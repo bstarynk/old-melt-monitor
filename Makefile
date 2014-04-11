@@ -20,12 +20,13 @@
 PACKAGES= sqlite3
 PKGCONFIG= pkg-config
 CC=gcc
-CFLAGS= -Wall $(PREPROFLAGS) $(OPTIMFLAGS)
+CFLAGS= -std=gnu11 -Wall $(PREPROFLAGS) $(OPTIMFLAGS)
 CXX=g++
-CXXFLAGS= -std=c++11 -Wall  $(PREPROFLAGS) $(OPTIMFLAGS)
+CXXFLAGS= -std=c++11 -Wall -pthread  $(PREPROFLAGS) $(OPTIMFLAGS)
+INDENT= indent -gnu
 PREPROFLAGS= $(shell $(PKGCONFIG) --cflags $(PACKAGES))
 OPTIMFLAGS= -O -g
-LIBES= -luuid -lgc $(shell $(PKGCONFIG) --libs $(PACKAGES))
+LIBES= -luuid -lgc $(shell $(PKGCONFIG) --libs $(PACKAGES)) -lpthread
 SOURCES= $(wildcard [a-z][a-z]*.c)
 OBJECTS= $(patsubst %.c,%.o,$(SOURCES))
 RM= rm -fv
@@ -36,6 +37,9 @@ clean:
 ################
 monimelt: $(OBJECTS)
 	$(LINK.c)  -rdynamic $^ $(LIBES) -o $@
+
+indent:
+	for f in *.c *.h; do $(INDENT) $$f ; done
 
 $(OBJECTS): monimelt.h monimelt-names.h
 

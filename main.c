@@ -20,8 +20,22 @@
 
 #include "monimelt.h"
 
-int main (int argc, char**argv)
+void
+mom_initialize (void)
 {
-  GC_INIT();
+  extern void mom_initialize_items ();
+  static int inited;
+  if (inited)
+    return;
+  inited = 1;
+  mom_initialize_items ();
+}
+
+int
+main (int argc, char **argv)
+{
+  GC_INIT ();
+  pthread_setname_np (pthread_self (), "monimelt-main");
+  mom_initialize ();
   return 0;
 }
