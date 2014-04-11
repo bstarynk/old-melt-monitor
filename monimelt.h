@@ -164,4 +164,6 @@ void *mom_allocate_item_with_uuid (unsigned type, size_t itemsize,
 				   uuid_t uid);
 mom_anyitem_t *mom_item_of_uuid (uuid_t);
 
+momit_json_name_t *mom_make_item_json_name_of_uuid (uuid_t, const char *name);
+momit_json_name_t *mom_make_item_json_name (const char *name);
 #endif /* MONIMELT_INCLUDED_ */

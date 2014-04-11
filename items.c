@@ -312,3 +312,25 @@ end:
   pthread_mutex_unlock (&mtx_global_items);
   return res;
 }
+
+
+momit_json_name_t *
+mom_make_item_json_name_of_uuid (uuid_t uid, const char *name)
+{
+  momit_json_name_t *itm
+    = mom_allocate_item_with_uuid (momty_jsonitem, sizeof (momit_json_name_t),
+				   uid);
+  if (name)
+    itm->ij_namejson = mom_make_string (name);
+  return itm;
+}
+
+momit_json_name_t *
+mom_make_item_json_name (const char *name)
+{
+  momit_json_name_t *itm
+    = mom_allocate_item (momty_jsonitem, sizeof (momit_json_name_t));
+  if (name)
+    itm->ij_namejson = mom_make_string (name);
+  return itm;
+}
