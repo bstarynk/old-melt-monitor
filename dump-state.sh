@@ -25,6 +25,7 @@ export LANG=C LC_ALL=C
 logger -s -t dump-monimelt-state $(date +"start dump-monimelt-state %c")
 date +'-- state-monimelt dump %Y %b %d %T %Z' > $tempdump
 sqlite3 state-monimelt.dbsqlite .schema >> $tempdump || exit 1
+echo '-- state-monimelt tables contents' >> $tempdump 
 sqlite3 state-monimelt.dbsqlite >> $tempdump <<EOF
 .mode insert t_item
   SELECT * FROM t_item ORDER BY uid;
