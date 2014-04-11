@@ -21,6 +21,8 @@ PACKAGES= sqlite3
 PKGCONFIG= pkg-config
 CC=gcc
 CFLAGS= -Wall $(PREPROFLAGS) $(OPTIMFLAGS)
+CXX=g++
+CXXFLAGS= -std=c++11 -Wall  $(PREPROFLAGS) $(OPTIMFLAGS)
 PREPROFLAGS= $(shell $(PKGCONFIG) --cflags $(PACKAGES))
 OPTIMFLAGS= -O -g
 LIBES= -luuid -lgc $(shell $(PKGCONFIG) --libs $(PACKAGES))
@@ -28,7 +30,7 @@ SOURCES= $(wildcard [a-z][a-z]*.c)
 OBJECTS= $(patsubst %.c,%.o,$(SOURCES))
 RM= rm -fv
 .PHONY: all modules clean tests indent
-all: monimelt
+all: monimelt make-named
 clean:
 	$(RM) *~ *.o *.so _tmp_* monimelt
 ################
@@ -36,4 +38,7 @@ monimelt: $(OBJECTS)
 	$(LINK.c)  -rdynamic $^ $(LIBES) -o $@
 
 $(OBJECTS): monimelt.h
+
+make-named: u-make-named.cc
+	$(COMPILE.cc)  $<  $(LIBES) -o $@
 

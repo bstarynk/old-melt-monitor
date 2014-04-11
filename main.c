@@ -22,4 +22,6 @@
 
 int main (int argc, char**argv)
 {
+  GC_INIT();
+  return 0;
 }

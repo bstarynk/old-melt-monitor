@@ -32,6 +32,7 @@
 #include <unistd.h>
 #include <dlfcn.h>
 #include <gc/gc.h>
+#include <sqlite3.h>
 
 enum momvaltype_en {
   momty_none=0,
@@ -74,6 +75,12 @@ struct momstring_st {
   char cstr[];
 };
 
+struct momjsonarray_st {
+  momtynum_t typnum;
+  momusize_t slen;
+  momhash_t hash;
+  monval_t jvaltab[];
+};
 
 momhash_t mom_string_hash(const char*str, int len);
 momstring_t* mom_make_string_len(const char*str, int len);
