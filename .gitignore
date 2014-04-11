@@ -3,4 +3,5 @@
 *.bin
 *.fcgi
 *~
-*.dbsqlit
+*.dbsqlite
+monimelt
