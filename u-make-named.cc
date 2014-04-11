@@ -123,6 +123,18 @@ void update_header()
   ohf.close();
 }
 
+void usage(char*argv0)
+{
+  fprintf(stderr, "usage: %s\n"
+	  "\t [ -b | --database <db> ] #default %s\n",
+	  argv0, dbpath.c_str());
+  fprintf (stderr, "\t [ -H | --header <header> ] #default %s\n",
+	   headerpath.c_str());
+  fprintf (stderr, "\t  -n | --name <item-name>\n");
+  fprintf (stderr, "\t  -t | --type <item-type>\n");
+  exit (EXIT_FAILURE);
+}
+
 int main (int argc, char**argv)
 {
   /* getopt_long stores the option index here. */
@@ -139,8 +151,9 @@ int main (int argc, char**argv)
       if (optarg) headerpath=optarg; break;
     case 'n': if (optarg) itemname = optarg; break;
     case 't': if (optarg) itemtype = optarg; break;
-    case '?': break;
+    case '?': usage(argv[0]); break;
     default: fprintf(stderr, "bad option #%d: %c\n", option_index, c);
+      usage(argv[0]);
       exit(EXIT_FAILURE);
     }
   }
@@ -169,7 +182,7 @@ int main (int argc, char**argv)
   // grep type in source code
   {
     char grepcmd[256];
-    snprintf (grepcmd, sizeof(grepcmd), "/bin/fgrep -q '%s' *.c", itemtype.c_str());
+    snprintf (grepcmd, sizeof(grepcmd), "/bin/fgrep -q 'momit_%s_t' *.c", itemtype.c_str());
     if (system(grepcmd)) {
       fprintf(stderr, "%s: unknown item type, failed command %s\n", argv[0], grepcmd);
       exit(EXIT_FAILURE);

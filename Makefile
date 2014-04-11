@@ -37,8 +37,8 @@ clean:
 monimelt: $(OBJECTS)
 	$(LINK.c)  -rdynamic $^ $(LIBES) -o $@
 
-$(OBJECTS): monimelt.h
+$(OBJECTS): monimelt.h monimelt-names.h
 
 make-named: u-make-named.cc
-	$(COMPILE.cc)  $<  $(LIBES) -o $@
+	$(LINK.cc)  $<  $(LIBES) -o $@
 

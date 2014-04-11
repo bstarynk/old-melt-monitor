@@ -33,6 +33,7 @@
 #include <dlfcn.h>
 #include <gc/gc.h>
 #include <sqlite3.h>
+#include <uuid/uuid.h>
 
 enum momvaltype_en {
   momty_none=0,
@@ -44,14 +45,15 @@ enum momvaltype_en {
 };
 
 typedef uint16_t momtynum_t;
+typedef uint16_t momspaceid_t;
 typedef uint32_t momhash_t;
 typedef uint32_t momusize_t;
-typedef union monvalueptr_un monval_t;
+typedef union momvalueptr_un momval_t;
 typedef struct momint_st momint_t;
 typedef struct momfloat_st momfloat_t;
 typedef struct momstring_st momstring_t;
-
-union monvalueptr_un {
+typedef struct momjsonitem_st momit_json_name_t;
+union momvalueptr_un {
   momtynum_t* ptype;
   momint_t* pint;
   momfloat_t* pfloat;
@@ -79,7 +81,39 @@ struct momjsonarray_st {
   momtynum_t typnum;
   momusize_t slen;
   momhash_t hash;
-  monval_t jvaltab[];
+  momval_t jarrtab[];
+};
+
+struct mom_jsonentry_st {
+  momval_t je_name;
+  momval_t je_attr;
+};
+
+struct momjsonobject_st {
+  momtynum_t typnum;
+  momusize_t slen;
+  momhash_t hash;
+  struct mom_jsonentry_st jobjtab[];
+};
+
+struct mom_attrentry_st  {
+};
+
+struct mom_itemattributes_st {
+  momusize_t nbattr;
+  struct mom_attrentry_st itattrtab[];
+};
+
+struct momanyitem_st {
+  momtynum_t typnum;
+  momspaceid_t i_space;
+  uuid_t i_uuid;
+  pthread_mutex_t i_mtx;
+  struct mom_itemattributes_st* i_attrs;
+};
+
+struct momjsonitem_st {
+  struct momanyitem_st ij_item;
 };
 
 momhash_t mom_string_hash(const char*str, int len);
