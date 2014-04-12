@@ -33,7 +33,7 @@ RM= rm -fv
 .PHONY: all modules clean tests indent
 all: monimelt make-named
 clean:
-	$(RM) *~ *.o *.so _tmp_* monimelt
+	$(RM) *~ *.o *.so *.orig _tmp_* monimelt
 ################
 monimelt: $(OBJECTS)
 	$(LINK.c)  -rdynamic $^ $(LIBES) -o $@
