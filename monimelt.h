@@ -275,6 +275,33 @@ momit_bool_t *mom_create_named_bool (uuid_t uid, const char *name);
 #define mom_create__bool(Name,Uid) \
   mom_create_named_bool(Uid,#Name)
 
+static inline momit_bool_t *
+mom_get_item_bool (bool b)
+{
+  // defined and initialized in create-items.c using monimelt-named.h
+  extern momit_bool_t *mom_item__true;
+  extern momit_bool_t *mom_item__false;
+  if (b)
+    return mom_item__true;
+  else
+    return mom_item__false;
+}
+
+static inline bool
+mom_item_is_true (mom_anyitem_t * itm)
+{
+  extern momit_bool_t *mom_item__true;
+  return itm == (mom_anyitem_t *) mom_item__true;
+}
+
+static inline bool
+mom_item_is_false (mom_anyitem_t * itm)
+{
+  extern momit_bool_t *mom_item__false;
+  return itm == (mom_anyitem_t *) mom_item__false;
+}
+
+
 /// global data, managed by functions
 void mom_register_named (const char *name, mom_anyitem_t * item);
 mom_anyitem_t *mom_item_named (const char *name);

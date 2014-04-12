@@ -341,18 +341,16 @@ mom_create_named_bool (uuid_t uid, const char *name)
   if (!strcmp (name, "true"))
     {
       momit_bool_t *itrue
-	=
-	mom_allocate_item_with_uuid (momty_boolitem, sizeof (momit_bool_t),
-				     uid);
+	= mom_allocate_item_with_uuid (momty_boolitem, sizeof (momit_bool_t),
+				       uid);
       itrue->ib_bool = true;
       return itrue;
     }
   else if (!strcmp (name, "false"))
     {
       momit_bool_t *ifalse
-	=
-	mom_allocate_item_with_uuid (momty_boolitem, sizeof (momit_bool_t),
-				     uid);
+	= mom_allocate_item_with_uuid (momty_boolitem, sizeof (momit_bool_t),
+				       uid);
       ifalse->ib_bool = false;
       return ifalse;
     }
