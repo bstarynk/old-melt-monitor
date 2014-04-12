@@ -96,7 +96,9 @@ void update_header(const char*argv0)
   std::ifstream hf(headerpath);
   typedef std::tuple<std::string,std::string,std::string> tup3str_t;
   std::vector<tup3str_t> vec;
+  int lineno=0;
   for (std::string line; std::getline(hf,line);) {
+    lineno++;
     char curname[80];
     char curtype[80];
     char curuuid[40];
@@ -106,7 +108,13 @@ void update_header(const char*argv0)
     int pos= 0;
     if (sscanf(line.c_str(), " MONIMELT_NAMED ( %78s, %78s, \"%39[0-9a-fA-F-]\" )%n",
 	       curname, curtype, curuuid, &pos) >= 3 && pos>0) {
-      vec.emplace_back(std::make_tuple(std::string(curname),std::string(curtype),std::string(curuuid)));
+      vec.push_back(std::make_tuple(std::string(curname),std::string(curtype),std::string(curuuid)));
+    }
+    else if (line.find("MONIMELT_NAMED")>=0
+	     && line[0] != '#' && line[0] != '/') {
+      fprintf(stderr, "%s:%d: bad line %s\n",
+	      headerpath.c_str(), lineno, line.c_str());
+      exit(EXIT_FAILURE);
     }
   }
   hf.close();
