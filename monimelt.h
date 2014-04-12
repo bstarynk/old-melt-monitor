@@ -27,6 +27,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -44,8 +45,17 @@ enum momvaltype_en
   momty_string,
   momty_jsonarray,
   momty_jsonobject,
+  momty_itemset,
+  momty_itemtuple,
+  momty_node,
+  momty_closure,
+  /// items below
+  momty__itemlowtype,
   momty_jsonitem,
+  momty_boolitem,
+  momty__last
 };
+
 
 typedef uint16_t momtynum_t;
 typedef uint16_t momspaceid_t;
@@ -57,6 +67,7 @@ typedef struct momfloat_st momfloat_t;
 typedef struct momstring_st momstring_t;
 typedef struct momanyitem_st mom_anyitem_t;
 typedef struct momjsonitem_st momit_json_name_t;
+typedef struct momboolitem_st momit_bool_t;
 union momvalueptr_un
 {
   void *ptr;
@@ -67,6 +78,7 @@ union momvalueptr_un
   mom_anyitem_t *panyitem;
 };
 
+#define MONIMELT_NULLV ((union momvalueptr_un)((void*)0))
 struct momint_st
 {
   momtynum_t typnum;
@@ -136,6 +148,96 @@ struct momjsonitem_st
   momstring_t *ij_namejson;
 };
 
+struct momboolitem_st
+{
+  struct momanyitem_st ib_item;
+  bool ib_bool;
+};
+
+static inline mom_anyitem_t *
+mom_value_as_item (momval_t val)
+{
+  if (!val.ptr)
+    return NULL;
+  if (*val.ptype > momty__itemlowtype)
+    return val.panyitem;
+  return NULL;
+}
+
+static inline momval_t
+mom_value_json (momval_t val)
+{
+  if (!val.ptr)
+    return MONIMELT_NULLV;
+  switch (*val.ptype)
+    {
+    case momty_int:
+      return val;
+    case momty_float:
+      return val;
+    case momty_string:
+      return val;
+    case momty_jsonarray:
+      return val;
+    case momty_jsonobject:
+      return val;
+    case momty_jsonitem:
+      return val;
+    case momty_boolitem:
+      return val;
+    default:
+      return MONIMELT_NULLV;
+    }
+}
+
+//////////////// integer values
+static inline momint_t *
+mom_value_as_int (momval_t val)
+{
+  if (!val.ptr)
+    return NULL;
+  if (*val.ptype == momty_int)
+    return val.pint;
+  return NULL;
+}
+
+const momint_t *mom_make_int (intptr_t i);
+
+static inline intptr_t
+mom_int_of_value (momval_t val, intptr_t def)
+{
+  if (val.ptr && *val.ptype == momty_int)
+    return val.pint->intval;
+  return def;
+}
+
+#define mom_int_of_value_else_0(V) mom_int_of_value((V),0L)
+
+
+////////////// float values
+static inline momfloat_t *
+mom_value_as_float (momval_t val)
+{
+  if (!val.ptr)
+    return NULL;
+  if (*val.ptype == momty_float)
+    return val.pfloat;
+  return NULL;
+}
+
+
+///////////// string values
+static inline momstring_t *
+mom_value_as_string (momval_t val)
+{
+  if (!val.ptr)
+    return NULL;
+  if (*val.ptype == momty_string)
+    return val.pstring;
+  return NULL;
+}
+
+
 #define MONIMELT_FATAL_AT(Fil,Lin,Fmt,...) do {		\
   char thname_##Lin[24];				\
   memset (thname_##Lin, 0, sizeof(thname_##Lin));	\
@@ -157,7 +259,7 @@ mom_make_string (const char *str)
   return mom_make_string_len (str, -1);
 };
 
-momint_t *mom_make_int (intptr_t n);
+const momint_t *mom_make_int (intptr_t n);
 void mom_initialize (void);
 void *mom_allocate_item (unsigned type, size_t itemsize);
 void *mom_allocate_item_with_uuid (unsigned type, size_t itemsize,
@@ -168,4 +270,13 @@ momit_json_name_t *mom_make_item_json_name_of_uuid (uuid_t, const char *name);
 momit_json_name_t *mom_make_item_json_name (const char *name);
 #define mom_create__json_name(Name,Uid) \
   mom_make_item_json_name_of_uuid(Uid,#Name)
+
+momit_bool_t *mom_create_named_bool (uuid_t uid, const char *name);
+#define mom_create__bool(Name,Uid) \
+  mom_create_named_bool(Uid,#Name)
+
+/// global data, managed by functions
+void mom_register_named (const char *name, mom_anyitem_t * item);
+mom_anyitem_t *mom_item_named (const char *name);
+
 #endif /* MONIMELT_INCLUDED_ */

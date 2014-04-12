@@ -90,12 +90,61 @@ mom_make_string_len (const char *str, int len)
   return sv;
 }
 
-momint_t *
+static const momint_t vintminus4 = {.typnum = momty_int,.intval = -4 };
+static const momint_t vintminus3 = {.typnum = momty_int,.intval = -3 };
+static const momint_t vintminus2 = {.typnum = momty_int,.intval = -2 };
+static const momint_t vintminus1 = {.typnum = momty_int,.intval = -1 };
+static const momint_t vint0 = {.typnum = momty_int,.intval = 0 };
+static const momint_t vint1 = {.typnum = momty_int,.intval = 1 };
+static const momint_t vint2 = {.typnum = momty_int,.intval = 2 };
+static const momint_t vint3 = {.typnum = momty_int,.intval = 3 };
+static const momint_t vint4 = {.typnum = momty_int,.intval = 4 };
+static const momint_t vint5 = {.typnum = momty_int,.intval = 5 };
+static const momint_t vint6 = {.typnum = momty_int,.intval = 6 };
+static const momint_t vint7 = {.typnum = momty_int,.intval = 7 };
+static const momint_t vint8 = {.typnum = momty_int,.intval = 8 };
+static const momint_t vint9 = {.typnum = momty_int,.intval = 9 };
+
+const momint_t *
 mom_make_int (intptr_t n)
 {
-  momint_t *iv = GC_MALLOC_ATOMIC (sizeof (momint_t));
-  memset (iv, 0, sizeof (momint_t));
-  iv->intval = n;
-  iv->typnum = momty_int;
-  return iv;
+  switch (n)
+    {
+    case -4:
+      return &vintminus4;
+    case -3:
+      return &vintminus3;
+    case -2:
+      return &vintminus2;
+    case -1:
+      return &vintminus1;
+    case 0:
+      return &vint0;
+    case 1:
+      return &vint1;
+    case 2:
+      return &vint2;
+    case 3:
+      return &vint3;
+    case 4:
+      return &vint4;
+    case 5:
+      return &vint5;
+    case 6:
+      return &vint6;
+    case 7:
+      return &vint7;
+    case 8:
+      return &vint8;
+    case 9:
+      return &vint9;
+    default:
+      {
+	momint_t *iv = GC_MALLOC_ATOMIC (sizeof (momint_t));
+	memset (iv, 0, sizeof (momint_t));
+	iv->intval = n;
+	iv->typnum = momty_int;
+	return iv;
+      }
+    }
 }

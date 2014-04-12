@@ -38,8 +38,8 @@ clean:
 monimelt: $(OBJECTS)
 	$(LINK.c)  -rdynamic $^ $(LIBES) -o $@
 
-indent:
-	for f in *.c *.h; do $(INDENT) $$f ; done
+indent: # don't indent monimelt-names.h
+	for f in *.c monimelt.h; do $(INDENT) $$f ; done
 
 $(OBJECTS): monimelt.h monimelt-names.h
 

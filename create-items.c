@@ -31,6 +31,8 @@ mom_create_items (void)
 {
   uuid_t uid;
   //
+#undef true
+#undef false
   // create the named items
 #define MONIMELT_NAMED(Name,Type,Uids) do {		\
   memset(&uid, 0, sizeof(uid));				\
@@ -38,5 +40,5 @@ mom_create_items (void)
   mom_item__##Name = mom_create__##Type (Name,uid);	\
   } while(0);
 #include "monimelt-names.h"
-    //
+  //
 }
