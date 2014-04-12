@@ -110,7 +110,9 @@ void update_header(const char*argv0)
     }
   }
   hf.close();
-  vec.emplace_back(std::make_tuple(itemname,itemtype,std::string(itemstruuid)));
+  if (verbose)
+    printf("%s: parsed %d names in %s\n", argv0, (int)vec.size(), headerpath.c_str());
+  vec.push_back(std::make_tuple(itemname,itemtype,std::string(itemstruuid)));
   std::stable_sort(vec.begin(), vec.end(),
 		   [](const tup3str_t&l, const tup3str_t&r)
 		   { return std::get<0>(l) < std::get<0>(r); });
@@ -125,7 +127,7 @@ void update_header(const char*argv0)
       << "#endif /*MONIMELT_NAMED*/" << std::endl << std::endl;
 
   for (auto tu : vec) {
-    ohf << " MONIMELT_NAMED(" << std::get<0>(tu) << ", "
+    ohf << " MONIMELT_NAMED (" << std::get<0>(tu) << ", "
 	<< std::get<1>(tu) << ", \""
 	<< std::get<2>(tu) << "\")" << std::endl;
   }
