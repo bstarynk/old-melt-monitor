@@ -185,6 +185,7 @@ void update_header(const char*argv0)
         << "#error should have defined MONIMELT_NAMED macro" << std::endl
         << "#endif /*MONIMELT_NAMED*/" << std::endl << std::endl;
 
+    ohf << "// MONIMELT_NAMED(Name,Type,Uidstr)" << std::endl;
     for (auto e : headvect) {
         ohf << " MONIMELT_NAMED (" << e.name << ", "
             << e.type << ", \""

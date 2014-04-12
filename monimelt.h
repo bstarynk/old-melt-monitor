@@ -166,4 +166,6 @@ mom_anyitem_t *mom_item_of_uuid (uuid_t);
 
 momit_json_name_t *mom_make_item_json_name_of_uuid (uuid_t, const char *name);
 momit_json_name_t *mom_make_item_json_name (const char *name);
+#define mom_create__json_name(Name,Uid) \
+  mom_make_item_json_name_of_uuid(Uid,#Name)
 #endif /* MONIMELT_INCLUDED_ */

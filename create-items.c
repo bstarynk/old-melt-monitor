@@ -20,24 +20,23 @@
 
 #include "monimelt.h"
 
-void
-mom_initialize (void)
-{
-  extern void mom_initialize_items ();
-  extern void mom_create_items ();
-  static int inited;
-  if (inited)
-    return;
-  inited = 1;
-  mom_initialize_items ();
-  mom_create_items ();
-}
 
-int
-main (int argc, char **argv)
+/// declare the named items
+#define MONIMELT_NAMED(Name,Type,Uid) \
+  momit_##Type##_t* mom_item__##Name;
+#include "monimelt-names.h"
+
+void
+mom_create_items (void)
 {
-  GC_INIT ();
-  pthread_setname_np (pthread_self (), "monimelt-main");
-  mom_initialize ();
-  return 0;
+  uuid_t uid;
+  //
+  // create the named items
+#define MONIMELT_NAMED(Name,Type,Uids) do {		\
+  memset(&uid, 0, sizeof(uid));				\
+  uuid_parse(Uids, uid);				\
+  mom_item__##Name = mom_create__##Type (Name,uid);	\
+  } while(0);
+#include "monimelt-names.h"
+    //
 }
