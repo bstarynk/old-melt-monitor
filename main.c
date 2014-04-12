@@ -23,13 +23,15 @@
 void
 mom_initialize (void)
 {
-  extern void mom_initialize_items ();
+  extern void mom_initialize_items (void);
+  extern void mom_initialize_globals (void);
   extern void mom_create_items ();
   static int inited;
   if (inited)
     return;
   inited = 1;
   mom_initialize_items ();
+  mom_initialize_globals ();
   mom_create_items ();
 }
 

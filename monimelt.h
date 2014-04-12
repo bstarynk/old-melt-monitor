@@ -304,6 +304,8 @@ mom_item_is_false (mom_anyitem_t * itm)
 
 /// global data, managed by functions
 void mom_register_named (const char *name, mom_anyitem_t * item);
+void mom_register_name_string (momstring_t* namestr, mom_anyitem_t* item);
 mom_anyitem_t *mom_item_named (const char *name);
+
 
 #endif /* MONIMELT_INCLUDED_ */
