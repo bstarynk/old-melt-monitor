@@ -32,6 +32,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <math.h>
+#include <ctype.h>
 #include <dlfcn.h>
 #include <gc/gc.h>
 #include <sqlite3.h>
@@ -226,6 +228,8 @@ mom_int_of_value (momval_t val, intptr_t def)
 
 
 ////////////// float values
+const momfloat_t *mom_make_double (double x);
+
 static inline momfloat_t *
 mom_value_as_float (momval_t val)
 {

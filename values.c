@@ -148,3 +148,13 @@ mom_make_int (intptr_t n)
       }
     }
 }
+
+const momfloat_t *
+mom_make_double (double x)
+{
+  momfloat_t *dv = GC_MALLOC_ATOMIC (sizeof (momfloat_t));
+  memset (dv, 0, sizeof (momfloat_t));
+  dv->floval = x;
+  dv->typnum = momty_float;
+  return dv;
+}

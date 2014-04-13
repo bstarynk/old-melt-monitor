@@ -26,7 +26,7 @@ CXXFLAGS= -std=c++11 -Wall -pthread  $(PREPROFLAGS) $(OPTIMFLAGS)
 INDENT= indent -gnu
 PREPROFLAGS= $(shell $(PKGCONFIG) --cflags $(PACKAGES))
 OPTIMFLAGS= -O -g
-LIBES= -luuid -lgc $(shell $(PKGCONFIG) --libs $(PACKAGES)) -lpthread
+LIBES= -luuid -lgc $(shell $(PKGCONFIG) --libs $(PACKAGES)) -lpthread -lm -ldl
 SOURCES= $(sort $(wildcard [a-z][a-z]*.c))
 OBJECTS= $(patsubst %.c,%.o,$(SOURCES))
 RM= rm -fv
@@ -39,7 +39,8 @@ monimelt: $(OBJECTS)
 	$(LINK.c)  -rdynamic $^ $(LIBES) -o $@
 
 indent: # don't indent monimelt-names.h
-	for f in *.c monimelt.h; do $(INDENT) $$f ; done
+	@for f in *.c $(filter-out monimelt-names.h, $(wildcard *.h)); do \
+	  echo formatting $$f; $(INDENT) $$f ; done
 
 $(OBJECTS): monimelt.h monimelt-names.h
 
