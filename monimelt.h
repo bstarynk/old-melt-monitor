@@ -37,6 +37,8 @@
 #include <sqlite3.h>
 #include <uuid/uuid.h>
 
+
+#define MONIMELT_EMPTY ((void*)(-1L))
 enum momvaltype_en
 {
   momty_none = 0,
@@ -303,9 +305,18 @@ mom_item_is_false (mom_anyitem_t * itm)
 
 
 /// global data, managed by functions
-void mom_register_named (const char *name, mom_anyitem_t * item);
-void mom_register_name_string (momstring_t* namestr, mom_anyitem_t* item);
-mom_anyitem_t *mom_item_named (const char *name);
+// register a new name, nop if existing entry
+void mom_register_new_name_item (const char *name, mom_anyitem_t * item);
+void mom_register_new_name_string (momstring_t * namestr,
+				   mom_anyitem_t * item);
 
+// register a name, replacing any previous entries
+void mom_replace_named_item (const char *name, mom_anyitem_t * item);
+void mom_replace_name_string (momstring_t * namestr, mom_anyitem_t * item);
+
+// get the item of some given name, or else NULL
+mom_anyitem_t *mom_item_named (const char *name);
+// get the name of some given item, or else NULL
+momstring_t *mom_name_of_item (mom_anyitem_t * item);
 
 #endif /* MONIMELT_INCLUDED_ */

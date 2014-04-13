@@ -40,13 +40,13 @@ mom_hash_uuid (uuid_t uid)
 	  h = h2;
 	  if (!h)
 	    {
-	      h = 3071741 * u[5] + u[7];
+	      h = 3071741 * u[5] + 7 * u[7];
 	      if (!h)
 		{
 		  h = 1071407 * u[6] + 31 * u[1];
 		  if (!h)
 		    {
-		      h = u[1] + 2 * u[2] + 17 * u[3];
+		      h = u[1] + 29 * u[2] + 17 * u[3];
 		      if (!h)
 			h = 156;
 		    }
@@ -58,7 +58,6 @@ mom_hash_uuid (uuid_t uid)
 }
 
 static pthread_mutex_t mtx_global_items = PTHREAD_MUTEX_INITIALIZER;
-#define EMPTY_ITEM_SLOT ((void*)(-1L))
 static struct items_data_st
 {
   uint32_t items_nb;
@@ -79,14 +78,14 @@ add_new_item (mom_anyitem_t * newitm)
   for (uint32_t i = istart; i < imax; i += 2)
     {
       if (!items_data->items_arr[i]
-	  || items_data->items_arr[i] == EMPTY_ITEM_SLOT)
+	  || items_data->items_arr[i] == MONIMELT_EMPTY)
 	{
 	  items_data->items_arr[i] = newitm;
 	  items_data->items_nb++;
 	  return;
 	}
       if (!items_data->items_arr[i + 1]
-	  || items_data->items_arr[i + 1] == EMPTY_ITEM_SLOT)
+	  || items_data->items_arr[i + 1] == MONIMELT_EMPTY)
 	{
 	  if (i + 1 >= imax)
 	    continue;
@@ -98,14 +97,14 @@ add_new_item (mom_anyitem_t * newitm)
   for (uint32_t i = 0; i < istart; i += 2)
     {
       if (!items_data->items_arr[i]
-	  || items_data->items_arr[i] == EMPTY_ITEM_SLOT)
+	  || items_data->items_arr[i] == MONIMELT_EMPTY)
 	{
 	  items_data->items_arr[i] = newitm;
 	  items_data->items_nb++;
 	  return;
 	}
       if (!items_data->items_arr[i + 1]
-	  || items_data->items_arr[i + 1] == EMPTY_ITEM_SLOT)
+	  || items_data->items_arr[i + 1] == MONIMELT_EMPTY)
 	{
 	  items_data->items_arr[i + 1] = newitm;
 	  items_data->items_nb++;
@@ -126,13 +125,13 @@ remove_old_item (mom_anyitem_t * olditm)
     {
       if (items_data->items_arr[i] == olditm)
 	{
-	  items_data->items_arr[i] = EMPTY_ITEM_SLOT;
+	  items_data->items_arr[i] = MONIMELT_EMPTY;
 	  items_data->items_nb--;
 	  return;
 	}
       if (items_data->items_arr[i + 1] == olditm && i + 1 < imax)
 	{
-	  items_data->items_arr[i + 1] = EMPTY_ITEM_SLOT;
+	  items_data->items_arr[i + 1] = MONIMELT_EMPTY;
 	  items_data->items_nb--;
 	  return;
 	}
@@ -141,13 +140,13 @@ remove_old_item (mom_anyitem_t * olditm)
     {
       if (items_data->items_arr[i] == olditm)
 	{
-	  items_data->items_arr[i] = EMPTY_ITEM_SLOT;
+	  items_data->items_arr[i] = MONIMELT_EMPTY;
 	  items_data->items_nb--;
 	  return;
 	}
       if (items_data->items_arr[i + 1] == olditm)
 	{
-	  items_data->items_arr[i + 1] = EMPTY_ITEM_SLOT;
+	  items_data->items_arr[i + 1] = MONIMELT_EMPTY;
 	  items_data->items_nb--;
 	  return;
 	}
@@ -176,7 +175,7 @@ resize_items_data (uint32_t newsiz)
     {
       mom_anyitem_t *olditm = olddata->items_arr[ix];
       olddata->items_arr[ix] = NULL;
-      if (!olditm || (void *) olddata == EMPTY_ITEM_SLOT)
+      if (!olditm || (void *) olddata == MONIMELT_EMPTY)
 	continue;
       add_new_item (olditm);
     }
@@ -285,7 +284,7 @@ mom_item_of_uuid (uuid_t uid)
   for (uint32_t i = istart; i < imax; i++)
     {
       mom_anyitem_t *curitm = items_data->items_arr[i];
-      if ((void *) curitm == EMPTY_ITEM_SLOT)
+      if ((void *) curitm == MONIMELT_EMPTY)
 	continue;
       if (!curitm)
 	goto end;
@@ -298,7 +297,7 @@ mom_item_of_uuid (uuid_t uid)
   for (uint32_t i = 0; i < istart; i++)
     {
       mom_anyitem_t *curitm = items_data->items_arr[i];
-      if ((void *) curitm == EMPTY_ITEM_SLOT)
+      if ((void *) curitm == MONIMELT_EMPTY)
 	continue;
       if (!curitm)
 	goto end;
