@@ -27,7 +27,7 @@ INDENT= indent -gnu
 PREPROFLAGS= $(shell $(PKGCONFIG) --cflags $(PACKAGES))
 OPTIMFLAGS= -O -g
 LIBES= -luuid -lgc $(shell $(PKGCONFIG) --libs $(PACKAGES)) -lpthread
-SOURCES= $(wildcard [a-z][a-z]*.c)
+SOURCES= $(sort $(wildcard [a-z][a-z]*.c))
 OBJECTS= $(patsubst %.c,%.o,$(SOURCES))
 RM= rm -fv
 .PHONY: all modules clean tests indent

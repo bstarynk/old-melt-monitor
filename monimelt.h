@@ -79,6 +79,11 @@ union momvalueptr_un
   momstring_t *pstring;
   mom_anyitem_t *panyitem;
 };
+#ifdef __GNUC__
+#define MONIMELT_UNLIKELY(P) __builtin_expect((P),0)
+#else
+#define MONIMELT_UNLIKELY(P) (P)
+#endif
 
 #define MONIMELT_NULLV ((union momvalueptr_un)((void*)0))
 struct momint_st
