@@ -38,6 +38,10 @@
 #include <uuid/uuid.h>
 
 
+/// downloaded from http://download.gnu.org.ua/pub/releases/microutf8/
+// see http://puszcza.gnu.org.ua/software/microutf8/
+#include "microutf8.h"
+
 #define MONIMELT_EMPTY ((void*)(-1L))
 enum momvaltype_en
 {
