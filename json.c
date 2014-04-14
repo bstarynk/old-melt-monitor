@@ -49,6 +49,7 @@ enum jsonstate_en
   jse_startjson,
   jse_parsename,
   jse_parsenumber,
+  jse_parsestring,
 };
 
 static inline void
@@ -212,6 +213,7 @@ mom_json_consume (struct jsonparser_st *jp, const char *buf, int len)
 		  MONIMELT_FATAL ("out of space for JSON name of %u", lenstr);
 		memset (newstr, 0, lenstr);
 		push_state (jp, jse_parsename, newstr, lenstr);
+		continue;
 	      }
 	    else
 	      if (((cp[0] == '-' || cp[0] == '+') && cp + 1 < endp
@@ -235,6 +237,28 @@ mom_json_consume (struct jsonparser_st *jp, const char *buf, int len)
 		    cp++;
 		  }
 		push_state (jp, jse_parsenumber, newstr, lenstr);
+		continue;
+	      }
+	    else if (cp[0] == '"' && cp + 1 < endp)
+	      {
+		cp++;
+		const char *start = cp;
+		while (cp + 1 < endp && *cp != '"' && *cp != '\\'
+		       && isprint (*cp))
+		  cp++;
+		const char *nextquote = memchr (cp, '"', endp - cp);
+		unsigned lenstr =
+		  nextquote ? (1 + ((nextquote - start + 5) | 0x1f))
+		  : (endp > start + 30) ? (1 + ((endp - start) | 0x1f)) : 32;
+		char *newstr = GC_MALLOC_ATOMIC (lenstr);
+		if (MONIMELT_UNLIKELY (!newstr))
+		  MONIMELT_FATAL ("out of space for JSON string of %u",
+				  lenstr);
+		memset (newstr, 0, lenstr);
+		memcpy (newstr, start, cp - start);
+		push_state (jp, jse_parsestring, newstr, lenstr);
+		set_top_num (jp, cp - start);
+		continue;
 	      }
 	    break;
 	  }
@@ -295,6 +319,7 @@ mom_json_consume (struct jsonparser_st *jp, const char *buf, int len)
 		GC_FREE (curptr);
 		continue;
 	      }
+	    break;
 	  }
 	case jse_parsenumber:
 	  {
@@ -361,6 +386,156 @@ mom_json_consume (struct jsonparser_st *jp, const char *buf, int len)
 		GC_FREE (curptr);
 	      }
 	    continue;
+	  }
+	case jse_parsestring:
+	  {
+	    const char *start = cp;
+	    intptr_t curstrlen = jp->json_numarr[jtop].num;
+	    unsigned curstrsize = jp->json_levarr[jtop].je_rank;
+	    while (cp < endp && *cp != '"' && *cp != '\\' && isprint (*cp))
+	      cp++;
+	    unsigned curchklen = start - cp;
+	    if (MONIMELT_UNLIKELY (curstrlen + curchklen + 12 > curstrsize))
+	      {
+		unsigned newsize =
+		  ((curstrlen + curchklen + curstrsize / 8 + 40) | 0x1f) + 1;
+		char *newstr = GC_MALLOC_ATOMIC (newsize);
+		if (MONIMELT_UNLIKELY (!newstr))
+		  MONIMELT_FATAL ("failed to grow JSON string to %u",
+				  newsize);
+		memset (newstr, 0, newsize);
+		memcpy (newstr, curptr, curstrlen);
+		curstrsize = jp->json_levarr[jtop].je_rank = newsize;
+		set_top_pointer (jp, newstr);
+		curptr = newstr;
+	      }
+	    if (cp > start)
+	      {
+		memcpy (curptr + curstrlen, start, curchklen);
+		curstrlen = jp->json_numarr[jtop].num =
+		  (curstrlen + curchklen);
+	      }
+	    if (cp >= endp)
+	      break;
+	    if (*cp == '\\' && cp + 1 < endp)
+	      switch (cp[1])
+		{
+#define ADD1CHAR(Ch) do { ((char*)curptr)[curstrlen] = (Ch);		\
+		  curstrlen = jp->json_numarr[jtop].num = curstrlen+1;	\
+		}while(0)
+		case 'b':
+		  ADD1CHAR ('\b');
+		  cp += 2;
+		  continue;
+		case 'f':
+		  ADD1CHAR ('\f');
+		  cp += 2;
+		  continue;
+		case 'n':
+		  ADD1CHAR ('\n');
+		  cp += 2;
+		  continue;
+		case 'r':
+		  ADD1CHAR ('\r');
+		  cp += 2;
+		  continue;
+		case 't':
+		  ADD1CHAR ('\t');
+		  cp += 2;
+		  continue;
+		case '"':
+		  ADD1CHAR ('\"');
+		  cp += 2;
+		  continue;
+		case '/':
+		  ADD1CHAR ('/');
+		  cp += 2;
+		  continue;
+		case '\\':
+		  ADD1CHAR ('\\');
+		  cp += 2;
+		  continue;
+		case 'u':
+		  if (cp + 6 < endp
+		      && isxdigit (cp[2]) && isxdigit (cp[3])
+		      && isxdigit (cp[4]) && isxdigit (cp[5]))
+		    {
+		      char hexd[8];
+		      memset (hexd, 0, sizeof (hexd));
+		      hexd[0] = cp[2];
+		      hexd[1] = cp[3];
+		      hexd[2] = cp[4];
+		      hexd[3] = cp[5];
+		      uint32_t c = (uint32_t) strtol (hexd, NULL, 16);
+		      memset (hexd, 0, sizeof (hexd));
+		      // see http://en.wikipedia.org/wiki/UTF-8
+		      if (c < 0x80)
+			hexd[0] = c;
+		      else if (c < 0x800)
+			{
+			  hexd[0] = (c >> 6) | 0xC0;
+			  hexd[1] = (c & 0x3F) | 0x80;
+			}
+		      else if (c < 0x10000)
+			{
+			  hexd[0] = (c >> 12) | 0xE0;
+			  hexd[1] = ((c >> 6) & 0x3F) | 0x80;
+			  hexd[2] = (c & 0x3F) | 0x80;
+			}
+		      else if (c < 0x200000)
+			{
+			  hexd[0] = (c >> 18) | 0xF0;
+			  hexd[1] = ((c >> 12) & 0x3F) | 0x80;
+			  hexd[2] = ((c >> 6) & 0x3F) | 0x80;
+			  hexd[3] = (c & 0x3F) | 0x80;
+			}
+		      else if (c <= 67108863)
+			{
+			  hexd[0] = (248 + (c / 16777216));
+			  hexd[1] = (128 + ((c / 262144) % 64));
+			  hexd[2] = (128 + ((c / 4096) % 64));
+			  hexd[3] = (128 + ((c / 64) % 64));
+			  hexd[4] = (128 + (c % 64));
+			}
+		      else if (c <= 2147483647)
+			{
+			  hexd[0] = (252 + (c / 1073741824));
+			  hexd[1] = (128 + ((c / 16777216) % 64));
+			  hexd[2] = (128 + ((c / 262144) % 64));
+			  hexd[3] = (128 + ((c / 4096) % 64));
+			  hexd[4] = (128 + ((c / 64) % 64));
+			  hexd[5] = (128 + (c % 64));
+			}
+		      ADD1CHAR (hexd[0]);
+		      if (hexd[1])
+			{
+			  ADD1CHAR (hexd[1]);
+			  if (hexd[2])
+			    {
+			      ADD1CHAR (hexd[2]);
+			      if (hexd[3])
+				{
+				  ADD1CHAR (hexd[3]);
+				  if (hexd[4])
+				    {
+				      ADD1CHAR (hexd[4]);
+				      if (hexd[5])
+					ADD1CHAR (hexd[5]);
+				    }
+				}
+			    }
+			}
+		      cp += 6;
+		      continue;
+		    }
+		  break;
+		default:
+		  ADD1CHAR (cp[1]);
+		  cp += 2;
+		  continue;
+#undef ADD1CHAR
+		}
+	    break;
 	  }
 	default:
 	  MONIMELT_FATAL ("unexpected JSON state #%u top %u", curstate, jtop);
