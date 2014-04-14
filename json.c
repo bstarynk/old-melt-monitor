@@ -389,6 +389,7 @@ mom_json_consume (struct jsonparser_st *jp, const char *buf, int len)
 	  }
 	case jse_parsestring:
 	  {
+#warning missing handling of end of string
 	    const char *start = cp;
 	    intptr_t curstrlen = jp->json_numarr[jtop].num;
 	    unsigned curstrsize = jp->json_levarr[jtop].je_rank;
