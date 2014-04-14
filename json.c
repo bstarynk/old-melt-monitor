@@ -50,6 +50,8 @@ enum jsonstate_en
   jse_parsename,
   jse_parsenumber,
   jse_parsestring,
+  jse_parsecomparr,
+  jse_parseattrobj,
 };
 
 static inline void
@@ -97,6 +99,21 @@ push_state (struct jsonparser_st *jp, unsigned state, void *val,
   jp->json_numarr[jtop].dbl = 0.0;
   jp->json_numarr[jtop].num = 0L;
   jp->json_top = jtop + 1;
+}
+
+static inline void
+replace_state (struct jsonparser_st *jp, unsigned state, void *val,
+	       unsigned rank)
+{
+  unsigned jtop = jp->json_top;
+  if (jtop > 0)
+    {
+      jp->json_ptrarr[jtop - 1] = val;
+      jp->json_levarr[jtop - 1].je_rank = rank;
+      jp->json_levarr[jtop - 1].je_state = state;
+      jp->json_numarr[jtop - 1].dbl = 0.0;
+      jp->json_numarr[jtop - 1].num = 0L;
+    }
 }
 
 static inline void
@@ -212,7 +229,7 @@ mom_json_consume (struct jsonparser_st *jp, const char *buf, int len)
 		if (MONIMELT_UNLIKELY (!newstr))
 		  MONIMELT_FATAL ("out of space for JSON name of %u", lenstr);
 		memset (newstr, 0, lenstr);
-		push_state (jp, jse_parsename, newstr, lenstr);
+		replace_state (jp, jse_parsename, newstr, lenstr);
 		continue;
 	      }
 	    else
@@ -236,7 +253,7 @@ mom_json_consume (struct jsonparser_st *jp, const char *buf, int len)
 		    newstr[0] = cp[0];
 		    cp++;
 		  }
-		push_state (jp, jse_parsenumber, newstr, lenstr);
+		replace_state (jp, jse_parsenumber, newstr, lenstr);
 		continue;
 	      }
 	    else if (cp[0] == '"' && cp + 1 < endp)
@@ -256,10 +273,28 @@ mom_json_consume (struct jsonparser_st *jp, const char *buf, int len)
 				  lenstr);
 		memset (newstr, 0, lenstr);
 		memcpy (newstr, start, cp - start);
-		push_state (jp, jse_parsestring, newstr, lenstr);
+		replace_state (jp, jse_parsestring, newstr, lenstr);
 		set_top_num (jp, cp - start);
 		continue;
 	      }
+	    else if (*cp == '[' && cp < endp)
+	      {
+		const int arrsize = 8;
+		momval_t *newvalarr = GC_MALLOC (sizeof (momval_t) * arrsize);
+		if (MONIMELT_UNLIKELY (!newvalarr))
+		  MONIMELT_FATAL ("out of space for initial array of %i",
+				  arrsize);
+		memset (newvalarr, 0, sizeof (momval_t) * arrsize);
+		replace_state (jp, jse_parsecomparr, newvalarr, arrsize);
+		push_state (jp, jse_startjson, NULL, 0);
+#warning not sure about pushed states....
+		continue;
+	      }
+	    else if (*cp == '{' && cp < endp)
+	      {
+	      }
+	    else if (cp < endp)
+	      MONIMELT_FATAL ("bad JSON %.40s", cp);
 	    break;
 	  }
 	case jse_parsename:
@@ -389,7 +424,6 @@ mom_json_consume (struct jsonparser_st *jp, const char *buf, int len)
 	  }
 	case jse_parsestring:
 	  {
-#warning missing handling of end of string
 	    const char *start = cp;
 	    intptr_t curstrlen = jp->json_numarr[jtop].num;
 	    unsigned curstrsize = jp->json_levarr[jtop].je_rank;
@@ -536,6 +570,16 @@ mom_json_consume (struct jsonparser_st *jp, const char *buf, int len)
 		  continue;
 #undef ADD1CHAR
 		}
+	    else if (*cp == '"' && cp < endp)
+	      {
+		cp++;
+		momstring_t *newstrv
+		  = mom_make_string_len (curptr, jp->json_numarr[jtop].num);
+		pop_state (jp);
+		set_top_pointer (jp, newstrv);
+		GC_FREE (curptr);
+		continue;
+	      }
 	    break;
 	  }
 	default:
