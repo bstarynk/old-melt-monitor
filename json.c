@@ -223,6 +223,17 @@ mom_json_consume (struct jsonparser_st *jp, const char *buf, int len)
 		  MONIMELT_FATAL ("out of space for JSON number of %u",
 				  lenstr);
 		memset (newstr, 0, lenstr);
+		if ((cp[0] == '+' || cp[0] == '-') && isdigit (cp[1]))
+		  {
+		    newstr[0] = cp[0];
+		    newstr[1] = cp[1];
+		    cp += 2;
+		  }
+		else if (isdigit (cp[0]))
+		  {
+		    newstr[0] = cp[0];
+		    cp++;
+		  }
 		push_state (jp, jse_parsenumber, newstr, lenstr);
 	      }
 	    break;
@@ -241,6 +252,7 @@ mom_json_consume (struct jsonparser_st *jp, const char *buf, int len)
 		if (MONIMELT_UNLIKELY (!newstr))
 		  MONIMELT_FATAL ("out of space for JSON name of %u", newlen);
 		memset (newstr, 0, newlen);
+		strcpy (newstr, (char *) curptr);
 		GC_FREE (jp->json_ptrarr[jtop - 1]);
 		currank = jp->json_levarr[jtop - 1].je_rank = newlen;
 		curptr = jp->json_ptrarr[jtop - 1] = newstr;
@@ -252,36 +264,103 @@ mom_json_consume (struct jsonparser_st *jp, const char *buf, int len)
 	      {
 		pop_state (jp);
 		set_top_pointer (jp, NULL);
+		GC_FREE (curptr);
 		continue;
 	      }
 	    else if (!strcmp ((char *) curptr, "true"))
 	      {
 		pop_state (jp);
 		set_top_pointer (jp, mom_get_item_bool (true));
+		GC_FREE (curptr);
 		continue;
 	      }
 	    else if (!strcmp ((char *) curptr, "false"))
 	      {
 		pop_state (jp);
 		set_top_pointer (jp, mom_get_item_bool (false));
+		GC_FREE (curptr);
 		continue;
 	      }
-	    else if (!strcmp ((char *) curptr, "NaN"))
+	    else if (!strcmp ((char *) curptr, "nan"))
 	      {
 		pop_state (jp);
 		set_top_pointer (jp, mom_make_double (NAN));
+		GC_FREE (curptr);
 		continue;
 	      }
 	    else
 	      {
 		pop_state (jp);
 		set_top_pointer (jp, mom_item_named ((char *) curptr));
+		GC_FREE (curptr);
 		continue;
 	      }
 	  }
 	case jse_parsenumber:
 	  {
-#warning should accumulate digit or exponent till not a number any more
+	    const char *begnum = cp;
+	    unsigned curnumlen = strlen ((char *) curptr);
+	    while (isdigit (*cp) && cp < endp)
+	      cp++;
+	    bool hasdot = strchr (curptr, '.') != NULL;
+	    bool hasexp = strchr (curptr, 'e') != NULL
+	      || strchr (curptr, 'E') != NULL;
+	    if (!hasdot && *cp == '.' && cp < endp)
+	      {
+		cp++;
+		hasdot = true;
+	      };
+	    if (hasdot)
+	      {
+		while (isdigit (*cp) && cp < endp)
+		  cp++;
+		if (!hasexp)
+		  {
+		    if (cp + 2 < endp && (cp[0] == 'e' || cp[0] == 'E')
+			&& isdigit (cp[1]))
+		      cp += 2;
+		    else if (cp + 3 < endp && (cp[0] == 'e' || cp[0] == 'E')
+			     && (cp[1] == '+' || cp[1] == '-')
+			     && isdigit (cp[2]))
+		      cp += 3;
+		    hasexp = true;
+		  };
+		if (hasexp)
+		  while (isdigit (*cp) && cp < endp)
+		    cp++;
+	      }
+	    if (MONIMELT_UNLIKELY (curnumlen + (cp - begnum) >= currank))
+	      {
+		unsigned newlen =
+		  ((5 * currank / 4 + 5 + (endp - cp)) | 0xf) + 1;
+		char *newstr = GC_MALLOC_ATOMIC (newlen);
+		if (MONIMELT_UNLIKELY (!newstr))
+		  MONIMELT_FATAL ("out of space for JSON number of %u",
+				  newlen);
+		memset (newstr, 0, newlen);
+		strcpy (newstr, (char *) curptr);
+		GC_FREE (jp->json_ptrarr[jtop - 1]);
+		currank = jp->json_levarr[jtop - 1].je_rank = newlen;
+		curptr = jp->json_ptrarr[jtop - 1] = newstr;
+	      };
+	    strncpy ((char *) curptr + curnumlen, begnum, cp - begnum);
+	    if (cp >= endp)
+	      return endp - buf;
+	    if (hasdot)
+	      {
+		double x = strtod ((char *) curptr, NULL);
+		pop_state (jp);
+		set_top_pointer (jp, mom_make_double (x));
+		GC_FREE (curptr);
+	      }
+	    else
+	      {
+		long l = strtol ((char *) curptr, NULL, 0);
+		pop_state (jp);
+		set_top_pointer (jp, mom_make_int (l));
+		GC_FREE (curptr);
+	      }
+	    continue;
 	  }
 	default:
 	  MONIMELT_FATAL ("unexpected JSON state #%u top %u", curstate, jtop);
