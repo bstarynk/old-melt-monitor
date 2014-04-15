@@ -322,6 +322,14 @@ again:
     }
 }
 
+static int
+jsonentry_cmp (const void *l, const void *r)
+{
+  const struct mom_jsonentry_st *le = l;
+  const struct mom_jsonentry_st *re = r;
+  return mom_json_cmp (le->je_name, re->je_name);
+}
+
 momjsonobject_t *
 mom_make_json_object (int firstdir, ...)
 {
@@ -384,9 +392,10 @@ mom_make_json_object (int firstdir, ...)
 	    momval_t namv = va_arg (args, momval_t);
 	    momval_t attv = va_arg (args, momval_t);
 	    dir = va_arg (args, int);
-	    if (attv.ptr
+	    if (namv.ptr
 		&& (*namv.ptype == momty_string
-		    || *namv.ptype == momty_jsonitem))
+		    || (*namv.ptype == momty_jsonitem
+			&& (namv.pjsonitem->ij_namejson))))
 	      {
 		jsob->jobjtab[count].je_name = namv;
 		jsob->jobjtab[count].je_attr = attv;
@@ -410,8 +419,8 @@ mom_make_json_object (int firstdir, ...)
 		    if (namitm->typnum == momty_jsonitem
 			&& ((momit_json_name_t *) namitm)->ij_namejson
 			&&
-			!strcmp ((((momit_json_name_t *) namitm)->
-				  ij_namejson)->cstr, namstr))
+			!strcmp ((((momit_json_name_t *)
+				   namitm)->ij_namejson)->cstr, namstr))
 		      namv = (momval_t) namitm;
 		    else
 		      namv = (momval_t) namvalstr;
@@ -432,8 +441,20 @@ mom_make_json_object (int firstdir, ...)
 	    dir = va_arg (args, int);
 	    if (jentab && nbent > 0)
 	      {
-#warning incomplete MOMJSON_COUNTED_ENTRIES
-		count += nbent;
+		for (unsigned ix = 0; ix < nbent; ix++)
+		  {
+		    momval_t namv = jentab[ix].je_name;
+		    momval_t attv = jentab[ix].je_attr;
+		    if (namv.ptr
+			&& (*namv.ptype == momty_string
+			    || (*namv.ptype == momty_jsonitem
+				&& (namv.pjsonitem->ij_namejson))))
+		      {
+			jsob->jobjtab[count].je_name = namv;
+			jsob->jobjtab[count].je_attr = attv;
+			count++;
+		      }
+		  }
 	      }
 	  }
 	  break;
@@ -442,6 +463,63 @@ mom_make_json_object (int firstdir, ...)
 	}
     }
   va_end (args);
+  // sort the entries and remove the unlikely duplicates
+  qsort (jsob, count, sizeof (struct mom_jsonentry_st), jsonentry_cmp);
+  bool shrink = false;
+  for (unsigned ix = 0; ix + 1 < count; ix++)
+    {
+      if (MONIMELT_UNLIKELY (jsonentry_cmp (jsob->jobjtab + ix,
+					    jsob->jobjtab + ix + 1) == 0))
+	{
+	  shrink = true;
+	  for (unsigned j = ix; j + 1 < count; j++)
+	    jsob->jobjtab[j] = jsob->jobjtab[j + 1];
+	  jsob->jobjtab[count].je_name = MONIMELT_NULLV;
+	  jsob->jobjtab[count].je_attr = MONIMELT_NULLV;
+	  count--;
+	}
+    }
+  // compute the hash
+  momhash_t h1 = 17, h2 = count, h = 0;
+  for (unsigned ix = 0; ix < count; ix++)
+    {
+      h1 =
+	((ix & 0xf) + 1) * h1 +
+	((45077 *
+	  mom_value_hash ((const momval_t) jsob->jobjtab[count].
+			  je_name)) ^ h2);
+      h2 =
+	(75041 * h2) ^ (7589 *
+			mom_value_hash ((const momval_t) jsob->jobjtab[count].
+					je_attr));
+    }
+  h = h1 ^ h2;
+  if (!h)
+    {
+      h = h1;
+      if (!h)
+	h = h2;
+      if (!h)
+	h = (count & 0xfff) + 11;
+    }
+  if (MONIMELT_UNLIKELY (shrink))
+    {
+      struct momjsonobject_st *newjsob
+	= GC_MALLOC (sizeof (struct momjsonobject_st)
+		     + count * sizeof (struct mom_jsonentry_st));
+      if (MONIMELT_UNLIKELY (!newjsob))
+	MONIMELT_FATAL ("failed to reallocate JSON object with %d entries",
+			size);
+      memcpy (newjsob, jsob,
+	      sizeof (struct momjsonobject_st) +
+	      count * sizeof (struct mom_jsonentry_st));
+      GC_FREE (jsob);
+      jsob = newjsob;
+    }
+  jsob->hash = h;
+  jsob->slen = count;
+  jsob->typnum = momty_jsonobject;
+  return jsob;
 }
 
 int
