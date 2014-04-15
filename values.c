@@ -21,6 +21,198 @@
 #include "monimelt.h"
 
 
+momhash_t
+mom_value_hash (const momval_t v)
+{
+  momhash_t h = 0;
+  if (!v.ptr)
+    return 0;
+  unsigned vtype = *v.ptype;
+  switch (vtype)
+    {
+    case momty_int:
+      {
+	intptr_t i = v.pint->intval;
+	h = ((momhash_t) i ^ ((momhash_t) (i >> 27)));
+	if (!h)
+	  {
+	    h = (momhash_t) i;
+	    if (!h)
+	      h = 12753;
+	  }
+	return h;
+      }
+    case momty_float:
+      {
+	double d = v.pfloat->floval;
+	if (isnan (d))
+	  return 3000229;
+	int e = 0;
+	double x = frexp (d, &e);
+	h = ((momhash_t) (x / (M_PI * M_LN2 * DBL_EPSILON))) ^ e;
+	if (!h)
+	  {
+	    h = e;
+	    if (!h)
+	      h = (x > 0.0) ? 1689767 : (x < 0.0) ? 2000281 : 13;
+	  }
+	return h;
+      }
+    case momty_string:
+      return v.pstring->hash;
+    case momty_jsonarray:
+      return v.pjsonarr->hash;
+    case momty_jsonobject:
+      return v.pjsonobj->hash;
+    default:
+      if (vtype >= momty__itemlowtype)
+	return v.panyitem->i_hash;
+#warning missing hash of nodes, sets, ...
+      else
+	MONIMELT_FATAL ("unimplemented hash of val@%p of type #%d", v.ptr,
+			vtype);
+    }
+}
+
+
+int
+mom_value_cmp (const momval_t l, const momval_t r)
+{
+  if (l.ptr == r.ptr)
+    return 0;
+  if (!l.ptr)
+    return -1;
+  if (!r.ptr)
+    return 1;
+  unsigned ltype = *l.ptype;
+  unsigned rtype = *r.ptype;
+  if (ltype < rtype)
+    return -1;
+  if (ltype > rtype)
+    return 1;
+  switch (ltype)
+    {
+    case momty_int:
+      {
+	intptr_t lint = l.pint->intval;
+	intptr_t rint = r.pint->intval;
+	if (lint < rint)
+	  return -1;
+	if (lint > rint)
+	  return 1;
+	return 0;
+      }
+    case momty_float:
+      {
+	double ldbl = l.pfloat->floval;
+	double rdbl = r.pfloat->floval;
+	if (ldbl < rdbl)
+	  return -1;
+	if (ldbl > rdbl)
+	  return 1;
+	if (ldbl == rdbl)
+	  return 0;
+	if (isnan (ldbl))
+	  {
+	    if (isnan (rdbl))
+	      return 0;
+	    else
+	      return -1;
+	  }
+	if (isnan (rdbl))
+	  {
+	    if (isnan (ldbl))
+	      return 0;
+	    else
+	      return 1;
+	  }
+	return 0;
+      }
+    case momty_string:
+      {
+	momusize_t llen = l.pstring->slen;
+	momusize_t rlen = r.pstring->slen;
+	momusize_t minlen = (llen > rlen) ? rlen : llen;
+	return memcmp (l.pstring->cstr, r.pstring->cstr, minlen);
+      }
+    case momty_jsonarray:
+      {
+	momusize_t llen = l.pjsonarr->slen;
+	momusize_t rlen = r.pjsonarr->slen;
+	momusize_t minlen = (llen > rlen) ? rlen : llen;
+	unsigned ix = 0;
+	for (ix = 0; ix < minlen; ix++)
+	  {
+	    int cmp =
+	      mom_value_cmp (l.pjsonarr->jarrtab[ix],
+			     r.pjsonarr->jarrtab[ix]);
+	    if (cmp)
+	      return cmp;
+	  }
+	if (llen < rlen)
+	  return -1;
+	else if (llen > rlen)
+	  return 1;
+	return 0;
+      }
+    case momty_jsonobject:
+      {
+	momusize_t llen = l.pjsonobj->slen;
+	momusize_t rlen = r.pjsonobj->slen;
+	momusize_t minlen = (llen > rlen) ? rlen : llen;
+	unsigned ix = 0;
+	for (ix = 0; ix < minlen; ix++)
+	  {
+	    int cmpat =
+	      mom_value_cmp (l.pjsonobj->jobjtab[ix].je_name,
+			     r.pjsonobj->jobjtab[ix].je_name);
+	    if (cmpat)
+	      return cmpat;
+	    int cmpval =
+	      mom_value_cmp (l.pjsonobj->jobjtab[ix].je_attr,
+			     r.pjsonobj->jobjtab[ix].je_attr);
+	    if (cmpval)
+	      return cmpval;
+	  }
+	if (llen < rlen)
+	  return -1;
+	else if (llen > rlen)
+	  return 1;
+	return 0;
+      }
+      // special case for JSON items: compare their names if different
+    case momty_jsonitem:
+      {
+	int cmp =
+	  mom_value_cmp ((momval_t) (l.pjsonitem->ij_namejson),
+			 (momval_t) (r.pjsonitem->ij_namejson));
+	if (cmp)
+	  return cmp;
+	else
+	  goto compare_item_by_uid;
+      }
+      // special case for boolean items: compare their boolean values if different
+    case momty_boolitem:
+      {
+	bool lb = l.pboolitem->ib_bool;
+	bool rb = r.pboolitem->ib_bool;
+	if (lb < rb)
+	  return -1;
+	else if (lb > rb)
+	  return 1;
+	else
+	  goto compare_item_by_uid;
+      }
+#warning missing compare of nodes, closures, etc...
+    default:
+      if (ltype > momty__itemlowtype)
+	goto compare_item_by_uid;
+      else
+	MONIMELT_FATAL ("unimplemented compare of type #%d", (int) ltype);
+    compare_item_by_uid:
+      return memcmp (l.panyitem->i_uuid, r.panyitem->i_uuid, sizeof (uuid_t));
+    }
+}
 
 momhash_t
 mom_string_hash (const char *str, int len)

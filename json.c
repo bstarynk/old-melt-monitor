@@ -322,6 +322,25 @@ again:
     }
 }
 
+
+int
+mom_json_cmp (momval_t l, momval_t r)
+{
+  if (l.ptr == r.ptr)
+    return 0;
+  if (!l.ptr)
+    return -1;
+  if (!r.ptr)
+    return 1;
+  if (*l.ptype == momty_jsonitem)
+    l = (momval_t) (l.pjsonitem->ij_namejson);
+  if (*r.ptype == momty_jsonitem)
+    r = (momval_t) (r.pjsonitem->ij_namejson);
+  if (l.ptr == r.ptr)
+    return 0;
+  return mom_value_cmp (l, r);
+}
+
 #if 0
 #error useless old code
 enum jsonstate_en

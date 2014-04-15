@@ -34,6 +34,8 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <math.h>
+#include <float.h>
+#include <limits.h>
 #include <ctype.h>
 #include <dlfcn.h>
 #include <gc/gc.h>
@@ -85,6 +87,8 @@ union momvalueptr_un
   const momfloat_t *pfloat;
   const momstring_t *pstring;
   mom_anyitem_t *panyitem;
+  struct momjsonarray_st *pjsonarr;
+  struct momjsonobject_st *pjsonobj;
   struct momjsonitem_st *pjsonitem;
   struct momboolitem_st *pboolitem;
 };
@@ -219,6 +223,9 @@ mom_value_as_int (momval_t val)
 
 const momint_t *mom_make_int (intptr_t i);
 
+int mom_value_cmp (const momval_t l, const momval_t r);
+momhash_t mom_value_hash (const momval_t v);
+
 static inline intptr_t
 mom_int_of_value (momval_t val, intptr_t def)
 {
@@ -339,4 +346,6 @@ mom_anyitem_t *mom_item_named_with_string (const char *name,
 // get the name of some given item, or else NULL
 const momstring_t *mom_name_of_item (const mom_anyitem_t * item);
 
+// compare values for JSON
+int mom_json_cmp (momval_t l, momval_t r);
 #endif /* MONIMELT_INCLUDED_ */
