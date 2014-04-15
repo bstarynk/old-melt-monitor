@@ -114,7 +114,7 @@ find_item_index (const mom_anyitem_t * itm)
   return -1;
 }
 
-const mom_anyitem_t *
+mom_anyitem_t *
 mom_item_named (const char *name)
 {
   const mom_anyitem_t *itm = NULL;
@@ -125,11 +125,11 @@ mom_item_named (const char *name)
   if (ix >= 0)
     itm = glob_dict.name_hashstr[ix].nme_itm;
   pthread_mutex_unlock (&glob_mtx);
-  return itm;
+  return (mom_anyitem_t *) itm;
 }
 
 
-const mom_anyitem_t *
+mom_anyitem_t *
 mom_item_named_with_string (const char *name, const momstring_t ** pstr)
 {
   const mom_anyitem_t *itm = NULL;
@@ -146,7 +146,7 @@ mom_item_named_with_string (const char *name, const momstring_t ** pstr)
 	*pstr = glob_dict.name_hashstr[ix].nme_str;
     }
   pthread_mutex_unlock (&glob_mtx);
-  return itm;
+  return (mom_anyitem_t *) itm;
 }
 
 const momstring_t *

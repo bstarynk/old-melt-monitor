@@ -103,7 +103,7 @@ json_item_or_string (const char *buf)
 {
   if (!buf || !buf[0])
     return MONIMELT_NULLV;
-  momstring_t *str = NULL;
+  const momstring_t *str = NULL;
   mom_anyitem_t *itm = mom_item_named_with_string (buf, &str);
   if (itm)
     {
@@ -135,7 +135,37 @@ again:
     }
   else if (jp->json_c == ',' || jp->json_c == ':' || jp->json_c == '}'
 	   || jp->json_c == ']')
+    // don't consume the terminator! Leave it available to the caller.
     return (momval_t) MONIMELT_EMPTY;
+  // extension, admit comments à la C slash slash or à la C++ slash star
+  else if (jp->json_c == '/')
+    {
+      long off = ftell (jp->json_file);
+      jp->json_c = getc (jp->json_file);
+      if (jp->json_c == '/')
+	{
+	  do
+	    {
+	      jp->json_c = getc (jp->json_file);
+	    }
+	  while (jp->json_c >= 0 && jp->json_c != '\n' && jp->json_c != '\r');
+	  goto again;
+	}
+      else if (jp->json_c == '*')
+	{
+	  jp->json_c = EOF;
+	  int pc = EOF;
+	  do
+	    {
+	      pc = jp->json_c;
+	      jp->json_c = getc (jp->json_file);
+	    }
+	  while (jp->json_c >= 0 && jp->json_c != '/' && pc != '*');
+	  goto again;
+	}
+      else
+	JSON_ERROR (jp, "bad slash at offset %ld", off);
+    }
   else if (isdigit (jp->json_c) || jp->json_c == '+' || jp->json_c == '-')
     {
       char numbuf[64];
@@ -236,7 +266,55 @@ again:
     }
   else if (jp->json_c == '[')
     {
-#warning should parse a JSON array
+      unsigned arrsize = 8;
+      unsigned arrlen = 0;
+      momval_t *arrptr = GC_MALLOC (arrsize * sizeof (momval_t));
+      if (MONIMELT_UNLIKELY (!arrptr))
+	MONIMELT_FATAL ("cannot allocate initial json array of %u", arrsize);
+      memset (arrptr, 0, arrsize * sizeof (momval_t));
+      jp->json_c = getc (jp->json_file);
+      momval_t comp = MONIMELT_NULLV;
+      bool gotcomma = false;
+      do
+	{
+	  comp = parse_json_internal (jp);
+	  if (comp.ptr == MONIMELT_EMPTY)
+	    {
+	      if (jp->json_c == ']')
+		{
+		  jp->json_c = getc (jp->json_file);
+		  break;
+		}
+	      else if (jp->json_c == ',')
+		{
+		  jp->json_c = getc (jp->json_file);
+		  if (gotcomma)
+		    JSON_ERROR (jp,
+				"consecutive commas in JSON array at offset %ld",
+				ftell (jp->json_file));
+		  gotcomma = true;
+		  continue;
+		}
+	      else
+		JSON_ERROR (jp, "invalid char %c in JSON array at offset %ld",
+			    jp->json_c, ftell (jp->json_file));
+	    };
+	  gotcomma = false;
+	  if (MONIMELT_UNLIKELY (arrlen + 1 >= arrsize))
+	    {
+	      unsigned newsize = ((5 * arrsize / 4 + 5) | 0xf) + 1;
+	      momval_t *newarr = GC_MALLOC (arrsize * sizeof (momval_t));
+	      if (MONIMELT_UNLIKELY (!newarr))
+		MONIMELT_FATAL ("cannot grow json array to %u", newsize);
+	      memset (newarr, 0, arrsize * sizeof (momval_t));
+	      memcpy (newarr, arrptr, arrlen * sizeof (momval_t));
+	      GC_FREE (arrptr);
+	      arrptr = newarr;
+	      arrsize = newsize;
+	    }
+	  arrptr[arrlen++] = comp;
+	}
+      while (jp->json_c >= 0);
     }
   else if (jp->json_c == '{')
     {

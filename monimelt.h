@@ -161,7 +161,7 @@ struct momanyitem_st
 struct momjsonitem_st
 {
   struct momanyitem_st ij_item;
-  momstring_t *ij_namejson;
+  const momstring_t *ij_namejson;
 };
 
 struct momboolitem_st
@@ -331,10 +331,10 @@ void mom_replace_named_item (const char *name, mom_anyitem_t * item);
 void mom_replace_name_string (momstring_t * namestr, mom_anyitem_t * item);
 
 // get the item of some given name, or else NULL
-const mom_anyitem_t *mom_item_named (const char *name);
+mom_anyitem_t *mom_item_named (const char *name);
 // also retrieve the string
-const mom_anyitem_t *mom_item_named_with_string (const char *name,
-						 const momstring_t ** pstr);
+mom_anyitem_t *mom_item_named_with_string (const char *name,
+					   const momstring_t ** pstr);
 
 // get the name of some given item, or else NULL
 const momstring_t *mom_name_of_item (const mom_anyitem_t * item);
