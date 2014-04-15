@@ -74,7 +74,7 @@ mom_string_hash (const char *str, int len)
   return h;
 }
 
-momstring_t *
+const momstring_t *
 mom_make_string_len (const char *str, int len)
 {
   if (!str)

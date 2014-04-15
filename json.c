@@ -24,20 +24,22 @@
 struct jsonparser_st
 {
   uint32_t json_magic;		/* always MOMJSON_MAGIC */
-  int json_c;		/* read ahead character */
+  int json_c;			/* read ahead character */
   pthread_mutex_t json_mtx;
-  FILE* json_file;
-  void* json_data;
-  char* json_error;
+  FILE *json_file;
+  void *json_data;
+  char *json_error;
   jmp_buf json_jmpbuf;
 };
 
 
-void mom_initialize_json_parser (struct jsonparser_st *jp, FILE* file, void* data)
+void
+mom_initialize_json_parser (struct jsonparser_st *jp, FILE * file, void *data)
 {
-  if (!file || !jp) return;
-  memset (jp, 0, sizeof(struct jsonparser_st));
-  pthread_mutex_init(&jp->json_mtx, NULL);
+  if (!file || !jp)
+    return;
+  memset (jp, 0, sizeof (struct jsonparser_st));
+  pthread_mutex_init (&jp->json_mtx, NULL);
   jp->json_c = EOF;
   jp->json_file = file;
   jp->json_data = data;
@@ -45,32 +47,7 @@ void mom_initialize_json_parser (struct jsonparser_st *jp, FILE* file, void* dat
   jp->json_error = NULL;
 }
 
-static momval_t parse_json_internal(struct jsonparser_st* jp);
-
-momval_t mom_parse_json(struct jsonparser_st* jp, char**perrmsg)
-{
-  momval_t res = MONIMELT_NULLV;
-  if (perrmsg) *perrmsg = NULL;
-  if (!jp || jp->json_magic != MOMJSON_MAGIC) {
-    if (perrmsg) {
-      *perrmsg = "invalid JSON parser";
-      return MONIMELT_NULLV;
-    }
-  }
-  pthread_mutex_lock (&jp->json_mtx);
-  if (setjmp(jp->json_jmpbuf)) {
-    if (perrmsg) {
-      if (jp->json_error) *perrmsg = jp->json_error;
-      else *perrmsg = "JSON parsing failed";
-    }
-    pthread_mutex_unlock (&jp->json_mtx);
-    return MONIMELT_NULLV;
-  }
-  res = parse_json_internal(jp);
-  pthread_mutex_unlock (&jp->json_mtx);
-  return res;
-}
-
+static momval_t parse_json_internal (struct jsonparser_st *jp);
 
 #define JSON_ERROR_AT(Fil,Lin,Jp,Fmt,...) do {	\
     static char buf##Lin[128];			\
@@ -86,65 +63,185 @@ momval_t mom_parse_json(struct jsonparser_st* jp, char**perrmsg)
 #define JSON_ERROR(Jp,Fmt,...) \
     JSON_ERROR_REALLY_AT(__FILE__,__LINE__,(Jp),Fmt,##__VA_ARGS__)
 
-static momval_t
-parse_json_internal(struct jsonparser_st* jp)
+momval_t
+mom_parse_json (struct jsonparser_st *jp, char **perrmsg)
 {
- again:
-  if (jp->json_c<0)
-    jp->json_c = getc(jp->json_file);
-  if (jp->json_c<0)
-    JSON_ERROR(jp, "end of file at offset %ld", ftell(jp->json_file));
-  if (isspace(jp->json_c)) {
-    jp->json_c = getc(jp->json_file);
-    goto again;
-  }
-  else if (isdigit(jp->json_c) || jp->json_c == '+' || jp->json_c == '-') {
-    static char numbuf[64];
-    long off = ftell(jp->json_file);
-    memset (numbuf, 0, sizeof(numbuf));
-    int ix=0;
-    bool isfloat = false;
-    do {
-      if (ix<sizeof(numbuf)-1) numbuf[ix++] = jp->json_c;
-      jp->json_c = getc(jp->json_file);
-    } while (isdigit(jp->json_c));
-    if (jp->json_c == '.') {
-      isfloat = true;
-      do {
-	if (ix<sizeof(numbuf)-1) numbuf[ix++] = jp->json_c;
-	jp->json_c = getc(jp->json_file);
-      } while (isdigit(jp->json_c));
-      if (jp->json_c == 'E' || jp->json_c == 'e'){
-	if (ix<sizeof(numbuf)-1) numbuf[ix++] = jp->json_c;
-	jp->json_c = getc(jp->json_file);
-      };
-      if (jp->json_c == '+' || jp->json_c == '-'){
-	if (ix<sizeof(numbuf)-1) numbuf[ix++] = jp->json_c;
-	jp->json_c = getc(jp->json_file);
-      };
-      do {
-	if (ix<sizeof(numbuf)-1) numbuf[ix++] = jp->json_c;
-	jp->json_c = getc(jp->json_file);
-      } while (isdigit(jp->json_c));
+  momval_t res = MONIMELT_NULLV;
+  if (perrmsg)
+    *perrmsg = NULL;
+  if (!jp || jp->json_magic != MOMJSON_MAGIC)
+    {
+      if (perrmsg)
+	{
+	  *perrmsg = "invalid JSON parser";
+	  return MONIMELT_NULLV;
+	}
     }
-    numbuf[sizeof(numbuf)-1] = (char)0;
-    char *end=NULL;
-    if (isfloat) {
-      double x = strtod(numbuf, &end);
-      if (end && *end)
-	JSON_ERROR(jp, "bad float number %s at offset %ld", numbuf,
-		   off);
-      return (momval_t)mom_make_double(x);
+  pthread_mutex_lock (&jp->json_mtx);
+  if (setjmp (jp->json_jmpbuf))
+    {
+      if (perrmsg)
+	{
+	  if (jp->json_error)
+	    *perrmsg = jp->json_error;
+	  else
+	    *perrmsg = "JSON parsing failed";
+	}
+      pthread_mutex_unlock (&jp->json_mtx);
+      return MONIMELT_NULLV;
     }
-    else {
-      long l = strtol(numbuf, &end, 10);
-      if (end && *end)
-	JSON_ERROR(jp, "bad number %s at offset %ld", numbuf,
-		   off);
-      return (momval_t)mom_make_int(l);
+  res = parse_json_internal (jp);
+  if (res.ptr == MONIMELT_EMPTY)
+    JSON_ERROR (jp, "unexpected terminator %c", jp->json_c);
+  pthread_mutex_unlock (&jp->json_mtx);
+  return res;
+}
+
+
+static momval_t
+json_item_or_string (const char *buf)
+{
+  if (!buf || !buf[0])
+    return MONIMELT_NULLV;
+  momstring_t *str = NULL;
+  mom_anyitem_t *itm = mom_item_named_with_string (buf, &str);
+  if (itm)
+    {
+      if (itm->typnum == momty_jsonitem
+	  && ((momit_json_name_t *) itm)->ij_namejson
+	  && !strcmp (((momit_json_name_t *) itm)->ij_namejson->cstr, buf))
+	return (momval_t) itm;
+      else
+	return (momval_t) (const momstring_t *) str;
     }
-  }
-    
+  else
+    return (momval_t) mom_make_string (buf);
+}
+
+// may return MONIMELT_EMPTY if found a terminator like comma,
+// right-brace, right-bracket, colon
+static momval_t
+parse_json_internal (struct jsonparser_st *jp)
+{
+again:
+  if (jp->json_c < 0)
+    jp->json_c = getc (jp->json_file);
+  if (jp->json_c < 0)
+    JSON_ERROR (jp, "end of file at offset %ld", ftell (jp->json_file));
+  if (isspace (jp->json_c))
+    {
+      jp->json_c = getc (jp->json_file);
+      goto again;
+    }
+  else if (jp->json_c == ',' || jp->json_c == ':' || jp->json_c == '}'
+	   || jp->json_c == ']')
+    return (momval_t) MONIMELT_EMPTY;
+  else if (isdigit (jp->json_c) || jp->json_c == '+' || jp->json_c == '-')
+    {
+      char numbuf[64];
+      long off = ftell (jp->json_file);
+      memset (numbuf, 0, sizeof (numbuf));
+      int ix = 0;
+      bool isfloat = false;
+      do
+	{
+	  if (ix < sizeof (numbuf) - 1)
+	    numbuf[ix++] = jp->json_c;
+	  jp->json_c = getc (jp->json_file);
+	}
+      while (isdigit (jp->json_c));
+      if (jp->json_c == '.')
+	{
+	  isfloat = true;
+	  do
+	    {
+	      if (ix < sizeof (numbuf) - 1)
+		numbuf[ix++] = jp->json_c;
+	      jp->json_c = getc (jp->json_file);
+	    }
+	  while (isdigit (jp->json_c));
+	  if (jp->json_c == 'E' || jp->json_c == 'e')
+	    {
+	      if (ix < sizeof (numbuf) - 1)
+		numbuf[ix++] = jp->json_c;
+	      jp->json_c = getc (jp->json_file);
+	    };
+	  if (jp->json_c == '+' || jp->json_c == '-')
+	    {
+	      if (ix < sizeof (numbuf) - 1)
+		numbuf[ix++] = jp->json_c;
+	      jp->json_c = getc (jp->json_file);
+	    };
+	  do
+	    {
+	      if (ix < sizeof (numbuf) - 1)
+		numbuf[ix++] = jp->json_c;
+	      jp->json_c = getc (jp->json_file);
+	    }
+	  while (isdigit (jp->json_c));
+	}
+      numbuf[sizeof (numbuf) - 1] = (char) 0;
+      char *end = NULL;
+      if (isfloat)
+	{
+	  double x = strtod (numbuf, &end);
+	  if (end && *end)
+	    JSON_ERROR (jp, "bad float number %s at offset %ld", numbuf, off);
+	  return (momval_t) mom_make_double (x);
+	}
+      else
+	{
+	  long l = strtol (numbuf, &end, 10);
+	  if (end && *end)
+	    JSON_ERROR (jp, "bad number %s at offset %ld", numbuf, off);
+	  return (momval_t) mom_make_int (l);
+	}
+    }
+  // as an extension, C-identifier names can be read as strings or
+  // JSON names
+  else if (isalpha (jp->json_c) || jp->json_c == '_')
+    {
+      char namebuf[64];		// optimize for small stack-allocated names
+      memset (namebuf, 0, sizeof (namebuf));
+      char *namestr = namebuf;
+      unsigned namesize = sizeof (namebuf) - 1;
+      unsigned ix = 0;
+      do
+	{
+	  if (ix < namesize)
+	    namestr[ix++] = jp->json_c;
+	  else
+	    {
+	      unsigned newsize = ((5 * namesize / 4 + 10) | 0xf) + 1;
+	      char *newname = GC_MALLOC_ATOMIC (newsize);
+	      if (!newname)
+		MONIMELT_FATAL ("no space for JSON name of size %u", newsize);
+	      memset (newname, 0, newsize);
+	      strcpy (newname, namestr);
+	      if (namestr != namebuf)
+		GC_FREE (namestr);
+	      namestr = newname;
+	      namesize = newsize - 1;
+	    }
+	}
+      while (isalnum (jp->json_c) || jp->json_c == '_');
+      if (!strcmp (namestr, "null"))
+	return MONIMELT_NULLV;
+      else if (!strcmp (namestr, "true"))
+	return (momval_t) mom_get_item_bool (true);
+      else if (!strcmp (namestr, "false"))
+	return (momval_t) mom_get_item_bool (false);
+      else
+	return json_item_or_string (namestr);
+    }
+  else if (jp->json_c == '[')
+    {
+#warning should parse a JSON array
+    }
+  else if (jp->json_c == '{')
+    {
+#warning should parse a JSON object
+    }
 }
 
 #if 0

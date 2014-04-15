@@ -24,8 +24,8 @@ static pthread_mutex_t glob_mtx = PTHREAD_MUTEX_INITIALIZER;
 
 struct name_entry_st
 {
-  momstring_t *nme_str;
-  mom_anyitem_t *nme_itm;
+  const momstring_t *nme_str;
+  const mom_anyitem_t *nme_itm;
 };
 
 static struct glob_dict_st
@@ -87,7 +87,7 @@ find_name_index (const char *str, momhash_t h)
 
 // internal routine to find the item index by item or -1 if not found
 static inline int
-find_item_index (mom_anyitem_t * itm)
+find_item_index (const mom_anyitem_t * itm)
 {
   momhash_t h = itm->i_hash;
   unsigned size = glob_dict.name_size;
@@ -114,10 +114,10 @@ find_item_index (mom_anyitem_t * itm)
   return -1;
 }
 
-mom_anyitem_t *
+const mom_anyitem_t *
 mom_item_named (const char *name)
 {
-  mom_anyitem_t *itm = NULL;
+  const mom_anyitem_t *itm = NULL;
   if (!name || !name[0])
     return NULL;
   pthread_mutex_lock (&glob_mtx);
@@ -128,10 +128,31 @@ mom_item_named (const char *name)
   return itm;
 }
 
-momstring_t *
-mom_name_of_item (mom_anyitem_t * itm)
+
+const mom_anyitem_t *
+mom_item_named_with_string (const char *name, const momstring_t ** pstr)
 {
-  momstring_t *str = NULL;
+  const mom_anyitem_t *itm = NULL;
+  if (!name || !name[0])
+    return NULL;
+  if (pstr)
+    *pstr = NULL;
+  pthread_mutex_lock (&glob_mtx);
+  int ix = find_name_index (name, 0);
+  if (ix >= 0)
+    {
+      itm = glob_dict.name_hashstr[ix].nme_itm;
+      if (pstr)
+	*pstr = glob_dict.name_hashstr[ix].nme_str;
+    }
+  pthread_mutex_unlock (&glob_mtx);
+  return itm;
+}
+
+const momstring_t *
+mom_name_of_item (const mom_anyitem_t * itm)
+{
+  const momstring_t *str = NULL;
   if (!itm || itm->typnum < momty__itemlowtype)
     return NULL;
   pthread_mutex_lock (&glob_mtx);
@@ -145,7 +166,7 @@ mom_name_of_item (mom_anyitem_t * itm)
 
 // internal routine to add a name entry which is known to be new
 static inline void
-add_new_name_entry (momstring_t * name, mom_anyitem_t * item)
+add_new_name_entry (const momstring_t * name, const mom_anyitem_t * item)
 {
   unsigned size = glob_dict.name_size;
   momhash_t hashname = name->hash;
@@ -278,14 +299,14 @@ mom_register_new_name_item (const char *name, mom_anyitem_t * item)
       unsigned newsize = ((13 * glob_dict.name_count / 8 + 400) | 0xff) + 1;
       resize_dict (newsize);
     }
-  momstring_t *namestr = mom_make_string_len (name, namelen);
+  const momstring_t *namestr = mom_make_string_len (name, namelen);
   add_new_name_entry (namestr, item);
 end:
   pthread_mutex_unlock (&glob_mtx);
 }
 
 static void
-remove_entry (momstring_t * name, mom_anyitem_t * itm)
+remove_entry (const momstring_t * name, const mom_anyitem_t * itm)
 {
   unsigned size = glob_dict.name_size;
   momhash_t hashname = name->hash;
@@ -400,7 +421,7 @@ mom_replace_named_item (const char *name, mom_anyitem_t * item)
   pthread_mutex_lock (&glob_mtx);
   unsigned namelen = strlen (name);
   momhash_t namehash = mom_string_hash (name, namelen);
-  momstring_t *namestr = NULL;
+  const momstring_t *namestr = NULL;
   pthread_mutex_lock (&glob_mtx);
   int namix = find_name_index (name, namehash);
   if (namix >= 0)

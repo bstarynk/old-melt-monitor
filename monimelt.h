@@ -85,6 +85,8 @@ union momvalueptr_un
   const momfloat_t *pfloat;
   const momstring_t *pstring;
   mom_anyitem_t *panyitem;
+  struct momjsonitem_st *pjsonitem;
+  struct momboolitem_st *pboolitem;
 };
 #ifdef __GNUC__
 #define MONIMELT_UNLIKELY(P) __builtin_expect((P),0)
@@ -268,8 +270,8 @@ mom_value_as_string (momval_t val)
   MONIMELT_FATAL_AT_BIS(__FILE__,__LINE__,Fmt,__VA_ARGS__)
 
 momhash_t mom_string_hash (const char *str, int len);
-momstring_t *mom_make_string_len (const char *str, int len);
-static inline momstring_t *
+const momstring_t *mom_make_string_len (const char *str, int len);
+static inline const momstring_t *
 mom_make_string (const char *str)
 {
   return mom_make_string_len (str, -1);
@@ -329,8 +331,12 @@ void mom_replace_named_item (const char *name, mom_anyitem_t * item);
 void mom_replace_name_string (momstring_t * namestr, mom_anyitem_t * item);
 
 // get the item of some given name, or else NULL
-mom_anyitem_t *mom_item_named (const char *name);
+const mom_anyitem_t *mom_item_named (const char *name);
+// also retrieve the string
+const mom_anyitem_t *mom_item_named_with_string (const char *name,
+						 const momstring_t ** pstr);
+
 // get the name of some given item, or else NULL
-momstring_t *mom_name_of_item (mom_anyitem_t * item);
+const momstring_t *mom_name_of_item (const mom_anyitem_t * item);
 
 #endif /* MONIMELT_INCLUDED_ */
