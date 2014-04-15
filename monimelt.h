@@ -29,6 +29,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <setjmp.h>
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
@@ -80,9 +81,9 @@ union momvalueptr_un
 {
   void *ptr;
   momtynum_t *ptype;
-  momint_t *pint;
-  momfloat_t *pfloat;
-  momstring_t *pstring;
+  const momint_t *pint;
+  const momfloat_t *pfloat;
+  const momstring_t *pstring;
   mom_anyitem_t *panyitem;
 };
 #ifdef __GNUC__
@@ -204,7 +205,7 @@ mom_value_json (momval_t val)
 }
 
 //////////////// integer values
-static inline momint_t *
+static inline const momint_t *
 mom_value_as_int (momval_t val)
 {
   if (!val.ptr)
@@ -230,7 +231,7 @@ mom_int_of_value (momval_t val, intptr_t def)
 ////////////// float values
 const momfloat_t *mom_make_double (double x);
 
-static inline momfloat_t *
+static inline const momfloat_t *
 mom_value_as_float (momval_t val)
 {
   if (!val.ptr)
@@ -242,7 +243,7 @@ mom_value_as_float (momval_t val)
 
 
 ///////////// string values
-static inline momstring_t *
+static inline const momstring_t *
 mom_value_as_string (momval_t val)
 {
   if (!val.ptr)

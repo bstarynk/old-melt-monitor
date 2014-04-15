@@ -20,29 +20,135 @@
 
 #include "monimelt.h"
 
-#define MOMJSON_MAGIC 0x124ba95b	/*json magic 306948443 */
-struct jsonstatelevel_st
-{
-  unsigned je_rank;
-  unsigned je_state;
-};
-
-union jsonnum_un
-{
-  intptr_t num;
-  double dbl;
-};
-
+#define MOMJSON_MAGIC 0x48b97a1d	/*json magic 1220114973 */
 struct jsonparser_st
 {
   uint32_t json_magic;		/* always MOMJSON_MAGIC */
-  unsigned json_top;
-  unsigned json_size;
-  void **json_ptrarr;
-  struct jsonstatelevel_st *json_levarr;
-  union jsonnum_un *json_numarr;
+  int json_c;		/* read ahead character */
+  pthread_mutex_t json_mtx;
+  FILE* json_file;
+  void* json_data;
+  char* json_error;
+  jmp_buf json_jmpbuf;
 };
 
+
+void mom_initialize_json_parser (struct jsonparser_st *jp, FILE* file, void* data)
+{
+  if (!file || !jp) return;
+  memset (jp, 0, sizeof(struct jsonparser_st));
+  pthread_mutex_init(&jp->json_mtx, NULL);
+  jp->json_c = EOF;
+  jp->json_file = file;
+  jp->json_data = data;
+  jp->json_magic = MOMJSON_MAGIC;
+  jp->json_error = NULL;
+}
+
+static momval_t parse_json_internal(struct jsonparser_st* jp);
+
+momval_t mom_parse_json(struct jsonparser_st* jp, char**perrmsg)
+{
+  momval_t res = MONIMELT_NULLV;
+  if (perrmsg) *perrmsg = NULL;
+  if (!jp || jp->json_magic != MOMJSON_MAGIC) {
+    if (perrmsg) {
+      *perrmsg = "invalid JSON parser";
+      return MONIMELT_NULLV;
+    }
+  }
+  pthread_mutex_lock (&jp->json_mtx);
+  if (setjmp(jp->json_jmpbuf)) {
+    if (perrmsg) {
+      if (jp->json_error) *perrmsg = jp->json_error;
+      else *perrmsg = "JSON parsing failed";
+    }
+    pthread_mutex_unlock (&jp->json_mtx);
+    return MONIMELT_NULLV;
+  }
+  res = parse_json_internal(jp);
+  pthread_mutex_unlock (&jp->json_mtx);
+  return res;
+}
+
+
+#define JSON_ERROR_AT(Fil,Lin,Jp,Fmt,...) do {	\
+    static char buf##Lin[128];			\
+    snprintf (buf##Lin, sizeof(buf##Lin),	\
+	      "%s:%d: " Fmt,			\
+	      Fil, Lin, ##__VA_ARGS__);		\
+    jp->json_error = GC_STRDUP(buf##Lin);	\
+    longjmp (jp->json_jmpbuf,Lin);		\
+  } while(0)
+
+#define JSON_ERROR_REALLY_AT(Fil,Lin,Jp,Fmt,...) \
+  JSON_ERROR_AT(Fil,Lin,Jp,Fmt,##__VA_ARGS__)
+#define JSON_ERROR(Jp,Fmt,...) \
+    JSON_ERROR_REALLY_AT(__FILE__,__LINE__,(Jp),Fmt,##__VA_ARGS__)
+
+static momval_t
+parse_json_internal(struct jsonparser_st* jp)
+{
+ again:
+  if (jp->json_c<0)
+    jp->json_c = getc(jp->json_file);
+  if (jp->json_c<0)
+    JSON_ERROR(jp, "end of file at offset %ld", ftell(jp->json_file));
+  if (isspace(jp->json_c)) {
+    jp->json_c = getc(jp->json_file);
+    goto again;
+  }
+  else if (isdigit(jp->json_c) || jp->json_c == '+' || jp->json_c == '-') {
+    static char numbuf[64];
+    long off = ftell(jp->json_file);
+    memset (numbuf, 0, sizeof(numbuf));
+    int ix=0;
+    bool isfloat = false;
+    do {
+      if (ix<sizeof(numbuf)-1) numbuf[ix++] = jp->json_c;
+      jp->json_c = getc(jp->json_file);
+    } while (isdigit(jp->json_c));
+    if (jp->json_c == '.') {
+      isfloat = true;
+      do {
+	if (ix<sizeof(numbuf)-1) numbuf[ix++] = jp->json_c;
+	jp->json_c = getc(jp->json_file);
+      } while (isdigit(jp->json_c));
+      if (jp->json_c == 'E' || jp->json_c == 'e'){
+	if (ix<sizeof(numbuf)-1) numbuf[ix++] = jp->json_c;
+	jp->json_c = getc(jp->json_file);
+      };
+      if (jp->json_c == '+' || jp->json_c == '-'){
+	if (ix<sizeof(numbuf)-1) numbuf[ix++] = jp->json_c;
+	jp->json_c = getc(jp->json_file);
+      };
+      do {
+	if (ix<sizeof(numbuf)-1) numbuf[ix++] = jp->json_c;
+	jp->json_c = getc(jp->json_file);
+      } while (isdigit(jp->json_c));
+    }
+    numbuf[sizeof(numbuf)-1] = (char)0;
+    char *end=NULL;
+    if (isfloat) {
+      double x = strtod(numbuf, &end);
+      if (end && *end)
+	JSON_ERROR(jp, "bad float number %s at offset %ld", numbuf,
+		   off);
+      return (momval_t)mom_make_double(x);
+    }
+    else {
+      long l = strtol(numbuf, &end, 10);
+      if (end && *end)
+	JSON_ERROR(jp, "bad number %s at offset %ld", numbuf,
+		   off);
+      return (momval_t)mom_make_int(l);
+    }
+  }
+    
+}
+
+#if 0
+#error useless old code
 enum jsonstate_en
 {
   jse_none,
@@ -587,3 +693,4 @@ mom_json_consume (struct jsonparser_st *jp, const char *buf, int len)
 	}
     }
 }
+#endif
