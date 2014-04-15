@@ -313,11 +313,63 @@ again:
 	      arrsize = newsize;
 	    }
 	  arrptr[arrlen++] = comp;
+	  comp = MONIMELT_NULLV;
 	}
       while (jp->json_c >= 0);
+      struct momjsonarray_st *jarr =
+	GC_MALLOC (sizeof (struct momjsonarray_st) +
+		   arrlen * sizeof (momval_t));
+      if (MONIMELT_UNLIKELY (!jarr))
+	MONIMELT_FATAL ("failed to build JSON array of %d components",
+			(int) arrlen);
+      memset (jarr, 0,
+	      sizeof (struct momjsonarray_st) + arrlen * sizeof (momval_t));
+      momhash_t h = 3 * arrlen + 5;
+      for (unsigned ix = 0; ix < arrlen; ix++)
+	{
+	  jarr->jarrtab[ix] = arrptr[ix];
+	  h = (6053 * mom_value_hash (arrptr[ix])) ^ (7 * ix + h * 9059);
+	}
+      if (!h)
+	{
+	  h = 2 * arrlen + 5;
+	  if (!h)
+	    h = 113;
+	}
+      jarr->hash = h;
+      jarr->slen = arrlen;
+      jarr->typnum = momty_jsonarray;
+      GC_FREE (arrptr);
+      return (momval_t) jarr;
     }
   else if (jp->json_c == '{')
     {
+      unsigned jsize = 4, jcount = 0;
+      long off = ftell (jp->json_file);
+      jp->json_c = getc (jp->json_file);
+      struct mom_jsonentry_st *jent =
+	GC_MALLOC (sizeof (struct mom_jsonentry_st) * jsize);
+      if (MONIMELT_UNLIKELY (!jent))
+	MONIMELT_FATAL ("failed to allocate initial json entry table of %d",
+			(int) jsize);
+      memset (jent, 0, sizeof (struct mom_jsonentry_st) * jsize);
+      do
+	{
+	  momval_t namv = parse_json_internal (jp);
+	  if (namv.ptr == MONIMELT_EMPTY)
+	    {
+	      if (jp->json_c == '}')
+		{
+		  jp->json_c = fgetc (jp->json_file);
+		  break;
+		}
+	      else
+		JSON_ERROR (jp,
+			    "failed to parse attribute in JSON object at offset %ld",
+			    off);
+	    }
+	}
+      while (jp->json_c >= 0);
 #warning should parse a JSON object
     }
 }
@@ -486,12 +538,12 @@ mom_make_json_object (int firstdir, ...)
       h1 =
 	((ix & 0xf) + 1) * h1 +
 	((45077 *
-	  mom_value_hash ((const momval_t) jsob->
-			  jobjtab[count].je_name)) ^ h2);
+	  mom_value_hash ((const momval_t) jsob->jobjtab[count].
+			  je_name)) ^ h2);
       h2 =
 	(75041 * h2) ^ (7589 *
-			mom_value_hash ((const momval_t) jsob->
-					jobjtab[count].je_attr));
+			mom_value_hash ((const momval_t) jsob->jobjtab[count].
+					je_attr));
     }
   h = h1 ^ h2;
   if (!h)
