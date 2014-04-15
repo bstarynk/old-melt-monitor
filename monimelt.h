@@ -360,4 +360,12 @@ const momstring_t *mom_name_of_item (const mom_anyitem_t * item);
 
 // compare values for JSON
 int mom_json_cmp (momval_t l, momval_t r);
+const momval_t mom_json_get_def (const momval_t jsobv, const momval_t namev,
+				 const momval_t def);
+static inline const momval_t
+mom_json_get (const momval_t jsobv, const momval_t namev)
+{
+  return mom_json_get_def (jsobv, namev, MONIMELT_NULLV);
+}
+
 #endif /* MONIMELT_INCLUDED_ */

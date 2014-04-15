@@ -486,12 +486,12 @@ mom_make_json_object (int firstdir, ...)
       h1 =
 	((ix & 0xf) + 1) * h1 +
 	((45077 *
-	  mom_value_hash ((const momval_t) jsob->jobjtab[count].
-			  je_name)) ^ h2);
+	  mom_value_hash ((const momval_t) jsob->
+			  jobjtab[count].je_name)) ^ h2);
       h2 =
 	(75041 * h2) ^ (7589 *
-			mom_value_hash ((const momval_t) jsob->jobjtab[count].
-					je_attr));
+			mom_value_hash ((const momval_t) jsob->
+					jobjtab[count].je_attr));
     }
   h = h1 ^ h2;
   if (!h)
@@ -539,6 +539,40 @@ mom_json_cmp (momval_t l, momval_t r)
     return 0;
   return mom_value_cmp (l, r);
 }
+
+const momval_t
+mom_json_get_def (const momval_t jsobv, const momval_t namev,
+		  const momval_t def)
+{
+  if (!jsobv.ptr || !namev.ptr)
+    return def;
+  if (*jsobv.ptype != momty_jsonobject)
+    return def;
+  const struct momjsonobject_st *job = jsobv.pjsonobj;
+  if (!job->slen)
+    return def;
+  unsigned lo = 0, hi = job->slen, md = 0;
+  while (lo + 3 < hi)
+    {
+      md = (lo + hi) / 2;
+      const momval_t curnamv = job->jobjtab[md].je_name;
+      int cmp = mom_json_cmp (namev, curnamv);
+      if (!cmp)
+	return job->jobjtab[md].je_attr;
+      else if (cmp < 0)
+	hi = md;
+      else
+	lo = md;
+    }
+  for (md = lo; md < hi; md++)
+    {
+      const momval_t curnamv = job->jobjtab[md].je_name;
+      if (mom_json_cmp (namev, curnamv) == 0)
+	return job->jobjtab[md].je_attr;
+    }
+  return def;
+}
+
 
 #if 0
 #error useless old code
