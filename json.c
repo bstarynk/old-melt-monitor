@@ -358,9 +358,10 @@ again:
 	  momval_t namv = parse_json_internal (jp);
 	  if (namv.ptr == MONIMELT_EMPTY)
 	    {
+	      namv = MONIMELT_NULLV;
 	      if (jp->json_c == '}')
 		{
-		  jp->json_c = fgetc (jp->json_file);
+		  jp->json_c = getc (jp->json_file);
 		  break;
 		}
 	      else
@@ -368,10 +369,195 @@ again:
 			    "failed to parse attribute in JSON object at offset %ld",
 			    off);
 	    }
+	  while (isspace (jp->json_c))
+	    jp->json_c = getc (jp->json_file);
+	  if (jp->json_c == ':')
+	    {
+	      jp->json_c = getc (jp->json_file);
+	    }
+	  else
+	    JSON_ERROR (jp,
+			"missing colon in JSON object after name at offset %ld",
+			ftell (jp->json_file));
+	  momval_t valv = parse_json_internal (jp);
+	  if (valv.ptr == MONIMELT_EMPTY)
+	    JSON_ERROR (jp,
+			"failed to parse value in JSON object at offset %ld",
+			ftell (jp->json_file));
+	  while (isspace (jp->json_c))
+	    jp->json_c = getc (jp->json_file);
+	  if (jp->json_c == ',')
+	    {
+	      jp->json_c = getc (jp->json_file);
+	      continue;
+	    }
+	  if (MONIMELT_UNLIKELY (jcount >= jsize))
+	    {
+	      unsigned newjsize = ((5 * jcount / 4 + 5) | 0x7) + 1;
+	      struct mom_jsonentry_st *newjent =
+		GC_MALLOC (sizeof (struct mom_jsonentry_st) * newjsize);
+	      if (MONIMELT_UNLIKELY (!newjent))
+		MONIMELT_FATAL ("failed to grow json entry table of %d",
+				(int) newjsize);
+	      memset (newjent, 0,
+		      sizeof (struct mom_jsonentry_st) * newjsize);
+	      memcpy (newjent, jent,
+		      sizeof (struct mom_jsonentry_st) * jcount);
+	      GC_FREE (jent);
+	      jent = newjent;
+	    }
+	  if (namv.ptr != NULL)
+	    {
+	      jent[jcount].je_name = namv;
+	      jent[jcount].je_attr = valv;
+	      jcount++;
+	    }
+	  namv = MONIMELT_NULLV;
+	  valv = MONIMELT_NULLV;
 	}
       while (jp->json_c >= 0);
-#warning should parse a JSON object
+      return (momval_t) mom_make_json_object (MOMJSON_COUNTED_ENTRIES, jcount,
+					      jent, NULL);
     }
+  else if (jp->json_c == '"')
+    {
+      jp->json_c = getc (jp->json_file);
+      unsigned siz = 24, cnt = 0;
+      char *str = GC_MALLOC_ATOMIC (siz);
+      if (MONIMELT_UNLIKELY (!str))
+	MONIMELT_FATAL ("failed to allocate initial string buffer of %d",
+			(int) siz);
+      memset (str, 0, siz);
+      do
+	{
+	  if (jp->json_c == '"')
+	    break;
+	  if (MONIMELT_UNLIKELY (cnt + 1 >= siz))
+	    {
+	      unsigned newsiz = (((5 * cnt / 4) + 12) | 0xf) + 1;
+	      char *newstr = GC_MALLOC_ATOMIC (newsiz);
+	      if (MONIMELT_UNLIKELY (!str))
+		MONIMELT_FATAL ("failed to grow string buffer of %d",
+				(int) newsiz);
+	      memset (newstr, 0, newsiz);
+	      memcpy (newstr, str, cnt);
+	    }
+	  if (MONIMELT_UNLIKELY (jp->json_c < 0))
+	    JSON_ERROR (jp, "unterminated string at offset %ld",
+			ftell (jp->json_file));
+	  if (jp->json_c == '\\')
+	    {
+	      jp->json_c = getc (jp->json_file);
+#define ADD1CHAR(Ch) do { str[cnt++] = Ch;		\
+	  jp->json_c = getc(jp->json_file); } while(0)
+	      switch (jp->json_c)
+		{
+		case 'b':
+		  ADD1CHAR ('\b');
+		  break;
+		case 'f':
+		  ADD1CHAR ('\f');
+		  break;
+		case 'n':
+		  ADD1CHAR ('\n');
+		  break;
+		case 'r':
+		  ADD1CHAR ('\r');
+		  break;
+		case 't':
+		  ADD1CHAR ('\t');
+		  break;
+		case '/':
+		  ADD1CHAR ('/');
+		  break;
+		case '"':
+		  ADD1CHAR ('"');
+		  break;
+		case '\\':
+		  ADD1CHAR ('\\');
+		  break;
+		case 'u':
+		  {
+		    int h = 0;
+		    if (fscanf (jp->json_file, "%04x", &h) > 0)
+		      {
+			char hexd[8];
+			memset (hexd, 0, sizeof (hexd));
+			uint32_t c = (uint32_t) h;
+			// see http://en.wikipedia.org/wiki/UTF-8
+			if (c < 0x80)
+			  hexd[0] = c;
+			else if (c < 0x800)
+			  {
+			    hexd[0] = (c >> 6) | 0xC0;
+			    hexd[1] = (c & 0x3F) | 0x80;
+			  }
+			else if (c < 0x10000)
+			  {
+			    hexd[0] = (c >> 12) | 0xE0;
+			    hexd[1] = ((c >> 6) & 0x3F) | 0x80;
+			    hexd[2] = (c & 0x3F) | 0x80;
+			  }
+			else if (c < 0x200000)
+			  {
+			    hexd[0] = (c >> 18) | 0xF0;
+			    hexd[1] = ((c >> 12) & 0x3F) | 0x80;
+			    hexd[2] = ((c >> 6) & 0x3F) | 0x80;
+			    hexd[3] = (c & 0x3F) | 0x80;
+			  }
+			else if (c <= 67108863)
+			  {
+			    hexd[0] = (248 + (c / 16777216));
+			    hexd[1] = (128 + ((c / 262144) % 64));
+			    hexd[2] = (128 + ((c / 4096) % 64));
+			    hexd[3] = (128 + ((c / 64) % 64));
+			    hexd[4] = (128 + (c % 64));
+			  }
+			else if (c <= 2147483647)
+			  {
+			    hexd[0] = (252 + (c / 1073741824));
+			    hexd[1] = (128 + ((c / 16777216) % 64));
+			    hexd[2] = (128 + ((c / 262144) % 64));
+			    hexd[3] = (128 + ((c / 4096) % 64));
+			    hexd[4] = (128 + ((c / 64) % 64));
+			    hexd[5] = (128 + (c % 64));
+			  }
+			ADD1CHAR (hexd[0]);
+			if (hexd[1])
+			  {
+			    ADD1CHAR (hexd[1]);
+			    if (hexd[2])
+			      {
+				ADD1CHAR (hexd[2]);
+				if (hexd[3])
+				  {
+				    ADD1CHAR (hexd[3]);
+				    if (hexd[4])
+				      {
+					ADD1CHAR (hexd[4]);
+					if (hexd[5])
+					  ADD1CHAR (hexd[5]);
+				      }
+				  }
+			      }
+			  }
+		      }
+		  }
+		  break;
+		}
+	    }
+	  else
+	    ADD1CHAR (jp->json_c);
+#undef ADD1CHAR
+	  if (jp->json_c < 0)
+	    break;
+	}
+      while (jp->json_c != '"');
+      return (momval_t) mom_make_string_len (str, cnt);
+    }
+  else
+    JSON_ERROR (jp, "unexpected char %c at offset %ld",
+		jp->json_c, ftell (jp->json_file));
 }
 
 static int
@@ -538,12 +724,12 @@ mom_make_json_object (int firstdir, ...)
       h1 =
 	((ix & 0xf) + 1) * h1 +
 	((45077 *
-	  mom_value_hash ((const momval_t) jsob->jobjtab[count].
-			  je_name)) ^ h2);
+	  mom_value_hash ((const momval_t) jsob->
+			  jobjtab[count].je_name)) ^ h2);
       h2 =
 	(75041 * h2) ^ (7589 *
-			mom_value_hash ((const momval_t) jsob->jobjtab[count].
-					je_attr));
+			mom_value_hash ((const momval_t) jsob->
+					jobjtab[count].je_attr));
     }
   h = h1 ^ h2;
   if (!h)
