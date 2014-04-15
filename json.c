@@ -63,6 +63,8 @@ static momval_t parse_json_internal (struct jsonparser_st *jp);
 #define JSON_ERROR(Jp,Fmt,...) \
     JSON_ERROR_REALLY_AT(__FILE__,__LINE__,(Jp),Fmt,##__VA_ARGS__)
 
+static void compute_json_array_hash (momjsonarray_t * jarr);
+
 momval_t
 mom_parse_json (struct jsonparser_st *jp, char **perrmsg)
 {
@@ -324,20 +326,12 @@ again:
 			(int) arrlen);
       memset (jarr, 0,
 	      sizeof (struct momjsonarray_st) + arrlen * sizeof (momval_t));
-      momhash_t h = 3 * arrlen + 5;
       for (unsigned ix = 0; ix < arrlen; ix++)
 	{
 	  jarr->jarrtab[ix] = arrptr[ix];
-	  h = (6053 * mom_value_hash (arrptr[ix])) ^ (7 * ix + h * 9059);
 	}
-      if (!h)
-	{
-	  h = 2 * arrlen + 5;
-	  if (!h)
-	    h = 113;
-	}
-      jarr->hash = h;
       jarr->slen = arrlen;
+      compute_json_array_hash (jarr);
       jarr->typnum = momty_jsonarray;
       GC_FREE (arrptr);
       return (momval_t) jarr;
@@ -633,7 +627,8 @@ mom_make_json_object (int firstdir, ...)
 	    if (namv.ptr
 		&& (*namv.ptype == momty_string
 		    || (*namv.ptype == momty_jsonitem
-			&& (namv.pjsonitem->ij_namejson))))
+			&& (namv.pjsonitem->ij_namejson)))
+		&& mom_is_jsonable (attv))
 	      {
 		jsob->jobjtab[count].je_name = namv;
 		jsob->jobjtab[count].je_attr = attv;
@@ -646,7 +641,7 @@ mom_make_json_object (int firstdir, ...)
 	    const char *namstr = va_arg (args, const char *);
 	    momval_t attv = va_arg (args, momval_t);
 	    dir = va_arg (args, int);
-	    if (namstr && namstr[0])
+	    if (namstr && namstr[0] && mom_is_jsonable (attv))
 	      {
 		momval_t namv = MONIMELT_NULLV;
 		const momstring_t *namvalstr = NULL;
@@ -686,7 +681,8 @@ mom_make_json_object (int firstdir, ...)
 		    if (namv.ptr
 			&& (*namv.ptype == momty_string
 			    || (*namv.ptype == momty_jsonitem
-				&& (namv.pjsonitem->ij_namejson))))
+				&& (namv.pjsonitem->ij_namejson)))
+			&& mom_is_jsonable (attv))
 		      {
 			jsob->jobjtab[count].je_name = namv;
 			jsob->jobjtab[count].je_attr = attv;
@@ -760,6 +756,103 @@ mom_make_json_object (int firstdir, ...)
   return jsob;
 }
 
+static void
+compute_json_array_hash (momjsonarray_t * jarr)
+{
+  if (!jarr || jarr->hash != 0)
+    return;
+  if (jarr->typnum && jarr->typnum != momty_jsonarray)
+    return;
+  momhash_t h = jarr->slen + 1;
+  for (unsigned ix = 0; ix < jarr->slen; ix++)
+    h = (15061 * h) ^ (1511 * mom_value_hash (jarr->jarrtab[ix]) + ix * 17);
+  if (!h)
+    h = (jarr->slen & 0xffff) + 2531;
+  jarr->hash = h;
+  jarr->typnum = momty_jsonarray;
+}
+
+const momjsonarray_t *
+mon_make_json_array (unsigned nbelem, ...)
+{
+  momjsonarray_t *jarr =
+    GC_MALLOC (sizeof (momjsonarray_t) + nbelem * sizeof (momval_t));
+  if (MONIMELT_UNLIKELY (!jarr))
+    MONIMELT_FATAL ("failed to make JSON array of %u elements", nbelem);
+  memset (jarr, 0, sizeof (momjsonarray_t) + nbelem * sizeof (momval_t));
+  va_list args;
+  va_start (args, nbelem);
+  for (unsigned ix = 0; ix < nbelem; ix++)
+    {
+      momval_t comp = va_arg (args, momval_t);
+      if (!mom_is_jsonable (comp))
+	continue;
+      jarr->jarrtab[ix] = comp;
+    }
+  va_end (args);
+  compute_json_array_hash (jarr);
+  return jarr;
+}
+
+
+const momjsonarray_t *
+mom_make_json_array_count (unsigned nbelem, const momval_t * arr)
+{
+  if (!arr)
+    return NULL;
+  momjsonarray_t *jarr =
+    GC_MALLOC (sizeof (momjsonarray_t) + nbelem * sizeof (momval_t));
+  if (MONIMELT_UNLIKELY (!jarr))
+    MONIMELT_FATAL ("failed to make JSON array of %u elements", nbelem);
+  memset (jarr, 0, sizeof (momjsonarray_t) + nbelem * sizeof (momval_t));
+  for (unsigned ix = 0; ix < nbelem; ix++)
+    {
+      momval_t comp = arr[ix];
+      if (!mom_is_jsonable (comp))
+	continue;
+      jarr->jarrtab[ix] = comp;
+    }
+  compute_json_array_hash (jarr);
+  return jarr;
+}
+
+const momjsonarray_t *
+mom_make_json_array_til_nil (momval_t firstv, ...)
+{
+  unsigned nbelem = 0;
+  va_list args;
+  va_start (args, firstv);
+  if (firstv.ptr)
+    {
+      momval_t valv = MONIMELT_NULLV;
+      do
+	{
+	  nbelem++;
+	  valv = va_arg (args, momval_t);
+	}
+      while (valv.ptr != NULL);
+    }
+  va_end (args);
+  momjsonarray_t *jarr =
+    GC_MALLOC (sizeof (momjsonarray_t) + nbelem * sizeof (momval_t));
+  if (MONIMELT_UNLIKELY (!jarr))
+    MONIMELT_FATAL ("failed to make JSON array of %u elements", nbelem);
+  memset (jarr, 0, sizeof (momjsonarray_t) + nbelem * sizeof (momval_t));
+  if (nbelem > 0)
+    jarr->jarrtab[0] = firstv;
+  va_start (args, firstv);
+  for (unsigned ix = 1; ix < nbelem; ix++)
+    {
+      momval_t valv = va_arg (args, momval_t);
+      if (!mom_is_jsonable (valv))
+	continue;
+      jarr->jarrtab[ix] = valv;
+    }
+  va_end (args);
+  compute_json_array_hash (jarr);
+  return jarr;
+}
+
 int
 mom_json_cmp (momval_t l, momval_t r)
 {
@@ -779,8 +872,8 @@ mom_json_cmp (momval_t l, momval_t r)
 }
 
 const momval_t
-mom_json_get_def (const momval_t jsobv, const momval_t namev,
-		  const momval_t def)
+mom_jsonob_get_def (const momval_t jsobv, const momval_t namev,
+		    const momval_t def)
 {
   if (!jsobv.ptr || !namev.ptr)
     return def;
