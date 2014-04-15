@@ -27,6 +27,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <setjmp.h>
@@ -76,6 +77,7 @@ typedef union momvalueptr_un momval_t;
 typedef struct momint_st momint_t;
 typedef struct momfloat_st momfloat_t;
 typedef struct momstring_st momstring_t;
+typedef struct momjsonobject_st momjsonobject_t;
 typedef struct momanyitem_st mom_anyitem_t;
 typedef struct momjsonitem_st momit_json_name_t;
 typedef struct momboolitem_st momit_bool_t;
@@ -295,6 +297,16 @@ momit_json_name_t *mom_make_item_json_name_of_uuid (uuid_t, const char *name);
 momit_json_name_t *mom_make_item_json_name (const char *name);
 #define mom_create__json_name(Name,Uid) \
   mom_make_item_json_name_of_uuid(Uid,#Name)
+
+
+momjsonobject_t *mom_make_json_object (int, ...) __attribute__ ((sentinel));
+enum momjsondirective_en
+{
+  MOMJSON_END,
+  MOMJSON_ENTRY,		/* momval_t nameval, momval_t attrval */
+  MOMJSON_STRING,		/* const char*namestr, momval_t attval */
+  MOMJSON_COUNTED_ENTRIES,	/* unsigned count, struct mom_jsonentry_st* */
+};
 
 momit_bool_t *mom_create_named_bool (uuid_t uid, const char *name);
 #define mom_create__bool(Name,Uid) \

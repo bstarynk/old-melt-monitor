@@ -322,6 +322,127 @@ again:
     }
 }
 
+momjsonobject_t *
+mom_make_json_object (int firstdir, ...)
+{
+  va_list args;
+  int dir = 0;
+  unsigned count = 0;
+  //////
+  // first argument scan, to count the number of entries
+  dir = firstdir;
+  va_start (args, firstdir);
+  while (dir != MOMJSON_END)
+    {
+      switch (dir)
+	{
+	case MOMJSON_ENTRY:
+	  (void) va_arg (args, momval_t);
+	  (void) va_arg (args, momval_t);
+	  dir = va_arg (args, int);
+	  count++;
+	  break;
+	case MOMJSON_STRING:
+	  (void) va_arg (args, const char *);
+	  (void) va_arg (args, momval_t);
+	  dir = va_arg (args, int);
+	  count++;
+	  break;
+	case MOMJSON_COUNTED_ENTRIES:
+	  {
+	    unsigned nbent = va_arg (args, unsigned);
+	    (void) va_arg (args, struct mom_jsonentry_st *);
+	    dir = va_arg (args, int);
+	    count += nbent;
+	  }
+	  break;
+	default:
+	  MONIMELT_FATAL ("unexpected JSON directive %d", dir);
+	}
+    }
+  va_end (args);
+  unsigned size = count + 1;
+  struct momjsonobject_st *jsob
+    = GC_MALLOC (sizeof (struct momjsonobject_st)
+		 + size * sizeof (struct mom_jsonentry_st));
+  if (MONIMELT_UNLIKELY (!jsob))
+    MONIMELT_FATAL ("failed to allocate JSON object with %d entries", size);
+  memset (jsob, 0, sizeof (struct momjsonobject_st)
+	  + size * sizeof (struct mom_jsonentry_st));
+  /////
+  // second argument scan, to fill the entries
+  count = 0;
+  dir = firstdir;
+  dir = firstdir;
+  va_start (args, firstdir);
+  while (dir != MOMJSON_END)
+    {
+      switch (dir)
+	{
+	case MOMJSON_ENTRY:
+	  {
+	    momval_t namv = va_arg (args, momval_t);
+	    momval_t attv = va_arg (args, momval_t);
+	    dir = va_arg (args, int);
+	    if (attv.ptr
+		&& (*namv.ptype == momty_string
+		    || *namv.ptype == momty_jsonitem))
+	      {
+		jsob->jobjtab[count].je_name = namv;
+		jsob->jobjtab[count].je_attr = attv;
+		count++;
+	      }
+	  }
+	  break;
+	case MOMJSON_STRING:
+	  {
+	    const char *namstr = va_arg (args, const char *);
+	    momval_t attv = va_arg (args, momval_t);
+	    dir = va_arg (args, int);
+	    if (namstr && namstr[0])
+	      {
+		momval_t namv = MONIMELT_NULLV;
+		const momstring_t *namvalstr = NULL;
+		mom_anyitem_t *namitm =
+		  mom_item_named_with_string (namstr, &namvalstr);
+		if (namitm)
+		  {
+		    if (namitm->typnum == momty_jsonitem
+			&& ((momit_json_name_t *) namitm)->ij_namejson
+			&&
+			!strcmp ((((momit_json_name_t *) namitm)->
+				  ij_namejson)->cstr, namstr))
+		      namv = (momval_t) namitm;
+		    else
+		      namv = (momval_t) namvalstr;
+		  };
+		if (!namv.ptr)
+		  namv = (momval_t) mom_make_string (namstr);
+		jsob->jobjtab[count].je_name = namv;
+		jsob->jobjtab[count].je_attr = attv;
+		count++;
+	      }
+	  }
+	  break;
+	case MOMJSON_COUNTED_ENTRIES:
+	  {
+	    unsigned nbent = va_arg (args, unsigned);
+	    struct mom_jsonentry_st *jentab =
+	      va_arg (args, struct mom_jsonentry_st *);
+	    dir = va_arg (args, int);
+	    if (jentab && nbent > 0)
+	      {
+#warning incomplete MOMJSON_COUNTED_ENTRIES
+		count += nbent;
+	      }
+	  }
+	  break;
+	default:
+	  MONIMELT_FATAL ("unexpected JSON directive %d", dir);
+	}
+    }
+  va_end (args);
+}
 
 int
 mom_json_cmp (momval_t l, momval_t r)

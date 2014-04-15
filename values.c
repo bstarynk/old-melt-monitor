@@ -143,9 +143,8 @@ mom_value_cmp (const momval_t l, const momval_t r)
 	unsigned ix = 0;
 	for (ix = 0; ix < minlen; ix++)
 	  {
-	    int cmp =
-	      mom_value_cmp (l.pjsonarr->jarrtab[ix],
-			     r.pjsonarr->jarrtab[ix]);
+	    int cmp = mom_value_cmp (l.pjsonarr->jarrtab[ix],
+				     r.pjsonarr->jarrtab[ix]);
 	    if (cmp)
 	      return cmp;
 	  }
@@ -163,14 +162,12 @@ mom_value_cmp (const momval_t l, const momval_t r)
 	unsigned ix = 0;
 	for (ix = 0; ix < minlen; ix++)
 	  {
-	    int cmpat =
-	      mom_value_cmp (l.pjsonobj->jobjtab[ix].je_name,
-			     r.pjsonobj->jobjtab[ix].je_name);
+	    int cmpat = mom_value_cmp (l.pjsonobj->jobjtab[ix].je_name,
+				       r.pjsonobj->jobjtab[ix].je_name);
 	    if (cmpat)
 	      return cmpat;
-	    int cmpval =
-	      mom_value_cmp (l.pjsonobj->jobjtab[ix].je_attr,
-			     r.pjsonobj->jobjtab[ix].je_attr);
+	    int cmpval = mom_value_cmp (l.pjsonobj->jobjtab[ix].je_attr,
+					r.pjsonobj->jobjtab[ix].je_attr);
 	    if (cmpval)
 	      return cmpval;
 	  }
@@ -183,9 +180,8 @@ mom_value_cmp (const momval_t l, const momval_t r)
       // special case for JSON items: compare their names if different
     case momty_jsonitem:
       {
-	int cmp =
-	  mom_value_cmp ((momval_t) (l.pjsonitem->ij_namejson),
-			 (momval_t) (r.pjsonitem->ij_namejson));
+	int cmp = mom_value_cmp ((momval_t) (l.pjsonitem->ij_namejson),
+				 (momval_t) (r.pjsonitem->ij_namejson));
 	if (cmp)
 	  return cmp;
 	else
