@@ -217,7 +217,7 @@ additem:
   // this should never happen
   MONIMELT_FATAL ("corrupted dictionnary for items of size %d", (int) size);
 end:
-  glob_dict.name_size = size + 1;
+  glob_dict.name_count++;
 }
 
 static void

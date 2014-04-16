@@ -68,6 +68,7 @@ usage (const char *argv0)
   printf ("\t -h | --help " " \t# Give this help.\n");
   printf ("\t -V | --version " " \t# Give version information.\n");
   printf ("\t -d | --daemon " " \t# Daemonize.\n");
+  printf ("\t -l | --syslog " " \t# Log to syslog.\n");
   printf ("\t -n | --nice <nice-level> " " \t# Set process nice level.\n");
   printf ("\t -M | --module <module-name> <module-arg> "
 	  " \t# load a plugin.\n");
