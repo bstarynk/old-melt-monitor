@@ -69,8 +69,8 @@ void read_header(const char*argv0)
     int lineno=0;
     for (std::string line; std::getline(hf,line);) {
         lineno++;
-	if (line.empty())
-	  continue;
+        if (line.empty())
+            continue;
         char curname[80];
         char curtype[80];
         char curuuid[40];
@@ -151,8 +151,8 @@ void add_dbase(const char*argv0)
     };
     // insert the name
     snprintf(sqlbuf, sizeof(sqlbuf),
-             "INSERT INTO t_name(name,nuid) VALUES"
-             "('%s','%s')", itemname.c_str(), itemstruuid);
+             "INSERT INTO t_name(name,nuid,spacenam) VALUES"
+             "('%s','%s','.')", itemname.c_str(), itemstruuid);
     if (verbose) printf ("%s: sql: %s\n", argv0, sqlbuf);
     if (sqlite3_exec(db, sqlbuf, nullptr, nullptr, &errstr)) {
         fprintf(stderr, "failed item insertion sql: %s\n %s (%s)\n",

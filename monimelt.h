@@ -66,7 +66,7 @@ enum momvaltype_en
   momty__itemlowtype,
   momty_jsonitem,
   momty_boolitem,
-  momty__last
+  momty__last = 1000
 };
 
 
@@ -117,6 +117,7 @@ struct momitemtypedescr_st
   mom_item_get_build_sig_t *ityp_getbuild;
   mom_item_get_fill_sig_t *ityp_getfill;
 };
+struct momitemtypedescr_st *mom_typedescr_array[momty__last];
 
 #ifdef __GNUC__
 #define MONIMELT_UNLIKELY(P) __builtin_expect((P),0)

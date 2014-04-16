@@ -3,6 +3,8 @@
 *.bin
 *.fcgi
 *~
+*orig
+*%
 *.dbsqlite
 monimelt
 make-named
