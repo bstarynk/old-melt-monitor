@@ -42,11 +42,9 @@
 #include <gc/gc.h>
 #include <sqlite3.h>
 #include <uuid/uuid.h>
+#include <glib.h>
 
 
-/// downloaded from http://download.gnu.org.ua/pub/releases/microutf8/
-// see http://puszcza.gnu.org.ua/software/microutf8/
-#include "microutf8.h"
 
 #define MONIMELT_EMPTY ((void*)(-1L))
 enum momvaltype_en
@@ -399,4 +397,57 @@ const momjsonarray_t *mom_make_json_array_count (unsigned count,
 const momjsonarray_t *mom_make_json_array_til_nil (momval_t, ...)
   __attribute__ ((sentinel));
 
+
+///// JSON parsing:
+struct jsonparser_st 
+{
+  uint32_t jsonp_magic;		/* always MOMJSONP_MAGIC */
+  int jsonp_c;			/* read ahead character */
+  pthread_mutex_t jsonp_mtx;
+  FILE *jsonp_file;
+  void *jsonp_data;
+  char *jsonp_error;
+  jmp_buf jsonp_jmpbuf;
+};
+
+// initialize a JSON parser
+void mom_initialize_json_parser (struct jsonparser_st *jp, FILE * file, void *data);
+// get its data
+void*mom_json_parser_data(const struct jsonparser_st*jp);
+// end the parsing without closing the file
+void mom_end_json_parser (struct jsonparser_st*jp);
+// end the parsing and close the file
+void mom_close_json_parser (struct jsonparser_st*jp);
+// parse a JSON value, or else set the error message to *perrmsg
+momval_t mom_parse_json (struct jsonparser_st *jp, char **perrmsg);
+
+
+///// JSON output
+struct jsonoutput_st
+{
+  uint32_t jsono_magic;		/* always MOMJSONO_MAGIC */
+  uint32_t jsono_flags;
+  pthread_mutex_t jsono_mtx;
+  FILE *jsono_file;
+  void *jsono_data;
+};
+
+enum jsonoutflags_en {
+  jsof_none = 0,
+  jsof_indent = 1<<0,		/* indent the output */
+  jsof_flush = 1<<1,		/* flush the output at end */
+  jsof_cname = 1<<2,		/* output C identifiers at names in JSON objects */
+};
+
+// initialize the output
+void mom_json_output_initialize (struct jsonoutput_st*jo, FILE*f, void*data, unsigned flags);
+
+// retrieve the client data
+void* mom_json_output_data (const struct jsonoutput_st*jo);
+
+// end the output without closing the file
+void mom_json_output_end (struct jsonoutput_st*jo);
+
+// end the output and close the file
+void mom_json_output_close (struct jsonoutput_st*jo);
 #endif /* MONIMELT_INCLUDED_ */
