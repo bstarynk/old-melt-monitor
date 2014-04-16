@@ -34,6 +34,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <syslog.h>
 #include <math.h>
 #include <float.h>
 #include <limits.h>
@@ -266,21 +267,12 @@ mom_value_as_string (momval_t val)
 }
 
 
+void
+mom_fatal_at (const char *fil, int lin, const char *fmt, ...)
+__attribute__ ((format (printf, 3, 4), noreturn));
+
 #define MONIMELT_FATAL_AT(Fil,Lin,Fmt,...) do {         \
-  char thname_##Lin[24];                                \
-  int errno_##Lin = errno;				\
-  memset (thname_##Lin, 0, sizeof(thname_##Lin));       \
-  pthread_getname_np(pthread_self(),thname_##Lin,       \
-                     sizeof(thname_##Lin)-1);           \
-  if (errno_##Lin)                                      \
-    fprintf(stderr, "%s:%d <%s> " Fmt "; %s\n",         \
-            Fil, Lin,                                   \
-            thname_##Lin, __VA_ARGS__,                  \
-            strerror(errno_##Lin));                     \
- else                                                   \
-  fprintf(stderr, "%s:%d <%s> " Fmt "\n", Fil, Lin,     \
-          thname_##Lin, __VA_ARGS__);                   \
-  abort(); } while(0)
+  mom_fatal_at(Fil,Lin,Fmt,__VA_ARGS__);} while(0)
 #define MONIMELT_FATAL_AT_BIS(Fil,Lin,Fmt,...) \
   MONIMELT_FATAL_AT(Fil,Lin,Fmt,__VA_ARGS__)
 #define MONIMELT_FATAL(Fmt,...) \

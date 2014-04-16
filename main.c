@@ -23,7 +23,10 @@
 static int nicelevel = 0;
 static const char *json_file;
 static const char *json_string;
-bool json_indented;
+static bool json_indented;
+static bool daemonize_me;
+static bool want_syslog;
+static bool using_syslog;
 
 /* Option specification for getopt_long.  */
 enum extraopt_en
@@ -39,6 +42,7 @@ static const struct option mom_long_options[] = {
   {"version", no_argument, NULL, 'V'},
   {"nice", required_argument, NULL, 'n'},
   {"daemon", no_argument, NULL, 'd'},
+  {"syslog", no_argument, NULL, 'l'},
   // long-only options
   {"json-file", required_argument, NULL, xtraopt_jsonfile},
   {"json-string", required_argument, NULL, xtraopt_jsonstring},
@@ -71,7 +75,7 @@ static void
 parse_program_arguments (int argc, char **argv)
 {
   int opt = -1;
-  while ((opt = getopt_long (argc, argv, "hVdn:",
+  while ((opt = getopt_long (argc, argv, "hVdln:",
 			     mom_long_options, NULL)) >= 0)
     {
       switch (opt)
@@ -82,6 +86,11 @@ parse_program_arguments (int argc, char **argv)
 	  return;
 	case 'V':
 	  print_version (argv[0]);
+	  break;
+	case 'l':
+	  want_syslog = true;
+	case 'd':
+	  daemonize_me = true;
 	  break;
 	case xtraopt_jsonfile:
 	  json_file = optarg;
@@ -158,6 +167,65 @@ do_json_string_test (void)
   mom_json_output_end (&jo);
 }
 
+
+void
+mom_fatal_at (const char *fil, int lin, const char *fmt, ...)
+{
+  int len = 0;
+  char thrname[24];
+  char buf[128];
+  char timbuf[64];
+  char *bigbuf = NULL;
+  struct tm tm = { };
+  int err = errno;
+  time_t now = 0;
+  memset (buf, 0, sizeof (buf));
+  memset (thrname, 0, sizeof (thrname));
+  memset (timbuf, 0, sizeof (timbuf));
+  time (&now);
+  strftime (timbuf, sizeof (timbuf), "%Y-%b-%d %T %Z",
+	    localtime_r (&now, &tm));
+  pthread_getname_np (pthread_self (), thrname, sizeof (thrname) - 1);
+  va_list args;
+  va_start (args, fmt);
+  len = vsnprintf (buf, sizeof (buf), fmt, args);
+  va_end (args);
+  if (MONIMELT_UNLIKELY (len >= sizeof (buf) - 1))
+    {
+      bigbuf = malloc (len + 10);
+      if (bigbuf)
+	{
+	  memset (bigbuf, 0, len + 10);
+	  va_start (args, fmt);
+	  (void) vsnprintf (bigbuf, len + 1, fmt, args);
+	  va_end (args);
+	}
+    }
+  if (using_syslog)
+    {
+      if (err)
+	syslog (LOG_ALERT, "MONIMELT FATAL @%s:%d <%s> %s %s (%s)",
+		fil, lin, thrname, timbuf, bigbuf ? bigbuf : buf,
+		strerror (err));
+      else
+	syslog (LOG_ALERT, "MONIMELT FATAL @%s:%d <%s> %s %s",
+		fil, lin, thrname, timbuf, bigbuf ? bigbuf : buf);
+    }
+  else
+    {
+      fputc ('\n', stderr);
+      if (err)
+	fprintf (stderr, "MONIMELT FATAL @%s:%d <%s> %s %s (%s)\n",
+		 fil, lin, thrname, timbuf, bigbuf ? bigbuf : buf,
+		 strerror (err));
+      else
+	fprintf (stderr, "MONIMELT FATAL @%s:%d <%s> %s %s\n",
+		 fil, lin, thrname, timbuf, bigbuf ? bigbuf : buf);
+      fflush (stderr);
+    }
+  abort ();
+}
+
 int
 main (int argc, char **argv)
 {
@@ -165,14 +233,35 @@ main (int argc, char **argv)
   pthread_setname_np (pthread_self (), "monimelt-main");
   mom_initialize ();
   parse_program_arguments (argc, argv);
+  if (json_file)
+    do_json_file_test ();
+  if (json_string)
+    do_json_string_test ();
   if (nicelevel != 0)
     {
       if (MONIMELT_UNLIKELY (nice (nicelevel) == -1 && errno))
 	MONIMELT_FATAL ("failed to nice at level %d", nicelevel);
     }
-  if (json_file)
-    do_json_file_test ();
-  if (json_string)
-    do_json_string_test ();
+  if (daemonize_me)
+    {
+      if (MONIMELT_UNLIKELY (daemon ( /*nochdir */ 1, /*noclose */ 0)))
+	MONIMELT_FATAL ("failed to daemonize from pid #%d", (int) getpid ());
+      want_syslog = true;
+    }
+  if (want_syslog)
+    {
+      char timbuf[64];
+      struct tm tm = { };
+      time_t now = 0;
+      memset (timbuf, 0, sizeof (timbuf));
+      time (&now);
+      strftime (timbuf, sizeof (timbuf), "%Y-%b-%d %T %Z",
+		localtime_r (&now, &tm));
+      openlog ("monimelt",
+	       LOG_PID | LOG_CONS | (daemonize_me ? 0 : LOG_PERROR),
+	       LOG_LOCAL2);
+      syslog (LOG_INFO, "monimelt starting at %s", timbuf);
+      using_syslog = true;
+    }
   return 0;
 }
