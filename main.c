@@ -130,6 +130,7 @@ do_json_file_test (void)
      (json_indented ? jsof_indent : 0) | jsof_flush | jsof_cname);
   printf ("parsed JSON from file %s\n", json_file);
   mom_output_json (&jo, vp);
+  putchar ('\n');
   mom_json_output_end (&jo);
 }
 
@@ -153,6 +154,7 @@ do_json_string_test (void)
      (json_indented ? jsof_indent : 0) | jsof_flush | jsof_cname);
   printf ("parsed JSON from string %s\n", json_string);
   mom_output_json (&jo, vp);
+  putchar ('\n');
   mom_json_output_end (&jo);
 }
 

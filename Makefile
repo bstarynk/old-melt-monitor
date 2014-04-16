@@ -25,7 +25,7 @@ CXX=g++
 CXXFLAGS= -std=c++11 -Wall -pthread  $(PREPROFLAGS) $(OPTIMFLAGS)
 INDENT= indent -gnu
 PREPROFLAGS= $(shell $(PKGCONFIG) --cflags $(PACKAGES))
-OPTIMFLAGS= -O -g
+OPTIMFLAGS= -Og -g
 LIBES= -luuid -lgc $(shell $(PKGCONFIG) --libs $(PACKAGES)) -lpthread -lm -ldl
 SOURCES= $(sort $(wildcard [a-z][a-z]*.c))
 OBJECTS= $(patsubst %.c,%.o,$(SOURCES))

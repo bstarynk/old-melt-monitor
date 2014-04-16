@@ -232,13 +232,12 @@ again:
 		numbuf[ix++] = jp->jsonp_c;
 	      jp->jsonp_c = getc (jp->jsonp_file);
 	    };
-	  do
+	  while (isdigit (jp->jsonp_c))
 	    {
 	      if (ix < sizeof (numbuf) - 1)
 		numbuf[ix++] = jp->jsonp_c;
 	      jp->jsonp_c = getc (jp->jsonp_file);
-	    }
-	  while (isdigit (jp->jsonp_c));
+	    };
 	}
       numbuf[sizeof (numbuf) - 1] = (char) 0;
       char *end = NULL;
@@ -246,15 +245,18 @@ again:
 	{
 	  double x = strtod (numbuf, &end);
 	  if (end && *end)
-	    JSONPARSE_ERROR (jp, "bad float number %s at offset %ld", numbuf,
-			     off);
+	    JSONPARSE_ERROR (jp,
+			     "bad float number '%s' at offset %ld, followed by %s",
+			     numbuf, off, end);
 	  return (momval_t) mom_make_double (x);
 	}
       else
 	{
 	  long l = strtol (numbuf, &end, 10);
 	  if (end && *end)
-	    JSONPARSE_ERROR (jp, "bad number %s at offset %ld", numbuf, off);
+	    JSONPARSE_ERROR (jp,
+			     "bad number '%s' at offset %ld, followed by %s",
+			     numbuf, off, end);
 	  return (momval_t) mom_make_int (l);
 	}
     }
@@ -284,6 +286,7 @@ again:
 	      namestr = newname;
 	      namesize = newsize - 1;
 	    }
+	  jp->jsonp_c = getc (jp->jsonp_file);
 	}
       while (isalnum (jp->jsonp_c) || jp->jsonp_c == '_');
       if (!strcmp (namestr, "null"))
@@ -540,6 +543,7 @@ again:
 	    break;
 	}
       while (jp->jsonp_c != '"');
+      jp->jsonp_c = getc (jp->jsonp_file);
       return (momval_t) mom_make_string_len (str, cnt);
     }
   else
