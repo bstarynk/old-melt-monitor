@@ -39,6 +39,8 @@
 #include <limits.h>
 #include <ctype.h>
 #include <dlfcn.h>
+#include <getopt.h>
+#include <errno.h>
 #include <gc/gc.h>
 #include <sqlite3.h>
 #include <uuid/uuid.h>
