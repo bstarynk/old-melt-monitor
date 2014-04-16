@@ -43,6 +43,7 @@ static const struct option mom_long_options[] = {
   {"help", no_argument, NULL, 'h'},
   {"version", no_argument, NULL, 'V'},
   {"nice", required_argument, NULL, 'n'},
+  {"module", required_argument, NULL, 'M'},
   {"daemon", no_argument, NULL, 'd'},
   {"syslog", no_argument, NULL, 'l'},
   // long-only options
@@ -54,6 +55,12 @@ static const struct option mom_long_options[] = {
   {NULL, no_argument, NULL, 0},
 };
 
+static const char **module_names;
+static const char **module_arguments;
+static void **module_handles;
+static unsigned module_count;
+static unsigned module_size;
+
 static void
 usage (const char *argv0)
 {
@@ -62,6 +69,8 @@ usage (const char *argv0)
   printf ("\t -V | --version " " \t# Give version information.\n");
   printf ("\t -d | --daemon " " \t# Daemonize.\n");
   printf ("\t -n | --nice <nice-level> " " \t# Set process nice level.\n");
+  printf ("\t -M | --module <module-name> <module-arg> "
+	  " \t# load a plugin.\n");
   putchar ('\n');
   printf ("\t --json-file <file-name>" "\t #parse JSON file for testing\n");
   printf ("\t --json-string <string>" "\t #parse JSON string for testing\n");
@@ -79,7 +88,7 @@ static void
 parse_program_arguments (int argc, char **argv)
 {
   int opt = -1;
-  while ((opt = getopt_long (argc, argv, "hVdln:",
+  while ((opt = getopt_long (argc, argv, "hVdln:M:",
 			     mom_long_options, NULL)) >= 0)
     {
       switch (opt)
@@ -97,6 +106,40 @@ parse_program_arguments (int argc, char **argv)
 	case 'd':
 	  daemonize_me = true;
 	  break;
+	case 'M':
+	  {
+	    char *modnam = optarg;
+	    char *modarg = argv[optind++];
+	    if (!modnam || !modarg)
+	      {
+		fprintf (stderr, "monimelt bad module specification\n");
+		usage (argv[0]);
+		exit (EXIT_FAILURE);
+	      };
+	    if (module_count + 1 >= module_size)
+	      {
+		unsigned newsize = ((5 * module_count / 4 + 10) | 0xf) + 1;
+		const char **newnames = GC_MALLOC (newsize * sizeof (char *));
+		const char **newargs = GC_MALLOC (newsize * sizeof (char *));
+		if (!newnames || !newargs)
+		  MONIMELT_FATAL ("failed to grow modules to %d",
+				  (int) newsize);
+		memset (newnames, 0, newsize * sizeof (char *));
+		memset (newargs, 0, newsize * sizeof (char *));
+		if (module_names)
+		  memcpy (newnames, module_names,
+			  sizeof (char *) * module_count);
+		if (module_arguments)
+		  memcpy (newargs, module_arguments,
+			  sizeof (char *) * module_count);
+		module_names = newnames;
+		module_arguments = newargs;
+		module_size = newsize;
+	      }
+	    module_names[module_count] = modnam;
+	    module_arguments[module_count] = modarg;
+	    module_count++;
+	  }
 	case xtraopt_jsonfile:
 	  json_file = optarg;
 	  break;
@@ -248,6 +291,39 @@ logexit_cb (void)
   syslog (LOG_INFO, "monimelt exiting at %s", timbuf);
 }
 
+static void
+load_modules ()
+{
+  module_handles = calloc (module_count, sizeof (void *));
+  if (!module_handles)
+    MONIMELT_FATAL ("failed to allocate %d module handles", module_count);
+  for (unsigned ix = 0; ix < module_count; ix++)
+    {
+      const char *modname = module_names[ix];
+      const char *modarg = module_arguments[ix];
+      void *modhdl = dlopen (modname, RTLD_NOW);
+      if (!modhdl)
+	MONIMELT_FATAL ("failed to load module #%d named %s: %s",
+			ix, modname, dlerror ());
+      const char *modlic = dlsym (modhdl, "monimelt_module_GPL_friendly");
+      if (!modlic)
+	MONIMELT_FATAL
+	  ("module named %s without 'monimelt_module_GPL_friendly' symbol: %s",
+	   modname, dlerror ());
+      typedef void modinit_sig_t (const char *);
+      modinit_sig_t *modinit = dlsym (modhdl, "monimelt_module_init");
+      if (!modinit)
+	MONIMELT_FATAL
+	  ("module named %s without 'monimelt_module_init' function: %s",
+	   modname, dlerror ());
+      modinit (modarg);
+      if (using_syslog)
+	syslog (LOG_INFO, "loaded module #%d %s with argument %s",
+		ix, modname, modarg);
+      module_handles[ix] = modhdl;
+    }
+}
+
 int
 main (int argc, char **argv)
 {
@@ -295,5 +371,7 @@ main (int argc, char **argv)
       using_syslog = true;
       atexit (logexit_cb);
     }
+  if (module_count > 0)
+    load_modules ();
   return 0;
 }

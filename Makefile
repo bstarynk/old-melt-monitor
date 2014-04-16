@@ -27,11 +27,13 @@ INDENT= indent -gnu
 PREPROFLAGS= $(shell $(PKGCONFIG) --cflags $(PACKAGES))
 OPTIMFLAGS= -Og -g
 LIBES= -luuid -lgc $(shell $(PKGCONFIG) --libs $(PACKAGES)) -lpthread -lm -ldl
-SOURCES= $(sort $(wildcard [a-z][a-z]*.c))
+SOURCES= $(sort $(filter-out $(wildcard mod_*.c), $(wildcard [a-z]*.c)))
+MODSOURCES= $(sort $(wildcard mod_*.c))
+MODULES= $((patsubst %.c,%.so,$(MODSOURCES))
 OBJECTS= $(patsubst %.c,%.o,$(SOURCES))
 RM= rm -fv
 .PHONY: all modules clean tests indent
-all: monimelt make-named
+all: monimelt make-named modules
 clean:
 	$(RM) *~ *.o *.so *.orig _tmp_* monimelt
 ################
@@ -47,3 +49,4 @@ $(OBJECTS): monimelt.h monimelt-names.h
 make-named: u-make-named.cc
 	$(LINK.cc)  $<  $(LIBES) -o $@
 
+modules: $(MODULES)
