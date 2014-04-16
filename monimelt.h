@@ -96,6 +96,28 @@ union momvalueptr_un
   struct momjsonitem_st *pjsonitem;
   struct momboolitem_st *pboolitem;
 };
+
+
+// function to load and build an item from its building json and uid
+typedef mom_anyitem_t mom_item_loader_sig_t (momval_t json, uuid_t uid,
+					     void *data);
+// function to fill an item from its filling json
+typedef void mom_item_filler_sig_t (mom_anyitem_t * itm, momval_t json,
+				    void *data);
+// function to get the building json of an item
+typedef momval_t mom_item_get_build_sig_t (mom_anyitem_t * itm, void *data);
+// function to get the filling json of an item
+typedef momval_t mom_item_get_fill_sig_t (mom_anyitem_t * itm, void *data);
+
+struct momitemtypedescr_st
+{
+  const char *ityp_name;
+  mom_item_loader_sig_t *ityp_loader;
+  mom_item_filler_sig_t *ityp_filler;
+  mom_item_get_build_sig_t *ityp_getbuild;
+  mom_item_get_fill_sig_t *ityp_getfill;
+};
+
 #ifdef __GNUC__
 #define MONIMELT_UNLIKELY(P) __builtin_expect((P),0)
 #else
