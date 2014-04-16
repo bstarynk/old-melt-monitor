@@ -38,37 +38,40 @@ mom_initialize_json_parser (struct jsonparser_st *jp, FILE * file, void *data)
   jp->jsonp_error = NULL;
 }
 
-void*
-mom_json_parser_data(const struct jsonparser_st*jp)
+void *
+mom_json_parser_data (const struct jsonparser_st *jp)
 {
-  if (!jp) return NULL;
+  if (!jp)
+    return NULL;
   if (jp->jsonp_magic != MOMJSONP_MAGIC)
-    MONIMELT_FATAL("invalid json parser (magic %x, expecting %x)",
-		   jp->jsonp_magic, MOMJSONP_MAGIC);
+    MONIMELT_FATAL ("invalid json parser (magic %x, expecting %x)",
+		    jp->jsonp_magic, MOMJSONP_MAGIC);
   return jp->jsonp_data;
 }
 
 void
-mom_end_json_parser (struct jsonparser_st*jp)
+mom_end_json_parser (struct jsonparser_st *jp)
 {
-  if (!jp) return;
+  if (!jp)
+    return;
   if (jp->jsonp_magic != MOMJSONP_MAGIC)
-    MONIMELT_FATAL("invalid json parser (magic %x, expecting %x)",
-		   jp->jsonp_magic, MOMJSONP_MAGIC);
-  pthread_mutex_destroy(&jp->jsonp_mtx);
-  memset (jp, 0, sizeof(struct jsonparser_st));
+    MONIMELT_FATAL ("invalid json parser (magic %x, expecting %x)",
+		    jp->jsonp_magic, MOMJSONP_MAGIC);
+  pthread_mutex_destroy (&jp->jsonp_mtx);
+  memset (jp, 0, sizeof (struct jsonparser_st));
 }
 
 void
-mom_close_json_parser (struct jsonparser_st*jp)
+mom_close_json_parser (struct jsonparser_st *jp)
 {
-  if (!jp) return;
+  if (!jp)
+    return;
   if (jp->jsonp_magic != MOMJSONP_MAGIC)
-    MONIMELT_FATAL("invalid json parser (magic %x, expecting %x)",
-		   jp->jsonp_magic, MOMJSONP_MAGIC);
-  pthread_mutex_destroy(&jp->jsonp_mtx);
-  fclose(jp->jsonp_file);
-  memset (jp, 0, sizeof(struct jsonparser_st));
+    MONIMELT_FATAL ("invalid json parser (magic %x, expecting %x)",
+		    jp->jsonp_magic, MOMJSONP_MAGIC);
+  pthread_mutex_destroy (&jp->jsonp_mtx);
+  fclose (jp->jsonp_file);
+  memset (jp, 0, sizeof (struct jsonparser_st));
 }
 
 static momval_t parse_json_internal (struct jsonparser_st *jp);
@@ -174,7 +177,8 @@ again:
 	    {
 	      jp->jsonp_c = getc (jp->jsonp_file);
 	    }
-	  while (jp->jsonp_c >= 0 && jp->jsonp_c != '\n' && jp->jsonp_c != '\r');
+	  while (jp->jsonp_c >= 0 && jp->jsonp_c != '\n'
+		 && jp->jsonp_c != '\r');
 	  goto again;
 	}
       else if (jp->jsonp_c == '*')
@@ -242,7 +246,8 @@ again:
 	{
 	  double x = strtod (numbuf, &end);
 	  if (end && *end)
-	    JSONPARSE_ERROR (jp, "bad float number %s at offset %ld", numbuf, off);
+	    JSONPARSE_ERROR (jp, "bad float number %s at offset %ld", numbuf,
+			     off);
 	  return (momval_t) mom_make_double (x);
 	}
       else
@@ -316,14 +321,15 @@ again:
 		  jp->jsonp_c = getc (jp->jsonp_file);
 		  if (gotcomma)
 		    JSONPARSE_ERROR (jp,
-				"consecutive commas in JSON array at offset %ld",
-				ftell (jp->jsonp_file));
+				     "consecutive commas in JSON array at offset %ld",
+				     ftell (jp->jsonp_file));
 		  gotcomma = true;
 		  continue;
 		}
 	      else
-		JSONPARSE_ERROR (jp, "invalid char %c in JSON array at offset %ld",
-			    jp->jsonp_c, ftell (jp->jsonp_file));
+		JSONPARSE_ERROR (jp,
+				 "invalid char %c in JSON array at offset %ld",
+				 jp->jsonp_c, ftell (jp->jsonp_file));
 	    };
 	  gotcomma = false;
 	  if (MONIMELT_UNLIKELY (arrlen + 1 >= arrsize))
@@ -384,8 +390,8 @@ again:
 		}
 	      else
 		JSONPARSE_ERROR (jp,
-			    "failed to parse attribute in JSON object at offset %ld",
-			    off);
+				 "failed to parse attribute in JSON object at offset %ld",
+				 off);
 	    }
 	  while (isspace (jp->jsonp_c))
 	    jp->jsonp_c = getc (jp->jsonp_file);
@@ -395,13 +401,13 @@ again:
 	    }
 	  else
 	    JSONPARSE_ERROR (jp,
-			"missing colon in JSON object after name at offset %ld",
-			ftell (jp->jsonp_file));
+			     "missing colon in JSON object after name at offset %ld",
+			     ftell (jp->jsonp_file));
 	  momval_t valv = parse_json_internal (jp);
 	  if (valv.ptr == MONIMELT_EMPTY)
 	    JSONPARSE_ERROR (jp,
-			"failed to parse value in JSON object at offset %ld",
-			ftell (jp->jsonp_file));
+			     "failed to parse value in JSON object at offset %ld",
+			     ftell (jp->jsonp_file));
 	  while (isspace (jp->jsonp_c))
 	    jp->jsonp_c = getc (jp->jsonp_file);
 	  if (jp->jsonp_c == ',')
@@ -462,7 +468,7 @@ again:
 	    }
 	  if (MONIMELT_UNLIKELY (jp->jsonp_c < 0))
 	    JSONPARSE_ERROR (jp, "unterminated string at offset %ld",
-			ftell (jp->jsonp_file));
+			     ftell (jp->jsonp_file));
 	  if (jp->jsonp_c == '\\')
 	    {
 	      jp->jsonp_c = getc (jp->jsonp_file);
@@ -502,7 +508,7 @@ again:
 			char hexd[8];
 			memset (hexd, 0, sizeof (hexd));
 			uint32_t c = (uint32_t) h;
-			g_unichar_to_utf8((gunichar)c,hexd);
+			g_unichar_to_utf8 ((gunichar) c, hexd);
 			ADD1CHAR (hexd[0]);
 			if (hexd[1])
 			  {
@@ -538,7 +544,7 @@ again:
     }
   else
     JSONPARSE_ERROR (jp, "unexpected char %c at offset %ld",
-		jp->jsonp_c, ftell (jp->jsonp_file));
+		     jp->jsonp_c, ftell (jp->jsonp_file));
 }
 
 static int
@@ -707,12 +713,12 @@ mom_make_json_object (int firstdir, ...)
       h1 =
 	((ix & 0xf) + 1) * h1 +
 	((45077 *
-	  mom_value_hash ((const momval_t) jsob->
-			  jobjtab[count].je_name)) ^ h2);
+	  mom_value_hash ((const momval_t) jsob->jobjtab[count].
+			  je_name)) ^ h2);
       h2 =
 	(75041 * h2) ^ (7589 *
-			mom_value_hash ((const momval_t) jsob->
-					jobjtab[count].je_attr));
+			mom_value_hash ((const momval_t) jsob->jobjtab[count].
+					je_attr));
     }
   h = h1 ^ h2;
   if (!h)
@@ -891,164 +897,265 @@ mom_jsonob_get_def (const momval_t jsobv, const momval_t namev,
   return def;
 }
 
-#define MOMJSONO_MAGIC 0x5cd05c95 /* json outmagic 1557159061 */
-void mom_json_output_initialize (struct jsonoutput_st*jo, FILE*f, void*data, unsigned flags)
+#define MOMJSONO_MAGIC 0x5cd05c95	/* json outmagic 1557159061 */
+void
+mom_json_output_initialize (struct jsonoutput_st *jo, FILE * f, void *data,
+			    unsigned flags)
 {
-  memset (jo, 0, sizeof(struct jsonoutput_st));
+  memset (jo, 0, sizeof (struct jsonoutput_st));
   jo->jsono_flags = flags;
-  pthread_mutex_init(&jo->jsono_mtx, NULL);
-  jo->jsono_file=f;
-  jo->jsono_data=data;
+  pthread_mutex_init (&jo->jsono_mtx, NULL);
+  jo->jsono_file = f;
+  jo->jsono_data = data;
   jo->jsono_magic = MOMJSONO_MAGIC;
 }
 
-void* mom_json_output_data (const struct jsonoutput_st*jo)
+void *
+mom_json_output_data (const struct jsonoutput_st *jo)
 {
-  if (!jo) return NULL;
-  if (jo->jsono_magic != MOMJSONO_MAGIC)
-    MONIMELT_FATAL("bad json output magic %x (expected %x)",
-		   jo->jsono_magic, MOMJSONO_MAGIC);
+  if (!jo)
+    return NULL;
+  if (MONIMELT_UNLIKELY (jo->jsono_magic != MOMJSONO_MAGIC))
+    MONIMELT_FATAL ("bad json output magic %x (expected %x)",
+		    jo->jsono_magic, MOMJSONO_MAGIC);
   return jo->jsono_data;
 }
 
-void mom_json_output_end (struct jsonoutput_st*jo)
+void
+mom_json_output_end (struct jsonoutput_st *jo)
 {
-  if (!jo) return;
+  if (!jo)
+    return;
   if (jo->jsono_magic != MOMJSONO_MAGIC)
-    MONIMELT_FATAL("bad json output magic %x (expected %x)",
-		   jo->jsono_magic, MOMJSONO_MAGIC);
-  pthread_mutex_destroy(&jo->jsono_mtx);
+    MONIMELT_FATAL ("bad json output magic %x (expected %x)",
+		    jo->jsono_magic, MOMJSONO_MAGIC);
+  pthread_mutex_destroy (&jo->jsono_mtx);
   if (jo->jsono_flags & jsof_flush)
-    fflush(jo->jsono_file);
-  memset (jo, 0, sizeof(struct jsonoutput_st));
+    fflush (jo->jsono_file);
+  memset (jo, 0, sizeof (struct jsonoutput_st));
 }
 
-void mom_json_output_close (struct jsonoutput_st*jo)
+void
+mom_json_output_close (struct jsonoutput_st *jo)
 {
-  if (!jo) return;
+  if (!jo)
+    return;
   if (jo->jsono_magic != MOMJSONO_MAGIC)
-    MONIMELT_FATAL("bad json output magic %x (expected %x)",
-		   jo->jsono_magic, MOMJSONO_MAGIC);
-  pthread_mutex_destroy(&jo->jsono_mtx);
-  fclose(jo->jsono_file);
-  memset (jo, 0, sizeof(struct jsonoutput_st));
+    MONIMELT_FATAL ("bad json output magic %x (expected %x)",
+		    jo->jsono_magic, MOMJSONO_MAGIC);
+  pthread_mutex_destroy (&jo->jsono_mtx);
+  fclose (jo->jsono_file);
+  memset (jo, 0, sizeof (struct jsonoutput_st));
 }
 
-static void output_val(struct jsonoutput_st*jo, momval_t val, unsigned depth)
+static inline void
+output_indented_newline (FILE * f, unsigned depth)
 {
-  if (!val.ptr) {
-    fputs("null",jo->jsono_file);
-    return;
-  }
-  unsigned typ = *val.ptype;
-  switch (typ) {
-  case momty_int:
-    fprintf(jo->jsono_file,"%ld",(long)val.pint->intval);
-    return;
-  case momty_float:
-    {
-      double x = val.pfloat->floval;
-      if (MONIMELT_UNLIKELY(isnan(x))) {
-	if (jo->jsono_flags & jsof_cname)
-	  fputs("nan", jo->jsono_file);
-	else
-	  fputs("null", jo->jsono_file);
-      }
-      else{
-	char numbuf[48];
-	memset(numbuf, 0, sizeof(numbuf));
-	snprintf(numbuf, sizeof(numbuf), "%.3f", x);
-	if (atof(numbuf)==x && strlen(numbuf)<20) {
-	  fputs(numbuf,jo->jsono_file);
-	  return;
-	}
-	snprintf(numbuf, sizeof(numbuf), "%.6f", x);
-	if (atof(numbuf)==x && strlen(numbuf)<30) {
-	  fputs(numbuf,jo->jsono_file);
-	  return;
-	}
-	snprintf(numbuf, sizeof(numbuf), "%.15f", x);
-	if (atof(numbuf)==x && strlen(numbuf)<30) {
-	  fputs(numbuf,jo->jsono_file);
-	  return;
-	}
-	snprintf(numbuf, sizeof(numbuf), "%#.10g", x);
-	if (atof(numbuf)==x && strlen(numbuf)<30) {
-	  fputs(numbuf,jo->jsono_file);
-	  return;
-	}
-	snprintf(numbuf, sizeof(numbuf), "%#.15g", x);
-	fputs(numbuf,jo->jsono_file);
-      }
-    }
-    break;
-  case momty_string:
-    {
-      putc('"', jo->jsono_file);
-      unsigned slen = val.pstring->slen;
-      const gchar* cs = (const gchar*)(val.pstring->cstr);
-      const gchar*end = NULL;
-      if (MONIMELT_UNLIKELY(!g_utf8_validate(cs,-1,&end)))
-	MONIMELT_FATAL("invalid UTF-8 string %s", cs);
-      for (const gchar*pc=cs; *pc && pc<cs+slen; pc=g_utf8_next_char(pc)) {
-	gunichar c=g_utf8_get_char(pc);
-	switch (c) {
-	case '\\': fputs("\\\\", jo->jsono_file); break;
-	case '"' : fputs("\\\"", jo->jsono_file); break;
-	case '\b': fputs("\\b", jo->jsono_file); break;
-	case '\f': fputs("\\f", jo->jsono_file); break;
-	case '\n': fputs("\\n", jo->jsono_file); break;
-	case '\r': fputs("\\r", jo->jsono_file); break;
-	case '\t': fputs("\\t", jo->jsono_file); break;
-	default:
-	  if ((unsigned)c<0x7f && (char)c>=' ' && isprint(c)) {
-	    putc(c, jo->jsono_file);
-	  }
-	  else {
-	    fprintf(jo->jsono_file, "\\u%04x", (unsigned)c);
-	  }
-	}
-      }
-      putc('"', jo->jsono_file);
-    }
-    break;
-  case momty_jsonitem:
-    {
-      const momstring_t*nstr = val.pjsonitem->ij_namejson;
-      if (MONIMELT_UNLIKELY(!nstr || nstr->typnum != momty_string)) {
-	char uidstr[40];
-	memset (uidstr, 0, sizeof(uidstr));
-	uuid_unparse(val.panyitem->i_uuid, uidstr);
-	MONIMELT_FATAL("corrupted JSON item of uid %s without string JSON name",
-		       uidstr);
-      }
-      if ((jo->jsono_flags & jsof_cname)
-	  && (isalpha(nstr->cstr[0]) ||nstr->cstr[0]=='_')) {
-	bool isident=true;
-	for (const char*c = nstr->cstr; *c && isident; c++)
-	  isident= (isalnum(*c)|| *c=='_');
-	if (isident && strcmp(nstr->cstr, "null")
-	    && strcmp(nstr->cstr, "nan")
-	    && strcmp(nstr->cstr, "true") && strcmp(nstr->cstr, "false"))
-	  {
-	    fputs(nstr->cstr, jo->jsono_file);
-	    return;
-	  }
-      };
-      output_val(jo,(momval_t)nstr,depth);
-      return;      
-    }
-  case momty_boolitem:
-    if (val.pboolitem->ib_bool)
-      fputs("true",jo->jsono_file);
-    else
-      fputs("false",jo->jsono_file);
-    return;
-  case momty_jsonarray:
-  case momty_jsonobject:
-#warning unimplemented output of JSON array & objects
-  default:
-    fputs(" null",jo->jsono_file);
-    return;
-  }
+  putc ('\n', f);
+  for (unsigned ix = depth % 16; ix > 0; ix--)
+    putc (' ', f);
 }
+
+static void
+output_val (struct jsonoutput_st *jo, momval_t val, unsigned depth)
+{
+  if (!val.ptr)
+    {
+      fputs ("null", jo->jsono_file);
+      return;
+    }
+  unsigned typ = *val.ptype;
+  switch (typ)
+    {
+    case momty_int:
+      fprintf (jo->jsono_file, "%ld", (long) val.pint->intval);
+      return;
+    case momty_float:
+      {
+	double x = val.pfloat->floval;
+	if (MONIMELT_UNLIKELY (isnan (x)))
+	  {
+	    if (jo->jsono_flags & jsof_cname)
+	      fputs ("nan", jo->jsono_file);
+	    else
+	      fputs ("null", jo->jsono_file);
+	  }
+	else
+	  {
+	    char numbuf[48];
+	    memset (numbuf, 0, sizeof (numbuf));
+	    snprintf (numbuf, sizeof (numbuf), "%.3f", x);
+	    if (atof (numbuf) == x && strlen (numbuf) < 20)
+	      {
+		fputs (numbuf, jo->jsono_file);
+		return;
+	      }
+	    snprintf (numbuf, sizeof (numbuf), "%.6f", x);
+	    if (atof (numbuf) == x && strlen (numbuf) < 30)
+	      {
+		fputs (numbuf, jo->jsono_file);
+		return;
+	      }
+	    snprintf (numbuf, sizeof (numbuf), "%.15f", x);
+	    if (atof (numbuf) == x && strlen (numbuf) < 30)
+	      {
+		fputs (numbuf, jo->jsono_file);
+		return;
+	      }
+	    snprintf (numbuf, sizeof (numbuf), "%#.10g", x);
+	    if (atof (numbuf) == x && strlen (numbuf) < 30)
+	      {
+		fputs (numbuf, jo->jsono_file);
+		return;
+	      }
+	    snprintf (numbuf, sizeof (numbuf), "%#.15g", x);
+	    fputs (numbuf, jo->jsono_file);
+	  }
+      }
+      break;
+    case momty_string:
+      {
+	putc ('"', jo->jsono_file);
+	unsigned slen = val.pstring->slen;
+	const gchar *cs = (const gchar *) (val.pstring->cstr);
+	const gchar *end = NULL;
+	if (MONIMELT_UNLIKELY (!g_utf8_validate (cs, -1, &end)))
+	  MONIMELT_FATAL ("invalid UTF-8 string %s", cs);
+	for (const gchar * pc = cs; *pc && pc < cs + slen;
+	     pc = g_utf8_next_char (pc))
+	  {
+	    gunichar c = g_utf8_get_char (pc);
+	    switch (c)
+	      {
+	      case '\\':
+		fputs ("\\\\", jo->jsono_file);
+		break;
+	      case '"':
+		fputs ("\\\"", jo->jsono_file);
+		break;
+	      case '\b':
+		fputs ("\\b", jo->jsono_file);
+		break;
+	      case '\f':
+		fputs ("\\f", jo->jsono_file);
+		break;
+	      case '\n':
+		fputs ("\\n", jo->jsono_file);
+		break;
+	      case '\r':
+		fputs ("\\r", jo->jsono_file);
+		break;
+	      case '\t':
+		fputs ("\\t", jo->jsono_file);
+		break;
+	      default:
+		if ((unsigned) c < 0x7f && (char) c >= ' ' && isprint (c))
+		  {
+		    putc (c, jo->jsono_file);
+		  }
+		else
+		  {
+		    fprintf (jo->jsono_file, "\\u%04x", (unsigned) c);
+		  }
+	      }
+	  }
+	putc ('"', jo->jsono_file);
+      }
+      break;
+    case momty_jsonitem:
+      {
+	const momstring_t *nstr = val.pjsonitem->ij_namejson;
+	if (MONIMELT_UNLIKELY (!nstr || nstr->typnum != momty_string))
+	  {
+	    char uidstr[40];
+	    memset (uidstr, 0, sizeof (uidstr));
+	    uuid_unparse (val.panyitem->i_uuid, uidstr);
+	    MONIMELT_FATAL
+	      ("corrupted JSON item of uid %s without string JSON name",
+	       uidstr);
+	  }
+	if ((jo->jsono_flags & jsof_cname)
+	    && (isalpha (nstr->cstr[0]) || nstr->cstr[0] == '_'))
+	  {
+	    bool isident = true;
+	    for (const char *c = nstr->cstr; *c && isident; c++)
+	      isident = (isalnum (*c) || *c == '_');
+	    if (isident && strcmp (nstr->cstr, "null")
+		&& strcmp (nstr->cstr, "nan")
+		&& strcmp (nstr->cstr, "true")
+		&& strcmp (nstr->cstr, "false"))
+	      {
+		fputs (nstr->cstr, jo->jsono_file);
+		return;
+	      }
+	  };
+	output_val (jo, (momval_t) nstr, depth);
+	return;
+      }
+    case momty_boolitem:
+      if (val.pboolitem->ib_bool)
+	fputs ("true", jo->jsono_file);
+      else
+	fputs ("false", jo->jsono_file);
+      return;
+    case momty_jsonarray:
+      {
+	unsigned arrlen = val.pjsonarr->slen;
+	putc ('[', jo->jsono_file);
+	for (unsigned ix = 0; ix < arrlen; ix++)
+	  {
+	    if (ix > 0)
+	      {
+		putc (',', jo->jsono_file);
+		if (jo->jsono_flags & jsof_indent)
+		  output_indented_newline (jo->jsono_file, depth + 1);
+	      }
+	    output_val (jo, val.pjsonarr->jarrtab[ix], depth + 1);
+	  }
+	putc (']', jo->jsono_file);
+      }
+      return;
+    case momty_jsonobject:
+      {
+	unsigned joblen = val.pjsonobj->slen;
+	putc ('{', jo->jsono_file);
+	for (unsigned ix = 0; ix < joblen; ix++)
+	  {
+	    if (ix > 0)
+	      {
+		putc (',', jo->jsono_file);
+		if (jo->jsono_flags & jsof_indent)
+		  output_indented_newline (jo->jsono_file, depth + 1);
+	      }
+	    output_val (jo, val.pjsonobj->jobjtab[ix].je_name, depth + 1);
+	    putc (':', jo->jsono_file);
+	    if (jo->jsono_flags & jsof_indent)
+	      putc (' ', jo->jsono_file);
+	    output_val (jo, val.pjsonobj->jobjtab[ix].je_attr, depth + 1);
+	  }
+	putc ('}', jo->jsono_file);
+      }
+      return;
+    default:
+      fputs (" null", jo->jsono_file);
+      return;
+    }
+}
+
+void
+mom_output_json (struct jsonoutput_st *jo, const momval_t val)
+{
+  if (!jo)
+    return;
+  if (MONIMELT_UNLIKELY (jo->jsono_magic != MOMJSONO_MAGIC))
+    {
+      MONIMELT_FATAL ("bad json output magic %x (expected %x)",
+		      jo->jsono_magic, MOMJSONO_MAGIC);
+    }
+  pthread_mutex_lock (&jo->jsono_mtx);
+  output_val (jo, val, 0);
+  pthread_mutex_unlock (&jo->jsono_mtx);
+}
+
+
+//// eof json.c
