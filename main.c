@@ -23,6 +23,7 @@
 static int nicelevel = 0;
 static const char *json_file;
 static const char *json_string;
+static const char *wanted_dir;
 static bool json_indented;
 static bool daemonize_me;
 static bool want_syslog;
@@ -35,6 +36,7 @@ enum extraopt_en
   xtraopt_jsonfile = 1024,
   xtraopt_jsonstring,
   xtraopt_jsonindent,
+  xtraopt_chdir,
 };
 
 static const struct option mom_long_options[] = {
@@ -47,6 +49,7 @@ static const struct option mom_long_options[] = {
   {"json-file", required_argument, NULL, xtraopt_jsonfile},
   {"json-string", required_argument, NULL, xtraopt_jsonstring},
   {"json-indent", no_argument, NULL, xtraopt_jsonindent},
+  {"chdir", required_argument, NULL, xtraopt_chdir},
   /* Terminating NULL placeholder.  */
   {NULL, no_argument, NULL, 0},
 };
@@ -63,6 +66,7 @@ usage (const char *argv0)
   printf ("\t --json-file <file-name>" "\t #parse JSON file for testing\n");
   printf ("\t --json-string <string>" "\t #parse JSON string for testing\n");
   printf ("\t --json-indent" "\t #output parsed JSON with indentation\n");
+  printf ("\t --chdir <directory>" "\t #change directory\n");
 }
 
 static void
@@ -89,6 +93,7 @@ parse_program_arguments (int argc, char **argv)
 	  break;
 	case 'l':
 	  want_syslog = true;
+	  break;
 	case 'd':
 	  daemonize_me = true;
 	  break;
@@ -100,6 +105,9 @@ parse_program_arguments (int argc, char **argv)
 	  break;
 	case xtraopt_jsonindent:
 	  json_indented = true;
+	  break;
+	case xtraopt_chdir:
+	  wanted_dir = optarg;
 	  break;
 	}
     }
@@ -226,6 +234,20 @@ mom_fatal_at (const char *fil, int lin, const char *fmt, ...)
   abort ();
 }
 
+
+static void
+logexit_cb (void)
+{
+  char timbuf[64];
+  struct tm tm = { };
+  time_t now = 0;
+  memset (timbuf, 0, sizeof (timbuf));
+  time (&now);
+  strftime (timbuf, sizeof (timbuf), "%Y-%b-%d %T %Z",
+	    localtime_r (&now, &tm));
+  syslog (LOG_INFO, "monimelt exiting at %s", timbuf);
+}
+
 int
 main (int argc, char **argv)
 {
@@ -242,8 +264,16 @@ main (int argc, char **argv)
       if (MONIMELT_UNLIKELY (nice (nicelevel) == -1 && errno))
 	MONIMELT_FATAL ("failed to nice at level %d", nicelevel);
     }
+  if (wanted_dir)
+    {
+      if (MONIMELT_UNLIKELY (chdir (wanted_dir)))
+	MONIMELT_FATAL ("failed to chdir to %s", wanted_dir);
+    }
   if (daemonize_me)
     {
+      fprintf (stderr, "%s before daemonizing pid %d\n", argv[0],
+	       (int) getpid ());
+      fflush (NULL);
       if (MONIMELT_UNLIKELY (daemon ( /*nochdir */ 1, /*noclose */ 0)))
 	MONIMELT_FATAL ("failed to daemonize from pid #%d", (int) getpid ());
       want_syslog = true;
@@ -260,8 +290,10 @@ main (int argc, char **argv)
       openlog ("monimelt",
 	       LOG_PID | LOG_CONS | (daemonize_me ? 0 : LOG_PERROR),
 	       LOG_LOCAL2);
-      syslog (LOG_INFO, "monimelt starting at %s", timbuf);
+      syslog (LOG_INFO, "monimelt starting at %s in %s",
+	      timbuf, get_current_dir_name ());
       using_syslog = true;
+      atexit (logexit_cb);
     }
   return 0;
 }
