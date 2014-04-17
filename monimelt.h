@@ -506,8 +506,12 @@ struct mom_dumper_st
   mom_anyitem_t **dmp_array;
 };
 
+// initialize a dumper
 void mom_dump_initialize (struct mom_dumper_st *dmp);
 
+// add a scanned item into a dumper
 void mom_dump_add_item (struct mom_dumper_st *dmp, mom_anyitem_t * itm);
 
+// scan a value into a dumper
+void mom_dump_scan_value (struct mom_dumper_st *dmp, const momval_t val);
 #endif /* MONIMELT_INCLUDED_ */

@@ -82,6 +82,26 @@ add_dumped_item (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
   MONIMELT_FATAL ("corrupted dump of %d items", dmp->dmp_count);
 }
 
+
+static inline bool
+found_dumped_item (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+{
+  momhash_t h = itm->i_hash;
+  unsigned size = dmp->dmp_size;
+  unsigned istart = h % size;
+  for (unsigned ix = istart; ix < size; ix++)
+    {
+      if (dmp->dmp_array[ix] == itm)
+	return true;
+    }
+  for (unsigned ix = 0; ix < istart; ix++)
+    {
+      if (dmp->dmp_array[ix] == itm)
+	return true;
+    }
+  return false;
+}
+
 void
 mom_dump_add_item (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
@@ -97,7 +117,7 @@ mom_dump_add_item (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
       unsigned oldsize = dmp->dmp_size;
       unsigned oldcount = dmp->dmp_count;
       mom_anyitem_t **oldarr = dmp->dmp_array;
-      unsigned newsize = ((4 * oldcount / 3 + 50) | 0x7f) + 1;
+      unsigned newsize = ((4 * oldcount / 3 + oldcount / 4 + 60) | 0x7f) + 1;
       mom_anyitem_t **newarr = GC_MALLOC (newsize * sizeof (mom_anyitem_t *));
       if (MONIMELT_UNLIKELY (!newarr))
 	MONIMELT_FATAL ("cannot grow dumper to %d items", newsize);
@@ -113,22 +133,7 @@ mom_dump_add_item (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 	  add_dumped_item (dmp, curitm);
 	}
     }
-  bool founditem = false;
-  {
-    momhash_t h = itm->i_hash;
-    unsigned size = dmp->dmp_size;
-    unsigned istart = h % size;
-    for (unsigned ix = istart; ix < size && !founditem; ix++)
-      {
-	if (dmp->dmp_array[ix] == itm)
-	  founditem = true;
-      }
-    for (unsigned ix = 0; ix < istart && !founditem; ix++)
-      {
-	if (dmp->dmp_array[ix] == itm)
-	  founditem = true;
-      }
-  }
+  bool founditem = found_dumped_item (dmp, itm);
   // enqueue and add the item if it is not found
   if (!founditem)
     {
@@ -151,4 +156,44 @@ mom_dump_add_item (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
       add_dumped_item (dmp, itm);
     }
   pthread_mutex_unlock (&dmp->dmp_mtx);
+}
+
+void
+mom_dump_scan_value (struct mom_dumper_st *dmp, const momval_t val)
+{
+  if (!dmp || !val.ptr)
+    return;
+  if (MONIMELT_UNLIKELY (dmp->dmp_magic != DUMPER_MAGIC))
+    MONIMELT_FATAL ("bad dumper@%p when dumping value @%p", (void *) dmp,
+		    val.ptr);
+  unsigned typ = *val.ptype;
+  switch (typ)
+    {
+    case momty_int:
+    case momty_float:
+    case momty_string:
+      return;
+    case momty_jsonarray:
+      {
+	unsigned siz = val.pjsonarr->slen;
+	for (unsigned ix = 0; ix < siz; ix++)
+	  mom_dump_scan_value (dmp, val.pjsonarr->jarrtab[ix]);
+	return;
+      }
+    case momty_jsonobject:
+      {
+	unsigned siz = val.pjsonobj->slen;
+	for (unsigned ix = 0; ix < siz; ix++)
+	  {
+	    mom_dump_scan_value (dmp, val.pjsonobj->jobjtab[ix].je_name);
+	    mom_dump_scan_value (dmp, val.pjsonobj->jobjtab[ix].je_attr);
+	  }
+	return;
+      }
+#warning missing cases for node etc in mom_dump_scan_value
+    default:
+      if (typ > momty__itemlowtype)
+	mom_dump_add_item (dmp, val.panyitem);
+      return;
+    }
 }
