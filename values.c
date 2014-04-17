@@ -64,6 +64,11 @@ mom_value_hash (const momval_t v)
       return v.pjsonarr->hash;
     case momty_jsonobject:
       return v.pjsonobj->hash;
+    case momty_node:
+      return v.pnode->hash;
+    case momty_itemtuple:
+    case momty_itemset:
+      return v.pseqitm->hash;
     default:
       if (vtype >= momty__itemlowtype)
 	return v.panyitem->i_hash;
@@ -198,6 +203,50 @@ mom_value_cmp (const momval_t l, const momval_t r)
 	  return 1;
 	else
 	  goto compare_item_by_uid;
+      }
+    case momty_node:
+      {
+	momusize_t llen = l.pnode->slen;
+	momusize_t rlen = r.pnode->slen;
+	momusize_t minlen = (llen > rlen) ? rlen : llen;
+	int cmp = mom_value_cmp ((momval_t) (l.pnode->connitm),
+				 (momval_t) (r.pnode->connitm));
+	if (cmp != 0)
+	  return cmp;
+	unsigned ix = 0;
+	for (ix = 0; ix < minlen; ix++)
+	  {
+	    cmp = mom_value_cmp (l.pnode->sontab[ix], r.pnode->sontab[ix]);
+	    if (cmp != 0)
+	      return cmp;
+	  }
+	if (llen < rlen)
+	  return -1;
+	else if (llen > rlen)
+	  return 1;
+	return 0;
+      }
+    case momty_itemtuple:
+    case momty_itemset:
+      {
+	momusize_t llen = l.pseqitm->slen;
+	momusize_t rlen = r.pseqitm->slen;
+	momusize_t minlen = (llen > rlen) ? rlen : llen;
+	int cmp = 0;
+	unsigned ix = 0;
+	for (ix = 0; ix < minlen; ix++)
+	  {
+	    cmp =
+	      mom_value_cmp ((momval_t) (l.pseqitm->itemseq[ix]),
+			     (momval_t) (r.pseqitm->itemseq[ix]));
+	    if (cmp != 0)
+	      return cmp;
+	  }
+	if (llen < rlen)
+	  return -1;
+	else if (llen > rlen)
+	  return 1;
+	return 0;
       }
 #warning missing compare of nodes, closures, etc...
     default:

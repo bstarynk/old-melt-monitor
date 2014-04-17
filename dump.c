@@ -190,7 +190,29 @@ mom_dump_scan_value (struct mom_dumper_st *dmp, const momval_t val)
 	  }
 	return;
       }
-#warning missing cases for node etc in mom_dump_scan_value
+    case momty_node:
+      {
+	unsigned siz = val.pnode->slen;
+	mom_dump_add_item (dmp, val.pnode->connitm);
+	for (unsigned ix = 0; ix < siz; ix++)
+	  mom_dump_scan_value (dmp, val.pnode->sontab[ix]);
+	return;
+      }
+    case momty_itemtuple:
+    case momty_itemset:
+      {
+	unsigned siz = val.pseqitm->slen;
+	for (unsigned ix = 0; ix < siz; ix++)
+	  {
+	    mom_anyitem_t *curitm = val.pseqitm->itemseq[ix];
+	    if (!curitm)
+	      continue;
+	    mom_dump_add_item (dmp, curitm);
+	  }
+	return;
+      }
+
+#warning missing cases for in mom_dump_scan_value
     default:
       if (typ > momty__itemlowtype)
 	mom_dump_add_item (dmp, val.panyitem);

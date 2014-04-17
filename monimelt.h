@@ -52,7 +52,7 @@
 #define MONIMELT_EMPTY ((void*)(-1L))
 enum momvaltype_en
 {
-  momty_none = 0,
+  momty_null = 0,
   momty_int,
   momty_float,
   momty_string,
@@ -80,6 +80,8 @@ typedef struct momfloat_st momfloat_t;
 typedef struct momstring_st momstring_t;
 typedef struct momjsonobject_st momjsonobject_t;
 typedef struct momjsonarray_st momjsonarray_t;
+typedef struct momnode_st momnode_t;
+typedef struct momseqitem_st momseqitem_t;
 typedef struct momanyitem_st mom_anyitem_t;
 typedef struct momjsonitem_st momit_json_name_t;
 typedef struct momboolitem_st momit_bool_t;
@@ -95,6 +97,10 @@ union momvalueptr_un
   struct momjsonobject_st *pjsonobj;
   struct momjsonitem_st *pjsonitem;
   struct momboolitem_st *pboolitem;
+  struct momnode_st *pnode;
+  struct momseqitem_st *pseqitm;
+  struct momseqitem_st *pitemset;
+  struct momseqitem_st *pitemtuple;
 };
 
 struct mom_dumper_st;
@@ -173,8 +179,30 @@ struct momjsonobject_st
   struct mom_jsonentry_st jobjtab[];
 };
 
+
+struct momnode_st
+{
+  momtynum_t typnum;
+  momusize_t slen;
+  momhash_t hash;
+  mom_anyitem_t *connitm;
+  momval_t sontab[];
+};
+
+
+// for sets and tuples of item. In sets, itemseq is sorted by
+// increasing uuids. In tuples, some itemseq components may be nil.
+struct momseqitem_st
+{
+  momtynum_t typnum;
+  momusize_t slen;
+  momhash_t hash;
+  mom_anyitem_t *itemseq[];
+};
 struct mom_attrentry_st
 {
+  mom_anyitem_t *aten_itm;
+  momval_t aten_val;
 };
 
 struct mom_itemattributes_st
