@@ -395,3 +395,18 @@ mom_make_double (double x)
   dv->typnum = momty_float;
   return dv;
 }
+
+const momitemset_t *
+mom_make_item_set_til_nil (momval_t firstitm, ...)
+{
+#warning mom_make_item_set_til_nil unimplemented
+  MONIMELT_FATAL ("unimplemented mom_make_item_set_til_nil");
+}
+
+
+const momitemtuple_t *
+mom_make_item_tuple_til_nil (momval_t firstitm, ...)
+{
+#warning mom_make_item_tuple_til_nil unimplemented
+  MONIMELT_FATAL ("unimplemented mom_make_item_tuple_til_nil");
+}

@@ -82,6 +82,8 @@ typedef struct momjsonobject_st momjsonobject_t;
 typedef struct momjsonarray_st momjsonarray_t;
 typedef struct momnode_st momnode_t;
 typedef struct momseqitem_st momseqitem_t;
+typedef struct momseqitem_st momitemset_t;
+typedef struct momseqitem_st momitemtuple_t;
 typedef struct momanyitem_st mom_anyitem_t;
 typedef struct momjsonitem_st momit_json_name_t;
 typedef struct momboolitem_st momit_bool_t;
@@ -328,11 +330,11 @@ mom_fatal_at (const char *fil, int lin, const char *fmt, ...)
 __attribute__ ((format (printf, 3, 4), noreturn));
 
 #define MONIMELT_FATAL_AT(Fil,Lin,Fmt,...) do {         \
-  mom_fatal_at(Fil,Lin,Fmt,__VA_ARGS__);} while(0)
+  mom_fatal_at(Fil,Lin,Fmt,##__VA_ARGS__);} while(0)
 #define MONIMELT_FATAL_AT_BIS(Fil,Lin,Fmt,...) \
-  MONIMELT_FATAL_AT(Fil,Lin,Fmt,__VA_ARGS__)
+  MONIMELT_FATAL_AT(Fil,Lin,Fmt,##__VA_ARGS__)
 #define MONIMELT_FATAL(Fmt,...) \
-  MONIMELT_FATAL_AT_BIS(__FILE__,__LINE__,Fmt,__VA_ARGS__)
+  MONIMELT_FATAL_AT_BIS(__FILE__,__LINE__,Fmt,##__VA_ARGS__)
 
 momhash_t mom_string_hash (const char *str, int len);
 const momstring_t *mom_make_string_len (const char *str, int len);
@@ -454,6 +456,10 @@ const momjsonarray_t *mom_make_json_array_count (unsigned count,
 const momjsonarray_t *mom_make_json_array_til_nil (momval_t, ...)
   __attribute__ ((sentinel));
 
+const momitemset_t *mom_make_item_set_til_nil (momval_t, ...)
+  __attribute__ ((sentinel));
+const momitemtuple_t *mom_make_item_tuple_til_nil (momval_t, ...)
+  __attribute__ ((sentinel));
 
 ///// JSON parsing:
 struct jsonparser_st
