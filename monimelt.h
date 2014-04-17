@@ -39,13 +39,13 @@
 #include <float.h>
 #include <limits.h>
 #include <ctype.h>
-#include <dlfcn.h>
 #include <getopt.h>
 #include <errno.h>
 #include <gc/gc.h>
 #include <sqlite3.h>
 #include <uuid/uuid.h>
 #include <glib.h>
+#include <gmodule.h>
 
 
 
@@ -482,7 +482,8 @@ void mom_json_output_close (struct jsonoutput_st *jo);
 void mom_output_json (struct jsonoutput_st *jo, const momval_t val);
 
 // every module should have
-extern const char monimelt_module_GPL_friendly[];
+extern const char monimelt_GPL_friendly_module[];
 extern void monimelt_module_init (const char *marg);
-
+// modules may also define
+extern GOptionGroup *monimelt_module_option_group (const char *modname);
 #endif /* MONIMELT_INCLUDED_ */

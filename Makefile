@@ -17,7 +17,7 @@
 ##  along with GCC; see the file COPYING3.   If not see
 ##  <http://www.gnu.org/licenses/>.
 ################################################################
-PACKAGES= sqlite3 glib-2.0
+PACKAGES= sqlite3 glib-2.0 gmodule-2.0
 PKGCONFIG= pkg-config
 CC=gcc
 CFLAGS= -std=gnu11 -Wall $(PREPROFLAGS) $(OPTIMFLAGS)

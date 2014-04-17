@@ -55,9 +55,10 @@ static const struct option mom_long_options[] = {
   {NULL, no_argument, NULL, 0},
 };
 
+static GOptionContext *option_ctx;
 static const char **module_names;
 static const char **module_arguments;
-static void **module_handles;
+static GModule **module_handles;
 static unsigned module_count;
 static unsigned module_size;
 
@@ -77,6 +78,11 @@ usage (const char *argv0)
   printf ("\t --json-string <string>" "\t #parse JSON string for testing\n");
   printf ("\t --json-indent" "\t #output parsed JSON with indentation\n");
   printf ("\t --chdir <directory>" "\t #change directory\n");
+  if (option_ctx)
+    {
+      printf ("## additional help\n%s\n",
+	      g_option_context_get_help (option_ctx, FALSE, NULL));
+    }
 }
 
 static void
@@ -85,10 +91,52 @@ print_version (const char *argv0)
   printf ("%s built on " __DATE__ "@" __TIME__, argv0);
 }
 
+
 static void
-parse_program_arguments (int argc, char **argv)
+load_module (GOptionContext * optctx, unsigned ix, const char *modname,
+	     const char *modarg)
+{
+  GModule *modhdl = g_module_open (modname, 0);
+  char *modbasename = basename (modname);
+  if (!modhdl)
+    MONIMELT_FATAL ("failed to load module #%d named %s: %s",
+		    ix, modname, g_module_error ());
+  const char *modlic = NULL;
+  if (!g_module_symbol
+      (modhdl, "monimelt_GPL_friendly_module", (gpointer *) & modlic)
+      || !modlic)
+    MONIMELT_FATAL
+      ("module named %s without 'monimelt_GPL_friendly_module' symbol: %s",
+       modname, g_module_error ());
+  typedef void modinit_sig_t (const char *);
+  modinit_sig_t *modinit = NULL;
+  if (!g_module_symbol
+      (modhdl, "monimelt_module_init", (gpointer *) & modinit) || !modinit)
+    MONIMELT_FATAL
+      ("module named %s without 'monimelt_module_init' function: %s", modname,
+       g_module_error ());
+  modinit (modarg);
+  typedef GOptionGroup *modoptgroup_sig_t (const char *modname);
+  modoptgroup_sig_t *modoptgroup = NULL;
+  if (g_module_symbol
+      (modhdl, "monimelt_module_option_group", (gpointer *) & modoptgroup)
+      && modoptgroup)
+    {
+      GOptionGroup *optgrp = modoptgroup (modbasename);
+      if (optgrp)
+	g_option_context_add_group (optctx, optgrp);
+    }
+  if (using_syslog)
+    syslog (LOG_INFO, "loaded module #%d %s with argument %s",
+	    ix, modname, modarg);
+  module_handles[ix] = modhdl;
+}
+
+static void
+parse_program_arguments_and_load_modules (int argc, char **argv)
 {
   int opt = -1;
+  option_ctx = g_option_context_new ("monimelt");
   while ((opt = getopt_long (argc, argv, "hVdln:M:",
 			     mom_long_options, NULL)) >= 0)
     {
@@ -117,7 +165,7 @@ parse_program_arguments (int argc, char **argv)
 		usage (argv[0]);
 		exit (EXIT_FAILURE);
 	      };
-	    if (module_count + 1 >= module_size)
+	    if (MONIMELT_UNLIKELY (module_count + 1 >= module_size))
 	      {
 		unsigned newsize = ((5 * module_count / 4 + 10) | 0xf) + 1;
 		const char **newnames = GC_MALLOC (newsize * sizeof (char *));
@@ -137,8 +185,7 @@ parse_program_arguments (int argc, char **argv)
 		module_arguments = newargs;
 		module_size = newsize;
 	      }
-	    module_names[module_count] = modnam;
-	    module_arguments[module_count] = modarg;
+	    load_module (option_ctx, module_count, modnam, modarg);
 	    module_count++;
 	  }
 	case xtraopt_jsonfile:
@@ -152,6 +199,8 @@ parse_program_arguments (int argc, char **argv)
 	  break;
 	case xtraopt_chdir:
 	  wanted_dir = optarg;
+	  break;
+	default:
 	  break;
 	}
     }
@@ -292,46 +341,54 @@ logexit_cb (void)
   syslog (LOG_INFO, "monimelt exiting at %s", timbuf);
 }
 
-static void
-load_modules ()
+static gpointer
+checked_gc_malloc (gsize sz)
 {
-  module_handles = calloc (module_count, sizeof (void *));
-  if (!module_handles)
-    MONIMELT_FATAL ("failed to allocate %d module handles", module_count);
-  for (unsigned ix = 0; ix < module_count; ix++)
-    {
-      const char *modname = module_names[ix];
-      const char *modarg = module_arguments[ix];
-      void *modhdl = dlopen (modname, RTLD_NOW);
-      if (!modhdl)
-	MONIMELT_FATAL ("failed to load module #%d named %s: %s",
-			ix, modname, dlerror ());
-      const char *modlic = dlsym (modhdl, "monimelt_module_GPL_friendly");
-      if (!modlic)
-	MONIMELT_FATAL
-	  ("module named %s without 'monimelt_module_GPL_friendly' symbol: %s",
-	   modname, dlerror ());
-      typedef void modinit_sig_t (const char *);
-      modinit_sig_t *modinit = dlsym (modhdl, "monimelt_module_init");
-      if (!modinit)
-	MONIMELT_FATAL
-	  ("module named %s without 'monimelt_module_init' function: %s",
-	   modname, dlerror ());
-      modinit (modarg);
-      if (using_syslog)
-	syslog (LOG_INFO, "loaded module #%d %s with argument %s",
-		ix, modname, modarg);
-      module_handles[ix] = modhdl;
-    }
+  void *p = GC_MALLOC (sz);
+  if (MONIMELT_UNLIKELY (!p))
+    MONIMELT_FATAL ("failed to GC malloc %ld bytes", (long) sz);
+  memset (p, 0, sz);
+  return p;
 }
+
+static gpointer
+checked_gc_realloc (gpointer m, gsize sz)
+{
+  void *p = GC_REALLOC (m, sz);
+  if (MONIMELT_UNLIKELY (!p))
+    MONIMELT_FATAL ("failed to GC realloc %ld bytes", (long) sz);
+  return p;
+}
+
+static gpointer
+checked_gc_calloc (gsize nblock, gsize bsize)
+{
+  void *p = GC_MALLOC (nblock * bsize);
+  if (MONIMELT_UNLIKELY (!p))
+    MONIMELT_FATAL ("failed to GC calloc %ld blocks of %ld bytes",
+		    (long) nblock, (long) bsize);
+  memset (p, 0, nblock * bsize);
+  return p;
+}
+
+static GMemVTable gc_mem_vtable = {
+  .malloc = checked_gc_malloc,
+  .realloc = checked_gc_realloc,
+  .free = GC_free,
+  .calloc = checked_gc_calloc,
+  .try_malloc = GC_malloc,
+  .try_realloc = GC_realloc
+};
 
 int
 main (int argc, char **argv)
 {
   GC_INIT ();
   pthread_setname_np (pthread_self (), "monimelt-main");
+  g_mem_gc_friendly = TRUE;
+  g_mem_set_vtable (&gc_mem_vtable);
   mom_initialize ();
-  parse_program_arguments (argc, argv);
+  parse_program_arguments_and_load_modules (argc, argv);
   if (json_file)
     do_json_file_test ();
   if (json_string)
@@ -372,7 +429,5 @@ main (int argc, char **argv)
       using_syslog = true;
       atexit (logexit_cb);
     }
-  if (module_count > 0)
-    load_modules ();
   return 0;
 }
