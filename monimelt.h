@@ -97,23 +97,28 @@ union momvalueptr_un
   struct momboolitem_st *pboolitem;
 };
 
+struct mom_dumper_st;
 
 // function to load and build an item from its building json and uid
-typedef mom_anyitem_t mom_item_loader_sig_t (momval_t json, uuid_t uid,
-					     void *data);
+typedef mom_anyitem_t mom_item_loader_sig_t (momval_t json, uuid_t uid);
 // function to fill an item from its filling json
-typedef void mom_item_filler_sig_t (mom_anyitem_t * itm, momval_t json,
-				    void *data);
+typedef void mom_item_filler_sig_t (mom_anyitem_t * itm, momval_t json);
+// function to scan an item
+typedef void mom_item_scan_sig_t (struct mom_dumper_st *dmp,
+				  mom_anyitem_t * itm);
 // function to get the building json of an item
-typedef momval_t mom_item_get_build_sig_t (mom_anyitem_t * itm, void *data);
+typedef momval_t mom_item_get_build_sig_t (mom_anyitem_t * itm);
 // function to get the filling json of an item
-typedef momval_t mom_item_get_fill_sig_t (mom_anyitem_t * itm, void *data);
+typedef momval_t mom_item_get_fill_sig_t (mom_anyitem_t * itm);
 
+
+// the item type FOO is described by momitype_FOO of following type:
 struct momitemtypedescr_st
 {
   const char *ityp_name;
   mom_item_loader_sig_t *ityp_loader;
   mom_item_filler_sig_t *ityp_filler;
+  mom_item_scan_sig_t *ityp_scan;
   mom_item_get_build_sig_t *ityp_getbuild;
   mom_item_get_fill_sig_t *ityp_getfill;
 };
@@ -486,4 +491,23 @@ extern const char monimelt_GPL_friendly_module[];
 extern void monimelt_module_init (const char *marg);
 // modules may also define
 extern GOptionGroup *monimelt_module_option_group (const char *modname);
+
+
+//// dumper, see file dump.c
+struct mom_dumper_st
+{
+  unsigned dmp_magic;		/* always DUMPER_MAGIC */
+  unsigned dmp_count;
+  unsigned dmp_size;
+  unsigned dmp_state;
+  pthread_mutex_t dmp_mtx;
+  struct mom_dumperqueue_st *dmp_qfirst;
+  struct mom_dumperqueue_st *dmp_qlast;
+  mom_anyitem_t **dmp_array;
+};
+
+void mom_dump_initialize (struct mom_dumper_st *dmp);
+
+void mom_dump_add_item (struct mom_dumper_st *dmp, mom_anyitem_t * itm);
+
 #endif /* MONIMELT_INCLUDED_ */

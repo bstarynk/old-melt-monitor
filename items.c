@@ -21,6 +21,38 @@
 #include "monimelt.h"
 
 
+/// for boolean item type descriptor
+static mom_anyitem_t bool_itemloader (momval_t json, uuid_t uid);
+static void bool_itemfiller (mom_anyitem_t * itm, momval_t json);
+static void bool_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm);
+static momval_t bool_itemgetbuild (mom_anyitem_t * itm);
+static momval_t bool_itemgetfill (mom_anyitem_t * itm);
+
+const struct momitemtypedescr_st momitype_bool = {
+  .ityp_name = "bool",
+  .ityp_loader = bool_itemloader,
+  .ityp_filler = bool_itemfiller,
+  .ityp_scan = bool_itemscan,
+  .ityp_getbuild = bool_itemgetbuild,
+  .ityp_getfill = bool_itemgetfill,
+};
+
+/// for json name item type descriptor
+static mom_anyitem_t json_name_itemloader (momval_t json, uuid_t uid);
+static void json_name_itemfiller (mom_anyitem_t * itm, momval_t json);
+static void json_name_itemscan (struct mom_dumper_st *dmp,
+				mom_anyitem_t * itm);
+static momval_t json_name_itemgetbuild (mom_anyitem_t * itm);
+static momval_t json_name_itemgetfill (mom_anyitem_t * itm);
+
+const struct momitemtypedescr_st momitype_json_name = {
+  .ityp_name = "json_name",
+  .ityp_loader = json_name_itemloader,
+  .ityp_filler = json_name_itemfiller,
+  .ityp_scan = json_name_itemscan,
+  .ityp_getbuild = json_name_itemgetbuild,
+  .ityp_getfill = json_name_itemgetfill,
+};
 
 momhash_t
 mom_hash_uuid (uuid_t uid)
@@ -355,4 +387,61 @@ mom_create_named_bool (uuid_t uid, const char *name)
     }
   else
     MONIMELT_FATAL ("invalid boolean item name=%s", name);
+}
+
+
+/// type routine for boolean items
+
+static mom_anyitem_t
+bool_itemloader (momval_t json __attribute__ ((unused)), uuid_t uid)
+{
+  char ustr[40];
+  uuid_unparse (uid, ustr);
+  MONIMELT_FATAL ("invalid call to bool_itemloader %s", ustr);
+}
+
+static void
+bool_itemfiller (mom_anyitem_t * itm, momval_t json)
+{
+}
+
+static void
+bool_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+{
+}
+
+static momval_t
+bool_itemgetbuild (mom_anyitem_t * itm)
+{
+}
+
+static momval_t
+bool_itemgetfill (mom_anyitem_t * itm)
+{
+}
+
+/// type routine for json name items
+static mom_anyitem_t
+json_name_itemloader (momval_t json __attribute__ ((unused)), uuid_t uid)
+{
+}
+
+static void
+json_name_itemfiller (mom_anyitem_t * itm, momval_t json)
+{
+}
+
+static void
+json_name_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+{
+}
+
+static momval_t
+json_name_itemgetbuild (mom_anyitem_t * itm)
+{
+}
+
+static momval_t
+json_name_itemgetfill (mom_anyitem_t * itm)
+{
 }
