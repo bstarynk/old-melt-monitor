@@ -81,6 +81,25 @@ mom_value_hash (const momval_t v)
 
 
 int
+mom_item_cmp (const mom_anyitem_t * l, const mom_anyitem_t * r)
+{
+  if (l == r)
+    return 0;
+  if (!l)
+    return -1;
+  if (!r)
+    return 1;
+  return memcmp (l->i_uuid, r->i_uuid, sizeof (uuid_t));
+}
+
+int
+mom_itemptr_cmp (const void *l, const void *r)
+{
+  return mom_item_cmp (*(const mom_anyitem_t **) l,
+		       *(const mom_anyitem_t **) r);
+}
+
+int
 mom_value_cmp (const momval_t l, const momval_t r)
 {
   if (l.ptr == r.ptr)
@@ -396,17 +415,230 @@ mom_make_double (double x)
   return dv;
 }
 
-const momitemset_t *
-mom_make_item_set_til_nil (momval_t firstitm, ...)
+static inline void
+update_seqitem_hash (struct momseqitem_st *si)
 {
-#warning mom_make_item_set_til_nil unimplemented
-  MONIMELT_FATAL ("unimplemented mom_make_item_set_til_nil");
+  unsigned slen = si->slen;
+  momhash_t h = (unsigned) 11 * si->typnum + 31 * slen;
+  for (unsigned ix = 0; ix < slen; ix++)
+    {
+      mom_anyitem_t *itm = si->itemseq[ix];
+      h = (23473 * ix + 43499 * h) ^ (itm ? (itm->i_hash) : 43403);
+    }
+  if (MONIMELT_UNLIKELY (!h))
+    h = (si->typnum + 13 * slen) | 1;
+  si->hash = h;
 }
 
+const momitemset_t *
+mom_make_item_set_til_nil (momval_t first, ...)
+{
+  va_list args;
+  momval_t val = MONIMELT_NULLV;
+  unsigned siz = 0, ix = 0;
+  momitemset_t *iset = NULL;
+  val = first;
+  va_start (args, first);
+  while (val.ptr != NULL)
+    {
+      switch (*val.ptype)
+	{
+	case momty_itemset:
+	case momty_itemtuple:
+	  siz += val.pseqitm->slen;
+	  continue;
+	default:
+	  if (*val.ptype > momty__itemlowtype)
+	    siz++;
+	}
+      val = va_arg (args, momval_t);
+    }
+  va_end (args);
+  iset = GC_MALLOC (sizeof (momitemset_t) + siz * sizeof (mom_anyitem_t *));
+  if (MONIMELT_UNLIKELY (!iset))
+    MONIMELT_FATAL ("failed to allocate set of size %d", (int) siz);
+  memset (iset, 0, sizeof (momitemset_t) + siz * sizeof (mom_anyitem_t *));
+  siz = 0;
+  val = first;
+  va_start (args, first);
+  while (val.ptr != NULL)
+    {
+      switch (*val.ptype)
+	{
+	case momty_itemset:
+	case momty_itemtuple:
+	  {
+	    momseqitem_t *subsi = val.pseqitm;
+	    unsigned subslen = subsi->slen;
+	    for (unsigned j = 0; j < subslen; j++)
+	      if (subsi->itemseq[j])
+		iset->itemseq[ix++] = subsi->itemseq[j];
+	  }
+	  break;
+	default:
+	  if (*val.ptype > momty__itemlowtype)
+	    iset->itemseq[ix++] = val.panyitem;
+	  break;
+	}
+      val = va_arg (args, momval_t);
+    }
+  va_end (args);
+  qsort (iset->itemseq, siz, sizeof (mom_anyitem_t *), mom_itemptr_cmp);
+  bool shrink = false;
+  for (unsigned ix = 0; siz > 0 && ix + 1 < siz; ix++)
+    {
+      if (iset->itemseq[ix] == iset->itemseq[ix + 1])
+	{
+	  shrink = true;
+	  for (unsigned j = ix; j + 1 < siz; j++)
+	    iset->itemseq[j] = iset->itemseq[j + 1];
+	  iset->itemseq[siz - 1] = NULL;
+	  siz--;
+	}
+    }
+  iset->typnum = momty_itemset;
+  update_seqitem_hash (iset);
+  if (MONIMELT_UNLIKELY (shrink))
+    {
+      momitemset_t *newiset =
+	GC_MALLOC (sizeof (momitemset_t) + siz * sizeof (mom_anyitem_t *));
+      if (newiset)
+	{
+	  memcpy (newiset, iset,
+		  sizeof (momitemset_t) + siz * sizeof (mom_anyitem_t *));
+	  GC_FREE (iset);
+	  iset = newiset;
+	}
+    }
+  return iset;
+}
+
+const momitemset_t *
+mom_make_item_set_sized (unsigned siz, ...)
+{
+  va_list args;
+  momval_t val = MONIMELT_NULLV;
+  unsigned ix = 0, count = 0;
+  momitemset_t *iset = NULL;
+  bool shrink = false;
+  iset = GC_MALLOC (sizeof (momitemset_t) + siz * sizeof (mom_anyitem_t *));
+  if (MONIMELT_UNLIKELY (!iset))
+    MONIMELT_FATAL ("failed to build set of size %d", (int) siz);
+  memset (iset, 0, sizeof (momitemset_t) + siz * sizeof (mom_anyitem_t *));
+  va_start (args, siz);
+  for (ix = 0; ix < siz; ix++)
+    {
+      mom_anyitem_t *itm = va_arg (args, mom_anyitem_t *);
+      if (itm && itm->typnum >= momty__itemlowtype)
+	iset->itemseq[count++] = itm;
+    }
+  va_end (args);
+  shrink = count < siz;
+  qsort (iset->itemseq, count, sizeof (mom_anyitem_t *), mom_itemptr_cmp);
+  for (unsigned ix = 0; count > 0 && ix + 1 < count; ix++)
+    {
+      if (iset->itemseq[ix] == iset->itemseq[ix + 1])
+	{
+	  shrink = true;
+	  for (unsigned j = ix; j + 1 < count; j++)
+	    iset->itemseq[j] = iset->itemseq[j + 1];
+	  iset->itemseq[siz - 1] = NULL;
+	  count--;
+	}
+    }
+  iset->typnum = momty_itemset;
+  update_seqitem_hash (iset);
+  if (MONIMELT_UNLIKELY (shrink))
+    {
+      momitemset_t *newiset =
+	GC_MALLOC (sizeof (momitemset_t) + siz * sizeof (mom_anyitem_t *));
+      if (newiset)
+	{
+	  memcpy (newiset, iset,
+		  sizeof (momitemset_t) + siz * sizeof (mom_anyitem_t *));
+	  GC_FREE (iset);
+	  iset = newiset;
+	}
+    }
+  return iset;
+}
 
 const momitemtuple_t *
-mom_make_item_tuple_til_nil (momval_t firstitm, ...)
+mom_make_item_tuple_til_nil (momval_t first, ...)
 {
-#warning mom_make_item_tuple_til_nil unimplemented
-  MONIMELT_FATAL ("unimplemented mom_make_item_tuple_til_nil");
+  va_list args;
+  momval_t val = MONIMELT_NULLV;
+  unsigned siz = 0, ix = 0;
+  momitemtuple_t *itup = NULL;
+  val = first;
+  va_start (args, first);
+  while (val.ptr != NULL)
+    {
+      switch (*val.ptype)
+	{
+	case momty_itemset:
+	case momty_itemtuple:
+	  siz += val.pseqitm->slen;
+	  continue;
+	default:
+	  if (*val.ptype > momty__itemlowtype)
+	    siz++;
+	}
+      val = va_arg (args, momval_t);
+    }
+  va_end (args);
+  itup = GC_MALLOC (sizeof (momitemtuple_t) + siz * sizeof (mom_anyitem_t *));
+  if (MONIMELT_UNLIKELY (!itup))
+    MONIMELT_FATAL ("failed to allocate tuple of size %d", (int) siz);
+  memset (itup, 0, sizeof (momitemtuple_t) + siz * sizeof (mom_anyitem_t *));
+  siz = 0;
+  val = first;
+  va_start (args, first);
+  while (val.ptr != NULL)
+    {
+      switch (*val.ptype)
+	{
+	case momty_itemset:
+	case momty_itemtuple:
+	  {
+	    momseqitem_t *subsi = val.pseqitm;
+	    unsigned subslen = subsi->slen;
+	    for (unsigned j = 0; j < subslen; j++)
+	      itup->itemseq[ix++] = subsi->itemseq[j];
+	  }
+	  break;
+	default:
+	  if (*val.ptype > momty__itemlowtype)
+	    itup->itemseq[ix++] = val.panyitem;
+	  break;
+	}
+      val = va_arg (args, momval_t);
+    }
+  va_end (args);
+  itup->typnum = momty_itemtuple;
+  update_seqitem_hash (itup);
+  return itup;
+}
+
+const momitemset_t *
+mom_make_item_tuple_sized (unsigned siz, ...)
+{
+  va_list args;
+  momval_t val = MONIMELT_NULLV;
+  unsigned ix = 0;
+  momitemtuple_t *itup = NULL;
+  itup = GC_MALLOC (sizeof (momitemtuple_t) + siz * sizeof (mom_anyitem_t *));
+  if (MONIMELT_UNLIKELY (!itup))
+    MONIMELT_FATAL ("failed to build tuple of size %d", (int) siz);
+  memset (itup, 0, sizeof (momitemtuple_t) + siz * sizeof (mom_anyitem_t *));
+  va_start (args, siz);
+  for (ix = 0; ix < siz; ix++)
+    {
+      mom_anyitem_t *itm = va_arg (args, mom_anyitem_t *);
+      itup->itemseq[ix] = itm;
+    }
+  va_end (args);
+  itup->typnum = momty_itemtuple;
+  update_seqitem_hash (itup);
+  return itup;
 }

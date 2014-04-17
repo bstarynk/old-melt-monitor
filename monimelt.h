@@ -285,6 +285,7 @@ mom_value_as_int (momval_t val)
 
 const momint_t *mom_make_int (intptr_t i);
 
+int mom_item_cmp (const mom_anyitem_t * l, const mom_anyitem_t * r);
 int mom_value_cmp (const momval_t l, const momval_t r);
 momhash_t mom_value_hash (const momval_t v);
 
@@ -456,10 +457,16 @@ const momjsonarray_t *mom_make_json_array_count (unsigned count,
 const momjsonarray_t *mom_make_json_array_til_nil (momval_t, ...)
   __attribute__ ((sentinel));
 
+// make a set from items, or sets, or tuples
 const momitemset_t *mom_make_item_set_til_nil (momval_t, ...)
   __attribute__ ((sentinel));
+// make an tuple from items, or sets, or tuples
 const momitemtuple_t *mom_make_item_tuple_til_nil (momval_t, ...)
   __attribute__ ((sentinel));
+// make a set of given number of items, removing duplicates...
+const momitemset_t *mom_make_item_set_sized (unsigned siz, ...);
+// make a tuple of given number of items
+const momitemtuple_t *mom_make_item_tuple_sized (unsigned siz, ...);
 
 ///// JSON parsing:
 struct jsonparser_st
