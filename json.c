@@ -367,7 +367,7 @@ again:
       compute_json_array_hash (jarr);
       jarr->typnum = momty_jsonarray;
       GC_FREE (arrptr);
-      return (momval_t) jarr;
+      return (momval_t) (const struct momjsonarray_st *) jarr;
     }
   else if (jp->jsonp_c == '{')
     {
@@ -559,7 +559,7 @@ jsonentry_cmp (const void *l, const void *r)
   return mom_json_cmp (le->je_name, re->je_name);
 }
 
-momjsonobject_t *
+const momjsonobject_t *
 mom_make_json_object (int firstdir, ...)
 {
   va_list args;

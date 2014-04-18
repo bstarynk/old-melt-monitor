@@ -621,7 +621,6 @@ mom_scan_any_item_data (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
     mom_dump_scan_value (dmp, itm->i_content);
 }
 
-
 momit_json_name_t *
 mom_make_item_json_name_of_uuid (uuid_t uid, const char *name)
 {

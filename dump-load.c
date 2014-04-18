@@ -231,7 +231,8 @@ mom_dump_scan_value (struct mom_dumper_st *dmp, const momval_t val)
 static momval_t raw_dump_emit_json (struct mom_dumper_st *dmp,
 				    const momval_t val);
 static const momjsonarray_t *
-jsonarray_emit_itemseq (struct mom_dumper_st *dmp, struct momseqitem_st *si)
+jsonarray_emit_itemseq (struct mom_dumper_st *dmp,
+			const struct momseqitem_st *si)
 {
   unsigned slen = si->slen;
   if (slen <= 8)
@@ -256,7 +257,8 @@ jsonarray_emit_itemseq (struct mom_dumper_st *dmp, struct momseqitem_st *si)
 }
 
 static const momjsonarray_t *
-jsonarray_emit_nodesons (struct mom_dumper_st *dmp, struct momnode_st *nd)
+jsonarray_emit_nodesons (struct mom_dumper_st *dmp,
+			 const struct momnode_st *nd)
 {
   unsigned slen = nd->slen;
   if (slen <= 8)
@@ -399,4 +401,47 @@ mom_dump_emit_json (struct mom_dumper_st * dmp, const momval_t val)
   jsval = raw_dump_emit_json (dmp, val);
   pthread_mutex_unlock (&dmp->dmp_mtx);
   return jsval;
+}
+
+momval_t
+mom_attributes_emit_json (struct mom_dumper_st * dmp,
+			  struct mom_itemattributes_st * iat)
+{
+  if (!iat)
+    return MONIMELT_NULLV;
+  momusize_t nbat = iat->nbattr;
+  if (nbat < 8)
+    {
+      momval_t jatv[8];
+      for (unsigned ix = 0; ix < nbat; ix++)
+	jatv[ix] =
+	  (momval_t) mom_make_json_object
+	  (MOMJSON_ENTRY, mom_item__attr,
+	   raw_dump_emit_json (dmp, (momval_t) iat->itattrtab[ix].aten_itm),
+	   MOMJSON_ENTRY, mom_item__val, raw_dump_emit_json (dmp,
+							     iat->itattrtab
+							     [ix].aten_val),
+	   MOMJSON_END);
+      return (momval_t) mom_make_json_array_count (nbat, jatv);
+    }
+  else
+    {
+      momval_t *jatarr = GC_MALLOC (nbat * sizeof (momval_t));
+      if (MONIMELT_UNLIKELY (!jatarr))
+	MONIMELT_FATAL ("failed to allocate json array for %d attributes",
+			(int) nbat);
+      memset (jatarr, 0, nbat * sizeof (momval_t));
+      for (unsigned ix = 0; ix < nbat; ix++)
+	jatarr[ix] =
+	  (momval_t) mom_make_json_object
+	  (MOMJSON_ENTRY, mom_item__attr,
+	   raw_dump_emit_json (dmp, (momval_t) iat->itattrtab[ix].aten_itm),
+	   MOMJSON_ENTRY, mom_item__val, raw_dump_emit_json (dmp,
+							     iat->itattrtab
+							     [ix].aten_val),
+	   MOMJSON_END);
+      momval_t res = (momval_t) mom_make_json_array_count (nbat, jatarr);
+      GC_FREE (jatarr);
+      return res;
+    }
 }

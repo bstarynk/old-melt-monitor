@@ -467,7 +467,7 @@ mom_make_item_set_til_nil (momval_t first, ...)
 	case momty_itemset:
 	case momty_itemtuple:
 	  {
-	    momseqitem_t *subsi = val.pseqitm;
+	    const momseqitem_t *subsi = val.pseqitm;
 	    unsigned subslen = subsi->slen;
 	    for (unsigned j = 0; j < subslen; j++)
 	      if (subsi->itemseq[j])
@@ -599,7 +599,7 @@ mom_make_item_tuple_til_nil (momval_t first, ...)
 	case momty_itemset:
 	case momty_itemtuple:
 	  {
-	    momseqitem_t *subsi = val.pseqitm;
+	    const momseqitem_t *subsi = val.pseqitm;
 	    unsigned subslen = subsi->slen;
 	    for (unsigned j = 0; j < subslen; j++)
 	      itup->itemseq[ix++] = subsi->itemseq[j];

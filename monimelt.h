@@ -97,18 +97,19 @@ union momvalueptr_un
   const momfloat_t *pfloat;
   const momstring_t *pstring;
   mom_anyitem_t *panyitem;
-  struct momjsonarray_st *pjsonarr;
-  struct momjsonobject_st *pjsonobj;
+  const struct momjsonarray_st *pjsonarr;
+  const struct momjsonobject_st *pjsonobj;
   struct momjsonitem_st *pjsonitem;
   struct momboolitem_st *pboolitem;
-  struct momnode_st *pnode;
-  struct momnode_st *pclosure;
-  struct momseqitem_st *pseqitm;
-  struct momseqitem_st *pitemset;
-  struct momseqitem_st *pitemtuple;
+  const struct momnode_st *pnode;
+  const struct momnode_st *pclosure;
+  const struct momseqitem_st *pseqitm;
+  const struct momseqitem_st *pitemset;
+  const struct momseqitem_st *pitemtuple;
 };
 
 struct mom_dumper_st;
+void mom_dumper_initialize (struct mom_dumper_st *dmp);
 
 // function to load and build an item from its building json and uid
 typedef mom_anyitem_t *mom_item_loader_sig_t (momval_t json, uuid_t uid);
@@ -486,7 +487,8 @@ mom_jsonob_get (const momval_t jsobv, const momval_t namev)
   return mom_jsonob_get_def (jsobv, namev, MONIMELT_NULLV);
 }
 
-momjsonobject_t *mom_make_json_object (int, ...) __attribute__ ((sentinel));
+const momjsonobject_t *mom_make_json_object (int, ...)
+  __attribute__ ((sentinel));
 enum momjsondirective_en
 {
   MOMJSON__END,

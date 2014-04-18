@@ -4,8 +4,11 @@
 #endif /*MONIMELT_NAMED*/
 
 // MONIMELT_NAMED(Name,Type,Uidstr)
+ MONIMELT_NAMED (attr, json_name, "e29d6d73-6a40-41bd-bfd4-df5183ffc764")
+ MONIMELT_NAMED (attributes, json_name, "b29bc8a3-1517-4a28-b566-39e447c80250")
  MONIMELT_NAMED (closure, json_name, "f8a3568d-ae4a-4486-a362-577e0ec91474")
  MONIMELT_NAMED (conn, json_name, "03c1ace3-3293-43bb-9541-19b4357cbc3c")
+ MONIMELT_NAMED (content, json_name, "9a05b9fa-17d3-4294-9253-e67406e52d4a")
  MONIMELT_NAMED (false, bool, "69cbd072-7d8e-4f62-bef4-5cd0cc847578")
  MONIMELT_NAMED (itemref, json_name, "18d95093-b523-4ee1-8bca-ded252e91235")
  MONIMELT_NAMED (json_array, json_name, "d7a1e1a4-f401-436a-887f-980f66643a24")
@@ -20,6 +23,7 @@
  MONIMELT_NAMED (true, bool, "3b19b433-29b0-473e-9827-7756ee219573")
  MONIMELT_NAMED (tuple, json_name, "c52ead7c-63bf-4e65-a873-486de4e4db41")
  MONIMELT_NAMED (uuid, json_name, "a75bef70-596b-4fc5-99ca-e60b5287feec")
+ MONIMELT_NAMED (val, json_name, "d8aa61cc-2543-4659-bff9-2b0bfc0f779a")
 
-// end of 16 named items
+// end of 20 named items
 #undef MONIMELT_NAMED
