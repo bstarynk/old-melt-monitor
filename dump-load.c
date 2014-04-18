@@ -1,4 +1,4 @@
-// file dump.c
+// file dump-load.c
 
 /**   Copyright (C)  2014 Free Software Foundation, Inc.
     MONIMELT is a monitor for MELT - see http://gcc-melt.org/

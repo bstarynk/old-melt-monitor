@@ -111,7 +111,7 @@ union momvalueptr_un
 struct mom_dumper_st;
 
 // function to load and build an item from its building json and uid
-typedef mom_anyitem_t mom_item_loader_sig_t (momval_t json, uuid_t uid);
+typedef mom_anyitem_t *mom_item_loader_sig_t (momval_t json, uuid_t uid);
 // function to fill an item from its filling json
 typedef void mom_item_filler_sig_t (mom_anyitem_t * itm, momval_t json);
 // function to scan an item

@@ -22,7 +22,7 @@
 
 
 /// for boolean item type descriptor
-static mom_anyitem_t bool_itemloader (momval_t json, uuid_t uid);
+static mom_anyitem_t *bool_itemloader (momval_t json, uuid_t uid);
 static void bool_itemfiller (mom_anyitem_t * itm, momval_t json);
 static void bool_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm);
 static momval_t bool_itemgetbuild (mom_anyitem_t * itm);
@@ -39,7 +39,7 @@ const struct momitemtypedescr_st momitype_bool = {
 };
 
 /// for json name item type descriptor
-static mom_anyitem_t json_name_itemloader (momval_t json, uuid_t uid);
+static mom_anyitem_t *json_name_itemloader (momval_t json, uuid_t uid);
 static void json_name_itemfiller (mom_anyitem_t * itm, momval_t json);
 static void json_name_itemscan (struct mom_dumper_st *dmp,
 				mom_anyitem_t * itm);
@@ -602,6 +602,26 @@ end:
 }
 
 
+void
+mom_scan_any_item_data (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+{
+  if (MONIMELT_UNLIKELY (!itm || itm->typnum <= momty__itemlowtype))
+    return;
+  struct mom_itemattributes_st *iat = itm->i_attrs;
+  if (iat)
+    {
+      momusize_t nba = iat->nbattr;
+      for (unsigned ix = 0; ix < nba; ix++)
+	{
+	  mom_dump_add_item (dmp, iat->itattrtab[ix].aten_itm);
+	  mom_dump_scan_value (dmp, iat->itattrtab[ix].aten_val);
+	}
+    }
+  if (itm->i_content.ptr)
+    mom_dump_scan_value (dmp, itm->i_content);
+}
+
+
 momit_json_name_t *
 mom_make_item_json_name_of_uuid (uuid_t uid, const char *name)
 {
@@ -646,10 +666,10 @@ mom_create_named_bool (uuid_t uid, const char *name)
     MONIMELT_FATAL ("invalid boolean item name=%s", name);
 }
 
-
+////////////////////////////////////////////////////////////////
 /// type routine for boolean items
 
-static mom_anyitem_t
+static mom_anyitem_t *
 bool_itemloader (momval_t json __attribute__ ((unused)), uuid_t uid)
 {
   char ustr[40];
@@ -660,11 +680,13 @@ bool_itemloader (momval_t json __attribute__ ((unused)), uuid_t uid)
 static void
 bool_itemfiller (mom_anyitem_t * itm, momval_t json)
 {
+#warning bool_itemfiller should fill the common data
 }
 
 static void
 bool_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
+  mom_scan_any_item_data (dmp, itm);
 }
 
 static momval_t
@@ -677,8 +699,9 @@ bool_itemgetfill (mom_anyitem_t * itm)
 {
 }
 
+////////////////////////////////////////////////////////////////
 /// type routine for json name items
-static mom_anyitem_t
+static mom_anyitem_t *
 json_name_itemloader (momval_t json __attribute__ ((unused)), uuid_t uid)
 {
 }
@@ -691,6 +714,8 @@ json_name_itemfiller (mom_anyitem_t * itm, momval_t json)
 static void
 json_name_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
+  mom_scan_any_item_data (dmp, itm);
+  // no need to scan ij_namejson, it is a string
 }
 
 static momval_t

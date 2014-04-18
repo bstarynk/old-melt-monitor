@@ -446,3 +446,25 @@ mom_replace_named_item (const char *name, mom_anyitem_t * item)
   add_new_name_entry (namestr, item);
   pthread_mutex_unlock (&glob_mtx);
 }
+
+
+void
+mom_dump_global_state (const char *sqlpath)
+{
+  struct mom_dumper_st dumper;
+  memset (&dumper, 0, sizeof (dumper));
+  mom_dumper_initialize (&dumper);
+  // add global data
+  {
+    pthread_mutex_lock (&glob_mtx);
+    /// add the named items
+    for (unsigned ix = 0; ix < glob_dict.name_size; ix++)
+      {
+	mom_anyitem_t *itm = glob_dict.name_hashitem[ix].nme_itm;
+	if (!itm || (void *) itm == MONIMELT_EMPTY)
+	  continue;
+	mom_dump_add_item (&dumper, itm);
+      }
+    pthread_mutex_unlock (&glob_mtx);
+  }
+}
