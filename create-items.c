@@ -34,10 +34,12 @@ mom_create_items (void)
 #undef true
 #undef false
   // create & register the named items
-#define MONIMELT_NAMED(Name,Type,Uids) do {		\
+#define MONIMELT_NAMED(Name,Type,Uidstr) do {		\
   memset(&uid, 0, sizeof(uid));				\
-  uuid_parse(Uids, uid);				\
+  uuid_parse (Uidstr, uid);				\
   mom_item__##Name = mom_create__##Type (Name,uid);	\
+  ((mom_anyitem_t*)mom_item__##Name)->i_space		\
+    = MONIMELT_SPACE_ROOT;				\
   mom_register_new_name_item				\
     (#Name, (mom_anyitem_t *)mom_item__##Name);		\
   } while(0);

@@ -20,6 +20,11 @@
 
 #include "monimelt.h"
 
+/// declare the named items
+#define MONIMELT_NAMED(Name,Type,Uid) \
+  extern momit_##Type##_t* mom_item__##Name;
+#include "monimelt-names.h"
+
 enum dumpstate_en
 {
   dus_none = 0,
@@ -166,6 +171,8 @@ mom_dump_scan_value (struct mom_dumper_st *dmp, const momval_t val)
   if (MONIMELT_UNLIKELY (dmp->dmp_magic != DUMPER_MAGIC))
     MONIMELT_FATAL ("bad dumper@%p when dumping value @%p", (void *) dmp,
 		    val.ptr);
+  if (MONIMELT_UNLIKELY(dmp->dmp_state != dus_scan))
+    MONIMELT_FATAL ("invalid dump state #%d", (int) dmp->dmp_state);
   unsigned typ = *val.ptype;
   switch (typ)
     {
@@ -218,4 +225,83 @@ mom_dump_scan_value (struct mom_dumper_st *dmp, const momval_t val)
 	mom_dump_add_item (dmp, val.panyitem);
       return;
     }
+}
+
+static momjsonarray_t*jsonarray_emit_itemseq(struct mom_dumper_st*dmp, struct momseqitem_st*si)
+{
+  unsigned slen = si->slen;
+  if (slen<=8) {
+    momval_t tab[8] = {MONIMELT_NULLV};
+    for (unsigned ix=0; ix<slen; ix++)
+      tab[ix] = mom_dump_emit_json(dmp, (momval_t)(si->itemseq[ix]));
+    return mom_make_json_array_count(slen, tab);
+  }
+  else {
+    momval_t *arr = GC_MALLOC (sizeof(momval_t)*slen);
+    if (MONIMELT_UNLIKELY(!arr))
+      MONIMELT_FATAL("failed to allocate array of %d", (int)slen);
+    memset (arr, 0, sizeof(momval_t)*slen);
+    for (unsigned ix=0; ix<slen; ix++)
+      arr[ix] = mom_dump_emit_json(dmp, (momval_t)(si->itemseq[ix]));
+    momjsonarray_t* jarr = mom_make_json_array_count(slen, arr);
+    GC_FREE(arr);
+    return jarr;
+  }    
+}
+
+momval_t mom_dump_emit_json (struct mom_dumper_st*dmp, const momval_t val)
+{
+  momval_t jsval = MONIMELT_NULLV;
+  if (MONIMELT_UNLIKELY (!dmp || dmp->dmp_magic != DUMPER_MAGIC))
+    MONIMELT_FATAL ("bad dumper@%p when dumping value @%p", (void *) dmp,
+		    val.ptr);
+  pthread_mutex_lock (&dmp->dmp_mtx);
+  if (MONIMELT_UNLIKELY(dmp->dmp_state != dus_emit))
+    MONIMELT_FATAL ("invalid dump state #%d", (int) dmp->dmp_state);
+  if (!val.ptr) goto end;
+  unsigned typ = *val.ptype;
+  switch (typ)
+    {
+    case momty_int:
+    case momty_float:
+    case momty_string:
+      jsval = val;
+      break;
+    case momty_jsonarray:
+      {
+	jsval = (momval_t)mom_make_json_object
+	  (MOMJSON_ENTRY, mom_item__jtype, mom_item__json_array,
+	   MOMJSON_ENTRY, mom_item__json_array, val,
+	   MOMJSON_END);
+      }
+      break;
+    case momty_jsonobject:
+      {
+	jsval = (momval_t)mom_make_json_object
+	  (MOMJSON_ENTRY, mom_item__jtype, mom_item__json_object,
+	   MOMJSON_ENTRY, mom_item__json_object, val,
+	   MOMJSON_END);
+      }
+      break;
+    case momty_itemset:
+      {
+	jsval = (momval_t)mom_make_json_object
+	  (MOMJSON_ENTRY, mom_item__jtype, mom_item__set,
+	   MOMJSON_ENTRY, mom_item__set, jsonarray_emit_itemseq(dmp, val.pitemset),
+	   MOMJSON_END);
+      }
+      break;
+    case momty_itemtuple:
+      {
+	jsval = (momval_t)mom_make_json_object
+	  (MOMJSON_ENTRY, mom_item__jtype, mom_item__tuple,
+	   MOMJSON_ENTRY, mom_item__tuple, jsonarray_emit_itemseq(dmp, val.pitemtuple),
+	   MOMJSON_END);
+      }
+      break;
+#warning mom_dump_emit_json incomplete for node & items
+    }
+ end:
+  pthread_mutex_unlock (&dmp->dmp_mtx);
+  return jsval;
 }

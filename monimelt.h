@@ -121,7 +121,8 @@ typedef void mom_item_scan_sig_t (struct mom_dumper_st *dmp,
 typedef momval_t mom_item_get_build_sig_t (mom_anyitem_t * itm);
 // function to get the filling json of an item
 typedef momval_t mom_item_get_fill_sig_t (mom_anyitem_t * itm);
-
+// function to destroy an item
+typedef void mom_item_destroy_sig_t (mom_anyitem_t*itm);
 
 // the item type FOO is described by momitype_FOO of following type:
 #define ITEMTYPE_MAGIC 0x5237aed3	/* item type magic 1379380947 */
@@ -134,14 +135,19 @@ struct momitemtypedescr_st
   mom_item_scan_sig_t *ityp_scan;
   mom_item_get_build_sig_t *ityp_getbuild;
   mom_item_get_fill_sig_t *ityp_getfill;
+  mom_item_destroy_sig_t *ityp_destroy;
 };
 struct momitemtypedescr_st *mom_typedescr_array[momty__last];
 
+
+#define SPACE_MAGIC 0x167d68fd /* space magic 377317629 */
 // the space FOO is described by momspace_FOO of following type:
 struct momspacedescr_st
 {
-  const char *space_name;
+  unsigned spa_magic;		/* always SPACE_MAGIC */
+  const char *spa_name;
 };
+#define MONIMELT_SPACE_ROOT 1
 #define MONIMELT_SPACE_MAX 512
 struct momspacedescr_st *mom_spacedescr_array[MONIMELT_SPACE_MAX];
 
@@ -396,6 +402,28 @@ mom_is_jsonable (const momval_t val)
       }
 }
 
+// get the content of an item
+static inline momval_t mom_item_get_content (mom_anyitem_t * itm)
+{
+  momval_t res =  MONIMELT_NULLV;
+  if (!itm || itm->typnum <= momty__itemlowtype)
+	return MONIMELT_NULLV;
+  pthread_mutex_lock (&itm->i_mtx);
+  res = itm->i_content;
+  pthread_mutex_unlock (&itm->i_mtx);
+  return res;
+}
+
+// put the content of an item
+static inline void mom_item_put_content (mom_anyitem_t * itm, momval_t val)
+{
+  if (!itm || itm->typnum <= momty__itemlowtype)
+	return;
+  pthread_mutex_lock (&itm->i_mtx);
+  itm->i_content = val;
+  pthread_mutex_unlock (&itm->i_mtx);
+}
+
 // get one attribute
 momval_t mom_item_get_attr (mom_anyitem_t * itm, mom_anyitem_t * itat);
 
@@ -456,12 +484,13 @@ mom_jsonob_get (const momval_t jsobv, const momval_t namev)
 momjsonobject_t *mom_make_json_object (int, ...) __attribute__ ((sentinel));
 enum momjsondirective_en
 {
-  MOMJSON_END,
+  MOMJSON__END,
   MOMJSON_ENTRY,		/* momval_t nameval, momval_t attrval */
   MOMJSON_STRING,		/* const char*namestr, momval_t attval */
   MOMJSON_COUNTED_ENTRIES,	/* unsigned count, struct mom_jsonentry_st* */
 };
 
+#define MOMJSON_END ((void*)MOMJSON__END)
 // make a JSON array of given count
 const momjsonarray_t *mom_make_json_array (unsigned nbelem, ...);
 const momjsonarray_t *mom_make_json_array_count (unsigned count,
@@ -574,6 +603,9 @@ void mom_dump_add_item (struct mom_dumper_st *dmp, mom_anyitem_t * itm);
 
 // scan a value into a dumper
 void mom_dump_scan_value (struct mom_dumper_st *dmp, const momval_t val);
+
+// give the JSON value to dump the value VAL
+momval_t mom_dump_emit_json (struct mom_dumper_st*dmp, const momval_t val);
 
 ////////////////////////////////////////////////////////////////
 /// global data, managed by functions

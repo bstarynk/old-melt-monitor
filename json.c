@@ -569,7 +569,7 @@ mom_make_json_object (int firstdir, ...)
   // first argument scan, to count the number of entries
   dir = firstdir;
   va_start (args, firstdir);
-  while (dir != MOMJSON_END)
+  while (dir != MOMJSON__END)
     {
       switch (dir)
 	{
@@ -612,7 +612,7 @@ mom_make_json_object (int firstdir, ...)
   dir = firstdir;
   dir = firstdir;
   va_start (args, firstdir);
-  while (dir != MOMJSON_END)
+  while (dir != MOMJSON__END)
     {
       switch (dir)
 	{
