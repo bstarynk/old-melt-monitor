@@ -9,7 +9,10 @@
  MONIMELT_NAMED (json_name_item, json_name, "1fca3bc7-7316-4597-9d9f-ff97bc4f4353")
  MONIMELT_NAMED (json_object, json_name, "11da23ab-3b9e-4ea0-bc13-4a9aa46e2995")
  MONIMELT_NAMED (jtype, json_name, "b9664990-11a1-49a5-bf59-be714626ed6d")
+ MONIMELT_NAMED (node, json_name, "f99051be-30bf-4efc-8c35-b4344c4e6d2c")
+ MONIMELT_NAMED (set, json_name, "3265e0f0-f3f7-4ef1-b157-50ec4fd4ce41")
  MONIMELT_NAMED (true, bool, "3b19b433-29b0-473e-9827-7756ee219573")
+ MONIMELT_NAMED (tuple, json_name, "c52ead7c-63bf-4e65-a873-486de4e4db41")
 
-// end of 6 named items
+// end of 9 named items
 #undef MONIMELT_NAMED
