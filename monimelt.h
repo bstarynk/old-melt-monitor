@@ -587,6 +587,7 @@ void mom_close_json_parser (struct jsonparser_st *jp);
 // parse a JSON value, or else set the error message to *perrmsg
 momval_t mom_parse_json (struct jsonparser_st *jp, char **perrmsg);
 
+#warning should have a struct mom_loader_st and use for all loading
 // load a value from its JSON
 momval_t mom_load_value_json (const momval_t jval);
 
