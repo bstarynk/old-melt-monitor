@@ -561,6 +561,52 @@ mom_make_item_set_sized (unsigned siz, ...)
   return iset;
 }
 
+const momitemset_t *
+mom_make_item_set_from_array (unsigned siz, mom_anyitem_t ** itemarr)
+{
+  unsigned ix = 0, count = 0;
+  momitemset_t *iset = NULL;
+  bool shrink = false;
+  iset = GC_MALLOC (sizeof (momitemset_t) + siz * sizeof (mom_anyitem_t *));
+  if (MONIMELT_UNLIKELY (!iset))
+    MONIMELT_FATAL ("failed to build set of size %d", (int) siz);
+  memset (iset, 0, sizeof (momitemset_t) + siz * sizeof (mom_anyitem_t *));
+  for (ix = 0; ix < siz; ix++)
+    {
+      mom_anyitem_t *itm = itemarr[ix];
+      if (itm && itm->typnum >= momty__itemlowtype)
+	iset->itemseq[count++] = itm;
+    }
+  shrink = count < siz;
+  qsort (iset->itemseq, count, sizeof (mom_anyitem_t *), mom_itemptr_cmp);
+  for (unsigned ix = 0; count > 0 && ix + 1 < count; ix++)
+    {
+      if (iset->itemseq[ix] == iset->itemseq[ix + 1])
+	{
+	  shrink = true;
+	  for (unsigned j = ix; j + 1 < count; j++)
+	    iset->itemseq[j] = iset->itemseq[j + 1];
+	  iset->itemseq[siz - 1] = NULL;
+	  count--;
+	}
+    }
+  iset->typnum = momty_itemset;
+  update_seqitem_hash (iset);
+  if (MONIMELT_UNLIKELY (shrink))
+    {
+      momitemset_t *newiset =
+	GC_MALLOC (sizeof (momitemset_t) + siz * sizeof (mom_anyitem_t *));
+      if (newiset)
+	{
+	  memcpy (newiset, iset,
+		  sizeof (momitemset_t) + siz * sizeof (mom_anyitem_t *));
+	  GC_FREE (iset);
+	  iset = newiset;
+	}
+    }
+  return iset;
+}
+
 const momitemtuple_t *
 mom_make_item_tuple_til_nil (momval_t first, ...)
 {

@@ -465,13 +465,78 @@ mom_load_value_json (const momval_t jval)
 	  }
 	else if (jtypv.panyitem == (mom_anyitem_t *) mom_item__node)
 	  {
+	    momval_t jconnv =
+	      mom_jsonob_get (jval, (momval_t) mom_item__conn);
+	    if (!jconnv.ptr)
+	      return MONIMELT_NULLV;
+	    mom_anyitem_t *connitm =
+	      mom_value_as_item (mom_load_value_json (jconnv));
+	    if (!connitm)
+	      return MONIMELT_NULLV;
+	    momval_t jsonsv =
+	      mom_jsonob_get (jval, (momval_t) mom_item__sons);
+	    unsigned nbsons = mom_json_array_size (jsonsv);
+	    if (nbsons < 8)
+	      {
+		momval_t sontab[8] = { MONIMELT_NULLV };
+		for (unsigned ix = 0; ix < nbsons; ix++)
+		  sontab[ix] =
+		    mom_load_value_json (mom_json_array_nth (jsonsv, ix));
+		return (momval_t) mom_make_node_from_array (connitm, nbsons,
+							    sontab);
+	      }
+	    else
+	      {
+		momval_t *sonarr = GC_MALLOC (sizeof (momval_t) * nbsons);
+		if (MONIMELT_UNLIKELY (!sonarr))
+		  MONIMELT_FATAL ("failed to load %d sons in node",
+				  (unsigned) nbsons);
+		memset (sonarr, 0, sizeof (momval_t) * nbsons);
+		for (unsigned ix = 0; ix < nbsons; ix++)
+		  sonarr[ix] =
+		    mom_load_value_json (mom_json_array_nth (jsonsv, ix));
+		val =
+		  (momval_t) mom_make_node_from_array (connitm, nbsons,
+						       sonarr);
+		GC_FREE (sonarr);
+		return val;
+	      }
 	  }
 	else if (jtypv.panyitem == (mom_anyitem_t *) mom_item__set)
 	  {
-	    momval_t jset = mom_jsonob_get (jval, (momval_t) mom_item__set);
+	    momval_t jsetv = mom_jsonob_get (jval, (momval_t) mom_item__set);
+	    unsigned nbsons = mom_json_array_size (jsetv);
+	    if (nbsons < 8)
+	      {
+		mom_anyitem_t *itemtab[8] = { NULL };
+		for (unsigned ix = 0; ix < nbsons; ix++)
+		  itemtab[ix] =
+		    mom_value_as_item (mom_load_value_json
+				       (mom_json_array_nth (jsetv, ix)));
+		return (momval_t) mom_make_item_set_from_array (nbsons,
+								itemtab);
+	      }
+	    else
+	      {
+		mom_anyitem_t **itemarr =
+		  GC_MALLOC (sizeof (mom_anyitem_t *) * nbsons);
+		if (MONIMELT_UNLIKELY (!itemarr))
+		  MONIMELT_FATAL ("failed to load %d elements in set",
+				  (unsigned) nbsons);
+		memset (itemarr, 0, sizeof (momval_t) * nbsons);
+		for (unsigned ix = 0; ix < nbsons; ix++)
+		  itemarr[ix] =
+		    mom_value_as_item (mom_load_value_json
+				       (mom_json_array_nth (jsetv, ix)));
+		val =
+		  (momval_t) mom_make_item_set_from_array (nbsons, itemarr);
+		GC_FREE (itemarr);
+		return val;
+	      }
 	  }
 	else if (jtypv.panyitem == (mom_anyitem_t *) mom_item__tuple)
 	  {
+#warning incomplete
 	  }
 	else if (jtypv.panyitem == (mom_anyitem_t *) mom_item__json_array)
 	  {

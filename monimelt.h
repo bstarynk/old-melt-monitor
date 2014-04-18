@@ -548,6 +548,9 @@ const momitemtuple_t *mom_make_item_tuple_til_nil (momval_t, ...)
   __attribute__ ((sentinel));
 // make a set of given number of items, removing duplicates...
 const momitemset_t *mom_make_item_set_sized (unsigned siz, ...);
+// make a set of given number of items, removing duplicates...
+const momitemset_t *mom_make_item_set_from_array (unsigned siz,
+						  mom_anyitem_t ** arr);
 // make a tuple of given number of items
 const momitemtuple_t *mom_make_item_tuple_sized (unsigned siz, ...);
 
