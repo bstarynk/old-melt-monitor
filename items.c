@@ -29,6 +29,7 @@ static momval_t bool_itemgetbuild (mom_anyitem_t * itm);
 static momval_t bool_itemgetfill (mom_anyitem_t * itm);
 
 const struct momitemtypedescr_st momitype_bool = {
+  .ityp_magic = ITEMTYPE_MAGIC,
   .ityp_name = "bool",
   .ityp_loader = bool_itemloader,
   .ityp_filler = bool_itemfiller,
@@ -46,6 +47,7 @@ static momval_t json_name_itemgetbuild (mom_anyitem_t * itm);
 static momval_t json_name_itemgetfill (mom_anyitem_t * itm);
 
 const struct momitemtypedescr_st momitype_json_name = {
+  .ityp_magic = ITEMTYPE_MAGIC,
   .ityp_name = "json_name",
   .ityp_loader = json_name_itemloader,
   .ityp_filler = json_name_itemfiller,
@@ -302,6 +304,248 @@ mom_allocate_item (unsigned type, size_t itemsize)
   return mom_allocate_item_with_uuid (type, itemsize, uid);
 }
 
+static inline momval_t
+get_attribute (struct mom_itemattributes_st *attrs, mom_anyitem_t * itat)
+{
+  if (!attrs)
+    return MONIMELT_NULLV;
+  unsigned nbattr = attrs->nbattr;
+  unsigned lo = 0, hi = nbattr, md;
+  while (lo + 3 < hi)
+    {
+      md = (lo + hi) / 2;
+      mom_anyitem_t *curatitm = attrs->itattrtab[md].aten_itm;
+      if (curatitm == itat)
+	return attrs->itattrtab[md].aten_val;
+      else if (mom_item_cmp (itat, curatitm) < 0)
+	hi = md;
+      else
+	lo = md;
+    }
+  for (md = lo; md < hi; md++)
+    {
+      mom_anyitem_t *curatitm = attrs->itattrtab[md].aten_itm;
+      if (curatitm == itat)
+	return attrs->itattrtab[md].aten_val;
+    }
+  return MONIMELT_NULLV;
+}
+
+static struct mom_itemattributes_st *
+put_attribute (struct mom_itemattributes_st *attrs, mom_anyitem_t * itat,
+	       momval_t val)
+{
+  if (MONIMELT_UNLIKELY (!attrs))
+    {
+      if (!itat || !val.ptr || itat->typnum <= momty__itemlowtype)
+	return NULL;
+      unsigned newsize = 3;
+      struct mom_itemattributes_st *newattrs
+	=
+	GC_MALLOC (sizeof (struct mom_itemattributes_st) +
+		   newsize * sizeof (struct mom_attrentry_st));
+      if (MONIMELT_UNLIKELY (!newattrs))
+	MONIMELT_FATAL ("failed to allocate initial attributes of %d",
+			(int) newsize);
+      memset (newattrs, 0,
+	      sizeof (struct mom_itemattributes_st) +
+	      newsize * sizeof (struct mom_attrentry_st));
+      newattrs->nbattr = 1;
+      newattrs->size = newsize;
+      newattrs->itattrtab[0].aten_itm = itat;
+      newattrs->itattrtab[0].aten_val = val;
+      return newattrs;
+    }
+  unsigned nbattr = attrs->nbattr;
+  unsigned size = attrs->size;
+  unsigned lo = 0, hi = nbattr, md;
+  assert (nbattr <= size);
+  while (lo + 3 < hi)
+    {
+      md = (lo + hi) / 2;
+      mom_anyitem_t *curatitm = attrs->itattrtab[md].aten_itm;
+      if (curatitm == itat)
+	{
+	  if (val.ptr)
+	    {
+	      attrs->itattrtab[md].aten_val = val;
+	      return attrs;
+	    }
+	  else
+	    goto remove_at_md;
+	}
+      else if (mom_item_cmp (itat, curatitm) < 0)
+	hi = md;
+      else
+	lo = md;
+    }
+  for (md = lo; md < hi; md++)
+    {
+      mom_anyitem_t *curatitm = attrs->itattrtab[md].aten_itm;
+      if (curatitm == itat)
+	{
+	  if (val.ptr)
+	    {
+	      attrs->itattrtab[md].aten_val = val;
+	      return attrs;
+	    }
+	  else
+	    goto remove_at_md;
+	}
+      else if (mom_item_cmp (curatitm, itat) > 0)
+	{
+	  if (!val.ptr)
+	    return attrs;
+	  /// insert at md
+	  if (nbattr >= size - 1)
+	    {
+	      unsigned newsize = ((5 * nbattr / 4 + 3) | 3) + 1;
+	      struct mom_itemattributes_st *newattrs
+		=
+		GC_MALLOC (sizeof (struct mom_itemattributes_st) +
+			   newsize * sizeof (struct mom_attrentry_st));
+	      if (MONIMELT_UNLIKELY (!newattrs))
+		MONIMELT_FATAL ("failed to grow attributes of %d",
+				(int) newsize);
+	      memset (newattrs, 0,
+		      sizeof (struct mom_itemattributes_st) +
+		      newsize * sizeof (struct mom_attrentry_st));
+	      memcpy (newattrs, attrs,
+		      sizeof (struct mom_itemattributes_st) +
+		      md * sizeof (struct mom_attrentry_st));
+	      newattrs->size = newsize;
+	      newattrs->nbattr = nbattr + 1;
+	      newattrs->itattrtab[md].aten_itm = itat;
+	      newattrs->itattrtab[md].aten_val = val;
+	      memcpy (newattrs->itattrtab + md + 1, attrs->itattrtab + md,
+		      (nbattr - md) * sizeof (struct mom_itemattributes_st));
+	      attrs->size = attrs->nbattr = 0;
+	      GC_FREE (attrs);
+	      return newattrs;
+	    }
+	  else
+	    {
+	      for (unsigned ix = md + 1; ix < nbattr; ix++)
+		attrs->itattrtab[ix] = attrs->itattrtab[ix - 1];
+	      attrs->nbattr = nbattr + 1;
+	      attrs->itattrtab[md].aten_itm = itat;
+	      attrs->itattrtab[md].aten_val = val;
+	      return attrs;
+	    }
+	}
+    }
+  // this should never happen
+  MONIMELT_FATAL ("corrupted attributes @%p", attrs);
+remove_at_md:
+  if (3 * nbattr / 2 + 1 < size && size > 4)
+    {
+      unsigned newsize = ((5 * nbattr / 4 + 3) | 3) + 1;
+      if (newsize < size)
+	{
+	  struct mom_itemattributes_st *newattrs
+	    =
+	    GC_MALLOC (sizeof (struct mom_itemattributes_st) +
+		       newsize * sizeof (struct mom_attrentry_st));
+	  if (MONIMELT_UNLIKELY (!newattrs))
+	    MONIMELT_FATAL ("failed to shrink attributes of %d",
+			    (int) newsize);
+	  memset (newattrs, 0,
+		  sizeof (struct mom_itemattributes_st) +
+		  newsize * sizeof (struct mom_attrentry_st));
+	  memcpy (newattrs, attrs,
+		  sizeof (struct mom_itemattributes_st) +
+		  md * sizeof (struct mom_attrentry_st));
+	  for (unsigned ix = md; ix + 1 < nbattr; ix++)
+	    newattrs->itattrtab[ix] = attrs->itattrtab[ix + 1];
+	  newattrs->size = newsize;
+	  newattrs->nbattr = nbattr - 1;
+	  attrs->size = 0;
+	  attrs->nbattr = 0;
+	  GC_FREE (attrs);
+	  return newattrs;
+	}
+      else
+	{
+	  for (unsigned ix = md; ix + 1 < nbattr; ix++)
+	    attrs->itattrtab[ix] = attrs->itattrtab[ix + 1];
+	  attrs->itattrtab[nbattr].aten_itm = NULL;
+	  attrs->itattrtab[nbattr].aten_val = MONIMELT_NULLV;
+	  attrs->nbattr = nbattr - 1;
+	  return attrs;
+	}
+    }
+}
+
+momval_t
+mom_item_get_attr (mom_anyitem_t * itm, mom_anyitem_t * itat)
+{
+  momval_t res = MONIMELT_NULLV;
+  if (!itm || !itat || itm->typnum <= momty__itemlowtype
+      || itat->typnum <= momty__itemlowtype)
+    return MONIMELT_NULLV;
+  pthread_mutex_lock (&itm->i_mtx);
+  res = get_attribute (itm->i_attrs, itat);
+  pthread_mutex_unlock (&itm->i_mtx);
+  return res;
+}
+
+int
+mom_item_get_several_attrs (mom_anyitem_t * itm, ...)
+{
+  int cnt = 0;
+  if (!itm || itm->typnum <= momty__itemlowtype)
+    return 0;
+  va_list args;
+  pthread_mutex_lock (&itm->i_mtx);
+  va_start (args, itm);
+  for (;;)
+    {
+      mom_anyitem_t *curitat = va_arg (args, mom_anyitem_t *);
+      if (!curitat || curitat->typnum <= momty__itemlowtype)
+	break;
+      momval_t *curvalp = va_arg (args, momval_t *);
+      momval_t curval = get_attribute (itm->i_attrs, curitat);
+      if (curval.ptr)
+	cnt++;
+      if (curvalp)
+	*curvalp = curval;
+      else
+	break;
+    }
+  va_end (args);
+  pthread_mutex_unlock (&itm->i_mtx);
+  return cnt;
+}
+
+void
+mom_item_put_attr (mom_anyitem_t * itm, mom_anyitem_t * itat, momval_t val)
+{
+  if (!itm || itm->typnum <= momty__itemlowtype)
+    return;
+  pthread_mutex_lock (&itm->i_mtx);
+  itm->i_attrs = put_attribute (itm->i_attrs, itat, val);
+  pthread_mutex_unlock (&itm->i_mtx);
+}
+
+void
+mom_item_put_several_attrs (mom_anyitem_t * itm, ...)
+{
+  if (!itm || itm->typnum <= momty__itemlowtype)
+    return;
+  va_list args;
+  pthread_mutex_lock (&itm->i_mtx);
+  va_start (args, itm);
+  for (;;)
+    {
+      mom_anyitem_t *curitat = va_arg (args, mom_anyitem_t *);
+      if (!curitat || curitat->typnum <= momty__itemlowtype)
+	break;
+      momval_t curval = va_arg (args, momval_t);
+      itm->i_attrs = put_attribute (itm->i_attrs, curitat, curval);
+    }
+  va_end (args);
+  pthread_mutex_unlock (&itm->i_mtx);
+}
 
 mom_anyitem_t *
 mom_item_of_uuid (uuid_t uid)

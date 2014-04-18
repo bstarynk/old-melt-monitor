@@ -72,7 +72,6 @@ mom_value_hash (const momval_t v)
     default:
       if (vtype >= momty__itemlowtype)
 	return v.panyitem->i_hash;
-#warning missing hash of nodes, sets, ...
       else
 	MONIMELT_FATAL ("unimplemented hash of val@%p of type #%d", v.ptr,
 			vtype);

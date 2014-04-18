@@ -66,6 +66,8 @@ enum momvaltype_en
   momty__itemlowtype,
   momty_jsonitem,
   momty_boolitem,
+  momty_routineitem,
+  momty_taskletitem,
   momty__last = 1000
 };
 
@@ -100,6 +102,7 @@ union momvalueptr_un
   struct momjsonitem_st *pjsonitem;
   struct momboolitem_st *pboolitem;
   struct momnode_st *pnode;
+  struct momnode_st *pclosure;
   struct momseqitem_st *pseqitm;
   struct momseqitem_st *pitemset;
   struct momseqitem_st *pitemtuple;
@@ -121,8 +124,10 @@ typedef momval_t mom_item_get_fill_sig_t (mom_anyitem_t * itm);
 
 
 // the item type FOO is described by momitype_FOO of following type:
+#define ITEMTYPE_MAGIC 0x5237aed3	/* item type magic 1379380947 */
 struct momitemtypedescr_st
 {
+  unsigned ityp_magic;		/* always ITEMTYPE_MAGIC */
   const char *ityp_name;
   mom_item_loader_sig_t *ityp_loader;
   mom_item_filler_sig_t *ityp_filler;
@@ -131,6 +136,14 @@ struct momitemtypedescr_st
   mom_item_get_fill_sig_t *ityp_getfill;
 };
 struct momitemtypedescr_st *mom_typedescr_array[momty__last];
+
+// the space FOO is described by momspace_FOO of following type:
+struct momspacedescr_st
+{
+  const char *space_name;
+};
+#define MONIMELT_SPACE_MAX 512
+struct momspacedescr_st *mom_spacedescr_array[MONIMELT_SPACE_MAX];
 
 #ifdef __GNUC__
 #define MONIMELT_UNLIKELY(P) __builtin_expect((P),0)
@@ -182,6 +195,7 @@ struct momjsonobject_st
 };
 
 
+// for nodes & closures
 struct momnode_st
 {
   momtynum_t typnum;
@@ -210,7 +224,8 @@ struct mom_attrentry_st
 struct mom_itemattributes_st
 {
   momusize_t nbattr;
-  struct mom_attrentry_st itattrtab[];
+  momusize_t size;
+  struct mom_attrentry_st itattrtab[];	/* of size entries */
 };
 
 struct momanyitem_st
@@ -381,6 +396,23 @@ mom_is_jsonable (const momval_t val)
       }
 }
 
+// get one attribute
+momval_t mom_item_get_attr (mom_anyitem_t * itm, mom_anyitem_t * itat);
+
+// atomically get several attributes : mom_item_get_several_attrs(itm,
+// itat1, &val1, itat2, &val2, ... NULL);
+int mom_item_get_several_attrs (mom_anyitem_t *, ...)
+  __attribute__ ((sentinel));
+
+// put an attribute, if itat or val is nil remove it
+void mom_item_put_attr (mom_anyitem_t * itm, mom_anyitem_t * itat,
+			momval_t val);
+
+// atomically put several attributes : mom_item_get_several_attrs(itm,
+// itat1, &val1, itat2, &val2, ... NULL);
+void mom_item_put_several_attrs (mom_anyitem_t *, ...)
+  __attribute__ ((sentinel));
+
 momit_bool_t *mom_create_named_bool (uuid_t uid, const char *name);
 #define mom_create__bool(Name,Uid) \
   mom_create_named_bool(Uid,#Name)
@@ -410,26 +442,6 @@ mom_item_is_false (mom_anyitem_t * itm)
   extern momit_bool_t *mom_item__false;
   return itm == (mom_anyitem_t *) mom_item__false;
 }
-
-
-/// global data, managed by functions
-// register a new name, nop if existing entry
-void mom_register_new_name_item (const char *name, mom_anyitem_t * item);
-void mom_register_new_name_string (momstring_t * namestr,
-				   mom_anyitem_t * item);
-
-// register a name, replacing any previous entries
-void mom_replace_named_item (const char *name, mom_anyitem_t * item);
-void mom_replace_name_string (momstring_t * namestr, mom_anyitem_t * item);
-
-// get the item of some given name, or else NULL
-mom_anyitem_t *mom_item_named (const char *name);
-// also retrieve the string
-mom_anyitem_t *mom_item_named_with_string (const char *name,
-					   const momstring_t ** pstr);
-
-// get the name of some given item, or else NULL
-const momstring_t *mom_name_of_item (const mom_anyitem_t * item);
 
 // compare values for JSON
 int mom_json_cmp (momval_t l, momval_t r);
@@ -562,4 +574,25 @@ void mom_dump_add_item (struct mom_dumper_st *dmp, mom_anyitem_t * itm);
 
 // scan a value into a dumper
 void mom_dump_scan_value (struct mom_dumper_st *dmp, const momval_t val);
+
+////////////////////////////////////////////////////////////////
+/// global data, managed by functions
+// register a new name, nop if existing entry
+void mom_register_new_name_item (const char *name, mom_anyitem_t * item);
+void mom_register_new_name_string (momstring_t * namestr,
+				   mom_anyitem_t * item);
+
+// register a name, replacing any previous entries
+void mom_replace_named_item (const char *name, mom_anyitem_t * item);
+void mom_replace_name_string (momstring_t * namestr, mom_anyitem_t * item);
+
+// get the item of some given name, or else NULL
+mom_anyitem_t *mom_item_named (const char *name);
+// also retrieve the string
+mom_anyitem_t *mom_item_named_with_string (const char *name,
+					   const momstring_t ** pstr);
+
+// get the name of some given item, or else NULL
+const momstring_t *mom_name_of_item (const mom_anyitem_t * item);
+
 #endif /* MONIMELT_INCLUDED_ */
