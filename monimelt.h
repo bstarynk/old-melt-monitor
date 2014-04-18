@@ -89,6 +89,9 @@ typedef struct momseqitem_st momitemtuple_t;
 typedef struct momanyitem_st mom_anyitem_t;
 typedef struct momjsonitem_st momit_json_name_t;
 typedef struct momboolitem_st momit_bool_t;
+pthread_mutexattr_t mom_normal_mutex_attr;
+pthread_mutexattr_t mom_recursive_mutex_attr;
+
 union momvalueptr_un
 {
   void *ptr;
@@ -119,9 +122,11 @@ typedef void mom_item_filler_sig_t (mom_anyitem_t * itm, momval_t json);
 typedef void mom_item_scan_sig_t (struct mom_dumper_st *dmp,
 				  mom_anyitem_t * itm);
 // function to get the building json of an item
-typedef momval_t mom_item_get_build_sig_t (mom_anyitem_t * itm);
-// function to get the filling json of an item
-typedef momval_t mom_item_get_fill_sig_t (mom_anyitem_t * itm);
+typedef momval_t mom_item_get_build_sig_t (struct mom_dumper_st *dmp,
+					   mom_anyitem_t * itm);
+// function to get the filling json of an item 
+typedef momval_t mom_item_get_fill_sig_t (struct mom_dumper_st *dmp,
+					  mom_anyitem_t * itm);
 // function to destroy an item
 typedef void mom_item_destroy_sig_t (mom_anyitem_t * itm);
 
@@ -151,7 +156,8 @@ struct momspacedescr_st
   void *spa_data;
 };
 #define MONIMELT_SPACE_ROOT 1
-#define MONIMELT_SPACE_MAX 512
+#define MONIMELT_FIRST_USER_SPACE 2
+#define MONIMELT_SPACE_MAX 64
 struct momspacedescr_st *mom_spacedescr_array[MONIMELT_SPACE_MAX];
 struct momstring_st *mom_spacename_array[MONIMELT_SPACE_MAX];
 
@@ -370,6 +376,14 @@ mom_make_string (const char *str)
   return mom_make_string_len (str, -1);
 };
 
+static inline const char *
+mom_string_cstr (momval_t val)
+{
+  if (!val.ptr || *val.ptype != momty_string)
+    return NULL;
+  return val.pstring->cstr;
+}
+
 const momint_t *mom_make_int (intptr_t n);
 void mom_initialize (void);
 void *mom_allocate_item (unsigned type, size_t itemsize);
@@ -505,6 +519,27 @@ const momjsonarray_t *mom_make_json_array_count (unsigned count,
 const momjsonarray_t *mom_make_json_array_til_nil (momval_t, ...)
   __attribute__ ((sentinel));
 
+static inline unsigned
+mom_json_array_size (momval_t val)
+{
+  if (!val.ptr || *val.ptype != momty_jsonarray)
+    return 0;
+  return val.pjsonarr->slen;
+}
+
+static inline const momval_t
+mom_json_array_nth (momval_t val, int rk)
+{
+  if (!val.ptr || *val.ptype != momty_jsonarray)
+    return MONIMELT_NULLV;
+  unsigned slen = val.pjsonarr->slen;
+  if (rk < 0)
+    rk += slen;
+  if (rk >= 0 && rk < slen)
+    return val.pjsonarr->jarrtab[rk];
+  return MONIMELT_NULLV;
+}
+
 // make a set from items, or sets, or tuples
 const momitemset_t *mom_make_item_set_til_nil (momval_t, ...)
   __attribute__ ((sentinel));
@@ -522,6 +557,8 @@ const momnode_t *mom_make_node_til_nil (mom_anyitem_t * conn, ...)
 // make a node of given arity
 const momnode_t *mom_make_node_sized (mom_anyitem_t * conn, unsigned siz,
 				      ...);
+const momnode_t *mom_make_node_from_array (mom_anyitem_t * conn, unsigned siz,
+					   momval_t * arr);
 
 ///// JSON parsing:
 struct jsonparser_st
@@ -547,6 +584,8 @@ void mom_close_json_parser (struct jsonparser_st *jp);
 // parse a JSON value, or else set the error message to *perrmsg
 momval_t mom_parse_json (struct jsonparser_st *jp, char **perrmsg);
 
+// load a value from its JSON
+momval_t mom_load_value_json (const momval_t jval);
 
 ///// JSON output
 struct jsonoutput_st
@@ -614,6 +653,8 @@ void mom_dump_scan_value (struct mom_dumper_st *dmp, const momval_t val);
 // give the JSON value to dump the value VAL
 momval_t mom_dump_emit_json (struct mom_dumper_st *dmp, const momval_t val);
 
+momval_t mom_attributes_emit_json (struct mom_dumper_st *dmp,
+				   struct mom_itemattributes_st *iat);
 ////////////////////////////////////////////////////////////////
 /// global data, managed by functions
 // register a new name, nop if existing entry

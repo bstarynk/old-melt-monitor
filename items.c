@@ -21,12 +21,19 @@
 #include "monimelt.h"
 
 
+/// declare the named items
+#define MONIMELT_NAMED(Name,Type,Uid) \
+  extern momit_##Type##_t* mom_item__##Name;
+#include "monimelt-names.h"
+
 /// for boolean item type descriptor
 static mom_anyitem_t *bool_itemloader (momval_t json, uuid_t uid);
 static void bool_itemfiller (mom_anyitem_t * itm, momval_t json);
 static void bool_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm);
-static momval_t bool_itemgetbuild (mom_anyitem_t * itm);
-static momval_t bool_itemgetfill (mom_anyitem_t * itm);
+static momval_t bool_itemgetbuild (struct mom_dumper_st *dmp,
+				   mom_anyitem_t * itm);
+static momval_t bool_itemgetfill (struct mom_dumper_st *dmp,
+				  mom_anyitem_t * itm);
 
 const struct momitemtypedescr_st momitype_bool = {
   .ityp_magic = ITEMTYPE_MAGIC,
@@ -43,8 +50,10 @@ static mom_anyitem_t *json_name_itemloader (momval_t json, uuid_t uid);
 static void json_name_itemfiller (mom_anyitem_t * itm, momval_t json);
 static void json_name_itemscan (struct mom_dumper_st *dmp,
 				mom_anyitem_t * itm);
-static momval_t json_name_itemgetbuild (mom_anyitem_t * itm);
-static momval_t json_name_itemgetfill (mom_anyitem_t * itm);
+static momval_t json_name_itemgetbuild (struct mom_dumper_st *dmp,
+					mom_anyitem_t * itm);
+static momval_t json_name_itemgetfill (struct mom_dumper_st *dmp,
+				       mom_anyitem_t * itm);
 
 const struct momitemtypedescr_st momitype_json_name = {
   .ityp_magic = ITEMTYPE_MAGIC,
@@ -300,7 +309,7 @@ mom_allocate_item_with_uuid (unsigned type, size_t itemsize, uuid_t uid)
 	resize_items_data (newsiz);
     }
   add_new_item (p);
-  pthread_mutex_init (&p->i_mtx, NULL);
+  pthread_mutex_init (&p->i_mtx, &mom_recursive_mutex_attr);
   GC_REGISTER_FINALIZER (p, mom_finalize_item, NULL, NULL, NULL);
   p->i_content.ptr = NULL;
   pthread_mutex_unlock (&mtx_global_items);
@@ -621,6 +630,16 @@ mom_scan_any_item_data (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
     mom_dump_scan_value (dmp, itm->i_content);
 }
 
+
+void
+mom_fill_any_item_data (mom_anyitem_t * it, momval_t jsob)
+{
+  momval_t jattrs = mom_jsonob_get (jsob, (momval_t) mom_item__attributes);
+  if (jattrs.ptr && *jattrs.ptype == momty_jsonarray)
+    {
+    }
+}
+
 momit_json_name_t *
 mom_make_item_json_name_of_uuid (uuid_t uid, const char *name)
 {
@@ -689,13 +708,20 @@ bool_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 }
 
 static momval_t
-bool_itemgetbuild (mom_anyitem_t * itm)
+bool_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
+  return MONIMELT_NULLV;
 }
 
 static momval_t
-bool_itemgetfill (mom_anyitem_t * itm)
+bool_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
+  return
+    (momval_t) mom_make_json_object
+    (MOMJSON_ENTRY, mom_item__attributes,
+     mom_attributes_emit_json (dmp, itm->i_attrs), MOMJSON_ENTRY,
+     mom_item__content, mom_dump_emit_json (dmp, itm->i_content),
+     MOMJSON_END);
 }
 
 ////////////////////////////////////////////////////////////////
@@ -718,11 +744,11 @@ json_name_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 }
 
 static momval_t
-json_name_itemgetbuild (mom_anyitem_t * itm)
+json_name_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
 }
 
 static momval_t
-json_name_itemgetfill (mom_anyitem_t * itm)
+json_name_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
 }

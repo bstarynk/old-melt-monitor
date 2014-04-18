@@ -52,7 +52,7 @@ mom_dumper_initialize (struct mom_dumper_st *dmp)
   dmp->dmp_size = siz;
   dmp->dmp_count = 0;
   dmp->dmp_qfirst = dmp->dmp_qlast = NULL;
-  pthread_mutex_init (&dmp->dmp_mtx, NULL);
+  pthread_mutex_init (&dmp->dmp_mtx, &mom_recursive_mutex_attr);
   dmp->dmp_magic = DUMPER_MAGIC;
   pthread_mutex_lock (&dmp->dmp_mtx);
   dmp->dmp_state = dus_scan;
@@ -401,6 +401,95 @@ mom_dump_emit_json (struct mom_dumper_st * dmp, const momval_t val)
   jsval = raw_dump_emit_json (dmp, val);
   pthread_mutex_unlock (&dmp->dmp_mtx);
   return jsval;
+}
+
+
+mom_anyitem_t *
+mom_load_item (uuid_t uuid, const char *space)
+{
+  mom_anyitem_t *itm = NULL;
+  itm = mom_item_of_uuid (uuid);
+  if (itm)
+    return itm;
+  for (unsigned spanum = MONIMELT_FIRST_USER_SPACE;
+       spanum < MONIMELT_SPACE_MAX; spanum++)
+    {
+      struct momspacedescr_st *curspa = mom_spacedescr_array[spanum];
+      if (!curspa)
+	continue;
+      if (!strcmp (curspa->spa_name, space))
+	{
+#warning unimplemented load item for external space
+	  MONIMELT_FATAL ("unimplemented load item in external space %s",
+			  space);
+	}
+    }
+  return itm;
+}
+
+momval_t
+mom_load_value_json (const momval_t jval)
+{
+  if (!jval.ptr)
+    return MONIMELT_NULLV;
+  unsigned jtype = *jval.ptype;
+  switch (jtype)
+    {
+    case momty_int:
+    case momty_float:
+    case momty_string:
+      return jval;
+    case momty_jsonobject:
+      {
+	momval_t val = MONIMELT_NULLV;
+	momval_t jtypv = mom_jsonob_get (jval, (momval_t) mom_item__jtype);
+	if (jtypv.panyitem == (mom_anyitem_t *) mom_item__itemref)
+	  {
+	    const char *uidstr =
+	      mom_string_cstr (mom_jsonob_get
+			       (jval, (momval_t) mom_item__uuid));
+	    const char *spastr =
+	      mom_string_cstr (mom_jsonob_get
+			       (jval, (momval_t) mom_item__space));
+	    uuid_t uuid;
+	    memset (uuid, 0, sizeof (uuid));
+	    if (uidstr && !uuid_parse (uidstr, uuid))
+	      {
+		return (momval_t) mom_load_item (uuid, spastr);
+	      }
+	    else
+	      return MONIMELT_NULLV;
+	  }
+	else if (jtypv.panyitem == (mom_anyitem_t *) mom_item__closure)
+	  {
+	  }
+	else if (jtypv.panyitem == (mom_anyitem_t *) mom_item__node)
+	  {
+	  }
+	else if (jtypv.panyitem == (mom_anyitem_t *) mom_item__set)
+	  {
+	    momval_t jset = mom_jsonob_get (jval, (momval_t) mom_item__set);
+	  }
+	else if (jtypv.panyitem == (mom_anyitem_t *) mom_item__tuple)
+	  {
+	  }
+	else if (jtypv.panyitem == (mom_anyitem_t *) mom_item__json_array)
+	  {
+	    return (momval_t) mom_jsonob_get (jval,
+					      (momval_t)
+					      mom_item__json_array);
+	  }
+	else if (jtypv.panyitem == (mom_anyitem_t *) mom_item__json_object)
+	  {
+	    return (momval_t) mom_jsonob_get (jval,
+					      (momval_t)
+					      mom_item__json_object);
+	  }
+	return val;
+      }
+    default:
+      return jval;
+    }
 }
 
 momval_t

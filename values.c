@@ -701,3 +701,20 @@ mom_make_node_sized (mom_anyitem_t * conn, unsigned siz, ...)
   update_node_hash (nd);
   return nd;
 }
+
+const momnode_t *
+mom_make_node_from_array (mom_anyitem_t * conn, unsigned siz, momval_t * arr)
+{
+  momnode_t *nd = NULL;
+  if (!conn || conn->typnum <= momty__itemlowtype)
+    return NULL;
+  nd = GC_MALLOC (sizeof (momnode_t) + siz * sizeof (momval_t));
+  if (MONIMELT_UNLIKELY (!nd))
+    MONIMELT_FATAL ("failed to allocate node of size %d", (int) siz);
+  memset (nd, 0, sizeof (momnode_t) + siz * sizeof (momval_t));
+  for (unsigned ix = 0; ix < siz; ix++)
+    nd->sontab[ix] = arr[ix];
+  nd->typnum = momty_node;
+  update_node_hash (nd);
+  return nd;
+}

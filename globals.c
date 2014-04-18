@@ -460,10 +460,10 @@ mom_dump_global_state (const char *sqlpath)
     /// add the named items
     for (unsigned ix = 0; ix < glob_dict.name_size; ix++)
       {
-	mom_anyitem_t *itm = glob_dict.name_hashitem[ix].nme_itm;
+	const mom_anyitem_t *itm = glob_dict.name_hashitem[ix].nme_itm;
 	if (!itm || (void *) itm == MONIMELT_EMPTY)
 	  continue;
-	mom_dump_add_item (&dumper, itm);
+	mom_dump_add_item (&dumper, (mom_anyitem_t *) itm);
       }
     pthread_mutex_unlock (&glob_mtx);
   }
