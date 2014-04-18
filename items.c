@@ -237,18 +237,21 @@ mom_finalize_item (void *itmad, void *data)
 {
   mom_anyitem_t *itm = itmad;
   struct momitemtypedescr_st *idescr =
-    (itm->typnum>momty__itemlowtype && itm->typnum<momty__last)?
-    mom_typedescr_array[itm->typnum]:NULL;
+    (itm->typnum > momty__itemlowtype && itm->typnum < momty__last) ?
+    mom_typedescr_array[itm->typnum] : NULL;
   pthread_mutex_lock (&mtx_global_items);
   momhash_t itmhash = itm->i_hash;
   assert (itmhash != 0);
-  if (idescr && idescr->ityp_destroy) {
-    if (MONIMELT_UNLIKELY(idescr->ityp_magic != ITEMTYPE_MAGIC))
-      MONIMELT_FATAL("corrupted item type descriptor #%d for finalized item@%p", (int)(itm->typnum), (void*)itm);
-    pthread_mutex_lock (&itm->i_mtx);
-    idescr->ityp_destroy(itm);
-    pthread_mutex_unlock (&itm->i_mtx);
-  }
+  if (idescr && idescr->ityp_destroy)
+    {
+      if (MONIMELT_UNLIKELY (idescr->ityp_magic != ITEMTYPE_MAGIC))
+	MONIMELT_FATAL
+	  ("corrupted item type descriptor #%d for finalized item@%p",
+	   (int) (itm->typnum), (void *) itm);
+      pthread_mutex_lock (&itm->i_mtx);
+      idescr->ityp_destroy (itm);
+      pthread_mutex_unlock (&itm->i_mtx);
+    }
   pthread_mutex_destroy (&itm->i_mtx);
   if (items_data->items_nb < items_data->items_size / 4
       && items_data->items_size > 2000)

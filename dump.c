@@ -171,7 +171,7 @@ mom_dump_scan_value (struct mom_dumper_st *dmp, const momval_t val)
   if (MONIMELT_UNLIKELY (dmp->dmp_magic != DUMPER_MAGIC))
     MONIMELT_FATAL ("bad dumper@%p when dumping value @%p", (void *) dmp,
 		    val.ptr);
-  if (MONIMELT_UNLIKELY(dmp->dmp_state != dus_scan))
+  if (MONIMELT_UNLIKELY (dmp->dmp_state != dus_scan))
     MONIMELT_FATAL ("invalid dump state #%d", (int) dmp->dmp_state);
   unsigned typ = *val.ptype;
   switch (typ)
@@ -227,38 +227,64 @@ mom_dump_scan_value (struct mom_dumper_st *dmp, const momval_t val)
     }
 }
 
-static momjsonarray_t*jsonarray_emit_itemseq(struct mom_dumper_st*dmp, struct momseqitem_st*si)
+static momval_t raw_dump_emit_json (struct mom_dumper_st *dmp,
+				    const momval_t val);
+static const momjsonarray_t *
+jsonarray_emit_itemseq (struct mom_dumper_st *dmp, struct momseqitem_st *si)
 {
   unsigned slen = si->slen;
-  if (slen<=8) {
-    momval_t tab[8] = {MONIMELT_NULLV};
-    for (unsigned ix=0; ix<slen; ix++)
-      tab[ix] = mom_dump_emit_json(dmp, (momval_t)(si->itemseq[ix]));
-    return mom_make_json_array_count(slen, tab);
-  }
-  else {
-    momval_t *arr = GC_MALLOC (sizeof(momval_t)*slen);
-    if (MONIMELT_UNLIKELY(!arr))
-      MONIMELT_FATAL("failed to allocate array of %d", (int)slen);
-    memset (arr, 0, sizeof(momval_t)*slen);
-    for (unsigned ix=0; ix<slen; ix++)
-      arr[ix] = mom_dump_emit_json(dmp, (momval_t)(si->itemseq[ix]));
-    momjsonarray_t* jarr = mom_make_json_array_count(slen, arr);
-    GC_FREE(arr);
-    return jarr;
-  }    
+  if (slen <= 8)
+    {
+      momval_t tab[8] = { MONIMELT_NULLV };
+      for (unsigned ix = 0; ix < slen; ix++)
+	tab[ix] = raw_dump_emit_json (dmp, (momval_t) (si->itemseq[ix]));
+      return mom_make_json_array_count (slen, tab);
+    }
+  else
+    {
+      momval_t *arr = GC_MALLOC (sizeof (momval_t) * slen);
+      if (MONIMELT_UNLIKELY (!arr))
+	MONIMELT_FATAL ("failed to allocate array of %d", (int) slen);
+      memset (arr, 0, sizeof (momval_t) * slen);
+      for (unsigned ix = 0; ix < slen; ix++)
+	arr[ix] = raw_dump_emit_json (dmp, (momval_t) (si->itemseq[ix]));
+      momjsonarray_t *jarr = mom_make_json_array_count (slen, arr);
+      GC_FREE (arr);
+      return jarr;
+    }
 }
 
-momval_t mom_dump_emit_json (struct mom_dumper_st*dmp, const momval_t val)
+static const momjsonarray_t *
+jsonarray_emit_nodesons (struct mom_dumper_st *dmp, struct momnode_st *nd)
+{
+  unsigned slen = nd->slen;
+  if (slen <= 8)
+    {
+      momval_t tab[8] = { MONIMELT_NULLV };
+      for (unsigned ix = 0; ix < slen; ix++)
+	tab[ix] = raw_dump_emit_json (dmp, (nd->sontab[ix]));
+      return mom_make_json_array_count (slen, tab);
+    }
+  else
+    {
+      momval_t *arr = GC_MALLOC (sizeof (momval_t) * slen);
+      if (MONIMELT_UNLIKELY (!arr))
+	MONIMELT_FATAL ("failed to allocate son array of %d", (int) slen);
+      memset (arr, 0, sizeof (momval_t) * slen);
+      for (unsigned ix = 0; ix < slen; ix++)
+	arr[ix] = raw_dump_emit_json (dmp, (nd->sontab[ix]));
+      momjsonarray_t *jarr = mom_make_json_array_count (slen, arr);
+      GC_FREE (arr);
+      return jarr;
+    }
+}
+
+momval_t
+raw_dump_emit_json (struct mom_dumper_st * dmp, const momval_t val)
 {
   momval_t jsval = MONIMELT_NULLV;
-  if (MONIMELT_UNLIKELY (!dmp || dmp->dmp_magic != DUMPER_MAGIC))
-    MONIMELT_FATAL ("bad dumper@%p when dumping value @%p", (void *) dmp,
-		    val.ptr);
-  pthread_mutex_lock (&dmp->dmp_mtx);
-  if (MONIMELT_UNLIKELY(dmp->dmp_state != dus_emit))
-    MONIMELT_FATAL ("invalid dump state #%d", (int) dmp->dmp_state);
-  if (!val.ptr) goto end;
+  if (!val.ptr)
+    goto end;
   unsigned typ = *val.ptype;
   switch (typ)
     {
@@ -269,39 +295,99 @@ momval_t mom_dump_emit_json (struct mom_dumper_st*dmp, const momval_t val)
       break;
     case momty_jsonarray:
       {
-	jsval = (momval_t)mom_make_json_object
+	jsval = (momval_t) mom_make_json_object
 	  (MOMJSON_ENTRY, mom_item__jtype, mom_item__json_array,
-	   MOMJSON_ENTRY, mom_item__json_array, val,
-	   MOMJSON_END);
+	   MOMJSON_ENTRY, mom_item__json_array, val, MOMJSON_END);
       }
       break;
     case momty_jsonobject:
       {
-	jsval = (momval_t)mom_make_json_object
+	jsval = (momval_t) mom_make_json_object
 	  (MOMJSON_ENTRY, mom_item__jtype, mom_item__json_object,
-	   MOMJSON_ENTRY, mom_item__json_object, val,
-	   MOMJSON_END);
+	   MOMJSON_ENTRY, mom_item__json_object, val, MOMJSON_END);
       }
       break;
     case momty_itemset:
       {
-	jsval = (momval_t)mom_make_json_object
+	jsval = (momval_t) mom_make_json_object
 	  (MOMJSON_ENTRY, mom_item__jtype, mom_item__set,
-	   MOMJSON_ENTRY, mom_item__set, jsonarray_emit_itemseq(dmp, val.pitemset),
+	   MOMJSON_ENTRY, mom_item__set, jsonarray_emit_itemseq (dmp,
+								 val.pitemset),
 	   MOMJSON_END);
       }
       break;
     case momty_itemtuple:
       {
-	jsval = (momval_t)mom_make_json_object
+	jsval = (momval_t) mom_make_json_object
 	  (MOMJSON_ENTRY, mom_item__jtype, mom_item__tuple,
-	   MOMJSON_ENTRY, mom_item__tuple, jsonarray_emit_itemseq(dmp, val.pitemtuple),
+	   MOMJSON_ENTRY, mom_item__tuple, jsonarray_emit_itemseq (dmp,
+								   val.pitemtuple),
 	   MOMJSON_END);
       }
       break;
-#warning mom_dump_emit_json incomplete for node & items
+    case momty_node:
+      {
+	jsval = (momval_t) mom_make_json_object
+	  (MOMJSON_ENTRY, mom_item__jtype, mom_item__node,
+	   MOMJSON_ENTRY, mom_item__conn, raw_dump_emit_json (dmp,
+							      (momval_t)
+							      (val.pnode->connitm)),
+	   MOMJSON_ENTRY, mom_item__sons, jsonarray_emit_nodesons (dmp,
+								   val.pnode),
+	   MOMJSON_END);
+      }
+      break;
+    case momty_closure:
+      {
+	jsval = (momval_t) mom_make_json_object
+	  (MOMJSON_ENTRY, mom_item__jtype, mom_item__closure,
+	   MOMJSON_ENTRY, mom_item__conn, raw_dump_emit_json (dmp,
+							      (momval_t)
+							      (val.pnode->connitm)),
+	   MOMJSON_ENTRY, mom_item__sons, jsonarray_emit_nodesons (dmp,
+								   val.pnode),
+	   MOMJSON_END);
+      }
+      break;
+    default:
+      if (typ > momty__itemlowtype && val.panyitem->i_space > 0
+	  && val.panyitem->i_space < MONIMELT_SPACE_MAX
+	  && mom_spacedescr_array[val.panyitem->i_space])
+	{
+	  struct momspacedescr_st *spadecr =
+	    mom_spacedescr_array[val.panyitem->i_space];
+	  char ustr[40];
+	  memset (ustr, 0, sizeof (ustr));
+	  uuid_unparse (val.panyitem->i_uuid, ustr);
+	  if (MONIMELT_UNLIKELY (!found_dumped_item (dmp, val.panyitem)))
+	    MONIMELT_FATAL ("unknown dumped item @%p uuid %s", val.panyitem,
+			    ustr);
+	  if (MONIMELT_UNLIKELY (spadecr->spa_magic != SPACE_MAGIC))
+	    MONIMELT_FATAL ("dumped item @%p uuid %s has bad space #%d",
+			    val.ptr, ustr, val.panyitem->i_space);
+	  jsval = (momval_t) mom_make_json_object
+	    (MOMJSON_ENTRY, mom_item__jtype, mom_item__itemref,
+	     MOMJSON_ENTRY, mom_item__uuid, mom_make_string (ustr),
+	     MOMJSON_ENTRY, mom_item__space,
+	     mom_make_string (spadecr->spa_name), MOMJSON_END);
+	}
+#warning raw_dump_emit_json incomplete for node & items
     }
- end:
+end:
+  return jsval;
+}
+
+momval_t
+mom_dump_emit_json (struct mom_dumper_st * dmp, const momval_t val)
+{
+  momval_t jsval = MONIMELT_NULLV;
+  if (MONIMELT_UNLIKELY (!dmp || dmp->dmp_magic != DUMPER_MAGIC))
+    MONIMELT_FATAL ("bad dumper@%p when dumping value @%p", (void *) dmp,
+		    val.ptr);
+  pthread_mutex_lock (&dmp->dmp_mtx);
+  if (MONIMELT_UNLIKELY (dmp->dmp_state != dus_emit))
+    MONIMELT_FATAL ("invalid dump state #%d", (int) dmp->dmp_state);
+  jsval = raw_dump_emit_json (dmp, val);
   pthread_mutex_unlock (&dmp->dmp_mtx);
   return jsval;
 }

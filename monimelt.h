@@ -122,7 +122,7 @@ typedef momval_t mom_item_get_build_sig_t (mom_anyitem_t * itm);
 // function to get the filling json of an item
 typedef momval_t mom_item_get_fill_sig_t (mom_anyitem_t * itm);
 // function to destroy an item
-typedef void mom_item_destroy_sig_t (mom_anyitem_t*itm);
+typedef void mom_item_destroy_sig_t (mom_anyitem_t * itm);
 
 // the item type FOO is described by momitype_FOO of following type:
 #define ITEMTYPE_MAGIC 0x5237aed3	/* item type magic 1379380947 */
@@ -140,7 +140,7 @@ struct momitemtypedescr_st
 struct momitemtypedescr_st *mom_typedescr_array[momty__last];
 
 
-#define SPACE_MAGIC 0x167d68fd /* space magic 377317629 */
+#define SPACE_MAGIC 0x167d68fd	/* space magic 377317629 */
 // the space FOO is described by momspace_FOO of following type:
 struct momspacedescr_st
 {
@@ -403,11 +403,12 @@ mom_is_jsonable (const momval_t val)
 }
 
 // get the content of an item
-static inline momval_t mom_item_get_content (mom_anyitem_t * itm)
+static inline momval_t
+mom_item_get_content (mom_anyitem_t * itm)
 {
-  momval_t res =  MONIMELT_NULLV;
+  momval_t res = MONIMELT_NULLV;
   if (!itm || itm->typnum <= momty__itemlowtype)
-	return MONIMELT_NULLV;
+    return MONIMELT_NULLV;
   pthread_mutex_lock (&itm->i_mtx);
   res = itm->i_content;
   pthread_mutex_unlock (&itm->i_mtx);
@@ -415,10 +416,11 @@ static inline momval_t mom_item_get_content (mom_anyitem_t * itm)
 }
 
 // put the content of an item
-static inline void mom_item_put_content (mom_anyitem_t * itm, momval_t val)
+static inline void
+mom_item_put_content (mom_anyitem_t * itm, momval_t val)
 {
   if (!itm || itm->typnum <= momty__itemlowtype)
-	return;
+    return;
   pthread_mutex_lock (&itm->i_mtx);
   itm->i_content = val;
   pthread_mutex_unlock (&itm->i_mtx);
@@ -605,7 +607,7 @@ void mom_dump_add_item (struct mom_dumper_st *dmp, mom_anyitem_t * itm);
 void mom_dump_scan_value (struct mom_dumper_st *dmp, const momval_t val);
 
 // give the JSON value to dump the value VAL
-momval_t mom_dump_emit_json (struct mom_dumper_st*dmp, const momval_t val);
+momval_t mom_dump_emit_json (struct mom_dumper_st *dmp, const momval_t val);
 
 ////////////////////////////////////////////////////////////////
 /// global data, managed by functions
