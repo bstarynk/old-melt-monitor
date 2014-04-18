@@ -468,6 +468,13 @@ const momitemset_t *mom_make_item_set_sized (unsigned siz, ...);
 // make a tuple of given number of items
 const momitemtuple_t *mom_make_item_tuple_sized (unsigned siz, ...);
 
+// make a node from a nil terminated sequence of components
+const momnode_t *mom_make_node_til_nil (mom_anyitem_t * conn, ...)
+  __attribute__ ((sentinel));
+// make a node of given arity
+const momnode_t *mom_make_node_sized (mom_anyitem_t * conn, unsigned siz,
+				      ...);
+
 ///// JSON parsing:
 struct jsonparser_st
 {

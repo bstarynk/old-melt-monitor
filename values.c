@@ -517,7 +517,6 @@ const momitemset_t *
 mom_make_item_set_sized (unsigned siz, ...)
 {
   va_list args;
-  momval_t val = MONIMELT_NULLV;
   unsigned ix = 0, count = 0;
   momitemset_t *iset = NULL;
   bool shrink = false;
@@ -624,7 +623,6 @@ const momitemset_t *
 mom_make_item_tuple_sized (unsigned siz, ...)
 {
   va_list args;
-  momval_t val = MONIMELT_NULLV;
   unsigned ix = 0;
   momitemtuple_t *itup = NULL;
   itup = GC_MALLOC (sizeof (momitemtuple_t) + siz * sizeof (mom_anyitem_t *));
@@ -641,4 +639,66 @@ mom_make_item_tuple_sized (unsigned siz, ...)
   itup->typnum = momty_itemtuple;
   update_seqitem_hash (itup);
   return itup;
+}
+
+static inline void
+update_node_hash (struct momnode_st *nd)
+{
+  unsigned slen = nd->slen;
+  momhash_t h = (unsigned) 11 * nd->connitm->i_hash + 31 * slen;
+  for (unsigned ix = 0; ix < slen; ix++)
+    {
+      h =
+	(23053 * ix + 53171 * h) ^ (11 +
+				    5309 * mom_value_hash (nd->sontab[ix]));
+    }
+  if (MONIMELT_UNLIKELY (!h))
+    h = (13 * slen + (nd->connitm->i_hash & 0xfff)) | 1;
+  nd->hash = h;
+}
+
+
+const momnode_t *
+mom_make_node_til_nil (mom_anyitem_t * conn, ...)
+{
+  momnode_t *nd = NULL;
+  unsigned siz = 0;
+  if (!conn || conn->typnum <= momty__itemlowtype)
+    return NULL;
+  va_list args;
+  va_start (args, conn);
+  while (va_arg (args, momval_t).ptr != NULL)
+    siz++;
+  va_end (args);
+  nd = GC_MALLOC (sizeof (momnode_t) + siz * sizeof (momval_t));
+  if (MONIMELT_UNLIKELY (!nd))
+    MONIMELT_FATAL ("failed to allocate node of size %d", (int) siz);
+  memset (nd, 0, sizeof (momnode_t) + siz * sizeof (momval_t));
+  va_start (args, conn);
+  for (unsigned ix = 0; ix < siz; ix++)
+    nd->sontab[ix] = va_arg (args, momval_t);
+  va_end (args);
+  nd->typnum = momty_node;
+  update_node_hash (nd);
+  return nd;
+}
+
+const momnode_t *
+mom_make_node_sized (mom_anyitem_t * conn, unsigned siz, ...)
+{
+  momnode_t *nd = NULL;
+  if (!conn || conn->typnum <= momty__itemlowtype)
+    return NULL;
+  va_list args;
+  nd = GC_MALLOC (sizeof (momnode_t) + siz * sizeof (momval_t));
+  if (MONIMELT_UNLIKELY (!nd))
+    MONIMELT_FATAL ("failed to allocate node of size %d", (int) siz);
+  memset (nd, 0, sizeof (momnode_t) + siz * sizeof (momval_t));
+  va_start (args, siz);
+  for (unsigned ix = 0; ix < siz; ix++)
+    nd->sontab[ix] = va_arg (args, momval_t);
+  va_end (args);
+  nd->typnum = momty_node;
+  update_node_hash (nd);
+  return nd;
 }
