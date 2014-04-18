@@ -141,15 +141,18 @@ struct momitemtypedescr_st *mom_typedescr_array[momty__last];
 
 
 #define SPACE_MAGIC 0x167d68fd	/* space magic 377317629 */
+
 // the space FOO is described by momspace_FOO of following type:
 struct momspacedescr_st
 {
   unsigned spa_magic;		/* always SPACE_MAGIC */
   const char *spa_name;
+  void *spa_data;
 };
 #define MONIMELT_SPACE_ROOT 1
 #define MONIMELT_SPACE_MAX 512
 struct momspacedescr_st *mom_spacedescr_array[MONIMELT_SPACE_MAX];
+struct momstring_st *mom_spacename_array[MONIMELT_SPACE_MAX];
 
 #ifdef __GNUC__
 #define MONIMELT_UNLIKELY(P) __builtin_expect((P),0)
