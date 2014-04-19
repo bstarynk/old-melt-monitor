@@ -72,6 +72,7 @@ enum momvaltype_en
 };
 
 
+#define UUID_PARSED_LEN 40
 typedef uint16_t momtynum_t;
 typedef uint16_t momspaceid_t;
 typedef uint32_t momhash_t;
@@ -112,12 +113,15 @@ union momvalueptr_un
 };
 
 struct mom_dumper_st;
+struct mom_loader_st;
 void mom_dumper_initialize (struct mom_dumper_st *dmp);
 
 // function to load and build an item from its building json and uid
-typedef mom_anyitem_t *mom_item_loader_sig_t (momval_t json, uuid_t uid);
+typedef mom_anyitem_t *mom_item_loader_sig_t (struct mom_loader_st *ld,
+					      momval_t json, uuid_t uid);
 // function to fill an item from its filling json
-typedef void mom_item_filler_sig_t (mom_anyitem_t * itm, momval_t json);
+typedef void mom_item_filler_sig_t (struct mom_loader_st *ld,
+				    mom_anyitem_t * itm, momval_t json);
 // function to scan an item
 typedef void mom_item_scan_sig_t (struct mom_dumper_st *dmp,
 				  mom_anyitem_t * itm);
@@ -148,13 +152,23 @@ struct momitemtypedescr_st *mom_typedescr_array[momty__last];
 
 #define SPACE_MAGIC 0x167d68fd	/* space magic 377317629 */
 
+
+// fetch a GC_STRDUP-ed string to build an item of given uuid string
+typedef char *mom_space_fetch_build_sig_t (unsigned spanum,
+					   const char *uuidstr);
+// fetch a GC_STRDUP-ed string to fill an item of given uuid string
+typedef char *mom_space_fetch_fill_sig_t (unsigned spanum,
+					  const char *uuidstr);
 // the space FOO is described by momspace_FOO of following type:
 struct momspacedescr_st
 {
   unsigned spa_magic;		/* always SPACE_MAGIC */
   const char *spa_name;
   void *spa_data;
+  mom_space_fetch_build_sig_t *spa_fetch_build;
+  mom_space_fetch_fill_sig_t *spa_fetch_fill;
 };
+#define MONIMELT_ROOT_SPACE_NAME "."
 #define MONIMELT_SPACE_ROOT 1
 #define MONIMELT_FIRST_USER_SPACE 2
 #define MONIMELT_SPACE_MAX 64
@@ -587,9 +601,9 @@ void mom_close_json_parser (struct jsonparser_st *jp);
 // parse a JSON value, or else set the error message to *perrmsg
 momval_t mom_parse_json (struct jsonparser_st *jp, char **perrmsg);
 
-#warning should have a struct mom_loader_st and use for all loading
+struct mom_loader_st;
 // load a value from its JSON
-momval_t mom_load_value_json (const momval_t jval);
+momval_t mom_load_value_json (struct mom_loader_st *ld, const momval_t jval);
 
 ///// JSON output
 struct jsonoutput_st
@@ -639,9 +653,8 @@ struct mom_dumper_st
   unsigned dmp_count;
   unsigned dmp_size;
   unsigned dmp_state;
-  pthread_mutex_t dmp_mtx;
-  struct mom_dumperqueue_st *dmp_qfirst;
-  struct mom_dumperqueue_st *dmp_qlast;
+  struct mom_itemqueue_st *dmp_qfirst;
+  struct mom_itemqueue_st *dmp_qlast;
   mom_anyitem_t **dmp_array;
 };
 
@@ -659,6 +672,15 @@ momval_t mom_dump_emit_json (struct mom_dumper_st *dmp, const momval_t val);
 
 momval_t mom_attributes_emit_json (struct mom_dumper_st *dmp,
 				   struct mom_itemattributes_st *iat);
+
+#define LOADER_MAGIC 0x169128bb	/* loader magic 378611899 */
+struct mom_loader_st
+{
+  unsigned ldr_magic;		/* always LOADER_MAGIC */
+  struct mom_itemqueue_st *ldr_qfirst;
+  struct mom_itemqueue_st *ldr_qlast;
+};
+
 ////////////////////////////////////////////////////////////////
 /// global data, managed by functions
 // register a new name, nop if existing entry

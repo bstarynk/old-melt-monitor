@@ -25,6 +25,8 @@
   extern momit_##Type##_t* mom_item__##Name;
 #include "monimelt-names.h"
 
+// below TINY_MAX we try to allocate on stack temporary vectors
+#define TINY_MAX 8
 enum dumpstate_en
 {
   dus_none = 0,
@@ -33,10 +35,10 @@ enum dumpstate_en
 };
 
 #define DUMPER_MAGIC 0x572bb695	/* dumper magic 1462482581 */
-struct mom_dumperqueue_st
+struct mom_itemqueue_st
 {
-  struct mom_dumperqueue_st *dq_next;
-  mom_anyitem_t *dq_item;
+  struct mom_itemqueue_st *iq_next;
+  mom_anyitem_t *iq_item;
 };
 
 void
@@ -52,11 +54,8 @@ mom_dumper_initialize (struct mom_dumper_st *dmp)
   dmp->dmp_size = siz;
   dmp->dmp_count = 0;
   dmp->dmp_qfirst = dmp->dmp_qlast = NULL;
-  pthread_mutex_init (&dmp->dmp_mtx, &mom_recursive_mutex_attr);
   dmp->dmp_magic = DUMPER_MAGIC;
-  pthread_mutex_lock (&dmp->dmp_mtx);
   dmp->dmp_state = dus_scan;
-  pthread_mutex_unlock (&dmp->dmp_mtx);
 }
 
 static inline void
@@ -114,7 +113,6 @@ mom_dump_add_item (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
     return;
   if (!dmp || dmp->dmp_magic != DUMPER_MAGIC)
     return;
-  pthread_mutex_lock (&dmp->dmp_mtx);
   if (MONIMELT_UNLIKELY (dmp->dmp_state != dus_scan))
     MONIMELT_FATAL ("invalid dump state #%d", (int) dmp->dmp_state);
   if (MONIMELT_UNLIKELY (4 * dmp->dmp_count / 3 + 10 >= dmp->dmp_size))
@@ -142,25 +140,24 @@ mom_dump_add_item (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
   // enqueue and add the item if it is not found
   if (!founditem)
     {
-      struct mom_dumperqueue_st *qel =
-	GC_MALLOC (sizeof (struct mom_dumperqueue_st));
+      struct mom_itemqueue_st *qel =
+	GC_MALLOC (sizeof (struct mom_itemqueue_st));
       if (MONIMELT_UNLIKELY (!qel))
 	MONIMELT_FATAL ("cannot add queue element to dumper of %d items",
 			dmp->dmp_count);
-      qel->dq_next = NULL;
-      qel->dq_item = itm;
+      qel->iq_next = NULL;
+      qel->iq_item = itm;
       if (MONIMELT_UNLIKELY (dmp->dmp_qlast == NULL))
 	{
 	  dmp->dmp_qfirst = dmp->dmp_qlast = qel;
 	}
       else
 	{
-	  dmp->dmp_qlast->dq_next = qel;
+	  dmp->dmp_qlast->iq_next = qel;
 	  dmp->dmp_qlast = qel;
 	}
       add_dumped_item (dmp, itm);
     }
-  pthread_mutex_unlock (&dmp->dmp_mtx);
 }
 
 void
@@ -235,9 +232,9 @@ jsonarray_emit_itemseq (struct mom_dumper_st *dmp,
 			const struct momseqitem_st *si)
 {
   unsigned slen = si->slen;
-  if (slen <= 8)
+  if (slen <= TINY_MAX)
     {
-      momval_t tab[8] = { MONIMELT_NULLV };
+      momval_t tab[TINY_MAX] = { MONIMELT_NULLV };
       for (unsigned ix = 0; ix < slen; ix++)
 	tab[ix] = raw_dump_emit_json (dmp, (momval_t) (si->itemseq[ix]));
       return mom_make_json_array_count (slen, tab);
@@ -261,9 +258,9 @@ jsonarray_emit_nodesons (struct mom_dumper_st *dmp,
 			 const struct momnode_st *nd)
 {
   unsigned slen = nd->slen;
-  if (slen <= 8)
+  if (slen <= TINY_MAX)
     {
-      momval_t tab[8] = { MONIMELT_NULLV };
+      momval_t tab[TINY_MAX] = { MONIMELT_NULLV };
       for (unsigned ix = 0; ix < slen; ix++)
 	tab[ix] = raw_dump_emit_json (dmp, (nd->sontab[ix]));
       return mom_make_json_array_count (slen, tab);
@@ -361,7 +358,7 @@ raw_dump_emit_json (struct mom_dumper_st * dmp, const momval_t val)
 	{
 	  unsigned spacenum = val.panyitem->i_space;
 	  struct momspacedescr_st *spadecr = mom_spacedescr_array[spacenum];
-	  char ustr[40];
+	  char ustr[UUID_PARSED_LEN];
 	  memset (ustr, 0, sizeof (ustr));
 	  uuid_unparse (val.panyitem->i_uuid, ustr);
 	  if (MONIMELT_UNLIKELY (!found_dumped_item (dmp, val.panyitem)))
@@ -395,40 +392,101 @@ mom_dump_emit_json (struct mom_dumper_st * dmp, const momval_t val)
   if (MONIMELT_UNLIKELY (!dmp || dmp->dmp_magic != DUMPER_MAGIC))
     MONIMELT_FATAL ("bad dumper@%p when dumping value @%p", (void *) dmp,
 		    val.ptr);
-  pthread_mutex_lock (&dmp->dmp_mtx);
   if (MONIMELT_UNLIKELY (dmp->dmp_state != dus_emit))
     MONIMELT_FATAL ("invalid dump state #%d", (int) dmp->dmp_state);
   jsval = raw_dump_emit_json (dmp, val);
-  pthread_mutex_unlock (&dmp->dmp_mtx);
   return jsval;
 }
 
 
 mom_anyitem_t *
-mom_load_item (uuid_t uuid, const char *space)
+mom_load_item (struct mom_loader_st * ld, uuid_t uuid, const char *space)
 {
   mom_anyitem_t *itm = NULL;
   itm = mom_item_of_uuid (uuid);
   if (itm)
     return itm;
-  for (unsigned spanum = MONIMELT_FIRST_USER_SPACE;
-       spanum < MONIMELT_SPACE_MAX; spanum++)
+  for (unsigned spanum = 1; spanum < MONIMELT_SPACE_MAX; spanum++)
     {
       struct momspacedescr_st *curspa = mom_spacedescr_array[spanum];
       if (!curspa)
 	continue;
+      if (MONIMELT_UNLIKELY (curspa->spa_magic != SPACE_MAGIC))
+	MONIMELT_FATAL ("corrupted space #%d", (int) spanum);
       if (!strcmp (curspa->spa_name, space))
 	{
-#warning unimplemented load item for external space
-	  MONIMELT_FATAL ("unimplemented load item in external space %s",
-			  space);
+	  char *buildstr = NULL;
+	  char uuidstr[UUID_PARSED_LEN];
+	  struct jsonparser_st jp = { 0 };
+	  memset (uuidstr, 0, sizeof (uuidstr));
+	  uuid_unparse (uuid, uuidstr);
+	  if (curspa->spa_fetch_build)
+	    buildstr = curspa->spa_fetch_build (spanum, uuidstr);
+	  if (buildstr)
+	    {
+	      FILE *fm = fmemopen (buildstr, strlen (buildstr), "r");
+	      if (MONIMELT_UNLIKELY (!fm))
+		MONIMELT_FATAL ("fmemopen failed for build string %s",
+				buildstr);
+	      mom_initialize_json_parser (&jp, fm, NULL);
+	      char *errmsg = NULL;
+	      const char *typestr = NULL;
+	      struct momitemtypedescr_st *typdescr = NULL;
+	      momval_t jval = mom_parse_json (&jp, &errmsg);
+	      if (MONIMELT_UNLIKELY (!jval.ptr && errmsg))
+		MONIMELT_FATAL
+		  ("parsing of build of uid %s in space %s json %s failed : %s",
+		   uuidstr, space, buildstr, errmsg);
+	      mom_close_json_parser (&jp);
+	      typestr =
+		mom_string_cstr ((momval_t)
+				 mom_jsonob_get (jval,
+						 (momval_t) mom_item__jtype));
+	      if (MONIMELT_UNLIKELY (!typestr || !typestr[0]))
+		MONIMELT_FATAL
+		  ("build string %s of uid %s in space %s without jtype",
+		   buildstr, uuidstr, space);
+	      for (unsigned ix = momty__itemlowtype;
+		   ix < momty__last && !typdescr; ix++)
+		if (mom_typedescr_array[ix]
+		    && !strcmp (mom_typedescr_array[ix]->ityp_name, typestr))
+		  typdescr = mom_typedescr_array[ix];
+	      if (MONIMELT_UNLIKELY (!typdescr))
+		MONIMELT_FATAL
+		  ("build string %s of uid %s in space %s with unknown type %s",
+		   buildstr, uuidstr, space, typestr);
+	      if (typdescr->ityp_loader)
+		{
+		  itm = typdescr->ityp_loader (ld, jval, uuid);
+		  // queue the loaded item to be filled
+		  if (itm)
+		    {
+		      itm->i_space = spanum;
+		      struct mom_itemqueue_st *iq =
+			GC_MALLOC (sizeof (struct mom_itemqueue_st));
+		      if (MONIMELT_UNLIKELY (!iq))
+			MONIMELT_FATAL ("failed to queue item in loader");
+		      iq->iq_item = itm;
+		      iq->iq_next = NULL;
+		      if (MONIMELT_UNLIKELY (!ld->ldr_qlast))
+			ld->ldr_qfirst = ld->ldr_qlast = iq;
+		      else
+			{
+			  ld->ldr_qlast->iq_next = iq;
+			  ld->ldr_qlast = iq;
+			}
+		    }
+		}
+	      return itm;
+	    }
 	}
-    }
-  return itm;
+    };
+  return NULL;
 }
 
+
 momval_t
-mom_load_value_json (const momval_t jval)
+mom_load_value_json (struct mom_loader_st * ld, const momval_t jval)
 {
   if (!jval.ptr)
     return MONIMELT_NULLV;
@@ -455,7 +513,7 @@ mom_load_value_json (const momval_t jval)
 	    memset (uuid, 0, sizeof (uuid));
 	    if (uidstr && !uuid_parse (uidstr, uuid))
 	      {
-		return (momval_t) mom_load_item (uuid, spastr);
+		return (momval_t) mom_load_item (ld, uuid, spastr);
 	      }
 	    else
 	      return MONIMELT_NULLV;
@@ -470,18 +528,18 @@ mom_load_value_json (const momval_t jval)
 	    if (!jconnv.ptr)
 	      return MONIMELT_NULLV;
 	    mom_anyitem_t *connitm =
-	      mom_value_as_item (mom_load_value_json (jconnv));
+	      mom_value_as_item (mom_load_value_json (ld, jconnv));
 	    if (!connitm)
 	      return MONIMELT_NULLV;
 	    momval_t jsonsv =
 	      mom_jsonob_get (jval, (momval_t) mom_item__sons);
 	    unsigned nbsons = mom_json_array_size (jsonsv);
-	    if (nbsons < 8)
+	    if (nbsons < TINY_MAX)
 	      {
-		momval_t sontab[8] = { MONIMELT_NULLV };
+		momval_t sontab[TINY_MAX] = { MONIMELT_NULLV };
 		for (unsigned ix = 0; ix < nbsons; ix++)
 		  sontab[ix] =
-		    mom_load_value_json (mom_json_array_nth (jsonsv, ix));
+		    mom_load_value_json (ld, mom_json_array_nth (jsonsv, ix));
 		return (momval_t) mom_make_node_from_array (connitm, nbsons,
 							    sontab);
 	      }
@@ -494,7 +552,7 @@ mom_load_value_json (const momval_t jval)
 		memset (sonarr, 0, sizeof (momval_t) * nbsons);
 		for (unsigned ix = 0; ix < nbsons; ix++)
 		  sonarr[ix] =
-		    mom_load_value_json (mom_json_array_nth (jsonsv, ix));
+		    mom_load_value_json (ld, mom_json_array_nth (jsonsv, ix));
 		val =
 		  (momval_t) mom_make_node_from_array (connitm, nbsons,
 						       sonarr);
@@ -506,13 +564,13 @@ mom_load_value_json (const momval_t jval)
 	  {
 	    momval_t jsetv = mom_jsonob_get (jval, (momval_t) mom_item__set);
 	    unsigned nbsons = mom_json_array_size (jsetv);
-	    if (nbsons < 8)
+	    if (nbsons < TINY_MAX)
 	      {
-		mom_anyitem_t *itemtab[8] = { NULL };
+		mom_anyitem_t *itemtab[TINY_MAX] = { NULL };
 		for (unsigned ix = 0; ix < nbsons; ix++)
 		  itemtab[ix] =
 		    mom_value_as_item (mom_load_value_json
-				       (mom_json_array_nth (jsetv, ix)));
+				       (ld, mom_json_array_nth (jsetv, ix)));
 		return (momval_t) mom_make_item_set_from_array (nbsons,
 								itemtab);
 	      }
@@ -527,7 +585,7 @@ mom_load_value_json (const momval_t jval)
 		for (unsigned ix = 0; ix < nbsons; ix++)
 		  itemarr[ix] =
 		    mom_value_as_item (mom_load_value_json
-				       (mom_json_array_nth (jsetv, ix)));
+				       (ld, mom_json_array_nth (jsetv, ix)));
 		val =
 		  (momval_t) mom_make_item_set_from_array (nbsons, itemarr);
 		GC_FREE (itemarr);
@@ -536,6 +594,9 @@ mom_load_value_json (const momval_t jval)
 	  }
 	else if (jtypv.panyitem == (mom_anyitem_t *) mom_item__tuple)
 	  {
+	    momval_t jtuplev =
+	      mom_jsonob_get (jval, (momval_t) mom_item__tuple);
+	    unsigned nbsons = mom_json_array_size (jtuplev);
 #warning incomplete
 	  }
 	else if (jtypv.panyitem == (mom_anyitem_t *) mom_item__json_array)
@@ -564,9 +625,9 @@ mom_attributes_emit_json (struct mom_dumper_st * dmp,
   if (!iat)
     return MONIMELT_NULLV;
   momusize_t nbat = iat->nbattr;
-  if (nbat < 8)
+  if (nbat < TINY_MAX)
     {
-      momval_t jatv[8];
+      momval_t jatv[TINY_MAX];
       for (unsigned ix = 0; ix < nbat; ix++)
 	jatv[ix] =
 	  (momval_t) mom_make_json_object
