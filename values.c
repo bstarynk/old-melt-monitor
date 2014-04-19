@@ -686,6 +686,28 @@ mom_make_item_tuple_sized (unsigned siz, ...)
   return itup;
 }
 
+const momitemtuple_t *
+mom_make_item_tuple_from_array (unsigned siz, mom_anyitem_t ** itemarr)
+{
+  unsigned ix = 0;
+  momitemtuple_t *ituple = NULL;
+  ituple =
+    GC_MALLOC (sizeof (momitemtuple_t) + siz * sizeof (mom_anyitem_t *));
+  if (MONIMELT_UNLIKELY (!ituple))
+    MONIMELT_FATAL ("failed to build tuple of size %d", (int) siz);
+  memset (ituple, 0,
+	  sizeof (momitemtuple_t) + siz * sizeof (mom_anyitem_t *));
+  for (ix = 0; ix < siz; ix++)
+    {
+      mom_anyitem_t *itm = itemarr[ix];
+      if (itm && itm->typnum >= momty__itemlowtype)
+	ituple->itemseq[ix] = itm;
+    }
+  ituple->typnum = momty_itemtuple;
+  update_seqitem_hash (ituple);
+  return ituple;
+}
+
 static inline void
 update_node_hash (struct momnode_st *nd)
 {

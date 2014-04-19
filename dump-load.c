@@ -520,6 +520,7 @@ mom_load_value_json (struct mom_loader_st * ld, const momval_t jval)
 	  }
 	else if (jtypv.panyitem == (mom_anyitem_t *) mom_item__closure)
 	  {
+#warning load of closures unimplemented
 	  }
 	else if (jtypv.panyitem == (mom_anyitem_t *) mom_item__node)
 	  {
@@ -597,7 +598,35 @@ mom_load_value_json (struct mom_loader_st * ld, const momval_t jval)
 	    momval_t jtuplev =
 	      mom_jsonob_get (jval, (momval_t) mom_item__tuple);
 	    unsigned nbsons = mom_json_array_size (jtuplev);
-#warning incomplete
+	    if (nbsons < TINY_MAX)
+	      {
+		mom_anyitem_t *itemtab[TINY_MAX] = { NULL };
+		for (unsigned ix = 0; ix < nbsons; ix++)
+		  itemtab[ix] =
+		    mom_value_as_item (mom_load_value_json
+				       (ld,
+					mom_json_array_nth (jtuplev, ix)));
+		return (momval_t) mom_make_item_tuple_from_array (nbsons,
+								  itemtab);
+	      }
+	    else
+	      {
+		mom_anyitem_t **itemarr =
+		  GC_MALLOC (sizeof (mom_anyitem_t *) * nbsons);
+		if (MONIMELT_UNLIKELY (!itemarr))
+		  MONIMELT_FATAL ("failed to load %d elements in tuple",
+				  (unsigned) nbsons);
+		memset (itemarr, 0, sizeof (momval_t) * nbsons);
+		for (unsigned ix = 0; ix < nbsons; ix++)
+		  itemarr[ix] =
+		    mom_value_as_item (mom_load_value_json
+				       (ld,
+					mom_json_array_nth (jtuplev, ix)));
+		val =
+		  (momval_t) mom_make_item_tuple_from_array (nbsons, itemarr);
+		GC_FREE (itemarr);
+		return val;
+	      }
 	  }
 	else if (jtypv.panyitem == (mom_anyitem_t *) mom_item__json_array)
 	  {
