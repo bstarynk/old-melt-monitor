@@ -333,6 +333,64 @@ mom_fatal_at (const char *fil, int lin, const char *fmt, ...)
 }
 
 
+void
+mom_inform_at (const char *fil, int lin, const char *fmt, ...)
+{
+  int len = 0;
+  char thrname[24];
+  char buf[128];
+  char timbuf[64];
+  char *bigbuf = NULL;
+  struct tm tm = { };
+  int err = errno;
+  time_t now = 0;
+  memset (buf, 0, sizeof (buf));
+  memset (thrname, 0, sizeof (thrname));
+  memset (timbuf, 0, sizeof (timbuf));
+  time (&now);
+  strftime (timbuf, sizeof (timbuf), "%Y-%b-%d %T %Z",
+	    localtime_r (&now, &tm));
+  pthread_getname_np (pthread_self (), thrname, sizeof (thrname) - 1);
+  va_list args;
+  va_start (args, fmt);
+  len = vsnprintf (buf, sizeof (buf), fmt, args);
+  va_end (args);
+  if (MONIMELT_UNLIKELY (len >= sizeof (buf) - 1))
+    {
+      bigbuf = malloc (len + 10);
+      if (bigbuf)
+	{
+	  memset (bigbuf, 0, len + 10);
+	  va_start (args, fmt);
+	  (void) vsnprintf (bigbuf, len + 1, fmt, args);
+	  va_end (args);
+	}
+    }
+  if (using_syslog)
+    {
+      if (err)
+	syslog (LOG_INFO, "MONIMELT INFO @%s:%d <%s> %s %s (%s)",
+		fil, lin, thrname, timbuf, bigbuf ? bigbuf : buf,
+		strerror (err));
+      else
+	syslog (LOG_INFO, "MONIMELT INFO @%s:%d <%s> %s %s",
+		fil, lin, thrname, timbuf, bigbuf ? bigbuf : buf);
+    }
+  else
+    {
+      fputc ('\n', stderr);
+      if (err)
+	fprintf (stderr, "MONIMELT INFO @%s:%d <%s> %s %s (%s)\n",
+		 fil, lin, thrname, timbuf, bigbuf ? bigbuf : buf,
+		 strerror (err));
+      else
+	fprintf (stderr, "MONIMELT INFO @%s:%d <%s> %s %s\n",
+		 fil, lin, thrname, timbuf, bigbuf ? bigbuf : buf);
+      fflush (stderr);
+    }
+}
+
+
 static void
 logexit_cb (void)
 {

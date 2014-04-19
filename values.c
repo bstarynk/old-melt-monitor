@@ -223,6 +223,7 @@ mom_value_cmp (const momval_t l, const momval_t r)
 	  goto compare_item_by_uid;
       }
     case momty_node:
+    case momty_closure:
       {
 	momusize_t llen = l.pnode->slen;
 	momusize_t rlen = r.pnode->slen;
@@ -266,7 +267,6 @@ mom_value_cmp (const momval_t l, const momval_t r)
 	  return 1;
 	return 0;
       }
-#warning missing compare of closures, etc...
     default:
       if (ltype > momty__itemlowtype)
 	goto compare_item_by_uid;

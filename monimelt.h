@@ -90,6 +90,8 @@ typedef struct momseqitem_st momitemtuple_t;
 typedef struct momanyitem_st mom_anyitem_t;
 typedef struct momjsonitem_st momit_json_name_t;
 typedef struct momboolitem_st momit_bool_t;
+typedef struct momroutineitem_st momit_routine_t;
+typedef struct momtaskletitem_st momit_tasklet_t;
 pthread_mutexattr_t mom_normal_mutex_attr;
 pthread_mutexattr_t mom_recursive_mutex_attr;
 
@@ -382,6 +384,17 @@ __attribute__ ((format (printf, 3, 4), noreturn));
 #define MONIMELT_FATAL(Fmt,...) \
   MONIMELT_FATAL_AT_BIS(__FILE__,__LINE__,Fmt,##__VA_ARGS__)
 
+void
+mom_info_at (const char *fil, int lin, const char *fmt, ...)
+__attribute__ ((format (printf, 3, 4)));
+
+#define MONIMELT_INFO_AT(Fil,Lin,Fmt,...) do {         \
+  mom_info_at(Fil,Lin,Fmt,##__VA_ARGS__);} while(0)
+#define MONIMELT_INFO_AT_BIS(Fil,Lin,Fmt,...) \
+  MONIMELT_INFO_AT(Fil,Lin,Fmt,##__VA_ARGS__)
+#define MONIMELT_INFO(Fmt,...) \
+  MONIMELT_INFO_AT_BIS(__FILE__,__LINE__,Fmt,##__VA_ARGS__)
+
 momhash_t mom_string_hash (const char *str, int len);
 const momstring_t *mom_make_string_len (const char *str, int len);
 static inline const momstring_t *
@@ -400,6 +413,7 @@ mom_string_cstr (momval_t val)
 
 const momint_t *mom_make_int (intptr_t n);
 void mom_initialize (void);
+void mom_initial_load (const char *state);
 void *mom_allocate_item (unsigned type, size_t itemsize);
 void *mom_allocate_item_with_uuid (unsigned type, size_t itemsize,
 				   uuid_t uid);
@@ -606,9 +620,13 @@ void mom_close_json_parser (struct jsonparser_st *jp);
 momval_t mom_parse_json (struct jsonparser_st *jp, char **perrmsg);
 
 struct mom_loader_st;
-// load a value from its JSON
-momval_t mom_load_value_json (struct mom_loader_st *ld, const momval_t jval);
+// load a value from its JSON           
+void
+mom_load_any_item_data (struct mom_loader_st *ld, mom_anyitem_t * itm,
+			momval_t jsob);
 
+momval_t mom_load_value_json (struct mom_loader_st *ld, const momval_t jval);
+// load the common part of an item 
 ///// JSON output
 struct jsonoutput_st
 {

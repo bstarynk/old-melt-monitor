@@ -500,6 +500,7 @@ remove_at_md:
 	  return attrs;
 	}
     }
+  return attrs;
 }
 
 momval_t
@@ -635,15 +636,6 @@ mom_scan_any_item_data (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 }
 
 
-void
-mom_fill_any_item_data (mom_anyitem_t * it, momval_t jsob)
-{
-  momval_t jattrs = mom_jsonob_get (jsob, (momval_t) mom_item__attributes);
-  if (jattrs.ptr && *jattrs.ptype == momty_jsonarray)
-    {
-    }
-}
-
 momit_json_name_t *
 mom_make_item_json_name_of_uuid (uuid_t uid, const char *name)
 {
@@ -703,7 +695,7 @@ bool_itemloader (struct mom_loader_st *ld, momval_t json
 static void
 bool_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm, momval_t json)
 {
-#warning bool_itemfiller should fill the common data
+  mom_load_any_item_data (ld, itm, json);
 }
 
 static void

@@ -485,8 +485,63 @@ mom_load_item (struct mom_loader_st * ld, uuid_t uuid, const char *space)
 }
 
 
+
+void
+mom_load_any_item_data (struct mom_loader_st *ld, mom_anyitem_t * itm,
+			momval_t jsob)
+{
+  if (MONIMELT_UNLIKELY (!ld || ld->ldr_magic != LOADER_MAGIC))
+    MONIMELT_FATAL ("invalid loader @%p to fill item data", ld);
+  if (MONIMELT_UNLIKELY (!itm || itm->typnum <= momty__itemlowtype))
+    MONIMELT_FATAL ("invalid item @%p to fill item data", itm);
+  // fill the attributes
+  momval_t jattrs = mom_jsonob_get (jsob, (momval_t) mom_item__attributes);
+  unsigned nbat = 0;
+  if (jattrs.ptr && *jattrs.ptype == momty_jsonarray
+      && (nbat = mom_json_array_size (jattrs)) > 0)
+    {
+      unsigned sizat = 2 + 9 * nbat / 8;
+      struct mom_itemattributes_st *attrs =
+	GC_MALLOC (sizeof (struct mom_itemattributes_st) +
+		   sizat * sizeof (struct mom_attrentry_st));
+      if (MONIMELT_UNLIKELY (!attrs))
+	MONIMELT_FATAL ("cannot allocate %d attributes", (int) sizat);
+      memset (attrs, 0,
+	      sizeof (struct mom_itemattributes_st) +
+	      sizat * sizeof (struct mom_attrentry_st));
+      attrs->size = sizat;
+      attrs->nbattr = 0;
+      itm->i_attrs = attrs;
+      for (unsigned ix = 0; ix < nbat; ix++)
+	{
+	  momval_t jent = mom_json_array_nth (jattrs, ix);
+	  if (MONIMELT_UNLIKELY
+	      (!jent.ptr || *jent.ptype != momty_jsonobject))
+	    continue;
+	  momval_t jat = mom_jsonob_get (jent, (momval_t) mom_item__attr);
+	  if (MONIMELT_UNLIKELY (!jat.ptr))
+	    continue;
+	  momval_t jval = mom_jsonob_get (jent, (momval_t) mom_item__val);
+	  if (MONIMELT_UNLIKELY (!jval.ptr))
+	    continue;
+	  mom_anyitem_t *itat =
+	    mom_value_as_item (mom_load_value_json (ld, jat));
+	  if (MONIMELT_UNLIKELY (!itat))
+	    continue;
+	  momval_t aval = mom_load_value_json (ld, jval);
+	  if (MONIMELT_UNLIKELY (!aval.ptr))
+	    continue;
+	  mom_item_put_attr (itm, itat, aval);
+	}
+    };
+  // fill the contents
+  momval_t jcontents = mom_jsonob_get (jsob, (momval_t) mom_item__content);
+  if (jcontents.ptr)
+    itm->i_content = mom_load_value_json (ld, jcontents);
+}
+
 momval_t
-mom_load_value_json (struct mom_loader_st * ld, const momval_t jval)
+mom_load_value_json (struct mom_loader_st *ld, const momval_t jval)
 {
   if (!jval.ptr)
     return MONIMELT_NULLV;
@@ -688,4 +743,12 @@ mom_attributes_emit_json (struct mom_dumper_st * dmp,
       GC_FREE (jatarr);
       return res;
     }
+}
+
+
+
+void
+mom_initial_load (const char *state)
+{
+
 }
