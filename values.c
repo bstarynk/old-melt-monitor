@@ -809,7 +809,7 @@ mom_make_closure_til_nil (mom_anyitem_t * conn, ...)
   unsigned siz = 0;
   if (!conn || conn->typnum != momty_routineitem)
     return NULL;
-  unsigned minsiz = ((momit_routine_t *) conn)->irt_minclosize;
+  unsigned minsiz = ((momit_routine_t *) conn)->irt_descr->rout_minclosize;
   va_list args;
   va_start (args, conn);
   while (va_arg (args, momval_t).ptr != NULL)
@@ -836,7 +836,7 @@ mom_make_closure_sized (mom_anyitem_t * conn, unsigned siz, ...)
   momclosure_t *clo = NULL;
   if (!conn || conn->typnum != momty_routineitem)
     return NULL;
-  unsigned minsiz = ((momit_routine_t *) conn)->irt_minclosize;
+  unsigned minsiz = ((momit_routine_t *) conn)->irt_descr->rout_minclosize;
   unsigned alsize = (minsiz > siz) ? minsiz : siz;
   va_list args;
   clo = GC_MALLOC (sizeof (momclosure_t) + alsize * sizeof (momval_t));
@@ -860,7 +860,7 @@ mom_make_closure_from_array (mom_anyitem_t * conn, unsigned siz,
   momnode_t *clo = NULL;
   if (!conn || conn->typnum != momty_routineitem)
     return NULL;
-  unsigned minsiz = ((momit_routine_t *) conn)->irt_minclosize;
+  unsigned minsiz = ((momit_routine_t *) conn)->irt_descr->rout_minclosize;
   unsigned alsize = (minsiz > siz) ? minsiz : siz;
   clo = GC_MALLOC (sizeof (momnode_t) + alsize * sizeof (momval_t));
   if (MONIMELT_UNLIKELY (!clo))

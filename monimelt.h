@@ -291,38 +291,53 @@ struct momboolitem_st
 // routine descriptor is read-only
 #define ROUTINE_MAGIC 0x6b9c644d	/* routine magic 1805411405 */
 // the routine item FOO has descriptor momrout_FOO
+// the routine returns a positive state 
+enum routres_en
+{
+  routres_steady = 0,		/* don't change the current state or tasklet */
+  routres_pop = -1,		/* pop the current frame */
+};
+typedef int momrout_sig_t (int state, momit_tasklet_t * tasklet,
+			   momclosure_t * closure, momval_t * locvals,
+			   intptr_t * locnums, double *locdbls);
 struct momroutinedescr_st
 {
   unsigned rout_magic;		/* always ROUTINE_MAGIC */
   unsigned rout_minclosize;	/* minimal closure size */
   unsigned rout_frame_nbval;	/* number of values in its frame */
   unsigned rout_frame_nbnum;	/* number of intptr_t numbers in its frame */
-  unsigned rout_frame_nbflo;	/* number of double numbers in its frame */
+  unsigned rout_frame_nbdbl;	/* number of double numbers in its frame */
+  const char *rout_name;	/* the name FOO */
+  const momrout_sig_t *rout_code;	/* the code */
 };
 
 struct momroutineitem_st
 {
   struct momanyitem_st irt_item;
-  const momstring_t *irt_routname;	/* the name of the routine */
-  unsigned irt_minclosize;	/* the minimal closure size */
+  struct momroutinedescr_st *irt_descr;
 };
 
-#warning tasklets to be improved...
-struct momtaskframe_st
+struct momframe_st
 {
   uint32_t fr_state;		/* current state */
   uint32_t fr_intoff;		/* offset of integer locals in itk_scalars */
-  uint32_t fr_dbloff;		/* offset of double locals in itk_scalars */
+  uint32_t fr_dbloff;		/* offset of double locals in itk_scalars, should be after fr_intoff */
   uint32_t fr_valoff;		/* offset of value locals in its_values */
 };
 
 struct momtaskletitem_st
 {
   struct momanyitem_st itk_item;	/* common part */
-  intptr_t *itk_scalars;	/* space for scalar data */
+  intptr_t *itk_scalars;	/* space for scalar data, intptr_t or double-s */
   momval_t *itk_values;		/* space for value data */
   momclosure_t **itk_closures;	/* stack of closures */
-  struct momtaskframe_st *itk_frames;	/* stack of frames */
+  struct momframe_st *itk_frames;	/* stack of frames */
+  uint32_t itk_scalsize;	/* size of itk_scalars */
+  uint32_t itk_scaltop;		/* top of stack offset on itk_scalars */
+  uint32_t itk_valsize;		/* size of itk_values */
+  uint32_t itk_valtop;		/* top of stack offset on its_values */
+  uint32_t itk_frasize;		/* size of itk_closures & itk_frames */
+  uint32_t itk_fratop;		/* top of stack offset on itk_closures & itk_frames */
 };
 
 
@@ -472,7 +487,7 @@ momit_routine_t *mom_make_item_routine (const char *name);
 
 momit_tasklet_t *mom_make_item_tasklet_of_uuid (uuid_t);
 momit_tasklet_t *mom_make_item_tasklet ();
-void mom_tasklet_step (momit_tasklet_t *);
+int mom_tasklet_step (momit_tasklet_t *);
 
 static inline bool
 mom_is_jsonable (const momval_t val)

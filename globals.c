@@ -468,3 +468,80 @@ mom_dump_global_state (const char *sqlpath)
     pthread_mutex_unlock (&glob_mtx);
   }
 }
+
+
+int
+mom_tasklet_step (momit_tasklet_t * tsk)
+{
+  int res = 0;
+  if (!tsk || tsk->itk_item.typnum != momty_taskletitem)
+    return 0;
+  pthread_mutex_lock (&((mom_anyitem_t *) tsk)->i_mtx);
+  unsigned fratop = tsk->itk_fratop;
+  if (fratop == 0)
+    goto end;
+  struct momframe_st *curfram = tsk->itk_frames + fratop - 1;
+  uint32_t curstate = curfram->fr_state;
+  uint32_t curintoff = curfram->fr_intoff;
+  uint32_t curdbloff = curfram->fr_dbloff;
+  uint32_t curvaloff = curfram->fr_valoff;
+  momclosure_t *curclo = tsk->itk_closures[fratop - 1];
+  if (MONIMELT_UNLIKELY (!curclo || curclo->typnum != momty_closure))
+    {
+      tsk->itk_closures[fratop] = NULL;
+      memset (tsk->itk_frames + fratop, 0, sizeof (struct momframe_st));
+      if (tsk->itk_valtop > curvaloff)
+	{
+	  memset (tsk->itk_values + curvaloff, 0,
+		  sizeof (momval_t) * (tsk->itk_valtop - curvaloff));
+	  tsk->itk_valtop = curvaloff;
+	}
+      if (tsk->itk_scaltop > curintoff)
+	{
+	  memset (tsk->itk_scalars + curintoff, 0,
+		  sizeof (intptr_t) * (tsk->itk_scaltop - curintoff));
+	  tsk->itk_scaltop = curintoff;
+	}
+      tsk->itk_fratop = fratop - 1;
+      goto end;
+    }
+  momit_routine_t *curout = (momit_routine_t *) (curclo->connitm);
+  const struct momroutinedescr_st *rdescr = NULL;
+  const momrout_sig_t *rcode = NULL;
+  int nextstate = 0;
+  if (MONIMELT_UNLIKELY (!curout || curout->irt_item.typnum != momty_closure
+			 || !(rdescr = curout->irt_descr)
+			 || rdescr->rout_magic != ROUTINE_MAGIC
+			 || !(rcode = rdescr->rout_code)))
+    MONIMELT_FATAL ("corrupted closure in tasklet");
+  nextstate = rcode (curstate, tsk, curclo,
+		     tsk->itk_values + curvaloff,
+		     tsk->itk_scalars + curintoff,
+		     (double *) tsk->itk_scalars + curdbloff);
+  if (nextstate > 0)
+    // the rcode might have changed the itk_frames so we can't use curfram
+    tsk->itk_frames[fratop - 1].fr_state = nextstate;
+  else if (nextstate == routres_pop)
+    {
+      // pop one frame
+      tsk->itk_closures[fratop] = NULL;
+      memset (tsk->itk_frames + fratop, 0, sizeof (struct momframe_st));
+      if (tsk->itk_valtop > curvaloff)
+	{
+	  memset (tsk->itk_values + curvaloff, 0,
+		  sizeof (momval_t) * (tsk->itk_valtop - curvaloff));
+	  tsk->itk_valtop = curvaloff;
+	}
+      if (tsk->itk_scaltop > curintoff)
+	{
+	  memset (tsk->itk_scalars + curintoff, 0,
+		  sizeof (intptr_t) * (tsk->itk_scaltop - curintoff));
+	  tsk->itk_scaltop = curintoff;
+	}
+      tsk->itk_fratop = fratop - 1;
+    }
+  res = nextstate;
+end:
+  pthread_mutex_unlock (&((mom_anyitem_t *) tsk)->i_mtx);
+  return res;
+}
