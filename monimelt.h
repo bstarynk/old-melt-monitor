@@ -332,6 +332,7 @@ struct momtaskletitem_st
   momval_t *itk_values;		/* space for value data */
   momclosure_t **itk_closures;	/* stack of closures */
   struct momframe_st *itk_frames;	/* stack of frames */
+  pthread_t itk_thread;		/* the thread executing this, or else 0 */
   uint32_t itk_scalsize;	/* size of itk_scalars */
   uint32_t itk_scaltop;		/* top of stack offset on itk_scalars */
   uint32_t itk_valsize;		/* size of itk_values */

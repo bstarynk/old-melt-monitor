@@ -478,6 +478,7 @@ mom_tasklet_step (momit_tasklet_t * tsk)
     return 0;
   pthread_mutex_lock (&((mom_anyitem_t *) tsk)->i_mtx);
   unsigned fratop = tsk->itk_fratop;
+  tsk->itk_thread = pthread_self ();
   if (fratop == 0)
     goto end;
   struct momframe_st *curfram = tsk->itk_frames + fratop - 1;
@@ -542,6 +543,7 @@ mom_tasklet_step (momit_tasklet_t * tsk)
     }
   res = nextstate;
 end:
+  tsk->itk_thread = (pthread_t) 0;
   pthread_mutex_unlock (&((mom_anyitem_t *) tsk)->i_mtx);
   return res;
 }
