@@ -716,23 +716,29 @@ bool_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
   return
     (momval_t) mom_make_json_object
     (MOMJSON_ENTRY, mom_item__attributes,
-     mom_attributes_emit_json (dmp, itm->i_attrs), MOMJSON_ENTRY,
-     mom_item__content, mom_dump_emit_json (dmp, itm->i_content),
+     mom_attributes_emit_json (dmp, itm->i_attrs),
+     MOMJSON_ENTRY, mom_item__content, mom_dump_emit_json (dmp,
+							   itm->i_content),
      MOMJSON_END);
 }
 
 ////////////////////////////////////////////////////////////////
 /// type routine for json name items
 static mom_anyitem_t *
-json_name_itemloader (struct mom_loader_st *ld, momval_t json
-		      __attribute__ ((unused)), uuid_t uid)
+json_name_itemloader (struct mom_loader_st *ld, momval_t json, uuid_t uid)
 {
+  const char *name =
+    mom_string_cstr (mom_jsonob_get (json, (momval_t) mom_item__name));
+  if (name && name[0])
+    return (mom_anyitem_t *) mom_make_item_json_name_of_uuid (uid, name);
+  MONIMELT_FATAL ("failed to load & build json name item");
 }
 
 static void
 json_name_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
 		      momval_t json)
 {
+  mom_load_any_item_data (ld, itm, json);
 }
 
 static void
@@ -745,9 +751,27 @@ json_name_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 static momval_t
 json_name_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
+  return (momval_t) mom_make_json_object (	// the type:
+					   MOMJSON_ENTRY, mom_item__jtype,
+					   mom_item__json_name_item,
+					   // the name
+					   MOMJSON_ENTRY, mom_item__name,
+					   ((momit_json_name_t *)
+					    itm)->ij_namejson,
+					   // done
+					   MOMJSON_END);
 }
 
 static momval_t
 json_name_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
+  return (momval_t) mom_make_json_object
+    /// attributes
+    (MOMJSON_ENTRY, mom_item__attributes,
+     mom_attributes_emit_json (dmp, itm->i_attrs),
+     /// contents
+     MOMJSON_ENTRY, mom_item__content, mom_dump_emit_json (dmp,
+							   itm->i_content),
+     /// done
+     MOMJSON_END);
 }

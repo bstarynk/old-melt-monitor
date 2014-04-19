@@ -217,11 +217,11 @@ mom_dump_scan_value (struct mom_dumper_st *dmp, const momval_t val)
 	return;
       }
 
-#warning missing cases for in mom_dump_scan_value
     default:
       if (typ > momty__itemlowtype)
 	mom_dump_add_item (dmp, val.panyitem);
-      return;
+      else
+	MONIMELT_FATAL ("unimplemented dump for type %d", (int) typ);
     }
 }
 
@@ -786,5 +786,5 @@ mom_attributes_emit_json (struct mom_dumper_st * dmp,
 void
 mom_initial_load (const char *state)
 {
-
+  MONIMELT_FATAL ("unimplemented initial load of %s", state);
 }
