@@ -717,12 +717,12 @@ mom_make_json_object (int firstdir, ...)
       h1 =
 	((ix & 0xf) + 1) * h1 +
 	((45077 *
-	  mom_value_hash ((const momval_t) jsob->jobjtab[count].
-			  je_name)) ^ h2);
+	  mom_value_hash ((const momval_t) jsob->
+			  jobjtab[count].je_name)) ^ h2);
       h2 =
 	(75041 * h2) ^ (7589 *
-			mom_value_hash ((const momval_t) jsob->jobjtab[count].
-					je_attr));
+			mom_value_hash ((const momval_t) jsob->
+					jobjtab[count].je_attr));
     }
   h = h1 ^ h2;
   if (!h)

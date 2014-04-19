@@ -14,6 +14,7 @@ INSERT INTO t_item VALUES('69cbd072-7d8e-4f62-bef4-5cd0cc847578','bool','','');
 INSERT INTO t_item VALUES('8dba998c-341b-4a66-900f-545ac9dd06c4','json_name','','');
 INSERT INTO t_item VALUES('9a05b9fa-17d3-4294-9253-e67406e52d4a','json_name','','');
 INSERT INTO t_item VALUES('a75bef70-596b-4fc5-99ca-e60b5287feec','json_name','','');
+INSERT INTO t_item VALUES('abdd3eea-22da-4e09-b1f8-a05b80783924','json_name','','');
 INSERT INTO t_item VALUES('b039b53b-5198-4770-ac05-7eeded55fdeb','json_name','','');
 INSERT INTO t_item VALUES('b29bc8a3-1517-4a28-b566-39e447c80250','json_name','','');
 INSERT INTO t_item VALUES('b9664990-11a1-49a5-bf59-be714626ed6d','json_name','','');
@@ -35,6 +36,7 @@ INSERT INTO t_name VALUES('json_array','d7a1e1a4-f401-436a-887f-980f66643a24','.
 INSERT INTO t_name VALUES('json_name_item','1fca3bc7-7316-4597-9d9f-ff97bc4f4353','.');
 INSERT INTO t_name VALUES('json_object','11da23ab-3b9e-4ea0-bc13-4a9aa46e2995','.');
 INSERT INTO t_name VALUES('jtype','b9664990-11a1-49a5-bf59-be714626ed6d','.');
+INSERT INTO t_name VALUES('name','abdd3eea-22da-4e09-b1f8-a05b80783924','.');
 INSERT INTO t_name VALUES('node','f99051be-30bf-4efc-8c35-b4344c4e6d2c','.');
 INSERT INTO t_name VALUES('refitem','5e77140e-2467-4e85-aa28-8ca734c2aa07','.');
 INSERT INTO t_name VALUES('routine_item','cddd3209-6d5f-4ac5-ada3-fc9ed0053728','.');

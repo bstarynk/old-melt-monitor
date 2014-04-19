@@ -95,6 +95,8 @@ typedef struct momroutineitem_st momit_routine_t;
 typedef struct momtaskletitem_st momit_tasklet_t;
 pthread_mutexattr_t mom_normal_mutex_attr;
 pthread_mutexattr_t mom_recursive_mutex_attr;
+GModule *mom_prog_module;
+
 
 union momvalueptr_un
 {
@@ -286,6 +288,18 @@ struct momboolitem_st
   bool ib_bool;
 };
 
+// routine descriptor is read-only
+#define ROUTINE_MAGIC 0x6b9c644d	/* routine magic 1805411405 */
+// the routine item FOO has descriptor momrout_FOO
+struct momroutinedescr_st
+{
+  unsigned rout_magic;		/* always ROUTINE_MAGIC */
+  unsigned rout_minclosize;	/* minimal closure size */
+  unsigned rout_frame_nbval;	/* number of values in its frame */
+  unsigned rout_frame_nbnum;	/* number of intptr_t numbers in its frame */
+  unsigned rout_frame_nbflo;	/* number of double numbers in its frame */
+};
+
 struct momroutineitem_st
 {
   struct momanyitem_st irt_item;
@@ -293,9 +307,22 @@ struct momroutineitem_st
   unsigned irt_minclosize;	/* the minimal closure size */
 };
 
+#warning tasklets to be improved...
+struct momtaskframe_st
+{
+  uint32_t fr_state;		/* current state */
+  uint32_t fr_intoff;		/* offset of integer locals in itk_scalars */
+  uint32_t fr_dbloff;		/* offset of double locals in itk_scalars */
+  uint32_t fr_valoff;		/* offset of value locals in its_values */
+};
+
 struct momtaskletitem_st
 {
-  struct momanyitem_st itk_item;
+  struct momanyitem_st itk_item;	/* common part */
+  intptr_t *itk_scalars;	/* space for scalar data */
+  momval_t *itk_values;		/* space for value data */
+  momclosure_t **itk_closures;	/* stack of closures */
+  struct momtaskframe_st *itk_frames;	/* stack of frames */
 };
 
 
@@ -440,6 +467,12 @@ momit_json_name_t *mom_make_item_json_name (const char *name);
 #define mom_create__json_name(Name,Uid) \
   mom_make_item_json_name_of_uuid(Uid,#Name)
 
+momit_routine_t *mom_make_item_routine_of_uuid (uuid_t, const char *name);
+momit_routine_t *mom_make_item_routine (const char *name);
+
+momit_tasklet_t *mom_make_item_tasklet_of_uuid (uuid_t);
+momit_tasklet_t *mom_make_item_tasklet ();
+void mom_tasklet_step (momit_tasklet_t *);
 
 static inline bool
 mom_is_jsonable (const momval_t val)

@@ -218,6 +218,7 @@ mom_initialize (void)
   inited = 1;
   pthread_mutexattr_init (&mom_normal_mutex_attr);
   pthread_mutexattr_init (&mom_recursive_mutex_attr);
+  mom_prog_module = g_module_open (NULL, 0);
   pthread_mutexattr_settype (&mom_normal_mutex_attr, PTHREAD_MUTEX_NORMAL);
   pthread_mutexattr_settype (&mom_recursive_mutex_attr,
 			     PTHREAD_MUTEX_RECURSIVE);
