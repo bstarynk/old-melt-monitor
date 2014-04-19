@@ -84,6 +84,7 @@ typedef struct momstring_st momstring_t;
 typedef struct momjsonobject_st momjsonobject_t;
 typedef struct momjsonarray_st momjsonarray_t;
 typedef struct momnode_st momnode_t;
+typedef struct momnode_st momclosure_t;
 typedef struct momseqitem_st momseqitem_t;
 typedef struct momseqitem_st momitemset_t;
 typedef struct momseqitem_st momitemtuple_t;
@@ -609,6 +610,16 @@ const momnode_t *mom_make_node_sized (mom_anyitem_t * conn, unsigned siz,
 				      ...);
 const momnode_t *mom_make_node_from_array (mom_anyitem_t * conn, unsigned siz,
 					   momval_t * arr);
+
+// make a closure from a nil terminated sequence of components
+const momclosure_t *mom_make_closure_til_nil (mom_anyitem_t * conn, ...)
+  __attribute__ ((sentinel));
+// make a closure of given arity
+const momclosure_t *mom_make_closure_sized (mom_anyitem_t * conn,
+					    unsigned siz, ...);
+const momclosure_t *mom_make_closure_from_array (mom_anyitem_t * conn,
+						 unsigned siz,
+						 momval_t * arr);
 
 ///// JSON parsing:
 struct jsonparser_st

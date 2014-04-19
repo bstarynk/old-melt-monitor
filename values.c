@@ -714,11 +714,13 @@ mom_make_item_tuple_from_array (unsigned siz, mom_anyitem_t ** itemarr)
   return ituple;
 }
 
+////////////////////////////////////////////////////////// nodes
+
 static inline void
 update_node_hash (struct momnode_st *nd)
 {
   unsigned slen = nd->slen;
-  momhash_t h = (unsigned) 11 * nd->connitm->i_hash + 31 * slen;
+  momhash_t h = 11 * nd->connitm->i_hash + ((31 * slen) ^ (19 * nd->typnum));
   for (unsigned ix = 0; ix < slen; ix++)
     {
       h =
@@ -726,7 +728,7 @@ update_node_hash (struct momnode_st *nd)
 				    5309 * mom_value_hash (nd->sontab[ix]));
     }
   if (MONIMELT_UNLIKELY (!h))
-    h = (13 * slen + (nd->connitm->i_hash & 0xfff)) | 1;
+    h = (13 * slen + 17 * nd->typnum + (nd->connitm->i_hash & 0xfff)) | 1;
   nd->hash = h;
 }
 
@@ -794,4 +796,80 @@ mom_make_node_from_array (mom_anyitem_t * conn, unsigned siz, momval_t * arr)
   nd->slen = siz;
   update_node_hash (nd);
   return nd;
+}
+
+
+///////////////////////////////////////////// closures
+
+
+const momclosure_t *
+mom_make_closure_til_nil (mom_anyitem_t * conn, ...)
+{
+  momclosure_t *clo = NULL;
+  unsigned siz = 0;
+  if (!conn || conn->typnum != momty_routineitem)
+    return NULL;
+  unsigned minsiz = ((momit_routine_t *) conn)->irt_minclosize;
+  va_list args;
+  va_start (args, conn);
+  while (va_arg (args, momval_t).ptr != NULL)
+    siz++;
+  va_end (args);
+  unsigned alsize = (minsiz > siz) ? minsiz : siz;
+  clo = GC_MALLOC (sizeof (momnode_t) + alsize * sizeof (momval_t));
+  if (MONIMELT_UNLIKELY (!clo))
+    MONIMELT_FATAL ("failed to allocate closure of size %d", (int) alsize);
+  memset (clo, 0, sizeof (momnode_t) + alsize * sizeof (momval_t));
+  va_start (args, conn);
+  for (unsigned ix = 0; ix < siz; ix++)
+    clo->sontab[ix] = va_arg (args, momval_t);
+  va_end (args);
+  clo->typnum = momty_closure;
+  clo->slen = alsize;
+  update_node_hash (clo);
+  return clo;
+}
+
+const momclosure_t *
+mom_make_closure_sized (mom_anyitem_t * conn, unsigned siz, ...)
+{
+  momclosure_t *clo = NULL;
+  if (!conn || conn->typnum != momty_routineitem)
+    return NULL;
+  unsigned minsiz = ((momit_routine_t *) conn)->irt_minclosize;
+  unsigned alsize = (minsiz > siz) ? minsiz : siz;
+  va_list args;
+  clo = GC_MALLOC (sizeof (momclosure_t) + alsize * sizeof (momval_t));
+  if (MONIMELT_UNLIKELY (!clo))
+    MONIMELT_FATAL ("failed to allocate closure of size %d", (int) alsize);
+  memset (clo, 0, sizeof (momclosure_t) + alsize * sizeof (momval_t));
+  va_start (args, siz);
+  for (unsigned ix = 0; ix < siz; ix++)
+    clo->sontab[ix] = va_arg (args, momval_t);
+  va_end (args);
+  clo->typnum = momty_closure;
+  clo->slen = alsize;
+  update_node_hash (clo);
+  return clo;
+}
+
+const momclosure_t *
+mom_make_closure_from_array (mom_anyitem_t * conn, unsigned siz,
+			     momval_t * arr)
+{
+  momnode_t *clo = NULL;
+  if (!conn || conn->typnum != momty_routineitem)
+    return NULL;
+  unsigned minsiz = ((momit_routine_t *) conn)->irt_minclosize;
+  unsigned alsize = (minsiz > siz) ? minsiz : siz;
+  clo = GC_MALLOC (sizeof (momnode_t) + alsize * sizeof (momval_t));
+  if (MONIMELT_UNLIKELY (!clo))
+    MONIMELT_FATAL ("failed to allocate closure of size %d", (int) siz);
+  memset (clo, 0, sizeof (momnode_t) + alsize * sizeof (momval_t));
+  for (unsigned ix = 0; ix < siz; ix++)
+    clo->sontab[ix] = arr[ix];
+  clo->typnum = momty_closure;
+  clo->slen = alsize;
+  update_node_hash (clo);
+  return clo;
 }

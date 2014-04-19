@@ -575,7 +575,43 @@ mom_load_value_json (struct mom_loader_st *ld, const momval_t jval)
 	  }
 	else if (jtypv.panyitem == (mom_anyitem_t *) mom_item__closure)
 	  {
-#warning load of closures unimplemented
+	    momval_t jconnv =
+	      mom_jsonob_get (jval, (momval_t) mom_item__conn);
+	    if (!jconnv.ptr)
+	      return MONIMELT_NULLV;
+	    mom_anyitem_t *connitm =
+	      mom_value_as_item (mom_load_value_json (ld, jconnv));
+	    if (!connitm || connitm->typnum != momty_routineitem)
+	      return MONIMELT_NULLV;
+	    momval_t jsonsv =
+	      mom_jsonob_get (jval, (momval_t) mom_item__sons);
+	    unsigned nbsons = mom_json_array_size (jsonsv);
+	    if (nbsons < TINY_MAX)
+	      {
+		momval_t sontab[TINY_MAX] = { MONIMELT_NULLV };
+		for (unsigned ix = 0; ix < nbsons; ix++)
+		  sontab[ix] =
+		    mom_load_value_json (ld, mom_json_array_nth (jsonsv, ix));
+		return (momval_t) mom_make_closure_from_array (connitm,
+							       nbsons,
+							       sontab);
+	      }
+	    else
+	      {
+		momval_t *sonarr = GC_MALLOC (sizeof (momval_t) * nbsons);
+		if (MONIMELT_UNLIKELY (!sonarr))
+		  MONIMELT_FATAL ("failed to load %d sons in closure",
+				  (unsigned) nbsons);
+		memset (sonarr, 0, sizeof (momval_t) * nbsons);
+		for (unsigned ix = 0; ix < nbsons; ix++)
+		  sonarr[ix] =
+		    mom_load_value_json (ld, mom_json_array_nth (jsonsv, ix));
+		val =
+		  (momval_t) mom_make_closure_from_array (connitm, nbsons,
+							  sonarr);
+		GC_FREE (sonarr);
+		return val;
+	      }
 	  }
 	else if (jtypv.panyitem == (mom_anyitem_t *) mom_item__node)
 	  {
