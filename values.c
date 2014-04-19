@@ -496,6 +496,7 @@ mom_make_item_set_til_nil (momval_t first, ...)
 	}
     }
   iset->typnum = momty_itemset;
+  iset->slen = siz;
   update_seqitem_hash (iset);
   if (MONIMELT_UNLIKELY (shrink))
     {
@@ -545,6 +546,7 @@ mom_make_item_set_sized (unsigned siz, ...)
 	}
     }
   iset->typnum = momty_itemset;
+  iset->slen = count;
   update_seqitem_hash (iset);
   if (MONIMELT_UNLIKELY (shrink))
     {
@@ -591,6 +593,7 @@ mom_make_item_set_from_array (unsigned siz, mom_anyitem_t ** itemarr)
 	}
     }
   iset->typnum = momty_itemset;
+  iset->slen = count;
   update_seqitem_hash (iset);
   if (MONIMELT_UNLIKELY (shrink))
     {
@@ -660,6 +663,7 @@ mom_make_item_tuple_til_nil (momval_t first, ...)
     }
   va_end (args);
   itup->typnum = momty_itemtuple;
+  itup->slen = siz;
   update_seqitem_hash (itup);
   return itup;
 }
@@ -682,6 +686,7 @@ mom_make_item_tuple_sized (unsigned siz, ...)
     }
   va_end (args);
   itup->typnum = momty_itemtuple;
+  itup->slen = siz;
   update_seqitem_hash (itup);
   return itup;
 }
@@ -704,6 +709,7 @@ mom_make_item_tuple_from_array (unsigned siz, mom_anyitem_t ** itemarr)
 	ituple->itemseq[ix] = itm;
     }
   ituple->typnum = momty_itemtuple;
+  ituple->slen = siz;
   update_seqitem_hash (ituple);
   return ituple;
 }
@@ -746,6 +752,7 @@ mom_make_node_til_nil (mom_anyitem_t * conn, ...)
     nd->sontab[ix] = va_arg (args, momval_t);
   va_end (args);
   nd->typnum = momty_node;
+  nd->slen = siz;
   update_node_hash (nd);
   return nd;
 }
@@ -766,6 +773,7 @@ mom_make_node_sized (mom_anyitem_t * conn, unsigned siz, ...)
     nd->sontab[ix] = va_arg (args, momval_t);
   va_end (args);
   nd->typnum = momty_node;
+  nd->slen = siz;
   update_node_hash (nd);
   return nd;
 }
@@ -783,6 +791,7 @@ mom_make_node_from_array (mom_anyitem_t * conn, unsigned siz, momval_t * arr)
   for (unsigned ix = 0; ix < siz; ix++)
     nd->sontab[ix] = arr[ix];
   nd->typnum = momty_node;
+  nd->slen = siz;
   update_node_hash (nd);
   return nd;
 }

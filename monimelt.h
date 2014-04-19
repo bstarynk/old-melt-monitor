@@ -107,6 +107,8 @@ union momvalueptr_un
   const struct momjsonobject_st *pjsonobj;
   struct momjsonitem_st *pjsonitem;
   struct momboolitem_st *pboolitem;
+  struct momroutineitem_st *proutitem;
+  struct momtaskletitem_st *ptaskitem;
   const struct momnode_st *pnode;
   const struct momnode_st *pclosure;
   const struct momseqitem_st *pseqitm;
@@ -282,6 +284,19 @@ struct momboolitem_st
   struct momanyitem_st ib_item;
   bool ib_bool;
 };
+
+struct momroutineitem_st
+{
+  struct momanyitem_st irt_item;
+  const momstring_t *irt_routname;	/* the name of the routine */
+  unsigned irt_minclosize;	/* the minimal closure size */
+};
+
+struct momtaskletitem_st
+{
+  struct momanyitem_st itk_item;
+};
+
 
 static inline mom_anyitem_t *
 mom_value_as_item (momval_t val)
