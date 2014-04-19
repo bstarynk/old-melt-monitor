@@ -342,6 +342,39 @@ struct momtaskletitem_st
 };
 
 
+enum mom_pushframedirective_en
+{
+  MOMPFR__END = 0,
+  MOMPFR_STATE /*, int state  */ ,
+  MOMPFR_CLOSURE /*, momclosure_t* clos  */ ,
+  MOMPFR_VALUE /*, momval_t val */ ,
+  MOMPFR_TWO_VALUES /*, momval_t val1, val2 */ ,
+  MOMPFR_THREE_VALUES /*, momval_t val1, val2, val3 */ ,
+  MOMPFR_FOUR_VALUES /*, momval_t val1, val2, val3, val4 */ ,
+  MOMPFR_FIVE_VALUES /*, momval_t val1, val2, val3, val4, val5 */ ,
+  MOMPFR_ARRAY_VALUES /* unsigned count, momval_t valarr[count] */ ,
+  MOMPFR_NODE_VALUES /* momnode_st* node, -- to push the sons of a node */ ,
+  MOMPFR_INT /*, intptr_t num */ ,
+  MOMPFR_TWO_INTS /*, intptr_t num1, num2 */ ,
+  MOMPFR_THREE_INTS /*, intptr_t num1, num2, num3 */ ,
+  MOMPFR_FOUR_INTS /*, intptr_t num1, num2, num3, num4 */ ,
+  MOMPFR_FIVE_INTS /*, intptr_t num1, num2, num3, num4, num5 */ ,
+  MOMPFR_ARRAY_INTS /* unsigned count, intptr_t numarr[count] */ ,
+  MOMPFR_DOUBLE /*, double d */ ,
+  MOMPFR_TWO_DOUBLES /*, double d1, d2 */ ,
+  MOMPFR_THREE_DOUBLES /*, double d1, d2, d3 */ ,
+  MOMPFR_FOUR_DOUBLES /*, double d1, d2, d3, d4 */ ,
+  MOMPFR_FIVE_DOUBLES /*, double d1, d2, d3, d4, d5 */ ,
+  MOMPFR_ARRAY_DOUBLES /* unsigned count, double dblarr[count] */ ,
+};
+#define MOMPFR_END ((void*)MOMPFR__END)
+void mom_tasklet_push_frame (momval_t tsk, enum mom_pushframedirective_en,
+			     ...) __attribute__ ((sentinel));
+void mom_tasklet_replace_frame (momval_t tsk, enum mom_pushframedirective_en,
+				...) __attribute__ ((sentinel));
+void mom_tasklet_pop_frame (momval_t tsk);
+int mom_tasklet_depth (momval_t tsk);
+
 static inline mom_anyitem_t *
 mom_value_as_item (momval_t val)
 {

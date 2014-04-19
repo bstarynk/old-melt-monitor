@@ -471,39 +471,39 @@ mom_dump_global_state (const char *sqlpath)
 
 
 int
-mom_tasklet_step (momit_tasklet_t * tsk)
+mom_tasklet_step (momit_tasklet_t * tskitm)
 {
   int res = 0;
-  if (!tsk || tsk->itk_item.typnum != momty_taskletitem)
+  if (!tskitm || tskitm->itk_item.typnum != momty_taskletitem)
     return 0;
-  pthread_mutex_lock (&((mom_anyitem_t *) tsk)->i_mtx);
-  unsigned fratop = tsk->itk_fratop;
-  tsk->itk_thread = pthread_self ();
+  pthread_mutex_lock (&((mom_anyitem_t *) tskitm)->i_mtx);
+  unsigned fratop = tskitm->itk_fratop;
+  tskitm->itk_thread = pthread_self ();
   if (fratop == 0)
     goto end;
-  struct momframe_st *curfram = tsk->itk_frames + fratop - 1;
+  struct momframe_st *curfram = tskitm->itk_frames + fratop - 1;
   uint32_t curstate = curfram->fr_state;
   uint32_t curintoff = curfram->fr_intoff;
   uint32_t curdbloff = curfram->fr_dbloff;
   uint32_t curvaloff = curfram->fr_valoff;
-  momclosure_t *curclo = tsk->itk_closures[fratop - 1];
+  momclosure_t *curclo = tskitm->itk_closures[fratop - 1];
   if (MONIMELT_UNLIKELY (!curclo || curclo->typnum != momty_closure))
     {
-      tsk->itk_closures[fratop] = NULL;
-      memset (tsk->itk_frames + fratop, 0, sizeof (struct momframe_st));
-      if (tsk->itk_valtop > curvaloff)
+      tskitm->itk_closures[fratop] = NULL;
+      memset (tskitm->itk_frames + fratop, 0, sizeof (struct momframe_st));
+      if (tskitm->itk_valtop > curvaloff)
 	{
-	  memset (tsk->itk_values + curvaloff, 0,
-		  sizeof (momval_t) * (tsk->itk_valtop - curvaloff));
-	  tsk->itk_valtop = curvaloff;
+	  memset (tskitm->itk_values + curvaloff, 0,
+		  sizeof (momval_t) * (tskitm->itk_valtop - curvaloff));
+	  tskitm->itk_valtop = curvaloff;
 	}
-      if (tsk->itk_scaltop > curintoff)
+      if (tskitm->itk_scaltop > curintoff)
 	{
-	  memset (tsk->itk_scalars + curintoff, 0,
-		  sizeof (intptr_t) * (tsk->itk_scaltop - curintoff));
-	  tsk->itk_scaltop = curintoff;
+	  memset (tskitm->itk_scalars + curintoff, 0,
+		  sizeof (intptr_t) * (tskitm->itk_scaltop - curintoff));
+	  tskitm->itk_scaltop = curintoff;
 	}
-      tsk->itk_fratop = fratop - 1;
+      tskitm->itk_fratop = fratop - 1;
       goto end;
     }
   momit_routine_t *curout = (momit_routine_t *) (curclo->connitm);
@@ -515,35 +515,241 @@ mom_tasklet_step (momit_tasklet_t * tsk)
 			 || rdescr->rout_magic != ROUTINE_MAGIC
 			 || !(rcode = rdescr->rout_code)))
     MONIMELT_FATAL ("corrupted closure in tasklet");
-  nextstate = rcode (curstate, tsk, curclo,
-		     tsk->itk_values + curvaloff,
-		     tsk->itk_scalars + curintoff,
-		     (double *) tsk->itk_scalars + curdbloff);
+  nextstate = rcode (curstate, tskitm, curclo,
+		     tskitm->itk_values + curvaloff,
+		     tskitm->itk_scalars + curintoff,
+		     (double *) tskitm->itk_scalars + curdbloff);
   if (nextstate > 0)
     // the rcode might have changed the itk_frames so we can't use curfram
-    tsk->itk_frames[fratop - 1].fr_state = nextstate;
+    tskitm->itk_frames[fratop - 1].fr_state = nextstate;
   else if (nextstate == routres_pop)
     {
       // pop one frame
-      tsk->itk_closures[fratop] = NULL;
-      memset (tsk->itk_frames + fratop, 0, sizeof (struct momframe_st));
-      if (tsk->itk_valtop > curvaloff)
+      tskitm->itk_closures[fratop] = NULL;
+      memset (tskitm->itk_frames + fratop, 0, sizeof (struct momframe_st));
+      if (tskitm->itk_valtop > curvaloff)
 	{
-	  memset (tsk->itk_values + curvaloff, 0,
-		  sizeof (momval_t) * (tsk->itk_valtop - curvaloff));
-	  tsk->itk_valtop = curvaloff;
+	  memset (tskitm->itk_values + curvaloff, 0,
+		  sizeof (momval_t) * (tskitm->itk_valtop - curvaloff));
+	  tskitm->itk_valtop = curvaloff;
 	}
-      if (tsk->itk_scaltop > curintoff)
+      if (tskitm->itk_scaltop > curintoff)
 	{
-	  memset (tsk->itk_scalars + curintoff, 0,
-		  sizeof (intptr_t) * (tsk->itk_scaltop - curintoff));
-	  tsk->itk_scaltop = curintoff;
+	  memset (tskitm->itk_scalars + curintoff, 0,
+		  sizeof (intptr_t) * (tskitm->itk_scaltop - curintoff));
+	  tskitm->itk_scaltop = curintoff;
 	}
-      tsk->itk_fratop = fratop - 1;
+      tskitm->itk_fratop = fratop - 1;
     }
   res = nextstate;
 end:
-  tsk->itk_thread = (pthread_t) 0;
-  pthread_mutex_unlock (&((mom_anyitem_t *) tsk)->i_mtx);
+  tskitm->itk_thread = (pthread_t) 0;
+  pthread_mutex_unlock (&((mom_anyitem_t *) tskitm)->i_mtx);
   return res;
+}
+
+int
+mom_tasklet_depth (momval_t tsk)
+{
+  int top = 0;
+  if (!tsk.ptr || *tsk.ptype != momty_taskletitem)
+    return 0;
+  momit_tasklet_t *tskitm = tsk.ptaskitem;
+  pthread_mutex_lock (&((mom_anyitem_t *) tskitm)->i_mtx);
+  top = (int) tskitm->itk_fratop;
+  pthread_mutex_unlock (&((mom_anyitem_t *) tskitm)->i_mtx);
+  return top;
+}
+
+
+void
+mom_tasklet_push_frame (momval_t tsk, enum mom_pushframedirective_en firstdir,
+			...)
+{
+  if (!tsk.ptr || *tsk.ptype != momty_taskletitem)
+    return;
+  unsigned nbval = 0;
+  unsigned nbnum = 0;
+  unsigned nbdbl = 0;
+  int newstate = 0;
+  momclosure_t *newclos = NULL;
+  va_list args;
+  // first, compute the data size
+  {
+    enum mom_pushframedirective_en dir = firstdir;
+    va_start (args, firstdir);
+    while (dir != MOMPFR__END)
+      {
+	dir = va_arg (args, enum mom_pushframedirective_en);
+	switch (dir)
+	  {
+	  case MOMPFR__END:
+	    break;
+	  case MOMPFR_STATE /*, int state  */ :
+	    newstate = va_arg (args, int);
+	    break;
+	  case MOMPFR_CLOSURE /*, momclosure_t* clos  */ :
+	    newclos = va_arg (args, momclosure_t *);
+	    if (MONIMELT_UNLIKELY
+		(newclos && newclos->typnum != momty_closure))
+	      MONIMELT_FATAL ("invalid closure to push on tasklet");
+	    break;
+	  case MOMPFR_VALUE /*, momval_t val */ :
+	    (void) va_arg (args, momval_t);
+	    nbval++;
+	    break;
+	  case MOMPFR_TWO_VALUES /*, momval_t val1, val2 */ :
+	    (void) va_arg (args, momval_t);
+	    (void) va_arg (args, momval_t);
+	    nbval += 2;
+	    break;
+	  case MOMPFR_THREE_VALUES /*, momval_t val1, val2, val3 */ :
+	    (void) va_arg (args, momval_t);
+	    (void) va_arg (args, momval_t);
+	    (void) va_arg (args, momval_t);
+	    nbval += 3;
+	    break;
+	  case MOMPFR_FOUR_VALUES /*, momval_t val1, val2, val3, val4 */ :
+	    (void) va_arg (args, momval_t);
+	    (void) va_arg (args, momval_t);
+	    (void) va_arg (args, momval_t);
+	    (void) va_arg (args, momval_t);
+	    nbval += 4;
+	    break;
+	  case MOMPFR_FIVE_VALUES /*, momval_t val1, val2, val3, val4, val5 */ :
+	    (void) va_arg (args,
+			   momval_t);
+	    (void) va_arg (args, momval_t);
+	    (void) va_arg (args, momval_t);
+	    (void) va_arg (args, momval_t);
+	    (void) va_arg (args, momval_t);
+	    nbval += 4;
+	    break;
+	  case MOMPFR_ARRAY_VALUES /* unsigned count, momval_t valarr[count] */ :
+	    {
+	      unsigned count = va_arg (args, unsigned);
+	      momval_t *arr = va_arg (args, momval_t *);
+	      if (MONIMELT_UNLIKELY (!arr))
+		MONIMELT_FATAL ("invalid array value to push");
+	    }
+	    break;
+	  case MOMPFR_NODE_VALUES /* momnode_st* node, -- to push the sons of a node or closure */ :
+	    {
+	      momnode_t *nod = va_arg (args, momnode_t *);
+	      if (nod
+		  && (nod->typnum == momty_node
+		      || nod->typnum == momty_closure))
+		nbval += nod->slen;
+	    }
+	    break;
+	  case MOMPFR_INT /*, intptr_t num */ :
+	    {
+	      (void) va_arg (args, intptr_t);
+	      nbnum++;
+	    }
+	    break;
+	  case MOMPFR_TWO_INTS /*, intptr_t num1, num2 */ :
+	    {
+	      (void) va_arg (args, intptr_t);
+	      (void) va_arg (args, intptr_t);
+	      nbnum += 2;
+	    }
+	    break;
+	  case MOMPFR_THREE_INTS /*, intptr_t num1, num2, num3 */ :
+	    {
+	      (void) va_arg (args, intptr_t);
+	      (void) va_arg (args, intptr_t);
+	      (void) va_arg (args, intptr_t);
+	      nbnum += 3;
+	    }
+	    break;
+	  case MOMPFR_FOUR_INTS /*, intptr_t num1, num2, num3, num4 */ :
+	    {
+	      (void) va_arg (args, intptr_t);
+	      (void) va_arg (args, intptr_t);
+	      (void) va_arg (args, intptr_t);
+	      (void) va_arg (args, intptr_t);
+	      nbnum += 4;
+	    }
+	    break;
+	  case MOMPFR_FIVE_INTS /*, intptr_t num1, num2, num3, num4, num5 */ :
+	    {
+	      (void) va_arg (args, intptr_t);
+	      (void) va_arg (args, intptr_t);
+	      (void) va_arg (args, intptr_t);
+	      (void) va_arg (args, intptr_t);
+	      (void) va_arg (args, intptr_t);
+	      nbnum += 5;
+	    }
+	    break;
+	  case MOMPFR_ARRAY_INTS /* unsigned count, intptr_t numarr[count] */ :
+	    {
+	      unsigned count = va_arg (args, unsigned);
+	      momval_t *arr = va_arg (args, intptr_t *);
+	      if (MONIMELT_UNLIKELY (!arr))
+		MONIMELT_FATAL ("invalid integer value to push");
+	      nbnum += count;
+	    }
+	    break;
+	  case MOMPFR_DOUBLE /*, double d */ :
+	    {
+	      (void) va_arg (args, double);
+	      nbdbl++;
+	    }
+	    break;
+	  case MOMPFR_TWO_DOUBLES /*, double d1, d2 */ :
+	    {
+	      (void) va_arg (args, double);
+	      (void) va_arg (args, double);
+	      nbdbl += 2;
+	    }
+	    break;
+	  case MOMPFR_THREE_DOUBLES /*, double d1, d2, d3 */ :
+	    {
+	      (void) va_arg (args, double);
+	      (void) va_arg (args, double);
+	      (void) va_arg (args, double);
+	      nbdbl += 3;
+	    }
+	    break;
+	  case MOMPFR_FOUR_DOUBLES /*, double d1, d2, d3, d4 */ :
+	    {
+	      (void) va_arg (args, double);
+	      (void) va_arg (args, double);
+	      (void) va_arg (args, double);
+	      (void) va_arg (args, double);
+	      nbdbl += 4;
+	    }
+	    break;
+	  case MOMPFR_FIVE_DOUBLES /*, double d1, d2, d3, d4, d5 */ :
+	    {
+	      (void) va_arg (args, double);
+	      (void) va_arg (args, double);
+	      (void) va_arg (args, double);
+	      (void) va_arg (args, double);
+	      (void) va_arg (args, double);
+	      nbdbl += 5;
+	    }
+	    break;
+	  case MOMPFR_ARRAY_DOUBLES /* unsigned count, double dblarr[count] */ :
+	    {
+	      unsigned count = va_arg (args, unsigned);
+	      double *arr = va_arg (args, intptr_t *);
+	      if (MONIMELT_UNLIKELY (!arr))
+		MONIMELT_FATAL ("invalid double value to push");
+	      nbdbl += count;
+	    }
+	    break;
+	  default:
+	    MONIMELT_FATAL ("unexpected push directive #%d", (int) dir);
+	    goto end;
+	  }
+      }
+    va_end (args);
+  }
+  momit_tasklet_t *tskitm = tsk.ptaskitem;
+  pthread_mutex_lock (&((mom_anyitem_t *) tskitm)->i_mtx);
+#warning mom_tasklet_push_frame should really push a frame
+end:
+  pthread_mutex_unlock (&((mom_anyitem_t *) tskitm)->i_mtx);
 }
