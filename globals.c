@@ -723,7 +723,7 @@ compute_pushed_data_size (const momclosure_t * closure, unsigned *pnbval,
 	case MOMPFR_ARRAY_DOUBLES /* unsigned count, double dblarr[count] */ :
 	  {
 	    unsigned count = va_arg (args, unsigned);
-	    double *arr = va_arg (args, intptr_t *);
+	    double *arr = va_arg (args, double *);
 	    if (MONIMELT_UNLIKELY (!arr))
 	      MONIMELT_FATAL ("invalid double value to push");
 	    nbdbl += count;
@@ -745,11 +745,152 @@ compute_pushed_data_size (const momclosure_t * closure, unsigned *pnbval,
     nbnum = rdescr->rout_frame_nbnum;
   if (nbdbl < rdescr->rout_frame_nbdbl)
     nbdbl = rdescr->rout_frame_nbdbl;
+  if (nbnum % 2 != 0)
+    nbnum++;
+  if (nbval % 2 != 0)
+    nbval++;
+  if (nbdbl % 2 != 0)
+    nbdbl++;
   *pnbval = nbval;
   *pnbnum = nbnum;
   *pnbdbl = nbdbl;
   *pnewstate = newstate;
 }
+
+
+
+
+static void
+fill_frame_data (intptr_t * numdata, double *dbldata, momval_t * valdata,
+		 enum mom_pushframedirective_en dir, va_list args)
+{
+  while (dir != MOMPFR__END)
+    {
+      dir = va_arg (args, enum mom_pushframedirective_en);
+      switch (dir)
+	{
+	case MOMPFR__END:
+	  break;
+	case MOMPFR_STATE /*, int state  */ :
+	  break;
+	case MOMPFR_VALUE /*, momval_t val */ :
+	  *(valdata++) = va_arg (args, momval_t);
+	  break;
+	case MOMPFR_TWO_VALUES /*, momval_t val1, val2 */ :
+	  *(valdata++) = va_arg (args, momval_t);
+	  *(valdata++) = va_arg (args, momval_t);
+	  break;
+	case MOMPFR_THREE_VALUES /*, momval_t val1, val2, val3 */ :
+	  *(valdata++) = va_arg (args, momval_t);
+	  *(valdata++) = va_arg (args, momval_t);
+	  *(valdata++) = va_arg (args, momval_t);
+	  break;
+	case MOMPFR_FOUR_VALUES /*, momval_t val1, val2, val3, val4 */ :
+	  *(valdata++) = va_arg (args, momval_t);
+	  *(valdata++) = va_arg (args, momval_t);
+	  *(valdata++) = va_arg (args, momval_t);
+	  *(valdata++) = va_arg (args, momval_t);
+	  break;
+	case MOMPFR_FIVE_VALUES /*, momval_t val1, val2, val3, val4, val5 */ :
+	  *(valdata++) =
+	    va_arg (args, momval_t);
+	  *(valdata++) = va_arg (args, momval_t);
+	  *(valdata++) = va_arg (args, momval_t);
+	  *(valdata++) = va_arg (args, momval_t);
+	  *(valdata++) = va_arg (args, momval_t);
+	  break;
+	case MOMPFR_ARRAY_VALUES /* unsigned count, momval_t valarr[count] */ :
+	  {
+	    unsigned count = va_arg (args, unsigned);
+	    momval_t *arr = va_arg (args, momval_t *);
+	    memcpy (valdata, arr, count * sizeof (momval_t));
+	    valdata += count;
+	  }
+	  break;
+	case MOMPFR_NODE_VALUES /* momnode_st* node, -- to push the sons of a node or closure */ :
+	  {
+	    momnode_t *nod = va_arg (args, momnode_t *);
+	    if (nod
+		&& (nod->typnum == momty_node
+		    || nod->typnum == momty_closure))
+	      {
+		memcpy (valdata, nod->sontab, nod->slen * sizeof (momval_t));
+		valdata += nod->slen;
+	      }
+	  }
+	  break;
+	case MOMPFR_INT /*, intptr_t num */ :
+	  *(numdata++) = va_arg (args, intptr_t);
+	  break;
+	case MOMPFR_TWO_INTS /*, intptr_t num1, num2 */ :
+	  *(numdata++) = va_arg (args, intptr_t);
+	  *(numdata++) = va_arg (args, intptr_t);
+	  break;
+	case MOMPFR_THREE_INTS /*, intptr_t num1, num2, num3 */ :
+	  *(numdata++) = va_arg (args, intptr_t);
+	  *(numdata++) = va_arg (args, intptr_t);
+	  *(numdata++) = va_arg (args, intptr_t);
+	  break;
+	case MOMPFR_FOUR_INTS /*, intptr_t num1, num2, num3, num4 */ :
+	  *(numdata++) = va_arg (args, intptr_t);
+	  *(numdata++) = va_arg (args, intptr_t);
+	  *(numdata++) = va_arg (args, intptr_t);
+	  *(numdata++) = va_arg (args, intptr_t);
+	  break;
+	case MOMPFR_FIVE_INTS /*, intptr_t num1, num2, num3, num4, num5 */ :
+	  *(numdata++) = va_arg (args, intptr_t);
+	  *(numdata++) = va_arg (args, intptr_t);
+	  *(numdata++) = va_arg (args, intptr_t);
+	  *(numdata++) = va_arg (args, intptr_t);
+	  *(numdata++) = va_arg (args, intptr_t);
+	  break;
+	case MOMPFR_ARRAY_INTS /* unsigned count, intptr_t numarr[count] */ :
+	  {
+	    unsigned count = va_arg (args, unsigned);
+	    momval_t *arr = va_arg (args, intptr_t *);
+	    memcpy (numdata, arr, count * sizeof (intptr_t));
+	    numdata += count;
+	  }
+	  break;
+	case MOMPFR_DOUBLE /*, double d */ :
+	  *(dbldata++) = va_arg (args, double);
+	  break;
+	case MOMPFR_TWO_DOUBLES /*, double d1, d2 */ :
+	  *(dbldata++) = va_arg (args, double);
+	  *(dbldata++) = va_arg (args, double);
+	  break;
+	case MOMPFR_THREE_DOUBLES /*, double d1, d2, d3 */ :
+	  *(dbldata++) = va_arg (args, double);
+	  *(dbldata++) = va_arg (args, double);
+	  *(dbldata++) = va_arg (args, double);
+	  break;
+	case MOMPFR_FOUR_DOUBLES /*, double d1, d2, d3, d4 */ :
+	  *(dbldata++) = va_arg (args, double);
+	  *(dbldata++) = va_arg (args, double);
+	  *(dbldata++) = va_arg (args, double);
+	  *(dbldata++) = va_arg (args, double);
+	  break;
+	case MOMPFR_FIVE_DOUBLES /*, double d1, d2, d3, d4, d5 */ :
+	  *(dbldata++) = va_arg (args, double);
+	  *(dbldata++) = va_arg (args, double);
+	  *(dbldata++) = va_arg (args, double);
+	  *(dbldata++) = va_arg (args, double);
+	  *(dbldata++) = va_arg (args, double);
+	  break;
+	case MOMPFR_ARRAY_DOUBLES /* unsigned count, double dblarr[count] */ :
+	  {
+	    unsigned count = va_arg (args, unsigned);
+	    double *arr = va_arg (args, double *);
+	    memcpy (dbldata, arr, count * sizeof (double));
+	    dbldata += count;
+	  }
+	  break;
+	default:
+	  MONIMELT_FATAL ("unexpected push directive #%d", (int) dir);
+	}
+    }
+}
+
 
 
 
@@ -774,7 +915,84 @@ mom_tasklet_push_frame (momval_t tsk, momval_t clo,
   va_end (args);
   momit_tasklet_t *tskitm = tsk.ptaskitem;
   pthread_mutex_lock (&((mom_anyitem_t *) tskitm)->i_mtx);
-#warning mom_tasklet_push_frame should really push a frame
-end:
+  if (MONIMELT_UNLIKELY
+      (tskitm->itk_scaltop +
+       (sizeof (intptr_t) * nbnum +
+	sizeof (double) * nbdbl) / sizeof (intptr_t) >= tskitm->itk_scalsize))
+    {
+      unsigned newscalsize =
+	((5 * tskitm->itk_scaltop / 4 +
+	  (sizeof (intptr_t *) * nbnum +
+	   sizeof (double) * nbdbl) / sizeof (intptr_t) + 5) | 7) + 1;
+      intptr_t *newscalars =
+	GC_MALLOC_ATOMIC (newscalsize * sizeof (intptr_t));
+      if (MONIMELT_UNLIKELY (!newscalars))
+	MONIMELT_FATAL ("failed to grow scalars of task to %d",
+			(int) newscalsize);
+      memset (newscalars, 0, newscalsize * sizeof (intptr_t));
+      memcpy (newscalars, tskitm->itk_scalars,
+	      tskitm->itk_scaltop * sizeof (intptr_t));
+      GC_FREE (tskitm->itk_scalars);
+      tskitm->itk_scalars = newscalars;
+      tskitm->itk_scalsize = newscalsize;
+    }
+  if (MONIMELT_UNLIKELY (tskitm->itk_valtop + nbval >= tskitm->itk_valsize))
+    {
+      unsigned newvalsize =
+	((5 * tskitm->itk_valtop / 4 + nbval + 6) | 7) + 1;
+      momval_t *newvalues = GC_MALLOC (newvalsize * sizeof (momval_t));
+      if (MONIMELT_UNLIKELY (!newvalues))
+	MONIMELT_FATAL ("failed to grow values of task to %d",
+			(int) newvalsize);
+      memset (newvalues, 0, newvalsize * sizeof (momval_t));
+      memcpy (newvalues, tskitm->itk_values,
+	      tskitm->itk_valtop * sizeof (momval_t));
+      GC_FREE (tskitm->itk_values);
+      tskitm->itk_values = newvalues;
+      tskitm->itk_valsize = newvalsize;
+    }
+  if (MONIMELT_UNLIKELY (tskitm->itk_fratop + 1 >= tskitm->itk_frasize))
+    {
+      unsigned newfrasize = ((5 * tskitm->itk_frasize / 4 + 6) | 7) + 1;
+      struct momframe_st *newframes =
+	GC_MALLOC_ATOMIC (sizeof (struct momframe_st) * newfrasize);
+      momclosure_t **newclosures =
+	GC_MALLOC (sizeof (momclosure_t *) * newfrasize);
+      if (MONIMELT_UNLIKELY (!newframes || !newclosures))
+	MONIMELT_FATAL ("failed to grow frames of task to %d",
+			(int) newfrasize);
+      memset (newframes, 0, sizeof (struct momframe_st) * newfrasize);
+      memset (newclosures, 0, sizeof (momclosure_t *) * newfrasize);
+      memcpy (newframes, tskitm->itk_frames,
+	      tskitm->itk_fratop * sizeof (struct momframe_st));
+      memcpy (newclosures, tskitm->itk_closures,
+	      tskitm->itk_fratop * sizeof (momclosure_t *));
+      GC_FREE (tskitm->itk_frames);
+      GC_FREE (tskitm->itk_closures);
+      tskitm->itk_frames = newframes;
+      tskitm->itk_closures = newclosures;
+      tskitm->itk_frasize = newfrasize;
+    }
+  struct momframe_st *newframe = tskitm->itk_frames + tskitm->itk_fratop;
+  newframe->fr_state = newstate;
+  unsigned froint = newframe->fr_intoff = tskitm->itk_scaltop;
+  unsigned frodbl = newframe->fr_dbloff = tskitm->itk_scaltop + nbnum;
+  unsigned froval = newframe->fr_valoff = tskitm->itk_valtop;
+  unsigned fratop = tskitm->itk_fratop;
+  memset (tskitm->itk_scalars + tskitm->itk_scaltop, 0,
+	  (nbnum * sizeof (intptr_t) + nbdbl * sizeof (double)));
+  memset (tskitm->itk_values + tskitm->itk_valtop, 0,
+	  nbval * sizeof (momval_t));
+  tskitm->itk_scaltop +=
+    (nbnum * sizeof (intptr_t) + nbdbl * sizeof (double)) / sizeof (intptr_t);
+  tskitm->itk_valtop += nbval;
+  tskitm->itk_closures[tskitm->itk_fratop] = (momclosure_t *) closure;
+  tskitm->itk_fratop = fratop + 1;
+  va_start (args, firstdir);
+  fill_frame_data ((intptr_t *) (tskitm->itk_scalars + froint),
+		   (double *) (tskitm->itk_scalars + frodbl),
+		   (momval_t *) (tskitm->itk_values + froval), firstdir,
+		   args);
+  va_end (args);
   pthread_mutex_unlock (&((mom_anyitem_t *) tskitm)->i_mtx);
 }
