@@ -1118,8 +1118,9 @@ tasklet_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 	nbval = tskitm->itk_frames[frix + 1].fr_valoff - curfra->fr_valoff;
       for (unsigned vix = 0; vix < nbval; vix++)
 	mom_dump_scan_value (dmp,
-			     tskitm->itk_values[tskitm->itk_frames[frix].
-						fr_valoff + vix]);
+			     tskitm->itk_values[tskitm->
+						itk_frames[frix].fr_valoff +
+						vix]);
     }
 }
 
@@ -1247,7 +1248,8 @@ routine_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 static mom_anyitem_t *
 routine_itemloader (struct mom_loader_st *ld, momval_t json, uuid_t uid)
 {
-  const char *name = mom_string_cstr (mom_jsonob_get (json, mom_item__name));
+  const char *name =
+    mom_string_cstr (mom_jsonob_get (json, (momval_t) mom_item__name));
   if (MONIMELT_UNLIKELY (!name))
     MONIMELT_FATAL ("missing name for routine item");
   return (mom_anyitem_t *) mom_make_item_routine_of_uuid (uid, name);
