@@ -346,7 +346,6 @@ enum mom_pushframedirective_en
 {
   MOMPFR__END = 0,
   MOMPFR_STATE /*, int state  */ ,
-  MOMPFR_CLOSURE /*, momclosure_t* clos  */ ,
   MOMPFR_VALUE /*, momval_t val */ ,
   MOMPFR_TWO_VALUES /*, momval_t val1, val2 */ ,
   MOMPFR_THREE_VALUES /*, momval_t val1, val2, val3 */ ,
@@ -368,7 +367,7 @@ enum mom_pushframedirective_en
   MOMPFR_ARRAY_DOUBLES /* unsigned count, double dblarr[count] */ ,
 };
 #define MOMPFR_END ((void*)MOMPFR__END)
-void mom_tasklet_push_frame (momval_t tsk, enum mom_pushframedirective_en,
+void mom_tasklet_push_frame (momval_t tsk, momval_t clo, enum mom_pushframedirective_en,
 			     ...) __attribute__ ((sentinel));
 void mom_tasklet_replace_frame (momval_t tsk, enum mom_pushframedirective_en,
 				...) __attribute__ ((sentinel));

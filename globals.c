@@ -562,191 +562,216 @@ mom_tasklet_depth (momval_t tsk)
 }
 
 
+static void
+compute_pushed_data_size (const momclosure_t * closure, unsigned *pnbval,
+			  unsigned *pnbnum, unsigned *pnbdbl, int *pnewstate,
+			  enum mom_pushframedirective_en dir, va_list args)
+{
+  unsigned nbval = 0;
+  unsigned nbnum = 0;
+  unsigned nbdbl = 0;
+  int newstate = 0;
+  while (dir != MOMPFR__END)
+    {
+      dir = va_arg (args, enum mom_pushframedirective_en);
+      switch (dir)
+	{
+	case MOMPFR__END:
+	  break;
+	case MOMPFR_STATE /*, int state  */ :
+	  newstate = va_arg (args, int);
+	  break;
+	case MOMPFR_VALUE /*, momval_t val */ :
+	  (void) va_arg (args, momval_t);
+	  nbval++;
+	  break;
+	case MOMPFR_TWO_VALUES /*, momval_t val1, val2 */ :
+	  (void) va_arg (args, momval_t);
+	  (void) va_arg (args, momval_t);
+	  nbval += 2;
+	  break;
+	case MOMPFR_THREE_VALUES /*, momval_t val1, val2, val3 */ :
+	  (void) va_arg (args, momval_t);
+	  (void) va_arg (args, momval_t);
+	  (void) va_arg (args, momval_t);
+	  nbval += 3;
+	  break;
+	case MOMPFR_FOUR_VALUES /*, momval_t val1, val2, val3, val4 */ :
+	  (void) va_arg (args, momval_t);
+	  (void) va_arg (args, momval_t);
+	  (void) va_arg (args, momval_t);
+	  (void) va_arg (args, momval_t);
+	  nbval += 4;
+	  break;
+	case MOMPFR_FIVE_VALUES /*, momval_t val1, val2, val3, val4, val5 */ :
+	  (void) va_arg (args,
+			 momval_t);
+	  (void) va_arg (args, momval_t);
+	  (void) va_arg (args, momval_t);
+	  (void) va_arg (args, momval_t);
+	  (void) va_arg (args, momval_t);
+	  (void) va_arg (args, momval_t);
+	  nbval += 5;
+	  break;
+	case MOMPFR_ARRAY_VALUES /* unsigned count, momval_t valarr[count] */ :
+	  {
+	    unsigned count = va_arg (args, unsigned);
+	    momval_t *arr = va_arg (args, momval_t *);
+	    if (MONIMELT_UNLIKELY (!arr))
+	      MONIMELT_FATAL ("invalid array value to push");
+	    nbval += count;
+	  }
+	  break;
+	case MOMPFR_NODE_VALUES /* momnode_st* node, -- to push the sons of a node or closure */ :
+	  {
+	    momnode_t *nod = va_arg (args, momnode_t *);
+	    if (nod
+		&& (nod->typnum == momty_node
+		    || nod->typnum == momty_closure))
+	      nbval += nod->slen;
+	  }
+	  break;
+	case MOMPFR_INT /*, intptr_t num */ :
+	  {
+	    (void) va_arg (args, intptr_t);
+	    nbnum++;
+	  }
+	  break;
+	case MOMPFR_TWO_INTS /*, intptr_t num1, num2 */ :
+	  {
+	    (void) va_arg (args, intptr_t);
+	    (void) va_arg (args, intptr_t);
+	    nbnum += 2;
+	  }
+	  break;
+	case MOMPFR_THREE_INTS /*, intptr_t num1, num2, num3 */ :
+	  {
+	    (void) va_arg (args, intptr_t);
+	    (void) va_arg (args, intptr_t);
+	    (void) va_arg (args, intptr_t);
+	    nbnum += 3;
+	  }
+	  break;
+	case MOMPFR_FOUR_INTS /*, intptr_t num1, num2, num3, num4 */ :
+	  {
+	    (void) va_arg (args, intptr_t);
+	    (void) va_arg (args, intptr_t);
+	    (void) va_arg (args, intptr_t);
+	    (void) va_arg (args, intptr_t);
+	    nbnum += 4;
+	  }
+	  break;
+	case MOMPFR_FIVE_INTS /*, intptr_t num1, num2, num3, num4, num5 */ :
+	  {
+	    (void) va_arg (args, intptr_t);
+	    (void) va_arg (args, intptr_t);
+	    (void) va_arg (args, intptr_t);
+	    (void) va_arg (args, intptr_t);
+	    (void) va_arg (args, intptr_t);
+	    nbnum += 5;
+	  }
+	  break;
+	case MOMPFR_ARRAY_INTS /* unsigned count, intptr_t numarr[count] */ :
+	  {
+	    unsigned count = va_arg (args, unsigned);
+	    momval_t *arr = va_arg (args, intptr_t *);
+	    if (MONIMELT_UNLIKELY (!arr))
+	      MONIMELT_FATAL ("invalid integer value to push");
+	    nbnum += count;
+	  }
+	  break;
+	case MOMPFR_DOUBLE /*, double d */ :
+	  {
+	    (void) va_arg (args, double);
+	    nbdbl++;
+	  }
+	  break;
+	case MOMPFR_TWO_DOUBLES /*, double d1, d2 */ :
+	  {
+	    (void) va_arg (args, double);
+	    (void) va_arg (args, double);
+	    nbdbl += 2;
+	  }
+	  break;
+	case MOMPFR_THREE_DOUBLES /*, double d1, d2, d3 */ :
+	  {
+	    (void) va_arg (args, double);
+	    (void) va_arg (args, double);
+	    (void) va_arg (args, double);
+	    nbdbl += 3;
+	  }
+	  break;
+	case MOMPFR_FOUR_DOUBLES /*, double d1, d2, d3, d4 */ :
+	  {
+	    (void) va_arg (args, double);
+	    (void) va_arg (args, double);
+	    (void) va_arg (args, double);
+	    (void) va_arg (args, double);
+	    nbdbl += 4;
+	  }
+	  break;
+	case MOMPFR_FIVE_DOUBLES /*, double d1, d2, d3, d4, d5 */ :
+	  {
+	    (void) va_arg (args, double);
+	    (void) va_arg (args, double);
+	    (void) va_arg (args, double);
+	    (void) va_arg (args, double);
+	    (void) va_arg (args, double);
+	    nbdbl += 5;
+	  }
+	  break;
+	case MOMPFR_ARRAY_DOUBLES /* unsigned count, double dblarr[count] */ :
+	  {
+	    unsigned count = va_arg (args, unsigned);
+	    double *arr = va_arg (args, intptr_t *);
+	    if (MONIMELT_UNLIKELY (!arr))
+	      MONIMELT_FATAL ("invalid double value to push");
+	    nbdbl += count;
+	  }
+	  break;
+	default:
+	  MONIMELT_FATAL ("unexpected push directive #%d", (int) dir);
+	}
+    }
+  momit_routine_t *rout = (momit_routine_t *) closure->connitm;
+  if (MONIMELT_UNLIKELY (!rout || rout->irt_item.typnum != momty_routineitem))
+    MONIMELT_FATAL ("bad routine in closure");
+  struct momroutinedescr_st *rdescr = rout->irt_descr;
+  if (MONIMELT_UNLIKELY (!rdescr || rdescr->rout_magic != ROUTINE_MAGIC))
+    MONIMELT_FATAL ("corrupted routine in closure");
+  if (nbval < rdescr->rout_frame_nbval)
+    nbval = rdescr->rout_frame_nbval;
+  if (nbnum < rdescr->rout_frame_nbnum)
+    nbnum = rdescr->rout_frame_nbnum;
+  if (nbdbl < rdescr->rout_frame_nbdbl)
+    nbdbl = rdescr->rout_frame_nbdbl;
+  *pnbval = nbval;
+  *pnbnum = nbnum;
+  *pnbdbl = nbdbl;
+  *pnewstate = newstate;
+}
+
+
+
 void
-mom_tasklet_push_frame (momval_t tsk, enum mom_pushframedirective_en firstdir,
-			...)
+mom_tasklet_push_frame (momval_t tsk, momval_t clo,
+			enum mom_pushframedirective_en firstdir, ...)
 {
   if (!tsk.ptr || *tsk.ptype != momty_taskletitem)
+    return;
+  if (!clo.ptr || *clo.ptype != momty_closure)
     return;
   unsigned nbval = 0;
   unsigned nbnum = 0;
   unsigned nbdbl = 0;
   int newstate = 0;
-  momclosure_t *newclos = NULL;
+  const momclosure_t *closure = clo.pclosure;
   va_list args;
   // first, compute the data size
-  {
-    enum mom_pushframedirective_en dir = firstdir;
-    va_start (args, firstdir);
-    while (dir != MOMPFR__END)
-      {
-	dir = va_arg (args, enum mom_pushframedirective_en);
-	switch (dir)
-	  {
-	  case MOMPFR__END:
-	    break;
-	  case MOMPFR_STATE /*, int state  */ :
-	    newstate = va_arg (args, int);
-	    break;
-	  case MOMPFR_CLOSURE /*, momclosure_t* clos  */ :
-	    newclos = va_arg (args, momclosure_t *);
-	    if (MONIMELT_UNLIKELY
-		(newclos && newclos->typnum != momty_closure))
-	      MONIMELT_FATAL ("invalid closure to push on tasklet");
-	    break;
-	  case MOMPFR_VALUE /*, momval_t val */ :
-	    (void) va_arg (args, momval_t);
-	    nbval++;
-	    break;
-	  case MOMPFR_TWO_VALUES /*, momval_t val1, val2 */ :
-	    (void) va_arg (args, momval_t);
-	    (void) va_arg (args, momval_t);
-	    nbval += 2;
-	    break;
-	  case MOMPFR_THREE_VALUES /*, momval_t val1, val2, val3 */ :
-	    (void) va_arg (args, momval_t);
-	    (void) va_arg (args, momval_t);
-	    (void) va_arg (args, momval_t);
-	    nbval += 3;
-	    break;
-	  case MOMPFR_FOUR_VALUES /*, momval_t val1, val2, val3, val4 */ :
-	    (void) va_arg (args, momval_t);
-	    (void) va_arg (args, momval_t);
-	    (void) va_arg (args, momval_t);
-	    (void) va_arg (args, momval_t);
-	    nbval += 4;
-	    break;
-	  case MOMPFR_FIVE_VALUES /*, momval_t val1, val2, val3, val4, val5 */ :
-	    (void) va_arg (args,
-			   momval_t);
-	    (void) va_arg (args, momval_t);
-	    (void) va_arg (args, momval_t);
-	    (void) va_arg (args, momval_t);
-	    (void) va_arg (args, momval_t);
-	    nbval += 4;
-	    break;
-	  case MOMPFR_ARRAY_VALUES /* unsigned count, momval_t valarr[count] */ :
-	    {
-	      unsigned count = va_arg (args, unsigned);
-	      momval_t *arr = va_arg (args, momval_t *);
-	      if (MONIMELT_UNLIKELY (!arr))
-		MONIMELT_FATAL ("invalid array value to push");
-	    }
-	    break;
-	  case MOMPFR_NODE_VALUES /* momnode_st* node, -- to push the sons of a node or closure */ :
-	    {
-	      momnode_t *nod = va_arg (args, momnode_t *);
-	      if (nod
-		  && (nod->typnum == momty_node
-		      || nod->typnum == momty_closure))
-		nbval += nod->slen;
-	    }
-	    break;
-	  case MOMPFR_INT /*, intptr_t num */ :
-	    {
-	      (void) va_arg (args, intptr_t);
-	      nbnum++;
-	    }
-	    break;
-	  case MOMPFR_TWO_INTS /*, intptr_t num1, num2 */ :
-	    {
-	      (void) va_arg (args, intptr_t);
-	      (void) va_arg (args, intptr_t);
-	      nbnum += 2;
-	    }
-	    break;
-	  case MOMPFR_THREE_INTS /*, intptr_t num1, num2, num3 */ :
-	    {
-	      (void) va_arg (args, intptr_t);
-	      (void) va_arg (args, intptr_t);
-	      (void) va_arg (args, intptr_t);
-	      nbnum += 3;
-	    }
-	    break;
-	  case MOMPFR_FOUR_INTS /*, intptr_t num1, num2, num3, num4 */ :
-	    {
-	      (void) va_arg (args, intptr_t);
-	      (void) va_arg (args, intptr_t);
-	      (void) va_arg (args, intptr_t);
-	      (void) va_arg (args, intptr_t);
-	      nbnum += 4;
-	    }
-	    break;
-	  case MOMPFR_FIVE_INTS /*, intptr_t num1, num2, num3, num4, num5 */ :
-	    {
-	      (void) va_arg (args, intptr_t);
-	      (void) va_arg (args, intptr_t);
-	      (void) va_arg (args, intptr_t);
-	      (void) va_arg (args, intptr_t);
-	      (void) va_arg (args, intptr_t);
-	      nbnum += 5;
-	    }
-	    break;
-	  case MOMPFR_ARRAY_INTS /* unsigned count, intptr_t numarr[count] */ :
-	    {
-	      unsigned count = va_arg (args, unsigned);
-	      momval_t *arr = va_arg (args, intptr_t *);
-	      if (MONIMELT_UNLIKELY (!arr))
-		MONIMELT_FATAL ("invalid integer value to push");
-	      nbnum += count;
-	    }
-	    break;
-	  case MOMPFR_DOUBLE /*, double d */ :
-	    {
-	      (void) va_arg (args, double);
-	      nbdbl++;
-	    }
-	    break;
-	  case MOMPFR_TWO_DOUBLES /*, double d1, d2 */ :
-	    {
-	      (void) va_arg (args, double);
-	      (void) va_arg (args, double);
-	      nbdbl += 2;
-	    }
-	    break;
-	  case MOMPFR_THREE_DOUBLES /*, double d1, d2, d3 */ :
-	    {
-	      (void) va_arg (args, double);
-	      (void) va_arg (args, double);
-	      (void) va_arg (args, double);
-	      nbdbl += 3;
-	    }
-	    break;
-	  case MOMPFR_FOUR_DOUBLES /*, double d1, d2, d3, d4 */ :
-	    {
-	      (void) va_arg (args, double);
-	      (void) va_arg (args, double);
-	      (void) va_arg (args, double);
-	      (void) va_arg (args, double);
-	      nbdbl += 4;
-	    }
-	    break;
-	  case MOMPFR_FIVE_DOUBLES /*, double d1, d2, d3, d4, d5 */ :
-	    {
-	      (void) va_arg (args, double);
-	      (void) va_arg (args, double);
-	      (void) va_arg (args, double);
-	      (void) va_arg (args, double);
-	      (void) va_arg (args, double);
-	      nbdbl += 5;
-	    }
-	    break;
-	  case MOMPFR_ARRAY_DOUBLES /* unsigned count, double dblarr[count] */ :
-	    {
-	      unsigned count = va_arg (args, unsigned);
-	      double *arr = va_arg (args, intptr_t *);
-	      if (MONIMELT_UNLIKELY (!arr))
-		MONIMELT_FATAL ("invalid double value to push");
-	      nbdbl += count;
-	    }
-	    break;
-	  default:
-	    MONIMELT_FATAL ("unexpected push directive #%d", (int) dir);
-	    goto end;
-	  }
-      }
-    va_end (args);
-  }
+  va_start (args, firstdir);
+  compute_pushed_data_size (closure, &nbval, &nbnum, &nbdbl, &newstate,
+			    firstdir, args);
+  va_end (args);
   momit_tasklet_t *tskitm = tsk.ptaskitem;
   pthread_mutex_lock (&((mom_anyitem_t *) tskitm)->i_mtx);
 #warning mom_tasklet_push_frame should really push a frame
