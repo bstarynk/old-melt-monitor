@@ -780,9 +780,176 @@ mom_attributes_emit_json (struct mom_dumper_st * dmp,
 }
 
 
+static int
+setintptr_cb (void *data, int nbcol, char **colarrs, char **colnames)
+{
+  if (nbcol == 1 && data)
+    {
+      intptr_t *n = data;
+      if (n)
+	*n = atol (colarrs[0]);
+    }
+  return 0;
+}
+
+static int
+setgcdup_cb (void *data, int nbcol, char **colarrs, char **colnames)
+{
+  if (nbcol == 1 && data && colarrs[0])
+    {
+      char **s = data;
+      if (s)
+	{
+	  if (colarrs[0][0])
+	    *s = GC_STRDUP (colarrs[0]);
+	  else
+	    *s = NULL;
+	}
+    }
+  return 0;
+}
+
+static sqlite3 *mom_dbsqlite = NULL;
+
+// fetch a GC_STRDUP-ed string to build an item of given uuid string
+static char *
+rootspace_fetch_build (unsigned spanum, const char *uuidstr)
+{
+  char sqlbuf[128];
+  char *res = NULL;
+  char *errmsg = NULL;
+  memset (sqlbuf, 0, sizeof (sqlbuf));
+  assert (spanum == MONIMELT_SPACE_ROOT);
+  assert (mom_dbsqlite != NULL);
+  assert (strchr (uuidstr, '\'') == NULL);
+  snprintf (sqlbuf, sizeof (sqlbuf),
+	    "SELECT jbuild FROM t_items WHERE uid='%s'", uuidstr);
+  assert (strlen (sqlbuf) + 2 < sizeof (sqlbuf));
+  if (sqlite3_exec (mom_dbsqlite, sqlbuf, setgcdup_cb, &res, &errmsg))
+    MONIMELT_FATAL ("failed build fetch with %s: %s", sqlbuf, errmsg);
+  return res;
+}
+
+// fetch a GC_STRDUP-ed string to fill an item of given uuid string
+static char *
+rootspace_fetch_fill (unsigned spanum, const char *uuidstr)
+{
+  char sqlbuf[128];
+  char *res = NULL;
+  char *errmsg = NULL;
+  memset (sqlbuf, 0, sizeof (sqlbuf));
+  assert (spanum == MONIMELT_SPACE_ROOT);
+  assert (mom_dbsqlite != NULL);
+  assert (strchr (uuidstr, '\'') == NULL);
+  snprintf (sqlbuf, sizeof (sqlbuf),
+	    "SELECT jfill FROM t_items WHERE uid='%s'", uuidstr);
+  assert (strlen (sqlbuf) + 2 < sizeof (sqlbuf));
+  if (sqlite3_exec (mom_dbsqlite, sqlbuf, setgcdup_cb, &res, &errmsg))
+    MONIMELT_FATAL ("failed build fetch with %s: %s", sqlbuf, errmsg);
+  return res;
+}
+
+static struct momspacedescr_st mom_root_space_descr = {
+  .spa_magic = SPACE_MAGIC,
+  .spa_name = MONIMELT_ROOT_SPACE_NAME,
+  .spa_data = NULL,
+  .spa_fetch_build = rootspace_fetch_build,
+  .spa_fetch_fill = rootspace_fetch_fill,
+};
+
+#define LOADNAMING_MAGIC 0x148e62fd	/* loadnaming magic 344875773 */
+struct loadnaming_st
+{
+  unsigned ldn_magic;
+  unsigned ldn_nbitems;
+  unsigned ldn_nbnames;
+  unsigned ldn_count;
+  char **ldn_names;
+  char **ldn_uuids;
+  char **ldn_spaces;
+};
+
+static int
+ldn_cb (void *data, int nbcol, char **colarrs, char **colnames)
+{
+  struct loadnaming_st *ldn = data;
+  assert (ldn->ldn_magic == LOADNAMING_MAGIC);
+  assert (nbcol == 3);
+  unsigned cnt = ldn->ldn_count;
+  assert (cnt < ldn->ldn_nbnames);
+  ldn->ldn_names[cnt] = GC_STRDUP (colarrs[0]);
+  ldn->ldn_uuids[cnt] = GC_STRDUP (colarrs[1]);
+  char *spaname = colarrs[2];
+  assert (spaname != NULL);
+#warning should check that spaname is valid and put it in ldn_spaces
+  ldn->ldn_count = cnt + 1;
+  return 0;
+}
 
 void
 mom_initial_load (const char *state)
 {
-  MONIMELT_FATAL ("unimplemented initial load of %s", state);
+  int errcod = sqlite3_open (state, &mom_dbsqlite);
+  struct mom_loader_st ld = { };
+  intptr_t nbitems = 0, nbnames = 0;
+  if (errcod)
+    MONIMELT_FATAL ("failed to open sqlite3 %s:%s", state,
+		    sqlite3_errmsg (mom_dbsqlite));
+  char *errmsg = NULL;
+  mom_spacedescr_array[MONIMELT_SPACE_ROOT] = &mom_root_space_descr;
+  mom_spacename_array[MONIMELT_SPACE_ROOT] =
+    (momstring_t *) mom_make_string (MONIMELT_ROOT_SPACE_NAME);
+  if (sqlite3_exec
+      (mom_dbsqlite, "SELECT COUNT(*) AS nb_items FROM t_item", setintptr_cb,
+       &nbitems, &errmsg))
+    MONIMELT_FATAL ("counting items in %s failed with %s", state, errmsg);
+  if (sqlite3_exec (mom_dbsqlite,
+		    "SELECT COUNT(*) AS nb_names FROM t_name",
+		    setintptr_cb, &nbnames, &errmsg))
+    MONIMELT_FATAL ("counting names in %s failed with %s", state, errmsg);
+  MONIMELT_INFORM ("state %s has %d items and %d names", state, (int) nbitems,
+		   (int) nbnames);
+  memset (&ld, 0, sizeof (ld));
+  ld.ldr_magic = LOADER_MAGIC;
+  struct loadnaming_st ldn;
+  memset (&ldn, 0, sizeof (ldn));
+  ldn.ldn_nbitems = nbitems;
+  ldn.ldn_nbnames = nbnames;
+  ldn.ldn_count = 0;
+  char **namesarr = GC_MALLOC (nbnames * sizeof (char *));
+  char **uuidsarr = GC_MALLOC (nbnames * sizeof (char *));
+  char **spacearr = GC_MALLOC (nbnames * sizeof (char *));
+  if (!namesarr || !uuidsarr || !spacearr)
+    MONIMELT_FATAL ("failed to allocate for %d names", (int) nbnames);
+  memset (namesarr, 0, nbnames * sizeof (char *));
+  memset (uuidsarr, 0, nbnames * sizeof (char *));
+  memset (spacearr, 0, nbnames * sizeof (char *));
+  ldn.ldn_names = namesarr;
+  ldn.ldn_uuids = uuidsarr;
+  ldn.ldn_spaces = spacearr;
+  ldn.ldn_magic = LOADNAMING_MAGIC;
+  if (sqlite3_exec (mom_dbsqlite,
+		    "SELECT name, nuid, spacenam FROM t_name ORDER BY name",
+		    ldn_cb, &ldn, &errmsg))
+    MONIMELT_FATAL ("fetching names in %s failed with %s", state, errmsg);
+  for (unsigned ix = 0; ix < ldn.ldn_count; ix++)
+    {
+      const char *curname = ldn.ldn_names[ix];
+      const char *curuuidstr = ldn.ldn_uuids[ix];
+      const char *curspace = ldn.ldn_spaces[ix];
+      mom_anyitem_t *curitm = NULL;
+      uuid_t curuid;
+      memset (&curuid, 0, sizeof (uuid_t));
+      if (!uuid_parse (curuuidstr, curuid))
+	{
+	  curitm = mom_load_item (&ld, curuid, curspace);
+	  if (!curitm)
+	    MONIMELT_FATAL ("failed to load named item %s of uid %s space %s",
+			    curname, curuuidstr, curspace);
+	}
+    }
+#warning should load the queued items in the loader
+end:
+  sqlite3_close (mom_dbsqlite);
+  mom_dbsqlite = NULL;
 }
