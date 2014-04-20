@@ -498,15 +498,15 @@ __attribute__ ((format (printf, 3, 4), noreturn));
   MONIMELT_FATAL_AT_BIS(__FILE__,__LINE__,Fmt,##__VA_ARGS__)
 
 void
-mom_info_at (const char *fil, int lin, const char *fmt, ...)
+mom_inform_at (const char *fil, int lin, const char *fmt, ...)
 __attribute__ ((format (printf, 3, 4)));
 
-#define MONIMELT_INFO_AT(Fil,Lin,Fmt,...) do {         \
-  mom_info_at(Fil,Lin,Fmt,##__VA_ARGS__);} while(0)
-#define MONIMELT_INFO_AT_BIS(Fil,Lin,Fmt,...) \
-  MONIMELT_INFO_AT(Fil,Lin,Fmt,##__VA_ARGS__)
-#define MONIMELT_INFO(Fmt,...) \
-  MONIMELT_INFO_AT_BIS(__FILE__,__LINE__,Fmt,##__VA_ARGS__)
+#define MONIMELT_INFORM_AT(Fil,Lin,Fmt,...) do {         \
+  mom_inform_at(Fil,Lin,Fmt,##__VA_ARGS__);} while(0)
+#define MONIMELT_INFORM_AT_BIS(Fil,Lin,Fmt,...) \
+  MONIMELT_INFORM_AT(Fil,Lin,Fmt,##__VA_ARGS__)
+#define MONIMELT_INFORM(Fmt,...) \
+  MONIMELT_INFORM_AT_BIS(__FILE__,__LINE__,Fmt,##__VA_ARGS__)
 
 momhash_t mom_string_hash (const char *str, int len);
 const momstring_t *mom_make_string_len (const char *str, int len);
@@ -537,8 +537,12 @@ momit_json_name_t *mom_make_item_json_name (const char *name);
 #define mom_create__json_name(Name,Uid) \
   mom_make_item_json_name_of_uuid(Uid,#Name)
 
+
+// fail if routine not found
 momit_routine_t *mom_make_item_routine_of_uuid (uuid_t, const char *name);
 momit_routine_t *mom_make_item_routine (const char *name);
+// return NULL if routine not found
+momit_routine_t *mom_try_make_item_routine (const char *name);
 
 momit_tasklet_t *mom_make_item_tasklet_of_uuid (uuid_t);
 momit_tasklet_t *mom_make_item_tasklet ();

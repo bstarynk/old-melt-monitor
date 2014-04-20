@@ -89,6 +89,17 @@ add_new_item (mom_anyitem_t * newitm)
 	  items_data->items_nb++;
 	  return;
 	}
+      else
+	if (MONIMELT_UNLIKELY
+	    (!memcmp
+	     (newitm->i_uuid, items_data->items_arr[i]->i_uuid,
+	      sizeof (uuid_t))))
+	{
+	  char uidstr[UUID_PARSED_LEN];
+	  memset (uidstr, 0, sizeof (uidstr));
+	  uuid_unparse (newitm->i_uuid, uidstr);
+	  MONIMELT_FATAL ("duplicate uuid %s", uidstr);
+	}
       if (!items_data->items_arr[i + 1]
 	  || items_data->items_arr[i + 1] == MONIMELT_EMPTY)
 	{
@@ -97,6 +108,17 @@ add_new_item (mom_anyitem_t * newitm)
 	  items_data->items_arr[i + 1] = newitm;
 	  items_data->items_nb++;
 	  return;
+	}
+      else
+	if (MONIMELT_UNLIKELY
+	    (!memcmp
+	     (newitm->i_uuid, items_data->items_arr[i]->i_uuid,
+	      sizeof (uuid_t))))
+	{
+	  char uidstr[UUID_PARSED_LEN];
+	  memset (uidstr, 0, sizeof (uidstr));
+	  uuid_unparse (newitm->i_uuid, uidstr);
+	  MONIMELT_FATAL ("duplicate uuid %s", uidstr);
 	}
     }
   for (uint32_t i = 0; i < istart; i += 2)
@@ -108,12 +130,34 @@ add_new_item (mom_anyitem_t * newitm)
 	  items_data->items_nb++;
 	  return;
 	}
+      else
+	if (MONIMELT_UNLIKELY
+	    (!memcmp
+	     (newitm->i_uuid, items_data->items_arr[i]->i_uuid,
+	      sizeof (uuid_t))))
+	{
+	  char uidstr[UUID_PARSED_LEN];
+	  memset (uidstr, 0, sizeof (uidstr));
+	  uuid_unparse (newitm->i_uuid, uidstr);
+	  MONIMELT_FATAL ("duplicate uuid %s", uidstr);
+	}
       if (!items_data->items_arr[i + 1]
 	  || items_data->items_arr[i + 1] == MONIMELT_EMPTY)
 	{
 	  items_data->items_arr[i + 1] = newitm;
 	  items_data->items_nb++;
 	  return;
+	}
+      else
+	if (MONIMELT_UNLIKELY
+	    (!memcmp
+	     (newitm->i_uuid, items_data->items_arr[i]->i_uuid,
+	      sizeof (uuid_t))))
+	{
+	  char uidstr[UUID_PARSED_LEN];
+	  memset (uidstr, 0, sizeof (uidstr));
+	  uuid_unparse (newitm->i_uuid, uidstr);
+	  MONIMELT_FATAL ("duplicate uuid %s", uidstr);
 	}
     }
 }
@@ -251,7 +295,7 @@ void *
 mom_allocate_item_with_uuid (unsigned type, size_t itemsize, uuid_t uid)
 {
   struct momanyitem_st *p = NULL;
-  assert (itemsize > sizeof (struct momanyitem_st));
+  assert (itemsize >= sizeof (struct momanyitem_st));
   p = GC_MALLOC (itemsize);
   if (!p)
     MONIMELT_FATAL ("out of memory for item type %d size %ld",
@@ -1082,6 +1126,132 @@ tasklet_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 static momval_t
 tasklet_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
-#warning incomplete tasklet_itemgetbuild
-  return MONIMELT_NULLV;
+  return (momval_t) mom_make_json_object (	// the type:
+					   MOMJSON_ENTRY, mom_item__jtype,
+					   mom_item__tasklet_item,
+					   // done
+					   MOMJSON_END);
+}
+
+
+#define SYMNAME_LEN 128
+#define MOM_ROUTINE_NAME_FMT "momrout_%s"
+momit_routine_t *
+mom_make_item_routine_of_uuid (uuid_t uid, const char *name)
+{
+  char symname[SYMNAME_LEN];
+  memset (symname, 0, sizeof (symname));
+  if (MONIMELT_UNLIKELY (!name || !name[0]))
+    MONIMELT_FATAL ("bad name for item routine");
+  snprintf (symname, sizeof (symname), MOM_ROUTINE_NAME_FMT, name);
+  struct momroutinedescr_st *rdescr = NULL;
+  if (!g_module_symbol
+      (mom_prog_module, symname, (gpointer *) & rdescr) || !rdescr)
+    MONIMELT_FATAL ("failed to find routine descriptor %s : %s", symname,
+		    g_module_error ());
+  if (rdescr->rout_magic != ROUTINE_MAGIC || !rdescr->rout_code
+      || strcmp (rdescr->rout_name, name))
+    MONIMELT_FATAL ("bad routine descriptor %s", symname);
+  momit_routine_t *itrout =
+    mom_allocate_item_with_uuid (momty_routineitem, sizeof (momit_routine_t),
+				 uid);
+  itrout->irt_descr = rdescr;
+  return itrout;
+}
+
+momit_routine_t *
+mom_make_item_routine (const char *name)
+{
+  char symname[SYMNAME_LEN];
+  memset (symname, 0, sizeof (symname));
+  if (MONIMELT_UNLIKELY (!name || !name[0]))
+    MONIMELT_FATAL ("bad name for item routine");
+  snprintf (symname, sizeof (symname), MOM_ROUTINE_NAME_FMT, name);
+  struct momroutinedescr_st *rdescr = NULL;
+  if (!g_module_symbol
+      (mom_prog_module, symname, (gpointer *) & rdescr) || !rdescr)
+    MONIMELT_FATAL ("failed to find routine descriptor %s : %s", symname,
+		    g_module_error ());
+  if (rdescr->rout_magic != ROUTINE_MAGIC || !rdescr->rout_code
+      || strcmp (rdescr->rout_name, name))
+    MONIMELT_FATAL ("bad routine descriptor %s", symname);
+  momit_routine_t *itrout =
+    mom_allocate_item (momty_routineitem, sizeof (momit_routine_t));
+  itrout->irt_descr = rdescr;
+  return itrout;
+}
+
+
+momit_routine_t *
+mom_try_make_item_routine (const char *name)
+{
+  char symname[SYMNAME_LEN];
+  memset (symname, 0, sizeof (symname));
+  if (MONIMELT_UNLIKELY (!name || !name[0]))
+    return NULL;
+  snprintf (symname, sizeof (symname), MOM_ROUTINE_NAME_FMT, name);
+  struct momroutinedescr_st *rdescr = NULL;
+  if (!g_module_symbol
+      (mom_prog_module, symname, (gpointer *) & rdescr) || !rdescr)
+    {
+      MONIMELT_INFORM ("failed to find routine descriptor %s : %s", symname,
+		       g_module_error ());
+      return NULL;
+    }
+  if (rdescr->rout_magic != ROUTINE_MAGIC || !rdescr->rout_code
+      || strcmp (rdescr->rout_name, name))
+    MONIMELT_FATAL ("bad routine descriptor %s", symname);
+  momit_routine_t *itrout =
+    mom_allocate_item (momty_routineitem, sizeof (momit_routine_t));
+  itrout->irt_descr = rdescr;
+  return itrout;
+}
+
+
+/// for routine item type descriptor
+static mom_anyitem_t *routine_itemloader (struct mom_loader_st *ld,
+					  momval_t json, uuid_t uid);
+static void routine_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
+				momval_t json);
+static void routine_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm);
+static momval_t routine_itemgetbuild (struct mom_dumper_st *dmp,
+				      mom_anyitem_t * itm);
+static momval_t routine_itemgetfill (struct mom_dumper_st *dmp,
+				     mom_anyitem_t * itm);
+
+const struct momitemtypedescr_st momitype_routine = {
+  .ityp_magic = ITEMTYPE_MAGIC,
+  .ityp_name = "routine",
+  .ityp_loader = routine_itemloader,
+  .ityp_filler = routine_itemfiller,
+  .ityp_scan = routine_itemscan,
+  .ityp_getbuild = routine_itemgetbuild,
+  .ityp_getfill = routine_itemgetfill,
+};
+
+static momval_t
+routine_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+{
+}
+
+static mom_anyitem_t *
+routine_itemloader (struct mom_loader_st *ld, momval_t json, uuid_t uid)
+{
+}
+
+
+static void
+routine_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
+		    momval_t json)
+{
+}
+
+static void
+routine_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+{
+}
+
+static momval_t
+routine_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+{
 }
