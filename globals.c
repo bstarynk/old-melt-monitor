@@ -1116,3 +1116,91 @@ mom_tasklet_replace_top_frame (momval_t tsk, momval_t clo,
 end:
   pthread_mutex_unlock (&((mom_anyitem_t *) tskitm)->i_mtx);
 }
+
+void
+mom_tasklet_reserve (momval_t tsk, unsigned nbint, unsigned nbdbl,
+		     unsigned nbval, unsigned nbfram)
+{
+  if (!tsk.ptr || *tsk.ptype != momty_taskletitem)
+    return;
+  momit_tasklet_t *tskitm = tsk.ptaskitem;
+  pthread_mutex_lock (&((mom_anyitem_t *) tskitm)->i_mtx);
+  unsigned scalwant =
+    tskitm->itk_scaltop +
+    ((nbint * sizeof (intptr_t) +
+      nbdbl * sizeof (double)) / sizeof (intptr_t));
+  unsigned valuwant = tskitm->itk_valtop + nbval;
+  if (MONIMELT_UNLIKELY
+      (scalwant > tskitm->itk_scalsize
+       || (tskitm->itk_scalsize > 64 && 2 * scalwant < tskitm->itk_scalsize)))
+    {
+      unsigned newscalsize =
+	((5 * tskitm->itk_scaltop / 4 + 3 +
+	  ((nbint * sizeof (intptr_t) +
+	    nbdbl * sizeof (double)) / sizeof (intptr_t))) | 7) + 1;
+      if (newscalsize != tskitm->itk_scalsize)
+	{
+	  intptr_t *newscalars =
+	    GC_MALLOC_ATOMIC (newscalsize * sizeof (intptr_t));
+	  if (MONIMELT_UNLIKELY (!newscalars))
+	    MONIMELT_FATAL ("failed to resize scalars of task to %d",
+			    (int) newscalsize);
+	  memset (newscalars, 0, newscalsize * sizeof (intptr_t));
+	  memcpy (newscalars, tskitm->itk_scalars,
+		  tskitm->itk_scaltop * sizeof (intptr_t));
+	  GC_FREE (tskitm->itk_scalars);
+	  tskitm->itk_scalars = newscalars;
+	  tskitm->itk_scalsize = newscalsize;
+	}
+    }
+  if (MONIMELT_UNLIKELY
+      (valuwant > tskitm->itk_valsize
+       || (tskitm->itk_valsize > 64 && 2 * valuwant < tskitm->itk_valsize)))
+    {
+      unsigned newvalsize =
+	((5 * tskitm->itk_valtop / 4 + 3 + nbval) | 7) + 1;
+      if (newvalsize != tskitm->itk_valsize)
+	{
+	  momval_t *newvalues = GC_MALLOC (newvalsize * sizeof (momval_t));
+	  if (MONIMELT_UNLIKELY (!newvalues))
+	    MONIMELT_FATAL ("failed to resize values of task to %d",
+			    (int) newvalsize);
+	  memset (newvalues, 0, newvalsize * sizeof (momval_t));
+	  memcpy (newvalues, tskitm->itk_values,
+		  tskitm->itk_valtop * sizeof (momval_t));
+	  GC_FREE (tskitm->itk_values);
+	  tskitm->itk_values = newvalues;
+	  tskitm->itk_valsize = newvalsize;
+	}
+    }
+  unsigned framwant = tskitm->itk_fratop + nbfram;
+  if (MONIMELT_UNLIKELY
+      (framwant > tskitm->itk_frasize
+       || (tskitm->itk_frasize > 64 && 2 * framwant < tskitm->itk_frasize)))
+    {
+      unsigned newfrasize =
+	((5 * tskitm->itk_fratop / 4 + 3 + nbfram) | 7) + 1;
+      if (newfrasize != tskitm->itk_frasize)
+	{
+	  struct momframe_st *newframes =
+	    GC_MALLOC_ATOMIC (sizeof (struct momframe_st) * newfrasize);
+	  momclosure_t **newclosures =
+	    GC_MALLOC (sizeof (momclosure_t *) * newfrasize);
+	  if (MONIMELT_UNLIKELY (!newframes || !newclosures))
+	    MONIMELT_FATAL ("failed to resize frames of task to %d",
+			    (int) newfrasize);
+	  memset (newframes, 0, sizeof (struct momframe_st) * newfrasize);
+	  memset (newclosures, 0, sizeof (momclosure_t *) * newfrasize);
+	  memcpy (newframes, tskitm->itk_frames,
+		  tskitm->itk_fratop * sizeof (struct momframe_st));
+	  memcpy (newclosures, tskitm->itk_closures,
+		  tskitm->itk_fratop * sizeof (momclosure_t *));
+	  GC_FREE (tskitm->itk_frames);
+	  GC_FREE (tskitm->itk_closures);
+	  tskitm->itk_frames = newframes;
+	  tskitm->itk_closures = newclosures;
+	  tskitm->itk_frasize = newfrasize;
+	}
+    }
+  pthread_mutex_unlock (&((mom_anyitem_t *) tskitm)->i_mtx);
+}
