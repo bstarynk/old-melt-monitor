@@ -996,3 +996,123 @@ mom_tasklet_push_frame (momval_t tsk, momval_t clo,
   va_end (args);
   pthread_mutex_unlock (&((mom_anyitem_t *) tskitm)->i_mtx);
 }
+
+
+void
+mom_tasklet_replace_top_frame (momval_t tsk, momval_t clo,
+			       enum mom_pushframedirective_en firstdir, ...)
+{
+  if (!tsk.ptr || *tsk.ptype != momty_taskletitem)
+    return;
+  if (!clo.ptr || *clo.ptype != momty_closure)
+    return;
+  unsigned nbval = 0;
+  unsigned nbnum = 0;
+  unsigned nbdbl = 0;
+  int newstate = 0;
+  const momclosure_t *closure = clo.pclosure;
+  va_list args;
+  // first, compute the data size
+  va_start (args, firstdir);
+  compute_pushed_data_size (closure, &nbval, &nbnum, &nbdbl, &newstate,
+			    firstdir, args);
+  va_end (args);
+  momit_tasklet_t *tskitm = tsk.ptaskitem;
+  pthread_mutex_lock (&((mom_anyitem_t *) tskitm)->i_mtx);
+  if (tskitm->itk_fratop == 0)
+    goto end;
+  struct momframe_st *prevframe = tskitm->itk_frames + tskitm->itk_fratop - 1;
+  unsigned ofpscal = prevframe->fr_intoff;
+  unsigned ofpvalu = prevframe->fr_valoff;
+  if (tskitm->itk_scaltop > ofpscal)
+    memset (tskitm->itk_scalars + ofpscal, 0,
+	    (tskitm->itk_scaltop - ofpscal) * sizeof (intptr_t));
+  if (tskitm->itk_valtop > ofpvalu)
+    memset (tskitm->itk_values + ofpvalu, 0,
+	    (tskitm->itk_valtop - ofpvalu) * sizeof (momval_t));
+  tskitm->itk_scaltop = ofpscal;
+  tskitm->itk_valtop = ofpvalu;
+  memset (prevframe, 0, sizeof (struct momframe_st));
+  tskitm->itk_fratop--;
+  if (MONIMELT_UNLIKELY
+      (tskitm->itk_scaltop +
+       (sizeof (intptr_t) * nbnum +
+	sizeof (double) * nbdbl) / sizeof (intptr_t) >= tskitm->itk_scalsize))
+    {
+      unsigned newscalsize =
+	((5 * tskitm->itk_scaltop / 4 +
+	  (sizeof (intptr_t *) * nbnum +
+	   sizeof (double) * nbdbl) / sizeof (intptr_t) + 5) | 7) + 1;
+      intptr_t *newscalars =
+	GC_MALLOC_ATOMIC (newscalsize * sizeof (intptr_t));
+      if (MONIMELT_UNLIKELY (!newscalars))
+	MONIMELT_FATAL ("failed to grow scalars of task to %d",
+			(int) newscalsize);
+      memset (newscalars, 0, newscalsize * sizeof (intptr_t));
+      memcpy (newscalars, tskitm->itk_scalars,
+	      tskitm->itk_scaltop * sizeof (intptr_t));
+      GC_FREE (tskitm->itk_scalars);
+      tskitm->itk_scalars = newscalars;
+      tskitm->itk_scalsize = newscalsize;
+    }
+  if (MONIMELT_UNLIKELY (tskitm->itk_valtop + nbval >= tskitm->itk_valsize))
+    {
+      unsigned newvalsize =
+	((5 * tskitm->itk_valtop / 4 + nbval + 6) | 7) + 1;
+      momval_t *newvalues = GC_MALLOC (newvalsize * sizeof (momval_t));
+      if (MONIMELT_UNLIKELY (!newvalues))
+	MONIMELT_FATAL ("failed to grow values of task to %d",
+			(int) newvalsize);
+      memset (newvalues, 0, newvalsize * sizeof (momval_t));
+      memcpy (newvalues, tskitm->itk_values,
+	      tskitm->itk_valtop * sizeof (momval_t));
+      GC_FREE (tskitm->itk_values);
+      tskitm->itk_values = newvalues;
+      tskitm->itk_valsize = newvalsize;
+    }
+  if (MONIMELT_UNLIKELY (tskitm->itk_fratop + 1 >= tskitm->itk_frasize))
+    {
+      unsigned newfrasize = ((5 * tskitm->itk_frasize / 4 + 6) | 7) + 1;
+      struct momframe_st *newframes =
+	GC_MALLOC_ATOMIC (sizeof (struct momframe_st) * newfrasize);
+      momclosure_t **newclosures =
+	GC_MALLOC (sizeof (momclosure_t *) * newfrasize);
+      if (MONIMELT_UNLIKELY (!newframes || !newclosures))
+	MONIMELT_FATAL ("failed to grow frames of task to %d",
+			(int) newfrasize);
+      memset (newframes, 0, sizeof (struct momframe_st) * newfrasize);
+      memset (newclosures, 0, sizeof (momclosure_t *) * newfrasize);
+      memcpy (newframes, tskitm->itk_frames,
+	      tskitm->itk_fratop * sizeof (struct momframe_st));
+      memcpy (newclosures, tskitm->itk_closures,
+	      tskitm->itk_fratop * sizeof (momclosure_t *));
+      GC_FREE (tskitm->itk_frames);
+      GC_FREE (tskitm->itk_closures);
+      tskitm->itk_frames = newframes;
+      tskitm->itk_closures = newclosures;
+      tskitm->itk_frasize = newfrasize;
+    }
+  struct momframe_st *newframe = tskitm->itk_frames + tskitm->itk_fratop;
+  newframe->fr_state = newstate;
+  unsigned froint = newframe->fr_intoff = tskitm->itk_scaltop;
+  unsigned frodbl = newframe->fr_dbloff = tskitm->itk_scaltop + nbnum;
+  unsigned froval = newframe->fr_valoff = tskitm->itk_valtop;
+  unsigned fratop = tskitm->itk_fratop;
+  memset (tskitm->itk_scalars + tskitm->itk_scaltop, 0,
+	  (nbnum * sizeof (intptr_t) + nbdbl * sizeof (double)));
+  memset (tskitm->itk_values + tskitm->itk_valtop, 0,
+	  nbval * sizeof (momval_t));
+  tskitm->itk_scaltop +=
+    (nbnum * sizeof (intptr_t) + nbdbl * sizeof (double)) / sizeof (intptr_t);
+  tskitm->itk_valtop += nbval;
+  tskitm->itk_closures[tskitm->itk_fratop] = (momclosure_t *) closure;
+  tskitm->itk_fratop = fratop + 1;
+  va_start (args, firstdir);
+  fill_frame_data ((intptr_t *) (tskitm->itk_scalars + froint),
+		   (double *) (tskitm->itk_scalars + frodbl),
+		   (momval_t *) (tskitm->itk_values + froval), firstdir,
+		   args);
+  va_end (args);
+end:
+  pthread_mutex_unlock (&((mom_anyitem_t *) tskitm)->i_mtx);
+}

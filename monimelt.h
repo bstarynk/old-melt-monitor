@@ -367,10 +367,15 @@ enum mom_pushframedirective_en
   MOMPFR_ARRAY_DOUBLES /* unsigned count, double dblarr[count] */ ,
 };
 #define MOMPFR_END ((void*)MOMPFR__END)
-void mom_tasklet_push_frame (momval_t tsk, momval_t clo, enum mom_pushframedirective_en,
-			     ...) __attribute__ ((sentinel));
-void mom_tasklet_replace_frame (momval_t tsk, enum mom_pushframedirective_en,
-				...) __attribute__ ((sentinel));
+void mom_tasklet_push_frame (momval_t tsk, momval_t clo,
+			     enum mom_pushframedirective_en, ...)
+  __attribute__ ((sentinel));
+void mom_tasklet_replace_top_frame (momval_t tsk, momval_t clo,
+				    enum mom_pushframedirective_en, ...)
+  __attribute__ ((sentinel));
+// reserve or shrink to fit
+void mom_tasklet_reserve (momval_t tsk, unsigned nbint, unsigned nbdbl,
+			  unsigned nbval, unsigned nbfram);
 void mom_tasklet_pop_frame (momval_t tsk);
 int mom_tasklet_depth (momval_t tsk);
 
