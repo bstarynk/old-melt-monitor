@@ -1232,11 +1232,25 @@ const struct momitemtypedescr_st momitype_routine = {
 static momval_t
 routine_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
+  momit_routine_t *routitm = (momit_routine_t *) itm;
+  return (momval_t) mom_make_json_object
+    // build with type and routine name
+    (				// the type:
+      MOMJSON_ENTRY, mom_item__jtype, mom_item__routine_item,
+      // the routine name
+      MOMJSON_ENTRY, mom_item__name,
+      mom_make_string (routitm->irt_descr->rout_name),
+      // that's all!
+      MOMJSON_END);
 }
 
 static mom_anyitem_t *
 routine_itemloader (struct mom_loader_st *ld, momval_t json, uuid_t uid)
 {
+  const char *name = mom_string_cstr (mom_jsonob_get (json, mom_item__name));
+  if (MONIMELT_UNLIKELY (!name))
+    MONIMELT_FATAL ("missing name for routine item");
+  return (mom_anyitem_t *) mom_make_item_routine_of_uuid (uid, name);
 }
 
 
@@ -1244,14 +1258,23 @@ static void
 routine_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
 		    momval_t json)
 {
+  mom_load_any_item_data (ld, itm, json);
 }
 
 static void
 routine_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
+  mom_scan_any_item_data (dmp, itm);
 }
 
 static momval_t
 routine_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
+  return
+    (momval_t) mom_make_json_object
+    (MOMJSON_ENTRY, mom_item__attributes,
+     mom_attributes_emit_json (dmp, itm->i_attrs),
+     MOMJSON_ENTRY, mom_item__content, mom_dump_emit_json (dmp,
+							   itm->i_content),
+     MOMJSON_END);
 }
