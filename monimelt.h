@@ -97,6 +97,8 @@ pthread_mutexattr_t mom_normal_mutex_attr;
 pthread_mutexattr_t mom_recursive_mutex_attr;
 GModule *mom_prog_module;
 
+// below TINY_MAX we try to allocate on stack temporary vectors
+#define TINY_MAX 8
 
 union momvalueptr_un
 {
@@ -367,6 +369,10 @@ enum mom_pushframedirective_en
   MOMPFR_ARRAY_DOUBLES /* unsigned count, double dblarr[count] */ ,
 };
 #define MOMPFR_END ((void*)MOMPFR__END)
+
+momit_tasklet_t *mom_make_item_tasklet (void);
+momit_tasklet_t *mom_make_item_tasklet_of_uuid (uuid_t);
+
 void mom_tasklet_push_frame (momval_t tsk, momval_t clo,
 			     enum mom_pushframedirective_en, ...)
   __attribute__ ((sentinel));

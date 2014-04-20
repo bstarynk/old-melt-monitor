@@ -25,8 +25,6 @@
   extern momit_##Type##_t* mom_item__##Name;
 #include "monimelt-names.h"
 
-// below TINY_MAX we try to allocate on stack temporary vectors
-#define TINY_MAX 8
 enum dumpstate_en
 {
   dus_none = 0,

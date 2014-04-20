@@ -26,48 +26,6 @@
   extern momit_##Type##_t* mom_item__##Name;
 #include "monimelt-names.h"
 
-/// for boolean item type descriptor
-static mom_anyitem_t *bool_itemloader (struct mom_loader_st *ld,
-				       momval_t json, uuid_t uid);
-static void bool_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
-			     momval_t json);
-static void bool_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm);
-static momval_t bool_itemgetbuild (struct mom_dumper_st *dmp,
-				   mom_anyitem_t * itm);
-static momval_t bool_itemgetfill (struct mom_dumper_st *dmp,
-				  mom_anyitem_t * itm);
-
-const struct momitemtypedescr_st momitype_bool = {
-  .ityp_magic = ITEMTYPE_MAGIC,
-  .ityp_name = "bool",
-  .ityp_loader = bool_itemloader,
-  .ityp_filler = bool_itemfiller,
-  .ityp_scan = bool_itemscan,
-  .ityp_getbuild = bool_itemgetbuild,
-  .ityp_getfill = bool_itemgetfill,
-};
-
-/// for json name item type descriptor
-static mom_anyitem_t *json_name_itemloader (struct mom_loader_st *ld,
-					    momval_t json, uuid_t uid);
-static void json_name_itemfiller (struct mom_loader_st *ld,
-				  mom_anyitem_t * itm, momval_t json);
-static void json_name_itemscan (struct mom_dumper_st *dmp,
-				mom_anyitem_t * itm);
-static momval_t json_name_itemgetbuild (struct mom_dumper_st *dmp,
-					mom_anyitem_t * itm);
-static momval_t json_name_itemgetfill (struct mom_dumper_st *dmp,
-				       mom_anyitem_t * itm);
-
-const struct momitemtypedescr_st momitype_json_name = {
-  .ityp_magic = ITEMTYPE_MAGIC,
-  .ityp_name = "json_name",
-  .ityp_loader = json_name_itemloader,
-  .ityp_filler = json_name_itemfiller,
-  .ityp_scan = json_name_itemscan,
-  .ityp_getbuild = json_name_itemgetbuild,
-  .ityp_getfill = json_name_itemgetfill,
-};
 
 momhash_t
 mom_hash_uuid (uuid_t uid)
@@ -657,6 +615,29 @@ mom_make_item_json_name (const char *name)
   return itm;
 }
 
+/// for json name item type descriptor
+static mom_anyitem_t *json_name_itemloader (struct mom_loader_st *ld,
+					    momval_t json, uuid_t uid);
+static void json_name_itemfiller (struct mom_loader_st *ld,
+				  mom_anyitem_t * itm, momval_t json);
+static void json_name_itemscan (struct mom_dumper_st *dmp,
+				mom_anyitem_t * itm);
+static momval_t json_name_itemgetbuild (struct mom_dumper_st *dmp,
+					mom_anyitem_t * itm);
+static momval_t json_name_itemgetfill (struct mom_dumper_st *dmp,
+				       mom_anyitem_t * itm);
+
+const struct momitemtypedescr_st momitype_json_name = {
+  .ityp_magic = ITEMTYPE_MAGIC,
+  .ityp_name = "json_name",
+  .ityp_loader = json_name_itemloader,
+  .ityp_filler = json_name_itemfiller,
+  .ityp_scan = json_name_itemscan,
+  .ityp_getbuild = json_name_itemgetbuild,
+  .ityp_getfill = json_name_itemgetfill,
+};
+
+
 momit_bool_t *
 mom_create_named_bool (uuid_t uid, const char *name)
 {
@@ -682,6 +663,27 @@ mom_create_named_bool (uuid_t uid, const char *name)
 
 ////////////////////////////////////////////////////////////////
 /// type routine for boolean items
+
+/// for boolean item type descriptor
+static mom_anyitem_t *bool_itemloader (struct mom_loader_st *ld,
+				       momval_t json, uuid_t uid);
+static void bool_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
+			     momval_t json);
+static void bool_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm);
+static momval_t bool_itemgetbuild (struct mom_dumper_st *dmp,
+				   mom_anyitem_t * itm);
+static momval_t bool_itemgetfill (struct mom_dumper_st *dmp,
+				  mom_anyitem_t * itm);
+
+const struct momitemtypedescr_st momitype_bool = {
+  .ityp_magic = ITEMTYPE_MAGIC,
+  .ityp_name = "bool",
+  .ityp_loader = bool_itemloader,
+  .ityp_filler = bool_itemfiller,
+  .ityp_scan = bool_itemscan,
+  .ityp_getbuild = bool_itemgetbuild,
+  .ityp_getfill = bool_itemgetfill,
+};
 
 static mom_anyitem_t *
 bool_itemloader (struct mom_loader_st *ld, momval_t json
@@ -774,4 +776,241 @@ json_name_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 							   itm->i_content),
      /// done
      MOMJSON_END);
+}
+
+/// tasklets
+
+momit_tasklet_t *
+mom_make_item_tasklet_of_uuid (uuid_t uid)
+{
+  momit_tasklet_t *itm
+    =
+    mom_allocate_item_with_uuid (momty_taskletitem, sizeof (momit_tasklet_t),
+				 uid);
+  return itm;
+}
+
+momit_tasklet_t *
+mom_make_item_tasklet (void)
+{
+  momit_tasklet_t *itm
+    = mom_allocate_item (momty_taskletitem, sizeof (momit_tasklet_t));
+  return itm;
+}
+
+/// for tasklet item type descriptor
+static mom_anyitem_t *tasklet_itemloader (struct mom_loader_st *ld,
+					  momval_t json, uuid_t uid);
+static void tasklet_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
+				momval_t json);
+static void tasklet_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm);
+static momval_t tasklet_itemgetbuild (struct mom_dumper_st *dmp,
+				      mom_anyitem_t * itm);
+static momval_t tasklet_itemgetfill (struct mom_dumper_st *dmp,
+				     mom_anyitem_t * itm);
+
+const struct momitemtypedescr_st momitype_tasklet = {
+  .ityp_magic = ITEMTYPE_MAGIC,
+  .ityp_name = "tasklet",
+  .ityp_loader = tasklet_itemloader,
+  .ityp_filler = tasklet_itemfiller,
+  .ityp_scan = tasklet_itemscan,
+  .ityp_getbuild = tasklet_itemgetbuild,
+  .ityp_getfill = tasklet_itemgetfill,
+};
+
+static mom_anyitem_t *
+tasklet_itemloader (struct mom_loader_st *ld, momval_t json
+		    __attribute__ ((unused)), uuid_t uid)
+{
+  return (mom_anyitem_t *) mom_make_item_tasklet_of_uuid (uid);
+}
+
+
+
+
+static momval_t
+tasklet_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+{
+  momval_t *jframarr = NULL;
+  momval_t jframetiny[TINY_MAX] = { MONIMELT_NULLV };
+  momit_tasklet_t *tskitm = (momit_tasklet_t *) itm;
+  unsigned fratop = tskitm->itk_fratop;
+  if (tskitm->itk_fratop >= TINY_MAX)
+    {
+      jframarr = GC_MALLOC (fratop * sizeof (momval_t));
+      if (MONIMELT_UNLIKELY (!jframarr))
+	MONIMELT_FATAL ("failed to allocate for %d frames", fratop);
+      memset (jframarr, 0, fratop * sizeof (momval_t));
+    }
+  else
+    jframarr = jframetiny;
+  for (unsigned ix = 0; ix < fratop; ix++)
+    {
+      struct momframe_st *curfra = tskitm->itk_frames + ix;
+      momclosure_t *curclo = tskitm->itk_closures[ix];
+      if (MONIMELT_UNLIKELY (!curclo || curclo->typnum != momty_closure))
+	MONIMELT_FATAL ("corrupted frame #%d", ix);
+      unsigned nbnum = curfra->fr_dbloff - curfra->fr_intoff;
+      unsigned nbdbl = 0, nbval = 0;
+      if (ix + 1 >= fratop)
+	{
+	  nbdbl =
+	    ((tskitm->itk_scaltop -
+	      curfra->fr_dbloff) * sizeof (intptr_t)) / sizeof (double);
+	  nbval = (tskitm->itk_valtop - curfra->fr_valoff);
+	}
+      else
+	{
+	  nbdbl =
+	    (((tskitm->itk_frames[ix + 1].fr_intoff -
+	       curfra->fr_dbloff) * sizeof (intptr_t)) / sizeof (double));
+	  nbval = tskitm->itk_frames[ix + 1].fr_valoff - curfra->fr_valoff;
+	}
+      momval_t *valarr = NULL;
+      momval_t *numarr = NULL;
+      momval_t *dblarr = NULL;
+      momval_t valtiny[TINY_MAX] = { MONIMELT_NULLV };
+      momval_t numtiny[TINY_MAX] = { MONIMELT_NULLV };
+      momval_t dbltiny[TINY_MAX] = { MONIMELT_NULLV };
+      if (nbnum < TINY_MAX)
+	numarr = numtiny;
+      else
+	{
+	  numarr = GC_MALLOC (sizeof (momval_t) * nbnum);
+	  if (MONIMELT_UNLIKELY (!numarr))
+	    MONIMELT_FATAL ("failed to allocate for %d numbers", nbnum);
+	  memset (numarr, 0, sizeof (momval_t) * nbnum);
+	}
+      if (nbdbl < TINY_MAX)
+	dblarr = dbltiny;
+      else
+	{
+	  dblarr = GC_MALLOC (sizeof (momval_t) * nbdbl);
+	  if (MONIMELT_UNLIKELY (!dblarr))
+	    MONIMELT_FATAL ("failed to allocate for %d doubles", nbdbl);
+	  memset (dblarr, 0, sizeof (momval_t) * nbdbl);
+	}
+      if (nbval < TINY_MAX)
+	valarr = valtiny;
+      else
+	{
+	  valarr = GC_MALLOC (sizeof (momval_t) * nbval);
+	  if (MONIMELT_UNLIKELY (!valarr))
+	    MONIMELT_FATAL ("failed to allocate for %d values", nbval);
+	  memset (valarr, 0, sizeof (momval_t) * nbval);
+	}
+      for (unsigned nix = 0; ix < nbnum; nix++)
+	numarr[nix] =
+	  (momval_t)
+	  mom_make_int (((intptr_t *) (tskitm->itk_scalars +
+				       curfra->fr_intoff))[nix]);
+      for (unsigned dix = 0; dix < nbdbl; dix++)
+	dblarr[dix] =
+	  (momval_t)
+	  mom_make_double (((double *) (tskitm->itk_scalars +
+					curfra->fr_dbloff))[dix]);
+      for (unsigned vix = 0; vix < nbval; vix++)
+	valarr[vix] =
+	  mom_dump_emit_json (dmp,
+			      tskitm->itk_values[curfra->fr_valoff + vix]);
+      jframarr[ix] = (momval_t) mom_make_json_object (
+						       /// values
+						       MOMJSON_ENTRY,
+						       mom_item__values,
+						       (momval_t)
+						       mom_make_json_array_count
+						       (nbval, valarr),
+						       /// numbers
+						       MOMJSON_ENTRY,
+						       mom_item__numbers,
+						       (momval_t)
+						       mom_make_json_array_count
+						       (nbnum, numarr),
+						       /// doubles
+						       MOMJSON_ENTRY,
+						       mom_item__doubles,
+						       (momval_t)
+						       mom_make_json_array_count
+						       (nbdbl, dblarr),
+						       /// closure
+						       MOMJSON_ENTRY,
+						       mom_item__closure,
+						       (momval_t)
+						       mom_dump_emit_json
+						       (dmp,
+							(momval_t) (const
+								    momclosure_t
+								    *)
+							(tskitm->itk_closures
+							 [ix])),
+						       /// state
+						       MOMJSON_ENTRY,
+						       mom_item__state,
+						       mom_make_int
+						       (curfra->fr_state),
+						       /// end
+						       MOMJSON_END);
+    }
+  return (momval_t) mom_make_json_object
+    /// attributes
+    (MOMJSON_ENTRY, mom_item__attributes,
+     mom_attributes_emit_json (dmp, itm->i_attrs),
+     /// contents
+     MOMJSON_ENTRY, mom_item__content, mom_dump_emit_json (dmp,
+							   itm->i_content),
+     /// frames
+     MOMJSON_ENTRY, mom_item__frames,
+     (momval_t) mom_make_json_array_count (fratop, jframarr),
+     /// end
+     MOMJSON_END);
+}
+
+static void
+tasklet_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
+		    momval_t json)
+{
+#warning incomplete tasklet_itemfiller
+  mom_load_any_item_data (ld, itm, json);
+}
+
+
+
+
+
+
+
+
+
+static void
+tasklet_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+{
+  mom_scan_any_item_data (dmp, itm);
+  momit_tasklet_t *tskitm = (momit_tasklet_t *) itm;
+  unsigned fratop = tskitm->itk_fratop;
+  for (unsigned frix = 0; frix < fratop; frix++)
+    {
+      struct momframe_st *curfra = tskitm->itk_frames + frix;
+      const momclosure_t *curclo = tskitm->itk_closures[frix];
+      if (MONIMELT_UNLIKELY (!curclo || curclo->typnum != momty_closure))
+	MONIMELT_FATAL ("corrupted frame #%d", frix);
+      mom_dump_scan_value (dmp, (momval_t) curclo);
+      unsigned nbval = 0;
+      if (frix + 1 >= fratop)
+	nbval = (tskitm->itk_valtop - curfra->fr_valoff);
+      else
+	nbval = tskitm->itk_frames[frix + 1].fr_valoff - curfra->fr_valoff;
+      for (unsigned vix = 0; vix < nbval; vix++)
+	mom_dump_scan_value (dmp,
+			     tskitm->itk_values[tskitm->
+						itk_frames[frix].fr_valoff +
+						vix]);
+    }
+}
+
+static momval_t
+tasklet_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+{
+#warning incomplete tasklet_itemgetbuild
+  return MONIMELT_NULLV;
 }
