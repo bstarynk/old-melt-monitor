@@ -463,6 +463,17 @@ mom_value_as_float (momval_t val)
 }
 
 
+static inline double
+mom_double_of_value (momval_t val, double def)
+{
+  if (val.ptr && *val.ptype == momty_float)
+    return val.pfloat->floval;
+  return def;
+}
+
+#define mom_double_of_value_else_0(V) mom_double_of_value((V),0.0)
+
+
 ///////////// string values
 static inline const momstring_t *
 mom_value_as_string (momval_t val)
