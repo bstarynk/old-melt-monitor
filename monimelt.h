@@ -168,6 +168,11 @@ typedef char *mom_space_fetch_build_sig_t (unsigned spanum,
 // fetch a GC_STRDUP-ed string to fill an item of given uuid string
 typedef char *mom_space_fetch_fill_sig_t (unsigned spanum,
 					  const char *uuidstr);
+// store the build & fill GC_STRDUP-ed strings of a given uuid string
+typedef void mom_space_store_build_fill_sig_t (unsigned spanum,
+					       const char *uuidstr,
+					       const char *buildstr,
+					       const char *fillstr);
 // the space FOO is described by momspace_FOO of following type:
 struct momspacedescr_st
 {
@@ -176,6 +181,7 @@ struct momspacedescr_st
   void *spa_data;
   mom_space_fetch_build_sig_t *spa_fetch_build;
   mom_space_fetch_fill_sig_t *spa_fetch_fill;
+  mom_space_store_build_fill_sig_t *spa_store_build_fill;
 };
 #define MONIMELT_ROOT_SPACE_NAME "."
 #define MONIMELT_SPACE_ROOT 1

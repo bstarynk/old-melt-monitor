@@ -1070,9 +1070,50 @@ mom_full_dump (const char *state)
   mom_dump_globals (&dmp, dumpglobal_cb, stmt);
   while (dmp.dmp_qfirst != NULL)
     {
+      struct jsonoutput_st outj = { };
+      memset (&outj, 0, sizeof (outj));
       mom_anyitem_t *curitm = dmp.dmp_qfirst->iq_item;
-      assert (curitm != NULL);
-#warning should dump content of curitm in its space
+      assert (curitm != NULL && curitm->i_space < momty__last);
+      struct momitemtypedescr_st *tydescr =
+	mom_typedescr_array[curitm->typnum];
+      assert (tydescr != NULL && tydescr->ityp_magic == ITEMTYPE_MAGIC);
+      assert (curitm->i_space > 0 && curitm->i_space < MONIMELT_SPACE_MAX);
+      struct momspacedescr_st *spadescr =
+	mom_spacedescr_array[curitm->i_space];
+      assert (spadescr && spadescr->spa_magic == SPACE_MAGIC);
+      momval_t jsonbuild = tydescr->ityp_getbuild (&dmp, curitm);
+      momval_t jsonfill = tydescr->ityp_getfill (&dmp, curitm);
+      char *strbuild = NULL;
+      char *strfill = NULL;
+      {
+	char *bufbuild = NULL;
+	size_t sizbuild = 0;
+	FILE *foutbuild = open_memstream (&bufbuild, &sizbuild);
+	mom_json_output_initialize (&outj, foutbuild, NULL, jsof_flush);
+	mom_output_json (&outj, jsonbuild);
+	mom_json_output_close (&outj);
+	strbuild = GC_STRDUP (bufbuild);
+	free (bufbuild), bufbuild = NULL, sizbuild = 0;
+      }
+      memset (&outj, 0, sizeof (outj));
+      {
+	char *buffill = NULL;
+	size_t sizfill = 0;
+	FILE *foutfill = open_memstream (&buffill, &sizfill);
+	mom_json_output_initialize (&outj, foutfill, NULL, jsof_flush);
+	mom_output_json (&outj, jsonfill);
+	mom_json_output_close (&outj);
+	strfill = GC_STRDUP (buffill);
+	free (buffill), buffill = NULL, sizfill = 0;
+      }
+      assert (spadescr->spa_store_build_fill != NULL);
+      char ustr[UUID_PARSED_LEN];
+      memset (ustr, 0, sizeof (ustr));
+      uuid_unparse (curitm->i_uuid, ustr);
+      spadescr->spa_store_build_fill (curitm->i_space, ustr, strbuild,
+				      strfill);
+      strbuild = NULL;
+      strfill = NULL;
       dmp.dmp_qfirst = dmp.dmp_qfirst->iq_next;
       if (!dmp.dmp_qfirst)
 	dmp.dmp_qlast = NULL;
