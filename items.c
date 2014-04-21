@@ -753,7 +753,11 @@ bool_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 static momval_t
 bool_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
-  return MONIMELT_NULLV;
+  return (momval_t) mom_make_json_object (	// the type:
+					   MOMJSON_ENTRY, mom_item__jtype,
+					   mom_item__bool_item,
+					   // done
+					   MOMJSON_END);
 }
 
 static momval_t

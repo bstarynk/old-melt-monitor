@@ -6,6 +6,7 @@
 // MONIMELT_NAMED(Name,Type,Uidstr)
  MONIMELT_NAMED (attr, json_name, "e29d6d73-6a40-41bd-bfd4-df5183ffc764")
  MONIMELT_NAMED (attributes, json_name, "b29bc8a3-1517-4a28-b566-39e447c80250")
+ MONIMELT_NAMED (bool_item, json_name, "d39e1047-71fb-4c62-b13d-a18852d844ef")
  MONIMELT_NAMED (closure, json_name, "f8a3568d-ae4a-4486-a362-577e0ec91474")
  MONIMELT_NAMED (conn, json_name, "03c1ace3-3293-43bb-9541-19b4357cbc3c")
  MONIMELT_NAMED (content, json_name, "9a05b9fa-17d3-4294-9253-e67406e52d4a")
@@ -33,5 +34,5 @@
  MONIMELT_NAMED (val, json_name, "d8aa61cc-2543-4659-bff9-2b0bfc0f779a")
  MONIMELT_NAMED (values, json_name, "7e8b7206-2548-427d-9b7c-9d5b5067c78a")
 
-// end of 28 named items
+// end of 29 named items
 #undef MONIMELT_NAMED
