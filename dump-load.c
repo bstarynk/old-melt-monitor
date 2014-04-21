@@ -844,12 +844,60 @@ rootspace_fetch_fill (unsigned spanum, const char *uuidstr)
   return res;
 }
 
+static sqlite3_stmt *buildfill_stmt;
+static void
+rootspace_store_build_fill (mom_anyitem_t * itm,
+			    const char *buildstr, const char *fillstr)
+{
+  char ustr[UUID_PARSED_LEN];
+  memset (ustr, 0, sizeof (ustr));
+  assert (itm && itm->typnum > momty__itemlowtype
+	  && itm->typnum < momty__last);
+  uuid_unparse (itm->i_uuid, ustr);
+  if (MONIMELT_UNLIKELY (buildfill_stmt == NULL))
+    {
+      if (sqlite3_prepare_v2 (mom_dbsqlite,
+			      "INSERT INTO t_item (uid, type, jbuild, jfill) VALUES (?1, ?2, ?3, ?4)",
+			      -1, &buildfill_stmt, NULL))
+	MONIMELT_FATAL ("failed to prepare build&fill insertion: %s",
+			sqlite3_errmsg (mom_dbsqlite));
+    }
+  // uidstr at index 1
+  if (sqlite3_bind_text (buildfill_stmt, 1, ustr, -1, SQLITE_STATIC))
+    MONIMELT_FATAL ("failed to bind uuid: %s", sqlite3_errmsg (mom_dbsqlite));
+  // type at index 2
+  struct momitemtypedescr_st *typdesc = mom_typedescr_array[itm->typnum];
+  assert (typdesc != NULL && typdesc->ityp_magic == ITEMTYPE_MAGIC);
+  if (sqlite3_bind_text
+      (buildfill_stmt, 2, typdesc->ityp_name, -1, SQLITE_STATIC))
+    MONIMELT_FATAL ("failed to bind type: %s", sqlite3_errmsg (mom_dbsqlite));
+  // build string at index 3
+  if (sqlite3_bind_text
+      (buildfill_stmt, 3, buildstr ? buildstr : "", -1, SQLITE_STATIC))
+    MONIMELT_FATAL ("failed to bind build string: %s",
+		    sqlite3_errmsg (mom_dbsqlite));
+  // fill string at index 4
+  if (sqlite3_bind_text
+      (buildfill_stmt, 4, fillstr ? fillstr : "", -1, SQLITE_STATIC))
+    MONIMELT_FATAL ("failed to bind fill string: %s",
+		    sqlite3_errmsg (mom_dbsqlite));
+  // now insert the build & fill
+  if (sqlite3_step (buildfill_stmt))
+    MONIMELT_FATAL ("failed to insert build & fill of uid %s: %s",
+		    ustr, sqlite3_errmsg (mom_dbsqlite));
+  if (sqlite3_reset (buildfill_stmt))
+    MONIMELT_FATAL ("failed to reset build & fill statement: %s",
+		    sqlite3_errmsg (mom_dbsqlite));
+}
+
+
 static struct momspacedescr_st mom_root_space_descr = {
   .spa_magic = SPACE_MAGIC,
   .spa_name = MONIMELT_ROOT_SPACE_NAME,
   .spa_data = NULL,
   .spa_fetch_build = rootspace_fetch_build,
   .spa_fetch_fill = rootspace_fetch_fill,
+  .spa_store_build_fill = rootspace_store_build_fill,
 };
 
 #define LOADNAMING_MAGIC 0x148e62fd	/* loadnaming magic 344875773 */
@@ -1068,6 +1116,7 @@ mom_full_dump (const char *state)
     MONIMELT_FATAL ("failed to prepare name insertion: %s",
 		    sqlite3_errmsg (mom_dbsqlite));
   mom_dump_globals (&dmp, dumpglobal_cb, stmt);
+  unsigned nbdumpeditems = 0;
   while (dmp.dmp_qfirst != NULL)
     {
       struct jsonoutput_st outj = { };
@@ -1107,16 +1156,16 @@ mom_full_dump (const char *state)
 	free (buffill), buffill = NULL, sizfill = 0;
       }
       assert (spadescr->spa_store_build_fill != NULL);
-      char ustr[UUID_PARSED_LEN];
-      memset (ustr, 0, sizeof (ustr));
-      uuid_unparse (curitm->i_uuid, ustr);
-      spadescr->spa_store_build_fill (curitm->i_space, ustr, strbuild,
-				      strfill);
+      spadescr->spa_store_build_fill (curitm, strbuild, strfill);
       strbuild = NULL;
       strfill = NULL;
       dmp.dmp_qfirst = dmp.dmp_qfirst->iq_next;
       if (!dmp.dmp_qfirst)
 	dmp.dmp_qlast = NULL;
+      nbdumpeditems++;
     }
-#warning mom_full_dump incomplete
+  if (buildfill_stmt)
+    sqlite3_finalize (buildfill_stmt), buildfill_stmt = NULL;
+  sqlite3_close_v2 (mom_dbsqlite), mom_dbsqlite = NULL;
+  MONIMELT_INFORM ("dumped %d items in %s", nbdumpeditems, state);
 }

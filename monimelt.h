@@ -169,8 +169,7 @@ typedef char *mom_space_fetch_build_sig_t (unsigned spanum,
 typedef char *mom_space_fetch_fill_sig_t (unsigned spanum,
 					  const char *uuidstr);
 // store the build & fill GC_STRDUP-ed strings of a given uuid string
-typedef void mom_space_store_build_fill_sig_t (unsigned spanum,
-					       const char *uuidstr,
+typedef void mom_space_store_build_fill_sig_t (mom_anyitem_t * itm,
 					       const char *buildstr,
 					       const char *fillstr);
 // the space FOO is described by momspace_FOO of following type:
