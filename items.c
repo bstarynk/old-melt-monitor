@@ -231,21 +231,6 @@ resize_items_data (uint32_t newsiz)
   GC_FREE (olddata);
 }
 
-void
-mom_initialize_items (void)
-{
-  const unsigned nb_items = 4090;
-  pthread_mutex_lock (&mtx_global_items);
-  items_data =
-    GC_MALLOC_ATOMIC (sizeof (struct items_data_st) +
-		      nb_items * sizeof (mom_anyitem_t *));
-  memset (items_data, 0,
-	  sizeof (struct items_data_st) +
-	  nb_items * sizeof (mom_anyitem_t *));
-  items_data->items_nb = 0;
-  items_data->items_size = nb_items;
-  pthread_mutex_unlock (&mtx_global_items);
-}
 
 static void
 mom_finalize_item (void *itmad, void *data)
@@ -1283,4 +1268,24 @@ routine_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
      MOMJSON_ENTRY, mom_item__content, mom_dump_emit_json (dmp,
 							   itm->i_content),
      MOMJSON_END);
+}
+
+void
+mom_initialize_items (void)
+{
+  const unsigned nb_items = 4090;
+  pthread_mutex_lock (&mtx_global_items);
+  items_data =
+    GC_MALLOC_ATOMIC (sizeof (struct items_data_st) +
+		      nb_items * sizeof (mom_anyitem_t *));
+  memset (items_data, 0,
+	  sizeof (struct items_data_st) +
+	  nb_items * sizeof (mom_anyitem_t *));
+  items_data->items_nb = 0;
+  items_data->items_size = nb_items;
+  pthread_mutex_unlock (&mtx_global_items);
+  mom_typedescr_array[momty_jsonitem] = &momitype_json_name;
+  mom_typedescr_array[momty_boolitem] = &momitype_bool;
+  mom_typedescr_array[momty_taskletitem] = &momitype_tasklet;
+  mom_typedescr_array[momty_routineitem] = &momitype_routine;
 }

@@ -37,6 +37,8 @@ enum extraopt_en
   xtraopt_jsonstring,
   xtraopt_jsonindent,
   xtraopt_chdir,
+  xtraopt_loadstate,
+  xtraopt_dumpstate,
 };
 
 static const struct option mom_long_options[] = {
@@ -50,6 +52,8 @@ static const struct option mom_long_options[] = {
   {"json-file", required_argument, NULL, xtraopt_jsonfile},
   {"json-string", required_argument, NULL, xtraopt_jsonstring},
   {"json-indent", no_argument, NULL, xtraopt_jsonindent},
+  {"load-state", required_argument, NULL, xtraopt_loadstate},
+  {"dump-state", required_argument, NULL, xtraopt_dumpstate},
   {"chdir", required_argument, NULL, xtraopt_chdir},
   /* Terminating NULL placeholder.  */
   {NULL, no_argument, NULL, 0},
@@ -61,7 +65,8 @@ static const char **module_arguments;
 static GModule **module_handles;
 static unsigned module_count;
 static unsigned module_size;
-
+static const char* load_state_path;
+static const char* dump_state_path;
 static void
 usage (const char *argv0)
 {
@@ -77,6 +82,8 @@ usage (const char *argv0)
   printf ("\t --json-file <file-name>" "\t #parse JSON file for testing\n");
   printf ("\t --json-string <string>" "\t #parse JSON string for testing\n");
   printf ("\t --json-indent" "\t #output parsed JSON with indentation\n");
+  printf ("\t --load-state <sqlite-state>" "\t #load an initial state\n");
+  printf ("\t --dump-state <sqlite-state>" "\t #dump an initial state\n");
   printf ("\t --chdir <directory>" "\t #change directory\n");
   if (option_ctx)
     {
@@ -88,7 +95,7 @@ usage (const char *argv0)
 static void
 print_version (const char *argv0)
 {
-  printf ("%s built on " __DATE__ "@" __TIME__, argv0);
+  printf ("%s built on " __DATE__ "@" __TIME__ "\n", argv0);
 }
 
 
@@ -200,6 +207,12 @@ parse_program_arguments_and_load_modules (int argc, char **argv)
 	case xtraopt_chdir:
 	  wanted_dir = optarg;
 	  break;
+	case xtraopt_loadstate:
+	  load_state_path = optarg;
+	  break;
+	case xtraopt_dumpstate:
+	  dump_state_path = optarg;
+	  break;
 	default:
 	  break;
 	}
@@ -211,6 +224,7 @@ mom_initialize (void)
 {
   extern void mom_initialize_items (void);
   extern void mom_initialize_globals (void);
+  extern void mom_initialize_spaces (void);
   extern void mom_create_items ();
   static int inited;
   if (inited)
@@ -223,6 +237,7 @@ mom_initialize (void)
   pthread_mutexattr_settype (&mom_recursive_mutex_attr,
 			     PTHREAD_MUTEX_RECURSIVE);
   mom_initialize_items ();
+  mom_initialize_spaces ();
   mom_initialize_globals ();
   mom_create_items ();
 }
@@ -492,6 +507,14 @@ main (int argc, char **argv)
 	      timbuf, get_current_dir_name ());
       using_syslog = true;
       atexit (logexit_cb);
+    }
+  if (load_state_path)
+    {
+      mom_initial_load (load_state_path);
+    }
+  if (dump_state_path)
+    {
+      mom_full_dump (dump_state_path);
     }
   return 0;
 }

@@ -156,7 +156,7 @@ struct momitemtypedescr_st
   mom_item_get_fill_sig_t *ityp_getfill;
   mom_item_destroy_sig_t *ityp_destroy;
 };
-struct momitemtypedescr_st *mom_typedescr_array[momty__last];
+const struct momitemtypedescr_st *mom_typedescr_array[momty__last];
 
 
 #define SPACE_MAGIC 0x167d68fd	/* space magic 377317629 */
