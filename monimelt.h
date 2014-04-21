@@ -527,6 +527,8 @@ mom_string_cstr (momval_t val)
 const momint_t *mom_make_int (intptr_t n);
 void mom_initialize (void);
 void mom_initial_load (const char *state);
+// the full dump should be called without worker thread running
+void mom_full_dump (const char *state);
 void *mom_allocate_item (unsigned type, size_t itemsize);
 void *mom_allocate_item_with_uuid (unsigned type, size_t itemsize,
 				   uuid_t uid);

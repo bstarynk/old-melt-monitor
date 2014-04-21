@@ -994,3 +994,36 @@ mom_initial_load (const char *state)
   sqlite3_close (mom_dbsqlite);
   mom_dbsqlite = NULL;
 }
+
+void
+mom_full_dump (const char *state)
+{
+  struct mom_dumper_st dmp = { };
+  memset (&dmp, 0, sizeof (dmp));
+  if (!access (state, R_OK))
+    {
+      char backupname[256];
+      memset (backupname, 0, sizeof (backupname));
+      snprintf (backupname, sizeof (backupname), "%s~", state);
+      rename (state, backupname);
+    }
+  int errcod = sqlite3_open (state, &mom_dbsqlite);
+  char *errmsg = NULL;
+  if (errcod)
+    MONIMELT_FATAL ("failed to open sqlite3 %s:%s", state,
+		    sqlite3_errmsg (mom_dbsqlite));
+  if (sqlite3_exec
+      (mom_dbsqlite,
+       "CREATE TABLE t_item (uid VARCHAR(38) PRIMARY KEY ASC NOT NULL UNIQUE,"
+       " type VARCHAR(60) NOT NULL,"
+       " jbuild TEXT NOT NULL," " jfill TEXT NOT NULL)", NULL, NULL, &errmsg))
+    MONIMELT_FATAL ("failed to create t_item: %s", errmsg);
+  if (sqlite3_exec
+      (mom_dbsqlite,
+       "CREATE TABLE t_name (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE,"
+       " nuid VARCHAR(38) UNIQUE NOT NULL REFERENCES t_id(uid),"
+       "spacenam VARCHAR(23) NOT NULL)", NULL, NULL, &errmsg))
+    MONIMELT_FATAL ("failed to create t_name: %s", errmsg);
+  mom_dumper_initialize (&dmp);
+#warning mom_full_dump incomplete
+}
