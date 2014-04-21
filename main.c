@@ -65,8 +65,8 @@ static const char **module_arguments;
 static GModule **module_handles;
 static unsigned module_count;
 static unsigned module_size;
-static const char* load_state_path;
-static const char* dump_state_path;
+static const char *load_state_path;
+static const char *dump_state_path;
 static void
 usage (const char *argv0)
 {

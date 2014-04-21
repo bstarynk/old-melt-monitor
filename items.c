@@ -236,7 +236,7 @@ static void
 mom_finalize_item (void *itmad, void *data)
 {
   mom_anyitem_t *itm = itmad;
-  struct momitemtypedescr_st *idescr =
+  const struct momitemtypedescr_st *idescr =
     (itm->typnum > momty__itemlowtype && itm->typnum < momty__last) ?
     mom_typedescr_array[itm->typnum] : NULL;
   pthread_mutex_lock (&mtx_global_items);

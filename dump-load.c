@@ -866,7 +866,8 @@ rootspace_store_build_fill (mom_anyitem_t * itm,
   if (sqlite3_bind_text (buildfill_stmt, 1, ustr, -1, SQLITE_STATIC))
     MONIMELT_FATAL ("failed to bind uuid: %s", sqlite3_errmsg (mom_dbsqlite));
   // type at index 2
-  const struct momitemtypedescr_st *typdesc = mom_typedescr_array[itm->typnum];
+  const struct momitemtypedescr_st *typdesc =
+    mom_typedescr_array[itm->typnum];
   assert (typdesc != NULL && typdesc->ityp_magic == ITEMTYPE_MAGIC);
   if (sqlite3_bind_text
       (buildfill_stmt, 2, typdesc->ityp_name, -1, SQLITE_STATIC))
@@ -886,7 +887,7 @@ rootspace_store_build_fill (mom_anyitem_t * itm,
   if (stepres != SQLITE_DONE)
     MONIMELT_FATAL ("failed to insert build & fill of uid %s: %s (%d:%s)",
 		    ustr, sqlite3_errmsg (mom_dbsqlite),
-		    stepres, sqlite3_errstr(stepres));
+		    stepres, sqlite3_errstr (stepres));
   if (sqlite3_reset (buildfill_stmt))
     MONIMELT_FATAL ("failed to reset build & fill statement: %s",
 		    sqlite3_errmsg (mom_dbsqlite));
@@ -943,7 +944,8 @@ ldn_cb (void *data, int nbcol, char **colarrs, char **colnames)
 }
 
 
-void mom_initialize_spaces (void)
+void
+mom_initialize_spaces (void)
 {
   mom_spacedescr_array[MONIMELT_SPACE_ROOT] = &mom_root_space_descr;
   mom_spacename_array[MONIMELT_SPACE_ROOT] =
@@ -1022,7 +1024,8 @@ mom_initial_load (const char *state)
       assert (curspad != NULL && curspad->spa_magic == SPACE_MAGIC);
       assert (curspad->spa_fetch_fill != NULL);
       uuid_unparse (itmld->i_uuid, curustr);
-      const struct momitemtypedescr_st *ids = mom_typedescr_array[itmld->typnum];
+      const struct momitemtypedescr_st *ids =
+	mom_typedescr_array[itmld->typnum];
       assert (ids && ids->ityp_magic == ITEMTYPE_MAGIC);
       char *fillstr = curspad->spa_fetch_fill (itmld->i_space, curustr);
       if (fillstr && fillstr[0] && ids->ityp_filler)
@@ -1082,12 +1085,15 @@ dumpglobal_cb (const mom_anyitem_t * itm, const momstring_t * name,
     MONIMELT_FATAL ("failed to insert global name %s: %s (%d:%s)",
 		    mom_string_cstr ((momval_t) name),
 		    sqlite3_errmsg (mom_dbsqlite),
-		    stepres, sqlite3_errstr(stepres));
+		    stepres, sqlite3_errstr (stepres));
   if (sqlite3_reset (stmt))
     MONIMELT_FATAL ("failed to reset statement: %s",
 		    sqlite3_errmsg (mom_dbsqlite));
 }
 
+// we may want to avoid too long lines in the dumps. See
+// http://programmers.stackexchange.com/q/236542/40065
+#define BIGDUMP_THRESHOLD 250
 void
 mom_full_dump (const char *state)
 {
@@ -1139,7 +1145,6 @@ mom_full_dump (const char *state)
 	char ustr[UUID_PARSED_LEN];
 	memset (ustr, 0, sizeof (ustr));
 	uuid_unparse (curitm->i_uuid, ustr);
-	MONIMELT_INFORM("dumping curitm@%p uuid %s", curitm, ustr);
       }
       //
       assert (curitm != NULL && curitm->i_space < momty__last);
@@ -1147,7 +1152,8 @@ mom_full_dump (const char *state)
 	mom_typedescr_array[curitm->typnum];
       assert (tydescr != NULL && tydescr->ityp_magic == ITEMTYPE_MAGIC);
       assert (curitm->i_space > 0 && curitm->i_space < MONIMELT_SPACE_MAX);
-      struct momspacedescr_st *spadescr = mom_spacedescr_array[curitm->i_space];
+      struct momspacedescr_st *spadescr =
+	mom_spacedescr_array[curitm->i_space];
       assert (spadescr && spadescr->spa_magic == SPACE_MAGIC);
       momval_t jsonbuild = tydescr->ityp_getbuild (&dmp, curitm);
       momval_t jsonfill = tydescr->ityp_getfill (&dmp, curitm);
@@ -1157,8 +1163,12 @@ mom_full_dump (const char *state)
 	char *bufbuild = NULL;
 	size_t sizbuild = 0;
 	FILE *foutbuild = open_memstream (&bufbuild, &sizbuild);
-	mom_json_output_initialize (&outj, foutbuild, NULL, jsof_flush);
+	mom_json_output_initialize (&outj, foutbuild, NULL,
+				    jsof_flush | jsof_halfindent);
 	mom_output_json (&outj, jsonbuild);
+	fflush (foutbuild);
+	if (ftell (foutbuild) > BIGDUMP_THRESHOLD)
+	  putc ('\n', foutbuild);
 	mom_json_output_close (&outj);
 	strbuild = GC_STRDUP (bufbuild);
 	free (bufbuild), bufbuild = NULL, sizbuild = 0;
@@ -1168,8 +1178,12 @@ mom_full_dump (const char *state)
 	char *buffill = NULL;
 	size_t sizfill = 0;
 	FILE *foutfill = open_memstream (&buffill, &sizfill);
-	mom_json_output_initialize (&outj, foutfill, NULL, jsof_flush);
+	mom_json_output_initialize (&outj, foutfill, NULL,
+				    jsof_flush | jsof_halfindent);
 	mom_output_json (&outj, jsonfill);
+	fflush (foutfill);
+	if (ftell (foutfill) > BIGDUMP_THRESHOLD)
+	  putc ('\n', foutfill);
 	mom_json_output_close (&outj);
 	strfill = GC_STRDUP (buffill);
 	free (buffill), buffill = NULL, sizfill = 0;

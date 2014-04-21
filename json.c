@@ -1113,6 +1113,8 @@ output_val (struct jsonoutput_st *jo, momval_t val, unsigned depth)
 		putc (',', jo->jsono_file);
 		if (jo->jsono_flags & jsof_indent)
 		  output_indented_newline (jo->jsono_file, depth + 1);
+		else if ((jo->jsono_flags & jsof_halfindent) && ix % 4 == 0)
+		  output_indented_newline (jo->jsono_file, (depth / 2) & 7);
 	      }
 	    output_val (jo, val.pjsonarr->jarrtab[ix], depth + 1);
 	  }
@@ -1130,6 +1132,8 @@ output_val (struct jsonoutput_st *jo, momval_t val, unsigned depth)
 		putc (',', jo->jsono_file);
 		if (jo->jsono_flags & jsof_indent)
 		  output_indented_newline (jo->jsono_file, depth + 1);
+		else if ((jo->jsono_flags & jsof_halfindent) && ix % 4 == 0)
+		  output_indented_newline (jo->jsono_file, (depth / 2) & 7);
 	      }
 	    output_val (jo, val.pjsonobj->jobjtab[ix].je_name, depth + 1);
 	    putc (':', jo->jsono_file);

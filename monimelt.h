@@ -780,9 +780,10 @@ struct jsonoutput_st
 enum jsonoutflags_en
 {
   jsof_none = 0,
-  jsof_indent = 1 << 0,		/* indent the output */
-  jsof_flush = 1 << 1,		/* flush the output at end */
-  jsof_cname = 1 << 2,		/* output C identifiers at names in JSON objects */
+  jsof_indent = 1 << 0,		/* indent systematically the output */
+  jsof_halfindent = 1 << 1,	/* indent sometimes the output, producing not too long lines */
+  jsof_flush = 1 << 2,		/* flush the output at end */
+  jsof_cname = 1 << 3,		/* output C identifiers at names in JSON objects */
 };
 
 // initialize the output
