@@ -182,7 +182,7 @@ struct momspacedescr_st
 #define MONIMELT_FIRST_USER_SPACE 2
 #define MONIMELT_SPACE_MAX 64
 struct momspacedescr_st *mom_spacedescr_array[MONIMELT_SPACE_MAX];
-struct momstring_st *mom_spacename_array[MONIMELT_SPACE_MAX];
+const struct momstring_st *mom_spacename_array[MONIMELT_SPACE_MAX];
 
 #ifdef __GNUC__
 #define MONIMELT_UNLIKELY(P) __builtin_expect((P),0)
@@ -823,6 +823,12 @@ struct mom_dumper_st
 
 // initialize a dumper
 void mom_dump_initialize (struct mom_dumper_st *dmp);
+
+typedef void mom_dumpglobal_sig_t (const mom_anyitem_t * itm,
+				   const momstring_t * name, void *data);
+
+void mom_dump_globals (struct mom_dumper_st *, mom_dumpglobal_sig_t * globcb,
+		       void *data);
 
 // add a scanned item into a dumper
 void mom_dump_add_item (struct mom_dumper_st *dmp, mom_anyitem_t * itm);

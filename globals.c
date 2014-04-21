@@ -449,24 +449,24 @@ mom_replace_named_item (const char *name, mom_anyitem_t * item)
 
 
 void
-mom_dump_global_state (const char *sqlpath)
+mom_dump_globals (struct mom_dumper_st *dmp, mom_dumpglobal_sig_t * globcb,
+		  void *data)
 {
-  struct mom_dumper_st dumper;
-  memset (&dumper, 0, sizeof (dumper));
-  mom_dumper_initialize (&dumper);
   // add global data
-  {
-    pthread_mutex_lock (&glob_mtx);
-    /// add the named items
-    for (unsigned ix = 0; ix < glob_dict.name_size; ix++)
-      {
-	const mom_anyitem_t *itm = glob_dict.name_hashitem[ix].nme_itm;
-	if (!itm || (void *) itm == MONIMELT_EMPTY)
-	  continue;
-	mom_dump_add_item (&dumper, (mom_anyitem_t *) itm);
-      }
-    pthread_mutex_unlock (&glob_mtx);
-  }
+  pthread_mutex_lock (&glob_mtx);
+  /// add the named items
+  for (unsigned ix = 0; ix < glob_dict.name_size; ix++)
+    {
+      const mom_anyitem_t *itm = glob_dict.name_hashitem[ix].nme_itm;
+      const momstring_t *nam = glob_dict.name_hashitem[ix].nme_str;
+      if (!itm || (void *) itm == MONIMELT_EMPTY || !nam
+	  || (void *) nam == MONIMELT_EMPTY)
+	continue;
+      mom_dump_add_item (dmp, (mom_anyitem_t *) itm);
+      if (globcb)
+	globcb (itm, nam, data);
+    }
+  pthread_mutex_unlock (&glob_mtx);
 }
 
 

@@ -995,6 +995,42 @@ mom_initial_load (const char *state)
   mom_dbsqlite = NULL;
 }
 
+
+static void
+dumpglobal_cb (const mom_anyitem_t * itm, const momstring_t * name,
+	       void *data)
+{
+  sqlite3_stmt *stmt = data;
+  if (!itm || itm->typnum <= momty__itemlowtype || itm->i_space == 0
+      || itm->i_space >= MONIMELT_SPACE_MAX
+      || !mom_spacename_array[itm->i_space])
+    return;
+  // name at index 1
+  if (sqlite3_bind_text
+      (stmt, 1, mom_string_cstr ((momval_t) name), -1, SQLITE_STATIC))
+    MONIMELT_FATAL ("failed to bind name: %s", sqlite3_errmsg (mom_dbsqlite));
+  // uid string at index 2
+  char ustr[UUID_PARSED_LEN];
+  memset (ustr, 0, sizeof (ustr));
+  uuid_unparse (itm->i_uuid, ustr);
+  if (sqlite3_bind_text (stmt, 2, ustr, -1, SQLITE_STATIC))
+    MONIMELT_FATAL ("failed to bind uid: %s", sqlite3_errmsg (mom_dbsqlite));
+  // spacename at index 3
+  if (sqlite3_bind_text
+      (stmt, 3,
+       mom_string_cstr ((momval_t) mom_spacename_array[itm->i_space]), -1,
+       SQLITE_STATIC))
+    MONIMELT_FATAL ("failed to bind space name: %s",
+		    sqlite3_errmsg (mom_dbsqlite));
+  if (sqlite3_step (stmt))
+    MONIMELT_FATAL ("failed to insert global name %s: %s",
+		    mom_string_cstr ((momval_t) name),
+		    sqlite3_errmsg (mom_dbsqlite));
+  if (sqlite3_reset (stmt))
+    MONIMELT_FATAL ("failed to reset statement: %s",
+		    sqlite3_errmsg (mom_dbsqlite));
+}
+
 void
 mom_full_dump (const char *state)
 {
@@ -1022,8 +1058,24 @@ mom_full_dump (const char *state)
       (mom_dbsqlite,
        "CREATE TABLE t_name (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE,"
        " nuid VARCHAR(38) UNIQUE NOT NULL REFERENCES t_id(uid),"
-       "spacenam VARCHAR(23) NOT NULL)", NULL, NULL, &errmsg))
+       " spacenam VARCHAR(30) NOT NULL)", NULL, NULL, &errmsg))
     MONIMELT_FATAL ("failed to create t_name: %s", errmsg);
   mom_dumper_initialize (&dmp);
+  sqlite3_stmt *stmt = NULL;
+  if (sqlite3_prepare_v2 (mom_dbsqlite,
+			  "INSERT INTO t_name (name, nuid, spacenam) VALUES (?1, ?2, ?3)",
+			  -1, &stmt, NULL))
+    MONIMELT_FATAL ("failed to prepare name insertion: %s",
+		    sqlite3_errmsg (mom_dbsqlite));
+  mom_dump_globals (&dmp, dumpglobal_cb, stmt);
+  while (dmp.dmp_qfirst != NULL)
+    {
+      mom_anyitem_t *curitm = dmp.dmp_qfirst->iq_item;
+      assert (curitm != NULL);
+#warning should dump content of curitm in its space
+      dmp.dmp_qfirst = dmp.dmp_qfirst->iq_next;
+      if (!dmp.dmp_qfirst)
+	dmp.dmp_qlast = NULL;
+    }
 #warning mom_full_dump incomplete
 }
