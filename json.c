@@ -910,6 +910,7 @@ mom_json_output_initialize (struct jsonoutput_st *jo, FILE * f, void *data,
   jo->jsono_flags = flags;
   pthread_mutex_init (&jo->jsono_mtx, NULL);
   jo->jsono_file = f;
+  jo->jsono_lastnewline = 0;
   jo->jsono_data = data;
   jo->jsono_magic = MOMJSONO_MAGIC;
 }
@@ -953,13 +954,16 @@ mom_json_output_close (struct jsonoutput_st *jo)
 }
 
 static inline void
-output_indented_newline (FILE * f, unsigned depth)
+output_indented_newline (struct jsonoutput_st *jo, unsigned depth)
 {
-  putc ('\n', f);
+  putc ('\n', jo->jsono_file);
+  jo->jsono_lastnewline = ftell (jo->jsono_file);
   for (unsigned ix = depth % 16; ix > 0; ix--)
-    putc (' ', f);
+    putc (' ', jo->jsono_file);
 }
 
+
+#define  OUTLINE_THESHOLD 76
 static void
 output_val (struct jsonoutput_st *jo, momval_t val, unsigned depth)
 {
@@ -1112,9 +1116,12 @@ output_val (struct jsonoutput_st *jo, momval_t val, unsigned depth)
 	      {
 		putc (',', jo->jsono_file);
 		if (jo->jsono_flags & jsof_indent)
-		  output_indented_newline (jo->jsono_file, depth + 1);
-		else if ((jo->jsono_flags & jsof_halfindent) && ix % 4 == 0)
-		  output_indented_newline (jo->jsono_file, (depth / 2) & 7);
+		  output_indented_newline (jo, depth + 1);
+		else if ((jo->jsono_flags & jsof_halfindent)
+			 && (ix % 4 == 0
+			     || ftell (jo->jsono_file) -
+			     jo->jsono_lastnewline > OUTLINE_THESHOLD))
+		  output_indented_newline (jo, (depth / 2) & 7);
 	      }
 	    output_val (jo, val.pjsonarr->jarrtab[ix], depth + 1);
 	  }
@@ -1131,9 +1138,12 @@ output_val (struct jsonoutput_st *jo, momval_t val, unsigned depth)
 	      {
 		putc (',', jo->jsono_file);
 		if (jo->jsono_flags & jsof_indent)
-		  output_indented_newline (jo->jsono_file, depth + 1);
-		else if ((jo->jsono_flags & jsof_halfindent) && ix % 4 == 0)
-		  output_indented_newline (jo->jsono_file, (depth / 2) & 7);
+		  output_indented_newline (jo, depth + 1);
+		else if ((jo->jsono_flags & jsof_halfindent)
+			 && (ix % 4 == 0
+			     || ftell (jo->jsono_file) -
+			     jo->jsono_lastnewline > OUTLINE_THESHOLD))
+		  output_indented_newline (jo, (depth / 2) & 7);
 	      }
 	    output_val (jo, val.pjsonobj->jobjtab[ix].je_name, depth + 1);
 	    putc (':', jo->jsono_file);

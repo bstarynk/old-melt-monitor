@@ -774,6 +774,7 @@ struct jsonoutput_st
   uint32_t jsono_flags;
   pthread_mutex_t jsono_mtx;
   FILE *jsono_file;
+  long jsono_lastnewline;
   void *jsono_data;
 };
 
