@@ -801,7 +801,13 @@ extern void monimelt_module_init (const char *marg);
 extern GOptionGroup *monimelt_module_option_group (const char *modname);
 
 
-//// dumper, see file dump.c
+struct mom_itemqueue_st
+{
+  struct mom_itemqueue_st *iq_next;
+  mom_anyitem_t *iq_item;
+};
+
+//// dumper, see file dump-load.c
 struct mom_dumper_st
 {
   unsigned dmp_magic;		/* always DUMPER_MAGIC */

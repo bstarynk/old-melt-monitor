@@ -33,11 +33,6 @@ enum dumpstate_en
 };
 
 #define DUMPER_MAGIC 0x572bb695	/* dumper magic 1462482581 */
-struct mom_itemqueue_st
-{
-  struct mom_itemqueue_st *iq_next;
-  mom_anyitem_t *iq_item;
-};
 
 void
 mom_dumper_initialize (struct mom_dumper_st *dmp)
@@ -881,7 +876,18 @@ ldn_cb (void *data, int nbcol, char **colarrs, char **colnames)
   ldn->ldn_uuids[cnt] = GC_STRDUP (colarrs[1]);
   char *spaname = colarrs[2];
   assert (spaname != NULL);
-#warning should check that spaname is valid and put it in ldn_spaces
+  for (unsigned spix = 1; spix < MONIMELT_SPACE_MAX; spix++)
+    {
+      if (!mom_spacedescr_array[spix])
+	MONIMELT_FATAL ("unknown space %s for uuid %s name %s", spaname,
+			ldn->ldn_uuids[cnt], ldn->ldn_names[cnt]);
+      if (!strcmp (spaname, mom_spacedescr_array[spix]->spa_name))
+	{
+	  ldn->ldn_spaces[cnt] =
+	    (char *) mom_spacedescr_array[spix]->spa_name;
+	  break;
+	}
+    }
   ldn->ldn_count = cnt + 1;
   return 0;
 }
@@ -948,8 +954,43 @@ mom_initial_load (const char *state)
 			    curname, curuuidstr, curspace);
 	}
     }
-#warning should load the queued items in the loader
-end:
+  while (ld.ldr_qfirst != NULL)
+    {
+      char curustr[UUID_PARSED_LEN];
+      memset (curustr, 0, sizeof (curustr));
+      assert (ld.ldr_magic == LOADER_MAGIC);
+      mom_anyitem_t *itmld = ld.ldr_qfirst->iq_item;
+      assert (itmld != NULL && itmld->typnum > momty__itemlowtype
+	      && itmld->typnum < momty__last);
+      assert (itmld->i_space > 0 && itmld->i_space < MONIMELT_SPACE_MAX);
+      struct momspacedescr_st *curspad = mom_spacedescr_array[itmld->i_space];
+      assert (curspad != NULL && curspad->spa_magic == SPACE_MAGIC);
+      assert (curspad->spa_fetch_fill != NULL);
+      uuid_unparse (itmld->i_uuid, curustr);
+      struct momitemtypedescr_st *ids = mom_typedescr_array[itmld->typnum];
+      assert (ids && ids->ityp_magic == ITEMTYPE_MAGIC);
+      char *fillstr = curspad->spa_fetch_fill (itmld->i_space, curustr);
+      if (fillstr && fillstr[0] && ids->ityp_filler)
+	{
+	  struct jsonparser_st jp = { 0 };
+	  FILE *fm = fmemopen (fillstr, strlen (fillstr), "r");
+	  if (MONIMELT_UNLIKELY (!fm))
+	    MONIMELT_FATAL ("fmemopen failed for uid %s fill string %s",
+			    curustr, fillstr);
+	  mom_initialize_json_parser (&jp, fm, NULL);
+	  char *errmsg = NULL;
+	  momval_t jval = mom_parse_json (&jp, &errmsg);
+	  if (MONIMELT_UNLIKELY (!jval.ptr && errmsg))
+	    MONIMELT_FATAL
+	      ("parsing of fill of uid %s in space %s json %s failed : %s",
+	       curustr, curspad->spa_name, fillstr, errmsg);
+	  mom_close_json_parser (&jp);
+	  ids->ityp_filler (&ld, itmld, jval);
+	}
+      ld.ldr_qfirst = ld.ldr_qfirst->iq_next;
+      if (!ld.ldr_qfirst)
+	ld.ldr_qlast = NULL;
+    }
   sqlite3_close (mom_dbsqlite);
   mom_dbsqlite = NULL;
 }
