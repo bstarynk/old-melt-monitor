@@ -10,6 +10,7 @@ INSERT INTO t_item VALUES('3265e0f0-f3f7-4ef1-b157-50ec4fd4ce41','json_name','{"
 INSERT INTO t_item VALUES('326c3317-5c04-47dc-bf74-f4fc776eab72','json_name','{"jtype":"json_name_item","name":"assoc_item"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('35461f69-eeb6-4562-806b-f37537d6ce7a','json_name','{"jtype":"json_name_item","name":"vector_item"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('3b19b433-29b0-473e-9827-7756ee219573','bool','{"jtype":"bool_item"}','{"attributes":null,"content":null}');
+INSERT INTO t_item VALUES('402d1108-9e25-4065-b81d-1bea8b06f269','json_name','','');
 INSERT INTO t_item VALUES('52d29f69-0bec-435b-af7c-f5cbeb51a80b','json_name','{"jtype":"json_name_item","name":"state"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('566acfce-866a-4730-884d-30310b2fdf92','json_name','{"jtype":"json_name_item","name":"space"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('5e77140e-2467-4e85-aa28-8ca734c2aa07','json_name','{"jtype":"json_name_item","name":"refitem"}','{"attributes":null,"content":null}');
@@ -63,5 +64,6 @@ INSERT INTO t_name VALUES('tuple','c52ead7c-63bf-4e65-a873-486de4e4db41','.');
 INSERT INTO t_name VALUES('uuid','a75bef70-596b-4fc5-99ca-e60b5287feec','.');
 INSERT INTO t_name VALUES('val','d8aa61cc-2543-4659-bff9-2b0bfc0f779a','.');
 INSERT INTO t_name VALUES('values','7e8b7206-2548-427d-9b7c-9d5b5067c78a','.');
+INSERT INTO t_name VALUES('vector','402d1108-9e25-4065-b81d-1bea8b06f269','.');
 INSERT INTO t_name VALUES('vector_item','35461f69-eeb6-4562-806b-f37537d6ce7a','.');
 -- state-monimelt end dump 
