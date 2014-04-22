@@ -23,7 +23,7 @@ CC=gcc
 CFLAGS= -std=gnu11 -Wall $(PREPROFLAGS) $(OPTIMFLAGS)
 CXX=g++
 CXXFLAGS= -std=c++11 -Wall -pthread  $(PREPROFLAGS) $(OPTIMFLAGS)
-INDENT= indent -gnu -v
+INDENT= indent -gnu
 PREPROFLAGS= $(shell $(PKGCONFIG) --cflags $(PACKAGES))
 OPTIMFLAGS= -Og -g
 LIBES= -luuid -lgc $(shell $(PKGCONFIG) --libs $(PACKAGES)) -lpthread -lm -ldl
@@ -42,7 +42,7 @@ monimelt: $(OBJECTS)
 
 indent: # don't indent monimelt-names.h
 	@for f in *.c $(filter-out monimelt-names.h, $(wildcard *.h)); do \
-	  echo indenting $$f; $(INDENT) $$f ; done
+	  echo indenting $$f; $(INDENT) $$f ;$(INDENT) $$f; done
 
 $(OBJECTS): monimelt.h monimelt-names.h
 

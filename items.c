@@ -2244,8 +2244,6 @@ mom_item_queue_length (const momval_t que)
 static void
 queue_push_back (struct momqueueitem_st *quitm, mom_anyitem_t * itm)
 {
-  if (!quitm || !itm)
-    return;
   struct mom_itemqueue_st *qel = GC_MALLOC (sizeof (struct mom_itemqueue_st));
   if (MONIMELT_UNLIKELY (!qel))
     MONIMELT_FATAL ("failed to allocate queue element");
@@ -2265,6 +2263,28 @@ queue_push_back (struct momqueueitem_st *quitm, mom_anyitem_t * itm)
     }
 }
 
+static void
+queue_push_front (struct momqueueitem_st *quitm, mom_anyitem_t * itm)
+{
+  struct mom_itemqueue_st *qel = GC_MALLOC (sizeof (struct mom_itemqueue_st));
+  if (MONIMELT_UNLIKELY (!qel))
+    MONIMELT_FATAL ("failed to allocate queue element");
+  qel->iq_next = NULL;
+  qel->iq_item = itm;
+  if (MONIMELT_UNLIKELY (!quitm->itq_first))
+    {
+      quitm->itq_first = quitm->itq_last = qel;
+      quitm->itq_len = 1;
+    }
+  else
+    {
+      struct mom_itemqueue_st *oldfirst = quitm->itq_first;
+      qel->iq_next = oldfirst;
+      quitm->itq_first = qel;
+      quitm->itq_len++;
+    }
+}
+
 void
 mom_item_queue_push_back (momval_t quev, momval_t itmv)
 {
@@ -2274,6 +2294,92 @@ mom_item_queue_push_back (momval_t quev, momval_t itmv)
     return;
   pthread_mutex_lock (&quev.panyitem->i_mtx);
   queue_push_back (quev.pqueueitem, itmv.panyitem);
+  pthread_mutex_unlock (&quev.panyitem->i_mtx);
+}
+
+void
+mom_item_queue_push_front (momval_t quev, momval_t itmv)
+{
+  if (!quev.ptr || *quev.ptype != momty_queueitem)
+    return;
+  if (!itmv.ptr || *itmv.ptype <= momty__itemlowtype)
+    return;
+  pthread_mutex_lock (&quev.panyitem->i_mtx);
+  queue_push_front (quev.pqueueitem, itmv.panyitem);
+  pthread_mutex_unlock (&quev.panyitem->i_mtx);
+}
+
+void
+mom_item_queue_push_many_back (momval_t quev, ...)
+{
+  if (!quev.ptr || *quev.ptype != momty_queueitem)
+    return;
+  mom_anyitem_t *curitm = NULL;
+  va_list args;
+  pthread_mutex_lock (&quev.panyitem->i_mtx);
+  va_start (args, quev);
+  while ((curitm = va_arg (args, mom_anyitem_t *)) != NULL)
+    {
+      if (curitm->typnum <= momty__itemlowtype)
+	continue;
+      queue_push_back (quev.pqueueitem, curitm);
+    }
+  va_end (args);
+  pthread_mutex_unlock (&quev.panyitem->i_mtx);
+}
+
+
+void
+mom_item_queue_push_many_front (momval_t quev, ...)
+{
+  if (!quev.ptr || *quev.ptype != momty_queueitem)
+    return;
+  mom_anyitem_t *curitm = NULL;
+  va_list args;
+  pthread_mutex_lock (&quev.panyitem->i_mtx);
+  va_start (args, quev);
+  while ((curitm = va_arg (args, mom_anyitem_t *)) != NULL)
+    {
+      if (curitm->typnum <= momty__itemlowtype)
+	continue;
+      queue_push_front (quev.pqueueitem, curitm);
+    }
+  va_end (args);
+  pthread_mutex_unlock (&quev.panyitem->i_mtx);
+}
+
+
+void
+mom_item_queue_push_counted_back (momval_t quev, unsigned count,
+				  mom_anyitem_t * arr[])
+{
+  if (!quev.ptr || *quev.ptype != momty_queueitem || !count || !arr)
+    return;
+  pthread_mutex_lock (&quev.panyitem->i_mtx);
+  for (unsigned ix = 0; ix < count; ix++)
+    {
+      mom_anyitem_t *curitm = arr[ix];
+      if (!curitm || curitm->typnum <= momty__itemlowtype)
+	continue;
+      queue_push_back (quev.pqueueitem, curitm);
+    }
+  pthread_mutex_unlock (&quev.panyitem->i_mtx);
+}
+
+void
+mom_item_queue_push_counted_front (momval_t quev, unsigned count,
+				   mom_anyitem_t * arr[])
+{
+  if (!quev.ptr || *quev.ptype != momty_queueitem || !count || !arr)
+    return;
+  pthread_mutex_lock (&quev.panyitem->i_mtx);
+  for (unsigned ix = 0; ix < count; ix++)
+    {
+      mom_anyitem_t *curitm = arr[ix];
+      if (!curitm || curitm->typnum <= momty__itemlowtype)
+	continue;
+      queue_push_front (quev.pqueueitem, curitm);
+    }
   pthread_mutex_unlock (&quev.panyitem->i_mtx);
 }
 

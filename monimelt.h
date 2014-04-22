@@ -486,9 +486,15 @@ void mom_item_queue_push_back (momval_t quev, momval_t itmv);
 void mom_item_queue_push_front (momval_t quev, momval_t itmv);
 void mom_item_queue_push_many_back (momval_t quev, ...)
   __attribute__ ((sentinel));
+void mom_item_queue_push_many_front (momval_t quev, ...)
+  __attribute__ ((sentinel));
 void mom_item_queue_push_counted_back (momval_t, unsigned count,
-				       mom_anyitem_t arr[]);
+				       mom_anyitem_t * arr[]);
+void mom_item_queue_push_counted_front (momval_t, unsigned count,
+					mom_anyitem_t * arr[]);
 unsigned mom_item_queue_length (momval_t quev);
+mom_anyitem_t *mom_item_queue_first (momval_t quev);
+mom_anyitem_t *mom_item_queue_last (momval_t quev);
 void mom_item_queue_push_front (momval_t quev, momval_t itmv);
 void mom_item_queue_pop_front (momval_t quev);
 momval_t mom_item_queue_to_tuple (momval_t quev);
