@@ -2207,6 +2207,76 @@ assoc_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
     }
 }
 
+
+
+
+//////////////////////////////////////////////////////////////// queue items
+
+momit_queue_t *
+mom_make_item_queue (unsigned space)
+{
+  momit_queue_t *itmque =
+    mom_allocate_item (momty_queueitem, sizeof (momit_queue_t), space);
+  return itmque;
+}
+
+momit_queue_t *
+mom_make_item_queue_of_uuid (uuid_t uid, unsigned space)
+{
+  momit_queue_t *itmque =
+    mom_allocate_item_with_uuid (momty_queueitem, sizeof (momit_queue_t),
+				 space, uid);
+  return itmque;
+}
+
+unsigned
+mom_item_queue_length (const momval_t que)
+{
+  unsigned len = 0;
+  if (!que.ptr || *que.ptype != momty_queueitem)
+    return 0;
+  pthread_mutex_lock (&que.panyitem->i_mtx);
+  len = que.pqueueitem->itq_len;
+  pthread_mutex_unlock (&que.panyitem->i_mtx);
+  return len;
+}
+
+static void
+queue_push_back (struct momqueueitem_st *quitm, mom_anyitem_t * itm)
+{
+  if (!quitm || !itm)
+    return;
+  struct mom_itemqueue_st *qel = GC_MALLOC (sizeof (struct mom_itemqueue_st));
+  if (MONIMELT_UNLIKELY (!qel))
+    MONIMELT_FATAL ("failed to allocate queue element");
+  qel->iq_next = NULL;
+  qel->iq_item = itm;
+  if (MONIMELT_UNLIKELY (!quitm->itq_first))
+    {
+      quitm->itq_first = quitm->itq_last = qel;
+      quitm->itq_len = 1;
+    }
+  else
+    {
+      struct mom_itemqueue_st *oldlast = quitm->itq_last;
+      oldlast->iq_next = qel;
+      quitm->itq_last = qel;
+      quitm->itq_len++;
+    }
+}
+
+void
+mom_item_queue_push_back (momval_t quev, momval_t itmv)
+{
+  if (!quev.ptr || *quev.ptype != momty_queueitem)
+    return;
+  if (!itmv.ptr || *itmv.ptype <= momty__itemlowtype)
+    return;
+  pthread_mutex_lock (&quev.panyitem->i_mtx);
+  queue_push_back (quev.pqueueitem, itmv.panyitem);
+  pthread_mutex_unlock (&quev.panyitem->i_mtx);
+}
+
 ////////////////////////////////////////////////////////////////
 void
 mom_initialize_items (void)

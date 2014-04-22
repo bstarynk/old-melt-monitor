@@ -124,6 +124,7 @@ union momvalueptr_un
   struct momtaskletitem_st *ptaskitem;
   struct momvectoritem_st *pvectitem;
   struct momassocitem_st *passocitem;
+  struct momqueueitem_st *pqueueitem;
   const struct momnode_st *pnode;
   const struct momnode_st *pclosure;
   const struct momseqitem_st *pseqitm;
@@ -479,9 +480,20 @@ struct momqueueitem_st
   struct mom_itemqueue_st *itq_first;
   struct mom_itemqueue_st *itq_last;
 };
+momit_queue_t *mom_make_item_queue (unsigned space);
+momit_queue_t *mom_make_item_queue_of_uuid (uuid_t uid, unsigned space);
 void mom_item_queue_push_back (momval_t quev, momval_t itmv);
 void mom_item_queue_push_front (momval_t quev, momval_t itmv);
-#warning need more queue functions
+void mom_item_queue_push_many_back (momval_t quev, ...)
+  __attribute__ ((sentinel));
+void mom_item_queue_push_counted_back (momval_t, unsigned count,
+				       mom_anyitem_t arr[]);
+unsigned mom_item_queue_length (momval_t quev);
+void mom_item_queue_push_front (momval_t quev, momval_t itmv);
+void mom_item_queue_pop_front (momval_t quev);
+momval_t mom_item_queue_to_tuple (momval_t quev);
+
+
 /////// tasklets
 void mom_tasklet_push_frame (momval_t tsk, momval_t clo,
 			     enum mom_pushframedirective_en, ...)
