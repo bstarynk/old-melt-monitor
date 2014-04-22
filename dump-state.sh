@@ -24,6 +24,7 @@ trap 'rm -vf $tempdump' EXIT INT QUIT TERM
 export LANG=C LC_ALL=C
 logger -s -t dump-monimelt-state $(date +"start dump-monimelt-state %c")
 date +'-- state-monimelt dump %Y %b %d' > $tempdump
+echo 'BEGIN TRANSACTION;' >> $tempdump
 sqlite3 state-monimelt.dbsqlite .schema >> $tempdump || exit 1
 echo '-- state-monimelt tables contents' >> $tempdump 
 sqlite3 state-monimelt.dbsqlite >> $tempdump <<EOF
@@ -32,6 +33,7 @@ sqlite3 state-monimelt.dbsqlite >> $tempdump <<EOF
 .mode insert t_name
   SELECT * FROM t_name ORDER BY name;
 EOF
+echo 'COMMIT;' >> $tempdump
 echo "-- state-monimelt end dump " >> $tempdump
 mv state-monimelt.sql state-monimelt.sql~
 mv $tempdump state-monimelt.sql
