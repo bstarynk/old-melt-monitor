@@ -277,7 +277,8 @@ mom_finalize_item (void *itmad, void *data)
 
 
 void *
-mom_allocate_item_with_uuid (unsigned type, size_t itemsize, uuid_t uid)
+mom_allocate_item_with_uuid (unsigned type, size_t itemsize, unsigned space,
+			     uuid_t uid)
 {
   struct momanyitem_st *p = NULL;
   assert (itemsize >= sizeof (struct momanyitem_st));
@@ -286,9 +287,15 @@ mom_allocate_item_with_uuid (unsigned type, size_t itemsize, uuid_t uid)
     MONIMELT_FATAL ("out of memory for item type %d size %ld",
 		    type, (long) itemsize);
   memset (p, 0, itemsize);
+  if (space != 0)
+    {
+      if (MONIMELT_UNLIKELY
+	  (space > MONIMELT_SPACE_MAX || !mom_spacedescr_array[space]))
+	space = 0;
+    }
   pthread_mutex_lock (&mtx_global_items);
   p->typnum = type;
-  p->i_space = 0;
+  p->i_space = space;
   p->i_attrs = NULL;
   momhash_t itmhash = mom_hash_uuid (uid);
   p->i_hash = itmhash;
@@ -308,13 +315,13 @@ mom_allocate_item_with_uuid (unsigned type, size_t itemsize, uuid_t uid)
 }
 
 void *
-mom_allocate_item (unsigned type, size_t itemsize)
+mom_allocate_item (unsigned type, size_t itemsize, unsigned space)
 {
   assert (itemsize > sizeof (struct momanyitem_st));
   uuid_t uid;
   memset (uid, 0, sizeof (uid));
   uuid_generate (uid);
-  return mom_allocate_item_with_uuid (type, itemsize, uid);
+  return mom_allocate_item_with_uuid (type, itemsize, space, uid);
 }
 
 static inline momval_t
@@ -624,21 +631,21 @@ mom_scan_any_item_data (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 
 
 momit_json_name_t *
-mom_make_item_json_name_of_uuid (uuid_t uid, const char *name)
+mom_make_item_json_name_of_uuid (uuid_t uid, const char *name, unsigned space)
 {
   momit_json_name_t *itm
     = mom_allocate_item_with_uuid (momty_jsonitem, sizeof (momit_json_name_t),
-				   uid);
+				   space, uid);
   if (name)
     itm->ij_namejson = mom_make_string (name);
   return itm;
 }
 
 momit_json_name_t *
-mom_make_item_json_name (const char *name)
+mom_make_item_json_name (const char *name, unsigned space)
 {
   momit_json_name_t *itm
-    = mom_allocate_item (momty_jsonitem, sizeof (momit_json_name_t));
+    = mom_allocate_item (momty_jsonitem, sizeof (momit_json_name_t), space);
   if (name)
     itm->ij_namejson = mom_make_string (name);
   return itm;
@@ -646,7 +653,8 @@ mom_make_item_json_name (const char *name)
 
 /// for json name item type descriptor
 static mom_anyitem_t *json_name_itemloader (struct mom_loader_st *ld,
-					    momval_t json, uuid_t uid);
+					    momval_t json, uuid_t uid,
+					    unsigned space);
 static void json_name_itemfiller (struct mom_loader_st *ld,
 				  mom_anyitem_t * itm, momval_t json);
 static void json_name_itemscan (struct mom_dumper_st *dmp,
@@ -674,7 +682,7 @@ mom_create_named_bool (uuid_t uid, const char *name)
     {
       momit_bool_t *itrue
 	= mom_allocate_item_with_uuid (momty_boolitem, sizeof (momit_bool_t),
-				       uid);
+				       MONIMELT_SPACE_ROOT, uid);
       itrue->ib_bool = true;
       return itrue;
     }
@@ -682,7 +690,7 @@ mom_create_named_bool (uuid_t uid, const char *name)
     {
       momit_bool_t *ifalse
 	= mom_allocate_item_with_uuid (momty_boolitem, sizeof (momit_bool_t),
-				       uid);
+				       MONIMELT_SPACE_ROOT, uid);
       ifalse->ib_bool = false;
       return ifalse;
     }
@@ -695,7 +703,8 @@ mom_create_named_bool (uuid_t uid, const char *name)
 
 /// for boolean item type descriptor
 static mom_anyitem_t *bool_itemloader (struct mom_loader_st *ld,
-				       momval_t json, uuid_t uid);
+				       momval_t json, uuid_t uid,
+				       unsigned space);
 static void bool_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
 			     momval_t json);
 static void bool_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm);
@@ -716,7 +725,7 @@ const struct momitemtypedescr_st momitype_bool = {
 
 static mom_anyitem_t *
 bool_itemloader (struct mom_loader_st *ld, momval_t json
-		 __attribute__ ((unused)), uuid_t uid)
+		 __attribute__ ((unused)), uuid_t uid, unsigned space)
 {
   char ustr[UUID_PARSED_LEN];
   uuid_unparse (uid, ustr);
@@ -760,12 +769,14 @@ bool_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 ////////////////////////////////////////////////////////////////
 /// type routine for json name items
 static mom_anyitem_t *
-json_name_itemloader (struct mom_loader_st *ld, momval_t json, uuid_t uid)
+json_name_itemloader (struct mom_loader_st *ld, momval_t json, uuid_t uid,
+		      unsigned space)
 {
   const char *name =
     mom_string_cstr (mom_jsonob_get (json, (momval_t) mom_item__name));
   if (name && name[0])
-    return (mom_anyitem_t *) mom_make_item_json_name_of_uuid (uid, name);
+    return (mom_anyitem_t *) mom_make_item_json_name_of_uuid (uid, name,
+							      space);
   MONIMELT_FATAL ("failed to load & build json name item");
 }
 
@@ -814,26 +825,27 @@ json_name_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 /// tasklets
 
 momit_tasklet_t *
-mom_make_item_tasklet_of_uuid (uuid_t uid)
+mom_make_item_tasklet_of_uuid (uuid_t uid, unsigned space)
 {
   momit_tasklet_t *itm
     =
     mom_allocate_item_with_uuid (momty_taskletitem, sizeof (momit_tasklet_t),
-				 uid);
+				 space, uid);
   return itm;
 }
 
 momit_tasklet_t *
-mom_make_item_tasklet (void)
+mom_make_item_tasklet (unsigned space)
 {
   momit_tasklet_t *itm
-    = mom_allocate_item (momty_taskletitem, sizeof (momit_tasklet_t));
+    = mom_allocate_item (momty_taskletitem, sizeof (momit_tasklet_t), space);
   return itm;
 }
 
 /// for tasklet item type descriptor
 static mom_anyitem_t *tasklet_itemloader (struct mom_loader_st *ld,
-					  momval_t json, uuid_t uid);
+					  momval_t json, uuid_t uid,
+					  unsigned space);
 static void tasklet_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
 				momval_t json);
 static void tasklet_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm);
@@ -854,9 +866,9 @@ const struct momitemtypedescr_st momitype_tasklet = {
 
 static mom_anyitem_t *
 tasklet_itemloader (struct mom_loader_st *ld, momval_t json
-		    __attribute__ ((unused)), uuid_t uid)
+		    __attribute__ ((unused)), uuid_t uid, unsigned space)
 {
-  return (mom_anyitem_t *) mom_make_item_tasklet_of_uuid (uid);
+  return (mom_anyitem_t *) mom_make_item_tasklet_of_uuid (uid, space);
 }
 
 
@@ -1127,7 +1139,7 @@ tasklet_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 #define SYMNAME_LEN 128
 #define MOM_ROUTINE_NAME_FMT "momrout_%s"
 momit_routine_t *
-mom_make_item_routine_of_uuid (uuid_t uid, const char *name)
+mom_make_item_routine_of_uuid (uuid_t uid, const char *name, unsigned space)
 {
   char symname[SYMNAME_LEN];
   memset (symname, 0, sizeof (symname));
@@ -1144,13 +1156,13 @@ mom_make_item_routine_of_uuid (uuid_t uid, const char *name)
     MONIMELT_FATAL ("bad routine descriptor %s", symname);
   momit_routine_t *itrout =
     mom_allocate_item_with_uuid (momty_routineitem, sizeof (momit_routine_t),
-				 uid);
+				 space, uid);
   itrout->irt_descr = rdescr;
   return itrout;
 }
 
 momit_routine_t *
-mom_make_item_routine (const char *name)
+mom_make_item_routine (const char *name, unsigned space)
 {
   char symname[SYMNAME_LEN];
   memset (symname, 0, sizeof (symname));
@@ -1166,14 +1178,14 @@ mom_make_item_routine (const char *name)
       || strcmp (rdescr->rout_name, name))
     MONIMELT_FATAL ("bad routine descriptor %s", symname);
   momit_routine_t *itrout =
-    mom_allocate_item (momty_routineitem, sizeof (momit_routine_t));
+    mom_allocate_item (momty_routineitem, sizeof (momit_routine_t), space);
   itrout->irt_descr = rdescr;
   return itrout;
 }
 
 
 momit_routine_t *
-mom_try_make_item_routine (const char *name)
+mom_try_make_item_routine (const char *name, unsigned space)
 {
   char symname[SYMNAME_LEN];
   memset (symname, 0, sizeof (symname));
@@ -1192,7 +1204,7 @@ mom_try_make_item_routine (const char *name)
       || strcmp (rdescr->rout_name, name))
     MONIMELT_FATAL ("bad routine descriptor %s", symname);
   momit_routine_t *itrout =
-    mom_allocate_item (momty_routineitem, sizeof (momit_routine_t));
+    mom_allocate_item (momty_routineitem, sizeof (momit_routine_t), space);
   itrout->irt_descr = rdescr;
   return itrout;
 }
@@ -1200,7 +1212,8 @@ mom_try_make_item_routine (const char *name)
 
 /// for routine item type descriptor
 static mom_anyitem_t *routine_itemloader (struct mom_loader_st *ld,
-					  momval_t json, uuid_t uid);
+					  momval_t json, uuid_t uid,
+					  unsigned space);
 static void routine_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
 				momval_t json);
 static void routine_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm);
@@ -1235,13 +1248,14 @@ routine_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 }
 
 static mom_anyitem_t *
-routine_itemloader (struct mom_loader_st *ld, momval_t json, uuid_t uid)
+routine_itemloader (struct mom_loader_st *ld, momval_t json, uuid_t uid,
+		    unsigned space)
 {
   const char *name =
     mom_string_cstr (mom_jsonob_get (json, (momval_t) mom_item__name));
   if (MONIMELT_UNLIKELY (!name))
     MONIMELT_FATAL ("missing name for routine item");
-  return (mom_anyitem_t *) mom_make_item_routine_of_uuid (uid, name);
+  return (mom_anyitem_t *) mom_make_item_routine_of_uuid (uid, name, space);
 }
 
 

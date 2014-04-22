@@ -133,7 +133,8 @@ void mom_dumper_initialize (struct mom_dumper_st *dmp);
 
 // function to load and build an item from its building json and uid
 typedef mom_anyitem_t *mom_item_loader_sig_t (struct mom_loader_st *ld,
-					      momval_t json, uuid_t uid);
+					      momval_t json, uuid_t uid,
+					      unsigned space);
 // function to fill an item from its filling json
 typedef void mom_item_filler_sig_t (struct mom_loader_st *ld,
 				    mom_anyitem_t * itm, momval_t json);
@@ -381,24 +382,26 @@ enum mom_pushframedirective_en
 };
 #define MOMPFR_END ((void*)MOMPFR__END)
 
-momit_tasklet_t *mom_make_item_tasklet (void);
-momit_tasklet_t *mom_make_item_tasklet_of_uuid (uuid_t);
+momit_tasklet_t *mom_make_item_tasklet (unsigned space);
+momit_tasklet_t *mom_make_item_tasklet_of_uuid (uuid_t uid, unsigned space);
 
 
 
 
-struct momvectoritem_st {
+struct momvectoritem_st
+{
   struct momanyitem_st itv_item;	/* common part */
   unsigned itv_count;
   unsigned itv_size;
-  momval_t* itv_arr;		/* of size itv_size, with itv_count elements */
+  momval_t *itv_arr;		/* of size itv_size, with itv_count elements */
 };
 
-struct momassocitem_st {
+struct momassocitem_st
+{
   struct momanyitem_st ita_item;	/* common part */
   unsigned ita_count;
   unsigned ita_size;
-  struct mom_attrentry_st* ita_htab; /* hash table of entries */
+  struct mom_attrentry_st *ita_htab;	/* hash table of entries */
 };
 
 void mom_tasklet_push_frame (momval_t tsk, momval_t clo,
@@ -558,24 +561,26 @@ void mom_initialize (void);
 void mom_initial_load (const char *state);
 // the full dump should be called without worker thread running
 void mom_full_dump (const char *state);
-void *mom_allocate_item (unsigned type, size_t itemsize);
+void *mom_allocate_item (unsigned type, size_t itemsize, unsigned space);
 void *mom_allocate_item_with_uuid (unsigned type, size_t itemsize,
-				   uuid_t uid);
+				   unsigned space, uuid_t uid);
 mom_anyitem_t *mom_item_of_uuid (uuid_t);
 
-momit_json_name_t *mom_make_item_json_name_of_uuid (uuid_t, const char *name);
-momit_json_name_t *mom_make_item_json_name (const char *name);
+momit_json_name_t *mom_make_item_json_name_of_uuid (uuid_t, const char *name,
+						    unsigned space);
+momit_json_name_t *mom_make_item_json_name (const char *name, unsigned space);
 #define mom_create__json_name(Name,Uid) \
-  mom_make_item_json_name_of_uuid(Uid,#Name)
+  mom_make_item_json_name_of_uuid(Uid,#Name,MONIMELT_SPACE_ROOT)
 
 
 // fail if routine not found
-momit_routine_t *mom_make_item_routine_of_uuid (uuid_t, const char *name);
-momit_routine_t *mom_make_item_routine (const char *name);
+momit_routine_t *mom_make_item_routine_of_uuid (uuid_t, const char *name,
+						unsigned space);
+momit_routine_t *mom_make_item_routine (const char *name, unsigned space);
 // return NULL if routine not found
-momit_routine_t *mom_try_make_item_routine (const char *name);
+momit_routine_t *mom_try_make_item_routine (const char *name, unsigned space);
 
-momit_tasklet_t *mom_make_item_tasklet_of_uuid (uuid_t);
+momit_tasklet_t *mom_make_item_tasklet_of_uuid (uuid_t uid, unsigned space);
 momit_tasklet_t *mom_make_item_tasklet ();
 int mom_tasklet_step (momit_tasklet_t *);
 

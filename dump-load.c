@@ -450,7 +450,7 @@ mom_load_item (struct mom_loader_st * ld, uuid_t uuid, const char *space)
 		   buildstr, uuidstr, space, typestr);
 	      if (typdescr->ityp_loader)
 		{
-		  itm = typdescr->ityp_loader (ld, jval, uuid);
+		  itm = typdescr->ityp_loader (ld, jval, uuid, spanum);
 		  // queue the loaded item to be filled
 		  if (itm)
 		    {
