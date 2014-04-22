@@ -1285,6 +1285,213 @@ routine_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 }
 
 //////////////////////////////////////////////////// vector items
+static void
+reserve_vectoritem (momit_vector_t * vecitm, unsigned more)
+{
+  if (MONIMELT_UNLIKELY (vecitm->itv_count + more + 1 >= vecitm->itv_size))
+    {
+      unsigned newsiz = ((5 * vecitm->itv_count / 4 + 5 + more) | 7) + 1;
+      momval_t *newarr = GC_MALLOC (newsiz * sizeof (momval_t));
+      if (MONIMELT_UNLIKELY (!newarr))
+	MONIMELT_FATAL ("failed to grow vector to %d", (int) newsiz);
+      memset (newarr, 0, newsiz * sizeof (momval_t));
+      if (vecitm->itv_count > 0)
+	memcpy (newarr, vecitm->itv_arr,
+		vecitm->itv_count * sizeof (momval_t));
+      GC_FREE (vecitm->itv_arr);
+      vecitm->itv_size = newsiz;
+    }
+}
+
+momit_vector_t *
+mom_make_item_vector (unsigned space, unsigned reserve)
+{
+  momit_vector_t *itmvec =
+    mom_allocate_item (momty_vectoritem, sizeof (momit_vector_t), space);
+  if (reserve > 0)
+    reserve_vectoritem (itmvec, reserve);
+  return itmvec;
+}
+
+momit_vector_t *
+mom_make_item_vector_of_uuid (uuid_t uid, unsigned space, unsigned reserve)
+{
+  momit_vector_t *itmvec =
+    mom_allocate_item_with_uuid (momty_vectoritem, sizeof (momit_vector_t),
+				 space, uid);
+  if (reserve > 0)
+    reserve_vectoritem (itmvec, reserve);
+  return itmvec;
+}
+
+unsigned
+mom_item_vector_count (const momval_t vec)
+{
+  unsigned cnt = 0;
+  if (!vec.ptr || *vec.ptype != momty_vectoritem)
+    return 0;
+  pthread_mutex_lock (&vec.panyitem->i_mtx);
+  cnt = vec.pvectitem->itv_count;
+  pthread_mutex_unlock (&vec.panyitem->i_mtx);
+  return cnt;
+}
+
+const momval_t
+mom_item_vector_nth (const momval_t vec, int rk)
+{
+  momval_t res = MONIMELT_NULLV;
+  if (!vec.ptr || *vec.ptype != momty_vectoritem)
+    return MONIMELT_NULLV;
+  pthread_mutex_lock (&vec.panyitem->i_mtx);
+  unsigned cnt = vec.pvectitem->itv_count;
+  if (rk < 0)
+    rk += cnt;
+  if (rk >= 0 && rk < (int) cnt)
+    res = vec.pvectitem->itv_arr[rk];
+  pthread_mutex_unlock (&vec.panyitem->i_mtx);
+  return res;
+}
+
+void
+mom_item_vector_put_nth (const momval_t vec, int rk, const momval_t val)
+{
+  if (!vec.ptr || *vec.ptype != momty_vectoritem)
+    return;
+  pthread_mutex_lock (&vec.panyitem->i_mtx);
+  unsigned cnt = vec.pvectitem->itv_count;
+  if (rk < 0)
+    rk += cnt;
+  if (rk >= 0 && rk < (int) cnt)
+    vec.pvectitem->itv_arr[rk] = val;
+  pthread_mutex_unlock (&vec.panyitem->i_mtx);
+}
+
+void
+mom_item_vector_resize (momval_t vec, unsigned newcount)
+{
+  if (!vec.ptr || *vec.ptype != momty_vectoritem)
+    return;
+  pthread_mutex_lock (&vec.panyitem->i_mtx);
+  unsigned oldcnt = vec.pvectitem->itv_count;
+  unsigned oldsiz = vec.pvectitem->itv_size;
+  momval_t *oldarr = vec.pvectitem->itv_arr;
+  if (newcount < oldcnt)
+    {
+      memset (vec.pvectitem->itv_arr + oldcnt, 0,
+	      sizeof (momval_t) * (oldcnt - newcount));
+      if (oldsiz > 24 && oldsiz > 2 * newcount)
+	{
+	  unsigned newsiz = ((9 * newcount / 8 + 3) | 7) + 1;
+	  if (newsiz < oldsiz)
+	    {
+	      momval_t *newarr = GC_MALLOC (newsiz * sizeof (momval_t));
+	      if (MONIMELT_UNLIKELY (!newarr))
+		MONIMELT_FATAL ("failed to shrink vector to %d",
+				(int) newsiz);
+	      memset (newarr, 0, newsiz * sizeof (momval_t));
+	      memcpy (newarr, oldarr, newcount * sizeof (momval_t));
+	      vec.pvectitem->itv_size = newsiz;
+	      vec.pvectitem->itv_arr = newarr;
+	      GC_FREE (oldarr), oldarr = NULL;
+	    }
+	}
+      vec.pvectitem->itv_count = newcount;
+    }
+  else if (newcount > oldcnt)
+    {
+      if (newcount + 1 >= oldsiz)
+	reserve_vectoritem (vec.pvectitem, 9 * newcount / 8 - oldcnt + 1);
+      vec.pvectitem->itv_count = newcount;
+    };
+  pthread_mutex_unlock (&vec.panyitem->i_mtx);
+}
+
+void
+mom_item_vector_reserve (momval_t vec, unsigned more)
+{
+  if (!vec.ptr || *vec.ptype != momty_vectoritem)
+    return;
+  pthread_mutex_lock (&vec.panyitem->i_mtx);
+  reserve_vectoritem (vec.pvectitem, more);
+  pthread_mutex_unlock (&vec.panyitem->i_mtx);
+}
+
+void
+mom_item_vector_append1 (momval_t vec, momval_t val)
+{
+  if (!vec.ptr || *vec.ptype != momty_vectoritem)
+    return;
+  pthread_mutex_lock (&vec.panyitem->i_mtx);
+  if (MONIMELT_UNLIKELY
+      (vec.pvectitem->itv_count + 1 >= vec.pvectitem->itv_size))
+    reserve_vectoritem (vec.pvectitem, 1 + vec.pvectitem->itv_count / 8);
+  vec.pvectitem->itv_arr[vec.pvectitem->itv_count] = val;
+  vec.pvectitem->itv_count++;
+  pthread_mutex_unlock (&vec.panyitem->i_mtx);
+}
+
+void
+mom_item_vector_append_values (momval_t vec, unsigned nbval, ...)
+{
+  if (!vec.ptr || *vec.ptype != momty_vectoritem)
+    return;
+  pthread_mutex_lock (&vec.panyitem->i_mtx);
+  unsigned oldcnt = vec.pvectitem->itv_count;
+  if (oldcnt + 1 + nbval >= vec.pvectitem->itv_size)
+    reserve_vectoritem (vec.pvectitem, 2 + nbval + oldcnt / 8);
+  va_list args;
+  va_start (args, nbval);
+  for (unsigned ix = 0; ix < nbval; ix++)
+    {
+      momval_t curval = va_arg (args, momval_t);
+      vec.pvectitem->itv_arr[oldcnt + ix] = curval;
+    }
+  va_end (args);
+  vec.pvectitem->itv_count += nbval;
+  pthread_mutex_unlock (&vec.panyitem->i_mtx);
+}
+
+void
+mom_item_vector_append_til_nil (momval_t vec, ...)
+{
+  if (!vec.ptr || *vec.ptype != momty_vectoritem)
+    return;
+  pthread_mutex_lock (&vec.panyitem->i_mtx);
+  unsigned oldcnt = vec.pvectitem->itv_count;
+  unsigned nbval = 0;
+  va_list args;
+  va_start (args, vec);
+  while (va_arg (args, momval_t).ptr != NULL)
+    nbval++;
+  va_end (args);
+  if (oldcnt + 1 + nbval >= vec.pvectitem->itv_size)
+    reserve_vectoritem (vec.pvectitem, 2 + nbval + oldcnt / 8);
+  va_start (args, vec);
+  for (unsigned ix = 0; ix < nbval; ix++)
+    {
+      momval_t curval = va_arg (args, momval_t);
+      vec.pvectitem->itv_arr[oldcnt + ix] = curval;
+    }
+  va_end (args);
+  vec.pvectitem->itv_count += nbval;
+  pthread_mutex_unlock (&vec.panyitem->i_mtx);
+}
+
+
+void
+mom_item_vector_append_count (momval_t vec, unsigned nbval, momval_t * arr)
+{
+  if (!vec.ptr || *vec.ptype != momty_vectoritem || !nbval || !arr)
+    return;
+  pthread_mutex_lock (&vec.panyitem->i_mtx);
+  unsigned oldcnt = vec.pvectitem->itv_count;
+  if (oldcnt + 1 + nbval >= vec.pvectitem->itv_size)
+    reserve_vectoritem (vec.pvectitem, 2 + nbval + oldcnt / 8);
+  for (unsigned ix = 0; ix < nbval; ix++)
+    vec.pvectitem->itv_arr[oldcnt + ix] = arr[ix];
+  vec.pvectitem->itv_count += nbval;
+  pthread_mutex_unlock (&vec.panyitem->i_mtx);
+}
 
 //////////////////////////////////////////////////// assoc items
 #warning should implement assoc items

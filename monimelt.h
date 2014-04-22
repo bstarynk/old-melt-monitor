@@ -395,6 +395,21 @@ struct momvectoritem_st
   unsigned itv_size;
   momval_t *itv_arr;		/* of size itv_size, with itv_count elements */
 };
+// make an item vector with a reserved size
+momit_vector_t *mom_make_item_vector (unsigned space, unsigned reserve);
+momit_vector_t *mom_make_item_vector_of_uuid (uuid_t uid, unsigned space,
+					      unsigned size);
+unsigned mom_item_vector_count (const momval_t vec);
+const momval_t mom_item_vector_nth (const momval_t vec, int rk);
+void mom_item_vector_put_nth (const momval_t vec, int rk, const momval_t val);
+void mom_item_vector_resize (momval_t vec, unsigned newcount);
+void mom_item_vector_reserve (momval_t vec, unsigned more);
+void mom_item_vector_append1 (momval_t vec, momval_t val);
+void mom_item_vector_append_values (momval_t vec, unsigned nbval, ...);
+void mom_item_vector_append_til_nil (momval_t vec, ...)
+  __attribute__ ((sentinel));
+void mom_item_vector_append_count (momval_t vec, unsigned nbval,
+				   momval_t * arr);
 
 struct momassocitem_st
 {
