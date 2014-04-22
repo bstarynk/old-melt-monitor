@@ -1,4 +1,22 @@
 -- state-monimelt dump 2014 Apr 22
+
+ --   Copyright (C) 2014 Free Software Foundation, Inc.
+ --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
+ --  This file is part of GCC.
+ --
+ --  GCC is free software; you can redistribute it and/or modify
+ --  it under the terms of the GNU General Public License as published by
+ --  the Free Software Foundation; either version 3, or (at your option)
+ --  any later version.
+ --
+ --  GCC is distributed in the hope that it will be useful,
+ --  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ --  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ --  GNU General Public License for more details.
+ --  You should have received a copy of the GNU General Public License
+ --  along with GCC; see the file COPYING3.   If not see
+ --  <http://www.gnu.org/licenses/>.
+
 BEGIN TRANSACTION;
 CREATE TABLE t_item (uid VARCHAR(38) PRIMARY KEY ASC NOT NULL UNIQUE, type VARCHAR(60) NOT NULL, jbuild TEXT NOT NULL, jfill TEXT NOT NULL);
 CREATE TABLE t_name (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, nuid VARCHAR(38) UNIQUE NOT NULL REFERENCES t_id(uid), spacenam VARCHAR(30) NOT NULL);

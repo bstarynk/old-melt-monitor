@@ -24,6 +24,24 @@ trap 'rm -vf $tempdump' EXIT INT QUIT TERM
 export LANG=C LC_ALL=C
 logger -s -t dump-monimelt-state $(date +"start dump-monimelt-state %c")
 date +'-- state-monimelt dump %Y %b %d' > $tempdump
+echo >> $tempdump
+date +' --   Copyright (C) %Y Free Software Foundation, Inc.' >> $tempdump
+echo ' --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/' >> $tempdump
+echo ' --  This file is part of GCC.' >> $tempdump
+echo ' --' >> $tempdump
+echo ' --  GCC is free software; you can redistribute it and/or modify' >> $tempdump
+echo ' --  it under the terms of the GNU General Public License as published by' >> $tempdump
+echo ' --  the Free Software Foundation; either version 3, or (at your option)' >> $tempdump
+echo ' --  any later version.' >> $tempdump
+echo ' --' >> $tempdump
+echo ' --  GCC is distributed in the hope that it will be useful,' >> $tempdump
+echo ' --  but WITHOUT ANY WARRANTY; without even the implied warranty of' >> $tempdump
+echo ' --  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the' >> $tempdump
+echo ' --  GNU General Public License for more details.' >> $tempdump
+echo ' --  You should have received a copy of the GNU General Public License' >> $tempdump
+echo ' --  along with GCC; see the file COPYING3.   If not see' >> $tempdump
+echo ' --  <http://www.gnu.org/licenses/>.' >> $tempdump
+echo >> $tempdump
 echo 'BEGIN TRANSACTION;' >> $tempdump
 sqlite3 state-monimelt.dbsqlite .schema >> $tempdump || exit 1
 echo '-- state-monimelt tables contents' >> $tempdump 
