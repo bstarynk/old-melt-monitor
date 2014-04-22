@@ -477,8 +477,8 @@ momval_t mom_item_box_put (momval_t boxv, momval_t val);
 struct momqueueitem_st
 {
   unsigned itq_len;
-  struct mom_itemqueue_st *itq_first;
-  struct mom_itemqueue_st *itq_last;
+  struct mom_itqueue_st *itq_first;
+  struct mom_itqueue_st *itq_last;
 };
 momit_queue_t *mom_make_item_queue (unsigned space);
 momit_queue_t *mom_make_item_queue_of_uuid (uuid_t uid, unsigned space);
@@ -939,9 +939,9 @@ extern void monimelt_module_init (const char *marg);
 extern GOptionGroup *monimelt_module_option_group (const char *modname);
 
 
-struct mom_itemqueue_st
+struct mom_itqueue_st
 {
-  struct mom_itemqueue_st *iq_next;
+  struct mom_itqueue_st *iq_next;
   mom_anyitem_t *iq_item;
 };
 
@@ -952,8 +952,8 @@ struct mom_dumper_st
   unsigned dmp_count;
   unsigned dmp_size;
   unsigned dmp_state;
-  struct mom_itemqueue_st *dmp_qfirst;
-  struct mom_itemqueue_st *dmp_qlast;
+  struct mom_itqueue_st *dmp_qfirst;
+  struct mom_itqueue_st *dmp_qlast;
   const mom_anyitem_t **dmp_array;
 };
 
@@ -982,8 +982,8 @@ momval_t mom_attributes_emit_json (struct mom_dumper_st *dmp,
 struct mom_loader_st
 {
   unsigned ldr_magic;		/* always LOADER_MAGIC */
-  struct mom_itemqueue_st *ldr_qfirst;
-  struct mom_itemqueue_st *ldr_qlast;
+  struct mom_itqueue_st *ldr_qfirst;
+  struct mom_itqueue_st *ldr_qlast;
 };
 
 ////////////////////////////////////////////////////////////////

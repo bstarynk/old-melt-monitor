@@ -134,8 +134,7 @@ mom_dump_add_item (struct mom_dumper_st *dmp, const mom_anyitem_t * itm)
   // enqueue and add the item if it is not found
   if (!founditem)
     {
-      struct mom_itemqueue_st *qel =
-	GC_MALLOC (sizeof (struct mom_itemqueue_st));
+      struct mom_itqueue_st *qel = GC_MALLOC (sizeof (struct mom_itqueue_st));
       if (MONIMELT_UNLIKELY (!qel))
 	MONIMELT_FATAL ("cannot add queue element to dumper of %d items",
 			dmp->dmp_count);
@@ -461,8 +460,8 @@ mom_load_item (struct mom_loader_st * ld, uuid_t uuid, const char *space)
 		  if (itm)
 		    {
 		      itm->i_space = spanum;
-		      struct mom_itemqueue_st *iq =
-			GC_MALLOC (sizeof (struct mom_itemqueue_st));
+		      struct mom_itqueue_st *iq =
+			GC_MALLOC (sizeof (struct mom_itqueue_st));
 		      if (MONIMELT_UNLIKELY (!iq))
 			MONIMELT_FATAL ("failed to queue item in loader");
 		      iq->iq_item = itm;

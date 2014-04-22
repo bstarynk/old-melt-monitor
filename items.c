@@ -2244,7 +2244,7 @@ mom_item_queue_length (const momval_t que)
 static void
 queue_push_back (struct momqueueitem_st *quitm, mom_anyitem_t * itm)
 {
-  struct mom_itemqueue_st *qel = GC_MALLOC (sizeof (struct mom_itemqueue_st));
+  struct mom_itqueue_st *qel = GC_MALLOC (sizeof (struct mom_itqueue_st));
   if (MONIMELT_UNLIKELY (!qel))
     MONIMELT_FATAL ("failed to allocate queue element");
   qel->iq_next = NULL;
@@ -2256,7 +2256,7 @@ queue_push_back (struct momqueueitem_st *quitm, mom_anyitem_t * itm)
     }
   else
     {
-      struct mom_itemqueue_st *oldlast = quitm->itq_last;
+      struct mom_itqueue_st *oldlast = quitm->itq_last;
       oldlast->iq_next = qel;
       quitm->itq_last = qel;
       quitm->itq_len++;
@@ -2266,7 +2266,7 @@ queue_push_back (struct momqueueitem_st *quitm, mom_anyitem_t * itm)
 static void
 queue_push_front (struct momqueueitem_st *quitm, mom_anyitem_t * itm)
 {
-  struct mom_itemqueue_st *qel = GC_MALLOC (sizeof (struct mom_itemqueue_st));
+  struct mom_itqueue_st *qel = GC_MALLOC (sizeof (struct mom_itqueue_st));
   if (MONIMELT_UNLIKELY (!qel))
     MONIMELT_FATAL ("failed to allocate queue element");
   qel->iq_next = NULL;
@@ -2278,7 +2278,7 @@ queue_push_front (struct momqueueitem_st *quitm, mom_anyitem_t * itm)
     }
   else
     {
-      struct mom_itemqueue_st *oldfirst = quitm->itq_first;
+      struct mom_itqueue_st *oldfirst = quitm->itq_first;
       qel->iq_next = oldfirst;
       quitm->itq_first = qel;
       quitm->itq_len++;
@@ -2454,7 +2454,7 @@ mom_item_queue_tuple (momval_t quev)
     MONIMELT_FATAL ("failed to allocate array of %d values", (int) len);
   memset (arr, 0, len * sizeof (mom_anyitem_t *));
   unsigned nb = 0;
-  for (struct mom_itemqueue_st * iq = quev.pqueueitem->itq_first;
+  for (struct mom_itqueue_st * iq = quev.pqueueitem->itq_first;
        iq != NULL && nb < len; iq = iq->iq_next)
     {
       const mom_anyitem_t *curitm = iq->iq_item;
@@ -2466,6 +2466,110 @@ mom_item_queue_tuple (momval_t quev)
   if (arr != tinyarr)
     GC_FREE (arr);
   return res;
+}
+
+
+//////////////// queue type descriptor
+
+static mom_anyitem_t *queue_itemloader (struct mom_loader_st *ld,
+					momval_t json, uuid_t uid,
+					unsigned space);
+static void queue_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
+			      momval_t json);
+static void queue_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm);
+static momval_t queue_itemgetbuild (struct mom_dumper_st *dmp,
+				    mom_anyitem_t * itm);
+static momval_t queue_itemgetfill (struct mom_dumper_st *dmp,
+				   mom_anyitem_t * itm);
+
+const struct momitemtypedescr_st momitype_queue = {
+  .ityp_magic = ITEMTYPE_MAGIC,
+  .ityp_name = "queue",
+  .ityp_loader = queue_itemloader,
+  .ityp_filler = queue_itemfiller,
+  .ityp_scan = queue_itemscan,
+  .ityp_getbuild = queue_itemgetbuild,
+  .ityp_getfill = queue_itemgetfill,
+};
+
+static mom_anyitem_t *
+queue_itemloader (struct mom_loader_st *ld __attribute__ ((unused)),
+		  momval_t json __attribute__ ((unused)),
+		  uuid_t uid, unsigned space)
+{
+  return (mom_anyitem_t *) mom_make_item_queue_of_uuid (uid, space);
+}
+
+static void
+queue_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+{
+  mom_scan_any_item_data (dmp, itm);
+  momit_queue_t *queitm = (momit_queue_t *) itm;
+  for (struct mom_itqueue_st * iq = queitm->itq_first; iq != NULL;
+       iq = iq->iq_next)
+    mom_dump_scan_value (dmp, (momval_t) iq->iq_item);
+}
+
+static momval_t
+queue_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+{
+  momit_queue_t *queitm = (momit_queue_t *) itm;
+  unsigned len = queitm->itq_len;
+  momval_t tinyjarr[TINY_MAX] = { };
+  momval_t *jarr = NULL;
+  if (len < TINY_MAX)
+    jarr = tinyjarr;
+  else
+    jarr = GC_MALLOC (len * sizeof (momval_t));
+  if (MONIMELT_UNLIKELY (!jarr))
+    MONIMELT_FATAL ("failed to allocate %d queued items", (int) len);
+  unsigned nb = 0;
+  for (struct mom_itqueue_st * iq = queitm->itq_first; iq != NULL && nb < len;
+       iq = iq->iq_next)
+    jarr[nb++] = mom_dump_emit_json (dmp, (momval_t) iq->iq_item);
+  momval_t jres = (momval_t) mom_make_json_object
+    // attributes
+    (MOMJSON_ENTRY, mom_item__attributes,
+     mom_attributes_emit_json (dmp, itm->i_attrs),
+     // queue
+     MOMJSON_ENTRY, mom_item__queue, mom_make_json_array_count (nb, jarr),
+     // content
+     MOMJSON_ENTRY, mom_item__content, mom_dump_emit_json (dmp,
+							   itm->i_content),
+     // end
+     MOMJSON_END);
+  if (jarr != tinyjarr)
+    GC_FREE (jarr);
+  return jres;
+}
+
+static void
+queue_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
+		  momval_t json)
+{
+  mom_load_any_item_data (ld, itm, json);
+  assert (itm->typnum == momty_queueitem);
+  momit_queue_t *queitm = (momit_queue_t *) itm;
+  momval_t jarr = mom_jsonob_get (json, (momval_t) mom_item__queue);
+  unsigned cnt = mom_json_array_size (jarr);
+  for (unsigned ix = 0; ix < cnt; ix++)
+    {
+      momval_t jcur = mom_json_array_nth (jarr, ix);
+      momval_t curval = mom_load_value_json (ld, jcur);
+      mom_item_queue_push_back ((momval_t) queitm, (momval_t) curval);
+    }
+}
+
+static momval_t
+queue_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+{;
+  assert (itm->typnum == momty_queueitem);
+  return (momval_t) mom_make_json_object
+    // build with type 
+    (				// the type:
+      MOMJSON_ENTRY, mom_item__jtype, mom_item__queue_item,
+      // that's all!
+      MOMJSON_END);
 }
 
 ////////////////////////////////////////////////////////////////
@@ -2489,4 +2593,5 @@ mom_initialize_items (void)
   mom_typedescr_array[momty_routineitem] = &momitype_routine;
   mom_typedescr_array[momty_vectoritem] = &momitype_vector;
   mom_typedescr_array[momty_associtem] = &momitype_assoc;
+  mom_typedescr_array[momty_queueitem] = &momitype_queue;
 }
