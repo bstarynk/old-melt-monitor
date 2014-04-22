@@ -70,6 +70,8 @@ enum momvaltype_en
   momty_taskletitem,
   momty_vectoritem,
   momty_associtem,
+  momty_boxitem,
+  momty_queueitem,
   momty__last = 1000
 };
 
@@ -97,6 +99,8 @@ typedef struct momroutineitem_st momit_routine_t;
 typedef struct momtaskletitem_st momit_tasklet_t;
 typedef struct momvectoritem_st momit_vector_t;
 typedef struct momassocitem_st momit_assoc_t;
+typedef struct momboxitem_st momit_box_t;
+typedef struct momqueueitem_st momit_queue_t;
 pthread_mutexattr_t mom_normal_mutex_attr;
 pthread_mutexattr_t mom_recursive_mutex_attr;
 GModule *mom_prog_module;
@@ -452,6 +456,32 @@ void mom_item_assoc_put_several (momval_t asso, ...)
 mom_anyitem_t *mom_item_assoc_first_attr (momval_t assoc, int *phint);
 mom_anyitem_t *mom_item_assoc_next_attr (momval_t assoc, mom_anyitem_t * attr,
 					 int *phint);
+
+
+//////////////// box item
+struct momboxitem_st
+{
+  struct momanyitem_st ita_item;	/* common part */
+  momval_t itb_boxv;
+};
+
+momit_box_t *mom_make_item_box (unsigned space);
+momit_box_t *mom_make_item_box_of_uuid (uuid_t uid, unsigned space);
+// get the boxed value
+momval_t mom_item_box_get (momval_t boxv);
+// put a new boxed value and return the old one
+momval_t mom_item_box_put (momval_t boxv, momval_t val);
+
+//////////////// queue item - contain a queue with items
+struct momqueueitem_st
+{
+  unsigned itq_len;
+  struct mom_itemqueue_st *itq_first;
+  struct mom_itemqueue_st *itq_last;
+};
+void mom_item_queue_push_back (momval_t quev, momval_t itmv);
+void mom_item_queue_push_front (momval_t quev, momval_t itmv);
+#warning need more queue functions
 /////// tasklets
 void mom_tasklet_push_frame (momval_t tsk, momval_t clo,
 			     enum mom_pushframedirective_en, ...)

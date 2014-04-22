@@ -1584,7 +1584,7 @@ static momval_t
 vector_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
   return (momval_t) mom_make_json_object
-    // build with type and routine name
+    // build with type 
     (				// the type:
       MOMJSON_ENTRY, mom_item__jtype, mom_item__vector_item,
       // that's all!
@@ -2026,7 +2026,187 @@ end:
   return next;
 }
 
-#warning should implement assoc item type
+
+
+/// for assoc item type descriptor
+static mom_anyitem_t *assoc_itemloader (struct mom_loader_st *ld,
+					momval_t json, uuid_t uid,
+					unsigned space);
+static void assoc_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
+			      momval_t json);
+static void assoc_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm);
+static momval_t assoc_itemgetbuild (struct mom_dumper_st *dmp,
+				    mom_anyitem_t * itm);
+static momval_t assoc_itemgetfill (struct mom_dumper_st *dmp,
+				   mom_anyitem_t * itm);
+
+const struct momitemtypedescr_st momitype_assoc = {
+  .ityp_magic = ITEMTYPE_MAGIC,
+  .ityp_name = "assoc",
+  .ityp_loader = assoc_itemloader,
+  .ityp_filler = assoc_itemfiller,
+  .ityp_scan = assoc_itemscan,
+  .ityp_getbuild = assoc_itemgetbuild,
+  .ityp_getfill = assoc_itemgetfill,
+};
+
+static momval_t
+assoc_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+{
+  return (momval_t) mom_make_json_object
+    // build with type 
+    (				// the type:
+      MOMJSON_ENTRY, mom_item__jtype, mom_item__assoc_item,
+      // that's all!
+      MOMJSON_END);
+}
+
+static mom_anyitem_t *
+assoc_itemloader (struct mom_loader_st *ld __attribute__ ((unused)),
+		  momval_t json __attribute__ ((unused)),
+		  uuid_t uid, unsigned space)
+{
+  return (mom_anyitem_t *) mom_make_item_assoc_of_uuid (uid, space);
+}
+
+static void
+assoc_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+{
+  mom_scan_any_item_data (dmp, itm);
+  momit_assoc_t *assitm = (momit_assoc_t *) itm;
+  unsigned size = assitm->ita_size;
+  if (assitm->ita_count == 0)
+    return;
+  for (unsigned ix = 0; ix < size; ix++)
+    {
+      mom_anyitem_t *curitm = assitm->ita_htab[ix].aten_itm;
+      if (!curitm || (void *) curitm == MONIMELT_EMPTY)
+	continue;
+      momval_t curval = assitm->ita_htab[ix].aten_val;
+      if (!curval.ptr || curval.ptr == MONIMELT_EMPTY)
+	continue;
+      mom_dump_scan_value (dmp, (momval_t) curitm);
+      mom_dump_scan_value (dmp, curval);
+    }
+}
+
+// we sort the attribute entries, to normalize the JSON
+static int
+cmp_attrentry (const void *p1, const void *p2)
+{
+  const struct mom_attrentry_st *e1 = p1;
+  const struct mom_attrentry_st *e2 = p2;
+  return mom_item_cmp (e1->aten_itm, e2->aten_itm);
+}
+
+static momval_t
+assoc_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+{
+  momit_assoc_t *assitm = (momit_assoc_t *) itm;
+  unsigned count = assitm->ita_count;
+  unsigned size = assitm->ita_size;
+  struct mom_attrentry_st entiny[TINY_MAX] = { };
+  struct mom_attrentry_st *entarr =
+    (count <
+     TINY_MAX) ? entiny : GC_MALLOC (count *
+				     sizeof (struct mom_attrentry_st));
+  if (MONIMELT_UNLIKELY (!entarr))
+    MONIMELT_FATAL ("failed to allocate %d entries", (int) count);
+  memset (entarr, 0, count * sizeof (struct mom_attrentry_st));
+  unsigned nb = 0;
+  for (unsigned ix = 0; ix < size; ix++)
+    {
+      mom_anyitem_t *curitm = assitm->ita_htab[ix].aten_itm;
+      if (!curitm || (void *) curitm == MONIMELT_EMPTY)
+	continue;
+      assert (nb < count);
+      assert (assitm->ita_htab[ix].aten_val.ptr != NULL
+	      && (void *) assitm->ita_htab[ix].aten_val.ptr !=
+	      MONIMELT_EMPTY);
+      entarr[nb] = assitm->ita_htab[ix];
+      nb++;
+    }
+  assert (nb == count);
+  qsort (entarr, count, sizeof (struct mom_attrentry_st), cmp_attrentry);
+  momval_t jarrtiny[TINY_MAX] = { };
+  momval_t *jarr =
+    (count < TINY_MAX) ? jarrtiny : GC_MALLOC (count * sizeof (momval_t));
+  if (MONIMELT_UNLIKELY (!jarr))
+    MONIMELT_FATAL ("failed to allocate %d json", (int) count);
+  memset (jarr, 0, count * sizeof (momval_t));
+  for (unsigned ix = 0; ix < count; ix++)
+    jarr[ix] = (momval_t) mom_make_json_object (	// the attribute
+						 MOMJSON_ENTRY,
+						 mom_item__attr,
+						 mom_dump_emit_json (dmp,
+								     (momval_t)
+								     entarr
+								     [ix].aten_itm),
+						 // the value
+						 MOMJSON_ENTRY, mom_item__val,
+						 mom_dump_emit_json (dmp,
+								     (momval_t)
+								     entarr
+								     [ix].aten_val),
+						 // that's all
+						 MOMJSON_END);
+  momval_t jres = (momval_t) mom_make_json_object
+    // attributes
+    (MOMJSON_ENTRY, mom_item__attributes,
+     mom_attributes_emit_json (dmp, itm->i_attrs),
+     // assocations
+     MOMJSON_ENTRY, mom_item__associations,
+     mom_make_json_array_count (count, jarr),
+     // content
+     MOMJSON_ENTRY, mom_item__content, mom_dump_emit_json (dmp,
+							   itm->i_content),
+     // that's all
+     MOMJSON_END);
+  if (jarr != jarrtiny)
+    GC_FREE (jarr), jarr = NULL;
+  if (entarr != entiny)
+    GC_FREE (entarr), entarr = NULL;
+  return jres;
+}
+
+static void
+assoc_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
+		  momval_t json)
+{
+  mom_load_any_item_data (ld, itm, json);
+  assert (itm->typnum == momty_associtem);
+  momit_assoc_t *assoc = (momit_assoc_t *) itm;
+  momval_t jarr = mom_jsonob_get (json, (momval_t) mom_item__associations);
+  unsigned cnt = mom_json_array_size (jarr);
+  if (!cnt)
+    return;
+  {
+    unsigned newsiz = ((5 * cnt / 4 + 5) | 3) + 1;
+    struct mom_attrentry_st *entarr =
+      GC_MALLOC (newsiz * sizeof (struct mom_attrentry_st));
+    if (MONIMELT_UNLIKELY (!entarr))
+      MONIMELT_FATAL ("failed to allocate %d entries", (int) newsiz);
+    memset (entarr, 0, newsiz * sizeof (struct mom_attrentry_st));
+    assoc->ita_htab = entarr;
+    assoc->ita_size = newsiz;
+    assoc->ita_count = 0;
+  }
+  for (unsigned eix = 0; eix < cnt; eix++)
+    {
+      momval_t jcurent = mom_json_array_nth (jarr, eix);
+      momval_t curatt = mom_load_value_json (ld,
+					     mom_jsonob_get (jcurent,
+							     (momval_t)
+							     mom_item__attr));
+      momval_t curval = mom_load_value_json (ld,
+					     mom_jsonob_get (jcurent,
+							     (momval_t)
+							     mom_item__val));
+      if (curatt.ptr && curval.ptr)
+	mom_item_assoc_put1 ((momval_t) assoc, curatt, curval);
+    }
+}
+
 ////////////////////////////////////////////////////////////////
 void
 mom_initialize_items (void)
@@ -2047,4 +2227,5 @@ mom_initialize_items (void)
   mom_typedescr_array[momty_taskletitem] = &momitype_tasklet;
   mom_typedescr_array[momty_routineitem] = &momitype_routine;
   mom_typedescr_array[momty_vectoritem] = &momitype_vector;
+  mom_typedescr_array[momty_associtem] = &momitype_assoc;
 }
