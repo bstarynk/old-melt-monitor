@@ -1670,7 +1670,217 @@ vector_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
 //////////////////////////////////////////////////// assoc items
 #warning should implement assoc items
 
+// return the rank of given attribute in association item, or else negative
+// start at the hinted index hintix
+static int
+assoc_get_rank (momit_assoc_t * itmassoc, mom_anyitem_t * itmattr, int hintix)
+{
+  unsigned siz = itmassoc->ita_size;
+  momhash_t hat = itmattr->i_hash;
+  if (!siz)
+    return -1;
+  if (hintix >= 0 && hintix < siz
+      && itmassoc->ita_htab[hintix].aten_itm == itmattr)
+    return hintix;
+  unsigned istart = hat % siz;
+  for (unsigned ix = istart; ix < siz; ix++)
+    {
+      mom_anyitem_t *curat = itmassoc->ita_htab[ix].aten_itm;
+      if (curat == itmattr)
+	return ix;
+      if (!curat)
+	return -1;
+    }
+  for (unsigned ix = 0; ix < istart; ix++)
+    {
+      mom_anyitem_t *curat = itmassoc->ita_htab[ix].aten_itm;
+      if (curat == itmattr)
+	return ix;
+      if (!curat)
+	return -1;
+    }
+  return -1;
+}
 
+void
+assoc_put (momit_assoc_t * itmassoc, mom_anyitem_t * itmattr, momval_t val)
+{
+  unsigned siz = itmassoc->ita_size;
+  momhash_t hat = itmattr->i_hash;
+  unsigned istart = hat % siz;
+  int pix = -1;
+  for (unsigned ix = istart; ix < siz; ix++)
+    {
+      mom_anyitem_t *curat = itmassoc->ita_htab[ix].aten_itm;
+      if (curat == itmattr)
+	{
+	  itmassoc->ita_htab[ix].aten_val = val;
+	  return;
+	}
+      else if ((void *) curat == MONIMELT_EMPTY)
+	{
+	  if (pix < 0)
+	    pix = (int) ix;
+	  continue;
+	}
+      else if (!curat)
+	{
+	  if (pix < 0)
+	    pix = (int) ix;
+	  goto addatpix;
+	}
+    }
+  for (unsigned ix = 0; ix < istart; ix++)
+    {
+      mom_anyitem_t *curat = itmassoc->ita_htab[ix].aten_itm;
+      if (curat == itmattr)
+	{
+	  itmassoc->ita_htab[ix].aten_val = val;
+	  return;
+	}
+      else if ((void *) curat == MONIMELT_EMPTY)
+	{
+	  if (pix < 0)
+	    pix = (int) ix;
+	  continue;
+	}
+      else if (!curat)
+	{
+	  if (pix < 0)
+	    pix = (int) ix;
+	  goto addatpix;
+	}
+    }
+addatpix:
+  if (pix >= 0)
+    {
+      itmassoc->ita_htab[pix].aten_itm = itmattr;
+      itmassoc->ita_htab[pix].aten_val = val;
+      itmassoc->ita_count++;
+      return;
+    }
+  MONIMELT_FATAL ("corrupted assoc item");
+}
+
+
+momit_assoc_t *
+mom_make_item_assoc (unsigned space)
+{
+  momit_assoc_t *itmasso =
+    mom_allocate_item (momty_associtem, sizeof (momit_assoc_t), space);
+  return itmasso;
+}
+
+momit_assoc_t *
+mom_make_item_assoc_of_uuid (uuid_t uid, unsigned space)
+{
+  momit_assoc_t *itmasso =
+    mom_allocate_item_with_uuid (momty_associtem, sizeof (momit_assoc_t),
+				 space, uid);
+  return itmasso;
+}
+
+unsigned
+mom_item_assoc_count (const momval_t asso)
+{
+  unsigned cnt = 0;
+  if (!asso.ptr || *asso.ptype != momty_associtem)
+    return 0;
+  pthread_mutex_lock (&asso.panyitem->i_mtx);
+  cnt = asso.passocitem->ita_count;
+  pthread_mutex_unlock (&asso.panyitem->i_mtx);
+  return cnt;
+}
+
+momval_t
+mom_item_assoc_get1 (momval_t asso, const momval_t attr)
+{
+  momval_t res = MONIMELT_NULLV;
+  if (!asso.ptr || asso.panyitem->typnum != momty_associtem
+      || !attr.ptr || attr.panyitem->typnum <= momty__itemlowtype)
+    return MONIMELT_NULLV;
+  pthread_mutex_lock (&asso.panyitem->i_mtx);
+  momit_assoc_t *assoc = asso.passocitem;
+  int ix = assoc_get_rank (assoc, attr.panyitem, 0);
+  if (ix >= 0)
+    res = assoc->ita_htab[ix].aten_val;
+  pthread_mutex_unlock (&asso.panyitem->i_mtx);
+  return res;
+}
+
+int
+mom_item_assoc_get_several (momval_t asso, ...)
+{
+  int cnt = 0;
+  if (!asso.ptr || asso.panyitem->typnum != momty_associtem)
+    return 0;
+  va_list args;
+  pthread_mutex_lock (&asso.panyitem->i_mtx);
+  va_start (args, asso);
+  mom_anyitem_t *itatt = NULL;
+  while ((itatt = va_arg (args, mom_anyitem_t *)) != NULL)
+    {
+      momval_t *pval = va_arg (args, momval_t *);
+      int ix = assoc_get_rank (asso.passocitem, itatt, 0);
+      if (ix >= 0)
+	{
+	  cnt++;
+	  if (pval)
+	    *pval = asso.passocitem->ita_htab[ix].aten_val;
+	}
+    }
+  va_end (args);
+  pthread_mutex_unlock (&asso.panyitem->i_mtx);
+  return cnt;
+}
+
+
+void
+mom_item_assoc_put1 (momval_t asso, const momval_t attr, const momval_t val)
+{
+  if (!asso.ptr || asso.panyitem->typnum != momty_associtem
+      || !attr.ptr || attr.panyitem->typnum <= momty__itemlowtype)
+    return;
+  momit_assoc_t *assoc = asso.passocitem;
+  pthread_mutex_lock (&asso.panyitem->i_mtx);
+  unsigned oldcount = assoc->ita_count;
+  unsigned oldsize = assoc->ita_size;
+  if (MONIMELT_UNLIKELY ((4 * oldcount + 2 >= 3 * oldsize && val.ptr != NULL)
+			 || (oldsize > 32 && 4 * oldcount + 5 < oldsize)))
+    {
+      unsigned newsiz = ((3 * oldcount / 2 + oldcount / 16 + 5) | 7) + 1;
+      struct mom_attrentry_st *oldarr = assoc->ita_htab;
+      struct mom_attrentry_st *newarr =
+	GC_MALLOC (newsiz * sizeof (struct mom_attrentry_st));
+      if (MONIMELT_UNLIKELY (!newarr))
+	MONIMELT_FATAL ("failed to grow assoc to size %d", (int) newsiz);
+      memset (newarr, 0, newsiz * sizeof (struct mom_attrentry_st));
+      assoc->ita_count = 0;
+      assoc->ita_size = newsiz;
+      assoc->ita_htab = newarr;
+      for (unsigned oix = 0; oix < oldsize; oix++)
+	{
+	  mom_anyitem_t *curat = oldarr[oix].aten_itm;
+	  if (!curat || (void *) curat == MONIMELT_EMPTY)
+	    continue;
+	  assoc_put (assoc, curat, oldarr[oix].aten_val);
+	}
+      assert (assoc->ita_count == oldcount);
+    }
+  if (val.ptr != NULL)
+    assoc_put (assoc, attr.panyitem, val);
+  else
+    {
+      int aix = assoc_get_rank (assoc, attr.panyitem, 0);
+      if (aix >= 0)
+	{
+	  assoc->ita_htab[aix].aten_itm = (mom_anyitem_t *) MONIMELT_EMPTY;
+	  assoc->ita_htab[aix].aten_val = (momval_t) MONIMELT_EMPTY;
+	  assoc->ita_count--;
+	}
+    }
+  pthread_mutex_unlock (&asso.panyitem->i_mtx);
+}
 
 ////////////////////////////////////////////////////////////////
 void
@@ -1691,4 +1901,5 @@ mom_initialize_items (void)
   mom_typedescr_array[momty_boolitem] = &momitype_bool;
   mom_typedescr_array[momty_taskletitem] = &momitype_tasklet;
   mom_typedescr_array[momty_routineitem] = &momitype_routine;
+  mom_typedescr_array[momty_vectoritem] = &momitype_vector;
 }

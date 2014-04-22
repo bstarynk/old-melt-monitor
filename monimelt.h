@@ -416,6 +416,8 @@ const momnode_t *mom_make_node_from_item_vector (momval_t conn, momval_t vec);
 const momclosure_t *mom_make_closure_from_item_vector (momval_t conn,
 						       momval_t vec);
 
+
+///// assoc items
 struct momassocitem_st
 {
   struct momanyitem_st ita_item;	/* common part */
@@ -424,6 +426,20 @@ struct momassocitem_st
   struct mom_attrentry_st *ita_htab;	/* hash table of entries */
 };
 
+
+momit_assoc_t *mom_make_item_assoc (unsigned space);
+momit_assoc_t *mom_make_item_assoc_of_uuid (uuid_t uid, unsigned space);
+unsigned mom_item_assoc_count (const momval_t asso);
+momval_t mom_item_assoc_get1 (const momval_t asso, const momval_t attr);
+void mom_item_assoc_put1 (momval_t asso, const momval_t attr,
+			  const momval_t val);
+// mom_item_assoc_get_several(assoc, itat1, &val1, itat2, &val2, ... NULL)
+// return the number of found attributes
+int mom_item_assoc_get_several (momval_t asso, ...)
+  __attribute__ ((sentinel));
+
+
+/////// tasklets
 void mom_tasklet_push_frame (momval_t tsk, momval_t clo,
 			     enum mom_pushframedirective_en, ...)
   __attribute__ ((sentinel));
