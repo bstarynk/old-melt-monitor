@@ -437,8 +437,21 @@ void mom_item_assoc_put1 (momval_t asso, const momval_t attr,
 // return the number of found attributes
 int mom_item_assoc_get_several (momval_t asso, ...)
   __attribute__ ((sentinel));
+// mom_item_assoc_put_several(assoc, itat1, val1, itat2, val2, .... NULL);
+// if no items are given this may reorganize the assoc
+void mom_item_assoc_put_several (momval_t asso, ...)
+  __attribute__ ((sentinel));
 
-
+/// iteration on assoc items:
+/**
+ int hint=0;
+ for (mom_anyitem_t*attr = mom_item_assoc_first_attr(asso, &hint);
+      attr != NULL;
+      att = mom_item_assoc_next_attr(asso, attr, &hint)) {...}
+**/
+mom_anyitem_t *mom_item_assoc_first_attr (momval_t assoc, int *phint);
+mom_anyitem_t *mom_item_assoc_next_attr (momval_t assoc, mom_anyitem_t * attr,
+					 int *phint);
 /////// tasklets
 void mom_tasklet_push_frame (momval_t tsk, momval_t clo,
 			     enum mom_pushframedirective_en, ...)

@@ -1668,7 +1668,6 @@ vector_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
 }
 
 //////////////////////////////////////////////////// assoc items
-#warning should implement assoc items
 
 // return the rank of given attribute in association item, or else negative
 // start at the hinted index hintix
@@ -1882,6 +1881,152 @@ mom_item_assoc_put1 (momval_t asso, const momval_t attr, const momval_t val)
   pthread_mutex_unlock (&asso.panyitem->i_mtx);
 }
 
+void
+mom_item_assoc_put_several (momval_t asso, ...)
+{
+  int cnt = 0;
+  if (!asso.ptr || asso.panyitem->typnum != momty_associtem)
+    return;
+  mom_anyitem_t *itatt = NULL;
+  momit_assoc_t *assoc = asso.passocitem;
+  va_list args;
+  // first, count the arguments
+  va_start (args, asso);
+  while ((itatt = va_arg (args, mom_anyitem_t *)) != NULL)
+    {
+      (void) va_arg (args, momval_t);
+      cnt++;
+    };
+  va_end (args);
+  pthread_mutex_lock (&asso.panyitem->i_mtx);
+  unsigned oldcount = assoc->ita_count;
+  unsigned oldsize = assoc->ita_size;
+  unsigned newsize =
+    ((4 * oldcount / 3 + oldcount / 16 + 3 * cnt / 2 + 3) | 7) + 1;
+  if ((!cnt && newsize != oldsize) || (newsize > oldsize))
+    {
+      struct mom_attrentry_st *oldarr = assoc->ita_htab;
+      struct mom_attrentry_st *newarr =
+	GC_MALLOC (newsize * sizeof (struct mom_attrentry_st));
+      if (MONIMELT_UNLIKELY (!newarr))
+	MONIMELT_FATAL ("failed to resize assoc to size %d", (int) newsize);
+      memset (newarr, 0, newsize * sizeof (struct mom_attrentry_st));
+      assoc->ita_count = 0;
+      assoc->ita_size = newsize;
+      assoc->ita_htab = newarr;
+      for (unsigned oix = 0; oix < oldsize; oix++)
+	{
+	  mom_anyitem_t *curat = oldarr[oix].aten_itm;
+	  if (!curat || (void *) curat == MONIMELT_EMPTY)
+	    continue;
+	  assoc_put (assoc, curat, oldarr[oix].aten_val);
+	}
+      assert (assoc->ita_count == oldcount);
+    }
+  // second, put the arguments
+  va_start (args, asso);
+  while ((itatt = va_arg (args, mom_anyitem_t *)) != NULL)
+    {
+      momval_t curval = va_arg (args, momval_t);
+      if (itatt->typnum < momty__itemlowtype)
+	continue;
+      if (curval.ptr)
+	assoc_put (assoc, itatt, curval);
+      else
+	{
+	  int aix = assoc_get_rank (assoc, itatt, 0);
+	  if (aix >= 0)
+	    {
+	      assoc->ita_htab[aix].aten_itm =
+		(mom_anyitem_t *) MONIMELT_EMPTY;
+	      assoc->ita_htab[aix].aten_val = (momval_t) MONIMELT_EMPTY;
+	      assoc->ita_count--;
+	    }
+	}
+    };
+  va_end (args);
+  pthread_mutex_unlock (&asso.panyitem->i_mtx);
+}
+
+
+mom_anyitem_t *
+mom_item_assoc_first_attr (momval_t asso, int *phint)
+{
+  if (phint)
+    *phint = 0;
+  if (!asso.ptr || asso.panyitem->typnum != momty_associtem)
+    return NULL;
+  momit_assoc_t *assoc = asso.passocitem;
+  mom_anyitem_t *first = NULL;
+  int hintix = -1;
+  pthread_mutex_lock (&asso.panyitem->i_mtx);
+  unsigned count = assoc->ita_count;
+  unsigned size = assoc->ita_size;
+  if (!count)
+    goto end;
+  for (unsigned ix = 0; ix < size; ix++)
+    {
+      mom_anyitem_t *curat = assoc->ita_htab[ix].aten_itm;
+      if (!curat || (void *) curat == MONIMELT_EMPTY)
+	continue;
+      hintix = ix;
+      first = curat;
+      goto end;
+    }
+end:
+  pthread_mutex_unlock (&asso.panyitem->i_mtx);
+  if (phint)
+    *phint = hintix;
+  return first;
+}
+
+mom_anyitem_t *
+mom_item_assoc_next_attr (momval_t asso, mom_anyitem_t * attr, int *phint)
+{
+  int oldhint = phint ? (*phint) : -1;
+  if (!asso.ptr || asso.panyitem->typnum != momty_associtem
+      || !attr || attr->typnum <= momty__itemlowtype)
+    return NULL;
+  momit_assoc_t *assoc = asso.passocitem;
+  mom_anyitem_t *next = NULL;
+  int hintix = -1;
+  pthread_mutex_lock (&asso.panyitem->i_mtx);
+  unsigned count = assoc->ita_count;
+  unsigned size = assoc->ita_size;
+  if (!count)
+    goto end;
+  int rk = assoc_get_rank (assoc, attr, oldhint);
+  if (rk >= 0 && rk < size)
+    {
+      for (unsigned ix = rk + 1; ix < size && hintix < 0; ix++)
+	{
+	  mom_anyitem_t *curitm = assoc->ita_htab[ix].aten_itm;
+	  if (!curitm || (void *) curitm == MONIMELT_EMPTY)
+	    continue;
+	  hintix = ix;
+	  next = curitm;
+	  break;
+	}
+      for (unsigned ix = 0; ix < rk && hintix < 0; ix++)
+	{
+	  mom_anyitem_t *curitm = assoc->ita_htab[ix].aten_itm;
+	  if (!curitm || (void *) curitm == MONIMELT_EMPTY)
+	    continue;
+	  hintix = ix;
+	  next = curitm;
+	  break;
+	}
+    }
+  else
+    goto end;
+end:
+  pthread_mutex_unlock (&asso.panyitem->i_mtx);
+  if (phint)
+    *phint = hintix;
+  return next;
+}
+
+#warning should implement assoc item type
 ////////////////////////////////////////////////////////////////
 void
 mom_initialize_items (void)
