@@ -1560,15 +1560,15 @@ mom_make_closure_from_item_vector (momval_t conn, momval_t vec)
 
 /// for vector item type descriptor
 static mom_anyitem_t *vector_itemloader (struct mom_loader_st *ld,
-					  momval_t json, uuid_t uid,
-					  unsigned space);
+					 momval_t json, uuid_t uid,
+					 unsigned space);
 static void vector_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
-				momval_t json);
+			       momval_t json);
 static void vector_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm);
 static momval_t vector_itemgetbuild (struct mom_dumper_st *dmp,
-				      mom_anyitem_t * itm);
-static momval_t vector_itemgetfill (struct mom_dumper_st *dmp,
 				     mom_anyitem_t * itm);
+static momval_t vector_itemgetfill (struct mom_dumper_st *dmp,
+				    mom_anyitem_t * itm);
 
 const struct momitemtypedescr_st momitype_vector = {
   .ityp_magic = ITEMTYPE_MAGIC,
@@ -1592,46 +1592,49 @@ vector_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 }
 
 static mom_anyitem_t *
-vector_itemloader (struct mom_loader_st *ld __attribute__((unused)),
-		   momval_t json __attribute__((unused)),
+vector_itemloader (struct mom_loader_st *ld __attribute__ ((unused)),
+		   momval_t json __attribute__ ((unused)),
 		   uuid_t uid, unsigned space)
 {
-  return (mom_anyitem_t*)mom_make_item_vector_of_uuid(uid, space, 0);
+  return (mom_anyitem_t *) mom_make_item_vector_of_uuid (uid, space, 0);
 }
 
 
-static void vector_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+static void
+vector_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
   mom_scan_any_item_data (dmp, itm);
-  momit_vector_t* vecitm = (momit_vector_t*)itm;
+  momit_vector_t *vecitm = (momit_vector_t *) itm;
   unsigned cnt = vecitm->itv_count;
-  for (unsigned ix=0; ix<cnt; ix++)
-      mom_dump_scan_value (dmp, vecitm->itv_arr[ix]);
+  for (unsigned ix = 0; ix < cnt; ix++)
+    mom_dump_scan_value (dmp, vecitm->itv_arr[ix]);
 }
 
 
 static momval_t
 vector_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
-  momit_vector_t* vecitm = (momit_vector_t*)itm;
+  momit_vector_t *vecitm = (momit_vector_t *) itm;
   unsigned cnt = vecitm->itv_count;
-  momval_t* jarr = NULL;
-  momval_t tinyarr[TINY_MAX] = {MONIMELT_NULLV};
-  if (cnt<TINY_MAX) 
+  momval_t *jarr = NULL;
+  momval_t tinyarr[TINY_MAX] = { MONIMELT_NULLV };
+  if (cnt < TINY_MAX)
     jarr = tinyarr;
-  else {
-    jarr = GC_MALLOC (sizeof(momval_t)*cnt);
-    if (MONIMELT_UNLIKELY(!jarr))
-      MONIMELT_FATAL("failed to allocate json array for %d vector elements", (int)cnt);
-    memset (jarr, 0, sizeof(momval_t)*cnt);
-  }
-  for (unsigned vix=0; vix<cnt; vix++) 
+  else
+    {
+      jarr = GC_MALLOC (sizeof (momval_t) * cnt);
+      if (MONIMELT_UNLIKELY (!jarr))
+	MONIMELT_FATAL
+	  ("failed to allocate json array for %d vector elements", (int) cnt);
+      memset (jarr, 0, sizeof (momval_t) * cnt);
+    }
+  for (unsigned vix = 0; vix < cnt; vix++)
     jarr[vix] = mom_dump_emit_json (dmp, vecitm->itv_arr[vix]);
-  momval_t jarrvec = (momval_t)mom_make_json_array_count(cnt, jarr);
-  if (jarr != tinyarr) GC_FREE (jarr);
+  momval_t jarrvec = (momval_t) mom_make_json_array_count (cnt, jarr);
+  if (jarr != tinyarr)
+    GC_FREE (jarr);
   jarr = NULL;
-  return
-    (momval_t) mom_make_json_object
+  return (momval_t) mom_make_json_object
     /// attributes
     (MOMJSON_ENTRY, mom_item__attributes,
      mom_attributes_emit_json (dmp, itm->i_attrs),
@@ -1642,23 +1645,25 @@ vector_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
      MOMJSON_ENTRY, mom_item__vector, jarrvec,
      /// end
      MOMJSON_END);
-     
+
 }
 
 static void
 vector_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
-		      momval_t json)
+		   momval_t json)
 {
-  momit_vector_t* vecitm = (momit_vector_t*)itm;
+  momit_vector_t *vecitm = (momit_vector_t *) itm;
   mom_load_any_item_data (ld, itm, json);
-  momval_t jarr = mom_jsonob_get(json, (momval_t)mom_item__vector);
-  unsigned cnt = mom_json_array_size(jarr);
-  if (!cnt) return;
-  reserve_vectoritem (vecitm, cnt+cnt/16+1);
-  for (unsigned vix=0; vix<cnt; vix++)
+  momval_t jarr = mom_jsonob_get (json, (momval_t) mom_item__vector);
+  unsigned cnt = mom_json_array_size (jarr);
+  if (!cnt)
+    return;
+  reserve_vectoritem (vecitm, cnt + cnt / 16 + 1);
+  for (unsigned vix = 0; vix < cnt; vix++)
     {
       momval_t jcurelem = mom_json_array_nth (jarr, vix);
-      mom_item_vector_append1((momval_t)vecitm, mom_load_value_json (ld, jcurelem));
+      mom_item_vector_append1 ((momval_t) vecitm,
+			       mom_load_value_json (ld, jcurelem));
     }
 }
 

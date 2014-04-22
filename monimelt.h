@@ -430,6 +430,9 @@ void mom_tasklet_push_frame (momval_t tsk, momval_t clo,
 void mom_tasklet_replace_top_frame (momval_t tsk, momval_t clo,
 				    enum mom_pushframedirective_en, ...)
   __attribute__ ((sentinel));
+momval_t mom_run_closure (momval_t clo,
+			  enum mom_pushframedirective_en, ...)
+  __attribute__ ((sentinel));
 // reserve or shrink to fit
 void mom_tasklet_reserve (momval_t tsk, unsigned nbint, unsigned nbdbl,
 			  unsigned nbval, unsigned nbfram);

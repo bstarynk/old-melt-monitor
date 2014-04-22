@@ -1301,3 +1301,77 @@ mom_tasklet_pop_frame (momval_t tsk)
 end:
   pthread_mutex_unlock (&((mom_anyitem_t *) tskitm)->i_mtx);
 }
+
+momval_t
+mom_run_closure (momval_t clo, enum mom_pushframedirective_en firstdir, ...)
+{
+  momval_t res = MONIMELT_NULLV;
+  if (!clo.ptr || *clo.ptype != momty_closure)
+    return MONIMELT_NULLV;
+  unsigned nbval = 0;
+  unsigned nbnum = 0;
+  unsigned nbdbl = 0;
+  int newstate = 0;
+  const momclosure_t *closure = clo.pclosure;
+  const momit_routine_t *routitm = (momit_routine_t *) closure->connitm;
+  if (!routitm || ((mom_anyitem_t *) routitm)->typnum != momty_routineitem)
+    return MONIMELT_NULLV;
+  va_list args;
+  const struct momroutinedescr_st *rdescr = routitm->irt_descr;
+  if (MONIMELT_UNLIKELY (!rdescr || rdescr->rout_magic != ROUTINE_MAGIC
+			 || !rdescr->rout_code))
+    MONIMELT_FATAL ("corrupted routine descriptor in closure's routine");
+  // first, compute the data size
+  va_start (args, firstdir);
+  compute_pushed_data_size (closure, &nbval, &nbnum, &nbdbl, &newstate,
+			    firstdir, args);
+  va_end (args);
+  momval_t valtiny[TINY_MAX] = { MONIMELT_NULLV };
+  intptr_t numtiny[TINY_MAX] = { 0 };
+  double dbltiny[TINY_MAX] = { 0.0 };
+  momval_t *valarr = NULL;
+  intptr_t *numarr = NULL;
+  double *dblarr = NULL;
+  if (closure->slen < rdescr->rout_minclosize)
+    return MONIMELT_NULLV;
+  if (nbval < rdescr->rout_frame_nbval)
+    nbval = rdescr->rout_frame_nbval;
+  if (nbnum < rdescr->rout_frame_nbnum)
+    nbnum = rdescr->rout_frame_nbnum;
+  if (nbdbl < rdescr->rout_frame_nbdbl)
+    nbdbl = rdescr->rout_frame_nbdbl;
+  if (nbval == 0)
+    nbval = 1;
+  if (nbval < TINY_MAX)
+    valarr = valtiny;
+  else
+    {
+      valarr = GC_MALLOC (nbval * sizeof (momval_t));
+      if (MONIMELT_UNLIKELY (!valarr))
+	MONIMELT_FATAL ("failed to allocate %d values", (int) nbval);
+      memset (valarr, 0, nbval * sizeof (momval_t));
+    };
+  if (nbnum < TINY_MAX)
+    numarr = numtiny;
+  else
+    {
+      numarr = GC_MALLOC_ATOMIC (sizeof (intptr_t) * nbnum);
+      if (MONIMELT_UNLIKELY (!numarr))
+	MONIMELT_FATAL ("failed to allocate %d numbers", (int) nbnum);
+      memset (numarr, 0, nbnum * sizeof (intptr_t));
+    };
+  if (nbdbl < TINY_MAX)
+    dblarr = dbltiny;
+  else
+    {
+      dblarr = GC_MALLOC_ATOMIC (sizeof (double) * nbdbl);
+      if (MONIMELT_UNLIKELY (!dblarr))
+	MONIMELT_FATAL ("failed to allocate %d doubles", (int) nbdbl);
+      memset (dblarr, 0, nbdbl * sizeof (double));
+    };
+  if (rdescr->rout_code (0, NULL, (momclosure_t *) closure, valarr, numarr,
+			 dblarr) < 0)
+    return MONIMELT_NULLV;
+  res = valarr[0];
+  return res;
+}
