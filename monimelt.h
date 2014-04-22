@@ -410,6 +410,11 @@ void mom_item_vector_append_til_nil (momval_t vec, ...)
   __attribute__ ((sentinel));
 void mom_item_vector_append_count (momval_t vec, unsigned nbval,
 				   momval_t * arr);
+const momitemset_t *mom_make_item_set_from_item_vector (momval_t vec);
+const momitemtuple_t *mom_make_item_tuple_from_item_vector (momval_t vec);
+const momnode_t *mom_make_node_from_item_vector (momval_t conn, momval_t vec);
+const momclosure_t *mom_make_closure_from_item_vector (momval_t conn,
+						       momval_t vec);
 
 struct momassocitem_st
 {

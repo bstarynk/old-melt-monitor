@@ -1493,6 +1493,71 @@ mom_item_vector_append_count (momval_t vec, unsigned nbval, momval_t * arr)
   pthread_mutex_unlock (&vec.panyitem->i_mtx);
 }
 
+const momitemset_t *
+mom_make_item_set_from_item_vector (momval_t vec)
+{
+  const momitemset_t *iset = NULL;
+  assert (sizeof (mom_anyitem_t *) == sizeof (momval_t));
+  if (!vec.ptr || *vec.ptype != momty_vectoritem)
+    return NULL;
+  pthread_mutex_lock (&vec.panyitem->i_mtx);
+  unsigned cnt = vec.pvectitem->itv_count;
+  iset =
+    mom_make_item_set_from_array (cnt,
+				  (mom_anyitem_t **) vec.pvectitem->itv_arr);
+  pthread_mutex_unlock (&vec.panyitem->i_mtx);
+  return iset;
+}
+
+const momitemtuple_t *
+mom_make_item_tuple_from_item_vector (momval_t vec)
+{
+  const momitemtuple_t *ituple = NULL;
+  assert (sizeof (mom_anyitem_t *) == sizeof (momval_t));
+  if (!vec.ptr || *vec.ptype != momty_vectoritem)
+    return NULL;
+  pthread_mutex_lock (&vec.panyitem->i_mtx);
+  unsigned cnt = vec.pvectitem->itv_count;
+  ituple =
+    mom_make_item_tuple_from_array (cnt,
+				    (mom_anyitem_t **) vec.
+				    pvectitem->itv_arr);
+  pthread_mutex_unlock (&vec.panyitem->i_mtx);
+  return ituple;
+}
+
+const momnode_t *
+mom_make_node_from_item_vector (momval_t conn, momval_t vec)
+{
+  const momnode_t *nd = NULL;
+  if (!vec.ptr || *vec.ptype != momty_vectoritem)
+    return NULL;
+  if (!conn.ptr || *conn.ptype < momty__itemlowtype)
+    return NULL;
+  pthread_mutex_lock (&vec.panyitem->i_mtx);
+  unsigned cnt = vec.pvectitem->itv_count;
+  nd = mom_make_node_from_array (conn.panyitem, cnt, vec.pvectitem->itv_arr);
+  pthread_mutex_unlock (&vec.panyitem->i_mtx);
+  return nd;
+}
+
+const momclosure_t *
+mom_make_closure_from_item_vector (momval_t conn, momval_t vec)
+{
+  const momclosure_t *clo = NULL;
+  if (!vec.ptr || *vec.ptype != momty_vectoritem)
+    return NULL;
+  if (!conn.ptr || *conn.ptype != momty_routineitem)
+    return NULL;
+  pthread_mutex_lock (&vec.panyitem->i_mtx);
+  unsigned cnt = vec.pvectitem->itv_count;
+  clo =
+    mom_make_closure_from_array (conn.panyitem, cnt, vec.pvectitem->itv_arr);
+  pthread_mutex_unlock (&vec.panyitem->i_mtx);
+  return clo;
+}
+
+
 //////////////////////////////////////////////////// assoc items
 #warning should implement assoc items
 
