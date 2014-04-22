@@ -1116,17 +1116,11 @@ mom_full_dump (const char *state)
        " nuid VARCHAR(38) UNIQUE NOT NULL REFERENCES t_id(uid),"
        " spacenam VARCHAR(30) NOT NULL)", NULL, NULL, &errmsg))
     MONIMELT_FATAL ("failed to create t_name: %s", errmsg);
-  if (sqlite3_exec
-      (mom_dbsqlite,
-       "BEGIN TRANSACTION",  NULL, NULL, &errmsg))
+  if (sqlite3_exec (mom_dbsqlite, "BEGIN TRANSACTION", NULL, NULL, &errmsg))
     MONIMELT_FATAL ("failed to BEGIN TRANSACTION: %s", errmsg);
-  if (sqlite3_exec
-      (mom_dbsqlite,
-       "DELETE FROM t_name",  NULL, NULL, &errmsg))
+  if (sqlite3_exec (mom_dbsqlite, "DELETE FROM t_name", NULL, NULL, &errmsg))
     MONIMELT_FATAL ("failed to DELETE FROM t_name: %s", errmsg);
-  if (sqlite3_exec
-      (mom_dbsqlite,
-       "DELETE FROM t_item",  NULL, NULL, &errmsg))
+  if (sqlite3_exec (mom_dbsqlite, "DELETE FROM t_item", NULL, NULL, &errmsg))
     MONIMELT_FATAL ("failed to DELETE FROM t_item: %s", errmsg);
   mom_dumper_initialize (&dmp);
   sqlite3_stmt *stmt = NULL;
@@ -1202,9 +1196,7 @@ mom_full_dump (const char *state)
     }
   if (buildfill_stmt)
     sqlite3_finalize (buildfill_stmt), buildfill_stmt = NULL;
-  if (sqlite3_exec
-      (mom_dbsqlite,
-       "END TRANSACTION",  NULL, NULL, &errmsg))
+  if (sqlite3_exec (mom_dbsqlite, "END TRANSACTION", NULL, NULL, &errmsg))
     MONIMELT_FATAL ("failed to END TRANSACTION: %s", errmsg);
   sqlite3_close_v2 (mom_dbsqlite), mom_dbsqlite = NULL;
   MONIMELT_INFORM ("dumped %d items in %s", nbdumpeditems, state);
