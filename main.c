@@ -65,7 +65,7 @@ static const char **module_arguments;
 static GModule **module_handles;
 static unsigned module_count;
 static unsigned module_size;
-static const char *load_state_path;
+static const char *load_state_path =  MONIMELT_DEFAULT_STATE_FILE;
 static const char *dump_state_path;
 static void
 usage (const char *argv0)
@@ -508,7 +508,7 @@ main (int argc, char **argv)
       using_syslog = true;
       atexit (logexit_cb);
     }
-  if (load_state_path)
+  if (load_state_path && load_state_path[0])
     {
       mom_initial_load (load_state_path);
     }

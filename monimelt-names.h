@@ -4,6 +4,7 @@
 #endif /*MONIMELT_NAMED*/
 
 // MONIMELT_NAMED(Name,Type,Uidstr)
+ MONIMELT_NAMED (assoc_item, json_name, "326c3317-5c04-47dc-bf74-f4fc776eab72")
  MONIMELT_NAMED (attr, json_name, "e29d6d73-6a40-41bd-bfd4-df5183ffc764")
  MONIMELT_NAMED (attributes, json_name, "b29bc8a3-1517-4a28-b566-39e447c80250")
  MONIMELT_NAMED (bool_item, json_name, "d39e1047-71fb-4c62-b13d-a18852d844ef")
@@ -33,6 +34,7 @@
  MONIMELT_NAMED (uuid, json_name, "a75bef70-596b-4fc5-99ca-e60b5287feec")
  MONIMELT_NAMED (val, json_name, "d8aa61cc-2543-4659-bff9-2b0bfc0f779a")
  MONIMELT_NAMED (values, json_name, "7e8b7206-2548-427d-9b7c-9d5b5067c78a")
+ MONIMELT_NAMED (vector_item, json_name, "35461f69-eeb6-4562-806b-f37537d6ce7a")
 
-// end of 29 named items
+// end of 31 named items
 #undef MONIMELT_NAMED

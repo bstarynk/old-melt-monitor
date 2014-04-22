@@ -68,6 +68,8 @@ enum momvaltype_en
   momty_boolitem,
   momty_routineitem,
   momty_taskletitem,
+  momty_vectoritem,
+  momty_associtem,
   momty__last = 1000
 };
 
@@ -93,6 +95,8 @@ typedef struct momjsonitem_st momit_json_name_t;
 typedef struct momboolitem_st momit_bool_t;
 typedef struct momroutineitem_st momit_routine_t;
 typedef struct momtaskletitem_st momit_tasklet_t;
+typedef struct momvectoritem_st momit_vector_t;
+typedef struct momassocitem_st momit_assoc_t;
 pthread_mutexattr_t mom_normal_mutex_attr;
 pthread_mutexattr_t mom_recursive_mutex_attr;
 GModule *mom_prog_module;
@@ -114,6 +118,8 @@ union momvalueptr_un
   struct momboolitem_st *pboolitem;
   struct momroutineitem_st *proutitem;
   struct momtaskletitem_st *ptaskitem;
+  struct momvectoritem_st *pvectitem;
+  struct momassocitem_st *passocitem;
   const struct momnode_st *pnode;
   const struct momnode_st *pclosure;
   const struct momseqitem_st *pseqitm;
@@ -378,6 +384,23 @@ enum mom_pushframedirective_en
 momit_tasklet_t *mom_make_item_tasklet (void);
 momit_tasklet_t *mom_make_item_tasklet_of_uuid (uuid_t);
 
+
+
+
+struct momvectoritem_st {
+  struct momanyitem_st itv_item;	/* common part */
+  unsigned itv_count;
+  unsigned itv_size;
+  momval_t* itv_arr;		/* of size itv_size, with itv_count elements */
+};
+
+struct momassocitem_st {
+  struct momanyitem_st ita_item;	/* common part */
+  unsigned ita_count;
+  unsigned ita_size;
+  struct mom_attrentry_st* ita_htab; /* hash table of entries */
+};
+
 void mom_tasklet_push_frame (momval_t tsk, momval_t clo,
 			     enum mom_pushframedirective_en, ...)
   __attribute__ ((sentinel));
@@ -529,6 +552,7 @@ mom_string_cstr (momval_t val)
   return val.pstring->cstr;
 }
 
+#define MONIMELT_DEFAULT_STATE_FILE "state-monimelt.dbsqlite"
 const momint_t *mom_make_int (intptr_t n);
 void mom_initialize (void);
 void mom_initial_load (const char *state);
