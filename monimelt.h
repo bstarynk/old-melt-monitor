@@ -257,8 +257,8 @@ struct momnode_st
   momtynum_t typnum;
   momusize_t slen;
   momhash_t hash;
-  mom_anyitem_t *connitm;
-  momval_t sontab[];
+  const mom_anyitem_t *connitm;
+  const momval_t sontab[];
 };
 
 
@@ -269,7 +269,7 @@ struct momseqitem_st
   momtynum_t typnum;
   momusize_t slen;
   momhash_t hash;
-  mom_anyitem_t *itemseq[];
+  const mom_anyitem_t *itemseq[];
 };
 struct mom_attrentry_st
 {
@@ -495,9 +495,8 @@ void mom_item_queue_push_counted_front (momval_t, unsigned count,
 unsigned mom_item_queue_length (momval_t quev);
 mom_anyitem_t *mom_item_queue_first (momval_t quev);
 mom_anyitem_t *mom_item_queue_last (momval_t quev);
-void mom_item_queue_push_front (momval_t quev, momval_t itmv);
-void mom_item_queue_pop_front (momval_t quev);
-momval_t mom_item_queue_to_tuple (momval_t quev);
+mom_anyitem_t *mom_item_queue_pop_front (momval_t quev);
+momval_t mom_item_queue_tuple (momval_t quev);
 
 
 /////// tasklets
@@ -837,13 +836,14 @@ const momitemtuple_t *mom_make_item_tuple_til_nil (momval_t, ...)
 const momitemset_t *mom_make_item_set_sized (unsigned siz, ...);
 // make a set of given number of items, removing duplicates...
 const momitemset_t *mom_make_item_set_from_array (unsigned siz,
-						  mom_anyitem_t ** arr);
+						  const mom_anyitem_t ** arr);
 // make a tuple of given number of items
 const momitemtuple_t *mom_make_item_tuple_sized (unsigned siz, ...);
 
 // make a tuple of given number of items
 const momitemtuple_t *mom_make_item_tuple_from_array (unsigned siz,
-						      mom_anyitem_t ** arr);
+						      const mom_anyitem_t **
+						      arr);
 
 // make a node from a nil terminated sequence of components
 const momnode_t *mom_make_node_til_nil (mom_anyitem_t * conn, ...)
@@ -954,7 +954,7 @@ struct mom_dumper_st
   unsigned dmp_state;
   struct mom_itemqueue_st *dmp_qfirst;
   struct mom_itemqueue_st *dmp_qlast;
-  mom_anyitem_t **dmp_array;
+  const mom_anyitem_t **dmp_array;
 };
 
 // initialize a dumper
@@ -967,7 +967,7 @@ void mom_dump_globals (struct mom_dumper_st *, mom_dumpglobal_sig_t * globcb,
 		       void *data);
 
 // add a scanned item into a dumper
-void mom_dump_add_item (struct mom_dumper_st *dmp, mom_anyitem_t * itm);
+void mom_dump_add_item (struct mom_dumper_st *dmp, const mom_anyitem_t * itm);
 
 // scan a value into a dumper
 void mom_dump_scan_value (struct mom_dumper_st *dmp, const momval_t val);

@@ -228,8 +228,9 @@ mom_value_cmp (const momval_t l, const momval_t r)
 	momusize_t llen = l.pnode->slen;
 	momusize_t rlen = r.pnode->slen;
 	momusize_t minlen = (llen > rlen) ? rlen : llen;
-	int cmp = mom_value_cmp ((momval_t) (l.pnode->connitm),
-				 (momval_t) (r.pnode->connitm));
+	int cmp =
+	  mom_value_cmp ((momval_t) (mom_anyitem_t *) (l.pnode->connitm),
+			 (momval_t) (mom_anyitem_t *) (r.pnode->connitm));
 	if (cmp != 0)
 	  return cmp;
 	unsigned ix = 0;
@@ -256,8 +257,10 @@ mom_value_cmp (const momval_t l, const momval_t r)
 	for (ix = 0; ix < minlen; ix++)
 	  {
 	    cmp =
-	      mom_value_cmp ((momval_t) (l.pseqitm->itemseq[ix]),
-			     (momval_t) (r.pseqitm->itemseq[ix]));
+	      mom_value_cmp ((momval_t) (mom_anyitem_t *)
+			     (l.pseqitm->itemseq[ix]),
+			     (momval_t) (mom_anyitem_t *) (r.pseqitm->itemseq
+							   [ix]));
 	    if (cmp != 0)
 	      return cmp;
 	  }
@@ -421,7 +424,7 @@ update_seqitem_hash (struct momseqitem_st *si)
   momhash_t h = (unsigned) 11 * si->typnum + 31 * slen;
   for (unsigned ix = 0; ix < slen; ix++)
     {
-      mom_anyitem_t *itm = si->itemseq[ix];
+      const mom_anyitem_t *itm = si->itemseq[ix];
       h = (23473 * ix + 43499 * h) ^ (itm ? (itm->i_hash) : 43403);
     }
   if (MONIMELT_UNLIKELY (!h))
@@ -564,7 +567,7 @@ mom_make_item_set_sized (unsigned siz, ...)
 }
 
 const momitemset_t *
-mom_make_item_set_from_array (unsigned siz, mom_anyitem_t ** itemarr)
+mom_make_item_set_from_array (unsigned siz, const mom_anyitem_t ** itemarr)
 {
   unsigned ix = 0, count = 0;
   momitemset_t *iset = NULL;
@@ -575,7 +578,7 @@ mom_make_item_set_from_array (unsigned siz, mom_anyitem_t ** itemarr)
   memset (iset, 0, sizeof (momitemset_t) + siz * sizeof (mom_anyitem_t *));
   for (ix = 0; ix < siz; ix++)
     {
-      mom_anyitem_t *itm = itemarr[ix];
+      const mom_anyitem_t *itm = itemarr[ix];
       if (itm && itm->typnum >= momty__itemlowtype)
 	iset->itemseq[count++] = itm;
     }
@@ -692,7 +695,7 @@ mom_make_item_tuple_sized (unsigned siz, ...)
 }
 
 const momitemtuple_t *
-mom_make_item_tuple_from_array (unsigned siz, mom_anyitem_t ** itemarr)
+mom_make_item_tuple_from_array (unsigned siz, const mom_anyitem_t ** itemarr)
 {
   unsigned ix = 0;
   momitemtuple_t *ituple = NULL;
@@ -704,7 +707,7 @@ mom_make_item_tuple_from_array (unsigned siz, mom_anyitem_t ** itemarr)
 	  sizeof (momitemtuple_t) + siz * sizeof (mom_anyitem_t *));
   for (ix = 0; ix < siz; ix++)
     {
-      mom_anyitem_t *itm = itemarr[ix];
+      const mom_anyitem_t *itm = itemarr[ix];
       if (itm && itm->typnum >= momty__itemlowtype)
 	ituple->itemseq[ix] = itm;
     }
@@ -751,7 +754,7 @@ mom_make_node_til_nil (mom_anyitem_t * conn, ...)
   memset (nd, 0, sizeof (momnode_t) + siz * sizeof (momval_t));
   va_start (args, conn);
   for (unsigned ix = 0; ix < siz; ix++)
-    nd->sontab[ix] = va_arg (args, momval_t);
+    ((momval_t *) nd->sontab)[ix] = va_arg (args, momval_t);
   va_end (args);
   nd->typnum = momty_node;
   nd->slen = siz;
@@ -772,7 +775,7 @@ mom_make_node_sized (mom_anyitem_t * conn, unsigned siz, ...)
   memset (nd, 0, sizeof (momnode_t) + siz * sizeof (momval_t));
   va_start (args, siz);
   for (unsigned ix = 0; ix < siz; ix++)
-    nd->sontab[ix] = va_arg (args, momval_t);
+    ((momval_t *) nd->sontab)[ix] = va_arg (args, momval_t);
   va_end (args);
   nd->typnum = momty_node;
   nd->slen = siz;
@@ -791,7 +794,7 @@ mom_make_node_from_array (mom_anyitem_t * conn, unsigned siz, momval_t * arr)
     MONIMELT_FATAL ("failed to allocate node of size %d", (int) siz);
   memset (nd, 0, sizeof (momnode_t) + siz * sizeof (momval_t));
   for (unsigned ix = 0; ix < siz; ix++)
-    nd->sontab[ix] = arr[ix];
+    ((momval_t *) nd->sontab)[ix] = arr[ix];
   nd->typnum = momty_node;
   nd->slen = siz;
   update_node_hash (nd);
@@ -822,7 +825,7 @@ mom_make_closure_til_nil (mom_anyitem_t * conn, ...)
   memset (clo, 0, sizeof (momnode_t) + alsize * sizeof (momval_t));
   va_start (args, conn);
   for (unsigned ix = 0; ix < siz; ix++)
-    clo->sontab[ix] = va_arg (args, momval_t);
+    ((momval_t *) clo->sontab)[ix] = va_arg (args, momval_t);
   va_end (args);
   clo->typnum = momty_closure;
   clo->slen = alsize;
@@ -845,7 +848,7 @@ mom_make_closure_sized (mom_anyitem_t * conn, unsigned siz, ...)
   memset (clo, 0, sizeof (momclosure_t) + alsize * sizeof (momval_t));
   va_start (args, siz);
   for (unsigned ix = 0; ix < siz; ix++)
-    clo->sontab[ix] = va_arg (args, momval_t);
+    ((momval_t *) clo->sontab)[ix] = va_arg (args, momval_t);
   va_end (args);
   clo->typnum = momty_closure;
   clo->slen = alsize;
@@ -867,7 +870,7 @@ mom_make_closure_from_array (mom_anyitem_t * conn, unsigned siz,
     MONIMELT_FATAL ("failed to allocate closure of size %d", (int) siz);
   memset (clo, 0, sizeof (momnode_t) + alsize * sizeof (momval_t));
   for (unsigned ix = 0; ix < siz; ix++)
-    clo->sontab[ix] = arr[ix];
+    ((momval_t *) clo->sontab)[ix] = arr[ix];
   clo->typnum = momty_closure;
   clo->slen = alsize;
   update_node_hash (clo);

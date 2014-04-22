@@ -39,7 +39,7 @@ mom_dumper_initialize (struct mom_dumper_st *dmp)
 {
   const unsigned siz = 512;
   memset (dmp, 0, sizeof (struct mom_dumper_st));
-  mom_anyitem_t **arr = GC_MALLOC (siz * sizeof (mom_anyitem_t *));
+  const mom_anyitem_t **arr = GC_MALLOC (siz * sizeof (mom_anyitem_t *));
   if (MONIMELT_UNLIKELY (!arr))
     MONIMELT_FATAL ("cannot allocate dump array for %d items", siz);
   memset (arr, 0, siz * sizeof (mom_anyitem_t *));
@@ -52,7 +52,7 @@ mom_dumper_initialize (struct mom_dumper_st *dmp)
 }
 
 static inline void
-add_dumped_item (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+add_dumped_item (struct mom_dumper_st *dmp, const mom_anyitem_t * itm)
 {
   momhash_t h = itm->i_hash;
   unsigned size = dmp->dmp_size;
@@ -81,7 +81,7 @@ add_dumped_item (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 
 
 static inline bool
-found_dumped_item (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+found_dumped_item (struct mom_dumper_st *dmp, const mom_anyitem_t * itm)
 {
   momhash_t h = itm->i_hash;
   unsigned size = dmp->dmp_size;
@@ -100,7 +100,7 @@ found_dumped_item (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 }
 
 void
-mom_dump_add_item (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+mom_dump_add_item (struct mom_dumper_st *dmp, const mom_anyitem_t * itm)
 {
   if (!itm || itm->typnum < momty__itemlowtype)
     return;
@@ -112,9 +112,10 @@ mom_dump_add_item (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
     {
       unsigned oldsize = dmp->dmp_size;
       unsigned oldcount = dmp->dmp_count;
-      mom_anyitem_t **oldarr = dmp->dmp_array;
+      const mom_anyitem_t **oldarr = dmp->dmp_array;
       unsigned newsize = ((4 * oldcount / 3 + oldcount / 4 + 60) | 0x7f) + 1;
-      mom_anyitem_t **newarr = GC_MALLOC (newsize * sizeof (mom_anyitem_t *));
+      const mom_anyitem_t **newarr =
+	GC_MALLOC (newsize * sizeof (mom_anyitem_t *));
       if (MONIMELT_UNLIKELY (!newarr))
 	MONIMELT_FATAL ("cannot grow dumper to %d items", newsize);
       memset (newarr, 0, newsize * sizeof (mom_anyitem_t *));
@@ -123,7 +124,7 @@ mom_dump_add_item (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
       dmp->dmp_count = 0;
       for (unsigned ix = 0; ix < oldsize; ix++)
 	{
-	  mom_anyitem_t *curitm = oldarr[ix];
+	  const mom_anyitem_t *curitm = oldarr[ix];
 	  if (!curitm)
 	    continue;
 	  add_dumped_item (dmp, curitm);
@@ -139,7 +140,7 @@ mom_dump_add_item (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 	MONIMELT_FATAL ("cannot add queue element to dumper of %d items",
 			dmp->dmp_count);
       qel->iq_next = NULL;
-      qel->iq_item = itm;
+      qel->iq_item = (mom_anyitem_t *) itm;
       if (MONIMELT_UNLIKELY (dmp->dmp_qlast == NULL))
 	{
 	  dmp->dmp_qfirst = dmp->dmp_qlast = qel;
@@ -202,7 +203,7 @@ mom_dump_scan_value (struct mom_dumper_st *dmp, const momval_t val)
 	unsigned siz = val.pseqitm->slen;
 	for (unsigned ix = 0; ix < siz; ix++)
 	  {
-	    mom_anyitem_t *curitm = val.pseqitm->itemseq[ix];
+	    const mom_anyitem_t *curitm = val.pseqitm->itemseq[ix];
 	    if (!curitm)
 	      continue;
 	    mom_dump_add_item (dmp, curitm);
@@ -229,7 +230,9 @@ jsonarray_emit_itemseq (struct mom_dumper_st *dmp,
     {
       momval_t tab[TINY_MAX] = { MONIMELT_NULLV };
       for (unsigned ix = 0; ix < slen; ix++)
-	tab[ix] = raw_dump_emit_json (dmp, (momval_t) (si->itemseq[ix]));
+	tab[ix] =
+	  raw_dump_emit_json (dmp,
+			      (momval_t) (mom_anyitem_t *) (si->itemseq[ix]));
       return mom_make_json_array_count (slen, tab);
     }
   else
@@ -239,7 +242,9 @@ jsonarray_emit_itemseq (struct mom_dumper_st *dmp,
 	MONIMELT_FATAL ("failed to allocate array of %d", (int) slen);
       memset (arr, 0, sizeof (momval_t) * slen);
       for (unsigned ix = 0; ix < slen; ix++)
-	arr[ix] = raw_dump_emit_json (dmp, (momval_t) (si->itemseq[ix]));
+	arr[ix] =
+	  raw_dump_emit_json (dmp,
+			      (momval_t) (mom_anyitem_t *) (si->itemseq[ix]));
       const momjsonarray_t *jarr = mom_make_json_array_count (slen, arr);
       GC_FREE (arr);
       return jarr;
@@ -324,8 +329,9 @@ raw_dump_emit_json (struct mom_dumper_st * dmp, const momval_t val)
 	  (MOMJSON_ENTRY, mom_item__jtype, mom_item__node,
 	   MOMJSON_ENTRY, mom_item__conn, raw_dump_emit_json (dmp,
 							      (momval_t)
-							      (val.
-							       pnode->connitm)),
+							      (mom_anyitem_t
+							       *) (val.
+								   pnode->connitm)),
 	   MOMJSON_ENTRY, mom_item__sons, jsonarray_emit_nodesons (dmp,
 								   val.pnode),
 	   MOMJSON_END);
@@ -335,10 +341,10 @@ raw_dump_emit_json (struct mom_dumper_st * dmp, const momval_t val)
       {
 	jsval = (momval_t) mom_make_json_object
 	  (MOMJSON_ENTRY, mom_item__jtype, mom_item__closure,
-	   MOMJSON_ENTRY, mom_item__conn, raw_dump_emit_json (dmp,
-							      (momval_t)
-							      (val.
-							       pnode->connitm)),
+	   MOMJSON_ENTRY, mom_item__conn,
+	   raw_dump_emit_json (dmp,
+			       (momval_t)
+			       (mom_anyitem_t *) (val.pnode->connitm)),
 	   MOMJSON_ENTRY, mom_item__sons, jsonarray_emit_nodesons (dmp,
 								   val.pnode),
 	   MOMJSON_END);
@@ -651,7 +657,7 @@ mom_load_value_json (struct mom_loader_st *ld, const momval_t jval)
 	    unsigned nbsons = mom_json_array_size (jsetv);
 	    if (nbsons < TINY_MAX)
 	      {
-		mom_anyitem_t *itemtab[TINY_MAX] = { NULL };
+		const mom_anyitem_t *itemtab[TINY_MAX] = { NULL };
 		for (unsigned ix = 0; ix < nbsons; ix++)
 		  itemtab[ix] =
 		    mom_value_as_item (mom_load_value_json
@@ -661,7 +667,7 @@ mom_load_value_json (struct mom_loader_st *ld, const momval_t jval)
 	      }
 	    else
 	      {
-		mom_anyitem_t **itemarr =
+		const mom_anyitem_t **itemarr =
 		  GC_MALLOC (sizeof (mom_anyitem_t *) * nbsons);
 		if (MONIMELT_UNLIKELY (!itemarr))
 		  MONIMELT_FATAL ("failed to load %d elements in set",
@@ -684,7 +690,7 @@ mom_load_value_json (struct mom_loader_st *ld, const momval_t jval)
 	    unsigned nbsons = mom_json_array_size (jtuplev);
 	    if (nbsons < TINY_MAX)
 	      {
-		mom_anyitem_t *itemtab[TINY_MAX] = { NULL };
+		const mom_anyitem_t *itemtab[TINY_MAX] = { NULL };
 		for (unsigned ix = 0; ix < nbsons; ix++)
 		  itemtab[ix] =
 		    mom_value_as_item (mom_load_value_json
@@ -695,7 +701,7 @@ mom_load_value_json (struct mom_loader_st *ld, const momval_t jval)
 	      }
 	    else
 	      {
-		mom_anyitem_t **itemarr =
+		const mom_anyitem_t **itemarr =
 		  GC_MALLOC (sizeof (mom_anyitem_t *) * nbsons);
 		if (MONIMELT_UNLIKELY (!itemarr))
 		  MONIMELT_FATAL ("failed to load %d elements in tuple",

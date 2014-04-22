@@ -1504,7 +1504,8 @@ mom_make_item_set_from_item_vector (momval_t vec)
   unsigned cnt = vec.pvectitem->itv_count;
   iset =
     mom_make_item_set_from_array (cnt,
-				  (mom_anyitem_t **) vec.pvectitem->itv_arr);
+				  (const mom_anyitem_t **) vec.
+				  pvectitem->itv_arr);
   pthread_mutex_unlock (&vec.panyitem->i_mtx);
   return iset;
 }
@@ -1519,9 +1520,8 @@ mom_make_item_tuple_from_item_vector (momval_t vec)
   pthread_mutex_lock (&vec.panyitem->i_mtx);
   unsigned cnt = vec.pvectitem->itv_count;
   ituple =
-    mom_make_item_tuple_from_array (cnt,
-				    (mom_anyitem_t **) vec.
-				    pvectitem->itv_arr);
+    mom_make_item_tuple_from_array
+    (cnt, (const mom_anyitem_t **) vec.pvectitem->itv_arr);
   pthread_mutex_unlock (&vec.panyitem->i_mtx);
   return ituple;
 }
@@ -2381,6 +2381,91 @@ mom_item_queue_push_counted_front (momval_t quev, unsigned count,
       queue_push_front (quev.pqueueitem, curitm);
     }
   pthread_mutex_unlock (&quev.panyitem->i_mtx);
+}
+
+
+
+mom_anyitem_t *
+mom_item_queue_first (momval_t quev)
+{
+  mom_anyitem_t *res = NULL;
+  if (!quev.ptr || *quev.ptype != momty_queueitem)
+    return NULL;
+  pthread_mutex_lock (&quev.panyitem->i_mtx);
+  if (quev.pqueueitem->itq_first)
+    res = quev.pqueueitem->itq_first->iq_item;
+  pthread_mutex_unlock (&quev.panyitem->i_mtx);
+  return res;
+}
+
+mom_anyitem_t *
+mom_item_queue_last (momval_t quev)
+{
+  mom_anyitem_t *res = NULL;
+  if (!quev.ptr || *quev.ptype != momty_queueitem)
+    return NULL;
+  pthread_mutex_lock (&quev.panyitem->i_mtx);
+  if (quev.pqueueitem->itq_last)
+    res = quev.pqueueitem->itq_last->iq_item;
+  pthread_mutex_unlock (&quev.panyitem->i_mtx);
+  return res;
+}
+
+mom_anyitem_t *
+mom_item_queue_pop_front (momval_t quev)
+{
+  mom_anyitem_t *res = NULL;
+  if (!quev.ptr || *quev.ptype != momty_queueitem)
+    return NULL;
+  pthread_mutex_lock (&quev.panyitem->i_mtx);
+  if (quev.pqueueitem->itq_first)
+    {
+      res = quev.pqueueitem->itq_first->iq_item;
+      if (quev.pqueueitem->itq_first == quev.pqueueitem->itq_last)
+	{
+	  quev.pqueueitem->itq_first = quev.pqueueitem->itq_last = NULL;
+	  quev.pqueueitem->itq_len = 0;
+	}
+      else
+	{
+	  quev.pqueueitem->itq_first = quev.pqueueitem->itq_first->iq_next;
+	  quev.pqueueitem->itq_len--;
+	}
+    }
+  pthread_mutex_unlock (&quev.panyitem->i_mtx);
+  return res;
+}
+
+momval_t
+mom_item_queue_tuple (momval_t quev)
+{
+  momval_t res = MONIMELT_NULLV;
+  if (!quev.ptr || *quev.ptype != momty_queueitem)
+    return MONIMELT_NULLV;
+  const mom_anyitem_t *tinyarr[TINY_MAX] = { 0 };
+  const mom_anyitem_t **arr = NULL;
+  pthread_mutex_lock (&quev.panyitem->i_mtx);
+  unsigned len = quev.pqueueitem->itq_len;
+  if (len < TINY_MAX)
+    arr = tinyarr;
+  else
+    arr = GC_MALLOC (len * sizeof (mom_anyitem_t *));
+  if (MONIMELT_UNLIKELY (!arr))
+    MONIMELT_FATAL ("failed to allocate array of %d values", (int) len);
+  memset (arr, 0, len * sizeof (mom_anyitem_t *));
+  unsigned nb = 0;
+  for (struct mom_itemqueue_st * iq = quev.pqueueitem->itq_first;
+       iq != NULL && nb < len; iq = iq->iq_next)
+    {
+      const mom_anyitem_t *curitm = iq->iq_item;
+      if (curitm != NULL && curitm->typnum > momty__itemlowtype)
+	arr[nb++] = curitm;
+    }
+  pthread_mutex_unlock (&quev.panyitem->i_mtx);
+  res = (momval_t) mom_make_item_tuple_from_array (nb, arr);
+  if (arr != tinyarr)
+    GC_FREE (arr);
+  return res;
 }
 
 ////////////////////////////////////////////////////////////////
