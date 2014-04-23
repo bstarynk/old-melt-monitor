@@ -384,24 +384,14 @@ mom_inform_at (const char *fil, int lin, const char *fmt, ...)
     }
   if (using_syslog)
     {
-      if (err)
-	syslog (LOG_INFO, "MONIMELT INFO @%s:%d <%s> %s %s (%s)",
-		fil, lin, thrname, timbuf, bigbuf ? bigbuf : buf,
-		strerror (err));
-      else
-	syslog (LOG_INFO, "MONIMELT INFO @%s:%d <%s> %s %s",
-		fil, lin, thrname, timbuf, bigbuf ? bigbuf : buf);
+      syslog (LOG_INFO, "MONIMELT INFO @%s:%d <%s> %s %s",
+	      fil, lin, thrname, timbuf, bigbuf ? bigbuf : buf);
     }
   else
     {
       fputc ('\n', stderr);
-      if (err)
-	fprintf (stderr, "MONIMELT INFO @%s:%d <%s> %s %s (%s)\n",
-		 fil, lin, thrname, timbuf, bigbuf ? bigbuf : buf,
-		 strerror (err));
-      else
-	fprintf (stderr, "MONIMELT INFO @%s:%d <%s> %s %s\n",
-		 fil, lin, thrname, timbuf, bigbuf ? bigbuf : buf);
+      fprintf (stderr, "MONIMELT INFO @%s:%d <%s> %s %s\n",
+	       fil, lin, thrname, timbuf, bigbuf ? bigbuf : buf);
       fflush (stderr);
     }
 }
