@@ -476,12 +476,16 @@ momval_t mom_item_box_put (momval_t boxv, momval_t val);
 //////////////// queue item - contain a queue with items
 struct momqueueitem_st
 {
+  struct momanyitem_st itq_item;
   unsigned itq_len;
   struct mom_itqueue_st *itq_first;
   struct mom_itqueue_st *itq_last;
 };
 momit_queue_t *mom_make_item_queue (unsigned space);
 momit_queue_t *mom_make_item_queue_of_uuid (uuid_t uid, unsigned space);
+
+#define mom_create__queue(Name,Uid) \
+  mom_make_item_queue_of_uuid(Uid,MONIMELT_SPACE_ROOT)
 void mom_item_queue_push_back (momval_t quev, momval_t itmv);
 void mom_item_queue_push_front (momval_t quev, momval_t itmv);
 void mom_item_queue_push_many_back (momval_t quev, ...)
@@ -678,6 +682,8 @@ momit_routine_t *mom_make_item_routine_of_uuid (uuid_t, const char *name,
 momit_routine_t *mom_make_item_routine (const char *name, unsigned space);
 // return NULL if routine not found
 momit_routine_t *mom_try_make_item_routine (const char *name, unsigned space);
+#define mom_create__routine(Name,Uid) \
+  mom_make_item_routine_of_uuid(Uid,#Name,MONIMELT_SPACE_ROOT)
 
 momit_tasklet_t *mom_make_item_tasklet_of_uuid (uuid_t uid, unsigned space);
 momit_tasklet_t *mom_make_item_tasklet ();

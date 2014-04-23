@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 Apr 22
+-- state-monimelt dump 2014 Apr 23
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -45,6 +45,7 @@ INSERT INTO t_item VALUES('a75bef70-596b-4fc5-99ca-e60b5287feec','json_name','{"
 INSERT INTO t_item VALUES('abdd3eea-22da-4e09-b1f8-a05b80783924','json_name','{"jtype":"json_name_item","name":"name"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('b039b53b-5198-4770-ac05-7eeded55fdeb','json_name','{"jtype":"json_name_item","name":"tasklet_item"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('b29bc8a3-1517-4a28-b566-39e447c80250','json_name','{"jtype":"json_name_item","name":"attributes"}','{"attributes":null,"content":null}');
+INSERT INTO t_item VALUES('b5a0ef97-7eb2-4cf3-924e-8bc5de7e49bc','queue','{"jtype":"queue_item"}','{"attributes":null,"queue":[],"content":null}');
 INSERT INTO t_item VALUES('b9664990-11a1-49a5-bf59-be714626ed6d','json_name','{"jtype":"json_name_item","name":"jtype"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('c52ead7c-63bf-4e65-a873-486de4e4db41','json_name','{"jtype":"json_name_item","name":"tuple"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('cddd3209-6d5f-4ac5-ada3-fc9ed0053728','json_name','{"jtype":"json_name_item","name":"routine_item"}','{"attributes":null,"content":null}');
@@ -56,6 +57,7 @@ INSERT INTO t_item VALUES('e6727e08-6232-4beb-8c17-3b9cdf5045fb','json_name','{"
 INSERT INTO t_item VALUES('eaada55e-bcfb-4b87-b335-65b31ed2fdac','json_name','{"jtype":"json_name_item","name":"queue"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('f8a3568d-ae4a-4486-a362-577e0ec91474','json_name','{"jtype":"json_name_item","name":"closure"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('f99051be-30bf-4efc-8c35-b4344c4e6d2c','json_name','{"jtype":"json_name_item","name":"node"}','{"attributes":null,"content":null}');
+INSERT INTO t_name VALUES('agenda','b5a0ef97-7eb2-4cf3-924e-8bc5de7e49bc','.');
 INSERT INTO t_name VALUES('assoc_item','326c3317-5c04-47dc-bf74-f4fc776eab72','.');
 INSERT INTO t_name VALUES('associations','670d0025-401e-4c78-9d8b-62fad2ad26ec','.');
 INSERT INTO t_name VALUES('attr','e29d6d73-6a40-41bd-bfd4-df5183ffc764','.');
