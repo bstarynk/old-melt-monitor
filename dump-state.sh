@@ -50,6 +50,8 @@ sqlite3 state-monimelt.dbsqlite >> $tempdump <<EOF
   SELECT * FROM t_item ORDER BY uid;
 .mode insert t_name
   SELECT * FROM t_name ORDER BY name;
+.mode insert t_param
+  SELECT * FROM t_param ORDER BY parname;
 EOF
 echo 'COMMIT;' >> $tempdump
 echo "-- state-monimelt end dump " >> $tempdump

@@ -1096,6 +1096,8 @@ dumpglobal_cb (const mom_anyitem_t * itm, const momstring_t * name,
 		    sqlite3_errmsg (mom_dbsqlite));
 }
 
+#warning should manage ie fetch and retrieve parameters using t_param table
+
 // we may want to avoid too long lines in the dumps. See
 // http://programmers.stackexchange.com/q/236542/40065
 #define BIGDUMP_THRESHOLD 250
@@ -1121,12 +1123,19 @@ mom_full_dump (const char *state)
        " nuid VARCHAR(38) UNIQUE NOT NULL REFERENCES t_id(uid),"
        " spacenam VARCHAR(30) NOT NULL)", NULL, NULL, &errmsg))
     MONIMELT_FATAL ("failed to create t_name: %s", errmsg);
+  if (sqlite3_exec
+      (mom_dbsqlite,
+       "CREATE TABLE IF NOT EXISTS t_param (parname VARCHAR(35) PRIMARY KEY ASC NOT NULL UNIQUE,"
+       " parvalue TEXT NOT NULL)", NULL, NULL, &errmsg))
+    MONIMELT_FATAL ("failed to create t_param: %s", errmsg);
   if (sqlite3_exec (mom_dbsqlite, "BEGIN TRANSACTION", NULL, NULL, &errmsg))
     MONIMELT_FATAL ("failed to BEGIN TRANSACTION: %s", errmsg);
   if (sqlite3_exec (mom_dbsqlite, "DELETE FROM t_name", NULL, NULL, &errmsg))
     MONIMELT_FATAL ("failed to DELETE FROM t_name: %s", errmsg);
   if (sqlite3_exec (mom_dbsqlite, "DELETE FROM t_item", NULL, NULL, &errmsg))
     MONIMELT_FATAL ("failed to DELETE FROM t_item: %s", errmsg);
+  if (sqlite3_exec (mom_dbsqlite, "DELETE FROM t_param", NULL, NULL, &errmsg))
+    MONIMELT_FATAL ("failed to DELETE FROM t_param: %s", errmsg);
   mom_dumper_initialize (&dmp);
   sqlite3_stmt *stmt = NULL;
   if (sqlite3_prepare_v2 (mom_dbsqlite,

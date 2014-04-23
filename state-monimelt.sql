@@ -20,6 +20,7 @@
 BEGIN TRANSACTION;
 CREATE TABLE t_item (uid VARCHAR(38) PRIMARY KEY ASC NOT NULL UNIQUE, type VARCHAR(60) NOT NULL, jbuild TEXT NOT NULL, jfill TEXT NOT NULL);
 CREATE TABLE t_name (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, nuid VARCHAR(38) UNIQUE NOT NULL REFERENCES t_id(uid), spacenam VARCHAR(30) NOT NULL);
+CREATE TABLE t_param (parname VARCHAR(35) PRIMARY KEY ASC NOT NULL UNIQUE, parvalue TEXT NOT NULL);
 -- state-monimelt tables contents
 INSERT INTO t_item VALUES('03c1ace3-3293-43bb-9541-19b4357cbc3c','json_name','{"jtype":"json_name_item","name":"conn"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('11da23ab-3b9e-4ea0-bc13-4a9aa46e2995','json_name','{"jtype":"json_name_item","name":"json_object"}','{"attributes":null,"content":null}');
