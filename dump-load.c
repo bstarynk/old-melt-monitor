@@ -899,6 +899,83 @@ rootspace_store_build_fill (mom_anyitem_t * itm,
 }
 
 
+#warning should manage ie fetch and store parameters using t_param table
+
+static sqlite3_stmt *fetchparam_stmt;
+static const char *
+fetch_param (const char *parname)
+{
+  char *res = NULL;
+  if (!parname || !parname[0])
+    return NULL;
+  if (MONIMELT_UNLIKELY (fetchparam_stmt == NULL))
+    {
+      if (sqlite3_prepare_v2 (mom_dbsqlite,
+			      "SELECT parvalue FROM t_param WHERE parname = ?1",
+			      -1, &fetchparam_stmt, NULL))
+	MONIMELT_FATAL ("failed to prepare fetchparam query: %s",
+			sqlite3_errmsg (mom_dbsqlite));
+    }
+  // parname at index 1
+  if (sqlite3_bind_text (fetchparam_stmt, 1, parname, -1, SQLITE_STATIC))
+    MONIMELT_FATAL ("failed to bind parrame: %s",
+		    sqlite3_errmsg (mom_dbsqlite));
+  int stepres = sqlite3_step (fetchparam_stmt);
+  if (stepres == SQLITE_ROW)
+    {
+      res =
+	GC_STRDUP ((const char *) sqlite3_column_text (fetchparam_stmt, 1));
+      stepres = sqlite3_step (fetchparam_stmt);
+    }
+  sqlite3_reset (fetchparam_stmt);
+  if (stepres == SQLITE_DONE)
+    return res;
+  else
+    MONIMELT_FATAL ("failed to fetch parameter %s: %s (%d:%s)",
+		    parname, sqlite3_errmsg (mom_dbsqlite),
+		    stepres, sqlite3_errstr (stepres));
+}
+
+static sqlite3_stmt *putparam_stmt;
+static void param_printf (const char *paramname, const char *fmt, ...)
+  __attribute__ ((format (printf, 2, 3)));
+static void
+param_printf (const char *paramname, const char *fmt, ...)
+{
+  if (!paramname || !paramname[0])
+    return;
+  char *buf = NULL;
+  va_list args;
+  va_start (args, fmt);
+  asprintf (&buf, fmt, args);
+  va_end (args);
+  if (MONIMELT_UNLIKELY (putparam_stmt == NULL))
+    {
+      if (sqlite3_prepare_v2 (mom_dbsqlite,
+			      "INSERT INTO t_param (parname, parvalue) VALUES (?1, ?2)",
+			      -1, &putparam_stmt, NULL))
+	MONIMELT_FATAL ("failed to prepare putparam query: %s",
+			sqlite3_errmsg (mom_dbsqlite));
+    }
+  // parname at index 1
+  if (sqlite3_bind_text (putparam_stmt, 1, paramname, -1, SQLITE_STATIC))
+    MONIMELT_FATAL ("failed to bind parame: %s",
+		    sqlite3_errmsg (mom_dbsqlite));
+  // buf at index 2
+  if (sqlite3_bind_text (putparam_stmt, 2, buf, -1, SQLITE_STATIC))
+    MONIMELT_FATAL ("failed to bind buf: %s", sqlite3_errmsg (mom_dbsqlite));
+  // now insert the param
+  int stepres = sqlite3_step (putparam_stmt);
+  if (stepres != SQLITE_DONE)
+    MONIMELT_FATAL ("failed to insert parameter %s: %s (%d:%s)",
+		    paramname, sqlite3_errmsg (mom_dbsqlite),
+		    stepres, sqlite3_errstr (stepres));
+  if (sqlite3_reset (putparam_stmt))
+    MONIMELT_FATAL ("failed to reset put parameter statement: %s",
+		    sqlite3_errmsg (mom_dbsqlite));
+  free (buf);
+}
+
 static struct momspacedescr_st mom_root_space_descr = {
   .spa_magic = SPACE_MAGIC,
   .spa_name = MONIMELT_ROOT_SPACE_NAME,
@@ -1054,6 +1131,8 @@ mom_initial_load (const char *state)
       if (!ld.ldr_qfirst)
 	ld.ldr_qlast = NULL;
     }
+  if (fetchparam_stmt)
+    sqlite3_finalize (fetchparam_stmt), fetchparam_stmt = NULL;
   sqlite3_close (mom_dbsqlite);
   mom_dbsqlite = NULL;
 }
@@ -1095,8 +1174,6 @@ dumpglobal_cb (const mom_anyitem_t * itm, const momstring_t * name,
     MONIMELT_FATAL ("failed to reset statement: %s",
 		    sqlite3_errmsg (mom_dbsqlite));
 }
-
-#warning should manage ie fetch and retrieve parameters using t_param table
 
 // we may want to avoid too long lines in the dumps. See
 // http://programmers.stackexchange.com/q/236542/40065
@@ -1210,6 +1287,10 @@ mom_full_dump (const char *state)
     }
   if (buildfill_stmt)
     sqlite3_finalize (buildfill_stmt), buildfill_stmt = NULL;
+  if (fetchparam_stmt)
+    sqlite3_finalize (fetchparam_stmt), fetchparam_stmt = NULL;
+  if (putparam_stmt)
+    sqlite3_finalize (putparam_stmt), putparam_stmt = NULL;
   if (sqlite3_exec (mom_dbsqlite, "END TRANSACTION", NULL, NULL, &errmsg))
     MONIMELT_FATAL ("failed to END TRANSACTION: %s", errmsg);
   sqlite3_close_v2 (mom_dbsqlite), mom_dbsqlite = NULL;

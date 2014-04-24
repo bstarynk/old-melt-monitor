@@ -43,9 +43,13 @@
 #include <errno.h>
 #include <gc/gc.h>
 #include <sqlite3.h>
+#include <fastcgi.h>
+#include <fcgiapp.h>
 #include <uuid/uuid.h>
 #include <glib.h>
 #include <gmodule.h>
+// Gmime from http://spruce.sourceforge.net/gmime/
+#include <gmime/gmime.h>
 
 
 
