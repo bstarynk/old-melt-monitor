@@ -621,7 +621,10 @@ mom_scan_any_item_data (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
       momusize_t nba = iat->nbattr;
       for (unsigned ix = 0; ix < nba; ix++)
 	{
-	  mom_dump_add_item (dmp, iat->itattrtab[ix].aten_itm);
+	  mom_anyitem_t *curat = iat->itattrtab[ix].aten_itm;
+	  if (!curat || !curat->i_space)
+	    continue;
+	  mom_dump_add_item (dmp, curat);
 	  mom_dump_scan_value (dmp, iat->itattrtab[ix].aten_val);
 	}
     }
