@@ -358,7 +358,6 @@ mom_inform_at (const char *fil, int lin, const char *fmt, ...)
   char timbuf[64];
   char *bigbuf = NULL;
   struct tm tm = { };
-  int err = errno;
   time_t now = 0;
   memset (buf, 0, sizeof (buf));
   memset (thrname, 0, sizeof (thrname));

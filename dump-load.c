@@ -792,64 +792,84 @@ setintptr_cb (void *data, int nbcol, char **colarrs, char **colnames)
   return 0;
 }
 
-static int
-setgcdup_cb (void *data, int nbcol, char **colarrs, char **colnames)
-{
-  if (nbcol == 1 && data && colarrs[0])
-    {
-      char **s = data;
-      if (s)
-	{
-	  if (colarrs[0][0])
-	    *s = GC_STRDUP (colarrs[0]);
-	  else
-	    *s = NULL;
-	}
-    }
-  return 0;
-}
 
 static sqlite3 *mom_dbsqlite = NULL;
 
+static sqlite3_stmt *fetchbuild_loadstmt;
 // fetch a GC_STRDUP-ed string to build an item of given uuid string
 static char *
 rootspace_fetch_build (unsigned spanum, const char *uuidstr)
 {
-  char sqlbuf[128];
   char *res = NULL;
-  char *errmsg = NULL;
-  memset (sqlbuf, 0, sizeof (sqlbuf));
   assert (spanum == MONIMELT_SPACE_ROOT);
   assert (mom_dbsqlite != NULL);
-  assert (strchr (uuidstr, '\'') == NULL);
-  snprintf (sqlbuf, sizeof (sqlbuf),
-	    "SELECT jbuild FROM t_items WHERE uid='%s'", uuidstr);
-  assert (strlen (sqlbuf) + 2 < sizeof (sqlbuf));
-  if (sqlite3_exec (mom_dbsqlite, sqlbuf, setgcdup_cb, &res, &errmsg))
-    MONIMELT_FATAL ("failed build fetch with %s: %s", sqlbuf, errmsg);
-  return res;
+  if (MONIMELT_UNLIKELY (fetchbuild_loadstmt == NULL))
+    {
+      if (sqlite3_prepare_v2 (mom_dbsqlite,
+			      "SELECT jbuild FROM t_items WHERE uid = ?1",
+			      -1, &fetchbuild_loadstmt, NULL))
+	MONIMELT_FATAL ("failed to prepare fetchbuild query: %s",
+			sqlite3_errmsg (mom_dbsqlite));
+    };
+  // uuidstr at index 1
+  if (sqlite3_bind_text (fetchbuild_loadstmt, 1, uuidstr, -1, SQLITE_STATIC))
+    MONIMELT_FATAL ("failed to bind uuidstr: %s",
+		    sqlite3_errmsg (mom_dbsqlite));
+  int stepres = sqlite3_step (fetchbuild_loadstmt);
+  if (stepres == SQLITE_ROW)
+    {
+      res =
+	GC_STRDUP ((const char *)
+		   sqlite3_column_text (fetchbuild_loadstmt, 1));
+      stepres = sqlite3_step (fetchbuild_loadstmt);
+    }
+  sqlite3_reset (fetchbuild_loadstmt);
+  if (stepres == SQLITE_DONE)
+    return res;
+  else
+    MONIMELT_FATAL ("failed to fetch build %s: %s (%d:%s)",
+		    uuidstr, sqlite3_errmsg (mom_dbsqlite),
+		    stepres, sqlite3_errstr (stepres));
 }
 
+static sqlite3_stmt *fetchfill_loadstmt;
 // fetch a GC_STRDUP-ed string to fill an item of given uuid string
 static char *
 rootspace_fetch_fill (unsigned spanum, const char *uuidstr)
 {
-  char sqlbuf[128];
   char *res = NULL;
-  char *errmsg = NULL;
-  memset (sqlbuf, 0, sizeof (sqlbuf));
   assert (spanum == MONIMELT_SPACE_ROOT);
   assert (mom_dbsqlite != NULL);
-  assert (strchr (uuidstr, '\'') == NULL);
-  snprintf (sqlbuf, sizeof (sqlbuf),
-	    "SELECT jfill FROM t_items WHERE uid='%s'", uuidstr);
-  assert (strlen (sqlbuf) + 2 < sizeof (sqlbuf));
-  if (sqlite3_exec (mom_dbsqlite, sqlbuf, setgcdup_cb, &res, &errmsg))
-    MONIMELT_FATAL ("failed build fetch with %s: %s", sqlbuf, errmsg);
-  return res;
+  if (MONIMELT_UNLIKELY (fetchfill_loadstmt == NULL))
+    {
+      if (sqlite3_prepare_v2 (mom_dbsqlite,
+			      "SELECT jfill FROM t_items WHERE uid = ?1",
+			      -1, &fetchfill_loadstmt, NULL))
+	MONIMELT_FATAL ("failed to prepare fetchfill query: %s",
+			sqlite3_errmsg (mom_dbsqlite));
+    };
+  // uuidstr at index 1
+  if (sqlite3_bind_text (fetchfill_loadstmt, 1, uuidstr, -1, SQLITE_STATIC))
+    MONIMELT_FATAL ("failed to bind uuidstr: %s",
+		    sqlite3_errmsg (mom_dbsqlite));
+  int stepres = sqlite3_step (fetchfill_loadstmt);
+  if (stepres == SQLITE_ROW)
+    {
+      res =
+	GC_STRDUP ((const char *)
+		   sqlite3_column_text (fetchfill_loadstmt, 1));
+      stepres = sqlite3_step (fetchfill_loadstmt);
+    }
+  sqlite3_reset (fetchfill_loadstmt);
+  if (stepres == SQLITE_DONE)
+    return res;
+  else
+    MONIMELT_FATAL ("failed to fetch fill %s: %s (%d:%s)",
+		    uuidstr, sqlite3_errmsg (mom_dbsqlite),
+		    stepres, sqlite3_errstr (stepres));
 }
 
-static sqlite3_stmt *buildfill_stmt;
+static sqlite3_stmt *buildfill_dumpstmt;
 static void
 rootspace_store_build_fill (mom_anyitem_t * itm,
 			    const char *buildstr, const char *fillstr)
@@ -859,41 +879,41 @@ rootspace_store_build_fill (mom_anyitem_t * itm,
   assert (itm && itm->typnum > momty__itemlowtype
 	  && itm->typnum < momty__last);
   uuid_unparse (itm->i_uuid, ustr);
-  if (MONIMELT_UNLIKELY (buildfill_stmt == NULL))
+  if (MONIMELT_UNLIKELY (buildfill_dumpstmt == NULL))
     {
       if (sqlite3_prepare_v2 (mom_dbsqlite,
 			      "INSERT INTO t_item (uid, type, jbuild, jfill) VALUES (?1, ?2, ?3, ?4)",
-			      -1, &buildfill_stmt, NULL))
+			      -1, &buildfill_dumpstmt, NULL))
 	MONIMELT_FATAL ("failed to prepare build&fill insertion: %s",
 			sqlite3_errmsg (mom_dbsqlite));
     }
   // uidstr at index 1
-  if (sqlite3_bind_text (buildfill_stmt, 1, ustr, -1, SQLITE_STATIC))
+  if (sqlite3_bind_text (buildfill_dumpstmt, 1, ustr, -1, SQLITE_STATIC))
     MONIMELT_FATAL ("failed to bind uuid: %s", sqlite3_errmsg (mom_dbsqlite));
   // type at index 2
   const struct momitemtypedescr_st *typdesc =
     mom_typedescr_array[itm->typnum];
   assert (typdesc != NULL && typdesc->ityp_magic == ITEMTYPE_MAGIC);
   if (sqlite3_bind_text
-      (buildfill_stmt, 2, typdesc->ityp_name, -1, SQLITE_STATIC))
+      (buildfill_dumpstmt, 2, typdesc->ityp_name, -1, SQLITE_STATIC))
     MONIMELT_FATAL ("failed to bind type: %s", sqlite3_errmsg (mom_dbsqlite));
   // build string at index 3
   if (sqlite3_bind_text
-      (buildfill_stmt, 3, buildstr ? buildstr : "", -1, SQLITE_STATIC))
+      (buildfill_dumpstmt, 3, buildstr ? buildstr : "", -1, SQLITE_STATIC))
     MONIMELT_FATAL ("failed to bind build string: %s",
 		    sqlite3_errmsg (mom_dbsqlite));
   // fill string at index 4
   if (sqlite3_bind_text
-      (buildfill_stmt, 4, fillstr ? fillstr : "", -1, SQLITE_STATIC))
+      (buildfill_dumpstmt, 4, fillstr ? fillstr : "", -1, SQLITE_STATIC))
     MONIMELT_FATAL ("failed to bind fill string: %s",
 		    sqlite3_errmsg (mom_dbsqlite));
   // now insert the build & fill
-  int stepres = sqlite3_step (buildfill_stmt);
+  int stepres = sqlite3_step (buildfill_dumpstmt);
   if (stepres != SQLITE_DONE)
     MONIMELT_FATAL ("failed to insert build & fill of uid %s: %s (%d:%s)",
 		    ustr, sqlite3_errmsg (mom_dbsqlite),
 		    stepres, sqlite3_errstr (stepres));
-  if (sqlite3_reset (buildfill_stmt))
+  if (sqlite3_reset (buildfill_dumpstmt))
     MONIMELT_FATAL ("failed to reset build & fill statement: %s",
 		    sqlite3_errmsg (mom_dbsqlite));
 }
@@ -901,33 +921,34 @@ rootspace_store_build_fill (mom_anyitem_t * itm,
 
 #warning should manage ie fetch and store parameters using t_param table
 
-static sqlite3_stmt *fetchparam_stmt;
+static sqlite3_stmt *fetchparam_loadstmt;
 static const char *
 fetch_param (const char *parname)
 {
   char *res = NULL;
   if (!parname || !parname[0])
     return NULL;
-  if (MONIMELT_UNLIKELY (fetchparam_stmt == NULL))
+  if (MONIMELT_UNLIKELY (fetchparam_loadstmt == NULL))
     {
       if (sqlite3_prepare_v2 (mom_dbsqlite,
 			      "SELECT parvalue FROM t_param WHERE parname = ?1",
-			      -1, &fetchparam_stmt, NULL))
+			      -1, &fetchparam_loadstmt, NULL))
 	MONIMELT_FATAL ("failed to prepare fetchparam query: %s",
 			sqlite3_errmsg (mom_dbsqlite));
     }
   // parname at index 1
-  if (sqlite3_bind_text (fetchparam_stmt, 1, parname, -1, SQLITE_STATIC))
+  if (sqlite3_bind_text (fetchparam_loadstmt, 1, parname, -1, SQLITE_STATIC))
     MONIMELT_FATAL ("failed to bind parrame: %s",
 		    sqlite3_errmsg (mom_dbsqlite));
-  int stepres = sqlite3_step (fetchparam_stmt);
+  int stepres = sqlite3_step (fetchparam_loadstmt);
   if (stepres == SQLITE_ROW)
     {
       res =
-	GC_STRDUP ((const char *) sqlite3_column_text (fetchparam_stmt, 1));
-      stepres = sqlite3_step (fetchparam_stmt);
+	GC_STRDUP ((const char *)
+		   sqlite3_column_text (fetchparam_loadstmt, 1));
+      stepres = sqlite3_step (fetchparam_loadstmt);
     }
-  sqlite3_reset (fetchparam_stmt);
+  sqlite3_reset (fetchparam_loadstmt);
   if (stepres == SQLITE_DONE)
     return res;
   else
@@ -936,7 +957,7 @@ fetch_param (const char *parname)
 		    stepres, sqlite3_errstr (stepres));
 }
 
-static sqlite3_stmt *putparam_stmt;
+static sqlite3_stmt *putparam_dumpstmt;
 static void param_printf (const char *paramname, const char *fmt, ...)
   __attribute__ ((format (printf, 2, 3)));
 static void
@@ -949,28 +970,28 @@ param_printf (const char *paramname, const char *fmt, ...)
   va_start (args, fmt);
   asprintf (&buf, fmt, args);
   va_end (args);
-  if (MONIMELT_UNLIKELY (putparam_stmt == NULL))
+  if (MONIMELT_UNLIKELY (putparam_dumpstmt == NULL))
     {
       if (sqlite3_prepare_v2 (mom_dbsqlite,
 			      "INSERT INTO t_param (parname, parvalue) VALUES (?1, ?2)",
-			      -1, &putparam_stmt, NULL))
+			      -1, &putparam_dumpstmt, NULL))
 	MONIMELT_FATAL ("failed to prepare putparam query: %s",
 			sqlite3_errmsg (mom_dbsqlite));
     }
   // parname at index 1
-  if (sqlite3_bind_text (putparam_stmt, 1, paramname, -1, SQLITE_STATIC))
+  if (sqlite3_bind_text (putparam_dumpstmt, 1, paramname, -1, SQLITE_STATIC))
     MONIMELT_FATAL ("failed to bind parame: %s",
 		    sqlite3_errmsg (mom_dbsqlite));
   // buf at index 2
-  if (sqlite3_bind_text (putparam_stmt, 2, buf, -1, SQLITE_STATIC))
+  if (sqlite3_bind_text (putparam_dumpstmt, 2, buf, -1, SQLITE_STATIC))
     MONIMELT_FATAL ("failed to bind buf: %s", sqlite3_errmsg (mom_dbsqlite));
   // now insert the param
-  int stepres = sqlite3_step (putparam_stmt);
+  int stepres = sqlite3_step (putparam_dumpstmt);
   if (stepres != SQLITE_DONE)
     MONIMELT_FATAL ("failed to insert parameter %s: %s (%d:%s)",
 		    paramname, sqlite3_errmsg (mom_dbsqlite),
 		    stepres, sqlite3_errstr (stepres));
-  if (sqlite3_reset (putparam_stmt))
+  if (sqlite3_reset (putparam_dumpstmt))
     MONIMELT_FATAL ("failed to reset put parameter statement: %s",
 		    sqlite3_errmsg (mom_dbsqlite));
   free (buf);
@@ -1131,8 +1152,12 @@ mom_initial_load (const char *state)
       if (!ld.ldr_qfirst)
 	ld.ldr_qlast = NULL;
     }
-  if (fetchparam_stmt)
-    sqlite3_finalize (fetchparam_stmt), fetchparam_stmt = NULL;
+  if (fetchparam_loadstmt)
+    sqlite3_finalize (fetchparam_loadstmt), fetchparam_loadstmt = NULL;
+  if (fetchbuild_loadstmt)
+    sqlite3_finalize (fetchbuild_loadstmt), fetchbuild_loadstmt = NULL;
+  if (fetchfill_loadstmt)
+    sqlite3_finalize (fetchfill_loadstmt), fetchbuild_loadstmt = NULL;
   sqlite3_close (mom_dbsqlite);
   mom_dbsqlite = NULL;
 }
@@ -1285,12 +1310,10 @@ mom_full_dump (const char *state)
 	dmp.dmp_qlast = NULL;
       nbdumpeditems++;
     }
-  if (buildfill_stmt)
-    sqlite3_finalize (buildfill_stmt), buildfill_stmt = NULL;
-  if (fetchparam_stmt)
-    sqlite3_finalize (fetchparam_stmt), fetchparam_stmt = NULL;
-  if (putparam_stmt)
-    sqlite3_finalize (putparam_stmt), putparam_stmt = NULL;
+  if (buildfill_dumpstmt)
+    sqlite3_finalize (buildfill_dumpstmt), buildfill_dumpstmt = NULL;
+  if (putparam_dumpstmt)
+    sqlite3_finalize (putparam_dumpstmt), putparam_dumpstmt = NULL;
   if (sqlite3_exec (mom_dbsqlite, "END TRANSACTION", NULL, NULL, &errmsg))
     MONIMELT_FATAL ("failed to END TRANSACTION: %s", errmsg);
   sqlite3_close_v2 (mom_dbsqlite), mom_dbsqlite = NULL;
