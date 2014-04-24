@@ -740,22 +740,28 @@ momval_t
 mom_attributes_emit_json (struct mom_dumper_st * dmp,
 			  struct mom_itemattributes_st * iat)
 {
+  unsigned cntat = 0;
   if (!iat)
     return MONIMELT_NULLV;
   momusize_t nbat = iat->nbattr;
   if (nbat < TINY_MAX)
     {
-      momval_t jatv[TINY_MAX];
+      momval_t jatv[TINY_MAX] = { };
       for (unsigned ix = 0; ix < nbat; ix++)
-	jatv[ix] =
-	  (momval_t) mom_make_json_object
-	  (MOMJSON_ENTRY, mom_item__attr,
-	   raw_dump_emit_json (dmp, (momval_t) iat->itattrtab[ix].aten_itm),
-	   MOMJSON_ENTRY, mom_item__val, raw_dump_emit_json (dmp,
-							     iat->itattrtab
-							     [ix].aten_val),
-	   MOMJSON_END);
-      return (momval_t) mom_make_json_array_count (nbat, jatv);
+	{
+	  momval_t jcurat =
+	    raw_dump_emit_json (dmp, (momval_t) iat->itattrtab[ix].aten_itm);
+	  momval_t jcurva =
+	    raw_dump_emit_json (dmp, iat->itattrtab[ix].aten_val);
+	  if (!jcurat.ptr || !jcurva.ptr)
+	    continue;
+	  jatv[cntat] =
+	    (momval_t) mom_make_json_object
+	    (MOMJSON_ENTRY, mom_item__attr, jcurat,
+	     MOMJSON_ENTRY, mom_item__val, jcurva, MOMJSON_END);
+	  cntat++;
+	}
+      return (momval_t) mom_make_json_array_count (cntat, jatv);
     }
   else
     {
@@ -765,15 +771,20 @@ mom_attributes_emit_json (struct mom_dumper_st * dmp,
 			(int) nbat);
       memset (jatarr, 0, nbat * sizeof (momval_t));
       for (unsigned ix = 0; ix < nbat; ix++)
-	jatarr[ix] =
-	  (momval_t) mom_make_json_object
-	  (MOMJSON_ENTRY, mom_item__attr,
-	   raw_dump_emit_json (dmp, (momval_t) iat->itattrtab[ix].aten_itm),
-	   MOMJSON_ENTRY, mom_item__val, raw_dump_emit_json (dmp,
-							     iat->itattrtab
-							     [ix].aten_val),
-	   MOMJSON_END);
-      momval_t res = (momval_t) mom_make_json_array_count (nbat, jatarr);
+	{
+	  momval_t jcurat =
+	    raw_dump_emit_json (dmp, (momval_t) iat->itattrtab[ix].aten_itm);
+	  momval_t jcurva =
+	    raw_dump_emit_json (dmp, iat->itattrtab[ix].aten_val);
+	  if (!jcurat.ptr || !jcurva.ptr)
+	    continue;
+	  jatarr[cntat] =
+	    (momval_t) mom_make_json_object
+	    (MOMJSON_ENTRY, mom_item__attr, jcurat,
+	     MOMJSON_ENTRY, mom_item__val, jcurva, MOMJSON_END);
+	  cntat++;
+	}
+      momval_t res = (momval_t) mom_make_json_array_count (cntat, jatarr);
       GC_FREE (jatarr);
       return res;
     }

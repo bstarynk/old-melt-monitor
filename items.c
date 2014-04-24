@@ -2134,29 +2134,34 @@ assoc_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
   if (MONIMELT_UNLIKELY (!jarr))
     MONIMELT_FATAL ("failed to allocate %d json", (int) count);
   memset (jarr, 0, count * sizeof (momval_t));
+  unsigned nbjent = 0;
   for (unsigned ix = 0; ix < count; ix++)
-    jarr[ix] = (momval_t) mom_make_json_object (	// the attribute
-						 MOMJSON_ENTRY,
-						 mom_item__attr,
-						 mom_dump_emit_json (dmp,
-								     (momval_t)
-								     entarr
-								     [ix].aten_itm),
-						 // the value
-						 MOMJSON_ENTRY, mom_item__val,
-						 mom_dump_emit_json (dmp,
-								     (momval_t)
-								     entarr
-								     [ix].aten_val),
-						 // that's all
-						 MOMJSON_END);
+    {
+      momval_t jcurat = mom_dump_emit_json (dmp, (momval_t)
+					    entarr[ix].aten_itm);
+      if (!jcurat.ptr)
+	continue;
+      momval_t jcurva = mom_dump_emit_json (dmp, (momval_t)
+					    entarr[ix].aten_val);
+      if (!jcurva.ptr)
+	continue;
+      jarr[nbjent] = (momval_t) mom_make_json_object (	// the attribute
+						       MOMJSON_ENTRY,
+						       mom_item__attr, jcurat,
+						       // the value
+						       MOMJSON_ENTRY,
+						       mom_item__val, jcurva,
+						       // that's all
+						       MOMJSON_END);
+      nbjent++;
+    }
   momval_t jres = (momval_t) mom_make_json_object
     // attributes
     (MOMJSON_ENTRY, mom_item__attributes,
      mom_attributes_emit_json (dmp, itm->i_attrs),
      // assocations
      MOMJSON_ENTRY, mom_item__associations,
-     mom_make_json_array_count (count, jarr),
+     mom_make_json_array_count (nbjent, jarr),
      // content
      MOMJSON_ENTRY, mom_item__content, mom_dump_emit_json (dmp,
 							   itm->i_content),
@@ -2526,7 +2531,12 @@ queue_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
   unsigned nb = 0;
   for (struct mom_itqueue_st * iq = queitm->itq_first; iq != NULL && nb < len;
        iq = iq->iq_next)
-    jarr[nb++] = mom_dump_emit_json (dmp, (momval_t) iq->iq_item);
+    {
+      momval_t jcuritm = mom_dump_emit_json (dmp, (momval_t) iq->iq_item);
+      if (!jcuritm.ptr)
+	continue;
+      jarr[nb++] = jcuritm;
+    }
   momval_t jres = (momval_t) mom_make_json_object
     // attributes
     (MOMJSON_ENTRY, mom_item__attributes,
