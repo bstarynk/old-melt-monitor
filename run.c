@@ -79,12 +79,18 @@ work_loop ()
       else
 	{
 	  pthread_mutex_lock (&mom_run_mtx);
-	  if (working_flag)
+	  working = working_flag;
+	  if (working)
 	    pthread_cond_wait (&mom_run_changed_cond, &mom_run_mtx);
 	  pthread_mutex_unlock (&mom_run_mtx);
 	}
     }
   while (working);
+  pthread_mutex_lock (&mom_run_mtx);
+  cur_worker->work_index = 0;
+  pthread_mutex_unlock (&mom_run_mtx);
+  pthread_cond_broadcast (&mom_run_changed_cond);
+
 }
 
 static void *
@@ -100,6 +106,7 @@ work_cb (void *ad)
     MONIMELT_FATAL ("bad agenda");
   cur_worker = wd;
   work_loop ();
+  memset (wd, 0, sizeof (struct momworkdata_st));
   cur_worker = NULL;
   GC_unregister_my_thread ();
 }
@@ -122,4 +129,24 @@ mom_run (void)
     }
   working_flag = true;
   pthread_mutex_unlock (&mom_run_mtx);
+}
+
+void
+mom_stop (void)
+{
+  bool working = false;
+  int nb_workers = 0;
+  do
+    {
+      pthread_mutex_lock (&mom_run_mtx);
+      working_flag = false;
+      for (unsigned ix = 1; ix <= mom_nb_workers; ix++)
+	if (workers[ix].work_magic == WORK_MAGIC
+	    && workers[ix].work_index == ix)
+	  nb_workers++;
+      if (nb_workers > 0)
+	pthread_cond_wait (&mom_run_changed_cond, &mom_run_mtx);
+      pthread_mutex_unlock (&mom_run_mtx);
+    }
+  while (working && nb_workers > 0);
 }

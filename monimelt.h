@@ -1031,7 +1031,7 @@ pthread_cond_t mom_run_changed_cond;
 
 void mom_run (void);
 typedef void mom_stop_sig_t (void *);
-void mom_stop_then_do (mom_stop_sig_t todo, void *data);
+void mom_stop (void);
 void mom_agenda_add_tasklet_front (momval_t tsk);
 void mom_agenda_add_tasklet_back (momval_t tsk);
 
