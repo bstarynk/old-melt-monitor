@@ -23,6 +23,8 @@
 #define _GNU_SOURCE 1
 #endif /*_GNU_SOURCE*/
 
+#define GC_THREADS 1
+
 #include <features.h>		// GNU things
 #include <assert.h>
 #include <stdio.h>
@@ -1015,5 +1017,22 @@ mom_anyitem_t *mom_item_named_with_string (const char *name,
 
 // get the name of some given item, or else NULL
 const momstring_t *mom_name_of_item (const mom_anyitem_t * item);
+
+
+////////////////
+// run work threads
+
+#define MOM_MIN_WORKERS 2
+#define MOM_MAX_WORKERS 16
+
+unsigned mom_nb_workers;
+pthread_mutex_t mom_run_mtx;
+pthread_cond_t mom_run_changed_cond;
+
+void mom_run (void);
+typedef void mom_stop_sig_t (void *);
+void mom_stop_then_do (mom_stop_sig_t todo, void *data);
+void mom_agenda_add_tasklet_front (momval_t tsk);
+void mom_agenda_add_tasklet_back (momval_t tsk);
 
 #endif /* MONIMELT_INCLUDED_ */

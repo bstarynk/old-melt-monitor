@@ -20,6 +20,8 @@
 
 #include "monimelt.h"
 
+pthread_mutex_t mom_run_mtx = PTHREAD_MUTEX_INITIALIZER;
+
 static int nicelevel = 0;
 static const char *json_file;
 static const char *json_string;
@@ -28,6 +30,8 @@ static bool json_indented;
 static bool daemonize_me;
 static bool want_syslog;
 static bool using_syslog;
+
+
 
 /* Option specification for getopt_long.  */
 enum extraopt_en
