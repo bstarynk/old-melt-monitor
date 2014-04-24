@@ -36,6 +36,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <sched.h>
 #include <syslog.h>
 #include <math.h>
 #include <float.h>
@@ -1029,9 +1030,12 @@ unsigned mom_nb_workers;
 pthread_mutex_t mom_run_mtx;
 pthread_cond_t mom_run_changed_cond;
 
+// start the worker threads
 void mom_run (void);
-typedef void mom_stop_sig_t (void *);
+// ask workers to stop
 void mom_stop (void);
+// wait for stop
+void mom_wait_for_stop (void);
 void mom_agenda_add_tasklet_front (momval_t tsk);
 void mom_agenda_add_tasklet_back (momval_t tsk);
 

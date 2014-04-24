@@ -109,6 +109,7 @@ work_cb (void *ad)
   memset (wd, 0, sizeof (struct momworkdata_st));
   cur_worker = NULL;
   GC_unregister_my_thread ();
+  return NULL;
 }
 
 void
@@ -132,10 +133,43 @@ mom_run (void)
 }
 
 void
+mom_wait_for_stop (void)
+{
+  int nbworkers = 0;
+  bool isworking = false;
+  do
+    {
+      nbworkers = 0;
+      isworking = false;
+      pthread_mutex_lock (&mom_run_mtx);
+      isworking = working_flag;
+      for (unsigned ix = 1; ix <= mom_nb_workers; ix++)
+	if (workers[ix].work_magic == WORK_MAGIC
+	    && workers[ix].work_index == ix)
+	  nbworkers++;
+      if (nbworkers > 0 && isworking)
+	pthread_cond_wait (&mom_run_changed_cond, &mom_run_mtx);
+      pthread_mutex_unlock (&mom_run_mtx);
+      sched_yield ();
+    }
+  while (nbworkers > 0 || isworking);
+  pthread_mutex_lock (&mom_run_mtx);
+  for (unsigned ix = 1; ix <= mom_nb_workers; ix++)
+    {
+      void *ret = NULL;
+      if (workers[ix].work_magic == WORK_MAGIC
+	  && workers[ix].work_index == ix)
+	pthread_join (workers[ix].work_thread, &ret);
+      assert (ret == NULL);
+      workers[ix].work_thread = (pthread_t) 0;
+    }
+  pthread_mutex_unlock (&mom_run_mtx);
+}
+
+void
 mom_stop (void)
 {
-  bool working = false;
-  int nb_workers = 0;
+  int nbworkers = 0;
   do
     {
       pthread_mutex_lock (&mom_run_mtx);
@@ -143,10 +177,11 @@ mom_stop (void)
       for (unsigned ix = 1; ix <= mom_nb_workers; ix++)
 	if (workers[ix].work_magic == WORK_MAGIC
 	    && workers[ix].work_index == ix)
-	  nb_workers++;
-      if (nb_workers > 0)
+	  nbworkers++;
+      if (nbworkers > 0)
 	pthread_cond_wait (&mom_run_changed_cond, &mom_run_mtx);
       pthread_mutex_unlock (&mom_run_mtx);
+      sched_yield ();
     }
-  while (working && nb_workers > 0);
+  while (nbworkers > 0);
 }

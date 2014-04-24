@@ -50,6 +50,7 @@ static const struct option mom_long_options[] = {
   {"version", no_argument, NULL, 'V'},
   {"nice", required_argument, NULL, 'n'},
   {"module", required_argument, NULL, 'M'},
+  {"jobs", required_argument, NULL, 'J'},
   {"daemon", no_argument, NULL, 'd'},
   {"syslog", no_argument, NULL, 'l'},
   // long-only options
@@ -80,6 +81,7 @@ usage (const char *argv0)
   printf ("\t -d | --daemon " " \t# Daemonize.\n");
   printf ("\t -l | --syslog " " \t# Log to syslog.\n");
   printf ("\t -n | --nice <nice-level> " " \t# Set process nice level.\n");
+  printf ("\t -J | --jobs <nb-work-threads> " " \t# Start work threads.\n");
   printf ("\t -M | --module <module-name> <module-arg> "
 	  " \t# load a plugin.\n");
   putchar ('\n');
@@ -148,7 +150,7 @@ parse_program_arguments_and_load_modules (int argc, char **argv)
 {
   int opt = -1;
   option_ctx = g_option_context_new ("monimelt");
-  while ((opt = getopt_long (argc, argv, "hVdln:M:",
+  while ((opt = getopt_long (argc, argv, "hVdln:M:J:",
 			     mom_long_options, NULL)) >= 0)
     {
       switch (opt)
@@ -165,6 +167,10 @@ parse_program_arguments_and_load_modules (int argc, char **argv)
 	  break;
 	case 'd':
 	  daemonize_me = true;
+	  break;
+	case 'J':
+	  if (optarg)
+	    mom_nb_workers = atoi (optarg);
 	  break;
 	case 'M':
 	  {
@@ -504,6 +510,13 @@ main (int argc, char **argv)
   if (load_state_path && load_state_path[0])
     {
       mom_initial_load (load_state_path);
+    }
+  if (mom_nb_workers > 0)
+    {
+      MONIMELT_INFORM ("start %d workers", (int) mom_nb_workers);
+      mom_run ();
+      mom_wait_for_stop ();
+      MONIMELT_INFORM ("done %d workers", (int) mom_nb_workers);
     }
   if (dump_state_path)
     {
