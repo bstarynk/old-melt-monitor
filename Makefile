@@ -17,7 +17,11 @@
 ##  along with GCC; see the file COPYING3.   If not see
 ##  <http://www.gnu.org/licenses/>.
 ################################################################
-PACKAGES= sqlite3 glib-2.0 gmodule-2.0 gmime-2.6
+## sqlite3 is commonly available, see http://sqlite.org
+## glib-2.0 & gmodule-2.0 are from GTK3, see https://developer.gnome.org/glib/
+## gmime is also Gnome related, see https://developer.gnome.org/gmime/
+## onion is not packaged, see https://github.com/davidmoreno/onion
+PACKAGES= sqlite3 glib-2.0 gmodule-2.0 gmime-2.6 
 PKGCONFIG= pkg-config
 CC=gcc
 CFLAGS= -std=gnu11 -Wall $(PREPROFLAGS) $(OPTIMFLAGS)
@@ -26,7 +30,7 @@ CXXFLAGS= -std=c++11 -Wall -pthread  $(PREPROFLAGS) $(OPTIMFLAGS)
 INDENT= indent -gnu
 PREPROFLAGS= $(shell $(PKGCONFIG) --cflags $(PACKAGES))
 OPTIMFLAGS= -Og -g
-LIBES= -luuid -lgc -lfcgi $(shell $(PKGCONFIG) --libs $(PACKAGES)) -lpthread -lm -ldl
+LIBES= -luuid -lgc -lfcgi $(shell $(PKGCONFIG) --libs $(PACKAGES)) -lonion -lpthread -lm -ldl
 SOURCES= $(sort $(filter-out $(wildcard mod_*.c), $(wildcard [a-z]*.c)))
 MODSOURCES= $(sort $(wildcard mod_*.c))
 MODULES= $((patsubst %.c,%.so,$(MODSOURCES))

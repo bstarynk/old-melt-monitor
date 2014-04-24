@@ -53,8 +53,9 @@
 #include <gmodule.h>
 // Gmime from http://spruce.sourceforge.net/gmime/
 #include <gmime/gmime.h>
-
-
+// libonion from http://www.coralbits.com/libonion/ &
+// https://github.com/davidmoreno/onion
+#include <onion/onion.h>
 
 #define MONIMELT_EMPTY ((void*)(-1L))
 enum momvaltype_en
