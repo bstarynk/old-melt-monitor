@@ -33,6 +33,7 @@ MODULES= $((patsubst %.c,%.so,$(MODSOURCES))
 OBJECTS= $(patsubst %.c,%.o,$(SOURCES))
 RM= rm -fv
 .PHONY: all modules clean tests indent
+.SUFFIXES: .so
 all: monimelt make-named modules
 clean:
 	$(RM) *~ *.o *.so *.orig _tmp_* monimelt core*
@@ -50,3 +51,6 @@ make-named: u-make-named.cc
 	$(LINK.cc)  $<  $(LIBES) -o $@
 
 modules: $(MODULES)
+
+%.so: %.c | monimelt.h monimelt-names.h
+	$(COMPILE.c) -fPIC $< -shared -o $@
