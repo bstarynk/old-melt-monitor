@@ -47,7 +47,6 @@
 #include <gc/gc.h>
 #include <sqlite3.h>
 #include <fastcgi.h>
-#include <fcgiapp.h>
 #include <uuid/uuid.h>
 #include <glib.h>
 #include <gmodule.h>
@@ -112,6 +111,10 @@ typedef struct momqueueitem_st momit_queue_t;
 pthread_mutexattr_t mom_normal_mutex_attr;
 pthread_mutexattr_t mom_recursive_mutex_attr;
 GModule *mom_prog_module;
+
+// generated modules start with:
+#define MONIMELT_SHARED_MODULE_PREFIX "momg_"
+void mom_register_dumped_module (const char *modname);
 
 // below TINY_MAX we try to allocate on stack temporary vectors
 #define TINY_MAX 8

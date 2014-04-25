@@ -20,6 +20,9 @@
 
 #include "monimelt.h"
 
+#define MONIMELT_VERSION_PARAM "dump_format_version"
+#define MONIMELT_DUMP_VERSION "MoniMelt2014A"
+
 /// declare the named items
 #define MONIMELT_NAMED(Name,Type,Uid) \
   extern momit_##Type##_t* mom_item__##Name;
@@ -949,8 +952,6 @@ rootspace_store_build_fill (mom_anyitem_t * itm,
 }
 
 
-#warning should manage ie fetch and store parameters using t_param table
-
 static sqlite3_stmt *fetchparam_loadstmt;
 static const char *
 fetch_param (const char *parname)
@@ -1085,16 +1086,22 @@ mom_initialize_spaces (void)
     (momstring_t *) mom_make_string (MONIMELT_ROOT_SPACE_NAME);
 }
 
+static void load_modules ();
 void
 mom_initial_load (const char *state)
 {
   int errcod = sqlite3_open (state, &mom_dbsqlite);
   struct mom_loader_st ld = { };
-  intptr_t nbitems = 0, nbnames = 0;
+  intptr_t nbitems = 0, nbnames = 0, nbmodules = 0;
   if (errcod)
     MONIMELT_FATAL ("failed to open sqlite3 %s:%s", state,
 		    sqlite3_errmsg (mom_dbsqlite));
   char *errmsg = NULL;
+  const char *vers = fetch_param (MONIMELT_VERSION_PARAM);
+  if (MONIMELT_UNLIKELY (vers && strcmp (vers, MONIMELT_DUMP_VERSION)))
+    MONIMELT_FATAL
+      ("in state %s dump format version mismatch got %s expected %s", state,
+       vers, MONIMELT_DUMP_VERSION);
   if (sqlite3_exec
       (mom_dbsqlite, "SELECT COUNT(*) AS nb_items FROM t_item", setintptr_cb,
        &nbitems, &errmsg))
@@ -1103,8 +1110,13 @@ mom_initial_load (const char *state)
 		    "SELECT COUNT(*) AS nb_names FROM t_name",
 		    setintptr_cb, &nbnames, &errmsg))
     MONIMELT_FATAL ("counting names in %s failed with %s", state, errmsg);
-  MONIMELT_INFORM ("state %s has %d items and %d names", state, (int) nbitems,
-		   (int) nbnames);
+  if (sqlite3_exec (mom_dbsqlite,
+		    "SELECT COUNT(*) AS nb_modules FROM t_module",
+		    setintptr_cb, &nbmodules, &errmsg))
+    MONIMELT_FATAL ("counting modules in %s failed with %s", state, errmsg);
+  MONIMELT_INFORM ("state %s has %d items and %d names in %d modules", state,
+		   (int) nbitems, (int) nbnames, (int) nbmodules);
+  load_modules ();
   memset (&ld, 0, sizeof (ld));
   ld.ldr_magic = LOADER_MAGIC;
   struct loadnaming_st ldn;
@@ -1230,6 +1242,9 @@ dumpglobal_cb (const mom_anyitem_t * itm, const momstring_t * name,
 		    sqlite3_errmsg (mom_dbsqlite));
 }
 
+static GTree *dumped_module_tree;
+static void dump_modules (void);
+
 // we may want to avoid too long lines in the dumps. See
 // http://programmers.stackexchange.com/q/236542/40065
 #define BIGDUMP_THRESHOLD 250
@@ -1243,6 +1258,7 @@ mom_full_dump (const char *state)
   if (errcod)
     MONIMELT_FATAL ("failed to open sqlite3 %s:%s", state,
 		    sqlite3_errmsg (mom_dbsqlite));
+  dumped_module_tree = g_tree_new ((GCompareFunc) strcmp);
   if (sqlite3_exec
       (mom_dbsqlite,
        "CREATE TABLE IF NOT EXISTS t_item (uid VARCHAR(38) PRIMARY KEY ASC NOT NULL UNIQUE,"
@@ -1260,6 +1276,11 @@ mom_full_dump (const char *state)
        "CREATE TABLE IF NOT EXISTS t_param (parname VARCHAR(35) PRIMARY KEY ASC NOT NULL UNIQUE,"
        " parvalue TEXT NOT NULL)", NULL, NULL, &errmsg))
     MONIMELT_FATAL ("failed to create t_param: %s", errmsg);
+  if (sqlite3_exec
+      (mom_dbsqlite,
+       "CREATE TABLE IF NOT EXISTS t_module (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE)",
+       NULL, NULL, &errmsg))
+    MONIMELT_FATAL ("failed to create t_module: %s", errmsg);
   if (sqlite3_exec (mom_dbsqlite, "BEGIN TRANSACTION", NULL, NULL, &errmsg))
     MONIMELT_FATAL ("failed to BEGIN TRANSACTION: %s", errmsg);
   if (sqlite3_exec (mom_dbsqlite, "DELETE FROM t_name", NULL, NULL, &errmsg))
@@ -1268,6 +1289,10 @@ mom_full_dump (const char *state)
     MONIMELT_FATAL ("failed to DELETE FROM t_item: %s", errmsg);
   if (sqlite3_exec (mom_dbsqlite, "DELETE FROM t_param", NULL, NULL, &errmsg))
     MONIMELT_FATAL ("failed to DELETE FROM t_param: %s", errmsg);
+  if (sqlite3_exec
+      (mom_dbsqlite, "DELETE FROM t_module", NULL, NULL, &errmsg))
+    MONIMELT_FATAL ("failed to DELETE FROM t_module: %s", errmsg);
+  param_printf (MONIMELT_VERSION_PARAM, "%s", MONIMELT_DUMP_VERSION);
   mom_dumper_initialize (&dmp);
   sqlite3_stmt *stmt = NULL;
   if (sqlite3_prepare_v2 (mom_dbsqlite,
@@ -1340,6 +1365,7 @@ mom_full_dump (const char *state)
 	dmp.dmp_qlast = NULL;
       nbdumpeditems++;
     }
+  dump_modules ();
   if (buildfill_dumpstmt)
     sqlite3_finalize (buildfill_dumpstmt), buildfill_dumpstmt = NULL;
   if (putparam_dumpstmt)
@@ -1348,4 +1374,81 @@ mom_full_dump (const char *state)
     MONIMELT_FATAL ("failed to END TRANSACTION: %s", errmsg);
   sqlite3_close_v2 (mom_dbsqlite), mom_dbsqlite = NULL;
   MONIMELT_INFORM ("dumped %d items in %s", nbdumpeditems, state);
+  g_tree_destroy (dumped_module_tree), dumped_module_tree = NULL;
+}
+
+void
+mom_register_dumped_module (const char *modname)
+{
+  assert (dumped_module_tree != NULL);
+  if (!g_tree_lookup (dumped_module_tree, modname))
+    g_tree_insert (dumped_module_tree, (gpointer) modname,
+		   (gpointer) modname);
+}
+
+gboolean
+traverse_module_tree (gpointer key, gpointer val, gpointer data)
+{
+  const char *modname = key;
+  sqlite3_stmt *modstmt = data;
+  assert (key == val);
+  // modname at index 1
+  if (sqlite3_bind_text (modstmt, 1, modname, -1, SQLITE_STATIC))
+    MONIMELT_FATAL ("failed to bind modname: %s",
+		    sqlite3_errmsg (mom_dbsqlite));
+  int stepres = sqlite3_step (modstmt);
+  if (stepres != SQLITE_DONE)
+    MONIMELT_FATAL ("failed to insert module name %s: %s (%d:%s)",
+		    modname,
+		    sqlite3_errmsg (mom_dbsqlite),
+		    stepres, sqlite3_errstr (stepres));
+  if (sqlite3_reset (modstmt))
+    MONIMELT_FATAL ("failed to reset statement: %s",
+		    sqlite3_errmsg (mom_dbsqlite));
+  return FALSE;
+}
+
+static void
+dump_modules (void)
+{
+  sqlite3_stmt *modstmt = NULL;
+  assert (dumped_module_tree != NULL);
+  if (sqlite3_prepare_v2 (mom_dbsqlite,
+			  "INSERT INTO t_module (modname) VALUES (?1)",
+			  -1, &modstmt, NULL))
+    MONIMELT_FATAL ("failed to prepare module insertion query: %s",
+		    sqlite3_errmsg (mom_dbsqlite));
+  g_tree_foreach (dumped_module_tree, traverse_module_tree, modstmt);
+  sqlite3_finalize (modstmt), modstmt = NULL;
+}
+
+static int
+loadmodule_cb (void *data, int nbcol, char **colarrs, char **colnames)
+{
+  char *modname = colarrs[0];
+  GModule *mod = g_module_open (modname, 0);
+  if (!mod)
+    {
+      char bufname[128];
+      memset (bufname, 0, sizeof (bufname));
+      snprintf (bufname, sizeof (bufname), "./%s.%s", modname,
+		G_MODULE_SUFFIX);
+      mod = g_module_open (bufname, 0);
+    }
+  if (!mod)
+    MONIMELT_FATAL ("failed to load module %s: %s", modname,
+		    g_module_error ());
+  else
+    MONIMELT_INFORM ("loaded module %s", modname);
+  return 0;
+}
+
+static void
+load_modules (void)
+{
+  char *errmsg = NULL;
+  if (sqlite3_exec
+      (mom_dbsqlite, "SELECT modname FROM t_module", loadmodule_cb,
+       NULL, &errmsg))
+    MONIMELT_FATAL ("loading modules failed with %s", errmsg);
 }

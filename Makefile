@@ -30,7 +30,7 @@ CXXFLAGS= -std=c++11 -Wall -pthread  $(PREPROFLAGS) $(OPTIMFLAGS)
 INDENT= indent -gnu
 PREPROFLAGS= $(shell $(PKGCONFIG) --cflags $(PACKAGES))
 OPTIMFLAGS= -Og -g
-LIBES= -luuid -lgc -lfcgi $(shell $(PKGCONFIG) --libs $(PACKAGES)) -lonion -lpthread -lm -ldl
+LIBES= -luuid -lgc  $(shell $(PKGCONFIG) --libs $(PACKAGES)) -lonion -lpthread -lm -ldl
 SOURCES= $(sort $(filter-out $(wildcard mod_*.c), $(wildcard [a-z]*.c)))
 MODSOURCES= $(sort $(wildcard mod_*.c))
 MODULES= $((patsubst %.c,%.so,$(MODSOURCES))
@@ -56,5 +56,7 @@ make-named: u-make-named.cc
 
 modules: $(MODULES)
 
+## MONIMELT generated code starts with momg_ followed by alphanum or +
+## or - or _ characters. see MONIMELT_SHARED_MODULE_PREFIX in monimelt.h
 %.so: %.c | monimelt.h monimelt-names.h
 	$(COMPILE.c) -fPIC $< -shared -o $@

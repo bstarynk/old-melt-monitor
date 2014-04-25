@@ -1238,14 +1238,35 @@ const struct momitemtypedescr_st momitype_routine = {
 static momval_t
 routine_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
+  Dl_info dlinf = { };
   momit_routine_t *routitm = (momit_routine_t *) itm;
+  struct momroutinedescr_st *rdescr = routitm->irt_descr;
+  if (MONIMELT_UNLIKELY (!rdescr
+			 || rdescr->rout_magic != ROUTINE_MAGIC
+			 || !rdescr->rout_name))
+    MONIMELT_FATAL ("routine item with invalid descriptor");
+  if (!dladdr (rdescr, &dlinf))
+    MONIMELT_FATAL ("failed to get address of routine %s @%p : %s",
+		    rdescr->rout_name, (void *) rdescr, dlerror ());
+  const char *basefname = dlinf.dli_fname ? basename (dlinf.dli_fname) : NULL;
+  if (basefname && !strncmp (basefname, MONIMELT_SHARED_MODULE_PREFIX,
+			     sizeof (MONIMELT_SHARED_MODULE_PREFIX) - 1))
+    {
+      char modname[104];
+      memset (modname, 0, sizeof (modname));
+      if (sscanf (basefname,
+		  MONIMELT_SHARED_MODULE_PREFIX
+		  "%100[a-zA-Z0-9+-]", modname) > 0)
+	{
+	  mom_register_dumped_module (GC_STRDUP (modname));
+	}
+    }
   return (momval_t) mom_make_json_object
     // build with type and routine name
     (				// the type:
       MOMJSON_ENTRY, mom_item__jtype, mom_item__routine_item,
       // the routine name
-      MOMJSON_ENTRY, mom_item__name,
-      mom_make_string (routitm->irt_descr->rout_name),
+      MOMJSON_ENTRY, mom_item__name, mom_make_string (rdescr->rout_name),
       // that's all!
       MOMJSON_END);
 }
