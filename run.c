@@ -99,6 +99,12 @@ work_cb (void *ad)
   struct GC_stack_base sb;
   memset (&sb, 0, sizeof (sb));
   struct momworkdata_st *wd = ad;
+  {
+    char thnambuf[24];
+    memset (thnambuf, 0, sizeof(thnambuf));
+    snprintf (thnambuf, sizeof(thnambuf), "monimelt-r%02d", wd->work_index);
+    pthread_setname_np (pthread_self (), thnambuf);
+  }
   assert (wd && wd->work_magic == WORK_MAGIC);
   GC_register_my_thread (&sb);
   if (!mom_item__agenda
@@ -111,6 +117,7 @@ work_cb (void *ad)
   GC_unregister_my_thread ();
   return NULL;
 }
+    
 
 void
 mom_run (void)

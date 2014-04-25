@@ -55,6 +55,7 @@
 // libonion from http://www.coralbits.com/libonion/ &
 // https://github.com/davidmoreno/onion
 #include <onion/onion.h>
+#include <onion/handlers/exportlocal.h>
 
 #define MONIMELT_EMPTY ((void*)(-1L))
 enum momvaltype_en
@@ -717,6 +718,7 @@ mom_string_cstr (momval_t val)
 }
 
 #define MONIMELT_DEFAULT_STATE_FILE "state-monimelt.dbsqlite"
+#define MONIMELT_WEB_DIRECTORY "webdir"
 const momint_t *mom_make_int (intptr_t n);
 void mom_initialize (void);
 void mom_initial_load (const char *state);

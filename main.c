@@ -26,6 +26,7 @@ static int nicelevel = 0;
 static const char *json_file;
 static const char *json_string;
 static const char *wanted_dir;
+static const char *web_host;
 static bool json_indented;
 static bool daemonize_me;
 static bool want_syslog;
@@ -53,6 +54,7 @@ static const struct option mom_long_options[] = {
   {"jobs", required_argument, NULL, 'J'},
   {"daemon", no_argument, NULL, 'd'},
   {"syslog", no_argument, NULL, 'l'},
+  {"web", required_argument, NULL, 'W'},
   // long-only options
   {"json-file", required_argument, NULL, xtraopt_jsonfile},
   {"json-string", required_argument, NULL, xtraopt_jsonstring},
@@ -84,6 +86,7 @@ usage (const char *argv0)
   printf ("\t -J | --jobs <nb-work-threads> " " \t# Start work threads.\n");
   printf ("\t -M | --module <module-name> <module-arg> "
 	  " \t# load a plugin.\n");
+  printf ("\t -W | --web <webhost>\n");
   putchar ('\n');
   printf ("\t --json-file <file-name>" "\t #parse JSON file for testing\n");
   printf ("\t --json-string <string>" "\t #parse JSON string for testing\n");
@@ -150,7 +153,7 @@ parse_program_arguments_and_load_modules (int argc, char **argv)
 {
   int opt = -1;
   option_ctx = g_option_context_new ("monimelt");
-  while ((opt = getopt_long (argc, argv, "hVdln:M:J:",
+  while ((opt = getopt_long (argc, argv, "hVdln:M:W:J:",
 			     mom_long_options, NULL)) >= 0)
     {
       switch (opt)
@@ -171,6 +174,9 @@ parse_program_arguments_and_load_modules (int argc, char **argv)
 	case 'J':
 	  if (optarg)
 	    mom_nb_workers = atoi (optarg);
+	  break;
+	case 'W':
+	  web_host = optarg;
 	  break;
 	case 'M':
 	  {
@@ -510,6 +516,11 @@ main (int argc, char **argv)
   if (load_state_path && load_state_path[0])
     {
       mom_initial_load (load_state_path);
+    }
+  if (web_host)
+    {
+      extern void mom_start_web(const char*);
+      mom_start_web (web_host);
     }
   if (mom_nb_workers > 0)
     {
