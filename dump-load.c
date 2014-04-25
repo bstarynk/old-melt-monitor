@@ -999,8 +999,10 @@ param_printf (const char *paramname, const char *fmt, ...)
   char *buf = NULL;
   va_list args;
   va_start (args, fmt);
-  asprintf (&buf, fmt, args);
+  vasprintf (&buf, fmt, args);
   va_end (args);
+  if (MONIMELT_UNLIKELY (!buf))
+    MONIMELT_FATAL ("failed to print param %s", fmt);
   if (MONIMELT_UNLIKELY (putparam_dumpstmt == NULL))
     {
       if (sqlite3_prepare_v2 (mom_dbsqlite,

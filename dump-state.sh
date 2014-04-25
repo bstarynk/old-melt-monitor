@@ -46,6 +46,8 @@ echo 'BEGIN TRANSACTION;' >> $tempdump
 sqlite3 state-monimelt.dbsqlite .schema >> $tempdump || exit 1
 echo '-- state-monimelt tables contents' >> $tempdump 
 sqlite3 state-monimelt.dbsqlite >> $tempdump <<EOF
+.mode insert t_module
+  SELECT * FROM t_module ORDER BY modname;
 .mode insert t_item
   SELECT * FROM t_item ORDER BY uid;
 .mode insert t_name
