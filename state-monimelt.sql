@@ -42,7 +42,7 @@ INSERT INTO t_item VALUES('7e8b7206-2548-427d-9b7c-9d5b5067c78a','json_name','{"
 INSERT INTO t_item VALUES('80e337da-7a05-40e4-86ec-806ac78dbd03','json_name','{"jtype":"json_name_item","name":"frames"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('84961ab4-f2ff-4e10-9479-2e62148c54bc','json_name','{"jtype":"json_name_item","name":"numbers"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('8dba998c-341b-4a66-900f-545ac9dd06c4','json_name','{"jtype":"json_name_item","name":"sons"}','{"attributes":null,"content":null}');
-INSERT INTO t_item VALUES('97ec1834-c510-4d38-967a-6f8665a39b46','json_name','','');
+INSERT INTO t_item VALUES('97ec1834-c510-4d38-967a-6f8665a39b46','json_name','{"jtype":"json_name_item","name":"box_item"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('9a05b9fa-17d3-4294-9253-e67406e52d4a','json_name','{"jtype":"json_name_item","name":"content"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('a75bef70-596b-4fc5-99ca-e60b5287feec','json_name','{"jtype":"json_name_item","name":"uuid"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('abdd3eea-22da-4e09-b1f8-a05b80783924','json_name','{"jtype":"json_name_item","name":"name"}','{"attributes":null,"content":null}');
@@ -55,7 +55,7 @@ INSERT INTO t_item VALUES('cddd3209-6d5f-4ac5-ada3-fc9ed0053728','json_name','{"
 INSERT INTO t_item VALUES('d39e1047-71fb-4c62-b13d-a18852d844ef','json_name','{"jtype":"json_name_item","name":"bool_item"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('d7a1e1a4-f401-436a-887f-980f66643a24','json_name','{"jtype":"json_name_item","name":"json_array"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('d8aa61cc-2543-4659-bff9-2b0bfc0f779a','json_name','{"jtype":"json_name_item","name":"val"}','{"attributes":null,"content":null}');
-INSERT INTO t_item VALUES('dc6e0602-32b4-4416-a675-d45fb894f7eb','json_name','','');
+INSERT INTO t_item VALUES('dc6e0602-32b4-4416-a675-d45fb894f7eb','json_name','{"jtype":"json_name_item","name":"box"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('e29d6d73-6a40-41bd-bfd4-df5183ffc764','json_name','{"jtype":"json_name_item","name":"attr"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('e6727e08-6232-4beb-8c17-3b9cdf5045fb','json_name','{"jtype":"json_name_item","name":"doubles"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('eaada55e-bcfb-4b87-b335-65b31ed2fdac','json_name','{"jtype":"json_name_item","name":"queue"}','{"attributes":null,"content":null}');
