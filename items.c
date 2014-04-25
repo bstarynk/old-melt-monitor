@@ -2606,6 +2606,134 @@ queue_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
       MOMJSON_END);
 }
 
+
+////////////////////////////////////////////////// box items
+
+momit_box_t *
+mom_make_item_box (unsigned space)
+{
+  momit_box_t *itm
+    = mom_allocate_item (momty_boxitem, sizeof (momit_box_t), space);
+  itm->itb_boxv = MONIMELT_NULLV;
+  return itm;
+}
+
+momit_box_t *
+mom_make_item_box_of_uuid (uuid_t uid, unsigned space)
+{
+  momit_box_t *itm
+    = mom_allocate_item_with_uuid (momty_boxitem, sizeof (momit_box_t),
+				   space, uid);
+  itm->itb_boxv = MONIMELT_NULLV;
+  return itm;
+}
+
+momval_t
+mom_item_box_get (momval_t boxv)
+{
+  momval_t res = MONIMELT_NULLV;
+  if (!boxv.ptr || *boxv.ptype != momty_boxitem)
+    return MONIMELT_NULLV;
+  pthread_mutex_lock (&boxv.panyitem->i_mtx);
+  res = boxv.pboxitem->itb_boxv;
+  pthread_mutex_unlock (&boxv.panyitem->i_mtx);
+  return res;
+}
+
+// put a new boxed value and return the old one
+momval_t
+mom_item_box_put (momval_t boxv, momval_t val)
+{
+  momval_t res = MONIMELT_NULLV;
+  if (!boxv.ptr || *boxv.ptype != momty_boxitem)
+    return MONIMELT_NULLV;
+  pthread_mutex_lock (&boxv.panyitem->i_mtx);
+  res = boxv.pboxitem->itb_boxv;
+  boxv.pboxitem->itb_boxv = val;
+  pthread_mutex_unlock (&boxv.panyitem->i_mtx);
+  return res;
+}
+
+//////////////// box type descriptor
+
+static mom_anyitem_t *box_itemloader (struct mom_loader_st *ld,
+				      momval_t json, uuid_t uid,
+				      unsigned space);
+static void box_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
+			    momval_t json);
+static void box_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm);
+static momval_t box_itemgetbuild (struct mom_dumper_st *dmp,
+				  mom_anyitem_t * itm);
+static momval_t box_itemgetfill (struct mom_dumper_st *dmp,
+				 mom_anyitem_t * itm);
+
+const struct momitemtypedescr_st momitype_box = {
+  .ityp_magic = ITEMTYPE_MAGIC,
+  .ityp_name = "box",
+  .ityp_loader = box_itemloader,
+  .ityp_filler = box_itemfiller,
+  .ityp_scan = box_itemscan,
+  .ityp_getbuild = box_itemgetbuild,
+  .ityp_getfill = box_itemgetfill,
+};
+
+static mom_anyitem_t *
+box_itemloader (struct mom_loader_st *ld __attribute__ ((unused)),
+		momval_t json __attribute__ ((unused)),
+		uuid_t uid, unsigned space)
+{
+  return (mom_anyitem_t *) mom_make_item_box_of_uuid (uid, space);
+}
+
+static void
+box_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+{
+  mom_scan_any_item_data (dmp, itm);
+  mom_dump_scan_value (dmp, ((momit_box_t *) itm)->itb_boxv);
+}
+
+static momval_t
+box_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+{
+  momit_box_t *boxitm = (momit_box_t *) itm;
+  momval_t jres = (momval_t) mom_make_json_object
+    // attributes
+    (MOMJSON_ENTRY, mom_item__attributes,
+     mom_attributes_emit_json (dmp, itm->i_attrs),
+     // box
+     MOMJSON_ENTRY, mom_item__box, mom_dump_emit_json (dmp, boxitm->itb_boxv),
+     // content
+     MOMJSON_ENTRY, mom_item__content, mom_dump_emit_json (dmp,
+							   itm->i_content),
+     // end
+     MOMJSON_END);
+  return jres;
+}
+
+static void
+box_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm, momval_t json)
+{
+  mom_load_any_item_data (ld, itm, json);
+  assert (itm->typnum == momty_boxitem);
+  momit_box_t *boxitm = (momit_box_t *) itm;
+  boxitm->itb_boxv =
+    mom_load_value_json (ld, mom_jsonob_get (json, (momval_t) mom_item__box));
+}
+
+static momval_t
+box_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+{;
+  assert (itm->typnum == momty_boxitem);
+  return (momval_t) mom_make_json_object
+    // build with type 
+    (				// the type:
+      MOMJSON_ENTRY, mom_item__jtype, mom_item__box_item,
+      // that's all!
+      MOMJSON_END);
+}
+
+
+
 ////////////////////////////////////////////////////////////////
 void
 mom_initialize_items (void)
@@ -2628,4 +2756,5 @@ mom_initialize_items (void)
   mom_typedescr_array[momty_vectoritem] = &momitype_vector;
   mom_typedescr_array[momty_associtem] = &momitype_assoc;
   mom_typedescr_array[momty_queueitem] = &momitype_queue;
+  mom_typedescr_array[momty_boxitem] = &momitype_box;
 }

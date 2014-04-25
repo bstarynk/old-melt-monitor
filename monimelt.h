@@ -136,6 +136,7 @@ union momvalueptr_un
   struct momvectoritem_st *pvectitem;
   struct momassocitem_st *passocitem;
   struct momqueueitem_st *pqueueitem;
+  struct momboxitem_st *pboxitem;
   const struct momnode_st *pnode;
   const struct momnode_st *pclosure;
   const struct momseqitem_st *pseqitm;
