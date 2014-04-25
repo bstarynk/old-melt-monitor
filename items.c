@@ -2733,6 +2733,362 @@ box_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 }
 
 
+#define BUFFER_INITIAL_SIZE 48
+
+momit_buffer_t *
+mom_make_item_buffer (unsigned space)
+{
+  momit_buffer_t *itm
+    = mom_allocate_item (momty_bufferitem, sizeof (momit_buffer_t), space);
+  const unsigned siz = BUFFER_INITIAL_SIZE;
+  itm->itu_buf = GC_MALLOC_ATOMIC (siz);
+  if (MONIMELT_UNLIKELY (!itm->itu_buf))
+    MONIMELT_FATAL ("failed to allocate buffer of %d", (int) siz);
+  memset (itm->itu_buf, 0, siz);
+  itm->itu_begin = itm->itu_end = 0;
+  itm->itu_size = siz;
+  return itm;
+
+}
+
+momit_buffer_t *
+mom_make_item_buffer_of_uuid (uuid_t uid, unsigned space)
+{
+  momit_buffer_t *itm
+    = mom_allocate_item_with_uuid (momty_bufferitem, sizeof (momit_buffer_t),
+				   space, uid);
+  const unsigned siz = BUFFER_INITIAL_SIZE;
+  itm->itu_buf = GC_MALLOC_ATOMIC (siz);
+  if (MONIMELT_UNLIKELY (!itm->itu_buf))
+    MONIMELT_FATAL ("failed to allocate buffer of %d", (int) siz);
+  memset (itm->itu_buf, 0, siz);
+  itm->itu_begin = itm->itu_end = 0;
+  itm->itu_size = siz;
+  return itm;
+}
+
+
+unsigned
+mom_item_buffer_length (momval_t bufv)
+{
+  unsigned len = 0;
+  if (!bufv.ptr || *bufv.ptype != momty_bufferitem)
+    return 0;
+  pthread_mutex_lock (&bufv.panyitem->i_mtx);
+  len = bufv.pbufferitem->itu_end - bufv.pbufferitem->itu_begin;
+  pthread_mutex_unlock (&bufv.panyitem->i_mtx);
+  return len;
+}
+
+void
+mom_item_buffer_reserve (momval_t bufv, unsigned gap)
+{
+  if (!bufv.ptr || *bufv.ptype != momty_bufferitem)
+    return;
+  momit_buffer_t *bufitm = bufv.pbufferitem;
+  pthread_mutex_lock (&bufv.panyitem->i_mtx);
+  if (bufitm->itu_end - bufitm->itu_begin + gap >= bufitm->itu_size)
+    {
+      unsigned oldlen = bufitm->itu_end - bufitm->itu_begin;
+      unsigned newsiz = ((5 * oldlen / 4 + gap + 5) | 0x1f) + 1;
+      char *newbuf = GC_MALLOC_ATOMIC (newsiz);
+      if (MONIMELT_UNLIKELY (!newbuf))
+	MONIMELT_FATAL ("failed to reserve buffer for %d bytes",
+			(int) newsiz);
+      memset (newbuf, 0, newsiz);
+      memcpy (newbuf, bufitm->itu_buf + bufitm->itu_begin, oldlen);
+      GC_FREE (bufitm->itu_buf);
+      bufitm->itu_buf = newbuf;
+      bufitm->itu_size = newsiz;
+      bufitm->itu_begin = 0;
+      bufitm->itu_end = oldlen;
+    }
+  pthread_mutex_unlock (&bufv.panyitem->i_mtx);
+}
+
+static inline void
+item_buffer_need (momit_buffer_t * bufitm, unsigned more)
+{
+  if (bufitm->itu_end + more >= bufitm->itu_size)
+    {
+      unsigned oldlen = bufitm->itu_end - bufitm->itu_begin;
+      if (oldlen + more + 1 >= bufitm->itu_size)
+	{
+	  unsigned newsiz = ((5 * oldlen / 4 + more + 4) | 0x1f) + 1;
+	  char *newbuf = GC_MALLOC_ATOMIC (newsiz);
+	  if (MONIMELT_UNLIKELY (!newbuf))
+	    MONIMELT_FATAL ("failed to grow buffer for %d bytes",
+			    (int) newsiz);
+	  memset (newbuf, 0, newsiz);
+	  memcpy (newbuf, bufitm->itu_buf + bufitm->itu_begin, oldlen);
+	  GC_FREE (bufitm->itu_buf);
+	  bufitm->itu_buf = newbuf;
+	  bufitm->itu_size = newsiz;
+	  bufitm->itu_begin = 0;
+	  bufitm->itu_end = oldlen;
+	}
+      else
+	{
+	  memmove (bufitm->itu_buf, bufitm->itu_buf + bufitm->itu_begin,
+		   oldlen);
+	  bufitm->itu_begin = 0;
+	  bufitm->itu_end = oldlen;
+	  bufitm->itu_buf[oldlen] = (char) 0;
+	}
+    }
+}
+
+
+void
+mom_item_buffer_clear (momval_t bufv)
+{
+  if (!bufv.ptr || *bufv.ptype != momty_bufferitem)
+    return;
+  momit_buffer_t *bufitm = bufv.pbufferitem;
+  pthread_mutex_lock (&bufv.panyitem->i_mtx);
+  if (bufitm->itu_size > 3 * BUFFER_INITIAL_SIZE)
+    {
+      unsigned newsiz = BUFFER_INITIAL_SIZE;
+      char *newbuf = GC_MALLOC_ATOMIC (newsiz);
+      if (MONIMELT_UNLIKELY (!newbuf))
+	MONIMELT_FATAL ("failed to reserve buffer for %d bytes",
+			(int) newsiz);
+      memset (newbuf, 0, newsiz);
+      GC_FREE (bufitm->itu_buf);
+      bufitm->itu_buf = newbuf;
+      bufitm->itu_size = newsiz;
+    }
+  bufitm->itu_begin = bufitm->itu_end = 0;
+  bufitm->itu_buf[0] = (char) 0;
+  pthread_mutex_unlock (&bufv.panyitem->i_mtx);
+}
+
+/////////////////////////////////////////////////////// buffers
+
+
+void
+mom_item_buffer_puts (momval_t bufv, const char *str)
+{
+  if (!bufv.ptr || *bufv.ptype != momty_bufferitem || !str || !str[0])
+    return;
+  unsigned slen = strlen (str);
+  momit_buffer_t *bufitm = bufv.pbufferitem;
+  pthread_mutex_lock (&bufv.panyitem->i_mtx);
+  item_buffer_need (bufitm, slen + 1);
+  memcpy (bufitm->itu_buf + bufitm->itu_end, str, slen + 1);
+  bufitm->itu_end += slen;
+  bufitm->itu_buf[bufitm->itu_end] = (char) 0;
+  pthread_mutex_unlock (&bufv.panyitem->i_mtx);
+}
+
+void
+mom_item_buffer_printf (momval_t bufv, const char *fmt, ...)
+{
+  if (!bufv.ptr || *bufv.ptype != momty_bufferitem || !fmt || !fmt[0])
+    return;
+  char minbuf[128];
+  memset (minbuf, 0, sizeof (minbuf));
+  va_list args;
+  va_start (args, fmt);
+  int plen = vsnprintf (minbuf, sizeof (minbuf), fmt, args);
+  va_end (args);
+  if (plen <= 0)
+    return;
+  momit_buffer_t *bufitm = bufv.pbufferitem;
+  pthread_mutex_lock (&bufv.panyitem->i_mtx);
+  item_buffer_need (bufitm, plen + 2);
+  if (plen < sizeof (minbuf) - 1)
+    memcpy (bufitm->itu_buf + bufitm->itu_end, minbuf, plen + 1);
+  else
+    {
+      va_start (args, fmt);
+      vsnprintf (bufitm->itu_buf + bufitm->itu_end, plen + 1, fmt, args);
+      va_end (args);
+    }
+  bufitm->itu_buf[bufitm->itu_end + plen] = (char) 0;
+  bufitm->itu_end += plen;
+  pthread_mutex_unlock (&bufv.panyitem->i_mtx);
+}
+
+int
+mom_item_buffer__scanf_pos (momval_t bufv, int *pos, const char *fmt, ...)
+{
+  int res = 0;
+  if (!bufv.ptr || *bufv.ptype != momty_bufferitem || !fmt || !fmt[0])
+    return 0;
+  unsigned fmtlen = strlen (fmt);
+  assert (fmtlen >= 2 && fmt[fmtlen - 2] == '%' && fmt[fmtlen - 1] == 'n'
+	  && pos != NULL);
+  *pos = -1;
+  va_list args;
+  momit_buffer_t *bufitm = bufv.pbufferitem;
+  pthread_mutex_lock (&bufv.panyitem->i_mtx);
+  va_start (args, fmt);
+  int nbscan = vsscanf (bufitm->itu_buf + bufitm->itu_begin, fmt, args);
+  va_end (args);
+  int rdlen = *pos;
+  if (rdlen > 0 && nbscan > 0)
+    {
+      bufitm->itu_begin += rdlen;
+      res = nbscan;
+    }
+  pthread_mutex_unlock (&bufv.panyitem->i_mtx);
+  return res;
+}
+
+int
+mom_item_buffer_peek (momval_t bufv, int off)
+{
+  int res = -1;
+  if (!bufv.ptr || *bufv.ptype != momty_bufferitem)
+    return -1;
+  momit_buffer_t *bufitm = bufv.pbufferitem;
+  pthread_mutex_lock (&bufv.panyitem->i_mtx);
+  unsigned blen = bufitm->itu_end - bufitm->itu_begin;
+  if (off < 0)
+    off += blen;
+  if (off >= 0 && off < blen)
+    res = bufitm->itu_buf[bufitm->itu_begin + off];
+  pthread_mutex_unlock (&bufv.panyitem->i_mtx);
+  return res;
+}
+
+
+
+/////////////////////////////////////////////////////// buffers
+
+
+
+
+
+/// type descriptor for buffer
+static mom_anyitem_t *buffer_itemloader (struct mom_loader_st *ld,
+					 momval_t json, uuid_t uid,
+					 unsigned space);
+static void buffer_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
+			       momval_t json);
+static void buffer_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm);
+static momval_t buffer_itemgetbuild (struct mom_dumper_st *dmp,
+				     mom_anyitem_t * itm);
+static momval_t buffer_itemgetfill (struct mom_dumper_st *dmp,
+				    mom_anyitem_t * itm);
+
+const struct momitemtypedescr_st momitype_buffer = {
+  .ityp_magic = ITEMTYPE_MAGIC,
+  .ityp_name = "buffer",
+  .ityp_loader = buffer_itemloader,
+  .ityp_filler = buffer_itemfiller,
+  .ityp_scan = buffer_itemscan,
+  .ityp_getbuild = buffer_itemgetbuild,
+  .ityp_getfill = buffer_itemgetfill,
+};
+
+static mom_anyitem_t *
+buffer_itemloader (struct mom_loader_st *ld,
+		   momval_t json, uuid_t uid, unsigned space)
+{
+  return (mom_anyitem_t *) mom_make_item_buffer_of_uuid (uid, space);
+}
+
+
+
+
+static momval_t
+buffer_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+{
+  momit_buffer_t *bufitm = (momit_buffer_t *) itm;
+  momval_t jarr = MONIMELT_NULLV;
+  momval_t *arrcont = NULL;
+  const char *first = bufitm->itu_buf;
+  char *last = NULL;
+  if (first)
+    {
+      first += bufitm->itu_begin;
+      last = bufitm->itu_buf + bufitm->itu_end;
+      *last = (char) 0;
+    };
+  unsigned nbnl = 0;
+  for (const char *pc = first; pc != NULL; pc = strchr (pc, '\n'))
+    {
+      if (pc[0] == '\n')
+	{
+	  pc++;
+	  nbnl++;
+	}
+    };
+  momval_t tinycont[TINY_MAX] = { };
+  if (nbnl + 1 < TINY_MAX)
+    arrcont = tinycont;
+  else
+    {
+      arrcont = GC_MALLOC ((nbnl + 1) * sizeof (momval_t));
+      if (MONIMELT_UNLIKELY (!arrcont))
+	MONIMELT_FATAL ("failed to allocate %d lines", (int) nbnl + 1);
+      memset (arrcont, 0, (nbnl + 1) * sizeof (momval_t));
+    }
+  unsigned ix = 0;
+  const char *eol = NULL;
+  for (const char *pc = first; pc != NULL; pc = eol)
+    {
+      eol = strchr (pc, '\n');
+      if (eol)
+	eol++;
+      momval_t jlin =
+	(momval_t) mom_make_string_len (pc, eol ? (eol - pc) : -1);
+      assert (ix <= nbnl);
+      arrcont[ix] = jlin;
+      ix++;
+    }
+  jarr = (momval_t) mom_make_json_array_count (ix, arrcont);
+  if (arrcont != tinycont)
+    GC_FREE (arrcont), arrcont = NULL;
+  momval_t jres = (momval_t) mom_make_json_object
+    // attributes
+    (MOMJSON_ENTRY, mom_item__attributes,
+     mom_attributes_emit_json (dmp, itm->i_attrs),
+     // buffer
+     MOMJSON_ENTRY, mom_item__buffer, jarr,
+     // content
+     MOMJSON_ENTRY, mom_item__content, mom_dump_emit_json (dmp,
+							   itm->i_content),
+     // end
+     MOMJSON_END);
+  return jres;
+}
+
+static void
+buffer_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
+		   momval_t json)
+{
+  mom_load_any_item_data (ld, itm, json);
+  momval_t jbuffer = mom_jsonob_get (json, (momval_t) mom_item__buffer);
+  unsigned nblin = mom_json_array_size (jbuffer);
+  for (unsigned lix = 0; lix < nblin; lix++)
+    {
+      momval_t jline = mom_json_array_nth (jbuffer, lix);
+      if (jline.ptr && *jline.ptype == momty_string)
+	mom_item_buffer_puts ((momval_t) itm, mom_string_cstr (jline));
+    }
+}
+
+
+static void
+buffer_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+{
+  mom_scan_any_item_data (dmp, itm);
+}
+
+static momval_t
+buffer_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+{
+  return (momval_t) mom_make_json_object (	// the type:
+					   MOMJSON_ENTRY, mom_item__jtype,
+					   mom_item__buffer_item,
+					   // done
+					   MOMJSON_END);
+}
+
+
 
 ////////////////////////////////////////////////////////////////
 void
@@ -2757,4 +3113,5 @@ mom_initialize_items (void)
   mom_typedescr_array[momty_associtem] = &momitype_assoc;
   mom_typedescr_array[momty_queueitem] = &momitype_queue;
   mom_typedescr_array[momty_boxitem] = &momitype_box;
+  mom_typedescr_array[momty_bufferitem] = &momitype_buffer;
 }

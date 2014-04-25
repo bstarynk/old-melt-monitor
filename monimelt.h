@@ -79,6 +79,7 @@ enum momvaltype_en
   momty_associtem,
   momty_boxitem,
   momty_queueitem,
+  momty_bufferitem,
   momty__last = 1000
 };
 
@@ -108,6 +109,7 @@ typedef struct momvectoritem_st momit_vector_t;
 typedef struct momassocitem_st momit_assoc_t;
 typedef struct momboxitem_st momit_box_t;
 typedef struct momqueueitem_st momit_queue_t;
+typedef struct mombufferitem_st momit_buffer_t;
 pthread_mutexattr_t mom_normal_mutex_attr;
 pthread_mutexattr_t mom_recursive_mutex_attr;
 GModule *mom_prog_module;
@@ -137,6 +139,7 @@ union momvalueptr_un
   struct momassocitem_st *passocitem;
   struct momqueueitem_st *pqueueitem;
   struct momboxitem_st *pboxitem;
+  struct mombufferitem_st *pbufferitem;
   const struct momnode_st *pnode;
   const struct momnode_st *pclosure;
   const struct momseqitem_st *pseqitm;
@@ -514,6 +517,49 @@ mom_anyitem_t *mom_item_queue_last (momval_t quev);
 mom_anyitem_t *mom_item_queue_pop_front (momval_t quev);
 momval_t mom_item_queue_tuple (momval_t quev);
 
+
+//////////////// buffer item
+struct mombufferitem_st
+{
+  struct momanyitem_st itu_item;	/* common part */
+  char *itu_buf;
+  unsigned itu_size;		/* allocated size */
+  unsigned itu_begin;		/* offset of beginning */
+  unsigned itu_end;		/* offset of end */
+};
+
+momit_buffer_t *mom_make_item_buffer (unsigned space);
+momit_buffer_t *mom_make_item_buffer_of_uuid (uuid_t uid, unsigned space);
+// get a duplicate of the buffer string with its length
+const char *mom_item_buffer_cstr (momval_t bufv, unsigned *plen);
+// get the content of the buffer as a string value
+momval_t mom_item_buffer_string_value (momval_t bufv);
+// get the length of the buffer
+unsigned mom_item_buffer_length (momval_t bufv);
+// peek the character at given offset or else EOF ie -1
+int mom_item_buffer_peek (momval_t bufv, int off);
+// reserve space for at least gap characters
+void mom_item_buffer_reserve (momval_t bufv, unsigned gap);
+// clear the buffer
+void mom_item_buffer_clear (momval_t bufv);
+// put a string at end of buffer
+void mom_item_buffer_puts (momval_t bufv, const char *str);
+// print into a buffer
+void mom_item_buffer_printf (momval_t bufv, const char *fmt, ...)
+  __attribute__ ((format (printf, 2, 3)));
+int mom_item_buffer__scanf_pos (momval_t bufv, int *pos, const char *fmt, ...)
+  __attribute__ ((format (scanf, 3, 4)));
+#define mom_item_buffer__scanf_at(Lin,Bufv,Fmt,...) ({int pos_##Lin=0;	\
+      int res_##Lin							\
+	= mom_item_buffer__scanf_pos((Bufv), &pos_##Lin, Fmt "%n",	\
+				     ##__VA_ARGS__, &pos_##Lin);       	\
+      res_##Lin;})
+#define mom_item_buffer__scanf_at_lin(Lin,Bufv,Fmt,...) \
+  mom_item_buffer__scanf_at(Lin,Bufv,Fmt,##__VA_ARGS__)
+
+// usable only with a literal Fmt
+#define mom_item_buffer_scanf(Bufv,Fmt,...) \
+  mom_item_buffer__scanf_at_lin(__LINE__,Bufv,Fmt,##__VA_ARGS__)
 
 /////// tasklets
 void mom_tasklet_push_frame (momval_t tsk, momval_t clo,
