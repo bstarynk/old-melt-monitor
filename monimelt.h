@@ -59,6 +59,7 @@
 #include <onion/response.h>
 #include <onion/handler.h>
 #include <onion/log.h>
+#include <onion/handlers/internal_status.h>
 #include <onion/handlers/exportlocal.h>
 #include <onion/handlers/path.h>
 #include <onion/handlers/static.h>

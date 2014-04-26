@@ -23,6 +23,39 @@
 
 onion *mom_onion = NULL;
 onion_url *mom_onion_root = NULL;
+static pthread_mutex_t mtx_onion = PTHREAD_MUTEX_INITIALIZER;
+static long nb_weq_requests;
+
+extern momit_dictionnary_t *mom_item__web_dictionnary;
+
+static
+  onion_connection_status mom_really_process_request (long webnum,
+						      onion_request * req,
+						      onion_response * res)
+  __attribute__ ((noinline));
+
+static onion_connection_status
+process_request (void *ignore, onion_request * req, onion_response * res)
+{
+  struct GC_stack_base sb;
+  memset (&sb, 0, sizeof (sb));
+  GC_register_my_thread (&sb);
+  long webnum = 0;
+  {
+    char thnambuf[32];
+    memset (thnambuf, 0, sizeof (thnambuf));
+    pthread_mutex_lock (&mtx_onion);
+    nb_weq_requests++;
+    webnum = nb_weq_requests;
+    snprintf (thnambuf, sizeof (thnambuf), "monimelt-w%04ld", webnum);
+    pthread_setname_np (pthread_self (), thnambuf);
+    pthread_mutex_unlock (&mtx_onion);
+  }
+  onion_connection_status cs = mom_really_process_request (webnum, req, res);
+  GC_unregister_my_thread ();
+  return cs;
+}
+
 void
 mom_start_web (const char *webhost)
 {
@@ -43,7 +76,45 @@ mom_start_web (const char *webhost)
   mom_onion_root = onion_root_url (mom_onion);
   onion_handler *loch =
     onion_handler_export_local_new (MONIMELT_WEB_DIRECTORY);
+  onion_url_add_handler (mom_onion_root, "status", onion_internal_status ());
+  onion_url_add_handler (mom_onion_root, "^.*",
+			 onion_handler_new ((onion_handler_handler)
+					    process_request, NULL, NULL));
   onion_url_add_handler (mom_onion_root, "[A-Za-z0-9+-.]+", loch);
-#warning very incomplete
-  //bof: onion_handler_add(mom_onion_root, onion_handler_export_local_new(MONIMELT_WEB_DIRECTORY));
+  MONIMELT_INFORM ("before listening web host %s", webhost);
+  onion_listen (mom_onion);
+  MONIMELT_INFORM ("after listening web host %s", webhost);
+}
+
+static onion_connection_status
+mom_really_process_request (long webnum, onion_request * req,
+			    onion_response * res)
+{
+  assert (mom_item__web_dictionnary != NULL);
+  const char *fullpath = onion_request_get_fullpath (req);
+  const char *path = onion_request_get_path (req);
+  unsigned flags = onion_request_get_flags (req);
+  const char *method = NULL;
+  switch (flags & OR_METHODS)
+    {
+    case OR_GET:
+      method = "GET";
+      break;
+    case OR_POST:
+      method = "POST";
+      break;
+    case OR_HEAD:
+      method = "HEAD";
+      break;
+    case OR_OPTIONS:
+      method = "OPTIONS";
+      break;
+    default:
+      MONIMELT_FATAL ("unexpected req#%ld fullpath=%s method %d flags %#x",
+		      webnum, fullpath, flags & OR_METHODS, flags);
+    }
+  MONIMELT_INFORM ("request #%ld fullpath=%s path=%s method=%s",
+		   webnum, fullpath, path, method);
+  return OCS_NOT_PROCESSED;
+#warning incomplete mom_really_process_request
 }
