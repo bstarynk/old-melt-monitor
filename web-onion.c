@@ -31,7 +31,7 @@ mom_start_web (const char *webhost)
   if (strlen (webhost) + 2 >= sizeof (webuf))
     MONIMELT_FATAL ("too long webhost %s", webhost);
   strncpy (webuf, webhost, sizeof (webuf) - 1);
-  mom_onion = onion_new (O_ONE_LOOP);
+  mom_onion = onion_new (O_THREADED);
   char *lastcolon = strchr (webuf, ':');
   if (lastcolon && isdigit (lastcolon[1]))
     {
@@ -41,6 +41,9 @@ mom_start_web (const char *webhost)
   if (webuf[0])
     onion_set_hostname (mom_onion, webuf);
   mom_onion_root = onion_root_url (mom_onion);
+  onion_handler *loch =
+    onion_handler_export_local_new (MONIMELT_WEB_DIRECTORY);
+  onion_url_add_handler (mom_onion_root, "[A-Za-z0-9+-.]+", loch);
 #warning very incomplete
   //bof: onion_handler_add(mom_onion_root, onion_handler_export_local_new(MONIMELT_WEB_DIRECTORY));
 }

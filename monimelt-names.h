@@ -46,6 +46,7 @@
  MONIMELT_NAMED (values, json_name, "7e8b7206-2548-427d-9b7c-9d5b5067c78a")
  MONIMELT_NAMED (vector, json_name, "402d1108-9e25-4065-b81d-1bea8b06f269")
  MONIMELT_NAMED (vector_item, json_name, "35461f69-eeb6-4562-806b-f37537d6ce7a")
+ MONIMELT_NAMED (web_dictionnary, dictionnary, "0229c553-c443-49a9-9244-5f8d7d3c79cf")
 
-// end of 42 named items
+// end of 43 named items
 #undef MONIMELT_NAMED

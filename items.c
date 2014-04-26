@@ -37,10 +37,10 @@ mom_hash_uuid (uuid_t uid)
     (31 * u[4]) + (u[4] << (8 + (u[5] & 0xf))) - (521 * u[5]) +
     ((541 * u[6]) ^ (2071591 * u[7] + 156912));
   momhash_t h = (h1 * 3071633 - (h1 >> 10)) ^ (769 * h2 + 17);
-  if (!h)
+  if (MONIMELT_UNLIKELY (!h))
     {
       h = h1;
-      if (!h)
+      if (MONIMELT_UNLIKELY (!h))
 	{
 	  h = h2;
 	  if (!h)

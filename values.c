@@ -752,6 +752,7 @@ mom_make_node_til_nil (mom_anyitem_t * conn, ...)
   if (MONIMELT_UNLIKELY (!nd))
     MONIMELT_FATAL ("failed to allocate node of size %d", (int) siz);
   memset (nd, 0, sizeof (momnode_t) + siz * sizeof (momval_t));
+  nd->connitm = conn;
   va_start (args, conn);
   for (unsigned ix = 0; ix < siz; ix++)
     ((momval_t *) nd->sontab)[ix] = va_arg (args, momval_t);
@@ -778,6 +779,7 @@ mom_make_node_sized (mom_anyitem_t * conn, unsigned siz, ...)
     ((momval_t *) nd->sontab)[ix] = va_arg (args, momval_t);
   va_end (args);
   nd->typnum = momty_node;
+  nd->connitm = conn;
   nd->slen = siz;
   update_node_hash (nd);
   return nd;
@@ -796,6 +798,7 @@ mom_make_node_from_array (mom_anyitem_t * conn, unsigned siz, momval_t * arr)
   for (unsigned ix = 0; ix < siz; ix++)
     ((momval_t *) nd->sontab)[ix] = arr[ix];
   nd->typnum = momty_node;
+  nd->connitm = conn;
   nd->slen = siz;
   update_node_hash (nd);
   return nd;
@@ -828,6 +831,7 @@ mom_make_closure_til_nil (mom_anyitem_t * conn, ...)
     ((momval_t *) clo->sontab)[ix] = va_arg (args, momval_t);
   va_end (args);
   clo->typnum = momty_closure;
+  clo->connitm = conn;
   clo->slen = alsize;
   update_node_hash (clo);
   return clo;
@@ -850,6 +854,7 @@ mom_make_closure_sized (mom_anyitem_t * conn, unsigned siz, ...)
   for (unsigned ix = 0; ix < siz; ix++)
     ((momval_t *) clo->sontab)[ix] = va_arg (args, momval_t);
   va_end (args);
+  clo->connitm = conn;
   clo->typnum = momty_closure;
   clo->slen = alsize;
   update_node_hash (clo);
@@ -872,6 +877,7 @@ mom_make_closure_from_array (mom_anyitem_t * conn, unsigned siz,
   for (unsigned ix = 0; ix < siz; ix++)
     ((momval_t *) clo->sontab)[ix] = arr[ix];
   clo->typnum = momty_closure;
+  clo->connitm = conn;
   clo->slen = alsize;
   update_node_hash (clo);
   return clo;

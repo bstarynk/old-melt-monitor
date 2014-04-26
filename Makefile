@@ -30,7 +30,7 @@ CXXFLAGS= -std=c++11 -Wall -pthread  $(PREPROFLAGS) $(OPTIMFLAGS)
 INDENT= indent -gnu
 PREPROFLAGS= $(shell $(PKGCONFIG) --cflags $(PACKAGES))
 OPTIMFLAGS= -Og -g
-LIBES= -luuid -lgc  $(shell $(PKGCONFIG) --libs $(PACKAGES)) -lonion -lpthread -lm -ldl
+LIBES= -luuid -lgc  $(shell $(PKGCONFIG) --libs $(PACKAGES)) -lonion_handlers -lonion -lpthread -lm -ldl
 SOURCES= $(sort $(filter-out $(wildcard mod_*.c), $(wildcard [a-z]*.c)))
 MODSOURCES= $(sort $(wildcard mod_*.c))
 MODULES= $((patsubst %.c,%.so,$(MODSOURCES))

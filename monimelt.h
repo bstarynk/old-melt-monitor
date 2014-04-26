@@ -55,7 +55,14 @@
 // libonion from http://www.coralbits.com/libonion/ &
 // https://github.com/davidmoreno/onion
 #include <onion/onion.h>
+#include <onion/request.h>
+#include <onion/response.h>
+#include <onion/handler.h>
+#include <onion/log.h>
 #include <onion/handlers/exportlocal.h>
+#include <onion/handlers/path.h>
+#include <onion/handlers/static.h>
+#include <onion/handlers/auth_pam.h>
 
 #define MONIMELT_EMPTY ((void*)(-1L))
 enum momvaltype_en
@@ -583,6 +590,8 @@ struct momdictionnaryitem_st
 momit_dictionnary_t *mom_make_item_dictionnary (unsigned space);
 momit_dictionnary_t *mom_make_item_dictionnary_of_uuid (uuid_t uid,
 							unsigned space);
+#define mom_create__dictionnary(Name,Uid) \
+  mom_make_item_dictionnary_of_uuid(Uid,MONIMELT_SPACE_ROOT)
 void mom_item_dictionnary_reserve (momval_t dictv, unsigned more);
 void mom_item_dictionnary_put (momval_t dictv, momval_t namev, momval_t valv);
 momval_t mom_item_dictionnary_get (momval_t dictv, momval_t namev);
@@ -777,6 +786,8 @@ momit_routine_t *mom_try_make_item_routine (const char *name, unsigned space);
 
 momit_tasklet_t *mom_make_item_tasklet_of_uuid (uuid_t uid, unsigned space);
 momit_tasklet_t *mom_make_item_tasklet ();
+#define mom_create__tasklet(Name,Uid) \
+  mom_make_item_tasklet_of_uuid(Uid,MONIMELT_SPACE_ROOT)
 int mom_tasklet_step (momit_tasklet_t *);
 
 static inline bool

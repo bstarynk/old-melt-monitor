@@ -839,7 +839,7 @@ rootspace_fetch_build (unsigned spanum, const char *uuidstr)
   if (MONIMELT_UNLIKELY (fetchbuild_loadstmt == NULL))
     {
       if (sqlite3_prepare_v2 (mom_dbsqlite,
-			      "SELECT jbuild FROM t_items WHERE uid = ?1",
+			      "SELECT jbuild FROM t_item WHERE uid = ?1",
 			      -1, &fetchbuild_loadstmt, NULL))
 	MONIMELT_FATAL ("failed to prepare fetchbuild query: %s",
 			sqlite3_errmsg (mom_dbsqlite));
@@ -876,7 +876,7 @@ rootspace_fetch_fill (unsigned spanum, const char *uuidstr)
   if (MONIMELT_UNLIKELY (fetchfill_loadstmt == NULL))
     {
       if (sqlite3_prepare_v2 (mom_dbsqlite,
-			      "SELECT jfill FROM t_items WHERE uid = ?1",
+			      "SELECT jfill FROM t_item WHERE uid = ?1",
 			      -1, &fetchfill_loadstmt, NULL))
 	MONIMELT_FATAL ("failed to prepare fetchfill query: %s",
 			sqlite3_errmsg (mom_dbsqlite));
