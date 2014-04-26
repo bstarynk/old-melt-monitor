@@ -3098,15 +3098,291 @@ mom_make_item_dictionnary (unsigned space)
 			 space);
   const unsigned siz = DICTIONNARY_INITIAL_SIZE;
   itm->idi_dictab =
-    GC_MALLOC_ATOMIC (siz * sizeof (struct mom_name_entry_st));
+    GC_MALLOC_ATOMIC (siz * sizeof (struct mom_name_value_entry_st));
   if (MONIMELT_UNLIKELY (!itm->idi_dictab))
     MONIMELT_FATAL ("failed to allocate dictionnary of %d", (int) siz);
-  memset (itm->idi_dictab, 0, siz * sizeof (struct mom_name_entry_st));
+  memset (itm->idi_dictab, 0, siz * sizeof (struct mom_name_value_entry_st));
   itm->idi_count = 0;
   itm->idi_size = siz;
   return itm;
 }
 
+momit_dictionnary_t *
+mom_make_item_dictionnary_of_uuid (uuid_t uid, unsigned space)
+{
+  momit_dictionnary_t *itm
+    = mom_allocate_item_with_uuid (momty_dictionnaryitem,
+				   sizeof (momit_dictionnary_t),
+				   space, uid);
+  const unsigned siz = DICTIONNARY_INITIAL_SIZE;
+  itm->idi_dictab =
+    GC_MALLOC_ATOMIC (siz * sizeof (struct mom_name_value_entry_st));
+  if (MONIMELT_UNLIKELY (!itm->idi_dictab))
+    MONIMELT_FATAL ("failed to allocate dictionnary of %d", (int) siz);
+  memset (itm->idi_dictab, 0, siz * sizeof (struct mom_name_value_entry_st));
+  itm->idi_count = 0;
+  itm->idi_size = siz;
+  return itm;
+}
+
+static inline void
+dictionnary_add_new_name_entry (momit_dictionnary_t * itmdict,
+				const momstring_t * name, const momval_t val)
+{
+  unsigned size = itmdict->idi_size;
+  momhash_t hashname = name->hash;
+  unsigned istartname = hashname % size;
+  struct mom_name_value_entry_st *dictab = itmdict->idi_dictab;
+  for (unsigned i = istartname; i < size; i++)
+    {
+      if (!dictab[i].nme_str || dictab[i].nme_str == MONIMELT_EMPTY)
+	{
+	  dictab[i].nme_str = name;
+	  *(momval_t *) & dictab[i].nme_val = val;
+	  goto added;
+	}
+    }
+  for (unsigned i = 0; i < istartname; i++)
+    {
+      if (!dictab[i].nme_str || dictab[i].nme_str == MONIMELT_EMPTY)
+	{
+	  dictab[i].nme_str = name;
+	  *(momval_t *) & dictab[i].nme_val = val;
+	  goto added;
+	}
+    }
+  // this should never happen
+  MONIMELT_FATAL ("corrupted dictionnary item of size %d", (int) size);
+added:
+  itmdict->idi_count++;
+}
+
+static inline int
+dictionnary_find_name_index (momit_dictionnary_t * itmdict, const char *str,
+			     momhash_t h)
+{
+  if (!h)
+    h = mom_string_hash (str, -1);
+  unsigned size = itmdict->idi_size;
+  unsigned istart = h % size;
+  struct mom_name_value_entry_st *dictab = itmdict->idi_dictab;
+  for (unsigned i = istart; i < size; i++)
+    {
+      if (!dictab[i].nme_str)
+	return -1;
+      if (dictab[i].nme_str == MONIMELT_EMPTY)
+	continue;
+      if (dictab[i].nme_str->hash == h
+	  && !strcmp (dictab[i].nme_str->cstr, str))
+	return (int) i;
+    }
+  for (unsigned i = 0; i < istart; i++)
+    {
+      if (!dictab[i].nme_str)
+	return -1;
+      if (dictab[i].nme_str == MONIMELT_EMPTY)
+	continue;
+      if (dictab[i].nme_str->hash == h
+	  && !strcmp (dictab[i].nme_str->cstr, str))
+	return (int) i;
+    }
+  return -1;
+}
+
+void
+mom_item_dictionnary_reserve (momval_t dictv, unsigned more)
+{
+  if (!dictv.ptr || *dictv.ptype != momty_dictionnaryitem)
+    return;
+  pthread_mutex_lock (&dictv.panyitem->i_mtx);
+  momit_dictionnary_t *itmdict = dictv.pdictionnaryitem;
+  unsigned oldcnt = itmdict->idi_count;
+  unsigned oldsiz = itmdict->idi_size;
+  if (5 * (oldcnt + more) + 4 > 4 * oldsiz)
+    {
+      unsigned newsiz =
+	(((4 * (oldcnt + more) / 3 + (oldcnt + more) / 16 + 10)) | 0x1f) + 1;
+      if (newsiz != oldsiz)
+	{
+	  struct mom_name_value_entry_st *newdictab =
+	    GC_MALLOC (newsiz * sizeof (struct mom_name_value_entry_st *));
+	  if (MONIMELT_UNLIKELY (!newdictab))
+	    MONIMELT_FATAL ("unable to resize dictionnary to %d",
+			    (int) newsiz);
+	  memset (newdictab, 0,
+		  newsiz * sizeof (struct mom_name_value_entry_st *));
+	  struct mom_name_value_entry_st *olddictab = itmdict->idi_dictab;
+	  itmdict->idi_dictab = newdictab;
+	  itmdict->idi_count = 0;
+	  itmdict->idi_size = newsiz;
+	  for (unsigned oix = 0; oix < oldsiz; oix++)
+	    {
+	      const momstring_t *curnam = olddictab[oix].nme_str;
+	      if (!curnam || curnam == MONIMELT_EMPTY)
+		continue;
+	      dictionnary_add_new_name_entry (itmdict, curnam,
+					      olddictab[oix].nme_val);
+	    }
+	  assert (itmdict->idi_count == oldcnt);
+	  GC_FREE (olddictab), olddictab = NULL;
+	}
+    }
+  pthread_mutex_unlock (&dictv.panyitem->i_mtx);
+}
+
+
+void
+mom_item_dictionnary_put (momval_t dictv, momval_t namev, momval_t valv)
+{
+  if (!dictv.ptr || *dictv.ptype != momty_dictionnaryitem
+      || !namev.ptr || *namev.ptype != momty_string
+      || namev.pstring->slen == 0)
+    return;
+  pthread_mutex_lock (&dictv.panyitem->i_mtx);
+  momit_dictionnary_t *itmdict = dictv.pdictionnaryitem;
+  const momstring_t *namestr = namev.pstring;
+  if (MONIMELT_UNLIKELY (4 * itmdict->idi_count + 5 >= 3 * itmdict->idi_size))
+    {
+      struct mom_name_value_entry_st *olddicttab = itmdict->idi_dictab;
+      unsigned oldcount = itmdict->idi_count;
+      unsigned oldsize = itmdict->idi_size;
+      unsigned newsize = ((4 * oldcount / 3 + oldcount / 16 + 5) | 0x1f) + 1;
+      struct mom_name_value_entry_st *newdictab
+	= GC_MALLOC (newsize * sizeof (struct mom_name_value_entry_st));
+      if (MONIMELT_UNLIKELY (!newdictab))
+	MONIMELT_FATAL ("failed to grown dictionnary to %d size",
+			(int) newsize);
+      memset (newdictab, 0,
+	      newsize * sizeof (struct mom_name_value_entry_st));
+      itmdict->idi_count = 0;
+      itmdict->idi_size = newsize;
+      itmdict->idi_dictab = newdictab;
+      for (unsigned oix = 0; oix < oldsize; oix++)
+	{
+	  const momstring_t *oldname = olddicttab[oix].nme_str;
+	  if (!oldname || oldname == MONIMELT_EMPTY)
+	    continue;
+	  const momval_t oldval = olddicttab[oix].nme_val;
+	  if (!oldval.ptr || oldval.ptr == MONIMELT_EMPTY)
+	    continue;
+	  dictionnary_add_new_name_entry (itmdict, oldname, oldval);
+	}
+      assert (itmdict->idi_count == oldcount);
+      GC_FREE (olddicttab);
+    }
+  int ix =
+    dictionnary_find_name_index (itmdict, namestr->cstr, namestr->hash);
+  if (ix >= 0)
+    {
+      if (valv.ptr)
+	{
+	  *(momval_t *) & itmdict->idi_dictab[ix].nme_val = valv;
+	  goto done;
+	}
+      else
+	{
+	  itmdict->idi_dictab[ix].nme_str = MONIMELT_EMPTY;
+	  *(momval_t *) & itmdict->idi_dictab[ix].nme_val = MONIMELT_NULLV;
+	  itmdict->idi_count--;
+	}
+    }
+  else
+    {				// ix<0    
+      if (!valv.ptr)
+	goto done;
+      dictionnary_add_new_name_entry (itmdict, namestr, valv);
+    }
+done:
+  pthread_mutex_unlock (&dictv.panyitem->i_mtx);
+}
+
+momval_t
+mom_item_dictionnary_get (momval_t dictv, momval_t namev)
+{
+  momval_t res = MONIMELT_NULLV;
+  if (!dictv.ptr || *dictv.ptype != momty_dictionnaryitem
+      || !namev.ptr || *namev.ptype != momty_string
+      || namev.pstring->slen == 0)
+    return MONIMELT_NULLV;
+  pthread_mutex_lock (&dictv.panyitem->i_mtx);
+  momit_dictionnary_t *itmdict = dictv.pdictionnaryitem;
+  const momstring_t *namestr = namev.pstring;
+  int ix =
+    dictionnary_find_name_index (itmdict, namestr->cstr, namestr->hash);
+  if (ix > 0)
+    res = itmdict->idi_dictab[ix].nme_val;
+  pthread_mutex_unlock (&dictv.panyitem->i_mtx);
+  return res;
+}
+
+momval_t
+mom_item_dictionnary_get_cstr (momval_t dictv, const char *namestr)
+{
+  momval_t res = MONIMELT_NULLV;
+  if (!dictv.ptr || *dictv.ptype != momty_dictionnaryitem
+      || !namestr || !namestr[0])
+    return MONIMELT_NULLV;
+  pthread_mutex_lock (&dictv.panyitem->i_mtx);
+  momit_dictionnary_t *itmdict = dictv.pdictionnaryitem;
+  int ix = dictionnary_find_name_index (itmdict, namestr, 0);
+  if (ix > 0)
+    res = itmdict->idi_dictab[ix].nme_val;
+  pthread_mutex_unlock (&dictv.panyitem->i_mtx);
+  return res;
+}
+
+unsigned
+mom_item_dictionnary_count (momval_t dictv)
+{
+  unsigned cnt = 0;
+  if (!dictv.ptr || *dictv.ptype != momty_dictionnaryitem)
+    return 0;
+  pthread_mutex_lock (&dictv.panyitem->i_mtx);
+  momit_dictionnary_t *itmdict = dictv.pdictionnaryitem;
+  cnt = itmdict->idi_count;
+  pthread_mutex_unlock (&dictv.panyitem->i_mtx);
+  return cnt;
+}
+
+static int
+valptr_cmp (const void *p1, const void *p2)
+{
+  const momval_t *pv1 = p1;
+  const momval_t *pv2 = p2;
+  return mom_value_cmp (*pv1, *pv2);
+}
+
+momval_t
+mom_item_dictionnary_sorted_name_node (momval_t dictv, momval_t connv)
+{
+  momval_t res = MONIMELT_NULLV;
+  if (!dictv.ptr || *dictv.ptype != momty_dictionnaryitem
+      || !connv.ptr || *connv.ptype <= momty__itemlowtype)
+    return MONIMELT_NULLV;
+  pthread_mutex_lock (&dictv.panyitem->i_mtx);
+  momit_dictionnary_t *itmdict = dictv.pdictionnaryitem;
+  unsigned cnt = itmdict->idi_count;
+  unsigned siz = itmdict->idi_size;
+  momval_t *sonarr = GC_MALLOC ((cnt + 1) * sizeof (momval_t));
+  if (MONIMELT_UNLIKELY (!sonarr))
+    MONIMELT_FATAL ("failed to allocate %d sons", cnt + 1);
+  memset (sonarr, 0, (cnt + 1) * sizeof (momval_t));
+  unsigned nb = 0;
+  for (unsigned dix = 0; dix < siz; dix++)
+    {
+      const momstring_t *curname = itmdict->idi_dictab[dix].nme_str;
+      if (!curname || curname == MONIMELT_EMPTY)
+	continue;
+      assert (nb <= cnt);
+      sonarr[nb++] = (momval_t) curname;
+    }
+  assert (nb == cnt);
+  qsort (sonarr, cnt, sizeof (momval_t), valptr_cmp);
+  pthread_mutex_unlock (&dictv.panyitem->i_mtx);
+  res = (momval_t) mom_make_node_from_array (connv.panyitem, cnt, sonarr);
+  GC_FREE (sonarr);
+  return res;
+}
 
 /// type descriptor for dictionnary
 static mom_anyitem_t *dictionnary_itemloader (struct mom_loader_st *ld,
@@ -3121,7 +3397,6 @@ static momval_t dictionnary_itemgetbuild (struct mom_dumper_st *dmp,
 static momval_t dictionnary_itemgetfill (struct mom_dumper_st *dmp,
 					 mom_anyitem_t * itm);
 
-#warning dictionnary type unimplemented
 const struct momitemtypedescr_st momitype_dictionnary = {
   .ityp_magic = ITEMTYPE_MAGIC,
   .ityp_name = "dictionnary",
@@ -3134,29 +3409,99 @@ const struct momitemtypedescr_st momitype_dictionnary = {
 
 static mom_anyitem_t *
 dictionnary_itemloader (struct mom_loader_st *ld,
-			momval_t json, uuid_t uid, unsigned space)
+			momval_t json
+			__attribute__ ((unused)), uuid_t uid, unsigned space)
 {
+  return (mom_anyitem_t *) mom_make_item_dictionnary_of_uuid (uid, space);
 }
 
 static void
 dictionnary_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
 			momval_t json)
 {
+  mom_load_any_item_data (ld, itm, json);
+  momval_t jdictarr = mom_jsonob_get (json, (momval_t) mom_item__dictionnary);
+  unsigned lendict = mom_json_array_size (jdictarr);
+  mom_item_dictionnary_reserve ((momval_t) itm, 5 * lendict / 4 + 1);
+  for (unsigned eix = 0; eix < lendict; eix++)
+    {
+      momval_t jent = mom_json_array_nth (jdictarr, eix);
+      momval_t jname = mom_jsonob_get (jent, (momval_t) mom_item__name);
+      momval_t jval = mom_jsonob_get (jent, (momval_t) mom_item__val);
+      momval_t curval = mom_load_value_json (ld, jval);
+      mom_item_dictionnary_put ((momval_t) itm, jname, curval);
+    }
 }
 
 static void
 dictionnary_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
+  mom_scan_any_item_data (dmp, itm);
+  momit_dictionnary_t *dictitm = (momit_dictionnary_t *) itm;
+  unsigned siz = dictitm->idi_size;
+  unsigned nb = 0;
+  for (unsigned ix = 0; ix < siz; ix++)
+    {
+      const momstring_t *curname = dictitm->idi_dictab[ix].nme_str;
+      if (!curname || curname == MONIMELT_EMPTY)
+	continue;
+      mom_dump_scan_value (dmp, (momval_t) curname);
+      mom_dump_scan_value (dmp, (momval_t) dictitm->idi_dictab[ix].nme_val);
+      nb++;
+    }
+  assert (nb == dictitm->idi_count);
 }
 
 static momval_t
 dictionnary_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
+  return (momval_t) mom_make_json_object (	// the type:
+					   MOMJSON_ENTRY, mom_item__jtype,
+					   mom_item__dictionnary_item,
+					   // done
+					   MOMJSON_END);
 }
 
 static momval_t
 dictionnary_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
+  momval_t node = mom_item_dictionnary_sorted_name_node ((momval_t) itm,
+							 (momval_t)
+							 mom_item__dictionnary);
+  assert (node.ptr && *node.ptype == momty_node);
+  const momnode_t *nd = node.pnode;
+  unsigned nbnames = nd->slen;
+  momval_t *entarr = GC_MALLOC (nbnames * sizeof (momval_t));
+  if (MONIMELT_UNLIKELY (!entarr))
+    MONIMELT_FATAL ("failed to allocate %d entries", nbnames);
+  memset (entarr, 0, nbnames * sizeof (momval_t));
+  unsigned nb = 0;
+  for (unsigned eix = 0; eix < nbnames; eix++)
+    {
+      momval_t jname = nd->sontab[eix];
+      assert (jname.ptr && *jname.ptype == momty_string);
+      momval_t curval = mom_item_dictionnary_get ((momval_t) itm, jname);
+      momval_t jval = mom_dump_emit_json (dmp, curval);
+      if (jval.ptr)
+	entarr[nb++] =
+	  (momval_t) mom_make_json_object (MOMJSON_ENTRY, mom_item__name,
+					   jname, MOMJSON_ENTRY,
+					   mom_item__val, jval, MOMJSON_END);
+    }
+  momval_t jarr = (momval_t) mom_make_json_array_count (nb, entarr);
+  GC_FREE (entarr), entarr = NULL;
+  momval_t jres = (momval_t) mom_make_json_object
+    // attributes
+    (MOMJSON_ENTRY, mom_item__attributes,
+     mom_attributes_emit_json (dmp, itm->i_attrs),
+     // buffer
+     MOMJSON_ENTRY, mom_item__dictionnary, jarr,
+     // content
+     MOMJSON_ENTRY, mom_item__content, mom_dump_emit_json (dmp,
+							   itm->i_content),
+     // end
+     MOMJSON_END);
+  return jres;
 }
 
 ////////////////////////////////////////////////////////////////

@@ -567,23 +567,30 @@ int mom_item_buffer__scanf_pos (momval_t bufv, int *pos, const char *fmt, ...)
 
 
 //////////////////////////////// dictionnary items
-struct mom_name_entry_st	// for dictionnary and global names
+struct mom_name_value_entry_st	// for dictionnary 
 {
   const momstring_t *nme_str;
-  const mom_anyitem_t *nme_itm;
+  const momval_t nme_val;
 };
 struct momdictionnaryitem_st
 {
   struct momanyitem_st idi_item;	/* common part */
   unsigned idi_count;
   unsigned idi_size;
-  struct mom_name_entry_st *idi_dictab;
+  struct mom_name_value_entry_st *idi_dictab;
 };
 
 momit_dictionnary_t *mom_make_item_dictionnary (unsigned space);
 momit_dictionnary_t *mom_make_item_dictionnary_of_uuid (uuid_t uid,
 							unsigned space);
-
+void mom_item_dictionnary_reserve (momval_t dictv, unsigned more);
+void mom_item_dictionnary_put (momval_t dictv, momval_t namev, momval_t valv);
+momval_t mom_item_dictionnary_get (momval_t dictv, momval_t namev);
+momval_t mom_item_dictionnary_get_cstr (momval_t dictv, const char *namestr);
+unsigned mom_item_dictionnary_count (momval_t dictv);
+// make a node with the sorted names
+momval_t mom_item_dictionnary_sorted_name_node (momval_t dictv,
+						momval_t connv);
 ////////////////////////////////
 /////// tasklets
 void mom_tasklet_push_frame (momval_t tsk, momval_t clo,
