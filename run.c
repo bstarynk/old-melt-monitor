@@ -57,9 +57,12 @@ mom_agenda_add_tasklet_back (momval_t tsk)
   pthread_cond_broadcast (&mom_run_changed_cond);
 }
 
-static void
-work_loop ()
+static void *
+work_loop (struct GC_stack_base *sb, void *data)
 {
+  struct momworkdata_st *wd = data;
+  GC_register_my_thread (sb);
+  assert (wd != NULL);
   mom_anyitem_t *curtsk = NULL;
   bool working = false;
   do
@@ -90,14 +93,13 @@ work_loop ()
   cur_worker->work_index = 0;
   pthread_mutex_unlock (&mom_run_mtx);
   pthread_cond_broadcast (&mom_run_changed_cond);
-
+  GC_unregister_my_thread ();
+  return NULL;
 }
 
 static void *
 work_cb (void *ad)
 {
-  struct GC_stack_base sb;
-  memset (&sb, 0, sizeof (sb));
   struct momworkdata_st *wd = ad;
   {
     char thnambuf[24];
@@ -106,15 +108,12 @@ work_cb (void *ad)
     pthread_setname_np (pthread_self (), thnambuf);
   }
   assert (wd && wd->work_magic == WORK_MAGIC);
-  GC_register_my_thread (&sb);
   if (!mom_item__agenda
       || ((mom_anyitem_t *) mom_item__agenda)->typnum != momty_queueitem)
     MONIMELT_FATAL ("bad agenda");
   cur_worker = wd;
-  work_loop ();
-  memset (wd, 0, sizeof (struct momworkdata_st));
+  GC_call_with_stack_base (work_loop, wd);
   cur_worker = NULL;
-  GC_unregister_my_thread ();
   return NULL;
 }
 

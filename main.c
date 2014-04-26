@@ -468,6 +468,7 @@ int
 main (int argc, char **argv)
 {
   GC_INIT ();
+  GC_allow_register_threads ();
   pthread_setname_np (pthread_self (), "monimelt-main");
   g_mem_gc_friendly = TRUE;
   g_mem_set_vtable (&gc_mem_vtable);

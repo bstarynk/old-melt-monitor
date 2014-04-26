@@ -28,18 +28,23 @@ static long nb_weq_requests;
 
 extern momit_dictionnary_t *mom_item__web_dictionnary;
 
+#define WEB_MAGIC 0x11b63c99	/* web magic 297155737 */
+struct mom_web_info_st
+{
+  unsigned web_magic;
+  onion_connection_status web_stat;
+  unsigned long web_num;
+  onion_request *web_requ;
+  onion_response *web_resp;
+};
+
 static
-  onion_connection_status mom_really_process_request (long webnum,
-						      onion_request * req,
-						      onion_response * res)
+  void *mom_really_process_request (struct GC_stack_base *sb, void *data)
   __attribute__ ((noinline));
 
 static onion_connection_status
 process_request (void *ignore, onion_request * req, onion_response * res)
 {
-  struct GC_stack_base sb;
-  memset (&sb, 0, sizeof (sb));
-  GC_register_my_thread (&sb);
   long webnum = 0;
   {
     char thnambuf[32];
@@ -51,9 +56,15 @@ process_request (void *ignore, onion_request * req, onion_response * res)
     pthread_setname_np (pthread_self (), thnambuf);
     pthread_mutex_unlock (&mtx_onion);
   }
-  onion_connection_status cs = mom_really_process_request (webnum, req, res);
-  GC_unregister_my_thread ();
-  return cs;
+  struct mom_web_info_st webinf;
+  memset (&webinf, 0, sizeof (webinf));
+  webinf.web_magic = WEB_MAGIC;
+  webinf.web_stat = OCS_NOT_PROCESSED;
+  webinf.web_num = webnum;
+  webinf.web_requ = req;
+  webinf.web_resp = res;
+  GC_call_with_stack_base (mom_really_process_request, &webinf);
+  return webinf.web_stat;
 }
 
 void
@@ -80,17 +91,22 @@ mom_start_web (const char *webhost)
   onion_url_add_handler (mom_onion_root, "^.*",
 			 onion_handler_new ((onion_handler_handler)
 					    process_request, NULL, NULL));
-  onion_url_add_handler (mom_onion_root, "[A-Za-z0-9+-.]+", loch);
+  onion_url_add_handler (mom_onion_root, "webdir/[A-Za-z0-9+-.]+", loch);
   MONIMELT_INFORM ("before listening web host %s", webhost);
   onion_listen (mom_onion);
   MONIMELT_INFORM ("after listening web host %s", webhost);
 }
 
-static onion_connection_status
-mom_really_process_request (long webnum, onion_request * req,
-			    onion_response * res)
+static void *
+mom_really_process_request (struct GC_stack_base *sb, void *data)
 {
+  GC_register_my_thread (sb);
+  struct mom_web_info_st *pwebinf = data;
+  assert (pwebinf->web_magic == WEB_MAGIC);
   assert (mom_item__web_dictionnary != NULL);
+  unsigned long webnum = pwebinf->web_num;
+  onion_request *req = pwebinf->web_requ;
+  onion_response *res = pwebinf->web_resp;
   const char *fullpath = onion_request_get_fullpath (req);
   const char *path = onion_request_get_path (req);
   unsigned flags = onion_request_get_flags (req);
@@ -115,6 +131,7 @@ mom_really_process_request (long webnum, onion_request * req,
     }
   MONIMELT_INFORM ("request #%ld fullpath=%s path=%s method=%s",
 		   webnum, fullpath, path, method);
-  return OCS_NOT_PROCESSED;
+  GC_unregister_my_thread ();
+  return NULL;
 #warning incomplete mom_really_process_request
 }
