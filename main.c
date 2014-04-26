@@ -519,7 +519,7 @@ main (int argc, char **argv)
     }
   if (web_host)
     {
-      extern void mom_start_web(const char*);
+      extern void mom_start_web (const char *);
       mom_start_web (web_host);
     }
   if (mom_nb_workers > 0)

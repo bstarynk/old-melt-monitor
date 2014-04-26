@@ -2748,7 +2748,6 @@ mom_make_item_buffer (unsigned space)
   itm->itu_begin = itm->itu_end = 0;
   itm->itu_size = siz;
   return itm;
-
 }
 
 momit_buffer_t *
@@ -3089,6 +3088,76 @@ buffer_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 }
 
 
+////////////////////////////////////////////////// dictionnary items
+#define DICTIONNARY_INITIAL_SIZE 12
+momit_dictionnary_t *
+mom_make_item_dictionnary (unsigned space)
+{
+  momit_dictionnary_t *itm
+    = mom_allocate_item (momty_dictionnaryitem, sizeof (momit_dictionnary_t),
+			 space);
+  const unsigned siz = DICTIONNARY_INITIAL_SIZE;
+  itm->idi_dictab =
+    GC_MALLOC_ATOMIC (siz * sizeof (struct mom_name_entry_st));
+  if (MONIMELT_UNLIKELY (!itm->idi_dictab))
+    MONIMELT_FATAL ("failed to allocate dictionnary of %d", (int) siz);
+  memset (itm->idi_dictab, 0, siz * sizeof (struct mom_name_entry_st));
+  itm->idi_count = 0;
+  itm->idi_size = siz;
+  return itm;
+}
+
+
+/// type descriptor for dictionnary
+static mom_anyitem_t *dictionnary_itemloader (struct mom_loader_st *ld,
+					      momval_t json, uuid_t uid,
+					      unsigned space);
+static void dictionnary_itemfiller (struct mom_loader_st *ld,
+				    mom_anyitem_t * itm, momval_t json);
+static void dictionnary_itemscan (struct mom_dumper_st *dmp,
+				  mom_anyitem_t * itm);
+static momval_t dictionnary_itemgetbuild (struct mom_dumper_st *dmp,
+					  mom_anyitem_t * itm);
+static momval_t dictionnary_itemgetfill (struct mom_dumper_st *dmp,
+					 mom_anyitem_t * itm);
+
+#warning dictionnary type unimplemented
+const struct momitemtypedescr_st momitype_dictionnary = {
+  .ityp_magic = ITEMTYPE_MAGIC,
+  .ityp_name = "dictionnary",
+  .ityp_loader = dictionnary_itemloader,
+  .ityp_filler = dictionnary_itemfiller,
+  .ityp_scan = dictionnary_itemscan,
+  .ityp_getbuild = dictionnary_itemgetbuild,
+  .ityp_getfill = dictionnary_itemgetfill,
+};
+
+static mom_anyitem_t *
+dictionnary_itemloader (struct mom_loader_st *ld,
+			momval_t json, uuid_t uid, unsigned space)
+{
+}
+
+static void
+dictionnary_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
+			momval_t json)
+{
+}
+
+static void
+dictionnary_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+{
+}
+
+static momval_t
+dictionnary_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+{
+}
+
+static momval_t
+dictionnary_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+{
+}
 
 ////////////////////////////////////////////////////////////////
 void
@@ -3114,4 +3183,5 @@ mom_initialize_items (void)
   mom_typedescr_array[momty_queueitem] = &momitype_queue;
   mom_typedescr_array[momty_boxitem] = &momitype_box;
   mom_typedescr_array[momty_bufferitem] = &momitype_buffer;
+  mom_typedescr_array[momty_dictionnaryitem] = &momitype_dictionnary;
 }

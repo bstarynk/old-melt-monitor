@@ -22,18 +22,13 @@
 
 static pthread_mutex_t glob_mtx = PTHREAD_MUTEX_INITIALIZER;
 
-struct name_entry_st
-{
-  const momstring_t *nme_str;
-  const mom_anyitem_t *nme_itm;
-};
 
 static struct glob_dict_st
 {
   unsigned name_count;		// number of named entries
   unsigned name_size;		// size of hash tables
-  struct name_entry_st *name_hashitem;	// hash table on items
-  struct name_entry_st *name_hashstr;	// hash table on strings
+  struct mom_name_entry_st *name_hashitem;	// hash table on items
+  struct mom_name_entry_st *name_hashstr;	// hash table on strings
 } glob_dict;
 
 
@@ -43,12 +38,13 @@ mom_initialize_globals (void)
   const unsigned dictsiz = 1024;
   pthread_mutex_lock (&glob_mtx);
   glob_dict.name_hashitem =
-    GC_MALLOC (sizeof (struct name_entry_st) * dictsiz);
+    GC_MALLOC (sizeof (struct mom_name_entry_st) * dictsiz);
   memset (glob_dict.name_hashitem, 0,
-	  sizeof (struct name_entry_st) * dictsiz);
+	  sizeof (struct mom_name_entry_st) * dictsiz);
   glob_dict.name_hashstr =
-    GC_MALLOC (sizeof (struct name_entry_st) * dictsiz);
-  memset (glob_dict.name_hashstr, 0, sizeof (struct name_entry_st) * dictsiz);
+    GC_MALLOC (sizeof (struct mom_name_entry_st) * dictsiz);
+  memset (glob_dict.name_hashstr, 0,
+	  sizeof (struct mom_name_entry_st) * dictsiz);
   glob_dict.name_size = dictsiz;
   pthread_mutex_unlock (&glob_mtx);
 }
@@ -61,7 +57,7 @@ find_name_index (const char *str, momhash_t h)
     h = mom_string_hash (str, -1);
   unsigned size = glob_dict.name_size;
   unsigned istart = h % size;
-  struct name_entry_st *arrname = glob_dict.name_hashstr;
+  struct mom_name_entry_st *arrname = glob_dict.name_hashstr;
   for (unsigned i = istart; i < size; i++)
     {
       if (!arrname[i].nme_str)
@@ -92,7 +88,7 @@ find_item_index (const mom_anyitem_t * itm)
   momhash_t h = itm->i_hash;
   unsigned size = glob_dict.name_size;
   unsigned istart = h % size;
-  struct name_entry_st *arritem = glob_dict.name_hashitem;
+  struct mom_name_entry_st *arritem = glob_dict.name_hashitem;
   for (unsigned i = istart; i < size; i++)
     {
       if (arritem[i].nme_itm == itm)
@@ -173,8 +169,8 @@ add_new_name_entry (const momstring_t * name, const mom_anyitem_t * item)
   momhash_t hashitem = item->i_hash;
   unsigned istartname = hashname % size;
   unsigned istartitem = hashitem % size;
-  struct name_entry_st *arrname = glob_dict.name_hashstr;
-  struct name_entry_st *arritem = glob_dict.name_hashitem;
+  struct mom_name_entry_st *arrname = glob_dict.name_hashstr;
+  struct mom_name_entry_st *arritem = glob_dict.name_hashitem;
   for (unsigned i = istartname; i < size; i++)
     {
       if (!arrname[i].nme_str || arrname[i].nme_str == MONIMELT_EMPTY)
@@ -230,24 +226,25 @@ resize_dict (unsigned newsize)
 		    newsize, oldcount);
   if (newsize == oldsize)
     return;
-  struct name_entry_st *oldarrname = glob_dict.name_hashstr;
-  struct name_entry_st *oldarritem = glob_dict.name_hashitem;
+  struct mom_name_entry_st *oldarrname = glob_dict.name_hashstr;
+  struct mom_name_entry_st *oldarritem = glob_dict.name_hashitem;
   glob_dict.name_hashstr =
-    GC_MALLOC (sizeof (struct name_entry_st) * newsize);
+    GC_MALLOC (sizeof (struct mom_name_entry_st) * newsize);
   if (!glob_dict.name_hashstr)
     MONIMELT_FATAL ("failed to grow dictionnary string hash to %u", newsize);
-  memset (glob_dict.name_hashstr, 0, sizeof (struct name_entry_st) * newsize);
+  memset (glob_dict.name_hashstr, 0,
+	  sizeof (struct mom_name_entry_st) * newsize);
   glob_dict.name_hashitem =
-    GC_MALLOC (sizeof (struct name_entry_st) * newsize);
+    GC_MALLOC (sizeof (struct mom_name_entry_st) * newsize);
   if (!glob_dict.name_hashitem)
     MONIMELT_FATAL ("failed to grow dictionnary item hash to %u", newsize);
   memset (glob_dict.name_hashitem, 0,
-	  sizeof (struct name_entry_st) * newsize);
+	  sizeof (struct mom_name_entry_st) * newsize);
   glob_dict.name_count = 0;
   glob_dict.name_size = newsize;
   for (unsigned i = 0; i < oldsize; i++)
     {
-      struct name_entry_st *curent = oldarrname + i;
+      struct mom_name_entry_st *curent = oldarrname + i;
       if (!curent->nme_str || curent->nme_str == MONIMELT_EMPTY
 	  || !curent->nme_itm || curent->nme_itm == MONIMELT_EMPTY)
 	continue;
@@ -313,8 +310,8 @@ remove_entry (const momstring_t * name, const mom_anyitem_t * itm)
   momhash_t hashitem = itm->i_hash;
   unsigned istartname = hashname % size;
   unsigned istartitem = hashitem % size;
-  struct name_entry_st *arrname = glob_dict.name_hashstr;
-  struct name_entry_st *arritem = glob_dict.name_hashitem;
+  struct mom_name_entry_st *arrname = glob_dict.name_hashstr;
+  struct mom_name_entry_st *arritem = glob_dict.name_hashitem;
   for (unsigned i = istartname; i < size; i++)
     {
       if (!arrname[i].nme_str)

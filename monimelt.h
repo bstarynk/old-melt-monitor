@@ -81,6 +81,7 @@ enum momvaltype_en
   momty_boxitem,
   momty_queueitem,
   momty_bufferitem,
+  momty_dictionnaryitem,
   momty__last = 1000
 };
 
@@ -111,6 +112,7 @@ typedef struct momassocitem_st momit_assoc_t;
 typedef struct momboxitem_st momit_box_t;
 typedef struct momqueueitem_st momit_queue_t;
 typedef struct mombufferitem_st momit_buffer_t;
+typedef struct momdictionnaryitem_st momit_dictionnary_t;
 pthread_mutexattr_t mom_normal_mutex_attr;
 pthread_mutexattr_t mom_recursive_mutex_attr;
 GModule *mom_prog_module;
@@ -141,6 +143,7 @@ union momvalueptr_un
   struct momqueueitem_st *pqueueitem;
   struct momboxitem_st *pboxitem;
   struct mombufferitem_st *pbufferitem;
+  struct momdictionnaryitem_st *pdictionnaryitem;
   const struct momnode_st *pnode;
   const struct momnode_st *pclosure;
   const struct momseqitem_st *pseqitm;
@@ -562,6 +565,26 @@ int mom_item_buffer__scanf_pos (momval_t bufv, int *pos, const char *fmt, ...)
 #define mom_item_buffer_scanf(Bufv,Fmt,...) \
   mom_item_buffer__scanf_at_lin(__LINE__,Bufv,Fmt,##__VA_ARGS__)
 
+
+//////////////////////////////// dictionnary items
+struct mom_name_entry_st	// for dictionnary and global names
+{
+  const momstring_t *nme_str;
+  const mom_anyitem_t *nme_itm;
+};
+struct momdictionnaryitem_st
+{
+  struct momanyitem_st idi_item;	/* common part */
+  unsigned idi_count;
+  unsigned idi_size;
+  struct mom_name_entry_st *idi_dictab;
+};
+
+momit_dictionnary_t *mom_make_item_dictionnary (unsigned space);
+momit_dictionnary_t *mom_make_item_dictionnary_of_uuid (uuid_t uid,
+							unsigned space);
+
+////////////////////////////////
 /////// tasklets
 void mom_tasklet_push_frame (momval_t tsk, momval_t clo,
 			     enum mom_pushframedirective_en, ...)
