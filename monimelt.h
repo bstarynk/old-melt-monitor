@@ -58,6 +58,7 @@
 #include <onion/request.h>
 #include <onion/response.h>
 #include <onion/handler.h>
+#include <onion/dict.h>
 #include <onion/log.h>
 #include <onion/handlers/internal_status.h>
 #include <onion/handlers/exportlocal.h>
@@ -65,7 +66,11 @@
 #include <onion/handlers/static.h>
 #include <onion/handlers/auth_pam.h>
 
+// empty placeholder in hashes
 #define MONIMELT_EMPTY ((void*)(-1L))
+
+// reasonable path length
+#define MONIMELT_PATH_LEN 256
 enum momvaltype_en
 {
   momty_null = 0,
@@ -132,6 +137,7 @@ void mom_register_dumped_module (const char *modname);
 // below TINY_MAX we try to allocate on stack temporary vectors
 #define TINY_MAX 8
 
+#warning perhaps need a transient value for web requests, files, etc...
 union momvalueptr_un
 {
   void *ptr;
@@ -495,6 +501,9 @@ struct momboxitem_st
 
 momit_box_t *mom_make_item_box (unsigned space);
 momit_box_t *mom_make_item_box_of_uuid (uuid_t uid, unsigned space);
+#define mom_create__box(Name,Uid) \
+  mom_make_item_box_of_uuid(Uid,MONIMELT_SPACE_ROOT)
+
 // get the boxed value
 momval_t mom_item_box_get (momval_t boxv);
 // put a new boxed value and return the old one
@@ -740,6 +749,18 @@ __attribute__ ((format (printf, 3, 4)));
   MONIMELT_INFORM_AT(Fil,Lin,Fmt,##__VA_ARGS__)
 #define MONIMELT_INFORM(Fmt,...) \
   MONIMELT_INFORM_AT_BIS(__FILE__,__LINE__,Fmt,##__VA_ARGS__)
+
+
+void
+mom_warning_at (const char *fil, int lin, const char *fmt, ...)
+__attribute__ ((format (printf, 3, 4)));
+
+#define MONIMELT_WARNING_AT(Fil,Lin,Fmt,...) do {         \
+  mom_warning_at(Fil,Lin,Fmt,##__VA_ARGS__);} while(0)
+#define MONIMELT_WARNING_AT_BIS(Fil,Lin,Fmt,...) \
+  MONIMELT_WARNING_AT(Fil,Lin,Fmt,##__VA_ARGS__)
+#define MONIMELT_WARNING(Fmt,...) \
+  MONIMELT_WARNING_AT_BIS(__FILE__,__LINE__,Fmt,##__VA_ARGS__)
 
 momhash_t mom_string_hash (const char *str, int len);
 const momstring_t *mom_make_string_len (const char *str, int len);
