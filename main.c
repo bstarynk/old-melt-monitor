@@ -522,6 +522,7 @@ main (int argc, char **argv)
     {
       extern void mom_start_web (const char *);
       mom_start_web (web_host);
+      MONIMELT_INFORM ("started web %s", web_host);
     }
   if (mom_nb_workers > 0)
     {

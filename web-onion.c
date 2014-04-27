@@ -75,7 +75,7 @@ mom_start_web (const char *webhost)
   if (strlen (webhost) + 2 >= sizeof (webuf))
     MONIMELT_FATAL ("too long webhost %s", webhost);
   strncpy (webuf, webhost, sizeof (webuf) - 1);
-  mom_onion = onion_new (O_THREADED);
+  mom_onion = onion_new (O_THREADED | O_DETACH_LISTEN);
   char *lastcolon = strchr (webuf, ':');
   if (lastcolon && isdigit (lastcolon[1]))
     {
@@ -91,7 +91,7 @@ mom_start_web (const char *webhost)
   onion_url_add_handler (mom_onion_root, "^.*",
 			 onion_handler_new ((onion_handler_handler)
 					    process_request, NULL, NULL));
-  onion_url_add_handler (mom_onion_root, "webdir/[A-Za-z0-9+-.]+", loch);
+  onion_url_add_handler (mom_onion_root, "[A-Za-z0-9+-.]+", loch);
   MONIMELT_INFORM ("before listening web host %s", webhost);
   onion_listen (mom_onion);
   MONIMELT_INFORM ("after listening web host %s", webhost);
