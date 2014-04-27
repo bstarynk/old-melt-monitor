@@ -1,1 +1,21 @@
-A monitor for MELT, with FastCGI interface, using Boehm GC
+A monitor for MELT (see http://gcc-melt.org/ for more) on Linux with a
+web interface, using Boehm GC
+
+To compile it, you need 
+    sqlite3 from  http://sqlite.org
+    glib-2.0 & gmodule-2.0 from GTK3 see  https://developer.gnome.org/glib/
+    gmime from  https://developer.gnome.org/gmime/
+    onion from https://github.com/davidmoreno/onion
+    Boehm GC from http://www.hboehm.info/gc/
+
+This code is free software (GPLv3+) in pre-alpha stage in april 2014.
+
+To test it, first build a sqlite3 database with
+
+   sqlite3 state-monimelt.dbsqlite < state-monimelt.sql
+
+then run
+
+   ./monimelt -W localhost:8086 -J 2   
+
+and try browsing http://localhost:8086/ or http://localhost:8086/status

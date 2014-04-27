@@ -530,6 +530,11 @@ main (int argc, char **argv)
       mom_run ();
       mom_wait_for_stop ();
       MONIMELT_INFORM ("done %d workers", (int) mom_nb_workers);
+      if (!dump_state_path && load_state_path)
+	{
+	  MONIMELT_INFORM ("will dump on %s", dump_state_path);
+	  dump_state_path = load_state_path;
+	}
     }
   if (dump_state_path)
     {
