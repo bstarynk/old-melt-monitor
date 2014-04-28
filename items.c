@@ -3581,6 +3581,31 @@ webrequest_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
   return jres;
 }
 
+
+void
+mom_item_webrequest_puts (momval_t val, const char *str)
+{
+  if (!val.ptr || *val.ptype != momty_webrequestitem || !str || !str[0])
+    return;
+  pthread_mutex_lock (&val.panyitem->i_mtx);
+  onion_response *resp = val.pwebrequestitem->iweb_response;
+  if (resp)
+    onion_response_write0 (resp, str);
+  pthread_mutex_unlock (&val.panyitem->i_mtx);
+}
+
+void
+mom_item_webrequest_puts_html (momval_t val, const char *str)
+{
+  if (!val.ptr || *val.ptype != momty_webrequestitem || !str || !str[0])
+    return;
+  pthread_mutex_lock (&val.panyitem->i_mtx);
+  onion_response *resp = val.pwebrequestitem->iweb_response;
+  if (resp)
+    onion_response_write_html_safe (resp, str);
+  pthread_mutex_unlock (&val.panyitem->i_mtx);
+}
+
 ////////////////////////////////////////////////////////////////
 void
 mom_initialize_items (void)
