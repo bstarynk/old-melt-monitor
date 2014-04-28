@@ -904,7 +904,8 @@ rootspace_fetch_fill (unsigned spanum, const char *uuidstr)
 
 static sqlite3_stmt *buildfill_dumpstmt;
 static void
-rootspace_store_build_fill (mom_anyitem_t * itm,
+rootspace_store_build_fill (struct mom_dumper_st *dmp,
+			    mom_anyitem_t * itm,
 			    const char *buildstr, const char *fillstr)
 {
   char ustr[UUID_PARSED_LEN];
@@ -927,6 +928,11 @@ rootspace_store_build_fill (mom_anyitem_t * itm,
   const struct momitemtypedescr_st *typdesc =
     mom_typedescr_array[itm->typnum];
   assert (typdesc != NULL && typdesc->ityp_magic == ITEMTYPE_MAGIC);
+  const char *typename = typdesc->ityp_name;
+  if (typdesc->ityp_mascarade_dump)
+    typename = typdesc->ityp_mascarade_dump (dmp, itm);
+  if (!typename || !typename[0])
+    goto reset_step;
   if (sqlite3_bind_text
       (buildfill_dumpstmt, 2, typdesc->ityp_name, -1, SQLITE_STATIC))
     MONIMELT_FATAL ("failed to bind type: %s", sqlite3_errmsg (mom_dbsqlite));
@@ -946,6 +952,7 @@ rootspace_store_build_fill (mom_anyitem_t * itm,
     MONIMELT_FATAL ("failed to insert build & fill of uid %s: %s (%d:%s)",
 		    ustr, sqlite3_errmsg (mom_dbsqlite),
 		    stepres, sqlite3_errstr (stepres));
+reset_step:
   if (sqlite3_reset (buildfill_dumpstmt))
     MONIMELT_FATAL ("failed to reset build & fill statement: %s",
 		    sqlite3_errmsg (mom_dbsqlite));
@@ -1359,7 +1366,7 @@ mom_full_dump (const char *state)
 	free (buffill), buffill = NULL, sizfill = 0;
       }
       assert (spadescr->spa_store_build_fill != NULL);
-      spadescr->spa_store_build_fill (curitm, strbuild, strfill);
+      spadescr->spa_store_build_fill (&dmp, curitm, strbuild, strfill);
       strbuild = NULL;
       strfill = NULL;
       dmp.dmp_qfirst = dmp.dmp_qfirst->iq_next;

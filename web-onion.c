@@ -237,7 +237,7 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
 	GC_FREE (pdic);
       }
     }
-#warning incomplete mom_really_process_request
+#warning incomplete mom_really_process_request, should make a web request item
 end:
   MONIMELT_INFORM ("request #%ld fullpath=%s path=%s method=%s",
 		   webnum, fullpath, path, method ? method : "??");

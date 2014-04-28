@@ -137,7 +137,6 @@ void mom_register_dumped_module (const char *modname);
 // below TINY_MAX we try to allocate on stack temporary vectors
 #define TINY_MAX 8
 
-#warning perhaps need a transient value for web requests, files, etc...
 union momvalueptr_un
 {
   void *ptr;
@@ -179,6 +178,10 @@ typedef void mom_item_filler_sig_t (struct mom_loader_st *ld,
 // function to scan an item
 typedef void mom_item_scan_sig_t (struct mom_dumper_st *dmp,
 				  mom_anyitem_t * itm);
+
+// optional function to mascarade the type of a dumped item
+typedef const char *mom_item_mascarade_type_sig_t (struct mom_dumper_st *dmp,
+						   mom_anyitem_t * itm);
 // function to get the building json of an item
 typedef momval_t mom_item_get_build_sig_t (struct mom_dumper_st *dmp,
 					   mom_anyitem_t * itm);
@@ -197,6 +200,7 @@ struct momitemtypedescr_st
   mom_item_loader_sig_t *ityp_loader;
   mom_item_filler_sig_t *ityp_filler;
   mom_item_scan_sig_t *ityp_scan;
+  mom_item_mascarade_type_sig_t *ityp_mascarade_dump;
   mom_item_get_build_sig_t *ityp_getbuild;
   mom_item_get_fill_sig_t *ityp_getfill;
   mom_item_destroy_sig_t *ityp_destroy;
@@ -214,7 +218,8 @@ typedef char *mom_space_fetch_build_sig_t (unsigned spanum,
 typedef char *mom_space_fetch_fill_sig_t (unsigned spanum,
 					  const char *uuidstr);
 // store the build & fill GC_STRDUP-ed strings of a given uuid string
-typedef void mom_space_store_build_fill_sig_t (mom_anyitem_t * itm,
+typedef void mom_space_store_build_fill_sig_t (struct mom_dumper_st *dmp,
+					       mom_anyitem_t * itm,
 					       const char *buildstr,
 					       const char *fillstr);
 // the space FOO is described by momspace_FOO of following type:
