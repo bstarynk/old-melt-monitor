@@ -66,11 +66,52 @@
 #include <onion/handlers/static.h>
 #include <onion/handlers/auth_pam.h>
 
+// mark unlikely conditions to help optimization
+#ifdef __GNUC__
+#define MONIMELT_UNLIKELY(P) __builtin_expect((P),0)
+#else
+#define MONIMELT_UNLIKELY(P) (P)
+#endif
+
 // empty placeholder in hashes
 #define MONIMELT_EMPTY ((void*)(-1L))
 
 // reasonable path length
 #define MONIMELT_PATH_LEN 256
+
+// query a clock
+static inline double
+monimelt_clock_time (clockid_t cid)
+{
+  struct timespec ts = { 0, 0 };
+  if (clock_gettime (cid, &ts))
+    return NAN;
+  else
+    return (double) ts.tv_sec + 1.0e-9 * ts.tv_nsec;
+}
+
+
+static inline struct timespec
+monimelt_timespec (double t)
+{
+  struct timespec ts = { 0, 0 };
+  if (isnan (t) || t < 0.0)
+    return ts;
+  double fl = floor (t);
+  ts.tv_sec = (time_t) fl;
+  ts.tv_nsec = (long) ((t - fl) * 1.0e9);
+  // this should not happen
+  if (MONIMELT_UNLIKELY (ts.tv_nsec < 0))
+    ts.tv_nsec = 0;
+  while (MONIMELT_UNLIKELY (ts.tv_nsec >= 1000 * 1000 * 1000))
+    {
+      ts.tv_sec++;
+      ts.tv_nsec -= 1000 * 1000 * 1000;
+    };
+  return ts;
+}
+
+
 enum momvaltype_en
 {
   momty_null = 0,
@@ -95,6 +136,7 @@ enum momvaltype_en
   momty_queueitem,
   momty_bufferitem,
   momty_dictionnaryitem,
+  momty_webrequestitem,
   momty__last = 1000
 };
 
@@ -126,6 +168,7 @@ typedef struct momboxitem_st momit_box_t;
 typedef struct momqueueitem_st momit_queue_t;
 typedef struct mombufferitem_st momit_buffer_t;
 typedef struct momdictionnaryitem_st momit_dictionnary_t;
+typedef struct momwebrequestitem_st momit_webrequest_t;
 pthread_mutexattr_t mom_normal_mutex_attr;
 pthread_mutexattr_t mom_recursive_mutex_attr;
 GModule *mom_prog_module;
@@ -157,6 +200,7 @@ union momvalueptr_un
   struct momboxitem_st *pboxitem;
   struct mombufferitem_st *pbufferitem;
   struct momdictionnaryitem_st *pdictionnaryitem;
+  struct momwebrequestitem_st *pwebrequestitem;
   const struct momnode_st *pnode;
   const struct momnode_st *pclosure;
   const struct momseqitem_st *pseqitm;
@@ -233,17 +277,13 @@ struct momspacedescr_st
   mom_space_store_build_fill_sig_t *spa_store_build_fill;
 };
 #define MONIMELT_ROOT_SPACE_NAME "."
+#define MONIMELT_SPACE_NONE 0
 #define MONIMELT_SPACE_ROOT 1
 #define MONIMELT_FIRST_USER_SPACE 2
 #define MONIMELT_SPACE_MAX 64
 struct momspacedescr_st *mom_spacedescr_array[MONIMELT_SPACE_MAX];
 const struct momstring_st *mom_spacename_array[MONIMELT_SPACE_MAX];
 
-#ifdef __GNUC__
-#define MONIMELT_UNLIKELY(P) __builtin_expect((P),0)
-#else
-#define MONIMELT_UNLIKELY(P) (P)
-#endif
 
 #define MONIMELT_NULLV ((union momvalueptr_un)((void*)0))
 struct momint_st
@@ -615,6 +655,24 @@ unsigned mom_item_dictionnary_count (momval_t dictv);
 // make a node with the sorted names
 momval_t mom_item_dictionnary_sorted_name_node (momval_t dictv,
 						momval_t connv);
+
+//////////////// web request items, only allocated in web-onion.c
+///// mascaraded at dump time into a box item
+struct momwebrequestitem_st
+{
+  struct momanyitem_st iweb_item;	/* common part */
+  onion_request *iweb_request;
+  onion_response *iweb_response;
+  unsigned long iweb_webnum;
+  double iweb_time;		/* real time of request */
+  pthread_cond_t iweb_cond;
+  mom_anyitem_t *iweb_methoditm;
+  momval_t iweb_postjsob;	/* JSON object for POST arguments */
+  momval_t iweb_queryjsob;	/* JSON object for query arguments */
+  momval_t iweb_path;		/* path string */
+
+};
+
 ////////////////////////////////
 /////// tasklets
 void mom_tasklet_push_frame (momval_t tsk, momval_t clo,

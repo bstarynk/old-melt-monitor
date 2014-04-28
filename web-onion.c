@@ -34,13 +34,13 @@ struct mom_web_info_st
   unsigned web_magic;
   onion_connection_status web_stat;
   unsigned long web_num;
-  unsigned long web_rand;
+  double web_time;
   onion_request *web_requ;
   onion_response *web_resp;
 };
 
 
-static struct random_data web_randata;
+
 
 static
   void *mom_really_process_request (struct GC_stack_base *sb, void *data)
@@ -51,14 +51,13 @@ static onion_connection_status
 process_request (void *ignore, onion_request * req, onion_response * res)
 {
   long webnum = 0;
-  int32_t randnum = 0;
+  double webtim = monimelt_clock_time (CLOCK_REALTIME);
   {
     char thnambuf[32];
     memset (thnambuf, 0, sizeof (thnambuf));
     pthread_mutex_lock (&mtx_onion);
     nb_weq_requests++;
     webnum = nb_weq_requests;
-    random_r (&web_randata, &randnum);
     snprintf (thnambuf, sizeof (thnambuf), "monimelt-w%04ld", webnum);
     pthread_setname_np (pthread_self (), thnambuf);
     pthread_mutex_unlock (&mtx_onion);
@@ -68,7 +67,7 @@ process_request (void *ignore, onion_request * req, onion_response * res)
   webinf.web_magic = WEB_MAGIC;
   webinf.web_stat = OCS_NOT_PROCESSED;
   webinf.web_num = webnum;
-  webinf.web_rand = (randnum * 100049) ^ (1039 * getpid () + time (NULL));
+  webinf.web_time = webtim;
   webinf.web_requ = req;
   webinf.web_resp = res;
   GC_call_with_stack_base (mom_really_process_request, &webinf);
@@ -87,16 +86,6 @@ mom_start_web (const char *webhost)
     MONIMELT_FATAL ("too long webhost %s", webhost);
   strncpy (webuf, webhost, sizeof (webuf) - 1);
   mom_onion = onion_new (O_THREADED | O_DETACH_LISTEN);
-  memset (&web_randata, 0, sizeof (web_randata));
-  {
-    unsigned seed = getpid ();
-    FILE *fr = fopen ("/dev/urandom", "r");
-    if (!fr)
-      MONIMELT_FATAL ("cannot open /dev/urandom");
-    fread (&seed, sizeof (seed), 1, fr);
-    fclose (fr);
-    srandom_r (seed, &web_randata);
-  }
   char *lastcolon = strchr (webuf, ':');
   if (lastcolon && isdigit (lastcolon[1]))
     {
@@ -149,6 +138,7 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
   unsigned long webnum = pwebinf->web_num;
   onion_request *req = pwebinf->web_requ;
   onion_response *res = pwebinf->web_resp;
+  double wtim = pwebinf->web_time;
   const char *fullpath = onion_request_get_fullpath (req);
   const char *path = onion_request_get_path (req);
   unsigned flags = onion_request_get_flags (req);
@@ -187,14 +177,14 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
     }
   unsigned fullpathlen = fullpath ? strlen (fullpath) : 0;
   momval_t closhandler = MONIMELT_NULLV;
+  momval_t jpost = MONIMELT_NULLV;
+  momval_t jquery = MONIMELT_NULLV;
   if (fullpathlen > 2 && isalpha (fullpath[1])
       && (closhandler =
 	  mom_item_dictionnary_get_cstr ((momval_t) mom_item__web_dictionnary,
 					 fullpath + 1)).ptr != NULL
       && *closhandler.ptype == momty_closure)
     {
-      momval_t jpost = MONIMELT_NULLV;
-      momval_t jquery = MONIMELT_NULLV;
       momval_t pathv = (momval_t) mom_make_string (fullpath + 1);
       if (methoditm == (mom_anyitem_t *) mom_item__POST)
 	{
@@ -236,8 +226,26 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
 	   MOMJSON_END);
 	GC_FREE (pdic);
       }
+      momit_webrequest_t *webitm = mom_allocate_item (momty_webrequestitem,
+						      sizeof
+						      (momit_webrequest_t),
+						      MONIMELT_SPACE_NONE);
+      webitm->iweb_request = req;
+      webitm->iweb_response = res;
+      webitm->iweb_webnum = webnum;
+      webitm->iweb_time = wtim;
+      webitm->iweb_methoditm = methoditm;
+      webitm->iweb_postjsob = jpost;
+      webitm->iweb_queryjsob = jquery;
+      webitm->iweb_path = pathv;
+      pthread_cond_init (&webitm->iweb_cond, NULL);
+      (void) mom_run_closure (closhandler,
+			      MOMPFR_VALUE, (momval_t) webitm, MOMPFR_END);
+      /* we should loop on lock the webitm's mutex and
+         pthread_cond_timedwait webitm->iweb_cond, so we should define
+         a protocol to reply to a request */
+#warning should wait for condition till web request terminated
     }
-#warning incomplete mom_really_process_request, should make a web request item
 end:
   MONIMELT_INFORM ("request #%ld fullpath=%s path=%s method=%s",
 		   webnum, fullpath, path, method ? method : "??");
