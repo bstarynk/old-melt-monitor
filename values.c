@@ -632,7 +632,7 @@ mom_make_set_union (momval_t s1, momval_t s2)
     arr = tinyarr;
   else
     arr = GC_MALLOC (sizeof (mom_anyitem_t *) * sumlen);
-  if (MONIMELT_UNLIKELY (arr))
+  if (MONIMELT_UNLIKELY (!arr))
     MONIMELT_FATAL ("failed to allocate union temporary of %d items", sumlen);
   memset (arr, 0, sumlen * sizeof (mom_anyitem_t *));
   unsigned i1 = 0, i2 = 0;
@@ -674,7 +674,7 @@ mom_make_set_union (momval_t s1, momval_t s2)
   update_seqitem_hash (rset);
   if (arr != tinyarr)
     GC_FREE (arr);
-  return rset;
+  return (momval_t)(const momset_t*)rset;
 }				// end mom_make_set_union
 
 
@@ -695,7 +695,7 @@ mom_make_set_intersection (momval_t s1, momval_t s2)
     arr = tinyarr;
   else
     arr = GC_MALLOC (sizeof (mom_anyitem_t *) * maxlen);
-  if (MONIMELT_UNLIKELY (arr))
+  if (MONIMELT_UNLIKELY (!arr))
     MONIMELT_FATAL ("failed to allocate intersection temporary of %d items",
 		    maxlen);
   memset (arr, 0, maxlen * sizeof (mom_anyitem_t *));
@@ -733,7 +733,7 @@ mom_make_set_intersection (momval_t s1, momval_t s2)
   update_seqitem_hash (rset);
   if (arr != tinyarr)
     GC_FREE (arr);
-  return rset;
+  return (momval_t)(const momset_t*)rset;
 }
 
 const momitemtuple_t *
