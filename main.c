@@ -31,7 +31,7 @@ static bool json_indented;
 static bool daemonize_me;
 static bool want_syslog;
 static bool using_syslog;
-
+static bool dont_want_event_loop;
 
 
 /* Option specification for getopt_long.  */
@@ -44,6 +44,7 @@ enum extraopt_en
   xtraopt_chdir,
   xtraopt_loadstate,
   xtraopt_dumpstate,
+  xtraopt_noeventloop,
 };
 
 static const struct option mom_long_options[] = {
@@ -62,6 +63,7 @@ static const struct option mom_long_options[] = {
   {"load-state", required_argument, NULL, xtraopt_loadstate},
   {"dump-state", required_argument, NULL, xtraopt_dumpstate},
   {"chdir", required_argument, NULL, xtraopt_chdir},
+  {"no-event-loop", no_argument, NULL, xtraopt_noeventloop},
   /* Terminating NULL placeholder.  */
   {NULL, no_argument, NULL, 0},
 };
@@ -91,6 +93,7 @@ usage (const char *argv0)
   printf ("\t --json-file <file-name>" "\t #parse JSON file for testing\n");
   printf ("\t --json-string <string>" "\t #parse JSON string for testing\n");
   printf ("\t --json-indent" "\t #output parsed JSON with indentation\n");
+  printf ("\t --no-event-loop" "\t #Dont start the event loop thread\n");
   printf ("\t --load-state <sqlite-state>" "\t #load an initial state\n");
   printf ("\t --dump-state <sqlite-state>" "\t #dump an initial state\n");
   printf ("\t --chdir <directory>" "\t #change directory\n");
@@ -219,6 +222,9 @@ parse_program_arguments_and_load_modules (int argc, char **argv)
 	  break;
 	case xtraopt_jsonindent:
 	  json_indented = true;
+	  break;
+	case xtraopt_noeventloop:
+	  dont_want_event_loop = true;
 	  break;
 	case xtraopt_chdir:
 	  wanted_dir = optarg;
@@ -565,6 +571,8 @@ main (int argc, char **argv)
     {
       mom_initial_load (load_state_path);
     }
+  else
+    MONIMELT_WARNING ("no load state path");
   if (web_host)
     {
       extern void mom_start_web (const char *);
@@ -575,6 +583,16 @@ main (int argc, char **argv)
     {
       MONIMELT_INFORM ("start %d workers", (int) mom_nb_workers);
       mom_run ();
+    }
+  if (!dont_want_event_loop)
+    {
+      extern void mom_start_event_loop (void);
+      mom_start_event_loop ();
+    }
+  else
+    MONIMELT_WARNING ("did not start event loop");
+  if (mom_nb_workers > 0)
+    {
       mom_wait_for_stop ();
       MONIMELT_INFORM ("done %d workers", (int) mom_nb_workers);
       if (!dump_state_path && load_state_path)

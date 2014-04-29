@@ -48,6 +48,10 @@
 #include <sqlite3.h>
 #include <fastcgi.h>
 #include <uuid/uuid.h>
+// eventfd(2) & signalfd(2) & timerfd_create(2) are Linux specific
+#include <sys/eventfd.h>
+#include <sys/signalfd.h>
+#include <sys/timerfd.h>
 #include <glib.h>
 #include <gmodule.h>
 // Gmime from http://spruce.sourceforge.net/gmime/

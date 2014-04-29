@@ -191,3 +191,54 @@ mom_stop (void)
     }
   while (nbworkers > 0);
 }
+
+
+static pthread_t event_loop_thread;
+
+static int event_loop_pipe[2] = { -1, -1 };
+
+#define event_loop_read_pipe event_loop_pipe[0]
+#define event_loop_write_pipe event_loop_pipe[1]
+
+#define EVLOOP_STOP '.'
+
+void
+mom_stop_event_loop (void)
+{
+  char buf[4] = { EVLOOP_STOP, 0, 0, 0 };
+  write (event_loop_write_pipe, buf, 1);
+}
+
+static void *
+event_loop (struct GC_stack_base *sb, void *data)
+{
+  extern momit_box_t *mom_item__heart_beat;
+  GC_register_my_thread (sb);
+  assert (data == NULL);
+  assert (mom_item__heart_beat != NULL);
+#warning missing code inside event_loop
+  MONIMELT_WARNING ("event_loop not implemented");
+  GC_unregister_my_thread ();
+  return NULL;
+}
+
+
+static void *
+eventloop_cb (void *p)
+{
+  pthread_setname_np (pthread_self (), "monimelt-evloop");
+  GC_call_with_stack_base (event_loop, p);
+  return p;
+}
+
+void
+mom_start_event_loop (void)
+{
+  static pthread_attr_t evthattr;
+  pthread_attr_init (&evthattr);
+  pthread_attr_setdetachstate (&evthattr, TRUE);
+  if (pipe (event_loop_pipe))
+    MONIMELT_FATAL ("failed to create event loop pipe");
+  if (pthread_create (&event_loop_thread, &evthattr, eventloop_cb, NULL))
+    MONIMELT_FATAL ("failed to create event loop thread");
+}
