@@ -674,7 +674,7 @@ mom_make_set_union (momval_t s1, momval_t s2)
   update_seqitem_hash (rset);
   if (arr != tinyarr)
     GC_FREE (arr);
-  return (momval_t)(const momset_t*)rset;
+  return (momval_t) (const momset_t *) rset;
 }				// end mom_make_set_union
 
 
@@ -733,7 +733,7 @@ mom_make_set_intersection (momval_t s1, momval_t s2)
   update_seqitem_hash (rset);
   if (arr != tinyarr)
     GC_FREE (arr);
-  return (momval_t)(const momset_t*)rset;
+  return (momval_t) (const momset_t *) rset;
 }
 
 const momitemtuple_t *

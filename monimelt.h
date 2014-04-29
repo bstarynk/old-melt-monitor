@@ -499,8 +499,41 @@ const momitemtuple_t *mom_make_tuple_from_item_vector (momval_t vec);
 const momnode_t *mom_make_node_from_item_vector (momval_t conn, momval_t vec);
 const momclosure_t *mom_make_closure_from_item_vector (momval_t conn,
 						       momval_t vec);
+
+// union and intersection of two sets
 momval_t mom_make_set_union (momval_t s1, momval_t s2);
 momval_t mom_make_set_intersection (momval_t s1, momval_t s2);
+
+/// unparse the uuid of an item
+static inline const char *
+mom_unparse_item_uuid (const mom_anyitem_t * itm, char buf[UUID_PARSED_LEN])
+{
+  if (!buf)
+    return NULL;
+  memset (buf, 0, UUID_PARSED_LEN);
+  if (!itm)
+    return buf;
+  uuid_unparse (itm->i_uuid, buf);
+  return buf;
+}
+
+// unparse the uuid of an item, using _ insteead of -
+
+static inline const char *
+mom_underscore_item_uuid (const mom_anyitem_t * itm,
+			  char buf[UUID_PARSED_LEN])
+{
+  if (!buf)
+    return NULL;
+  memset (buf, 0, UUID_PARSED_LEN);
+  if (!itm)
+    return buf;
+  uuid_unparse (itm->i_uuid, buf);
+  for (unsigned ix = 0; ix < UUID_PARSED_LEN && buf[ix]; ix++)
+    if (buf[ix] == '-')
+      buf[ix] = '_';
+  return buf;
+}
 
 ///// assoc items
 struct momassocitem_st
