@@ -3606,6 +3606,47 @@ mom_item_webrequest_puts_html (momval_t val, const char *str)
   pthread_mutex_unlock (&val.panyitem->i_mtx);
 }
 
+void
+mom_item_webrequest_printf (momval_t val, const char *fmt, ...)
+{
+  if (!val.ptr || *val.ptype != momty_webrequestitem || !fmt || !fmt[0])
+    return;
+  pthread_mutex_lock (&val.panyitem->i_mtx);
+  onion_response *resp = val.pwebrequestitem->iweb_response;
+  if (resp)
+    {
+      va_list args;
+      va_start (args, fmt);
+      onion_response_vprintf (resp, fmt, args);
+      va_end (args);
+    }
+  pthread_mutex_unlock (&val.panyitem->i_mtx);
+}
+
+void
+mom_item_webrequest_outjson (momval_t val, momval_t json)
+{
+  if (!val.ptr || *val.ptype != momty_webrequestitem
+      || !mom_is_jsonable (json))
+    return;
+  char *buf = NULL;
+  size_t bufsiz = 0;
+  struct jsonoutput_st jout = { };
+  FILE *memout = open_memstream (&buf, &bufsiz);
+  if (MONIMELT_UNLIKELY (!memout))
+    MONIMELT_FATAL ("failed to open memory stream for web request");
+  mom_json_output_initialize (&jout, memout, NULL, jsof_flush);
+  mom_output_json (&jout, json);
+  putc ('\n', memout);
+  mom_json_output_close (&jout);
+  pthread_mutex_lock (&val.panyitem->i_mtx);
+  onion_response *resp = val.pwebrequestitem->iweb_response;
+  if (resp && buf)
+    onion_response_write0 (resp, buf);
+  pthread_mutex_unlock (&val.panyitem->i_mtx);
+  free (buf);
+}
+
 ////////////////////////////////////////////////////////////////
 void
 mom_initialize_items (void)

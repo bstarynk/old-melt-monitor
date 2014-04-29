@@ -128,6 +128,7 @@ dict_add (void *data, const char *key, const void *value, int flags)
   pd->post_count = cnt + 1;
 }
 
+#define WEB_REPLY_TIMEOUT 2.4	/*seconds web reply timeout */
 static void *
 mom_really_process_request (struct GC_stack_base *sb, void *data)
 {
@@ -139,6 +140,7 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
   onion_request *req = pwebinf->web_requ;
   onion_response *res = pwebinf->web_resp;
   double wtim = pwebinf->web_time;
+  double wend = wtim + WEB_REPLY_TIMEOUT;
   const char *fullpath = onion_request_get_fullpath (req);
   const char *path = onion_request_get_path (req);
   unsigned flags = onion_request_get_flags (req);
@@ -179,6 +181,8 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
   momval_t closhandler = MONIMELT_NULLV;
   momval_t jpost = MONIMELT_NULLV;
   momval_t jquery = MONIMELT_NULLV;
+  MONIMELT_INFORM ("got web request #%ld fullpath=%s path=%s method=%s",
+		   webnum, fullpath, path, method ? method : "??");
   if (fullpathlen > 2 && isalpha (fullpath[1])
       && (closhandler =
 	  mom_item_dictionnary_get_cstr ((momval_t) mom_item__web_dictionnary,
@@ -244,11 +248,60 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
       /* we should loop on lock the webitm's mutex and
          pthread_cond_timedwait webitm->iweb_cond, so we should define
          a protocol to reply to a request */
-#warning should wait for condition till web request terminated
+      bool sentreply = false;
+      pthread_mutex_lock (&webitm->iweb_item.i_mtx);
+      struct timespec endts = monimelt_timespec (wend);
+      pthread_cond_timedwait (&webitm->iweb_cond, &webitm->iweb_item.i_mtx,
+			      &endts);
+      sentreply = webitm->iweb_response == NULL;
+      if (!sentreply)
+	{
+	  onion_response_free (webitm->iweb_response);
+	  webitm->iweb_response = onion_response_new (webitm->iweb_request);
+	  onion_response_printf (webitm->iweb_response,
+				 "<html><head><title>Monimelt timeout</title></head>\n"
+				 "<body><h1>Monimelt timeout for %s of <tt>",
+				 method);
+	  onion_response_write_html_safe (webitm->iweb_response, fullpath);
+	  {
+	    char timebuf[80];
+	    struct tm timetm = { };
+	    time_t wt = (time_t) wtim;
+	    memset (timebuf, 0, sizeof (timebuf));
+	    localtime_r (&wt, &timetm);
+	    strftime (timebuf, sizeof (timebuf), "%Y-%b-%d %T %Z", &timetm);
+	    onion_response_printf (webitm->iweb_response,
+				   "</tt> at <i>%s</i></h1>", timebuf);
+	  }
+	  onion_response_write0 (webitm->iweb_response, "</body></html>\n");
+	  onion_response_set_code (webitm->iweb_response,
+				   HTTP_SERVICE_UNAVALIABLE);
+	  webitm->iweb_response = NULL;
+	}
+      pthread_mutex_unlock (&webitm->iweb_item.i_mtx);
+      pwebinf->web_stat = OCS_PROCESSED;
     }
-end:
-  MONIMELT_INFORM ("request #%ld fullpath=%s path=%s method=%s",
-		   webnum, fullpath, path, method ? method : "??");
   GC_unregister_my_thread ();
   return NULL;
+}
+
+void
+mom_item_webrequest_reply (momval_t vweb, const char *mimetype, int code)
+{
+  if (!vweb.ptr || *vweb.ptype != momty_webrequestitem || !mimetype)
+    return;
+  if (!code)
+    code = HTTP_OK;
+  momit_webrequest_t *webitm = vweb.pwebrequestitem;
+  pthread_mutex_lock (&vweb.panyitem->i_mtx);
+  if (webitm->iweb_response)
+    {
+      onion_response_set_header (webitm->iweb_response, "Content-Type",
+				 mimetype);
+      if (code > 0)
+	onion_response_set_code (webitm->iweb_response, code);
+      webitm->iweb_response = NULL;
+    }
+  pthread_mutex_unlock (&vweb.panyitem->i_mtx);
+  pthread_cond_signal (&webitm->iweb_cond);
 }

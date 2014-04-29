@@ -656,6 +656,9 @@ unsigned mom_item_dictionnary_count (momval_t dictv);
 momval_t mom_item_dictionnary_sorted_name_node (momval_t dictv,
 						momval_t connv);
 
+
+
+
 //////////////// web request items, only allocated in web-onion.c
 ///// mascaraded at dump time into a box item
 struct momwebrequestitem_st
@@ -673,6 +676,17 @@ struct momwebrequestitem_st
 
 };
 
+// write a constant string
+void mom_item_webrequest_puts (momval_t val, const char *str);
+// write an HTML encoded constant string
+void mom_item_webrequest_puts_html (momval_t val, const char *str);
+// printf like
+void mom_item_webrequest_printf (momval_t val, const char *fmt, ...)
+  __attribute__ ((format (printf, 2, 3)));
+// output a JSON
+void mom_item_webrequest_outjson (momval_t val, momval_t json);
+// send the reply and set its mime type; in web-onion.c
+void mom_item_webrequest_reply (momval_t val, const char *mimetype, int code);
 ////////////////////////////////
 /////// tasklets
 void mom_tasklet_push_frame (momval_t tsk, momval_t clo,
