@@ -156,7 +156,7 @@ typedef struct momjsonarray_st momjsonarray_t;
 typedef struct momnode_st momnode_t;
 typedef struct momnode_st momclosure_t;
 typedef struct momseqitem_st momseqitem_t;
-typedef struct momseqitem_st momitemset_t;
+typedef struct momseqitem_st momset_t;
 typedef struct momseqitem_st momitemtuple_t;
 typedef struct momanyitem_st mom_anyitem_t;
 typedef struct momjsonitem_st momit_json_name_t;
@@ -205,8 +205,8 @@ union momvalueptr_un
   const struct momnode_st *pnode;
   const struct momnode_st *pclosure;
   const struct momseqitem_st *pseqitm;
-  const struct momseqitem_st *pitemset;
-  const struct momseqitem_st *pitemtuple;
+  const struct momseqitem_st *pset;
+  const struct momseqitem_st *ptuple;
 };
 
 struct mom_dumper_st;
@@ -494,12 +494,13 @@ void mom_item_vector_append_til_nil (momval_t vec, ...)
   __attribute__ ((sentinel));
 void mom_item_vector_append_count (momval_t vec, unsigned nbval,
 				   momval_t * arr);
-const momitemset_t *mom_make_set_from_item_vector (momval_t vec);
+const momset_t *mom_make_set_from_item_vector (momval_t vec);
 const momitemtuple_t *mom_make_tuple_from_item_vector (momval_t vec);
 const momnode_t *mom_make_node_from_item_vector (momval_t conn, momval_t vec);
 const momclosure_t *mom_make_closure_from_item_vector (momval_t conn,
 						       momval_t vec);
-
+momval_t mom_make_set_union (momval_t s1, momval_t s2);
+momval_t mom_make_set_intersection (momval_t s1, momval_t s2);
 
 ///// assoc items
 struct momassocitem_st
@@ -754,7 +755,18 @@ mom_value_as_int (momval_t val)
 
 const momint_t *mom_make_int (intptr_t i);
 
-int mom_item_cmp (const mom_anyitem_t * l, const mom_anyitem_t * r);
+static inline int
+mom_item_cmp (const mom_anyitem_t * l, const mom_anyitem_t * r)
+{
+  if (l == r)
+    return 0;
+  if (!l)
+    return -1;
+  if (!r)
+    return 1;
+  return memcmp (l->i_uuid, r->i_uuid, sizeof (uuid_t));
+}
+
 int mom_value_cmp (const momval_t l, const momval_t r);
 momhash_t mom_value_hash (const momval_t v);
 
@@ -1034,16 +1046,16 @@ mom_json_array_nth (momval_t val, int rk)
 }
 
 // make a set from items, or sets, or tuples
-const momitemset_t *mom_make_set_til_nil (momval_t, ...)
+const momset_t *mom_make_set_til_nil (momval_t, ...)
   __attribute__ ((sentinel));
 // make an tuple from items, or sets, or tuples
 const momitemtuple_t *mom_make_tuple_til_nil (momval_t, ...)
   __attribute__ ((sentinel));
 // make a set of given number of items, removing duplicates...
-const momitemset_t *mom_make_set_sized (unsigned siz, ...);
+const momset_t *mom_make_set_sized (unsigned siz, ...);
 // make a set of given number of items, removing duplicates...
-const momitemset_t *mom_make_set_from_array (unsigned siz,
-					     const mom_anyitem_t ** arr);
+const momset_t *mom_make_set_from_array (unsigned siz,
+					 const mom_anyitem_t ** arr);
 // make a tuple of given number of items
 const momitemtuple_t *mom_make_tuple_sized (unsigned siz, ...);
 

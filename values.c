@@ -79,17 +79,6 @@ mom_value_hash (const momval_t v)
 }
 
 
-int
-mom_item_cmp (const mom_anyitem_t * l, const mom_anyitem_t * r)
-{
-  if (l == r)
-    return 0;
-  if (!l)
-    return -1;
-  if (!r)
-    return 1;
-  return memcmp (l->i_uuid, r->i_uuid, sizeof (uuid_t));
-}
 
 int
 mom_itemptr_cmp (const void *l, const void *r)
@@ -432,13 +421,13 @@ update_seqitem_hash (struct momseqitem_st *si)
   si->hash = h;
 }
 
-const momitemset_t *
+const momset_t *
 mom_make_set_til_nil (momval_t first, ...)
 {
   va_list args;
   momval_t val = MONIMELT_NULLV;
   unsigned siz = 0, ix = 0;
-  momitemset_t *iset = NULL;
+  momset_t *iset = NULL;
   val = first;
   va_start (args, first);
   while (val.ptr != NULL)
@@ -456,10 +445,10 @@ mom_make_set_til_nil (momval_t first, ...)
       val = va_arg (args, momval_t);
     }
   va_end (args);
-  iset = GC_MALLOC (sizeof (momitemset_t) + siz * sizeof (mom_anyitem_t *));
+  iset = GC_MALLOC (sizeof (momset_t) + siz * sizeof (mom_anyitem_t *));
   if (MONIMELT_UNLIKELY (!iset))
     MONIMELT_FATAL ("failed to allocate set of size %d", (int) siz);
-  memset (iset, 0, sizeof (momitemset_t) + siz * sizeof (mom_anyitem_t *));
+  memset (iset, 0, sizeof (momset_t) + siz * sizeof (mom_anyitem_t *));
   siz = 0;
   val = first;
   va_start (args, first);
@@ -503,12 +492,12 @@ mom_make_set_til_nil (momval_t first, ...)
   update_seqitem_hash (iset);
   if (MONIMELT_UNLIKELY (shrink))
     {
-      momitemset_t *newiset =
-	GC_MALLOC (sizeof (momitemset_t) + siz * sizeof (mom_anyitem_t *));
+      momset_t *newiset =
+	GC_MALLOC (sizeof (momset_t) + siz * sizeof (mom_anyitem_t *));
       if (newiset)
 	{
 	  memcpy (newiset, iset,
-		  sizeof (momitemset_t) + siz * sizeof (mom_anyitem_t *));
+		  sizeof (momset_t) + siz * sizeof (mom_anyitem_t *));
 	  GC_FREE (iset);
 	  iset = newiset;
 	}
@@ -516,17 +505,17 @@ mom_make_set_til_nil (momval_t first, ...)
   return iset;
 }
 
-const momitemset_t *
+const momset_t *
 mom_make_set_sized (unsigned siz, ...)
 {
   va_list args;
   unsigned ix = 0, count = 0;
-  momitemset_t *iset = NULL;
+  momset_t *iset = NULL;
   bool shrink = false;
-  iset = GC_MALLOC (sizeof (momitemset_t) + siz * sizeof (mom_anyitem_t *));
+  iset = GC_MALLOC (sizeof (momset_t) + siz * sizeof (mom_anyitem_t *));
   if (MONIMELT_UNLIKELY (!iset))
     MONIMELT_FATAL ("failed to build set of size %d", (int) siz);
-  memset (iset, 0, sizeof (momitemset_t) + siz * sizeof (mom_anyitem_t *));
+  memset (iset, 0, sizeof (momset_t) + siz * sizeof (mom_anyitem_t *));
   va_start (args, siz);
   for (ix = 0; ix < siz; ix++)
     {
@@ -553,12 +542,12 @@ mom_make_set_sized (unsigned siz, ...)
   update_seqitem_hash (iset);
   if (MONIMELT_UNLIKELY (shrink))
     {
-      momitemset_t *newiset =
-	GC_MALLOC (sizeof (momitemset_t) + siz * sizeof (mom_anyitem_t *));
+      momset_t *newiset =
+	GC_MALLOC (sizeof (momset_t) + siz * sizeof (mom_anyitem_t *));
       if (newiset)
 	{
 	  memcpy (newiset, iset,
-		  sizeof (momitemset_t) + siz * sizeof (mom_anyitem_t *));
+		  sizeof (momset_t) + siz * sizeof (mom_anyitem_t *));
 	  GC_FREE (iset);
 	  iset = newiset;
 	}
@@ -566,16 +555,16 @@ mom_make_set_sized (unsigned siz, ...)
   return iset;
 }
 
-const momitemset_t *
+const momset_t *
 mom_make_set_from_array (unsigned siz, const mom_anyitem_t ** itemarr)
 {
   unsigned ix = 0, count = 0;
-  momitemset_t *iset = NULL;
+  momset_t *iset = NULL;
   bool shrink = false;
-  iset = GC_MALLOC (sizeof (momitemset_t) + siz * sizeof (mom_anyitem_t *));
+  iset = GC_MALLOC (sizeof (momset_t) + siz * sizeof (mom_anyitem_t *));
   if (MONIMELT_UNLIKELY (!iset))
     MONIMELT_FATAL ("failed to build set of size %d", (int) siz);
-  memset (iset, 0, sizeof (momitemset_t) + siz * sizeof (mom_anyitem_t *));
+  memset (iset, 0, sizeof (momset_t) + siz * sizeof (mom_anyitem_t *));
   for (ix = 0; ix < siz; ix++)
     {
       const mom_anyitem_t *itm = itemarr[ix];
@@ -600,17 +589,151 @@ mom_make_set_from_array (unsigned siz, const mom_anyitem_t ** itemarr)
   update_seqitem_hash (iset);
   if (MONIMELT_UNLIKELY (shrink))
     {
-      momitemset_t *newiset =
-	GC_MALLOC (sizeof (momitemset_t) + siz * sizeof (mom_anyitem_t *));
+      momset_t *newiset =
+	GC_MALLOC (sizeof (momset_t) + siz * sizeof (mom_anyitem_t *));
       if (newiset)
 	{
 	  memcpy (newiset, iset,
-		  sizeof (momitemset_t) + siz * sizeof (mom_anyitem_t *));
+		  sizeof (momset_t) + siz * sizeof (mom_anyitem_t *));
 	  GC_FREE (iset);
 	  iset = newiset;
 	}
     }
   return iset;
+}
+
+momval_t
+mom_make_set_union (momval_t s1, momval_t s2)
+{
+  if (!s1.ptr)
+    {
+      if (s2.ptr && *s2.ptype == momty_set)
+	return s2;
+      else
+	return MONIMELT_NULLV;
+    }
+  else if (!s2.ptr)
+    {
+      if (s1.ptr && *s1.ptype == momty_set)
+	return s1;
+      else
+	return MONIMELT_NULLV;
+    };
+  if (*s1.ptype != momty_set || *s2.ptype != momty_set)
+    return MONIMELT_NULLV;
+  const momset_t *s1set = s1.pset;
+  const momset_t *s2set = s2.pset;
+  unsigned s1len = s1set->slen;
+  unsigned s2len = s2set->slen;
+  const mom_anyitem_t *tinyarr[TINY_MAX] = { };
+  unsigned sumlen = s1len + s2len;
+  const mom_anyitem_t **arr = NULL;
+  if (sumlen < TINY_MAX)
+    arr = tinyarr;
+  else
+    arr = GC_MALLOC (sizeof (mom_anyitem_t *) * sumlen);
+  if (MONIMELT_UNLIKELY (arr))
+    MONIMELT_FATAL ("failed to allocate union temporary of %d items", sumlen);
+  memset (arr, 0, sumlen * sizeof (mom_anyitem_t *));
+  unsigned i1 = 0, i2 = 0;
+  unsigned nbun = 0;
+  while (i1 < s1len && i2 < s2len)
+    {
+      const mom_anyitem_t *itm1 = s1set->itemseq[i1];
+      const mom_anyitem_t *itm2 = s1set->itemseq[i2];
+      assert (itm1 != NULL && itm2 != NULL);
+      assert (nbun < sumlen);
+      int cmp = mom_item_cmp (itm1, itm2);
+      if (cmp < 0)
+	{
+	  arr[nbun++] = itm1;
+	  i1++;
+	}
+      else if (cmp > 0)
+	{
+	  arr[nbun++] = itm2;
+	  i2++;
+	}
+      else
+	{
+	  assert (itm1 == itm2);
+	  arr[nbun++] = itm1;
+	  i1++, i2++;
+	}
+    }
+  momset_t *rset =
+    GC_MALLOC (sizeof (struct momseqitem_st) +
+	       nbun * sizeof (mom_anyitem_t *));
+  if (MONIMELT_UNLIKELY (!rset))
+    MONIMELT_FATAL ("failed to allocate union of %d elements", (int) nbun);
+  memset (rset, 0,
+	  sizeof (struct momseqitem_st) + nbun * sizeof (mom_anyitem_t *));
+  rset->slen = nbun;
+  rset->typnum = momty_set;
+  memcpy (rset->itemseq, arr, nbun * sizeof (mom_anyitem_t *));
+  update_seqitem_hash (rset);
+  if (arr != tinyarr)
+    GC_FREE (arr);
+  return rset;
+}				// end mom_make_set_union
+
+
+
+momval_t
+mom_make_set_intersection (momval_t s1, momval_t s2)
+{
+  if (!s1.ptr || !s2.ptr || *s1.ptype != momty_set || *s2.ptype != momty_set)
+    return MONIMELT_NULLV;
+  const momset_t *s1set = s1.pset;
+  const momset_t *s2set = s2.pset;
+  unsigned s1len = s1set->slen;
+  unsigned s2len = s2set->slen;
+  const mom_anyitem_t *tinyarr[TINY_MAX] = { };
+  unsigned maxlen = (s1len > s2len) ? s1len : s2len;
+  const mom_anyitem_t **arr = NULL;
+  if (maxlen < TINY_MAX)
+    arr = tinyarr;
+  else
+    arr = GC_MALLOC (sizeof (mom_anyitem_t *) * maxlen);
+  if (MONIMELT_UNLIKELY (arr))
+    MONIMELT_FATAL ("failed to allocate intersection temporary of %d items",
+		    maxlen);
+  memset (arr, 0, maxlen * sizeof (mom_anyitem_t *));
+  unsigned i1 = 0, i2 = 0;
+  unsigned nbin = 0;
+  while (i1 < s1len && i2 < s2len)
+    {
+      const mom_anyitem_t *itm1 = s1set->itemseq[i1];
+      const mom_anyitem_t *itm2 = s1set->itemseq[i2];
+      assert (itm1 != NULL && itm2 != NULL);
+      assert (nbin < maxlen);
+      int cmp = mom_item_cmp (itm1, itm2);
+      if (cmp < 0)
+	i1++;
+      else if (cmp > 0)
+	i2++;
+      else
+	{
+	  assert (itm1 == itm2);
+	  arr[nbin++] = itm1;
+	  i1++, i2++;
+	}
+    }
+  momset_t *rset =
+    GC_MALLOC (sizeof (struct momseqitem_st) +
+	       nbin * sizeof (mom_anyitem_t *));
+  if (MONIMELT_UNLIKELY (!rset))
+    MONIMELT_FATAL ("failed to allocate intersection of %d elements",
+		    (int) nbin);
+  memset (rset, 0,
+	  sizeof (struct momseqitem_st) + nbin * sizeof (mom_anyitem_t *));
+  rset->slen = nbin;
+  rset->typnum = momty_set;
+  memcpy (rset->itemseq, arr, nbin * sizeof (mom_anyitem_t *));
+  update_seqitem_hash (rset);
+  if (arr != tinyarr)
+    GC_FREE (arr);
+  return rset;
 }
 
 const momitemtuple_t *

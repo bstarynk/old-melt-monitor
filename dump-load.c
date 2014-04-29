@@ -322,7 +322,7 @@ raw_dump_emit_json (struct mom_dumper_st * dmp, const momval_t val)
 	jsval = (momval_t) mom_make_json_object
 	  (MOMJSON_ENTRY, mom_item__jtype, mom_item__set,
 	   MOMJSON_ENTRY, mom_item__set, jsonarray_emit_itemseq (dmp,
-								 val.pitemset),
+								 val.pset),
 	   MOMJSON_END);
       }
       break;
@@ -331,7 +331,7 @@ raw_dump_emit_json (struct mom_dumper_st * dmp, const momval_t val)
 	jsval = (momval_t) mom_make_json_object
 	  (MOMJSON_ENTRY, mom_item__jtype, mom_item__tuple,
 	   MOMJSON_ENTRY, mom_item__tuple, jsonarray_emit_itemseq (dmp,
-								   val.pitemtuple),
+								   val.ptuple),
 	   MOMJSON_END);
       }
       break;

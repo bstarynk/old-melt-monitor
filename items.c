@@ -1517,10 +1517,10 @@ mom_item_vector_append_count (momval_t vec, unsigned nbval, momval_t * arr)
   pthread_mutex_unlock (&vec.panyitem->i_mtx);
 }
 
-const momitemset_t *
+const momset_t *
 mom_make_set_from_item_vector (momval_t vec)
 {
-  const momitemset_t *iset = NULL;
+  const momset_t *iset = NULL;
   assert (sizeof (mom_anyitem_t *) == sizeof (momval_t));
   if (!vec.ptr || *vec.ptype != momty_vectoritem)
     return NULL;
