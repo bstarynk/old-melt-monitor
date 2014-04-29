@@ -1518,7 +1518,7 @@ mom_item_vector_append_count (momval_t vec, unsigned nbval, momval_t * arr)
 }
 
 const momitemset_t *
-mom_make_item_set_from_item_vector (momval_t vec)
+mom_make_set_from_item_vector (momval_t vec)
 {
   const momitemset_t *iset = NULL;
   assert (sizeof (mom_anyitem_t *) == sizeof (momval_t));
@@ -1527,9 +1527,8 @@ mom_make_item_set_from_item_vector (momval_t vec)
   pthread_mutex_lock (&vec.panyitem->i_mtx);
   unsigned cnt = vec.pvectitem->itv_count;
   iset =
-    mom_make_item_set_from_array (cnt,
-				  (const mom_anyitem_t **) vec.
-				  pvectitem->itv_arr);
+    mom_make_set_from_array (cnt,
+			     (const mom_anyitem_t **) vec.pvectitem->itv_arr);
   pthread_mutex_unlock (&vec.panyitem->i_mtx);
   return iset;
 }
@@ -1544,7 +1543,7 @@ mom_make_item_tuple_from_item_vector (momval_t vec)
   pthread_mutex_lock (&vec.panyitem->i_mtx);
   unsigned cnt = vec.pvectitem->itv_count;
   ituple =
-    mom_make_item_tuple_from_array
+    mom_make_tuple_from_array
     (cnt, (const mom_anyitem_t **) vec.pvectitem->itv_arr);
   pthread_mutex_unlock (&vec.panyitem->i_mtx);
   return ituple;
@@ -2491,7 +2490,7 @@ mom_item_queue_tuple (momval_t quev)
 	arr[nb++] = curitm;
     }
   pthread_mutex_unlock (&quev.panyitem->i_mtx);
-  res = (momval_t) mom_make_item_tuple_from_array (nb, arr);
+  res = (momval_t) mom_make_tuple_from_array (nb, arr);
   if (arr != tinyarr)
     GC_FREE (arr);
   return res;

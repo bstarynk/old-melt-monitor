@@ -120,12 +120,12 @@ enum momvaltype_en
   momty_string,
   momty_jsonarray,
   momty_jsonobject,
-  momty_itemset,
-  momty_itemtuple,
+  momty_set,
+  momty_tuple,
   momty_node,
   momty_closure,
-  /// items below
-  momty__itemlowtype,
+  ////
+  momty__itemlowtype,		//// types below are for items
   momty_jsonitem,
   momty_boolitem,
   momty_routineitem,
@@ -137,6 +137,7 @@ enum momvaltype_en
   momty_bufferitem,
   momty_dictionnaryitem,
   momty_webrequestitem,
+  /////
   momty__last = 1000
 };
 
@@ -493,8 +494,8 @@ void mom_item_vector_append_til_nil (momval_t vec, ...)
   __attribute__ ((sentinel));
 void mom_item_vector_append_count (momval_t vec, unsigned nbval,
 				   momval_t * arr);
-const momitemset_t *mom_make_item_set_from_item_vector (momval_t vec);
-const momitemtuple_t *mom_make_item_tuple_from_item_vector (momval_t vec);
+const momitemset_t *mom_make_set_from_item_vector (momval_t vec);
+const momitemtuple_t *mom_make_tuple_from_item_vector (momval_t vec);
 const momnode_t *mom_make_node_from_item_vector (momval_t conn, momval_t vec);
 const momclosure_t *mom_make_closure_from_item_vector (momval_t conn,
 						       momval_t vec);
@@ -1033,23 +1034,22 @@ mom_json_array_nth (momval_t val, int rk)
 }
 
 // make a set from items, or sets, or tuples
-const momitemset_t *mom_make_item_set_til_nil (momval_t, ...)
+const momitemset_t *mom_make_set_til_nil (momval_t, ...)
   __attribute__ ((sentinel));
 // make an tuple from items, or sets, or tuples
-const momitemtuple_t *mom_make_item_tuple_til_nil (momval_t, ...)
+const momitemtuple_t *mom_make_tuple_til_nil (momval_t, ...)
   __attribute__ ((sentinel));
 // make a set of given number of items, removing duplicates...
-const momitemset_t *mom_make_item_set_sized (unsigned siz, ...);
+const momitemset_t *mom_make_set_sized (unsigned siz, ...);
 // make a set of given number of items, removing duplicates...
-const momitemset_t *mom_make_item_set_from_array (unsigned siz,
-						  const mom_anyitem_t ** arr);
+const momitemset_t *mom_make_set_from_array (unsigned siz,
+					     const mom_anyitem_t ** arr);
 // make a tuple of given number of items
-const momitemtuple_t *mom_make_item_tuple_sized (unsigned siz, ...);
+const momitemtuple_t *mom_make_tuple_sized (unsigned siz, ...);
 
 // make a tuple of given number of items
-const momitemtuple_t *mom_make_item_tuple_from_array (unsigned siz,
-						      const mom_anyitem_t **
-						      arr);
+const momitemtuple_t *mom_make_tuple_from_array (unsigned siz,
+						 const mom_anyitem_t ** arr);
 
 // make a node from a nil terminated sequence of components
 const momnode_t *mom_make_node_til_nil (mom_anyitem_t * conn, ...)

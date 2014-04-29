@@ -203,8 +203,8 @@ mom_dump_scan_value (struct mom_dumper_st *dmp, const momval_t val)
 	  }
 	return;
       }
-    case momty_itemtuple:
-    case momty_itemset:
+    case momty_tuple:
+    case momty_set:
       {
 	unsigned siz = val.pseqitm->slen;
 	for (unsigned ix = 0; ix < siz; ix++)
@@ -317,7 +317,7 @@ raw_dump_emit_json (struct mom_dumper_st * dmp, const momval_t val)
 	   MOMJSON_ENTRY, mom_item__json_object, val, MOMJSON_END);
       }
       break;
-    case momty_itemset:
+    case momty_set:
       {
 	jsval = (momval_t) mom_make_json_object
 	  (MOMJSON_ENTRY, mom_item__jtype, mom_item__set,
@@ -326,7 +326,7 @@ raw_dump_emit_json (struct mom_dumper_st * dmp, const momval_t val)
 	   MOMJSON_END);
       }
       break;
-    case momty_itemtuple:
+    case momty_tuple:
       {
 	jsval = (momval_t) mom_make_json_object
 	  (MOMJSON_ENTRY, mom_item__jtype, mom_item__tuple,
@@ -681,8 +681,7 @@ mom_load_value_json (struct mom_loader_st *ld, const momval_t jval)
 		  itemtab[ix] =
 		    mom_value_as_item (mom_load_value_json
 				       (ld, mom_json_array_nth (jsetv, ix)));
-		return (momval_t) mom_make_item_set_from_array (nbsons,
-								itemtab);
+		return (momval_t) mom_make_set_from_array (nbsons, itemtab);
 	      }
 	    else
 	      {
@@ -696,8 +695,7 @@ mom_load_value_json (struct mom_loader_st *ld, const momval_t jval)
 		  itemarr[ix] =
 		    mom_value_as_item (mom_load_value_json
 				       (ld, mom_json_array_nth (jsetv, ix)));
-		val =
-		  (momval_t) mom_make_item_set_from_array (nbsons, itemarr);
+		val = (momval_t) mom_make_set_from_array (nbsons, itemarr);
 		GC_FREE (itemarr);
 		return val;
 	      }
@@ -715,8 +713,7 @@ mom_load_value_json (struct mom_loader_st *ld, const momval_t jval)
 		    mom_value_as_item (mom_load_value_json
 				       (ld,
 					mom_json_array_nth (jtuplev, ix)));
-		return (momval_t) mom_make_item_tuple_from_array (nbsons,
-								  itemtab);
+		return (momval_t) mom_make_tuple_from_array (nbsons, itemtab);
 	      }
 	    else
 	      {
@@ -731,8 +728,7 @@ mom_load_value_json (struct mom_loader_st *ld, const momval_t jval)
 		    mom_value_as_item (mom_load_value_json
 				       (ld,
 					mom_json_array_nth (jtuplev, ix)));
-		val =
-		  (momval_t) mom_make_item_tuple_from_array (nbsons, itemarr);
+		val = (momval_t) mom_make_tuple_from_array (nbsons, itemarr);
 		GC_FREE (itemarr);
 		return val;
 	      }

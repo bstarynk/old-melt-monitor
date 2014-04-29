@@ -66,8 +66,8 @@ mom_value_hash (const momval_t v)
       return v.pjsonobj->hash;
     case momty_node:
       return v.pnode->hash;
-    case momty_itemtuple:
-    case momty_itemset:
+    case momty_tuple:
+    case momty_set:
       return v.pseqitm->hash;
     default:
       if (vtype >= momty__itemlowtype)
@@ -246,8 +246,8 @@ mom_value_cmp (const momval_t l, const momval_t r)
 	  return 1;
 	return 0;
       }
-    case momty_itemtuple:
-    case momty_itemset:
+    case momty_tuple:
+    case momty_set:
       {
 	momusize_t llen = l.pseqitm->slen;
 	momusize_t rlen = r.pseqitm->slen;
@@ -433,7 +433,7 @@ update_seqitem_hash (struct momseqitem_st *si)
 }
 
 const momitemset_t *
-mom_make_item_set_til_nil (momval_t first, ...)
+mom_make_set_til_nil (momval_t first, ...)
 {
   va_list args;
   momval_t val = MONIMELT_NULLV;
@@ -445,8 +445,8 @@ mom_make_item_set_til_nil (momval_t first, ...)
     {
       switch (*val.ptype)
 	{
-	case momty_itemset:
-	case momty_itemtuple:
+	case momty_set:
+	case momty_tuple:
 	  siz += val.pseqitm->slen;
 	  continue;
 	default:
@@ -467,8 +467,8 @@ mom_make_item_set_til_nil (momval_t first, ...)
     {
       switch (*val.ptype)
 	{
-	case momty_itemset:
-	case momty_itemtuple:
+	case momty_set:
+	case momty_tuple:
 	  {
 	    const momseqitem_t *subsi = val.pseqitm;
 	    unsigned subslen = subsi->slen;
@@ -498,7 +498,7 @@ mom_make_item_set_til_nil (momval_t first, ...)
 	  siz--;
 	}
     }
-  iset->typnum = momty_itemset;
+  iset->typnum = momty_set;
   iset->slen = siz;
   update_seqitem_hash (iset);
   if (MONIMELT_UNLIKELY (shrink))
@@ -517,7 +517,7 @@ mom_make_item_set_til_nil (momval_t first, ...)
 }
 
 const momitemset_t *
-mom_make_item_set_sized (unsigned siz, ...)
+mom_make_set_sized (unsigned siz, ...)
 {
   va_list args;
   unsigned ix = 0, count = 0;
@@ -548,7 +548,7 @@ mom_make_item_set_sized (unsigned siz, ...)
 	  count--;
 	}
     }
-  iset->typnum = momty_itemset;
+  iset->typnum = momty_set;
   iset->slen = count;
   update_seqitem_hash (iset);
   if (MONIMELT_UNLIKELY (shrink))
@@ -567,7 +567,7 @@ mom_make_item_set_sized (unsigned siz, ...)
 }
 
 const momitemset_t *
-mom_make_item_set_from_array (unsigned siz, const mom_anyitem_t ** itemarr)
+mom_make_set_from_array (unsigned siz, const mom_anyitem_t ** itemarr)
 {
   unsigned ix = 0, count = 0;
   momitemset_t *iset = NULL;
@@ -595,7 +595,7 @@ mom_make_item_set_from_array (unsigned siz, const mom_anyitem_t ** itemarr)
 	  count--;
 	}
     }
-  iset->typnum = momty_itemset;
+  iset->typnum = momty_set;
   iset->slen = count;
   update_seqitem_hash (iset);
   if (MONIMELT_UNLIKELY (shrink))
@@ -614,7 +614,7 @@ mom_make_item_set_from_array (unsigned siz, const mom_anyitem_t ** itemarr)
 }
 
 const momitemtuple_t *
-mom_make_item_tuple_til_nil (momval_t first, ...)
+mom_make_tuple_til_nil (momval_t first, ...)
 {
   va_list args;
   momval_t val = MONIMELT_NULLV;
@@ -626,8 +626,8 @@ mom_make_item_tuple_til_nil (momval_t first, ...)
     {
       switch (*val.ptype)
 	{
-	case momty_itemset:
-	case momty_itemtuple:
+	case momty_set:
+	case momty_tuple:
 	  siz += val.pseqitm->slen;
 	  continue;
 	default:
@@ -648,8 +648,8 @@ mom_make_item_tuple_til_nil (momval_t first, ...)
     {
       switch (*val.ptype)
 	{
-	case momty_itemset:
-	case momty_itemtuple:
+	case momty_set:
+	case momty_tuple:
 	  {
 	    const momseqitem_t *subsi = val.pseqitm;
 	    unsigned subslen = subsi->slen;
@@ -665,14 +665,14 @@ mom_make_item_tuple_til_nil (momval_t first, ...)
       val = va_arg (args, momval_t);
     }
   va_end (args);
-  itup->typnum = momty_itemtuple;
+  itup->typnum = momty_tuple;
   itup->slen = siz;
   update_seqitem_hash (itup);
   return itup;
 }
 
-const momitemset_t *
-mom_make_item_tuple_sized (unsigned siz, ...)
+const momitemtuple_t *
+mom_make_tuple_sized (unsigned siz, ...)
 {
   va_list args;
   unsigned ix = 0;
@@ -688,14 +688,14 @@ mom_make_item_tuple_sized (unsigned siz, ...)
       itup->itemseq[ix] = itm;
     }
   va_end (args);
-  itup->typnum = momty_itemtuple;
+  itup->typnum = momty_tuple;
   itup->slen = siz;
   update_seqitem_hash (itup);
   return itup;
 }
 
 const momitemtuple_t *
-mom_make_item_tuple_from_array (unsigned siz, const mom_anyitem_t ** itemarr)
+mom_make_tuple_from_array (unsigned siz, const mom_anyitem_t ** itemarr)
 {
   unsigned ix = 0;
   momitemtuple_t *ituple = NULL;
@@ -711,7 +711,7 @@ mom_make_item_tuple_from_array (unsigned siz, const mom_anyitem_t ** itemarr)
       if (itm && itm->typnum >= momty__itemlowtype)
 	ituple->itemseq[ix] = itm;
     }
-  ituple->typnum = momty_itemtuple;
+  ituple->typnum = momty_tuple;
   ituple->slen = siz;
   update_seqitem_hash (ituple);
   return ituple;
