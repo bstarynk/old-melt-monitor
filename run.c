@@ -20,6 +20,16 @@
 
 #include "monimelt.h"
 
+static pthread_t event_loop_thread;
+
+static int event_loop_pipe[2] = { -1, -1 };
+
+static int my_signals_fd = -1;
+#define event_loop_read_pipe event_loop_pipe[0]
+#define event_loop_write_pipe event_loop_pipe[1]
+
+#define EVLOOP_STOP '.'
+
 #define WORK_MAGIC 0x5c59b171	/* work magic 1549382001 */
 struct momworkdata_st
 {
@@ -193,15 +203,6 @@ mom_stop (void)
 }
 
 
-static pthread_t event_loop_thread;
-
-static int event_loop_pipe[2] = { -1, -1 };
-
-static int my_signals_fd = -1;
-#define event_loop_read_pipe event_loop_pipe[0]
-#define event_loop_write_pipe event_loop_pipe[1]
-
-#define EVLOOP_STOP '.'
 
 void
 mom_stop_event_loop (void)
@@ -256,4 +257,20 @@ mom_start_event_loop (void)
     MONIMELT_FATAL ("failed to create event loop pipe");
   if (pthread_create (&event_loop_thread, &evthattr, eventloop_cb, NULL))
     MONIMELT_FATAL ("failed to create event loop thread");
+}
+
+
+void
+mom_process_destroy (mom_anyitem_t * itm)
+{
+  assert (itm && itm->typnum == momty_processitem);
+  momit_process_t *procitm = (momit_process_t *) itm;
+  if (procitm->iproc_pid > 0)
+    {
+      MONIMELT_WARNING ("destroying running process %d for %s",
+			(int) procitm->iproc_pid,
+			mom_string_cstr ((momval_t) procitm->iproc_progname) ?
+			: "??");
+      kill (procitm->iproc_pid, SIGKILL);
+    }
 }

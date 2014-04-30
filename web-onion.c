@@ -306,12 +306,13 @@ mom_item_webrequest_reply (momval_t vweb, const char *mimetype, int code)
   pthread_cond_signal (&webitm->iweb_cond);
 }
 
-extern void mom_webrequest_destroy(mom_anyitem_t*itm)
+extern void
+mom_webrequest_destroy (mom_anyitem_t * itm)
 {
   assert (itm && itm->typnum == momty_webrequestitem);
-  momit_webrequest_t*webitm = (momit_webrequest_t*)itm;
+  momit_webrequest_t *webitm = (momit_webrequest_t *) itm;
   assert (!webitm->iweb_request);
   assert (!webitm->iweb_response);
   pthread_cond_destroy (&webitm->iweb_cond);
-  memset (&webitm->iweb_cond, 0, sizeof(pthread_cond_t));
+  memset (&webitm->iweb_cond, 0, sizeof (pthread_cond_t));
 }

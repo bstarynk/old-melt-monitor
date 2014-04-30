@@ -140,6 +140,7 @@ enum momvaltype_en
   momty_bufferitem,
   momty_dictionnaryitem,
   momty_webrequestitem,
+  momty_processitem,
   /////
   momty__last = 1000
 };
@@ -173,6 +174,7 @@ typedef struct momqueueitem_st momit_queue_t;
 typedef struct mombufferitem_st momit_buffer_t;
 typedef struct momdictionnaryitem_st momit_dictionnary_t;
 typedef struct momwebrequestitem_st momit_webrequest_t;
+typedef struct momprocessitem_st momit_process_t;
 pthread_mutexattr_t mom_normal_mutex_attr;
 pthread_mutexattr_t mom_recursive_mutex_attr;
 GModule *mom_prog_module;
@@ -724,6 +726,21 @@ void mom_item_webrequest_printf (momval_t val, const char *fmt, ...)
 void mom_item_webrequest_outjson (momval_t val, momval_t json);
 // send the reply and set its mime type; in web-onion.c
 void mom_item_webrequest_reply (momval_t val, const char *mimetype, int code);
+
+
+
+///////////////////////////////////////////// process items
+///// mascaraded at dump time into a box item
+struct momprocessitem_st
+{
+  struct momanyitem_st iproc_item;	/* common part */
+  const momstring_t *iproc_progname;
+  const momstring_t *iproc_argv;
+  unsigned iproc_argc;
+  int iproc_fd;
+  pid_t iproc_pid;
+};
+
 ////////////////////////////////
 /////// tasklets
 void mom_tasklet_push_frame (momval_t tsk, momval_t clo,

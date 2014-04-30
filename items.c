@@ -3518,7 +3518,7 @@ static momval_t webrequest_itemgetfill (struct mom_dumper_st *dmp,
 static const char *webrequest_mascaradedump (struct mom_dumper_st *dmp,
 					     mom_anyitem_t * itm);
 //only called by the garbage collector!
-extern void mom_webrequest_destroy(mom_anyitem_t*);
+extern void mom_webrequest_destroy (mom_anyitem_t *);
 
 const struct momitemtypedescr_st momitype_webrequest = {
   .ityp_magic = ITEMTYPE_MAGIC,
@@ -3650,6 +3650,91 @@ mom_item_webrequest_outjson (momval_t val, momval_t json)
   free (buf);
 }
 
+
+
+////////////////////////////////////////////////////////////////
+
+/// type descriptor for process
+static mom_anyitem_t *process_itemloader (struct mom_loader_st *ld,
+					  momval_t json, uuid_t uid,
+					  unsigned space);
+static void process_itemfiller (struct mom_loader_st *ld,
+				mom_anyitem_t * itm, momval_t json);
+static void process_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm);
+static momval_t process_itemgetbuild (struct mom_dumper_st *dmp,
+				      mom_anyitem_t * itm);
+static momval_t process_itemgetfill (struct mom_dumper_st *dmp,
+				     mom_anyitem_t * itm);
+static const char *process_mascaradedump (struct mom_dumper_st *dmp,
+					  mom_anyitem_t * itm);
+//only called by the garbage collector!
+extern void mom_process_destroy (mom_anyitem_t *);
+
+const struct momitemtypedescr_st momitype_process = {
+  .ityp_magic = ITEMTYPE_MAGIC,
+  .ityp_name = "process",
+  .ityp_mascarade_dump = process_mascaradedump,
+  .ityp_loader = process_itemloader,
+  .ityp_filler = process_itemfiller,
+  .ityp_scan = process_itemscan,
+  .ityp_getbuild = process_itemgetbuild,
+  .ityp_getfill = process_itemgetfill,
+  .ityp_destroy = mom_process_destroy,
+};
+
+static const char *
+process_mascaradedump (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+{
+  return "box";
+}
+
+static mom_anyitem_t *
+process_itemloader (struct mom_loader_st *ld,
+		    momval_t json
+		    __attribute__ ((unused)), uuid_t uid, unsigned space)
+{
+  MONIMELT_FATAL ("impossible call to process_itemloader");
+}
+
+static void
+process_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
+		    momval_t json)
+{
+  MONIMELT_FATAL ("impossible call to process_itemfiller");
+}
+
+static void
+process_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+{
+  mom_scan_any_item_data (dmp, itm);
+}
+
+static momval_t
+process_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+{
+  return (momval_t) mom_make_json_object (	// the type:
+					   MOMJSON_ENTRY, mom_item__jtype,
+					   mom_item__box_item,
+					   // done
+					   MOMJSON_END);
+}
+
+static momval_t
+process_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
+{
+  momval_t jres = (momval_t) mom_make_json_object
+    // attributes
+    (MOMJSON_ENTRY, mom_item__attributes,
+     mom_attributes_emit_json (dmp, itm->i_attrs),
+     // content
+     MOMJSON_ENTRY, mom_item__content, mom_dump_emit_json (dmp,
+							   itm->i_content),
+     // end
+     MOMJSON_END);
+  return jres;
+}
+
+
 ////////////////////////////////////////////////////////////////
 void
 mom_initialize_items (void)
@@ -3676,4 +3761,5 @@ mom_initialize_items (void)
   mom_typedescr_array[momty_bufferitem] = &momitype_buffer;
   mom_typedescr_array[momty_dictionnaryitem] = &momitype_dictionnary;
   mom_typedescr_array[momty_webrequestitem] = &momitype_webrequest;
+  mom_typedescr_array[momty_processitem] = &momitype_process;
 }
