@@ -197,6 +197,7 @@ static pthread_t event_loop_thread;
 
 static int event_loop_pipe[2] = { -1, -1 };
 
+static int my_signals_fd = -1;
 #define event_loop_read_pipe event_loop_pipe[0]
 #define event_loop_write_pipe event_loop_pipe[1]
 
@@ -216,6 +217,20 @@ event_loop (struct GC_stack_base *sb, void *data)
   GC_register_my_thread (sb);
   assert (data == NULL);
   assert (mom_item__heart_beat != NULL);
+  // set up the signalfd 
+  {
+    sigset_t mask;
+    sigemptyset (mask);
+    sigaddset (&mask, SIGINT);
+    sigaddset (&mask, SIGTERM);
+    sigaddset (&mask, SIGQUIT);
+    sigaddset (&mask, SIGPIPE);
+    sigaddset (&mask, SIGCHLD);
+    my_signals_fd = signalfd (-1, &mask, SFD_NONBLOCK | SFD_CLOEXEC);
+    if (MONIMELT_UNLIKELY (my_signals_fd < 0))
+      MONIMELT_FATAL ("signalfd failed");
+  }
+  // should set up the child processes
 #warning missing code inside event_loop
   MONIMELT_WARNING ("event_loop not implemented");
   GC_unregister_my_thread ();
