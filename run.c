@@ -220,7 +220,7 @@ event_loop (struct GC_stack_base *sb, void *data)
   // set up the signalfd 
   {
     sigset_t mask;
-    sigemptyset (mask);
+    sigemptyset (&mask);
     sigaddset (&mask, SIGINT);
     sigaddset (&mask, SIGTERM);
     sigaddset (&mask, SIGQUIT);

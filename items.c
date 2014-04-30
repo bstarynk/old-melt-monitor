@@ -3517,6 +3517,9 @@ static momval_t webrequest_itemgetfill (struct mom_dumper_st *dmp,
 					mom_anyitem_t * itm);
 static const char *webrequest_mascaradedump (struct mom_dumper_st *dmp,
 					     mom_anyitem_t * itm);
+//only called by the garbage collector!
+extern void mom_webrequest_destroy(mom_anyitem_t*);
+
 const struct momitemtypedescr_st momitype_webrequest = {
   .ityp_magic = ITEMTYPE_MAGIC,
   .ityp_name = "webrequest",
@@ -3526,6 +3529,7 @@ const struct momitemtypedescr_st momitype_webrequest = {
   .ityp_scan = webrequest_itemscan,
   .ityp_getbuild = webrequest_itemgetbuild,
   .ityp_getfill = webrequest_itemgetfill,
+  .ityp_destroy = mom_webrequest_destroy,
 };
 
 static const char *

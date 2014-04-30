@@ -696,7 +696,6 @@ momval_t mom_item_dictionnary_sorted_name_node (momval_t dictv,
 
 
 
-
 //////////////// web request items, only allocated in web-onion.c
 ///// mascaraded at dump time into a box item
 struct momwebrequestitem_st
