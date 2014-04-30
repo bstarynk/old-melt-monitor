@@ -28,6 +28,7 @@ static int my_signals_fd = -1;
 #define event_loop_read_pipe event_loop_pipe[0]
 #define event_loop_write_pipe event_loop_pipe[1]
 
+// communication between other threads & event loop thread thru single byte sent on pipe
 #define EVLOOP_STOP '.'
 
 #define WORK_MAGIC 0x5c59b171	/* work magic 1549382001 */
@@ -271,6 +272,160 @@ mom_process_destroy (mom_anyitem_t * itm)
 			(int) procitm->iproc_pid,
 			mom_string_cstr ((momval_t) procitm->iproc_progname) ?
 			: "??");
-      kill (procitm->iproc_pid, SIGKILL);
+      kill (procitm->iproc_pid, SIGTERM);
     }
+}
+
+
+
+momit_process_t *
+mom_make_item_process_argvals (momval_t progstr, ...)
+{
+  momit_process_t *procitm = NULL;
+  va_list args;
+  unsigned nbargstr = 0;
+  if (!progstr.ptr || *progstr.ptype != momty_string
+      || progstr.pstring->cstr[0] == (char) 0)
+    return NULL;
+  va_start (args, progstr);
+  for (;;)
+    {
+      const momstring_t *curargv = va_arg (args, const momstring_t *);
+      if (!curargv)
+	break;
+      if (curargv->typnum == momty_string)
+	nbargstr++;
+    }
+  va_end (args);
+  const momstring_t **argv = NULL;
+  if (nbargstr > 0)
+    {
+      argv = GC_MALLOC (nbargstr * sizeof (momstring_t *));
+      if (MONIMELT_UNLIKELY (!argv))
+	MONIMELT_FATAL ("cannot allocate %d argument strings",
+			(int) nbargstr);
+      memset (argv, 0, nbargstr * sizeof (momstring_t *));
+      unsigned cnt = 0;
+      va_start (args, progstr);
+      for (;;)
+	{
+	  const momstring_t *curargv = va_arg (args, const momstring_t *);
+	  if (!curargv)
+	    break;
+	  if (curargv->typnum != momty_string)
+	    continue;
+	  assert (cnt < nbargstr);
+	  argv[cnt++] = curargv;
+	}
+      va_end (args);
+    };
+  procitm = mom_allocate_item (momty_processitem, sizeof (momit_process_t),
+			       MONIMELT_SPACE_NONE);
+  procitm->iproc_progname = progstr.pstring;
+  procitm->iproc_argv = argv;
+  procitm->iproc_argcount = nbargstr;
+  procitm->iproc_fd = -1;
+  procitm->iproc_pid = 0;
+  return procitm;
+}
+
+
+
+momit_process_t *
+mom_make_item_process_from_array (momval_t progstr, unsigned argc,
+				  momval_t * argvals)
+{
+  momit_process_t *procitm = NULL;
+  unsigned nbargstr = 0;
+  if (!progstr.ptr || *progstr.ptype != momty_string
+      || progstr.pstring->cstr[0] == (char) 0 || (argc > 0 && !argvals))
+    return NULL;
+  for (unsigned ix = 0; ix < argc; ix++)
+    {
+      const momstring_t *curargv = argvals[ix].pstring;
+      if (!curargv)
+	break;
+      if (curargv->typnum != momty_string)
+	continue;
+      nbargstr++;
+    }
+  const momstring_t **argv = NULL;
+  if (nbargstr > 0)
+    {
+      unsigned cnt = 0;
+      argv = GC_MALLOC (nbargstr * sizeof (momstring_t *));
+      if (MONIMELT_UNLIKELY (!argv))
+	MONIMELT_FATAL ("cannot allocate %d argument strings",
+			(int) nbargstr);
+      memset (argv, 0, nbargstr * sizeof (momstring_t *));
+      for (unsigned ix = 0; ix < argc; ix++)
+	{
+	  const momstring_t *curargv = argvals[ix].pstring;
+	  if (!curargv)
+	    break;
+	  assert (cnt < nbargstr);
+	  if (curargv->typnum == momty_string)
+	    argv[cnt++] = curargv;
+	}
+    }
+  procitm = mom_allocate_item (momty_processitem, sizeof (momit_process_t),
+			       MONIMELT_SPACE_NONE);
+  procitm->iproc_progname = progstr.pstring;
+  procitm->iproc_argv = argv;
+  procitm->iproc_argcount = nbargstr;
+  procitm->iproc_fd = -1;
+  procitm->iproc_pid = 0;
+  return procitm;
+}
+
+
+momit_process_t *
+mom_make_item_process_from_node (momval_t progstr, momval_t nodv)
+{
+  momit_process_t *procitm = NULL;
+  unsigned nbargstr = 0;
+  const momstring_t **argv = NULL;
+  if (!progstr.ptr || *progstr.ptype != momty_string
+      || progstr.pstring->cstr[0] == (char) 0)
+    return NULL;
+  if (nodv.ptr && *nodv.ptype == momty_node)
+    {
+      const momnode_t *nd = nodv.pnode;
+      unsigned ndlen = nd->slen;
+      for (unsigned ix = 0; ix < ndlen; ix++)
+	{
+	  const momstring_t *curargv = nd->sontab[ix].pstring;
+	  if (!curargv)
+	    break;
+	  if (curargv->typnum != momty_string)
+	    continue;
+	  nbargstr++;
+	}
+      if (nbargstr > 0)
+	{
+	  unsigned cnt = 0;
+	  argv = GC_MALLOC (nbargstr * sizeof (momstring_t *));
+	  if (MONIMELT_UNLIKELY (!argv))
+	    MONIMELT_FATAL ("cannot allocate %d argument strings",
+			    (int) nbargstr);
+	  memset (argv, 0, nbargstr * sizeof (momstring_t *));
+	  for (unsigned ix = 0; ix < ndlen; ix++)
+	    {
+	      const momstring_t *curargv = nd->sontab[ix].pstring;
+	      if (!curargv)
+		break;
+	      assert (cnt < nbargstr);
+	      if (curargv->typnum == momty_string)
+		argv[cnt++] = curargv;
+	    }
+	}
+    }
+  procitm = mom_allocate_item (momty_processitem, sizeof (momit_process_t),
+			       MONIMELT_SPACE_NONE);
+  procitm->iproc_progname = progstr.pstring;
+  procitm->iproc_argv = argv;
+  procitm->iproc_argcount = nbargstr;
+  procitm->iproc_fd = -1;
+  procitm->iproc_pid = 0;
+  return procitm;
 }

@@ -735,11 +735,27 @@ struct momprocessitem_st
 {
   struct momanyitem_st iproc_item;	/* common part */
   const momstring_t *iproc_progname;
-  const momstring_t *iproc_argv;
-  unsigned iproc_argc;
+  const momstring_t **iproc_argv;	/* of iproc_argc size */
+  unsigned iproc_argcount;
   int iproc_fd;
   pid_t iproc_pid;
 };
+
+// a process item is created with its program and arguments
+// it has to be started later with mom_item_process_start
+
+// mom_make_item_process_argvals(progstrv, arg1strv, ...., NULL)
+momit_process_t *mom_make_item_process_argvals (momval_t progstr, ...)
+  __attribute__ ((sentinel));
+momit_process_t *mom_make_item_process_from_array (momval_t progstr,
+						   unsigned argc,
+						   momval_t * argv);
+momit_process_t *mom_make_item_process_from_node (momval_t progstr,
+						  momval_t node);
+
+// queue the process to be started, giving the closure which will be
+// invoked at completion
+void mom_item_process_start (momval_t procv, momval_t clov);
 
 ////////////////////////////////
 /////// tasklets
@@ -999,6 +1015,35 @@ mom_item_put_content (mom_anyitem_t * itm, momval_t val)
   pthread_mutex_lock (&itm->i_mtx);
   itm->i_content = val;
   pthread_mutex_unlock (&itm->i_mtx);
+}
+
+// change the space of an item, return the previous space
+static inline unsigned
+mom_item_set_space (mom_anyitem_t * itm, unsigned spacenum)
+{
+  if (!itm || itm->typnum <= momty__itemlowtype
+      || spacenum > MONIMELT_SPACE_MAX
+      || (spacenum > MONIMELT_SPACE_NONE
+	  && mom_spacedescr_array[spacenum] == NULL))
+    return MONIMELT_SPACE_NONE;
+  unsigned spa = MONIMELT_SPACE_NONE;
+  pthread_mutex_lock (&itm->i_mtx);
+  spa = itm->i_space;
+  itm->i_space = spacenum;
+  pthread_mutex_unlock (&itm->i_mtx);
+  return spa;
+}
+
+static inline unsigned
+mom_item_space (mom_anyitem_t * itm)
+{
+  if (!itm || itm->typnum <= momty__itemlowtype)
+    return MONIMELT_SPACE_NONE;
+  unsigned spa = MONIMELT_SPACE_NONE;
+  pthread_mutex_lock (&itm->i_mtx);
+  spa = itm->i_space;
+  pthread_mutex_unlock (&itm->i_mtx);
+  return spa;
 }
 
 // get one attribute
