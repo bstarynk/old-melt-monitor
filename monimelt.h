@@ -46,7 +46,6 @@
 #include <errno.h>
 #include <gc/gc.h>
 #include <sqlite3.h>
-#include <fastcgi.h>
 #include <uuid/uuid.h>
 // eventfd(2) & signalfd(2) & timerfd_create(2) are Linux specific
 #include <sys/eventfd.h>
