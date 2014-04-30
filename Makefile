@@ -22,7 +22,7 @@
 ## gmime is also Gnome related, see https://developer.gnome.org/gmime/
 ## onion is not packaged, see https://github.com/davidmoreno/onion
 ## Boehm GC is from http://www.hboehm.info/gc/
-PACKAGES= sqlite3 glib-2.0 gmodule-2.0 gmime-2.6 
+PACKAGES= sqlite3 glib-2.0 gmodule-2.0 gmime-2.6  libcurl
 PKGCONFIG= pkg-config
 CC=gcc
 CFLAGS= -std=gnu11 -Wall $(PREPROFLAGS) $(OPTIMFLAGS)

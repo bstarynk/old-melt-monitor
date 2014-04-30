@@ -47,6 +47,8 @@
 #include <gc/gc.h>
 #include <sqlite3.h>
 #include <uuid/uuid.h>
+#include <sys/poll.h>
+#include <sys/select.h>
 // eventfd(2) & signalfd(2) & timerfd_create(2) are Linux specific
 #include <sys/eventfd.h>
 #include <sys/signalfd.h>
@@ -68,6 +70,10 @@
 #include <onion/handlers/path.h>
 #include <onion/handlers/static.h>
 #include <onion/handlers/auth_pam.h>
+// curl from http://curl.haxx.se/libcurl is an HTTP client library
+#include <curl/curl.h>
+
+
 
 // mark unlikely conditions to help optimization
 #ifdef __GNUC__

@@ -32,10 +32,15 @@ static int my_signals_fd = -1;
 #define EVLOOP_STOP '.'		/* stop the event loop */
 #define EVLOOP_JOB 'J'		/* something changed about jobs */
 
-static momit_process_t *running_jobs[MOM_MAX_WORKERS + 1];
+
+#define MOM_POLL_TIMEOUT 500	/* milliseconds for mom poll timeout */
+
+// the job_mtx is both for processes and for CURL
 static pthread_mutex_t job_mtx = PTHREAD_MUTEX_INITIALIZER;
+static momit_process_t *running_jobs[MOM_MAX_WORKERS + 1];
 static struct mom_itqueue_st *jobq_first;
 static struct mom_itqueue_st *jobq_last;
+static CURLM *multicurl_job;
 
 #define WORK_MAGIC 0x5c59b171	/* work magic 1549382001 */
 struct momworkdata_st
@@ -218,13 +223,75 @@ mom_stop_event_loop (void)
   write (event_loop_write_pipe, buf, 1);
 }
 
+typedef void mom_poll_handler_sig_t (int fd, short revent, void *data);
+
+static void
+event_loop_handler (int fd, short revent, void *data)
+{
+  assert (fd == event_loop_read_pipe && data);
+  bool *prepeatloop = data;
+  char rbuf[4];
+  memset (rbuf, 0, sizeof (rbuf));
+  if (read (fd, &rbuf, 1) > 0)
+    {
+      switch (rbuf[0])
+	{
+	case EVLOOP_STOP:
+	  *prepeatloop = false;
+	  break;
+	case EVLOOP_JOB:
+#warning do something about jobs
+	  break;
+	default:
+	  MONIMELT_FATAL ("unexpected loop command %c = %d", rbuf[0],
+			  (int) rbuf[0]);
+	}
+    }
+}
+
+static void
+signal_fd_handler (int fd, short revent, void *data)
+{
+  assert (fd == my_signals_fd && !data);
+}
+
+static void
+process_out_handler (int fd, short revent, void *data)
+{
+  momit_process_t *procitm = data;
+  assert (procitm && procitm->iproc_item.typnum == momty_processitem
+	  && fd == procitm->iproc_outfd);
+}
+
+static void
+curl_handler (int fd, short revent, void *data)
+{
+  int *pnb = data;
+  if (*pnb > 0)
+    curl_multi_perform (&multicurl_job, pnb);
+}
+
 static void *
 event_loop (struct GC_stack_base *sb, void *data)
 {
+  bool repeat_loop = false;
   extern momit_box_t *mom_item__heart_beat;
+#define MOM_POLL_MAX 100
+  struct pollfd polltab[MOM_POLL_MAX];
+  mom_poll_handler_sig_t *handlertab[MOM_POLL_MAX];
+  void **datatab[MOM_POLL_MAX];
+  int curlnbhandles = 0;
+  memset (polltab, 0, sizeof (polltab));
+  memset (handlertab, 0, sizeof (handlertab));
+  memset (datatab, 0, sizeof (datatab));
   GC_register_my_thread (sb);
   assert (data == NULL);
   assert (mom_item__heart_beat != NULL);
+  // set up CURL multi handle
+  assert (multicurl_job == NULL);
+  multicurl_job = curl_multi_init ();
+  if (MONIMELT_UNLIKELY (!multicurl_job))
+    MONIMELT_FATAL ("failed to initial multi CURL handle");
   // set up the signalfd 
   {
     sigset_t mask;
@@ -238,9 +305,86 @@ event_loop (struct GC_stack_base *sb, void *data)
     if (MONIMELT_UNLIKELY (my_signals_fd < 0))
       MONIMELT_FATAL ("signalfd failed");
   }
-  // should set up the child processes
-#warning missing code inside event_loop
-  MONIMELT_WARNING ("event_loop not implemented");
+  /// our event loop
+  do
+    {
+      repeat_loop = true;
+      unsigned pollcnt = 0;
+      memset (polltab, 0, sizeof (polltab));
+      memset (handlertab, 0, sizeof (handlertab));
+      memset (datatab, 0, sizeof (datatab));
+#define ADD_POLL(Ev,Fd,Hdr,Data) do {					\
+    if (MONIMELT_UNLIKELY(pollcnt>=MOM_POLL_MAX))			\
+      MONIMELT_FATAL("failed to poll fd#%d", (Fd));			\
+    polltab[pollcnt].fd = (Fd);  polltab[pollcnt].events = (Ev);	\
+    handlertab[pollcnt] = Hdr; datatab[pollcnt]= (void*)(Data);		\
+    pollcnt++; } while(0)
+      ADD_POLL (POLL_IN, event_loop_read_pipe, event_loop_handler,
+		&repeat_loop);
+      ADD_POLL (POLL_IN, my_signals_fd, signal_fd_handler, NULL);
+      // add the process output and CURL
+      {
+	pthread_mutex_lock (&job_mtx);
+	// add the running processes
+	for (unsigned jix = 1; jix <= MOM_MAX_WORKERS; jix++)
+	  {
+	    momit_process_t *curproc = running_jobs[jix];
+	    if (!curproc)
+	      continue;
+	    pthread_mutex_lock (&curproc->iproc_item.i_mtx);
+	    if (curproc->iproc_outfd >= 0)
+	      ADD_POLL (POLL_IN, curproc->iproc_outfd, process_out_handler,
+			curproc);
+	    pthread_mutex_unlock (&curproc->iproc_item.i_mtx);
+	  }
+	// add the CURL file descriptors
+	{
+	  int curlmaxfd = -1;
+	  fd_set inscurl, outscurl, excscurl;
+	  FD_ZERO (&inscurl);
+	  FD_ZERO (&outscurl);
+	  FD_ZERO (&excscurl);
+	  curlnbhandles = 0;
+	  curl_multi_fdset (multicurl_job, &inscurl, &outscurl, &excscurl,
+			    &curlmaxfd);
+	  for (int curlfd = 0; curlfd < curlmaxfd; curlfd++)
+	    {
+	      unsigned curlpollflags = 0;
+	      if (FD_ISSET (curlfd, &inscurl))
+		curlpollflags |= POLL_IN;
+	      if (FD_ISSET (curlfd, &outscurl))
+		curlpollflags |= POLL_OUT;
+	      if (FD_ISSET (curlfd, &excscurl))
+		curlpollflags |= POLL_PRI;
+	      if (curlpollflags)
+		{
+		  ADD_POLL (curlpollflags, curlfd, curl_handler,
+			    &curlnbhandles);
+		  curlnbhandles++;
+		}
+	    }
+	}
+	pthread_mutex_unlock (&job_mtx);
+      }
+      // do the polling
+      int respoll = poll (polltab, pollcnt, MOM_POLL_TIMEOUT);
+      // invoke the handlers
+      if (respoll > 0)
+	{
+	  for (int pix = 0; pix < pollcnt; pix++)
+	    {
+	      if (polltab[pix].revents && handlertab[pix])
+		handlertab[pix] (polltab[pix].fd, polltab[pix].revents,
+				 datatab[pix]);
+	    }
+	  sched_yield ();
+	}
+      else
+	{			// timed-out
+#warning should handle time out in event loop
+	}
+    }
+  while (repeat_loop);
   GC_unregister_my_thread ();
   return NULL;
 }

@@ -252,6 +252,7 @@ mom_initialize (void)
   if (inited)
     return;
   inited = 1;
+  curl_global_init (CURL_GLOBAL_DEFAULT);
   pthread_mutexattr_init (&mom_normal_mutex_attr);
   pthread_mutexattr_init (&mom_recursive_mutex_attr);
   mom_prog_module = g_module_open (NULL, 0);
