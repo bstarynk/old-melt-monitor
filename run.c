@@ -348,14 +348,120 @@ static void
 signal_fd_handler (int fd, short revent, void *data)
 {
   assert (fd == my_signals_fd && !data);
+  struct signalfd_siginfo sinf;
+  memset (&sinf, 0, sizeof (sinf));
+  if (read (fd, &sinf, sizeof (sinf)) != sizeof (sinf))
+    MONIMELT_FATAL ("failed to read from signalfd %d", fd);
+  switch (sinf.ssi_signo)
+    {
+    case SIGCHLD:
+      {
+	int pst = 0;
+	pid_t wpid = waitpid (-1, &pst, WNOHANG);
+	if (wpid > 0)
+	  {
+	    momit_process_t *wproc = NULL;
+	    const momclosure_t *clos = NULL;
+	    const momstring_t *outstr = NULL;
+	    pthread_mutex_lock (&job_mtx);
+	    // handle the ended process
+	    for (unsigned jix = 1; jix <= MOM_MAX_WORKERS && !wproc; jix++)
+	      {
+		momit_process_t *curproc = running_jobs[jix];
+		if (!curproc)
+		  continue;
+		assert (curproc->iproc_item.typnum == momty_processitem);
+		pthread_mutex_lock (&curproc->iproc_item.i_mtx);
+		if (curproc->iproc_pid == wpid)
+		  {
+		    wproc = curproc;
+		    clos = curproc->iproc_closure;
+		    running_jobs[jix] = NULL;
+		  }
+		pthread_mutex_unlock (&curproc->iproc_item.i_mtx);
+	      }
+	    pthread_mutex_unlock (&job_mtx);
+	    int exitstatus = -1;
+	    int termsig = -1;
+	    if (WIFEXITED (pst))
+	      exitstatus = WEXITSTATUS (pst);
+	    else if (WIFSIGNALED (pst))
+	      termsig = WTERMSIG (pst);
+	    if (wproc && (exitstatus >= 0 || termsig >= 0))
+	      {
+		extern momit_box_t *mom_item__exited;
+		extern momit_box_t *mom_item__terminated;
+		pthread_mutex_lock (&wproc->iproc_item.i_mtx);
+		outstr =
+		  mom_make_string_len (wproc->iproc_outbuf,
+				       wproc->iproc_outpos);
+		close (wproc->iproc_outfd);
+		wproc->iproc_outfd = -1;
+		GC_FREE (wproc->iproc_outbuf);
+		wproc->iproc_outbuf = NULL;
+		wproc->iproc_outsize = wproc->iproc_outpos = 0;
+		wproc->iproc_pid = 0;
+		pthread_mutex_unlock (&wproc->iproc_item.i_mtx);
+		// should run the closure
+		if (exitstatus >= 0)
+		  mom_run_closure ((momval_t) clos,
+				   MOMPFR_THREE_VALUES, wproc, outstr,
+				   mom_item__exited, MOMPFR_INT, exitstatus,
+				   MOMPFR_END);
+		else if (termsig >= 0)
+		  mom_run_closure ((momval_t) clos,
+				   MOMPFR_THREE_VALUES, wproc, outstr,
+				   mom_item__terminated, MOMPFR_INT, termsig,
+				   MOMPFR_END);
+	      }
+	  }
+      }
+      break;
+    default:
+      MONIMELT_WARNING ("unexpected signal#%d : %s", sinf.ssi_signo,
+			sys_siglist[sinf.ssi_signo]);
+      break;
+    }
 }
 
+#define MONIMELT_MAX_OUTPUT_LEN (1024*1024)	/* one megabyte */
 static void
-process_out_handler (int fd, short revent, void *data)
+process_readout_handler (int fd, short revent, void *data)
 {
+#define PROCOUT_BUFSIZE 4096
+  char rdbuf[PROCOUT_BUFSIZE];
+  memset (rdbuf, 0, sizeof (rdbuf));
+  int nbr = read (fd, rdbuf, sizeof (rdbuf));
   momit_process_t *procitm = data;
   assert (procitm && procitm->iproc_item.typnum == momty_processitem
 	  && fd == procitm->iproc_outfd);
+  if (nbr < 0)
+    return;
+  pthread_mutex_lock (&procitm->iproc_item.i_mtx);
+  if (MONIMELT_UNLIKELY
+      (nbr + procitm->iproc_outpos + 1 >= procitm->iproc_outsize))
+    {
+      unsigned newsiz =
+	((5 * (nbr + procitm->iproc_outpos) / 4 + 10) | 0x1f) + 1;
+      char *newbuf = GC_MALLOC_ATOMIC (newsiz);
+      char *oldbuf = procitm->iproc_outbuf;
+      if (MONIMELT_UNLIKELY (!newbuf))
+	MONIMELT_FATAL ("failed to grow output buffer to %d", (int) newsiz);
+      memset (newbuf, 0, newsiz);
+      memcpy (newbuf, oldbuf, procitm->iproc_outpos);
+      GC_FREE (oldbuf);
+      procitm->iproc_outbuf = newbuf;
+      procitm->iproc_outsize = newsiz;
+    };
+  memcpy (procitm->iproc_outbuf + procitm->iproc_outpos, rdbuf, nbr);
+  procitm->iproc_outbuf[procitm->iproc_outpos + nbr] = (char) 0;
+  procitm->iproc_outpos += nbr;
+  if (procitm->iproc_outpos > MONIMELT_MAX_OUTPUT_LEN)
+    {
+      close (procitm->iproc_outfd);	// the child process could later get a SIGPIPE if it writes more
+      procitm->iproc_outfd = -1;
+    }
+  pthread_mutex_unlock (&procitm->iproc_item.i_mtx);
 }
 
 static void
@@ -428,8 +534,8 @@ event_loop (struct GC_stack_base *sb, void *data)
 	      continue;
 	    pthread_mutex_lock (&curproc->iproc_item.i_mtx);
 	    if (curproc->iproc_outfd >= 0)
-	      ADD_POLL (POLL_IN, curproc->iproc_outfd, process_out_handler,
-			curproc);
+	      ADD_POLL (POLL_IN, curproc->iproc_outfd,
+			process_readout_handler, curproc);
 	    pthread_mutex_unlock (&curproc->iproc_item.i_mtx);
 	  }
 	// add the CURL file descriptors
@@ -523,6 +629,7 @@ mom_process_destroy (mom_anyitem_t * itm)
 
 
 
+#define OUTPROC_INITIAL_SIZE 512
 momit_process_t *
 mom_make_item_process_argvals (momval_t progstr, ...)
 {
@@ -686,6 +793,13 @@ mom_item_process_start (momval_t procv, momval_t clov)
   const momclosure_t *clos = clov.pclosure;
   if (procitm->iproc_closure)	// already started
     goto end;
+  procitm->iproc_outbuf = GC_MALLOC_ATOMIC (OUTPROC_INITIAL_SIZE);
+  if (MONIMELT_UNLIKELY (!procitm->iproc_outbuf))
+    MONIMELT_FATAL ("failed to allocate output buffer for process %s",
+		    mom_string_cstr ((momval_t) procitm->iproc_progname));
+  memset (procitm->iproc_outbuf, 0, OUTPROC_INITIAL_SIZE);
+  procitm->iproc_outsize = OUTPROC_INITIAL_SIZE;
+  procitm->iproc_outpos = 0;
   procitm->iproc_closure = clos;
   {
     struct mom_itqueue_st *qel = GC_MALLOC (sizeof (struct mom_itqueue_st));

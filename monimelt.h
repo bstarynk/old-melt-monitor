@@ -51,6 +51,7 @@
 #include <sys/stat.h>
 #include <sys/poll.h>
 #include <sys/select.h>
+#include <sys/wait.h>
 #include <fcntl.h>
 // eventfd(2) & signalfd(2) & timerfd_create(2) are Linux specific
 #include <sys/eventfd.h>
@@ -747,6 +748,10 @@ struct momprocessitem_st
   const momstring_t *iproc_progname;
   const momstring_t **iproc_argv;	/* of iproc_argc size */
   const momclosure_t *iproc_closure;	/* the closure handing process outcome */
+  char *iproc_outbuf;		// buffer for output
+  unsigned iproc_outsize;	/* its size */
+  unsigned iproc_outpos;	/* last written position */
+
   unsigned iproc_jobnum;	/* the internal job number */
   unsigned iproc_argcount;
   int iproc_outfd;		/* the process output, to be read by
