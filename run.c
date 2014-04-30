@@ -215,6 +215,101 @@ mom_stop (void)
 }
 
 
+static void
+start_some_pending_jobs (void)
+{
+  int nbrunning = 0;
+  int nbstarting = 0;
+  momit_process_t *proctab[MOM_MAX_WORKERS] = { };
+  memset (proctab, 0, sizeof (proctab));
+  pthread_mutex_lock (&job_mtx);
+  for (unsigned jix = 1; jix <= MOM_MAX_WORKERS; jix++)
+    {
+      momit_process_t *curjob = running_jobs[jix];
+      if (!curjob)
+	continue;
+      if (curjob->iproc_jobnum == jix && curjob->iproc_pid > 0
+	  && !kill (curjob->iproc_pid, 0))
+	nbrunning++;
+    }
+  while (nbrunning < mom_nb_workers && nbstarting < mom_nb_workers
+	 && jobq_first != NULL)
+    {
+      proctab[nbstarting++] = (momit_process_t *) jobq_first->iq_item;
+      jobq_first = jobq_first->iq_next;
+      if (jobq_first == NULL)
+	jobq_last = NULL;
+    }
+  for (unsigned rix = 0; rix < nbstarting; rix++)
+    {
+      momit_process_t *curproc = proctab[rix];
+      int pipetab[2] = { -1, -1 };
+      int jobnum = -1;
+      for (unsigned j = 1; j <= MOM_MAX_WORKERS && jobnum < 0; j++)
+	if (!running_jobs[j])
+	  jobnum = j;
+      assert (curproc && curproc->iproc_item.typnum == momty_processitem);
+      assert (curproc->iproc_pid <= 0 && curproc->iproc_outfd < 0);
+      assert (jobnum > 0);
+      pthread_mutex_lock (&curproc->iproc_item.i_mtx);
+      const char *progname =
+	mom_string_cstr ((momval_t) curproc->iproc_progname);
+      const char **progargv =
+	GC_MALLOC ((curproc->iproc_argcount + 2) * sizeof (char *));
+      if (MONIMELT_UNLIKELY (!progargv))
+	MONIMELT_FATAL ("cannot allocate array for %d program arguments",
+			curproc->iproc_argcount);
+      memset (progargv, 0, (curproc->iproc_argcount + 2) * sizeof (char *));
+      progargv[0] = progname;
+      unsigned argcnt = 1;
+      for (unsigned aix = 0; aix < curproc->iproc_argcount; aix++)
+	{
+	  const char *argstr =
+	    mom_string_cstr ((momval_t) (curproc->iproc_argv[aix]));
+	  if (argstr)
+	    progargv[argcnt++] = argstr;
+	}
+      progargv[argcnt] = NULL;
+      assert (progname != NULL);
+      if (pipe (pipetab))
+	MONIMELT_FATAL ("failed to create pipe for process %s", progname);
+      fflush (NULL);
+      pid_t newpid = fork ();
+      if (newpid == 0)
+	{
+	  /* child process */
+	  for (int fd = 3; fd < 128; fd++)
+	    if (fd != pipetab[1])
+	      close (fd);
+	  int nullfd = open ("/dev/null", O_RDONLY);
+	  if (nullfd < 0)
+	    {
+	      perror ("open /dev/null child process");
+	      _exit (127);
+	    };
+	  close (STDIN_FILENO);
+	  dup2 (nullfd, STDIN_FILENO);
+	  dup2 (pipetab[1], STDOUT_FILENO);
+	  dup2 (pipetab[1], STDERR_FILENO);
+	  nice (1);
+	  execvp ((const char *) progname, (char *const *) progargv);
+	  fprintf (stderr, "execution of %s failed : %s\n", progname,
+		   strerror (errno));
+	  fflush (NULL);
+	  _exit (127);
+	}
+      else if (newpid < 0)
+	MONIMELT_FATAL ("fork failed for %s", progname);
+      // parent process:
+      curproc->iproc_outfd = pipetab[0];
+      curproc->iproc_pid = newpid;
+      curproc->iproc_jobnum = jobnum;
+      pthread_mutex_unlock (&curproc->iproc_item.i_mtx);
+      GC_FREE (progargv), progargv = NULL;
+    }
+  pthread_mutex_unlock (&job_mtx);
+}
+
 
 void
 mom_stop_event_loop (void)
@@ -240,7 +335,7 @@ event_loop_handler (int fd, short revent, void *data)
 	  *prepeatloop = false;
 	  break;
 	case EVLOOP_JOB:
-#warning do something about jobs
+	  start_some_pending_jobs ();
 	  break;
 	default:
 	  MONIMELT_FATAL ("unexpected loop command %c = %d", rbuf[0],

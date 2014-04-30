@@ -47,8 +47,11 @@
 #include <gc/gc.h>
 #include <sqlite3.h>
 #include <uuid/uuid.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/poll.h>
 #include <sys/select.h>
+#include <fcntl.h>
 // eventfd(2) & signalfd(2) & timerfd_create(2) are Linux specific
 #include <sys/eventfd.h>
 #include <sys/signalfd.h>
