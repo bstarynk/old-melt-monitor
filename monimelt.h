@@ -196,6 +196,11 @@ union momvalueptr_un
   mom_anyitem_t *panyitem;
   const struct momjsonarray_st *pjsonarr;
   const struct momjsonobject_st *pjsonobj;
+  const struct momnode_st *pnode;
+  const struct momnode_st *pclosure;
+  const struct momseqitem_st *pseqitm;
+  const struct momseqitem_st *pset;
+  const struct momseqitem_st *ptuple;
   struct momjsonitem_st *pjsonitem;
   struct momboolitem_st *pboolitem;
   struct momroutineitem_st *proutitem;
@@ -207,11 +212,7 @@ union momvalueptr_un
   struct mombufferitem_st *pbufferitem;
   struct momdictionnaryitem_st *pdictionnaryitem;
   struct momwebrequestitem_st *pwebrequestitem;
-  const struct momnode_st *pnode;
-  const struct momnode_st *pclosure;
-  const struct momseqitem_st *pseqitm;
-  const struct momseqitem_st *pset;
-  const struct momseqitem_st *ptuple;
+  struct momprocessitem_st *pprocessitem;
 };
 
 struct mom_dumper_st;
@@ -736,8 +737,11 @@ struct momprocessitem_st
   struct momanyitem_st iproc_item;	/* common part */
   const momstring_t *iproc_progname;
   const momstring_t **iproc_argv;	/* of iproc_argc size */
+  const momclosure_t *iproc_closure;	/* the closure handing process outcome */
+  unsigned iproc_jobnum;	/* the internal job number */
   unsigned iproc_argcount;
-  int iproc_fd;
+  int iproc_outfd;		/* the process output, to be read by
+				   the monitor */
   pid_t iproc_pid;
 };
 

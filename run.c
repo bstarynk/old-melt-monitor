@@ -29,7 +29,13 @@ static int my_signals_fd = -1;
 #define event_loop_write_pipe event_loop_pipe[1]
 
 // communication between other threads & event loop thread thru single byte sent on pipe
-#define EVLOOP_STOP '.'
+#define EVLOOP_STOP '.'		/* stop the event loop */
+#define EVLOOP_JOB 'J'		/* something changed about jobs */
+
+static momit_process_t *running_jobs[MOM_MAX_WORKERS + 1];
+static pthread_mutex_t job_mtx = PTHREAD_MUTEX_INITIALIZER;
+static struct mom_itqueue_st *jobq_first;
+static struct mom_itqueue_st *jobq_last;
 
 #define WORK_MAGIC 0x5c59b171	/* work magic 1549382001 */
 struct momworkdata_st
@@ -324,7 +330,7 @@ mom_make_item_process_argvals (momval_t progstr, ...)
   procitm->iproc_progname = progstr.pstring;
   procitm->iproc_argv = argv;
   procitm->iproc_argcount = nbargstr;
-  procitm->iproc_fd = -1;
+  procitm->iproc_outfd = -1;
   procitm->iproc_pid = 0;
   return procitm;
 }
@@ -373,7 +379,7 @@ mom_make_item_process_from_array (momval_t progstr, unsigned argc,
   procitm->iproc_progname = progstr.pstring;
   procitm->iproc_argv = argv;
   procitm->iproc_argcount = nbargstr;
-  procitm->iproc_fd = -1;
+  procitm->iproc_outfd = -1;
   procitm->iproc_pid = 0;
   return procitm;
 }
@@ -425,7 +431,43 @@ mom_make_item_process_from_node (momval_t progstr, momval_t nodv)
   procitm->iproc_progname = progstr.pstring;
   procitm->iproc_argv = argv;
   procitm->iproc_argcount = nbargstr;
-  procitm->iproc_fd = -1;
+  procitm->iproc_outfd = -1;
   procitm->iproc_pid = 0;
   return procitm;
+}
+
+void
+mom_item_process_start (momval_t procv, momval_t clov)
+{
+  if (!procv.ptr || *procv.ptype != momty_processitem
+      || !clov.ptr || *clov.ptype != momty_closure)
+    return;
+  pthread_mutex_lock (&procv.panyitem->i_mtx);
+  momit_process_t *procitm = procv.pprocessitem;
+  const momclosure_t *clos = clov.pclosure;
+  if (procitm->iproc_closure)	// already started
+    goto end;
+  procitm->iproc_closure = clos;
+  {
+    struct mom_itqueue_st *qel = GC_MALLOC (sizeof (struct mom_itqueue_st));
+    if (MONIMELT_UNLIKELY (!qel))
+      MONIMELT_FATAL ("failed to allocate job item queue element");
+    memset (qel, 0, sizeof (struct mom_itqueue_st));
+    qel->iq_item = (mom_anyitem_t *) procitm;
+    pthread_mutex_lock (&job_mtx);
+    if (!jobq_first)
+      {
+	jobq_first = jobq_last = qel;
+      }
+    else
+      {
+	jobq_last->iq_next = qel;
+	jobq_last = qel;
+      }
+    char buf[4] = { EVLOOP_JOB, 0, 0, 0 };
+    write (event_loop_write_pipe, buf, 1);
+    pthread_mutex_unlock (&job_mtx);
+  }
+end:
+  pthread_mutex_unlock (&procv.panyitem->i_mtx);
 }
