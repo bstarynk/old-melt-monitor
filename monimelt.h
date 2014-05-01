@@ -225,6 +225,13 @@ union momvalueptr_un
   struct momprocessitem_st *pprocessitem;
 };
 
+static inline enum momvaltype_en
+mom_type (const momval_t v)
+{
+  if (!v.ptr) return momty_null;
+  return (enum momvaltype_en) *v.ptype;
+}
+
 struct mom_dumper_st;
 struct mom_loader_st;
 void mom_dumper_initialize (struct mom_dumper_st *dmp);
