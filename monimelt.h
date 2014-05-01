@@ -228,7 +228,8 @@ union momvalueptr_un
 static inline enum momvaltype_en
 mom_type (const momval_t v)
 {
-  if (!v.ptr) return momty_null;
+  if (!v.ptr)
+    return momty_null;
   return (enum momvaltype_en) *v.ptype;
 }
 
