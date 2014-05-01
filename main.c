@@ -120,6 +120,30 @@ load_module (GOptionContext * optctx, unsigned ix, const char *modname,
   if (!modhdl)
     MONIMELT_FATAL ("failed to load module #%d named %s: %s",
 		    ix, modname, g_module_error ());
+  if (module_count + 1 >= module_size)
+    {
+      unsigned newsiz = (((3 * module_count / 2) + 10) | 0xf) + 1;
+      GModule **newarrmod = GC_MALLOC (newsiz * sizeof (GModule *));
+      const char **newarrname = GC_MALLOC (newsiz * sizeof (char *));
+      const char **newarrarg = GC_MALLOC (newsiz * sizeof (char *));
+      if (MONIMELT_UNLIKELY (!newarrmod || !newarrname || !newarrarg))
+	MONIMELT_FATAL ("failed to grow module array to %d", (int) newsiz);
+      memset (newarrmod, 0, newsiz * sizeof (GModule *));
+      memset (newarrname, 0, newsiz * sizeof (char *));
+      memset (newarrarg, 0, newsiz * sizeof (char *));
+      if (module_count > 0)
+	{
+	  memcpy (newarrmod, module_handles,
+		  module_count * sizeof (GModule *));
+	  memcpy (newarrname, module_names, module_count * sizeof (char *));
+	  memcpy (newarrarg, module_arguments,
+		  module_count * sizeof (char *));
+	}
+      free (module_handles), module_handles = newarrmod;
+      free (module_arguments), module_arguments = newarrarg;
+      free (module_names), module_names = newarrname;
+      module_size = newsiz;
+    }
   const char *modlic = NULL;
   if (!g_module_symbol
       (modhdl, "monimelt_GPL_friendly_module", (gpointer *) & modlic)
@@ -191,26 +215,6 @@ parse_program_arguments_and_load_modules (int argc, char **argv)
 		usage (argv[0]);
 		exit (EXIT_FAILURE);
 	      };
-	    if (MONIMELT_UNLIKELY (module_count + 1 >= module_size))
-	      {
-		unsigned newsize = ((5 * module_count / 4 + 10) | 0xf) + 1;
-		const char **newnames = GC_MALLOC (newsize * sizeof (char *));
-		const char **newargs = GC_MALLOC (newsize * sizeof (char *));
-		if (!newnames || !newargs)
-		  MONIMELT_FATAL ("failed to grow modules to %d",
-				  (int) newsize);
-		memset (newnames, 0, newsize * sizeof (char *));
-		memset (newargs, 0, newsize * sizeof (char *));
-		if (module_names)
-		  memcpy (newnames, module_names,
-			  sizeof (char *) * module_count);
-		if (module_arguments)
-		  memcpy (newargs, module_arguments,
-			  sizeof (char *) * module_count);
-		module_names = newnames;
-		module_arguments = newargs;
-		module_size = newsize;
-	      }
 	    load_module (option_ctx, module_count, modnam, modarg);
 	    module_count++;
 	  }

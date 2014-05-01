@@ -60,4 +60,4 @@ modules: $(MODULES)
 ## MONIMELT generated code starts with momg_ followed by alphanum or +
 ## or - or _ characters. see MONIMELT_SHARED_MODULE_PREFIX in monimelt.h
 %.so: %.c | monimelt.h monimelt-names.h
-	$(COMPILE.c) -fPIC $< -shared -o $@
+	$(LINK.c) -fPIC $< -shared -o $@

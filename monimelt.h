@@ -406,7 +406,7 @@ struct momboolitem_st
 #define ROUTINE_MAGIC 0x6b9c644d	/* routine magic 1805411405 */
 #define MOM_ROUTINE_NAME_PREFIX "momrout_"
 #define MOM_SYMBNAME_LEN 128
-#define MOM_ROUTINE_NAME_FMT  MOM_ROUTINE_NAME_PREFIX "_%s"
+#define MOM_ROUTINE_NAME_FMT  MOM_ROUTINE_NAME_PREFIX "%s"
 // the routine item FOO has descriptor momrout_FOO
 // the routine returns a positive state 
 enum routres_en
