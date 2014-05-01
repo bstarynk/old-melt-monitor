@@ -8,5 +8,19 @@
 </head>
 <body>
   <h1>Initial Form for Monimelt</h1>
+
+  <form action='form_compile' method='post'>
+     <b>compile all:</b> <input type='submit' name='compile' value='compile' />
+  </form>
+
+  <hr/>
+  
+  <h2>add routine</h2>
+
+  <form action='add_routine' method='post'>
+    <b>name:</b> <input type='text' name='routname' /> <br/>
+    <b>body:</b> <textarea rows='20' cols='72' id='txt_routcode'>
+    </textarea>
+  </form>
 </body>
 </html>
