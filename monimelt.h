@@ -983,6 +983,22 @@ mom_string_cstr (momval_t val)
   return val.pstring->cstr;
 }
 
+static inline const char *
+mom_jsonstring_cstr (momval_t val)
+{
+  if (!val.ptr)
+    return NULL;
+  switch (*val.ptype)
+    {
+    case momty_string:
+      return val.pstring->cstr;
+    case momty_jsonitem:
+      return mom_string_cstr ((momval_t) (val.pjsonitem->ij_namejson));
+    default:
+      return NULL;
+    }
+}
+
 #define MONIMELT_DEFAULT_STATE_FILE "state-monimelt.dbsqlite"
 #define MONIMELT_WEB_DIRECTORY "webdir"
 const momint_t *mom_make_int (intptr_t n);
@@ -1039,6 +1055,7 @@ mom_is_jsonable (const momval_t val)
 	return false;
       }
 }
+
 
 // get the content of an item
 static inline momval_t

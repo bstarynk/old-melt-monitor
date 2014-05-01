@@ -8,3 +8,4 @@
 *.dbsqlite
 monimelt
 make-named
+core*

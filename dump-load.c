@@ -458,9 +458,10 @@ mom_load_item (struct mom_loader_st * ld, uuid_t uuid, const char *space)
 		   uuidstr, space, buildstr, errmsg);
 	      mom_close_json_parser (&jp);
 	      typestr =
-		mom_string_cstr ((momval_t)
-				 mom_jsonob_get (jval,
-						 (momval_t) mom_item__jtype));
+		mom_jsonstring_cstr ((momval_t)
+				     mom_jsonob_get (jval,
+						     (momval_t)
+						     mom_item__jtype));
 	      if (MONIMELT_UNLIKELY (!typestr || !typestr[0]))
 		MONIMELT_FATAL
 		  ("build string %s of uid %s in space %s without jtype",
@@ -578,11 +579,11 @@ mom_load_value_json (struct mom_loader_st *ld, const momval_t jval)
 	if (jtypv.panyitem == (mom_anyitem_t *) mom_item__itemref)
 	  {
 	    const char *uidstr =
-	      mom_string_cstr (mom_jsonob_get
-			       (jval, (momval_t) mom_item__uuid));
+	      mom_jsonstring_cstr (mom_jsonob_get
+				   (jval, (momval_t) mom_item__uuid));
 	    const char *spastr =
-	      mom_string_cstr (mom_jsonob_get
-			       (jval, (momval_t) mom_item__space));
+	      mom_jsonstring_cstr (mom_jsonob_get
+				   (jval, (momval_t) mom_item__space));
 	    uuid_t uuid;
 	    memset (uuid, 0, sizeof (uuid));
 	    if (uidstr && !uuid_parse (uidstr, uuid))
@@ -1230,6 +1231,8 @@ dumpglobal_cb (const mom_anyitem_t * itm, const momstring_t * name,
 	       void *data)
 {
   sqlite3_stmt *stmt = data;
+  assert (stmt != NULL);
+  assert (name != NULL && name->typnum == momty_string);
   if (!itm || itm->typnum <= momty__itemlowtype || itm->i_space == 0
       || itm->i_space >= MONIMELT_SPACE_MAX
       || !mom_spacename_array[itm->i_space])
