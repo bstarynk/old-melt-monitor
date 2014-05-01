@@ -416,16 +416,21 @@ mom_anyitem_t *
 mom_load_item (struct mom_loader_st * ld, uuid_t uuid, const char *space)
 {
   mom_anyitem_t *itm = NULL;
+  unsigned spanum = 0;
+  assert (uuid != NULL && !uuid_is_null (uuid));
+  assert (ld != NULL && ld->ldr_magic == LOADER_MAGIC);
   itm = mom_item_of_uuid (uuid);
   if (itm)
     return itm;
-  for (unsigned spanum = 1; spanum < MONIMELT_SPACE_MAX; spanum++)
+  for (spanum = 0; spanum < MONIMELT_SPACE_MAX; spanum++)
     {
       struct momspacedescr_st *curspa = mom_spacedescr_array[spanum];
       if (!curspa)
 	continue;
+      assert (spanum > 0);
       if (MONIMELT_UNLIKELY (curspa->spa_magic != SPACE_MAGIC))
 	MONIMELT_FATAL ("corrupted space #%d", (int) spanum);
+      assert (curspa->spa_name != NULL);
       if (!strcmp (curspa->spa_name, space))
 	{
 	  char *buildstr = NULL;
@@ -433,6 +438,7 @@ mom_load_item (struct mom_loader_st * ld, uuid_t uuid, const char *space)
 	  struct jsonparser_st jp = { 0 };
 	  memset (uuidstr, 0, sizeof (uuidstr));
 	  uuid_unparse (uuid, uuidstr);
+	  assert (uuid[0] != (char) 0);
 	  if (curspa->spa_fetch_build)
 	    buildstr = curspa->spa_fetch_build (spanum, uuidstr);
 	  if (buildstr)
@@ -842,9 +848,13 @@ rootspace_fetch_build (unsigned spanum, const char *uuidstr)
   int stepres = sqlite3_step (fetchbuild_loadstmt);
   if (stepres == SQLITE_ROW)
     {
-      res =
-	GC_STRDUP ((const char *)
-		   sqlite3_column_text (fetchbuild_loadstmt, 1));
+      const char *colbuild = (const char *)
+	sqlite3_column_text (fetchbuild_loadstmt, 0);
+      assert (colbuild != NULL);
+      res = GC_STRDUP (colbuild);
+      if (MONIMELT_UNLIKELY (!res))
+	MONIMELT_FATAL ("failed to duplicate build of %s which is %s",
+			uuidstr, colbuild);
       stepres = sqlite3_step (fetchbuild_loadstmt);
     }
   sqlite3_reset (fetchbuild_loadstmt);
@@ -879,9 +889,13 @@ rootspace_fetch_fill (unsigned spanum, const char *uuidstr)
   int stepres = sqlite3_step (fetchfill_loadstmt);
   if (stepres == SQLITE_ROW)
     {
-      res =
-	GC_STRDUP ((const char *)
-		   sqlite3_column_text (fetchfill_loadstmt, 1));
+      const char *colfill = (const char *)
+	sqlite3_column_text (fetchfill_loadstmt, 0);
+      assert (colfill != NULL);
+      res = GC_STRDUP (colfill);
+      if (MONIMELT_UNLIKELY (!res))
+	MONIMELT_FATAL ("failed to duplicate fill of %s which is %s",
+			uuidstr, colfill);
       stepres = sqlite3_step (fetchfill_loadstmt);
     }
   sqlite3_reset (fetchfill_loadstmt);
@@ -972,9 +986,13 @@ fetch_param (const char *parname)
   int stepres = sqlite3_step (fetchparam_loadstmt);
   if (stepres == SQLITE_ROW)
     {
-      res =
-	GC_STRDUP ((const char *)
-		   sqlite3_column_text (fetchparam_loadstmt, 1));
+      const char *colparam = (const char *)
+	sqlite3_column_text (fetchparam_loadstmt, 0);
+      assert (colparam != NULL);
+      res = GC_STRDUP (colparam);
+      if (MONIMELT_UNLIKELY (!res))
+	MONIMELT_FATAL ("failed to duplicate param of name %s which is %s",
+			parname, colparam);
       stepres = sqlite3_step (fetchparam_loadstmt);
     }
   sqlite3_reset (fetchparam_loadstmt);
