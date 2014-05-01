@@ -23,7 +23,7 @@ CREATE TABLE t_name (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, nuid VARCHAR(38)
 CREATE TABLE t_param (parname VARCHAR(35) PRIMARY KEY ASC NOT NULL UNIQUE, parvalue TEXT NOT NULL);
 CREATE TABLE t_module (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
-INSERT INTO t_item VALUES('0229c553-c443-49a9-9244-5f8d7d3c79cf','dictionnary','{"jtype":"dictionnary_item"}','{"attributes":null,"dictionnary":[],"content":null}');
+INSERT INTO t_item VALUES('0229c553-c443-49a9-9244-5f8d7d3c79cf','dictionnary','{"jtype":"dictionnary_item"}','{"attributes":null,"content":null,"dictionnary":null}');
 INSERT INTO t_item VALUES('03c1ace3-3293-43bb-9541-19b4357cbc3c','json_name','{"jtype":"json_name_item","name":"conn"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('11da23ab-3b9e-4ea0-bc13-4a9aa46e2995','json_name','{"jtype":"json_name_item","name":"json_object"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('18d95093-b523-4ee1-8bca-ded252e91235','json_name','{"jtype":"json_name_item","name":"itemref"}','{"attributes":null,"content":null}');
@@ -56,7 +56,7 @@ INSERT INTO t_item VALUES('a75bef70-596b-4fc5-99ca-e60b5287feec','json_name','{"
 INSERT INTO t_item VALUES('abdd3eea-22da-4e09-b1f8-a05b80783924','json_name','{"jtype":"json_name_item","name":"name"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('b039b53b-5198-4770-ac05-7eeded55fdeb','json_name','{"jtype":"json_name_item","name":"tasklet_item"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('b29bc8a3-1517-4a28-b566-39e447c80250','json_name','{"jtype":"json_name_item","name":"attributes"}','{"attributes":null,"content":null}');
-INSERT INTO t_item VALUES('b5a0ef97-7eb2-4cf3-924e-8bc5de7e49bc','queue','{"jtype":"queue_item"}','{"attributes":null,"queue":[],"content":null}');
+INSERT INTO t_item VALUES('b5a0ef97-7eb2-4cf3-924e-8bc5de7e49bc','queue','{"jtype":"queue_item"}','{"attributes":null,"content":null,"queue":[]}');
 INSERT INTO t_item VALUES('b9664990-11a1-49a5-bf59-be714626ed6d','json_name','{"jtype":"json_name_item","name":"jtype"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('c3b77d8b-ff65-4717-b9d5-f2b5c22fca71','box','{"jtype":"box_item"}','{"attributes":null,"box":null,"content":null}');
 INSERT INTO t_item VALUES('c52ead7c-63bf-4e65-a873-486de4e4db41','json_name','{"jtype":"json_name_item","name":"tuple"}','{"attributes":null,"content":null}');
