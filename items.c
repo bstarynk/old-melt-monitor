@@ -3521,6 +3521,7 @@ dictionnary_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 	   MOMJSON_END);
     }
   momval_t jarr = (momval_t) mom_make_json_array_count (nb, entarr);
+  assert (mom_json_array_size (jarr) == nb);
   GC_FREE (entarr), entarr = NULL;
   momval_t jres = (momval_t) mom_make_json_object
     // attributes

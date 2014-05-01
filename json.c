@@ -797,6 +797,8 @@ mon_make_json_array (unsigned nbelem, ...)
       jarr->jarrtab[ix] = comp;
     }
   va_end (args);
+  jarr->typnum = momty_jsonarray;
+  jarr->slen = nbelem;
   compute_json_array_hash (jarr);
   return jarr;
 }
@@ -819,6 +821,8 @@ mom_make_json_array_count (unsigned nbelem, const momval_t * arr)
 	continue;
       jarr->jarrtab[ix] = comp;
     }
+  jarr->typnum = momty_jsonarray;
+  jarr->slen = nbelem;
   compute_json_array_hash (jarr);
   return jarr;
 }
@@ -856,6 +860,8 @@ mom_make_json_array_til_nil (momval_t firstv, ...)
       jarr->jarrtab[ix] = valv;
     }
   va_end (args);
+  jarr->typnum = momty_jsonarray;
+  jarr->slen = nbelem;
   compute_json_array_hash (jarr);
   return jarr;
 }
