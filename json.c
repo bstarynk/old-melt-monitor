@@ -556,6 +556,8 @@ jsonentry_cmp (const void *l, const void *r)
 {
   const struct mom_jsonentry_st *le = l;
   const struct mom_jsonentry_st *re = r;
+  assert (le->je_name.ptr != NULL);
+  assert (re->je_name.ptr != NULL);
   return mom_json_cmp (le->je_name, re->je_name);
 }
 
@@ -694,8 +696,13 @@ mom_make_json_object (int firstdir, ...)
 	}
     }
   va_end (args);
+#ifndef NDEBUG
+  for (unsigned ix = 0; ix < count; ix++)
+    assert (jsob->jobjtab[ix].je_name.ptr != NULL);
+#endif
   // sort the entries and remove the unlikely duplicates
-  qsort (jsob, count, sizeof (struct mom_jsonentry_st), jsonentry_cmp);
+  qsort (jsob->jobjtab, count,
+	 sizeof (struct mom_jsonentry_st), jsonentry_cmp);
   bool shrink = false;
   for (unsigned ix = 0; ix + 1 < count; ix++)
     {
