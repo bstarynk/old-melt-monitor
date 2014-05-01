@@ -868,6 +868,19 @@ mom_json_cmp (momval_t l, momval_t r)
   return mom_value_cmp (l, r);
 }
 
+int
+mom_json_cstr_cmp (momval_t jv, const char *str)
+{
+  assert (str != NULL);
+  if (!jv.ptr)
+    return -1;
+  if (*jv.ptype == momty_jsonitem)
+    jv = (momval_t) (jv.pjsonitem->ij_namejson);
+  if (jv.ptr && *jv.ptype == momty_string)
+    return strcmp (jv.pstring->cstr, str);
+  return -1;
+}
+
 const momval_t
 mom_jsonob_get_def (const momval_t jsobv, const momval_t namev,
 		    const momval_t def)
@@ -899,6 +912,39 @@ mom_jsonob_get_def (const momval_t jsobv, const momval_t namev,
 	return job->jobjtab[md].je_attr;
     }
   return def;
+}
+
+
+const momval_t
+mom_jsonob_getstr (const momval_t jsobv, const char *namestr)
+{
+  if (!jsobv.ptr || !namestr)
+    return MONIMELT_NULLV;
+  if (*jsobv.ptype != momty_jsonobject)
+    return MONIMELT_NULLV;
+  const struct momjsonobject_st *job = jsobv.pjsonobj;
+  if (!job->slen)
+    return MONIMELT_NULLV;
+  unsigned lo = 0, hi = job->slen, md = 0;
+  while (lo + 3 < hi)
+    {
+      md = (lo + hi) / 2;
+      const momval_t curnamv = job->jobjtab[md].je_name;
+      int cmp = mom_json_cstr_cmp (curnamv, namestr);
+      if (!cmp)
+	return job->jobjtab[md].je_attr;
+      else if (cmp > 0)
+	hi = md;
+      else
+	lo = md;
+    }
+  for (md = lo; md < hi; md++)
+    {
+      const momval_t curnamv = job->jobjtab[md].je_name;
+      if (mom_json_cstr_cmp (curnamv, namestr) == 0)
+	return job->jobjtab[md].je_attr;
+    }
+  return MONIMELT_NULLV;
 }
 
 #define MOMJSONO_MAGIC 0x5cd05c95	/* json outmagic 1557159061 */

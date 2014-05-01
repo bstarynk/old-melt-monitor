@@ -3,14 +3,20 @@
 <head>
   <title>test form for monimelt</title>
   <link rel="stylesheet" type="text/css" href="mom-style.css"/>
+  <script src="jquery.js" type="text/javascript"></script>
   <script src="mom-scripts.js" type="text/javascript"></script>
 
 </head>
 <body>
   <h1>Initial Form for Monimelt</h1>
 
+  <form action='form_exit' method='post'>
+    <b>save and exit:</b> <input type='submit' name='do_savexit' value='save &amp; exit'/> <br/>
+    <b>quit:</b>  <input type='submit' name='do_quit' value='quit'/> <small>(without dumping)</small> <br/>
+  </form>
+  
   <form action='form_compile' method='post'>
-     <b>compile all:</b> <input type='submit' name='compile' value='compile' />
+     <b>compile all:</b> <input type='submit' name='do_compile' value='compile' />
   </form>
 
   <hr/>

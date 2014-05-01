@@ -740,7 +740,24 @@ void mom_item_webrequest_printf (momval_t val, const char *fmt, ...)
 void mom_item_webrequest_outjson (momval_t val, momval_t json);
 // send the reply and set its mime type; in web-onion.c
 void mom_item_webrequest_reply (momval_t val, const char *mimetype, int code);
+// return the string value for a POST argument or else null
+momval_t mom_item_webrequest_post_arg (momval_t val, const char *argname);
+// return the JSON object for POST arguments
+momval_t mom_item_webrequest_jsob_post (momval_t);
+// return the string value for a query argument or else null
+momval_t mom_item_webrequest_query_arg (momval_t val, const char *argname);
+// return the JSON object for query arguments
+momval_t mom_item_webrequest_jsob_query (momval_t);
+// return the method item
+momval_t mom_item_webrequest_method (momval_t val);
 
+static inline unsigned long
+mom_item_webrequest_webnum (momval_t val)
+{
+  if (!val.ptr || *val.ptype != momty_webrequestitem)
+    return 0;
+  return val.pwebrequestitem->iweb_webnum;
+}
 
 
 ///////////////////////////////////////////// process items
@@ -1116,6 +1133,11 @@ mom_item_is_false (mom_anyitem_t * itm)
 
 // compare values for JSON
 int mom_json_cmp (momval_t l, momval_t r);
+// compare a JSON value to a non-null string
+int mom_json_cstr_cmp (momval_t jv, const char *str);
+
+const momval_t mom_jsonob_getstr (const momval_t jsobv, const char *name);
+
 const momval_t mom_jsonob_get_def (const momval_t jsobv, const momval_t namev,
 				   const momval_t def);
 static inline const momval_t
@@ -1365,4 +1387,6 @@ void mom_load_code_then_run (const char *modname);
 void mom_agenda_add_tasklet_front (momval_t tsk);
 void mom_agenda_add_tasklet_back (momval_t tsk);
 
+#define MONIMELT_NAMED(Name,Type,Uid) extern momit_##Type##_t* mom_item__##Name;
+#include "monimelt-names.h"
 #endif /* MONIMELT_INCLUDED_ */

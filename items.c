@@ -3625,6 +3625,70 @@ mom_item_webrequest_puts (momval_t val, const char *str)
   pthread_mutex_unlock (&val.panyitem->i_mtx);
 }
 
+momval_t
+mom_item_webrequest_post_arg (momval_t val, const char *argname)
+{
+  momval_t res = MONIMELT_NULLV;
+  if (!val.ptr || *val.ptype != momty_webrequestitem || !argname
+      || !argname[0])
+    return MONIMELT_NULLV;
+  pthread_mutex_lock (&val.panyitem->i_mtx);
+  res = mom_jsonob_getstr (val.pwebrequestitem->iweb_postjsob, argname);
+  pthread_mutex_unlock (&val.panyitem->i_mtx);
+  return res;
+}
+
+momval_t
+mom_item_webrequest_jsob_post (momval_t val)
+{
+  momval_t res = MONIMELT_NULLV;
+  if (!val.ptr || *val.ptype != momty_webrequestitem)
+    return MONIMELT_NULLV;
+  pthread_mutex_lock (&val.panyitem->i_mtx);
+  res = val.pwebrequestitem->iweb_postjsob;
+  pthread_mutex_unlock (&val.panyitem->i_mtx);
+  return res;
+}
+
+momval_t
+mom_item_webrequest_query_arg (momval_t val, const char *argname)
+{
+  momval_t res = MONIMELT_NULLV;
+  if (!val.ptr || *val.ptype != momty_webrequestitem || !argname
+      || !argname[0])
+    return MONIMELT_NULLV;
+  pthread_mutex_lock (&val.panyitem->i_mtx);
+  res = mom_jsonob_getstr (val.pwebrequestitem->iweb_queryjsob, argname);
+  pthread_mutex_unlock (&val.panyitem->i_mtx);
+  return res;
+}
+
+momval_t
+mom_item_webrequest_jsob_query (momval_t val)
+{
+  momval_t res = MONIMELT_NULLV;
+  if (!val.ptr || *val.ptype != momty_webrequestitem)
+    return MONIMELT_NULLV;
+  pthread_mutex_lock (&val.panyitem->i_mtx);
+  res = val.pwebrequestitem->iweb_queryjsob;
+  pthread_mutex_unlock (&val.panyitem->i_mtx);
+  return res;
+}
+
+
+momval_t
+mom_item_webrequest_method (momval_t val)
+{
+  momval_t res = MONIMELT_NULLV;
+  if (!val.ptr || *val.ptype != momty_webrequestitem)
+    return MONIMELT_NULLV;
+  pthread_mutex_lock (&val.panyitem->i_mtx);
+  res = (momval_t) (val.pwebrequestitem->iweb_methoditm);
+  pthread_mutex_unlock (&val.panyitem->i_mtx);
+  return res;
+}
+
+
 void
 mom_item_webrequest_puts_html (momval_t val, const char *str)
 {
