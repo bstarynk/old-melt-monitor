@@ -936,7 +936,8 @@ mom_make_closure_til_nil (mom_anyitem_t * conn, ...)
 {
   momclosure_t *clo = NULL;
   unsigned siz = 0;
-  if (!conn || conn->typnum != momty_routineitem)
+  if (!conn || conn->typnum != momty_routineitem
+      || !((const momit_routine_t *) conn)->irt_descr)
     return NULL;
   unsigned minsiz = ((momit_routine_t *) conn)->irt_descr->rout_minclosize;
   va_list args;
@@ -964,7 +965,8 @@ const momclosure_t *
 mom_make_closure_sized (mom_anyitem_t * conn, unsigned siz, ...)
 {
   momclosure_t *clo = NULL;
-  if (!conn || conn->typnum != momty_routineitem)
+  if (!conn || conn->typnum != momty_routineitem
+      || !((const momit_routine_t *) conn)->irt_descr)
     return NULL;
   unsigned minsiz = ((momit_routine_t *) conn)->irt_descr->rout_minclosize;
   unsigned alsize = (minsiz > siz) ? minsiz : siz;
@@ -989,7 +991,8 @@ mom_make_closure_from_array (mom_anyitem_t * conn, unsigned siz,
 			     momval_t * arr)
 {
   momnode_t *clo = NULL;
-  if (!conn || conn->typnum != momty_routineitem)
+  if (!conn || conn->typnum != momty_routineitem
+      || !((const momit_routine_t *) conn)->irt_descr)
     return NULL;
   unsigned minsiz = ((momit_routine_t *) conn)->irt_descr->rout_minclosize;
   unsigned alsize = (minsiz > siz) ? minsiz : siz;

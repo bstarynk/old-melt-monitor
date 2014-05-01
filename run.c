@@ -42,6 +42,11 @@ static struct mom_itqueue_st *jobq_first;
 static struct mom_itqueue_st *jobq_last;
 static CURLM *multicurl_job;
 
+static momit_routine_t **embryonic_routine_arr;
+static const char **embryonic_routine_name;
+static unsigned embryonic_routine_size;
+static pthread_mutex_t embryonic_mtx = PTHREAD_MUTEX_INITIALIZER;
+
 #define WORK_MAGIC 0x5c59b171	/* work magic 1549382001 */
 struct momworkdata_st
 {
@@ -195,7 +200,7 @@ mom_wait_for_stop (void)
 }
 
 void
-mom_stop (void)
+mom_request_stop (void)
 {
   int nbworkers = 0;
   do
@@ -209,7 +214,7 @@ mom_stop (void)
       if (nbworkers > 0)
 	pthread_cond_wait (&mom_run_changed_cond, &mom_run_mtx);
       pthread_mutex_unlock (&mom_run_mtx);
-      sched_yield ();
+      usleep (500);
     }
   while (nbworkers > 0);
 }
@@ -823,4 +828,101 @@ mom_item_process_start (momval_t procv, momval_t clov)
   }
 end:
   pthread_mutex_unlock (&procv.panyitem->i_mtx);
+}
+
+
+void
+mom_load_code_then_run (const char *modname)
+{
+  GModule *codmodu = NULL;
+  char pathbuf[MONIMELT_PATH_LEN];
+  char symname[MOM_SYMBNAME_LEN];
+  int foundnamecount = 0;
+  memset (pathbuf, 0, sizeof (pathbuf));
+  memset (symname, 0, sizeof (symname));
+  snprintf (pathbuf, sizeof (pathbuf), "./%s.%s", modname, G_MODULE_SUFFIX);
+  if (access (pathbuf, R_OK))
+    {
+      MONIMELT_WARNING ("fail to access code module %s", pathbuf);
+      return;
+    }
+  mom_request_stop ();
+  mom_wait_for_stop ();
+  codmodu = g_module_open (pathbuf, 0);
+  if (!codmodu)
+    MONIMELT_FATAL ("failed to load code module %s: %s", pathbuf,
+		    g_module_error ());
+  pthread_mutex_lock (&embryonic_mtx);
+  for (unsigned eix = 0; eix < embryonic_routine_size; eix++)
+    {
+      const char *curname = embryonic_routine_name[eix];
+      momit_routine_t *curout = embryonic_routine_arr[eix];
+      if (!curname || !curout)
+	continue;
+      pthread_mutex_lock (&curout->irt_item.i_mtx);
+      assert (curout->irt_descr == NULL);
+      memset (symname, 0, sizeof (symname));
+      snprintf (symname, sizeof (symname), MOM_ROUTINE_NAME_FMT, curname);
+      struct momroutinedescr_st *rdescr = NULL;
+      if ((g_module_symbol
+	   (codmodu, symname, (gpointer *) & rdescr)
+	   || g_module_symbol
+	   (mom_prog_module, symname, (gpointer *) & rdescr)) && rdescr)
+	{
+	  if (rdescr->rout_magic != ROUTINE_MAGIC || !rdescr->rout_code
+	      || strcmp (rdescr->rout_name, curname))
+	    MONIMELT_FATAL ("bad routine descriptor %s", symname);
+	  curout->irt_descr = rdescr;
+	  foundnamecount++;
+	}
+      pthread_mutex_unlock (&curout->irt_item.i_mtx);
+    }
+  pthread_mutex_unlock (&embryonic_mtx);
+  MONIMELT_INFORM ("loaded code module %s and found %d embryonic routines",
+		   pathbuf, foundnamecount);
+  usleep (500);
+  mom_run ();
+}
+
+
+void
+mom_mark_delayed_embryonic_routine (momit_routine_t * itrout,
+				    const char *name)
+{
+  assert (itrout && itrout->irt_item.typnum == momty_routineitem);
+  assert (name && name[0]);
+  int eix = -1;
+  char *dupname = GC_STRDUP (name);
+  if (!dupname)
+    MONIMELT_FATAL ("failed to duplicate name %s", name);
+  pthread_mutex_lock (&embryonic_mtx);
+  for (int j = 0; j < (int) embryonic_routine_size && eix < 0; j++)
+    if (!embryonic_routine_arr[j] || embryonic_routine_arr[j] == itrout)
+      eix = j;
+  if (MONIMELT_UNLIKELY (eix < 0))
+    {
+      unsigned newsiz = ((3 * embryonic_routine_size / 2 + 10) | 0x1f) + 1;
+      char **newnames = GC_MALLOC (newsiz * sizeof (char *));
+      momit_routine_t **newarr =
+	GC_MALLOC (newsiz * sizeof (momit_routine_t *));
+      if (!newnames || !newarr)
+	MONIMELT_FATAL ("failed to allocate for %d embryonic routines",
+			newsiz);
+      memset (newnames, 0, newsiz * sizeof (char *));
+      memset (newarr, 0, newsiz * sizeof (momit_routine_t *));
+      if (embryonic_routine_size > 0)
+	{
+	  memcpy (newnames, embryonic_routine_name,
+		  embryonic_routine_size * sizeof (char *));
+	  memcpy (newarr, embryonic_routine_arr,
+		  embryonic_routine_size * sizeof (momit_routine_t *));
+	};
+      GC_FREE (embryonic_routine_name), embryonic_routine_name = newnames;
+      GC_FREE (embryonic_routine_arr), embryonic_routine_arr = newarr;
+      eix = embryonic_routine_size;
+      embryonic_routine_size = newsiz;
+    }
+  embryonic_routine_name[eix] = dupname;
+  embryonic_routine_arr[eix] = itrout;
+  pthread_mutex_unlock (&embryonic_mtx);
 }

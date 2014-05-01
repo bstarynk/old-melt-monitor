@@ -404,6 +404,9 @@ struct momboolitem_st
 
 // routine descriptor is read-only
 #define ROUTINE_MAGIC 0x6b9c644d	/* routine magic 1805411405 */
+#define MOM_ROUTINE_NAME_PREFIX "momrout_"
+#define MOM_SYMBNAME_LEN 128
+#define MOM_ROUTINE_NAME_FMT  MOM_ROUTINE_NAME_PREFIX "_%s"
 // the routine item FOO has descriptor momrout_FOO
 // the routine returns a positive state 
 enum routres_en
@@ -1353,9 +1356,12 @@ pthread_cond_t mom_run_changed_cond;
 // start the worker threads
 void mom_run (void);
 // ask workers to stop
-void mom_stop (void);
+void mom_request_stop (void);
 // wait for stop
 void mom_wait_for_stop (void);
+// load a code module, resolve embryonic routines, run again
+void mom_load_code_then_run (const char *modname);
+
 void mom_agenda_add_tasklet_front (momval_t tsk);
 void mom_agenda_add_tasklet_back (momval_t tsk);
 

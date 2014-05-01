@@ -1139,12 +1139,11 @@ tasklet_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 }
 
 
-#define SYMNAME_LEN 128
-#define MOM_ROUTINE_NAME_FMT "momrout_%s"
+
 momit_routine_t *
 mom_make_item_routine_of_uuid (uuid_t uid, const char *name, unsigned space)
 {
-  char symname[SYMNAME_LEN];
+  char symname[MOM_SYMBNAME_LEN];
   memset (symname, 0, sizeof (symname));
   if (MONIMELT_UNLIKELY (!name || !name[0]))
     MONIMELT_FATAL ("bad name for item routine");
@@ -1167,7 +1166,7 @@ mom_make_item_routine_of_uuid (uuid_t uid, const char *name, unsigned space)
 momit_routine_t *
 mom_make_item_routine (const char *name, unsigned space)
 {
-  char symname[SYMNAME_LEN];
+  char symname[MOM_SYMBNAME_LEN];
   memset (symname, 0, sizeof (symname));
   if (MONIMELT_UNLIKELY (!name || !name[0]))
     MONIMELT_FATAL ("bad name for item routine");
@@ -1186,11 +1185,40 @@ mom_make_item_routine (const char *name, unsigned space)
   return itrout;
 }
 
+momit_routine_t *
+mom_make_item_embryonic_routine (const char *name, unsigned space)
+{
+  char symname[MOM_SYMBNAME_LEN];
+  memset (symname, 0, sizeof (symname));
+  if (MONIMELT_UNLIKELY (!name || !name[0]))
+    MONIMELT_FATAL ("bad name for item routine");
+  snprintf (symname, sizeof (symname), MOM_ROUTINE_NAME_FMT, name);
+  struct momroutinedescr_st *rdescr = NULL;
+  if (!g_module_symbol
+      (mom_prog_module, symname, (gpointer *) & rdescr) || !rdescr)
+    MONIMELT_WARNING ("delayed embryonic routine descriptor %s : %s", symname,
+		      g_module_error ());
+  momit_routine_t *itrout =
+    mom_allocate_item (momty_routineitem, sizeof (momit_routine_t), space);
+  itrout->irt_descr = rdescr;
+  if (!rdescr)
+    {
+      extern void mom_mark_delayed_embryonic_routine (momit_routine_t *
+						      itrout,
+						      const char *name);
+      mom_mark_delayed_embryonic_routine (itrout, name);
+    }
+  else if (rdescr->rout_magic != ROUTINE_MAGIC || !rdescr->rout_code
+	   || strcmp (rdescr->rout_name, name))
+    MONIMELT_FATAL ("bad routine descriptor %s", symname);
+  return itrout;
+}
+
 
 momit_routine_t *
 mom_try_make_item_routine (const char *name, unsigned space)
 {
-  char symname[SYMNAME_LEN];
+  char symname[MOM_SYMBNAME_LEN];
   memset (symname, 0, sizeof (symname));
   if (MONIMELT_UNLIKELY (!name || !name[0]))
     return NULL;
@@ -1199,8 +1227,8 @@ mom_try_make_item_routine (const char *name, unsigned space)
   if (!g_module_symbol
       (mom_prog_module, symname, (gpointer *) & rdescr) || !rdescr)
     {
-      MONIMELT_INFORM ("failed to find routine descriptor %s : %s", symname,
-		       g_module_error ());
+      MONIMELT_WARNING ("failed to find routine descriptor %s : %s", symname,
+			g_module_error ());
       return NULL;
     }
   if (rdescr->rout_magic != ROUTINE_MAGIC || !rdescr->rout_code

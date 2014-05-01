@@ -18,4 +18,5 @@ then run
 
    ./monimelt -W localhost:8086 -J 2   
 
-and try browsing http://localhost:8086/ or http://localhost:8086/status
+and try browsing http://localhost:8086/webdir/testform.html or
+http://localhost:8086/status

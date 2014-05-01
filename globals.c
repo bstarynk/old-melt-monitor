@@ -513,6 +513,7 @@ mom_tasklet_step (momit_tasklet_t * tskitm)
   const struct momroutinedescr_st *rdescr = NULL;
   const momrout_sig_t *rcode = NULL;
   int nextstate = 0;
+  // an incomplete routine would not have made a closure
   if (MONIMELT_UNLIKELY (!curout || curout->irt_item.typnum != momty_closure
 			 || !(rdescr = curout->irt_descr)
 			 || rdescr->rout_magic != ROUTINE_MAGIC
@@ -739,6 +740,7 @@ compute_pushed_data_size (const momclosure_t * closure, unsigned *pnbval,
   momit_routine_t *rout = (momit_routine_t *) closure->connitm;
   if (MONIMELT_UNLIKELY (!rout || rout->irt_item.typnum != momty_routineitem))
     MONIMELT_FATAL ("bad routine in closure");
+  // an incomplete routine would not have made a closure
   struct momroutinedescr_st *rdescr = rout->irt_descr;
   if (MONIMELT_UNLIKELY (!rdescr || rdescr->rout_magic != ROUTINE_MAGIC))
     MONIMELT_FATAL ("corrupted routine in closure");
@@ -1321,6 +1323,7 @@ mom_run_closure (momval_t clo, enum mom_pushframedirective_en firstdir, ...)
     return MONIMELT_NULLV;
   va_list args;
   const struct momroutinedescr_st *rdescr = routitm->irt_descr;
+  // an incomplete routine would not have made a closure
   if (MONIMELT_UNLIKELY (!rdescr || rdescr->rout_magic != ROUTINE_MAGIC
 			 || !rdescr->rout_code))
     MONIMELT_FATAL ("corrupted routine descriptor in closure's routine");
