@@ -26,7 +26,8 @@ void
 monimelt_module_init (const char *marg)
 {
   char uistr[UUID_PARSED_LEN];
-  MONIMELT_INFORM ("cold module init marg=%s", marg);
+  MONIMELT_WARNING ("cold module init marg=%s do nothing", marg);
+#if 0
   momit_routine_t *rout_web_form_exit =
     mom_make_item_routine ("web_form_exit", MONIMELT_SPACE_ROOT);
   MONIMELT_INFORM ("cold monimelt_inform web_form_exit ~%s",
@@ -44,4 +45,5 @@ monimelt_module_init (const char *marg)
   mom_item_dictionnary_put_cstr ((momval_t) mom_item__web_dictionnary,
 				 "form_exit", (momval_t) clos_web_form_exit);
   MONIMELT_INFORM ("cold module end marg=%s", marg);
+#endif
 }
