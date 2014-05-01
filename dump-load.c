@@ -23,11 +23,6 @@
 #define MONIMELT_VERSION_PARAM "dump_format_version"
 #define MONIMELT_DUMP_VERSION "MoniMelt2014A"
 
-/// declare the named items
-#define MONIMELT_NAMED(Name,Type,Uid) \
-  extern momit_##Type##_t* mom_item__##Name;
-#include "monimelt-names.h"
-
 enum dumpstate_en
 {
   dus_none = 0,
@@ -1121,6 +1116,8 @@ mom_initial_load (const char *state)
     MONIMELT_FATAL ("counting modules in %s failed with %s", state, errmsg);
   MONIMELT_INFORM ("state %s has %d items and %d names in %d modules", state,
 		   (int) nbitems, (int) nbnames, (int) nbmodules);
+  if (MONIMELT_UNLIKELY (nbitems == 0 || nbnames == 0))
+    MONIMELT_FATAL ("no items or names to load from %s", state);
   load_modules ();
   memset (&ld, 0, sizeof (ld));
   ld.ldr_magic = LOADER_MAGIC;

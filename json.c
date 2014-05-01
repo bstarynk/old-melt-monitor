@@ -699,8 +699,9 @@ mom_make_json_object (int firstdir, ...)
   bool shrink = false;
   for (unsigned ix = 0; ix + 1 < count; ix++)
     {
-      if (MONIMELT_UNLIKELY (jsonentry_cmp (jsob->jobjtab + ix,
-					    jsob->jobjtab + ix + 1) == 0))
+      int cmpj = jsonentry_cmp (jsob->jobjtab + ix,
+				jsob->jobjtab + ix + 1);
+      if (MONIMELT_UNLIKELY (cmpj == 0))
 	{
 	  shrink = true;
 	  for (unsigned j = ix; j + 1 < count; j++)
@@ -709,6 +710,8 @@ mom_make_json_object (int firstdir, ...)
 	  jsob->jobjtab[count].je_attr = MONIMELT_NULLV;
 	  count--;
 	}
+      else
+	assert (cmpj < 0);
     }
   // compute the hash
   momhash_t h1 = 17, h2 = count, h = 0;
@@ -725,12 +728,12 @@ mom_make_json_object (int firstdir, ...)
 					je_attr));
     }
   h = h1 ^ h2;
-  if (!h)
+  if (MONIMELT_UNLIKELY (!h))
     {
       h = h1;
-      if (!h)
+      if (MONIMELT_UNLIKELY (!h))
 	h = h2;
-      if (!h)
+      if (MONIMELT_UNLIKELY (!h))
 	h = (count & 0xfff) + 11;
     }
   if (MONIMELT_UNLIKELY (shrink))

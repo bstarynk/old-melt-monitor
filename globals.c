@@ -227,7 +227,7 @@ resize_dict (unsigned newsize)
 {
   unsigned oldcount = glob_dict.name_count;
   unsigned oldsize = glob_dict.name_size;
-  if (newsize + 5 < 9 * oldcount / 8)
+  if (newsize + 5 < 9 * oldcount / 8 || newsize == 0)
     MONIMELT_FATAL ("invalid newsize %u for dictonnary count %u",
 		    newsize, oldcount);
   if (newsize == oldsize)

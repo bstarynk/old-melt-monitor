@@ -917,7 +917,8 @@ mom_mark_delayed_embryonic_routine (momit_routine_t * itrout,
 	  memcpy (newarr, embryonic_routine_arr,
 		  embryonic_routine_size * sizeof (momit_routine_t *));
 	};
-      GC_FREE (embryonic_routine_name), embryonic_routine_name = (const char**) newnames;
+      GC_FREE (embryonic_routine_name), embryonic_routine_name =
+	(const char **) newnames;
       GC_FREE (embryonic_routine_arr), embryonic_routine_arr = newarr;
       eix = embryonic_routine_size;
       embryonic_routine_size = newsiz;

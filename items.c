@@ -212,6 +212,8 @@ resize_items_data (uint32_t newsiz)
   struct items_data_st *newdata =
     GC_MALLOC_ATOMIC (sizeof (struct items_data_st) +
 		      (newsiz + 1) * sizeof (mom_anyitem_t *));
+  if (MONIMELT_UNLIKELY (!newdata))
+    MONIMELT_FATAL ("fail to resize items to %d", (int) newsiz);
   struct items_data_st *olddata = items_data;
   memset (newdata, 0,
 	  sizeof (struct items_data_st) + (newsiz +
@@ -3498,8 +3500,8 @@ dictionnary_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
   assert (node.ptr && *node.ptype == momty_node);
   const momnode_t *nd = node.pnode;
   unsigned nbnames = nd->slen;
-  momval_t *entarr = GC_MALLOC (nbnames * sizeof (momval_t));
-  if (MONIMELT_UNLIKELY (!entarr))
+  momval_t *entarr = nbnames ? GC_MALLOC (nbnames * sizeof (momval_t)) : NULL;
+  if (MONIMELT_UNLIKELY (!entarr && nbnames > 0))
     MONIMELT_FATAL ("failed to allocate %d entries", nbnames);
   memset (entarr, 0, nbnames * sizeof (momval_t));
   unsigned nb = 0;
@@ -3510,10 +3512,13 @@ dictionnary_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
       momval_t curval = mom_item_dictionnary_get ((momval_t) itm, jname);
       momval_t jval = mom_dump_emit_json (dmp, curval);
       if (jval.ptr)
-	entarr[nb++] =
-	  (momval_t) mom_make_json_object (MOMJSON_ENTRY, mom_item__name,
-					   jname, MOMJSON_ENTRY,
-					   mom_item__val, jval, MOMJSON_END);
+	entarr[nb++] = (momval_t) mom_make_json_object
+	  // name
+	  (MOMJSON_ENTRY, mom_item__name, jname,
+	   // val
+	   MOMJSON_ENTRY, mom_item__val, jval,
+	   // that's it
+	   MOMJSON_END);
     }
   momval_t jarr = (momval_t) mom_make_json_array_count (nb, entarr);
   GC_FREE (entarr), entarr = NULL;
@@ -3521,7 +3526,7 @@ dictionnary_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
     // attributes
     (MOMJSON_ENTRY, mom_item__attributes,
      mom_attributes_emit_json (dmp, itm->i_attrs),
-     // buffer
+     // dictionnary
      MOMJSON_ENTRY, mom_item__dictionnary, jarr,
      // content
      MOMJSON_ENTRY, mom_item__content, mom_dump_emit_json (dmp,
