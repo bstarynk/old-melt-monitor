@@ -218,6 +218,7 @@ parse_program_arguments_and_load_modules (int argc, char **argv)
 	    load_module (option_ctx, module_count, modnam, modarg);
 	    module_count++;
 	  }
+	  break;
 	case xtraopt_jsonfile:
 	  json_file = optarg;
 	  break;
