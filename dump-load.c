@@ -457,14 +457,17 @@ mom_load_item (struct mom_loader_st * ld, uuid_t uuid, const char *space)
 		  ("parsing of build of uid %s in space %s json %s failed : %s",
 		   uuidstr, space, buildstr, errmsg);
 	      mom_close_json_parser (&jp);
-	      typestr =
-		mom_jsonstring_cstr ((momval_t)
-				     mom_jsonob_get (jval,
-						     (momval_t)
-						     mom_item__jtype));
-	      if (MONIMELT_UNLIKELY (!typestr || !typestr[0]))
+	      momval_t jcurtype = (momval_t) mom_jsonob_get (jval,
+							     (momval_t)
+							     mom_item__jtype);
+	      if (MONIMELT_UNLIKELY (!jcurtype.ptr))
 		MONIMELT_FATAL
 		  ("build string %s of uid %s in space %s without jtype",
+		   buildstr, uuidstr, space);
+	      typestr = mom_jsonstring_cstr (jcurtype);
+	      if (MONIMELT_UNLIKELY (!typestr || !typestr[0]))
+		MONIMELT_FATAL
+		  ("build string %s of uid %s in space %s with bad jtype",
 		   buildstr, uuidstr, space);
 	      for (unsigned ix = momty__itemlowtype;
 		   ix < momty__last && !typdescr; ix++)
