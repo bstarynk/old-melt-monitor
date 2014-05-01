@@ -26,4 +26,16 @@ void
 monimelt_module_init (const char *marg)
 {
   MONIMELT_INFORM ("cold module init marg=%s", marg);
+  momit_routine_t *rout_web_form_exit =
+    mom_make_item_routine ("web_form_exit", MONIMELT_SPACE_ROOT);
+  mom_register_new_name_item ("web_form_exit",
+			      (mom_anyitem_t *) rout_web_form_exit);
+  const momclosure_t *clos_web_form_exit =
+    mom_make_closure_til_nil ((mom_anyitem_t *) rout_web_form_exit, NULL);
+  mom_item_dictionnary_put_cstr ((momval_t) mom_item__web_dictionnary,
+				 "form_exit", (momval_t) clos_web_form_exit);
+  char uistr[UUID_PARSED_LEN];
+  MONIMELT_INFORM ("cold monimelt_inform web_form_exit ~%s",
+		   mom_unparse_item_uuid ((mom_anyitem_t *)
+					  rout_web_form_exit, uistr));
 }

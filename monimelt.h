@@ -703,6 +703,15 @@ momit_dictionnary_t *mom_make_item_dictionnary_of_uuid (uuid_t uid,
   mom_make_item_dictionnary_of_uuid(Uid,MONIMELT_SPACE_ROOT)
 void mom_item_dictionnary_reserve (momval_t dictv, unsigned more);
 void mom_item_dictionnary_put (momval_t dictv, momval_t namev, momval_t valv);
+static inline const momstring_t *mom_make_string (const char *str);
+static inline void
+mom_item_dictionnary_put_cstr (momval_t dictv, const char *name,
+			       momval_t valv)
+{
+  if (dictv.ptr && *dictv.ptype == momty_dictionnaryitem && name && name[0])
+    mom_item_dictionnary_put (dictv, (momval_t) mom_make_string (name), valv);
+}
+
 momval_t mom_item_dictionnary_get (momval_t dictv, momval_t namev);
 momval_t mom_item_dictionnary_get_cstr (momval_t dictv, const char *namestr);
 unsigned mom_item_dictionnary_count (momval_t dictv);
