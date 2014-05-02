@@ -225,6 +225,12 @@ union momvalueptr_un
   struct momprocessitem_st *pprocessitem;
 };
 
+// for debugging:
+void mom_debugprint_item (FILE * fil, const mom_anyitem_t * itm);
+void mom_debugprint_value (FILE * fil, momval_t val);
+void mom_dbgout_item (const mom_anyitem_t * itm);
+void mom_dbgout_value (momval_t val);
+
 static inline enum momvaltype_en
 mom_type (const momval_t v)
 {
@@ -1178,6 +1184,14 @@ static inline const momval_t
 mom_jsonob_get (const momval_t jsobv, const momval_t namev)
 {
   return mom_jsonob_get_def (jsobv, namev, MONIMELT_NULLV);
+}
+
+static inline unsigned
+mom_jsonob_size (momval_t jsobv)
+{
+  if (!jsobv.ptr || *jsobv.ptype != momty_jsonobject)
+    return 0;
+  return jsobv.pjsonobj->slen;
 }
 
 const momjsonobject_t *mom_make_json_object (int, ...)

@@ -316,8 +316,19 @@ do_json_string_test (void)
      (json_indented ? jsof_indent : 0) | jsof_flush | jsof_cname);
   printf ("parsed JSON from string %s\n", json_string);
   mom_output_json (&jo, vp);
-  putchar ('\n');
   mom_json_output_end (&jo);
+  putchar ('\n');
+  putchar ('\n');
+  if (*vp.ptype == momty_jsonarray)
+    MONIMELT_INFORM ("parsed JSON array of %d components",
+		     mom_json_array_size (vp));
+  else if (*vp.ptype == momty_jsonobject)
+    MONIMELT_INFORM ("parsed JSON object of %d entries",
+		     mom_jsonob_size (vp));
+  else if (!vp.ptr)
+    MONIMELT_INFORM ("parsed nil");
+  else
+    MONIMELT_INFORM ("parsed value of type %d", (int) mom_type (vp));
   MONIMELT_INFORM ("ended JSON string test on %s", json_string);
 }
 

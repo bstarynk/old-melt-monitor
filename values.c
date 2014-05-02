@@ -1008,3 +1008,238 @@ mom_make_closure_from_array (mom_anyitem_t * conn, unsigned siz,
   update_node_hash (clo);
   return clo;
 }
+
+void
+mom_debugprint_item (FILE * fil, const mom_anyitem_t * itm)
+{
+  assert (fil != NULL);
+  if (!itm)
+    fputs ("*nilitem*", fil);
+  else
+    {
+      const momstring_t *namev = mom_name_of_item (itm);
+      if (namev && namev->typnum == momty_string)
+	fputs (namev->cstr, fil);
+      else
+	{
+	  char uuidstr[UUID_PARSED_LEN];
+	  memset (uuidstr, 0, sizeof (uuidstr));
+	  fprintf (fil, "${%s}", mom_unparse_item_uuid (itm, uuidstr));
+	}
+    }
+}
+
+static void
+debugprint_indent (FILE * fil, unsigned depth)
+{
+  putc ('\n', fil);
+  for (unsigned ix = depth % 16; ix > 0; ix--)
+    putc (' ', fil);
+}
+
+static void
+debugprint_value (FILE * fil, momval_t val, unsigned depth)
+{
+  assert (fil != NULL);
+  if (!val.ptr)
+    fputs ("*nil*", fil);
+  else
+    {
+      unsigned typ = *val.ptype;
+      switch (typ)
+	{
+	case momty_int:
+	  fprintf (fil, "%ld", (long) val.pint->intval);
+	  break;
+	case momty_float:
+	  fprintf (fil, "#%f", val.pfloat->floval);
+	  break;
+	case momty_string:
+	  {
+	    unsigned l = val.pstring->slen;
+	    const char *s = val.pstring->cstr;
+	    fputc ('"', fil);
+	    for (unsigned ix = 0; ix < l; ix++)
+	      {
+		char c = s[ix];
+		switch (c)
+		  {
+		  case '"':
+		    fputs ("\\\"", fil);
+		    break;
+		  case '\\':
+		    fputs ("\\\\", fil);
+		    break;
+		  case '\n':
+		    fputs ("\\n", fil);
+		    break;
+		  case '\r':
+		    fputs ("\\r", fil);
+		    break;
+		  case '\t':
+		    fputs ("\\t", fil);
+		    break;
+		  case '\v':
+		    fputs ("\\v", fil);
+		    break;
+		  case '\f':
+		    fputs ("\\v", fil);
+		    break;
+		  default:
+		    if (c >= ' ' && c < (char) 0x7f)
+		      fputc (c, fil);
+		    else
+		      fprintf (fil, "\\x%02x", ((unsigned) c) & 0xff);
+		    break;
+		  }
+		fputc ('"', fil);
+	      }
+	    break;
+	case momty_jsonarray:
+	    {
+	      unsigned l = val.pjsonarr->slen;
+	      fprintf (fil, "*jsar%d[", (int) l);
+	      for (unsigned ix = 0; ix < l; ix++)
+		{
+		  if (ix > 0)
+		    {
+		      putc (',', fil);
+		      debugprint_indent (fil, depth + 1);
+		    };
+		  debugprint_value (fil, val.pjsonarr->jarrtab[ix],
+				    depth + 1);
+		}
+	      fputs ("]", fil);
+	    }
+	    break;
+	case momty_jsonobject:
+	    {
+	      unsigned l = val.pjsonobj->slen;
+	      fprintf (fil, "*jsob%d{", (int) l);
+	      for (unsigned ix = 0; ix < l; ix++)
+		{
+		  if (ix > 0)
+		    {
+		      putc (',', fil);
+		      debugprint_indent (fil, depth + 1);
+		    };
+		  debugprint_value (fil, val.pjsonobj->jobjtab[ix].je_name,
+				    depth + 1);
+		  fputs (": ", fil);
+		  debugprint_value (fil, val.pjsonobj->jobjtab[ix].je_attr,
+				    depth + 1);
+		}
+	      fputs ("}", fil);
+	    }
+	    break;
+	case momty_set:
+	    {
+	      unsigned l = val.pset->slen;
+	      fprintf (fil, "*set%d{", (int) l);
+	      for (unsigned ix = 0; ix < l; ix++)
+		{
+		  if (ix > 0)
+		    {
+		      putc (';', fil);
+		      debugprint_indent (fil, depth + 1);
+		    };
+		  mom_debugprint_item (fil, val.pset->itemseq[ix]);
+		}
+	      fputs ("}", fil);
+	    }
+	    break;
+	case momty_tuple:
+	    {
+	      unsigned l = val.ptuple->slen;
+	      fprintf (fil, "*tuple%d(", (int) l);
+	      for (unsigned ix = 0; ix < l; ix++)
+		{
+		  if (ix > 0)
+		    {
+		      putc (',', fil);
+		      debugprint_indent (fil, depth + 1);
+		    };
+		  mom_debugprint_item (fil, val.ptuple->itemseq[ix]);
+		}
+	      fputs (")", fil);
+	    }
+	    break;
+	case momty_node:
+	    {
+	      unsigned l = val.pnode->slen;
+	      fprintf (fil, "*nod%d:", (int) l);
+	      mom_debugprint_item (fil, val.pnode->connitm);
+	      fputs ("/(", fil);
+	      for (unsigned ix = 0; ix < l; ix++)
+		{
+		  if (ix > 0)
+		    {
+		      putc (',', fil);
+		      debugprint_indent (fil, depth + 1);
+		    };
+		  debugprint_value (fil, val.pnode->sontab[ix], depth + 1);
+		}
+	      fputs (")", fil);
+	    }
+	    break;
+	case momty_closure:
+	    {
+	      unsigned l = val.pnode->slen;
+	      fprintf (fil, "*clo%d:", (int) l);
+	      mom_debugprint_item (fil, val.pnode->connitm);
+	      fputs ("/(", fil);
+	      for (unsigned ix = 0; ix < l; ix++)
+		{
+		  if (ix > 0)
+		    {
+		      putc (',', fil);
+		      debugprint_indent (fil, depth + 1);
+		    };
+		  debugprint_value (fil, val.pnode->sontab[ix], depth + 1);
+		}
+	      fputs (")", fil);
+	    }
+	    break;
+	case momty_routineitem:
+	    {
+	      mom_debugprint_item (fil, val.panyitem);
+	      if (val.proutitem->irt_descr
+		  && val.proutitem->irt_descr->rout_magic == ROUTINE_MAGIC)
+		fprintf (fil, "@r!%s", val.proutitem->irt_descr->rout_name);
+	    }
+	    break;
+	default:
+	    if (typ > momty__itemlowtype && typ < momty__last)
+	      mom_debugprint_item (fil, val.panyitem);
+	    else
+	      {
+		if (typ > 0 && typ < momty__last && mom_typedescr_array[typ])
+		  fprintf (fil, "?*%s@%p",
+			   mom_typedescr_array[typ]->ityp_name, val.ptr);
+		else
+		  fprintf (fil, "?type#%d@%p", typ, val.ptr);
+	      }
+	  }
+	}
+    }
+}
+
+
+void
+mom_debugprint_value (FILE * fil, momval_t val)
+{
+  debugprint_value (fil, val, 0);
+}
+
+
+void
+mom_dbgout_item (const mom_anyitem_t * itm)
+{
+  mom_debugprint_item (stdout, itm);
+}
+
+void
+mom_dbgout_value (momval_t val)
+{
+  mom_debugprint_value (stdout, val);
+}
