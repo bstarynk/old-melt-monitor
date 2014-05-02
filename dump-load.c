@@ -412,8 +412,28 @@ mom_dump_emit_json (struct mom_dumper_st * dmp, const momval_t val)
 }
 
 
+static void
+mom_queue_item_to_load (struct mom_loader_st *ld, const mom_anyitem_t * itm)
+{
+  assert (ld && ld->ldr_magic == LOADER_MAGIC);
+  assert (itm && itm->typnum > momty__itemlowtype);
+  struct mom_itqueue_st *iq = GC_MALLOC (sizeof (struct mom_itqueue_st));
+  if (MONIMELT_UNLIKELY (!iq))
+    MONIMELT_FATAL ("failed to queue item in loader");
+  iq->iq_item = (mom_anyitem_t *) itm;
+  iq->iq_next = NULL;
+  if (MONIMELT_UNLIKELY (!ld->ldr_qlast))
+    ld->ldr_qfirst = ld->ldr_qlast = iq;
+  else
+    {
+      ld->ldr_qlast->iq_next = iq;
+      ld->ldr_qlast = iq;
+    }
+}
+
+
 mom_anyitem_t *
-mom_load_item (struct mom_loader_st * ld, uuid_t uuid, const char *space)
+mom_load_item (struct mom_loader_st *ld, uuid_t uuid, const char *space)
 {
   mom_anyitem_t *itm = NULL;
   unsigned spanum = 0;
@@ -485,19 +505,7 @@ mom_load_item (struct mom_loader_st * ld, uuid_t uuid, const char *space)
 		  if (itm)
 		    {
 		      itm->i_space = spanum;
-		      struct mom_itqueue_st *iq =
-			GC_MALLOC (sizeof (struct mom_itqueue_st));
-		      if (MONIMELT_UNLIKELY (!iq))
-			MONIMELT_FATAL ("failed to queue item in loader");
-		      iq->iq_item = itm;
-		      iq->iq_next = NULL;
-		      if (MONIMELT_UNLIKELY (!ld->ldr_qlast))
-			ld->ldr_qfirst = ld->ldr_qlast = iq;
-		      else
-			{
-			  ld->ldr_qlast->iq_next = iq;
-			  ld->ldr_qlast = iq;
-			}
+		      mom_queue_item_to_load (ld, itm);
 		    }
 		}
 	      return itm;
@@ -1109,6 +1117,20 @@ mom_initialize_spaces (void)
 }
 
 static void load_modules ();
+
+static void
+queue_load_predefined (struct mom_loader_st *ld)
+{
+  assert (ld && ld->ldr_magic == LOADER_MAGIC);
+#define MONIMELT_NAMED(Nam,Typ,Uuid) do {				\
+  if (mom_item__##Nam)							\
+  mom_queue_item_to_load (ld,						\
+			  (const mom_anyitem_t*)mom_item__##Nam);	\
+  } while(0);
+#include "monimelt-names.h"
+}
+
+
 void
 mom_initial_load (const char *state)
 {
@@ -1143,6 +1165,7 @@ mom_initial_load (const char *state)
   load_modules ();
   memset (&ld, 0, sizeof (ld));
   ld.ldr_magic = LOADER_MAGIC;
+  queue_load_predefined (&ld);
   struct loadnaming_st ldn;
   memset (&ldn, 0, sizeof (ldn));
   ldn.ldn_nbitems = nbitems;

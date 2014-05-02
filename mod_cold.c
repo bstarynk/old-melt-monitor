@@ -43,6 +43,6 @@ monimelt_module_init (const char *marg)
   MONIMELT_INFORM ("cold clos_web_form_exit@%p", (void *) clos_web_form_exit);
   mom_item_dictionnary_put_cstr ((momval_t) mom_item__web_dictionnary,
 				 "form_exit", (momval_t) clos_web_form_exit);
-  mom_dbgout_value ((const momval_t)clos_web_form_exit);
+  mom_dbgout_value ((const momval_t) clos_web_form_exit);
   MONIMELT_INFORM ("cold module end marg=%s", marg);
 }
