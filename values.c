@@ -1092,134 +1092,133 @@ debugprint_value (FILE * fil, const momval_t val, unsigned depth)
 		      fprintf (fil, "\\x%02x", ((unsigned) c) & 0xff);
 		    break;
 		  }
-		fputc ('"', fil);
 	      }
-	    break;
-	case momty_jsonarray:
-	    {
-	      unsigned l = val.pjsonarr->slen;
-	      fprintf (fil, "*jsar%d[", (int) l);
-	      for (unsigned ix = 0; ix < l; ix++)
-		{
-		  if (ix > 0)
-		    {
-		      putc (',', fil);
-		      debugprint_indent (fil, depth + 1);
-		    };
-		  debugprint_value (fil, val.pjsonarr->jarrtab[ix],
-				    depth + 1);
-		}
-	      fputs ("]", fil);
-	    }
-	    break;
-	case momty_jsonobject:
-	    {
-	      unsigned l = val.pjsonobj->slen;
-	      fprintf (fil, "*jsob%d{", (int) l);
-	      for (unsigned ix = 0; ix < l; ix++)
-		{
-		  if (ix > 0)
-		    {
-		      putc (',', fil);
-		      debugprint_indent (fil, depth + 1);
-		    };
-		  debugprint_value (fil, val.pjsonobj->jobjtab[ix].je_name,
-				    depth + 1);
-		  fputs (": ", fil);
-		  debugprint_value (fil, val.pjsonobj->jobjtab[ix].je_attr,
-				    depth + 1);
-		}
-	      fputs ("}", fil);
-	    }
-	    break;
-	case momty_set:
-	    {
-	      unsigned l = val.pset->slen;
-	      fprintf (fil, "*set%d{", (int) l);
-	      for (unsigned ix = 0; ix < l; ix++)
-		{
-		  if (ix > 0)
-		    {
-		      putc (';', fil);
-		      debugprint_indent (fil, depth + 1);
-		    };
-		  mom_debugprint_item (fil, val.pset->itemseq[ix]);
-		}
-	      fputs ("}", fil);
-	    }
-	    break;
-	case momty_tuple:
-	    {
-	      unsigned l = val.ptuple->slen;
-	      fprintf (fil, "*tuple%d(", (int) l);
-	      for (unsigned ix = 0; ix < l; ix++)
-		{
-		  if (ix > 0)
-		    {
-		      putc (',', fil);
-		      debugprint_indent (fil, depth + 1);
-		    };
-		  mom_debugprint_item (fil, val.ptuple->itemseq[ix]);
-		}
-	      fputs (")", fil);
-	    }
-	    break;
-	case momty_node:
-	    {
-	      unsigned l = val.pnode->slen;
-	      fprintf (fil, "*nod%d:", (int) l);
-	      mom_debugprint_item (fil, val.pnode->connitm);
-	      fputs ("/(", fil);
-	      for (unsigned ix = 0; ix < l; ix++)
-		{
-		  if (ix > 0)
-		    {
-		      putc (',', fil);
-		      debugprint_indent (fil, depth + 1);
-		    };
-		  debugprint_value (fil, val.pnode->sontab[ix], depth + 1);
-		}
-	      fputs (")", fil);
-	    }
-	    break;
-	case momty_closure:
-	    {
-	      unsigned l = val.pnode->slen;
-	      fprintf (fil, "*clo%d:", (int) l);
-	      mom_debugprint_item (fil, val.pnode->connitm);
-	      fputs ("/(", fil);
-	      for (unsigned ix = 0; ix < l; ix++)
-		{
-		  if (ix > 0)
-		    {
-		      putc (',', fil);
-		      debugprint_indent (fil, depth + 1);
-		    };
-		  debugprint_value (fil, val.pnode->sontab[ix], depth + 1);
-		}
-	      fputs (")", fil);
-	    }
-	    break;
-	case momty_routineitem:
-	    {
-	      mom_debugprint_item (fil, val.panyitem);
-	      if (val.proutitem->irt_descr
-		  && val.proutitem->irt_descr->rout_magic == ROUTINE_MAGIC)
-		fprintf (fil, "@r!%s", val.proutitem->irt_descr->rout_name);
-	    }
-	    break;
-	default:
-	    if (typ > momty__itemlowtype && typ < momty__last)
-	      mom_debugprint_item (fil, val.panyitem);
-	    else
-	      {
-		if (typ > 0 && typ < momty__last && mom_typedescr_array[typ])
-		  fprintf (fil, "?*%s@%p",
-			   mom_typedescr_array[typ]->ityp_name, val.ptr);
-		else
-		  fprintf (fil, "?type#%d@%p", typ, val.ptr);
-	      }
+	    fputc ('"', fil);
 	  }
+	  break;
+	case momty_jsonarray:
+	  {
+	    unsigned l = val.pjsonarr->slen;
+	    fprintf (fil, "*jsar%d[", (int) l);
+	    for (unsigned ix = 0; ix < l; ix++)
+	      {
+		if (ix > 0)
+		  {
+		    putc (',', fil);
+		    debugprint_indent (fil, depth + 1);
+		  };
+		debugprint_value (fil, val.pjsonarr->jarrtab[ix], depth + 1);
+	      }
+	    fputs ("]", fil);
+	  }
+	  break;
+	case momty_jsonobject:
+	  {
+	    unsigned l = val.pjsonobj->slen;
+	    fprintf (fil, "*jsob%d{", (int) l);
+	    for (unsigned ix = 0; ix < l; ix++)
+	      {
+		if (ix > 0)
+		  {
+		    putc (',', fil);
+		    debugprint_indent (fil, depth + 1);
+		  };
+		debugprint_value (fil, val.pjsonobj->jobjtab[ix].je_name,
+				  depth + 1);
+		fputs (": ", fil);
+		debugprint_value (fil, val.pjsonobj->jobjtab[ix].je_attr,
+				  depth + 1);
+	      }
+	    fputs ("}", fil);
+	  }
+	  break;
+	case momty_set:
+	  {
+	    unsigned l = val.pset->slen;
+	    fprintf (fil, "*set%d{", (int) l);
+	    for (unsigned ix = 0; ix < l; ix++)
+	      {
+		if (ix > 0)
+		  {
+		    putc (';', fil);
+		    debugprint_indent (fil, depth + 1);
+		  };
+		mom_debugprint_item (fil, val.pset->itemseq[ix]);
+	      }
+	    fputs ("}", fil);
+	  }
+	  break;
+	case momty_tuple:
+	  {
+	    unsigned l = val.ptuple->slen;
+	    fprintf (fil, "*tuple%d(", (int) l);
+	    for (unsigned ix = 0; ix < l; ix++)
+	      {
+		if (ix > 0)
+		  {
+		    putc (',', fil);
+		    debugprint_indent (fil, depth + 1);
+		  };
+		mom_debugprint_item (fil, val.ptuple->itemseq[ix]);
+	      }
+	    fputs (")", fil);
+	  }
+	  break;
+	case momty_node:
+	  {
+	    unsigned l = val.pnode->slen;
+	    fprintf (fil, "*nod%d:", (int) l);
+	    mom_debugprint_item (fil, val.pnode->connitm);
+	    fputs ("/(", fil);
+	    for (unsigned ix = 0; ix < l; ix++)
+	      {
+		if (ix > 0)
+		  {
+		    putc (',', fil);
+		    debugprint_indent (fil, depth + 1);
+		  };
+		debugprint_value (fil, val.pnode->sontab[ix], depth + 1);
+	      }
+	    fputs (")", fil);
+	  }
+	  break;
+	case momty_closure:
+	  {
+	    unsigned l = val.pnode->slen;
+	    fprintf (fil, "*clo%d:", (int) l);
+	    mom_debugprint_item (fil, val.pnode->connitm);
+	    fputs ("/(", fil);
+	    for (unsigned ix = 0; ix < l; ix++)
+	      {
+		if (ix > 0)
+		  {
+		    putc (',', fil);
+		    debugprint_indent (fil, depth + 1);
+		  };
+		debugprint_value (fil, val.pnode->sontab[ix], depth + 1);
+	      }
+	    fputs (")", fil);
+	  }
+	  break;
+	case momty_routineitem:
+	  {
+	    mom_debugprint_item (fil, val.panyitem);
+	    if (val.proutitem->irt_descr
+		&& val.proutitem->irt_descr->rout_magic == ROUTINE_MAGIC)
+	      fprintf (fil, "@r!%s", val.proutitem->irt_descr->rout_name);
+	  }
+	  break;
+	default:
+	  if (typ > momty__itemlowtype && typ < momty__last)
+	    mom_debugprint_item (fil, val.panyitem);
+	  else
+	    {
+	      if (typ > 0 && typ < momty__last && mom_typedescr_array[typ])
+		fprintf (fil, "?*%s@%p",
+			 mom_typedescr_array[typ]->ityp_name, val.ptr);
+	      else
+		fprintf (fil, "?type#%d@%p", typ, val.ptr);
+	    }
 	}
     }
 }

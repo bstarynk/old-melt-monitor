@@ -371,17 +371,21 @@ again:
     }
   else if (jp->jsonp_c == '{')
     {
-      unsigned jsize = 4, jcount = 0;
+      unsigned jsize = TINY_MAX, jcount = 0;
+      struct mom_jsonentry_st tinyent[TINY_MAX] = { };
       long off = ftell (jp->jsonp_file);
       jp->jsonp_c = getc (jp->jsonp_file);
-      struct mom_jsonentry_st *jent =
-	GC_MALLOC (sizeof (struct mom_jsonentry_st) * jsize);
-      if (MONIMELT_UNLIKELY (!jent))
-	MONIMELT_FATAL ("failed to allocate initial json entry table of %d",
-			(int) jsize);
+      struct mom_jsonentry_st *jent = tinyent;
       memset (jent, 0, sizeof (struct mom_jsonentry_st) * jsize);
       do
 	{
+	  while (jp->jsonp_c > 0 && isspace (jp->jsonp_c))
+	    jp->jsonp_c = getc (jp->jsonp_file);
+	  if (jp->jsonp_c == '}')
+	    {
+	      jp->jsonp_c = getc (jp->jsonp_file);
+	      break;
+	    }
 	  momval_t namv = parse_json_internal (jp);
 	  if (namv.ptr == MONIMELT_EMPTY)
 	    {
@@ -395,8 +399,8 @@ again:
 		JSONPARSE_ERROR (jp,
 				 "failed to parse attribute in JSON object at offset %ld",
 				 off);
-	    }
-	  while (isspace (jp->jsonp_c))
+	    };
+	  while (jp->jsonp_c > 0 && isspace (jp->jsonp_c))
 	    jp->jsonp_c = getc (jp->jsonp_file);
 	  if (jp->jsonp_c == ':')
 	    {
@@ -406,6 +410,8 @@ again:
 	    JSONPARSE_ERROR (jp,
 			     "missing colon in JSON object after name at offset %ld",
 			     ftell (jp->jsonp_file));
+	  while (jp->jsonp_c > 0 && isspace (jp->jsonp_c))
+	    jp->jsonp_c = getc (jp->jsonp_file);
 	  momval_t valv = parse_json_internal (jp);
 	  if (valv.ptr == MONIMELT_EMPTY)
 	    JSONPARSE_ERROR (jp,
@@ -413,11 +419,6 @@ again:
 			     ftell (jp->jsonp_file));
 	  while (isspace (jp->jsonp_c))
 	    jp->jsonp_c = getc (jp->jsonp_file);
-	  if (jp->jsonp_c == ',')
-	    {
-	      jp->jsonp_c = getc (jp->jsonp_file);
-	      continue;
-	    }
 	  if (MONIMELT_UNLIKELY (jcount >= jsize))
 	    {
 	      unsigned newjsize = ((5 * jcount / 4 + 5) | 0x7) + 1;
@@ -430,7 +431,8 @@ again:
 		      sizeof (struct mom_jsonentry_st) * newjsize);
 	      memcpy (newjent, jent,
 		      sizeof (struct mom_jsonentry_st) * jcount);
-	      GC_FREE (jent);
+	      if (jent != tinyent)
+		GC_FREE (jent);
 	      jent = newjent;
 	    }
 	  if (namv.ptr != NULL)
@@ -441,6 +443,11 @@ again:
 	    }
 	  namv = MONIMELT_NULLV;
 	  valv = MONIMELT_NULLV;
+	  if (jp->jsonp_c == ',')
+	    {
+	      jp->jsonp_c = getc (jp->jsonp_file);
+	      continue;
+	    }
 	}
       while (jp->jsonp_c >= 0);
       return (momval_t) mom_make_json_object (MOMJSON_COUNTED_ENTRIES, jcount,

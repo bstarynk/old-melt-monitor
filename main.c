@@ -291,6 +291,7 @@ do_json_file_test (void)
   printf ("parsed JSON from file %s\n", json_file);
   mom_output_json (&jo, vp);
   putchar ('\n');
+  mom_dbgout_value (vp);
   mom_json_output_end (&jo);
   MONIMELT_INFORM ("ended JSON file test on %s", json_file);
 }
@@ -329,6 +330,7 @@ do_json_string_test (void)
     MONIMELT_INFORM ("parsed nil");
   else
     MONIMELT_INFORM ("parsed value of type %d", (int) mom_type (vp));
+  mom_dbgout_value (vp);
   MONIMELT_INFORM ("ended JSON string test on %s", json_string);
 }
 
