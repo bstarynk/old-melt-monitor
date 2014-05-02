@@ -19,10 +19,30 @@
 ################################################################
 ##  utility to dump the sqlite3 database state-monimelt.dbsqlite
 ## in a textual SQL dump state-monimelt.sql
+statefile=$1
+if [ -z "$statefile" ]; then
+    statefile=state-monimelt.dbsqlite
+fi
+sqlfile=$2
+if [ -z "$sqlfile" ]; then
+    sqlfile=$(basename $statefile .dbsqlite).sql
+fi
+if [ ! -e "$statefile" ]; then
+    echo "$0:" no state file to dump $statefile > /dev/stderr
+    exit 1
+fi
+
+if file "$statefile" | grep -qi SQLite ; then
+    echo "$0:" dumping state file $statefile
+else
+    echo "$0:" bad state file $statefile > /dev/stderr
+    exit 1
+fi
+
 tempdump=$(basename $(tempfile -d . -p _tmp_ -s .sql))
 trap 'rm -vf $tempdump' EXIT INT QUIT TERM
 export LANG=C LC_ALL=C
-logger -s -t dump-monimelt-state $(date +"start dump-monimelt-state %c")
+logger -s -t dump-monimelt-state $(date +"start dump-monimelt-state %c") $statefile
 date +'-- state-monimelt dump %Y %b %d' > $tempdump
 echo >> $tempdump
 date +' --   Copyright (C) %Y Free Software Foundation, Inc.' >> $tempdump
@@ -57,5 +77,8 @@ sqlite3 state-monimelt.dbsqlite >> $tempdump <<EOF
 EOF
 echo 'COMMIT;' >> $tempdump
 echo "-- state-monimelt end dump " >> $tempdump
-mv state-monimelt.sql state-monimelt.sql~
-mv $tempdump state-monimelt.sql
+if [ -e "$sqlfile" ]; then
+    mv "$sqlfile" "$sqlfile~"
+fi
+mv $tempdump "$sqlfile"
+ls -l "$sqlfile"
