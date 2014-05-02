@@ -94,7 +94,8 @@ usage (const char *argv0)
   printf ("\t --json-string <string>" "\t #parse JSON string for testing\n");
   printf ("\t --json-indent" "\t #output parsed JSON with indentation\n");
   printf ("\t --no-event-loop" "\t #Dont start the event loop thread\n");
-  printf ("\t --load-state <sqlite-state>" "\t #load an initial state\n");
+  printf ("\t --load-state <sqlite-state>"
+	  "\t #load an initial state, or noting if - or . \n");
   printf ("\t --dump-state <sqlite-state>" "\t #dump an initial state\n");
   printf ("\t --chdir <directory>" "\t #change directory\n");
   if (option_ctx)
@@ -590,7 +591,8 @@ main (int argc, char **argv)
       using_syslog = true;
       atexit (logexit_cb);
     }
-  if (load_state_path && load_state_path[0])
+  if (load_state_path && load_state_path[0] && !strcmp (load_state_path, ".")
+      && !strcmp (load_state_path, "_") && !strcmp (load_state_path, "-"))
     {
       mom_initial_load (load_state_path);
     }

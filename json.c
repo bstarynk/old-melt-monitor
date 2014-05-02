@@ -299,6 +299,17 @@ again:
 	}
       while (jp->jsonp_c != '"');
       jp->jsonp_c = getc (jp->jsonp_file);
+      if ((isalpha (str[0]) || str[0] == '_') && strlen (str) == cnt)
+	{
+	  mom_anyitem_t *namitm = mom_item_named (str);
+	  const momstring_t *namstr = NULL;
+	  if (namitm && namitm->typnum == momty_jsonitem
+	      && (namstr =
+		  ((momit_json_name_t *) namitm)->ij_namejson) != NULL
+	      && namstr->typnum == momty_string
+	      && !strcmp (namstr->cstr, str))
+	    return (momval_t) namitm;
+	}
       return (momval_t) mom_make_string_len (str, cnt);
     }
 
@@ -566,6 +577,7 @@ again:
   else
     JSONPARSE_ERROR (jp, "unexpected char %c at offset %ld",
 		     jp->jsonp_c, ftell (jp->jsonp_file));
+  return MONIMELT_NULLV;
 }
 
 static int
