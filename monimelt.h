@@ -230,6 +230,13 @@ void mom_debugprint_item (FILE * fil, const mom_anyitem_t * itm);
 void mom_debugprint_value (FILE * fil, momval_t val);
 void mom_dbgout_item (const mom_anyitem_t * itm);
 void mom_dbgout_value (momval_t val);
+void mom_dbg_item_at (const char *file, int line, const char *msg,
+		      const mom_anyitem_t * itm);
+#define mom_dbg_item(Msg,Itm) mom_dbg_item_at(__FILE__,__LINE__,(Msg),(Itm))
+
+void mom_dbg_value_at (const char *fil, int lin, const char *msg,
+		       const momval_t val);
+#define mom_dbg_value(Msg,Val) mom_dbg_value_at(__FILE__,__LINE__,(Msg),(Val))
 
 static inline enum momvaltype_en
 mom_type (const momval_t v)

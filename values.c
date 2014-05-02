@@ -1232,6 +1232,16 @@ mom_debugprint_value (FILE * fil, const momval_t val)
 
 
 void
+mom_dbg_item_at (const char *file, int line, const char *msg,
+		 const mom_anyitem_t * itm)
+{
+  printf ("%s:%d: %s ", file, line, msg);
+  mom_debugprint_item (stdout, itm);
+  putchar ('\n');
+  fflush (stdout);
+}
+
+void
 mom_dbgout_item (const mom_anyitem_t * itm)
 {
   mom_debugprint_item (stdout, itm);
@@ -1242,6 +1252,16 @@ mom_dbgout_item (const mom_anyitem_t * itm)
 void
 mom_dbgout_value (const momval_t val)
 {
+  mom_debugprint_value (stdout, val);
+  putchar ('\n');
+  fflush (stdout);
+}
+
+void
+mom_dbg_value_at (const char *fil, int lin, const char *msg,
+		  const momval_t val)
+{
+  printf ("%s:%d: %s", fil, lin, msg);
   mom_debugprint_value (stdout, val);
   putchar ('\n');
   fflush (stdout);

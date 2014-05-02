@@ -10,12 +10,12 @@
 <body>
   <h1>Initial Form for Monimelt</h1>
 
-  <form action='form_exit' method='post'>
+  <form action='/form_exit' method='post'>
     <b>save and exit:</b> <input type='submit' name='do_savexit' value='save &amp; exit'/> <br/>
     <b>quit:</b>  <input type='submit' name='do_quit' value='quit'/> <small>(without dumping)</small> <br/>
   </form>
   
-  <form action='form_compile' method='post'>
+  <form action='/form_compile' method='post'>
      <b>compile all:</b> <input type='submit' name='do_compile' value='compile' />
   </form>
 
@@ -23,7 +23,7 @@
   
   <h2>add routine</h2>
 
-  <form action='add_routine' method='post'>
+  <form action='/add_routine' method='post'>
     <b>name:</b> <input type='text' name='routname' /> <br/>
     <b>body:</b> <textarea rows='20' cols='72' id='txt_routcode'>
     </textarea>

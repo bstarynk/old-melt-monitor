@@ -162,6 +162,7 @@ again:
       jp->jsonp_c = getc (jp->jsonp_file);
       goto again;
     }
+  // terminating character, to be consumed by caller
   else if (jp->jsonp_c == ',' || jp->jsonp_c == ':' || jp->jsonp_c == '}'
 	   || jp->jsonp_c == ']')
     // don't consume the terminator! Leave it available to the caller.
@@ -196,6 +197,111 @@ again:
       else
 	JSONPARSE_ERROR (jp, "bad slash at offset %ld", off);
     }
+  // strings
+  else if (jp->jsonp_c == '"')
+    {
+      jp->jsonp_c = getc (jp->jsonp_file);
+      unsigned siz = 2 * TINY_MAX, cnt = 0;
+      char tinyarr[2 * TINY_MAX];
+      char *str = tinyarr;
+      memset (str, 0, siz);
+      do
+	{
+	  if (jp->jsonp_c == '"')
+	    break;
+	  // we need extraspace for \u-encoded unicode characters
+	  if (MONIMELT_UNLIKELY (cnt + 7 >= siz))
+	    {
+	      unsigned newsiz = (((5 * cnt / 4) + 12) | 0xf) + 1;
+	      char *newstr = GC_MALLOC_ATOMIC (newsiz);
+	      if (MONIMELT_UNLIKELY (!str))
+		MONIMELT_FATAL ("failed to grow string buffer of %d",
+				(int) newsiz);
+	      memset (newstr, 0, newsiz);
+	      memcpy (newstr, str, cnt);
+	      if (str != tinyarr)
+		GC_FREE (str);
+	      str = newstr;
+	      siz = newsiz;
+	    }
+	  if (MONIMELT_UNLIKELY (jp->jsonp_c < 0))
+	    JSONPARSE_ERROR (jp, "unterminated string at offset %ld",
+			     ftell (jp->jsonp_file));
+	  if (jp->jsonp_c == '\\')
+	    {
+	      jp->jsonp_c = getc (jp->jsonp_file);
+#define ADD1CHAR(Ch) do { str[cnt++] = Ch;			\
+		jp->jsonp_c = getc(jp->jsonp_file); } while(0)
+	      switch (jp->jsonp_c)
+		{
+		case 'b':
+		  ADD1CHAR ('\b');
+		  break;
+		case 'f':
+		  ADD1CHAR ('\f');
+		  break;
+		case 'n':
+		  ADD1CHAR ('\n');
+		  break;
+		case 'r':
+		  ADD1CHAR ('\r');
+		  break;
+		case 't':
+		  ADD1CHAR ('\t');
+		  break;
+		case '/':
+		  ADD1CHAR ('/');
+		  break;
+		case '"':
+		  ADD1CHAR ('"');
+		  break;
+		case '\\':
+		  ADD1CHAR ('\\');
+		  break;
+		case 'u':
+		  {
+		    int h = 0;
+		    if (fscanf (jp->jsonp_file, "%04x", &h) > 0)
+		      {
+			char hexd[8];
+			memset (hexd, 0, sizeof (hexd));
+			uint32_t c = (uint32_t) h;
+			g_unichar_to_utf8 ((gunichar) c, hexd);
+			ADD1CHAR (hexd[0]);
+			if (hexd[1])
+			  {
+			    ADD1CHAR (hexd[1]);
+			    if (hexd[2])
+			      {
+				ADD1CHAR (hexd[2]);
+				if (hexd[3])
+				  {
+				    ADD1CHAR (hexd[3]);
+				    if (hexd[4])
+				      {
+					ADD1CHAR (hexd[4]);
+					if (hexd[5])
+					  ADD1CHAR (hexd[5]);
+				      }
+				  }
+			      }
+			  }
+		      }
+		  }
+		  break;
+		}
+	    }
+	  else
+	    ADD1CHAR (jp->jsonp_c);
+#undef ADD1CHAR
+	  if (jp->jsonp_c < 0)
+	    break;
+	}
+      while (jp->jsonp_c != '"');
+      jp->jsonp_c = getc (jp->jsonp_file);
+      return (momval_t) mom_make_string_len (str, cnt);
+    }
+
   else if (isdigit (jp->jsonp_c) || jp->jsonp_c == '+' || jp->jsonp_c == '-')
     {
       char numbuf[64];
@@ -443,115 +549,19 @@ again:
 	    }
 	  namv = MONIMELT_NULLV;
 	  valv = MONIMELT_NULLV;
+	  while (jp->jsonp_c > 0 && isspace (jp->jsonp_c))
+	    jp->jsonp_c = getc (jp->jsonp_file);
 	  if (jp->jsonp_c == ',')
 	    {
 	      jp->jsonp_c = getc (jp->jsonp_file);
+	      while (jp->jsonp_c > 0 && isspace (jp->jsonp_c))
+		jp->jsonp_c = getc (jp->jsonp_file);
 	      continue;
 	    }
 	}
       while (jp->jsonp_c >= 0);
       return (momval_t) mom_make_json_object (MOMJSON_COUNTED_ENTRIES, jcount,
 					      jent, NULL);
-    }
-  else if (jp->jsonp_c == '"')
-    {
-      jp->jsonp_c = getc (jp->jsonp_file);
-      unsigned siz = 24, cnt = 0;
-      char *str = GC_MALLOC_ATOMIC (siz);
-      if (MONIMELT_UNLIKELY (!str))
-	MONIMELT_FATAL ("failed to allocate initial string buffer of %d",
-			(int) siz);
-      memset (str, 0, siz);
-      do
-	{
-	  if (jp->jsonp_c == '"')
-	    break;
-	  if (MONIMELT_UNLIKELY (cnt + 1 >= siz))
-	    {
-	      unsigned newsiz = (((5 * cnt / 4) + 12) | 0xf) + 1;
-	      char *newstr = GC_MALLOC_ATOMIC (newsiz);
-	      if (MONIMELT_UNLIKELY (!str))
-		MONIMELT_FATAL ("failed to grow string buffer of %d",
-				(int) newsiz);
-	      memset (newstr, 0, newsiz);
-	      memcpy (newstr, str, cnt);
-	    }
-	  if (MONIMELT_UNLIKELY (jp->jsonp_c < 0))
-	    JSONPARSE_ERROR (jp, "unterminated string at offset %ld",
-			     ftell (jp->jsonp_file));
-	  if (jp->jsonp_c == '\\')
-	    {
-	      jp->jsonp_c = getc (jp->jsonp_file);
-#define ADD1CHAR(Ch) do { str[cnt++] = Ch;		\
-	  jp->jsonp_c = getc(jp->jsonp_file); } while(0)
-	      switch (jp->jsonp_c)
-		{
-		case 'b':
-		  ADD1CHAR ('\b');
-		  break;
-		case 'f':
-		  ADD1CHAR ('\f');
-		  break;
-		case 'n':
-		  ADD1CHAR ('\n');
-		  break;
-		case 'r':
-		  ADD1CHAR ('\r');
-		  break;
-		case 't':
-		  ADD1CHAR ('\t');
-		  break;
-		case '/':
-		  ADD1CHAR ('/');
-		  break;
-		case '"':
-		  ADD1CHAR ('"');
-		  break;
-		case '\\':
-		  ADD1CHAR ('\\');
-		  break;
-		case 'u':
-		  {
-		    int h = 0;
-		    if (fscanf (jp->jsonp_file, "%04x", &h) > 0)
-		      {
-			char hexd[8];
-			memset (hexd, 0, sizeof (hexd));
-			uint32_t c = (uint32_t) h;
-			g_unichar_to_utf8 ((gunichar) c, hexd);
-			ADD1CHAR (hexd[0]);
-			if (hexd[1])
-			  {
-			    ADD1CHAR (hexd[1]);
-			    if (hexd[2])
-			      {
-				ADD1CHAR (hexd[2]);
-				if (hexd[3])
-				  {
-				    ADD1CHAR (hexd[3]);
-				    if (hexd[4])
-				      {
-					ADD1CHAR (hexd[4]);
-					if (hexd[5])
-					  ADD1CHAR (hexd[5]);
-				      }
-				  }
-			      }
-			  }
-		      }
-		  }
-		  break;
-		}
-	    }
-	  else
-	    ADD1CHAR (jp->jsonp_c);
-#undef ADD1CHAR
-	  if (jp->jsonp_c < 0)
-	    break;
-	}
-      while (jp->jsonp_c != '"');
-      jp->jsonp_c = getc (jp->jsonp_file);
-      return (momval_t) mom_make_string_len (str, cnt);
     }
   else
     JSONPARSE_ERROR (jp, "unexpected char %c at offset %ld",

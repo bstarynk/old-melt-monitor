@@ -189,6 +189,7 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
 					 fullpath + 1)).ptr != NULL
       && *closhandler.ptype == momty_closure)
     {
+      mom_dbg_value ("closhandler", closhandler);
       momval_t pathv = (momval_t) mom_make_string (fullpath + 1);
       if (methoditm == (mom_anyitem_t *) mom_item__POST)
 	{
@@ -242,6 +243,7 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
       webitm->iweb_postjsob = jpost;
       webitm->iweb_queryjsob = jquery;
       webitm->iweb_path = pathv;
+      mom_dbg_item ("webitm", webitm);
       pthread_cond_init (&webitm->iweb_cond, NULL);
       (void) mom_run_closure (closhandler,
 			      MOMPFR_VALUE, (momval_t) webitm, MOMPFR_END);
