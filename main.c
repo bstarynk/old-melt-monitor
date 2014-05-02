@@ -274,6 +274,7 @@ static void
 do_json_file_test (void)
 {
   FILE *fj = fopen (json_file, "r");
+  MONIMELT_INFORM ("starting JSON file test on %s", json_file);
   if (!fj)
     MONIMELT_FATAL ("failed to open json file %s", json_file);
   struct jsonparser_st jp = { 0 };
@@ -291,11 +292,13 @@ do_json_file_test (void)
   mom_output_json (&jo, vp);
   putchar ('\n');
   mom_json_output_end (&jo);
+  MONIMELT_INFORM ("ended JSON file test on %s", json_file);
 }
 
 static void
 do_json_string_test (void)
 {
+  MONIMELT_INFORM ("starting JSON string test on %s", json_string);
   FILE *fj = fmemopen ((void *) json_string, strlen (json_string), "r");
   if (!fj)
     MONIMELT_FATAL ("failed to open json string %s", json_string);
@@ -315,6 +318,7 @@ do_json_string_test (void)
   mom_output_json (&jo, vp);
   putchar ('\n');
   mom_json_output_end (&jo);
+  MONIMELT_INFORM ("ended JSON string test on %s", json_string);
 }
 
 
