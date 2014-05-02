@@ -1038,7 +1038,7 @@ debugprint_indent (FILE * fil, unsigned depth)
 }
 
 static void
-debugprint_value (FILE * fil, momval_t val, unsigned depth)
+debugprint_value (FILE * fil, const momval_t val, unsigned depth)
 {
   assert (fil != NULL);
   if (!val.ptr)
@@ -1226,7 +1226,7 @@ debugprint_value (FILE * fil, momval_t val, unsigned depth)
 
 
 void
-mom_debugprint_value (FILE * fil, momval_t val)
+mom_debugprint_value (FILE * fil, const momval_t val)
 {
   debugprint_value (fil, val, 0);
 }
@@ -1236,10 +1236,14 @@ void
 mom_dbgout_item (const mom_anyitem_t * itm)
 {
   mom_debugprint_item (stdout, itm);
+  putchar ('\n');
+  fflush (stdout);
 }
 
 void
-mom_dbgout_value (momval_t val)
+mom_dbgout_value (const momval_t val)
 {
   mom_debugprint_value (stdout, val);
+  putchar ('\n');
+  fflush (stdout);
 }
