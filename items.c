@@ -675,27 +675,36 @@ const struct momitemtypedescr_st momitype_json_name = {
 };
 
 
-momit_bool_t *
+momit_boolean_t *
 mom_create_named_bool (uuid_t uid, const char *name)
 {
-  if (!strcmp (name, "true"))
+  if (!strcmp (name, "true_value"))
     {
-      momit_bool_t *itrue
-	= mom_allocate_item_with_uuid (momty_boolitem, sizeof (momit_bool_t),
-				       MONIMELT_SPACE_ROOT, uid);
+      momit_boolean_t *itrue = mom_allocate_item_with_uuid (momty_booleanitem,
+							    sizeof
+							    (momit_boolean_t),
+							    MONIMELT_SPACE_ROOT,
+							    uid);
       itrue->ib_bool = true;
       return itrue;
     }
-  else if (!strcmp (name, "false"))
+  else if (!strcmp (name, "false_value"))
     {
-      momit_bool_t *ifalse
-	= mom_allocate_item_with_uuid (momty_boolitem, sizeof (momit_bool_t),
+      momit_boolean_t *ifalse
+	= mom_allocate_item_with_uuid (momty_booleanitem,
+				       sizeof (momit_boolean_t),
 				       MONIMELT_SPACE_ROOT, uid);
       ifalse->ib_bool = false;
       return ifalse;
     }
   else
-    MONIMELT_FATAL ("invalid boolean item name=%s", name);
+    {
+      char uuidstr[UUID_PARSED_LEN];
+      memset (uuidstr, 0, sizeof (uuidstr));
+      uuid_unparse (uid, uuidstr);
+      MONIMELT_FATAL ("invalid creation of boolean item name=%s uuid %s",
+		      name, uuidstr);
+    }
 }
 
 ////////////////////////////////////////////////////////////////
@@ -749,7 +758,7 @@ bool_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
   return (momval_t) mom_make_json_object (	// the type:
 					   MOMJSON_ENTRY, mom_item__jtype,
-					   mom_item__bool,
+					   mom_item__boolean,
 					   // done
 					   MOMJSON_END);
 }
@@ -3844,7 +3853,7 @@ mom_initialize_items (void)
   items_data->items_size = nb_items;
   pthread_mutex_unlock (&mtx_global_items);
   mom_typedescr_array[momty_jsonitem] = &momitype_json_name;
-  mom_typedescr_array[momty_boolitem] = &momitype_bool;
+  mom_typedescr_array[momty_booleanitem] = &momitype_bool;
   mom_typedescr_array[momty_taskletitem] = &momitype_tasklet;
   mom_typedescr_array[momty_routineitem] = &momitype_routine;
   mom_typedescr_array[momty_vectoritem] = &momitype_vector;

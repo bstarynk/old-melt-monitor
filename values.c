@@ -200,10 +200,10 @@ mom_value_cmp (const momval_t l, const momval_t r)
 	  goto compare_item_by_uid;
       }
       // special case for boolean items: compare their boolean values if different
-    case momty_boolitem:
+    case momty_booleanitem:
       {
-	bool lb = l.pboolitem->ib_bool;
-	bool rb = r.pboolitem->ib_bool;
+	bool lb = l.pbooleanitem->ib_bool;
+	bool rb = r.pbooleanitem->ib_bool;
 	if (lb < rb)
 	  return -1;
 	else if (lb > rb)

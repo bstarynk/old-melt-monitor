@@ -1169,8 +1169,8 @@ output_val (struct jsonoutput_st *jo, momval_t val, unsigned depth)
 	output_val (jo, (momval_t) nstr, depth);
 	return;
       }
-    case momty_boolitem:
-      if (val.pboolitem->ib_bool)
+    case momty_booleanitem:
+      if (val.pbooleanitem->ib_bool)
 	fputs ("true", jo->jsono_file);
       else
 	fputs ("false", jo->jsono_file);

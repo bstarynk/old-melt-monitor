@@ -140,7 +140,7 @@ enum momvaltype_en
   ////
   momty__itemlowtype,		//// types below are for items
   momty_jsonitem,
-  momty_boolitem,
+  momty_booleanitem,
   momty_routineitem,
   momty_taskletitem,
   momty_vectoritem,
@@ -174,7 +174,7 @@ typedef struct momseqitem_st momset_t;
 typedef struct momseqitem_st momitemtuple_t;
 typedef struct momanyitem_st mom_anyitem_t;
 typedef struct momjsonitem_st momit_json_name_t;
-typedef struct momboolitem_st momit_bool_t;
+typedef struct mombooleanitem_st momit_boolean_t;
 typedef struct momroutineitem_st momit_routine_t;
 typedef struct momtaskletitem_st momit_tasklet_t;
 typedef struct momvectoritem_st momit_vector_t;
@@ -212,7 +212,7 @@ union momvalueptr_un
   const struct momseqitem_st *pset;
   const struct momseqitem_st *ptuple;
   struct momjsonitem_st *pjsonitem;
-  struct momboolitem_st *pboolitem;
+  struct mombooleanitem_st *pbooleanitem;
   struct momroutineitem_st *proutitem;
   struct momtaskletitem_st *ptaskitem;
   struct momvectoritem_st *pvectitem;
@@ -410,7 +410,7 @@ struct momjsonitem_st
   const momstring_t *ij_namejson;
 };
 
-struct momboolitem_st
+struct mombooleanitem_st
 {
   struct momanyitem_st ib_item;
   bool ib_bool;
@@ -864,7 +864,7 @@ mom_value_json (momval_t val)
       return val;
     case momty_jsonitem:
       return val;
-    case momty_boolitem:
+    case momty_booleanitem:
       return val;
     default:
       return MONIMELT_NULLV;
@@ -1063,7 +1063,7 @@ mom_is_jsonable (const momval_t val)
       case momty_jsonarray:
       case momty_jsonobject:
       case momty_jsonitem:
-      case momty_boolitem:
+      case momty_booleanitem:
 	return true;
       default:
 	return false;
@@ -1141,34 +1141,34 @@ void mom_item_put_attr (mom_anyitem_t * itm, mom_anyitem_t * itat,
 void mom_item_put_several_attrs (mom_anyitem_t *, ...)
   __attribute__ ((sentinel));
 
-momit_bool_t *mom_create_named_bool (uuid_t uid, const char *name);
-#define mom_create__bool(Name,Uid) \
+momit_boolean_t *mom_create_named_bool (uuid_t uid, const char *name);
+#define mom_create__boolean(Name,Uid) \
   mom_create_named_bool(Uid,#Name)
 
-static inline momit_bool_t *
+static inline momit_boolean_t *
 mom_get_item_bool (bool b)
 {
+  extern momit_boolean_t *mom_item__true_value;
+  extern momit_boolean_t *mom_item__false_value;
   // defined and initialized in create-items.c using monimelt-named.h
-  extern momit_bool_t *mom_item__true;
-  extern momit_bool_t *mom_item__false;
   if (b)
-    return mom_item__true;
+    return mom_item__true_value;
   else
-    return mom_item__false;
+    return mom_item__false_value;
 }
 
 static inline bool
 mom_item_is_true (mom_anyitem_t * itm)
 {
-  extern momit_bool_t *mom_item__true;
-  return itm == (mom_anyitem_t *) mom_item__true;
+  extern momit_boolean_t *mom_item__true_value;
+  return itm == (mom_anyitem_t *) mom_item__true_value;
 }
 
 static inline bool
 mom_item_is_false (mom_anyitem_t * itm)
 {
-  extern momit_bool_t *mom_item__false;
-  return itm == (mom_anyitem_t *) mom_item__false;
+  extern momit_boolean_t *mom_item__false_value;
+  return itm == (mom_anyitem_t *) mom_item__false_value;
 }
 
 // compare values for JSON
