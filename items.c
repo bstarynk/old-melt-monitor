@@ -754,7 +754,7 @@ bool_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
   return (momval_t) mom_make_json_object (	// the type:
 					   MOMJSON_ENTRY, mom_item__jtype,
-					   mom_item__bool_item,
+					   mom_item__bool,
 					   // done
 					   MOMJSON_END);
 }
@@ -804,7 +804,7 @@ json_name_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
   return (momval_t) mom_make_json_object (	// the type:
 					   MOMJSON_ENTRY, mom_item__jtype,
-					   mom_item__json_name_item,
+					   mom_item__json_name,
 					   // the name
 					   MOMJSON_ENTRY, mom_item__name,
 					   ((momit_json_name_t *)
@@ -1135,7 +1135,7 @@ tasklet_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
   return (momval_t) mom_make_json_object (	// the type:
 					   MOMJSON_ENTRY, mom_item__jtype,
-					   mom_item__tasklet_item,
+					   mom_item__tasklet,
 					   // done
 					   MOMJSON_END);
 }
@@ -1294,7 +1294,7 @@ routine_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
   return (momval_t) mom_make_json_object
     // build with type and routine name
     (				// the type:
-      MOMJSON_ENTRY, mom_item__jtype, mom_item__routine_item,
+      MOMJSON_ENTRY, mom_item__jtype, mom_item__routine,
       // the routine name
       MOMJSON_ENTRY, mom_item__name, mom_make_string (rdescr->rout_name),
       // that's all!
@@ -1639,7 +1639,7 @@ vector_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
   return (momval_t) mom_make_json_object
     // build with type 
     (				// the type:
-      MOMJSON_ENTRY, mom_item__jtype, mom_item__vector_item,
+      MOMJSON_ENTRY, mom_item__jtype, mom_item__vector,
       // that's all!
       MOMJSON_END);
 }
@@ -2109,7 +2109,7 @@ assoc_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
   return (momval_t) mom_make_json_object
     // build with type 
     (				// the type:
-      MOMJSON_ENTRY, mom_item__jtype, mom_item__assoc_item,
+      MOMJSON_ENTRY, mom_item__jtype, mom_item__assoc,
       // that's all!
       MOMJSON_END);
 }
@@ -2630,7 +2630,7 @@ queue_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
   return (momval_t) mom_make_json_object
     // build with type 
     (				// the type:
-      MOMJSON_ENTRY, mom_item__jtype, mom_item__queue_item,
+      MOMJSON_ENTRY, mom_item__jtype, mom_item__queue,
       // that's all!
       MOMJSON_END);
 }
@@ -2756,7 +2756,7 @@ box_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
   return (momval_t) mom_make_json_object
     // build with type 
     (				// the type:
-      MOMJSON_ENTRY, mom_item__jtype, mom_item__box_item,
+      MOMJSON_ENTRY, mom_item__jtype, mom_item__box,
       // that's all!
       MOMJSON_END);
 }
@@ -3111,7 +3111,7 @@ buffer_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
   return (momval_t) mom_make_json_object (	// the type:
 					   MOMJSON_ENTRY, mom_item__jtype,
-					   mom_item__buffer_item,
+					   mom_item__buffer,
 					   // done
 					   MOMJSON_END);
 }
@@ -3486,7 +3486,7 @@ dictionnary_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
   return (momval_t) mom_make_json_object (	// the type:
 					   MOMJSON_ENTRY, mom_item__jtype,
-					   mom_item__dictionnary_item,
+					   mom_item__dictionnary,
 					   // done
 					   MOMJSON_END);
 }
@@ -3598,7 +3598,7 @@ webrequest_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
   return (momval_t) mom_make_json_object (	// the type:
 					   MOMJSON_ENTRY, mom_item__jtype,
-					   mom_item__box_item,
+					   mom_item__box,
 					   // done
 					   MOMJSON_END);
 }
@@ -3812,7 +3812,7 @@ process_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
   return (momval_t) mom_make_json_object (	// the type:
 					   MOMJSON_ENTRY, mom_item__jtype,
-					   mom_item__box_item,
+					   mom_item__box,
 					   // done
 					   MOMJSON_END);
 }
