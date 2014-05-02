@@ -32,12 +32,13 @@ INDENT= indent -gnu
 PREPROFLAGS= $(shell $(PKGCONFIG) --cflags $(PACKAGES))
 OPTIMFLAGS= -Og -g
 LIBES= -luuid -lgc  $(shell $(PKGCONFIG) --libs $(PACKAGES)) -lonion_handlers -lonion -lpthread -lm -ldl
+SQLITE= sqlite3
 SOURCES= $(sort $(filter-out $(wildcard mod_*.c), $(wildcard [a-z]*.c)))
 MODSOURCES= $(sort $(wildcard mod_*.c))
 MODULES= $(patsubst %.c,%.so,$(MODSOURCES))
 OBJECTS= $(patsubst %.c,%.o,$(SOURCES))
 RM= rm -fv
-.PHONY: all modules clean tests indent
+.PHONY: all modules clean tests indent restore-state
 .SUFFIXES: .so
 all: monimelt make-named modules
 clean:
@@ -61,3 +62,7 @@ modules: $(MODULES)
 ## or - or _ characters. see MONIMELT_SHARED_MODULE_PREFIX in monimelt.h
 %.so: %.c | monimelt.h monimelt-names.h
 	$(LINK.c) -fPIC $< -shared -o $@
+
+restore-state: 
+	mv -v state-monimelt.dbsqlite  state-monimelt.dbsqlite~
+	$(SQLITE) state-monimelt.dbsqlite < state-monimelt.sql
