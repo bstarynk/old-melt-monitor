@@ -21,11 +21,6 @@
 #include "monimelt.h"
 
 
-/// declare the named items
-#define MONIMELT_NAMED(Name,Type,Uid) \
-  extern momit_##Type##_t* mom_item__##Name;
-#include "monimelt-names.h"
-
 
 momhash_t
 mom_hash_uuid (uuid_t uid)
