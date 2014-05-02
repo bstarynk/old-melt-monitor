@@ -334,29 +334,36 @@ raw_dump_emit_json (struct mom_dumper_st * dmp, const momval_t val)
       {
 	const mom_anyitem_t *curconn = val.pnode->connitm;
 	if (curconn && curconn->i_space > 0)
-	  jsval = (momval_t) mom_make_json_object
-	    (MOMJSON_ENTRY, mom_item__jtype, mom_item__node,
-	     MOMJSON_ENTRY, mom_item__conn, raw_dump_emit_json (dmp,
-								(momval_t)
-								(mom_anyitem_t
-								 *) curconn),
-	     MOMJSON_ENTRY, mom_item__sons, jsonarray_emit_nodesons (dmp,
-								     val.pnode),
-	     MOMJSON_END);
+	  {
+	    momval_t jconn = raw_dump_emit_json (dmp,
+						 (momval_t) (mom_anyitem_t *)
+						 curconn);
+	    if (jconn.ptr)
+	      jsval = (momval_t) mom_make_json_object
+		(MOMJSON_ENTRY, mom_item__jtype, mom_item__node,
+		 MOMJSON_ENTRY, mom_item__conn, jconn,
+		 MOMJSON_ENTRY, mom_item__sons, jsonarray_emit_nodesons (dmp,
+									 val.pnode),
+		 MOMJSON_END);
+	  }
       }
       break;
     case momty_closure:
       {
 	const mom_anyitem_t *curconn = val.pnode->connitm;
 	if (curconn && curconn->i_space > 0)
-	  jsval = (momval_t) mom_make_json_object
-	    (MOMJSON_ENTRY, mom_item__jtype, mom_item__closure,
-	     MOMJSON_ENTRY, mom_item__conn,
-	     raw_dump_emit_json (dmp,
-				 (momval_t) (mom_anyitem_t *) curconn),
-	     MOMJSON_ENTRY, mom_item__sons, jsonarray_emit_nodesons (dmp,
-								     val.pnode),
-	     MOMJSON_END);
+	  {
+	    momval_t jconn = raw_dump_emit_json (dmp,
+						 (momval_t) (mom_anyitem_t *)
+						 curconn);
+	    if (jconn.ptr)
+	      jsval = (momval_t) mom_make_json_object
+		(MOMJSON_ENTRY, mom_item__jtype, mom_item__closure,
+		 MOMJSON_ENTRY, mom_item__conn, jconn,
+		 MOMJSON_ENTRY, mom_item__sons, jsonarray_emit_nodesons (dmp,
+									 val.pnode),
+		 MOMJSON_END);
+	  }
       }
       break;
     default:
