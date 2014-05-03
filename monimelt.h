@@ -1081,7 +1081,10 @@ const momint_t *mom_make_int (intptr_t n);
 void mom_initialize (void);
 void mom_initial_load (const char *state);
 // the full dump should be called without worker thread running
-void mom_full_dump (const char *state);
+void mom_full_dump_at (const char *fil, int lin, const char *reason,
+		       const char *state);
+#define mom_full_dump(Reason,State) mom_full_dump_at(__FILE__,__LINE__,(Reason),(State))
+
 void *mom_allocate_item (unsigned type, size_t itemsize, unsigned space);
 void *mom_allocate_item_with_uuid (unsigned type, size_t itemsize,
 				   unsigned space, uuid_t uid);
@@ -1420,6 +1423,9 @@ struct mom_dumper_st
   unsigned dmp_count;
   unsigned dmp_size;
   unsigned dmp_state;
+  const char *dmp_reason;
+  const char *dmp_srcfile;
+  int dmp_srcline;
   struct mom_itqueue_st *dmp_qfirst;
   struct mom_itqueue_st *dmp_qlast;
   const mom_anyitem_t **dmp_array;

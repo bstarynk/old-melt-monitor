@@ -679,9 +679,11 @@ static GMemVTable gc_mem_vtable = {
 int
 main (int argc, char **argv)
 {
+  bool explicit_boehm_gc_thread = false;
   GC_INIT ();
 #if MONIMELT_EXPLICIT_GC_THREAD
   GC_allow_register_threads ();
+  explicit_boehm_gc_thread = true;
 #endif
   pthread_setname_np (pthread_self (), "monimelt-main");
   g_mem_gc_friendly = TRUE;
@@ -735,6 +737,8 @@ main (int argc, char **argv)
     }
   else
     MONIMELT_WARNING ("no load state path");
+  MONIMELT_INFORM ("explicit Boehm GC registration = %d",
+		   (int) explicit_boehm_gc_thread);
   if (web_host)
     {
       extern void mom_start_web (const char *);
@@ -765,7 +769,7 @@ main (int argc, char **argv)
     }
   if (dump_state_path)
     {
-      mom_full_dump (dump_state_path);
+      mom_full_dump ("final dump", dump_state_path);
     }
   return 0;
 }

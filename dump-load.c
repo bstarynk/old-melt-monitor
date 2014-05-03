@@ -1338,11 +1338,16 @@ static void dump_modules (void);
 // http://programmers.stackexchange.com/q/236542/40065
 #define BIGDUMP_THRESHOLD 250
 void
-mom_full_dump (const char *state)
+mom_full_dump_at (const char *srcfil, int srclin, const char *reason,
+		  const char *state)
 {
   struct mom_dumper_st dmp = { };
   memset (&dmp, 0, sizeof (dmp));
-  MONIMELT_INFORM ("start of full state dump to %s", state);
+  MONIMELT_INFORM ("start of full state dump to %s from %s:%d reason %s",
+		   state, srcfil, srclin, reason);
+  dmp.dmp_srcfile = srcfil;
+  dmp.dmp_srcline = srclin;
+  dmp.dmp_reason = reason;
   int errcod = sqlite3_open (state, &mom_dbsqlite);
   char *errmsg = NULL;
   if (errcod)
@@ -1509,6 +1514,8 @@ mom_full_dump (const char *state)
   sqlite3_close_v2 (mom_dbsqlite), mom_dbsqlite = NULL;
   MONIMELT_INFORM ("dumped %d items in %s", nbdumpeditems, state);
   g_tree_destroy (dumped_module_tree), dumped_module_tree = NULL;
+  MONIMELT_INFORM ("end of full state dump to %s from %s:%d reason %s",
+		   state, srcfil, srclin, reason);
 }
 
 void
