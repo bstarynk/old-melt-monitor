@@ -1383,6 +1383,11 @@ mom_run_closure (momval_t clo, enum mom_pushframedirective_en firstdir, ...)
 	MONIMELT_FATAL ("failed to allocate %d doubles", (int) nbdbl);
       memset (dblarr, 0, nbdbl * sizeof (double));
     };
+  // fill the pseudo frame data
+  va_start (args, firstdir);
+  fill_frame_data (numarr, dblarr, valarr, firstdir, args);
+  va_end (args);
+  // invoke the routine
   if (rdescr->rout_code (0, NULL, (momclosure_t *) closure, valarr, numarr,
 			 dblarr) < 0)
     return MONIMELT_NULLV;

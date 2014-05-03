@@ -1454,8 +1454,10 @@ mom_full_dump (const char *state)
       struct momspacedescr_st *spadescr =
 	mom_spacedescr_array[curitm->i_space];
       assert (spadescr && spadescr->spa_magic == SPACE_MAGIC);
-      momval_t jsonbuild = tydescr->ityp_getbuild (&dmp, curitm);
-      momval_t jsonfill = tydescr->ityp_getfill (&dmp, curitm);
+      momval_t jsonbuild =
+	tydescr->ityp_getbuild (&dmp, (const mom_anyitem_t *) curitm);
+      momval_t jsonfill =
+	tydescr->ityp_getfill (&dmp, (const mom_anyitem_t *) curitm);
       char *strbuild = NULL;
       char *strfill = NULL;
       struct jsonoutput_st outj = { };
@@ -1492,7 +1494,8 @@ mom_full_dump (const char *state)
 	free (buffill), buffill = NULL, sizfill = 0;
       }
       assert (spadescr->spa_store_build_fill != NULL);
-      spadescr->spa_store_build_fill (&dmp, curitm, strbuild, strfill);
+      spadescr->spa_store_build_fill (&dmp, (const mom_anyitem_t *) curitm,
+				      strbuild, strfill);
       strbuild = NULL;
       strfill = NULL;
     }

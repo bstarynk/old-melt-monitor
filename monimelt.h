@@ -230,6 +230,7 @@ union momvalueptr_un
   Dbg(dump)					\
   Dbg(load)					\
   Dbg(json)					\
+  Dbg(run)					\
   Dbg(web)
 
 #define MOM_DEBUG_DEFINE_OPT(Nam) momdbg_##Nam,

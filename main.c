@@ -130,18 +130,24 @@ add_debugging (const char *dbgopt)
     MONIMELT_FATAL ("too long debug option %s", dbgopt);
   strcpy (dbuf, dbgopt);
   char *comma = NULL;
-  for (char *pc = dbuf; pc != NULL; pc = comma ? comma + 1 : NULL)
+  if (!strcmp (dbuf, ".") || !strcmp (dbuf, "_"))
     {
-      comma = strchr (pc, ',');
-      if (comma)
-	*comma = (char) 0;
-#define MOM_TEST_DEBUG_OPTION(Nam) \
-    if (!strcmp(pc,#Nam)) mom_debugflags |=  (1<<momdbg_##Nam); else
-      if (!pc)
-	break;
-      MOM_DEBUG_LIST_OPTIONS (MOM_TEST_DEBUG_OPTION)
-	MONIMELT_FATAL ("unrecognized debug flag %s", pc);
+      mom_debugflags = ~0;
+      MONIMELT_INFORM ("set all debugging");
     }
+  else
+    for (char *pc = dbuf; pc != NULL; pc = comma ? comma + 1 : NULL)
+      {
+	comma = strchr (pc, ',');
+	if (comma)
+	  *comma = (char) 0;
+#define MOM_TEST_DEBUG_OPTION(Nam)					\
+	if (!strcmp(pc,#Nam)) mom_debugflags |=  (1<<momdbg_##Nam); else
+	if (!pc)
+	  break;
+	MOM_DEBUG_LIST_OPTIONS (MOM_TEST_DEBUG_OPTION)
+	  MONIMELT_FATAL ("unrecognized debug flag %s", pc);
+      }
 }
 
 
@@ -515,15 +521,15 @@ mom_debug_at (enum mom_debug_en dbg, const char *fil, int lin,
     }
   if (using_syslog)
     {
-      syslog (LOG_DEBUG, "MONIMELT DEBUG %s @%s:%d <%s> %s %s",
-	      mom_debug_names[dbg],
+      syslog (LOG_DEBUG, "MONIMELT DEBUG %s <%s> @%s:%d <%s> %s %s",
+	      mom_debug_names[dbg], thrname,
 	      fil, lin, thrname, timbuf, bigbuf ? bigbuf : buf);
     }
   else
     {
       pthread_mutex_lock (&dbg_mtx);
-      fprintf (stderr, "\nMONIMELT DEBUG %s @%s:%d <%s> %s %s\n",
-	       mom_debug_names[dbg],
+      fprintf (stderr, "\nMONIMELT DEBUG %s <%s> @%s:%d <%s> %s %s\n",
+	       mom_debug_names[dbg], thrname,
 	       fil, lin, thrname, timbuf, bigbuf ? bigbuf : buf);
       fflush (stderr);
       pthread_mutex_unlock (&dbg_mtx);
@@ -534,9 +540,12 @@ void
 mom_dbg_item_at (enum mom_debug_en dbg, const char *file, int line,
 		 const char *msg, const mom_anyitem_t * itm)
 {
+  char thrname[24];
+  memset (thrname, 0, sizeof (thrname));
+  pthread_getname_np (pthread_self (), thrname, sizeof (thrname) - 1);
   pthread_mutex_lock (&dbg_mtx);
-  fprintf (stderr, "MONIMELT DBG_ITEM %s:%d:%s %s ", file, line,
-	   mom_debug_names[dbg], msg);
+  fprintf (stderr, "MONIMELT DBG_ITEM %s:%d:%s <%s> %s ", file, line,
+	   mom_debug_names[dbg], thrname, msg);
   mom_debugprint_item (stderr, itm);
   if (mom_name_of_item (itm))
     {
@@ -557,9 +566,12 @@ void
 mom_dbg_value_at (enum mom_debug_en dbg, const char *fil, int lin,
 		  const char *msg, const momval_t val)
 {
+  char thrname[24];
+  memset (thrname, 0, sizeof (thrname));
+  pthread_getname_np (pthread_self (), thrname, sizeof (thrname) - 1);
   pthread_mutex_lock (&dbg_mtx);
-  fprintf (stderr, "MONIMELT_DBG_VALUE %s:%d:%s %s", fil, lin,
-	   mom_debug_names[dbg], msg);
+  fprintf (stderr, "MONIMELT_DBG_VALUE %s:%d:%s <%s> %s", fil, lin,
+	   mom_debug_names[dbg], thrname, msg);
   mom_debugprint_value (stderr, val);
   putc ('\n', stderr);
   fflush (stderr);

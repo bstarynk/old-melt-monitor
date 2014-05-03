@@ -70,6 +70,7 @@ mom_agenda_add_tasklet_front (momval_t tsk)
   assert (mom_item__agenda
 	  && ((mom_anyitem_t *) mom_item__agenda)->typnum == momty_queueitem);
   mom_item_queue_push_front ((momval_t) mom_item__agenda, tsk);
+  mom_dbg_value (run, "add tasklet front tsk=", tsk);
   pthread_cond_broadcast (&mom_run_changed_cond);
 }
 
@@ -81,9 +82,11 @@ mom_agenda_add_tasklet_back (momval_t tsk)
   assert (mom_item__agenda
 	  && ((mom_anyitem_t *) mom_item__agenda)->typnum == momty_queueitem);
   mom_item_queue_push_back ((momval_t) mom_item__agenda, tsk);
+  mom_dbg_value (run, "add tasklet back tsk=", tsk);
   pthread_cond_broadcast (&mom_run_changed_cond);
 }
 
+#define WORK_DELAY 1.8		/* seconds */
 static void *
 work_loop (struct GC_stack_base *sb, void *data)
 {
@@ -91,15 +94,22 @@ work_loop (struct GC_stack_base *sb, void *data)
   GC_register_my_thread (sb);
   assert (wd != NULL);
   mom_anyitem_t *curtsk = NULL;
+  MONIMELT_DEBUG (run, "work_loop start index %d wd@%p  cur_worker@%p",
+		  wd->work_index, wd, cur_worker);
   bool working = false;
+  long loopcnt = 0;
   do
     {
       curtsk = NULL;
       pthread_mutex_lock (&mom_run_mtx);
       working = working_flag;
       pthread_mutex_unlock (&mom_run_mtx);
+      loopcnt++;
+      MONIMELT_DEBUG (run, "work_loop index %d, loopcnt=%ld, working=%d",
+		      wd->work_index, loopcnt, (int) working);
       if (working)
 	curtsk = mom_item_queue_pop_front ((momval_t) mom_item__agenda);
+      mom_dbg_item (run, "work_loop curtsk=", curtsk);
       if (curtsk)
 	{
 	  if (MONIMELT_UNLIKELY (curtsk->typnum != momty_taskletitem))
@@ -108,14 +118,20 @@ work_loop (struct GC_stack_base *sb, void *data)
 	}
       else
 	{
+	  double curwtim = monimelt_clock_time (CLOCK_REALTIME);
 	  pthread_mutex_lock (&mom_run_mtx);
+	  struct timespec endts =
+	    monimelt_timespec (curwtim + WORK_DELAY +
+			       (wd->work_index * 0.03 + 0.01));
 	  working = working_flag;
 	  if (working)
-	    pthread_cond_wait (&mom_run_changed_cond, &mom_run_mtx);
+	    pthread_cond_timedwait (&mom_run_changed_cond, &mom_run_mtx,
+				    &endts);
 	  pthread_mutex_unlock (&mom_run_mtx);
 	}
     }
   while (working);
+  MONIMELT_DEBUG (run, "work_loop index %d ending", wd->work_index);
   pthread_mutex_lock (&mom_run_mtx);
   cur_worker->work_index = 0;
   pthread_mutex_unlock (&mom_run_mtx);
@@ -170,6 +186,7 @@ mom_wait_for_stop (void)
 {
   int nbworkers = 0;
   bool isworking = false;
+  MONIMELT_DEBUG (run, "mom_wait_for_stop start");
   do
     {
       nbworkers = 0;
@@ -197,12 +214,14 @@ mom_wait_for_stop (void)
       workers[ix].work_thread = (pthread_t) 0;
     }
   pthread_mutex_unlock (&mom_run_mtx);
+  MONIMELT_DEBUG (run, "mom_wait_for_stop end");
 }
 
 void
 mom_request_stop (void)
 {
   int nbworkers = 0;
+  MONIMELT_DEBUG (run, "mom_request_stop start");
   do
     {
       pthread_mutex_lock (&mom_run_mtx);
@@ -217,6 +236,7 @@ mom_request_stop (void)
       usleep (500);
     }
   while (nbworkers > 0);
+  MONIMELT_DEBUG (run, "mom_request_stop end");
 }
 
 

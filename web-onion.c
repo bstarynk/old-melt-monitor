@@ -128,6 +128,8 @@ dict_add (void *data, const char *key, const void *value, int flags)
   pd->post_count = cnt + 1;
 }
 
+
+
 #define WEB_REPLY_TIMEOUT 2.4	/*seconds web reply timeout */
 static void *
 mom_really_process_request (struct GC_stack_base *sb, void *data)
@@ -266,8 +268,9 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
 	  webitm->iweb_response = onion_response_new (webitm->iweb_request);
 	  onion_response_printf (webitm->iweb_response,
 				 "<html><head><title>Monimelt timeout</title></head>\n"
-				 "<body><h1>Monimelt timeout for %s of <tt>",
-				 method);
+				 "<body><h1>Monimelt timeout webnum#%ld</h1>\n"
+				 "<p>For %s of <tt>",
+				 (long) webitm->iweb_webnum, method);
 	  onion_response_write_html_safe (webitm->iweb_response, fullpath);
 	  {
 	    char timebuf[80];
@@ -277,7 +280,7 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
 	    localtime_r (&wt, &timetm);
 	    strftime (timebuf, sizeof (timebuf), "%Y-%b-%d %T %Z", &timetm);
 	    onion_response_printf (webitm->iweb_response,
-				   "</tt> at <i>%s</i></h1>", timebuf);
+				   "</tt> at <i>%s</i></p>", timebuf);
 	  }
 	  onion_response_write0 (webitm->iweb_response, "</body></html>\n");
 	  onion_response_set_code (webitm->iweb_response,
@@ -299,6 +302,10 @@ mom_item_webrequest_reply (momval_t vweb, const char *mimetype, int code)
   if (!code)
     code = HTTP_OK;
   momit_webrequest_t *webitm = vweb.pwebrequestitem;
+  MONIMELT_DEBUG (web, "webrequest_reply mimetype=%s code=%d webnum#%ld",
+		  mimetype, code, (long) webitm->iweb_webnum);
+  mom_dbg_item (web, "webrequest_reply webitm",
+		(const mom_anyitem_t *) webitm);
   pthread_mutex_lock (&vweb.panyitem->i_mtx);
   if (webitm->iweb_response)
     {
@@ -310,6 +317,9 @@ mom_item_webrequest_reply (momval_t vweb, const char *mimetype, int code)
     }
   pthread_mutex_unlock (&vweb.panyitem->i_mtx);
   pthread_cond_signal (&webitm->iweb_cond);
+  MONIMELT_DEBUG (web, "webrequest_reply webnum#%ld done",
+		  (long) webitm->iweb_webnum);
+  sched_yield ();
 }
 
 extern void

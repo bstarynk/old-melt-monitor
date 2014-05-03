@@ -33,15 +33,22 @@ momcode_web_form_exit (int state, momit_tasklet_t * tasklet,
   strftime (nowbuf, sizeof (nowbuf), "%c", localtime_r (&now, &nowtm));
   MONIMELT_DEBUG (web, "momcode_form_exit state=%d webnum=%ld nowbuf=%s",
 		  state, mom_item_webrequest_webnum (webv), nowbuf);
-  mom_dbg_item (web, "web_form_exit tasklet",
+  mom_dbg_item (web, "web_form_exit tasklet=",
 		(const mom_anyitem_t *) tasklet);
-  mom_dbg_value (web, "web_form_exit closure",
+  mom_dbg_value (web, "web_form_exit webv=", webv);
+  mom_dbg_value (web, "web_form_exit closure=",
 		 (momval_t) (const momclosure_t *) closure);
+  mom_dbg_value (web, "web_form_exit method=",
+		 (momval_t) mom_item_webrequest_method (webv));
   if (mom_item_webrequest_method (webv).ptr ==
       ((momval_t) mom_item__POST).ptr)
     {
+      MONIMELT_DEBUG (web, "momcode_form_exit POST");
+      mom_dbg_value (web, "web_form_exit jsobpost=",
+		     mom_item_webrequest_jsob_post (webv));
       if (mom_item_webrequest_post_arg (webv, "do_savexit").ptr)
 	{
+	  MONIMELT_DEBUG (web, "momcode_form_exit do_savexit");
 	  mom_item_webrequest_printf
 	    (webv,
 	     "<!doctype html><head><title>dump and exit Monimelt</title></head>\n"
@@ -51,12 +58,16 @@ momcode_web_form_exit (int state, momit_tasklet_t * tasklet,
 	     mom_item_webrequest_webnum (webv), nowbuf);
 	  mom_item_webrequest_reply (webv, "text/html", HTTP_OK);
 	  usleep (100);
+	  MONIMELT_DEBUG (web,
+			  "momcode_form_exit do_savexit before request stop");
 	  mom_request_stop ();
-	  mom_wait_for_stop ();
+	  MONIMELT_DEBUG (web,
+			  "momcode_form_exit do_savexit before fulldump");
 	  mom_full_dump (MONIMELT_DEFAULT_STATE_FILE);
 	}
       else if (mom_item_webrequest_post_arg (webv, "do_quit").ptr)
 	{
+	  MONIMELT_DEBUG (web, "momcode_form_exit do_quit");
 	  mom_item_webrequest_printf
 	    (webv,
 	     "<!doctype html><head><title>Quit Monimelt</title></head>\n"
@@ -65,9 +76,13 @@ momcode_web_form_exit (int state, momit_tasklet_t * tasklet,
 	     "</body></html>\n", mom_item_webrequest_webnum (webv), nowbuf);
 	  mom_item_webrequest_reply (webv, "text/html", HTTP_OK);
 	  usleep (100);
+	  MONIMELT_DEBUG (web,
+			  "momcode_form_exit do_quit before request stop");
 	  mom_request_stop ();
-	  mom_wait_for_stop ();
 	}
+      else
+	MONIMELT_WARNING ("unexpected post query for webnum#%ld",
+			  mom_item_webrequest_webnum (webv));
     }
   MONIMELT_DEBUG (web, "momcode_form_exit ending");
   return -1;
