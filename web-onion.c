@@ -58,7 +58,7 @@ process_request (void *ignore, onion_request * req, onion_response * res)
     pthread_mutex_lock (&mtx_onion);
     nb_weq_requests++;
     webnum = nb_weq_requests;
-    snprintf (thnambuf, sizeof (thnambuf), "monimelt-w%04ld", webnum);
+    snprintf (thnambuf, sizeof (thnambuf), "mom-web%05ld", webnum);
     pthread_setname_np (pthread_self (), thnambuf);
     pthread_mutex_unlock (&mtx_onion);
   }
@@ -168,7 +168,7 @@ webrun_cb (void *data)
   assert (wr->webrunner_webitm != NULL
 	  && wr->webrunner_webitm->iweb_item.typnum == momty_webrequestitem);
   unsigned long webnum = wr->webrunner_webitm->iweb_webnum;
-  snprintf (thrname, sizeof (thrname), "monimeltwru%05ld", webnum);
+  snprintf (thrname, sizeof (thrname), "mom-wru%05ld", webnum);
   pthread_setname_np (pthread_self (), thrname);
   MONIMELT_DEBUG (web, "webrun before running closhandler webnum#%ld",
 		  webnum);
@@ -196,11 +196,9 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
   unsigned flags = onion_request_get_flags (req);
   mom_anyitem_t *methoditm = NULL;
   const char *method = NULL;
-  extern momit_box_t *mom_item__GET;
-  extern momit_box_t *mom_item__PUT;
-  extern momit_box_t *mom_item__POST;
-  extern momit_box_t *mom_item__OPTIONS;
-  extern momit_box_t *mom_item__HEAD;
+  MONIMELT_DEBUG (web,
+		  "really_process_request start webnum#%ld wtim=%f wend=%f",
+		  webnum, wtim, wend);
   switch (flags & OR_METHODS)
     {
     case OR_GET:
@@ -293,10 +291,14 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
       webitm->iweb_postjsob = jpost;
       webitm->iweb_queryjsob = jquery;
       webitm->iweb_path = pathv;
-      mom_dbg_item (web, "webitm", (const mom_anyitem_t *) webitm);
-      mom_dbg_value (web, "closhandler", closhandler);
       pthread_cond_init (&webitm->iweb_cond, NULL);
-      MONIMELT_DEBUG (web, "before running closhandler");
+      MONIMELT_DEBUG (web,
+		      "really_process_request made webitm@%p webnum#%ld wtim=%f wend=%f",
+		      webitm, webnum, wtim, wend);
+      mom_dbg_item (web, "really_process_request webitm",
+		    (const mom_anyitem_t *) webitm);
+      mom_dbg_value (web, "really_process_request closhandler", closhandler);
+      MONIMELT_DEBUG (web, "before running webrunthread");
       pthread_t webrunthread = 0;
       struct webrunner_st webrun = { };
       memset (&webrun, 0, sizeof (webrun));
@@ -305,53 +307,70 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
       webrun.webrunner_magic = WEBRUNNER_MAGIC;
       if (pthread_create (&webrunthread, NULL, webrun_cb, &webrun))
 	MONIMELT_FATAL ("failed to create webrunner for webnum#%ld", webnum);
-      usleep (100);
+      usleep (1000);
       void *ret = NULL;
-      MONIMELT_DEBUG (web, "created webrunthread=%ld for webnum#%ld",
+      MONIMELT_DEBUG (web, "created webrunthread=%#lx for webnum#%ld",
 		      (long) webrunthread, webnum);
-      if (pthread_join (webrunthread, &ret)
-	  || (ret != NULL && ret != &webrun))
-	MONIMELT_FATAL
-	  ("failed to join successfully webrunner for webnum#%ld", webnum);
+      sched_yield ();
       /* we should loop on lock the webitm's mutex and
          pthread_cond_timedwait webitm->iweb_cond, so we should define
          a protocol to reply to a request */
       bool gotreply = false;
-      int waiterr = 0;
-      pthread_mutex_lock (&webitm->iweb_item.i_mtx);
-      struct timespec endts = monimelt_timespec (wend);
-      waiterr =
-	pthread_cond_timedwait (&webitm->iweb_cond, &webitm->iweb_item.i_mtx,
-				&endts);
-      gotreply = webitm->iweb_response == NULL;
-      MONIMELT_DEBUG (web, "waiterr=%d, gotreply=%d", waiterr,
-		      (int) gotreply);
-      if (!gotreply)
+      do
 	{
-	  onion_response_free (webitm->iweb_response);
-	  webitm->iweb_response = onion_response_new (webitm->iweb_request);
-	  onion_response_printf (webitm->iweb_response,
-				 "<html><head><title>Monimelt timeout</title></head>\n"
-				 "<body><h1>Monimelt timeout webnum#%ld</h1>\n"
-				 "<p>For %s of <tt>",
-				 (long) webitm->iweb_webnum, method);
-	  onion_response_write_html_safe (webitm->iweb_response, fullpath);
-	  {
-	    char timebuf[80];
-	    struct tm timetm = { };
-	    time_t wt = (time_t) wtim;
-	    memset (timebuf, 0, sizeof (timebuf));
-	    localtime_r (&wt, &timetm);
-	    strftime (timebuf, sizeof (timebuf), "%Y-%b-%d %T %Z", &timetm);
-	    onion_response_printf (webitm->iweb_response,
-				   "</tt> at <i>%s</i></p>", timebuf);
-	  }
-	  onion_response_write0 (webitm->iweb_response, "</body></html>\n");
-	  onion_response_set_code (webitm->iweb_response,
-				   HTTP_SERVICE_UNAVALIABLE);
-	  webitm->iweb_response = NULL;
+	  int waiterr = 0;
+	  gotreply = false;
+	  pthread_mutex_lock (&webitm->iweb_item.i_mtx);
+	  struct timespec endts = monimelt_timespec (wend);
+	  waiterr =
+	    pthread_cond_timedwait (&webitm->iweb_cond,
+				    &webitm->iweb_item.i_mtx, &endts);
+	  gotreply = webitm->iweb_response == NULL;
+	  MONIMELT_DEBUG (web, "waiterr=%d (%s), gotreply=%d", waiterr,
+			  strerror (waiterr), (int) gotreply);
+	  if (!gotreply)
+	    {
+	      onion_response_free (webitm->iweb_response);
+	      webitm->iweb_response =
+		onion_response_new (webitm->iweb_request);
+	      onion_response_printf (webitm->iweb_response,
+				     "<html><head><title>Monimelt timeout</title></head>\n"
+				     "<body><h1>Monimelt timeout webnum#%ld</h1>\n"
+				     "<p>For %s of <tt>",
+				     (long) webitm->iweb_webnum, method);
+	      onion_response_write_html_safe (webitm->iweb_response,
+					      fullpath);
+	      {
+		char timebuf[80];
+		struct tm timetm = { };
+		time_t wt = (time_t) wtim;
+		memset (timebuf, 0, sizeof (timebuf));
+		localtime_r (&wt, &timetm);
+		strftime (timebuf, sizeof (timebuf), "%Y-%b-%d %T %Z",
+			  &timetm);
+		onion_response_printf (webitm->iweb_response,
+				       "</tt> at <i>%s</i></p>", timebuf);
+	      }
+	      onion_response_write0 (webitm->iweb_response,
+				     "</body></html>\n");
+	      onion_response_set_code (webitm->iweb_response,
+				       HTTP_SERVICE_UNAVALIABLE);
+	      webitm->iweb_response = NULL;
+	    }
+	  pthread_mutex_unlock (&webitm->iweb_item.i_mtx);
+	  sched_yield ();
 	}
-      pthread_mutex_unlock (&webitm->iweb_item.i_mtx);
+      while (!gotreply && monimelt_clock_time (CLOCK_REALTIME) <= wend);
+      MONIMELT_DEBUG (web, "before joining webrunthread");
+      if (pthread_join (webrunthread, &ret))
+	MONIMELT_FATAL
+	  ("failed to join successfully webrunner for webnum#%ld", webnum);
+      if (ret != NULL && ret != &webrun)
+	MONIMELT_FATAL
+	  ("bad return @%p from webrunner for webnum#%ld", ret, webnum);
+      MONIMELT_DEBUG (web, "joined webrunthread=%#lx", (long) webrunthread);
+      memset (&webrun, 0, sizeof (webrun));
+      sched_yield ();
       pwebinf->web_stat = OCS_PROCESSED;
     }
   MOMGC_UNREGISTER_MY_THREAD ();
@@ -371,6 +390,7 @@ mom_item_webrequest_reply (momval_t vweb, const char *mimetype, int code)
 		  mimetype, code, (long) webitm->iweb_webnum);
   mom_dbg_item (web, "webrequest_reply webitm",
 		(const mom_anyitem_t *) webitm);
+  bool webdone = false;
   pthread_mutex_lock (&vweb.panyitem->i_mtx);
   if (webitm->iweb_response)
     {
@@ -379,13 +399,22 @@ mom_item_webrequest_reply (momval_t vweb, const char *mimetype, int code)
       if (code > 0)
 	onion_response_set_code (webitm->iweb_response, code);
       webitm->iweb_response = NULL;
+      webdone = true;
       MONIMELT_DEBUG (web,
-		      "webrequest_reply clearing response webnum#%ld and signaling",
+		      "webrequest_reply clearing response webnum#%ld",
 		      (long) webitm->iweb_webnum);
-      pthread_cond_signal (&webitm->iweb_cond);
     }
   pthread_mutex_unlock (&vweb.panyitem->i_mtx);
-  MONIMELT_DEBUG (web, "webrequest_reply webnum#%ld done",
+  if (webdone)
+    {
+      MONIMELT_DEBUG (web, "webrequest_reply webnum#%ld webdone broadcast",
+		      (long) webitm->iweb_webnum);
+      int brerr = pthread_cond_broadcast (&webitm->iweb_cond);
+      MONIMELT_DEBUG (web, "webrequest_reply webnum#%ld brerr#%d (%s)",
+		      webitm->iweb_webnum, brerr, strerror (brerr));
+
+    }
+  MONIMELT_DEBUG (web, "webrequest_reply webnum#%ld end",
 		  (long) webitm->iweb_webnum);
   sched_yield ();
 }

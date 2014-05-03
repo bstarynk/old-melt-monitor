@@ -57,7 +57,7 @@ momcode_web_form_exit (int state, momit_tasklet_t * tasklet,
 	     "</tt> reqnum#%ld at <i>%s</i></p>\n" "</body></html>\n",
 	     mom_item_webrequest_webnum (webv), nowbuf);
 	  mom_item_webrequest_reply (webv, "text/html", HTTP_OK);
-	  usleep (100);
+	  usleep (1000);
 	  MONIMELT_DEBUG (web,
 			  "momcode_form_exit do_savexit before request stop");
 	  mom_request_stop ();

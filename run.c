@@ -95,8 +95,8 @@ work_loop (struct GC_stack_base *sb, void *data)
   assert (wd != NULL);
   mom_anyitem_t *curtsk = NULL;
   MONIMELT_DEBUG (run,
-		  "work_loop tid %ld start index %d wd@%p  cur_worker@%p",
-		  mom_gettid (), wd->work_index, wd, cur_worker);
+		  "work_loop tid %d start index %d wd@%p  cur_worker@%p",
+		  (int) mom_gettid (), wd->work_index, wd, cur_worker);
   bool working = false;
   long loopcnt = 0;
   do
@@ -148,7 +148,7 @@ work_cb (void *ad)
   {
     char thnambuf[24];
     memset (thnambuf, 0, sizeof (thnambuf));
-    snprintf (thnambuf, sizeof (thnambuf), "monimelt-r%02d", wd->work_index);
+    snprintf (thnambuf, sizeof (thnambuf), "mom-work%02d", wd->work_index);
     pthread_setname_np (pthread_self (), thnambuf);
   }
   assert (wd && wd->work_magic == WORK_MAGIC);
@@ -215,6 +215,7 @@ mom_wait_for_stop (void)
       workers[ix].work_thread = (pthread_t) 0;
     }
   pthread_mutex_unlock (&mom_run_mtx);
+  usleep (1000);
   MONIMELT_DEBUG (run, "mom_wait_for_stop end");
 }
 
@@ -620,7 +621,7 @@ event_loop (struct GC_stack_base *sb, void *data)
 static void *
 eventloop_cb (void *p)
 {
-  pthread_setname_np (pthread_self (), "monimelt-evloop");
+  pthread_setname_np (pthread_self (), "mom-evloop");
   MOMGC_CALL_WITH_STACK_BASE (event_loop, p);
   return p;
 }

@@ -521,16 +521,16 @@ mom_debug_at (enum mom_debug_en dbg, const char *fil, int lin,
     }
   if (using_syslog)
     {
-      syslog (LOG_DEBUG, "MONIMELT DEBUG %s <%s> @%s:%d <%s> %s %s",
+      syslog (LOG_DEBUG, "MONIMELT DEBUG %s <%s> @%s:%d %s %s",
 	      mom_debug_names[dbg], thrname,
-	      fil, lin, thrname, timbuf, bigbuf ? bigbuf : buf);
+	      fil, lin, timbuf, bigbuf ? bigbuf : buf);
     }
   else
     {
       pthread_mutex_lock (&dbg_mtx);
-      fprintf (stderr, "\nMONIMELT DEBUG %s <%s> @%s:%d <%s> %s %s\n",
+      fprintf (stderr, "\nMONIMELT DEBUG %s <%s> @%s:%d %s %s\n",
 	       mom_debug_names[dbg], thrname,
-	       fil, lin, thrname, timbuf, bigbuf ? bigbuf : buf);
+	       fil, lin, timbuf, bigbuf ? bigbuf : buf);
       fflush (stderr);
       pthread_mutex_unlock (&dbg_mtx);
     }
@@ -685,7 +685,7 @@ main (int argc, char **argv)
   GC_allow_register_threads ();
   explicit_boehm_gc_thread = true;
 #endif
-  pthread_setname_np (pthread_self (), "monimelt-main");
+  pthread_setname_np (pthread_self (), "mom-main");
   g_mem_gc_friendly = TRUE;
   g_mem_set_vtable (&gc_mem_vtable);
   mom_initialize ();
@@ -759,8 +759,10 @@ main (int argc, char **argv)
     MONIMELT_WARNING ("did not start event loop");
   if (mom_nb_workers > 0)
     {
+      usleep (2000);
       mom_wait_for_stop ();
       MONIMELT_INFORM ("done %d workers", (int) mom_nb_workers);
+      usleep (2000);
       if (!dump_state_path && load_state_path)
 	{
 	  MONIMELT_INFORM ("will dump on %s", dump_state_path);
