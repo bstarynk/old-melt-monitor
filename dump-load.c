@@ -1216,6 +1216,7 @@ mom_initial_load (const char *state)
 	  if (!curitm)
 	    MONIMELT_FATAL ("failed to load named item %s of uid %s space %s",
 			    curname, curuuidstr, curspace);
+	  mom_register_new_name_item (curname, curitm);
 	}
     }
   while (ld.ldr_qfirst != NULL)
