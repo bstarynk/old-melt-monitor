@@ -384,9 +384,10 @@ raw_dump_emit_json (struct mom_dumper_st * dmp, const momval_t val)
 	  struct momspacedescr_st *spadecr = mom_spacedescr_array[spacenum];
 	  char ustr[UUID_PARSED_LEN];
 	  memset (ustr, 0, sizeof (ustr));
+	  mom_unparse_item_uuid (val.panyitem, ustr);
 	  if (MONIMELT_UNLIKELY (!found_dumped_item (dmp, val.panyitem)))
 	    MONIMELT_FATAL ("unknown dumped item @%p uuid %s", val.panyitem,
-			    mom_unparse_item_uuid (val.panyitem, ustr));
+			   ustr);
 	  if (MONIMELT_UNLIKELY (spadecr->spa_magic != SPACE_MAGIC))
 	    MONIMELT_FATAL ("dumped item @%p uuid %s has bad space #%d",
 			    val.ptr, ustr, spacenum);
@@ -1399,15 +1400,52 @@ mom_full_dump (const char *state)
     mom_dump_globals (&dmp, dumpglobal_cb, &dg);
     memset (&dg, 0, sizeof (dg));
   }
+  MONIMELT_DEBUG (dump, "scanning loop start");
   unsigned nbdumpeditems = 0;
-  dmp.dmp_state = dus_emit;
+  // scanning queue loop
   while (dmp.dmp_qfirst != NULL)
     {
-      struct jsonoutput_st outj = { };
-      memset (&outj, 0, sizeof (outj));
       mom_anyitem_t *curitm = dmp.dmp_qfirst->iq_item;
-      mom_dbg_item (dump, "dumping build of item", curitm);
+      mom_dbg_item (dump, "dumping scan of item", curitm);
       //
+      assert (curitm != NULL && curitm->i_space < momty__last);
+      const struct momitemtypedescr_st *tydescr =
+	mom_typedescr_array[curitm->typnum];
+      assert (tydescr != NULL && tydescr->ityp_magic == ITEMTYPE_MAGIC);
+      assert (curitm->i_space > 0 && curitm->i_space < MONIMELT_SPACE_MAX);
+      struct momspacedescr_st *spadescr =
+	mom_spacedescr_array[curitm->i_space];
+      assert (spadescr && spadescr->spa_magic == SPACE_MAGIC);
+      // now scan that item
+      if (tydescr->ityp_scan)
+	{
+	  mom_dbg_item (dump, "scanning item", curitm);
+	  tydescr->ityp_scan (&dmp, curitm);
+	}
+      else
+	{
+	  char uidstr[UUID_PARSED_LEN];
+	  memset (uidstr, 0, sizeof (uidstr));
+	  mom_dbg_item (dump, "unscanned item", curitm);
+	  MONIMELT_FATAL ("unscanned item %s",
+			  mom_unparse_item_uuid (curitm, uidstr));
+	};
+      // go the next queued item
+      dmp.dmp_qfirst = dmp.dmp_qfirst->iq_next;
+      if (!dmp.dmp_qfirst)
+	dmp.dmp_qlast = NULL;
+      nbdumpeditems++;
+    }
+  MONIMELT_DEBUG (dump, "after scanning loop nbdumpeditems=%d",
+		  (int) nbdumpeditems);
+  dmp.dmp_state = dus_emit;
+  /// dumping loop
+  for (unsigned dix = 0; dix < dmp.dmp_size; dix++)
+    {
+      mom_anyitem_t *curitm = dmp.dmp_array[dix];
+      if (!curitm || curitm == MONIMELT_EMPTY)
+	continue;
+      mom_dbg_item (dump, "dump of item", curitm);
       assert (curitm != NULL && curitm->i_space < momty__last);
       const struct momitemtypedescr_st *tydescr =
 	mom_typedescr_array[curitm->typnum];
@@ -1420,6 +1458,8 @@ mom_full_dump (const char *state)
       momval_t jsonfill = tydescr->ityp_getfill (&dmp, curitm);
       char *strbuild = NULL;
       char *strfill = NULL;
+      struct jsonoutput_st outj = { };
+      memset (&outj, 0, sizeof (outj));
       {
 	char *bufbuild = NULL;
 	size_t sizbuild = 0;
@@ -1448,31 +1488,13 @@ mom_full_dump (const char *state)
 	  putc ('\n', foutfill);
 	mom_json_output_close (&outj);
 	strfill = GC_STRDUP (buffill);
+	MONIMELT_DEBUG (dump, "strfill=%s", strbuild);
 	free (buffill), buffill = NULL, sizfill = 0;
       }
       assert (spadescr->spa_store_build_fill != NULL);
       spadescr->spa_store_build_fill (&dmp, curitm, strbuild, strfill);
       strbuild = NULL;
       strfill = NULL;
-      // now scan that item
-      if (tydescr->ityp_scan)
-	{
-	  mom_dbg_item (dump, "scanning item", curitm);
-	  tydescr->ityp_scan (&dmp, curitm);
-	}
-      else
-	{
-	  char uidstr[UUID_PARSED_LEN];
-	  memset (uidstr, 0, sizeof (uidstr));
-	  mom_dbg_item (dump, "unscanned item", curitm);
-	  MONIMELT_FATAL ("unscanned item %s",
-			  mom_unparse_item_uuid (curitm, uidstr));
-	};
-      // go the next queued item
-      dmp.dmp_qfirst = dmp.dmp_qfirst->iq_next;
-      if (!dmp.dmp_qfirst)
-	dmp.dmp_qlast = NULL;
-      nbdumpeditems++;
     }
   dump_modules ();
   if (buildfill_dumpstmt)
