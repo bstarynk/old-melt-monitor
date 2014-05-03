@@ -387,7 +387,7 @@ raw_dump_emit_json (struct mom_dumper_st * dmp, const momval_t val)
 	  mom_unparse_item_uuid (val.panyitem, ustr);
 	  if (MONIMELT_UNLIKELY (!found_dumped_item (dmp, val.panyitem)))
 	    MONIMELT_FATAL ("unknown dumped item @%p uuid %s", val.panyitem,
-			   ustr);
+			    ustr);
 	  if (MONIMELT_UNLIKELY (spadecr->spa_magic != SPACE_MAGIC))
 	    MONIMELT_FATAL ("dumped item @%p uuid %s has bad space #%d",
 			    val.ptr, ustr, spacenum);
@@ -1442,7 +1442,7 @@ mom_full_dump (const char *state)
   /// dumping loop
   for (unsigned dix = 0; dix < dmp.dmp_size; dix++)
     {
-      mom_anyitem_t *curitm = dmp.dmp_array[dix];
+      const mom_anyitem_t *curitm = dmp.dmp_array[dix];
       if (!curitm || curitm == MONIMELT_EMPTY)
 	continue;
       mom_dbg_item (dump, "dump of item", curitm);

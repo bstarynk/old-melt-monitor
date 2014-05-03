@@ -577,12 +577,13 @@ compute_pushed_data_size (const momclosure_t * closure, unsigned *pnbval,
   unsigned nbnum = 0;
   unsigned nbdbl = 0;
   int newstate = 0;
-  while (dir != MOMPFR__END)
+  bool again = true;
+  while (again && dir != MOMPFR__END)
     {
-      dir = va_arg (args, enum mom_pushframedirective_en);
       switch (dir)
 	{
 	case MOMPFR__END:
+	  again = false;
 	  break;
 	case MOMPFR_STATE /*, int state  */ :
 	  newstate = va_arg (args, int);
@@ -738,6 +739,8 @@ compute_pushed_data_size (const momclosure_t * closure, unsigned *pnbval,
 	default:
 	  MONIMELT_FATAL ("unexpected push directive #%d", (int) dir);
 	}
+      if (again)
+	dir = va_arg (args, enum mom_pushframedirective_en);
     }
   momit_routine_t *rout = (momit_routine_t *) closure->connitm;
   if (MONIMELT_UNLIKELY (!rout || rout->irt_item.typnum != momty_routineitem))
@@ -771,12 +774,13 @@ static void
 fill_frame_data (intptr_t * numdata, double *dbldata, momval_t * valdata,
 		 enum mom_pushframedirective_en dir, va_list args)
 {
-  while (dir != MOMPFR__END)
+  bool again = true;
+  while (again && dir != MOMPFR__END)
     {
-      dir = va_arg (args, enum mom_pushframedirective_en);
       switch (dir)
 	{
 	case MOMPFR__END:
+	  again = false;
 	  break;
 	case MOMPFR_STATE /*, int state  */ :
 	  break;
@@ -895,6 +899,8 @@ fill_frame_data (intptr_t * numdata, double *dbldata, momval_t * valdata,
 	default:
 	  MONIMELT_FATAL ("unexpected push directive #%d", (int) dir);
 	}
+      if (again)
+	dir = va_arg (args, enum mom_pushframedirective_en);
     }
 }
 

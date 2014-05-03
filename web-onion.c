@@ -243,10 +243,14 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
       webitm->iweb_postjsob = jpost;
       webitm->iweb_queryjsob = jquery;
       webitm->iweb_path = pathv;
-      mom_dbg_item (web, "webitm", webitm);
+      mom_dbg_item (web, "webitm", (const mom_anyitem_t *) webitm);
+      mom_dbg_value (web, "closhandler", closhandler);
       pthread_cond_init (&webitm->iweb_cond, NULL);
+      MONIMELT_DEBUG (web, "before running closhandler");
       (void) mom_run_closure (closhandler,
 			      MOMPFR_VALUE, (momval_t) webitm, MOMPFR_END);
+      MONIMELT_DEBUG (web, "after running closhandler");
+
       /* we should loop on lock the webitm's mutex and
          pthread_cond_timedwait webitm->iweb_cond, so we should define
          a protocol to reply to a request */

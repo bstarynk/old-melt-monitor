@@ -207,7 +207,7 @@ union momvalueptr_un
   const struct momjsonarray_st *pjsonarr;
   const struct momjsonobject_st *pjsonobj;
   const struct momnode_st *pnode;
-  const struct momnode_st *pclosure;
+  const momclosure_t *pclosure;
   const struct momseqitem_st *pseqitm;
   const struct momseqitem_st *pset;
   const struct momseqitem_st *ptuple;

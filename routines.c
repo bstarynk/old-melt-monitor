@@ -31,8 +31,12 @@ momcode_web_form_exit (int state, momit_tasklet_t * tasklet,
   char nowbuf[64] = "";
   time (&now);
   strftime (nowbuf, sizeof (nowbuf), "%c", localtime_r (&now, &nowtm));
-  MONIMELT_INFORM ("momcode_form_exit state=%d webnum=%ld",
-		   state, mom_item_webrequest_webnum (webv));
+  MONIMELT_DEBUG (web, "momcode_form_exit state=%d webnum=%ld nowbuf=%s",
+		  state, mom_item_webrequest_webnum (webv), nowbuf);
+  mom_dbg_item (web, "web_form_exit tasklet",
+		(const mom_anyitem_t *) tasklet);
+  mom_dbg_value (web, "web_form_exit closure",
+		 (momval_t) (const momclosure_t *) closure);
   if (mom_item_webrequest_method (webv).ptr ==
       ((momval_t) mom_item__POST).ptr)
     {
@@ -65,7 +69,7 @@ momcode_web_form_exit (int state, momit_tasklet_t * tasklet,
 	  mom_wait_for_stop ();
 	}
     }
-  MONIMELT_INFORM ("momcode_form_exit ending");
+  MONIMELT_DEBUG (web, "momcode_form_exit ending");
   return -1;
 }
 
