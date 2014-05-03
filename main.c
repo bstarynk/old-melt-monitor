@@ -538,6 +538,15 @@ mom_dbg_item_at (enum mom_debug_en dbg, const char *file, int line,
   fprintf (stderr, "MONIMELT DBG_ITEM %s:%d:%s %s ", file, line,
 	   mom_debug_names[dbg], msg);
   mom_debugprint_item (stderr, itm);
+  if (mom_name_of_item (itm))
+    {
+      char uidstr[UUID_PARSED_LEN];
+      memset (uidstr, 0, sizeof (uidstr));
+      fprintf (stderr, " {%s}", mom_unparse_item_uuid (itm, uidstr));
+    }
+  if (itm && itm->typnum < momty__last
+      && mom_typedescr_array[itm->typnum] != NULL)
+    fprintf (stderr, " /.%s", mom_typedescr_array[itm->typnum]->ityp_name);
   putc ('\n', stderr);
   fflush (stderr);
   pthread_mutex_unlock (&dbg_mtx);

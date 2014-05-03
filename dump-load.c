@@ -105,6 +105,7 @@ mom_dump_add_item (struct mom_dumper_st *dmp, const mom_anyitem_t * itm)
     return;
   if (!dmp || dmp->dmp_magic != DUMPER_MAGIC)
     return;
+  mom_dbg_item (dump, "adding item", itm);
   if (MONIMELT_UNLIKELY (dmp->dmp_state != dus_scan))
     MONIMELT_FATAL ("invalid dump state #%d", (int) dmp->dmp_state);
   if (MONIMELT_UNLIKELY (4 * dmp->dmp_count / 3 + 10 >= dmp->dmp_size))
@@ -379,13 +380,13 @@ raw_dump_emit_json (struct mom_dumper_st * dmp, const momval_t val)
 	      jsval.ptr = NULL;
 	      goto end;
 	    };
+	  mom_dbg_item (dump, "dumping item", val.panyitem);
 	  struct momspacedescr_st *spadecr = mom_spacedescr_array[spacenum];
 	  char ustr[UUID_PARSED_LEN];
 	  memset (ustr, 0, sizeof (ustr));
-	  uuid_unparse (val.panyitem->i_uuid, ustr);
 	  if (MONIMELT_UNLIKELY (!found_dumped_item (dmp, val.panyitem)))
 	    MONIMELT_FATAL ("unknown dumped item @%p uuid %s", val.panyitem,
-			    ustr);
+			    mom_unparse_item_uuid (val.panyitem, ustr));
 	  if (MONIMELT_UNLIKELY (spadecr->spa_magic != SPACE_MAGIC))
 	    MONIMELT_FATAL ("dumped item @%p uuid %s has bad space #%d",
 			    val.ptr, ustr, spacenum);
@@ -1269,17 +1270,34 @@ mom_initial_load (const char *state)
 }
 
 
+
+////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
+
+#define DUMPGLOBAL_MAGIC 0x5ada2023	/* dumpglobal magic 1524244515 */
+struct dumpglobal_st
+{
+  unsigned dumpglobal_magic;	/* always DUMPGLOBAL_MAGIC */
+  sqlite3_stmt *dumpglobal_stmt;
+  struct mom_dumper_st *dumpglobal_dumper;
+};
+
 static void
 dumpglobal_cb (const mom_anyitem_t * itm, const momstring_t * name,
 	       void *data)
 {
-  sqlite3_stmt *stmt = data;
+  struct dumpglobal_st *dg = data;
+  assert (dg && dg->dumpglobal_magic == DUMPGLOBAL_MAGIC);
+  sqlite3_stmt *stmt = dg->dumpglobal_stmt;
+  struct mom_dumper_st *dmp = dg->dumpglobal_dumper;
   assert (stmt != NULL);
   assert (name != NULL && name->typnum == momty_string);
   if (!itm || itm->typnum <= momty__itemlowtype || itm->i_space == 0
       || itm->i_space >= MONIMELT_SPACE_MAX
       || !mom_spacename_array[itm->i_space])
     return;
+  // add the global item to dump
+  mom_dump_add_item (dmp, itm);
   // name at index 1
   if (sqlite3_bind_text
       (stmt, 1, mom_string_cstr ((momval_t) name), -1, SQLITE_STATIC))
@@ -1308,6 +1326,9 @@ dumpglobal_cb (const mom_anyitem_t * itm, const momstring_t * name,
 		    sqlite3_errmsg (mom_dbsqlite));
 }
 
+
+
+
 static GTree *dumped_module_tree;
 static void dump_modules (void);
 
@@ -1319,6 +1340,7 @@ mom_full_dump (const char *state)
 {
   struct mom_dumper_st dmp = { };
   memset (&dmp, 0, sizeof (dmp));
+  MONIMELT_INFORM ("start of full state dump to %s", state);
   int errcod = sqlite3_open (state, &mom_dbsqlite);
   char *errmsg = NULL;
   if (errcod)
@@ -1359,6 +1381,7 @@ mom_full_dump (const char *state)
       (mom_dbsqlite, "DELETE FROM t_module", NULL, NULL, &errmsg))
     MONIMELT_FATAL ("failed to DELETE FROM t_module: %s", errmsg);
   param_printf (MONIMELT_VERSION_PARAM, "%s", MONIMELT_DUMP_VERSION);
+  //
   mom_dumper_initialize (&dmp);
   sqlite3_stmt *stmt = NULL;
   if (sqlite3_prepare_v2 (mom_dbsqlite,
@@ -1366,7 +1389,15 @@ mom_full_dump (const char *state)
 			  -1, &stmt, NULL))
     MONIMELT_FATAL ("failed to prepare name insertion: %s",
 		    sqlite3_errmsg (mom_dbsqlite));
-  mom_dump_globals (&dmp, dumpglobal_cb, stmt);
+  {
+    struct dumpglobal_st dg = { };
+    memset (&dg, 0, sizeof (dg));
+    dg.dumpglobal_dumper = &dmp;
+    dg.dumpglobal_stmt = stmt;
+    dg.dumpglobal_magic = DUMPGLOBAL_MAGIC;
+    mom_dump_globals (&dmp, dumpglobal_cb, &dg);
+    memset (&dg, 0, sizeof (dg));
+  }
   unsigned nbdumpeditems = 0;
   dmp.dmp_state = dus_emit;
   while (dmp.dmp_qfirst != NULL)
@@ -1374,12 +1405,7 @@ mom_full_dump (const char *state)
       struct jsonoutput_st outj = { };
       memset (&outj, 0, sizeof (outj));
       mom_anyitem_t *curitm = dmp.dmp_qfirst->iq_item;
-      // debugging
-      {
-	char ustr[UUID_PARSED_LEN];
-	memset (ustr, 0, sizeof (ustr));
-	uuid_unparse (curitm->i_uuid, ustr);
-      }
+      mom_dbg_item (dump, "dumping build of item", curitm);
       //
       assert (curitm != NULL && curitm->i_space < momty__last);
       const struct momitemtypedescr_st *tydescr =
@@ -1406,6 +1432,7 @@ mom_full_dump (const char *state)
 	mom_json_output_close (&outj);
 	strbuild = GC_STRDUP (bufbuild);
 	free (bufbuild), bufbuild = NULL, sizbuild = 0;
+	MONIMELT_DEBUG (dump, "strbuild=%s", strbuild);
       }
       memset (&outj, 0, sizeof (outj));
       {
@@ -1426,6 +1453,21 @@ mom_full_dump (const char *state)
       spadescr->spa_store_build_fill (&dmp, curitm, strbuild, strfill);
       strbuild = NULL;
       strfill = NULL;
+      // now scan that item
+      if (tydescr->ityp_scan)
+	{
+	  mom_dbg_item (dump, "scanning item", curitm);
+	  tydescr->ityp_scan (&dmp, curitm);
+	}
+      else
+	{
+	  char uidstr[UUID_PARSED_LEN];
+	  memset (uidstr, 0, sizeof (uidstr));
+	  mom_dbg_item (dump, "unscanned item", curitm);
+	  MONIMELT_FATAL ("unscanned item %s",
+			  mom_unparse_item_uuid (curitm, uidstr));
+	};
+      // go the next queued item
       dmp.dmp_qfirst = dmp.dmp_qfirst->iq_next;
       if (!dmp.dmp_qfirst)
 	dmp.dmp_qlast = NULL;

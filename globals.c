@@ -41,17 +41,20 @@ static struct glob_dict_st
 void
 mom_initialize_globals (void)
 {
-  const unsigned dictsiz = 1024;
+  const unsigned dictsiz = 128;
   pthread_mutex_lock (&glob_mtx);
   glob_dict.name_hashitem =
     GC_MALLOC (sizeof (struct mom_name_item_entry_st) * dictsiz);
-  memset (glob_dict.name_hashitem, 0,
-	  sizeof (struct mom_name_item_entry_st) * dictsiz);
   glob_dict.name_hashstr =
     GC_MALLOC (sizeof (struct mom_name_item_entry_st) * dictsiz);
+  if (!glob_dict.name_hashitem || !glob_dict.name_hashstr)
+    MONIMELT_FATAL ("failed to allocate %d globals", dictsiz);
+  memset (glob_dict.name_hashitem, 0,
+	  sizeof (struct mom_name_item_entry_st) * dictsiz);
   memset (glob_dict.name_hashstr, 0,
 	  sizeof (struct mom_name_item_entry_st) * dictsiz);
   glob_dict.name_size = dictsiz;
+  glob_dict.name_count = 0;
   pthread_mutex_unlock (&glob_mtx);
 }
 
@@ -278,7 +281,7 @@ mom_register_new_name_string (momstring_t * namestr, mom_anyitem_t * item)
     goto end;
   if (4 * glob_dict.name_count > 3 * glob_dict.name_size)
     {
-      unsigned newsize = ((13 * glob_dict.name_count / 8 + 400) | 0xff) + 1;
+      unsigned newsize = ((13 * glob_dict.name_count / 8 + 100) | 0x7f) + 1;
       resize_dict (newsize);
     }
   add_new_name_entry (namestr, item);
@@ -299,7 +302,7 @@ mom_register_new_name_item (const char *name, mom_anyitem_t * item)
     goto end;
   if (4 * glob_dict.name_count > 3 * glob_dict.name_size)
     {
-      unsigned newsize = ((13 * glob_dict.name_count / 8 + 400) | 0xff) + 1;
+      unsigned newsize = ((13 * glob_dict.name_count / 8 + 100) | 0x7f) + 1;
       resize_dict (newsize);
     }
   const momstring_t *namestr = mom_make_string_len (name, namelen);
