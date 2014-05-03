@@ -86,7 +86,7 @@ mom_agenda_add_tasklet_back (momval_t tsk)
   pthread_cond_broadcast (&mom_run_changed_cond);
 }
 
-#define WORK_DELAY 1.8		/* seconds */
+#define WORK_DELAY 5.8		/* seconds */
 static void *
 work_loop (struct GC_stack_base *sb, void *data)
 {
@@ -94,8 +94,9 @@ work_loop (struct GC_stack_base *sb, void *data)
   GC_register_my_thread (sb);
   assert (wd != NULL);
   mom_anyitem_t *curtsk = NULL;
-  MONIMELT_DEBUG (run, "work_loop start index %d wd@%p  cur_worker@%p",
-		  wd->work_index, wd, cur_worker);
+  MONIMELT_DEBUG (run,
+		  "work_loop tid %ld start index %d wd@%p  cur_worker@%p",
+		  mom_gettid (), wd->work_index, wd, cur_worker);
   bool working = false;
   long loopcnt = 0;
   do

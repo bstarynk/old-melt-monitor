@@ -57,6 +57,7 @@
 #include <sys/eventfd.h>
 #include <sys/signalfd.h>
 #include <sys/timerfd.h>
+#include <sys/syscall.h>
 #include <glib.h>
 #include <gmodule.h>
 // Gmime from http://spruce.sourceforge.net/gmime/
@@ -85,6 +86,12 @@
 #else
 #define MONIMELT_UNLIKELY(P) (P)
 #endif
+
+static inline pid_t
+mom_gettid (void)
+{
+  return syscall (SYS_gettid, 0L);
+}
 
 // empty placeholder in hashes
 #define MONIMELT_EMPTY ((void*)(-1L))
