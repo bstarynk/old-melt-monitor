@@ -1347,6 +1347,8 @@ mom_full_dump_at (const char *srcfil, int srclin, const char *reason,
   memset (&dmp, 0, sizeof (dmp));
   MONIMELT_INFORM ("start of full state dump to %s from %s:%d reason %s",
 		   state, srcfil, srclin, reason);
+  double startrealtime = monimelt_clock_time (CLOCK_REALTIME);
+  double startcputime = monimelt_clock_time (CLOCK_PROCESS_CPUTIME_ID);
   pthread_mutex_lock (&dump_mtx);
   dmp.dmp_srcfile = srcfil;
   dmp.dmp_srcline = srclin;
@@ -1515,11 +1517,15 @@ mom_full_dump_at (const char *srcfil, int srclin, const char *reason,
   if (sqlite3_exec (mom_dbsqlite, "END TRANSACTION", NULL, NULL, &errmsg))
     MONIMELT_FATAL ("failed to END TRANSACTION: %s", errmsg);
   sqlite3_close_v2 (mom_dbsqlite), mom_dbsqlite = NULL;
-  MONIMELT_INFORM ("dumped %d items in %s, reason %s", nbdumpeditems, state,
-		   reason);
   g_tree_destroy (dumped_module_tree), dumped_module_tree = NULL;
-  MONIMELT_INFORM ("end of full state dump to %s from %s:%d reason %s",
-		   state, srcfil, srclin, reason);
+  double endrealtime = monimelt_clock_time (CLOCK_REALTIME);
+  double endcputime = monimelt_clock_time (CLOCK_PROCESS_CPUTIME_ID);
+  MONIMELT_INFORM
+    ("dumped %d items in file %s, %.3f real, %.3f cpu seconds, reason %s",
+     nbdumpeditems, state, endrealtime - startrealtime,
+     endcputime - startcputime, reason);
+  MONIMELT_INFORM ("end of full state dump to %s from %s:%d reason %s", state,
+		   srcfil, srclin, reason);
   pthread_mutex_unlock (&dump_mtx);
   memset (&dmp, 0, sizeof (dmp));
 }

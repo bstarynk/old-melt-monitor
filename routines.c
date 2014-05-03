@@ -86,8 +86,7 @@ momcode_web_form_exit (int state, momit_tasklet_t * tasklet,
 	MONIMELT_WARNING ("unexpected post query for webnum#%ld",
 			  mom_item_webrequest_webnum (webv));
     }
-  usleep (25000);
-  MONIMELT_DEBUG (web, "momcode_form_exit ending");
+  usleep (5000);
   return -1;
 }
 

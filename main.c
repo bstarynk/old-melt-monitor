@@ -771,11 +771,12 @@ main (int argc, char **argv)
 	}
     }
   sched_yield ();
-  usleep (8000);
+  usleep (5000);
   MONIMELT_DEBUG (run, "before potential final dump");
-  if (dump_state_path)
+  if (dump_state_path && !web_host)
     {
       mom_full_dump ("final dump", dump_state_path);
     }
+  usleep (3000);
   return 0;
 }

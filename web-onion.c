@@ -328,7 +328,7 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
 	  gotreply = webitm->iweb_response == NULL;
 	  MONIMELT_DEBUG (web, "waiterr=%d (%s), gotreply=%d", waiterr,
 			  strerror (waiterr), (int) gotreply);
-	  if (!gotreply)
+	  if (!gotreply && monimelt_clock_time (CLOCK_REALTIME) > wend + 0.01)
 	    {
 	      onion_response_free (webitm->iweb_response);
 	      webitm->iweb_response =
@@ -355,6 +355,7 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
 				     "</body></html>\n");
 	      onion_response_set_code (webitm->iweb_response,
 				       HTTP_SERVICE_UNAVALIABLE);
+	      onion_response_flush (webitm->iweb_response);
 	      webitm->iweb_response = NULL;
 	    }
 	  pthread_mutex_unlock (&webitm->iweb_item.i_mtx);
@@ -398,6 +399,7 @@ mom_item_webrequest_reply (momval_t vweb, const char *mimetype, int code)
 				 mimetype);
       if (code > 0)
 	onion_response_set_code (webitm->iweb_response, code);
+      onion_response_flush (webitm->iweb_response);
       webitm->iweb_response = NULL;
       webdone = true;
       MONIMELT_DEBUG (web,

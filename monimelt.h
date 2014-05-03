@@ -811,7 +811,6 @@ struct momwebrequestitem_st
   momval_t iweb_postjsob;	/* JSON object for POST arguments */
   momval_t iweb_queryjsob;	/* JSON object for query arguments */
   momval_t iweb_path;		/* path string */
-
 };
 
 // write a constant string

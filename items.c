@@ -3630,8 +3630,10 @@ mom_item_webrequest_puts (momval_t val, const char *str)
     return;
   pthread_mutex_lock (&val.panyitem->i_mtx);
   onion_response *resp = val.pwebrequestitem->iweb_response;
+  MONIMELT_DEBUG (web, "puts webnum#%ld %s",
+		  val.pwebrequestitem->iweb_webnum, str);
   if (resp)
-    onion_response_write0 (resp, str);
+    onion_response_write (resp, str, strlen (str));
   pthread_mutex_unlock (&val.panyitem->i_mtx);
 }
 
@@ -3705,6 +3707,8 @@ mom_item_webrequest_puts_html (momval_t val, const char *str)
   if (!val.ptr || *val.ptype != momty_webrequestitem || !str || !str[0])
     return;
   pthread_mutex_lock (&val.panyitem->i_mtx);
+  MONIMELT_DEBUG (web, "puts_html webnum#%ld %s",
+		  val.pwebrequestitem->iweb_webnum, str);
   onion_response *resp = val.pwebrequestitem->iweb_response;
   if (resp)
     onion_response_write_html_safe (resp, str);
@@ -3716,16 +3720,37 @@ mom_item_webrequest_printf (momval_t val, const char *fmt, ...)
 {
   if (!val.ptr || *val.ptype != momty_webrequestitem || !fmt || !fmt[0])
     return;
+  char smallbuf[80];
+  char *wbuf = NULL;
+  memset (smallbuf, 0, sizeof (smallbuf));
+  int len = 0;
+  va_list args;
+  va_start (args, fmt);
+  len = vsnprintf (smallbuf, sizeof (smallbuf), fmt, args);
+  va_end (args);
+  if (len < sizeof (smallbuf) - 1)
+    wbuf = smallbuf;
+  else
+    {
+      wbuf = GC_MALLOC_ATOMIC (len + 2);
+      if (MONIMELT_UNLIKELY (!wbuf))
+	MONIMELT_FATAL ("failed to allocate buffer for %d bytes", len);
+      memset (wbuf, 0, len + 2);
+      va_start (args, fmt);
+      len = vsnprintf (wbuf, len + 1, fmt, args);
+      va_end (args);
+    }
   pthread_mutex_lock (&val.panyitem->i_mtx);
+  MONIMELT_DEBUG (web, "printf webnum#%ld len%d:%s",
+		  val.pwebrequestitem->iweb_webnum, len, wbuf);
   onion_response *resp = val.pwebrequestitem->iweb_response;
   if (resp)
     {
-      va_list args;
-      va_start (args, fmt);
-      onion_response_vprintf (resp, fmt, args);
-      va_end (args);
+      onion_response_write (resp, wbuf, len);
     }
   pthread_mutex_unlock (&val.panyitem->i_mtx);
+  if (wbuf != smallbuf)
+    GC_FREE (wbuf);
 }
 
 void
@@ -3746,8 +3771,10 @@ mom_item_webrequest_outjson (momval_t val, momval_t json)
   mom_json_output_close (&jout);
   pthread_mutex_lock (&val.panyitem->i_mtx);
   onion_response *resp = val.pwebrequestitem->iweb_response;
+  MONIMELT_DEBUG (web, "outjson webnum#%ld:%s",
+		  val.pwebrequestitem->iweb_webnum, buf);
   if (resp && buf)
-    onion_response_write0 (resp, buf);
+    onion_response_write (resp, buf, strlen (buf));
   pthread_mutex_unlock (&val.panyitem->i_mtx);
   free (buf);
 }
