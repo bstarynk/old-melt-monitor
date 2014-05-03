@@ -235,6 +235,7 @@ union momvalueptr_un
 #define MOM_DEBUG_DEFINE_OPT(Nam) momdbg_##Nam,
 enum mom_debug_en
 {
+  momdbg__none,
   MOM_DEBUG_LIST_OPTIONS (MOM_DEBUG_DEFINE_OPT) momdbg__last
 };
 

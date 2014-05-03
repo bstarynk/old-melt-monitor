@@ -1194,6 +1194,7 @@ mom_initial_load (const char *state)
 		    "SELECT name, nuid, spacenam FROM t_name ORDER BY name",
 		    ldn_cb, &ldn, &errmsg))
     MONIMELT_FATAL ("fetching names in %s failed with %s", state, errmsg);
+  MONIMELT_DEBUG (load, "ldn_count=%d", ldn.ldn_count);
   for (unsigned ix = 0; ix < ldn.ldn_count; ix++)
     {
       const char *curname = ldn.ldn_names[ix];
@@ -1204,7 +1205,9 @@ mom_initial_load (const char *state)
       memset (&curuid, 0, sizeof (uuid_t));
       if (!uuid_parse (curuuidstr, curuid))
 	{
+	  MONIMELT_DEBUG (load, "loading item %s", curuuidstr);
 	  curitm = mom_load_item (&ld, curuid, curspace);
+	  mom_dbg_item (load, "loaded item", curitm);
 	  if (!curitm)
 	    MONIMELT_FATAL ("failed to load named item %s of uid %s space %s",
 			    curname, curuuidstr, curspace);
@@ -1218,6 +1221,7 @@ mom_initial_load (const char *state)
       mom_anyitem_t *itmld = ld.ldr_qfirst->iq_item;
       assert (itmld != NULL && itmld->typnum > momty__itemlowtype
 	      && itmld->typnum < momty__last);
+      mom_dbg_item (load, "loading item", itmld);
       assert (itmld->i_space > 0 && itmld->i_space < MONIMELT_SPACE_MAX);
       struct momspacedescr_st *curspad = mom_spacedescr_array[itmld->i_space];
       assert (curspad != NULL && curspad->spa_magic == SPACE_MAGIC);
@@ -1230,6 +1234,7 @@ mom_initial_load (const char *state)
       if (fillstr && fillstr[0] && ids->ityp_filler)
 	{
 	  struct jsonparser_st jp = { 0 };
+	  MONIMELT_DEBUG (load, "fillstr %s", fillstr);
 	  FILE *fm = fmemopen (fillstr, strlen (fillstr), "r");
 	  if (MONIMELT_UNLIKELY (!fm))
 	    MONIMELT_FATAL ("fmemopen failed for uid %s fill string %s",
@@ -1256,6 +1261,7 @@ mom_initial_load (const char *state)
     sqlite3_finalize (fetchfill_loadstmt), fetchbuild_loadstmt = NULL;
   sqlite3_close (mom_dbsqlite);
   mom_dbsqlite = NULL;
+  MONIMELT_DEBUG (load, "end loading %s", state);
 }
 
 
@@ -1490,6 +1496,7 @@ loadmodule_cb (void *data, int nbcol, char **colarrs, char **colnames)
       snprintf (bufname, sizeof (bufname), "./%s.%s", modname,
 		G_MODULE_SUFFIX);
       mod = g_module_open (bufname, 0);
+      MONIMELT_DEBUG (load, "loaded module %s", bufname);
     }
   if (!mod)
     MONIMELT_FATAL ("failed to load module %s: %s", modname,

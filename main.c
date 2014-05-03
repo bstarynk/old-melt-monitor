@@ -68,6 +68,11 @@ static const struct option mom_long_options[] = {
   {NULL, no_argument, NULL, 0},
 };
 
+const char *const mom_debug_names[momdbg__last] = {
+#define MOM_DEFINE_DBG_NAME(Dbg) [momdbg_##Dbg] #Dbg,
+  MOM_DEBUG_LIST_OPTIONS (MOM_DEFINE_DBG_NAME)
+};
+
 static GOptionContext *option_ctx;
 static const char **module_names;
 static const char **module_arguments;
@@ -83,7 +88,11 @@ usage (const char *argv0)
   printf ("\t -h | --help " " \t# Give this help.\n");
   printf ("\t -V | --version " " \t# Give version information.\n");
   printf ("\t -d | --daemon " " \t# Daemonize.\n");
-  printf ("\t -D | --debug <debug-feature>" " \t# Daemonize.\n");
+  printf ("\t -D | --debug <debug-features>"
+	  " \t# Debugging comma separated features\n\t\t##");
+  for (unsigned ix = 1; ix < momdbg__last; ix++)
+    printf (" %s", mom_debug_names[ix]);
+  putchar ('\n');
   printf ("\t -l | --syslog " " \t# Log to syslog.\n");
   printf ("\t -n | --nice <nice-level> " " \t# Set process nice level.\n");
   printf ("\t -J | --jobs <nb-work-threads> " " \t# Start work threads.\n");
@@ -468,11 +477,6 @@ mom_inform_at (const char *fil, int lin, const char *fmt, ...)
     }
 }
 
-
-const char *const mom_debug_names[momdbg__last] = {
-#define MOM_DEFINE_DBG_NAME(Dbg) [momdbg_##Dbg] #Dbg,
-  MOM_DEBUG_LIST_OPTIONS (MOM_DEFINE_DBG_NAME)
-};
 
 static pthread_mutex_t dbg_mtx = PTHREAD_MUTEX_INITIALIZER;
 
