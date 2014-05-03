@@ -757,6 +757,7 @@ main (int argc, char **argv)
     }
   else
     MONIMELT_WARNING ("did not start event loop");
+  sched_yield ();
   if (mom_nb_workers > 0)
     {
       usleep (2000);
@@ -769,6 +770,9 @@ main (int argc, char **argv)
 	  dump_state_path = load_state_path;
 	}
     }
+  sched_yield ();
+  usleep (8000);
+  MONIMELT_DEBUG (run, "before potential final dump");
   if (dump_state_path)
     {
       mom_full_dump ("final dump", dump_state_path);

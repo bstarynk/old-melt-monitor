@@ -61,6 +61,7 @@ momcode_web_form_exit (int state, momit_tasklet_t * tasklet,
 	  MONIMELT_DEBUG (web,
 			  "momcode_form_exit do_savexit before request stop");
 	  mom_request_stop ();
+	  usleep (2000);
 	  MONIMELT_DEBUG (web,
 			  "momcode_form_exit do_savexit before fulldump");
 	  mom_full_dump ("web save&exit dump", MONIMELT_DEFAULT_STATE_FILE);;
@@ -85,6 +86,7 @@ momcode_web_form_exit (int state, momit_tasklet_t * tasklet,
 	MONIMELT_WARNING ("unexpected post query for webnum#%ld",
 			  mom_item_webrequest_webnum (webv));
     }
+  usleep (25000);
   MONIMELT_DEBUG (web, "momcode_form_exit ending");
   return -1;
 }

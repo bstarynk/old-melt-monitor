@@ -223,18 +223,26 @@ void
 mom_request_stop (void)
 {
   int nbworkers = 0;
+  long stopcount = 0;
   MONIMELT_DEBUG (run, "mom_request_stop start");
   do
     {
       pthread_mutex_lock (&mom_run_mtx);
+      stopcount++;
+      MONIMELT_DEBUG (run, "mom_request_stop stopcount=%ld", stopcount);
       working_flag = false;
+      nbworkers = 0;
       for (unsigned ix = 1; ix <= mom_nb_workers; ix++)
 	if (workers[ix].work_magic == WORK_MAGIC
 	    && workers[ix].work_index == ix)
 	  nbworkers++;
+      MONIMELT_DEBUG (run, "mom_request_stop nbworkers=%d", nbworkers);
+      int errwait = 0;
       if (nbworkers > 0)
-	pthread_cond_wait (&mom_run_changed_cond, &mom_run_mtx);
+	errwait = pthread_cond_wait (&mom_run_changed_cond, &mom_run_mtx);
       pthread_mutex_unlock (&mom_run_mtx);
+      MONIMELT_DEBUG (run, "nbworkers=%d, errwait#%d (%s)", nbworkers,
+		      errwait, strerror (errwait));
       usleep (500);
     }
   while (nbworkers > 0);

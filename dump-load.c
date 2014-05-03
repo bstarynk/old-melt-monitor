@@ -1337,6 +1337,8 @@ static void dump_modules (void);
 // we may want to avoid too long lines in the dumps. See
 // http://programmers.stackexchange.com/q/236542/40065
 #define BIGDUMP_THRESHOLD 250
+
+static pthread_mutex_t dump_mtx = PTHREAD_MUTEX_INITIALIZER;
 void
 mom_full_dump_at (const char *srcfil, int srclin, const char *reason,
 		  const char *state)
@@ -1345,6 +1347,7 @@ mom_full_dump_at (const char *srcfil, int srclin, const char *reason,
   memset (&dmp, 0, sizeof (dmp));
   MONIMELT_INFORM ("start of full state dump to %s from %s:%d reason %s",
 		   state, srcfil, srclin, reason);
+  pthread_mutex_lock (&dump_mtx);
   dmp.dmp_srcfile = srcfil;
   dmp.dmp_srcline = srclin;
   dmp.dmp_reason = reason;
@@ -1460,9 +1463,9 @@ mom_full_dump_at (const char *srcfil, int srclin, const char *reason,
 	mom_spacedescr_array[curitm->i_space];
       assert (spadescr && spadescr->spa_magic == SPACE_MAGIC);
       momval_t jsonbuild =
-	tydescr->ityp_getbuild (&dmp, (const mom_anyitem_t *) curitm);
+	tydescr->ityp_getbuild (&dmp, (mom_anyitem_t *) curitm);
       momval_t jsonfill =
-	tydescr->ityp_getfill (&dmp, (const mom_anyitem_t *) curitm);
+	tydescr->ityp_getfill (&dmp, (mom_anyitem_t *) curitm);
       char *strbuild = NULL;
       char *strfill = NULL;
       struct jsonoutput_st outj = { };
@@ -1499,7 +1502,7 @@ mom_full_dump_at (const char *srcfil, int srclin, const char *reason,
 	free (buffill), buffill = NULL, sizfill = 0;
       }
       assert (spadescr->spa_store_build_fill != NULL);
-      spadescr->spa_store_build_fill (&dmp, (const mom_anyitem_t *) curitm,
+      spadescr->spa_store_build_fill (&dmp, (mom_anyitem_t *) curitm,
 				      strbuild, strfill);
       strbuild = NULL;
       strfill = NULL;
@@ -1512,10 +1515,13 @@ mom_full_dump_at (const char *srcfil, int srclin, const char *reason,
   if (sqlite3_exec (mom_dbsqlite, "END TRANSACTION", NULL, NULL, &errmsg))
     MONIMELT_FATAL ("failed to END TRANSACTION: %s", errmsg);
   sqlite3_close_v2 (mom_dbsqlite), mom_dbsqlite = NULL;
-  MONIMELT_INFORM ("dumped %d items in %s", nbdumpeditems, state);
+  MONIMELT_INFORM ("dumped %d items in %s, reason %s", nbdumpeditems, state,
+		   reason);
   g_tree_destroy (dumped_module_tree), dumped_module_tree = NULL;
   MONIMELT_INFORM ("end of full state dump to %s from %s:%d reason %s",
 		   state, srcfil, srclin, reason);
+  pthread_mutex_unlock (&dump_mtx);
+  memset (&dmp, 0, sizeof (dmp));
 }
 
 void
