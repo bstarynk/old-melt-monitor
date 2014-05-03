@@ -393,6 +393,8 @@ mom_item_webrequest_reply (momval_t vweb, const char *mimetype, int code)
 		(const mom_anyitem_t *) webitm);
   bool webdone = false;
   pthread_mutex_lock (&vweb.panyitem->i_mtx);
+  MONIMELT_DEBUG (web, "webrequest_reply  webnum#%ld resp@%p",
+		  (long) webitm->iweb_webnum, webitm->iweb_response);
   if (webitm->iweb_response)
     {
       onion_response_set_header (webitm->iweb_response, "Content-Type",
@@ -403,7 +405,7 @@ mom_item_webrequest_reply (momval_t vweb, const char *mimetype, int code)
       webitm->iweb_response = NULL;
       webdone = true;
       MONIMELT_DEBUG (web,
-		      "webrequest_reply clearing response webnum#%ld",
+		      "webrequest_reply clearing iweb_response webnum#%ld",
 		      (long) webitm->iweb_webnum);
     }
   pthread_mutex_unlock (&vweb.panyitem->i_mtx);

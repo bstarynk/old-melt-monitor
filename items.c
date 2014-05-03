@@ -3623,20 +3623,6 @@ webrequest_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 }
 
 
-void
-mom_item_webrequest_puts (momval_t val, const char *str)
-{
-  if (!val.ptr || *val.ptype != momty_webrequestitem || !str || !str[0])
-    return;
-  pthread_mutex_lock (&val.panyitem->i_mtx);
-  onion_response *resp = val.pwebrequestitem->iweb_response;
-  MONIMELT_DEBUG (web, "puts webnum#%ld %s",
-		  val.pwebrequestitem->iweb_webnum, str);
-  if (resp)
-    onion_response_write (resp, str, strlen (str));
-  pthread_mutex_unlock (&val.panyitem->i_mtx);
-}
-
 momval_t
 mom_item_webrequest_post_arg (momval_t val, const char *argname)
 {
@@ -3701,15 +3687,32 @@ mom_item_webrequest_method (momval_t val)
 }
 
 
+
+
+void
+mom_item_webrequest_puts (momval_t val, const char *str)
+{
+  if (!val.ptr || *val.ptype != momty_webrequestitem || !str || !str[0])
+    return;
+  pthread_mutex_lock (&val.panyitem->i_mtx);
+  onion_response *resp = val.pwebrequestitem->iweb_response;
+  MONIMELT_DEBUG (web, "puts resp@%p webnum#%ld %s", resp,
+		  val.pwebrequestitem->iweb_webnum, str);
+  if (resp)
+    onion_response_write (resp, str, strlen (str));
+  pthread_mutex_unlock (&val.panyitem->i_mtx);
+}
+
+
 void
 mom_item_webrequest_puts_html (momval_t val, const char *str)
 {
   if (!val.ptr || *val.ptype != momty_webrequestitem || !str || !str[0])
     return;
   pthread_mutex_lock (&val.panyitem->i_mtx);
-  MONIMELT_DEBUG (web, "puts_html webnum#%ld %s",
-		  val.pwebrequestitem->iweb_webnum, str);
   onion_response *resp = val.pwebrequestitem->iweb_response;
+  MONIMELT_DEBUG (web, "puts_html webnum#%ld resp@%p %s",
+		  val.pwebrequestitem->iweb_webnum, resp, str);
   if (resp)
     onion_response_write_html_safe (resp, str);
   pthread_mutex_unlock (&val.panyitem->i_mtx);
@@ -3741,9 +3744,9 @@ mom_item_webrequest_printf (momval_t val, const char *fmt, ...)
       va_end (args);
     }
   pthread_mutex_lock (&val.panyitem->i_mtx);
-  MONIMELT_DEBUG (web, "printf webnum#%ld len%d:%s",
-		  val.pwebrequestitem->iweb_webnum, len, wbuf);
   onion_response *resp = val.pwebrequestitem->iweb_response;
+  MONIMELT_DEBUG (web, "printf webnum#%ld resp@%p len%d:%s",
+		  val.pwebrequestitem->iweb_webnum, resp, len, wbuf);
   if (resp)
     {
       onion_response_write (resp, wbuf, len);
@@ -3771,8 +3774,8 @@ mom_item_webrequest_outjson (momval_t val, momval_t json)
   mom_json_output_close (&jout);
   pthread_mutex_lock (&val.panyitem->i_mtx);
   onion_response *resp = val.pwebrequestitem->iweb_response;
-  MONIMELT_DEBUG (web, "outjson webnum#%ld:%s",
-		  val.pwebrequestitem->iweb_webnum, buf);
+  MONIMELT_DEBUG (web, "outjson webnum#%ld resp@%p:%s",
+		  val.pwebrequestitem->iweb_webnum, resp, buf);
   if (resp && buf)
     onion_response_write (resp, buf, strlen (buf));
   pthread_mutex_unlock (&val.panyitem->i_mtx);
