@@ -79,6 +79,15 @@
 #include <curl/curl.h>
 
 
+#if MONIMELT_EXPLICIT_GC_THREAD
+#define MOMGC_REGISTER_MY_THREAD(Sb) GC_register_my_thread(Sb)
+#define MOMGC_UNREGISTER_MY_THHREAD() GC_unregister_my_thread()
+#define MOMGC_CALL_WITH_STACK_BASE(Rout,Base) GC_call_with_stack_base(Rout,Base)
+#else
+#define MOMGC_REGISTER_MY_THREAD(Sb) do{if (0) (void)(Sb);}while(0)
+#define MOMGC_UNREGISTER_MY_THREAD() do{}while(0)
+#define MOMGC_CALL_WITH_STACK_BASE(Rout,Base) Rout(NULL,(Base))
+#endif
 
 // mark unlikely conditions to help optimization
 #ifdef __GNUC__

@@ -91,7 +91,7 @@ static void *
 work_loop (struct GC_stack_base *sb, void *data)
 {
   struct momworkdata_st *wd = data;
-  GC_register_my_thread (sb);
+  MOMGC_REGISTER_MY_THREAD (sb);
   assert (wd != NULL);
   mom_anyitem_t *curtsk = NULL;
   MONIMELT_DEBUG (run,
@@ -137,7 +137,7 @@ work_loop (struct GC_stack_base *sb, void *data)
   cur_worker->work_index = 0;
   pthread_mutex_unlock (&mom_run_mtx);
   pthread_cond_broadcast (&mom_run_changed_cond);
-  GC_unregister_my_thread ();
+  MOMGC_UNREGISTER_MY_THREAD ();
   return NULL;
 }
 
@@ -156,7 +156,7 @@ work_cb (void *ad)
       || ((mom_anyitem_t *) mom_item__agenda)->typnum != momty_queueitem)
     MONIMELT_FATAL ("bad agenda");
   cur_worker = wd;
-  GC_call_with_stack_base (work_loop, wd);
+  MOMGC_CALL_WITH_STACK_BASE (work_loop, wd);
   cur_worker = NULL;
   return NULL;
 }
@@ -511,7 +511,7 @@ event_loop (struct GC_stack_base *sb, void *data)
   memset (polltab, 0, sizeof (polltab));
   memset (handlertab, 0, sizeof (handlertab));
   memset (datatab, 0, sizeof (datatab));
-  GC_register_my_thread (sb);
+  MOMGC_REGISTER_MY_THREAD (sb);
   assert (data == NULL);
   assert (mom_item__heart_beat != NULL);
   // set up CURL multi handle
@@ -612,7 +612,7 @@ event_loop (struct GC_stack_base *sb, void *data)
 	}
     }
   while (repeat_loop);
-  GC_unregister_my_thread ();
+  MOMGC_UNREGISTER_MY_THREAD ();
   return NULL;
 }
 
@@ -621,7 +621,7 @@ static void *
 eventloop_cb (void *p)
 {
   pthread_setname_np (pthread_self (), "monimelt-evloop");
-  GC_call_with_stack_base (event_loop, p);
+  MOMGC_CALL_WITH_STACK_BASE (event_loop, p);
   return p;
 }
 

@@ -70,7 +70,7 @@ process_request (void *ignore, onion_request * req, onion_response * res)
   webinf.web_time = webtim;
   webinf.web_requ = req;
   webinf.web_resp = res;
-  GC_call_with_stack_base (mom_really_process_request, &webinf);
+  MOMGC_CALL_WITH_STACK_BASE (mom_really_process_request, &webinf);
   MONIMELT_INFORM ("process request webnum#%ld return %d",
 		   webnum, webinf.web_stat);
   return webinf.web_stat;
@@ -134,7 +134,7 @@ dict_add (void *data, const char *key, const void *value, int flags)
 static void *
 mom_really_process_request (struct GC_stack_base *sb, void *data)
 {
-  GC_register_my_thread (sb);
+  MOMGC_REGISTER_MY_THREAD (sb);
   struct mom_web_info_st *pwebinf = data;
   assert (pwebinf->web_magic == WEB_MAGIC);
   assert (mom_item__web_dictionnary != NULL);
@@ -290,7 +290,7 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
       pthread_mutex_unlock (&webitm->iweb_item.i_mtx);
       pwebinf->web_stat = OCS_PROCESSED;
     }
-  GC_unregister_my_thread ();
+  MOMGC_UNREGISTER_MY_THREAD ();
   return NULL;
 }
 
