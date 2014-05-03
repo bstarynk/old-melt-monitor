@@ -705,8 +705,8 @@ main (int argc, char **argv)
       using_syslog = true;
       atexit (logexit_cb);
     }
-  if (load_state_path && load_state_path[0] && !strcmp (load_state_path, ".")
-      && !strcmp (load_state_path, "_") && !strcmp (load_state_path, "-"))
+  if (load_state_path && load_state_path[0] && strcmp (load_state_path, ".")
+      && strcmp (load_state_path, "_") && strcmp (load_state_path, "-"))
     {
       mom_initial_load (load_state_path);
     }

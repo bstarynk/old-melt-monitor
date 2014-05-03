@@ -47,6 +47,7 @@ mom_dumper_initialize (struct mom_dumper_st *dmp)
   dmp->dmp_qfirst = dmp->dmp_qlast = NULL;
   dmp->dmp_magic = DUMPER_MAGIC;
   dmp->dmp_state = dus_scan;
+  MONIMELT_DEBUG (dump, "initialize dmp@%p", (void *) dmp);
 }
 
 static inline void
@@ -132,6 +133,7 @@ mom_dump_add_item (struct mom_dumper_st *dmp, const mom_anyitem_t * itm)
   // enqueue and add the item if it is not found
   if (!founditem)
     {
+      mom_dbg_item (dump, "enqueue item", itm);
       struct mom_itqueue_st *qel = GC_MALLOC (sizeof (struct mom_itqueue_st));
       if (MONIMELT_UNLIKELY (!qel))
 	MONIMELT_FATAL ("cannot add queue element to dumper of %d items",
@@ -414,7 +416,9 @@ mom_dump_emit_json (struct mom_dumper_st * dmp, const momval_t val)
 		    val.ptr);
   if (MONIMELT_UNLIKELY (dmp->dmp_state != dus_emit))
     MONIMELT_FATAL ("invalid dump state #%d", (int) dmp->dmp_state);
+  mom_dbg_value (dump, "dumping value", val);
   jsval = raw_dump_emit_json (dmp, val);
+  mom_dbg_value (dump, "dumped jsval", jsval);
   return jsval;
 }
 

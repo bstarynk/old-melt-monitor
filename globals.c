@@ -19,8 +19,8 @@
 **/
 
 #include "monimelt.h"
-
-static pthread_mutex_t glob_mtx = PTHREAD_MUTEX_INITIALIZER;
+// the glob_mtx should be recursive, since dump is locking it too..
+static pthread_mutex_t glob_mtx = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 
 
 struct mom_name_item_entry_st	// for dictionnary 
@@ -425,7 +425,6 @@ mom_replace_named_item (const char *name, mom_anyitem_t * item)
   unsigned namelen = strlen (name);
   momhash_t namehash = mom_string_hash (name, namelen);
   const momstring_t *namestr = NULL;
-  pthread_mutex_lock (&glob_mtx);
   int namix = find_name_index (name, namehash);
   if (namix >= 0)
     {
