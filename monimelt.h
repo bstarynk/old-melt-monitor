@@ -226,17 +226,54 @@ union momvalueptr_un
 };
 
 // for debugging:
+#define MOM_DEBUG_LIST_OPTIONS(Dbg)		\
+  Dbg(dump)					\
+  Dbg(load)					\
+  Dbg(json)					\
+  Dbg(web)
+
+#define MOM_DEBUG_DEFINE_OPT(Nam) momdbg_##Nam,
+enum mom_debug_en
+{
+  MOM_DEBUG_LIST_OPTIONS (MOM_DEBUG_DEFINE_OPT) momdbg__last
+};
+
+unsigned mom_debugflags;
+
+void
+mom_debug_at (enum mom_debug_en dbg, const char *fil, int lin,
+	      const char *fmt, ...) __attribute__ ((format (printf, 4, 5)));
+
+#define MONIMELT_DEBUG_AT(Dbg,Fil,Lin,Fmt,...) do {	\
+    if (mom_debugflags & (1<<momdbg_##Dbg))				\
+      mom_debug_at(momdbg_##Dbg,Fil,Lin,Fmt,##__VA_ARGS__);} while(0)
+#define MONIMELT_DEBUG_AT_BIS(Dbg,Fil,Lin,Fmt,...)	\
+  MONIMELT_DEBUG_AT(Dbg,Fil,Lin,Fmt,##__VA_ARGS__)
+#define MONIMELT_DEBUG(Dbg,Fmt,...)				\
+  MONIMELT_DEBUG_AT_BIS(Dbg,__FILE__,__LINE__,Fmt,##__VA_ARGS__)
+
+
+
 void mom_debugprint_item (FILE * fil, const mom_anyitem_t * itm);
 void mom_debugprint_value (FILE * fil, momval_t val);
 void mom_dbgout_item (const mom_anyitem_t * itm);
 void mom_dbgout_value (momval_t val);
-void mom_dbg_item_at (const char *file, int line, const char *msg,
-		      const mom_anyitem_t * itm);
-#define mom_dbg_item(Msg,Itm) mom_dbg_item_at(__FILE__,__LINE__,(Msg),(Itm))
+void mom_dbg_item_at (enum mom_debug_en dbg, const char *file, int line,
+		      const char *msg, const mom_anyitem_t * itm);
+#define mom_dbg_item(Dbg,Msg,Itm)  do			\
+    {							\
+     if (mom_debugflags & (1<<momdbg_##Dbg))		\
+       mom_dbg_item_at(momdbg_##Dbg,			\
+			 __FILE__,__LINE__,		\
+			 (Msg),(Itm));} while(0)
 
-void mom_dbg_value_at (const char *fil, int lin, const char *msg,
-		       const momval_t val);
-#define mom_dbg_value(Msg,Val) mom_dbg_value_at(__FILE__,__LINE__,(Msg),(Val))
+void mom_dbg_value_at (enum mom_debug_en dbg, const char *fil, int lin,
+		       const char *msg, const momval_t val);
+#define mom_dbg_value(Dbg,Msg,Val) do		\
+    {						\
+      if (mom_debugflags & (1<<momdbg_##Dbg))	\
+      mom_dbg_value_at(momdbg_##Dbg,		\
+__FILE__,__LINE__,(Msg),(Val));} while(0)
 
 static inline enum momvaltype_en
 mom_type (const momval_t v)
