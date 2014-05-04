@@ -811,7 +811,37 @@ struct momwebrequestitem_st
   momval_t iweb_postjsob;	/* JSON object for POST arguments */
   momval_t iweb_queryjsob;	/* JSON object for query arguments */
   momval_t iweb_path;		/* path string */
+  // the reply buffer, its size and current length
+  char *iweb_replybuf;
+  unsigned iweb_replysize;
+  unsigned iweb_replylength;
 };
+
+enum mom_webreplydirective_en
+{
+  MOMWEB__END = 0,
+  MOMWEB_LIT_STRING /*, const char* literalstring; for literal  string */ ,
+  MOMWEB_HTML_STRING
+    /*, const char* literalhtmlstring; for HTML encoded UTF-8 literal string  */
+    ,
+  MOMWEB_VALUE
+    /*, momval_t val; for boxed numbers, JSON values, named items  */ ,
+  MOMWEB_JSON_VALUE /*, momval_t jsonval; for JSON values */ ,
+  MOMWEB_HTML_VALUE
+    /*, momval_t val; for boxed numbers, JSON values, named items HTML encoded */
+    ,
+  MOMWEB_DEC_INT /*, int num; for numbers in decimal */ ,
+  MOMWEB_HEX_INT /*, int num; for numbers in hexadecimal  */ ,
+  MOMWEB_DEC_INT64 /*, int64_t num; for numbers in decimal */ ,
+  MOMWEB_HEX_INT64 /*, int64_t num; for numbers in hexadecimal  */ ,
+  MOMWEB_DOUBLE /*, double x; for double with %g */ ,
+  MOMWEB_RESERVE /*, unsigned more; to reserve space in the buffer */ ,
+  MOMWEB_CLEAR_BUFFER /*; to clear the buffer and restart  */ ,
+  MOMWEB__LAST
+};
+#define MOMWEB_END ((void*)MOMWEB__END)
+
+void mom_item_webrequest_add (momval_t val, ...) __attribute__ ((sentinel));
 
 // write a constant string
 void mom_item_webrequest_puts (momval_t val, const char *str);

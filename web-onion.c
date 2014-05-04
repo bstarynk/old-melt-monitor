@@ -178,6 +178,7 @@ webrun_cb (void *data)
   return wr;
 }
 
+#define WEB_INITIAL_REPLY_SIZE 256
 #define WEB_REPLY_TIMEOUT 2.4	/*seconds web reply timeout */
 static void *
 mom_really_process_request (struct GC_stack_base *sb, void *data)
@@ -291,6 +292,16 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
       webitm->iweb_postjsob = jpost;
       webitm->iweb_queryjsob = jquery;
       webitm->iweb_path = pathv;
+      {
+	char *wbuf = GC_MALLOC_ATOMIC (WEB_INITIAL_REPLY_SIZE);
+	if (MONIMELT_UNLIKELY (!wbuf))
+	  MONIMELT_FATAL ("cannot allocate web buffer of %d",
+			  WEB_INITIAL_REPLY_SIZE);
+	memset (wbuf, 0, WEB_INITIAL_REPLY_SIZE);
+	webitm->iweb_replybuf = wbuf;
+	webitm->iweb_replysize = WEB_INITIAL_REPLY_SIZE;
+	webitm->iweb_replylength = 0;
+      }
       pthread_cond_init (&webitm->iweb_cond, NULL);
       MONIMELT_DEBUG (web,
 		      "really_process_request made webitm@%p webnum#%ld wtim=%f wend=%f",
@@ -423,6 +434,8 @@ mom_item_webrequest_reply (momval_t vweb, const char *mimetype, int code)
   sched_yield ();
 }
 
+
+
 extern void
 mom_webrequest_destroy (mom_anyitem_t * itm)
 {
@@ -433,3 +446,282 @@ mom_webrequest_destroy (mom_anyitem_t * itm)
   pthread_cond_destroy (&webitm->iweb_cond);
   memset (&webitm->iweb_cond, 0, sizeof (pthread_cond_t));
 }
+
+momval_t
+mom_item_webrequest_post_arg (momval_t val, const char *argname)
+{
+  momval_t res = MONIMELT_NULLV;
+  if (!val.ptr || *val.ptype != momty_webrequestitem || !argname
+      || !argname[0])
+    return MONIMELT_NULLV;
+  pthread_mutex_lock (&val.panyitem->i_mtx);
+  res = mom_jsonob_getstr (val.pwebrequestitem->iweb_postjsob, argname);
+  pthread_mutex_unlock (&val.panyitem->i_mtx);
+  return res;
+}
+
+momval_t
+mom_item_webrequest_jsob_post (momval_t val)
+{
+  momval_t res = MONIMELT_NULLV;
+  if (!val.ptr || *val.ptype != momty_webrequestitem)
+    return MONIMELT_NULLV;
+  pthread_mutex_lock (&val.panyitem->i_mtx);
+  res = val.pwebrequestitem->iweb_postjsob;
+  pthread_mutex_unlock (&val.panyitem->i_mtx);
+  return res;
+}
+
+momval_t
+mom_item_webrequest_query_arg (momval_t val, const char *argname)
+{
+  momval_t res = MONIMELT_NULLV;
+  if (!val.ptr || *val.ptype != momty_webrequestitem || !argname
+      || !argname[0])
+    return MONIMELT_NULLV;
+  pthread_mutex_lock (&val.panyitem->i_mtx);
+  res = mom_jsonob_getstr (val.pwebrequestitem->iweb_queryjsob, argname);
+  pthread_mutex_unlock (&val.panyitem->i_mtx);
+  return res;
+}
+
+momval_t
+mom_item_webrequest_jsob_query (momval_t val)
+{
+  momval_t res = MONIMELT_NULLV;
+  if (!val.ptr || *val.ptype != momty_webrequestitem)
+    return MONIMELT_NULLV;
+  pthread_mutex_lock (&val.panyitem->i_mtx);
+  res = val.pwebrequestitem->iweb_queryjsob;
+  pthread_mutex_unlock (&val.panyitem->i_mtx);
+  return res;
+}
+
+
+momval_t
+mom_item_webrequest_method (momval_t val)
+{
+  momval_t res = MONIMELT_NULLV;
+  if (!val.ptr || *val.ptype != momty_webrequestitem)
+    return MONIMELT_NULLV;
+  pthread_mutex_lock (&val.panyitem->i_mtx);
+  res = (momval_t) (val.pwebrequestitem->iweb_methoditm);
+  pthread_mutex_unlock (&val.panyitem->i_mtx);
+  return res;
+}
+
+
+
+
+void
+mom_item_webrequest_puts (momval_t val, const char *str)
+{
+  if (!val.ptr || *val.ptype != momty_webrequestitem || !str || !str[0])
+    return;
+  pthread_mutex_lock (&val.panyitem->i_mtx);
+  onion_response *resp = val.pwebrequestitem->iweb_response;
+  MONIMELT_DEBUG (web, "puts resp@%p webnum#%ld %s", resp,
+		  val.pwebrequestitem->iweb_webnum, str);
+  if (resp)
+    onion_response_write (resp, str, strlen (str));
+  pthread_mutex_unlock (&val.panyitem->i_mtx);
+}
+
+
+void
+mom_item_webrequest_puts_html (momval_t val, const char *str)
+{
+  if (!val.ptr || *val.ptype != momty_webrequestitem || !str || !str[0])
+    return;
+  pthread_mutex_lock (&val.panyitem->i_mtx);
+  onion_response *resp = val.pwebrequestitem->iweb_response;
+  MONIMELT_DEBUG (web, "puts_html webnum#%ld resp@%p %s",
+		  val.pwebrequestitem->iweb_webnum, resp, str);
+  if (resp)
+    onion_response_write_html_safe (resp, str);
+  pthread_mutex_unlock (&val.panyitem->i_mtx);
+}
+
+void
+mom_item_webrequest_printf (momval_t val, const char *fmt, ...)
+{
+  if (!val.ptr || *val.ptype != momty_webrequestitem || !fmt || !fmt[0])
+    return;
+  char smallbuf[80];
+  char *wbuf = NULL;
+  memset (smallbuf, 0, sizeof (smallbuf));
+  int len = 0;
+  va_list args;
+  va_start (args, fmt);
+  len = vsnprintf (smallbuf, sizeof (smallbuf), fmt, args);
+  va_end (args);
+  if (len < sizeof (smallbuf) - 1)
+    wbuf = smallbuf;
+  else
+    {
+      wbuf = GC_MALLOC_ATOMIC (len + 2);
+      if (MONIMELT_UNLIKELY (!wbuf))
+	MONIMELT_FATAL ("failed to allocate buffer for %d bytes", len);
+      memset (wbuf, 0, len + 2);
+      va_start (args, fmt);
+      len = vsnprintf (wbuf, len + 1, fmt, args);
+      va_end (args);
+    }
+  pthread_mutex_lock (&val.panyitem->i_mtx);
+  onion_response *resp = val.pwebrequestitem->iweb_response;
+  MONIMELT_DEBUG (web, "printf webnum#%ld resp@%p len%d:%s",
+		  val.pwebrequestitem->iweb_webnum, resp, len, wbuf);
+  if (resp)
+    {
+      onion_response_write (resp, wbuf, len);
+    }
+  pthread_mutex_unlock (&val.panyitem->i_mtx);
+  if (wbuf != smallbuf)
+    GC_FREE (wbuf);
+}
+
+void
+mom_item_webrequest_outjson (momval_t val, momval_t json)
+{
+  if (!val.ptr || *val.ptype != momty_webrequestitem
+      || !mom_is_jsonable (json))
+    return;
+  char *buf = NULL;
+  size_t bufsiz = 0;
+  struct jsonoutput_st jout = { };
+  FILE *memout = open_memstream (&buf, &bufsiz);
+  if (MONIMELT_UNLIKELY (!memout))
+    MONIMELT_FATAL ("failed to open memory stream for web request");
+  mom_json_output_initialize (&jout, memout, NULL, jsof_flush);
+  mom_output_json (&jout, json);
+  putc ('\n', memout);
+  mom_json_output_close (&jout);
+  pthread_mutex_lock (&val.panyitem->i_mtx);
+  onion_response *resp = val.pwebrequestitem->iweb_response;
+  MONIMELT_DEBUG (web, "outjson webnum#%ld resp@%p:%s",
+		  val.pwebrequestitem->iweb_webnum, resp, buf);
+  if (resp && buf)
+    onion_response_write (resp, buf, strlen (buf));
+  pthread_mutex_unlock (&val.panyitem->i_mtx);
+  free (buf);
+}
+
+
+////////////////
+
+
+static inline void
+webrequest_reserve (momit_webrequest_t * webitm, unsigned more)
+{
+  if (webitm->iweb_replylength + more + 2 >= webitm->iweb_replysize)
+    {
+      unsigned newsize =
+	((5 * webitm->iweb_replylength / 4 + more + 100) | 0xff) + 1;
+      char *newbuf = GC_MALLOC_ATOMIC (newsize);
+      if (MONIMELT_UNLIKELY (!newbuf))
+	MONIMELT_FATAL ("failed to grow webrequest reply to %d",
+			(int) newsize);
+      memset (newbuf, 0, newsize);
+      memcpy (newbuf, webitm->iweb_replybuf, webitm->iweb_replylength);
+      GC_FREE (webitm->iweb_replybuf);
+      webitm->iweb_replybuf = newbuf;
+    }
+}
+
+#define ADDWEBSTR(Webitm,Str) do { const char*str = (Str);		\
+      int slen=strlen(str);						\
+      webrequest_reserve((Webitm), slen+1);				\
+      strcpy ((Webitm)->iweb_replybuf+(Webitm)->iweb_replylength, str);	\
+      (Webitm)->iweb_replylength += slen;				\
+  } while(0)
+
+static void
+webrequest_addhtml (momit_webrequest_t * webitm, const char *htmlstr)
+{
+  unsigned len = strlen (htmlstr);
+  const gchar *end = NULL;
+  if (MONIMELT_UNLIKELY (!g_utf8_validate (htmlstr, len, &end)))
+    MONIMELT_FATAL ("invalid UTF-8 string %s", htmlstr);
+  webrequest_reserve (webitm, 9 * len / 8 + 2);
+  for (const gchar * pc = htmlstr; *pc && pc < htmlstr + len;
+       pc = g_utf8_next_char (pc))
+    {
+      gunichar c = g_utf8_get_char (pc);
+      switch (c)
+	{
+	case '&':
+	  ADDWEBSTR (webitm, "&amp;");
+	  break;
+	case '<':
+	  ADDWEBSTR (webitm, "&lt;");
+	  break;
+	case '>':
+	  ADDWEBSTR (webitm, "&gt;");
+	  break;
+	case '"':
+	  ADDWEBSTR (webitm, "&quot;");
+	  break;
+	case '\'':
+	  ADDWEBSTR (webitm, "&apos;");
+	  break;
+	case 160:
+	  ADDWEBSTR (webitm, "&nbsp;");
+	  break;
+	default:
+	  if (c >= 128)
+	    {
+	      char ebuf[16];
+	      memset (ebuf, 0, sizeof (ebuf));
+	      snprintf (ebuf, sizeof (ebuf), "&#%d;", (int) c);
+	      ADDWEBSTR (webitm, ebuf);
+	    }
+	  else
+	    {
+	      webrequest_reserve (webitm, 4);
+	      webitm->iweb_replybuf[webitm->iweb_replylength++] = (char) c;
+	    }
+	  break;
+	}
+    }
+}
+
+
+void
+mom_item_webrequest_add (momval_t val, ...)
+{
+  if (!val.ptr || *val.ptype != momty_webrequestitem)
+    return;
+  momit_webrequest_t *webitm = val.pwebrequestitem;
+  va_list args;
+  enum mom_webreplydirective_en wdir = 0;
+  pthread_mutex_lock (&val.panyitem->i_mtx);
+  va_start (args, val);
+  while ((wdir = va_arg (args, enum mom_webreplydirective_en)) != MOMWEB__END)
+    {
+      switch (wdir)
+	{
+	case MOMWEB__END:
+	  break;
+	case MOMWEB_LIT_STRING:
+	  {
+	    const char *litstr = va_arg (args, const char *);
+	    if (litstr && litstr[0])
+	      ADDWEBSTR (webitm, litstr);
+	  }
+	  break;
+	case MOMWEB_HTML_STRING:
+	  {
+	    const char *htmlstr = va_arg (args, const char *);
+	    if (htmlstr && htmlstr[0])
+	      webrequest_addhtml (webitm, htmlstr);
+	  }
+	  break;
+	default:
+	  MONIMELT_FATAL ("unexpected web reply directive %d", (int) wdir);
+	}
+    }
+  va_end (args);
+  pthread_mutex_unlock (&val.panyitem->i_mtx);
+}
+
+#undef ADDWEBSTR
