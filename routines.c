@@ -171,6 +171,8 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
     wfcs_emission_loop,
     wfcs_got_preparation,
     wfcs_declare_routine,
+    wfcs_emit_routine,
+    wfcs_run_compiler,
     wfcs__last
   };
 #define GENERATED_FILE_NAME "gen-first.c"
@@ -375,9 +377,9 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 	   "// declaration of code for %s\n"
 	   "int momcode_%s (int, momit_tasklet_t *, momclosure_t *,\n"
 	   "       momval_t *,intptr_t *, double *);\n", cnam, cnam);
-	momval_t statev = MONIMELT_NULLV, closurev = MONIMELT_NULLV, valuesv =
-	  MONIMELT_NULLV, numbersv = MONIMELT_NULLV, doublesv =
-	  MONIMELT_NULLV;
+	momval_t statev = MONIMELT_NULLV, closurev = MONIMELT_NULLV;
+	momval_t valuesv = MONIMELT_NULLV, numbersv = MONIMELT_NULLV;
+	momval_t doublesv = MONIMELT_NULLV;
 	mom_item_get_several_attrs (mom_value_as_item (l_routdata),
 				    mom_item__state, &statev,
 				    mom_item__closure, &closurev,
@@ -401,7 +403,30 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 	SET_STATE (preparation_loop);
       }
       break;
-#warning missing emission_loop
+    case wfcs_emission_loop:	////================ emission loop
+      {
+	goodstate = true;
+	MONIMELT_DEBUG (web,
+			"momcode_web_form_compile emission_loop n_ix=%ld",
+			(long) n_ix);
+	if (n_ix > (long) mom_set_cardinal (l_routines))
+	  {
+	    mom_item_buffer_printf
+	      (l_buffer, "\n\n"
+	       "// emitted %ld routines\n",
+	       (long) mom_set_cardinal (l_routines));
+	    n_ix = 0;
+	    SET_STATE (run_compiler);
+	  }
+	l_curout = (momval_t) mom_set_nth_item (l_routines, n_ix);
+	mom_dbg_value (web, "web_form_compile l_curout=", l_curout);
+	n_ix++;
+	if (mom_value_as_item (l_curout) != NULL)
+	  SET_STATE (emit_routine);
+	else
+	  SET_STATE (emission_loop);
+      }
+      break;
     case wfcs__last:
       {
 	MONIMELT_FATAL ("momcode_web_form_compile unexpected last");
@@ -417,6 +442,8 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 #undef l_dashboard
 #undef l_buffer
 #undef l_curout
+#undef l_curprep
+#undef l_routdata
 #undef n_ix
 }
 
