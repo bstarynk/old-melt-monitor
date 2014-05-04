@@ -516,7 +516,7 @@ mom_tasklet_step (momit_tasklet_t * tskitm)
   const momrout_sig_t *rcode = NULL;
   int nextstate = 0;
   // an incomplete routine would not have made a closure
-  if (MONIMELT_UNLIKELY (!curout || curout->irt_item.typnum != momty_closure
+  if (MONIMELT_UNLIKELY (!curout || curout->irt_item.typnum != momty_routineitem
 			 || !(rdescr = curout->irt_descr)
 			 || rdescr->rout_magic != ROUTINE_MAGIC
 			 || !(rcode = rdescr->rout_code)))
