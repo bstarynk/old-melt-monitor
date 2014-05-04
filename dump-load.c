@@ -474,7 +474,7 @@ mom_load_item (struct mom_loader_st *ld, uuid_t uuid, const char *space)
 	  assert (uuid[0] != (char) 0);
 	  if (curspa->spa_fetch_build)
 	    buildstr = curspa->spa_fetch_build (spanum, uuidstr);
-	  if (buildstr)
+	  if (buildstr && buildstr[0])
 	    {
 	      FILE *fm = fmemopen (buildstr, strlen (buildstr), "r");
 	      if (MONIMELT_UNLIKELY (!fm))

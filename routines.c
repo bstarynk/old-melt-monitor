@@ -123,6 +123,7 @@ enum web_form_compile_values_en
   wfcv_dashboard,
   wfcv_buffer,
   wfcv_curout,
+  wfcv_curprep,
   wfcv__lastval
 };
 
@@ -158,6 +159,7 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 #define l_dashboard locvals[wfcv_dashboard]
 #define l_buffer locvals[wfcv_buffer]
 #define l_curout locvals[wfcv_curout]
+#define l_curprep locvals[wfcv_curprep]
 #define n_ix locnums[wfcn_ix]
   time_t now = 0;
   struct tm nowtm = { };
@@ -278,7 +280,14 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 			"momcode_web_form_compile preparation_loop n_ix=%ld",
 			(long) n_ix);
 	if (n_ix > (long) mom_set_cardinal (l_routines))
-	  SET_STATE (emission_loop);
+	  {
+	    mom_item_buffer_printf
+	      (l_buffer, "\n\n"
+	       "// prepared %ld routines\n",
+	       (long) mom_set_cardinal (l_routines));
+	    n_ix = 0;
+	    SET_STATE (emission_loop);
+	  }
 	l_curout = (momval_t) mom_set_nth_item (l_routines, n_ix);
 	mom_dbg_value (web, "web_form_compile l_curout=", l_curout);
 	n_ix++;
@@ -294,6 +303,7 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 	MONIMELT_DEBUG (web,
 			"momcode_web_form_compile prepare_routine n_ix=%ld",
 			(long) n_ix);
+#warning a completer
       }
       break;
     case wfcs__last:
