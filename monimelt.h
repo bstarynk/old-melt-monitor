@@ -599,6 +599,27 @@ const momclosure_t *mom_make_closure_from_item_vector (momval_t conn,
 momval_t mom_make_set_union (momval_t s1, momval_t s2);
 momval_t mom_make_set_intersection (momval_t s1, momval_t s2);
 
+static inline unsigned
+mom_set_cardinal (momval_t setv)
+{
+  if (setv.ptr && *setv.ptype != momty_set)
+    return 0;
+  return setv.pset->slen;
+}
+
+static inline mom_anyitem_t *
+mom_set_nth_item (momval_t setv, int rk)
+{
+  if (setv.ptr && *setv.ptype != momty_set)
+    return NULL;
+  unsigned slen = setv.pset->slen;
+  if (rk < 0)
+    rk += (int) slen;
+  if (rk >= 0 && rk < (int) slen)
+    return (mom_anyitem_t *) (setv.pset->itemseq[rk]);
+  return NULL;
+}
+
 /// unparse the uuid of an item
 static inline const char *
 mom_unparse_item_uuid (const mom_anyitem_t * itm, char buf[UUID_PARSED_LEN])

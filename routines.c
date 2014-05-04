@@ -114,6 +114,24 @@ const struct momroutinedescr_st momrout_web_form_exit =
 
 
 ////////////////////////////////////////////////////////////////
+enum web_form_compile_values_en
+{
+  wfcv_argres,
+  wfcv_web,
+  wfcv_module,
+  wfcv_routines,
+  wfcv_dashboard,
+  wfcv_buffer,
+  wfcv_curout,
+  wfcv__lastval
+};
+
+enum web_form_compile_numbers_en
+{
+  wfcn_ix,
+  wfcn__lastnum
+};
+
 int
 momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 			  momclosure_t * closure, momval_t * locvals,
@@ -122,9 +140,25 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
   enum web_form_compile_state_en
   {
     wfcs_start,
+    wfcs_compute_routines,
+    wfcs_got_routines,
+    wfcs_begin_emission,
+    wfcs_preparation_loop,
+    wfcs_prepare_routine,
+    wfcs_emission_loop,
     wfcs__last
   };
-#define l_webv locvals[0]
+#define GENERATED_FILE_NAME "gen-first.c"
+#define SET_STATE(St) do { MONIMELT_DEBUG(web, "momcode_web_form_compile setstate " #St); \
+    return wfcs_##St; } while(0)
+#define l_argres locvals[wfcv_argres]
+#define l_web locvals[wfcv_web]
+#define l_module locvals[wfcv_module]
+#define l_routines locvals[wfcv_routines]
+#define l_dashboard locvals[wfcv_dashboard]
+#define l_buffer locvals[wfcv_buffer]
+#define l_curout locvals[wfcv_curout]
+#define n_ix locnums[wfcn_ix]
   time_t now = 0;
   struct tm nowtm = { };
   char nowbuf[64] = "";
@@ -132,21 +166,134 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
   strftime (nowbuf, sizeof (nowbuf), "%c", localtime_r (&now, &nowtm));
   MONIMELT_DEBUG (web,
 		  "momcode_web_form_compile state=%d webnum=%ld nowbuf=%s",
-		  state, mom_item_webrequest_webnum (l_webv), nowbuf);
+		  state, mom_item_webrequest_webnum (l_web), nowbuf);
   mom_dbg_item (web, "web_form_compile tasklet=",
 		(const mom_anyitem_t *) tasklet);
-  mom_dbg_value (web, "web_form_compile l_webv=", l_webv);
+  mom_dbg_value (web, "web_form_compile l_web=", l_web);
   mom_dbg_value (web, "web_form_compile closure=",
 		 (momval_t) (const momclosure_t *) closure);
   bool goodstate = false;
+  //// state machine
   switch ((enum web_form_compile_state_en) state)
     {
-    case wfcs_start:
+    case wfcs_start:		////================ start
       {
-	MONIMELT_DEBUG (web, "momcode_web_form_compile start webnum=%ld",
-			mom_item_webrequest_webnum (l_webv));
 	goodstate = true;
-	MONIMELT_FATAL ("momcode_web_form_compile unimplemented");
+	l_web = l_argres;
+	MONIMELT_DEBUG (web, "momcode_web_form_compile start webnum=%ld",
+			mom_item_webrequest_webnum (l_web));
+	mom_dbg_value (web, "web_form_compile l_web=", l_web);
+	l_module = (momval_t) mom_item__first_module;
+	mom_dbg_value (web, "web_form_compile l_module=", l_module);
+	l_routines =
+	  (momval_t) mom_item_get_attr (mom_value_as_item (l_module),
+					(mom_anyitem_t *) mom_item__routines);
+	mom_dbg_value (web, "web_form_compile l_routines=", l_routines);
+	if (mom_type (l_routines) == momty_closure)
+	  SET_STATE (compute_routines);
+	else if (mom_type (l_routines) == momty_set)
+	  SET_STATE (begin_emission);
+	else
+	  {
+	    MONIMELT_WARNING ("no routines in module");
+	    l_routines = MONIMELT_NULLV;
+	    SET_STATE (begin_emission);
+	  }
+	MONIMELT_FATAL
+	  ("momcode_web_form_compile unimplemented routine form at start");
+      }
+      break;
+    case wfcs_compute_routines:	////================ compute routines
+      {
+	MONIMELT_DEBUG (web,
+			"momcode_web_form_compile compute_routines webnum=%ld",
+			mom_item_webrequest_webnum (l_web));
+	goodstate = true;
+	mom_tasklet_push_frame ((momval_t) tasklet, (momval_t) l_routines,
+				MOMPFR_VALUE, l_module, MOMPFR_END);
+	SET_STATE (got_routines);
+      }
+      break;
+    case wfcs_got_routines:	////================ got routines
+      {
+	goodstate = true;
+	l_routines = l_argres;
+	mom_dbg_value (web, "web_form_compile got routines=", l_routines);
+	if (mom_type (l_routines) != momty_set)
+	  {
+	    MONIMELT_WARNING ("got no routines in module");
+	    l_routines = MONIMELT_NULLV;
+	  }
+	SET_STATE (begin_emission);
+      }
+      break;
+    case wfcs_begin_emission:	////================ begin emissions
+      {
+	goodstate = true;
+	l_dashboard = (momval_t) mom_make_item_assoc (MONIMELT_SPACE_NONE);
+	l_buffer = (momval_t) mom_make_item_buffer (MONIMELT_SPACE_NONE);
+	mom_dbg_value (web, "web_form_compile l_dashboard=", l_dashboard);
+	mom_dbg_value (web, "web_form_compile l_buffer=", l_buffer);
+	mom_item_buffer_puts
+	  (l_buffer,
+	   "// generated file " GENERATED_FILE_NAME " *** DO NOT EDIT ***\n");
+	time_t nowt = 0;
+	time (&nowt);
+	struct tm nowtm = { };
+	char nowyear[16];
+	char nowdate[72];
+	memset (nowyear, 0, sizeof (nowyear));
+	memset (nowdate, 0, sizeof (nowdate));
+	localtime_r (&nowt, &nowtm);
+	strftime (nowyear, sizeof (nowyear), "%Y", &nowtm);
+	strftime (nowdate, sizeof (nowdate), "%Y %b %d [%F]", &nowtm);
+	mom_item_buffer_printf (l_buffer, "// generated on %s\n\n", nowdate);
+	mom_item_buffer_printf
+	  (l_buffer,
+	   "/**   Copyright (C) %s Free Software Foundation, Inc.\n"
+	   " MONIMELT is a monitor for MELT - see http://gcc-melt.org/\n"
+	   " This generated file is part of GCC.\n"
+	   "\n"
+	   " GCC is free software; you can redistribute it and/or modify\n"
+	   " it under the terms of the GNU General Public License as published by\n"
+	   " the Free Software Foundation; either version 3, or (at your option)\n"
+	   " any later version.\n"
+	   "\n"
+	   " GCC is distributed in the hope that it will be useful,\n"
+	   " but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+	   " MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+	   " GNU General Public License for more details.\n"
+	   " You should have received a copy of the GNU General Public License\n"
+	   " along with GCC; see the file COPYING3.   If not see\n"
+	   " <http://www.gnu.org/licenses/>.\n"
+	   "**/\n\n" "#" "include \"monimelt.h\"\n\n", nowyear);
+	n_ix = 0;
+	SET_STATE (preparation_loop);
+      }
+      break;
+    case wfcs_preparation_loop:	////================ preparation loop
+      {
+	goodstate = true;
+	MONIMELT_DEBUG (web,
+			"momcode_web_form_compile preparation_loop n_ix=%ld",
+			(long) n_ix);
+	if (n_ix > (long) mom_set_cardinal (l_routines))
+	  SET_STATE (emission_loop);
+	l_curout = (momval_t) mom_set_nth_item (l_routines, n_ix);
+	mom_dbg_value (web, "web_form_compile l_curout=", l_curout);
+	n_ix++;
+	if (mom_value_as_item (l_curout) != NULL)
+	  SET_STATE (prepare_routine);
+	else
+	  SET_STATE (preparation_loop);
+      }
+      break;
+    case wfcs_prepare_routine:	////================ prepare routine
+      {
+	goodstate = true;
+	MONIMELT_DEBUG (web,
+			"momcode_web_form_compile prepare_routine n_ix=%ld",
+			(long) n_ix);
       }
       break;
     case wfcs__last:
@@ -156,14 +303,22 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
     }
   if (!goodstate)
     MONIMELT_FATAL ("momcode_web_form_compile invalid state %d", state);
-#undef l_webv
+  MONIMELT_DEBUG (web, "momcode_web_form_compile ending");
+  return -1;
+#undef l_web
+#undef l_module
+#undef l_routines
+#undef l_dashboard
+#undef l_buffer
+#undef l_curout
+#undef n_ix
 }
 
 const struct momroutinedescr_st momrout_web_form_compile =
   {.rout_magic = ROUTINE_MAGIC,
   .rout_minclosize = 0,
-  .rout_frame_nbval = 1,
-  .rout_frame_nbnum = 0,
+  .rout_frame_nbval = (unsigned) wfcv__lastval,
+  .rout_frame_nbnum = (unsigned) wfcn__lastnum,
   .rout_frame_nbdbl = 0,
   .rout_name = "web_form_compile",
   .rout_code = (const momrout_sig_t *) momcode_web_form_compile
