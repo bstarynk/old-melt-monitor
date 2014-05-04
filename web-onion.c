@@ -629,9 +629,10 @@ webrequest_reserve (momit_webrequest_t * webitm, unsigned more)
 }
 
 #define ADDWEBSTR(Webitm,Str) do { const char*str = (Str);		\
-      int slen=strlen(str);						\
-      webrequest_reserve((Webitm), slen+1);				\
-      strcpy ((Webitm)->iweb_replybuf+(Webitm)->iweb_replylength, str);	\
+      int slen=strlen (str);						\
+      webrequest_reserve ((Webitm), slen+1);				\
+      memcpy ((Webitm)->iweb_replybuf+(Webitm)->iweb_replylength,	\
+	      str, slen);						\
       (Webitm)->iweb_replylength += slen;				\
   } while(0)
 
@@ -668,7 +669,7 @@ webrequest_addhtml (momit_webrequest_t * webitm, const char *htmlstr)
 	  ADDWEBSTR (webitm, "&nbsp;");
 	  break;
 	default:
-	  if (c >= 128)
+	  if (c >= 127)
 	    {
 	      char ebuf[16];
 	      memset (ebuf, 0, sizeof (ebuf));
@@ -715,6 +716,75 @@ mom_item_webrequest_add (momval_t val, ...)
 	    if (htmlstr && htmlstr[0])
 	      webrequest_addhtml (webitm, htmlstr);
 	  }
+	  break;
+	case MOMWEB_VALUE:
+	  {
+	    momval_t val = va_arg (args, momval_t);
+	    unsigned typn = 0;
+	    if (val.ptr)
+	      switch ((typn = (*val.ptype)))
+		{
+		case momty_string:
+		  ADDWEBSTR (webitm, val.pstring->cstr);
+		  break;
+		case momty_int:
+		  {
+		    char ibuf[32];
+		    memset (ibuf, 0, sizeof (ibuf));
+		    snprintf (ibuf, sizeof (ibuf), "%ld",
+			      (long) val.pint->intval);
+		    ADDWEBSTR (webitm, ibuf);
+		  }
+		  break;
+		case momty_float:
+		  {
+		    char fbuf[48];
+		    memset (fbuf, 0, sizeof (fbuf));
+		    snprintf (fbuf, sizeof (fbuf), "%g", val.pfloat->floval);
+		    ADDWEBSTR (webitm, fbuf);
+		  }
+		  break;
+		case momty_jsonarray:
+		case momty_jsonobject:
+		case momty_jsonitem:
+		case momty_booleanitem:
+		  {
+		    char *bufj = NULL;
+		    size_t sizj = 0;
+		    struct jsonoutput_st outj = { };
+		    FILE *foutj = open_memstream (&bufj, &sizj);
+		    if (!foutj)
+		      MONIMELT_FATAL ("failed to open stream for JSON");
+		    mom_json_output_initialize (&outj, foutj, NULL,
+						jsof_flush);
+		    mom_output_json (&outj, val);
+		    putc ('\n', foutj);
+		    fflush (foutj);
+		    mom_json_output_close (&outj);
+		    ADDWEBSTR (webitm, bufj);
+		    free (bufj), bufj = NULL;
+		  }
+		  break;
+		default:
+		  if (typn > momty__itemlowtype)
+		    {
+		      const char *iname =
+			mom_string_cstr ((momval_t)
+					 mom_name_of_item (val.panyitem));
+		      if (iname)
+			ADDWEBSTR (webitm, iname);
+		      else
+			{
+			  char ustr[UUID_PARSED_LEN + 4];
+			  memset (ustr, 0, sizeof (ustr));
+			  ustr[0] = '$';
+			  mom_underscore_item_uuid (val.panyitem, ustr + 1);
+			  ADDWEBSTR (webitm, ustr);
+			}
+		    }
+		  break;
+		}
+	  }			// end case MOMWEB_VALUE
 	  break;
 	default:
 	  MONIMELT_FATAL ("unexpected web reply directive %d", (int) wdir);

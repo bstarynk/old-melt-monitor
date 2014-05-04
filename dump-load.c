@@ -1476,6 +1476,8 @@ mom_full_dump_at (const char *srcfil, int srclin, const char *reason,
 	char *bufbuild = NULL;
 	size_t sizbuild = 0;
 	FILE *foutbuild = open_memstream (&bufbuild, &sizbuild);
+	if (!foutbuild)
+	  MONIMELT_FATAL ("failed to open stream for JSON build");
 	mom_json_output_initialize (&outj, foutbuild, NULL,
 				    jsof_flush | jsof_halfindent);
 	mom_output_json (&outj, jsonbuild);
