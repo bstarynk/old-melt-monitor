@@ -375,8 +375,33 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 	   "// declaration of code for %s\n"
 	   "int momcode_%s (int, momit_tasklet_t *, momclosure_t *,\n"
 	   "       momval_t *,intptr_t *, double *);\n", cnam, cnam);
+	momval_t statev = MONIMELT_NULLV, closurev = MONIMELT_NULLV, valuesv =
+	  MONIMELT_NULLV, numbersv = MONIMELT_NULLV, doublesv =
+	  MONIMELT_NULLV;
+	mom_item_get_several_attrs (mom_value_as_item (l_routdata),
+				    mom_item__state, &statev,
+				    mom_item__closure, &closurev,
+				    mom_item__values, &valuesv,
+				    mom_item__numbers, &numbersv,
+				    mom_item__doubles, &doublesv, NULL);
+	mom_item_buffer_printf (l_buffer,
+				"\n" "// routine descriptor for %s\n"
+				"const struct momroutinedescr_st momrout_%s = { .rout_magic = ROUTINE_MAGIC, \n"
+				" .rout_minclosize = %d,\n"
+				" .rout_frame_nbval = %d,\n"
+				" .rout_frame_nbnum = %d,\n"
+				" .rout_frame_nbdbl = %d,\n"
+				" .rout_name = \"%s\",\n"
+				" .rout_code = (const momrout_sig_t *) momcode_%s\n"
+				"};\n", cnam, cnam,
+				mom_seqitem_length (closurev),
+				mom_seqitem_length (valuesv),
+				mom_seqitem_length (numbersv),
+				mom_seqitem_length (doublesv), cnam, cnam);
+	SET_STATE (preparation_loop);
       }
       break;
+#warning missing emission_loop
     case wfcs__last:
       {
 	MONIMELT_FATAL ("momcode_web_form_compile unexpected last");
