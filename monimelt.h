@@ -1521,13 +1521,19 @@ pthread_mutex_t mom_run_mtx;
 pthread_cond_t mom_run_changed_cond;
 
 // start the worker threads
-void mom_run (void);
-// ask workers to stop
-void mom_request_stop (void);
-// wait for stop
-void mom_wait_for_stop (void);
+void mom_run_at (const char *srcfil, int srclin, const char *reason);
+#define mom_run(Reason) mom_run_at(__FILE__,__LINE__,(Reason))
+
+// a post runner function returns >0 to request that running resumes
+typedef int mom_post_runner_sig_t (void *data);
+// ask workers to stop, then have the main thread invokes a post runner
+void mom_request_stop_at (const char *srcfil, int srclin, const char *reason,
+			  mom_post_runner_sig_t * postrunner,
+			  void *clientdata);
+#define mom_request_stop(Reason,Postrunner,Data) mom_request_stop_at(__FILE__,__LINE__,(Reason),(Postrunner),(Data))
+
 // load a code module, resolve embryonic routines, run again
-void mom_load_code_then_run (const char *modname);
+int mom_load_code_post_runner (const char *modname);
 
 void mom_agenda_add_tasklet_front (momval_t tsk);
 void mom_agenda_add_tasklet_back (momval_t tsk);

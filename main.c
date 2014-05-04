@@ -745,11 +745,6 @@ main (int argc, char **argv)
       mom_start_web (web_host);
       MONIMELT_INFORM ("started web %s", web_host);
     }
-  if (mom_nb_workers > 0)
-    {
-      MONIMELT_INFORM ("start %d workers", (int) mom_nb_workers);
-      mom_run ();
-    }
   if (!dont_want_event_loop)
     {
       extern void mom_start_event_loop (void);
@@ -757,21 +752,11 @@ main (int argc, char **argv)
     }
   else
     MONIMELT_WARNING ("did not start event loop");
-  sched_yield ();
-  if (mom_nb_workers > 0)
+  if (mom_nb_workers > 0 && web_host && !dont_want_event_loop)
     {
-      usleep (2000);
-      mom_wait_for_stop ();
-      MONIMELT_INFORM ("done %d workers", (int) mom_nb_workers);
-      usleep (2000);
-      if (!dump_state_path && load_state_path)
-	{
-	  MONIMELT_INFORM ("will dump on %s", dump_state_path);
-	  dump_state_path = load_state_path;
-	}
+      MONIMELT_INFORM ("start %d workers", (int) mom_nb_workers);
+      mom_run ("main working run");
     }
-  sched_yield ();
-  usleep (5000);
   MONIMELT_DEBUG (run, "before potential final dump");
   if (dump_state_path && !web_host)
     {

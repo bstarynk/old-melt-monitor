@@ -57,6 +57,11 @@ struct momworkdata_st
 
 static __thread struct momworkdata_st *cur_worker;
 
+#define MAX_POST_RUNNERS (2*MOM_MAX_WORKERS)
+
+static mom_post_runner_sig_t *post_runner_funtab[MAX_POST_RUNNERS];
+static void *post_runner_datatab[MAX_POST_RUNNERS];
+
 extern momit_queue_t *mom_item__agenda;
 
 static struct momworkdata_st workers[MOM_MAX_WORKERS + 1];
@@ -108,8 +113,9 @@ work_loop (struct GC_stack_base *sb, void *data)
       loopcnt++;
       MONIMELT_DEBUG (run, "work_loop index %d, loopcnt=%ld, working=%d",
 		      wd->work_index, loopcnt, (int) working);
-      if (working)
-	curtsk = mom_item_queue_pop_front ((momval_t) mom_item__agenda);
+      if (!working)
+	break;
+      curtsk = mom_item_queue_pop_front ((momval_t) mom_item__agenda);
       mom_dbg_item (run, "work_loop curtsk=", curtsk);
       if (curtsk)
 	{
@@ -129,14 +135,17 @@ work_loop (struct GC_stack_base *sb, void *data)
 	    pthread_cond_timedwait (&mom_run_changed_cond, &mom_run_mtx,
 				    &endts);
 	  pthread_mutex_unlock (&mom_run_mtx);
+	  usleep (33000);
 	}
     }
   while (working);
   MONIMELT_DEBUG (run, "work_loop index %d ending", wd->work_index);
   pthread_mutex_lock (&mom_run_mtx);
-  cur_worker->work_index = 0;
+  MONIMELT_DEBUG (run, "work_loop index %d clearing", wd->work_index);
+  wd->work_index = 0;
   pthread_mutex_unlock (&mom_run_mtx);
   pthread_cond_broadcast (&mom_run_changed_cond);
+  sched_yield ();
   MOMGC_UNREGISTER_MY_THREAD ();
   return NULL;
 }
@@ -163,90 +172,143 @@ work_cb (void *ad)
 
 
 void
-mom_run (void)
+mom_run_at (const char *srcfil, int srclin, const char *reason)
 {
-  pthread_mutex_lock (&mom_run_mtx);
-  if (mom_nb_workers < MOM_MIN_WORKERS)
-    mom_nb_workers = MOM_MIN_WORKERS;
-  else if (mom_nb_workers > MOM_MAX_WORKERS)
-    mom_nb_workers = MOM_MAX_WORKERS;
-  assert (!working_flag);
-  memset (workers, 0, sizeof (workers));
-  for (unsigned ix = 1; ix <= mom_nb_workers; ix++)
-    {
-      workers[ix].work_magic = WORK_MAGIC;
-      workers[ix].work_index = ix;
-      pthread_create (&workers[ix].work_thread, NULL, work_cb, workers + ix);
-    }
-  working_flag = true;
-  pthread_mutex_unlock (&mom_run_mtx);
-}
-
-void
-mom_wait_for_stop (void)
-{
-  int nbworkers = 0;
-  bool isworking = false;
-  MONIMELT_DEBUG (run, "mom_wait_for_stop start");
+  bool restart_work = false;
+  MONIMELT_DEBUG (run, "mom_run %s:%d reason %s start", srcfil, srclin,
+		  reason);
   do
     {
-      nbworkers = 0;
-      isworking = false;
-      pthread_mutex_lock (&mom_run_mtx);
-      isworking = working_flag;
-      for (unsigned ix = 1; ix <= mom_nb_workers; ix++)
-	if (workers[ix].work_magic == WORK_MAGIC
-	    && workers[ix].work_index == ix)
-	  nbworkers++;
-      if (nbworkers > 0 && isworking)
-	pthread_cond_wait (&mom_run_changed_cond, &mom_run_mtx);
-      pthread_mutex_unlock (&mom_run_mtx);
-      sched_yield ();
+      // start the work threads
+      {
+	pthread_mutex_lock (&mom_run_mtx);
+	if (mom_nb_workers < MOM_MIN_WORKERS)
+	  mom_nb_workers = MOM_MIN_WORKERS;
+	else if (mom_nb_workers > MOM_MAX_WORKERS)
+	  mom_nb_workers = MOM_MAX_WORKERS;
+	assert (!working_flag);
+	memset (workers, 0, sizeof (workers));
+	working_flag = true;
+	for (unsigned ix = 1; ix <= mom_nb_workers; ix++)
+	  {
+	    workers[ix].work_magic = WORK_MAGIC;
+	    workers[ix].work_index = ix;
+	    pthread_create (&workers[ix].work_thread, NULL, work_cb,
+			    workers + ix);
+	  }
+	pthread_mutex_unlock (&mom_run_mtx);
+      }
+      usleep (75000);
+      MONIMELT_DEBUG (run, "mom_run %s:%d reason %s joining %d workers",
+		      srcfil, srclin, reason, mom_nb_workers);
+      // join the work threads
+      {
+	for (unsigned ix = 1; ix <= mom_nb_workers; ix++)
+	  {
+	    void *ret = NULL;
+	    pthread_join (workers[ix].work_thread, &ret);
+	    MONIMELT_DEBUG (run, "mom_run %s:%d reason %s joined worker#%d",
+			    srcfil, srclin, reason, ix);
+	  }
+      }
+      // check that we are not working
+      usleep (75000);
+      {
+	pthread_mutex_lock (&mom_run_mtx);
+	if (working_flag)
+	  MONIMELT_FATAL ("corruption, working after run %s:%d reason %s",
+			  srcfil, srclin, reason);
+	pthread_mutex_unlock (&mom_run_mtx);
+      }
+      // run the post runner functions
+      int nbpostrunner = 0;
+      int nbfailpost = 0;
+      {
+	pthread_mutex_lock (&mom_run_mtx);
+	for (int pix = 0; pix < MAX_POST_RUNNERS; pix++)
+	  {
+	    if (post_runner_funtab[pix])
+	      {
+		nbpostrunner++;
+		int pr = post_runner_funtab[pix] (post_runner_datatab[pix]);
+		if (pr <= 0)
+		  nbfailpost++;
+	      }
+	  }
+	pthread_mutex_unlock (&mom_run_mtx);
+      }
+      if (nbpostrunner > 0 && nbfailpost == 0)
+	{
+	  restart_work = 1;
+	  MONIMELT_DEBUG (run, "mom_run %s:%d reason %s restarting", srcfil,
+			  srclin, reason);
+	}
     }
-  while (nbworkers > 0 || isworking);
-  pthread_mutex_lock (&mom_run_mtx);
-  for (unsigned ix = 1; ix <= mom_nb_workers; ix++)
-    {
-      void *ret = NULL;
-      if (workers[ix].work_magic == WORK_MAGIC
-	  && workers[ix].work_index == ix)
-	pthread_join (workers[ix].work_thread, &ret);
-      assert (ret == NULL);
-      workers[ix].work_thread = (pthread_t) 0;
-    }
-  pthread_mutex_unlock (&mom_run_mtx);
-  usleep (1000);
-  MONIMELT_DEBUG (run, "mom_wait_for_stop end");
+  while (restart_work);
+  MONIMELT_DEBUG (run, "mom_run %s:%d reason %s ending", srcfil, srclin,
+		  reason);
 }
 
 void
-mom_request_stop (void)
+mom_request_stop_at (const char *srcfil, int srcline, const char *reason,
+		     mom_post_runner_sig_t * postrunner, void *clientdata)
 {
   int nbworkers = 0;
   long stopcount = 0;
-  MONIMELT_DEBUG (run, "mom_request_stop start");
+  MONIMELT_DEBUG (run, "mom_request_stop start %s:%d reason %s", srcfil,
+		  srcline, reason);
+  // first register the postrunner
+  if (postrunner)
+    {
+      int pix = -1;
+      pthread_mutex_lock (&mom_run_mtx);
+      for (unsigned rix = 0; rix < MAX_POST_RUNNERS && pix < 0; rix++)
+	if (!post_runner_funtab[rix])
+	  {
+	    post_runner_funtab[rix] = postrunner;
+	    post_runner_datatab[rix] = clientdata;
+	    pix = rix;
+	  }
+      pthread_mutex_unlock (&mom_run_mtx);
+      if (pix < 0)
+	MONIMELT_FATAL ("failed to register postrunner @%p", postrunner);
+      MONIMELT_DEBUG (run,
+		      "request_stop reason %s registered pix %d", reason,
+		      pix);
+    };
   do
     {
+#define STOP_DELAY 1.5
+      double stoptime = monimelt_clock_time (CLOCK_REALTIME) + STOP_DELAY;
       pthread_mutex_lock (&mom_run_mtx);
       stopcount++;
-      MONIMELT_DEBUG (run, "mom_request_stop stopcount=%ld", stopcount);
+      MONIMELT_DEBUG (run,
+		      "mom_request_stop stopcount=%ld reason %s clearing working_flag",
+		      stopcount, reason);
       working_flag = false;
       nbworkers = 0;
       for (unsigned ix = 1; ix <= mom_nb_workers; ix++)
 	if (workers[ix].work_magic == WORK_MAGIC
 	    && workers[ix].work_index == ix)
 	  nbworkers++;
-      MONIMELT_DEBUG (run, "mom_request_stop nbworkers=%d", nbworkers);
+      MONIMELT_DEBUG (run, "mom_request_stop nbworkers=%d reason %s",
+		      nbworkers, reason);
       int errwait = 0;
       if (nbworkers > 0)
-	errwait = pthread_cond_wait (&mom_run_changed_cond, &mom_run_mtx);
+	{
+	  struct timespec stopts = monimelt_timespec (stoptime);
+	  errwait =
+	    pthread_cond_timedwait (&mom_run_changed_cond, &mom_run_mtx,
+				    &stopts);
+	}
       pthread_mutex_unlock (&mom_run_mtx);
-      MONIMELT_DEBUG (run, "nbworkers=%d, errwait#%d (%s)", nbworkers,
-		      errwait, strerror (errwait));
+      MONIMELT_DEBUG (run, "nbworkers=%d, errwait#%d (%s) reason %s",
+		      nbworkers, errwait, strerror (errwait), reason);
       usleep (500);
     }
   while (nbworkers > 0);
-  MONIMELT_DEBUG (run, "mom_request_stop end");
+  MONIMELT_DEBUG (run, "mom_request_stop end %s:%d reason %s", srcfil,
+		  srcline, reason);
 }
 
 
@@ -885,8 +947,8 @@ end:
 }
 
 
-void
-mom_load_code_then_run (const char *modname)
+int
+mom_load_code_post_runner (const char *modname)
 {
   GModule *codmodu = NULL;
   char pathbuf[MONIMELT_PATH_LEN];
@@ -898,10 +960,8 @@ mom_load_code_then_run (const char *modname)
   if (access (pathbuf, R_OK))
     {
       MONIMELT_WARNING ("fail to access code module %s", pathbuf);
-      return;
+      return 0;
     }
-  mom_request_stop ();
-  mom_wait_for_stop ();
   codmodu = g_module_open (pathbuf, 0);
   if (!codmodu)
     MONIMELT_FATAL ("failed to load code module %s: %s", pathbuf,
@@ -935,7 +995,7 @@ mom_load_code_then_run (const char *modname)
   MONIMELT_INFORM ("loaded code module %s and found %d embryonic routines",
 		   pathbuf, foundnamecount);
   usleep (500);
-  mom_run ();
+  return 1;
 }
 
 

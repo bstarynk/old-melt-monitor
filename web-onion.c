@@ -821,6 +821,7 @@ mom_item_webrequest_add (momval_t val, ...)
 #undef COMMON_MIME_TYPE
 	      }
 	  }
+	  break;
 	case MOMWEB_STDIO_FILE_HTML_CONTENT:
 	  wanthtmlencoding = true;
 	  // failthru
