@@ -422,10 +422,13 @@ signal_fd_handler (int fd, short revent, void *data)
 	      exitstatus = WEXITSTATUS (pst);
 	    else if (WIFSIGNALED (pst))
 	      termsig = WTERMSIG (pst);
+	    MONIMELT_DEBUG (run, "wpid %d, exitstatus=%d termsig=%d",
+			    (int) wpid, exitstatus, termsig);
 	    if (wproc && (exitstatus >= 0 || termsig >= 0))
 	      {
 		extern momit_box_t *mom_item__exited;
 		extern momit_box_t *mom_item__terminated;
+		mom_dbg_item (run, "wproc=", (const mom_anyitem_t *) wproc);
 		pthread_mutex_lock (&wproc->iproc_item.i_mtx);
 		outstr =
 		  mom_make_string_len (wproc->iproc_outbuf,
@@ -437,17 +440,38 @@ signal_fd_handler (int fd, short revent, void *data)
 		wproc->iproc_outsize = wproc->iproc_outpos = 0;
 		wproc->iproc_pid = 0;
 		pthread_mutex_unlock (&wproc->iproc_item.i_mtx);
-		// should run the closure
-		if (exitstatus >= 0)
-		  mom_run_closure ((momval_t) clos,
-				   MOMPFR_THREE_VALUES, wproc, outstr,
-				   mom_item__exited, MOMPFR_INT, exitstatus,
-				   MOMPFR_END);
-		else if (termsig >= 0)
-		  mom_run_closure ((momval_t) clos,
-				   MOMPFR_THREE_VALUES, wproc, outstr,
-				   mom_item__terminated, MOMPFR_INT, termsig,
-				   MOMPFR_END);
+		// should run the closure in a new tasklet
+		{
+		  momit_tasklet_t *protasklet = NULL;
+		  if (exitstatus >= 0)
+		    {
+		      protasklet =
+			mom_make_item_tasklet (MONIMELT_SPACE_NONE);
+		      mom_tasklet_push_frame ((momval_t) protasklet,
+					      (momval_t) clos,
+					      MOMPFR_THREE_VALUES, wproc,
+					      outstr, mom_item__exited,
+					      MOMPFR_INT, exitstatus,
+					      MOMPFR_END);
+		    }
+		  else if (termsig >= 0)
+		    {
+		      protasklet =
+			mom_make_item_tasklet (MONIMELT_SPACE_NONE);
+		      mom_tasklet_push_frame ((momval_t) protasklet,
+					      (momval_t) clos,
+					      MOMPFR_THREE_VALUES, wproc,
+					      outstr, mom_item__terminated,
+					      MOMPFR_INT, termsig,
+					      MOMPFR_END);
+		    };
+		  if (protasklet)
+		    {
+		      mom_dbg_item (run, "new protasklet=",
+				    (const mom_anyitem_t *) protasklet);
+		      mom_agenda_add_tasklet_front ((momval_t) protasklet);
+		    }
+		}
 	      }
 	  }
       }

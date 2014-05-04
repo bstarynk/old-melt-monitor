@@ -129,54 +129,7 @@ dict_add (void *data, const char *key, const void *value, int flags)
 }
 
 
-#define WEBRUNNER_MAGIC 0x1158fcab	/* webrunner magic 291044523 */
-struct webrunner_st
-{
-  unsigned webrunner_magic;
-  const momclosure_t *webrunner_closhandler;
-  momit_webrequest_t *webrunner_webitm;
-  void *webrunner__gap;
-};
 
-static void
-really_webrun (struct GC_stack_base *sb, void *data)
-{
-  MOMGC_REGISTER_MY_THREAD (sb);
-  struct webrunner_st *wr = data;
-  assert (wr && wr->webrunner_magic == WEBRUNNER_MAGIC);
-  assert (wr->webrunner_webitm != NULL
-	  && wr->webrunner_webitm->iweb_item.typnum == momty_webrequestitem);
-  unsigned long webnum = wr->webrunner_webitm->iweb_webnum;
-  MONIMELT_DEBUG (web, "really_webrun webnum#%ld before running closure",
-		  webnum);
-  (void) mom_run_closure ((momval_t) (const momclosure_t *)
-			  wr->webrunner_closhandler, MOMPFR_VALUE,
-			  (momval_t) wr->webrunner_webitm, MOMPFR_END);
-  MONIMELT_DEBUG (web, "really_webrun webnum#%ld after running closure",
-		  webnum);
-  usleep (100);
-  MOMGC_UNREGISTER_MY_THREAD ();
-}
-
-static void *
-webrun_cb (void *data)
-{
-  char thrname[24];
-  struct webrunner_st *wr = data;
-  memset (thrname, 0, sizeof (thrname));
-  assert (wr && wr->webrunner_magic == WEBRUNNER_MAGIC);
-  assert (wr->webrunner_webitm != NULL
-	  && wr->webrunner_webitm->iweb_item.typnum == momty_webrequestitem);
-  unsigned long webnum = wr->webrunner_webitm->iweb_webnum;
-  snprintf (thrname, sizeof (thrname), "mom-wru%05ld", webnum);
-  pthread_setname_np (pthread_self (), thrname);
-  MONIMELT_DEBUG (web, "webrun before running closhandler webnum#%ld",
-		  webnum);
-  MOMGC_CALL_WITH_STACK_BASE (really_webrun, wr);
-  usleep (100);
-  MONIMELT_DEBUG (web, "webrun after running closhandler webnum#%ld", webnum);
-  return wr;
-}
 
 #define WEB_INITIAL_REPLY_SIZE 256
 #define WEB_REPLY_TIMEOUT 2.4	/*seconds web reply timeout */
@@ -309,20 +262,19 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
       mom_dbg_item (web, "really_process_request webitm",
 		    (const mom_anyitem_t *) webitm);
       mom_dbg_value (web, "really_process_request closhandler", closhandler);
-      MONIMELT_DEBUG (web, "before running webrunthread");
-      pthread_t webrunthread = 0;
-      struct webrunner_st webrun = { };
-      memset (&webrun, 0, sizeof (webrun));
-      webrun.webrunner_closhandler = closhandler.pclosure;
-      webrun.webrunner_webitm = webitm;
-      webrun.webrunner_magic = WEBRUNNER_MAGIC;
-      if (pthread_create (&webrunthread, NULL, webrun_cb, &webrun))
-	MONIMELT_FATAL ("failed to create webrunner for webnum#%ld", webnum);
-      usleep (1000);
-      void *ret = NULL;
-      MONIMELT_DEBUG (web, "created webrunthread=%#lx for webnum#%ld",
-		      (long) webrunthread, webnum);
+      {
+	momit_tasklet_t *webtasklet =
+	  mom_make_item_tasklet (MONIMELT_SPACE_NONE);
+	mom_tasklet_push_frame ((momval_t) webtasklet, (momval_t) closhandler,
+				MOMPFR_VALUE, webitm, MOMPFR_END);
+	mom_dbg_item (web, "new webtasklet=",
+		      (const mom_anyitem_t *) webtasklet);
+	mom_agenda_add_tasklet_front ((momval_t) webtasklet);
+      }
       sched_yield ();
+      // we sleep for 25 milliseconds, to avoid replying too quickly
+      // to the browser; this might slow down some attacks...
+      usleep (25000);
       /* we should loop on lock the webitm's mutex and
          pthread_cond_timedwait webitm->iweb_cond, so we should define
          a protocol to reply to a request */
@@ -342,6 +294,8 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
 			  webitm->iweb_replycode);
 	  if (!gotreply && monimelt_clock_time (CLOCK_REALTIME) > wend + 0.01)
 	    {
+	      MONIMELT_DEBUG (web, "timedout webnum#%ld",
+			      webitm->iweb_webnum);
 	      onion_response_free (webitm->iweb_response);
 	      webitm->iweb_response =
 		onion_response_new (webitm->iweb_request);
@@ -370,69 +324,54 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
 	      onion_response_flush (webitm->iweb_response);
 	      webitm->iweb_response = NULL;
 	    }
+	  else if (gotreply)
+	    {
+	      MONIMELT_DEBUG (web,
+			      "gotreply webnum#%ld mime %s length %u code %d",
+			      webitm->iweb_webnum, webitm->iweb_replymime,
+			      webitm->iweb_replylength,
+			      webitm->iweb_replycode);
+	      if (webitm->iweb_replymime
+		  && !strncmp (webitm->iweb_replymime, "text/", 5)
+		  && webitm->iweb_replybuf)
+		{
+		  if (webitm->iweb_replylength + 1 < webitm->iweb_replysize)
+		    webitm->iweb_replybuf[webitm->iweb_replylength] =
+		      (char) 0;
+		  MONIMELT_DEBUG (web, "webnum#%ld buffer:%s\n",
+				  webitm->iweb_webnum, webitm->iweb_replybuf);
+		}
+	      assert (webitm->iweb_response != NULL);
+	      onion_response_set_code (webitm->iweb_response,
+				       webitm->iweb_replycode);
+	      onion_response_set_length (webitm->iweb_response,
+					 webitm->iweb_replylength);
+	      if (webitm->iweb_replymime)
+		onion_response_set_header (webitm->iweb_response,
+					   "content-type",
+					   webitm->iweb_replymime);
+	      else
+		MONIMELT_WARNING ("web request #%ld has no mime type",
+				  webitm->iweb_webnum);
+	      if (webitm->iweb_replylength > 0)
+		onion_response_write (webitm->iweb_response,
+				      webitm->iweb_replybuf,
+				      webitm->iweb_replylength);
+	      onion_response_flush (webitm->iweb_response);
+	      MONIMELT_DEBUG (web, "webnum#%ld flushed response",
+			      webitm->iweb_webnum);
+	      webitm->iweb_response = NULL;
+	    };
 	  pthread_mutex_unlock (&webitm->iweb_item.i_mtx);
 	  sched_yield ();
 	}
       while (!gotreply && monimelt_clock_time (CLOCK_REALTIME) <= wend);
-      MONIMELT_DEBUG (web, "before joining webrunthread");
-      if (pthread_join (webrunthread, &ret))
-	MONIMELT_FATAL
-	  ("failed to join successfully webrunner for webnum#%ld", webnum);
-      if (ret != NULL && ret != &webrun)
-	MONIMELT_FATAL
-	  ("bad return @%p from webrunner for webnum#%ld", ret, webnum);
-      MONIMELT_DEBUG (web, "joined webrunthread=%#lx", (long) webrunthread);
-      memset (&webrun, 0, sizeof (webrun));
       sched_yield ();
       pwebinf->web_stat = OCS_PROCESSED;
     }
   MOMGC_UNREGISTER_MY_THREAD ();
   return NULL;
 
-}
-
-void
-mom_item_webrequest_reply (momval_t vweb, const char *mimetype, int code)
-{
-  if (!vweb.ptr || *vweb.ptype != momty_webrequestitem || !mimetype)
-    return;
-  if (!code)
-    code = HTTP_OK;
-  momit_webrequest_t *webitm = vweb.pwebrequestitem;
-  MONIMELT_DEBUG (web, "webrequest_reply mimetype=%s code=%d webnum#%ld",
-		  mimetype, code, (long) webitm->iweb_webnum);
-  mom_dbg_item (web, "webrequest_reply webitm",
-		(const mom_anyitem_t *) webitm);
-  bool webdone = false;
-  pthread_mutex_lock (&vweb.panyitem->i_mtx);
-  MONIMELT_DEBUG (web, "webrequest_reply  webnum#%ld resp@%p",
-		  (long) webitm->iweb_webnum, webitm->iweb_response);
-  if (webitm->iweb_response)
-    {
-      onion_response_set_header (webitm->iweb_response, "Content-Type",
-				 mimetype);
-      if (code > 0)
-	onion_response_set_code (webitm->iweb_response, code);
-      onion_response_flush (webitm->iweb_response);
-      webitm->iweb_response = NULL;
-      webdone = true;
-      MONIMELT_DEBUG (web,
-		      "webrequest_reply clearing iweb_response webnum#%ld",
-		      (long) webitm->iweb_webnum);
-    }
-  pthread_mutex_unlock (&vweb.panyitem->i_mtx);
-  if (webdone)
-    {
-      MONIMELT_DEBUG (web, "webrequest_reply webnum#%ld webdone broadcast",
-		      (long) webitm->iweb_webnum);
-      int brerr = pthread_cond_broadcast (&webitm->iweb_cond);
-      MONIMELT_DEBUG (web, "webrequest_reply webnum#%ld brerr#%d (%s)",
-		      webitm->iweb_webnum, brerr, strerror (brerr));
-
-    }
-  MONIMELT_DEBUG (web, "webrequest_reply webnum#%ld end",
-		  (long) webitm->iweb_webnum);
-  sched_yield ();
 }
 
 
