@@ -602,7 +602,7 @@ momval_t mom_make_set_intersection (momval_t s1, momval_t s2);
 static inline unsigned
 mom_set_cardinal (momval_t setv)
 {
-  if (setv.ptr && *setv.ptype != momty_set)
+  if (!setv.ptr || *setv.ptype != momty_set)
     return 0;
   return setv.pset->slen;
 }
@@ -610,13 +610,55 @@ mom_set_cardinal (momval_t setv)
 static inline mom_anyitem_t *
 mom_set_nth_item (momval_t setv, int rk)
 {
-  if (setv.ptr && *setv.ptype != momty_set)
+  if (!setv.ptr || *setv.ptype != momty_set)
     return NULL;
   unsigned slen = setv.pset->slen;
   if (rk < 0)
     rk += (int) slen;
   if (rk >= 0 && rk < (int) slen)
     return (mom_anyitem_t *) (setv.pset->itemseq[rk]);
+  return NULL;
+}
+
+static inline unsigned
+mom_tuple_length (momval_t tupv)
+{
+  if (!tupv.ptr || *tupv.ptype != momty_tuple)
+    return 0;
+  return tupv.ptuple->slen;
+}
+
+static inline mom_anyitem_t *
+mom_tuple_nth_item (momval_t tupv, int rk)
+{
+  if (!tupv.ptr || *tupv.ptype != momty_tuple)
+    return 0;
+  unsigned slen = tupv.ptuple->slen;
+  if (rk < 0)
+    rk += (int) slen;
+  if (rk >= 0 && rk < (int) slen)
+    return (mom_anyitem_t *) (tupv.ptuple->itemseq[rk]);
+  return NULL;
+}
+
+static inline unsigned
+mom_seqitem_length (momval_t seqv)
+{
+  if (!seqv.ptr || (*seqv.ptype != momty_tuple && *seqv.ptype != momty_set))
+    return 0;
+  return seqv.pseqitm->slen;
+}
+
+static inline mom_anyitem_t *
+mom_seqitem_nth_item (momval_t seqv, int rk)
+{
+  if (!seqv.ptr || (*seqv.ptype != momty_tuple && *seqv.ptype != momty_set))
+    return 0;
+  unsigned slen = seqv.pseqitm->slen;
+  if (rk < 0)
+    rk += (int) slen;
+  if (rk >= 0 && rk < (int) slen)
+    return (mom_anyitem_t *) (seqv.pseqitm->itemseq[rk]);
   return NULL;
 }
 

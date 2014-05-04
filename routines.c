@@ -114,6 +114,27 @@ const struct momroutinedescr_st momrout_web_form_exit =
 
 
 ////////////////////////////////////////////////////////////////
+static inline const char *
+c_name_suffix (mom_anyitem_t * itm)
+{
+  const char *cn = NULL;
+  if (!itm)
+    return NULL;
+  cn = mom_string_cstr ((momval_t) mom_name_of_item (itm));
+  if (!cn)
+    {
+      char cbuf[UUID_PARSED_LEN + 4];
+      memset (cbuf, 0, sizeof (cbuf));
+      cbuf[0] = '0';
+      cbuf[1] = 'u';
+      mom_underscore_item_uuid (itm, cbuf + 2);
+      cn = GC_STRDUP (cbuf);
+      if (!cn)
+	MONIMELT_FATAL ("failed to make c_name_suffix");
+      return cn;
+    }
+}
+
 enum web_form_compile_values_en
 {
   wfcv_argres,
@@ -124,6 +145,7 @@ enum web_form_compile_values_en
   wfcv_buffer,
   wfcv_curout,
   wfcv_curprep,
+  wfcv_routdata,
   wfcv__lastval
 };
 
@@ -147,6 +169,8 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
     wfcs_preparation_loop,
     wfcs_prepare_routine,
     wfcs_emission_loop,
+    wfcs_got_preparation,
+    wfcs_declare_routine,
     wfcs__last
   };
 #define GENERATED_FILE_NAME "gen-first.c"
@@ -160,6 +184,7 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 #define l_buffer locvals[wfcv_buffer]
 #define l_curout locvals[wfcv_curout]
 #define l_curprep locvals[wfcv_curprep]
+#define l_routdata locvals[wfcv_routdata]
 #define n_ix locnums[wfcn_ix]
   time_t now = 0;
   struct tm nowtm = { };
@@ -303,7 +328,53 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 	MONIMELT_DEBUG (web,
 			"momcode_web_form_compile prepare_routine n_ix=%ld",
 			(long) n_ix);
-#warning a completer
+	// get the preparator in the routine, or else in the module
+	l_curprep =
+	  (momval_t) mom_item_get_attr (mom_value_as_item (l_curout),
+					(mom_anyitem_t *)
+					mom_item__routine_preparator);
+	if (mom_type (l_curprep) != momty_closure)
+	  l_curprep =
+	    (momval_t) mom_item_get_attr (mom_value_as_item (l_module),
+					  (mom_anyitem_t *)
+					  mom_item__routine_preparator);
+	if (mom_type (l_curprep) == momty_closure)
+	  {
+	    mom_dbg_value (web, "web_form_compile l_curprep=", l_curprep);
+	    mom_tasklet_push_frame ((momval_t) tasklet, (momval_t) l_curprep,
+				    MOMPFR_FOUR_VALUES, l_curout, l_dashboard,
+				    l_buffer, l_module, MOMPFR_END);
+	    SET_STATE (got_preparation);
+	  }
+	else
+	  {
+	    SET_STATE (declare_routine);
+	  }
+      }
+      break;
+    case wfcs_got_preparation:	////================ got preparation
+      {
+	mom_dbg_value (web, "web_form_compile got preparation l_argres=",
+		       l_argres);
+	if (!l_argres.ptr)
+	  SET_STATE (declare_routine);
+	else
+	  SET_STATE (preparation_loop);
+      }
+      break;
+    case wfcs_declare_routine:	////================ declare_routine
+      {
+	// should emit the declaration of the routine
+	const char *cnam = c_name_suffix (mom_value_as_item (l_curout));
+	assert (cnam != NULL);
+	l_routdata = mom_item_assoc_get1 (l_dashboard, l_curout);
+	if (!l_routdata.ptr)
+	  l_routdata = l_curout;
+	mom_item_buffer_printf
+	  (l_buffer, "\n"
+	   "// declaration of code for %s\n"
+	   "int momcode_%s (int, momit_tasklet_t *, momclosure_t *,\n"
+	   "       momval_t *,intptr_t *, double *);\n", cnam, cnam);
       }
       break;
     case wfcs__last:
