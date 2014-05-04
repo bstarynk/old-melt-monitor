@@ -811,10 +811,12 @@ struct momwebrequestitem_st
   momval_t iweb_postjsob;	/* JSON object for POST arguments */
   momval_t iweb_queryjsob;	/* JSON object for query arguments */
   momval_t iweb_path;		/* path string */
-  // the reply buffer, its size and current length
+  // the reply buffer its mimetype, size and current length
   char *iweb_replybuf;
+  const char *iweb_replymime;
   unsigned iweb_replysize;
   unsigned iweb_replylength;
+  int iweb_replycode;
 };
 
 enum mom_webreplydirective_en
@@ -825,7 +827,8 @@ enum mom_webreplydirective_en
     /*, const char* literalhtmlstring; for HTML encoded UTF-8 literal string  */
     ,
   MOMWEB_VALUE
-    /*, momval_t val; for boxed numbers, JSON values, named items  */ ,
+    /*, momval_t val; for boxed numbers, JSON values, named items, buffer items  */
+    ,
   MOMWEB_JSON_VALUE /*, momval_t jsonval; for JSON values */ ,
   MOMWEB_HTML_VALUE
     /*, momval_t val; for boxed numbers, JSON values, named items HTML encoded */
@@ -838,25 +841,19 @@ enum mom_webreplydirective_en
   MOMWEB_DEC_INT64 /*, int64_t num; for numbers in decimal */ ,
   MOMWEB_HEX_INT64 /*, int64_t num; for numbers in hexadecimal  */ ,
   MOMWEB_DOUBLE /*, double x; for double with %g */ ,
+  MOMWEB_FIXED_DOUBLE /*, double x; for double with %.15f */ ,
   MOMWEB_RESERVE /*, unsigned more; to reserve space in the buffer */ ,
   MOMWEB_CLEAR_BUFFER /*; to clear the buffer and restart  */ ,
+  MOMWEB_SET_MIME /* const char*mimetype; e.g. "text/html" */ ,
+  MOMWEB_STDIO_FILE_CONTENT /* FILE* file  */ ,
+  MOMWEB_STDIO_FILE_HTML_CONTENT /* FILE* file; HTML encoded  */ ,
+  MOMWEB_REPLY_CODE /* int httpcode; will trigger the send */ ,
   MOMWEB__LAST
 };
 #define MOMWEB_END ((void*)MOMWEB__END)
 
 void mom_item_webrequest_add (momval_t val, ...) __attribute__ ((sentinel));
 
-// write a constant string
-void mom_item_webrequest_puts (momval_t val, const char *str);
-// write an HTML encoded constant string
-void mom_item_webrequest_puts_html (momval_t val, const char *str);
-// printf like
-void mom_item_webrequest_printf (momval_t val, const char *fmt, ...)
-  __attribute__ ((format (printf, 2, 3)));
-// output a JSON
-void mom_item_webrequest_outjson (momval_t val, momval_t json);
-// send the reply and set its mime type; in web-onion.c
-void mom_item_webrequest_reply (momval_t val, const char *mimetype, int code);
 // return the string value for a POST argument or else null
 momval_t mom_item_webrequest_post_arg (momval_t val, const char *argname);
 // return the JSON object for POST arguments

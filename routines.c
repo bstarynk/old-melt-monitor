@@ -49,15 +49,20 @@ momcode_web_form_exit (int state, momit_tasklet_t * tasklet,
       if (mom_item_webrequest_post_arg (webv, "do_savexit").ptr)
 	{
 	  MONIMELT_DEBUG (web, "momcode_form_exit do_savexit");
-	  mom_item_webrequest_printf
+	  mom_item_webrequest_add
 	    (webv,
+	     MOMWEB_SET_MIME, "text/html",
+	     MOMWEB_LIT_STRING,
 	     "<!doctype html><head><title>dump and exit Monimelt</title></head>\n"
 	     "<body><h1>Monimelt dump and exit</h1>\n"
 	     "<p>dump to default <tt>" MONIMELT_DEFAULT_STATE_FILE
-	     "</tt> reqnum#%ld at <i>%s</i></p>\n" "</body></html>\n",
-	     mom_item_webrequest_webnum (webv), nowbuf);
-	  mom_item_webrequest_reply (webv, "text/html", HTTP_OK);
-	  usleep (1000);
+	     "</tt> reqnum#",
+	     MOMWEB_DEC_LONG, (long) mom_item_webrequest_webnum (webv),
+	     MOMWEB_LIT_STRING, " at <i>",
+	     MOMWEB_HTML_STRING, nowbuf,
+	     MOMWEB_LIT_STRING, "</i></p>\n" "</body></html>\n",
+	     MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
+	  usleep (25000);
 	  MONIMELT_DEBUG (web,
 			  "momcode_form_exit do_savexit before request stop");
 	  mom_request_stop ();
@@ -70,14 +75,19 @@ momcode_web_form_exit (int state, momit_tasklet_t * tasklet,
       else if (mom_item_webrequest_post_arg (webv, "do_quit").ptr)
 	{
 	  MONIMELT_DEBUG (web, "momcode_form_exit do_quit");
-	  mom_item_webrequest_printf
+	  mom_item_webrequest_add
 	    (webv,
+	     MOMWEB_SET_MIME, "text/html",
+	     MOMWEB_LIT_STRING,
 	     "<!doctype html><head><title>Quit Monimelt</title></head>\n"
 	     "<body><h1>Monimelt quitting</h1>\n"
-	     "<p>quitting reqnum#%ld at <i>%s</i></p>\n"
-	     "</body></html>\n", mom_item_webrequest_webnum (webv), nowbuf);
-	  mom_item_webrequest_reply (webv, "text/html", HTTP_OK);
-	  usleep (100);
+	     "<p>quitting reqnum#",
+	     MOMWEB_DEC_LONG, (long) mom_item_webrequest_webnum (webv),
+	     MOMWEB_LIT_STRING, " at <i>",
+	     MOMWEB_HTML_STRING, nowbuf,
+	     MOMWEB_LIT_STRING, "</i></p>\n" "</body></html>\n",
+	     MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
+	  usleep (2000);
 	  MONIMELT_DEBUG (web,
 			  "momcode_form_exit do_quit before request stop");
 	  mom_request_stop ();

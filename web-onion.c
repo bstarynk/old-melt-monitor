@@ -336,9 +336,10 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
 	  waiterr =
 	    pthread_cond_timedwait (&webitm->iweb_cond,
 				    &webitm->iweb_item.i_mtx, &endts);
-	  gotreply = webitm->iweb_response == NULL;
-	  MONIMELT_DEBUG (web, "waiterr=%d (%s), gotreply=%d", waiterr,
-			  strerror (waiterr), (int) gotreply);
+	  gotreply = webitm->iweb_replycode > 0;
+	  MONIMELT_DEBUG (web, "waiterr=%d (%s), gotreply=%d, replycode %d",
+			  waiterr, strerror (waiterr), (int) gotreply,
+			  webitm->iweb_replycode);
 	  if (!gotreply && monimelt_clock_time (CLOCK_REALTIME) > wend + 0.01)
 	    {
 	      onion_response_free (webitm->iweb_response);
@@ -513,100 +514,6 @@ mom_item_webrequest_method (momval_t val)
 
 
 
-void
-mom_item_webrequest_puts (momval_t val, const char *str)
-{
-  if (!val.ptr || *val.ptype != momty_webrequestitem || !str || !str[0])
-    return;
-  pthread_mutex_lock (&val.panyitem->i_mtx);
-  onion_response *resp = val.pwebrequestitem->iweb_response;
-  MONIMELT_DEBUG (web, "puts resp@%p webnum#%ld %s", resp,
-		  val.pwebrequestitem->iweb_webnum, str);
-  if (resp)
-    onion_response_write (resp, str, strlen (str));
-  pthread_mutex_unlock (&val.panyitem->i_mtx);
-}
-
-
-void
-mom_item_webrequest_puts_html (momval_t val, const char *str)
-{
-  if (!val.ptr || *val.ptype != momty_webrequestitem || !str || !str[0])
-    return;
-  pthread_mutex_lock (&val.panyitem->i_mtx);
-  onion_response *resp = val.pwebrequestitem->iweb_response;
-  MONIMELT_DEBUG (web, "puts_html webnum#%ld resp@%p %s",
-		  val.pwebrequestitem->iweb_webnum, resp, str);
-  if (resp)
-    onion_response_write_html_safe (resp, str);
-  pthread_mutex_unlock (&val.panyitem->i_mtx);
-}
-
-void
-mom_item_webrequest_printf (momval_t val, const char *fmt, ...)
-{
-  if (!val.ptr || *val.ptype != momty_webrequestitem || !fmt || !fmt[0])
-    return;
-  char smallbuf[80];
-  char *wbuf = NULL;
-  memset (smallbuf, 0, sizeof (smallbuf));
-  int len = 0;
-  va_list args;
-  va_start (args, fmt);
-  len = vsnprintf (smallbuf, sizeof (smallbuf), fmt, args);
-  va_end (args);
-  if (len < sizeof (smallbuf) - 1)
-    wbuf = smallbuf;
-  else
-    {
-      wbuf = GC_MALLOC_ATOMIC (len + 2);
-      if (MONIMELT_UNLIKELY (!wbuf))
-	MONIMELT_FATAL ("failed to allocate buffer for %d bytes", len);
-      memset (wbuf, 0, len + 2);
-      va_start (args, fmt);
-      len = vsnprintf (wbuf, len + 1, fmt, args);
-      va_end (args);
-    }
-  pthread_mutex_lock (&val.panyitem->i_mtx);
-  onion_response *resp = val.pwebrequestitem->iweb_response;
-  MONIMELT_DEBUG (web, "printf webnum#%ld resp@%p len%d:%s",
-		  val.pwebrequestitem->iweb_webnum, resp, len, wbuf);
-  if (resp)
-    {
-      onion_response_write (resp, wbuf, len);
-    }
-  pthread_mutex_unlock (&val.panyitem->i_mtx);
-  if (wbuf != smallbuf)
-    GC_FREE (wbuf);
-}
-
-void
-mom_item_webrequest_outjson (momval_t val, momval_t json)
-{
-  if (!val.ptr || *val.ptype != momty_webrequestitem
-      || !mom_is_jsonable (json))
-    return;
-  char *buf = NULL;
-  size_t bufsiz = 0;
-  struct jsonoutput_st jout = { };
-  FILE *memout = open_memstream (&buf, &bufsiz);
-  if (MONIMELT_UNLIKELY (!memout))
-    MONIMELT_FATAL ("failed to open memory stream for web request");
-  mom_json_output_initialize (&jout, memout, NULL, jsof_flush);
-  mom_output_json (&jout, json);
-  putc ('\n', memout);
-  mom_json_output_close (&jout);
-  pthread_mutex_lock (&val.panyitem->i_mtx);
-  onion_response *resp = val.pwebrequestitem->iweb_response;
-  MONIMELT_DEBUG (web, "outjson webnum#%ld resp@%p:%s",
-		  val.pwebrequestitem->iweb_webnum, resp, buf);
-  if (resp && buf)
-    onion_response_write (resp, buf, strlen (buf));
-  pthread_mutex_unlock (&val.panyitem->i_mtx);
-  free (buf);
-}
-
-
 ////////////////
 
 
@@ -690,6 +597,7 @@ webrequest_addhtml (momit_webrequest_t * webitm, const char *htmlstr)
 void
 mom_item_webrequest_add (momval_t val, ...)
 {
+  int replycode = -1;
   if (!val.ptr || *val.ptype != momty_webrequestitem)
     return;
   momit_webrequest_t *webitm = val.pwebrequestitem;
@@ -914,6 +822,15 @@ mom_item_webrequest_add (momval_t val, ...)
 	    ADDWEBSTR (webitm, dbuf);
 	  }
 	  break;
+	case MOMWEB_FIXED_DOUBLE:
+	  {
+	    double x = va_arg (args, double);
+	    char dbuf[48];
+	    memset (dbuf, 0, sizeof (dbuf));
+	    snprintf (dbuf, sizeof (dbuf), "%.15f", x);
+	    ADDWEBSTR (webitm, dbuf);
+	  }
+	  break;
 	case MOMWEB_RESERVE:
 	  {
 	    unsigned more = va_arg (args, unsigned);
@@ -924,7 +841,88 @@ mom_item_webrequest_add (momval_t val, ...)
 	  {
 	    webitm->iweb_replylength = 0;
 	    memset (webitm->iweb_replybuf, 0, webitm->iweb_replysize);
+	    webitm->iweb_replymime = NULL;
 	  }
+	  break;
+	case MOMWEB_SET_MIME:
+	  {
+	    const char *mime = va_arg (args, const char *);
+	    if (mime && mime[0])
+	      {
+		// for common mime types, give a constant literal to avoid the GC_STRDUP
+#define COMMON_MIME_PREFIX_UTF8(Pref) else if (!strncmp (mime, Pref, sizeof(Pref)-1)) \
+		webitm->iweb_replymime = Pref "; charset=utf-8"
+#define COMMON_MIME_TYPE(Mime) else if (!strcmp (mime, Mime)) \
+		webitm->iweb_replymime = Mime
+		// to start the if ... else if
+		if (0)
+		  mime = "???";
+		// our common mime types, by probable decreasing frequencies
+		COMMON_MIME_PREFIX_UTF8 ("text/html");
+		COMMON_MIME_PREFIX_UTF8 ("text/plain");
+		COMMON_MIME_TYPE ("application/json");
+		COMMON_MIME_TYPE ("application/javascript");
+		COMMON_MIME_TYPE ("application/xhtml+xml");
+		COMMON_MIME_PREFIX_UTF8 ("text/x-csrc");
+		COMMON_MIME_PREFIX_UTF8 ("text/x-chdr");
+		COMMON_MIME_PREFIX_UTF8 ("text/x-c++src");
+		COMMON_MIME_PREFIX_UTF8 ("text/x-c++hdr");
+		COMMON_MIME_TYPE ("image/jpeg");
+		COMMON_MIME_TYPE ("image/png");
+		COMMON_MIME_TYPE ("image/gif");
+		COMMON_MIME_TYPE ("image/svg+xml");
+		COMMON_MIME_PREFIX_UTF8 ("application/xml");
+		else
+		{
+		  webitm->iweb_replymime = GC_STRDUP (mime);
+		  if (MONIMELT_UNLIKELY (!webitm->iweb_replymime))
+		    MONIMELT_FATAL ("failed to strdup mime type %s", mime);
+		}
+#undef COMMON_MIME_PREFIX_UTF8
+#undef COMMON_MIME_TYPE
+	      }
+	  }
+	case MOMWEB_STDIO_FILE_HTML_CONTENT:
+	  wanthtmlencoding = true;
+	  // failthru
+	case MOMWEB_STDIO_FILE_CONTENT:
+	  {
+	    FILE *filc = va_arg (args, FILE *);
+	    char buff[1024];
+	    if (filc)
+	      {
+		do
+		  {
+		    memset (buff, 0, sizeof (buff));
+		    size_t len = fread (buff, 1, sizeof (buff) - 1, filc);
+		    if (len > 0)
+		      {
+			if (wanthtmlencoding)
+			  ADDWEBSTR (webitm, buff);
+			else
+			  {
+			    webrequest_reserve (webitm, len + 1);
+			    memcpy (webitm->iweb_replybuf +
+				    webitm->iweb_replylength, buff, len);
+			    webitm->iweb_replylength += len;
+			  }
+		      }
+		  }
+		while (!feof (filc));
+	      }
+	  }			// end case MOMWEB_STDIO_FILE_HTML_CONTENT & MOMWEB_STDIO_FILE_CONTENT
+	  break;
+	case MOMWEB_REPLY_CODE:
+	  {
+	    if (replycode > 0)
+	      MONIMELT_FATAL ("already given reply code %d", replycode);
+	    int rcode = va_arg (args, int);
+	    if (rcode > 0)
+	      {
+		replycode = rcode;
+		webitm->iweb_replycode = rcode;
+	      }
+	  }			// end case MOMWEB_SEND_REPLY_CODE
 	  break;
 	default:
 	  MONIMELT_FATAL ("unexpected web reply directive %d", (int) wdir);
@@ -932,6 +930,8 @@ mom_item_webrequest_add (momval_t val, ...)
     }
   va_end (args);
   pthread_mutex_unlock (&val.panyitem->i_mtx);
+  if (replycode > 0)
+    pthread_cond_broadcast (&webitm->iweb_cond);
 }
 
 #undef ADDWEBSTR
