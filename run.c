@@ -106,9 +106,13 @@ work_loop (struct GC_stack_base *sb, void *data)
   long loopcnt = 0;
   do
     {
+      assert (wd->work_magic == WORK_MAGIC);
       curtsk = NULL;
       pthread_mutex_lock (&mom_run_mtx);
       working = working_flag;
+      assert (!working
+	      || (wd->work_index > 0 && wd->work_index <= MOM_MAX_WORKERS
+		  && workers + wd->work_index == wd));
       pthread_mutex_unlock (&mom_run_mtx);
       loopcnt++;
       MONIMELT_DEBUG (run, "work_loop index %d, loopcnt=%ld, working=%d",
@@ -126,6 +130,8 @@ work_loop (struct GC_stack_base *sb, void *data)
       else
 	{
 	  double curwtim = monimelt_clock_time (CLOCK_REALTIME);
+	  MONIMELT_DEBUG (run, "work_loop index %d no curtsk",
+			  wd->work_index);
 	  pthread_mutex_lock (&mom_run_mtx);
 	  struct timespec endts =
 	    monimelt_timespec (curwtim + WORK_DELAY +
@@ -140,11 +146,14 @@ work_loop (struct GC_stack_base *sb, void *data)
     }
   while (working);
   MONIMELT_DEBUG (run, "work_loop index %d ending", wd->work_index);
-  pthread_mutex_lock (&mom_run_mtx);
-  MONIMELT_DEBUG (run, "work_loop index %d clearing", wd->work_index);
-  wd->work_index = 0;
-  pthread_mutex_unlock (&mom_run_mtx);
-  pthread_cond_broadcast (&mom_run_changed_cond);
+  {
+    pthread_mutex_lock (&mom_run_mtx);
+    assert (!working_flag);
+    MONIMELT_DEBUG (run, "work_loop index %d clearing", wd->work_index);
+    wd->work_index = 0;
+    pthread_mutex_unlock (&mom_run_mtx);
+    pthread_cond_broadcast (&mom_run_changed_cond);
+  }
   sched_yield ();
   MOMGC_UNREGISTER_MY_THREAD ();
   return NULL;
@@ -289,7 +298,7 @@ mom_request_stop_at (const char *srcfil, int srcline, const char *reason,
       nbworkers = 0;
       for (unsigned ix = 1; ix <= mom_nb_workers; ix++)
 	if (workers[ix].work_magic == WORK_MAGIC
-	    && workers[ix].work_index == ix)
+	    && workers[ix].work_index == ix && cur_worker != workers + ix)
 	  nbworkers++;
       MONIMELT_DEBUG (run, "mom_request_stop nbworkers=%d reason %s",
 		      nbworkers, reason);

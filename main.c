@@ -20,7 +20,7 @@
 
 #include "monimelt.h"
 
-pthread_mutex_t mom_run_mtx = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mom_run_mtx = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 
 static int nicelevel = 0;
 static const char *json_file;
