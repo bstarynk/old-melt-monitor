@@ -27,22 +27,24 @@ monimelt_module_init (const char *marg)
 {
   char uistr[UUID_PARSED_LEN];
   MONIMELT_WARNING ("cold module init marg=%s do nothing", marg);
-  momit_routine_t *rout_web_form_exit =
-    mom_make_item_routine ("web_form_exit", MONIMELT_SPACE_ROOT);
-  MONIMELT_INFORM ("cold monimelt_inform web_form_exit ~%s",
+  momit_routine_t *rout_web_form_compile =
+    mom_make_item_routine ("web_form_compile", MONIMELT_SPACE_ROOT);
+  MONIMELT_INFORM ("cold monimelt_inform web_form_compile ~%s",
 		   mom_unparse_item_uuid ((mom_anyitem_t *)
-					  rout_web_form_exit, uistr));
-  mom_register_new_name_item ("web_form_exit",
-			      (mom_anyitem_t *) rout_web_form_exit);
-  MONIMELT_INFORM ("cold name of web_form_exit=%s",
+					  rout_web_form_compile, uistr));
+  mom_register_new_name_item ("web_form_compile",
+			      (mom_anyitem_t *) rout_web_form_compile);
+  MONIMELT_INFORM ("cold name of web_form_compile=%s",
 		   mom_string_cstr ((momval_t)
 				    mom_name_of_item ((const mom_anyitem_t *)
-						      rout_web_form_exit)));
-  const momclosure_t *clos_web_form_exit =
-    mom_make_closure_til_nil ((mom_anyitem_t *) rout_web_form_exit, NULL);
-  MONIMELT_INFORM ("cold clos_web_form_exit@%p", (void *) clos_web_form_exit);
+						      rout_web_form_compile)));
+  const momclosure_t *clos_web_form_compile =
+    mom_make_closure_til_nil ((mom_anyitem_t *) rout_web_form_compile, NULL);
+  MONIMELT_INFORM ("cold clos_web_form_exit@%p",
+		   (void *) clos_web_form_compile);
   mom_item_dictionnary_put_cstr ((momval_t) mom_item__web_dictionnary,
-				 "form_exit", (momval_t) clos_web_form_exit);
-  mom_dbgout_value ((const momval_t) clos_web_form_exit);
+				 "form_compile",
+				 (momval_t) clos_web_form_compile);
+  mom_dbgout_value ((const momval_t) clos_web_form_compile);
   MONIMELT_INFORM ("cold module end marg=%s", marg);
 }

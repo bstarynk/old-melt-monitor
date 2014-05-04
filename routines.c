@@ -31,7 +31,7 @@ momcode_web_form_exit (int state, momit_tasklet_t * tasklet,
   char nowbuf[64] = "";
   time (&now);
   strftime (nowbuf, sizeof (nowbuf), "%c", localtime_r (&now, &nowtm));
-  MONIMELT_DEBUG (web, "momcode_form_exit state=%d webnum=%ld nowbuf=%s",
+  MONIMELT_DEBUG (web, "momcode_web_form_exit state=%d webnum=%ld nowbuf=%s",
 		  state, mom_item_webrequest_webnum (webv), nowbuf);
   mom_dbg_item (web, "web_form_exit tasklet=",
 		(const mom_anyitem_t *) tasklet);
@@ -43,12 +43,12 @@ momcode_web_form_exit (int state, momit_tasklet_t * tasklet,
   if (mom_item_webrequest_method (webv).ptr ==
       ((momval_t) mom_item__POST).ptr)
     {
-      MONIMELT_DEBUG (web, "momcode_form_exit POST");
+      MONIMELT_DEBUG (web, "momcode_web_form_exit POST");
       mom_dbg_value (web, "web_form_exit jsobpost=",
 		     mom_item_webrequest_jsob_post (webv));
       if (mom_item_webrequest_post_arg (webv, "do_savexit").ptr)
 	{
-	  MONIMELT_DEBUG (web, "momcode_form_exit do_savexit");
+	  MONIMELT_DEBUG (web, "momcode_web_form_exit do_savexit");
 	  mom_item_webrequest_add
 	    (webv,
 	     MOMWEB_SET_MIME, "text/html",
@@ -64,17 +64,18 @@ momcode_web_form_exit (int state, momit_tasklet_t * tasklet,
 	     MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
 	  usleep (25000);
 	  MONIMELT_DEBUG (web,
-			  "momcode_form_exit do_savexit before request stop");
-	  mom_request_stop ("momcode_form_exit do_savexit", NULL, NULL);
+			  "momcode_web_form_exit do_savexit before request stop");
+	  mom_request_stop ("momcode_web_form_exit do_savexit", NULL, NULL);
 	  usleep (2000);
 	  MONIMELT_DEBUG (web,
-			  "momcode_form_exit do_savexit before fulldump");
+			  "momcode_web_form_exit do_savexit before fulldump");
 	  mom_full_dump ("web save&exit dump", MONIMELT_DEFAULT_STATE_FILE);;
-	  MONIMELT_DEBUG (web, "momcode_form_exit do_savexit after fulldump");
+	  MONIMELT_DEBUG (web,
+			  "momcode_web_form_exit do_savexit after fulldump");
 	}
       else if (mom_item_webrequest_post_arg (webv, "do_quit").ptr)
 	{
-	  MONIMELT_DEBUG (web, "momcode_form_exit do_quit");
+	  MONIMELT_DEBUG (web, "momcode_web_form_exit do_quit");
 	  mom_item_webrequest_add
 	    (webv,
 	     MOMWEB_SET_MIME, "text/html",
@@ -89,8 +90,8 @@ momcode_web_form_exit (int state, momit_tasklet_t * tasklet,
 	     MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
 	  usleep (2000);
 	  MONIMELT_DEBUG (web,
-			  "momcode_form_exit do_quit before request stop");
-	  mom_request_stop ("momcode_form_exit do_quit", NULL, NULL);
+			  "momcode_web_form_exit do_quit before request stop");
+	  mom_request_stop ("momcode_web_form_exit do_quit", NULL, NULL);
 	}
       else
 	MONIMELT_WARNING ("unexpected post query for webnum#%ld",
@@ -108,4 +109,62 @@ const struct momroutinedescr_st momrout_web_form_exit =
   .rout_frame_nbdbl = 0,
   .rout_name = "web_form_exit",
   .rout_code = (const momrout_sig_t *) momcode_web_form_exit
+};
+
+
+
+////////////////////////////////////////////////////////////////
+int
+momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
+			  momclosure_t * closure, momval_t * locvals,
+			  intptr_t * locnums, double *locdbls)
+{
+  enum web_form_compile_state_en
+  {
+    wfcs_start,
+    wfcs__last
+  };
+#define l_webv locvals[0]
+  time_t now = 0;
+  struct tm nowtm = { };
+  char nowbuf[64] = "";
+  time (&now);
+  strftime (nowbuf, sizeof (nowbuf), "%c", localtime_r (&now, &nowtm));
+  MONIMELT_DEBUG (web,
+		  "momcode_web_form_compile state=%d webnum=%ld nowbuf=%s",
+		  state, mom_item_webrequest_webnum (l_webv), nowbuf);
+  mom_dbg_item (web, "web_form_compile tasklet=",
+		(const mom_anyitem_t *) tasklet);
+  mom_dbg_value (web, "web_form_compile l_webv=", l_webv);
+  mom_dbg_value (web, "web_form_compile closure=",
+		 (momval_t) (const momclosure_t *) closure);
+  bool goodstate = false;
+  switch ((enum web_form_compile_state_en) state)
+    {
+    case wfcs_start:
+      {
+	MONIMELT_DEBUG (web, "momcode_web_form_compile start webnum=%ld",
+			mom_item_webrequest_webnum (l_webv));
+	goodstate = true;
+	MONIMELT_FATAL ("momcode_web_form_compile unimplemented");
+      }
+      break;
+    case wfcs__last:
+      {
+	MONIMELT_FATAL ("momcode_web_form_compile unexpected last");
+      }
+    }
+  if (!goodstate)
+    MONIMELT_FATAL ("momcode_web_form_compile invalid state %d", state);
+#undef l_webv
+}
+
+const struct momroutinedescr_st momrout_web_form_compile =
+  {.rout_magic = ROUTINE_MAGIC,
+  .rout_minclosize = 0,
+  .rout_frame_nbval = 1,
+  .rout_frame_nbnum = 0,
+  .rout_frame_nbdbl = 0,
+  .rout_name = "web_form_compile",
+  .rout_code = (const momrout_sig_t *) momcode_web_form_compile
 };

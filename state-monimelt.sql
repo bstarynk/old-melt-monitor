@@ -23,9 +23,11 @@ CREATE TABLE t_name (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, nuid VARCHAR(38)
 CREATE TABLE t_param (parname VARCHAR(35) PRIMARY KEY ASC NOT NULL UNIQUE, parvalue TEXT NOT NULL);
 CREATE TABLE t_module (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
-INSERT INTO t_item VALUES('0229c553-c443-49a9-9244-5f8d7d3c79cf','dictionnary','{"jtype":"dictionnary"}','{"attributes":null,"content":null,"dictionnary":[{"name":"form_exit","val":{"conn":{"jtype":"itemref",
-  "space":".","uuid":"84e3d03a-f704-42c9-b5bd-175d5845076d"},"jtype":"closure",
- "sons":[]}}]}');
+INSERT INTO t_item VALUES('0229c553-c443-49a9-9244-5f8d7d3c79cf','dictionnary','{"jtype":"dictionnary"}','{"attributes":null,"content":null,"dictionnary":[{"name":"form_compile","val":{"conn":{"jtype":"itemref",
+  "space":".","uuid":"f094ea32-9a48-4de2-bba7-4b25e8d028d1"},"jtype":"closure",
+ "sons":[]}},{"name":"form_exit","val":{"conn":{"jtype":"itemref","space":".",
+  "uuid":"84e3d03a-f704-42c9-b5bd-175d5845076d"},"jtype":"closure","sons":[]}}]}
+');
 INSERT INTO t_item VALUES('03c1ace3-3293-43bb-9541-19b4357cbc3c','json_name','{"jtype":"json_name","name":"conn"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('11da23ab-3b9e-4ea0-bc13-4a9aa46e2995','json_name','{"jtype":"json_name","name":"json_object"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('18d95093-b523-4ee1-8bca-ded252e91235','json_name','{"jtype":"json_name","name":"itemref"}','{"attributes":null,"content":null}');
@@ -69,6 +71,7 @@ INSERT INTO t_item VALUES('e6727e08-6232-4beb-8c17-3b9cdf5045fb','json_name','{"
 INSERT INTO t_item VALUES('eaada55e-bcfb-4b87-b335-65b31ed2fdac','json_name','{"jtype":"json_name","name":"queue"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('ebb71e9a-ef65-4fcd-aec9-f4a5e780e333','json_name','{"jtype":"json_name","name":"buffer"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('ed78ae41-bd10-44bf-9bc7-57be044fe610','box','{"jtype":"box"}','{"attributes":null,"box":null,"content":null}');
+INSERT INTO t_item VALUES('f094ea32-9a48-4de2-bba7-4b25e8d028d1','routine','{"jtype":"routine","name":"web_form_compile"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('f8a3568d-ae4a-4486-a362-577e0ec91474','json_name','{"jtype":"json_name","name":"closure"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('f99051be-30bf-4efc-8c35-b4344c4e6d2c','json_name','{"jtype":"json_name","name":"node"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('fa97d5b8-40cb-4884-9e77-27803c6a4deb','box','{"jtype":"box"}','{"attributes":null,"box":null,"content":null}');
@@ -118,6 +121,7 @@ INSERT INTO t_name VALUES('val','d8aa61cc-2543-4659-bff9-2b0bfc0f779a','.');
 INSERT INTO t_name VALUES('values','7e8b7206-2548-427d-9b7c-9d5b5067c78a','.');
 INSERT INTO t_name VALUES('vector','402d1108-9e25-4065-b81d-1bea8b06f269','.');
 INSERT INTO t_name VALUES('web_dictionnary','0229c553-c443-49a9-9244-5f8d7d3c79cf','.');
+INSERT INTO t_name VALUES('web_form_compile','f094ea32-9a48-4de2-bba7-4b25e8d028d1','.');
 INSERT INTO t_name VALUES('web_form_exit','84e3d03a-f704-42c9-b5bd-175d5845076d','.');
 INSERT INTO t_param VALUES('dump_format_version','MoniMelt2014A');
 COMMIT;
