@@ -831,7 +831,10 @@ enum mom_webreplydirective_en
     /*, momval_t val; for boxed numbers, JSON values, named items HTML encoded */
     ,
   MOMWEB_DEC_INT /*, int num; for numbers in decimal */ ,
+  MOMWEB_DEC_UNSIGNED /*, unsigned num */ ,
   MOMWEB_HEX_INT /*, int num; for numbers in hexadecimal  */ ,
+  MOMWEB_DEC_LONG /*, long num; for numbers in decimal */ ,
+  MOMWEB_HEX_LONG /*, long num; for numbers in hexadecimal  */ ,
   MOMWEB_DEC_INT64 /*, int64_t num; for numbers in decimal */ ,
   MOMWEB_HEX_INT64 /*, int64_t num; for numbers in hexadecimal  */ ,
   MOMWEB_DOUBLE /*, double x; for double with %g */ ,

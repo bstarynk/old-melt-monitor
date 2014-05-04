@@ -699,6 +699,7 @@ mom_item_webrequest_add (momval_t val, ...)
   va_start (args, val);
   while ((wdir = va_arg (args, enum mom_webreplydirective_en)) != MOMWEB__END)
     {
+      bool wanthtmlencoding = false;
       switch (wdir)
 	{
 	case MOMWEB__END:
@@ -717,6 +718,9 @@ mom_item_webrequest_add (momval_t val, ...)
 	      webrequest_addhtml (webitm, htmlstr);
 	  }
 	  break;
+	case MOMWEB_HTML_VALUE:
+	  wanthtmlencoding = true;
+	  // failthru
 	case MOMWEB_VALUE:
 	  {
 	    momval_t val = va_arg (args, momval_t);
@@ -725,7 +729,10 @@ mom_item_webrequest_add (momval_t val, ...)
 	      switch ((typn = (*val.ptype)))
 		{
 		case momty_string:
-		  ADDWEBSTR (webitm, val.pstring->cstr);
+		  if (wanthtmlencoding)
+		    webrequest_addhtml (webitm, val.pstring->cstr);
+		  else
+		    ADDWEBSTR (webitm, val.pstring->cstr);
 		  break;
 		case momty_int:
 		  {
@@ -765,6 +772,26 @@ mom_item_webrequest_add (momval_t val, ...)
 		    free (bufj), bufj = NULL;
 		  }
 		  break;
+		case momty_bufferitem:
+		  {
+		    pthread_mutex_lock (&val.panyitem->i_mtx);
+		    momit_buffer_t *bufitm = val.pbufferitem;
+		    assert (bufitm->itu_buf
+			    && bufitm->itu_end < bufitm->itu_size);
+		    if (bufitm->itu_begin < bufitm->itu_end)
+		      {
+			bufitm->itu_buf[bufitm->itu_end] = (char) 0;
+			if (wanthtmlencoding)
+			  webrequest_addhtml (webitm,
+					      bufitm->itu_buf +
+					      bufitm->itu_begin);
+			else
+			  ADDWEBSTR (webitm,
+				     bufitm->itu_buf + bufitm->itu_begin);
+		      };
+		    pthread_mutex_unlock (&val.panyitem->i_mtx);
+		  }
+		  break;
 		default:
 		  if (typn > momty__itemlowtype)
 		    {
@@ -772,7 +799,12 @@ mom_item_webrequest_add (momval_t val, ...)
 			mom_string_cstr ((momval_t)
 					 mom_name_of_item (val.panyitem));
 		      if (iname)
-			ADDWEBSTR (webitm, iname);
+			{
+			  if (wanthtmlencoding)
+			    webrequest_addhtml (webitm, iname);
+			  else
+			    ADDWEBSTR (webitm, iname);
+			}
 		      else
 			{
 			  char ustr[UUID_PARSED_LEN + 4];
@@ -784,7 +816,115 @@ mom_item_webrequest_add (momval_t val, ...)
 		    }
 		  break;
 		}
-	  }			// end case MOMWEB_VALUE
+	    else		// null value
+	      {
+	      }
+	  }			// end case MOMWEB_VALUE, MOMWEB_HTML_VALUE
+	  break;
+	case MOMWEB_JSON_VALUE:
+	  {
+	    momval_t val = va_arg (args, momval_t);
+	    if (mom_is_jsonable (val))
+	      {
+		char *bufj = NULL;
+		size_t sizj = 0;
+		struct jsonoutput_st outj = { };
+		FILE *foutj = open_memstream (&bufj, &sizj);
+		if (!foutj)
+		  MONIMELT_FATAL ("failed to open stream for JSON");
+		mom_json_output_initialize (&outj, foutj, NULL, jsof_flush);
+		mom_output_json (&outj, val);
+		putc ('\n', foutj);
+		fflush (foutj);
+		mom_json_output_close (&outj);
+		ADDWEBSTR (webitm, bufj);
+		free (bufj), bufj = NULL;
+	      }
+	  }			// end case MOMWEB_JSON_VALUE
+	  break;
+	case MOMWEB_DEC_INT:
+	  {
+	    int num = va_arg (args, int);
+	    char ibuf[32];
+	    memset (ibuf, 0, sizeof (ibuf));
+	    snprintf (ibuf, sizeof (ibuf), "%d", num);
+	    ADDWEBSTR (webitm, ibuf);
+	  }
+	  break;
+	case MOMWEB_DEC_UNSIGNED:
+	  {
+	    unsigned num = va_arg (args, int);
+	    char ibuf[32];
+	    memset (ibuf, 0, sizeof (ibuf));
+	    snprintf (ibuf, sizeof (ibuf), "%u", num);
+	    ADDWEBSTR (webitm, ibuf);
+	  }
+	  break;
+	case MOMWEB_HEX_INT:
+	  {
+	    int num = va_arg (args, int);
+	    char ibuf[32];
+	    memset (ibuf, 0, sizeof (ibuf));
+	    snprintf (ibuf, sizeof (ibuf), "%#x", num);
+	    ADDWEBSTR (webitm, ibuf);
+	  }
+	  break;
+	case MOMWEB_DEC_LONG:
+	  {
+	    long num = va_arg (args, long);
+	    char ibuf[48];
+	    memset (ibuf, 0, sizeof (ibuf));
+	    snprintf (ibuf, sizeof (ibuf), "%ld", num);
+	    ADDWEBSTR (webitm, ibuf);
+	  }
+	  break;
+	case MOMWEB_HEX_LONG:
+	  {
+	    long num = va_arg (args, long);
+	    char ibuf[48];
+	    memset (ibuf, 0, sizeof (ibuf));
+	    snprintf (ibuf, sizeof (ibuf), "%#lx", num);
+	    ADDWEBSTR (webitm, ibuf);
+	  }
+	  break;
+	case MOMWEB_DEC_INT64:
+	  {
+	    int64_t num = va_arg (args, int64_t);
+	    char ibuf[48];
+	    memset (ibuf, 0, sizeof (ibuf));
+	    snprintf (ibuf, sizeof (ibuf), "%lld", (long long) num);
+	    ADDWEBSTR (webitm, ibuf);
+	  }
+	  break;
+	case MOMWEB_HEX_INT64:
+	  {
+	    int64_t num = va_arg (args, int64_t);
+	    char ibuf[48];
+	    memset (ibuf, 0, sizeof (ibuf));
+	    snprintf (ibuf, sizeof (ibuf), "%#llx", (long long) num);
+	    ADDWEBSTR (webitm, ibuf);
+	  }
+	  break;
+	case MOMWEB_DOUBLE:
+	  {
+	    double x = va_arg (args, double);
+	    char dbuf[48];
+	    memset (dbuf, 0, sizeof (dbuf));
+	    snprintf (dbuf, sizeof (dbuf), "%g", x);
+	    ADDWEBSTR (webitm, dbuf);
+	  }
+	  break;
+	case MOMWEB_RESERVE:
+	  {
+	    unsigned more = va_arg (args, unsigned);
+	    webrequest_reserve (webitm, more + 1);
+	  }
+	  break;
+	case MOMWEB_CLEAR_BUFFER:
+	  {
+	    webitm->iweb_replylength = 0;
+	    memset (webitm->iweb_replybuf, 0, webitm->iweb_replysize);
+	  }
 	  break;
 	default:
 	  MONIMELT_FATAL ("unexpected web reply directive %d", (int) wdir);
