@@ -791,6 +791,8 @@ momit_buffer_t *mom_make_item_buffer (unsigned space);
 momit_buffer_t *mom_make_item_buffer_of_uuid (uuid_t uid, unsigned space);
 // get a duplicate of the buffer string with its length
 const char *mom_item_buffer_cstr (momval_t bufv, unsigned *plen);
+// output the content of the buffer into a FILE
+int mom_item_buffer_output_content_to_file (momval_t bufv, FILE * file);
 // get the content of the buffer as a string value
 momval_t mom_item_buffer_string_value (momval_t bufv);
 // get the length of the buffer

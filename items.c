@@ -2987,6 +2987,42 @@ mom_item_buffer_peek (momval_t bufv, int off)
 
 
 
+const char *
+mom_item_buffer_cstr (momval_t bufv, unsigned *plen)
+{
+  char *res = NULL;
+  if (!bufv.ptr || *bufv.ptype != momty_bufferitem)
+    return NULL;
+  if (plen)
+    *plen = 0;
+  momit_buffer_t *bufitm = bufv.pbufferitem;
+  pthread_mutex_lock (&bufv.panyitem->i_mtx);
+  unsigned blen = bufitm->itu_end - bufitm->itu_begin;
+  if (plen)
+    *plen = blen;
+  res = GC_MALLOC_ATOMIC (blen + 1);
+  if (MONIMELT_UNLIKELY (!res))
+    MONIMELT_FATAL ("failed to allocate string of %d bytes", (int) blen);
+  memset (res, 0, blen + 1);
+  memcpy (res, bufitm->itu_buf + bufitm->itu_begin, blen);
+  pthread_mutex_unlock (&bufv.panyitem->i_mtx);
+  return res;
+}
+
+int
+mom_item_buffer_output_content_to_file (momval_t bufv, FILE * fil)
+{
+  int res = 0;
+  if (!bufv.ptr || *bufv.ptype != momty_bufferitem || !fil)
+    return 0;
+  momit_buffer_t *bufitm = bufv.pbufferitem;
+  pthread_mutex_lock (&bufv.panyitem->i_mtx);
+  unsigned blen = bufitm->itu_end - bufitm->itu_begin;
+  res = fwrite (bufitm->itu_buf + bufitm->itu_begin, 1, blen, fil);
+  pthread_mutex_unlock (&bufv.panyitem->i_mtx);
+  return res;
+}
+
 /////////////////////////////////////////////////////// buffers
 
 

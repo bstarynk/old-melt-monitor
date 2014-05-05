@@ -446,6 +446,8 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
       ////////////////
     case wfcs_emit_routine:	////================ emit routine
       {
+	const char *cnam = c_name_suffix (mom_value_as_item (l_curout));
+	MONIMELT_DEBUG (web, "web_form_compile emit routine %s", cnam);
 	goodstate = true;
 	mom_dbg_value (web, "web_form_compile emit routine l_curout=",
 		       l_curout);
@@ -463,19 +465,53 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 	mom_dbg_value (web, "web_form_compile l_curemit=", l_curemit);
 	if (mom_type (l_curemit) == momty_closure)
 	  {
-	    mom_tasklet_push_frame ((momval_t) tasklet, (momval_t) l_curemit,
-				    MOMPFR_FIVE_VALUES, l_curout, l_routemp,
-				    l_dashboard, l_buffer, l_module,
-				    MOMPFR_END);
+	    mom_tasklet_push_frame
+	      ((momval_t) tasklet, (momval_t) l_curemit,
+	       MOMPFR_FOUR_VALUES, l_curout, l_routdata, l_routemp,
+	       l_dashboard, MOMPFR_TWO_VALUES, l_buffer, l_module,
+	       MOMPFR_END);
 	    SET_STATE (got_emitter);
 	  }
 	else
 	  {
-	    SET_STATE (output_routine);
+	    MONIMELT_WARNING ("no routine emitter for %s", cnam);
+	    return -1;
 	  }
       }
       break;
       ////////////////
+    case wfcs_got_emitter:	////================ got emitter
+      {
+	// essentially a no-op
+	goodstate = true;
+	const char *cnam = c_name_suffix (mom_value_as_item (l_curout));
+	MONIMELT_DEBUG (web, "web_form_compile got emitter routine %s", cnam);
+	SET_STATE (emission_loop);
+      }
+      break;
+      //////////////// 
+    case wfcs_run_compiler:	////================ run compiler
+      {
+	goodstate = true;
+	mom_item_buffer_printf (l_buffer, "\n\n///// end of %d routines \n\n",
+				(int) n_ix);
+	MONIMELT_DEBUG (web,
+			"web_form_compile run compiler buffer of %d bytes",
+			(int) mom_item_buffer_length (l_buffer));
+	rename (GENERATED_FILE_NAME, GENERATED_FILE_NAME "~");
+	FILE *fout = fopen (GENERATED_FILE_NAME, "w");
+	if (MONIMELT_UNLIKELY (!fout))
+	  MONIMELT_FATAL ("failed to open file " GENERATED_FILE_NAME);
+	unsigned blen = mom_item_buffer_length (l_buffer);
+	if (mom_item_buffer_output_content_to_file (l_buffer, fout)
+	    != (int) blen)
+	  MONIMELT_WARNING ("failed to output all %d bytes to "
+			    GENERATED_FILE_NAME, (int) blen);
+	fclose (fout), fout = NULL;
+	MONIMELT_INFORM ("wrote %d bytes into %s", (int) blen,
+			 GENERATED_FILE_NAME);
+      }
+      break;
     case wfcs__last:
       {
 	MONIMELT_FATAL ("momcode_web_form_compile unexpected last");
@@ -483,7 +519,7 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
     }
   if (!goodstate)
     MONIMELT_FATAL ("momcode_web_form_compile invalid state %d", state);
-  MONIMELT_DEBUG (web, "momcode_web_form_compile ending");
+  MONIMELT_DEBUG (web, "momcode_web_form_compile ending state %d", state);
   return -1;
 #undef l_web
 #undef l_module
