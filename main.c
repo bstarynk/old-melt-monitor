@@ -314,6 +314,38 @@ mom_initialize (void)
   mom_create_items ();
 }
 
+
+//// run the post load routines inside modules
+static void
+modules_post_load (void)
+{
+  assert (module_count <= module_size);
+  assert (module_handles != NULL);
+  unsigned nbpostload = 0;
+  for (unsigned ix = 0; ix < module_count; ix++)
+    {
+      GModule *modhdl = module_handles[ix];
+      if (!modhdl)
+	continue;
+      typedef void post_load_sig_t (void);
+      post_load_sig_t *modpostload = NULL;
+      if (g_module_symbol
+	  (modhdl, "monimelt_module_post_load", (gpointer *) & modpostload)
+	  && modpostload)
+	{
+	  MONIMELT_DEBUG (run, "before post loading module #%d", (int) ix);
+	  modpostload ();
+	  MONIMELT_DEBUG (run, "after post loading module #%d", (int) ix);
+	  nbpostload++;
+	}
+    };
+  MONIMELT_INFORM ("Done %d post load routines for %d modules", nbpostload,
+		   module_count);
+}
+
+
+
+
 static void
 do_json_file_test (void)
 {
@@ -726,15 +758,18 @@ main (int argc, char **argv)
       using_syslog = true;
       atexit (logexit_cb);
     }
+  MONIMELT_INFORM ("explicit Boehm GC registration = %d",
+		   (int) explicit_boehm_gc_thread);
+
   if (load_state_path && load_state_path[0] && strcmp (load_state_path, ".")
       && strcmp (load_state_path, "_") && strcmp (load_state_path, "-"))
     {
       mom_initial_load (load_state_path);
+      if (module_count > 0)
+	modules_post_load ();
     }
   else
     MONIMELT_WARNING ("no load state path");
-  MONIMELT_INFORM ("explicit Boehm GC registration = %d",
-		   (int) explicit_boehm_gc_thread);
   if (web_host)
     {
       extern void mom_start_web (const char *);

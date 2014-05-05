@@ -1500,9 +1500,10 @@ void mom_output_json (struct jsonoutput_st *jo, const momval_t val);
 // every module should have
 extern const char monimelt_GPL_friendly_module[];
 extern void monimelt_module_init (const char *marg);
-// modules may also define
+// modules may also define for option processing
 extern GOptionGroup *monimelt_module_option_group (const char *modname);
-
+// and for post load processing
+extern void monimelt_module_post_load (void);
 
 struct mom_itqueue_st
 {

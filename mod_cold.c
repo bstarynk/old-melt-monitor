@@ -25,31 +25,37 @@ const char monimelt_GPL_friendly_module[] = "mod_cold is GPLv3";
 void
 monimelt_module_init (const char *marg)
 {
-  char uistr[UUID_PARSED_LEN];
   MONIMELT_WARNING ("cold module init marg=%s do nothing", marg);
 
+  MONIMELT_INFORM ("cold module end marg=%s", marg);
+}
 
-#if 0
-  momit_routine_t *rout_web_form_compile =
-    mom_make_item_routine ("web_form_compile", MONIMELT_SPACE_ROOT);
-  MONIMELT_INFORM ("cold monimelt_inform web_form_compile ~%s",
+void
+monimelt_module_post_load (void)
+{
+  char uistr[UUID_PARSED_LEN];
+  memset (uistr, 0, sizeof (uistr));
+  MONIMELT_INFORM ("cold post load " __DATE__ "@" __TIME__);
+  mom_anyitem_t *rout_web_form_compile = mom_item_named ("web_form_compile");
+  assert (rout_web_form_compile != NULL);
+
+  momit_routine_t *rout_proc_compilation =
+    mom_make_item_routine ("proc_compilation", MONIMELT_SPACE_ROOT);
+  MONIMELT_INFORM ("cold rout_proc_compilation ~%s",
 		   mom_unparse_item_uuid ((mom_anyitem_t *)
-					  rout_web_form_compile, uistr));
-  mom_register_new_name_item ("web_form_compile",
-			      (mom_anyitem_t *) rout_web_form_compile);
-  MONIMELT_INFORM ("cold name of web_form_compile=%s",
-		   mom_string_cstr ((momval_t)
-				    mom_name_of_item ((const mom_anyitem_t *)
-						      rout_web_form_compile)));
+					  rout_proc_compilation, uistr));
+  mom_register_new_name_item ("proc_compilation",
+			      (mom_anyitem_t *) rout_proc_compilation);
+  const momclosure_t *clos_proc_compilation =
+    mom_make_closure_til_nil ((mom_anyitem_t *) rout_proc_compilation,
+			      mom_make_string ("Gap*Proc_Compilation"), NULL);
   const momclosure_t *clos_web_form_compile =
-    mom_make_closure_til_nil ((mom_anyitem_t *) rout_web_form_compile, NULL);
-  MONIMELT_INFORM ("cold clos_web_form_exit@%p",
-		   (void *) clos_web_form_compile);
+    mom_make_closure_til_nil ((mom_anyitem_t *) rout_web_form_compile,
+			      clos_proc_compilation, NULL);
   mom_item_dictionnary_put_cstr ((momval_t) mom_item__web_dictionnary,
 				 "form_compile",
 				 (momval_t) clos_web_form_compile);
-  mom_dbgout_value ((const momval_t) clos_web_form_compile);
-#endif
-
-  MONIMELT_INFORM ("cold module end marg=%s", marg);
+  mom_dbg_value (run, "clos_web_form_compile=",
+		 (momval_t) clos_web_form_compile);
+  MONIMELT_INFORM ("cold post load done");
 }
