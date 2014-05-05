@@ -538,6 +538,12 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 		       c_aftercompilation);
 	mom_item_process_start (l_compilproc, c_aftercompilation);
 	MONIMELT_DEBUG (web, "after compilation start");
+	char timbuf[64] = { };
+	memset (timbuf, 0, sizeof (timbuf));
+	struct tm curtm = { };
+	time_t now = 0;
+	time (&now);
+	strftime (timbuf, sizeof (timbuf), "%c", localtime_r (&now, &curtm));
 	/// answer the web request
 	mom_item_webrequest_add
 	  (l_web,
@@ -549,8 +555,10 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 	   MOMWEB_DEC_LONG, (long) n_ix,
 	   MOMWEB_LIT_STRING, " routines and ",
 	   MOMWEB_DEC_LONG, (long) blen,
-	   MOMWEB_LIT_STRING, " bytes.</p>\n"
-	   "</body></html>\n", MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
+	   MOMWEB_LIT_STRING, " bytes <small>at ",
+	   MOMWEB_LIT_STRING, timbuf,
+	   MOMWEB_LIT_STRING, "</small>.</p>\n" "</body></html>\n",
+	   MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
 	return routres_pop;
       }
       break;
