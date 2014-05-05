@@ -98,7 +98,7 @@ momcode_web_form_exit (int state, momit_tasklet_t * tasklet,
 			  mom_item_webrequest_webnum (webv));
     }
   usleep (5000);
-  return -1;
+  return routres_pop;
 }
 
 const struct momroutinedescr_st momrout_web_form_exit =
@@ -475,7 +475,7 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 	else
 	  {
 	    MONIMELT_WARNING ("no routine emitter for %s", cnam);
-	    return -1;
+	    return routres_pop;
 	  }
       }
       break;
@@ -520,7 +520,7 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
   if (!goodstate)
     MONIMELT_FATAL ("momcode_web_form_compile invalid state %d", state);
   MONIMELT_DEBUG (web, "momcode_web_form_compile ending state %d", state);
-  return -1;
+  return routres_pop;
 #undef l_web
 #undef l_module
 #undef l_routines

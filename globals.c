@@ -525,9 +525,14 @@ mom_tasklet_step (momit_tasklet_t * tskitm)
 		     tskitm->itk_values + curvaloff,
 		     tskitm->itk_scalars + curintoff,
 		     (double *) tskitm->itk_scalars + curdbloff);
+  MONIMELT_DEBUG (run, "tasklet_step nextstate=%d", (int) nextstate);
   if (nextstate > 0)
-    // the rcode might have changed the itk_frames so we can't use curfram
-    tskitm->itk_frames[fratop - 1].fr_state = nextstate;
+    {
+      // the rcode might have changed the itk_frames so we can't use curfram
+      tskitm->itk_frames[fratop - 1].fr_state = nextstate;
+      // enqueue the current task into the agenda
+      mom_agenda_add_tasklet_back ((momval_t) tskitm);
+    }
   else if (nextstate == routres_pop)
     {
       // pop one frame

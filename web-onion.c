@@ -87,13 +87,20 @@ mom_start_web (const char *webhost)
   strncpy (webuf, webhost, sizeof (webuf) - 1);
   mom_onion = onion_new (O_THREADED | O_DETACH_LISTEN);
   char *lastcolon = strchr (webuf, ':');
+  char *portstr = NULL;
+  char *hoststr = NULL;
   if (lastcolon && isdigit (lastcolon[1]))
     {
       *lastcolon = (char) 0;
-      onion_set_port (mom_onion, lastcolon + 1);
+      portstr = lastcolon + 1;
     }
   if (webuf[0])
-    onion_set_hostname (mom_onion, webuf);
+    hoststr = webuf;
+  if (hoststr)
+    onion_set_hostname (mom_onion, hoststr);
+  if (portstr)
+    onion_set_port (mom_onion, portstr);
+  MONIMELT_INFORM ("start web hoststr=%s portstr=%s", hoststr, portstr);
   mom_onion_root = onion_root_url (mom_onion);
   onion_handler *hdlr = onion_handler_new ((onion_handler_handler)
 					   process_request, NULL, NULL);
@@ -279,10 +286,13 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
          pthread_cond_timedwait webitm->iweb_cond, so we should define
          a protocol to reply to a request */
       bool gotreply = false;
-      do
+      bool repeatloop = true;
+      while (repeatloop)
 	{
 	  int waiterr = 0;
 	  gotreply = false;
+	  MONIMELT_DEBUG (web, "waiting for webreply webnum#%ld wend=%f",
+			  (long) webitm->iweb_webnum, wend);
 	  pthread_mutex_lock (&webitm->iweb_item.i_mtx);
 	  struct timespec endts = monimelt_timespec (wend);
 	  waiterr =
@@ -292,10 +302,51 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
 	  MONIMELT_DEBUG (web, "waiterr=%d (%s), gotreply=%d, replycode %d",
 			  waiterr, strerror (waiterr), (int) gotreply,
 			  webitm->iweb_replycode);
-	  if (!gotreply && monimelt_clock_time (CLOCK_REALTIME) > wend + 0.01)
+	  /// got a reply
+	  if (gotreply)
 	    {
-	      MONIMELT_DEBUG (web, "timedout webnum#%ld",
+	      MONIMELT_DEBUG (web,
+			      "gotreply webnum#%ld mime %s length %u code %d",
+			      webnum, webitm->iweb_replymime,
+			      webitm->iweb_replylength,
+			      webitm->iweb_replycode);
+	      if (webitm->iweb_replymime
+		  && !strncmp (webitm->iweb_replymime, "text/", 5)
+		  && webitm->iweb_replybuf)
+		{
+		  if (webitm->iweb_replylength + 1 < webitm->iweb_replysize)
+		    webitm->iweb_replybuf[webitm->iweb_replylength] =
+		      (char) 0;
+		  MONIMELT_DEBUG (web, "webnum#%ld buffer:%s\n",
+				  webnum, webitm->iweb_replybuf);
+		}
+	      assert (webitm->iweb_response != NULL);
+	      onion_response_set_code (webitm->iweb_response,
+				       webitm->iweb_replycode);
+	      onion_response_set_length (webitm->iweb_response,
+					 webitm->iweb_replylength);
+	      if (webitm->iweb_replymime)
+		onion_response_set_header (webitm->iweb_response,
+					   "content-type",
+					   webitm->iweb_replymime);
+	      else
+		MONIMELT_WARNING ("web request #%ld has no mime type",
+				  webitm->iweb_webnum);
+	      if (webitm->iweb_replylength > 0)
+		onion_response_write (webitm->iweb_response,
+				      webitm->iweb_replybuf,
+				      webitm->iweb_replylength);
+	      onion_response_flush (webitm->iweb_response);
+	      MONIMELT_DEBUG (web, "webnum#%ld flushed response",
 			      webitm->iweb_webnum);
+	      webitm->iweb_response = NULL;
+	      repeatloop = false;
+	    }
+	  // timedout
+	  else if (!gotreply
+		   && monimelt_clock_time (CLOCK_REALTIME) > wend + 0.01)
+	    {
+	      MONIMELT_DEBUG (web, "timedout webnum#%ld", webnum);
 	      onion_response_free (webitm->iweb_response);
 	      webitm->iweb_response =
 		onion_response_new (webitm->iweb_request);
@@ -323,52 +374,30 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
 				       HTTP_SERVICE_UNAVALIABLE);
 	      onion_response_flush (webitm->iweb_response);
 	      webitm->iweb_response = NULL;
+	      repeatloop = false;
 	    }
-	  else if (gotreply)
+	  else
 	    {
-	      MONIMELT_DEBUG (web,
-			      "gotreply webnum#%ld mime %s length %u code %d",
-			      webitm->iweb_webnum, webitm->iweb_replymime,
-			      webitm->iweb_replylength,
-			      webitm->iweb_replycode);
-	      if (webitm->iweb_replymime
-		  && !strncmp (webitm->iweb_replymime, "text/", 5)
-		  && webitm->iweb_replybuf)
-		{
-		  if (webitm->iweb_replylength + 1 < webitm->iweb_replysize)
-		    webitm->iweb_replybuf[webitm->iweb_replylength] =
-		      (char) 0;
-		  MONIMELT_DEBUG (web, "webnum#%ld buffer:%s\n",
-				  webitm->iweb_webnum, webitm->iweb_replybuf);
-		}
-	      assert (webitm->iweb_response != NULL);
-	      onion_response_set_code (webitm->iweb_response,
-				       webitm->iweb_replycode);
-	      onion_response_set_length (webitm->iweb_response,
-					 webitm->iweb_replylength);
-	      if (webitm->iweb_replymime)
-		onion_response_set_header (webitm->iweb_response,
-					   "content-type",
-					   webitm->iweb_replymime);
-	      else
-		MONIMELT_WARNING ("web request #%ld has no mime type",
-				  webitm->iweb_webnum);
-	      if (webitm->iweb_replylength > 0)
-		onion_response_write (webitm->iweb_response,
-				      webitm->iweb_replybuf,
-				      webitm->iweb_replylength);
-	      onion_response_flush (webitm->iweb_response);
-	      MONIMELT_DEBUG (web, "webnum#%ld flushed response",
-			      webitm->iweb_webnum);
-	      webitm->iweb_response = NULL;
-	    };
+	      MONIMELT_DEBUG (web, "patiently rewaiting for webnum#%ld",
+			      webnum);
+	      repeatloop = true;
+	    }
 	  pthread_mutex_unlock (&webitm->iweb_item.i_mtx);
 	  sched_yield ();
-	}
-      while (!gotreply && monimelt_clock_time (CLOCK_REALTIME) <= wend);
+	  MONIMELT_DEBUG (web, "webnum#%ld endloop repeatloop=%d", webnum,
+			  (int) repeatloop);
+	};			// end while repeatloop
       sched_yield ();
       pwebinf->web_stat = OCS_PROCESSED;
+      MONIMELT_DEBUG (web, "processed webnum#%ld", webnum);
     }
+  else
+    {
+      pwebinf->web_stat = OCS_NOT_PROCESSED;
+      MONIMELT_DEBUG (web, "notprocessed webnum#%ld", webnum);
+    }
+  MONIMELT_DEBUG (web, "end really_process_request webnum %ld web_stat %d",
+		  webnum, (int) pwebinf->web_stat);
   MOMGC_UNREGISTER_MY_THREAD ();
   return NULL;
 
@@ -796,6 +825,7 @@ mom_item_webrequest_add (momval_t val, ...)
 		// to start the if ... else if
 		if (0)
 		  mime = "???";
+		/* *INDENT-OFF* */
 		// our common mime types, by probable decreasing frequencies
 		COMMON_MIME_PREFIX_UTF8 ("text/html");
 		COMMON_MIME_PREFIX_UTF8 ("text/plain");
@@ -817,6 +847,7 @@ mom_item_webrequest_add (momval_t val, ...)
 		  if (MONIMELT_UNLIKELY (!webitm->iweb_replymime))
 		    MONIMELT_FATAL ("failed to strdup mime type %s", mime);
 		}
+		/* *INDENT-ON* */
 #undef COMMON_MIME_PREFIX_UTF8
 #undef COMMON_MIME_TYPE
 	      }

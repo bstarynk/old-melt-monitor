@@ -20,6 +20,8 @@
 
 #include "monimelt.h"
 
+static long long work_tasklet_counter;
+
 static pthread_t event_loop_thread;
 
 static int event_loop_pipe[2] = { -1, -1 };
@@ -91,6 +93,16 @@ mom_agenda_add_tasklet_back (momval_t tsk)
   pthread_cond_broadcast (&mom_run_changed_cond);
 }
 
+long long
+mom_agenda_work_counter (void)
+{
+  long long c = 0;
+  pthread_mutex_lock (&mom_run_mtx);
+  c = work_tasklet_counter;
+  pthread_mutex_unlock (&mom_run_mtx);
+  return c;
+}
+
 #define WORK_DELAY 5.8		/* seconds */
 static void *
 work_loop (struct GC_stack_base *sb, void *data)
@@ -119,13 +131,21 @@ work_loop (struct GC_stack_base *sb, void *data)
 		      wd->work_index, loopcnt, (int) working);
       if (!working)
 	break;
+      long long tc = 0;
+      pthread_mutex_lock (&mom_run_mtx);
       curtsk = mom_item_queue_pop_front ((momval_t) mom_item__agenda);
       mom_dbg_item (run, "work_loop curtsk=", curtsk);
       if (curtsk)
+	work_tasklet_counter++;
+      tc = work_tasklet_counter;
+      pthread_mutex_unlock (&mom_run_mtx);
+      if (curtsk)
 	{
-	  if (MONIMELT_UNLIKELY (curtsk->typnum != momty_taskletitem))
-	    MONIMELT_FATAL ("invalid current task");
+	  MONIMELT_DEBUG (run, "work_loop taskletcounter %lld before step",
+			  tc);
 	  mom_tasklet_step ((momit_tasklet_t *) curtsk);
+	  MONIMELT_DEBUG (run, "work_loop taskletcounter %lld after step",
+			  tc);
 	}
       else
 	{
@@ -141,7 +161,7 @@ work_loop (struct GC_stack_base *sb, void *data)
 	    pthread_cond_timedwait (&mom_run_changed_cond, &mom_run_mtx,
 				    &endts);
 	  pthread_mutex_unlock (&mom_run_mtx);
-	  usleep (33000);
+	  usleep (3000);
 	}
     }
   while (working);

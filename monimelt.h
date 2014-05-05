@@ -1603,6 +1603,9 @@ int mom_load_code_post_runner (const char *modname);
 void mom_agenda_add_tasklet_front (momval_t tsk);
 void mom_agenda_add_tasklet_back (momval_t tsk);
 
+// number of tasklet steps 
+long long mom_agenda_work_counter (void);
+
 #define MONIMELT_NAMED(Name,Type,Uid) extern momit_##Type##_t* mom_item__##Name;
 #include "monimelt-names.h"
 #endif /* MONIMELT_INCLUDED_ */
