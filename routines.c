@@ -131,8 +131,8 @@ c_name_suffix (mom_anyitem_t * itm)
       cn = GC_STRDUP (cbuf);
       if (!cn)
 	MONIMELT_FATAL ("failed to make c_name_suffix");
-      return cn;
     }
+  return cn;
 }
 
 enum web_form_compile_values_en
@@ -147,6 +147,7 @@ enum web_form_compile_values_en
   wfcv_curprep,
   wfcv_routdata,
   wfcv_routemp,
+  wfcv_curemit,
   wfcv__lastval
 };
 
@@ -173,6 +174,8 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
     wfcs_got_preparation,
     wfcs_declare_routine,
     wfcs_emit_routine,
+    wfcs_got_emitter,
+    wfcs_output_routine,
     wfcs_run_compiler,
     wfcs__last
   };
@@ -189,6 +192,7 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 #define l_curprep locvals[wfcv_curprep]
 #define l_routdata locvals[wfcv_routdata]
 #define l_routemp locvals[wfcv_routemp]
+#define l_curemit locvals[wfcv_curemit]
 #define n_ix locnums[wfcn_ix]
   time_t now = 0;
   struct tm nowtm = { };
@@ -430,7 +434,8 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 	    SET_STATE (run_compiler);
 	  }
 	l_curout = (momval_t) mom_set_nth_item (l_routines, n_ix);
-	mom_dbg_value (web, "web_form_compile emission loop l_curout=", l_curout);
+	mom_dbg_value (web, "web_form_compile emission loop l_curout=",
+		       l_curout);
 	n_ix++;
 	if (mom_value_as_item (l_curout) != NULL)
 	  SET_STATE (emit_routine);
@@ -439,11 +444,35 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
       }
       break;
       ////////////////
-    case wfcs_emit_routine:   ////================ emit routine
+    case wfcs_emit_routine:	////================ emit routine
       {
 	goodstate = true;
-	mom_dbg_value (web, "web_form_compile emit routine l_curout=", l_curout);
+	mom_dbg_value (web, "web_form_compile emit routine l_curout=",
+		       l_curout);
 	l_routemp = (momval_t) mom_make_item_assoc (MONIMELT_SPACE_NONE);
+	// get the emitter in the routine, or else in the module
+	l_curemit =
+	  (momval_t) mom_item_get_attr (mom_value_as_item (l_curout),
+					(mom_anyitem_t *)
+					mom_item__routine_emitter);
+	if (mom_type (l_curemit) != momty_closure)
+	  l_curemit =
+	    (momval_t) mom_item_get_attr (mom_value_as_item (l_module),
+					  (mom_anyitem_t *)
+					  mom_item__routine_emitter);
+	mom_dbg_value (web, "web_form_compile l_curemit=", l_curemit);
+	if (mom_type (l_curemit) == momty_closure)
+	  {
+	    mom_tasklet_push_frame ((momval_t) tasklet, (momval_t) l_curemit,
+				    MOMPFR_FIVE_VALUES, l_curout, l_routemp,
+				    l_dashboard, l_buffer, l_module,
+				    MOMPFR_END);
+	    SET_STATE (got_emitter);
+	  }
+	else
+	  {
+	    SET_STATE (output_routine);
+	  }
       }
       break;
       ////////////////
@@ -464,6 +493,8 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 #undef l_curout
 #undef l_curprep
 #undef l_routdata
+#undef l_routemp
+#undef l_curemit
 #undef n_ix
 }
 
