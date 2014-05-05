@@ -135,7 +135,7 @@ c_name_suffix (mom_anyitem_t * itm)
   return cn;
 }
 
-#define GENERATED_BASE_NAME "gen-first"
+#define GENERATED_BASE_NAME MONIMELT_SHARED_MODULE_PREFIX "first"
 #define GENERATED_SOURCE_FILE_NAME GENERATED_BASE_NAME ".c"
 #define GENERATED_SHAROB_FILE_NAME GENERATED_BASE_NAME ".so"
 

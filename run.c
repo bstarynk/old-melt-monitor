@@ -35,7 +35,7 @@ static int my_signals_fd = -1;
 #define EVLOOP_JOB 'J'		/* something changed about jobs */
 
 
-#define MOM_POLL_TIMEOUT 500	/* milliseconds for mom poll timeout */
+#define MOM_POLL_TIMEOUT 1600	/* milliseconds for mom poll timeout */
 
 // the job_mtx is both for processes and for CURL
 static pthread_mutex_t job_mtx = PTHREAD_MUTEX_INITIALIZER;
@@ -68,7 +68,7 @@ extern momit_queue_t *mom_item__agenda;
 
 static struct momworkdata_st workers[MOM_MAX_WORKERS + 1];
 static bool working_flag;
-
+static bool event_loop_started;
 void
 mom_agenda_add_tasklet_front (momval_t tsk)
 {
@@ -374,6 +374,7 @@ start_some_pending_jobs (void)
       for (unsigned j = 1; j <= MOM_MAX_WORKERS && jobnum < 0; j++)
 	if (!running_jobs[j])
 	  jobnum = j;
+      mom_dbg_item (run, "curproc=", (mom_anyitem_t *) curproc);
       assert (curproc && curproc->iproc_item.typnum == momty_processitem);
       assert (curproc->iproc_pid <= 0 && curproc->iproc_outfd < 0);
       assert (jobnum > 0);
@@ -396,6 +397,8 @@ start_some_pending_jobs (void)
 	    progargv[argcnt++] = argstr;
 	}
       progargv[argcnt] = NULL;
+      for (unsigned aix = 0; aix < argcnt; aix++)
+	MONIMELT_DEBUG (run, "run progargv[%d]=%s", aix, progargv[aix]);
       assert (progname != NULL);
       if (pipe (pipetab))
 	MONIMELT_FATAL ("failed to create pipe for process %s", progname);
@@ -427,6 +430,7 @@ start_some_pending_jobs (void)
       else if (newpid < 0)
 	MONIMELT_FATAL ("fork failed for %s", progname);
       // parent process:
+      MONIMELT_DEBUG (run, "newpid=%d", (int) newpid);
       curproc->iproc_outfd = pipetab[0];
       curproc->iproc_pid = newpid;
       curproc->iproc_jobnum = jobnum;
@@ -473,6 +477,7 @@ event_loop_handler (int fd, short revent, void *data)
 static void
 signal_fd_handler (int fd, short revent, void *data)
 {
+  MONIMELT_DEBUG (run, "signal_fd_handler fd=%d", fd);
   assert (fd == my_signals_fd && !data);
   struct signalfd_siginfo sinf;
   memset (&sinf, 0, sizeof (sinf));
@@ -489,6 +494,8 @@ signal_fd_handler (int fd, short revent, void *data)
 	    momit_process_t *wproc = NULL;
 	    const momclosure_t *clos = NULL;
 	    const momstring_t *outstr = NULL;
+	    MONIMELT_DEBUG (run, "signal_fd_handler SIGCHLD wpid=%d pst=%#x",
+			    wpid, pst);
 	    pthread_mutex_lock (&job_mtx);
 	    // handle the ended process
 	    for (unsigned jix = 1; jix <= MOM_MAX_WORKERS && !wproc; jix++)
@@ -638,6 +645,7 @@ event_loop (struct GC_stack_base *sb, void *data)
   MOMGC_REGISTER_MY_THREAD (sb);
   assert (data == NULL);
   assert (mom_item__heart_beat != NULL);
+  MONIMELT_DEBUG (run, "event_loop start");
   // set up CURL multi handle
   assert (multicurl_job == NULL);
   multicurl_job = curl_multi_init ();
@@ -645,16 +653,22 @@ event_loop (struct GC_stack_base *sb, void *data)
     MONIMELT_FATAL ("failed to initial multi CURL handle");
   // set up the signalfd 
   {
-    sigset_t mask;
-    sigemptyset (&mask);
-    sigaddset (&mask, SIGINT);
-    sigaddset (&mask, SIGTERM);
-    sigaddset (&mask, SIGQUIT);
-    sigaddset (&mask, SIGPIPE);
-    sigaddset (&mask, SIGCHLD);
-    my_signals_fd = signalfd (-1, &mask, SFD_NONBLOCK | SFD_CLOEXEC);
+    sigset_t mysetsig;
+    sigemptyset (&mysetsig);
+    sigaddset (&mysetsig, SIGINT);
+    sigaddset (&mysetsig, SIGTERM);
+    sigaddset (&mysetsig, SIGQUIT);
+    sigaddset (&mysetsig, SIGPIPE);
+    sigaddset (&mysetsig, SIGCHLD);
+    // according to signalfd(2) we need to block the signals
+    MONIMELT_DEBUG (run, "before sigprocmask");
+    if (sigprocmask (SIG_BLOCK, &mysetsig, NULL))
+      MONIMELT_FATAL ("failed to block signals with sigprocmask");
+    MONIMELT_DEBUG (run, "before signalfd");
+    my_signals_fd = signalfd (-1, &mysetsig, SFD_CLOEXEC);
     if (MONIMELT_UNLIKELY (my_signals_fd < 0))
       MONIMELT_FATAL ("signalfd failed");
+    MONIMELT_DEBUG (run, "my_signals_fd=%d", my_signals_fd);
   }
   /// our event loop
   do
@@ -668,6 +682,7 @@ event_loop (struct GC_stack_base *sb, void *data)
     if (MONIMELT_UNLIKELY(pollcnt>=MOM_POLL_MAX))			\
       MONIMELT_FATAL("failed to poll fd#%d", (Fd));			\
     polltab[pollcnt].fd = (Fd);  polltab[pollcnt].events = (Ev);	\
+    MONIMELT_DEBUG(run, "add_poll pollcnt=%d, fd=%d", pollcnt, (Fd));	\
     handlertab[pollcnt] = Hdr; datatab[pollcnt]= (void*)(Data);		\
     pollcnt++; } while(0)
       ADD_POLL (POLL_IN, event_loop_read_pipe, event_loop_handler,
@@ -718,20 +733,26 @@ event_loop (struct GC_stack_base *sb, void *data)
 	pthread_mutex_unlock (&job_mtx);
       }
       // do the polling
+      MONIMELT_DEBUG (run, "before poll pollcnt=%d", pollcnt);
       int respoll = poll (polltab, pollcnt, MOM_POLL_TIMEOUT);
+      MONIMELT_DEBUG (run, "after poll respoll=%d", respoll);
       // invoke the handlers
       if (respoll > 0)
 	{
 	  for (int pix = 0; pix < pollcnt; pix++)
 	    {
 	      if (polltab[pix].revents && handlertab[pix])
-		handlertab[pix] (polltab[pix].fd, polltab[pix].revents,
-				 datatab[pix]);
+		{
+		  MONIMELT_DEBUG (run, "invoking handler pix=%d", pix);
+		  handlertab[pix] (polltab[pix].fd, polltab[pix].revents,
+				   datatab[pix]);
+		}
 	    }
 	  sched_yield ();
 	}
       else
 	{			// timed-out
+	  MONIMELT_DEBUG (run, "poll timed out");
 #warning should handle time out in event loop
 	}
     }
@@ -757,8 +778,11 @@ mom_start_event_loop (void)
   pthread_attr_setdetachstate (&evthattr, TRUE);
   if (pipe (event_loop_pipe))
     MONIMELT_FATAL ("failed to create event loop pipe");
+  MONIMELT_DEBUG (run, "event_loop_read_pipe=%d event_loop_write_pipe=%d",
+		  event_loop_read_pipe, event_loop_write_pipe);
   if (pthread_create (&event_loop_thread, &evthattr, eventloop_cb, NULL))
     MONIMELT_FATAL ("failed to create event loop thread");
+  event_loop_started = true;
 }
 
 
@@ -935,9 +959,13 @@ mom_make_item_process_from_node (momval_t progstr, momval_t nodv)
 void
 mom_item_process_start (momval_t procv, momval_t clov)
 {
+  mom_dbg_value (run, "process_start procv=", procv);
+  mom_dbg_value (run, "process_start clov=", clov);
   if (!procv.ptr || *procv.ptype != momty_processitem
       || !clov.ptr || *clov.ptype != momty_closure)
     return;
+  if (!event_loop_started)
+    MONIMELT_FATAL ("cannot start process without event loop");
   pthread_mutex_lock (&procv.panyitem->i_mtx);
   momit_process_t *procitm = procv.pprocessitem;
   const momclosure_t *clos = clov.pclosure;
