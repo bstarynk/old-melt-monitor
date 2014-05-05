@@ -66,6 +66,8 @@ mom_value_hash (const momval_t v)
       return v.pjsonobj->hash;
     case momty_node:
       return v.pnode->hash;
+    case momty_closure:
+      return v.pclosure->hash;
     case momty_tuple:
     case momty_set:
       return v.pseqitm->hash;

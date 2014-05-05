@@ -25,8 +25,10 @@ CREATE TABLE t_module (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_item VALUES('0229c553-c443-49a9-9244-5f8d7d3c79cf','dictionnary','{"jtype":"dictionnary"}','{"attributes":null,"content":null,"dictionnary":[{"name":"form_compile","val":{"conn":{"jtype":"itemref",
   "space":".","uuid":"f094ea32-9a48-4de2-bba7-4b25e8d028d1"},"jtype":"closure",
- "sons":[]}},{"name":"form_exit","val":{"conn":{"jtype":"itemref","space":".",
-  "uuid":"84e3d03a-f704-42c9-b5bd-175d5845076d"},"jtype":"closure","sons":[]}}]}
+ "sons":[{"conn":{"jtype":"itemref","space":".","uuid":"88aeaf2b-192e-4936-bdbb-b9a186d86cd4"},
+  "jtype":"closure","sons":["Gap*Proc_Compilation"]}]}},{"name":"form_exit","val":{"conn":{"jtype":"itemref",
+  "space":".","uuid":"84e3d03a-f704-42c9-b5bd-175d5845076d"},"jtype":"closure",
+ "sons":[]}}]}
 ');
 INSERT INTO t_item VALUES('03c1ace3-3293-43bb-9541-19b4357cbc3c','json_name','{"jtype":"json_name","name":"conn"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('11da23ab-3b9e-4ea0-bc13-4a9aa46e2995','json_name','{"jtype":"json_name","name":"json_object"}','{"attributes":null,"content":null}');
@@ -54,6 +56,7 @@ INSERT INTO t_item VALUES('7e8b7206-2548-427d-9b7c-9d5b5067c78a','json_name','{"
 INSERT INTO t_item VALUES('80e337da-7a05-40e4-86ec-806ac78dbd03','json_name','{"jtype":"json_name","name":"frames"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('84961ab4-f2ff-4e10-9479-2e62148c54bc','json_name','{"jtype":"json_name","name":"numbers"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('84e3d03a-f704-42c9-b5bd-175d5845076d','routine','{"jtype":"routine","name":"web_form_exit"}','{"attributes":null,"content":null}');
+INSERT INTO t_item VALUES('88aeaf2b-192e-4936-bdbb-b9a186d86cd4','routine','{"jtype":"routine","name":"proc_compilation"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('8dba998c-341b-4a66-900f-545ac9dd06c4','json_name','{"jtype":"json_name","name":"sons"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('8e3cbe87-244d-49e7-ac72-e6f8a09afd7c','box','{"jtype":"box"}','{"attributes":null,"box":null,"content":null}');
 INSERT INTO t_item VALUES('93abbd1c-2d33-4b86-8e16-e5b0c14842dc','box','{"jtype":"box"}','{"attributes":null,"box":null,"content":null}');
@@ -110,6 +113,7 @@ INSERT INTO t_name VALUES('jtype','b9664990-11a1-49a5-bf59-be714626ed6d','.');
 INSERT INTO t_name VALUES('name','abdd3eea-22da-4e09-b1f8-a05b80783924','.');
 INSERT INTO t_name VALUES('node','f99051be-30bf-4efc-8c35-b4344c4e6d2c','.');
 INSERT INTO t_name VALUES('numbers','84961ab4-f2ff-4e10-9479-2e62148c54bc','.');
+INSERT INTO t_name VALUES('proc_compilation','88aeaf2b-192e-4936-bdbb-b9a186d86cd4','.');
 INSERT INTO t_name VALUES('queue','eaada55e-bcfb-4b87-b335-65b31ed2fdac','.');
 INSERT INTO t_name VALUES('refitem','5e77140e-2467-4e85-aa28-8ca734c2aa07','.');
 INSERT INTO t_name VALUES('routine','c5d8949e-8348-4166-82b8-5bf9ce3a6778','.');

@@ -551,6 +551,9 @@ mom_tasklet_step (momit_tasklet_t * tskitm)
 	  tskitm->itk_scaltop = curintoff;
 	}
       tskitm->itk_fratop = fratop - 1;
+      // if the tasklet is not empty, enqueue it again
+      if (tskitm->itk_fratop > 0)
+	mom_agenda_add_tasklet_back ((momval_t) tskitm);
     }
   res = nextstate;
 end:
