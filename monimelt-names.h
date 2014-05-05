@@ -38,6 +38,7 @@
  MONIMELT_NAMED (queue, json_name, "eaada55e-bcfb-4b87-b335-65b31ed2fdac")
  MONIMELT_NAMED (refitem, json_name, "5e77140e-2467-4e85-aa28-8ca734c2aa07")
  MONIMELT_NAMED (routine, json_name, "c5d8949e-8348-4166-82b8-5bf9ce3a6778")
+ MONIMELT_NAMED (routine_emitter, box, "8e3cbe87-244d-49e7-ac72-e6f8a09afd7c")
  MONIMELT_NAMED (routine_preparator, box, "43714c87-bb83-4413-bc7b-41fc01976f76")
  MONIMELT_NAMED (routines, box, "49c854e1-d91f-43b4-8a49-428fa8dceec4")
  MONIMELT_NAMED (set, json_name, "3265e0f0-f3f7-4ef1-b157-50ec4fd4ce41")
@@ -54,5 +55,5 @@
  MONIMELT_NAMED (vector, json_name, "402d1108-9e25-4065-b81d-1bea8b06f269")
  MONIMELT_NAMED (web_dictionnary, dictionnary, "0229c553-c443-49a9-9244-5f8d7d3c79cf")
 
-// end of 49 named items
+// end of 50 named items
 #undef MONIMELT_NAMED

@@ -146,6 +146,7 @@ enum web_form_compile_values_en
   wfcv_curout,
   wfcv_curprep,
   wfcv_routdata,
+  wfcv_routemp,
   wfcv__lastval
 };
 
@@ -187,6 +188,7 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 #define l_curout locvals[wfcv_curout]
 #define l_curprep locvals[wfcv_curprep]
 #define l_routdata locvals[wfcv_routdata]
+#define l_routemp locvals[wfcv_routemp]
 #define n_ix locnums[wfcn_ix]
   time_t now = 0;
   struct tm nowtm = { };
@@ -205,6 +207,7 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
   //// state machine
   switch ((enum web_form_compile_state_en) state)
     {
+      ////////////////
     case wfcs_start:		////================ start
       {
 	goodstate = true;
@@ -232,6 +235,7 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 	  ("momcode_web_form_compile unimplemented routine form at start");
       }
       break;
+      ////////////////
     case wfcs_compute_routines:	////================ compute routines
       {
 	MONIMELT_DEBUG (web,
@@ -243,6 +247,7 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 	SET_STATE (got_routines);
       }
       break;
+      ////////////////
     case wfcs_got_routines:	////================ got routines
       {
 	goodstate = true;
@@ -256,6 +261,7 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 	SET_STATE (begin_emission);
       }
       break;
+      ////////////////
     case wfcs_begin_emission:	////================ begin emissions
       {
 	goodstate = true;
@@ -300,6 +306,7 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 	SET_STATE (preparation_loop);
       }
       break;
+      ////////////////
     case wfcs_preparation_loop:	////================ preparation loop
       {
 	goodstate = true;
@@ -324,6 +331,7 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 	  SET_STATE (preparation_loop);
       }
       break;
+      ////////////////
     case wfcs_prepare_routine:	////================ prepare routine
       {
 	goodstate = true;
@@ -354,6 +362,7 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 	  }
       }
       break;
+      ////////////////
     case wfcs_got_preparation:	////================ got preparation
       {
 	mom_dbg_value (web, "web_form_compile got preparation l_argres=",
@@ -364,6 +373,7 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 	  SET_STATE (preparation_loop);
       }
       break;
+      ////////////////
     case wfcs_declare_routine:	////================ declare_routine
       {
 	// should emit the declaration of the routine
@@ -403,6 +413,7 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 	SET_STATE (preparation_loop);
       }
       break;
+      ////////////////
     case wfcs_emission_loop:	////================ emission loop
       {
 	goodstate = true;
@@ -419,7 +430,7 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 	    SET_STATE (run_compiler);
 	  }
 	l_curout = (momval_t) mom_set_nth_item (l_routines, n_ix);
-	mom_dbg_value (web, "web_form_compile l_curout=", l_curout);
+	mom_dbg_value (web, "web_form_compile emission loop l_curout=", l_curout);
 	n_ix++;
 	if (mom_value_as_item (l_curout) != NULL)
 	  SET_STATE (emit_routine);
@@ -427,6 +438,15 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 	  SET_STATE (emission_loop);
       }
       break;
+      ////////////////
+    case wfcs_emit_routine:   ////================ emit routine
+      {
+	goodstate = true;
+	mom_dbg_value (web, "web_form_compile emit routine l_curout=", l_curout);
+	l_routemp = (momval_t) mom_make_item_assoc (MONIMELT_SPACE_NONE);
+      }
+      break;
+      ////////////////
     case wfcs__last:
       {
 	MONIMELT_FATAL ("momcode_web_form_compile unexpected last");

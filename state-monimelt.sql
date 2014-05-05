@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 May 04
+-- state-monimelt dump 2014 May 05
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -55,6 +55,7 @@ INSERT INTO t_item VALUES('80e337da-7a05-40e4-86ec-806ac78dbd03','json_name','{"
 INSERT INTO t_item VALUES('84961ab4-f2ff-4e10-9479-2e62148c54bc','json_name','{"jtype":"json_name","name":"numbers"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('84e3d03a-f704-42c9-b5bd-175d5845076d','routine','{"jtype":"routine","name":"web_form_exit"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('8dba998c-341b-4a66-900f-545ac9dd06c4','json_name','{"jtype":"json_name","name":"sons"}','{"attributes":null,"content":null}');
+INSERT INTO t_item VALUES('8e3cbe87-244d-49e7-ac72-e6f8a09afd7c','box','{"jtype":"box"}','{"attributes":null,"box":null,"content":null}');
 INSERT INTO t_item VALUES('93abbd1c-2d33-4b86-8e16-e5b0c14842dc','box','{"jtype":"box"}','{"attributes":null,"box":null,"content":null}');
 INSERT INTO t_item VALUES('9a05b9fa-17d3-4294-9253-e67406e52d4a','json_name','{"jtype":"json_name","name":"content"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('9dccb4ab-45d0-4fa3-a3d0-8bb722a83478','box','{"jtype":"box"}','{"attributes":null,"box":null,"content":null}');
@@ -112,6 +113,7 @@ INSERT INTO t_name VALUES('numbers','84961ab4-f2ff-4e10-9479-2e62148c54bc','.');
 INSERT INTO t_name VALUES('queue','eaada55e-bcfb-4b87-b335-65b31ed2fdac','.');
 INSERT INTO t_name VALUES('refitem','5e77140e-2467-4e85-aa28-8ca734c2aa07','.');
 INSERT INTO t_name VALUES('routine','c5d8949e-8348-4166-82b8-5bf9ce3a6778','.');
+INSERT INTO t_name VALUES('routine_emitter','8e3cbe87-244d-49e7-ac72-e6f8a09afd7c','.');
 INSERT INTO t_name VALUES('routine_preparator','43714c87-bb83-4413-bc7b-41fc01976f76','.');
 INSERT INTO t_name VALUES('routines','49c854e1-d91f-43b4-8a49-428fa8dceec4','.');
 INSERT INTO t_name VALUES('set','3265e0f0-f3f7-4ef1-b157-50ec4fd4ce41','.');
