@@ -62,7 +62,7 @@ modules: $(MODULES)
 ## or - or _ characters. see MONIMELT_SHARED_MODULE_PREFIX in monimelt.h
 momg_%.so: momg_%.c | monimelt.h monimelt-names.h
 	$(LINK.c) -fPIC $< -shared -o $@
-	logger -t makemonimelt -p user.info -s compiled $< into shared $@ at $$(date +%c)
+	@logger -t makemonimelt -p user.info -s compiled $< into shared $@ at $$(date +%c)
 
 ## extra modules
 mod_%.so: mod_%.c  | monimelt.h monimelt-names.h

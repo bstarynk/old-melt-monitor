@@ -429,6 +429,19 @@ start_some_pending_jobs (void)
 	  dup2 (pipetab[1], STDOUT_FILENO);
 	  dup2 (pipetab[1], STDERR_FILENO);
 	  nice (1);
+	  sigset_t mysetsig;
+	  sigemptyset (&mysetsig);
+	  sigaddset (&mysetsig, SIGINT);
+	  sigaddset (&mysetsig, SIGTERM);
+	  sigaddset (&mysetsig, SIGQUIT);
+	  sigaddset (&mysetsig, SIGPIPE);
+	  sigaddset (&mysetsig, SIGCHLD);
+	  sigprocmask (SIG_UNBLOCK, &mysetsig, NULL);
+	  signal (SIGCHLD, SIG_DFL);
+	  signal (SIGTERM, SIG_DFL);
+	  signal (SIGQUIT, SIG_DFL);
+	  signal (SIGINT, SIG_DFL);
+	  signal (SIGCHLD, SIG_DFL);
 	  execvp ((const char *) progname, (char *const *) progargv);
 	  fprintf (stderr, "execution of %s failed : %s\n", progname,
 		   strerror (errno));
@@ -487,15 +500,19 @@ event_loop_handler (int fd, short revent, void *data)
 }
 
 static void
-signal_fd_handler (int fd, short revent, void *data)
+mysignalfd_handler (int fd, short revent, void *data)
 {
-  MONIMELT_DEBUG (run, "signal_fd_handler fd=%d", fd);
+  MONIMELT_DEBUG (run, "mysignalfd_handler fd=%d", fd);
   assert (fd == my_signals_fd && !data);
   struct signalfd_siginfo sinf;
   memset (&sinf, 0, sizeof (sinf));
-  if (read (fd, &sinf, sizeof (sinf)) != sizeof (sinf))
-    MONIMELT_FATAL ("failed to read from signalfd %d", fd);
-  MONIMELT_DEBUG (run, "signal_fd_handler signo=%d (%s)",
+  if (read (fd, &sinf, sizeof (sinf)) < 0)
+    {
+      MONIMELT_DEBUG (run, "mysignalfd_handler read failed (%s)",
+		      strerror (errno));
+      return;
+    }
+  MONIMELT_DEBUG (run, "mysignalfd_handler signo=%d (%s)",
 		  sinf.ssi_signo, strsignal (sinf.ssi_signo));
   switch (sinf.ssi_signo)
     {
@@ -508,7 +525,7 @@ signal_fd_handler (int fd, short revent, void *data)
 	    momit_process_t *wproc = NULL;
 	    const momclosure_t *clos = NULL;
 	    const momstring_t *outstr = NULL;
-	    MONIMELT_DEBUG (run, "signal_fd_handler SIGCHLD wpid=%d pst=%#x",
+	    MONIMELT_DEBUG (run, "mysignalfd_handler SIGCHLD wpid=%d pst=%#x",
 			    wpid, pst);
 	    pthread_mutex_lock (&job_mtx);
 	    // handle the ended process
@@ -698,16 +715,21 @@ event_loop (struct GC_stack_base *sb, void *data)
       memset (polltab, 0, sizeof (polltab));
       memset (handlertab, 0, sizeof (handlertab));
       memset (datatab, 0, sizeof (datatab));
-#define ADD_POLL(Ev,Fd,Hdr,Data) do {					\
-    if (MONIMELT_UNLIKELY(pollcnt>=MOM_POLL_MAX))			\
-      MONIMELT_FATAL("failed to poll fd#%d", (Fd));			\
-    polltab[pollcnt].fd = (Fd);  polltab[pollcnt].events = (Ev);	\
-    MONIMELT_DEBUG(run, "add_poll pollcnt=%d, fd=%d", pollcnt, (Fd));	\
-    handlertab[pollcnt] = Hdr; datatab[pollcnt]= (void*)(Data);		\
+      //
+#define ADD_POLL(Ev,Fd,Hdr,Data) do {				\
+    if (MONIMELT_UNLIKELY(pollcnt>=MOM_POLL_MAX))		\
+      MONIMELT_FATAL("failed to poll fd#%d", (Fd));		\
+    polltab[pollcnt].fd = (Fd);					\
+    polltab[pollcnt].events = (Ev);				\
+    MONIMELT_DEBUG(run, "add_poll pollcnt=%d, fd=%d " #Hdr,	\
+		   pollcnt, (Fd));				\
+    handlertab[pollcnt] = Hdr;					\
+    datatab[pollcnt]= (void*)(Data);				\
     pollcnt++; } while(0)
+      //
       ADD_POLL (POLL_IN, event_loop_read_pipe, event_loop_handler,
 		&repeat_loop);
-      ADD_POLL (POLL_IN, my_signals_fd, signal_fd_handler, NULL);
+      ADD_POLL (POLL_IN, my_signals_fd, mysignalfd_handler, NULL);
       // add the process output and CURL
       {
 	pthread_mutex_lock (&job_mtx);

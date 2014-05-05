@@ -571,7 +571,7 @@ mom_debug_at (enum mom_debug_en dbg, const char *fil, int lin,
   else
     {
       pthread_mutex_lock (&dbg_mtx);
-      fprintf (stderr, "\nMONIMELT DEBUG %s <%s> @%s:%d %s %s\n",
+      fprintf (stderr, "MONIMELT DEBUG %s <%s> @%s:%d %s %s\n",
 	       mom_debug_names[dbg], thrname,
 	       fil, lin, timbuf, bigbuf ? bigbuf : buf);
       fflush (stderr);
