@@ -379,6 +379,32 @@ do_json_string_test (void)
 }
 
 
+
+// call strftime but replace .__ with centiseconds for current time
+static void
+strftime_centi_now (char *buf, size_t len, char *fmt)
+{
+  struct tm tm = { };
+  time_t now = 0;
+  struct timespec ts = { };
+  if (!buf || !fmt)
+    return;
+  memset (buf, 0, len);
+  clock_gettime (CLOCK_REALTIME, &ts);
+  now = ts.tv_sec;
+  strftime (buf, len, fmt, localtime_r (&now, &tm));
+  char *dotundund = strstr (buf, ".__");
+  if (dotundund)
+    {
+      char minibuf[8];
+      memset (minibuf, 0, sizeof (minibuf));
+      snprintf (minibuf, sizeof (minibuf), "%02d",
+		(int) (ts.tv_nsec / 10000000));
+      dotundund[1] = minibuf[0];
+      dotundund[2] = minibuf[1];
+    }
+}
+
 void
 mom_fatal_at (const char *fil, int lin, const char *fmt, ...)
 {
@@ -387,15 +413,10 @@ mom_fatal_at (const char *fil, int lin, const char *fmt, ...)
   char buf[128];
   char timbuf[64];
   char *bigbuf = NULL;
-  struct tm tm = { };
   int err = errno;
-  time_t now = 0;
   memset (buf, 0, sizeof (buf));
   memset (thrname, 0, sizeof (thrname));
-  memset (timbuf, 0, sizeof (timbuf));
-  time (&now);
-  strftime (timbuf, sizeof (timbuf), "%Y-%b-%d %T %Z",
-	    localtime_r (&now, &tm));
+  strftime_centi_now (timbuf, sizeof (timbuf), "%Y-%b-%d %H:%M:%S.__ %Z");
   pthread_getname_np (pthread_self (), thrname, sizeof (thrname) - 1);
   va_list args;
   va_start (args, fmt);
@@ -446,14 +467,9 @@ mom_inform_at (const char *fil, int lin, const char *fmt, ...)
   char buf[128];
   char timbuf[64];
   char *bigbuf = NULL;
-  struct tm tm = { };
-  time_t now = 0;
   memset (buf, 0, sizeof (buf));
   memset (thrname, 0, sizeof (thrname));
-  memset (timbuf, 0, sizeof (timbuf));
-  time (&now);
-  strftime (timbuf, sizeof (timbuf), "%Y-%b-%d %T %Z",
-	    localtime_r (&now, &tm));
+  strftime_centi_now (timbuf, sizeof (timbuf), "%Y-%b-%d %H:%M:%S.__ %Z");
   pthread_getname_np (pthread_self (), thrname, sizeof (thrname) - 1);
   va_list args;
   va_start (args, fmt);
@@ -495,14 +511,9 @@ mom_debug_at (enum mom_debug_en dbg, const char *fil, int lin,
   char buf[128];
   char timbuf[64];
   char *bigbuf = NULL;
-  struct tm tm = { };
-  time_t now = 0;
   memset (buf, 0, sizeof (buf));
   memset (thrname, 0, sizeof (thrname));
-  memset (timbuf, 0, sizeof (timbuf));
-  time (&now);
-  strftime (timbuf, sizeof (timbuf), "%Y-%b-%d %T %Z",
-	    localtime_r (&now, &tm));
+  strftime_centi_now (timbuf, sizeof (timbuf), "%Y-%b-%d %H:%M:%S.__ %Z");
   pthread_getname_np (pthread_self (), thrname, sizeof (thrname) - 1);
   va_list args;
   va_start (args, fmt);
@@ -586,14 +597,9 @@ mom_warning_at (const char *fil, int lin, const char *fmt, ...)
   char buf[128];
   char timbuf[64];
   char *bigbuf = NULL;
-  struct tm tm = { };
-  time_t now = 0;
   memset (buf, 0, sizeof (buf));
   memset (thrname, 0, sizeof (thrname));
-  memset (timbuf, 0, sizeof (timbuf));
-  time (&now);
-  strftime (timbuf, sizeof (timbuf), "%Y-%b-%d %T %Z",
-	    localtime_r (&now, &tm));
+  strftime_centi_now (timbuf, sizeof (timbuf), "%Y-%b-%d %H:%M:%S.__ %Z");
   pthread_getname_np (pthread_self (), thrname, sizeof (thrname) - 1);
   va_list args;
   va_start (args, fmt);
@@ -628,12 +634,7 @@ static void
 logexit_cb (void)
 {
   char timbuf[64];
-  struct tm tm = { };
-  time_t now = 0;
-  memset (timbuf, 0, sizeof (timbuf));
-  time (&now);
-  strftime (timbuf, sizeof (timbuf), "%Y-%b-%d %T %Z",
-	    localtime_r (&now, &tm));
+  strftime_centi_now (timbuf, sizeof (timbuf), "%Y-%b-%d %H:%M:%S.__ %Z");
   syslog (LOG_INFO, "monimelt exiting at %s", timbuf);
 }
 
@@ -716,12 +717,7 @@ main (int argc, char **argv)
   if (want_syslog)
     {
       char timbuf[64];
-      struct tm tm = { };
-      time_t now = 0;
-      memset (timbuf, 0, sizeof (timbuf));
-      time (&now);
-      strftime (timbuf, sizeof (timbuf), "%Y-%b-%d %T %Z",
-		localtime_r (&now, &tm));
+      strftime_centi_now (timbuf, sizeof (timbuf), "%Y-%b-%d %H:%M:%S.__ %Z");
       openlog ("monimelt",
 	       LOG_PID | LOG_CONS | (daemonize_me ? 0 : LOG_PERROR),
 	       LOG_LOCAL2);
