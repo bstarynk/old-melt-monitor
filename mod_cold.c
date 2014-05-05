@@ -27,6 +27,9 @@ monimelt_module_init (const char *marg)
 {
   char uistr[UUID_PARSED_LEN];
   MONIMELT_WARNING ("cold module init marg=%s do nothing", marg);
+
+
+#if 0
   momit_routine_t *rout_web_form_compile =
     mom_make_item_routine ("web_form_compile", MONIMELT_SPACE_ROOT);
   MONIMELT_INFORM ("cold monimelt_inform web_form_compile ~%s",
@@ -46,5 +49,7 @@ monimelt_module_init (const char *marg)
 				 "form_compile",
 				 (momval_t) clos_web_form_compile);
   mom_dbgout_value ((const momval_t) clos_web_form_compile);
+#endif
+
   MONIMELT_INFORM ("cold module end marg=%s", marg);
 }

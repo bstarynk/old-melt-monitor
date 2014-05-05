@@ -135,6 +135,10 @@ c_name_suffix (mom_anyitem_t * itm)
   return cn;
 }
 
+#define GENERATED_BASE_NAME "gen-first"
+#define GENERATED_SOURCE_FILE_NAME GENERATED_BASE_NAME ".c"
+#define GENERATED_SHAROB_FILE_NAME GENERATED_BASE_NAME ".so"
+
 enum web_form_compile_values_en
 {
   wfcv_argres,
@@ -148,6 +152,7 @@ enum web_form_compile_values_en
   wfcv_routdata,
   wfcv_routemp,
   wfcv_curemit,
+  wfcv_compilproc,
   wfcv__lastval
 };
 
@@ -179,8 +184,10 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
     wfcs_run_compiler,
     wfcs__last
   };
-#define GENERATED_FILE_NAME "gen-first.c"
-#define SET_STATE(St) do { MONIMELT_DEBUG(web, "momcode_web_form_compile setstate " #St); \
+#define SET_STATE(St) do {						\
+    MONIMELT_DEBUG (web,						\
+		    "momcode_web_form_compile setstate " #St " = %d",	\
+		    (int)wfcs_##St);					\
     return wfcs_##St; } while(0)
 #define l_argres locvals[wfcv_argres]
 #define l_web locvals[wfcv_web]
@@ -193,6 +200,7 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 #define l_routdata locvals[wfcv_routdata]
 #define l_routemp locvals[wfcv_routemp]
 #define l_curemit locvals[wfcv_curemit]
+#define l_compilproc locvals[wfcv_compilproc]
 #define n_ix locnums[wfcn_ix]
   time_t now = 0;
   struct tm nowtm = { };
@@ -275,7 +283,8 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 	mom_dbg_value (web, "web_form_compile l_buffer=", l_buffer);
 	mom_item_buffer_puts
 	  (l_buffer,
-	   "// generated file " GENERATED_FILE_NAME " *** DO NOT EDIT ***\n");
+	   "// generated file " GENERATED_SOURCE_FILE_NAME
+	   " *** DO NOT EDIT ***\n");
 	time_t nowt = 0;
 	time (&nowt);
 	struct tm nowtm = { };
@@ -498,18 +507,23 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 	MONIMELT_DEBUG (web,
 			"web_form_compile run compiler buffer of %d bytes",
 			(int) mom_item_buffer_length (l_buffer));
-	rename (GENERATED_FILE_NAME, GENERATED_FILE_NAME "~");
-	FILE *fout = fopen (GENERATED_FILE_NAME, "w");
+	rename (GENERATED_SOURCE_FILE_NAME, GENERATED_SOURCE_FILE_NAME "~");
+	FILE *fout = fopen (GENERATED_SOURCE_FILE_NAME, "w");
 	if (MONIMELT_UNLIKELY (!fout))
-	  MONIMELT_FATAL ("failed to open file " GENERATED_FILE_NAME);
+	  MONIMELT_FATAL ("failed to open file " GENERATED_SOURCE_FILE_NAME);
 	unsigned blen = mom_item_buffer_length (l_buffer);
 	if (mom_item_buffer_output_content_to_file (l_buffer, fout)
 	    != (int) blen)
 	  MONIMELT_WARNING ("failed to output all %d bytes to "
-			    GENERATED_FILE_NAME, (int) blen);
+			    GENERATED_SOURCE_FILE_NAME, (int) blen);
 	fclose (fout), fout = NULL;
-	MONIMELT_INFORM ("wrote %d bytes into %s", (int) blen,
-			 GENERATED_FILE_NAME);
+	MONIMELT_INFORM ("wrote %d bytes of code into %s", (int) blen,
+			 GENERATED_SOURCE_FILE_NAME);
+	l_compilproc = (momval_t)
+	  mom_make_item_process_argvals ((momval_t) mom_make_string ("make"),
+					 (momval_t)
+					 mom_make_string
+					 (GENERATED_SHAROB_FILE_NAME), NULL);
       }
       break;
     case wfcs__last:
@@ -521,6 +535,8 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
     MONIMELT_FATAL ("momcode_web_form_compile invalid state %d", state);
   MONIMELT_DEBUG (web, "momcode_web_form_compile ending state %d", state);
   return routres_pop;
+#undef SET_STATE
+#undef l_argres
 #undef l_web
 #undef l_module
 #undef l_routines
@@ -531,6 +547,7 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 #undef l_routdata
 #undef l_routemp
 #undef l_curemit
+#undef l_compilproc
 #undef n_ix
 }
 
@@ -542,4 +559,53 @@ const struct momroutinedescr_st momrout_web_form_compile =
   .rout_frame_nbdbl = 0,
   .rout_name = "web_form_compile",
   .rout_code = (const momrout_sig_t *) momcode_web_form_compile
+};
+
+
+
+/*****************************************************************/
+/*****************************************************************/
+/*****************************************************************/
+
+enum proc_compilation_values_en
+{
+  pcov_argres,
+  pcov__lastval
+};
+
+enum proc_compilation_numbers_en
+{
+  pcon__lastnum
+};
+
+
+int
+momcode_proc_compilation (int state, momit_tasklet_t * tasklet,
+			  momclosure_t * closure, momval_t * locvals,
+			  intptr_t * locnums, double *locdbls)
+{
+  enum proc_compilation_state_en
+  {
+    pcos_start,
+    pcos__laststate
+  };
+#define l_argres locvals[pcov_argres]
+#define SET_STATE(St) do {						\
+    MONIMELT_DEBUG (web,						\
+		    "momcode_proc_compilation setstate " #St " = %d",	\
+		    (int)pcos_##St);					\
+    return pcos_##St; } while(0)
+  MONIMELT_FATAL ("unimplemented momcode_proc_compilation state=%d", state);
+#undef l_argres
+#undef SET_STATE
+}
+
+const struct momroutinedescr_st momrout_proc_compilation =
+  {.rout_magic = ROUTINE_MAGIC,
+  .rout_minclosize = 0,
+  .rout_frame_nbval = (unsigned) pcov__lastval,
+  .rout_frame_nbnum = (unsigned) pcon__lastnum,
+  .rout_frame_nbdbl = 0,
+  .rout_name = "proc_compilation",
+  .rout_code = (const momrout_sig_t *) momcode_proc_compilation
 };

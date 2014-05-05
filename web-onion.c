@@ -350,6 +350,9 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
 	      onion_response_free (webitm->iweb_response);
 	      webitm->iweb_response =
 		onion_response_new (webitm->iweb_request);
+	      onion_response_set_header (webitm->iweb_response,
+					 "Content-Type",
+					 "text/html; charset=utf-8");
 	      onion_response_printf (webitm->iweb_response,
 				     "<html><head><title>Monimelt timeout</title></head>\n"
 				     "<body><h1>Monimelt timeout webnum#%ld</h1>\n"
