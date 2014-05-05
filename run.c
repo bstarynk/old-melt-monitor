@@ -499,14 +499,23 @@ event_loop_handler (int fd, short revent, void *data)
     }
 }
 
+#warning dont use signalfd ...
 static void
 mysignalfd_handler (int fd, short revent, void *data)
 {
-  MONIMELT_DEBUG (run, "mysignalfd_handler fd=%d", fd);
-  assert (fd == my_signals_fd && !data);
   struct signalfd_siginfo sinf;
   memset (&sinf, 0, sizeof (sinf));
-  if (read (fd, &sinf, sizeof (sinf)) < 0)
+  MONIMELT_DEBUG (run, "mysignalfd_handler fd=%d sizeof(sinf)=%d", fd,
+		  (int) sizeof (sinf));
+  assert (fd == my_signals_fd && !data);
+  int rdsiz = -2;
+  if (revent & POLL_IN)
+    {
+      MONIMELT_DEBUG (run, "mysignalfd_handler reading fd=%d", fd);
+      rdsiz = read (fd, &sinf, sizeof (sinf));
+    }
+  MONIMELT_DEBUG (run, "mysignalfd_handler fd=%d rdsiz=%d", fd, rdsiz);
+  if (rdsiz < 0)
     {
       MONIMELT_DEBUG (run, "mysignalfd_handler read failed (%s)",
 		      strerror (errno));
@@ -788,10 +797,14 @@ event_loop (struct GC_stack_base *sb, void *data)
 	      if (polltab[pix].revents && handlertab[pix])
 		{
 		  MONIMELT_DEBUG (run,
-				  "invoking handler pix=%d evloopcnt=%lld",
-				  pix, evloopcnt);
+				  "invoking handler pix=%d fd#%d revents=%#x evloopcnt=%lld",
+				  pix, polltab[pix].fd, polltab[pix].revents,
+				  evloopcnt);
 		  handlertab[pix] (polltab[pix].fd, polltab[pix].revents,
 				   datatab[pix]);
+		  MONIMELT_DEBUG (run,
+				  "done handler pix=%d fd#%d evloopcnt=%lld",
+				  pix, polltab[pix].fd, evloopcnt);
 		}
 	    }
 	  sched_yield ();
@@ -1061,6 +1074,7 @@ mom_load_code_post_runner (const char *modname)
   memset (pathbuf, 0, sizeof (pathbuf));
   memset (symname, 0, sizeof (symname));
   snprintf (pathbuf, sizeof (pathbuf), "./%s.%s", modname, G_MODULE_SUFFIX);
+  MONIMELT_DEBUG (run, "mom_load_code_post_runner pathbuf=%s", pathbuf);
   if (access (pathbuf, R_OK))
     {
       MONIMELT_WARNING ("fail to access code module %s", pathbuf);
@@ -1070,6 +1084,8 @@ mom_load_code_post_runner (const char *modname)
   if (!codmodu)
     MONIMELT_FATAL ("failed to load code module %s: %s", pathbuf,
 		    g_module_error ());
+  MONIMELT_DEBUG (run, "mom_load_code_post_runner opened module pathbuf=%s",
+		  pathbuf);
   pthread_mutex_lock (&embryonic_mtx);
   for (unsigned eix = 0; eix < embryonic_routine_size; eix++)
     {
@@ -1081,6 +1097,7 @@ mom_load_code_post_runner (const char *modname)
       assert (curout->irt_descr == NULL);
       memset (symname, 0, sizeof (symname));
       snprintf (symname, sizeof (symname), MOM_ROUTINE_NAME_FMT, curname);
+      MONIMELT_DEBUG (run, "symname=%s eix=%d", symname, eix);
       struct momroutinedescr_st *rdescr = NULL;
       if ((g_module_symbol
 	   (codmodu, symname, (gpointer *) & rdescr)

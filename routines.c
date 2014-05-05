@@ -139,6 +139,25 @@ c_name_suffix (mom_anyitem_t * itm)
 #define GENERATED_SOURCE_FILE_NAME GENERATED_BASE_NAME ".c"
 #define GENERATED_SHAROB_FILE_NAME GENERATED_BASE_NAME ".so"
 
+static pthread_mutex_t backup_mtx = PTHREAD_MUTEX_INITIALIZER;
+static int backup_count;
+static void
+backup_old_shared_object ()
+{
+  pthread_mutex_lock (&backup_mtx);
+  if (!access (GENERATED_SHAROB_FILE_NAME, R_OK))
+    {
+      char pathbuf[128];
+      memset (pathbuf, 0, sizeof (pathbuf));
+      backup_count++;
+      snprintf (pathbuf, sizeof (pathbuf), "%s+p%d_c%d~",
+		GENERATED_SHAROB_FILE_NAME, (int) getpid (), backup_count);
+      rename (GENERATED_SHAROB_FILE_NAME, pathbuf);
+      MONIMELT_INFORM ("backup of old shared object to %s", pathbuf);
+    }
+  pthread_mutex_unlock (&backup_mtx);
+}
+
 enum web_form_compile_values_en
 {
   wfcv_argres,
@@ -527,6 +546,7 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 	fclose (fout), fout = NULL;
 	MONIMELT_INFORM ("wrote %d bytes of code into %s", (int) blen,
 			 GENERATED_SOURCE_FILE_NAME);
+	backup_old_shared_object ();
 	/// create and start the compilation process
 	l_compilproc = (momval_t)
 	  mom_make_item_process_argvals ((momval_t) mom_make_string ("make"),
@@ -701,9 +721,13 @@ momcode_proc_compilation (int state, momit_tasklet_t * tasklet,
       {
 	goodstate = true;
 	MONIMELT_DEBUG (run, "momcode_proc_compilation loadnewmodule");
-	MONIMELT_FATAL
-	  ("unimplemented momcode_proc_compilation loadnewmodule");
-#warning unimplemented momcode_proc_compilation loadnewmodule
+	mom_request_stop ("proc_compilation loadnewmodule",
+			  mom_load_code_post_runner,
+			  GENERATED_SHAROB_FILE_NAME);
+	MONIMELT_DEBUG (run,
+			"momcode_proc_compilation stop to load "
+			GENERATED_SHAROB_FILE_NAME);
+	return routres_pop;
       }
       break;
       ////////////////
