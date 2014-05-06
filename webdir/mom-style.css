@@ -32,3 +32,17 @@ h1 {
     color: darkblue;
     text-align: center;
 }
+
+div.toolbar_cl {
+    background-color: peachpuff;
+    color: navy;
+    border: 1px;
+}
+
+div.toped_cl {
+    background-color: lightyellow;
+    width: 80%;
+    min-height: 100px;
+    border: 2px solid brown;
+    border-spacing: 15px;
+}

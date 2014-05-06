@@ -10,12 +10,11 @@ To compile it, you need
 
 This code is free software (GPLv3+) in pre-alpha stage in may 2014.
 
-To test it, first build a sqlite3 database with
-
-   sqlite3 state-monimelt.dbsqlite < state-monimelt.sql
-
+To test it, (edit Makefile if wanted, then) compile monimelt with
+    make,
+then first build the state-monimelt.dbsqlite sqlite3 database with
+    make restore-state
 then run
-
    ./monimelt -W localhost:8086 -J 2   
 
 and try browsing http://localhost:8086/testform.html or

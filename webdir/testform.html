@@ -4,9 +4,18 @@
   <title>test form for monimelt</title>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <link rel="stylesheet" type="text/css" href="mom-style.css"/>
+  <link rel="stylesheet" type="text/css" href="font-awesome.min.css"/>
+  <link rel="stylesheet" type="text/css" href="jquery.notebook.min.css"/>
   <script src="jquery.js" type="text/javascript"></script>
+  <script src="jquery.notebook.min.js" type="text/javascript"></script>
   <script src="mom-scripts.js" type="text/javascript"></script>
 
+  <script type='text/javascript'>
+    $(function() { // handler for ready
+    var toped = $('#id_toped');
+    toped.notebook ();
+    }) // end of ready function
+  </script>
 </head>
 <body>
   <h1>Initial Form for Monimelt</h1>
@@ -21,13 +30,17 @@
   </form>
 
   <hr/>
-  
-  <h2>add routine</h2>
 
-  <form action='/add_routine' method='post'>
-    <b>name:</b> <input type='text' name='routname' /> <br/>
-    <b>body:</b> <textarea rows='20' cols='72' id='txt_routcode'>
-    </textarea>
-  </form>
+  <h2>Initial editor</h2>
+
+  <div id='id_toolbar' class='toolbar_cl'>
+    <i>No Toolbar</i>
+  </div>
+
+  <div id='id_editor'>
+    <i>Editor:</i>
+  <div id='id_toped' class='toped_cl editor'>
+  </div>
+  </div>
 </body>
 </html>

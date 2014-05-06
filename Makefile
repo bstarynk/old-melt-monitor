@@ -69,5 +69,5 @@ mod_%.so: mod_%.c  | monimelt.h monimelt-names.h
 	$(LINK.c) -fPIC $< -shared -o $@
 
 restore-state: 
-	mv -v state-monimelt.dbsqlite  state-monimelt.dbsqlite~
+	-mv -v state-monimelt.dbsqlite  state-monimelt.dbsqlite~
 	$(SQLITE) state-monimelt.dbsqlite < state-monimelt.sql
