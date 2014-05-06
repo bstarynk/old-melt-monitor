@@ -1146,6 +1146,8 @@ mom_load_code_post_runner (const char *modname)
       aftercodeloadfun (modname);
       MONIMELT_DEBUG (run, "after aftercodeloadfun %s", modname);
     }
+  else
+    MONIMELT_DEBUG (run, "no aftercodeloadfun in %s", modname);
   pthread_mutex_unlock (&embryonic_mtx);
   MONIMELT_INFORM ("loaded code module %s and found %d embryonic routines",
 		   pathbuf, foundnamecount);
