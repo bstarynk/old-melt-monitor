@@ -105,7 +105,7 @@ mom_dump_add_item (struct mom_dumper_st *dmp, const mom_anyitem_t * itm)
     return;
   if (!dmp || dmp->dmp_magic != DUMPER_MAGIC)
     return;
-  mom_dbg_item (dump, "adding item", itm);
+  MOM_DBG_ITEM (dump, "adding item", itm);
   if (MONIMELT_UNLIKELY (dmp->dmp_state != dus_scan))
     MONIMELT_FATAL ("invalid dump state #%d", (int) dmp->dmp_state);
   if (MONIMELT_UNLIKELY (4 * dmp->dmp_count / 3 + 10 >= dmp->dmp_size))
@@ -134,7 +134,7 @@ mom_dump_add_item (struct mom_dumper_st *dmp, const mom_anyitem_t * itm)
   // enqueue and add the item if it is not found
   if (!founditem)
     {
-      mom_dbg_item (dump, "enqueue item", itm);
+      MOM_DBG_ITEM (dump, "enqueue item", itm);
       struct mom_itqueue_st *qel = GC_MALLOC (sizeof (struct mom_itqueue_st));
       if (MONIMELT_UNLIKELY (!qel))
 	MONIMELT_FATAL ("cannot add queue element to dumper of %d items",
@@ -380,7 +380,7 @@ raw_dump_emit_json (struct mom_dumper_st * dmp, const momval_t val)
 	      jsval.ptr = NULL;
 	      goto end;
 	    };
-	  mom_dbg_item (dump, "dumping item", val.panyitem);
+	  MOM_DBG_ITEM (dump, "dumping item", val.panyitem);
 	  struct momspacedescr_st *spadecr = mom_spacedescr_array[spacenum];
 	  char ustr[UUID_PARSED_LEN];
 	  memset (ustr, 0, sizeof (ustr));
@@ -418,9 +418,9 @@ mom_dump_emit_json (struct mom_dumper_st * dmp, const momval_t val)
 		    val.ptr);
   if (MONIMELT_UNLIKELY (dmp->dmp_state != dus_emit))
     MONIMELT_FATAL ("invalid dump state #%d", (int) dmp->dmp_state);
-  mom_dbg_value (dump, "dumping value", val);
+  MOM_DBG_VALUE (dump, "dumping value", val);
   jsval = raw_dump_emit_json (dmp, val);
-  mom_dbg_value (dump, "dumped jsval", jsval);
+  MOM_DBG_VALUE (dump, "dumped jsval", jsval);
   return jsval;
 }
 
@@ -1213,7 +1213,7 @@ mom_initial_load (const char *state)
 	{
 	  MONIMELT_DEBUG (load, "loading item %s", curuuidstr);
 	  curitm = mom_load_item (&ld, curuid, curspace);
-	  mom_dbg_item (load, "loaded item", curitm);
+	  MOM_DBG_ITEM (load, "loaded item", curitm);
 	  if (!curitm)
 	    MONIMELT_FATAL ("failed to load named item %s of uid %s space %s",
 			    curname, curuuidstr, curspace);
@@ -1228,7 +1228,7 @@ mom_initial_load (const char *state)
       mom_anyitem_t *itmld = ld.ldr_qfirst->iq_item;
       assert (itmld != NULL && itmld->typnum > momty__itemlowtype
 	      && itmld->typnum < momty__last);
-      mom_dbg_item (load, "loading item", itmld);
+      MOM_DBG_ITEM (load, "loading item", itmld);
       assert (itmld->i_space > 0 && itmld->i_space < MONIMELT_SPACE_MAX);
       struct momspacedescr_st *curspad = mom_spacedescr_array[itmld->i_space];
       assert (curspad != NULL && curspad->spa_magic == SPACE_MAGIC);
@@ -1416,7 +1416,7 @@ mom_full_dump_at (const char *srcfil, int srclin, const char *reason,
   while (dmp.dmp_qfirst != NULL)
     {
       mom_anyitem_t *curitm = dmp.dmp_qfirst->iq_item;
-      mom_dbg_item (dump, "dumping scan of item", curitm);
+      MOM_DBG_ITEM (dump, "dumping scan of item", curitm);
       //
       assert (curitm != NULL && curitm->i_space < momty__last);
       const struct momitemtypedescr_st *tydescr =
@@ -1429,14 +1429,14 @@ mom_full_dump_at (const char *srcfil, int srclin, const char *reason,
       // now scan that item
       if (tydescr->ityp_scan)
 	{
-	  mom_dbg_item (dump, "scanning item", curitm);
+	  MOM_DBG_ITEM (dump, "scanning item", curitm);
 	  tydescr->ityp_scan (&dmp, curitm);
 	}
       else
 	{
 	  char uidstr[UUID_PARSED_LEN];
 	  memset (uidstr, 0, sizeof (uidstr));
-	  mom_dbg_item (dump, "unscanned item", curitm);
+	  MOM_DBG_ITEM (dump, "unscanned item", curitm);
 	  MONIMELT_FATAL ("unscanned item %s",
 			  mom_unparse_item_uuid (curitm, uidstr));
 	};
@@ -1455,7 +1455,7 @@ mom_full_dump_at (const char *srcfil, int srclin, const char *reason,
       const mom_anyitem_t *curitm = dmp.dmp_array[dix];
       if (!curitm || curitm == MONIMELT_EMPTY)
 	continue;
-      mom_dbg_item (dump, "dump of item", curitm);
+      MOM_DBG_ITEM (dump, "dump of item", curitm);
       assert (curitm != NULL && curitm->i_space < momty__last);
       const struct momitemtypedescr_st *tydescr =
 	mom_typedescr_array[curitm->typnum];

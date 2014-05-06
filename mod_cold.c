@@ -55,7 +55,7 @@ monimelt_module_post_load (void)
   mom_item_dictionnary_put_cstr ((momval_t) mom_item__web_dictionnary,
 				 "form_compile",
 				 (momval_t) clos_web_form_compile);
-  mom_dbg_value (run, "clos_web_form_compile=",
+  MOM_DBG_VALUE (run, "clos_web_form_compile=",
 		 (momval_t) clos_web_form_compile);
   MONIMELT_INFORM ("cold post load done");
 }

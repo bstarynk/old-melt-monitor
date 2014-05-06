@@ -198,7 +198,7 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
 					 fullpath + 1)).ptr != NULL
       && *closhandler.ptype == momty_closure)
     {
-      mom_dbg_value (web, "closhandler", closhandler);
+      MOM_DBG_VALUE (web, "closhandler", closhandler);
       momval_t pathv = (momval_t) mom_make_string (fullpath + 1);
       if (methoditm == (mom_anyitem_t *) mom_item__POST)
 	{
@@ -266,15 +266,15 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
       MONIMELT_DEBUG (web,
 		      "really_process_request made webitm@%p webnum#%ld wtim=%f wend=%f",
 		      webitm, webnum, wtim, wend);
-      mom_dbg_item (web, "really_process_request webitm",
+      MOM_DBG_ITEM (web, "really_process_request webitm",
 		    (const mom_anyitem_t *) webitm);
-      mom_dbg_value (web, "really_process_request closhandler", closhandler);
+      MOM_DBG_VALUE (web, "really_process_request closhandler", closhandler);
       {
 	momit_tasklet_t *webtasklet =
 	  mom_make_item_tasklet (MONIMELT_SPACE_NONE);
 	mom_tasklet_push_frame ((momval_t) webtasklet, (momval_t) closhandler,
 				MOMPFR_VALUE, webitm, MOMPFR_END);
-	mom_dbg_item (web, "new webtasklet=",
+	MOM_DBG_ITEM (web, "new webtasklet=",
 		      (const mom_anyitem_t *) webtasklet);
 	mom_agenda_add_tasklet_front ((momval_t) webtasklet);
       }

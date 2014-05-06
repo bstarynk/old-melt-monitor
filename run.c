@@ -35,7 +35,8 @@ static int my_signals_fd = -1;
 #define EVLOOP_JOB 'J'		/* something changed about jobs */
 
 
-#define MOM_POLL_TIMEOUT 1600	/* milliseconds for mom poll timeout */
+// the poll timeout is 1.6 seconds without debugging, and 3.1 with debugging 'run'
+#define MOM_POLL_TIMEOUT (MOM_IS_DEBUGGING(run)?3100:1600)	/* milliseconds for mom poll timeout */
 
 // the job_mtx is both for processes and for CURL
 static pthread_mutex_t job_mtx = PTHREAD_MUTEX_INITIALIZER;
@@ -77,7 +78,7 @@ mom_agenda_add_tasklet_front (momval_t tsk)
   assert (mom_item__agenda
 	  && ((mom_anyitem_t *) mom_item__agenda)->typnum == momty_queueitem);
   mom_item_queue_push_front ((momval_t) mom_item__agenda, tsk);
-  mom_dbg_value (run, "add tasklet front tsk=", tsk);
+  MOM_DBG_VALUE (run, "add tasklet front tsk=", tsk);
   pthread_cond_broadcast (&mom_run_changed_cond);
 }
 
@@ -89,7 +90,7 @@ mom_agenda_add_tasklet_back (momval_t tsk)
   assert (mom_item__agenda
 	  && ((mom_anyitem_t *) mom_item__agenda)->typnum == momty_queueitem);
   mom_item_queue_push_back ((momval_t) mom_item__agenda, tsk);
-  mom_dbg_value (run, "add tasklet back tsk=", tsk);
+  MOM_DBG_VALUE (run, "add tasklet back tsk=", tsk);
   pthread_cond_broadcast (&mom_run_changed_cond);
 }
 
@@ -134,7 +135,7 @@ work_loop (struct GC_stack_base *sb, void *data)
       long long tc = 0;
       pthread_mutex_lock (&mom_run_mtx);
       curtsk = mom_item_queue_pop_front ((momval_t) mom_item__agenda);
-      mom_dbg_item (run, "work_loop curtsk=", curtsk);
+      MOM_DBG_ITEM (run, "work_loop curtsk=", curtsk);
       if (curtsk)
 	work_tasklet_counter++;
       tc = work_tasklet_counter;
@@ -379,7 +380,7 @@ start_some_pending_jobs (void)
       for (unsigned j = 1; j <= MOM_MAX_WORKERS && jobnum < 0; j++)
 	if (!running_jobs[j])
 	  jobnum = j;
-      mom_dbg_item (run, "start_some_pending_jobs curproc=",
+      MOM_DBG_ITEM (run, "start_some_pending_jobs curproc=",
 		    (mom_anyitem_t *) curproc);
       MONIMELT_DEBUG (run, "start_some_pending_jobs jobnum=%d", jobnum);
       assert (curproc && curproc->iproc_item.typnum == momty_processitem);
@@ -545,7 +546,7 @@ check_for_some_child_process_at (const char *srcfil, int srclin)
 	{
 	  extern momit_box_t *mom_item__exited;
 	  extern momit_box_t *mom_item__terminated;
-	  mom_dbg_item (run, "wproc=", (const mom_anyitem_t *) wproc);
+	  MOM_DBG_ITEM (run, "wproc=", (const mom_anyitem_t *) wproc);
 	  pthread_mutex_lock (&wproc->iproc_item.i_mtx);
 	  outstr =
 	    mom_make_string_len (wproc->iproc_outbuf, wproc->iproc_outpos);
@@ -579,7 +580,7 @@ check_for_some_child_process_at (const char *srcfil, int srclin)
 	      };
 	    if (protasklet)
 	      {
-		mom_dbg_item (run, "new protasklet=",
+		MOM_DBG_ITEM (run, "new protasklet=",
 			      (const mom_anyitem_t *) protasklet);
 		mom_agenda_add_tasklet_front ((momval_t) protasklet);
 	      }
@@ -723,6 +724,9 @@ event_loop (struct GC_stack_base *sb, void *data)
       repeat_loop = true;
       evloopcnt++;
       MONIMELT_DEBUG (run, "start eventloop evloopcnt=%lld", evloopcnt);
+      // check for ended process from time to time, to be safe
+      if (evloopcnt % 8 == 0)
+	check_for_some_child_process ();
       unsigned pollcnt = 0;
       memset (polltab, 0, sizeof (polltab));
       memset (handlertab, 0, sizeof (handlertab));
@@ -1035,8 +1039,8 @@ mom_make_item_process_from_node (momval_t progstr, momval_t nodv)
 void
 mom_item_process_start (momval_t procv, momval_t clov)
 {
-  mom_dbg_value (run, "process_start procv=", procv);
-  mom_dbg_value (run, "process_start clov=", clov);
+  MOM_DBG_VALUE (run, "process_start procv=", procv);
+  MOM_DBG_VALUE (run, "process_start clov=", clov);
   if (!procv.ptr || *procv.ptype != momty_processitem
       || !clov.ptr || *clov.ptype != momty_closure)
     return;

@@ -33,18 +33,18 @@ momcode_web_form_exit (int state, momit_tasklet_t * tasklet,
   strftime (nowbuf, sizeof (nowbuf), "%c", localtime_r (&now, &nowtm));
   MONIMELT_DEBUG (web, "momcode_web_form_exit state=%d webnum=%ld nowbuf=%s",
 		  state, mom_item_webrequest_webnum (webv), nowbuf);
-  mom_dbg_item (web, "web_form_exit tasklet=",
+  MOM_DBG_ITEM (web, "web_form_exit tasklet=",
 		(const mom_anyitem_t *) tasklet);
-  mom_dbg_value (web, "web_form_exit webv=", webv);
-  mom_dbg_value (web, "web_form_exit closure=",
+  MOM_DBG_VALUE (web, "web_form_exit webv=", webv);
+  MOM_DBG_VALUE (web, "web_form_exit closure=",
 		 (momval_t) (const momclosure_t *) closure);
-  mom_dbg_value (web, "web_form_exit method=",
+  MOM_DBG_VALUE (web, "web_form_exit method=",
 		 (momval_t) mom_item_webrequest_method (webv));
   if (mom_item_webrequest_method (webv).ptr ==
       ((momval_t) mom_item__POST).ptr)
     {
       MONIMELT_DEBUG (web, "momcode_web_form_exit POST");
-      mom_dbg_value (web, "web_form_exit jsobpost=",
+      MOM_DBG_VALUE (web, "web_form_exit jsobpost=",
 		     mom_item_webrequest_jsob_post (webv));
       if (mom_item_webrequest_post_arg (webv, "do_savexit").ptr)
 	{
@@ -235,10 +235,10 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
   MONIMELT_DEBUG (web,
 		  "momcode_web_form_compile state=%d webnum=%ld nowbuf=%s",
 		  state, mom_item_webrequest_webnum (l_web), nowbuf);
-  mom_dbg_item (web, "web_form_compile tasklet=",
+  MOM_DBG_ITEM (web, "web_form_compile tasklet=",
 		(const mom_anyitem_t *) tasklet);
-  mom_dbg_value (web, "web_form_compile l_web=", l_web);
-  mom_dbg_value (web, "web_form_compile closure=",
+  MOM_DBG_VALUE (web, "web_form_compile l_web=", l_web);
+  MOM_DBG_VALUE (web, "web_form_compile closure=",
 		 (momval_t) (const momclosure_t *) closure);
   bool goodstate = false;
   //// state machine
@@ -251,13 +251,13 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 	l_web = l_argres;
 	MONIMELT_DEBUG (web, "momcode_web_form_compile start webnum=%ld",
 			mom_item_webrequest_webnum (l_web));
-	mom_dbg_value (web, "web_form_compile l_web=", l_web);
+	MOM_DBG_VALUE (web, "web_form_compile l_web=", l_web);
 	l_module = (momval_t) mom_item__first_module;
-	mom_dbg_value (web, "web_form_compile l_module=", l_module);
+	MOM_DBG_VALUE (web, "web_form_compile l_module=", l_module);
 	l_routines =
 	  (momval_t) mom_item_get_attr (mom_value_as_item (l_module),
 					(mom_anyitem_t *) mom_item__routines);
-	mom_dbg_value (web, "web_form_compile l_routines=", l_routines);
+	MOM_DBG_VALUE (web, "web_form_compile l_routines=", l_routines);
 	if (mom_type (l_routines) == momty_closure)
 	  SET_STATE (compute_routines);
 	else if (mom_type (l_routines) == momty_set)
@@ -289,7 +289,7 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
       {
 	goodstate = true;
 	l_routines = l_argres;
-	mom_dbg_value (web, "web_form_compile got routines=", l_routines);
+	MOM_DBG_VALUE (web, "web_form_compile got routines=", l_routines);
 	if (mom_type (l_routines) != momty_set)
 	  {
 	    MONIMELT_WARNING ("got no routines in module");
@@ -304,8 +304,8 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 	goodstate = true;
 	l_dashboard = (momval_t) mom_make_item_assoc (MONIMELT_SPACE_NONE);
 	l_buffer = (momval_t) mom_make_item_buffer (MONIMELT_SPACE_NONE);
-	mom_dbg_value (web, "web_form_compile l_dashboard=", l_dashboard);
-	mom_dbg_value (web, "web_form_compile l_buffer=", l_buffer);
+	MOM_DBG_VALUE (web, "web_form_compile l_dashboard=", l_dashboard);
+	MOM_DBG_VALUE (web, "web_form_compile l_buffer=", l_buffer);
 	mom_item_buffer_puts
 	  (l_buffer,
 	   "// generated file " GENERATED_SOURCE_FILE_NAME
@@ -361,7 +361,7 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 	    SET_STATE (emission_loop);
 	  }
 	l_curout = (momval_t) mom_set_nth_item (l_routines, n_ix);
-	mom_dbg_value (web, "web_form_compile l_curout=", l_curout);
+	MOM_DBG_VALUE (web, "web_form_compile l_curout=", l_curout);
 	n_ix++;
 	if (mom_value_as_item (l_curout) != NULL)
 	  SET_STATE (prepare_routine);
@@ -388,7 +388,7 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 					  mom_item__routine_preparator);
 	if (mom_type (l_curprep) == momty_closure)
 	  {
-	    mom_dbg_value (web, "web_form_compile l_curprep=", l_curprep);
+	    MOM_DBG_VALUE (web, "web_form_compile l_curprep=", l_curprep);
 	    mom_tasklet_push_frame ((momval_t) tasklet, (momval_t) l_curprep,
 				    MOMPFR_FOUR_VALUES, l_curout, l_dashboard,
 				    l_buffer, l_module, MOMPFR_END);
@@ -403,7 +403,7 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
       ////////////////
     case wfcs_got_preparation:	////================ got preparation
       {
-	mom_dbg_value (web, "web_form_compile got preparation l_argres=",
+	MOM_DBG_VALUE (web, "web_form_compile got preparation l_argres=",
 		       l_argres);
 	if (!l_argres.ptr)
 	  SET_STATE (declare_routine);
@@ -468,7 +468,7 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 	    SET_STATE (run_compiler);
 	  }
 	l_curout = (momval_t) mom_set_nth_item (l_routines, n_ix);
-	mom_dbg_value (web, "web_form_compile emission loop l_curout=",
+	MOM_DBG_VALUE (web, "web_form_compile emission loop l_curout=",
 		       l_curout);
 	n_ix++;
 	if (mom_value_as_item (l_curout) != NULL)
@@ -483,7 +483,7 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 	const char *cnam = c_name_suffix (mom_value_as_item (l_curout));
 	MONIMELT_DEBUG (web, "web_form_compile emit routine %s", cnam);
 	goodstate = true;
-	mom_dbg_value (web, "web_form_compile emit routine l_curout=",
+	MOM_DBG_VALUE (web, "web_form_compile emit routine l_curout=",
 		       l_curout);
 	l_routemp = (momval_t) mom_make_item_assoc (MONIMELT_SPACE_NONE);
 	// get the emitter in the routine, or else in the module
@@ -496,7 +496,7 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 	    (momval_t) mom_item_get_attr (mom_value_as_item (l_module),
 					  (mom_anyitem_t *)
 					  mom_item__routine_emitter);
-	mom_dbg_value (web, "web_form_compile l_curemit=", l_curemit);
+	MOM_DBG_VALUE (web, "web_form_compile l_curemit=", l_curemit);
 	if (mom_type (l_curemit) == momty_closure)
 	  {
 	    mom_tasklet_push_frame
@@ -553,8 +553,8 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 					 (momval_t)
 					 mom_make_string
 					 (GENERATED_SHAROB_FILE_NAME), NULL);
-	mom_dbg_value (web, "web_form_compile l_compilproc=", l_compilproc);
-	mom_dbg_value (web, "web_form_compile c_aftercompilation=",
+	MOM_DBG_VALUE (web, "web_form_compile l_compilproc=", l_compilproc);
+	MOM_DBG_VALUE (web, "web_form_compile c_aftercompilation=",
 		       c_aftercompilation);
 	mom_item_process_start (l_compilproc, c_aftercompilation);
 	MONIMELT_DEBUG (web, "after compilation start");
@@ -668,7 +668,7 @@ momcode_proc_compilation (int state, momit_tasklet_t * tasklet,
 		    (int)pcos_##St);					\
     return pcos_##St; } while(0)
   MONIMELT_DEBUG (run, "begin momcode_proc_compilation state=%d", state);
-  mom_dbg_value (run, "proc_compilation closure=",
+  MOM_DBG_VALUE (run, "proc_compilation closure=",
 		 (momval_t) (const momclosure_t *) closure);
   bool goodstate = false;
   //// state machine
@@ -681,10 +681,10 @@ momcode_proc_compilation (int state, momit_tasklet_t * tasklet,
 	/// incoming values: process, output_string, endstatus (exited|terminated)
 	/// incoming numbers: exit-status|termination-signal
 	l_proc = l_argres;
-	mom_dbg_value (run, "momcode_proc_compilation start l_proc=", l_proc);
-	mom_dbg_value (run, "momcode_proc_compilation start l_outstr=",
+	MOM_DBG_VALUE (run, "momcode_proc_compilation start l_proc=", l_proc);
+	MOM_DBG_VALUE (run, "momcode_proc_compilation start l_outstr=",
 		       l_outstr);
-	mom_dbg_value (run, "momcode_proc_compilation start l_endreason=",
+	MOM_DBG_VALUE (run, "momcode_proc_compilation start l_endreason=",
 		       l_endreason);
 	MONIMELT_DEBUG (run,
 			"momcode_proc_compilation start n_procstatus=%ld",
