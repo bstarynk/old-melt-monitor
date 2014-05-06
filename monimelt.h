@@ -1608,6 +1608,8 @@ void mom_request_stop_at (const char *srcfil, int srclin, const char *reason,
 			  void *clientdata);
 #define mom_request_stop(Reason,Postrunner,Data) mom_request_stop_at(__FILE__,__LINE__,(Reason),(Postrunner),(Data))
 
+// a generated code module might have a monimelt_after_code_load(const char*modname); function
+extern void monimelt_after_code_load (const char *modname);
 // load a code module, resolve embryonic routines, run again
 int mom_load_code_post_runner (const char *modname);
 

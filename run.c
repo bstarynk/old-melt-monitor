@@ -1091,6 +1091,8 @@ mom_load_code_post_runner (const char *modname)
   char pathbuf[MONIMELT_PATH_LEN];
   char symname[MOM_SYMBNAME_LEN];
   int foundnamecount = 0;
+  typedef void after_code_load_sig_t (const char *modname);
+  after_code_load_sig_t *aftercodeloadfun = NULL;
   memset (pathbuf, 0, sizeof (pathbuf));
   memset (symname, 0, sizeof (symname));
   snprintf (pathbuf, sizeof (pathbuf), "./%s.%s", modname, G_MODULE_SUFFIX);
@@ -1107,6 +1109,12 @@ mom_load_code_post_runner (const char *modname)
   MONIMELT_DEBUG (run, "mom_load_code_post_runner opened module pathbuf=%s",
 		  pathbuf);
   pthread_mutex_lock (&embryonic_mtx);
+  if (g_module_symbol
+      (codmodu, "monimelt_after_code_load", (gpointer *) & aftercodeloadfun)
+      && aftercodeloadfun)
+    MONIMELT_DEBUG (run,
+		    "mom_load_code_post_runner got monimelt_after_code_load@%p in %s",
+		    (void *) aftercodeloadfun, pathbuf);
   for (unsigned eix = 0; eix < embryonic_routine_size; eix++)
     {
       const char *curname = embryonic_routine_name[eix];
@@ -1131,6 +1139,12 @@ mom_load_code_post_runner (const char *modname)
 	  foundnamecount++;
 	}
       pthread_mutex_unlock (&curout->irt_item.i_mtx);
+    }
+  if (aftercodeloadfun != NULL)
+    {
+      MONIMELT_DEBUG (run, "before aftercodeloadfun %s", modname);
+      aftercodeloadfun (modname);
+      MONIMELT_DEBUG (run, "after aftercodeloadfun %s", modname);
     }
   pthread_mutex_unlock (&embryonic_mtx);
   MONIMELT_INFORM ("loaded code module %s and found %d embryonic routines",
