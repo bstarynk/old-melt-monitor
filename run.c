@@ -499,7 +499,96 @@ event_loop_handler (int fd, short revent, void *data)
     }
 }
 
-#warning dont use signalfd ...
+
+#define check_for_some_child_process() \
+  check_for_some_child_process_at(__FILE__,__LINE__)
+static void
+check_for_some_child_process_at (const char *srcfil, int srclin)
+{
+  MONIMELT_DEBUG (run, "check_for_some_child_process %s:%d", srcfil, srclin);
+  int pst = 0;
+  pid_t wpid = waitpid (-1, &pst, WNOHANG);
+  if (wpid > 0)
+    {
+      momit_process_t *wproc = NULL;
+      const momclosure_t *clos = NULL;
+      const momstring_t *outstr = NULL;
+      MONIMELT_DEBUG (run, "check_for_some_child_process wpid=%d pst=%#x",
+		      wpid, pst);
+      pthread_mutex_lock (&job_mtx);
+      // handle the ended process
+      for (unsigned jix = 1; jix <= MOM_MAX_WORKERS && !wproc; jix++)
+	{
+	  momit_process_t *curproc = running_jobs[jix];
+	  if (!curproc)
+	    continue;
+	  assert (curproc->iproc_item.typnum == momty_processitem);
+	  pthread_mutex_lock (&curproc->iproc_item.i_mtx);
+	  if (curproc->iproc_pid == wpid)
+	    {
+	      wproc = curproc;
+	      clos = curproc->iproc_closure;
+	      running_jobs[jix] = NULL;
+	    }
+	  pthread_mutex_unlock (&curproc->iproc_item.i_mtx);
+	}
+      pthread_mutex_unlock (&job_mtx);
+      int exitstatus = -1;
+      int termsig = -1;
+      if (WIFEXITED (pst))
+	exitstatus = WEXITSTATUS (pst);
+      else if (WIFSIGNALED (pst))
+	termsig = WTERMSIG (pst);
+      MONIMELT_DEBUG (run, "wpid %d, exitstatus=%d termsig=%d",
+		      (int) wpid, exitstatus, termsig);
+      if (wproc && (exitstatus >= 0 || termsig >= 0))
+	{
+	  extern momit_box_t *mom_item__exited;
+	  extern momit_box_t *mom_item__terminated;
+	  mom_dbg_item (run, "wproc=", (const mom_anyitem_t *) wproc);
+	  pthread_mutex_lock (&wproc->iproc_item.i_mtx);
+	  outstr =
+	    mom_make_string_len (wproc->iproc_outbuf, wproc->iproc_outpos);
+	  close (wproc->iproc_outfd);
+	  wproc->iproc_outfd = -1;
+	  GC_FREE (wproc->iproc_outbuf);
+	  wproc->iproc_outbuf = NULL;
+	  wproc->iproc_outsize = wproc->iproc_outpos = 0;
+	  wproc->iproc_pid = 0;
+	  pthread_mutex_unlock (&wproc->iproc_item.i_mtx);
+	  // should run the closure in a new tasklet
+	  {
+	    momit_tasklet_t *protasklet = NULL;
+	    if (exitstatus >= 0)
+	      {
+		protasklet = mom_make_item_tasklet (MONIMELT_SPACE_NONE);
+		mom_tasklet_push_frame ((momval_t) protasklet,
+					(momval_t) clos,
+					MOMPFR_THREE_VALUES, wproc,
+					outstr, mom_item__exited,
+					MOMPFR_INT, exitstatus, MOMPFR_END);
+	      }
+	    else if (termsig >= 0)
+	      {
+		protasklet = mom_make_item_tasklet (MONIMELT_SPACE_NONE);
+		mom_tasklet_push_frame ((momval_t) protasklet,
+					(momval_t) clos,
+					MOMPFR_THREE_VALUES, wproc,
+					outstr, mom_item__terminated,
+					MOMPFR_INT, termsig, MOMPFR_END);
+	      };
+	    if (protasklet)
+	      {
+		mom_dbg_item (run, "new protasklet=",
+			      (const mom_anyitem_t *) protasklet);
+		mom_agenda_add_tasklet_front ((momval_t) protasklet);
+	      }
+	  }
+	}
+    }
+}
+
+
 static void
 mysignalfd_handler (int fd, short revent, void *data)
 {
@@ -509,7 +598,7 @@ mysignalfd_handler (int fd, short revent, void *data)
 		  (int) sizeof (sinf));
   assert (fd == my_signals_fd && !data);
   int rdsiz = -2;
-  if (revent & POLL_IN)
+  if (revent & POLLIN)
     {
       MONIMELT_DEBUG (run, "mysignalfd_handler reading fd=%d", fd);
       rdsiz = read (fd, &sinf, sizeof (sinf));
@@ -526,93 +615,7 @@ mysignalfd_handler (int fd, short revent, void *data)
   switch (sinf.ssi_signo)
     {
     case SIGCHLD:
-      {
-	int pst = 0;
-	pid_t wpid = waitpid (-1, &pst, WNOHANG);
-	if (wpid > 0)
-	  {
-	    momit_process_t *wproc = NULL;
-	    const momclosure_t *clos = NULL;
-	    const momstring_t *outstr = NULL;
-	    MONIMELT_DEBUG (run, "mysignalfd_handler SIGCHLD wpid=%d pst=%#x",
-			    wpid, pst);
-	    pthread_mutex_lock (&job_mtx);
-	    // handle the ended process
-	    for (unsigned jix = 1; jix <= MOM_MAX_WORKERS && !wproc; jix++)
-	      {
-		momit_process_t *curproc = running_jobs[jix];
-		if (!curproc)
-		  continue;
-		assert (curproc->iproc_item.typnum == momty_processitem);
-		pthread_mutex_lock (&curproc->iproc_item.i_mtx);
-		if (curproc->iproc_pid == wpid)
-		  {
-		    wproc = curproc;
-		    clos = curproc->iproc_closure;
-		    running_jobs[jix] = NULL;
-		  }
-		pthread_mutex_unlock (&curproc->iproc_item.i_mtx);
-	      }
-	    pthread_mutex_unlock (&job_mtx);
-	    int exitstatus = -1;
-	    int termsig = -1;
-	    if (WIFEXITED (pst))
-	      exitstatus = WEXITSTATUS (pst);
-	    else if (WIFSIGNALED (pst))
-	      termsig = WTERMSIG (pst);
-	    MONIMELT_DEBUG (run, "wpid %d, exitstatus=%d termsig=%d",
-			    (int) wpid, exitstatus, termsig);
-	    if (wproc && (exitstatus >= 0 || termsig >= 0))
-	      {
-		extern momit_box_t *mom_item__exited;
-		extern momit_box_t *mom_item__terminated;
-		mom_dbg_item (run, "wproc=", (const mom_anyitem_t *) wproc);
-		pthread_mutex_lock (&wproc->iproc_item.i_mtx);
-		outstr =
-		  mom_make_string_len (wproc->iproc_outbuf,
-				       wproc->iproc_outpos);
-		close (wproc->iproc_outfd);
-		wproc->iproc_outfd = -1;
-		GC_FREE (wproc->iproc_outbuf);
-		wproc->iproc_outbuf = NULL;
-		wproc->iproc_outsize = wproc->iproc_outpos = 0;
-		wproc->iproc_pid = 0;
-		pthread_mutex_unlock (&wproc->iproc_item.i_mtx);
-		// should run the closure in a new tasklet
-		{
-		  momit_tasklet_t *protasklet = NULL;
-		  if (exitstatus >= 0)
-		    {
-		      protasklet =
-			mom_make_item_tasklet (MONIMELT_SPACE_NONE);
-		      mom_tasklet_push_frame ((momval_t) protasklet,
-					      (momval_t) clos,
-					      MOMPFR_THREE_VALUES, wproc,
-					      outstr, mom_item__exited,
-					      MOMPFR_INT, exitstatus,
-					      MOMPFR_END);
-		    }
-		  else if (termsig >= 0)
-		    {
-		      protasklet =
-			mom_make_item_tasklet (MONIMELT_SPACE_NONE);
-		      mom_tasklet_push_frame ((momval_t) protasklet,
-					      (momval_t) clos,
-					      MOMPFR_THREE_VALUES, wproc,
-					      outstr, mom_item__terminated,
-					      MOMPFR_INT, termsig,
-					      MOMPFR_END);
-		    };
-		  if (protasklet)
-		    {
-		      mom_dbg_item (run, "new protasklet=",
-				    (const mom_anyitem_t *) protasklet);
-		      mom_agenda_add_tasklet_front ((momval_t) protasklet);
-		    }
-		}
-	      }
-	  }
-      }
+      check_for_some_child_process ();
       break;
     default:
       MONIMELT_WARNING ("unexpected signal#%d : %s", sinf.ssi_signo,
@@ -709,7 +712,7 @@ event_loop (struct GC_stack_base *sb, void *data)
     if (sigprocmask (SIG_BLOCK, &mysetsig, NULL))
       MONIMELT_FATAL ("failed to block signals with sigprocmask");
     MONIMELT_DEBUG (run, "before signalfd");
-    my_signals_fd = signalfd (-1, &mysetsig, SFD_CLOEXEC);
+    my_signals_fd = signalfd (-1, &mysetsig, SFD_NONBLOCK | SFD_CLOEXEC);
     if (MONIMELT_UNLIKELY (my_signals_fd < 0))
       MONIMELT_FATAL ("signalfd failed");
     MONIMELT_DEBUG (run, "my_signals_fd=%d", my_signals_fd);
@@ -736,9 +739,9 @@ event_loop (struct GC_stack_base *sb, void *data)
     datatab[pollcnt]= (void*)(Data);				\
     pollcnt++; } while(0)
       //
-      ADD_POLL (POLL_IN, event_loop_read_pipe, event_loop_handler,
+      ADD_POLL (POLLIN, event_loop_read_pipe, event_loop_handler,
 		&repeat_loop);
-      ADD_POLL (POLL_IN, my_signals_fd, mysignalfd_handler, NULL);
+      ADD_POLL (POLLIN, my_signals_fd, mysignalfd_handler, NULL);
       // add the process output and CURL
       {
 	pthread_mutex_lock (&job_mtx);
@@ -750,7 +753,7 @@ event_loop (struct GC_stack_base *sb, void *data)
 	      continue;
 	    pthread_mutex_lock (&curproc->iproc_item.i_mtx);
 	    if (curproc->iproc_outfd >= 0)
-	      ADD_POLL (POLL_IN, curproc->iproc_outfd,
+	      ADD_POLL (POLLIN, curproc->iproc_outfd,
 			process_readout_handler, curproc);
 	    pthread_mutex_unlock (&curproc->iproc_item.i_mtx);
 	  }
@@ -768,11 +771,11 @@ event_loop (struct GC_stack_base *sb, void *data)
 	    {
 	      unsigned curlpollflags = 0;
 	      if (FD_ISSET (curlfd, &inscurl))
-		curlpollflags |= POLL_IN;
+		curlpollflags |= POLLIN;
 	      if (FD_ISSET (curlfd, &outscurl))
-		curlpollflags |= POLL_OUT;
+		curlpollflags |= POLLOUT;
 	      if (FD_ISSET (curlfd, &excscurl))
-		curlpollflags |= POLL_PRI;
+		curlpollflags |= POLLPRI;
 	      if (curlpollflags)
 		{
 		  ADD_POLL (curlpollflags, curlfd, curl_handler,
@@ -797,9 +800,20 @@ event_loop (struct GC_stack_base *sb, void *data)
 	      if (polltab[pix].revents && handlertab[pix])
 		{
 		  MONIMELT_DEBUG (run,
-				  "invoking handler pix=%d fd#%d revents=%#x evloopcnt=%lld",
+				  "invoking handler pix=%d fd#%d revents=%#x%s%s%s%s%s%s evloopcnt=%lld",
 				  pix, polltab[pix].fd, polltab[pix].revents,
-				  evloopcnt);
+				  (polltab[pix].revents & POLLIN) ? ";POLLIN"
+				  : "",
+				  (polltab[pix].revents & POLLOUT) ?
+				  ";POLLOUT" : "",
+				  (polltab[pix].revents & POLLERR) ?
+				  ";POLLERR" : "",
+				  (polltab[pix].revents & POLLHUP) ?
+				  ";POLLHUP" : "",
+				  (polltab[pix].revents & POLLNVAL) ?
+				  ";POLLNVAL" : "",
+				  (polltab[pix].revents & POLLPRI) ?
+				  ";POLLPRI" : "", evloopcnt);
 		  handlertab[pix] (polltab[pix].fd, polltab[pix].revents,
 				   datatab[pix]);
 		  MONIMELT_DEBUG (run,
@@ -812,7 +826,9 @@ event_loop (struct GC_stack_base *sb, void *data)
       else
 	{			// timed-out
 	  MONIMELT_DEBUG (run, "poll timed out evloopcnt=%lld", evloopcnt);
-#warning should handle time out in event loop
+	  check_for_some_child_process ();
+	  MONIMELT_DEBUG (run, "poll done timed out evloopcnt=%lld",
+			  evloopcnt);
 	}
     }
   while (repeat_loop);

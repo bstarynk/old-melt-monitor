@@ -722,7 +722,7 @@ momcode_proc_compilation (int state, momit_tasklet_t * tasklet,
 	goodstate = true;
 	MONIMELT_DEBUG (run, "momcode_proc_compilation loadnewmodule");
 	mom_request_stop ("proc_compilation loadnewmodule",
-			  mom_load_code_post_runner,
+			  (mom_post_runner_sig_t *) mom_load_code_post_runner,
 			  GENERATED_SHAROB_FILE_NAME);
 	MONIMELT_DEBUG (run,
 			"momcode_proc_compilation stop to load "
