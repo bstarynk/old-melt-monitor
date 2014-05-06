@@ -8,7 +8,7 @@ To compile it, you need
     onion from https://github.com/davidmoreno/onion
     Boehm GC from http://www.hboehm.info/gc/
 
-This code is free software (GPLv3+) in pre-alpha stage in april 2014.
+This code is free software (GPLv3+) in pre-alpha stage in may 2014.
 
 To test it, first build a sqlite3 database with
 
@@ -18,5 +18,9 @@ then run
 
    ./monimelt -W localhost:8086 -J 2   
 
-and try browsing http://localhost:8086/webdir/testform.html or
+and try browsing http://localhost:8086/testform.html or
 http://localhost:8086/status
+
+You may want to get debugging output, e.g. all debugging with -D _
+or only running & web debugging with -D web,run program option.
+Look for MOM_DEBUG_LIST_OPTIONS macros in monimelt.h

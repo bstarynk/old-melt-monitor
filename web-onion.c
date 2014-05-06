@@ -105,7 +105,7 @@ mom_start_web (const char *webhost)
   onion_handler *hdlr = onion_handler_new ((onion_handler_handler)
 					   process_request, NULL, NULL);
   onion_url_add_handler (mom_onion_root, "status", onion_internal_status ());
-  onion_url_add_handler (mom_onion_root, "^" MONIMELT_WEB_DIRECTORY,
+  onion_url_add_handler (mom_onion_root, "^",
 			 onion_handler_export_local_new
 			 (MONIMELT_WEB_DIRECTORY));
 
