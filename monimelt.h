@@ -1570,7 +1570,7 @@ struct mom_loader_st
 /// global data, managed by functions
 // register a new name, nop if existing entry
 void mom_register_new_name_item (const char *name, mom_anyitem_t * item);
-void mom_register_new_name_string (momstring_t * namestr,
+void mom_register_new_name_string (const momstring_t * namestr,
 				   mom_anyitem_t * item);
 
 // register a name, replacing any previous entries

@@ -268,7 +268,8 @@ resize_dict (unsigned newsize)
 
 
 void
-mom_register_new_name_string (momstring_t * namestr, mom_anyitem_t * item)
+mom_register_new_name_string (const momstring_t * namestr,
+			      mom_anyitem_t * item)
 {
   if (!namestr || namestr->typnum != momty_string)
     return;

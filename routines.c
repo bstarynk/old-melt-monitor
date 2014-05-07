@@ -143,7 +143,8 @@ momcode_web_form_new_named (int state, momit_tasklet_t * tasklet,
 		     mom_item_webrequest_jsob_post (webv));
       if (mom_item_webrequest_post_arg (webv, "do_create_new_named").ptr)
 	{
-	  char *errmsg = "not implemented";
+	  mom_anyitem_t *newitm = NULL;
+	  char *errmsg = NULL;
 	  MONIMELT_DEBUG (web,
 			  "momcode_web_form_new_named do_create_new_named");
 	  momval_t namestr = mom_item_webrequest_post_arg (webv, "name_str");
@@ -153,6 +154,63 @@ momcode_web_form_new_named (int state, momit_tasklet_t * tasklet,
 	  momval_t commentstr =
 	    mom_item_webrequest_post_arg (webv, "comment_str");
 	  MOM_DBG_VALUE (web, "web_form_new_named comment=", commentstr);
+	  const char *namec = mom_string_cstr (namestr);
+	  if (mom_item_named (namec) != NULL)
+	    errmsg = "already existing item";
+	  bool goodname = isalpha (namec);
+	  for (const char *pc = namec; *pc && goodname; pc++)
+	    if (pc[0] == '_')
+	      goodname = pc[1] != '_';
+	    else if (!isalnum (*pc))
+	      goodname = false;
+	  if (!goodname)
+	    errmsg = "invalid name";
+	  else
+	    {
+	      const char *typec = mom_string_cstr (typestr);
+	      if (!typec || !typec[0])
+		errmsg = "no type";
+	      else if (!strcmp (typec, "assoc"))
+		newitm =
+		  (mom_anyitem_t *) mom_make_item_assoc (MONIMELT_SPACE_ROOT);
+	      else if (!strcmp (typec, "box"))
+		newitm =
+		  (mom_anyitem_t *) mom_make_item_box (MONIMELT_SPACE_ROOT);
+	      else if (!strcmp (typec, "buffer"))
+		newitm =
+		  (mom_anyitem_t *)
+		  mom_make_item_buffer (MONIMELT_SPACE_ROOT);
+	      else if (!strcmp (typec, "dictionnary"))
+		newitm =
+		  (mom_anyitem_t *)
+		  mom_make_item_dictionnary (MONIMELT_SPACE_ROOT);
+	      else if (!strcmp (typec, "json_name"))
+		newitm =
+		  (mom_anyitem_t *) mom_make_item_json_name (namec,
+							     MONIMELT_SPACE_ROOT);
+	      else if (!strcmp (typec, "queue"))
+		newitm =
+		  (mom_anyitem_t *) mom_make_item_queue (MONIMELT_SPACE_ROOT);
+	      else if (!strcmp (typec, "routine"))
+		newitm =
+		  (mom_anyitem_t *) mom_make_item_routine (namec,
+							   MONIMELT_SPACE_ROOT);
+	      else if (!strcmp (typec, "vector"))
+		newitm =
+		  (mom_anyitem_t *) mom_make_item_vector (MONIMELT_SPACE_ROOT,
+							  15);
+	      else
+		errmsg = "bad type";
+	      if (!newitm && !errmsg)
+		errmsg = "failed to make item";
+	      else
+		{
+		  mom_register_new_name_string (namestr.pstring, newitm);
+		  const char *commc = mom_string_cstr (commentstr);
+		  if (commc && commc[0])
+		    mom_item_put_attr (newitm, mom_item__comment, commentstr);
+		}
+	    }
 	  if (errmsg)
 	    mom_item_webrequest_add
 	      (webv,
@@ -169,6 +227,27 @@ momcode_web_form_new_named (int state, momit_tasklet_t * tasklet,
 	       MOMWEB_HTML_STRING, errmsg,
 	       MOMWEB_LIT_STRING, "</p>\n" "</body></html>\n",
 	       MOMWEB_REPLY_CODE, HTTP_NOT_FOUND, MOMWEB_END);
+	  else
+	    {
+	      char uidstr[UUID_PARSED_LEN];
+	      memset (uidstr, 0, sizeof (uidstr));
+	      mom_item_webrequest_add
+		(webv,
+		 MOMWEB_SET_MIME, "text/html",
+		 MOMWEB_LIT_STRING,
+		 "<!doctype html><head><title>Create New Named Monimelt</title></head>\n"
+		 "<body><h1>Monimelt create a new named</h1>\n"
+		 "<p>name=<tt>", MOMWEB_HTML_STRING,
+		 mom_string_cstr (namestr), MOMWEB_LIT_STRING,
+		 "</tt> reqnum#", MOMWEB_DEC_LONG,
+		 (long) mom_item_webrequest_webnum (webv), MOMWEB_LIT_STRING,
+		 " of uuid <tt>", MOMWEB_LIT_STRING,
+		 mom_unparse_item_uuid (newitm, uidstr), MOMWEB_LIT_STRING,
+		 "</tt> at <i>", MOMWEB_HTML_STRING, nowbuf,
+		 MOMWEB_LIT_STRING, "</i></p>\n" "</body></html>\n",
+		 MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
+	    }
+
 	  MONIMELT_DEBUG (web,
 			  "momcode_web_form_new_named do_create_new_named after");
 	}
