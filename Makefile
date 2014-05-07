@@ -42,7 +42,7 @@ RM= rm -fv
 .SUFFIXES: .so
 all: monimelt make-named modules
 clean:
-	$(RM) *~ *.o *.so *.orig _tmp_* monimelt core*
+	$(RM) *~ *.o *.so *.orig _tmp_* monimelt core* webdir/*~
 ################
 monimelt: $(OBJECTS)
 	$(LINK.c)  -rdynamic $^ $(LIBES) -o $@

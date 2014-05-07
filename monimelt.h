@@ -71,6 +71,7 @@
 #include <onion/handler.h>
 #include <onion/dict.h>
 #include <onion/log.h>
+#include <onion/shortcuts.h>
 #include <onion/handlers/internal_status.h>
 #include <onion/handlers/exportlocal.h>
 #include <onion/handlers/path.h>

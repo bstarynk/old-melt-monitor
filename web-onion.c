@@ -62,6 +62,29 @@ process_request (void *ignore, onion_request * req, onion_response * res)
     pthread_setname_np (pthread_self (), thnambuf);
     pthread_mutex_unlock (&mtx_onion);
   }
+  /// hack to deliver local files in MONIMELT_WEB_DIRECTORY
+  {
+    char bufpath[128];
+    struct stat stpath = {};
+    memset (bufpath, 0, sizeof(bufpath));
+    memset (&stpath, 0, sizeof(stpath));
+    const char *fullpath = onion_request_get_fullpath (req);
+    if (fullpath && fullpath[0] == '/' && isalpha(fullpath[1])
+	&& !strstr(fullpath, "..")
+	&& strlen(fullpath) + sizeof(MONIMELT_WEB_DIRECTORY) + 3
+	< sizeof(bufpath)) {
+      strcpy (bufpath, MONIMELT_WEB_DIRECTORY);
+      strcat (bufpath, fullpath);
+      assert (strlen(bufpath)<sizeof(bufpath)-1);
+      MONIMELT_DEBUG(web, "testing for access of bufpath=%s", bufpath);
+      if (!access(bufpath, R_OK) && !stat(bufpath, &stpath)
+	  && S_ISREG(stpath.st_mode)) {
+	MONIMELT_DEBUG(web, "shortcutting readable file bufpath=%s", bufpath);
+	return onion_shortcut_response_file(bufpath, req, res);
+      }
+    }
+    MONIMELT_DEBUG (web, "fullpath %s not static file", fullpath);
+  }
   struct mom_web_info_st webinf;
   memset (&webinf, 0, sizeof (webinf));
   webinf.web_magic = WEB_MAGIC;
@@ -104,12 +127,12 @@ mom_start_web (const char *webhost)
   mom_onion_root = onion_root_url (mom_onion);
   onion_handler *hdlr = onion_handler_new ((onion_handler_handler)
 					   process_request, NULL, NULL);
+  onion_url_add_handler (mom_onion_root, "^", hdlr);
   onion_url_add_handler (mom_onion_root, "status", onion_internal_status ());
   onion_url_add_handler (mom_onion_root, "^",
 			 onion_handler_export_local_new
 			 (MONIMELT_WEB_DIRECTORY));
 
-  onion_url_add_handler (mom_onion_root, "^.*", hdlr);
   MONIMELT_INFORM ("before listening web host %s", webhost);
   onion_listen (mom_onion);
   MONIMELT_INFORM ("after listening web host %s", webhost);

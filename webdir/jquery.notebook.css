@@ -85,11 +85,11 @@
     outline: none;
     border: none;
     background: transparent;
-    width: 41px;
-    height: 42px;
+    width: 35px;
+    height: 34px;
     font-family: FontAwesome;
     color: white;
-    font-size: 14pt;
+    font-size: 11pt;
     cursor: pointer;
     -webkit-font-smoothing: antialiased;
 }
@@ -158,6 +158,6 @@
     border: none;
     outline: none;
     color:#fff;
-    font-size: 14px;
+    font-size: 13px;
     float: left;
 }
