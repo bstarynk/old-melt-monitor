@@ -157,7 +157,7 @@ momcode_web_form_new_named (int state, momit_tasklet_t * tasklet,
 	  const char *namec = mom_string_cstr (namestr);
 	  if (mom_item_named (namec) != NULL)
 	    errmsg = "already existing item";
-	  bool goodname = isalpha (namec);
+	  bool goodname = isalpha (namec[0]);
 	  for (const char *pc = namec; *pc && goodname; pc++)
 	    if (pc[0] == '_')
 	      goodname = pc[1] != '_';
@@ -208,7 +208,9 @@ momcode_web_form_new_named (int state, momit_tasklet_t * tasklet,
 		  mom_register_new_name_string (namestr.pstring, newitm);
 		  const char *commc = mom_string_cstr (commentstr);
 		  if (commc && commc[0])
-		    mom_item_put_attr (newitm, mom_item__comment, commentstr);
+		    mom_item_put_attr (newitm,
+				       (mom_anyitem_t *) mom_item__comment,
+				       commentstr);
 		}
 	    }
 	  if (errmsg)
