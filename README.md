@@ -204,6 +204,9 @@ persistable neither (also persisted as boxed items). They also
 contains a closure used to create a tasklet item created when the
 process has ended.
 
+The agenda is persistent. In principle, one could persist the state in
+the evening and restart from it later.
+
 # What is working?
 
 Not much, it is pre-alpha software. If lucky you might be able to build it.
@@ -227,6 +230,8 @@ Look for MOM_DEBUG_LIST_OPTIONS macros in monimelt.h
 
 # Contact information
 
-[Basile Starynkevitch](http://starynkevitch.net/Basile/); my email is
-my first (christian) name followed by the at sign followed by my last
-(family) name followed by `.net`
+[Basile Starynkevitch](http://starynkevitch.net/Basile/), from France;
+my email is my first (christian) name (i.e. `basile`) followed by the
+`@` sign followed by my last (family) name (i.e. `starynkevitch`)
+followed by `.net`. Spambots are not supposed understand this, but
+humans should. :smile:
