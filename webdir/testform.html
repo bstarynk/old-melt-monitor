@@ -3,6 +3,7 @@
 <head>
   <title>test form for monimelt</title>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" type="text/css" href="codemirror.css"/>
   <link rel="stylesheet" type="text/css" href="mom-style.css"/>
   <script src="jquery.js" type="text/javascript"></script>
   <script src="codemirror-compressed.js" type="text/javascript"></script>
@@ -20,6 +21,17 @@
      <b>compile all:</b> <input type='submit' name='do_compile' value='compile' />
   </form>
 
+  <hr/>
+  
+  <form action='/form_new_named' method='post'>
+    <b>new named:</b> <input type='text' name='name_str' width='42'/> 
+    &nbsp; - <b>type:</b> <select name='type_sel'>
+      <option>routine</option>
+      <option>vector</option>
+      <option>box</option>
+    </select>
+    &nbsp; - <b>comment:</b> <input type='text' name='comment_str' width='64'/>
+  </form>
   <hr/>
 
   <h2>Initial editor</h2>

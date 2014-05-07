@@ -36,7 +36,7 @@ static int my_signals_fd = -1;
 
 
 // the poll timeout is 1.6 seconds without debugging, and 3.1 with debugging 'run'
-#define MOM_POLL_TIMEOUT (MOM_IS_DEBUGGING(run)?3100:1600)	/* milliseconds for mom poll timeout */
+#define MOM_POLL_TIMEOUT (MOM_IS_DEBUGGING(run)?4100:1600)	/* milliseconds for mom poll timeout */
 
 // the job_mtx is both for processes and for CURL
 static pthread_mutex_t job_mtx = PTHREAD_MUTEX_INITIALIZER;
@@ -104,7 +104,7 @@ mom_agenda_work_counter (void)
   return c;
 }
 
-#define WORK_DELAY 5.8		/* seconds */
+#define WORK_DELAY (MOM_IS_DEBUGGING(run)?9.0:5.8)		/* seconds */
 static void *
 work_loop (struct GC_stack_base *sb, void *data)
 {
