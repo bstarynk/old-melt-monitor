@@ -40,7 +40,9 @@ div.toolbar_cl {
 }
 
 div.toped_cl {
-    background-color: lightyellow;
+    background-color: lightblue;
+    margin-left: 80px;
+    position: center;
     width: 80%;
     min-height: 100px;
     border: 2px solid brown;
