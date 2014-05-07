@@ -23,7 +23,7 @@
   
   <form action='/form_new_named' method='post'>
     <b>new named:</b> <input type='text' name='name_str' width='42'/> 
-    &nbsp; - <b>type:</b> <select name='type_sel'>
+    &nbsp; - <b>type:</b> <select name='type_str'>
       <option>assoc</option>
       <option>box</option>
       <option>buffer</option>
@@ -34,6 +34,7 @@
       <option>vector</option>
     </select>
     &nbsp; - <b>comment:</b> <input type='text' name='comment_str' width='64'/>
+    <input type='submit' name='do_create_new_named' value='create' />
   </form>
   <hr/>
 

@@ -116,8 +116,8 @@ const struct momroutinedescr_st momrout_web_form_exit =
 
 int
 momcode_web_form_new_named (int state, momit_tasklet_t * tasklet,
-		       momclosure_t * closure, momval_t * locvals,
-		       intptr_t * locnums, double *locdbls)
+			    momclosure_t * closure, momval_t * locvals,
+			    intptr_t * locnums, double *locdbls)
 {
   momval_t webv = locvals[0];
   time_t now = 0;
@@ -125,7 +125,8 @@ momcode_web_form_new_named (int state, momit_tasklet_t * tasklet,
   char nowbuf[64] = "";
   time (&now);
   strftime (nowbuf, sizeof (nowbuf), "%c", localtime_r (&now, &nowtm));
-  MONIMELT_DEBUG (web, "momcode_web_form_new_named state=%d webnum=%ld nowbuf=%s",
+  MONIMELT_DEBUG (web,
+		  "momcode_web_form_new_named state=%d webnum=%ld nowbuf=%s",
 		  state, mom_item_webrequest_webnum (webv), nowbuf);
   MOM_DBG_ITEM (web, "web_form_new_named tasklet=",
 		(const mom_anyitem_t *) tasklet);
@@ -142,19 +143,32 @@ momcode_web_form_new_named (int state, momit_tasklet_t * tasklet,
 		     mom_item_webrequest_jsob_post (webv));
       if (mom_item_webrequest_post_arg (webv, "do_create_new_named").ptr)
 	{
-	  MONIMELT_DEBUG (web, "momcode_web_form_new_named do_create_new_named");
-	  mom_item_webrequest_add
-	    (webv,
-	     MOMWEB_SET_MIME, "text/html",
-	     MOMWEB_LIT_STRING,
-	     "<!doctype html><head><title>Create New Named Monimelt</title></head>\n"
-	     "<body><h1>Monimelt create a new named</h1>\n"
-	     " reqnum#",
-	     MOMWEB_DEC_LONG, (long) mom_item_webrequest_webnum (webv),
-	     MOMWEB_LIT_STRING, " at <i>",
-	     MOMWEB_HTML_STRING, nowbuf,
-	     MOMWEB_LIT_STRING, "</i></p>\n" "</body></html>\n",
-	     MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
+	  char *errmsg = "not implemented";
+	  MONIMELT_DEBUG (web,
+			  "momcode_web_form_new_named do_create_new_named");
+	  momval_t namestr = mom_item_webrequest_post_arg (webv, "name_str");
+	  MOM_DBG_VALUE (web, "web_form_new_named namestr=", namestr);
+	  momval_t typestr = mom_item_webrequest_post_arg (webv, "type_str");
+	  MOM_DBG_VALUE (web, "web_form_new_named type=", typestr);
+	  momval_t commentstr =
+	    mom_item_webrequest_post_arg (webv, "comment_str");
+	  MOM_DBG_VALUE (web, "web_form_new_named comment=", commentstr);
+	  if (errmsg)
+	    mom_item_webrequest_add
+	      (webv,
+	       MOMWEB_SET_MIME, "text/html",
+	       MOMWEB_LIT_STRING,
+	       "<!doctype html><head><title>Failed to Create New Named Monimelt</title></head>\n"
+	       "<body><h1>Monimelt failed to create a new named</h1>\n"
+	       "<p>name=<tt>", MOMWEB_HTML_STRING, mom_string_cstr (namestr),
+	       MOMWEB_LIT_STRING, "</tt> reqnum#",
+	       MOMWEB_DEC_LONG, (long) mom_item_webrequest_webnum (webv),
+	       MOMWEB_LIT_STRING, " at <i>",
+	       MOMWEB_HTML_STRING, nowbuf,
+	       MOMWEB_LIT_STRING, "</i> because: ",
+	       MOMWEB_HTML_STRING, errmsg,
+	       MOMWEB_LIT_STRING, "</p>\n" "</body></html>\n",
+	       MOMWEB_REPLY_CODE, HTTP_NOT_FOUND, MOMWEB_END);
 	  MONIMELT_DEBUG (web,
 			  "momcode_web_form_new_named do_create_new_named after");
 	}

@@ -104,7 +104,7 @@ mom_agenda_work_counter (void)
   return c;
 }
 
-#define WORK_DELAY (MOM_IS_DEBUGGING(run)?9.0:5.8)		/* seconds */
+#define WORK_DELAY (MOM_IS_DEBUGGING(run)?9.0:5.8)	/* seconds */
 static void *
 work_loop (struct GC_stack_base *sb, void *data)
 {

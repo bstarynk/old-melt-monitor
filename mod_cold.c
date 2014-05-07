@@ -45,7 +45,8 @@ monimelt_module_post_load (void)
 			      (mom_anyitem_t *) rout_web_form_new_named);
   const momclosure_t *clos_web_form_new_named =
     mom_make_closure_til_nil ((mom_anyitem_t *) rout_web_form_new_named,
-			      mom_make_string ("Gap*Web_Form_New_Named"), NULL);
+			      mom_make_string ("Gap*Web_Form_New_Named"),
+			      NULL);
   mom_item_dictionnary_put_cstr ((momval_t) mom_item__web_dictionnary,
 				 "form_new_named",
 				 (momval_t) clos_web_form_new_named);
