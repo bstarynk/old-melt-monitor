@@ -112,6 +112,71 @@ const struct momroutinedescr_st momrout_web_form_exit =
 };
 
 
+////////////////////////////////////////////////////////////////
+
+int
+momcode_web_form_new_named (int state, momit_tasklet_t * tasklet,
+		       momclosure_t * closure, momval_t * locvals,
+		       intptr_t * locnums, double *locdbls)
+{
+  momval_t webv = locvals[0];
+  time_t now = 0;
+  struct tm nowtm = { };
+  char nowbuf[64] = "";
+  time (&now);
+  strftime (nowbuf, sizeof (nowbuf), "%c", localtime_r (&now, &nowtm));
+  MONIMELT_DEBUG (web, "momcode_web_form_new_named state=%d webnum=%ld nowbuf=%s",
+		  state, mom_item_webrequest_webnum (webv), nowbuf);
+  MOM_DBG_ITEM (web, "web_form_new_named tasklet=",
+		(const mom_anyitem_t *) tasklet);
+  MOM_DBG_VALUE (web, "web_form_new_named webv=", webv);
+  MOM_DBG_VALUE (web, "web_form_new_named closure=",
+		 (momval_t) (const momclosure_t *) closure);
+  MOM_DBG_VALUE (web, "web_form_new_named method=",
+		 (momval_t) mom_item_webrequest_method (webv));
+  if (mom_item_webrequest_method (webv).ptr ==
+      ((momval_t) mom_item__POST).ptr)
+    {
+      MONIMELT_DEBUG (web, "momcode_web_form_new_named POST");
+      MOM_DBG_VALUE (web, "web_form_new_named jsobpost=",
+		     mom_item_webrequest_jsob_post (webv));
+      if (mom_item_webrequest_post_arg (webv, "do_create_new_named").ptr)
+	{
+	  MONIMELT_DEBUG (web, "momcode_web_form_new_named do_create_new_named");
+	  mom_item_webrequest_add
+	    (webv,
+	     MOMWEB_SET_MIME, "text/html",
+	     MOMWEB_LIT_STRING,
+	     "<!doctype html><head><title>Create New Named Monimelt</title></head>\n"
+	     "<body><h1>Monimelt create a new named</h1>\n"
+	     " reqnum#",
+	     MOMWEB_DEC_LONG, (long) mom_item_webrequest_webnum (webv),
+	     MOMWEB_LIT_STRING, " at <i>",
+	     MOMWEB_HTML_STRING, nowbuf,
+	     MOMWEB_LIT_STRING, "</i></p>\n" "</body></html>\n",
+	     MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
+	  MONIMELT_DEBUG (web,
+			  "momcode_web_form_new_named do_create_new_named after");
+	}
+      else
+	MONIMELT_WARNING ("unexpected post query for webnum#%ld",
+			  mom_item_webrequest_webnum (webv));
+    }
+  usleep (5000);
+  return routres_pop;
+}
+
+const struct momroutinedescr_st momrout_web_form_new_named =
+  {.rout_magic = ROUTINE_MAGIC,
+  .rout_minclosize = 0,
+  .rout_frame_nbval = 1,
+  .rout_frame_nbnum = 0,
+  .rout_frame_nbdbl = 0,
+  .rout_name = "web_form_new_named",
+  .rout_code = (const momrout_sig_t *) momcode_web_form_new_named
+};
+
+
 
 ////////////////////////////////////////////////////////////////
 static inline const char *

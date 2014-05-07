@@ -36,26 +36,20 @@ monimelt_module_post_load (void)
   char uistr[UUID_PARSED_LEN];
   memset (uistr, 0, sizeof (uistr));
   MONIMELT_INFORM ("cold post load " __DATE__ "@" __TIME__);
-  mom_anyitem_t *rout_web_form_compile = mom_item_named ("web_form_compile");
-  assert (rout_web_form_compile != NULL);
-
-  momit_routine_t *rout_proc_compilation =
-    mom_make_item_routine ("proc_compilation", MONIMELT_SPACE_ROOT);
-  MONIMELT_INFORM ("cold rout_proc_compilation ~%s",
+  momit_routine_t *rout_web_form_new_named =
+    mom_make_item_routine ("web_form_new_named", MONIMELT_SPACE_ROOT);
+  MONIMELT_INFORM ("cold rout_web_form_new_named ~%s",
 		   mom_unparse_item_uuid ((mom_anyitem_t *)
-					  rout_proc_compilation, uistr));
-  mom_register_new_name_item ("proc_compilation",
-			      (mom_anyitem_t *) rout_proc_compilation);
-  const momclosure_t *clos_proc_compilation =
-    mom_make_closure_til_nil ((mom_anyitem_t *) rout_proc_compilation,
-			      mom_make_string ("Gap*Proc_Compilation"), NULL);
-  const momclosure_t *clos_web_form_compile =
-    mom_make_closure_til_nil ((mom_anyitem_t *) rout_web_form_compile,
-			      clos_proc_compilation, NULL);
+					  rout_web_form_new_named, uistr));
+  mom_register_new_name_item ("web_form_new_named",
+			      (mom_anyitem_t *) rout_web_form_new_named);
+  const momclosure_t *clos_web_form_new_named =
+    mom_make_closure_til_nil ((mom_anyitem_t *) rout_web_form_new_named,
+			      mom_make_string ("Gap*Web_Form_New_Named"), NULL);
   mom_item_dictionnary_put_cstr ((momval_t) mom_item__web_dictionnary,
-				 "form_compile",
-				 (momval_t) clos_web_form_compile);
-  MOM_DBG_VALUE (run, "clos_web_form_compile=",
-		 (momval_t) clos_web_form_compile);
+				 "form_new_named",
+				 (momval_t) clos_web_form_new_named);
+  MOM_DBG_VALUE (run, "clos_web_form_new_named=",
+		 (momval_t) clos_web_form_new_named);
   MONIMELT_INFORM ("cold post load done");
 }
