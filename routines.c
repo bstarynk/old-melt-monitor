@@ -300,16 +300,16 @@ momcode_ajax_start (int state, momit_tasklet_t * tasklet,
       gethostname (myhostname, sizeof (myhostname));
       MONIMELT_DEBUG (web, "momcode_ajax_start GET myhostname=%s",
 		      myhostname);
-      mom_item_webrequest_add (webv, MOMWEB_SET_MIME, "text/html",
-			       MOMWEB_LIT_STRING,
-			       "<!-- ajax_start fragment -->\n",
-			       MOMWEB_LIT_STRING, "<b>Monimelt</b> at <tt>",
-			       MOMWEB_HTML_STRING, nowbuf, MOMWEB_LIT_STRING,
-			       "</tt> pid ", MOMWEB_DEC_LONG,
-			       (long) getpid (), MOMWEB_LIT_STRING,
-			       " on host <i>", MOMWEB_HTML_STRING, myhostname,
-			       MOMWEB_LIT_STRING, "</i>", MOMWEB_REPLY_CODE,
-			       HTTP_OK, MOMWEB_END);
+      mom_item_webrequest_add
+	(webv, MOMWEB_SET_MIME, "text/html",
+	 MOMWEB_LIT_STRING,
+	 "<!-- ajax_start fragment -->\n",
+	 MOMWEB_LIT_STRING, "<b>Monimelt</b> at <tt>",
+	 MOMWEB_HTML_STRING, nowbuf, MOMWEB_LIT_STRING,
+	 "</tt> pid ", MOMWEB_DEC_LONG,
+	 (long) getpid (), MOMWEB_LIT_STRING,
+	 " on host <i>", MOMWEB_HTML_STRING, myhostname,
+	 MOMWEB_LIT_STRING, "</i>", MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
       MOM_DBG_VALUE (web, "ajax_start replied webv=", webv);
     }
   return routres_pop;
@@ -357,8 +357,20 @@ momcode_ajax_complete_routine_name (int state, momit_tasklet_t * tasklet,
       const char *qtermstr = mom_string_cstr (qtermv);
       assert (qtermstr != NULL);
       momval_t nodev =
-	mom_node_sorted_names_prefixed (mom_item__dictionnary, qtermstr);
-
+	mom_node_sorted_names_prefixed ((const mom_anyitem_t *)
+					mom_item__dictionnary, qtermstr);
+      unsigned nbnames = mom_node_arity (nodev);
+      momval_t jres =
+	(momval_t) ((nbnames > 0) ? mom_make_json_array_count (nbnames,
+							       nodev.
+							       pnode->sontab)
+		    : NULL);
+      MOM_DBG_VALUE (web, "ajax_complete_routine_name jres=", jres);
+      mom_item_webrequest_add
+	(webv,
+	 MOMWEB_SET_MIME, "application/json",
+	 MOMWEB_JSON_VALUE, jres, MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
+      MOM_DBG_VALUE (web, "ajax_complete_routine_name replied webv=", webv);
     }
   return routres_pop;
 }
