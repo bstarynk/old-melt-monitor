@@ -611,6 +611,14 @@ const momclosure_t *mom_make_closure_from_item_vector (momval_t conn,
 momval_t mom_make_set_union (momval_t s1, momval_t s2);
 momval_t mom_make_set_intersection (momval_t s1, momval_t s2);
 
+static inline bool
+mom_is_set (momval_t setv)
+{
+  if (!setv.ptr || *setv.ptype != momty_set)
+    return false;
+  return true;
+}
+
 static inline unsigned
 mom_set_cardinal (momval_t setv)
 {
@@ -632,6 +640,14 @@ mom_set_nth_item (momval_t setv, int rk)
   return NULL;
 }
 
+static inline bool
+mom_is_tuple (momval_t tupv)
+{
+  if (!tupv.ptr || *tupv.ptype != momty_tuple)
+    return false;
+  return true;
+}
+
 static inline unsigned
 mom_tuple_length (momval_t tupv)
 {
@@ -651,6 +667,14 @@ mom_tuple_nth_item (momval_t tupv, int rk)
   if (rk >= 0 && rk < (int) slen)
     return (mom_anyitem_t *) (tupv.ptuple->itemseq[rk]);
   return NULL;
+}
+
+static inline bool
+mom_is_seqitem (momval_t seqv)
+{
+  if (!seqv.ptr || (*seqv.ptype != momty_tuple && *seqv.ptype != momty_set))
+    return false;
+  return true;
 }
 
 static inline unsigned

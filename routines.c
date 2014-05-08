@@ -545,10 +545,10 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
     wfcs_emit_routine,
     wfcs_got_emitter,
     wfcs_run_compiler,
-    wfcs__last
+    wfcs__laststate
   };
 #define SET_STATE(St) do {						\
-    MOM_DEBUG (web,						\
+    MOM_DEBUG (web,							\
 		    "momcode_web_form_compile setstate " #St " = %d",	\
 		    (int)wfcs_##St);					\
     return wfcs_##St; } while(0)
@@ -923,7 +923,7 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
       }
       break;
       ////////////////
-    case wfcs__last:
+    case wfcs__laststate:
       {
 	MOM_FATAL ("momcode_web_form_compile unexpected last");
       }
@@ -1004,7 +1004,7 @@ momcode_proc_compilation (int state, momit_tasklet_t * tasklet,
 #define l_endreason locvals[pcov_endreason]
 #define n_procstatus locnums[pcon_procstatus]
 #define SET_STATE(St) do {						\
-    MOM_DEBUG (run,						\
+    MOM_DEBUG (run,							\
 		    "momcode_proc_compilation setstate " #St " = %d",	\
 		    (int)pcos_##St);					\
     return pcos_##St; } while(0)
@@ -1100,23 +1100,162 @@ const struct momroutinedescr_st momrout_proc_compilation =
 };
 
 
+
 /*****************************************************************/
 /*****************************************************************/
 /*****************************************************************/
+
+enum cold_routine_emit_values_en
+{
+  crev_arg0res,
+  crev_routdata,
+  crev_routemp,
+  crev_dashboard,
+  crev_buffer,
+  crev_module,
+  crev_savecurout,
+  crev_xstate,
+  crev_xclosure,
+  crev_xvalues,
+  crev_xnumbers,
+  crev_xdoubles,
+  crev__lastval
+};
+
+enum cold_routine_emit_closure_en
+{
+  crec__lastclosure
+};
+
+enum cold_routine_emit_numbers_en
+{
+  cren_nbstates,
+  cren_nbclosed,
+  cren_nbvalues,
+  cren_nbnumbers,
+  cren_nbdoubles,
+  cren__lastnum
+};
+
 
 int
 momcode_cold_routine_emit (int state, momit_tasklet_t * tasklet,
 			   momclosure_t * closure, momval_t * locvals,
 			   intptr_t * locnums, double *locdbls)
 {
+  enum cold_routine_emit_state_en
+  {
+    cres_start,
+    cres_epilog,
+    cres__laststate
+  };
+#define SET_STATE(St) do {						\
+    MOM_DEBUG (run,							\
+	       "momcode_cold_routine_emit setstate " #St " = %d",	\
+	       (int)cres_##St);						\
+    return cres_##St; } while(0)
+#define _L(N) locvals[crev_##N]
+#define _C(N) closure->sontab[crec_##N]
+#define _N(N) locnum[cren_##N]
+  bool goodstate = false;
+  MOM_DEBUG (run, "cold_routine_emit start state=%d", state);
+  switch ((enum cold_routine_emit_state_en) state)
+    {
+      ////////////////
+    case cres_start:		////================ start
+      {
+	goodstate = true;
+	_L (savecurout) = _L (arg0res);
+	MOM_DBG_VALUE (run, "cold_routine_emit savecurout=", _L (savecurout));
+	const char *cnam =
+	  c_name_suffix (mom_value_as_item (_L (savecurout)));
+	MOM_DBG_VALUE (run, "cold_routine_emit routdata=", _L (routdata));
+	MOM_DEBUG (run, "cold_routine_emit cnam=%s", cnam);
+	mom_item_get_several_attrs (mom_value_as_item (_L (routdata)),
+				    mom_item__state, &_L (xstate),
+				    mom_item__closure, &_L (xclosure),
+				    mom_item__values, &_L (xvalues),
+				    mom_item__numbers, &_L (xnumbers),
+				    mom_item__doubles, &_L (xdoubles), NULL);
+	if (_L (xstate).ptr == NULL)
+	  _L (xstate) =
+	    mom_item_get_attr (mom_value_as_item (_L (savecurout)),
+			       (mom_anyitem_t *) mom_item__state);
+	if (_L (xclosure).ptr == NULL)
+	  _L (xclosure) =
+	    mom_item_get_attr (mom_value_as_item (_L (savecurout)),
+			       (mom_anyitem_t *) mom_item__closure);
+	if (_L (xvalues).ptr == NULL)
+	  _L (xvalues) =
+	    mom_item_get_attr (mom_value_as_item (_L (savecurout)),
+			       (mom_anyitem_t *) mom_item__values);
+	if (_L (xnumbers).ptr == NULL)
+	  _L (xnumbers) =
+	    mom_item_get_attr (mom_value_as_item (_L (savecurout)),
+			       (mom_anyitem_t *) mom_item__numbers);
+	if (_L (xdoubles).ptr == NULL)
+	  _L (xdoubles) =
+	    mom_item_get_attr (mom_value_as_item (_L (savecurout)),
+			       (mom_anyitem_t *) mom_item__doubles);
+	MOM_DBG_VALUE (run, "cold_routine_emit xstate=", _L (xstate));
+	MOM_DBG_VALUE (run, "cold_routine_emit xclosure=", _L (xclosure));
+	MOM_DBG_VALUE (run, "cold_routine_emit xvalues=", _L (xvalues));
+	MOM_DBG_VALUE (run, "cold_routine_emit xnumbers=", _L (xnumbers));
+	MOM_DBG_VALUE (run, "cold_routine_emit xdoubles=", _L (xdoubles));
+	mom_item_buffer_printf
+	  (_L (buffer), "\n\n\n"
+	   "//// *** implementation of code for %s\n"
+	   "int momcode_%s (int momp_state, momit_tasklet_t *momp_tasklet, momclosure_t *momp_closure,\n"
+	   "       momval_t *momp_locvals, intptr_t *momp_locnums, double *momp_locdoubles) {\n",
+	   cnam, cnam);
+#if 0
+	//// emit the unique enumeration for states
+	if (!mom_is_seqitem (_L (xstate)))
+	  {
+	    mom_item_buffer_printf ("#warning strange state in %s\n", cnam);
+	    MOM_WARNING ("cold_routine_emit: strange state in %s", cnam);
+	  }
+	_N (nbstates) = mom_seqitem_length (_L (xstate));
+	mom_item_buffer_printf
+	  (_L (buffer),
+	   "// %d state enumeration for %s\n"
+	   " enum momstates_%s_en {\n", _N (nbstates), cnam, cnam);
+#endif
+      }
+      break;
+      ////////////////
+    case cres_epilog:
+      {
+	goodstate = true;
+	const char *cnam =
+	  c_name_suffix (mom_value_as_item (_L (savecurout)));
+	mom_item_buffer_printf (_L (buffer),
+				"\n" "} //// end of emitted code for %s\n\n",
+				cnam);
+      }
+      break;
+      /////////
+    case cres__laststate:
+      {
+	MOM_FATAL ("bad last state in momcode_cold_routine_emit");
+      }
+      break;
+    }
+  if (!goodstate)
+    MOM_FATAL ("bad state %d in momcode_cold_routine_emit", state);
+  return routres_pop;
+
+#undef _L
+#undef _C
+#undef _N
 }
 
 
 const struct momroutinedescr_st momrout_cold_routine_emit =
   {.rout_magic = ROUTINE_MAGIC,
-  .rout_minclosize = (unsigned) 0,
-  .rout_frame_nbval = (unsigned) 0,
-  .rout_frame_nbnum = (unsigned) 0,
+  .rout_minclosize = (unsigned) crec__lastclosure,
+  .rout_frame_nbval = (unsigned) crev__lastval,
+  .rout_frame_nbnum = (unsigned) cren__lastnum,
   .rout_frame_nbdbl = 0,
   .rout_name = "cold_routine_emit",
   .rout_code = (const momrout_sig_t *) momcode_cold_routine_emit,

@@ -1301,8 +1301,9 @@ routine_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
     {
       char uidstr[UUID_PARSED_LEN];
       memset (uidstr, 0, sizeof (uidstr));
-      char *routname = mom_name_of_item (itm);
-      MOM_DBG_ITEM (dump, "possibly embryonic routine dumped ", routitm);
+      const char *routname =
+	mom_string_cstr ((momval_t) mom_name_of_item (itm));
+      MOM_DBG_ITEM (dump, "possibly embryonic routine dumped ", itm);
       const char *embryname = mom_embryonic_routine_name (routitm);
       if (!embryname)
 	{
@@ -1361,7 +1362,6 @@ static mom_anyitem_t *
 routine_itemloader (struct mom_loader_st *ld, momval_t json, uuid_t uid,
 		    unsigned space)
 {
-  mom_anyitem_t *itm = NULL;
   const char *name =
     mom_string_cstr (mom_jsonob_get (json, (momval_t) mom_item__name));
   if (MOM_UNLIKELY (!name))
