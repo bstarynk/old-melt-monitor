@@ -41,7 +41,7 @@ static struct glob_dict_st
 void
 mom_initialize_globals (void)
 {
-  const unsigned dictsiz = 128;
+  const unsigned dictsiz = 32;
   pthread_mutex_lock (&glob_mtx);
   glob_dict.name_hashitem =
     GC_MALLOC (sizeof (struct mom_name_item_entry_st) * dictsiz);
@@ -144,24 +144,27 @@ indexes_of_name_starting (const char *prefix, int *pnbindex)
       if (strncmp (arritem[ix].nme_str->cstr, prefix, lenprefix) == 0)
 	count++;
     }
-  res = count ? GC_MALLOC_ATOMIC (count * sizeof (int)) : NULL;
+  // allocate one extra element, useless except for assert in second
+  // loop
+  res = count ? GC_MALLOC_ATOMIC ((count + 1) * sizeof (int)) : NULL;
   if (MONIMELT_UNLIKELY (!res && count > 0))
     MONIMELT_FATAL ("failed to allocate %d integers", count);
-  for (int i = 0; i < count; i++)
+  for (int i = 0; i <= count; i++)
     res[i] = -1;
   int nbres = 0;
   // second loop to fill the index table
-  for (unsigned ix = 0; ix < size; ix++)
-    {
-      assert (nbres < count);
-      if (!arritem[ix].nme_itm || arritem[ix].nme_itm == MONIMELT_EMPTY)
-	continue;
-      if (!arritem[ix].nme_str || arritem[ix].nme_str == MONIMELT_EMPTY)
-	continue;
-      assert (arritem[ix].nme_str->typnum == momty_string);
-      if (strncmp (arritem[ix].nme_str->cstr, prefix, lenprefix) == 0)
-	res[nbres++] = ix;
-    };
+  if (count > 0)
+    for (unsigned ix = 0; ix < size; ix++)
+      {
+	assert (nbres <= count);
+	if (!arritem[ix].nme_itm || arritem[ix].nme_itm == MONIMELT_EMPTY)
+	  continue;
+	if (!arritem[ix].nme_str || arritem[ix].nme_str == MONIMELT_EMPTY)
+	  continue;
+	assert (arritem[ix].nme_str->typnum == momty_string);
+	if (strncmp (arritem[ix].nme_str->cstr, prefix, lenprefix) == 0)
+	  res[nbres++] = ix;
+      };
   assert (nbres == count);
   if (pnbindex)
     *pnbindex = count;
@@ -254,7 +257,9 @@ mom_node_sorted_names_prefixed (const mom_anyitem_t * conn,
     memset (arrsons, 0, nbindex * sizeof (momval_t));
   for (int ix = 0; ix < nbindex; ix++)
     {
-      arrsons[ix] = (momval_t) glob_dict.name_hashitem[ix].nme_str;
+      int cix = arrindexes[ix];
+      assert (cix>=0 && cix<glob_dict.name_size);
+      arrsons[ix] = (momval_t) glob_dict.name_hashitem[cix].nme_str;
       assert (arrsons[ix].ptr && arrsons[ix].ptr != MONIMELT_EMPTY
 	      && *arrsons[ix].ptype == momty_string);
     };

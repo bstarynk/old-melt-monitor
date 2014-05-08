@@ -247,9 +247,9 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
 	    (MOMJSON_COUNTED_ENTRIES, pdic->post_count, pdic->post_pairtab,
 	     MOMJSON_END);
 	  GC_FREE (pdic);
-	}
+	};
       {
-	const onion_dict *odicquery = onion_request_get_post_dict (req);
+	const onion_dict *odicquery = onion_request_get_query_dict (req);
 	int cntdicquery = onion_dict_count (odicquery);
 	struct post_dict_st *pdic =
 	  GC_MALLOC (sizeof (struct post_dict_st) +

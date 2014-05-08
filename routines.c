@@ -352,8 +352,10 @@ momcode_ajax_complete_routine_name (int state, momit_tasklet_t * tasklet,
 		 (momval_t) mom_item_webrequest_method (webv));
   if (mom_item_webrequest_method (webv).ptr == ((momval_t) mom_item__GET).ptr)
     {
+      momval_t queryv = mom_item_webrequest_jsob_query (webv);
       momval_t qtermv = mom_item_webrequest_query_arg (webv, "term");
       MOM_DBG_VALUE (web, "ajax_complete_routine_name qtermv=", qtermv);
+      MOM_DBG_VALUE (web, "ajax_complete_routine_name queryv=", queryv);
       const char *qtermstr = mom_string_cstr (qtermv);
       assert (qtermstr != NULL);
       momval_t nodev =
