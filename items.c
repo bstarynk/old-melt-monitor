@@ -1158,6 +1158,7 @@ tasklet_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 momit_routine_t *
 mom_make_item_routine_of_uuid (uuid_t uid, const char *name, unsigned space)
 {
+  momit_routine_t *itrout = NULL;
   char symname[MOM_SYMBNAME_LEN];
   memset (symname, 0, sizeof (symname));
   if (MONIMELT_UNLIKELY (!name || !name[0]))
@@ -1166,12 +1167,27 @@ mom_make_item_routine_of_uuid (uuid_t uid, const char *name, unsigned space)
   struct momroutinedescr_st *rdescr = NULL;
   if (!g_module_symbol
       (mom_prog_module, symname, (gpointer *) & rdescr) || !rdescr)
-    MONIMELT_FATAL ("failed to find routine descriptor %s : %s", symname,
-		    g_module_error ());
-  if (rdescr->rout_magic != ROUTINE_MAGIC || !rdescr->rout_code
-      || strcmp (rdescr->rout_name, name))
+    {
+      char uidstr[UUID_PARSED_LEN];
+      memset (uidstr, 0, sizeof (uidstr));
+      extern void mom_mark_delayed_embryonic_routine (momit_routine_t *
+						      itrout,
+						      const char *name);
+      itrout =
+	mom_allocate_item_with_uuid (momty_routineitem,
+				     sizeof (momit_routine_t), space, uid);
+      MONIMELT_WARNING
+	("failed to find routine descriptor %s : %s, so delay embryonic %s for {%s}",
+	 symname, g_module_error (), name,
+	 mom_unparse_item_uuid ((mom_anyitem_t *) itrout, uidstr));
+      mom_mark_delayed_embryonic_routine (itrout, name);
+      return itrout;
+    }
+  else
+    if (rdescr->rout_magic != ROUTINE_MAGIC || !rdescr->rout_code
+	|| strcmp (rdescr->rout_name, name))
     MONIMELT_FATAL ("bad routine descriptor %s", symname);
-  momit_routine_t *itrout =
+  itrout =
     mom_allocate_item_with_uuid (momty_routineitem, sizeof (momit_routine_t),
 				 space, uid);
   itrout->irt_descr = rdescr;
@@ -1281,11 +1297,43 @@ const struct momitemtypedescr_st momitype_routine = {
 static momval_t
 routine_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
+
   Dl_info dlinf = { };
   momit_routine_t *routitm = (momit_routine_t *) itm;
   struct momroutinedescr_st *rdescr = routitm->irt_descr;
-  if (MONIMELT_UNLIKELY (!rdescr
-			 || rdescr->rout_magic != ROUTINE_MAGIC
+  if (!rdescr)
+    {
+      char uidstr[UUID_PARSED_LEN];
+      memset (uidstr, 0, sizeof (uidstr));
+      char *routname = mom_name_of_item (itm);
+      MOM_DBG_ITEM (dump, "possibly embryonic routine dumped ", routitm);
+      const char *embryname = mom_embryonic_routine_name (routitm);
+      if (!embryname)
+	{
+	  if (routname)
+	    MONIMELT_FATAL
+	      ("failed to dump routine item named %s without code", routname);
+	  else
+	    MONIMELT_FATAL ("failed to dump routine item {%s} without code",
+			    mom_unparse_item_uuid (itm, uidstr));
+	};
+      if (routname)
+	MONIMELT_WARNING
+	  ("dumping incomplete routine item named %s embryonic %s", routname,
+	   embryname);
+      else
+	MONIMELT_WARNING ("dumping incomplete routine item {%s} embryonic %s",
+			  mom_unparse_item_uuid (itm, uidstr), embryname);
+      return (momval_t) mom_make_json_object
+	// build with type and routine name
+	(			// the type:
+	  MOMJSON_ENTRY, mom_item__jtype, mom_item__routine,
+	  // the routine name
+	  MOMJSON_ENTRY, mom_item__name, mom_make_string (embryname),
+	  // that's all!
+	  MOMJSON_END);
+    }
+  if (MONIMELT_UNLIKELY (rdescr->rout_magic != ROUTINE_MAGIC
 			 || !rdescr->rout_name))
     MONIMELT_FATAL ("routine item with invalid descriptor");
   if (!dladdr (rdescr, &dlinf))
@@ -1318,6 +1366,7 @@ static mom_anyitem_t *
 routine_itemloader (struct mom_loader_st *ld, momval_t json, uuid_t uid,
 		    unsigned space)
 {
+  mom_anyitem_t *itm = NULL;
   const char *name =
     mom_string_cstr (mom_jsonob_get (json, (momval_t) mom_item__name));
   if (MONIMELT_UNLIKELY (!name))
