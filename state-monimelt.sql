@@ -65,6 +65,8 @@ INSERT INTO t_item VALUES('84e3d03a-f704-42c9-b5bd-175d5845076d','routine','{"jt
 INSERT INTO t_item VALUES('88aeaf2b-192e-4936-bdbb-b9a186d86cd4','routine','{"jtype":"routine","name":"proc_compilation"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('8dba998c-341b-4a66-900f-545ac9dd06c4','json_name','{"jtype":"json_name","name":"sons"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('8e3cbe87-244d-49e7-ac72-e6f8a09afd7c','box','{"jtype":"box"}','{"attributes":null,"box":null,"content":null}');
+INSERT INTO t_item VALUES('8e5f1892-9c0b-42c0-8390-e384e471d3fd','routine','{"jtype":"routine","name":"ajax_complete_routine_name"}','{"attributes":[{"attr":{"jtype":"itemref","space":".","uuid":"1e299c1c-4d29-4616-b30b-258c72722484"},
+ "val":"for autocompletion of routine names"}],"content":null}');
 INSERT INTO t_item VALUES('93abbd1c-2d33-4b86-8e16-e5b0c14842dc','box','{"jtype":"box"}','{"attributes":null,"box":null,"content":null}');
 INSERT INTO t_item VALUES('9a05b9fa-17d3-4294-9253-e67406e52d4a','json_name','{"jtype":"json_name","name":"content"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('9dccb4ab-45d0-4fa3-a3d0-8bb722a83478','box','{"jtype":"box"}','{"attributes":null,"box":null,"content":null}');
@@ -95,6 +97,7 @@ INSERT INTO t_name VALUES('OPTIONS','4b1faa71-01c2-4dc9-b9b8-f894ae54a1d0','.');
 INSERT INTO t_name VALUES('POST','9dccb4ab-45d0-4fa3-a3d0-8bb722a83478','.');
 INSERT INTO t_name VALUES('PUT','ed78ae41-bd10-44bf-9bc7-57be044fe610','.');
 INSERT INTO t_name VALUES('agenda','b5a0ef97-7eb2-4cf3-924e-8bc5de7e49bc','.');
+INSERT INTO t_name VALUES('ajax_complete_routine_name','8e5f1892-9c0b-42c0-8390-e384e471d3fd','.');
 INSERT INTO t_name VALUES('ajax_start','0e750860-7063-4ad7-8488-ee57d4aba2a8','.');
 INSERT INTO t_name VALUES('assoc','764e6c3e-0e1d-4462-9dfc-a590123b2755','.');
 INSERT INTO t_name VALUES('associations','670d0025-401e-4c78-9d8b-62fad2ad26ec','.');

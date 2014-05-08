@@ -360,11 +360,31 @@ momcode_ajax_complete_routine_name (int state, momit_tasklet_t * tasklet,
 	mom_node_sorted_names_prefixed ((const mom_anyitem_t *)
 					mom_item__dictionnary, qtermstr);
       unsigned nbnames = mom_node_arity (nodev);
-      momval_t jres =
-	(momval_t) ((nbnames > 0) ? mom_make_json_array_count (nbnames,
-							       nodev.
-							       pnode->sontab)
-		    : NULL);
+      momval_t jres = MONIMELT_NULLV;
+      if (nbnames > 0)
+	{
+	  momval_t *goodnames = GC_MALLOC (nbnames * sizeof (momval_t));
+	  if (!goodnames)
+	    MONIMELT_FATAL ("failed to allocate %d names", nbnames);
+	  memset (goodnames, 0, nbnames * sizeof (momval_t));
+	  unsigned goodcount = 0;
+	  for (unsigned ix = 0; ix < nbnames; ix++)
+	    {
+	      assert (goodcount < nbnames);
+	      momval_t curname = mom_node_nth (nodev, ix);
+	      const char *curstr = mom_string_cstr (curname);
+	      if (!curstr)
+		continue;
+	      const mom_anyitem_t *curitm = mom_item_named (curstr);
+	      if (!curitm || curitm->typnum != momty_routineitem)
+		continue;
+	      goodnames[goodcount++] = curname;
+	    }
+	  jres =
+	    (momval_t) ((goodcount > 0)
+			? mom_make_json_array_count (goodcount, goodnames)
+			: NULL);
+	}
       MOM_DBG_VALUE (web, "ajax_complete_routine_name jres=", jres);
       mom_item_webrequest_add
 	(webv,
