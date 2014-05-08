@@ -23,15 +23,18 @@ CREATE TABLE t_name (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, nuid VARCHAR(38)
 CREATE TABLE t_param (parname VARCHAR(35) PRIMARY KEY ASC NOT NULL UNIQUE, parvalue TEXT NOT NULL);
 CREATE TABLE t_module (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
-INSERT INTO t_item VALUES('0229c553-c443-49a9-9244-5f8d7d3c79cf','dictionnary','{"jtype":"dictionnary"}','{"attributes":null,"content":null,"dictionnary":[{"name":"ajax_start","val":{"conn":{"jtype":"itemref",
-  "space":".","uuid":"0e750860-7063-4ad7-8488-ee57d4aba2a8"},"jtype":"closure",
- "sons":["Gap*Ajax_Start"]}},{"name":"form_compile","val":{"conn":{"jtype":"itemref",
+INSERT INTO t_item VALUES('0229c553-c443-49a9-9244-5f8d7d3c79cf','dictionnary','{"jtype":"dictionnary"}','{"attributes":null,"content":null,"dictionnary":[{"name":"ajax_complete_routine_name",
+ "val":{"conn":{"jtype":"itemref","space":".","uuid":"8e5f1892-9c0b-42c0-8390-e384e471d3fd"},
+ "jtype":"closure","sons":["Gap*Ajax_Complete_Routine_Name"]}},{"name":"ajax_start",
+ "val":{"conn":{"jtype":"itemref","space":".","uuid":"0e750860-7063-4ad7-8488-ee57d4aba2a8"},
+ "jtype":"closure","sons":["Gap*Ajax_Start"]}},{"name":"form_compile","val":{"conn":{"jtype":"itemref",
   "space":".","uuid":"f094ea32-9a48-4de2-bba7-4b25e8d028d1"},"jtype":"closure",
  "sons":[{"conn":{"jtype":"itemref","space":".","uuid":"88aeaf2b-192e-4936-bdbb-b9a186d86cd4"},
   "jtype":"closure","sons":["Gap*Proc_Compilation"]}]}},{"name":"form_exit","val":{"conn":{"jtype":"itemref",
   "space":".","uuid":"84e3d03a-f704-42c9-b5bd-175d5845076d"},"jtype":"closure",
- "sons":[]}},{"name":"form_new_named","val":{"conn":{"jtype":"itemref","space":".",
-  "uuid":"dafbdfa9-d633-447a-8ab3-e011f4f3fee8"},"jtype":"closure","sons":["Gap*Web_Form_New_Named"]}}]}
+ "sons":[]}},
+{"name":"form_new_named","val":{"conn":{"jtype":"itemref","space":".","uuid":"dafbdfa9-d633-447a-8ab3-e011f4f3fee8"},
+ "jtype":"closure","sons":["Gap*Web_Form_New_Named"]}}]}
 ');
 INSERT INTO t_item VALUES('03c1ace3-3293-43bb-9541-19b4357cbc3c','json_name','{"jtype":"json_name","name":"conn"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('0e750860-7063-4ad7-8488-ee57d4aba2a8','routine','{"jtype":"routine","name":"ajax_start"}','{"attributes":[{"attr":{"jtype":"itemref","space":".","uuid":"1e299c1c-4d29-4616-b30b-258c72722484"},
