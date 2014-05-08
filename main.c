@@ -539,14 +539,20 @@ mom_debug_at (enum mom_debug_en dbg, const char *fil, int lin,
 	      const char *fmt, ...)
 {
   int len = 0;
+  static long dbgcount;
   char thrname[24];
   char buf[128];
   char timbuf[64];
   char *bigbuf = NULL;
   memset (buf, 0, sizeof (buf));
   memset (thrname, 0, sizeof (thrname));
-  strftime_centi_now (timbuf, sizeof (timbuf), "%Y-%b-%d %H:%M:%S.__ %Z");
+  memset (timbuf, 0, sizeof (timbuf));
   pthread_getname_np (pthread_self (), thrname, sizeof (thrname) - 1);
+  pthread_mutex_lock (&dbg_mtx);
+  strftime_centi_now (timbuf, sizeof (timbuf),
+		      (dbgcount % 16 ==
+		       0) ? "%Y-%b-%d %H:%M:%S.__ %Z" : "%H:%M:%S.__");
+  dbgcount++;
   va_list args;
   va_start (args, fmt);
   len = vsnprintf (buf, sizeof (buf), fmt, args);
@@ -570,13 +576,14 @@ mom_debug_at (enum mom_debug_en dbg, const char *fil, int lin,
     }
   else
     {
-      pthread_mutex_lock (&dbg_mtx);
       fprintf (stderr, "MONIMELT DEBUG %s <%s> @%s:%d %s %s\n",
 	       mom_debug_names[dbg], thrname,
 	       fil, lin, timbuf, bigbuf ? bigbuf : buf);
       fflush (stderr);
-      pthread_mutex_unlock (&dbg_mtx);
     }
+  if (bigbuf)
+    free (bigbuf);
+  pthread_mutex_unlock (&dbg_mtx);
 }
 
 void
@@ -584,11 +591,14 @@ mom_dbg_item_at (enum mom_debug_en dbg, const char *file, int line,
 		 const char *msg, const mom_anyitem_t * itm)
 {
   char thrname[24];
+  char timbuf[64];
   memset (thrname, 0, sizeof (thrname));
+  memset (timbuf, 0, sizeof (timbuf));
+  strftime_centi_now (timbuf, sizeof (timbuf), "%H:%M:%S.__");
   pthread_getname_np (pthread_self (), thrname, sizeof (thrname) - 1);
   pthread_mutex_lock (&dbg_mtx);
-  fprintf (stderr, "MONIMELT DBG_ITEM %s:%d:%s <%s> %s ", file, line,
-	   mom_debug_names[dbg], thrname, msg);
+  fprintf (stderr, "MONIMELT DBG_ITEM %s <%s> %s @%s:%d %s",
+	   mom_debug_names[dbg], thrname, timbuf, file, line, msg);
   mom_debugprint_item (stderr, itm);
   if (mom_name_of_item (itm))
     {
@@ -610,12 +620,19 @@ mom_dbg_value_at (enum mom_debug_en dbg, const char *fil, int lin,
 		  const char *msg, const momval_t val)
 {
   char thrname[24];
+  char timbuf[64];
   memset (thrname, 0, sizeof (thrname));
+  memset (timbuf, 0, sizeof (timbuf));
+  strftime_centi_now (timbuf, sizeof (timbuf), "%H:%M:%S.__");
   pthread_getname_np (pthread_self (), thrname, sizeof (thrname) - 1);
   pthread_mutex_lock (&dbg_mtx);
-  fprintf (stderr, "MONIMELT_DBG_VALUE %s:%d:%s <%s> %s", fil, lin,
-	   mom_debug_names[dbg], thrname, msg);
+  fprintf (stderr, "MONIMELT_DBG_VALUE %s <%s> %s %s:%d:%s",
+	   mom_debug_names[dbg], thrname, timbuf, fil, lin, msg);
   mom_debugprint_value (stderr, val);
+  unsigned tynum = 0;
+  if (val.ptr && (tynum = *val.ptype) > momty__itemlowtype
+      && tynum < momty__last && mom_typedescr_array[tynum])
+    fprintf (stderr, " /.%s", mom_typedescr_array[tynum]->ityp_name);
   putc ('\n', stderr);
   fflush (stderr);
   pthread_mutex_unlock (&dbg_mtx);

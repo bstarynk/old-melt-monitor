@@ -37,8 +37,7 @@ monimelt_module_post_load (void)
   memset (uistr, 0, sizeof (uistr));
   MONIMELT_INFORM ("cold post load " __DATE__ "@" __TIME__);
   mom_anyitem_t *rout_ajax_start = mom_item_named ("ajax_start");
-  MOM_DBG_VALUE (run, "rout_ajax_start=",
-		 (momval_t) rout_ajax_start);
+  MOM_DBG_VALUE (run, "rout_ajax_start=", (momval_t) rout_ajax_start);
   MONIMELT_INFORM ("cold rout_ajax_start ~%s",
 		   mom_unparse_item_uuid ((mom_anyitem_t *)
 					  rout_ajax_start, uistr));
@@ -47,9 +46,7 @@ monimelt_module_post_load (void)
 			      mom_make_string ("Gap*Ajax_Start"),
 			      NULL);
   mom_item_dictionnary_put_cstr ((momval_t) mom_item__web_dictionnary,
-				 "ajax_start",
-				 (momval_t) clos_ajax_start);
-  MOM_DBG_VALUE (run, "clos_ajax_start=",
-		 (momval_t) clos_ajax_start);
+				 "ajax_start", (momval_t) clos_ajax_start);
+  MOM_DBG_VALUE (run, "clos_ajax_start=", (momval_t) clos_ajax_start);
   MONIMELT_INFORM ("cold post load done");
 }

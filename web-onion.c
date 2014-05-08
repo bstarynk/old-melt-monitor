@@ -42,9 +42,8 @@ struct mom_web_info_st
 
 
 
-static
-  void *mom_really_process_request (struct GC_stack_base *sb, void *data)
-  __attribute__ ((noinline));
+static void *mom_really_process_request (struct GC_stack_base *sb,
+					 void *data);
 
 
 static onion_connection_status
@@ -62,13 +61,15 @@ process_request (void *ignore, onion_request * req, onion_response * res)
     pthread_setname_np (pthread_self (), thnambuf);
     pthread_mutex_unlock (&mtx_onion);
   }
+  const char *fullpath = onion_request_get_fullpath (req);
+  MONIMELT_DEBUG (web, "process_request webnum#%ld webtim=%.3f fullpath=%s",
+		  webnum, webtim, fullpath);
   /// hack to deliver local files in MONIMELT_WEB_DIRECTORY
   {
     char bufpath[128];
     struct stat stpath = { };
     memset (bufpath, 0, sizeof (bufpath));
     memset (&stpath, 0, sizeof (stpath));
-    const char *fullpath = onion_request_get_fullpath (req);
     if (fullpath && fullpath[0] == '/' && isalpha (fullpath[1])
 	&& !strstr (fullpath, "..")
 	&& strlen (fullpath) + sizeof (MONIMELT_WEB_DIRECTORY) + 3
@@ -313,17 +314,25 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
          a protocol to reply to a request */
       bool gotreply = false;
       bool repeatloop = true;
+#define INITIAL_WAIT_DELAY 0.001
+      double waitdelay = INITIAL_WAIT_DELAY;
       while (repeatloop)
 	{
 	  int waiterr = 0;
+	  double tnow = monimelt_clock_time (CLOCK_REALTIME);
 	  gotreply = false;
-	  MONIMELT_DEBUG (web, "waiting for webreply webnum#%ld wend=%f",
-			  (long) webitm->iweb_webnum, wend);
+	  MONIMELT_DEBUG (web,
+			  "before waiting for webreply webnum#%ld wend=%.4f tnow=%.4f",
+			  (long) webitm->iweb_webnum, wend, tnow);
 	  pthread_mutex_lock (&webitm->iweb_item.i_mtx);
-	  struct timespec endts = monimelt_timespec (wend);
+	  double twait = tnow + waitdelay;
+	  struct timespec waitts = monimelt_timespec (twait);
+	  MONIMELT_DEBUG (web,
+			  "waiting for webreply webnum#%ld twait=%.4f waitdelay=%g",
+			  webnum, twait, waitdelay);
 	  waiterr =
 	    pthread_cond_timedwait (&webitm->iweb_cond,
-				    &webitm->iweb_item.i_mtx, &endts);
+				    &webitm->iweb_item.i_mtx, &waitts);
 	  gotreply = webitm->iweb_replycode > 0;
 	  MONIMELT_DEBUG (web, "waiterr=%d (%s), gotreply=%d, replycode %d",
 			  waiterr, strerror (waiterr), (int) gotreply,
@@ -369,8 +378,7 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
 	      repeatloop = false;
 	    }
 	  // timedout
-	  else if (!gotreply
-		   && monimelt_clock_time (CLOCK_REALTIME) > wend + 0.01)
+	  else if (!gotreply && tnow > wend + 0.01)
 	    {
 	      MONIMELT_DEBUG (web, "timedout webnum#%ld", webnum);
 	      onion_response_free (webitm->iweb_response);
@@ -407,8 +415,11 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
 	    }
 	  else
 	    {
-	      MONIMELT_DEBUG (web, "patiently rewaiting for webnum#%ld",
-			      webnum);
+	      if (waitdelay < 0.2)
+		waitdelay = waitdelay * 1.4 + 0.002;
+	      MONIMELT_DEBUG (web,
+			      "patiently rewaiting for webnum#%ld waitdelay=%g",
+			      webnum, waitdelay);
 	      repeatloop = true;
 	    }
 	  pthread_mutex_unlock (&webitm->iweb_item.i_mtx);

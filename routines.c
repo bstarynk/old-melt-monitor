@@ -275,8 +275,8 @@ const struct momroutinedescr_st momrout_web_form_new_named =
 
 int
 momcode_ajax_start (int state, momit_tasklet_t * tasklet,
-		       momclosure_t * closure, momval_t * locvals,
-		       intptr_t * locnums, double *locdbls)
+		    momclosure_t * closure, momval_t * locvals,
+		    intptr_t * locnums, double *locdbls)
 {
   momval_t webv = locvals[0];
   time_t now = 0;
@@ -287,34 +287,31 @@ momcode_ajax_start (int state, momit_tasklet_t * tasklet,
   MONIMELT_DEBUG (web,
 		  "momcode_ajax_start state=%d webnum=%ld nowbuf=%s",
 		  state, mom_item_webrequest_webnum (webv), nowbuf);
-  MOM_DBG_ITEM (web, "ajax_start tasklet=",
-		(const mom_anyitem_t *) tasklet);
+  MOM_DBG_ITEM (web, "ajax_start tasklet=", (const mom_anyitem_t *) tasklet);
   MOM_DBG_VALUE (web, "ajax_start webv=", webv);
   MOM_DBG_VALUE (web, "ajax_start closure=",
 		 (momval_t) (const momclosure_t *) closure);
   MOM_DBG_VALUE (web, "ajax_start method=",
 		 (momval_t) mom_item_webrequest_method (webv));
-  if (mom_item_webrequest_method (webv).ptr ==
-      ((momval_t) mom_item__GET).ptr)
+  if (mom_item_webrequest_method (webv).ptr == ((momval_t) mom_item__GET).ptr)
     {
       char myhostname[64];
-      memset (myhostname, 0, sizeof(myhostname));
-      gethostname(myhostname, sizeof(myhostname));
-      MONIMELT_DEBUG (web, "momcode_ajax_start GET myhostname=%s", myhostname);
-      mom_item_webrequest_add
-	(webv,
-	 MOMWEB_SET_MIME, "text/html",
-	 MOMWEB_LIT_STRING, "<!-- ajax_start fragment -->\n",
-	 MOMWEB_LIT_STRING, "<b>Monimelt</b> at <tt>",
-	 MOMWEB_HTML_STRING, nowbuf,
-	 MOMWEB_LIT_STRING, "</tt> pid ",
-	 MOMWEB_DEC_LONG, (long)getpid(),
-	 MOMWEB_LIT_STRING, " on host <i>",
-	 MOMWEB_HTML_STRING, myhostname,
-	 MOMWEB_LIT_STRING, "</i>",
-	 MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
+      memset (myhostname, 0, sizeof (myhostname));
+      gethostname (myhostname, sizeof (myhostname));
+      MONIMELT_DEBUG (web, "momcode_ajax_start GET myhostname=%s",
+		      myhostname);
+      mom_item_webrequest_add (webv, MOMWEB_SET_MIME, "text/html",
+			       MOMWEB_LIT_STRING,
+			       "<!-- ajax_start fragment -->\n",
+			       MOMWEB_LIT_STRING, "<b>Monimelt</b> at <tt>",
+			       MOMWEB_HTML_STRING, nowbuf, MOMWEB_LIT_STRING,
+			       "</tt> pid ", MOMWEB_DEC_LONG,
+			       (long) getpid (), MOMWEB_LIT_STRING,
+			       " on host <i>", MOMWEB_HTML_STRING, myhostname,
+			       MOMWEB_LIT_STRING, "</i>", MOMWEB_REPLY_CODE,
+			       HTTP_OK, MOMWEB_END);
+      MOM_DBG_VALUE (web, "ajax_start replied webv=", webv);
     }
-  usleep (5000);
   return routres_pop;
 }
 
