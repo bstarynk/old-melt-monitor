@@ -673,6 +673,97 @@ mom_seqitem_nth_item (momval_t seqv, int rk)
   return NULL;
 }
 
+
+static inline unsigned
+mom_node_arity (momval_t nodv)
+{
+  if (!nodv.ptr || *nodv.ptype != momty_node)
+    return 0;
+  return nodv.pnode->slen;
+}
+
+static inline unsigned
+mom_closure_arity (momval_t clov)
+{
+  if (!clov.ptr || *clov.ptype != momty_closure)
+    return 0;
+  return clov.pclosure->slen;
+}
+
+static inline unsigned
+mom_arity_of_node_or_closure (momval_t clonodv)
+{
+  if (!clonodv.ptr
+      || (*clonodv.ptype != momty_closure && *clonodv.ptype != momty_node))
+    return 0;
+  return clonodv.pclosure->slen;
+}
+
+static inline momval_t
+mom_node_nth (momval_t nodv, int rk)
+{
+  if (!nodv.ptr || *nodv.ptype != momty_node)
+    return MONIMELT_NULLV;
+  unsigned l = nodv.pnode->slen;
+  if (rk < 0)
+    rk += (int) l;
+  if (rk >= 0 && rk < l)
+    return nodv.pnode->sontab[rk];
+  return MONIMELT_NULLV;
+}
+
+static inline const mom_anyitem_t *
+mom_node_conn (momval_t nodv)
+{
+  if (!nodv.ptr || *nodv.ptype != momty_node)
+    return NULL;
+  return nodv.pnode->connitm;
+}
+
+static inline const mom_anyitem_t *
+mom_closure_conn (momval_t clov)
+{
+  if (!clov.ptr || *clov.ptype != momty_node)
+    return NULL;
+  return clov.pclosure->connitm;
+}
+
+static inline const mom_anyitem_t *
+mom_conn_of_node_or_closure (momval_t clonodv)
+{
+  if (!clonodv.ptr
+      || (*clonodv.ptype != momty_closure && *clonodv.ptype != momty_node))
+    return NULL;
+  return clonodv.pclosure->connitm;
+}
+
+static inline momval_t
+mom_closure_nth (momval_t clov, int rk)
+{
+  if (!clov.ptr || *clov.ptype != momty_closure)
+    return MONIMELT_NULLV;
+  unsigned l = clov.pclosure->slen;
+  if (rk < 0)
+    rk += (int) l;
+  if (rk >= 0 && rk < l)
+    return clov.pclosure->sontab[rk];
+  return MONIMELT_NULLV;
+}
+
+static inline momval_t
+mom_son_nth_of_node_or_closure (momval_t clonodv, int rk)
+{
+  if (!clonodv.ptr
+      || (*clonodv.ptype != momty_closure && *clonodv.ptype != momty_node))
+    return MONIMELT_NULLV;
+  unsigned l = clonodv.pclosure->slen;
+  if (rk < 0)
+    rk += (int) l;
+  if (rk >= 0 && rk < l)
+    return clonodv.pclosure->sontab[rk];
+  return MONIMELT_NULLV;
+}
+
 /// unparse the uuid of an item
 static inline const char *
 mom_unparse_item_uuid (const mom_anyitem_t * itm, char buf[UUID_PARSED_LEN])

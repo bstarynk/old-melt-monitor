@@ -354,6 +354,10 @@ momcode_ajax_complete_routine_name (int state, momit_tasklet_t * tasklet,
     {
       momval_t qtermv = mom_item_webrequest_query_arg (webv, "term");
       MOM_DBG_VALUE (web, "ajax_complete_routine_name qtermv=", qtermv);
+      const char *qtermstr = mom_string_cstr (qtermv);
+      assert (qtermstr != NULL);
+      momval_t nodev =
+	mom_node_sorted_names_prefixed (mom_item__dictionnary, qtermstr);
 
     }
   return routres_pop;
