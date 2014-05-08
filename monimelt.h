@@ -1719,6 +1719,8 @@ void mom_replace_name_string (momstring_t * namestr, mom_anyitem_t * item);
 
 // get the item of some given name, or else NULL
 mom_anyitem_t *mom_item_named (const char *name);
+// use a string value 
+mom_anyitem_t *mom_item_of_name_string (momval_t namev);
 // also retrieve the string
 mom_anyitem_t *mom_item_named_with_string (const char *name,
 					   const momstring_t ** pstr);

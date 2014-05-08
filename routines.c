@@ -272,12 +272,18 @@ const struct momroutinedescr_st momrout_web_form_new_named =
 
 ////////////////////////////////////////////////////////////////
 
+enum formhandlevalues_en
+{
+  wfhv_web,
+  wfhv_routine,
+  wfhv__lastval
+};
 int
 momcode_web_form_handle_routine (int state, momit_tasklet_t * tasklet,
 				 momclosure_t * closure, momval_t * locvals,
 				 intptr_t * locnums, double *locdbls)
 {
-  momval_t webv = locvals[0];
+#define _L(N) locvals[wfhv_##N]
   time_t now = 0;
   struct tm nowtm = { };
   char nowbuf[64] = "";
@@ -285,28 +291,76 @@ momcode_web_form_handle_routine (int state, momit_tasklet_t * tasklet,
   strftime (nowbuf, sizeof (nowbuf), "%c", localtime_r (&now, &nowtm));
   MOM_DEBUG (web,
 	     "momcode_web_form_handle_routine state=%d webnum=%ld nowbuf=%s",
-	     state, mom_item_webrequest_webnum (webv), nowbuf);
+	     state, mom_item_webrequest_webnum (_L (web)), nowbuf);
   MOM_DBG_ITEM (web, "web_form_handle_routine tasklet=",
 		(const mom_anyitem_t *) tasklet);
-  MOM_DBG_VALUE (web, "web_form_handle_routine webv=", webv);
+  MOM_DBG_VALUE (web, "web_form_handle_routine web=", _L (web));
   MOM_DBG_VALUE (web, "web_form_handle_routine closure=",
 		 (momval_t) (const momclosure_t *) closure);
   MOM_DBG_VALUE (web, "web_form_handle_routine method=",
-		 (momval_t) mom_item_webrequest_method (webv));
-  if (mom_item_webrequest_method (webv).ptr ==
+		 (momval_t) mom_item_webrequest_method (_L (web)));
+  if (mom_item_webrequest_method (_L (web)).ptr ==
       ((momval_t) mom_item__POST).ptr)
     {
-      MOM_DEBUG (web, "momcode_web_form_handle_routine POST");
+      MOM_DEBUG (web, "web_form_handle_routine POST");
+      MOM_DBG_VALUE (web, "web_form_handle_routine jsobpost=",
+		     mom_item_webrequest_jsob_post (_L (web)));
+      momval_t namestrv =
+	mom_item_webrequest_post_arg (_L (web), "routine_name");
+      _L (routine) = (momval_t) mom_item_of_name_string (namestrv);
+      MOM_DBG_VALUE (web, "web_form_handle_routine routine=", _L (routine));
+      if (mom_type (_L (routine)) != momty_routineitem)
+	{
+	  MOM_WARNING ("web_form_handle_routine bad routine name %s",
+		       mom_string_cstr (namestrv));
+	  mom_item_webrequest_add (_L (web), MOMWEB_SET_MIME, "text/html",
+				   MOMWEB_LIT_STRING,
+				   "<!doctype html><head><title>Bad Routine Name in Monimelt</title></head>\n"
+				   "<body><h1>Bad Routine Name</h1>\n",
+				   MOMWEB_LIT_STRING, "<p>Name <tt>",
+				   MOMWEB_HTML_STRING,
+				   mom_string_cstr (namestrv),
+				   MOMWEB_LIT_STRING,
+				   "</tt> not found at <i>",
+				   MOMWEB_HTML_STRING, nowbuf,
+				   MOMWEB_LIT_STRING,
+				   "</i>.</p></body></html>\n",
+				   MOMWEB_REPLY_CODE, HTTP_NOT_FOUND,
+				   MOMWEB_END);
+	  return routres_pop;
+	}
+      if (mom_item_webrequest_post_arg (_L (web), "do_addrout").ptr)
+	{
+	  momval_t oldset =
+	    (momval_t) mom_item_get_attr ((mom_anyitem_t *)
+					  mom_item__first_module,
+					  (mom_anyitem_t *)
+					  mom_item__routines);
+	  MOM_DBG_VALUE (web, "old set of routines in first module=", oldset);
+	  momval_t newset =
+	    (momval_t) mom_make_set_til_nil (_L (routine), oldset, NULL);
+	  MOM_DBG_VALUE (web, "new set of routines in first module=", newset);
+	  mom_item_put_attr ((mom_anyitem_t *) mom_item__first_module,
+			     (mom_anyitem_t *) mom_item__routines, newset);
+	}
+      else if (mom_item_webrequest_post_arg (_L (web), "do_removerout").ptr)
+	{
+#warning we are missing a et difference or remove
+	}
+      else if (mom_item_webrequest_post_arg (_L (web), "do_editrout").ptr)
+	{
+	}
 #warning momcode_web_form_handle_routine incomplete
       MOM_WARNING ("momcode_web_form_handle_routine incomplete");
     }
   return routres_pop;
+#undef _L
 }
 
 const struct momroutinedescr_st momrout_web_form_handle_routine =
   {.rout_magic = ROUTINE_MAGIC,
   .rout_minclosize = 0,
-  .rout_frame_nbval = 1,
+  .rout_frame_nbval = wfhv__lastval,
   .rout_frame_nbnum = 0,
   .rout_frame_nbdbl = 0,
   .rout_name = "web_form_handle_routine",

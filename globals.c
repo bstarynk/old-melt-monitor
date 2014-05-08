@@ -189,6 +189,20 @@ mom_item_named (const char *name)
 
 
 mom_anyitem_t *
+mom_item_of_name_string (momval_t namev)
+{
+  const mom_anyitem_t *itm = NULL;
+  if (!namev.ptr || *namev.ptype != momty_string)
+    return NULL;
+  pthread_mutex_lock (&glob_mtx);
+  int ix = find_name_index (namev.pstring->cstr, namev.pstring->hash);
+  if (ix >= 0)
+    itm = glob_dict.name_hashstr[ix].nme_itm;
+  pthread_mutex_unlock (&glob_mtx);
+  return (mom_anyitem_t *) itm;
+}
+
+mom_anyitem_t *
 mom_item_named_with_string (const char *name, const momstring_t ** pstr)
 {
   const mom_anyitem_t *itm = NULL;
