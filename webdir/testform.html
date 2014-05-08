@@ -50,8 +50,13 @@
 
   <div id='id_toolbar' class='toolbar_cl'>
     <i>Toolbar:</i> <br/>
-    <label for='routname_id'>Routine:</label> <input type='text' id='routname_id' name='routine_name' />
+    <form action='/form_handle_routine' method='post'>
+    <label for='routname_id'>Routine:</label> <input type='text' id='routname_id' name='routine_name' size='48'/>
     <script>install_routine_completer('#routname_id');</script>
+    <label for='addrout_id'>Add:</label> <input type='submit' id='addrout_id' name='do_addrout' value='add routine' /> &nbsp;
+    <label for='removerout_id'>Remove:</label> <input type='submit' id='removerout_id' name='do_removerout' value='remove routine' /> &nbsp;
+    <label for='editrout_id'>Edit:</label> <input type='submit' id='editrout_id' name='do_editrout' value='edit routine' /> &nbsp;
+    </form>
   </div>
 
   <div id='id_routeditor'>

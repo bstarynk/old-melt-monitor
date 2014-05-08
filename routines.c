@@ -276,6 +276,51 @@ const struct momroutinedescr_st momrout_web_form_new_named =
 };
 
 
+////////////////////////////////////////////////////////////////
+
+int
+momcode_web_form_handle_routine (int state, momit_tasklet_t * tasklet,
+				 momclosure_t * closure, momval_t * locvals,
+				 intptr_t * locnums, double *locdbls)
+{
+  momval_t webv = locvals[0];
+  time_t now = 0;
+  struct tm nowtm = { };
+  char nowbuf[64] = "";
+  time (&now);
+  strftime (nowbuf, sizeof (nowbuf), "%c", localtime_r (&now, &nowtm));
+  MONIMELT_DEBUG (web,
+		  "momcode_web_form_handle_routine state=%d webnum=%ld nowbuf=%s",
+		  state, mom_item_webrequest_webnum (webv), nowbuf);
+  MOM_DBG_ITEM (web, "web_form_handle_routine tasklet=",
+		(const mom_anyitem_t *) tasklet);
+  MOM_DBG_VALUE (web, "web_form_handle_routine webv=", webv);
+  MOM_DBG_VALUE (web, "web_form_handle_routine closure=",
+		 (momval_t) (const momclosure_t *) closure);
+  MOM_DBG_VALUE (web, "web_form_handle_routine method=",
+		 (momval_t) mom_item_webrequest_method (webv));
+  if (mom_item_webrequest_method (webv).ptr ==
+      ((momval_t) mom_item__POST).ptr)
+    {
+      MONIMELT_DEBUG (web, "momcode_web_form_handle_routine POST");
+#warning momcode_web_form_handle_routine incomplete
+      MONIMELT_WARNING ("momcode_web_form_handle_routine incomplete");
+    }
+  return routres_pop;
+}
+
+const struct momroutinedescr_st momrout_web_form_handle_routine =
+  {.rout_magic = ROUTINE_MAGIC,
+  .rout_minclosize = 0,
+  .rout_frame_nbval = 1,
+  .rout_frame_nbnum = 0,
+  .rout_frame_nbdbl = 0,
+  .rout_name = "web_form_handle_routine",
+  .rout_code = (const momrout_sig_t *) momcode_web_form_handle_routine,
+  .rout_timestamp = __DATE__ "@" __TIME__
+};
+
+////////////////////////////////////////////////////////////////
 
 int
 momcode_ajax_start (int state, momit_tasklet_t * tasklet,
@@ -565,7 +610,7 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 	  SET_STATE (begin_emission);
 	else
 	  {
-	    MONIMELT_WARNING ("no routines in module");
+	    MONIMELT_WARNING ("no routines in first_module");
 	    l_routines = MONIMELT_NULLV;
 	    SET_STATE (begin_emission);
 	  }

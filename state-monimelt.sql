@@ -34,7 +34,9 @@ INSERT INTO t_item VALUES('0229c553-c443-49a9-9244-5f8d7d3c79cf','dictionnary','
   "space":".","uuid":"84e3d03a-f704-42c9-b5bd-175d5845076d"},"jtype":"closure",
  "sons":[]}},
 {"name":"form_new_named","val":{"conn":{"jtype":"itemref","space":".","uuid":"dafbdfa9-d633-447a-8ab3-e011f4f3fee8"},
- "jtype":"closure","sons":["Gap*Web_Form_New_Named"]}}]}
+ "jtype":"closure","sons":["Gap*Web_Form_New_Named"]}},{"name":"web_form_handle_routine",
+ "val":{"conn":{"jtype":"itemref","space":".","uuid":"2e0f4651-d859-4e58-960d-9a1b5a84032f"},
+ "jtype":"closure","sons":["Gap*Web_Form_Handle_Routine"]}}]}
 ');
 INSERT INTO t_item VALUES('03c1ace3-3293-43bb-9541-19b4357cbc3c','json_name','{"jtype":"json_name","name":"conn"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('0e750860-7063-4ad7-8488-ee57d4aba2a8','routine','{"jtype":"routine","name":"ajax_start"}','{"attributes":[{"attr":{"jtype":"itemref","space":".","uuid":"1e299c1c-4d29-4616-b30b-258c72722484"},
@@ -42,6 +44,8 @@ INSERT INTO t_item VALUES('0e750860-7063-4ad7-8488-ee57d4aba2a8','routine','{"jt
 INSERT INTO t_item VALUES('11da23ab-3b9e-4ea0-bc13-4a9aa46e2995','json_name','{"jtype":"json_name","name":"json_object"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('18d95093-b523-4ee1-8bca-ded252e91235','json_name','{"jtype":"json_name","name":"itemref"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('1e299c1c-4d29-4616-b30b-258c72722484','box','{"jtype":"box"}','{"attributes":null,"box":null,"content":null}');
+INSERT INTO t_item VALUES('2e0f4651-d859-4e58-960d-9a1b5a84032f','routine','{"jtype":"routine","name":"web_form_handle_routine"}','{"attributes":[{"attr":{"jtype":"itemref","space":".","uuid":"1e299c1c-4d29-4616-b30b-258c72722484"},
+ "val":"handling of initial routines within first_module"}],"content":null}');
 INSERT INTO t_item VALUES('3265e0f0-f3f7-4ef1-b157-50ec4fd4ce41','json_name','{"jtype":"json_name","name":"set"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('3b19b433-29b0-473e-9827-7756ee219573','bool','{"jtype":"boolean"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('402d1108-9e25-4065-b81d-1bea8b06f269','json_name','{"jtype":"json_name","name":"vector"}','{"attributes":null,"content":null}');
@@ -150,6 +154,7 @@ INSERT INTO t_name VALUES('vector','402d1108-9e25-4065-b81d-1bea8b06f269','.');
 INSERT INTO t_name VALUES('web_dictionnary','0229c553-c443-49a9-9244-5f8d7d3c79cf','.');
 INSERT INTO t_name VALUES('web_form_compile','f094ea32-9a48-4de2-bba7-4b25e8d028d1','.');
 INSERT INTO t_name VALUES('web_form_exit','84e3d03a-f704-42c9-b5bd-175d5845076d','.');
+INSERT INTO t_name VALUES('web_form_handle_routine','2e0f4651-d859-4e58-960d-9a1b5a84032f','.');
 INSERT INTO t_name VALUES('web_form_new_named','dafbdfa9-d633-447a-8ab3-e011f4f3fee8','.');
 INSERT INTO t_param VALUES('dump_format_version','MoniMelt2014A');
 COMMIT;
