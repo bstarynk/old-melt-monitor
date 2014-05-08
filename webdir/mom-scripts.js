@@ -20,8 +20,12 @@
 // jquery ready function for our document
 $(function(){
     // if there is a momstart_id element, fill it by an Ajax query
-    var starthtml;
-    $.get('/ajax_start',function(data){starthtml=data;},'html');
-    if (starthtml) $('#momstart_id').html(starthtml);
-    else alert('no starthml');
+    $.ajax({ url: '/ajax_start',
+	     method: 'GET',
+	     dataType: 'html',
+	     success: function(data){
+		 console.debug('ajax_start got data=', data);
+		 $('#momstart_id').html(data);
+	     }
+	   });
 });
