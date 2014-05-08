@@ -513,6 +513,7 @@ struct momroutinedescr_st
   unsigned rout_frame_nbdbl;	/* number of double numbers in its frame */
   const char *rout_name;	/* the name FOO */
   const momrout_sig_t *rout_code;	/* the code */
+  const char *rout_timestamp;
 };
 
 struct momroutineitem_st
@@ -1299,6 +1300,9 @@ momit_routine_t *mom_make_item_routine_of_uuid (uuid_t, const char *name,
 momit_routine_t *mom_make_item_routine (const char *name, unsigned space);
 // return NULL if routine not found
 momit_routine_t *mom_try_make_item_routine (const char *name, unsigned space);
+// make an embryonic routine 
+momit_routine_t *mom_make_item_embryonic_routine (const char *name,
+						  unsigned space);
 #define mom_create__routine(Name,Uid) \
   mom_make_item_routine_of_uuid(Uid,#Name,MONIMELT_SPACE_ROOT)
 

@@ -258,7 +258,7 @@ mom_node_sorted_names_prefixed (const mom_anyitem_t * conn,
   for (int ix = 0; ix < nbindex; ix++)
     {
       int cix = arrindexes[ix];
-      assert (cix>=0 && cix<glob_dict.name_size);
+      assert (cix >= 0 && cix < glob_dict.name_size);
       arrsons[ix] = (momval_t) glob_dict.name_hashitem[cix].nme_str;
       assert (arrsons[ix].ptr && arrsons[ix].ptr != MONIMELT_EMPTY
 	      && *arrsons[ix].ptype == momty_string);

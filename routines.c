@@ -108,7 +108,8 @@ const struct momroutinedescr_st momrout_web_form_exit =
   .rout_frame_nbnum = 0,
   .rout_frame_nbdbl = 0,
   .rout_name = "web_form_exit",
-  .rout_code = (const momrout_sig_t *) momcode_web_form_exit
+  .rout_code = (const momrout_sig_t *) momcode_web_form_exit,
+  .rout_timestamp = __DATE__ "@" __TIME__
 };
 
 
@@ -192,9 +193,11 @@ momcode_web_form_new_named (int state, momit_tasklet_t * tasklet,
 		newitm =
 		  (mom_anyitem_t *) mom_make_item_queue (MONIMELT_SPACE_ROOT);
 	      else if (!strcmp (typec, "routine"))
-		newitm =
-		  (mom_anyitem_t *) mom_make_item_routine (namec,
-							   MONIMELT_SPACE_ROOT);
+		{
+		  newitm =
+		    (mom_anyitem_t *) mom_make_item_embryonic_routine (namec,
+								       MONIMELT_SPACE_ROOT);
+		}
 	      else if (!strcmp (typec, "vector"))
 		newitm =
 		  (mom_anyitem_t *) mom_make_item_vector (MONIMELT_SPACE_ROOT,
@@ -268,7 +271,8 @@ const struct momroutinedescr_st momrout_web_form_new_named =
   .rout_frame_nbnum = 0,
   .rout_frame_nbdbl = 0,
   .rout_name = "web_form_new_named",
-  .rout_code = (const momrout_sig_t *) momcode_web_form_new_named
+  .rout_code = (const momrout_sig_t *) momcode_web_form_new_named,
+  .rout_timestamp = __DATE__ "@" __TIME__
 };
 
 
@@ -322,7 +326,8 @@ const struct momroutinedescr_st momrout_ajax_start =
   .rout_frame_nbnum = 0,
   .rout_frame_nbdbl = 0,
   .rout_name = "ajax_start",
-  .rout_code = (const momrout_sig_t *) momcode_ajax_start
+  .rout_code = (const momrout_sig_t *) momcode_ajax_start,
+  .rout_timestamp = __DATE__ "@" __TIME__
 };
 
 
@@ -404,7 +409,8 @@ const struct momroutinedescr_st momrout_ajax_complete_routine_name =
   .rout_frame_nbnum = 0,
   .rout_frame_nbdbl = 0,
   .rout_name = "ajax_complete_routine_name",
-  .rout_code = (const momrout_sig_t *) momcode_ajax_complete_routine_name
+  .rout_code = (const momrout_sig_t *) momcode_ajax_complete_routine_name,
+  .rout_timestamp = __DATE__ "@" __TIME__
 };
 
 
@@ -737,7 +743,8 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 				" .rout_frame_nbnum = %d,\n"
 				" .rout_frame_nbdbl = %d,\n"
 				" .rout_name = \"%s\",\n"
-				" .rout_code = (const momrout_sig_t *) momcode_%s\n"
+				" .rout_code = (const momrout_sig_t *) momcode_%s,\n"
+				" .rout_timestamp = __DATE__ \"@\" __TIME__\n"
 				"};\n", cnam, cnam,
 				mom_seqitem_length (closurev),
 				mom_seqitem_length (valuesv),
