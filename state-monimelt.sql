@@ -39,6 +39,7 @@ INSERT INTO t_item VALUES('0229c553-c443-49a9-9244-5f8d7d3c79cf','dictionnary','
  "jtype":"closure","sons":["Gap*Form_New_Named"]}}]}
 ');
 INSERT INTO t_item VALUES('03c1ace3-3293-43bb-9541-19b4357cbc3c','json_name','{"jtype":"json_name","name":"conn"}','{"attributes":null,"content":null}');
+INSERT INTO t_item VALUES('0403e866-c514-4ee1-aa47-fc8b476f937e','box','{"jtype":"box"}','{"attributes":null,"box":null,"content":null}');
 INSERT INTO t_item VALUES('0e750860-7063-4ad7-8488-ee57d4aba2a8','routine','{"jtype":"routine","name":"ajax_start"}','{"attributes":[{"attr":{"jtype":"itemref","space":".","uuid":"1e299c1c-4d29-4616-b30b-258c72722484"},
  "val":"for ajax_start GET request at HTML page initialization"}],"content":null}');
 INSERT INTO t_item VALUES('11da23ab-3b9e-4ea0-bc13-4a9aa46e2995','json_name','{"jtype":"json_name","name":"json_object"}','{"attributes":null,"content":null}');
@@ -117,6 +118,7 @@ INSERT INTO t_name VALUES('box','dc6e0602-32b4-4416-a675-d45fb894f7eb','.');
 INSERT INTO t_name VALUES('buffer','ebb71e9a-ef65-4fcd-aec9-f4a5e780e333','.');
 INSERT INTO t_name VALUES('closure','f8a3568d-ae4a-4486-a362-577e0ec91474','.');
 INSERT INTO t_name VALUES('cold_routine_emit','d7d288ae-7a8e-4709-99d0-6dfba1c9565f','.');
+INSERT INTO t_name VALUES('cold_state','0403e866-c514-4ee1-aa47-fc8b476f937e','.');
 INSERT INTO t_name VALUES('comment','1e299c1c-4d29-4616-b30b-258c72722484','.');
 INSERT INTO t_name VALUES('conn','03c1ace3-3293-43bb-9541-19b4357cbc3c','.');
 INSERT INTO t_name VALUES('content','9a05b9fa-17d3-4294-9253-e67406e52d4a','.');

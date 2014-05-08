@@ -724,6 +724,14 @@ mom_arity_of_node_or_closure (momval_t clonodv)
   return clonodv.pclosure->slen;
 }
 
+static inline bool mom_is_node_or_closure (momval_t clonodv)
+{
+  if (!clonodv.ptr
+      || (*clonodv.ptype != momty_closure && *clonodv.ptype != momty_node))
+    return false;
+  return true;
+}
+
 static inline momval_t
 mom_node_nth (momval_t nodv, int rk)
 {
@@ -1271,6 +1279,14 @@ mom_make_string (const char *str)
 {
   return mom_make_string_len (str, -1);
 };
+
+static inline bool
+mom_is_string (momval_t val)
+{
+  if (!val.ptr || *val.ptype != momty_string)
+    return false;
+  return true;
+}
 
 static inline const char *
 mom_string_cstr (momval_t val)
