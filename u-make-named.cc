@@ -78,7 +78,7 @@ void read_header(const char*argv0)
         memset (curtype, 0, sizeof(curtype));
         memset (curuuid, 0, sizeof(curuuid));
         int pos= 0;
-        if (sscanf(line.c_str(), " MONIMELT_NAMED ( %78[A-Za-z0-9_], %78[A-Za-z0-9_], \"%39[0-9a-fA-F-]\" )%n",
+        if (sscanf(line.c_str(), " MOM_NAMED ( %78[A-Za-z0-9_], %78[A-Za-z0-9_], \"%39[0-9a-fA-F-]\" )%n",
                    curname, curtype, curuuid, &pos) >= 3 && pos>0) {
             headvect.push_back(headentry(std::string(curname),std::string(curtype),std::string(curuuid)));
             if (!strcmp(curname, itemname.c_str())) {
@@ -87,7 +87,7 @@ void read_header(const char*argv0)
                 exit(EXIT_FAILURE);
             }
         }
-        else if (line.find("MONIMELT_NAMED") != std::string::npos
+        else if (line.find("MOM_NAMED") != std::string::npos
                  && line[0] != '#' && line[0] != '/') {
             fprintf(stderr, "%s:%d: bad line %s\n",
                     headerpath.c_str(), lineno, line.c_str());
@@ -181,18 +181,18 @@ void update_header(const char*argv0)
     std::ofstream ohf(headerpath);
     ohf << "// generated header " << headerpath << " for named items of Monimelt"
         << std::endl;
-    ohf << "#ifndef MONIMELT_NAMED" << std::endl
-        << "#error should have defined MONIMELT_NAMED macro" << std::endl
-        << "#endif /*MONIMELT_NAMED*/" << std::endl << std::endl;
+    ohf << "#ifndef MOM_NAMED" << std::endl
+        << "#error should have defined MOM_NAMED macro" << std::endl
+        << "#endif /*MOM_NAMED*/" << std::endl << std::endl;
 
-    ohf << "// MONIMELT_NAMED(Name,Type,Uidstr)" << std::endl;
+    ohf << "// MOM_NAMED(Name,Type,Uidstr)" << std::endl;
     for (auto e : headvect) {
-        ohf << " MONIMELT_NAMED (" << e.name << ", "
+        ohf << " MOM_NAMED (" << e.name << ", "
             << e.type << ", \""
             << e.uidstr << "\")" << std::endl;
     }
     ohf << std::endl << "// end of " << headvect.size() << " named items" << std::endl;
-    ohf << "#undef MONIMELT_NAMED" << std::endl;
+    ohf << "#undef MOM_NAMED" << std::endl;
     ohf.close();
     printf("%s: generating %d items in header %s\n", argv0,
            (int)headvect.size(), headerpath.c_str());

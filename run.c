@@ -112,9 +112,9 @@ work_loop (struct GC_stack_base *sb, void *data)
   MOMGC_REGISTER_MY_THREAD (sb);
   assert (wd != NULL);
   mom_anyitem_t *curtsk = NULL;
-  MONIMELT_DEBUG (run,
-		  "work_loop tid %d start index %d wd@%p  cur_worker@%p",
-		  (int) mom_gettid (), wd->work_index, wd, cur_worker);
+  MOM_DEBUG (run,
+	     "work_loop tid %d start index %d wd@%p  cur_worker@%p",
+	     (int) mom_gettid (), wd->work_index, wd, cur_worker);
   bool working = false;
   long loopcnt = 0;
   do
@@ -128,8 +128,8 @@ work_loop (struct GC_stack_base *sb, void *data)
 		  && workers + wd->work_index == wd));
       pthread_mutex_unlock (&mom_run_mtx);
       loopcnt++;
-      MONIMELT_DEBUG (run, "work_loop index %d, loopcnt=%ld, working=%d",
-		      wd->work_index, loopcnt, (int) working);
+      MOM_DEBUG (run, "work_loop index %d, loopcnt=%ld, working=%d",
+		 wd->work_index, loopcnt, (int) working);
       if (!working)
 	break;
       long long tc = 0;
@@ -142,21 +142,18 @@ work_loop (struct GC_stack_base *sb, void *data)
       pthread_mutex_unlock (&mom_run_mtx);
       if (curtsk)
 	{
-	  MONIMELT_DEBUG (run, "work_loop taskletcounter %lld before step",
-			  tc);
+	  MOM_DEBUG (run, "work_loop taskletcounter %lld before step", tc);
 	  mom_tasklet_step ((momit_tasklet_t *) curtsk);
-	  MONIMELT_DEBUG (run, "work_loop taskletcounter %lld after step",
-			  tc);
+	  MOM_DEBUG (run, "work_loop taskletcounter %lld after step", tc);
 	}
       else
 	{
-	  double curwtim = monimelt_clock_time (CLOCK_REALTIME);
-	  MONIMELT_DEBUG (run, "work_loop index %d no curtsk",
-			  wd->work_index);
+	  double curwtim = mom_clock_time (CLOCK_REALTIME);
+	  MOM_DEBUG (run, "work_loop index %d no curtsk", wd->work_index);
 	  pthread_mutex_lock (&mom_run_mtx);
 	  struct timespec endts =
-	    monimelt_timespec (curwtim + WORK_DELAY +
-			       (wd->work_index * 0.03 + 0.01));
+	    mom_timespec (curwtim + WORK_DELAY +
+			  (wd->work_index * 0.03 + 0.01));
 	  working = working_flag;
 	  if (working)
 	    pthread_cond_timedwait (&mom_run_changed_cond, &mom_run_mtx,
@@ -166,11 +163,11 @@ work_loop (struct GC_stack_base *sb, void *data)
 	}
     }
   while (working);
-  MONIMELT_DEBUG (run, "work_loop index %d ending", wd->work_index);
+  MOM_DEBUG (run, "work_loop index %d ending", wd->work_index);
   {
     pthread_mutex_lock (&mom_run_mtx);
     assert (!working_flag);
-    MONIMELT_DEBUG (run, "work_loop index %d clearing", wd->work_index);
+    MOM_DEBUG (run, "work_loop index %d clearing", wd->work_index);
     wd->work_index = 0;
     pthread_mutex_unlock (&mom_run_mtx);
     pthread_cond_broadcast (&mom_run_changed_cond);
@@ -193,7 +190,7 @@ work_cb (void *ad)
   assert (wd && wd->work_magic == WORK_MAGIC);
   if (!mom_item__agenda
       || ((mom_anyitem_t *) mom_item__agenda)->typnum != momty_queueitem)
-    MONIMELT_FATAL ("bad agenda");
+    MOM_FATAL ("bad agenda");
   cur_worker = wd;
   MOMGC_CALL_WITH_STACK_BASE (work_loop, wd);
   cur_worker = NULL;
@@ -205,8 +202,7 @@ void
 mom_run_at (const char *srcfil, int srclin, const char *reason)
 {
   bool restart_work = false;
-  MONIMELT_DEBUG (run, "mom_run %s:%d reason %s start", srcfil, srclin,
-		  reason);
+  MOM_DEBUG (run, "mom_run %s:%d reason %s start", srcfil, srclin, reason);
   do
     {
       // start the work threads
@@ -229,16 +225,16 @@ mom_run_at (const char *srcfil, int srclin, const char *reason)
 	pthread_mutex_unlock (&mom_run_mtx);
       }
       usleep (75000);
-      MONIMELT_DEBUG (run, "mom_run %s:%d reason %s joining %d workers",
-		      srcfil, srclin, reason, mom_nb_workers);
+      MOM_DEBUG (run, "mom_run %s:%d reason %s joining %d workers",
+		 srcfil, srclin, reason, mom_nb_workers);
       // join the work threads
       {
 	for (unsigned ix = 1; ix <= mom_nb_workers; ix++)
 	  {
 	    void *ret = NULL;
 	    pthread_join (workers[ix].work_thread, &ret);
-	    MONIMELT_DEBUG (run, "mom_run %s:%d reason %s joined worker#%d",
-			    srcfil, srclin, reason, ix);
+	    MOM_DEBUG (run, "mom_run %s:%d reason %s joined worker#%d",
+		       srcfil, srclin, reason, ix);
 	  }
       }
       // check that we are not working
@@ -246,8 +242,8 @@ mom_run_at (const char *srcfil, int srclin, const char *reason)
       {
 	pthread_mutex_lock (&mom_run_mtx);
 	if (working_flag)
-	  MONIMELT_FATAL ("corruption, working after run %s:%d reason %s",
-			  srcfil, srclin, reason);
+	  MOM_FATAL ("corruption, working after run %s:%d reason %s",
+		     srcfil, srclin, reason);
 	pthread_mutex_unlock (&mom_run_mtx);
       }
       // run the post runner functions
@@ -270,13 +266,12 @@ mom_run_at (const char *srcfil, int srclin, const char *reason)
       if (nbpostrunner > 0 && nbfailpost == 0)
 	{
 	  restart_work = 1;
-	  MONIMELT_DEBUG (run, "mom_run %s:%d reason %s restarting", srcfil,
-			  srclin, reason);
+	  MOM_DEBUG (run, "mom_run %s:%d reason %s restarting", srcfil,
+		     srclin, reason);
 	}
     }
   while (restart_work);
-  MONIMELT_DEBUG (run, "mom_run %s:%d reason %s ending", srcfil, srclin,
-		  reason);
+  MOM_DEBUG (run, "mom_run %s:%d reason %s ending", srcfil, srclin, reason);
 }
 
 void
@@ -285,8 +280,8 @@ mom_request_stop_at (const char *srcfil, int srcline, const char *reason,
 {
   int nbworkers = 0;
   long stopcount = 0;
-  MONIMELT_DEBUG (run, "mom_request_stop start %s:%d reason %s", srcfil,
-		  srcline, reason);
+  MOM_DEBUG (run, "mom_request_stop start %s:%d reason %s", srcfil,
+	     srcline, reason);
   // first register the postrunner
   if (postrunner)
     {
@@ -301,44 +296,43 @@ mom_request_stop_at (const char *srcfil, int srcline, const char *reason,
 	  }
       pthread_mutex_unlock (&mom_run_mtx);
       if (pix < 0)
-	MONIMELT_FATAL ("failed to register postrunner @%p", postrunner);
-      MONIMELT_DEBUG (run,
-		      "request_stop reason %s registered pix %d", reason,
-		      pix);
+	MOM_FATAL ("failed to register postrunner @%p", postrunner);
+      MOM_DEBUG (run,
+		 "request_stop reason %s registered pix %d", reason, pix);
     };
   do
     {
 #define STOP_DELAY 1.5
-      double stoptime = monimelt_clock_time (CLOCK_REALTIME) + STOP_DELAY;
+      double stoptime = mom_clock_time (CLOCK_REALTIME) + STOP_DELAY;
       pthread_mutex_lock (&mom_run_mtx);
       stopcount++;
-      MONIMELT_DEBUG (run,
-		      "mom_request_stop stopcount=%ld reason %s clearing working_flag",
-		      stopcount, reason);
+      MOM_DEBUG (run,
+		 "mom_request_stop stopcount=%ld reason %s clearing working_flag",
+		 stopcount, reason);
       working_flag = false;
       nbworkers = 0;
       for (unsigned ix = 1; ix <= mom_nb_workers; ix++)
 	if (workers[ix].work_magic == WORK_MAGIC
 	    && workers[ix].work_index == ix && cur_worker != workers + ix)
 	  nbworkers++;
-      MONIMELT_DEBUG (run, "mom_request_stop nbworkers=%d reason %s",
-		      nbworkers, reason);
+      MOM_DEBUG (run, "mom_request_stop nbworkers=%d reason %s",
+		 nbworkers, reason);
       int errwait = 0;
       if (nbworkers > 0)
 	{
-	  struct timespec stopts = monimelt_timespec (stoptime);
+	  struct timespec stopts = mom_timespec (stoptime);
 	  errwait =
 	    pthread_cond_timedwait (&mom_run_changed_cond, &mom_run_mtx,
 				    &stopts);
 	}
       pthread_mutex_unlock (&mom_run_mtx);
-      MONIMELT_DEBUG (run, "nbworkers=%d, errwait#%d (%s) reason %s",
-		      nbworkers, errwait, strerror (errwait), reason);
+      MOM_DEBUG (run, "nbworkers=%d, errwait#%d (%s) reason %s",
+		 nbworkers, errwait, strerror (errwait), reason);
       usleep (500);
     }
   while (nbworkers > 0);
-  MONIMELT_DEBUG (run, "mom_request_stop end %s:%d reason %s", srcfil,
-		  srcline, reason);
+  MOM_DEBUG (run, "mom_request_stop end %s:%d reason %s", srcfil,
+	     srcline, reason);
 }
 
 
@@ -351,7 +345,7 @@ start_some_pending_jobs (void)
   int nbstarting = 0;
   momit_process_t *proctab[MOM_MAX_WORKERS] = { };
   memset (proctab, 0, sizeof (proctab));
-  MONIMELT_DEBUG (run, "start_some_pending_jobs");
+  MOM_DEBUG (run, "start_some_pending_jobs");
   pthread_mutex_lock (&job_mtx);
   for (unsigned jix = 1; jix <= MOM_MAX_WORKERS; jix++)
     {
@@ -370,8 +364,8 @@ start_some_pending_jobs (void)
       if (jobq_first == NULL)
 	jobq_last = NULL;
     }
-  MONIMELT_DEBUG (run, "start_some_pending_jobs nbstarting=%d, nbrunning=%d",
-		  nbstarting, nbrunning);
+  MOM_DEBUG (run, "start_some_pending_jobs nbstarting=%d, nbrunning=%d",
+	     nbstarting, nbrunning);
   for (unsigned rix = 0; rix < nbstarting; rix++)
     {
       momit_process_t *curproc = proctab[rix];
@@ -382,7 +376,7 @@ start_some_pending_jobs (void)
 	  jobnum = j;
       MOM_DBG_ITEM (run, "start_some_pending_jobs curproc=",
 		    (mom_anyitem_t *) curproc);
-      MONIMELT_DEBUG (run, "start_some_pending_jobs jobnum=%d", jobnum);
+      MOM_DEBUG (run, "start_some_pending_jobs jobnum=%d", jobnum);
       assert (curproc && curproc->iproc_item.typnum == momty_processitem);
       assert (curproc->iproc_pid <= 0 && curproc->iproc_outfd < 0);
       assert (jobnum > 0);
@@ -391,9 +385,9 @@ start_some_pending_jobs (void)
 	mom_string_cstr ((momval_t) curproc->iproc_progname);
       const char **progargv =
 	GC_MALLOC ((curproc->iproc_argcount + 2) * sizeof (char *));
-      if (MONIMELT_UNLIKELY (!progargv))
-	MONIMELT_FATAL ("cannot allocate array for %d program arguments",
-			curproc->iproc_argcount);
+      if (MOM_UNLIKELY (!progargv))
+	MOM_FATAL ("cannot allocate array for %d program arguments",
+		   curproc->iproc_argcount);
       memset (progargv, 0, (curproc->iproc_argcount + 2) * sizeof (char *));
       progargv[0] = progname;
       unsigned argcnt = 1;
@@ -406,11 +400,11 @@ start_some_pending_jobs (void)
 	}
       progargv[argcnt] = NULL;
       for (unsigned aix = 0; aix < argcnt; aix++)
-	MONIMELT_DEBUG (run, "run progargv[%d]=%s", aix, progargv[aix]);
+	MOM_DEBUG (run, "run progargv[%d]=%s", aix, progargv[aix]);
       assert (progname != NULL);
       if (pipe (pipetab))
-	MONIMELT_FATAL ("failed to create pipe for process %s", progname);
-      MONIMELT_DEBUG (run, "pipetab={r:%d,w:%d}", pipetab[0], pipetab[1]);
+	MOM_FATAL ("failed to create pipe for process %s", progname);
+      MOM_DEBUG (run, "pipetab={r:%d,w:%d}", pipetab[0], pipetab[1]);
       fflush (NULL);
       pid_t newpid = fork ();
       if (newpid == 0)
@@ -450,10 +444,10 @@ start_some_pending_jobs (void)
 	  _exit (127);
 	}
       else if (newpid < 0)
-	MONIMELT_FATAL ("fork failed for %s", progname);
+	MOM_FATAL ("fork failed for %s", progname);
       // parent process:
-      MONIMELT_DEBUG (run, "start_some_pending_jobs newpid=%d, jobnum=%d",
-		      (int) newpid, jobnum);
+      MOM_DEBUG (run, "start_some_pending_jobs newpid=%d, jobnum=%d",
+		 (int) newpid, jobnum);
       curproc->iproc_outfd = pipetab[0];
       curproc->iproc_pid = newpid;
       curproc->iproc_jobnum = jobnum;
@@ -477,14 +471,14 @@ typedef void mom_poll_handler_sig_t (int fd, short revent, void *data);
 static void
 event_loop_handler (int fd, short revent, void *data)
 {
-  MONIMELT_DEBUG (run, "event_loop_handler fd=%d", fd);
+  MOM_DEBUG (run, "event_loop_handler fd=%d", fd);
   assert (fd == event_loop_read_pipe && data);
   bool *prepeatloop = data;
   char rbuf[4];
   memset (rbuf, 0, sizeof (rbuf));
   if (read (fd, &rbuf, 1) > 0)
     {
-      MONIMELT_DEBUG (run, "event_loop_handler rbuf='%c'", rbuf[0]);
+      MOM_DEBUG (run, "event_loop_handler rbuf='%c'", rbuf[0]);
       switch (rbuf[0])
 	{
 	case EVLOOP_STOP:
@@ -494,8 +488,8 @@ event_loop_handler (int fd, short revent, void *data)
 	  start_some_pending_jobs ();
 	  break;
 	default:
-	  MONIMELT_FATAL ("unexpected loop command %c = %d", rbuf[0],
-			  (int) rbuf[0]);
+	  MOM_FATAL ("unexpected loop command %c = %d", rbuf[0],
+		     (int) rbuf[0]);
 	}
     }
 }
@@ -506,7 +500,7 @@ event_loop_handler (int fd, short revent, void *data)
 static void
 check_for_some_child_process_at (const char *srcfil, int srclin)
 {
-  MONIMELT_DEBUG (run, "check_for_some_child_process %s:%d", srcfil, srclin);
+  MOM_DEBUG (run, "check_for_some_child_process %s:%d", srcfil, srclin);
   int pst = 0;
   pid_t wpid = waitpid (-1, &pst, WNOHANG);
   if (wpid > 0)
@@ -514,8 +508,8 @@ check_for_some_child_process_at (const char *srcfil, int srclin)
       momit_process_t *wproc = NULL;
       const momclosure_t *clos = NULL;
       const momstring_t *outstr = NULL;
-      MONIMELT_DEBUG (run, "check_for_some_child_process wpid=%d pst=%#x",
-		      wpid, pst);
+      MOM_DEBUG (run, "check_for_some_child_process wpid=%d pst=%#x",
+		 wpid, pst);
       pthread_mutex_lock (&job_mtx);
       // handle the ended process
       for (unsigned jix = 1; jix <= MOM_MAX_WORKERS && !wproc; jix++)
@@ -540,8 +534,8 @@ check_for_some_child_process_at (const char *srcfil, int srclin)
 	exitstatus = WEXITSTATUS (pst);
       else if (WIFSIGNALED (pst))
 	termsig = WTERMSIG (pst);
-      MONIMELT_DEBUG (run, "wpid %d, exitstatus=%d termsig=%d",
-		      (int) wpid, exitstatus, termsig);
+      MOM_DEBUG (run, "wpid %d, exitstatus=%d termsig=%d",
+		 (int) wpid, exitstatus, termsig);
       if (wproc && (exitstatus >= 0 || termsig >= 0))
 	{
 	  extern momit_box_t *mom_item__exited;
@@ -562,7 +556,7 @@ check_for_some_child_process_at (const char *srcfil, int srclin)
 	    momit_tasklet_t *protasklet = NULL;
 	    if (exitstatus >= 0)
 	      {
-		protasklet = mom_make_item_tasklet (MONIMELT_SPACE_NONE);
+		protasklet = mom_make_item_tasklet (MOM_SPACE_NONE);
 		mom_tasklet_push_frame ((momval_t) protasklet,
 					(momval_t) clos,
 					MOMPFR_THREE_VALUES, wproc,
@@ -571,7 +565,7 @@ check_for_some_child_process_at (const char *srcfil, int srclin)
 	      }
 	    else if (termsig >= 0)
 	      {
-		protasklet = mom_make_item_tasklet (MONIMELT_SPACE_NONE);
+		protasklet = mom_make_item_tasklet (MOM_SPACE_NONE);
 		mom_tasklet_push_frame ((momval_t) protasklet,
 					(momval_t) clos,
 					MOMPFR_THREE_VALUES, wproc,
@@ -595,37 +589,37 @@ mysignalfd_handler (int fd, short revent, void *data)
 {
   struct signalfd_siginfo sinf;
   memset (&sinf, 0, sizeof (sinf));
-  MONIMELT_DEBUG (run, "mysignalfd_handler fd=%d sizeof(sinf)=%d", fd,
-		  (int) sizeof (sinf));
+  MOM_DEBUG (run, "mysignalfd_handler fd=%d sizeof(sinf)=%d", fd,
+	     (int) sizeof (sinf));
   assert (fd == my_signals_fd && !data);
   int rdsiz = -2;
   if (revent & POLLIN)
     {
-      MONIMELT_DEBUG (run, "mysignalfd_handler reading fd=%d", fd);
+      MOM_DEBUG (run, "mysignalfd_handler reading fd=%d", fd);
       rdsiz = read (fd, &sinf, sizeof (sinf));
     }
-  MONIMELT_DEBUG (run, "mysignalfd_handler fd=%d rdsiz=%d", fd, rdsiz);
+  MOM_DEBUG (run, "mysignalfd_handler fd=%d rdsiz=%d", fd, rdsiz);
   if (rdsiz < 0)
     {
-      MONIMELT_DEBUG (run, "mysignalfd_handler read failed (%s)",
-		      strerror (errno));
+      MOM_DEBUG (run, "mysignalfd_handler read failed (%s)",
+		 strerror (errno));
       return;
     }
-  MONIMELT_DEBUG (run, "mysignalfd_handler signo=%d (%s)",
-		  sinf.ssi_signo, strsignal (sinf.ssi_signo));
+  MOM_DEBUG (run, "mysignalfd_handler signo=%d (%s)",
+	     sinf.ssi_signo, strsignal (sinf.ssi_signo));
   switch (sinf.ssi_signo)
     {
     case SIGCHLD:
       check_for_some_child_process ();
       break;
     default:
-      MONIMELT_WARNING ("unexpected signal#%d : %s", sinf.ssi_signo,
-			sys_siglist[sinf.ssi_signo]);
+      MOM_WARNING ("unexpected signal#%d : %s", sinf.ssi_signo,
+		   sys_siglist[sinf.ssi_signo]);
       break;
     }
 }
 
-#define MONIMELT_MAX_OUTPUT_LEN (1024*1024)	/* one megabyte */
+#define MOM_MAX_OUTPUT_LEN (1024*1024)	/* one megabyte */
 static void
 process_readout_handler (int fd, short revent, void *data)
 {
@@ -633,23 +627,23 @@ process_readout_handler (int fd, short revent, void *data)
   char rdbuf[PROCOUT_BUFSIZE];
   memset (rdbuf, 0, sizeof (rdbuf));
   int nbr = read (fd, rdbuf, sizeof (rdbuf));
-  MONIMELT_DEBUG (run, "process_readout_handler fd=%d, nbr=%d, rdbuf=%s\n",
-		  fd, nbr, rdbuf);
+  MOM_DEBUG (run, "process_readout_handler fd=%d, nbr=%d, rdbuf=%s\n",
+	     fd, nbr, rdbuf);
   momit_process_t *procitm = data;
   assert (procitm && procitm->iproc_item.typnum == momty_processitem
 	  && fd == procitm->iproc_outfd);
   if (nbr < 0)
     return;
   pthread_mutex_lock (&procitm->iproc_item.i_mtx);
-  if (MONIMELT_UNLIKELY
+  if (MOM_UNLIKELY
       (nbr + procitm->iproc_outpos + 1 >= procitm->iproc_outsize))
     {
       unsigned newsiz =
 	((5 * (nbr + procitm->iproc_outpos) / 4 + 10) | 0x1f) + 1;
       char *newbuf = GC_MALLOC_ATOMIC (newsiz);
       char *oldbuf = procitm->iproc_outbuf;
-      if (MONIMELT_UNLIKELY (!newbuf))
-	MONIMELT_FATAL ("failed to grow output buffer to %d", (int) newsiz);
+      if (MOM_UNLIKELY (!newbuf))
+	MOM_FATAL ("failed to grow output buffer to %d", (int) newsiz);
       memset (newbuf, 0, newsiz);
       memcpy (newbuf, oldbuf, procitm->iproc_outpos);
       GC_FREE (oldbuf);
@@ -659,7 +653,7 @@ process_readout_handler (int fd, short revent, void *data)
   memcpy (procitm->iproc_outbuf + procitm->iproc_outpos, rdbuf, nbr);
   procitm->iproc_outbuf[procitm->iproc_outpos + nbr] = (char) 0;
   procitm->iproc_outpos += nbr;
-  if (procitm->iproc_outpos > MONIMELT_MAX_OUTPUT_LEN)
+  if (procitm->iproc_outpos > MOM_MAX_OUTPUT_LEN)
     {
       close (procitm->iproc_outfd);	// the child process could later get a SIGPIPE if it writes more
       procitm->iproc_outfd = -1;
@@ -670,7 +664,7 @@ process_readout_handler (int fd, short revent, void *data)
 static void
 curl_handler (int fd, short revent, void *data)
 {
-  MONIMELT_DEBUG (run, "curl_handler fd=%d", fd);
+  MOM_DEBUG (run, "curl_handler fd=%d", fd);
   int *pnb = data;
   if (*pnb > 0)
     curl_multi_perform (&multicurl_job, pnb);
@@ -693,12 +687,12 @@ event_loop (struct GC_stack_base *sb, void *data)
   MOMGC_REGISTER_MY_THREAD (sb);
   assert (data == NULL);
   assert (mom_item__heart_beat != NULL);
-  MONIMELT_DEBUG (run, "event_loop start");
+  MOM_DEBUG (run, "event_loop start");
   // set up CURL multi handle
   assert (multicurl_job == NULL);
   multicurl_job = curl_multi_init ();
-  if (MONIMELT_UNLIKELY (!multicurl_job))
-    MONIMELT_FATAL ("failed to initial multi CURL handle");
+  if (MOM_UNLIKELY (!multicurl_job))
+    MOM_FATAL ("failed to initial multi CURL handle");
   // set up the signalfd 
   {
     sigset_t mysetsig;
@@ -709,21 +703,21 @@ event_loop (struct GC_stack_base *sb, void *data)
     sigaddset (&mysetsig, SIGPIPE);
     sigaddset (&mysetsig, SIGCHLD);
     // according to signalfd(2) we need to block the signals
-    MONIMELT_DEBUG (run, "before sigprocmask");
+    MOM_DEBUG (run, "before sigprocmask");
     if (sigprocmask (SIG_BLOCK, &mysetsig, NULL))
-      MONIMELT_FATAL ("failed to block signals with sigprocmask");
-    MONIMELT_DEBUG (run, "before signalfd");
+      MOM_FATAL ("failed to block signals with sigprocmask");
+    MOM_DEBUG (run, "before signalfd");
     my_signals_fd = signalfd (-1, &mysetsig, SFD_NONBLOCK | SFD_CLOEXEC);
-    if (MONIMELT_UNLIKELY (my_signals_fd < 0))
-      MONIMELT_FATAL ("signalfd failed");
-    MONIMELT_DEBUG (run, "my_signals_fd=%d", my_signals_fd);
+    if (MOM_UNLIKELY (my_signals_fd < 0))
+      MOM_FATAL ("signalfd failed");
+    MOM_DEBUG (run, "my_signals_fd=%d", my_signals_fd);
   }
   /// our event loop
   do
     {
       repeat_loop = true;
       evloopcnt++;
-      MONIMELT_DEBUG (run, "start eventloop evloopcnt=%lld", evloopcnt);
+      MOM_DEBUG (run, "start eventloop evloopcnt=%lld", evloopcnt);
       // check for ended process from time to time, to be safe
       if (evloopcnt % 8 == 0)
 	check_for_some_child_process ();
@@ -733,11 +727,11 @@ event_loop (struct GC_stack_base *sb, void *data)
       memset (datatab, 0, sizeof (datatab));
       //
 #define ADD_POLL(Ev,Fd,Hdr,Data) do {				\
-    if (MONIMELT_UNLIKELY(pollcnt>=MOM_POLL_MAX))		\
-      MONIMELT_FATAL("failed to poll fd#%d", (Fd));		\
+    if (MOM_UNLIKELY(pollcnt>=MOM_POLL_MAX))		\
+      MOM_FATAL("failed to poll fd#%d", (Fd));		\
     polltab[pollcnt].fd = (Fd);					\
     polltab[pollcnt].events = (Ev);				\
-    MONIMELT_DEBUG(run, "add_poll pollcnt=%d, fd=%d " #Hdr,	\
+    MOM_DEBUG(run, "add_poll pollcnt=%d, fd=%d " #Hdr,	\
 		   pollcnt, (Fd));				\
     handlertab[pollcnt] = Hdr;					\
     datatab[pollcnt]= (void*)(Data);				\
@@ -791,11 +785,11 @@ event_loop (struct GC_stack_base *sb, void *data)
 	pthread_mutex_unlock (&job_mtx);
       }
       // do the polling
-      MONIMELT_DEBUG (run, "before poll pollcnt=%d evloopcnt=%lld",
-		      pollcnt, evloopcnt);
+      MOM_DEBUG (run, "before poll pollcnt=%d evloopcnt=%lld",
+		 pollcnt, evloopcnt);
       int respoll = poll (polltab, pollcnt, MOM_POLL_TIMEOUT);
-      MONIMELT_DEBUG (run, "after poll respoll=%d evloopcnt=%lld", respoll,
-		      evloopcnt);
+      MOM_DEBUG (run, "after poll respoll=%d evloopcnt=%lld", respoll,
+		 evloopcnt);
       // invoke the handlers
       if (respoll > 0)
 	{
@@ -803,40 +797,39 @@ event_loop (struct GC_stack_base *sb, void *data)
 	    {
 	      if (polltab[pix].revents && handlertab[pix])
 		{
-		  MONIMELT_DEBUG (run,
-				  "invoking handler pix=%d fd#%d revents=%#x%s%s%s%s%s%s evloopcnt=%lld",
-				  pix, polltab[pix].fd, polltab[pix].revents,
-				  (polltab[pix].revents & POLLIN) ? ";POLLIN"
-				  : "",
-				  (polltab[pix].revents & POLLOUT) ?
-				  ";POLLOUT" : "",
-				  (polltab[pix].revents & POLLERR) ?
-				  ";POLLERR" : "",
-				  (polltab[pix].revents & POLLHUP) ?
-				  ";POLLHUP" : "",
-				  (polltab[pix].revents & POLLNVAL) ?
-				  ";POLLNVAL" : "",
-				  (polltab[pix].revents & POLLPRI) ?
-				  ";POLLPRI" : "", evloopcnt);
+		  MOM_DEBUG (run,
+			     "invoking handler pix=%d fd#%d revents=%#x%s%s%s%s%s%s evloopcnt=%lld",
+			     pix, polltab[pix].fd, polltab[pix].revents,
+			     (polltab[pix].revents & POLLIN) ? ";POLLIN"
+			     : "",
+			     (polltab[pix].revents & POLLOUT) ?
+			     ";POLLOUT" : "",
+			     (polltab[pix].revents & POLLERR) ?
+			     ";POLLERR" : "",
+			     (polltab[pix].revents & POLLHUP) ?
+			     ";POLLHUP" : "",
+			     (polltab[pix].revents & POLLNVAL) ?
+			     ";POLLNVAL" : "",
+			     (polltab[pix].revents & POLLPRI) ?
+			     ";POLLPRI" : "", evloopcnt);
 		  handlertab[pix] (polltab[pix].fd, polltab[pix].revents,
 				   datatab[pix]);
-		  MONIMELT_DEBUG (run,
-				  "done handler pix=%d fd#%d evloopcnt=%lld",
-				  pix, polltab[pix].fd, evloopcnt);
+		  MOM_DEBUG (run,
+			     "done handler pix=%d fd#%d evloopcnt=%lld",
+			     pix, polltab[pix].fd, evloopcnt);
 		}
 	    }
 	  sched_yield ();
 	}
       else
 	{			// timed-out
-	  MONIMELT_DEBUG (run, "poll timed out evloopcnt=%lld", evloopcnt);
+	  MOM_DEBUG (run, "poll timed out evloopcnt=%lld", evloopcnt);
 	  check_for_some_child_process ();
-	  MONIMELT_DEBUG (run, "poll done timed out evloopcnt=%lld",
-			  evloopcnt);
+	  MOM_DEBUG (run, "poll done timed out evloopcnt=%lld", evloopcnt);
 	}
     }
   while (repeat_loop);
-  MONIMELT_DEBUG (run, "end of eventloop evloopcnt=%lld", evloopcnt);
+  MOM_DEBUG (run, "end of eventloop evloopcnt=%lld", evloopcnt);
   MOMGC_UNREGISTER_MY_THREAD ();
   return NULL;
 }
@@ -857,11 +850,11 @@ mom_start_event_loop (void)
   pthread_attr_init (&evthattr);
   pthread_attr_setdetachstate (&evthattr, TRUE);
   if (pipe (event_loop_pipe))
-    MONIMELT_FATAL ("failed to create event loop pipe");
-  MONIMELT_DEBUG (run, "event_loop_read_pipe=%d event_loop_write_pipe=%d",
-		  event_loop_read_pipe, event_loop_write_pipe);
+    MOM_FATAL ("failed to create event loop pipe");
+  MOM_DEBUG (run, "event_loop_read_pipe=%d event_loop_write_pipe=%d",
+	     event_loop_read_pipe, event_loop_write_pipe);
   if (pthread_create (&event_loop_thread, &evthattr, eventloop_cb, NULL))
-    MONIMELT_FATAL ("failed to create event loop thread");
+    MOM_FATAL ("failed to create event loop thread");
   event_loop_started = true;
 }
 
@@ -873,10 +866,10 @@ mom_process_destroy (mom_anyitem_t * itm)
   momit_process_t *procitm = (momit_process_t *) itm;
   if (procitm->iproc_pid > 0)
     {
-      MONIMELT_WARNING ("destroying running process %d for %s",
-			(int) procitm->iproc_pid,
-			mom_string_cstr ((momval_t) procitm->iproc_progname) ?
-			: "??");
+      MOM_WARNING ("destroying running process %d for %s",
+		   (int) procitm->iproc_pid,
+		   mom_string_cstr ((momval_t) procitm->iproc_progname) ?
+		   : "??");
       kill (procitm->iproc_pid, SIGTERM);
     }
 }
@@ -907,9 +900,8 @@ mom_make_item_process_argvals (momval_t progstr, ...)
   if (nbargstr > 0)
     {
       argv = GC_MALLOC (nbargstr * sizeof (momstring_t *));
-      if (MONIMELT_UNLIKELY (!argv))
-	MONIMELT_FATAL ("cannot allocate %d argument strings",
-			(int) nbargstr);
+      if (MOM_UNLIKELY (!argv))
+	MOM_FATAL ("cannot allocate %d argument strings", (int) nbargstr);
       memset (argv, 0, nbargstr * sizeof (momstring_t *));
       unsigned cnt = 0;
       va_start (args, progstr);
@@ -926,7 +918,7 @@ mom_make_item_process_argvals (momval_t progstr, ...)
       va_end (args);
     };
   procitm = mom_allocate_item (momty_processitem, sizeof (momit_process_t),
-			       MONIMELT_SPACE_NONE);
+			       MOM_SPACE_NONE);
   procitm->iproc_progname = progstr.pstring;
   procitm->iproc_argv = argv;
   procitm->iproc_argcount = nbargstr;
@@ -960,9 +952,8 @@ mom_make_item_process_from_array (momval_t progstr, unsigned argc,
     {
       unsigned cnt = 0;
       argv = GC_MALLOC (nbargstr * sizeof (momstring_t *));
-      if (MONIMELT_UNLIKELY (!argv))
-	MONIMELT_FATAL ("cannot allocate %d argument strings",
-			(int) nbargstr);
+      if (MOM_UNLIKELY (!argv))
+	MOM_FATAL ("cannot allocate %d argument strings", (int) nbargstr);
       memset (argv, 0, nbargstr * sizeof (momstring_t *));
       for (unsigned ix = 0; ix < argc; ix++)
 	{
@@ -975,7 +966,7 @@ mom_make_item_process_from_array (momval_t progstr, unsigned argc,
 	}
     }
   procitm = mom_allocate_item (momty_processitem, sizeof (momit_process_t),
-			       MONIMELT_SPACE_NONE);
+			       MOM_SPACE_NONE);
   procitm->iproc_progname = progstr.pstring;
   procitm->iproc_argv = argv;
   procitm->iproc_argcount = nbargstr;
@@ -1011,9 +1002,8 @@ mom_make_item_process_from_node (momval_t progstr, momval_t nodv)
 	{
 	  unsigned cnt = 0;
 	  argv = GC_MALLOC (nbargstr * sizeof (momstring_t *));
-	  if (MONIMELT_UNLIKELY (!argv))
-	    MONIMELT_FATAL ("cannot allocate %d argument strings",
-			    (int) nbargstr);
+	  if (MOM_UNLIKELY (!argv))
+	    MOM_FATAL ("cannot allocate %d argument strings", (int) nbargstr);
 	  memset (argv, 0, nbargstr * sizeof (momstring_t *));
 	  for (unsigned ix = 0; ix < ndlen; ix++)
 	    {
@@ -1027,7 +1017,7 @@ mom_make_item_process_from_node (momval_t progstr, momval_t nodv)
 	}
     }
   procitm = mom_allocate_item (momty_processitem, sizeof (momit_process_t),
-			       MONIMELT_SPACE_NONE);
+			       MOM_SPACE_NONE);
   procitm->iproc_progname = progstr.pstring;
   procitm->iproc_argv = argv;
   procitm->iproc_argcount = nbargstr;
@@ -1045,24 +1035,24 @@ mom_item_process_start (momval_t procv, momval_t clov)
       || !clov.ptr || *clov.ptype != momty_closure)
     return;
   if (!event_loop_started)
-    MONIMELT_FATAL ("cannot start process without event loop");
+    MOM_FATAL ("cannot start process without event loop");
   pthread_mutex_lock (&procv.panyitem->i_mtx);
   momit_process_t *procitm = procv.pprocessitem;
   const momclosure_t *clos = clov.pclosure;
   if (procitm->iproc_closure)	// already started
     goto end;
   procitm->iproc_outbuf = GC_MALLOC_ATOMIC (OUTPROC_INITIAL_SIZE);
-  if (MONIMELT_UNLIKELY (!procitm->iproc_outbuf))
-    MONIMELT_FATAL ("failed to allocate output buffer for process %s",
-		    mom_string_cstr ((momval_t) procitm->iproc_progname));
+  if (MOM_UNLIKELY (!procitm->iproc_outbuf))
+    MOM_FATAL ("failed to allocate output buffer for process %s",
+	       mom_string_cstr ((momval_t) procitm->iproc_progname));
   memset (procitm->iproc_outbuf, 0, OUTPROC_INITIAL_SIZE);
   procitm->iproc_outsize = OUTPROC_INITIAL_SIZE;
   procitm->iproc_outpos = 0;
   procitm->iproc_closure = clos;
   {
     struct mom_itqueue_st *qel = GC_MALLOC (sizeof (struct mom_itqueue_st));
-    if (MONIMELT_UNLIKELY (!qel))
-      MONIMELT_FATAL ("failed to allocate job item queue element");
+    if (MOM_UNLIKELY (!qel))
+      MOM_FATAL ("failed to allocate job item queue element");
     memset (qel, 0, sizeof (struct mom_itqueue_st));
     qel->iq_item = (mom_anyitem_t *) procitm;
     pthread_mutex_lock (&job_mtx);
@@ -1088,7 +1078,7 @@ int
 mom_load_code_post_runner (const char *modname)
 {
   GModule *codmodu = NULL;
-  char pathbuf[MONIMELT_PATH_LEN];
+  char pathbuf[MOM_PATH_LEN];
   char symname[MOM_SYMBNAME_LEN];
   int foundnamecount = 0;
   typedef void after_code_load_sig_t (const char *modname);
@@ -1096,25 +1086,25 @@ mom_load_code_post_runner (const char *modname)
   memset (pathbuf, 0, sizeof (pathbuf));
   memset (symname, 0, sizeof (symname));
   snprintf (pathbuf, sizeof (pathbuf), "./%s.%s", modname, G_MODULE_SUFFIX);
-  MONIMELT_DEBUG (run, "mom_load_code_post_runner pathbuf=%s", pathbuf);
+  MOM_DEBUG (run, "mom_load_code_post_runner pathbuf=%s", pathbuf);
   if (access (pathbuf, R_OK))
     {
-      MONIMELT_WARNING ("fail to access code module %s", pathbuf);
+      MOM_WARNING ("fail to access code module %s", pathbuf);
       return 0;
     }
   codmodu = g_module_open (pathbuf, 0);
   if (!codmodu)
-    MONIMELT_FATAL ("failed to load code module %s: %s", pathbuf,
-		    g_module_error ());
-  MONIMELT_DEBUG (run, "mom_load_code_post_runner opened module pathbuf=%s",
-		  pathbuf);
+    MOM_FATAL ("failed to load code module %s: %s", pathbuf,
+	       g_module_error ());
+  MOM_DEBUG (run, "mom_load_code_post_runner opened module pathbuf=%s",
+	     pathbuf);
   pthread_mutex_lock (&embryonic_mtx);
   if (g_module_symbol
-      (codmodu, "monimelt_after_code_load", (gpointer *) & aftercodeloadfun)
+      (codmodu, "mom_after_code_load", (gpointer *) & aftercodeloadfun)
       && aftercodeloadfun)
-    MONIMELT_DEBUG (run,
-		    "mom_load_code_post_runner got monimelt_after_code_load@%p in %s",
-		    (void *) aftercodeloadfun, pathbuf);
+    MOM_DEBUG (run,
+	       "mom_load_code_post_runner got mom_after_code_load@%p in %s",
+	       (void *) aftercodeloadfun, pathbuf);
   for (unsigned eix = 0; eix < embryonic_routine_size; eix++)
     {
       const char *curname = embryonic_routine_name[eix];
@@ -1125,7 +1115,7 @@ mom_load_code_post_runner (const char *modname)
       assert (curout->irt_descr == NULL);
       memset (symname, 0, sizeof (symname));
       snprintf (symname, sizeof (symname), MOM_ROUTINE_NAME_FMT, curname);
-      MONIMELT_DEBUG (run, "symname=%s eix=%d", symname, eix);
+      MOM_DEBUG (run, "symname=%s eix=%d", symname, eix);
       struct momroutinedescr_st *rdescr = NULL;
       if ((g_module_symbol
 	   (codmodu, symname, (gpointer *) & rdescr)
@@ -1134,7 +1124,7 @@ mom_load_code_post_runner (const char *modname)
 	{
 	  if (rdescr->rout_magic != ROUTINE_MAGIC || !rdescr->rout_code
 	      || strcmp (rdescr->rout_name, curname))
-	    MONIMELT_FATAL ("bad routine descriptor %s", symname);
+	    MOM_FATAL ("bad routine descriptor %s", symname);
 	  curout->irt_descr = rdescr;
 	  foundnamecount++;
 	}
@@ -1142,15 +1132,15 @@ mom_load_code_post_runner (const char *modname)
     }
   if (aftercodeloadfun != NULL)
     {
-      MONIMELT_DEBUG (run, "before aftercodeloadfun %s", modname);
+      MOM_DEBUG (run, "before aftercodeloadfun %s", modname);
       aftercodeloadfun (modname);
-      MONIMELT_DEBUG (run, "after aftercodeloadfun %s", modname);
+      MOM_DEBUG (run, "after aftercodeloadfun %s", modname);
     }
   else
-    MONIMELT_DEBUG (run, "no aftercodeloadfun in %s", modname);
+    MOM_DEBUG (run, "no aftercodeloadfun in %s", modname);
   pthread_mutex_unlock (&embryonic_mtx);
-  MONIMELT_INFORM ("loaded code module %s and found %d embryonic routines",
-		   pathbuf, foundnamecount);
+  MOM_INFORM ("loaded code module %s and found %d embryonic routines",
+	      pathbuf, foundnamecount);
   usleep (500);
   return 1;
 }
@@ -1190,20 +1180,19 @@ mom_mark_delayed_embryonic_routine (momit_routine_t * itrout,
   int eix = -1;
   char *dupname = GC_STRDUP (name);
   if (!dupname)
-    MONIMELT_FATAL ("failed to duplicate name %s", name);
+    MOM_FATAL ("failed to duplicate name %s", name);
   pthread_mutex_lock (&embryonic_mtx);
   for (int j = 0; j < (int) embryonic_routine_size && eix < 0; j++)
     if (!embryonic_routine_arr[j] || embryonic_routine_arr[j] == itrout)
       eix = j;
-  if (MONIMELT_UNLIKELY (eix < 0))
+  if (MOM_UNLIKELY (eix < 0))
     {
       unsigned newsiz = ((3 * embryonic_routine_size / 2 + 10) | 0x1f) + 1;
       char **newnames = GC_MALLOC (newsiz * sizeof (char *));
       momit_routine_t **newarr =
 	GC_MALLOC (newsiz * sizeof (momit_routine_t *));
       if (!newnames || !newarr)
-	MONIMELT_FATAL ("failed to allocate for %d embryonic routines",
-			newsiz);
+	MOM_FATAL ("failed to allocate for %d embryonic routines", newsiz);
       memset (newnames, 0, newsiz * sizeof (char *));
       memset (newarr, 0, newsiz * sizeof (momit_routine_t *));
       if (embryonic_routine_size > 0)

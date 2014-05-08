@@ -48,7 +48,7 @@ mom_initialize_globals (void)
   glob_dict.name_hashstr =
     GC_MALLOC (sizeof (struct mom_name_item_entry_st) * dictsiz);
   if (!glob_dict.name_hashitem || !glob_dict.name_hashstr)
-    MONIMELT_FATAL ("failed to allocate %d globals", dictsiz);
+    MOM_FATAL ("failed to allocate %d globals", dictsiz);
   memset (glob_dict.name_hashitem, 0,
 	  sizeof (struct mom_name_item_entry_st) * dictsiz);
   memset (glob_dict.name_hashstr, 0,
@@ -71,7 +71,7 @@ find_name_index (const char *str, momhash_t h)
     {
       if (!arrname[i].nme_str)
 	return -1;
-      if (arrname[i].nme_str == MONIMELT_EMPTY)
+      if (arrname[i].nme_str == MOM_EMPTY)
 	continue;
       if (arrname[i].nme_str->hash == h
 	  && !strcmp (arrname[i].nme_str->cstr, str))
@@ -81,7 +81,7 @@ find_name_index (const char *str, momhash_t h)
     {
       if (!arrname[i].nme_str)
 	return -1;
-      if (arrname[i].nme_str == MONIMELT_EMPTY)
+      if (arrname[i].nme_str == MOM_EMPTY)
 	continue;
       if (arrname[i].nme_str->hash == h
 	  && !strcmp (arrname[i].nme_str->cstr, str))
@@ -104,7 +104,7 @@ find_item_index (const mom_anyitem_t * itm)
 	return (int) i;
       if (!arritem[i].nme_itm)
 	return -1;
-      if (arritem[i].nme_itm == MONIMELT_EMPTY)
+      if (arritem[i].nme_itm == MOM_EMPTY)
 	continue;
     }
   for (unsigned i = 0; i < istart; i++)
@@ -113,7 +113,7 @@ find_item_index (const mom_anyitem_t * itm)
 	return (int) i;
       if (!arritem[i].nme_itm)
 	return -1;
-      if (arritem[i].nme_itm == MONIMELT_EMPTY)
+      if (arritem[i].nme_itm == MOM_EMPTY)
 	continue;
     }
   return -1;
@@ -136,9 +136,9 @@ indexes_of_name_starting (const char *prefix, int *pnbindex)
   // first loop to find the number of matching indexes
   for (unsigned ix = 0; ix < size; ix++)
     {
-      if (!arritem[ix].nme_itm || arritem[ix].nme_itm == MONIMELT_EMPTY)
+      if (!arritem[ix].nme_itm || arritem[ix].nme_itm == MOM_EMPTY)
 	continue;
-      if (!arritem[ix].nme_str || arritem[ix].nme_str == MONIMELT_EMPTY)
+      if (!arritem[ix].nme_str || arritem[ix].nme_str == MOM_EMPTY)
 	continue;
       assert (arritem[ix].nme_str->typnum == momty_string);
       if (strncmp (arritem[ix].nme_str->cstr, prefix, lenprefix) == 0)
@@ -147,8 +147,8 @@ indexes_of_name_starting (const char *prefix, int *pnbindex)
   // allocate one extra element, useless except for assert in second
   // loop
   res = count ? GC_MALLOC_ATOMIC ((count + 1) * sizeof (int)) : NULL;
-  if (MONIMELT_UNLIKELY (!res && count > 0))
-    MONIMELT_FATAL ("failed to allocate %d integers", count);
+  if (MOM_UNLIKELY (!res && count > 0))
+    MOM_FATAL ("failed to allocate %d integers", count);
   for (int i = 0; i <= count; i++)
     res[i] = -1;
   int nbres = 0;
@@ -157,9 +157,9 @@ indexes_of_name_starting (const char *prefix, int *pnbindex)
     for (unsigned ix = 0; ix < size; ix++)
       {
 	assert (nbres <= count);
-	if (!arritem[ix].nme_itm || arritem[ix].nme_itm == MONIMELT_EMPTY)
+	if (!arritem[ix].nme_itm || arritem[ix].nme_itm == MOM_EMPTY)
 	  continue;
-	if (!arritem[ix].nme_str || arritem[ix].nme_str == MONIMELT_EMPTY)
+	if (!arritem[ix].nme_str || arritem[ix].nme_str == MOM_EMPTY)
 	  continue;
 	assert (arritem[ix].nme_str->typnum == momty_string);
 	if (strncmp (arritem[ix].nme_str->cstr, prefix, lenprefix) == 0)
@@ -228,9 +228,9 @@ index_name_cmp (const void *p1, const void *p2)
   int i2 = *(int *) p2;
   struct mom_name_item_entry_st *arritem = glob_dict.name_hashitem;
   assert (i1 >= 0 && i1 < glob_dict.name_size && arritem[i1].nme_str != NULL
-	  && arritem[i1].nme_str != MONIMELT_EMPTY);
+	  && arritem[i1].nme_str != MOM_EMPTY);
   assert (i2 >= 0 && i2 < glob_dict.name_size && arritem[i2].nme_str != NULL
-	  && arritem[i2].nme_str != MONIMELT_EMPTY);
+	  && arritem[i2].nme_str != MOM_EMPTY);
   return strcmp (arritem[i1].nme_str->cstr, arritem[i2].nme_str->cstr);
 }
 
@@ -238,9 +238,9 @@ momval_t
 mom_node_sorted_names_prefixed (const mom_anyitem_t * conn,
 				const char *prefix)
 {
-  momval_t res = MONIMELT_NULLV;
+  momval_t res = MOM_NULLV;
   if (!conn || conn->typnum < momty__itemlowtype)
-    return MONIMELT_NULLV;
+    return MOM_NULLV;
   int nbindex = -1;
   if (!prefix)
     prefix = "";
@@ -251,8 +251,8 @@ mom_node_sorted_names_prefixed (const mom_anyitem_t * conn,
     qsort (arrindexes, nbindex, sizeof (int), index_name_cmp);
   momval_t *arrsons =
     (nbindex > 0) ? GC_MALLOC (nbindex * sizeof (momval_t)) : NULL;
-  if (MONIMELT_UNLIKELY (nbindex > 0 && !arrsons))
-    MONIMELT_FATAL ("failed to allocate %d sons", nbindex);
+  if (MOM_UNLIKELY (nbindex > 0 && !arrsons))
+    MOM_FATAL ("failed to allocate %d sons", nbindex);
   if (arrsons)
     memset (arrsons, 0, nbindex * sizeof (momval_t));
   for (int ix = 0; ix < nbindex; ix++)
@@ -260,7 +260,7 @@ mom_node_sorted_names_prefixed (const mom_anyitem_t * conn,
       int cix = arrindexes[ix];
       assert (cix >= 0 && cix < glob_dict.name_size);
       arrsons[ix] = (momval_t) glob_dict.name_hashitem[cix].nme_str;
-      assert (arrsons[ix].ptr && arrsons[ix].ptr != MONIMELT_EMPTY
+      assert (arrsons[ix].ptr && arrsons[ix].ptr != MOM_EMPTY
 	      && *arrsons[ix].ptype == momty_string);
     };
   pthread_mutex_unlock (&glob_mtx);
@@ -274,7 +274,7 @@ mom_node_sorted_names_prefixed (const mom_anyitem_t * conn,
 momval_t
 mom_set_named_items_prefixed (const char *prefix)
 {
-  momval_t res = MONIMELT_NULLV;
+  momval_t res = MOM_NULLV;
   int nbindex = -1;
   if (!prefix)
     prefix = "";
@@ -283,14 +283,14 @@ mom_set_named_items_prefixed (const char *prefix)
   assert (nbindex >= 0);
   const mom_anyitem_t **arritems =
     (nbindex > 0) ? GC_MALLOC (nbindex * sizeof (mom_anyitem_t *)) : NULL;
-  if (MONIMELT_UNLIKELY (nbindex > 0 && !arritems))
-    MONIMELT_FATAL ("failed to allocate %d items", nbindex);
+  if (MOM_UNLIKELY (nbindex > 0 && !arritems))
+    MOM_FATAL ("failed to allocate %d items", nbindex);
   if (arritems)
     memset (arritems, 0, nbindex * sizeof (mom_anyitem_t *));
   for (int ix = 0; ix < nbindex; ix++)
     {
       arritems[ix] = glob_dict.name_hashitem[ix].nme_itm;
-      assert (arritems[ix] && arritems[ix] != MONIMELT_EMPTY
+      assert (arritems[ix] && arritems[ix] != MOM_EMPTY
 	      && arritems[ix]->typnum > momty__itemlowtype);
     };
   res = (momval_t) mom_make_set_from_array (nbindex, arritems);
@@ -313,7 +313,7 @@ add_new_name_entry (const momstring_t * name, const mom_anyitem_t * item)
   struct mom_name_item_entry_st *arritem = glob_dict.name_hashitem;
   for (unsigned i = istartname; i < size; i++)
     {
-      if (!arrname[i].nme_str || arrname[i].nme_str == MONIMELT_EMPTY)
+      if (!arrname[i].nme_str || arrname[i].nme_str == MOM_EMPTY)
 	{
 	  arrname[i].nme_str = name;
 	  arrname[i].nme_itm = item;
@@ -322,7 +322,7 @@ add_new_name_entry (const momstring_t * name, const mom_anyitem_t * item)
     }
   for (unsigned i = 0; i < istartname; i++)
     {
-      if (!arrname[i].nme_str || arrname[i].nme_str == MONIMELT_EMPTY)
+      if (!arrname[i].nme_str || arrname[i].nme_str == MOM_EMPTY)
 	{
 	  arrname[i].nme_str = name;
 	  arrname[i].nme_itm = item;
@@ -330,11 +330,11 @@ add_new_name_entry (const momstring_t * name, const mom_anyitem_t * item)
 	}
     }
   // this should never happen
-  MONIMELT_FATAL ("corrupted dictionnary for names of size %d", (int) size);
+  MOM_FATAL ("corrupted dictionnary for names of size %d", (int) size);
 additem:
   for (unsigned i = istartitem; i < size; i++)
     {
-      if (!arritem[i].nme_str || arritem[i].nme_str == MONIMELT_EMPTY)
+      if (!arritem[i].nme_str || arritem[i].nme_str == MOM_EMPTY)
 	{
 	  arritem[i].nme_str = name;
 	  arritem[i].nme_itm = item;
@@ -343,7 +343,7 @@ additem:
     }
   for (unsigned i = 0; i < istartitem; i++)
     {
-      if (!arritem[i].nme_str || arritem[i].nme_str == MONIMELT_EMPTY)
+      if (!arritem[i].nme_str || arritem[i].nme_str == MOM_EMPTY)
 	{
 	  arritem[i].nme_str = name;
 	  arritem[i].nme_itm = item;
@@ -351,7 +351,7 @@ additem:
 	}
     }
   // this should never happen
-  MONIMELT_FATAL ("corrupted dictionnary for items of size %d", (int) size);
+  MOM_FATAL ("corrupted dictionnary for items of size %d", (int) size);
 end:
   glob_dict.name_count++;
 }
@@ -362,8 +362,8 @@ resize_dict (unsigned newsize)
   unsigned oldcount = glob_dict.name_count;
   unsigned oldsize = glob_dict.name_size;
   if (newsize + 5 < 9 * oldcount / 8 || newsize == 0)
-    MONIMELT_FATAL ("invalid newsize %u for dictonnary count %u",
-		    newsize, oldcount);
+    MOM_FATAL ("invalid newsize %u for dictonnary count %u",
+	       newsize, oldcount);
   if (newsize == oldsize)
     return;
   struct mom_name_item_entry_st *oldarrname = glob_dict.name_hashstr;
@@ -371,13 +371,13 @@ resize_dict (unsigned newsize)
   glob_dict.name_hashstr =
     GC_MALLOC (sizeof (struct mom_name_item_entry_st) * newsize);
   if (!glob_dict.name_hashstr)
-    MONIMELT_FATAL ("failed to grow dictionnary string hash to %u", newsize);
+    MOM_FATAL ("failed to grow dictionnary string hash to %u", newsize);
   memset (glob_dict.name_hashstr, 0,
 	  sizeof (struct mom_name_item_entry_st) * newsize);
   glob_dict.name_hashitem =
     GC_MALLOC (sizeof (struct mom_name_item_entry_st) * newsize);
   if (!glob_dict.name_hashitem)
-    MONIMELT_FATAL ("failed to grow dictionnary item hash to %u", newsize);
+    MOM_FATAL ("failed to grow dictionnary item hash to %u", newsize);
   memset (glob_dict.name_hashitem, 0,
 	  sizeof (struct mom_name_item_entry_st) * newsize);
   glob_dict.name_count = 0;
@@ -385,14 +385,14 @@ resize_dict (unsigned newsize)
   for (unsigned i = 0; i < oldsize; i++)
     {
       struct mom_name_item_entry_st *curent = oldarrname + i;
-      if (!curent->nme_str || curent->nme_str == MONIMELT_EMPTY
-	  || !curent->nme_itm || curent->nme_itm == MONIMELT_EMPTY)
+      if (!curent->nme_str || curent->nme_str == MOM_EMPTY
+	  || !curent->nme_itm || curent->nme_itm == MOM_EMPTY)
 	continue;
       add_new_name_entry (curent->nme_str, curent->nme_itm);
     }
   if (glob_dict.name_count != oldcount)
-    MONIMELT_FATAL ("corrupted resized dictionnary old count=%u new count=%u",
-		    oldcount, (unsigned) glob_dict.name_count);
+    MOM_FATAL ("corrupted resized dictionnary old count=%u new count=%u",
+	       oldcount, (unsigned) glob_dict.name_count);
   GC_FREE (oldarrname);
   GC_FREE (oldarritem);
 }
@@ -457,14 +457,14 @@ remove_entry (const momstring_t * name, const mom_anyitem_t * itm)
     {
       if (!arrname[i].nme_str)
 	return;
-      if (arrname[i].nme_str == MONIMELT_EMPTY)
+      if (arrname[i].nme_str == MOM_EMPTY)
 	continue;
       if (arrname[i].nme_str->hash == hashname
 	  && (arrname[i].nme_str == name
 	      || !strcmp (arrname[i].nme_str->cstr, name->cstr)))
 	{
-	  arrname[i].nme_str = MONIMELT_EMPTY;
-	  arrname[i].nme_itm = MONIMELT_EMPTY;
+	  arrname[i].nme_str = MOM_EMPTY;
+	  arrname[i].nme_itm = MOM_EMPTY;
 	  goto remove_item;
 	}
     }
@@ -472,14 +472,14 @@ remove_entry (const momstring_t * name, const mom_anyitem_t * itm)
     {
       if (!arrname[i].nme_str)
 	return;
-      if (arrname[i].nme_str == MONIMELT_EMPTY)
+      if (arrname[i].nme_str == MOM_EMPTY)
 	continue;
       if (arrname[i].nme_str->hash == hashname
 	  && (arrname[i].nme_str == name
 	      || !strcmp (arrname[i].nme_str->cstr, name->cstr)))
 	{
-	  arrname[i].nme_str = MONIMELT_EMPTY;
-	  arrname[i].nme_itm = MONIMELT_EMPTY;
+	  arrname[i].nme_str = MOM_EMPTY;
+	  arrname[i].nme_itm = MOM_EMPTY;
 	  goto remove_item;
 	}
     }
@@ -490,30 +490,30 @@ remove_item:
     {
       if (arritem[i].nme_itm == itm)
 	{
-	  arritem[i].nme_str = MONIMELT_EMPTY;
-	  arritem[i].nme_itm = MONIMELT_EMPTY;
+	  arritem[i].nme_str = MOM_EMPTY;
+	  arritem[i].nme_itm = MOM_EMPTY;
 	  goto end;
 	}
       else if (!arritem[i].nme_itm)	// should not happen
-	MONIMELT_FATAL ("corrupted item dict of size %u", size);
-      else if (arritem[i].nme_itm == MONIMELT_EMPTY)
+	MOM_FATAL ("corrupted item dict of size %u", size);
+      else if (arritem[i].nme_itm == MOM_EMPTY)
 	continue;
     }
   for (unsigned i = 0; i < istartitem; i++)
     {
       if (arritem[i].nme_itm == itm)
 	{
-	  arritem[i].nme_str = MONIMELT_EMPTY;
-	  arritem[i].nme_itm = MONIMELT_EMPTY;
+	  arritem[i].nme_str = MOM_EMPTY;
+	  arritem[i].nme_itm = MOM_EMPTY;
 	  goto end;
 	}
       else if (!arritem[i].nme_itm)	// should not happen
-	MONIMELT_FATAL ("corrupted item dict of size %u", size);
-      else if (arritem[i].nme_itm == MONIMELT_EMPTY)
+	MOM_FATAL ("corrupted item dict of size %u", size);
+      else if (arritem[i].nme_itm == MOM_EMPTY)
 	continue;
     }
   // should never happen
-  MONIMELT_FATAL ("corrupted dict of size %u", size);
+  MOM_FATAL ("corrupted dict of size %u", size);
 end:
   glob_dict.name_count--;
 }
@@ -596,8 +596,8 @@ mom_dump_globals (struct mom_dumper_st *dmp, mom_dumpglobal_sig_t * globcb,
     {
       const mom_anyitem_t *itm = glob_dict.name_hashitem[ix].nme_itm;
       const momstring_t *nam = glob_dict.name_hashitem[ix].nme_str;
-      if (!itm || (void *) itm == MONIMELT_EMPTY || !nam
-	  || (void *) nam == MONIMELT_EMPTY)
+      if (!itm || (void *) itm == MOM_EMPTY || !nam
+	  || (void *) nam == MOM_EMPTY)
 	continue;
       mom_dump_add_item (dmp, (mom_anyitem_t *) itm);
       if (globcb)
@@ -624,7 +624,7 @@ mom_tasklet_step (momit_tasklet_t * tskitm)
   uint32_t curdbloff = curfram->fr_dbloff;
   uint32_t curvaloff = curfram->fr_valoff;
   momclosure_t *curclo = tskitm->itk_closures[fratop - 1];
-  if (MONIMELT_UNLIKELY (!curclo || curclo->typnum != momty_closure))
+  if (MOM_UNLIKELY (!curclo || curclo->typnum != momty_closure))
     {
       tskitm->itk_closures[fratop] = NULL;
       memset (tskitm->itk_frames + fratop, 0, sizeof (struct momframe_st));
@@ -648,16 +648,16 @@ mom_tasklet_step (momit_tasklet_t * tskitm)
   const momrout_sig_t *rcode = NULL;
   int nextstate = 0;
   // an incomplete routine would not have made a closure
-  if (MONIMELT_UNLIKELY
+  if (MOM_UNLIKELY
       (!curout || curout->irt_item.typnum != momty_routineitem
        || !(rdescr = curout->irt_descr) || rdescr->rout_magic != ROUTINE_MAGIC
        || !(rcode = rdescr->rout_code)))
-    MONIMELT_FATAL ("corrupted closure in tasklet");
+    MOM_FATAL ("corrupted closure in tasklet");
   nextstate = rcode (curstate, tskitm, curclo,
 		     tskitm->itk_values + curvaloff,
 		     tskitm->itk_scalars + curintoff,
 		     (double *) tskitm->itk_scalars + curdbloff);
-  MONIMELT_DEBUG (run, "tasklet_step nextstate=%d", (int) nextstate);
+  MOM_DEBUG (run, "tasklet_step nextstate=%d", (int) nextstate);
   if (nextstate > 0)
     {
       // the rcode might have changed the itk_frames so we can't use curfram
@@ -764,8 +764,8 @@ compute_pushed_data_size (const momclosure_t * closure, unsigned *pnbval,
 	  {
 	    unsigned count = va_arg (args, unsigned);
 	    momval_t *arr = va_arg (args, momval_t *);
-	    if (MONIMELT_UNLIKELY (!arr))
-	      MONIMELT_FATAL ("invalid array value to push");
+	    if (MOM_UNLIKELY (!arr))
+	      MOM_FATAL ("invalid array value to push");
 	    nbval += count;
 	  }
 	  break;
@@ -822,8 +822,8 @@ compute_pushed_data_size (const momclosure_t * closure, unsigned *pnbval,
 	  {
 	    unsigned count = va_arg (args, unsigned);
 	    momval_t *arr = va_arg (args, intptr_t *);
-	    if (MONIMELT_UNLIKELY (!arr))
-	      MONIMELT_FATAL ("invalid integer value to push");
+	    if (MOM_UNLIKELY (!arr))
+	      MOM_FATAL ("invalid integer value to push");
 	    nbnum += count;
 	  }
 	  break;
@@ -871,24 +871,24 @@ compute_pushed_data_size (const momclosure_t * closure, unsigned *pnbval,
 	  {
 	    unsigned count = va_arg (args, unsigned);
 	    double *arr = va_arg (args, double *);
-	    if (MONIMELT_UNLIKELY (!arr))
-	      MONIMELT_FATAL ("invalid double value to push");
+	    if (MOM_UNLIKELY (!arr))
+	      MOM_FATAL ("invalid double value to push");
 	    nbdbl += count;
 	  }
 	  break;
 	default:
-	  MONIMELT_FATAL ("unexpected push directive #%d", (int) dir);
+	  MOM_FATAL ("unexpected push directive #%d", (int) dir);
 	}
       if (again)
 	dir = va_arg (args, enum mom_pushframedirective_en);
     }
   momit_routine_t *rout = (momit_routine_t *) closure->connitm;
-  if (MONIMELT_UNLIKELY (!rout || rout->irt_item.typnum != momty_routineitem))
-    MONIMELT_FATAL ("bad routine in closure");
+  if (MOM_UNLIKELY (!rout || rout->irt_item.typnum != momty_routineitem))
+    MOM_FATAL ("bad routine in closure");
   // an incomplete routine would not have made a closure
   struct momroutinedescr_st *rdescr = rout->irt_descr;
-  if (MONIMELT_UNLIKELY (!rdescr || rdescr->rout_magic != ROUTINE_MAGIC))
-    MONIMELT_FATAL ("corrupted routine in closure");
+  if (MOM_UNLIKELY (!rdescr || rdescr->rout_magic != ROUTINE_MAGIC))
+    MOM_FATAL ("corrupted routine in closure");
   if (nbval < rdescr->rout_frame_nbval)
     nbval = rdescr->rout_frame_nbval;
   if (nbnum < rdescr->rout_frame_nbnum)
@@ -1037,7 +1037,7 @@ fill_frame_data (intptr_t * numdata, double *dbldata, momval_t * valdata,
 	  }
 	  break;
 	default:
-	  MONIMELT_FATAL ("unexpected push directive #%d", (int) dir);
+	  MOM_FATAL ("unexpected push directive #%d", (int) dir);
 	}
       if (again)
 	dir = va_arg (args, enum mom_pushframedirective_en);
@@ -1068,7 +1068,7 @@ mom_tasklet_push_frame (momval_t tsk, momval_t clo,
   va_end (args);
   momit_tasklet_t *tskitm = tsk.ptaskitem;
   pthread_mutex_lock (&((mom_anyitem_t *) tskitm)->i_mtx);
-  if (MONIMELT_UNLIKELY
+  if (MOM_UNLIKELY
       (tskitm->itk_scaltop +
        (sizeof (intptr_t) * nbnum +
 	sizeof (double) * nbdbl) / sizeof (intptr_t) >= tskitm->itk_scalsize))
@@ -1079,9 +1079,8 @@ mom_tasklet_push_frame (momval_t tsk, momval_t clo,
 	   sizeof (double) * nbdbl) / sizeof (intptr_t) + 5) | 7) + 1;
       intptr_t *newscalars =
 	GC_MALLOC_ATOMIC (newscalsize * sizeof (intptr_t));
-      if (MONIMELT_UNLIKELY (!newscalars))
-	MONIMELT_FATAL ("failed to grow scalars of task to %d",
-			(int) newscalsize);
+      if (MOM_UNLIKELY (!newscalars))
+	MOM_FATAL ("failed to grow scalars of task to %d", (int) newscalsize);
       memset (newscalars, 0, newscalsize * sizeof (intptr_t));
       memcpy (newscalars, tskitm->itk_scalars,
 	      tskitm->itk_scaltop * sizeof (intptr_t));
@@ -1089,14 +1088,13 @@ mom_tasklet_push_frame (momval_t tsk, momval_t clo,
       tskitm->itk_scalars = newscalars;
       tskitm->itk_scalsize = newscalsize;
     }
-  if (MONIMELT_UNLIKELY (tskitm->itk_valtop + nbval >= tskitm->itk_valsize))
+  if (MOM_UNLIKELY (tskitm->itk_valtop + nbval >= tskitm->itk_valsize))
     {
       unsigned newvalsize =
 	((5 * tskitm->itk_valtop / 4 + nbval + 6) | 7) + 1;
       momval_t *newvalues = GC_MALLOC (newvalsize * sizeof (momval_t));
-      if (MONIMELT_UNLIKELY (!newvalues))
-	MONIMELT_FATAL ("failed to grow values of task to %d",
-			(int) newvalsize);
+      if (MOM_UNLIKELY (!newvalues))
+	MOM_FATAL ("failed to grow values of task to %d", (int) newvalsize);
       memset (newvalues, 0, newvalsize * sizeof (momval_t));
       memcpy (newvalues, tskitm->itk_values,
 	      tskitm->itk_valtop * sizeof (momval_t));
@@ -1104,16 +1102,15 @@ mom_tasklet_push_frame (momval_t tsk, momval_t clo,
       tskitm->itk_values = newvalues;
       tskitm->itk_valsize = newvalsize;
     }
-  if (MONIMELT_UNLIKELY (tskitm->itk_fratop + 1 >= tskitm->itk_frasize))
+  if (MOM_UNLIKELY (tskitm->itk_fratop + 1 >= tskitm->itk_frasize))
     {
       unsigned newfrasize = ((5 * tskitm->itk_frasize / 4 + 6) | 7) + 1;
       struct momframe_st *newframes =
 	GC_MALLOC_ATOMIC (sizeof (struct momframe_st) * newfrasize);
       momclosure_t **newclosures =
 	GC_MALLOC (sizeof (momclosure_t *) * newfrasize);
-      if (MONIMELT_UNLIKELY (!newframes || !newclosures))
-	MONIMELT_FATAL ("failed to grow frames of task to %d",
-			(int) newfrasize);
+      if (MOM_UNLIKELY (!newframes || !newclosures))
+	MOM_FATAL ("failed to grow frames of task to %d", (int) newfrasize);
       memset (newframes, 0, sizeof (struct momframe_st) * newfrasize);
       memset (newclosures, 0, sizeof (momclosure_t *) * newfrasize);
       memcpy (newframes, tskitm->itk_frames,
@@ -1189,7 +1186,7 @@ mom_tasklet_replace_top_frame (momval_t tsk, momval_t clo,
   tskitm->itk_valtop = ofpvalu;
   memset (prevframe, 0, sizeof (struct momframe_st));
   tskitm->itk_closures[tskitm->itk_fratop - 1] = NULL;
-  if (MONIMELT_UNLIKELY
+  if (MOM_UNLIKELY
       (tskitm->itk_scaltop +
        (sizeof (intptr_t) * nbnum +
 	sizeof (double) * nbdbl) / sizeof (intptr_t) >= tskitm->itk_scalsize))
@@ -1200,9 +1197,8 @@ mom_tasklet_replace_top_frame (momval_t tsk, momval_t clo,
 	   sizeof (double) * nbdbl) / sizeof (intptr_t) + 5) | 7) + 1;
       intptr_t *newscalars =
 	GC_MALLOC_ATOMIC (newscalsize * sizeof (intptr_t));
-      if (MONIMELT_UNLIKELY (!newscalars))
-	MONIMELT_FATAL ("failed to grow scalars of task to %d",
-			(int) newscalsize);
+      if (MOM_UNLIKELY (!newscalars))
+	MOM_FATAL ("failed to grow scalars of task to %d", (int) newscalsize);
       memset (newscalars, 0, newscalsize * sizeof (intptr_t));
       memcpy (newscalars, tskitm->itk_scalars,
 	      tskitm->itk_scaltop * sizeof (intptr_t));
@@ -1210,14 +1206,13 @@ mom_tasklet_replace_top_frame (momval_t tsk, momval_t clo,
       tskitm->itk_scalars = newscalars;
       tskitm->itk_scalsize = newscalsize;
     }
-  if (MONIMELT_UNLIKELY (tskitm->itk_valtop + nbval >= tskitm->itk_valsize))
+  if (MOM_UNLIKELY (tskitm->itk_valtop + nbval >= tskitm->itk_valsize))
     {
       unsigned newvalsize =
 	((5 * tskitm->itk_valtop / 4 + nbval + 6) | 7) + 1;
       momval_t *newvalues = GC_MALLOC (newvalsize * sizeof (momval_t));
-      if (MONIMELT_UNLIKELY (!newvalues))
-	MONIMELT_FATAL ("failed to grow values of task to %d",
-			(int) newvalsize);
+      if (MOM_UNLIKELY (!newvalues))
+	MOM_FATAL ("failed to grow values of task to %d", (int) newvalsize);
       memset (newvalues, 0, newvalsize * sizeof (momval_t));
       memcpy (newvalues, tskitm->itk_values,
 	      tskitm->itk_valtop * sizeof (momval_t));
@@ -1225,16 +1220,15 @@ mom_tasklet_replace_top_frame (momval_t tsk, momval_t clo,
       tskitm->itk_values = newvalues;
       tskitm->itk_valsize = newvalsize;
     }
-  if (MONIMELT_UNLIKELY (tskitm->itk_fratop + 1 >= tskitm->itk_frasize))
+  if (MOM_UNLIKELY (tskitm->itk_fratop + 1 >= tskitm->itk_frasize))
     {
       unsigned newfrasize = ((5 * tskitm->itk_frasize / 4 + 6) | 7) + 1;
       struct momframe_st *newframes =
 	GC_MALLOC_ATOMIC (sizeof (struct momframe_st) * newfrasize);
       momclosure_t **newclosures =
 	GC_MALLOC (sizeof (momclosure_t *) * newfrasize);
-      if (MONIMELT_UNLIKELY (!newframes || !newclosures))
-	MONIMELT_FATAL ("failed to grow frames of task to %d",
-			(int) newfrasize);
+      if (MOM_UNLIKELY (!newframes || !newclosures))
+	MOM_FATAL ("failed to grow frames of task to %d", (int) newfrasize);
       memset (newframes, 0, sizeof (struct momframe_st) * newfrasize);
       memset (newclosures, 0, sizeof (momclosure_t *) * newfrasize);
       memcpy (newframes, tskitm->itk_frames,
@@ -1285,7 +1279,7 @@ mom_tasklet_reserve (momval_t tsk, unsigned nbint, unsigned nbdbl,
     ((nbint * sizeof (intptr_t) +
       nbdbl * sizeof (double)) / sizeof (intptr_t));
   unsigned valuwant = tskitm->itk_valtop + nbval;
-  if (MONIMELT_UNLIKELY
+  if (MOM_UNLIKELY
       (scalwant > tskitm->itk_scalsize
        || (tskitm->itk_scalsize > 64 && 2 * scalwant < tskitm->itk_scalsize)))
     {
@@ -1297,9 +1291,9 @@ mom_tasklet_reserve (momval_t tsk, unsigned nbint, unsigned nbdbl,
 	{
 	  intptr_t *newscalars =
 	    GC_MALLOC_ATOMIC (newscalsize * sizeof (intptr_t));
-	  if (MONIMELT_UNLIKELY (!newscalars))
-	    MONIMELT_FATAL ("failed to resize scalars of task to %d",
-			    (int) newscalsize);
+	  if (MOM_UNLIKELY (!newscalars))
+	    MOM_FATAL ("failed to resize scalars of task to %d",
+		       (int) newscalsize);
 	  memset (newscalars, 0, newscalsize * sizeof (intptr_t));
 	  memcpy (newscalars, tskitm->itk_scalars,
 		  tskitm->itk_scaltop * sizeof (intptr_t));
@@ -1308,7 +1302,7 @@ mom_tasklet_reserve (momval_t tsk, unsigned nbint, unsigned nbdbl,
 	  tskitm->itk_scalsize = newscalsize;
 	}
     }
-  if (MONIMELT_UNLIKELY
+  if (MOM_UNLIKELY
       (valuwant > tskitm->itk_valsize
        || (tskitm->itk_valsize > 64 && 2 * valuwant < tskitm->itk_valsize)))
     {
@@ -1317,9 +1311,9 @@ mom_tasklet_reserve (momval_t tsk, unsigned nbint, unsigned nbdbl,
       if (newvalsize != tskitm->itk_valsize)
 	{
 	  momval_t *newvalues = GC_MALLOC (newvalsize * sizeof (momval_t));
-	  if (MONIMELT_UNLIKELY (!newvalues))
-	    MONIMELT_FATAL ("failed to resize values of task to %d",
-			    (int) newvalsize);
+	  if (MOM_UNLIKELY (!newvalues))
+	    MOM_FATAL ("failed to resize values of task to %d",
+		       (int) newvalsize);
 	  memset (newvalues, 0, newvalsize * sizeof (momval_t));
 	  memcpy (newvalues, tskitm->itk_values,
 		  tskitm->itk_valtop * sizeof (momval_t));
@@ -1329,7 +1323,7 @@ mom_tasklet_reserve (momval_t tsk, unsigned nbint, unsigned nbdbl,
 	}
     }
   unsigned framwant = tskitm->itk_fratop + nbfram;
-  if (MONIMELT_UNLIKELY
+  if (MOM_UNLIKELY
       (framwant > tskitm->itk_frasize
        || (tskitm->itk_frasize > 64 && 2 * framwant < tskitm->itk_frasize)))
     {
@@ -1341,9 +1335,9 @@ mom_tasklet_reserve (momval_t tsk, unsigned nbint, unsigned nbdbl,
 	    GC_MALLOC_ATOMIC (sizeof (struct momframe_st) * newfrasize);
 	  momclosure_t **newclosures =
 	    GC_MALLOC (sizeof (momclosure_t *) * newfrasize);
-	  if (MONIMELT_UNLIKELY (!newframes || !newclosures))
-	    MONIMELT_FATAL ("failed to resize frames of task to %d",
-			    (int) newfrasize);
+	  if (MOM_UNLIKELY (!newframes || !newclosures))
+	    MOM_FATAL ("failed to resize frames of task to %d",
+		       (int) newfrasize);
 	  memset (newframes, 0, sizeof (struct momframe_st) * newfrasize);
 	  memset (newclosures, 0, sizeof (momclosure_t *) * newfrasize);
 	  memcpy (newframes, tskitm->itk_frames,
@@ -1385,7 +1379,7 @@ mom_tasklet_pop_frame (momval_t tsk)
   memset (prevframe, 0, sizeof (struct momframe_st));
   tskitm->itk_closures[tskitm->itk_fratop - 1] = NULL;
   tskitm->itk_fratop--;
-  if (MONIMELT_UNLIKELY
+  if (MOM_UNLIKELY
       (tskitm->itk_scalsize > 64
        && 2 * tskitm->itk_scaltop < tskitm->itk_scalsize))
     {
@@ -1394,9 +1388,9 @@ mom_tasklet_pop_frame (momval_t tsk)
 	{
 	  intptr_t *newscalars =
 	    GC_MALLOC_ATOMIC (newscalsize * sizeof (intptr_t));
-	  if (MONIMELT_UNLIKELY (!newscalars))
-	    MONIMELT_FATAL ("failed to shrink scalars of task to %d",
-			    (int) newscalsize);
+	  if (MOM_UNLIKELY (!newscalars))
+	    MOM_FATAL ("failed to shrink scalars of task to %d",
+		       (int) newscalsize);
 	  memset (newscalars, 0, newscalsize * sizeof (intptr_t));
 	  memcpy (newscalars, tskitm->itk_scalars,
 		  tskitm->itk_scaltop * sizeof (intptr_t));
@@ -1405,7 +1399,7 @@ mom_tasklet_pop_frame (momval_t tsk)
 	  tskitm->itk_scalsize = newscalsize;
 	}
     }
-  if (MONIMELT_UNLIKELY
+  if (MOM_UNLIKELY
       (tskitm->itk_valsize > 64
        && 2 * tskitm->itk_valtop < tskitm->itk_valsize))
     {
@@ -1413,9 +1407,9 @@ mom_tasklet_pop_frame (momval_t tsk)
       if (newvalsize != tskitm->itk_valsize)
 	{
 	  momval_t *newvalues = GC_MALLOC (newvalsize * sizeof (momval_t));
-	  if (MONIMELT_UNLIKELY (!newvalues))
-	    MONIMELT_FATAL ("failed to shrink values of task to %d",
-			    (int) newvalsize);
+	  if (MOM_UNLIKELY (!newvalues))
+	    MOM_FATAL ("failed to shrink values of task to %d",
+		       (int) newvalsize);
 	  memset (newvalues, 0, newvalsize * sizeof (momval_t));
 	  memcpy (newvalues, tskitm->itk_values,
 		  tskitm->itk_valtop * sizeof (momval_t));
@@ -1424,7 +1418,7 @@ mom_tasklet_pop_frame (momval_t tsk)
 	  tskitm->itk_valsize = newvalsize;
 	}
     }
-  if (MONIMELT_UNLIKELY
+  if (MOM_UNLIKELY
       (tskitm->itk_frasize > 64
        && 2 * tskitm->itk_fratop < tskitm->itk_frasize))
     {
@@ -1435,9 +1429,9 @@ mom_tasklet_pop_frame (momval_t tsk)
 	    GC_MALLOC_ATOMIC (sizeof (struct momframe_st) * newfrasize);
 	  momclosure_t **newclosures =
 	    GC_MALLOC (sizeof (momclosure_t *) * newfrasize);
-	  if (MONIMELT_UNLIKELY (!newframes || !newclosures))
-	    MONIMELT_FATAL ("failed to shrink frames of task to %d",
-			    (int) newfrasize);
+	  if (MOM_UNLIKELY (!newframes || !newclosures))
+	    MOM_FATAL ("failed to shrink frames of task to %d",
+		       (int) newfrasize);
 	  memset (newframes, 0, sizeof (struct momframe_st) * newfrasize);
 	  memset (newclosures, 0, sizeof (momclosure_t *) * newfrasize);
 	  memcpy (newframes, tskitm->itk_frames,
@@ -1458,9 +1452,9 @@ end:
 momval_t
 mom_run_closure (momval_t clo, enum mom_pushframedirective_en firstdir, ...)
 {
-  momval_t res = MONIMELT_NULLV;
+  momval_t res = MOM_NULLV;
   if (!clo.ptr || *clo.ptype != momty_closure)
-    return MONIMELT_NULLV;
+    return MOM_NULLV;
   unsigned nbval = 0;
   unsigned nbnum = 0;
   unsigned nbdbl = 0;
@@ -1468,26 +1462,26 @@ mom_run_closure (momval_t clo, enum mom_pushframedirective_en firstdir, ...)
   const momclosure_t *closure = clo.pclosure;
   const momit_routine_t *routitm = (momit_routine_t *) closure->connitm;
   if (!routitm || ((mom_anyitem_t *) routitm)->typnum != momty_routineitem)
-    return MONIMELT_NULLV;
+    return MOM_NULLV;
   va_list args;
   const struct momroutinedescr_st *rdescr = routitm->irt_descr;
   // an incomplete routine would not have made a closure
-  if (MONIMELT_UNLIKELY (!rdescr || rdescr->rout_magic != ROUTINE_MAGIC
-			 || !rdescr->rout_code))
-    MONIMELT_FATAL ("corrupted routine descriptor in closure's routine");
+  if (MOM_UNLIKELY (!rdescr || rdescr->rout_magic != ROUTINE_MAGIC
+		    || !rdescr->rout_code))
+    MOM_FATAL ("corrupted routine descriptor in closure's routine");
   // first, compute the data size
   va_start (args, firstdir);
   compute_pushed_data_size (closure, &nbval, &nbnum, &nbdbl, &newstate,
 			    firstdir, args);
   va_end (args);
-  momval_t valtiny[TINY_MAX] = { MONIMELT_NULLV };
+  momval_t valtiny[TINY_MAX] = { MOM_NULLV };
   intptr_t numtiny[TINY_MAX] = { 0 };
   double dbltiny[TINY_MAX] = { 0.0 };
   momval_t *valarr = NULL;
   intptr_t *numarr = NULL;
   double *dblarr = NULL;
   if (closure->slen < rdescr->rout_minclosize)
-    return MONIMELT_NULLV;
+    return MOM_NULLV;
   if (nbval < rdescr->rout_frame_nbval)
     nbval = rdescr->rout_frame_nbval;
   if (nbnum < rdescr->rout_frame_nbnum)
@@ -1501,8 +1495,8 @@ mom_run_closure (momval_t clo, enum mom_pushframedirective_en firstdir, ...)
   else
     {
       valarr = GC_MALLOC (nbval * sizeof (momval_t));
-      if (MONIMELT_UNLIKELY (!valarr))
-	MONIMELT_FATAL ("failed to allocate %d values", (int) nbval);
+      if (MOM_UNLIKELY (!valarr))
+	MOM_FATAL ("failed to allocate %d values", (int) nbval);
       memset (valarr, 0, nbval * sizeof (momval_t));
     };
   if (nbnum < TINY_MAX)
@@ -1510,8 +1504,8 @@ mom_run_closure (momval_t clo, enum mom_pushframedirective_en firstdir, ...)
   else
     {
       numarr = GC_MALLOC_ATOMIC (sizeof (intptr_t) * nbnum);
-      if (MONIMELT_UNLIKELY (!numarr))
-	MONIMELT_FATAL ("failed to allocate %d numbers", (int) nbnum);
+      if (MOM_UNLIKELY (!numarr))
+	MOM_FATAL ("failed to allocate %d numbers", (int) nbnum);
       memset (numarr, 0, nbnum * sizeof (intptr_t));
     };
   if (nbdbl < TINY_MAX)
@@ -1519,8 +1513,8 @@ mom_run_closure (momval_t clo, enum mom_pushframedirective_en firstdir, ...)
   else
     {
       dblarr = GC_MALLOC_ATOMIC (sizeof (double) * nbdbl);
-      if (MONIMELT_UNLIKELY (!dblarr))
-	MONIMELT_FATAL ("failed to allocate %d doubles", (int) nbdbl);
+      if (MOM_UNLIKELY (!dblarr))
+	MOM_FATAL ("failed to allocate %d doubles", (int) nbdbl);
       memset (dblarr, 0, nbdbl * sizeof (double));
     };
   // fill the pseudo frame data
@@ -1530,7 +1524,7 @@ mom_run_closure (momval_t clo, enum mom_pushframedirective_en firstdir, ...)
   // invoke the routine
   if (rdescr->rout_code (0, NULL, (momclosure_t *) closure, valarr, numarr,
 			 dblarr) < 0)
-    return MONIMELT_NULLV;
+    return MOM_NULLV;
   res = valarr[0];
   return res;
 }

@@ -19,31 +19,30 @@
 **/
 
 #include "monimelt.h"
-const char monimelt_GPL_friendly_module[] = "mod_cold is GPLv3";
+const char mom_GPL_friendly_module[] = "mod_cold is GPLv3";
 
 
 void
-monimelt_module_init (const char *marg)
+mom_module_init (const char *marg)
 {
-  MONIMELT_WARNING ("cold module init marg=%s do nothing", marg);
+  MOM_WARNING ("cold module init marg=%s do nothing", marg);
 
-  MONIMELT_INFORM ("cold module end marg=%s", marg);
+  MOM_INFORM ("cold module end marg=%s", marg);
 }
 
 void
-monimelt_module_post_load (void)
+mom_module_post_load (void)
 {
   char uistr[UUID_PARSED_LEN];
   memset (uistr, 0, sizeof (uistr));
-  MONIMELT_INFORM ("cold post load " __DATE__ "@" __TIME__);
+  MOM_INFORM ("cold post load " __DATE__ "@" __TIME__);
   mom_anyitem_t *rout_web_form_handle_routine =
     mom_item_named ("web_form_handle_routine");
   MOM_DBG_VALUE (run, "rout_web_form_handle_routine=",
 		 (momval_t) rout_web_form_handle_routine);
-  MONIMELT_INFORM ("cold rout_web_form_handle_routine ~%s",
-		   mom_unparse_item_uuid ((mom_anyitem_t *)
-					  rout_web_form_handle_routine,
-					  uistr));
+  MOM_INFORM ("cold rout_web_form_handle_routine ~%s",
+	      mom_unparse_item_uuid ((mom_anyitem_t *)
+				     rout_web_form_handle_routine, uistr));
   const momclosure_t *clos_web_form_handle_routine =
     mom_make_closure_til_nil ((mom_anyitem_t *) rout_web_form_handle_routine,
 			      mom_make_string ("Gap*Web_Form_Handle_Routine"),
@@ -53,5 +52,5 @@ monimelt_module_post_load (void)
 				 (momval_t) clos_web_form_handle_routine);
   MOM_DBG_VALUE (run, "clos_web_form_handle_routine=",
 		 (momval_t) clos_web_form_handle_routine);
-  MONIMELT_INFORM ("cold post load done");
+  MOM_INFORM ("cold post load done");
 }

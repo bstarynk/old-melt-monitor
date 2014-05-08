@@ -19,23 +19,23 @@
 **/
 
 #include "monimelt.h"
-const char monimelt_GPL_friendly_module[] = "mod_test1 is GPLv3";
+const char mom_GPL_friendly_module[] = "mod_test1 is GPLv3";
 
 
 void
-monimelt_module_init (const char *marg)
+mom_module_init (const char *marg)
 {
-  MONIMELT_INFORM ("test1 module init marg=%s", marg);
-  MONIMELT_INFORM ("json_cmp agenda attr=%d",
-		   mom_json_cmp ((momval_t) mom_item__agenda,
-				 (momval_t) mom_item__attr));
-  MONIMELT_INFORM ("json_cmp attr conn=%d",
-		   mom_json_cmp ((momval_t) mom_item__attr,
-				 (momval_t) mom_item__conn));
-  MONIMELT_INFORM ("json_cmp frames conn=%d",
-		   mom_json_cmp ((momval_t) mom_item__frames,
-				 (momval_t) mom_item__conn));
-  MONIMELT_INFORM ("json_cmp attr 'attr'=%d",
-		   mom_json_cmp ((momval_t) mom_item__attr,
-				 (momval_t) mom_make_string ("attr")));
+  MOM_INFORM ("test1 module init marg=%s", marg);
+  MOM_INFORM ("json_cmp agenda attr=%d",
+	      mom_json_cmp ((momval_t) mom_item__agenda,
+			    (momval_t) mom_item__attr));
+  MOM_INFORM ("json_cmp attr conn=%d",
+	      mom_json_cmp ((momval_t) mom_item__attr,
+			    (momval_t) mom_item__conn));
+  MOM_INFORM ("json_cmp frames conn=%d",
+	      mom_json_cmp ((momval_t) mom_item__frames,
+			    (momval_t) mom_item__conn));
+  MOM_INFORM ("json_cmp attr 'attr'=%d",
+	      mom_json_cmp ((momval_t) mom_item__attr,
+			    (momval_t) mom_make_string ("attr")));
 }

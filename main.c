@@ -79,7 +79,7 @@ static const char **module_arguments;
 static GModule **module_handles;
 static unsigned module_count;
 static unsigned module_size;
-static const char *load_state_path = MONIMELT_DEFAULT_STATE_FILE;
+static const char *load_state_path = MOM_DEFAULT_STATE_FILE;
 static const char *dump_state_path;
 static void
 usage (const char *argv0)
@@ -127,13 +127,13 @@ add_debugging (const char *dbgopt)
   char dbuf[256];
   memset (dbuf, 0, sizeof (dbuf));
   if (strlen (dbgopt) >= sizeof (dbuf) - 1)
-    MONIMELT_FATAL ("too long debug option %s", dbgopt);
+    MOM_FATAL ("too long debug option %s", dbgopt);
   strcpy (dbuf, dbgopt);
   char *comma = NULL;
   if (!strcmp (dbuf, ".") || !strcmp (dbuf, "_"))
     {
       mom_debugflags = ~0;
-      MONIMELT_INFORM ("set all debugging");
+      MOM_INFORM ("set all debugging");
     }
   else
     for (char *pc = dbuf; pc != NULL; pc = comma ? comma + 1 : NULL)
@@ -146,7 +146,7 @@ add_debugging (const char *dbgopt)
 	if (!pc)
 	  break;
 	MOM_DEBUG_LIST_OPTIONS (MOM_TEST_DEBUG_OPTION)
-	  MONIMELT_FATAL ("unrecognized debug flag %s", pc);
+	  MOM_FATAL ("unrecognized debug flag %s", pc);
       }
 }
 
@@ -158,16 +158,16 @@ load_module (GOptionContext * optctx, unsigned ix, const char *modname,
   GModule *modhdl = g_module_open (modname, 0);
   char *modbasename = basename (modname);
   if (!modhdl)
-    MONIMELT_FATAL ("failed to load module #%d named %s: %s",
-		    ix, modname, g_module_error ());
+    MOM_FATAL ("failed to load module #%d named %s: %s",
+	       ix, modname, g_module_error ());
   if (module_count + 1 >= module_size)
     {
       unsigned newsiz = (((3 * module_count / 2) + 10) | 0xf) + 1;
       GModule **newarrmod = GC_MALLOC (newsiz * sizeof (GModule *));
       const char **newarrname = GC_MALLOC (newsiz * sizeof (char *));
       const char **newarrarg = GC_MALLOC (newsiz * sizeof (char *));
-      if (MONIMELT_UNLIKELY (!newarrmod || !newarrname || !newarrarg))
-	MONIMELT_FATAL ("failed to grow module array to %d", (int) newsiz);
+      if (MOM_UNLIKELY (!newarrmod || !newarrname || !newarrarg))
+	MOM_FATAL ("failed to grow module array to %d", (int) newsiz);
       memset (newarrmod, 0, newsiz * sizeof (GModule *));
       memset (newarrname, 0, newsiz * sizeof (char *));
       memset (newarrarg, 0, newsiz * sizeof (char *));
@@ -186,23 +186,22 @@ load_module (GOptionContext * optctx, unsigned ix, const char *modname,
     }
   const char *modlic = NULL;
   if (!g_module_symbol
-      (modhdl, "monimelt_GPL_friendly_module", (gpointer *) & modlic)
-      || !modlic)
-    MONIMELT_FATAL
-      ("module named %s without 'monimelt_GPL_friendly_module' symbol: %s",
+      (modhdl, "mom_GPL_friendly_module", (gpointer *) & modlic) || !modlic)
+    MOM_FATAL
+      ("module named %s without 'mom_GPL_friendly_module' symbol: %s",
        modname, g_module_error ());
   typedef void modinit_sig_t (const char *);
   modinit_sig_t *modinit = NULL;
   if (!g_module_symbol
-      (modhdl, "monimelt_module_init", (gpointer *) & modinit) || !modinit)
-    MONIMELT_FATAL
-      ("module named %s without 'monimelt_module_init' function: %s", modname,
+      (modhdl, "mom_module_init", (gpointer *) & modinit) || !modinit)
+    MOM_FATAL
+      ("module named %s without 'mom_module_init' function: %s", modname,
        g_module_error ());
   modinit (modarg);
   typedef GOptionGroup *modoptgroup_sig_t (const char *modname);
   modoptgroup_sig_t *modoptgroup = NULL;
   if (g_module_symbol
-      (modhdl, "monimelt_module_option_group", (gpointer *) & modoptgroup)
+      (modhdl, "mom_module_option_group", (gpointer *) & modoptgroup)
       && modoptgroup)
     {
       GOptionGroup *optgrp = modoptgroup (modbasename);
@@ -330,17 +329,17 @@ modules_post_load (void)
       typedef void post_load_sig_t (void);
       post_load_sig_t *modpostload = NULL;
       if (g_module_symbol
-	  (modhdl, "monimelt_module_post_load", (gpointer *) & modpostload)
+	  (modhdl, "mom_module_post_load", (gpointer *) & modpostload)
 	  && modpostload)
 	{
-	  MONIMELT_DEBUG (run, "before post loading module #%d", (int) ix);
+	  MOM_DEBUG (run, "before post loading module #%d", (int) ix);
 	  modpostload ();
-	  MONIMELT_DEBUG (run, "after post loading module #%d", (int) ix);
+	  MOM_DEBUG (run, "after post loading module #%d", (int) ix);
 	  nbpostload++;
 	}
     };
-  MONIMELT_INFORM ("Done %d post load routines for %d modules", nbpostload,
-		   module_count);
+  MOM_INFORM ("Done %d post load routines for %d modules", nbpostload,
+	      module_count);
 }
 
 
@@ -350,15 +349,15 @@ static void
 do_json_file_test (void)
 {
   FILE *fj = fopen (json_file, "r");
-  MONIMELT_INFORM ("starting JSON file test on %s", json_file);
+  MOM_INFORM ("starting JSON file test on %s", json_file);
   if (!fj)
-    MONIMELT_FATAL ("failed to open json file %s", json_file);
+    MOM_FATAL ("failed to open json file %s", json_file);
   struct jsonparser_st jp = { 0 };
   mom_initialize_json_parser (&jp, fj, NULL);
   char *errmsg = NULL;
   momval_t vp = mom_parse_json (&jp, &errmsg);
   if (errmsg)
-    MONIMELT_FATAL ("failed to parse %s json file: %s", json_file, errmsg);
+    MOM_FATAL ("failed to parse %s json file: %s", json_file, errmsg);
   mom_close_json_parser (&jp);
   struct jsonoutput_st jo = { 0 };
   mom_json_output_initialize
@@ -369,23 +368,22 @@ do_json_file_test (void)
   putchar ('\n');
   mom_dbgout_value (vp);
   mom_json_output_end (&jo);
-  MONIMELT_INFORM ("ended JSON file test on %s", json_file);
+  MOM_INFORM ("ended JSON file test on %s", json_file);
 }
 
 static void
 do_json_string_test (void)
 {
-  MONIMELT_INFORM ("starting JSON string test on %s", json_string);
+  MOM_INFORM ("starting JSON string test on %s", json_string);
   FILE *fj = fmemopen ((void *) json_string, strlen (json_string), "r");
   if (!fj)
-    MONIMELT_FATAL ("failed to open json string %s", json_string);
+    MOM_FATAL ("failed to open json string %s", json_string);
   struct jsonparser_st jp = { 0 };
   mom_initialize_json_parser (&jp, fj, NULL);
   char *errmsg = NULL;
   momval_t vp = mom_parse_json (&jp, &errmsg);
   if (errmsg)
-    MONIMELT_FATAL ("failed to parse %s json string: %s", json_string,
-		    errmsg);
+    MOM_FATAL ("failed to parse %s json string: %s", json_string, errmsg);
   mom_close_json_parser (&jp);
   struct jsonoutput_st jo = { 0 };
   mom_json_output_initialize
@@ -397,17 +395,16 @@ do_json_string_test (void)
   putchar ('\n');
   putchar ('\n');
   if (*vp.ptype == momty_jsonarray)
-    MONIMELT_INFORM ("parsed JSON array of %d components",
-		     mom_json_array_size (vp));
+    MOM_INFORM ("parsed JSON array of %d components",
+		mom_json_array_size (vp));
   else if (*vp.ptype == momty_jsonobject)
-    MONIMELT_INFORM ("parsed JSON object of %d entries",
-		     mom_jsonob_size (vp));
+    MOM_INFORM ("parsed JSON object of %d entries", mom_jsonob_size (vp));
   else if (!vp.ptr)
-    MONIMELT_INFORM ("parsed nil");
+    MOM_INFORM ("parsed nil");
   else
-    MONIMELT_INFORM ("parsed value of type %d", (int) mom_type (vp));
+    MOM_INFORM ("parsed value of type %d", (int) mom_type (vp));
   mom_dbgout_value (vp);
-  MONIMELT_INFORM ("ended JSON string test on %s", json_string);
+  MOM_INFORM ("ended JSON string test on %s", json_string);
 }
 
 
@@ -454,7 +451,7 @@ mom_fatal_at (const char *fil, int lin, const char *fmt, ...)
   va_start (args, fmt);
   len = vsnprintf (buf, sizeof (buf), fmt, args);
   va_end (args);
-  if (MONIMELT_UNLIKELY (len >= sizeof (buf) - 1))
+  if (MOM_UNLIKELY (len >= sizeof (buf) - 1))
     {
       bigbuf = malloc (len + 10);
       if (bigbuf)
@@ -507,7 +504,7 @@ mom_inform_at (const char *fil, int lin, const char *fmt, ...)
   va_start (args, fmt);
   len = vsnprintf (buf, sizeof (buf), fmt, args);
   va_end (args);
-  if (MONIMELT_UNLIKELY (len >= sizeof (buf) - 1))
+  if (MOM_UNLIKELY (len >= sizeof (buf) - 1))
     {
       bigbuf = malloc (len + 10);
       if (bigbuf)
@@ -557,7 +554,7 @@ mom_debug_at (enum mom_debug_en dbg, const char *fil, int lin,
   va_start (args, fmt);
   len = vsnprintf (buf, sizeof (buf), fmt, args);
   va_end (args);
-  if (MONIMELT_UNLIKELY (len >= sizeof (buf) - 1))
+  if (MOM_UNLIKELY (len >= sizeof (buf) - 1))
     {
       bigbuf = malloc (len + 10);
       if (bigbuf)
@@ -626,7 +623,7 @@ mom_dbg_value_at (enum mom_debug_en dbg, const char *fil, int lin,
   strftime_centi_now (timbuf, sizeof (timbuf), "%H:%M:%S.__");
   pthread_getname_np (pthread_self (), thrname, sizeof (thrname) - 1);
   pthread_mutex_lock (&dbg_mtx);
-  fprintf (stderr, "MONIMELT_DBG_VALUE %s <%s> %s %s:%d:%s",
+  fprintf (stderr, "MOM_DBG_VALUE %s <%s> %s %s:%d:%s",
 	   mom_debug_names[dbg], thrname, timbuf, fil, lin, msg);
   mom_debugprint_value (stderr, val);
   unsigned tynum = 0;
@@ -654,7 +651,7 @@ mom_warning_at (const char *fil, int lin, const char *fmt, ...)
   va_start (args, fmt);
   len = vsnprintf (buf, sizeof (buf), fmt, args);
   va_end (args);
-  if (MONIMELT_UNLIKELY (len >= sizeof (buf) - 1))
+  if (MOM_UNLIKELY (len >= sizeof (buf) - 1))
     {
       bigbuf = malloc (len + 10);
       if (bigbuf)
@@ -691,8 +688,8 @@ static gpointer
 checked_gc_malloc (gsize sz)
 {
   void *p = GC_MALLOC (sz);
-  if (MONIMELT_UNLIKELY (!p))
-    MONIMELT_FATAL ("failed to GC malloc %ld bytes", (long) sz);
+  if (MOM_UNLIKELY (!p))
+    MOM_FATAL ("failed to GC malloc %ld bytes", (long) sz);
   memset (p, 0, sz);
   return p;
 }
@@ -701,8 +698,8 @@ static gpointer
 checked_gc_realloc (gpointer m, gsize sz)
 {
   void *p = GC_REALLOC (m, sz);
-  if (MONIMELT_UNLIKELY (!p))
-    MONIMELT_FATAL ("failed to GC realloc %ld bytes", (long) sz);
+  if (MOM_UNLIKELY (!p))
+    MOM_FATAL ("failed to GC realloc %ld bytes", (long) sz);
   return p;
 }
 
@@ -710,9 +707,9 @@ static gpointer
 checked_gc_calloc (gsize nblock, gsize bsize)
 {
   void *p = GC_MALLOC (nblock * bsize);
-  if (MONIMELT_UNLIKELY (!p))
-    MONIMELT_FATAL ("failed to GC calloc %ld blocks of %ld bytes",
-		    (long) nblock, (long) bsize);
+  if (MOM_UNLIKELY (!p))
+    MOM_FATAL ("failed to GC calloc %ld blocks of %ld bytes",
+	       (long) nblock, (long) bsize);
   memset (p, 0, nblock * bsize);
   return p;
 }
@@ -731,7 +728,7 @@ main (int argc, char **argv)
 {
   bool explicit_boehm_gc_thread = false;
   GC_INIT ();
-#if MONIMELT_EXPLICIT_GC_THREAD
+#if MOM_EXPLICIT_GC_THREAD
   GC_allow_register_threads ();
   explicit_boehm_gc_thread = true;
 #endif
@@ -746,21 +743,21 @@ main (int argc, char **argv)
     do_json_string_test ();
   if (nicelevel != 0)
     {
-      if (MONIMELT_UNLIKELY (nice (nicelevel) == -1 && errno))
-	MONIMELT_FATAL ("failed to nice at level %d", nicelevel);
+      if (MOM_UNLIKELY (nice (nicelevel) == -1 && errno))
+	MOM_FATAL ("failed to nice at level %d", nicelevel);
     }
   if (wanted_dir)
     {
-      if (MONIMELT_UNLIKELY (chdir (wanted_dir)))
-	MONIMELT_FATAL ("failed to chdir to %s", wanted_dir);
+      if (MOM_UNLIKELY (chdir (wanted_dir)))
+	MOM_FATAL ("failed to chdir to %s", wanted_dir);
     }
   if (daemonize_me)
     {
       fprintf (stderr, "%s before daemonizing pid %d\n", argv[0],
 	       (int) getpid ());
       fflush (NULL);
-      if (MONIMELT_UNLIKELY (daemon ( /*nochdir */ 1, /*noclose */ 0)))
-	MONIMELT_FATAL ("failed to daemonize from pid #%d", (int) getpid ());
+      if (MOM_UNLIKELY (daemon ( /*nochdir */ 1, /*noclose */ 0)))
+	MOM_FATAL ("failed to daemonize from pid #%d", (int) getpid ());
       want_syslog = true;
     }
   if (want_syslog)
@@ -775,8 +772,8 @@ main (int argc, char **argv)
       using_syslog = true;
       atexit (logexit_cb);
     }
-  MONIMELT_INFORM ("explicit Boehm GC registration = %d",
-		   (int) explicit_boehm_gc_thread);
+  MOM_INFORM ("explicit Boehm GC registration = %d",
+	      (int) explicit_boehm_gc_thread);
 
   if (load_state_path && load_state_path[0] && strcmp (load_state_path, ".")
       && strcmp (load_state_path, "_") && strcmp (load_state_path, "-"))
@@ -786,12 +783,12 @@ main (int argc, char **argv)
 	modules_post_load ();
     }
   else
-    MONIMELT_WARNING ("no load state path");
+    MOM_WARNING ("no load state path");
   if (web_host)
     {
       extern void mom_start_web (const char *);
       mom_start_web (web_host);
-      MONIMELT_INFORM ("started web %s", web_host);
+      MOM_INFORM ("started web %s", web_host);
     }
   if (!dont_want_event_loop)
     {
@@ -799,13 +796,13 @@ main (int argc, char **argv)
       mom_start_event_loop ();
     }
   else
-    MONIMELT_WARNING ("did not start event loop");
+    MOM_WARNING ("did not start event loop");
   if (mom_nb_workers > 0 && web_host && !dont_want_event_loop)
     {
-      MONIMELT_INFORM ("start %d workers", (int) mom_nb_workers);
+      MOM_INFORM ("start %d workers", (int) mom_nb_workers);
       mom_run ("main working run");
     }
-  MONIMELT_DEBUG (run, "before potential final dump");
+  MOM_DEBUG (run, "before potential final dump");
   if (dump_state_path && !web_host)
     {
       mom_full_dump ("final dump", dump_state_path);

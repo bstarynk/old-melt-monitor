@@ -32,10 +32,10 @@ mom_hash_uuid (uuid_t uid)
     (31 * u[4]) + (u[4] << (8 + (u[5] & 0xf))) - (521 * u[5]) +
     ((541 * u[6]) ^ (2071591 * u[7] + 156912));
   momhash_t h = (h1 * 3071633 - (h1 >> 10)) ^ (769 * h2 + 17);
-  if (MONIMELT_UNLIKELY (!h))
+  if (MOM_UNLIKELY (!h))
     {
       h = h1;
-      if (MONIMELT_UNLIKELY (!h))
+      if (MOM_UNLIKELY (!h))
 	{
 	  h = h2;
 	  if (!h)
@@ -77,15 +77,14 @@ add_new_item (mom_anyitem_t * newitm)
   uint32_t istart = newhash % imax;
   for (uint32_t i = istart; i < imax; i += 2)
     {
-      if (!items_data->items_arr[i]
-	  || items_data->items_arr[i] == MONIMELT_EMPTY)
+      if (!items_data->items_arr[i] || items_data->items_arr[i] == MOM_EMPTY)
 	{
 	  items_data->items_arr[i] = newitm;
 	  items_data->items_nb++;
 	  return;
 	}
       else
-	if (MONIMELT_UNLIKELY
+	if (MOM_UNLIKELY
 	    (!memcmp
 	     (newitm->i_uuid, items_data->items_arr[i]->i_uuid,
 	      sizeof (uuid_t))))
@@ -93,10 +92,10 @@ add_new_item (mom_anyitem_t * newitm)
 	  char uidstr[UUID_PARSED_LEN];
 	  memset (uidstr, 0, sizeof (uidstr));
 	  uuid_unparse (newitm->i_uuid, uidstr);
-	  MONIMELT_FATAL ("duplicate uuid %s", uidstr);
+	  MOM_FATAL ("duplicate uuid %s", uidstr);
 	}
       if (!items_data->items_arr[i + 1]
-	  || items_data->items_arr[i + 1] == MONIMELT_EMPTY)
+	  || items_data->items_arr[i + 1] == MOM_EMPTY)
 	{
 	  if (i + 1 >= imax)
 	    continue;
@@ -105,7 +104,7 @@ add_new_item (mom_anyitem_t * newitm)
 	  return;
 	}
       else
-	if (MONIMELT_UNLIKELY
+	if (MOM_UNLIKELY
 	    (!memcmp
 	     (newitm->i_uuid, items_data->items_arr[i]->i_uuid,
 	      sizeof (uuid_t))))
@@ -113,20 +112,19 @@ add_new_item (mom_anyitem_t * newitm)
 	  char uidstr[UUID_PARSED_LEN];
 	  memset (uidstr, 0, sizeof (uidstr));
 	  uuid_unparse (newitm->i_uuid, uidstr);
-	  MONIMELT_FATAL ("duplicate uuid %s", uidstr);
+	  MOM_FATAL ("duplicate uuid %s", uidstr);
 	}
     }
   for (uint32_t i = 0; i < istart; i += 2)
     {
-      if (!items_data->items_arr[i]
-	  || items_data->items_arr[i] == MONIMELT_EMPTY)
+      if (!items_data->items_arr[i] || items_data->items_arr[i] == MOM_EMPTY)
 	{
 	  items_data->items_arr[i] = newitm;
 	  items_data->items_nb++;
 	  return;
 	}
       else
-	if (MONIMELT_UNLIKELY
+	if (MOM_UNLIKELY
 	    (!memcmp
 	     (newitm->i_uuid, items_data->items_arr[i]->i_uuid,
 	      sizeof (uuid_t))))
@@ -134,17 +132,17 @@ add_new_item (mom_anyitem_t * newitm)
 	  char uidstr[UUID_PARSED_LEN];
 	  memset (uidstr, 0, sizeof (uidstr));
 	  uuid_unparse (newitm->i_uuid, uidstr);
-	  MONIMELT_FATAL ("duplicate uuid %s", uidstr);
+	  MOM_FATAL ("duplicate uuid %s", uidstr);
 	}
       if (!items_data->items_arr[i + 1]
-	  || items_data->items_arr[i + 1] == MONIMELT_EMPTY)
+	  || items_data->items_arr[i + 1] == MOM_EMPTY)
 	{
 	  items_data->items_arr[i + 1] = newitm;
 	  items_data->items_nb++;
 	  return;
 	}
       else
-	if (MONIMELT_UNLIKELY
+	if (MOM_UNLIKELY
 	    (!memcmp
 	     (newitm->i_uuid, items_data->items_arr[i]->i_uuid,
 	      sizeof (uuid_t))))
@@ -152,7 +150,7 @@ add_new_item (mom_anyitem_t * newitm)
 	  char uidstr[UUID_PARSED_LEN];
 	  memset (uidstr, 0, sizeof (uidstr));
 	  uuid_unparse (newitm->i_uuid, uidstr);
-	  MONIMELT_FATAL ("duplicate uuid %s", uidstr);
+	  MOM_FATAL ("duplicate uuid %s", uidstr);
 	}
     }
 }
@@ -169,13 +167,13 @@ remove_old_item (mom_anyitem_t * olditm)
     {
       if (items_data->items_arr[i] == olditm)
 	{
-	  items_data->items_arr[i] = MONIMELT_EMPTY;
+	  items_data->items_arr[i] = MOM_EMPTY;
 	  items_data->items_nb--;
 	  return;
 	}
       if (items_data->items_arr[i + 1] == olditm && i + 1 < imax)
 	{
-	  items_data->items_arr[i + 1] = MONIMELT_EMPTY;
+	  items_data->items_arr[i + 1] = MOM_EMPTY;
 	  items_data->items_nb--;
 	  return;
 	}
@@ -184,13 +182,13 @@ remove_old_item (mom_anyitem_t * olditm)
     {
       if (items_data->items_arr[i] == olditm)
 	{
-	  items_data->items_arr[i] = MONIMELT_EMPTY;
+	  items_data->items_arr[i] = MOM_EMPTY;
 	  items_data->items_nb--;
 	  return;
 	}
       if (items_data->items_arr[i + 1] == olditm)
 	{
-	  items_data->items_arr[i + 1] = MONIMELT_EMPTY;
+	  items_data->items_arr[i + 1] = MOM_EMPTY;
 	  items_data->items_nb--;
 	  return;
 	}
@@ -207,8 +205,8 @@ resize_items_data (uint32_t newsiz)
   struct items_data_st *newdata =
     GC_MALLOC_ATOMIC (sizeof (struct items_data_st) +
 		      (newsiz + 1) * sizeof (mom_anyitem_t *));
-  if (MONIMELT_UNLIKELY (!newdata))
-    MONIMELT_FATAL ("fail to resize items to %d", (int) newsiz);
+  if (MOM_UNLIKELY (!newdata))
+    MOM_FATAL ("fail to resize items to %d", (int) newsiz);
   struct items_data_st *olddata = items_data;
   memset (newdata, 0,
 	  sizeof (struct items_data_st) + (newsiz +
@@ -221,7 +219,7 @@ resize_items_data (uint32_t newsiz)
     {
       mom_anyitem_t *olditm = olddata->items_arr[ix];
       olddata->items_arr[ix] = NULL;
-      if (!olditm || (void *) olddata == MONIMELT_EMPTY)
+      if (!olditm || (void *) olddata == MOM_EMPTY)
 	continue;
       add_new_item (olditm);
     }
@@ -241,8 +239,8 @@ mom_finalize_item (void *itmad, void *data)
   assert (itmhash != 0);
   if (idescr && idescr->ityp_destroy)
     {
-      if (MONIMELT_UNLIKELY (idescr->ityp_magic != ITEMTYPE_MAGIC))
-	MONIMELT_FATAL
+      if (MOM_UNLIKELY (idescr->ityp_magic != ITEMTYPE_MAGIC))
+	MOM_FATAL
 	  ("corrupted item type descriptor #%d for finalized item@%p",
 	   (int) (itm->typnum), (void *) itm);
       pthread_mutex_lock (&itm->i_mtx);
@@ -281,13 +279,13 @@ mom_allocate_item_with_uuid (unsigned type, size_t itemsize, unsigned space,
   assert (itemsize >= sizeof (struct momanyitem_st));
   p = GC_MALLOC (itemsize);
   if (!p)
-    MONIMELT_FATAL ("out of memory for item type %d size %ld",
-		    type, (long) itemsize);
+    MOM_FATAL ("out of memory for item type %d size %ld",
+	       type, (long) itemsize);
   memset (p, 0, itemsize);
   if (space != 0)
     {
-      if (MONIMELT_UNLIKELY
-	  (space > MONIMELT_SPACE_MAX || !mom_spacedescr_array[space]))
+      if (MOM_UNLIKELY
+	  (space > MOM_SPACE_MAX || !mom_spacedescr_array[space]))
 	space = 0;
     }
   pthread_mutex_lock (&mtx_global_items);
@@ -325,7 +323,7 @@ static inline momval_t
 get_attribute (struct mom_itemattributes_st *attrs, mom_anyitem_t * itat)
 {
   if (!attrs)
-    return MONIMELT_NULLV;
+    return MOM_NULLV;
   unsigned nbattr = attrs->nbattr;
   unsigned lo = 0, hi = nbattr, md;
   while (lo + 3 < hi)
@@ -345,14 +343,14 @@ get_attribute (struct mom_itemattributes_st *attrs, mom_anyitem_t * itat)
       if (curatitm == itat)
 	return attrs->itattrtab[md].aten_val;
     }
-  return MONIMELT_NULLV;
+  return MOM_NULLV;
 }
 
 static struct mom_itemattributes_st *
 put_attribute (struct mom_itemattributes_st *attrs, mom_anyitem_t * itat,
 	       momval_t val)
 {
-  if (MONIMELT_UNLIKELY (!attrs))
+  if (MOM_UNLIKELY (!attrs))
     {
       if (!itat || !val.ptr || itat->typnum <= momty__itemlowtype)
 	return NULL;
@@ -361,9 +359,9 @@ put_attribute (struct mom_itemattributes_st *attrs, mom_anyitem_t * itat,
 	=
 	GC_MALLOC (sizeof (struct mom_itemattributes_st) +
 		   newsize * sizeof (struct mom_attrentry_st));
-      if (MONIMELT_UNLIKELY (!newattrs))
-	MONIMELT_FATAL ("failed to allocate initial attributes of %d",
-			(int) newsize);
+      if (MOM_UNLIKELY (!newattrs))
+	MOM_FATAL ("failed to allocate initial attributes of %d",
+		   (int) newsize);
       memset (newattrs, 0,
 	      sizeof (struct mom_itemattributes_st) +
 	      newsize * sizeof (struct mom_attrentry_st));
@@ -377,7 +375,7 @@ put_attribute (struct mom_itemattributes_st *attrs, mom_anyitem_t * itat,
   unsigned size = attrs->size;
   unsigned lo = 0, hi = nbattr, md;
   assert (nbattr < size);
-  if (MONIMELT_UNLIKELY (nbattr == 0))
+  if (MOM_UNLIKELY (nbattr == 0))
     {
       if (!val.ptr)
 	return attrs;
@@ -430,9 +428,8 @@ put_attribute (struct mom_itemattributes_st *attrs, mom_anyitem_t * itat,
 		=
 		GC_MALLOC (sizeof (struct mom_itemattributes_st) +
 			   newsize * sizeof (struct mom_attrentry_st));
-	      if (MONIMELT_UNLIKELY (!newattrs))
-		MONIMELT_FATAL ("failed to grow attributes of %d",
-				(int) newsize);
+	      if (MOM_UNLIKELY (!newattrs))
+		MOM_FATAL ("failed to grow attributes of %d", (int) newsize);
 	      memset (newattrs, 0,
 		      sizeof (struct mom_itemattributes_st) +
 		      newsize * sizeof (struct mom_attrentry_st));
@@ -461,7 +458,7 @@ put_attribute (struct mom_itemattributes_st *attrs, mom_anyitem_t * itat,
 	}
     }
   // this should never happen
-  MONIMELT_FATAL ("corrupted attributes @%p", attrs);
+  MOM_FATAL ("corrupted attributes @%p", attrs);
 remove_at_md:
   if (3 * nbattr / 2 + 1 < size && size > 4)
     {
@@ -472,9 +469,8 @@ remove_at_md:
 	    =
 	    GC_MALLOC (sizeof (struct mom_itemattributes_st) +
 		       newsize * sizeof (struct mom_attrentry_st));
-	  if (MONIMELT_UNLIKELY (!newattrs))
-	    MONIMELT_FATAL ("failed to shrink attributes of %d",
-			    (int) newsize);
+	  if (MOM_UNLIKELY (!newattrs))
+	    MOM_FATAL ("failed to shrink attributes of %d", (int) newsize);
 	  memset (newattrs, 0,
 		  sizeof (struct mom_itemattributes_st) +
 		  newsize * sizeof (struct mom_attrentry_st));
@@ -495,7 +491,7 @@ remove_at_md:
 	  for (unsigned ix = md; ix + 1 < nbattr; ix++)
 	    attrs->itattrtab[ix] = attrs->itattrtab[ix + 1];
 	  attrs->itattrtab[nbattr].aten_itm = NULL;
-	  attrs->itattrtab[nbattr].aten_val = MONIMELT_NULLV;
+	  attrs->itattrtab[nbattr].aten_val = MOM_NULLV;
 	  attrs->nbattr = nbattr - 1;
 	  return attrs;
 	}
@@ -506,10 +502,10 @@ remove_at_md:
 momval_t
 mom_item_get_attr (mom_anyitem_t * itm, mom_anyitem_t * itat)
 {
-  momval_t res = MONIMELT_NULLV;
+  momval_t res = MOM_NULLV;
   if (!itm || !itat || itm->typnum <= momty__itemlowtype
       || itat->typnum <= momty__itemlowtype)
-    return MONIMELT_NULLV;
+    return MOM_NULLV;
   pthread_mutex_lock (&itm->i_mtx);
   res = get_attribute (itm->i_attrs, itat);
   pthread_mutex_unlock (&itm->i_mtx);
@@ -587,7 +583,7 @@ mom_item_of_uuid (uuid_t uid)
   for (uint32_t i = istart; i < imax; i++)
     {
       mom_anyitem_t *curitm = items_data->items_arr[i];
-      if ((void *) curitm == MONIMELT_EMPTY)
+      if ((void *) curitm == MOM_EMPTY)
 	continue;
       if (!curitm)
 	goto end;
@@ -600,7 +596,7 @@ mom_item_of_uuid (uuid_t uid)
   for (uint32_t i = 0; i < istart; i++)
     {
       mom_anyitem_t *curitm = items_data->items_arr[i];
-      if ((void *) curitm == MONIMELT_EMPTY)
+      if ((void *) curitm == MOM_EMPTY)
 	continue;
       if (!curitm)
 	goto end;
@@ -619,7 +615,7 @@ end:
 void
 mom_scan_any_item_data (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
-  if (MONIMELT_UNLIKELY (!itm || itm->typnum <= momty__itemlowtype))
+  if (MOM_UNLIKELY (!itm || itm->typnum <= momty__itemlowtype))
     return;
   struct mom_itemattributes_st *iat = itm->i_attrs;
   if (iat)
@@ -692,7 +688,7 @@ mom_create_named_bool (uuid_t uid, const char *name)
       momit_boolean_t *itrue = mom_allocate_item_with_uuid (momty_booleanitem,
 							    sizeof
 							    (momit_boolean_t),
-							    MONIMELT_SPACE_ROOT,
+							    MOM_SPACE_ROOT,
 							    uid);
       itrue->ib_bool = true;
       return itrue;
@@ -702,7 +698,7 @@ mom_create_named_bool (uuid_t uid, const char *name)
       momit_boolean_t *ifalse
 	= mom_allocate_item_with_uuid (momty_booleanitem,
 				       sizeof (momit_boolean_t),
-				       MONIMELT_SPACE_ROOT, uid);
+				       MOM_SPACE_ROOT, uid);
       ifalse->ib_bool = false;
       return ifalse;
     }
@@ -711,8 +707,8 @@ mom_create_named_bool (uuid_t uid, const char *name)
       char uuidstr[UUID_PARSED_LEN];
       memset (uuidstr, 0, sizeof (uuidstr));
       uuid_unparse (uid, uuidstr);
-      MONIMELT_FATAL ("invalid creation of boolean item name=%s uuid %s",
-		      name, uuidstr);
+      MOM_FATAL ("invalid creation of boolean item name=%s uuid %s",
+		 name, uuidstr);
     }
 }
 
@@ -747,7 +743,7 @@ bool_itemloader (struct mom_loader_st *ld, momval_t json
 {
   char ustr[UUID_PARSED_LEN];
   uuid_unparse (uid, ustr);
-  MONIMELT_FATAL ("invalid call to bool_itemloader %s", ustr);
+  MOM_FATAL ("invalid call to bool_itemloader %s", ustr);
 }
 
 static void
@@ -795,7 +791,7 @@ json_name_itemloader (struct mom_loader_st *ld, momval_t json, uuid_t uid,
   if (name && name[0])
     return (mom_anyitem_t *) mom_make_item_json_name_of_uuid (uid, name,
 							      space);
-  MONIMELT_FATAL ("failed to load & build json name item");
+  MOM_FATAL ("failed to load & build json name item");
 }
 
 static void
@@ -896,14 +892,14 @@ static momval_t
 tasklet_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
   momval_t *jframarr = NULL;
-  momval_t jframetiny[TINY_MAX] = { MONIMELT_NULLV };
+  momval_t jframetiny[TINY_MAX] = { MOM_NULLV };
   momit_tasklet_t *tskitm = (momit_tasklet_t *) itm;
   unsigned fratop = tskitm->itk_fratop;
   if (tskitm->itk_fratop >= TINY_MAX)
     {
       jframarr = GC_MALLOC (fratop * sizeof (momval_t));
-      if (MONIMELT_UNLIKELY (!jframarr))
-	MONIMELT_FATAL ("failed to allocate for %d frames", fratop);
+      if (MOM_UNLIKELY (!jframarr))
+	MOM_FATAL ("failed to allocate for %d frames", fratop);
       memset (jframarr, 0, fratop * sizeof (momval_t));
     }
   else
@@ -912,8 +908,8 @@ tasklet_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
     {
       struct momframe_st *curfra = tskitm->itk_frames + ix;
       momclosure_t *curclo = tskitm->itk_closures[ix];
-      if (MONIMELT_UNLIKELY (!curclo || curclo->typnum != momty_closure))
-	MONIMELT_FATAL ("corrupted frame #%d", ix);
+      if (MOM_UNLIKELY (!curclo || curclo->typnum != momty_closure))
+	MOM_FATAL ("corrupted frame #%d", ix);
       unsigned nbnum = curfra->fr_dbloff - curfra->fr_intoff;
       unsigned nbdbl = 0, nbval = 0;
       if (ix + 1 >= fratop)
@@ -933,16 +929,16 @@ tasklet_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
       momval_t *valarr = NULL;
       momval_t *numarr = NULL;
       momval_t *dblarr = NULL;
-      momval_t valtiny[TINY_MAX] = { MONIMELT_NULLV };
-      momval_t numtiny[TINY_MAX] = { MONIMELT_NULLV };
-      momval_t dbltiny[TINY_MAX] = { MONIMELT_NULLV };
+      momval_t valtiny[TINY_MAX] = { MOM_NULLV };
+      momval_t numtiny[TINY_MAX] = { MOM_NULLV };
+      momval_t dbltiny[TINY_MAX] = { MOM_NULLV };
       if (nbnum < TINY_MAX)
 	numarr = numtiny;
       else
 	{
 	  numarr = GC_MALLOC (sizeof (momval_t) * nbnum);
-	  if (MONIMELT_UNLIKELY (!numarr))
-	    MONIMELT_FATAL ("failed to allocate for %d numbers", nbnum);
+	  if (MOM_UNLIKELY (!numarr))
+	    MOM_FATAL ("failed to allocate for %d numbers", nbnum);
 	  memset (numarr, 0, sizeof (momval_t) * nbnum);
 	}
       if (nbdbl < TINY_MAX)
@@ -950,8 +946,8 @@ tasklet_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
       else
 	{
 	  dblarr = GC_MALLOC (sizeof (momval_t) * nbdbl);
-	  if (MONIMELT_UNLIKELY (!dblarr))
-	    MONIMELT_FATAL ("failed to allocate for %d doubles", nbdbl);
+	  if (MOM_UNLIKELY (!dblarr))
+	    MOM_FATAL ("failed to allocate for %d doubles", nbdbl);
 	  memset (dblarr, 0, sizeof (momval_t) * nbdbl);
 	}
       if (nbval < TINY_MAX)
@@ -959,8 +955,8 @@ tasklet_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
       else
 	{
 	  valarr = GC_MALLOC (sizeof (momval_t) * nbval);
-	  if (MONIMELT_UNLIKELY (!valarr))
-	    MONIMELT_FATAL ("failed to allocate for %d values", nbval);
+	  if (MOM_UNLIKELY (!valarr))
+	    MOM_FATAL ("failed to allocate for %d values", nbval);
 	  memset (valarr, 0, sizeof (momval_t) * nbval);
 	}
       for (unsigned nix = 0; ix < nbnum; nix++)
@@ -1045,7 +1041,7 @@ tasklet_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
       momval_t closv = mom_load_value_json (ld, jclosure);
       if (closv.ptr == NULL || *closv.ptype != momty_closure)
 	continue;
-      momval_t valtiny[TINY_MAX] = { MONIMELT_NULLV };
+      momval_t valtiny[TINY_MAX] = { MOM_NULLV };
       intptr_t numtiny[TINY_MAX] = { 0 };
       double dbltiny[TINY_MAX] = { 0.0 };
       unsigned nbval = mom_json_array_size (jvalues);
@@ -1062,7 +1058,7 @@ tasklet_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
 	{
 	  valarr = GC_MALLOC (nbval * sizeof (momval_t));
 	  if (!valarr)
-	    MONIMELT_FATAL ("failed to allocate %d values", nbval);
+	    MOM_FATAL ("failed to allocate %d values", nbval);
 	  memset (valarr, 0, nbval * sizeof (momval_t));
 	}
       for (unsigned vix = 0; vix < nbval; vix++)
@@ -1075,7 +1071,7 @@ tasklet_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
 	{
 	  numarr = GC_MALLOC_ATOMIC (nbnum * sizeof (intptr_t));
 	  if (!numarr)
-	    MONIMELT_FATAL ("failed to allocate %d numbers", nbnum);
+	    MOM_FATAL ("failed to allocate %d numbers", nbnum);
 	  memset (numarr, 0, nbnum * sizeof (intptr_t));
 	}
       for (unsigned nix = 0; nix < nbnum; nix++)
@@ -1088,7 +1084,7 @@ tasklet_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
 	{
 	  dblarr = GC_MALLOC_ATOMIC (nbdbl * sizeof (double));
 	  if (!dblarr)
-	    MONIMELT_FATAL ("failed to allocate %d doubles", nbdbl);
+	    MOM_FATAL ("failed to allocate %d doubles", nbdbl);
 	  memset (dblarr, 0, nbdbl * sizeof (double));
 	}
       for (unsigned dix = 0; dix < nbdbl; dix++)
@@ -1127,8 +1123,8 @@ tasklet_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
     {
       struct momframe_st *curfra = tskitm->itk_frames + frix;
       const momclosure_t *curclo = tskitm->itk_closures[frix];
-      if (MONIMELT_UNLIKELY (!curclo || curclo->typnum != momty_closure))
-	MONIMELT_FATAL ("corrupted frame #%d", frix);
+      if (MOM_UNLIKELY (!curclo || curclo->typnum != momty_closure))
+	MOM_FATAL ("corrupted frame #%d", frix);
       mom_dump_scan_value (dmp, (momval_t) curclo);
       unsigned nbval = 0;
       if (frix + 1 >= fratop)
@@ -1161,8 +1157,8 @@ mom_make_item_routine_of_uuid (uuid_t uid, const char *name, unsigned space)
   momit_routine_t *itrout = NULL;
   char symname[MOM_SYMBNAME_LEN];
   memset (symname, 0, sizeof (symname));
-  if (MONIMELT_UNLIKELY (!name || !name[0]))
-    MONIMELT_FATAL ("bad name for item routine");
+  if (MOM_UNLIKELY (!name || !name[0]))
+    MOM_FATAL ("bad name for item routine");
   snprintf (symname, sizeof (symname), MOM_ROUTINE_NAME_FMT, name);
   struct momroutinedescr_st *rdescr = NULL;
   if (!g_module_symbol
@@ -1176,7 +1172,7 @@ mom_make_item_routine_of_uuid (uuid_t uid, const char *name, unsigned space)
       itrout =
 	mom_allocate_item_with_uuid (momty_routineitem,
 				     sizeof (momit_routine_t), space, uid);
-      MONIMELT_WARNING
+      MOM_WARNING
 	("failed to find routine descriptor %s : %s, so delay embryonic %s for {%s}",
 	 symname, g_module_error (), name,
 	 mom_unparse_item_uuid ((mom_anyitem_t *) itrout, uidstr));
@@ -1186,7 +1182,7 @@ mom_make_item_routine_of_uuid (uuid_t uid, const char *name, unsigned space)
   else
     if (rdescr->rout_magic != ROUTINE_MAGIC || !rdescr->rout_code
 	|| strcmp (rdescr->rout_name, name))
-    MONIMELT_FATAL ("bad routine descriptor %s", symname);
+    MOM_FATAL ("bad routine descriptor %s", symname);
   itrout =
     mom_allocate_item_with_uuid (momty_routineitem, sizeof (momit_routine_t),
 				 space, uid);
@@ -1199,17 +1195,17 @@ mom_make_item_routine (const char *name, unsigned space)
 {
   char symname[MOM_SYMBNAME_LEN];
   memset (symname, 0, sizeof (symname));
-  if (MONIMELT_UNLIKELY (!name || !name[0]))
-    MONIMELT_FATAL ("bad name for item routine");
+  if (MOM_UNLIKELY (!name || !name[0]))
+    MOM_FATAL ("bad name for item routine");
   snprintf (symname, sizeof (symname), MOM_ROUTINE_NAME_FMT, name);
   struct momroutinedescr_st *rdescr = NULL;
   if (!g_module_symbol
       (mom_prog_module, symname, (gpointer *) & rdescr) || !rdescr)
-    MONIMELT_FATAL ("failed to find routine descriptor %s : %s", symname,
-		    g_module_error ());
+    MOM_FATAL ("failed to find routine descriptor %s : %s", symname,
+	       g_module_error ());
   if (rdescr->rout_magic != ROUTINE_MAGIC || !rdescr->rout_code
       || strcmp (rdescr->rout_name, name))
-    MONIMELT_FATAL ("bad routine descriptor %s", symname);
+    MOM_FATAL ("bad routine descriptor %s", symname);
   momit_routine_t *itrout =
     mom_allocate_item (momty_routineitem, sizeof (momit_routine_t), space);
   itrout->irt_descr = rdescr;
@@ -1221,14 +1217,14 @@ mom_make_item_embryonic_routine (const char *name, unsigned space)
 {
   char symname[MOM_SYMBNAME_LEN];
   memset (symname, 0, sizeof (symname));
-  if (MONIMELT_UNLIKELY (!name || !name[0]))
-    MONIMELT_FATAL ("bad name for item routine");
+  if (MOM_UNLIKELY (!name || !name[0]))
+    MOM_FATAL ("bad name for item routine");
   snprintf (symname, sizeof (symname), MOM_ROUTINE_NAME_FMT, name);
   struct momroutinedescr_st *rdescr = NULL;
   if (!g_module_symbol
       (mom_prog_module, symname, (gpointer *) & rdescr) || !rdescr)
-    MONIMELT_WARNING ("delayed embryonic routine descriptor %s : %s", symname,
-		      g_module_error ());
+    MOM_WARNING ("delayed embryonic routine descriptor %s : %s", symname,
+		 g_module_error ());
   momit_routine_t *itrout =
     mom_allocate_item (momty_routineitem, sizeof (momit_routine_t), space);
   itrout->irt_descr = rdescr;
@@ -1241,7 +1237,7 @@ mom_make_item_embryonic_routine (const char *name, unsigned space)
     }
   else if (rdescr->rout_magic != ROUTINE_MAGIC || !rdescr->rout_code
 	   || strcmp (rdescr->rout_name, name))
-    MONIMELT_FATAL ("bad routine descriptor %s", symname);
+    MOM_FATAL ("bad routine descriptor %s", symname);
   return itrout;
 }
 
@@ -1251,20 +1247,20 @@ mom_try_make_item_routine (const char *name, unsigned space)
 {
   char symname[MOM_SYMBNAME_LEN];
   memset (symname, 0, sizeof (symname));
-  if (MONIMELT_UNLIKELY (!name || !name[0]))
+  if (MOM_UNLIKELY (!name || !name[0]))
     return NULL;
   snprintf (symname, sizeof (symname), MOM_ROUTINE_NAME_FMT, name);
   struct momroutinedescr_st *rdescr = NULL;
   if (!g_module_symbol
       (mom_prog_module, symname, (gpointer *) & rdescr) || !rdescr)
     {
-      MONIMELT_WARNING ("failed to find routine descriptor %s : %s", symname,
-			g_module_error ());
+      MOM_WARNING ("failed to find routine descriptor %s : %s", symname,
+		   g_module_error ());
       return NULL;
     }
   if (rdescr->rout_magic != ROUTINE_MAGIC || !rdescr->rout_code
       || strcmp (rdescr->rout_name, name))
-    MONIMELT_FATAL ("bad routine descriptor %s", symname);
+    MOM_FATAL ("bad routine descriptor %s", symname);
   momit_routine_t *itrout =
     mom_allocate_item (momty_routineitem, sizeof (momit_routine_t), space);
   itrout->irt_descr = rdescr;
@@ -1311,19 +1307,19 @@ routine_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
       if (!embryname)
 	{
 	  if (routname)
-	    MONIMELT_FATAL
+	    MOM_FATAL
 	      ("failed to dump routine item named %s without code", routname);
 	  else
-	    MONIMELT_FATAL ("failed to dump routine item {%s} without code",
-			    mom_unparse_item_uuid (itm, uidstr));
+	    MOM_FATAL ("failed to dump routine item {%s} without code",
+		       mom_unparse_item_uuid (itm, uidstr));
 	};
       if (routname)
-	MONIMELT_WARNING
+	MOM_WARNING
 	  ("dumping incomplete routine item named %s embryonic %s", routname,
 	   embryname);
       else
-	MONIMELT_WARNING ("dumping incomplete routine item {%s} embryonic %s",
-			  mom_unparse_item_uuid (itm, uidstr), embryname);
+	MOM_WARNING ("dumping incomplete routine item {%s} embryonic %s",
+		     mom_unparse_item_uuid (itm, uidstr), embryname);
       return (momval_t) mom_make_json_object
 	// build with type and routine name
 	(			// the type:
@@ -1333,21 +1329,20 @@ routine_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 	  // that's all!
 	  MOMJSON_END);
     }
-  if (MONIMELT_UNLIKELY (rdescr->rout_magic != ROUTINE_MAGIC
-			 || !rdescr->rout_name))
-    MONIMELT_FATAL ("routine item with invalid descriptor");
+  if (MOM_UNLIKELY (rdescr->rout_magic != ROUTINE_MAGIC
+		    || !rdescr->rout_name))
+    MOM_FATAL ("routine item with invalid descriptor");
   if (!dladdr (rdescr, &dlinf))
-    MONIMELT_FATAL ("failed to get address of routine %s @%p : %s",
-		    rdescr->rout_name, (void *) rdescr, dlerror ());
+    MOM_FATAL ("failed to get address of routine %s @%p : %s",
+	       rdescr->rout_name, (void *) rdescr, dlerror ());
   const char *basefname = dlinf.dli_fname ? basename (dlinf.dli_fname) : NULL;
-  if (basefname && !strncmp (basefname, MONIMELT_SHARED_MODULE_PREFIX,
-			     sizeof (MONIMELT_SHARED_MODULE_PREFIX) - 1))
+  if (basefname && !strncmp (basefname, MOM_SHARED_MODULE_PREFIX,
+			     sizeof (MOM_SHARED_MODULE_PREFIX) - 1))
     {
       char modname[104];
       memset (modname, 0, sizeof (modname));
       if (sscanf (basefname,
-		  MONIMELT_SHARED_MODULE_PREFIX
-		  "%100[a-zA-Z0-9+-]", modname) > 0)
+		  MOM_SHARED_MODULE_PREFIX "%100[a-zA-Z0-9+-]", modname) > 0)
 	{
 	  mom_register_dumped_module (GC_STRDUP (modname));
 	}
@@ -1369,8 +1364,8 @@ routine_itemloader (struct mom_loader_st *ld, momval_t json, uuid_t uid,
   mom_anyitem_t *itm = NULL;
   const char *name =
     mom_string_cstr (mom_jsonob_get (json, (momval_t) mom_item__name));
-  if (MONIMELT_UNLIKELY (!name))
-    MONIMELT_FATAL ("missing name for routine item");
+  if (MOM_UNLIKELY (!name))
+    MOM_FATAL ("missing name for routine item");
   return (mom_anyitem_t *) mom_make_item_routine_of_uuid (uid, name, space);
 }
 
@@ -1404,12 +1399,12 @@ routine_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 static void
 reserve_vectoritem (momit_vector_t * vecitm, unsigned more)
 {
-  if (MONIMELT_UNLIKELY (vecitm->itv_count + more + 1 >= vecitm->itv_size))
+  if (MOM_UNLIKELY (vecitm->itv_count + more + 1 >= vecitm->itv_size))
     {
       unsigned newsiz = ((5 * vecitm->itv_count / 4 + 5 + more) | 7) + 1;
       momval_t *newarr = GC_MALLOC (newsiz * sizeof (momval_t));
-      if (MONIMELT_UNLIKELY (!newarr))
-	MONIMELT_FATAL ("failed to grow vector to %d", (int) newsiz);
+      if (MOM_UNLIKELY (!newarr))
+	MOM_FATAL ("failed to grow vector to %d", (int) newsiz);
       memset (newarr, 0, newsiz * sizeof (momval_t));
       if (vecitm->itv_count > 0)
 	memcpy (newarr, vecitm->itv_arr,
@@ -1455,9 +1450,9 @@ mom_item_vector_count (const momval_t vec)
 const momval_t
 mom_item_vector_nth (const momval_t vec, int rk)
 {
-  momval_t res = MONIMELT_NULLV;
+  momval_t res = MOM_NULLV;
   if (!vec.ptr || *vec.ptype != momty_vectoritem)
-    return MONIMELT_NULLV;
+    return MOM_NULLV;
   pthread_mutex_lock (&vec.panyitem->i_mtx);
   unsigned cnt = vec.pvectitem->itv_count;
   if (rk < 0)
@@ -1501,9 +1496,8 @@ mom_item_vector_resize (momval_t vec, unsigned newcount)
 	  if (newsiz < oldsiz)
 	    {
 	      momval_t *newarr = GC_MALLOC (newsiz * sizeof (momval_t));
-	      if (MONIMELT_UNLIKELY (!newarr))
-		MONIMELT_FATAL ("failed to shrink vector to %d",
-				(int) newsiz);
+	      if (MOM_UNLIKELY (!newarr))
+		MOM_FATAL ("failed to shrink vector to %d", (int) newsiz);
 	      memset (newarr, 0, newsiz * sizeof (momval_t));
 	      memcpy (newarr, oldarr, newcount * sizeof (momval_t));
 	      vec.pvectitem->itv_size = newsiz;
@@ -1538,8 +1532,7 @@ mom_item_vector_append1 (momval_t vec, momval_t val)
   if (!vec.ptr || *vec.ptype != momty_vectoritem)
     return;
   pthread_mutex_lock (&vec.panyitem->i_mtx);
-  if (MONIMELT_UNLIKELY
-      (vec.pvectitem->itv_count + 1 >= vec.pvectitem->itv_size))
+  if (MOM_UNLIKELY (vec.pvectitem->itv_count + 1 >= vec.pvectitem->itv_size))
     reserve_vectoritem (vec.pvectitem, 1 + vec.pvectitem->itv_count / 8);
   vec.pvectitem->itv_arr[vec.pvectitem->itv_count] = val;
   vec.pvectitem->itv_count++;
@@ -1732,14 +1725,14 @@ vector_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
   momit_vector_t *vecitm = (momit_vector_t *) itm;
   unsigned cnt = vecitm->itv_count;
   momval_t *jarr = NULL;
-  momval_t tinyarr[TINY_MAX] = { MONIMELT_NULLV };
+  momval_t tinyarr[TINY_MAX] = { MOM_NULLV };
   if (cnt < TINY_MAX)
     jarr = tinyarr;
   else
     {
       jarr = GC_MALLOC (sizeof (momval_t) * cnt);
-      if (MONIMELT_UNLIKELY (!jarr))
-	MONIMELT_FATAL
+      if (MOM_UNLIKELY (!jarr))
+	MOM_FATAL
 	  ("failed to allocate json array for %d vector elements", (int) cnt);
       memset (jarr, 0, sizeof (momval_t) * cnt);
     }
@@ -1831,7 +1824,7 @@ assoc_put (momit_assoc_t * itmassoc, mom_anyitem_t * itmattr, momval_t val)
 	  itmassoc->ita_htab[ix].aten_val = val;
 	  return;
 	}
-      else if ((void *) curat == MONIMELT_EMPTY)
+      else if ((void *) curat == MOM_EMPTY)
 	{
 	  if (pix < 0)
 	    pix = (int) ix;
@@ -1852,7 +1845,7 @@ assoc_put (momit_assoc_t * itmassoc, mom_anyitem_t * itmattr, momval_t val)
 	  itmassoc->ita_htab[ix].aten_val = val;
 	  return;
 	}
-      else if ((void *) curat == MONIMELT_EMPTY)
+      else if ((void *) curat == MOM_EMPTY)
 	{
 	  if (pix < 0)
 	    pix = (int) ix;
@@ -1873,7 +1866,7 @@ addatpix:
       itmassoc->ita_count++;
       return;
     }
-  MONIMELT_FATAL ("corrupted assoc item");
+  MOM_FATAL ("corrupted assoc item");
 }
 
 
@@ -1909,10 +1902,10 @@ mom_item_assoc_count (const momval_t asso)
 momval_t
 mom_item_assoc_get1 (momval_t asso, const momval_t attr)
 {
-  momval_t res = MONIMELT_NULLV;
+  momval_t res = MOM_NULLV;
   if (!asso.ptr || asso.panyitem->typnum != momty_associtem
       || !attr.ptr || attr.panyitem->typnum <= momty__itemlowtype)
-    return MONIMELT_NULLV;
+    return MOM_NULLV;
   pthread_mutex_lock (&asso.panyitem->i_mtx);
   momit_assoc_t *assoc = asso.passocitem;
   int ix = assoc_get_rank (assoc, attr.panyitem, 0);
@@ -1959,15 +1952,15 @@ mom_item_assoc_put1 (momval_t asso, const momval_t attr, const momval_t val)
   pthread_mutex_lock (&asso.panyitem->i_mtx);
   unsigned oldcount = assoc->ita_count;
   unsigned oldsize = assoc->ita_size;
-  if (MONIMELT_UNLIKELY ((4 * oldcount + 2 >= 3 * oldsize && val.ptr != NULL)
-			 || (oldsize > 32 && 4 * oldcount + 5 < oldsize)))
+  if (MOM_UNLIKELY ((4 * oldcount + 2 >= 3 * oldsize && val.ptr != NULL)
+		    || (oldsize > 32 && 4 * oldcount + 5 < oldsize)))
     {
       unsigned newsiz = ((3 * oldcount / 2 + oldcount / 16 + 5) | 7) + 1;
       struct mom_attrentry_st *oldarr = assoc->ita_htab;
       struct mom_attrentry_st *newarr =
 	GC_MALLOC (newsiz * sizeof (struct mom_attrentry_st));
-      if (MONIMELT_UNLIKELY (!newarr))
-	MONIMELT_FATAL ("failed to grow assoc to size %d", (int) newsiz);
+      if (MOM_UNLIKELY (!newarr))
+	MOM_FATAL ("failed to grow assoc to size %d", (int) newsiz);
       memset (newarr, 0, newsiz * sizeof (struct mom_attrentry_st));
       assoc->ita_count = 0;
       assoc->ita_size = newsiz;
@@ -1975,7 +1968,7 @@ mom_item_assoc_put1 (momval_t asso, const momval_t attr, const momval_t val)
       for (unsigned oix = 0; oix < oldsize; oix++)
 	{
 	  mom_anyitem_t *curat = oldarr[oix].aten_itm;
-	  if (!curat || (void *) curat == MONIMELT_EMPTY)
+	  if (!curat || (void *) curat == MOM_EMPTY)
 	    continue;
 	  assoc_put (assoc, curat, oldarr[oix].aten_val);
 	}
@@ -1988,8 +1981,8 @@ mom_item_assoc_put1 (momval_t asso, const momval_t attr, const momval_t val)
       int aix = assoc_get_rank (assoc, attr.panyitem, 0);
       if (aix >= 0)
 	{
-	  assoc->ita_htab[aix].aten_itm = (mom_anyitem_t *) MONIMELT_EMPTY;
-	  assoc->ita_htab[aix].aten_val = (momval_t) MONIMELT_EMPTY;
+	  assoc->ita_htab[aix].aten_itm = (mom_anyitem_t *) MOM_EMPTY;
+	  assoc->ita_htab[aix].aten_val = (momval_t) MOM_EMPTY;
 	  assoc->ita_count--;
 	}
     }
@@ -2023,8 +2016,8 @@ mom_item_assoc_put_several (momval_t asso, ...)
       struct mom_attrentry_st *oldarr = assoc->ita_htab;
       struct mom_attrentry_st *newarr =
 	GC_MALLOC (newsize * sizeof (struct mom_attrentry_st));
-      if (MONIMELT_UNLIKELY (!newarr))
-	MONIMELT_FATAL ("failed to resize assoc to size %d", (int) newsize);
+      if (MOM_UNLIKELY (!newarr))
+	MOM_FATAL ("failed to resize assoc to size %d", (int) newsize);
       memset (newarr, 0, newsize * sizeof (struct mom_attrentry_st));
       assoc->ita_count = 0;
       assoc->ita_size = newsize;
@@ -2032,7 +2025,7 @@ mom_item_assoc_put_several (momval_t asso, ...)
       for (unsigned oix = 0; oix < oldsize; oix++)
 	{
 	  mom_anyitem_t *curat = oldarr[oix].aten_itm;
-	  if (!curat || (void *) curat == MONIMELT_EMPTY)
+	  if (!curat || (void *) curat == MOM_EMPTY)
 	    continue;
 	  assoc_put (assoc, curat, oldarr[oix].aten_val);
 	}
@@ -2052,9 +2045,8 @@ mom_item_assoc_put_several (momval_t asso, ...)
 	  int aix = assoc_get_rank (assoc, itatt, 0);
 	  if (aix >= 0)
 	    {
-	      assoc->ita_htab[aix].aten_itm =
-		(mom_anyitem_t *) MONIMELT_EMPTY;
-	      assoc->ita_htab[aix].aten_val = (momval_t) MONIMELT_EMPTY;
+	      assoc->ita_htab[aix].aten_itm = (mom_anyitem_t *) MOM_EMPTY;
+	      assoc->ita_htab[aix].aten_val = (momval_t) MOM_EMPTY;
 	      assoc->ita_count--;
 	    }
 	}
@@ -2082,7 +2074,7 @@ mom_item_assoc_first_attr (momval_t asso, int *phint)
   for (unsigned ix = 0; ix < size; ix++)
     {
       mom_anyitem_t *curat = assoc->ita_htab[ix].aten_itm;
-      if (!curat || (void *) curat == MONIMELT_EMPTY)
+      if (!curat || (void *) curat == MOM_EMPTY)
 	continue;
       hintix = ix;
       first = curat;
@@ -2116,7 +2108,7 @@ mom_item_assoc_next_attr (momval_t asso, mom_anyitem_t * attr, int *phint)
       for (unsigned ix = rk + 1; ix < size && hintix < 0; ix++)
 	{
 	  mom_anyitem_t *curitm = assoc->ita_htab[ix].aten_itm;
-	  if (!curitm || (void *) curitm == MONIMELT_EMPTY)
+	  if (!curitm || (void *) curitm == MOM_EMPTY)
 	    continue;
 	  hintix = ix;
 	  next = curitm;
@@ -2125,7 +2117,7 @@ mom_item_assoc_next_attr (momval_t asso, mom_anyitem_t * attr, int *phint)
       for (unsigned ix = 0; ix < rk && hintix < 0; ix++)
 	{
 	  mom_anyitem_t *curitm = assoc->ita_htab[ix].aten_itm;
-	  if (!curitm || (void *) curitm == MONIMELT_EMPTY)
+	  if (!curitm || (void *) curitm == MOM_EMPTY)
 	    continue;
 	  hintix = ix;
 	  next = curitm;
@@ -2195,10 +2187,10 @@ assoc_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
   for (unsigned ix = 0; ix < size; ix++)
     {
       mom_anyitem_t *curitm = assitm->ita_htab[ix].aten_itm;
-      if (!curitm || (void *) curitm == MONIMELT_EMPTY)
+      if (!curitm || (void *) curitm == MOM_EMPTY)
 	continue;
       momval_t curval = assitm->ita_htab[ix].aten_val;
-      if (!curval.ptr || curval.ptr == MONIMELT_EMPTY)
+      if (!curval.ptr || curval.ptr == MOM_EMPTY)
 	continue;
       mom_dump_scan_value (dmp, (momval_t) curitm);
       mom_dump_scan_value (dmp, curval);
@@ -2225,19 +2217,18 @@ assoc_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
     (count <
      TINY_MAX) ? entiny : GC_MALLOC (count *
 				     sizeof (struct mom_attrentry_st));
-  if (MONIMELT_UNLIKELY (!entarr))
-    MONIMELT_FATAL ("failed to allocate %d entries", (int) count);
+  if (MOM_UNLIKELY (!entarr))
+    MOM_FATAL ("failed to allocate %d entries", (int) count);
   memset (entarr, 0, count * sizeof (struct mom_attrentry_st));
   unsigned nb = 0;
   for (unsigned ix = 0; ix < size; ix++)
     {
       mom_anyitem_t *curitm = assitm->ita_htab[ix].aten_itm;
-      if (!curitm || (void *) curitm == MONIMELT_EMPTY)
+      if (!curitm || (void *) curitm == MOM_EMPTY)
 	continue;
       assert (nb < count);
       assert (assitm->ita_htab[ix].aten_val.ptr != NULL
-	      && (void *) assitm->ita_htab[ix].aten_val.ptr !=
-	      MONIMELT_EMPTY);
+	      && (void *) assitm->ita_htab[ix].aten_val.ptr != MOM_EMPTY);
       entarr[nb] = assitm->ita_htab[ix];
       nb++;
     }
@@ -2246,8 +2237,8 @@ assoc_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
   momval_t jarrtiny[TINY_MAX] = { };
   momval_t *jarr =
     (count < TINY_MAX) ? jarrtiny : GC_MALLOC (count * sizeof (momval_t));
-  if (MONIMELT_UNLIKELY (!jarr))
-    MONIMELT_FATAL ("failed to allocate %d json", (int) count);
+  if (MOM_UNLIKELY (!jarr))
+    MOM_FATAL ("failed to allocate %d json", (int) count);
   memset (jarr, 0, count * sizeof (momval_t));
   unsigned nbjent = 0;
   for (unsigned ix = 0; ix < count; ix++)
@@ -2304,8 +2295,8 @@ assoc_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
     unsigned newsiz = ((5 * cnt / 4 + 5) | 3) + 1;
     struct mom_attrentry_st *entarr =
       GC_MALLOC (newsiz * sizeof (struct mom_attrentry_st));
-    if (MONIMELT_UNLIKELY (!entarr))
-      MONIMELT_FATAL ("failed to allocate %d entries", (int) newsiz);
+    if (MOM_UNLIKELY (!entarr))
+      MOM_FATAL ("failed to allocate %d entries", (int) newsiz);
     memset (entarr, 0, newsiz * sizeof (struct mom_attrentry_st));
     assoc->ita_htab = entarr;
     assoc->ita_size = newsiz;
@@ -2365,11 +2356,11 @@ static void
 queue_push_back (struct momqueueitem_st *quitm, mom_anyitem_t * itm)
 {
   struct mom_itqueue_st *qel = GC_MALLOC (sizeof (struct mom_itqueue_st));
-  if (MONIMELT_UNLIKELY (!qel))
-    MONIMELT_FATAL ("failed to allocate queue element");
+  if (MOM_UNLIKELY (!qel))
+    MOM_FATAL ("failed to allocate queue element");
   qel->iq_next = NULL;
   qel->iq_item = itm;
-  if (MONIMELT_UNLIKELY (!quitm->itq_first))
+  if (MOM_UNLIKELY (!quitm->itq_first))
     {
       quitm->itq_first = quitm->itq_last = qel;
       quitm->itq_len = 1;
@@ -2387,11 +2378,11 @@ static void
 queue_push_front (struct momqueueitem_st *quitm, mom_anyitem_t * itm)
 {
   struct mom_itqueue_st *qel = GC_MALLOC (sizeof (struct mom_itqueue_st));
-  if (MONIMELT_UNLIKELY (!qel))
-    MONIMELT_FATAL ("failed to allocate queue element");
+  if (MOM_UNLIKELY (!qel))
+    MOM_FATAL ("failed to allocate queue element");
   qel->iq_next = NULL;
   qel->iq_item = itm;
-  if (MONIMELT_UNLIKELY (!quitm->itq_first))
+  if (MOM_UNLIKELY (!quitm->itq_first))
     {
       quitm->itq_first = quitm->itq_last = qel;
       quitm->itq_len = 1;
@@ -2559,9 +2550,9 @@ mom_item_queue_pop_front (momval_t quev)
 momval_t
 mom_item_queue_tuple (momval_t quev)
 {
-  momval_t res = MONIMELT_NULLV;
+  momval_t res = MOM_NULLV;
   if (!quev.ptr || *quev.ptype != momty_queueitem)
-    return MONIMELT_NULLV;
+    return MOM_NULLV;
   const mom_anyitem_t *tinyarr[TINY_MAX] = { 0 };
   const mom_anyitem_t **arr = NULL;
   pthread_mutex_lock (&quev.panyitem->i_mtx);
@@ -2570,8 +2561,8 @@ mom_item_queue_tuple (momval_t quev)
     arr = tinyarr;
   else
     arr = GC_MALLOC (len * sizeof (mom_anyitem_t *));
-  if (MONIMELT_UNLIKELY (!arr))
-    MONIMELT_FATAL ("failed to allocate array of %d values", (int) len);
+  if (MOM_UNLIKELY (!arr))
+    MOM_FATAL ("failed to allocate array of %d values", (int) len);
   memset (arr, 0, len * sizeof (mom_anyitem_t *));
   unsigned nb = 0;
   for (struct mom_itqueue_st * iq = quev.pqueueitem->itq_first;
@@ -2641,8 +2632,8 @@ queue_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
     jarr = tinyjarr;
   else
     jarr = GC_MALLOC (len * sizeof (momval_t));
-  if (MONIMELT_UNLIKELY (!jarr))
-    MONIMELT_FATAL ("failed to allocate %d queued items", (int) len);
+  if (MOM_UNLIKELY (!jarr))
+    MOM_FATAL ("failed to allocate %d queued items", (int) len);
   unsigned nb = 0;
   for (struct mom_itqueue_st * iq = queitm->itq_first; iq != NULL && nb < len;
        iq = iq->iq_next)
@@ -2705,7 +2696,7 @@ mom_make_item_box (unsigned space)
 {
   momit_box_t *itm
     = mom_allocate_item (momty_boxitem, sizeof (momit_box_t), space);
-  itm->itb_boxv = MONIMELT_NULLV;
+  itm->itb_boxv = MOM_NULLV;
   return itm;
 }
 
@@ -2715,16 +2706,16 @@ mom_make_item_box_of_uuid (uuid_t uid, unsigned space)
   momit_box_t *itm
     = mom_allocate_item_with_uuid (momty_boxitem, sizeof (momit_box_t),
 				   space, uid);
-  itm->itb_boxv = MONIMELT_NULLV;
+  itm->itb_boxv = MOM_NULLV;
   return itm;
 }
 
 momval_t
 mom_item_box_get (momval_t boxv)
 {
-  momval_t res = MONIMELT_NULLV;
+  momval_t res = MOM_NULLV;
   if (!boxv.ptr || *boxv.ptype != momty_boxitem)
-    return MONIMELT_NULLV;
+    return MOM_NULLV;
   pthread_mutex_lock (&boxv.panyitem->i_mtx);
   res = boxv.pboxitem->itb_boxv;
   pthread_mutex_unlock (&boxv.panyitem->i_mtx);
@@ -2735,9 +2726,9 @@ mom_item_box_get (momval_t boxv)
 momval_t
 mom_item_box_put (momval_t boxv, momval_t val)
 {
-  momval_t res = MONIMELT_NULLV;
+  momval_t res = MOM_NULLV;
   if (!boxv.ptr || *boxv.ptype != momty_boxitem)
-    return MONIMELT_NULLV;
+    return MOM_NULLV;
   pthread_mutex_lock (&boxv.panyitem->i_mtx);
   res = boxv.pboxitem->itb_boxv;
   boxv.pboxitem->itb_boxv = val;
@@ -2833,8 +2824,8 @@ mom_make_item_buffer (unsigned space)
     = mom_allocate_item (momty_bufferitem, sizeof (momit_buffer_t), space);
   const unsigned siz = BUFFER_INITIAL_SIZE;
   itm->itu_buf = GC_MALLOC_ATOMIC (siz);
-  if (MONIMELT_UNLIKELY (!itm->itu_buf))
-    MONIMELT_FATAL ("failed to allocate buffer of %d", (int) siz);
+  if (MOM_UNLIKELY (!itm->itu_buf))
+    MOM_FATAL ("failed to allocate buffer of %d", (int) siz);
   memset (itm->itu_buf, 0, siz);
   itm->itu_begin = itm->itu_end = 0;
   itm->itu_size = siz;
@@ -2849,8 +2840,8 @@ mom_make_item_buffer_of_uuid (uuid_t uid, unsigned space)
 				   space, uid);
   const unsigned siz = BUFFER_INITIAL_SIZE;
   itm->itu_buf = GC_MALLOC_ATOMIC (siz);
-  if (MONIMELT_UNLIKELY (!itm->itu_buf))
-    MONIMELT_FATAL ("failed to allocate buffer of %d", (int) siz);
+  if (MOM_UNLIKELY (!itm->itu_buf))
+    MOM_FATAL ("failed to allocate buffer of %d", (int) siz);
   memset (itm->itu_buf, 0, siz);
   itm->itu_begin = itm->itu_end = 0;
   itm->itu_size = siz;
@@ -2882,9 +2873,8 @@ mom_item_buffer_reserve (momval_t bufv, unsigned gap)
       unsigned oldlen = bufitm->itu_end - bufitm->itu_begin;
       unsigned newsiz = ((5 * oldlen / 4 + gap + 5) | 0x1f) + 1;
       char *newbuf = GC_MALLOC_ATOMIC (newsiz);
-      if (MONIMELT_UNLIKELY (!newbuf))
-	MONIMELT_FATAL ("failed to reserve buffer for %d bytes",
-			(int) newsiz);
+      if (MOM_UNLIKELY (!newbuf))
+	MOM_FATAL ("failed to reserve buffer for %d bytes", (int) newsiz);
       memset (newbuf, 0, newsiz);
       memcpy (newbuf, bufitm->itu_buf + bufitm->itu_begin, oldlen);
       GC_FREE (bufitm->itu_buf);
@@ -2906,9 +2896,8 @@ item_buffer_need (momit_buffer_t * bufitm, unsigned more)
 	{
 	  unsigned newsiz = ((5 * oldlen / 4 + more + 4) | 0x1f) + 1;
 	  char *newbuf = GC_MALLOC_ATOMIC (newsiz);
-	  if (MONIMELT_UNLIKELY (!newbuf))
-	    MONIMELT_FATAL ("failed to grow buffer for %d bytes",
-			    (int) newsiz);
+	  if (MOM_UNLIKELY (!newbuf))
+	    MOM_FATAL ("failed to grow buffer for %d bytes", (int) newsiz);
 	  memset (newbuf, 0, newsiz);
 	  memcpy (newbuf, bufitm->itu_buf + bufitm->itu_begin, oldlen);
 	  GC_FREE (bufitm->itu_buf);
@@ -2940,9 +2929,8 @@ mom_item_buffer_clear (momval_t bufv)
     {
       unsigned newsiz = BUFFER_INITIAL_SIZE;
       char *newbuf = GC_MALLOC_ATOMIC (newsiz);
-      if (MONIMELT_UNLIKELY (!newbuf))
-	MONIMELT_FATAL ("failed to reserve buffer for %d bytes",
-			(int) newsiz);
+      if (MOM_UNLIKELY (!newbuf))
+	MOM_FATAL ("failed to reserve buffer for %d bytes", (int) newsiz);
       memset (newbuf, 0, newsiz);
       GC_FREE (bufitm->itu_buf);
       bufitm->itu_buf = newbuf;
@@ -3059,8 +3047,8 @@ mom_item_buffer_cstr (momval_t bufv, unsigned *plen)
   if (plen)
     *plen = blen;
   res = GC_MALLOC_ATOMIC (blen + 1);
-  if (MONIMELT_UNLIKELY (!res))
-    MONIMELT_FATAL ("failed to allocate string of %d bytes", (int) blen);
+  if (MOM_UNLIKELY (!res))
+    MOM_FATAL ("failed to allocate string of %d bytes", (int) blen);
   memset (res, 0, blen + 1);
   memcpy (res, bufitm->itu_buf + bufitm->itu_begin, blen);
   pthread_mutex_unlock (&bufv.panyitem->i_mtx);
@@ -3123,7 +3111,7 @@ static momval_t
 buffer_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 {
   momit_buffer_t *bufitm = (momit_buffer_t *) itm;
-  momval_t jarr = MONIMELT_NULLV;
+  momval_t jarr = MOM_NULLV;
   momval_t *arrcont = NULL;
   const char *first = bufitm->itu_buf;
   char *last = NULL;
@@ -3148,8 +3136,8 @@ buffer_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
   else
     {
       arrcont = GC_MALLOC ((nbnl + 1) * sizeof (momval_t));
-      if (MONIMELT_UNLIKELY (!arrcont))
-	MONIMELT_FATAL ("failed to allocate %d lines", (int) nbnl + 1);
+      if (MOM_UNLIKELY (!arrcont))
+	MOM_FATAL ("failed to allocate %d lines", (int) nbnl + 1);
       memset (arrcont, 0, (nbnl + 1) * sizeof (momval_t));
     }
   unsigned ix = 0;
@@ -3226,8 +3214,8 @@ mom_make_item_dictionnary (unsigned space)
   const unsigned siz = DICTIONNARY_INITIAL_SIZE;
   itm->idi_dictab =
     GC_MALLOC_ATOMIC (siz * sizeof (struct mom_name_value_entry_st));
-  if (MONIMELT_UNLIKELY (!itm->idi_dictab))
-    MONIMELT_FATAL ("failed to allocate dictionnary of %d", (int) siz);
+  if (MOM_UNLIKELY (!itm->idi_dictab))
+    MOM_FATAL ("failed to allocate dictionnary of %d", (int) siz);
   memset (itm->idi_dictab, 0, siz * sizeof (struct mom_name_value_entry_st));
   itm->idi_count = 0;
   itm->idi_size = siz;
@@ -3244,8 +3232,8 @@ mom_make_item_dictionnary_of_uuid (uuid_t uid, unsigned space)
   const unsigned siz = DICTIONNARY_INITIAL_SIZE;
   itm->idi_dictab =
     GC_MALLOC_ATOMIC (siz * sizeof (struct mom_name_value_entry_st));
-  if (MONIMELT_UNLIKELY (!itm->idi_dictab))
-    MONIMELT_FATAL ("failed to allocate dictionnary of %d", (int) siz);
+  if (MOM_UNLIKELY (!itm->idi_dictab))
+    MOM_FATAL ("failed to allocate dictionnary of %d", (int) siz);
   memset (itm->idi_dictab, 0, siz * sizeof (struct mom_name_value_entry_st));
   itm->idi_count = 0;
   itm->idi_size = siz;
@@ -3262,7 +3250,7 @@ dictionnary_add_new_name_entry (momit_dictionnary_t * itmdict,
   struct mom_name_value_entry_st *dictab = itmdict->idi_dictab;
   for (unsigned i = istartname; i < size; i++)
     {
-      if (!dictab[i].nme_str || dictab[i].nme_str == MONIMELT_EMPTY)
+      if (!dictab[i].nme_str || dictab[i].nme_str == MOM_EMPTY)
 	{
 	  dictab[i].nme_str = name;
 	  *(momval_t *) & dictab[i].nme_val = val;
@@ -3271,7 +3259,7 @@ dictionnary_add_new_name_entry (momit_dictionnary_t * itmdict,
     }
   for (unsigned i = 0; i < istartname; i++)
     {
-      if (!dictab[i].nme_str || dictab[i].nme_str == MONIMELT_EMPTY)
+      if (!dictab[i].nme_str || dictab[i].nme_str == MOM_EMPTY)
 	{
 	  dictab[i].nme_str = name;
 	  *(momval_t *) & dictab[i].nme_val = val;
@@ -3279,7 +3267,7 @@ dictionnary_add_new_name_entry (momit_dictionnary_t * itmdict,
 	}
     }
   // this should never happen
-  MONIMELT_FATAL ("corrupted dictionnary item of size %d", (int) size);
+  MOM_FATAL ("corrupted dictionnary item of size %d", (int) size);
 added:
   itmdict->idi_count++;
 }
@@ -3297,7 +3285,7 @@ dictionnary_find_name_index (momit_dictionnary_t * itmdict, const char *str,
     {
       if (!dictab[i].nme_str)
 	return -1;
-      if (dictab[i].nme_str == MONIMELT_EMPTY)
+      if (dictab[i].nme_str == MOM_EMPTY)
 	continue;
       if (dictab[i].nme_str->hash == h
 	  && !strcmp (dictab[i].nme_str->cstr, str))
@@ -3307,7 +3295,7 @@ dictionnary_find_name_index (momit_dictionnary_t * itmdict, const char *str,
     {
       if (!dictab[i].nme_str)
 	return -1;
-      if (dictab[i].nme_str == MONIMELT_EMPTY)
+      if (dictab[i].nme_str == MOM_EMPTY)
 	continue;
       if (dictab[i].nme_str->hash == h
 	  && !strcmp (dictab[i].nme_str->cstr, str))
@@ -3333,9 +3321,8 @@ mom_item_dictionnary_reserve (momval_t dictv, unsigned more)
 	{
 	  struct mom_name_value_entry_st *newdictab =
 	    GC_MALLOC (newsiz * sizeof (struct mom_name_value_entry_st *));
-	  if (MONIMELT_UNLIKELY (!newdictab))
-	    MONIMELT_FATAL ("unable to resize dictionnary to %d",
-			    (int) newsiz);
+	  if (MOM_UNLIKELY (!newdictab))
+	    MOM_FATAL ("unable to resize dictionnary to %d", (int) newsiz);
 	  memset (newdictab, 0,
 		  newsiz * sizeof (struct mom_name_value_entry_st *));
 	  struct mom_name_value_entry_st *olddictab = itmdict->idi_dictab;
@@ -3345,7 +3332,7 @@ mom_item_dictionnary_reserve (momval_t dictv, unsigned more)
 	  for (unsigned oix = 0; oix < oldsiz; oix++)
 	    {
 	      const momstring_t *curnam = olddictab[oix].nme_str;
-	      if (!curnam || curnam == MONIMELT_EMPTY)
+	      if (!curnam || curnam == MOM_EMPTY)
 		continue;
 	      dictionnary_add_new_name_entry (itmdict, curnam,
 					      olddictab[oix].nme_val);
@@ -3368,7 +3355,7 @@ mom_item_dictionnary_put (momval_t dictv, momval_t namev, momval_t valv)
   pthread_mutex_lock (&dictv.panyitem->i_mtx);
   momit_dictionnary_t *itmdict = dictv.pdictionnaryitem;
   const momstring_t *namestr = namev.pstring;
-  if (MONIMELT_UNLIKELY (4 * itmdict->idi_count + 5 >= 3 * itmdict->idi_size))
+  if (MOM_UNLIKELY (4 * itmdict->idi_count + 5 >= 3 * itmdict->idi_size))
     {
       struct mom_name_value_entry_st *olddicttab = itmdict->idi_dictab;
       unsigned oldcount = itmdict->idi_count;
@@ -3376,9 +3363,8 @@ mom_item_dictionnary_put (momval_t dictv, momval_t namev, momval_t valv)
       unsigned newsize = ((4 * oldcount / 3 + oldcount / 16 + 5) | 0x1f) + 1;
       struct mom_name_value_entry_st *newdictab
 	= GC_MALLOC (newsize * sizeof (struct mom_name_value_entry_st));
-      if (MONIMELT_UNLIKELY (!newdictab))
-	MONIMELT_FATAL ("failed to grown dictionnary to %d size",
-			(int) newsize);
+      if (MOM_UNLIKELY (!newdictab))
+	MOM_FATAL ("failed to grown dictionnary to %d size", (int) newsize);
       memset (newdictab, 0,
 	      newsize * sizeof (struct mom_name_value_entry_st));
       itmdict->idi_count = 0;
@@ -3387,10 +3373,10 @@ mom_item_dictionnary_put (momval_t dictv, momval_t namev, momval_t valv)
       for (unsigned oix = 0; oix < oldsize; oix++)
 	{
 	  const momstring_t *oldname = olddicttab[oix].nme_str;
-	  if (!oldname || oldname == MONIMELT_EMPTY)
+	  if (!oldname || oldname == MOM_EMPTY)
 	    continue;
 	  const momval_t oldval = olddicttab[oix].nme_val;
-	  if (!oldval.ptr || oldval.ptr == MONIMELT_EMPTY)
+	  if (!oldval.ptr || oldval.ptr == MOM_EMPTY)
 	    continue;
 	  dictionnary_add_new_name_entry (itmdict, oldname, oldval);
 	}
@@ -3408,8 +3394,8 @@ mom_item_dictionnary_put (momval_t dictv, momval_t namev, momval_t valv)
 	}
       else
 	{
-	  itmdict->idi_dictab[ix].nme_str = MONIMELT_EMPTY;
-	  *(momval_t *) & itmdict->idi_dictab[ix].nme_val = MONIMELT_NULLV;
+	  itmdict->idi_dictab[ix].nme_str = MOM_EMPTY;
+	  *(momval_t *) & itmdict->idi_dictab[ix].nme_val = MOM_NULLV;
 	  itmdict->idi_count--;
 	}
     }
@@ -3426,11 +3412,11 @@ done:
 momval_t
 mom_item_dictionnary_get (momval_t dictv, momval_t namev)
 {
-  momval_t res = MONIMELT_NULLV;
+  momval_t res = MOM_NULLV;
   if (!dictv.ptr || *dictv.ptype != momty_dictionnaryitem
       || !namev.ptr || *namev.ptype != momty_string
       || namev.pstring->slen == 0)
-    return MONIMELT_NULLV;
+    return MOM_NULLV;
   pthread_mutex_lock (&dictv.panyitem->i_mtx);
   momit_dictionnary_t *itmdict = dictv.pdictionnaryitem;
   const momstring_t *namestr = namev.pstring;
@@ -3445,10 +3431,10 @@ mom_item_dictionnary_get (momval_t dictv, momval_t namev)
 momval_t
 mom_item_dictionnary_get_cstr (momval_t dictv, const char *namestr)
 {
-  momval_t res = MONIMELT_NULLV;
+  momval_t res = MOM_NULLV;
   if (!dictv.ptr || *dictv.ptype != momty_dictionnaryitem
       || !namestr || !namestr[0])
-    return MONIMELT_NULLV;
+    return MOM_NULLV;
   pthread_mutex_lock (&dictv.panyitem->i_mtx);
   momit_dictionnary_t *itmdict = dictv.pdictionnaryitem;
   int ix = dictionnary_find_name_index (itmdict, namestr, 0);
@@ -3482,23 +3468,23 @@ valptr_cmp (const void *p1, const void *p2)
 momval_t
 mom_item_dictionnary_sorted_name_node (momval_t dictv, momval_t connv)
 {
-  momval_t res = MONIMELT_NULLV;
+  momval_t res = MOM_NULLV;
   if (!dictv.ptr || *dictv.ptype != momty_dictionnaryitem
       || !connv.ptr || *connv.ptype <= momty__itemlowtype)
-    return MONIMELT_NULLV;
+    return MOM_NULLV;
   pthread_mutex_lock (&dictv.panyitem->i_mtx);
   momit_dictionnary_t *itmdict = dictv.pdictionnaryitem;
   unsigned cnt = itmdict->idi_count;
   unsigned siz = itmdict->idi_size;
   momval_t *sonarr = GC_MALLOC ((cnt + 1) * sizeof (momval_t));
-  if (MONIMELT_UNLIKELY (!sonarr))
-    MONIMELT_FATAL ("failed to allocate %d sons", cnt + 1);
+  if (MOM_UNLIKELY (!sonarr))
+    MOM_FATAL ("failed to allocate %d sons", cnt + 1);
   memset (sonarr, 0, (cnt + 1) * sizeof (momval_t));
   unsigned nb = 0;
   for (unsigned dix = 0; dix < siz; dix++)
     {
       const momstring_t *curname = itmdict->idi_dictab[dix].nme_str;
-      if (!curname || curname == MONIMELT_EMPTY)
+      if (!curname || curname == MOM_EMPTY)
 	continue;
       assert (nb <= cnt);
       sonarr[nb++] = (momval_t) curname;
@@ -3570,7 +3556,7 @@ dictionnary_itemscan (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
   for (unsigned ix = 0; ix < siz; ix++)
     {
       const momstring_t *curname = dictitm->idi_dictab[ix].nme_str;
-      if (!curname || curname == MONIMELT_EMPTY)
+      if (!curname || curname == MOM_EMPTY)
 	continue;
       mom_dump_scan_value (dmp, (momval_t) curname);
       mom_dump_scan_value (dmp, (momval_t) dictitm->idi_dictab[ix].nme_val);
@@ -3599,8 +3585,8 @@ dictionnary_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
   const momnode_t *nd = node.pnode;
   unsigned nbnames = nd->slen;
   momval_t *entarr = nbnames ? GC_MALLOC (nbnames * sizeof (momval_t)) : NULL;
-  if (MONIMELT_UNLIKELY (!entarr && nbnames > 0))
-    MONIMELT_FATAL ("failed to allocate %d entries", nbnames);
+  if (MOM_UNLIKELY (!entarr && nbnames > 0))
+    MOM_FATAL ("failed to allocate %d entries", nbnames);
   memset (entarr, 0, nbnames * sizeof (momval_t));
   unsigned nb = 0;
   for (unsigned eix = 0; eix < nbnames; eix++)
@@ -3675,14 +3661,14 @@ webrequest_itemloader (struct mom_loader_st *ld,
 		       momval_t json
 		       __attribute__ ((unused)), uuid_t uid, unsigned space)
 {
-  MONIMELT_FATAL ("impossible call to webrequest_itemloader");
+  MOM_FATAL ("impossible call to webrequest_itemloader");
 }
 
 static void
 webrequest_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
 		       momval_t json)
 {
-  MONIMELT_FATAL ("impossible call to webrequest_itemfiller");
+  MOM_FATAL ("impossible call to webrequest_itemfiller");
 }
 
 static void
@@ -3761,14 +3747,14 @@ process_itemloader (struct mom_loader_st *ld,
 		    momval_t json
 		    __attribute__ ((unused)), uuid_t uid, unsigned space)
 {
-  MONIMELT_FATAL ("impossible call to process_itemloader");
+  MOM_FATAL ("impossible call to process_itemloader");
 }
 
 static void
 process_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
 		    momval_t json)
 {
-  MONIMELT_FATAL ("impossible call to process_itemfiller");
+  MOM_FATAL ("impossible call to process_itemfiller");
 }
 
 static void

@@ -44,8 +44,8 @@ mom_json_parser_data (const struct jsonparser_st *jp)
   if (!jp)
     return NULL;
   if (jp->jsonp_magic != MOMJSONP_MAGIC)
-    MONIMELT_FATAL ("invalid json parser (magic %x, expecting %x)",
-		    jp->jsonp_magic, MOMJSONP_MAGIC);
+    MOM_FATAL ("invalid json parser (magic %x, expecting %x)",
+	       jp->jsonp_magic, MOMJSONP_MAGIC);
   return jp->jsonp_data;
 }
 
@@ -55,8 +55,8 @@ mom_end_json_parser (struct jsonparser_st *jp)
   if (!jp)
     return;
   if (jp->jsonp_magic != MOMJSONP_MAGIC)
-    MONIMELT_FATAL ("invalid json parser (magic %x, expecting %x)",
-		    jp->jsonp_magic, MOMJSONP_MAGIC);
+    MOM_FATAL ("invalid json parser (magic %x, expecting %x)",
+	       jp->jsonp_magic, MOMJSONP_MAGIC);
   pthread_mutex_destroy (&jp->jsonp_mtx);
   memset (jp, 0, sizeof (struct jsonparser_st));
 }
@@ -67,8 +67,8 @@ mom_close_json_parser (struct jsonparser_st *jp)
   if (!jp)
     return;
   if (jp->jsonp_magic != MOMJSONP_MAGIC)
-    MONIMELT_FATAL ("invalid json parser (magic %x, expecting %x)",
-		    jp->jsonp_magic, MOMJSONP_MAGIC);
+    MOM_FATAL ("invalid json parser (magic %x, expecting %x)",
+	       jp->jsonp_magic, MOMJSONP_MAGIC);
   pthread_mutex_destroy (&jp->jsonp_mtx);
   fclose (jp->jsonp_file);
   memset (jp, 0, sizeof (struct jsonparser_st));
@@ -95,7 +95,7 @@ static void compute_json_array_hash (momjsonarray_t * jarr);
 momval_t
 mom_parse_json (struct jsonparser_st *jp, char **perrmsg)
 {
-  momval_t res = MONIMELT_NULLV;
+  momval_t res = MOM_NULLV;
   if (perrmsg)
     *perrmsg = NULL;
   if (!jp || jp->jsonp_magic != MOMJSONP_MAGIC)
@@ -103,7 +103,7 @@ mom_parse_json (struct jsonparser_st *jp, char **perrmsg)
       if (perrmsg)
 	{
 	  *perrmsg = "invalid JSON parser";
-	  return MONIMELT_NULLV;
+	  return MOM_NULLV;
 	}
     }
   pthread_mutex_lock (&jp->jsonp_mtx);
@@ -117,10 +117,10 @@ mom_parse_json (struct jsonparser_st *jp, char **perrmsg)
 	    *perrmsg = "JSON parsing failed";
 	}
       pthread_mutex_unlock (&jp->jsonp_mtx);
-      return MONIMELT_NULLV;
+      return MOM_NULLV;
     }
   res = parse_json_internal (jp);
-  if (res.ptr == MONIMELT_EMPTY)
+  if (res.ptr == MOM_EMPTY)
     JSONPARSE_ERROR (jp, "unexpected terminator %c", jp->jsonp_c);
   pthread_mutex_unlock (&jp->jsonp_mtx);
   return res;
@@ -131,7 +131,7 @@ static momval_t
 json_item_or_string (const char *buf)
 {
   if (!buf || !buf[0])
-    return MONIMELT_NULLV;
+    return MOM_NULLV;
   const momstring_t *str = NULL;
   mom_anyitem_t *itm = mom_item_named_with_string (buf, &str);
   if (itm)
@@ -147,7 +147,7 @@ json_item_or_string (const char *buf)
     return (momval_t) mom_make_string (buf);
 }
 
-// may return MONIMELT_EMPTY if found a terminator like comma,
+// may return MOM_EMPTY if found a terminator like comma,
 // right-brace, right-bracket, colon
 static momval_t
 parse_json_internal (struct jsonparser_st *jp)
@@ -166,7 +166,7 @@ again:
   else if (jp->jsonp_c == ',' || jp->jsonp_c == ':' || jp->jsonp_c == '}'
 	   || jp->jsonp_c == ']')
     // don't consume the terminator! Leave it available to the caller.
-    return (momval_t) MONIMELT_EMPTY;
+    return (momval_t) MOM_EMPTY;
   // extension, admit comments à la C slash slash or à la C++ slash star
   else if (jp->jsonp_c == '/')
     {
@@ -210,13 +210,13 @@ again:
 	  if (jp->jsonp_c == '"')
 	    break;
 	  // we need extraspace for \u-encoded unicode characters
-	  if (MONIMELT_UNLIKELY (cnt + 7 >= siz))
+	  if (MOM_UNLIKELY (cnt + 7 >= siz))
 	    {
 	      unsigned newsiz = (((5 * cnt / 4) + 12) | 0xf) + 1;
 	      char *newstr = GC_MALLOC_ATOMIC (newsiz);
-	      if (MONIMELT_UNLIKELY (!str))
-		MONIMELT_FATAL ("failed to grow string buffer of %d",
-				(int) newsiz);
+	      if (MOM_UNLIKELY (!str))
+		MOM_FATAL ("failed to grow string buffer of %d",
+			   (int) newsiz);
 	      memset (newstr, 0, newsiz);
 	      memcpy (newstr, str, cnt);
 	      if (str != tinyarr)
@@ -224,7 +224,7 @@ again:
 	      str = newstr;
 	      siz = newsiz;
 	    }
-	  if (MONIMELT_UNLIKELY (jp->jsonp_c < 0))
+	  if (MOM_UNLIKELY (jp->jsonp_c < 0))
 	    JSONPARSE_ERROR (jp, "unterminated string at offset %ld",
 			     ftell (jp->jsonp_file));
 	  if (jp->jsonp_c == '\\')
@@ -395,7 +395,7 @@ again:
 	      unsigned newsize = ((5 * namesize / 4 + 10) | 0xf) + 1;
 	      char *newname = GC_MALLOC_ATOMIC (newsize);
 	      if (!newname)
-		MONIMELT_FATAL ("no space for JSON name of size %u", newsize);
+		MOM_FATAL ("no space for JSON name of size %u", newsize);
 	      memset (newname, 0, newsize);
 	      strcpy (newname, namestr);
 	      if (namestr != namebuf)
@@ -407,7 +407,7 @@ again:
 	}
       while (isalnum (jp->jsonp_c) || jp->jsonp_c == '_');
       if (!strcmp (namestr, "null"))
-	return MONIMELT_NULLV;
+	return MOM_NULLV;
       else if (!strcmp (namestr, "true"))
 	return (momval_t) mom_get_item_bool (true);
       else if (!strcmp (namestr, "false"))
@@ -420,16 +420,16 @@ again:
       unsigned arrsize = 8;
       unsigned arrlen = 0;
       momval_t *arrptr = GC_MALLOC (arrsize * sizeof (momval_t));
-      if (MONIMELT_UNLIKELY (!arrptr))
-	MONIMELT_FATAL ("cannot allocate initial json array of %u", arrsize);
+      if (MOM_UNLIKELY (!arrptr))
+	MOM_FATAL ("cannot allocate initial json array of %u", arrsize);
       memset (arrptr, 0, arrsize * sizeof (momval_t));
       jp->jsonp_c = getc (jp->jsonp_file);
-      momval_t comp = MONIMELT_NULLV;
+      momval_t comp = MOM_NULLV;
       bool gotcomma = false;
       do
 	{
 	  comp = parse_json_internal (jp);
-	  if (comp.ptr == MONIMELT_EMPTY)
+	  if (comp.ptr == MOM_EMPTY)
 	    {
 	      if (jp->jsonp_c == ']')
 		{
@@ -452,12 +452,12 @@ again:
 				 jp->jsonp_c, ftell (jp->jsonp_file));
 	    };
 	  gotcomma = false;
-	  if (MONIMELT_UNLIKELY (arrlen + 1 >= arrsize))
+	  if (MOM_UNLIKELY (arrlen + 1 >= arrsize))
 	    {
 	      unsigned newsize = ((5 * arrsize / 4 + 5) | 0xf) + 1;
 	      momval_t *newarr = GC_MALLOC (arrsize * sizeof (momval_t));
-	      if (MONIMELT_UNLIKELY (!newarr))
-		MONIMELT_FATAL ("cannot grow json array to %u", newsize);
+	      if (MOM_UNLIKELY (!newarr))
+		MOM_FATAL ("cannot grow json array to %u", newsize);
 	      memset (newarr, 0, arrsize * sizeof (momval_t));
 	      memcpy (newarr, arrptr, arrlen * sizeof (momval_t));
 	      GC_FREE (arrptr);
@@ -465,15 +465,15 @@ again:
 	      arrsize = newsize;
 	    }
 	  arrptr[arrlen++] = comp;
-	  comp = MONIMELT_NULLV;
+	  comp = MOM_NULLV;
 	}
       while (jp->jsonp_c >= 0);
       struct momjsonarray_st *jarr =
 	GC_MALLOC (sizeof (struct momjsonarray_st) +
 		   arrlen * sizeof (momval_t));
-      if (MONIMELT_UNLIKELY (!jarr))
-	MONIMELT_FATAL ("failed to build JSON array of %d components",
-			(int) arrlen);
+      if (MOM_UNLIKELY (!jarr))
+	MOM_FATAL ("failed to build JSON array of %d components",
+		   (int) arrlen);
       memset (jarr, 0,
 	      sizeof (struct momjsonarray_st) + arrlen * sizeof (momval_t));
       for (unsigned ix = 0; ix < arrlen; ix++)
@@ -504,9 +504,9 @@ again:
 	      break;
 	    }
 	  momval_t namv = parse_json_internal (jp);
-	  if (namv.ptr == MONIMELT_EMPTY)
+	  if (namv.ptr == MOM_EMPTY)
 	    {
-	      namv = MONIMELT_NULLV;
+	      namv = MOM_NULLV;
 	      if (jp->jsonp_c == '}')
 		{
 		  jp->jsonp_c = getc (jp->jsonp_file);
@@ -530,20 +530,20 @@ again:
 	  while (jp->jsonp_c > 0 && isspace (jp->jsonp_c))
 	    jp->jsonp_c = getc (jp->jsonp_file);
 	  momval_t valv = parse_json_internal (jp);
-	  if (valv.ptr == MONIMELT_EMPTY)
+	  if (valv.ptr == MOM_EMPTY)
 	    JSONPARSE_ERROR (jp,
 			     "failed to parse value in JSON object at offset %ld",
 			     ftell (jp->jsonp_file));
 	  while (isspace (jp->jsonp_c))
 	    jp->jsonp_c = getc (jp->jsonp_file);
-	  if (MONIMELT_UNLIKELY (jcount >= jsize))
+	  if (MOM_UNLIKELY (jcount >= jsize))
 	    {
 	      unsigned newjsize = ((5 * jcount / 4 + 5) | 0x7) + 1;
 	      struct mom_jsonentry_st *newjent =
 		GC_MALLOC (sizeof (struct mom_jsonentry_st) * newjsize);
-	      if (MONIMELT_UNLIKELY (!newjent))
-		MONIMELT_FATAL ("failed to grow json entry table of %d",
-				(int) newjsize);
+	      if (MOM_UNLIKELY (!newjent))
+		MOM_FATAL ("failed to grow json entry table of %d",
+			   (int) newjsize);
 	      memset (newjent, 0,
 		      sizeof (struct mom_jsonentry_st) * newjsize);
 	      memcpy (newjent, jent,
@@ -558,8 +558,8 @@ again:
 	      jent[jcount].je_attr = valv;
 	      jcount++;
 	    }
-	  namv = MONIMELT_NULLV;
-	  valv = MONIMELT_NULLV;
+	  namv = MOM_NULLV;
+	  valv = MOM_NULLV;
 	  while (jp->jsonp_c > 0 && isspace (jp->jsonp_c))
 	    jp->jsonp_c = getc (jp->jsonp_file);
 	  if (jp->jsonp_c == ',')
@@ -577,7 +577,7 @@ again:
   else
     JSONPARSE_ERROR (jp, "unexpected char %c at offset %ld",
 		     jp->jsonp_c, ftell (jp->jsonp_file));
-  return MONIMELT_NULLV;
+  return MOM_NULLV;
 }
 
 static int
@@ -625,7 +625,7 @@ mom_make_json_object (int firstdir, ...)
 	  }
 	  break;
 	default:
-	  MONIMELT_FATAL ("unexpected JSON directive %d", dir);
+	  MOM_FATAL ("unexpected JSON directive %d", dir);
 	}
     }
   va_end (args);
@@ -633,8 +633,8 @@ mom_make_json_object (int firstdir, ...)
   struct momjsonobject_st *jsob
     = GC_MALLOC (sizeof (struct momjsonobject_st)
 		 + size * sizeof (struct mom_jsonentry_st));
-  if (MONIMELT_UNLIKELY (!jsob))
-    MONIMELT_FATAL ("failed to allocate JSON object with %d entries", size);
+  if (MOM_UNLIKELY (!jsob))
+    MOM_FATAL ("failed to allocate JSON object with %d entries", size);
   memset (jsob, 0, sizeof (struct momjsonobject_st)
 	  + size * sizeof (struct mom_jsonentry_st));
   /////
@@ -671,7 +671,7 @@ mom_make_json_object (int firstdir, ...)
 	    dir = va_arg (args, int);
 	    if (namstr && namstr[0] && mom_is_jsonable (attv))
 	      {
-		momval_t namv = MONIMELT_NULLV;
+		momval_t namv = MOM_NULLV;
 		const momstring_t *namvalstr = NULL;
 		mom_anyitem_t *namitm =
 		  mom_item_named_with_string (namstr, &namvalstr);
@@ -721,7 +721,7 @@ mom_make_json_object (int firstdir, ...)
 	  }
 	  break;
 	default:
-	  MONIMELT_FATAL ("unexpected JSON directive %d", dir);
+	  MOM_FATAL ("unexpected JSON directive %d", dir);
 	}
     }
   va_end (args);
@@ -737,13 +737,13 @@ mom_make_json_object (int firstdir, ...)
     {
       int cmpj = jsonentry_cmp (jsob->jobjtab + ix,
 				jsob->jobjtab + ix + 1);
-      if (MONIMELT_UNLIKELY (cmpj == 0))
+      if (MOM_UNLIKELY (cmpj == 0))
 	{
 	  shrink = true;
 	  for (unsigned j = ix; j + 1 < count; j++)
 	    jsob->jobjtab[j] = jsob->jobjtab[j + 1];
-	  jsob->jobjtab[count].je_name = MONIMELT_NULLV;
-	  jsob->jobjtab[count].je_attr = MONIMELT_NULLV;
+	  jsob->jobjtab[count].je_name = MOM_NULLV;
+	  jsob->jobjtab[count].je_attr = MOM_NULLV;
 	  count--;
 	}
       else
@@ -764,22 +764,21 @@ mom_make_json_object (int firstdir, ...)
 					je_attr));
     }
   h = h1 ^ h2;
-  if (MONIMELT_UNLIKELY (!h))
+  if (MOM_UNLIKELY (!h))
     {
       h = h1;
-      if (MONIMELT_UNLIKELY (!h))
+      if (MOM_UNLIKELY (!h))
 	h = h2;
-      if (MONIMELT_UNLIKELY (!h))
+      if (MOM_UNLIKELY (!h))
 	h = (count & 0xfff) + 11;
     }
-  if (MONIMELT_UNLIKELY (shrink))
+  if (MOM_UNLIKELY (shrink))
     {
       struct momjsonobject_st *newjsob
 	= GC_MALLOC (sizeof (struct momjsonobject_st)
 		     + count * sizeof (struct mom_jsonentry_st));
-      if (MONIMELT_UNLIKELY (!newjsob))
-	MONIMELT_FATAL ("failed to reallocate JSON object with %d entries",
-			size);
+      if (MOM_UNLIKELY (!newjsob))
+	MOM_FATAL ("failed to reallocate JSON object with %d entries", size);
       memcpy (newjsob, jsob,
 	      sizeof (struct momjsonobject_st) +
 	      count * sizeof (struct mom_jsonentry_st));
@@ -813,8 +812,8 @@ mon_make_json_array (unsigned nbelem, ...)
 {
   momjsonarray_t *jarr =
     GC_MALLOC (sizeof (momjsonarray_t) + nbelem * sizeof (momval_t));
-  if (MONIMELT_UNLIKELY (!jarr))
-    MONIMELT_FATAL ("failed to make JSON array of %u elements", nbelem);
+  if (MOM_UNLIKELY (!jarr))
+    MOM_FATAL ("failed to make JSON array of %u elements", nbelem);
   memset (jarr, 0, sizeof (momjsonarray_t) + nbelem * sizeof (momval_t));
   va_list args;
   va_start (args, nbelem);
@@ -840,8 +839,8 @@ mom_make_json_array_count (unsigned nbelem, const momval_t * arr)
     return NULL;
   momjsonarray_t *jarr =
     GC_MALLOC (sizeof (momjsonarray_t) + nbelem * sizeof (momval_t));
-  if (MONIMELT_UNLIKELY (!jarr))
-    MONIMELT_FATAL ("failed to make JSON array of %u elements", nbelem);
+  if (MOM_UNLIKELY (!jarr))
+    MOM_FATAL ("failed to make JSON array of %u elements", nbelem);
   memset (jarr, 0, sizeof (momjsonarray_t) + nbelem * sizeof (momval_t));
   for (unsigned ix = 0; ix < nbelem; ix++)
     {
@@ -864,7 +863,7 @@ mom_make_json_array_til_nil (momval_t firstv, ...)
   va_start (args, firstv);
   if (firstv.ptr)
     {
-      momval_t valv = MONIMELT_NULLV;
+      momval_t valv = MOM_NULLV;
       do
 	{
 	  nbelem++;
@@ -875,8 +874,8 @@ mom_make_json_array_til_nil (momval_t firstv, ...)
   va_end (args);
   momjsonarray_t *jarr =
     GC_MALLOC (sizeof (momjsonarray_t) + nbelem * sizeof (momval_t));
-  if (MONIMELT_UNLIKELY (!jarr))
-    MONIMELT_FATAL ("failed to make JSON array of %u elements", nbelem);
+  if (MOM_UNLIKELY (!jarr))
+    MOM_FATAL ("failed to make JSON array of %u elements", nbelem);
   memset (jarr, 0, sizeof (momjsonarray_t) + nbelem * sizeof (momval_t));
   if (nbelem > 0)
     jarr->jarrtab[0] = firstv;
@@ -964,12 +963,12 @@ const momval_t
 mom_jsonob_getstr (const momval_t jsobv, const char *namestr)
 {
   if (!jsobv.ptr || !namestr)
-    return MONIMELT_NULLV;
+    return MOM_NULLV;
   if (*jsobv.ptype != momty_jsonobject)
-    return MONIMELT_NULLV;
+    return MOM_NULLV;
   const struct momjsonobject_st *job = jsobv.pjsonobj;
   if (!job->slen)
-    return MONIMELT_NULLV;
+    return MOM_NULLV;
   unsigned lo = 0, hi = job->slen, md = 0;
   while (lo + 3 < hi)
     {
@@ -989,7 +988,7 @@ mom_jsonob_getstr (const momval_t jsobv, const char *namestr)
       if (mom_json_cstr_cmp (curnamv, namestr) == 0)
 	return job->jobjtab[md].je_attr;
     }
-  return MONIMELT_NULLV;
+  return MOM_NULLV;
 }
 
 #define MOMJSONO_MAGIC 0x5cd05c95	/* json outmagic 1557159061 */
@@ -1011,9 +1010,9 @@ mom_json_output_data (const struct jsonoutput_st *jo)
 {
   if (!jo)
     return NULL;
-  if (MONIMELT_UNLIKELY (jo->jsono_magic != MOMJSONO_MAGIC))
-    MONIMELT_FATAL ("bad json output magic %x (expected %x)",
-		    jo->jsono_magic, MOMJSONO_MAGIC);
+  if (MOM_UNLIKELY (jo->jsono_magic != MOMJSONO_MAGIC))
+    MOM_FATAL ("bad json output magic %x (expected %x)",
+	       jo->jsono_magic, MOMJSONO_MAGIC);
   return jo->jsono_data;
 }
 
@@ -1023,8 +1022,8 @@ mom_json_output_end (struct jsonoutput_st *jo)
   if (!jo)
     return;
   if (jo->jsono_magic != MOMJSONO_MAGIC)
-    MONIMELT_FATAL ("bad json output magic %x (expected %x)",
-		    jo->jsono_magic, MOMJSONO_MAGIC);
+    MOM_FATAL ("bad json output magic %x (expected %x)",
+	       jo->jsono_magic, MOMJSONO_MAGIC);
   pthread_mutex_destroy (&jo->jsono_mtx);
   if (jo->jsono_flags & jsof_flush)
     fflush (jo->jsono_file);
@@ -1037,8 +1036,8 @@ mom_json_output_close (struct jsonoutput_st *jo)
   if (!jo)
     return;
   if (jo->jsono_magic != MOMJSONO_MAGIC)
-    MONIMELT_FATAL ("bad json output magic %x (expected %x)",
-		    jo->jsono_magic, MOMJSONO_MAGIC);
+    MOM_FATAL ("bad json output magic %x (expected %x)",
+	       jo->jsono_magic, MOMJSONO_MAGIC);
   pthread_mutex_destroy (&jo->jsono_mtx);
   fclose (jo->jsono_file);
   memset (jo, 0, sizeof (struct jsonoutput_st));
@@ -1072,7 +1071,7 @@ output_val (struct jsonoutput_st *jo, momval_t val, unsigned depth)
     case momty_float:
       {
 	double x = val.pfloat->floval;
-	if (MONIMELT_UNLIKELY (isnan (x)))
+	if (MOM_UNLIKELY (isnan (x)))
 	  {
 	    if (jo->jsono_flags & jsof_cname)
 	      fputs ("nan", jo->jsono_file);
@@ -1118,8 +1117,8 @@ output_val (struct jsonoutput_st *jo, momval_t val, unsigned depth)
 	unsigned slen = val.pstring->slen;
 	const gchar *cs = (const gchar *) (val.pstring->cstr);
 	const gchar *end = NULL;
-	if (MONIMELT_UNLIKELY (!g_utf8_validate (cs, -1, &end)))
-	  MONIMELT_FATAL ("invalid UTF-8 string %s", cs);
+	if (MOM_UNLIKELY (!g_utf8_validate (cs, -1, &end)))
+	  MOM_FATAL ("invalid UTF-8 string %s", cs);
 	for (const gchar * pc = cs; *pc && pc < cs + slen;
 	     pc = g_utf8_next_char (pc))
 	  {
@@ -1164,12 +1163,12 @@ output_val (struct jsonoutput_st *jo, momval_t val, unsigned depth)
     case momty_jsonitem:
       {
 	const momstring_t *nstr = val.pjsonitem->ij_namejson;
-	if (MONIMELT_UNLIKELY (!nstr || nstr->typnum != momty_string))
+	if (MOM_UNLIKELY (!nstr || nstr->typnum != momty_string))
 	  {
 	    char uidstr[40];
 	    memset (uidstr, 0, sizeof (uidstr));
 	    uuid_unparse (val.panyitem->i_uuid, uidstr);
-	    MONIMELT_FATAL
+	    MOM_FATAL
 	      ("corrupted JSON item of uid %s without string JSON name",
 	       uidstr);
 	  }
@@ -1256,10 +1255,10 @@ mom_output_json (struct jsonoutput_st *jo, const momval_t val)
 {
   if (!jo)
     return;
-  if (MONIMELT_UNLIKELY (jo->jsono_magic != MOMJSONO_MAGIC))
+  if (MOM_UNLIKELY (jo->jsono_magic != MOMJSONO_MAGIC))
     {
-      MONIMELT_FATAL ("bad json output magic %x (expected %x)",
-		      jo->jsono_magic, MOMJSONO_MAGIC);
+      MOM_FATAL ("bad json output magic %x (expected %x)",
+		 jo->jsono_magic, MOMJSONO_MAGIC);
     }
   pthread_mutex_lock (&jo->jsono_mtx);
   output_val (jo, val, 0);

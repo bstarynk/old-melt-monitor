@@ -75,8 +75,7 @@ mom_value_hash (const momval_t v)
       if (vtype >= momty__itemlowtype)
 	return v.panyitem->i_hash;
       else
-	MONIMELT_FATAL ("unimplemented hash of val@%p of type #%d", v.ptr,
-			vtype);
+	MOM_FATAL ("unimplemented hash of val@%p of type #%d", v.ptr, vtype);
     }
 }
 
@@ -265,7 +264,7 @@ mom_value_cmp (const momval_t l, const momval_t r)
       if (ltype > momty__itemlowtype)
 	goto compare_item_by_uid;
       else
-	MONIMELT_FATAL ("unimplemented compare of type #%d", (int) ltype);
+	MOM_FATAL ("unimplemented compare of type #%d", (int) ltype);
     compare_item_by_uid:
       return memcmp (l.panyitem->i_uuid, r.panyitem->i_uuid, sizeof (uuid_t));
     }
@@ -418,7 +417,7 @@ update_seqitem_hash (struct momseqitem_st *si)
       const mom_anyitem_t *itm = si->itemseq[ix];
       h = (23473 * ix + 43499 * h) ^ (itm ? (itm->i_hash) : 43403);
     }
-  if (MONIMELT_UNLIKELY (!h))
+  if (MOM_UNLIKELY (!h))
     h = (si->typnum + 13 * slen) | 1;
   si->hash = h;
 }
@@ -427,7 +426,7 @@ const momset_t *
 mom_make_set_til_nil (momval_t first, ...)
 {
   va_list args;
-  momval_t val = MONIMELT_NULLV;
+  momval_t val = MOM_NULLV;
   unsigned siz = 0, ix = 0;
   momset_t *iset = NULL;
   val = first;
@@ -448,8 +447,8 @@ mom_make_set_til_nil (momval_t first, ...)
     }
   va_end (args);
   iset = GC_MALLOC (sizeof (momset_t) + siz * sizeof (mom_anyitem_t *));
-  if (MONIMELT_UNLIKELY (!iset))
-    MONIMELT_FATAL ("failed to allocate set of size %d", (int) siz);
+  if (MOM_UNLIKELY (!iset))
+    MOM_FATAL ("failed to allocate set of size %d", (int) siz);
   memset (iset, 0, sizeof (momset_t) + siz * sizeof (mom_anyitem_t *));
   siz = 0;
   val = first;
@@ -492,7 +491,7 @@ mom_make_set_til_nil (momval_t first, ...)
   iset->typnum = momty_set;
   iset->slen = siz;
   update_seqitem_hash (iset);
-  if (MONIMELT_UNLIKELY (shrink))
+  if (MOM_UNLIKELY (shrink))
     {
       momset_t *newiset =
 	GC_MALLOC (sizeof (momset_t) + siz * sizeof (mom_anyitem_t *));
@@ -515,8 +514,8 @@ mom_make_set_sized (unsigned siz, ...)
   momset_t *iset = NULL;
   bool shrink = false;
   iset = GC_MALLOC (sizeof (momset_t) + siz * sizeof (mom_anyitem_t *));
-  if (MONIMELT_UNLIKELY (!iset))
-    MONIMELT_FATAL ("failed to build set of size %d", (int) siz);
+  if (MOM_UNLIKELY (!iset))
+    MOM_FATAL ("failed to build set of size %d", (int) siz);
   memset (iset, 0, sizeof (momset_t) + siz * sizeof (mom_anyitem_t *));
   va_start (args, siz);
   for (ix = 0; ix < siz; ix++)
@@ -542,7 +541,7 @@ mom_make_set_sized (unsigned siz, ...)
   iset->typnum = momty_set;
   iset->slen = count;
   update_seqitem_hash (iset);
-  if (MONIMELT_UNLIKELY (shrink))
+  if (MOM_UNLIKELY (shrink))
     {
       momset_t *newiset =
 	GC_MALLOC (sizeof (momset_t) + siz * sizeof (mom_anyitem_t *));
@@ -564,8 +563,8 @@ mom_make_set_from_array (unsigned siz, const mom_anyitem_t ** itemarr)
   momset_t *iset = NULL;
   bool shrink = false;
   iset = GC_MALLOC (sizeof (momset_t) + siz * sizeof (mom_anyitem_t *));
-  if (MONIMELT_UNLIKELY (!iset))
-    MONIMELT_FATAL ("failed to build set of size %d", (int) siz);
+  if (MOM_UNLIKELY (!iset))
+    MOM_FATAL ("failed to build set of size %d", (int) siz);
   memset (iset, 0, sizeof (momset_t) + siz * sizeof (mom_anyitem_t *));
   for (ix = 0; ix < siz; ix++)
     {
@@ -589,7 +588,7 @@ mom_make_set_from_array (unsigned siz, const mom_anyitem_t ** itemarr)
   iset->typnum = momty_set;
   iset->slen = count;
   update_seqitem_hash (iset);
-  if (MONIMELT_UNLIKELY (shrink))
+  if (MOM_UNLIKELY (shrink))
     {
       momset_t *newiset =
 	GC_MALLOC (sizeof (momset_t) + siz * sizeof (mom_anyitem_t *));
@@ -612,17 +611,17 @@ mom_make_set_union (momval_t s1, momval_t s2)
       if (s2.ptr && *s2.ptype == momty_set)
 	return s2;
       else
-	return MONIMELT_NULLV;
+	return MOM_NULLV;
     }
   else if (!s2.ptr)
     {
       if (s1.ptr && *s1.ptype == momty_set)
 	return s1;
       else
-	return MONIMELT_NULLV;
+	return MOM_NULLV;
     };
   if (*s1.ptype != momty_set || *s2.ptype != momty_set)
-    return MONIMELT_NULLV;
+    return MOM_NULLV;
   const momset_t *s1set = s1.pset;
   const momset_t *s2set = s2.pset;
   unsigned s1len = s1set->slen;
@@ -634,8 +633,8 @@ mom_make_set_union (momval_t s1, momval_t s2)
     arr = tinyarr;
   else
     arr = GC_MALLOC (sizeof (mom_anyitem_t *) * sumlen);
-  if (MONIMELT_UNLIKELY (!arr))
-    MONIMELT_FATAL ("failed to allocate union temporary of %d items", sumlen);
+  if (MOM_UNLIKELY (!arr))
+    MOM_FATAL ("failed to allocate union temporary of %d items", sumlen);
   memset (arr, 0, sumlen * sizeof (mom_anyitem_t *));
   unsigned i1 = 0, i2 = 0;
   unsigned nbun = 0;
@@ -666,8 +665,8 @@ mom_make_set_union (momval_t s1, momval_t s2)
   momset_t *rset =
     GC_MALLOC (sizeof (struct momseqitem_st) +
 	       nbun * sizeof (mom_anyitem_t *));
-  if (MONIMELT_UNLIKELY (!rset))
-    MONIMELT_FATAL ("failed to allocate union of %d elements", (int) nbun);
+  if (MOM_UNLIKELY (!rset))
+    MOM_FATAL ("failed to allocate union of %d elements", (int) nbun);
   memset (rset, 0,
 	  sizeof (struct momseqitem_st) + nbun * sizeof (mom_anyitem_t *));
   rset->slen = nbun;
@@ -685,7 +684,7 @@ momval_t
 mom_make_set_intersection (momval_t s1, momval_t s2)
 {
   if (!s1.ptr || !s2.ptr || *s1.ptype != momty_set || *s2.ptype != momty_set)
-    return MONIMELT_NULLV;
+    return MOM_NULLV;
   const momset_t *s1set = s1.pset;
   const momset_t *s2set = s2.pset;
   unsigned s1len = s1set->slen;
@@ -697,9 +696,9 @@ mom_make_set_intersection (momval_t s1, momval_t s2)
     arr = tinyarr;
   else
     arr = GC_MALLOC (sizeof (mom_anyitem_t *) * maxlen);
-  if (MONIMELT_UNLIKELY (!arr))
-    MONIMELT_FATAL ("failed to allocate intersection temporary of %d items",
-		    maxlen);
+  if (MOM_UNLIKELY (!arr))
+    MOM_FATAL ("failed to allocate intersection temporary of %d items",
+	       maxlen);
   memset (arr, 0, maxlen * sizeof (mom_anyitem_t *));
   unsigned i1 = 0, i2 = 0;
   unsigned nbin = 0;
@@ -724,9 +723,8 @@ mom_make_set_intersection (momval_t s1, momval_t s2)
   momset_t *rset =
     GC_MALLOC (sizeof (struct momseqitem_st) +
 	       nbin * sizeof (mom_anyitem_t *));
-  if (MONIMELT_UNLIKELY (!rset))
-    MONIMELT_FATAL ("failed to allocate intersection of %d elements",
-		    (int) nbin);
+  if (MOM_UNLIKELY (!rset))
+    MOM_FATAL ("failed to allocate intersection of %d elements", (int) nbin);
   memset (rset, 0,
 	  sizeof (struct momseqitem_st) + nbin * sizeof (mom_anyitem_t *));
   rset->slen = nbin;
@@ -742,7 +740,7 @@ const momitemtuple_t *
 mom_make_tuple_til_nil (momval_t first, ...)
 {
   va_list args;
-  momval_t val = MONIMELT_NULLV;
+  momval_t val = MOM_NULLV;
   unsigned siz = 0, ix = 0;
   momitemtuple_t *itup = NULL;
   val = first;
@@ -763,8 +761,8 @@ mom_make_tuple_til_nil (momval_t first, ...)
     }
   va_end (args);
   itup = GC_MALLOC (sizeof (momitemtuple_t) + siz * sizeof (mom_anyitem_t *));
-  if (MONIMELT_UNLIKELY (!itup))
-    MONIMELT_FATAL ("failed to allocate tuple of size %d", (int) siz);
+  if (MOM_UNLIKELY (!itup))
+    MOM_FATAL ("failed to allocate tuple of size %d", (int) siz);
   memset (itup, 0, sizeof (momitemtuple_t) + siz * sizeof (mom_anyitem_t *));
   siz = 0;
   val = first;
@@ -803,8 +801,8 @@ mom_make_tuple_sized (unsigned siz, ...)
   unsigned ix = 0;
   momitemtuple_t *itup = NULL;
   itup = GC_MALLOC (sizeof (momitemtuple_t) + siz * sizeof (mom_anyitem_t *));
-  if (MONIMELT_UNLIKELY (!itup))
-    MONIMELT_FATAL ("failed to build tuple of size %d", (int) siz);
+  if (MOM_UNLIKELY (!itup))
+    MOM_FATAL ("failed to build tuple of size %d", (int) siz);
   memset (itup, 0, sizeof (momitemtuple_t) + siz * sizeof (mom_anyitem_t *));
   va_start (args, siz);
   for (ix = 0; ix < siz; ix++)
@@ -826,8 +824,8 @@ mom_make_tuple_from_array (unsigned siz, const mom_anyitem_t ** itemarr)
   momitemtuple_t *ituple = NULL;
   ituple =
     GC_MALLOC (sizeof (momitemtuple_t) + siz * sizeof (mom_anyitem_t *));
-  if (MONIMELT_UNLIKELY (!ituple))
-    MONIMELT_FATAL ("failed to build tuple of size %d", (int) siz);
+  if (MOM_UNLIKELY (!ituple))
+    MOM_FATAL ("failed to build tuple of size %d", (int) siz);
   memset (ituple, 0,
 	  sizeof (momitemtuple_t) + siz * sizeof (mom_anyitem_t *));
   for (ix = 0; ix < siz; ix++)
@@ -855,7 +853,7 @@ update_node_hash (struct momnode_st *nd)
 	(23053 * ix + 53171 * h) ^ (11 +
 				    5309 * mom_value_hash (nd->sontab[ix]));
     }
-  if (MONIMELT_UNLIKELY (!h))
+  if (MOM_UNLIKELY (!h))
     h = (13 * slen + 17 * nd->typnum + (nd->connitm->i_hash & 0xfff)) | 1;
   nd->hash = h;
 }
@@ -874,8 +872,8 @@ mom_make_node_til_nil (const mom_anyitem_t * conn, ...)
     siz++;
   va_end (args);
   nd = GC_MALLOC (sizeof (momnode_t) + siz * sizeof (momval_t));
-  if (MONIMELT_UNLIKELY (!nd))
-    MONIMELT_FATAL ("failed to allocate node of size %d", (int) siz);
+  if (MOM_UNLIKELY (!nd))
+    MOM_FATAL ("failed to allocate node of size %d", (int) siz);
   memset (nd, 0, sizeof (momnode_t) + siz * sizeof (momval_t));
   nd->connitm = conn;
   va_start (args, conn);
@@ -896,8 +894,8 @@ mom_make_node_sized (const mom_anyitem_t * conn, unsigned siz, ...)
     return NULL;
   va_list args;
   nd = GC_MALLOC (sizeof (momnode_t) + siz * sizeof (momval_t));
-  if (MONIMELT_UNLIKELY (!nd))
-    MONIMELT_FATAL ("failed to allocate node of size %d", (int) siz);
+  if (MOM_UNLIKELY (!nd))
+    MOM_FATAL ("failed to allocate node of size %d", (int) siz);
   memset (nd, 0, sizeof (momnode_t) + siz * sizeof (momval_t));
   va_start (args, siz);
   for (unsigned ix = 0; ix < siz; ix++)
@@ -918,8 +916,8 @@ mom_make_node_from_array (const mom_anyitem_t * conn, unsigned siz,
   if (!conn || conn->typnum <= momty__itemlowtype)
     return NULL;
   nd = GC_MALLOC (sizeof (momnode_t) + siz * sizeof (momval_t));
-  if (MONIMELT_UNLIKELY (!nd))
-    MONIMELT_FATAL ("failed to allocate node of size %d", (int) siz);
+  if (MOM_UNLIKELY (!nd))
+    MOM_FATAL ("failed to allocate node of size %d", (int) siz);
   memset (nd, 0, sizeof (momnode_t) + siz * sizeof (momval_t));
   for (unsigned ix = 0; ix < siz; ix++)
     ((momval_t *) nd->sontab)[ix] = arr[ix];
@@ -950,8 +948,8 @@ mom_make_closure_til_nil (const mom_anyitem_t * conn, ...)
   va_end (args);
   unsigned alsize = (minsiz > siz) ? minsiz : siz;
   clo = GC_MALLOC (sizeof (momnode_t) + alsize * sizeof (momval_t));
-  if (MONIMELT_UNLIKELY (!clo))
-    MONIMELT_FATAL ("failed to allocate closure of size %d", (int) alsize);
+  if (MOM_UNLIKELY (!clo))
+    MOM_FATAL ("failed to allocate closure of size %d", (int) alsize);
   memset (clo, 0, sizeof (momnode_t) + alsize * sizeof (momval_t));
   va_start (args, conn);
   for (unsigned ix = 0; ix < siz; ix++)
@@ -975,8 +973,8 @@ mom_make_closure_sized (const mom_anyitem_t * conn, unsigned siz, ...)
   unsigned alsize = (minsiz > siz) ? minsiz : siz;
   va_list args;
   clo = GC_MALLOC (sizeof (momclosure_t) + alsize * sizeof (momval_t));
-  if (MONIMELT_UNLIKELY (!clo))
-    MONIMELT_FATAL ("failed to allocate closure of size %d", (int) alsize);
+  if (MOM_UNLIKELY (!clo))
+    MOM_FATAL ("failed to allocate closure of size %d", (int) alsize);
   memset (clo, 0, sizeof (momclosure_t) + alsize * sizeof (momval_t));
   va_start (args, siz);
   for (unsigned ix = 0; ix < siz; ix++)
@@ -1000,8 +998,8 @@ mom_make_closure_from_array (const mom_anyitem_t * conn, unsigned siz,
   unsigned minsiz = ((momit_routine_t *) conn)->irt_descr->rout_minclosize;
   unsigned alsize = (minsiz > siz) ? minsiz : siz;
   clo = GC_MALLOC (sizeof (momnode_t) + alsize * sizeof (momval_t));
-  if (MONIMELT_UNLIKELY (!clo))
-    MONIMELT_FATAL ("failed to allocate closure of size %d", (int) siz);
+  if (MOM_UNLIKELY (!clo))
+    MOM_FATAL ("failed to allocate closure of size %d", (int) siz);
   memset (clo, 0, sizeof (momnode_t) + alsize * sizeof (momval_t));
   for (unsigned ix = 0; ix < siz; ix++)
     ((momval_t *) clo->sontab)[ix] = arr[ix];

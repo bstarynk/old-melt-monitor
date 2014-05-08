@@ -81,7 +81,7 @@
 #include <curl/curl.h>
 
 
-#if MONIMELT_EXPLICIT_GC_THREAD
+#if MOM_EXPLICIT_GC_THREAD
 #define MOMGC_REGISTER_MY_THREAD(Sb) GC_register_my_thread(Sb)
 #define MOMGC_UNREGISTER_MY_THHREAD() GC_unregister_my_thread()
 #define MOMGC_CALL_WITH_STACK_BASE(Rout,Base) GC_call_with_stack_base(Rout,Base)
@@ -93,9 +93,9 @@
 
 // mark unlikely conditions to help optimization
 #ifdef __GNUC__
-#define MONIMELT_UNLIKELY(P) __builtin_expect((P),0)
+#define MOM_UNLIKELY(P) __builtin_expect((P),0)
 #else
-#define MONIMELT_UNLIKELY(P) (P)
+#define MOM_UNLIKELY(P) (P)
 #endif
 
 static inline pid_t
@@ -105,14 +105,14 @@ mom_gettid (void)
 }
 
 // empty placeholder in hashes
-#define MONIMELT_EMPTY ((void*)(-1L))
+#define MOM_EMPTY ((void*)(-1L))
 
 // reasonable path length
-#define MONIMELT_PATH_LEN 256
+#define MOM_PATH_LEN 256
 
 // query a clock
 static inline double
-monimelt_clock_time (clockid_t cid)
+mom_clock_time (clockid_t cid)
 {
   struct timespec ts = { 0, 0 };
   if (clock_gettime (cid, &ts))
@@ -123,7 +123,7 @@ monimelt_clock_time (clockid_t cid)
 
 
 static inline struct timespec
-monimelt_timespec (double t)
+mom_timespec (double t)
 {
   struct timespec ts = { 0, 0 };
   if (isnan (t) || t < 0.0)
@@ -132,9 +132,9 @@ monimelt_timespec (double t)
   ts.tv_sec = (time_t) fl;
   ts.tv_nsec = (long) ((t - fl) * 1.0e9);
   // this should not happen
-  if (MONIMELT_UNLIKELY (ts.tv_nsec < 0))
+  if (MOM_UNLIKELY (ts.tv_nsec < 0))
     ts.tv_nsec = 0;
-  while (MONIMELT_UNLIKELY (ts.tv_nsec >= 1000 * 1000 * 1000))
+  while (MOM_UNLIKELY (ts.tv_nsec >= 1000 * 1000 * 1000))
     {
       ts.tv_sec++;
       ts.tv_nsec -= 1000 * 1000 * 1000;
@@ -208,7 +208,7 @@ pthread_mutexattr_t mom_recursive_mutex_attr;
 GModule *mom_prog_module;
 
 // generated modules start with:
-#define MONIMELT_SHARED_MODULE_PREFIX "momg_"
+#define MOM_SHARED_MODULE_PREFIX "momg_"
 void mom_register_dumped_module (const char *modname);
 
 // below TINY_MAX we try to allocate on stack temporary vectors
@@ -266,18 +266,18 @@ void
 mom_debug_at (enum mom_debug_en dbg, const char *fil, int lin,
 	      const char *fmt, ...) __attribute__ ((format (printf, 4, 5)));
 
-#define MONIMELT_DEBUG_AT(Dbg,Fil,Lin,Fmt,...) do {	\
+#define MOM_DEBUG_AT(Dbg,Fil,Lin,Fmt,...) do {	\
     if (MOM_IS_DEBUGGING(Dbg))				\
       mom_debug_at (momdbg_##Dbg,Fil,Lin,Fmt,		\
 		   ##__VA_ARGS__);			\
   } while(0)
 
-#define MONIMELT_DEBUG_AT_BIS(Dbg,Fil,Lin,Fmt,...)	\
-  MONIMELT_DEBUG_AT(Dbg,Fil,Lin,Fmt,			\
+#define MOM_DEBUG_AT_BIS(Dbg,Fil,Lin,Fmt,...)	\
+  MOM_DEBUG_AT(Dbg,Fil,Lin,Fmt,			\
 		    ##__VA_ARGS__)
 
-#define MONIMELT_DEBUG(Dbg,Fmt,...)			\
-  MONIMELT_DEBUG_AT_BIS(Dbg,__FILE__,__LINE__,Fmt,	\
+#define MOM_DEBUG(Dbg,Fmt,...)			\
+  MOM_DEBUG_AT_BIS(Dbg,__FILE__,__LINE__,Fmt,	\
 			##__VA_ARGS__)
 
 
@@ -380,16 +380,16 @@ struct momspacedescr_st
   mom_space_fetch_fill_sig_t *spa_fetch_fill;
   mom_space_store_build_fill_sig_t *spa_store_build_fill;
 };
-#define MONIMELT_ROOT_SPACE_NAME "."
-#define MONIMELT_SPACE_NONE 0
-#define MONIMELT_SPACE_ROOT 1
-#define MONIMELT_FIRST_USER_SPACE 2
-#define MONIMELT_SPACE_MAX 64
-struct momspacedescr_st *mom_spacedescr_array[MONIMELT_SPACE_MAX];
-const struct momstring_st *mom_spacename_array[MONIMELT_SPACE_MAX];
+#define MOM_ROOT_SPACE_NAME "."
+#define MOM_SPACE_NONE 0
+#define MOM_SPACE_ROOT 1
+#define MOM_FIRST_USER_SPACE 2
+#define MOM_SPACE_MAX 64
+struct momspacedescr_st *mom_spacedescr_array[MOM_SPACE_MAX];
+const struct momstring_st *mom_spacename_array[MOM_SPACE_MAX];
 
 
-#define MONIMELT_NULLV ((union momvalueptr_un)((void*)0))
+#define MOM_NULLV ((union momvalueptr_un)((void*)0))
 struct momint_st
 {
   momtynum_t typnum;
@@ -704,13 +704,13 @@ static inline momval_t
 mom_node_nth (momval_t nodv, int rk)
 {
   if (!nodv.ptr || *nodv.ptype != momty_node)
-    return MONIMELT_NULLV;
+    return MOM_NULLV;
   unsigned l = nodv.pnode->slen;
   if (rk < 0)
     rk += (int) l;
   if (rk >= 0 && rk < l)
     return nodv.pnode->sontab[rk];
-  return MONIMELT_NULLV;
+  return MOM_NULLV;
 }
 
 static inline const mom_anyitem_t *
@@ -742,13 +742,13 @@ static inline momval_t
 mom_closure_nth (momval_t clov, int rk)
 {
   if (!clov.ptr || *clov.ptype != momty_closure)
-    return MONIMELT_NULLV;
+    return MOM_NULLV;
   unsigned l = clov.pclosure->slen;
   if (rk < 0)
     rk += (int) l;
   if (rk >= 0 && rk < l)
     return clov.pclosure->sontab[rk];
-  return MONIMELT_NULLV;
+  return MOM_NULLV;
 }
 
 static inline momval_t
@@ -756,13 +756,13 @@ mom_son_nth_of_node_or_closure (momval_t clonodv, int rk)
 {
   if (!clonodv.ptr
       || (*clonodv.ptype != momty_closure && *clonodv.ptype != momty_node))
-    return MONIMELT_NULLV;
+    return MOM_NULLV;
   unsigned l = clonodv.pclosure->slen;
   if (rk < 0)
     rk += (int) l;
   if (rk >= 0 && rk < l)
     return clonodv.pclosure->sontab[rk];
-  return MONIMELT_NULLV;
+  return MOM_NULLV;
 }
 
 /// unparse the uuid of an item
@@ -843,7 +843,7 @@ struct momboxitem_st
 momit_box_t *mom_make_item_box (unsigned space);
 momit_box_t *mom_make_item_box_of_uuid (uuid_t uid, unsigned space);
 #define mom_create__box(Name,Uid) \
-  mom_make_item_box_of_uuid(Uid,MONIMELT_SPACE_ROOT)
+  mom_make_item_box_of_uuid(Uid,MOM_SPACE_ROOT)
 
 // get the boxed value
 momval_t mom_item_box_get (momval_t boxv);
@@ -862,7 +862,7 @@ momit_queue_t *mom_make_item_queue (unsigned space);
 momit_queue_t *mom_make_item_queue_of_uuid (uuid_t uid, unsigned space);
 
 #define mom_create__queue(Name,Uid) \
-  mom_make_item_queue_of_uuid(Uid,MONIMELT_SPACE_ROOT)
+  mom_make_item_queue_of_uuid(Uid,MOM_SPACE_ROOT)
 void mom_item_queue_push_back (momval_t quev, momval_t itmv);
 void mom_item_queue_push_front (momval_t quev, momval_t itmv);
 void mom_item_queue_push_many_back (momval_t quev, ...)
@@ -944,7 +944,7 @@ momit_dictionnary_t *mom_make_item_dictionnary (unsigned space);
 momit_dictionnary_t *mom_make_item_dictionnary_of_uuid (uuid_t uid,
 							unsigned space);
 #define mom_create__dictionnary(Name,Uid) \
-  mom_make_item_dictionnary_of_uuid(Uid,MONIMELT_SPACE_ROOT)
+  mom_make_item_dictionnary_of_uuid(Uid,MOM_SPACE_ROOT)
 void mom_item_dictionnary_reserve (momval_t dictv, unsigned more);
 void mom_item_dictionnary_put (momval_t dictv, momval_t namev, momval_t valv);
 static inline const momstring_t *mom_make_string (const char *str);
@@ -1108,7 +1108,7 @@ static inline momval_t
 mom_value_json (momval_t val)
 {
   if (!val.ptr)
-    return MONIMELT_NULLV;
+    return MOM_NULLV;
   switch (*val.ptype)
     {
     case momty_int:
@@ -1126,7 +1126,7 @@ mom_value_json (momval_t val)
     case momty_booleanitem:
       return val;
     default:
-      return MONIMELT_NULLV;
+      return MOM_NULLV;
     }
 }
 
@@ -1210,35 +1210,35 @@ void
 mom_fatal_at (const char *fil, int lin, const char *fmt, ...)
 __attribute__ ((format (printf, 3, 4), noreturn));
 
-#define MONIMELT_FATAL_AT(Fil,Lin,Fmt,...) do {         \
+#define MOM_FATAL_AT(Fil,Lin,Fmt,...) do {         \
   mom_fatal_at(Fil,Lin,Fmt,##__VA_ARGS__);} while(0)
-#define MONIMELT_FATAL_AT_BIS(Fil,Lin,Fmt,...) \
-  MONIMELT_FATAL_AT(Fil,Lin,Fmt,##__VA_ARGS__)
-#define MONIMELT_FATAL(Fmt,...) \
-  MONIMELT_FATAL_AT_BIS(__FILE__,__LINE__,Fmt,##__VA_ARGS__)
+#define MOM_FATAL_AT_BIS(Fil,Lin,Fmt,...) \
+  MOM_FATAL_AT(Fil,Lin,Fmt,##__VA_ARGS__)
+#define MOM_FATAL(Fmt,...) \
+  MOM_FATAL_AT_BIS(__FILE__,__LINE__,Fmt,##__VA_ARGS__)
 
 void
 mom_inform_at (const char *fil, int lin, const char *fmt, ...)
 __attribute__ ((format (printf, 3, 4)));
 
-#define MONIMELT_INFORM_AT(Fil,Lin,Fmt,...) do {         \
+#define MOM_INFORM_AT(Fil,Lin,Fmt,...) do {         \
   mom_inform_at(Fil,Lin,Fmt,##__VA_ARGS__);} while(0)
-#define MONIMELT_INFORM_AT_BIS(Fil,Lin,Fmt,...) \
-  MONIMELT_INFORM_AT(Fil,Lin,Fmt,##__VA_ARGS__)
-#define MONIMELT_INFORM(Fmt,...) \
-  MONIMELT_INFORM_AT_BIS(__FILE__,__LINE__,Fmt,##__VA_ARGS__)
+#define MOM_INFORM_AT_BIS(Fil,Lin,Fmt,...) \
+  MOM_INFORM_AT(Fil,Lin,Fmt,##__VA_ARGS__)
+#define MOM_INFORM(Fmt,...) \
+  MOM_INFORM_AT_BIS(__FILE__,__LINE__,Fmt,##__VA_ARGS__)
 
 
 void
 mom_warning_at (const char *fil, int lin, const char *fmt, ...)
 __attribute__ ((format (printf, 3, 4)));
 
-#define MONIMELT_WARNING_AT(Fil,Lin,Fmt,...) do {         \
+#define MOM_WARNING_AT(Fil,Lin,Fmt,...) do {         \
   mom_warning_at(Fil,Lin,Fmt,##__VA_ARGS__);} while(0)
-#define MONIMELT_WARNING_AT_BIS(Fil,Lin,Fmt,...) \
-  MONIMELT_WARNING_AT(Fil,Lin,Fmt,##__VA_ARGS__)
-#define MONIMELT_WARNING(Fmt,...) \
-  MONIMELT_WARNING_AT_BIS(__FILE__,__LINE__,Fmt,##__VA_ARGS__)
+#define MOM_WARNING_AT_BIS(Fil,Lin,Fmt,...) \
+  MOM_WARNING_AT(Fil,Lin,Fmt,##__VA_ARGS__)
+#define MOM_WARNING(Fmt,...) \
+  MOM_WARNING_AT_BIS(__FILE__,__LINE__,Fmt,##__VA_ARGS__)
 
 momhash_t mom_string_hash (const char *str, int len);
 const momstring_t *mom_make_string_len (const char *str, int len);
@@ -1272,8 +1272,8 @@ mom_jsonstring_cstr (momval_t val)
     }
 }
 
-#define MONIMELT_DEFAULT_STATE_FILE "state-monimelt.dbsqlite"
-#define MONIMELT_WEB_DIRECTORY "webdir"
+#define MOM_DEFAULT_STATE_FILE "state-monimelt.dbsqlite"
+#define MOM_WEB_DIRECTORY "webdir"
 const momint_t *mom_make_int (intptr_t n);
 void mom_initialize (void);
 void mom_initial_load (const char *state);
@@ -1291,7 +1291,7 @@ momit_json_name_t *mom_make_item_json_name_of_uuid (uuid_t, const char *name,
 						    unsigned space);
 momit_json_name_t *mom_make_item_json_name (const char *name, unsigned space);
 #define mom_create__json_name(Name,Uid) \
-  mom_make_item_json_name_of_uuid(Uid,#Name,MONIMELT_SPACE_ROOT)
+  mom_make_item_json_name_of_uuid(Uid,#Name,MOM_SPACE_ROOT)
 
 
 // fail if routine not found
@@ -1308,12 +1308,12 @@ momit_routine_t *mom_make_item_embryonic_routine (const char *name,
 const char *mom_embryonic_routine_name (momit_routine_t * itrout);
 
 #define mom_create__routine(Name,Uid) \
-  mom_make_item_routine_of_uuid(Uid,#Name,MONIMELT_SPACE_ROOT)
+  mom_make_item_routine_of_uuid(Uid,#Name,MOM_SPACE_ROOT)
 
 momit_tasklet_t *mom_make_item_tasklet_of_uuid (uuid_t uid, unsigned space);
 momit_tasklet_t *mom_make_item_tasklet ();
 #define mom_create__tasklet(Name,Uid) \
-  mom_make_item_tasklet_of_uuid(Uid,MONIMELT_SPACE_ROOT)
+  mom_make_item_tasklet_of_uuid(Uid,MOM_SPACE_ROOT)
 int mom_tasklet_step (momit_tasklet_t *);
 
 static inline bool
@@ -1321,7 +1321,7 @@ mom_is_jsonable (const momval_t val)
 {
   if (!val.ptr)
     return true;
-  else if (val.ptr == MONIMELT_EMPTY)
+  else if (val.ptr == MOM_EMPTY)
     return false;
   else
     switch (*val.ptype)
@@ -1344,9 +1344,9 @@ mom_is_jsonable (const momval_t val)
 static inline momval_t
 mom_item_get_content (mom_anyitem_t * itm)
 {
-  momval_t res = MONIMELT_NULLV;
+  momval_t res = MOM_NULLV;
   if (!itm || itm->typnum <= momty__itemlowtype)
-    return MONIMELT_NULLV;
+    return MOM_NULLV;
   pthread_mutex_lock (&itm->i_mtx);
   res = itm->i_content;
   pthread_mutex_unlock (&itm->i_mtx);
@@ -1369,11 +1369,11 @@ static inline unsigned
 mom_item_set_space (mom_anyitem_t * itm, unsigned spacenum)
 {
   if (!itm || itm->typnum <= momty__itemlowtype
-      || spacenum > MONIMELT_SPACE_MAX
-      || (spacenum > MONIMELT_SPACE_NONE
+      || spacenum > MOM_SPACE_MAX
+      || (spacenum > MOM_SPACE_NONE
 	  && mom_spacedescr_array[spacenum] == NULL))
-    return MONIMELT_SPACE_NONE;
-  unsigned spa = MONIMELT_SPACE_NONE;
+    return MOM_SPACE_NONE;
+  unsigned spa = MOM_SPACE_NONE;
   pthread_mutex_lock (&itm->i_mtx);
   spa = itm->i_space;
   itm->i_space = spacenum;
@@ -1385,8 +1385,8 @@ static inline unsigned
 mom_item_space (mom_anyitem_t * itm)
 {
   if (!itm || itm->typnum <= momty__itemlowtype)
-    return MONIMELT_SPACE_NONE;
-  unsigned spa = MONIMELT_SPACE_NONE;
+    return MOM_SPACE_NONE;
+  unsigned spa = MOM_SPACE_NONE;
   pthread_mutex_lock (&itm->i_mtx);
   spa = itm->i_space;
   pthread_mutex_unlock (&itm->i_mtx);
@@ -1452,7 +1452,7 @@ const momval_t mom_jsonob_get_def (const momval_t jsobv, const momval_t namev,
 static inline const momval_t
 mom_jsonob_get (const momval_t jsobv, const momval_t namev)
 {
-  return mom_jsonob_get_def (jsobv, namev, MONIMELT_NULLV);
+  return mom_jsonob_get_def (jsobv, namev, MOM_NULLV);
 }
 
 static inline unsigned
@@ -1493,13 +1493,13 @@ static inline const momval_t
 mom_json_array_nth (momval_t val, int rk)
 {
   if (!val.ptr || *val.ptype != momty_jsonarray)
-    return MONIMELT_NULLV;
+    return MOM_NULLV;
   unsigned slen = val.pjsonarr->slen;
   if (rk < 0)
     rk += slen;
   if (rk >= 0 && rk < slen)
     return val.pjsonarr->jarrtab[rk];
-  return MONIMELT_NULLV;
+  return MOM_NULLV;
 }
 
 // make a set from items, or sets, or tuples
@@ -1608,12 +1608,12 @@ void mom_json_output_close (struct jsonoutput_st *jo);
 void mom_output_json (struct jsonoutput_st *jo, const momval_t val);
 
 // every module should have
-extern const char monimelt_GPL_friendly_module[];
-extern void monimelt_module_init (const char *marg);
+extern const char mom_GPL_friendly_module[];
+extern void mom_module_init (const char *marg);
 // modules may also define for option processing
-extern GOptionGroup *monimelt_module_option_group (const char *modname);
+extern GOptionGroup *mom_module_option_group (const char *modname);
 // and for post load processing
-extern void monimelt_module_post_load (void);
+extern void mom_module_post_load (void);
 
 struct mom_itqueue_st
 {
@@ -1714,7 +1714,7 @@ void mom_request_stop_at (const char *srcfil, int srclin, const char *reason,
 								     (Reason),(Postrunner),(Data))
 
 // a generated code module might have a function to be executed after the code module load
-extern void monimelt_after_code_load (const char *modname);
+extern void mom_after_code_load (const char *modname);
 // load a code module, resolve embryonic routines, run again
 int mom_load_code_post_runner (const char *modname);
 
@@ -1724,6 +1724,6 @@ void mom_agenda_add_tasklet_back (momval_t tsk);
 // number of tasklet steps 
 long long mom_agenda_work_counter (void);
 
-#define MONIMELT_NAMED(Name,Type,Uid) extern momit_##Type##_t* mom_item__##Name;
+#define MOM_NAMED(Name,Type,Uid) extern momit_##Type##_t* mom_item__##Name;
 #include "monimelt-names.h"
-#endif /* MONIMELT_INCLUDED_ */
+#endif /* MOM_INCLUDED_ */
