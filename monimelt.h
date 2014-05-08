@@ -1303,6 +1303,10 @@ momit_routine_t *mom_try_make_item_routine (const char *name, unsigned space);
 // make an embryonic routine 
 momit_routine_t *mom_make_item_embryonic_routine (const char *name,
 						  unsigned space);
+// gives the embryonic name of such an embryonic routine, or else (ie
+// non-embryonic or non routine) NULL
+const char *mom_embryonic_routine_name (momit_routine_t * itrout);
+
 #define mom_create__routine(Name,Uid) \
   mom_make_item_routine_of_uuid(Uid,#Name,MONIMELT_SPACE_ROOT)
 

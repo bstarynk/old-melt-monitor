@@ -1156,6 +1156,31 @@ mom_load_code_post_runner (const char *modname)
 }
 
 
+const char *
+mom_embryonic_routine_name (momit_routine_t * itrout)
+{
+  const char *res = NULL;
+  if (!itrout || itrout->irt_item.typnum != momty_routineitem)
+    return NULL;
+  if (itrout->irt_descr != NULL)
+    return NULL;
+  pthread_mutex_lock (&embryonic_mtx);
+  for (unsigned eix = 0; eix < embryonic_routine_size; eix++)
+    {
+      const char *curname = embryonic_routine_name[eix];
+      momit_routine_t *curout = embryonic_routine_arr[eix];
+      if (!curname || !curout)
+	continue;
+      if (curout == itrout)
+	{
+	  res = GC_STRDUP (curname);
+	  break;
+	}
+    }
+  pthread_mutex_unlock (&embryonic_mtx);
+  return res;
+}
+
 void
 mom_mark_delayed_embryonic_routine (momit_routine_t * itrout,
 				    const char *name)
