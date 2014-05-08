@@ -724,7 +724,8 @@ mom_arity_of_node_or_closure (momval_t clonodv)
   return clonodv.pclosure->slen;
 }
 
-static inline bool mom_is_node_or_closure (momval_t clonodv)
+static inline bool
+mom_is_node_or_closure (momval_t clonodv)
 {
   if (!clonodv.ptr
       || (*clonodv.ptype != momty_closure && *clonodv.ptype != momty_node))

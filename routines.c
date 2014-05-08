@@ -1208,104 +1208,276 @@ momcode_cold_routine_emit (int state, momit_tasklet_t * tasklet,
 	   "int momcode_%s (int momp_state, momit_tasklet_t *momp_tasklet, momclosure_t *momp_closure,\n"
 	   "       momval_t *momp_locvals, intptr_t *momp_locnums, double *momp_locdoubles) {\n",
 	   cnam, cnam);
-	if (mom_node_conn(_L(xstate)) != (mom_anyitem_t*)mom_item__state)
+	if (mom_node_conn (_L (xstate)) != (mom_anyitem_t *) mom_item__state)
 	  {
-	    mom_item_buffer_printf (_L (buffer), "#error strange state in %s\n", cnam);
+	    mom_item_buffer_printf (_L (buffer),
+				    "#error strange state in %s\n", cnam);
 	    MOM_WARNING ("cold_routine_emit: strange state in %s", cnam);
 	  }
-	_N (nbstates) = mom_node_arity (_L(xstate));
-	MOM_DEBUG(run, "cold_routine_emit nbstates=%d", (int) _N(nbstates));
+	_N (nbstates) = mom_node_arity (_L (xstate));
+	MOM_DEBUG (run, "cold_routine_emit nbstates=%d", (int) _N (nbstates));
 	/////
 	/// check the states
-	for (unsigned stix = 0; stix < (unsigned) _N(nbstates); stix++) {
-	  momval_t curstatev = mom_node_nth (_L(xstate), stix);
-	  MOM_DEBUG(run, "cold_routine_emit stix=%d", (int)stix);
-	  MOM_DBG_VALUE (run, "cold_routine_emit curstatev=", curstatev);
-	  if (mom_node_conn(curstatev) != (mom_anyitem_t*)mom_item__cold_state
-	      || mom_node_arity(curstatev) < 2) {
-	    mom_item_buffer_printf (_L (buffer), "#error strange cold state #%d in %s\n", (int)stix, cnam);
-	    MOM_WARNING ("cold_routine_emit: strange cold state #%d in %s", (int)stix, cnam);
+	for (unsigned stix = 0; stix < (unsigned) _N (nbstates); stix++)
+	  {
+	    momval_t curstatev = mom_node_nth (_L (xstate), stix);
+	    MOM_DEBUG (run, "cold_routine_emit stix=%d", (int) stix);
+	    MOM_DBG_VALUE (run, "cold_routine_emit curstatev=", curstatev);
+	    if (mom_node_conn (curstatev) !=
+		(mom_anyitem_t *) mom_item__cold_state
+		|| mom_node_arity (curstatev) < 2)
+	      {
+		mom_item_buffer_printf (_L (buffer),
+					"#error strange cold state #%d in %s\n",
+					(int) stix, cnam);
+		MOM_WARNING
+		  ("cold_routine_emit: strange cold state #%d in %s",
+		   (int) stix, cnam);
+	      }
+	    mom_anyitem_t *curstateitm =
+	      mom_value_as_item (mom_node_nth (curstatev, 0));
+	    MOM_DBG_ITEM (run, "cold_routine_emit curstateitm=", curstateitm);
+	    if (!curstateitm)
+	      {
+		mom_item_buffer_printf (_L (buffer),
+					"#error bad current state item #%d in %s\n",
+					(int) stix, cnam);
+		MOM_WARNING
+		  ("cold_routine_emit: bad current state item #%d in %s\n",
+		   (int) stix, cnam);
+	      }
+	    momval_t curstatetext = mom_node_nth (curstatev, 1);
+	    if (!mom_is_string (curstatetext))
+	      {
+		mom_item_buffer_printf (_L (buffer),
+					"#error bad current state string #%d in %s\n",
+					(int) stix, cnam);
+		MOM_WARNING
+		  ("cold_routine_emit: bad current state item #%d in %s\n",
+		   (int) stix, cnam);
+	      }
 	  }
-	  mom_anyitem_t* curstateitm = mom_value_as_item(mom_node_nth(curstatev, 0));
-	  MOM_DBG_ITEM(run, "cold_routine_emit curstateitm=", curstateitm);
-	  if (!curstateitm) {
-	    mom_item_buffer_printf (_L (buffer), "#error bad current state item #%d in %s\n", (int)stix, cnam);
-	    MOM_WARNING("cold_routine_emit: bad current state item #%d in %s\n", (int) stix, cnam);
-	  }
-	  momval_t curstatetext = mom_node_nth(curstatev, 1);
-	  if (!mom_is_string(curstatetext))  {
-	    mom_item_buffer_printf (_L (buffer), "#error bad current state string #%d in %s\n", (int)stix, cnam);
-	    MOM_WARNING("cold_routine_emit: bad current state item #%d in %s\n", (int) stix, cnam);
-	  }
-	}
 	/////
 	/// emit the state enumeration and #define-s
-	mom_item_buffer_printf (_L (buffer), "// %d states enumeration in %s\n", (int) _N(nbstates), cnam);
-	mom_item_buffer_printf (_L (buffer), "enum momstates_%s_en {\n", cnam);
-	for (unsigned stix = 0; stix < (unsigned) _N(nbstates); stix++) {
-	  momval_t curstatev = mom_node_nth (_L(xstate), stix);
-	  mom_anyitem_t* curstateitm = mom_value_as_item(mom_node_nth(curstatev, 0));
-	  const char* namstatsuffix = c_name_suffix (curstateitm);
-	  mom_item_buffer_printf (_L(buffer), " momstate%s_num%d_%s = %d,", cnam, stix, namstatsuffix, stix);
-	  mom_item_buffer_printf (_L(buffer), "#define momsta_%s momstate%s_num%d_%s\n", namstatsuffix, cnam, stix, namstatsuffix);
-	};
-	mom_item_buffer_printf (_L(buffer), " momstate%s__laststate }; // end enum momstates_%s_en\n", cnam, cnam);
-	mom_item_buffer_printf (_L(buffer),
+	mom_item_buffer_printf (_L (buffer),
+				"// %d states enumeration in %s\n",
+				(int) _N (nbstates), cnam);
+	mom_item_buffer_printf (_L (buffer), "enum momstates_%s_en {\n",
+				cnam);
+	for (unsigned stix = 0; stix < (unsigned) _N (nbstates); stix++)
+	  {
+	    momval_t curstatev = mom_node_nth (_L (xstate), stix);
+	    if (!curstatev.ptr)
+	      continue;
+	    mom_anyitem_t *curstateitm =
+	      mom_value_as_item (mom_node_nth (curstatev, 0));
+	    if (!curstateitm)
+	      continue;
+	    const char *namstatsuffix = c_name_suffix (curstateitm);
+	    if (!namstatsuffix)
+	      continue;
+	    mom_item_buffer_printf (_L (buffer), " momstate%s_num%d_%s = %d,",
+				    cnam, stix, namstatsuffix, stix);
+	    mom_item_buffer_printf (_L (buffer),
+				    "#define momsta_%s momstate%s_num%d_%s\n",
+				    namstatsuffix, cnam, stix, namstatsuffix);
+	  };
+	mom_item_buffer_printf (_L (buffer),
+				" momstate%s__laststate }; // end enum momstates_%s_en\n",
+				cnam, cnam);
+	mom_item_buffer_printf (_L (buffer),
 				"#define GO(St) do { MOM_DEBUG (run, \\\n"
 				"    \"%s go state \" #St \" = %%d\", (int)  momsta_##St); \\\n"
-				"  return momsta_##St; } while(0)\n", cnam
-				);
+				"  return momsta_##St; } while(0)\n"
+				"#define POP() do  { MOM_DEBUG (run, \\\n"
+				"    \"%s pop state \"); return routres_pop; } while(0)\n"
+				"#define STEADY() do  { MOM_DEBUG (run, \\\n"
+				"    \"%s steady state \"); return routres_steady; } while(0)\n",
+				cnam, cnam, cnam);
 	//////
 	// check and #define the local values
-	if (_L(xvalues).ptr && !mom_is_seqitem(_L(xvalues))) {
-	  mom_item_buffer_printf(_L (buffer), "#error bad locals in %s\n", cnam);
-	  MOM_WARNING ("cold_routine_emit: bad local values in %s", cnam);
-	}
-	_N(nbvalues) = mom_seqitem_length(_L(xvalues));
-	MOM_DEBUG(run, "cold_routine_emit: nbvalues=%d", (int)_N(nbvalues));
-	for (unsigned lix = 0; lix < (unsigned) _N(nbvalues); lix++) {
-	  const mom_anyitem_t* curvalitm = mom_seqitem_nth_item(_L(xvalues), lix);
-	  MOM_DBG_ITEM(run, "cold_routine_emit: curvalitm=", curvalitm);
-	  if (!curvalitm) {
-	    mom_item_buffer_printf(_L (buffer), "#error bad local #%d in %s\n", (int)lix, cnam);
-	    MOM_WARNING ("cold_routine_emit: bad local value #%d in %s", lix, cnam);
-	    continue;
-	  };
-	  const char* curvalsuffix = c_name_suffix(curvalitm);
-	  mom_item_buffer_printf(_L(buffer), "#define momloc_%s momp_locvals[%d]\n", curvalsuffix, lix);
-	  if (isalpha(curvalsuffix[0]))
-	      mom_item_buffer_printf(_L(buffer), "#define %s  momloc_%s\n", curvalsuffix, curvalsuffix);
-	}
+	if (_L (xvalues).ptr && !mom_is_seqitem (_L (xvalues)))
+	  {
+	    mom_item_buffer_printf (_L (buffer), "#error bad locals in %s\n",
+				    cnam);
+	    MOM_WARNING ("cold_routine_emit: bad local values in %s", cnam);
+	  }
+	_N (nbvalues) = mom_seqitem_length (_L (xvalues));
+	MOM_DEBUG (run, "cold_routine_emit: nbvalues=%d",
+		   (int) _N (nbvalues));
+	for (unsigned lix = 0; lix < (unsigned) _N (nbvalues); lix++)
+	  {
+	    const mom_anyitem_t *curvalitm =
+	      mom_seqitem_nth_item (_L (xvalues), lix);
+	    MOM_DBG_ITEM (run, "cold_routine_emit: curvalitm=", curvalitm);
+	    if (!curvalitm)
+	      {
+		mom_item_buffer_printf (_L (buffer),
+					"#error bad local #%d in %s\n",
+					(int) lix, cnam);
+		MOM_WARNING ("cold_routine_emit: bad local value #%d in %s",
+			     lix, cnam);
+		continue;
+	      };
+	    const char *curvalsuffix = c_name_suffix (curvalitm);
+	    mom_item_buffer_printf (_L (buffer),
+				    "#define momloc_%s momp_locvals[%d]\n",
+				    curvalsuffix, lix);
+	    if (isalpha (curvalsuffix[0]))
+	      mom_item_buffer_printf (_L (buffer), "#define %s  momloc_%s\n",
+				      curvalsuffix, curvalsuffix);
+	  }
 	//////
 	// check and #define the closed values
-	if (_L(xclosure).ptr && !mom_is_seqitem(_L(xclosure))) {
-	  mom_item_buffer_printf(_L (buffer), "#error bad closed values in %s\n", cnam);
-	  MOM_WARNING ("cold_routine_emit: bad closed values in %s", cnam);
-	}
-	_N(nbclosed) = mom_seqitem_length(_L(xclosure));
-	MOM_DEBUG(run, "cold_routine_emit: nbclosed=%d", (int)_N(nbclosed));
-	for (unsigned cix = 0; cix < (unsigned) _N(nbclosed); cix++) {
-	  const mom_anyitem_t* curcloitm = mom_seqitem_nth_item(_L(xclosure), cix);
-	  MOM_DBG_ITEM(run, "cold_routine_emit: curcloitm=", curcloitm);
-	  if (!curcloitm) {
-	    mom_item_buffer_printf(_L (buffer), "#error bad closed value #%d in %s\n", (int)cix, cnam);
-	    MOM_WARNING ("cold_routine_emit: bad closed value #%d in %s", cix, cnam);
-	    continue;
-	  };
-	  const char* curclosuffix = c_name_suffix(curcloitm);
-	  if (!curclosuffix) continue;
-	  mom_item_buffer_printf(_L(buffer), "#define momclo_%s momp_closure->sontab[%d]\n", curclosuffix, cix);
-	  if (curclosuffix && isalpha(curclosuffix[0]))
-	    mom_item_buffer_printf(_L(buffer), "#define %s momclo_%s\n", curclosuffix, curclosuffix);
-	}
+	if (_L (xclosure).ptr && !mom_is_seqitem (_L (xclosure)))
+	  {
+	    mom_item_buffer_printf (_L (buffer),
+				    "#error bad closed values in %s\n", cnam);
+	    MOM_WARNING ("cold_routine_emit: bad closed values in %s", cnam);
+	  }
+	_N (nbclosed) = mom_seqitem_length (_L (xclosure));
+	MOM_DEBUG (run, "cold_routine_emit: nbclosed=%d",
+		   (int) _N (nbclosed));
+	for (unsigned cix = 0; cix < (unsigned) _N (nbclosed); cix++)
+	  {
+	    const mom_anyitem_t *curcloitm =
+	      mom_seqitem_nth_item (_L (xclosure), cix);
+	    MOM_DBG_ITEM (run, "cold_routine_emit: curcloitm=", curcloitm);
+	    if (!curcloitm)
+	      {
+		mom_item_buffer_printf (_L (buffer),
+					"#error bad closed value #%d in %s\n",
+					(int) cix, cnam);
+		MOM_WARNING ("cold_routine_emit: bad closed value #%d in %s",
+			     cix, cnam);
+		continue;
+	      };
+	    const char *curclosuffix = c_name_suffix (curcloitm);
+	    if (!curclosuffix)
+	      continue;
+	    mom_item_buffer_printf (_L (buffer),
+				    "#define momclo_%s momp_closure->sontab[%d]\n",
+				    curclosuffix, cix);
+	    if (curclosuffix && isalpha (curclosuffix[0]))
+	      mom_item_buffer_printf (_L (buffer), "#define %s momclo_%s\n",
+				      curclosuffix, curclosuffix);
+	  }
+	//////
+	// check and #define the numbers
+	if (_L (xnumbers).ptr && !mom_is_seqitem (_L (xnumbers)))
+	  {
+	    mom_item_buffer_printf (_L (buffer),
+				    "#error bad local numbers in %s\n", cnam);
+	    MOM_WARNING ("cold_routine_emit: bad local numbers in %s", cnam);
+	  }
+	_N (nbnumbers) = mom_seqitem_length (_L (xnumbers));
+	MOM_DEBUG (run, "cold_routine_emit: nbnumbers=%d",
+		   (int) _N (nbnumbers));
+	for (unsigned nix = 0; nix < (unsigned) _N (nbnumbers); nix++)
+	  {
+	    const mom_anyitem_t *curnumitm =
+	      mom_seqitem_nth_item (_L (xnumbers), nix);
+	    MOM_DBG_ITEM (run, "cold_routine_emit: curnumitm=", curnumitm);
+	    if (!curnumitm)
+	      {
+		mom_item_buffer_printf (_L (buffer),
+					"#error bad local number #%d in %s\n",
+					(int) nix, cnam);
+		MOM_WARNING ("cold_routine_emit: bad local number #%d in %s",
+			     nix, cnam);
+		continue;
+	      };
+	    const char *curnumsuffix = c_name_suffix (curnumitm);
+	    if (!curnumsuffix)
+	      continue;
+	    mom_item_buffer_printf (_L (buffer),
+				    "#define momnum_%s momp_locnums[%d]\n",
+				    curnumsuffix, (int) nix);
+	    if (isalpha (curnumsuffix))
+	      mom_item_buffer_printf (_L (buffer), "#define %s  momnum_%s\n",
+				      curnumsuffix, curnumsuffix);
+	  }
+	//////
+	// check and #define the doubles
+	if (_L (xdoubles).ptr && !mom_is_seqitem (_L (xdoubles)))
+	  {
+	    mom_item_buffer_printf (_L (buffer), "#error bad doubles in %s\n",
+				    cnam);
+	    MOM_WARNING ("cold_routine_emit: bad local doubles in %s", cnam);
+	  }
+	_N (nbdoubles) = mom_seqitem_length (_L (xdoubles));
+	MOM_DEBUG (run, "cold_routine_emit: nbdoubles=%d",
+		   (int) _N (nbdoubles));
+	for (unsigned dix = 0; dix < (unsigned) _N (nbdoubles); dix++)
+	  {
+	    const mom_anyitem_t *curdblitm =
+	      mom_seqitem_nth_item (_L (xdoubles), dix);
+	    MOM_DBG_ITEM (run, "cold_routine_emit: curdblitm=", curdblitm);
+	    if (!curdblitm)
+	      {
+		mom_item_buffer_printf (_L (buffer),
+					"#error bad local double #%d in %s\n",
+					(int) dix, cnam);
+		MOM_WARNING ("cold_routine_emit: bad local double #%d in %s",
+			     dix, cnam);
+		continue;
+	      };
+	    const char *curdblsuffix = c_name_suffix (curdblitm);
+	    if (!curdblsuffix)
+	      continue;
+	    mom_item_buffer_printf (_L (buffer),
+				    "#define momdbl_%s momp_locdoubles[%d]\n",
+				    curdblsuffix, (int) dix);
+	    if (isalpha (curdblsuffix))
+	      mom_item_buffer_printf (_L (buffer), "#define %s  momdbl_%s\n",
+				      curdblsuffix, curdblsuffix);
+	  }
 	/////
+	// emit an assertion on the closure arity
+	mom_item_buffer_printf (_L (buffer),
+				"assert(momp_closure && mom_closure_arity(momp_closure) >= %d);\n",
+				(int) _N (nbclosed));
 	// emit the switch goto
-	mom_item_buffer_printf (_L (buffer), " MOM_DEBUG(run, \"%s starting at state #%%d\", momp_state);\n", cnam);
+	mom_item_buffer_printf (_L (buffer),
+				" MOM_DEBUG(run, \"%s starting at state #%%d\", momp_state);\n",
+				cnam);
 	mom_item_buffer_printf (_L (buffer), " switch(momp_state) {\n");
-	for (unsigned stix = 0; stix < (unsigned) _N(nbstates); stix++) {
-	  mom_item_buffer_printf (_L(buffer), "  case %d: goto momlabstate_%d;\n", stix, stix);
-	};
-	mom_item_buffer_printf (_L (buffer), "  default: MOM_FATAL(\"%s: invalid state #%%d\", momp_state); } // end state switch\n", cnam);
+	for (unsigned stix = 0; stix < (unsigned) _N (nbstates); stix++)
+	  {
+	    mom_item_buffer_printf (_L (buffer),
+				    "  case %d: goto momlabstate_%d;\n", stix,
+				    stix);
+	  };
+	mom_item_buffer_printf (_L (buffer),
+				"  default: MOM_FATAL(\"%s: invalid state #%%d\", momp_state); } // end state switch\n",
+				cnam);
+	//////////////// ********
+	// emit each state with its label;
+	for (unsigned stix = 0; stix < (unsigned) _N (nbstates); stix++)
+	  {
+	    momval_t curstatev = mom_node_nth (_L (xstate), stix);
+	    if (!curstatev.ptr)
+	      continue;
+	    mom_anyitem_t *curstateitm =
+	      mom_value_as_item (mom_node_nth (curstatev, 0));
+	    if (!curstateitm)
+	      continue;
+	    const char *namstatsuffix = c_name_suffix (curstateitm);
+	    if (!namstatsuffix)
+	      continue;
+	    momval_t curstatetext = mom_node_nth (curstatev, 1);
+	    if (!mom_is_string (curstatetext))
+	      continue;
+	    mom_item_buffer_printf (_L (buffer),
+				    "\n\n ///// **************** state #%d %s **************** \n",
+				    stix, namstatsuffix);
+	    mom_item_buffer_printf (_L (buffer),
+				    "momlabstate_%d: MOM_DEBUG (run, \"%s at state #%%d %s\", momp_state);\n",
+				    stix, cnam, namstatsuffix);
+	    mom_item_buffer_printf (_L (buffer), "%s\n;//// end state #%d\n",
+				    mom_string_cstr (curstatetext), stix);
+	  }
+
       }
       break;
       ////////////////
@@ -1318,34 +1490,82 @@ momcode_cold_routine_emit (int state, momit_tasklet_t * tasklet,
 				"\n" "} //// end of emitted code for %s\n\n",
 				cnam);
 	// emit the state #undef-s
-	for (unsigned stix = 0; stix < (unsigned) _N(nbstates); stix++) {
-	  momval_t curstatev = mom_node_nth (_L(xstate), stix);
-	  mom_anyitem_t* curstateitm = mom_value_as_item(mom_node_nth(curstatev, 0));
-	  const char* namstatsuffix = c_name_suffix (curstateitm);
-	  mom_item_buffer_printf (_L(buffer), "#undef momsta_%s\n", namstatsuffix);
-	}
-	// emit #undef GO
-	mom_item_buffer_printf (_L(buffer), "#undef GO\n");
-	// emit the local #undef
-	for (unsigned lix = 0; lix < (unsigned) _N(nbvalues); lix++) {
-	  const mom_anyitem_t* curvalitm = mom_seqitem_nth_item(_L(xvalues), lix);
-	  if (!curvalitm)
-	    continue;
-	  const char* curvalsuffix = c_name_suffix(curvalitm);
-	  mom_item_buffer_printf(_L(buffer), "#undef momloc_%s\n", curvalsuffix);
-	  if (isalpha(curvalsuffix[0])) 
-	    mom_item_buffer_printf(_L(buffer), "#undef %s\n", curvalsuffix);
-	}
-	// emit the closure #undef
-	for (unsigned cix = 0; cix < (unsigned) _N(nbclosed); cix++) {
-	  const mom_anyitem_t* curcloitm = mom_seqitem_nth_item(_L(xclosure), cix);
-	  if (!curcloitm) continue;
-	  const char* curclosuffix = c_name_suffix(curcloitm);
-	  if (!curclosuffix) continue;
-	  mom_item_buffer_printf(_L(buffer), "#undef momclo_%s\n", curclosuffix);
-	  if (isalpha(curclosuffix[0]))
-	    mom_item_buffer_printf(_L(buffer), "#undef %s\n", curclosuffix);
-	}
+	for (unsigned stix = 0; stix < (unsigned) _N (nbstates); stix++)
+	  {
+	    momval_t curstatev = mom_node_nth (_L (xstate), stix);
+	    mom_anyitem_t *curstateitm =
+	      mom_value_as_item (mom_node_nth (curstatev, 0));
+	    const char *namstatsuffix = c_name_suffix (curstateitm);
+	    mom_item_buffer_printf (_L (buffer), "#undef momsta_%s\n",
+				    namstatsuffix);
+	  }
+	// emit #undef GO POP STEADY
+	mom_item_buffer_printf (_L (buffer), "#undef GO\n");
+	mom_item_buffer_printf (_L (buffer), "#undef POP\n");
+	mom_item_buffer_printf (_L (buffer), "#undef STEADY\n");
+	// emit the local values #undef
+	for (unsigned lix = 0; lix < (unsigned) _N (nbvalues); lix++)
+	  {
+	    const mom_anyitem_t *curvalitm =
+	      mom_seqitem_nth_item (_L (xvalues), lix);
+	    if (!curvalitm)
+	      continue;
+	    const char *curvalsuffix = c_name_suffix (curvalitm);
+	    mom_item_buffer_printf (_L (buffer), "#undef momloc_%s\n",
+				    curvalsuffix);
+	    if (isalpha (curvalsuffix[0]))
+	      mom_item_buffer_printf (_L (buffer), "#undef %s\n",
+				      curvalsuffix);
+	  }
+	// emit the closed values #undef
+	for (unsigned cix = 0; cix < (unsigned) _N (nbclosed); cix++)
+	  {
+	    const mom_anyitem_t *curcloitm =
+	      mom_seqitem_nth_item (_L (xclosure), cix);
+	    if (!curcloitm)
+	      continue;
+	    const char *curclosuffix = c_name_suffix (curcloitm);
+	    if (!curclosuffix)
+	      continue;
+	    mom_item_buffer_printf (_L (buffer), "#undef momclo_%s\n",
+				    curclosuffix);
+	    if (isalpha (curclosuffix[0]))
+	      mom_item_buffer_printf (_L (buffer), "#undef %s\n",
+				      curclosuffix);
+	  }
+	// emit the local numbers #undef
+	for (unsigned nix = 0; nix < (unsigned) _N (nbnumbers); nix++)
+	  {
+	    const mom_anyitem_t *curnumitm =
+	      mom_seqitem_nth_item (_L (xnumbers), nix);
+	    if (!curnumitm)
+	      continue;
+	    const char *curnumsuffix = c_name_suffix (curnumitm);
+	    if (!curnumsuffix)
+	      continue;
+	    mom_item_buffer_printf (_L (buffer), "#undef momnum_%s\n",
+				    curnumsuffix);
+	    if (isalpha (curnumsuffix))
+	      mom_item_buffer_printf (_L (buffer), "#undef %s\n",
+				      curnumsuffix);
+	  }
+	// emit the local doubles #undef
+	for (unsigned dix = 0; dix < (unsigned) _N (nbdoubles); dix++)
+	  {
+	    const mom_anyitem_t *curdblitm =
+	      mom_seqitem_nth_item (_L (xdoubles), dix);
+	    if (!curdblitm)
+	      continue;
+	    const char *curdblsuffix = c_name_suffix (curdblitm);
+	    if (!curdblsuffix)
+	      continue;
+	    mom_item_buffer_printf (_L (buffer), "#undef momdbl_%s\n",
+				    curdblsuffix);
+	    if (isalpha (curdblsuffix))
+	      mom_item_buffer_printf (_L (buffer), "#undef %s\n",
+				      curdblsuffix);
+	  }
+	SET_STATE (epilog);
       }
       break;
       /////////
