@@ -86,6 +86,8 @@ INSERT INTO t_item VALUES('c3b77d8b-ff65-4717-b9d5-f2b5c22fca71','box','{"jtype"
 INSERT INTO t_item VALUES('c52ead7c-63bf-4e65-a873-486de4e4db41','json_name','{"jtype":"json_name","name":"tuple"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('c5d8949e-8348-4166-82b8-5bf9ce3a6778','json_name','{"jtype":"json_name","name":"routine"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('d7a1e1a4-f401-436a-887f-980f66643a24','json_name','{"jtype":"json_name","name":"json_array"}','{"attributes":null,"content":null}');
+INSERT INTO t_item VALUES('d7d288ae-7a8e-4709-99d0-6dfba1c9565f','routine','{"jtype":"routine","name":"cold_routine_emit"}','{"attributes":[{"attr":{"jtype":"itemref","space":".","uuid":"1e299c1c-4d29-4616-b30b-258c72722484"},
+ "val":"the first emitter of C code for our first routines."}],"content":null}');
 INSERT INTO t_item VALUES('d8aa61cc-2543-4659-bff9-2b0bfc0f779a','json_name','{"jtype":"json_name","name":"val"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('dafbdfa9-d633-447a-8ab3-e011f4f3fee8','routine','{"jtype":"routine","name":"web_form_new_named"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('dc6e0602-32b4-4416-a675-d45fb894f7eb','json_name','{"jtype":"json_name","name":"box"}','{"attributes":null,"content":null}');
@@ -114,6 +116,7 @@ INSERT INTO t_name VALUES('boolean','4a77f6cf-ee8d-43d5-8af4-b273594e23cd','.');
 INSERT INTO t_name VALUES('box','dc6e0602-32b4-4416-a675-d45fb894f7eb','.');
 INSERT INTO t_name VALUES('buffer','ebb71e9a-ef65-4fcd-aec9-f4a5e780e333','.');
 INSERT INTO t_name VALUES('closure','f8a3568d-ae4a-4486-a362-577e0ec91474','.');
+INSERT INTO t_name VALUES('cold_routine_emit','d7d288ae-7a8e-4709-99d0-6dfba1c9565f','.');
 INSERT INTO t_name VALUES('comment','1e299c1c-4d29-4616-b30b-258c72722484','.');
 INSERT INTO t_name VALUES('conn','03c1ace3-3293-43bb-9541-19b4357cbc3c','.');
 INSERT INTO t_name VALUES('content','9a05b9fa-17d3-4294-9253-e67406e52d4a','.');

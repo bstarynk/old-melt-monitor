@@ -956,7 +956,8 @@ const struct momroutinedescr_st momrout_web_form_compile =
   .rout_frame_nbnum = (unsigned) wfcn__lastnum,
   .rout_frame_nbdbl = 0,
   .rout_name = "web_form_compile",
-  .rout_code = (const momrout_sig_t *) momcode_web_form_compile
+  .rout_code = (const momrout_sig_t *) momcode_web_form_compile,
+  .rout_timestamp = __DATE__ "@" __TIME__
 };
 
 
@@ -1094,5 +1095,30 @@ const struct momroutinedescr_st momrout_proc_compilation =
   .rout_frame_nbnum = (unsigned) pcon__lastnum,
   .rout_frame_nbdbl = 0,
   .rout_name = "proc_compilation",
-  .rout_code = (const momrout_sig_t *) momcode_proc_compilation
+  .rout_code = (const momrout_sig_t *) momcode_proc_compilation,
+  .rout_timestamp = __DATE__ "@" __TIME__
+};
+
+
+/*****************************************************************/
+/*****************************************************************/
+/*****************************************************************/
+
+int
+momcode_cold_routine_emit (int state, momit_tasklet_t * tasklet,
+			   momclosure_t * closure, momval_t * locvals,
+			   intptr_t * locnums, double *locdbls)
+{
+}
+
+
+const struct momroutinedescr_st momrout_cold_routine_emit =
+  {.rout_magic = ROUTINE_MAGIC,
+  .rout_minclosize = (unsigned) 0,
+  .rout_frame_nbval = (unsigned) 0,
+  .rout_frame_nbnum = (unsigned) 0,
+  .rout_frame_nbdbl = 0,
+  .rout_name = "cold_routine_emit",
+  .rout_code = (const momrout_sig_t *) momcode_cold_routine_emit,
+  .rout_timestamp = __DATE__ "@" __TIME__
 };
