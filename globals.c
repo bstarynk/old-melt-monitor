@@ -149,8 +149,9 @@ indexes_of_name_starting (const char *prefix, int *pnbindex)
   res = count ? GC_MALLOC_ATOMIC ((count + 1) * sizeof (int)) : NULL;
   if (MOM_UNLIKELY (!res && count > 0))
     MOM_FATAL ("failed to allocate %d integers", count);
-  for (int i = 0; i <= count; i++)
-    res[i] = -1;
+  if (res)
+    for (int i = 0; i <= count; i++)
+      res[i] = -1;
   int nbres = 0;
   // second loop to fill the index table
   if (count > 0)
