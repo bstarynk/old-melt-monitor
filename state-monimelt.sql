@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 May 07
+-- state-monimelt dump 2014 May 08
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -23,7 +23,9 @@ CREATE TABLE t_name (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, nuid VARCHAR(38)
 CREATE TABLE t_param (parname VARCHAR(35) PRIMARY KEY ASC NOT NULL UNIQUE, parvalue TEXT NOT NULL);
 CREATE TABLE t_module (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
-INSERT INTO t_item VALUES('0229c553-c443-49a9-9244-5f8d7d3c79cf','dictionnary','{"jtype":"dictionnary"}','{"attributes":null,"content":null,"dictionnary":[{"name":"form_compile","val":{"conn":{"jtype":"itemref",
+INSERT INTO t_item VALUES('0229c553-c443-49a9-9244-5f8d7d3c79cf','dictionnary','{"jtype":"dictionnary"}','{"attributes":null,"content":null,"dictionnary":[{"name":"ajax_start","val":{"conn":{"jtype":"itemref",
+  "space":".","uuid":"0e750860-7063-4ad7-8488-ee57d4aba2a8"},"jtype":"closure",
+ "sons":["Gap*Ajax_Start"]}},{"name":"form_compile","val":{"conn":{"jtype":"itemref",
   "space":".","uuid":"f094ea32-9a48-4de2-bba7-4b25e8d028d1"},"jtype":"closure",
  "sons":[{"conn":{"jtype":"itemref","space":".","uuid":"88aeaf2b-192e-4936-bdbb-b9a186d86cd4"},
   "jtype":"closure","sons":["Gap*Proc_Compilation"]}]}},{"name":"form_exit","val":{"conn":{"jtype":"itemref",
@@ -32,6 +34,8 @@ INSERT INTO t_item VALUES('0229c553-c443-49a9-9244-5f8d7d3c79cf','dictionnary','
   "uuid":"dafbdfa9-d633-447a-8ab3-e011f4f3fee8"},"jtype":"closure","sons":["Gap*Web_Form_New_Named"]}}]}
 ');
 INSERT INTO t_item VALUES('03c1ace3-3293-43bb-9541-19b4357cbc3c','json_name','{"jtype":"json_name","name":"conn"}','{"attributes":null,"content":null}');
+INSERT INTO t_item VALUES('0e750860-7063-4ad7-8488-ee57d4aba2a8','routine','{"jtype":"routine","name":"ajax_start"}','{"attributes":[{"attr":{"jtype":"itemref","space":".","uuid":"1e299c1c-4d29-4616-b30b-258c72722484"},
+ "val":"for ajax_start GET request at HTML page initialization"}],"content":null}');
 INSERT INTO t_item VALUES('11da23ab-3b9e-4ea0-bc13-4a9aa46e2995','json_name','{"jtype":"json_name","name":"json_object"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('18d95093-b523-4ee1-8bca-ded252e91235','json_name','{"jtype":"json_name","name":"itemref"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('1e299c1c-4d29-4616-b30b-258c72722484','box','{"jtype":"box"}','{"attributes":null,"box":null,"content":null}');
@@ -91,6 +95,7 @@ INSERT INTO t_name VALUES('OPTIONS','4b1faa71-01c2-4dc9-b9b8-f894ae54a1d0','.');
 INSERT INTO t_name VALUES('POST','9dccb4ab-45d0-4fa3-a3d0-8bb722a83478','.');
 INSERT INTO t_name VALUES('PUT','ed78ae41-bd10-44bf-9bc7-57be044fe610','.');
 INSERT INTO t_name VALUES('agenda','b5a0ef97-7eb2-4cf3-924e-8bc5de7e49bc','.');
+INSERT INTO t_name VALUES('ajax_start','0e750860-7063-4ad7-8488-ee57d4aba2a8','.');
 INSERT INTO t_name VALUES('assoc','764e6c3e-0e1d-4462-9dfc-a590123b2755','.');
 INSERT INTO t_name VALUES('associations','670d0025-401e-4c78-9d8b-62fad2ad26ec','.');
 INSERT INTO t_name VALUES('attr','e29d6d73-6a40-41bd-bfd4-df5183ffc764','.');

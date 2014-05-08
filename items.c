@@ -376,7 +376,14 @@ put_attribute (struct mom_itemattributes_st *attrs, mom_anyitem_t * itat,
   unsigned nbattr = attrs->nbattr;
   unsigned size = attrs->size;
   unsigned lo = 0, hi = nbattr, md;
-  assert (nbattr <= size);
+  assert (nbattr < size);
+  if (MONIMELT_UNLIKELY(nbattr == 0)) {
+    if (!val.ptr) return attrs;
+    attrs->nbattr = 1;
+    attrs->itattrtab[0].aten_itm = itat;
+    attrs->itattrtab[0].aten_val = val;
+    return attrs;
+  }
   while (lo + 3 < hi)
     {
       md = (lo + hi) / 2;

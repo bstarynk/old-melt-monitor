@@ -17,3 +17,11 @@
     along with GCC; see the file COPYING3.   If not see
     <http://www.gnu.org/licenses/>.
 **/
+// jquery ready function for our document
+$(function(){
+    // if there is a momstart_id element, fill it by an Ajax query
+    var starthtml;
+    $.get('/ajax_start',function(data){starthtml=data;},'html');
+    if (starthtml) $('#momstart_id').html(starthtml);
+    else alert('no starthml');
+});
