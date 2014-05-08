@@ -1422,21 +1422,21 @@ const momitemtuple_t *mom_make_tuple_from_array (unsigned siz,
 						 const mom_anyitem_t ** arr);
 
 // make a node from a nil terminated sequence of components
-const momnode_t *mom_make_node_til_nil (mom_anyitem_t * conn, ...)
+const momnode_t *mom_make_node_til_nil (const mom_anyitem_t * conn, ...)
   __attribute__ ((sentinel));
 // make a node of given arity
-const momnode_t *mom_make_node_sized (mom_anyitem_t * conn, unsigned siz,
-				      ...);
-const momnode_t *mom_make_node_from_array (mom_anyitem_t * conn, unsigned siz,
-					   momval_t * arr);
+const momnode_t *mom_make_node_sized (const mom_anyitem_t * conn,
+				      unsigned siz, ...);
+const momnode_t *mom_make_node_from_array (const mom_anyitem_t * conn,
+					   unsigned siz, momval_t * arr);
 
 // make a closure from a nil terminated sequence of components
-const momclosure_t *mom_make_closure_til_nil (mom_anyitem_t * conn, ...)
+const momclosure_t *mom_make_closure_til_nil (const mom_anyitem_t * conn, ...)
   __attribute__ ((sentinel));
 // make a closure of given arity
-const momclosure_t *mom_make_closure_sized (mom_anyitem_t * conn,
+const momclosure_t *mom_make_closure_sized (const mom_anyitem_t * conn,
 					    unsigned siz, ...);
-const momclosure_t *mom_make_closure_from_array (mom_anyitem_t * conn,
+const momclosure_t *mom_make_closure_from_array (const mom_anyitem_t * conn,
 						 unsigned siz,
 						 momval_t * arr);
 
@@ -1586,7 +1586,11 @@ mom_anyitem_t *mom_item_named_with_string (const char *name,
 // get the name of some given item, or else NULL
 const momstring_t *mom_name_of_item (const mom_anyitem_t * item);
 
-
+// get a node with the sorted names starting with a given prefix (or all if prefix is NULL)
+momval_t mom_node_sorted_names_prefixed (const mom_anyitem_t * conn,
+					 const char *prefix);
+// get the set of items starting with a given prefix (or all items if prefix is NULL)
+momval_t mom_set_named_items_prefixed (const char *prefix);
 ////////////////
 // run work threads
 

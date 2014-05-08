@@ -119,6 +119,56 @@ find_item_index (const mom_anyitem_t * itm)
   return -1;
 }
 
+// return a GC_MALLOC_ATOMIC array of indexes of names starting with a
+// given prefix, and set *pnbindex to the number of found indexes...
+static inline int *
+indexes_of_name_starting (const char *prefix, int *pnbindex)
+{
+  int *res = NULL;
+  if (!prefix)
+    prefix = "";
+  unsigned lenprefix = strlen (prefix);
+  if (pnbindex)
+    *pnbindex = 0;
+  unsigned size = glob_dict.name_size;
+  struct mom_name_item_entry_st *arritem = glob_dict.name_hashitem;
+  int count = 0;
+  // first loop to find the number of matching indexes
+  for (unsigned ix = 0; ix < size; ix++)
+    {
+      if (!arritem[ix].nme_itm || arritem[ix].nme_itm == MONIMELT_EMPTY)
+	continue;
+      if (!arritem[ix].nme_str || arritem[ix].nme_str == MONIMELT_EMPTY)
+	continue;
+      assert (arritem[ix].nme_str->typnum == momty_string);
+      if (strncmp (arritem[ix].nme_str->cstr, prefix, lenprefix) == 0)
+	count++;
+    }
+  res = count ? GC_MALLOC_ATOMIC (count * sizeof (int)) : NULL;
+  if (MONIMELT_UNLIKELY (!res && count > 0))
+    MONIMELT_FATAL ("failed to allocate %d integers", count);
+  for (int i = 0; i < count; i++)
+    res[i] = -1;
+  int nbres = 0;
+  // second loop to fill the index table
+  for (unsigned ix = 0; ix < size; ix++)
+    {
+      assert (nbres < count);
+      if (!arritem[ix].nme_itm || arritem[ix].nme_itm == MONIMELT_EMPTY)
+	continue;
+      if (!arritem[ix].nme_str || arritem[ix].nme_str == MONIMELT_EMPTY)
+	continue;
+      assert (arritem[ix].nme_str->typnum == momty_string);
+      if (strncmp (arritem[ix].nme_str->cstr, prefix, lenprefix) == 0)
+	res[nbres++] = ix;
+    };
+  assert (nbres == count);
+  if (pnbindex)
+    *pnbindex = count;
+  return res;
+}
+
+
 mom_anyitem_t *
 mom_item_named (const char *name)
 {
@@ -168,6 +218,82 @@ mom_name_of_item (const mom_anyitem_t * itm)
   return str;
 }
 
+int
+index_name_cmp (const void *p1, const void *p2)
+{
+  int i1 = *(int *) p1;
+  int i2 = *(int *) p2;
+  struct mom_name_item_entry_st *arritem = glob_dict.name_hashitem;
+  assert (i1 >= 0 && i1 < glob_dict.name_size && arritem[i1].nme_str != NULL
+	  && arritem[i1].nme_str != MONIMELT_EMPTY);
+  assert (i2 >= 0 && i2 < glob_dict.name_size && arritem[i2].nme_str != NULL
+	  && arritem[i2].nme_str != MONIMELT_EMPTY);
+  return strcmp (arritem[i1].nme_str->cstr, arritem[i2].nme_str->cstr);
+}
+
+momval_t
+mom_node_sorted_names_prefixed (const mom_anyitem_t * conn,
+				const char *prefix)
+{
+  momval_t res = MONIMELT_NULLV;
+  if (!conn || conn->typnum < momty__itemlowtype)
+    return MONIMELT_NULLV;
+  int nbindex = -1;
+  if (!prefix)
+    prefix = "";
+  pthread_mutex_lock (&glob_mtx);
+  int *arrindexes = indexes_of_name_starting (prefix, &nbindex);
+  assert (nbindex >= 0);
+  if (nbindex > 0)
+    qsort (arrindexes, nbindex, sizeof (int), index_name_cmp);
+  momval_t *arrsons =
+    (nbindex > 0) ? GC_MALLOC (nbindex * sizeof (momval_t)) : NULL;
+  if (MONIMELT_UNLIKELY (nbindex > 0 && !arrsons))
+    MONIMELT_FATAL ("failed to allocate %d sons", nbindex);
+  if (arrsons)
+    memset (arrsons, 0, nbindex * sizeof (momval_t));
+  for (int ix = 0; ix < nbindex; ix++)
+    {
+      arrsons[ix] = (momval_t) glob_dict.name_hashitem[ix].nme_str;
+      assert (arrsons[ix].ptr && arrsons[ix].ptr != MONIMELT_EMPTY
+	      && *arrsons[ix].ptype == momty_string);
+    };
+  pthread_mutex_unlock (&glob_mtx);
+  res =
+    (momval_t) mom_make_node_from_array (conn, (unsigned) nbindex, arrsons);
+  GC_FREE (arrindexes), arrindexes = NULL;
+  GC_FREE (arrsons), arrsons = NULL;
+  return res;
+}
+
+momval_t
+mom_set_named_items_prefixed (const char *prefix)
+{
+  momval_t res = MONIMELT_NULLV;
+  int nbindex = -1;
+  if (!prefix)
+    prefix = "";
+  pthread_mutex_lock (&glob_mtx);
+  int *arrindexes = indexes_of_name_starting (prefix, &nbindex);
+  assert (nbindex >= 0);
+  const mom_anyitem_t **arritems =
+    (nbindex > 0) ? GC_MALLOC (nbindex * sizeof (mom_anyitem_t *)) : NULL;
+  if (MONIMELT_UNLIKELY (nbindex > 0 && !arritems))
+    MONIMELT_FATAL ("failed to allocate %d items", nbindex);
+  if (arritems)
+    memset (arritems, 0, nbindex * sizeof (mom_anyitem_t *));
+  for (int ix = 0; ix < nbindex; ix++)
+    {
+      arritems[ix] = glob_dict.name_hashitem[ix].nme_itm;
+      assert (arritems[ix] && arritems[ix] != MONIMELT_EMPTY
+	      && arritems[ix]->typnum > momty__itemlowtype);
+    };
+  res = (momval_t) mom_make_set_from_array (nbindex, arritems);
+  pthread_mutex_unlock (&glob_mtx);
+  GC_FREE (arritems), arritems = NULL;
+  GC_FREE (arrindexes), arrindexes = NULL;
+  return res;
+}
 
 // internal routine to add a name entry which is known to be new
 static inline void

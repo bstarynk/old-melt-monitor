@@ -862,7 +862,7 @@ update_node_hash (struct momnode_st *nd)
 
 
 const momnode_t *
-mom_make_node_til_nil (mom_anyitem_t * conn, ...)
+mom_make_node_til_nil (const mom_anyitem_t * conn, ...)
 {
   momnode_t *nd = NULL;
   unsigned siz = 0;
@@ -889,7 +889,7 @@ mom_make_node_til_nil (mom_anyitem_t * conn, ...)
 }
 
 const momnode_t *
-mom_make_node_sized (mom_anyitem_t * conn, unsigned siz, ...)
+mom_make_node_sized (const mom_anyitem_t * conn, unsigned siz, ...)
 {
   momnode_t *nd = NULL;
   if (!conn || conn->typnum <= momty__itemlowtype)
@@ -911,7 +911,8 @@ mom_make_node_sized (mom_anyitem_t * conn, unsigned siz, ...)
 }
 
 const momnode_t *
-mom_make_node_from_array (mom_anyitem_t * conn, unsigned siz, momval_t * arr)
+mom_make_node_from_array (const mom_anyitem_t * conn, unsigned siz,
+			  momval_t * arr)
 {
   momnode_t *nd = NULL;
   if (!conn || conn->typnum <= momty__itemlowtype)
@@ -934,7 +935,7 @@ mom_make_node_from_array (mom_anyitem_t * conn, unsigned siz, momval_t * arr)
 
 
 const momclosure_t *
-mom_make_closure_til_nil (mom_anyitem_t * conn, ...)
+mom_make_closure_til_nil (const mom_anyitem_t * conn, ...)
 {
   momclosure_t *clo = NULL;
   unsigned siz = 0;
@@ -964,7 +965,7 @@ mom_make_closure_til_nil (mom_anyitem_t * conn, ...)
 }
 
 const momclosure_t *
-mom_make_closure_sized (mom_anyitem_t * conn, unsigned siz, ...)
+mom_make_closure_sized (const mom_anyitem_t * conn, unsigned siz, ...)
 {
   momclosure_t *clo = NULL;
   if (!conn || conn->typnum != momty_routineitem
@@ -989,7 +990,7 @@ mom_make_closure_sized (mom_anyitem_t * conn, unsigned siz, ...)
 }
 
 const momclosure_t *
-mom_make_closure_from_array (mom_anyitem_t * conn, unsigned siz,
+mom_make_closure_from_array (const mom_anyitem_t * conn, unsigned siz,
 			     momval_t * arr)
 {
   momnode_t *clo = NULL;

@@ -325,6 +325,51 @@ const struct momroutinedescr_st momrout_ajax_start =
   .rout_code = (const momrout_sig_t *) momcode_ajax_start
 };
 
+
+////////////////////////////////////////////////////////////////
+
+int
+momcode_ajax_complete_routine_name (int state, momit_tasklet_t * tasklet,
+				    momclosure_t * closure,
+				    momval_t * locvals, intptr_t * locnums,
+				    double *locdbls)
+{
+  momval_t webv = locvals[0];
+  time_t now = 0;
+  struct tm nowtm = { };
+  char nowbuf[64] = "";
+  time (&now);
+  strftime (nowbuf, sizeof (nowbuf), "%c", localtime_r (&now, &nowtm));
+  MONIMELT_DEBUG (web,
+		  "momcode_ajax_complete_routine_name state=%d webnum=%ld nowbuf=%s",
+		  state, mom_item_webrequest_webnum (webv), nowbuf);
+  MOM_DBG_ITEM (web, "ajax_complete_routine_name tasklet=",
+		(const mom_anyitem_t *) tasklet);
+  MOM_DBG_VALUE (web, "ajax_complete_routine_name webv=", webv);
+  MOM_DBG_VALUE (web, "ajax_complete_routine_name closure=",
+		 (momval_t) (const momclosure_t *) closure);
+  MOM_DBG_VALUE (web, "ajax_complete_routine_name method=",
+		 (momval_t) mom_item_webrequest_method (webv));
+  if (mom_item_webrequest_method (webv).ptr == ((momval_t) mom_item__GET).ptr)
+    {
+      momval_t qtermv = mom_item_webrequest_query_arg (webv, "term");
+      MOM_DBG_VALUE (web, "ajax_complete_routine_name qtermv=", qtermv);
+
+    }
+  return routres_pop;
+}
+
+const struct momroutinedescr_st momrout_ajax_complete_routine_name =
+  {.rout_magic = ROUTINE_MAGIC,
+  .rout_minclosize = 0,
+  .rout_frame_nbval = 1,
+  .rout_frame_nbnum = 0,
+  .rout_frame_nbdbl = 0,
+  .rout_name = "ajax_complete_routine_name",
+  .rout_code = (const momrout_sig_t *) momcode_ajax_complete_routine_name
+};
+
+
 ////////////////////////////////////////////////////////////////
 static inline const char *
 c_name_suffix (mom_anyitem_t * itm)

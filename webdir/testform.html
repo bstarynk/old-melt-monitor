@@ -39,7 +39,8 @@
       <option>vector</option>
     </select>
     &nbsp; - <b>comment:</b> <input type='text' name='comment_str' width='64'/>
-    <input type='submit' name='do_create_new_named' value='create' />
+    <input type='submit' name='do_create_new_named' value='create' /> &nbsp;
+    <input type='reset' value='clear' />
   </form>
   <hr/>
 
@@ -50,6 +51,7 @@
   <div id='id_toolbar' class='toolbar_cl'>
     <i>Toolbar:</i> <br/>
     <label for='routname_id'>Routine:</label> <input type='text' id='routname_id' name='routine_name' />
+    <script>install_routine_completer('#routname_id');</script>
   </div>
 
   <div id='id_routeditor'>

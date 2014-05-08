@@ -29,3 +29,11 @@ $(function(){
 	     }
 	   });
 });
+
+function install_routine_completer(jq) {
+    console.debug('install_routine_completer jq=', jq);
+    $(jq).autocomplete({
+	minLength: 2,
+	source: "/ajax_complete_routine_name"
+    });
+}
