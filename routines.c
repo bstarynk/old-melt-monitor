@@ -403,31 +403,75 @@ momcode_web_form_handle_routine (int state, momit_tasklet_t * tasklet,
 	    }
 	  else
 	    {
-	      MOM_WARNING ("web_form_handle_routine absent routine name %s",
+	      MOM_WARNING ("web_form_handle_routine missing routine name %s",
 			   mom_string_cstr (namestrv));
 	      mom_item_webrequest_add (_L (web), MOMWEB_SET_MIME, "text/html",
 				       MOMWEB_LIT_STRING,
-				       "<!doctype html><head><title>Absent Routine in Monimelt</title></head>\n"
-				       "<body><h1>Absent Routine Name</h1>\n",
+				       "<!doctype html><head><title>Missing Routine in Monimelt</title></head>\n"
+				       "<body><h1>Missing Routine Name</h1>\n",
 				       MOMWEB_LIT_STRING, "<p>Name <tt>",
 				       MOMWEB_HTML_STRING,
 				       mom_string_cstr (namestrv),
 				       MOMWEB_LIT_STRING,
-				       "</tt> not found at <i>",
+				       "</tt> not found in <tt>first_module</tt> at <i>",
 				       MOMWEB_HTML_STRING, nowbuf,
 				       MOMWEB_LIT_STRING,
 				       "</i>.</p></body></html>\n",
 				       MOMWEB_REPLY_CODE, HTTP_NOT_FOUND,
 				       MOMWEB_END);
 	      return routres_pop;
-
 	    }
 	}
       else if (mom_item_webrequest_post_arg (_L (web), "do_editrout").ptr)
 	{
 #warning momcode_web_form_handle_routine incomplete should do_editrout
+	  momval_t statev = MOM_NULLV, closurev = MOM_NULLV;
+	  momval_t valuesv = MOM_NULLV, numbersv = MOM_NULLV;
+	  momval_t doublesv = MOM_NULLV;
+	  mom_item_get_several_attrs (mom_value_as_item (_L (routine)),
+				      mom_item__state, &statev,
+				      mom_item__closure, &closurev,
+				      mom_item__values, &valuesv,
+				      mom_item__numbers, &numbersv,
+				      mom_item__doubles, &doublesv, NULL);
+	  if (!statev.ptr)
+	    {
+	      statev =
+		(momval_t) mom_make_node_til_nil ((mom_anyitem_t *)
+						  mom_item__state, NULL);
+	      mom_item_put_attr (mom_value_as_item (_L (routine)),
+				 (mom_anyitem_t *) mom_item__state, statev);
+	    }
+	  if (!closurev.ptr)
+	    {
+	      closurev = (momval_t) mom_make_tuple_sized (0, NULL);
+	      mom_item_put_attr (mom_value_as_item (_L (routine)),
+				 (mom_anyitem_t *) mom_item__closure,
+				 closurev);
+	    }
+	  if (!valuesv.ptr)
+	    {
+	      valuesv = (momval_t) mom_make_tuple_sized (0, NULL);
+	      mom_item_put_attr (mom_value_as_item (_L (routine)),
+				 (mom_anyitem_t *) mom_item__values, valuesv);
+	    }
+	  if (!numbersv.ptr)
+	    {
+	      numbersv = (momval_t) mom_make_tuple_sized (0, NULL);
+	      mom_item_put_attr (mom_value_as_item (_L (routine)),
+				 (mom_anyitem_t *) mom_item__numbers,
+				 numbersv);
+	    }
+	  if (!doublesv.ptr)
+	    {
+	      doublesv = (momval_t) mom_make_tuple_sized (0, NULL);
+	      mom_item_put_attr (mom_value_as_item (_L (routine)),
+				 (mom_anyitem_t *) mom_item__doubles,
+				 doublesv);
+	    }
+	  // we should edit the DOM to add the appropriate elements in it.
+	  MOM_WARNING ("momcode_web_form_handle_routine incomplete");
 	}
-      MOM_WARNING ("momcode_web_form_handle_routine incomplete");
     }
   return routres_pop;
 #undef _L
@@ -1377,7 +1421,8 @@ momcode_cold_routine_emit (int state, momit_tasklet_t * tasklet,
 		   (int) stix, cnam);
 	      }
 	    momval_t curstatetext = mom_node_nth (curstatev, 1);
-	    if (!mom_is_string (curstatetext))
+	    if (!mom_is_string (curstatetext)
+		&& mom_type (curstatetext) != momty_bufferitem)
 	      {
 		mom_item_buffer_printf (_L (buffer),
 					"#error bad current state string #%d in %s\n",
@@ -1596,7 +1641,9 @@ momcode_cold_routine_emit (int state, momit_tasklet_t * tasklet,
 	    if (!namstatsuffix)
 	      continue;
 	    momval_t curstatetext = mom_node_nth (curstatev, 1);
-	    if (!mom_is_string (curstatetext))
+	    unsigned typcurstatetext = mom_type (curstatetext);
+	    if (typcurstatetext != momty_string
+		&& typcurstatetext != momty_bufferitem)
 	      continue;
 	    mom_item_buffer_printf (_L (buffer),
 				    "\n\n ///// **************** state #%d %s **************** \n",
@@ -1604,8 +1651,24 @@ momcode_cold_routine_emit (int state, momit_tasklet_t * tasklet,
 	    mom_item_buffer_printf (_L (buffer),
 				    "momlabstate_%d: MOM_DEBUG (run, \"%s at state #%%d %s\", momp_state);\n",
 				    stix, cnam, namstatsuffix);
-	    mom_item_buffer_printf (_L (buffer), "%s\n;//// end state #%d\n",
-				    mom_string_cstr (curstatetext), stix);
+	    if (typcurstatetext == momty_string)
+	      mom_item_buffer_printf (_L (buffer),
+				      "// textual state\n"
+				      "%s\n;//// end textual state #%d\n",
+				      mom_string_cstr (curstatetext), stix);
+	    else if (typcurstatetext == momty_bufferitem)
+	      {
+		unsigned buflen = 0;
+		const char *bufstr =
+		  mom_item_buffer_cstr (curstatetext, &buflen);
+		mom_item_buffer_printf (_L (buffer),
+					"// buffered state of %d bytes\n"
+					"%s\n;//// end buffered state #%d\n",
+					buflen, bufstr, stix);
+		GC_FREE ((char *) bufstr);
+	      }
+	    else
+	      MOM_FATAL ("impossible curstatetext");
 	  }
 
       }
