@@ -345,7 +345,7 @@ momcode_web_form_handle_routine (int state, momit_tasklet_t * tasklet,
 	}
       else if (mom_item_webrequest_post_arg (_L (web), "do_removerout").ptr)
 	{
-#warning we are missing a et difference or remove
+#warning we are missing a set difference or remove
 	}
       else if (mom_item_webrequest_post_arg (_L (web), "do_editrout").ptr)
 	{

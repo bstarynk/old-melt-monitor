@@ -736,11 +736,14 @@ mom_make_set_intersection (momval_t s1, momval_t s2)
   return (momval_t) (const momset_t *) rset;
 }
 
+
+
 /// in set S1 remove the items from set, tuple V2 or remove the item
 /// V2 if it is an item...
 momval_t
 mom_make_set_without (momval_t s1, momval_t v2)
 {
+  momset_t *sres = NULL;
   if (!s1.ptr || *s1.ptype != momty_set)
     return MOM_NULLV;
   if (!v2.ptr)
@@ -748,24 +751,135 @@ mom_make_set_without (momval_t s1, momval_t v2)
   const momset_t *s1set = s1.pset;
   unsigned s1len = s1set->slen;
   unsigned numtyp2 = *v2.ptype;
+  if (s1len == 0)
+    return s1;
   switch (numtyp2)
     {
-#warning mom_make_set_without incomplete
     case momty_set:
+    merge_two_sets:
       {
+	const momset_t *s2set = v2.pset;
+	unsigned s2len = s2set->slen;
+	if (s2len == 0)
+	  return s1;
+	const mom_anyitem_t *tinyarr[TINY_MAX] = { };
+	const mom_anyitem_t **arr =
+	  (s1len <
+	   TINY_MAX) ? tinyarr : GC_MALLOC (s1len * sizeof (mom_anyitem_t *));
+	if (MOM_UNLIKELY (!arr))
+	  MOM_FATAL ("failed to allocate array of %d items", s1len);
+	memset (arr, 0, s1len * sizeof (mom_anyitem_t *));
+	int ix1 = 0, ix2 = 0, ixres = 0;
+	while (ix1 < s1len || ix2 < s2len)
+	  {
+	    assert (ixres < s1len);
+	    const mom_anyitem_t *curitm1 =
+	      (ix1 < s1len) ? s1set->itemseq[ix1] : NULL;
+	    const mom_anyitem_t *curitm2 =
+	      (ix2 < s2len) ? s2set->itemseq[ix2] : NULL;
+	    if (!curitm1)
+	      break;
+	    if (!curitm2)
+	      {
+		arr[ixres++] = curitm1;
+		ix1++;
+		continue;
+	      }
+	    if (curitm1 == curitm2)
+	      {
+		ix1++, ix2++;
+	      }
+	    else
+	      {
+		int cmp = mom_item_cmp (curitm1, curitm2);
+		assert (cmp != 0);
+		if (cmp < 0)
+		  {
+		    arr[ixres++] = curitm1;
+		    ix1++;
+		  }
+		else
+		  ix2++;
+	      }
+	  }
+	sres =
+	  GC_MALLOC (sizeof (momset_t) + ixres * sizeof (mom_anyitem_t *));
+	if (MOM_UNLIKELY (!sres))
+	  MOM_FATAL ("failed to allocate set of %d elements", ixres);
+	memset (sres, 0,
+		sizeof (momset_t) + ixres * sizeof (mom_anyitem_t *));
+	sres->typnum = momty_set;
+	if (ixres > 0)
+	  memcpy (sres->itemseq, arr, ixres * sizeof (mom_anyitem_t *));
+	sres->slen = ixres;
+	update_seqitem_hash (sres);
+	if (arr != tinyarr)
+	  GC_FREE (arr), arr = NULL;
+	return (momval_t) (const momset_t *) sres;
       }
       break;
     case momty_tuple:
       {
+	const momset_t *set2 = mom_make_set_from_array (v2.ptuple->slen,
+							(const mom_anyitem_t
+							 **) (v2.
+							      ptuple->itemseq));
+	if (!set2 || set2->slen == 0)
+	  return s1;
+	v2.pset = set2;
+	goto merge_two_sets;
       }
       break;
     default:
       if (numtyp2 > momty__itemlowtype)
-	{
+	{			// remove the single item itm2 from set s1
 	  const mom_anyitem_t *itm2 = v2.panyitem;
 	  int ix1 = -1;
+	  unsigned lo = 0, hi = s1len, md = 0;
+	  while (lo + 2 < hi)
+	    {
+	      md = (lo + hi) / 2;
+	      int cmp = mom_item_cmp (s1set->itemseq[md], itm2);
+	      if (cmp < 0)
+		lo = md;
+	      else if (cmp > 0)
+		hi = md;
+	      else
+		{
+		  assert (s1set->itemseq[md] == itm2);
+		  ix1 = (int) md;
+		  break;
+		};
+	    }
+	  for (md = lo; md < hi; md++)
+	    if (s1set->itemseq[md] == itm2)
+	      ix1 = (int) md;
+	  if (ix1 >= 0)
+	    {
+	      assert (s1len > 0);
+	      sres =
+		GC_MALLOC (sizeof (momset_t) +
+			   (s1len - 1) * sizeof (mom_anyitem_t *));
+	      if (MOM_UNLIKELY (!sres))
+		MOM_FATAL ("failed to allocate set of %d elements",
+			   (int) (s1len - 1));
+	      memset (sres, 0,
+		      sizeof (momset_t) + (s1len -
+					   1) * sizeof (mom_anyitem_t *));
+	      if (ix1 > 0)
+		memcpy (sres->itemseq, s1set->itemseq,
+			sizeof (mom_anyitem_t *) * (ix1 - 1));
+	      memcpy (sres->itemseq + ix1, s1set->itemseq + ix1 + 1,
+		      s1len - ix1 - 1);
+	      sres->typnum = momty_set;
+	      sres->slen = s1len - 1;
+	      update_seqitem_hash (sres);
+	      return (momval_t) (const momset_t *) sres;
+	    }
+	  else
+	    return s1;
 	}
-      else
+      else			// v2 is not an item, set or tuple
 	return s1;
     }
   return s1;
