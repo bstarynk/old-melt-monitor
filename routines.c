@@ -331,15 +331,19 @@ momcode_web_form_handle_routine (int state, momit_tasklet_t * tasklet,
 	}
       if (mom_item_webrequest_post_arg (_L (web), "do_addrout").ptr)
 	{
+	  MOM_DEBUG (web, "web_form_handle_routine adding routine");
 	  momval_t oldset =
 	    (momval_t) mom_item_get_attr ((mom_anyitem_t *)
 					  mom_item__first_module,
 					  (mom_anyitem_t *)
 					  mom_item__routines);
-	  MOM_DBG_VALUE (web, "old set of routines in first module=", oldset);
+	  MOM_DBG_VALUE (web,
+			 "web_form_handle_routine old set of routines in first module=",
+			 oldset);
 	  momval_t newset =
 	    (momval_t) mom_make_set_til_nil (_L (routine), oldset, NULL);
-	  MOM_DBG_VALUE (web, "new grown set of routines in first module=",
+	  MOM_DBG_VALUE (web,
+			 "web_form_handle_routine new grown set of routines in first module=",
 			 newset);
 	  mom_item_put_attr ((mom_anyitem_t *) mom_item__first_module,
 			     (mom_anyitem_t *) mom_item__routines, newset);
@@ -364,6 +368,7 @@ momcode_web_form_handle_routine (int state, momit_tasklet_t * tasklet,
 	}
       else if (mom_item_webrequest_post_arg (_L (web), "do_removerout").ptr)
 	{
+	  MOM_DEBUG (web, "web_form_handle_routine removing routine");
 	  momval_t oldset =
 	    (momval_t) mom_item_get_attr ((mom_anyitem_t *)
 					  mom_item__first_module,
@@ -424,7 +429,7 @@ momcode_web_form_handle_routine (int state, momit_tasklet_t * tasklet,
 	}
       else if (mom_item_webrequest_post_arg (_L (web), "do_editrout").ptr)
 	{
-#warning momcode_web_form_handle_routine incomplete should do_editrout
+	  MOM_DEBUG (web, "web_form_handle_routine editrout");
 	  momval_t statev = MOM_NULLV, closurev = MOM_NULLV;
 	  momval_t valuesv = MOM_NULLV, numbersv = MOM_NULLV;
 	  momval_t doublesv = MOM_NULLV;
@@ -434,6 +439,15 @@ momcode_web_form_handle_routine (int state, momit_tasklet_t * tasklet,
 				      mom_item__values, &valuesv,
 				      mom_item__numbers, &numbersv,
 				      mom_item__doubles, &doublesv, NULL);
+	  MOM_DBG_VALUE (web, "web_form_handle_routine got statev=", statev);
+	  MOM_DBG_VALUE (web, "web_form_handle_routine got closurev=",
+			 closurev);
+	  MOM_DBG_VALUE (web, "web_form_handle_routine got valuesv=",
+			 valuesv);
+	  MOM_DBG_VALUE (web, "web_form_handle_routine got numbersv=",
+			 numbersv);
+	  MOM_DBG_VALUE (web, "web_form_handle_routine got doublesv=",
+			 doublesv);
 	  if (!statev.ptr)
 	    {
 	      statev =
@@ -441,6 +455,8 @@ momcode_web_form_handle_routine (int state, momit_tasklet_t * tasklet,
 						  mom_item__state, NULL);
 	      mom_item_put_attr (mom_value_as_item (_L (routine)),
 				 (mom_anyitem_t *) mom_item__state, statev);
+	      MOM_DBG_VALUE (web, "web_form_handle_routine new statev=",
+			     statev);
 	    }
 	  if (!closurev.ptr)
 	    {
@@ -448,12 +464,16 @@ momcode_web_form_handle_routine (int state, momit_tasklet_t * tasklet,
 	      mom_item_put_attr (mom_value_as_item (_L (routine)),
 				 (mom_anyitem_t *) mom_item__closure,
 				 closurev);
+	      MOM_DBG_VALUE (web, "web_form_handle_routine new closurev=",
+			     statev);
 	    }
 	  if (!valuesv.ptr)
 	    {
 	      valuesv = (momval_t) mom_make_tuple_sized (0, NULL);
 	      mom_item_put_attr (mom_value_as_item (_L (routine)),
 				 (mom_anyitem_t *) mom_item__values, valuesv);
+	      MOM_DBG_VALUE (web, "web_form_handle_routine new valuesv=",
+			     valuesv);
 	    }
 	  if (!numbersv.ptr)
 	    {
@@ -461,6 +481,8 @@ momcode_web_form_handle_routine (int state, momit_tasklet_t * tasklet,
 	      mom_item_put_attr (mom_value_as_item (_L (routine)),
 				 (mom_anyitem_t *) mom_item__numbers,
 				 numbersv);
+	      MOM_DBG_VALUE (web, "web_form_handle_routine new numbersv=",
+			     numbersv);
 	    }
 	  if (!doublesv.ptr)
 	    {
@@ -468,9 +490,23 @@ momcode_web_form_handle_routine (int state, momit_tasklet_t * tasklet,
 	      mom_item_put_attr (mom_value_as_item (_L (routine)),
 				 (mom_anyitem_t *) mom_item__doubles,
 				 doublesv);
+	      MOM_DBG_VALUE (web, "web_form_handle_routine new doublesv=",
+			     doublesv);
 	    }
+#warning momcode_web_form_handle_routine incomplete should do_editrout
+	  MOM_DEBUG (web, "begin routine addition");
 	  // we should edit the DOM to add the appropriate elements in it.
+	  mom_item_webrequest_add (_L (web), MOMWEB_SET_MIME,
+				   "application/javascript",
+				   MOMWEB_LIT_STRING, "put_edited_routine('",
+				   MOMWEB_HTML_STRING,
+				   mom_string_cstr (namestrv),
+				   MOMWEB_LIT_STRING, "');\n", MOMWEB_END);
 	  MOM_WARNING ("momcode_web_form_handle_routine incomplete");
+	  mom_item_webrequest_add (_L (web), MOMWEB_LIT_STRING,
+				   "// end of routine edition\n",
+				   MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
+	  MOM_DEBUG (web, "end of routine addition");
 	}
     }
   return routres_pop;
