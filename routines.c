@@ -339,18 +339,94 @@ momcode_web_form_handle_routine (int state, momit_tasklet_t * tasklet,
 	  MOM_DBG_VALUE (web, "old set of routines in first module=", oldset);
 	  momval_t newset =
 	    (momval_t) mom_make_set_til_nil (_L (routine), oldset, NULL);
-	  MOM_DBG_VALUE (web, "new set of routines in first module=", newset);
+	  MOM_DBG_VALUE (web, "new grown set of routines in first module=",
+			 newset);
 	  mom_item_put_attr ((mom_anyitem_t *) mom_item__first_module,
 			     (mom_anyitem_t *) mom_item__routines, newset);
+	  mom_item_webrequest_add (_L (web), MOMWEB_SET_MIME, "text/html",
+				   MOMWEB_LIT_STRING,
+				   "<!doctype html><head><title>Grown first_module"
+				   " in Monimelt</title></head>\n"
+				   "<body><h1>Update grown <tt>first_module</tt></h1>\n",
+				   MOMWEB_LIT_STRING, "<p>Routine named <tt>",
+				   MOMWEB_HTML_STRING,
+				   mom_string_cstr (namestrv),
+				   MOMWEB_LIT_STRING,
+				   "</tt> added, now having ",
+				   MOMWEB_DEC_LONG,
+				   (long) mom_set_cardinal (newset),
+				   MOMWEB_LIT_STRING, " routines, at <i>",
+				   MOMWEB_HTML_STRING, nowbuf,
+				   MOMWEB_LIT_STRING,
+				   "</i>.</p></body></html>\n",
+				   MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
+	  return routres_pop;
 	}
       else if (mom_item_webrequest_post_arg (_L (web), "do_removerout").ptr)
 	{
-#warning we are missing a set difference or remove
+	  momval_t oldset =
+	    (momval_t) mom_item_get_attr ((mom_anyitem_t *)
+					  mom_item__first_module,
+					  (mom_anyitem_t *)
+					  mom_item__routines);
+	  bool waspresent = mom_set_contains (oldset, _L (routine).panyitem);
+	  MOM_DBG_VALUE (web, "old set of routines in first module=", oldset);
+	  if (waspresent)
+	    {
+	      momval_t newset = mom_make_set_without (oldset, _L (routine));
+	      MOM_DBG_VALUE (web,
+			     "new smaller set of routines in first module=",
+			     newset);
+	      mom_item_put_attr ((mom_anyitem_t *) mom_item__first_module,
+				 (mom_anyitem_t *) mom_item__routines,
+				 newset);
+	      mom_item_webrequest_add (_L (web), MOMWEB_SET_MIME, "text/html",
+				       MOMWEB_LIT_STRING,
+				       "<!doctype html><head><title>Shrinken first_module"
+				       " in Monimelt</title></head>\n"
+				       "<body><h1>Update shrinken <tt>first_module</tt></h1>\n",
+				       MOMWEB_LIT_STRING,
+				       "<p>Routine named <tt>",
+				       MOMWEB_HTML_STRING,
+				       mom_string_cstr (namestrv),
+				       MOMWEB_LIT_STRING,
+				       "</tt> removed, now having ",
+				       MOMWEB_DEC_LONG,
+				       (long) mom_set_cardinal (newset),
+				       MOMWEB_LIT_STRING, " routines, at <i>",
+				       MOMWEB_HTML_STRING, nowbuf,
+				       MOMWEB_LIT_STRING,
+				       "</i>.</p></body></html>\n",
+				       MOMWEB_REPLY_CODE, HTTP_OK,
+				       MOMWEB_END);
+	      return routres_pop;
+	    }
+	  else
+	    {
+	      MOM_WARNING ("web_form_handle_routine absent routine name %s",
+			   mom_string_cstr (namestrv));
+	      mom_item_webrequest_add (_L (web), MOMWEB_SET_MIME, "text/html",
+				       MOMWEB_LIT_STRING,
+				       "<!doctype html><head><title>Absent Routine in Monimelt</title></head>\n"
+				       "<body><h1>Absent Routine Name</h1>\n",
+				       MOMWEB_LIT_STRING, "<p>Name <tt>",
+				       MOMWEB_HTML_STRING,
+				       mom_string_cstr (namestrv),
+				       MOMWEB_LIT_STRING,
+				       "</tt> not found at <i>",
+				       MOMWEB_HTML_STRING, nowbuf,
+				       MOMWEB_LIT_STRING,
+				       "</i>.</p></body></html>\n",
+				       MOMWEB_REPLY_CODE, HTTP_NOT_FOUND,
+				       MOMWEB_END);
+	      return routres_pop;
+
+	    }
 	}
       else if (mom_item_webrequest_post_arg (_L (web), "do_editrout").ptr)
 	{
+#warning momcode_web_form_handle_routine incomplete should do_editrout
 	}
-#warning momcode_web_form_handle_routine incomplete
       MOM_WARNING ("momcode_web_form_handle_routine incomplete");
     }
   return routres_pop;
