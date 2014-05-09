@@ -47,6 +47,7 @@
  MOM_NAMED (sons, json_name, "8dba998c-341b-4a66-900f-545ac9dd06c4")
  MOM_NAMED (space, json_name, "566acfce-866a-4730-884d-30310b2fdf92")
  MOM_NAMED (state, json_name, "52d29f69-0bec-435b-af7c-f5cbeb51a80b")
+ MOM_NAMED (string, json_name, "9ef8915a-d57e-42b5-8e6d-507470a69996")
  MOM_NAMED (tasklet, json_name, "5446420a-4d37-4505-91a1-4c3bc5db01c1")
  MOM_NAMED (terminated, box, "fa97d5b8-40cb-4884-9e77-27803c6a4deb")
  MOM_NAMED (true_value, boolean, "3b19b433-29b0-473e-9827-7756ee219573")
@@ -57,5 +58,5 @@
  MOM_NAMED (vector, json_name, "402d1108-9e25-4065-b81d-1bea8b06f269")
  MOM_NAMED (web_dictionnary, dictionnary, "0229c553-c443-49a9-9244-5f8d7d3c79cf")
 
-// end of 52 named items
+// end of 53 named items
 #undef MOM_NAMED

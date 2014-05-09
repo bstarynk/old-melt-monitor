@@ -297,8 +297,83 @@ raw_dump_emit_json (struct mom_dumper_st * dmp, const momval_t val)
     {
     case momty_int:
     case momty_float:
-    case momty_string:
       jsval = val;
+      break;
+    case momty_string:
+      // we avoid very big strings in output by chunking them
+      {
+#define BIG_STRING_THRESHOLD 128
+#define STRING_CHUNK_SIZE 40
+	const momstring_t *str = val.pstring;
+	unsigned slen = str->slen;
+	const gchar *cstrb = (const gchar *) str->cstr;
+	assert (g_utf8_validate (cstrb, slen, NULL));
+	if (slen > BIG_STRING_THRESHOLD)
+	  {
+	    unsigned chksize = 3 + slen / STRING_CHUNK_SIZE;
+	    momval_t *chkarr = GC_MALLOC (chksize * sizeof (momval_t));
+	    if (MOM_UNLIKELY (!chkarr))
+	      MOM_FATAL ("failed to allocate array for %d string chunks",
+			 chksize);
+	    memset (chkarr, 0, chksize * sizeof (momval_t));
+	    const gchar *curb = cstrb;
+	    const gchar *endb = cstrb + slen;
+	    const gchar *nextb = NULL;
+	    unsigned nbchk = 0;
+	    for (curb = cstrb; curb && curb < endb; curb = nextb)
+	      {
+		momval_t chunkv = MOM_NULLV;
+		assert (nbchk + 1 < chksize);
+		nextb = g_utf8_next_char (curb);
+		unsigned curchklen = 0;
+		// skip STRING_CHUNK_SIZE UTF-8 characters if possible
+		while (curchklen < STRING_CHUNK_SIZE && nextb < endb
+		       && *nextb)
+		  {
+		    nextb = g_utf8_next_char (nextb);
+		    curchklen++;
+		  };
+		const gchar *endchk = NULL;
+		const gchar *lastb = nextb;
+		// skip again STRING_CHUNK_SIZE UTF-8 up to an Unicode space or punctuation
+		while (curchklen < 2 * STRING_CHUNK_SIZE && nextb < endb
+		       && *nextb)
+		  {
+		    gunichar uc = g_utf8_get_char (nextb);
+		    if (g_unichar_isspace (uc) || g_unichar_ispunct (uc))
+		      {
+			endchk = nextb;
+			break;
+		      }
+		  }
+		if (endchk)
+		  {
+		    chunkv =
+		      (momval_t) mom_make_string_len (curb, endchk - curb);
+		    nextb = endchk;
+		  }
+		else
+		  {
+		    chunkv =
+		      (momval_t) mom_make_string_len (curb, lastb - curb);
+		    nextb = lastb;
+		  }
+		chkarr[nbchk++] = chunkv;
+	      };
+	    momval_t jarrchk =
+	      (momval_t) mom_make_json_array_count (nbchk, chkarr);
+	    jsval =
+	      (momval_t) mom_make_json_object (MOMJSON_ENTRY, mom_item__jtype,
+					       mom_item__string,
+					       MOMJSON_ENTRY,
+					       mom_item__string, jarrchk,
+					       MOMJSON_END);
+	    GC_FREE (chkarr), chkarr = NULL;
+	  }
+	else
+	  jsval = val;
+	break;
+      }
       break;
     case momty_jsonarray:
       {
@@ -766,7 +841,42 @@ mom_load_value_json (struct mom_loader_st *ld, const momval_t jval)
 					      (momval_t)
 					      mom_item__json_object);
 	  }
-	return val;
+	else if (jtypv.panyitem == (mom_anyitem_t *) mom_item__string)
+	  {
+	    momval_t jarrstr =
+	      (momval_t) mom_jsonob_get (jval, (momval_t) mom_item__string);
+	    unsigned nbsubstr = mom_json_array_size (jarrstr);
+	    unsigned cumulslen = 0;
+	    for (int six = 0; six < nbsubstr; six++)
+	      {
+		momval_t jsubstr =
+		  (momval_t) mom_json_array_nth (jarrstr, six);
+		cumulslen += mom_string_length (jsubstr);
+	      }
+	    char *sbuf = GC_MALLOC_ATOMIC (cumulslen + 2);
+	    if (MOM_UNLIKELY (!sbuf))
+	      MOM_FATAL ("failed to allocate buffer of %d bytes", cumulslen);
+	    memset (sbuf, 0, cumulslen + 2);
+	    unsigned off = 0;
+	    for (int six = 0; six < nbsubstr; six++)
+	      {
+		momval_t jsubstr =
+		  (momval_t) mom_json_array_nth (jarrstr, six);
+		unsigned curlen = mom_string_length (jsubstr);
+		if (!curlen)
+		  continue;
+		memcpy (sbuf + off, mom_string_cstr (jsubstr), curlen);
+		off += curlen;
+		assert (off <= cumulslen);
+	      }
+	    assert (off == cumulslen);
+	    sbuf[off] = 0;
+	    momval_t jstr = (momval_t) mom_make_string_len (sbuf, cumulslen);
+	    GC_FREE (sbuf), sbuf = NULL;
+	    return jstr;
+	  }
+	else
+	  return jval;
       }
     default:
       return jval;

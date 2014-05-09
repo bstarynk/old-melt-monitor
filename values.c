@@ -736,6 +736,43 @@ mom_make_set_intersection (momval_t s1, momval_t s2)
   return (momval_t) (const momset_t *) rset;
 }
 
+/// in set S1 remove the items from set, tuple V2 or remove the item
+/// V2 if it is an item...
+momval_t
+mom_make_set_without (momval_t s1, momval_t v2)
+{
+  if (!s1.ptr || *s1.ptype != momty_set)
+    return MOM_NULLV;
+  if (!v2.ptr)
+    return s1;
+  const momset_t *s1set = s1.pset;
+  unsigned s1len = s1set->slen;
+  unsigned numtyp2 = *v2.ptype;
+  switch (numtyp2)
+    {
+#warning mom_make_set_without incomplete
+    case momty_set:
+      {
+      }
+      break;
+    case momty_tuple:
+      {
+      }
+      break;
+    default:
+      if (numtyp2 > momty__itemlowtype)
+	{
+	  const mom_anyitem_t *itm2 = v2.panyitem;
+	  int ix1 = -1;
+	}
+      else
+	return s1;
+    }
+  return s1;
+}
+
+////////////////////////////////
+
 const momitemtuple_t *
 mom_make_tuple_til_nil (momval_t first, ...)
 {

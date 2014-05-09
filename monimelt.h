@@ -611,6 +611,10 @@ const momclosure_t *mom_make_closure_from_item_vector (momval_t conn,
 momval_t mom_make_set_union (momval_t s1, momval_t s2);
 momval_t mom_make_set_intersection (momval_t s1, momval_t s2);
 
+/// in set S1 remove the items from set, tuple V2 or remove the item
+/// V2 if it is an item...
+momval_t mom_make_set_without (momval_t s1, momval_t v2);
+
 static inline bool
 mom_is_set (momval_t setv)
 {
@@ -1188,6 +1192,35 @@ mom_item_cmp (const mom_anyitem_t * l, const mom_anyitem_t * r)
   return memcmp (l->i_uuid, r->i_uuid, sizeof (uuid_t));
 }
 
+static inline bool
+mom_set_contains (momval_t s1, const mom_anyitem_t * itm)
+{
+  if (!s1.ptr || *s1.ptype != momty_set
+      || !itm || itm->typnum <= momty__itemlowtype)
+    return false;
+  const momset_t *s1set = s1.pset;
+  unsigned s1len = s1set->slen;
+  unsigned lo = 0, hi = s1len, md = 0;
+  while (lo + 2 < hi)
+    {
+      md = (lo + hi) / 2;
+      int cmp = mom_item_cmp (s1set->itemseq[md], itm);
+      if (cmp < 0)
+	lo = md;
+      else if (cmp > 0)
+	hi = md;
+      else
+	{
+	  assert (s1set->itemseq[md] == itm);
+	  return true;
+	};
+    }
+  for (md = lo; md < hi; md++)
+    if (s1set->itemseq[md] == itm)
+      return true;
+  return false;
+}
+
 int mom_value_cmp (const momval_t l, const momval_t r);
 momhash_t mom_value_hash (const momval_t v);
 
@@ -1295,6 +1328,14 @@ mom_string_cstr (momval_t val)
   if (!val.ptr || *val.ptype != momty_string)
     return NULL;
   return val.pstring->cstr;
+}
+
+static inline unsigned
+mom_string_length (momval_t val)
+{
+  if (!val.ptr || *val.ptype != momty_string)
+    return 0;
+  return val.pstring->slen;
 }
 
 static inline const char *
