@@ -103,9 +103,12 @@ mom_dump_add_item (struct mom_dumper_st *dmp, const mom_anyitem_t * itm)
 {
   if (!itm || itm->typnum < momty__itemlowtype)
     return;
+  assert (itm->typnum < momty__last);
   if (!dmp || dmp->dmp_magic != DUMPER_MAGIC)
     return;
-  MOM_DBG_ITEM (dump, "adding item", itm);
+  MOM_DBG_ITEM (dump, "adding item:", itm);
+#warning temporary assert... that could happen but is very improbable
+  assert (((intptr_t *) (itm->i_uuid))[0] != 0);
   if (MOM_UNLIKELY (dmp->dmp_state != dus_scan))
     MOM_FATAL ("invalid dump state #%d", (int) dmp->dmp_state);
   if (MOM_UNLIKELY (4 * dmp->dmp_count / 3 + 10 >= dmp->dmp_size))
@@ -215,10 +218,13 @@ mom_dump_scan_value (struct mom_dumper_st *dmp, const momval_t val)
       }
 
     default:
+      assert (typ < momty__last);
       if (typ > momty__itemlowtype && val.panyitem->i_space > 0)
 	mom_dump_add_item (dmp, val.panyitem);
     }
-}
+}				// end mom_dump_scan_value
+
+
 
 static momval_t raw_dump_emit_json (struct mom_dumper_st *dmp,
 				    const momval_t val);

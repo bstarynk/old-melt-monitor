@@ -3212,8 +3212,7 @@ mom_make_item_dictionnary (unsigned space)
     = mom_allocate_item (momty_dictionnaryitem, sizeof (momit_dictionnary_t),
 			 space);
   const unsigned siz = DICTIONNARY_INITIAL_SIZE;
-  itm->idi_dictab =
-    GC_MALLOC_ATOMIC (siz * sizeof (struct mom_name_value_entry_st));
+  itm->idi_dictab = GC_MALLOC (siz * sizeof (struct mom_name_value_entry_st));
   if (MOM_UNLIKELY (!itm->idi_dictab))
     MOM_FATAL ("failed to allocate dictionnary of %d", (int) siz);
   memset (itm->idi_dictab, 0, siz * sizeof (struct mom_name_value_entry_st));
@@ -3230,8 +3229,7 @@ mom_make_item_dictionnary_of_uuid (uuid_t uid, unsigned space)
 				   sizeof (momit_dictionnary_t),
 				   space, uid);
   const unsigned siz = DICTIONNARY_INITIAL_SIZE;
-  itm->idi_dictab =
-    GC_MALLOC_ATOMIC (siz * sizeof (struct mom_name_value_entry_st));
+  itm->idi_dictab = GC_MALLOC (siz * sizeof (struct mom_name_value_entry_st));
   if (MOM_UNLIKELY (!itm->idi_dictab))
     MOM_FATAL ("failed to allocate dictionnary of %d", (int) siz);
   memset (itm->idi_dictab, 0, siz * sizeof (struct mom_name_value_entry_st));
@@ -3320,11 +3318,11 @@ mom_item_dictionnary_reserve (momval_t dictv, unsigned more)
       if (newsiz != oldsiz)
 	{
 	  struct mom_name_value_entry_st *newdictab =
-	    GC_MALLOC (newsiz * sizeof (struct mom_name_value_entry_st *));
+	    GC_MALLOC (newsiz * sizeof (struct mom_name_value_entry_st));
 	  if (MOM_UNLIKELY (!newdictab))
 	    MOM_FATAL ("unable to resize dictionnary to %d", (int) newsiz);
 	  memset (newdictab, 0,
-		  newsiz * sizeof (struct mom_name_value_entry_st *));
+		  newsiz * sizeof (struct mom_name_value_entry_st));
 	  struct mom_name_value_entry_st *olddictab = itmdict->idi_dictab;
 	  itmdict->idi_dictab = newdictab;
 	  itmdict->idi_count = 0;
