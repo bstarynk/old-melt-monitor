@@ -42,10 +42,18 @@ RM= rm -fv
 .SUFFIXES: .so
 all: monimelt make-named modules
 clean:
-	$(RM) *~ *.o *.so *.orig _tmp_* monimelt core* webdir/*~
+	$(RM) *~ *.o *.so *.orig _tmp_* monimelt core* webdir/*~ *.tmp
 ################
-monimelt: $(OBJECTS)
+monimelt: $(OBJECTS) _timestamp.o
 	$(LINK.c)  -rdynamic $^ $(LIBES) -o $@
+	rm _timestamp.*
+
+_timestamp.c:
+	@date +'const char monimelt_timestamp[]="%c";' > _timestamp.tmp
+	@(echo -n 'const char monimelt_lastgitcommit[]="' ; \
+	 git log --format=oneline -q | head -1 | tr -d '\n\r\f' ; \
+	 echo '";') >> _timestamp.tmp
+	@mv _timestamp.tmp _timestamp.c
 
 indent: # don't indent monimelt-names.h
 	@for f in *.c $(filter-out monimelt-names.h, $(wildcard *.h)); do \

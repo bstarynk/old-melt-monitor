@@ -81,6 +81,10 @@
 #include <curl/curl.h>
 
 
+// in generated _timestamp.c
+extern const char monimelt_timestamp[];
+extern const char monimelt_lastgitcommit[];
+
 #if MOM_EXPLICIT_GC_THREAD
 #define MOMGC_REGISTER_MY_THREAD(Sb) GC_register_my_thread(Sb)
 #define MOMGC_UNREGISTER_MY_THHREAD() GC_unregister_my_thread()
@@ -1356,6 +1360,7 @@ mom_jsonstring_cstr (momval_t val)
 
 #define MOM_DEFAULT_STATE_FILE "state-monimelt.dbsqlite"
 #define MOM_WEB_DIRECTORY "webdir"
+#define MOM_WEB_ROOT_PAGE "mom-root-page.html"
 const momint_t *mom_make_int (intptr_t n);
 void mom_initialize (void);
 void mom_initial_load (const char *state);

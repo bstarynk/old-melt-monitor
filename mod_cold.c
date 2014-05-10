@@ -30,16 +30,19 @@ mom_module_init (const char *marg)
   MOM_INFORM ("cold module end marg=%s", marg);
 }
 
-static void test_put_several_attrs(void)
+static void
+test_put_several_attrs (void)
 {
-  MOM_DBG_ITEM(run, "test_put_several_attrs mom_item__comment=", mom_item__comment);
-  mom_item_put_several_attrs(mom_item__comment,
-			     mom_item__comment, mom_make_string("gives a human-readable comment string in items"),
-			     mom_item__OPTIONS, mom_make_string("silly OPTIONS"),
-			     mom_item__POST, mom_make_string("silly POST"),
-			     NULL
-			     );
-  MOM_DEBUG(run, "end test_put_several_attrs");
+  MOM_DBG_ITEM (run, "test_put_several_attrs mom_item__comment=",
+		mom_item__comment);
+  mom_item_put_several_attrs (mom_item__comment, mom_item__comment,
+			      mom_make_string
+			      ("gives a human-readable comment string in items"),
+			      mom_item__OPTIONS,
+			      mom_make_string ("silly OPTIONS"),
+			      mom_item__POST, mom_make_string ("silly POST"),
+			      NULL);
+  MOM_DEBUG (run, "end test_put_several_attrs");
 }
 
 void
@@ -48,8 +51,8 @@ mom_module_post_load (void)
   char uistr[UUID_PARSED_LEN];
   memset (uistr, 0, sizeof (uistr));
   MOM_INFORM ("cold post load " __DATE__ "@" __TIME__);
-  
-#if 0 ////////////////////////////////////////////////////////////////
+
+#if 0				////////////////////////////////////////////////////////////////
   mom_anyitem_t *rout_web_form_handle_routine =
     mom_item_named ("web_form_handle_routine");
   MOM_DBG_VALUE (run, "rout_web_form_handle_routine=",
@@ -67,5 +70,5 @@ mom_module_post_load (void)
   MOM_DBG_VALUE (run, "clos_web_form_handle_routine=",
 		 (momval_t) clos_web_form_handle_routine);
   MOM_INFORM ("cold post load done");
-#endif 0 ////////////////////////////////////////////////////////////////
+#endif	/* 0 */	////////////////////////////////////////////////////////////////
 }

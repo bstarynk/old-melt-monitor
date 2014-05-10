@@ -810,6 +810,6 @@ main (int argc, char **argv)
       mom_full_dump ("final dump", dump_state_path);
     }
   usleep (3000);
-  MOM_INFORM ("monimelt ending normally pid %d", (int)getpid());
+  MOM_INFORM ("monimelt ending normally pid %d", (int) getpid ());
   return 0;
 }

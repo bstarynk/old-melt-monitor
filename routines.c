@@ -123,9 +123,9 @@ momcode_web_form_new_named (int state, momit_tasklet_t * tasklet,
   struct tm nowtm = { };
   char nowbuf[64] = "";
   time (&now);
-  strftime (nowbuf, sizeof (nowbuf), "%d %b %Y, %T %Z", localtime_r (&now, &nowtm));
-  MOM_DEBUG (web,
-	     "momcode_web_form_new_named state=%d webnum=%ld nowbuf=%s",
+  strftime (nowbuf, sizeof (nowbuf), "%d %b %Y, %T %Z",
+	    localtime_r (&now, &nowtm));
+  MOM_DEBUG (web, "momcode_web_form_new_named state=%d webnum=%ld nowbuf=%s",
 	     state, mom_item_webrequest_webnum (webv), nowbuf);
   MOM_DBG_ITEM (web, "web_form_new_named tasklet=",
 		(const mom_anyitem_t *) tasklet);
@@ -555,7 +555,12 @@ momcode_ajax_start (int state, momit_tasklet_t * tasklet,
 	 "</tt> pid ", MOMWEB_DEC_LONG,
 	 (long) getpid (), MOMWEB_LIT_STRING,
 	 " on host <i>", MOMWEB_HTML_STRING, myhostname,
-	 MOMWEB_LIT_STRING, "</i>", MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
+	 MOMWEB_LIT_STRING, "</i> <span class='note_cl'>built: <i>",
+	 MOMWEB_HTML_STRING, monimelt_timestamp,
+	 MOMWEB_LIT_STRING, "</i> commit <tt>",
+	 MOMWEB_HTML_STRING, monimelt_lastgitcommit,
+	 MOMWEB_LIT_STRING, "</tt></span>",
+	 MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
       MOM_DBG_VALUE (web, "ajax_start replied webv=", webv);
     }
   return routres_pop;

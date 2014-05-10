@@ -64,12 +64,23 @@ process_request (void *ignore, onion_request * req, onion_response * res)
   const char *fullpath = onion_request_get_fullpath (req);
   MOM_DEBUG (web, "process_request webnum#%ld webtim=%.3f fullpath=%s",
 	     webnum, webtim, fullpath);
-  /// hack to deliver local files in MOM_WEB_DIRECTORY
+  /// hack to deliver local files in MOM_WEB_DIRECTORY and the root document as MOM_WEB_ROOT_PAGE
   {
     char bufpath[128];
     struct stat stpath = { };
     memset (bufpath, 0, sizeof (bufpath));
     memset (&stpath, 0, sizeof (stpath));
+    if (!fullpath[0] || !strcmp (fullpath, "/"))
+      {
+	MOM_DEBUG (web, "servicing the MOM_WEB_ROOT_PAGE %s",
+		   MOM_WEB_ROOT_PAGE);
+	snprintf (bufpath, sizeof (bufpath), "%s/%s", MOM_WEB_DIRECTORY,
+		  MOM_WEB_ROOT_PAGE);
+	MOM_DEBUG (web, "MOM web root page: %s", bufpath);
+	if (access (bufpath, R_OK))
+	  MOM_FATAL ("cannot open web root page %s", bufpath);
+	return onion_shortcut_response_file (bufpath, req, res);
+      }
     if (fullpath && fullpath[0] == '/' && isalpha (fullpath[1])
 	&& !strstr (fullpath, "..")
 	&& strlen (fullpath) + sizeof (MOM_WEB_DIRECTORY) + 3
