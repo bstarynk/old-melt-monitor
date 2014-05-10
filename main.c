@@ -788,6 +788,12 @@ main (int argc, char **argv)
     }
   else
     MOM_WARNING ("no load state path");
+  if (!dont_want_event_loop)
+    {
+      extern void mom_initialize_signals (void);
+      MOM_INFORM ("before initializing signals");
+      mom_initialize_signals ();
+    }
   if (web_host)
     {
       extern void mom_start_web (const char *);
@@ -797,6 +803,7 @@ main (int argc, char **argv)
   if (!dont_want_event_loop)
     {
       extern void mom_start_event_loop (void);
+      MOM_INFORM ("before starting event loop");
       mom_start_event_loop ();
     }
   else

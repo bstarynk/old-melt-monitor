@@ -432,7 +432,7 @@ start_some_pending_jobs (void)
 	  sigaddset (&mysetsig, SIGPIPE);
 	  sigaddset (&mysetsig, SIGCHLD);
 	  sigprocmask (SIG_UNBLOCK, &mysetsig, NULL);
-	  signal (SIGCHLD, SIG_DFL);
+	  signal (SIGINT, SIG_DFL);
 	  signal (SIGTERM, SIG_DFL);
 	  signal (SIGQUIT, SIG_DFL);
 	  signal (SIGINT, SIG_DFL);
@@ -701,6 +701,31 @@ curl_handler (int fd, short revent, void *data)
     curl_multi_perform (&multicurl_job, pnb);
 }
 
+void
+mom_initialize_signals (void)
+{
+  // set up the signalfd 
+  sigset_t mysetsig;
+  sigemptyset (&mysetsig);
+  sigaddset (&mysetsig, SIGINT);
+  sigaddset (&mysetsig, SIGTERM);
+  sigaddset (&mysetsig, SIGQUIT);
+  sigaddset (&mysetsig, SIGPIPE);
+  sigaddset (&mysetsig, SIGCHLD);
+  // according to signalfd(2) we need to block the signals
+  MOM_DEBUG (run,
+	     "handling signals SIGINT=%d SIGTERM=%d SIGQUIT=%d SIGPIPE=%d SIGCHLD=%d",
+	     SIGINT, SIGTERM, SIGQUIT, SIGPIPE, SIGCHLD);
+  MOM_DEBUG (run, "before sigprocmask");
+  if (sigprocmask (SIG_BLOCK, &mysetsig, NULL))
+    MOM_FATAL ("failed to block signals with sigprocmask");
+  MOM_DEBUG (run, "before signalfd");
+  my_signals_fd = signalfd (-1, &mysetsig, SFD_NONBLOCK | SFD_CLOEXEC);
+  if (MOM_UNLIKELY (my_signals_fd < 0))
+    MOM_FATAL ("signalfd failed");
+  MOM_DEBUG (run, "my_signals_fd=%d", my_signals_fd);
+}
+
 static void *
 event_loop (struct GC_stack_base *sb, void *data)
 {
@@ -718,31 +743,13 @@ event_loop (struct GC_stack_base *sb, void *data)
   MOMGC_REGISTER_MY_THREAD (sb);
   assert (data == NULL);
   assert (mom_item__heart_beat != NULL);
+  assert (my_signals_fd >= 0);
   MOM_DEBUG (run, "event_loop start");
   // set up CURL multi handle
   assert (multicurl_job == NULL);
   multicurl_job = curl_multi_init ();
   if (MOM_UNLIKELY (!multicurl_job))
     MOM_FATAL ("failed to initial multi CURL handle");
-  // set up the signalfd 
-  {
-    sigset_t mysetsig;
-    sigemptyset (&mysetsig);
-    sigaddset (&mysetsig, SIGINT);
-    sigaddset (&mysetsig, SIGTERM);
-    sigaddset (&mysetsig, SIGQUIT);
-    sigaddset (&mysetsig, SIGPIPE);
-    sigaddset (&mysetsig, SIGCHLD);
-    // according to signalfd(2) we need to block the signals
-    MOM_DEBUG (run, "before sigprocmask");
-    if (sigprocmask (SIG_BLOCK, &mysetsig, NULL))
-      MOM_FATAL ("failed to block signals with sigprocmask");
-    MOM_DEBUG (run, "before signalfd");
-    my_signals_fd = signalfd (-1, &mysetsig, SFD_NONBLOCK | SFD_CLOEXEC);
-    if (MOM_UNLIKELY (my_signals_fd < 0))
-      MOM_FATAL ("signalfd failed");
-    MOM_DEBUG (run, "my_signals_fd=%d", my_signals_fd);
-  }
   /// our event loop
   do
     {
@@ -757,15 +764,15 @@ event_loop (struct GC_stack_base *sb, void *data)
       memset (handlertab, 0, sizeof (handlertab));
       memset (datatab, 0, sizeof (datatab));
       //
-#define ADD_POLL(Ev,Fd,Hdr,Data) do {				\
+#define ADD_POLL(Ev,Fd,Hdr,Data) do {			\
     if (MOM_UNLIKELY(pollcnt>=MOM_POLL_MAX))		\
       MOM_FATAL("failed to poll fd#%d", (Fd));		\
-    polltab[pollcnt].fd = (Fd);					\
-    polltab[pollcnt].events = (Ev);				\
+    polltab[pollcnt].fd = (Fd);				\
+    polltab[pollcnt].events = (Ev);			\
     MOM_DEBUG(run, "add_poll pollcnt=%d, fd=%d " #Hdr,	\
-		   pollcnt, (Fd));				\
-    handlertab[pollcnt] = Hdr;					\
-    datatab[pollcnt]= (void*)(Data);				\
+		   pollcnt, (Fd));			\
+    handlertab[pollcnt] = Hdr;				\
+    datatab[pollcnt]= (void*)(Data);			\
     pollcnt++; } while(0)
       //
       ADD_POLL (POLLIN, event_loop_read_pipe, event_loop_handler,
