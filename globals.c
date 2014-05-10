@@ -534,7 +534,7 @@ end:
 }
 
 void
-mom_replace_name_string (momstring_t * namestr, mom_anyitem_t * item)
+mom_replace_name_string (const momstring_t * namestr, mom_anyitem_t * item)
 {
   if (!namestr || namestr->typnum != momty_string)
     return;
@@ -608,18 +608,17 @@ mom_forget_name (const char *name)
   pthread_mutex_lock (&glob_mtx);
   unsigned namelen = strlen (name);
   momhash_t namehash = mom_string_hash (name, namelen);
-  const momstring_t *namestr = NULL;
   int namix = find_name_index (name, namehash);
   if (namix >= 0)
     {
-      remove_entry (glob_dict.name_hashitem[itmix].nme_str,
-		    glob_dict.name_hashitem[itmix].nme_itm);
+      remove_entry (glob_dict.name_hashitem[namix].nme_str,
+		    glob_dict.name_hashitem[namix].nme_itm);
     }
   pthread_mutex_unlock (&glob_mtx);
 }
 
 void
-mom_forget_string (momstring_t * namestr)
+mom_forget_string (const momstring_t * namestr)
 {
   if (!namestr || namestr->typnum != momty_string)
     return;
@@ -630,108 +629,18 @@ mom_forget_string (momstring_t * namestr)
       remove_entry (glob_dict.name_hashstr[namix].nme_str,
 		    glob_dict.name_hashstr[namix].nme_itm);
     }
-  int itmix = find_item_index (item);
-  if (itmix >= 0)
-    {
-      remove_entry (glob_dict.name_hashitem[itmix].nme_str,
-		    glob_dict.name_hashitem[itmix].nme_itm);
-    }
-
+  else
+    goto unlock;
   if (4 * glob_dict.name_count > 3 * glob_dict.name_size)
     {
       unsigned newsize = ((13 * glob_dict.name_count / 8 + 400) | 0xff) + 1;
       resize_dict (newsize);
     }
-  add_new_name_entry (namestr, item);
+unlock:
   pthread_mutex_unlock (&glob_mtx);
 }
 
 
-void
-mom_replace_named_item (const char *name, mom_anyitem_t * item)
-{
-  if (!name || !name[0])
-    return;
-  if (!item || item->typnum <= momty__itemlowtype)
-    return;
-  pthread_mutex_lock (&glob_mtx);
-  unsigned namelen = strlen (name);
-  momhash_t namehash = mom_string_hash (name, namelen);
-  const momstring_t *namestr = NULL;
-  int namix = find_name_index (name, namehash);
-  if (namix >= 0)
-    {
-      namestr = glob_dict.name_hashstr[namix].nme_str;
-      remove_entry (namestr, glob_dict.name_hashstr[namix].nme_itm);
-    }
-  int itmix = find_item_index (item);
-  if (itmix >= 0)
-    {
-      remove_entry (glob_dict.name_hashitem[itmix].nme_str,
-		    glob_dict.name_hashitem[itmix].nme_itm);
-    }
-
-  if (4 * glob_dict.name_count > 3 * glob_dict.name_size)
-    {
-      unsigned newsize = ((13 * glob_dict.name_count / 8 + 400) | 0xff) + 1;
-      resize_dict (newsize);
-    }
-  if (!namestr)
-    namestr = mom_make_string_len (name, namelen);
-  add_new_name_entry (namestr, item);
-  pthread_mutex_unlock (&glob_mtx);
-}
-
-
-void
-mom_forget_name (const char *name)
-{
-  if (!name || !name[0])
-    return;
-  pthread_mutex_lock (&glob_mtx);
-  unsigned namelen = strlen (name);
-  momhash_t namehash = mom_string_hash (name, namelen);
-  const momstring_t *namestr = NULL;
-  int namix = find_name_index (name, namehash);
-  if (namix >= 0)
-    {
-      remove_entry (glob_dict.name_hashitem[itmix].nme_str,
-		    glob_dict.name_hashitem[itmix].nme_itm);
-      if (5 * glob_dict.name_count < glob_dict.name_size
-	  && glob_dict.name_size > 350)
-	{
-	  unsigned newsize =
-	    ((13 * glob_dict.name_count / 8 + 400) | 0xff) + 1;
-	  if (newsize != glob_dict.name_size)
-	    resize_dict (newsize);
-	}
-    }
-  pthread_mutex_unlock (&glob_mtx);
-}
-
-
-void
-mom_forget_string (momstring_t * namestr)
-{
-  if (!namestr || namestr->typnum != momty_string)
-    return;
-  pthread_mutex_lock (&glob_mtx);
-  int namix = find_name_index (namestr->cstr, namestr->hash);
-  if (namix >= 0)
-    {
-      remove_entry (glob_dict.name_hashstr[namix].nme_str,
-		    glob_dict.name_hashstr[namix].nme_itm);
-      if (5 * glob_dict.name_count < glob_dict.name_size
-	  && glob_dict.name_size > 350)
-	{
-	  unsigned newsize =
-	    ((13 * glob_dict.name_count / 8 + 400) | 0xff) + 1;
-	  if (newsize != glob_dict.name_size)
-	    resize_dict (newsize);
-	}
-    }
-  pthread_mutex_unlock (&glob_mtx);
-}
 
 
 
