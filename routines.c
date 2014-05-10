@@ -578,6 +578,54 @@ const struct momroutinedescr_st momrout_ajax_start =
 };
 
 
+
+////////////////////////////////////////////////////////////////
+int
+momcode_ajax_named (int state, momit_tasklet_t * tasklet,
+		    momclosure_t * closure, momval_t * locvals,
+		    intptr_t * locnums, double *locdbls)
+{
+  momval_t webv = locvals[0];
+  time_t now = 0;
+  struct tm nowtm = { };
+  char nowbuf[64] = "";
+  time (&now);
+  strftime (nowbuf, sizeof (nowbuf), "%c", localtime_r (&now, &nowtm));
+  MOM_DEBUG (web,
+	     "momcode_ajax_named state=%d webnum=%ld nowbuf=%s",
+	     state, mom_item_webrequest_webnum (webv), nowbuf);
+  MOM_DBG_ITEM (web, "ajax_named tasklet=", (const mom_anyitem_t *) tasklet);
+  MOM_DBG_VALUE (web, "ajax_named webv=", webv);
+  MOM_DBG_VALUE (web, "ajax_named closure=",
+		 (momval_t) (const momclosure_t *) closure);
+  MOM_DBG_VALUE (web, "ajax_named method=",
+		 (momval_t) mom_item_webrequest_method (webv));
+  if (mom_item_webrequest_method (webv).ptr ==
+      ((momval_t) mom_item__POST).ptr)
+    {
+      MOM_DEBUG (web, "momcode_ajax_named POST");
+      MOM_DBG_VALUE (web, "ajax_named jsobpost=",
+		     mom_item_webrequest_jsob_post (webv));
+      MOM_WARNING ("momcode_ajax_named incomplete");
+#warning incomplete momcode_ajax_named
+    }
+  else
+    MOM_WARNING ("ajax_named strange request webnum#%ld",
+		 mom_item_webrequest_webnum (webv));
+  return routres_pop;
+}
+
+const struct momroutinedescr_st momrout_ajax_named =
+  {.rout_magic = ROUTINE_MAGIC,
+  .rout_minclosize = 0,
+  .rout_frame_nbval = 1,
+  .rout_frame_nbnum = 0,
+  .rout_frame_nbdbl = 0,
+  .rout_name = "ajax_named",
+  .rout_code = (const momrout_sig_t *) momcode_ajax_named,
+  .rout_timestamp = __DATE__ "@" __TIME__
+};
+
 ////////////////////////////////////////////////////////////////
 
 int

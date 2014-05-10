@@ -17,6 +17,11 @@
     along with GCC; see the file COPYING3.   If not see
     <http://www.gnu.org/licenses/>.
 **/
+function give_message(htmlmessage) {
+    console.debug('give_message htmlmessage=', htmlmessage);
+    $('mom_message_id').html(htmlmessage);
+}
+
 // jquery ready function for our document
 $(function(){
     // if there is a momstart_id element, fill it by an Ajax query
@@ -43,7 +48,25 @@ $(function(){
 		    dataType: 'html',
 		    success: function(d) {
 			console.debug ("exitdrop success d=", d);
-			$('#status_id').html(d);
+			give_message(d);
+		    }});
+	}});
+
+    $('#named_drop_id').jui_dropdown({
+	launcher_id: 'named_launcher_id',
+	launcher_container_id: 'named_container_id',
+	menu_id: 'named_menu_id',
+	containerClass: 'menu_container_cl',
+	menuClass: 'menu_cl',
+	onSelect: function (event, data) {
+	    console.debug ("nameddrop select event=", event, "; data=", data);
+	    $.ajax({url: '/ajax_named',
+		    method: 'POST',
+		    data: data,
+		    dataType: 'html',
+		    success: function(d) {
+			console.debug ("nameddrop success d=", d);
+			give_message(d);
 		    }});
 	}
     });
@@ -56,11 +79,6 @@ function install_routine_completer(jq) {
 	minLength: 2,
 	source: "/ajax_complete_routine_name"
     });
-}
-
-function give_message(htmlmessage) {
-    console.debug('give_message htmlmessage=', htmlmessage);
-    $('mom_message_id').html(htmlmessage);
 }
 
 function put_edited_routine(htmltitle) {

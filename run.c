@@ -584,6 +584,16 @@ check_for_some_child_process_at (const char *srcfil, int srclin)
 }
 
 
+static int
+terminating_dump (void *data)
+{
+  const char *filepath = data;
+  MOM_DEBUG (run, "terminating_dump filepath=%s", filepath);
+  mom_full_dump ("terminating dump after SIGTERM", filepath);
+  MOM_INFORM ("dumped state on SIGTERM signal to %s", filepath);
+  return 0;
+}
+
 static void
 mysignalfd_handler (int fd, short revent, void *data)
 {
@@ -611,6 +621,27 @@ mysignalfd_handler (int fd, short revent, void *data)
     {
     case SIGCHLD:
       check_for_some_child_process ();
+      break;
+    case SIGTERM:
+      {
+	char termpath[MOM_PATH_LEN];
+	struct tm nowtm = { };
+	time_t nowt = 0;
+	char pidbuf[32];
+	memset (termpath, 0, sizeof (termpath));
+	time (&nowt);
+	strftime (termpath, sizeof (termpath) - sizeof (pidbuf),
+		  "_monimelt_sigterm_state_%d_%b_%Y_%Hh%M_",
+		  localtime_r (&nowt, &nowtm));
+	snprintf (pidbuf, sizeof (pidbuf), "pid%d.dbsqlite", (int) getpid ());
+	strcat (termpath, pidbuf);
+	char *termstr = GC_STRDUP (termpath);
+	MOM_DEBUG (run, "recieved SIGTERM signal, will try dump to %s",
+		   termstr);
+	mom_request_stop ("mysignalfd_handler got SIGTERM", terminating_dump,
+			  termstr);
+	MOM_WARNING ("got SIGTERM, will try to dump to %s", termstr);
+      }
       break;
     default:
       MOM_WARNING ("unexpected signal#%d : %s", sinf.ssi_signo,
