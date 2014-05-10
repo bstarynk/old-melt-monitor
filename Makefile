@@ -38,7 +38,7 @@ MODSOURCES= $(sort $(wildcard mod_*.c))
 MODULES= $(patsubst %.c,%.so,$(MODSOURCES))
 OBJECTS= $(patsubst %.c,%.o,$(SOURCES))
 RM= rm -fv
-.PHONY: all modules clean tests indent restore-state
+.PHONY: all modules clean tests indent restore-state dump-state
 .SUFFIXES: .so
 all: monimelt make-named modules
 clean:
@@ -79,3 +79,6 @@ mod_%.so: mod_%.c  | monimelt.h monimelt-names.h
 restore-state: 
 	-mv -v state-monimelt.dbsqlite  state-monimelt.dbsqlite~
 	$(SQLITE) state-monimelt.dbsqlite < state-monimelt.sql
+
+dump-state:
+	./dump-state.sh
