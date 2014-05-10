@@ -23,16 +23,33 @@
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <link rel="stylesheet" type="text/css" href="codemirror.css"/>
   <link rel="stylesheet" type="text/css" href="jqueryui-smoothness/jquery-ui.min.css"/>
+  <link rel="stylesheet" type="text/css" href="jquery.jui_dropdown.css"/>
   <link rel="stylesheet" type="text/css" href="mom-style.css"/>
   <script src="jquery.js"></script>
   <script src="jquery-ui.min.js"></script>
   <script src="codemirror.js"></script>
   <script src="styles-codemirror/clike.js"></script>
+  <script src="jquery.jui_dropdown.min.js"></script>
   <script src="mom-scripts.js"></script>
 </head>
 <body>
   <h1>Monimelt</h1>
   <p>* <span id='momstart_id' class='start_label_cl'></span><br />
     <span id='mom_message_id' class='message_cl'>-</span></p>
+
+  <p class='status_cl' id='status_id'></p>
+  
+  <nav class='nav_cl' id='nav_id'>
+    <div id='exit_drop_id'>
+    <div id='exit_container_id'>
+      <button id='exit_launcher_id' class='menubutton_cl'>exit...</button>
+    </div>
+    <ul id='exit_menu_id'>
+      <li id='exit_save_id'><a href='javascript:void(0);'>Save &amp; exit</a></li>
+      <li id='exit_quit_id'><a href='javascript:void(0);'>Quit <small>(without saving)</small></a></li>
+    </ul>
+    </div>
+  </nav>
+
 </body>
 </html>

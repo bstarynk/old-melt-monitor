@@ -53,8 +53,30 @@ span.start_label_cl {
     font-size: 90%;
 }
 
+p.status_cl {
+    background-color: grey;
+    min-height: 10px;
+    width: 75%
+}
+
 span.message_cl {
     font-size: 90%;
     font-family: Andale;
     color: darkblue;
+}
+
+nav.nav_cl {
+    background-color: lightgreen;
+    min-height: 10px;
+    font-size: 90%;
+}
+
+.menu_cl {
+    border: 5px navy;
+}
+
+.menu_container_cl {
+    margin: 5px;
+    background-color: ivory;
+    display: inline-block;
 }

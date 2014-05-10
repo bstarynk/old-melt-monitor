@@ -114,6 +114,97 @@ const struct momroutinedescr_st momrout_web_form_exit =
 ////////////////////////////////////////////////////////////////
 
 int
+momcode_ajax_exit (int state, momit_tasklet_t * tasklet,
+		   momclosure_t * closure, momval_t * locvals,
+		   intptr_t * locnums, double *locdbls)
+{
+  momval_t webv = locvals[0];
+  time_t now = 0;
+  struct tm nowtm = { };
+  char nowbuf[64] = "";
+  time (&now);
+  strftime (nowbuf, sizeof (nowbuf), "%c", localtime_r (&now, &nowtm));
+  MOM_DEBUG (web, "momcode_ajax_exit state=%d webnum=%ld nowbuf=%s",
+	     state, mom_item_webrequest_webnum (webv), nowbuf);
+  MOM_DBG_ITEM (web, "ajax_exit tasklet=", (const mom_anyitem_t *) tasklet);
+  MOM_DBG_VALUE (web, "ajax_exit webv=", webv);
+  MOM_DBG_VALUE (web, "ajax_exit closure=",
+		 (momval_t) (const momclosure_t *) closure);
+  MOM_DBG_VALUE (web, "ajax_exit method=",
+		 (momval_t) mom_item_webrequest_method (webv));
+  if (mom_item_webrequest_method (webv).ptr ==
+      ((momval_t) mom_item__POST).ptr)
+    {
+      MOM_DEBUG (web, "momcode_ajax_exit POST");
+      MOM_DBG_VALUE (web, "ajax_exit jsobpost=",
+		     mom_item_webrequest_jsob_post (webv));
+      momval_t idxdov = mom_item_webrequest_post_arg (webv, "id");
+      MOM_DBG_VALUE (web, "ajax_exit idxdov=", idxdov);
+      if (!strcmp (mom_string_cstr (idxdov), "exit_save_id"))
+	{
+	  MOM_DEBUG (run, "ajax_exit save and exiting webnum#%ld",
+		     mom_item_webrequest_webnum (webv));
+	  mom_item_webrequest_add (webv, MOMWEB_SET_MIME, "text/html",
+				   MOMWEB_LIT_STRING,
+				   "Dump to default <tt>"
+				   MOM_DEFAULT_STATE_FILE "</tt> reqnum#",
+				   MOMWEB_DEC_LONG,
+				   (long) mom_item_webrequest_webnum (webv),
+				   MOMWEB_LIT_STRING, " at <i>",
+				   MOMWEB_HTML_STRING, nowbuf,
+				   MOMWEB_LIT_STRING, "</i>.\n",
+				   MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
+	  usleep (25000);
+	  MOM_DEBUG (web, "ajax_exit do_savexit before request stop");
+	  mom_request_stop ("ajax_exit savexit", NULL, NULL);
+	  usleep (2000);
+	  MOM_DEBUG (web, "ajax_exit savexit before fulldump");
+	  mom_full_dump ("ajax save&exit dump", MOM_DEFAULT_STATE_FILE);;
+	  MOM_DEBUG (web, "ajax_exit savexit after fulldump");
+	}
+      else if (!strcmp (mom_string_cstr (idxdov), "exit_quit_id"))
+	{
+	  MOM_DEBUG (run, "ajax_exit exit and quitting webnum#%ld",
+		     mom_item_webrequest_webnum (webv));
+	  mom_item_webrequest_add (webv, MOMWEB_SET_MIME, "text/html",
+				   MOMWEB_LIT_STRING,
+				   "Quitting Moniweb without saving, reqnum#",
+				   MOMWEB_DEC_LONG,
+				   (long) mom_item_webrequest_webnum (webv),
+				   MOMWEB_LIT_STRING, " at <i>",
+				   MOMWEB_HTML_STRING, nowbuf,
+				   MOMWEB_LIT_STRING, "</i>.\n",
+				   MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
+	  usleep (25000);
+	  MOM_DEBUG (web, "ajax_exit do_quit before request stop");
+	  mom_request_stop ("ajax_exit quit", NULL, NULL);
+	  usleep (2000);
+	  MOM_DEBUG (web, "ajax_exit quit after fulldump");
+	}
+      else
+	MOM_WARNING ("ajax_exit strange idxdov=%s", mom_string_cstr (idxdov));
+    }
+  else
+    MOM_WARNING ("ajax_exit strange request webnum#%ld",
+		 mom_item_webrequest_webnum (webv));
+  return routres_pop;
+}
+
+const struct momroutinedescr_st momrout_ajax_exit =
+  {.rout_magic = ROUTINE_MAGIC,
+  .rout_minclosize = 0,
+  .rout_frame_nbval = 1,
+  .rout_frame_nbnum = 0,
+  .rout_frame_nbdbl = 0,
+  .rout_name = "ajax_exit",
+  .rout_code = (const momrout_sig_t *) momcode_ajax_exit,
+  .rout_timestamp = __DATE__ "@" __TIME__
+};
+
+
+////////////////////////////////////////////////////////////////
+
+int
 momcode_web_form_new_named (int state, momit_tasklet_t * tasklet,
 			    momclosure_t * closure, momval_t * locvals,
 			    intptr_t * locnums, double *locdbls)

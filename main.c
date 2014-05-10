@@ -727,6 +727,7 @@ int
 main (int argc, char **argv)
 {
   bool explicit_boehm_gc_thread = false;
+  double startime = 0.0;
   GC_INIT ();
 #if MOM_EXPLICIT_GC_THREAD
   GC_allow_register_threads ();
@@ -736,7 +737,10 @@ main (int argc, char **argv)
   g_mem_gc_friendly = TRUE;
   g_mem_set_vtable (&gc_mem_vtable);
   mom_initialize ();
+  startime = mom_clock_time (CLOCK_REALTIME);
   parse_program_arguments_and_load_modules (argc, argv);
+  MOM_INFORM ("starting Monimelt built timestamp %s gitcommit %s",
+	      monimelt_timestamp, monimelt_lastgitcommit);
   if (json_file)
     do_json_file_test ();
   if (json_string)
@@ -810,6 +814,11 @@ main (int argc, char **argv)
       mom_full_dump ("final dump", dump_state_path);
     }
   usleep (3000);
-  MOM_INFORM ("monimelt ending normally pid %d", (int) getpid ());
+
+  double endtime = mom_clock_time (CLOCK_REALTIME);
+  MOM_INFORM
+    ("monimelt ending normally pid %d, process cpu %.4f, real %.4f seconds\n",
+     (int) getpid (), mom_clock_time (CLOCK_PROCESS_CPUTIME_ID),
+     endtime - startime);
   return 0;
 }

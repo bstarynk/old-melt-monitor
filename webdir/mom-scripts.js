@@ -28,6 +28,26 @@ $(function(){
 		 $('#momstart_id').html(data);
 	     }
 	   });
+
+    $('#exit_drop_id').jui_dropdown({
+	launcher_id: 'exit_launcher_id',
+	launcher_container_id: 'exit_container_id',
+	menu_id: 'exit_menu_id',
+	containerClass: 'menu_container_cl',
+	menuClass: 'menu_cl',
+	onSelect: function (event, data) {
+	    console.debug ("exitdrop select event=", event, "; data=", data);
+	    $.ajax({url: '/ajax_exit',
+		    method: 'POST',
+		    data: data,
+		    dataType: 'html',
+		    success: function(d) {
+			console.debug ("exitdrop success d=", d);
+			$('status_id').html(d);
+		    }});
+	}
+    });
+    
 });
 
 function install_routine_completer(jq) {
