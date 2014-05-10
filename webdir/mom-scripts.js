@@ -38,6 +38,11 @@ function install_routine_completer(jq) {
     });
 }
 
+function give_message(htmlmessage) {
+    console.debug('give_message htmlmessage=', htmlmessage);
+    $('mom_message_id').html(htmlmessage);
+}
+
 function put_edited_routine(htmltitle) {
     console.debug('put_edited_routine htmltitle=', htmltitle);
     $('#toped_cl').html('<div class="routine_cl"><h3 id="routinetitle_id">routine <tt>'+htmltitle+'</tt></h3></div>');

@@ -123,7 +123,7 @@ momcode_web_form_new_named (int state, momit_tasklet_t * tasklet,
   struct tm nowtm = { };
   char nowbuf[64] = "";
   time (&now);
-  strftime (nowbuf, sizeof (nowbuf), "%c", localtime_r (&now, &nowtm));
+  strftime (nowbuf, sizeof (nowbuf), "%d %b %Y, %T %Z", localtime_r (&now, &nowtm));
   MOM_DEBUG (web,
 	     "momcode_web_form_new_named state=%d webnum=%ld nowbuf=%s",
 	     state, mom_item_webrequest_webnum (webv), nowbuf);
@@ -232,18 +232,12 @@ momcode_web_form_new_named (int state, momit_tasklet_t * tasklet,
 	      memset (uidstr, 0, sizeof (uidstr));
 	      mom_item_webrequest_add
 		(webv,
-		 MOMWEB_SET_MIME, "text/html",
-		 MOMWEB_LIT_STRING,
-		 "<!doctype html><head><title>Create New Named Monimelt</title></head>\n"
-		 "<body><h1>Monimelt create a new named</h1>\n"
-		 "<p>name=<tt>", MOMWEB_HTML_STRING,
-		 mom_string_cstr (namestr), MOMWEB_LIT_STRING,
-		 "</tt> reqnum#", MOMWEB_DEC_LONG,
-		 (long) mom_item_webrequest_webnum (webv), MOMWEB_LIT_STRING,
-		 " of uuid <tt>", MOMWEB_LIT_STRING,
-		 mom_unparse_item_uuid (newitm, uidstr), MOMWEB_LIT_STRING,
-		 "</tt> at <i>", MOMWEB_HTML_STRING, nowbuf,
-		 MOMWEB_LIT_STRING, "</i></p>\n" "</body></html>\n",
+		 MOMWEB_SET_MIME, "application/javascript",
+		 MOMWEB_LIT_STRING, "give_message('created new named <tt>",
+		 MOMWEB_HTML_STRING, mom_string_cstr (namestr),
+		 MOMWEB_LIT_STRING, "</tt> at <i>",
+		 MOMWEB_HTML_STRING, nowbuf,
+		 MOMWEB_LIT_STRING, "</i>');\n",
 		 MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
 	    }
 

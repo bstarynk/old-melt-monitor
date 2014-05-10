@@ -802,11 +802,14 @@ main (int argc, char **argv)
       MOM_INFORM ("start %d workers", (int) mom_nb_workers);
       mom_run ("main working run");
     }
+  else
+    MOM_INFORM ("did not run workers");
   MOM_DEBUG (run, "before potential final dump");
   if (dump_state_path && !web_host)
     {
       mom_full_dump ("final dump", dump_state_path);
     }
   usleep (3000);
+  MOM_INFORM ("monimelt ending normally pid %d", (int)getpid());
   return 0;
 }

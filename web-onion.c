@@ -351,17 +351,17 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
 			     webnum, webitm->iweb_replybuf);
 		}
 	      assert (webitm->iweb_response != NULL);
-	      onion_response_set_code (webitm->iweb_response,
-				       webitm->iweb_replycode);
-	      onion_response_set_length (webitm->iweb_response,
-					 webitm->iweb_replylength);
 	      if (webitm->iweb_replymime)
 		onion_response_set_header (webitm->iweb_response,
-					   "content-type",
+					   "Content-Type",
 					   webitm->iweb_replymime);
 	      else
 		MOM_WARNING ("web request #%ld has no mime type",
 			     webitm->iweb_webnum);
+	      onion_response_set_code (webitm->iweb_response,
+				       webitm->iweb_replycode);
+	      onion_response_set_length (webitm->iweb_response,
+					 webitm->iweb_replylength);
 	      if (webitm->iweb_replylength > 0)
 		onion_response_write (webitm->iweb_response,
 				      webitm->iweb_replybuf,

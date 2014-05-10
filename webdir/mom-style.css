@@ -48,3 +48,13 @@ div.toped_cl {
     border: 2px solid brown;
     border-spacing: 15px;
 }
+
+span.start_label_cl {
+    font-size: 80%;
+}
+
+span.message_cl {
+    font-size: 90%;
+    font-family: Andale;
+    color: darkblue;
+}
