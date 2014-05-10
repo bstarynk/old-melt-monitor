@@ -6,6 +6,7 @@
 *orig
 *%
 *.dbsqlite
+*.dbsqlite-journal
 monimelt
 make-named
 core*

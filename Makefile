@@ -42,7 +42,7 @@ RM= rm -fv
 .SUFFIXES: .so
 all: monimelt make-named modules
 clean:
-	$(RM) *~ *.o *.so *.orig _tmp_* monimelt core* webdir/*~ *.tmp  _timestamp.*
+	$(RM) *~ *.o *.so *.orig _tmp_* monimelt core* webdir/*~ *.tmp  _timestamp.* state-monimelt.dbsqlite-journal
 ################
 monimelt: $(OBJECTS) _timestamp.o
 	$(LINK.c)  -rdynamic $^ $(LIBES) -o $@
