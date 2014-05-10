@@ -611,8 +611,8 @@ mom_forget_name (const char *name)
   int namix = find_name_index (name, namehash);
   if (namix >= 0)
     {
-      remove_entry (glob_dict.name_hashitem[namix].nme_str,
-		    glob_dict.name_hashitem[namix].nme_itm);
+      remove_entry (glob_dict.name_hashstr[namix].nme_str,
+		    glob_dict.name_hashstr[namix].nme_itm);
     }
   pthread_mutex_unlock (&glob_mtx);
 }
