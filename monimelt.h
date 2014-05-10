@@ -1763,6 +1763,11 @@ void mom_register_new_name_string (const momstring_t * namestr,
 void mom_replace_named_item (const char *name, mom_anyitem_t * item);
 void mom_replace_name_string (momstring_t * namestr, mom_anyitem_t * item);
 
+/// forget a name, or a string value, or an item
+void mom_forget_name (const char *name);
+void mom_forget_string (momstring_st * namestr);
+void mom_forget_item (mom_anyitem_t * item);
+
 // get the item of some given name, or else NULL
 mom_anyitem_t *mom_item_named (const char *name);
 // use a string value 

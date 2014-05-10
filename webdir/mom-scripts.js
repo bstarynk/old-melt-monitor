@@ -43,7 +43,7 @@ $(function(){
 		    dataType: 'html',
 		    success: function(d) {
 			console.debug ("exitdrop success d=", d);
-			$('status_id').html(d);
+			$('#status_id').html(d);
 		    }});
 	}
     });

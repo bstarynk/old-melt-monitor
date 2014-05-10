@@ -55,6 +55,7 @@ span.start_label_cl {
 
 p.status_cl {
     background-color: grey;
+    color: yellow;
     min-height: 10px;
     width: 75%
 }

@@ -52,17 +52,10 @@ mom_module_post_load (void)
   char uistr[UUID_PARSED_LEN];
   memset (uistr, 0, sizeof (uistr));
   MOM_INFORM ("cold post load " __DATE__ "@" __TIME__);
-  mom_anyitem_t *rout_ajax_exit = mom_item_named ("ajax_exit");
-  MOM_DBG_ITEM (run, "rout_ajax_exit=", rout_ajax_exit);
-  const momclosure_t *clos_ajax_exit =
-    mom_make_closure_til_nil ((mom_anyitem_t *) rout_ajax_exit,
-			      mom_make_string ("Gap*Ajax_Exit"),
-			      NULL);
-  MOM_DBG_VALUE (run, "clos_ajax_exit=", (momval_t) clos_ajax_exit);
   mom_item_dictionnary_put_cstr ((momval_t) mom_item__web_dictionnary,
-				 "ajax_exit", (momval_t) clos_ajax_exit);
-
-
+				 "form_exit", MOM_NULLV);
+  mom_forget_name ("web_form_exit");
+  MOM_INFORM ("forgot web_form_exit");
 #if 0				////////////////////////////////////////////////////////////////
   mom_anyitem_t *rout_web_form_handle_routine =
     mom_item_named ("web_form_handle_routine");
