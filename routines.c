@@ -622,6 +622,13 @@ momcode_ajax_named (int state, momit_tasklet_t * tasklet,
       else if (mom_same_string (idw, "named_forget_id"))
 	{
 	  MOM_DEBUG (web, "should insert a forget form");
+	  mom_item_webrequest_add
+	    (webv,
+	     MOMWEB_SET_MIME, "application/javascript",
+	     MOMWEB_LIT_STRING, "install_forget_named_form('",
+	     MOMWEB_JS_STRING, nowbuf,
+	     MOMWEB_LIT_STRING, "');\n",
+	     MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
 	}
       else if (mom_same_string (idw, "do_create_named"))
 	{
@@ -722,6 +729,9 @@ momcode_ajax_named (int state, momit_tasklet_t * tasklet,
 	    }
 	  return routres_pop;
 	}
+      else if (mom_same_string (idw, "do_forget_named"))
+	{
+	}
       MOM_WARNING ("momcode_ajax_named incomplete");
     }
   else
@@ -820,6 +830,91 @@ const struct momroutinedescr_st momrout_ajax_complete_routine_name =
   .rout_frame_nbdbl = 0,
   .rout_name = "ajax_complete_routine_name",
   .rout_code = (const momrout_sig_t *) momcode_ajax_complete_routine_name,
+  .rout_timestamp = __DATE__ "@" __TIME__
+};
+
+////////////////////////////////////////////////////////////////
+
+
+
+int
+momcode_ajax_complete_name (int state, momit_tasklet_t * tasklet,
+			    momclosure_t * closure,
+			    momval_t * locvals, intptr_t * locnums,
+			    double *locdbls)
+{
+  momval_t webv = locvals[0];
+  time_t now = 0;
+  struct tm nowtm = { };
+  char nowbuf[64] = "";
+  time (&now);
+  strftime (nowbuf, sizeof (nowbuf), "%c", localtime_r (&now, &nowtm));
+  MOM_DEBUG (web,
+	     "momcode_ajax_complete_name state=%d webnum=%ld nowbuf=%s",
+	     state, mom_item_webrequest_webnum (webv), nowbuf);
+  MOM_DBG_ITEM (web, "ajax_complete_name tasklet=",
+		(const mom_anyitem_t *) tasklet);
+  MOM_DBG_VALUE (web, "ajax_complete_name webv=", webv);
+  MOM_DBG_VALUE (web, "ajax_complete_name closure=",
+		 (momval_t) (const momclosure_t *) closure);
+  MOM_DBG_VALUE (web, "ajax_complete_name method=",
+		 (momval_t) mom_item_webrequest_method (webv));
+  if (mom_item_webrequest_method (webv).ptr ==
+      ((momval_t) mom_item__POST).ptr)
+    {
+      momval_t postv = mom_item_webrequest_jsob_query (webv);
+      momval_t termv = mom_item_webrequest_post_arg (webv, "term");
+      MOM_DBG_VALUE (web, "ajax_complete_name postv=", postv);
+      MOM_DBG_VALUE (web, "ajax_complete_name termv=", termv);
+      const char *termstr = mom_string_cstr (termv);
+      momval_t nodev =
+	mom_node_sorted_names_prefixed ((const mom_anyitem_t *)
+					mom_item__dictionnary, termstr);
+      MOM_DBG_VALUE (web, "ajax_complete_name nodev=", nodev);
+      unsigned nbnames = mom_node_arity (nodev);
+      momval_t jres = MOM_NULLV;
+      if (nbnames > 0)
+	{
+	  momval_t *goodnames = GC_MALLOC (nbnames * sizeof (momval_t));
+	  if (!goodnames)
+	    MOM_FATAL ("failed to allocate %d names", nbnames);
+	  memset (goodnames, 0, nbnames * sizeof (momval_t));
+	  unsigned goodcount = 0;
+	  for (unsigned ix = 0; ix < nbnames; ix++)
+	    {
+	      assert (goodcount < nbnames);
+	      momval_t curname = mom_node_nth (nodev, ix);
+	      const char *curstr = mom_string_cstr (curname);
+	      if (!curstr)
+		continue;
+	      const mom_anyitem_t *curitm = mom_item_named (curstr);
+	      if (!curitm)
+		continue;
+	      goodnames[goodcount++] = curname;
+	    }
+	  jres =
+	    (momval_t) ((goodcount > 0)
+			? mom_make_json_array_count (goodcount, goodnames)
+			: NULL);
+	}
+      MOM_DBG_VALUE (web, "ajax_complete_name jres=", jres);
+      mom_item_webrequest_add
+	(webv,
+	 MOMWEB_SET_MIME, "application/json",
+	 MOMWEB_JSON_VALUE, jres, MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
+      MOM_DBG_VALUE (web, "ajax_complete_name replied webv=", webv);
+    }
+  return routres_pop;
+}
+
+const struct momroutinedescr_st momrout_ajax_complete_name =
+  {.rout_magic = ROUTINE_MAGIC,
+  .rout_minclosize = 0,
+  .rout_frame_nbval = 1,
+  .rout_frame_nbnum = 0,
+  .rout_frame_nbdbl = 0,
+  .rout_name = "ajax_complete_name",
+  .rout_code = (const momrout_sig_t *) momcode_ajax_complete_name,
   .rout_timestamp = __DATE__ "@" __TIME__
 };
 

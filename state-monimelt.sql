@@ -23,17 +23,19 @@ CREATE TABLE t_name (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, nuid VARCHAR(38)
 CREATE TABLE t_param (parname VARCHAR(35) PRIMARY KEY ASC NOT NULL UNIQUE, parvalue TEXT NOT NULL);
 CREATE TABLE t_module (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
-INSERT INTO t_item VALUES('0229c553-c443-49a9-9244-5f8d7d3c79cf','dictionnary','{"jtype":"dictionnary"}','{"attributes":null,"content":null,"dictionnary":[{"name":"ajax_complete_routine_name",
+INSERT INTO t_item VALUES('0229c553-c443-49a9-9244-5f8d7d3c79cf','dictionnary','{"jtype":"dictionnary"}','{"attributes":null,"content":null,"dictionnary":[{"name":"ajax_complete_name",
+ "val":{"conn":{"jtype":"itemref","space":".","uuid":"b6e41f84-c5f6-48d2-af55-6638c3cc9a64"},
+ "jtype":"closure","sons":["Gap*Ajax_Complete_Name"]}},{"name":"ajax_complete_routine_name",
  "val":{"conn":{"jtype":"itemref","space":".","uuid":"8e5f1892-9c0b-42c0-8390-e384e471d3fd"},
  "jtype":"closure","sons":["Gap*Ajax_Complete_Routine_Name"]}},{"name":"ajax_exit",
  "val":{"conn":{"jtype":"itemref","space":".","uuid":"16b844e6-0277-492d-aee9-cb687571a99c"},
  "jtype":"closure","sons":["Gap*Ajax_Exit"]}},{"name":"ajax_named","val":{"conn":{"jtype":"itemref",
   "space":".","uuid":"84220ca7-346c-4e8e-a5c8-0ec0367248d7"},"jtype":"closure",
- "sons":["Gap*Ajax_Named"]}},{"name":"ajax_start","val":{"conn":{"jtype":"itemref",
-  "space":".","uuid":"0e750860-7063-4ad7-8488-ee57d4aba2a8"},"jtype":"closure",
- "sons":["Gap*Ajax_Start"]}},
-{"name":"form_compile","val":{"conn":{"jtype":"itemref","space":".","uuid":"f094ea32-9a48-4de2-bba7-4b25e8d028d1"},
- "jtype":"closure","sons":[{"conn":{"jtype":"itemref","space":".","uuid":"88aeaf2b-192e-4936-bdbb-b9a186d86cd4"},
+ "sons":["Gap*Ajax_Named"]}},
+{"name":"ajax_start","val":{"conn":{"jtype":"itemref","space":".","uuid":"0e750860-7063-4ad7-8488-ee57d4aba2a8"},
+ "jtype":"closure","sons":["Gap*Ajax_Start"]}},{"name":"form_compile","val":{"conn":{"jtype":"itemref",
+  "space":".","uuid":"f094ea32-9a48-4de2-bba7-4b25e8d028d1"},"jtype":"closure",
+ "sons":[{"conn":{"jtype":"itemref","space":".","uuid":"88aeaf2b-192e-4936-bdbb-b9a186d86cd4"},
   "jtype":"closure","sons":["Gap*Proc_Compilation"]}]}},{"name":"form_handle_routine",
  "val":{"conn":{"jtype":"itemref","space":".","uuid":"2e0f4651-d859-4e58-960d-9a1b5a84032f"},
  "jtype":"closure","sons":["Gap*Form_Handle_Routine"]}},{"name":"form_new_named",
@@ -87,6 +89,7 @@ INSERT INTO t_item VALUES('a75bef70-596b-4fc5-99ca-e60b5287feec','json_name','{"
 INSERT INTO t_item VALUES('abdd3eea-22da-4e09-b1f8-a05b80783924','json_name','{"jtype":"json_name","name":"name"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('b29bc8a3-1517-4a28-b566-39e447c80250','json_name','{"jtype":"json_name","name":"attributes"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('b5a0ef97-7eb2-4cf3-924e-8bc5de7e49bc','queue','{"jtype":"queue"}','{"attributes":null,"content":null,"queue":[]}');
+INSERT INTO t_item VALUES('b6e41f84-c5f6-48d2-af55-6638c3cc9a64','routine','{"jtype":"routine","name":"ajax_complete_name"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('b9664990-11a1-49a5-bf59-be714626ed6d','json_name','{"jtype":"json_name","name":"jtype"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('c3b77d8b-ff65-4717-b9d5-f2b5c22fca71','box','{"jtype":"box"}','{"attributes":null,"box":null,"content":null}');
 INSERT INTO t_item VALUES('c52ead7c-63bf-4e65-a873-486de4e4db41','json_name','{"jtype":"json_name","name":"tuple"}','{"attributes":null,"content":null}');
@@ -112,6 +115,7 @@ INSERT INTO t_name VALUES('OPTIONS','4b1faa71-01c2-4dc9-b9b8-f894ae54a1d0','.');
 INSERT INTO t_name VALUES('POST','9dccb4ab-45d0-4fa3-a3d0-8bb722a83478','.');
 INSERT INTO t_name VALUES('PUT','ed78ae41-bd10-44bf-9bc7-57be044fe610','.');
 INSERT INTO t_name VALUES('agenda','b5a0ef97-7eb2-4cf3-924e-8bc5de7e49bc','.');
+INSERT INTO t_name VALUES('ajax_complete_name','b6e41f84-c5f6-48d2-af55-6638c3cc9a64','.');
 INSERT INTO t_name VALUES('ajax_complete_routine_name','8e5f1892-9c0b-42c0-8390-e384e471d3fd','.');
 INSERT INTO t_name VALUES('ajax_exit','16b844e6-0277-492d-aee9-cb687571a99c','.');
 INSERT INTO t_name VALUES('ajax_named','84220ca7-346c-4e8e-a5c8-0ec0367248d7','.');

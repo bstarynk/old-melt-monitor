@@ -107,7 +107,18 @@ function install_create_named_form(datestr) {
 	      +'<option>vector</option>'
 	      +'</select>'
 	      +'<br/><input type="submit" value="create" name="create named" onclick="send_create_named()"/>'
-	      +'&nbsp; <input type="submit" value="cancel" name="cancel" onclick="erase_work_zone()"/>');
+	      +'&nbsp; <input type="submit" value="cancel" name="cancel" onclick="erase_work_zone()"/>'
+	     +'<br/><small>at <i>'+datestr+'</i></small>');
+}
+
+function install_forget_named_form(datastr) {
+    console.debug('install_forget_named_form datestr=', datestr);
+    $('#workzone_id')
+	.html('<b>forget named:</b><input type="text" id="wforgetname_id" pattern="[A-Za-z_][A-Za-z0-9_]*" size="45"/>'
+	      + '&nbsp; <input type="submit" name="do_forgetname" value="forget" onclick="send_forget_named()"/>\n'
+	      +'<br/><small>at <i>'+datestr+'</i></small>');
+    $('#wforgetname_id').autocomplete({
+    });
 }
 
 function erase_work_zone() {
@@ -138,4 +149,10 @@ function send_create_named() {
 		 give_message(errtxt);		 
 	     }
 	   });
+}
+
+
+function send_forget_named() {
+    var forgnametxt = $('#wforgetname_id').val();
+    console.debug('send_forget_named forgnametxt=', forgnametxt);
 }
