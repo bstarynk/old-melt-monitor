@@ -41,6 +41,7 @@ $(function(){
 	     }
 	   });
 
+    // install the exit menu
     $('#exit_drop_id').jui_dropdown({
 	launcher_id: 'exit_launcher_id',
 	launcher_container_id: 'exit_container_id',
@@ -59,6 +60,7 @@ $(function(){
 		    }});
 	}});
 
+    // install the named menu
     $('#named_drop_id').jui_dropdown({
 	launcher_id: 'named_launcher_id',
 	launcher_container_id: 'named_container_id',
@@ -81,6 +83,25 @@ $(function(){
 	}
     });
     
+
+    // install the routine menu
+    $('#routine_drop_id').jui_dropdown({
+	launcher_id: 'routine_launcher_id',
+	launcher_container_id: 'routine_container_id',
+	menu_id: 'routine_menu_id',
+	containerClass: 'menu_container_cl',
+	menuClass: 'menu_cl',
+	onSelect: function (event, data) {
+	    console.debug ("routinedrop select event=", event, "; data=", data);
+	    $.ajax({url: '/ajax_routine',
+		    method: 'POST',
+		    data: data,
+		    dataType: 'html',
+		    success: function(d) {
+			console.debug ("routinedrop success d=", d);
+			console.warning ("routinedrop unimplemented d=", d);
+		    }});
+	}});
 });
 
 function install_routine_completer(jq) {

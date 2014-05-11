@@ -123,276 +123,6 @@ const struct momroutinedescr_st momrout_ajax_exit =
 
 
 
-
-////////////////////////////////////////////////////////////////
-
-#warning web_form_handle_routine is removed
-
-/*****************/
-#if 0
-enum formhandlevalues_en
-{
-  wfhv_web,
-  wfhv_routine,
-  wfhv__lastval
-};
-int
-momcode_web_form_handle_routine (int state, momit_tasklet_t * tasklet,
-				 momclosure_t * closure, momval_t * locvals,
-				 intptr_t * locnums, double *locdbls)
-{
-#define _L(N) locvals[wfhv_##N]
-  time_t now = 0;
-  struct tm nowtm = { };
-  char nowbuf[64] = "";
-  time (&now);
-  strftime (nowbuf, sizeof (nowbuf), "%c", localtime_r (&now, &nowtm));
-  MOM_DEBUG (web,
-	     "momcode_web_form_handle_routine state=%d webnum=%ld nowbuf=%s",
-	     state, mom_item_webrequest_webnum (_L (web)), nowbuf);
-  MOM_DBG_ITEM (web, "web_form_handle_routine tasklet=",
-		(const mom_anyitem_t *) tasklet);
-  MOM_DBG_VALUE (web, "web_form_handle_routine web=", _L (web));
-  MOM_DBG_VALUE (web, "web_form_handle_routine closure=",
-		 (momval_t) (const momclosure_t *) closure);
-  MOM_DBG_VALUE (web, "web_form_handle_routine method=",
-		 (momval_t) mom_item_webrequest_method (_L (web)));
-  if (mom_item_webrequest_method (_L (web)).ptr ==
-      ((momval_t) mom_item__POST).ptr)
-    {
-      MOM_DEBUG (web, "web_form_handle_routine POST");
-      MOM_DBG_VALUE (web, "web_form_handle_routine jsobpost=",
-		     mom_item_webrequest_jsob_post (_L (web)));
-      momval_t namestrv =
-	mom_item_webrequest_post_arg (_L (web), "routine_name");
-      _L (routine) = (momval_t) mom_item_of_name_string (namestrv);
-      MOM_DBG_VALUE (web, "web_form_handle_routine routine=", _L (routine));
-      if (mom_type (_L (routine)) != momty_routineitem)
-	{
-	  MOM_WARNING ("web_form_handle_routine bad routine name %s",
-		       mom_string_cstr (namestrv));
-	  mom_item_webrequest_add
-	    (_L (web), MOMWEB_SET_MIME, "text/html",
-	     MOMWEB_LIT_STRING,
-	     "<!doctype html><head><title>Bad Routine Name in Monimelt</title></head>\n"
-	     "<body><h1>Bad Routine Name</h1>\n",
-	     MOMWEB_LIT_STRING, "<p>Name <tt>",
-	     MOMWEB_HTML_STRING,
-	     mom_string_cstr (namestrv),
-	     MOMWEB_LIT_STRING,
-	     "</tt> not found at <i>",
-	     MOMWEB_HTML_STRING, nowbuf,
-	     MOMWEB_LIT_STRING,
-	     "</i>.</p></body></html>\n",
-	     MOMWEB_LIT_STRING, HTML_FROM (),
-	     MOMWEB_REPLY_CODE, HTTP_NOT_FOUND, MOMWEB_END);
-	  return routres_pop;
-	}
-      if (mom_item_webrequest_post_arg (_L (web), "do_addrout").ptr)
-	{
-	  MOM_DEBUG (web, "web_form_handle_routine adding routine");
-	  momval_t oldset =
-	    (momval_t) mom_item_get_attr ((mom_anyitem_t *)
-					  mom_item__first_module,
-					  (mom_anyitem_t *)
-					  mom_item__routines);
-	  MOM_DBG_VALUE (web,
-			 "web_form_handle_routine old set of routines in first module=",
-			 oldset);
-	  momval_t newset =
-	    (momval_t) mom_make_set_til_nil (_L (routine), oldset, NULL);
-	  MOM_DBG_VALUE (web,
-			 "web_form_handle_routine new grown set of routines in first module=",
-			 newset);
-	  mom_item_put_attr ((mom_anyitem_t *) mom_item__first_module,
-			     (mom_anyitem_t *) mom_item__routines, newset);
-	  mom_item_webrequest_add
-	    (_L (web), MOMWEB_SET_MIME, "text/html",
-	     MOMWEB_LIT_STRING,
-	     "<!doctype html><head><title>Grown first_module"
-	     " in Monimelt</title></head>\n"
-	     "<body><h1>Update grown <tt>first_module</tt></h1>\n",
-	     MOMWEB_LIT_STRING, "<p>Routine named <tt>",
-	     MOMWEB_HTML_STRING,
-	     mom_string_cstr (namestrv),
-	     MOMWEB_LIT_STRING,
-	     "</tt> added, now having ",
-	     MOMWEB_DEC_LONG,
-	     (long) mom_set_cardinal (newset),
-	     MOMWEB_LIT_STRING, " routines, at <i>",
-	     MOMWEB_HTML_STRING, nowbuf,
-	     MOMWEB_LIT_STRING,
-	     "</i>.</p></body></html>\n",
-	     MOMWEB_LIT_STRING, HTML_FROM (),
-	     MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
-	  return routres_pop;
-	}
-      else if (mom_item_webrequest_post_arg (_L (web), "do_removerout").ptr)
-	{
-	  MOM_DEBUG (web, "web_form_handle_routine removing routine");
-	  momval_t oldset =
-	    (momval_t) mom_item_get_attr ((mom_anyitem_t *)
-					  mom_item__first_module,
-					  (mom_anyitem_t *)
-					  mom_item__routines);
-	  bool waspresent = mom_set_contains (oldset, _L (routine).panyitem);
-	  MOM_DBG_VALUE (web, "old set of routines in first module=", oldset);
-	  if (waspresent)
-	    {
-	      momval_t newset = mom_make_set_without (oldset, _L (routine));
-	      MOM_DBG_VALUE (web,
-			     "new smaller set of routines in first module=",
-			     newset);
-	      mom_item_put_attr ((mom_anyitem_t *) mom_item__first_module,
-				 (mom_anyitem_t *) mom_item__routines,
-				 newset);
-	      mom_item_webrequest_add
-		(_L (web), MOMWEB_SET_MIME, "text/html",
-		 MOMWEB_LIT_STRING,
-		 "<!doctype html><head><title>Shrinken first_module"
-		 " in Monimelt</title></head>\n"
-		 "<body><h1>Update shrinken <tt>first_module</tt></h1>\n",
-		 MOMWEB_LIT_STRING,
-		 "<p>Routine named <tt>",
-		 MOMWEB_HTML_STRING,
-		 mom_string_cstr (namestrv),
-		 MOMWEB_LIT_STRING,
-		 "</tt> removed, now having ",
-		 MOMWEB_DEC_LONG,
-		 (long) mom_set_cardinal (newset),
-		 MOMWEB_LIT_STRING, " routines, at <i>",
-		 MOMWEB_HTML_STRING, nowbuf,
-		 MOMWEB_LIT_STRING,
-		 "</i>.</p></body></html>\n",
-		 MOMWEB_LIT_STRING, HTML_FROM (),
-		 MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
-	      return routres_pop;
-	    }
-	  else
-	    {
-	      MOM_WARNING ("web_form_handle_routine missing routine name %s",
-			   mom_string_cstr (namestrv));
-	      mom_item_webrequest_add
-		(_L (web), MOMWEB_SET_MIME, "text/html",
-		 MOMWEB_LIT_STRING,
-		 "<!doctype html><head><title>Missing Routine in Monimelt</title></head>\n"
-		 "<body><h1>Missing Routine Name</h1>\n",
-		 MOMWEB_LIT_STRING, "<p>Name <tt>",
-		 MOMWEB_HTML_STRING,
-		 mom_string_cstr (namestrv),
-		 MOMWEB_LIT_STRING,
-		 "</tt> not found in <tt>first_module</tt> at <i>",
-		 MOMWEB_HTML_STRING, nowbuf,
-		 MOMWEB_LIT_STRING,
-		 "</i>.</p></body></html>\n",
-		 MOMWEB_LIT_STRING, HTML_FROM (),
-		 MOMWEB_REPLY_CODE, HTTP_NOT_FOUND, MOMWEB_END);
-	      return routres_pop;
-	    }
-	}
-      else if (mom_item_webrequest_post_arg (_L (web), "do_editrout").ptr)
-	{
-	  MOM_DEBUG (web, "web_form_handle_routine editrout");
-	  momval_t statev = MOM_NULLV, closurev = MOM_NULLV;
-	  momval_t valuesv = MOM_NULLV, numbersv = MOM_NULLV;
-	  momval_t doublesv = MOM_NULLV;
-	  mom_item_get_several_attrs (mom_value_as_item (_L (routine)),
-				      mom_item__state, &statev,
-				      mom_item__closure, &closurev,
-				      mom_item__values, &valuesv,
-				      mom_item__numbers, &numbersv,
-				      mom_item__doubles, &doublesv, NULL);
-	  MOM_DBG_VALUE (web, "web_form_handle_routine got statev=", statev);
-	  MOM_DBG_VALUE (web, "web_form_handle_routine got closurev=",
-			 closurev);
-	  MOM_DBG_VALUE (web, "web_form_handle_routine got valuesv=",
-			 valuesv);
-	  MOM_DBG_VALUE (web, "web_form_handle_routine got numbersv=",
-			 numbersv);
-	  MOM_DBG_VALUE (web, "web_form_handle_routine got doublesv=",
-			 doublesv);
-	  if (!statev.ptr)
-	    {
-	      statev =
-		(momval_t) mom_make_node_til_nil ((mom_anyitem_t *)
-						  mom_item__state, NULL);
-	      mom_item_put_attr (mom_value_as_item (_L (routine)),
-				 (mom_anyitem_t *) mom_item__state, statev);
-	      MOM_DBG_VALUE (web, "web_form_handle_routine new statev=",
-			     statev);
-	    }
-	  if (!closurev.ptr)
-	    {
-	      closurev = (momval_t) mom_make_tuple_sized (0, NULL);
-	      mom_item_put_attr (mom_value_as_item (_L (routine)),
-				 (mom_anyitem_t *) mom_item__closure,
-				 closurev);
-	      MOM_DBG_VALUE (web, "web_form_handle_routine new closurev=",
-			     statev);
-	    }
-	  if (!valuesv.ptr)
-	    {
-	      valuesv = (momval_t) mom_make_tuple_sized (0, NULL);
-	      mom_item_put_attr (mom_value_as_item (_L (routine)),
-				 (mom_anyitem_t *) mom_item__values, valuesv);
-	      MOM_DBG_VALUE (web, "web_form_handle_routine new valuesv=",
-			     valuesv);
-	    }
-	  if (!numbersv.ptr)
-	    {
-	      numbersv = (momval_t) mom_make_tuple_sized (0, NULL);
-	      mom_item_put_attr (mom_value_as_item (_L (routine)),
-				 (mom_anyitem_t *) mom_item__numbers,
-				 numbersv);
-	      MOM_DBG_VALUE (web, "web_form_handle_routine new numbersv=",
-			     numbersv);
-	    }
-	  if (!doublesv.ptr)
-	    {
-	      doublesv = (momval_t) mom_make_tuple_sized (0, NULL);
-	      mom_item_put_attr (mom_value_as_item (_L (routine)),
-				 (mom_anyitem_t *) mom_item__doubles,
-				 doublesv);
-	      MOM_DBG_VALUE (web, "web_form_handle_routine new doublesv=",
-			     doublesv);
-	    }
-#warning momcode_web_form_handle_routine incomplete should do_editrout
-	  MOM_DEBUG (web, "begin routine addition");
-	  // we should edit the DOM to add the appropriate elements in it.
-	  mom_item_webrequest_add
-	    (_L (web), MOMWEB_SET_MIME,
-	     "application/javascript",
-	     MOMWEB_LIT_STRING, "put_edited_routine('",
-	     MOMWEB_HTML_STRING,
-	     mom_string_cstr (namestrv),
-	     MOMWEB_LIT_STRING, "');\n",
-	     MOMWEB_LIT_STRING, JS_FROM (), MOMWEB_END);
-	  MOM_WARNING ("momcode_web_form_handle_routine incomplete");
-	  mom_item_webrequest_add
-	    (_L (web), MOMWEB_LIT_STRING,
-	     "// end of routine edition\n",
-	     MOMWEB_LIT_STRING, JS_FROM (),
-	     MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
-	  MOM_DEBUG (web, "end of routine addition");
-	}
-    }
-  return routres_pop;
-#undef _L
-}
-
-const struct momroutinedescr_st momrout_web_form_handle_routine =
-  {.rout_magic = ROUTINE_MAGIC,
-  .rout_minclosize = 0,
-  .rout_frame_nbval = wfhv__lastval,
-  .rout_frame_nbnum = 0,
-  .rout_frame_nbdbl = 0,
-  .rout_name = "web_form_handle_routine",
-  .rout_code = (const momrout_sig_t *) momcode_web_form_handle_routine,
-  .rout_timestamp = __DATE__ "@" __TIME__
-};
-
-#endif  /*0*/
-
 ////////////////////////////////////////////////////////////////
 
 int
@@ -612,10 +342,47 @@ momcode_ajax_named (int state, momit_tasklet_t * tasklet,
       else if (mom_same_string (idw, "do_forget_named"))
 	{
 	  momval_t namev = mom_item_webrequest_post_arg (webv, "name");
+	  char uidstr[UUID_PARSED_LEN];
+	  memset (uidstr, 0, sizeof (uidstr));
 	  MOM_DBG_VALUE (web, "ajax_named do_forget_named namev=", namev);
-#warning ajax_named incomplete do_forget_named
-	  MOM_WARNING ("momcode_ajax_named do_forget_named incomplete");
-	  MOM_DEBUG (web, "ajax_named do_forget_named unimplemented");
+	  mom_anyitem_t *oldnameditm = mom_item_of_name_string (namev);
+	  MOM_DBG_ITEM (web, "ajax_named oldnameditm=", oldnameditm);
+	  if (oldnameditm)
+	    {
+	      // got oldnameditm
+	      mom_forget_item (oldnameditm);
+	      mom_item_webrequest_add
+		(webv,
+		 MOMWEB_SET_MIME, "text/html",
+		 MOMWEB_LIT_STRING, "<b>Forgotten named</b> <tt>",
+		 MOMWEB_HTML_STRING, mom_string_cstr (namev),
+		 MOMWEB_LIT_STRING, "</tt> <small>of uuid <tt>",
+		 MOMWEB_LIT_STRING, mom_unparse_item_uuid (oldnameditm,
+							   uidstr),
+		 MOMWEB_LIT_STRING, "</tt></small> at <i>",
+		 MOMWEB_HTML_STRING, nowbuf, MOMWEB_LIT_STRING, "</i>.\n",
+		 MOMWEB_LIT_STRING, HTML_FROM (), MOMWEB_REPLY_CODE, HTTP_OK,
+		 MOMWEB_END);
+	      MOM_DEBUG (web, "ajax_named do_forget_named ok uidstr=%s",
+			 uidstr);
+	      return routres_pop;
+	    }
+	  else
+	    {
+	      // no oldnameditm
+	      mom_item_webrequest_add
+		(webv,
+		 MOMWEB_SET_MIME, "text/html",
+		 MOMWEB_LIT_STRING,
+		 "<b>Failed to forget invalid named</b> <tt>",
+		 MOMWEB_HTML_STRING, mom_string_cstr (namev),
+		 MOMWEB_LIT_STRING, "</tt> at <i>", MOMWEB_HTML_STRING,
+		 nowbuf, MOMWEB_LIT_STRING, "</i>.\n", MOMWEB_LIT_STRING,
+		 HTML_FROM (), MOMWEB_REPLY_CODE, HTTP_FORBIDDEN, MOMWEB_END);
+	      MOM_DEBUG (web, "ajax_named do_forget_named failed nowbuf=%s",
+			 nowbuf);
+	      return routres_pop;
+	    }
 	}
       MOM_WARNING ("momcode_ajax_named incomplete");
     }
@@ -848,6 +615,144 @@ backup_old_shared_object ()
     }
   pthread_mutex_unlock (&backup_mtx);
 }
+
+/*****************************************************************/
+/*****************************************************************/
+/*****************************************************************/
+
+enum proc_compilation_values_en
+{
+  pcov_argres,
+  pcov_outstr,
+  pcov_endreason,
+  pcov_proc,
+  pcov__lastval
+};
+
+enum proc_compilation_closure_en
+{
+  pcoc__lastclosure
+};
+
+enum proc_compilation_numbers_en
+{
+  pcon_procstatus,
+  pcon__lastnum
+};
+
+
+int
+momcode_proc_compilation (int state, momit_tasklet_t * tasklet,
+			  momclosure_t * closure, momval_t * locvals,
+			  intptr_t * locnums, double *locdbls)
+{
+  enum proc_compilation_state_en
+  {
+    pcos_start,
+    pcos_loadnewmodule,
+    pcos__laststate
+  };
+#define l_argres locvals[pcov_argres]
+#define l_proc locvals[pcov_proc]
+#define l_outstr locvals[pcov_outstr]
+#define l_endreason locvals[pcov_endreason]
+#define n_procstatus locnums[pcon_procstatus]
+#define SET_STATE(St) do {						\
+    MOM_DEBUG (run,							\
+		    "momcode_proc_compilation setstate " #St " = %d",	\
+		    (int)pcos_##St);					\
+    return pcos_##St; } while(0)
+  MOM_DEBUG (run, "begin momcode_proc_compilation state=%d", state);
+  MOM_DBG_VALUE (run, "proc_compilation closure=",
+		 (momval_t) (const momclosure_t *) closure);
+  bool goodstate = false;
+  //// state machine
+  switch ((enum proc_compilation_state_en) state)
+    {
+      ////////////////
+    case pcos_start:		////================ start
+      {
+	goodstate = true;
+	/// incoming values: process, output_string, endstatus (exited|terminated)
+	/// incoming numbers: exit-status|termination-signal
+	l_proc = l_argres;
+	MOM_DBG_VALUE (run, "momcode_proc_compilation start l_proc=", l_proc);
+	MOM_DBG_VALUE (run, "momcode_proc_compilation start l_outstr=",
+		       l_outstr);
+	MOM_DBG_VALUE (run, "momcode_proc_compilation start l_endreason=",
+		       l_endreason);
+	MOM_DEBUG (run,
+		   "momcode_proc_compilation start n_procstatus=%ld",
+		   (long) n_procstatus);
+	if (l_endreason.panyitem == (mom_anyitem_t *) mom_item__exited
+	    && n_procstatus == 0)
+	  {
+	    MOM_DEBUG (run,
+		       "momcode_proc_compilation make process succeeded");
+	    SET_STATE (loadnewmodule);
+	  }
+	else if (l_endreason.panyitem == (mom_anyitem_t *) mom_item__exited
+		 && n_procstatus != 0)
+	  {
+	    MOM_WARNING
+	      ("momcode_proc_compilation make process failed, exit code=%ld",
+	       (long) n_procstatus);
+	    return routres_pop;
+	  }
+	else if (l_endreason.panyitem ==
+		 (mom_anyitem_t *) mom_item__terminated)
+	  {
+	    MOM_WARNING
+	      ("momcode_proc_compilation make process terminated with signal#%d = %s",
+	       (int) n_procstatus, strsignal (n_procstatus));
+	    return routres_pop;
+	  }
+	else
+	  MOM_FATAL ("momcode_proc_compilation bad endreason");
+      }
+      break;
+      ////////////////
+    case pcos_loadnewmodule:	////================ load new module
+      {
+	goodstate = true;
+	MOM_DEBUG (run, "momcode_proc_compilation loadnewmodule");
+	mom_request_stop ("proc_compilation loadnewmodule",
+			  (mom_post_runner_sig_t *) mom_load_code_post_runner,
+			  GENERATED_BASE_NAME);
+	MOM_DEBUG (run,
+		   "momcode_proc_compilation stop to load "
+		   GENERATED_BASE_NAME);
+	return routres_pop;
+      }
+      break;
+      ////////////////
+    case pcos__laststate:
+      {
+	MOM_FATAL ("momcode_proc_compilation unexpected last");
+      }
+    }
+  if (!goodstate)
+    MOM_FATAL ("momcode_proc_compilation invalid state %d", state);
+  return routres_pop;
+#undef l_argres
+#undef l_proc
+#undef l_outstr
+#undef l_endreason
+#undef n_procstatus
+#undef SET_STATE
+}
+
+const struct momroutinedescr_st momrout_proc_compilation =
+  {.rout_magic = ROUTINE_MAGIC,
+  .rout_minclosize = (unsigned) pcoc__lastclosure,
+  .rout_frame_nbval = (unsigned) pcov__lastval,
+  .rout_frame_nbnum = (unsigned) pcon__lastnum,
+  .rout_frame_nbdbl = 0,
+  .rout_name = "proc_compilation",
+  .rout_code = (const momrout_sig_t *) momcode_proc_compilation,
+  .rout_timestamp = __DATE__ "@" __TIME__
+};
+
 
 
 #warning web_form_compile is removed
@@ -1318,143 +1223,275 @@ const struct momroutinedescr_st momrout_web_form_compile =
 #endif
 
 
-/*****************************************************************/
-/*****************************************************************/
-/*****************************************************************/
 
-enum proc_compilation_values_en
+////////////////////////////////////////////////////////////////
+
+#warning web_form_handle_routine is removed
+
+/*****************/
+#if 0
+enum formhandlevalues_en
 {
-  pcov_argres,
-  pcov_outstr,
-  pcov_endreason,
-  pcov_proc,
-  pcov__lastval
+  wfhv_web,
+  wfhv_routine,
+  wfhv__lastval
 };
-
-enum proc_compilation_closure_en
-{
-  pcoc__lastclosure
-};
-
-enum proc_compilation_numbers_en
-{
-  pcon_procstatus,
-  pcon__lastnum
-};
-
-
 int
-momcode_proc_compilation (int state, momit_tasklet_t * tasklet,
-			  momclosure_t * closure, momval_t * locvals,
-			  intptr_t * locnums, double *locdbls)
+momcode_web_form_handle_routine (int state, momit_tasklet_t * tasklet,
+				 momclosure_t * closure, momval_t * locvals,
+				 intptr_t * locnums, double *locdbls)
 {
-  enum proc_compilation_state_en
-  {
-    pcos_start,
-    pcos_loadnewmodule,
-    pcos__laststate
-  };
-#define l_argres locvals[pcov_argres]
-#define l_proc locvals[pcov_proc]
-#define l_outstr locvals[pcov_outstr]
-#define l_endreason locvals[pcov_endreason]
-#define n_procstatus locnums[pcon_procstatus]
-#define SET_STATE(St) do {						\
-    MOM_DEBUG (run,							\
-		    "momcode_proc_compilation setstate " #St " = %d",	\
-		    (int)pcos_##St);					\
-    return pcos_##St; } while(0)
-  MOM_DEBUG (run, "begin momcode_proc_compilation state=%d", state);
-  MOM_DBG_VALUE (run, "proc_compilation closure=",
+#define _L(N) locvals[wfhv_##N]
+  time_t now = 0;
+  struct tm nowtm = { };
+  char nowbuf[64] = "";
+  time (&now);
+  strftime (nowbuf, sizeof (nowbuf), "%c", localtime_r (&now, &nowtm));
+  MOM_DEBUG (web,
+	     "momcode_web_form_handle_routine state=%d webnum=%ld nowbuf=%s",
+	     state, mom_item_webrequest_webnum (_L (web)), nowbuf);
+  MOM_DBG_ITEM (web, "web_form_handle_routine tasklet=",
+		(const mom_anyitem_t *) tasklet);
+  MOM_DBG_VALUE (web, "web_form_handle_routine web=", _L (web));
+  MOM_DBG_VALUE (web, "web_form_handle_routine closure=",
 		 (momval_t) (const momclosure_t *) closure);
-  bool goodstate = false;
-  //// state machine
-  switch ((enum proc_compilation_state_en) state)
+  MOM_DBG_VALUE (web, "web_form_handle_routine method=",
+		 (momval_t) mom_item_webrequest_method (_L (web)));
+  if (mom_item_webrequest_method (_L (web)).ptr ==
+      ((momval_t) mom_item__POST).ptr)
     {
-      ////////////////
-    case pcos_start:		////================ start
-      {
-	goodstate = true;
-	/// incoming values: process, output_string, endstatus (exited|terminated)
-	/// incoming numbers: exit-status|termination-signal
-	l_proc = l_argres;
-	MOM_DBG_VALUE (run, "momcode_proc_compilation start l_proc=", l_proc);
-	MOM_DBG_VALUE (run, "momcode_proc_compilation start l_outstr=",
-		       l_outstr);
-	MOM_DBG_VALUE (run, "momcode_proc_compilation start l_endreason=",
-		       l_endreason);
-	MOM_DEBUG (run,
-		   "momcode_proc_compilation start n_procstatus=%ld",
-		   (long) n_procstatus);
-	if (l_endreason.panyitem == (mom_anyitem_t *) mom_item__exited
-	    && n_procstatus == 0)
-	  {
-	    MOM_DEBUG (run,
-		       "momcode_proc_compilation make process succeeded");
-	    SET_STATE (loadnewmodule);
-	  }
-	else if (l_endreason.panyitem == (mom_anyitem_t *) mom_item__exited
-		 && n_procstatus != 0)
-	  {
-	    MOM_WARNING
-	      ("momcode_proc_compilation make process failed, exit code=%ld",
-	       (long) n_procstatus);
-	    return routres_pop;
-	  }
-	else if (l_endreason.panyitem ==
-		 (mom_anyitem_t *) mom_item__terminated)
-	  {
-	    MOM_WARNING
-	      ("momcode_proc_compilation make process terminated with signal#%d = %s",
-	       (int) n_procstatus, strsignal (n_procstatus));
-	    return routres_pop;
-	  }
-	else
-	  MOM_FATAL ("momcode_proc_compilation bad endreason");
-      }
-      break;
-      ////////////////
-    case pcos_loadnewmodule:	////================ load new module
-      {
-	goodstate = true;
-	MOM_DEBUG (run, "momcode_proc_compilation loadnewmodule");
-	mom_request_stop ("proc_compilation loadnewmodule",
-			  (mom_post_runner_sig_t *) mom_load_code_post_runner,
-			  GENERATED_BASE_NAME);
-	MOM_DEBUG (run,
-		   "momcode_proc_compilation stop to load "
-		   GENERATED_BASE_NAME);
-	return routres_pop;
-      }
-      break;
-      ////////////////
-    case pcos__laststate:
-      {
-	MOM_FATAL ("momcode_proc_compilation unexpected last");
-      }
+      MOM_DEBUG (web, "web_form_handle_routine POST");
+      MOM_DBG_VALUE (web, "web_form_handle_routine jsobpost=",
+		     mom_item_webrequest_jsob_post (_L (web)));
+      momval_t namestrv =
+	mom_item_webrequest_post_arg (_L (web), "routine_name");
+      _L (routine) = (momval_t) mom_item_of_name_string (namestrv);
+      MOM_DBG_VALUE (web, "web_form_handle_routine routine=", _L (routine));
+      if (mom_type (_L (routine)) != momty_routineitem)
+	{
+	  MOM_WARNING ("web_form_handle_routine bad routine name %s",
+		       mom_string_cstr (namestrv));
+	  mom_item_webrequest_add
+	    (_L (web), MOMWEB_SET_MIME, "text/html",
+	     MOMWEB_LIT_STRING,
+	     "<!doctype html><head><title>Bad Routine Name in Monimelt</title></head>\n"
+	     "<body><h1>Bad Routine Name</h1>\n",
+	     MOMWEB_LIT_STRING, "<p>Name <tt>",
+	     MOMWEB_HTML_STRING,
+	     mom_string_cstr (namestrv),
+	     MOMWEB_LIT_STRING,
+	     "</tt> not found at <i>",
+	     MOMWEB_HTML_STRING, nowbuf,
+	     MOMWEB_LIT_STRING,
+	     "</i>.</p></body></html>\n",
+	     MOMWEB_LIT_STRING, HTML_FROM (),
+	     MOMWEB_REPLY_CODE, HTTP_NOT_FOUND, MOMWEB_END);
+	  return routres_pop;
+	}
+      if (mom_item_webrequest_post_arg (_L (web), "do_addrout").ptr)
+	{
+	  MOM_DEBUG (web, "web_form_handle_routine adding routine");
+	  momval_t oldset =
+	    (momval_t) mom_item_get_attr ((mom_anyitem_t *)
+					  mom_item__first_module,
+					  (mom_anyitem_t *)
+					  mom_item__routines);
+	  MOM_DBG_VALUE (web,
+			 "web_form_handle_routine old set of routines in first module=",
+			 oldset);
+	  momval_t newset =
+	    (momval_t) mom_make_set_til_nil (_L (routine), oldset, NULL);
+	  MOM_DBG_VALUE (web,
+			 "web_form_handle_routine new grown set of routines in first module=",
+			 newset);
+	  mom_item_put_attr ((mom_anyitem_t *) mom_item__first_module,
+			     (mom_anyitem_t *) mom_item__routines, newset);
+	  mom_item_webrequest_add
+	    (_L (web), MOMWEB_SET_MIME, "text/html",
+	     MOMWEB_LIT_STRING,
+	     "<!doctype html><head><title>Grown first_module"
+	     " in Monimelt</title></head>\n"
+	     "<body><h1>Update grown <tt>first_module</tt></h1>\n",
+	     MOMWEB_LIT_STRING, "<p>Routine named <tt>",
+	     MOMWEB_HTML_STRING,
+	     mom_string_cstr (namestrv),
+	     MOMWEB_LIT_STRING,
+	     "</tt> added, now having ",
+	     MOMWEB_DEC_LONG,
+	     (long) mom_set_cardinal (newset),
+	     MOMWEB_LIT_STRING, " routines, at <i>",
+	     MOMWEB_HTML_STRING, nowbuf,
+	     MOMWEB_LIT_STRING,
+	     "</i>.</p></body></html>\n",
+	     MOMWEB_LIT_STRING, HTML_FROM (),
+	     MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
+	  return routres_pop;
+	}
+      else if (mom_item_webrequest_post_arg (_L (web), "do_removerout").ptr)
+	{
+	  MOM_DEBUG (web, "web_form_handle_routine removing routine");
+	  momval_t oldset =
+	    (momval_t) mom_item_get_attr ((mom_anyitem_t *)
+					  mom_item__first_module,
+					  (mom_anyitem_t *)
+					  mom_item__routines);
+	  bool waspresent = mom_set_contains (oldset, _L (routine).panyitem);
+	  MOM_DBG_VALUE (web, "old set of routines in first module=", oldset);
+	  if (waspresent)
+	    {
+	      momval_t newset = mom_make_set_without (oldset, _L (routine));
+	      MOM_DBG_VALUE (web,
+			     "new smaller set of routines in first module=",
+			     newset);
+	      mom_item_put_attr ((mom_anyitem_t *) mom_item__first_module,
+				 (mom_anyitem_t *) mom_item__routines,
+				 newset);
+	      mom_item_webrequest_add
+		(_L (web), MOMWEB_SET_MIME, "text/html",
+		 MOMWEB_LIT_STRING,
+		 "<!doctype html><head><title>Shrinken first_module"
+		 " in Monimelt</title></head>\n"
+		 "<body><h1>Update shrinken <tt>first_module</tt></h1>\n",
+		 MOMWEB_LIT_STRING,
+		 "<p>Routine named <tt>",
+		 MOMWEB_HTML_STRING,
+		 mom_string_cstr (namestrv),
+		 MOMWEB_LIT_STRING,
+		 "</tt> removed, now having ",
+		 MOMWEB_DEC_LONG,
+		 (long) mom_set_cardinal (newset),
+		 MOMWEB_LIT_STRING, " routines, at <i>",
+		 MOMWEB_HTML_STRING, nowbuf,
+		 MOMWEB_LIT_STRING,
+		 "</i>.</p></body></html>\n",
+		 MOMWEB_LIT_STRING, HTML_FROM (),
+		 MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
+	      return routres_pop;
+	    }
+	  else
+	    {
+	      MOM_WARNING ("web_form_handle_routine missing routine name %s",
+			   mom_string_cstr (namestrv));
+	      mom_item_webrequest_add
+		(_L (web), MOMWEB_SET_MIME, "text/html",
+		 MOMWEB_LIT_STRING,
+		 "<!doctype html><head><title>Missing Routine in Monimelt</title></head>\n"
+		 "<body><h1>Missing Routine Name</h1>\n",
+		 MOMWEB_LIT_STRING, "<p>Name <tt>",
+		 MOMWEB_HTML_STRING,
+		 mom_string_cstr (namestrv),
+		 MOMWEB_LIT_STRING,
+		 "</tt> not found in <tt>first_module</tt> at <i>",
+		 MOMWEB_HTML_STRING, nowbuf,
+		 MOMWEB_LIT_STRING,
+		 "</i>.</p></body></html>\n",
+		 MOMWEB_LIT_STRING, HTML_FROM (),
+		 MOMWEB_REPLY_CODE, HTTP_NOT_FOUND, MOMWEB_END);
+	      return routres_pop;
+	    }
+	}
+      else if (mom_item_webrequest_post_arg (_L (web), "do_editrout").ptr)
+	{
+	  MOM_DEBUG (web, "web_form_handle_routine editrout");
+	  momval_t statev = MOM_NULLV, closurev = MOM_NULLV;
+	  momval_t valuesv = MOM_NULLV, numbersv = MOM_NULLV;
+	  momval_t doublesv = MOM_NULLV;
+	  mom_item_get_several_attrs (mom_value_as_item (_L (routine)),
+				      mom_item__state, &statev,
+				      mom_item__closure, &closurev,
+				      mom_item__values, &valuesv,
+				      mom_item__numbers, &numbersv,
+				      mom_item__doubles, &doublesv, NULL);
+	  MOM_DBG_VALUE (web, "web_form_handle_routine got statev=", statev);
+	  MOM_DBG_VALUE (web, "web_form_handle_routine got closurev=",
+			 closurev);
+	  MOM_DBG_VALUE (web, "web_form_handle_routine got valuesv=",
+			 valuesv);
+	  MOM_DBG_VALUE (web, "web_form_handle_routine got numbersv=",
+			 numbersv);
+	  MOM_DBG_VALUE (web, "web_form_handle_routine got doublesv=",
+			 doublesv);
+	  if (!statev.ptr)
+	    {
+	      statev =
+		(momval_t) mom_make_node_til_nil ((mom_anyitem_t *)
+						  mom_item__state, NULL);
+	      mom_item_put_attr (mom_value_as_item (_L (routine)),
+				 (mom_anyitem_t *) mom_item__state, statev);
+	      MOM_DBG_VALUE (web, "web_form_handle_routine new statev=",
+			     statev);
+	    }
+	  if (!closurev.ptr)
+	    {
+	      closurev = (momval_t) mom_make_tuple_sized (0, NULL);
+	      mom_item_put_attr (mom_value_as_item (_L (routine)),
+				 (mom_anyitem_t *) mom_item__closure,
+				 closurev);
+	      MOM_DBG_VALUE (web, "web_form_handle_routine new closurev=",
+			     statev);
+	    }
+	  if (!valuesv.ptr)
+	    {
+	      valuesv = (momval_t) mom_make_tuple_sized (0, NULL);
+	      mom_item_put_attr (mom_value_as_item (_L (routine)),
+				 (mom_anyitem_t *) mom_item__values, valuesv);
+	      MOM_DBG_VALUE (web, "web_form_handle_routine new valuesv=",
+			     valuesv);
+	    }
+	  if (!numbersv.ptr)
+	    {
+	      numbersv = (momval_t) mom_make_tuple_sized (0, NULL);
+	      mom_item_put_attr (mom_value_as_item (_L (routine)),
+				 (mom_anyitem_t *) mom_item__numbers,
+				 numbersv);
+	      MOM_DBG_VALUE (web, "web_form_handle_routine new numbersv=",
+			     numbersv);
+	    }
+	  if (!doublesv.ptr)
+	    {
+	      doublesv = (momval_t) mom_make_tuple_sized (0, NULL);
+	      mom_item_put_attr (mom_value_as_item (_L (routine)),
+				 (mom_anyitem_t *) mom_item__doubles,
+				 doublesv);
+	      MOM_DBG_VALUE (web, "web_form_handle_routine new doublesv=",
+			     doublesv);
+	    }
+#warning momcode_web_form_handle_routine incomplete should do_editrout
+	  MOM_DEBUG (web, "begin routine addition");
+	  // we should edit the DOM to add the appropriate elements in it.
+	  mom_item_webrequest_add
+	    (_L (web), MOMWEB_SET_MIME,
+	     "application/javascript",
+	     MOMWEB_LIT_STRING, "put_edited_routine('",
+	     MOMWEB_HTML_STRING,
+	     mom_string_cstr (namestrv),
+	     MOMWEB_LIT_STRING, "');\n",
+	     MOMWEB_LIT_STRING, JS_FROM (), MOMWEB_END);
+	  MOM_WARNING ("momcode_web_form_handle_routine incomplete");
+	  mom_item_webrequest_add
+	    (_L (web), MOMWEB_LIT_STRING,
+	     "// end of routine edition\n",
+	     MOMWEB_LIT_STRING, JS_FROM (),
+	     MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
+	  MOM_DEBUG (web, "end of routine addition");
+	}
     }
-  if (!goodstate)
-    MOM_FATAL ("momcode_proc_compilation invalid state %d", state);
   return routres_pop;
-#undef l_argres
-#undef l_proc
-#undef l_outstr
-#undef l_endreason
-#undef n_procstatus
-#undef SET_STATE
+#undef _L
 }
 
-const struct momroutinedescr_st momrout_proc_compilation =
+const struct momroutinedescr_st momrout_web_form_handle_routine =
   {.rout_magic = ROUTINE_MAGIC,
-  .rout_minclosize = (unsigned) pcoc__lastclosure,
-  .rout_frame_nbval = (unsigned) pcov__lastval,
-  .rout_frame_nbnum = (unsigned) pcon__lastnum,
+  .rout_minclosize = 0,
+  .rout_frame_nbval = wfhv__lastval,
+  .rout_frame_nbnum = 0,
   .rout_frame_nbdbl = 0,
-  .rout_name = "proc_compilation",
-  .rout_code = (const momrout_sig_t *) momcode_proc_compilation,
+  .rout_name = "web_form_handle_routine",
+  .rout_code = (const momrout_sig_t *) momcode_web_form_handle_routine,
   .rout_timestamp = __DATE__ "@" __TIME__
 };
 
+#endif /*0 */
 
 
 /*****************************************************************/
