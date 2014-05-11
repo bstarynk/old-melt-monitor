@@ -123,12 +123,13 @@ function install_create_named_form(datestr) {
 
 
 ////////////////
-function install_forget_named_form(datastr) {
+function install_forget_named_form(datestr) {
     console.debug('install_forget_named_form datestr=', datestr, ' workzone_domelem=', workzone_domelem);
     console.trace('install_forget_named_form');
     workzone_domelem
 	.html('<b>forget named:</b><input type="text" id="wforgetname_id" pattern="[A-Za-z_][A-Za-z0-9_]*" size="45"/>'
 	      + '&nbsp; <input type="submit" name="do_forgetname" value="forget" onclick="send_forget_named();"/>\n'
+	      + '&nbsp; <input type="submit" value="cancel" name="cancel" onclick="erase_work_zone()"/>'
 	      +'<br/><small>at <i>'+datestr+'</i></small>');
     console.debug('install_forget_named_form before autocomplete ajax');
     $.ajax({ url: '/ajax_complete_name',
