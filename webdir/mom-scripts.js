@@ -71,6 +71,7 @@ $(function(){
 		    success: function(d) {
 			console.debug ("nameddrop success d=", d);
 			eval(d);
+			console.debug ("nameddrop success done d=", d);
 		    }});
 	}
     });
@@ -117,7 +118,19 @@ function install_forget_named_form(datastr) {
 	.html('<b>forget named:</b><input type="text" id="wforgetname_id" pattern="[A-Za-z_][A-Za-z0-9_]*" size="45"/>'
 	      + '&nbsp; <input type="submit" name="do_forgetname" value="forget" onclick="send_forget_named()"/>\n'
 	      +'<br/><small>at <i>'+datestr+'</i></small>');
+    var autocomplsrc;
+    console.debug('install_forget_named_form before autocomplete ajax');
+    $.ajax({ url: '/ajax_complete',
+	     datatype: 'json',
+	     async: false,
+	     method: 'POST',
+	     success: function (resp) {
+		 console.debug ('install_forget_named_form ajax_complete resp=', resp);
+		 autocomplsrc = resp;
+	     }});
+    console.debug ('install_forget_named_form ajax_complete autocomplsrc=', autocomplsrc);
     $('#wforgetname_id').autocomplete({
+	source: autocomplsrc
     });
 }
 
@@ -155,4 +168,20 @@ function send_create_named() {
 function send_forget_named() {
     var forgnametxt = $('#wforgetname_id').val();
     console.debug('send_forget_named forgnametxt=', forgnametxt);
+    $.ajax({ url: '/ajax_named',
+	     method: 'POST',
+	     dataType: 'html',
+	     data: { id: 'do_forget_named',
+		     name: forgnametxt },
+	     success: function(data) {
+		 console.debug('send_forget_named got success data=',data);
+		 erase_work_zone();
+		 give_message(data);
+	     },
+	     error: function(xhr,status,err) {
+		 var errtxt = xhr.responseText;
+		 console.debug('send_forget_named got error xhr=',xhr, ' status=', status, ' err=', err, ' errtxt=', errtxt);
+		 give_message(errtxt);		 
+	     }
+	   });
 }

@@ -621,7 +621,7 @@ momcode_ajax_named (int state, momit_tasklet_t * tasklet,
 	}
       else if (mom_same_string (idw, "named_forget_id"))
 	{
-	  MOM_DEBUG (web, "should insert a forget form");
+	  MOM_DEBUG (web, "inserting a forget form");
 	  mom_item_webrequest_add
 	    (webv,
 	     MOMWEB_SET_MIME, "application/javascript",
