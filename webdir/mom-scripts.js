@@ -92,6 +92,16 @@ function install_create_named_form(datestr) {
     $('#workzone_id')
 	.html('<b>create named:</b><input type="text" id="wcreatename_id" pattern="[A-Za-z_][A-Za-z0-9_]*" size="45"/>'
 	      +'&nbsp; <b>comment:</b><input type="text" id="wcreatecomment_id" size="60"/>'
+	      +'&nbsp; <b>type:</b><select id="wcreatetype_id">'
+	      +'<option>assoc</option>'
+	      +'<option>box</option>'
+	      +'<option>buffer</option>'
+	      +'<option>dictionnary</option>'
+	      +'<option>json_name</option>'
+	      +'<option>queue</option>'
+	      +'<option>routine</option>'
+	      +'<option>vector</option>'
+	      +'</select>'
 	      +'<br/><input type="submit" value="create" name="create named" onclick="send_create_named()"/>'
 	      +'&nbsp; <input type="submit" value="cancel" name="cancel" onclick="erase_work_zone()"/>');
 }
@@ -104,16 +114,24 @@ function erase_work_zone() {
 function send_create_named() {
     var nametxt = $('#wcreatename_id').val();
     var commtxt = $('#wcreatecomment_id').val();
-    console.debug('send_create_named nametxt=', nametxt, ' commtxt=', commtxt);
+    var typetxt = $('#wcreatetype_id').val();
+    console.debug('send_create_named nametxt=', nametxt, ' commtxt=', commtxt, ' typetxt=', typetxt);
     $.ajax({ url: '/ajax_named',
 	     method: 'POST',
 	     dataType: 'html',
 	     data: { id: 'do_create_named',
 		     name: nametxt,
-		     comment: commtxt },
-	     success: function(data,status,jqx) {
-		 console.debug('send_create_named got data=',data,' status=', status, 'jqx=', jqx);
+		     comment: commtxt,
+		     type: typetxt },
+	     success: function(data) {
+		 console.debug('send_create_named got success data=',data);
 		 erase_work_zone();
+		 give_message(data);
+	     },
+	     error: function(xhr,status,err) {
+		 var errtxt = xhr.responseText;
+		 console.debug('send_create_named got error xhr=',xhr, ' status=', status, ' err=', err, ' errtxt=', errtxt);
+		 give_message(errtxt);		 
 	     }
 	   });
 }

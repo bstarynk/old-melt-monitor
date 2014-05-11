@@ -609,6 +609,7 @@ momcode_ajax_named (int state, momit_tasklet_t * tasklet,
       momval_t idw = mom_item_webrequest_post_arg (webv, "id");
       if (mom_same_string (idw, "named_create_id"))
 	{
+	  MOM_DEBUG (web, "momcode_ajax_named named_create_id");
 	  mom_item_webrequest_add
 	    (webv,
 	     MOMWEB_SET_MIME, "application/javascript",
@@ -624,14 +625,99 @@ momcode_ajax_named (int state, momit_tasklet_t * tasklet,
 	}
       else if (mom_same_string (idw, "do_create_named"))
 	{
-	momval_t namev = mom_item_webrequest_post_arg (webv, "name");
-	momval_t commv = mom_item_webrequest_post_arg (webv, "comment");
-	MOM_DEBUG (web, "ajax_named do_create_named namev=", namev);
-	MOM_DEBUG (web, "ajax_named do_create_named namev=", commv);
-#warning should create the named, etc...
+	  mom_anyitem_t *newitm = NULL;
+	  char *errmsg = NULL;
+	  momval_t namev = mom_item_webrequest_post_arg (webv, "name");
+	  momval_t commv = mom_item_webrequest_post_arg (webv, "comment");
+	  momval_t typev = mom_item_webrequest_post_arg (webv, "type");
+	  MOM_DBG_VALUE (web, "ajax_named do_create_named namev=", namev);
+	  MOM_DBG_VALUE (web, "ajax_named do_create_named commv=", commv);
+	  MOM_DBG_VALUE (web, "ajax_named do_create_named typev=", typev);
+	  if (mom_item_of_name_string (namev) != NULL)
+	    errmsg = "already existing named item";
+	  const char *namec = mom_string_cstr (namev);
+	  if (!namec)
+	    errmsg = "invalid name";
+	  bool goodname = !errmsg && isalpha (namec[0]);
+	  for (const char *pc = namec; *pc && goodname; pc++)
+	    if (pc[0] == '_')
+	      goodname = pc[1] != '_';
+	    else if (!isalnum (*pc))
+	      goodname = false;
+	  if (!goodname)
+	    errmsg = "invalid name";
+	  else if (mom_same_string (typev, "assoc"))
+	    newitm = (mom_anyitem_t *) mom_make_item_assoc (MOM_SPACE_ROOT);
+	  else if (mom_same_string (typev, "box"))
+	    newitm = (mom_anyitem_t *) mom_make_item_box (MOM_SPACE_ROOT);
+	  else if (mom_same_string (typev, "dictionnary"))
+	    newitm =
+	      (mom_anyitem_t *) mom_make_item_dictionnary (MOM_SPACE_ROOT);
+	  else if (mom_same_string (typev, "json_name"))
+	    newitm =
+	      (mom_anyitem_t *) mom_make_item_json_name (namec,
+							 MOM_SPACE_ROOT);
+	  else if (mom_same_string (typev, "queue"))
+	    newitm = (mom_anyitem_t *) mom_make_item_queue (MOM_SPACE_ROOT);
+	  else if (mom_same_string (typev, "routine"))
+	    newitm =
+	      (mom_anyitem_t *) mom_make_item_embryonic_routine (namec,
+								 MOM_SPACE_ROOT);
+	  else if (mom_same_string (typev, "vector"))
+	    newitm =
+	      (mom_anyitem_t *) mom_make_item_vector (MOM_SPACE_ROOT, 15);
+	  else
+	    errmsg = "bad type";
+	  if (!newitm && !errmsg)
+	    errmsg = "failed to make item";
+	  else
+	    {
+	      mom_register_new_name_string (namev.pstring, newitm);
+	      const char *commc = mom_string_cstr (commv);
+	      if (commc && commc[0])
+		mom_item_put_attr (newitm,
+				   (mom_anyitem_t *) mom_item__comment,
+				   commv);
+	    }
+	  MOM_DEBUG (web, "ajax_named errmsg=%s", errmsg);
+	  MOM_DBG_ITEM (web, "ajax_named newitm=", newitm);
+	  if (errmsg)
+	    {
+	      mom_item_webrequest_add
+		(webv,
+		 MOMWEB_SET_MIME, "text/html",
+		 MOMWEB_LIT_STRING, "<b>Failed to create named</b> <tt>",
+		 MOMWEB_HTML_STRING, mom_string_cstr (namev),
+		 MOMWEB_LIT_STRING, "</tt>:\n <em>",
+		 MOMWEB_HTML_STRING, errmsg,
+		 MOMWEB_LIT_STRING, "</em>\n at <i>",
+		 MOMWEB_HTML_STRING, nowbuf,
+		 MOMWEB_LIT_STRING, "</i>.\n",
+		 MOMWEB_REPLY_CODE, HTTP_FORBIDDEN, MOMWEB_END);
+	      MOM_DEBUG (web, "ajax_named do_create_named forbidden %s",
+			 errmsg);
+	    }
+	  else
+	    {
+	      char uidstr[UUID_PARSED_LEN];
+	      memset (uidstr, 0, sizeof (uidstr));
+	      mom_item_webrequest_add
+		(webv,
+		 MOMWEB_SET_MIME, "text/html",
+		 MOMWEB_LIT_STRING, "<b>Create named</b> <tt>",
+		 MOMWEB_HTML_STRING, mom_string_cstr (namev),
+		 MOMWEB_LIT_STRING, "</tt> <small>of uuid <tt>",
+		 MOMWEB_LIT_STRING, mom_unparse_item_uuid (newitm, uidstr),
+		 MOMWEB_LIT_STRING, "</tt></small> at <i>",
+		 MOMWEB_HTML_STRING, nowbuf,
+		 MOMWEB_LIT_STRING, "</i>.\n",
+		 MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
+	      MOM_DEBUG (web, "ajax_named do_create_named ok uidstr=%s",
+			 uidstr);
+	    }
+	  return routres_pop;
 	}
       MOM_WARNING ("momcode_ajax_named incomplete");
-#warning incomplete momcode_ajax_named
     }
   else
     MOM_WARNING ("ajax_named strange request webnum#%ld",
