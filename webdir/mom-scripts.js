@@ -85,3 +85,35 @@ function put_edited_routine(htmltitle) {
     console.debug('put_edited_routine htmltitle=', htmltitle);
     $('#toped_cl').html('<div class="routine_cl"><h3 id="routinetitle_id">routine <tt>'+htmltitle+'</tt></h3></div>');
 }
+
+
+function install_create_named_form(datestr) {
+    console.debug('install_create_named_form datestr=', datestr);
+    $('#workzone_id')
+	.html('<b>create named:</b><input type="text" id="wcreatename_id" pattern="[A-Za-z_][A-Za-z0-9_]*" size="45"/>'
+	      +'&nbsp; <b>comment:</b><input type="text" id="wcreatecomment_id" size="60"/>'
+	      +'<br/><input type="submit" value="create" name="create named" onclick="send_create_named()"/>'
+	      +'&nbsp; <input type="submit" value="cancel" name="cancel" onclick="erase_work_zone()"/>');
+}
+
+function erase_work_zone() {
+    console.debug('erase_work_zone');
+    $('#workzone_id').html('');
+}
+
+function send_create_named() {
+    var nametxt = $('#wcreatename_id').val();
+    var commtxt = $('#wcreatecomment_id').val();
+    console.debug('send_create_named nametxt=', nametxt, ' commtxt=', commtxt);
+    $.ajax({ url: '/ajax_named',
+	     method: 'POST',
+	     dataType: 'html',
+	     data: { id: 'do_create_named',
+		     name: nametxt,
+		     comment: commtxt },
+	     success: function(data,status,jqx) {
+		 console.debug('send_create_named got data=',data,' status=', status, 'jqx=', jqx);
+		 erase_work_zone();
+	     }
+	   });
+}

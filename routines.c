@@ -609,7 +609,6 @@ momcode_ajax_named (int state, momit_tasklet_t * tasklet,
       momval_t idw = mom_item_webrequest_post_arg (webv, "id");
       if (mom_same_string (idw, "named_create_id"))
 	{
-	  MOM_DEBUG (web, "should insert a create form");
 	  mom_item_webrequest_add
 	    (webv,
 	     MOMWEB_SET_MIME, "application/javascript",
@@ -622,6 +621,14 @@ momcode_ajax_named (int state, momit_tasklet_t * tasklet,
       else if (mom_same_string (idw, "named_forget_id"))
 	{
 	  MOM_DEBUG (web, "should insert a forget form");
+	}
+      else if (mom_same_string (idw, "do_create_named"))
+	{
+	momval_t namev = mom_item_webrequest_post_arg (webv, "name");
+	momval_t commv = mom_item_webrequest_post_arg (webv, "comment");
+	MOM_DEBUG (web, "ajax_named do_create_named namev=", namev);
+	MOM_DEBUG (web, "ajax_named do_create_named namev=", commv);
+#warning should create the named, etc...
 	}
       MOM_WARNING ("momcode_ajax_named incomplete");
 #warning incomplete momcode_ajax_named
