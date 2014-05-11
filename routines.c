@@ -617,7 +617,6 @@ momcode_ajax_named (int state, momit_tasklet_t * tasklet,
 	     MOMWEB_JS_STRING, nowbuf,
 	     MOMWEB_LIT_STRING, "');\n",
 	     MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
-
 	}
       else if (mom_same_string (idw, "named_forget_id"))
 	{
@@ -731,6 +730,7 @@ momcode_ajax_named (int state, momit_tasklet_t * tasklet,
 	}
       else if (mom_same_string (idw, "do_forget_named"))
 	{
+	  MOM_DEBUG (web, "ajax_named do_forget_named unimplemented");
 	}
       MOM_WARNING ("momcode_ajax_named incomplete");
     }
