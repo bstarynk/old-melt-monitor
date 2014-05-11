@@ -606,6 +606,23 @@ momcode_ajax_named (int state, momit_tasklet_t * tasklet,
       MOM_DEBUG (web, "momcode_ajax_named POST");
       MOM_DBG_VALUE (web, "ajax_named jsobpost=",
 		     mom_item_webrequest_jsob_post (webv));
+      momval_t idw = mom_item_webrequest_post_arg (webv, "id");
+      if (mom_same_string (idw, "named_create_id"))
+	{
+	  MOM_DEBUG (web, "should insert a create form");
+	  mom_item_webrequest_add
+	    (webv,
+	     MOMWEB_SET_MIME, "application/javascript",
+	     MOMWEB_LIT_STRING, "install_create_named_form('",
+	     MOMWEB_JS_STRING, nowbuf,
+	     MOMWEB_LIT_STRING, "');\n",
+	     MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
+
+	}
+      else if (mom_same_string (idw, "named_forget_id"))
+	{
+	  MOM_DEBUG (web, "should insert a forget form");
+	}
       MOM_WARNING ("momcode_ajax_named incomplete");
 #warning incomplete momcode_ajax_named
     }

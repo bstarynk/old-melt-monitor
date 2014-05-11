@@ -1033,7 +1033,8 @@ enum mom_webreplydirective_en
   MOMWEB__END = 0,
   MOMWEB_LIT_STRING /*, const char* literalstring; for literal  string */ ,
   MOMWEB_HTML_STRING
-    /*, const char* literalhtmlstring; for HTML encoded UTF-8 literal string  */
+    /*, const char* htmlstring; for HTML encoded literal string  */ ,
+  MOMWEB_JS_STRING		/*, const char*jstring; for JSON encoded literal string */
     ,
   MOMWEB_VALUE
     /*, momval_t val; for boxed numbers, JSON values, named items, buffer items  */
@@ -1324,6 +1325,14 @@ mom_is_string (momval_t val)
   if (!val.ptr || *val.ptype != momty_string)
     return false;
   return true;
+}
+
+static inline bool
+mom_same_string (momval_t val, const char *cstr)
+{
+  if (!val.ptr || *val.ptype != momty_string || !cstr)
+    return false;
+  return !strcmp (val.pstring->cstr, cstr);
 }
 
 static inline const char *

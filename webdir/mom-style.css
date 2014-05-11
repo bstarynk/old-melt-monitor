@@ -81,3 +81,9 @@ nav.nav_cl {
     background-color: ivory;
     display: inline-block;
 }
+
+div#workzone_id {
+    border: 1px darkblue;
+    min-width: 80%;
+    min-height: 20px;
+}

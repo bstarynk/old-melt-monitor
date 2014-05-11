@@ -63,10 +63,10 @@ $(function(){
 	    $.ajax({url: '/ajax_named',
 		    method: 'POST',
 		    data: data,
-		    dataType: 'html',
+		    dataType: 'script',
 		    success: function(d) {
 			console.debug ("nameddrop success d=", d);
-			give_message(d);
+			eval(d);
 		    }});
 	}
     });

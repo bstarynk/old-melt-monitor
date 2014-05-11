@@ -606,6 +606,61 @@ webrequest_addhtml (momit_webrequest_t * webitm, const char *htmlstr)
     }
 }
 
+static void
+webrequest_addjs (momit_webrequest_t * webitm, const char *jsstr)
+{
+  unsigned len = strlen (jsstr);
+  const gchar *end = NULL;
+  if (MOM_UNLIKELY (!g_utf8_validate (jsstr, len, &end)))
+    MOM_FATAL ("invalid UTF-8 string %s", jsstr);
+  webrequest_reserve (webitm, 9 * len / 8 + 2);
+  for (const gchar * pc = jsstr; *pc && pc < jsstr + len;
+       pc = g_utf8_next_char (pc))
+    {
+      gunichar c = g_utf8_get_char (pc);
+      switch (c)
+	{
+	case '\\':
+	  ADDWEBSTR (webitm, "\\\\");
+	  break;
+	case '\'':
+	  ADDWEBSTR (webitm, "\\\'");
+	  break;
+	case '\"':
+	  ADDWEBSTR (webitm, "\\\"");
+	  break;
+	case '\n':
+	  ADDWEBSTR (webitm, "\\n");
+	  break;
+	case '\r':
+	  ADDWEBSTR (webitm, "\\r");
+	  break;
+	case '\t':
+	  ADDWEBSTR (webitm, "\\t");
+	  break;
+	case '\v':
+	  ADDWEBSTR (webitm, "\\v");
+	  break;
+	case '\f':
+	  ADDWEBSTR (webitm, "\\f");
+	  break;
+	default:
+	  if (c >= 127 || c < ' ')
+	    {
+	      char ebuf[16];
+	      memset (ebuf, 0, sizeof (ebuf));
+	      snprintf (ebuf, sizeof (ebuf), "\\u%04x", (unsigned) c);
+	      ADDWEBSTR (webitm, ebuf);
+	    }
+	  else
+	    {
+	      webrequest_reserve (webitm, 4);
+	      webitm->iweb_replybuf[webitm->iweb_replylength++] = (char) c;
+	    }
+	  break;
+	}
+    }
+}
 
 void
 mom_item_webrequest_add (momval_t val, ...)
@@ -637,6 +692,13 @@ mom_item_webrequest_add (momval_t val, ...)
 	    const char *htmlstr = va_arg (args, const char *);
 	    if (htmlstr && htmlstr[0])
 	      webrequest_addhtml (webitm, htmlstr);
+	  }
+	  break;
+	case MOMWEB_JS_STRING:
+	  {
+	    const char *jsstr = va_arg (args, const char *);
+	    if (jsstr && jsstr[0])
+	      webrequest_addjs (webitm, jsstr);
 	  }
 	  break;
 	case MOMWEB_HTML_VALUE:
