@@ -19,6 +19,7 @@
 **/
 
 var message_domelem;
+var workzone_domelem;
 function give_message(htmlmessage) {
     console.debug('give_message htmlmessage=', htmlmessage, ' message_domelem=', message_domelem);
     message_domelem.html(htmlmessage);
@@ -28,6 +29,8 @@ function give_message(htmlmessage) {
 $(function(){
     message_domelem = $('#mom_message_id');
     console.debug("message_domelem=", message_domelem);
+    workzone_domelem = $('#workzone_id');
+    console.debug("workzone_domelem=", workzone_domelem);
     // if there is a momstart_id element, fill it by an Ajax query
     $.ajax({ url: '/ajax_start',
 	     method: 'GET',
@@ -91,10 +94,11 @@ function put_edited_routine(htmltitle) {
     $('#toped_cl').html('<div class="routine_cl"><h3 id="routinetitle_id">routine <tt>'+htmltitle+'</tt></h3></div>');
 }
 
-
+////////////////
 function install_create_named_form(datestr) {
+    console.debug('install_create_named_form datestr=', datestr, ' workzone_domelem=', workzone_domelem);
     console.debug('install_create_named_form datestr=', datestr);
-    $('#workzone_id')
+     workzone_domelem
 	.html('<b>create named:</b><input type="text" id="wcreatename_id" pattern="[A-Za-z_][A-Za-z0-9_]*" size="45"/>'
 	      +'&nbsp; <b>comment:</b><input type="text" id="wcreatecomment_id" size="60"/>'
 	      +'&nbsp; <b>type:</b><select id="wcreatetype_id">'
@@ -112,31 +116,34 @@ function install_create_named_form(datestr) {
 	     +'<br/><small>at <i>'+datestr+'</i></small>');
 }
 
+
+
+
+////////////////
 function install_forget_named_form(datastr) {
     console.debug('install_forget_named_form datestr=', datestr);
-    $('#workzone_id')
+    workzone_domelem
 	.html('<b>forget named:</b><input type="text" id="wforgetname_id" pattern="[A-Za-z_][A-Za-z0-9_]*" size="45"/>'
-	      + '&nbsp; <input type="submit" name="do_forgetname" value="forget" onclick="send_forget_named()"/>\n'
+	      + '&nbsp; <input type="submit" name="do_forgetname" value="forget" onclick="send_forget_named();"/>\n'
 	      +'<br/><small>at <i>'+datestr+'</i></small>');
-    var autocomplsrc;
     console.debug('install_forget_named_form before autocomplete ajax');
-    $.ajax({ url: '/ajax_complete',
+    $.ajax({ url: '/ajax_complete_name',
 	     datatype: 'json',
-	     async: false,
 	     method: 'POST',
 	     success: function (resp) {
-		 console.debug ('install_forget_named_form ajax_complete resp=', resp);
-		 autocomplsrc = resp;
+		 console.debug ('install_forget_named_form ajax_complete_name resp=', resp);
+		 $('#wforgetname_id').autocomplete({
+		     source: resp
+		 });
+		 console.debug ('install_forget_named_form ajax_complete_name autocomplete resp=', resp);
 	     }});
-    console.debug ('install_forget_named_form ajax_complete autocomplsrc=', autocomplsrc);
-    $('#wforgetname_id').autocomplete({
-	source: autocomplsrc
-    });
 }
 
+
+
 function erase_work_zone() {
-    console.debug('erase_work_zone');
-    $('#workzone_id').html('');
+    console.debug('erase_work_zone workzone_domelem=', workzone_domelem);
+    workzone_domelem.html('');
 }
 
 function send_create_named() {
