@@ -755,6 +755,108 @@ const struct momroutinedescr_st momrout_proc_compilation =
 
 
 
+
+
+
+////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
+enum web_ajax_routine_values_en
+{
+  ajrv_arg0res,
+  ajrv_web,
+  ajrv__lastvalue
+};
+
+enum web_ajax_routine_closure_en
+{
+  ajrc_aftercompilation,
+  ajrc__lastclosed
+};
+
+enum web_ajax_routine_numbers_en
+{
+  ajrn_ix,
+  ajrn__lastnumber
+};
+
+int
+momcode_ajax_routine (int state, momit_tasklet_t * tasklet,
+		      momclosure_t * closure, momval_t * locvals,
+		      intptr_t * locnums, double *locdbls)
+{
+  enum ajax_routine_state_en
+  {
+    ajrs_start,
+    ajrs__laststate
+  };
+#define SET_STATE(St) do {					\
+    MOM_DEBUG (run,						\
+	       "momcode_ajax_routine setstate " #St " = %d",	\
+	       (int)ajrs_##St);					\
+    return ajrs_##St; } while(0)
+#define _L(N) locvals[ajrv_##N]
+#define _C(N) closure->sontab[ajrc_##N]
+#define _N(N) locnums[ajrn_##N]
+  MOM_DEBUG (run, "momcode_ajax_routine start state=%d", state);
+  bool goodstate = false;
+  switch ((enum ajax_routine_state_en) state)
+    {
+      ////////////////
+    case ajrs_start:
+      goodstate;
+      {
+	_L (web) = _L (arg0res);
+	MOM_DBG_VALUE (run, "ajax_routine web=", _L (web));
+	if (mom_item_webrequest_method (_L (web)).ptr ==
+	    ((momval_t) mom_item__POST).ptr)
+	  {
+	    MOM_DEBUG (web, "momcode_ajax_routine POST");
+	    MOM_DBG_VALUE (web, "ajax_routine jsobpost=",
+			   mom_item_webrequest_jsob_post (_L (web)));
+	    momval_t idw = mom_item_webrequest_post_arg (_L (web), "id");
+	    if (mom_same_string (idw, "routine_compile_id"))
+	      {
+		MOM_DEBUG (web, "ajax_routine routine_compile_id");
+	      }
+	    else if (mom_same_string (idw, "routine_add_id"))
+	      {
+		MOM_DEBUG (web, "ajax_routine routine_add_id");
+	      }
+	    else if (mom_same_string (idw, "routine_remove_id"))
+	      {
+		MOM_DEBUG (web, "ajax_routine routine_remove_id");
+	      }
+	    else if (mom_same_string (idw, "routine_edit_id"))
+	      {
+		MOM_DEBUG (web, "ajax_routine routine_edit_id");
+	      }
+	  }
+      }
+      break;
+    case ajrs__laststate:
+      MOM_FATAL ("momcode_ajax_routine impossible last state %d", state);
+    }
+#undef SET_STATE
+#undef _L
+#undef _C
+#undef _N
+}
+
+
+const struct momroutinedescr_st momrout_ajax_routine =
+  {.rout_magic = ROUTINE_MAGIC,
+  .rout_minclosize = (unsigned) ajrc__lastclosed,
+  .rout_frame_nbval = (unsigned) ajrv__lastvalue,
+  .rout_frame_nbnum = (unsigned) ajrn__lastnumber,
+  .rout_frame_nbdbl = 0,
+  .rout_name = "ajax_routine",
+  .rout_code = (const momrout_sig_t *) momcode_ajax_routine,
+  .rout_timestamp = __DATE__ "@" __TIME__
+};
+
+////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
+
 #warning web_form_compile is removed
 
 #if 0
