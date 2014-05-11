@@ -764,6 +764,11 @@ enum web_ajax_routine_values_en
 {
   ajrv_arg0res,
   ajrv_web,
+  ajrv_module,
+  ajrv_routines,
+  ajrv_dashboard,
+  ajrv_buffer,
+  ajrv_curout,
   ajrv__lastvalue
 };
 
@@ -787,6 +792,12 @@ momcode_ajax_routine (int state, momit_tasklet_t * tasklet,
   enum ajax_routine_state_en
   {
     ajrs_start,
+    ajrs_compile_compute_routines,
+    ajrs_compile_got_routines,
+    ajrs_compile_begin_emission,
+    ajrs_compile_preparation_loop,
+    ajrs_compile_prepare_routine,
+    ajrs_compile_emission_loop,
     ajrs__laststate
   };
 #define SET_STATE(St) do {					\
@@ -803,7 +814,7 @@ momcode_ajax_routine (int state, momit_tasklet_t * tasklet,
     {
       ////////////////
     case ajrs_start:
-      goodstate;
+      goodstate = true;
       {
 	_L (web) = _L (arg0res);
 	MOM_DBG_VALUE (run, "ajax_routine web=", _L (web));
@@ -817,25 +828,158 @@ momcode_ajax_routine (int state, momit_tasklet_t * tasklet,
 	    if (mom_same_string (idw, "routine_compile_id"))
 	      {
 		MOM_DEBUG (web, "ajax_routine routine_compile_id");
+		_L (module) = (momval_t) mom_item__first_module;
+		_L (routines) =
+		  (momval_t)
+		  mom_item_get_attr (mom_value_as_item (_L (module)),
+				     (mom_anyitem_t *) mom_item__routines);
+		MOM_DBG_VALUE (web, "ajax_routine compile routines=",
+			       _L (routines));
+		if (mom_type (_L (routines)) == momty_closure)
+		  SET_STATE (compile_compute_routines);
+		else if (mom_type (_L (routines)) == momty_set)
+		  SET_STATE (compile_begin_emission);
+		else
+		  {
+		    MOM_WARNING ("no routines in first_module");
+		    _L (routines) = MOM_NULLV;
+		    SET_STATE (compile_begin_emission);
+		  }
 	      }
 	    else if (mom_same_string (idw, "routine_add_id"))
 	      {
 		MOM_DEBUG (web, "ajax_routine routine_add_id");
+		MOM_WARNING ("unimplemented ajax_routine routine_add_id");
 	      }
 	    else if (mom_same_string (idw, "routine_remove_id"))
 	      {
 		MOM_DEBUG (web, "ajax_routine routine_remove_id");
+		MOM_WARNING ("unimplemented ajax_routine routine_remove_id");
 	      }
 	    else if (mom_same_string (idw, "routine_edit_id"))
 	      {
 		MOM_DEBUG (web, "ajax_routine routine_edit_id");
+		MOM_WARNING ("unimplemented ajax_routine routine_edit_id");
 	      }
 	  }
       }
       break;
+      ////////////////
+    case ajrs_compile_compute_routines:	////================ compile compute routines
+      goodstate = true;
+      {
+	MOM_DBG_VALUE (web,
+		       "ajax_routine compile compute_routines clo routines=",
+		       _L (routines));
+	mom_tasklet_push_frame ((momval_t) tasklet, (momval_t) _L (routines),
+				MOMPFR_VALUE, _L (module), MOMPFR_END);
+	SET_STATE (compile_got_routines);
+      }
+      break;
+      ////////////////
+    case ajrs_compile_got_routines:	////================ compile got_routines
+      goodstate = true;
+      {
+	_L (routines) = _L (arg0res);
+	MOM_DBG_VALUE (web, "ajax_routine compile got_routine routines=",
+		       _L (routines));
+	if (mom_type (_L (routines)) != momty_set)
+	  {
+	    MOM_WARNING ("ajax_routine compile got bad routines");
+	    _L (routines) = MOM_NULLV;
+	  }
+	SET_STATE (compile_begin_emission);
+      }
+      break;
+      ////////////////
+    case ajrs_compile_begin_emission:	////================ compile begin_emission
+      goodstate = true;
+      {
+	_L (dashboard) = (momval_t) mom_make_item_assoc (MOM_SPACE_NONE);
+	_L (buffer) = (momval_t) mom_make_item_buffer (MOM_SPACE_NONE);
+	MOM_DBG_VALUE (web, "ajax_routine compile begin_emission dashboard",
+		       _L (dashboard));
+	MOM_DBG_VALUE (web, "ajax_routine compile begin_emission buffer",
+		       _L (buffer));
+	mom_item_buffer_puts (_L (buffer),
+			      "// generated file " GENERATED_SOURCE_FILE_NAME
+			      " *** DO NOT EDIT ***\n");
+	time_t nowt = 0;
+	time (&nowt);
+	struct tm nowtm = { };
+	char nowyear[16];
+	char nowdate[72];
+	memset (nowyear, 0, sizeof (nowyear));
+	memset (nowdate, 0, sizeof (nowdate));
+	localtime_r (&nowt, &nowtm);
+	strftime (nowyear, sizeof (nowyear), "%Y", &nowtm);
+	strftime (nowdate, sizeof (nowdate), "%Y %b %d [%F]", &nowtm);
+	mom_item_buffer_printf (_L (buffer), "// generated on %s\n\n",
+				nowdate);
+	mom_item_buffer_printf
+	  (_L (buffer),
+	   "/**   Copyright (C) %s Free Software Foundation, Inc.\n"
+	   " MONIMELT is a monitor for MELT - see http://gcc-melt.org/\n"
+	   " This generated file is part of GCC.\n" "\n"
+	   " GCC is free software; you can redistribute it and/or modify\n"
+	   " it under the terms of the GNU General Public License as published by\n"
+	   " the Free Software Foundation; either version 3, or (at your option)\n"
+	   " any later version.\n" "\n"
+	   " GCC is distributed in the hope that it will be useful,\n"
+	   " but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+	   " MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+	   " GNU General Public License for more details.\n"
+	   " You should have received a copy of the GNU General Public License\n"
+	   " along with GCC; see the file COPYING3.   If not see\n"
+	   " <http://www.gnu.org/licenses/>.\n" "**/\n\n"
+	   "#" "include \"monimelt.h\"\n\n", nowyear);
+	_N (ix) = 0;
+	SET_STATE (compile_preparation_loop);
+      }
+      break;
+    case ajrs_compile_preparation_loop:	////================ compile preparation_loop
+      goodstate = true;
+      {
+	MOM_DEBUG (web, "ajax_routine compile preparation_loop ix=%ld",
+		   (long) _N (ix));
+	if (_N (ix) > (long) mom_set_cardinal (_L (routines)))
+	  {
+	    mom_item_buffer_printf
+	      (_L (buffer), "\n\n"
+	       "// prepared %ld routines\n",
+	       (long) mom_set_cardinal (_L (routines)));
+	    _N (ix) = 0;
+	    SET_STATE (compile_emission_loop);
+	  }
+	else
+	  {
+	    _L (curout) =
+	      (momval_t) mom_set_nth_item (_L (routines), _N (ix));
+	    MOM_DBG_VALUE (web,
+			   "ajax_routine compile preparation_loop curout=",
+			   _L (curout));
+	    _N (ix)++;
+	    if (mom_value_as_item (_L (curout)) != NULL)
+	      SET_STATE (compile_prepare_routine);
+	    else
+	      SET_STATE (compile_preparation_loop);
+	  }
+      }
+      break;
+    case ajrs_compile_prepare_routine:	////================ compile prepare_routine
+      goodstate = true;
+      {
+	MOM_DEBUG (web, "ajax_routine compile prepare_routine ix=%ld",
+		   (long) _N (ix));
+      }
+      break;
+      ////////////////*************
+      ////////////////
     case ajrs__laststate:
       MOM_FATAL ("momcode_ajax_routine impossible last state %d", state);
     }
+  if (!goodstate)
+    MOM_FATAL ("momcode_ajax_routine invalid state %d", state);
 #undef SET_STATE
 #undef _L
 #undef _C
@@ -1042,7 +1186,7 @@ momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
 	   " along with GCC; see the file COPYING3.   If not see\n"
 	   " <http://www.gnu.org/licenses/>.\n"
 	   "**/\n\n" "#" "include \"monimelt.h\"\n\n", nowyear);
-	n_ix = 0;
+	_N (ix) = 0;
 	SET_STATE (preparation_loop);
       }
       break;
