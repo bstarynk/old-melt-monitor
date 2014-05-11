@@ -76,12 +76,12 @@ mom_module_post_load (void)
     (mom_anyitem_t *) mom_make_item_routine ("ajax_routine",
 					     MOM_SPACE_ROOT);
 #endif
-  mom_anyitem_t* rout_ajax_routine = mom_item_named ("ajax_routine");
+  mom_anyitem_t *rout_ajax_routine = mom_item_named ("ajax_routine");
   MOM_DBG_ITEM (run, "rout_ajax_routine=", rout_ajax_routine);
   MOM_INFORM ("cold rout_ajax_routine ~%s",
 	      mom_unparse_item_uuid ((mom_anyitem_t *)
 				     rout_ajax_routine, uistr));
-  mom_anyitem_t* rout_proc_compilation = mom_item_named ("proc_compilation");
+  mom_anyitem_t *rout_proc_compilation = mom_item_named ("proc_compilation");
   MOM_DBG_ITEM (run, "rout_proc_compilation=", rout_proc_compilation);
   const momclosure_t *clos_proc_compilation =
     mom_make_closure_til_nil ((mom_anyitem_t *) rout_proc_compilation,

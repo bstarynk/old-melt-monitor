@@ -99,7 +99,7 @@ $(function(){
 		    dataType: 'html',
 		    success: function(d) {
 			console.debug ("routinedrop success d=", d);
-			console.warning ("routinedrop unimplemented d=", d);
+			give_message (d);
 		    }});
 	}});
 });
