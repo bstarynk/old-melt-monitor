@@ -24,7 +24,7 @@ CREATE TABLE t_param (parname VARCHAR(35) PRIMARY KEY ASC NOT NULL UNIQUE, parva
 CREATE TABLE t_module (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_item VALUES('0229c553-c443-49a9-9244-5f8d7d3c79cf','dictionnary','{"jtype":"dictionnary"}','{"attributes":null,"content":null,"dictionnary":[{"name":"ajax_complete_name",
- "val":{"conn":{"jtype":"itemref","space":".","uuid":"b6e41f84-c5f6-48d2-af55-6638c3cc9a64"},
+ "val":{"conn":{"jtype":"itemref","space":".","uuid":"9a4eeb30-2c39-4d6d-b737-59cb3e428fd0"},
  "jtype":"closure","sons":["Gap*Ajax_Complete_Name"]}},{"name":"ajax_complete_routine_name",
  "val":{"conn":{"jtype":"itemref","space":".","uuid":"8e5f1892-9c0b-42c0-8390-e384e471d3fd"},
  "jtype":"closure","sons":["Gap*Ajax_Complete_Routine_Name"]}},{"name":"ajax_exit",
@@ -83,6 +83,7 @@ INSERT INTO t_item VALUES('8e5f1892-9c0b-42c0-8390-e384e471d3fd','routine','{"jt
  "val":"for autocompletion of routine names"}],"content":null}');
 INSERT INTO t_item VALUES('93abbd1c-2d33-4b86-8e16-e5b0c14842dc','box','{"jtype":"box"}','{"attributes":null,"box":null,"content":null}');
 INSERT INTO t_item VALUES('9a05b9fa-17d3-4294-9253-e67406e52d4a','json_name','{"jtype":"json_name","name":"content"}','{"attributes":null,"content":null}');
+INSERT INTO t_item VALUES('9a4eeb30-2c39-4d6d-b737-59cb3e428fd0','routine','{"jtype":"routine","name":"ajax_complete_name"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('9dccb4ab-45d0-4fa3-a3d0-8bb722a83478','box','{"jtype":"box"}','{"attributes":null,"box":null,"content":null}');
 INSERT INTO t_item VALUES('9ef8915a-d57e-42b5-8e6d-507470a69996','json_name','{"jtype":"json_name","name":"string"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('a75bef70-596b-4fc5-99ca-e60b5287feec','json_name','{"jtype":"json_name","name":"uuid"}','{"attributes":null,"content":null}');

@@ -52,6 +52,10 @@ mom_module_post_load (void)
   char uistr[UUID_PARSED_LEN];
   memset (uistr, 0, sizeof (uistr));
   MOM_INFORM ("cold post load " __DATE__ "@" __TIME__);
+  mom_item_dictionnary_put_cstr ((momval_t) mom_item__web_dictionnary,
+				 "form_new_named", MOM_NULLV);
+  mom_forget_name ("web_form_new_named");
+#if 0
   mom_anyitem_t *rout_ajax_complete_name =
     (mom_anyitem_t *) mom_make_item_routine ("ajax_complete_name",
 					     MOM_SPACE_ROOT);
@@ -69,5 +73,6 @@ mom_module_post_load (void)
 				 (momval_t) clos_ajax_complete_name);
   MOM_DBG_VALUE (run, "clos_ajax_complete_name",
 		 (momval_t) clos_ajax_complete_name);
+#endif
   MOM_INFORM ("cold post load done");
 }
