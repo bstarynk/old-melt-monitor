@@ -122,11 +122,14 @@ const struct momroutinedescr_st momrout_ajax_exit =
 };
 
 
-////////////////////////////////////////////////////////////////
 
 
 ////////////////////////////////////////////////////////////////
 
+#warning web_form_handle_routine is removed
+
+/*****************/
+#if 0
 enum formhandlevalues_en
 {
   wfhv_web,
@@ -387,6 +390,8 @@ const struct momroutinedescr_st momrout_web_form_handle_routine =
   .rout_code = (const momrout_sig_t *) momcode_web_form_handle_routine,
   .rout_timestamp = __DATE__ "@" __TIME__
 };
+
+#endif  /*0*/
 
 ////////////////////////////////////////////////////////////////
 
@@ -844,6 +849,10 @@ backup_old_shared_object ()
   pthread_mutex_unlock (&backup_mtx);
 }
 
+
+#warning web_form_compile is removed
+
+#if 0
 enum web_form_compile_values_en
 {
   wfcv_argres,
@@ -1306,7 +1315,7 @@ const struct momroutinedescr_st momrout_web_form_compile =
   .rout_code = (const momrout_sig_t *) momcode_web_form_compile,
   .rout_timestamp = __DATE__ "@" __TIME__
 };
-
+#endif
 
 
 /*****************************************************************/
