@@ -426,16 +426,13 @@ start_some_pending_jobs (void)
 	  nice (1);
 	  sigset_t mysetsig;
 	  sigemptyset (&mysetsig);
-	  sigaddset (&mysetsig, SIGINT);
 	  sigaddset (&mysetsig, SIGTERM);
 	  sigaddset (&mysetsig, SIGQUIT);
 	  sigaddset (&mysetsig, SIGPIPE);
 	  sigaddset (&mysetsig, SIGCHLD);
 	  sigprocmask (SIG_UNBLOCK, &mysetsig, NULL);
-	  signal (SIGINT, SIG_DFL);
 	  signal (SIGTERM, SIG_DFL);
 	  signal (SIGQUIT, SIG_DFL);
-	  signal (SIGINT, SIG_DFL);
 	  signal (SIGCHLD, SIG_DFL);
 	  execvp ((const char *) progname, (char *const *) progargv);
 	  fprintf (stderr, "execution of %s failed : %s\n", progname,
@@ -707,15 +704,14 @@ mom_initialize_signals (void)
   // set up the signalfd 
   sigset_t mysetsig;
   sigemptyset (&mysetsig);
-  sigaddset (&mysetsig, SIGINT);
   sigaddset (&mysetsig, SIGTERM);
   sigaddset (&mysetsig, SIGQUIT);
   sigaddset (&mysetsig, SIGPIPE);
   sigaddset (&mysetsig, SIGCHLD);
   // according to signalfd(2) we need to block the signals
   MOM_DEBUG (run,
-	     "handling signals SIGINT=%d SIGTERM=%d SIGQUIT=%d SIGPIPE=%d SIGCHLD=%d",
-	     SIGINT, SIGTERM, SIGQUIT, SIGPIPE, SIGCHLD);
+	     "handling signals SIGTERM=%d SIGQUIT=%d SIGPIPE=%d SIGCHLD=%d",
+	     SIGTERM, SIGQUIT, SIGPIPE, SIGCHLD);
   MOM_DEBUG (run, "before sigprocmask");
   if (sigprocmask (SIG_BLOCK, &mysetsig, NULL))
     MOM_FATAL ("failed to block signals with sigprocmask");

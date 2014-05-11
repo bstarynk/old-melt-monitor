@@ -27,13 +27,15 @@ INSERT INTO t_item VALUES('0229c553-c443-49a9-9244-5f8d7d3c79cf','dictionnary','
  "val":{"conn":{"jtype":"itemref","space":".","uuid":"8e5f1892-9c0b-42c0-8390-e384e471d3fd"},
  "jtype":"closure","sons":["Gap*Ajax_Complete_Routine_Name"]}},{"name":"ajax_exit",
  "val":{"conn":{"jtype":"itemref","space":".","uuid":"16b844e6-0277-492d-aee9-cb687571a99c"},
- "jtype":"closure","sons":["Gap*Ajax_Exit"]}},{"name":"ajax_start","val":{"conn":{"jtype":"itemref",
+ "jtype":"closure","sons":["Gap*Ajax_Exit"]}},{"name":"ajax_named","val":{"conn":{"jtype":"itemref",
+  "space":".","uuid":"84220ca7-346c-4e8e-a5c8-0ec0367248d7"},"jtype":"closure",
+ "sons":["Gap*Ajax_Named"]}},{"name":"ajax_start","val":{"conn":{"jtype":"itemref",
   "space":".","uuid":"0e750860-7063-4ad7-8488-ee57d4aba2a8"},"jtype":"closure",
- "sons":["Gap*Ajax_Start"]}},{"name":"form_compile","val":{"conn":{"jtype":"itemref",
-  "space":".","uuid":"f094ea32-9a48-4de2-bba7-4b25e8d028d1"},"jtype":"closure",
- "sons":[{"conn":{"jtype":"itemref","space":".","uuid":"88aeaf2b-192e-4936-bdbb-b9a186d86cd4"},
-  "jtype":"closure","sons":["Gap*Proc_Compilation"]}]}},
-{"name":"form_handle_routine","val":{"conn":{"jtype":"itemref","space":".","uuid":"2e0f4651-d859-4e58-960d-9a1b5a84032f"},
+ "sons":["Gap*Ajax_Start"]}},
+{"name":"form_compile","val":{"conn":{"jtype":"itemref","space":".","uuid":"f094ea32-9a48-4de2-bba7-4b25e8d028d1"},
+ "jtype":"closure","sons":[{"conn":{"jtype":"itemref","space":".","uuid":"88aeaf2b-192e-4936-bdbb-b9a186d86cd4"},
+  "jtype":"closure","sons":["Gap*Proc_Compilation"]}]}},{"name":"form_handle_routine",
+ "val":{"conn":{"jtype":"itemref","space":".","uuid":"2e0f4651-d859-4e58-960d-9a1b5a84032f"},
  "jtype":"closure","sons":["Gap*Form_Handle_Routine"]}},{"name":"form_new_named",
  "val":{"conn":{"jtype":"itemref","space":".","uuid":"dafbdfa9-d633-447a-8ab3-e011f4f3fee8"},
  "jtype":"closure","sons":["Gap*Form_New_Named"]}}]}
@@ -70,6 +72,7 @@ INSERT INTO t_item VALUES('6dd4683e-cb4d-434b-b425-e45eed24d35e','box','{"jtype"
 INSERT INTO t_item VALUES('764e6c3e-0e1d-4462-9dfc-a590123b2755','json_name','{"jtype":"json_name","name":"assoc"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('7e8b7206-2548-427d-9b7c-9d5b5067c78a','json_name','{"jtype":"json_name","name":"values"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('80e337da-7a05-40e4-86ec-806ac78dbd03','json_name','{"jtype":"json_name","name":"frames"}','{"attributes":null,"content":null}');
+INSERT INTO t_item VALUES('84220ca7-346c-4e8e-a5c8-0ec0367248d7','routine','{"jtype":"routine","name":"ajax_named"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('84961ab4-f2ff-4e10-9479-2e62148c54bc','json_name','{"jtype":"json_name","name":"numbers"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('88aeaf2b-192e-4936-bdbb-b9a186d86cd4','routine','{"jtype":"routine","name":"proc_compilation"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('8dba998c-341b-4a66-900f-545ac9dd06c4','json_name','{"jtype":"json_name","name":"sons"}','{"attributes":null,"content":null}');
@@ -111,6 +114,7 @@ INSERT INTO t_name VALUES('PUT','ed78ae41-bd10-44bf-9bc7-57be044fe610','.');
 INSERT INTO t_name VALUES('agenda','b5a0ef97-7eb2-4cf3-924e-8bc5de7e49bc','.');
 INSERT INTO t_name VALUES('ajax_complete_routine_name','8e5f1892-9c0b-42c0-8390-e384e471d3fd','.');
 INSERT INTO t_name VALUES('ajax_exit','16b844e6-0277-492d-aee9-cb687571a99c','.');
+INSERT INTO t_name VALUES('ajax_named','84220ca7-346c-4e8e-a5c8-0ec0367248d7','.');
 INSERT INTO t_name VALUES('ajax_start','0e750860-7063-4ad7-8488-ee57d4aba2a8','.');
 INSERT INTO t_name VALUES('assoc','764e6c3e-0e1d-4462-9dfc-a590123b2755','.');
 INSERT INTO t_name VALUES('associations','670d0025-401e-4c78-9d8b-62fad2ad26ec','.');

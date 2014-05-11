@@ -52,27 +52,19 @@ mom_module_post_load (void)
   char uistr[UUID_PARSED_LEN];
   memset (uistr, 0, sizeof (uistr));
   MOM_INFORM ("cold post load " __DATE__ "@" __TIME__);
-  mom_item_dictionnary_put_cstr ((momval_t) mom_item__web_dictionnary,
-				 "form_exit", MOM_NULLV);
-  mom_forget_name ("web_form_exit");
-  MOM_INFORM ("forgot web_form_exit");
-#if 0				////////////////////////////////////////////////////////////////
-  mom_anyitem_t *rout_web_form_handle_routine =
-    mom_item_named ("web_form_handle_routine");
-  MOM_DBG_VALUE (run, "rout_web_form_handle_routine=",
-		 (momval_t) rout_web_form_handle_routine);
-  MOM_INFORM ("cold rout_web_form_handle_routine ~%s",
+  mom_anyitem_t *rout_ajax_named =
+    mom_make_item_routine ("ajax_named", MOM_SPACE_ROOT);
+  MOM_DBG_ITEM (run, "rout_ajax_named=", rout_ajax_named);
+  mom_register_new_name_item ("ajax_named", rout_ajax_named);
+  MOM_INFORM ("cold rout_ajax_named ~%s",
 	      mom_unparse_item_uuid ((mom_anyitem_t *)
-				     rout_web_form_handle_routine, uistr));
-  const momclosure_t *clos_web_form_handle_routine =
-    mom_make_closure_til_nil ((mom_anyitem_t *) rout_web_form_handle_routine,
-			      mom_make_string ("Gap*Web_Form_Handle_Routine"),
+				     rout_ajax_named, uistr));
+  const momclosure_t *clos_ajax_named =
+    mom_make_closure_til_nil ((mom_anyitem_t *) rout_ajax_named,
+			      mom_make_string ("Gap*Ajax_Named"),
 			      NULL);
   mom_item_dictionnary_put_cstr ((momval_t) mom_item__web_dictionnary,
-				 "web_form_handle_routine",
-				 (momval_t) clos_web_form_handle_routine);
-  MOM_DBG_VALUE (run, "clos_web_form_handle_routine=",
-		 (momval_t) clos_web_form_handle_routine);
+				 "ajax_named", (momval_t) clos_ajax_named);
+  MOM_DBG_VALUE (run, "clos_ajax_named", (momval_t) clos_ajax_named);
   MOM_INFORM ("cold post load done");
-#endif	/* 0 */	////////////////////////////////////////////////////////////////
 }
