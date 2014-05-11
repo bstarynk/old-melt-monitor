@@ -33,9 +33,10 @@ INSERT INTO t_item VALUES('0229c553-c443-49a9-9244-5f8d7d3c79cf','dictionnary','
   "space":".","uuid":"84220ca7-346c-4e8e-a5c8-0ec0367248d7"},"jtype":"closure",
  "sons":["Gap*Ajax_Named"]}},
 {"name":"ajax_routine","val":{"conn":{"jtype":"itemref","space":".","uuid":"84a82dc6-f049-42c4-ac69-ec458b8054ec"},
- "jtype":"closure","sons":["Gap*Ajax_Routine"]}},{"name":"ajax_start","val":{"conn":{"jtype":"itemref",
-  "space":".","uuid":"0e750860-7063-4ad7-8488-ee57d4aba2a8"},"jtype":"closure",
- "sons":["Gap*Ajax_Start"]}}]}
+ "jtype":"closure","sons":[{"conn":{"jtype":"itemref","space":".","uuid":"88aeaf2b-192e-4936-bdbb-b9a186d86cd4"},
+  "jtype":"closure","sons":["Gap*Proc_Compilation"]},"Gap*Ajax_Routine"]}},{"name":"ajax_start",
+ "val":{"conn":{"jtype":"itemref","space":".","uuid":"0e750860-7063-4ad7-8488-ee57d4aba2a8"},
+ "jtype":"closure","sons":["Gap*Ajax_Start"]}}]}
 ');
 INSERT INTO t_item VALUES('03c1ace3-3293-43bb-9541-19b4357cbc3c','json_name','{"jtype":"json_name","name":"conn"}','{"attributes":null,"content":null}');
 INSERT INTO t_item VALUES('0403e866-c514-4ee1-aa47-fc8b476f937e','box','{"jtype":"box"}','{"attributes":null,"box":null,"content":null}');

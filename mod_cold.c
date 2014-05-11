@@ -71,17 +71,25 @@ mom_module_post_load (void)
   MOM_DEBUG (run, "forgot web_form_compile");
 #endif
   //
-
+#if 0
   mom_anyitem_t *rout_ajax_routine =
     (mom_anyitem_t *) mom_make_item_routine ("ajax_routine",
 					     MOM_SPACE_ROOT);
+#endif
+  mom_anyitem_t* rout_ajax_routine = mom_item_named ("ajax_routine");
   MOM_DBG_ITEM (run, "rout_ajax_routine=", rout_ajax_routine);
-  mom_register_new_name_item ("ajax_routine", rout_ajax_routine);
   MOM_INFORM ("cold rout_ajax_routine ~%s",
 	      mom_unparse_item_uuid ((mom_anyitem_t *)
 				     rout_ajax_routine, uistr));
+  mom_anyitem_t* rout_proc_compilation = mom_item_named ("proc_compilation");
+  MOM_DBG_ITEM (run, "rout_proc_compilation=", rout_proc_compilation);
+  const momclosure_t *clos_proc_compilation =
+    mom_make_closure_til_nil ((mom_anyitem_t *) rout_proc_compilation,
+			      mom_make_string ("Gap*Proc_Compilation"),
+			      NULL);
   const momclosure_t *clos_ajax_routine =
     mom_make_closure_til_nil ((mom_anyitem_t *) rout_ajax_routine,
+			      clos_proc_compilation,
 			      mom_make_string ("Gap*Ajax_Routine"),
 			      NULL);
   mom_item_dictionnary_put_cstr ((momval_t) mom_item__web_dictionnary,
