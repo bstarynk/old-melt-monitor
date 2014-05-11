@@ -627,6 +627,8 @@ momcode_ajax_named (int state, momit_tasklet_t * tasklet,
 	{
 	  mom_anyitem_t *newitm = NULL;
 	  char *errmsg = NULL;
+	  MOM_DEBUG (web, "ajax_named do_create_named webnum#%ld",
+		     mom_item_webrequest_webnum (webv));
 	  momval_t namev = mom_item_webrequest_post_arg (webv, "name");
 	  momval_t commv = mom_item_webrequest_post_arg (webv, "comment");
 	  momval_t typev = mom_item_webrequest_post_arg (webv, "type");
@@ -645,7 +647,10 @@ momcode_ajax_named (int state, momit_tasklet_t * tasklet,
 	    else if (!isalnum (*pc))
 	      goodname = false;
 	  if (!goodname)
-	    errmsg = "invalid name";
+	    {
+	      if (!errmsg)
+		errmsg = "invalid name";
+	    }
 	  else if (mom_same_string (typev, "assoc"))
 	    newitm = (mom_anyitem_t *) mom_make_item_assoc (MOM_SPACE_ROOT);
 	  else if (mom_same_string (typev, "box"))

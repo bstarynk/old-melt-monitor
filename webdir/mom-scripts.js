@@ -17,13 +17,17 @@
     along with GCC; see the file COPYING3.   If not see
     <http://www.gnu.org/licenses/>.
 **/
+
+var message_domelem;
 function give_message(htmlmessage) {
-    console.debug('give_message htmlmessage=', htmlmessage);
-    $('mom_message_id').html(htmlmessage);
+    console.debug('give_message htmlmessage=', htmlmessage, ' message_domelem=', message_domelem);
+    message_domelem.html(htmlmessage);
 }
 
 // jquery ready function for our document
 $(function(){
+    message_domelem = $('#mom_message_id');
+    console.debug("message_domelem=", message_domelem);
     // if there is a momstart_id element, fill it by an Ajax query
     $.ajax({ url: '/ajax_start',
 	     method: 'GET',
