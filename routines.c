@@ -25,6 +25,7 @@
 #define JS_FROM_AT_2(Fil,Lin) "//from " # Fil "@" # Lin "\n"
 #define JS_FROM_AT(Fil,Lin) JS_FROM_AT_2(Fil,Lin)
 #define JS_FROM() JS_FROM_AT(__FILE__,__LINE__)
+#define C_FROM() JS_FROM()
 
 #define HTML_FROM_AT_2(Fil,Lin) "<!-- from " # Fil "@" # Lin " -->\n"
 #define HTML_FROM_AT(Fil,Lin) HTML_FROM_AT_2(Fil,Lin)
@@ -769,6 +770,11 @@ enum web_ajax_routine_values_en
   ajrv_dashboard,
   ajrv_buffer,
   ajrv_curout,
+  ajrv_curprep,
+  ajrv_routdata,
+  ajrv_routemp,
+  ajrv_curemit,
+  ajrv_compilproc,
   ajrv__lastvalue
 };
 
@@ -798,6 +804,11 @@ momcode_ajax_routine (int state, momit_tasklet_t * tasklet,
     ajrs_compile_preparation_loop,
     ajrs_compile_prepare_routine,
     ajrs_compile_emission_loop,
+    ajrs_compile_got_preparation,
+    ajrs_compile_declare_routine,
+    ajrs_compile_got_emitter,
+    ajrs_compile_emit_routine,
+    ajrs_compile_run_compiler,
     ajrs__laststate
   };
 #define SET_STATE(St) do {					\
@@ -971,6 +982,218 @@ momcode_ajax_routine (int state, momit_tasklet_t * tasklet,
       {
 	MOM_DEBUG (web, "ajax_routine compile prepare_routine ix=%ld",
 		   (long) _N (ix));
+	// get the preparator in the routine, or else in the module
+	_L (curprep) =
+	  (momval_t) mom_item_get_attr (mom_value_as_item (_L (curout)),
+					(mom_anyitem_t *)
+					mom_item__routine_preparator);
+	if (mom_type (_L (curprep)) != momty_closure)
+	  _L (curprep) =
+	    (momval_t) mom_item_get_attr (mom_value_as_item (_L (module)),
+					  (mom_anyitem_t *)
+					  mom_item__routine_preparator);
+	if (mom_type (_L (curprep)) == momty_closure)
+	  {
+	    MOM_DBG_VALUE (web,
+			   "ajax_routine compile prepare_routine curprep=",
+			   _L (curprep));
+	    mom_tasklet_push_frame ((momval_t) tasklet,
+				    (momval_t) _L (curprep),
+				    MOMPFR_FOUR_VALUES, _L (curout),
+				    _L (dashboard), _L (buffer), _L (module),
+				    MOMPFR_END);
+	    SET_STATE (compile_got_preparation);
+	  }
+	else
+	  {
+	    SET_STATE (compile_declare_routine);
+	  }
+      }
+      break;
+      ////////////////****************
+    case ajrs_compile_got_preparation:	////================ compile got_preparation
+      goodstate = true;
+      {
+	MOM_DBG_VALUE (web, "ajax_routine compile got_preparation arg0res=",
+		       _L (arg0res));
+	if (_L (arg0res).ptr)
+	  SET_STATE (compile_declare_routine);
+	else
+	  SET_STATE (compile_preparation_loop);
+      }
+      break;
+      ////////////////****************
+    case ajrs_compile_declare_routine:	////================ compile declare_routine
+      goodstate = true;
+      {
+	// should emit the declaration of the routine
+	const char *cnam = c_name_suffix (mom_value_as_item (_L (curout)));
+	assert (cnam != NULL);
+	_L (routdata) = mom_item_assoc_get1 (_L (dashboard), _L (curout));
+	if (!_L (routdata).ptr)
+	  _L (routdata) = _L (curout);
+	mom_item_buffer_printf
+	  (_L (buffer), "\n"
+	   "// declaration of code for %s\n"
+	   "int momcode_%s (int, momit_tasklet_t *, momclosure_t *,\n"
+	   "       momval_t *,intptr_t *, double *);\n"
+	   C_FROM (), cnam, cnam);
+	momval_t statev = MOM_NULLV, closurev = MOM_NULLV;
+	momval_t valuesv = MOM_NULLV, numbersv = MOM_NULLV;
+	momval_t doublesv = MOM_NULLV;
+	mom_item_get_several_attrs (mom_value_as_item (_L (routdata)),
+				    mom_item__state, &statev,
+				    mom_item__closure, &closurev,
+				    mom_item__values, &valuesv,
+				    mom_item__numbers, &numbersv,
+				    mom_item__doubles, &doublesv, NULL);
+	mom_item_buffer_printf
+	  (_L (buffer),
+	   "\n" "// routine descriptor for %s\n"
+	   "const struct momroutinedescr_st momrout_%s = { .rout_magic = ROUTINE_MAGIC, \n"
+	   " .rout_minclosize = %d,\n"
+	   " .rout_frame_nbval = %d,\n"
+	   " .rout_frame_nbnum = %d,\n"
+	   " .rout_frame_nbdbl = %d,\n"
+	   " .rout_name = \"%s\",\n"
+	   " .rout_code = (const momrout_sig_t *) momcode_%s,\n"
+	   " .rout_timestamp = __DATE__ \"@\" __TIME__\n"
+	   C_FROM ()"};\n", cnam, cnam,
+	   mom_seqitem_length (closurev),
+	   mom_seqitem_length (valuesv),
+	   mom_seqitem_length (numbersv),
+	   mom_seqitem_length (doublesv), cnam, cnam);
+	SET_STATE (compile_preparation_loop);
+      }
+      break;
+      ////////////////****************
+    case ajrs_compile_emission_loop:	////================ compile emission_loop
+      goodstate = true;
+      {
+	MOM_DEBUG (web, "ajax_routine compile emission_loop ix=%ld",
+		   (long) _N (ix));
+	if (_N (ix) > (long) mom_set_cardinal (_L (routines)))
+	  {
+	    mom_item_buffer_printf
+	      (_L (buffer), "\n\n"
+	       "// emitted %ld routines\n" C_FROM (),
+	       (long) mom_set_cardinal (_L (routines)));
+	    _N (ix) = 0;
+	    SET_STATE (compile_run_compiler);
+	  }
+	_L (curout) = (momval_t) mom_set_nth_item (_L (routines), _N (ix));
+	MOM_DBG_VALUE (web, "ajax_routine compile emission_loop curout=",
+		       _L (curout));
+	_N (ix)++;
+	if (mom_value_as_item (_L (curout)) != NULL)
+	  SET_STATE (compile_emit_routine);
+	else
+	  SET_STATE (compile_emission_loop);
+      }
+      break;
+      ////////////////****************
+    case ajrs_compile_emit_routine:	////================ compile emit_routine
+      goodstate = true;
+      {
+	const char *cnam = c_name_suffix (mom_value_as_item (_L (curout)));
+	MOM_DEBUG (web, "ajax_routine compile emit routine cnam %s", cnam);
+	MOM_DBG_VALUE (web, "ajax_routine compile emit routine curout",
+		       _L (curout));
+	_L (routemp) = (momval_t) mom_make_item_assoc (MOM_SPACE_NONE);
+	_L (curemit) =
+	  (momval_t) mom_item_get_attr (mom_value_as_item (_L (curout)),
+					(mom_anyitem_t *)
+					mom_item__routine_emitter);
+	if (mom_type (_L (curemit)) != momty_closure)
+	  _L (curemit) =
+	    (momval_t) mom_item_get_attr (mom_value_as_item (_L (module)),
+					  (mom_anyitem_t *)
+					  mom_item__routine_emitter);
+	MOM_DBG_VALUE (web, "ajax_routine compile emit routine curemit=",
+		       _L (curemit));
+	if (mom_type (_L (curemit)) == momty_closure)
+	  {
+	    mom_tasklet_push_frame
+	      ((momval_t) tasklet, (momval_t) _L (curemit),
+	       MOMPFR_FOUR_VALUES, _L (curout), _L (routdata), _L (routemp),
+	       _L (dashboard), MOMPFR_TWO_VALUES, _L (buffer), _L (module),
+	       MOMPFR_END);
+	    SET_STATE (compile_got_emitter);
+	  }
+	else
+	  {
+	    MOM_WARNING ("no routine emitter for %s", cnam);
+	    return routres_pop;
+	  }
+      }
+      break;
+      ////////////////****************
+    case ajrs_compile_got_emitter:	////================ compile got_emitter
+      goodstate = true;
+      {
+	// essentially a no-op
+	goodstate = true;
+	const char *cnam = c_name_suffix (mom_value_as_item (_L (curout)));
+	MOM_DEBUG (web, "web_form_compile got emitter routine %s", cnam);
+	SET_STATE (compile_emission_loop);
+      }
+      break;
+      ////////////////****************
+    case ajrs_compile_run_compiler:	////================ compile run_compiler
+      goodstate = true;
+      {
+	mom_item_buffer_printf (_L (buffer),
+				"\n\n///// end of %d routines \n\n"
+				"/*** eof " GENERATED_SOURCE_FILE_NAME
+				" ****/\n" C_FROM (), (int) _N (ix));
+	MOM_DEBUG (web,
+		   "ajax_routine compiler run compiler buffer of %d bytes",
+		   (int) mom_item_buffer_length (_L (buffer)));
+	/// write the buffer
+	rename (GENERATED_SOURCE_FILE_NAME, GENERATED_SOURCE_FILE_NAME "~");
+	FILE *fout = fopen (GENERATED_SOURCE_FILE_NAME, "w");
+	if (MOM_UNLIKELY (!fout))
+	  MOM_FATAL ("failed to open file " GENERATED_SOURCE_FILE_NAME);
+	unsigned blen = mom_item_buffer_length (_L (buffer));
+	if (mom_item_buffer_output_content_to_file (_L (buffer), fout)
+	    != (int) blen)
+	  MOM_WARNING ("failed to output all %d bytes to "
+		       GENERATED_SOURCE_FILE_NAME, (int) blen);
+	MOM_INFORM ("wrote %d bytes of code into %s", (int) blen,
+		    GENERATED_SOURCE_FILE_NAME);
+	backup_old_shared_object ();
+	fclose (fout), fout = NULL;
+	/// create and start the compilation process
+	_L (compilproc) = (momval_t)
+	  mom_make_item_process_argvals ((momval_t) mom_make_string ("make"),
+					 (momval_t)
+					 mom_make_string
+					 (GENERATED_SHAROB_FILE_NAME), NULL);
+	MOM_DBG_VALUE (web, "ajax_routine compile compilproc=",
+		       _L (compilproc));
+	MOM_DBG_VALUE (web, "ajax_routine compile aftercompilation=",
+		       _C (aftercompilation));
+	mom_item_process_start (_L (compilproc), _C (aftercompilation));
+	MOM_DEBUG (web, "ajax_routine compile after compilation start");
+	char timbuf[64] = { };
+	memset (timbuf, 0, sizeof (timbuf));
+	struct tm curtm = { };
+	time_t now = 0;
+	time (&now);
+	strftime (timbuf, sizeof (timbuf), "%c", localtime_r (&now, &curtm));
+	/// answer the Ajax web request
+	mom_item_webrequest_add
+	  (_L (web),
+	   MOMWEB_SET_MIME, "text/html",
+	   MOMWEB_LIT_STRING,
+	   "<b>Monimelt generates &amp; compile code</b> in <tt>"
+	   GENERATED_SOURCE_FILE_NAME "</tt> with ", MOMWEB_DEC_LONG,
+	   (long) _N (ix), MOMWEB_LIT_STRING, " routines and ",
+	   MOMWEB_DEC_LONG, (long) blen, MOMWEB_LIT_STRING,
+	   " bytes <small>at ", MOMWEB_LIT_STRING, timbuf, MOMWEB_LIT_STRING,
+	   "</small>.</p>\n" HTML_FROM (), MOMWEB_REPLY_CODE, HTTP_OK,
+	   MOMWEB_END);
+	return routres_pop;
       }
       break;
       ////////////////*************
@@ -980,6 +1203,8 @@ momcode_ajax_routine (int state, momit_tasklet_t * tasklet,
     }
   if (!goodstate)
     MOM_FATAL ("momcode_ajax_routine invalid state %d", state);
+  MOM_DEBUG (web, "momcode_ajax_routine final popping");
+  return routres_pop;
 #undef SET_STATE
 #undef _L
 #undef _C
@@ -1000,474 +1225,6 @@ const struct momroutinedescr_st momrout_ajax_routine =
 
 ////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////
-
-#warning web_form_compile is removed
-
-#if 0
-enum web_form_compile_values_en
-{
-  wfcv_argres,
-  wfcv_web,
-  wfcv_module,
-  wfcv_routines,
-  wfcv_dashboard,
-  wfcv_buffer,
-  wfcv_curout,
-  wfcv_curprep,
-  wfcv_routdata,
-  wfcv_routemp,
-  wfcv_curemit,
-  wfcv_compilproc,
-  wfcv__lastval
-};
-
-enum web_form_compile_closure_en
-{
-  wfcc_aftercompilation,
-  wfcc__lastclos
-};
-
-enum web_form_compile_numbers_en
-{
-  wfcn_ix,
-  wfcn__lastnum
-};
-
-int
-momcode_web_form_compile (int state, momit_tasklet_t * tasklet,
-			  momclosure_t * closure, momval_t * locvals,
-			  intptr_t * locnums, double *locdbls)
-{
-  enum web_form_compile_state_en
-  {
-    wfcs_start,
-    wfcs_compute_routines,
-    wfcs_got_routines,
-    wfcs_begin_emission,
-    wfcs_preparation_loop,
-    wfcs_prepare_routine,
-    wfcs_emission_loop,
-    wfcs_got_preparation,
-    wfcs_declare_routine,
-    wfcs_emit_routine,
-    wfcs_got_emitter,
-    wfcs_run_compiler,
-    wfcs__laststate
-  };
-#define SET_STATE(St) do {						\
-    MOM_DEBUG (web,							\
-		    "momcode_web_form_compile setstate " #St " = %d",	\
-		    (int)wfcs_##St);					\
-    return wfcs_##St; } while(0)
-#define l_argres locvals[wfcv_argres]
-#define l_web locvals[wfcv_web]
-#define l_module locvals[wfcv_module]
-#define l_routines locvals[wfcv_routines]
-#define l_dashboard locvals[wfcv_dashboard]
-#define l_buffer locvals[wfcv_buffer]
-#define l_curout locvals[wfcv_curout]
-#define l_curprep locvals[wfcv_curprep]
-#define l_routdata locvals[wfcv_routdata]
-#define l_routemp locvals[wfcv_routemp]
-#define l_curemit locvals[wfcv_curemit]
-#define l_compilproc locvals[wfcv_compilproc]
-#define c_aftercompilation closure->sontab[wfcc_aftercompilation]
-#define n_ix locnums[wfcn_ix]
-  time_t now = 0;
-  struct tm nowtm = { };
-  char nowbuf[64] = "";
-  time (&now);
-  strftime (nowbuf, sizeof (nowbuf), "%c", localtime_r (&now, &nowtm));
-  MOM_DEBUG (web,
-	     "momcode_web_form_compile state=%d webnum=%ld nowbuf=%s",
-	     state, mom_item_webrequest_webnum (l_web), nowbuf);
-  MOM_DBG_ITEM (web, "web_form_compile tasklet=",
-		(const mom_anyitem_t *) tasklet);
-  MOM_DBG_VALUE (web, "web_form_compile l_web=", l_web);
-  MOM_DBG_VALUE (web, "web_form_compile closure=",
-		 (momval_t) (const momclosure_t *) closure);
-  bool goodstate = false;
-  //// state machine
-  switch ((enum web_form_compile_state_en) state)
-    {
-      ////////////////
-    case wfcs_start:		////================ start
-      {
-	goodstate = true;
-	l_web = l_argres;
-	MOM_DEBUG (web, "momcode_web_form_compile start webnum=%ld",
-		   mom_item_webrequest_webnum (l_web));
-	MOM_DBG_VALUE (web, "web_form_compile l_web=", l_web);
-	l_module = (momval_t) mom_item__first_module;
-	MOM_DBG_VALUE (web, "web_form_compile l_module=", l_module);
-	l_routines =
-	  (momval_t) mom_item_get_attr (mom_value_as_item (l_module),
-					(mom_anyitem_t *) mom_item__routines);
-	MOM_DBG_VALUE (web, "web_form_compile l_routines=", l_routines);
-	if (mom_type (l_routines) == momty_closure)
-	  SET_STATE (compute_routines);
-	else if (mom_type (l_routines) == momty_set)
-	  SET_STATE (begin_emission);
-	else
-	  {
-	    MOM_WARNING ("no routines in first_module");
-	    l_routines = MOM_NULLV;
-	    SET_STATE (begin_emission);
-	  }
-	MOM_FATAL
-	  ("momcode_web_form_compile unimplemented routine form at start");
-      }
-      break;
-      ////////////////
-    case wfcs_compute_routines:	////================ compute routines
-      {
-	MOM_DEBUG (web,
-		   "momcode_web_form_compile compute_routines webnum=%ld",
-		   mom_item_webrequest_webnum (l_web));
-	goodstate = true;
-	mom_tasklet_push_frame ((momval_t) tasklet, (momval_t) l_routines,
-				MOMPFR_VALUE, l_module, MOMPFR_END);
-	SET_STATE (got_routines);
-      }
-      break;
-      ////////////////
-    case wfcs_got_routines:	////================ got routines
-      {
-	goodstate = true;
-	l_routines = l_argres;
-	MOM_DBG_VALUE (web, "web_form_compile got routines=", l_routines);
-	if (mom_type (l_routines) != momty_set)
-	  {
-	    MOM_WARNING ("got no routines in module");
-	    l_routines = MOM_NULLV;
-	  }
-	SET_STATE (begin_emission);
-      }
-      break;
-      ////////////////
-    case wfcs_begin_emission:	////================ begin emissions
-      {
-	goodstate = true;
-	l_dashboard = (momval_t) mom_make_item_assoc (MOM_SPACE_NONE);
-	l_buffer = (momval_t) mom_make_item_buffer (MOM_SPACE_NONE);
-	MOM_DBG_VALUE (web, "web_form_compile l_dashboard=", l_dashboard);
-	MOM_DBG_VALUE (web, "web_form_compile l_buffer=", l_buffer);
-	mom_item_buffer_puts
-	  (l_buffer,
-	   "// generated file " GENERATED_SOURCE_FILE_NAME
-	   " *** DO NOT EDIT ***\n");
-	time_t nowt = 0;
-	time (&nowt);
-	struct tm nowtm = { };
-	char nowyear[16];
-	char nowdate[72];
-	memset (nowyear, 0, sizeof (nowyear));
-	memset (nowdate, 0, sizeof (nowdate));
-	localtime_r (&nowt, &nowtm);
-	strftime (nowyear, sizeof (nowyear), "%Y", &nowtm);
-	strftime (nowdate, sizeof (nowdate), "%Y %b %d [%F]", &nowtm);
-	mom_item_buffer_printf (l_buffer, "// generated on %s\n\n", nowdate);
-	mom_item_buffer_printf
-	  (l_buffer,
-	   "/**   Copyright (C) %s Free Software Foundation, Inc.\n"
-	   " MONIMELT is a monitor for MELT - see http://gcc-melt.org/\n"
-	   " This generated file is part of GCC.\n"
-	   "\n"
-	   " GCC is free software; you can redistribute it and/or modify\n"
-	   " it under the terms of the GNU General Public License as published by\n"
-	   " the Free Software Foundation; either version 3, or (at your option)\n"
-	   " any later version.\n"
-	   "\n"
-	   " GCC is distributed in the hope that it will be useful,\n"
-	   " but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-	   " MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
-	   " GNU General Public License for more details.\n"
-	   " You should have received a copy of the GNU General Public License\n"
-	   " along with GCC; see the file COPYING3.   If not see\n"
-	   " <http://www.gnu.org/licenses/>.\n"
-	   "**/\n\n" "#" "include \"monimelt.h\"\n\n", nowyear);
-	_N (ix) = 0;
-	SET_STATE (preparation_loop);
-      }
-      break;
-      ////////////////
-    case wfcs_preparation_loop:	////================ preparation loop
-      {
-	goodstate = true;
-	MOM_DEBUG (web,
-		   "momcode_web_form_compile preparation_loop n_ix=%ld",
-		   (long) n_ix);
-	if (n_ix > (long) mom_set_cardinal (l_routines))
-	  {
-	    mom_item_buffer_printf
-	      (l_buffer, "\n\n"
-	       "// prepared %ld routines\n",
-	       (long) mom_set_cardinal (l_routines));
-	    n_ix = 0;
-	    SET_STATE (emission_loop);
-	  }
-	l_curout = (momval_t) mom_set_nth_item (l_routines, n_ix);
-	MOM_DBG_VALUE (web, "web_form_compile l_curout=", l_curout);
-	n_ix++;
-	if (mom_value_as_item (l_curout) != NULL)
-	  SET_STATE (prepare_routine);
-	else
-	  SET_STATE (preparation_loop);
-      }
-      break;
-      ////////////////
-    case wfcs_prepare_routine:	////================ prepare routine
-      {
-	goodstate = true;
-	MOM_DEBUG (web,
-		   "momcode_web_form_compile prepare_routine n_ix=%ld",
-		   (long) n_ix);
-	// get the preparator in the routine, or else in the module
-	l_curprep =
-	  (momval_t) mom_item_get_attr (mom_value_as_item (l_curout),
-					(mom_anyitem_t *)
-					mom_item__routine_preparator);
-	if (mom_type (l_curprep) != momty_closure)
-	  l_curprep =
-	    (momval_t) mom_item_get_attr (mom_value_as_item (l_module),
-					  (mom_anyitem_t *)
-					  mom_item__routine_preparator);
-	if (mom_type (l_curprep) == momty_closure)
-	  {
-	    MOM_DBG_VALUE (web, "web_form_compile l_curprep=", l_curprep);
-	    mom_tasklet_push_frame ((momval_t) tasklet, (momval_t) l_curprep,
-				    MOMPFR_FOUR_VALUES, l_curout, l_dashboard,
-				    l_buffer, l_module, MOMPFR_END);
-	    SET_STATE (got_preparation);
-	  }
-	else
-	  {
-	    SET_STATE (declare_routine);
-	  }
-      }
-      break;
-      ////////////////
-    case wfcs_got_preparation:	////================ got preparation
-      {
-	MOM_DBG_VALUE (web, "web_form_compile got preparation l_argres=",
-		       l_argres);
-	if (!l_argres.ptr)
-	  SET_STATE (declare_routine);
-	else
-	  SET_STATE (preparation_loop);
-      }
-      break;
-      ////////////////
-    case wfcs_declare_routine:	////================ declare_routine
-      {
-	// should emit the declaration of the routine
-	const char *cnam = c_name_suffix (mom_value_as_item (l_curout));
-	assert (cnam != NULL);
-	l_routdata = mom_item_assoc_get1 (l_dashboard, l_curout);
-	if (!l_routdata.ptr)
-	  l_routdata = l_curout;
-	mom_item_buffer_printf
-	  (l_buffer, "\n"
-	   "// declaration of code for %s\n"
-	   "int momcode_%s (int, momit_tasklet_t *, momclosure_t *,\n"
-	   "       momval_t *,intptr_t *, double *);\n", cnam, cnam);
-	momval_t statev = MOM_NULLV, closurev = MOM_NULLV;
-	momval_t valuesv = MOM_NULLV, numbersv = MOM_NULLV;
-	momval_t doublesv = MOM_NULLV;
-	mom_item_get_several_attrs (mom_value_as_item (l_routdata),
-				    mom_item__state, &statev,
-				    mom_item__closure, &closurev,
-				    mom_item__values, &valuesv,
-				    mom_item__numbers, &numbersv,
-				    mom_item__doubles, &doublesv, NULL);
-	mom_item_buffer_printf (l_buffer,
-				"\n" "// routine descriptor for %s\n"
-				"const struct momroutinedescr_st momrout_%s = { .rout_magic = ROUTINE_MAGIC, \n"
-				" .rout_minclosize = %d,\n"
-				" .rout_frame_nbval = %d,\n"
-				" .rout_frame_nbnum = %d,\n"
-				" .rout_frame_nbdbl = %d,\n"
-				" .rout_name = \"%s\",\n"
-				" .rout_code = (const momrout_sig_t *) momcode_%s,\n"
-				" .rout_timestamp = __DATE__ \"@\" __TIME__\n"
-				"};\n", cnam, cnam,
-				mom_seqitem_length (closurev),
-				mom_seqitem_length (valuesv),
-				mom_seqitem_length (numbersv),
-				mom_seqitem_length (doublesv), cnam, cnam);
-	SET_STATE (preparation_loop);
-      }
-      break;
-      ////////////////
-    case wfcs_emission_loop:	////================ emission loop
-      {
-	goodstate = true;
-	MOM_DEBUG (web,
-		   "momcode_web_form_compile emission_loop n_ix=%ld",
-		   (long) n_ix);
-	if (n_ix > (long) mom_set_cardinal (l_routines))
-	  {
-	    mom_item_buffer_printf
-	      (l_buffer, "\n\n"
-	       "// emitted %ld routines\n",
-	       (long) mom_set_cardinal (l_routines));
-	    n_ix = 0;
-	    SET_STATE (run_compiler);
-	  }
-	l_curout = (momval_t) mom_set_nth_item (l_routines, n_ix);
-	MOM_DBG_VALUE (web, "web_form_compile emission loop l_curout=",
-		       l_curout);
-	n_ix++;
-	if (mom_value_as_item (l_curout) != NULL)
-	  SET_STATE (emit_routine);
-	else
-	  SET_STATE (emission_loop);
-      }
-      break;
-      ////////////////
-    case wfcs_emit_routine:	////================ emit routine
-      {
-	const char *cnam = c_name_suffix (mom_value_as_item (l_curout));
-	MOM_DEBUG (web, "web_form_compile emit routine %s", cnam);
-	goodstate = true;
-	MOM_DBG_VALUE (web, "web_form_compile emit routine l_curout=",
-		       l_curout);
-	l_routemp = (momval_t) mom_make_item_assoc (MOM_SPACE_NONE);
-	// get the emitter in the routine, or else in the module
-	l_curemit =
-	  (momval_t) mom_item_get_attr (mom_value_as_item (l_curout),
-					(mom_anyitem_t *)
-					mom_item__routine_emitter);
-	if (mom_type (l_curemit) != momty_closure)
-	  l_curemit =
-	    (momval_t) mom_item_get_attr (mom_value_as_item (l_module),
-					  (mom_anyitem_t *)
-					  mom_item__routine_emitter);
-	MOM_DBG_VALUE (web, "web_form_compile l_curemit=", l_curemit);
-	if (mom_type (l_curemit) == momty_closure)
-	  {
-	    mom_tasklet_push_frame
-	      ((momval_t) tasklet, (momval_t) l_curemit,
-	       MOMPFR_FOUR_VALUES, l_curout, l_routdata, l_routemp,
-	       l_dashboard, MOMPFR_TWO_VALUES, l_buffer, l_module,
-	       MOMPFR_END);
-	    SET_STATE (got_emitter);
-	  }
-	else
-	  {
-	    MOM_WARNING ("no routine emitter for %s", cnam);
-	    return routres_pop;
-	  }
-      }
-      break;
-      ////////////////
-    case wfcs_got_emitter:	////================ got emitter
-      {
-	// essentially a no-op
-	goodstate = true;
-	const char *cnam = c_name_suffix (mom_value_as_item (l_curout));
-	MOM_DEBUG (web, "web_form_compile got emitter routine %s", cnam);
-	SET_STATE (emission_loop);
-      }
-      break;
-      //////////////// 
-    case wfcs_run_compiler:	////================ run compiler
-      {
-	goodstate = true;
-	mom_item_buffer_printf (l_buffer, "\n\n///// end of %d routines \n\n"
-				"/*** eof " GENERATED_SOURCE_FILE_NAME
-				" ****/\n", (int) n_ix);
-	MOM_DEBUG (web,
-		   "web_form_compile run compiler buffer of %d bytes",
-		   (int) mom_item_buffer_length (l_buffer));
-	/// write the buffer
-	rename (GENERATED_SOURCE_FILE_NAME, GENERATED_SOURCE_FILE_NAME "~");
-	FILE *fout = fopen (GENERATED_SOURCE_FILE_NAME, "w");
-	if (MOM_UNLIKELY (!fout))
-	  MOM_FATAL ("failed to open file " GENERATED_SOURCE_FILE_NAME);
-	unsigned blen = mom_item_buffer_length (l_buffer);
-	if (mom_item_buffer_output_content_to_file (l_buffer, fout)
-	    != (int) blen)
-	  MOM_WARNING ("failed to output all %d bytes to "
-		       GENERATED_SOURCE_FILE_NAME, (int) blen);
-	fclose (fout), fout = NULL;
-	MOM_INFORM ("wrote %d bytes of code into %s", (int) blen,
-		    GENERATED_SOURCE_FILE_NAME);
-	backup_old_shared_object ();
-	/// create and start the compilation process
-	l_compilproc = (momval_t)
-	  mom_make_item_process_argvals ((momval_t) mom_make_string ("make"),
-					 (momval_t)
-					 mom_make_string
-					 (GENERATED_SHAROB_FILE_NAME), NULL);
-	MOM_DBG_VALUE (web, "web_form_compile l_compilproc=", l_compilproc);
-	MOM_DBG_VALUE (web, "web_form_compile c_aftercompilation=",
-		       c_aftercompilation);
-	mom_item_process_start (l_compilproc, c_aftercompilation);
-	MOM_DEBUG (web, "after compilation start");
-	char timbuf[64] = { };
-	memset (timbuf, 0, sizeof (timbuf));
-	struct tm curtm = { };
-	time_t now = 0;
-	time (&now);
-	strftime (timbuf, sizeof (timbuf), "%c", localtime_r (&now, &curtm));
-	/// answer the web request
-	mom_item_webrequest_add
-	  (l_web,
-	   MOMWEB_SET_MIME, "text/html",
-	   MOMWEB_LIT_STRING,
-	   "<!doctype html><head><title>Monimelt generates code</title></head>\n"
-	   "<body><h1>Monimelt generates &amp; compiles code</h1>\n"
-	   "<p>Wrote <tt>" GENERATED_SHAROB_FILE_NAME "</tt> code file with ",
-	   MOMWEB_DEC_LONG, (long) n_ix,
-	   MOMWEB_LIT_STRING, " routines and ",
-	   MOMWEB_DEC_LONG, (long) blen,
-	   MOMWEB_LIT_STRING, " bytes <small>at ",
-	   MOMWEB_LIT_STRING, timbuf,
-	   MOMWEB_LIT_STRING, "</small>.</p>\n" "</body></html>\n",
-	   MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
-	return routres_pop;
-      }
-      break;
-      ////////////////
-    case wfcs__laststate:
-      {
-	MOM_FATAL ("momcode_web_form_compile unexpected last");
-      }
-    }
-  if (!goodstate)
-    MOM_FATAL ("momcode_web_form_compile invalid state %d", state);
-  MOM_DEBUG (web, "momcode_web_form_compile ending state %d", state);
-  return routres_pop;
-#undef SET_STATE
-#undef l_argres
-#undef l_web
-#undef l_module
-#undef l_routines
-#undef l_dashboard
-#undef l_buffer
-#undef l_curout
-#undef l_curprep
-#undef l_routdata
-#undef l_routemp
-#undef l_curemit
-#undef l_compilproc
-#undef c_aftercompilation
-#undef n_ix
-}
-
-const struct momroutinedescr_st momrout_web_form_compile =
-  {.rout_magic = ROUTINE_MAGIC,
-  .rout_minclosize = (unsigned) wfcc__lastclos,
-  .rout_frame_nbval = (unsigned) wfcv__lastval,
-  .rout_frame_nbnum = (unsigned) wfcn__lastnum,
-  .rout_frame_nbdbl = 0,
-  .rout_name = "web_form_compile",
-  .rout_code = (const momrout_sig_t *) momcode_web_form_compile,
-  .rout_timestamp = __DATE__ "@" __TIME__
-};
-#endif
-
 
 
 ////////////////////////////////////////////////////////////////
