@@ -20,6 +20,10 @@
 
 var message_domelem;
 var workzone_domelem;
+var periodicstate_domelem;
+var periodic_timeout;
+var period_domelem;
+
 function give_message(htmlmessage) {
     console.debug('give_message htmlmessage=', htmlmessage, ' message_domelem=', message_domelem);
     message_domelem.html(htmlmessage);
@@ -31,6 +35,9 @@ $(function(){
     console.debug("message_domelem=", message_domelem);
     workzone_domelem = $('#workzone_id');
     console.debug("workzone_domelem=", workzone_domelem);
+    period_domelem = $('#period_id');
+    console.debug("period_domelem=", period_domelem);
+    
     // if there is a momstart_id element, fill it by an Ajax query
     $.ajax({ url: '/ajax_start',
 	     method: 'GET',
@@ -102,8 +109,14 @@ $(function(){
 			give_message (d);
 		    }});
 	}});
-});
 
+    periodicstate_domelem = $('#periodic_state_id');
+    update_period();
+    
+});				// end of ready function
+
+
+////////////////
 function install_routine_completer(jq) {
     console.debug('install_routine_completer jq=', jq);
     $(jq).autocomplete({
@@ -220,5 +233,31 @@ function send_forget_named() {
 }
 
 
+function update_period() {
+    var periodtxt=period_domelem.val();
+    var periodmilli = 50 + parseInt(periodtxt)*1000;
+    console.debug('update_period start periodtxt=', periodtxt, ' periodmilli=', periodmilli);
+    $.ajax({ url: '/ajax_periodic',
+	     method: 'POST',
+	     dataType: 'html',
+	     success: function (data) {
+		 console.debug('update_period success data=', data);
+		 periodicstate_domelem.html(data);
+	     },
+	     complete: function(jqx,status) {
+		 console.debug('update_period complete jqx=', jqx, ' status=', status);
+		 periodic_timeout = setTimeout(update_period, periodmilli);
+	     }
+	   });
+    
+}
+
 function period_changed() {
+    var periodtxt=period_domelem.val();
+    console.debug('period_changed periodtxt=',period_domelem,
+		  '; periodicstate_domelem=', periodicstate_domelem,
+		  '; periodic_timeout=', periodic_timeout);
+    if (periodic_timeout)
+	clearTimeout(periodic_timeout);
+    update_period();
 }
