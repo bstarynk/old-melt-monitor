@@ -218,3 +218,7 @@ function send_forget_named() {
 	     }
 	   });
 }
+
+
+function period_changed() {
+}

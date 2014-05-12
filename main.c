@@ -723,11 +723,17 @@ static GMemVTable gc_mem_vtable = {
   .try_realloc = GC_realloc
 };
 
+static double startime = 0.0;
+
+double mom_elapsed_real_time (void)
+{
+  return mom_clock_time (CLOCK_REALTIME) - startime;
+}
+
 int
 main (int argc, char **argv)
 {
   bool explicit_boehm_gc_thread = false;
-  double startime = 0.0;
   GC_INIT ();
 #if MOM_EXPLICIT_GC_THREAD
   GC_allow_register_threads ();

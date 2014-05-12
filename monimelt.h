@@ -125,6 +125,8 @@ mom_clock_time (clockid_t cid)
     return (double) ts.tv_sec + 1.0e-9 * ts.tv_nsec;
 }
 
+// return the elapsed real time since start of process
+double mom_elapsed_real_time (void);
 
 static inline struct timespec
 mom_timespec (double t)

@@ -71,11 +71,11 @@ mom_module_post_load (void)
   MOM_DEBUG (run, "forgot web_form_compile");
 #endif
   //
+  
 #if 0
   mom_anyitem_t *rout_ajax_routine =
     (mom_anyitem_t *) mom_make_item_routine ("ajax_routine",
 					     MOM_SPACE_ROOT);
-#endif
   mom_anyitem_t *rout_ajax_routine = mom_item_named ("ajax_routine");
   MOM_DBG_ITEM (run, "rout_ajax_routine=", rout_ajax_routine);
   MOM_INFORM ("cold rout_ajax_routine ~%s",
@@ -96,6 +96,20 @@ mom_module_post_load (void)
 				 "ajax_routine",
 				 (momval_t) clos_ajax_routine);
   MOM_DBG_VALUE (run, "clos_ajax_routine", (momval_t) clos_ajax_routine);
+#endif
 
+  mom_anyitem_t* rout_ajax_periodic =
+    (mom_anyitem_t *) mom_make_item_routine ("ajax_periodic",
+					     MOM_SPACE_ROOT);
+  mom_register_new_name_item("ajax_periodic", rout_ajax_periodic);
+  const momclosure_t* clos_ajax_periodic =
+    mom_make_closure_til_nil ((mom_anyitem_t *) rout_ajax_periodic,
+			      mom_make_string("Gap*Ajax_Periodic"),
+			      NULL);
+  mom_item_dictionnary_put_cstr ((momval_t) mom_item__web_dictionnary,
+				 "ajax_periodic",
+				 (momval_t) clos_ajax_periodic);
+  MOM_DBG_VALUE (run, "clos_ajax_periodic", (momval_t) clos_ajax_periodic);
+  
   MOM_INFORM ("cold post load done");
 }
