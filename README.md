@@ -220,7 +220,7 @@ then first build the state-monimelt.dbsqlite sqlite3 database with
 then run
    ./monimelt -W localhost:8086 -J 2   
 
-and try browsing http://localhost:8086/testform.html or
+and try browsing http://localhost:8086/ or
 http://localhost:8086/status
 
 You may want to get debugging output, e.g. all debugging with -D _
