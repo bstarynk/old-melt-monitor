@@ -105,6 +105,8 @@ mom_agenda_work_counter (void)
 }
 
 #define WORK_DELAY (MOM_IS_DEBUGGING(run)?9.0:5.8)	/* seconds */
+#define WORK_GARBAGE_COLLECTION_CHECK_PERIOD 16
+#define WORK_GARBAGE_COLLECTION_DELAY (MOM_IS_DEBUGGING(run)?15.0:4.5)	/* seconds */
 static void *
 work_loop (struct GC_stack_base *sb, void *data)
 {
@@ -117,6 +119,7 @@ work_loop (struct GC_stack_base *sb, void *data)
 	     (int) mom_gettid (), wd->work_index, wd, cur_worker);
   bool working = false;
   long loopcnt = 0;
+  double lastgctime = 0.0;
   do
     {
       assert (wd->work_magic == WORK_MAGIC);
@@ -126,6 +129,19 @@ work_loop (struct GC_stack_base *sb, void *data)
       assert (!working
 	      || (wd->work_index > 0 && wd->work_index <= MOM_MAX_WORKERS
 		  && workers + wd->work_index == wd));
+      if (wd->work_index == 1
+	  && loopcnt % WORK_GARBAGE_COLLECTION_CHECK_PERIOD == 0)
+	{
+	  double nowtime = mom_clock_time (CLOCK_REALTIME);
+	  if (lastgctime + WORK_GARBAGE_COLLECTION_DELAY < nowtime)
+	    {
+	      MOM_DEBUG (run, "work_loop loopcnt %ld before full GC",
+			 loopcnt);
+	      GC_gcollect ();
+	      MOM_DEBUG (run, "work_loop loopcnt %ld after full GC", loopcnt);
+	      lastgctime = mom_clock_time (CLOCK_REALTIME);
+	    }
+	}
       pthread_mutex_unlock (&mom_run_mtx);
       loopcnt++;
       MOM_DEBUG (run, "work_loop index %d, loopcnt=%ld, working=%d",
@@ -145,6 +161,8 @@ work_loop (struct GC_stack_base *sb, void *data)
 	  MOM_DEBUG (run, "work_loop taskletcounter %lld before step", tc);
 	  mom_tasklet_step ((momit_tasklet_t *) curtsk);
 	  MOM_DEBUG (run, "work_loop taskletcounter %lld after step", tc);
+	  if (tc % MOM_MAX_WORKERS == 0)
+	    GC_collect_a_little ();
 	}
       else
 	{
@@ -159,6 +177,7 @@ work_loop (struct GC_stack_base *sb, void *data)
 	    pthread_cond_timedwait (&mom_run_changed_cond, &mom_run_mtx,
 				    &endts);
 	  pthread_mutex_unlock (&mom_run_mtx);
+	  GC_collect_a_little ();
 	  usleep (3000);
 	}
     }
@@ -752,6 +771,7 @@ event_loop (struct GC_stack_base *sb, void *data)
       repeat_loop = true;
       evloopcnt++;
       MOM_DEBUG (run, "start eventloop evloopcnt=%lld", evloopcnt);
+      GC_collect_a_little ();
       // check for ended process from time to time, to be safe
       if (evloopcnt % 8 == 0)
 	check_for_some_child_process ();
@@ -860,7 +880,7 @@ event_loop (struct GC_stack_base *sb, void *data)
 	  MOM_DEBUG (run, "poll timed out evloopcnt=%lld", evloopcnt);
 	  check_for_some_child_process ();
 	  MOM_DEBUG (run, "poll done timed out evloopcnt=%lld", evloopcnt);
-	}
+	};
     }
   while (repeat_loop);
   MOM_DEBUG (run, "end of eventloop evloopcnt=%lld", evloopcnt);

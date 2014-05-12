@@ -126,6 +126,8 @@ const struct momroutinedescr_st momrout_ajax_exit =
 
 ////////////////////////////////////////////////////////////////
 
+#define MOM_GARBAGE_COLLECTION_PERIOD 8
+static pthread_mutex_t periodic_mtx = PTHREAD_MUTEX_INITIALIZER;
 int
 momcode_ajax_periodic (int state, momit_tasklet_t * tasklet,
 		       momclosure_t * closure, momval_t * locvals,
@@ -136,9 +138,18 @@ momcode_ajax_periodic (int state, momit_tasklet_t * tasklet,
   struct tm nowtm = { };
   char nowbuf[64] = "";
   time (&now);
+  static long periodic_counter;
+  long count = 0;
+  {
+    pthread_mutex_lock (&periodic_mtx);
+    periodic_counter++;
+    count = periodic_counter;
+    pthread_mutex_unlock (&periodic_mtx);
+  }
   strftime (nowbuf, sizeof (nowbuf), "%c", localtime_r (&now, &nowtm));
-  MOM_DEBUG (web, "momcode_ajax_periodic state=%d webnum=%ld nowbuf=%s",
-	     state, mom_item_webrequest_webnum (webv), nowbuf);
+  MOM_DEBUG (web,
+	     "momcode_ajax_periodic state=%d webnum=%ld nowbuf=%s count=%ld",
+	     state, mom_item_webrequest_webnum (webv), nowbuf, count);
   MOM_DBG_ITEM (web, "ajax_periodic tasklet=",
 		(const mom_anyitem_t *) tasklet);
   MOM_DBG_VALUE (web, "ajax_periodic webv=", webv);
@@ -152,21 +163,44 @@ momcode_ajax_periodic (int state, momit_tasklet_t * tasklet,
       MOM_DEBUG (web, "momcode_ajax_periodic POST");
       MOM_DBG_VALUE (web, "ajax_periodic jsobpost=",
 		     mom_item_webrequest_jsob_post (webv));
-      mom_item_webrequest_add
-	(webv, MOMWEB_SET_MIME, "text/html",
-	 MOMWEB_LIT_STRING,
-	 "<!-- ajax_periodic fragment -->\n",
-	 MOMWEB_LIT_STRING, "elapsed real: ",
-	 MOMWEB_DOUBLE, mom_elapsed_real_time (),
-	 MOMWEB_LIT_STRING, " cpu:",
-	 MOMWEB_DOUBLE, mom_clock_time (CLOCK_PROCESS_CPUTIME_ID),
-	 MOMWEB_LIT_STRING, " sec., ",
-	 MOMWEB_DEC_LONG, (long) mom_agenda_work_counter (),
-	 MOMWEB_LIT_STRING, " tasklets.",
-	 MOMWEB_LIT_STRING, HTML_FROM,
-	 MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
+      GC_word gcheapsize = 0, gcfreebytes = 0, gcunmappedbytes =
+	0, gcbytessincegc = 0, gctotalbytes = 0;
+      GC_word gcnb =
+	(GC_word) GC_call_with_alloc_lock ((GC_fn_type) GC_get_gc_no, NULL);
+      GC_get_heap_usage_safe (&gcheapsize, &gcfreebytes, &gcunmappedbytes,
+			      &gcbytessincegc, &gctotalbytes);
+      mom_item_webrequest_add (webv, MOMWEB_SET_MIME, "text/html",
+			       MOMWEB_LIT_STRING,
+			       "<!-- ajax_periodic fragment -->\n",
+			       MOMWEB_LIT_STRING, "elapsed real: ",
+			       MOMWEB_FIX2DIG_DOUBLE,
+			       mom_elapsed_real_time (), MOMWEB_LIT_STRING,
+			       ", cpu:", MOMWEB_FIX2DIG_DOUBLE,
+			       mom_clock_time (CLOCK_PROCESS_CPUTIME_ID),
+			       MOMWEB_LIT_STRING, " sec., ", MOMWEB_DEC_INT64,
+			       (int64_t) mom_agenda_work_counter (),
+			       MOMWEB_LIT_STRING, " done tasklets, ",
+			       MOMWEB_DEC_LONG, (long) mom_nb_items (),
+			       MOMWEB_LIT_STRING, " items. <small>(GC: ",
+			       MOMWEB_DEC_LONG, (long) gcheapsize / 1024,
+			       MOMWEB_LIT_STRING, "kb heapsize, ",
+			       MOMWEB_DEC_LONG, (long) gcfreebytes / 1024,
+			       MOMWEB_LIT_STRING, "kb free, ",
+			       MOMWEB_DEC_LONG, (long) gcunmappedbytes / 1024,
+			       MOMWEB_LIT_STRING, "kb unmapped, ",
+			       MOMWEB_DEC_LONG, (long) gcbytessincegc / 1024,
+			       MOMWEB_LIT_STRING, "kb since gc, ",
+			       MOMWEB_DEC_LONG, (long) gctotalbytes / 1024,
+			       MOMWEB_LIT_STRING, "kb total, ",
+			       MOMWEB_DEC_LONG, (long) gcnb,
+			       MOMWEB_LIT_STRING, " nb, ", MOMWEB_HEX_LONG,
+			       (long) GC_get_version (), MOMWEB_LIT_STRING,
+			       " version)</small>", MOMWEB_LIT_STRING,
+			       HTML_FROM, MOMWEB_REPLY_CODE, HTTP_OK,
+			       MOMWEB_END);
       MOM_DBG_VALUE (web, "ajax_periodic replied webv=", webv);
     }
+  return routres_pop;
 }
 
 const struct momroutinedescr_st momrout_ajax_periodic =

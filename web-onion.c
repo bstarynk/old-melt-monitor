@@ -906,6 +906,15 @@ mom_item_webrequest_add (momval_t val, ...)
 	    ADDWEBSTR (webitm, dbuf);
 	  }
 	  break;
+	case MOMWEB_FIX2DIG_DOUBLE:
+	  {
+	    double x = va_arg (args, double);
+	    char dbuf[48];
+	    memset (dbuf, 0, sizeof (dbuf));
+	    snprintf (dbuf, sizeof (dbuf), "%.2f", x);
+	    ADDWEBSTR (webitm, dbuf);
+	  }
+	  break;
 	case MOMWEB_RESERVE:
 	  {
 	    unsigned more = va_arg (args, unsigned);

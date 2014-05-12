@@ -1054,6 +1054,7 @@ enum mom_webreplydirective_en
   MOMWEB_HEX_INT64 /*, int64_t num; for numbers in hexadecimal  */ ,
   MOMWEB_DOUBLE /*, double x; for double with %g */ ,
   MOMWEB_FIXED_DOUBLE /*, double x; for double with %.15f */ ,
+  MOMWEB_FIX2DIG_DOUBLE /*, double x; for double with %.2f */ ,
   MOMWEB_RESERVE /*, unsigned more; to reserve space in the buffer */ ,
   MOMWEB_CLEAR_BUFFER /*; to clear the buffer and restart  */ ,
   MOMWEB_SET_MIME /* const char*mimetype; e.g. "text/html" */ ,
@@ -1384,6 +1385,7 @@ void *mom_allocate_item (unsigned type, size_t itemsize, unsigned space);
 void *mom_allocate_item_with_uuid (unsigned type, size_t itemsize,
 				   unsigned space, uuid_t uid);
 mom_anyitem_t *mom_item_of_uuid (uuid_t);
+unsigned mom_nb_items (void);
 
 momit_json_name_t *mom_make_item_json_name_of_uuid (uuid_t, const char *name,
 						    unsigned space);

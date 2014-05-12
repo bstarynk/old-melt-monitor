@@ -271,6 +271,17 @@ mom_finalize_item (void *itmad, void *data)
 }
 
 
+unsigned
+mom_nb_items (void)
+{
+  unsigned nbitems = 0;
+  pthread_mutex_lock (&mtx_global_items);
+  if (items_data)
+    nbitems = items_data->items_nb;
+  pthread_mutex_unlock (&mtx_global_items);
+  return nbitems;
+}
+
 void *
 mom_allocate_item_with_uuid (unsigned type, size_t itemsize, unsigned space,
 			     uuid_t uid)
