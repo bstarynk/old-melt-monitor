@@ -202,6 +202,7 @@ resize_items_data (uint32_t newsiz)
   assert (5 * items_data->items_nb / 4 + 2 < newsiz);
   if (newsiz == items_data->items_size)
     return;
+  /// explicitly leave the GC_MALLOC_ATOMIC, so central to us
   struct items_data_st *newdata =
     GC_MALLOC_ATOMIC (sizeof (struct items_data_st) +
 		      (newsiz + 1) * sizeof (mom_anyitem_t *));
@@ -288,11 +289,7 @@ mom_allocate_item_with_uuid (unsigned type, size_t itemsize, unsigned space,
 {
   struct momanyitem_st *p = NULL;
   assert (itemsize >= sizeof (struct momanyitem_st));
-  p = GC_MALLOC (itemsize);
-  if (!p)
-    MOM_FATAL ("out of memory for item type %d size %ld",
-	       type, (long) itemsize);
-  memset (p, 0, itemsize);
+  p = MOM_GC_ALLOC ("allocate item", itemsize);
   if (space != 0)
     {
       if (MOM_UNLIKELY
@@ -367,15 +364,9 @@ put_attribute (struct mom_itemattributes_st *attrs, mom_anyitem_t * itat,
 	return NULL;
       unsigned newsize = 3;
       struct mom_itemattributes_st *newattrs
-	=
-	GC_MALLOC (sizeof (struct mom_itemattributes_st) +
-		   newsize * sizeof (struct mom_attrentry_st));
-      if (MOM_UNLIKELY (!newattrs))
-	MOM_FATAL ("failed to allocate initial attributes of %d",
-		   (int) newsize);
-      memset (newattrs, 0,
-	      sizeof (struct mom_itemattributes_st) +
-	      newsize * sizeof (struct mom_attrentry_st));
+	= MOM_GC_ALLOC ("initial attributes",
+			sizeof (struct mom_itemattributes_st) +
+			newsize * sizeof (struct mom_attrentry_st));
       newattrs->nbattr = 1;
       newattrs->size = newsize;
       newattrs->itattrtab[0].aten_itm = itat;
@@ -477,14 +468,9 @@ remove_at_md:
       if (newsize < size)
 	{
 	  struct mom_itemattributes_st *newattrs
-	    =
-	    GC_MALLOC (sizeof (struct mom_itemattributes_st) +
-		       newsize * sizeof (struct mom_attrentry_st));
-	  if (MOM_UNLIKELY (!newattrs))
-	    MOM_FATAL ("failed to shrink attributes of %d", (int) newsize);
-	  memset (newattrs, 0,
-		  sizeof (struct mom_itemattributes_st) +
-		  newsize * sizeof (struct mom_attrentry_st));
+	    = MOM_GC_ALLOC ("grown attributes",
+			    sizeof (struct mom_itemattributes_st) +
+			    newsize * sizeof (struct mom_attrentry_st));
 	  memcpy (newattrs, attrs,
 		  sizeof (struct mom_itemattributes_st) +
 		  md * sizeof (struct mom_attrentry_st));
@@ -908,10 +894,8 @@ tasklet_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
   unsigned fratop = tskitm->itk_fratop;
   if (tskitm->itk_fratop >= TINY_MAX)
     {
-      jframarr = GC_MALLOC (fratop * sizeof (momval_t));
-      if (MOM_UNLIKELY (!jframarr))
-	MOM_FATAL ("failed to allocate for %d frames", fratop);
-      memset (jframarr, 0, fratop * sizeof (momval_t));
+      jframarr =
+	MOM_GC_ALLOC ("tasklet dump fill frames", fratop * sizeof (momval_t));
     }
   else
     jframarr = jframetiny;
@@ -920,7 +904,7 @@ tasklet_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
       struct momframe_st *curfra = tskitm->itk_frames + ix;
       momclosure_t *curclo = tskitm->itk_closures[ix];
       if (MOM_UNLIKELY (!curclo || curclo->typnum != momty_closure))
-	MOM_FATAL ("corrupted frame #%d", ix);
+	MOM_FATAL ("corrupted dump frame #%d", ix);
       unsigned nbnum = curfra->fr_dbloff - curfra->fr_intoff;
       unsigned nbdbl = 0, nbval = 0;
       if (ix + 1 >= fratop)
@@ -946,30 +930,21 @@ tasklet_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
       if (nbnum < TINY_MAX)
 	numarr = numtiny;
       else
-	{
-	  numarr = GC_MALLOC (sizeof (momval_t) * nbnum);
-	  if (MOM_UNLIKELY (!numarr))
-	    MOM_FATAL ("failed to allocate for %d numbers", nbnum);
-	  memset (numarr, 0, sizeof (momval_t) * nbnum);
-	}
+	numarr =
+	  MOM_GC_ALLOC ("tasklet dump fill json numbers",
+			sizeof (momval_t) * nbnum);
       if (nbdbl < TINY_MAX)
 	dblarr = dbltiny;
       else
-	{
-	  dblarr = GC_MALLOC (sizeof (momval_t) * nbdbl);
-	  if (MOM_UNLIKELY (!dblarr))
-	    MOM_FATAL ("failed to allocate for %d doubles", nbdbl);
-	  memset (dblarr, 0, sizeof (momval_t) * nbdbl);
-	}
+	dblarr =
+	  MOM_GC_ALLOC ("tasklet dump fill json doubles",
+			sizeof (momval_t) * nbdbl);
       if (nbval < TINY_MAX)
 	valarr = valtiny;
       else
-	{
-	  valarr = GC_MALLOC (sizeof (momval_t) * nbval);
-	  if (MOM_UNLIKELY (!valarr))
-	    MOM_FATAL ("failed to allocate for %d values", nbval);
-	  memset (valarr, 0, sizeof (momval_t) * nbval);
-	}
+	valarr =
+	  MOM_GC_ALLOC ("tasklet dump fill json values",
+			sizeof (momval_t) * nbval);
       for (unsigned nix = 0; ix < nbnum; nix++)
 	numarr[nix] =
 	  (momval_t)
@@ -1066,12 +1041,9 @@ tasklet_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
       if (nbval < TINY_MAX)
 	valarr = valtiny;
       else
-	{
-	  valarr = GC_MALLOC (nbval * sizeof (momval_t));
-	  if (!valarr)
-	    MOM_FATAL ("failed to allocate %d values", nbval);
-	  memset (valarr, 0, nbval * sizeof (momval_t));
-	}
+	valarr =
+	  MOM_GC_ALLOC ("tasklet load fill values",
+			nbval * sizeof (momval_t));
       for (unsigned vix = 0; vix < nbval; vix++)
 	valarr[vix] =
 	  mom_load_value_json (ld, mom_json_array_nth (jvalues, vix));
@@ -1079,12 +1051,9 @@ tasklet_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
       if (nbnum < TINY_MAX)
 	numarr = numtiny;
       else
-	{
-	  numarr = GC_MALLOC_ATOMIC (nbnum * sizeof (intptr_t));
-	  if (!numarr)
-	    MOM_FATAL ("failed to allocate %d numbers", nbnum);
-	  memset (numarr, 0, nbnum * sizeof (intptr_t));
-	}
+	numarr =
+	  MOM_GC_SCALAR_ALLOC ("tasklet load fill numbers",
+			       nbnum * sizeof (intptr_t));
       for (unsigned nix = 0; nix < nbnum; nix++)
 	numarr[nix] =
 	  mom_int_of_value_else_0 (mom_json_array_nth (jnumbers, nix));
@@ -1092,12 +1061,9 @@ tasklet_itemfiller (struct mom_loader_st *ld, mom_anyitem_t * itm,
       if (nbdbl < TINY_MAX)
 	dblarr = dbltiny;
       else
-	{
-	  dblarr = GC_MALLOC_ATOMIC (nbdbl * sizeof (double));
-	  if (!dblarr)
-	    MOM_FATAL ("failed to allocate %d doubles", nbdbl);
-	  memset (dblarr, 0, nbdbl * sizeof (double));
-	}
+	dblarr =
+	  MOM_GC_SCALAR_ALLOC ("tasklet load fill doubles",
+			       nbdbl * sizeof (double));
       for (unsigned dix = 0; dix < nbdbl; dix++)
 	dblarr[dix] =
 	  mom_double_of_value_else_0 (mom_json_array_nth (jdoubles, dix));
@@ -1413,14 +1379,13 @@ reserve_vectoritem (momit_vector_t * vecitm, unsigned more)
   if (MOM_UNLIKELY (vecitm->itv_count + more + 1 >= vecitm->itv_size))
     {
       unsigned newsiz = ((5 * vecitm->itv_count / 4 + 5 + more) | 7) + 1;
-      momval_t *newarr = GC_MALLOC (newsiz * sizeof (momval_t));
-      if (MOM_UNLIKELY (!newarr))
-	MOM_FATAL ("failed to grow vector to %d", (int) newsiz);
-      memset (newarr, 0, newsiz * sizeof (momval_t));
+      momval_t *newarr =
+	MOM_GC_ALLOC ("reserve vector item", newsiz * sizeof (momval_t));
       if (vecitm->itv_count > 0)
 	memcpy (newarr, vecitm->itv_arr,
 		vecitm->itv_count * sizeof (momval_t));
-      GC_FREE (vecitm->itv_arr);
+      MOM_GC_FREE (vecitm->itv_arr);
+      vecitm->itv_arr = newarr;
       vecitm->itv_size = newsiz;
     }
 }
@@ -1506,14 +1471,12 @@ mom_item_vector_resize (momval_t vec, unsigned newcount)
 	  unsigned newsiz = ((9 * newcount / 8 + 3) | 7) + 1;
 	  if (newsiz < oldsiz)
 	    {
-	      momval_t *newarr = GC_MALLOC (newsiz * sizeof (momval_t));
-	      if (MOM_UNLIKELY (!newarr))
-		MOM_FATAL ("failed to shrink vector to %d", (int) newsiz);
-	      memset (newarr, 0, newsiz * sizeof (momval_t));
+	      momval_t *newarr =
+		MOM_GC_ALLOC ("shrink vector", newsiz * sizeof (momval_t));
 	      memcpy (newarr, oldarr, newcount * sizeof (momval_t));
 	      vec.pvectitem->itv_size = newsiz;
 	      vec.pvectitem->itv_arr = newarr;
-	      GC_FREE (oldarr), oldarr = NULL;
+	      MOM_GC_FREE (oldarr);
 	    }
 	}
       vec.pvectitem->itv_count = newcount;
@@ -1740,18 +1703,12 @@ vector_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
   if (cnt < TINY_MAX)
     jarr = tinyarr;
   else
-    {
-      jarr = GC_MALLOC (sizeof (momval_t) * cnt);
-      if (MOM_UNLIKELY (!jarr))
-	MOM_FATAL
-	  ("failed to allocate json array for %d vector elements", (int) cnt);
-      memset (jarr, 0, sizeof (momval_t) * cnt);
-    }
+    jarr = MOM_GC_ALLOC ("vector dump full jsonarr", sizeof (momval_t) * cnt);
   for (unsigned vix = 0; vix < cnt; vix++)
     jarr[vix] = mom_dump_emit_json (dmp, vecitm->itv_arr[vix]);
   momval_t jarrvec = (momval_t) mom_make_json_array_count (cnt, jarr);
   if (jarr != tinyarr)
-    GC_FREE (jarr);
+    MOM_GC_FREE (jarr);
   jarr = NULL;
   return (momval_t) mom_make_json_object
     /// attributes
@@ -1969,10 +1926,8 @@ mom_item_assoc_put1 (momval_t asso, const momval_t attr, const momval_t val)
       unsigned newsiz = ((3 * oldcount / 2 + oldcount / 16 + 5) | 7) + 1;
       struct mom_attrentry_st *oldarr = assoc->ita_htab;
       struct mom_attrentry_st *newarr =
-	GC_MALLOC (newsiz * sizeof (struct mom_attrentry_st));
-      if (MOM_UNLIKELY (!newarr))
-	MOM_FATAL ("failed to grow assoc to size %d", (int) newsiz);
-      memset (newarr, 0, newsiz * sizeof (struct mom_attrentry_st));
+	MOM_GC_ALLOC ("assoc put grown entries",
+		      newsiz * sizeof (struct mom_attrentry_st));
       assoc->ita_count = 0;
       assoc->ita_size = newsiz;
       assoc->ita_htab = newarr;
@@ -1984,6 +1939,7 @@ mom_item_assoc_put1 (momval_t asso, const momval_t attr, const momval_t val)
 	  assoc_put (assoc, curat, oldarr[oix].aten_val);
 	}
       assert (assoc->ita_count == oldcount);
+      MOM_GC_FREE (oldarr);
     }
   if (val.ptr != NULL)
     assoc_put (assoc, attr.panyitem, val);
@@ -2026,10 +1982,8 @@ mom_item_assoc_put_several (momval_t asso, ...)
     {
       struct mom_attrentry_st *oldarr = assoc->ita_htab;
       struct mom_attrentry_st *newarr =
-	GC_MALLOC (newsize * sizeof (struct mom_attrentry_st));
-      if (MOM_UNLIKELY (!newarr))
-	MOM_FATAL ("failed to resize assoc to size %d", (int) newsize);
-      memset (newarr, 0, newsize * sizeof (struct mom_attrentry_st));
+	MOM_GC_ALLOC ("assoc put several entries",
+		      newsize * sizeof (struct mom_attrentry_st));
       assoc->ita_count = 0;
       assoc->ita_size = newsize;
       assoc->ita_htab = newarr;
@@ -2041,6 +1995,7 @@ mom_item_assoc_put_several (momval_t asso, ...)
 	  assoc_put (assoc, curat, oldarr[oix].aten_val);
 	}
       assert (assoc->ita_count == oldcount);
+      MOM_GC_FREE (oldarr);
     }
   // second, put the arguments
   va_start (args, asso);
@@ -2225,11 +2180,10 @@ assoc_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
   unsigned size = assitm->ita_size;
   struct mom_attrentry_st entiny[TINY_MAX] = { };
   struct mom_attrentry_st *entarr =
-    (count <
-     TINY_MAX) ? entiny : GC_MALLOC (count *
-				     sizeof (struct mom_attrentry_st));
-  if (MOM_UNLIKELY (!entarr))
-    MOM_FATAL ("failed to allocate %d entries", (int) count);
+    (count < TINY_MAX) ? entiny : MOM_GC_ALLOC ("assoc dump entries",
+						count *
+						sizeof (struct
+							mom_attrentry_st));
   memset (entarr, 0, count * sizeof (struct mom_attrentry_st));
   unsigned nb = 0;
   for (unsigned ix = 0; ix < size; ix++)
@@ -2247,10 +2201,8 @@ assoc_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
   qsort (entarr, count, sizeof (struct mom_attrentry_st), cmp_attrentry);
   momval_t jarrtiny[TINY_MAX] = { };
   momval_t *jarr =
-    (count < TINY_MAX) ? jarrtiny : GC_MALLOC (count * sizeof (momval_t));
-  if (MOM_UNLIKELY (!jarr))
-    MOM_FATAL ("failed to allocate %d json", (int) count);
-  memset (jarr, 0, count * sizeof (momval_t));
+    (count < TINY_MAX) ? jarrtiny
+    : MOM_GC_ALLOC ("assoc dump jsonarr fill", count * sizeof (momval_t));
   unsigned nbjent = 0;
   for (unsigned ix = 0; ix < count; ix++)
     {
@@ -2366,9 +2318,8 @@ mom_item_queue_length (const momval_t que)
 static void
 queue_push_back (struct momqueueitem_st *quitm, mom_anyitem_t * itm)
 {
-  struct mom_itqueue_st *qel = GC_MALLOC (sizeof (struct mom_itqueue_st));
-  if (MOM_UNLIKELY (!qel))
-    MOM_FATAL ("failed to allocate queue element");
+  struct mom_itqueue_st *qel =
+    MOM_GC_ALLOC ("queue push back", sizeof (struct mom_itqueue_st));
   qel->iq_next = NULL;
   qel->iq_item = itm;
   if (MOM_UNLIKELY (!quitm->itq_first))
@@ -2388,9 +2339,8 @@ queue_push_back (struct momqueueitem_st *quitm, mom_anyitem_t * itm)
 static void
 queue_push_front (struct momqueueitem_st *quitm, mom_anyitem_t * itm)
 {
-  struct mom_itqueue_st *qel = GC_MALLOC (sizeof (struct mom_itqueue_st));
-  if (MOM_UNLIKELY (!qel))
-    MOM_FATAL ("failed to allocate queue element");
+  struct mom_itqueue_st *qel =
+    MOM_GC_ALLOC ("queue push front", sizeof (struct mom_itqueue_st));
   qel->iq_next = NULL;
   qel->iq_item = itm;
   if (MOM_UNLIKELY (!quitm->itq_first))
@@ -2571,10 +2521,7 @@ mom_item_queue_tuple (momval_t quev)
   if (len < TINY_MAX)
     arr = tinyarr;
   else
-    arr = GC_MALLOC (len * sizeof (mom_anyitem_t *));
-  if (MOM_UNLIKELY (!arr))
-    MOM_FATAL ("failed to allocate array of %d values", (int) len);
-  memset (arr, 0, len * sizeof (mom_anyitem_t *));
+    arr = MOM_GC_ALLOC ("queue tuple", len * sizeof (mom_anyitem_t *));
   unsigned nb = 0;
   for (struct mom_itqueue_st * iq = quev.pqueueitem->itq_first;
        iq != NULL && nb < len; iq = iq->iq_next)
@@ -2642,9 +2589,7 @@ queue_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
   if (len < TINY_MAX)
     jarr = tinyjarr;
   else
-    jarr = GC_MALLOC (len * sizeof (momval_t));
-  if (MOM_UNLIKELY (!jarr))
-    MOM_FATAL ("failed to allocate %d queued items", (int) len);
+    jarr = MOM_GC_ALLOC ("queue dump fill jarr", len * sizeof (momval_t));
   unsigned nb = 0;
   for (struct mom_itqueue_st * iq = queitm->itq_first; iq != NULL && nb < len;
        iq = iq->iq_next)
@@ -2666,7 +2611,7 @@ queue_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
      // end
      MOMJSON_END);
   if (jarr != tinyjarr)
-    GC_FREE (jarr);
+    MOM_GC_FREE (jarr);
   return jres;
 }
 
@@ -2834,10 +2779,7 @@ mom_make_item_buffer (unsigned space)
   momit_buffer_t *itm
     = mom_allocate_item (momty_bufferitem, sizeof (momit_buffer_t), space);
   const unsigned siz = BUFFER_INITIAL_SIZE;
-  itm->itu_buf = GC_MALLOC_ATOMIC (siz);
-  if (MOM_UNLIKELY (!itm->itu_buf))
-    MOM_FATAL ("failed to allocate buffer of %d", (int) siz);
-  memset (itm->itu_buf, 0, siz);
+  itm->itu_buf = MOM_GC_SCALAR_ALLOC ("new buffer", siz);
   itm->itu_begin = itm->itu_end = 0;
   itm->itu_size = siz;
   return itm;
@@ -2850,10 +2792,7 @@ mom_make_item_buffer_of_uuid (uuid_t uid, unsigned space)
     = mom_allocate_item_with_uuid (momty_bufferitem, sizeof (momit_buffer_t),
 				   space, uid);
   const unsigned siz = BUFFER_INITIAL_SIZE;
-  itm->itu_buf = GC_MALLOC_ATOMIC (siz);
-  if (MOM_UNLIKELY (!itm->itu_buf))
-    MOM_FATAL ("failed to allocate buffer of %d", (int) siz);
-  memset (itm->itu_buf, 0, siz);
+  itm->itu_buf = MOM_GC_SCALAR_ALLOC ("new buffer of uuid", siz);
   itm->itu_begin = itm->itu_end = 0;
   itm->itu_size = siz;
   return itm;
@@ -2883,12 +2822,9 @@ mom_item_buffer_reserve (momval_t bufv, unsigned gap)
     {
       unsigned oldlen = bufitm->itu_end - bufitm->itu_begin;
       unsigned newsiz = ((5 * oldlen / 4 + gap + 5) | 0x1f) + 1;
-      char *newbuf = GC_MALLOC_ATOMIC (newsiz);
-      if (MOM_UNLIKELY (!newbuf))
-	MOM_FATAL ("failed to reserve buffer for %d bytes", (int) newsiz);
-      memset (newbuf, 0, newsiz);
+      char *newbuf = MOM_GC_SCALAR_ALLOC ("reserve buffer", newsiz);
       memcpy (newbuf, bufitm->itu_buf + bufitm->itu_begin, oldlen);
-      GC_FREE (bufitm->itu_buf);
+      MOM_GC_FREE (bufitm->itu_buf);
       bufitm->itu_buf = newbuf;
       bufitm->itu_size = newsiz;
       bufitm->itu_begin = 0;
@@ -2906,10 +2842,7 @@ item_buffer_need (momit_buffer_t * bufitm, unsigned more)
       if (oldlen + more + 1 >= bufitm->itu_size)
 	{
 	  unsigned newsiz = ((5 * oldlen / 4 + more + 4) | 0x1f) + 1;
-	  char *newbuf = GC_MALLOC_ATOMIC (newsiz);
-	  if (MOM_UNLIKELY (!newbuf))
-	    MOM_FATAL ("failed to grow buffer for %d bytes", (int) newsiz);
-	  memset (newbuf, 0, newsiz);
+	  char *newbuf = MOM_GC_SCALAR_ALLOC ("buffer need", newsiz);
 	  memcpy (newbuf, bufitm->itu_buf + bufitm->itu_begin, oldlen);
 	  GC_FREE (bufitm->itu_buf);
 	  bufitm->itu_buf = newbuf;
@@ -2939,11 +2872,8 @@ mom_item_buffer_clear (momval_t bufv)
   if (bufitm->itu_size > 3 * BUFFER_INITIAL_SIZE)
     {
       unsigned newsiz = BUFFER_INITIAL_SIZE;
-      char *newbuf = GC_MALLOC_ATOMIC (newsiz);
-      if (MOM_UNLIKELY (!newbuf))
-	MOM_FATAL ("failed to reserve buffer for %d bytes", (int) newsiz);
-      memset (newbuf, 0, newsiz);
-      GC_FREE (bufitm->itu_buf);
+      char *newbuf = MOM_GC_SCALAR_ALLOC ("buffer clear", newsiz);
+      MOM_GC_FREE (bufitm->itu_buf);
       bufitm->itu_buf = newbuf;
       bufitm->itu_size = newsiz;
     }
@@ -3057,10 +2987,7 @@ mom_item_buffer_cstr (momval_t bufv, unsigned *plen)
   unsigned blen = bufitm->itu_end - bufitm->itu_begin;
   if (plen)
     *plen = blen;
-  res = GC_MALLOC_ATOMIC (blen + 1);
-  if (MOM_UNLIKELY (!res))
-    MOM_FATAL ("failed to allocate string of %d bytes", (int) blen);
-  memset (res, 0, blen + 1);
+  res = MOM_GC_SCALAR_ALLOC ("buffer cstr", blen + 1);
   memcpy (res, bufitm->itu_buf + bufitm->itu_begin, blen);
   pthread_mutex_unlock (&bufv.panyitem->i_mtx);
   return res;
@@ -3145,12 +3072,9 @@ buffer_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
   if (nbnl + 1 < TINY_MAX)
     arrcont = tinycont;
   else
-    {
-      arrcont = GC_MALLOC ((nbnl + 1) * sizeof (momval_t));
-      if (MOM_UNLIKELY (!arrcont))
-	MOM_FATAL ("failed to allocate %d lines", (int) nbnl + 1);
-      memset (arrcont, 0, (nbnl + 1) * sizeof (momval_t));
-    }
+    arrcont =
+      MOM_GC_ALLOC ("dump buffer get fill jsonarr",
+		    (nbnl + 1) * sizeof (momval_t));
   unsigned ix = 0;
   const char *eol = NULL;
   for (const char *pc = first; pc != NULL; pc = eol)
@@ -3223,10 +3147,9 @@ mom_make_item_dictionnary (unsigned space)
     = mom_allocate_item (momty_dictionnaryitem, sizeof (momit_dictionnary_t),
 			 space);
   const unsigned siz = DICTIONNARY_INITIAL_SIZE;
-  itm->idi_dictab = GC_MALLOC (siz * sizeof (struct mom_name_value_entry_st));
-  if (MOM_UNLIKELY (!itm->idi_dictab))
-    MOM_FATAL ("failed to allocate dictionnary of %d", (int) siz);
-  memset (itm->idi_dictab, 0, siz * sizeof (struct mom_name_value_entry_st));
+  itm->idi_dictab =
+    MOM_GC_ALLOC ("new item dictionnary",
+		  siz * sizeof (struct mom_name_value_entry_st));
   itm->idi_count = 0;
   itm->idi_size = siz;
   return itm;
@@ -3240,10 +3163,9 @@ mom_make_item_dictionnary_of_uuid (uuid_t uid, unsigned space)
 				   sizeof (momit_dictionnary_t),
 				   space, uid);
   const unsigned siz = DICTIONNARY_INITIAL_SIZE;
-  itm->idi_dictab = GC_MALLOC (siz * sizeof (struct mom_name_value_entry_st));
-  if (MOM_UNLIKELY (!itm->idi_dictab))
-    MOM_FATAL ("failed to allocate dictionnary of %d", (int) siz);
-  memset (itm->idi_dictab, 0, siz * sizeof (struct mom_name_value_entry_st));
+  itm->idi_dictab =
+    MOM_GC_ALLOC ("new item dictionnary of uuid",
+		  siz * sizeof (struct mom_name_value_entry_st));
   itm->idi_count = 0;
   itm->idi_size = siz;
   return itm;
@@ -3329,11 +3251,8 @@ mom_item_dictionnary_reserve (momval_t dictv, unsigned more)
       if (newsiz != oldsiz)
 	{
 	  struct mom_name_value_entry_st *newdictab =
-	    GC_MALLOC (newsiz * sizeof (struct mom_name_value_entry_st));
-	  if (MOM_UNLIKELY (!newdictab))
-	    MOM_FATAL ("unable to resize dictionnary to %d", (int) newsiz);
-	  memset (newdictab, 0,
-		  newsiz * sizeof (struct mom_name_value_entry_st));
+	    MOM_GC_ALLOC ("reserve dictionnary",
+			  newsiz * sizeof (struct mom_name_value_entry_st));
 	  struct mom_name_value_entry_st *olddictab = itmdict->idi_dictab;
 	  itmdict->idi_dictab = newdictab;
 	  itmdict->idi_count = 0;
@@ -3347,7 +3266,7 @@ mom_item_dictionnary_reserve (momval_t dictv, unsigned more)
 					      olddictab[oix].nme_val);
 	    }
 	  assert (itmdict->idi_count == oldcnt);
-	  GC_FREE (olddictab), olddictab = NULL;
+	  MOM_GC_FREE (olddictab);
 	}
     }
   pthread_mutex_unlock (&dictv.panyitem->i_mtx);
@@ -3371,11 +3290,8 @@ mom_item_dictionnary_put (momval_t dictv, momval_t namev, momval_t valv)
       unsigned oldsize = itmdict->idi_size;
       unsigned newsize = ((4 * oldcount / 3 + oldcount / 16 + 5) | 0x1f) + 1;
       struct mom_name_value_entry_st *newdictab
-	= GC_MALLOC (newsize * sizeof (struct mom_name_value_entry_st));
-      if (MOM_UNLIKELY (!newdictab))
-	MOM_FATAL ("failed to grown dictionnary to %d size", (int) newsize);
-      memset (newdictab, 0,
-	      newsize * sizeof (struct mom_name_value_entry_st));
+	= MOM_GC_ALLOC ("grow put dictionnary",
+			newsize * sizeof (struct mom_name_value_entry_st));
       itmdict->idi_count = 0;
       itmdict->idi_size = newsize;
       itmdict->idi_dictab = newdictab;
@@ -3390,7 +3306,7 @@ mom_item_dictionnary_put (momval_t dictv, momval_t namev, momval_t valv)
 	  dictionnary_add_new_name_entry (itmdict, oldname, oldval);
 	}
       assert (itmdict->idi_count == oldcount);
-      GC_FREE (olddicttab);
+      MOM_GC_FREE (olddicttab);
     }
   int ix =
     dictionnary_find_name_index (itmdict, namestr->cstr, namestr->hash);
@@ -3485,10 +3401,8 @@ mom_item_dictionnary_sorted_name_node (momval_t dictv, momval_t connv)
   momit_dictionnary_t *itmdict = dictv.pdictionnaryitem;
   unsigned cnt = itmdict->idi_count;
   unsigned siz = itmdict->idi_size;
-  momval_t *sonarr = GC_MALLOC ((cnt + 1) * sizeof (momval_t));
-  if (MOM_UNLIKELY (!sonarr))
-    MOM_FATAL ("failed to allocate %d sons", cnt + 1);
-  memset (sonarr, 0, (cnt + 1) * sizeof (momval_t));
+  momval_t *sonarr = MOM_GC_ALLOC ("dictionnary sorted name node",
+				   (cnt + 1) * sizeof (momval_t));
   unsigned nb = 0;
   for (unsigned dix = 0; dix < siz; dix++)
     {
@@ -3502,7 +3416,7 @@ mom_item_dictionnary_sorted_name_node (momval_t dictv, momval_t connv)
   qsort (sonarr, cnt, sizeof (momval_t), valptr_cmp);
   pthread_mutex_unlock (&dictv.panyitem->i_mtx);
   res = (momval_t) mom_make_node_from_array (connv.panyitem, cnt, sonarr);
-  GC_FREE (sonarr);
+  MOM_GC_FREE (sonarr);
   return res;
 }
 
@@ -3593,10 +3507,9 @@ dictionnary_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
   assert (node.ptr && *node.ptype == momty_node);
   const momnode_t *nd = node.pnode;
   unsigned nbnames = nd->slen;
-  momval_t *entarr = nbnames ? GC_MALLOC (nbnames * sizeof (momval_t)) : NULL;
-  if (MOM_UNLIKELY (!entarr && nbnames > 0))
-    MOM_FATAL ("failed to allocate %d entries", nbnames);
-  memset (entarr, 0, nbnames * sizeof (momval_t));
+  momval_t *entarr = nbnames ? MOM_GC_ALLOC ("dump dictionnary json entries",
+					     nbnames *
+					     sizeof (momval_t)) : NULL;
   unsigned nb = 0;
   for (unsigned eix = 0; eix < nbnames; eix++)
     {
@@ -3615,7 +3528,7 @@ dictionnary_itemgetfill (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
     }
   momval_t jarr = (momval_t) mom_make_json_array_count (nb, entarr);
   assert (mom_json_array_size (jarr) == nb);
-  GC_FREE (entarr), entarr = NULL;
+  MOM_GC_FREE (entarr);
   momval_t jres = (momval_t) mom_make_json_object
     // attributes
     (MOMJSON_ENTRY, mom_item__attributes,
@@ -3804,9 +3717,12 @@ mom_initialize_items (void)
 {
   const unsigned nb_items = 4090;
   pthread_mutex_lock (&mtx_global_items);
+  // keep this very central GC_MALLOC_ATOMIC
   items_data =
     GC_MALLOC_ATOMIC (sizeof (struct items_data_st) +
 		      nb_items * sizeof (mom_anyitem_t *));
+  if (!items_data)
+    MOM_FATAL ("failed to initialize %d items", nb_items);
   memset (items_data, 0,
 	  sizeof (struct items_data_st) +
 	  nb_items * sizeof (mom_anyitem_t *));

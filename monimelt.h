@@ -25,6 +25,10 @@
 
 #define GC_THREADS 1
 
+#define MOM_EXPLICIT_GC_THREAD 1
+#warning enabling MOM_EXPLICIT_GC_THREAD
+
+
 #include <features.h>		// GNU things
 #include <assert.h>
 #include <stdio.h>
@@ -87,7 +91,7 @@ extern const char monimelt_lastgitcommit[];
 
 #if MOM_EXPLICIT_GC_THREAD
 #define MOMGC_REGISTER_MY_THREAD(Sb) GC_register_my_thread(Sb)
-#define MOMGC_UNREGISTER_MY_THHREAD() GC_unregister_my_thread()
+#define MOMGC_UNREGISTER_MY_THREAD() GC_unregister_my_thread()
 #define MOMGC_CALL_WITH_STACK_BASE(Rout,Base) GC_call_with_stack_base(Rout,Base)
 #else
 #define MOMGC_REGISTER_MY_THREAD(Sb) do{if (0) (void)(Sb);}while(0)
@@ -219,6 +223,7 @@ void mom_register_dumped_module (const char *modname);
 
 // below TINY_MAX we try to allocate on stack temporary vectors
 #define TINY_MAX 8
+
 
 union momvalueptr_un
 {
@@ -1313,6 +1318,40 @@ __attribute__ ((format (printf, 3, 4)));
   MOM_WARNING_AT(Fil,Lin,Fmt,##__VA_ARGS__)
 #define MOM_WARNING(Fmt,...) \
   MOM_WARNING_AT_BIS(__FILE__,__LINE__,Fmt,##__VA_ARGS__)
+
+//////////////// wrapping Boehm GC allocation
+// using GNU extension: statement expression
+#define MOM_GC_ALLOC_AT(Msg,Siz,Lin) ({ \
+      size_t _sz_##Lin = Siz;					\
+      void* _p_##Lin =						\
+	(_sz_##Lin>0)?GC_MALLOC(_sz_##Lin):NULL;		\
+  if (MOM_UNLIKELY(!_p_##Lin && _sz_##Lin>0))			\
+    MOM_FATAL("failed to allocate %ld bytes:" Msg,		\
+	      (long) _sz_##Lin);				\
+  if (_sz_##Lin>0)						\
+    memset (_p_##Lin, 0, _sz_##Lin);				\
+  _p_##Lin; })
+#define MOM_GC_ALLOC(Msg,Siz) \
+  MOM_GC_ALLOC_AT(Msg,Siz,__LINE__)
+
+#define MOM_GC_SCALAR_ALLOC_AT(Msg,Siz,Lin) ({			\
+  size_t _sz_##Lin = Siz;					\
+  void* _p_##Lin =						\
+	(_sz_##Lin>0)?GC_MALLOC_ATOMIC(_sz_##Lin):NULL;		\
+  if (MOM_UNLIKELY(!_p_##Lin))					\
+    MOM_FATAL("failed to allocate %ld scalar bytes:" Msg,	\
+		(long) _sz_##Lin);				\
+  memset (_p_##Lin, 0, _sz_##Lin);				\
+  _p_##Lin; })
+#define MOM_GC_SCALAR_ALLOC(Msg,Siz) \
+  MOM_GC_SCALAR_ALLOC_AT(Msg,Siz,__LINE__)
+
+// free a pointer and clear the variable
+#define MOM_GC_FREE_AT(VarPtr,Lin) do {				\
+    void* _fp_##Lin = VarPtr;					\
+    VarPtr = NULL;						\
+    if (_fp_##Lin != NULL) GC_FREE(_fp_##Lin); } while(0)
+#define MOM_GC_FREE(VarPtr) MOM_GC_FREE_AT(VarPtr,__LINE__)
 
 momhash_t mom_string_hash (const char *str, int len);
 const momstring_t *mom_make_string_len (const char *str, int len);

@@ -240,40 +240,34 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
 	{
 	  const onion_dict *odicpost = onion_request_get_post_dict (req);
 	  int cntdicpost = onion_dict_count (odicpost);
-	  struct post_dict_st *pdic =
-	    GC_MALLOC (sizeof (struct post_dict_st) +
-		       cntdicpost * sizeof (struct mom_jsonentry_st));
-	  if (MOM_UNLIKELY (!pdic))
-	    MOM_FATAL
-	      ("failed to allocate for %d pairs for POST request",
-	       cntdicpost);
-	  memset (pdic, 0,
-		  sizeof (struct post_dict_st) +
-		  cntdicpost * sizeof (struct mom_jsonentry_st));
+	  struct post_dict_st *pdic = MOM_GC_ALLOC ("new POST dictionnary",
+						    sizeof (struct
+							    post_dict_st) +
+						    cntdicpost *
+						    sizeof (struct
+							    mom_jsonentry_st));
 	  pdic->post_len = cntdicpost;
 	  onion_dict_preorder (odicpost, dict_add, pdic);
 	  jpost = (momval_t) mom_make_json_object
 	    (MOMJSON_COUNTED_ENTRIES, pdic->post_count, pdic->post_pairtab,
 	     MOMJSON_END);
-	  GC_FREE (pdic);
+	  MOM_GC_FREE (pdic);
 	};
       {
 	const onion_dict *odicquery = onion_request_get_query_dict (req);
 	int cntdicquery = onion_dict_count (odicquery);
-	struct post_dict_st *pdic =
-	  GC_MALLOC (sizeof (struct post_dict_st) +
-		     cntdicquery * sizeof (struct mom_jsonentry_st));
-	if (MOM_UNLIKELY (!pdic))
-	  MOM_FATAL ("failed to allocate for %d pairs of query", cntdicquery);
-	memset (pdic, 0,
-		sizeof (struct post_dict_st) +
-		cntdicquery * sizeof (struct mom_jsonentry_st));
+	struct post_dict_st *pdic = MOM_GC_ALLOC ("new query dictionnary",
+						  sizeof (struct post_dict_st)
+						  +
+						  cntdicquery *
+						  sizeof (struct
+							  mom_jsonentry_st));
 	pdic->post_len = cntdicquery;
 	onion_dict_preorder (odicquery, dict_add, pdic);
 	jquery = (momval_t) mom_make_json_object
 	  (MOMJSON_COUNTED_ENTRIES, pdic->post_count, pdic->post_pairtab,
 	   MOMJSON_END);
-	GC_FREE (pdic);
+	MOM_GC_FREE (pdic);
       }
       momit_webrequest_t *webitm = mom_allocate_item (momty_webrequestitem,
 						      sizeof
@@ -288,11 +282,8 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
       webitm->iweb_queryjsob = jquery;
       webitm->iweb_path = pathv;
       {
-	char *wbuf = GC_MALLOC_ATOMIC (WEB_INITIAL_REPLY_SIZE);
-	if (MOM_UNLIKELY (!wbuf))
-	  MOM_FATAL ("cannot allocate web buffer of %d",
-		     WEB_INITIAL_REPLY_SIZE);
-	memset (wbuf, 0, WEB_INITIAL_REPLY_SIZE);
+	char *wbuf = MOM_GC_SCALAR_ALLOC ("initial web reply buffer",
+					  WEB_INITIAL_REPLY_SIZE);
 	webitm->iweb_replybuf = wbuf;
 	webitm->iweb_replysize = WEB_INITIAL_REPLY_SIZE;
 	webitm->iweb_replylength = 0;
@@ -538,12 +529,10 @@ webrequest_reserve (momit_webrequest_t * webitm, unsigned more)
     {
       unsigned newsize =
 	((5 * webitm->iweb_replylength / 4 + more + 100) | 0xff) + 1;
-      char *newbuf = GC_MALLOC_ATOMIC (newsize);
-      if (MOM_UNLIKELY (!newbuf))
-	MOM_FATAL ("failed to grow webrequest reply to %d", (int) newsize);
-      memset (newbuf, 0, newsize);
+      char *newbuf =
+	MOM_GC_SCALAR_ALLOC ("reserve webrequest buffer", newsize);
       memcpy (newbuf, webitm->iweb_replybuf, webitm->iweb_replylength);
-      GC_FREE (webitm->iweb_replybuf);
+      MOM_GC_FREE (webitm->iweb_replybuf);
       webitm->iweb_replybuf = newbuf;
     }
 }

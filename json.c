@@ -213,14 +213,11 @@ again:
 	  if (MOM_UNLIKELY (cnt + 7 >= siz))
 	    {
 	      unsigned newsiz = (((5 * cnt / 4) + 12) | 0xf) + 1;
-	      char *newstr = GC_MALLOC_ATOMIC (newsiz);
-	      if (MOM_UNLIKELY (!str))
-		MOM_FATAL ("failed to grow string buffer of %d",
-			   (int) newsiz);
-	      memset (newstr, 0, newsiz);
+	      char *newstr =
+		MOM_GC_SCALAR_ALLOC ("json grown string buffer", newsiz);
 	      memcpy (newstr, str, cnt);
 	      if (str != tinyarr)
-		GC_FREE (str);
+		MOM_GC_FREE (str);
 	      str = newstr;
 	      siz = newsiz;
 	    }
@@ -393,13 +390,13 @@ again:
 	  else
 	    {
 	      unsigned newsize = ((5 * namesize / 4 + 10) | 0xf) + 1;
-	      char *newname = GC_MALLOC_ATOMIC (newsize);
+	      char *newname = MOM_GC_SCALAR_ALLOC ("JSON new name", newsize);
 	      if (!newname)
 		MOM_FATAL ("no space for JSON name of size %u", newsize);
 	      memset (newname, 0, newsize);
 	      strcpy (newname, namestr);
 	      if (namestr != namebuf)
-		GC_FREE (namestr);
+		MOM_GC_FREE (namestr);
 	      namestr = newname;
 	      namesize = newsize - 1;
 	    }
@@ -419,10 +416,8 @@ again:
     {
       unsigned arrsize = 8;
       unsigned arrlen = 0;
-      momval_t *arrptr = GC_MALLOC (arrsize * sizeof (momval_t));
-      if (MOM_UNLIKELY (!arrptr))
-	MOM_FATAL ("cannot allocate initial json array of %u", arrsize);
-      memset (arrptr, 0, arrsize * sizeof (momval_t));
+      momval_t *arrptr =
+	MOM_GC_ALLOC ("json array elements", arrsize * sizeof (momval_t));
       jp->jsonp_c = getc (jp->jsonp_file);
       momval_t comp = MOM_NULLV;
       bool gotcomma = false;
@@ -455,12 +450,9 @@ again:
 	  if (MOM_UNLIKELY (arrlen + 1 >= arrsize))
 	    {
 	      unsigned newsize = ((5 * arrsize / 4 + 5) | 0xf) + 1;
-	      momval_t *newarr = GC_MALLOC (arrsize * sizeof (momval_t));
-	      if (MOM_UNLIKELY (!newarr))
-		MOM_FATAL ("cannot grow json array to %u", newsize);
-	      memset (newarr, 0, arrsize * sizeof (momval_t));
-	      memcpy (newarr, arrptr, arrlen * sizeof (momval_t));
-	      GC_FREE (arrptr);
+	      momval_t *newarr = MOM_GC_ALLOC ("grown json array elements",
+					       arrsize * sizeof (momval_t));
+	      MOM_GC_FREE (arrptr);
 	      arrptr = newarr;
 	      arrsize = newsize;
 	    }
@@ -469,13 +461,8 @@ again:
 	}
       while (jp->jsonp_c >= 0);
       struct momjsonarray_st *jarr =
-	GC_MALLOC (sizeof (struct momjsonarray_st) +
-		   arrlen * sizeof (momval_t));
-      if (MOM_UNLIKELY (!jarr))
-	MOM_FATAL ("failed to build JSON array of %d components",
-		   (int) arrlen);
-      memset (jarr, 0,
-	      sizeof (struct momjsonarray_st) + arrlen * sizeof (momval_t));
+	MOM_GC_ALLOC ("parsed json array", sizeof (struct momjsonarray_st) +
+		      arrlen * sizeof (momval_t));
       for (unsigned ix = 0; ix < arrlen; ix++)
 	{
 	  jarr->jarrtab[ix] = arrptr[ix];
@@ -540,16 +527,12 @@ again:
 	    {
 	      unsigned newjsize = ((5 * jcount / 4 + 5) | 0x7) + 1;
 	      struct mom_jsonentry_st *newjent =
-		GC_MALLOC (sizeof (struct mom_jsonentry_st) * newjsize);
-	      if (MOM_UNLIKELY (!newjent))
-		MOM_FATAL ("failed to grow json entry table of %d",
-			   (int) newjsize);
-	      memset (newjent, 0,
-		      sizeof (struct mom_jsonentry_st) * newjsize);
+		MOM_GC_ALLOC ("grown json entry table",
+			      sizeof (struct mom_jsonentry_st) * newjsize);
 	      memcpy (newjent, jent,
 		      sizeof (struct mom_jsonentry_st) * jcount);
 	      if (jent != tinyent)
-		GC_FREE (jent);
+		MOM_GC_FREE (jent);
 	      jent = newjent;
 	    }
 	  if (namv.ptr != NULL)
@@ -631,12 +614,8 @@ mom_make_json_object (int firstdir, ...)
   va_end (args);
   unsigned size = count + 1;
   struct momjsonobject_st *jsob
-    = GC_MALLOC (sizeof (struct momjsonobject_st)
-		 + size * sizeof (struct mom_jsonentry_st));
-  if (MOM_UNLIKELY (!jsob))
-    MOM_FATAL ("failed to allocate JSON object with %d entries", size);
-  memset (jsob, 0, sizeof (struct momjsonobject_st)
-	  + size * sizeof (struct mom_jsonentry_st));
+    = MOM_GC_ALLOC ("parsed json object", sizeof (struct momjsonobject_st)
+		    + size * sizeof (struct mom_jsonentry_st));
   /////
   // second argument scan, to fill the entries
   count = 0;
@@ -810,11 +789,9 @@ compute_json_array_hash (momjsonarray_t * jarr)
 const momjsonarray_t *
 mon_make_json_array (unsigned nbelem, ...)
 {
-  momjsonarray_t *jarr =
-    GC_MALLOC (sizeof (momjsonarray_t) + nbelem * sizeof (momval_t));
-  if (MOM_UNLIKELY (!jarr))
-    MOM_FATAL ("failed to make JSON array of %u elements", nbelem);
-  memset (jarr, 0, sizeof (momjsonarray_t) + nbelem * sizeof (momval_t));
+  momjsonarray_t *jarr = MOM_GC_ALLOC ("newly made json array",
+				       sizeof (momjsonarray_t) +
+				       nbelem * sizeof (momval_t));
   va_list args;
   va_start (args, nbelem);
   for (unsigned ix = 0; ix < nbelem; ix++)
@@ -837,11 +814,9 @@ mom_make_json_array_count (unsigned nbelem, const momval_t * arr)
 {
   if (!arr)
     return NULL;
-  momjsonarray_t *jarr =
-    GC_MALLOC (sizeof (momjsonarray_t) + nbelem * sizeof (momval_t));
-  if (MOM_UNLIKELY (!jarr))
-    MOM_FATAL ("failed to make JSON array of %u elements", nbelem);
-  memset (jarr, 0, sizeof (momjsonarray_t) + nbelem * sizeof (momval_t));
+  momjsonarray_t *jarr = MOM_GC_ALLOC ("newly made counted json array",
+				       sizeof (momjsonarray_t) +
+				       nbelem * sizeof (momval_t));
   for (unsigned ix = 0; ix < nbelem; ix++)
     {
       momval_t comp = arr[ix];
@@ -872,11 +847,9 @@ mom_make_json_array_til_nil (momval_t firstv, ...)
       while (valv.ptr != NULL);
     }
   va_end (args);
-  momjsonarray_t *jarr =
-    GC_MALLOC (sizeof (momjsonarray_t) + nbelem * sizeof (momval_t));
-  if (MOM_UNLIKELY (!jarr))
-    MOM_FATAL ("failed to make JSON array of %u elements", nbelem);
-  memset (jarr, 0, sizeof (momjsonarray_t) + nbelem * sizeof (momval_t));
+  momjsonarray_t *jarr = MOM_GC_ALLOC ("newly made jsonarray til nil",
+				       sizeof (momjsonarray_t) +
+				       nbelem * sizeof (momval_t));
   if (nbelem > 0)
     jarr->jarrtab[0] = firstv;
   va_start (args, firstv);

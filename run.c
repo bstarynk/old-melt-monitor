@@ -111,12 +111,15 @@ static void *
 work_loop (struct GC_stack_base *sb, void *data)
 {
   struct momworkdata_st *wd = data;
+  int myindex = 0;
   MOMGC_REGISTER_MY_THREAD (sb);
   assert (wd != NULL);
+  assert (wd->work_magic == WORK_MAGIC);
   mom_anyitem_t *curtsk = NULL;
+  myindex = wd->work_index;
   MOM_DEBUG (run,
 	     "work_loop tid %d start index %d wd@%p  cur_worker@%p",
-	     (int) mom_gettid (), wd->work_index, wd, cur_worker);
+	     (int) mom_gettid (), myindex, wd, cur_worker);
   bool working = false;
   long loopcnt = 0;
   double lastgctime = 0.0;
@@ -127,10 +130,9 @@ work_loop (struct GC_stack_base *sb, void *data)
       pthread_mutex_lock (&mom_run_mtx);
       working = working_flag;
       assert (!working
-	      || (wd->work_index > 0 && wd->work_index <= MOM_MAX_WORKERS
-		  && workers + wd->work_index == wd));
-      if (wd->work_index == 1
-	  && loopcnt % WORK_GARBAGE_COLLECTION_CHECK_PERIOD == 0)
+	      || (myindex > 0 && myindex <= MOM_MAX_WORKERS
+		  && workers + myindex == wd));
+      if (myindex == 1 && loopcnt % WORK_GARBAGE_COLLECTION_CHECK_PERIOD == 0)
 	{
 	  double nowtime = mom_clock_time (CLOCK_REALTIME);
 	  if (lastgctime + WORK_GARBAGE_COLLECTION_DELAY < nowtime)
@@ -170,28 +172,27 @@ work_loop (struct GC_stack_base *sb, void *data)
 	  MOM_DEBUG (run, "work_loop index %d no curtsk", wd->work_index);
 	  pthread_mutex_lock (&mom_run_mtx);
 	  struct timespec endts =
-	    mom_timespec (curwtim + WORK_DELAY +
-			  (wd->work_index * 0.03 + 0.01));
+	    mom_timespec (curwtim + WORK_DELAY + (myindex * 0.03 + 0.01));
 	  working = working_flag;
 	  if (working)
 	    pthread_cond_timedwait (&mom_run_changed_cond, &mom_run_mtx,
 				    &endts);
 	  pthread_mutex_unlock (&mom_run_mtx);
 	  GC_collect_a_little ();
-	  usleep (3000);
 	}
     }
   while (working);
-  MOM_DEBUG (run, "work_loop index %d ending", wd->work_index);
+  MOM_DEBUG (run, "work_loop index %d ending", myindex);
   {
     pthread_mutex_lock (&mom_run_mtx);
     assert (!working_flag);
-    MOM_DEBUG (run, "work_loop index %d clearing", wd->work_index);
+    MOM_DEBUG (run, "work_loop index %d clearing", myindex);
     wd->work_index = 0;
     pthread_mutex_unlock (&mom_run_mtx);
     pthread_cond_broadcast (&mom_run_changed_cond);
   }
   sched_yield ();
+  MOM_DEBUG (run, "work_loop ended index %d", myindex);
   MOMGC_UNREGISTER_MY_THREAD ();
   return NULL;
 }
@@ -403,11 +404,8 @@ start_some_pending_jobs (void)
       const char *progname =
 	mom_string_cstr ((momval_t) curproc->iproc_progname);
       const char **progargv =
-	GC_MALLOC ((curproc->iproc_argcount + 2) * sizeof (char *));
-      if (MOM_UNLIKELY (!progargv))
-	MOM_FATAL ("cannot allocate array for %d program arguments",
-		   curproc->iproc_argcount);
-      memset (progargv, 0, (curproc->iproc_argcount + 2) * sizeof (char *));
+	MOM_GC_ALLOC ("start_some_pending_jobs program argv",
+		      (curproc->iproc_argcount + 2) * sizeof (char *));
       progargv[0] = progname;
       unsigned argcnt = 1;
       for (unsigned aix = 0; aix < curproc->iproc_argcount; aix++)
@@ -687,13 +685,11 @@ process_readout_handler (int fd, short revent, void *data)
     {
       unsigned newsiz =
 	((5 * (nbr + procitm->iproc_outpos) / 4 + 10) | 0x1f) + 1;
-      char *newbuf = GC_MALLOC_ATOMIC (newsiz);
+      char *newbuf =
+	MOM_GC_SCALAR_ALLOC ("grown process output buffer", newsiz);
       char *oldbuf = procitm->iproc_outbuf;
-      if (MOM_UNLIKELY (!newbuf))
-	MOM_FATAL ("failed to grow output buffer to %d", (int) newsiz);
-      memset (newbuf, 0, newsiz);
       memcpy (newbuf, oldbuf, procitm->iproc_outpos);
-      GC_FREE (oldbuf);
+      MOM_GC_FREE (oldbuf);
       procitm->iproc_outbuf = newbuf;
       procitm->iproc_outsize = newsiz;
     };
@@ -953,10 +949,9 @@ mom_make_item_process_argvals (momval_t progstr, ...)
   const momstring_t **argv = NULL;
   if (nbargstr > 0)
     {
-      argv = GC_MALLOC (nbargstr * sizeof (momstring_t *));
-      if (MOM_UNLIKELY (!argv))
-	MOM_FATAL ("cannot allocate %d argument strings", (int) nbargstr);
-      memset (argv, 0, nbargstr * sizeof (momstring_t *));
+      argv =
+	MOM_GC_ALLOC ("process argvals arguments",
+		      nbargstr * sizeof (momstring_t *));
       unsigned cnt = 0;
       va_start (args, progstr);
       for (;;)
@@ -1005,10 +1000,9 @@ mom_make_item_process_from_array (momval_t progstr, unsigned argc,
   if (nbargstr > 0)
     {
       unsigned cnt = 0;
-      argv = GC_MALLOC (nbargstr * sizeof (momstring_t *));
-      if (MOM_UNLIKELY (!argv))
-	MOM_FATAL ("cannot allocate %d argument strings", (int) nbargstr);
-      memset (argv, 0, nbargstr * sizeof (momstring_t *));
+      argv =
+	MOM_GC_ALLOC ("process arguments from array",
+		      nbargstr * sizeof (momstring_t *));
       for (unsigned ix = 0; ix < argc; ix++)
 	{
 	  const momstring_t *curargv = argvals[ix].pstring;
@@ -1055,10 +1049,9 @@ mom_make_item_process_from_node (momval_t progstr, momval_t nodv)
       if (nbargstr > 0)
 	{
 	  unsigned cnt = 0;
-	  argv = GC_MALLOC (nbargstr * sizeof (momstring_t *));
-	  if (MOM_UNLIKELY (!argv))
-	    MOM_FATAL ("cannot allocate %d argument strings", (int) nbargstr);
-	  memset (argv, 0, nbargstr * sizeof (momstring_t *));
+	  argv =
+	    MOM_GC_ALLOC ("process arguments from node",
+			  nbargstr * sizeof (momstring_t *));
 	  for (unsigned ix = 0; ix < ndlen; ix++)
 	    {
 	      const momstring_t *curargv = nd->sontab[ix].pstring;
@@ -1095,19 +1088,14 @@ mom_item_process_start (momval_t procv, momval_t clov)
   const momclosure_t *clos = clov.pclosure;
   if (procitm->iproc_closure)	// already started
     goto end;
-  procitm->iproc_outbuf = GC_MALLOC_ATOMIC (OUTPROC_INITIAL_SIZE);
-  if (MOM_UNLIKELY (!procitm->iproc_outbuf))
-    MOM_FATAL ("failed to allocate output buffer for process %s",
-	       mom_string_cstr ((momval_t) procitm->iproc_progname));
-  memset (procitm->iproc_outbuf, 0, OUTPROC_INITIAL_SIZE);
+  procitm->iproc_outbuf =
+    MOM_GC_SCALAR_ALLOC ("process output initial", OUTPROC_INITIAL_SIZE);
   procitm->iproc_outsize = OUTPROC_INITIAL_SIZE;
   procitm->iproc_outpos = 0;
   procitm->iproc_closure = clos;
   {
-    struct mom_itqueue_st *qel = GC_MALLOC (sizeof (struct mom_itqueue_st));
-    if (MOM_UNLIKELY (!qel))
-      MOM_FATAL ("failed to allocate job item queue element");
-    memset (qel, 0, sizeof (struct mom_itqueue_st));
+    struct mom_itqueue_st *qel =
+      MOM_GC_ALLOC ("job item queue element", sizeof (struct mom_itqueue_st));
     qel->iq_item = (mom_anyitem_t *) procitm;
     pthread_mutex_lock (&job_mtx);
     if (!jobq_first)
@@ -1242,13 +1230,11 @@ mom_mark_delayed_embryonic_routine (momit_routine_t * itrout,
   if (MOM_UNLIKELY (eix < 0))
     {
       unsigned newsiz = ((3 * embryonic_routine_size / 2 + 10) | 0x1f) + 1;
-      char **newnames = GC_MALLOC (newsiz * sizeof (char *));
-      momit_routine_t **newarr =
-	GC_MALLOC (newsiz * sizeof (momit_routine_t *));
-      if (!newnames || !newarr)
-	MOM_FATAL ("failed to allocate for %d embryonic routines", newsiz);
-      memset (newnames, 0, newsiz * sizeof (char *));
-      memset (newarr, 0, newsiz * sizeof (momit_routine_t *));
+      char **newnames =
+	MOM_GC_ALLOC ("new embryonic names", newsiz * sizeof (char *));
+      momit_routine_t **newarr = MOM_GC_ALLOC ("new embryonic routines",
+					       newsiz *
+					       sizeof (momit_routine_t *));
       if (embryonic_routine_size > 0)
 	{
 	  memcpy (newnames, embryonic_routine_name,
@@ -1256,9 +1242,10 @@ mom_mark_delayed_embryonic_routine (momit_routine_t * itrout,
 	  memcpy (newarr, embryonic_routine_arr,
 		  embryonic_routine_size * sizeof (momit_routine_t *));
 	};
-      GC_FREE (embryonic_routine_name), embryonic_routine_name =
-	(const char **) newnames;
-      GC_FREE (embryonic_routine_arr), embryonic_routine_arr = newarr;
+      MOM_GC_FREE (embryonic_routine_name);
+      embryonic_routine_name = (const char **) newnames;
+      MOM_GC_FREE (embryonic_routine_arr);
+      embryonic_routine_arr = newarr;
       eix = embryonic_routine_size;
       embryonic_routine_size = newsiz;
     }

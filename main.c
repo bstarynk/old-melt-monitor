@@ -163,14 +163,12 @@ load_module (GOptionContext * optctx, unsigned ix, const char *modname,
   if (module_count + 1 >= module_size)
     {
       unsigned newsiz = (((3 * module_count / 2) + 10) | 0xf) + 1;
-      GModule **newarrmod = GC_MALLOC (newsiz * sizeof (GModule *));
-      const char **newarrname = GC_MALLOC (newsiz * sizeof (char *));
-      const char **newarrarg = GC_MALLOC (newsiz * sizeof (char *));
-      if (MOM_UNLIKELY (!newarrmod || !newarrname || !newarrarg))
-	MOM_FATAL ("failed to grow module array to %d", (int) newsiz);
-      memset (newarrmod, 0, newsiz * sizeof (GModule *));
-      memset (newarrname, 0, newsiz * sizeof (char *));
-      memset (newarrarg, 0, newsiz * sizeof (char *));
+      GModule **newarrmod =
+	MOM_GC_ALLOC ("grown module array", newsiz * sizeof (GModule *));
+      const char **newarrname =
+	MOM_GC_ALLOC ("grown module name array", newsiz * sizeof (char *));
+      const char **newarrarg =
+	MOM_GC_ALLOC ("grown module arg array", newsiz * sizeof (char *));
       if (module_count > 0)
 	{
 	  memcpy (newarrmod, module_handles,
@@ -179,9 +177,12 @@ load_module (GOptionContext * optctx, unsigned ix, const char *modname,
 	  memcpy (newarrarg, module_arguments,
 		  module_count * sizeof (char *));
 	}
-      free (module_handles), module_handles = newarrmod;
-      free (module_arguments), module_arguments = newarrarg;
-      free (module_names), module_names = newarrname;
+      MOM_GC_FREE (module_handles);
+      module_handles = newarrmod;
+      MOM_GC_FREE (module_arguments);
+      module_arguments = newarrarg;
+      MOM_GC_FREE (module_names);
+      module_names = newarrname;
       module_size = newsiz;
     }
   const char *modlic = NULL;
@@ -687,7 +688,7 @@ logexit_cb (void)
 static gpointer
 checked_gc_malloc (gsize sz)
 {
-  void *p = GC_MALLOC (sz);
+  void *p = GC_MALLOC (sz);	// leave that GC_MALLOC
   if (MOM_UNLIKELY (!p))
     MOM_FATAL ("failed to GC malloc %ld bytes", (long) sz);
   memset (p, 0, sz);
@@ -697,7 +698,7 @@ checked_gc_malloc (gsize sz)
 static gpointer
 checked_gc_realloc (gpointer m, gsize sz)
 {
-  void *p = GC_REALLOC (m, sz);
+  void *p = GC_REALLOC (m, sz);	// leave that GC_REALLOC
   if (MOM_UNLIKELY (!p))
     MOM_FATAL ("failed to GC realloc %ld bytes", (long) sz);
   return p;
@@ -706,8 +707,8 @@ checked_gc_realloc (gpointer m, gsize sz)
 static gpointer
 checked_gc_calloc (gsize nblock, gsize bsize)
 {
-  void *p = GC_MALLOC (nblock * bsize);
-  if (MOM_UNLIKELY (!p))
+  void *p = GC_MALLOC (nblock * bsize);	// leave that GC_MALLOC
+  if (MOM_UNLIKELY (!p && nblock > 0 && bsize > 0))
     MOM_FATAL ("failed to GC calloc %ld blocks of %ld bytes",
 	       (long) nblock, (long) bsize);
   memset (p, 0, nblock * bsize);

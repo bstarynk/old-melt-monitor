@@ -44,15 +44,11 @@ mom_initialize_globals (void)
   const unsigned dictsiz = 32;
   pthread_mutex_lock (&glob_mtx);
   glob_dict.name_hashitem =
-    GC_MALLOC (sizeof (struct mom_name_item_entry_st) * dictsiz);
+    MOM_GC_ALLOC ("global dictionnary name",
+		  sizeof (struct mom_name_item_entry_st) * dictsiz);
   glob_dict.name_hashstr =
-    GC_MALLOC (sizeof (struct mom_name_item_entry_st) * dictsiz);
-  if (!glob_dict.name_hashitem || !glob_dict.name_hashstr)
-    MOM_FATAL ("failed to allocate %d globals", dictsiz);
-  memset (glob_dict.name_hashitem, 0,
-	  sizeof (struct mom_name_item_entry_st) * dictsiz);
-  memset (glob_dict.name_hashstr, 0,
-	  sizeof (struct mom_name_item_entry_st) * dictsiz);
+    MOM_GC_ALLOC ("global dictionnary hash",
+		  sizeof (struct mom_name_item_entry_st) * dictsiz);
   glob_dict.name_size = dictsiz;
   glob_dict.name_count = 0;
   pthread_mutex_unlock (&glob_mtx);
@@ -146,7 +142,9 @@ indexes_of_name_starting (const char *prefix, int *pnbindex)
     }
   // allocate one extra element, useless except for assert in second
   // loop
-  res = count ? GC_MALLOC_ATOMIC ((count + 1) * sizeof (int)) : NULL;
+  res =
+    count ? MOM_GC_SCALAR_ALLOC ("index of name starting",
+				 (count + 1) * sizeof (int)) : NULL;
   if (MOM_UNLIKELY (!res && count > 0))
     MOM_FATAL ("failed to allocate %d integers", count);
   if (res)
@@ -264,12 +262,9 @@ mom_node_sorted_names_prefixed (const mom_anyitem_t * conn,
   assert (nbindex >= 0);
   if (nbindex > 0)
     qsort (arrindexes, nbindex, sizeof (int), index_name_cmp);
-  momval_t *arrsons =
-    (nbindex > 0) ? GC_MALLOC (nbindex * sizeof (momval_t)) : NULL;
-  if (MOM_UNLIKELY (nbindex > 0 && !arrsons))
-    MOM_FATAL ("failed to allocate %d sons", nbindex);
-  if (arrsons)
-    memset (arrsons, 0, nbindex * sizeof (momval_t));
+  momval_t *arrsons = (nbindex > 0) ? MOM_GC_ALLOC ("sons for sorted names",
+						    nbindex *
+						    sizeof (momval_t)) : NULL;
   for (int ix = 0; ix < nbindex; ix++)
     {
       int cix = arrindexes[ix];
@@ -297,11 +292,8 @@ mom_set_named_items_prefixed (const char *prefix)
   int *arrindexes = indexes_of_name_starting (prefix, &nbindex);
   assert (nbindex >= 0);
   const mom_anyitem_t **arritems =
-    (nbindex > 0) ? GC_MALLOC (nbindex * sizeof (mom_anyitem_t *)) : NULL;
-  if (MOM_UNLIKELY (nbindex > 0 && !arritems))
-    MOM_FATAL ("failed to allocate %d items", nbindex);
-  if (arritems)
-    memset (arritems, 0, nbindex * sizeof (mom_anyitem_t *));
+    (nbindex > 0) ? MOM_GC_ALLOC ("items for prefixed names",
+				  nbindex * sizeof (mom_anyitem_t *)) : NULL;
   for (int ix = 0; ix < nbindex; ix++)
     {
       arritems[ix] = glob_dict.name_hashitem[ix].nme_itm;
@@ -384,17 +376,11 @@ resize_dict (unsigned newsize)
   struct mom_name_item_entry_st *oldarrname = glob_dict.name_hashstr;
   struct mom_name_item_entry_st *oldarritem = glob_dict.name_hashitem;
   glob_dict.name_hashstr =
-    GC_MALLOC (sizeof (struct mom_name_item_entry_st) * newsize);
-  if (!glob_dict.name_hashstr)
-    MOM_FATAL ("failed to grow dictionnary string hash to %u", newsize);
-  memset (glob_dict.name_hashstr, 0,
-	  sizeof (struct mom_name_item_entry_st) * newsize);
+    MOM_GC_ALLOC ("resized global dict hash",
+		  sizeof (struct mom_name_item_entry_st) * newsize);
   glob_dict.name_hashitem =
-    GC_MALLOC (sizeof (struct mom_name_item_entry_st) * newsize);
-  if (!glob_dict.name_hashitem)
-    MOM_FATAL ("failed to grow dictionnary item hash to %u", newsize);
-  memset (glob_dict.name_hashitem, 0,
-	  sizeof (struct mom_name_item_entry_st) * newsize);
+    MOM_GC_ALLOC ("resized global dict item",
+		  sizeof (struct mom_name_item_entry_st) * newsize);
   glob_dict.name_count = 0;
   glob_dict.name_size = newsize;
   for (unsigned i = 0; i < oldsize; i++)
@@ -1161,14 +1147,12 @@ mom_tasklet_push_frame (momval_t tsk, momval_t clo,
 	((5 * tskitm->itk_scaltop / 4 +
 	  (sizeof (intptr_t *) * nbnum +
 	   sizeof (double) * nbdbl) / sizeof (intptr_t) + 5) | 7) + 1;
-      intptr_t *newscalars =
-	GC_MALLOC_ATOMIC (newscalsize * sizeof (intptr_t));
-      if (MOM_UNLIKELY (!newscalars))
-	MOM_FATAL ("failed to grow scalars of task to %d", (int) newscalsize);
-      memset (newscalars, 0, newscalsize * sizeof (intptr_t));
+      intptr_t *newscalars = MOM_GC_SCALAR_ALLOC ("tasklet grown scalar zone",
+						  newscalsize *
+						  sizeof (intptr_t));
       memcpy (newscalars, tskitm->itk_scalars,
 	      tskitm->itk_scaltop * sizeof (intptr_t));
-      GC_FREE (tskitm->itk_scalars);
+      MOM_GC_FREE (tskitm->itk_scalars);
       tskitm->itk_scalars = newscalars;
       tskitm->itk_scalsize = newscalsize;
     }
@@ -1176,13 +1160,9 @@ mom_tasklet_push_frame (momval_t tsk, momval_t clo,
     {
       unsigned newvalsize =
 	((5 * tskitm->itk_valtop / 4 + nbval + 6) | 7) + 1;
-      momval_t *newvalues = GC_MALLOC (newvalsize * sizeof (momval_t));
-      if (MOM_UNLIKELY (!newvalues))
-	MOM_FATAL ("failed to grow values of task to %d", (int) newvalsize);
-      memset (newvalues, 0, newvalsize * sizeof (momval_t));
-      memcpy (newvalues, tskitm->itk_values,
-	      tskitm->itk_valtop * sizeof (momval_t));
-      GC_FREE (tskitm->itk_values);
+      momval_t *newvalues =
+	MOM_GC_ALLOC ("tasklet grown values", newvalsize * sizeof (momval_t));
+      MOM_GC_FREE (tskitm->itk_values);
       tskitm->itk_values = newvalues;
       tskitm->itk_valsize = newvalsize;
     }
@@ -1190,19 +1170,17 @@ mom_tasklet_push_frame (momval_t tsk, momval_t clo,
     {
       unsigned newfrasize = ((5 * tskitm->itk_frasize / 4 + 6) | 7) + 1;
       struct momframe_st *newframes =
-	GC_MALLOC_ATOMIC (sizeof (struct momframe_st) * newfrasize);
-      momclosure_t **newclosures =
-	GC_MALLOC (sizeof (momclosure_t *) * newfrasize);
-      if (MOM_UNLIKELY (!newframes || !newclosures))
-	MOM_FATAL ("failed to grow frames of task to %d", (int) newfrasize);
-      memset (newframes, 0, sizeof (struct momframe_st) * newfrasize);
-      memset (newclosures, 0, sizeof (momclosure_t *) * newfrasize);
+	MOM_GC_SCALAR_ALLOC ("tasklet grown frames",
+			     sizeof (struct momframe_st) * newfrasize);
+      momclosure_t **newclosures = MOM_GC_ALLOC ("tasklet grown closures",
+						 sizeof (momclosure_t *) *
+						 newfrasize);
       memcpy (newframes, tskitm->itk_frames,
 	      tskitm->itk_fratop * sizeof (struct momframe_st));
       memcpy (newclosures, tskitm->itk_closures,
 	      tskitm->itk_fratop * sizeof (momclosure_t *));
-      GC_FREE (tskitm->itk_frames);
-      GC_FREE (tskitm->itk_closures);
+      MOM_GC_FREE (tskitm->itk_frames);
+      MOM_GC_FREE (tskitm->itk_closures);
       tskitm->itk_frames = newframes;
       tskitm->itk_closures = newclosures;
       tskitm->itk_frasize = newfrasize;
@@ -1279,8 +1257,9 @@ mom_tasklet_replace_top_frame (momval_t tsk, momval_t clo,
 	((5 * tskitm->itk_scaltop / 4 +
 	  (sizeof (intptr_t *) * nbnum +
 	   sizeof (double) * nbdbl) / sizeof (intptr_t) + 5) | 7) + 1;
-      intptr_t *newscalars =
-	GC_MALLOC_ATOMIC (newscalsize * sizeof (intptr_t));
+      intptr_t *newscalars = MOM_GC_SCALAR_ALLOC ("grown scalar in tasklet",
+						  newscalsize *
+						  sizeof (intptr_t));
       if (MOM_UNLIKELY (!newscalars))
 	MOM_FATAL ("failed to grow scalars of task to %d", (int) newscalsize);
       memset (newscalars, 0, newscalsize * sizeof (intptr_t));
@@ -1294,10 +1273,8 @@ mom_tasklet_replace_top_frame (momval_t tsk, momval_t clo,
     {
       unsigned newvalsize =
 	((5 * tskitm->itk_valtop / 4 + nbval + 6) | 7) + 1;
-      momval_t *newvalues = GC_MALLOC (newvalsize * sizeof (momval_t));
-      if (MOM_UNLIKELY (!newvalues))
-	MOM_FATAL ("failed to grow values of task to %d", (int) newvalsize);
-      memset (newvalues, 0, newvalsize * sizeof (momval_t));
+      momval_t *newvalues = MOM_GC_ALLOC ("grown values of tasklet",
+					  newvalsize * sizeof (momval_t));
       memcpy (newvalues, tskitm->itk_values,
 	      tskitm->itk_valtop * sizeof (momval_t));
       GC_FREE (tskitm->itk_values);
@@ -1308,19 +1285,17 @@ mom_tasklet_replace_top_frame (momval_t tsk, momval_t clo,
     {
       unsigned newfrasize = ((5 * tskitm->itk_frasize / 4 + 6) | 7) + 1;
       struct momframe_st *newframes =
-	GC_MALLOC_ATOMIC (sizeof (struct momframe_st) * newfrasize);
-      momclosure_t **newclosures =
-	GC_MALLOC (sizeof (momclosure_t *) * newfrasize);
-      if (MOM_UNLIKELY (!newframes || !newclosures))
-	MOM_FATAL ("failed to grow frames of task to %d", (int) newfrasize);
-      memset (newframes, 0, sizeof (struct momframe_st) * newfrasize);
-      memset (newclosures, 0, sizeof (momclosure_t *) * newfrasize);
+	MOM_GC_SCALAR_ALLOC ("grown frames of tasklet",
+			     sizeof (struct momframe_st) * newfrasize);
+      momclosure_t **newclosures = MOM_GC_ALLOC ("grown closures of tasklet",
+						 sizeof (momclosure_t *) *
+						 newfrasize);
       memcpy (newframes, tskitm->itk_frames,
 	      tskitm->itk_fratop * sizeof (struct momframe_st));
       memcpy (newclosures, tskitm->itk_closures,
 	      tskitm->itk_fratop * sizeof (momclosure_t *));
-      GC_FREE (tskitm->itk_frames);
-      GC_FREE (tskitm->itk_closures);
+      MOM_GC_FREE (tskitm->itk_frames);
+      MOM_GC_FREE (tskitm->itk_closures);
       tskitm->itk_frames = newframes;
       tskitm->itk_closures = newclosures;
       tskitm->itk_frasize = newfrasize;
@@ -1374,14 +1349,11 @@ mom_tasklet_reserve (momval_t tsk, unsigned nbint, unsigned nbdbl,
       if (newscalsize != tskitm->itk_scalsize)
 	{
 	  intptr_t *newscalars =
-	    GC_MALLOC_ATOMIC (newscalsize * sizeof (intptr_t));
-	  if (MOM_UNLIKELY (!newscalars))
-	    MOM_FATAL ("failed to resize scalars of task to %d",
-		       (int) newscalsize);
-	  memset (newscalars, 0, newscalsize * sizeof (intptr_t));
+	    MOM_GC_SCALAR_ALLOC ("reserved scalars of tasklet",
+				 newscalsize * sizeof (intptr_t));
 	  memcpy (newscalars, tskitm->itk_scalars,
 		  tskitm->itk_scaltop * sizeof (intptr_t));
-	  GC_FREE (tskitm->itk_scalars);
+	  MOM_GC_FREE (tskitm->itk_scalars);
 	  tskitm->itk_scalars = newscalars;
 	  tskitm->itk_scalsize = newscalsize;
 	}
@@ -1394,14 +1366,11 @@ mom_tasklet_reserve (momval_t tsk, unsigned nbint, unsigned nbdbl,
 	((5 * tskitm->itk_valtop / 4 + 3 + nbval) | 7) + 1;
       if (newvalsize != tskitm->itk_valsize)
 	{
-	  momval_t *newvalues = GC_MALLOC (newvalsize * sizeof (momval_t));
-	  if (MOM_UNLIKELY (!newvalues))
-	    MOM_FATAL ("failed to resize values of task to %d",
-		       (int) newvalsize);
-	  memset (newvalues, 0, newvalsize * sizeof (momval_t));
+	  momval_t *newvalues = MOM_GC_ALLOC ("reserved values of tasklet",
+					      newvalsize * sizeof (momval_t));
 	  memcpy (newvalues, tskitm->itk_values,
 		  tskitm->itk_valtop * sizeof (momval_t));
-	  GC_FREE (tskitm->itk_values);
+	  MOM_GC_FREE (tskitm->itk_values);
 	  tskitm->itk_values = newvalues;
 	  tskitm->itk_valsize = newvalsize;
 	}
@@ -1416,20 +1385,17 @@ mom_tasklet_reserve (momval_t tsk, unsigned nbint, unsigned nbdbl,
       if (newfrasize != tskitm->itk_frasize)
 	{
 	  struct momframe_st *newframes =
-	    GC_MALLOC_ATOMIC (sizeof (struct momframe_st) * newfrasize);
+	    MOM_GC_SCALAR_ALLOC ("reserved frames of tasklet",
+				 sizeof (struct momframe_st) * newfrasize);
 	  momclosure_t **newclosures =
-	    GC_MALLOC (sizeof (momclosure_t *) * newfrasize);
-	  if (MOM_UNLIKELY (!newframes || !newclosures))
-	    MOM_FATAL ("failed to resize frames of task to %d",
-		       (int) newfrasize);
-	  memset (newframes, 0, sizeof (struct momframe_st) * newfrasize);
-	  memset (newclosures, 0, sizeof (momclosure_t *) * newfrasize);
+	    MOM_GC_ALLOC ("reserved closures of tasklet",
+			  sizeof (momclosure_t *) * newfrasize);
 	  memcpy (newframes, tskitm->itk_frames,
 		  tskitm->itk_fratop * sizeof (struct momframe_st));
 	  memcpy (newclosures, tskitm->itk_closures,
 		  tskitm->itk_fratop * sizeof (momclosure_t *));
-	  GC_FREE (tskitm->itk_frames);
-	  GC_FREE (tskitm->itk_closures);
+	  MOM_GC_FREE (tskitm->itk_frames);
+	  MOM_GC_FREE (tskitm->itk_closures);
 	  tskitm->itk_frames = newframes;
 	  tskitm->itk_closures = newclosures;
 	  tskitm->itk_frasize = newfrasize;
@@ -1470,15 +1436,12 @@ mom_tasklet_pop_frame (momval_t tsk)
       unsigned newscalsize = ((5 * tskitm->itk_scaltop / 4 + 3) | 7) + 1;
       if (newscalsize != tskitm->itk_scalsize)
 	{
-	  intptr_t *newscalars =
-	    GC_MALLOC_ATOMIC (newscalsize * sizeof (intptr_t));
-	  if (MOM_UNLIKELY (!newscalars))
-	    MOM_FATAL ("failed to shrink scalars of task to %d",
-		       (int) newscalsize);
-	  memset (newscalars, 0, newscalsize * sizeof (intptr_t));
+	  intptr_t *newscalars = MOM_GC_SCALAR_ALLOC ("tasklet pop scalars",
+						      newscalsize *
+						      sizeof (intptr_t));
 	  memcpy (newscalars, tskitm->itk_scalars,
 		  tskitm->itk_scaltop * sizeof (intptr_t));
-	  GC_FREE (tskitm->itk_scalars);
+	  MOM_GC_FREE (tskitm->itk_scalars);
 	  tskitm->itk_scalars = newscalars;
 	  tskitm->itk_scalsize = newscalsize;
 	}
@@ -1490,14 +1453,11 @@ mom_tasklet_pop_frame (momval_t tsk)
       unsigned newvalsize = ((5 * tskitm->itk_valtop / 4 + 3) | 7) + 1;
       if (newvalsize != tskitm->itk_valsize)
 	{
-	  momval_t *newvalues = GC_MALLOC (newvalsize * sizeof (momval_t));
-	  if (MOM_UNLIKELY (!newvalues))
-	    MOM_FATAL ("failed to shrink values of task to %d",
-		       (int) newvalsize);
-	  memset (newvalues, 0, newvalsize * sizeof (momval_t));
+	  momval_t *newvalues = MOM_GC_ALLOC ("shrinked values of tasklet",
+					      newvalsize * sizeof (momval_t));
 	  memcpy (newvalues, tskitm->itk_values,
 		  tskitm->itk_valtop * sizeof (momval_t));
-	  GC_FREE (tskitm->itk_values);
+	  MOM_GC_FREE (tskitm->itk_values);
 	  tskitm->itk_values = newvalues;
 	  tskitm->itk_valsize = newvalsize;
 	}
@@ -1510,20 +1470,17 @@ mom_tasklet_pop_frame (momval_t tsk)
       if (newfrasize != tskitm->itk_frasize)
 	{
 	  struct momframe_st *newframes =
-	    GC_MALLOC_ATOMIC (sizeof (struct momframe_st) * newfrasize);
+	    MOM_GC_SCALAR_ALLOC ("shrinked frames of tasklet",
+				 sizeof (struct momframe_st) * newfrasize);
 	  momclosure_t **newclosures =
-	    GC_MALLOC (sizeof (momclosure_t *) * newfrasize);
-	  if (MOM_UNLIKELY (!newframes || !newclosures))
-	    MOM_FATAL ("failed to shrink frames of task to %d",
-		       (int) newfrasize);
-	  memset (newframes, 0, sizeof (struct momframe_st) * newfrasize);
-	  memset (newclosures, 0, sizeof (momclosure_t *) * newfrasize);
+	    MOM_GC_ALLOC ("shrinked closures of tasklet",
+			  sizeof (momclosure_t *) * newfrasize);
 	  memcpy (newframes, tskitm->itk_frames,
 		  tskitm->itk_fratop * sizeof (struct momframe_st));
 	  memcpy (newclosures, tskitm->itk_closures,
 		  tskitm->itk_fratop * sizeof (momclosure_t *));
-	  GC_FREE (tskitm->itk_frames);
-	  GC_FREE (tskitm->itk_closures);
+	  MOM_GC_FREE (tskitm->itk_frames);
+	  MOM_GC_FREE (tskitm->itk_closures);
 	  tskitm->itk_frames = newframes;
 	  tskitm->itk_closures = newclosures;
 	  tskitm->itk_frasize = newfrasize;
@@ -1532,6 +1489,8 @@ mom_tasklet_pop_frame (momval_t tsk)
 end:
   pthread_mutex_unlock (&((mom_anyitem_t *) tskitm)->i_mtx);
 }
+
+
 
 momval_t
 mom_run_closure (momval_t clo, enum mom_pushframedirective_en firstdir, ...)
@@ -1578,28 +1537,24 @@ mom_run_closure (momval_t clo, enum mom_pushframedirective_en firstdir, ...)
     valarr = valtiny;
   else
     {
-      valarr = GC_MALLOC (nbval * sizeof (momval_t));
-      if (MOM_UNLIKELY (!valarr))
-	MOM_FATAL ("failed to allocate %d values", (int) nbval);
-      memset (valarr, 0, nbval * sizeof (momval_t));
+      valarr =
+	MOM_GC_ALLOC ("running closure values", nbval * sizeof (momval_t));
     };
   if (nbnum < TINY_MAX)
     numarr = numtiny;
   else
     {
-      numarr = GC_MALLOC_ATOMIC (sizeof (intptr_t) * nbnum);
-      if (MOM_UNLIKELY (!numarr))
-	MOM_FATAL ("failed to allocate %d numbers", (int) nbnum);
-      memset (numarr, 0, nbnum * sizeof (intptr_t));
+      numarr =
+	MOM_GC_SCALAR_ALLOC ("running closure numbers",
+			     sizeof (intptr_t) * nbnum);
     };
   if (nbdbl < TINY_MAX)
     dblarr = dbltiny;
   else
     {
-      dblarr = GC_MALLOC_ATOMIC (sizeof (double) * nbdbl);
-      if (MOM_UNLIKELY (!dblarr))
-	MOM_FATAL ("failed to allocate %d doubles", (int) nbdbl);
-      memset (dblarr, 0, nbdbl * sizeof (double));
+      dblarr =
+	MOM_GC_SCALAR_ALLOC ("running closure doubles",
+			     sizeof (double) * nbdbl);
     };
   // fill the pseudo frame data
   va_start (args, firstdir);

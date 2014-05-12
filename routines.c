@@ -144,7 +144,7 @@ periodic_set_process (const char *msg, momval_t outstrv)
   pthread_mutex_unlock (&periodic_mtx);
 }
 
-#define PERIODIC_PROC_FORGET_DELAY 80.0
+#define PERIODIC_PROC_FORGET_DELAY 95.0
 int
 momcode_ajax_periodic (int state, momit_tasklet_t * tasklet,
 		       momclosure_t * closure, momval_t * locvals,
@@ -576,10 +576,9 @@ momcode_ajax_complete_routine_name (int state, momit_tasklet_t * tasklet,
       momval_t jres = MOM_NULLV;
       if (nbnames > 0)
 	{
-	  momval_t *goodnames = GC_MALLOC (nbnames * sizeof (momval_t));
-	  if (!goodnames)
-	    MOM_FATAL ("failed to allocate %d names", nbnames);
-	  memset (goodnames, 0, nbnames * sizeof (momval_t));
+	  momval_t *goodnames =
+	    MOM_GC_ALLOC ("momcode_ajax_complete_routine_name goodnames",
+			  nbnames * sizeof (momval_t));
 	  unsigned goodcount = 0;
 	  for (unsigned ix = 0; ix < nbnames; ix++)
 	    {
@@ -661,10 +660,8 @@ momcode_ajax_complete_name (int state, momit_tasklet_t * tasklet,
       momval_t jres = MOM_NULLV;
       if (nbnames > 0)
 	{
-	  momval_t *goodnames = GC_MALLOC (nbnames * sizeof (momval_t));
-	  if (!goodnames)
-	    MOM_FATAL ("failed to allocate %d names", nbnames);
-	  memset (goodnames, 0, nbnames * sizeof (momval_t));
+	  momval_t *goodnames = MOM_GC_ALLOC ("ajax_complete_name goodnames",
+					      nbnames * sizeof (momval_t));
 	  unsigned goodcount = 0;
 	  for (unsigned ix = 0; ix < nbnames; ix++)
 	    {

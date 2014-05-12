@@ -37,10 +37,8 @@ mom_dumper_initialize (struct mom_dumper_st *dmp)
 {
   const unsigned siz = 512;
   memset (dmp, 0, sizeof (struct mom_dumper_st));
-  const mom_anyitem_t **arr = GC_MALLOC (siz * sizeof (mom_anyitem_t *));
-  if (MOM_UNLIKELY (!arr))
-    MOM_FATAL ("cannot allocate dump array for %d items", siz);
-  memset (arr, 0, siz * sizeof (mom_anyitem_t *));
+  const mom_anyitem_t **arr
+    = MOM_GC_ALLOC ("dumper array", siz * sizeof (mom_anyitem_t *));
   dmp->dmp_array = arr;
   dmp->dmp_size = siz;
   dmp->dmp_count = 0;
@@ -117,11 +115,9 @@ mom_dump_add_item (struct mom_dumper_st *dmp, const mom_anyitem_t * itm)
       unsigned oldcount = dmp->dmp_count;
       const mom_anyitem_t **oldarr = dmp->dmp_array;
       unsigned newsize = ((4 * oldcount / 3 + oldcount / 4 + 60) | 0x7f) + 1;
-      const mom_anyitem_t **newarr =
-	GC_MALLOC (newsize * sizeof (mom_anyitem_t *));
-      if (MOM_UNLIKELY (!newarr))
-	MOM_FATAL ("cannot grow dumper to %d items", newsize);
-      memset (newarr, 0, newsize * sizeof (mom_anyitem_t *));
+      const mom_anyitem_t **newarr = MOM_GC_ALLOC ("growing dumper array",
+						   newsize *
+						   sizeof (mom_anyitem_t *));
       dmp->dmp_array = newarr;
       dmp->dmp_size = newsize;
       dmp->dmp_count = 0;
@@ -138,10 +134,9 @@ mom_dump_add_item (struct mom_dumper_st *dmp, const mom_anyitem_t * itm)
   if (!founditem)
     {
       MOM_DBG_ITEM (dump, "enqueue item", itm);
-      struct mom_itqueue_st *qel = GC_MALLOC (sizeof (struct mom_itqueue_st));
-      if (MOM_UNLIKELY (!qel))
-	MOM_FATAL ("cannot add queue element to dumper of %d items",
-		   dmp->dmp_count);
+      struct mom_itqueue_st *qel = MOM_GC_ALLOC ("dumped item queue element",
+						 sizeof (struct
+							 mom_itqueue_st));
       qel->iq_next = NULL;
       qel->iq_item = (mom_anyitem_t *) itm;
       if (MOM_UNLIKELY (dmp->dmp_qlast == NULL))
@@ -248,10 +243,8 @@ jsonarray_emit_itemseq (struct mom_dumper_st *dmp,
     }
   else
     {
-      momval_t *arr = GC_MALLOC (sizeof (momval_t) * slen);
-      if (MOM_UNLIKELY (!arr))
-	MOM_FATAL ("failed to allocate array of %d", (int) slen);
-      memset (arr, 0, sizeof (momval_t) * slen);
+      momval_t *arr =
+	MOM_GC_ALLOC ("jsonarray emit", sizeof (momval_t) * slen);
       for (unsigned ix = 0; ix < slen; ix++)
 	{
 	  mom_anyitem_t *curitm = (mom_anyitem_t *) (si->itemseq[ix]);
@@ -280,14 +273,12 @@ jsonarray_emit_nodesons (struct mom_dumper_st *dmp,
     }
   else
     {
-      momval_t *arr = GC_MALLOC (sizeof (momval_t) * slen);
-      if (MOM_UNLIKELY (!arr))
-	MOM_FATAL ("failed to allocate son array of %d", (int) slen);
-      memset (arr, 0, sizeof (momval_t) * slen);
+      momval_t *arr =
+	MOM_GC_ALLOC ("jsonarray emit node", sizeof (momval_t) * slen);
       for (unsigned ix = 0; ix < slen; ix++)
 	arr[ix] = raw_dump_emit_json (dmp, (nd->sontab[ix]));
       const momjsonarray_t *jarr = mom_make_json_array_count (slen, arr);
-      GC_FREE (arr);
+      MOM_GC_FREE (arr);
       return jarr;
     }
 }
@@ -317,11 +308,8 @@ raw_dump_emit_json (struct mom_dumper_st * dmp, const momval_t val)
 	if (slen > BIG_STRING_THRESHOLD)
 	  {
 	    unsigned chksize = 3 + slen / STRING_CHUNK_SIZE;
-	    momval_t *chkarr = GC_MALLOC (chksize * sizeof (momval_t));
-	    if (MOM_UNLIKELY (!chkarr))
-	      MOM_FATAL ("failed to allocate array for %d string chunks",
-			 chksize);
-	    memset (chkarr, 0, chksize * sizeof (momval_t));
+	    momval_t *chkarr =
+	      MOM_GC_ALLOC ("jstring big chunk", chksize * sizeof (momval_t));
 	    const gchar *curb = cstrb;
 	    const gchar *endb = cstrb + slen;
 	    const gchar *nextb = NULL;
@@ -508,9 +496,8 @@ mom_queue_item_to_load (struct mom_loader_st *ld, const mom_anyitem_t * itm)
 {
   assert (ld && ld->ldr_magic == LOADER_MAGIC);
   assert (itm && itm->typnum > momty__itemlowtype);
-  struct mom_itqueue_st *iq = GC_MALLOC (sizeof (struct mom_itqueue_st));
-  if (MOM_UNLIKELY (!iq))
-    MOM_FATAL ("failed to queue item in loader");
+  struct mom_itqueue_st *iq = MOM_GC_ALLOC ("item to load queue element",
+					    sizeof (struct mom_itqueue_st));
   iq->iq_item = (mom_anyitem_t *) itm;
   iq->iq_next = NULL;
   if (MOM_UNLIKELY (!ld->ldr_qlast))
@@ -623,13 +610,9 @@ mom_load_any_item_data (struct mom_loader_st *ld, mom_anyitem_t * itm,
     {
       unsigned sizat = 2 + 9 * nbat / 8;
       struct mom_itemattributes_st *attrs =
-	GC_MALLOC (sizeof (struct mom_itemattributes_st) +
-		   sizat * sizeof (struct mom_attrentry_st));
-      if (MOM_UNLIKELY (!attrs))
-	MOM_FATAL ("cannot allocate %d attributes", (int) sizat);
-      memset (attrs, 0,
-	      sizeof (struct mom_itemattributes_st) +
-	      sizat * sizeof (struct mom_attrentry_st));
+	MOM_GC_ALLOC ("loaded item attributes",
+		      sizeof (struct mom_itemattributes_st) +
+		      sizat * sizeof (struct mom_attrentry_st));
       attrs->size = sizat;
       attrs->nbattr = 0;
       itm->i_attrs = attrs;
@@ -718,11 +701,8 @@ mom_load_value_json (struct mom_loader_st *ld, const momval_t jval)
 	      }
 	    else
 	      {
-		momval_t *sonarr = GC_MALLOC (sizeof (momval_t) * nbsons);
-		if (MOM_UNLIKELY (!sonarr))
-		  MOM_FATAL ("failed to load %d sons in closure",
-			     (unsigned) nbsons);
-		memset (sonarr, 0, sizeof (momval_t) * nbsons);
+		momval_t *sonarr = MOM_GC_ALLOC ("loaded closure sons",
+						 sizeof (momval_t) * nbsons);
 		for (unsigned ix = 0; ix < nbsons; ix++)
 		  sonarr[ix] =
 		    mom_load_value_json (ld, mom_json_array_nth (jsonsv, ix));
@@ -757,11 +737,8 @@ mom_load_value_json (struct mom_loader_st *ld, const momval_t jval)
 	      }
 	    else
 	      {
-		momval_t *sonarr = GC_MALLOC (sizeof (momval_t) * nbsons);
-		if (MOM_UNLIKELY (!sonarr))
-		  MOM_FATAL ("failed to load %d sons in node",
-			     (unsigned) nbsons);
-		memset (sonarr, 0, sizeof (momval_t) * nbsons);
+		momval_t *sonarr = MOM_GC_ALLOC ("loaded sons of node",
+						 sizeof (momval_t) * nbsons);
 		for (unsigned ix = 0; ix < nbsons; ix++)
 		  sonarr[ix] =
 		    mom_load_value_json (ld, mom_json_array_nth (jsonsv, ix));
@@ -787,12 +764,9 @@ mom_load_value_json (struct mom_loader_st *ld, const momval_t jval)
 	      }
 	    else
 	      {
-		const mom_anyitem_t **itemarr =
-		  GC_MALLOC (sizeof (mom_anyitem_t *) * nbsons);
-		if (MOM_UNLIKELY (!itemarr))
-		  MOM_FATAL ("failed to load %d elements in set",
-			     (unsigned) nbsons);
-		memset (itemarr, 0, sizeof (momval_t) * nbsons);
+		const mom_anyitem_t **itemarr
+		  = MOM_GC_ALLOC ("loaded elements of set",
+				  sizeof (mom_anyitem_t *) * nbsons);
 		for (unsigned ix = 0; ix < nbsons; ix++)
 		  itemarr[ix] =
 		    mom_value_as_item (mom_load_value_json
@@ -820,18 +794,15 @@ mom_load_value_json (struct mom_loader_st *ld, const momval_t jval)
 	    else
 	      {
 		const mom_anyitem_t **itemarr =
-		  GC_MALLOC (sizeof (mom_anyitem_t *) * nbsons);
-		if (MOM_UNLIKELY (!itemarr))
-		  MOM_FATAL ("failed to load %d elements in tuple",
-			     (unsigned) nbsons);
-		memset (itemarr, 0, sizeof (momval_t) * nbsons);
+		  MOM_GC_ALLOC ("loaded tuple components",
+				sizeof (mom_anyitem_t *) * nbsons);
 		for (unsigned ix = 0; ix < nbsons; ix++)
 		  itemarr[ix] =
 		    mom_value_as_item (mom_load_value_json
 				       (ld,
 					mom_json_array_nth (jtuplev, ix)));
 		val = (momval_t) mom_make_tuple_from_array (nbsons, itemarr);
-		GC_FREE (itemarr);
+		MOM_GC_FREE (itemarr);
 		return val;
 	      }
 	  }
@@ -859,10 +830,7 @@ mom_load_value_json (struct mom_loader_st *ld, const momval_t jval)
 		  (momval_t) mom_json_array_nth (jarrstr, six);
 		cumulslen += mom_string_length (jsubstr);
 	      }
-	    char *sbuf = GC_MALLOC_ATOMIC (cumulslen + 2);
-	    if (MOM_UNLIKELY (!sbuf))
-	      MOM_FATAL ("failed to allocate buffer of %d bytes", cumulslen);
-	    memset (sbuf, 0, cumulslen + 2);
+	    char *sbuf = MOM_GC_SCALAR_ALLOC ("loaded buffer", cumulslen + 2);
 	    unsigned off = 0;
 	    for (int six = 0; six < nbsubstr; six++)
 	      {
@@ -920,11 +888,8 @@ mom_attributes_emit_json (struct mom_dumper_st * dmp,
     }
   else
     {
-      momval_t *jatarr = GC_MALLOC (nbat * sizeof (momval_t));
-      if (MOM_UNLIKELY (!jatarr))
-	MOM_FATAL ("failed to allocate json array for %d attributes",
-		   (int) nbat);
-      memset (jatarr, 0, nbat * sizeof (momval_t));
+      momval_t *jatarr =
+	MOM_GC_ALLOC ("json array for attributes", nbat * sizeof (momval_t));
       for (unsigned ix = 0; ix < nbat; ix++)
 	{
 	  momval_t jcurat =
@@ -1291,14 +1256,9 @@ mom_initial_load (const char *state)
   ldn.ldn_nbitems = nbitems;
   ldn.ldn_nbnames = nbnames;
   ldn.ldn_count = 0;
-  char **namesarr = GC_MALLOC (nbnames * sizeof (char *));
-  char **uuidsarr = GC_MALLOC (nbnames * sizeof (char *));
-  char **spacearr = GC_MALLOC (nbnames * sizeof (char *));
-  if (!namesarr || !uuidsarr || !spacearr)
-    MOM_FATAL ("failed to allocate for %d names", (int) nbnames);
-  memset (namesarr, 0, nbnames * sizeof (char *));
-  memset (uuidsarr, 0, nbnames * sizeof (char *));
-  memset (spacearr, 0, nbnames * sizeof (char *));
+  char **namesarr = MOM_GC_ALLOC ("loaded names", nbnames * sizeof (char *));
+  char **uuidsarr = MOM_GC_ALLOC ("loaded uuids", nbnames * sizeof (char *));
+  char **spacearr = MOM_GC_ALLOC ("loaded spaces", nbnames * sizeof (char *));
   ldn.ldn_names = namesarr;
   ldn.ldn_uuids = uuidsarr;
   ldn.ldn_spaces = spacearr;
