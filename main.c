@@ -725,7 +725,8 @@ static GMemVTable gc_mem_vtable = {
 
 static double startime = 0.0;
 
-double mom_elapsed_real_time (void)
+double
+mom_elapsed_real_time (void)
 {
   return mom_clock_time (CLOCK_REALTIME) - startime;
 }

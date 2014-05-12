@@ -128,8 +128,8 @@ const struct momroutinedescr_st momrout_ajax_exit =
 
 int
 momcode_ajax_periodic (int state, momit_tasklet_t * tasklet,
-		   momclosure_t * closure, momval_t * locvals,
-		   intptr_t * locnums, double *locdbls)
+		       momclosure_t * closure, momval_t * locvals,
+		       intptr_t * locnums, double *locdbls)
 {
   momval_t webv = locvals[0];
   time_t now = 0;
@@ -139,7 +139,8 @@ momcode_ajax_periodic (int state, momit_tasklet_t * tasklet,
   strftime (nowbuf, sizeof (nowbuf), "%c", localtime_r (&now, &nowtm));
   MOM_DEBUG (web, "momcode_ajax_periodic state=%d webnum=%ld nowbuf=%s",
 	     state, mom_item_webrequest_webnum (webv), nowbuf);
-  MOM_DBG_ITEM (web, "ajax_periodic tasklet=", (const mom_anyitem_t *) tasklet);
+  MOM_DBG_ITEM (web, "ajax_periodic tasklet=",
+		(const mom_anyitem_t *) tasklet);
   MOM_DBG_VALUE (web, "ajax_periodic webv=", webv);
   MOM_DBG_VALUE (web, "ajax_periodic closure=",
 		 (momval_t) (const momclosure_t *) closure);
@@ -1091,8 +1092,7 @@ momcode_ajax_routine (int state, momit_tasklet_t * tasklet,
 	  (_L (buffer), "\n"
 	   "// declaration of code for %s\n"
 	   "int momcode_%s (int, momit_tasklet_t *, momclosure_t *,\n"
-	   "       momval_t *,intptr_t *, double *);\n"
-	   C_FROM, cnam, cnam);
+	   "       momval_t *,intptr_t *, double *);\n" C_FROM, cnam, cnam);
 	momval_t statev = MOM_NULLV, closurev = MOM_NULLV;
 	momval_t valuesv = MOM_NULLV, numbersv = MOM_NULLV;
 	momval_t doublesv = MOM_NULLV;
@@ -1113,7 +1113,7 @@ momcode_ajax_routine (int state, momit_tasklet_t * tasklet,
 	   " .rout_name = \"%s\",\n"
 	   " .rout_code = (const momrout_sig_t *) momcode_%s,\n"
 	   " .rout_timestamp = __DATE__ \"@\" __TIME__\n"
-	   C_FROM"};\n", cnam, cnam,
+	   C_FROM "};\n", cnam, cnam,
 	   mom_seqitem_length (closurev),
 	   mom_seqitem_length (valuesv),
 	   mom_seqitem_length (numbersv),
