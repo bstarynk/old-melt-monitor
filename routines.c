@@ -126,8 +126,25 @@ const struct momroutinedescr_st momrout_ajax_exit =
 
 ////////////////////////////////////////////////////////////////
 
-#define MOM_GARBAGE_COLLECTION_PERIOD 8
 static pthread_mutex_t periodic_mtx = PTHREAD_MUTEX_INITIALIZER;
+static struct periodicproc_st
+{
+  double pp_time;
+  const char *pp_msg;
+  momval_t pp_output;
+} periodic_proc;
+
+static void
+periodic_set_process (const char *msg, momval_t outstrv)
+{
+  pthread_mutex_lock (&periodic_mtx);
+  periodic_proc.pp_time = mom_clock_time (CLOCK_REALTIME);
+  periodic_proc.pp_msg = GC_STRDUP (msg);
+  periodic_proc.pp_output = outstrv;
+  pthread_mutex_unlock (&periodic_mtx);
+}
+
+#define PERIODIC_PROC_FORGET_DELAY 80.0
 int
 momcode_ajax_periodic (int state, momit_tasklet_t * tasklet,
 		       momclosure_t * closure, momval_t * locvals,
@@ -140,10 +157,20 @@ momcode_ajax_periodic (int state, momit_tasklet_t * tasklet,
   time (&now);
   static long periodic_counter;
   long count = 0;
+  double proctime = 0.0;
+  const char *procmsg = NULL;
+  momval_t procoutput = MOM_NULLV;
   {
     pthread_mutex_lock (&periodic_mtx);
     periodic_counter++;
     count = periodic_counter;
+    proctime = periodic_proc.pp_time;
+    procmsg = periodic_proc.pp_msg;
+    procoutput = periodic_proc.pp_output;
+    if (proctime > 0
+	&& proctime + PERIODIC_PROC_FORGET_DELAY >
+	mom_clock_time (CLOCK_REALTIME))
+      memset (&periodic_proc, 0, sizeof (periodic_proc));
     pthread_mutex_unlock (&periodic_mtx);
   }
   strftime (nowbuf, sizeof (nowbuf), "%c", localtime_r (&now, &nowtm));
@@ -169,35 +196,51 @@ momcode_ajax_periodic (int state, momit_tasklet_t * tasklet,
 	(GC_word) GC_call_with_alloc_lock ((GC_fn_type) GC_get_gc_no, NULL);
       GC_get_heap_usage_safe (&gcheapsize, &gcfreebytes, &gcunmappedbytes,
 			      &gcbytessincegc, &gctotalbytes);
-      mom_item_webrequest_add (webv, MOMWEB_SET_MIME, "text/html",
-			       MOMWEB_LIT_STRING,
-			       "<!-- ajax_periodic fragment -->\n",
-			       MOMWEB_LIT_STRING, "elapsed real: ",
-			       MOMWEB_FIX2DIG_DOUBLE,
-			       mom_elapsed_real_time (), MOMWEB_LIT_STRING,
-			       ", cpu:", MOMWEB_FIX2DIG_DOUBLE,
-			       mom_clock_time (CLOCK_PROCESS_CPUTIME_ID),
-			       MOMWEB_LIT_STRING, " sec., ", MOMWEB_DEC_INT64,
-			       (int64_t) mom_agenda_work_counter (),
-			       MOMWEB_LIT_STRING, " done tasklets, ",
-			       MOMWEB_DEC_LONG, (long) mom_nb_items (),
-			       MOMWEB_LIT_STRING, " items. <small>(GC: ",
-			       MOMWEB_DEC_LONG, (long) gcheapsize / 1024,
-			       MOMWEB_LIT_STRING, "kb heapsize, ",
-			       MOMWEB_DEC_LONG, (long) gcfreebytes / 1024,
-			       MOMWEB_LIT_STRING, "kb free, ",
-			       MOMWEB_DEC_LONG, (long) gcunmappedbytes / 1024,
-			       MOMWEB_LIT_STRING, "kb unmapped, ",
-			       MOMWEB_DEC_LONG, (long) gcbytessincegc / 1024,
-			       MOMWEB_LIT_STRING, "kb since gc, ",
-			       MOMWEB_DEC_LONG, (long) gctotalbytes / 1024,
-			       MOMWEB_LIT_STRING, "kb total, ",
-			       MOMWEB_DEC_LONG, (long) gcnb,
-			       MOMWEB_LIT_STRING, " nb, ", MOMWEB_HEX_LONG,
-			       (long) GC_get_version (), MOMWEB_LIT_STRING,
-			       " version)</small>", MOMWEB_LIT_STRING,
-			       HTML_FROM, MOMWEB_REPLY_CODE, HTTP_OK,
-			       MOMWEB_END);
+      mom_item_webrequest_add
+	(webv, MOMWEB_SET_MIME, "text/html",
+	 MOMWEB_LIT_STRING,
+	 "<!-- ajax_periodic fragment -->\n",
+	 MOMWEB_LIT_STRING, "elapsed real: ",
+	 MOMWEB_FIX2DIG_DOUBLE,
+	 mom_elapsed_real_time (), MOMWEB_LIT_STRING,
+	 ", cpu:", MOMWEB_FIX2DIG_DOUBLE,
+	 mom_clock_time (CLOCK_PROCESS_CPUTIME_ID),
+	 MOMWEB_LIT_STRING, " sec., ", MOMWEB_DEC_INT64,
+	 (int64_t) mom_agenda_work_counter (),
+	 MOMWEB_LIT_STRING, " done tasklets, ",
+	 MOMWEB_DEC_LONG, (long) mom_nb_items (),
+	 MOMWEB_LIT_STRING, " items. <br/> <small>(GC: ",
+	 MOMWEB_DEC_LONG, (long) gcheapsize / 1024,
+	 MOMWEB_LIT_STRING, "kb heapsize, ",
+	 MOMWEB_DEC_LONG, (long) gcfreebytes / 1024,
+	 MOMWEB_LIT_STRING, "kb free, ",
+	 MOMWEB_DEC_LONG, (long) gcunmappedbytes / 1024,
+	 MOMWEB_LIT_STRING, "kb unmapped, ",
+	 MOMWEB_DEC_LONG, (long) gcbytessincegc / 1024,
+	 MOMWEB_LIT_STRING, "kb since gc, ",
+	 MOMWEB_DEC_LONG, (long) gctotalbytes / 1024,
+	 MOMWEB_LIT_STRING, "kb total, ",
+	 MOMWEB_DEC_LONG, (long) gcnb,
+	 MOMWEB_LIT_STRING, " nb, ", MOMWEB_HEX_LONG,
+	 (long) GC_get_version (), MOMWEB_LIT_STRING,
+	 " version)</small> <br/>",
+	 ////
+	 MOMWEB_LIT_STRING, HTML_FROM, MOMWEB_END);
+      if (procmsg && procoutput.ptr)
+	{
+	  mom_item_webrequest_add
+	    (webv,
+	     MOMWEB_LIT_STRING, "last compilation:",
+	     MOMWEB_HTML_STRING, procmsg,
+	     MOMWEB_LIT_STRING, "<br/><pre class='comprocout_cl'>\n",
+	     MOMWEB_HTML_VALUE, procoutput,
+	     MOMWEB_LIT_STRING, "</pre>\n",
+	     MOMWEB_LIT_STRING, HTML_FROM, MOMWEB_END);
+	}
+      mom_item_webrequest_add
+	(webv,
+	 MOMWEB_LIT_STRING, HTML_FROM,
+	 MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
       MOM_DBG_VALUE (web, "ajax_periodic replied webv=", webv);
     }
   return routres_pop;
@@ -775,11 +818,14 @@ momcode_proc_compilation (int state, momit_tasklet_t * tasklet,
 	MOM_DEBUG (run,
 		   "momcode_proc_compilation start n_procstatus=%ld",
 		   (long) n_procstatus);
+	char msgcomp[64];
+	memset (msgcomp, 0, sizeof (msgcomp));
 	if (l_endreason.panyitem == (mom_anyitem_t *) mom_item__exited
 	    && n_procstatus == 0)
 	  {
 	    MOM_DEBUG (run,
 		       "momcode_proc_compilation make process succeeded");
+	    periodic_set_process ("compilation succeeded", l_outstr);
 	    SET_STATE (loadnewmodule);
 	  }
 	else if (l_endreason.panyitem == (mom_anyitem_t *) mom_item__exited
@@ -788,6 +834,10 @@ momcode_proc_compilation (int state, momit_tasklet_t * tasklet,
 	    MOM_WARNING
 	      ("momcode_proc_compilation make process failed, exit code=%ld",
 	       (long) n_procstatus);
+	    snprintf (msgcomp, sizeof (msgcomp),
+		      "compilation failed with exit code %d",
+		      (int) n_procstatus);
+	    periodic_set_process (msgcomp, l_outstr);
 	    return routres_pop;
 	  }
 	else if (l_endreason.panyitem ==
@@ -796,6 +846,10 @@ momcode_proc_compilation (int state, momit_tasklet_t * tasklet,
 	    MOM_WARNING
 	      ("momcode_proc_compilation make process terminated with signal#%d = %s",
 	       (int) n_procstatus, strsignal (n_procstatus));
+	    snprintf (msgcomp, sizeof (msgcomp),
+		      "compilation terminated with signal#%d = %s",
+		      (int) n_procstatus, strsignal (n_procstatus));
+	    periodic_set_process (msgcomp, l_outstr);
 	    return routres_pop;
 	  }
 	else
