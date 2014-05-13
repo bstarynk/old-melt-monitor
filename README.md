@@ -228,6 +228,15 @@ or only running & web debugging with -D web,run program option.
 Look for MOM_DEBUG_LIST_OPTIONS macros in monimelt.h
 
 
+## Using some other HTTP server library.
+
+I'm considering giving up onion because it is creating threads
+incompatibly with libgc. My https://github.com/bstarynk/onion branch
+on github is proposing a solution, but I am not familiar with cmake
+and I am not able to build it (compilation is ok, linking is not ok).
+See http://stackoverflow.com/q/23633461/841108 and
+https://groups.google.com/a/coralbits.com/forum/#!msg/onion-dev/XxhtpYUBozw/oZ-TqS0VNDMJ
+
 # Contact information
 
 [Basile Starynkevitch](http://starynkevitch.net/Basile/), from France;
