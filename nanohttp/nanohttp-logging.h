@@ -63,10 +63,6 @@ extern "C"
   extern void hlog_warn (const char *FUNC, const char *format, ...);
   extern void hlog_error (const char *FUNC, const char *format, ...);
 
-#ifdef __cplusplus
-}
-#endif
-
 /*
  * XXX: This isn't the "right" way
  *
@@ -107,5 +103,6 @@ extern "C"
 #ifdef __cplusplus
 };
 #endif
+
 
 #endif

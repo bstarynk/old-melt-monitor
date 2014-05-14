@@ -1366,6 +1366,15 @@ __attribute__ ((format (printf, 3, 4)));
 #define MOM_GC_FREE(VarPtr) MOM_GC_FREE_AT(VarPtr,__LINE__)
 
 momhash_t mom_string_hash (const char *str, int len);
+
+static inline momhash_t
+mom_cstring_hash (const char *str)
+{
+  if (!str)
+    return 0;
+  return mom_string_hash (str, strlen (str));
+}
+
 const momstring_t *mom_make_string_len (const char *str, int len);
 static inline const momstring_t *
 mom_make_string (const char *str)

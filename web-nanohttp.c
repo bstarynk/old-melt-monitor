@@ -38,34 +38,6 @@ struct mom_web_info_st
 
 static void mom_nanohttp_service (httpd_conn_t * conn, hrequest_t * req);
 
-void
-mom_start_web (const char *webhost)
-{
-  char webuf[128];
-  memset (webuf, 0, sizeof (webuf));
-  if (strlen (webhost) + 2 >= sizeof (webuf))
-    MOM_FATAL ("too long webhost %s", webhost);
-  strncpy (webuf, webhost, sizeof (webuf) - 1);
-  char *lastcolon = strchr (webuf, ':');
-  char *portstr = NULL;
-  char *hoststr = NULL;
-  if (lastcolon && isdigit (lastcolon[1]))
-    {
-      *lastcolon = (char) 0;
-      portstr = lastcolon + 1;
-    }
-  if (webuf[0])
-    hoststr = webuf;
-  if (MOM_IS_DEBUGGING (web))
-    hlog_set_level (HLOG_VERBOSE);
-  else
-    hlog_set_level (HLOG_WARN);
-  MOM_DEBUG (web, "starting web portstr=%s hoststr=%s", portstr, hoststr);
-  httpd_basile_set_port (portstr);
-  hsocket_basile_set_host (hoststr);
-  httpd_register ("", mom_nanohttp_service);
-}
-
 
 
 struct post_dict_st
@@ -118,8 +90,149 @@ mom_http_method_str (hreq_method_t m)
 	char buf[16];
 	memset (buf, 0, sizeof (buf));
 	snprintf (buf, sizeof (buf), "httpmethod?%d", (int) m);
+	MOM_WARNING ("strange HTTP method: %s", buf);
 	return GC_STRDUP (buf);
       }
+    }
+}
+
+// metadata cache for files
+#define HEXCHECKSUM_LEN 48
+struct fixedfile_metadata_st
+{
+  time_t fixfil_time;		/* the metadata fetch time, or 0 for an empty entry */
+  char fixfil_path[MOM_PATH_LEN];	/* the file path */
+  struct stat fixfil_stat;
+  char fixfil_hexchecksum[HEXCHECKSUM_LEN];
+};
+
+static struct metadata_st
+{
+  pthread_mutex_t mdfixfil_mtx;
+  unsigned mdfixfil_size;
+  unsigned mdfixfil_count;
+  struct fixedfile_metadata_st *mdfixfil_array;	/* of size mdfixfil_size */
+} mom_metadatafixfil =
+{
+.mdfixfil_mtx = PTHREAD_MUTEX_INITIALIZER,.mdfixfil_size =
+    0,.mdfixfil_count = 0,.mdfixfil_array = NULL};
+
+static const struct fixedfile_metadata_st *
+get_file_metadata (const char *fpath)
+{
+  if (!fpath || !fpath[0])
+    return NULL;
+  unsigned siz = mom_metadatafixfil.mdfixfil_size;
+  struct fixedfile_metadata_st *arr = mom_metadatafixfil.mdfixfil_array;
+  assert (siz > 0 && arr != NULL);
+  momhash_t h = mom_cstring_hash (fpath);
+  unsigned istart = h % siz;
+  for (unsigned i = istart; i < siz; i++)
+    {
+      if (arr[i].fixfil_time > 0)
+	{
+	  if (!strcmp (arr[i].fixfil_path, fpath))
+	    return arr + i;
+	}
+      else if (!arr[i].fixfil_path[0])
+	return NULL;
+    }
+  for (unsigned i = 0; i < istart; i++)
+    {
+      if (arr[i].fixfil_time > 0)
+	{
+	  if (!strcmp (arr[i].fixfil_path, fpath))
+	    return arr + i;
+	}
+      else if (!arr[i].fixfil_path[0])
+	return NULL;
+    }
+  return NULL;
+}
+
+static void
+put_file_metadata (const char *fpath, time_t ftime, struct stat *fst,
+		   const char *fhexcsum)
+{
+  assert (mom_metadatafixfil.mdfixfil_size > 0
+	  && 5 * mom_metadatafixfil.mdfixfil_count / 4 + 1 <
+	  mom_metadatafixfil.mdfixfil_size);
+  assert (fpath && fpath[0] && strlen (fpath) < MOM_PATH_LEN);
+  assert (ftime > 0);
+  assert (fhexcsum != NULL && isxdigit (fhexcsum[0]));
+  assert (fst != NULL);
+  unsigned siz = mom_metadatafixfil.mdfixfil_size;
+  struct fixedfile_metadata_st *arr = mom_metadatafixfil.mdfixfil_array;
+  assert (siz > 0 && arr != NULL);
+  int pos = -1;
+  bool found = false;
+  momhash_t h = mom_cstring_hash (fpath);
+  unsigned istart = h % siz;
+  for (unsigned i = istart; i < siz; i++)
+    {
+      if (arr[i].fixfil_time > 0)
+	{
+	  if (!strcmp (arr[i].fixfil_path, fpath))
+	    {
+	      pos = i;
+	      found = true;
+	      break;
+	    }
+	}
+      else if (!arr[i].fixfil_path[0])
+	{			/* unused slot */
+	  if (pos < 0)
+	    pos = i;
+	  break;
+	}
+      else			/* time==0, emptied slot */
+	{
+	  if (pos < 0)
+	    pos = i;
+	  continue;
+	}
+    }
+  for (unsigned i = 0; i < istart; i++)
+    {
+      if (arr[i].fixfil_time > 0)
+	{
+	  if (!strcmp (arr[i].fixfil_path, fpath))
+	    {
+	      pos = i;
+	      found = true;
+	      break;
+	    }
+	}
+      else if (!arr[i].fixfil_path[0])
+	{			/* unused slot */
+	  if (pos < 0)
+	    pos = i;
+	  break;
+	}
+      else			/* time==0, emptied slot */
+	{
+	  if (pos < 0)
+	    pos = i;
+	  continue;
+	}
+    }
+  assert (pos >= 0 && pos < siz);
+  memset (&arr[pos].fixfil_stat, 0, sizeof (struct stat));
+  memset (arr[pos].fixfil_hexchecksum, 0, HEXCHECKSUM_LEN);
+  if (found)
+    {
+      arr[pos].fixfil_time = ftime;
+      memcpy (&arr[pos].fixfil_stat, fst, sizeof (struct stat));
+      strncpy (arr[pos].fixfil_hexchecksum, fhexcsum, HEXCHECKSUM_LEN - 1);
+    }
+  else
+    {
+      mom_metadatafixfil.mdfixfil_count++;
+      memset (arr + pos, 0, sizeof (struct fixedfile_metadata_st));
+      strncpy (arr[pos].fixfil_path, fpath, MOM_PATH_LEN - 1);
+      arr[pos].fixfil_time = ftime;
+      memcpy (&arr[pos].fixfil_stat, fst, sizeof (struct stat));
+      strncpy (arr[pos].fixfil_hexchecksum, fhexcsum, HEXCHECKSUM_LEN - 1);
     }
 }
 
@@ -132,8 +245,9 @@ mom_nanohttp_service (httpd_conn_t * conn, hrequest_t * req)
 	     req->path);
   if ((req->method == HTTP_REQUEST_GET || req->method == HTTP_REQUEST_HEAD)
       && (isalpha (req->path[0]) || req->path[0] == '/')
-      && !strstr (req->path, ".."))
+      && !strstr (req->path, "..") && strlen (req->path) < MOM_PATH_LEN)
     {
+      struct stat fst = { };
       if (!req->path[0] || !strcmp (req->path, "/"))
 	snprintf (filpath, sizeof (filpath), "%s/%s", MOM_WEB_DIRECTORY,
 		  MOM_WEB_ROOT_PAGE);
@@ -141,9 +255,66 @@ mom_nanohttp_service (httpd_conn_t * conn, hrequest_t * req)
 	snprintf (filpath, sizeof (filpath),
 		  (req->path[0] == '/') ? "%s%s" : "%s/%s", MOM_WEB_DIRECTORY,
 		  req->path);
-#warning should access the file filpath etc...
+      memset (&fst, 0, sizeof (struct stat));
+      if (!stat (filpath, &fst) && S_ISREG (fst.st_mode))
+	{
+	  MOM_DEBUG (web, "stat %s succeeded st_size=%ld st_mtime=%ld",
+		     filpath, (long) fst.st_size, (long) fst.st_mtime);
+	}
+      else
+	{
+	  MOM_DEBUG (web, "stat %s failed", filpath);
+	}
     }
 }
+
+
+
+
+void
+mom_start_web (const char *webhost)
+{
+  char webuf[128];
+  memset (webuf, 0, sizeof (webuf));
+  if (strlen (webhost) + 2 >= sizeof (webuf))
+    MOM_FATAL ("too long webhost %s", webhost);
+  strncpy (webuf, webhost, sizeof (webuf) - 1);
+  char *lastcolon = strchr (webuf, ':');
+  char *portstr = NULL;
+  char *hoststr = NULL;
+  if (lastcolon && isdigit (lastcolon[1]))
+    {
+      *lastcolon = (char) 0;
+      portstr = lastcolon + 1;
+    }
+  if (webuf[0])
+    hoststr = webuf;
+  if (MOM_IS_DEBUGGING (web))
+    hlog_set_level (HLOG_VERBOSE);
+  else
+    hlog_set_level (HLOG_WARN);
+  MOM_DEBUG (web, "starting web portstr=%s hoststr=%s", portstr, hoststr);
+  // initialize the file metadata cache
+  {
+    const unsigned inisiz = 16;
+    mom_metadatafixfil.mdfixfil_array =
+      GC_MALLOC_ATOMIC (sizeof (struct fixedfile_metadata_st) * inisiz);
+    if (MOM_UNLIKELY (!mom_metadatafixfil.mdfixfil_array))
+      MOM_FATAL
+	("failed to allocate file metadata cache for %d entries of %d bytes",
+	 (int) inisiz, (int) sizeof (struct fixedfile_metadata_st));
+    memset (mom_metadatafixfil.mdfixfil_array, 0,
+	    sizeof (struct fixedfile_metadata_st) * inisiz);
+    mom_metadatafixfil.mdfixfil_size = inisiz;
+    mom_metadatafixfil.mdfixfil_count = 0;
+  }
+  // initialize the web service
+  httpd_basile_set_port (portstr);
+  hsocket_basile_set_host (hoststr);
+  httpd_register ("", mom_nanohttp_service);
+}
+
+
 
 #if 0
 static void *

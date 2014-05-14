@@ -55,7 +55,7 @@ monimelt: $(OBJECTS) _timestamp.o  libnanohttp.a
 _timestamp.c:
 	@date +'const char monimelt_timestamp[]="%c";' > _timestamp.tmp
 	@(echo -n 'const char monimelt_lastgitcommit[]="' ; \
-	 git log --format=oneline --abbrev=12 --abbrev-commit -q | head -1 | tr -d '\n\r\f' ; \
+	 git log --format=oneline --abbrev=12 --abbrev-commit -q | head -1 | tr -d '\n\r\f\"' ; \
 	 echo '";') >> _timestamp.tmp
 	@mv _timestamp.tmp _timestamp.c
 
