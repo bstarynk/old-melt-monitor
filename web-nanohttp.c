@@ -96,6 +96,81 @@ mom_http_method_str (hreq_method_t m)
     }
 }
 
+const char *
+mom_http_code_description (int code)
+{
+  switch (code)
+    {
+    case HTTP_OK:
+      return "OK";
+    case HTTP_CREATED:
+      return "CREATED";
+    case HTTP_PARTIAL_CONTENT:
+      return "PARTIAL CONTENT";
+    case HTTP_MULTI_STATUS:
+      return "MULTI STATUS";
+    case HTTP_SWITCH_PROTOCOL:
+      return "SWITCHING PROTOCOLS";
+    case HTTP_MOVED:
+      return "MOVED";
+    case HTTP_REDIRECT:
+      return "REDIRECT";
+    case HTTP_SEE_OTHER:
+      return "SEE OTHER";
+    case HTTP_NOT_MODIFIED:
+      return "NOT MODIFIED";
+    case HTTP_TEMPORARY_REDIRECT:
+      return "TEMPORARY REDIRECT";
+    case HTTP_BAD_REQUEST:
+      return "BAD REQUEST";
+    case HTTP_UNAUTHORIZED:
+      return "UNAUTHORIZED";
+    case HTTP_FORBIDDEN:
+      return "FORBIDDEN";
+    case HTTP_NOT_FOUND:
+      return "NOT FOUND";
+    case HTTP_METHOD_NOT_ALLOWED:
+      return "METHOD NOT ALLOWED";
+    case HTTP_INTERNAL_ERROR:
+      return "INTERNAL ERROR";
+    case HTTP_NOT_IMPLEMENTED:
+      return "NOT IMPLEMENTED";
+    case HTTP_BAD_GATEWAY:
+      return "BAD GATEWAY";
+    case HTTP_SERVICE_UNAVALIABLE:
+      return "SERVICE UNAVALIABLE";
+    default:
+      {
+	char codbuf[32];
+	snprintf (codbuf, sizeof (codbuf), "*BadHttpCode%d*", code);
+	return GC_STRDUP (codbuf);
+      }
+    }
+  return NULL;
+}
+
+const char *
+mom_http_content_type_for_suffix (const char *suffix)
+{
+  if (suffix && suffix[0])
+    {
+#define SUFFIX_HAS_TYPE(Suf,Typ) if (!strcmp(suffix,Suf)) return Typ
+      SUFFIX_HAS_TYPE (".html", "text/html");
+      SUFFIX_HAS_TYPE (".htm", "text/html");
+      SUFFIX_HAS_TYPE (".js", "application/javascript");
+      SUFFIX_HAS_TYPE (".jpeg", "image/jpeg");
+      SUFFIX_HAS_TYPE (".jpg", "image/jpeg");
+      SUFFIX_HAS_TYPE (".png", "image/png");
+      SUFFIX_HAS_TYPE (".gif", "image/gif");
+      SUFFIX_HAS_TYPE (".svg", "image/svg+xml");
+      SUFFIX_HAS_TYPE (".c", "text/x-csrc");
+      SUFFIX_HAS_TYPE (".cc", "text/x-c++src");
+      SUFFIX_HAS_TYPE (".h", "text/x-chdr");
+    }
+  return NULL;
+}
+
+
 // metadata cache for files
 #define HEXCHECKSUM_LEN 48
 struct fixedfile_metadata_st
@@ -236,6 +311,28 @@ put_file_metadata (const char *fpath, time_t ftime, struct stat *fst,
     }
 }
 
+
+static void
+mom_dynamic_nanohttp_service (httpd_conn_t * conn, hrequest_t * req)
+{
+  mom_anyitem_t *methoditm = NULL;
+  MOM_DEBUG (web, "dynamic servicing %s of %s", mom_http_method_str (req->method),
+	     req->path);
+  switch (req->method) {
+  case HTTP_REQUEST_POST:
+      methoditm = (mom_anyitem_t *) mom_item__POST;
+      break;
+  case HTTP_REQUEST_GET:
+      methoditm = (mom_anyitem_t *) mom_item__GET;
+      break;
+  case HTTP_REQUEST_HEAD:
+      methoditm = (mom_anyitem_t *) mom_item__HEAD;
+      break;
+  default:
+    break;
+  }
+}
+
 static void
 mom_nanohttp_service (httpd_conn_t * conn, hrequest_t * req)
 {
@@ -247,24 +344,139 @@ mom_nanohttp_service (httpd_conn_t * conn, hrequest_t * req)
       && (isalpha (req->path[0]) || req->path[0] == '/')
       && !strstr (req->path, "..") && strlen (req->path) < MOM_PATH_LEN)
     {
+      bool ishead = req->method == HTTP_REQUEST_HEAD;
       struct stat fst = { };
       if (!req->path[0] || !strcmp (req->path, "/"))
 	snprintf (filpath, sizeof (filpath), "%s/%s", MOM_WEB_DIRECTORY,
 		  MOM_WEB_ROOT_PAGE);
       else
 	snprintf (filpath, sizeof (filpath),
-		  (req->path[0] == '/') ? "%s%s" : "%s/%s", MOM_WEB_DIRECTORY,
-		  req->path);
+		  (req->path[0] == '/') ? "%s%s" : "%s/%s",
+		  MOM_WEB_DIRECTORY, req->path);
       memset (&fst, 0, sizeof (struct stat));
       if (!stat (filpath, &fst) && S_ISREG (fst.st_mode))
 	{
+	  char lenbuf[24];
+	  char modifbuf[48];
+	  struct tm modiftm = { };
+	  memset (lenbuf, 0, sizeof (lenbuf));
+	  memset (modifbuf, 0, sizeof (modifbuf));
+	  strftime (modifbuf, sizeof (modifbuf), "%a, %d %b %Y %H:%M:%S GMT",
+		    gmtime_r (&fst.st_mtime, &modiftm));
+	  snprintf (lenbuf, sizeof (lenbuf), "%ld", (long) fst.st_size);
+	  char *lastdot = strrchr (filpath, '.');
+	  const char *contyp =
+	    lastdot ? mom_http_content_type_for_suffix (lastdot) : NULL;
 	  MOM_DEBUG (web, "stat %s succeeded st_size=%ld st_mtime=%ld",
 		     filpath, (long) fst.st_size, (long) fst.st_mtime);
+	  if (ishead)
+	    {
+	      if (contyp)
+		{
+		  if (!strncmp (contyp, "text/", 5))
+		    {
+		      char contypbuf[40];
+		      memset (contypbuf, 0, sizeof (contypbuf));
+		      snprintf (contypbuf, sizeof (contypbuf),
+				"%s; charset=utf-8", contyp);
+		      httpd_add_header (conn, HEADER_CONTENT_TYPE, contypbuf);
+		    }
+		  else
+		    httpd_add_header (conn, HEADER_CONTENT_TYPE, contyp);
+		}
+	      httpd_add_header (conn, HEADER_CONTENT_LENGTH, lenbuf);
+	      httpd_add_header (conn, HEADER_LAST_MODIFIED, modifbuf);
+	      httpd_send_header (conn, HTTP_OK,
+				 mom_http_code_description (HTTP_OK));
+	    }
+	  else
+	    {
+	      FILE *fil = fopen (filpath, "r");
+	      if (!fil)
+		{
+		  int err = errno;
+		  time_t now = 0;
+		  struct tm nowtm = { };
+		  char timbuf[48];
+		  memset (timbuf, 0, sizeof (timbuf));
+		  strftime (timbuf, sizeof (timbuf), "%c",
+			    localtime_r (time (&now), &nowtm));
+		  MOM_DEBUG (web, "failed to open %s: %s at %s", filpath,
+			     strerror (err), timbuf);
+		  httpd_add_header (conn, HEADER_CONTENT_TYPE,
+				    "text/html; charset=utf-8");
+		  char badbuf[800];
+		  memset (badbuf, 0, sizeof (badbuf));
+		  memset (lenbuf, 0, sizeof (lenbuf));
+		  snprintf (badbuf, sizeof (badbuf),
+			    "<html><head><title>not found unreadable file</title></head>\n"
+			    "<body><h1>file <tt>%s</tt> is unreadable: %s</h1>\n"
+			    "<small>(Monimelt at %s)</small>"
+			    "</body></html>\n",
+			    req->path, strerror (err), timbuf);
+		  snprintf (lenbuf, sizeof (lenbuf), "%d",
+			    (int) strlen (badbuf));
+		  httpd_add_header (conn, HEADER_CONTENT_LENGTH, lenbuf);
+		  httpd_send_header (conn, HTTP_FORBIDDEN,
+				     mom_http_code_description
+				     (HTTP_FORBIDDEN));
+		  http_output_stream_write_string (conn->out, badbuf);
+		}
+	      else
+		{
+		  httpd_add_header (conn, HEADER_CONTENT_LENGTH, lenbuf);
+		  MOM_DEBUG (web, "sending contyp=%s filpath %s length %s",
+			     contyp, filpath, lenbuf);
+		  if (contyp)
+		    {
+		      if (!strncmp (contyp, "text/", 5))
+			{
+			  char contypbuf[40];
+			  memset (contypbuf, 0, sizeof (contypbuf));
+			  snprintf (contypbuf, sizeof (contypbuf),
+				    "%s; charset=utf-8");
+			  httpd_add_header (conn, HEADER_CONTENT_TYPE,
+					    contypbuf);
+			}
+		      else
+			httpd_add_header (conn, HEADER_CONTENT_TYPE, contyp);
+		      httpd_add_header (conn, HEADER_LAST_MODIFIED, modifbuf);
+		      httpd_send_header (conn, HTTP_OK,
+					 mom_http_code_description (HTTP_OK));
+		      long remsiz = fst.st_size;
+		      while (remsiz > 0)
+			{
+			  char buf[2048];
+			  memset (buf, 0, sizeof (buf));
+			  int nbyt =
+			    fread (buf, 1,
+				   (remsiz >
+				    sizeof (buf)) ? sizeof (buf) : remsiz,
+				   fil);
+			  if (nbyt > 0)
+			    {
+			      http_output_stream_write (conn->out, buf, nbyt);
+			      remsiz -= nbyt;
+			    }
+			  else
+			    break;
+			}
+		      fclose (fil);
+		    }
+		}
+	    }
 	}
       else
-	{
+	{			/// stat failed, or is directory
 	  MOM_DEBUG (web, "stat %s failed", filpath);
+	  mom_dynamic_nanohttp_service (conn, req);
 	}
+    }
+  else
+    {
+/// bad file or path with ".."
+      MOM_DEBUG (web, "strange request path %s", req->path);
+      mom_dynamic_nanohttp_service (conn, req);
     }
 }
 
@@ -360,20 +572,23 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
       methoditm = (mom_anyitem_t *) mom_item__OPTIONS;
       break;
     default:
-      MOM_WARNING ("unexpected req#%ld fullpath=%s flags %#x",
-		   webnum, fullpath, flags);
+      MOM_WARNING
+	("unexpected req#%ld fullpath=%s flags %#x", webnum, fullpath, flags);
     }
   unsigned fullpathlen = fullpath ? strlen (fullpath) : 0;
   momval_t closhandler = MOM_NULLV;
   momval_t jpost = MOM_NULLV;
   momval_t jquery = MOM_NULLV;
-  MOM_INFORM ("got web request #%ld fullpath=%s path=%s method=%s",
-	      webnum, fullpath, path, method ? method : "??");
+  MOM_INFORM
+    ("got web request #%ld fullpath=%s path=%s method=%s",
+     webnum, fullpath, path, method ? method : "??");
   if (fullpathlen > 2 && isalpha (fullpath[1])
       && (closhandler =
-	  mom_item_dictionnary_get_cstr ((momval_t) mom_item__web_dictionnary,
-					 fullpath + 1)).ptr != NULL
-      && *closhandler.ptype == momty_closure)
+	  mom_item_dictionnary_get_cstr ((momval_t)
+					 mom_item__web_dictionnary,
+					 fullpath +
+					 1)).ptr !=
+      NULL && *closhandler.ptype == momty_closure)
     {
       MOM_DBG_VALUE (web, "closhandler", closhandler);
       momval_t pathv = (momval_t) mom_make_string (fullpath + 1);
@@ -389,25 +604,29 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
 							    mom_jsonentry_st));
 	  pdic->post_len = cntdicpost;
 	  onion_dict_preorder (odicpost, dict_add, pdic);
-	  jpost = (momval_t) mom_make_json_object
-	    (MOMJSON_COUNTED_ENTRIES, pdic->post_count, pdic->post_pairtab,
-	     MOMJSON_END);
+	  jpost =
+	    (momval_t)
+	    mom_make_json_object (MOMJSON_COUNTED_ENTRIES,
+				  pdic->post_count,
+				  pdic->post_pairtab, MOMJSON_END);
 	  MOM_GC_FREE (pdic);
 	};
       {
 	const onion_dict *odicquery = onion_request_get_query_dict (req);
 	int cntdicquery = onion_dict_count (odicquery);
 	struct post_dict_st *pdic = MOM_GC_ALLOC ("new query dictionnary",
-						  sizeof (struct post_dict_st)
-						  +
+						  sizeof (struct
+							  post_dict_st) +
 						  cntdicquery *
 						  sizeof (struct
 							  mom_jsonentry_st));
 	pdic->post_len = cntdicquery;
 	onion_dict_preorder (odicquery, dict_add, pdic);
-	jquery = (momval_t) mom_make_json_object
-	  (MOMJSON_COUNTED_ENTRIES, pdic->post_count, pdic->post_pairtab,
-	   MOMJSON_END);
+	jquery =
+	  (momval_t)
+	  mom_make_json_object (MOMJSON_COUNTED_ENTRIES,
+				pdic->post_count,
+				pdic->post_pairtab, MOMJSON_END);
 	MOM_GC_FREE (pdic);
       }
       momit_webrequest_t *webitm = mom_allocate_item (momty_webrequestitem,
@@ -433,12 +652,14 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
       MOM_DEBUG (web,
 		 "really_process_request made webitm@%p webnum#%ld wtim=%f wend=%f",
 		 webitm, webnum, wtim, wend);
-      MOM_DBG_ITEM (web, "really_process_request webitm",
+      MOM_DBG_ITEM (web,
+		    "really_process_request webitm",
 		    (const mom_anyitem_t *) webitm);
       MOM_DBG_VALUE (web, "really_process_request closhandler", closhandler);
       {
 	momit_tasklet_t *webtasklet = mom_make_item_tasklet (MOM_SPACE_NONE);
-	mom_tasklet_push_frame ((momval_t) webtasklet, (momval_t) closhandler,
+	mom_tasklet_push_frame ((momval_t) webtasklet,
+				(momval_t) closhandler,
 				MOMPFR_VALUE, webitm, MOMPFR_END);
 	MOM_DBG_ITEM (web, "new webtasklet=",
 		      (const mom_anyitem_t *) webtasklet);
@@ -473,9 +694,10 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
 	    pthread_cond_timedwait (&webitm->iweb_cond,
 				    &webitm->iweb_item.i_mtx, &waitts);
 	  gotreply = webitm->iweb_replycode > 0;
-	  MOM_DEBUG (web, "waiterr=%d (%s), gotreply=%d, replycode %d",
-		     waiterr, strerror (waiterr), (int) gotreply,
-		     webitm->iweb_replycode);
+	  MOM_DEBUG (web,
+		     "waiterr=%d (%s), gotreply=%d, replycode %d",
+		     waiterr, strerror (waiterr),
+		     (int) gotreply, webitm->iweb_replycode);
 	  /// got a reply
 	  if (gotreply)
 	    {
@@ -484,14 +706,14 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
 			 webnum, webitm->iweb_replymime,
 			 webitm->iweb_replylength, webitm->iweb_replycode);
 	      if (webitm->iweb_replymime
-		  && !strncmp (webitm->iweb_replymime, "text/", 5)
-		  && webitm->iweb_replybuf)
+		  && !strncmp (webitm->iweb_replymime, "text/",
+			       5) && webitm->iweb_replybuf)
 		{
 		  if (webitm->iweb_replylength + 1 < webitm->iweb_replysize)
 		    webitm->iweb_replybuf[webitm->iweb_replylength] =
 		      (char) 0;
-		  MOM_DEBUG (web, "webnum#%ld buffer:%s\n",
-			     webnum, webitm->iweb_replybuf);
+		  MOM_DEBUG (web, "webnum#%ld buffer:%s\n", webnum,
+			     webitm->iweb_replybuf);
 		}
 	      assert (webitm->iweb_response != NULL);
 	      if (webitm->iweb_replymime)
@@ -534,12 +756,13 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
 					      fullpath);
 	      {
 		char timebuf[80];
-		struct tm timetm = { };
+		struct tm timetm = {
+		};
 		time_t wt = (time_t) wtim;
 		memset (timebuf, 0, sizeof (timebuf));
 		localtime_r (&wt, &timetm);
-		strftime (timebuf, sizeof (timebuf), "%Y-%b-%d %T %Z",
-			  &timetm);
+		strftime (timebuf, sizeof (timebuf),
+			  "%Y-%b-%d %T %Z", &timetm);
 		onion_response_printf (webitm->iweb_response,
 				       "</tt> at <i>%s</i></p>", timebuf);
 	      }
@@ -574,11 +797,11 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
       pwebinf->web_stat = OCS_NOT_PROCESSED;
       MOM_DEBUG (web, "notprocessed webnum#%ld", webnum);
     }
-  MOM_DEBUG (web, "end really_process_request webnum %ld web_stat %d",
+  MOM_DEBUG (web,
+	     "end really_process_request webnum %ld web_stat %d",
 	     webnum, (int) pwebinf->web_stat);
   MOMGC_UNREGISTER_MY_THREAD ();
   return NULL;
-
 }
 #endif
 
@@ -596,8 +819,8 @@ momval_t
 mom_item_webrequest_post_arg (momval_t val, const char *argname)
 {
   momval_t res = MOM_NULLV;
-  if (!val.ptr || *val.ptype != momty_webrequestitem || !argname
-      || !argname[0])
+  if (!val.ptr
+      || *val.ptype != momty_webrequestitem || !argname || !argname[0])
     return MOM_NULLV;
   pthread_mutex_lock (&val.panyitem->i_mtx);
   res = mom_jsonob_getstr (val.pwebrequestitem->iweb_postjsob, argname);
@@ -621,8 +844,8 @@ momval_t
 mom_item_webrequest_query_arg (momval_t val, const char *argname)
 {
   momval_t res = MOM_NULLV;
-  if (!val.ptr || *val.ptype != momty_webrequestitem || !argname
-      || !argname[0])
+  if (!val.ptr
+      || *val.ptype != momty_webrequestitem || !argname || !argname[0])
     return MOM_NULLV;
   pthread_mutex_lock (&val.panyitem->i_mtx);
   res = mom_jsonob_getstr (val.pwebrequestitem->iweb_queryjsob, argname);
@@ -668,8 +891,8 @@ webrequest_reserve (momit_webrequest_t * webitm, unsigned more)
     {
       unsigned newsize =
 	((5 * webitm->iweb_replylength / 4 + more + 100) | 0xff) + 1;
-      char *newbuf =
-	MOM_GC_SCALAR_ALLOC ("reserve webrequest buffer", newsize);
+      char *newbuf = MOM_GC_SCALAR_ALLOC ("reserve webrequest buffer",
+					  newsize);
       memcpy (newbuf, webitm->iweb_replybuf, webitm->iweb_replylength);
       MOM_GC_FREE (webitm->iweb_replybuf);
       webitm->iweb_replybuf = newbuf;
@@ -692,8 +915,8 @@ webrequest_addhtml (momit_webrequest_t * webitm, const char *htmlstr)
   if (MOM_UNLIKELY (!g_utf8_validate (htmlstr, len, &end)))
     MOM_FATAL ("invalid UTF-8 string %s", htmlstr);
   webrequest_reserve (webitm, 9 * len / 8 + 2);
-  for (const gchar * pc = htmlstr; *pc && pc < htmlstr + len;
-       pc = g_utf8_next_char (pc))
+  for (const gchar * pc = htmlstr;
+       *pc && pc < htmlstr + len; pc = g_utf8_next_char (pc))
     {
       gunichar c = g_utf8_get_char (pc);
       switch (c)
@@ -742,8 +965,8 @@ webrequest_addjs (momit_webrequest_t * webitm, const char *jsstr)
   if (MOM_UNLIKELY (!g_utf8_validate (jsstr, len, &end)))
     MOM_FATAL ("invalid UTF-8 string %s", jsstr);
   webrequest_reserve (webitm, 9 * len / 8 + 2);
-  for (const gchar * pc = jsstr; *pc && pc < jsstr + len;
-       pc = g_utf8_next_char (pc))
+  for (const gchar * pc = jsstr;
+       *pc && pc < jsstr + len; pc = g_utf8_next_char (pc))
     {
       gunichar c = g_utf8_get_char (pc);
       switch (c)
@@ -869,7 +1092,8 @@ mom_item_webrequest_add (momval_t val, ...)
 		  {
 		    char *bufj = NULL;
 		    size_t sizj = 0;
-		    struct jsonoutput_st outj = { };
+		    struct jsonoutput_st outj = {
+		    };
 		    FILE *foutj = open_memstream (&bufj, &sizj);
 		    if (!foutj)
 		      MOM_FATAL ("failed to open stream for JSON");
@@ -939,7 +1163,8 @@ mom_item_webrequest_add (momval_t val, ...)
 	      {
 		char *bufj = NULL;
 		size_t sizj = 0;
-		struct jsonoutput_st outj = { };
+		struct jsonoutput_st outj = {
+		};
 		FILE *foutj = open_memstream (&bufj, &sizj);
 		if (!foutj)
 		  MOM_FATAL ("failed to open stream for JSON");
@@ -1063,9 +1288,9 @@ mom_item_webrequest_add (momval_t val, ...)
 	      {
 		// for common mime types, give a constant literal to avoid the GC_STRDUP
 #define COMMON_MIME_PREFIX_UTF8(Pref) else if (!strncmp (mime, Pref, sizeof(Pref)-1)) \
-		webitm->iweb_replymime = Pref "; charset=utf-8"
-#define COMMON_MIME_TYPE(Mime) else if (!strcmp (mime, Mime)) \
-		webitm->iweb_replymime = Mime
+		  webitm->iweb_replymime = Pref "; charset=utf-8"
+#define COMMON_MIME_TYPE(Mime) else if (!strcmp (mime, Mime))	\
+		  webitm->iweb_replymime = Mime
 		// to start the if ... else if
 		if (0)
 		  mime = "???";
@@ -1086,11 +1311,11 @@ mom_item_webrequest_add (momval_t val, ...)
 		COMMON_MIME_TYPE ("image/svg+xml");
 		COMMON_MIME_PREFIX_UTF8 ("application/xml");
 		else
-		{
-		  webitm->iweb_replymime = GC_STRDUP (mime);
-		  if (MOM_UNLIKELY (!webitm->iweb_replymime))
-		    MOM_FATAL ("failed to strdup mime type %s", mime);
-		}
+		  {
+		    webitm->iweb_replymime = GC_STRDUP (mime);
+		    if (MOM_UNLIKELY (!webitm->iweb_replymime))
+		      MOM_FATAL ("failed to strdup mime type %s", mime);
+		  }
 		/* *INDENT-ON* */
 #undef COMMON_MIME_PREFIX_UTF8
 #undef COMMON_MIME_TYPE
