@@ -746,6 +746,9 @@ main (int argc, char **argv)
   explicit_boehm_gc_thread = true;
 #endif
   pthread_setname_np (pthread_self (), "mom-main");
+  // we heavily depend on having the "C" locale, e.g. for strftime
+  // calls in nanohttp/nanohttp-server.c
+  setlocale (LC_ALL, "C");
   g_mem_gc_friendly = TRUE;
   g_mem_set_vtable (&gc_mem_vtable);
   mom_initialize ();

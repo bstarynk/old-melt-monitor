@@ -14,3 +14,5 @@ monimelt
 make-named
 core*
 _monimelt_sigterm*.*
+*.mkd
+*/*.mkd

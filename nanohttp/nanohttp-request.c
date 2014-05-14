@@ -77,18 +77,18 @@ hrequest_new (void)
 static hrequest_t *
 _hrequest_parse_header (char *data)
 {
-  hrequest_t *req;
+  hrequest_t *req = NULL;
   hpair_t *hpair = NULL, *qpair = NULL, *tmppair = NULL;
 
-  char *tmp;
-  char *tmp2;
-  char *saveptr;
-  char *saveptr2;
-  char *saveptr3;
-  char *result;
-  char *key;
-  char *opt_key;
-  char *opt_value;
+  char *tmp = NULL;
+  char *tmp2 = NULL;
+  char *saveptr = NULL;
+  char *saveptr2 = NULL;
+  char *saveptr3 = NULL;
+  char *result = NULL;
+  char *key = NULL;
+  char *opt_key = NULL;
+  char *opt_value = NULL;
   int firstline = 1;
 
   req = hrequest_new ();
@@ -285,7 +285,9 @@ hrequest_new_from_socket (hsocket_t * sock, hrequest_t ** out)
   /* Read header */
   for (i = 0; i < MAX_HEADER_SIZE; i++)
     {
-      if ((status = hsocket_read (sock, &(buffer[i]), 1, 1, &readed)) != H_OK)
+      if ((status =
+	   hsocket_read (sock, (byte_t *) & (buffer[i]), 1, 1,
+			 &readed)) != H_OK)
 	{
 	  log_error2 ("hsocket_read failed (%s)", herror_message (status));
 	  return status;

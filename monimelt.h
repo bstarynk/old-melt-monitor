@@ -43,6 +43,7 @@
 #include <float.h>
 #include <limits.h>
 #include <ctype.h>
+#include <locale.h>
 #include <getopt.h>
 #include <errno.h>
 #include <gc/gc.h>
