@@ -108,11 +108,10 @@ mom_agenda_work_counter (void)
 #define WORK_GARBAGE_COLLECTION_CHECK_PERIOD 16
 #define WORK_GARBAGE_COLLECTION_DELAY (MOM_IS_DEBUGGING(run)?15.0:4.5)	/* seconds */
 static void *
-work_loop (struct GC_stack_base *sb, void *data)
+mom_work_loop (void *data)
 {
   struct momworkdata_st *wd = data;
   int myindex = 0;
-  MOMGC_REGISTER_MY_THREAD (sb);
   assert (wd != NULL);
   assert (wd->work_magic == WORK_MAGIC);
   mom_anyitem_t *curtsk = NULL;
@@ -193,7 +192,6 @@ work_loop (struct GC_stack_base *sb, void *data)
   }
   sched_yield ();
   MOM_DEBUG (run, "work_loop ended index %d", myindex);
-  MOMGC_UNREGISTER_MY_THREAD ();
   return NULL;
 }
 
@@ -212,7 +210,7 @@ work_cb (void *ad)
       || ((mom_anyitem_t *) mom_item__agenda)->typnum != momty_queueitem)
     MOM_FATAL ("bad agenda");
   cur_worker = wd;
-  MOMGC_CALL_WITH_STACK_BASE (work_loop, wd);
+  mom_work_loop (wd);
   cur_worker = NULL;
   return NULL;
 }
@@ -239,8 +237,8 @@ mom_run_at (const char *srcfil, int srclin, const char *reason)
 	  {
 	    workers[ix].work_magic = WORK_MAGIC;
 	    workers[ix].work_index = ix;
-	    pthread_create (&workers[ix].work_thread, NULL, work_cb,
-			    workers + ix);
+	    GC_pthread_create (&workers[ix].work_thread, NULL, work_cb,
+			       workers + ix);
 	  }
 	pthread_mutex_unlock (&mom_run_mtx);
       }
@@ -738,7 +736,7 @@ mom_initialize_signals (void)
 }
 
 static void *
-event_loop (struct GC_stack_base *sb, void *data)
+mom_event_loop (void *data)
 {
   long long evloopcnt = 0;
   bool repeat_loop = false;
@@ -751,7 +749,6 @@ event_loop (struct GC_stack_base *sb, void *data)
   memset (polltab, 0, sizeof (polltab));
   memset (handlertab, 0, sizeof (handlertab));
   memset (datatab, 0, sizeof (datatab));
-  MOMGC_REGISTER_MY_THREAD (sb);
   assert (data == NULL);
   assert (mom_item__heart_beat != NULL);
   assert (my_signals_fd >= 0);
@@ -880,7 +877,6 @@ event_loop (struct GC_stack_base *sb, void *data)
     }
   while (repeat_loop);
   MOM_DEBUG (run, "end of eventloop evloopcnt=%lld", evloopcnt);
-  MOMGC_UNREGISTER_MY_THREAD ();
   return NULL;
 }
 
@@ -889,7 +885,7 @@ static void *
 eventloop_cb (void *p)
 {
   pthread_setname_np (pthread_self (), "mom-evloop");
-  MOMGC_CALL_WITH_STACK_BASE (event_loop, p);
+  mom_event_loop (p);
   return p;
 }
 
@@ -903,7 +899,7 @@ mom_start_event_loop (void)
     MOM_FATAL ("failed to create event loop pipe");
   MOM_DEBUG (run, "event_loop_read_pipe=%d event_loop_write_pipe=%d",
 	     event_loop_read_pipe, event_loop_write_pipe);
-  if (pthread_create (&event_loop_thread, &evthattr, eventloop_cb, NULL))
+  if (GC_pthread_create (&event_loop_thread, &evthattr, eventloop_cb, NULL))
     MOM_FATAL ("failed to create event loop thread");
   event_loop_started = true;
 }

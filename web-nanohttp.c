@@ -21,98 +21,22 @@
 #include "monimelt.h"
 
 
-onion *mom_onion = NULL;
-onion_url *mom_onion_root = NULL;
-static pthread_mutex_t mtx_onion = PTHREAD_MUTEX_INITIALIZER;
-static long nb_weq_requests;
 
 extern momit_dictionnary_t *mom_item__web_dictionnary;
+
 
 #define WEB_MAGIC 0x11b63c99	/* web magic 297155737 */
 struct mom_web_info_st
 {
   unsigned web_magic;
-  onion_connection_status web_stat;
   unsigned long web_num;
   double web_time;
-  onion_request *web_requ;
-  onion_response *web_resp;
 };
 
 
 
 
-static void *mom_really_process_request (struct GC_stack_base *sb,
-					 void *data);
-
-
-static onion_connection_status
-process_request (void *ignore, onion_request * req, onion_response * res)
-{
-  long webnum = 0;
-  double webtim = mom_clock_time (CLOCK_REALTIME);
-  {
-    char thnambuf[32];
-    memset (thnambuf, 0, sizeof (thnambuf));
-    pthread_mutex_lock (&mtx_onion);
-    nb_weq_requests++;
-    webnum = nb_weq_requests;
-    snprintf (thnambuf, sizeof (thnambuf), "mom-web%05ld", webnum);
-    pthread_setname_np (pthread_self (), thnambuf);
-    pthread_mutex_unlock (&mtx_onion);
-  }
-  const char *fullpath = onion_request_get_fullpath (req);
-  MOM_DEBUG (web, "process_request tid %ld webnum#%ld webtim=%.3f fullpath=%s",
-	     (long) mom_gettid(), webnum, webtim, fullpath);
-  /// hack to deliver local files in MOM_WEB_DIRECTORY and the root document as MOM_WEB_ROOT_PAGE
-  {
-    char bufpath[128];
-    struct stat stpath = { };
-    memset (bufpath, 0, sizeof (bufpath));
-    memset (&stpath, 0, sizeof (stpath));
-    if (!fullpath[0] || !strcmp (fullpath, "/"))
-      {
-	MOM_DEBUG (web, "servicing the MOM_WEB_ROOT_PAGE %s",
-		   MOM_WEB_ROOT_PAGE);
-	snprintf (bufpath, sizeof (bufpath), "%s/%s", MOM_WEB_DIRECTORY,
-		  MOM_WEB_ROOT_PAGE);
-	MOM_DEBUG (web, "MOM web root page: %s", bufpath);
-	if (access (bufpath, R_OK))
-	  MOM_FATAL ("cannot open web root page %s", bufpath);
-	return onion_shortcut_response_file (bufpath, req, res);
-      }
-    if (fullpath && fullpath[0] == '/' && isalpha (fullpath[1])
-	&& !strstr (fullpath, "..")
-	&& strlen (fullpath) + sizeof (MOM_WEB_DIRECTORY) + 3
-	< sizeof (bufpath))
-      {
-	strcpy (bufpath, MOM_WEB_DIRECTORY);
-	strcat (bufpath, fullpath);
-	assert (strlen (bufpath) < sizeof (bufpath) - 1);
-	MOM_DEBUG (web, "testing for access of bufpath=%s", bufpath);
-	if (!access (bufpath, R_OK) && !stat (bufpath, &stpath)
-	    && S_ISREG (stpath.st_mode))
-	  {
-	    MOM_DEBUG (web, "shortcutting readable file bufpath=%s", bufpath);
-	    return onion_shortcut_response_file (bufpath, req, res);
-	  }
-      }
-    MOM_DEBUG (web, "fullpath %s not static file", fullpath);
-  }
-  struct mom_web_info_st webinf;
-  memset (&webinf, 0, sizeof (webinf));
-  webinf.web_magic = WEB_MAGIC;
-  webinf.web_stat = OCS_NOT_PROCESSED;
-  webinf.web_num = webnum;
-  webinf.web_time = webtim;
-  webinf.web_requ = req;
-  webinf.web_resp = res;
-  MOMGC_CALL_WITH_STACK_BASE (mom_really_process_request, &webinf);
-  MOM_INFORM ("process request webnum#%ld return %d",
-	      webnum, webinf.web_stat);
-  return webinf.web_stat;
-}
-
+static void mom_nanohttp_service (httpd_conn_t * conn, hrequest_t * req);
 
 void
 mom_start_web (const char *webhost)
@@ -122,7 +46,6 @@ mom_start_web (const char *webhost)
   if (strlen (webhost) + 2 >= sizeof (webuf))
     MOM_FATAL ("too long webhost %s", webhost);
   strncpy (webuf, webhost, sizeof (webuf) - 1);
-  mom_onion = onion_new (O_THREADED | O_DETACH_LISTEN);
   char *lastcolon = strchr (webuf, ':');
   char *portstr = NULL;
   char *hoststr = NULL;
@@ -133,22 +56,14 @@ mom_start_web (const char *webhost)
     }
   if (webuf[0])
     hoststr = webuf;
-  if (hoststr)
-    onion_set_hostname (mom_onion, hoststr);
-  if (portstr)
-    onion_set_port (mom_onion, portstr);
-  MOM_INFORM ("start web hoststr=%s portstr=%s", hoststr, portstr);
-  mom_onion_root = onion_root_url (mom_onion);
-  onion_handler *hdlr = onion_handler_new ((onion_handler_handler)
-					   process_request, NULL, NULL);
-  onion_url_add_handler (mom_onion_root, "^", hdlr);
-  onion_url_add_handler (mom_onion_root, "status", onion_internal_status ());
-  onion_url_add_handler (mom_onion_root, "^",
-			 onion_handler_export_local_new (MOM_WEB_DIRECTORY));
-
-  MOM_INFORM ("before listening web host %s", webhost);
-  onion_listen (mom_onion);
-  MOM_INFORM ("after listening web host %s", webhost);
+  if (MOM_IS_DEBUGGING (web))
+    hlog_set_level (HLOG_VERBOSE);
+  else
+    hlog_set_level (HLOG_WARN);
+  MOM_DEBUG (web, "starting web portstr=%s hoststr=%s", portstr, hoststr);
+  httpd_basile_set_port (portstr);
+  hsocket_basile_set_host (hoststr);
+  httpd_register ("", mom_nanohttp_service);
 }
 
 
@@ -176,6 +91,61 @@ dict_add (void *data, const char *key, const void *value, int flags)
 
 #define WEB_INITIAL_REPLY_SIZE 256
 #define WEB_REPLY_TIMEOUT 2.4	/*seconds web reply timeout */
+
+const char *
+mom_http_method_str (hreq_method_t m)
+{
+  switch (m)
+    {
+    case HTTP_REQUEST_POST:
+      return "POST";
+    case HTTP_REQUEST_GET:
+      return "GET";
+    case HTTP_REQUEST_OPTIONS:
+      return "OPTIONS";
+    case HTTP_REQUEST_HEAD:
+      return "HEAD";
+    case HTTP_REQUEST_PUT:
+      return "PUT";
+    case HTTP_REQUEST_DELETE:
+      return "DELETE";
+    case HTTP_REQUEST_TRACE:
+      return "TRACE";
+    case HTTP_REQUEST_CONNECT:
+      return "CONNECT";
+    default:
+      {
+	char buf[16];
+	memset (buf, 0, sizeof (buf));
+	snprintf (buf, sizeof (buf), "httpmethod?%d", (int) m);
+	return GC_STRDUP (buf);
+      }
+    }
+}
+
+static void
+mom_nanohttp_service (httpd_conn_t * conn, hrequest_t * req)
+{
+  char filpath[MOM_PATH_LEN];
+  memset (filpath, 0, sizeof (filpath));
+  MOM_DEBUG (web, "servicing %s of %s", mom_http_method_str (req->method),
+	     req->path);
+  if ((req->method == HTTP_REQUEST_GET || req->method == HTTP_REQUEST_HEAD)
+      && (isalpha (req->path[0]) || req->path[0] == '/')
+      && !strstr (req->path, ".."))
+    {
+      if (!req->path[0] || !strcmp (req->path, "/"))
+	snprintf (filpath, sizeof (filpath), "%s/%s", MOM_WEB_DIRECTORY,
+		  MOM_WEB_ROOT_PAGE);
+      else
+	snprintf (filpath, sizeof (filpath),
+		  (req->path[0] == '/') ? "%s%s" : "%s/%s", MOM_WEB_DIRECTORY,
+		  req->path);
+#warning should access the file filpath etc...
+    }
+}
+
+#if 0
 static void *
 mom_really_process_request (struct GC_stack_base *sb, void *data)
 {
@@ -439,7 +409,7 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
   return NULL;
 
 }
-
+#endif
 
 
 extern void
@@ -447,8 +417,6 @@ mom_webrequest_destroy (mom_anyitem_t * itm)
 {
   assert (itm && itm->typnum == momty_webrequestitem);
   momit_webrequest_t *webitm = (momit_webrequest_t *) itm;
-  assert (!webitm->iweb_request);
-  assert (!webitm->iweb_response);
   pthread_cond_destroy (&webitm->iweb_cond);
   memset (&webitm->iweb_cond, 0, sizeof (pthread_cond_t));
 }

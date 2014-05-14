@@ -25,9 +25,6 @@
 
 #define GC_THREADS 1
 
-#define MOM_EXPLICIT_GC_THREAD 1
-#warning enabling MOM_EXPLICIT_GC_THREAD
-
 
 #include <features.h>		// GNU things
 #include <assert.h>
@@ -67,20 +64,13 @@
 #include <gmodule.h>
 // Gmime from http://spruce.sourceforge.net/gmime/
 #include <gmime/gmime.h>
-// libonion from http://www.coralbits.com/libonion/ &
-// https://github.com/davidmoreno/onion
-#include <onion/onion.h>
-#include <onion/request.h>
-#include <onion/response.h>
-#include <onion/handler.h>
-#include <onion/dict.h>
-#include <onion/log.h>
-#include <onion/shortcuts.h>
-#include <onion/handlers/internal_status.h>
-#include <onion/handlers/exportlocal.h>
-#include <onion/handlers/path.h>
-#include <onion/handlers/static.h>
-#include <onion/handlers/auth_pam.h>
+// Our nanohttp
+#include "nanohttp/nanohttp-common.h"
+#include "nanohttp/nanohttp-logging.h"
+#include "nanohttp/nanohttp-server.h"
+#include "nanohttp/nanohttp-request.h"
+#include "nanohttp/nanohttp-response.h"
+
 // curl from http://curl.haxx.se/libcurl is an HTTP client library
 #include <curl/curl.h>
 
@@ -89,15 +79,6 @@
 extern const char monimelt_timestamp[];
 extern const char monimelt_lastgitcommit[];
 
-#if MOM_EXPLICIT_GC_THREAD
-#define MOMGC_REGISTER_MY_THREAD(Sb) GC_register_my_thread(Sb)
-#define MOMGC_UNREGISTER_MY_THREAD() GC_unregister_my_thread()
-#define MOMGC_CALL_WITH_STACK_BASE(Rout,Base) GC_call_with_stack_base(Rout,Base)
-#else
-#define MOMGC_REGISTER_MY_THREAD(Sb) do{if (0) (void)(Sb);}while(0)
-#define MOMGC_UNREGISTER_MY_THREAD() do{}while(0)
-#define MOMGC_CALL_WITH_STACK_BASE(Rout,Base) Rout(NULL,(Base))
-#endif
 
 // mark unlikely conditions to help optimization
 #ifdef __GNUC__
@@ -1013,13 +994,43 @@ momval_t mom_item_dictionnary_sorted_name_node (momval_t dictv,
 
 
 
+enum http_response_codes_en
+{				// copied from onion/response.h
+  //
+  HTTP_SWITCH_PROTOCOL = 101,
+
+  // OK codes
+  HTTP_OK = 200,
+  HTTP_CREATED = 201,
+  HTTP_PARTIAL_CONTENT = 206,
+  HTTP_MULTI_STATUS = 207,
+
+  // Redirects
+  HTTP_MOVED = 301,
+  HTTP_REDIRECT = 302,
+  HTTP_SEE_OTHER = 303,
+  HTTP_NOT_MODIFIED = 304,
+  HTTP_TEMPORARY_REDIRECT = 307,
+
+  // Not allowed to access
+  HTTP_BAD_REQUEST = 400,
+  HTTP_UNAUTHORIZED = 401,
+  HTTP_FORBIDDEN = 403,
+  HTTP_NOT_FOUND = 404,
+  HTTP_METHOD_NOT_ALLOWED = 405,
+
+  // Error codes
+  HTTP_INTERNAL_ERROR = 500,
+  HTTP_NOT_IMPLEMENTED = 501,
+  HTTP_BAD_GATEWAY = 502,
+  HTTP_SERVICE_UNAVALIABLE = 503,
+};
+
 //////////////// web request items, only allocated in web-onion.c
 ///// mascaraded at dump time into a box item
 struct momwebrequestitem_st
 {
   struct momanyitem_st iweb_item;	/* common part */
-  onion_request *iweb_request;
-  onion_response *iweb_response;
   unsigned long iweb_webnum;
   double iweb_time;		/* real time of request */
   pthread_cond_t iweb_cond;

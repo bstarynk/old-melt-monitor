@@ -99,9 +99,12 @@ so `libglib2.0-dev` Debian package
   collector](http://www.hboehm.info/gc/), i.e. the `libgc-dev` Debian
   package.
  
-- [onion HTTP server library](https://github.com/davidmoreno/onion) by
-  David Moreno. You want a recent version (may 2014 github snapshot),
-  and it may be sadly not packaged by Debian.
+- [onion HTTP server library](https://github.com/davidmoreno/onion)
+  might not be needed anymore. I'm experimenting the usage of
+  *nanohttp* from [csoap](http://csoap.sourceforge.net/). The
+  `nanohttp/` subdirectory is copied from [Csoap version
+  1.1.0](http://prdownloads.sourceforge.net/csoap/libsoap-1.1.0.tar.gz)
+  and I will adapt it to my needs.
 
 - [JQuery2](http://http://jquery.com/) which might be bundled in the monitor
 

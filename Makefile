@@ -29,22 +29,26 @@ CFLAGS= -std=gnu11 -Wall $(PREPROFLAGS) $(OPTIMFLAGS)
 CXX=g++
 CXXFLAGS= -std=c++11 -Wall -pthread  $(PREPROFLAGS) $(OPTIMFLAGS)
 INDENT= indent -gnu
-PREPROFLAGS= $(shell $(PKGCONFIG) --cflags $(PACKAGES))
+PREPROFLAGS= $(shell $(PKGCONFIG) --cflags $(PACKAGES)) -Inanohttp/ -I.
 OPTIMFLAGS= -Og -g
-LIBES= -luuid -lgc  $(shell $(PKGCONFIG) --libs $(PACKAGES)) -lonion_handlers -lonion -lpthread -lm -ldl
+LIBES= libnanohttp.a -luuid -lgc  $(shell $(PKGCONFIG) --libs $(PACKAGES))  -lm -ldl
 SQLITE= sqlite3
 SOURCES= $(sort $(filter-out $(wildcard mod_*.c), $(wildcard [a-z]*.c)))
 MODSOURCES= $(sort $(wildcard mod_*.c))
 MODULES= $(patsubst %.c,%.so,$(MODSOURCES))
 OBJECTS= $(patsubst %.c,%.o,$(SOURCES))
+NANOHTTP_SOURCES= $(wildcard nanohttp/*.c)
+NANOHTTP_OBJECTS= $(patsubst nanohttp/%.c, nanohttp/%.o, $(NANOHTTP_SOURCES))
+
 RM= rm -fv
 .PHONY: all modules clean tests indent restore-state dump-state
 .SUFFIXES: .so
-all: monimelt make-named modules
+all: monimelt make-named modules 
 clean:
-	$(RM) *~ *.o *.so *.orig _tmp_* monimelt core* webdir/*~ *.tmp  _timestamp.* state-monimelt.dbsqlite-journal
+	$(RM) *~ *.o *.so *.orig _tmp_* monimelt core* */*~ *.tmp  lib*.a _timestamp.* \
+	     state-monimelt.dbsqlite-journal nanohttp/*.o nanohttp/*.mkd
 ################
-monimelt: $(OBJECTS) _timestamp.o
+monimelt: $(OBJECTS) _timestamp.o  libnanohttp.a
 	$(LINK.c)  -rdynamic $^ $(LIBES) -o $@
 	rm _timestamp.*
 
@@ -57,6 +61,8 @@ _timestamp.c:
 
 indent: # don't indent monimelt-names.h
 	@for f in *.c $(filter-out monimelt-names.h, $(wildcard *.h)); do \
+	  echo indenting $$f; $(INDENT) $$f ;$(INDENT) $$f; done
+	@for f in $(wildcard nanohttp/*.[ch]); do \
 	  echo indenting $$f; $(INDENT) $$f ;$(INDENT) $$f; done
 
 $(OBJECTS): monimelt.h monimelt-names.h
@@ -82,3 +88,11 @@ restore-state:
 
 dump-state:
 	./dump-state.sh
+
+libnanohttp.a: $(NANOHTTP_OBJECTS)
+	ar rcv $@ $^
+
+nanohttp/%.o: nanohttp/%.c nanohttp/%.h
+	$(COMPILE.c) $< -DHAVE_CONFIG_H -MMD -MT "nanohttp/$(*F).o" -MF  "nanohttp/$(*F).mkd" -o $@
+
+-include nanohttp/*.mkd

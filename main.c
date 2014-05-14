@@ -288,6 +288,10 @@ parse_program_arguments_and_load_modules (int argc, char **argv)
 	  break;
 	}
     }
+  herror_t *herr = httpd_init (argc - optind, argv + optind);
+  if (herr)
+    MOM_FATAL ("failed to initialize nanohttp: %s in %s",
+	       herror_message (herr), herror_func (herr));
 }
 
 void
@@ -805,6 +809,7 @@ main (int argc, char **argv)
   if (web_host)
     {
       extern void mom_start_web (const char *);
+      MOM_INFORM ("before  web %s", web_host);
       mom_start_web (web_host);
       MOM_INFORM ("started web %s", web_host);
     }
