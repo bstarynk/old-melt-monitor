@@ -373,6 +373,10 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
 	      MOM_DEBUG (web, "webnum#%ld flushed response",
 			 webitm->iweb_webnum);
 	      webitm->iweb_response = NULL;
+	      webitm->iweb_replybuf = NULL;
+	      webitm->iweb_replylength = 0;
+	      webitm->iweb_replysize = 0;
+	      webitm->iweb_replymime = 0;
 	      repeatloop = false;
 	    }
 	  // timedout
@@ -425,6 +429,7 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
 	  MOM_DEBUG (web, "webnum#%ld endloop repeatloop=%d", webnum,
 		     (int) repeatloop);
 	};			// end while repeatloop
+      webitm = NULL;
       sched_yield ();
       pwebinf->web_stat = OCS_PROCESSED;
       MOM_DEBUG (web, "processed webnum#%ld", webnum);
@@ -446,12 +451,23 @@ mom_really_process_request (struct GC_stack_base *sb, void *data)
 extern void
 mom_webrequest_destroy (mom_anyitem_t * itm)
 {
+  char uidstr[UUID_PARSED_LEN];
+  memset (uidstr, 0, sizeof (uidstr));
   assert (itm && itm->typnum == momty_webrequestitem);
   momit_webrequest_t *webitm = (momit_webrequest_t *) itm;
-  assert (!webitm->iweb_request);
-  assert (!webitm->iweb_response);
+  MOM_DEBUG (web, "webrequest_destroy %s @%p #%ld",
+	     mom_unparse_item_uuid (itm, uidstr), itm, webitm->iweb_webnum);
   pthread_cond_destroy (&webitm->iweb_cond);
   memset (&webitm->iweb_cond, 0, sizeof (pthread_cond_t));
+  webitm->iweb_request = NULL;
+  webitm->iweb_response = NULL;
+  webitm->iweb_replybuf = NULL;
+  webitm->iweb_replymime = NULL;
+  webitm->iweb_methoditm = NULL;
+  webitm->iweb_postjsob.ptr = NULL;
+  webitm->iweb_queryjsob.ptr = NULL;
+  webitm->iweb_replylength = 0;
+  webitm->iweb_replysize = 0;
 }
 
 momval_t

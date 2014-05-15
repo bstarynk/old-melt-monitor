@@ -267,6 +267,7 @@ union momvalueptr_un
 
 // for debugging:
 #define MOM_DEBUG_LIST_OPTIONS(Dbg)		\
+  Dbg(item)					\
   Dbg(dump)					\
   Dbg(load)					\
   Dbg(json)					\

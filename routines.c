@@ -2150,7 +2150,7 @@ momcode_cold_routine_emit (int state, momit_tasklet_t * tasklet,
 	      continue;
 	    mom_item_buffer_printf (_L (buffer), "#undef momnum_%s\n",
 				    curnumsuffix);
-	    if (isalpha (curnumsuffix))
+	    if (isalpha (curnumsuffix[0]))
 	      mom_item_buffer_printf (_L (buffer), "#undef %s\n",
 				      curnumsuffix);
 	  }
@@ -2166,7 +2166,7 @@ momcode_cold_routine_emit (int state, momit_tasklet_t * tasklet,
 	      continue;
 	    mom_item_buffer_printf (_L (buffer), "#undef momdbl_%s\n",
 				    curdblsuffix);
-	    if (isalpha (curdblsuffix))
+	    if (isalpha (curdblsuffix[0]))
 	      mom_item_buffer_printf (_L (buffer), "#undef %s\n",
 				      curdblsuffix);
 	  }

@@ -69,7 +69,7 @@ static struct items_data_st
 } *items_data;
 
 
-static inline void
+static inline unsigned
 add_new_item (mom_anyitem_t * newitm)
 {
   uint32_t imax = items_data->items_size;
@@ -83,7 +83,7 @@ add_new_item (mom_anyitem_t * newitm)
 	{
 	  items_data->items_arr[i] = newitm;
 	  items_data->items_nb++;
-	  return;
+	  return i;
 	}
       else
 	if (MOM_UNLIKELY
@@ -103,7 +103,7 @@ add_new_item (mom_anyitem_t * newitm)
 	    continue;
 	  items_data->items_arr[i + 1] = newitm;
 	  items_data->items_nb++;
-	  return;
+	  return i + 1;
 	}
       else
 	if (MOM_UNLIKELY
@@ -123,7 +123,7 @@ add_new_item (mom_anyitem_t * newitm)
 	{
 	  items_data->items_arr[i] = newitm;
 	  items_data->items_nb++;
-	  return;
+	  return i;
 	}
       else
 	if (MOM_UNLIKELY
@@ -141,7 +141,7 @@ add_new_item (mom_anyitem_t * newitm)
 	{
 	  items_data->items_arr[i + 1] = newitm;
 	  items_data->items_nb++;
-	  return;
+	  return i + 1;
 	}
       else
 	if (MOM_UNLIKELY
@@ -155,6 +155,7 @@ add_new_item (mom_anyitem_t * newitm)
 	  MOM_FATAL ("duplicate uuid %s", uidstr);
 	}
     }
+  return UINT_MAX;
 }
 
 static inline void
@@ -248,6 +249,22 @@ mom_finalize_item (void *itmad, void *data)
   pthread_mutex_lock (&mtx_global_items);
   momhash_t itmhash = itm->i_hash;
   assert (itmhash != 0);
+  items_data->items_finalcount++;
+#if  NDEBUG
+  (void) 0;
+#else
+  if (MOM_UNLIKELY (MOM_IS_DEBUGGING (item)))
+    {
+      char uidstr[UUID_PARSED_LEN];
+      memset (uidstr, 0, sizeof (uidstr));
+      uuid_unparse (itm->i_uuid, uidstr);
+      MOM_DEBUG (item,
+		 "destroying %lld-th item {%s/h%x} @%p type#%d=%s space#%d",
+		 (long long) items_data->items_finalcount, uidstr, itmhash,
+		 (void *) itmad, itm->typnum,
+		 mom_typedescr_array[itm->typnum]->ityp_name, itm->i_space);
+    }
+#endif
   if (idescr && idescr->ityp_destroy)
     {
       if (MOM_UNLIKELY (idescr->ityp_magic != ITEMTYPE_MAGIC))
@@ -280,7 +297,6 @@ mom_finalize_item (void *itmad, void *data)
 	      nba * sizeof (struct mom_attrentry_st));
       GC_FREE (iat);
     }
-  items_data->items_finalcount++;
   pthread_mutex_unlock (&mtx_global_items);
 }
 
@@ -324,7 +340,10 @@ mom_allocate_item_with_uuid (unsigned type, size_t itemsize, unsigned space,
 			     uuid_t uid)
 {
   struct momanyitem_st *p = NULL;
+  unsigned ix = 0;
   assert (itemsize >= sizeof (struct momanyitem_st));
+  assert (type > momty__itemlowtype && type < momty__last
+	  && mom_typedescr_array[type] != NULL);
   p = MOM_GC_ALLOC ("allocate item", itemsize);
   if (space != 0)
     {
@@ -345,11 +364,50 @@ mom_allocate_item_with_uuid (unsigned type, size_t itemsize, unsigned space,
       if (newsiz > items_data->items_size)
 	resize_items_data (newsiz);
     }
-  add_new_item (p);
+  ix = add_new_item (p);
   pthread_mutex_init (&p->i_mtx, &mom_recursive_mutex_attr);
+  // see
+  // http://www.hpl.hp.com/hosted/linux/mail-archives/gc/2009-June/002786.html
   GC_REGISTER_FINALIZER (p, mom_finalize_item, NULL, NULL, NULL);
   p->i_content.ptr = NULL;
   items_data->items_allocount++;
+  //
+#if  NDEBUG
+  (void) 0;
+#else
+  if (MOM_UNLIKELY (MOM_IS_DEBUGGING (item)))
+    {
+      char uidstr[UUID_PARSED_LEN];
+      memset (uidstr, 0, sizeof (uidstr));
+      Dl_info inf0 = { };
+      Dl_info inf1 = { };
+      Dl_info inf2 = { };
+      memset (&inf0, 0, sizeof (inf0));
+      memset (&inf1, 0, sizeof (inf1));
+      memset (&inf2, 0, sizeof (inf2));
+      void *ret0 =
+      /*__builtin_extract_return_addr*/ (__builtin_return_address (0));
+      void *ret1 = ret0 ?
+	       /*__builtin_extract_return_addr*/
+	(__builtin_return_address (1)) : NULL;
+      void *ret2 = ret1 ?
+	       /*__builtin_extract_return_addr*/
+	(__builtin_return_address (2)) : NULL;
+      uuid_unparse (uid, uidstr);
+      dladdr (ret0, &inf0);
+      dladdr (ret1, &inf1);
+      dladdr (ret2, &inf2);
+      MOM_DEBUG (item,
+		 "creating %lld-th item {%s/h%x} @%p ix=%u type#%d=%s space#%d called from %p<%s+%#lx> from %p<%s+%#lx> from %p<%s+%#lx>",
+		 (long long) items_data->items_allocount, uidstr, itmhash,
+		 (void *) p, ix, type, mom_typedescr_array[type]->ityp_name,
+		 space, ret0, inf0.dli_sname,
+		 (char *) inf0.dli_saddr - (char *) ret0, ret1,
+		 inf1.dli_sname, (char *) inf1.dli_saddr - (char *) ret1,
+		 ret2, inf2.dli_sname,
+		 (char *) inf2.dli_saddr - (char *) ret2);
+    }
+#endif
   pthread_mutex_unlock (&mtx_global_items);
   return p;
 }
@@ -902,6 +960,7 @@ static momval_t tasklet_itemgetbuild (struct mom_dumper_st *dmp,
 static momval_t tasklet_itemgetfill (struct mom_dumper_st *dmp,
 				     mom_anyitem_t * itm);
 
+static void tasklet_destroy (mom_anyitem_t * itm);
 const struct momitemtypedescr_st momitype_tasklet = {
   .ityp_magic = ITEMTYPE_MAGIC,
   .ityp_name = "tasklet",
@@ -910,6 +969,7 @@ const struct momitemtypedescr_st momitype_tasklet = {
   .ityp_scan = tasklet_itemscan,
   .ityp_getbuild = tasklet_itemgetbuild,
   .ityp_getfill = tasklet_itemgetfill,
+  .ityp_destroy = tasklet_destroy
 };
 
 static mom_anyitem_t *
@@ -1163,7 +1223,42 @@ tasklet_itemgetbuild (struct mom_dumper_st *dmp, mom_anyitem_t * itm)
 					   MOMJSON_END);
 }
 
-
+// a tasklet destroyer is useful to reduce cycles for Boehm GC.
+static void
+tasklet_destroy (mom_anyitem_t * itm)
+{
+  assert (itm && itm->typnum == momty_taskletitem);
+  MOM_DEBUG(item, "tasklet_destroy itm@%p", itm);
+  momit_tasklet_t *tskitm = (momit_tasklet_t *) itm;
+  tskitm->itk_fratop = 0;
+  if (tskitm->itk_scalars != NULL)
+    {
+      memset (tskitm->itk_scalars, 0,
+	      tskitm->itk_scalsize * sizeof (intptr_t));
+      tskitm->itk_scalars = NULL;
+      tskitm->itk_scalsize = 0;
+      tskitm->itk_scaltop = 0;
+    };
+  if (tskitm->itk_values != NULL)
+    {
+      memset (tskitm->itk_values, 0, tskitm->itk_valsize * sizeof (momval_t));
+      tskitm->itk_values = NULL;
+      tskitm->itk_valsize = 0;
+      tskitm->itk_valtop = 0;
+    }
+  if (tskitm->itk_closures != NULL)
+    {
+      memset (tskitm->itk_closures, 0,
+	      tskitm->itk_frasize * sizeof (momclosure_t));
+      tskitm->itk_closures = NULL;
+    }
+  if (tskitm->itk_frames != NULL)
+    {
+      memset (tskitm->itk_frames, 0,
+	      tskitm->itk_frasize * sizeof (struct momframe_st));
+      tskitm->itk_frames = NULL;
+    }
+}
 
 momit_routine_t *
 mom_make_item_routine_of_uuid (uuid_t uid, const char *name, unsigned space)
