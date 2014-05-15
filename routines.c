@@ -187,7 +187,29 @@ momcode_ajax_periodic (int state, momit_tasklet_t * tasklet,
   if (mom_item_webrequest_method (webv).ptr ==
       ((momval_t) mom_item__POST).ptr)
     {
-      MOM_DEBUG (web, "momcode_ajax_periodic POST");
+      momval_t idw = mom_item_webrequest_post_arg (webv, "id");
+      MOM_DBG_VALUE (web, "momcode_ajax_periodic POST idw=", idw);
+      bool forcegc = mom_same_string (idw, "do_force_gc");
+      MOM_DEBUG (web, "momcode_ajax_periodic %s",
+		 forcegc ? "forcing gc" : "plain");
+      if (forcegc)
+	{
+	  MOM_DEBUG (web, "momcode_ajax_periodic before forced GC");
+	  GC_gcollect ();
+	  MOM_DEBUG (web, "momcode_ajax_periodic after forced GC");
+	}
+      long vmsizepg = 0, vmrsspg = 0, vmsharedpg = 0, vmtextpg = 0;
+      {
+	FILE *fstatm = fopen ("/proc/self/statm", "r");
+	if (fstatm)
+	  {
+	    fscanf (fstatm, "%ld %ld %ld %ld ",
+		    &vmsizepg, &vmrsspg, &vmsharedpg, &vmtextpg);
+	    fclose (fstatm);
+	  }
+	else
+	  MOM_WARNING ("failed to open /proc/self/status");
+      }
       MOM_DBG_VALUE (web, "ajax_periodic jsobpost=",
 		     mom_item_webrequest_jsob_post (webv));
       GC_word gcheapsize = 0, gcfreebytes = 0, gcunmappedbytes =
@@ -221,9 +243,14 @@ momcode_ajax_periodic (int state, momit_tasklet_t * tasklet,
 	 MOMWEB_DEC_LONG, (long) gctotalbytes / 1024,
 	 MOMWEB_LIT_STRING, "kb total, ",
 	 MOMWEB_DEC_LONG, (long) gcnb,
-	 MOMWEB_LIT_STRING, " nb, ", MOMWEB_HEX_LONG,
-	 (long) GC_get_version (), MOMWEB_LIT_STRING,
-	 " version)</small> <br/>",
+	 MOMWEB_LIT_STRING, " nb, ",
+	 MOMWEB_HEX_LONG, (long) GC_get_version (),
+	 MOMWEB_LIT_STRING, " version, ",
+	 MOMWEB_DEC_LONG, (long) vmsharedpg,
+	 MOMWEB_LIT_STRING, " mem.pages, ",
+	 MOMWEB_DEC_LONG, (long) vmrsspg,
+	 MOMWEB_LIT_STRING, " rss.pages, ",
+	 MOMWEB_LIT_STRING, ")</small> <br/>",
 	 ////
 	 MOMWEB_LIT_STRING, HTML_FROM, MOMWEB_END);
       if (procmsg && procoutput.ptr)

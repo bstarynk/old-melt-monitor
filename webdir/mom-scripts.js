@@ -261,3 +261,16 @@ function period_changed() {
 	clearTimeout(periodic_timeout);
     update_period();
 }
+
+function send_force_gc() {
+    console.debug('send_force_gc');
+    $.ajax({ url: '/ajax_periodic',
+	     method: 'POST',
+	     data: { id: 'do_force_gc' },
+	     dataType: 'html',
+	     success: function (data) {
+		 console.debug('send_force_gc success data=', data);
+		 periodicstate_domelem.html(data);
+	     }
+	   });
+}

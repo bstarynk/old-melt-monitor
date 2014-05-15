@@ -39,7 +39,8 @@
 
   <p class='status_cl' id='status_id'></p>
 
-  <p class='periodic_cl'><select id='period_id' onchange='period_changed()'><option selected='true'>1</option><option>3</option><option>10</option></select>
+  <p class='periodic_cl'><select id='period_id' onchange='period_changed()'><option selected='true'>1</option><option>3</option><option>10</option></select> &nbsp;
+    <input type='submit' name='forcegc_id' value='force gc' onclick='send_force_gc();'/>
     &nbsp; <span id='periodic_state_id'></span></p>
   
   <nav class='nav_cl' id='nav_id'>
