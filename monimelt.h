@@ -1046,20 +1046,27 @@ struct momwebrequestitem_st
   int iweb_replycode;
 };
 
+
+#define MOM_REQUIRES_TYPE_AT(Lin,V,Typ) \
+  (__builtin_choose_expr((__builtin_types_compatible_p(typeof(V),Typ)), \
+			 ((V)), ((void)mom_bad_at_line_##Lin)))
+#define MOM_REQUIRES_TYPE_AT_BIS(Lin,V,Typ) MOM_REQUIRES_TYPE_AT(Lin,V,Typ)
+#define MOM_REQUIRES_TYPE__bad(V,Typ) MOM_REQUIRES_TYPE_AT_BIS(__LINE__,V,Typ)
+#define MOM_REQUIRES_TYPE(V,Typ) (V)
 enum mom_webreplydirective_en
 {
   MOMWEBDO__END = 0,
   ///
   MOMWEBDO_LIT_STRING /*, const char* literalstring; for literal  string */ ,
-#define MOMWEB_LIT_STRING(S) MOMWEBDO_LIT_STRING, (S)
+#define MOMWEB_LIT_STRING(S) MOMWEBDO_LIT_STRING, MOM_REQUIRES_TYPE(S,const char*)
   ///
   MOMWEBDO_HTML_STRING
     /*, const char* htmlstring; for HTML encoded literal string  */ ,
-#define MOMWEB_HTML_STRING(S) MOMWEBDO_HTML_STRING, (S)
+#define MOMWEB_HTML_STRING(S) MOMWEBDO_HTML_STRING, MOM_REQUIRES_TYPE(S,const char*)
   ///
   MOMWEBDO_JS_STRING		/*, const char*jstring; for JSON encoded literal string */
     ,
-#define MOMWEB_JS_STRING(S) MOMWEBDO_JS_STRING, (S)
+#define MOMWEB_JS_STRING(S) MOMWEBDO_JS_STRING, MOM_REQUIRES_TYPE((S),const char*)
   ///
   MOMWEBDO_VALUE
     /*, momval_t val; for boxed numbers, JSON values, named items, buffer items  */
