@@ -60,8 +60,10 @@ mom_hash_uuid (uuid_t uid)
 static pthread_mutex_t mtx_global_items = PTHREAD_MUTEX_INITIALIZER;
 static struct items_data_st
 {
-  uint32_t items_nb;
-  uint32_t items_size;
+  uint32_t items_nb;		/* number of live items */
+  uint32_t items_size;		/* size of items_arr */
+  uint64_t items_allocount;	/* current allocation counter */
+  uint64_t items_finalcount;	/* current finalization counter */
   // should have one extra slot to ease loop unrolling
   mom_anyitem_t *items_arr[];
 } *items_data;
@@ -214,13 +216,15 @@ resize_items_data (uint32_t newsiz)
 					   1) * sizeof (mom_anyitem_t *));
   newdata->items_nb = 0;
   newdata->items_size = newsiz;
+  newdata->items_allocount = olddata->items_allocount;
+  newdata->items_finalcount = olddata->items_finalcount;
   items_data = newdata;
   unsigned sizold = olddata->items_size;
   for (unsigned ix = 0; ix < sizold; ix++)
     {
       mom_anyitem_t *olditm = olddata->items_arr[ix];
       olddata->items_arr[ix] = NULL;
-      if (!olditm || (void *) olddata == MOM_EMPTY)
+      if (!olditm || (void *) olditm == MOM_EMPTY)
 	continue;
       add_new_item (olditm);
     }
@@ -252,7 +256,9 @@ mom_finalize_item (void *itmad, void *data)
   if (items_data->items_nb < items_data->items_size / 4
       && items_data->items_size > 2000)
     {
-      uint32_t newsiz = ((4 * items_data->items_nb / 3 + 100) | 0x3ff) - 2;
+      uint32_t newsiz =
+	((4 * items_data->items_nb / 3 + items_data->items_nb / 16 +
+	  100) | 0x3ff) - 2;
       if (newsiz < items_data->items_size)
 	resize_items_data (newsiz);
     }
@@ -268,6 +274,7 @@ mom_finalize_item (void *itmad, void *data)
 	      nba * sizeof (struct mom_attrentry_st));
       GC_FREE (iat);
     }
+  items_data->items_finalcount++;
   pthread_mutex_unlock (&mtx_global_items);
 }
 
@@ -281,6 +288,29 @@ mom_nb_items (void)
     nbitems = items_data->items_nb;
   pthread_mutex_unlock (&mtx_global_items);
   return nbitems;
+}
+
+void
+mom_items_get_stats (uint32_t * pnb, uint64_t * pallocount,
+		     uint64_t * pfinalcount)
+{
+  if (pnb)
+    *pnb = 0;
+  if (pallocount)
+    *pallocount = 0;
+  if (pfinalcount)
+    *pfinalcount = 0;
+  pthread_mutex_lock (&mtx_global_items);
+  if (items_data)
+    {
+      if (pnb)
+	*pnb = items_data->items_nb;
+      if (pallocount)
+	*pallocount = items_data->items_allocount;
+      if (pfinalcount)
+	*pfinalcount = items_data->items_finalcount;
+    }
+  pthread_mutex_unlock (&mtx_global_items);
 }
 
 void *
@@ -305,7 +335,7 @@ mom_allocate_item_with_uuid (unsigned type, size_t itemsize, unsigned space,
   memcpy (p->i_uuid, uid, sizeof (uuid_t));
   if (items_data->items_nb >= 3 * items_data->items_size / 4)
     {
-      uint32_t newsiz = ((3 * items_data->items_nb / 2 + 500) | 0x1ff) - 2;
+      uint32_t newsiz = ((3 * items_data->items_nb / 2 + 500) | 0x1ff) - 3;
       if (newsiz > items_data->items_size)
 	resize_items_data (newsiz);
     }
@@ -313,6 +343,7 @@ mom_allocate_item_with_uuid (unsigned type, size_t itemsize, unsigned space,
   pthread_mutex_init (&p->i_mtx, &mom_recursive_mutex_attr);
   GC_REGISTER_FINALIZER (p, mom_finalize_item, NULL, NULL, NULL);
   p->i_content.ptr = NULL;
+  items_data->items_allocount++;
   pthread_mutex_unlock (&mtx_global_items);
   return p;
 }

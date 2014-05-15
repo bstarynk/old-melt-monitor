@@ -1435,6 +1435,9 @@ void *mom_allocate_item (unsigned type, size_t itemsize, unsigned space);
 void *mom_allocate_item_with_uuid (unsigned type, size_t itemsize,
 				   unsigned space, uuid_t uid);
 mom_anyitem_t *mom_item_of_uuid (uuid_t);
+void mom_items_get_stats (uint32_t * pnb, uint64_t * pallocount,
+			  uint64_t * pfinalcount);
+
 unsigned mom_nb_items (void);
 
 momit_json_name_t *mom_make_item_json_name_of_uuid (uuid_t, const char *name,
