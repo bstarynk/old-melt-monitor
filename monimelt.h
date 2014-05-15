@@ -26,8 +26,8 @@
 #define GC_THREADS 1
 #define HAVE_PTHREADS 1
 
-#define MOM_EXPLICIT_GC_THREAD 1
-#warning enabling MOM_EXPLICIT_GC_THREAD
+//#define MOM_EXPLICIT_GC_THREAD 1
+//#warning enabling MOM_EXPLICIT_GC_THREAD
 
 
 #include <features.h>		// GNU things

@@ -326,7 +326,7 @@ modules_post_load (void)
       if (!modh)
 	continue;
       typedef void post_load_sig_t (void);
-      post_load_sig_t *modpostload = dlsym(modh, "mom_module_post_load");
+      post_load_sig_t *modpostload = dlsym (modh, "mom_module_post_load");
       if (modpostload)
 	{
 	  MOM_DEBUG (run, "before post loading module #%d", (int) ix);

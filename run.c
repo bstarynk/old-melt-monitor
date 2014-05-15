@@ -239,8 +239,8 @@ mom_run_at (const char *srcfil, int srclin, const char *reason)
 	  {
 	    workers[ix].work_magic = WORK_MAGIC;
 	    workers[ix].work_index = ix;
-	    pthread_create (&workers[ix].work_thread, NULL, work_cb,
-			    workers + ix);
+	    GC_pthread_create (&workers[ix].work_thread, NULL, work_cb,
+			       workers + ix);
 	  }
 	pthread_mutex_unlock (&mom_run_mtx);
       }
@@ -903,7 +903,7 @@ mom_start_event_loop (void)
     MOM_FATAL ("failed to create event loop pipe");
   MOM_DEBUG (run, "event_loop_read_pipe=%d event_loop_write_pipe=%d",
 	     event_loop_read_pipe, event_loop_write_pipe);
-  if (pthread_create (&event_loop_thread, &evthattr, eventloop_cb, NULL))
+  if (GC_pthread_create (&event_loop_thread, &evthattr, eventloop_cb, NULL))
     MOM_FATAL ("failed to create event loop thread");
   event_loop_started = true;
 }
