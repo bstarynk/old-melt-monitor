@@ -1980,7 +1980,7 @@ momcode_cold_routine_emit (int state, momit_tasklet_t * tasklet,
 	    mom_item_buffer_printf (_L (buffer),
 				    "#define momnum_%s momp_locnums[%d]\n",
 				    curnumsuffix, (int) nix);
-	    if (isalpha (curnumsuffix))
+	    if (isalpha (curnumsuffix[0]))
 	      mom_item_buffer_printf (_L (buffer), "#define %s  momnum_%s\n",
 				      curnumsuffix, curnumsuffix);
 	  }
@@ -2015,7 +2015,7 @@ momcode_cold_routine_emit (int state, momit_tasklet_t * tasklet,
 	    mom_item_buffer_printf (_L (buffer),
 				    "#define momdbl_%s momp_locdoubles[%d]\n",
 				    curdblsuffix, (int) dix);
-	    if (isalpha (curdblsuffix))
+	    if (isalpha (curdblsuffix[0]))
 	      mom_item_buffer_printf (_L (buffer), "#define %s  momdbl_%s\n",
 				      curdblsuffix, curdblsuffix);
 	  }

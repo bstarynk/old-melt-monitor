@@ -1049,10 +1049,10 @@ struct momwebrequestitem_st
 
 #define MOM_REQUIRES_TYPE_AT(Lin,V,Typ) \
   (__builtin_choose_expr((__builtin_types_compatible_p(typeof(V),Typ)), \
-			 ((V)), ((void)mom_bad_at_line_##Lin)))
+			 ((V)), ((Typ)(void*)0)))
 #define MOM_REQUIRES_TYPE_AT_BIS(Lin,V,Typ) MOM_REQUIRES_TYPE_AT(Lin,V,Typ)
-#define MOM_REQUIRES_TYPE__bad(V,Typ) MOM_REQUIRES_TYPE_AT_BIS(__LINE__,V,Typ)
-#define MOM_REQUIRES_TYPE(V,Typ) (V)
+#define MOM_REQUIRES_TYPE(V,Typ) MOM_REQUIRES_TYPE_AT_BIS(__LINE__,V,Typ)
+
 enum mom_webreplydirective_en
 {
   MOMWEBDO__END = 0,
@@ -1066,72 +1066,72 @@ enum mom_webreplydirective_en
   ///
   MOMWEBDO_JS_STRING		/*, const char*jstring; for JSON encoded literal string */
     ,
-#define MOMWEB_JS_STRING(S) MOMWEBDO_JS_STRING, MOM_REQUIRES_TYPE((S),const char*)
+#define MOMWEB_JS_STRING(S) MOMWEBDO_JS_STRING, MOM_REQUIRES_TYPE(S,const char*)
   ///
   MOMWEBDO_VALUE
     /*, momval_t val; for boxed numbers, JSON values, named items, buffer items  */
     ,
-#define MOMWEB_VALUE(V) MOMWEBDO_VALUE_V, (V)
+#define MOMWEB_VALUE(V) MOMWEBDO_VALUE_V, MOM_REQUIRES_TYPE(V,momval_t)
   ///
   MOMWEBDO_JSON_VALUE /*, momval_t jsonval; for JSON values */ ,
-#define MOMWEB_JSON_VALUE(V) MOMWEBDO_JSON_VALUE, (V)
+#define MOMWEB_JSON_VALUE(V) MOMWEBDO_JSON_VALUE, MOM_REQUIRES_TYPE(V,momval_t)
   ///
   MOMWEBDO_HTML_VALUE
     /*, momval_t val; for boxed numbers, JSON values, named items HTML encoded */
     ,
-#define MOMWEB_HTML_VALUE(V) MOMWEBDO_HTML_VALUE, (V)
+#define MOMWEB_HTML_VALUE(V) MOMWEBDO_HTML_VALUE, MOM_REQUIRES_TYPE(V,momval_t)
   ///
   MOMWEBDO_DEC_INT /*, int num; for numbers in decimal */ ,
-#define MOMWEB_DEC_INT(N) MOMWEBDO_DEC_INT, (N)
+#define MOMWEB_DEC_INT(N) MOMWEBDO_DEC_INT, MOM_REQUIRES_TYPE(N,int)
   ///
   MOMWEBDO_DEC_UNSIGNED /*, unsigned num */ ,
-#define MOMWEB_DEC_UNSIGNED(N) MOMWEBDO_DEC_UNSIGNED, (N)
+#define MOMWEB_DEC_UNSIGNED(N) MOMWEBDO_DEC_UNSIGNED,  MOM_REQUIRES_TYPE(N,unsigned)
   ///
   MOMWEBDO_HEX_INT /*, int num; for numbers in hexadecimal  */ ,
-#define MOMWEB_HEX_INT(N) MOMWEBDO_HEX_INT, (N)
+#define MOMWEB_HEX_INT(N) MOMWEBDO_HEX_INT, MOM_REQUIRES_TYPE(N,int)
   ///
   MOMWEBDO_DEC_LONG /*, long num; for numbers in decimal */ ,
-#define MOMWEB_DEC_LONG(N) MOMWEBDO_DEC_LONG, (N)
+#define MOMWEB_DEC_LONG(N) MOMWEBDO_DEC_LONG, MOM_REQUIRES_TYPE(N,long)
   ///
   MOMWEBDO_HEX_LONG /*, long num; for numbers in hexadecimal  */ ,
-#define MOMWEB_HEX_LONG(N) MOMWEBDO_HEX_LONG, (N)
+#define MOMWEB_HEX_LONG(N) MOMWEBDO_HEX_LONG, MOM_REQUIRES_TYPE(N,long)
   ///
   MOMWEBDO_DEC_INT64 /*, int64_t num; for numbers in decimal */ ,
-#define MOMWEB_DEC_INT64(N) MOMWEBDO_DEC_INT64, (N)
+#define MOMWEB_DEC_INT64(N) MOMWEBDO_DEC_INT64, MOM_REQUIRES_TYPE(N,int64_t)
   ///
   MOMWEBDO_HEX_INT64 /*, int64_t num; for numbers in hexadecimal  */ ,
-#define MOMWEB_HEX_INT64(N) MOMWEBDO_HEX_INT64, (N)
+#define MOMWEB_HEX_INT64(N) MOMWEBDO_HEX_INT64, MOM_REQUIRES_TYPE(N,int64_t)
   ///
   MOMWEBDO_DOUBLE /*, double x; for double with %g */ ,
-#define MOMWEB_DOUBLE(N) MOMWEBDO_DOUBLE, (N)
+#define MOMWEB_DOUBLE(N) MOMWEBDO_DOUBLE, (double)(N)
   //
   MOMWEBDO_FIXED_DOUBLE /*, double x; for double with %.15f */ ,
-#define MOMWEB_FIXED_DOUBLE(N) MOMWEBDO_FIXED_DOUBLE, (N)
+#define MOMWEB_FIXED_DOUBLE(N) MOMWEBDO_FIXED_DOUBLE,  (double)(N)
   ///
   MOMWEBDO_FIX2DIG_DOUBLE /*, double x; for double with %.2f */ ,
-#define MOMWEB_FIX2DIG_DOUBLE(N) MOMWEBDO_FIX2DIG_DOUBLE, (N)
+#define MOMWEB_FIX2DIG_DOUBLE(N) MOMWEBDO_FIX2DIG_DOUBLE,  (double)(N)
   ///
   MOMWEBDO_RESERVE /*, unsigned more; to reserve space in the buffer */ ,
-#define MOMWEB_RESERVE(N) MOMWEBDO_RESERVE, (N)
+#define MOMWEB_RESERVE(N) MOMWEBDO_RESERVE, MOM_REQUIRES_TYPE(N,unsigned)
   ///
   MOMWEBDO_CLEAR_BUFFER /*; to clear the buffer and restart  */ ,
 #define MOMWEB_CLEAR_BUFFER()  MOMWEBDO_CLEAR_BUFFER
   ///
   MOMWEBDO_SET_MIME /* const char*mimetype; e.g. "text/html" */ ,
-#define MOMWEB_SET_MIME(M) MOMWEBDO_SET_MIME, (M)
+#define MOMWEB_SET_MIME(M) MOMWEBDO_SET_MIME, MOM_REQUIRES_TYPE(M,const char*)
   ///
   MOMWEBDO_STDIO_FILE_CONTENT /* FILE* file  */ ,
-#define MOMWEB_STDIO_FILE_CONTENT(F)  MOMWEBDO_STDIO_FILE_CONTENT, (F)
+#define MOMWEB_STDIO_FILE_CONTENT(F)  MOMWEBDO_STDIO_FILE_CONTENT, MOM_REQUIRES_TYPE(F,FILE*)
   ///
   MOMWEBDO_STDIO_FILE_HTML_CONTENT /* FILE* file; HTML encoded  */ ,
-#define MOMWEB_STDIO_FILE_HTML_CONTENT(F) MOMWEBDO_STDIO_FILE_HTML_CONTENT, (F)
+#define MOMWEB_STDIO_FILE_HTML_CONTENT(F) MOMWEBDO_STDIO_FILE_HTML_CONTENT, MOM_REQUIRES_TYPE(F,FILE*)
   ///
   MOMWEBDO_REPLY_CODE /* int httpcode; will trigger the send */ ,
-#define MOMWEB_REPLY_CODE(N) MOMWEBDO_REPLY_CODE, (N)
+#define MOMWEB_REPLY_CODE(N) MOMWEBDO_REPLY_CODE, MOM_REQUIRES_TYPE(N,onion_response_codes)
   ///
   MOMWEBDO__LAST
 };
-#define MOMWEB_END ((void*)MOMWEBDO__END)
+#define MOMWEB_END  ((void*)MOMWEBDO__END)
 
 void mom_item_webrequest_add (momval_t val, ...) __attribute__ ((sentinel));
 
