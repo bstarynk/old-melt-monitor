@@ -1049,7 +1049,7 @@ struct momwebrequestitem_st
 
 #define MOM_REQUIRES_TYPE_AT(Lin,V,Typ) \
   (__builtin_choose_expr((__builtin_types_compatible_p(typeof(V),Typ)), \
-			 ((V)), ((Typ)(void*)0)))
+			 ((V)), ((Typ)(V))))
 #define MOM_REQUIRES_TYPE_AT_BIS(Lin,V,Typ) MOM_REQUIRES_TYPE_AT(Lin,V,Typ)
 #define MOM_REQUIRES_TYPE(V,Typ) MOM_REQUIRES_TYPE_AT_BIS(__LINE__,V,Typ)
 
