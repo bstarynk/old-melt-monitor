@@ -1137,9 +1137,8 @@ mom_make_item_routine_of_uuid (uuid_t uid, const char *name, unsigned space)
   if (MOM_UNLIKELY (!name || !name[0]))
     MOM_FATAL ("bad name for item routine");
   snprintf (symname, sizeof (symname), MOM_ROUTINE_NAME_FMT, name);
-  struct momroutinedescr_st *rdescr = NULL;
-  if (!g_module_symbol
-      (mom_prog_module, symname, (gpointer *) & rdescr) || !rdescr)
+  struct momroutinedescr_st *rdescr = dlsym (mom_prog_handle, symname);
+  if (!rdescr)
     {
       char uidstr[UUID_PARSED_LEN];
       memset (uidstr, 0, sizeof (uidstr));
@@ -1151,7 +1150,7 @@ mom_make_item_routine_of_uuid (uuid_t uid, const char *name, unsigned space)
 				     sizeof (momit_routine_t), space, uid);
       MOM_WARNING
 	("failed to find routine descriptor %s : %s, so delay embryonic %s for {%s}",
-	 symname, g_module_error (), name,
+	 symname, dlerror (), name,
 	 mom_unparse_item_uuid ((mom_anyitem_t *) itrout, uidstr));
       mom_mark_delayed_embryonic_routine (itrout, name);
       return itrout;
@@ -1175,11 +1174,10 @@ mom_make_item_routine (const char *name, unsigned space)
   if (MOM_UNLIKELY (!name || !name[0]))
     MOM_FATAL ("bad name for item routine");
   snprintf (symname, sizeof (symname), MOM_ROUTINE_NAME_FMT, name);
-  struct momroutinedescr_st *rdescr = NULL;
-  if (!g_module_symbol
-      (mom_prog_module, symname, (gpointer *) & rdescr) || !rdescr)
+  struct momroutinedescr_st *rdescr = dlsym (mom_prog_handle, symname);
+  if (!rdescr)
     MOM_FATAL ("failed to find routine descriptor %s : %s", symname,
-	       g_module_error ());
+	       dlerror ());
   if (rdescr->rout_magic != ROUTINE_MAGIC || !rdescr->rout_code
       || strcmp (rdescr->rout_name, name))
     MOM_FATAL ("bad routine descriptor %s", symname);
@@ -1197,11 +1195,10 @@ mom_make_item_embryonic_routine (const char *name, unsigned space)
   if (MOM_UNLIKELY (!name || !name[0]))
     MOM_FATAL ("bad name for item routine");
   snprintf (symname, sizeof (symname), MOM_ROUTINE_NAME_FMT, name);
-  struct momroutinedescr_st *rdescr = NULL;
-  if (!g_module_symbol
-      (mom_prog_module, symname, (gpointer *) & rdescr) || !rdescr)
+  struct momroutinedescr_st *rdescr = dlsym (mom_prog_handle, symname);
+  if (!rdescr)
     MOM_WARNING ("delayed embryonic routine descriptor %s : %s", symname,
-		 g_module_error ());
+		 dlerror ());
   momit_routine_t *itrout =
     mom_allocate_item (momty_routineitem, sizeof (momit_routine_t), space);
   itrout->irt_descr = rdescr;
@@ -1227,12 +1224,11 @@ mom_try_make_item_routine (const char *name, unsigned space)
   if (MOM_UNLIKELY (!name || !name[0]))
     return NULL;
   snprintf (symname, sizeof (symname), MOM_ROUTINE_NAME_FMT, name);
-  struct momroutinedescr_st *rdescr = NULL;
-  if (!g_module_symbol
-      (mom_prog_module, symname, (gpointer *) & rdescr) || !rdescr)
+  struct momroutinedescr_st *rdescr = dlsym (mom_prog_handle, symname);
+  if (!rdescr)
     {
       MOM_WARNING ("failed to find routine descriptor %s : %s", symname,
-		   g_module_error ());
+		   dlerror ());
       return NULL;
     }
   if (rdescr->rout_magic != ROUTINE_MAGIC || !rdescr->rout_code

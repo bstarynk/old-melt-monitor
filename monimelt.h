@@ -48,9 +48,7 @@
 #include <ctype.h>
 #include <getopt.h>
 #include <errno.h>
-#include <gc/gc.h>
-#include <sqlite3.h>
-#include <uuid/uuid.h>
+#include <dlfcn.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/poll.h>
@@ -63,13 +61,17 @@
 #include <sys/timerfd.h>
 #include <sys/syscall.h>
 #include <sys/ioctl.h>
+///
+#include <sqlite3.h>
+#include <uuid/uuid.h>
+#include <gc/gc.h>
 #include <glib.h>
-#include <gmodule.h>
 // Gmime from http://spruce.sourceforge.net/gmime/
 #include <gmime/gmime.h>
 // libonion from http://www.coralbits.com/libonion/ &
 // https://github.com/davidmoreno/onion
 #include <onion/onion.h>
+#include <onion/low.h>
 #include <onion/request.h>
 #include <onion/response.h>
 #include <onion/handler.h>
@@ -117,6 +119,14 @@ mom_gettid (void)
 
 // reasonable path length
 #define MOM_PATH_LEN 256
+
+// most versions of Boehm garbage collector (see
+// http://hboehm.info/gc/ for more) don't have it, so define::
+#ifndef GC_CALLOC
+#define MOM_NEED_GC_CALLOC 1
+extern void *GC_calloc (size_t nbelem, size_t elsiz);
+#define GC_CALLOC(NbElem,ElSiz) GC_calloc(NbElem,ElSiz)
+#endif /*GC_CALLOC */
 
 // query a clock
 static inline double
@@ -215,7 +225,7 @@ typedef struct momwebrequestitem_st momit_webrequest_t;
 typedef struct momprocessitem_st momit_process_t;
 pthread_mutexattr_t mom_normal_mutex_attr;
 pthread_mutexattr_t mom_recursive_mutex_attr;
-GModule *mom_prog_module;
+void *mom_prog_handle;
 
 // generated modules start with:
 #define MOM_SHARED_MODULE_PREFIX "momg_"

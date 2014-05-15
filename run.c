@@ -1119,7 +1119,7 @@ end:
 int
 mom_load_code_post_runner (const char *modname)
 {
-  GModule *codmodu = NULL;
+  void *codmodh = NULL;
   char pathbuf[MOM_PATH_LEN];
   char symname[MOM_SYMBNAME_LEN];
   int foundnamecount = 0;
@@ -1134,16 +1134,14 @@ mom_load_code_post_runner (const char *modname)
       MOM_WARNING ("fail to access code module %s", pathbuf);
       return 0;
     }
-  codmodu = g_module_open (pathbuf, 0);
-  if (!codmodu)
-    MOM_FATAL ("failed to load code module %s: %s", pathbuf,
-	       g_module_error ());
+  codmodh = GC_dlopen (pathbuf, RTLD_NOW | RTLD_GLOBAL);
+  if (!codmodh)
+    MOM_FATAL ("failed to load code module %s: %s", pathbuf, dlerror ());
   MOM_DEBUG (run, "mom_load_code_post_runner opened module pathbuf=%s",
 	     pathbuf);
   pthread_mutex_lock (&embryonic_mtx);
-  if (g_module_symbol
-      (codmodu, "mom_after_code_load", (gpointer *) & aftercodeloadfun)
-      && aftercodeloadfun)
+  aftercodeloadfun = dlsym (codmodh, "mom_after_code_load");
+  if (aftercodeloadfun)
     MOM_DEBUG (run,
 	       "mom_load_code_post_runner got mom_after_code_load@%p in %s",
 	       (void *) aftercodeloadfun, pathbuf);
@@ -1159,10 +1157,11 @@ mom_load_code_post_runner (const char *modname)
       snprintf (symname, sizeof (symname), MOM_ROUTINE_NAME_FMT, curname);
       MOM_DEBUG (run, "symname=%s eix=%d", symname, eix);
       struct momroutinedescr_st *rdescr = NULL;
-      if ((g_module_symbol
-	   (codmodu, symname, (gpointer *) & rdescr)
-	   || g_module_symbol
-	   (mom_prog_module, symname, (gpointer *) & rdescr)) && rdescr)
+      rdescr = dlsym (codmodh, symname);
+      MOM_DEBUG (run, "rdescr@%p dlerror=%s", rdescr, dlerror ());
+      if (!rdescr)
+	rdescr = dlsym (mom_prog_handle, symname);
+      if (rdescr)
 	{
 	  if (rdescr->rout_magic != ROUTINE_MAGIC || !rdescr->rout_code
 	      || strcmp (rdescr->rout_name, curname))

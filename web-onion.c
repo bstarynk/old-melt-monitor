@@ -62,8 +62,9 @@ process_request (void *ignore, onion_request * req, onion_response * res)
     pthread_mutex_unlock (&mtx_onion);
   }
   const char *fullpath = onion_request_get_fullpath (req);
-  MOM_DEBUG (web, "process_request tid %ld webnum#%ld webtim=%.3f fullpath=%s",
-	     (long) mom_gettid(), webnum, webtim, fullpath);
+  MOM_DEBUG (web,
+	     "process_request tid %ld webnum#%ld webtim=%.3f fullpath=%s",
+	     (long) mom_gettid (), webnum, webtim, fullpath);
   /// hack to deliver local files in MOM_WEB_DIRECTORY and the root document as MOM_WEB_ROOT_PAGE
   {
     char bufpath[128];

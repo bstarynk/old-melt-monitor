@@ -304,7 +304,9 @@ mom_initialize (void)
   curl_global_init (CURL_GLOBAL_DEFAULT);
   pthread_mutexattr_init (&mom_normal_mutex_attr);
   pthread_mutexattr_init (&mom_recursive_mutex_attr);
-  mom_prog_module = g_module_open (NULL, 0);
+  mom_prog_handle = dlopen (NULL, RTLD_GLOBAL | RTLD_NOW);
+  if (!mom_prog_handle)
+    MOM_FATAL ("failed to get whole program dlopen handle : %s", dlerror ());
   pthread_mutexattr_settype (&mom_normal_mutex_attr, PTHREAD_MUTEX_NORMAL);
   pthread_mutexattr_settype (&mom_recursive_mutex_attr,
 			     PTHREAD_MUTEX_RECURSIVE);
@@ -677,6 +679,26 @@ mom_warning_at (const char *fil, int lin, const char *fmt, ...)
 }
 
 
+#if MOM_NEED_GC_CALLOC
+void *
+GC_calloc (size_t nbelem, size_t elsiz)
+{
+  if (nbelem == 0 || elsiz == 0)
+    return NULL;
+  size_t sz = nbelem * elsiz;
+  void *p = GC_MALLOC (sz);
+  if (p)
+    memset (p, 0, sz);
+  return p;
+}
+#endif /* MOM_NEED_GC_CALLOC */
+
+static void
+memory_failure_momonion (const char *msg)
+{
+  MOM_FATAL ("memory failure: %s", msg);
+}
+
 static void
 logexit_cb (void)
 {
@@ -744,6 +766,15 @@ main (int argc, char **argv)
   pthread_setname_np (pthread_self (), "mom-main");
   g_mem_gc_friendly = TRUE;
   g_mem_set_vtable (&gc_mem_vtable);
+  onion_low_initialize_memory_allocation
+    (GC_malloc,
+     GC_malloc_atomic,
+     GC_calloc, GC_realloc, GC_strdup, GC_free, memory_failure_momonion);
+  onion_low_initialize_threads
+    (GC_pthread_create,
+     GC_pthread_join,
+     GC_pthread_cancel,
+     GC_pthread_detach, GC_pthread_exit, GC_pthread_sigmask);
   mom_initialize ();
   startime = mom_clock_time (CLOCK_REALTIME);
   parse_program_arguments_and_load_modules (argc, argv);
