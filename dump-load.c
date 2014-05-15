@@ -1646,18 +1646,18 @@ static int
 loadmodule_cb (void *data, int nbcol, char **colarrs, char **colnames)
 {
   char *modname = colarrs[0];
-  GModule *mod = g_module_open (modname, 0);
-  if (!mod)
-    {
-      char bufname[128];
-      memset (bufname, 0, sizeof (bufname));
-      snprintf (bufname, sizeof (bufname), "./%s.%s", modname,
-		G_MODULE_SUFFIX);
-      mod = g_module_open (bufname, 0);
-      MOM_DEBUG (load, "loaded module %s", bufname);
-    }
-  if (!mod)
-    MOM_FATAL ("failed to load module %s: %s", modname, g_module_error ());
+  char modpath[MOM_PATH_LEN];
+  memset (modpath, 0, sizeof (modpath));
+  MOM_DEBUG (load, "loading module %s", modname);
+  assert (modname != NULL);
+  if (strchr (modname, '/') != NULL)
+    snprintf (modpath, sizeof (modpath), "%s.so", modname);
+  else
+    snprintf (modpath, sizeof (modpath), "./%s.so", modname);
+  void *modh = GC_dlopen (modpath, RTLD_NOW | RTLD_GLOBAL);
+  if (!modh)
+    MOM_FATAL ("failed to load module %s path %s: %s",
+	       modname, modpath, dlerror ());
   else
     MOM_INFORM ("loaded module %s", modname);
   return 0;

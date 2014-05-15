@@ -155,11 +155,11 @@ static void
 load_module (GOptionContext * optctx, unsigned ix, const char *modname,
 	     const char *modarg)
 {
-  GModule *modhdl = g_module_open (modname, 0);
+  void *modh = GC_dlopen (modname, RTLD_NOW | RTLD_GLOBAL);
   char *modbasename = basename (modname);
-  if (!modhdl)
-    MOM_FATAL ("failed to load module #%d named %s: %s",
-	       ix, modname, g_module_error ());
+  if (!modh)
+    MOM_FATAL ("failed to dlopen module #%d named %s: %s",
+	       ix, modname, dlerror ());
   if (module_count + 1 >= module_size)
     {
       unsigned newsiz = (((3 * module_count / 2) + 10) | 0xf) + 1;
@@ -185,25 +185,21 @@ load_module (GOptionContext * optctx, unsigned ix, const char *modname,
       module_names = newarrname;
       module_size = newsiz;
     }
-  const char *modlic = NULL;
-  if (!g_module_symbol
-      (modhdl, "mom_GPL_friendly_module", (gpointer *) & modlic) || !modlic)
+  const char *modlic = dlsym (modh, "mom_GPL_friendly_module");
+  if (!modlic)
     MOM_FATAL
       ("module named %s without 'mom_GPL_friendly_module' symbol: %s",
-       modname, g_module_error ());
+       modname, dlerror ());
   typedef void modinit_sig_t (const char *);
-  modinit_sig_t *modinit = NULL;
-  if (!g_module_symbol
-      (modhdl, "mom_module_init", (gpointer *) & modinit) || !modinit)
+  modinit_sig_t *modinit = dlsym (modh, "mom_module_init");
+  if (!modinit)
     MOM_FATAL
       ("module named %s without 'mom_module_init' function: %s", modname,
-       g_module_error ());
+       dlerror ());
   modinit (modarg);
   typedef GOptionGroup *modoptgroup_sig_t (const char *modname);
-  modoptgroup_sig_t *modoptgroup = NULL;
-  if (g_module_symbol
-      (modhdl, "mom_module_option_group", (gpointer *) & modoptgroup)
-      && modoptgroup)
+  modoptgroup_sig_t *modoptgroup = dlsym (modh, "mom_module_option_group");
+  if (modoptgroup)
     {
       GOptionGroup *optgrp = modoptgroup (modbasename);
       if (optgrp)
@@ -212,7 +208,7 @@ load_module (GOptionContext * optctx, unsigned ix, const char *modname,
   if (using_syslog)
     syslog (LOG_INFO, "loaded module #%d %s with argument %s",
 	    ix, modname, modarg);
-  module_handles[ix] = modhdl;
+  module_handles[ix] = modh;
 }
 
 static void
@@ -304,7 +300,7 @@ mom_initialize (void)
   curl_global_init (CURL_GLOBAL_DEFAULT);
   pthread_mutexattr_init (&mom_normal_mutex_attr);
   pthread_mutexattr_init (&mom_recursive_mutex_attr);
-  mom_prog_handle = dlopen (NULL, RTLD_GLOBAL | RTLD_NOW);
+  mom_prog_handle = GC_dlopen (NULL, RTLD_GLOBAL | RTLD_NOW);
   if (!mom_prog_handle)
     MOM_FATAL ("failed to get whole program dlopen handle : %s", dlerror ());
   pthread_mutexattr_settype (&mom_normal_mutex_attr, PTHREAD_MUTEX_NORMAL);
@@ -326,14 +322,12 @@ modules_post_load (void)
   unsigned nbpostload = 0;
   for (unsigned ix = 0; ix < module_count; ix++)
     {
-      GModule *modhdl = module_handles[ix];
-      if (!modhdl)
+      void *modh = module_handles[ix];
+      if (!modh)
 	continue;
       typedef void post_load_sig_t (void);
-      post_load_sig_t *modpostload = NULL;
-      if (g_module_symbol
-	  (modhdl, "mom_module_post_load", (gpointer *) & modpostload)
-	  && modpostload)
+      post_load_sig_t *modpostload = dlsym(modh, "mom_module_post_load");
+      if (modpostload)
 	{
 	  MOM_DEBUG (run, "before post loading module #%d", (int) ix);
 	  modpostload ();

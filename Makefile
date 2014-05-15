@@ -18,11 +18,12 @@
 ##  <http://www.gnu.org/licenses/>.
 ################################################################
 ## sqlite3 is commonly available, see http://sqlite.org
-## glib-2.0 & gmodule-2.0 are from GTK3, see https://developer.gnome.org/glib/
+## glib-2.0 are from GTK3, see https://developer.gnome.org/glib/
 ## gmime is also Gnome related, see https://developer.gnome.org/gmime/
 ## onion is not packaged, see https://github.com/davidmoreno/onion
+## or my onion branch https://github.com/bstarynk/onion ...
 ## Boehm GC is from http://www.hboehm.info/gc/
-PACKAGES= sqlite3 glib-2.0 gmodule-2.0 gmime-2.6  libcurl
+PACKAGES= sqlite3 glib-2.0 gmime-2.6  libcurl
 PKGCONFIG= pkg-config
 CC=gcc
 CFLAGS= -std=gnu11 -Wall $(PREPROFLAGS) $(OPTIMFLAGS)
