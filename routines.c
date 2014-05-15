@@ -222,39 +222,45 @@ momcode_ajax_periodic (int state, momit_tasklet_t * tasklet,
       uint64_t allocount = 0;
       uint64_t finalcount = 0;
       mom_items_get_stats (&nbitems, &allocount, &finalcount);
-      mom_item_webrequest_add
-	(webv, MOMWEB_SET_MIME, "text/html",
-	 MOMWEB_LIT_STRING,
-	 "<!-- ajax_periodic fragment -->\n",
-	 MOMWEB_LIT_STRING, "elapsed real: ",
-	 MOMWEB_FIX2DIG_DOUBLE,
-	 mom_elapsed_real_time (), MOMWEB_LIT_STRING,
-	 ", cpu:", MOMWEB_FIX2DIG_DOUBLE,
-	 mom_clock_time (CLOCK_PROCESS_CPUTIME_ID),
-	 MOMWEB_LIT_STRING, " sec., ",
-	 MOMWEB_DEC_INT64, (int64_t) mom_agenda_work_counter (),
-	 MOMWEB_LIT_STRING, " done &amp; ",
-	 MOMWEB_DEC_LONG,
-	 (long) mom_item_queue_length ((momval_t) mom_item__agenda),
-	 MOMWEB_LIT_STRING, " queued tasklets, ", MOMWEB_DEC_LONG,
-	 (long) nbitems, MOMWEB_LIT_STRING, " items. <br/> <small>(GC: ",
-	 MOMWEB_DEC_LONG, (long) gcheapsize / 1024, MOMWEB_LIT_STRING,
-	 "kb heapsize, ", MOMWEB_DEC_LONG, (long) gcfreebytes / 1024,
-	 MOMWEB_LIT_STRING, "kb free, ", MOMWEB_DEC_LONG,
-	 (long) gcunmappedbytes / 1024, MOMWEB_LIT_STRING, "kb unmapped, ",
-	 MOMWEB_DEC_LONG, (long) gcbytessincegc / 1024, MOMWEB_LIT_STRING,
-	 "kb since gc, ", MOMWEB_DEC_LONG, (long) gctotalbytes / 1024,
-	 MOMWEB_LIT_STRING, "kb total, ", MOMWEB_DEC_LONG, (long) gcnb,
-	 MOMWEB_LIT_STRING, " nb, ", MOMWEB_HEX_LONG,
-	 (long) GC_get_version (), MOMWEB_LIT_STRING, " version, ",
-	 MOMWEB_DEC_LONG, (long) vmsharedpg, MOMWEB_LIT_STRING,
-	 " mem.pages, ", MOMWEB_DEC_LONG, (long) vmrsspg, MOMWEB_LIT_STRING,
-	 " rss.pages, ", MOMWEB_DEC_INT64, (int64_t) allocount,
-	 MOMWEB_LIT_STRING, " it.allocated ", MOMWEB_DEC_INT64,
-	 (int64_t) finalcount, MOMWEB_LIT_STRING, " it.finalized ",
-	 MOMWEB_LIT_STRING, ")</small> <br/>",
-	 ////
-	 MOMWEB_LIT_STRING, HTML_FROM, MOMWEB_END);
+      mom_item_webrequest_add	///
+	(webv, MOMWEB_SET_MIME, "text/html",	////
+	 MOMWEB_LIT_STRING, "<!-- ajax_periodic fragment -->\n",	////
+	 MOMWEB_LIT_STRING, "elapsed real: ",	///
+	 MOMWEB_FIX2DIG_DOUBLE, mom_elapsed_real_time (),	////
+	 MOMWEB_LIT_STRING, ", cpu:",	/////
+	 MOMWEB_FIX2DIG_DOUBLE, mom_clock_time (CLOCK_PROCESS_CPUTIME_ID),	////
+	 MOMWEB_LIT_STRING, " sec., ",	////
+	 MOMWEB_DEC_INT64, (int64_t) mom_agenda_work_counter (),	////
+	 MOMWEB_LIT_STRING, " done &amp; ",	////
+	 MOMWEB_DEC_LONG, (long) mom_item_queue_length ((momval_t) mom_item__agenda),	////
+	 MOMWEB_LIT_STRING, " queued tasklets, ",	////
+	 MOMWEB_DEC_LONG, (long) nbitems,	////
+	 MOMWEB_LIT_STRING, " items. <br/> <small>(GC: ",	////
+	 MOMWEB_DEC_LONG, (long) gcheapsize / 1024,	////
+	 MOMWEB_LIT_STRING, "kb heapsize, ",	////
+	 MOMWEB_DEC_LONG, (long) gcfreebytes / 1024,	////
+	 MOMWEB_LIT_STRING, "kb free, ",	////
+	 MOMWEB_DEC_LONG, (long) gcunmappedbytes / 1024,	////
+	 MOMWEB_LIT_STRING, "kb unmapped, ",	////
+	 MOMWEB_DEC_LONG, (long) gcbytessincegc / 1024,	////
+	 MOMWEB_LIT_STRING, "kb since gc, ",	////
+	 MOMWEB_DEC_LONG, (long) gctotalbytes / 1024,	/////
+	 MOMWEB_LIT_STRING, "kb total, ",	/////
+	 MOMWEB_DEC_LONG, (long) gcnb,	////
+	 MOMWEB_LIT_STRING, " nb, ",	////
+	 MOMWEB_HEX_LONG, (long) GC_get_version (),	////
+	 MOMWEB_LIT_STRING, " version, ",	////
+	 MOMWEB_DEC_LONG, (long) vmsharedpg,	////
+	 MOMWEB_LIT_STRING, " mem.pages, ",	////
+	 MOMWEB_DEC_LONG, (long) vmrsspg,	/////
+	 MOMWEB_LIT_STRING, " rss.pages, ",	////
+	 MOMWEB_DEC_INT64, (int64_t) allocount,	////
+	 MOMWEB_LIT_STRING, " it.allocated ",	////
+	 MOMWEB_DEC_INT64, (int64_t) finalcount,	////
+	 MOMWEB_LIT_STRING, " it.finalized ",	////
+	 MOMWEB_LIT_STRING, ")</small> <br/>",	////
+	 MOMWEB_LIT_STRING, HTML_FROM,	////
+	 MOMWEB_END);
       if (procmsg && procoutput.ptr)
 	{
 	  mom_item_webrequest_add
