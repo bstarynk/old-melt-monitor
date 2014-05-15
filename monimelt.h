@@ -1048,38 +1048,83 @@ struct momwebrequestitem_st
 
 enum mom_webreplydirective_en
 {
-  MOMWEB__END = 0,
-  MOMWEB_LIT_STRING /*, const char* literalstring; for literal  string */ ,
-  MOMWEB_HTML_STRING
+  MOMWEBDO__END = 0,
+  ///
+  MOMWEBDO_LIT_STRING /*, const char* literalstring; for literal  string */ ,
+#define MOMWEB_LIT_STRING(S) MOMWEBDO_LIT_STRING, (S)
+  ///
+  MOMWEBDO_HTML_STRING
     /*, const char* htmlstring; for HTML encoded literal string  */ ,
-  MOMWEB_JS_STRING		/*, const char*jstring; for JSON encoded literal string */
+#define MOMWEB_HTML_STRING(S) MOMWEBDO_HTML_STRING, (S)
+  ///
+  MOMWEBDO_JS_STRING		/*, const char*jstring; for JSON encoded literal string */
     ,
-  MOMWEB_VALUE
+#define MOMWEB_JS_STRING(S) MOMWEBDO_JS_STRING, (S)
+  ///
+  MOMWEBDO_VALUE
     /*, momval_t val; for boxed numbers, JSON values, named items, buffer items  */
     ,
-  MOMWEB_JSON_VALUE /*, momval_t jsonval; for JSON values */ ,
-  MOMWEB_HTML_VALUE
+#define MOMWEB_VALUE(V) MOMWEBDO_VALUE_V, (V)
+  ///
+  MOMWEBDO_JSON_VALUE /*, momval_t jsonval; for JSON values */ ,
+#define MOMWEB_JSON_VALUE(V) MOMWEBDO_JSON_VALUE, (V)
+  ///
+  MOMWEBDO_HTML_VALUE
     /*, momval_t val; for boxed numbers, JSON values, named items HTML encoded */
     ,
-  MOMWEB_DEC_INT /*, int num; for numbers in decimal */ ,
-  MOMWEB_DEC_UNSIGNED /*, unsigned num */ ,
-  MOMWEB_HEX_INT /*, int num; for numbers in hexadecimal  */ ,
-  MOMWEB_DEC_LONG /*, long num; for numbers in decimal */ ,
-  MOMWEB_HEX_LONG /*, long num; for numbers in hexadecimal  */ ,
-  MOMWEB_DEC_INT64 /*, int64_t num; for numbers in decimal */ ,
-  MOMWEB_HEX_INT64 /*, int64_t num; for numbers in hexadecimal  */ ,
-  MOMWEB_DOUBLE /*, double x; for double with %g */ ,
-  MOMWEB_FIXED_DOUBLE /*, double x; for double with %.15f */ ,
-  MOMWEB_FIX2DIG_DOUBLE /*, double x; for double with %.2f */ ,
-  MOMWEB_RESERVE /*, unsigned more; to reserve space in the buffer */ ,
-  MOMWEB_CLEAR_BUFFER /*; to clear the buffer and restart  */ ,
-  MOMWEB_SET_MIME /* const char*mimetype; e.g. "text/html" */ ,
-  MOMWEB_STDIO_FILE_CONTENT /* FILE* file  */ ,
-  MOMWEB_STDIO_FILE_HTML_CONTENT /* FILE* file; HTML encoded  */ ,
-  MOMWEB_REPLY_CODE /* int httpcode; will trigger the send */ ,
-  MOMWEB__LAST
+#define MOMWEB_HTML_VALUE(V) MOMWEBDO_HTML_VALUE, (V)
+  ///
+  MOMWEBDO_DEC_INT /*, int num; for numbers in decimal */ ,
+#define MOMWEB_DEC_INT(N) MOMWEBDO_DEC_INT, (N)
+  ///
+  MOMWEBDO_DEC_UNSIGNED /*, unsigned num */ ,
+#define MOMWEB_DEC_UNSIGNED(N) MOMWEBDO_DEC_UNSIGNED, (N)
+  ///
+  MOMWEBDO_HEX_INT /*, int num; for numbers in hexadecimal  */ ,
+#define MOMWEB_HEX_INT(N) MOMWEBDO_HEX_INT, (N)
+  ///
+  MOMWEBDO_DEC_LONG /*, long num; for numbers in decimal */ ,
+#define MOMWEB_DEC_LONG(N) MOMWEBDO_DEC_LONG, (N)
+  ///
+  MOMWEBDO_HEX_LONG /*, long num; for numbers in hexadecimal  */ ,
+#define MOMWEB_HEX_LONG(N) MOMWEBDO_HEX_LONG, (N)
+  ///
+  MOMWEBDO_DEC_INT64 /*, int64_t num; for numbers in decimal */ ,
+#define MOMWEB_DEC_INT64(N) MOMWEBDO_DEC_INT64, (N)
+  ///
+  MOMWEBDO_HEX_INT64 /*, int64_t num; for numbers in hexadecimal  */ ,
+#define MOMWEB_HEX_INT64(N) MOMWEBDO_HEX_INT64, (N)
+  ///
+  MOMWEBDO_DOUBLE /*, double x; for double with %g */ ,
+#define MOMWEB_DOUBLE(N) MOMWEBDO_DOUBLE, (N)
+  //
+  MOMWEBDO_FIXED_DOUBLE /*, double x; for double with %.15f */ ,
+#define MOMWEB_FIXED_DOUBLE(N) MOMWEBDO_FIXED_DOUBLE, (N)
+  ///
+  MOMWEBDO_FIX2DIG_DOUBLE /*, double x; for double with %.2f */ ,
+#define MOMWEB_FIX2DIG_DOUBLE(N) MOMWEBDO_FIX2DIG_DOUBLE, (N)
+  ///
+  MOMWEBDO_RESERVE /*, unsigned more; to reserve space in the buffer */ ,
+#define MOMWEB_RESERVE(N) MOMWEBDO_RESERVE, (N)
+  ///
+  MOMWEBDO_CLEAR_BUFFER /*; to clear the buffer and restart  */ ,
+#define MOMWEB_CLEAR_BUFFER()  MOMWEBDO_CLEAR_BUFFER
+  ///
+  MOMWEBDO_SET_MIME /* const char*mimetype; e.g. "text/html" */ ,
+#define MOMWEB_SET_MIME(M) MOMWEBDO_SET_MIME, (M)
+  ///
+  MOMWEBDO_STDIO_FILE_CONTENT /* FILE* file  */ ,
+#define MOMWEB_STDIO_FILE_CONTENT(F)  MOMWEBDO_STDIO_FILE_CONTENT, (F)
+  ///
+  MOMWEBDO_STDIO_FILE_HTML_CONTENT /* FILE* file; HTML encoded  */ ,
+#define MOMWEB_STDIO_FILE_HTML_CONTENT(F) MOMWEBDO_STDIO_FILE_HTML_CONTENT, (F)
+  ///
+  MOMWEBDO_REPLY_CODE /* int httpcode; will trigger the send */ ,
+#define MOMWEB_REPLY_CODE(N) MOMWEBDO_REPLY_CODE, (N)
+  ///
+  MOMWEBDO__LAST
 };
-#define MOMWEB_END ((void*)MOMWEB__END)
+#define MOMWEB_END ((void*)MOMWEBDO__END)
 
 void mom_item_webrequest_add (momval_t val, ...) __attribute__ ((sentinel));
 

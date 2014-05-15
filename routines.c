@@ -63,17 +63,16 @@ momcode_ajax_exit (int state, momit_tasklet_t * tasklet,
 	{
 	  MOM_DEBUG (run, "ajax_exit save and exiting webnum#%ld",
 		     mom_item_webrequest_webnum (webv));
-	  mom_item_webrequest_add (webv, MOMWEB_SET_MIME, "text/html",
-				   MOMWEB_LIT_STRING,
-				   "Dump to default <tt>"
-				   MOM_DEFAULT_STATE_FILE "</tt> reqnum#",
-				   MOMWEB_DEC_LONG,
-				   (long) mom_item_webrequest_webnum (webv),
-				   MOMWEB_LIT_STRING, " at <i>",
-				   MOMWEB_HTML_STRING, nowbuf,
-				   MOMWEB_LIT_STRING, "</i>.\n",
-				   MOMWEB_LIT_STRING, HTML_FROM,
-				   MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
+	  mom_item_webrequest_add
+	    (webv, MOMWEB_SET_MIME ("text/html"),
+	     MOMWEB_LIT_STRING ("Dump to default <tt>"
+				MOM_DEFAULT_STATE_FILE "</tt> reqnum#"),
+	     MOMWEB_DEC_LONG ((long) mom_item_webrequest_webnum (webv)),
+	     MOMWEB_LIT_STRING (" at <i>"),
+	     MOMWEB_HTML_STRING (nowbuf),
+	     MOMWEB_LIT_STRING ("</i>.\n"),
+	     MOMWEB_LIT_STRING (HTML_FROM),
+	     MOMWEB_REPLY_CODE (HTTP_OK), MOMWEB_END);
 	  usleep (25000);
 	  MOM_DEBUG (web, "ajax_exit do_savexit before request stop");
 	  mom_request_stop ("ajax_exit savexit", NULL, NULL);
@@ -86,16 +85,16 @@ momcode_ajax_exit (int state, momit_tasklet_t * tasklet,
 	{
 	  MOM_DEBUG (run, "ajax_exit exit and quitting webnum#%ld",
 		     mom_item_webrequest_webnum (webv));
-	  mom_item_webrequest_add (webv, MOMWEB_SET_MIME, "text/html",
-				   MOMWEB_LIT_STRING,
-				   "Quitting Moniweb without saving, reqnum#",
-				   MOMWEB_DEC_LONG,
-				   (long) mom_item_webrequest_webnum (webv),
-				   MOMWEB_LIT_STRING, " at <i>",
-				   MOMWEB_HTML_STRING, nowbuf,
-				   MOMWEB_LIT_STRING, "</i>.\n",
-				   MOMWEB_LIT_STRING, HTML_FROM,
-				   MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
+	  mom_item_webrequest_add	////
+	    (webv,
+	     MOMWEB_SET_MIME ("text/html"),
+	     MOMWEB_LIT_STRING ("Quitting Moniweb without saving, reqnum#"),
+	     MOMWEB_DEC_LONG ((long) mom_item_webrequest_webnum (webv)),
+	     MOMWEB_LIT_STRING (" at <i>"),
+	     MOMWEB_HTML_STRING (nowbuf),
+	     MOMWEB_LIT_STRING ("</i>.\n"),
+	     MOMWEB_LIT_STRING (HTML_FROM),
+	     MOMWEB_REPLY_CODE (HTTP_OK), MOMWEB_END);
 	  usleep (25000);
 	  MOM_DEBUG (web, "ajax_exit do_quit before request stop");
 	  mom_request_stop ("ajax_exit quit", NULL, NULL);
@@ -167,10 +166,17 @@ momcode_ajax_periodic (int state, momit_tasklet_t * tasklet,
     proctime = periodic_proc.pp_time;
     procmsg = periodic_proc.pp_msg;
     procoutput = periodic_proc.pp_output;
+    MOM_DEBUG (web,
+	       "ajax_periodic proctime %.2f elaps %.2f now %.2f procmsg: %s count=%ld",
+	       proctime, proctime + PERIODIC_PROC_FORGET_DELAY,
+	       mom_clock_time (CLOCK_REALTIME), procmsg, count);
     if (proctime > 0
 	&& proctime + PERIODIC_PROC_FORGET_DELAY >
 	mom_clock_time (CLOCK_REALTIME))
-      memset (&periodic_proc, 0, sizeof (periodic_proc));
+      {
+	MOM_DEBUG (web, "ajax_periodic forgetting periodic_proc");
+	memset (&periodic_proc, 0, sizeof (periodic_proc));
+      }
     pthread_mutex_unlock (&periodic_mtx);
   }
   strftime (nowbuf, sizeof (nowbuf), "%c", localtime_r (&now, &nowtm));
@@ -223,59 +229,62 @@ momcode_ajax_periodic (int state, momit_tasklet_t * tasklet,
       uint64_t finalcount = 0;
       mom_items_get_stats (&nbitems, &allocount, &finalcount);
       mom_item_webrequest_add	///
-	(webv, MOMWEB_SET_MIME, "text/html",	////
-	 MOMWEB_LIT_STRING, "<!-- ajax_periodic fragment -->\n",	////
-	 MOMWEB_LIT_STRING, "elapsed real: ",	///
-	 MOMWEB_FIX2DIG_DOUBLE, mom_elapsed_real_time (),	////
-	 MOMWEB_LIT_STRING, ", cpu:",	/////
-	 MOMWEB_FIX2DIG_DOUBLE, mom_clock_time (CLOCK_PROCESS_CPUTIME_ID),	////
-	 MOMWEB_LIT_STRING, " sec., ",	////
-	 MOMWEB_DEC_INT64, (int64_t) mom_agenda_work_counter (),	////
-	 MOMWEB_LIT_STRING, " done &amp; ",	////
-	 MOMWEB_DEC_LONG, (long) mom_item_queue_length ((momval_t) mom_item__agenda),	////
-	 MOMWEB_LIT_STRING, " queued tasklets, ",	////
-	 MOMWEB_DEC_LONG, (long) nbitems,	////
-	 MOMWEB_LIT_STRING, " items. <br/> <small>(GC: ",	////
-	 MOMWEB_DEC_LONG, (long) gcheapsize / 1024,	////
-	 MOMWEB_LIT_STRING, "kb heapsize, ",	////
-	 MOMWEB_DEC_LONG, (long) gcfreebytes / 1024,	////
-	 MOMWEB_LIT_STRING, "kb free, ",	////
-	 MOMWEB_DEC_LONG, (long) gcunmappedbytes / 1024,	////
-	 MOMWEB_LIT_STRING, "kb unmapped, ",	////
-	 MOMWEB_DEC_LONG, (long) gcbytessincegc / 1024,	////
-	 MOMWEB_LIT_STRING, "kb since gc, ",	////
-	 MOMWEB_DEC_LONG, (long) gctotalbytes / 1024,	/////
-	 MOMWEB_LIT_STRING, "kb total, ",	/////
-	 MOMWEB_DEC_LONG, (long) gcnb,	////
-	 MOMWEB_LIT_STRING, " nb, ",	////
-	 MOMWEB_HEX_LONG, (long) GC_get_version (),	////
-	 MOMWEB_LIT_STRING, " version, ",	////
-	 MOMWEB_DEC_LONG, (long) vmsharedpg,	////
-	 MOMWEB_LIT_STRING, " mem.pages, ",	////
-	 MOMWEB_DEC_LONG, (long) vmrsspg,	/////
-	 MOMWEB_LIT_STRING, " rss.pages, ",	////
-	 MOMWEB_DEC_INT64, (int64_t) allocount,	////
-	 MOMWEB_LIT_STRING, " it.allocated ",	////
-	 MOMWEB_DEC_INT64, (int64_t) finalcount,	////
-	 MOMWEB_LIT_STRING, " it.finalized ",	////
-	 MOMWEB_LIT_STRING, ")</small> <br/>",	////
-	 MOMWEB_LIT_STRING, HTML_FROM,	////
+	(webv, MOMWEB_SET_MIME ("text/html"),
+	 MOMWEB_LIT_STRING ("<!-- ajax_periodic fragment -->\n"),
+	 MOMWEB_LIT_STRING ("elapsed real: "),
+	 MOMWEB_FIX2DIG_DOUBLE (mom_elapsed_real_time ()),
+	 MOMWEB_LIT_STRING (", cpu:"),
+	 MOMWEB_FIX2DIG_DOUBLE (mom_clock_time (CLOCK_PROCESS_CPUTIME_ID)),
+	 MOMWEB_LIT_STRING (" sec., "),
+	 MOMWEB_DEC_INT64 ((int64_t) mom_agenda_work_counter ()),
+	 MOMWEB_LIT_STRING (" done &amp; "),
+	 MOMWEB_DEC_LONG ((long)
+			  mom_item_queue_length ((momval_t)
+						 mom_item__agenda)),
+	 MOMWEB_LIT_STRING (" queued tasklets, "),
+	 MOMWEB_DEC_LONG ((long) nbitems),
+	 MOMWEB_LIT_STRING (" items. <br/> <small>(GC: "),
+	 MOMWEB_DEC_LONG ((long) gcheapsize / 1024),
+	 MOMWEB_LIT_STRING ("kb heapsize, "),
+	 MOMWEB_DEC_LONG ((long) gcfreebytes / 1024),
+	 MOMWEB_LIT_STRING ("kb free, "),
+	 MOMWEB_DEC_LONG ((long) gcunmappedbytes / 1024),
+	 MOMWEB_LIT_STRING ("kb unmapped, "),
+	 MOMWEB_DEC_LONG ((long) gcbytessincegc / 1024),
+	 MOMWEB_LIT_STRING ("kb since gc, "),
+	 MOMWEB_DEC_LONG ((long) gctotalbytes / 1024),
+	 MOMWEB_LIT_STRING ("kb total, "), MOMWEB_DEC_LONG ((long) gcnb),
+	 MOMWEB_LIT_STRING (" nb, "),
+	 MOMWEB_HEX_LONG ((long) GC_get_version ()),
+	 MOMWEB_LIT_STRING (" version, "),
+	 MOMWEB_DEC_LONG ((long) vmsharedpg),
+	 MOMWEB_LIT_STRING (" mem.pages, "), MOMWEB_DEC_LONG ((long) vmrsspg),
+	 MOMWEB_LIT_STRING (" rss.pages, "),
+	 MOMWEB_DEC_INT64 ((int64_t) allocount),
+	 MOMWEB_LIT_STRING (" it.allocated "),
+	 MOMWEB_DEC_INT64 ((int64_t) finalcount),
+	 MOMWEB_LIT_STRING (" it.finalized "),
+	 MOMWEB_LIT_STRING (")</small> <br/>"), MOMWEB_LIT_STRING (HTML_FROM),
 	 MOMWEB_END);
+      MOM_DEBUG (web, "ajax_periodic procmsg: %s, procoutput@%p", procmsg,
+		 procoutput.ptr);
       if (procmsg && procoutput.ptr)
 	{
 	  mom_item_webrequest_add
 	    (webv,
-	     MOMWEB_LIT_STRING, "last compilation:",
-	     MOMWEB_HTML_STRING, procmsg,
-	     MOMWEB_LIT_STRING, "<br/><pre class='comprocout_cl'>\n",
-	     MOMWEB_HTML_VALUE, procoutput,
-	     MOMWEB_LIT_STRING, "</pre>\n",
-	     MOMWEB_LIT_STRING, HTML_FROM, MOMWEB_END);
+	     MOMWEB_LIT_STRING ("last compilation:"),
+	     MOMWEB_HTML_STRING (procmsg),
+	     MOMWEB_LIT_STRING ("<br/><pre class='comprocout_cl'>\n"),
+	     MOMWEB_HTML_VALUE (procoutput),
+	     MOMWEB_LIT_STRING ("</pre>\n"),
+	     MOMWEB_LIT_STRING (HTML_FROM), MOMWEB_END);
 	}
+      else
+	MOM_DEBUG (web, "ajax_periodic no procmsg");
       mom_item_webrequest_add
 	(webv,
-	 MOMWEB_LIT_STRING, HTML_FROM,
-	 MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
+	 MOMWEB_LIT_STRING (HTML_FROM),
+	 MOMWEB_REPLY_CODE (HTTP_OK), MOMWEB_END);
       MOM_DBG_VALUE (web, "ajax_periodic replied webv=", webv);
     }
   return routres_pop;
@@ -320,22 +329,22 @@ momcode_ajax_start (int state, momit_tasklet_t * tasklet,
       memset (myhostname, 0, sizeof (myhostname));
       gethostname (myhostname, sizeof (myhostname));
       MOM_DEBUG (web, "momcode_ajax_start GET myhostname=%s", myhostname);
-      mom_item_webrequest_add
-	(webv, MOMWEB_SET_MIME, "text/html",
-	 MOMWEB_LIT_STRING,
-	 "<!-- ajax_start fragment -->\n",
-	 MOMWEB_LIT_STRING, "<b>Monimelt</b> at <tt>",
-	 MOMWEB_HTML_STRING, nowbuf, MOMWEB_LIT_STRING,
-	 "</tt> pid ", MOMWEB_DEC_LONG,
-	 (long) getpid (), MOMWEB_LIT_STRING,
-	 " on host <i>", MOMWEB_HTML_STRING, myhostname,
-	 MOMWEB_LIT_STRING, "</i> <span class='note_cl'>built: <i>",
-	 MOMWEB_HTML_STRING, monimelt_timestamp,
-	 MOMWEB_LIT_STRING, "</i> commit <tt>",
-	 MOMWEB_HTML_STRING, monimelt_lastgitcommit,
-	 MOMWEB_LIT_STRING, "</tt></span>",
-	 MOMWEB_LIT_STRING, HTML_FROM,
-	 MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
+      mom_item_webrequest_add	/////
+	(webv, MOMWEB_SET_MIME ("text/html"),
+	 MOMWEB_LIT_STRING ("<!-- ajax_start fragment -->\n"),
+	 MOMWEB_LIT_STRING ("<b>Monimelt</b> at <tt>"),
+	 MOMWEB_HTML_STRING (nowbuf),
+	 MOMWEB_LIT_STRING ("</tt> pid "),
+	 MOMWEB_DEC_LONG ((long) getpid ()),
+	 MOMWEB_LIT_STRING (" on host <i>"),
+	 MOMWEB_HTML_STRING (myhostname),
+	 MOMWEB_LIT_STRING ("</i> <span class='note_cl'>built: <i>"),
+	 MOMWEB_HTML_STRING (monimelt_timestamp),
+	 MOMWEB_LIT_STRING ("</i> commit <tt>"),
+	 MOMWEB_HTML_STRING (monimelt_lastgitcommit),
+	 MOMWEB_LIT_STRING ("</tt></span>"),
+	 MOMWEB_LIT_STRING (HTML_FROM),
+	 MOMWEB_REPLY_CODE (HTTP_OK), MOMWEB_END);
       MOM_DBG_VALUE (web, "ajax_start replied webv=", webv);
     }
   return routres_pop;
@@ -385,27 +394,26 @@ momcode_ajax_named (int state, momit_tasklet_t * tasklet,
       if (mom_same_string (idw, "named_create_id"))
 	{
 	  MOM_DEBUG (web, "momcode_ajax_named named_create_id");
-	  mom_item_webrequest_add
+	  mom_item_webrequest_add	///
 	    (webv,
-	     MOMWEB_SET_MIME, "application/javascript",
-	     MOMWEB_LIT_STRING, "install_create_named_form('",
-	     MOMWEB_JS_STRING, nowbuf,
-	     MOMWEB_LIT_STRING, "');\n",
-	     MOMWEB_LIT_STRING, JS_FROM,
-	     MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
+	     MOMWEB_SET_MIME ("application/javascript"),
+	     MOMWEB_LIT_STRING ("install_create_named_form('"),
+	     MOMWEB_JS_STRING (nowbuf),
+	     MOMWEB_LIT_STRING ("');\n"),
+	     MOMWEB_LIT_STRING (JS_FROM),
+	     MOMWEB_REPLY_CODE (HTTP_OK), MOMWEB_END);
 	}
       else if (mom_same_string (idw, "named_forget_id"))
 	{
 	  MOM_DEBUG (web,
 		     "momcode_ajax_named named_forget_id inserting a forget form");
-	  mom_item_webrequest_add (webv, MOMWEB_SET_MIME,
-				   "application/javascript",
-				   MOMWEB_LIT_STRING,
-				   "install_forget_named_form('",
-				   MOMWEB_JS_STRING, nowbuf,
-				   MOMWEB_LIT_STRING, "');\n",
-				   MOMWEB_LIT_STRING, JS_FROM,
-				   MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
+	  mom_item_webrequest_add	////
+	    (webv, MOMWEB_SET_MIME ("application/javascript"),
+	     MOMWEB_LIT_STRING ("install_forget_named_form('"),
+	     MOMWEB_JS_STRING (nowbuf),
+	     MOMWEB_LIT_STRING ("');\n"),
+	     MOMWEB_LIT_STRING (JS_FROM),
+	     MOMWEB_REPLY_CODE (HTTP_OK), MOMWEB_END);
 	}
       else if (mom_same_string (idw, "do_create_named"))
 	{
@@ -472,18 +480,18 @@ momcode_ajax_named (int state, momit_tasklet_t * tasklet,
 	  MOM_DBG_ITEM (web, "ajax_named newitm=", newitm);
 	  if (errmsg)
 	    {
-	      mom_item_webrequest_add
+	      mom_item_webrequest_add	///
 		(webv,
-		 MOMWEB_SET_MIME, "text/html",
-		 MOMWEB_LIT_STRING, "<b>Failed to create named</b> <tt>",
-		 MOMWEB_HTML_STRING, mom_string_cstr (namev),
-		 MOMWEB_LIT_STRING, "</tt>:\n <em>",
-		 MOMWEB_HTML_STRING, errmsg,
-		 MOMWEB_LIT_STRING, "</em>\n at <i>",
-		 MOMWEB_HTML_STRING, nowbuf,
-		 MOMWEB_LIT_STRING, "</i>.\n",
-		 MOMWEB_LIT_STRING, HTML_FROM,
-		 MOMWEB_REPLY_CODE, HTTP_FORBIDDEN, MOMWEB_END);
+		 MOMWEB_SET_MIME ("text/html"),
+		 MOMWEB_LIT_STRING ("<b>Failed to create named</b> <tt>"),
+		 MOMWEB_HTML_STRING (mom_string_cstr (namev)),
+		 MOMWEB_LIT_STRING ("</tt>:\n <em>"),
+		 MOMWEB_HTML_STRING (errmsg),
+		 MOMWEB_LIT_STRING ("</em>\n at <i>"),
+		 MOMWEB_HTML_STRING (nowbuf),
+		 MOMWEB_LIT_STRING ("</i>.\n"),
+		 MOMWEB_LIT_STRING (HTML_FROM),
+		 MOMWEB_REPLY_CODE (HTTP_FORBIDDEN), MOMWEB_END);
 	      MOM_DEBUG (web, "ajax_named do_create_named forbidden %s",
 			 errmsg);
 	    }
@@ -491,18 +499,18 @@ momcode_ajax_named (int state, momit_tasklet_t * tasklet,
 	    {
 	      char uidstr[UUID_PARSED_LEN];
 	      memset (uidstr, 0, sizeof (uidstr));
-	      mom_item_webrequest_add
+	      mom_item_webrequest_add	////
 		(webv,
-		 MOMWEB_SET_MIME, "text/html",
-		 MOMWEB_LIT_STRING, "<b>Create named</b> <tt>",
-		 MOMWEB_HTML_STRING, mom_string_cstr (namev),
-		 MOMWEB_LIT_STRING, "</tt> <small>of uuid <tt>",
-		 MOMWEB_LIT_STRING, mom_unparse_item_uuid (newitm, uidstr),
-		 MOMWEB_LIT_STRING, "</tt></small> at <i>",
-		 MOMWEB_HTML_STRING, nowbuf,
-		 MOMWEB_LIT_STRING, "</i>.\n",
-		 MOMWEB_LIT_STRING, HTML_FROM,
-		 MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
+		 MOMWEB_SET_MIME ("text/html"),
+		 MOMWEB_LIT_STRING ("<b>Create named</b> <tt>"),
+		 MOMWEB_HTML_STRING (mom_string_cstr (namev)),
+		 MOMWEB_LIT_STRING ("</tt> <small>of uuid <tt>"),
+		 MOMWEB_LIT_STRING (mom_unparse_item_uuid (newitm, uidstr)),
+		 MOMWEB_LIT_STRING ("</tt></small> at <i>"),
+		 MOMWEB_HTML_STRING (nowbuf),
+		 MOMWEB_LIT_STRING ("</i>.\n"),
+		 MOMWEB_LIT_STRING (HTML_FROM),
+		 MOMWEB_REPLY_CODE (HTTP_OK), MOMWEB_END);
 	      MOM_DEBUG (web, "ajax_named do_create_named ok uidstr=%s",
 			 uidstr);
 	    }
@@ -520,18 +528,19 @@ momcode_ajax_named (int state, momit_tasklet_t * tasklet,
 	    {
 	      // got oldnameditm
 	      mom_forget_item (oldnameditm);
-	      mom_item_webrequest_add
+	      mom_item_webrequest_add	///
 		(webv,
-		 MOMWEB_SET_MIME, "text/html",
-		 MOMWEB_LIT_STRING, "<b>Forgotten named</b> <tt>",
-		 MOMWEB_HTML_STRING, mom_string_cstr (namev),
-		 MOMWEB_LIT_STRING, "</tt> <small>of uuid <tt>",
-		 MOMWEB_LIT_STRING, mom_unparse_item_uuid (oldnameditm,
-							   uidstr),
-		 MOMWEB_LIT_STRING, "</tt></small> at <i>",
-		 MOMWEB_HTML_STRING, nowbuf, MOMWEB_LIT_STRING, "</i>.\n",
-		 MOMWEB_LIT_STRING, HTML_FROM, MOMWEB_REPLY_CODE, HTTP_OK,
-		 MOMWEB_END);
+		 MOMWEB_SET_MIME ("text/html"),
+		 MOMWEB_LIT_STRING ("<b>Forgotten named</b> <tt>"),
+		 MOMWEB_HTML_STRING (mom_string_cstr (namev)),
+		 MOMWEB_LIT_STRING ("</tt> <small>of uuid <tt>"),
+		 MOMWEB_LIT_STRING (mom_unparse_item_uuid (oldnameditm,
+							   uidstr)),
+		 MOMWEB_LIT_STRING ("</tt></small> at <i>"),
+		 MOMWEB_HTML_STRING (nowbuf),
+		 MOMWEB_LIT_STRING ("</i>.\n"),
+		 MOMWEB_LIT_STRING (HTML_FROM),
+		 MOMWEB_REPLY_CODE (HTTP_OK), MOMWEB_END);
 	      MOM_DEBUG (web, "ajax_named do_forget_named ok uidstr=%s",
 			 uidstr);
 	      return routres_pop;
@@ -539,15 +548,16 @@ momcode_ajax_named (int state, momit_tasklet_t * tasklet,
 	  else
 	    {
 	      // no oldnameditm
-	      mom_item_webrequest_add
+	      mom_item_webrequest_add	//
 		(webv,
-		 MOMWEB_SET_MIME, "text/html",
-		 MOMWEB_LIT_STRING,
-		 "<b>Failed to forget invalid named</b> <tt>",
-		 MOMWEB_HTML_STRING, mom_string_cstr (namev),
-		 MOMWEB_LIT_STRING, "</tt> at <i>", MOMWEB_HTML_STRING,
-		 nowbuf, MOMWEB_LIT_STRING, "</i>.\n", MOMWEB_LIT_STRING,
-		 HTML_FROM, MOMWEB_REPLY_CODE, HTTP_FORBIDDEN, MOMWEB_END);
+		 MOMWEB_SET_MIME ("text/html"),
+		 MOMWEB_LIT_STRING
+		 ("<b>Failed to forget invalid named</b> <tt>"),
+		 MOMWEB_HTML_STRING (mom_string_cstr (namev)),
+		 MOMWEB_LIT_STRING ("</tt> at <i>"),
+		 MOMWEB_HTML_STRING (nowbuf), MOMWEB_LIT_STRING ("</i>.\n"),
+		 MOMWEB_LIT_STRING (HTML_FROM),
+		 MOMWEB_REPLY_CODE (HTTP_FORBIDDEN), MOMWEB_END);
 	      MOM_DEBUG (web, "ajax_named do_forget_named failed nowbuf=%s",
 			 nowbuf);
 	      return routres_pop;
@@ -633,10 +643,10 @@ momcode_ajax_complete_routine_name (int state, momit_tasklet_t * tasklet,
 			: NULL);
 	}
       MOM_DBG_VALUE (web, "ajax_complete_routine_name jres=", jres);
-      mom_item_webrequest_add
+      mom_item_webrequest_add	////
 	(webv,
-	 MOMWEB_SET_MIME, "application/json",
-	 MOMWEB_JSON_VALUE, jres, MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
+	 MOMWEB_SET_MIME ("application/json"),
+	 MOMWEB_JSON_VALUE (jres), MOMWEB_REPLY_CODE (HTTP_OK), MOMWEB_END);
       MOM_DBG_VALUE (web, "ajax_complete_routine_name replied webv=", webv);
     }
   return routres_pop;
@@ -716,10 +726,10 @@ momcode_ajax_complete_name (int state, momit_tasklet_t * tasklet,
 			: NULL);
 	}
       MOM_DBG_VALUE (web, "ajax_complete_name jres=", jres);
-      mom_item_webrequest_add
+      mom_item_webrequest_add	///
 	(webv,
-	 MOMWEB_SET_MIME, "application/json",
-	 MOMWEB_JSON_VALUE, jres, MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
+	 MOMWEB_SET_MIME ("application/json"),
+	 MOMWEB_JSON_VALUE (jres), MOMWEB_REPLY_CODE (HTTP_OK), MOMWEB_END);
       MOM_DBG_VALUE (web, "ajax_complete_name replied webv=", webv);
     }
   return routres_pop;
@@ -1036,17 +1046,37 @@ momcode_ajax_routine (int state, momit_tasklet_t * tasklet,
 	    else if (mom_same_string (idw, "routine_add_id"))
 	      {
 		MOM_DEBUG (web, "ajax_routine routine_add_id");
+		mom_item_webrequest_add	////
+		  (_L (web),
+		   MOMWEB_SET_MIME ("text/html"),
+		   MOMWEB_LIT_STRING ("<b>adding routine:</b>"),
+		   MOMWEB_LIT_STRING (HTML_FROM),
+		   MOMWEB_REPLY_CODE (HTTP_OK), MOMWEB_END);
 		MOM_WARNING ("unimplemented ajax_routine routine_add_id");
+		return routres_pop;
 	      }
 	    else if (mom_same_string (idw, "routine_remove_id"))
 	      {
 		MOM_DEBUG (web, "ajax_routine routine_remove_id");
+		mom_item_webrequest_add	///
+		  (_L (web),
+		   MOMWEB_SET_MIME ("text/html"),
+		   MOMWEB_LIT_STRING ("<b>removing routine:</b>"),
+		   MOMWEB_LIT_STRING (HTML_FROM),
+		   MOMWEB_REPLY_CODE (HTTP_OK), MOMWEB_END);
 		MOM_WARNING ("unimplemented ajax_routine routine_remove_id");
+		return routres_pop;
 	      }
 	    else if (mom_same_string (idw, "routine_edit_id"))
 	      {
 		MOM_DEBUG (web, "ajax_routine routine_edit_id");
+		mom_item_webrequest_add	///
+		  (_L (web), MOMWEB_SET_MIME ("text/html"), MOMWEB_LIT_STRING ("<b>editing routine:</b>"),	///
+		   MOMWEB_LIT_STRING (HTML_FROM),	////
+		   MOMWEB_REPLY_CODE (HTTP_OK),	///
+		   MOMWEB_END);
 		MOM_WARNING ("unimplemented ajax_routine routine_edit_id");
+		return routres_pop;
 	      }
 	  }
       }
@@ -1357,17 +1387,19 @@ momcode_ajax_routine (int state, momit_tasklet_t * tasklet,
 	time (&now);
 	strftime (timbuf, sizeof (timbuf), "%c", localtime_r (&now, &curtm));
 	/// answer the Ajax web request
-	mom_item_webrequest_add
+	mom_item_webrequest_add	////
 	  (_L (web),
-	   MOMWEB_SET_MIME, "text/html",
-	   MOMWEB_LIT_STRING,
-	   "<b>Monimelt generates &amp; compile code</b> in <tt>"
-	   GENERATED_SOURCE_FILE_NAME "</tt> with ", MOMWEB_DEC_LONG,
-	   (long) _N (ix), MOMWEB_LIT_STRING, " routines and ",
-	   MOMWEB_DEC_LONG, (long) blen, MOMWEB_LIT_STRING,
-	   " bytes <small>at ", MOMWEB_LIT_STRING, timbuf, MOMWEB_LIT_STRING,
-	   "</small>.</p>\n" HTML_FROM, MOMWEB_REPLY_CODE, HTTP_OK,
-	   MOMWEB_END);
+	   MOMWEB_SET_MIME ("text/html"),
+	   MOMWEB_LIT_STRING
+	   ("<b>Monimelt generates &amp; compile code</b> in <tt>"
+	    GENERATED_SOURCE_FILE_NAME "</tt> with "),
+	   MOMWEB_DEC_LONG ((long) _N (ix)),
+	   MOMWEB_LIT_STRING (" routines and "),
+	   MOMWEB_DEC_LONG ((long) blen),
+	   MOMWEB_LIT_STRING (" bytes <small>at "),
+	   MOMWEB_LIT_STRING (timbuf),
+	   MOMWEB_LIT_STRING ("</small>.</p>\n" HTML_FROM),
+	   MOMWEB_REPLY_CODE (HTTP_OK), MOMWEB_END);
 	return routres_pop;
       }
       break;
@@ -1449,21 +1481,18 @@ momcode_web_form_handle_routine (int state, momit_tasklet_t * tasklet,
 	{
 	  MOM_WARNING ("web_form_handle_routine bad routine name %s",
 		       mom_string_cstr (namestrv));
-	  mom_item_webrequest_add
-	    (_L (web), MOMWEB_SET_MIME, "text/html",
-	     MOMWEB_LIT_STRING,
-	     "<!doctype html><head><title>Bad Routine Name in Monimelt</title></head>\n"
-	     "<body><h1>Bad Routine Name</h1>\n",
-	     MOMWEB_LIT_STRING, "<p>Name <tt>",
-	     MOMWEB_HTML_STRING,
-	     mom_string_cstr (namestrv),
-	     MOMWEB_LIT_STRING,
-	     "</tt> not found at <i>",
-	     MOMWEB_HTML_STRING, nowbuf,
-	     MOMWEB_LIT_STRING,
-	     "</i>.</p></body></html>\n",
-	     MOMWEB_LIT_STRING, HTML_FROM,
-	     MOMWEB_REPLY_CODE, HTTP_NOT_FOUND, MOMWEB_END);
+	  mom_item_webrequest_add	/////
+	    (_L (web), MOMWEB_SET_MIME ("text/html"),
+	     MOMWEB_LIT_STRING
+	     ("<!doctype html><head><title>Bad Routine Name in Monimelt</title></head>\n"
+	      "<body><h1>Bad Routine Name</h1>\n"),
+	     MOMWEB_LIT_STRING ("<p>Name <tt>"),
+	     MOMWEB_HTML_STRING (mom_string_cstr (namestrv)),
+	     MOMWEB_LIT_STRING ("</tt> not found at <i>"),
+	     MOMWEB_HTML_STRING (nowbuf),
+	     MOMWEB_LIT_STRING ("</i>.</p></body></html>\n"),
+	     MOMWEB_LIT_STRING (HTML_FROM),
+	     MOMWEB_REPLY_CODE (HTTP_NOT_FOUND), MOMWEB_END);
 	  return routres_pop;
 	}
       if (mom_item_webrequest_post_arg (_L (web), "do_addrout").ptr)
@@ -1484,25 +1513,21 @@ momcode_web_form_handle_routine (int state, momit_tasklet_t * tasklet,
 			 newset);
 	  mom_item_put_attr ((mom_anyitem_t *) mom_item__first_module,
 			     (mom_anyitem_t *) mom_item__routines, newset);
-	  mom_item_webrequest_add
-	    (_L (web), MOMWEB_SET_MIME, "text/html",
-	     MOMWEB_LIT_STRING,
-	     "<!doctype html><head><title>Grown first_module"
-	     " in Monimelt</title></head>\n"
-	     "<body><h1>Update grown <tt>first_module</tt></h1>\n",
-	     MOMWEB_LIT_STRING, "<p>Routine named <tt>",
-	     MOMWEB_HTML_STRING,
-	     mom_string_cstr (namestrv),
-	     MOMWEB_LIT_STRING,
-	     "</tt> added, now having ",
-	     MOMWEB_DEC_LONG,
-	     (long) mom_set_cardinal (newset),
-	     MOMWEB_LIT_STRING, " routines, at <i>",
-	     MOMWEB_HTML_STRING, nowbuf,
-	     MOMWEB_LIT_STRING,
-	     "</i>.</p></body></html>\n",
-	     MOMWEB_LIT_STRING, HTML_FROM,
-	     MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
+	  mom_item_webrequest_add	///
+	    (_L (web), MOMWEB_SET_MIME ("text/html"),
+	     MOMWEB_LIT_STRING
+	     ("<!doctype html><head><title>Grown first_module"
+	      " in Monimelt</title></head>\n"
+	      "<body><h1>Update grown <tt>first_module</tt></h1>\n"),
+	     MOMWEB_LIT_STRING ("<p>Routine named <tt>"),
+	     MOMWEB_HTML_STRING (mom_string_cstr (namestrv)),
+	     MOMWEB_LIT_STRING ("</tt> added, now having "),
+	     MOMWEB_DEC_LONG ((long) mom_set_cardinal (newset)),
+	     MOMWEB_LIT_STRING (" routines, at <i>"),
+	     MOMWEB_HTML_STRING (nowbuf),
+	     MOMWEB_LIT_STRING ("</i>.</p></body></html>\n"),
+	     MOMWEB_LIT_STRING (HTML_FROM), MOMWEB_REPLY_CODE (HTTP_OK),
+	     MOMWEB_END);
 	  return routres_pop;
 	}
       else if (mom_item_webrequest_post_arg (_L (web), "do_removerout").ptr)
@@ -1524,47 +1549,40 @@ momcode_web_form_handle_routine (int state, momit_tasklet_t * tasklet,
 	      mom_item_put_attr ((mom_anyitem_t *) mom_item__first_module,
 				 (mom_anyitem_t *) mom_item__routines,
 				 newset);
-	      mom_item_webrequest_add
-		(_L (web), MOMWEB_SET_MIME, "text/html",
-		 MOMWEB_LIT_STRING,
-		 "<!doctype html><head><title>Shrinken first_module"
-		 " in Monimelt</title></head>\n"
-		 "<body><h1>Update shrinken <tt>first_module</tt></h1>\n",
-		 MOMWEB_LIT_STRING,
-		 "<p>Routine named <tt>",
-		 MOMWEB_HTML_STRING,
-		 mom_string_cstr (namestrv),
-		 MOMWEB_LIT_STRING,
-		 "</tt> removed, now having ",
-		 MOMWEB_DEC_LONG,
-		 (long) mom_set_cardinal (newset),
-		 MOMWEB_LIT_STRING, " routines, at <i>",
-		 MOMWEB_HTML_STRING, nowbuf,
-		 MOMWEB_LIT_STRING,
-		 "</i>.</p></body></html>\n",
-		 MOMWEB_LIT_STRING, HTML_FROM,
-		 MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
+	      mom_item_webrequest_add	///
+		(_L (web), MOMWEB_SET_MIME ("text/html"),
+		 MOMWEB_LIT_STRING
+		 ("<!doctype html><head><title>Shrinken first_module"
+		  " in Monimelt</title></head>\n"
+		  "<body><h1>Update shrinken <tt>first_module</tt></h1>\n"),
+		 MOMWEB_LIT_STRING ("<p>Routine named <tt>"),
+		 MOMWEB_HTML_STRING (mom_string_cstr (namestrv)),
+		 MOMWEB_LIT_STRING ("</tt> removed, now having "),
+		 MOMWEB_DEC_LONG ((long) mom_set_cardinal (newset)),
+		 MOMWEB_LIT_STRING (" routines, at <i>"),
+		 MOMWEB_HTML_STRING (nowbuf),
+		 MOMWEB_LIT_STRING ("</i>.</p></body></html>\n"),
+		 MOMWEB_LIT_STRING (HTML_FROM), MOMWEB_REPLY_CODE (HTTP_OK),
+		 MOMWEB_END);
 	      return routres_pop;
 	    }
 	  else
 	    {
 	      MOM_WARNING ("web_form_handle_routine missing routine name %s",
 			   mom_string_cstr (namestrv));
-	      mom_item_webrequest_add
-		(_L (web), MOMWEB_SET_MIME, "text/html",
-		 MOMWEB_LIT_STRING,
-		 "<!doctype html><head><title>Missing Routine in Monimelt</title></head>\n"
-		 "<body><h1>Missing Routine Name</h1>\n",
-		 MOMWEB_LIT_STRING, "<p>Name <tt>",
-		 MOMWEB_HTML_STRING,
-		 mom_string_cstr (namestrv),
-		 MOMWEB_LIT_STRING,
-		 "</tt> not found in <tt>first_module</tt> at <i>",
-		 MOMWEB_HTML_STRING, nowbuf,
-		 MOMWEB_LIT_STRING,
-		 "</i>.</p></body></html>\n",
-		 MOMWEB_LIT_STRING, HTML_FROM,
-		 MOMWEB_REPLY_CODE, HTTP_NOT_FOUND, MOMWEB_END);
+	      mom_item_webrequest_add	////
+		(_L (web), MOMWEB_SET_MIME ("text/html"),
+		 MOMWEB_LIT_STRING
+		 ("<!doctype html><head><title>Missing Routine in Monimelt</title></head>\n"
+		  "<body><h1>Missing Routine Name</h1>\n"),
+		 MOMWEB_LIT_STRING ("<p>Name <tt>"),
+		 MOMWEB_HTML_STRING (mom_string_cstr (namestrv)),
+		 MOMWEB_LIT_STRING
+		 ("</tt> not found in <tt>first_module</tt> at <i>"),
+		 MOMWEB_HTML_STRING (nowbuf),
+		 MOMWEB_LIT_STRING ("</i>.</p></body></html>\n"),
+		 MOMWEB_LIT_STRING (HTML_FROM),
+		 MOMWEB_REPLY_CODE (HTTP_NOT_FOUND), MOMWEB_END);
 	      return routres_pop;
 	    }
 	}
@@ -1637,20 +1655,17 @@ momcode_web_form_handle_routine (int state, momit_tasklet_t * tasklet,
 #warning momcode_web_form_handle_routine incomplete should do_editrout
 	  MOM_DEBUG (web, "begin routine addition");
 	  // we should edit the DOM to add the appropriate elements in it.
-	  mom_item_webrequest_add
-	    (_L (web), MOMWEB_SET_MIME,
-	     "application/javascript",
-	     MOMWEB_LIT_STRING, "put_edited_routine('",
-	     MOMWEB_HTML_STRING,
-	     mom_string_cstr (namestrv),
-	     MOMWEB_LIT_STRING, "');\n",
-	     MOMWEB_LIT_STRING, JS_FROM, MOMWEB_END);
+	  mom_item_webrequest_add	////
+	    (_L (web), MOMWEB_SET_MIME ("application/javascript"),
+	     MOMWEB_LIT_STRING ("put_edited_routine('"),
+	     MOMWEB_HTML_STRING (mom_string_cstr (namestrv)),
+	     MOMWEB_LIT_STRING ("');\n"),
+	     MOMWEB_LIT_STRING (JS_FROM), MOMWEB_END);
 	  MOM_WARNING ("momcode_web_form_handle_routine incomplete");
-	  mom_item_webrequest_add
-	    (_L (web), MOMWEB_LIT_STRING,
-	     "// end of routine edition\n",
-	     MOMWEB_LIT_STRING, JS_FROM,
-	     MOMWEB_REPLY_CODE, HTTP_OK, MOMWEB_END);
+	  mom_item_webrequest_add	//
+	    (_L (web), MOMWEB_LIT_STRING ("// end of routine edition\n"),
+	     MOMWEB_LIT_STRING (JS_FROM),
+	     MOMWEB_REPLY_CODE (HTTP_OK), MOMWEB_END);
 	  MOM_DEBUG (web, "end of routine addition");
 	}
     }

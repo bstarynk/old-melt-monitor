@@ -663,38 +663,39 @@ mom_item_webrequest_add (momval_t val, ...)
   enum mom_webreplydirective_en wdir = 0;
   pthread_mutex_lock (&val.panyitem->i_mtx);
   va_start (args, val);
-  while ((wdir = va_arg (args, enum mom_webreplydirective_en)) != MOMWEB__END)
+  while ((wdir =
+	  va_arg (args, enum mom_webreplydirective_en)) != MOMWEBDO__END)
     {
       bool wanthtmlencoding = false;
       switch (wdir)
 	{
-	case MOMWEB__END:
+	case MOMWEBDO__END:
 	  break;
-	case MOMWEB_LIT_STRING:
+	case MOMWEBDO_LIT_STRING:
 	  {
 	    const char *litstr = va_arg (args, const char *);
 	    if (litstr && litstr[0])
 	      ADDWEBSTR (webitm, litstr);
 	  }
 	  break;
-	case MOMWEB_HTML_STRING:
+	case MOMWEBDO_HTML_STRING:
 	  {
 	    const char *htmlstr = va_arg (args, const char *);
 	    if (htmlstr && htmlstr[0])
 	      webrequest_addhtml (webitm, htmlstr);
 	  }
 	  break;
-	case MOMWEB_JS_STRING:
+	case MOMWEBDO_JS_STRING:
 	  {
 	    const char *jsstr = va_arg (args, const char *);
 	    if (jsstr && jsstr[0])
 	      webrequest_addjs (webitm, jsstr);
 	  }
 	  break;
-	case MOMWEB_HTML_VALUE:
+	case MOMWEBDO_HTML_VALUE:
 	  wanthtmlencoding = true;
 	  // failthru
-	case MOMWEB_VALUE:
+	case MOMWEBDO_VALUE:
 	  {
 	    momval_t val = va_arg (args, momval_t);
 	    unsigned typn = 0;
@@ -792,9 +793,9 @@ mom_item_webrequest_add (momval_t val, ...)
 	    else		// null value
 	      {
 	      }
-	  }			// end case MOMWEB_VALUE, MOMWEB_HTML_VALUE
+	  }			// end case MOMWEBDO_VALUE, MOMWEBDO_HTML_VALUE
 	  break;
-	case MOMWEB_JSON_VALUE:
+	case MOMWEBDO_JSON_VALUE:
 	  {
 	    momval_t val = va_arg (args, momval_t);
 	    if (mom_is_jsonable (val))
@@ -813,9 +814,9 @@ mom_item_webrequest_add (momval_t val, ...)
 		ADDWEBSTR (webitm, bufj);
 		free (bufj), bufj = NULL;
 	      }
-	  }			// end case MOMWEB_JSON_VALUE
+	  }			// end case MOMWEBDO_JSON_VALUE
 	  break;
-	case MOMWEB_DEC_INT:
+	case MOMWEBDO_DEC_INT:
 	  {
 	    int num = va_arg (args, int);
 	    char ibuf[32];
@@ -824,7 +825,7 @@ mom_item_webrequest_add (momval_t val, ...)
 	    ADDWEBSTR (webitm, ibuf);
 	  }
 	  break;
-	case MOMWEB_DEC_UNSIGNED:
+	case MOMWEBDO_DEC_UNSIGNED:
 	  {
 	    unsigned num = va_arg (args, int);
 	    char ibuf[32];
@@ -833,7 +834,7 @@ mom_item_webrequest_add (momval_t val, ...)
 	    ADDWEBSTR (webitm, ibuf);
 	  }
 	  break;
-	case MOMWEB_HEX_INT:
+	case MOMWEBDO_HEX_INT:
 	  {
 	    int num = va_arg (args, int);
 	    char ibuf[32];
@@ -842,7 +843,7 @@ mom_item_webrequest_add (momval_t val, ...)
 	    ADDWEBSTR (webitm, ibuf);
 	  }
 	  break;
-	case MOMWEB_DEC_LONG:
+	case MOMWEBDO_DEC_LONG:
 	  {
 	    long num = va_arg (args, long);
 	    char ibuf[48];
@@ -851,7 +852,7 @@ mom_item_webrequest_add (momval_t val, ...)
 	    ADDWEBSTR (webitm, ibuf);
 	  }
 	  break;
-	case MOMWEB_HEX_LONG:
+	case MOMWEBDO_HEX_LONG:
 	  {
 	    long num = va_arg (args, long);
 	    char ibuf[48];
@@ -860,7 +861,7 @@ mom_item_webrequest_add (momval_t val, ...)
 	    ADDWEBSTR (webitm, ibuf);
 	  }
 	  break;
-	case MOMWEB_DEC_INT64:
+	case MOMWEBDO_DEC_INT64:
 	  {
 	    int64_t num = va_arg (args, int64_t);
 	    char ibuf[48];
@@ -869,7 +870,7 @@ mom_item_webrequest_add (momval_t val, ...)
 	    ADDWEBSTR (webitm, ibuf);
 	  }
 	  break;
-	case MOMWEB_HEX_INT64:
+	case MOMWEBDO_HEX_INT64:
 	  {
 	    int64_t num = va_arg (args, int64_t);
 	    char ibuf[48];
@@ -878,7 +879,7 @@ mom_item_webrequest_add (momval_t val, ...)
 	    ADDWEBSTR (webitm, ibuf);
 	  }
 	  break;
-	case MOMWEB_DOUBLE:
+	case MOMWEBDO_DOUBLE:
 	  {
 	    double x = va_arg (args, double);
 	    char dbuf[48];
@@ -887,7 +888,7 @@ mom_item_webrequest_add (momval_t val, ...)
 	    ADDWEBSTR (webitm, dbuf);
 	  }
 	  break;
-	case MOMWEB_FIXED_DOUBLE:
+	case MOMWEBDO_FIXED_DOUBLE:
 	  {
 	    double x = va_arg (args, double);
 	    char dbuf[48];
@@ -896,7 +897,7 @@ mom_item_webrequest_add (momval_t val, ...)
 	    ADDWEBSTR (webitm, dbuf);
 	  }
 	  break;
-	case MOMWEB_FIX2DIG_DOUBLE:
+	case MOMWEBDO_FIX2DIG_DOUBLE:
 	  {
 	    double x = va_arg (args, double);
 	    char dbuf[48];
@@ -905,20 +906,20 @@ mom_item_webrequest_add (momval_t val, ...)
 	    ADDWEBSTR (webitm, dbuf);
 	  }
 	  break;
-	case MOMWEB_RESERVE:
+	case MOMWEBDO_RESERVE:
 	  {
 	    unsigned more = va_arg (args, unsigned);
 	    webrequest_reserve (webitm, more + 1);
 	  }
 	  break;
-	case MOMWEB_CLEAR_BUFFER:
+	case MOMWEBDO_CLEAR_BUFFER:
 	  {
 	    webitm->iweb_replylength = 0;
 	    memset (webitm->iweb_replybuf, 0, webitm->iweb_replysize);
 	    webitm->iweb_replymime = NULL;
 	  }
 	  break;
-	case MOMWEB_SET_MIME:
+	case MOMWEBDO_SET_MIME:
 	  {
 	    const char *mime = va_arg (args, const char *);
 	    if (mime && mime[0])
@@ -959,10 +960,10 @@ mom_item_webrequest_add (momval_t val, ...)
 	      }
 	  }
 	  break;
-	case MOMWEB_STDIO_FILE_HTML_CONTENT:
+	case MOMWEBDO_STDIO_FILE_HTML_CONTENT:
 	  wanthtmlencoding = true;
 	  // failthru
-	case MOMWEB_STDIO_FILE_CONTENT:
+	case MOMWEBDO_STDIO_FILE_CONTENT:
 	  {
 	    FILE *filc = va_arg (args, FILE *);
 	    char buff[1024];
@@ -987,9 +988,9 @@ mom_item_webrequest_add (momval_t val, ...)
 		  }
 		while (!feof (filc));
 	      }
-	  }			// end case MOMWEB_STDIO_FILE_HTML_CONTENT & MOMWEB_STDIO_FILE_CONTENT
+	  }			// end case MOMWEBDO_STDIO_FILE_HTML_CONTENT & MOMWEBDO_STDIO_FILE_CONTENT
 	  break;
-	case MOMWEB_REPLY_CODE:
+	case MOMWEBDO_REPLY_CODE:
 	  {
 	    if (replycode > 0)
 	      MOM_FATAL ("already given reply code %d", replycode);
@@ -999,7 +1000,7 @@ mom_item_webrequest_add (momval_t val, ...)
 		replycode = rcode;
 		webitm->iweb_replycode = rcode;
 	      }
-	  }			// end case MOMWEB_SEND_REPLY_CODE
+	  }			// end case MOMWEBDO_SEND_REPLY_CODE
 	  break;
 	default:
 	  MOM_FATAL ("unexpected web reply directive %d", (int) wdir);
