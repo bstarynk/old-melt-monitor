@@ -179,6 +179,9 @@ remove_old_item (mom_anyitem_t * olditm)
 	  items_data->items_nb--;
 	  return;
 	}
+      if (!items_data->items_arr[i] && !items_data->items_arr[i + 1]
+	  && i + 1 < imax)
+	break;
     }
   for (uint32_t i = 0; i < istart; i += 2)
     {
@@ -194,6 +197,9 @@ remove_old_item (mom_anyitem_t * olditm)
 	  items_data->items_nb--;
 	  return;
 	}
+      if (!items_data->items_arr[i] && !items_data->items_arr[i + 1]
+	  && i + 1 < imax)
+	break;
     }
 }
 
