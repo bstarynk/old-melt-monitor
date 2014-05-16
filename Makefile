@@ -62,8 +62,8 @@ indent: # don't indent monimelt-names.h
 
 $(OBJECTS): monimelt.h monimelt-names.h
 
-make-named: u-make-named.cc
-	$(LINK.cc)  $<  $(LIBES) -o $@
+monimelt-names.h:
+	date +"#warning no monimelt-names.h at %c" > $@
 
 modules: $(MODULES)
 

@@ -1,4 +1,4 @@
-// file mod_test1.c
+// file output.c
 
 /**   Copyright (C)  2014 Free Software Foundation, Inc.
     MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -19,23 +19,22 @@
 **/
 
 #include "monimelt.h"
-const char mom_GPL_friendly_module[] = "mod_test1 is GPLv3";
 
+static pthread_mutex_t diag_mtx_mom = PTHREAD_MUTEX_INITIALIZER;
+
+
+
+void mom_out_at (const char*sfil, int lin, FILE* out, ...)
+{
+  va_list alist;
+  va_start (alist, out);
+  mom_outva_at (sfil,lin,out,alist);
+  va_end (alist);
+}
 
 void
-mom_module_init (const char *marg)
+mom_outva_at(const char*sfil, int lin, FILE* out, va_list alist)
 {
-  MOM_INFORM ("test1 module init marg=%s", marg);
-  MOM_INFORM ("json_cmp agenda attr=%d",
-	      mom_json_cmp ((momval_t) mom_item__agenda,
-			    (momval_t) mom_item__attr));
-  MOM_INFORM ("json_cmp attr conn=%d",
-	      mom_json_cmp ((momval_t) mom_item__attr,
-			    (momval_t) mom_item__conn));
-  MOM_INFORM ("json_cmp frames conn=%d",
-	      mom_json_cmp ((momval_t) mom_item__frames,
-			    (momval_t) mom_item__conn));
-  MOM_INFORM ("json_cmp attr 'attr'=%d",
-	      mom_json_cmp ((momval_t) mom_item__attr,
-			    (momval_t) mom_make_string ("attr")));
+#warning mom_outva_at unimplemented
+  MOM_FATAPRINTF("unimplemented mom_outva_at from %s:%d", sfil, lin);
 }
