@@ -169,6 +169,96 @@ mom_outva_at (const char *sfil, int lin, FILE * out, va_list alist)
 		   out);
 	  }
 	  break;
+	  //
+	case MOMOUTDO_DOUBLE_G:
+	  {
+	    double x = va_arg (alist, double);
+	    fprintf (out, "%g", x);
+	  }
+	  break;
+	  ///
+	case MOMOUTDO_DOUBLE_F:
+	  {
+	    double x = va_arg (alist, double);
+	    fprintf (out, "%f", x);
+	  }
+	  break;
+	  ///
+	case MOMOUTDO_FMT_DOUBLE:
+	  {
+	    const char *fmt = va_arg (alist, const char *);
+	    double x = va_arg (alist, double);
+	    assert (strchr (fmt, '%') == strrchr (fmt, '%'));
+	    fprintf (out, fmt, x);
+	  }
+	  break;
+	  ///
+	case MOMOUTDO_FMT_LONG:
+	  {
+	    const char *fmt = va_arg (alist, const char *);
+	    long l = va_arg (alist, long);
+	    assert (strchr (fmt, '%') == strrchr (fmt, '%'));
+	    fprintf (out, fmt, l);
+	  }
+	  break;
+	  ///
+	case MOMOUTDO_VERBATIM_FILE:
+	  {
+	    FILE *cfil = va_arg (alist, FILE *);
+	    if (cfil)
+	      {
+		int c = EOF;
+		do
+		  {
+		    c = getc (cfil);
+		    putc (c, out);
+		  }
+		while (c != EOF);
+	      }
+	  }
+	  break;
+	  ///
+	case MOMOUTDO_HTML_FILE:
+	  {
+	    char *lin = NULL;
+	    size_t sz = 0;
+	    FILE *cfil = va_arg (alist, FILE *);
+	    if (cfil)
+	      {
+		do
+		  {
+		    ssize_t linsiz = getline (&lin, &sz, cfil);
+		    if (linsiz < 0)
+		      break;
+		    MOM_OUT (out, MOMOUT_HTML ((const char *) lin));
+		  }
+		while (!feof (cfil));
+		free (lin);
+	      }
+	  }
+	  break;
+	  ///
+	  ///
+	case MOMOUTDO_JS_FILE:
+	  {
+	    char *lin = NULL;
+	    size_t sz = 0;
+	    FILE *cfil = va_arg (alist, FILE *);
+	    if (cfil)
+	      {
+		do
+		  {
+		    ssize_t linsiz = getline (&lin, &sz, cfil);
+		    if (linsiz < 0)
+		      break;
+		    MOM_OUT (out, MOMOUT_JS ((const char *) lin));
+		  }
+		while (!feof (cfil));
+		free (lin);
+	      }
+	  }
+	  break;
+	  ///
 	}
     }
 }

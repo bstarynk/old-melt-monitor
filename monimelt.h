@@ -364,10 +364,51 @@ enum momoutdir_en
   MOMOUTDO_HEX_INT /*, int num */ ,
 #define MOMOUT_HEX_INT(N) MOMOUTDO_HEX_INT, MOM_REQUIRES_TYPE(N,int,mombad_int)
   ///
+  /// format a double with %g 
+  MOMOUTDO_DOUBLE_G /*, double time */ ,
+#define MOMOUT_DOUBLE_G(D) MOMOUTDO_DOUBLE_G, \
+  MOM_REQUIRES_TYPE(D,double,mombad_double)
+  ///
+  /// format a double with %f 
+  MOMOUTDO_DOUBLE_F /*, double time */ ,
+#define MOMOUT_DOUBLE_F(D) MOMOUTDO_DOUBLE_F, \
+  MOM_REQUIRES_TYPE(D,double,mombad_double)
+  ///
+  /// format giving a format a double
+  MOMOUTDO_FMT_DOUBLE /*, const char*fmt, double x */ ,
+#define MOMOUT_FMT_DOUBLE(F,D) MOMOUTDO_FMT_DOUBLE,	\
+  MOM_REQUIRES_TYPE(F,const char*,mombad_fmt) \
+    MOM_REQUIRES_TYPE(D,double,mombad_double)
+  ///
+  ///
+  /// format giving a format a long
+  MOMOUTDO_FMT_LONG /*, const char*fmt, long l */ ,
+#define MOMOUT_FMT_LONG(F,L) MOMOUTDO_FMT_LONG,	\
+  MOM_REQUIRES_TYPE(F,const char*,mombad_fmt) \
+    MOM_REQUIRES_TYPE(l,long,mombad_long)
+  ///
+  ///
   /// format a double as a time using mom_strftime_centi
   MOMOUTDO_DOUBLE_TIME /*, const char*fmt, double time */ ,
 #define MOMOUT_DOUBLE_TIME(F,D) MOMOUTDO_DOUBLE_TIME, \
   MOM_REQUIRES_TYPE(F,const char*,mombad_fmt), MOM_REQUIRES_TYPE(D,double,mombad_double)
+  ///
+  ///
+  /// copy verbatim the bytes of an opened FILE*
+  MOMOUTDO_VERBATIM_FILE /*, FILE*fil */ ,
+#define MOMOUT_VERBATIM_FILE(F) MOMOUTDO_VERBATIM_FILE, \
+  MOM_REQUIRES_TYPE(F,FILE*,mombad_file),
+  ///
+  ///
+  /// copy HTML encoded the bytes of an opened FILE*
+  MOMOUTDO_HTML_FILE /*, FILE*fil */ ,
+#define MOMOUT_HTML_FILE(F) MOMOUTDO_HTML_FILE, \
+  MOM_REQUIRES_TYPE(F,FILE*,mombad_file),
+  ///
+  /// copy JS encoded the bytes of an opened FILE*
+  MOMOUTDO_JS_FILE /*, FILE*fil */ ,
+#define MOMOUT_JS_FILE(F) MOMOUTDO_JS_FILE, \
+  MOM_REQUIRES_TYPE(F,FILE*,mombad_file),
   ///
 };
 
@@ -377,5 +418,7 @@ extern const char *mombad_int;
 extern const char *mombad_js;
 extern const char *mombad_fmt;
 extern const char *mombad_double;
+extern const char *mombad_long;
+extern const char *mombad_file;
 
 #endif /*MONIMELT_INCLUDED_ */
