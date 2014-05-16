@@ -23,18 +23,19 @@
 
 
 void
-mom_out_at (const char *sfil, int lin, FILE * out, ...)
+mom_out_at (const char *sfil, int lin, int indent, FILE * out, ...)
 {
   va_list alist;
   if (!sfil || !out)
     return;
   va_start (alist, out);
-  mom_outva_at (sfil, lin, out, alist);
+  mom_outva_at (sfil, lin, indent, out, alist);
   va_end (alist);
 }
 
 void
-mom_outva_at (const char *sfil, int lin, FILE * out, va_list alist)
+mom_outva_at (const char *sfil, int lin, int indent, FILE * out,
+	      va_list alist)
 {
   bool again = true;
   while (again)

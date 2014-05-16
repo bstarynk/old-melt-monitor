@@ -327,12 +327,17 @@ __attribute__ ((format (printf, 3, 4)));
 
 
 
-void mom_out_at (const char *sfil, int lin, FILE * out, ...)
+void mom_out_at (const char *sfil, int lin, int indent, FILE * out, ...)
   __attribute__ ((sentinel));
-void mom_outva_at (const char *sfil, int lin, FILE * out, va_list alist);
-#define MOM_OUT_AT_BIS(Fil,Lin,Out,...) mom_out_at(Fil,Lin,Out,##__VA_ARGS__,NULL)
+void mom_outva_at (const char *sfil, int lin, int indent, FILE * out,
+		   va_list alist);
+#define MOM_OUT_AT_BIS(Fil,Lin,Out,...) mom_out_at(Fil,Lin,0,Out,##__VA_ARGS__,NULL)
 #define MOM_OUT_AT(Fil,Lin,Out,...) MOM_OUT_AT_BIS(Fil,Lin,Out,##__VA_ARGS__)
 #define MOM_OUT(Out,...) MOM_OUT_AT(__FILE__,__LINE__,Out,##__VA_ARGS__)
+
+#define MOM_OUTIND_AT_BIS(Fil,Lin,Ind,Out,...) mom_out_at(Fil,Lin,(Ind),Out,##__VA_ARGS__,NULL)
+#define MOM_OUTIND_AT(Fil,Lin,Ind,Out,...) MOM_OUTIND_AT_BIS(Fil,Lin,Ind,Out,##__VA_ARGS__)
+#define MOM_OUTIND(Out,Ind,...) MOM_OUTIND_AT(__FILE__,__LINE__,Out,(Ind),##__VA_ARGS__)
 
 #define MOM_REQUIRES_TYPE_AT(Lin,V,Typ,Else)				\
   (__builtin_choose_expr((__builtin_types_compatible_p(typeof(V),Typ)), \
