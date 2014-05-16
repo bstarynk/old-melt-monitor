@@ -134,11 +134,12 @@ mom_fataprintf_at (const char *fil, int lin, const char *fmt, ...)
   if (err)
     syslog (LOG_ALERT, "MONIMELT FATAL @%s:%d <%s:%d> %s %s (%s)",
 	    fil, lin, thrname, (int) mom_gettid (), timbuf,
-	    bigbuf ? bigbuf : buf, strerror (err));
+	    msg, strerror (err));
   else
     syslog (LOG_ALERT, "MONIMELT FATAL @%s:%d <%s:%d> %s %s",
-	    fil, lin, thrname, (int) mom_gettid (), timbuf,
-	    bigbuf ? bigbuf : buf);
+	    fil, lin, thrname, (int) mom_gettid (), timbuf, msg);
+  if (bigbuf)
+    free (bigbuf);
   abort ();
 }
 
@@ -239,9 +240,13 @@ main (int argc, char **argv)
     memset (hnam, 0, sizeof (hnam));
     gethostname (hnam, sizeof (hnam) - 1);
     mom_now_strftime_bufcenti (timbuf, "%Y-%b-%d %H:%M:%S.__ %Z");
-    syslog (LOG_INFO, "MONIMELT starting on %s at %s in %s",
-	    hnam, timbuf, get_current_dir_name ());
+    syslog (LOG_INFO,
+	    "MONIMELT starting on %s at %s in %s,\n.. built %s gitcommit %s",
+	    hnam, timbuf, get_current_dir_name (), monimelt_timestamp,
+	    monimelt_lastgitcommit);
     atexit (logexit_cb_mom);
   }
+  ///
+
   return 0;
 }

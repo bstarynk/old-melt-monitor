@@ -20,14 +20,14 @@
 
 #include "monimelt.h"
 
-static pthread_mutex_t diag_mtx_mom = PTHREAD_MUTEX_INITIALIZER;
-
 
 
 void
 mom_out_at (const char *sfil, int lin, FILE * out, ...)
 {
   va_list alist;
+  if (!sfil || !out)
+    return;
   va_start (alist, out);
   mom_outva_at (sfil, lin, out, alist);
   va_end (alist);
@@ -36,6 +36,139 @@ mom_out_at (const char *sfil, int lin, FILE * out, ...)
 void
 mom_outva_at (const char *sfil, int lin, FILE * out, va_list alist)
 {
-#warning mom_outva_at unimplemented
-  MOM_FATAPRINTF ("unimplemented mom_outva_at from %s:%d", sfil, lin);
+  bool again = true;
+  while (again)
+    {
+      enum momoutdir_en dir = va_arg (alist, enum momoutdir_en);
+      switch (dir)
+	{
+	case MOMOUTDO__END:
+	  again = false;
+	  break;
+	case MOMOUTDO_LITERAL:
+	  {
+	    const char *s = va_arg (alist, const char *);
+	    if (s)
+	      fputs (s, out);
+	  }
+	  break;
+	case MOMOUTDO_HTML:
+	  {
+	    const char *s = va_arg (alist, const char *);
+	    int len = s ? strlen (s) : 0;
+	    const gchar *end = NULL;
+	    if (MOM_UNLIKELY
+		(s && !g_utf8_validate ((const gchar *) s, len, &end)))
+	      MOM_FATAPRINTF ("from %s:%d invalid string to htmlize: %s",
+			      sfil, lin, s);
+	    for (const gchar * pc = s; pc && *pc && pc < s + len;
+		 pc = g_utf8_next_char (pc))
+	      {
+		gunichar c = g_utf8_get_char (pc);
+		switch (c)
+		  {
+		  case '&':
+		    fputs ("&amp;", out);
+		    break;
+		  case '<':
+		    fputs ("&lt;", out);
+		    break;
+		  case '>':
+		    fputs ("&gt;", out);
+		    break;
+		  case '\'':
+		    fputs ("&apos;", out);
+		    break;
+		  case '\"':
+		    fputs ("&quot;", out);
+		    break;
+		  case 160:
+		    fputs ("&nbsp;", out);
+		    break;
+		  default:
+		    if (c >= 127)
+		      fprintf (out, "&#%d;", (int) c);
+		    else
+		      putc (c, out);
+		    break;
+		  }
+	      }
+	  }
+	  break;
+	  //
+	case MOMOUTDO_JS:
+	  {
+	    const char *s = va_arg (alist, const char *);
+	    int len = s ? strlen (s) : 0;
+	    const gchar *end = NULL;
+	    if (MOM_UNLIKELY (s && !g_utf8_validate (s, len, &end)))
+	      MOM_FATAPRINTF ("from %s:%d invalid string to jsonize: %s",
+			      sfil, lin, s);
+	    for (const gchar * pc = s; pc && *pc && pc < s + len;
+		 pc = g_utf8_next_char (pc))
+	      {
+		gunichar c = g_utf8_get_char (pc);
+		switch (c)
+		  {
+		  case '\\':
+		    fputs ("\\\\", out);
+		    break;
+		  case '\'':
+		    fputs ("\\'", out);
+		    break;
+		  case '\"':
+		    fputs ("\\\"", out);
+		    break;
+		  case '\n':
+		    fputs ("\\n", out);
+		    break;
+		  case '\r':
+		    fputs ("\\r", out);
+		    break;
+		  case '\t':
+		    fputs ("\\t", out);
+		    break;
+		  case '\v':
+		    fputs ("\\v", out);
+		    break;
+		  case '\f':
+		    fputs ("\\f", out);
+		    break;
+		  default:
+		    if (c >= 127 || c < ' ')
+		      fprintf (out, "\\u%04x", (unsigned) c);
+		    else
+		      fputc (c, out);
+		    break;
+		  }
+	      }
+	  }
+	  break;
+	  //
+	case MOMOUTDO_DEC_INT:
+	  {
+	    int n = va_arg (alist, int);
+	    fprintf (out, "%d", n);
+	  }
+	  break;
+	  //
+	case MOMOUTDO_HEX_INT:
+	  {
+	    int n = va_arg (alist, int);
+	    fprintf (out, "%x", n);
+	  }
+	  break;
+	  //
+	case MOMOUTDO_DOUBLE_TIME:
+	  {
+	    char timbuf[64];
+	    memset (timbuf, 0, sizeof (timbuf));
+	    const char *fmt = va_arg (alist, const char *);
+	    double ti = va_arg (alist, double);
+	    fputs (mom_strftime_centi (timbuf, sizeof (timbuf), fmt, ti),
+		   out);
+	  }
+	  break;
+	}
+    }
 }

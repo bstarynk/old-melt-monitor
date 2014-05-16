@@ -331,12 +331,12 @@ void mom_out_at (const char *sfil, int lin, FILE * out, ...)
   __attribute__ ((sentinel));
 void mom_outva_at (const char *sfil, int lin, FILE * out, va_list alist);
 #define MOM_OUT_AT_BIS(Fil,Lin,Out,...) mom_out_at(Fil,Lin,Out,##__VA_ARGS__,NULL)
-#define MOM_OUT_AT(Fil,Lin,Out,...) MOM_OUT_AT_BIS(Fil,Lin,Out,...)
+#define MOM_OUT_AT(Fil,Lin,Out,...) MOM_OUT_AT_BIS(Fil,Lin,Out,##__VA_ARGS__)
 #define MOM_OUT(Out,...) MOM_OUT_AT(__FILE__,__LINE__,Out,##__VA_ARGS__)
 
 #define MOM_REQUIRES_TYPE_AT(Lin,V,Typ,Else)				\
   (__builtin_choose_expr((__builtin_types_compatible_p(typeof(V),Typ)), \
-			 (V), ((Else)[Lin])))
+			 (V), (void)((Else)+Lin)))
 #define MOM_REQUIRES_TYPE_AT_BIS(Lin,V,Typ,Else) MOM_REQUIRES_TYPE_AT(Lin,V,Typ,Else)
 #define MOM_REQUIRES_TYPE(V,Typ,Else) MOM_REQUIRES_TYPE_AT_BIS(__LINE__,(V),Typ,Else)
 
@@ -352,9 +352,30 @@ enum momoutdir_en
   MOMOUTDO_HTML /*, const char*htmlstring */ ,
 #define MOMOUT_HTML(S) MOMOUTDO_HTML, MOM_REQUIRES_TYPE(S,const char*,mombad_html)
   ///
+  /// Javascript encoded strings
+  MOMOUTDO_JS /*, const char*jsstring */ ,
+#define MOMOUT_JS(S) MOMOUTDO_JS, MOM_REQUIRES_TYPE(S,const char*,mombad_js)
+  ///
+  /// decimal int
+  MOMOUTDO_DEC_INT /*, int num */ ,
+#define MOMOUT_DEC_INT(N) MOMOUTDO_DEC_INT, MOM_REQUIRES_TYPE(N,int,mombad_int)
+  //
+  /// hex int
+  MOMOUTDO_HEX_INT /*, int num */ ,
+#define MOMOUT_HEX_INT(N) MOMOUTDO_HEX_INT, MOM_REQUIRES_TYPE(N,int,mombad_int)
+  ///
+  /// format a double as a time using mom_strftime_centi
+  MOMOUTDO_DOUBLE_TIME /*, const char*fmt, double time */ ,
+#define MOMOUT_DOUBLE_TIME(F,D) MOMOUTDO_DOUBLE_TIME, \
+  MOM_REQUIRES_TYPE(F,const char*,mombad_fmt), MOM_REQUIRES_TYPE(D,double,mombad_double)
+  ///
 };
 
 extern const char *mombad_literal;
 extern const char *mombad_html;
+extern const char *mombad_int;
+extern const char *mombad_js;
+extern const char *mombad_fmt;
+extern const char *mombad_double;
 
 #endif /*MONIMELT_INCLUDED_ */
