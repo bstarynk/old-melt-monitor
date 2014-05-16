@@ -20,24 +20,28 @@
 
 #include "monimelt.h"
 
-static const char* dbg_level_mom(enum mom_debug_en dbg)
+static const char *
+dbg_level_mom (enum mom_debug_en dbg)
 {
 #define LEVDBG(Dbg) case momdbg_##Dbg: return #Dbg;
-  switch (dbg) {
-    MOM_DEBUG_LIST_OPTIONS(LEVDBG);
-  default: {
-    static char dbglev[16];
-    snprintf (dbglev, sizeof(dbglev), "?DBG?%d", (int)dbg);
-    return dbglev;
-  }
-  }
+  switch (dbg)
+    {
+      MOM_DEBUG_LIST_OPTIONS (LEVDBG);
+    default:
+      {
+	static char dbglev[16];
+	snprintf (dbglev, sizeof (dbglev), "?DBG?%d", (int) dbg);
+	return dbglev;
+      }
+    }
 }
 
 
-char* mom_strftime_centi (char*buf, size_t len, const char*fmt, double ti)
+char *
+mom_strftime_centi (char *buf, size_t len, const char *fmt, double ti)
 {
   struct tm tm = { };
-  time_t tim = (time_t)ti;
+  time_t tim = (time_t) ti;
   if (!buf || !fmt || !len)
     return NULL;
   strftime (buf, len, fmt, localtime_r (&tim, &tm));
@@ -45,37 +49,38 @@ char* mom_strftime_centi (char*buf, size_t len, const char*fmt, double ti)
   if (dotundund)
     {
       double ind = 0.0;
-      double fra = modf(ti, &ind);
+      double fra = modf (ti, &ind);
       char minibuf[16];
-      memset (minibuf, 0, sizeof(minibuf));
-      snprintf(minibuf, sizeof(minibuf), "%.02f", fra);
-      strncpy(dotundund,strchr(minibuf, '.'), 3);
+      memset (minibuf, 0, sizeof (minibuf));
+      snprintf (minibuf, sizeof (minibuf), "%.02f", fra);
+      strncpy (dotundund, strchr (minibuf, '.'), 3);
     }
   return buf;
 }
 
 
 void
-mom_debugprintf_at (enum mom_debug_en dbg, const char *fil, int lin, const char*fmt, ...)
+mom_debugprintf_at (enum mom_debug_en dbg, const char *fil, int lin,
+		    const char *fmt, ...)
 {
   char thrname[24];
   char buf[128];
   char timbuf[64];
   int len = 0;
-  char*msg = NULL;
-  char* bigbuf = NULL;
+  char *msg = NULL;
+  char *bigbuf = NULL;
   memset (thrname, 0, sizeof (thrname));
-  memset (buf, 0, sizeof(buf));
-  memset (timbuf, 0, sizeof(timbuf));
+  memset (buf, 0, sizeof (buf));
+  memset (timbuf, 0, sizeof (timbuf));
   pthread_getname_np (pthread_self (), thrname, sizeof (thrname) - 1);
-  mom_now_strftime_bufcenti(timbuf,"%Y-%b-%d %H:%M:%S.__ %Z");
+  mom_now_strftime_bufcenti (timbuf, "%Y-%b-%d %H:%M:%S.__ %Z");
   va_list alist;
   va_start (alist, fmt);
   len = vsnprintf (buf, sizeof (buf), fmt, alist);
   va_end (alist);
   if (MOM_UNLIKELY (len >= sizeof (buf) - 1))
     {
-      char* bigbuf = malloc (len + 10);
+      char *bigbuf = malloc (len + 10);
       if (bigbuf)
 	{
 	  memset (bigbuf, 0, len + 10);
@@ -85,35 +90,36 @@ mom_debugprintf_at (enum mom_debug_en dbg, const char *fil, int lin, const char*
 	  msg = bigbuf;
 	}
     }
-  else msg = buf;
-  syslog(LOG_DEBUG,  "MONIMELT DEBUG %s <%s> @%s:%d %s %s",
-	 dbg_level_mom(dbg), thrname,
-	 fil, lin, timbuf, msg);
-  if (bigbuf) free(bigbuf);
+  else
+    msg = buf;
+  syslog (LOG_DEBUG, "MONIMELT DEBUG %s <%s> @%s:%d %s %s",
+	  dbg_level_mom (dbg), thrname, fil, lin, timbuf, msg);
+  if (bigbuf)
+    free (bigbuf);
 }
 
 void
-mom_fataprintf_at (const char *fil, int lin, const char*fmt, ...)
+mom_fataprintf_at (const char *fil, int lin, const char *fmt, ...)
 {
   int len = 0;
   char thrname[24];
   char buf[128];
   char timbuf[64];
   char *bigbuf = NULL;
-  char*msg = NULL;
+  char *msg = NULL;
   int err = errno;
   memset (buf, 0, sizeof (buf));
   memset (thrname, 0, sizeof (thrname));
-  memset (timbuf, 0, sizeof(timbuf));
+  memset (timbuf, 0, sizeof (timbuf));
   pthread_getname_np (pthread_self (), thrname, sizeof (thrname) - 1);
-  mom_now_strftime_bufcenti(timbuf,"%Y-%b-%d %H:%M:%S.__ %Z");
+  mom_now_strftime_bufcenti (timbuf, "%Y-%b-%d %H:%M:%S.__ %Z");
   va_list alist;
   va_start (alist, fmt);
   len = vsnprintf (buf, sizeof (buf), fmt, alist);
   va_end (alist);
   if (MOM_UNLIKELY (len >= sizeof (buf) - 1))
     {
-      char* bigbuf = malloc (len + 10);
+      char *bigbuf = malloc (len + 10);
       if (bigbuf)
 	{
 	  memset (bigbuf, 0, len + 10);
@@ -123,15 +129,17 @@ mom_fataprintf_at (const char *fil, int lin, const char*fmt, ...)
 	  msg = bigbuf;
 	}
     }
-  else msg = buf;
+  else
+    msg = buf;
   if (err)
     syslog (LOG_ALERT, "MONIMELT FATAL @%s:%d <%s:%d> %s %s (%s)",
-	    fil, lin, thrname, (int)mom_gettid(), timbuf, bigbuf ? bigbuf : buf,
-	    strerror (err));
+	    fil, lin, thrname, (int) mom_gettid (), timbuf,
+	    bigbuf ? bigbuf : buf, strerror (err));
   else
     syslog (LOG_ALERT, "MONIMELT FATAL @%s:%d <%s:%d> %s %s",
-	    fil, lin, thrname,(int)mom_gettid(),  timbuf, bigbuf ? bigbuf : buf);
-  abort();
+	    fil, lin, thrname, (int) mom_gettid (), timbuf,
+	    bigbuf ? bigbuf : buf);
+  abort ();
 }
 
 
@@ -153,8 +161,8 @@ static void
 logexit_cb_mom (void)
 {
   char timbuf[64];
-  memset(timbuf, 0, sizeof(timbuf));
-  mom_now_strftime_bufcenti(timbuf,"%Y-%b-%d %H:%M:%S.__ %Z");
+  memset (timbuf, 0, sizeof (timbuf));
+  mom_now_strftime_bufcenti (timbuf, "%Y-%b-%d %H:%M:%S.__ %Z");
   syslog (LOG_INFO, "MONIMELT exiting at %s", timbuf);
 }
 
@@ -185,7 +193,7 @@ checked_gc_calloc (gsize nblock, gsize bsize)
   void *p = GC_MALLOC (nblock * bsize);	// leave that GC_MALLOC
   if (MOM_UNLIKELY (!p && nblock > 0 && bsize > 0))
     MOM_FATAPRINTF ("failed to GC calloc %ld blocks of %ld bytes",
-	       (long) nblock, (long) bsize);
+		    (long) nblock, (long) bsize);
   memset (p, 0, nblock * bsize);
   return p;
 }
@@ -205,7 +213,8 @@ memory_failure_onion_mom (const char *msg)
   MOM_FATAPRINTF ("memory failure: %s", msg);
 }
 
-int main(int argc, char**argv)
+int
+main (int argc, char **argv)
 {
   bool daemonize_me = false;
   GC_INIT ();
@@ -222,15 +231,14 @@ int main(int argc, char**argv)
      GC_pthread_cancel,
      GC_pthread_detach, GC_pthread_exit, GC_pthread_sigmask);
   openlog ("monimelt",
-	   LOG_PID | LOG_CONS | (daemonize_me ? 0 : LOG_PERROR),
-	   LOG_LOCAL2);
+	   LOG_PID | LOG_CONS | (daemonize_me ? 0 : LOG_PERROR), LOG_LOCAL2);
   {
     char hnam[64];
     char timbuf[64];
-    memset(timbuf, 0, sizeof(timbuf));
-    memset (hnam, 0, sizeof(hnam));
-    gethostname(hnam, sizeof(hnam)-1);
-    mom_now_strftime_bufcenti(timbuf,"%Y-%b-%d %H:%M:%S.__ %Z");
+    memset (timbuf, 0, sizeof (timbuf));
+    memset (hnam, 0, sizeof (hnam));
+    gethostname (hnam, sizeof (hnam) - 1);
+    mom_now_strftime_bufcenti (timbuf, "%Y-%b-%d %H:%M:%S.__ %Z");
     syslog (LOG_INFO, "MONIMELT starting on %s at %s in %s",
 	    hnam, timbuf, get_current_dir_name ());
     atexit (logexit_cb_mom);

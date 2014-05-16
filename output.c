@@ -24,17 +24,18 @@ static pthread_mutex_t diag_mtx_mom = PTHREAD_MUTEX_INITIALIZER;
 
 
 
-void mom_out_at (const char*sfil, int lin, FILE* out, ...)
+void
+mom_out_at (const char *sfil, int lin, FILE * out, ...)
 {
   va_list alist;
   va_start (alist, out);
-  mom_outva_at (sfil,lin,out,alist);
+  mom_outva_at (sfil, lin, out, alist);
   va_end (alist);
 }
 
 void
-mom_outva_at(const char*sfil, int lin, FILE* out, va_list alist)
+mom_outva_at (const char *sfil, int lin, FILE * out, va_list alist)
 {
 #warning mom_outva_at unimplemented
-  MOM_FATAPRINTF("unimplemented mom_outva_at from %s:%d", sfil, lin);
+  MOM_FATAPRINTF ("unimplemented mom_outva_at from %s:%d", sfil, lin);
 }

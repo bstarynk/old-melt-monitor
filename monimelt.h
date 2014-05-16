@@ -121,7 +121,8 @@ mom_clock_time (clockid_t cid)
 
 
 // call strftime on ti, but replace .__ with centiseconds for ti
-char* mom_strftime_centi (char*buf, size_t len, const char*fmt, double ti) __attribute__((format(strftime,3,0)));
+char *mom_strftime_centi (char *buf, size_t len, const char *fmt, double ti)
+  __attribute__ ((format (strftime, 3, 0)));
 #define mom_now_strftime_centi(Buf,Len,Fmt) mom_strftime_centi((Buf),(Len),(Fmt),mom_clock_time(CLOCK_REALTIME))
 #define mom_now_strftime_bufcenti(Buf,Fmt) mom_now_strftime_centi(Buf,sizeof(Buf),(Fmt))
 // return the elapsed real time since start of process
@@ -177,17 +178,18 @@ typedef struct momseqitem_st momtuple_t;
 typedef struct momnode_st momnode_t;
 typedef struct momassoc_st momassoc_t;
 typedef struct momitem_st momitem_t;
-union momvalueptr_un {
-  void* ptr;
-  const momtynum_t* ptype;
-  const momint_t* pint;
-  const momfloat_t* pfloat;
-  const momstring_t* pstring;
-  const momset_t* pset;
-  const momtuple_t*ptuple;
-  const momnode_t*pnode;
-  const momassoc_t*passoc;
-  momitem_t*pitem;
+union momvalueptr_un
+{
+  void *ptr;
+  const momtynum_t *ptype;
+  const momint_t *pint;
+  const momfloat_t *pfloat;
+  const momstring_t *pstring;
+  const momset_t *pset;
+  const momtuple_t *ptuple;
+  const momnode_t *pnode;
+  const momassoc_t *passoc;
+  momitem_t *pitem;
 };
 
 
@@ -213,7 +215,8 @@ unsigned mom_debugflags;
 #define MOM_IS_DEBUGGING(Dbg) (mom_debugflags & (1<<momdbg_##Dbg))
 
 void
-mom_debug_at (enum mom_debug_en dbg, const char *fil, int lin, ...) __attribute__ ((sentinel));
+mom_debug_at (enum mom_debug_en dbg, const char *fil, int lin, ...)
+__attribute__ ((sentinel));
 
 #define MOM_DEBUG_AT(Dbg,Fil,Lin,Fmt,...) do {	\
     if (MOM_IS_DEBUGGING(Dbg))			\
@@ -232,8 +235,9 @@ mom_debug_at (enum mom_debug_en dbg, const char *fil, int lin, ...) __attribute_
 
 
 void
-mom_debugprintf_at (enum mom_debug_en dbg, const char *fil, int lin, const char*fmt, ...)
-  __attribute__ ((format (printf,4, 5)));
+mom_debugprintf_at (enum mom_debug_en dbg, const char *fil, int lin,
+		    const char *fmt, ...)
+__attribute__ ((format (printf, 4, 5)));
 
 #define MOM_DEBUGPRINTF_AT(Dbg,Fil,Lin,Fmt,...) do {	\
     if (MOM_IS_DEBUGGING(Dbg))				\
@@ -269,8 +273,8 @@ mom_warning_at (const char *fil, int lin, ...) __attribute__ ((sentinel));
 
 
 void
-mom_warnprintf_at (const char *fil, int lin, const char*fmt, ...)
-  __attribute__ ((format (printf,3, 4)));
+mom_warnprintf_at (const char *fil, int lin, const char *fmt, ...)
+__attribute__ ((format (printf, 3, 4)));
 
 #define MOM_WARNPRINTF_AT(Fil,Lin,Fmt,...) do {	\
       mom_warnprintf_at (Fil,Lin,Fmt,		\
@@ -287,8 +291,7 @@ mom_warnprintf_at (const char *fil, int lin, const char*fmt, ...)
 
 
 
-void
-mom_fatal_at (const char *fil, int lin, ...) __attribute__ ((sentinel));
+void mom_fatal_at (const char *fil, int lin, ...) __attribute__ ((sentinel));
 
 #define MOM_FATAL_AT(Fil,Lin,Fmt,...) do {	\
       mom_fatal_at (Fil,Lin,Fmt,		\
@@ -306,8 +309,8 @@ mom_fatal_at (const char *fil, int lin, ...) __attribute__ ((sentinel));
 
 
 void
-mom_fataprintf_at (const char *fil, int lin, const char*fmt, ...)
-  __attribute__ ((format (printf,3, 4)));
+mom_fataprintf_at (const char *fil, int lin, const char *fmt, ...)
+__attribute__ ((format (printf, 3, 4)));
 
 #define MOM_FATAPRINTF_AT(Fil,Lin,Fmt,...) do {	\
       mom_fataprintf_at (Fil,Lin,Fmt,		\
@@ -324,8 +327,9 @@ mom_fataprintf_at (const char *fil, int lin, const char*fmt, ...)
 
 
 
-void mom_out_at (const char*sfil, int lin, FILE* out, ...) __attribute__ ((sentinel));
-void mom_outva_at(const char*sfil, int lin, FILE*out, va_list alist);
+void mom_out_at (const char *sfil, int lin, FILE * out, ...)
+  __attribute__ ((sentinel));
+void mom_outva_at (const char *sfil, int lin, FILE * out, va_list alist);
 #define MOM_OUT_AT_BIS(Fil,Lin,Out,...) mom_out_at(Fil,Lin,Out,##__VA_ARGS__,NULL)
 #define MOM_OUT_AT(Fil,Lin,Out,...) MOM_OUT_AT_BIS(Fil,Lin,Out,...)
 #define MOM_OUT(Out,...) MOM_OUT_AT(__FILE__,__LINE__,Out,##__VA_ARGS__)
@@ -336,20 +340,21 @@ void mom_outva_at(const char*sfil, int lin, FILE*out, va_list alist);
 #define MOM_REQUIRES_TYPE_AT_BIS(Lin,V,Typ,Else) MOM_REQUIRES_TYPE_AT(Lin,V,Typ,Else)
 #define MOM_REQUIRES_TYPE(V,Typ,Else) MOM_REQUIRES_TYPE_AT_BIS(__LINE__,(V),Typ,Else)
 
-enum momoutdir_en {
+enum momoutdir_en
+{
   MOMOUTDO__END = 0,
   ///
   /// literal strings
-  MOMOUTDO_LITERAL /*, const char*literalstring */,
+  MOMOUTDO_LITERAL /*, const char*literalstring */ ,
 #define MOMOUT_LITERAL(S) MOMOUTDO_LITERAL, MOM_REQUIRES_TYPE(S,const char*,mombad_literal)
   ///
   /// HTML encoded strings
-  MOMOUTDO_HTML/*, const char*htmlstring */,
+  MOMOUTDO_HTML /*, const char*htmlstring */ ,
 #define MOMOUT_HTML(S) MOMOUTDO_HTML, MOM_REQUIRES_TYPE(S,const char*,mombad_html)
   ///
 };
 
-extern const char* mombad_literal;
-extern const char*mombad_html;
+extern const char *mombad_literal;
+extern const char *mombad_html;
 
-#endif /*MONIMELT_INCLUDED_*/
+#endif /*MONIMELT_INCLUDED_ */
