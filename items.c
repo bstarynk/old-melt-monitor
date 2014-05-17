@@ -40,6 +40,8 @@ static struct
 static int64_t nb_creation_items_mom;
 static int64_t nb_destruction_items_mom;
 
+static void finalize_item_mom (void *itmad, void *data);
+
 void
 mom_initialize_items (void)
 {
@@ -53,6 +55,19 @@ mom_initialize_items (void)
   buckets_mom.itbuck_size = inibuck;
 }
 
+
+static struct itembucket_mom_st *
+find_bucket_for_idstr_mom (const momstring_t * idstr)
+{
+  if (!idstr || idstr->typnum != momty_string
+      || idstr->slen != MOM_IDSTRING_LEN
+      || idstr->cstr[0] != '_' || !isdigit (idstr->cstr[1]))
+    return NULL;
+  momhash_t h = idstr->hash;
+  unsigned bix = h % buckets_mom.itbuck_size;
+  struct itembucket_mom_st *curbuck = buckets_mom.itbuck_arr[bix];
+  return curbuck;
+}
 
 // return true if item is added
 static bool
@@ -231,6 +246,8 @@ mom_make_item (void)
     MOM_FATAPRINTF ("failed to allocate item");
   memset (newitm, 0, sizeof (momitem_t));
   const momstring_t *ids = mom_make_random_idstr ();
+  assert (ids && ids->typnum == momty_string
+	  && ids->slen == MOM_IDSTRING_LEN);
   momhash_t h = ids->hash;
   assert (h != 0);
   pthread_mutex_init (&newitm->i_mtx, &mom_recursive_mutex_attr);
@@ -244,11 +261,157 @@ mom_make_item (void)
 		    || buckets_mom.itbuck_size * (3 *
 						  PREFERRED_BUCKET_SIZE_MOM) >
 		    2 * buckets_mom.itbuck_nbitems))
-    reorganize_items_mom (15);
+    reorganize_items_mom (15 +
+			  buckets_mom.itbuck_nbitems / (8 *
+							PREFERRED_BUCKET_SIZE_MOM));
   if (MOM_UNLIKELY (!add_item_mom (newitm)))
     MOM_FATAPRINTF ("failed to add new item @%p", newitm);
+  // see
+  // http://www.hpl.hp.com/hosted/linux/mail-archives/gc/2009-June/002786.html
+  GC_REGISTER_FINALIZER (newitm, finalize_item_mom, NULL, NULL, NULL);
   goto end;
 end:
   pthread_mutex_unlock (&globitem_mtx_mom);
   return newitm;
+}
+
+
+momitem_t *
+mom_make_item_of_ident (const momstring_t * idstr)
+{
+  momitem_t *itm = NULL;
+  if (!idstr || idstr->typnum != momty_string
+      || idstr->slen != MOM_IDSTRING_LEN)
+    return NULL;
+  {
+    const char *end = NULL;
+    if (!mom_looks_like_random_id_cstr (idstr->cstr, &end) || !end || *end)
+      return NULL;
+  }
+  momhash_t idh = idstr->hash;
+  pthread_mutex_lock (&globitem_mtx_mom);
+  {
+    struct itembucket_mom_st *curbuck = find_bucket_for_idstr_mom (idstr);
+    if (curbuck)
+      {
+	unsigned bsiz = curbuck->buck_size;
+	for (unsigned bix = 0; bix < bsiz; bix++)
+	  {
+	    const momitem_t *curitm = curbuck->buck_items[bix];
+	    if (!curitm)
+	      continue;
+	    if (curitm->i_hash == idh
+		&& !memcmp (idstr->cstr, curitm->i_idstr->cstr,
+			    MOM_IDSTRING_LEN))
+	      {
+		itm = (momitem_t *) curitm;
+		goto end;
+	      }
+	  }
+      }
+  }
+  itm = GC_MALLOC (sizeof (momitem_t));
+  if (MOM_UNLIKELY (!itm))
+    MOM_FATAPRINTF ("failed to allocate item of ident %s", idstr->cstr);
+  memset (itm, 0, sizeof (momitem_t));
+  pthread_mutex_init (&itm->i_mtx, &mom_recursive_mutex_attr);
+  *(momtynum_t *) (&itm->i_typnum) = momty_item;
+  *(momhash_t *) (&itm->i_hash) = idh;
+  *(momstring_t **) (&itm->i_idstr) = (momstring_t *) idstr;
+  *(unsigned *) (&itm->i_magic) = MOM_ITEM_MAGIC;
+  nb_creation_items_mom++;
+  if (MOM_UNLIKELY (nb_creation_items_mom % REORGANIZE_ITEM_PERIOD_MOM == 0
+		    || buckets_mom.itbuck_size * (3 *
+						  PREFERRED_BUCKET_SIZE_MOM) >
+		    2 * buckets_mom.itbuck_nbitems))
+    reorganize_items_mom (15 +
+			  buckets_mom.itbuck_nbitems / (8 *
+							PREFERRED_BUCKET_SIZE_MOM));
+  if (MOM_UNLIKELY (!add_item_mom (itm)))
+    MOM_FATAPRINTF ("failed to add new item @%p", itm);
+  // see
+  // http://www.hpl.hp.com/hosted/linux/mail-archives/gc/2009-June/002786.html
+  GC_REGISTER_FINALIZER (itm, finalize_item_mom, NULL, NULL, NULL);
+end:
+  pthread_mutex_unlock (&globitem_mtx_mom);
+  return itm;
+}
+
+momitem_t *
+mom_make_item_of_identcstr (const char *idstr)
+{
+  if (!idstr || idstr[0] != '_')
+    return NULL;
+  {
+    const char *end = NULL;
+    if (!mom_looks_like_random_id_cstr (idstr, &end) || !end || *end)
+      return NULL;
+  }
+  return mom_make_item_of_ident (mom_make_string (idstr));
+}
+
+
+momitem_t *
+mom_get_item_of_ident (const momstring_t * idstr)
+{
+  momitem_t *itm = NULL;
+  if (!idstr || idstr->typnum != momty_string
+      || idstr->slen != MOM_IDSTRING_LEN)
+    return NULL;
+  {
+    const char *end = NULL;
+    if (!mom_looks_like_random_id_cstr (idstr->cstr, &end) || !end || *end)
+      return NULL;
+  }
+  momhash_t idh = idstr->hash;
+  pthread_mutex_lock (&globitem_mtx_mom);
+  {
+    struct itembucket_mom_st *curbuck = find_bucket_for_idstr_mom (idstr);
+    if (curbuck)
+      {
+	unsigned bsiz = curbuck->buck_size;
+	for (unsigned bix = 0; bix < bsiz; bix++)
+	  {
+	    const momitem_t *curitm = curbuck->buck_items[bix];
+	    if (!curitm)
+	      continue;
+	    if (curitm->i_hash == idh
+		&& !memcmp (idstr->cstr, curitm->i_idstr->cstr,
+			    MOM_IDSTRING_LEN))
+	      {
+		itm = (momitem_t *) curitm;
+		goto end;
+	      }
+	  }
+      }
+  }
+end:
+  pthread_mutex_unlock (&globitem_mtx_mom);
+  return itm;
+}
+
+
+
+momitem_t *
+mom_get_item_of_identcstr (const char *idcstr)
+{
+  {
+    const char *end = NULL;
+    if (!mom_looks_like_random_id_cstr (idcstr, &end) || !end || *end)
+      return NULL;
+  }
+  return mom_get_item_of_ident (mom_make_string (idcstr));
+}
+
+
+
+static void
+finalize_item_mom (void *itmad, void *data)
+{
+  momitem_t *itm = (momitem_t *) itmad;
+  assert (itm->i_typnum == momty_item && itm->i_magic == MOM_ITEM_MAGIC);
+  pthread_mutex_destroy (&itm->i_mtx);
+  pthread_mutex_lock (&globitem_mtx_mom);
+  nb_destruction_items_mom++;
+  pthread_mutex_unlock (&globitem_mtx_mom);
 }
