@@ -165,6 +165,8 @@ enum momvaltype_en
   momty_int,
   momty_float,
   momty_string,
+  momty_jsonarray,
+  momty_jsonobject,
   momty_set,
   momty_tuple,
   momty_node,
@@ -195,6 +197,7 @@ union momvalueptr_un
   const momnode_t *pnode;
   const momassoc_t *passoc;
   momitem_t *pitem;
+  const momitem_t *pitemk;
 };
 typedef union momvalueptr_un momval_t;
 
@@ -217,6 +220,7 @@ const momstring_t *mom_make_random_idstr ();
 // the ending character should not be alphanumerical but it might be _
 // and is stored in *pend if pend non-null.
 bool mom_looks_like_random_id_cstr (const char *s, const char **pend);
+#define MOM_IDSTRING_LEN 24
 static inline bool
 mom_is_string (momval_t v)
 {
@@ -235,6 +239,74 @@ mom_string_cstr (momval_t v)
   return (v.ptr
 	  && v.pstring->typnum == momty_string) ? (v.pstring->cstr) : NULL;
 }
+
+////////////////////////////////////////////////////////////////
+/////////// ITEMS
+////////////////////////////////////////////////////////////////
+struct mom_attrentry_st
+{
+  momitem_t *aten_itm;
+  momval_t aten_val;
+};
+
+struct mom_itemattributes_st
+{
+  momusize_t nbattr;
+  momusize_t size;
+  struct mom_attrentry_st itattrtab[];	/* of size entries */
+};
+#define MOM_ITEM_MAGIC 0x5ce6881	/* mom item magic 97413249 */
+struct momitem_st
+{
+  const momtynum_t i_typnum;	/* always momty_item */
+  const unsigned i_magic;	/* always MOM_ITEM_MAGIC */
+  const momhash_t i_hash;	/* same as i_idstr->hash */
+  const momstring_t *i_idstr;	/* id string */
+  pthread_mutex_t i_mtx;
+  struct mom_itemattributes_st *i_attrs;
+  momval_t i_content;
+};
+
+static inline bool
+mom_is_item (momval_t v)
+{
+  return (v.ptr && v.pitem->i_typnum == momty_item
+	  && v.pitem->i_magic == MOM_ITEM_MAGIC);
+}
+
+static inline int
+mom_item_cmp (const momitem_t * itm1, const momitem_t * itm2)
+{
+  if (itm1 == itm2)
+    return 0;
+  if (!mom_is_item ((momval_t) itm1))
+    return -1;
+  if (!mom_is_item ((momval_t) itm2))
+    return 1;
+  const momstring_t *ids1 = itm1->i_idstr;
+  const momstring_t *ids2 = itm2->i_idstr;
+  assert (ids1 && ids1->typnum == momty_string
+	  && ids1->slen == MOM_IDSTRING_LEN);
+  assert (ids2 && ids2->typnum == momty_string
+	  && ids2->slen == MOM_IDSTRING_LEN);
+  int cmp = memcmp (ids1->cstr, ids2->cstr, MOM_IDSTRING_LEN);
+  assert (cmp != 0);		// only identical items should have equal idstr
+  return cmp;
+}
+
+// make a new item
+momitem_t *mom_make_item (void);
+
+// make or get an item of given idstr or else -when bad idstr- NULL
+momitem_t *mom_make_item_of_ident (const momstring_t * idstr);
+// make or get an item of given idstr or else -when bad idcstr- NULL
+momitem_t *mom_make_item_of_identcstr (const char *idcstr);
+
+// get an item of given idstr or else NULL
+momitem_t *mom_get_item_of_ident (const momstring_t * idstr);
+// get an item of given idstr or else NULL
+momitem_t *mom_get_item_of_identcstr (const char *idcstr);
+
 
 ////////////////////////////////////////////////////////////////
 /////////// DIAGNOSTICS

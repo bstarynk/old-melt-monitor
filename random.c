@@ -199,8 +199,6 @@ mom_make_random_idstr (void)
     r3 / NBRANDCHARS_MOM;
   (resbuf[23] = RANDCHARS_MOM[r3 % NBRANDCHARS_MOM]), r3 =
     r3 / NBRANDCHARS_MOM;
-  (resbuf[24] = RANDCHARS_MOM[r3 % NBRANDCHARS_MOM]), r3 =
-    r3 / NBRANDCHARS_MOM;
   pthread_mutex_unlock (&mtx_random_mom);
   return mom_make_string (resbuf);
 }
@@ -262,12 +260,10 @@ mom_looks_like_random_id_cstr (const char *s, const char **pend)
     return false;
   if (!CHECKRANDCHAR (s[23]))
     return false;
-  if (!CHECKRANDCHAR (s[24]))
-    return false;
-  if (isalnum (s[25]))
+  if (isalnum (s[24]))
     return false;
   if (pend)
-    *pend = s + 27;
+    *pend = s + 24;
   return true;
 #undef CHECKRANDCHAR
 }

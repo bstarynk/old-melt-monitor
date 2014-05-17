@@ -427,6 +427,7 @@ main (int argc, char **argv)
      GC_pthread_join,
      GC_pthread_cancel,
      GC_pthread_detach, GC_pthread_exit, GC_pthread_sigmask);
+  //// initialize logging
   openlog ("monimelt",
 	   LOG_PID | LOG_CONS | (daemonize_me ? 0 : LOG_PERROR), LOG_LOCAL2);
   {
@@ -442,17 +443,12 @@ main (int argc, char **argv)
 	    monimelt_lastgitcommit);
     atexit (logexit_cb_mom);
   }
-  ///
+  //// initialize items
   {
-    const momstring_t *rs = mom_make_random_idstr ();
-    MOM_INFORMPRINTF ("rs@%p random idstr %s hash %u looks %s",
-		      (void *) rs, mom_string_cstr ((momval_t) rs),
-		      mom_string_hash ((momval_t) rs),
-		      mom_looks_like_random_id_cstr (mom_string_cstr
-						     ((momval_t) rs),
-						     NULL) ? "good" :
-		      "strange");
+    extern void mom_initialize_items (void);
+    mom_initialize_items ();
   }
+  ///
 
   ///
   return 0;
