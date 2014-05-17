@@ -40,6 +40,19 @@ static struct
 static int64_t nb_creation_items_mom;
 static int64_t nb_destruction_items_mom;
 
+struct dictent_mom_st
+{
+  const momstring_t *dicent_name;
+  momitem_t *dicent_item;
+};
+
+static struct
+{
+  unsigned dict_size;
+  unsigned dict_count;
+  struct dictent_mom_st *dict_array;
+} dict_mom;
+
 static void finalize_item_mom (void *itmad, void *data);
 
 void
@@ -49,10 +62,16 @@ mom_initialize_items (void)
   buckets_mom.itbuck_arr =
     GC_MALLOC (inibuck * sizeof (struct itembucket_mom_st *));
   if (!buckets_mom.itbuck_arr)
-    MOM_FATAPRINTF ("failed to create %d buckets", inibuck);
+    MOM_FATAPRINTF ("failed to create %d buckets for items", inibuck);
   memset (buckets_mom.itbuck_arr, 0,
 	  inibuck * sizeof (struct itembucket_mom_st *));
   buckets_mom.itbuck_size = inibuck;
+  const unsigned inidict = 32;
+  dict_mom.dict_array = GC_MALLOC (inidict * sizeof (struct dictent_mom_st));
+  if (!dict_mom.dict_array)
+    MOM_FATAPRINTF ("failed to create dictionnary of %d", inidict);
+  memset (dict_mom.dict_array, 0, inidict * sizeof (struct dictent_mom_st));
+  dict_mom.dict_size = inidict;
 }
 
 
@@ -414,4 +433,237 @@ finalize_item_mom (void *itmad, void *data)
   pthread_mutex_lock (&globitem_mtx_mom);
   nb_destruction_items_mom++;
   pthread_mutex_unlock (&globitem_mtx_mom);
+}
+
+
+#warning dictionnary routines are missing
+
+// return the index of a given string, or -1 if not found
+static int
+index_dict_mom (const char *namcstr, momhash_t namh)
+{
+  if (!namcstr || !namcstr[0])
+    return -1;
+  if (!namh)
+    namh = mom_cstring_hash (namcstr);
+  unsigned dsize = dict_mom.dict_size;
+  struct dictent_mom_st *darr = dict_mom.dict_array;
+  unsigned istart = namh / dsize;
+  for (unsigned i = istart; i < dsize; i++)
+    {
+      const momstring_t *curnam = darr[i].dicent_name;
+      if ((void *) curnam == MOM_EMPTY
+	  || (void *) darr[i].dicent_item == MOM_EMPTY)
+	continue;
+      if (!curnam)
+	return -1;
+      if (curnam->hash == namh && !strcmp (curnam->cstr, namcstr))
+	return i;
+    }
+  for (unsigned i = 0; i < istart; i++)
+    {
+      const momstring_t *curnam = darr[i].dicent_name;
+      if ((void *) curnam == MOM_EMPTY
+	  || (void *) darr[i].dicent_item == MOM_EMPTY)
+	continue;
+      if (!curnam)
+	return -1;
+      if (curnam->hash == namh && !strcmp (curnam->cstr, namcstr))
+	return i;
+    }
+  return -1;
+}
+
+static int
+add_dict_mom (const momstring_t * nam, const momitem_t * itm)
+{
+  if (!nam || !itm || nam->typnum != momty_string || nam->slen == 0
+      || itm->i_typnum != momty_item)
+    return -1;
+  momhash_t h = nam->hash;
+  assert (h != 0);
+  unsigned dsize = dict_mom.dict_size;
+  struct dictent_mom_st *darr = dict_mom.dict_array;
+  assert (dict_mom.dict_count + 1 < dsize);
+  unsigned istart = h / dsize;
+  int pos = -1;
+  for (unsigned i = istart; i < dsize; i++)
+    {
+      const momstring_t *curnam = darr[i].dicent_name;
+      if ((void *) curnam == MOM_EMPTY
+	  || (void *) darr[i].dicent_item == MOM_EMPTY)
+	{
+	  if (pos < 0)
+	    pos = i;
+	  continue;
+	}
+      if (!curnam)
+	{
+	  if (pos < 0)
+	    pos = i;
+	  break;
+	};
+      if (curnam->hash == h && !strcmp (curnam->cstr, nam->cstr))
+	return i;
+    }
+  for (unsigned i = 0; i < istart; i++)
+    {
+      const momstring_t *curnam = darr[i].dicent_name;
+      if ((void *) curnam == MOM_EMPTY
+	  || (void *) darr[i].dicent_item == MOM_EMPTY)
+	{
+	  if (pos < 0)
+	    pos = i;
+	  continue;
+	}
+      if (!curnam)
+	{
+	  if (pos < 0)
+	    pos = i;
+	  break;
+	};
+      if (curnam->hash == h && !strcmp (curnam->cstr, nam->cstr))
+	return i;
+    }
+  if (pos >= 0)
+    {
+      darr[pos].dicent_item = (momitem_t *) itm;
+      darr[pos].dicent_name = nam;
+      dict_mom.dict_count++;
+    }
+  return pos;
+}
+
+void
+reorganize_dict (unsigned more)
+{
+  unsigned oldsize = dict_mom.dict_size;
+  unsigned oldcnt = dict_mom.dict_count;
+  struct dictent_mom_st *oldarr = dict_mom.dict_array;
+  unsigned newsize = ((3 * oldcnt / 2 + more + 10) | 0x1f) + 1;
+  struct dictent_mom_st *newarr =
+    GC_MALLOC (newsize * sizeof (struct dictent_mom_st));
+  if (MOM_UNLIKELY (!newarr))
+    MOM_FATAPRINTF ("failed to grow dictionnary to %d", newsize);
+  memset (newarr, 0, newsize * sizeof (struct dictent_mom_st));
+  dict_mom.dict_size = newsize;
+  dict_mom.dict_count = 0;
+  dict_mom.dict_array = newarr;
+  for (unsigned i = 0; i < oldsize; i++)
+    {
+      const momstring_t *curnam = oldarr[i].dicent_name;
+      if (!curnam)
+	continue;
+      if ((void *) curnam == MOM_EMPTY)
+	continue;
+      const momitem_t *curitm = oldarr[i].dicent_item;
+      if (!curitm || (void *) curitm == MOM_EMPTY)
+	continue;
+      add_dict_mom (curnam, curitm);
+    }
+  assert (dict_mom.dict_count == oldcnt);
+  memset (oldarr, 0, oldsize * sizeof (struct dictent_mom_st));
+  GC_FREE (oldarr);
+}
+
+
+
+void
+mom_register_item_named (momitem_t * itm, const momstring_t * name)
+{
+  if (!itm || itm->i_typnum != momty_item || !name
+      || name->typnum != momty_string || isalpha (name->cstr[0]))
+    return;
+  unsigned nlen = name->slen;
+  for (unsigned cix = 0; cix < nlen; cix++)
+    if (!isalnum (name->cstr[cix]) && name->cstr[cix] != '_')
+      return;
+  pthread_mutex_lock (&globitem_mtx_mom);
+  if (5 * dict_mom.dict_count + 10 > 4 * dict_mom.dict_size)
+    reorganize_dict (dict_mom.dict_count / 8 + 2);
+  int nix = index_dict_mom (name->cstr, name->hash);
+  if (nix >= 0)
+    {
+      momitem_t *olditm = dict_mom.dict_array[nix].dicent_item;
+      assert (olditm && olditm != MOM_EMPTY
+	      && olditm->i_typnum == momty_item);
+      pthread_mutex_lock (&olditm->i_mtx);
+      assert (olditm->i_name == dict_mom.dict_array[nix].dicent_name);
+      olditm->i_name = NULL;
+      pthread_mutex_unlock (&olditm->i_mtx);
+      dict_mom.dict_array[nix].dicent_item = itm;
+    }
+  else
+    {
+      add_dict_mom (name, itm);
+    };
+  pthread_mutex_lock (&itm->i_mtx);
+  itm->i_name = name;
+  pthread_mutex_unlock (&itm->i_mtx);
+  pthread_mutex_unlock (&globitem_mtx_mom);
+}
+
+
+
+void
+mom_forget_name (const char *namestr)
+{
+  if (!namestr || !isalpha (namestr[0]))
+    return;
+  pthread_mutex_lock (&globitem_mtx_mom);
+  int nix = index_dict_mom (namestr, 0);
+  if (nix >= 0)
+    {
+      momitem_t *olditm = dict_mom.dict_array[nix].dicent_item;
+      assert (olditm && olditm != MOM_EMPTY
+	      && olditm->i_typnum == momty_item);
+      pthread_mutex_lock (&olditm->i_mtx);
+      assert (olditm->i_name == dict_mom.dict_array[nix].dicent_name);
+      olditm->i_name = NULL;
+      pthread_mutex_unlock (&olditm->i_mtx);
+      dict_mom.dict_count--;
+      if (dict_mom.dict_size > 100
+	  && 4 * dict_mom.dict_count < dict_mom.dict_size)
+	reorganize_dict (dict_mom.dict_count / 8 + 2);
+    }
+  pthread_mutex_unlock (&globitem_mtx_mom);
+}
+
+const momstring_t *
+mom_item_get_name (momitem_t * itm)
+{
+  const momstring_t *namev = NULL;
+  if (!itm || !itm->i_typnum == momty_item)
+    return NULL;
+  pthread_mutex_lock (&itm->i_mtx);
+  namev = itm->i_name;
+  pthread_mutex_unlock (&itm->i_mtx);
+  return namev;
+}
+
+const momstring_t *
+mom_item_get_idstr (momitem_t * itm)
+{
+  const momstring_t *idsv = NULL;
+  if (!itm || !itm->i_typnum == momty_item)
+    return NULL;
+  pthread_mutex_lock (&itm->i_mtx);
+  idsv = itm->i_idstr;
+  pthread_mutex_unlock (&itm->i_mtx);
+  return idsv;
+}
+
+
+const momstring_t *
+mom_item_get_name_or_idstr (momitem_t * itm)
+{
+  const momstring_t *strv = NULL;
+  if (!itm || !itm->i_typnum == momty_item)
+    return NULL;
+  pthread_mutex_lock (&itm->i_mtx);
+  strv = itm->i_name;
+  if (!strv)
+    strv = itm->i_idstr;
+  pthread_mutex_unlock (&itm->i_mtx);
+  return strv;
 }

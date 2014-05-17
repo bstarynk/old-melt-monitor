@@ -267,9 +267,12 @@ struct momitem_st
   const unsigned i_magic;	/* always MOM_ITEM_MAGIC */
   pthread_mutex_t i_mtx;
   const momstring_t *i_idstr;	/* id string */
+  const momstring_t *i_name;	/* name, or NULL */
   struct mom_itemattributes_st *i_attrs;
   momval_t i_content;
-#warning missing payload
+  uint16_t i_paylkind;
+  uint16_t i_paylxtra;
+  void *i_payload;
 };
 
 static inline bool
@@ -312,6 +315,34 @@ momitem_t *mom_get_item_of_ident (const momstring_t * idstr);
 // get an item of given idstr or else NULL
 momitem_t *mom_get_item_of_identcstr (const char *idcstr);
 
+// register an item with a given name
+void mom_register_item_named (momitem_t * itm, const momstring_t * name);
+static inline void
+mom_register_item_named_cstr (momitem_t * itm, const char *namestr)
+{
+  if (!itm || itm->i_typnum != momty_item || !namestr || !namestr[0])
+    return;
+  mom_register_item_named (itm, mom_make_string (namestr));
+}
+
+const momstring_t *mom_item_get_name (momitem_t * itm);
+const momstring_t *mom_item_get_idstr (momitem_t * itm);
+const momstring_t *mom_item_get_name_or_idstr (momitem_t * itm);
+
+void mom_forget_name (const char *namestr);
+
+static inline void
+mom_forget_name_string (const momstring_t * namev)
+{
+  if (namev && namev->typnum == momty_string)
+    mom_forget_name (namev->cstr);
+}
+
+static inline void
+mom_forget_item (momitem_t * itm)
+{
+  mom_forget_name (mom_string_cstr ((momval_t) mom_item_get_name (itm)));
+};
 
 ////////////////////////////////////////////////////////////////
 /////////// DIAGNOSTICS
