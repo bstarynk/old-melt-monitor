@@ -154,6 +154,11 @@ typedef uint16_t momspaceid_t;
 typedef uint32_t momhash_t;
 typedef uint32_t momusize_t;
 
+
+
+////////////////////////////////////////////////////////////////
+//////////////// TYPES AND VALUES
+////////////////////////////////////////////////////////////////
 enum momvaltype_en
 {
   momty_null = 0,
@@ -191,8 +196,49 @@ union momvalueptr_un
   const momassoc_t *passoc;
   momitem_t *pitem;
 };
+typedef union momvalueptr_un momval_t;
 
 
+#define MOM_MAX_STRING_LENGTH (1<<25)	/* max string length 33554432 */
+struct momstring_st
+{
+  momtynum_t typnum;
+  momusize_t slen;		/* length in bytes of cstr */
+  momhash_t hash;
+  char cstr[];			/* zero terminated */
+};
+
+momhash_t mom_cstring_hash (const char *str);
+// make a boxed UTF8 string
+const momstring_t *mom_make_string (const char *str);
+// make a random id string
+const momstring_t *mom_make_random_idstr ();
+// check that s points to a string looking like a random id string;
+// the ending character should not be alphanumerical but it might be _
+// and is stored in *pend if pend non-null.
+bool mom_looks_like_random_id_cstr (const char *s, const char **pend);
+static inline bool
+mom_is_string (momval_t v)
+{
+  return (v.ptr && v.pstring->typnum == momty_string);
+}
+
+static inline momhash_t
+mom_string_hash (momval_t v)
+{
+  return (v.ptr && v.pstring->typnum == momty_string) ? (v.pstring->hash) : 0;
+}
+
+static inline const char *
+mom_string_cstr (momval_t v)
+{
+  return (v.ptr
+	  && v.pstring->typnum == momty_string) ? (v.pstring->cstr) : NULL;
+}
+
+////////////////////////////////////////////////////////////////
+/////////// DIAGNOSTICS
+////////////////////////////////////////////////////////////////
 
 // for debugging:
 #define MOM_DEBUG_LIST_OPTIONS(Dbg)		\
@@ -266,7 +312,7 @@ mom_warning_at (const char *fil, int lin, ...) __attribute__ ((sentinel));
   MOM_WARNING_AT(Fil,Lin,Fmt,			\
 		    ##__VA_ARGS__)
 
-#define MOM_WARNING(Dbg,Fmt,...)		\
+#define MOM_WARNING(Fmt,...)		\
   MOM_WARNING_AT_BIS(__FILE__,__LINE__,Fmt,	\
 			##__VA_ARGS__)
 
@@ -325,6 +371,10 @@ __attribute__ ((format (printf, 3, 4)));
   MOM_FATAPRINTF_AT_BIS(__FILE__,__LINE__,Fmt,	\
 			##__VA_ARGS__)
 
+
+////////////////////////////////////////////////////////////////
+/////////// OUTPUT
+////////////////////////////////////////////////////////////////
 
 #define MOM_MOUT_MAGIC 0x41f67aa5	/* mom_out_magic 1106672293 */
 struct momout_st
