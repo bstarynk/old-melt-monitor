@@ -326,18 +326,26 @@ __attribute__ ((format (printf, 3, 4)));
 			##__VA_ARGS__)
 
 
-
-void mom_out_at (const char *sfil, int lin, int indent, FILE * out, ...)
+#define MOM_MOUT_MAGIC 0x41f67aa5	/* mom_out_magic 1106672293 */
+struct momout_st
+{
+  unsigned mout_magic;		/* always MOM_MOUT_MAGIC */
+  int mout_indent;
+  FILE *mout_file;
+  long mout_lastnl;		/* offset at last newline with MOMOUT_NEWLINE or MOMOUT_SPACE */
+};
+typedef struct momout_st momout_t;
+extern struct momout_st mom_stdout_data;
+extern struct momout_st mom_stderr_data;
+#define mom_stdout &mom_stdout_data
+#define mom_stderr &mom_stderr_data
+void mom_out_at (const char *sfil, int lin, momout_t * pout, ...)
   __attribute__ ((sentinel));
-void mom_outva_at (const char *sfil, int lin, int indent, FILE * out,
-		   va_list alist);
-#define MOM_OUT_AT_BIS(Fil,Lin,Out,...) mom_out_at(Fil,Lin,0,Out,##__VA_ARGS__,NULL)
+void mom_outva_at (const char *sfil, int lin, momout_t * pout, va_list alist);
+#define MOM_OUT_AT_BIS(Fil,Lin,Out,...) mom_out_at(Fil,Lin,Out,##__VA_ARGS__,NULL)
 #define MOM_OUT_AT(Fil,Lin,Out,...) MOM_OUT_AT_BIS(Fil,Lin,Out,##__VA_ARGS__)
 #define MOM_OUT(Out,...) MOM_OUT_AT(__FILE__,__LINE__,Out,##__VA_ARGS__)
 
-#define MOM_OUTIND_AT_BIS(Fil,Lin,Ind,Out,...) mom_out_at(Fil,Lin,(Ind),Out,##__VA_ARGS__,NULL)
-#define MOM_OUTIND_AT(Fil,Lin,Ind,Out,...) MOM_OUTIND_AT_BIS(Fil,Lin,Ind,Out,##__VA_ARGS__)
-#define MOM_OUTIND(Out,Ind,...) MOM_OUTIND_AT(__FILE__,__LINE__,Out,(Ind),##__VA_ARGS__)
 
 #define MOM_REQUIRES_TYPE_AT(Lin,V,Typ,Else)				\
   (__builtin_choose_expr((__builtin_types_compatible_p(typeof(V),Typ)), \
@@ -390,7 +398,26 @@ enum momoutdir_en
   MOMOUTDO_FMT_LONG /*, const char*fmt, long l */ ,
 #define MOMOUT_FMT_LONG(F,L) MOMOUTDO_FMT_LONG,	\
   MOM_REQUIRES_TYPE(F,const char*,mombad_fmt) \
-    MOM_REQUIRES_TYPE(l,long,mombad_long)
+    MOM_REQUIRES_TYPE(L,long,mombad_long)
+  ///
+  /// format giving a format a long
+  MOMOUTDO_FMT_LONG_LONG /*, const char*fmt, long long l */ ,
+#define MOMOUT_FMT_LONG_LONG(F,L) MOMOUTDO_FMT_LONG_LONG,	\
+  MOM_REQUIRES_TYPE(F,const char*,mombad_fmt) \
+    MOM_REQUIRES_TYPE(L,long long,mombad_longlong)
+  ///
+  /// format giving a format an int
+  MOMOUTDO_FMT_INT /*, const char*fmt, long l */ ,
+#define MOMOUT_FMT_INT(F,L) MOMOUTDO_FMT_INT,	\
+  MOM_REQUIRES_TYPE(F,const char*,mombad_fmt) \
+    MOM_REQUIRES_TYPE(L,int,mombad_int)
+  ///
+  ///
+  /// format giving a format an unsigned
+  MOMOUTDO_FMT_UNSIGNED /*, const char*fmt, unsigned l */ ,
+#define MOMOUT_FMT_UNSIGNED(F,L) MOMOUTDO_FMT_UNSIGNED,	\
+  MOM_REQUIRES_TYPE(F,const char*,mombad_fmt) \
+    MOM_REQUIRES_TYPE(L,unsigned,mombad_unsigned)
   ///
   ///
   /// format a double as a time using mom_strftime_centi
@@ -415,8 +442,42 @@ enum momoutdir_en
 #define MOMOUT_JS_FILE(F) MOMOUTDO_JS_FILE, \
   MOM_REQUIRES_TYPE(F,FILE*,mombad_file),
   ///
-};
+  ///
+  /// increase indentation
+  MOMOUTDO_INDENT_MORE /* -no arguments-  */ ,
+#define MOMOUT_INDENT_MORE() MOMOUTDO_INDENT_MORE
+  ///
+  ///
+  /// decrease indentation
+  MOMOUTDO_INDENT_LESS /* -no arguments- */ ,
+#define MOMOUT_INDENT_LESS() MOMOUTDO_INDENT_LESS
+  ///
+  /// indented newline, at most 16 spaces
+  MOMOUTDO_NEWLINE /* -no arguments- */ ,
+#define MOMOUT_NEWLINE() MOMOUTDO_NEWLINE
+  ///
+  /// indented newline, at most 8 spaces
+  MOMOUTDO_SMALL_NEWLINE /* -no arguments- */ ,
+#define MOMOUT_SMALL_NEWLINE() MOMOUTDO_SMALL_NEWLINE
+  ///
+  /// output a space or an indented newline if the current line
+  /// exceeds a given threshold
+  MOMOUTDO_SPACE /*, unsigned threshold */ ,
+#define MOMOUT_SPACE(L) MOMOUTDO_SPACE,	\
+    MOM_REQUIRES_TYPE(L,int,mombad_space)
+  ///
+  ///
+  /// output a space or an indented small newline if the current line
+  /// exceeds a given threshold
+  MOMOUTDO_SMALL_SPACE /*, unsigned threshold */ ,
+#define MOMOUT_SMALL_SPACE(L) MOMOUTDO_SMALL_SPACE,	\
+    MOM_REQUIRES_TYPE(L,int,mombad_space)
+  ///
 
+};
+// declare but don't define them. Linker should complain if
+// referenced... which happens only with wrong MOMOUT_... macros
+// above.
 extern const char *mombad_literal;
 extern const char *mombad_html;
 extern const char *mombad_int;
@@ -424,6 +485,8 @@ extern const char *mombad_js;
 extern const char *mombad_fmt;
 extern const char *mombad_double;
 extern const char *mombad_long;
+extern const char *mombad_longlong;
 extern const char *mombad_file;
+extern const char *mombad_space;
 
 #endif /*MONIMELT_INCLUDED_ */

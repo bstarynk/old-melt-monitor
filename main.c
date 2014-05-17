@@ -20,6 +20,20 @@
 
 #include "monimelt.h"
 
+struct momout_st mom_stdout_data = {
+  .mout_magic = MOM_MOUT_MAGIC,
+  .mout_indent = 0,
+  .mout_file = NULL,
+  .mout_lastnl = 0
+};
+
+struct momout_st mom_stderr_data = {
+  .mout_magic = MOM_MOUT_MAGIC,
+  .mout_indent = 0,
+  .mout_file = NULL,
+  .mout_lastnl = 0
+};
+
 static const char *
 dbg_level_mom (enum mom_debug_en dbg)
 {
@@ -222,6 +236,8 @@ main (int argc, char **argv)
   pthread_setname_np (pthread_self (), "mom-main");
   g_mem_gc_friendly = TRUE;
   g_mem_set_vtable (&gc_mem_vtable_mom);
+  mom_stdout_data.mout_file = stdout;
+  mom_stderr_data.mout_file = stderr;
   onion_low_initialize_memory_allocation
     (GC_malloc,
      GC_malloc_atomic,

@@ -21,23 +21,27 @@
 #include "monimelt.h"
 
 
-
 void
-mom_out_at (const char *sfil, int lin, int indent, FILE * out, ...)
+mom_out_at (const char *sfil, int lin, momout_t * pout, ...)
 {
   va_list alist;
-  if (!sfil || !out)
+  if (!sfil || !pout)
     return;
-  va_start (alist, out);
-  mom_outva_at (sfil, lin, indent, out, alist);
+  va_start (alist, pout);
+  mom_outva_at (sfil, lin, pout, alist);
   va_end (alist);
 }
 
+
+
+#define SMALL_INDENT_MOM 8
+#define INDENT_MOM 16
 void
-mom_outva_at (const char *sfil, int lin, int indent, FILE * out,
-	      va_list alist)
+mom_outva_at (const char *sfil, int lin, momout_t * pout, va_list alist)
 {
   bool again = true;
+  assert (pout->mout_magic == MOM_MOUT_MAGIC);
+  FILE *out = pout->mout_file;
   while (again)
     {
       enum momoutdir_en dir = va_arg (alist, enum momoutdir_en);
@@ -203,6 +207,33 @@ mom_outva_at (const char *sfil, int lin, int indent, FILE * out,
 	  }
 	  break;
 	  ///
+	case MOMOUTDO_FMT_LONG_LONG:
+	  {
+	    const char *fmt = va_arg (alist, const char *);
+	    long ll = va_arg (alist, long long);
+	    assert (strchr (fmt, '%') == strrchr (fmt, '%'));
+	    fprintf (out, fmt, ll);
+	  }
+	  break;
+	  ///
+	case MOMOUTDO_FMT_INT:
+	  {
+	    const char *fmt = va_arg (alist, const char *);
+	    int i = va_arg (alist, int);
+	    assert (strchr (fmt, '%') == strrchr (fmt, '%'));
+	    fprintf (out, fmt, i);
+	  }
+	  break;
+	  ///
+	case MOMOUTDO_FMT_UNSIGNED:
+	  {
+	    const char *fmt = va_arg (alist, const char *);
+	    unsigned u = va_arg (alist, unsigned);
+	    assert (strchr (fmt, '%') == strrchr (fmt, '%'));
+	    fprintf (out, fmt, u);
+	  }
+	  break;
+	  ///
 	case MOMOUTDO_VERBATIM_FILE:
 	  {
 	    FILE *cfil = va_arg (alist, FILE *);
@@ -231,7 +262,7 @@ mom_outva_at (const char *sfil, int lin, int indent, FILE * out,
 		    ssize_t linsiz = getline (&lin, &sz, cfil);
 		    if (linsiz < 0)
 		      break;
-		    MOM_OUT (out, MOMOUT_HTML ((const char *) lin));
+		    MOM_OUT (pout, MOMOUT_HTML ((const char *) lin));
 		  }
 		while (!feof (cfil));
 		free (lin);
@@ -252,7 +283,7 @@ mom_outva_at (const char *sfil, int lin, int indent, FILE * out,
 		    ssize_t linsiz = getline (&lin, &sz, cfil);
 		    if (linsiz < 0)
 		      break;
-		    MOM_OUT (out, MOMOUT_JS ((const char *) lin));
+		    MOM_OUT (pout, MOMOUT_JS ((const char *) lin));
 		  }
 		while (!feof (cfil));
 		free (lin);
@@ -260,6 +291,69 @@ mom_outva_at (const char *sfil, int lin, int indent, FILE * out,
 	  }
 	  break;
 	  ///
-	}
-    }
+	case MOMOUTDO_INDENT_MORE:
+	  {
+	    pout->mout_indent++;
+	  }
+	  break;
+	  ///
+	case MOMOUTDO_INDENT_LESS:
+	  {
+	    pout->mout_indent--;
+	  }
+	  break;
+	  ///
+	case MOMOUTDO_NEWLINE:
+	  {
+	    putc ('\n', out);
+	    pout->mout_lastnl = ftell (out);
+	    for (unsigned nsp = pout->mout_indent % INDENT_MOM; nsp > 0;
+		 nsp--)
+	      putc (' ', out);
+	  }
+	  break;
+	  ///
+	case MOMOUTDO_SMALL_NEWLINE:
+	  {
+	    putc ('\n', out);
+	    pout->mout_lastnl = ftell (out);
+	    for (unsigned nsp = pout->mout_indent % SMALL_INDENT_MOM; nsp > 0;
+		 nsp--)
+	      putc (' ', out);
+	  }
+	  break;
+	  ///
+	case MOMOUTDO_SPACE:
+	  {
+	    unsigned maxwl = va_arg (alist, unsigned);
+	    if (ftell (out) > pout->mout_lastnl + maxwl)
+	      {
+		putc ('\n', out);
+		pout->mout_lastnl = ftell (out);
+		for (unsigned nsp = pout->mout_indent % INDENT_MOM; nsp > 0;
+		     nsp--)
+		  putc (' ', out);
+	      }
+	    else
+	      putc (' ', out);
+	  }
+	  break;
+	  ///
+	case MOMOUTDO_SMALL_SPACE:
+	  {
+	    unsigned maxwl = va_arg (alist, unsigned);
+	    if (ftell (out) > pout->mout_lastnl + maxwl)
+	      {
+		putc ('\n', out);
+		pout->mout_lastnl = ftell (out);
+		for (unsigned nsp = pout->mout_indent % SMALL_INDENT_MOM;
+		     nsp > 0; nsp--)
+		  putc (' ', out);
+	      }
+	    else
+	      putc (' ', out);
+	  }
+	  break;
+	}			/// end switch dir
+    }				/// end while again
 }
