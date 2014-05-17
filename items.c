@@ -37,6 +37,9 @@ static struct
   struct itembucket_mom_st **itbuck_arr;
 } buckets_mom;
 
+static int64_t nb_creation_items_mom;
+static int64_t nb_destruction_items_mom;
+
 void
 mom_initialize_items (void)
 {
@@ -215,4 +218,37 @@ reorganize_items_mom (unsigned morebuckets)
     }
   memset (itemarr, 0, itemcount * sizeof (momitem_t *));
   GC_FREE (itemarr), itemarr = NULL;
+}
+
+
+#define REORGANIZE_ITEM_PERIOD_MOM 2048
+
+momitem_t *
+mom_make_item (void)
+{
+  momitem_t *newitm = GC_MALLOC (sizeof (momitem_t));
+  if (MOM_UNLIKELY (!newitm))
+    MOM_FATAPRINTF ("failed to allocate item");
+  memset (newitm, 0, sizeof (momitem_t));
+  const momstring_t *ids = mom_make_random_idstr ();
+  momhash_t h = ids->hash;
+  assert (h != 0);
+  pthread_mutex_init (&newitm->i_mtx, &mom_recursive_mutex_attr);
+  *(momtynum_t *) (&newitm->i_typnum) = momty_item;
+  *(momhash_t *) (&newitm->i_hash) = h;
+  *(momstring_t **) (&newitm->i_idstr) = (momstring_t *) ids;
+  *(unsigned *) (&newitm->i_magic) = MOM_ITEM_MAGIC;
+  pthread_mutex_lock (&globitem_mtx_mom);
+  nb_creation_items_mom++;
+  if (MOM_UNLIKELY (nb_creation_items_mom % REORGANIZE_ITEM_PERIOD_MOM == 0
+		    || buckets_mom.itbuck_size * (3 *
+						  PREFERRED_BUCKET_SIZE_MOM) >
+		    2 * buckets_mom.itbuck_nbitems))
+    reorganize_items_mom (15);
+  if (MOM_UNLIKELY (!add_item_mom (newitm)))
+    MOM_FATAPRINTF ("failed to add new item @%p", newitm);
+  goto end;
+end:
+  pthread_mutex_unlock (&globitem_mtx_mom);
+  return newitm;
 }

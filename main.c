@@ -408,6 +408,22 @@ memory_failure_onion_mom (const char *msg)
   MOM_FATAPRINTF ("memory failure: %s", msg);
 }
 
+
+static void
+initialize_mom (void)
+{
+  //// initialize items
+  {
+    extern void mom_initialize_items (void);
+    mom_initialize_items ();
+  }
+  pthread_mutexattr_init (&mom_normal_mutex_attr);
+  pthread_mutexattr_init (&mom_recursive_mutex_attr);
+  pthread_mutexattr_settype (&mom_normal_mutex_attr, PTHREAD_MUTEX_NORMAL);
+  pthread_mutexattr_settype (&mom_recursive_mutex_attr,
+			     PTHREAD_MUTEX_RECURSIVE);
+}
+
 int
 main (int argc, char **argv)
 {
@@ -443,13 +459,8 @@ main (int argc, char **argv)
 	    monimelt_lastgitcommit);
     atexit (logexit_cb_mom);
   }
-  //// initialize items
-  {
-    extern void mom_initialize_items (void);
-    mom_initialize_items ();
-  }
   ///
-
+  initialize_mom ();
   ///
   return 0;
 }

@@ -156,6 +156,9 @@ typedef uint32_t momusize_t;
 
 
 
+pthread_mutexattr_t mom_normal_mutex_attr;
+pthread_mutexattr_t mom_recursive_mutex_attr;
+
 ////////////////////////////////////////////////////////////////
 //////////////// TYPES AND VALUES
 ////////////////////////////////////////////////////////////////
@@ -259,12 +262,14 @@ struct mom_itemattributes_st
 struct momitem_st
 {
   const momtynum_t i_typnum;	/* always momty_item */
-  const unsigned i_magic;	/* always MOM_ITEM_MAGIC */
+  momspaceid_t i_space;
   const momhash_t i_hash;	/* same as i_idstr->hash */
-  const momstring_t *i_idstr;	/* id string */
+  const unsigned i_magic;	/* always MOM_ITEM_MAGIC */
   pthread_mutex_t i_mtx;
+  const momstring_t *i_idstr;	/* id string */
   struct mom_itemattributes_st *i_attrs;
   momval_t i_content;
+#warning missing payload
 };
 
 static inline bool
