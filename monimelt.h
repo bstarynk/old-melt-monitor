@@ -240,6 +240,8 @@ mom_string_cstr (momval_t v)
 /////////// DIAGNOSTICS
 ////////////////////////////////////////////////////////////////
 
+
+/************************* debugging *************************/
 // for debugging:
 #define MOM_DEBUG_LIST_OPTIONS(Dbg)		\
   Dbg(item)					\
@@ -300,6 +302,43 @@ __attribute__ ((format (printf, 4, 5)));
 			##__VA_ARGS__)
 
 
+/************************* inform *************************/
+void mom_inform_at (const char *fil, int lin, ...) __attribute__ ((sentinel));
+
+#define MOM_INFORM_AT(Fil,Lin,Fmt,...) do {	\
+      mom_inform_at (Fil,Lin,Fmt,	\
+		    ##__VA_ARGS__, NULL);	\
+  } while(0)
+
+#define MOM_INFORM_AT_BIS(Fil,Lin,Fmt,...)	\
+  MOM_INFORM_AT(Fil,Lin,Fmt,			\
+		    ##__VA_ARGS__)
+
+#define MOM_INFORM(Fmt,...)		\
+  MOM_INFORM_AT_BIS(__FILE__,__LINE__,Fmt,	\
+			##__VA_ARGS__)
+
+
+
+void
+mom_informprintf_at (const char *fil, int lin, const char *fmt, ...)
+__attribute__ ((format (printf, 3, 4)));
+
+#define MOM_INFORMPRINTF_AT(Fil,Lin,Fmt,...) do {	\
+      mom_informprintf_at (Fil,Lin,Fmt,		\
+		    ##__VA_ARGS__);		\
+  } while(0)
+
+#define MOM_INFORMPRINTF_AT_BIS(Fil,Lin,Fmt,...)	\
+  MOM_INFORMPRINTF_AT(Fil,Lin,Fmt,		\
+		    ##__VA_ARGS__)
+
+#define MOM_INFORMPRINTF(Fmt,...)			\
+  MOM_INFORMPRINTF_AT_BIS(__FILE__,__LINE__,Fmt,	\
+			##__VA_ARGS__)
+
+
+/************************* warning *************************/
 void
 mom_warning_at (const char *fil, int lin, ...) __attribute__ ((sentinel));
 
@@ -337,6 +376,7 @@ __attribute__ ((format (printf, 3, 4)));
 
 
 
+/************************* fatal *************************/
 void mom_fatal_at (const char *fil, int lin, ...) __attribute__ ((sentinel));
 
 #define MOM_FATAL_AT(Fil,Lin,Fmt,...) do {	\
@@ -370,6 +410,8 @@ __attribute__ ((format (printf, 3, 4)));
 #define MOM_FATAPRINTF(Fmt,...)			\
   MOM_FATAPRINTF_AT_BIS(__FILE__,__LINE__,Fmt,	\
 			##__VA_ARGS__)
+
+
 
 
 ////////////////////////////////////////////////////////////////

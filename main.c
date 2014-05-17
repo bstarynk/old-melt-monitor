@@ -34,6 +34,9 @@ struct momout_st mom_stderr_data = {
   .mout_lastnl = 0
 };
 
+
+/************************* debugging *************************/
+
 static const char *
 dbg_level_mom (enum mom_debug_en dbg)
 {
@@ -131,6 +134,9 @@ mom_debugprintf_at (enum mom_debug_en dbg, const char *fil, int lin,
     free (bigbuf);
 }
 
+
+
+/************************* fatal *************************/
 void
 mom_fataprintf_at (const char *fil, int lin, const char *fmt, ...)
 {
@@ -152,7 +158,7 @@ mom_fataprintf_at (const char *fil, int lin, const char *fmt, ...)
   va_end (alist);
   if (MOM_UNLIKELY (len >= sizeof (buf) - 1))
     {
-      char *bigbuf = malloc (len + 10);
+      bigbuf = malloc (len + 10);
       if (bigbuf)
 	{
 	  memset (bigbuf, 0, len + 10);
@@ -196,6 +202,11 @@ mom_fatal_at (const char *sfil, int slin, ...)
   free (membuf), membuf = 0;
 }
 
+
+
+
+/************************* warning *************************/
+
 void
 mom_warnprintf_at (const char *fil, int lin, const char *fmt, ...)
 {
@@ -217,7 +228,7 @@ mom_warnprintf_at (const char *fil, int lin, const char *fmt, ...)
   va_end (alist);
   if (MOM_UNLIKELY (len >= sizeof (buf) - 1))
     {
-      char *bigbuf = malloc (len + 10);
+      bigbuf = malloc (len + 10);
       if (bigbuf)
 	{
 	  memset (bigbuf, 0, len + 10);
@@ -259,6 +270,73 @@ mom_warning_at (const char *sfil, int slin, ...)
   mom_warnprintf_at (sfil, slin, "%s", membuf);
   free (membuf), membuf = 0;
 }
+
+
+
+
+
+/************************* inform *************************/
+
+void
+mom_informprintf_at (const char *fil, int lin, const char *fmt, ...)
+{
+  int len = 0;
+  char thrname[24];
+  char buf[128];
+  char timbuf[64];
+  char *bigbuf = NULL;
+  char *msg = NULL;
+  memset (buf, 0, sizeof (buf));
+  memset (thrname, 0, sizeof (thrname));
+  memset (timbuf, 0, sizeof (timbuf));
+  pthread_getname_np (pthread_self (), thrname, sizeof (thrname) - 1);
+  mom_now_strftime_bufcenti (timbuf, "%Y-%b-%d %H:%M:%S.__ %Z");
+  va_list alist;
+  va_start (alist, fmt);
+  len = vsnprintf (buf, sizeof (buf), fmt, alist);
+  va_end (alist);
+  if (MOM_UNLIKELY (len >= sizeof (buf) - 1))
+    {
+      bigbuf = malloc (len + 10);
+      if (bigbuf)
+	{
+	  memset (bigbuf, 0, len + 10);
+	  va_start (alist, fmt);
+	  (void) vsnprintf (bigbuf, len + 1, fmt, alist);
+	  va_end (alist);
+	  msg = bigbuf;
+	}
+    }
+  else
+    msg = buf;
+  syslog (LOG_INFO, "MONIMELT INFORM @%s:%d <%s:%d> %s %s",
+	  fil, lin, thrname, (int) mom_gettid (), timbuf, msg);
+  if (bigbuf)
+    free (bigbuf);
+}
+
+
+void
+mom_inform_at (const char *sfil, int slin, ...)
+{
+  struct momout_st outd;
+  char *membuf = NULL;
+  size_t memsize = 0;
+  memset (&outd, 0, sizeof (outd));
+  outd.mout_magic = MOM_MOUT_MAGIC;
+  outd.mout_file = open_memstream (&membuf, &memsize);
+  va_list alist;
+  va_start (alist, slin);
+  mom_outva_at (sfil, slin, &outd, alist);
+  va_end (alist);
+  fclose (outd.mout_file);
+  memset (&outd, 0, sizeof (outd));
+  mom_informprintf_at (sfil, slin, "%s", membuf);
+  free (membuf), membuf = 0;
+}
+
+
+/*********************** misc **********************/
 
 #if MOM_NEED_GC_CALLOC
 void *
@@ -367,13 +445,13 @@ main (int argc, char **argv)
   ///
   {
     const momstring_t *rs = mom_make_random_idstr ();
-    MOM_WARNPRINTF ("rs@%p random idstr %s hash %u looks %s",
-		    (void *) rs, mom_string_cstr ((momval_t) rs),
-		    mom_string_hash ((momval_t) rs),
-		    mom_looks_like_random_id_cstr (mom_string_cstr
-						   ((momval_t) rs),
-						   NULL) ? "good" :
-		    "strange");
+    MOM_INFORMPRINTF ("rs@%p random idstr %s hash %u looks %s",
+		      (void *) rs, mom_string_cstr ((momval_t) rs),
+		      mom_string_hash ((momval_t) rs),
+		      mom_looks_like_random_id_cstr (mom_string_cstr
+						     ((momval_t) rs),
+						     NULL) ? "good" :
+		      "strange");
   }
 
   ///
