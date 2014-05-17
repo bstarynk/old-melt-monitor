@@ -48,6 +48,7 @@ dbg_level_mom (enum mom_debug_en dbg)
 	return dbglev;
       }
     }
+#undef LEVDBG
 }
 
 
@@ -72,6 +73,24 @@ mom_strftime_centi (char *buf, size_t len, const char *fmt, double ti)
   return buf;
 }
 
+void
+mom_debug_at (enum mom_debug_en dbg, const char *sfil, int slin, ...)
+{
+  struct momout_st outd;
+  char *membuf = NULL;
+  size_t memsize = 0;
+  memset (&outd, 0, sizeof (outd));
+  outd.mout_magic = MOM_MOUT_MAGIC;
+  outd.mout_file = open_memstream (&membuf, &memsize);
+  va_list alist;
+  va_start (alist, slin);
+  mom_outva_at (sfil, slin, &outd, alist);
+  va_end (alist);
+  fclose (outd.mout_file);
+  memset (&outd, 0, sizeof (outd));
+  mom_debugprintf_at (dbg, sfil, slin, "%s", membuf);
+  free (membuf), membuf = 0;
+}
 
 void
 mom_debugprintf_at (enum mom_debug_en dbg, const char *fil, int lin,
@@ -157,6 +176,25 @@ mom_fataprintf_at (const char *fil, int lin, const char *fmt, ...)
   abort ();
 }
 
+
+void
+mom_fatal_at (const char *sfil, int slin, ...)
+{
+  struct momout_st outd;
+  char *membuf = NULL;
+  size_t memsize = 0;
+  memset (&outd, 0, sizeof (outd));
+  outd.mout_magic = MOM_MOUT_MAGIC;
+  outd.mout_file = open_memstream (&membuf, &memsize);
+  va_list alist;
+  va_start (alist, slin);
+  mom_outva_at (sfil, slin, &outd, alist);
+  va_end (alist);
+  fclose (outd.mout_file);
+  memset (&outd, 0, sizeof (outd));
+  mom_fataprintf_at (sfil, slin, "%s", membuf);
+  free (membuf), membuf = 0;
+}
 
 #if MOM_NEED_GC_CALLOC
 void *
