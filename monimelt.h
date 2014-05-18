@@ -983,4 +983,9 @@ extern const char *mombad_longlong;
 extern const char *mombad_file;
 extern const char *mombad_space;
 
+
+
+/////////////////// agenda and workers and web
+int mom_nb_workers;
+const char *mom_web_host;
 #endif /*MONIMELT_INCLUDED_ */

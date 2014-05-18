@@ -338,6 +338,7 @@ mom_inform_at (const char *sfil, int slin, ...)
 
 /*********************** misc **********************/
 
+static const char *wanted_dir_mom;
 #if MOM_NEED_GC_CALLOC
 void *
 GC_calloc (size_t nbelem, size_t elsiz)
@@ -424,10 +425,158 @@ initialize_mom (void)
 			     PTHREAD_MUTEX_RECURSIVE);
 }
 
+
+static bool daemonize_mom = false;
+/* Option specification for getopt_long.  */
+enum extraopt_en
+{
+  xtraopt__none = 0,
+  xtraopt_chdir = 1024,
+  xtraopt_loadstate,
+  xtraopt_dumpstate,
+  xtraopt_noeventloop,
+};
+
+static const struct option mom_long_options[] = {
+  {"help", no_argument, NULL, 'h'},
+  {"version", no_argument, NULL, 'V'},
+  {"nice", required_argument, NULL, 'n'},
+  {"module", required_argument, NULL, 'M'},
+  {"jobs", required_argument, NULL, 'J'},
+  {"daemon", no_argument, NULL, 'd'},
+  {"syslog", no_argument, NULL, 'l'},
+  {"web", required_argument, NULL, 'W'},
+  // long-only options
+  {"load-state", required_argument, NULL, xtraopt_loadstate},
+  {"dump-state", required_argument, NULL, xtraopt_dumpstate},
+  {"chdir", required_argument, NULL, xtraopt_chdir},
+  {"no-event-loop", no_argument, NULL, xtraopt_noeventloop},
+  /* Terminating NULL placeholder.  */
+  {NULL, no_argument, NULL, 0},
+};
+
+const char *const mom_debug_names[momdbg__last] = {
+#define DEFINE_DBG_NAME_MOM(Dbg) [momdbg_##Dbg] #Dbg,
+  MOM_DEBUG_LIST_OPTIONS (DEFINE_DBG_NAME_MOM)
+};
+
+#undef DEFINE_DBG_NAME_MOM
+
+static void
+usage_mom (const char *argv0)
+{
+  printf ("Usage: %s\n", argv0);
+  printf ("\t -h | --help " " \t# Give this help.\n");
+  printf ("\t -V | --version " " \t# Give version information.\n");
+  printf ("\t -d | --daemon " " \t# Daemonize.\n");
+  printf ("\t -D | --debug <debug-features>"
+	  " \t# Debugging comma separated features\n\t\t##");
+  for (unsigned ix = 1; ix < momdbg__last; ix++)
+    printf (" %s", mom_debug_names[ix]);
+  putchar ('\n');
+  printf ("\t -n | --nice <nice-level> " " \t# Set process nice level.\n");
+  printf ("\t -J | --jobs <nb-work-threads> " " \t# Start work threads.\n");
+  printf ("\t -M | --module <module-name> <module-arg> "
+	  " \t# load a plugin.\n");
+  printf ("\t -W | --web <webhost>\n");
+  putchar ('\n');
+  printf ("\t --chdir <directory>" "\t #change directory\n");
+}
+
+static void
+print_version_mom (const char *argv0)
+{
+  printf ("%s built on %s gitcommit %s\n", argv0,
+	  monimelt_timestamp, monimelt_lastgitcommit);
+}
+
+static void
+add_debugging_mom (const char *dbgopt)
+{
+  char dbuf[256];
+  memset (dbuf, 0, sizeof (dbuf));
+  if (strlen (dbgopt) >= sizeof (dbuf) - 1)
+    MOM_FATAL ("too long debug option %s", dbgopt);
+  strcpy (dbuf, dbgopt);
+  char *comma = NULL;
+  if (!strcmp (dbuf, ".") || !strcmp (dbuf, "_"))
+    {
+      mom_debugflags = ~0;
+      MOM_INFORMPRINTF ("set all debugging");
+    }
+  else
+    for (char *pc = dbuf; pc != NULL; pc = comma ? comma + 1 : NULL)
+      {
+	comma = strchr (pc, ',');
+	if (comma)
+	  *comma = (char) 0;
+#define MOM_TEST_DEBUG_OPTION(Nam)					\
+	if (!strcmp(pc,#Nam)) mom_debugflags |=  (1<<momdbg_##Nam); else
+	if (!pc)
+	  break;
+	MOM_DEBUG_LIST_OPTIONS (MOM_TEST_DEBUG_OPTION)
+	  MOM_FATAPRINTF ("unrecognized debug flag %s", pc);
+      }
+}
+
+static void
+parse_program_arguments_and_load_modules_mom (int *pargc, char **argv)
+{
+  int argc = *pargc;
+  int opt = -1;
+  while ((opt = getopt_long (argc, argv, "hVdn:M:W:J:D:",
+			     mom_long_options, NULL)) >= 0)
+    {
+      switch (opt)
+	{
+	case 'h':
+	  usage_mom (argv[0]);
+	  exit (EXIT_FAILURE);
+	  return;
+	case 'V':
+	  print_version_mom (argv[0]);
+	  break;
+	case 'd':
+	  daemonize_mom = true;
+	  break;
+	case 'D':
+	  if (optarg)
+	    add_debugging_mom (optarg);
+	  break;
+	case 'J':
+	  if (optarg)
+	    mom_nb_workers = atoi (optarg);
+	  break;
+	case 'W':
+	  mom_web_host = optarg;
+	  break;
+	case 'M':
+	  {
+	    char *modnam = optarg;
+	    char *modarg = argv[optind++];
+#warning load of module unimplemented
+	    MOM_FATAPRINTF ("should load module %s arg %s", modnam, modarg);
+	  }
+	  break;
+	case xtraopt_chdir:
+	  wanted_dir_mom = optarg;
+	  break;
+	default:
+	  {
+	    if (opt > 0 && opt < UCHAR_MAX && isalpha (opt))
+	      MOM_FATAPRINTF ("unknown option %c", opt);
+	    else
+	      MOM_FATAPRINTF ("unknown option #%d", opt);
+	  }
+	  break;
+	}
+    }
+
+}
+
 int
 main (int argc, char **argv)
 {
-  bool daemonize_me = false;
   GC_INIT ();
   pthread_setname_np (pthread_self (), "mom-main");
   g_mem_gc_friendly = TRUE;
@@ -443,9 +592,10 @@ main (int argc, char **argv)
      GC_pthread_join,
      GC_pthread_cancel,
      GC_pthread_detach, GC_pthread_exit, GC_pthread_sigmask);
+  parse_program_arguments_and_load_modules_mom (&argc, argv);
   //// initialize logging
   openlog ("monimelt",
-	   LOG_PID | LOG_CONS | (daemonize_me ? 0 : LOG_PERROR), LOG_LOCAL2);
+	   LOG_PID | LOG_CONS | (daemonize_mom ? 0 : LOG_PERROR), LOG_LOCAL2);
   {
     char hnam[64];
     char timbuf[64];
@@ -459,6 +609,15 @@ main (int argc, char **argv)
 	    monimelt_lastgitcommit);
     atexit (logexit_cb_mom);
   }
+  /// change directory if asked
+  if (wanted_dir_mom)
+    {
+      if (chdir (wanted_dir_mom))
+	MOM_FATAPRINTF ("failed to chdir %s", wanted_dir_mom);
+      else
+	MOM_INFORMPRINTF ("changed directory to %s, now in %s",
+			  wanted_dir_mom, get_current_dir_name ());
+    };
   ///
   initialize_mom ();
   ///
