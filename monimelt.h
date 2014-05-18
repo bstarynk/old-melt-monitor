@@ -211,7 +211,6 @@ enum momvaltype_en
   momty_set,
   momty_tuple,
   momty_node,
-  momty_assoc,
   momty_item
 };
 
@@ -226,7 +225,6 @@ typedef struct momseqitem_st momseqitem_t;
 typedef struct momseqitem_st momset_t;
 typedef struct momseqitem_st momtuple_t;
 typedef struct momnode_st momnode_t;
-typedef struct momassoc_st momassoc_t;
 typedef struct momitem_st momitem_t;
 union momvalueptr_un
 {
@@ -241,7 +239,6 @@ union momvalueptr_un
   const momset_t *pset;
   const momtuple_t *ptuple;
   const momnode_t *pnode;
-  const momassoc_t *passoc;
   momitem_t *pitem;
   const momitem_t *pitemk;
 };
@@ -641,17 +638,71 @@ struct momseqitem_st
   const momitem_t *itemseq[];
 };
 
+// make a set until a NULL value, argument can be tuples, sets, items.
+const momset_t *mom_make_set_til_nil (momval_t first, ...)
+  __attribute__ ((sentinel));
+// make a set of siz items
+const momset_t *mom_make_set_sized (unsigned siz, ...);
+// make a set from an array of items
+const momset_t *mom_make_set_from_array (unsigned siz,
+					 const momitem_t **itemarr);
+
+// union of two sets values
+momval_t mom_make_set_union (momval_t s1, momval_t s2);
+// intersection of two sets values
+momval_t mom_make_set_intersection (momval_t s1, momval_t s2);
+/// in set S1 remove the items from set, tuple V2 or remove the item
+/// V2 if it is an item...
+momval_t mom_make_set_without (momval_t s1, momval_t v2);
+
+// make a tuple til nil. Arguments which are MOM_EMPTY are replaced by nil.
+const momtuple_t *mom_make_tuple_til_nil (momval_t first, ...)
+  __attribute__ ((sentinel));
+const momtuple_t *mom_make_tuple_sized (unsigned siz, ...);
+const momtuple_t *mom_make_tuple_from_array (unsigned siz,
+					     const momitem_t **itemarr);
+
+
+////////////////////////////////////////////////////////////////
+/////////// NODES, notably CLOSURES
+////////////////////////////////////////////////////////////////
+
+// for nodes & closures
+struct momnode_st
+{
+  momtynum_t typnum;
+  momusize_t slen;
+  momhash_t hash;
+  const momitem_t *connitm;
+  const momval_t sontab[];
+};
+
+// node making functions would return nil if the connective is not an
+// item...
+
+// make a node til nil. MOM_EMPTY arguments are replaced with nil.
+const momnode_t *mom_make_node_til_nil (const momitem_t *conn, ...)
+  __attribute__ ((sentinel));
+
+// make a node of given size. all arguments after siz should be
+// genuine values without MOM_EMPTY...
+const momnode_t *mom_make_node_sized (const momitem_t *conn,
+				      unsigned siz, ...);
+
+// make a node from an array
+const momnode_t *mom_make_node_from_array (const momitem_t *conn,
+					   unsigned siz, momval_t *arr);
 
 ////////////////////////////////////////////////////////////////
 /////////// SPACES
 ////////////////////////////////////////////////////////////////
 enum mom_space_en
 {
-  spa_none = 0,
-  spa_root = 1,
+  momspa_none = 0,
+  momspa_root = 1,
 
   spa__last = 100,
-  spa__predefined = 9999
+  momspa__predefined = 9999
 };
 #define MOM_SPACE_MAGIC 0x5eaf0539	/* mom space magic 1588528441 */
 struct mom_spacedescr_st

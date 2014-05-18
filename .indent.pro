@@ -11,7 +11,6 @@
 -T momset_t
 -T momtuple_t
 -T momnode_t
--T momassoc_t
 -T momitem_t
 -T momval_t
--T momout_t
+     -T momout_t

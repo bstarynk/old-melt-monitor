@@ -760,13 +760,13 @@ mom_create_predefined_items (void)
   int nbnamed = 0, nbanonym = 0;
 #define MOM_PREDEFINED_NAMED(Nam,Id) do {			\
     mom_named__##Nam = mom_make_item_of_identcstr(#Id);		\
-    mom_named__##Nam->i_space = spa__predefined;		\
+    mom_named__##Nam->i_space = momspa__predefined;		\
     mom_register_item_named_cstr (mom_named__##Nam, #Nam);	\
     nbnamed ++;							\
   } while(0);
 #define MOM_PREDEFINED_ANONYMOUS(Id) do {			\
   mom_anonymous_##Id =  mom_make_item_of_identcstr (#Id);	\
-  mom_anonymous__##Id->i_space = spa__predefined;		\
+  mom_anonymous_##Id->i_space = momspa__predefined;		\
   nbanonym ++;							\
   } while(0);
 #include "predefined.h"
