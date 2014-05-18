@@ -56,12 +56,14 @@ _timestamp.c:
 	 echo '";') >> _timestamp.tmp
 	@mv _timestamp.tmp _timestamp.c
 
-indent: # don't indent monimelt-names.h
+indent: .indent.pro # don't indent monimelt-names.h
 	@for f in *.c $(filter-out monimelt-names.h, $(wildcard *.h)); do \
 	  echo indenting $$f; $(INDENT) $$f ;$(INDENT) $$f; done
 
 $(OBJECTS): monimelt.h monimelt-names.h
 
+.indent.pro: monimelt.h
+	sed -n 's/typedef.*\(mom[a-z0-9_]*_t\);/-T \1/p' monimelt.h > $@
 monimelt-names.h:
 	date +"#warning no monimelt-names.h at %c" > $@
 

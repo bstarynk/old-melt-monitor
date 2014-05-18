@@ -339,7 +339,7 @@ mom_is_item (momval_t v)
 }
 
 static inline int
-mom_item_cmp (const momitem_t * itm1, const momitem_t * itm2)
+mom_item_cmp (const momitem_t *itm1, const momitem_t *itm2)
 {
   if (itm1 == itm2)
     return 0;
@@ -362,40 +362,40 @@ mom_item_cmp (const momitem_t * itm1, const momitem_t * itm2)
 momitem_t *mom_make_item (void);
 
 // make or get an item of given idstr or else -when bad idstr- NULL
-momitem_t *mom_make_item_of_ident (const momstring_t * idstr);
+momitem_t *mom_make_item_of_ident (const momstring_t *idstr);
 // make or get an item of given idstr or else -when bad idcstr- NULL
 momitem_t *mom_make_item_of_identcstr (const char *idcstr);
 
 // get an item of given idstr or else NULL
-momitem_t *mom_get_item_of_ident (const momstring_t * idstr);
+momitem_t *mom_get_item_of_ident (const momstring_t *idstr);
 // get an item of given idstr or else NULL
 momitem_t *mom_get_item_of_identcstr (const char *idcstr);
 
 // register an item with a given name
-void mom_register_item_named (momitem_t * itm, const momstring_t * name);
+void mom_register_item_named (momitem_t *itm, const momstring_t *name);
 static inline void
-mom_register_item_named_cstr (momitem_t * itm, const char *namestr)
+mom_register_item_named_cstr (momitem_t *itm, const char *namestr)
 {
   if (!itm || itm->i_typnum != momty_item || !namestr || !namestr[0])
     return;
   mom_register_item_named (itm, mom_make_string (namestr));
 }
 
-const momstring_t *mom_item_get_name (momitem_t * itm);
-const momstring_t *mom_item_get_idstr (momitem_t * itm);
-const momstring_t *mom_item_get_name_or_idstr (momitem_t * itm);
+const momstring_t *mom_item_get_name (momitem_t *itm);
+const momstring_t *mom_item_get_idstr (momitem_t *itm);
+const momstring_t *mom_item_get_name_or_idstr (momitem_t *itm);
 
 void mom_forget_name (const char *namestr);
 
 static inline void
-mom_forget_name_string (const momstring_t * namev)
+mom_forget_name_string (const momstring_t *namev)
 {
   if (namev && namev->typnum == momty_string)
     mom_forget_name (namev->cstr);
 }
 
 static inline void
-mom_forget_item (momitem_t * itm)
+mom_forget_item (momitem_t *itm)
 {
   mom_forget_name (mom_string_cstr ((momval_t) mom_item_get_name (itm)));
 };
@@ -595,9 +595,9 @@ extern struct momout_st mom_stdout_data;
 extern struct momout_st mom_stderr_data;
 #define mom_stdout &mom_stdout_data
 #define mom_stderr &mom_stderr_data
-void mom_out_at (const char *sfil, int lin, momout_t * pout, ...)
+void mom_out_at (const char *sfil, int lin, momout_t *pout, ...)
   __attribute__ ((sentinel));
-void mom_outva_at (const char *sfil, int lin, momout_t * pout, va_list alist);
+void mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist);
 #define MOM_OUT_AT_BIS(Fil,Lin,Out,...) mom_out_at(Fil,Lin,Out,##__VA_ARGS__,NULL)
 #define MOM_OUT_AT(Fil,Lin,Out,...) MOM_OUT_AT_BIS(Fil,Lin,Out,##__VA_ARGS__)
 #define MOM_OUT(Out,...) MOM_OUT_AT(__FILE__,__LINE__,Out,##__VA_ARGS__)

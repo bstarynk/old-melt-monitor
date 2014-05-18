@@ -55,57 +55,57 @@ mom_make_integer (int64_t c)
     switch ((int) c)
       {
       case 0:
-	return (momval_t) & int0_mom;
+	return (momval_t) &int0_mom;
       case 1:
-	return (momval_t) & int1_mom;
+	return (momval_t) &int1_mom;
       case 2:
-	return (momval_t) & int2_mom;
+	return (momval_t) &int2_mom;
       case 3:
-	return (momval_t) & int3_mom;
+	return (momval_t) &int3_mom;
       case 4:
-	return (momval_t) & int4_mom;
+	return (momval_t) &int4_mom;
       case 5:
-	return (momval_t) & int5_mom;
+	return (momval_t) &int5_mom;
       case 6:
-	return (momval_t) & int6_mom;
+	return (momval_t) &int6_mom;
       case 7:
-	return (momval_t) & int7_mom;
+	return (momval_t) &int7_mom;
       case 8:
-	return (momval_t) & int8_mom;
+	return (momval_t) &int8_mom;
       case 9:
-	return (momval_t) & int9_mom;
+	return (momval_t) &int9_mom;
       case 10:
-	return (momval_t) & int10_mom;
+	return (momval_t) &int10_mom;
       case 11:
-	return (momval_t) & int11_mom;
+	return (momval_t) &int11_mom;
       case 12:
-	return (momval_t) & int12_mom;
+	return (momval_t) &int12_mom;
       case 13:
-	return (momval_t) & int13_mom;
+	return (momval_t) &int13_mom;
       case 14:
-	return (momval_t) & int14_mom;
+	return (momval_t) &int14_mom;
       case 15:
-	return (momval_t) & int15_mom;
+	return (momval_t) &int15_mom;
       case 16:
-	return (momval_t) & int16_mom;
+	return (momval_t) &int16_mom;
       case -1:
-	return (momval_t) & intm1_mom;
+	return (momval_t) &intm1_mom;
       case -2:
-	return (momval_t) & intm2_mom;
+	return (momval_t) &intm2_mom;
       case -3:
-	return (momval_t) & intm3_mom;
+	return (momval_t) &intm3_mom;
       case -4:
-	return (momval_t) & intm4_mom;
+	return (momval_t) &intm4_mom;
       case -5:
-	return (momval_t) & intm5_mom;
+	return (momval_t) &intm5_mom;
       case -6:
-	return (momval_t) & intm6_mom;
+	return (momval_t) &intm6_mom;
       case -7:
-	return (momval_t) & intm7_mom;
+	return (momval_t) &intm7_mom;
       case -8:
-	return (momval_t) & intm8_mom;
+	return (momval_t) &intm8_mom;
       case -9:
-	return (momval_t) & intm9_mom;
+	return (momval_t) &intm9_mom;
       default:
 	break;
       };
@@ -128,11 +128,11 @@ momval_t
 mom_make_double (double d)
 {
   if (d == 0.0)
-    return (momval_t) & dbl0_mom;
+    return (momval_t) &dbl0_mom;
   else if (d == 1.0)
-    return (momval_t) & dbl1_mom;
+    return (momval_t) &dbl1_mom;
   else if (d == -1.0)
-    return (momval_t) & dblm1_mom;
+    return (momval_t) &dblm1_mom;
   momdouble_t *vd = GC_MALLOC_ATOMIC (sizeof (momdouble_t));
   if (MOM_UNLIKELY (!vd))
     MOM_FATAPRINTF ("failed to make double");

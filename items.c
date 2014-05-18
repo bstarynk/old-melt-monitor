@@ -76,7 +76,7 @@ mom_initialize_items (void)
 
 
 static struct itembucket_mom_st *
-find_bucket_for_idstr_mom (const momstring_t * idstr)
+find_bucket_for_idstr_mom (const momstring_t *idstr)
 {
   if (!idstr || idstr->typnum != momty_string
       || idstr->slen != MOM_IDSTRING_LEN
@@ -90,7 +90,7 @@ find_bucket_for_idstr_mom (const momstring_t * idstr)
 
 // return true if item is added
 static bool
-add_item_mom (const momitem_t * aitm)
+add_item_mom (const momitem_t *aitm)
 {
   assert (mom_is_item ((momval_t) aitm));
   momhash_t h = aitm->i_hash;
@@ -296,7 +296,7 @@ end:
 
 
 momitem_t *
-mom_make_item_of_ident (const momstring_t * idstr)
+mom_make_item_of_ident (const momstring_t *idstr)
 {
   momitem_t *itm = NULL;
   if (!idstr || idstr->typnum != momty_string
@@ -371,7 +371,7 @@ mom_make_item_of_identcstr (const char *idstr)
 
 
 momitem_t *
-mom_get_item_of_ident (const momstring_t * idstr)
+mom_get_item_of_ident (const momstring_t *idstr)
 {
   momitem_t *itm = NULL;
   if (!idstr || idstr->typnum != momty_string
@@ -473,7 +473,7 @@ index_dict_mom (const char *namcstr, momhash_t namh)
 }
 
 static int
-add_dict_mom (const momstring_t * nam, const momitem_t * itm)
+add_dict_mom (const momstring_t *nam, const momitem_t *itm)
 {
   if (!nam || !itm || nam->typnum != momty_string || nam->slen == 0
       || itm->i_typnum != momty_item)
@@ -567,7 +567,7 @@ reorganize_dict (unsigned more)
 
 
 void
-mom_register_item_named (momitem_t * itm, const momstring_t * name)
+mom_register_item_named (momitem_t *itm, const momstring_t *name)
 {
   if (!itm || itm->i_typnum != momty_item || !name
       || name->typnum != momty_string || isalpha (name->cstr[0]))
@@ -628,7 +628,7 @@ mom_forget_name (const char *namestr)
 }
 
 const momstring_t *
-mom_item_get_name (momitem_t * itm)
+mom_item_get_name (momitem_t *itm)
 {
   const momstring_t *namev = NULL;
   if (!itm || !itm->i_typnum == momty_item)
@@ -640,7 +640,7 @@ mom_item_get_name (momitem_t * itm)
 }
 
 const momstring_t *
-mom_item_get_idstr (momitem_t * itm)
+mom_item_get_idstr (momitem_t *itm)
 {
   const momstring_t *idsv = NULL;
   if (!itm || !itm->i_typnum == momty_item)
@@ -653,7 +653,7 @@ mom_item_get_idstr (momitem_t * itm)
 
 
 const momstring_t *
-mom_item_get_name_or_idstr (momitem_t * itm)
+mom_item_get_name_or_idstr (momitem_t *itm)
 {
   const momstring_t *strv = NULL;
   if (!itm || !itm->i_typnum == momty_item)

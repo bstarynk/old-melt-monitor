@@ -22,7 +22,7 @@
 
 
 void
-mom_out_at (const char *sfil, int lin, momout_t * pout, ...)
+mom_out_at (const char *sfil, int lin, momout_t *pout, ...)
 {
   va_list alist;
   if (!sfil || !pout)
@@ -37,7 +37,7 @@ mom_out_at (const char *sfil, int lin, momout_t * pout, ...)
 #define SMALL_INDENT_MOM 8
 #define INDENT_MOM 16
 void
-mom_outva_at (const char *sfil, int lin, momout_t * pout, va_list alist)
+mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist)
 {
   bool again = true;
   assert (pout->mout_magic == MOM_MOUT_MAGIC);
