@@ -20,7 +20,107 @@
 
 #include "monimelt.h"
 
+/***************** integers ****************/
+static const momint_t int0_mom = {.typnum = momty_int,.intval = 0 };
+static const momint_t int1_mom = {.typnum = momty_int,.intval = 1 };
+static const momint_t int2_mom = {.typnum = momty_int,.intval = 2 };
+static const momint_t int3_mom = {.typnum = momty_int,.intval = 3 };
+static const momint_t int4_mom = {.typnum = momty_int,.intval = 4 };
+static const momint_t int5_mom = {.typnum = momty_int,.intval = 5 };
+static const momint_t int6_mom = {.typnum = momty_int,.intval = 6 };
+static const momint_t int7_mom = {.typnum = momty_int,.intval = 7 };
+static const momint_t int8_mom = {.typnum = momty_int,.intval = 8 };
+static const momint_t int9_mom = {.typnum = momty_int,.intval = 9 };
+static const momint_t int10_mom = {.typnum = momty_int,.intval = 10 };
+static const momint_t int11_mom = {.typnum = momty_int,.intval = 11 };
+static const momint_t int12_mom = {.typnum = momty_int,.intval = 12 };
+static const momint_t int13_mom = {.typnum = momty_int,.intval = 13 };
+static const momint_t int14_mom = {.typnum = momty_int,.intval = 14 };
+static const momint_t int15_mom = {.typnum = momty_int,.intval = 15 };
+static const momint_t int16_mom = {.typnum = momty_int,.intval = 16 };
+static const momint_t intm1_mom = {.typnum = momty_int,.intval = -1 };
+static const momint_t intm2_mom = {.typnum = momty_int,.intval = -2 };
+static const momint_t intm3_mom = {.typnum = momty_int,.intval = -3 };
+static const momint_t intm4_mom = {.typnum = momty_int,.intval = -4 };
+static const momint_t intm5_mom = {.typnum = momty_int,.intval = -5 };
+static const momint_t intm6_mom = {.typnum = momty_int,.intval = -6 };
+static const momint_t intm7_mom = {.typnum = momty_int,.intval = -7 };
+static const momint_t intm8_mom = {.typnum = momty_int,.intval = -8 };
+static const momint_t intm9_mom = {.typnum = momty_int,.intval = -9 };
 
+momval_t
+mom_make_integer (int64_t c)
+{
+  if (c > -127L && c <= 128L)
+    switch ((int) c)
+      {
+      case 0:
+	return (momval_t) & int0_mom;
+      case 1:
+	return (momval_t) & int1_mom;
+      case 2:
+	return (momval_t) & int2_mom;
+      case 3:
+	return (momval_t) & int3_mom;
+      case 4:
+	return (momval_t) & int4_mom;
+      case 5:
+	return (momval_t) & int5_mom;
+      case 6:
+	return (momval_t) & int6_mom;
+      case 7:
+	return (momval_t) & int7_mom;
+      case 8:
+	return (momval_t) & int8_mom;
+      case 9:
+	return (momval_t) & int9_mom;
+      case 10:
+	return (momval_t) & int10_mom;
+      case 11:
+	return (momval_t) & int11_mom;
+      case 12:
+	return (momval_t) & int12_mom;
+      case 13:
+	return (momval_t) & int13_mom;
+      case 14:
+	return (momval_t) & int14_mom;
+      case 15:
+	return (momval_t) & int15_mom;
+      case 16:
+	return (momval_t) & int16_mom;
+      case -1:
+	return (momval_t) & intm1_mom;
+      case -2:
+	return (momval_t) & intm2_mom;
+      case -3:
+	return (momval_t) & intm3_mom;
+      case -4:
+	return (momval_t) & intm4_mom;
+      case -5:
+	return (momval_t) & intm5_mom;
+      case -6:
+	return (momval_t) & intm6_mom;
+      case -7:
+	return (momval_t) & intm7_mom;
+      case -8:
+	return (momval_t) & intm8_mom;
+      case -9:
+	return (momval_t) & intm9_mom;
+      default:
+	break;
+      };
+  momint_t *v = GC_MALLOC_ATOMIC (sizeof (momint_t));
+  if (MOM_UNLIKELY (!v))
+    MOM_FATAPRINTF ("cannot allocate boxed integer");
+  memset (v, 0, sizeof (momint_t));
+  v->typnum = momty_int;
+  v->intval = c;
+  return (momval_t) (const momint_t *) v;
+}
+
+
+
+/********************* strings ********************/
 momhash_t
 mom_cstring_hash (const char *str)
 {

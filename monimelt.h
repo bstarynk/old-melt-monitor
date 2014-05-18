@@ -182,6 +182,8 @@ struct momseqitem_st;
 typedef struct momint_st momint_t;
 typedef struct momfloat_st momfloat_t;
 typedef struct momstring_st momstring_t;
+typedef struct momjsonobject_st momjsonobject_t;
+typedef struct momjsonarray_st momjsonarray_t;
 typedef struct momseqitem_st momseqitem_t;
 typedef struct momseqitem_st momset_t;
 typedef struct momseqitem_st momtuple_t;
@@ -195,6 +197,8 @@ union momvalueptr_un
   const momint_t *pint;
   const momfloat_t *pfloat;
   const momstring_t *pstring;
+  const momjsonobject_t *pjsonobj;
+  const momjsonarray_t *pjsonarr;
   const momset_t *pset;
   const momtuple_t *ptuple;
   const momnode_t *pnode;
@@ -205,6 +209,29 @@ union momvalueptr_un
 typedef union momvalueptr_un momval_t;
 
 
+/*************************** boxed integers ***************************/
+struct momint_st
+{
+  momtynum_t typnum;
+  int64_t intval;
+};
+
+static inline bool
+mom_is_integer (momval_t v)
+{
+  return (v.ptr && v.pint->typnum == momty_int);
+}
+
+static inline int64_t
+mom_integer_val_def (momval_t v, int64_t def)
+{
+  return (v.ptr && v.pint->typnum == momty_int) ? (v.pint->intval) : def;
+}
+
+#define mom_integer_val(V) mom_integer_val_def((V),0)
+momval_t mom_make_integer (int64_t c);
+
+/*************************** strings ***************************/
 #define MOM_MAX_STRING_LENGTH (1<<25)	/* max string length 33554432 */
 struct momstring_st
 {
@@ -217,11 +244,11 @@ struct momstring_st
 momhash_t mom_cstring_hash (const char *str);
 // make a boxed UTF8 string
 const momstring_t *mom_make_string (const char *str);
-// make a random id string
+// make a random id string, starting with _ then a digit, in total 24 characters
 const momstring_t *mom_make_random_idstr ();
 // check that s points to a string looking like a random id string;
 // the ending character should not be alphanumerical but it might be _
-// and is stored in *pend if pend non-null.
+// or a space or delimiter and is stored in *pend if pend non-null.
 bool mom_looks_like_random_id_cstr (const char *s, const char **pend);
 #define MOM_IDSTRING_LEN 24
 static inline bool
@@ -241,6 +268,12 @@ mom_string_cstr (momval_t v)
 {
   return (v.ptr
 	  && v.pstring->typnum == momty_string) ? (v.pstring->cstr) : NULL;
+}
+
+static inline unsigned
+mom_string_slen (momval_t v)
+{
+  return (v.ptr && v.pstring->typnum == momty_string) ? (v.pstring->slen) : 0;
 }
 
 ////////////////////////////////////////////////////////////////

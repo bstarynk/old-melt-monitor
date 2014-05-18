@@ -436,8 +436,6 @@ finalize_item_mom (void *itmad, void *data)
 }
 
 
-#warning dictionnary routines are missing
-
 // return the index of a given string, or -1 if not found
 static int
 index_dict_mom (const char *namcstr, momhash_t namh)
