@@ -625,6 +625,8 @@ mom_forget_item (momitem_t *itm)
 
 const momitem_t *mom_get_item_bool (bool v);
 
+
+
 ////////////////////////////////////////////////////////////////
 /////////// SEQUENCE OF ITEMS, SETS & TUPLES
 ////////////////////////////////////////////////////////////////
@@ -638,6 +640,26 @@ struct momseqitem_st
   momhash_t hash;
   const momitem_t *itemseq[];
 };
+
+
+////////////////////////////////////////////////////////////////
+/////////// SPACES
+////////////////////////////////////////////////////////////////
+enum mom_space_en
+{
+  spa_none = 0,
+  spa_root = 1,
+
+  spa__last = 100,
+  spa__predefined = 9999
+};
+#define MOM_SPACE_MAGIC 0x5eaf0539	/* mom space magic 1588528441 */
+struct mom_spacedescr_st
+{
+  unsigned space_magic;		/* always MOM_SPACE_MAGIC */
+  const char *space_name;
+} *mom_spacedescr_array[spa__last];
+
 ////////////////////////////////////////////////////////////////
 /////////// DIAGNOSTICS
 ////////////////////////////////////////////////////////////////
@@ -988,4 +1010,9 @@ extern const char *mombad_space;
 /////////////////// agenda and workers and web
 int mom_nb_workers;
 const char *mom_web_host;
+
+/// declare the predefined named and anonymous
+#define MOM_PREDEFINED_NAMED(Name,Id) extern momitem_t* mom_named__##Name;
+#define MOM_PREDEFINED_ANONYMOUS(Id) extern momitem_t* mom_anonymous_##Id;
+#include "predefined.h"
 #endif /*MONIMELT_INCLUDED_ */

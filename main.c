@@ -37,6 +37,8 @@ struct momout_st mom_stderr_data = {
 
 /************************* debugging *************************/
 
+static bool syslogging_mom;
+
 static const char *
 dbg_level_mom (enum mom_debug_en dbg)
 {
@@ -109,6 +111,7 @@ mom_debugprintf_at (enum mom_debug_en dbg, const char *fil, int lin,
   memset (buf, 0, sizeof (buf));
   memset (timbuf, 0, sizeof (timbuf));
   pthread_getname_np (pthread_self (), thrname, sizeof (thrname) - 1);
+  fflush (NULL);
   mom_now_strftime_bufcenti (timbuf, "%Y-%b-%d %H:%M:%S.__ %Z");
   va_list alist;
   va_start (alist, fmt);
@@ -128,8 +131,15 @@ mom_debugprintf_at (enum mom_debug_en dbg, const char *fil, int lin,
     }
   else
     msg = buf;
-  syslog (LOG_DEBUG, "MONIMELT DEBUG %s <%s> @%s:%d %s %s",
-	  dbg_level_mom (dbg), thrname, fil, lin, timbuf, msg);
+  if (syslogging_mom)
+    syslog (LOG_DEBUG, "MONIMELT DEBUG %s <%s> @%s:%d %s %s",
+	    dbg_level_mom (dbg), thrname, fil, lin, timbuf, msg);
+  else
+    {
+      fprintf (stderr, "MONIMELT DEBUG %s <%s> @%s:%d %s %s\n",
+	       dbg_level_mom (dbg), thrname, fil, lin, timbuf, msg);
+      fflush (NULL);
+    }
   if (bigbuf)
     free (bigbuf);
 }
@@ -152,6 +162,7 @@ mom_fataprintf_at (const char *fil, int lin, const char *fmt, ...)
   memset (timbuf, 0, sizeof (timbuf));
   pthread_getname_np (pthread_self (), thrname, sizeof (thrname) - 1);
   mom_now_strftime_bufcenti (timbuf, "%Y-%b-%d %H:%M:%S.__ %Z");
+  fflush (NULL);
   va_list alist;
   va_start (alist, fmt);
   len = vsnprintf (buf, sizeof (buf), fmt, alist);
@@ -170,13 +181,27 @@ mom_fataprintf_at (const char *fil, int lin, const char *fmt, ...)
     }
   else
     msg = buf;
-  if (err)
-    syslog (LOG_ALERT, "MONIMELT FATAL @%s:%d <%s:%d> %s %s (%s)",
-	    fil, lin, thrname, (int) mom_gettid (), timbuf,
-	    msg, strerror (err));
+  if (syslogging_mom)
+    {
+      if (err)
+	syslog (LOG_ALERT, "MONIMELT FATAL @%s:%d <%s:%d> %s %s (%s)",
+		fil, lin, thrname, (int) mom_gettid (), timbuf,
+		msg, strerror (err));
+      else
+	syslog (LOG_ALERT, "MONIMELT FATAL @%s:%d <%s:%d> %s %s",
+		fil, lin, thrname, (int) mom_gettid (), timbuf, msg);
+    }
   else
-    syslog (LOG_ALERT, "MONIMELT FATAL @%s:%d <%s:%d> %s %s",
-	    fil, lin, thrname, (int) mom_gettid (), timbuf, msg);
+    {
+      if (err)
+	fprintf (stderr, "MONIMELT FATAL @%s:%d <%s:%d> %s %s (%s)\n",
+		 fil, lin, thrname, (int) mom_gettid (), timbuf,
+		 msg, strerror (err));
+      else
+	fprintf (stderr, "MONIMELT FATAL @%s:%d <%s:%d> %s %s\n",
+		 fil, lin, thrname, (int) mom_gettid (), timbuf, msg);
+      fflush (NULL);
+    }
   if (bigbuf)
     free (bigbuf);
   abort ();
@@ -221,6 +246,7 @@ mom_warnprintf_at (const char *fil, int lin, const char *fmt, ...)
   memset (thrname, 0, sizeof (thrname));
   memset (timbuf, 0, sizeof (timbuf));
   pthread_getname_np (pthread_self (), thrname, sizeof (thrname) - 1);
+  fflush (NULL);
   mom_now_strftime_bufcenti (timbuf, "%Y-%b-%d %H:%M:%S.__ %Z");
   va_list alist;
   va_start (alist, fmt);
@@ -240,13 +266,27 @@ mom_warnprintf_at (const char *fil, int lin, const char *fmt, ...)
     }
   else
     msg = buf;
-  if (err)
-    syslog (LOG_WARNING, "MONIMELT WARNING @%s:%d <%s:%d> %s %s (%s)",
-	    fil, lin, thrname, (int) mom_gettid (), timbuf,
-	    msg, strerror (err));
+  if (syslogging_mom)
+    {
+      if (err)
+	syslog (LOG_WARNING, "MONIMELT WARNING @%s:%d <%s:%d> %s %s (%s)",
+		fil, lin, thrname, (int) mom_gettid (), timbuf,
+		msg, strerror (err));
+      else
+	syslog (LOG_WARNING, "MONIMELT WARNING @%s:%d <%s:%d> %s %s",
+		fil, lin, thrname, (int) mom_gettid (), timbuf, msg);
+    }
   else
-    syslog (LOG_WARNING, "MONIMELT WARNING @%s:%d <%s:%d> %s %s",
-	    fil, lin, thrname, (int) mom_gettid (), timbuf, msg);
+    {
+      if (err)
+	fprintf (stderr, "MONIMELT WARNING @%s:%d <%s:%d> %s %s (%s)\n",
+		 fil, lin, thrname, (int) mom_gettid (), timbuf,
+		 msg, strerror (err));
+      else
+	fprintf (stderr, "MONIMELT WARNING @%s:%d <%s:%d> %s %s\n",
+		 fil, lin, thrname, (int) mom_gettid (), timbuf, msg);
+      fflush (NULL);
+    }
   if (bigbuf)
     free (bigbuf);
 }
@@ -290,6 +330,7 @@ mom_informprintf_at (const char *fil, int lin, const char *fmt, ...)
   memset (thrname, 0, sizeof (thrname));
   memset (timbuf, 0, sizeof (timbuf));
   pthread_getname_np (pthread_self (), thrname, sizeof (thrname) - 1);
+  fflush (NULL);
   mom_now_strftime_bufcenti (timbuf, "%Y-%b-%d %H:%M:%S.__ %Z");
   va_list alist;
   va_start (alist, fmt);
@@ -309,8 +350,17 @@ mom_informprintf_at (const char *fil, int lin, const char *fmt, ...)
     }
   else
     msg = buf;
-  syslog (LOG_INFO, "MONIMELT INFORM @%s:%d <%s:%d> %s %s",
-	  fil, lin, thrname, (int) mom_gettid (), timbuf, msg);
+  if (syslogging_mom)
+    {
+      syslog (LOG_INFO, "MONIMELT INFORM @%s:%d <%s:%d> %s %s",
+	      fil, lin, thrname, (int) mom_gettid (), timbuf, msg);
+    }
+  else
+    {
+      fprintf (stderr, "MONIMELT INFORM @%s:%d <%s:%d> %s %s\n",
+	       fil, lin, thrname, (int) mom_gettid (), timbuf, msg);
+      fflush (NULL);
+    }
   if (bigbuf)
     free (bigbuf);
 }
@@ -418,11 +468,17 @@ initialize_mom (void)
     extern void mom_initialize_items (void);
     mom_initialize_items ();
   }
+  //// initialize some thread attributes
   pthread_mutexattr_init (&mom_normal_mutex_attr);
   pthread_mutexattr_init (&mom_recursive_mutex_attr);
   pthread_mutexattr_settype (&mom_normal_mutex_attr, PTHREAD_MUTEX_NORMAL);
   pthread_mutexattr_settype (&mom_recursive_mutex_attr,
 			     PTHREAD_MUTEX_RECURSIVE);
+  //// create the predefined items
+  {
+    extern void mom_create_predefined_items (void);
+    mom_create_predefined_items ();
+  }
 }
 
 
@@ -435,6 +491,7 @@ enum extraopt_en
   xtraopt_loadstate,
   xtraopt_dumpstate,
   xtraopt_noeventloop,
+  xtraopt_randomidstr,
 };
 
 static const struct option mom_long_options[] = {
@@ -451,6 +508,7 @@ static const struct option mom_long_options[] = {
   {"dump-state", required_argument, NULL, xtraopt_dumpstate},
   {"chdir", required_argument, NULL, xtraopt_chdir},
   {"no-event-loop", no_argument, NULL, xtraopt_noeventloop},
+  {"random-idstr", no_argument, NULL, xtraopt_randomidstr},
   /* Terminating NULL placeholder.  */
   {NULL, no_argument, NULL, 0},
 };
@@ -481,6 +539,7 @@ usage_mom (const char *argv0)
   printf ("\t -W | --web <webhost>\n");
   putchar ('\n');
   printf ("\t --chdir <directory>" "\t #change directory\n");
+  printf ("\t --random-idstr" "\t #output a random idstr then exit\n");
 }
 
 static void
@@ -524,7 +583,7 @@ parse_program_arguments_and_load_modules_mom (int *pargc, char **argv)
 {
   int argc = *pargc;
   int opt = -1;
-  while ((opt = getopt_long (argc, argv, "hVdn:M:W:J:D:",
+  while ((opt = getopt_long (argc, argv, "lhVdn:M:W:J:D:",
 			     mom_long_options, NULL)) >= 0)
     {
       switch (opt)
@@ -538,6 +597,10 @@ parse_program_arguments_and_load_modules_mom (int *pargc, char **argv)
 	  break;
 	case 'd':
 	  daemonize_mom = true;
+	  syslogging_mom = true;
+	  break;
+	case 'l':
+	  syslogging_mom = true;
 	  break;
 	case 'D':
 	  if (optarg)
@@ -560,6 +623,16 @@ parse_program_arguments_and_load_modules_mom (int *pargc, char **argv)
 	  break;
 	case xtraopt_chdir:
 	  wanted_dir_mom = optarg;
+	  break;
+	case xtraopt_randomidstr:
+	  {
+	    errno = 0;
+	    const momstring_t *randidstr = mom_make_random_idstr ();
+	    printf ("%s\n", randidstr->cstr);
+	    MOM_WARNPRINTF ("exiting after random id string %s",
+			    randidstr->cstr);
+	    exit (EXIT_SUCCESS);
+	  }
 	  break;
 	default:
 	  {
@@ -593,22 +666,26 @@ main (int argc, char **argv)
      GC_pthread_cancel,
      GC_pthread_detach, GC_pthread_exit, GC_pthread_sigmask);
   parse_program_arguments_and_load_modules_mom (&argc, argv);
-  //// initialize logging
-  openlog ("monimelt",
-	   LOG_PID | LOG_CONS | (daemonize_mom ? 0 : LOG_PERROR), LOG_LOCAL2);
-  {
-    char hnam[64];
-    char timbuf[64];
-    memset (timbuf, 0, sizeof (timbuf));
-    memset (hnam, 0, sizeof (hnam));
-    gethostname (hnam, sizeof (hnam) - 1);
-    mom_now_strftime_bufcenti (timbuf, "%Y-%b-%d %H:%M:%S.__ %Z");
-    syslog (LOG_INFO,
-	    "MONIMELT starting on %s at %s in %s,\n.. built %s gitcommit %s",
-	    hnam, timbuf, get_current_dir_name (), monimelt_timestamp,
-	    monimelt_lastgitcommit);
-    atexit (logexit_cb_mom);
-  }
+  if (syslogging_mom)
+    {
+      //// initialize logging
+      openlog ("monimelt",
+	       LOG_PID | (daemonize_mom ? 0 : (LOG_CONS | LOG_PERROR)),
+	       LOG_LOCAL2);
+      {
+	char hnam[64];
+	char timbuf[64];
+	memset (timbuf, 0, sizeof (timbuf));
+	memset (hnam, 0, sizeof (hnam));
+	gethostname (hnam, sizeof (hnam) - 1);
+	mom_now_strftime_bufcenti (timbuf, "%Y-%b-%d %H:%M:%S.__ %Z");
+	syslog (LOG_INFO,
+		"MONIMELT starting on %s at %s in %s,\n.. built %s gitcommit %s",
+		hnam, timbuf, get_current_dir_name (), monimelt_timestamp,
+		monimelt_lastgitcommit);
+	atexit (logexit_cb_mom);
+      }
+    }
   /// change directory if asked
   if (wanted_dir_mom)
     {

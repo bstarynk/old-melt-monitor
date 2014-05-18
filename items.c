@@ -747,7 +747,34 @@ end:
 const momitem_t *
 mom_get_item_bool (bool v)
 {
-#warning unimplemented mom_get_item_bool
-  MOM_FATAPRINTF ("unimplemented mom_get_item_bool");
-  return NULL;
+  if (v)
+    return mom_named__json_true;
+  else
+    return mom_named__json_false;
 }
+
+
+void
+mom_create_predefined_items (void)
+{
+  int nbnamed = 0, nbanonym = 0;
+#define MOM_PREDEFINED_NAMED(Nam,Id) do {			\
+    mom_named__##Nam = mom_make_item_of_identcstr(#Id);		\
+    mom_named__##Nam->i_space = spa__predefined;		\
+    mom_register_item_named_cstr (mom_named__##Nam, #Nam);	\
+    nbnamed ++;							\
+  } while(0);
+#define MOM_PREDEFINED_ANONYMOUS(Id) do {			\
+  mom_anonymous_##Id =  mom_make_item_of_identcstr (#Id);	\
+  mom_anonymous__##Id->i_space = spa__predefined;		\
+  nbanonym ++;							\
+  } while(0);
+#include "predefined.h"
+  MOM_INFORMPRINTF ("created predefined %d named, %d anonymous items",
+		    nbnamed, nbanonym);
+}				// end of mom_create_predefined_items
+
+// declare the predefined
+#define MOM_PREDEFINED_NAMED(Nam,Id) momitem_t* mom_named__##Nam;
+#define MOM_PREDEFINED_ANONYMOUS(Id) momitem_t* mom_anonymous_##Id;
+#include "predefined.h"
