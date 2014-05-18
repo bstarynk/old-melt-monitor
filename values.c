@@ -219,6 +219,27 @@ mom_make_string (const char *str)
   return res;
 }
 
+const momstring_t *
+mom_make_string_len (const char *str, unsigned slen)
+{
+  if (!str)
+    return NULL;
+  const gchar *end = NULL;
+  if (MOM_UNLIKELY (slen > MOM_MAX_STRING_LENGTH))
+    MOM_FATAPRINTF ("too long %d string to make %.50s", slen, str);
+  if (MOM_UNLIKELY (!g_utf8_validate ((const gchar *) str, slen, &end)))
+    MOM_FATAPRINTF ("invalid UTF8 in %d-sized string %.50s", slen, str);
+  momstring_t *res = GC_MALLOC_ATOMIC (sizeof (momstring_t) + slen + 1);
+  if (MOM_UNLIKELY (!res))
+    MOM_FATAPRINTF ("failed to allocate string of %d bytes", slen);
+  memset (res, 0, sizeof (momstring_t) + slen + 1);
+  res->slen = slen;
+  res->hash = mom_cstring_hash (str);
+  memcpy (res->cstr, str, slen);
+  res->typnum = momty_string;
+  return res;
+}
+
 momhash_t
 mom_value_hash (const momval_t v)
 {

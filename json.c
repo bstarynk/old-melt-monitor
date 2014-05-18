@@ -544,8 +544,8 @@ again:
 	    }
 	}
       while (jp->jsonp_c >= 0);
-      return (momval_t) mom_make_json_object (MOMJSON_COUNTED_ENTRIES, jcount,
-					      jent, NULL);
+      return (momval_t) mom_make_json_object
+	(MOMJSOB_COUNTED_ENTRIES (jcount, jent), NULL);
     }
   else
     JSONPARSE_ERROR (jp, "unexpected char %c at offset %ld",
@@ -577,19 +577,19 @@ mom_make_json_object (int firstdir, ...)
     {
       switch (dir)
 	{
-	case MOMJSON_ENTRY:
+	case MOMJSONDIR__ENTRY:
 	  (void) va_arg (args, momval_t);
 	  (void) va_arg (args, momval_t);
 	  dir = va_arg (args, int);
 	  count++;
 	  break;
-	case MOMJSON_STRING:
+	case MOMJSONDIR__STRING:
 	  (void) va_arg (args, const char *);
 	  (void) va_arg (args, momval_t);
 	  dir = va_arg (args, int);
 	  count++;
 	  break;
-	case MOMJSON_COUNTED_ENTRIES:
+	case MOMJSONDIR__COUNTED_ENTRIES:
 	  {
 	    unsigned nbent = va_arg (args, unsigned);
 	    (void) va_arg (args, struct mom_jsonentry_st *);
@@ -616,7 +616,7 @@ mom_make_json_object (int firstdir, ...)
     {
       switch (dir)
 	{
-	case MOMJSON_ENTRY:
+	case MOMJSONDIR__ENTRY:
 	  {
 	    momval_t namv = va_arg (args, momval_t);
 	    momval_t attv = va_arg (args, momval_t);
@@ -631,7 +631,7 @@ mom_make_json_object (int firstdir, ...)
 	      }
 	  }
 	  break;
-	case MOMJSON_STRING:
+	case MOMJSONDIR__STRING:
 	  {
 	    const char *namstr = va_arg (args, const char *);
 	    momval_t attv = va_arg (args, momval_t);
@@ -651,7 +651,7 @@ mom_make_json_object (int firstdir, ...)
 	      }
 	  }
 	  break;
-	case MOMJSON_COUNTED_ENTRIES:
+	case MOMJSONDIR__COUNTED_ENTRIES:
 	  {
 	    unsigned nbent = va_arg (args, unsigned);
 	    struct mom_jsonentry_st *jentab =

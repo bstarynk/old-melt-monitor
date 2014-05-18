@@ -310,6 +310,7 @@ struct momstring_st
 momhash_t mom_cstring_hash (const char *str);
 // make a boxed UTF8 string
 const momstring_t *mom_make_string (const char *str);
+const momstring_t *mom_make_string_len (const char *str, unsigned len);
 // make a random id string, starting with _ then a digit, in total 24 characters
 const momstring_t *mom_make_random_idstr ();
 // check that s points to a string looking like a random id string;
@@ -465,12 +466,26 @@ const momjsonobject_t *mom_make_json_object (int, ...)
 enum momjsondirective_en
 {
   MOMJSON__END,
-  MOMJSON_ENTRY,		/* momval_t nameval, momval_t attrval */
-  MOMJSON_STRING,		/* const char*namestr, momval_t attval */
-  MOMJSON_COUNTED_ENTRIES,	/* unsigned count, struct mom_jsonentry_st* */
+  MOMJSONDIR__ENTRY,		/* momval_t nameval, momval_t attrval */
+  MOMJSONDIR__STRING,		/* const char*namestr, momval_t attval */
+  MOMJSONDIR__COUNTED_ENTRIES,	/* unsigned count, struct mom_jsonentry_st* */
 };
 
 #define MOMJSON_END ((void*)MOMJSON__END)
+
+#define MOMJSOB_ENTRY(N,V) MOMJSONDIR__ENTRY,	\
+    MOM_REQUIRES_TYPE(N,momval_t,mombad_value), \
+    MOM_REQUIRES_TYPE(V,momval_t,mombad_value)
+
+#define MOMJSOB_STRING(S,V) MOMJSONDIR__STRING,		\
+    MOM_REQUIRES_TYPE(S,const char*,mombad_string),	\
+    MOM_REQUIRES_TYPE(V,momval_t,mombad_value)
+
+#define MOMJSOB_COUNTED_ENTRIES(C,E)  MOMJSONDIR__COUNTED_ENTRIES,	\
+    MOM_REQUIRES_TYPE(C,unsigned,mombad_unsigned),			\
+    MOM_REQUIRES_TYPE(E,struct mom_jsonentry_st*,mombad_entries)
+
+
 // make a JSON array of given count
 const momjsonarray_t *mom_make_json_array (unsigned nbelem, ...);
 const momjsonarray_t *mom_make_json_array_count (unsigned count,
@@ -1078,6 +1093,8 @@ extern const char *mombad_file;
 extern const char *mombad_space;
 extern const char *mombad_value;
 extern const char *mombad_item;
+extern const char *mombad_entries;
+extern const char *mombad_unsigned;
 
 
 struct mom_itqueue_st
