@@ -894,12 +894,21 @@ __attribute__ ((format (printf, 3, 4)));
 ////////////////////////////////////////////////////////////////
 
 #define MOM_MOUT_MAGIC 0x41f67aa5	/* mom_out_magic 1106672293 */
+enum outflags_en
+{
+  outf__none = 0,
+  outf_cname = 1 << 0,
+  outf_jsonhalfindent = 1 << 1,
+  outf_jsonindent = 1 << 2,
+};
+
 struct momout_st
 {
   unsigned mout_magic;		/* always MOM_MOUT_MAGIC */
   int mout_indent;
   FILE *mout_file;
   long mout_lastnl;		/* offset at last newline with MOMOUT_NEWLINE or MOMOUT_SPACE */
+  unsigned mout_flags;
 };
 typedef struct momout_st momout_t;
 extern struct momout_st mom_stdout_data;
@@ -933,8 +942,12 @@ enum momoutdir_en
 #define MOMOUT_HTML(S) MOMOUTDO_HTML, MOM_REQUIRES_TYPE(S,const char*,mombad_html)
   ///
   /// Javascript encoded strings
-  MOMOUTDO_JS /*, const char*jsstring */ ,
-#define MOMOUT_JS(S) MOMOUTDO_JS, MOM_REQUIRES_TYPE(S,const char*,mombad_js)
+  MOMOUTDO_JS_STRING /*, const char*jsstring */ ,
+#define MOMOUT_JS_STRING(S) MOMOUTDO_JS_STRING, MOM_REQUIRES_TYPE(S,const char*,mombad_js)
+  ///
+  /// JSON value
+  MOMOUTDO_JSON_VALUE /*, momval_t jsval */ ,
+#define MOMOUT_JSON_VALUE(S) MOMOUTDO_JSON_VALUE, MOM_REQUIRES_TYPE(S,momval_t,mombad_value)
   ///
   /// decimal int
   MOMOUTDO_DEC_INT /*, int num */ ,
@@ -1055,6 +1068,7 @@ extern const char *mombad_long;
 extern const char *mombad_longlong;
 extern const char *mombad_file;
 extern const char *mombad_space;
+extern const char *mombad_value;
 
 
 

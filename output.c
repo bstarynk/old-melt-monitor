@@ -33,6 +33,157 @@ mom_out_at (const char *sfil, int lin, momout_t *pout, ...)
 }
 
 
+static void
+output_json_mom (momout_t *pout, momval_t v)
+{
+  assert (pout && pout->mout_magic == MOM_MOUT_MAGIC);
+  FILE *out = pout->mout_file;
+  if (!out)
+    return;
+  assert (mom_is_jsonable (v));
+  if (!v.ptr)
+    fputs ("null", out);
+  momtynum_t typ = *v.ptype;
+  switch ((enum momvaltype_en) typ)
+    {
+    case momty_item:
+      if (v.pitem == mom_named__json_true)
+	fputs ("true", out);
+      else if (v.pitem == mom_named__json_false)
+	fputs ("false", out);
+      else
+	{
+	  const momstring_t *nams = mom_item_get_name_or_idstr (v.pitem);
+	  assert (nams && nams->typnum == momty_string);
+	  if ((pout->mout_flags & outf_cname) && isalpha (nams->cstr[0]))
+	    fputs (nams->cstr, out);
+	  else
+	    fprintf (out, "\"%s\"", nams->cstr);
+	}
+      break;
+    case momty_int:
+      fprintf (out, "%lld", (long long) v.pint->intval);
+      break;
+    case momty_string:
+      putc ('"', out);
+      MOM_OUT (pout, MOMOUT_JS_STRING ((const char *) v.pstring->cstr));
+      putc ('"', out);
+      break;
+    case momty_double:
+      {
+	double x = v.pdouble->dblval;
+	char numbuf[48];
+	memset (numbuf, 0, sizeof (numbuf));
+	snprintf (numbuf, sizeof (numbuf), "%.3f", x);
+	if (atof (numbuf) == x && strlen (numbuf) < 20
+	    && strchr (numbuf, '.'))
+	  {
+	    fputs (numbuf, out);
+	    return;
+	  }
+	snprintf (numbuf, sizeof (numbuf), "%.6f", x);
+	if (atof (numbuf) == x && strlen (numbuf) < 30
+	    && strchr (numbuf, '.'))
+	  {
+	    fputs (numbuf, out);
+	    return;
+	  }
+	snprintf (numbuf, sizeof (numbuf), "%.9f", x);
+	if (atof (numbuf) == x && strlen (numbuf) < 30
+	    && strchr (numbuf, '.'))
+	  {
+	    fputs (numbuf, out);
+	    return;
+	  }
+	snprintf (numbuf, sizeof (numbuf), "%#.5g", x);
+	if (atof (numbuf) == x && strlen (numbuf) < 30
+	    && strchr (numbuf, '.'))
+	  {
+	    fputs (numbuf, out);
+	    return;
+	  }
+	snprintf (numbuf, sizeof (numbuf), "%#.10g", x);
+	if (atof (numbuf) == x && strlen (numbuf) < 30
+	    && strchr (numbuf, '.'))
+	  {
+	    fputs (numbuf, out);
+	    return;
+	  }
+	if (isnan (x))
+	  {
+	    if (pout->mout_flags & outf_cname)
+	      fputs ("nan", out);
+	    else
+	      fputs ("null", out);
+	  }
+	snprintf (numbuf, sizeof (numbuf), "%#.15g", x);
+	fputs (numbuf, out);
+	return;
+      }
+      break;
+    case momty_jsonobject:
+      {
+	unsigned joblen = v.pjsonobj->slen;
+	putc ('{', out);
+	if (pout->mout_flags & (outf_jsonhalfindent | outf_jsonindent))
+	  MOM_OUT (pout, MOMOUT_INDENT_MORE ());
+	for (unsigned ix = 0; ix < joblen; ix++)
+	  {
+	    if (ix > 0)
+	      {
+		putc (',', out);
+		if (pout->mout_flags & outf_jsonhalfindent)
+		  MOM_OUT (pout, MOMOUT_SMALL_SPACE (72));
+		else if (pout->mout_flags & outf_jsonindent)
+		  MOM_OUT (pout, MOMOUT_SPACE (48));
+	      }
+	    output_json_mom (pout, v.pjsonobj->jobjtab[ix].je_name);
+	    putc (':', out);
+	    if (pout->mout_flags & outf_jsonhalfindent)
+	      MOM_OUT (pout, MOMOUT_SMALL_SPACE (80));
+	    else if (pout->mout_flags & outf_jsonindent)
+	      MOM_OUT (pout, MOMOUT_SPACE (64));
+	    output_json_mom (pout, v.pjsonobj->jobjtab[ix].je_attr);
+	  }
+	if (pout->mout_flags & outf_jsonindent)
+	  MOM_OUT (pout, MOMOUT_SPACE (48));
+	if (pout->mout_flags & (outf_jsonhalfindent | outf_jsonindent))
+	  MOM_OUT (pout, MOMOUT_INDENT_LESS ());
+	putc ('}', out);
+      }
+      break;
+    case momty_jsonarray:
+      {
+	unsigned jarlen = v.pjsonarr->slen;
+	putc ('[', out);
+	if (pout->mout_flags & (outf_jsonhalfindent | outf_jsonindent))
+	  MOM_OUT (pout, MOMOUT_INDENT_MORE ());
+	for (unsigned ix = 0; ix < jarlen; ix++)
+	  {
+	    if (ix > 0)
+	      {
+		putc (',', out);
+		if (pout->mout_flags & outf_jsonhalfindent)
+		  MOM_OUT (pout, MOMOUT_SMALL_SPACE (72));
+		else if (pout->mout_flags & outf_jsonindent)
+		  MOM_OUT (pout, MOMOUT_SPACE (48));
+	      }
+	    output_json_mom (pout, v.pjsonarr->jarrtab[ix]);
+	  }
+	if (pout->mout_flags & (outf_jsonhalfindent | outf_jsonindent))
+	  MOM_OUT (pout, MOMOUT_INDENT_LESS ());
+	putc (']', out);
+      }
+      break;
+    case momty_set:
+    case momty_tuple:
+    case momty_node:
+    case momty_null:		// should never happen
+      MOM_FATAPRINTF ("corrupted json value to output");
+      break;
+    }
+}
+
 
 #define SMALL_INDENT_MOM 8
 #define INDENT_MOM 16
@@ -101,7 +252,7 @@ mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist)
 	  }
 	  break;
 	  //
-	case MOMOUTDO_JS:
+	case MOMOUTDO_JS_STRING:
 	  {
 	    const char *s = va_arg (alist, const char *);
 	    int len = s ? strlen (s) : 0;
@@ -154,6 +305,14 @@ mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist)
 	  {
 	    int n = va_arg (alist, int);
 	    fprintf (out, "%d", n);
+	  }
+	  break;
+	  //
+	case MOMOUTDO_JSON_VALUE:
+	  {
+	    momval_t v = va_arg (alist, momval_t);
+	    if (mom_is_jsonable (v))
+	      output_json_mom (pout, v);
 	  }
 	  break;
 	  //
@@ -283,7 +442,7 @@ mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist)
 		    ssize_t linsiz = getline (&lin, &sz, cfil);
 		    if (linsiz < 0)
 		      break;
-		    MOM_OUT (pout, MOMOUT_JS ((const char *) lin));
+		    MOM_OUT (pout, MOMOUT_JS_STRING ((const char *) lin));
 		  }
 		while (!feof (cfil));
 		free (lin);

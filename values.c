@@ -267,11 +267,13 @@ mom_value_hash (const momval_t v)
       return v.pseqitems->hash;
     case momty_item:
       return v.pitem->i_hash;
-#warning missing hash for node, etc...
+    case momty_node:
+      return v.pnode->hash;
     default:
       MOM_FATAPRINTF ("unimplemented hash of val@%p of type #%d", v.ptr,
 		      vtype);
     }
+  return 0;
 }
 
 int
@@ -289,8 +291,11 @@ mom_value_cmp (const momval_t l, const momval_t r)
     return -1;
   if (ltype > rtype)
     return 1;
-  switch (ltype)
+  switch ((enum momvaltype_en) ltype)
     {
+    case momty_null:
+      MOM_FATAPRINTF ("corrupted values to compare");
+      return 0;
     case momty_int:
       {
 	intptr_t lint = l.pint->intval;
@@ -380,10 +385,54 @@ mom_value_cmp (const momval_t l, const momval_t r)
       {
 	return mom_item_cmp (l.pitem, r.pitem);
       }
-    default:
-#warning incomplete compare
-      MOM_FATAPRINTF ("unimplemented compare of value of type#%d", ltype);
+    case momty_node:
+      {
+	momusize_t llen = l.pnode->slen;
+	momusize_t rlen = r.pnode->slen;
+	momusize_t minlen = (llen > rlen) ? rlen : llen;
+	int cmp = mom_item_cmp ((l.pnode->connitm), (r.pnode->connitm));
+	if (cmp != 0)
+	  return cmp;
+	unsigned ix = 0;
+	for (ix = 0; ix < minlen; ix++)
+	  {
+	    cmp = mom_value_cmp (l.pnode->sontab[ix], r.pnode->sontab[ix]);
+	    if (cmp != 0)
+	      return cmp;
+	  }
+	if (llen < rlen)
+	  return -1;
+	else if (llen > rlen)
+	  return 1;
+	return 0;
+      }
+      break;
+    case momty_set:
+    case momty_tuple:
+      {
+	momusize_t llen = l.pseqitems->slen;
+	momusize_t rlen = r.pseqitems->slen;
+	momusize_t minlen = (llen > rlen) ? rlen : llen;
+	int cmp = 0;
+	unsigned ix = 0;
+	for (ix = 0; ix < minlen; ix++)
+	  {
+	    cmp =
+	      mom_item_cmp ((l.pseqitems->itemseq[ix]),
+			    (r.pseqitems->itemseq[ix]));
+	    if (cmp != 0)
+	      return cmp;
+	  }
+	if (llen < rlen)
+	  return -1;
+	else if (llen > rlen)
+	  return 1;
+	return 0;
+      }
+      break;
     }
+  MOM_FATAPRINTF ("corrupted values to compare");
+  return -2;
 }
 
 
