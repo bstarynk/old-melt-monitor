@@ -935,7 +935,7 @@ enum momoutdir_en
   ///
   /// literal strings
   MOMOUTDO_LITERAL /*, const char*literalstring */ ,
-#define MOMOUT_LITERAL(S) MOMOUTDO_LITERAL, MOM_REQUIRES_TYPE(S,const char*,mombad_literal)
+#define MOMOUT_LITERAL(S) MOMOUTDO_LITERAL, MOM_REQUIRES_TYPE(S,const char[],mombad_literal)
   ///
   /// HTML encoded strings
   MOMOUTDO_HTML /*, const char*htmlstring */ ,
@@ -948,6 +948,14 @@ enum momoutdir_en
   /// JSON value
   MOMOUTDO_JSON_VALUE /*, momval_t jsval */ ,
 #define MOMOUT_JSON_VALUE(S) MOMOUTDO_JSON_VALUE, MOM_REQUIRES_TYPE(S,momval_t,mombad_value)
+  ///
+  /// any value
+  MOMOUTDO_VALUE /*, momval_t val */ ,
+#define MOMOUT_VALUE(S) MOMOUTDO_VALUE, MOM_REQUIRES_TYPE(S,momval_t,mombad_value)
+  ///
+  /// any item
+  MOMOUTDO_ITEM /*, momitem_t* itm */ ,
+#define MOMOUT_ITEM(S) MOMOUTDO_ITEM, MOM_REQUIRES_TYPE(S,const momitem_t*,mombad_item)
   ///
   /// decimal int
   MOMOUTDO_DEC_INT /*, int num */ ,
@@ -1069,7 +1077,40 @@ extern const char *mombad_longlong;
 extern const char *mombad_file;
 extern const char *mombad_space;
 extern const char *mombad_value;
+extern const char *mombad_item;
 
+
+struct mom_itqueue_st
+{
+  struct mom_itqueue_st *iq_next;
+  momitem_t *iq_item;
+};
+
+//// dumper, see file load-dump.c
+struct mom_dumper_st
+{
+  unsigned dmp_magic;		/* always DUMPER_MAGIC */
+  unsigned dmp_count;
+  unsigned dmp_size;
+  unsigned dmp_state;
+  const char *dmp_reason;
+  const char *dmp_srcfile;
+  int dmp_srcline;
+  struct mom_itqueue_st *dmp_qfirst;
+  struct mom_itqueue_st *dmp_qlast;
+  const momitem_t **dmp_array;
+};
+
+//// loader, see file load-dump.c
+struct mom_loader_st
+{
+  unsigned ldr_magic;		/* always LOADER_MAGIC */
+  struct mom_itqueue_st *ldr_qfirst;
+  struct mom_itqueue_st *ldr_qlast;
+};
+
+// initialize a dumper
+void mom_dump_initialize (struct mom_dumper_st *dmp);
 
 
 /////////////////// agenda and workers and web

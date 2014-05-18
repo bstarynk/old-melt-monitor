@@ -32,7 +32,7 @@ CXXFLAGS= -std=c++11 -Wall -pthread  $(PREPROFLAGS) $(OPTIMFLAGS)
 INDENT= indent -gnu
 PREPROFLAGS= $(shell $(PKGCONFIG) --cflags $(PACKAGES))
 OPTIMFLAGS= -Og -g
-LIBES= -luuid -lgc  $(shell $(PKGCONFIG) --libs $(PACKAGES)) -lonion_handlers -lonion -lpthread -lm -ldl
+LIBES= -lgc  $(shell $(PKGCONFIG) --libs $(PACKAGES)) -lonion_handlers -lonion -lpthread -lm -ldl
 SQLITE= sqlite3
 SOURCES= $(sort $(filter-out $(wildcard mod_*.c), $(wildcard [a-z]*.c)))
 MODSOURCES= $(sort $(wildcard mod_*.c))
@@ -64,19 +64,17 @@ $(OBJECTS): monimelt.h predefined.h
 
 .indent.pro: monimelt.h
 	sed -n 's/typedef.*\(mom[a-z0-9_]*_t\);/-T \1/p' monimelt.h > $@
-monimelt-names.h:
-	date +"#warning no monimelt-names.h at %c" > $@
 
 modules: $(MODULES)
 
 ## MONIMELT generated code starts with momg_ followed by alphanum or +
 ## or - or _ characters. see MONIMELT_SHARED_MODULE_PREFIX in monimelt.h
-momg_%.so: momg_%.c | monimelt.h monimelt-names.h
+momg_%.so: momg_%.c | monimelt.h predefined.h
 	$(LINK.c) -fPIC $< -shared -o $@
 	@logger -t makemonimelt -p user.info -s compiled $< into shared $@ at $$(date +%c)
 
 ## extra modules
-mod_%.so: mod_%.c  | monimelt.h monimelt-names.h
+mod_%.so: mod_%.c  | monimelt.h predefined.h
 	$(LINK.c) -fPIC $< -shared -o $@
 
 restore-state: 

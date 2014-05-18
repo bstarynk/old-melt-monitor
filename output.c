@@ -184,6 +184,125 @@ output_json_mom (momout_t *pout, momval_t v)
     }
 }
 
+static void output_item_mom (momout_t *pout, const momitem_t *itm);
+
+static void
+output_value_mom (momout_t *pout, const momval_t v)
+{
+  assert (pout->mout_magic == MOM_MOUT_MAGIC);
+  FILE *out = pout->mout_file;
+  if (!out)
+    return;
+  if (!v.ptr)
+    {
+      fputs ("nil", out);
+      return;
+    }
+  unsigned tynum = *v.ptype;
+  switch ((enum momvaltype_en) tynum)
+    {
+    case momty_null:
+      MOM_FATAPRINTF ("invalid value at %p", v.ptr);
+      break;
+    case momty_int:
+      fprintf (out, "%lld", (long long) v.pint->intval);
+      break;
+    case momty_double:
+      fprintf (out, "%#.7g", v.pdouble->dblval);
+      break;
+    case momty_string:
+      MOM_OUT (pout,
+	       MOMOUT_SMALL_SPACE (64),
+	       MOMOUT_LITERAL ("\""),
+	       MOMOUT_JS_STRING ((const char *) v.pstring->cstr),
+	       MOMOUT_LITERAL ("\""));
+      break;
+    case momty_item:
+      output_item_mom (pout, v.pitem);
+      break;
+    case momty_tuple:
+      {
+	unsigned tuplen = v.ptuple->slen;
+	MOM_OUT (pout, MOMOUT_SMALL_SPACE (48),
+		 MOMOUT_LITERAL ("@tup["), MOMOUT_INDENT_MORE ());
+	for (unsigned ix = 0; ix < tuplen; ix++)
+	  {
+	    if (ix > 0)
+	      {
+		MOM_OUT (pout, MOMOUT_LITERAL (","), MOMOUT_SMALL_SPACE (60));
+		if (ix % 10 == 9)
+		  MOM_OUT (pout, MOMOUT_SMALL_SPACE (60));
+	      }
+	    output_item_mom (pout, v.ptuple->itemseq[ix]);
+	  }
+	MOM_OUT (pout, MOMOUT_INDENT_LESS (), MOMOUT_LITERAL ("]"));
+      }
+      break;
+    case momty_set:
+      {
+	unsigned setlen = v.pset->slen;
+	MOM_OUT (pout, MOMOUT_SMALL_SPACE (48),
+		 MOMOUT_LITERAL ("@set{"), MOMOUT_INDENT_MORE ());
+	for (unsigned ix = 0; ix < setlen; ix++)
+	  {
+	    if (ix > 0)
+	      {
+		MOM_OUT (pout, MOMOUT_LITERAL (","), MOMOUT_SMALL_SPACE (60));
+		if (ix % 10 == 9)
+		  MOM_OUT (pout, MOMOUT_SMALL_SPACE (60));
+	      }
+	    output_item_mom (pout, v.pset->itemseq[ix]);
+	  }
+	MOM_OUT (pout, MOMOUT_INDENT_LESS (), MOMOUT_LITERAL ("}"));
+      }
+      break;
+    case momty_jsonarray:
+      MOM_OUT (pout, MOMOUT_SMALL_SPACE (48),
+	       MOMOUT_LITERAL ("@jsar"), MOMOUT_JSON_VALUE (v));
+      break;
+    case momty_jsonobject:
+      MOM_OUT (pout, MOMOUT_SMALL_SPACE (48),
+	       MOMOUT_LITERAL ("@jsob"), MOMOUT_JSON_VALUE (v));
+      break;
+    case momty_node:
+      {
+	unsigned nbsons = v.pnode->slen;
+	MOM_OUT (pout, MOMOUT_SMALL_SPACE (48),
+		 MOMOUT_LITERAL ("*"), MOMOUT_ITEM (v.pnode->connitm),
+		 MOMOUT_LITERAL ("("), MOMOUT_INDENT_MORE ());
+	for (unsigned six = 0; six < nbsons; six++)
+	  {
+	    if (six > 0)
+	      {
+		MOM_OUT (pout, MOMOUT_LITERAL (","), MOMOUT_SMALL_SPACE (60));
+		if (six % 10 == 9)
+		  MOM_OUT (pout, MOMOUT_SMALL_SPACE (60));
+	      }
+	    output_value_mom (pout, v.pnode->sontab[six]);
+	  }
+	MOM_OUT (pout, MOMOUT_INDENT_LESS (), MOMOUT_LITERAL (")"));
+      }
+      break;
+    }
+}
+
+static void
+output_item_mom (momout_t *pout, const momitem_t *itm)
+{
+  assert (pout->mout_magic == MOM_MOUT_MAGIC);
+  FILE *out = pout->mout_file;
+  if (!out)
+    return;
+  if (!itm)
+    {
+      fputs ("?nilitem?", out);
+      return;
+    }
+  assert (itm->i_typnum == momty_item);
+  fputs (mom_string_cstr
+	 ((momval_t) mom_item_get_name_or_idstr ((momitem_t *) itm)), out);
+}
+
 
 #define SMALL_INDENT_MOM 8
 #define INDENT_MOM 16
@@ -193,6 +312,8 @@ mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist)
   bool again = true;
   assert (pout->mout_magic == MOM_MOUT_MAGIC);
   FILE *out = pout->mout_file;
+  if (!out)
+    return;
   while (again)
     {
       enum momoutdir_en dir = va_arg (alist, enum momoutdir_en);
@@ -511,6 +632,20 @@ mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist)
 	      }
 	    else
 	      putc (' ', out);
+	  }
+	  break;
+	  ///
+	case MOMOUTDO_VALUE:
+	  {
+	    const momval_t v = va_arg (alist, const momval_t);
+	    output_value_mom (pout, v);
+	  }
+	  break;
+	  ///
+	case MOMOUTDO_ITEM:
+	  {
+	    const momitem_t *itm = va_arg (alist, momitem_t *);
+	    output_item_mom (pout, itm);
 	  }
 	  break;
 	}			/// end switch dir
