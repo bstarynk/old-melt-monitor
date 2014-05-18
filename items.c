@@ -88,6 +88,18 @@ find_bucket_for_idstr_mom (const momstring_t *idstr)
   return curbuck;
 }
 
+static struct itembucket_mom_st *
+find_bucket_for_cstr_mom (const char *cstr, momhash_t h)
+{
+  if (!cstr || cstr[0] != '_' || !isdigit (cstr[1]))
+    return NULL;
+  if (h)
+    h = mom_cstring_hash (cstr);
+  unsigned bix = h % buckets_mom.itbuck_size;
+  struct itembucket_mom_st *curbuck = buckets_mom.itbuck_arr[bix];
+  return curbuck;
+}
+
 // return true if item is added
 static bool
 add_item_mom (const momitem_t *aitm)
@@ -664,4 +676,78 @@ mom_item_get_name_or_idstr (momitem_t *itm)
     strv = itm->i_idstr;
   pthread_mutex_unlock (&itm->i_mtx);
   return strv;
+}
+
+momitem_t *
+mom_get_item_of_name_hash (const char *s, momhash_t h)
+{
+  momitem_t *itm = NULL;
+  if (!s || !isalpha (s[0]))
+    return NULL;
+  if (!h)
+    h = mom_cstring_hash (s);
+  pthread_mutex_lock (&globitem_mtx_mom);
+  int nix = index_dict_mom (s, h);
+  if (nix >= 0)
+    {
+      itm = dict_mom.dict_array[nix].dicent_item;
+      assert (itm && itm != MOM_EMPTY && itm->i_typnum == momty_item);
+    };
+  pthread_mutex_unlock (&globitem_mtx_mom);
+  return itm;
+}
+
+momitem_t *
+mom_get_item_of_name_or_ident_cstr_hash (const char *s, momhash_t h)
+{
+  momitem_t *itm = NULL;
+  const char *end = NULL;
+  if (!s || !s[0])
+    return NULL;
+  if (!(isalpha (s[0]) || (s[0] == '_' && isdigit (s[1]))))
+    return NULL;
+  if (!h)
+    h = mom_cstring_hash (s);
+  pthread_mutex_lock (&globitem_mtx_mom);
+  if (s[0] == '_' && mom_looks_like_random_id_cstr (s, &end)
+      && end && *end == (char) 0)
+    {
+      struct itembucket_mom_st *curbuck = find_bucket_for_cstr_mom (s, h);
+      if (curbuck)
+	{
+	  unsigned bsiz = curbuck->buck_size;
+	  for (unsigned bix = 0; bix < bsiz; bix++)
+	    {
+	      const momitem_t *curitm = curbuck->buck_items[bix];
+	      if (!curitm)
+		continue;
+	      if (curitm->i_hash == h
+		  && !memcmp (s, curitm->i_idstr->cstr, MOM_IDSTRING_LEN))
+		{
+		  itm = (momitem_t *) curitm;
+		  goto end;
+		}
+	    }
+	}
+    }
+  else if (isalpha (s[0]))
+    {
+      int nix = index_dict_mom (s, h);
+      if (nix >= 0)
+	{
+	  itm = dict_mom.dict_array[nix].dicent_item;
+	  assert (itm && itm != MOM_EMPTY && itm->i_typnum == momty_item);
+	};
+    }
+end:
+  pthread_mutex_unlock (&globitem_mtx_mom);
+  return itm;
+}
+
+const momitem_t *
+mom_get_item_bool (bool v)
+{
+#warning unimplemented mom_get_item_bool
+  MOM_FATAPRINTF ("unimplemented mom_get_item_bool");
+  return NULL;
 }

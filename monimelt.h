@@ -107,7 +107,8 @@ extern void *GC_calloc (size_t nbelem, size_t elsiz);
 // empty placeholder in hashes
 #define MOM_EMPTY ((void*)(-1L))
 
-
+// we handle specially "tiny" data, e.g. by stack-allocating temporories.
+#define MOM_TINY_MAX 8
 // query a clock
 static inline double
 mom_clock_time (clockid_t cid)
@@ -159,6 +160,43 @@ typedef uint32_t momusize_t;
 pthread_mutexattr_t mom_normal_mutex_attr;
 pthread_mutexattr_t mom_recursive_mutex_attr;
 
+
+
+//////////////// wrapping Boehm GC allocation
+// using GNU extension: statement expression
+#define MOM_GC_ALLOC_AT(Msg,Siz,Lin) ({ \
+      size_t _sz_##Lin = Siz;					\
+      void* _p_##Lin =						\
+	(_sz_##Lin>0)?GC_MALLOC(_sz_##Lin):NULL;		\
+  if (MOM_UNLIKELY(!_p_##Lin && _sz_##Lin>0))			\
+    MOM_FATAPRINTF("failed to allocate %ld bytes:" Msg,		\
+	      (long) _sz_##Lin);				\
+  if (_sz_##Lin>0)						\
+    memset (_p_##Lin, 0, _sz_##Lin);				\
+  _p_##Lin; })
+#define MOM_GC_ALLOC(Msg,Siz) \
+  MOM_GC_ALLOC_AT(Msg,Siz,__LINE__)
+
+#define MOM_GC_SCALAR_ALLOC_AT(Msg,Siz,Lin) ({			\
+  size_t _sz_##Lin = Siz;					\
+  void* _p_##Lin =						\
+	(_sz_##Lin>0)?GC_MALLOC_ATOMIC(_sz_##Lin):NULL;		\
+  if (MOM_UNLIKELY(!_p_##Lin))					\
+    MOM_FATAPRINTF("failed to allocate %ld scalar bytes:" Msg,	\
+		(long) _sz_##Lin);				\
+  memset (_p_##Lin, 0, _sz_##Lin);				\
+  _p_##Lin; })
+#define MOM_GC_SCALAR_ALLOC(Msg,Siz) \
+  MOM_GC_SCALAR_ALLOC_AT(Msg,Siz,__LINE__)
+
+// free a pointer and clear the variable
+#define MOM_GC_FREE_AT(VarPtr,Lin) do {				\
+    void* _fp_##Lin = VarPtr;					\
+    VarPtr = NULL;						\
+    if (_fp_##Lin != NULL) GC_FREE(_fp_##Lin); } while(0)
+#define MOM_GC_FREE(VarPtr) MOM_GC_FREE_AT(VarPtr,__LINE__)
+
+
 ////////////////////////////////////////////////////////////////
 //////////////// TYPES AND VALUES
 ////////////////////////////////////////////////////////////////
@@ -199,6 +237,7 @@ union momvalueptr_un
   const momstring_t *pstring;
   const momjsonobject_t *pjsonobj;
   const momjsonarray_t *pjsonarr;
+  const momseqitem_t *pseqitems;
   const momset_t *pset;
   const momtuple_t *ptuple;
   const momnode_t *pnode;
@@ -207,14 +246,21 @@ union momvalueptr_un
   const momitem_t *pitemk;
 };
 typedef union momvalueptr_un momval_t;
+#define MOM_NULLV ((momval_t)NULL)
 
+// nonzero hash, except for null
+momhash_t mom_value_hash (const momval_t v);
 
+// compare
+int mom_value_cmp (const momval_t l, const momval_t r);
 /*************************** boxed integers ***************************/
 struct momint_st
 {
   momtynum_t typnum;
   int64_t intval;
 };
+
+
 
 static inline bool
 mom_is_integer (momval_t v)
@@ -298,6 +344,164 @@ mom_string_slen (momval_t v)
 {
   return (v.ptr && v.pstring->typnum == momty_string) ? (v.pstring->slen) : 0;
 }
+
+////////////////////////////////////////////////////////////////
+/////////// JSON VALUES
+////////////////////////////////////////////////////////////////
+
+struct momjsonarray_st
+{
+  momtynum_t typnum;
+  momusize_t slen;
+  momhash_t hash;
+  momval_t jarrtab[];
+};
+
+/// entries are sorted on the ident string for items or on the string
+struct mom_jsonentry_st
+{
+  union
+  {
+    momval_t je_name;
+    const momstring_t *je_namestr;
+    const momitem_t *je_nameitm;
+  };
+  momval_t je_attr;
+};
+
+struct momjsonobject_st
+{
+  momtynum_t typnum;
+  momusize_t slen;
+  momhash_t hash;
+  struct mom_jsonentry_st jobjtab[];
+};
+
+// dynamically cast any value to a JSON value or else null
+static inline momval_t
+mom_value_json (momval_t val)
+{
+  if (!val.ptr)
+    return MOM_NULLV;
+  switch (*val.ptype)
+    {
+    case momty_int:
+    case momty_double:
+    case momty_string:
+    case momty_jsonobject:
+    case momty_jsonarray:
+    case momty_item:
+      return val;
+    default:
+      return MOM_NULLV;
+    }
+}
+
+static inline bool
+mom_is_jsonable (momval_t val)
+{
+  if (!val.ptr)
+    return true;
+  switch (*val.ptype)
+    {
+    case momty_int:
+    case momty_double:
+    case momty_string:
+    case momty_jsonobject:
+    case momty_jsonarray:
+    case momty_item:
+      return true;
+    default:
+      return false;
+    }
+}
+
+///// JSON parsing:
+struct jsonparser_st
+{
+  uint32_t jsonp_magic;		/* always MOMJSONP_MAGIC */
+  int jsonp_c;			/* read ahead character */
+  pthread_mutex_t jsonp_mtx;
+  FILE *jsonp_file;
+  void *jsonp_data;
+  char *jsonp_error;
+  jmp_buf jsonp_jmpbuf;
+};
+
+// initialize a JSON parser
+void mom_initialize_json_parser (struct jsonparser_st *jp, FILE * file,
+				 void *data);
+// get its data
+void *mom_json_parser_data (const struct jsonparser_st *jp);
+// end the parsing without closing the file
+void mom_end_json_parser (struct jsonparser_st *jp);
+// end the parsing and close the file
+void mom_close_json_parser (struct jsonparser_st *jp);
+// parse a JSON value, or else set the error message to *perrmsg
+momval_t mom_parse_json (struct jsonparser_st *jp, char **perrmsg);
+
+// compare values for JSON
+int mom_json_cmp (momval_t l, momval_t r);
+// compare a JSON value to a non-null string
+int mom_json_cstr_cmp (momval_t jv, const char *str);
+
+const momval_t mom_jsonob_getstr (const momval_t jsobv, const char *name);
+
+const momval_t mom_jsonob_get_def (const momval_t jsobv, const momval_t namev,
+				   const momval_t def);
+static inline const momval_t
+mom_jsonob_get (const momval_t jsobv, const momval_t namev)
+{
+  return mom_jsonob_get_def (jsobv, namev, MOM_NULLV);
+}
+
+static inline unsigned
+mom_jsonob_size (momval_t jsobv)
+{
+  if (!jsobv.ptr || *jsobv.ptype != momty_jsonobject)
+    return 0;
+  return jsobv.pjsonobj->slen;
+}
+
+const momjsonobject_t *mom_make_json_object (int, ...)
+  __attribute__ ((sentinel));
+enum momjsondirective_en
+{
+  MOMJSON__END,
+  MOMJSON_ENTRY,		/* momval_t nameval, momval_t attrval */
+  MOMJSON_STRING,		/* const char*namestr, momval_t attval */
+  MOMJSON_COUNTED_ENTRIES,	/* unsigned count, struct mom_jsonentry_st* */
+};
+
+#define MOMJSON_END ((void*)MOMJSON__END)
+// make a JSON array of given count
+const momjsonarray_t *mom_make_json_array (unsigned nbelem, ...);
+const momjsonarray_t *mom_make_json_array_count (unsigned count,
+						 const momval_t *arr);
+const momjsonarray_t *mom_make_json_array_til_nil (momval_t, ...)
+  __attribute__ ((sentinel));
+
+static inline unsigned
+mom_json_array_size (momval_t val)
+{
+  if (!val.ptr || *val.ptype != momty_jsonarray)
+    return 0;
+  return val.pjsonarr->slen;
+}
+
+static inline const momval_t
+mom_json_array_nth (momval_t val, int rk)
+{
+  if (!val.ptr || *val.ptype != momty_jsonarray)
+    return MOM_NULLV;
+  unsigned slen = val.pjsonarr->slen;
+  if (rk < 0)
+    rk += slen;
+  if (rk >= 0 && rk < slen)
+    return val.pjsonarr->jarrtab[rk];
+  return MOM_NULLV;
+}
+
 
 ////////////////////////////////////////////////////////////////
 /////////// ITEMS
@@ -384,6 +588,24 @@ mom_register_item_named_cstr (momitem_t *itm, const char *namestr)
 const momstring_t *mom_item_get_name (momitem_t *itm);
 const momstring_t *mom_item_get_idstr (momitem_t *itm);
 const momstring_t *mom_item_get_name_or_idstr (momitem_t *itm);
+// get an item of given name
+momitem_t *mom_get_item_of_name_hash (const char *s, momhash_t h);
+#define mom_get_item_of_name(S) mom_get_item_of_name_hash((S),0)
+
+// get an item of given name or ident
+momitem_t *mom_get_item_of_name_or_ident_cstr_hash (const char *s,
+						    momhash_t h);
+// get an item of given name or ident
+#define mom_get_item_of_name_or_ident_cstr(S) \
+  mom_get_item_of_name_or_ident_cstr_hash ((S), 0)
+static inline momitem_t *
+mom_get_item_of_name_or_ident_string (momval_t s)
+{
+  if (s.ptr && s.pstring->typnum == momty_string)
+    return mom_get_item_of_name_or_ident_cstr_hash (s.pstring->cstr,
+						    s.pstring->hash);
+  return NULL;
+}
 
 void mom_forget_name (const char *namestr);
 
@@ -400,6 +622,22 @@ mom_forget_item (momitem_t *itm)
   mom_forget_name (mom_string_cstr ((momval_t) mom_item_get_name (itm)));
 };
 
+
+const momitem_t *mom_get_item_bool (bool v);
+
+////////////////////////////////////////////////////////////////
+/////////// SEQUENCE OF ITEMS, SETS & TUPLES
+////////////////////////////////////////////////////////////////
+
+// for sets and tuples of item. In sets, itemseq is sorted by
+// increasing idstr. In tuples, some itemseq components may be nil.
+struct momseqitem_st
+{
+  momtynum_t typnum;
+  momusize_t slen;
+  momhash_t hash;
+  const momitem_t *itemseq[];
+};
 ////////////////////////////////////////////////////////////////
 /////////// DIAGNOSTICS
 ////////////////////////////////////////////////////////////////
