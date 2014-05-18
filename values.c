@@ -119,6 +119,30 @@ mom_make_integer (int64_t c)
 }
 
 
+/*************************** boxed doubles ***************************/
+const momdouble_t dbl0_mom = {.typnum = momty_double,.dblval = 0.0 };
+const momdouble_t dbl1_mom = {.typnum = momty_double,.dblval = 1.0 };
+const momdouble_t dblm1_mom = {.typnum = momty_double,.dblval = -1.0 };
+
+momval_t
+mom_make_double (double d)
+{
+  if (d == 0.0)
+    return (momval_t) & dbl0_mom;
+  else if (d == 1.0)
+    return (momval_t) & dbl1_mom;
+  else if (d == -1.0)
+    return (momval_t) & dblm1_mom;
+  momdouble_t *vd = GC_MALLOC_ATOMIC (sizeof (momdouble_t));
+  if (MOM_UNLIKELY (!vd))
+    MOM_FATAPRINTF ("failed to make double");
+  memset (vd, 0, sizeof (momdouble_t));
+  vd->typnum = momty_double;
+  vd->dblval = d;
+  return (momval_t) (const momdouble_t *) vd;
+}
+
+
 
 /********************* strings ********************/
 momhash_t

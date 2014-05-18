@@ -166,7 +166,7 @@ enum momvaltype_en
 {
   momty_null = 0,
   momty_int,
-  momty_float,
+  momty_double,
   momty_string,
   momty_jsonarray,
   momty_jsonobject,
@@ -180,7 +180,7 @@ enum momvaltype_en
 struct momseqitem_st;
 
 typedef struct momint_st momint_t;
-typedef struct momfloat_st momfloat_t;
+typedef struct momdouble_st momdouble_t;
 typedef struct momstring_st momstring_t;
 typedef struct momjsonobject_st momjsonobject_t;
 typedef struct momjsonarray_st momjsonarray_t;
@@ -195,7 +195,7 @@ union momvalueptr_un
   void *ptr;
   const momtynum_t *ptype;
   const momint_t *pint;
-  const momfloat_t *pfloat;
+  const momdouble_t *pdouble;
   const momstring_t *pstring;
   const momjsonobject_t *pjsonobj;
   const momjsonarray_t *pjsonarr;
@@ -230,6 +230,29 @@ mom_integer_val_def (momval_t v, int64_t def)
 
 #define mom_integer_val(V) mom_integer_val_def((V),0)
 momval_t mom_make_integer (int64_t c);
+
+/*************************** boxed doubles ***************************/
+struct momdouble_st
+{
+  momtynum_t typnum;
+  double dblval;
+};
+static inline bool
+mom_is_double (momval_t v)
+{
+  return (v.ptr && v.pdouble->typnum == momty_double);
+}
+
+static inline double
+mom_double_val_def (momval_t v, double def)
+{
+  return (v.ptr
+	  && v.pdouble->typnum == momty_double) ? (v.pdouble->dblval) : def;
+}
+
+#define mom_double_val_else_0(V) mom_double_val_def((V),0.0)
+#define mom_double_val(V) mom_double_val_def((V),NAN)
+momval_t mom_make_double (double d);
 
 /*************************** strings ***************************/
 #define MOM_MAX_STRING_LENGTH (1<<25)	/* max string length 33554432 */
