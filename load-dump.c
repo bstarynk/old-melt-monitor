@@ -242,8 +242,8 @@ jsonarray_emit_itemseq_mom (struct mom_dumper_st *dmp,
       for (unsigned ix = 0; ix < slen; ix++)
 	{
 	  momitem_t *curitm = (momitem_t *) (si->itemseq[ix]);
-	  if (curitm && curitm->i_space)
-	    tab[ix] = raw_dump_emit_json_mom (dmp, (momval_t) curitm);
+	  if (curitm && curitm->i_space > 0)
+	    tab[ix] = (momval_t) mom_item_get_idstr (curitm);
 	  else
 	    tab[ix] = MOM_NULLV;
 	}
@@ -426,25 +426,31 @@ raw_dump_emit_json_mom (struct mom_dumper_st *dmp, const momval_t val)
 	const momitem_t *curconn = val.pnode->connitm;
 	if (curconn && curconn->i_space > 0)
 	  {
-	    momval_t jconn = raw_dump_emit_json_mom (dmp,
-						     (momval_t) (momitem_t
-								 *) curconn);
-#warning should just dump the id or string of the connective
-	    if (jconn.ptr)
-	      jsval = (momval_t) mom_make_json_object
-		(MOMJSOB_ENTRY
-		 ((momval_t) mom_named__jtype, (momval_t) mom_named__node),
-		 MOMJSOB_ENTRY ((momval_t) mom_named__conn, jconn),
-		 MOMJSOB_ENTRY ((momval_t) mom_named__sons,
-				(momval_t) jsonarray_emit_nodesons_mom (dmp,
-									val.pnode)),
-		 MOMJSON_END);
+	    const momstring_t *connids =
+	      mom_item_get_idstr ((momitem_t *) curconn);
+	    assert (mom_is_string ((momval_t) connids));
+	    jsval = (momval_t) mom_make_json_object
+	      (MOMJSOB_ENTRY
+	       ((momval_t) mom_named__jtype, (momval_t) mom_named__node),
+	       MOMJSOB_ENTRY ((momval_t) mom_named__conn, (momval_t) connids),
+	       MOMJSOB_ENTRY ((momval_t) mom_named__sons,
+			      (momval_t) jsonarray_emit_nodesons_mom (dmp,
+								      val.pnode)),
+	       MOMJSON_END);
 	  }
       }
       break;
     case momty_item:
-#warning unimplemented item dump
-      MOM_FATAPRINTF ("unimplemented item dump");
+      {
+	const momstring_t *itemids = mom_item_get_idstr (val.pitem);
+	assert (mom_is_string ((momval_t) itemids));
+	jsval = (momval_t) mom_make_json_object
+	  (MOMJSOB_ENTRY
+	   ((momval_t) mom_named__jtype, (momval_t) mom_named__item_ref),
+	   MOMJSOB_ENTRY ((momval_t) mom_named__item_ref, (momval_t) itemids),
+	   MOMJSON_END);
+      }
       break;
     }
+  return jsval;
 }

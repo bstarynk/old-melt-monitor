@@ -72,7 +72,7 @@ mom_close_json_parser (struct jsonparser_st *jp)
   memset (jp, 0, sizeof (struct jsonparser_st));
 }
 
-static momval_t parse_json_internal (struct jsonparser_st *jp);
+static momval_t parse_json_internal_mom (struct jsonparser_st *jp);
 
 #define JSONPARSE_ERROR_AT(Fil,Lin,Jp,Fmt,...) do {	\
     static char buf##Lin[128];			\
@@ -117,7 +117,7 @@ mom_parse_json (struct jsonparser_st *jp, char **perrmsg)
       pthread_mutex_unlock (&jp->jsonp_mtx);
       return MOM_NULLV;
     }
-  res = parse_json_internal (jp);
+  res = parse_json_internal_mom (jp);
   if (res.ptr == MOM_EMPTY)
     JSONPARSE_ERROR (jp, "unexpected terminator %c", jp->jsonp_c);
   pthread_mutex_unlock (&jp->jsonp_mtx);
@@ -142,7 +142,7 @@ json_item_or_string_mom (const char *buf)
 // may return MOM_EMPTY if found a terminator like comma,
 // right-brace, right-bracket, colon
 static momval_t
-parse_json_internal (struct jsonparser_st *jp)
+parse_json_internal_mom (struct jsonparser_st *jp)
 {
 again:
   if (jp->jsonp_c < 0)
@@ -193,8 +193,8 @@ again:
   else if (jp->jsonp_c == '"')
     {
       jp->jsonp_c = getc (jp->jsonp_file);
-      unsigned siz = 2 * MOM_TINY_MAX, cnt = 0;
       char tinyarr[2 * MOM_TINY_MAX];
+      unsigned siz = 2 * MOM_TINY_MAX, cnt = 0;
       char *str = tinyarr;
       memset (str, 0, siz);
       do
@@ -293,9 +293,19 @@ again:
       jp->jsonp_c = getc (jp->jsonp_file);
       if ((isalpha (str[0]) || str[0] == '_') && strlen (str) == cnt)
 	{
+	  // for strings which happen to be names or identifiers, if
+	  // the item is predefined, return that predefined item
+	  // otherwise return the shared identifier or name string.
 	  momitem_t *namitm = mom_get_item_of_name_or_ident_cstr (str);
 	  if (namitm)
-	    return (momval_t) namitm;
+	    {
+	      if (namitm->i_space == momspa__predefined)
+		return (momval_t) namitm;
+	      else if (str[0] == '_' && isdigit (str[1]))
+		return (momval_t) namitm->i_idstr;
+	      else if (isalpha (str[0]) && namitm->i_name)
+		return (momval_t) namitm->i_name;
+	    }
 	}
       return (momval_t) mom_make_string (str);
     }
@@ -413,7 +423,7 @@ again:
       bool gotcomma = false;
       do
 	{
-	  comp = parse_json_internal (jp);
+	  comp = parse_json_internal_mom (jp);
 	  if (comp.ptr == MOM_EMPTY)
 	    {
 	      if (jp->jsonp_c == ']')
@@ -480,7 +490,7 @@ again:
 	      jp->jsonp_c = getc (jp->jsonp_file);
 	      break;
 	    }
-	  momval_t namv = parse_json_internal (jp);
+	  momval_t namv = parse_json_internal_mom (jp);
 	  if (namv.ptr == MOM_EMPTY)
 	    {
 	      namv = MOM_NULLV;
@@ -506,7 +516,7 @@ again:
 			     ftell (jp->jsonp_file));
 	  while (jp->jsonp_c > 0 && isspace (jp->jsonp_c))
 	    jp->jsonp_c = getc (jp->jsonp_file);
-	  momval_t valv = parse_json_internal (jp);
+	  momval_t valv = parse_json_internal_mom (jp);
 	  if (valv.ptr == MOM_EMPTY)
 	    JSONPARSE_ERROR (jp,
 			     "failed to parse value in JSON object at offset %ld",
