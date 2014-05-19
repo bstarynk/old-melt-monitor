@@ -222,7 +222,8 @@ mom_dump_scan_value (struct mom_dumper_st *dmp, const momval_t val)
       }
     case momty_item:
       {
-	mom_dump_add_item (dmp, val.pitem);
+	if (val.pitem && val.pitem->i_space > 0)
+	  mom_dump_add_item (dmp, val.pitem);
       }
       break;
     }
@@ -456,29 +457,108 @@ raw_dump_emit_json_mom (struct mom_dumper_st *dmp, const momval_t val)
   return jsval;
 }
 
+static bool
+add_loaded_item_mom (struct mom_loader_st *ld, const momitem_t *litm)
+{
+  assert (ld != NULL && ld->ldr_magic == LOADER_MAGIC);
+  assert (litm != NULL && litm->i_typnum == momty_item);
+  unsigned siz = ld->ldr_hsize;
+  const momitem_t **htbl = ld->ldr_htable;
+  assert (siz > 0 && htbl != NULL && ld->ldr_hcount < siz);
+  unsigned lh = litm->i_hash;
+  assert (lh != 0);
+  unsigned istart = lh % siz;
+  for (unsigned ix = istart; ix < siz; ix++)
+    {
+      if (!htbl[ix])
+	{
+	  htbl[ix] = litm;
+	  ld->ldr_hcount++;
+	  return true;
+	}
+      else if (htbl[ix] == litm)
+	return false;
+    }
+  for (unsigned ix = 0; ix < istart; ix++)
+    {
+      if (!htbl[ix])
+	{
+	  htbl[ix] = litm;
+	  ld->ldr_hcount++;
+	  return true;
+	}
+      else if (htbl[ix] == litm)
+	return false;
+    }
+  // should never reach here
+  MOM_FATAPRINTF ("load htable is corrupted and full");
+  return false;
+}
+
 const momitem_t *
 mom_load_item_json (struct mom_loader_st *ld, const momval_t jval)
 {
+  const momitem_t *litm = NULL;
   if (!jval.ptr || !ld)
     return NULL;
   assert (ld->ldr_magic == LOADER_MAGIC);
   if (mom_is_item (jval))
-    return jval.pitem;
+    litm = jval.pitem;
   else if (mom_is_string (jval))
     {
       if (mom_looks_like_random_id_cstr (jval.pstring->cstr, NULL))
-	return mom_make_item_of_ident (jval.pstring);
+	litm = mom_make_item_of_ident (jval.pstring);
       else if (isalpha (jval.pstring->cstr[0]))
-	return mom_get_item_of_name_hash (jval.pstring->cstr,
+	litm = mom_get_item_of_name_hash (jval.pstring->cstr,
 					  jval.pstring->hash);
     }
   else if (mom_jsonob_get (jval, (momval_t) mom_named__jtype).pitem ==
 	   mom_named__item_ref)
-    return mom_load_item_json (ld,
+    litm = mom_load_item_json (ld,
 			       mom_jsonob_get (jval,
 					       (momval_t)
 					       mom_named__item_ref));
-  return NULL;
+  if (MOM_UNLIKELY (4 * ld->ldr_hcount + 10 > 3 * ld->ldr_hsize))
+    {
+      // grow the hash table
+      const momitem_t **oldhtbl = ld->ldr_htable;
+      unsigned oldsize = ld->ldr_hsize;
+      unsigned oldcount = ld->ldr_hcount;
+      unsigned newsize = (((3 * oldcount / 2) + 50) | 0x1f) + 1;
+      assert (newsize > oldsize);
+      const momitem_t **newhtbl =
+	MOM_GC_ALLOC ("load hash table", newsize * sizeof (momitem_t *));
+      ld->ldr_hsize = newsize;
+      ld->ldr_htable = newhtbl;
+      ld->ldr_hcount = 0;
+      for (unsigned oix = 0; oix < oldsize; oix++)
+	{
+	  const momitem_t *curolditm = oldhtbl[oix];
+	  if (!curolditm)
+	    continue;
+	  if (!add_loaded_item_mom (ld, curolditm))
+	    MOM_FATAPRINTF ("corrupted old load hash table");
+	}
+      assert (ld->ldr_hcount == oldcount);
+    }
+  // add and enqueue the item if new
+  if (add_loaded_item_mom (ld, litm))
+    {
+      struct mom_itqueue_st *elq =
+	MOM_GC_ALLOC ("load queue element", sizeof (struct mom_itqueue_st));
+      elq->iq_item = (momitem_t *) litm;
+      if (MOM_UNLIKELY (!ld->ldr_qfirst))
+	{
+	  ld->ldr_qfirst = ld->ldr_qlast = elq;
+	}
+      else
+	{
+	  assert (ld->ldr_qlast != NULL);
+	  ld->ldr_qlast->iq_next = elq;
+	  ld->ldr_qlast = elq;
+	}
+    }
+  return litm;
 }
 
 static const momseqitem_t *

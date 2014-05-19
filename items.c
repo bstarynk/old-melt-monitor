@@ -766,9 +766,9 @@ mom_set_of_named_items (void)
       arr[cnt++] = curitm;
     };
   assert (cnt == dict_mom.dict_count);
+  pthread_mutex_unlock (&globitem_mtx_mom);
   set = mom_make_set_from_array (cnt, arr);
   MOM_GC_FREE (arr);
-  pthread_mutex_unlock (&globitem_mtx_mom);
   return set;
 }
 
@@ -803,10 +803,10 @@ mom_alpha_ordered_tuple_of_named_items (void)
       arr[cnt++] = curitm;
     };
   assert (cnt == dict_mom.dict_count);
+  pthread_mutex_unlock (&globitem_mtx_mom);
   qsort (arr, cnt, sizeof (momitem_t *), item_name_cmp_mom);
   tup = mom_make_tuple_from_array (cnt, arr);
   MOM_GC_FREE (arr);
-  pthread_mutex_unlock (&globitem_mtx_mom);
   return tup;
 }
 

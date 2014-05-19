@@ -739,7 +739,9 @@ enum mom_space_en
 struct mom_spacedescr_st
 {
   unsigned space_magic;		/* always MOM_SPACE_MAGIC */
+  unsigned space_index;		/* my index in mom_spacedescr_array */
   const char *space_name;
+  void *space_data;
 } *mom_spacedescr_array[spa__last];
 
 ////////////////////////////////////////////////////////////////
@@ -1138,6 +1140,11 @@ struct mom_dumper_st
 struct mom_loader_st
 {
   unsigned ldr_magic;		/* always LOADER_MAGIC */
+  /// hash table of loaded items
+  unsigned ldr_hsize;
+  unsigned ldr_hcount;
+  const momitem_t **ldr_htable;
+  /// queue of items whose content should be loaded:
   struct mom_itqueue_st *ldr_qfirst;
   struct mom_itqueue_st *ldr_qlast;
 };
