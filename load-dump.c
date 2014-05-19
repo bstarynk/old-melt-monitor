@@ -20,8 +20,47 @@
 
 #include "monimelt.h"
 
-static pthread_mutex_t loadump_mtx_mom =
-  PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+#define MOM_VERSION_PARAM "dump_format_version"
+#define MOM_DUMP_VERSION "MoniMelt2014B"
+//// loader
+struct mom_loader_st
+{
+  unsigned ldr_magic;		/* always LOADER_MAGIC */
+  /// hash table of loaded items
+  unsigned ldr_hsize;
+  unsigned ldr_hcount;
+  const momitem_t **ldr_htable;
+  // the load directory
+  const char *ldr_dirpath;
+  // the sqlite3 path
+  const char *ldr_sqlpath;
+  // the sqlite database handle
+  sqlite3 *ldr_sqlite;
+  // statement for param fetching
+  sqlite3_stmt *ldr_sqlstmt_param_fetch;
+  /// queue of items whose content should be loaded:
+  struct mom_itqueue_st *ldr_qfirst;
+  struct mom_itqueue_st *ldr_qlast;
+};
+
+
+//// dumper, see file load-dump.c
+struct mom_dumper_st
+{
+  unsigned dmp_magic;		/* always DUMPER_MAGIC */
+  unsigned dmp_count;
+  unsigned dmp_size;
+  unsigned dmp_state;
+  const char *dmp_reason;
+  const char *dmp_dirpath;
+  const char *dmp_sqlpath;
+  sqlite3 *dmp_sqlite;
+  sqlite3_stmt *dmp_sqlstmt_param_update;
+  struct mom_itqueue_st *dmp_qfirst;
+  struct mom_itqueue_st *dmp_qlast;
+  const momitem_t **dmp_array;
+};
+static pthread_mutex_t dump_mtx_mom = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 
 enum dumpstate_en
 {
@@ -33,21 +72,6 @@ enum dumpstate_en
 #define DUMPER_MAGIC 0x572bb695	/* dumper magic 1462482581 */
 
 #define LOADER_MAGIC 0x169128bb	/* loader magic 378611899 */
-void
-mom_dumper_initialize (struct mom_dumper_st *dmp)
-{
-  const unsigned siz = 512;
-  memset (dmp, 0, sizeof (struct mom_dumper_st));
-  const momitem_t **arr
-    = MOM_GC_ALLOC ("dumper array", siz * sizeof (momitem_t *));
-  dmp->dmp_array = arr;
-  dmp->dmp_size = siz;
-  dmp->dmp_count = 0;
-  dmp->dmp_qfirst = dmp->dmp_qlast = NULL;
-  dmp->dmp_magic = DUMPER_MAGIC;
-  dmp->dmp_state = dus_scan;
-  MOM_DEBUG (dump, "initialize dmp@%p", (void *) dmp);
-}
 
 static inline void
 add_dumped_item_mom (struct mom_dumper_st *dmp, const momitem_t *itm)
@@ -702,4 +726,171 @@ mom_load_value_json (struct mom_loader_st *ld, const momval_t jval)
       }
     }
   return jres;
+}
+
+
+static const char *
+fetch_param_mom (struct mom_loader_st *ld, const char *parname)
+{
+  const char *res = NULL;
+  assert (ld && ld->ldr_magic == LOADER_MAGIC);
+  // parname at index 1
+  if (sqlite3_bind_text
+      (ld->ldr_sqlstmt_param_fetch, 1, parname, -1, SQLITE_STATIC))
+    MOM_FATAL ("failed to bind parrame: %s", sqlite3_errmsg (ld->ldr_sqlite));
+  int stepres = sqlite3_step (ld->ldr_sqlstmt_param_fetch);
+  if (stepres == SQLITE_ROW)
+    {
+      const char *colparam = (const char *)
+	sqlite3_column_text (ld->ldr_sqlstmt_param_fetch, 0);
+      assert (colparam != NULL);
+      res = MOM_GC_STRDUP ("load paramvalue", colparam);
+    }
+  sqlite3_reset (ld->ldr_sqlstmt_param_fetch);
+  return res;
+}
+
+void
+mom_load (const char *ldirnam)
+{
+  char filpath[MOM_PATH_MAX];
+  memset (filpath, 0, sizeof (filpath));
+  if (!ldirnam || !ldirnam[0])
+    {
+      char dirpath[MOM_PATH_MAX];
+      memset (dirpath, 0, sizeof (dirpath));
+      MOM_WARNPRINTF ("forcing load directory to current directory: %s",
+		      getcwd (dirpath, sizeof (dirpath)));
+      ldirnam = ".";
+    };
+  snprintf (filpath, sizeof (filpath), "%s/%s.dbsqlite", ldirnam,
+	    MOM_STATE_FILE_BASENAME);
+  if (access (filpath, R_OK))
+    MOM_FATAPRINTF ("cannot access initial state file %s", filpath);
+  struct mom_loader_st ldr;
+  memset (&ldr, 0, sizeof (ldr));
+  ldr.ldr_magic = LOADER_MAGIC;
+  const int inisiz = 64;
+  ldr.ldr_hsize = inisiz;
+  ldr.ldr_htable =
+    MOM_GC_ALLOC ("initial loader hashtable", inisiz * sizeof (momitem_t *));
+  ldr.ldr_hsize = inisiz;
+  ldr.ldr_hcount = 0;
+  ldr.ldr_dirpath = MOM_GC_STRDUP ("initial loader dirpath", ldirnam);
+  /// open the database
+  int errcod = sqlite3_open (filpath, &ldr.ldr_sqlite);
+  if (errcod)
+    MOM_FATAPRINTF ("failed to open loaded state sqlite3 file %s: %s",
+		    filpath, sqlite3_errmsg (ldr.ldr_sqlite));
+  ldr.ldr_sqlpath = MOM_GC_STRDUP ("initial loader sqldb", filpath);
+  /// prepare some statements
+  if (sqlite3_prepare_v2 (ldr.ldr_sqlite,
+			  "SELECT parvalue from t_param WHERE parname = ?1",
+			  -1, &ldr.ldr_sqlstmt_param_fetch, NULL))
+    MOM_FATAPRINTF ("failed to prepare fetchparam query: %s",
+		    sqlite3_errmsg (ldr.ldr_sqlite));
+  /// check the version
+  const char *vers = fetch_param_mom (&ldr, MOM_VERSION_PARAM);
+  if (MOM_UNLIKELY (vers && strcmp (vers, MOM_DUMP_VERSION)))
+    MOM_FATAPRINTF ("incompatible version in %s, expected %s got %s",
+		    ldr.ldr_sqlpath, MOM_DUMP_VERSION, vers);
+#warning incomplete load
+}
+
+
+
+void
+mom_full_dump (const char *reason, const char *dumpdir)
+{
+  char filpath[MOM_PATH_MAX];
+  memset (filpath, 0, sizeof (filpath));
+  if (!dumpdir || !dumpdir[0])
+    {
+      MOM_WARNPRINTF ("setting dump directory to current: %s",
+		      getcwd (filpath, sizeof (filpath)));
+      dumpdir = ".";
+    };
+  memset (filpath, 0, sizeof (filpath));
+  MOM_INFORMPRINTF ("start full dump reason=%s dumpdir=%s", reason, dumpdir);
+  /// try to make the dump directory if it does not exist
+  if (access (dumpdir, F_OK) && dumpdir[0] != '.' && dumpdir[0] != '_')
+    {
+      if (mkdir (dumpdir, 0750))
+	MOM_FATAPRINTF ("failed to make dump directory %s", dumpdir);
+      else
+	MOM_INFORMPRINTF ("made dump directory %s", dumpdir);
+    }
+  snprintf (filpath, sizeof (filpath), "%s/%s.dbsqlite", dumpdir,
+	    MOM_STATE_FILE_BASENAME);
+  if (!access (filpath, F_OK))
+    {
+      char backupath[MOM_PATH_MAX];
+      memset (backupath, 0, sizeof (backupath));
+      snprintf (backupath, sizeof (backupath), "%s~", filpath);
+      if (rename (filpath, backupath))
+	MOM_WARNPRINTF ("failed to backup %s as %s", filpath, backupath);
+      else
+	MOM_INFORMPRINTF ("moved for backup %s to %s", filpath, backupath);
+    };
+  /// lock the mutex
+  pthread_mutex_lock (&dump_mtx_mom);
+  /// create & initialize the dumper
+  struct mom_dumper_st dmp = { };
+  memset (&dmp, 0, sizeof (struct mom_dumper_st));
+  const unsigned siz = 512;
+  const momitem_t **arr
+    = MOM_GC_ALLOC ("dumper array", siz * sizeof (momitem_t *));
+  dmp.dmp_array = arr;
+  dmp.dmp_size = siz;
+  dmp.dmp_count = 0;
+  if (sqlite3_open (filpath, &dmp.dmp_sqlite))
+    MOM_FATAPRINTF ("failed to open dump state sqlite3 file %s: %s",
+		    filpath, sqlite3_errmsg (dmp.dmp_sqlite));
+  dmp.dmp_dirpath = MOM_GC_STRDUP ("dumped directory", dumpdir);
+  dmp.dmp_sqlpath = MOM_GC_STRDUP ("dumped sqlite path", filpath);
+  dmp.dmp_qfirst = dmp.dmp_qlast = NULL;
+  dmp.dmp_magic = DUMPER_MAGIC;
+  dmp.dmp_state = dus_scan;
+  char *errmsg = NULL;
+  /// create the initial tables
+  if (sqlite3_exec
+      (dmp.dmp_sqlite,
+       "CREATE TABLE IF NOT EXISTS t_param (parname VARCHAR(35) PRIMARY KEY ASC NOT NULL UNIQUE,"
+       " parvalue TEXT NOT NULL)", NULL, NULL, &errmsg))
+    MOM_FATAPRINTF ("in dumped db %s failed to create t_param %s",
+		    dmp.dmp_sqlpath, errmsg);
+  if (sqlite3_exec
+      (dmp.dmp_sqlite,
+       "CREATE TABLE IF NOT EXISTS t_items (itm_idstr VARCHAR(30) PRIMARY KEY ASC NOT NULL UNIQUE,"
+       " itm_jdata TEXT NOT NULL," " itm_paylkind VARCHAR(30) NOT NULL,"
+       " itm_payldata TEXT NOT NULL)", NULL, NULL, &errmsg))
+    MOM_FATAPRINTF ("in dumped db %s failed to create t_items %s",
+		    dmp.dmp_sqlpath, errmsg);
+  if (sqlite3_exec
+      (dmp.dmp_sqlite,
+       "CREATE TABLE IF NOT EXISTS t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE,"
+       " nam_idstr VARCHAR(30) UNIQUE NOT NULL REFERENCES t_items(itm_idstr),"
+       " spacename VARCHAR(20) NOT NULL)", NULL, NULL, &errmsg))
+    MOM_FATAPRINTF ("failed to create t_names: %s", errmsg);
+  if (sqlite3_exec
+      (dmp.dmp_sqlite,
+       "CREATE TABLE IF NOT EXISTS t_module (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE)",
+       NULL, NULL, &errmsg))
+    MOM_FATAPRINTF ("failed to create t_module: %s", errmsg);
+  if (sqlite3_exec (dmp.dmp_sqlite, "BEGIN TRANSACTION", NULL, NULL, &errmsg))
+    MOM_FATAPRINTF ("failed to BEGIN TRANSACTION: %s", errmsg);
+#warning incomplete dump
+  /// at last
+  goto end;
+end:
+  sqlite3_finalize (dmp.dmp_sqlstmt_param_update),
+    dmp.dmp_sqlstmt_param_update = NULL;
+  if (sqlite3_exec (dmp.dmp_sqlite, "END TRANSACTION", NULL, NULL, &errmsg))
+    MOM_FATAL ("failed to END TRANSACTION: %s", errmsg);
+  int errclo = sqlite3_close_v2 (dmp.dmp_sqlite);
+  if (errclo != SQLITE_OK)
+    MOM_FATAPRINTF ("failed to close sqlite3 %s: %s", dmp.dmp_sqlpath,
+		    sqlite3_errstr (errclo));
+  dmp.dmp_sqlite = NULL;
+  pthread_mutex_unlock (&dump_mtx_mom);
 }

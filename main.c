@@ -691,25 +691,29 @@ main (int argc, char **argv)
       {
 	char hnam[64];
 	char timbuf[64];
+	char dirnam[MOM_PATH_MAX];
 	memset (timbuf, 0, sizeof (timbuf));
 	memset (hnam, 0, sizeof (hnam));
+	memset (dirnam, 0, sizeof (dirnam));
 	gethostname (hnam, sizeof (hnam) - 1);
 	mom_now_strftime_bufcenti (timbuf, "%Y-%b-%d %H:%M:%S.__ %Z");
 	syslog (LOG_INFO,
 		"MONIMELT starting on %s at %s in %s,\n.. built %s gitcommit %s",
-		hnam, timbuf, get_current_dir_name (), monimelt_timestamp,
-		monimelt_lastgitcommit);
+		hnam, timbuf, getcwd (dirnam, sizeof (dirnam)),
+		monimelt_timestamp, monimelt_lastgitcommit);
 	atexit (logexit_cb_mom);
       }
     }
   /// change directory if asked
   if (wanted_dir_mom)
     {
+      char dirpath[MOM_PATH_MAX];
+      memset (dirpath, 0, sizeof (dirpath));
       if (chdir (wanted_dir_mom))
 	MOM_FATAPRINTF ("failed to chdir %s", wanted_dir_mom);
       else
 	MOM_INFORMPRINTF ("changed directory to %s, now in %s",
-			  wanted_dir_mom, get_current_dir_name ());
+			  wanted_dir_mom, getcwd (dirpath, sizeof (dirpath)));
     };
   // write the pid to the given file if so asked
   if (write_pid_file_mom)

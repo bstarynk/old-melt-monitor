@@ -109,6 +109,9 @@ extern void *GC_calloc (size_t nbelem, size_t elsiz);
 
 // we handle specially "tiny" data, e.g. by stack-allocating temporories.
 #define MOM_TINY_MAX 8
+
+#define MOM_PATH_MAX 256
+
 // query a clock
 static inline double
 mom_clock_time (clockid_t cid)
@@ -188,6 +191,15 @@ pthread_mutexattr_t mom_recursive_mutex_attr;
   _p_##Lin; })
 #define MOM_GC_SCALAR_ALLOC(Msg,Siz) \
   MOM_GC_SCALAR_ALLOC_AT(Msg,Siz,__LINE__)
+
+#define MOM_GC_STRDUP_AT(Msg,Str,Lin) ({		\
+const char* _str_##Lin = (Str);				\
+const char* _dup_##Lin = GC_STRDUP(_str_##Lin);		\
+  if (MOM_UNLIKELY(!_dup_##Lin && _str_##Lin))		\
+    MOM_FATAPRINTF("failed to duplicate string %s",	\
+		   _str_##Lin);				\
+  _str_##Lin; })
+#define MOM_GC_STRDUP(Msg,Str) MOM_GC_STRDUP_AT((Msg),(Str),__LINE__)
 
 // free a pointer and clear the variable
 #define MOM_GC_FREE_AT(VarPtr,Lin) do {				\
@@ -666,7 +678,7 @@ struct mom_payload_descr_st
 {
   unsigned dpayl_magic;		/* always MOM_PAYLOAD_MAGIC */
   unsigned dpayl_spare;
-  const char*dpayl_name;
+  const char *dpayl_name;
   // the payload loader
   void (*dpayl_loadfun) (struct mom_loader_st * ld, momitem_t *litm,
 			 momval_t jsob);
@@ -674,7 +686,7 @@ struct mom_payload_descr_st
   void (*dpayl_dumpscanfun) (struct mom_dumper_st * du, momitem_t *ditm);
   // the payload dumper, should return a json object
   momval_t (*dpayl_dumpjsonfun) (struct mom_dumper_st * du, momitem_t *ditm);
-#warning incomplete payload descriptor
+  intptr_t dpayl_spare1, dpayl_spare2;
 };
 
 /************* misc items *********/
@@ -1142,38 +1154,8 @@ struct mom_itqueue_st
   momitem_t *iq_item;
 };
 
-//// dumper, see file load-dump.c
-struct mom_dumper_st
-{
-  unsigned dmp_magic;		/* always DUMPER_MAGIC */
-  unsigned dmp_count;
-  unsigned dmp_size;
-  unsigned dmp_state;
-  const char *dmp_reason;
-  const char *dmp_srcfile;
-  int dmp_srcline;
-  struct mom_itqueue_st *dmp_qfirst;
-  struct mom_itqueue_st *dmp_qlast;
-  const momitem_t **dmp_array;
-};
 
-//// loader, see file load-dump.c
-struct mom_loader_st
-{
-  unsigned ldr_magic;		/* always LOADER_MAGIC */
-  /// hash table of loaded items
-  unsigned ldr_hsize;
-  unsigned ldr_hcount;
-  // the load directory
-  const char *ldr_dirpath;
-  const momitem_t **ldr_htable;
-  /// queue of items whose content should be loaded:
-  struct mom_itqueue_st *ldr_qfirst;
-  struct mom_itqueue_st *ldr_qlast;
-};
-
-// initialize a dumper
-void mom_dump_initialize (struct mom_dumper_st *dmp);
+#define MOM_STATE_FILE_BASENAME "state-monimelt"
 
 // the initial loading
 void mom_initial_load (const char *ldir);

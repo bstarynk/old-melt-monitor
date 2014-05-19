@@ -46,15 +46,15 @@ clean:
 	$(RM) *~ *.o *.so *.orig _tmp_* monimelt core* webdir/*~ *.tmp  _timestamp.* state-monimelt.dbsqlite-journal
 ################
 monimelt: $(OBJECTS) _timestamp.o
-	@if [ -f $@ ]; then mv -v $@ $@~ ; fi
+	@if [ -f $@ ]; then echo -n backup old executable: ' ' ; mv -v $@ $@~ ; fi
 	$(LINK.c)  -rdynamic $^ $(LIBES) -o $@
 	rm _timestamp.*
 
 _timestamp.c:
 	@date +'const char monimelt_timestamp[]="%c";' > _timestamp.tmp
 	@(echo -n 'const char monimelt_lastgitcommit[]="' ; \
-	 git log --format=oneline --abbrev=12 --abbrev-commit -q | head -1 | tr -d '\n\r\f' ; \
-	 echo '";') >> _timestamp.tmp
+	    git log --format=oneline --abbrev=12 --abbrev-commit -q | head -1 | tr -d '\n\r\f\"' ; \
+	    echo '";') >> _timestamp.tmp
 	@mv _timestamp.tmp _timestamp.c
 
 indent: .indent.pro # don't indent predefined.h
