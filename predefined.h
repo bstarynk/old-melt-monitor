@@ -9,7 +9,6 @@
 #endif
 
 /// named predefined: MOM_PREDEFINED_NAMED(Name,Id)
-MOM_PREDEFINED_NAMED(conn,_3eada2wz9zs_sefcyfe1c03)
 MOM_PREDEFINED_NAMED(item_ref,_6hf2vzmrsee_t35suhjvtj4)
 MOM_PREDEFINED_NAMED(json_array,_35vp60aw7em_d436vfie4ud)
 MOM_PREDEFINED_NAMED(json_false,_4mha85xcfwi_9zqcvkiy3dk)

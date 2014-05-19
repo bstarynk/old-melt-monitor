@@ -32,6 +32,7 @@ enum dumpstate_en
 
 #define DUMPER_MAGIC 0x572bb695	/* dumper magic 1462482581 */
 
+#define LOADER_MAGIC 0x169128bb	/* loader magic 378611899 */
 void
 mom_dumper_initialize (struct mom_dumper_st *dmp)
 {
@@ -256,7 +257,7 @@ jsonarray_emit_itemseq_mom (struct mom_dumper_st *dmp,
       for (unsigned ix = 0; ix < slen; ix++)
 	{
 	  momitem_t *curitm = (momitem_t *) (si->itemseq[ix]);
-	  if (curitm && curitm->i_space)
+	  if (curitm && curitm->i_space > 0)
 	    arr[ix] = raw_dump_emit_json_mom (dmp, (momval_t) curitm);
 	  else
 	    arr[ix].ptr = NULL;
@@ -381,6 +382,17 @@ raw_dump_emit_json_mom (struct mom_dumper_st *dmp, const momval_t val)
 	break;
       }
       break;
+    case momty_item:
+      {
+	const momstring_t *itemids = mom_item_get_idstr (val.pitem);
+	assert (mom_is_string ((momval_t) itemids));
+	jsval = (momval_t) mom_make_json_object
+	  (MOMJSOB_ENTRY
+	   ((momval_t) mom_named__jtype, (momval_t) mom_named__item_ref),
+	   MOMJSOB_ENTRY ((momval_t) mom_named__item_ref, (momval_t) itemids),
+	   MOMJSON_END);
+      }
+      break;
     case momty_jsonarray:
       {
 	jsval = (momval_t) mom_make_json_object
@@ -432,7 +444,7 @@ raw_dump_emit_json_mom (struct mom_dumper_st *dmp, const momval_t val)
 	    jsval = (momval_t) mom_make_json_object
 	      (MOMJSOB_ENTRY
 	       ((momval_t) mom_named__jtype, (momval_t) mom_named__node),
-	       MOMJSOB_ENTRY ((momval_t) mom_named__conn, (momval_t) connids),
+	       MOMJSOB_ENTRY ((momval_t) mom_named__node, (momval_t) connids),
 	       MOMJSOB_ENTRY ((momval_t) mom_named__sons,
 			      (momval_t) jsonarray_emit_nodesons_mom (dmp,
 								      val.pnode)),
@@ -440,17 +452,174 @@ raw_dump_emit_json_mom (struct mom_dumper_st *dmp, const momval_t val)
 	  }
       }
       break;
-    case momty_item:
-      {
-	const momstring_t *itemids = mom_item_get_idstr (val.pitem);
-	assert (mom_is_string ((momval_t) itemids));
-	jsval = (momval_t) mom_make_json_object
-	  (MOMJSOB_ENTRY
-	   ((momval_t) mom_named__jtype, (momval_t) mom_named__item_ref),
-	   MOMJSOB_ENTRY ((momval_t) mom_named__item_ref, (momval_t) itemids),
-	   MOMJSON_END);
-      }
-      break;
     }
   return jsval;
+}
+
+const momitem_t *
+mom_load_item_json (struct mom_loader_st *ld, const momval_t jval)
+{
+  if (!jval.ptr || !ld)
+    return NULL;
+  assert (ld->ldr_magic == LOADER_MAGIC);
+  if (mom_is_item (jval))
+    return jval.pitem;
+  else if (mom_is_string (jval))
+    {
+      if (mom_looks_like_random_id_cstr (jval.pstring->cstr, NULL))
+	return mom_make_item_of_ident (jval.pstring);
+      else if (isalpha (jval.pstring->cstr[0]))
+	return mom_get_item_of_name_hash (jval.pstring->cstr,
+					  jval.pstring->hash);
+    }
+  else if (mom_jsonob_get (jval, (momval_t) mom_named__jtype).pitem ==
+	   mom_named__item_ref)
+    return mom_load_item_json (ld,
+			       mom_jsonob_get (jval,
+					       (momval_t)
+					       mom_named__item_ref));
+  return NULL;
+}
+
+static const momseqitem_t *
+load_seqitem_json_mom (unsigned mtyp, struct mom_loader_st *ld,
+		       const momjsonarray_t *jarr)
+{
+  const momseqitem_t *seqres = NULL;
+  assert (mtyp == momty_set || mtyp == momty_tuple);
+  assert (ld && ld->ldr_magic == LOADER_MAGIC);
+  assert (jarr && jarr->typnum == momty_jsonarray);
+  unsigned jlen = jarr->slen;
+  const momitem_t **arritems = NULL;
+  const momitem_t *tinyarr[MOM_TINY_MAX] = { NULL };
+  if (jlen < MOM_TINY_MAX)
+    arritems = tinyarr;
+  else
+    arritems =
+      MOM_GC_ALLOC ("loaded items in sequence", jlen * sizeof (momitem_t *));
+  for (unsigned ix = 0; ix < jlen; ix++)
+    arritems[ix] = mom_load_item_json (ld, jarr->jarrtab[ix]);
+  if (mtyp == momty_set)
+    seqres = mom_make_set_from_array (jlen, arritems);
+  else if (mtyp == momty_tuple)
+    seqres = mom_make_tuple_from_array (jlen, arritems);
+  else
+    MOM_FATAPRINTF ("corrupted mtyp#%d", mtyp);
+  if (arritems != tinyarr)
+    MOM_GC_FREE (arritems);
+  return seqres;
+}
+
+momval_t
+mom_load_value_json (struct mom_loader_st *ld, const momval_t jval)
+{
+  momval_t jres = MOM_NULLV;
+  if (!jval.ptr)
+    return MOM_NULLV;
+  if (!ld)
+    return MOM_NULLV;
+  assert (ld->ldr_magic == LOADER_MAGIC);
+  unsigned jvaltype = *jval.ptype;
+  switch ((enum momvaltype_en) jvaltype)
+    {
+    case momty_int:
+    case momty_double:
+    case momty_string:
+    case momty_item:
+      return jval;
+    case momty_null:
+    case momty_set:
+    case momty_tuple:
+    case momty_node:
+    case momty_jsonarray:
+      MOM_WARNPRINTF ("unexpected jvaltype#%d", jvaltype);
+      return MOM_NULLV;
+    case momty_jsonobject:
+      {
+	momval_t jtypv = mom_jsonob_get (jval, (momval_t) mom_named__jtype);
+	/// chunked strings
+	if (jtypv.pitem == mom_named__string)
+	  {
+	    momval_t jarrchk =
+	      mom_jsonob_get (jval, (momval_t) mom_named__string);
+	    unsigned nbchk = mom_json_array_size (jarrchk);
+	    unsigned cumsiz = 0;
+	    for (unsigned cix = 0; cix < nbchk; cix++)
+	      {
+		momval_t curchk = mom_json_array_nth (jarrchk, cix);
+		cumsiz += mom_string_slen (curchk);
+	      }
+	    char *buf = MOM_GC_SCALAR_ALLOC ("chunk buffer", cumsiz + 2);
+	    unsigned curoff = 0;
+	    for (unsigned cix = 0; cix < nbchk; cix++)
+	      {
+		momval_t curchk = mom_json_array_nth (jarrchk, cix);
+		if (!mom_is_string (curchk))
+		  continue;
+		unsigned chklen = mom_string_slen (curchk);
+		assert (curoff + chklen <= cumsiz);
+		memcpy (buf + curoff, mom_string_cstr (curchk), chklen);
+		curoff += chklen;
+	      }
+	    assert (curoff == cumsiz);
+	    jres = (momval_t) mom_make_string_len (buf, cumsiz);
+	    MOM_GC_FREE (buf);
+	  }
+	else if (jtypv.pitem == mom_named__item_ref)
+	  {
+	    momval_t jidstr =
+	      mom_jsonob_get (jval, (momval_t) mom_named__item_ref);
+	    if (mom_is_string (jidstr)
+		&& mom_looks_like_random_id_cstr (jidstr.pstring->cstr, NULL))
+	      jres = (momval_t) mom_make_item_of_ident (jidstr.pstring);
+	  }
+	else if (jtypv.pitem == mom_named__json_array)
+	  {
+	    jres = mom_jsonob_get (jval, (momval_t) mom_named__json_array);
+	  }
+	else if (jtypv.pitem == mom_named__json_object)
+	  {
+	    jres = mom_jsonob_get (jval, (momval_t) mom_named__json_object);
+	  }
+	else if (jtypv.pitem == mom_named__set)
+	  {
+	    momval_t jset = mom_jsonob_get (jval, (momval_t) mom_named__set);
+	    if (mom_type (jset) == momty_jsonarray)
+	      jres =
+		(momval_t) load_seqitem_json_mom (momty_set, ld,
+						  jset.pjsonarr);
+	  }
+	else if (jtypv.pitem == mom_named__tuple)
+	  {
+	    momval_t jtup =
+	      mom_jsonob_get (jval, (momval_t) mom_named__tuple);
+	    if (mom_type (jtup) == momty_jsonarray)
+	      jres =
+		(momval_t) load_seqitem_json_mom (momty_tuple, ld,
+						  jtup.pjsonarr);
+	  }
+	else if (jtypv.pitem == mom_named__node)
+	  {
+	    momval_t jnode =
+	      mom_jsonob_get (jval, (momval_t) mom_named__node);
+	    momval_t jsons =
+	      mom_jsonob_get (jval, (momval_t) mom_named__sons);
+	    const momitem_t *connitm = mom_load_item_json (ld, jnode);
+	    if (connitm != NULL)
+	      {
+		unsigned nbsons = mom_json_array_size (jsons);
+		momval_t tinysons[MOM_TINY_MAX] = { MOM_NULLV };
+		momval_t *sons = (nbsons < MOM_TINY_MAX) ? tinysons
+		  : MOM_GC_ALLOC ("sons in node", nbsons * sizeof (momval_t));
+		for (unsigned ix = 0; ix < nbsons; ix++)
+		  sons[ix] =
+		    mom_load_value_json (ld, mom_json_array_nth (jsons, ix));
+		jres = (momval_t) mom_make_node_sized (connitm, nbsons, sons);
+		if (sons != tinysons)
+		  MOM_GC_FREE (sons);
+	      }
+	  }
+      }
+    }
+  return jres;
 }

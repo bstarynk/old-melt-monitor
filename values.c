@@ -458,6 +458,21 @@ mom_value_cmp (const momval_t l, const momval_t r)
 
 
 
+/// be careful, the hash of empty set or tuple should be consistent
+/// with what update_seqitem_hash_mom would compute!
+static const momset_t empty_set_mom = {
+  .typnum = momty_set,
+  .hash = 11 * (unsigned) momty_set,
+  .slen = 0
+};
+
+
+static const momtuple_t empty_tuple_mom = {
+  .typnum = momty_tuple,
+  .hash = 11 * (unsigned) momty_tuple,
+  .slen = 0
+};
+
 static inline void
 update_seqitem_hash_mom (struct momseqitem_st *si)
 {
@@ -478,6 +493,9 @@ itemptr_cmp_mom (const void *l, const void *r)
 {
   return mom_item_cmp (*(const momitem_t **) l, *(const momitem_t **) r);
 }
+
+
+
 
 const momset_t *
 mom_make_set_til_nil (momval_t first, ...)
@@ -504,6 +522,8 @@ mom_make_set_til_nil (momval_t first, ...)
       val = va_arg (args, momval_t);
     };
   va_end (args);
+  if (siz == 0)
+    return &empty_set_mom;
   iset =
     MOM_GC_ALLOC ("new set til nil",
 		  sizeof (momset_t) + siz * sizeof (momitem_t *));
@@ -570,6 +590,8 @@ mom_make_set_sized (unsigned siz, ...)
   unsigned ix = 0, count = 0;
   momset_t *iset = NULL;
   bool shrink = false;
+  if (siz == 0)
+    return &empty_set_mom;
   iset =
     MOM_GC_ALLOC ("new sized set",
 		  sizeof (momset_t) + siz * sizeof (momitem_t *));
@@ -594,6 +616,8 @@ mom_make_set_sized (unsigned siz, ...)
 	  count--;
 	}
     }
+  if (count == 0)
+    return &empty_set_mom;
   iset->typnum = momty_set;
   iset->slen = count;
   update_seqitem_hash_mom (iset);
@@ -618,6 +642,8 @@ mom_make_set_from_array (unsigned siz, const momitem_t **itemarr)
   unsigned ix = 0, count = 0;
   momset_t *iset = NULL;
   bool shrink = false;
+  if (siz == 0 || !itemarr)
+    return &empty_set_mom;
   iset =
     MOM_GC_ALLOC ("new set from array",
 		  sizeof (momset_t) + siz * sizeof (momitem_t *));
@@ -627,6 +653,8 @@ mom_make_set_from_array (unsigned siz, const momitem_t **itemarr)
       if (itm && itm->i_typnum == momty_item)
 	iset->itemseq[count++] = itm;
     }
+  if (count == 0)
+    return &empty_set_mom;
   shrink = count < siz;
   qsort (iset->itemseq, count, sizeof (momitem_t *), itemptr_cmp_mom);
   for (unsigned ix = 0; count > 0 && ix + 1 < count; ix++)
@@ -680,6 +708,8 @@ mom_make_set_union (momval_t s1, momval_t s2)
   unsigned s2len = s2set->slen;
   const momitem_t *tinyarr[MOM_TINY_MAX] = { };
   unsigned sumlen = s1len + s2len;
+  if (sumlen == 0)
+    return (momval_t) &empty_set_mom;
   const momitem_t **arr = NULL;
   if (sumlen < MOM_TINY_MAX)
     arr = tinyarr;
@@ -713,6 +743,8 @@ mom_make_set_union (momval_t s1, momval_t s2)
 	  i1++, i2++;
 	}
     }
+  if (nbun == 0)
+    return (momval_t) &empty_set_mom;
   momset_t *rset =
     MOM_GC_ALLOC ("result union set", sizeof (struct momseqitem_st) +
 		  nbun * sizeof (momitem_t *));
@@ -738,6 +770,8 @@ mom_make_set_intersection (momval_t s1, momval_t s2)
   unsigned s2len = s2set->slen;
   const momitem_t *tinyarr[MOM_TINY_MAX] = { };
   unsigned maxlen = (s1len > s2len) ? s1len : s2len;
+  if (s1len == 0 || s2len == 0)
+    return (momval_t) &empty_set_mom;
   const momitem_t **arr = NULL;
   if (maxlen < MOM_TINY_MAX)
     arr = tinyarr;
@@ -765,6 +799,12 @@ mom_make_set_intersection (momval_t s1, momval_t s2)
 	  i1++, i2++;
 	}
     }
+  if (nbin == 0)
+    {
+      if (arr != tinyarr)
+	MOM_GC_FREE (arr);
+      return (momval_t) &empty_set_mom;
+    };
   momset_t *rset =
     MOM_GC_ALLOC ("result set intersection", sizeof (struct momseqitem_st) +
 		  nbin * sizeof (momitem_t *));
@@ -842,6 +882,8 @@ mom_make_set_without (momval_t s1, momval_t v2)
 		  ix2++;
 	      }
 	  }
+	if (ixres == 0)
+	  return (momval_t) &empty_set_mom;
 	sres =
 	  MOM_GC_ALLOC ("result of set without",
 			sizeof (momset_t) + ixres * sizeof (momitem_t *));
@@ -894,6 +936,8 @@ mom_make_set_without (momval_t s1, momval_t v2)
 	  if (ix1 >= 0)
 	    {
 	      assert (s1len > 0);
+	      if (s1len == 1)
+		return (momval_t) &empty_set_mom;
 	      sres =
 		MOM_GC_ALLOC ("result of set without", sizeof (momset_t) +
 			      (s1len - 1) * sizeof (momitem_t *));
@@ -951,10 +995,13 @@ mom_make_tuple_til_nil (momval_t first, ...)
       val = va_arg (args, momval_t);
     }
   va_end (args);
+  if (siz == 0)
+    return &empty_tuple_mom;
   itup =
     MOM_GC_ALLOC ("new tuple til nil",
 		  sizeof (momtuple_t) + siz * sizeof (momitem_t *));
   siz = 0;
+  ix = 0;
   val = first;
   va_start (args, first);
   while (val.ptr != NULL)
@@ -985,6 +1032,7 @@ mom_make_tuple_til_nil (momval_t first, ...)
     }
   va_end (args);
   itup->typnum = momty_tuple;
+  assert (ix == siz);
   itup->slen = siz;
   update_seqitem_hash_mom (itup);
   return itup;
@@ -996,6 +1044,8 @@ mom_make_tuple_sized (unsigned siz, ...)
   va_list args;
   unsigned ix = 0;
   momtuple_t *itup = NULL;
+  if (siz == 0)
+    return &empty_tuple_mom;
   itup =
     MOM_GC_ALLOC ("new tuple sized",
 		  sizeof (momtuple_t) + siz * sizeof (momitem_t *));
@@ -1019,6 +1069,8 @@ mom_make_tuple_from_array (unsigned siz, const momitem_t **itemarr)
 {
   unsigned ix = 0;
   momtuple_t *ituple = NULL;
+  if (siz == 0 || !itemarr)
+    return &empty_tuple_mom;
   ituple =
     MOM_GC_ALLOC ("new tuple from array",
 		  sizeof (momtuple_t) + siz * sizeof (momitem_t *));
