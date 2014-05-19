@@ -744,6 +744,73 @@ end:
   return itm;
 }
 
+////////////////////////////////////////////////////////////////
+const momset_t *
+mom_set_of_named_items (void)
+{
+  const momset_t *set = NULL;
+  const momitem_t **arr = NULL;
+  unsigned siz = 0;
+  unsigned cnt = 0;
+  pthread_mutex_lock (&globitem_mtx_mom);
+  siz = dict_mom.dict_count + 2;
+  unsigned dicsiz = dict_mom.dict_size;
+  assert (dicsiz > 0 && dict_mom.dict_array != NULL);
+  arr = MOM_GC_ALLOC ("named array", siz * sizeof (momitem_t *));
+  for (unsigned dix = 0; dix < dicsiz; dix++)
+    {
+      const momitem_t *curitm = dict_mom.dict_array[dix].dicent_item;
+      if (!curitm || curitm == MOM_EMPTY)
+	continue;
+      assert (cnt < siz);
+      arr[cnt++] = curitm;
+    };
+  assert (cnt == dict_mom.dict_count);
+  set = mom_make_set_from_array (cnt, arr);
+  MOM_GC_FREE (arr);
+  pthread_mutex_unlock (&globitem_mtx_mom);
+  return set;
+}
+
+static int
+item_name_cmp_mom (const void *l, const void *r)
+{
+  const momitem_t *litm = *(momitem_t **) l;
+  const momitem_t *ritm = *(momitem_t **) r;
+  assert (litm && litm->i_typnum == momty_item && litm->i_name);
+  assert (ritm && ritm->i_typnum == momty_item && ritm->i_name);
+  return strcmp (litm->i_name->cstr, ritm->i_name->cstr);
+}
+
+const momtuple_t *
+mom_alpha_ordered_tuple_of_named_items (void)
+{
+  const momtuple_t *tup = NULL;
+  const momitem_t **arr = NULL;
+  unsigned siz = 0;
+  unsigned cnt = 0;
+  pthread_mutex_lock (&globitem_mtx_mom);
+  siz = dict_mom.dict_count + 2;
+  unsigned dicsiz = dict_mom.dict_size;
+  assert (dicsiz > 0 && dict_mom.dict_array != NULL);
+  arr = MOM_GC_ALLOC ("named array", siz * sizeof (momitem_t *));
+  for (unsigned dix = 0; dix < dicsiz; dix++)
+    {
+      const momitem_t *curitm = dict_mom.dict_array[dix].dicent_item;
+      if (!curitm || curitm == MOM_EMPTY)
+	continue;
+      assert (cnt < siz);
+      arr[cnt++] = curitm;
+    };
+  assert (cnt == dict_mom.dict_count);
+  qsort (arr, cnt, sizeof (momitem_t *), item_name_cmp_mom);
+  tup = mom_make_tuple_from_array (cnt, arr);
+  MOM_GC_FREE (arr);
+  pthread_mutex_unlock (&globitem_mtx_mom);
+  return tup;
+}
+
+////////////////////////////////////////////////////////////////
 const momitem_t *
 mom_get_item_bool (bool v)
 {
@@ -754,6 +821,7 @@ mom_get_item_bool (bool v)
 }
 
 
+////////////////////////////////////////////////////////////////
 void
 mom_create_predefined_items (void)
 {

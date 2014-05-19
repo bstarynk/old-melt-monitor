@@ -597,6 +597,12 @@ mom_register_item_named_cstr (momitem_t *itm, const char *namestr)
   mom_register_item_named (itm, mom_make_string (namestr));
 }
 
+
+/// get the set of named items, ordered by item ids
+const momset_t *mom_set_of_named_items (void);
+/// get the tuple of named items, alphabetically ordered by name
+const momtuple_t *mom_alpha_ordered_tuple_of_named_items (void);
+
 const momstring_t *mom_item_get_name (momitem_t *itm);
 const momstring_t *mom_item_get_idstr (momitem_t *itm);
 const momstring_t *mom_item_get_name_or_idstr (momitem_t *itm);
