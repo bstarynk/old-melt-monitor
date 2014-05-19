@@ -389,6 +389,8 @@ mom_inform_at (const char *sfil, int slin, ...)
 /*********************** misc **********************/
 
 static const char *wanted_dir_mom;
+static const char *write_pid_file_mom;
+
 #if MOM_NEED_GC_CALLOC
 void *
 GC_calloc (size_t nbelem, size_t elsiz)
@@ -488,6 +490,7 @@ enum extraopt_en
 {
   xtraopt__none = 0,
   xtraopt_chdir = 1024,
+  xtraopt_writepid,
   xtraopt_loadstate,
   xtraopt_dumpstate,
   xtraopt_noeventloop,
@@ -504,6 +507,7 @@ static const struct option mom_long_options[] = {
   {"syslog", no_argument, NULL, 'l'},
   {"web", required_argument, NULL, 'W'},
   // long-only options
+  {"write-pid", required_argument, NULL, xtraopt_writepid},
   {"load-state", required_argument, NULL, xtraopt_loadstate},
   {"dump-state", required_argument, NULL, xtraopt_dumpstate},
   {"chdir", required_argument, NULL, xtraopt_chdir},
@@ -539,6 +543,8 @@ usage_mom (const char *argv0)
   printf ("\t -W | --web <webhost>\n");
   putchar ('\n');
   printf ("\t --chdir <directory>" "\t #change directory\n");
+  printf ("\t --write-pid <file>"
+	  "\t #write the pid (e.g. --write-pid /var/run/monimelt.pid)\n");
   printf ("\t --random-idstr" "\t #output a random idstr then exit\n");
 }
 
@@ -634,6 +640,11 @@ parse_program_arguments_and_load_modules_mom (int *pargc, char **argv)
 	    exit (EXIT_SUCCESS);
 	  }
 	  break;
+	case xtraopt_writepid:
+	  {
+	    write_pid_file_mom = optarg;
+	  }
+	  break;
 	default:
 	  {
 	    if (opt > 0 && opt < UCHAR_MAX && isalpha (opt))
@@ -666,6 +677,11 @@ main (int argc, char **argv)
      GC_pthread_cancel,
      GC_pthread_detach, GC_pthread_exit, GC_pthread_sigmask);
   parse_program_arguments_and_load_modules_mom (&argc, argv);
+  if (daemonize_mom)
+    {
+      if (daemon (true, false))
+	MOM_FATAPRINTF ("failed to daemonize");
+    }
   if (syslogging_mom)
     {
       //// initialize logging
@@ -695,6 +711,18 @@ main (int argc, char **argv)
 	MOM_INFORMPRINTF ("changed directory to %s, now in %s",
 			  wanted_dir_mom, get_current_dir_name ());
     };
+  // write the pid to the given file if so asked
+  if (write_pid_file_mom)
+    {
+      FILE *pidf = fopen (write_pid_file_mom, "w");
+      if (!pidf)
+	MOM_FATAPRINTF ("failed to open write pid file %s",
+			write_pid_file_mom);
+      fprintf (pidf, "%d\n", (int) getpid ());
+      if (fclose (pidf))
+	MOM_FATAPRINTF ("failed to close pid file %s", write_pid_file_mom);
+      MOM_INFORMPRINTF ("wrote my pid into %s", write_pid_file_mom);
+    }
   ///
   initialize_mom ();
   ///

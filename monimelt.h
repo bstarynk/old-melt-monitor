@@ -1143,6 +1143,8 @@ struct mom_loader_st
   /// hash table of loaded items
   unsigned ldr_hsize;
   unsigned ldr_hcount;
+  // the load directory
+  const char *ldr_dirpath;
   const momitem_t **ldr_htable;
   /// queue of items whose content should be loaded:
   struct mom_itqueue_st *ldr_qfirst;
@@ -1152,6 +1154,8 @@ struct mom_loader_st
 // initialize a dumper
 void mom_dump_initialize (struct mom_dumper_st *dmp);
 
+// the initial loading
+void mom_initial_load (const char *ldir);
 
 /////////////////// agenda and workers and web
 int mom_nb_workers;
