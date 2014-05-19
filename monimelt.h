@@ -196,6 +196,12 @@ pthread_mutexattr_t mom_recursive_mutex_attr;
     if (_fp_##Lin != NULL) GC_FREE(_fp_##Lin); } while(0)
 #define MOM_GC_FREE(VarPtr) MOM_GC_FREE_AT(VarPtr,__LINE__)
 
+// GCC compiler trick to add some typechecking in variadic functions
+#define MOM_REQUIRES_TYPE_AT(Lin,V,Typ,Else)				\
+  (__builtin_choose_expr((__builtin_types_compatible_p(typeof(V),Typ)), \
+			 (V), (void)((Else)+Lin)))
+#define MOM_REQUIRES_TYPE_AT_BIS(Lin,V,Typ,Else) MOM_REQUIRES_TYPE_AT(Lin,V,Typ,Else)
+#define MOM_REQUIRES_TYPE(V,Typ,Else) MOM_REQUIRES_TYPE_AT_BIS(__LINE__,(V),Typ,Else)
 
 ////////////////////////////////////////////////////////////////
 //////////////// TYPES AND VALUES
@@ -584,7 +590,7 @@ mom_item_cmp (const momitem_t *itm1, const momitem_t *itm2)
   return cmp;
 }
 
-// make a new item
+// make a new item  -- low-level
 momitem_t *mom_make_item (void);
 
 // make or get an item of given idstr or else -when bad idstr- NULL
@@ -650,9 +656,180 @@ mom_forget_item (momitem_t *itm)
   mom_forget_name (mom_string_cstr ((momval_t) mom_item_get_name (itm)));
 };
 
+enum momitemdir_en
+{
+  MOMITEMDO__END = 0,
+#define MOMITEM_END ((void*)MOMITEMDO__END)
+  ///******************* accessors
+  ///
+  /// get a physical attribute
+  MOMITEMDO_GET_ATTR,
+#define MOMITEM_GET_ATTR(At,ResVal) MOMITEMDO_GET_ATTR, \
+    MOM_REQUIRES_TYPE(At,const momitem_t*,mombad_item), \
+    MOM_REQUIRES_TYPE(&(ResVal),momval_t*,mombad_resvalue)
+  ///
+  /// get the payload kind
+  MOMITEMDO_GET_PAYLOAD_KIND,
+#define MOMITEM_GET_PAYLOAD_KIND(ResVal) MOMITEMDO_GET_PAYLOAD_KIND, \
+    MOM_REQUIRES_TYPE(&(ResVal),unsigned*,mombad_resunsigned)
+  ///
+  ///
+  /// get the number of physical attributes
+  MOMITEMDO_GET_NBATTRS,
+#define MOMITEM_GET_NBATTRS(ResNb) MOMITEMDO_GET_NBATTRS, \
+    MOM_REQUIRES_TYPE(&(ResVal),unsigned*,mombad_resunsigned)
+  ///
+  /// get the set of physical attributes
+  MOMITEMDO_GET_SETATTRS,
+#define MOMITEM_GET_SETATTRS(ResNb) MOMITEMDO_GET_SETATTRS, \
+    MOM_REQUIRES_TYPE(&(ResVal),unsigned*,mombad_resunsigned)
+  ///
+  /// get the physical content
+  MOMITEMDO_GET_CONTENT,
+#define MOMITEM_GET_CONTENT(ResVal) MOMITEMDO_GET_CONTENT, \
+    MOM_REQUIRES_TYPE(&(ResVal),momval_t*,mombad_resvalue)
+  ///
+  /// fetch a value first from an attribute, or else thru the payload
+  MOMITEMDO_FETCH_VALUE,
+#define MOMITEM_FETCH_VALUE(At,ResVal) MOMITEMDO_FETCH_VALUE, \
+    MOM_REQUIRES_TYPE(At,const momitem_t*,mombad_item), \
+    MOM_REQUIRES_TYPE(&(ResVal),momval_t*,mombad_resvalue)
+  ///
+  /// ask something from the payload, can modify next gets
+  MOMITEMDO_ASK,
+#define MOMITEM_ASK(At) MOMITEMDO_ASK, \
+    MOM_REQUIRES_TYPE(At,const momitem_t*,mombad_item)
+  ///
+  /// get a value from the payload
+  MOMITEMDO_GET_VALUE,
+#define MOMITEM_GET_VALUE(At,ResVal) MOMITEMDO_GET_VALUE, \
+    MOM_REQUIRES_TYPE(At,const momitem_t*,mombad_item), \
+    MOM_REQUIRES_TYPE(&(ResVal),momval_t*,mombad_resvalue)
+  ///
+  /// get an int64_t number thru the payload
+  MOMITEMDO_GET_INT64,
+#define MOMITEM_GET_INT64(At,ResVal) MOMITEMDO_GET_INT64, \
+    MOM_REQUIRES_TYPE(At,const momitem_t*,mombad_item), \
+    MOM_REQUIRES_TYPE(&(ResVal),int64_t*,mombad_resint)
+  ///
+  /// get an double thru the payload
+  MOMITEMDO_GET_DOUBLE,
+#define MOMITEM_GET_DOUBLE(At,ResVal) MOMITEMDO_GET_DOUBLE, \
+    MOM_REQUIRES_TYPE(At,const momitem_t*,mombad_item), \
+    MOM_REQUIRES_TYPE(&(ResVal),double*,mombad_resdouble)
+  ///
+  /// get a literal cstring of fixed size thru the payload
+  MOMITEMDO_GET_CSTRING,
+#define MOMITEM_GET_CSTRING(At,ResStr) MOMITEMDO_GET_DOUBLE, \
+    MOM_REQUIRES_TYPE(At,const momitem_t*,mombad_item), \
+    sizeof(ResStr), \
+    MOM_REQUIRES_TYPE(ResStr,char[],mombad_rescstring)
+  ///
+  /// get a GC_strdup-ed cstring thru the payload
+  MOMITEMDO_GET_DUPSTRING,
+#define MOMITEM_GET_DUPSTRING(At,ResStr) MOMITEMDO_GET_DOUBLE, \
+    MOM_REQUIRES_TYPE(At,const momitem_t*,mombad_item), \
+    MOM_REQUIRES_TYPE(&(ResStr),char**,mombad_rescstring)
+  ///
+  ///***************************************************
+  /// "transactional" modifiers
+  ///////////////////////////////
+  /// requires a specific payload kind
+  MOMITEMDO_REQUIRE_PAYLOAD,
+#define MOMITEM_REQUIRE_PAYLOAD(Kind) MOMITEMDO_REQUIRE_PAYLOAD, \
+    MOM_REQUIRES_TYPE(Kind,unsigned,mombad_unsigned)
+  ///
+  /// requires the presence of a physical attribute
+  MOMITEMDO_REQUIRE_ATTR,
+#define MOMITEM_REQUIRE_ATTR(At) MOMITEMDO_REQUIRE_ATTR, \
+    MOM_REQUIRES_TYPE(At,const momitem_t*,mombad_attr)
+  ///
+  /// swap with a physical attribute
+  MOMITEMDO_SWAP_ATTR,
+#define MOMITEM_SWAP_ATTR(At,NewVal,OldRes) MOMITEMDO_SWAP_ATTR,	\
+    MOM_REQUIRES_TYPE(At,const momitem_t*,mombad_attr), \
+    MOM_REQUIRES_TYPE(NewVal,const momval_t,mombad_value), \
+    MOM_REQUIRES_TYPE(&(OldRed),momval_t*,mombad_resvalue)
+  ///
+  /// forcibly put a physical attribute
+  MOMITEMDO_PUT_ATTR,
+#define MOMITEM_PUT_ATTR(At,NewVal)  MOMITEMDO_PUT_ATTR, \
+    MOM_REQUIRES_TYPE(At,const momitem_t*,mombad_attr), \
+    MOM_REQUIRES_TYPE(NewVal,const momval_t,mombad_value)
+  ///
+  /// store a value in the payload or else as a physical attribute
+  MOMITEMDO_STORE_ATTR,
+#define MOMITEM_STORE_ATTR(At,NewVal)  MOMITEMDO_STORE_ATTR, \
+    MOM_REQUIRES_TYPE(At,const momitem_t*,mombad_attr), \
+    MOM_REQUIRES_TYPE(NewVal,const momval_t,mombad_value)
+  ///
+  /// want something from the payload, can modify next puts and can fail
+  MOMITEMDO_WANT,
+#define MOMITEM_WANT(At) MOMITEMDO_WANT, \
+    MOM_REQUIRES_TYPE(At,const momitem_t*,mombad_item)
+  ///
+  ///
+  /// put a value from the payload
+  MOMITEMDO_PUT_VALUE,
+#define MOMITEM_PUT_VALUE(At,Val) MOMITEMDO_PUT_VALUE, \
+    MOM_REQUIRES_TYPE(At,const momitem_t*,mombad_item), \
+    MOM_REQUIRES_TYPE(Val,const momval_t,mombad_resvalue)
+  ///
+  /// put an int64_t number thru the payload
+  MOMITEMDO_PUT_INT64,
+#define MOMITEM_PUT_INT64(At,Num) MOMITEMDO_PUT_INT64,	\
+    MOM_REQUIRES_TYPE(At,const momitem_t*,mombad_item), \
+    MOM_REQUIRES_TYPE(Num,int64_t,mombad_int64)
+  ///
+  /// put an int number thru the payload
+  MOMITEMDO_PUT_INT,
+#define MOMITEM_PUT_INT(At,Num) MOMITEMDO_PUT_INT64,	\
+    MOM_REQUIRES_TYPE(At,const momitem_t*,mombad_item), \
+    MOM_REQUIRES_TYPE(Num,int,mombad_int)
+  ///
+  /// put an unsigned number thru the payload
+  MOMITEMDO_PUT_UNSIGNED,
+#define MOMITEM_PUT_UNSIGNED(At,Num) MOMITEMDO_PUT_UNSIGNED,	\
+    MOM_REQUIRES_TYPE(At,const momitem_t*,mombad_item), \
+    MOM_REQUIRES_TYPE(Num,unsigned,mombad_unsigned)
+  ///
+  /// put an double thru the payload
+  MOMITEMDO_PUT_DOUBLE,
+#define MOMITEM_PUT_DOUBLE(At,Dbl) MOMITEMDO_PUT_DOUBLE, \
+    MOM_REQUIRES_TYPE(At,const momitem_t*,mombad_item), \
+    MOM_REQUIRES_TYPE(Dbl,double,mombad_double)
+  ///
+  /// put a string thru the payload
+  MOMITEMDO_PUT_CSTRING,
+#define MOMITEM_PUT_CSTRING(At,Str) MOMITEMDO_PUT_CSTRING, \
+    MOM_REQUIRES_TYPE(At,const momitem_t*,mombad_item), \
+    MOM_REQUIRES_TYPE(Str,const char*,mombad_string)
+  ///
+};
 
+
+////////////////////////////////////////////////////////////////
+struct mom_dumper_st;
+struct mom_loader_st;
+/************** payload descriptors ********************/
+#define MOM_PAYLOAD_MAGIC 0x128ffdcb	/* payload magic 311426507 */
+struct mom_payload_descr_st
+{
+  unsigned dpayl_magic;		/* always MOM_PAYLOAD_MAGIC */
+  unsigned dpayl_statesize;	/* small size < 4Kbytes for item functions */
+  // the payload loader
+  void (*dpayl_loadfun) (struct mom_loader_st * ld, momitem_t *litm,
+			 momval_t jsob);
+  // the payload dump scanner
+  void (*dpayl_dumpscanfun) (struct mom_dumper_st * du, momitem_t *ditm);
+  // the payload dumper, should return a json object
+  momval_t (*dpayl_dumpjsonfun) (struct mom_dumper_st * du, momitem_t *ditm);
+#warning incomplete payload descriptor
+};
+
+/************* misc items *********/
+// convert a boolean to a predefined item json_true or json_false
 const momitem_t *mom_get_item_bool (bool v);
-
 
 
 ////////////////////////////////////////////////////////////////
@@ -955,12 +1132,6 @@ void mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist);
 #define MOM_OUT_AT(Fil,Lin,Out,...) MOM_OUT_AT_BIS(Fil,Lin,Out,##__VA_ARGS__)
 #define MOM_OUT(Out,...) MOM_OUT_AT(__FILE__,__LINE__,Out,##__VA_ARGS__)
 
-
-#define MOM_REQUIRES_TYPE_AT(Lin,V,Typ,Else)				\
-  (__builtin_choose_expr((__builtin_types_compatible_p(typeof(V),Typ)), \
-			 (V), (void)((Else)+Lin)))
-#define MOM_REQUIRES_TYPE_AT_BIS(Lin,V,Typ,Else) MOM_REQUIRES_TYPE_AT(Lin,V,Typ,Else)
-#define MOM_REQUIRES_TYPE(V,Typ,Else) MOM_REQUIRES_TYPE_AT_BIS(__LINE__,(V),Typ,Else)
 
 enum momoutdir_en
 {
