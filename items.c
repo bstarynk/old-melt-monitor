@@ -783,7 +783,7 @@ item_name_cmp_mom (const void *l, const void *r)
 }
 
 const momtuple_t *
-mom_alpha_ordered_tuple_of_named_items (void)
+mom_alpha_ordered_tuple_of_named_items (momval_t *parrname)
 {
   const momtuple_t *tup = NULL;
   const momitem_t **arr = NULL;
@@ -803,9 +803,22 @@ mom_alpha_ordered_tuple_of_named_items (void)
       arr[cnt++] = curitm;
     };
   assert (cnt == dict_mom.dict_count);
-  pthread_mutex_unlock (&globitem_mtx_mom);
   qsort (arr, cnt, sizeof (momitem_t *), item_name_cmp_mom);
   tup = mom_make_tuple_from_array (cnt, arr);
+  if (parrname)
+    {
+      momval_t *arrnam =
+	MOM_GC_ALLOC ("name array", sizeof (momval_t) * (cnt + 1));
+      for (unsigned nix = 0; nix < cnt; nix++)
+	{
+	  const momitem_t *curitm = arr[nix];
+	  if (curitm)
+	    arrnam[nix] = (momval_t) curitm->i_name;
+	}
+      *parrname = (momval_t) mom_make_json_array_count (cnt, arrnam);
+      MOM_GC_FREE (arrnam);
+    }
+  pthread_mutex_unlock (&globitem_mtx_mom);
   MOM_GC_FREE (arr);
   return tup;
 }

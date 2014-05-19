@@ -629,7 +629,8 @@ mom_register_item_named_cstr (momitem_t *itm, const char *namestr)
 /// get the set of named items, ordered by item ids
 const momset_t *mom_set_of_named_items (void);
 /// get the tuple of named items, alphabetically ordered by name
-const momtuple_t *mom_alpha_ordered_tuple_of_named_items (void);
+/// if parrname is not-null, set it to the jsonarray of names
+const momtuple_t *mom_alpha_ordered_tuple_of_named_items (momval_t *parrname);
 
 const momstring_t *mom_item_get_name (momitem_t *itm);
 const momstring_t *mom_item_get_idstr (momitem_t *itm);
@@ -733,6 +734,94 @@ const momtuple_t *mom_make_tuple_from_array (unsigned siz,
 					     const momitem_t **itemarr);
 
 
+static inline bool
+mom_is_set (momval_t setv)
+{
+  if (!setv.ptr || *setv.ptype != momty_set)
+    return false;
+  return true;
+}
+
+static inline unsigned
+mom_set_cardinal (momval_t setv)
+{
+  if (!setv.ptr || *setv.ptype != momty_set)
+    return 0;
+  return setv.pset->slen;
+}
+
+static inline momitem_t *
+mom_set_nth_item (momval_t setv, int rk)
+{
+  if (!setv.ptr || *setv.ptype != momty_set)
+    return NULL;
+  unsigned slen = setv.pset->slen;
+  if (rk < 0)
+    rk += (int) slen;
+  if (rk >= 0 && rk < (int) slen)
+    return (momitem_t *) (setv.pset->itemseq[rk]);
+  return NULL;
+}
+
+static inline bool
+mom_is_tuple (momval_t tupv)
+{
+  if (!tupv.ptr || *tupv.ptype != momty_tuple)
+    return false;
+  return true;
+}
+
+static inline unsigned
+mom_tuple_length (momval_t tupv)
+{
+  if (!tupv.ptr || *tupv.ptype != momty_tuple)
+    return 0;
+  return tupv.ptuple->slen;
+}
+
+static inline momitem_t *
+mom_tuple_nth_item (momval_t tupv, int rk)
+{
+  if (!tupv.ptr || *tupv.ptype != momty_tuple)
+    return 0;
+  unsigned slen = tupv.ptuple->slen;
+  if (rk < 0)
+    rk += (int) slen;
+  if (rk >= 0 && rk < (int) slen)
+    return (momitem_t *) (tupv.ptuple->itemseq[rk]);
+  return NULL;
+}
+
+static inline bool
+mom_is_seqitem (momval_t seqv)
+{
+  if (!seqv.ptr || (*seqv.ptype != momty_tuple && *seqv.ptype != momty_set))
+    return false;
+  return true;
+}
+
+static inline unsigned
+mom_seqitem_length (momval_t seqv)
+{
+  if (!seqv.ptr || (*seqv.ptype != momty_tuple && *seqv.ptype != momty_set))
+    return 0;
+  return seqv.pseqitems->slen;
+}
+
+static inline momitem_t *
+mom_seqitem_nth_item (momval_t seqv, int rk)
+{
+  if (!seqv.ptr || (*seqv.ptype != momty_tuple && *seqv.ptype != momty_set))
+    return 0;
+  unsigned slen = seqv.pseqitems->slen;
+  if (rk < 0)
+    rk += (int) slen;
+  if (rk >= 0 && rk < (int) slen)
+    return (momitem_t *) (seqv.pseqitems->itemseq[rk]);
+  return NULL;
+}
+
+
 ////////////////////////////////////////////////////////////////
 /////////// NODES, notably CLOSURES
 ////////////////////////////////////////////////////////////////
@@ -762,6 +851,36 @@ const momnode_t *mom_make_node_sized (const momitem_t *conn,
 // make a node from an array
 const momnode_t *mom_make_node_from_array (const momitem_t *conn,
 					   unsigned siz, momval_t *arr);
+
+static inline unsigned
+mom_node_arity (momval_t nodv)
+{
+  if (!nodv.ptr || *nodv.ptype != momty_node)
+    return 0;
+  return nodv.pnode->slen;
+}
+
+static inline const momitem_t *
+mom_node_conn (momval_t nodv)
+{
+  if (!nodv.ptr || *nodv.ptype != momty_node)
+    return NULL;
+  return nodv.pnode->connitm;
+}
+
+
+static inline momval_t
+mom_node_nth (momval_t nodv, int rk)
+{
+  if (!nodv.ptr || *nodv.ptype != momty_node)
+    return MOM_NULLV;
+  unsigned l = nodv.pnode->slen;
+  if (rk < 0)
+    rk += (int) l;
+  if (rk >= 0 && rk < l)
+    return nodv.pnode->sontab[rk];
+  return MOM_NULLV;
+}
 
 ////////////////////////////////////////////////////////////////
 /////////// SPACES

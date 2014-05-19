@@ -811,6 +811,10 @@ mom_full_dump (const char *reason, const char *dumpdir)
       dumpdir = ".";
     };
   memset (filpath, 0, sizeof (filpath));
+  double startrealtime = mom_clock_time (CLOCK_REALTIME);
+  double startcputime = mom_clock_time (CLOCK_PROCESS_CPUTIME_ID);
+  /// lock the mutex
+  pthread_mutex_lock (&dump_mtx_mom);
   MOM_INFORMPRINTF ("start full dump reason=%s dumpdir=%s", reason, dumpdir);
   /// try to make the dump directory if it does not exist
   if (access (dumpdir, F_OK) && dumpdir[0] != '.' && dumpdir[0] != '_')
@@ -832,8 +836,6 @@ mom_full_dump (const char *reason, const char *dumpdir)
       else
 	MOM_INFORMPRINTF ("moved for backup %s to %s", filpath, backupath);
     };
-  /// lock the mutex
-  pthread_mutex_lock (&dump_mtx_mom);
   /// create & initialize the dumper
   struct mom_dumper_st dmp = { };
   memset (&dmp, 0, sizeof (struct mom_dumper_st));
@@ -877,8 +879,14 @@ mom_full_dump (const char *reason, const char *dumpdir)
        "CREATE TABLE IF NOT EXISTS t_module (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE)",
        NULL, NULL, &errmsg))
     MOM_FATAPRINTF ("failed to create t_module: %s", errmsg);
+  // it is important that the entire dump is a single transaction,
+  // otherwise it is very slow...
   if (sqlite3_exec (dmp.dmp_sqlite, "BEGIN TRANSACTION", NULL, NULL, &errmsg))
     MOM_FATAPRINTF ("failed to BEGIN TRANSACTION: %s", errmsg);
+  momval_t tupnameditems = MOM_NULLV, arrnam = MOM_NULLV;
+  tupnameditems = (momval_t) mom_alpha_ordered_tuple_of_named_items (&arrnam);
+  assert (mom_tuple_length (tupnameditems) == mom_json_array_size (arrnam));
+  mom_dump_scan_value (&dmp, tupnameditems);
 #warning incomplete dump
   /// at last
   goto end;
