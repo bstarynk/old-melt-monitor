@@ -46,6 +46,7 @@ clean:
 	$(RM) *~ *.o *.so *.orig _tmp_* monimelt core* webdir/*~ *.tmp  _timestamp.* state-monimelt.dbsqlite-journal
 ################
 monimelt: $(OBJECTS) _timestamp.o
+	@if [ -f $@ ]; then mv -v $@ $@~ ; fi
 	$(LINK.c)  -rdynamic $^ $(LIBES) -o $@
 	rm _timestamp.*
 
