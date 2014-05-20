@@ -890,8 +890,8 @@ enum mom_space_en
   momspa_none = 0,
   momspa_root = 1,
 
-  spa__last = 100,
-  momspa__predefined = 9999
+  momspa__last = 100,
+  momspa__predefined
 };
 #define MOM_SPACE_MAGIC 0x5eaf0539	/* mom space magic 1588528441 */
 struct mom_spacedescr_st
@@ -899,8 +899,9 @@ struct mom_spacedescr_st
   unsigned space_magic;		/* always MOM_SPACE_MAGIC */
   unsigned space_index;		/* my index in mom_spacedescr_array */
   const char *space_name;
+  const momstring_t *space_namestr;
   void *space_data;
-} *mom_spacedescr_array[spa__last];
+} *mom_spacedescr_array[momspa__predefined + 1];
 
 ////////////////////////////////////////////////////////////////
 /////////// DIAGNOSTICS

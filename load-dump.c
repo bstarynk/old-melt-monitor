@@ -50,7 +50,8 @@ struct mom_dumper_st
   unsigned dmp_magic;		/* always DUMPER_MAGIC */
   unsigned dmp_count;
   unsigned dmp_size;
-  unsigned dmp_state;
+  uint8_t dmp_state;
+  momspaceid_t dmp_curspace;
   const char *dmp_reason;
   const char *dmp_dirpath;
   const char *dmp_sqlpath;
@@ -257,6 +258,40 @@ mom_dump_scan_value (struct mom_dumper_st *dmp, const momval_t val)
 static momval_t
 raw_dump_emit_json_mom (struct mom_dumper_st *dmp, const momval_t val);
 
+// emit a short representation of an item: if it is in the current
+// space, just its id string...
+static momval_t
+emit_short_item_json_mom (struct mom_dumper_st *dmp, const momitem_t *itm)
+{
+  if (!itm)
+    return MOM_NULLV;
+  assert (dmp && dmp->dmp_magic == DUMPER_MAGIC);
+  if (itm->i_space == momspa_none)
+    return MOM_NULLV;
+  assert (itm->i_typnum == momty_item && itm->i_magic == MOM_ITEM_MAGIC);
+  momval_t idstr = (momval_t) mom_item_get_idstr ((momitem_t *) itm);
+  if (dmp->dmp_curspace == itm->i_space
+      || (itm->i_space == momspa__predefined
+	  && dmp->dmp_curspace == momspa_root))
+    return idstr;
+  else
+    {
+      assert (itm->i_space <= momspa__predefined);
+      struct mom_spacedescr_st *spad = mom_spacedescr_array[itm->i_space];
+      assert (spad && spad->space_magic == MOM_SPACE_MAGIC);
+      assert (spad->space_name && spad->space_name[0]);
+      if (MOM_UNLIKELY (!spad->space_namestr))
+	spad->space_namestr = mom_make_string (spad->space_name);
+      return
+	(momval_t) mom_make_json_object
+	(MOMJSOB_ENTRY
+	 ((momval_t) mom_named__jtype, (momval_t) mom_named__item_ref),
+	 MOMJSOB_ENTRY ((momval_t) mom_named__item_ref, idstr),
+	 MOMJSOB_ENTRY ((momval_t) mom_named__space,
+			(momval_t) spad->space_namestr), MOMJSON_END);
+    }
+}
+
 static const momjsonarray_t *
 jsonarray_emit_itemseq_mom (struct mom_dumper_st *dmp,
 			    const struct momseqitem_st *si)
@@ -268,8 +303,8 @@ jsonarray_emit_itemseq_mom (struct mom_dumper_st *dmp,
       for (unsigned ix = 0; ix < slen; ix++)
 	{
 	  momitem_t *curitm = (momitem_t *) (si->itemseq[ix]);
-	  if (curitm && curitm->i_space > 0)
-	    tab[ix] = (momval_t) mom_item_get_idstr (curitm);
+	  if (curitm)
+	    tab[ix] = emit_short_item_json_mom (dmp, curitm);
 	  else
 	    tab[ix] = MOM_NULLV;
 	}
@@ -409,13 +444,27 @@ raw_dump_emit_json_mom (struct mom_dumper_st *dmp, const momval_t val)
       break;
     case momty_item:
       {
-	const momstring_t *itemids = mom_item_get_idstr (val.pitem);
-	assert (mom_is_string ((momval_t) itemids));
-	jsval = (momval_t) mom_make_json_object
-	  (MOMJSOB_ENTRY
-	   ((momval_t) mom_named__jtype, (momval_t) mom_named__item_ref),
-	   MOMJSOB_ENTRY ((momval_t) mom_named__item_ref, (momval_t) itemids),
-	   MOMJSON_END);
+	if (val.pitem->i_space == momspa_none)
+	  jsval = MOM_NULLV;
+	else
+	  {
+	    const momstring_t *itemids = mom_item_get_idstr (val.pitem);
+	    assert (val.pitem->i_space <= momspa__predefined);
+	    struct mom_spacedescr_st *spad =
+	      mom_spacedescr_array[val.pitem->i_space];
+	    assert (spad && spad->space_magic == MOM_SPACE_MAGIC);
+	    assert (spad->space_name && spad->space_name[0]);
+	    if (MOM_UNLIKELY (!spad->space_namestr))
+	      spad->space_namestr = mom_make_string (spad->space_name);
+	    assert (mom_is_string ((momval_t) itemids));
+	    jsval = (momval_t) mom_make_json_object
+	      (MOMJSOB_ENTRY
+	       ((momval_t) mom_named__jtype, (momval_t) mom_named__item_ref),
+	       MOMJSOB_ENTRY ((momval_t) mom_named__item_ref,
+			      (momval_t) itemids),
+	       MOMJSOB_ENTRY ((momval_t) mom_named__space,
+			      (momval_t) spad->space_namestr), MOMJSON_END);
+	  }
       }
       break;
     case momty_jsonarray:
@@ -463,13 +512,12 @@ raw_dump_emit_json_mom (struct mom_dumper_st *dmp, const momval_t val)
 	const momitem_t *curconn = val.pnode->connitm;
 	if (curconn && curconn->i_space > 0)
 	  {
-	    const momstring_t *connids =
-	      mom_item_get_idstr ((momitem_t *) curconn);
-	    assert (mom_is_string ((momval_t) connids));
+	    momval_t jconn = emit_short_item_json_mom (dmp, curconn);
+	    assert (jconn.ptr != NULL);
 	    jsval = (momval_t) mom_make_json_object
 	      (MOMJSOB_ENTRY
 	       ((momval_t) mom_named__jtype, (momval_t) mom_named__node),
-	       MOMJSOB_ENTRY ((momval_t) mom_named__node, (momval_t) connids),
+	       MOMJSOB_ENTRY ((momval_t) mom_named__node, jconn),
 	       MOMJSOB_ENTRY ((momval_t) mom_named__sons,
 			      (momval_t) jsonarray_emit_nodesons_mom (dmp,
 								      val.pnode)),
@@ -880,7 +928,7 @@ mom_full_dump (const char *reason, const char *dumpdir)
        NULL, NULL, &errmsg))
     MOM_FATAPRINTF ("failed to create t_module: %s", errmsg);
   // it is important that the entire dump is a single transaction,
-  // otherwise it is very slow...
+  // otherwise it is much more slow...
   if (sqlite3_exec (dmp.dmp_sqlite, "BEGIN TRANSACTION", NULL, NULL, &errmsg))
     MOM_FATAPRINTF ("failed to BEGIN TRANSACTION: %s", errmsg);
   momval_t tupnameditems = MOM_NULLV, arrnam = MOM_NULLV;
