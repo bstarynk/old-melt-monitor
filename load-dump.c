@@ -30,6 +30,7 @@ struct mom_loader_st
   unsigned ldr_hsize;
   unsigned ldr_hcount;
   const momitem_t **ldr_htable;
+  momspaceid_t ldr_curspace;
   // the load directory
   const char *ldr_dirpath;
   // the sqlite3 path
@@ -583,13 +584,41 @@ mom_load_item_json (struct mom_loader_st *ld, const momval_t jval)
       else if (isalpha (jval.pstring->cstr[0]))
 	litm = mom_get_item_of_name_hash (jval.pstring->cstr,
 					  jval.pstring->hash);
+      if (litm->i_space == momspa_none && ld->ldr_curspace != momspa_none)
+	((momitem_t *) litm)->i_space = ld->ldr_curspace;
     }
   else if (mom_jsonob_get (jval, (momval_t) mom_named__jtype).pitem ==
 	   mom_named__item_ref)
-    litm = mom_load_item_json (ld,
-			       mom_jsonob_get (jval,
-					       (momval_t)
-					       mom_named__item_ref));
+    {
+      momval_t idrefv = mom_jsonob_get (jval, (momval_t) mom_named__item_ref);
+      momval_t spav = mom_jsonob_get (jval, (momval_t) mom_named__space);
+      if (mom_is_string (idrefv))
+	{
+	  if (mom_looks_like_random_id_cstr (idrefv.pstring->cstr, NULL))
+	    litm = mom_make_item_of_ident (idrefv.pstring);
+	  else if (isalpha (idrefv.pstring->cstr[0]))
+	    litm = mom_get_item_of_name_hash (idrefv.pstring->cstr,
+					      idrefv.pstring->hash);
+	  if (MOM_UNLIKELY (litm->i_space == momspa_none
+			    && mom_is_string (spav)))
+	    {
+	      struct mom_spacedescr_st *spad = NULL;
+	      for (unsigned spix = momspa_root; spix <= momspa__predefined;
+		   spix++)
+		if ((spad = mom_spacedescr_array[spix]) != NULL)
+		  {
+		    assert (spad->space_magic == MOM_SPACE_MAGIC);
+		    assert (spad->space_index == spix);
+		    assert (spad->space_name != NULL);
+		    if (!strcmp (spad->space_name, spav.pstring->cstr))
+		      {
+			((momitem_t *) litm)->i_space = spix;
+			break;
+		      }
+		  };
+	    }
+	}
+    }
   if (MOM_UNLIKELY (4 * ld->ldr_hcount + 10 > 3 * ld->ldr_hsize))
     {
       // grow the hash table

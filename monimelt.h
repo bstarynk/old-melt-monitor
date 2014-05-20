@@ -890,7 +890,7 @@ enum mom_space_en
   momspa_none = 0,
   momspa_root = 1,
 
-  momspa__last = 100,
+  momspa__last = 32,
   momspa__predefined
 };
 #define MOM_SPACE_MAGIC 0x5eaf0539	/* mom space magic 1588528441 */
