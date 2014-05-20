@@ -669,8 +669,55 @@ static void
 load_data_inside_item_mom (struct mom_loader_st *ld, momitem_t *itm,
 			   momval_t jdata)
 {
-#warning load_data_inside_item_mom incomplete
-  MOM_FATAPRINTF ("unimplemented load_data_inside_item_mom");
+  assert (ld && ld->ldr_magic == LOADER_MAGIC);
+  assert (itm && itm->i_typnum == momty_item);
+  momval_t jarrent = mom_jsonob_get (jdata, (momval_t) mom_named__attr);
+  momval_t jpayl = mom_jsonob_get (jdata, (momval_t) mom_named__payload);
+  momval_t jcontent = mom_jsonob_get (jdata, (momval_t) mom_named__content);
+  momval_t jkind = mom_jsonob_get (jdata, (momval_t) mom_named__kind);
+  unsigned nbent = mom_json_array_size (jarrent);
+  if (nbent > 0)
+    {
+      itm->i_attrs = mom_reserve_attribute (itm->i_attrs, 5 * nbent / 4 + 1);
+      for (unsigned aix = 0; aix < nbent; aix++)
+	{
+	  momval_t jent = mom_json_array_nth (jarrent, (int) aix);
+	  momval_t jcurattr =
+	    mom_jsonob_get (jent, (momval_t) mom_named__attr);
+	  momval_t jcurval = mom_jsonob_get (jent, (momval_t) mom_named__val);
+	  momitem_t *curitm = mom_load_item_json (ld, jcurattr);
+	  if (!curitm)
+	    continue;
+	  momval_t curval = mom_load_value_json (ld, jcurval);
+	  if (curval.ptr)
+	    itm->i_attrs = mom_put_attribute (itm->i_attrs, curitm, curval);
+	}
+    }
+  if (jcontent.ptr)
+    {
+      momval_t curcont = mom_load_value_json (ld, jcontent);
+      if (curcont.ptr)
+	itm->i_content = curcont;
+    }
+  const momstring_t *skind = NULL;
+  if (mom_is_string (jkind))
+    skind = jkind.pstring;
+  else if (mom_is_item (jkind))
+    skind = mom_item_get_name (jkind.pitem);
+  for (unsigned kix = 1; kix < mompayl__last; kix++)
+    {
+      struct mom_payload_descr_st *payld = mom_payloadescr[kix];
+      if (!payld)
+	continue;
+      assert (payld->dpayl_magic == MOM_PAYLOAD_MAGIC);
+      assert (payld->dpayl_name != NULL && payld->dpayl_name[0]);
+      if (mom_string_same ((momval_t) skind, payld->dpayl_name)
+	  && payld->dpayl_loadfun)
+	{
+	  payld->dpayl_loadfun (ld, itm, jpayl);
+	  break;
+	}
+    }
 }
 
 static bool
@@ -711,10 +758,10 @@ add_loaded_item_mom (struct mom_loader_st *ld, const momitem_t *litm)
   return false;
 }
 
-const momitem_t *
+momitem_t *
 mom_load_item_json (struct mom_loader_st *ld, const momval_t jval)
 {
-  const momitem_t *litm = NULL;
+  momitem_t *litm = NULL;
   if (!jval.ptr || !ld)
     return NULL;
   assert (ld->ldr_magic == LOADER_MAGIC);
@@ -890,11 +937,8 @@ mom_load_value_json (struct mom_loader_st *ld, const momval_t jval)
 	  }
 	else if (jtypv.pitem == mom_named__item_ref)
 	  {
-	    momval_t jidstr =
-	      mom_jsonob_get (jval, (momval_t) mom_named__item_ref);
-	    if (mom_is_string (jidstr)
-		&& mom_looks_like_random_id_cstr (jidstr.pstring->cstr, NULL))
-	      jres = (momval_t) mom_make_item_of_ident (jidstr.pstring);
+	    momitem_t *curitm = mom_load_item_json (ld, jval);
+	    jres = (momval_t) curitm;
 	  }
 	else if (jtypv.pitem == mom_named__json_array)
 	  {
@@ -1078,7 +1122,7 @@ mom_full_dump (const char *reason, const char *dumpdir)
 			  backupath);
     };
   /// create & initialize the dumper
-  struct mom_dumper_st dmp = { };
+  struct mom_dumper_st dmp = { 0 };
   memset (&dmp, 0, sizeof (struct mom_dumper_st));
   const unsigned siz = 512;
   const momitem_t **arr
@@ -1174,12 +1218,37 @@ mom_full_dump (const char *reason, const char *dumpdir)
 	if (spad->space_store_item_fun)
 	  {
 	    char *datastr = NULL;
-#warning should build the data string...
+	    size_t datasiz = 0;
+	    struct momout_st out = { 0 };
 	    // build the data string
+	    momval_t datav = mom_dump_data_inside_item (&dmp, curitm);
+	    FILE *fdata = open_memstream (&datastr, &datasiz);
+	    if (MOM_UNLIKELY
+		(!mom_initialize_output (&out, fdata, outf_jsonhalfindent)))
+	      MOM_FATAPRINTF ("failed to initialize data output");
+	    MOM_OUT (&out, MOMOUT_JSON_VALUE (datav), MOMOUT_FLUSH ());
+	    fclose (fdata);
+	    memset (&out, 0, sizeof (out));
+	    if (datastr)
+	      {
+		spad->space_store_item_fun (&dmp, curitm, datastr);
+		free (datastr), datastr = NULL;
+	      }
 	  }
       done_item:
 	pthread_mutex_unlock (&curitm->i_mtx);
       }
+    /// finish all the initialized spaces
+    for (unsigned six = momspa_root; six < momspa__last; six++)
+      if (spaceinited[six])
+	{
+	  struct mom_spacedescr_st *spad = mom_spacedescr_array[six];
+	  assert (spad && spad->space_magic == MOM_SPACE_MAGIC
+		  && spad->space_index == six);
+	  if (spad->space_fini_dump_fun)
+	    spad->space_fini_dump_fun (&dmp, six);
+	}
+
   }
 #warning incomplete dump
   /// at last

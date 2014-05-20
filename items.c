@@ -437,7 +437,7 @@ mom_get_item_of_identcstr (const char *idcstr)
 
 
 static void
-finalize_item_mom (void *itmad, void *data)
+finalize_item_mom (void *itmad, void *data __attribute__ ((unused)))
 {
   momitem_t *itm = (momitem_t *) itmad;
   assert (itm->i_typnum == momty_item && itm->i_magic == MOM_ITEM_MAGIC);
@@ -833,6 +833,228 @@ mom_get_item_bool (bool v)
     return mom_named__json_false;
 }
 
+
+////////////////////////////////////////////////////////////////
+/************* attributes in items ***********/
+static inline int
+find_index_attribute_mom (const struct mom_itemattributes_st *const attrs,
+			  const momitem_t *atitm)
+{
+  assert (attrs && atitm);
+  unsigned siz = attrs->size;
+  if (siz < MOM_TINY_MAX)
+    {
+      for (unsigned ix = 0; ix < siz; ix++)
+	if (attrs->itattrtab[ix].aten_itm == atitm)
+	  return ix;
+    }
+  else
+    {
+      unsigned istart = atitm->i_hash % siz;
+      for (unsigned ix = istart; ix < siz; ix++)
+	{
+	  const momitem_t *curatitm = attrs->itattrtab[ix].aten_itm;
+	  if (curatitm == atitm)
+	    return ix;
+	  if (!curatitm)
+	    return -1;
+	  else if (curatitm == MOM_EMPTY)
+	    continue;
+	}
+      for (unsigned ix = 0; ix < istart; ix++)
+	{
+	  const momitem_t *curatitm = attrs->itattrtab[ix].aten_itm;
+	  if (curatitm == atitm)
+	    return ix;
+	  if (!curatitm)
+	    return -1;
+	  else if (curatitm == MOM_EMPTY)
+	    continue;
+	}
+    }
+  return -1;
+}
+
+
+static inline int
+add_index_attribute_mom (struct mom_itemattributes_st *attrs,
+			 momitem_t *atitm, const momval_t val)
+{
+  int pos = -1;
+  assert (attrs && atitm && val.ptr);
+  unsigned siz = attrs->size;
+  if (siz < MOM_TINY_MAX)
+    {
+      for (unsigned ix = 0; ix < siz; ix++)
+	{
+	  const momitem_t *curat = attrs->itattrtab[ix].aten_itm;
+	  if (curat == atitm)
+	    {
+	      attrs->itattrtab[ix].aten_val = val;
+	      return ix;
+	    }
+	  else if (!curat || curat == MOM_EMPTY)
+	    {
+	      if (pos < 0)
+		pos = ix;
+	    }
+	}
+    }
+  else
+    {
+      unsigned istart = atitm->i_hash % siz;
+      for (unsigned ix = istart; ix < siz; ix++)
+	{
+	  const momitem_t *curatitm = attrs->itattrtab[ix].aten_itm;
+	  if (curatitm == atitm)
+	    {
+	      attrs->itattrtab[ix].aten_val = val;
+	      return ix;
+	    }
+	  if (!curatitm)
+	    {
+	      if (pos < 0)
+		pos = ix;
+	      break;
+	    }
+	  else if (curatitm == MOM_EMPTY)
+	    {
+	      if (pos < 0)
+		pos = ix;
+	    };
+	}
+      if (pos < 0)
+	for (unsigned ix = 0; ix < istart; ix++)
+	  {
+	    const momitem_t *curatitm = attrs->itattrtab[ix].aten_itm;
+	    if (curatitm == atitm)
+	      {
+		attrs->itattrtab[ix].aten_val = val;
+		return ix;
+	      }
+	    if (!curatitm)
+	      {
+		if (pos < 0)
+		  pos = ix;
+		break;
+	      }
+	    else if (curatitm == MOM_EMPTY)
+	      {
+		if (pos < 0)
+		  pos = ix;
+	      };
+	  };
+    }
+  if (pos >= 0)
+    {
+      attrs->itattrtab[pos].aten_itm = atitm;
+      attrs->itattrtab[pos].aten_val = val;
+      attrs->nbattr++;
+      return pos;
+    }
+  return -1;
+}
+
+struct mom_itemattributes_st *
+mom_reserve_attribute (struct mom_itemattributes_st *attrs, unsigned gap)
+{
+  unsigned oldsize = attrs ? (attrs->size) : 0;
+  unsigned count = attrs ? (attrs->nbattr) : 0;
+  unsigned newsize = count + gap;
+  if (count + gap >= MOM_TINY_MAX - 1)
+    newsize = ((5 * count / 4 + gap + 2) | 7) + 1;
+  else
+    newsize = MOM_TINY_MAX - 1;
+  if (newsize == oldsize)
+    return attrs;
+  struct mom_itemattributes_st *newattrs	////
+    = MOM_GC_ALLOC ("reserve attribute",
+		    sizeof (struct mom_itemattributes_st)
+		    + newsize * sizeof (struct mom_attrentry_st));
+  newattrs->size = newsize;
+  newattrs->nbattr = 0;
+  for (unsigned oix = 0; oix < oldsize; oix++)
+    {
+      momitem_t *curatitm = attrs->itattrtab[oix].aten_itm;
+      if (!curatitm || curatitm == MOM_EMPTY)
+	continue;
+      const momval_t curval = attrs->itattrtab[oix].aten_val;
+      assert (curval.ptr != NULL && curval.ptr != MOM_EMPTY);
+      int pos = add_index_attribute_mom (newattrs, curatitm, curval);
+      if (MOM_UNLIKELY (pos < 0))
+	MOM_FATAPRINTF ("corrupted attributes");
+    }
+  assert (newattrs->nbattr == count);
+  return newattrs;
+}
+
+struct mom_itemattributes_st *
+mom_put_attribute (struct mom_itemattributes_st *attrs,
+		   const momitem_t *atitm, const momval_t val)
+{
+  if (!atitm)
+    return attrs;
+  if (!attrs)
+    {
+      if (!val.ptr)
+	return NULL;
+      const unsigned newsize = MOM_TINY_MAX / 2;
+      assert (newsize > 0);
+      struct mom_itemattributes_st *newattrs
+	= MOM_GC_ALLOC ("put attribute new",
+			sizeof (struct mom_itemattributes_st) +
+			newsize * sizeof (struct mom_attrentry_st));
+      newattrs->size = newsize;
+      newattrs->nbattr = 1;
+      newattrs->itattrtab[0].aten_itm = (momitem_t *) atitm;
+      newattrs->itattrtab[0].aten_val = val;
+      return newattrs;
+    };
+  unsigned siz = attrs->size;
+  unsigned cnt = attrs->nbattr;
+  if (!val.ptr)
+    {
+      int pos = find_index_attribute_mom (attrs, atitm);
+      if (pos > 0)
+	{
+	  attrs->itattrtab[pos].aten_itm = MOM_EMPTY;
+	  attrs->itattrtab[pos].aten_val = MOM_NULLV;
+	  attrs->nbattr = cnt - 1;
+	  if (siz > MOM_TINY_MAX && cnt < siz / 2)
+	    attrs =
+	      mom_reserve_attribute (attrs, 1 + cnt / (2 * MOM_TINY_MAX));
+	}
+    }
+  else
+    {				// val is not null
+      if ((siz < MOM_TINY_MAX) ? (cnt + 1 >= siz) : (5 * cnt + 2 > 4 * siz))
+	attrs = mom_reserve_attribute (attrs, 1 + cnt / ((3 + MOM_TINY_MAX)));
+      int pos = add_index_attribute_mom (attrs, (momitem_t *) atitm, val);
+      if (MOM_UNLIKELY (pos < 0))
+	MOM_FATAPRINTF ("corrupted attributes when putting");
+    }
+  return attrs;
+}
+
+
+struct mom_itemattributes_st *
+mom_remove_attribute (struct mom_itemattributes_st *attrs,
+		      const momitem_t *atitm)
+{
+  if (!attrs || !atitm)
+    return attrs;
+  int pos = find_index_attribute_mom (attrs, atitm);
+  if (pos > 0)
+    {
+      attrs->itattrtab[pos].aten_itm = MOM_EMPTY;
+      attrs->itattrtab[pos].aten_val = MOM_NULLV;
+      unsigned siz = attrs->size;
+      unsigned cnt = --(attrs->nbattr);
+      if (siz > MOM_TINY_MAX && cnt < siz / 2)
+	attrs = mom_reserve_attribute (attrs, 1 + cnt / (2 * MOM_TINY_MAX));
+    }
+  return attrs;
+}
 
 ////////////////////////////////////////////////////////////////
 void

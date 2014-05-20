@@ -60,7 +60,7 @@ dbg_level_mom (enum mom_debug_en dbg)
 char *
 mom_strftime_centi (char *buf, size_t len, const char *fmt, double ti)
 {
-  struct tm tm = { };
+  struct tm tm = { 0 };
   time_t tim = (time_t) ti;
   if (!buf || !fmt || !len)
     return NULL;
@@ -117,7 +117,7 @@ mom_debugprintf_at (enum mom_debug_en dbg, const char *fil, int lin,
   va_start (alist, fmt);
   len = vsnprintf (buf, sizeof (buf), fmt, alist);
   va_end (alist);
-  if (MOM_UNLIKELY (len >= sizeof (buf) - 1))
+  if (MOM_UNLIKELY (len >= (int) sizeof (buf) - 1))
     {
       char *bigbuf = malloc (len + 10);
       if (bigbuf)
@@ -167,7 +167,7 @@ mom_fataprintf_at (const char *fil, int lin, const char *fmt, ...)
   va_start (alist, fmt);
   len = vsnprintf (buf, sizeof (buf), fmt, alist);
   va_end (alist);
-  if (MOM_UNLIKELY (len >= sizeof (buf) - 1))
+  if (MOM_UNLIKELY (len >= (int) sizeof (buf) - 1))
     {
       bigbuf = malloc (len + 10);
       if (bigbuf)
@@ -252,7 +252,7 @@ mom_warnprintf_at (const char *fil, int lin, const char *fmt, ...)
   va_start (alist, fmt);
   len = vsnprintf (buf, sizeof (buf), fmt, alist);
   va_end (alist);
-  if (MOM_UNLIKELY (len >= sizeof (buf) - 1))
+  if (MOM_UNLIKELY (len >= (int) sizeof (buf) - 1))
     {
       bigbuf = malloc (len + 10);
       if (bigbuf)
@@ -336,7 +336,7 @@ mom_informprintf_at (const char *fil, int lin, const char *fmt, ...)
   va_start (alist, fmt);
   len = vsnprintf (buf, sizeof (buf), fmt, alist);
   va_end (alist);
-  if (MOM_UNLIKELY (len >= sizeof (buf) - 1))
+  if (MOM_UNLIKELY (len >= (int) sizeof (buf) - 1))
     {
       bigbuf = malloc (len + 10);
       if (bigbuf)

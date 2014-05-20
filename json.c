@@ -319,7 +319,7 @@ again:
       bool isfloat = false;
       do
 	{
-	  if (ix < sizeof (numbuf) - 1)
+	  if (ix < (int) sizeof (numbuf) - 1)
 	    numbuf[ix++] = jp->jsonp_c;
 	  jp->jsonp_c = getc (jp->jsonp_file);
 	}
@@ -329,26 +329,26 @@ again:
 	  isfloat = true;
 	  do
 	    {
-	      if (ix < sizeof (numbuf) - 1)
+	      if (ix < (int) sizeof (numbuf) - 1)
 		numbuf[ix++] = jp->jsonp_c;
 	      jp->jsonp_c = getc (jp->jsonp_file);
 	    }
 	  while (isdigit (jp->jsonp_c));
 	  if (jp->jsonp_c == 'E' || jp->jsonp_c == 'e')
 	    {
-	      if (ix < sizeof (numbuf) - 1)
+	      if (ix < (int) sizeof (numbuf) - 1)
 		numbuf[ix++] = jp->jsonp_c;
 	      jp->jsonp_c = getc (jp->jsonp_file);
 	    };
 	  if (jp->jsonp_c == '+' || jp->jsonp_c == '-')
 	    {
-	      if (ix < sizeof (numbuf) - 1)
+	      if (ix < (int) sizeof (numbuf) - 1)
 		numbuf[ix++] = jp->jsonp_c;
 	      jp->jsonp_c = getc (jp->jsonp_file);
 	    };
 	  while (isdigit (jp->jsonp_c))
 	    {
-	      if (ix < sizeof (numbuf) - 1)
+	      if (ix < (int) sizeof (numbuf) - 1)
 		numbuf[ix++] = jp->jsonp_c;
 	      jp->jsonp_c = getc (jp->jsonp_file);
 	    };
@@ -881,7 +881,7 @@ mom_json_cstr_cmp (momval_t jv, const char *str)
   return -1;
 }
 
-const momval_t
+momval_t
 mom_jsonob_get_def (const momval_t jsobv, const momval_t namev,
 		    const momval_t def)
 {
@@ -915,7 +915,7 @@ mom_jsonob_get_def (const momval_t jsobv, const momval_t namev,
 }
 
 
-const momval_t
+momval_t
 mom_jsonob_getstr (const momval_t jsobv, const char *namestr)
 {
   if (!jsobv.ptr || !namestr)

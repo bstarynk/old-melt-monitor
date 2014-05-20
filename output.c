@@ -648,6 +648,12 @@ mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist)
 	    output_item_mom (pout, itm);
 	  }
 	  break;
+	  ///
+	case MOMOUTDO_FLUSH:
+	  {
+	    fflush (out);
+	  }
+	  break;
 	}			/// end switch dir
     }				/// end while again
 }

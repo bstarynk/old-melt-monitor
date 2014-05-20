@@ -371,6 +371,13 @@ mom_string_slen (momval_t v)
   return (v.ptr && v.pstring->typnum == momty_string) ? (v.pstring->slen) : 0;
 }
 
+static inline bool
+mom_string_same (momval_t v, const char *cstr)
+{
+  return (v.ptr && v.pstring->typnum == momty_string && cstr
+	  && !strcmp (v.pstring->cstr, cstr));
+}
+
 ////////////////////////////////////////////////////////////////
 /////////// JSON VALUES
 ////////////////////////////////////////////////////////////////
@@ -471,11 +478,11 @@ int mom_json_cmp (momval_t l, momval_t r);
 // compare a JSON value to a non-null string
 int mom_json_cstr_cmp (momval_t jv, const char *str);
 
-const momval_t mom_jsonob_getstr (const momval_t jsobv, const char *name);
+momval_t mom_jsonob_getstr (const momval_t jsobv, const char *name);
 
-const momval_t mom_jsonob_get_def (const momval_t jsobv, const momval_t namev,
-				   const momval_t def);
-static inline const momval_t
+momval_t mom_jsonob_get_def (const momval_t jsobv, const momval_t namev,
+			     const momval_t def);
+static inline momval_t
 mom_jsonob_get (const momval_t jsobv, const momval_t namev)
 {
   return mom_jsonob_get_def (jsobv, namev, MOM_NULLV);
@@ -529,7 +536,7 @@ mom_json_array_size (momval_t val)
   return val.pjsonarr->slen;
 }
 
-static inline const momval_t
+static inline momval_t
 mom_json_array_nth (momval_t val, int rk)
 {
   if (!val.ptr || *val.ptype != momty_jsonarray)
@@ -537,7 +544,7 @@ mom_json_array_nth (momval_t val, int rk)
   unsigned slen = val.pjsonarr->slen;
   if (rk < 0)
     rk += slen;
-  if (rk >= 0 && rk < slen)
+  if (rk >= 0 && rk < (int) slen)
     return val.pjsonarr->jarrtab[rk];
   return MOM_NULLV;
 }
@@ -552,7 +559,7 @@ struct mom_attrentry_st
   momval_t aten_val;
 };
 
-struct mom_itemattributes_st
+struct mom_itemattributes_st	// an hash table
 {
   momusize_t nbattr;
   momusize_t size;
@@ -626,6 +633,58 @@ mom_register_item_named_cstr (momitem_t *itm, const char *namestr)
 }
 
 
+struct mom_itemattributes_st *mom_put_attribute (struct mom_itemattributes_st
+						 *attrs,
+						 const momitem_t *atitm,
+						 const momval_t val);
+struct mom_itemattributes_st *mom_remove_attribute (struct
+						    mom_itemattributes_st *,
+						    const momitem_t *atitm);
+struct mom_itemattributes_st *mom_reserve_attribute (struct
+						     mom_itemattributes_st *,
+						     unsigned gap);
+static inline momval_t
+mom_get_attribute (const struct mom_itemattributes_st *const attrs,
+		   const momitem_t *atitm)
+{
+  if (!attrs || !atitm)
+    return MOM_NULLV;
+  unsigned siz = attrs->size;
+  assert (siz > 0);
+  assert (atitm->i_typnum == momty_item && atitm->i_magic == MOM_ITEM_MAGIC);
+  if (siz < MOM_TINY_MAX)
+    {
+      for (unsigned ix = 0; ix < siz; ix++)
+	if (attrs->itattrtab[ix].aten_itm == atitm)
+	  return attrs->itattrtab[ix].aten_val;
+    }
+  else
+    {
+      unsigned istart = atitm->i_hash % siz;
+      for (unsigned ix = istart; ix < siz; ix++)
+	{
+	  const momitem_t *curatitm = attrs->itattrtab[ix].aten_itm;
+	  if (curatitm == atitm)
+	    return attrs->itattrtab[ix].aten_val;
+	  if (!curatitm)
+	    return MOM_NULLV;
+	  else if (curatitm == MOM_EMPTY)
+	    continue;
+	}
+      for (unsigned ix = 0; ix < istart; ix++)
+	{
+	  const momitem_t *curatitm = attrs->itattrtab[ix].aten_itm;
+	  if (curatitm == atitm)
+	    return attrs->itattrtab[ix].aten_val;
+	  if (!curatitm)
+	    return MOM_NULLV;
+	  else if (curatitm == MOM_EMPTY)
+	    continue;
+	}
+    }
+  return MOM_NULLV;
+}
+
 /// get the set of named items, ordered by item ids
 const momset_t *mom_set_of_named_items (void);
 /// get the tuple of named items, alphabetically ordered by name
@@ -690,13 +749,16 @@ struct mom_payload_descr_st
   intptr_t dpayl_spare1, dpayl_spare2;
 };
 
+momitem_t *mom_load_item_json (struct mom_loader_st *ld, const momval_t jval);
+momval_t mom_load_value_json (struct mom_loader_st *ld, const momval_t jval);
+
 enum mom_kindpayload_en
 {
   mompayl_none = 0,
   mompayl_queue,
   mompayl_tasklet,
 
-  mompayl__last = 128
+  mompayl__last = 32
 };
 struct mom_payload_descr_st *mom_payloadescr[mompayl__last + 1];
 /************* misc items *********/
@@ -886,7 +948,7 @@ mom_node_nth (momval_t nodv, int rk)
   unsigned l = nodv.pnode->slen;
   if (rk < 0)
     rk += (int) l;
-  if (rk >= 0 && rk < l)
+  if (rk >= 0 && rk < (int) l)
     return nodv.pnode->sontab[rk];
   return MOM_NULLV;
 }
@@ -913,6 +975,7 @@ struct mom_spacedescr_st
   void (*space_init_dump_fun) (struct mom_dumper_st * dmp, unsigned spacix);
   void (*space_store_item_fun) (struct mom_dumper_st * dmp, momitem_t *itm,
 				const char *datastr);
+  void (*space_fini_dump_fun) (struct mom_dumper_st * dmp, unsigned spacix);
 } *mom_spacedescr_array[momspa__last + 1];
 
 ////////////////////////////////////////////////////////////////
@@ -1126,6 +1189,17 @@ void mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist);
 #define MOM_OUT_AT(Fil,Lin,Out,...) MOM_OUT_AT_BIS(Fil,Lin,Out,##__VA_ARGS__)
 #define MOM_OUT(Out,...) MOM_OUT_AT(__FILE__,__LINE__,Out,##__VA_ARGS__)
 
+static inline bool
+mom_initialize_output (struct momout_st *out, FILE * fil, unsigned flags)
+{
+  if (!out || !fil)
+    return false;
+  memset (out, 0, sizeof (struct momout_st));
+  out->mout_magic = MOM_MOUT_MAGIC;
+  out->mout_file = fil;
+  out->mout_flags = flags;
+  return true;
+}
 
 enum momoutdir_en
 {
@@ -1258,6 +1332,10 @@ enum momoutdir_en
   MOMOUTDO_SMALL_SPACE /*, unsigned threshold */ ,
 #define MOMOUT_SMALL_SPACE(L) MOMOUTDO_SMALL_SPACE,	\
     MOM_REQUIRES_TYPE(L,int,mombad_space)
+  /// output a space or an indented small newline if the current line
+  /// exceeds a given threshold
+  MOMOUTDO_FLUSH /* */ ,
+#define MOMOUT_FLUSH() MOMOUTDO_FLUSH
   ///
 
 };

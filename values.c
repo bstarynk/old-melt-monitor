@@ -850,13 +850,13 @@ mom_make_set_without (momval_t s1, momval_t v2)
 						   s1len *
 						   sizeof (momitem_t *));
 	int ix1 = 0, ix2 = 0, ixres = 0;
-	while (ix1 < s1len || ix2 < s2len)
+	while (ix1 < (int) s1len || ix2 < (int) s2len)
 	  {
-	    assert (ixres < s1len);
+	    assert (ixres < (int) s1len);
 	    const momitem_t *curitm1 =
-	      (ix1 < s1len) ? s1set->itemseq[ix1] : NULL;
+	      (ix1 < (int) s1len) ? s1set->itemseq[ix1] : NULL;
 	    const momitem_t *curitm2 =
-	      (ix2 < s2len) ? s2set->itemseq[ix2] : NULL;
+	      (ix2 < (int) s2len) ? s2set->itemseq[ix2] : NULL;
 	    if (!curitm1)
 	      break;
 	    if (!curitm2)
