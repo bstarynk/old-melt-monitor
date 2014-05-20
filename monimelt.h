@@ -690,6 +690,15 @@ struct mom_payload_descr_st
   intptr_t dpayl_spare1, dpayl_spare2;
 };
 
+enum mom_kindpayload_en
+{
+  mompayl_none = 0,
+  mompayl_queue,
+  mompayl_tasklet,
+
+  mompayl__last = 128
+};
+struct mom_payload_descr_st *mom_payloadescr[mompayl__last + 1];
 /************* misc items *********/
 // convert a boolean to a predefined item json_true or json_false
 const momitem_t *mom_get_item_bool (bool v);

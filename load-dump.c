@@ -303,6 +303,32 @@ mom_dump_scan_inside_item (struct mom_dumper_st *dmp, momitem_t *itm)
   if (itm->i_space == momspa_none)
     return;
   pthread_mutex_lock (&itm->i_mtx);
+  if (itm->i_content.ptr)
+    mom_dump_scan_value (dmp, itm->i_content);
+  if (itm->i_attrs)
+    {
+      unsigned atsiz = itm->i_attrs->size;
+      struct mom_attrentry_st *atent = itm->i_attrs->itattrtab;
+      for (unsigned aix = 0; aix < atsiz; aix++)
+	{
+	  if (atent[aix].aten_itm && atent[aix].aten_itm != MOM_EMPTY
+	      && atent[aix].aten_val.ptr
+	      && atent[aix].aten_val.ptr != MOM_EMPTY
+	      && atent[aix].aten_itm->i_space != momspa_none)
+	    {
+	      add_dumped_item_mom (dmp, atent[aix].aten_itm);
+	      mom_dump_scan_value (dmp, atent[aix].aten_val);
+	    }
+	}
+    }
+  if (itm->i_payload != NULL)
+    {
+      assert (itm->i_paylkind > 0 && itm->i_paylkind < mompayl__last);
+      struct mom_payload_descr_st *payld = mom_payloadescr[itm->i_paylkind];
+      assert (payld && payld->dpayl_magic == MOM_PAYLOAD_MAGIC);
+      if (payld->dpayl_dumpscanfun)
+	payld->dpayl_dumpscanfun (dmp, itm);
+    }
   pthread_mutex_unlock (&itm->i_mtx);
 }
 
