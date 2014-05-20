@@ -272,12 +272,12 @@ emit_short_item_json_mom (struct mom_dumper_st *dmp, const momitem_t *itm)
   assert (itm->i_typnum == momty_item && itm->i_magic == MOM_ITEM_MAGIC);
   momval_t idstr = (momval_t) mom_item_get_idstr ((momitem_t *) itm);
   if (dmp->dmp_curspace == itm->i_space
-      || (itm->i_space == momspa__predefined
+      || (itm->i_space == momspa_predefined
 	  && dmp->dmp_curspace == momspa_root))
     return idstr;
   else
     {
-      assert (itm->i_space <= momspa__predefined);
+      assert (itm->i_space <= momspa__last);
       struct mom_spacedescr_st *spad = mom_spacedescr_array[itm->i_space];
       assert (spad && spad->space_magic == MOM_SPACE_MAGIC);
       assert (spad->space_name && spad->space_name[0]);
@@ -291,6 +291,19 @@ emit_short_item_json_mom (struct mom_dumper_st *dmp, const momitem_t *itm)
 	 MOMJSOB_ENTRY ((momval_t) mom_named__space,
 			(momval_t) spad->space_namestr), MOMJSON_END);
     }
+}
+
+void
+mom_dump_scan_inside_item (struct mom_dumper_st *dmp, momitem_t *itm)
+{
+  assert (dmp && dmp->dmp_magic == DUMPER_MAGIC);
+  assert (dmp->dmp_state == dus_scan);
+  assert (itm && itm->i_typnum == momty_item
+	  && itm->i_magic == MOM_ITEM_MAGIC);
+  if (itm->i_space == momspa_none)
+    return;
+  pthread_mutex_lock (&itm->i_mtx);
+  pthread_mutex_unlock (&itm->i_mtx);
 }
 
 static const momjsonarray_t *
@@ -450,7 +463,7 @@ raw_dump_emit_json_mom (struct mom_dumper_st *dmp, const momval_t val)
 	else
 	  {
 	    const momstring_t *itemids = mom_item_get_idstr (val.pitem);
-	    assert (val.pitem->i_space <= momspa__predefined);
+	    assert (val.pitem->i_space <= momspa__last);
 	    struct mom_spacedescr_st *spad =
 	      mom_spacedescr_array[val.pitem->i_space];
 	    assert (spad && spad->space_magic == MOM_SPACE_MAGIC);
@@ -603,8 +616,7 @@ mom_load_item_json (struct mom_loader_st *ld, const momval_t jval)
 			    && mom_is_string (spav)))
 	    {
 	      struct mom_spacedescr_st *spad = NULL;
-	      for (unsigned spix = momspa_root; spix <= momspa__predefined;
-		   spix++)
+	      for (unsigned spix = momspa_root; spix <= momspa__last; spix++)
 		if ((spad = mom_spacedescr_array[spix]) != NULL)
 		  {
 		    assert (spad->space_magic == MOM_SPACE_MAGIC);
@@ -827,6 +839,8 @@ fetch_param_mom (struct mom_loader_st *ld, const char *parname)
   return res;
 }
 
+
+
 void
 mom_load (const char *ldirnam)
 {
@@ -862,15 +876,17 @@ mom_load (const char *ldirnam)
   ldr.ldr_sqlpath = MOM_GC_STRDUP ("initial loader sqldb", filpath);
   /// prepare some statements
   if (sqlite3_prepare_v2 (ldr.ldr_sqlite,
-			  "SELECT parvalue from t_param WHERE parname = ?1",
+			  "SELECT parvalue from t_params WHERE parname = ?1",
 			  -1, &ldr.ldr_sqlstmt_param_fetch, NULL))
     MOM_FATAPRINTF ("failed to prepare fetchparam query: %s",
 		    sqlite3_errmsg (ldr.ldr_sqlite));
   /// check the version
   const char *vers = fetch_param_mom (&ldr, MOM_VERSION_PARAM);
-  if (MOM_UNLIKELY (vers && strcmp (vers, MOM_DUMP_VERSION)))
+  if (MOM_UNLIKELY (!vers || strcmp (vers, MOM_DUMP_VERSION)))
     MOM_FATAPRINTF ("incompatible version in %s, expected %s got %s",
-		    ldr.ldr_sqlpath, MOM_DUMP_VERSION, vers);
+		    ldr.ldr_sqlpath, MOM_DUMP_VERSION,
+		    vers ? vers : "*nothing*");
+  /// load the named items
 #warning incomplete load
 }
 
@@ -934,9 +950,9 @@ mom_full_dump (const char *reason, const char *dumpdir)
   /// create the initial tables
   if (sqlite3_exec
       (dmp.dmp_sqlite,
-       "CREATE TABLE IF NOT EXISTS t_param (parname VARCHAR(35) PRIMARY KEY ASC NOT NULL UNIQUE,"
+       "CREATE TABLE IF NOT EXISTS t_params (parname VARCHAR(35) PRIMARY KEY ASC NOT NULL UNIQUE,"
        " parvalue TEXT NOT NULL)", NULL, NULL, &errmsg))
-    MOM_FATAPRINTF ("in dumped db %s failed to create t_param %s",
+    MOM_FATAPRINTF ("in dumped db %s failed to create t_params %s",
 		    dmp.dmp_sqlpath, errmsg);
   if (sqlite3_exec
       (dmp.dmp_sqlite,
@@ -964,6 +980,20 @@ mom_full_dump (const char *reason, const char *dumpdir)
   tupnameditems = (momval_t) mom_alpha_ordered_tuple_of_named_items (&arrnam);
   assert (mom_tuple_length (tupnameditems) == mom_json_array_size (arrnam));
   mom_dump_scan_value (&dmp, tupnameditems);
+  /// scanning loop
+  while (dmp.dmp_qfirst != NULL)
+    {
+      struct mom_itqueue_st *qel = dmp.dmp_qfirst;
+      if (MOM_UNLIKELY (qel == dmp.dmp_qlast))
+	{
+	  dmp.dmp_qfirst = dmp.dmp_qlast = NULL;
+	}
+      else
+	dmp.dmp_qfirst = qel->iq_next;
+      momitem_t *curitm = qel->iq_item;
+      assert (curitm != NULL && curitm->i_typnum == momty_item);
+      mom_dump_scan_inside_item (&dmp, curitm);
+    }
 #warning incomplete dump
   /// at last
   goto end;

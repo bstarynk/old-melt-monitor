@@ -888,10 +888,10 @@ mom_node_nth (momval_t nodv, int rk)
 enum mom_space_en
 {
   momspa_none = 0,
-  momspa_root = 1,
+  momspa_predefined = 1,
+  momspa_root = 2,
 
   momspa__last = 32,
-  momspa__predefined
 };
 #define MOM_SPACE_MAGIC 0x5eaf0539	/* mom space magic 1588528441 */
 struct mom_spacedescr_st
@@ -901,7 +901,7 @@ struct mom_spacedescr_st
   const char *space_name;
   const momstring_t *space_namestr;
   void *space_data;
-} *mom_spacedescr_array[momspa__predefined + 1];
+} *mom_spacedescr_array[momspa__last + 1];
 
 ////////////////////////////////////////////////////////////////
 /////////// DIAGNOSTICS

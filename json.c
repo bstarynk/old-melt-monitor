@@ -299,7 +299,7 @@ again:
 	  momitem_t *namitm = mom_get_item_of_name_or_ident_cstr (str);
 	  if (namitm)
 	    {
-	      if (namitm->i_space == momspa__predefined)
+	      if (namitm->i_space == momspa_predefined)
 		return (momval_t) namitm;
 	      else if (str[0] == '_' && isdigit (str[1]))
 		return (momval_t) namitm->i_idstr;
