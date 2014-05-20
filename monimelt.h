@@ -910,6 +910,9 @@ struct mom_spacedescr_st
   const char *space_name;
   const momstring_t *space_namestr;
   void *space_data;
+  void (*space_init_dump_fun) (struct mom_dumper_st * dmp, unsigned spacix);
+  void (*space_store_item_fun) (struct mom_dumper_st * dmp, momitem_t *itm,
+				const char *datastr);
 } *mom_spacedescr_array[momspa__last + 1];
 
 ////////////////////////////////////////////////////////////////
