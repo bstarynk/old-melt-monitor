@@ -390,6 +390,7 @@ mom_inform_at (const char *sfil, int slin, ...)
 
 static const char *wanted_dir_mom;
 static const char *write_pid_file_mom;
+static const char *dump_cold_dir_mom;
 
 #if MOM_NEED_GC_CALLOC
 void *
@@ -495,6 +496,7 @@ enum extraopt_en
   xtraopt_dumpstate,
   xtraopt_noeventloop,
   xtraopt_randomidstr,
+  xtraopt_dumpcoldstate,
 };
 
 static const struct option mom_long_options[] = {
@@ -513,6 +515,7 @@ static const struct option mom_long_options[] = {
   {"chdir", required_argument, NULL, xtraopt_chdir},
   {"no-event-loop", no_argument, NULL, xtraopt_noeventloop},
   {"random-idstr", no_argument, NULL, xtraopt_randomidstr},
+  {"dump-cold-state", required_argument, NULL, xtraopt_dumpcoldstate},
   /* Terminating NULL placeholder.  */
   {NULL, no_argument, NULL, 0},
 };
@@ -546,6 +549,7 @@ usage_mom (const char *argv0)
   printf ("\t --write-pid <file>"
 	  "\t #write the pid (e.g. --write-pid /var/run/monimelt.pid)\n");
   printf ("\t --random-idstr" "\t #output a random idstr then exit\n");
+  printf ("\t --dump-cold-state <dumpdir>" "\t #dump the cold state\n");
 }
 
 static void
@@ -645,6 +649,11 @@ parse_program_arguments_and_load_modules_mom (int *pargc, char **argv)
 	    write_pid_file_mom = optarg;
 	  }
 	  break;
+	case xtraopt_dumpcoldstate:
+	  {
+	    dump_cold_dir_mom = optarg;
+	  }
+	  break;
 	default:
 	  {
 	    if (opt > 0 && opt < UCHAR_MAX && isalpha (opt))
@@ -729,6 +738,13 @@ main (int argc, char **argv)
     }
   ///
   initialize_mom ();
+  if (dump_cold_dir_mom)
+    {
+      MOM_INFORMPRINTF ("trying to dump cold directory %s",
+			dump_cold_dir_mom);
+      mom_full_dump ("cold dump of predefined", dump_cold_dir_mom);
+      MOM_INFORMPRINTF ("done cold dump to directory %s", dump_cold_dir_mom);
+    }
   ///
   return 0;
 }

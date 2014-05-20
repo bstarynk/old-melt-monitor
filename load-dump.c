@@ -39,6 +39,8 @@ struct mom_loader_st
   sqlite3 *ldr_sqlite;
   // statement for param fetching
   sqlite3_stmt *ldr_sqlstmt_param_fetch;
+  // statement for named fetching
+  sqlite3_stmt *ldr_sqlstmt_named_fetch;
   /// queue of items whose content should be loaded:
   struct mom_itqueue_st *ldr_qfirst;
   struct mom_itqueue_st *ldr_qlast;
@@ -57,7 +59,10 @@ struct mom_dumper_st
   const char *dmp_dirpath;
   const char *dmp_sqlpath;
   sqlite3 *dmp_sqlite;
-  sqlite3_stmt *dmp_sqlstmt_param_update;
+  /// statements for Sqlite3
+  sqlite3_stmt *dmp_sqlstmt_param_insert;
+  sqlite3_stmt *dmp_sqlstmt_item_insert;
+  sqlite3_stmt *dmp_sqlstmt_name_insert;
   struct mom_itqueue_st *dmp_qfirst;
   struct mom_itqueue_st *dmp_qlast;
   const momitem_t **dmp_array;
@@ -1050,18 +1055,94 @@ mom_load (const char *ldirnam)
   ldr.ldr_sqlpath = MOM_GC_STRDUP ("initial loader sqldb", filpath);
   /// prepare some statements
   if (sqlite3_prepare_v2 (ldr.ldr_sqlite,
-			  "SELECT parvalue from t_params WHERE parname = ?1",
+			  "SELECT parvalue FROM t_params WHERE parname = ?1",
 			  -1, &ldr.ldr_sqlstmt_param_fetch, NULL))
+    MOM_FATAPRINTF ("failed to prepare fetchparam query: %s",
+		    sqlite3_errmsg (ldr.ldr_sqlite));
+  if (sqlite3_prepare_v2 (ldr.ldr_sqlite,
+			  "SELECT name, n_idstr, n_spacename FROM t_names ORDER BY name",
+			  -1, &ldr.ldr_sqlstmt_named_fetch, NULL))
     MOM_FATAPRINTF ("failed to prepare fetchparam query: %s",
 		    sqlite3_errmsg (ldr.ldr_sqlite));
   /// check the version
   const char *vers = fetch_param_mom (&ldr, MOM_VERSION_PARAM);
+  MOM_DEBUGPRINTF (load, "vers=%s", vers);
   if (MOM_UNLIKELY (!vers || strcmp (vers, MOM_DUMP_VERSION)))
     MOM_FATAPRINTF ("incompatible version in %s, expected %s got %s",
 		    ldr.ldr_sqlpath, MOM_DUMP_VERSION,
 		    vers ? vers : "*nothing*");
   /// load the named items
+  int rowcount = 0;
+  for (;;)
+    {
+      int stepres = sqlite3_step (ldr.ldr_sqlstmt_named_fetch);
+      if (stepres == SQLITE_DONE)
+	break;
+      else if (stepres == SQLITE_ROW)
+	{
+	  rowcount++;
+	  const unsigned char *rowname =
+	    sqlite3_column_text (ldr.ldr_sqlstmt_named_fetch, 0);
+	  const unsigned char *rowidstr =
+	    sqlite3_column_text (ldr.ldr_sqlstmt_named_fetch, 1);
+	  const unsigned char *rowspacename =
+	    sqlite3_column_text (ldr.ldr_sqlstmt_named_fetch, 2);
+	  MOM_DEBUGPRINTF (load,
+			   "rowcount#%d rowname:%s rowidstr:%s rowspacename:%s",
+			   rowcount, rowname, rowidstr, rowspacename);
+	  if (!mom_looks_like_random_id_cstr ((const char *) rowidstr, NULL))
+	    {
+	      MOM_WARNPRINTF ("loading: strange idstr %s for name %s",
+			      rowidstr, rowname);
+	      continue;
+	    }
+	  momitem_t *curnameditm =
+	    mom_make_item_of_identcstr ((const char *) rowidstr);
+	  mom_register_item_named_cstr (curnameditm, (const char *) rowname);
+	  if (rowspacename && rowspacename[0])
+	    {
+	      struct mom_spacedescr_st *spad = NULL;
+	      for (unsigned spix = momspa_root; spix <= momspa__last; spix++)
+		if ((spad = mom_spacedescr_array[spix]) != NULL)
+		  {
+		    assert (spad->space_magic == MOM_SPACE_MAGIC);
+		    assert (spad->space_index == spix);
+		    assert (spad->space_name != NULL);
+		    if (!strcmp
+			(spad->space_name, (const char *) rowspacename))
+		      {
+			curnameditm->i_space = spix;
+			break;
+		      }
+		  };
+	    }
+	  else
+	    MOM_WARNPRINTF ("loading: item of id %s named %s without space",
+			    rowidstr, rowname);
+	  if (!add_loaded_item_mom (&ldr, curnameditm))
+	    MOM_FATAPRINTF ("failed to add named item %s of id %s", rowname,
+			    rowidstr);
+	  struct mom_itqueue_st *elq =
+	    MOM_GC_ALLOC ("load queue named element",
+			  sizeof (struct mom_itqueue_st));
+	  elq->iq_item = (momitem_t *) curnameditm;
+	  if (MOM_UNLIKELY (!ldr.ldr_qfirst))
+	    {
+	      ldr.ldr_qfirst = ldr.ldr_qlast = elq;
+	    }
+	  else
+	    {
+	      assert (ldr.ldr_qlast != NULL);
+	      ldr.ldr_qlast->iq_next = elq;
+	      ldr.ldr_qlast = elq;
+	    }
+	}
+      else
+	MOM_FATAPRINTF ("failed to step on names: %s",
+			sqlite3_errmsg (ldr.ldr_sqlite));
+    }
 #warning incomplete load
+  MOM_FATAPRINTF ("missing load item loop");
 }
 
 
@@ -1071,6 +1152,8 @@ mom_full_dump (const char *reason, const char *dumpdir)
 {
   char filpath[MOM_PATH_MAX];
   memset (filpath, 0, sizeof (filpath));
+  MOM_DEBUGPRINTF (dump, "start mom_full_dump reason=%s dumpdir=%s", reason,
+		   dumpdir);
   if (!dumpdir || !dumpdir[0])
     {
       MOM_WARNPRINTF ("setting dump directory to current: %s",
@@ -1080,6 +1163,8 @@ mom_full_dump (const char *reason, const char *dumpdir)
   memset (filpath, 0, sizeof (filpath));
   double startrealtime = mom_clock_time (CLOCK_REALTIME);
   double startcputime = mom_clock_time (CLOCK_PROCESS_CPUTIME_ID);
+  MOM_DEBUGPRINTF (dump, "mom_full_dump startrealtime=%.3f startcputime=%.3f",
+		   startrealtime, startcputime);
   /// lock the mutex
   pthread_mutex_lock (&dump_mtx_mom);
   MOM_INFORMPRINTF ("start full dump reason=%s dumpdir=%s", reason, dumpdir);
@@ -1155,8 +1240,8 @@ mom_full_dump (const char *reason, const char *dumpdir)
   if (sqlite3_exec
       (dmp.dmp_sqlite,
        "CREATE TABLE IF NOT EXISTS t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE,"
-       " nam_idstr VARCHAR(30) UNIQUE NOT NULL REFERENCES t_items(itm_idstr),"
-       " spacename VARCHAR(20) NOT NULL)", NULL, NULL, &errmsg))
+       " n_idstr VARCHAR(30) UNIQUE NOT NULL REFERENCES t_items(itm_idstr),"
+       " n_spacename VARCHAR(20) NOT NULL)", NULL, NULL, &errmsg))
     MOM_FATAPRINTF ("failed to create t_names: %s", errmsg);
   if (sqlite3_exec
       (dmp.dmp_sqlite,
@@ -1167,11 +1252,26 @@ mom_full_dump (const char *reason, const char *dumpdir)
   // otherwise it is much more slow...
   if (sqlite3_exec (dmp.dmp_sqlite, "BEGIN TRANSACTION", NULL, NULL, &errmsg))
     MOM_FATAPRINTF ("failed to BEGIN TRANSACTION: %s", errmsg);
+  /// prepare some statements
+  if (sqlite3_prepare_v2 (dmp.dmp_sqlite,
+			  "INSERT INTO t_items (itm_idstr, itm_jdata) VALUES (?1, ?2)",
+			  -1, &dmp.dmp_sqlstmt_item_insert, NULL))
+    MOM_FATAPRINTF ("failed to prepare item insert query: %s",
+		    sqlite3_errmsg (dmp.dmp_sqlite));
+  if (sqlite3_prepare_v2 (dmp.dmp_sqlite,
+			  "INSERT INTO t_names (name, n_idstr, n_spacename) VALUES (?1, ?2, ?3)",
+			  -1, &dmp.dmp_sqlstmt_name_insert, NULL))
+    MOM_FATAPRINTF ("failed to prepare name insert query: %s",
+		    sqlite3_errmsg (dmp.dmp_sqlite));
+  ///
   momval_t tupnameditems = MOM_NULLV, arrnam = MOM_NULLV;
   tupnameditems = (momval_t) mom_alpha_ordered_tuple_of_named_items (&arrnam);
+  MOM_DEBUG (dump, MOMOUT_LITERAL ("tuple of named:"),
+	     MOMOUT_VALUE (tupnameditems));
   assert (mom_tuple_length (tupnameditems) == mom_json_array_size (arrnam));
   mom_dump_scan_value (&dmp, tupnameditems);
   /// scanning loop
+  long scancount = 0;
   while (dmp.dmp_qfirst != NULL)
     {
       struct mom_itqueue_st *qel = dmp.dmp_qfirst;
@@ -1183,8 +1283,12 @@ mom_full_dump (const char *reason, const char *dumpdir)
 	dmp.dmp_qfirst = qel->iq_next;
       momitem_t *curitm = qel->iq_item;
       assert (curitm != NULL && curitm->i_typnum == momty_item);
+      MOM_DEBUG (dump, MOMOUT_LITERAL ("scanning item:"),
+		 MOMOUT_ITEM ((const momitem_t *) curitm));
       mom_dump_scan_inside_item (&dmp, curitm);
+      scancount++;
     }
+  MOM_DEBUGPRINTF (dump, "final scancount=%ld", scancount);
   /// emit loop
   {
     dmp.dmp_state = dus_emit;
@@ -1196,6 +1300,8 @@ mom_full_dump (const char *reason, const char *dumpdir)
 	momitem_t *curitm = (momitem_t *) dmp.dmp_array[dix];
 	if (!curitm || curitm == MOM_EMPTY)
 	  continue;
+	MOM_DEBUG (load, MOMOUT_LITERAL ("current dumped item:"),
+		   MOMOUT_ITEM ((const momitem_t *) curitm));
 	assert (curitm->i_typnum == momty_item
 		&& curitm->i_magic == MOM_ITEM_MAGIC);
 	pthread_mutex_lock (&curitm->i_mtx);
@@ -1229,6 +1335,7 @@ mom_full_dump (const char *reason, const char *dumpdir)
 	    MOM_OUT (&out, MOMOUT_JSON_VALUE (datav), MOMOUT_FLUSH ());
 	    fclose (fdata);
 	    memset (&out, 0, sizeof (out));
+	    MOM_DEBUGPRINTF (dump, "datastr=%s", datastr);
 	    if (datastr)
 	      {
 		spad->space_store_item_fun (&dmp, curitm, datastr);
@@ -1248,14 +1355,17 @@ mom_full_dump (const char *reason, const char *dumpdir)
 	  if (spad->space_fini_dump_fun)
 	    spad->space_fini_dump_fun (&dmp, six);
 	}
-
-  }
+  }				// end of emit loop
 #warning incomplete dump
   /// at last
   goto end;
 end:
-  sqlite3_finalize (dmp.dmp_sqlstmt_param_update),
-    dmp.dmp_sqlstmt_param_update = NULL;
+  sqlite3_finalize (dmp.dmp_sqlstmt_param_insert),
+    dmp.dmp_sqlstmt_param_insert = NULL;
+  sqlite3_finalize (dmp.dmp_sqlstmt_item_insert),
+    dmp.dmp_sqlstmt_item_insert = NULL;
+  sqlite3_finalize (dmp.dmp_sqlstmt_name_insert),
+    dmp.dmp_sqlstmt_name_insert = NULL;
   if (sqlite3_exec (dmp.dmp_sqlite, "END TRANSACTION", NULL, NULL, &errmsg))
     MOM_FATAL ("failed to END TRANSACTION: %s", errmsg);
   int errclo = sqlite3_close_v2 (dmp.dmp_sqlite);
@@ -1265,3 +1375,82 @@ end:
   dmp.dmp_sqlite = NULL;
   pthread_mutex_unlock (&dump_mtx_mom);
 }
+
+static void
+spacepredef_storeitem_mom (struct mom_dumper_st *dmp, momitem_t *itm,
+			   const char *datastr)
+{
+  MOM_DEBUG (dump, MOMOUT_LITERAL ("spacepredef_storeitem_mom itm="),
+	     MOMOUT_ITEM ((const momitem_t *) itm),
+	     MOMOUT_LITERAL (" datastr="), MOMOUT_LITERALV (datastr));
+  // idstr at rank 1
+  const char *idstr = mom_string_cstr ((momval_t) mom_item_get_idstr (itm));
+  if (sqlite3_bind_text
+      (dmp->dmp_sqlstmt_item_insert, 1, idstr, -1, SQLITE_STATIC))
+    MOM_FATAPRINTF ("failed to bind dumped item idstr: %s",
+		    sqlite3_errmsg (dmp->dmp_sqlite));
+  // datastr at rank 2
+  if (sqlite3_bind_text
+      (dmp->dmp_sqlstmt_item_insert, 2, datastr, -1, SQLITE_STATIC))
+    MOM_FATAPRINTF ("failed to bind dumped item datastr: %s",
+		    sqlite3_errmsg (dmp->dmp_sqlite));
+  int err = sqlite3_step (dmp->dmp_sqlstmt_item_insert);
+  if (err != SQLITE_DONE)
+    MOM_FATAPRINTF ("failed to insert item: %s",
+		    sqlite3_errmsg (dmp->dmp_sqlite));
+#warning should add the predefined item to an array inside the dumper
+}
+
+
+static void
+spaceroot_storeitem_mom (struct mom_dumper_st *dmp, momitem_t *itm,
+			 const char *datastr)
+{
+  MOM_DEBUG (dump, MOMOUT_LITERAL ("spaceroot_storeitem_mom itm="),
+	     MOMOUT_ITEM ((const momitem_t *) itm),
+	     MOMOUT_LITERAL (" datastr="), MOMOUT_LITERALV (datastr));
+  // idstr at rank 1
+  const char *idstr = mom_string_cstr ((momval_t) mom_item_get_idstr (itm));
+  if (sqlite3_bind_text
+      (dmp->dmp_sqlstmt_item_insert, 1, idstr, -1, SQLITE_STATIC))
+    MOM_FATAPRINTF ("failed to bind dumped item idstr: %s",
+		    sqlite3_errmsg (dmp->dmp_sqlite));
+  // datastr at rank 2
+  if (sqlite3_bind_text
+      (dmp->dmp_sqlstmt_item_insert, 2, datastr, -1, SQLITE_STATIC))
+    MOM_FATAPRINTF ("failed to bind dumped item datastr: %s",
+		    sqlite3_errmsg (dmp->dmp_sqlite));
+  int err = sqlite3_step (dmp->dmp_sqlstmt_item_insert);
+  if (err != SQLITE_DONE)
+    MOM_FATAPRINTF ("failed to insert item: %s",
+		    sqlite3_errmsg (dmp->dmp_sqlite));
+}
+
+
+static struct mom_spacedescr_st spacepredefdescr_mom =
+  {.space_magic = MOM_SPACE_MAGIC,
+  .space_index = momspa_predefined,
+  .space_name = ".",
+  .space_namestr = NULL,
+  .space_data = NULL,
+  .space_init_dump_fun = NULL,
+  .space_store_item_fun = spacepredef_storeitem_mom,
+  .space_fini_dump_fun = NULL
+};
+
+static struct mom_spacedescr_st spacerootdescr_mom =
+  {.space_magic = MOM_SPACE_MAGIC,
+  .space_index = momspa_root,
+  .space_name = ".",
+  .space_namestr = NULL,
+  .space_data = NULL,
+  .space_init_dump_fun = NULL,
+  .space_store_item_fun = spaceroot_storeitem_mom,
+  .space_fini_dump_fun = NULL
+};
+
+struct mom_spacedescr_st *mom_spacedescr_array[momspa__last + 1] =
+  {[momspa_predefined] = &spacepredefdescr_mom,
+  [momspa_root] = &spacerootdescr_mom,
+  NULL
+};

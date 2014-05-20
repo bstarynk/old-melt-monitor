@@ -965,7 +965,7 @@ enum mom_space_en
   momspa__last = 32,
 };
 #define MOM_SPACE_MAGIC 0x5eaf0539	/* mom space magic 1588528441 */
-struct mom_spacedescr_st
+extern struct mom_spacedescr_st
 {
   unsigned space_magic;		/* always MOM_SPACE_MAGIC */
   unsigned space_index;		/* my index in mom_spacedescr_array */
@@ -1032,7 +1032,7 @@ __attribute__ ((format (printf, 4, 5)));
 #define MOM_DEBUGPRINTF_AT(Dbg,Fil,Lin,Fmt,...) do {	\
     if (MOM_IS_DEBUGGING(Dbg))				\
       mom_debugprintf_at (momdbg_##Dbg,Fil,Lin,Fmt,	\
-		    ##__VA_ARGS__, NULL);		\
+		    ##__VA_ARGS__);			\
   } while(0)
 
 #define MOM_DEBUGPRINTF_AT_BIS(Dbg,Fil,Lin,Fmt,...)	\
@@ -1208,6 +1208,7 @@ enum momoutdir_en
   /// literal strings
   MOMOUTDO_LITERAL /*, const char*literalstring */ ,
 #define MOMOUT_LITERAL(S) MOMOUTDO_LITERAL, MOM_REQUIRES_TYPE(S,const char[],mombad_literal)
+#define MOMOUT_LITERALV(S) MOMOUTDO_LITERAL, MOM_REQUIRES_TYPE(S,const char*,mombad_literal)
   ///
   /// HTML encoded strings
   MOMOUTDO_HTML /*, const char*htmlstring */ ,
@@ -1369,6 +1370,9 @@ struct mom_itqueue_st
 
 // the initial loading
 void mom_initial_load (const char *ldir);
+
+// the state dumper
+void mom_full_dump (const char *reason, const char *dumpdir);
 
 /////////////////// agenda and workers and web
 int mom_nb_workers;
