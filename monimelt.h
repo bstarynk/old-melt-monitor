@@ -974,14 +974,17 @@ extern struct mom_spacedescr_st
   void *space_data;
   // initialize the space for dumping
   void (*space_init_dump_fun) (struct mom_dumper_st * dmp, unsigned spacix);
-  // stora an item in the spac
+  // store an item in the spac
   void (*space_store_item_fun) (struct mom_dumper_st * dmp, momitem_t *itm,
 				const char *datastr);
-  // finalize the state for dumping
+  // finalize the state for dumping, only done if initialized
   void (*space_fini_dump_fun) (struct mom_dumper_st * dmp, unsigned spacix);
   // initialize the space for loading
   void (*space_init_load_fun) (struct mom_loader_st * ld, unsigned spacix);
-  // finalize the space for loading
+  // fetch a GC-strdup-ed data string for a given item
+  const char *(*space_fetch_item_fun) (struct mom_loader_st * ld,
+				       momitem_t *itm);
+  // finalize the space for loading, only done if initialized
   void (*space_fini_load_fun) (struct mom_loader_st * ld, unsigned spacix);
 } *mom_spacedescr_array[momspa__last + 1];
 

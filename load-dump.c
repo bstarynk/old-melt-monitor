@@ -1184,14 +1184,76 @@ mom_load (const char *ldirnam)
       else
 	ldr.ldr_qlast = ldr.ldr_qfirst->iq_next;
       loadloopcount++;
-      MOM_DEBUG (load, MOMOUT_LITERAL ("current loaded item:"),
+      unsigned ixspace = curlitm->i_space;
+      MOM_DEBUG (load, MOMOUT_LITERAL ("load loop#"),
+		 MOMOUT_DEC_INT ((int) loadloopcount),
+		 MOMOUT_LITERAL ("; current loaded item:"),
 		 MOMOUT_ITEM ((const momitem_t *) curlitm),
-		 MOMOUT_LITERAL (" spaceix#"),
-		 MOMOUT_DEC_INT ((int) curlitm->i_space));
+		 MOMOUT_LITERAL (" ixspace#"),
+		 MOMOUT_DEC_INT ((int) ixspace));
       assert (curlitm != NULL && curlitm->i_typnum == momty_item);
-      /// load_data_inside_item_mom (ld, curlitm, jdata)
+      assert (ixspace < momspa__last);
+      struct mom_spacedescr_st *spad = mom_spacedescr_array[ixspace];
+      assert (spad && spad->space_magic == MOM_SPACE_MAGIC);
+      if (!spaceinited[ixspace] && spad->space_init_load_fun)
+	{
+	  spaceinited[ixspace] = true;
+	  MOM_DEBUGPRINTF (load, "initialize load space %s #%d",
+			   spad->space_name, ixspace);
+	  spad->space_init_load_fun (&ldr, ixspace);
+	};
+      if (spad->space_fetch_item_fun != NULL)
+	{
+	  const char *datastr = spad->space_fetch_item_fun (&ldr, curlitm);
+	  if (datastr && datastr[0])
+	    {
+	      MOM_DEBUG (load, MOMOUT_LITERAL ("load item:"),
+			 MOMOUT_ITEM ((const momitem_t *) curlitm),
+			 MOMOUT_LITERAL (" datastr:"),
+			 MOMOUT_LITERALV (datastr));
+	      FILE *fdata =
+		fmemopen ((void *) datastr, strlen (datastr), "r");
+	      if (!fdata)
+		MOM_FATAPRINTF ("failed to fmemopen datastr %s", datastr);
+	      struct jsonparser_st jparser = { 0 };
+	      memset (&jparser, 0, sizeof (jparser));
+	      mom_initialize_json_parser (&jparser, fdata, NULL);
+	      char *errmsgj = NULL;
+	      momval_t jdata = mom_parse_json (&jparser, &errmsgj);
+	      if (errmsgj)
+		MOM_WARNPRINTF
+		  ("failed to parse item %s JSON data in space %s, got %s",
+		   mom_string_cstr ((momval_t) mom_item_get_idstr (curlitm)),
+		   spad->space_name, errmsgj);
+	      else
+		{
+		  MOM_DEBUG (load, MOMOUT_LITERAL ("load inside item:"),
+			     MOMOUT_ITEM ((const momitem_t *) curlitm),
+			     MOMOUT_LITERAL (" jdata="),
+			     MOMOUT_VALUE (jdata));
+		  load_data_inside_item_mom (&ldr, curlitm, jdata);
+		}
+	      mom_close_json_parser (&jparser);
+	    }
+	}
+    };
+  MOM_INFORMPRINTF ("loaded %d items from dir %s", loadloopcount,
+		    ldr.ldr_dirpath);
+  // finalize the spaces if needed
+  for (unsigned spix = 1; spix < momspa__last; spix++)
+    {
+      struct mom_spacedescr_st *spad = mom_spacedescr_array[spix];
+      if (!spad)
+	continue;
+      assert (spad && spad->space_magic == MOM_SPACE_MAGIC);
+      if (spaceinited[spix] && spad->space_fini_load_fun)
+	{
+	  MOM_DEBUGPRINTF (load, "finalize load space %s #%d",
+			   spad->space_name, spix);
+	  spad->space_fini_load_fun (&ldr, spix);
+	}
     }
-#warning incomplete load
+#warning incomplete load, should close the database after finalization of stmts
   MOM_FATAPRINTF ("missing load item loop");
 }
 
