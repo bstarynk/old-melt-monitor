@@ -89,7 +89,7 @@ I only care about Linux (my systems are Debian or related) on x86-64.
 - [Sqlite3](http://sqlite.org), i.e. Debian packages `libsqlite3-dev`
   and `sqlite3`
   
-- `glib-2.0` & `gmodule-2.0` from GTK3 see  [Glib](https://developer.gnome.org/glib/)
+- `glib-2.0` from GTK3 see  [Glib](https://developer.gnome.org/glib/)
 so `libglib2.0-dev` Debian package
 
 - [gmime](https://developer.gnome.org/gmime/) so `libgmime-2.6-dev`
@@ -136,26 +136,31 @@ They include:
 3. boxed integer numbers, and boxed double precision floats
 4. set or tuple of items
 5. nodes, which have a connector item and a sequence of sons.
-6. closures are like nodes, but their connector is a routine and their sons represent
-   the closed values
+   Sometimes playing the role of closures.
+
 
 ### shared mutable items
 
-Items can be plain items, or box items, vector items, associative hash
-items, JSON name items, tasklet items, routine items, queue items,
-process items, web request items, etc. Basic blocks and edges as known
-to GCC will be represented as items. Each item has
+Items have their data, a unique id string, and a mutable payload.
 
-1. A globally unique
-[UUID](http://en.wikipedia.org/wiki/Universally_unique_identifier)
-which is fixed and is used notably for persistency, hashing, and sorting of items
+Items also serve for tasklets and routines. Basic blocks and edges as
+known to GCC will be represented as items. Each item has
+
+1. A globally unique, randomly generated, string id of 24 characters,
+like e.g. `_41v0erax6my_m6pytj0793u` or `_0477zh15y06_td93ap85p79`,
+etc. The first character is an underscore, the second is a digit. This
+id has a role similar to UUID: it is randomly generated, and big
+enough to be universally unique. Two running instances of the MELT
+monitor won't in practice generate the same string id. Notice that our
+item's string ids can be used as C identifiers, javascript
+identifiers, Scheme or Common Lisp or MELT symbols.
 
 2. A mutex to ensure that only one thread is accessing or modifying the item
 
 3. Each item has its (dynamically changing) attribute association and
 content. Attributes are themselves items, associated to non-nil
 values. The content is some arbitrary value. An additional payload is
-possible, and specific to the item's type.
+optionally possible. The payload kind could mutate.
 
 ### persistency
 
@@ -163,17 +168,19 @@ Values (including items) are persistable. Each item can belong to a
 space which can be persisted. An item without a space is transient and
 is not persisted on disk.
 
-Items are persisted using their UUID as some key. The space is also a
-persistency area. The root space is an Sqlite3 database (whose SQL
-dump is kept in the GIT repository).
+Items are persisted using their string-id as some key. The space is
+also a persistency area. The root space is an Sqlite3 database (whose
+SQL dump is kept in the GIT repository).
 
 
 ### dictionnary
 
 We have one global dictionnary of named items. Names are C-like
-identifiers.  An item can have at most one name (but many items are
-anonymous). Some named item are predefined (see `monimelt-names.h`
-file) because they are created before loading the state Sqlite3 file.
+identifiers, but are required to start with a letter (hence, string
+ids are not names).  An item can have at most one name (but many items
+are anonymous). Some named items are predefined (see
+`predef-monimelt.h` file) because they are created before loading the
+state Sqlite3 file.
 
 ## Agenda, tasklets and work threads
 
@@ -218,7 +225,8 @@ To test it, (edit `Makefile` if wanted, then) compile monimelt with
 then first build the state-monimelt.dbsqlite sqlite3 database with
     make restore-state
 then run
-   ./monimelt -W localhost:8086 -J 2   
+   ./monimelt -W localhost:8086 -J 2
+But this is not working on may 21st 2014.
 
 and try browsing http://localhost:8086/ or
 http://localhost:8086/status
@@ -228,14 +236,6 @@ or only running & web debugging with -D web,run program option.
 Look for MOM_DEBUG_LIST_OPTIONS macros in monimelt.h
 
 
-## Using some other HTTP server library.
-
-I'm considering giving up onion because it is creating threads
-incompatibly with libgc. My https://github.com/bstarynk/onion branch
-on github is proposing a solution, but I am not familiar with cmake
-and I am not able to build it (compilation is ok, linking is not ok).
-See http://stackoverflow.com/q/23633461/841108 and
-https://groups.google.com/a/coralbits.com/forum/#!msg/onion-dev/XxhtpYUBozw/oZ-TqS0VNDMJ
 
 # Contact information
 
