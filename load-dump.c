@@ -41,6 +41,8 @@ struct mom_loader_st
   sqlite3_stmt *ldr_sqlstmt_param_fetch;
   // statement for named fetching
   sqlite3_stmt *ldr_sqlstmt_named_fetch;
+  // statement for item fetching
+  sqlite3_stmt *ldr_sqlstmt_item_fetch;
   /// queue of items whose content should be loaded:
   struct mom_itqueue_st *ldr_qfirst;
   struct mom_itqueue_st *ldr_qlast;
@@ -1049,11 +1051,16 @@ compare_predefined_mom (const void *p1, const void *p2)
   return strcmp (s1, s2);
 }
 
+
+
+////////////////////////////////////////////////////////////////
 void
 mom_load (const char *ldirnam)
 {
   char filpath[MOM_PATH_MAX];
   memset (filpath, 0, sizeof (filpath));
+  double startrealtime = mom_clock_time (CLOCK_REALTIME);
+  double startcputime = mom_clock_time (CLOCK_PROCESS_CPUTIME_ID);
   if (!ldirnam || !ldirnam[0])
     {
       char dirpath[MOM_PATH_MAX];
@@ -1077,7 +1084,8 @@ mom_load (const char *ldirnam)
   ldr.ldr_hcount = 0;
   ldr.ldr_dirpath = MOM_GC_STRDUP ("initial loader dirpath", ldirnam);
   /// open the database
-  int errcod = sqlite3_open (filpath, &ldr.ldr_sqlite);
+  int errcod =
+    sqlite3_open_v2 (filpath, &ldr.ldr_sqlite, SQLITE_OPEN_READONLY, NULL);
   if (errcod)
     MOM_FATAPRINTF ("failed to open loaded state sqlite3 file %s: %s",
 		    filpath, sqlite3_errmsg (ldr.ldr_sqlite));
@@ -1093,6 +1101,11 @@ mom_load (const char *ldirnam)
 			  -1, &ldr.ldr_sqlstmt_named_fetch, NULL))
     MOM_FATAPRINTF ("failed to prepare fetchparam query: %s",
 		    sqlite3_errmsg (ldr.ldr_sqlite));
+  if (sqlite3_prepare_v2 (ldr.ldr_sqlite,
+			  "SELECT itm_jdata FROM t_items WHERE itm_idstr = ?1",
+			  -1, &ldr.ldr_sqlstmt_item_fetch, NULL))
+    MOM_FATAPRINTF ("failed to prepare fetchitem query: %s",
+		    sqlite3_errmsg (ldr.ldr_sqlite));
   /// check the version
   const char *vers = fetch_param_mom (&ldr, MOM_VERSION_PARAM);
   MOM_DEBUGPRINTF (load, "vers=%s", vers);
@@ -1101,7 +1114,7 @@ mom_load (const char *ldirnam)
 		    ldr.ldr_sqlpath, MOM_DUMP_VERSION,
 		    vers ? vers : "*nothing*");
   /// load the named items
-  int rowcount = 0;
+  int namedrowcount = 0;
   for (;;)
     {
       int stepres = sqlite3_step (ldr.ldr_sqlstmt_named_fetch);
@@ -1109,7 +1122,7 @@ mom_load (const char *ldirnam)
 	break;
       else if (stepres == SQLITE_ROW)
 	{
-	  rowcount++;
+	  namedrowcount++;
 	  const unsigned char *rowname =
 	    sqlite3_column_text (ldr.ldr_sqlstmt_named_fetch, 0);
 	  const unsigned char *rowidstr =
@@ -1117,8 +1130,8 @@ mom_load (const char *ldirnam)
 	  const unsigned char *rowspacename =
 	    sqlite3_column_text (ldr.ldr_sqlstmt_named_fetch, 2);
 	  MOM_DEBUGPRINTF (load,
-			   "rowcount#%d rowname:%s rowidstr:%s rowspacename:%s",
-			   rowcount, rowname, rowidstr, rowspacename);
+			   "namedrowcount#%d rowname:%s rowidstr:%s rowspacename:%s",
+			   namedrowcount, rowname, rowidstr, rowspacename);
 	  if (!mom_looks_like_random_id_cstr ((const char *) rowidstr, NULL))
 	    {
 	      MOM_WARNPRINTF ("loading: strange idstr %s for name %s",
@@ -1237,7 +1250,7 @@ mom_load (const char *ldirnam)
 	    }
 	}
     };
-  MOM_INFORMPRINTF ("loaded %d items from dir %s", loadloopcount,
+  MOM_INFORMPRINTF ("loaded %ld items from dir %s", loadloopcount,
 		    ldr.ldr_dirpath);
   // finalize the spaces if needed
   for (unsigned spix = 1; spix < momspa__last; spix++)
@@ -1253,8 +1266,23 @@ mom_load (const char *ldirnam)
 	  spad->space_fini_load_fun (&ldr, spix);
 	}
     }
-#warning incomplete load, should close the database after finalization of stmts
-  MOM_FATAPRINTF ("missing load item loop");
+  // finalize the sqlite3 statements
+  sqlite3_finalize (ldr.ldr_sqlstmt_param_fetch),
+    ldr.ldr_sqlstmt_param_fetch = NULL;
+  sqlite3_finalize (ldr.ldr_sqlstmt_named_fetch),
+    ldr.ldr_sqlstmt_named_fetch = NULL;
+  sqlite3_finalize (ldr.ldr_sqlstmt_item_fetch), ldr.ldr_sqlstmt_item_fetch =
+    NULL;
+  int errclo = sqlite3_close_v2 (ldr.ldr_sqlite);
+  if (errclo != SQLITE_OK)
+    MOM_FATAPRINTF ("failed to close loaded sqlite3 %s: %s", ldr.ldr_sqlpath,
+		    sqlite3_errstr (errclo));
+  double endrealtime = mom_clock_time (CLOCK_REALTIME);
+  double endcputime = mom_clock_time (CLOCK_PROCESS_CPUTIME_ID);
+  MOM_INFORMPRINTF
+    ("end of load of %ld items, %d named from sqlite3 %s in %.3f real, %.3f cpu sec.",
+     loadloopcount, namedrowcount, ldr.ldr_sqlpath,
+     endrealtime - startrealtime, endcputime - startcputime);
 }
 
 
