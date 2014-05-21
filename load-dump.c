@@ -64,8 +64,9 @@ struct mom_dumper_st
 					   index is dmp_predefnb */
   ///
   const char *dmp_reason;
-  const char *dmp_dirpath;
-  const char *dmp_sqlpath;
+  const char *dmp_dirpath;	/* the directory */
+  const char *dmp_sqlpath;	/* the .dbsqlite file */
+  const char *dmp_predefhpath;	/* the predef-monimelt.h file */
   sqlite3 *dmp_sqlite;
   /// statements for Sqlite3
   sqlite3_stmt *dmp_sqlstmt_param_insert;
@@ -1026,6 +1027,27 @@ fetch_param_mom (struct mom_loader_st *ld, const char *parname)
 }
 
 
+static int
+compare_predefined_mom (const void *p1, const void *p2)
+{
+  const momitem_t *itm1 = *(const momitem_t **) p1;
+  const momitem_t *itm2 = *(const momitem_t **) p2;
+  assert (itm1 && itm1->i_typnum == momty_item
+	  && itm1->i_magic == MOM_ITEM_MAGIC);
+  assert (itm1->i_space == momspa_predefined);
+  assert (itm2 && itm2->i_typnum == momty_item
+	  && itm2->i_magic == MOM_ITEM_MAGIC);
+  assert (itm2->i_space == momspa_predefined);
+  const char *s1 =
+    mom_string_cstr ((momval_t)
+		     mom_item_get_name_or_idstr ((momitem_t *) itm1));
+  const char *s2 =
+    mom_string_cstr ((momval_t)
+		     mom_item_get_name_or_idstr ((momitem_t *) itm2));
+  assert (s1 != NULL && *s1);
+  assert (s2 != NULL && *s2);
+  return strcmp (s1, s2);
+}
 
 void
 mom_load (const char *ldirnam)
@@ -1158,6 +1180,7 @@ void
 mom_full_dump (const char *reason, const char *dumpdir,
 	       struct mom_dumpoutcome_st *outd)
 {
+  FILE *filpredefh = NULL;
   char filpath[MOM_PATH_MAX];
   memset (filpath, 0, sizeof (filpath));
   MOM_DEBUGPRINTF (dump, "start mom_full_dump reason=%s dumpdir=%s", reason,
@@ -1201,21 +1224,48 @@ mom_full_dump (const char *reason, const char *dumpdir,
 	MOM_INFORMPRINTF ("moved for SQL dump backup %s to %s", filpath,
 			  backupath);
     };
-  /// open and backup the *.dbsqlite file
+  /// backup the *.dbsqlite file and open the database
   snprintf (filpath, sizeof (filpath), "%s/%s.dbsqlite", dumpdir,
 	    MOM_STATE_FILE_BASENAME);
-  if (!access (filpath, F_OK))
+  const char *sqlite3path = MOM_GC_STRDUP ("sqlite3 path", filpath);
+  memset (filpath, 0, sizeof (filpath));
+  if (!access (sqlite3path, F_OK))
     {
       char backupath[MOM_PATH_MAX];
       memset (backupath, 0, sizeof (backupath));
-      snprintf (backupath, sizeof (backupath), "%s~", filpath);
-      if (rename (filpath, backupath))
-	MOM_WARNPRINTF ("failed to backup Sqlite db %s as %s", filpath,
+      snprintf (backupath, sizeof (backupath), "%s~", sqlite3path);
+      if (rename (sqlite3path, backupath))
+	MOM_WARNPRINTF ("failed to backup Sqlite db %s as %s", sqlite3path,
 			backupath);
       else
-	MOM_INFORMPRINTF ("moved for backup Sqlite db %s to %s", filpath,
+	MOM_INFORMPRINTF ("moved for backup Sqlite db %s to %s", sqlite3path,
 			  backupath);
     };
+  sqlite3 *sqlite3dump = NULL;
+  if (sqlite3_open (sqlite3path, &sqlite3dump))
+    MOM_FATAPRINTF ("failed to open dump state sqlite3 file %s: %s",
+		    sqlite3path, sqlite3_errmsg (sqlite3dump));
+  /// backup the MOM_PREDEFINED_HEADER_FILENAME
+  snprintf (filpath, sizeof (filpath), "%s/%s", dumpdir,
+	    MOM_PREDEFINED_HEADER_FILENAME);
+  char *predefhpath =
+    MOM_GC_STRDUP ("predefined header path", (const char *) filpath);
+  memset (filpath, 0, sizeof (filpath));
+  if (!access (predefhpath, R_OK))
+    {
+      char backupath[MOM_PATH_MAX];
+      memset (backupath, 0, sizeof (backupath));
+      snprintf (backupath, sizeof (backupath), "%s~", predefhpath);
+      if (rename (predefhpath, backupath))
+	MOM_WARNPRINTF ("failed to backup predefined header %s as %s",
+			predefhpath, backupath);
+      else
+	MOM_INFORMPRINTF ("moved for backup predefined header %s to %s",
+			  predefhpath, backupath);
+    }
+  filpredefh = fopen (predefhpath, "w");
+  if (!filpredefh)
+    MOM_FATAPRINTF ("failed to open predefined header %s", predefhpath);
   /// create & initialize the dumper
   struct mom_dumper_st dmp = { 0 };
   memset (&dmp, 0, sizeof (struct mom_dumper_st));
@@ -1230,11 +1280,9 @@ mom_full_dump (const char *reason, const char *dumpdir,
     MOM_GC_ALLOC ("dumper predefined array",
 		  predefsiz * sizeof (momitem_t *));
   dmp.dmp_predefsize = predefsiz;
-  if (sqlite3_open (filpath, &dmp.dmp_sqlite))
-    MOM_FATAPRINTF ("failed to open dump state sqlite3 file %s: %s",
-		    filpath, sqlite3_errmsg (dmp.dmp_sqlite));
   dmp.dmp_dirpath = MOM_GC_STRDUP ("dumped directory", dumpdir);
-  dmp.dmp_sqlpath = MOM_GC_STRDUP ("dumped sqlite path", filpath);
+  dmp.dmp_sqlpath = sqlite3path;
+  dmp.dmp_sqlite = sqlite3dump;
   dmp.dmp_qfirst = dmp.dmp_qlast = NULL;
   dmp.dmp_magic = DUMPER_MAGIC;
   dmp.dmp_state = dus_scan;
@@ -1419,6 +1467,61 @@ mom_full_dump (const char *reason, const char *dumpdir,
 			sqlite3_errmsg (dmp.dmp_sqlite), errn);
       (void) sqlite3_reset (dmp.dmp_sqlstmt_name_insert);
     }
+  /// generate the predefined.h file
+  {
+    struct momout_st outs = { 0 };
+    memset (&outs, 0, sizeof (outs));
+    MOM_DEBUGPRINTF (dump, "generating for %d predefined", dmp.dmp_predefnb);
+    qsort (dmp.dmp_predefarray, dmp.dmp_predefnb, sizeof (momitem_t *),
+	   compare_predefined_mom);
+    mom_initialize_output (&outs, filpredefh, 0);
+    MOM_OUT (&outs,
+	     //MOMOUT_GPLV3P_NOTICE((const char*)MOM_PREDEFINED_HEADER_FILENAME),
+	     MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL ("#ifndef MOM_PREDEFINED_NAMED"),
+	     MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL ("#error missing MOM_PREDEFINED_NAMED"),
+	     MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL ("#endif /*MOM_PREDEFINED_NAMED*/"),
+	     MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL ("#ifndef MOM_PREDEFINED_ANONYMOUS"),
+	     MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL ("#error missing MOM_PREDEFINED_ANONYMOUS"),
+	     MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL ("#endif /*MOM_PREDEFINED_ANONYMOUS*/"),
+	     MOMOUT_NEWLINE (), MOMOUT_NEWLINE ());
+    for (unsigned pix = 0; pix < dmp.dmp_predefnb; pix++)
+      {
+	momitem_t *predefitm = dmp.dmp_predefarray[pix];
+	assert (predefitm && predefitm->i_typnum == momty_item
+		&& predefitm->i_space == momspa_predefined);
+	pthread_mutex_lock (&predefitm->i_mtx);
+	if (predefitm->i_name)
+	  MOM_OUT (&outs, MOMOUT_LITERAL ("MOM_PREDEFINED_NAMED("),
+		   MOMOUT_LITERALV (mom_string_cstr
+				    ((momval_t) predefitm->i_name)),
+		   MOMOUT_LITERAL (","),
+		   MOMOUT_LITERALV (mom_string_cstr
+				    ((momval_t) predefitm->i_idstr)),
+		   MOMOUT_LITERAL (")"), MOMOUT_NEWLINE ());
+	else
+	  MOM_OUT (&outs, MOMOUT_LITERAL ("MOM_PREDEFINED_ANONYMOUS("),
+		   MOMOUT_LITERALV (mom_string_cstr
+				    ((momval_t) predefitm->i_idstr)),
+		   MOMOUT_LITERAL (")"), MOMOUT_NEWLINE ());
+	pthread_mutex_unlock (&predefitm->i_mtx);
+      }
+    MOM_OUT (&outs, MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL ("#undef MOM_PREDEFINED_NAMED"),
+	     MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL ("#undef MOM_PREDEFINED_ANONYMOUS"),
+	     MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL ("// eof " MOM_PREDEFINED_HEADER_FILENAME),
+	     MOMOUT_NEWLINE (), MOMOUT_FLUSH ());
+    if (fclose (filpredefh))
+      MOM_FATAPRINTF ("failed to close predefined header file %s",
+		      dmp.dmp_predefhpath);
+  }
   /// at last
   goto end;
 end:

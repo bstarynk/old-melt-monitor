@@ -1174,6 +1174,7 @@ struct momout_st
   unsigned mout_magic;		/* always MOM_MOUT_MAGIC */
   int mout_indent;
   FILE *mout_file;
+  void *mout_data;
   long mout_lastnl;		/* offset at last newline with MOMOUT_NEWLINE or MOMOUT_SPACE */
   unsigned mout_flags;
 };
@@ -1373,6 +1374,7 @@ struct mom_itqueue_st
 
 
 #define MOM_STATE_FILE_BASENAME "state-monimelt"
+#define MOM_PREDEFINED_HEADER_FILENAME "predef-monimelt.h"
 
 // outcome of successful dump
 struct mom_dumpoutcome_st
