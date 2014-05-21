@@ -982,8 +982,8 @@ extern struct mom_spacedescr_st
   // initialize the space for loading
   void (*space_init_load_fun) (struct mom_loader_st * ld, unsigned spacix);
   // fetch a GC-strdup-ed data string for a given item
-  const char *(*space_fetch_item_fun) (struct mom_loader_st * ld,
-				       momitem_t *itm);
+  const char *(*space_fetch_load_item_fun) (struct mom_loader_st * ld,
+					    momitem_t *itm);
   // finalize the space for loading, only done if initialized
   void (*space_fini_load_fun) (struct mom_loader_st * ld, unsigned spacix);
 } *mom_spacedescr_array[momspa__last + 1];

@@ -1215,9 +1215,10 @@ mom_load (const char *ldirnam)
 			   spad->space_name, ixspace);
 	  spad->space_init_load_fun (&ldr, ixspace);
 	};
-      if (spad->space_fetch_item_fun != NULL)
+      if (spad->space_fetch_load_item_fun != NULL)
 	{
-	  const char *datastr = spad->space_fetch_item_fun (&ldr, curlitm);
+	  const char *datastr =
+	    spad->space_fetch_load_item_fun (&ldr, curlitm);
 	  if (datastr && datastr[0])
 	    {
 	      MOM_DEBUG (load, MOMOUT_LITERAL ("load item:"),
@@ -1743,26 +1744,66 @@ spacepredef_storeitem_mom (struct mom_dumper_st *du, momitem_t *itm,
   du->dmp_predefarray[du->dmp_predefnb++] = itm;
 }
 
+
+static char *
+spacerootpredef_fetch_item_mom (struct mom_loader_st *ld, momitem_t *itm)
+{
+  char *res = NULL;
+  assert (ld && ld->ldr_magic == LOADER_MAGIC);
+  assert (itm && itm->i_typnum == momty_item
+	  && itm->i_magic == MOM_ITEM_MAGIC);
+  assert (itm->i_space == momspa_root || itm->i_space == momspa_predefined);
+  assert (ld->ldr_sqlstmt_item_fetch != NULL);
+  momval_t idstrv = (momval_t) mom_item_get_idstr ((momitem_t *) itm);
+  const char *ids = mom_string_cstr (idstrv);
+  assert (ids != NULL && ids[0] == '_');
+  MOM_DEBUG (load, MOMOUT_LITERAL ("fetch loaded item:"),
+	     MOMOUT_ITEM ((const momitem_t *) itm));
+  // idstr at index 1
+  if (sqlite3_bind_text
+      (ld->ldr_sqlstmt_item_fetch, 1, ids, -1, SQLITE_STATIC))
+    MOM_FATAL ("failed to bind idstr: %s", sqlite3_errmsg (ld->ldr_sqlite));
+  int stepres = sqlite3_step (ld->ldr_sqlstmt_item_fetch);
+  if (stepres == SQLITE_ROW)
+    {
+      const char *coljdata = (const char *)
+	sqlite3_column_text (ld->ldr_sqlstmt_param_fetch, 0);
+      assert (coljdata != NULL);
+      res = (char *) MOM_GC_STRDUP ("load item data", coljdata);
+      MOM_DEBUG (load, MOMOUT_LITERAL ("fetched data:"),
+		 MOMOUT_LITERALV ((const char *) res), MOMOUT_NEWLINE ());
+    }
+  else
+    MOM_WARNPRINTF ("failed to load item %s data (%s) - stepres#%d", ids,
+		    sqlite3_errmsg (ld->ldr_sqlite), stepres);
+  sqlite3_reset (ld->ldr_sqlstmt_item_fetch);
+  return res;
+}
+
+
+
 static struct mom_spacedescr_st spacepredefdescr_mom =
   {.space_magic = MOM_SPACE_MAGIC,
   .space_index = momspa_predefined,
-  .space_name = ".",
+  .space_name = ".predef",
   .space_namestr = NULL,
   .space_data = NULL,
   .space_init_dump_fun = NULL,
   .space_store_item_fun = spacepredef_storeitem_mom,
-  .space_fini_dump_fun = NULL
+  .space_fini_dump_fun = NULL,
+  .space_fetch_load_item_fun = spacerootpredef_fetch_item_mom
 };
 
 static struct mom_spacedescr_st spacerootdescr_mom =
   {.space_magic = MOM_SPACE_MAGIC,
   .space_index = momspa_root,
-  .space_name = ".",
+  .space_name = ".root",
   .space_namestr = NULL,
   .space_data = NULL,
   .space_init_dump_fun = NULL,
   .space_store_item_fun = spaceroot_storeitem_mom,
-  .space_fini_dump_fun = NULL
+  .space_fini_dump_fun = NULL,
+  .space_fetch_load_item_fun = spacerootpredef_fetch_item_mom
 };
 
 struct mom_spacedescr_st *mom_spacedescr_array[momspa__last + 1] =
