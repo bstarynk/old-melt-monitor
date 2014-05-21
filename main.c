@@ -740,9 +740,11 @@ main (int argc, char **argv)
   initialize_mom ();
   if (dump_cold_dir_mom)
     {
+      struct mom_dumpoutcome_st outdump;
+      memset (&outdump, 0, sizeof (outdump));
       MOM_INFORMPRINTF ("trying to dump cold directory %s",
 			dump_cold_dir_mom);
-      mom_full_dump ("cold dump of predefined", dump_cold_dir_mom);
+      mom_full_dump ("cold dump of predefined", dump_cold_dir_mom, &outdump);
       MOM_INFORMPRINTF ("done cold dump to directory %s", dump_cold_dir_mom);
     }
   ///

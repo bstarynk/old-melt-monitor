@@ -1368,11 +1368,18 @@ struct mom_itqueue_st
 
 #define MOM_STATE_FILE_BASENAME "state-monimelt"
 
+// outcome of successful dump
+struct mom_dumpoutcome_st
+{
+  momval_t *odmp_tuplenamed;
+};
+
 // the initial loading
 void mom_initial_load (const char *ldir);
 
 // the state dumper
-void mom_full_dump (const char *reason, const char *dumpdir);
+void mom_full_dump (const char *reason, const char *dumpdir,
+		    struct mom_dumpoutcome_st *outd);
 
 /////////////////// agenda and workers and web
 int mom_nb_workers;
