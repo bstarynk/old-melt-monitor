@@ -1338,6 +1338,12 @@ enum momoutdir_en
   MOMOUTDO_FLUSH /* */ ,
 #define MOMOUT_FLUSH() MOMOUTDO_FLUSH
   ///
+  /// output a GPLv3+ copyright notice commented à la C++ with two-slashes
+  /// mentioning a given generated file
+  MOMOUTDO_GPLV3P_NOTICE /*, const char* file */ ,
+#define MOMOUT_GPLV3P_NOTICE(F) MOMOUTDO_GPLV3P_NOTICE,	\
+    MOM_REQUIRES_TYPE(F,const char*,mombad_string)
+  ///
 
 };
 // declare but don't define them. Linker should complain if

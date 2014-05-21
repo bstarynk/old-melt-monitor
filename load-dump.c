@@ -1419,7 +1419,6 @@ mom_full_dump (const char *reason, const char *dumpdir,
 			sqlite3_errmsg (dmp.dmp_sqlite), errn);
       (void) sqlite3_reset (dmp.dmp_sqlstmt_name_insert);
     }
-#warning incomplete dump, should dump the named
   /// at last
   goto end;
 end:

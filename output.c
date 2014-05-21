@@ -307,6 +307,93 @@ output_item_mom (momout_t *pout, const momitem_t *itm)
 }
 
 
+
+
+#define INITIAL_COPYRIGHT_YEAR_MOM 2014
+static void
+output_gplv3p_notice_mom (momout_t *pout, const char *forfile)
+{
+  time_t now = 0;
+  struct tm nowtm = { 0 };
+  time (&now);
+  localtime_r (&now, &nowtm);
+  assert (pout != NULL);
+  MOM_OUT (pout, MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL
+	   ("////////////////////////////////////////////////////////////////++"),
+	   MOMOUT_NEWLINE ());
+  /// output the copyright line, little trick to avoid 2014-2014 in the generated notice
+  MOM_OUT (pout, MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL ("/// generated file "),
+	   MOMOUT_LITERALV (forfile),
+	   MOMOUT_LITERAL (" ** DO NOT EDIT"),
+	   MOMOUT_NEWLINE (), MOMOUT_LITERAL ("/// Copyright (C) "));
+  int nowyear = nowtm.tm_year + 1900;
+  /// In the year of the Lord 2222, some artificial intelligence
+  /// should change the following assert :-)  :-)
+  /// But I'll be dead long time ago, and probably also this very software...
+  assert (nowyear > 2000 && nowyear < 2222);
+  if (nowyear > INITIAL_COPYRIGHT_YEAR_MOM)
+    MOM_OUT (pout, MOMOUT_DEC_INT (INITIAL_COPYRIGHT_YEAR_MOM),
+	     MOMOUT_LITERAL ("-"), MOMOUT_DEC_INT (nowyear));
+  else
+    MOM_OUT (pout, MOMOUT_DEC_INT (nowyear));
+  MOM_OUT (pout, MOMOUT_LITERAL ("Free Software Foundation, Inc."),
+	   MOMOUT_NEWLINE ());
+  MOM_OUT (pout,
+	   MOMOUT_LITERAL
+	   ("// MONIMELT is a monitor for MELT - see http://gcc-melt.org/"),
+	   MOMOUT_NEWLINE ());
+  MOM_OUT (pout, MOMOUT_LITERAL ("// This file is part of GCC."),
+	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE ());
+  MOM_OUT (pout,
+	   MOMOUT_LITERAL
+	   ("// GCC is free software; you can redistribute it and/or modify"),
+	   MOMOUT_NEWLINE ());
+  MOM_OUT (pout,
+	   MOMOUT_LITERAL
+	   ("// it under the terms of the GNU General Public License as published by"),
+	   MOMOUT_NEWLINE ());
+  MOM_OUT (pout,
+	   MOMOUT_LITERAL
+	   ("// the Free Software Foundation; either version 3, or (at your option)"),
+	   MOMOUT_NEWLINE ());
+  MOM_OUT (pout, MOMOUT_LITERAL ("// any later version."), MOMOUT_NEWLINE (),
+	   MOMOUT_NEWLINE ());
+  MOM_OUT (pout,
+	   MOMOUT_LITERAL
+	   ("// GCC is distributed in the hope that it will be useful,"),
+	   MOMOUT_NEWLINE ());
+  MOM_OUT (pout,
+	   MOMOUT_LITERAL
+	   ("// but WITHOUT ANY WARRANTY; without even the implied warranty of"),
+	   MOMOUT_NEWLINE ());
+  MOM_OUT (pout,
+	   MOMOUT_LITERAL
+	   ("// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the"),
+	   MOMOUT_NEWLINE ());
+  MOM_OUT (pout,
+	   MOMOUT_LITERAL ("// GNU General Public License for more details."),
+	   MOMOUT_NEWLINE ());
+  MOM_OUT (pout,
+	   MOMOUT_LITERAL
+	   ("// You should have received a copy of the GNU General Public License"),
+	   MOMOUT_NEWLINE ());
+  MOM_OUT (pout,
+	   MOMOUT_LITERAL
+	   ("// along with GCC; see the file COPYING3.   If not see"),
+	   MOMOUT_NEWLINE ());
+  MOM_OUT (pout, MOMOUT_LITERAL ("//  <http://www.gnu.org/licenses/>."),
+	   MOMOUT_NEWLINE ());
+  MOM_OUT (pout,
+	   MOMOUT_LITERAL
+	   ("////////////////////////////////////////////////////////////////--"),
+	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE ());
+
+}
+
+
+
 #define SMALL_INDENT_MOM 8
 #define INDENT_MOM 16
 void
@@ -655,6 +742,13 @@ mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist)
 	case MOMOUTDO_FLUSH:
 	  {
 	    fflush (out);
+	  }
+	  break;
+	  ///
+	case MOMOUTDO_GPLV3P_NOTICE:
+	  {
+	    const char *forfile = va_arg (alist, const char *);
+	    output_gplv3p_notice_mom (pout, forfile);
 	  }
 	  break;
 	}			/// end switch dir
