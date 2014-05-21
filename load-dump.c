@@ -1281,11 +1281,13 @@ mom_full_dump (const char *reason, const char *dumpdir,
     MOM_FATAPRINTF ("failed to prepare name insert query: %s",
 		    sqlite3_errmsg (dmp.dmp_sqlite));
   ///
-  momval_t tupnameditems = MOM_NULLV, arrnam = MOM_NULLV;
-  tupnameditems = (momval_t) mom_alpha_ordered_tuple_of_named_items (&arrnam);
+  momval_t tupnameditems = MOM_NULLV, jarrnam = MOM_NULLV;
+  tupnameditems =
+    (momval_t) mom_alpha_ordered_tuple_of_named_items (&jarrnam);
   MOM_DEBUG (dump, MOMOUT_LITERAL ("tuple of named:"),
 	     MOMOUT_VALUE (tupnameditems));
-  assert (mom_tuple_length (tupnameditems) == mom_json_array_size (arrnam));
+  unsigned nbnameditems = mom_tuple_length (tupnameditems);
+  assert (nbnameditems > 0 && nbnameditems == mom_json_array_size (jarrnam));
   mom_dump_scan_value (&dmp, tupnameditems);
   /// scanning loop
   long scancount = 0;
@@ -1374,6 +1376,49 @@ mom_full_dump (const char *reason, const char *dumpdir,
 	    spad->space_fini_dump_fun (&dmp, six);
 	}
   }				// end of emit loop
+  //// dump the named
+  for (unsigned nix = 0; nix < nbnameditems; nix++)
+    {
+      momitem_t *curnamitm = mom_tuple_nth_item (tupnameditems, nix);
+      momval_t curnamstr = mom_json_array_nth (jarrnam, nix);
+      MOM_DEBUG (dump, MOMOUT_LITERAL ("dumping named:"),
+		 MOMOUT_ITEM ((const momitem_t *) curnamitm));
+      assert (curnamitm && curnamitm->i_typnum == momty_item);
+      assert (curnamitm->i_space < momspa__last);
+      assert (mom_is_string (curnamstr));
+      struct mom_spacedescr_st *spad =
+	mom_spacedescr_array[curnamitm->i_space];
+      if (!spad)
+	continue;
+      assert (spad->space_magic == MOM_SPACE_MAGIC);
+      int errn = 0;
+      // name is field 1
+      errn = sqlite3_bind_text
+	(dmp.dmp_sqlstmt_name_insert, 1, mom_string_cstr (curnamstr),
+	 -1, SQLITE_STATIC);
+      if (errn)
+	MOM_FATAPRINTF ("failed to bind named item name: %s, err#%d",
+			sqlite3_errmsg (dmp.dmp_sqlite), errn);
+      // n_idstr is field 2
+      errn = sqlite3_bind_text
+	(dmp.dmp_sqlstmt_name_insert, 2,
+	 mom_string_cstr ((momval_t) mom_item_get_idstr (curnamitm)), -1,
+	 SQLITE_STATIC);
+      if (errn)
+	MOM_FATAPRINTF ("failed to bind named item idstr: %s, err#%d",
+			sqlite3_errmsg (dmp.dmp_sqlite), errn);
+      // n_spacename is field 3
+      errn = sqlite3_bind_text
+	(dmp.dmp_sqlstmt_name_insert, 3, spad->space_name, -1, SQLITE_STATIC);
+      if (errn)
+	MOM_FATAPRINTF ("failed to bind named item spacename: %s, err#%d",
+			sqlite3_errmsg (dmp.dmp_sqlite), errn);
+      errn = sqlite3_step (dmp.dmp_sqlstmt_name_insert);
+      if (errn != SQLITE_DONE)
+	MOM_FATAPRINTF ("failed to insert name: %s, err#%d",
+			sqlite3_errmsg (dmp.dmp_sqlite), errn);
+      (void) sqlite3_reset (dmp.dmp_sqlstmt_name_insert);
+    }
 #warning incomplete dump, should dump the named
   /// at last
   goto end;
@@ -1421,11 +1466,9 @@ spaceroot_storeitem_mom (struct mom_dumper_st *dmp, momitem_t *itm,
 		    sqlite3_errmsg (dmp->dmp_sqlite), err);
   err = sqlite3_step (dmp->dmp_sqlstmt_item_insert);
   if (err != SQLITE_DONE)
-    MOM_FATAPRINTF ("failed to insert item: %s",
-		    sqlite3_errmsg (dmp->dmp_sqlite));
-  (void) sqlite3_reset (dmp->dmp_sqlstmt_item_insert);
+    MOM_FATAPRINTF ("failed to insert name: %s, err#%d",
+		    sqlite3_errmsg (dmp->dmp_sqlite), err);
 }
-
 
 static void
 spacepredef_storeitem_mom (struct mom_dumper_st *dmp, momitem_t *itm,

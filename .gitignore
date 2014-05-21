@@ -8,6 +8,7 @@
 *.dbsqlite
 *.dbsqlite-journal
 monimelt
+_monimelt
 make-named
 core*
 _monimelt_sigterm*.*
