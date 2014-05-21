@@ -326,7 +326,7 @@ output_gplv3p_notice_mom (momout_t *pout, const char *forfile)
   MOM_OUT (pout, MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL ("/// generated file "),
 	   MOMOUT_LITERALV (forfile),
-	   MOMOUT_LITERAL (" ** DO NOT EDIT"),
+	   MOMOUT_LITERAL (" ** DO NOT EDIT"), MOMOUT_NEWLINE (),
 	   MOMOUT_NEWLINE (), MOMOUT_LITERAL ("/// Copyright (C) "));
   int nowyear = nowtm.tm_year + 1900;
   /// In the year of the Lord 2222, some artificial intelligence
@@ -338,7 +338,7 @@ output_gplv3p_notice_mom (momout_t *pout, const char *forfile)
 	     MOMOUT_LITERAL ("-"), MOMOUT_DEC_INT (nowyear));
   else
     MOM_OUT (pout, MOMOUT_DEC_INT (nowyear));
-  MOM_OUT (pout, MOMOUT_LITERAL ("Free Software Foundation, Inc."),
+  MOM_OUT (pout, MOMOUT_LITERAL (" Free Software Foundation, Inc."),
 	   MOMOUT_NEWLINE ());
   MOM_OUT (pout,
 	   MOMOUT_LITERAL

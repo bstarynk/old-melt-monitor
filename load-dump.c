@@ -1406,11 +1406,7 @@ mom_full_dump (const char *reason, const char *dumpdir,
 	pthread_mutex_lock (&curitm->i_mtx);
 	unsigned ispa = curitm->i_space;
 	assert (ispa < momspa__last);
-	struct mom_spacedescr_st *spad = NULL;
-	if (ispa == momspa_predefined)
-	  spad = mom_spacedescr_array[momspa_root];
-	else
-	  spad = mom_spacedescr_array[ispa];
+	struct mom_spacedescr_st *spad = mom_spacedescr_array[ispa];
 	if (!spad)
 	  goto done_item;
 	assert (spad != NULL && spad->space_magic == MOM_SPACE_MAGIC);
