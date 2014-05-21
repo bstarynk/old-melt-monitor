@@ -1176,6 +1176,32 @@ mom_load (const char *ldirnam)
 
 
 
+static void
+set_dump_param_mom (struct mom_dumper_st *du, const char *parname,
+		    const char *parval)
+{
+  assert (du && du->dmp_magic == DUMPER_MAGIC);
+  if (!parname || !parval || !parname[0] || !parval[0])
+    return;
+  // parname at index 1
+  if (sqlite3_bind_text
+      (du->dmp_sqlstmt_param_insert, 1, parname, -1, SQLITE_STATIC))
+    MOM_FATAPRINTF ("failed to bind dump parrame: %s",
+		    sqlite3_errmsg (du->dmp_sqlite));
+  // parval at index 2
+  if (sqlite3_bind_text
+      (du->dmp_sqlstmt_param_insert, 2, parval, -1, SQLITE_STATIC))
+    MOM_FATAPRINTF ("failed to bind dump parval: %s",
+		    sqlite3_errmsg (du->dmp_sqlite));
+  int stepres = sqlite3_step (du->dmp_sqlstmt_param_insert);
+  if (stepres != SQLITE_DONE)
+    MOM_FATAPRINTF ("failed to insert dump parameter %s: %s", parname,
+		    sqlite3_errmsg (du->dmp_sqlite));
+  sqlite3_reset (du->dmp_sqlstmt_param_insert);
+}
+
+
+
 void
 mom_full_dump (const char *reason, const char *dumpdir,
 	       struct mom_dumpoutcome_st *outd)
@@ -1327,6 +1353,11 @@ mom_full_dump (const char *reason, const char *dumpdir,
 			  "INSERT INTO t_names (name, n_idstr, n_spacename) VALUES (?1, ?2, ?3)",
 			  -1, &dmp.dmp_sqlstmt_name_insert, NULL))
     MOM_FATAPRINTF ("failed to prepare name insert query: %s",
+		    sqlite3_errmsg (dmp.dmp_sqlite));
+  if (sqlite3_prepare_v2 (dmp.dmp_sqlite,
+			  "INSERT INTO t_params (parname, parvalue) VALUES (?1, ?2)",
+			  -1, &dmp.dmp_sqlstmt_param_insert, NULL))
+    MOM_FATAPRINTF ("failed to prepare param insert query: %s",
 		    sqlite3_errmsg (dmp.dmp_sqlite));
   ///
   momval_t tupnameditems = MOM_NULLV, jarrnam = MOM_NULLV;
@@ -1522,7 +1553,12 @@ mom_full_dump (const char *reason, const char *dumpdir,
     if (fclose (filpredefh))
       MOM_FATAPRINTF ("failed to close predefined header file %s",
 		      dmp.dmp_predefhpath);
-  }
+    filpredefh = NULL;
+    MOM_INFORMPRINTF ("generated predefine header file %s",
+		      dmp.dmp_predefhpath);
+  };
+  set_dump_param_mom (&dmp, MOM_VERSION_PARAM, MOM_DUMP_VERSION);
+  set_dump_param_mom (&dmp, "dump_reason", reason);
   /// at last
   goto end;
 end:
