@@ -1350,21 +1350,6 @@ mom_full_dump (const char *reason, const char *dumpdir,
       else
 	MOM_INFORMPRINTF ("made dump directory %s", dumpdir);
     }
-  /// backup the *.sql file if it exists
-  snprintf (filpath, sizeof (filpath), "%s/%s.sql", dumpdir,
-	    MOM_STATE_FILE_BASENAME);
-  if (!access (filpath, F_OK))
-    {
-      char backupath[MOM_PATH_MAX];
-      memset (backupath, 0, sizeof (backupath));
-      snprintf (backupath, sizeof (backupath), "%s~", filpath);
-      if (rename (filpath, backupath))
-	MOM_WARNPRINTF ("failed to backup SQL dump %s as %s", filpath,
-			backupath);
-      else
-	MOM_INFORMPRINTF ("moved for SQL dump backup %s to %s", filpath,
-			  backupath);
-    };
   /// backup the *.dbsqlite file and open the database
   snprintf (filpath, sizeof (filpath), "%s/%s.dbsqlite", dumpdir,
 	    MOM_STATE_FILE_BASENAME);
@@ -1388,24 +1373,17 @@ mom_full_dump (const char *reason, const char *dumpdir,
 		    sqlite3path, sqlite3_errmsg (sqlite3dump));
   /// backup the MOM_PREDEFINED_HEADER_FILENAME
   snprintf (filpath, sizeof (filpath), "%s/%s", dumpdir,
-	    MOM_PREDEFINED_HEADER_FILENAME);
-  const char *predefhpath =
-    MOM_GC_STRDUP ("predefined header path", (const char *) filpath);
-  MOM_DEBUGPRINTF (dump, "predefhpath=%s", predefhpath);
+	    MOM_PREDEFINED_HEADER_FILENAME "%");
+  char *predefhpath =
+    (char *) MOM_GC_STRDUP ("predefined header path", (char *) filpath);
+  {
+    char *lastpercent = strrchr (predefhpath, '%');
+    if (lastpercent && predefhpath + strlen (predefhpath) - 1 == lastpercent)
+      *lastpercent = (char) 0;
+    MOM_DEBUGPRINTF (dump, "predefhpath=%s", predefhpath);
+    filpredefh = fopen (filpath, "w");
+  }
   memset (filpath, 0, sizeof (filpath));
-  if (!access (predefhpath, R_OK))
-    {
-      char backupath[MOM_PATH_MAX];
-      memset (backupath, 0, sizeof (backupath));
-      snprintf (backupath, sizeof (backupath), "%s~", predefhpath);
-      if (rename (predefhpath, backupath))
-	MOM_WARNPRINTF ("failed to backup predefined header %s as %s",
-			predefhpath, backupath);
-      else
-	MOM_INFORMPRINTF ("moved for backup predefined header %s to %s",
-			  predefhpath, backupath);
-    }
-  filpredefh = fopen (predefhpath, "w");
   if (!filpredefh)
     MOM_FATAPRINTF ("failed to open predefined header %s", predefhpath);
   /// create & initialize the dumper
@@ -1674,6 +1652,12 @@ mom_full_dump (const char *reason, const char *dumpdir,
       MOM_FATAPRINTF ("failed to close predefined header file %s",
 		      dmp.dmp_predefhpath);
     filpredefh = NULL;
+    {
+      snprintf (filpath, sizeof (filpath), "%s%%", dmp.dmp_predefhpath);
+      if (rename (filpath, dmp.dmp_predefhpath))
+	MOM_FATAPRINTF ("failed to rename %s to %s", filpath,
+			dmp.dmp_predefhpath);
+    }
     MOM_INFORMPRINTF ("generated predefine header file %s",
 		      dmp.dmp_predefhpath);
   };
