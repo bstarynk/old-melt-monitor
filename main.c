@@ -392,6 +392,7 @@ static const char *wanted_dir_mom;
 static const char *write_pid_file_mom;
 static const char *dump_cold_dir_mom;
 static const char *new_predefined_mom;
+static const char *new_comment_mom;
 
 #if MOM_NEED_GC_CALLOC
 void *
@@ -662,6 +663,12 @@ parse_program_arguments_and_load_modules_mom (int *pargc, char **argv)
 	case xtraopt_addpredef:
 	  {
 	    new_predefined_mom = optarg;
+	    char *commarg = argv[optind];
+	    if (commarg && isalpha (commarg[0]))
+	      {
+		new_comment_mom = commarg;
+		optind++;
+	      };
 	  }
 	  break;
 	default:
@@ -779,6 +786,16 @@ main (int argc, char **argv)
       MOM_INFORMPRINTF ("predefined item $%s named %s",
 			mom_ident_cstr_of_item (predefitm),
 			new_predefined_mom);
+      if (new_comment_mom && new_comment_mom[0])
+	{
+	  predefitm->i_attrs
+	    = mom_put_attribute (predefitm->i_attrs,
+				 mom_named__comment,
+				 (momval_t)
+				 mom_make_string (new_comment_mom));
+	  MOM_INFORMPRINTF ("predefined item named %s has comment '%s'",
+			    new_predefined_mom, new_comment_mom);
+	}
       char reasonbuf[128];
       memset (reasonbuf, 0, sizeof (reasonbuf));
       snprintf (reasonbuf, sizeof (reasonbuf), "after predefined %s",
