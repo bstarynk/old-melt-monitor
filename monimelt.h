@@ -1400,6 +1400,9 @@ void mom_initial_load (const char *ldir);
 void mom_full_dump (const char *reason, const char *dumpdir,
 		    struct mom_dumpoutcome_st *outd);
 
+// can be called from dumping routines
+void mom_dump_require_module (struct mom_dumper_st *du, const char *modname);
+
 /////////////////// agenda and workers and web
 int mom_nb_workers;
 const char *mom_web_host;

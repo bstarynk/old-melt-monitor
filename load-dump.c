@@ -74,6 +74,7 @@ struct mom_dumper_st
   sqlite3_stmt *dmp_sqlstmt_param_insert;
   sqlite3_stmt *dmp_sqlstmt_item_insert;
   sqlite3_stmt *dmp_sqlstmt_name_insert;
+  sqlite3_stmt *dmp_sqlstmt_module_insert;
   struct mom_itqueue_st *dmp_qfirst;
   struct mom_itqueue_st *dmp_qlast;
 };
@@ -1472,6 +1473,11 @@ mom_full_dump (const char *reason, const char *dumpdir,
 			  -1, &dmp.dmp_sqlstmt_param_insert, NULL))
     MOM_FATAPRINTF ("failed to prepare param insert query: %s",
 		    sqlite3_errmsg (dmp.dmp_sqlite));
+  if (sqlite3_prepare_v2 (dmp.dmp_sqlite,
+			  "INSERT OR IGNORE INTO t_modules (modname) VALUES (?1)",
+			  -1, &dmp.dmp_sqlstmt_module_insert, NULL))
+    MOM_FATAPRINTF ("failed to prepare module insert query: %s",
+		    sqlite3_errmsg (dmp.dmp_sqlite));
   ///
   momval_t tupnameditems = MOM_NULLV, jarrnam = MOM_NULLV;
   tupnameditems =
@@ -1677,6 +1683,8 @@ end:
     dmp.dmp_sqlstmt_item_insert = NULL;
   sqlite3_finalize (dmp.dmp_sqlstmt_name_insert),
     dmp.dmp_sqlstmt_name_insert = NULL;
+  sqlite3_finalize (dmp.dmp_sqlstmt_module_insert),
+    dmp.dmp_sqlstmt_module_insert = NULL;
   if (sqlite3_exec (dmp.dmp_sqlite, "END TRANSACTION", NULL, NULL, &errmsg))
     MOM_FATAL ("failed to END TRANSACTION: %s", errmsg);
   int errclo = sqlite3_close_v2 (dmp.dmp_sqlite);
@@ -1688,6 +1696,31 @@ end:
 }
 
 
+void
+mom_dump_require_module (struct mom_dumper_st *du, const char *modname)
+{
+  if (!du || !modname || !modname[0])
+    return;
+  MOM_DEBUGPRINTF (dump, "mom_dump_require_module modname=%s", modname);
+  for (const char *pc = modname; *pc; pc++)
+    if (!isalnum (*pc) && *pc != '_')
+      {
+	MOM_WARNPRINTF ("invalid dumped module %s requirement", modname);
+	return;
+      };
+  assert (du->dmp_magic == DUMPER_MAGIC);
+  assert (du->dmp_sqlstmt_module_insert != NULL);
+  /// modname at rank 1
+  int err = sqlite3_bind_text (du->dmp_sqlstmt_module_insert, 1, modname, -1,
+			       SQLITE_STATIC);
+  if (err)
+    MOM_FATAPRINTF ("failed to bind dumped module %s: %s, err#%d", modname,
+		    sqlite3_errmsg (du->dmp_sqlite), err);
+  err = sqlite3_step (du->dmp_sqlstmt_item_insert);
+  if (err != SQLITE_DONE)
+    MOM_WARNPRINTF ("failed to require dumped module %s: %s, err#%d", modname,
+		    sqlite3_errmsg (du->dmp_sqlite), err);
+}
 
 static void
 spaceroot_storeitem_mom (struct mom_dumper_st *du, momitem_t *itm,
