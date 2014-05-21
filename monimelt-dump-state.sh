@@ -1,5 +1,5 @@
 #! /bin/sh
-## file dump-state.sh
+## file monimelt-dump-state.sh (should be in your $PATH)
 ##   Copyright (C)  2014 Free Software Foundation, Inc.
 ##  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
 ##  This file is part of GCC.
@@ -47,7 +47,7 @@ date +'-- state-monimelt dump %Y %b %d' > $tempdump
 echo >> $tempdump
 date +' --   Copyright (C) %Y Free Software Foundation, Inc.' >> $tempdump
 echo ' --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/' >> $tempdump
-echo ' --  This file is part of GCC.' >> $tempdump
+echo " --  This sqlite3 dump file $sqlfile is part of GCC." >> $tempdump
 echo ' --' >> $tempdump
 echo ' --  GCC is free software; you can redistribute it and/or modify' >> $tempdump
 echo ' --  it under the terms of the GNU General Public License as published by' >> $tempdump
@@ -66,19 +66,20 @@ echo 'BEGIN TRANSACTION;' >> $tempdump
 sqlite3 state-monimelt.dbsqlite .schema >> $tempdump || exit 1
 echo '-- state-monimelt tables contents' >> $tempdump 
 sqlite3 state-monimelt.dbsqlite >> $tempdump <<EOF
-.mode insert t_module
-  SELECT * FROM t_module ORDER BY modname;
-.mode insert t_item
-  SELECT * FROM t_item ORDER BY uid;
-.mode insert t_name
-  SELECT * FROM t_name ORDER BY name;
-.mode insert t_param
-  SELECT * FROM t_param ORDER BY parname;
+.mode insert t_params
+  SELECT * FROM t_params ORDER BY parname;
+.mode insert t_modules
+  SELECT * FROM t_modules ORDER BY modname;
+.mode insert t_items
+  SELECT * FROM t_items ORDER BY itm_idstr;
+.mode insert t_names
+  SELECT * FROM t_names ORDER BY name;
 EOF
 echo 'COMMIT;' >> $tempdump
 echo "-- state-monimelt end dump " >> $tempdump
 if [ -e "$sqlfile" ]; then
-    mv "$sqlfile" "$sqlfile~"
+    echo -n "backup Sqlite3 dump:" 
+    mv -v "$sqlfile" "$sqlfile~"
 fi
 mv $tempdump "$sqlfile"
 ls -l "$sqlfile"

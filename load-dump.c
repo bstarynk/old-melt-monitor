@@ -1488,6 +1488,7 @@ mom_full_dump (const char *reason, const char *dumpdir,
   assert (nbnameditems > 0 && nbnameditems == mom_json_array_size (jarrnam));
   mom_dump_scan_value (&dmp, tupnameditems);
   /// scanning loop
+  memset (filpath, 0, sizeof (filpath));
   long scancount = 0;
   while (dmp.dmp_qfirst != NULL)
     {
@@ -1571,6 +1572,7 @@ mom_full_dump (const char *reason, const char *dumpdir,
 	}
   }				// end of emit loop
   //// dump the named
+  memset (filpath, 0, sizeof (filpath));
   for (unsigned nix = 0; nix < nbnameditems; nix++)
     {
       momitem_t *curnamitm = mom_tuple_nth_item (tupnameditems, nix);
@@ -1614,6 +1616,7 @@ mom_full_dump (const char *reason, const char *dumpdir,
       (void) sqlite3_reset (dmp.dmp_sqlstmt_name_insert);
     }
   /// generate the predefined.h file
+  memset (filpath, 0, sizeof (filpath));
   {
     struct momout_st outs = { 0 };
     memset (&outs, 0, sizeof (outs));
@@ -1674,6 +1677,7 @@ mom_full_dump (const char *reason, const char *dumpdir,
   };
   set_dump_param_mom (&dmp, MOM_VERSION_PARAM, MOM_DUMP_VERSION);
   set_dump_param_mom (&dmp, "dump_reason", reason);
+  memset (filpath, 0, sizeof (filpath));
   /// at last
   goto end;
 end:
@@ -1692,7 +1696,84 @@ end:
     MOM_FATAPRINTF ("failed to close sqlite3 %s: %s", dmp.dmp_sqlpath,
 		    sqlite3_errstr (errclo));
   dmp.dmp_sqlite = NULL;
+  // perhaps fork the dump command
+  bool shouldump = strlen (dmp.dmp_sqlpath) < MOM_PATH_MAX - 32;
+  for (const char *pc = dmp.dmp_sqlpath; *pc && shouldump; pc++)
+    if (!isalnum (*pc) && *pc != '/' && *pc != '.' && *pc != '_'
+	&& !(*pc == '-' && pc > dmp.dmp_sqlpath && isalnum (pc[-1])))
+      shouldump = false;
+  if (shouldump)
+    {
+      char *dumpargtab[4] = { NULL };
+      dumpargtab[0] = MOM_DUMP_SCRIPT;
+      dumpargtab[1] = basename (dmp.dmp_sqlpath);
+      dumpargtab[2] = NULL;
+      dumpargtab[3] = NULL;
+      fflush (NULL);
+      pid_t dumpid = fork ();
+      if (dumpid < 0)
+	MOM_FATAPRINTF ("failed to fork %s", MOM_DUMP_SCRIPT);
+      else if (dumpid == 0)
+	{			// child process
+	  for (int i = 3; i < 64; i++)
+	    (void) close (i);
+	  close (STDIN_FILENO);
+	  int nulldev = open ("/dev/null", O_RDONLY);
+	  if (nulldev > 0)
+	    dup2 (nulldev, STDIN_FILENO);
+	  usleep (5000);
+	  if (chdir (dmp.dmp_dirpath))
+	    {
+	      fprintf (stderr, "Failed to chdir %s: %s\n", dmp.dmp_dirpath,
+		       strerror (errno));
+	      exit (EXIT_FAILURE);
+	    };
+	  usleep (5000);
+	  nice (1);
+	  execvp (MOM_DUMP_SCRIPT, dumpargtab);
+	  execvp (MOM_DUMP_SCRIPT2, dumpargtab);
+	  perror ("exec " MOM_DUMP_SCRIPT " or " MOM_DUMP_SCRIPT2);
+	  fflush (NULL);
+	  _exit (127);
+	};
+      fflush (NULL);
+      MOM_INFORMPRINTF ("started dump process #%d", (int) dumpid);
+      int dumpstat = 0;
+      while (waitpid (dumpid, &dumpstat, 0) < 0)
+	{
+	  MOM_WARNPRINTF ("failed to wait Sqlite dump process pid#%d",
+			  (int) dumpid);
+	  fflush (NULL);
+	  sleep (2);
+	}
+      if (WIFEXITED (dumpstat) && WEXITSTATUS (dumpstat) > 0)
+	MOM_WARNPRINTF ("dump command '%s %s' failed, exited %d",
+			MOM_DUMP_SCRIPT, dumpargtab[1],
+			WEXITSTATUS (dumpstat));
+      else if (WIFSIGNALED (dumpstat))
+	{
+	  int dusig = WTERMSIG (dumpstat);
+	  MOM_FATAPRINTF
+	    ("dump command '%s %s' failed, terminated with signal #%d: %s",
+	     MOM_DUMP_SCRIPT, dumpargtab[1], dusig, strsignal (dusig));
+	}
+      else
+	{
+	  assert (WIFEXITED (dumpstat) && WEXITSTATUS (dumpstat) == 0);
+	  MOM_INFORMPRINTF ("completed successfully dump '%s %s' process #%d",
+			    MOM_DUMP_SCRIPT, dumpargtab[1], (int) dumpid);
+	}
+    }
+  else
+    MOM_WARNPRINTF
+      ("dont dump the database %s in SQL form because of strange path",
+       dmp.dmp_sqlpath);
   pthread_mutex_unlock (&dump_mtx_mom);
+  double endrealtime = mom_clock_time (CLOCK_REALTIME);
+  double endcputime = mom_clock_time (CLOCK_PROCESS_CPUTIME_ID);
+  MOM_INFORMPRINTF
+    ("end of dump into directory %s in %.3f cpu, %.3f real seconds", dumpdir,
+     endcputime - startcputime, endrealtime - startrealtime);
 }
 
 

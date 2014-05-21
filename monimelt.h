@@ -1386,7 +1386,8 @@ struct mom_itqueue_st
 
 #define MOM_STATE_FILE_BASENAME "state-monimelt"
 #define MOM_PREDEFINED_HEADER_FILENAME "predef-monimelt.h"
-
+#define MOM_DUMP_SCRIPT "monimelt-dump-state"
+#define MOM_DUMP_SCRIPT2 "monimelt-dump-state.sh"
 // outcome of successful dump
 struct mom_dumpoutcome_st
 {
