@@ -30,6 +30,7 @@
 #endif /*MOM_PREDEFINED_ANONYMOUS*/
 
 MOM_PREDEFINED_NAMED(attr,_6w3dvx83dfw_xzc6aif6isv)
+MOM_PREDEFINED_NAMED(comment,_41u1utcxyek_22cftxt3xxm)
 MOM_PREDEFINED_NAMED(content,_8s357rq2dzk_k8ze95tikjm)
 MOM_PREDEFINED_NAMED(item_ref,_6hf2vzmrsee_t35suhjvtj4)
 MOM_PREDEFINED_NAMED(json_array,_35vp60aw7em_d436vfie4ud)
