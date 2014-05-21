@@ -41,8 +41,10 @@ output_json_mom (momout_t *pout, momval_t v)
   if (!out)
     return;
   assert (mom_is_jsonable (v));
-  if (!v.ptr)
+  if (!v.ptr) {
     fputs ("null", out);
+    return;
+  }
   momtynum_t typ = *v.ptype;
   switch ((enum momvaltype_en) typ)
     {
