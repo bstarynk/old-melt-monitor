@@ -1745,7 +1745,7 @@ spacepredef_storeitem_mom (struct mom_dumper_st *du, momitem_t *itm,
 }
 
 
-static char *
+static const char *
 spacerootpredef_fetch_item_mom (struct mom_loader_st *ld, momitem_t *itm)
 {
   char *res = NULL;
