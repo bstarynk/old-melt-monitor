@@ -1343,7 +1343,7 @@ enum momoutdir_en
   /// mentioning a given generated file
   MOMOUTDO_GPLV3P_NOTICE /*, const char* file */ ,
 #define MOMOUT_GPLV3P_NOTICE(F) MOMOUTDO_GPLV3P_NOTICE,	\
-    MOM_REQUIRES_TYPE(F,const char*,mombad_string)
+  MOM_REQUIRES_TYPE((F),const char*,mombad_string)
   ///
 
 };
@@ -1351,6 +1351,7 @@ enum momoutdir_en
 // referenced... which happens only with wrong MOMOUT_... macros
 // above.
 extern const char *mombad_literal;
+extern const char *mombad_string;
 extern const char *mombad_html;
 extern const char *mombad_int;
 extern const char *mombad_js;

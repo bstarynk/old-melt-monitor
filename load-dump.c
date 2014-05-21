@@ -1476,7 +1476,8 @@ mom_full_dump (const char *reason, const char *dumpdir,
 	   compare_predefined_mom);
     mom_initialize_output (&outs, filpredefh, 0);
     MOM_OUT (&outs,
-	     //MOMOUT_GPLV3P_NOTICE((const char*)MOM_PREDEFINED_HEADER_FILENAME),
+	     MOMOUT_GPLV3P_NOTICE ((const char *)
+				   MOM_PREDEFINED_HEADER_FILENAME),
 	     MOMOUT_NEWLINE (),
 	     MOMOUT_LITERAL ("#ifndef MOM_PREDEFINED_NAMED"),
 	     MOMOUT_NEWLINE (),
