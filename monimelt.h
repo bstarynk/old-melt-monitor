@@ -198,7 +198,7 @@ const char* _dup_##Lin = GC_STRDUP(_str_##Lin);		\
   if (MOM_UNLIKELY(!_dup_##Lin && _str_##Lin))		\
     MOM_FATAPRINTF("failed to duplicate string %s",	\
 		   _str_##Lin);				\
-  _str_##Lin; })
+  _dup_##Lin; })
 #define MOM_GC_STRDUP(Msg,Str) MOM_GC_STRDUP_AT((Msg),(Str),__LINE__)
 
 // free a pointer and clear the variable

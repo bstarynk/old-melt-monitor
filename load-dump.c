@@ -1274,8 +1274,9 @@ mom_full_dump (const char *reason, const char *dumpdir,
   /// backup the MOM_PREDEFINED_HEADER_FILENAME
   snprintf (filpath, sizeof (filpath), "%s/%s", dumpdir,
 	    MOM_PREDEFINED_HEADER_FILENAME);
-  char *predefhpath =
+  const char *predefhpath =
     MOM_GC_STRDUP ("predefined header path", (const char *) filpath);
+  MOM_DEBUGPRINTF (dump, "predefhpath=%s", predefhpath);
   memset (filpath, 0, sizeof (filpath));
   if (!access (predefhpath, R_OK))
     {
@@ -1524,7 +1525,7 @@ mom_full_dump (const char *reason, const char *dumpdir,
 	     MOMOUT_NEWLINE (), MOMOUT_NEWLINE ());
     for (unsigned pix = 0; pix < dmp.dmp_predefnb; pix++)
       {
-	momitem_t *predefitm = dmp.dmp_predefarray[pix];
+	momitem_t *predefitm = (momitem_t *) dmp.dmp_predefarray[pix];
 	assert (predefitm && predefitm->i_typnum == momty_item
 		&& predefitm->i_space == momspa_predefined);
 	pthread_mutex_lock (&predefitm->i_mtx);
@@ -1581,57 +1582,58 @@ end:
 
 
 static void
-spaceroot_storeitem_mom (struct mom_dumper_st *dmp, momitem_t *itm,
+spaceroot_storeitem_mom (struct mom_dumper_st *du, momitem_t *itm,
 			 const char *datastr)
 {
   int err = 0;
-  assert (dmp && dmp->dmp_magic == DUMPER_MAGIC);
+  assert (du && du->dmp_magic == DUMPER_MAGIC);
   MOM_DEBUG (dump, MOMOUT_LITERAL ("spaceroot_storeitem_mom itm="),
 	     MOMOUT_ITEM ((const momitem_t *) itm),
 	     MOMOUT_LITERAL (" datastr="), MOMOUT_LITERALV (datastr));
-  assert (dmp->dmp_sqlstmt_item_insert != NULL);
+  assert (du->dmp_sqlstmt_item_insert != NULL);
   // idstr at rank 1
   const char *idstr = mom_string_cstr ((momval_t) mom_item_get_idstr (itm));
   err = sqlite3_bind_text
-    (dmp->dmp_sqlstmt_item_insert, 1, idstr, -1, SQLITE_STATIC);
+    (du->dmp_sqlstmt_item_insert, 1, idstr, -1, SQLITE_STATIC);
   if (err)
     MOM_FATAPRINTF ("failed to bind dumped item idstr: %s, err#%d",
-		    sqlite3_errmsg (dmp->dmp_sqlite), err);
+		    sqlite3_errmsg (du->dmp_sqlite), err);
   // datastr at rank 2
   err = sqlite3_bind_text
-    (dmp->dmp_sqlstmt_item_insert, 2, datastr, -1, SQLITE_STATIC);
+    (du->dmp_sqlstmt_item_insert, 2, datastr, -1, SQLITE_STATIC);
   if (err)
     MOM_FATAPRINTF ("failed to bind dumped item datastr: %s, err#%d",
-		    sqlite3_errmsg (dmp->dmp_sqlite), err);
-  err = sqlite3_step (dmp->dmp_sqlstmt_item_insert);
+		    sqlite3_errmsg (du->dmp_sqlite), err);
+  err = sqlite3_step (du->dmp_sqlstmt_item_insert);
   if (err != SQLITE_DONE)
     MOM_FATAPRINTF ("failed to insert name: %s, err#%d",
-		    sqlite3_errmsg (dmp->dmp_sqlite), err);
+		    sqlite3_errmsg (du->dmp_sqlite), err);
+  (void) sqlite3_reset (du->dmp_sqlstmt_item_insert);
 }
 
 static void
-spacepredef_storeitem_mom (struct mom_dumper_st *dmp, momitem_t *itm,
+spacepredef_storeitem_mom (struct mom_dumper_st *du, momitem_t *itm,
 			   const char *datastr)
 {
-  assert (dmp && dmp->dmp_magic == DUMPER_MAGIC);
+  assert (du && du->dmp_magic == DUMPER_MAGIC);
   MOM_DEBUG (dump, MOMOUT_LITERAL ("spacepredef_storeitem_mom itm="),
 	     MOMOUT_ITEM ((const momitem_t *) itm),
 	     MOMOUT_LITERAL (" datastr="), MOMOUT_LITERALV (datastr));
-  spaceroot_storeitem_mom (dmp, itm, datastr);
-  if (MOM_UNLIKELY (dmp->dmp_predefnb + 1 >= dmp->dmp_predefsize))
+  spaceroot_storeitem_mom (du, itm, datastr);
+  if (MOM_UNLIKELY (du->dmp_predefnb + 1 >= du->dmp_predefsize))
     {
-      const momitem_t **oldarr = dmp->dmp_predefarray;
-      unsigned oldsiz = dmp->dmp_predefsize;
-      unsigned newsiz = ((3 * dmp->dmp_predefnb / 2 + 10) | 0xf) + 1;
+      const momitem_t **oldarr = du->dmp_predefarray;
+      unsigned oldsiz = du->dmp_predefsize;
+      unsigned newsiz = ((3 * du->dmp_predefnb / 2 + 10) | 0xf) + 1;
       const momitem_t **newarr = MOM_GC_ALLOC ("growing predef array",
 					       newsiz * sizeof (momitem_t *));
-      memcpy (newarr, oldarr, dmp->dmp_predefnb * sizeof (momitem_t *));
+      memcpy (newarr, oldarr, du->dmp_predefnb * sizeof (momitem_t *));
       memset (oldarr, 0, oldsiz * sizeof (momitem_t *));
-      dmp->dmp_predefarray = newarr;
-      dmp->dmp_predefsize = newsiz;
+      du->dmp_predefarray = newarr;
+      du->dmp_predefsize = newsiz;
       MOM_GC_FREE (oldarr);
     }
-  dmp->dmp_predefarray[dmp->dmp_predefnb++] = itm;
+  du->dmp_predefarray[du->dmp_predefnb++] = itm;
 }
 
 static struct mom_spacedescr_st spacepredefdescr_mom =
