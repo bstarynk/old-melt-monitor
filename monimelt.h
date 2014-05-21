@@ -45,13 +45,14 @@
 #include <ctype.h>
 #include <getopt.h>
 #include <errno.h>
-#include <dlfcn.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/poll.h>
 #include <sys/select.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <dlfcn.h>
+#include <execinfo.h>
 // eventfd(2) & signalfd(2) & timerfd_create(2) are Linux specific
 #include <sys/eventfd.h>
 #include <sys/signalfd.h>
@@ -1338,6 +1339,11 @@ enum momoutdir_en
 #define MOMOUT_SPACE(L) MOMOUTDO_SPACE,	\
     MOM_REQUIRES_TYPE(L,int,mombad_space)
   ///
+  /// output some backtrace, mostly useful for debugging
+  MOMOUTDO_BACKTRACE /*, unsigned maxlevel */ ,
+#define MOMOUT_BACKTRACE(L) MOMOUTDO_BACKTRACE,	\
+  MOM_REQUIRES_TYPE((L),int,mombad_space)
+  ///
   ///
   /// output a space or an indented small newline if the current line
   /// exceeds a given threshold
@@ -1404,6 +1410,10 @@ void mom_full_dump (const char *reason, const char *dumpdir,
 // can be called from dumping routines
 void mom_dump_require_module (struct mom_dumper_st *du, const char *modname);
 
+
+// initial load
+void mom_initial_load (const char *ldirnam);
+
 /////////////////// agenda and workers and web
 int mom_nb_workers;
 const char *mom_web_host;
@@ -1411,5 +1421,5 @@ const char *mom_web_host;
 /// declare the predefined named and anonymous
 #define MOM_PREDEFINED_NAMED(Name,Id) extern momitem_t* mom_named__##Name;
 #define MOM_PREDEFINED_ANONYMOUS(Id) extern momitem_t* mom_anonymous_##Id;
-#include "predefined.h"
+#include "predef-monimelt.h"
 #endif /*MONIMELT_INCLUDED_ */

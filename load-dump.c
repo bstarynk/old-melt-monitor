@@ -1056,7 +1056,7 @@ compare_predefined_mom (const void *p1, const void *p2)
 
 ////////////////////////////////////////////////////////////////
 void
-mom_load (const char *ldirnam)
+mom_initial_load (const char *ldirnam)
 {
   char filpath[MOM_PATH_MAX];
   memset (filpath, 0, sizeof (filpath));
@@ -1615,7 +1615,7 @@ mom_full_dump (const char *reason, const char *dumpdir,
 			sqlite3_errmsg (dmp.dmp_sqlite), errn);
       (void) sqlite3_reset (dmp.dmp_sqlstmt_name_insert);
     }
-  /// generate the predefined.h file
+  /// generate the predef-monimelt.h file
   memset (filpath, 0, sizeof (filpath));
   {
     struct momout_st outs = { 0 };
@@ -1881,7 +1881,8 @@ spacerootpredef_fetch_item_mom (struct mom_loader_st *ld, momitem_t *itm)
   if (stepres == SQLITE_ROW)
     {
       const char *coljdata = (const char *)
-	sqlite3_column_text (ld->ldr_sqlstmt_param_fetch, 0);
+	sqlite3_column_text (ld->ldr_sqlstmt_item_fetch, 0);
+      MOM_DEBUGPRINTF (load, "ids=%s coljdata=%s", ids, coljdata);
       assert (coljdata != NULL);
       res = (char *) MOM_GC_STRDUP ("load item data", coljdata);
       MOM_DEBUG (load, MOMOUT_LITERAL ("fetched data:"),

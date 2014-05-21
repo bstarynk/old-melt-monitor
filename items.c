@@ -1074,7 +1074,8 @@ mom_create_predefined_items (void)
   mom_anonymous_##Id->i_space = momspa_predefined;		\
   nbanonym ++;							\
   } while(0);
-#include "predefined.h"
+
+#include "predef-monimelt.h"
   MOM_INFORMPRINTF ("created predefined %d named, %d anonymous items",
 		    nbnamed, nbanonym);
 }				// end of mom_create_predefined_items
@@ -1082,4 +1083,5 @@ mom_create_predefined_items (void)
 // declare the predefined
 #define MOM_PREDEFINED_NAMED(Nam,Id) momitem_t* mom_named__##Nam;
 #define MOM_PREDEFINED_ANONYMOUS(Id) momitem_t* mom_anonymous_##Id;
-#include "predefined.h"
+
+#include "predef-monimelt.h"

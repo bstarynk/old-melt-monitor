@@ -292,7 +292,7 @@ output_value_mom (momout_t *pout, const momval_t v)
 static void
 output_item_mom (momout_t *pout, const momitem_t *itm)
 {
-  assert (pout->mout_magic == MOM_MOUT_MAGIC);
+  assert (pout && pout->mout_magic == MOM_MOUT_MAGIC);
   FILE *out = pout->mout_file;
   if (!out)
     return;
@@ -307,6 +307,25 @@ output_item_mom (momout_t *pout, const momitem_t *itm)
 }
 
 
+static void
+output_backtrace_mom (momout_t *pout, void **bbuf, int depth, int lev)
+{
+  assert (pout && pout->mout_magic == MOM_MOUT_MAGIC);
+  FILE *out = pout->mout_file;
+  if (!out)
+    return;
+  char **backsyms = backtrace_symbols (bbuf, depth);
+  if (MOM_UNLIKELY (!backsyms))
+    MOM_FATAPRINTF ("backtrace failing for depth %d, level %d", depth, lev);
+  for (unsigned ix = 0; ix < (unsigned) depth; ix++)
+    {
+      MOM_OUT (pout, MOMOUT_LITERAL ("#"), MOMOUT_DEC_INT ((int) ix),
+	       MOMOUT_LITERAL (": "),
+	       MOMOUT_LITERALV ((const char *) backsyms[ix]),
+	       MOMOUT_NEWLINE ());
+    }
+  free (backsyms);
+}
 
 
 #define INITIAL_COPYRIGHT_YEAR_MOM 2014
@@ -742,6 +761,20 @@ mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist)
 	case MOMOUTDO_FLUSH:
 	  {
 	    fflush (out);
+	  }
+	  break;
+	  ///
+	case MOMOUTDO_BACKTRACE:
+	  {
+	    int lev = va_arg (alist, int);
+	    if (lev < 3)
+	      lev = 3;
+	    else if (lev > 256)
+	      lev = 256;
+	    void **bbuf = MOM_GC_ALLOC ("backtrace", lev * sizeof (void *));
+	    int depth = backtrace (bbuf, lev);
+	    output_backtrace_mom (pout, bbuf, depth, lev);
+	    MOM_GC_FREE (bbuf);
 	  }
 	  break;
 	  ///

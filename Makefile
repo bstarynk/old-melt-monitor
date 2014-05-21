@@ -57,11 +57,11 @@ _timestamp.c:
 	    echo '";') >> _timestamp.tmp
 	@mv _timestamp.tmp _timestamp.c
 
-indent: .indent.pro # don't indent predefined.h
-	@for f in *.c $(filter-out predefined.h, $(wildcard *.h)); do \
+indent: .indent.pro # don't indent predef-monimelt.h
+	@for f in *.c $(filter-out predef-monimelt.h, $(wildcard *.h)); do \
 	  echo indenting $$f; $(INDENT) $$f ;$(INDENT) $$f; done
 
-$(OBJECTS): monimelt.h predefined.h
+$(OBJECTS): monimelt.h predef-monimelt.h
 
 .indent.pro: monimelt.h
 	sed -n 's/typedef.*\(mom[a-z0-9_]*_t\);/-T \1/p' monimelt.h > $@
@@ -70,12 +70,12 @@ modules: $(MODULES)
 
 ## MONIMELT generated code starts with momg_ followed by alphanum or +
 ## or - or _ characters. see MONIMELT_SHARED_MODULE_PREFIX in monimelt.h
-momg_%.so: momg_%.c | monimelt.h predefined.h
+momg_%.so: momg_%.c | monimelt.h predef-monimelt.h
 	$(LINK.c) -fPIC $< -shared -o $@
 	@logger -t makemonimelt -p user.info -s compiled $< into shared $@ at $$(date +%c)
 
 ## extra modules
-mod_%.so: mod_%.c  | monimelt.h predefined.h
+mod_%.so: mod_%.c  | monimelt.h predef-monimelt.h
 	$(LINK.c) -fPIC $< -shared -o $@
 
 restore-state: 

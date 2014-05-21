@@ -747,6 +747,7 @@ main (int argc, char **argv)
       mom_full_dump ("cold dump of predefined", dump_cold_dir_mom, &outdump);
       MOM_INFORMPRINTF ("done cold dump to directory %s", dump_cold_dir_mom);
     }
+  mom_initial_load (".");
   ///
   return 0;
 }
