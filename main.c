@@ -767,7 +767,7 @@ main (int argc, char **argv)
   mom_initial_load (".");
   if (new_predefined_mom)
     {
-      if (!isalpha (new_predefined_mom))
+      if (!isalpha (new_predefined_mom[0]))
 	MOM_FATAPRINTF ("predefined %s does not start with a letter",
 			new_predefined_mom);
       for (const char *pc = new_predefined_mom; *pc; pc++)
