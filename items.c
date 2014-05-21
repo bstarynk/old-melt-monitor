@@ -174,7 +174,7 @@ add_item_mom (const momitem_t *aitm)
 	};
       if (curitm == aitm)
 	return false;
-      if (MOM_UNLIKELY (mom_item_cmp (curitm, aitm)))
+      if (MOM_UNLIKELY (!mom_item_cmp (curitm, aitm)))
 	MOM_FATAPRINTF ("items @%p and @%p have same id %s", curitm, aitm,
 			curitm->i_idstr->cstr);
     }
@@ -493,6 +493,7 @@ add_dict_mom (const momstring_t *nam, const momitem_t *itm)
   momhash_t h = nam->hash;
   assert (h != 0);
   unsigned dsize = dict_mom.dict_size;
+  assert (dsize > 0);
   struct dictent_mom_st *darr = dict_mom.dict_array;
   assert (dict_mom.dict_count + 1 < dsize);
   unsigned istart = h / dsize;
@@ -582,7 +583,7 @@ void
 mom_register_item_named (momitem_t *itm, const momstring_t *name)
 {
   if (!itm || itm->i_typnum != momty_item || !name
-      || name->typnum != momty_string || isalpha (name->cstr[0]))
+      || name->typnum != momty_string || !isalpha (name->cstr[0]))
     return;
   unsigned nlen = name->slen;
   for (unsigned cix = 0; cix < nlen; cix++)
@@ -790,6 +791,7 @@ mom_alpha_ordered_tuple_of_named_items (momval_t *parrname)
   unsigned siz = 0;
   unsigned cnt = 0;
   pthread_mutex_lock (&globitem_mtx_mom);
+  assert (dict_mom.dict_count > 0);
   siz = dict_mom.dict_count + 2;
   unsigned dicsiz = dict_mom.dict_size;
   assert (dicsiz > 0 && dict_mom.dict_array != NULL);
