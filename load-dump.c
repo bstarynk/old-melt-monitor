@@ -1170,6 +1170,27 @@ mom_load (const char *ldirnam)
 	MOM_FATAPRINTF ("failed to step on names: %s",
 			sqlite3_errmsg (ldr.ldr_sqlite));
     }
+  sqlite3_reset (ldr.ldr_sqlstmt_named_fetch);
+  bool spaceinited[momspa__last + 1] = { false };
+  memset (spaceinited, 0, sizeof (spaceinited));
+  /// loop on the queue of items
+  long loadloopcount = 0;
+  while (ldr.ldr_qfirst != NULL)
+    {
+      momitem_t *curlitm = ldr.ldr_qfirst->iq_item;
+      assert (curlitm && curlitm->i_typnum == momty_item);
+      if (ldr.ldr_qfirst == ldr.ldr_qlast)
+	ldr.ldr_qfirst = ldr.ldr_qlast = NULL;
+      else
+	ldr.ldr_qlast = ldr.ldr_qfirst->iq_next;
+      loadloopcount++;
+      MOM_DEBUG (load, MOMOUT_LITERAL ("current loaded item:"),
+		 MOMOUT_ITEM ((const momitem_t *) curlitm),
+		 MOMOUT_LITERAL (" spaceix#"),
+		 MOMOUT_DEC_INT ((int) curlitm->i_space));
+      assert (curlitm != NULL && curlitm->i_typnum == momty_item);
+      /// load_data_inside_item_mom (ld, curlitm, jdata)
+    }
 #warning incomplete load
   MOM_FATAPRINTF ("missing load item loop");
 }
