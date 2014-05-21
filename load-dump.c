@@ -1196,7 +1196,7 @@ mom_initial_load (const char *ldirnam)
       if (ldr.ldr_qfirst == ldr.ldr_qlast)
 	ldr.ldr_qfirst = ldr.ldr_qlast = NULL;
       else
-	ldr.ldr_qlast = ldr.ldr_qfirst->iq_next;
+	ldr.ldr_qfirst = ldr.ldr_qfirst->iq_next;
       loadloopcount++;
       unsigned ixspace = curlitm->i_space;
       MOM_DEBUG (load, MOMOUT_LITERAL ("load loop#"),
@@ -1225,7 +1225,9 @@ mom_initial_load (const char *ldirnam)
 	      MOM_DEBUG (load, MOMOUT_LITERAL ("load item:"),
 			 MOMOUT_ITEM ((const momitem_t *) curlitm),
 			 MOMOUT_LITERAL (" datastr:"),
-			 MOMOUT_LITERALV (datastr));
+			 MOMOUT_LITERALV (datastr),
+			 //MOMOUT_LITERAL (" backtrace:"), MOMOUT_NEWLINE (), MOMOUT_BACKTRACE (5), 
+			 MOMOUT_NEWLINE ());
 	      FILE *fdata =
 		fmemopen ((void *) datastr, strlen (datastr), "r");
 	      if (!fdata)
