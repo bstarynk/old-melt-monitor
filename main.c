@@ -391,6 +391,7 @@ mom_inform_at (const char *sfil, int slin, ...)
 static const char *wanted_dir_mom;
 static const char *write_pid_file_mom;
 static const char *dump_cold_dir_mom;
+static const char *new_predefined_mom;
 
 #if MOM_NEED_GC_CALLOC
 void *
@@ -491,6 +492,7 @@ enum extraopt_en
 {
   xtraopt__none = 0,
   xtraopt_chdir = 1024,
+  xtraopt_addpredef,
   xtraopt_writepid,
   xtraopt_loadstate,
   xtraopt_dumpstate,
@@ -516,6 +518,7 @@ static const struct option mom_long_options[] = {
   {"no-event-loop", no_argument, NULL, xtraopt_noeventloop},
   {"random-idstr", no_argument, NULL, xtraopt_randomidstr},
   {"dump-cold-state", required_argument, NULL, xtraopt_dumpcoldstate},
+  {"add-predefined", required_argument, NULL, xtraopt_addpredef},
   /* Terminating NULL placeholder.  */
   {NULL, no_argument, NULL, 0},
 };
@@ -550,6 +553,8 @@ usage_mom (const char *argv0)
 	  "\t #write the pid (e.g. --write-pid /var/run/monimelt.pid)\n");
   printf ("\t --random-idstr" "\t #output a random idstr then exit\n");
   printf ("\t --dump-cold-state <dumpdir>" "\t #dump the cold state\n");
+  printf ("\t --add-predefined <predefname>"
+	  "\t #add a new predefined and dump\n");
 }
 
 static void
@@ -654,6 +659,11 @@ parse_program_arguments_and_load_modules_mom (int *pargc, char **argv)
 	    dump_cold_dir_mom = optarg;
 	  }
 	  break;
+	case xtraopt_addpredef:
+	  {
+	    new_predefined_mom = optarg;
+	  }
+	  break;
 	default:
 	  {
 	    if (opt > 0 && opt < UCHAR_MAX && isalpha (opt))
@@ -748,6 +758,37 @@ main (int argc, char **argv)
       MOM_INFORMPRINTF ("done cold dump to directory %s", dump_cold_dir_mom);
     }
   mom_initial_load (".");
+  if (new_predefined_mom)
+    {
+      if (!isalpha (new_predefined_mom))
+	MOM_FATAPRINTF ("predefined %s does not start with a letter",
+			new_predefined_mom);
+      for (const char *pc = new_predefined_mom; *pc; pc++)
+	if (!
+	    (isalnum (*pc)
+	     || (*pc == '_' && pc > new_predefined_mom && isalnum (pc[-1]))))
+	  MOM_FATAPRINTF ("bad predefined name %s", new_predefined_mom);
+      momitem_t *predefitm = mom_get_item_of_name (new_predefined_mom);
+      if (!predefitm)
+	{
+	  predefitm = mom_make_item ();
+	  mom_register_item_named (predefitm,
+				   mom_make_string (new_predefined_mom));
+	};
+      predefitm->i_space = momspa_predefined;
+      MOM_INFORMPRINTF ("predefined item $%s named %s",
+			mom_ident_cstr_of_item (predefitm),
+			new_predefined_mom);
+      char reasonbuf[128];
+      memset (reasonbuf, 0, sizeof (reasonbuf));
+      snprintf (reasonbuf, sizeof (reasonbuf), "after predefined %s",
+		new_predefined_mom);
+      mom_full_dump (reasonbuf, ".", NULL);
+      MOM_INFORMPRINTF ("done dump here after predefined %s",
+			new_predefined_mom);
+      return 0;
+    }
+
   ///
   return 0;
 }
