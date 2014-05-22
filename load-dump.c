@@ -624,12 +624,15 @@ mom_dump_data_inside_item (struct mom_dumper_st *dmp, momitem_t *itm)
 	{
 	  assert (payld->dpayl_magic == MOM_PAYLOAD_MAGIC);
 	  if (payld->dpayl_dumpjsonfun)
-	    jpayl = payld->dpayl_dumpjsonfun (dmp, itm);
-	  const momitem_t *kinditm = mom_get_item_of_name (payld->dpayl_name);
-	  jkind =
-	    kinditm ? ((momval_t) kinditm) : ((momval_t)
-					      mom_make_string
-					      (payld->dpayl_name));
+	    {
+	      jpayl = payld->dpayl_dumpjsonfun (dmp, itm);
+	      const momitem_t *kinditm =
+		mom_get_item_of_name (payld->dpayl_name);
+	      jkind =
+		kinditm ? ((momval_t) kinditm) : ((momval_t)
+						  mom_make_string
+						  (payld->dpayl_name));
+	    }
 	}
     }
   if (itm->i_content.ptr)
