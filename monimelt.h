@@ -1550,6 +1550,9 @@ void mom_initial_load (const char *ldirnam);
 int mom_nb_workers;
 const char *mom_web_host;
 
+// generated modules start with:
+#define MOM_SHARED_MODULE_PREFIX "momg_"
+
 /// declare the predefined named and anonymous
 #define MOM_PREDEFINED_NAMED(Name,Id) extern momitem_t* mom_named__##Name;
 #define MOM_PREDEFINED_ANONYMOUS(Id) extern momitem_t* mom_anonymous_##Id;

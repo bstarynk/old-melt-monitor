@@ -21,9 +21,8 @@
 ## glib-2.0 are from GTK3, see https://developer.gnome.org/glib/
 ## gmime is also Gnome related, see https://developer.gnome.org/gmime/
 ## onion is not packaged, see https://github.com/davidmoreno/onion
-## or my onion branch https://github.com/bstarynk/onion ...
 ## Boehm GC is from http://www.hboehm.info/gc/
-PACKAGES= sqlite3 glib-2.0 gmime-2.6  libcurl
+PACKAGES= sqlite3 glib-2.0 gmime-2.6 libcurl
 PKGCONFIG= pkg-config
 CC=gcc
 CFLAGS= -std=gnu11 -Wall -Wextra $(PREPROFLAGS) $(OPTIMFLAGS)
@@ -35,8 +34,12 @@ OPTIMFLAGS= -Og -g
 LIBES= -lgc  $(shell $(PKGCONFIG) --libs $(PACKAGES)) -lonion_handlers -lonion -lpthread -lm -ldl
 SQLITE= sqlite3
 SOURCES= $(sort $(filter-out $(wildcard mod_*.c), $(wildcard [a-z]*.c)))
-MODSOURCES= $(sort $(wildcard mod_*.c))
-MODULES= $(patsubst %.c,%.so,$(MODSOURCES))
+# modules are monimelt generated code
+MODULE_SOURCES= $(sort $(wildcard momg_*.c))
+MODULES= $(patsubst %.c,%.so,$(MODULE_SOURCES))
+# plugins are extra code
+PLUGIN_SOURCES= $(sort $(wildcard plug_*.c))
+PLUGINS=  $(patsubst %.c,%.so,$(PLUGIN_SOURCES))
 OBJECTS= $(patsubst %.c,%.o,$(SOURCES))
 RM= rm -fv
 .PHONY: all modules clean tests indent restore-state dump-state
@@ -69,13 +72,15 @@ $(OBJECTS): monimelt.h predef-monimelt.h
 modules: $(MODULES)
 
 ## MONIMELT generated code starts with momg_ followed by alphanum or +
-## or - or _ characters. see MONIMELT_SHARED_MODULE_PREFIX in monimelt.h
+## or - or _ characters, conventionally by the name or identstr of the
+## module item. see MONIMELT_SHARED_MODULE_PREFIX in monimelt.h
 momg_%.so: momg_%.c | monimelt.h predef-monimelt.h
 	$(LINK.c) -fPIC $< -shared -o $@
-	@logger -t makemonimelt -p user.info -s compiled $< into shared $@ at $$(date +%c)
+	@logger -t makemonimelt -p user.info -s compiled $< into \
+	        shared module $@ at $$(date +%c)
 
-## extra modules
-mod_%.so: mod_%.c  | monimelt.h predef-monimelt.h
+## extra plugins
+plug_%.so: plug_%.c  | monimelt.h predef-monimelt.h
 	$(LINK.c) -fPIC $< -shared -o $@
 
 restore-state: 
