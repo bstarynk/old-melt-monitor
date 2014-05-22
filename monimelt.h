@@ -50,6 +50,7 @@
 #include <sys/poll.h>
 #include <sys/select.h>
 #include <sys/wait.h>
+#include <sys/file.h>
 #include <fcntl.h>
 #include <dlfcn.h>
 #include <execinfo.h>
@@ -1179,6 +1180,13 @@ __attribute__ ((format (printf, 3, 4)));
 ////////////////////////////////////////////////////////////////
 /////////// OUTPUT
 ////////////////////////////////////////////////////////////////
+
+// rename ORIGPATH as DESTPATH -both in same directory or filesystem-
+// if the content of ORIGPATH is not the same as the content of DESTPATH
+// also backup DESPATH as DESPATH~; if both contents are same, remove ORIGPATH
+// e.g. mom_rename_if_content_changed("dir/foo.c+1234tmp", "dir/foo.c")
+void mom_rename_if_content_changed (const char *origpath,
+				    const char *destpath);
 
 #define MOM_MOUT_MAGIC 0x41f67aa5	/* mom_out_magic 1106672293 */
 enum outflags_en

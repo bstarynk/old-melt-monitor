@@ -20,6 +20,86 @@
 
 #include "monimelt.h"
 
+static pthread_mutex_t renamcontchg_mtx_mom = PTHREAD_MUTEX_INITIALIZER;
+void
+mom_rename_if_content_changed (const char *origpath, const char *destpath)
+{
+  FILE *origfil = NULL;
+  FILE *destfil = NULL;
+  bool samecontents = false;
+  assert (origpath && origpath[0]);
+  assert (destpath && destpath[0]);
+  assert (strlen (origpath) < MOM_PATH_MAX - 1);
+  assert (strlen (destpath) < MOM_PATH_MAX - 1);
+  assert (strcmp (origpath, destpath) != 0);
+  pthread_mutex_lock (&renamcontchg_mtx_mom);
+  destfil = fopen (destpath, "r");
+  if (!destfil)
+    {
+      if (rename (origpath, destpath))
+	MOM_FATAPRINTF ("failed to rename %s as new %s", origpath, destpath);
+      goto end;
+    };
+  flock (fileno (destfil), LOCK_EX);
+  origfil = fopen (origpath, "r");
+  if (!origfil)
+    MOM_FATAPRINTF ("failed to open original file %s to be renamed as %s",
+		    origpath, destpath);
+  flock (fileno (origfil), LOCK_EX);
+  struct stat origstat, deststat;
+  memset (&origstat, 0, sizeof (struct stat));
+  memset (&deststat, 0, sizeof (struct stat));
+  if (fstat (fileno (origfil), &origstat))
+    MOM_FATAPRINTF ("failed to fstat fd#%d for original %s", fileno (origfil),
+		    origpath);
+  if (fstat (fileno (destfil), &deststat))
+    MOM_FATAPRINTF ("failed to fstat fd#%d for destination %s",
+		    fileno (destfil), destpath);
+  if (origstat.st_size != deststat.st_size)
+    samecontents = false;
+  else
+    {
+      samecontents = true;
+      do
+	{
+	  int oc = getc (origfil);
+	  int dc = getc (destfil);
+	  samecontents = (oc == dc);
+	  if (oc == EOF || dc == EOF)
+	    break;
+	}
+      while (samecontents);
+    };
+  if (samecontents)
+    {
+      if (remove (origpath))
+	MOM_FATAPRINTF ("failed to remove original %s same as destination %s",
+			origpath, destpath);
+    }
+  else
+    {				// different content
+      char backpath[MOM_PATH_MAX];
+      memset (backpath, 0, sizeof (backpath));
+      snprintf (backpath, sizeof (backpath), "%s~", destpath);
+      if (rename (destpath, backpath))
+	MOM_FATAPRINTF ("failed to backup %s as %s", destpath, backpath);
+      if (rename (origpath, destpath))
+	MOM_FATAPRINTF ("failed to rename %s different as destination %s",
+			origpath, destpath);
+    }
+end:
+  if (origfil)
+    {
+      flock (fileno (origfil), LOCK_UN);
+      fclose (origfil);
+    };
+  if (destfil)
+    {
+      flock (fileno (origfil), LOCK_UN);
+      fclose (destfil);
+    };
+  pthread_mutex_unlock (&renamcontchg_mtx_mom);
+}
 
 void
 mom_out_at (const char *sfil, int lin, momout_t *pout, ...)
