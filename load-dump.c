@@ -44,7 +44,7 @@ struct mom_loader_st
   // statement for item fetching
   sqlite3_stmt *ldr_sqlstmt_item_fetch;
   /// queue of items whose content should be loaded:
-  struct mom_itemqueue_st ldr_itqueue;
+  struct mom_valuequeue_st ldr_itqueue;
 };
 
 
@@ -75,7 +75,7 @@ struct mom_dumper_st
   sqlite3_stmt *dmp_sqlstmt_name_insert;
   sqlite3_stmt *dmp_sqlstmt_module_insert;
   // the queue of items to be dumped
-  struct mom_itemqueue_st dmp_itqueue;
+  struct mom_valuequeue_st dmp_itqueue;
 };
 static pthread_mutex_t dump_mtx_mom = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 
@@ -186,7 +186,7 @@ mom_dump_add_item (struct mom_dumper_st *du, const momitem_t *itm)
   if (!founditem)
     {
       MOM_DEBUG (dump, MOMOUT_LITERAL ("enqueue item:"), MOMOUT_ITEM (itm));
-      mom_queue_add_item_back (&du->dmp_itqueue, itm);
+      mom_queue_add_value_back (&du->dmp_itqueue, (momval_t) itm);
       add_dumped_item_mom (du, itm);
     }
 }
@@ -841,7 +841,7 @@ mom_load_item_json (struct mom_loader_st *ld, const momval_t jval)
   // add and enqueue the item if new
   if (add_loaded_item_mom (ld, litm))
     {
-      mom_queue_add_item_back (&ld->ldr_itqueue, litm);
+      mom_queue_add_value_back (&ld->ldr_itqueue, (momval_t) litm);
     }
   return litm;
 }
@@ -1144,7 +1144,7 @@ mom_initial_load (const char *ldirnam)
 	  if (!add_loaded_item_mom (&ldr, curnameditm))
 	    MOM_FATAPRINTF ("failed to add named item %s of id %s", rowname,
 			    rowidstr);
-	  mom_queue_add_item_back (&ldr.ldr_itqueue, curnameditm);
+	  mom_queue_add_value_back (&ldr.ldr_itqueue, (momval_t) curnameditm);
 	}
       else
 	MOM_FATAPRINTF ("failed to step on names: %s",
@@ -1158,7 +1158,7 @@ mom_initial_load (const char *ldirnam)
   while (!mom_queue_is_empty (&ldr.ldr_itqueue))
     {
       momitem_t *curlitm =
-	(momitem_t *) mom_queue_pop_item_front (&ldr.ldr_itqueue);
+	mom_value_to_item (mom_queue_pop_value_front (&ldr.ldr_itqueue));
       assert (curlitm && curlitm->i_typnum == momty_item);
       loadloopcount++;
       unsigned ixspace = curlitm->i_space;
@@ -1429,7 +1429,7 @@ mom_full_dump (const char *reason, const char *dumpdir,
   while (!mom_queue_is_empty (&dmp.dmp_itqueue))
     {
       momitem_t *curitm =
-	(momitem_t *) mom_queue_pop_item_front (&dmp.dmp_itqueue);
+	mom_value_to_item (mom_queue_pop_value_front (&dmp.dmp_itqueue));
       assert (curitm != NULL && curitm->i_typnum == momty_item);
       MOM_DEBUG (dump, MOMOUT_LITERAL ("scanning item:"),
 		 MOMOUT_ITEM ((const momitem_t *) curitm));

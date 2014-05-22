@@ -591,6 +591,12 @@ mom_is_item (momval_t v)
 	  && v.pitem->i_magic == MOM_ITEM_MAGIC);
 }
 
+static inline momitem_t *
+mom_value_to_item (momval_t v)
+{
+  return (v.ptr && v.pitem->i_typnum == momty_item) ? v.pitem : NULL;
+}
+
 static inline int
 mom_item_cmp (const momitem_t *itm1, const momitem_t *itm2)
 {
@@ -1403,94 +1409,94 @@ extern const char *mombad_entries;
 extern const char *mombad_unsigned;
 
 
-struct mom_itqelem_st
+struct mom_vaqelem_st
 {
-  struct mom_itqelem_st *iqe_next;
-  const momitem_t *iqe_item;
+  struct mom_vaqelem_st *vqe_next;
+  momval_t vqe_val;
 };
 
-struct mom_itemqueue_st
+struct mom_valuequeue_st
 {
-  struct mom_itqelem_st *itq_first;
-  struct mom_itqelem_st *itq_last;
+  struct mom_vaqelem_st *vaq_first;
+  struct mom_vaqelem_st *vaq_last;
 };
 
 static inline bool
-mom_queue_is_empty (struct mom_itemqueue_st *iq)
+mom_queue_is_empty (struct mom_valuequeue_st *vq)
 {
-  assert (iq != NULL);
-  return iq->itq_first != NULL;
+  assert (vq != NULL);
+  return vq->vaq_first != NULL;
 }
 
 static inline void
-mom_queue_add_item_back (struct mom_itemqueue_st *iq, const momitem_t *itm)
+mom_queue_add_value_back (struct mom_valuequeue_st *vq, const momval_t val)
 {
-  assert (iq != NULL);
-  struct mom_itqelem_st *qel =
-    MOM_GC_ALLOC ("add back item queue", sizeof (struct mom_itqelem_st));
-  qel->iqe_item = itm;
-  if (MOM_UNLIKELY (iq->itq_first == NULL))
-    iq->itq_first = iq->itq_last = qel;
+  assert (vq != NULL);
+  struct mom_vaqelem_st *qel =
+    MOM_GC_ALLOC ("add back value queue", sizeof (struct mom_vaqelem_st));
+  qel->vqe_val = val;
+  if (MOM_UNLIKELY (vq->vaq_first == NULL))
+    vq->vaq_first = vq->vaq_last = qel;
   else
     {
-      iq->itq_last->iqe_next = qel;
-      iq->itq_last = qel;
+      vq->vaq_last->vqe_next = qel;
+      vq->vaq_last = qel;
     }
 }
 
 static inline void
-mom_queue_add_item_front (struct mom_itemqueue_st *iq, const momitem_t *itm)
+mom_queue_add_value_front (struct mom_valuequeue_st *vq, const momval_t val)
 {
-  assert (iq != NULL);
-  struct mom_itqelem_st *qel =
-    MOM_GC_ALLOC ("add front item queue", sizeof (struct mom_itqelem_st));
-  qel->iqe_item = itm;
-  if (MOM_UNLIKELY (iq->itq_first == NULL))
-    iq->itq_first = iq->itq_last = qel;
+  assert (vq != NULL);
+  struct mom_vaqelem_st *qel =
+    MOM_GC_ALLOC ("add front value queue", sizeof (struct mom_vaqelem_st));
+  qel->vqe_val = val;
+  if (MOM_UNLIKELY (vq->vaq_first == NULL))
+    vq->vaq_first = vq->vaq_last = qel;
   else
     {
-      qel->iqe_next = iq->itq_first;
-      iq->itq_first = qel;
+      qel->vqe_next = vq->vaq_first;
+      vq->vaq_first = qel;
     }
 }
 
-static inline const momitem_t *
-mom_queue_peek_item_front (struct mom_itemqueue_st *iq)
+static inline momval_t
+mom_queue_peek_value_front (struct mom_valuequeue_st *vq)
 {
-  assert (iq != NULL);
-  if (MOM_UNLIKELY (iq->itq_first == NULL))
-    return NULL;
+  assert (vq != NULL);
+  if (MOM_UNLIKELY (vq->vaq_first == NULL))
+    return MOM_NULLV;
   else
-    return iq->itq_first->iqe_item;
+    return vq->vaq_first->vqe_val;
 }
 
-static inline const momitem_t *
-mom_queue_pop_item_front (struct mom_itemqueue_st *iq)
+static inline momval_t
+mom_queue_pop_value_front (struct mom_valuequeue_st *vq)
 {
-  assert (iq != NULL);
-  if (MOM_UNLIKELY (iq->itq_first == NULL))
-    return NULL;
+  assert (vq != NULL);
+  if (MOM_UNLIKELY (vq->vaq_first == NULL))
+    return MOM_NULLV;
   else
     {
-      struct mom_itqelem_st *qel = iq->itq_first;
-      const momitem_t *itm = qel->iqe_item;
-      if (MOM_UNLIKELY (qel == iq->itq_last))
-	iq->itq_first = iq->itq_last = NULL;
+      struct mom_vaqelem_st *qel = vq->vaq_first;
+      const momval_t val = qel->vqe_val;
+      if (MOM_UNLIKELY (qel == vq->vaq_last))
+	vq->vaq_first = vq->vaq_last = NULL;
       else
-	iq->itq_first = qel->iqe_next;
+	vq->vaq_first = qel->vqe_next;
       MOM_GC_FREE (qel);
-      return itm;
+      return val;
     }
 }
 
-static inline const momitem_t *
-mom_queue_peek_item_back (struct mom_itemqueue_st *iq)
+static inline momval_t
+mom_queue_peek_value_back (struct mom_valuequeue_st *vq)
 {
-  assert (iq != NULL);
-  if (MOM_UNLIKELY (iq->itq_last == NULL))
-    return NULL;
+  assert (vq != NULL);
+  if (MOM_UNLIKELY (vq->vaq_last == NULL))
+    return MOM_NULLV;
   else
-    return iq->itq_last->iqe_item;
+    return vq->vaq_last->vqe_val;
 }
 
 
@@ -1521,6 +1527,7 @@ void mom_full_dump (const char *reason, const char *dumpdir,
 // can be called from dumping routines
 void mom_dump_require_module (struct mom_dumper_st *du, const char *modname);
 
+void mom_dump_notice (struct mom_dumper_st *du, momval_t nval);
 
 // initial load
 void mom_initial_load (const char *ldirnam);
