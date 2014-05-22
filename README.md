@@ -222,6 +222,10 @@ This code is free software (GPLv3+) in pre-alpha stage in may 2014.
 
 To test it, (edit `Makefile` if wanted, then) compile monimelt with
     make,
+
+then add -perhaps thru a symlink named monimelt-dump-state - the shell
+script monimelt-dump-state.sh to your $PATH
+
 then first build the state-monimelt.dbsqlite sqlite3 database with
     make restore-state
 then run

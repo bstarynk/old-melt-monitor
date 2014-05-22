@@ -1709,6 +1709,7 @@ end:
       dumpargtab[2] = NULL;
       dumpargtab[3] = NULL;
       fflush (NULL);
+      errno = 0;
       pid_t dumpid = fork ();
       if (dumpid < 0)
 	MOM_FATAPRINTF ("failed to fork %s", MOM_DUMP_SCRIPT);
