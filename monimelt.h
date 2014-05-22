@@ -1403,11 +1403,97 @@ extern const char *mombad_entries;
 extern const char *mombad_unsigned;
 
 
-struct mom_itqueue_st
+struct mom_itqelem_st
 {
-  struct mom_itqueue_st *iq_next;
-  momitem_t *iq_item;
+  struct mom_itqelem_st *iqe_next;
+  const momitem_t *iqe_item;
 };
+
+struct mom_itemqueue_st
+{
+  struct mom_itqelem_st *itq_first;
+  struct mom_itqelem_st *itq_last;
+};
+
+static inline bool
+mom_queue_is_empty (struct mom_itemqueue_st *iq)
+{
+  assert (iq != NULL);
+  return iq->itq_first != NULL;
+}
+
+static inline void
+mom_queue_add_item_back (struct mom_itemqueue_st *iq, const momitem_t *itm)
+{
+  assert (iq != NULL);
+  struct mom_itqelem_st *qel =
+    MOM_GC_ALLOC ("add back item queue", sizeof (struct mom_itqelem_st));
+  qel->iqe_item = itm;
+  if (MOM_UNLIKELY (iq->itq_first == NULL))
+    iq->itq_first = iq->itq_last = qel;
+  else
+    {
+      iq->itq_last->iqe_next = qel;
+      iq->itq_last = qel;
+    }
+}
+
+static inline void
+mom_queue_add_item_front (struct mom_itemqueue_st *iq, const momitem_t *itm)
+{
+  assert (iq != NULL);
+  struct mom_itqelem_st *qel =
+    MOM_GC_ALLOC ("add front item queue", sizeof (struct mom_itqelem_st));
+  qel->iqe_item = itm;
+  if (MOM_UNLIKELY (iq->itq_first == NULL))
+    iq->itq_first = iq->itq_last = qel;
+  else
+    {
+      qel->iqe_next = iq->itq_first;
+      iq->itq_first = qel;
+    }
+}
+
+static inline const momitem_t *
+mom_queue_peek_item_front (struct mom_itemqueue_st *iq)
+{
+  assert (iq != NULL);
+  if (MOM_UNLIKELY (iq->itq_first == NULL))
+    return NULL;
+  else
+    return iq->itq_first->iqe_item;
+}
+
+static inline const momitem_t *
+mom_queue_pop_item_front (struct mom_itemqueue_st *iq)
+{
+  assert (iq != NULL);
+  if (MOM_UNLIKELY (iq->itq_first == NULL))
+    return NULL;
+  else
+    {
+      struct mom_itqelem_st *qel = iq->itq_first;
+      const momitem_t *itm = qel->iqe_item;
+      if (MOM_UNLIKELY (qel == iq->itq_last))
+	iq->itq_first = iq->itq_last = NULL;
+      else
+	iq->itq_first = qel->iqe_next;
+      MOM_GC_FREE (qel);
+      return itm;
+    }
+}
+
+static inline const momitem_t *
+mom_queue_peek_item_back (struct mom_itemqueue_st *iq)
+{
+  assert (iq != NULL);
+  if (MOM_UNLIKELY (iq->itq_last == NULL))
+    return NULL;
+  else
+    return iq->itq_last->iqe_item;
+}
+
+
 
 //////// random numbers
 uint32_t mom_random_nonzero_32 (void);
