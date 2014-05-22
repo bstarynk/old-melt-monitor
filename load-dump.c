@@ -1514,6 +1514,8 @@ mom_full_dump (const char *reason, const char *dumpdir,
 	    char *datastr = NULL;
 	    size_t datasiz = 0;
 	    struct momout_st out = { 0 };
+	    unsigned oldmpspa = dmp.dmp_curspace;
+	    dmp.dmp_curspace = ispa;
 	    // build the data string
 	    momval_t datav = mom_dump_data_inside_item (&dmp, curitm);
 	    FILE *fdata = open_memstream (&datastr, &datasiz);
@@ -1530,6 +1532,7 @@ mom_full_dump (const char *reason, const char *dumpdir,
 		spad->space_store_item_fun (&dmp, curitm, datastr);
 		free (datastr), datastr = NULL;
 	      }
+	    dmp.dmp_curspace = oldmpspa;
 	  }
       done_item:
 	pthread_mutex_unlock (&curitm->i_mtx);
@@ -1823,6 +1826,9 @@ spaceroot_storeitem_mom (struct mom_dumper_st *du, momitem_t *itm,
   if (err)
     MOM_FATAPRINTF ("failed to bind dumped item datastr: %s, err#%d",
 		    sqlite3_errmsg (du->dmp_sqlite), err);
+  MOM_DEBUGPRINTF (dump,
+		   "spaceroot_storeitem_mom before iteminsert step ?1=idstr=%s\n.. ?2=datastr=%s",
+		   idstr, datastr);
   err = sqlite3_step (du->dmp_sqlstmt_item_insert);
   if (err != SQLITE_DONE)
     MOM_FATAPRINTF ("failed to insert name: %s, err#%d",
