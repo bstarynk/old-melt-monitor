@@ -91,7 +91,7 @@ enum dumpstate_en
 
 #define LOADER_MAGIC 0x169128bb	/* loader magic 378611899 */
 
-static inline void
+static inline int
 add_dumped_item_mom (struct mom_dumper_st *dmp, const momitem_t *itm)
 {
   assert (itm && itm->i_typnum == momty_item);
@@ -101,24 +101,29 @@ add_dumped_item_mom (struct mom_dumper_st *dmp, const momitem_t *itm)
   unsigned istart = h % size;
   for (unsigned ix = istart; ix < size; ix++)
     {
-      if (!dmp->dmp_array[ix])
+      if (dmp->dmp_array[ix] == itm)
+	return ix;
+      else if (!dmp->dmp_array[ix])
 	{
 	  dmp->dmp_array[ix] = itm;
 	  dmp->dmp_count++;
-	  return;
+	  return ix;
 	}
     }
   for (unsigned ix = 0; ix < istart; ix++)
     {
+      if (dmp->dmp_array[ix] == itm)
+	return ix;
       if (!dmp->dmp_array[ix])
 	{
 	  dmp->dmp_array[ix] = itm;
 	  dmp->dmp_count++;
-	  return;
+	  return ix;
 	}
     }
   // unreached
   MOM_FATAPRINTF ("corrupted dump of %d items", dmp->dmp_count);
+  return -1;
 }
 
 
@@ -347,7 +352,7 @@ mom_dump_scan_inside_item (struct mom_dumper_st *dmp, momitem_t *itm)
 	      && atent[aix].aten_val.ptr != MOM_EMPTY
 	      && atent[aix].aten_itm->i_space != momspa_none)
 	    {
-	      add_dumped_item_mom (dmp, atent[aix].aten_itm);
+	      mom_dump_add_item (dmp, atent[aix].aten_itm);
 	      mom_dump_scan_value (dmp, atent[aix].aten_val);
 	    }
 	}
@@ -1383,13 +1388,13 @@ mom_full_dump (const char *reason, const char *dumpdir,
   /// create & initialize the dumper
   struct mom_dumper_st dmp = { 0 };
   memset (&dmp, 0, sizeof (struct mom_dumper_st));
-  const unsigned siz = 512;
+  const unsigned siz = 128;
   const momitem_t **arr
     = MOM_GC_ALLOC ("dumper array", siz * sizeof (momitem_t *));
   dmp.dmp_array = arr;
   dmp.dmp_size = siz;
   dmp.dmp_count = 0;
-  const unsigned predefsiz = 32;
+  const unsigned predefsiz = 16;
   dmp.dmp_predefarray =
     MOM_GC_ALLOC ("dumper predefined array",
 		  predefsiz * sizeof (momitem_t *));
@@ -1649,12 +1654,6 @@ mom_full_dump (const char *reason, const char *dumpdir,
       MOM_FATAPRINTF ("failed to close predefined header file %s",
 		      dmp.dmp_predefhpath);
     filpredefh = NULL;
-    {
-      snprintf (filpath, sizeof (filpath), "%s%%", dmp.dmp_predefhpath);
-      if (rename (filpath, dmp.dmp_predefhpath))
-	MOM_FATAPRINTF ("failed to rename %s to %s", filpath,
-			dmp.dmp_predefhpath);
-    }
     MOM_INFORMPRINTF ("generated predefine header file %s",
 		      dmp.dmp_predefhpath);
   };

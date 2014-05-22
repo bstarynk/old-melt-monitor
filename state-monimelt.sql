@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 May 21
+-- state-monimelt dump 2014 May 22
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -35,7 +35,8 @@ INSERT INTO t_items VALUES('_35vp60aw7em_d436vfie4ud','{"kind": null, "payload":
 ');
 INSERT INTO t_items VALUES('_3xpyd539p4m_23h7wi59xi9','{"kind": null, "payload": null, "attr": [], "content": null}
 ');
-INSERT INTO t_items VALUES('_41u1utcxyek_22cftxt3xxm','{"kind": null, "payload": null, "attr": [], "content": null}
+INSERT INTO t_items VALUES('_41u1utcxyek_22cftxt3xxm','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "gives a human-readable comment"}], "content": null}
 ');
 INSERT INTO t_items VALUES('_41v0erax6my_m6pytj0793u','{"kind": null, "payload": null, "attr": [], "content": null}
 ');
