@@ -1331,8 +1331,8 @@ mom_full_dump (const char *reason, const char *dumpdir,
   MOM_DEBUGPRINTF (dump,
 		   "mom_full_dump reason=%s startrealtime=%.3f startcputime=%.3f",
 		   reason, startrealtime, startcputime);
-  snprintf (tempsuffix, sizeof (tempsuffix), "p%dr%u%%", (int) getpid (),
-	    mom_random_32 ());
+  snprintf (tempsuffix, sizeof (tempsuffix), "p%dr%x%%", (int) getpid (),
+	    mom_random_32 () & 0xfffff);
   MOM_DEBUGPRINTF (dump,
 		   "start mom_full_dump reason=%s dumpdir=%s tempsuffix=%s",
 		   reason, dumpdir, tempsuffix);
