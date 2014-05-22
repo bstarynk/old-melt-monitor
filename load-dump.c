@@ -76,6 +76,8 @@ struct mom_dumper_st
   sqlite3_stmt *dmp_sqlstmt_module_insert;
   // the queue of items to be dumped
   struct mom_valuequeue_st dmp_itqueue;
+  // the queue of values to be noticed
+  struct mom_valuequeue_st dmp_vanoticequeue;
 };
 static pthread_mutex_t dump_mtx_mom = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 
@@ -1719,6 +1721,17 @@ end:
     MOM_WARNPRINTF
       ("dont dump the database %s in SQL form because of strange path",
        dmp.dmp_sqlpath);
+  /// fill the outcome, if asked
+  if (outd)
+    {
+      outd->odmp_tuplenamed = tupnameditems;
+      outd->odmp_jarrayname = jarrnam;
+      outd->odmp_setpredef =
+	(momval_t) mom_make_set_from_array (dmp.dmp_predefnb,
+					    dmp.dmp_predefarray);
+#warning should create the notice node...
+      outd->odmp_nodenotice = MOM_NULLV;
+    }				/* end filling the outcome */
   pthread_mutex_unlock (&dump_mtx_mom);
   double endrealtime = mom_clock_time (CLOCK_REALTIME);
   double endcputime = mom_clock_time (CLOCK_PROCESS_CPUTIME_ID);
@@ -1752,6 +1765,14 @@ mom_dump_require_module (struct mom_dumper_st *du, const char *modname)
   if (err != SQLITE_DONE)
     MOM_WARNPRINTF ("failed to require dumped module %s: %s, err#%d", modname,
 		    sqlite3_errmsg (du->dmp_sqlite), err);
+}
+
+void
+mom_dump_notice (struct mom_dumper_st *du, momval_t nval)
+{
+  assert (du && du->dmp_magic == DUMPER_MAGIC);
+  if (nval.ptr)
+    mom_queue_add_value_back (&du->dmp_vanoticequeue, nval);
 }
 
 static void

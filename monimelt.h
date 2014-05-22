@@ -1428,6 +1428,17 @@ mom_queue_is_empty (struct mom_valuequeue_st *vq)
   return vq->vaq_first != NULL;
 }
 
+static inline unsigned
+mom_queue_length (struct mom_valuequeue_st *vq)
+{
+  assert (vq != NULL);
+  unsigned cnt = 0;
+  for (struct mom_vaqelem_st * qel = vq->vaq_first;
+       qel != NULL; qel = qel->vqe_next)
+    cnt++;
+  return cnt;
+}
+
 static inline void
 mom_queue_add_value_back (struct mom_valuequeue_st *vq, const momval_t val)
 {
@@ -1514,7 +1525,10 @@ uint64_t mom_random_64 (void);
 // outcome of successful dump
 struct mom_dumpoutcome_st
 {
-  momval_t *odmp_tuplenamed;
+  momval_t odmp_tuplenamed;
+  momval_t odmp_jarrayname;
+  momval_t odmp_setpredef;
+  momval_t odmp_nodenotice;
 };
 
 // the initial loading
