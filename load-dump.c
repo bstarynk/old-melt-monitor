@@ -1680,45 +1680,18 @@ end:
   //////// backup the old database file and rename the new
   {
     memset (filpath, 0, sizeof (filpath));
-    MOM_DEBUGPRINTF (dump, "backup database %s and rename tempsuffix=%s",
-		     sqlite3path, tempsuffix);
-    if (!access (sqlite3path, F_OK))
-      {
-	snprintf (filpath, sizeof (filpath), "%s~", sqlite3path);
-	if (rename (sqlite3path, filpath))
-	  MOM_WARNPRINTF ("failed to backup Sqlite db %s as %s", sqlite3path,
-			  filpath);
-	else
-	  MOM_INFORMPRINTF ("moved for backup Sqlite db %s to %s",
-			    sqlite3path, filpath);
-      }
-    memset (filpath, 0, sizeof (filpath));
     snprintf (filpath, sizeof (filpath), "%s+%s", sqlite3path, tempsuffix);
-    if (rename (filpath, sqlite3path))
-      MOM_FATAPRINTF ("failed to rename database %s as %s",
-		      filpath, sqlite3path);
+    MOM_DEBUGPRINTF (dump, "backup dbsqlite3 %s and rename %s",
+		     sqlite3path, filpath);
+    mom_rename_if_content_changed (filpath, sqlite3path);
   }
   //////// backup the old header file and rename the new
   {
     memset (filpath, 0, sizeof (filpath));
-    MOM_DEBUGPRINTF (dump, "backup predefheader %s and rename tempsuffix=%s",
-		     predefhpath, tempsuffix);
-    if (!access (predefhpath, F_OK))
-      {
-	snprintf (filpath, sizeof (filpath), "%s~", predefhpath);
-	if (rename (predefhpath, filpath))
-	  MOM_WARNPRINTF ("failed to backup predefined headers %s as %s",
-			  predefhpath, filpath);
-	else
-	  MOM_INFORMPRINTF
-	    ("moved for backup old predefined headers %s as %s", predefhpath,
-	     filpath);
-      };
-    memset (filpath, 0, sizeof (filpath));
     snprintf (filpath, sizeof (filpath), "%s+%s", predefhpath, tempsuffix);
-    if (rename (filpath, predefhpath))
-      MOM_FATAPRINTF ("failed to rename predefined headers %s as %s",
-		      filpath, predefhpath);
+    MOM_DEBUGPRINTF (dump, "backup predefheader %s and rename %s",
+		     predefhpath, filpath);
+    mom_rename_if_content_changed (filpath, predefhpath);
   }
   // perhaps fork the dump command
   bool shouldump = strlen (dmp.dmp_sqlpath) < MOM_PATH_MAX - 32;
