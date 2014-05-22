@@ -554,7 +554,7 @@ usage_mom (const char *argv0)
 	  "\t #write the pid (e.g. --write-pid /var/run/monimelt.pid)\n");
   printf ("\t --random-idstr" "\t #output a random idstr then exit\n");
   printf ("\t --dump-cold-state <dumpdir>" "\t #dump the cold state\n");
-  printf ("\t --add-predefined <predefname>"
+  printf ("\t --add-predefined <predefname> [<comment>]"
 	  "\t #add a new predefined and dump\n");
 }
 
