@@ -1729,8 +1729,22 @@ end:
       outd->odmp_setpredef =
 	(momval_t) mom_make_set_from_array (dmp.dmp_predefnb,
 					    dmp.dmp_predefarray);
-#warning should create the notice node...
-      outd->odmp_nodenotice = MOM_NULLV;
+      unsigned nbnotice = mom_queue_length (&dmp.dmp_vanoticequeue);
+      momval_t tinynval[MOM_TINY_MAX] = { MOM_NULLV };
+      momval_t *nvalarr =
+	(nbnotice < MOM_TINY_MAX) ? tinynval : MOM_GC_ALLOC ("notice array",
+							     nbnotice *
+							     sizeof
+							     (momval_t));
+      unsigned cntnotice = 0;
+      for (struct mom_vaqelem_st * qel = dmp.dmp_vanoticequeue.vaq_first;
+	   qel != NULL && cntnotice < nbnotice; qel = qel->vqe_next)
+	nvalarr[cntnotice++] = qel->vqe_val;
+      outd->odmp_nodenotice =
+	(momval_t) mom_make_node_from_array (mom_named__notice, nbnotice,
+					     nvalarr);
+      if (nvalarr != tinynval)
+	MOM_GC_FREE (nvalarr);
     }				/* end filling the outcome */
   pthread_mutex_unlock (&dump_mtx_mom);
   double endrealtime = mom_clock_time (CLOCK_REALTIME);
