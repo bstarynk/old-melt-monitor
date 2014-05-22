@@ -1323,9 +1323,19 @@ mom_full_dump (const char *reason, const char *dumpdir,
 {
   FILE *filpredefh = NULL;
   char filpath[MOM_PATH_MAX];
+  char tempsuffix[32];
   memset (filpath, 0, sizeof (filpath));
-  MOM_DEBUGPRINTF (dump, "start mom_full_dump reason=%s dumpdir=%s", reason,
-		   dumpdir);
+  memset (tempsuffix, 0, sizeof (tempsuffix));
+  double startrealtime = mom_clock_time (CLOCK_REALTIME);
+  double startcputime = mom_clock_time (CLOCK_PROCESS_CPUTIME_ID);
+  MOM_DEBUGPRINTF (dump,
+		   "mom_full_dump reason=%s startrealtime=%.3f startcputime=%.3f",
+		   reason, startrealtime, startcputime);
+  snprintf (tempsuffix, sizeof (tempsuffix), "p%dr%u%%", (int) getpid (),
+	    mom_random_32 ());
+  MOM_DEBUGPRINTF (dump,
+		   "start mom_full_dump reason=%s dumpdir=%s tempsuffix=%s",
+		   reason, dumpdir, tempsuffix);
   if (outd)
     memset (outd, 0, sizeof (struct mom_dumpoutcome_st));
   if (!dumpdir || !dumpdir[0])
@@ -1333,12 +1343,10 @@ mom_full_dump (const char *reason, const char *dumpdir,
       MOM_WARNPRINTF ("setting dump directory to current: %s",
 		      getcwd (filpath, sizeof (filpath)));
       dumpdir = ".";
-    };
+    }
+  else if (strlen (dumpdir) > MOM_PATH_MAX - 48)
+    MOM_FATAPRINTF ("too long dump directory path %s", dumpdir);
   memset (filpath, 0, sizeof (filpath));
-  double startrealtime = mom_clock_time (CLOCK_REALTIME);
-  double startcputime = mom_clock_time (CLOCK_PROCESS_CPUTIME_ID);
-  MOM_DEBUGPRINTF (dump, "mom_full_dump startrealtime=%.3f startcputime=%.3f",
-		   startrealtime, startcputime);
   /// lock the mutex
   pthread_mutex_lock (&dump_mtx_mom);
   MOM_INFORMPRINTF ("start full dump reason=%s dumpdir=%s", reason, dumpdir);
@@ -1350,42 +1358,28 @@ mom_full_dump (const char *reason, const char *dumpdir,
       else
 	MOM_INFORMPRINTF ("made dump directory %s", dumpdir);
     }
-  /// backup the *.dbsqlite file and open the database
+  /// open the database with the tempsuffix
   snprintf (filpath, sizeof (filpath), "%s/%s.dbsqlite", dumpdir,
 	    MOM_STATE_FILE_BASENAME);
   const char *sqlite3path = MOM_GC_STRDUP ("sqlite3 path", filpath);
   memset (filpath, 0, sizeof (filpath));
-  if (!access (sqlite3path, F_OK))
-    {
-      char backupath[MOM_PATH_MAX];
-      memset (backupath, 0, sizeof (backupath));
-      snprintf (backupath, sizeof (backupath), "%s~", sqlite3path);
-      if (rename (sqlite3path, backupath))
-	MOM_WARNPRINTF ("failed to backup Sqlite db %s as %s", sqlite3path,
-			backupath);
-      else
-	MOM_INFORMPRINTF ("moved for backup Sqlite db %s to %s", sqlite3path,
-			  backupath);
-    };
+  snprintf (filpath, sizeof (filpath), "%s+%s", sqlite3path, tempsuffix);
   sqlite3 *sqlite3dump = NULL;
-  if (sqlite3_open (sqlite3path, &sqlite3dump))
+  if (sqlite3_open_v2 (filpath, &sqlite3dump,
+		       SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL))
     MOM_FATAPRINTF ("failed to open dump state sqlite3 file %s: %s",
-		    sqlite3path, sqlite3_errmsg (sqlite3dump));
-  /// backup the MOM_PREDEFINED_HEADER_FILENAME
+		    filpath, sqlite3_errmsg (sqlite3dump));
+  memset (filpath, 0, sizeof (filpath));
+  /// open the predefined header with the tempsuffix
   snprintf (filpath, sizeof (filpath), "%s/%s", dumpdir,
-	    MOM_PREDEFINED_HEADER_FILENAME "%");
+	    MOM_PREDEFINED_HEADER_FILENAME);
   char *predefhpath =
     (char *) MOM_GC_STRDUP ("predefined header path", (char *) filpath);
-  {
-    char *lastpercent = strrchr (predefhpath, '%');
-    if (lastpercent && predefhpath + strlen (predefhpath) - 1 == lastpercent)
-      *lastpercent = (char) 0;
-    MOM_DEBUGPRINTF (dump, "predefhpath=%s", predefhpath);
-    filpredefh = fopen (filpath, "w");
-  }
-  memset (filpath, 0, sizeof (filpath));
+  snprintf (filpath, sizeof (filpath), "%s+%s", predefhpath, tempsuffix);
+  filpredefh = fopen (filpath, "w");
   if (!filpredefh)
-    MOM_FATAPRINTF ("failed to open predefined header %s", predefhpath);
+    MOM_FATAPRINTF ("failed to open predefined header file %s", filpath);
+  memset (filpath, 0, sizeof (filpath));
   /// create & initialize the dumper
   struct mom_dumper_st dmp = { 0 };
   memset (&dmp, 0, sizeof (struct mom_dumper_st));
@@ -1667,6 +1661,7 @@ mom_full_dump (const char *reason, const char *dumpdir,
   /// at last
   goto end;
 end:
+  //////// finalize and close the database
   sqlite3_finalize (dmp.dmp_sqlstmt_param_insert),
     dmp.dmp_sqlstmt_param_insert = NULL;
   sqlite3_finalize (dmp.dmp_sqlstmt_item_insert),
@@ -1682,6 +1677,49 @@ end:
     MOM_FATAPRINTF ("failed to close sqlite3 %s: %s", dmp.dmp_sqlpath,
 		    sqlite3_errstr (errclo));
   dmp.dmp_sqlite = NULL;
+  //////// backup the old database file and rename the new
+  {
+    memset (filpath, 0, sizeof (filpath));
+    MOM_DEBUGPRINTF (dump, "backup database %s and rename tempsuffix=%s",
+		     sqlite3path, tempsuffix);
+    if (!access (sqlite3path, F_OK))
+      {
+	snprintf (filpath, sizeof (filpath), "%s~", sqlite3path);
+	if (rename (sqlite3path, filpath))
+	  MOM_WARNPRINTF ("failed to backup Sqlite db %s as %s", sqlite3path,
+			  filpath);
+	else
+	  MOM_INFORMPRINTF ("moved for backup Sqlite db %s to %s",
+			    sqlite3path, filpath);
+      }
+    memset (filpath, 0, sizeof (filpath));
+    snprintf (filpath, sizeof (filpath), "%s+%s", sqlite3path, tempsuffix);
+    if (rename (filpath, sqlite3path))
+      MOM_FATAPRINTF ("failed to rename database %s as %s",
+		      filpath, sqlite3path);
+  }
+  //////// backup the old header file and rename the new
+  {
+    memset (filpath, 0, sizeof (filpath));
+    MOM_DEBUGPRINTF (dump, "backup predefheader %s and rename tempsuffix=%s",
+		     predefhpath, tempsuffix);
+    if (!access (predefhpath, F_OK))
+      {
+	snprintf (filpath, sizeof (filpath), "%s~", predefhpath);
+	if (rename (predefhpath, filpath))
+	  MOM_WARNPRINTF ("failed to backup predefined headers %s as %s",
+			  predefhpath, filpath);
+	else
+	  MOM_INFORMPRINTF
+	    ("moved for backup old predefined headers %s as %s", predefhpath,
+	     filpath);
+      };
+    memset (filpath, 0, sizeof (filpath));
+    snprintf (filpath, sizeof (filpath), "%s+%s", predefhpath, tempsuffix);
+    if (rename (filpath, predefhpath))
+      MOM_FATAPRINTF ("failed to rename predefined headers %s as %s",
+		      filpath, predefhpath);
+  }
   // perhaps fork the dump command
   bool shouldump = strlen (dmp.dmp_sqlpath) < MOM_PATH_MAX - 32;
   for (const char *pc = dmp.dmp_sqlpath; *pc && shouldump; pc++)

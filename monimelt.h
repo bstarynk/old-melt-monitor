@@ -1398,6 +1398,11 @@ struct mom_itqueue_st
   momitem_t *iq_item;
 };
 
+//////// random numbers
+uint32_t mom_random_nonzero_32 (void);
+uint32_t mom_random_32 (void);
+uint64_t mom_random_nonzero_64 (void);
+uint64_t mom_random_64 (void);
 
 #define MOM_STATE_FILE_BASENAME "state-monimelt"
 #define MOM_PREDEFINED_HEADER_FILENAME "predef-monimelt.h"
