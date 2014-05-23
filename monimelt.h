@@ -855,6 +855,10 @@ struct mom_taskletdata_st
 // start a tasklet payload, under the item's lock
 void mom_item_start_tasklet (momitem_t *itm);
 
+// reserve in a tasklet item, under the item's lock
+void
+mom_item_tasklet_reserve (momitem_t *itm, unsigned nbint, unsigned nbdbl,
+			  unsigned nbval, unsigned nbfram);
 
 /************* misc items *********/
 // convert a boolean to a predefined item json_true or json_false

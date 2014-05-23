@@ -204,6 +204,91 @@ mom_item_start_tasklet (momitem_t *itm)
   itm->i_paylkind = mompayk_tasklet;
 }
 
+
+
+void
+mom_item_tasklet_reserve (momitem_t *itm, unsigned nbint, unsigned nbdbl,
+			  unsigned nbval, unsigned nbfram)
+{
+  assert (itm && itm->i_typnum == momty_item);
+  if (!itm->i_payload || itm->i_paylkind != mompayk_tasklet)
+    return;
+  struct mom_taskletdata_st *itd = itm->i_payload;
+  /// resize the scalars if needed
+  unsigned scalwant =
+    itd->dtk_scaltop +
+    ((nbint * sizeof (intptr_t) +
+      nbdbl * sizeof (double)) / sizeof (intptr_t));
+  if (MOM_UNLIKELY (scalwant > itd->dtk_scalsize
+		    || (itd->dtk_scalsize > 64
+			&& 2 * scalwant < itd->dtk_scalsize)))
+    {
+      unsigned newscalsize =
+	((5 * itd->dtk_scaltop / 4 + 3 +
+	  ((nbint * sizeof (intptr_t) +
+	    nbdbl * sizeof (double)) / sizeof (intptr_t))) | 7) + 1;
+      if (newscalsize != itd->dtk_scalsize)
+	{
+	  intptr_t *newscalars
+	    = MOM_GC_SCALAR_ALLOC ("reserved tasklet scalars",
+				   newscalsize * sizeof (intptr_t));
+	  if (itd->dtk_scaltop > 0)
+	    memcpy (newscalars, itd->dtk_scalars,
+		    itd->dtk_scaltop * sizeof (intptr_t));
+	  MOM_GC_FREE (itd->dtk_scalars);
+	  itd->dtk_scalars = newscalars;
+	  itd->dtk_scalsize = newscalsize;
+	}
+    };
+  /// resize the values if needed
+  unsigned valuwant = itd->dtk_valtop + nbval;
+  if (MOM_UNLIKELY
+      (valuwant > itd->dtk_valsize
+       || (itd->dtk_valsize > 64 && 2 * valuwant < itd->dtk_valsize)))
+    {
+      unsigned newvalsize = ((5 * itd->dtk_valtop / 4 + 3 + nbval) | 7) + 1;
+      if (newvalsize != itd->dtk_valsize)
+	{
+	  momval_t *newvalues = MOM_GC_ALLOC ("reserved tasklet values",
+					      newvalsize * sizeof (momval_t));
+	  memcpy (newvalues, itd->dtk_values,
+		  itd->dtk_valtop * sizeof (momval_t));
+	  MOM_GC_FREE (itd->dtk_values);
+	  itd->dtk_values = newvalues;
+	  itd->dtk_valsize = newvalsize;
+	}
+    }
+  /// resize the frames and the closures if needed
+  unsigned framwant = itd->dtk_fratop + nbfram;
+  if (MOM_UNLIKELY
+      (framwant > itd->dtk_frasize
+       || (itd->dtk_frasize > 64 && 2 * framwant < itd->dtk_frasize)))
+    {
+      unsigned newfrasize = ((5 * itd->dtk_fratop / 4 + 3 + nbfram) | 7) + 1;
+      if (newfrasize != itd->dtk_frasize)
+	{
+	  struct momframe_st *newframes =
+	    MOM_GC_SCALAR_ALLOC ("reserved frames of tasklet",
+				 sizeof (struct momframe_st) * newfrasize);
+	  momnode_t **newclosures =
+	    MOM_GC_ALLOC ("reserved closures of tasklet",
+			  sizeof (momnode_t *) * newfrasize);
+	  if (itd->dtk_fratop > 0)
+	    {
+	      memcpy (newframes, itd->dtk_frames,
+		      itd->dtk_fratop * sizeof (struct momframe_st));
+	      memcpy (newclosures, itd->dtk_closures,
+		      itd->dtk_fratop * sizeof (momnode_t *));
+	    }
+	  MOM_GC_FREE (itd->dtk_frames);
+	  MOM_GC_FREE (itd->dtk_closures);
+	  itd->dtk_frames = newframes;
+	  itd->dtk_closures = newclosures;
+	  itd->dtk_frasize = newfrasize;
+	}
+    }
+}
+
 #warning unimplemented tasklet
 static void
 payl_tasklet_load_mom (struct mom_loader_st *ld, momitem_t *litm,
