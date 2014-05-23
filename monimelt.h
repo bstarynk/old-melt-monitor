@@ -799,6 +799,7 @@ enum mom_kindpayload_en
 {
   mompayk_none = 0,
   mompayk_queue,
+  mompayk_routine,
   mompayk_tasklet,
   mompayk_buffer,
 

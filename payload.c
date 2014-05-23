@@ -172,6 +172,36 @@ static const struct mom_payload_descr_st payldescr_queue_mom = {
 };
 
 
+////////////////////////////////////////////////////////////////
+///// ROUTINE PAYLOAD
+////////////////////////////////////////////////////////////////
+
+#warning unimplemented routine
+static void
+payl_routine_load_mom (struct mom_loader_st *ld, momitem_t *litm,
+		       momval_t jsob)
+{
+}
+
+static void
+payl_routine_dump_scan_mom (struct mom_dumper_st *du, momitem_t *ditm)
+{
+}
+
+static momval_t
+payl_routine_dump_json_mom (struct mom_dumper_st *du, momitem_t *ditm)
+{
+}
+
+static const struct mom_payload_descr_st payldescr_routine_mom = {
+  .dpayl_magic = MOM_PAYLOAD_MAGIC,
+  .dpayl_name = "routine",
+  .dpayl_loadfun = payl_routine_load_mom,
+  .dpayl_dumpscanfun = payl_routine_dump_scan_mom,
+  .dpayl_dumpjsonfun = payl_routine_dump_json_mom,
+};
+
+
 
 ////////////////////////////////////////////////////////////////
 ///// TASKLET PAYLOAD
@@ -351,6 +381,7 @@ static const struct mom_payload_descr_st payldescr_buffer_mom = {
 
 struct mom_payload_descr_st *mom_payloadescr[mompayk__last + 1] = {
   [mompayk_queue] = (struct mom_payload_descr_st *) &payldescr_queue_mom,
+  [mompayk_routine] = (struct mom_payload_descr_st *) &payldescr_routine_mom,
   [mompayk_tasklet] = (struct mom_payload_descr_st *) &payldescr_tasklet_mom,
   [mompayk_buffer] = (struct mom_payload_descr_st *) &payldescr_buffer_mom,
 };
