@@ -368,6 +368,291 @@ mom_item_tasklet_reserve (momitem_t *itm, unsigned nbint, unsigned nbdbl,
     }
 }
 
+void
+mom_item_tasklet_push_frame (momitem_t *itm, momval_t clo,
+			     enum mom_pushframedirective_en dir, ...)
+{
+}
+
+
+
+static bool
+compute_pushed_data_size_mom (const momnode_t *closn,
+			      unsigned *pnbval,
+			      unsigned *pnbnum,
+			      unsigned *pnbdbl,
+			      int *pnewstate,
+			      enum mom_pushframedirective_en dir,
+			      va_list args)
+{
+  struct momroutinedescr_st *rdescr = NULL;
+  unsigned nbval = 0;
+  unsigned nbnum = 0;
+  unsigned nbdbl = 0;
+  int newstate = 0;
+  bool again = true;
+  if (pnbval)
+    *pnbval = 0;
+  if (pnbnum)
+    *pnbnum = 0;
+  if (pnbdbl)
+    *pnbdbl = 0;
+  if (!closn || closn->typnum != momty_node)
+    return false;
+  momitem_t *connitm = (momitem_t *) closn->connitm;
+  assert (connitm && connitm->i_typnum == momty_item);
+  pthread_mutex_lock (&connitm->i_mtx);
+  if (connitm->i_paylkind == mompayk_routine)
+    rdescr = connitm->i_payload;
+  pthread_mutex_unlock (&connitm->i_mtx);
+  if (!rdescr)
+    return false;
+  assert (rdescr->rout_magic == MOM_ROUTINE_MAGIC);
+  while (again && dir != MOMPFRDO__END)
+    {
+      if ((int) dir < MOMPFRDO__END || (int) dir >= MOMPFRDO__LAST)
+	MOM_FATAPRINTF ("invalid push frame directive #%d", (int) dir);
+      switch ((enum mom_pushframedirective_en) dir)
+	{
+	case MOMPFRDO__END:
+	  again = false;
+	  break;
+	  //
+	case MOMPFRDO_STATE:
+	  newstate = va_arg (args, int);
+	  break;
+	  // 
+	case MOMPFRDO_VALUE /*, momval_t val */ :
+	  (void) va_arg (args, momval_t);
+	  nbval++;
+	  break;
+	  //
+	case MOMPFRDO_TWO_VALUES /*, momval_t val1, val2 */ :
+	  (void) va_arg (args, momval_t);
+	  (void) va_arg (args, momval_t);
+	  nbval += 2;
+	  break;
+	  //
+	case MOMPFRDO_THREE_VALUES /*, momval_t val1, val2, val3 */ :
+	  (void) va_arg (args, momval_t);
+	  (void) va_arg (args, momval_t);
+	  (void) va_arg (args, momval_t);
+	  nbval += 3;
+	  break;
+	  //
+	case MOMPFRDO_FOUR_VALUES /*, momval_t val1, val2, val3, val4 */ :
+	  (void) va_arg (args, momval_t);
+	  (void) va_arg (args, momval_t);
+	  (void) va_arg (args, momval_t);
+	  (void) va_arg (args, momval_t);
+	  nbval += 4;
+	  break;
+	  //
+	case MOMPFRDO_FIVE_VALUES /*, momval_t val1, val2, val3, val4, val5 */ :
+	  (void) va_arg (args,
+			 momval_t);
+	  (void) va_arg (args, momval_t);
+	  (void) va_arg (args, momval_t);
+	  (void) va_arg (args, momval_t);
+	  (void) va_arg (args, momval_t);
+	  nbval += 5;
+	  break;
+	  //
+	case MOMPFRDO_SIX_VALUES /*, momval_t val1, val2, val3, val4, val5, val6 */ :
+	  (void) va_arg (args,
+			 momval_t);
+	  (void) va_arg (args, momval_t);
+	  (void) va_arg (args, momval_t);
+	  (void) va_arg (args, momval_t);
+	  (void) va_arg (args, momval_t);
+	  (void) va_arg (args, momval_t);
+	  nbval += 6;
+	  break;
+	  //
+	case MOMPFRDO_ARRAY_VALUES /*, unsigned count, momval_t valarr[count] */ :
+	  {
+	    unsigned count = va_arg (args, unsigned);
+	    momval_t *arr = va_arg (args, momval_t *);
+	    if (MOM_UNLIKELY (!arr && count > 0))
+	      MOM_FATAPRINTF ("invalid array value to push");
+	    nbval += count;
+	  }
+	  break;
+	  //
+	case MOMPFRDO_NODE_VALUES /*, momval_t node */ :
+	  {
+	    momval_t nod = va_arg (args, momval_t);
+	    if (nod.ptr && *nod.ptype == momty_node)
+	      nbval += nod.pnode->slen;
+	  }
+	  break;
+	  //
+	case MOMPFRDO_SEQ_ITEMS /*, momval_t seq */ :
+	  {
+	    momval_t seqv = va_arg (args, momval_t);
+	    if (mom_is_seqitem (seqv))
+	      nbval += seqv.pseqitems->slen;
+	  }
+	  break;
+	  //
+	  //////// integer numbers
+	case MOMPFRDO_INT:
+	  (void) va_arg (args, intptr_t);
+	  nbnum++;
+	  break;
+	  //
+	case MOMPFRDO_TWO_INTS:
+	  (void) va_arg (args, intptr_t);
+	  (void) va_arg (args, intptr_t);
+	  nbnum += 2;
+	  break;
+	  //
+	case MOMPFRDO_THREE_INTS:
+	  (void) va_arg (args, intptr_t);
+	  (void) va_arg (args, intptr_t);
+	  (void) va_arg (args, intptr_t);
+	  nbnum += 3;
+	  break;
+	  //
+	case MOMPFRDO_FOUR_INTS:
+	  (void) va_arg (args, intptr_t);
+	  (void) va_arg (args, intptr_t);
+	  (void) va_arg (args, intptr_t);
+	  (void) va_arg (args, intptr_t);
+	  nbnum += 4;
+	  break;
+	  //
+	case MOMPFRDO_FIVE_INTS:
+	  (void) va_arg (args, intptr_t);
+	  (void) va_arg (args, intptr_t);
+	  (void) va_arg (args, intptr_t);
+	  (void) va_arg (args, intptr_t);
+	  (void) va_arg (args, intptr_t);
+	  nbnum += 5;
+	  break;
+	  //
+	case MOMPFRDO_SIX_INTS:
+	  (void) va_arg (args, intptr_t);
+	  (void) va_arg (args, intptr_t);
+	  (void) va_arg (args, intptr_t);
+	  (void) va_arg (args, intptr_t);
+	  (void) va_arg (args, intptr_t);
+	  (void) va_arg (args, intptr_t);
+	  nbnum += 6;
+	  break;
+	  //
+	case MOMPFRDO_ARRAY_INTS /*, unsigned count, intptr_t numarr[count] */ :
+	  {
+	    unsigned count = va_arg (args, unsigned);
+	    intptr_t *arr = va_arg (args, intptr_t *);
+	    if (MOM_UNLIKELY (!arr && count > 0))
+	      MOM_FATAPRINTF ("invalid array of integers to push");
+	    nbnum += count;
+	  }
+	  break;
+	  //
+	  //////// doubles
+	case MOMPFRDO_DOUBLE:
+	  (void) va_arg (args, double);
+	  nbdbl++;
+	  break;
+	  //
+	case MOMPFRDO_TWO_DOUBLES:
+	  (void) va_arg (args, double);
+	  (void) va_arg (args, double);
+	  nbdbl += 2;
+	  break;
+	  //
+	case MOMPFRDO_THREE_DOUBLES:
+	  (void) va_arg (args, double);
+	  (void) va_arg (args, double);
+	  (void) va_arg (args, double);
+	  nbdbl += 3;
+	  break;
+	  //
+	case MOMPFRDO_FOUR_DOUBLES:
+	  (void) va_arg (args, double);
+	  (void) va_arg (args, double);
+	  (void) va_arg (args, double);
+	  (void) va_arg (args, double);
+	  nbdbl += 4;
+	  break;
+	  //
+	case MOMPFRDO_FIVE_DOUBLES:
+	  (void) va_arg (args, double);
+	  (void) va_arg (args, double);
+	  (void) va_arg (args, double);
+	  (void) va_arg (args, double);
+	  (void) va_arg (args, double);
+	  nbdbl += 5;
+	  break;
+	  //
+	case MOMPFRDO_SIX_DOUBLES:
+	  (void) va_arg (args, double);
+	  (void) va_arg (args, double);
+	  (void) va_arg (args, double);
+	  (void) va_arg (args, double);
+	  (void) va_arg (args, double);
+	  (void) va_arg (args, double);
+	  nbdbl += 6;
+	  break;
+	  //
+	case MOMPFRDO_ARRAY_DOUBLES /*, unsigned count, double numarr[count] */ :
+	  {
+	    unsigned count = va_arg (args, unsigned);
+	    double *arr = va_arg (args, double *);
+	    if (MOM_UNLIKELY (!arr && count > 0))
+	      MOM_FATAPRINTF ("invalid array of double to push");
+	    nbdbl += count;
+	  }
+	  break;
+	  //
+	case MOMPFRDO__LAST:
+	  MOM_FATAPRINTF ("impossible MOMPFRDO__LAST");
+	  break;
+	}			/* end switch push frame dir */
+    }				/* end while again */
+
+  if (nbval < rdescr->rout_frame_nbval)
+    nbval = rdescr->rout_frame_nbval;
+  if (nbnum < rdescr->rout_frame_nbnum)
+    nbnum = rdescr->rout_frame_nbnum;
+  if (nbdbl < rdescr->rout_frame_nbdbl)
+    nbdbl = rdescr->rout_frame_nbdbl;
+  if (nbnum % 2 != 0)
+    nbnum++;
+  if (nbval % 2 != 0)
+    nbval++;
+  if (nbdbl % 2 != 0)
+    nbdbl++;
+  if (pnbnum)
+    *pnbnum = nbnum;
+  if (pnbval)
+    *pnbval = nbval;
+  if (pnbdbl)
+    *pnbdbl = nbdbl;
+  if (newstate != 0 && pnewstate)
+    *pnewstate = newstate;
+  return true;
+}
+
+
+void
+mom_item_tasklet_replace_top_frame (momitem_t *itm, momval_t clo,
+				    enum mom_pushframedirective_en dir, ...)
+{
+}
+
+void
+mom_item_tasklet_pop_frame (momitem_t *itm)
+{
+}
+
+
+voidmom_item_tasklet_depth (momitem_t *itm)
+{
+}
+
 #warning unimplemented tasklet
 static void
 payl_tasklet_load_mom (struct mom_loader_st *ld, momitem_t *litm,

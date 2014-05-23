@@ -1049,6 +1049,8 @@ enum mom_pushframedirective_en
 #define MOMPFR_ARRAY_DOUBLES(Cnt,Arr) MOMPFRDO_ARRAY_DOUBLES,	\
   MOM_REQUIRES_TYPE(Cnt,unsigned,mombad_unsigned)	\
   MOM_REQUIRES_TYPE(Arr,(double*),mombad_arr)
+  //
+  MOMPFRDO__LAST
 };
 
 void mom_item_tasklet_push_frame (momitem_t *itm, momval_t clo,
