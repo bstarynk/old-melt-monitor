@@ -826,6 +826,43 @@ momval_t mom_item_queue_peek_back (momitem_t *itm);
 // under the item's lock pop its front value
 momval_t mom_item_queue_pop_front (momitem_t *itm);
 
+/**************** routine item ****************/
+
+/// the Makefile should define that for momg_* modules!
+#ifndef MONIMELT_CURRENT_MODULE
+#define MONIMELT_CURRENT_MODULE "."
+#endif
+
+// routine descriptor is read-only
+#define MOM_ROUTINE_MAGIC 0x6b9c644d	/* routine magic 1805411405 */
+#define MOM_ROUTINE_NAME_PREFIX "momrout_"
+#define MOM_SYMBNAME_LEN 128
+#define MOM_ROUTINE_NAME_FMT  MOM_ROUTINE_NAME_PREFIX "%s"
+// the routine item FOO has descriptor momrout_FOO
+// the routine's code returns a positive state, or 
+enum routres_en
+{
+  routres_steady = 0,		/* don't change the current state or tasklet */
+  routres_pop = -1,		/* pop the current frame */
+};
+struct momroutinedescr_st
+{
+  unsigned rout_magic;		/* always MOM_ROUTINE_MAGIC */
+  unsigned rout_minclosize;	/* minimal closure size */
+  unsigned rout_frame_nbval;	/* number of values in its frame */
+  unsigned rout_frame_nbnum;	/* number of intptr_t numbers in its frame */
+  unsigned rout_frame_nbdbl;	/* number of double numbers in its frame */
+  const char *rout_name;	/* the name FOO */
+  const char *rout_module;	/* always macro MONIMELT_CURRENT_MODULE */
+  int (*rout_codefun) (int state, momitem_t *tasklet,
+		       momnode_t *closure, momval_t *locvals,
+		       intptr_t * locnums, double *locdbls);
+  const char *rout_timestamp;	/* generally __DATE__ "@" __TIME__ */
+};
+
+// start a routine of given name. If name is NULL or empty, use the
+// item's name or identstr...
+void mom_item_start_routine (momitem_t *itm, const char *routname);
 
 /************* tasklet item *********/
 
@@ -1602,6 +1639,9 @@ mom_queue_peek_value_back (struct mom_valuequeue_st *vq)
 ////////////////////////////////////////////////////////////////
 ///// MISCELLANOUS
 ////////////////////////////////////////////////////////////////
+// the program handle from GC_dlopen with NULL
+void *mom_prog_dlhandle;
+//// load a plugin
 void mom_load_plugin (const char *plugname, const char *plugarg);
 
 //////// random numbers

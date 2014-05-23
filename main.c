@@ -821,6 +821,9 @@ main (int argc, char **argv)
      GC_pthread_join,
      GC_pthread_cancel,
      GC_pthread_detach, GC_pthread_exit, GC_pthread_sigmask);
+  mom_prog_dlhandle = GC_dlopen (NULL, RTLD_NOW | RTLD_GLOBAL);
+  if (MOM_UNLIKELY (!mom_prog_dlhandle))
+    MOM_FATAPRINTF ("failed to dlopen the program: %s", dlerror ());
   parse_program_arguments_and_load_modules_mom (&argc, argv);
   if (daemonize_mom)
     {

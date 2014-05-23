@@ -75,9 +75,10 @@ modules: $(MODULES)
 ## or - or _ characters, conventionally by the name or identstr of the
 ## module item. see MONIMELT_SHARED_MODULE_PREFIX in monimelt.h
 momg_%.so: momg_%.c | monimelt.h predef-monimelt.h
-	$(LINK.c) -fPIC $< -shared -o $@
+	$(LINK.c) -DMONIMELT_CURRENT_MODULE=\"$(patsubst momg_%.so,%,$(*F))\" -fPIC $< -shared -o $@
 	@logger -t makemonimelt -p user.info -s compiled $< into \
-	        shared module $@ at $$(date +%c)
+	        shared module $@ named $(patsubst momg_%.so,%,$(*F)) \
+	        at $$(date +%c)
 
 ## extra plugins
 momplug_%.so: momplug_%.c  | monimelt.h predef-monimelt.h

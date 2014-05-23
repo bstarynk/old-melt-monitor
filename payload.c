@@ -176,6 +176,51 @@ static const struct mom_payload_descr_st payldescr_queue_mom = {
 ///// ROUTINE PAYLOAD
 ////////////////////////////////////////////////////////////////
 
+void
+mom_item_start_routine (momitem_t *itm, const char *routname)
+{
+  char symbuf[MOM_SYMBNAME_LEN];
+  memset (symbuf, 0, sizeof (symbuf));
+  assert (itm && itm->i_typnum == momty_item);
+  if (itm->i_payload)
+    mom_item_clear_payload (itm);
+  if (!routname || !routname[0])
+    routname = mom_string_cstr ((momval_t) mom_item_get_name_or_idstr (itm));
+  if (!routname || !routname[0])
+    return;
+  snprintf (symbuf, sizeof (symbuf), MOM_ROUTINE_NAME_FMT, routname);
+  assert (symbuf[MOM_SYMBNAME_LEN] - 1 == '\0');
+  for (const char *pc = symbuf; *pc; pc++)
+    if (!isalnum (*pc) && *pc != '_')
+      return;
+  assert (isalpha (symbuf[0]));
+  void *routad = dlsym (mom_prog_dlhandle, symbuf);
+  if (!routad)
+    {
+      MOM_WARNPRINTF ("failed to start routine %s: %s", symbuf, dlerror ());
+      return;
+    };
+  const struct momroutinedescr_st *rdescr = routad;
+  if (rdescr->rout_magic != MOM_ROUTINE_MAGIC
+      || !rdescr->rout_name || !rdescr->rout_module
+      || !rdescr->rout_codefun || !rdescr->rout_timestamp)
+    MOM_FATAPRINTF ("invalid routine descriptor @%p for %s", routad,
+		    routname);
+  if (strcmp (routname, rdescr->rout_name))
+    MOM_WARNPRINTF ("strange routine descriptor for %s but named %s",
+		    routname, rdescr->rout_name);
+  itm->i_payload = (void *) rdescr;
+  itm->i_paylkind = mompayk_routine;
+  MOM_DEBUG (run, MOMOUT_LITERAL ("starting routine item:"),
+	     MOMOUT_ITEM ((const momitem_t *) itm),
+	     MOMOUT_LITERAL (", named "),
+	     MOMOUT_LITERALV (rdescr->rout_name),
+	     MOMOUT_LITERAL (" from module "),
+	     MOMOUT_LITERALV (rdescr->rout_module),
+	     MOMOUT_LITERAL (" timestamp "),
+	     MOMOUT_LITERALV (rdescr->rout_timestamp));
+}
+
 #warning unimplemented routine
 static void
 payl_routine_load_mom (struct mom_loader_st *ld, momitem_t *litm,
