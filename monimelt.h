@@ -1075,6 +1075,9 @@ intptr_t mom_item_tasklet_frame_nth_numbers (momitem_t *itm, int frk,
 					     int nrk);
 double mom_item_tasklet_frame_nth_double (momitem_t *itm, int frk, int drk);
 
+/*********** buffer items ****************/
+void mom_item_start_buffer (momitem_t *itm);
+
 /************* misc items *********/
 // convert a boolean to a predefined item json_true or json_false
 const momitem_t *mom_get_item_bool (bool v);

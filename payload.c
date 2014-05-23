@@ -1290,7 +1290,7 @@ mom_item_tasklet_frame_nth_double (momitem_t *itm, int frk, int drk)
     }
   if (drk < 0)
     drk += nbdbl;
-  if (drk >= 0 && drk < nbdbl)
+  if (drk >= 0 && drk < (int) nbdbl)
     return ((double *) (itd->dtk_scalars + curfram->fr_dbloff))[drk];
   return 0.0;
 }
@@ -1475,15 +1475,80 @@ static const struct mom_payload_descr_st payldescr_tasklet_mom = {
 ///// BUFFER PAYLOAD
 ////////////////////////////////////////////////////////////////
 
+#define BUFFER_MAGIC 0x2cdb8c85	/* buffer magic 752585861 */
+struct bufferdata_mom_st
+{
+  char *dbu_zone;		/* atomic, GC-allocated */
+  unsigned dbu_magic;		/* always BUFFER_MAGIC */
+  unsigned dbu_size;		/* size of dbu_zone */
+  unsigned dbu_begin;		/* offset of beginning */
+  unsigned dbu_end;		/* offset of end */
+};
+
+void
+mom_item_start_buffer (momitem_t *itm)
+{
+  assert (itm && itm->i_typnum == momty_item);
+  if (itm->i_payload)
+    mom_item_clear_payload (itm);
+  struct bufferdata_mom_st *dbuf =
+    MOM_GC_ALLOC ("item buffer", sizeof (struct bufferdata_mom_st));
+  unsigned inisiz = 256;
+  dbuf->dbu_zone = MOM_GC_SCALAR_ALLOC ("buffer zone", inisiz);
+  dbuf->dbu_magic = BUFFER_MAGIC;
+  dbuf->dbu_size = inisiz;
+  dbuf->dbu_begin = 0;
+  dbuf->dbu_end = 0;
+  itm->i_payload = dbuf;
+  itm->i_paylkind = mompayk_buffer;
+}
+
+#define BUFFER_THRESHOLD 1024
+void
+mom_item_buffer_reserve (momitem_t *itm, unsigned more)
+{
+  assert (itm && itm->i_typnum == momty_item);
+  if (itm->i_paylkind != mompayk_buffer)
+    return;
+  struct bufferdata_mom_st *dbuf = itm->i_payload;
+  assert (dbuf && dbuf->dbu_magic == BUFFER_MAGIC);
+  if (dbuf->dbu_end + more < dbuf->dbu_size)
+    return;
+  assert (dbuf->dbu_end >= dbuf->dbu_begin && dbuf->dbu_end < dbuf->dbu_size);
+  unsigned blen = dbuf->dbu_end - dbuf->dbu_begin;
+  if (dbuf->dbu_size > BUFFER_THRESHOLD && blen + more < 2 * dbuf->dbu_size)
+    {				// can shrink the buffer
+      unsigned newsiz = ((5 * blen / 4 + more + 10) | 0xf) + 1;
+      char *newzone = MOM_GC_SCALAR_ALLOC ("shrink buffer zone", newsiz);
+      memcpy (newzone, dbuf->dbu_zone + dbuf->dbu_begin, blen);
+      MOM_GC_FREE (dbuf->dbu_zone);
+      dbuf->dbu_zone = newzone;
+      dbuf->dbu_begin = 0;
+      dbuf->dbu_end = blen;
+      return;
+    }
+  if (dbuf->dbu_begin > 0 && blen + more + 1 < dbuf->dbu_size)
+    {
+      memmove (dbuf->dbu_zone, dbuf->dbu_zone + dbuf->dbu_begin, blen);
+      dbuf->dbu_zone[blen] = 0;
+      dbuf->dbu_begin = 0;
+      dbuf->dbu_end = blen;
+      return;
+    }
+  // need to grow the buffer
+  unsigned newsiz = ((5 * blen / 4 + more + 10) | 0xf) + 1;
+  char *newzone = MOM_GC_SCALAR_ALLOC ("grown buffer zone", newsiz);
+  memcpy (newzone, dbuf->dbu_zone + dbuf->dbu_begin, blen);
+  MOM_GC_FREE (dbuf->dbu_zone);
+  dbuf->dbu_zone = newzone;
+  dbuf->dbu_begin = 0;
+  dbuf->dbu_end = blen;
+}
+
 #warning unimplemented buffer
 static void
 payl_buffer_load_mom (struct mom_loader_st *ld, momitem_t *litm,
 		      momval_t jsob)
-{
-}
-
-static void
-payl_buffer_dump_scan_mom (struct mom_dumper_st *du, momitem_t *ditm)
 {
 }
 
@@ -1496,7 +1561,6 @@ static const struct mom_payload_descr_st payldescr_buffer_mom = {
   .dpayl_magic = MOM_PAYLOAD_MAGIC,
   .dpayl_name = "buffer",
   .dpayl_loadfun = payl_buffer_load_mom,
-  .dpayl_dumpscanfun = payl_buffer_dump_scan_mom,
   .dpayl_dumpjsonfun = payl_buffer_dump_json_mom,
 };
 
