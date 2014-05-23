@@ -414,9 +414,19 @@ logexit_cb_mom (void)
   char timbuf[64];
   memset (timbuf, 0, sizeof (timbuf));
   mom_now_strftime_bufcenti (timbuf, "%Y-%b-%d %H:%M:%S.__ %Z");
-  syslog (LOG_INFO, "MONIMELT exiting at %s", timbuf);
+  syslog (LOG_INFO, "MONIMELT exiting at %s, after %.3f real, %.3f cpu sec.",
+	  timbuf, mom_elapsed_real_time (),
+	  mom_clock_time (CLOCK_PROCESS_CPUTIME_ID));
 }
 
+static void
+informexit_cb_mom (void)
+{
+  MOM_INFORMPRINTF
+    ("MONIMELT exiting, pid %d, after %.3f real, %.3f cpu sec.",
+     (int) getpid (), mom_elapsed_real_time (),
+     mom_clock_time (CLOCK_PROCESS_CPUTIME_ID));
+}
 
 
 static gpointer
@@ -710,6 +720,7 @@ parse_program_arguments_and_load_modules_mom (int *pargc, char **argv)
 	  return;
 	case 'V':
 	  print_version_mom (argv[0]);
+	  exit (EXIT_SUCCESS);
 	  break;
 	case 'd':
 	  daemonize_mom = true;
@@ -783,6 +794,14 @@ parse_program_arguments_and_load_modules_mom (int *pargc, char **argv)
 
 }
 
+static double startime_mom;
+
+double
+mom_elapsed_real_time (void)
+{
+  return mom_clock_time (CLOCK_REALTIME) - startime_mom;
+}
+
 int
 main (int argc, char **argv)
 {
@@ -790,6 +809,7 @@ main (int argc, char **argv)
   pthread_setname_np (pthread_self (), "mom-main");
   g_mem_gc_friendly = TRUE;
   g_mem_set_vtable (&gc_mem_vtable_mom);
+  startime_mom = mom_clock_time (CLOCK_REALTIME);
   mom_stdout_data.mout_file = stdout;
   mom_stderr_data.mout_file = stderr;
   onion_low_initialize_memory_allocation
@@ -829,6 +849,8 @@ main (int argc, char **argv)
 	atexit (logexit_cb_mom);
       }
     }
+  else
+    atexit (informexit_cb_mom);
   /// change directory if asked
   if (wanted_dir_mom)
     {

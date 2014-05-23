@@ -125,6 +125,8 @@ mom_clock_time (clockid_t cid)
     return (double) ts.tv_sec + 1.0e-9 * ts.tv_nsec;
 }
 
+// elapsed real time since start of process
+double mom_elapsed_real_time (void);
 
 // call strftime on ti, but replace .__ with centiseconds for ti
 char *mom_strftime_centi (char *buf, size_t len, const char *fmt, double ti)
