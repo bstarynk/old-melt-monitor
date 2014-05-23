@@ -1432,7 +1432,7 @@ static inline bool
 mom_queue_is_empty (struct mom_valuequeue_st *vq)
 {
   assert (vq != NULL);
-  return vq->vaq_first != NULL;
+  return vq->vaq_first == NULL;
 }
 
 static inline unsigned
