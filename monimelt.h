@@ -903,7 +903,7 @@ mom_item_tasklet_reserve (momitem_t *itm, unsigned nbint, unsigned nbdbl,
 enum mom_pushframedirective_en
 {
   MOMPFRDO__END = 0,
-#define MOMPFR_END() ((void*)MOMPFR__END)
+#define MOMPFR_END() ((void*)MOMPFRDO__END)
   //
   MOMPFRDO_STATE /*, int state  */ ,
 #define MOMPFR_STATE(S) MOMPFRDO_STATE, \
@@ -1003,8 +1003,8 @@ enum mom_pushframedirective_en
   //
   MOMPFRDO_ARRAY_INTS /* unsigned count, intptr_t numarr[count] */ ,
 #define MOMPFR_ARRAY_INTS(Cnt,Arr) MOMPFRDO_ARRAY_INTS,	\
-  MOM_REQUIRES_TYPE(Cnt,unsigned,mombad_unsigned)	\
-  MOM_REQUIRES_TYPE(Arr,(intptr_t*),mombad_arr)
+  MOM_REQUIRES_TYPE(Cnt,unsigned,mombad_unsigned),	\
+  MOM_REQUIRES_TYPE(Arr,intptr_t*,mombad_array)
   //
   MOMPFRDO_DOUBLE /*, double d */ ,
 #define MOMPFR_DOUBLE(D) MOMPFRDO_DOUBLE,	\
@@ -1047,8 +1047,8 @@ enum mom_pushframedirective_en
   //
   MOMPFRDO_ARRAY_DOUBLES /* unsigned count, double dblarr[count] */ ,
 #define MOMPFR_ARRAY_DOUBLES(Cnt,Arr) MOMPFRDO_ARRAY_DOUBLES,	\
-  MOM_REQUIRES_TYPE(Cnt,unsigned,mombad_unsigned)	\
-  MOM_REQUIRES_TYPE(Arr,(double*),mombad_arr)
+  MOM_REQUIRES_TYPE(Cnt,unsigned,mombad_unsigned),		\
+  MOM_REQUIRES_TYPE(Arr,double*,mombad_array)
   //
   MOMPFRDO__LAST
 };
