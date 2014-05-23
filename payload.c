@@ -637,6 +637,213 @@ compute_pushed_data_size_mom (const momnode_t *closn,
 }
 
 
+static void
+fill_frame_data_mom (intptr_t * numdata, double *dbldata, momval_t *valdata,
+		     enum mom_pushframedirective_en dir, va_list args)
+{
+  bool again = true;
+  while (again && dir != MOMPFRDO__END)
+    {
+      if ((int) dir < MOMPFRDO__END || (int) dir >= MOMPFRDO__LAST)
+	MOM_FATAPRINTF ("invalid push frame directive #%d", (int) dir);
+      switch ((enum mom_pushframedirective_en) dir)
+	{
+	case MOMPFRDO__END:
+	  again = false;
+	  break;
+	  //
+	case MOMPFRDO_STATE:
+	  (void) va_arg (args, int);
+	  break;
+	  // 
+	case MOMPFRDO_VALUE /*, momval_t val */ :
+	  *(valdata++) = va_arg (args, momval_t);
+	  break;
+	  //
+	case MOMPFRDO_TWO_VALUES /*, momval_t val1, val2 */ :
+	  *(valdata++) = va_arg (args, momval_t);
+	  *(valdata++) = va_arg (args, momval_t);
+	  break;
+	  //
+	case MOMPFRDO_THREE_VALUES /*, momval_t val1, val2, val3 */ :
+	  *(valdata++) = va_arg (args, momval_t);
+	  *(valdata++) = va_arg (args, momval_t);
+	  *(valdata++) = va_arg (args, momval_t);
+	  break;
+	  //
+	case MOMPFRDO_FOUR_VALUES /*, momval_t val1, val2, val3, val4 */ :
+	  *(valdata++) = va_arg (args, momval_t);
+	  *(valdata++) = va_arg (args, momval_t);
+	  *(valdata++) = va_arg (args, momval_t);
+	  *(valdata++) = va_arg (args, momval_t);
+	  break;
+	  //
+	case MOMPFRDO_FIVE_VALUES /*, momval_t val1, val2, val3, val4, val5 */ :
+	  *(valdata++) = va_arg (args,
+				 momval_t);
+	  *(valdata++) = va_arg (args, momval_t);
+	  *(valdata++) = va_arg (args, momval_t);
+	  *(valdata++) = va_arg (args, momval_t);
+	  *(valdata++) = va_arg (args, momval_t);
+	  break;
+	  //
+	case MOMPFRDO_SIX_VALUES /*, momval_t val1, val2, val3, val4, val5, val6 */ :
+	  *(valdata++) =
+	    va_arg (args, momval_t);
+	  *(valdata++) = va_arg (args, momval_t);
+	  *(valdata++) = va_arg (args, momval_t);
+	  *(valdata++) = va_arg (args, momval_t);
+	  *(valdata++) = va_arg (args, momval_t);
+	  *(valdata++) = va_arg (args, momval_t);
+	  break;
+	  //
+	case MOMPFRDO_ARRAY_VALUES /*, unsigned count, momval_t valarr[count] */ :
+	  {
+	    unsigned count = va_arg (args, unsigned);
+	    momval_t *arr = va_arg (args, momval_t *);
+	    if (MOM_UNLIKELY (!arr && count > 0))
+	      MOM_FATAPRINTF ("invalid array value to push");
+	    memcpy (valdata, arr, count * sizeof (momval_t));
+	    valdata += count;
+	  }
+	  break;
+	  ///////
+	  //
+	case MOMPFRDO_NODE_VALUES /*, momval_t node */ :
+	  {
+	    momval_t nod = va_arg (args, momval_t);
+	    if (nod.ptr && *nod.ptype == momty_node)
+	      {
+		memcpy (valdata, nod.pnode->sontab,
+			nod.pnode->slen * sizeof (momval_t));
+		valdata += nod.pnode->slen;
+	      }
+	  }
+	  break;
+	  //
+	case MOMPFRDO_SEQ_ITEMS /*, momval_t seq */ :
+	  {
+	    momval_t seqv = va_arg (args, momval_t);
+	    if (mom_is_seqitem (seqv))
+	      {
+		assert (sizeof (momval_t) == sizeof (momitem_t *));
+		memcpy (valdata, seqv.pseqitems->itemseq,
+			seqv.pseqitems->slen * sizeof (momval_t));
+		valdata += seqv.pseqitems->slen;
+	      }
+	  }
+	  break;
+	  //
+	  //////// integer numbers
+	case MOMPFRDO_INT:
+	  *(numdata++) = va_arg (args, intptr_t);
+	  break;
+	  //
+	case MOMPFRDO_TWO_INTS:
+	  *(numdata++) = va_arg (args, intptr_t);
+	  *(numdata++) = va_arg (args, intptr_t);
+	  break;
+	  //
+	case MOMPFRDO_THREE_INTS:
+	  *(numdata++) = va_arg (args, intptr_t);
+	  *(numdata++) = va_arg (args, intptr_t);
+	  *(numdata++) = va_arg (args, intptr_t);
+	  break;
+	  //
+	case MOMPFRDO_FOUR_INTS:
+	  *(numdata++) = va_arg (args, intptr_t);
+	  *(numdata++) = va_arg (args, intptr_t);
+	  *(numdata++) = va_arg (args, intptr_t);
+	  *(numdata++) = va_arg (args, intptr_t);
+	  break;
+	  //
+	case MOMPFRDO_FIVE_INTS:
+	  *(numdata++) = va_arg (args, intptr_t);
+	  *(numdata++) = va_arg (args, intptr_t);
+	  *(numdata++) = va_arg (args, intptr_t);
+	  *(numdata++) = va_arg (args, intptr_t);
+	  *(numdata++) = va_arg (args, intptr_t);
+	  break;
+	  //
+	case MOMPFRDO_SIX_INTS:
+	  *(numdata++) = va_arg (args, intptr_t);
+	  *(numdata++) = va_arg (args, intptr_t);
+	  *(numdata++) = va_arg (args, intptr_t);
+	  *(numdata++) = va_arg (args, intptr_t);
+	  *(numdata++) = va_arg (args, intptr_t);
+	  *(numdata++) = va_arg (args, intptr_t);
+	  break;
+	  //
+	case MOMPFRDO_ARRAY_INTS /*, unsigned count, intptr_t numarr[count] */ :
+	  {
+	    unsigned count = va_arg (args, unsigned);
+	    intptr_t *arr = va_arg (args, intptr_t *);
+	    if (arr)
+	      memcpy (numdata, arr, count * sizeof (intptr_t));
+	    numdata += count;
+	  }
+	  break;
+	  //
+	  //////// doubles
+	case MOMPFRDO_DOUBLE:
+	  *(dbldata++) = va_arg (args, double);
+	  break;
+	  //
+	case MOMPFRDO_TWO_DOUBLES:
+	  *(dbldata++) = va_arg (args, double);
+	  *(dbldata++) = va_arg (args, double);
+	  break;
+	  //
+	case MOMPFRDO_THREE_DOUBLES:
+	  *(dbldata++) = va_arg (args, double);
+	  *(dbldata++) = va_arg (args, double);
+	  *(dbldata++) = va_arg (args, double);
+	  break;
+	  //
+	case MOMPFRDO_FOUR_DOUBLES:
+	  *(dbldata++) = va_arg (args, double);
+	  *(dbldata++) = va_arg (args, double);
+	  *(dbldata++) = va_arg (args, double);
+	  *(dbldata++) = va_arg (args, double);
+	  break;
+	  //
+	case MOMPFRDO_FIVE_DOUBLES:
+	  *(dbldata++) = va_arg (args, double);
+	  *(dbldata++) = va_arg (args, double);
+	  *(dbldata++) = va_arg (args, double);
+	  *(dbldata++) = va_arg (args, double);
+	  *(dbldata++) = va_arg (args, double);
+	  break;
+	  //
+	case MOMPFRDO_SIX_DOUBLES:
+	  *(dbldata++) = va_arg (args, double);
+	  *(dbldata++) = va_arg (args, double);
+	  *(dbldata++) = va_arg (args, double);
+	  *(dbldata++) = va_arg (args, double);
+	  *(dbldata++) = va_arg (args, double);
+	  *(dbldata++) = va_arg (args, double);
+	  break;
+	  //
+	case MOMPFRDO_ARRAY_DOUBLES /*, unsigned count, double numarr[count] */ :
+	  {
+	    unsigned count = va_arg (args, unsigned);
+	    double *arr = va_arg (args, double *);
+	    if (arr && count > 0)
+	      memcpy (dbldata, arr, count * sizeof (double));
+	    dbldata += count;
+	  }
+	  break;
+	  //
+	case MOMPFRDO__LAST:
+	  MOM_FATAPRINTF ("impossible MOMPFRDO__LAST");
+	  break;
+	}			/* end switch push frame dir */
+    }				/* end while again */
+}				//// end fill_frame_data_mom
+
+
+////////////////
+
 void
 mom_item_tasklet_replace_top_frame (momitem_t *itm, momval_t clo,
 				    enum mom_pushframedirective_en dir, ...)
@@ -649,7 +856,8 @@ mom_item_tasklet_pop_frame (momitem_t *itm)
 }
 
 
-voidmom_item_tasklet_depth (momitem_t *itm)
+int
+mom_item_tasklet_depth (momitem_t *itm)
 {
 }
 
