@@ -349,7 +349,7 @@ mom_item_tasklet_reserve (momitem_t *itm, unsigned nbint, unsigned nbdbl,
 	  struct momframe_st *newframes =
 	    MOM_GC_SCALAR_ALLOC ("reserved frames of tasklet",
 				 sizeof (struct momframe_st) * newfrasize);
-	  momnode_t **newclosures =
+	  const momnode_t **newclosures =
 	    MOM_GC_ALLOC ("reserved closures of tasklet",
 			  sizeof (momnode_t *) * newfrasize);
 	  if (itd->dtk_fratop > 0)
@@ -840,7 +840,7 @@ fill_frame_data_mom (intptr_t * numdata, double *dbldata, momval_t *valdata,
 
 void
 mom_item_tasklet_push_frame (momitem_t *itm, momval_t clo,
-			     enum mom_pushframedirective_en dir, ...)
+			     enum mom_pushframedirective_en firstdir, ...)
 {
   unsigned nbval = 0, nbnum = 0, nbdbl = 0;
   int state = 0;
@@ -851,10 +851,10 @@ mom_item_tasklet_push_frame (momitem_t *itm, momval_t clo,
   if (!itm->i_payload || itm->i_paylkind != mompayk_tasklet)
     return;
   struct mom_taskletdata_st *itd = itm->i_payload;
-  va_start (alist, dir);
+  va_start (alist, firstdir);
   if (!compute_pushed_data_size_mom (clo.pnode,
 				     &nbval, &nbnum, &nbdbl,
-				     &state, dir, alist))
+				     &state, firstdir, alist))
     return;
   va_end (alist);
   /// grow the scalars if needed
@@ -895,9 +895,9 @@ mom_item_tasklet_push_frame (momitem_t *itm, momval_t clo,
       struct momframe_st *newframes =
 	MOM_GC_SCALAR_ALLOC ("tasklet grown frames",
 			     sizeof (struct momframe_st) * newfrasize);
-      momnode_t **newclosures = MOM_GC_ALLOC ("tasklet grown closures",
-					      sizeof (momnode_t *) *
-					      newfrasize);
+      const momnode_t **newclosures = MOM_GC_ALLOC ("tasklet grown closures",
+						    sizeof (momnode_t *) *
+						    newfrasize);
       memcpy (newframes, itd->dtk_frames,
 	      sizeof (struct momframe_st) * itd->dtk_fratop);
       memcpy (newclosures, itd->dtk_closures,
@@ -909,6 +909,7 @@ mom_item_tasklet_push_frame (momitem_t *itm, momval_t clo,
       itd->dtk_frasize = newfrasize;
     }
   struct momframe_st *newframe = itd->dtk_frames + itd->dtk_fratop;
+  newframe->fr_state = state;
   unsigned froint = newframe->fr_intoff = itd->dtk_scaltop;
   unsigned frodbl = newframe->fr_dbloff = itd->dtk_scaltop + nbnum;
   unsigned froval = newframe->fr_valoff = itd->dtk_valtop;
@@ -921,21 +922,116 @@ mom_item_tasklet_push_frame (momitem_t *itm, momval_t clo,
   itd->dtk_valtop += nbval;
   itd->dtk_closures[fratop] = clo.pnode;
   itd->dtk_fratop = fratop + 1;
+  va_start (alist, firstdir);
+  fill_frame_data_mom ((intptr_t *) (itd->dtk_scalars + froint),
+		       (double *) (itd->dtk_scalars + frodbl),
+		       (momval_t *) (itd->dtk_values + froval), firstdir,
+		       alist);
+  va_end (alist);
 }
 
 
 void
 mom_item_tasklet_replace_top_frame (momitem_t *itm, momval_t clo,
-				    enum mom_pushframedirective_en dir, ...)
+				    enum mom_pushframedirective_en firstdir,
+				    ...)
 {
+  unsigned nbval = 0, nbnum = 0, nbdbl = 0;
+  int state = 0;
+  va_list alist;
   assert (itm && itm->i_typnum == momty_item);
+  if (!clo.ptr || *clo.ptype != momty_node)
+    return;
+  if (!itm->i_payload || itm->i_paylkind != mompayk_tasklet)
+    return;
+  struct mom_taskletdata_st *itd = itm->i_payload;
+  if (itd->dtk_fratop == 0)
+    return;
+  va_start (alist, firstdir);
+  if (!compute_pushed_data_size_mom (clo.pnode,
+				     &nbval, &nbnum, &nbdbl,
+				     &state, firstdir, alist))
+    return;
+  va_end (alist);
+  // pop the old top frame
+  struct momframe_st *prevframe = itd->dtk_frames + itd->dtk_fratop - 1;
+  unsigned ofpscal = prevframe->fr_intoff;
+  unsigned ofpvalu = prevframe->fr_valoff;
+  if (itd->dtk_scaltop > ofpscal)
+    memset (itd->dtk_scalars + ofpscal, 0,
+	    (itd->dtk_scaltop - ofpscal) * sizeof (intptr_t));
+  if (itd->dtk_valtop > ofpvalu)
+    memset (itd->dtk_values + ofpvalu, 0,
+	    (itd->dtk_valtop - ofpvalu) * sizeof (momval_t));
+  itd->dtk_scaltop = ofpscal;
+  itd->dtk_valtop = ofpvalu;
+  memset (prevframe, 0, sizeof (struct momframe_st));
+  itd->dtk_closures[itd->dtk_fratop - 1] = NULL;
+  itd->dtk_fratop--;
+  unsigned fratop = itd->dtk_fratop;
+  /// grow the scalars if needed
+  if (MOM_UNLIKELY (itd->dtk_scaltop +
+		    (sizeof (intptr_t) * nbnum +
+		     sizeof (double) * nbdbl) / sizeof (intptr_t)
+		    >= itd->dtk_scalsize))
+    {
+      unsigned newscalsize =
+	((5 * itd->dtk_scaltop / 4 +
+	  (sizeof (intptr_t *) * nbnum +
+	   sizeof (double) * nbdbl) / sizeof (intptr_t) + 5) | 7) + 1;
+      intptr_t *newscalars = MOM_GC_SCALAR_ALLOC ("tasklet grown scalar zone",
+						  newscalsize *
+						  sizeof (intptr_t));
+      memcpy (newscalars, itd->dtk_scalars,
+	      itd->dtk_scaltop * sizeof (intptr_t));
+      MOM_GC_FREE (itd->dtk_scalars);
+      itd->dtk_scalars = newscalars;
+      itd->dtk_scalsize = newscalsize;
+    };
+  /// grow the values if needed
+  if (MOM_UNLIKELY (itd->dtk_valtop + nbval >= itd->dtk_valsize))
+    {
+      unsigned newvalsize = ((5 * itd->dtk_valtop / 4 + nbval + 6) | 7) + 1;
+      momval_t *newvalues =
+	MOM_GC_ALLOC ("tasklet grown values", newvalsize * sizeof (momval_t));
+      memcpy (newvalues, itd->dtk_values,
+	      itd->dtk_valtop * sizeof (momval_t));
+      MOM_GC_FREE (itd->dtk_values);
+      itd->dtk_values = newvalues;
+      itd->dtk_valsize = newvalsize;
+    }
+  /// dont need to grow frames or closures, they are sure to fit
+  struct momframe_st *newframe = itd->dtk_frames + itd->dtk_fratop;
+  unsigned froint = newframe->fr_intoff = itd->dtk_scaltop;
+  unsigned frodbl = newframe->fr_dbloff = itd->dtk_scaltop + nbnum;
+  unsigned froval = newframe->fr_valoff = itd->dtk_valtop;
+  fratop = itd->dtk_fratop;
+  memset (itd->dtk_scalars + itd->dtk_scaltop, 0,
+	  (nbnum * sizeof (intptr_t) + nbdbl * sizeof (double)));
+  memset (itd->dtk_values + itd->dtk_valtop, 0, nbval * sizeof (momval_t));
+  itd->dtk_scaltop +=
+    (nbnum * sizeof (intptr_t) + nbdbl * sizeof (double)) / sizeof (intptr_t);
+  itd->dtk_valtop += nbval;
+  itd->dtk_closures[fratop] = clo.pnode;
+  itd->dtk_fratop = fratop + 1;
+  va_start (alist, firstdir);
+  fill_frame_data_mom ((intptr_t *) (itd->dtk_scalars + froint),
+		       (double *) (itd->dtk_scalars + frodbl),
+		       (momval_t *) (itd->dtk_values + froval), firstdir,
+		       alist);
+  va_end (alist);
 }
+
+
 
 void
 mom_item_tasklet_pop_frame (momitem_t *itm)
 {
   assert (itm && itm->i_typnum == momty_item);
+#warning to be completed mom_item_tasklet_pop_frame
 }
+
+
 
 
 int
