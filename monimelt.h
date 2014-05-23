@@ -1569,7 +1569,7 @@ const char *mom_web_host;
 extern const char momplugin_GPL_compatible[];	// a string describing the licence
 extern void momplugin_init (const char *pluginarg);	// the plugin initializer
 /// they may also define a function to be called after load
-extern void momplugin_afterload (void);
+extern void momplugin_after_load (void);
 
 /// declare the predefined named and anonymous
 #define MOM_PREDEFINED_NAMED(Name,Id) extern momitem_t* mom_named__##Name;

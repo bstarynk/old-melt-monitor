@@ -562,7 +562,7 @@ mom_load_plugin (const char *plugname, const char *plugarg)
 	    plugname);
   pthread_mutex_lock (&plugins_mom.plugins_mtx);
   if (MOM_UNLIKELY
-      (plugins_mom.plugins_count + 1 >= plugins_mom.plugins_size))
+      (plugins_mom.plugins_count + 2 >= plugins_mom.plugins_size))
     {
       unsigned oldcnt = plugins_mom.plugins_count;
       unsigned oldsiz = plugins_mom.plugins_size;
@@ -591,7 +591,8 @@ mom_load_plugin (const char *plugname, const char *plugarg)
   if (!pluginit)
     MOM_FATAPRINTF ("plugin %s without 'momplugin_init' function: %s",
 		    plugpath, dlerror ());
-  unsigned plugix = plugins_mom.plugins_count;
+  /// we don't use the index 0 on purpose!
+  unsigned plugix = ++plugins_mom.plugins_count;
   plugins_mom.plugins_arr[plugix].plugin_name =
     MOM_GC_STRDUP ("plugin name", plugname);
   plugins_mom.plugins_arr[plugix].plugin_dlh = plugdlh;
@@ -601,10 +602,35 @@ mom_load_plugin (const char *plugname, const char *plugarg)
   pluginit (plugarg);
   MOM_INFORMPRINTF ("using plugin #%d %s from %s, GPL compatible: %s",
 		    plugix, plugname, plugpath, pluggplcompatible);
-  plugins_mom.plugins_count++;
   pthread_mutex_unlock (&plugins_mom.plugins_mtx);
 }
 
+
+/// after the initial load, try to run the momplugin_after_load of
+/// each plugin defining it
+static void
+do_after_initial_load_with_plugins_mom (void)
+{
+  for (unsigned plugix = 1; plugix <= plugins_mom.plugins_count; plugix++)
+    {
+      void *plugdlh = plugins_mom.plugins_arr[plugix].plugin_dlh;
+      const char *plugnam = plugins_mom.plugins_arr[plugix].plugin_name;
+      assert (plugdlh != NULL && plugnam != NULL);
+      typeof (momplugin_after_load) * plugafterload =
+	dlsym (plugdlh, "momplugin_after_load");
+      if (plugafterload)
+	{
+	  MOM_DEBUGPRINTF (run, "before after load of plugin#%d %s",
+			   plugix, plugnam);
+	  plugafterload ();
+	  MOM_INFORMPRINTF ("done after load of plugin#%d %s",
+			    plugix, plugnam);
+	}
+    }
+}
+
+
+////////////////////////////////////////////////////////////////
 static void
 usage_mom (const char *argv0)
 {
@@ -838,6 +864,7 @@ main (int argc, char **argv)
       MOM_INFORMPRINTF ("done cold dump to directory %s", dump_cold_dir_mom);
     }
   mom_initial_load (".");
+  do_after_initial_load_with_plugins_mom ();
   if (new_predefined_mom)
     {
       if (!isalpha (new_predefined_mom[0]))
