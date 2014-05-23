@@ -1060,7 +1060,7 @@ void mom_item_tasklet_replace_top_frame (momitem_t *itm, momval_t clo,
 					 enum mom_pushframedirective_en, ...)
   __attribute__ ((sentinel));
 void mom_item_tasklet_pop_frame (momitem_t *itm);
-int mom_item_tasklet_depth (momitem_t *itm);
+unsigned mom_item_tasklet_depth (momitem_t *itm);
 
 /************* misc items *********/
 // convert a boolean to a predefined item json_true or json_false

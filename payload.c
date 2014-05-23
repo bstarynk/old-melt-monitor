@@ -1101,18 +1101,18 @@ mom_item_tasklet_pop_frame (momitem_t *itm)
 
 
 
-int
+unsigned
 mom_item_tasklet_depth (momitem_t *itm)
 {
   assert (itm && itm->i_typnum == momty_item);
+  if (!itm->i_payload || itm->i_paylkind != mompayk_tasklet)
+    return 0;
+  struct mom_taskletdata_st *itd = itm->i_payload;
+  unsigned fratop = itd->dtk_fratop;
+  return fratop;
 }
 
 #warning unimplemented tasklet
-static void
-payl_tasklet_load_mom (struct mom_loader_st *ld, momitem_t *litm,
-		       momval_t jsob)
-{
-}
 
 static void
 payl_tasklet_dump_scan_mom (struct mom_dumper_st *du, momitem_t *ditm)
@@ -1121,6 +1121,12 @@ payl_tasklet_dump_scan_mom (struct mom_dumper_st *du, momitem_t *ditm)
 
 static momval_t
 payl_tasklet_dump_json_mom (struct mom_dumper_st *du, momitem_t *ditm)
+{
+}
+
+static void
+payl_tasklet_load_mom (struct mom_loader_st *ld, momitem_t *litm,
+		       momval_t jsob)
 {
 }
 
