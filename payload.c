@@ -1239,6 +1239,63 @@ mom_item_tasklet_frame_nth_number (momitem_t *itm, int frk, int nrk)
 }
 
 
+unsigned
+mom_item_tasklet_frame_nb_doubles (momitem_t *itm, int frk)
+{
+  assert (itm && itm->i_typnum == momty_item);
+  if (!itm->i_payload || itm->i_paylkind != mompayk_tasklet)
+    return 0;
+  struct mom_taskletdata_st *itd = itm->i_payload;
+  unsigned fratop = itd->dtk_fratop;
+  if (frk < 0)
+    frk += fratop;
+  if (frk < 0 || frk >= (int) fratop)
+    return 0;
+  struct momframe_st *curfram = itd->dtk_frames + frk;
+  if (frk + 1 < (int) fratop)
+    {
+      struct momframe_st *nxtfram = itd->dtk_frames + frk + 1;
+      return ((nxtfram->fr_intoff -
+	       curfram->fr_dbloff) * sizeof (intptr_t)) / sizeof (double);
+    }
+  else
+    return ((itd->dtk_scaltop -
+	     curfram->fr_dbloff) * sizeof (intptr_t)) / sizeof (double);
+}
+
+double
+mom_item_tasklet_frame_nth_double (momitem_t *itm, int frk, int drk)
+{
+  unsigned nbdbl = 0;
+  assert (itm && itm->i_typnum == momty_item);
+  if (!itm->i_payload || itm->i_paylkind != mompayk_tasklet)
+    return 0.0;
+  struct mom_taskletdata_st *itd = itm->i_payload;
+  unsigned fratop = itd->dtk_fratop;
+  if (frk < 0)
+    frk += fratop;
+  if (frk < 0 || frk >= (int) fratop)
+    return 0.0;
+  struct momframe_st *curfram = itd->dtk_frames + frk;
+  if (frk + 1 < (int) fratop)
+    {
+      struct momframe_st *nxtfram = itd->dtk_frames + frk + 1;
+      nbdbl = ((nxtfram->fr_intoff -
+		curfram->fr_dbloff) * sizeof (intptr_t)) / sizeof (double);
+    }
+  else
+    {
+      nbdbl = ((itd->dtk_scaltop -
+		curfram->fr_dbloff) * sizeof (intptr_t)) / sizeof (double);
+    }
+  if (drk < 0)
+    drk += nbdbl;
+  if (drk >= 0 && drk < nbdbl)
+    return ((double *) (itd->dtk_scalars + curfram->fr_dbloff))[drk];
+  return 0.0;
+}
+
+
 static void
 payl_tasklet_dump_scan_mom (struct mom_dumper_st *du, momitem_t *itm)
 {
