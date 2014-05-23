@@ -1112,16 +1112,41 @@ mom_item_tasklet_depth (momitem_t *itm)
   return fratop;
 }
 
-#warning unimplemented tasklet
 
 static void
-payl_tasklet_dump_scan_mom (struct mom_dumper_st *du, momitem_t *ditm)
+payl_tasklet_dump_scan_mom (struct mom_dumper_st *du, momitem_t *itm)
 {
+  assert (du != NULL);
+  assert (itm != NULL && itm->i_typnum == momty_item);
+  assert (itm->i_paylkind == mompayk_tasklet && itm->i_payload);
+  struct mom_taskletdata_st *itd = itm->i_payload;
+  unsigned valtop = itd->dtk_valtop;
+  for (unsigned vix = 0; vix < valtop; vix++)
+    mom_dump_scan_value (du, itd->dtk_values[vix]);
+  unsigned fratop = itd->dtk_fratop;
+  for (unsigned frix = 0; frix < fratop; frix++)
+    mom_dump_scan_value (du, (momval_t) itd->dtk_closures[frix]);
 }
 
 static momval_t
-payl_tasklet_dump_json_mom (struct mom_dumper_st *du, momitem_t *ditm)
+payl_tasklet_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
 {
+  assert (du != NULL);
+  assert (itm != NULL && itm->i_typnum == momty_item);
+  assert (itm->i_paylkind == mompayk_tasklet && itm->i_payload);
+  struct mom_taskletdata_st *itd = itm->i_payload;
+  unsigned fratop = itd->dtk_fratop;
+  momval_t tinyarr[MOM_TINY_MAX] = { MOM_NULLV };
+  momval_t *jarr =
+    (fratop < MOM_TINY_MAX) ? tinyarr : MOM_GC_ALLOC ("jarray frames",
+						      fratop *
+						      sizeof (momval_t));
+#warning payl_tasklet_dump_json_mom incomplete
+  for (unsigned frix = 0; frix < fratop; frix++)
+    {
+
+    }
+
 }
 
 static void
