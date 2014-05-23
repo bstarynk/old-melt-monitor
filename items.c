@@ -435,14 +435,38 @@ mom_get_item_of_identcstr (const char *idcstr)
 }
 
 
+void
+mom_item_clear_payload (momitem_t *itm)
+{
+  assert (itm->i_typnum == momty_item && itm->i_magic == MOM_ITEM_MAGIC);
+  if (itm->i_paylkind > 0 && itm->i_payload != NULL)
+    {
+      void *payload = itm->i_payload;
+      unsigned paylkind = itm->i_paylkind;
+      itm->i_payload = NULL;
+      itm->i_paylkind = 0;
+      if (paylkind > 0 && paylkind < mompayk__last)
+	{
+	  struct mom_payload_descr_st *payld = mom_payloadescr[paylkind];
+	  assert (payld != NULL && payld->dpayl_magic == MOM_PAYLOAD_MAGIC);
+	  if (payld->dpayl_finalizefun)
+	    payld->dpayl_finalizefun (itm, payload);
+	}
+    }
+}
 
 static void
 finalize_item_mom (void *itmad, void *data __attribute__ ((unused)))
 {
   momitem_t *itm = (momitem_t *) itmad;
   assert (itm->i_typnum == momty_item && itm->i_magic == MOM_ITEM_MAGIC);
-  pthread_mutex_destroy (&itm->i_mtx);
+  pthread_mutex_lock (&itm->i_mtx);
+  if (itm->i_payload != NULL)
+    mom_item_clear_payload (itm);
+  pthread_mutex_unlock (&itm->i_mtx);
   pthread_mutex_lock (&globitem_mtx_mom);
+  pthread_mutex_destroy (&itm->i_mtx);
+  memset (itmad, 0, sizeof (momitem_t));
   nb_destruction_items_mom++;
   pthread_mutex_unlock (&globitem_mtx_mom);
 }

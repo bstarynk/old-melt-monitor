@@ -154,7 +154,7 @@ found_dumped_item_mom (struct mom_dumper_st *dmp, const momitem_t *itm)
 }
 
 void
-mom_dump_add_item (struct mom_dumper_st *du, const momitem_t *itm)
+mom_dump_add_scanned_item (struct mom_dumper_st *du, const momitem_t *itm)
 {
   if (!itm || itm->i_typnum != momty_item)
     return;
@@ -236,7 +236,7 @@ mom_dump_scan_value (struct mom_dumper_st *dmp, const momval_t val)
 	if (curconn && curconn->i_space > 0)
 	  {
 	    unsigned siz = val.pnode->slen;
-	    mom_dump_add_item (dmp, curconn);
+	    mom_dump_add_scanned_item (dmp, curconn);
 	    for (unsigned ix = 0; ix < siz; ix++)
 	      mom_dump_scan_value (dmp, val.pnode->sontab[ix]);
 	  }
@@ -251,14 +251,14 @@ mom_dump_scan_value (struct mom_dumper_st *dmp, const momval_t val)
 	    const momitem_t *curitm = val.pseqitems->itemseq[ix];
 	    if (!curitm || curitm->i_space == 0)
 	      continue;
-	    mom_dump_add_item (dmp, curitm);
+	    mom_dump_add_scanned_item (dmp, curitm);
 	  }
 	return;
       }
     case momty_item:
       {
 	if (val.pitem && val.pitem->i_space > 0)
-	  mom_dump_add_item (dmp, val.pitem);
+	  mom_dump_add_scanned_item (dmp, val.pitem);
       }
       break;
     }
@@ -340,14 +340,14 @@ mom_dump_scan_inside_item (struct mom_dumper_st *dmp, momitem_t *itm)
 	      && atent[aix].aten_val.ptr != MOM_EMPTY
 	      && atent[aix].aten_itm->i_space != momspa_none)
 	    {
-	      mom_dump_add_item (dmp, atent[aix].aten_itm);
+	      mom_dump_add_scanned_item (dmp, atent[aix].aten_itm);
 	      mom_dump_scan_value (dmp, atent[aix].aten_val);
 	    }
 	}
     }
   if (itm->i_payload != NULL)
     {
-      assert (itm->i_paylkind > 0 && itm->i_paylkind < mompayl__last);
+      assert (itm->i_paylkind > 0 && itm->i_paylkind < mompayk__last);
       struct mom_payload_descr_st *payld = mom_payloadescr[itm->i_paylkind];
       assert (payld && payld->dpayl_magic == MOM_PAYLOAD_MAGIC);
       if (payld->dpayl_dumpscanfun)
@@ -619,7 +619,7 @@ mom_dump_data_inside_item (struct mom_dumper_st *dmp, momitem_t *itm)
     {
       unsigned kindpayl = itm->i_paylkind;
       struct mom_payload_descr_st *payld = NULL;
-      if (kindpayl > 0 && kindpayl < mompayl__last
+      if (kindpayl > 0 && kindpayl < mompayk__last
 	  && (payld = mom_payloadescr[kindpayl]) != NULL)
 	{
 	  assert (payld->dpayl_magic == MOM_PAYLOAD_MAGIC);
@@ -716,7 +716,7 @@ load_data_inside_item_mom (struct mom_loader_st *ld, momitem_t *itm,
     skind = jkind.pstring;
   else if (mom_is_item (jkind))
     skind = mom_item_get_name (jkind.pitem);
-  for (unsigned kix = 1; kix < mompayl__last; kix++)
+  for (unsigned kix = 1; kix < mompayk__last; kix++)
     {
       struct mom_payload_descr_st *payld = mom_payloadescr[kix];
       if (!payld)

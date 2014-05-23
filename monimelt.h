@@ -581,9 +581,9 @@ struct momitem_st
   const momstring_t *i_name;	/* name, or NULL */
   struct mom_itemattributes_st *i_attrs;
   momval_t i_content;
-  uint16_t i_paylkind;
+  uint16_t i_paylkind;		// the kind of payload, see enum mom_kindpayload_en
   uint16_t i_paylxtra;
-  void *i_payload;
+  void *i_payload;		// the payload data, should be non null if kind is set
 };
 
 static inline bool
@@ -591,6 +591,25 @@ mom_is_item (momval_t v)
 {
   return (v.ptr && v.pitem->i_typnum == momty_item
 	  && v.pitem->i_magic == MOM_ITEM_MAGIC);
+}
+
+// lock an item & return true
+static inline bool
+mom_lock_item (momitem_t *itm)
+{
+  if (!itm || itm->i_typnum != momty_item)
+    return false;
+  assert (itm->i_magic == MOM_ITEM_MAGIC);
+  return (pthread_mutex_lock (&itm->i_mtx) == 0);
+}
+
+// unlock an item
+static inline void
+mom_unlock_item (momitem_t *itm)
+{
+  assert (itm && itm->i_typnum == momty_item
+	  && itm->i_magic == MOM_ITEM_MAGIC);
+  pthread_mutex_unlock (&itm->i_mtx);
 }
 
 static inline momitem_t *
@@ -695,6 +714,9 @@ mom_get_attribute (const struct mom_itemattributes_st *const attrs,
   return MOM_NULLV;
 }
 
+/// clear the payload of an item - should be called under the item's
+/// lock. Can call the payload finalizer
+void mom_item_clear_payload (momitem_t *itm);
 /// get the set of named items, ordered by item ids
 const momset_t *mom_set_of_named_items (void);
 /// get the tuple of named items, alphabetically ordered by name
@@ -765,6 +787,8 @@ struct mom_payload_descr_st
   void (*dpayl_dumpscanfun) (struct mom_dumper_st * du, momitem_t *ditm);
   // the payload dumper, should return a json object
   momval_t (*dpayl_dumpjsonfun) (struct mom_dumper_st * du, momitem_t *ditm);
+  // the payload finalizer
+  void (*dpayl_finalizefun) (momitem_t *ditm, void *payloadata);
   intptr_t dpayl_spare1, dpayl_spare2;
 };
 
@@ -773,13 +797,36 @@ momval_t mom_load_value_json (struct mom_loader_st *ld, const momval_t jval);
 
 enum mom_kindpayload_en
 {
-  mompayl_none = 0,
-  mompayl_queue,
-  mompayl_tasklet,
+  mompayk_none = 0,
+  mompayk_queue,
+  mompayk_tasklet,
+  mompayk_buffer,
 
-  mompayl__last = 32
+  mompayk__last = 32
 };
-struct mom_payload_descr_st *mom_payloadescr[mompayl__last + 1];
+struct mom_payload_descr_st *mom_payloadescr[mompayk__last + 1];
+
+/************* queue item *********/
+
+// start a queue payload, under the item's lock
+void mom_item_start_queue (momitem_t *itm);
+// add under the item's lock a value at the back of the queue
+void mom_item_queue_add_back (momitem_t *itm, momval_t val);
+// add under the item's lock a value at the front of the queue
+void mom_item_queue_add_front (momitem_t *itm, momval_t val);
+// under the item's lock test the queue emptiness
+bool mom_item_queue_is_empty (momitem_t *itm);
+// under the item's lock compute the queue length
+unsigned mom_item_queue_length (momitem_t *itm);
+// under the item's lock peek its front value
+momval_t mom_item_queue_peek_front (momitem_t *itm);
+// under the item's lock peek its back value
+momval_t mom_item_queue_peek_back (momitem_t *itm);
+// under the item's lock pop its front value
+momval_t mom_item_queue_pop_front (momitem_t *itm);
+
+
+
 /************* misc items *********/
 // convert a boolean to a predefined item json_true or json_false
 const momitem_t *mom_get_item_bool (bool v);
@@ -1553,6 +1600,13 @@ void mom_full_dump (const char *reason, const char *dumpdir,
 void mom_dump_require_module (struct mom_dumper_st *du, const char *modname);
 
 void mom_dump_notice (struct mom_dumper_st *du, momval_t nval);
+
+void mom_dump_scan_value (struct mom_dumper_st *dmp, const momval_t val);
+
+void mom_dump_add_scanned_item (struct mom_dumper_st *du,
+				const momitem_t *itm);
+
+momval_t mom_dump_emit_json (struct mom_dumper_st *dmp, const momval_t val);
 
 // initial load
 void mom_initial_load (const char *ldirnam);
