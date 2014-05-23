@@ -807,7 +807,7 @@ enum mom_kindpayload_en
 struct mom_payload_descr_st *mom_payloadescr[mompayk__last + 1];
 
 /************* queue item *********/
-
+///// the payload is a GC_MALLOC-ed struct mom_valuequeue_st
 // start a queue payload, under the item's lock
 void mom_item_start_queue (momitem_t *itm);
 // add under the item's lock a value at the back of the queue
@@ -825,6 +825,35 @@ momval_t mom_item_queue_peek_back (momitem_t *itm);
 // under the item's lock pop its front value
 momval_t mom_item_queue_pop_front (momitem_t *itm);
 
+
+/************* tasklet item *********/
+
+struct momframe_st
+{
+  uint32_t fr_state;		/* current state */
+  uint32_t fr_intoff;		/* offset of integer locals in itk_scalars */
+  uint32_t fr_dbloff;		/* offset of double locals in itk_scalars, should be after fr_intoff */
+  uint32_t fr_valoff;		/* offset of value locals in its_values */
+};
+
+// the payload is a GC_MALLOC-ed struct  mom_tasklet_data_st 
+struct mom_taskletdata_st
+{
+  intptr_t *dtk_scalars;	/* space for scalar data, intptr_t or double-s */
+  momval_t *dtk_values;		/* space for value data */
+  momnode_t **dtk_closures;	/* stack of closure nodes */
+  struct momframe_st *dtk_frames;	/* stack of scalar frames */
+  pthread_t dtk_thread;		/* the thread executing this, or else 0 */
+  uint32_t dtk_scalsize;	/* size of dtk_scalars */
+  uint32_t dtk_scaltop;		/* top of stack offset on dtk_scalars */
+  uint32_t dtk_valsize;		/* size of dtk_values */
+  uint32_t dtk_valtop;		/* top of stack offset on its_values */
+  uint32_t dtk_frasize;		/* size of dtk_closures & dtk_frames */
+  uint32_t dtk_fratop;		/* top of stack offset on dtk_closures & dtk_frames */
+};
+
+// start a tasklet payload, under the item's lock
+void mom_item_start_tasklet (momitem_t *itm);
 
 
 /************* misc items *********/

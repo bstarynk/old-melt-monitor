@@ -177,6 +177,33 @@ static const struct mom_payload_descr_st payldescr_queue_mom = {
 ///// TASKLET PAYLOAD
 ////////////////////////////////////////////////////////////////
 
+void
+mom_item_start_tasklet (momitem_t *itm)
+{
+  assert (itm && itm->i_typnum == momty_item);
+  if (itm->i_payload)
+    mom_item_clear_payload (itm);
+  struct mom_taskletdata_st *itd =
+    MOM_GC_ALLOC ("item tasklet", sizeof (struct mom_taskletdata_st));
+  const unsigned scalsize = 8;
+  const unsigned valsize = 8;
+  const unsigned frasize = 6;
+  itd->dtk_scalars =
+    MOM_GC_SCALAR_ALLOC ("tasklet scalars", scalsize * sizeof (intptr_t));
+  itd->dtk_values =
+    MOM_GC_ALLOC ("tasklet values", valsize * sizeof (momval_t));
+  itd->dtk_closures =
+    MOM_GC_ALLOC ("tasklet closures", frasize * sizeof (momnode_t *));
+  itd->dtk_frames =
+    MOM_GC_SCALAR_ALLOC ("tasklet frames",
+			 frasize * sizeof (struct momframe_st));
+  itd->dtk_scalsize = scalsize;
+  itd->dtk_valsize = valsize;
+  itd->dtk_frasize = frasize;
+  itm->i_payload = itd;
+  itm->i_paylkind = mompayk_tasklet;
+}
+
 #warning unimplemented tasklet
 static void
 payl_tasklet_load_mom (struct mom_loader_st *ld, momitem_t *litm,
