@@ -221,28 +221,32 @@ mom_item_start_routine (momitem_t *itm, const char *routname)
 	     MOMOUT_LITERALV (rdescr->rout_timestamp));
 }
 
-#warning unimplemented routine
 static void
-payl_routine_load_mom (struct mom_loader_st *ld, momitem_t *litm,
-		       momval_t jsob)
+payl_routine_load_mom (struct mom_loader_st *ld, momitem_t *itm,
+		       momval_t jsonv)
 {
-}
-
-static void
-payl_routine_dump_scan_mom (struct mom_dumper_st *du, momitem_t *ditm)
-{
+  assert (ld != NULL);
+  assert (itm != NULL && itm->i_typnum == momty_item);
+  mom_item_start_routine (itm, mom_string_cstr (jsonv));
 }
 
 static momval_t
-payl_routine_dump_json_mom (struct mom_dumper_st *du, momitem_t *ditm)
+payl_routine_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
 {
+  assert (du != NULL);
+  assert (itm != NULL && itm->i_typnum == momty_item);
+  assert (itm->i_paylkind == mompayk_routine);
+  const struct momroutinedescr_st *rdescr = itm->i_payload;
+  assert (rdescr != NULL && rdescr->rout_magic == MOM_ROUTINE_MAGIC
+	  && rdescr->rout_name != NULL && rdescr->rout_module);
+  mom_dump_require_module (du, rdescr->rout_module);
+  return (momval_t) mom_make_string (rdescr->rout_name);
 }
 
 static const struct mom_payload_descr_st payldescr_routine_mom = {
   .dpayl_magic = MOM_PAYLOAD_MAGIC,
   .dpayl_name = "routine",
   .dpayl_loadfun = payl_routine_load_mom,
-  .dpayl_dumpscanfun = payl_routine_dump_scan_mom,
   .dpayl_dumpjsonfun = payl_routine_dump_json_mom,
 };
 
