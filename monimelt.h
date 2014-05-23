@@ -1060,7 +1060,20 @@ void mom_item_tasklet_replace_top_frame (momitem_t *itm, momval_t clo,
 					 enum mom_pushframedirective_en, ...)
   __attribute__ ((sentinel));
 void mom_item_tasklet_pop_frame (momitem_t *itm);
+
+// tasklet inspectors
 unsigned mom_item_tasklet_depth (momitem_t *itm);
+/// frk is a frame rank with -1 meaning last
+/// vrk, nrk, drk are ranks within the frame
+int mom_item_tasklet_frame_state (momitem_t *itm, int frk);
+momval_t mom_item_tasklet_frame_closure (momitem_t *itm, int frk);
+unsigned mom_item_tasklet_frame_nb_values (momitem_t *itm, int frk);
+unsigned mom_item_tasklet_frame_nb_numbers (momitem_t *itm, int frk);
+unsigned mom_item_tasklet_frame_nb_doubles (momitem_t *itm, int frk);
+momval_t mom_item_tasklet_frame_nth_value (momitem_t *itm, int frk, int vtk);
+intptr_t mom_item_tasklet_frame_nth_numbers (momitem_t *itm, int frk,
+					     int nrk);
+double mom_item_tasklet_frame_nth_double (momitem_t *itm, int frk, int drk);
 
 /************* misc items *********/
 // convert a boolean to a predefined item json_true or json_false
