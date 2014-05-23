@@ -1409,6 +1409,11 @@ extern const char *mombad_entries;
 extern const char *mombad_unsigned;
 
 
+
+
+////////////////////////////////////////////////////////////////
+///// QUEUES OF VALUES
+////////////////////////////////////////////////////////////////
 struct mom_vaqelem_st
 {
   struct mom_vaqelem_st *vqe_next;
@@ -1511,6 +1516,10 @@ mom_queue_peek_value_back (struct mom_valuequeue_st *vq)
 }
 
 
+////////////////////////////////////////////////////////////////
+///// MISCELLANOUS
+////////////////////////////////////////////////////////////////
+void mom_load_plugin (const char *plugname, const char *plugarg);
 
 //////// random numbers
 uint32_t mom_random_nonzero_32 (void);
@@ -1550,8 +1559,17 @@ void mom_initial_load (const char *ldirnam);
 int mom_nb_workers;
 const char *mom_web_host;
 
+/// two prefixes known by our Makefile!
 // generated modules start with:
 #define MOM_SHARED_MODULE_PREFIX "momg_"
+// plugins path start with
+#define MOM_PLUGIN_PREFIX "momplug_"
+
+/// plugins are required to define
+extern const char momplugin_GPL_compatible[];	// a string describing the licence
+extern void momplugin_init (const char *pluginarg);	// the plugin initializer
+/// they may also define a function to be called after load
+extern void momplugin_afterload (void);
 
 /// declare the predefined named and anonymous
 #define MOM_PREDEFINED_NAMED(Name,Id) extern momitem_t* mom_named__##Name;

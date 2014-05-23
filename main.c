@@ -506,7 +506,7 @@ static const struct option mom_long_options[] = {
   {"help", no_argument, NULL, 'h'},
   {"version", no_argument, NULL, 'V'},
   {"nice", required_argument, NULL, 'n'},
-  {"module", required_argument, NULL, 'M'},
+  {"plugin", required_argument, NULL, 'P'},
   {"jobs", required_argument, NULL, 'J'},
   {"daemon", no_argument, NULL, 'd'},
   {"syslog", no_argument, NULL, 'l'},
@@ -531,6 +531,80 @@ const char *const mom_debug_names[momdbg__last] = {
 
 #undef DEFINE_DBG_NAME_MOM
 
+
+/*************************** plugins **************************/
+struct plugin_mom_st
+{
+  const char *plugin_name;
+  void *plugin_dlh;
+};
+static struct
+{
+  pthread_mutex_t plugins_mtx;
+  unsigned plugins_size;
+  unsigned plugins_count;
+  struct plugin_mom_st *plugins_arr;
+} plugins_mom =
+{
+.plugins_mtx = PTHREAD_MUTEX_INITIALIZER,.plugins_size = 0,.plugins_count =
+    0,.plugins_arr = NULL};
+
+
+void
+mom_load_plugin (const char *plugname, const char *plugarg)
+{
+  char plugpath[MOM_PATH_MAX];
+  memset (plugpath, 0, sizeof (plugpath));
+  if (!plugname || !(isalnum (plugname[0]) || plugname[0] == '_')
+      || strchr (plugname, '/') || strlen (plugname) > MOM_PATH_MAX - 32)
+    MOM_FATAPRINTF ("invalid plugin name %s", plugname);
+  snprintf (plugpath, sizeof (plugpath), "./" MOM_PLUGIN_PREFIX "%s.so",
+	    plugname);
+  pthread_mutex_lock (&plugins_mom.plugins_mtx);
+  if (MOM_UNLIKELY
+      (plugins_mom.plugins_count + 1 >= plugins_mom.plugins_size))
+    {
+      unsigned oldcnt = plugins_mom.plugins_count;
+      unsigned oldsiz = plugins_mom.plugins_size;
+      struct plugin_mom_st *oldarr = plugins_mom.plugins_arr;
+      unsigned newsiz = 1 + (((3 * oldcnt / 2) + 10) | 0xf);
+      struct plugin_mom_st *newarr =
+	MOM_GC_ALLOC ("plugins", newsiz * sizeof (struct plugin_mom_st));
+      if (oldcnt > 0)
+	memcpy (newarr, oldarr, oldcnt * sizeof (struct plugin_mom_st));
+      plugins_mom.plugins_arr = newarr;
+      plugins_mom.plugins_size = newsiz;
+      if (oldarr)
+	{
+	  memset (oldarr, 0, oldsiz * sizeof (struct plugin_mom_st));
+	  MOM_GC_FREE (oldarr);
+	}
+    }
+  void *plugdlh = GC_dlopen (plugpath, RTLD_NOW | RTLD_GLOBAL);
+  if (!plugdlh)
+    MOM_FATAPRINTF ("failed to load plugin %s: %s", plugpath, dlerror ());
+  const char *pluggplcompatible = dlsym (plugdlh, "momplugin_GPL_compatible");
+  if (!pluggplcompatible)
+    MOM_FATAPRINTF ("plugin %s without 'momplugin_GPL_compatible' string: %s",
+		    plugpath, dlerror ());
+  typeof (momplugin_init) * pluginit = dlsym (plugdlh, "momplugin_init");
+  if (!pluginit)
+    MOM_FATAPRINTF ("plugin %s without 'momplugin_init' function: %s",
+		    plugpath, dlerror ());
+  unsigned plugix = plugins_mom.plugins_count;
+  plugins_mom.plugins_arr[plugix].plugin_name =
+    MOM_GC_STRDUP ("plugin name", plugname);
+  plugins_mom.plugins_arr[plugix].plugin_dlh = plugdlh;
+  MOM_DEBUGPRINTF (run,
+		   "initializing plugin #%d %s from %s argument %s GPL compatible %s",
+		   plugix, plugname, plugpath, plugarg, pluggplcompatible);
+  pluginit (plugarg);
+  MOM_INFORMPRINTF ("using plugin #%d %s from %s, GPL compatible: %s",
+		    plugix, plugname, plugpath, pluggplcompatible);
+  plugins_mom.plugins_count++;
+  pthread_mutex_unlock (&plugins_mom.plugins_mtx);
+}
+
 static void
 usage_mom (const char *argv0)
 {
@@ -545,7 +619,7 @@ usage_mom (const char *argv0)
   putchar ('\n');
   printf ("\t -n | --nice <nice-level> " " \t# Set process nice level.\n");
   printf ("\t -J | --jobs <nb-work-threads> " " \t# Start work threads.\n");
-  printf ("\t -M | --module <module-name> <module-arg> "
+  printf ("\t -P | --plugin <plugin-name> <plugin-arg> "
 	  " \t# load a plugin.\n");
   printf ("\t -W | --web <webhost>\n");
   putchar ('\n');
@@ -599,7 +673,7 @@ parse_program_arguments_and_load_modules_mom (int *pargc, char **argv)
 {
   int argc = *pargc;
   int opt = -1;
-  while ((opt = getopt_long (argc, argv, "lhVdn:M:W:J:D:",
+  while ((opt = getopt_long (argc, argv, "lhVdn:P:W:J:D:",
 			     mom_long_options, NULL)) >= 0)
     {
       switch (opt)
@@ -629,12 +703,11 @@ parse_program_arguments_and_load_modules_mom (int *pargc, char **argv)
 	case 'W':
 	  mom_web_host = optarg;
 	  break;
-	case 'M':
+	case 'P':
 	  {
-	    char *modnam = optarg;
-	    char *modarg = argv[optind++];
-#warning load of module unimplemented
-	    MOM_FATAPRINTF ("should load module %s arg %s", modnam, modarg);
+	    char *plugnam = optarg;
+	    char *plugarg = argv[optind++];
+	    mom_load_plugin (plugnam, plugarg);
 	  }
 	  break;
 	case xtraopt_chdir:

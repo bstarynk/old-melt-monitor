@@ -38,7 +38,7 @@ SOURCES= $(sort $(filter-out $(wildcard mod_*.c), $(wildcard [a-z]*.c)))
 MODULE_SOURCES= $(sort $(wildcard momg_*.c))
 MODULES= $(patsubst %.c,%.so,$(MODULE_SOURCES))
 # plugins are extra code
-PLUGIN_SOURCES= $(sort $(wildcard plug_*.c))
+PLUGIN_SOURCES= $(sort $(wildcard momplug_*.c))
 PLUGINS=  $(patsubst %.c,%.so,$(PLUGIN_SOURCES))
 OBJECTS= $(patsubst %.c,%.o,$(SOURCES))
 RM= rm -fv
@@ -80,7 +80,7 @@ momg_%.so: momg_%.c | monimelt.h predef-monimelt.h
 	        shared module $@ at $$(date +%c)
 
 ## extra plugins
-plug_%.so: plug_%.c  | monimelt.h predef-monimelt.h
+momplug_%.so: momplug_%.c  | monimelt.h predef-monimelt.h
 	$(LINK.c) -fPIC $< -shared -o $@
 
 restore-state: 
