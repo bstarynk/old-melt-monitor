@@ -898,6 +898,168 @@ void
 mom_item_tasklet_reserve (momitem_t *itm, unsigned nbint, unsigned nbdbl,
 			  unsigned nbval, unsigned nbfram);
 
+
+/***** push directives for frames *****/
+enum mom_pushframedirective_en
+{
+  MOMPFRDO__END = 0,
+#define MOMPFR_END() ((void*)MOMPFR__END)
+  //
+  MOMPFRDO_STATE /*, int state  */ ,
+#define MOMPFR_STATE(S) MOMPFRDO_STATE, \
+  MOM_REQUIRES_TYPE(S,int,mombad_int)
+  //
+  MOMPFRDO_VALUE /*, momval_t val */ ,
+#define MOMPFR_VALUE(V) MOMPFRDO_VALUE, \
+  MOM_REQUIRES_TYPE(V,momval_t,mombad_value)
+  //
+  MOMPFRDO_TWO_VALUES /*, momval_t val1, val2 */ ,
+#define MOMPFR_TWO_VALUES(V1,V2) MOMPFRDO_TWO_VALUES,	\
+  MOM_REQUIRES_TYPE(V1,momval_t,mombad_value),		\
+  MOM_REQUIRES_TYPE(V2,momval_t,mombad_value)
+  //
+  MOMPFRDO_THREE_VALUES /*, momval_t val1, val2, val3 */ ,
+#define MOMPFR_THREE_VALUES(V1,V2,V3) MOMPFRDO_THREE_VALUES,	\
+  MOM_REQUIRES_TYPE(V1,momval_t,mombad_value),			\
+  MOM_REQUIRES_TYPE(V2,momval_t,mombad_value),			\
+  MOM_REQUIRES_TYPE(V3,momval_t,mombad_value)
+  //
+  MOMPFRDO_FOUR_VALUES /*, momval_t val1, val2, val3, val4 */ ,
+#define MOMPFR_FOUR_VALUES(V1,V2,V3,V4) MOMPFRDO_FOUR_VALUES,	\
+  MOM_REQUIRES_TYPE(V1,momval_t,mombad_value),			\
+  MOM_REQUIRES_TYPE(V2,momval_t,mombad_value),			\
+  MOM_REQUIRES_TYPE(V3,momval_t,mombad_value),			\
+  MOM_REQUIRES_TYPE(V4,momval_t,mombad_value)
+  //
+  MOMPFRDO_FIVE_VALUES /*, momval_t val1, val2, val3, val4, val5 */ ,
+#define MOMPFR_FIVE_VALUES(V1,V2,V3,V4,V5) MOMPFRDO_FIVE_VALUES,	\
+  MOM_REQUIRES_TYPE(V1,momval_t,mombad_value),				\
+  MOM_REQUIRES_TYPE(V2,momval_t,mombad_value),				\
+  MOM_REQUIRES_TYPE(V3,momval_t,mombad_value),				\
+  MOM_REQUIRES_TYPE(V4,momval_t,mombad_value),				\
+  MOM_REQUIRES_TYPE(V5,momval_t,mombad_value)
+  //
+  MOMPFRDO_SIX_VALUES /*, momval_t val1, val2, val3, val4, val5, val6 */ ,
+#define MOMPFR_SIX_VALUES(V1,V2,V3,V4,V5,V6) MOMPFRDO_SIX_VALUES, \
+  MOM_REQUIRES_TYPE(V1,momval_t,mombad_value),			  \
+  MOM_REQUIRES_TYPE(V2,momval_t,mombad_value),			  \
+  MOM_REQUIRES_TYPE(V3,momval_t,mombad_value),			  \
+  MOM_REQUIRES_TYPE(V4,momval_t,mombad_value),			  \
+  MOM_REQUIRES_TYPE(V4,momval_t,mombad_value),			  \
+  MOM_REQUIRES_TYPE(V6,momval_t,mombad_value)
+  //
+  MOMPFRDO_ARRAY_VALUES /* unsigned count, momval_t valarr[count] */ ,
+#define MOMPFR_ARRAY_VALUES(Cnt,Arr) MOMPFRDO_ARRAY_VALUES,	\
+  MOM_REQUIRES_TYPE(Cnt,unsigned,mombad_unsigned),		\
+  MOM_REQUIRES_TYPE(Arr,momval_t*,mombad_array)
+  //
+  MOMPFRDO_NODE_VALUES /* momvalue node, -- to push the sons of a node */ ,
+#define MOMPFR_NODE_VALUES(Nod) MOMPFRDO_NODE_VALUES,	\
+  MOM_REQUIRES_TYPE(Nod,momval_t,mombad_value)
+  //
+  MOMPFRDO_SEQ_ITEMS
+    /* momvalue seqitem, -- to push the items of a set or tuple */ ,
+#define MOMPFR_SEQITEM_ITEMS(Seq) MOMPFRDO_SEQ_ITEMS,	\
+  MOM_REQUIRES_TYPE(Seq,momval_t,mombad_value)
+  //
+  MOMPFRDO_INT /*, intptr_t num */ ,
+#define MOMPFR_INT(I) MOMPFRDO_INT,	\
+  MOM_REQUIRES_TYPE(I,intptr_t,mombad_int)
+  //
+  MOMPFRDO_TWO_INTS /*, intptr_t num1, num2 */ ,
+#define MOMPFR_TWO_INTS(I1,I2) MOMPFRDO_TWO_INTS,	\
+  MOM_REQUIRES_TYPE(I1,intptr_t,mombad_int),		\
+  MOM_REQUIRES_TYPE(I2,intptr_t,mombad_int)
+  //
+  MOMPFRDO_THREE_INTS /*, intptr_t num1, num2, num3 */ ,
+#define MOMPFR_THREE_INTS(I1,I2,I3) MOMPFRDO_THREE_INTS,	\
+  MOM_REQUIRES_TYPE(I1,intptr_t,mombad_int),			\
+  MOM_REQUIRES_TYPE(I2,intptr_t,mombad_int),			\
+  MOM_REQUIRES_TYPE(I3,intptr_t,mombad_int)
+  //
+  MOMPFRDO_FOUR_INTS /*, intptr_t num1, num2, num3, num4 */ ,
+#define MOMPFR_FOUR_INTS(I1,I2,I3,I4) MOMPFRDO_FOUR_INTS,	\
+  MOM_REQUIRES_TYPE(I1,intptr_t,mombad_int),			\
+  MOM_REQUIRES_TYPE(I2,intptr_t,mombad_int),			\
+  MOM_REQUIRES_TYPE(I3,intptr_t,mombad_int),			\
+  MOM_REQUIRES_TYPE(I4,intptr_t,mombad_int)
+  //
+  MOMPFRDO_FIVE_INTS /*, intptr_t num1, num2, num3, num4, num5 */ ,
+#define MOMPFR_FIVE_INTS(I1,I2,I3,I4,I5) MOMPFRDO_FIVE_INTS,	\
+  MOM_REQUIRES_TYPE(I1,intptr_t,mombad_int),			\
+  MOM_REQUIRES_TYPE(I2,intptr_t,mombad_int),			\
+  MOM_REQUIRES_TYPE(I3,intptr_t,mombad_int),			\
+  MOM_REQUIRES_TYPE(I4,intptr_t,mombad_int),			\
+  MOM_REQUIRES_TYPE(I5,intptr_t,mombad_int)
+  //
+  MOMPFRDO_SIX_INTS /*, intptr_t num1, num2, num3, num4, num5 */ ,
+#define MOMPFR_SIX_INTS(I1,I2,I3,I4,I5,I6) MOMPFRDO_SIX_INTS,	\
+  MOM_REQUIRES_TYPE(I1,intptr_t,mombad_int),			\
+  MOM_REQUIRES_TYPE(I2,intptr_t,mombad_int),			\
+  MOM_REQUIRES_TYPE(I3,intptr_t,mombad_int),			\
+  MOM_REQUIRES_TYPE(I4,intptr_t,mombad_int),			\
+  MOM_REQUIRES_TYPE(I5,intptr_t,mombad_int),			\
+  MOM_REQUIRES_TYPE(I6,intptr_t,mombad_int)
+  //
+  MOMPFRDO_ARRAY_INTS /* unsigned count, intptr_t numarr[count] */ ,
+#define MOMPFR_ARRAY_INTS(Cnt,Arr) MOMPFRDO_ARRAY_INTS,	\
+  MOM_REQUIRES_TYPE(Cnt,unsigned,mombad_unsigned)	\
+  MOM_REQUIRES_TYPE(Arr,(intptr_t*),mombad_arr)
+  //
+  MOMPFRDO_DOUBLE /*, double d */ ,
+#define MOMPFR_DOUBLE(D) MOMPFRDO_DOUBLE,	\
+  MOM_REQUIRES_TYPE(D,double,mombad_double)
+  //
+  MOMPFRDO_TWO_DOUBLES /*, double d1, d2 */ ,
+#define MOMPFR_TWO_DOUBLES(D1,D2) MOMPFRDO_TWO_DOUBLES,	\
+  MOM_REQUIRES_TYPE(D1,double,mombad_double),		\
+  MOM_REQUIRES_TYPE(D2,double,mombad_double)
+  //
+  MOMPFRDO_THREE_DOUBLES /*, double d1, d2, d3 */ ,
+#define MOMPFR_THREE_DOUBLES(D1,D2,D3) MOMPFRDO_THREE_DOUBLES,	\
+  MOM_REQUIRES_TYPE(D1,double,mombad_double),			\
+  MOM_REQUIRES_TYPE(D2,double,mombad_double),			\
+  MOM_REQUIRES_TYPE(D3,double,mombad_double)
+  //
+  MOMPFRDO_FOUR_DOUBLES /*, double d1, d2, d3, d4 */ ,
+#define MOMPFR_FOUR_DOUBLES(D1,D2,D3,D4) MOMPFRDO_FOUR_DOUBLES,	\
+  MOM_REQUIRES_TYPE(D1,double,mombad_double),			\
+  MOM_REQUIRES_TYPE(D2,double,mombad_double),			\
+  MOM_REQUIRES_TYPE(D3,double,mombad_double),			\
+  MOM_REQUIRES_TYPE(D4,double,mombad_double)
+  //
+  MOMPFRDO_FIVE_DOUBLES /*, double d1, d2, d3, d4, d5 */ ,
+#define MOMPFR_FIVE_DOUBLES(D1,D2,D3,D4,D5) MOMPFRDO_FIVE_DOUBLES,	\
+  MOM_REQUIRES_TYPE(D1,double,mombad_double),			\
+  MOM_REQUIRES_TYPE(D2,double,mombad_double),			\
+  MOM_REQUIRES_TYPE(D3,double,mombad_double),			\
+  MOM_REQUIRES_TYPE(D4,double,mombad_double),			\
+  MOM_REQUIRES_TYPE(D5,double,mombad_double)
+  //
+  MOMPFRDO_SIX_DOUBLES /*, double d1, d2, d3, d4, d5, d6 */ ,
+#define MOMPFR_SIX_DOUBLES(D1,D2,D3,D4,D5,D6) MOMPFRDO_SIX_DOUBLES,	\
+  MOM_REQUIRES_TYPE(D1,double,mombad_double),				\
+  MOM_REQUIRES_TYPE(D2,double,mombad_double),				\
+  MOM_REQUIRES_TYPE(D3,double,mombad_double),				\
+  MOM_REQUIRES_TYPE(D4,double,mombad_double),				\
+  MOM_REQUIRES_TYPE(D5,double,mombad_double),				\
+  MOM_REQUIRES_TYPE(D6,double,mombad_double)
+  //
+  MOMPFRDO_ARRAY_DOUBLES /* unsigned count, double dblarr[count] */ ,
+#define MOMPFR_ARRAY_DOUBLES(Cnt,Arr) MOMPFRDO_ARRAY_DOUBLES,	\
+  MOM_REQUIRES_TYPE(Cnt,unsigned,mombad_unsigned)	\
+  MOM_REQUIRES_TYPE(Arr,(double*),mombad_arr)
+};
+
+void mom_item_tasklet_push_frame (momitem_t *itm, momval_t clo,
+				  enum mom_pushframedirective_en, ...)
+  __attribute__ ((sentinel));
+void mom_item_tasklet_replace_top_frame (momitem_t *itm, momval_t clo,
+					 enum mom_pushframedirective_en, ...)
+  __attribute__ ((sentinel));
+void mom_item_tasklet_pop_frame (momitem_t *itm);
+int mom_item_tasklet_depth (momitem_t *itm);
+
 /************* misc items *********/
 // convert a boolean to a predefined item json_true or json_false
 const momitem_t *mom_get_item_bool (bool v);
@@ -1526,6 +1688,7 @@ extern const char *mombad_space;
 extern const char *mombad_value;
 extern const char *mombad_item;
 extern const char *mombad_entries;
+extern const char *mombad_array;
 extern const char *mombad_unsigned;
 
 
