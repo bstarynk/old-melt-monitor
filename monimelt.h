@@ -879,7 +879,7 @@ struct mom_taskletdata_st
 {
   intptr_t *dtk_scalars;	/* space for scalar data, intptr_t or double-s */
   momval_t *dtk_values;		/* space for value data */
-  momnode_t **dtk_closures;	/* stack of closure nodes */
+  const momnode_t **dtk_closures;	/* stack of closure nodes */
   struct momframe_st *dtk_frames;	/* stack of scalar frames */
   pthread_t dtk_thread;		/* the thread executing this, or else 0 */
   uint32_t dtk_scalsize;	/* size of dtk_scalars */
