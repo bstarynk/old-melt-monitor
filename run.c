@@ -155,14 +155,110 @@ work_run_mom (void *p)
   return NULL;
 }
 
+static bool
+step_tasklet_mom (momitem_t *tkitm, struct mom_taskletdata_st *itd)
+{
+  bool res = false;
+  bool popframe = false;
+  unsigned fratop = itd->dtk_fratop;
+  if (!fratop)
+    return false;
+  int state = 0;
+  momval_t *locvals = NULL;
+  intptr_t *locnums = NULL;
+  double *locdbls = NULL;
+  struct momroutinedescr_st *rdescr = NULL;
+  mom_routine_sig_t *routcod = NULL;
+  assert (fratop < itd->dtk_frasize);
+  struct momframe_st *curfram = itd->dtk_frames + fratop;
+  const momnode_t *curclo = itd->dtk_closures[fratop];
+  if (!curclo || curclo->typnum != momty_node)
+    {
+      mom_item_tasklet_pop_frame (tkitm);
+      return itd->dtk_fratop > 0;
+    }
+  momitem_t *routitm = (momitem_t *) curclo->connitm;
+  if (routitm || routitm->i_typnum != momty_item)
+    {
+      mom_item_tasklet_pop_frame (tkitm);
+      return itd->dtk_fratop > 0;
+    }
+  pthread_mutex_lock (&routitm->i_mtx);
+  if (routitm->i_paylkind != mompayk_routine)
+    {
+      popframe = true;
+      goto end;
+    }
+  rdescr = routitm->i_payload;
+  if (MOM_UNLIKELY
+      (!rdescr || rdescr->rout_magic != MOM_ROUTINE_MAGIC
+       || !rdescr->rout_codefun))
+    {
+      popframe = true;
+      goto end;
+    }
+  if (curclo->slen < rdescr->rout_minclosize)
+    {
+      popframe = true;
+      goto end;
+    }
+  state = curfram->fr_state;
+  locvals = itd->dtk_values + curfram->fr_valoff;
+  locnums = itd->dtk_scalars + curfram->fr_intoff;
+  locdbls = (double *) (itd->dtk_scalars + curfram->fr_dbloff);
+  routcod = rdescr->rout_codefun;
+end:
+  pthread_mutex_unlock (&routitm->i_mtx);
+  if (routcod)
+    {
+      MOM_DEBUG (MOMOUT_LITERAL ("step_tasklet_mom alling routine "),
+		 MOMOUT_LITERALV (rdescr->rout_name),
+		 MOMOUT_LITERAL (" at state#"),
+		 MOMOUT_DEC_INT (state),
+		 MOMOUT_LITERAL (" with taskitem:"),
+		 MOMOUT_ITEM ((const momitem_t *) tkitm));
+      int newstate =
+	routcod (state, tkitm, curclo, locvals, locnums, locdbls);
+      if (newstate == routres_pos)
+	popframe = true;
+      else
+	(itd->dtk_frames + fratop)->fr_state = newstate;
+    }
+  if (popframe)
+    mom_item_tasklet_pop_frame (tkitm);
+  return res;
+}
 
+
+#define TASKLET_TIMEOUT 0.002
 void
 run_one_tasklet_mom (momitem_t *tkitm)
 {
   MOM_DEBUG (run, MOMOUT_LITERAL ("run_one_tasklet_mom start tkitm:"),
 	     MOMOUT_ITEM ((const momitem_t *) tkitm));
   pthread_mutex_lock (&tkitm->i_mtx);
-  MOM_FATAPRINTF ("unimplemented run_one_tasklet_mom");
-#warning unimplemented run_one_tasklet_mom
+  if (tkitm->i_paylkind != mompayk_tasklet)
+    goto end;
+  double timestart = mom_clock_time (CLOCK_REALTIME);
+  double timelimit = timestart + TASKLET_TIMEOUT;
+  struct mom_taskletdata_st *itd = tkitm->i_payload;
+  itd->dtk_thread = pthread_self ();
+  unsigned nbsteps = mom_random_32 () % 16 + 3;
+  unsigned stepcount = 0;
+  MOM_DEBUG (run, MOMOUT_LITERAL ("run_one_tasklet_mom nbsteps:"),
+	     MOMOUT_DEC_INT ((int) nbsteps));
+  for (unsigned stepix = 0; stepix < nbsteps; stepix++)
+    {
+      if (!step_tasklet_mom (tkitm, itd))
+	break;
+      stepcount++;
+      if (tkitm->i_payload != itd)
+	break;
+      if (stepix % 2 == 0 && mom_clock_time (CLOCK_REALTIME) > timelimit)
+	break;
+    }
+  MOM_DEBUG (run, MOMOUT_LITERAL ("run_one_tasklet_mom done stepcount="),
+	     MOMOUT_DEC_INT ((int) stepcount));
+end:itd->dtk_thread = 0;
   pthread_mutex_unlock (&tkitm->i_mtx);
 }

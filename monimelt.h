@@ -845,6 +845,9 @@ enum routres_en
   routres_steady = 0,		/* don't change the current state or tasklet */
   routres_pop = -1,		/* pop the current frame */
 };
+typedef int mom_routine_sig_t (int state, momitem_t *tasklet,
+			       momnode_t *closure, momval_t *locvals,
+			       intptr_t * locnums, double *locdbls);
 struct momroutinedescr_st
 {
   unsigned rout_magic;		/* always MOM_ROUTINE_MAGIC */
@@ -854,9 +857,7 @@ struct momroutinedescr_st
   unsigned rout_frame_nbdbl;	/* number of double numbers in its frame */
   const char *rout_name;	/* the name FOO */
   const char *rout_module;	/* always macro MONIMELT_CURRENT_MODULE */
-  int (*rout_codefun) (int state, momitem_t *tasklet,
-		       momnode_t *closure, momval_t *locvals,
-		       intptr_t * locnums, double *locdbls);
+  mom_routine_sig_t *rout_codefun;
   const char *rout_timestamp;	/* generally __DATE__ "@" __TIME__ */
 };
 
