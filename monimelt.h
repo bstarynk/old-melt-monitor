@@ -1076,7 +1076,7 @@ intptr_t mom_item_tasklet_frame_nth_numbers (momitem_t *itm, int frk,
 double mom_item_tasklet_frame_nth_double (momitem_t *itm, int frk, int drk);
 
 /*********** buffer items ****************/
-void mom_item_start_buffer (momitem_t *itm, unsigned outflags);
+void mom_item_start_buffer (momitem_t *itm);
 void mom_item_buffer_out (momitem_t *itm, ...) __attribute__ ((sentinel));
 
 /************* misc items *********/

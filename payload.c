@@ -1564,7 +1564,7 @@ static const cookie_io_functions_t dbu_cookiefun_mom = {
 };
 
 void
-mom_item_start_buffer (momitem_t *itm, unsigned outflags)
+mom_item_start_buffer (momitem_t *itm)
 {
   assert (itm && itm->i_typnum == momty_item);
   if (itm->i_payload)
@@ -1578,7 +1578,7 @@ mom_item_start_buffer (momitem_t *itm, unsigned outflags)
   dbuf->dbu_begin = 0;
   dbuf->dbu_end = 0;
   FILE *fcookie = fopencookie (dbuf, "w", dbu_cookiefun_mom);
-  if (!mom_initialize_output (&dbuf->dbu_out, fcookie, outflags))
+  if (!mom_initialize_output (&dbuf->dbu_out, fcookie, 0))
     return;
   itm->i_payload = dbuf;
   itm->i_paylkind = mompayk_buffer;
@@ -1599,26 +1599,94 @@ void
 mom_item_buffer_out (momitem_t *itm, ...)
 {
   va_list alist;
-  va_start (alist, itm);
   assert (itm && itm->i_typnum == momty_item);
   if (itm->i_paylkind != mompayk_buffer)
     return;
   struct bufferdata_mom_st *dbuf = itm->i_payload;
   assert (dbuf && dbuf->dbu_magic == BUFFER_MAGIC);
+  va_start (alist, itm);
   MOM_OUTVA (&dbuf->dbu_out, alist);
   va_end (alist);
 }
 
-#warning unimplemented buffer
+#define BUFFER_CHUNK_MIN 24
 static void
 payl_buffer_load_mom (struct mom_loader_st *ld, momitem_t *litm,
-		      momval_t jsob)
+		      momval_t jsonv)
 {
+  assert (litm && litm->i_typnum == momty_item);
+  assert (ld != NULL);
+  unsigned nbchk = mom_json_array_size (jsonv);
+  mom_item_start_buffer (litm);
+  mom_item_buffer_reserve (litm, (5 * nbchk * BUFFER_CHUNK_MIN) + 10);
+  for (unsigned cix = 0; cix < nbchk; cix++)
+    mom_item_buffer_out (litm,
+			 MOMOUT_LITERALV (mom_string_cstr
+					  (mom_json_array_nth (jsonv, cix))),
+			 NULL);
+
 }
 
 static momval_t
 payl_buffer_dump_json_mom (struct mom_dumper_st *du, momitem_t *ditm)
 {
+  momval_t jres = MOM_NULLV;
+  struct mom_valuequeue_st que = { NULL, NULL };
+  assert (du != NULL);
+  assert (ditm && ditm->i_typnum == momty_item);
+  if (ditm->i_paylkind != mompayk_buffer)
+    return MOM_NULLV;
+  struct bufferdata_mom_st *dbuf = ditm->i_payload;
+  assert (dbuf && dbuf->dbu_magic == BUFFER_MAGIC);
+  assert (dbuf->dbu_end >= dbuf->dbu_begin && dbuf->dbu_end < dbuf->dbu_size);
+  const char *cbeg = dbuf->dbu_zone + dbuf->dbu_begin;
+  const char *cend = dbuf->dbu_zone + dbuf->dbu_end;
+  assert (g_utf8_validate (cbeg, cend - cbeg, NULL));
+  const char *chk = NULL;
+  const char *next = NULL;
+  unsigned nbchk = 0;
+  for (chk = cbeg; chk != NULL && chk < cend && *chk; chk = next)
+    {
+      int chklen = 0;
+      for (next = chk; chklen < BUFFER_CHUNK_MIN && next < cend && *next;
+	   next = g_utf8_next_char (next))
+	chklen++;
+      for (; chklen < 2 * BUFFER_CHUNK_MIN && next < cend && *next;
+	   next = g_utf8_next_char (next))
+	{
+	  chklen++;
+	  gunichar uc = g_utf8_get_char (next);
+	  if (g_unichar_isspace (uc) || g_unichar_ispunct (uc))
+	    break;
+	}
+      momval_t chunkv = (momval_t) mom_make_string_len (chk, next - chk);
+      mom_queue_add_value_back (&que, chunkv);
+      nbchk++;
+    }
+  momval_t tinyarr[MOM_TINY_MAX] = { MOM_NULLV };
+  momval_t *arrchk =
+    (nbchk < MOM_TINY_MAX) ? tinyarr : MOM_GC_ALLOC ("chunks for buffer",
+						     nbchk *
+						     sizeof (momval_t));
+  unsigned cntchk = 0;
+  for (struct mom_vaqelem_st * qel = que.vaq_first;
+       qel != NULL && cntchk < nbchk; qel = qel->vqe_next)
+    arrchk[cntchk++] = qel->vqe_val;
+  jres = (momval_t) mom_make_json_array_count (nbchk, arrchk);
+  if (arrchk != tinyarr)
+    MOM_GC_FREE (arrchk);
+  return jres;
+}
+
+static void
+payl_buffer_finalize_mom (momitem_t *ditm, void *payloadata)
+{
+  assert (ditm != NULL);
+  struct bufferdata_mom_st *dbuf = payloadata;
+  assert (dbuf != NULL && dbuf->dbu_magic == BUFFER_MAGIC);
+  if (dbuf->dbu_out.mout_file)
+    fclose (dbuf->dbu_out.mout_file), dbuf->dbu_out.mout_file = NULL;
+  memset (dbuf, 0, sizeof (struct bufferdata_mom_st));
 }
 
 static const struct mom_payload_descr_st payldescr_buffer_mom = {
@@ -1626,6 +1694,7 @@ static const struct mom_payload_descr_st payldescr_buffer_mom = {
   .dpayl_name = "buffer",
   .dpayl_loadfun = payl_buffer_load_mom,
   .dpayl_dumpjsonfun = payl_buffer_dump_json_mom,
+  .dpayl_finalizefun = payl_buffer_finalize_mom
 };
 
 
