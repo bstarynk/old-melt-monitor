@@ -1476,13 +1476,91 @@ static const struct mom_payload_descr_st payldescr_tasklet_mom = {
 ////////////////////////////////////////////////////////////////
 
 #define BUFFER_MAGIC 0x2cdb8c85	/* buffer magic 752585861 */
+#define BUFFER_MAXSIZE (32<<20)	/* 33554432, buffer maxsize */
+#define BUFFER_THRESHOLD 2048
 struct bufferdata_mom_st
 {
   char *dbu_zone;		/* atomic, GC-allocated */
+  struct momout_st dbu_out;	/* output contains a cookie file */
   unsigned dbu_magic;		/* always BUFFER_MAGIC */
   unsigned dbu_size;		/* size of dbu_zone */
   unsigned dbu_begin;		/* offset of beginning */
   unsigned dbu_end;		/* offset of end */
+};
+
+static bool
+dbu_reserve_mom (struct bufferdata_mom_st *dbuf, unsigned more)
+{
+  assert (dbuf && dbuf->dbu_magic == BUFFER_MAGIC);
+  assert (dbuf->dbu_end >= dbuf->dbu_begin && dbuf->dbu_end < dbuf->dbu_size);
+  unsigned blen = dbuf->dbu_end - dbuf->dbu_begin;
+  if (blen + more > BUFFER_MAXSIZE)
+    return false;
+  if (dbuf->dbu_size > BUFFER_THRESHOLD && blen + more < 2 * dbuf->dbu_size)
+    {				// can shrink the buffer
+      unsigned newsiz = ((5 * blen / 4 + more + 10) | 0xf) + 1;
+      char *newzone = MOM_GC_SCALAR_ALLOC ("shrink buffer zone", newsiz);
+      memcpy (newzone, dbuf->dbu_zone + dbuf->dbu_begin, blen);
+      MOM_GC_FREE (dbuf->dbu_zone);
+      dbuf->dbu_zone = newzone;
+      dbuf->dbu_begin = 0;
+      dbuf->dbu_end = blen;
+      return true;
+    }
+  if (dbuf->dbu_begin > 0 && blen + more + 1 < dbuf->dbu_size)
+    {
+      memmove (dbuf->dbu_zone, dbuf->dbu_zone + dbuf->dbu_begin, blen);
+      dbuf->dbu_zone[blen] = 0;
+      dbuf->dbu_begin = 0;
+      dbuf->dbu_end = blen;
+      return true;
+    }
+  // need to grow the buffer
+  unsigned newsiz = ((5 * blen / 4 + more + 10) | 0xf) + 1;
+  char *newzone = MOM_GC_SCALAR_ALLOC ("grown buffer zone", newsiz);
+  memcpy (newzone, dbuf->dbu_zone + dbuf->dbu_begin, blen);
+  MOM_GC_FREE (dbuf->dbu_zone);
+  dbuf->dbu_zone = newzone;
+  dbuf->dbu_begin = 0;
+  dbuf->dbu_end = blen;
+  return true;
+}
+
+static bool
+dbu_write_mom (struct bufferdata_mom_st *dbu, const char *buf, size_t siz)
+{
+  assert (dbu && dbu->dbu_magic == BUFFER_MAGIC);
+  assert (dbu->dbu_end >= dbu->dbu_begin && dbu->dbu_end < dbu->dbu_size);
+  if (siz > BUFFER_MAXSIZE)
+    return false;
+  if (dbu->dbu_end - dbu->dbu_begin + siz > BUFFER_MAXSIZE)
+    return false;
+  if (dbu->dbu_end + siz + 1 > dbu->dbu_size)
+    if (!dbu_reserve_mom (dbu, siz + 2))
+      return false;
+  memcpy (dbu->dbu_zone + dbu->dbu_end, buf, siz);
+  dbu->dbu_zone[dbu->dbu_end + siz] = 0;
+  dbu->dbu_end += siz;
+  assert (dbu->dbu_end >= dbu->dbu_begin && dbu->dbu_end < dbu->dbu_size);
+  return true;
+}
+
+
+
+static ssize_t
+dbu_cookie_write_mom (void *cookie, const char *buffer, size_t size)
+{
+  struct bufferdata_mom_st *dbu = cookie;
+  assert (dbu && dbu->dbu_magic == BUFFER_MAGIC);
+  if (size > BUFFER_MAXSIZE)
+    return -1;
+  if (!dbu_write_mom (dbu, buffer, size))
+    return -1;
+  return size;
+}
+
+static const cookie_io_functions_t dbu_cookiefun_mom = {
+  .write = dbu_cookie_write_mom
 };
 
 void
@@ -1499,11 +1577,13 @@ mom_item_start_buffer (momitem_t *itm)
   dbuf->dbu_size = inisiz;
   dbuf->dbu_begin = 0;
   dbuf->dbu_end = 0;
+  FILE *fcookie = fopencookie (dbuf, "w", dbu_cookiefun_mom);
+  if (!mom_initialize_output (&dbuf->dbu_out, fcookie, 0))
+    return;
   itm->i_payload = dbuf;
   itm->i_paylkind = mompayk_buffer;
 }
 
-#define BUFFER_THRESHOLD 1024
 void
 mom_item_buffer_reserve (momitem_t *itm, unsigned more)
 {
@@ -1512,37 +1592,7 @@ mom_item_buffer_reserve (momitem_t *itm, unsigned more)
     return;
   struct bufferdata_mom_st *dbuf = itm->i_payload;
   assert (dbuf && dbuf->dbu_magic == BUFFER_MAGIC);
-  if (dbuf->dbu_end + more < dbuf->dbu_size)
-    return;
-  assert (dbuf->dbu_end >= dbuf->dbu_begin && dbuf->dbu_end < dbuf->dbu_size);
-  unsigned blen = dbuf->dbu_end - dbuf->dbu_begin;
-  if (dbuf->dbu_size > BUFFER_THRESHOLD && blen + more < 2 * dbuf->dbu_size)
-    {				// can shrink the buffer
-      unsigned newsiz = ((5 * blen / 4 + more + 10) | 0xf) + 1;
-      char *newzone = MOM_GC_SCALAR_ALLOC ("shrink buffer zone", newsiz);
-      memcpy (newzone, dbuf->dbu_zone + dbuf->dbu_begin, blen);
-      MOM_GC_FREE (dbuf->dbu_zone);
-      dbuf->dbu_zone = newzone;
-      dbuf->dbu_begin = 0;
-      dbuf->dbu_end = blen;
-      return;
-    }
-  if (dbuf->dbu_begin > 0 && blen + more + 1 < dbuf->dbu_size)
-    {
-      memmove (dbuf->dbu_zone, dbuf->dbu_zone + dbuf->dbu_begin, blen);
-      dbuf->dbu_zone[blen] = 0;
-      dbuf->dbu_begin = 0;
-      dbuf->dbu_end = blen;
-      return;
-    }
-  // need to grow the buffer
-  unsigned newsiz = ((5 * blen / 4 + more + 10) | 0xf) + 1;
-  char *newzone = MOM_GC_SCALAR_ALLOC ("grown buffer zone", newsiz);
-  memcpy (newzone, dbuf->dbu_zone + dbuf->dbu_begin, blen);
-  MOM_GC_FREE (dbuf->dbu_zone);
-  dbuf->dbu_zone = newzone;
-  dbuf->dbu_begin = 0;
-  dbuf->dbu_end = blen;
+  dbu_reserve_mom (dbuf, more + 1);
 }
 
 #warning unimplemented buffer
