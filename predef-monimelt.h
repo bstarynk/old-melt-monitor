@@ -29,6 +29,7 @@
 #error missing MOM_PREDEFINED_ANONYMOUS
 #endif /*MOM_PREDEFINED_ANONYMOUS*/
 
+MOM_PREDEFINED_NAMED(agenda,_02u53qxa7dm_sttmhffpchr)
 MOM_PREDEFINED_NAMED(attr,_6w3dvx83dfw_xzc6aif6isv)
 MOM_PREDEFINED_NAMED(closure,_97zkxf62r11_6eedwwv3eu8)
 MOM_PREDEFINED_NAMED(comment,_41u1utcxyek_22cftxt3xxm)

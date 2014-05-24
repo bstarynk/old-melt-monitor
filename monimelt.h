@@ -1869,8 +1869,11 @@ momval_t mom_dump_emit_json (struct mom_dumper_st *dmp, const momval_t val);
 void mom_initial_load (const char *ldirnam);
 
 /////////////////// agenda and workers and web
+#define MOM_MAX_WORKERS 10
 int mom_nb_workers;
 const char *mom_web_host;
+void mom_add_tasklet_to_agenda_back (momitem_t *tkitm);
+void mom_add_tasklet_to_agenda_front (momitem_t *tkitm);
 
 /// two prefixes known by our Makefile!
 // generated modules start with:
