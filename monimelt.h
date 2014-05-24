@@ -1076,7 +1076,8 @@ intptr_t mom_item_tasklet_frame_nth_numbers (momitem_t *itm, int frk,
 double mom_item_tasklet_frame_nth_double (momitem_t *itm, int frk, int drk);
 
 /*********** buffer items ****************/
-void mom_item_start_buffer (momitem_t *itm);
+void mom_item_start_buffer (momitem_t *itm, unsigned outflags);
+void mom_item_buffer_out (momitem_t *itm, ...) __attribute__ ((sentinel));
 
 /************* misc items *********/
 // convert a boolean to a predefined item json_true or json_false
@@ -1523,6 +1524,7 @@ extern struct momout_st mom_stderr_data;
 void mom_out_at (const char *sfil, int lin, momout_t *pout, ...)
   __attribute__ ((sentinel));
 void mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist);
+#define MOM_OUTVA(Out,Alist) mom_outva_at(__FILE__,__LINE__,Out,Alist)
 #define MOM_OUT_AT_BIS(Fil,Lin,Out,...) mom_out_at(Fil,Lin,Out,##__VA_ARGS__,NULL)
 #define MOM_OUT_AT(Fil,Lin,Out,...) MOM_OUT_AT_BIS(Fil,Lin,Out,##__VA_ARGS__)
 #define MOM_OUT(Out,...) MOM_OUT_AT(__FILE__,__LINE__,Out,##__VA_ARGS__)

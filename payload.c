@@ -1564,7 +1564,7 @@ static const cookie_io_functions_t dbu_cookiefun_mom = {
 };
 
 void
-mom_item_start_buffer (momitem_t *itm)
+mom_item_start_buffer (momitem_t *itm, unsigned outflags)
 {
   assert (itm && itm->i_typnum == momty_item);
   if (itm->i_payload)
@@ -1578,7 +1578,7 @@ mom_item_start_buffer (momitem_t *itm)
   dbuf->dbu_begin = 0;
   dbuf->dbu_end = 0;
   FILE *fcookie = fopencookie (dbuf, "w", dbu_cookiefun_mom);
-  if (!mom_initialize_output (&dbuf->dbu_out, fcookie, 0))
+  if (!mom_initialize_output (&dbuf->dbu_out, fcookie, outflags))
     return;
   itm->i_payload = dbuf;
   itm->i_paylkind = mompayk_buffer;
@@ -1593,6 +1593,20 @@ mom_item_buffer_reserve (momitem_t *itm, unsigned more)
   struct bufferdata_mom_st *dbuf = itm->i_payload;
   assert (dbuf && dbuf->dbu_magic == BUFFER_MAGIC);
   dbu_reserve_mom (dbuf, more + 1);
+}
+
+void
+mom_item_buffer_out (momitem_t *itm, ...)
+{
+  va_list alist;
+  va_start (alist, itm);
+  assert (itm && itm->i_typnum == momty_item);
+  if (itm->i_paylkind != mompayk_buffer)
+    return;
+  struct bufferdata_mom_st *dbuf = itm->i_payload;
+  assert (dbuf && dbuf->dbu_magic == BUFFER_MAGIC);
+  MOM_OUTVA (&dbuf->dbu_out, alist);
+  va_end (alist);
 }
 
 #warning unimplemented buffer
