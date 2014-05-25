@@ -38,6 +38,7 @@ static struct
 } todo_after_stop_mom[TODO_MAX_MOM];
 
 static bool stop_working_mom;
+static bool continue_working_mom;
 static __thread struct workdata_mom_st *cur_worker_mom;
 static struct workdata_mom_st work_data_array_mom[MOM_MAX_WORKERS + 1];
 static int64_t task_counter_mom;
@@ -271,6 +272,7 @@ end:
 void
 run_one_tasklet_mom (momitem_t *tkitm)
 {
+  struct mom_taskletdata_st *itd = NULL;
   MOM_DEBUG (run, MOMOUT_LITERAL ("run_one_tasklet_mom start tkitm:"),
 	     MOMOUT_ITEM ((const momitem_t *) tkitm));
   pthread_mutex_lock (&tkitm->i_mtx);
@@ -278,7 +280,7 @@ run_one_tasklet_mom (momitem_t *tkitm)
     goto end;
   double timestart = mom_clock_time (CLOCK_REALTIME);
   double timelimit = timestart + TASKLET_TIMEOUT;
-  struct mom_taskletdata_st *itd = tkitm->i_payload;
+  itd = tkitm->i_payload;
   itd->dtk_thread = pthread_self ();
   unsigned nbsteps = mom_random_32 () % 16 + 3;
   unsigned stepcount = 0;
@@ -297,6 +299,73 @@ run_one_tasklet_mom (momitem_t *tkitm)
   MOM_DEBUG (run, MOMOUT_LITERAL ("run_one_tasklet_mom done stepcount="),
 	     MOMOUT_DEC_INT ((int) stepcount));
 end:
-  itd->dtk_thread = 0;
+  if (itd)
+    itd->dtk_thread = 0;
   pthread_mutex_unlock (&tkitm->i_mtx);
+}
+
+
+void
+mom_run_workers (void)
+{
+  bool again = false;
+  do
+    {
+      if (mom_nb_workers < MOM_MIN_WORKERS)
+	mom_nb_workers = MOM_MIN_WORKERS;
+      else if (mom_nb_workers > MOM_MAX_WORKERS)
+	mom_nb_workers = MOM_MAX_WORKERS;
+      MOM_DEBUGPRINTF (run, "mom_start_workers nb_workers=%d",
+		       mom_nb_workers);
+      assert (mom_named__agenda != NULL
+	      && mom_named__agenda->i_typnum == momty_item);
+      {
+	pthread_mutex_lock (&mom_named__agenda->i_mtx);
+	if (stop_working_mom)
+	  again = false;
+	pthread_mutex_unlock (&mom_named__agenda->i_mtx);
+      }
+      if (!again)
+	break;
+      stop_working_mom = false;
+      unsigned curnbwork = mom_nb_workers;
+      for (unsigned ix = 1; ix <= curnbwork; ix++)
+	{
+	  work_data_array_mom[ix].work_magic = WORK_MAGIC;
+	  work_data_array_mom[ix].work_index = ix;
+	  work_data_array_mom[ix].work_running = false;
+	  if (GC_pthread_create (&work_data_array_mom[ix].work_thread, NULL,
+				 work_run_mom, &work_data_array_mom[ix]))
+	    MOM_FATAPRINTF ("failed to create work thread #%d", ix);
+	};
+      MOM_DEBUGPRINTF (run, "mom_start_workers created %d work threads",
+		       curnbwork);
+      sched_yield ();
+      for (unsigned ix = 1; ix <= curnbwork; ix++)
+	{
+	  void *retwork = NULL;
+	  if (GC_pthread_join
+	      (&work_data_array_mom[ix].work_thread, &retwork))
+	    MOM_FATAPRINTF ("failed to join work thread #%d", ix);
+	}
+      MOM_DEBUGPRINTF (run, "mom_start_workers joined %d work threads",
+		       curnbwork);
+      {
+	pthread_mutex_lock (&mom_named__agenda->i_mtx);
+	for (unsigned dix = 0; dix < TODO_MAX_MOM; dix++)
+	  {
+	    if (todo_after_stop_mom[dix].todo_fun)
+	      todo_after_stop_mom[dix].todo_fun
+		(todo_after_stop_mom[dix].todo_data);
+	  }
+	memset (todo_after_stop_mom, 0, sizeof (todo_after_stop_mom));
+	if (stop_working_mom)
+	  again = false;
+	if (continue_working_mom)
+	  again = true;
+	continue_working_mom = false;
+	pthread_mutex_unlock (&mom_named__agenda->i_mtx);
+      }
+    }
+  while (again);
 }

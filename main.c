@@ -802,6 +802,72 @@ mom_elapsed_real_time (void)
   return mom_clock_time (CLOCK_REALTIME) - startime_mom;
 }
 
+
+static void
+start_syslog_mom (void)
+{
+  //// initialize logging
+  openlog ("monimelt",
+	   LOG_PID | (daemonize_mom ? 0 : (LOG_CONS | LOG_PERROR)),
+	   LOG_LOCAL2);
+  {
+    char hnam[64];
+    char timbuf[64];
+    char dirnam[MOM_PATH_MAX];
+    memset (timbuf, 0, sizeof (timbuf));
+    memset (hnam, 0, sizeof (hnam));
+    memset (dirnam, 0, sizeof (dirnam));
+    gethostname (hnam, sizeof (hnam) - 1);
+    mom_now_strftime_bufcenti (timbuf, "%Y-%b-%d %H:%M:%S.__ %Z");
+    syslog (LOG_INFO,
+	    "MONIMELT starting on %s at %s in %s,\n.. built %s gitcommit %s",
+	    hnam, timbuf, getcwd (dirnam, sizeof (dirnam)),
+	    monimelt_timestamp, monimelt_lastgitcommit);
+    atexit (logexit_cb_mom);
+  }
+}
+
+
+static void
+add_new_predefined_mom (void)
+{
+  if (!isalpha (new_predefined_mom[0]))
+    MOM_FATAPRINTF ("predefined %s does not start with a letter",
+		    new_predefined_mom);
+  for (const char *pc = new_predefined_mom; *pc; pc++)
+    if (!
+	(isalnum (*pc)
+	 || (*pc == '_' && pc > new_predefined_mom && isalnum (pc[-1]))))
+      MOM_FATAPRINTF ("bad predefined name %s", new_predefined_mom);
+  momitem_t *predefitm = mom_get_item_of_name (new_predefined_mom);
+  if (!predefitm)
+    {
+      predefitm = mom_make_item ();
+      mom_register_item_named (predefitm,
+			       mom_make_string (new_predefined_mom));
+    };
+  predefitm->i_space = momspa_predefined;
+  MOM_INFORMPRINTF ("predefined item $%s named %s",
+		    mom_ident_cstr_of_item (predefitm), new_predefined_mom);
+  if (new_comment_mom && new_comment_mom[0])
+    {
+      predefitm->i_attrs
+	= mom_put_attribute (predefitm->i_attrs,
+			     mom_named__comment,
+			     (momval_t) mom_make_string (new_comment_mom));
+      MOM_INFORMPRINTF ("predefined item named %s has comment '%s'",
+			new_predefined_mom, new_comment_mom);
+    }
+  char reasonbuf[128];
+  memset (reasonbuf, 0, sizeof (reasonbuf));
+  snprintf (reasonbuf, sizeof (reasonbuf), "after predefined %s",
+	    new_predefined_mom);
+  mom_full_dump (reasonbuf, ".", NULL);
+  MOM_INFORMPRINTF ("done dump here after predefined %s", new_predefined_mom);
+  return 0;
+}
+
+
 int
 main (int argc, char **argv)
 {
@@ -831,27 +897,7 @@ main (int argc, char **argv)
 	MOM_FATAPRINTF ("failed to daemonize");
     }
   if (syslogging_mom)
-    {
-      //// initialize logging
-      openlog ("monimelt",
-	       LOG_PID | (daemonize_mom ? 0 : (LOG_CONS | LOG_PERROR)),
-	       LOG_LOCAL2);
-      {
-	char hnam[64];
-	char timbuf[64];
-	char dirnam[MOM_PATH_MAX];
-	memset (timbuf, 0, sizeof (timbuf));
-	memset (hnam, 0, sizeof (hnam));
-	memset (dirnam, 0, sizeof (dirnam));
-	gethostname (hnam, sizeof (hnam) - 1);
-	mom_now_strftime_bufcenti (timbuf, "%Y-%b-%d %H:%M:%S.__ %Z");
-	syslog (LOG_INFO,
-		"MONIMELT starting on %s at %s in %s,\n.. built %s gitcommit %s",
-		hnam, timbuf, getcwd (dirnam, sizeof (dirnam)),
-		monimelt_timestamp, monimelt_lastgitcommit);
-	atexit (logexit_cb_mom);
-      }
-    }
+    start_syslog_mom ();
   else
     atexit (informexit_cb_mom);
   /// change directory if asked
@@ -891,46 +937,9 @@ main (int argc, char **argv)
   mom_initial_load (".");
   do_after_initial_load_with_plugins_mom ();
   if (new_predefined_mom)
-    {
-      if (!isalpha (new_predefined_mom[0]))
-	MOM_FATAPRINTF ("predefined %s does not start with a letter",
-			new_predefined_mom);
-      for (const char *pc = new_predefined_mom; *pc; pc++)
-	if (!
-	    (isalnum (*pc)
-	     || (*pc == '_' && pc > new_predefined_mom && isalnum (pc[-1]))))
-	  MOM_FATAPRINTF ("bad predefined name %s", new_predefined_mom);
-      momitem_t *predefitm = mom_get_item_of_name (new_predefined_mom);
-      if (!predefitm)
-	{
-	  predefitm = mom_make_item ();
-	  mom_register_item_named (predefitm,
-				   mom_make_string (new_predefined_mom));
-	};
-      predefitm->i_space = momspa_predefined;
-      MOM_INFORMPRINTF ("predefined item $%s named %s",
-			mom_ident_cstr_of_item (predefitm),
-			new_predefined_mom);
-      if (new_comment_mom && new_comment_mom[0])
-	{
-	  predefitm->i_attrs
-	    = mom_put_attribute (predefitm->i_attrs,
-				 mom_named__comment,
-				 (momval_t)
-				 mom_make_string (new_comment_mom));
-	  MOM_INFORMPRINTF ("predefined item named %s has comment '%s'",
-			    new_predefined_mom, new_comment_mom);
-	}
-      char reasonbuf[128];
-      memset (reasonbuf, 0, sizeof (reasonbuf));
-      snprintf (reasonbuf, sizeof (reasonbuf), "after predefined %s",
-		new_predefined_mom);
-      mom_full_dump (reasonbuf, ".", NULL);
-      MOM_INFORMPRINTF ("done dump here after predefined %s",
-			new_predefined_mom);
-      return 0;
-    }
-
+    add_new_predefined_mom ();
+  if (mom_nb_workers)
+    mom_run_workers ();
   ///
   return 0;
 }

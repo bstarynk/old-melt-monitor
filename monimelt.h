@@ -1871,12 +1871,17 @@ void mom_initial_load (const char *ldirnam);
 
 /////////////////// agenda and workers and web
 #define MOM_MAX_WORKERS 10
+#define MOM_MIN_WORKERS 2
 int mom_nb_workers;
 const char *mom_web_host;
 void mom_add_tasklet_to_agenda_back (momitem_t *tkitm);
 void mom_add_tasklet_to_agenda_front (momitem_t *tkitm);
 typedef void mom_todoafterstop_fun_t (void *data);
 void mom_stop_work_with_todo (mom_todoafterstop_fun_t * todofun, void *data);
+void mom_run_workers (void);
+
+
+
 /// two prefixes known by our Makefile!
 // generated modules start with:
 #define MOM_SHARED_MODULE_PREFIX "momg_"
