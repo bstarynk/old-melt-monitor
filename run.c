@@ -29,6 +29,14 @@ struct workdata_mom_st
   pthread_t work_thread;
 };
 
+#define TODO_MAX_MOM (MOM_MAX_WORKERS)
+// In practice we'll have only one thing to do at most
+static struct
+{
+  mom_todoafterstop_fun_t *todo_fun;
+  void *todo_data;
+} todo_after_stop_mom[TODO_MAX_MOM];
+
 static bool stop_working_mom;
 static __thread struct workdata_mom_st *cur_worker_mom;
 static struct workdata_mom_st work_data_array_mom[MOM_MAX_WORKERS + 1];
@@ -155,6 +163,35 @@ work_run_mom (void *p)
   return NULL;
 }
 
+void
+mom_stop_work_with_todo (mom_todoafterstop_fun_t * todof, void *data)
+{
+  assert (mom_named__agenda != NULL
+	  && mom_named__agenda->i_typnum == momty_item);
+  MOM_DEBUGPRINTF (run, "mom_stop_work_with_todo todof@%p data@%p", todof,
+		   data);
+  pthread_mutex_lock (&mom_named__agenda->i_mtx);
+  stop_working_mom = true;
+  if (todof)
+    {
+      bool foundslot = false;
+      for (unsigned ix = 0; ix < TODO_MAX_MOM && !foundslot; ix++)
+	if (!todo_after_stop_mom[ix].todo_fun)
+	  {
+	    todo_after_stop_mom[ix].todo_fun = todof;
+	    todo_after_stop_mom[ix].todo_data = data;
+	    foundslot = true;
+	  };
+      if (!foundslot)
+	MOM_FATAPRINTF ("failed to find todo slot");
+    }
+  pthread_mutex_unlock (&mom_named__agenda->i_mtx);
+}
+
+
+
+
+
 static bool
 step_tasklet_mom (momitem_t *tkitm, struct mom_taskletdata_st *itd)
 {
@@ -211,7 +248,7 @@ end:
   pthread_mutex_unlock (&routitm->i_mtx);
   if (routcod)
     {
-      MOM_DEBUG (MOMOUT_LITERAL ("step_tasklet_mom alling routine "),
+      MOM_DEBUG (run, MOMOUT_LITERAL ("step_tasklet_mom alling routine "),
 		 MOMOUT_LITERALV (rdescr->rout_name),
 		 MOMOUT_LITERAL (" at state#"),
 		 MOMOUT_DEC_INT (state),
@@ -219,7 +256,7 @@ end:
 		 MOMOUT_ITEM ((const momitem_t *) tkitm));
       int newstate =
 	routcod (state, tkitm, curclo, locvals, locnums, locdbls);
-      if (newstate == routres_pos)
+      if (newstate == routres_pop)
 	popframe = true;
       else
 	(itd->dtk_frames + fratop)->fr_state = newstate;
@@ -259,6 +296,7 @@ run_one_tasklet_mom (momitem_t *tkitm)
     }
   MOM_DEBUG (run, MOMOUT_LITERAL ("run_one_tasklet_mom done stepcount="),
 	     MOMOUT_DEC_INT ((int) stepcount));
-end:itd->dtk_thread = 0;
+end:
+  itd->dtk_thread = 0;
   pthread_mutex_unlock (&tkitm->i_mtx);
 }

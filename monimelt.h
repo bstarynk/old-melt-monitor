@@ -846,7 +846,7 @@ enum routres_en
   routres_pop = -1,		/* pop the current frame */
 };
 typedef int mom_routine_sig_t (int state, momitem_t *tasklet,
-			       momnode_t *closure, momval_t *locvals,
+			       const momnode_t *closure, momval_t *locvals,
 			       intptr_t * locnums, double *locdbls);
 struct momroutinedescr_st
 {
@@ -1875,7 +1875,8 @@ int mom_nb_workers;
 const char *mom_web_host;
 void mom_add_tasklet_to_agenda_back (momitem_t *tkitm);
 void mom_add_tasklet_to_agenda_front (momitem_t *tkitm);
-
+typedef void mom_todoafterstop_fun_t (void *data);
+void mom_stop_work_with_todo (mom_todoafterstop_fun_t * todofun, void *data);
 /// two prefixes known by our Makefile!
 // generated modules start with:
 #define MOM_SHARED_MODULE_PREFIX "momg_"
