@@ -864,7 +864,6 @@ add_new_predefined_mom (void)
 	    new_predefined_mom);
   mom_full_dump (reasonbuf, ".", NULL);
   MOM_INFORMPRINTF ("done dump here after predefined %s", new_predefined_mom);
-  return 0;
 }
 
 
