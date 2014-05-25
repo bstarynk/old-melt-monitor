@@ -351,14 +351,19 @@ mom_run_workers (void)
       MOM_DEBUGPRINTF (run, "mom_start_workers joined %d work threads",
 		       curnbwork);
       {
+	unsigned nbtodo = 0;
 	pthread_mutex_lock (&mom_named__agenda->i_mtx);
 	for (unsigned dix = 0; dix < TODO_MAX_MOM; dix++)
 	  {
 	    if (todo_after_stop_mom[dix].todo_fun)
-	      todo_after_stop_mom[dix].todo_fun
-		(todo_after_stop_mom[dix].todo_data);
+	      {
+		todo_after_stop_mom[dix].todo_fun
+		  (todo_after_stop_mom[dix].todo_data);
+		nbtodo++;
+	      }
 	  }
 	memset (todo_after_stop_mom, 0, sizeof (todo_after_stop_mom));
+	MOM_DEBUGPRINTF (run, "did %d todos", nbtodo);
 	if (stop_working_mom)
 	  again = false;
 	if (continue_working_mom)
