@@ -366,6 +366,8 @@ mom_run_workers (void)
 	continue_working_mom = false;
 	pthread_mutex_unlock (&mom_named__agenda->i_mtx);
       }
+      MOM_DEBUGPRINTF (run, "mom_start_workers again %s",
+		       again ? "true" : "false");
     }
   while (again);
 }
