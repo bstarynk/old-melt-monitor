@@ -215,6 +215,7 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 	  wxd->webx_requ = req;
 	  wxd->webx_resp = resp;
 	  pthread_cond_init (&wxd->webx_cond, NULL);
+#warning should probably set the query & post jsonobjects....
 	  FILE *webf = open_memstream (&wxd->webx_obuf, &wxd->webx_osize);
 	  if (!webf)
 	    MOM_FATAPRINTF ("failed to open memstream for webreq#%d", webnum);
