@@ -656,7 +656,7 @@ end:
 			   srcfil, srclin, exitstatus);
 	  if (exitstatus == 0)
 	    {
-	      mom_item_tasklet_push_frame
+	      mom_item_tasklet_push_frame	/////
 		(newtskitm, (momval_t) curproclos,
 		 MOMPFR_FOUR_VALUES ((momval_t) curprocitm,
 				     (momval_t) curprocoutstr,
@@ -665,7 +665,7 @@ end:
 	    }
 	  else
 	    {			/* exitstatus != 0, so failed */
-	      mom_item_tasklet_push_frame
+	      mom_item_tasklet_push_frame	/////
 		(newtskitm, (momval_t) curproclos,
 		 MOMPFR_FOUR_VALUES ((momval_t) curprocitm,
 				     (momval_t) curprocoutstr,
@@ -678,22 +678,17 @@ end:
       else if (WIFSIGNALED (pst))
 	{
 	  int termsig = WTERMSIG (pst);
+	  const char *termsigstr = strsignal (termsig);
 	  MOM_DEBUGPRINTF (run,
-			   "check_for_some_child_process %s:%d termsig=%d",
-			   srcfil, srclin, termsig);
-	  mom_item_tasklet_push_frame (newtskitm, (momval_t) curproclos,
-				       MOMPFR_FOUR_VALUES ((momval_t)
-							   curprocitm,
-							   (momval_t)
-							   curprocoutstr,
-							   (momval_t)
-							   mom_named__terminated,
-							   (momval_t)
-							   mom_make_string
-							   (strsignal
-							    (termsig))),
-				       MOMPFR_INT ((intptr_t) termsig),
-				       MOMPFR_END ());
+			   "check_for_some_child_process %s:%d termsig=%d::%s",
+			   srcfil, srclin, termsig, termsigstr);
+	  mom_item_tasklet_push_frame	/////
+	    (newtskitm, (momval_t) curproclos,
+	     MOMPFR_FOUR_VALUES ((momval_t) curprocitm,
+				 (momval_t) curprocoutstr,
+				 (momval_t) mom_named__terminated,
+				 (momval_t) mom_make_string (termsigstr)),
+	     MOMPFR_INT ((intptr_t) termsig), MOMPFR_END ());
 	}
       else
 	MOM_FATAPRINTF ("unexpected process status pst=%#x", pst);
