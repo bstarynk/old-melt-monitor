@@ -29,37 +29,62 @@
 #error missing MOM_PREDEFINED_ANONYMOUS
 #endif /*MOM_PREDEFINED_ANONYMOUS*/
 
+////!indicates the HTTP GET method
 MOM_PREDEFINED_NAMED(GET,_9dsak0qcy0v_1c5z9th7x3i)
+////!indicates the HTTP HEAD method
 MOM_PREDEFINED_NAMED(HEAD,_47fatww79x6_vh8ap22c0ch)
+////!indicates the HTTP POST method
 MOM_PREDEFINED_NAMED(POST,_5wmusj136kq_u5qpehp89aq)
 MOM_PREDEFINED_NAMED(agenda,_02u53qxa7dm_sttmhffpchr)
+////!gives the attribute[s], at least in dumped JSON...
 MOM_PREDEFINED_NAMED(attr,_6w3dvx83dfw_xzc6aif6isv)
 MOM_PREDEFINED_NAMED(closure,_97zkxf62r11_6eedwwv3eu8)
+////!gives a human-readable comment
 MOM_PREDEFINED_NAMED(comment,_41u1utcxyek_22cftxt3xxm)
+////!gives the item content, at least in dumped JSON...
 MOM_PREDEFINED_NAMED(content,_8s357rq2dzk_k8ze95tikjm)
 MOM_PREDEFINED_NAMED(doubles,_17spwr8dkzv_tsf2s8diazu)
+////!for exited processes
 MOM_PREDEFINED_NAMED(exited,_3v4d7uzex6f_euek4pztiuh)
+////!for exited processes with exit code >0
 MOM_PREDEFINED_NAMED(failed,_9sd1mh9q1zf_3duewi6fsaq)
+////!gives the item reference, at least in dumped JSON...
 MOM_PREDEFINED_NAMED(item_ref,_6hf2vzmrsee_t35suhjvtj4)
+////!in JSON dump, jtype of JSON array values
 MOM_PREDEFINED_NAMED(json_array,_35vp60aw7em_d436vfie4ud)
+////!in JSON, the false JSON value; dont use false because it is a C preprocessor #define
 MOM_PREDEFINED_NAMED(json_false,_4mha85xcfwi_9zqcvkiy3dk)
+////!in JSON dump, jtype of JSON object values
 MOM_PREDEFINED_NAMED(json_object,_3xpyd539p4m_23h7wi59xi9)
+////!in JSON, the true JSON value; dont use true because it is a C preprocessor #define
 MOM_PREDEFINED_NAMED(json_true,_2vmrrvq5kdk_9um63pstcu9)
+////!in JSON dumps, give the type of a value
 MOM_PREDEFINED_NAMED(jtype,_7urjeiw3evy_m7k72uv6790)
+////!in JSON dumps, give the kind of the payload of an item
 MOM_PREDEFINED_NAMED(kind,_06yp8ueq6yf_5ts408yww29)
+////!in JSON dumps, indicate nodes, or give their connective item
 MOM_PREDEFINED_NAMED(node,_4m7x6811f6j_t480zu575mz)
 MOM_PREDEFINED_NAMED(notice,_7diyc1cwj8z_x630afccr8e)
 MOM_PREDEFINED_NAMED(numbers,_3fw5acswe59_9016fqe4d41)
+////!in JSON dumps, give the payload of items
 MOM_PREDEFINED_NAMED(payload,_41v0erax6my_m6pytj0793u)
+////!in JSON dumps, indicate sets of item, or give their array of elements
 MOM_PREDEFINED_NAMED(set,_2v75mmyph64_4h4kys78740)
+////!in JSON dumps, give the sons of nodes
 MOM_PREDEFINED_NAMED(sons,_4ezpkss1akd_94f4h25sqe4)
+////!in JSON dumps, give the space of items
 MOM_PREDEFINED_NAMED(space,_7rf7axuc9h4_2aw6utwmsas)
 MOM_PREDEFINED_NAMED(state,_6f9870y6v8t_kp8fcmq2ezv)
+////!in JSON dumps, used for long chunked strings
 MOM_PREDEFINED_NAMED(string,_8j516kuv89j_4hc4w6ykmr6)
+////!for terminated processes
 MOM_PREDEFINED_NAMED(terminated,_3jpt8yuzuyw_ti1pyz3me1c)
+////!in JSON dumps, used for tuples of items
 MOM_PREDEFINED_NAMED(tuple,_7vw56h18sw0_hv77m6q8uxu)
+////!in JSON dumps, used for values in attribute lists of items
 MOM_PREDEFINED_NAMED(val,_7wk9y7e7r0z_575esi8ys5x)
 MOM_PREDEFINED_NAMED(values,_91pketvc5pz_wq0v0wpauw8)
+////!attribute giving the web handler inside items
 MOM_PREDEFINED_NAMED(web_handler,_7sav6zery1v_24sa6jwwu6c)
 
 #undef MOM_PREDEFINED_NAMED

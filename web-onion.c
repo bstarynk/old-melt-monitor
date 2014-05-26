@@ -50,20 +50,22 @@ mom_paylwebx_finalize (momitem_t *witm, void *wdata)
     onion_request_free (wxd->webx_requ), wxd->webx_requ = NULL;
   if (wxd->webx_resp)
     onion_response_free (wxd->webx_resp), wxd->webx_resp = NULL;
+  pthread_cond_destroy (&wxd->webx_cond);
 }
 
 
 
 #define WEB_ANSWER_DELAY_MOM ((MOM_IS_DEBUGGING(web))?7.0:4.0)
 static onion_connection_status
-process_web_exchange_mom (void *ignore __attribute__ ((unused)),
-			  onion_request * req, onion_response * resp)
+handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
+			 onion_request * req, onion_response * resp)
 {
   double webtim = mom_clock_time (CLOCK_REALTIME);
   double endtim = webtim + WEB_ANSWER_DELAY_MOM;
   momitem_t *methoditm = NULL;
   const char *method = NULL;
   int webnum = 0;
+  bool reqishead = false;
   char namidpath[104];		/* should be at least 100 characters,
 				   see below */
 #define NAMID_FMT_MOM "%100[a-zA-Z0-9_]"
@@ -137,6 +139,7 @@ process_web_exchange_mom (void *ignore __attribute__ ((unused)),
       case OR_HEAD:
 	method = "HEAD";
 	methoditm = (momitem_t *) mom_named__HEAD;
+	reqishead = true;
 	break;
       default:
 	{
@@ -203,14 +206,15 @@ process_web_exchange_mom (void *ignore __attribute__ ((unused)),
 	{
 	  momitem_t *webxitm = mom_make_item ();
 	  /// this is the only place where we are starting a webexchange item
-	  struct mom_webexchange_data_st *wxd = MOM_GC_ALLOC ("webexchange",
-							      sizeof (struct
-								      mom_webexchange_data_st));
+	  struct mom_webexchange_data_st *wxd	////
+	    = MOM_GC_ALLOC ("webexchange",
+			    sizeof (struct mom_webexchange_data_st));
 	  wxd->webx_magic = MOM_WEBX_MAGIC;
 	  wxd->webx_num = webnum;
 	  wxd->webx_time = webtim;
 	  wxd->webx_requ = req;
 	  wxd->webx_resp = resp;
+	  pthread_cond_init (&wxd->webx_cond, NULL);
 	  FILE *webf = open_memstream (&wxd->webx_obuf, &wxd->webx_osize);
 	  if (!webf)
 	    MOM_FATAPRINTF ("failed to open memstream for webreq#%d", webnum);
@@ -231,6 +235,171 @@ process_web_exchange_mom (void *ignore __attribute__ ((unused)),
 				 (momval_t) mom_make_string (restpath)),
 	     MOMPFR_END ());
 	  mom_add_tasklet_to_agenda_front (wtskitm);
+	  double minidelay = 0.002;
+	  double curtim = 0.0;
+	  bool replied = false;
+	  do
+	    {
+	      usleep (300);
+	      curtim = mom_clock_time (CLOCK_REALTIME);
+	      mom_lock_item (webxitm);
+	      struct timespec ts = mom_timespec (curtim + minidelay);
+	      if (!pthread_cond_timedwait (&wxd->webx_cond,
+					   &webxitm->i_mtx,
+					   &ts) && wxd->webx_mime != NULL
+		  && wxd->webx_httpcode > 0)
+		{
+		  endtim = curtim - 0.001;
+		  if (wxd->webx_resp)
+		    {
+		      onion_response_set_code (wxd->webx_resp,
+					       wxd->webx_httpcode);
+		      if (wxd->webx_osize > 0)
+			onion_response_set_length (wxd->webx_resp,
+						   wxd->webx_osize);
+		      if (wxd->webx_mime)
+			onion_response_set_header (wxd->webx_resp,
+						   "Content-Type",
+						   wxd->webx_mime);
+		      if (wxd->webx_obuf && wxd->webx_osize > 0 && !reqishead)
+			{
+			  onion_response_write (wxd->webx_resp,
+						wxd->webx_obuf,
+						wxd->webx_osize);
+			}
+		      onion_response_flush (wxd->webx_resp);
+		      wxd->webx_resp = NULL;
+		      replied = true;
+		      mom_item_clear_payload (webxitm);
+		    }
+		}
+	      else		// timedout
+	      if (minidelay < 0.25)
+		minidelay = 1.5 * minidelay + 0.001;
+	      mom_unlock_item (webxitm);
+	    }
+	  while (curtim < endtim && !replied);
+	  if (!replied)
+	    {
+	      mom_lock_item (webxitm);
+	      MOM_DEBUGPRINTF (web, "timedout webnum#%d", webnum);
+	      onion_response_free (wxd->webx_resp), wxd->webx_resp = resp =
+		NULL;
+	      onion_response *timoutresp =
+		onion_response_new (wxd->webx_requ);
+	      onion_response_set_header (timoutresp, "Content-Type",
+					 "text/html; charset=utf-8");
+	      onion_response_printf (timoutresp,
+				     "<html><head><title>Monimelt timeout</title></head>\n"
+				     "<body><h1>Monimelt timeout webnum#%ld</h1>\n"
+				     "<p>For %s of <tt>",
+				     (long) wxd->webx_num, method);
+	      onion_response_write_html_safe (timoutresp, fullpath);
+	      onion_response_write0 (timoutresp, "</body></html>\n");
+	      onion_response_set_code (timoutresp, HTTP_SERVICE_UNAVALIABLE);
+	      onion_response_flush (timoutresp);
+	      mom_item_clear_payload (webxitm);
+	      mom_unlock_item (webxitm);
+	    }
 	}
     }
+}
+
+
+void
+mom_webxout_at (const char *sfil, int lin, momitem_t *webitm, ...)
+{
+  va_list alist;
+  if (!mom_lock_item (webitm))
+    return;
+  if (webitm->i_paylkind != mompayk_webexchange)
+    {
+      MOM_WARNING (MOMOUT_LITERAL ("bad webxout "), MOMOUT_LITERALV (sfil),
+		   MOMOUT_LITERAL (":"),
+		   MOMOUT_DEC_INT (lin),
+		   MOMOUT_LITERAL ("; non webexchange webitem:"),
+		   MOMOUT_ITEM ((const momitem_t *) webitm));
+      goto end;
+    }
+  struct mom_webexchange_data_st *wxd = webitm->i_payload;
+  assert (wxd && wxd->webx_magic == MOM_WEBX_MAGIC);
+  va_start (alist, webitm);
+  if (wxd->webx_out.mout_file)
+    mom_outva_at (sfil, lin, &wxd->webx_out, alist);
+  va_end (alist);
+end:
+  mom_unlock_item (webitm);
+}
+
+
+void
+mom_webx_reply (momitem_t *webitm, const char *mime, int httpcode)
+{
+  /// onion has this in response.c, but does not export it...
+  extern const char *onion_response_code_description (int code);
+
+  if (!mime)
+    mime = "text/plain; charset=utf-8";
+#define COMMON_MIME_PREFIX_UTF8(Pref) else if (!strncmp (mime, Pref, sizeof(Pref)-1)) \
+    mime = Pref "; charset=utf-8"
+#define COMMON_MIME_TYPE(Mime) else if (!strcmp (mime, Mime))	\
+    mime = Mime
+  /* *INDENT-OFF* */
+  // our common mime types, by probable decreasing frequencies
+  COMMON_MIME_PREFIX_UTF8 ("text/html");
+  COMMON_MIME_PREFIX_UTF8 ("text/plain");
+  COMMON_MIME_TYPE ("application/json");
+  COMMON_MIME_TYPE ("application/javascript");
+  COMMON_MIME_TYPE ("application/xhtml+xml");
+  COMMON_MIME_PREFIX_UTF8 ("text/x-csrc");
+  COMMON_MIME_PREFIX_UTF8 ("text/x-chdr");
+  COMMON_MIME_PREFIX_UTF8 ("text/x-c++src");
+  COMMON_MIME_PREFIX_UTF8 ("text/x-c++hdr");
+  COMMON_MIME_TYPE ("image/jpeg");
+  COMMON_MIME_TYPE ("image/png");
+  COMMON_MIME_TYPE ("image/gif");
+  COMMON_MIME_TYPE ("image/svg+xml");
+  COMMON_MIME_PREFIX_UTF8 ("application/xml");
+  else mime = MOM_GC_STRDUP("strange mime", mime);
+  /* *INDENT-ON* */
+#undef COMMON_MIME_PREFIX_UTF8
+#undef COMMON_MIME_TYPE
+  ///
+  if (!mom_lock_item (webitm))
+    return;
+  if (webitm->i_paylkind != mompayk_webexchange)
+    {
+      MOM_WARNING (MOMOUT_LITERAL ("bad webxreply; non webexchange webitem:"),
+		   MOMOUT_ITEM ((const momitem_t *) webitm),
+		   MOMOUT_LITERAL (" ...from "), MOMOUT_BACKTRACE (5));
+      goto end;
+    }
+  struct mom_webexchange_data_st *wxd = webitm->i_payload;
+  assert (wxd && wxd->webx_magic == MOM_WEBX_MAGIC);
+  MOM_DEBUG (web, MOMOUT_LITERAL ("webreply webnum#"),
+	     MOMOUT_DEC_INT ((int) wxd->webx_num),
+	     MOMOUT_LITERAL (" mime:"),
+	     MOMOUT_LITERALV ((const char *) mime),
+	     MOMOUT_LITERAL (" httpcode:"),
+	     MOMOUT_DEC_INT (httpcode),
+	     MOMOUT_LITERAL ("="),
+	     MOMOUT_LITERALV ((const char *)
+			      onion_response_code_description (httpcode)),
+	     NULL);
+  if (!wxd->webx_resp)
+    {
+      MOM_WARNING (MOMOUT_LITERAL ("bad webxreply; already replied webnum#"),
+		   MOMOUT_DEC_INT ((int) wxd->webx_num),
+		   MOMOUT_LITERAL (" webitm:"),
+		   MOMOUT_ITEM ((const momitem_t *) webitm),
+		   MOMOUT_LITERAL (" ...from "), MOMOUT_BACKTRACE (5), NULL);
+      goto end;
+    };
+  if (wxd->webx_out.mout_file)
+    fclose (wxd->webx_out.mout_file), wxd->webx_out.mout_file = NULL;
+  wxd->webx_mime = (char *) mime;
+  wxd->webx_httpcode = httpcode;
+  pthread_cond_broadcast (&wxd->webx_cond);
+end:
+  mom_unlock_item (webitm);
 }

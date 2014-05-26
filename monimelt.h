@@ -1323,10 +1323,19 @@ struct mom_webexchange_data_st
   char *webx_obuf;		/* malloc-ed, not GC_malloced! */
   size_t webx_osize;
   struct momout_st webx_out;
+  pthread_cond_t webx_cond;
+  char *webx_mime;
+  int webx_httpcode;
 };
 
 void mom_paylwebx_finalize (momitem_t *witm, void *wdata);	// in web-onion.c
 
+void mom_webxout_at (const char *sfil, int lin, momitem_t *webitm, ...)
+  __attribute__ ((sentinel));
+#define MOM_WEBXOUT_AT_BIS(Fil,Lin,Witm,...) mom_webxout_at(Fil,Lin,Witm,##__VA_ARGS__,NULL)
+#define MOM_WEBXOUT_AT(Fil,Lin,Witm,...) MOM_OUT_AT_BIS(Fil,Lin,Witm,##__VA_ARGS__)
+#define MOM_WEBXOUT(Witm,...) MOM_WEBXOUT_AT(__FILE__,__LINE__,(Witm),##__VA_ARGS__)
+void mom_webx_reply (momitem_t *witm, const char *mime, int httpcode);
 
 #define MOM_WEB_DIRECTORY "webdir"
 #define MOM_WEB_ROOT_PAGE "mom-root-page.html"
