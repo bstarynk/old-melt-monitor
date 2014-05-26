@@ -62,8 +62,8 @@ static pthread_mutex_t job_mtx_mom = PTHREAD_MUTEX_INITIALIZER;
 static momitem_t *running_jobs_mom[MOM_MAX_WORKERS + 1];
 static struct mom_valuequeue_st pending_jobs_queue_mom;
 
-// the poll timeout is 1.6 seconds without debugging, and 3.1 with debugging 'run'
-#define MOM_POLL_TIMEOUT (MOM_IS_DEBUGGING(run)?4100:1600)	/* milliseconds for mom poll timeout */
+// the poll timeout is 1.8 seconds without debugging, and 4.5 with debugging 'run'
+#define MOM_POLL_TIMEOUT (MOM_IS_DEBUGGING(run)?4500:1800)	/* milliseconds for mom poll timeout */
 
 
 
@@ -390,6 +390,18 @@ event_loop_handler_mom (int fd, short revent, void *data)
     }
 }
 
+
+static void
+todo_dump_at_termination_mom (void *data)
+{
+  char *dpath = data;
+  assert (dpath && dpath[0]);
+  MOM_DEBUGPRINTF (run, "todo_dump_at_termination_mom should dump dpath=%s",
+		   dpath);
+  mom_full_dump ("todo dump at termination", dpath, NULL);
+  MOM_INFORMPRINTF ("dumped after SIGTERM signal into directory %s", dpath);
+}
+
 static void
 mysignalfd_handler_mom (int fd, short revent, void *data)
 {
@@ -435,7 +447,9 @@ mysignalfd_handler_mom (int fd, short revent, void *data)
 	MOM_DEBUGPRINTF (run, "recieved SIGTERM signal, will try dump to %s",
 			 termstr);
 	if (mkdir (termstr, 0750))
-	  MOM_FATAPRINTF ("failed to make terminating dir %s", termpath);
+	  MOM_FATAPRINTF ("failed to make terminating dir %s", termstr);
+	mom_stop_work_with_todo (todo_dump_at_termination_mom,
+				 (char *) termstr);
       }
       break;
     default:
@@ -511,8 +525,6 @@ end:
 
 
 #define POLL_MAX_MOM 100
-// the poll timeout is 1.8 seconds without debugging, and 5.1 with debugging 'run'
-#define MOM_POLL_TIMEOUT (MOM_IS_DEBUGGING(run)?5100:1800)	/* milliseconds for mom poll timeout */
 
 static void *
 event_loop_mom (void *p __attribute__ ((unused)))
@@ -619,12 +631,32 @@ event_loop_mom (void *p __attribute__ ((unused)))
       else
 	{			// timed-out
 	  MOM_DEBUGPRINTF (run, "poll timed out evloopcnt=%lld", evloopcnt);
-	  check_for_some_child_process ();
+	  check_for_some_child_process_mom ();
 	  MOM_DEBUGPRINTF (run, "poll done timed out evloopcnt=%lld",
 			   evloopcnt);
 	};
     }
   while (repeat_loop);
+  return NULL;
+}
+
+
+void
+mom_start_event_loop (void)
+{
+  static pthread_attr_t evthattr;
+  pthread_attr_init (&evthattr);
+  pthread_attr_setdetachstate (&evthattr, TRUE);
+  if (pipe (event_loop_pipe_mom))
+    MOM_FATAPRINTF ("failed to create event loop pipe");
+  MOM_DEBUGPRINTF (run,
+		   "mom_start_event_loop event_loop_read_pipe=%d event_loop_write_pipe=%d",
+		   event_loop_read_pipe_mom, event_loop_write_pipe_mom);
+  if (GC_pthread_create
+      (&event_loop_thread_mom, &evthattr, event_loop_mom, NULL))
+    MOM_FATAPRINTF ("failed to create event loop thread");
+  MOM_DEBUGPRINTF (run, "mom_start_event_loop done, event pthread#%ld",
+		   (long) event_loop_thread_mom);
 }
 
 
@@ -635,6 +667,7 @@ mom_run_workers (void)
   MOM_DEBUGPRINTF (run, "mom_run_workers starting mom_nb_workers=%d",
 		   mom_nb_workers);
   initialize_signals_mom ();
+  mom_start_event_loop ();
   do
     {
       if (mom_nb_workers < MOM_MIN_WORKERS)
