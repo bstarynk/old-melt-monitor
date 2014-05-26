@@ -562,6 +562,28 @@ mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist)
 	  }
 	  break;
 	  //
+	case MOMOUTDO_SLASHCOMMENT_STRING:
+	  {
+	    const char *s = va_arg (alist, const char *);
+	    int len = s ? strlen (s) : 0;
+	    if (len > 0)
+	      {
+		int nbl = 0;
+		fputs ("////!", out);
+		for (const char *pc = s; *pc; pc++)
+		  if (pc == '\n' || pc == '\r' || pc == '\f')
+		    {
+		      nbl++;
+		      MOM_OUT (pout, MOMOUT_SMALL_NEWLINE (),
+			       MOMOUT_LITERAL ("////+"));
+		    }
+		  else
+		    putc (*pc, out);
+		MOM_OUT (pout, MOMOUT_SMALL_NEWLINE ());
+	      }
+	  }
+	  break;
+	  //
 	case MOMOUTDO_JS_STRING:
 	  {
 	    const char *s = va_arg (alist, const char *);

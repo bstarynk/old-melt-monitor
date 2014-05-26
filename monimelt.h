@@ -283,6 +283,13 @@ enum momoutdir_en
   MOMOUTDO_JS_STRING /*, const char*jsstring */ ,
 #define MOMOUT_JS_STRING(S) MOMOUTDO_JS_STRING, MOM_REQUIRES_TYPE(S,const char*,mombad_js)
   ///
+  ///
+  ///  comment encoded strings
+  /// start with //! and replace every newline with //+ then a newline
+  /// do nothing if NULL string
+  MOMOUTDO_SLASHCOMMENT_STRING /*, const char*jsstring */ ,
+#define MOMOUT_SLASHCOMMENT_STRING(S) MOMOUTDO_SLASHCOMMENT_STRING, MOM_REQUIRES_TYPE(S,const char*,mombad_js)
+  ///
   /// JSON value
   MOMOUTDO_JSON_VALUE /*, momval_t jsval */ ,
 #define MOMOUT_JSON_VALUE(S) MOMOUTDO_JSON_VALUE, MOM_REQUIRES_TYPE(S,momval_t,mombad_value)
