@@ -352,22 +352,281 @@ initialize_signals_mom (void)
   MOM_DEBUG (run, "my_signals_fd=%d", my_signals_fd_mom);
 }
 
+#define check_for_some_child_process_mom() \
+  check_for_some_child_process_at_mom(__FILE__,__LINE__)
+static void check_for_some_child_process_at_mom (const char *srcfil,
+						 int srclin);
+
+
+typedef void mom_poll_handler_sig_t (int fd, short revent, void *data);
+
+
+static void start_some_pending_jobs_mom (void);
+
+static void
+event_loop_handler_mom (int fd, short revent, void *data)
+{
+  MOM_DEBUGPRINTF (run, "event_loop_handler_mom fd=%d revent=%#x", fd,
+		   revent);
+  assert (fd == event_loop_read_pipe_mom && data);
+  bool *prepeatloop = data;
+  char rbuf[4];
+  memset (rbuf, 0, sizeof (rbuf));
+  if (read (fd, &rbuf, 1) > 0)
+    {
+      MOM_DEBUGPRINTF (run, "event_loop_handler rbuf='%c'", rbuf[0]);
+      switch (rbuf[0])
+	{
+	case EVLOOP_STOP:
+	  *prepeatloop = false;
+	  break;
+	case EVLOOP_JOB:
+	  start_some_pending_jobs_mom ();
+	  break;
+	default:
+	  MOM_FATAPRINTF ("unexpected loop command %c = %d", rbuf[0],
+			  (int) rbuf[0]);
+	}
+    }
+}
+
+static void
+mysignalfd_handler_mom (int fd, short revent, void *data)
+{
+  struct signalfd_siginfo sinf;
+  memset (&sinf, 0, sizeof (sinf));
+  MOM_DEBUGPRINTF (run, "mysignalfd_handler fd=%d sizeof(sinf)=%d", fd,
+		   (int) sizeof (sinf));
+  assert (fd == my_signals_fd_mom && !data);
+  int rdsiz = -2;
+  if (revent & POLLIN)
+    {
+      MOM_DEBUG (run, "mysignalfd_handler reading fd=%d", fd);
+      rdsiz = read (fd, &sinf, sizeof (sinf));
+    }
+  MOM_DEBUGPRINTF (run, "mysignalfd_handler fd=%d rdsiz=%d", fd, rdsiz);
+  if (rdsiz < 0)
+    {
+      MOM_DEBUGPRINTF (run, "mysignalfd_handler read failed (%s)",
+		       strerror (errno));
+      return;
+    }
+  MOM_DEBUGPRINTF (run, "mysignalfd_handler signo=%d (%s)",
+		   sinf.ssi_signo, strsignal (sinf.ssi_signo));
+  switch (sinf.ssi_signo)
+    {
+    case SIGCHLD:
+      check_for_some_child_process_mom ();
+      break;
+    case SIGTERM:
+      {
+	char termpath[MOM_PATH_MAX];
+	struct tm nowtm = { 0 };
+	time_t nowt = 0;
+	char pidbuf[32];
+	memset (termpath, 0, sizeof (termpath));
+	time (&nowt);
+	strftime (termpath, sizeof (termpath) - sizeof (pidbuf),
+		  "_monimelt_sigterm_dump_%d_%b_%Y_%Hh%M_",
+		  localtime_r (&nowt, &nowtm));
+	snprintf (pidbuf, sizeof (pidbuf), "pid%d", (int) getpid ());
+	strcat (termpath, pidbuf);
+	const char *termstr = MOM_GC_STRDUP ("terminating dir", termpath);
+	MOM_DEBUGPRINTF (run, "recieved SIGTERM signal, will try dump to %s",
+			 termstr);
+	if (mkdir (termstr, 0750))
+	  MOM_FATAPRINTF ("failed to make terminating dir %s", termpath);
+      }
+      break;
+    default:
+      MOM_WARNPRINTF ("unexpected signal#%d : %s", sinf.ssi_signo,
+		      strsignal (sinf.ssi_signo));
+      break;
+    }
+}
+
+
+
+#define MOM_MAX_OUTPUT_LEN (1024*1024)	/* one megabyte */
+static void
+process_readout_handler_mom (int fd, short revent, void *data)
+{
+  momitem_t *procitm = data;
+  assert (procitm && procitm->i_typnum == momty_item);
+  MOM_DEBUG (run, MOMOUT_LITERAL ("process_readout_handler_mom revent="),
+	     MOMOUT_DEC_INT ((int) revent),
+	     MOMOUT_LITERAL (" fd="),
+	     MOMOUT_DEC_INT (fd),
+	     MOMOUT_LITERAL (" procitm:"),
+	     MOMOUT_ITEM ((const momitem_t *) procitm));
+  if (!mom_lock_item (procitm))
+    return;
+  if (procitm->i_paylkind != mompayk_process)
+    goto end;
+  struct mom_process_data_st *procdata = procitm->i_payload;
+  assert (procdata && procdata->iproc_magic == MOM_PROCESS_MAGIC);
+  if (procdata->iproc_pid <= 0 || procdata->iproc_outfd <= 0
+      || !procdata->iproc_outbuf)
+    goto end;
+  assert (procdata->iproc_outfd == fd);
+#define PROCOUT_BUFSIZE 4096
+  char rdbuf[PROCOUT_BUFSIZE];
+  memset (rdbuf, 0, sizeof (rdbuf));
+  int nbr = read (fd, rdbuf, sizeof (rdbuf));
+  MOM_DEBUGPRINTF (run, "process_readout_handler fd=%d, nbr=%d, rdbuf=%s\n",
+		   fd, nbr, rdbuf);
+  if (nbr > 0)
+    {
+      if (MOM_UNLIKELY
+	  (nbr + procdata->iproc_outpos + 1 >= procdata->iproc_outsize))
+	{
+	  unsigned newsiz =
+	    ((5 * (nbr + procdata->iproc_outpos) / 4 + 100) | 0x1f) + 1;
+	  char *newbuf =
+	    MOM_GC_SCALAR_ALLOC ("grown process output buffer", newsiz);
+	  char *oldbuf = procdata->iproc_outbuf;
+	  memcpy (newbuf, oldbuf, procdata->iproc_outpos);
+	  MOM_GC_FREE (oldbuf);
+	  procdata->iproc_outbuf = newbuf;
+	  procdata->iproc_outsize = newsiz;
+	}
+      memcpy (procdata->iproc_outbuf + procdata->iproc_outpos, rdbuf, nbr);
+      procdata->iproc_outbuf[procdata->iproc_outpos + nbr] = (char) 0;
+      procdata->iproc_outpos += nbr;
+      if (procdata->iproc_outpos > MOM_MAX_OUTPUT_LEN)
+	{
+	  MOM_WARNPRINTF
+	    ("closing pipe from process pid#%d (%s) output buffer full (%ld bytes)",
+	     (int) procdata->iproc_pid,
+	     mom_string_cstr ((momval_t) procdata->iproc_progname),
+	     (long) procdata->iproc_outpos);
+	  procdata->iproc_outfd = -1;
+	  // the child may get a SIGPIPE if he writes more.
+	  close (fd);
+	}
+    }
+end:
+  mom_unlock_item (procitm);
+}
+
 
 #define POLL_MAX_MOM 100
+// the poll timeout is 1.8 seconds without debugging, and 5.1 with debugging 'run'
+#define MOM_POLL_TIMEOUT (MOM_IS_DEBUGGING(run)?5100:1800)	/* milliseconds for mom poll timeout */
+
 static void *
 event_loop_mom (void *p __attribute__ ((unused)))
 {
   long long evloopcnt = 0;
   bool repeat_loop = false;
   struct pollfd polltab[POLL_MAX_MOM];
-  memset (polltab, 0, sizeof (polltab));
+  mom_poll_handler_sig_t *handlertab[POLL_MAX_MOM];
+  void **datatab[POLL_MAX_MOM];
+  pthread_setname_np (pthread_self (), "mom-evloop");
   assert (my_signals_fd_mom > 0);
+  /// our event loop
+  do
+    {
+      int pollcnt = 0;
+      repeat_loop = true;
+      evloopcnt++;
+      memset (polltab, 0, sizeof (polltab));
+      memset (handlertab, 0, sizeof (handlertab));
+      memset (datatab, 0, sizeof (datatab));
+      MOM_DEBUGPRINTF (run, "start event loop #%lld", evloopcnt);
+      GC_collect_a_little ();
+      // check for ended processes from time to time, to be safe
+      if (evloopcnt % 8 == 0)
+	check_for_some_child_process_mom ();
+      /// add various pollings
+#define ADD_POLL(Ev,Fd,Hdr,Data) do {					\
+	if (MOM_UNLIKELY(pollcnt>=POLL_MAX_MOM))			\
+	  MOM_FATAPRINTF("failed to poll fd#%d", (Fd));			\
+	polltab[pollcnt].fd = (Fd);					\
+	polltab[pollcnt].events = (Ev);					\
+	MOM_DEBUGPRINTF(run, "add_poll pollcnt=%d, fd=%d " #Hdr,	\
+			pollcnt, (Fd));					\
+	handlertab[pollcnt] = Hdr;					\
+	datatab[pollcnt]= (void*)(Data);				\
+	pollcnt++; } while(0)
+      //
+      ADD_POLL (POLLIN, event_loop_read_pipe_mom, event_loop_handler_mom,
+		&repeat_loop);
+      ADD_POLL (POLLIN, my_signals_fd_mom, mysignalfd_handler_mom, NULL);
+      // add the running processes reading
+      {
+	pthread_mutex_lock (&job_mtx_mom);
+	for (unsigned jix = 1; jix <= MOM_MAX_WORKERS; jix++)
+	  {
+	    momitem_t *curjobitm = running_jobs_mom[jix];
+	    if (!curjobitm)
+	      continue;
+	    assert (curjobitm->i_typnum == momty_item);
+	    pthread_mutex_lock (&curjobitm->i_mtx);
+	    struct mom_process_data_st *curjobdata =
+	      (curjobitm->i_paylkind ==
+	       mompayk_process) ? curjobitm->i_payload : NULL;
+	    pthread_mutex_unlock (&curjobitm->i_mtx);
+	    if (!curjobdata)
+	      continue;
+	    assert (curjobdata->iproc_magic == MOM_PROCESS_MAGIC);
+	    if (curjobdata->iproc_jobnum == jix && curjobdata->iproc_pid > 0
+		&& curjobdata->iproc_outfd > 0)
+	      ADD_POLL (POLLIN, curjobdata->iproc_outfd,
+			process_readout_handler_mom, curjobitm);
+
+	  }
+	pthread_mutex_unlock (&job_mtx_mom);
+      }
+      // other polling might go here, eg. perhaps for CURL web client library
+      // do the polling
+      MOM_DEBUGPRINTF (run, "before poll pollcnt=%d evloopcnt=%lld",
+		       pollcnt, evloopcnt);
+      int respoll = poll (polltab, pollcnt, MOM_POLL_TIMEOUT);
+      MOM_DEBUGPRINTF (run, "after poll respoll=%d evloopcnt=%lld", respoll,
+		       evloopcnt);
+      // invoke the handlers
+      if (respoll > 0)
+	{
+	  for (int pix = 0; pix < pollcnt; pix++)
+	    {
+	      if (polltab[pix].revents && handlertab[pix])
+		{
+		  MOM_DEBUGPRINTF (run,
+				   "invoking handler pix=%d fd#%d revents=%#x%s%s%s%s%s%s evloopcnt=%lld",
+				   pix, polltab[pix].fd, polltab[pix].revents,
+				   (polltab[pix].revents & POLLIN) ? ";POLLIN"
+				   : "",
+				   (polltab[pix].revents & POLLOUT) ?
+				   ";POLLOUT" : "",
+				   (polltab[pix].revents & POLLERR) ?
+				   ";POLLERR" : "",
+				   (polltab[pix].revents & POLLHUP) ?
+				   ";POLLHUP" : "",
+				   (polltab[pix].revents & POLLNVAL) ?
+				   ";POLLNVAL" : "",
+				   (polltab[pix].revents & POLLPRI) ?
+				   ";POLLPRI" : "", evloopcnt);
+		  handlertab[pix] (polltab[pix].fd, polltab[pix].revents,
+				   datatab[pix]);
+		  MOM_DEBUGPRINTF (run,
+				   "done handler pix=%d fd#%d evloopcnt=%lld",
+				   pix, polltab[pix].fd, evloopcnt);
+		}
+	    }
+	  sched_yield ();
+	}
+      else
+	{			// timed-out
+	  MOM_DEBUGPRINTF (run, "poll timed out evloopcnt=%lld", evloopcnt);
+	  check_for_some_child_process ();
+	  MOM_DEBUGPRINTF (run, "poll done timed out evloopcnt=%lld",
+			   evloopcnt);
+	};
+    }
+  while (repeat_loop);
 }
 
-#define check_for_some_child_process_mom() \
-  check_for_some_child_process_at_mom(__FILE__,__LINE__)
-static void check_for_some_child_process_at_mom (const char *srcfil,
-						 int srclin);
 
 void
 mom_run_workers (void)
@@ -691,11 +950,11 @@ end:
 	     MOMPFR_INT ((intptr_t) termsig), MOMPFR_END ());
 	}
       else
-	MOM_FATAPRINTF ("unexpected process status pst=%#x", pst);
-      MOM_DEBUG (run,
-		 MOMOUT_LITERAL ("check_for_some_child_process srcfil="),
-		 MOMOUT_LITERALV (srcfil),
-		 MOMOUT_LITERAL (" srclin="), MOMOUT_DEC_INT (srclin),
+	MOM_FATAPRINTF ("unexpected process status pst=%#x for wpid %d", pst,
+			(int) wpid);
+      MOM_DEBUG (run, MOMOUT_LITERAL ("check_for_some_child_process srcfil="),
+		 MOMOUT_LITERALV (srcfil), MOMOUT_LITERAL (" srclin="),
+		 MOMOUT_DEC_INT (srclin),
 		 MOMOUT_LITERAL ("adding newtskitm="),
 		 MOMOUT_ITEM ((const momitem_t *) newtskitm), MOMOUT_END ());
       mom_add_tasklet_to_agenda_front (newtskitm);
