@@ -802,6 +802,7 @@ enum mom_kindpayload_en
   mompayk_routine,
   mompayk_tasklet,
   mompayk_buffer,
+  mompayk_process,
 
   mompayk__last = 32
 };
@@ -1079,6 +1080,27 @@ double mom_item_tasklet_frame_nth_double (momitem_t *itm, int frk, int drk);
 /*********** buffer items ****************/
 void mom_item_start_buffer (momitem_t *itm);
 void mom_item_buffer_out (momitem_t *itm, ...) __attribute__ ((sentinel));
+
+/************* process item *********/
+#define MOM_PROCESS_MAGIC 0x229ec02d	/* process magic 580829229 */
+// their payload is some
+struct mom_process_data_st
+{
+  unsigned iproc_magic;		/* always MOM_PROCESS_MAGIC */
+  unsigned iproc_jobnum;	/* the internal job number */
+  int iproc_outfd;		/* the process output, to be read by
+				   the monitor */
+  pid_t iproc_pid;
+  unsigned iproc_outsize;	/* size of iproc_outbuf */
+  unsigned iproc_outpos;	/* last written position */
+
+  unsigned iproc_argcount;
+  const momstring_t *iproc_progname;
+  const momstring_t **iproc_argv;	/* of iproc_argcout size */
+  const momnode_t *iproc_closure;	/* the closure handing process outcome */
+  char *iproc_outbuf;		// buffer for output
+
+};
 
 /************* misc items *********/
 // convert a boolean to a predefined item json_true or json_false
