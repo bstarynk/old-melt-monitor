@@ -1750,6 +1750,13 @@ static const struct mom_payload_descr_st payldescr_process_mom = {
   .dpayl_finalizefun = payl_process_finalize_mom
 };
 
+///
+static const struct mom_payload_descr_st payldescr_webexchange_mom = {
+  .dpayl_magic = MOM_PAYLOAD_MAGIC,
+  .dpayl_name = "webexchange",
+  .dpayl_finalizefun = mom_paylwebx_finalize
+};
+
 ////////////////////////////////////////////////////////////////
 /******************** payload descriptors *********************/
 
@@ -1759,4 +1766,6 @@ struct mom_payload_descr_st *mom_payloadescr[mompayk__last + 1] = {
   [mompayk_tasklet] = (struct mom_payload_descr_st *) &payldescr_tasklet_mom,
   [mompayk_buffer] = (struct mom_payload_descr_st *) &payldescr_buffer_mom,
   [mompayk_process] = (struct mom_payload_descr_st *) &payldescr_process_mom,
+  [mompayk_webexchange] =
+    (struct mom_payload_descr_st *) &payldescr_webexchange_mom,
 };

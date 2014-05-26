@@ -29,6 +29,9 @@
 #error missing MOM_PREDEFINED_ANONYMOUS
 #endif /*MOM_PREDEFINED_ANONYMOUS*/
 
+MOM_PREDEFINED_NAMED(GET,_9dsak0qcy0v_1c5z9th7x3i)
+MOM_PREDEFINED_NAMED(HEAD,_47fatww79x6_vh8ap22c0ch)
+MOM_PREDEFINED_NAMED(POST,_5wmusj136kq_u5qpehp89aq)
 MOM_PREDEFINED_NAMED(agenda,_02u53qxa7dm_sttmhffpchr)
 MOM_PREDEFINED_NAMED(attr,_6w3dvx83dfw_xzc6aif6isv)
 MOM_PREDEFINED_NAMED(closure,_97zkxf62r11_6eedwwv3eu8)
@@ -57,6 +60,7 @@ MOM_PREDEFINED_NAMED(terminated,_3jpt8yuzuyw_ti1pyz3me1c)
 MOM_PREDEFINED_NAMED(tuple,_7vw56h18sw0_hv77m6q8uxu)
 MOM_PREDEFINED_NAMED(val,_7wk9y7e7r0z_575esi8ys5x)
 MOM_PREDEFINED_NAMED(values,_91pketvc5pz_wq0v0wpauw8)
+MOM_PREDEFINED_NAMED(web_handler,_7sav6zery1v_24sa6jwwu6c)
 
 #undef MOM_PREDEFINED_NAMED
 #undef MOM_PREDEFINED_ANONYMOUS

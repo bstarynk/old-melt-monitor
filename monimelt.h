@@ -220,6 +220,205 @@ const char* _dup_##Lin = GC_STRDUP(_str_##Lin);		\
 #define MOM_REQUIRES_TYPE(V,Typ,Else) MOM_REQUIRES_TYPE_AT_BIS(__LINE__,(V),Typ,Else)
 
 ////////////////////////////////////////////////////////////////
+struct momout_st
+{
+  unsigned mout_magic;		/* always MOM_MOUT_MAGIC */
+  int mout_indent;
+  FILE *mout_file;
+  void *mout_data;
+  long mout_lastnl;		/* offset at last newline with MOMOUT_NEWLINE or MOMOUT_SPACE */
+  unsigned mout_flags;
+};
+
+typedef struct momout_st momout_t;
+extern struct momout_st mom_stdout_data;
+extern struct momout_st mom_stderr_data;
+#define mom_stdout &mom_stdout_data
+#define mom_stderr &mom_stderr_data
+
+#define MOM_MOUT_MAGIC 0x41f67aa5	/* mom_out_magic 1106672293 */
+enum outflags_en
+{
+  outf__none = 0,
+  outf_cname = 1 << 0,
+  outf_jsonhalfindent = 1 << 1,
+  outf_jsonindent = 1 << 2,
+};
+
+void mom_out_at (const char *sfil, int lin, momout_t *pout, ...)
+  __attribute__ ((sentinel));
+void mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist);
+#define MOM_OUTVA(Out,Alist) mom_outva_at(__FILE__,__LINE__,Out,Alist)
+#define MOM_OUT_AT_BIS(Fil,Lin,Out,...) mom_out_at(Fil,Lin,Out,##__VA_ARGS__,NULL)
+#define MOM_OUT_AT(Fil,Lin,Out,...) MOM_OUT_AT_BIS(Fil,Lin,Out,##__VA_ARGS__)
+#define MOM_OUT(Out,...) MOM_OUT_AT(__FILE__,__LINE__,Out,##__VA_ARGS__)
+
+static inline bool
+mom_initialize_output (struct momout_st *out, FILE * fil, unsigned flags)
+{
+  if (!out || !fil)
+    return false;
+  memset (out, 0, sizeof (struct momout_st));
+  out->mout_magic = MOM_MOUT_MAGIC;
+  out->mout_file = fil;
+  out->mout_flags = flags;
+  return true;
+}
+
+enum momoutdir_en
+{
+  MOMOUTDO__END = 0,
+#define MOMOUT_END() ((void*)MOMOUTDO__END)
+  ///
+  /// literal strings
+  MOMOUTDO_LITERAL /*, const char*literalstring */ ,
+#define MOMOUT_LITERAL(S) MOMOUTDO_LITERAL, MOM_REQUIRES_TYPE(S,const char[],mombad_literal)
+#define MOMOUT_LITERALV(S) MOMOUTDO_LITERAL, MOM_REQUIRES_TYPE(S,const char*,mombad_literal)
+  ///
+  /// HTML encoded strings
+  MOMOUTDO_HTML /*, const char*htmlstring */ ,
+#define MOMOUT_HTML(S) MOMOUTDO_HTML, MOM_REQUIRES_TYPE(S,const char*,mombad_html)
+  ///
+  /// Javascript encoded strings
+  MOMOUTDO_JS_STRING /*, const char*jsstring */ ,
+#define MOMOUT_JS_STRING(S) MOMOUTDO_JS_STRING, MOM_REQUIRES_TYPE(S,const char*,mombad_js)
+  ///
+  /// JSON value
+  MOMOUTDO_JSON_VALUE /*, momval_t jsval */ ,
+#define MOMOUT_JSON_VALUE(S) MOMOUTDO_JSON_VALUE, MOM_REQUIRES_TYPE(S,momval_t,mombad_value)
+  ///
+  /// any value
+  MOMOUTDO_VALUE /*, momval_t val */ ,
+#define MOMOUT_VALUE(S) MOMOUTDO_VALUE, MOM_REQUIRES_TYPE(S,momval_t,mombad_value)
+  ///
+  /// any item
+  MOMOUTDO_ITEM /*, momitem_t* itm */ ,
+#define MOMOUT_ITEM(S) MOMOUTDO_ITEM, MOM_REQUIRES_TYPE(S,const momitem_t*,mombad_item)
+  ///
+  /// decimal int
+  MOMOUTDO_DEC_INT /*, int num */ ,
+#define MOMOUT_DEC_INT(N) MOMOUTDO_DEC_INT, MOM_REQUIRES_TYPE(N,int,mombad_int)
+  //
+  /// hex int
+  MOMOUTDO_HEX_INT /*, int num */ ,
+#define MOMOUT_HEX_INT(N) MOMOUTDO_HEX_INT, MOM_REQUIRES_TYPE(N,int,mombad_int)
+  ///
+  /// format a double with %g 
+  MOMOUTDO_DOUBLE_G /*, double time */ ,
+#define MOMOUT_DOUBLE_G(D) MOMOUTDO_DOUBLE_G, \
+  MOM_REQUIRES_TYPE(D,double,mombad_double)
+  ///
+  /// format a double with %f 
+  MOMOUTDO_DOUBLE_F /*, double time */ ,
+#define MOMOUT_DOUBLE_F(D) MOMOUTDO_DOUBLE_F, \
+  MOM_REQUIRES_TYPE(D,double,mombad_double)
+  ///
+  /// format giving a format a double
+  MOMOUTDO_FMT_DOUBLE /*, const char*fmt, double x */ ,
+#define MOMOUT_FMT_DOUBLE(F,D) MOMOUTDO_FMT_DOUBLE,	\
+  MOM_REQUIRES_TYPE(F,const char*,mombad_fmt) \
+    MOM_REQUIRES_TYPE(D,double,mombad_double)
+  ///
+  ///
+  /// format giving a format a long
+  MOMOUTDO_FMT_LONG /*, const char*fmt, long l */ ,
+#define MOMOUT_FMT_LONG(F,L) MOMOUTDO_FMT_LONG,	\
+  MOM_REQUIRES_TYPE(F,const char*,mombad_fmt) \
+    MOM_REQUIRES_TYPE(L,long,mombad_long)
+  ///
+  /// format giving a format a long
+  MOMOUTDO_FMT_LONG_LONG /*, const char*fmt, long long l */ ,
+#define MOMOUT_FMT_LONG_LONG(F,L) MOMOUTDO_FMT_LONG_LONG,	\
+  MOM_REQUIRES_TYPE(F,const char*,mombad_fmt) \
+    MOM_REQUIRES_TYPE(L,long long,mombad_longlong)
+  ///
+  /// format giving a format an int
+  MOMOUTDO_FMT_INT /*, const char*fmt, long l */ ,
+#define MOMOUT_FMT_INT(F,L) MOMOUTDO_FMT_INT,	\
+  MOM_REQUIRES_TYPE(F,const char*,mombad_fmt) \
+    MOM_REQUIRES_TYPE(L,int,mombad_int)
+  ///
+  ///
+  /// format giving a format an unsigned
+  MOMOUTDO_FMT_UNSIGNED /*, const char*fmt, unsigned l */ ,
+#define MOMOUT_FMT_UNSIGNED(F,L) MOMOUTDO_FMT_UNSIGNED,	\
+  MOM_REQUIRES_TYPE(F,const char*,mombad_fmt) \
+    MOM_REQUIRES_TYPE(L,unsigned,mombad_unsigned)
+  ///
+  ///
+  /// format a double as a time using mom_strftime_centi
+  MOMOUTDO_DOUBLE_TIME /*, const char*fmt, double time */ ,
+#define MOMOUT_DOUBLE_TIME(F,D) MOMOUTDO_DOUBLE_TIME, \
+  MOM_REQUIRES_TYPE(F,const char*,mombad_fmt), MOM_REQUIRES_TYPE(D,double,mombad_double)
+  ///
+  ///
+  /// copy verbatim the bytes of an opened FILE*
+  MOMOUTDO_VERBATIM_FILE /*, FILE*fil */ ,
+#define MOMOUT_VERBATIM_FILE(F) MOMOUTDO_VERBATIM_FILE, \
+  MOM_REQUIRES_TYPE(F,FILE*,mombad_file),
+  ///
+  ///
+  /// copy HTML encoded the bytes of an opened FILE*
+  MOMOUTDO_HTML_FILE /*, FILE*fil */ ,
+#define MOMOUT_HTML_FILE(F) MOMOUTDO_HTML_FILE, \
+  MOM_REQUIRES_TYPE(F,FILE*,mombad_file),
+  ///
+  /// copy JS encoded the bytes of an opened FILE*
+  MOMOUTDO_JS_FILE /*, FILE*fil */ ,
+#define MOMOUT_JS_FILE(F) MOMOUTDO_JS_FILE, \
+  MOM_REQUIRES_TYPE(F,FILE*,mombad_file),
+  ///
+  ///
+  /// increase indentation
+  MOMOUTDO_INDENT_MORE /* -no arguments-  */ ,
+#define MOMOUT_INDENT_MORE() MOMOUTDO_INDENT_MORE
+  ///
+  ///
+  /// decrease indentation
+  MOMOUTDO_INDENT_LESS /* -no arguments- */ ,
+#define MOMOUT_INDENT_LESS() MOMOUTDO_INDENT_LESS
+  ///
+  /// indented newline, at most 16 spaces
+  MOMOUTDO_NEWLINE /* -no arguments- */ ,
+#define MOMOUT_NEWLINE() MOMOUTDO_NEWLINE
+  ///
+  /// indented newline, at most 8 spaces
+  MOMOUTDO_SMALL_NEWLINE /* -no arguments- */ ,
+#define MOMOUT_SMALL_NEWLINE() MOMOUTDO_SMALL_NEWLINE
+  ///
+  /// output a space or an indented newline if the current line
+  /// exceeds a given threshold
+  MOMOUTDO_SPACE /*, unsigned threshold */ ,
+#define MOMOUT_SPACE(L) MOMOUTDO_SPACE,	\
+    MOM_REQUIRES_TYPE(L,int,mombad_space)
+  ///
+  /// output some backtrace, mostly useful for debugging
+  MOMOUTDO_BACKTRACE /*, unsigned maxlevel */ ,
+#define MOMOUT_BACKTRACE(L) MOMOUTDO_BACKTRACE,	\
+  MOM_REQUIRES_TYPE((L),int,mombad_space)
+  ///
+  ///
+  /// output a space or an indented small newline if the current line
+  /// exceeds a given threshold
+  MOMOUTDO_SMALL_SPACE /*, unsigned threshold */ ,
+#define MOMOUT_SMALL_SPACE(L) MOMOUTDO_SMALL_SPACE,	\
+    MOM_REQUIRES_TYPE(L,int,mombad_space)
+  /// output a space or an indented small newline if the current line
+  /// exceeds a given threshold
+  MOMOUTDO_FLUSH /* */ ,
+#define MOMOUT_FLUSH() MOMOUTDO_FLUSH
+  ///
+  /// output a GPLv3+ copyright notice commented à la C++ with two-slashes
+  /// mentioning a given generated file
+  MOMOUTDO_GPLV3P_NOTICE /*, const char* file */ ,
+#define MOMOUT_GPLV3P_NOTICE(F) MOMOUTDO_GPLV3P_NOTICE,	\
+  MOM_REQUIRES_TYPE((F),const char*,mombad_string)
+  ///
+  ///
+};				/* end enum momoutdir_en */
+
+
+////////////////////////////////////////////////////////////////
 //////////////// TYPES AND VALUES
 ////////////////////////////////////////////////////////////////
 enum momvaltype_en
@@ -803,6 +1002,7 @@ enum mom_kindpayload_en
   mompayk_tasklet,
   mompayk_buffer,
   mompayk_process,
+  mompayk_webexchange,
 
   mompayk__last = 32
 };
@@ -1102,6 +1302,27 @@ struct mom_process_data_st
 
 };
 
+
+/**************** web exchange items ****************/
+
+#define MOM_WEBX_MAGIC 0x11b63c9b	/* webx magic 297155739 */
+struct mom_webexchange_data_st
+{
+  unsigned webx_magic;		/* always MOM_WEBX_MAGIC */
+  int webx_num;
+  double webx_time;
+  onion_request *webx_requ;
+  onion_response *webx_resp;
+  char *webx_obuf;		/* malloc-ed, not GC_malloced! */
+  size_t webx_osize;
+  struct momout_st webx_out;
+};
+
+void mom_paylwebx_finalize (momitem_t *witm, void *wdata);	// in web-onion.c
+
+
+#define MOM_WEB_DIRECTORY "webdir"
+#define MOM_WEB_ROOT_PAGE "mom-root-page.html"
 /************* misc items *********/
 // convert a boolean to a predefined item json_true or json_false
 const momitem_t *mom_get_item_bool (bool v);
@@ -1263,6 +1484,12 @@ const momnode_t *mom_make_node_sized (const momitem_t *conn,
 // make a node from an array
 const momnode_t *mom_make_node_from_array (const momitem_t *conn,
 					   unsigned siz, momval_t *arr);
+
+static inline bool
+mom_is_node (momval_t nodv)
+{
+  return (nodv.ptr && *nodv.ptype == momty_node);
+}
 
 static inline unsigned
 mom_node_arity (momval_t nodv)
@@ -1521,200 +1748,6 @@ __attribute__ ((format (printf, 3, 4)));
 void mom_rename_if_content_changed (const char *origpath,
 				    const char *destpath);
 
-#define MOM_MOUT_MAGIC 0x41f67aa5	/* mom_out_magic 1106672293 */
-enum outflags_en
-{
-  outf__none = 0,
-  outf_cname = 1 << 0,
-  outf_jsonhalfindent = 1 << 1,
-  outf_jsonindent = 1 << 2,
-};
-
-struct momout_st
-{
-  unsigned mout_magic;		/* always MOM_MOUT_MAGIC */
-  int mout_indent;
-  FILE *mout_file;
-  void *mout_data;
-  long mout_lastnl;		/* offset at last newline with MOMOUT_NEWLINE or MOMOUT_SPACE */
-  unsigned mout_flags;
-};
-typedef struct momout_st momout_t;
-extern struct momout_st mom_stdout_data;
-extern struct momout_st mom_stderr_data;
-#define mom_stdout &mom_stdout_data
-#define mom_stderr &mom_stderr_data
-void mom_out_at (const char *sfil, int lin, momout_t *pout, ...)
-  __attribute__ ((sentinel));
-void mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist);
-#define MOM_OUTVA(Out,Alist) mom_outva_at(__FILE__,__LINE__,Out,Alist)
-#define MOM_OUT_AT_BIS(Fil,Lin,Out,...) mom_out_at(Fil,Lin,Out,##__VA_ARGS__,NULL)
-#define MOM_OUT_AT(Fil,Lin,Out,...) MOM_OUT_AT_BIS(Fil,Lin,Out,##__VA_ARGS__)
-#define MOM_OUT(Out,...) MOM_OUT_AT(__FILE__,__LINE__,Out,##__VA_ARGS__)
-
-static inline bool
-mom_initialize_output (struct momout_st *out, FILE * fil, unsigned flags)
-{
-  if (!out || !fil)
-    return false;
-  memset (out, 0, sizeof (struct momout_st));
-  out->mout_magic = MOM_MOUT_MAGIC;
-  out->mout_file = fil;
-  out->mout_flags = flags;
-  return true;
-}
-
-enum momoutdir_en
-{
-  MOMOUTDO__END = 0,
-#define MOMOUT_END() ((void*)MOMOUTDO__END)
-  ///
-  /// literal strings
-  MOMOUTDO_LITERAL /*, const char*literalstring */ ,
-#define MOMOUT_LITERAL(S) MOMOUTDO_LITERAL, MOM_REQUIRES_TYPE(S,const char[],mombad_literal)
-#define MOMOUT_LITERALV(S) MOMOUTDO_LITERAL, MOM_REQUIRES_TYPE(S,const char*,mombad_literal)
-  ///
-  /// HTML encoded strings
-  MOMOUTDO_HTML /*, const char*htmlstring */ ,
-#define MOMOUT_HTML(S) MOMOUTDO_HTML, MOM_REQUIRES_TYPE(S,const char*,mombad_html)
-  ///
-  /// Javascript encoded strings
-  MOMOUTDO_JS_STRING /*, const char*jsstring */ ,
-#define MOMOUT_JS_STRING(S) MOMOUTDO_JS_STRING, MOM_REQUIRES_TYPE(S,const char*,mombad_js)
-  ///
-  /// JSON value
-  MOMOUTDO_JSON_VALUE /*, momval_t jsval */ ,
-#define MOMOUT_JSON_VALUE(S) MOMOUTDO_JSON_VALUE, MOM_REQUIRES_TYPE(S,momval_t,mombad_value)
-  ///
-  /// any value
-  MOMOUTDO_VALUE /*, momval_t val */ ,
-#define MOMOUT_VALUE(S) MOMOUTDO_VALUE, MOM_REQUIRES_TYPE(S,momval_t,mombad_value)
-  ///
-  /// any item
-  MOMOUTDO_ITEM /*, momitem_t* itm */ ,
-#define MOMOUT_ITEM(S) MOMOUTDO_ITEM, MOM_REQUIRES_TYPE(S,const momitem_t*,mombad_item)
-  ///
-  /// decimal int
-  MOMOUTDO_DEC_INT /*, int num */ ,
-#define MOMOUT_DEC_INT(N) MOMOUTDO_DEC_INT, MOM_REQUIRES_TYPE(N,int,mombad_int)
-  //
-  /// hex int
-  MOMOUTDO_HEX_INT /*, int num */ ,
-#define MOMOUT_HEX_INT(N) MOMOUTDO_HEX_INT, MOM_REQUIRES_TYPE(N,int,mombad_int)
-  ///
-  /// format a double with %g 
-  MOMOUTDO_DOUBLE_G /*, double time */ ,
-#define MOMOUT_DOUBLE_G(D) MOMOUTDO_DOUBLE_G, \
-  MOM_REQUIRES_TYPE(D,double,mombad_double)
-  ///
-  /// format a double with %f 
-  MOMOUTDO_DOUBLE_F /*, double time */ ,
-#define MOMOUT_DOUBLE_F(D) MOMOUTDO_DOUBLE_F, \
-  MOM_REQUIRES_TYPE(D,double,mombad_double)
-  ///
-  /// format giving a format a double
-  MOMOUTDO_FMT_DOUBLE /*, const char*fmt, double x */ ,
-#define MOMOUT_FMT_DOUBLE(F,D) MOMOUTDO_FMT_DOUBLE,	\
-  MOM_REQUIRES_TYPE(F,const char*,mombad_fmt) \
-    MOM_REQUIRES_TYPE(D,double,mombad_double)
-  ///
-  ///
-  /// format giving a format a long
-  MOMOUTDO_FMT_LONG /*, const char*fmt, long l */ ,
-#define MOMOUT_FMT_LONG(F,L) MOMOUTDO_FMT_LONG,	\
-  MOM_REQUIRES_TYPE(F,const char*,mombad_fmt) \
-    MOM_REQUIRES_TYPE(L,long,mombad_long)
-  ///
-  /// format giving a format a long
-  MOMOUTDO_FMT_LONG_LONG /*, const char*fmt, long long l */ ,
-#define MOMOUT_FMT_LONG_LONG(F,L) MOMOUTDO_FMT_LONG_LONG,	\
-  MOM_REQUIRES_TYPE(F,const char*,mombad_fmt) \
-    MOM_REQUIRES_TYPE(L,long long,mombad_longlong)
-  ///
-  /// format giving a format an int
-  MOMOUTDO_FMT_INT /*, const char*fmt, long l */ ,
-#define MOMOUT_FMT_INT(F,L) MOMOUTDO_FMT_INT,	\
-  MOM_REQUIRES_TYPE(F,const char*,mombad_fmt) \
-    MOM_REQUIRES_TYPE(L,int,mombad_int)
-  ///
-  ///
-  /// format giving a format an unsigned
-  MOMOUTDO_FMT_UNSIGNED /*, const char*fmt, unsigned l */ ,
-#define MOMOUT_FMT_UNSIGNED(F,L) MOMOUTDO_FMT_UNSIGNED,	\
-  MOM_REQUIRES_TYPE(F,const char*,mombad_fmt) \
-    MOM_REQUIRES_TYPE(L,unsigned,mombad_unsigned)
-  ///
-  ///
-  /// format a double as a time using mom_strftime_centi
-  MOMOUTDO_DOUBLE_TIME /*, const char*fmt, double time */ ,
-#define MOMOUT_DOUBLE_TIME(F,D) MOMOUTDO_DOUBLE_TIME, \
-  MOM_REQUIRES_TYPE(F,const char*,mombad_fmt), MOM_REQUIRES_TYPE(D,double,mombad_double)
-  ///
-  ///
-  /// copy verbatim the bytes of an opened FILE*
-  MOMOUTDO_VERBATIM_FILE /*, FILE*fil */ ,
-#define MOMOUT_VERBATIM_FILE(F) MOMOUTDO_VERBATIM_FILE, \
-  MOM_REQUIRES_TYPE(F,FILE*,mombad_file),
-  ///
-  ///
-  /// copy HTML encoded the bytes of an opened FILE*
-  MOMOUTDO_HTML_FILE /*, FILE*fil */ ,
-#define MOMOUT_HTML_FILE(F) MOMOUTDO_HTML_FILE, \
-  MOM_REQUIRES_TYPE(F,FILE*,mombad_file),
-  ///
-  /// copy JS encoded the bytes of an opened FILE*
-  MOMOUTDO_JS_FILE /*, FILE*fil */ ,
-#define MOMOUT_JS_FILE(F) MOMOUTDO_JS_FILE, \
-  MOM_REQUIRES_TYPE(F,FILE*,mombad_file),
-  ///
-  ///
-  /// increase indentation
-  MOMOUTDO_INDENT_MORE /* -no arguments-  */ ,
-#define MOMOUT_INDENT_MORE() MOMOUTDO_INDENT_MORE
-  ///
-  ///
-  /// decrease indentation
-  MOMOUTDO_INDENT_LESS /* -no arguments- */ ,
-#define MOMOUT_INDENT_LESS() MOMOUTDO_INDENT_LESS
-  ///
-  /// indented newline, at most 16 spaces
-  MOMOUTDO_NEWLINE /* -no arguments- */ ,
-#define MOMOUT_NEWLINE() MOMOUTDO_NEWLINE
-  ///
-  /// indented newline, at most 8 spaces
-  MOMOUTDO_SMALL_NEWLINE /* -no arguments- */ ,
-#define MOMOUT_SMALL_NEWLINE() MOMOUTDO_SMALL_NEWLINE
-  ///
-  /// output a space or an indented newline if the current line
-  /// exceeds a given threshold
-  MOMOUTDO_SPACE /*, unsigned threshold */ ,
-#define MOMOUT_SPACE(L) MOMOUTDO_SPACE,	\
-    MOM_REQUIRES_TYPE(L,int,mombad_space)
-  ///
-  /// output some backtrace, mostly useful for debugging
-  MOMOUTDO_BACKTRACE /*, unsigned maxlevel */ ,
-#define MOMOUT_BACKTRACE(L) MOMOUTDO_BACKTRACE,	\
-  MOM_REQUIRES_TYPE((L),int,mombad_space)
-  ///
-  ///
-  /// output a space or an indented small newline if the current line
-  /// exceeds a given threshold
-  MOMOUTDO_SMALL_SPACE /*, unsigned threshold */ ,
-#define MOMOUT_SMALL_SPACE(L) MOMOUTDO_SMALL_SPACE,	\
-    MOM_REQUIRES_TYPE(L,int,mombad_space)
-  /// output a space or an indented small newline if the current line
-  /// exceeds a given threshold
-  MOMOUTDO_FLUSH /* */ ,
-#define MOMOUT_FLUSH() MOMOUTDO_FLUSH
-  ///
-  /// output a GPLv3+ copyright notice commented à la C++ with two-slashes
-  /// mentioning a given generated file
-  MOMOUTDO_GPLV3P_NOTICE /*, const char* file */ ,
-#define MOMOUT_GPLV3P_NOTICE(F) MOMOUTDO_GPLV3P_NOTICE,	\
-  MOM_REQUIRES_TYPE((F),const char*,mombad_string)
-  ///
-
-};
 // declare but don't define them. Linker should complain if
 // referenced... which happens only with wrong MOMOUT_... macros
 // above.

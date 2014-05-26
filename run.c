@@ -964,7 +964,7 @@ end:
 		 MOMOUT_VALUE ((momval_t) curprocoutstr),
 		 MOMOUT_NEWLINE (), MOMOUT_END ());
       momitem_t *newtskitm = mom_make_item ();
-      // dont need to lock the item, nobody knows it!
+      // dont need to lock the tasklet item, nobody knows it!
       mom_item_start_tasklet (newtskitm);
       if (WIFEXITED (pst))
 	{

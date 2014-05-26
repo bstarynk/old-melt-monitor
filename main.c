@@ -865,7 +865,7 @@ add_new_predefined_mom (void)
   mom_full_dump (reasonbuf, ".", NULL);
   MOM_INFORMPRINTF ("done dump here after predefined %s", new_predefined_mom);
   fflush (NULL);
-  if (system ("make"))
+  if (system ("make -j 3"))
     MOM_FATAPRINTF ("make failed after making predefined %s",
 		    new_predefined_mom);
   else
