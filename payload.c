@@ -1699,6 +1699,58 @@ static const struct mom_payload_descr_st payldescr_buffer_mom = {
 
 
 ////////////////////////////////////////////////////////////////
+/// process payload. process items are transient, but their finalizer
+/// should kill the Unix process
+
+
+static void
+payl_process_finalize_mom (momitem_t *ditm, void *payloadata)
+{
+  assert (ditm != NULL);
+  struct mom_process_data_st *procdata = payloadata;
+  assert (procdata && procdata->iproc_magic == MOM_PROCESS_MAGIC);
+  MOM_DEBUG (run, MOMOUT_LITERAL ("finalizing process item:"),
+	     MOMOUT_ITEM ((const momitem_t *) ditm),
+	     MOMOUT_LITERAL (" program:"),
+	     MOMOUT_VALUE ((momval_t) procdata->iproc_progname),
+	     MOMOUT_LITERAL (" jobnum#"),
+	     MOMOUT_DEC_INT ((int) procdata->iproc_jobnum),
+	     MOMOUT_LITERAL (" pid#"),
+	     MOMOUT_DEC_INT ((int) procdata->iproc_pid),
+	     MOMOUT_LITERAL (" outfd#"),
+	     MOMOUT_DEC_INT (procdata->iproc_outfd));
+  // we kill with SIGTERM the process, and we close its output buffer.
+  // I'm not sure what would happen if the process ignores SIGTERM and
+  // SIGPIPE; it might perhaps becomes a zombie process..., but
+  // ignoring SIGTERM is bad behavior...
+  if (procdata->iproc_pid > 0)
+    {
+      MOM_WARNING (MOMOUT_LITERAL ("finalized process item:"),
+		   MOMOUT_ITEM ((const momitem_t *) ditm),
+		   MOMOUT_LITERAL (" program:"),
+		   MOMOUT_VALUE ((momval_t) procdata->iproc_progname),
+		   MOMOUT_LITERAL (" jobnum#"),
+		   MOMOUT_DEC_INT ((int) procdata->iproc_jobnum),
+		   MOMOUT_LITERAL (" pid#"),
+		   MOMOUT_DEC_INT ((int) procdata->iproc_pid),
+		   MOMOUT_LITERAL (" is getting a SIGTERM"));
+      kill (procdata->iproc_pid, SIGTERM);
+    }
+  int outfd = -1;
+  if ((outfd = procdata->iproc_outfd) > 0)
+    {
+      procdata->iproc_outfd = -1;
+      close (outfd);
+    };
+}
+
+static const struct mom_payload_descr_st payldescr_process_mom = {
+  .dpayl_magic = MOM_PAYLOAD_MAGIC,
+  .dpayl_name = "process",
+  .dpayl_finalizefun = payl_process_finalize_mom
+};
+
+////////////////////////////////////////////////////////////////
 /******************** payload descriptors *********************/
 
 struct mom_payload_descr_st *mom_payloadescr[mompayk__last + 1] = {
@@ -1706,4 +1758,5 @@ struct mom_payload_descr_st *mom_payloadescr[mompayk__last + 1] = {
   [mompayk_routine] = (struct mom_payload_descr_st *) &payldescr_routine_mom,
   [mompayk_tasklet] = (struct mom_payload_descr_st *) &payldescr_tasklet_mom,
   [mompayk_buffer] = (struct mom_payload_descr_st *) &payldescr_buffer_mom,
+  [mompayk_process] = (struct mom_payload_descr_st *) &payldescr_process_mom,
 };
