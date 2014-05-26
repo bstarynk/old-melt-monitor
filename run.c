@@ -147,8 +147,8 @@ work_run_mom (void *p)
       else if (agendaempty)
 	{
 	  thiswork->work_running = false;
-	  double delay = (MOM_IS_DEBUGGING (run) ? 3.7 : 1.5)
-	    + 0.001 * (mom_random_32 () % 256);
+	  double delay = (MOM_IS_DEBUGGING (run) ? 4.7 : 2.5)
+	    + 0.002 * (mom_random_32 () % 256) + wix * 0.01;
 	  struct timespec ts
 	    = mom_timespec (mom_clock_time (CLOCK_REALTIME) + delay);
 	  MOM_DEBUGPRINTF (run, "work_run_mom: waiting agenda cond wix#%d",
@@ -339,17 +339,17 @@ initialize_signals_mom (void)
   sigaddset (&mysetsig, SIGPIPE);
   sigaddset (&mysetsig, SIGCHLD);
   // according to signalfd(2) we need to block the signals
-  MOM_DEBUG (run,
-	     "handling signals SIGTERM=%d SIGQUIT=%d SIGPIPE=%d SIGCHLD=%d",
-	     SIGTERM, SIGQUIT, SIGPIPE, SIGCHLD);
-  MOM_DEBUG (run, "before sigprocmask");
+  MOM_DEBUGPRINTF (run,
+		   "handling signals SIGTERM=%d SIGQUIT=%d SIGPIPE=%d SIGCHLD=%d",
+		   SIGTERM, SIGQUIT, SIGPIPE, SIGCHLD);
+  MOM_DEBUGPRINTF (run, "before sigprocmask");
   if (sigprocmask (SIG_BLOCK, &mysetsig, NULL))
     MOM_FATAPRINTF ("failed to block signals with sigprocmask");
-  MOM_DEBUG (run, "before signalfd");
+  MOM_DEBUGPRINTF (run, "before signalfd");
   my_signals_fd_mom = signalfd (-1, &mysetsig, SFD_NONBLOCK | SFD_CLOEXEC);
   if (MOM_UNLIKELY (my_signals_fd_mom <= 0))
     MOM_FATAPRINTF ("signalfd failed");
-  MOM_DEBUG (run, "my_signals_fd=%d", my_signals_fd_mom);
+  MOM_DEBUGPRINTF (run, "my_signals_fd=%d", my_signals_fd_mom);
 }
 
 #define check_for_some_child_process_mom() \
@@ -413,7 +413,7 @@ mysignalfd_handler_mom (int fd, short revent, void *data)
   int rdsiz = -2;
   if (revent & POLLIN)
     {
-      MOM_DEBUG (run, "mysignalfd_handler reading fd=%d", fd);
+      MOM_DEBUGPRINTF (run, "mysignalfd_handler reading fd=%d", fd);
       rdsiz = read (fd, &sinf, sizeof (sinf));
     }
   MOM_DEBUGPRINTF (run, "mysignalfd_handler fd=%d rdsiz=%d", fd, rdsiz);
@@ -439,7 +439,7 @@ mysignalfd_handler_mom (int fd, short revent, void *data)
 	memset (termpath, 0, sizeof (termpath));
 	time (&nowt);
 	strftime (termpath, sizeof (termpath) - sizeof (pidbuf),
-		  "_monimelt_sigterm_dump_%d_%b_%Y_%Hh%M_",
+		  "_monimelt_termdump_%Y%b%D_%Hh%M_",
 		  localtime_r (&nowt, &nowtm));
 	snprintf (pidbuf, sizeof (pidbuf), "pid%d", (int) getpid ());
 	strcat (termpath, pidbuf);
@@ -664,29 +664,37 @@ void
 mom_run_workers (void)
 {
   bool again = false;
+  long workcnt = 0;
   MOM_DEBUGPRINTF (run, "mom_run_workers starting mom_nb_workers=%d",
 		   mom_nb_workers);
   initialize_signals_mom ();
   mom_start_event_loop ();
   do
     {
+      workcnt++;
       if (mom_nb_workers < MOM_MIN_WORKERS)
 	mom_nb_workers = MOM_MIN_WORKERS;
       else if (mom_nb_workers > MOM_MAX_WORKERS)
 	mom_nb_workers = MOM_MAX_WORKERS;
-      MOM_DEBUGPRINTF (run, "mom_start_workers nb_workers=%d",
-		       mom_nb_workers);
+      MOM_DEBUGPRINTF (run, "mom_start_workers nb_workers=%d workcnt=%ld",
+		       mom_nb_workers, workcnt);
       assert (mom_named__agenda != NULL
 	      && mom_named__agenda->i_typnum == momty_item);
       {
 	pthread_mutex_lock (&mom_named__agenda->i_mtx);
 	if (stop_working_mom)
 	  again = false;
+	else
+	  again = true;
+	stop_working_mom = false;
 	pthread_mutex_unlock (&mom_named__agenda->i_mtx);
       }
       if (!again)
-	break;
-      stop_working_mom = false;
+	{
+	  MOM_DEBUGPRINTF (run, "mom_start_workers breaking workcnt=%ld",
+			   workcnt);
+	  break;
+	}
       unsigned curnbwork = mom_nb_workers;
       for (unsigned ix = 1; ix <= curnbwork; ix++)
 	{
@@ -695,7 +703,8 @@ mom_run_workers (void)
 	  work_data_array_mom[ix].work_running = false;
 	  if (GC_pthread_create (&work_data_array_mom[ix].work_thread, NULL,
 				 work_run_mom, &work_data_array_mom[ix]))
-	    MOM_FATAPRINTF ("failed to create work thread #%d", ix);
+	    MOM_FATAPRINTF ("failed to create work thread #%d workcnt=%ld",
+			    ix, workcnt);
 	};
       MOM_DEBUGPRINTF (run, "mom_start_workers created %d work threads",
 		       curnbwork);
@@ -706,8 +715,9 @@ mom_run_workers (void)
 	  if (GC_pthread_join (work_data_array_mom[ix].work_thread, &retwork))
 	    MOM_FATAPRINTF ("failed to join work thread #%d", ix);
 	}
-      MOM_DEBUGPRINTF (run, "mom_start_workers joined %d work threads",
-		       curnbwork);
+      MOM_DEBUGPRINTF (run,
+		       "mom_start_workers joined %d work threads workcnt=%ld",
+		       curnbwork, workcnt);
       {
 	unsigned nbtodo = 0;
 	pthread_mutex_lock (&mom_named__agenda->i_mtx);
@@ -721,7 +731,7 @@ mom_run_workers (void)
 	      }
 	  }
 	memset (todo_after_stop_mom, 0, sizeof (todo_after_stop_mom));
-	MOM_DEBUGPRINTF (run, "did %d todos", nbtodo);
+	MOM_DEBUGPRINTF (run, "did %d todos workcnt=%ld", nbtodo, workcnt);
 	if (stop_working_mom)
 	  again = false;
 	if (continue_working_mom)
@@ -729,10 +739,13 @@ mom_run_workers (void)
 	continue_working_mom = false;
 	pthread_mutex_unlock (&mom_named__agenda->i_mtx);
       }
-      MOM_DEBUGPRINTF (run, "mom_start_workers again %s",
-		       again ? "true" : "false");
+      MOM_DEBUGPRINTF (run, "mom_start_workers again %s workcnt=%ld",
+		       again ? "true" : "false", workcnt);
     }
   while (again);
+  MOM_DEBUGPRINTF (run,
+		   "mom_run_workers ending mom_nb_workers=%d workcnt=%ld",
+		   mom_nb_workers, workcnt);
 }
 
 
