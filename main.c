@@ -864,6 +864,13 @@ add_new_predefined_mom (void)
 	    new_predefined_mom);
   mom_full_dump (reasonbuf, ".", NULL);
   MOM_INFORMPRINTF ("done dump here after predefined %s", new_predefined_mom);
+  fflush (NULL);
+  if (system ("make"))
+    MOM_FATAPRINTF ("make failed after making predefined %s",
+		    new_predefined_mom);
+  else
+    MOM_INFORMPRINTF ("make succeeded after predefined %s",
+		      new_predefined_mom);
 }
 
 

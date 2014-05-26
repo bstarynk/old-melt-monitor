@@ -633,6 +633,79 @@ end:
   pthread_mutex_unlock (&job_mtx_mom);
   if (curprocitm && curproclos && curprocoutstr)
     {
-#warning should make a tasklet for process completing
+      MOM_DEBUG (run,
+		 MOMOUT_LITERAL ("check_for_some_child_process srcfil="),
+		 MOMOUT_LITERALV (srcfil),
+		 MOMOUT_LITERAL (" srclin="), MOMOUT_DEC_INT (srclin),
+		 MOMOUT_LITERAL (" curprocitm="),
+		 MOMOUT_ITEM ((const momitem_t *) curprocitm),
+		 MOMOUT_LITERAL (" curproclos="),
+		 MOMOUT_VALUE ((momval_t) curproclos),
+		 MOMOUT_SPACE (32),
+		 MOMOUT_LITERAL (" curprocoutstr="),
+		 MOMOUT_VALUE ((momval_t) curprocoutstr),
+		 MOMOUT_NEWLINE (), MOMOUT_END ());
+      momitem_t *newtskitm = mom_make_item ();
+      // dont need to lock the item, nobody knows it!
+      mom_item_start_tasklet (newtskitm);
+      if (WIFEXITED (pst))
+	{
+	  int exitstatus = WEXITSTATUS (pst);
+	  MOM_DEBUGPRINTF (run,
+			   "check_for_some_child_process %s:%d exitstatus=%d",
+			   srcfil, srclin, exitstatus);
+	  if (exitstatus == 0)
+	    {
+	      mom_item_tasklet_push_frame
+		(newtskitm, (momval_t) curproclos,
+		 MOMPFR_FOUR_VALUES ((momval_t) curprocitm,
+				     (momval_t) curprocoutstr,
+				     (momval_t) mom_named__exited, MOM_NULLV),
+		 MOMPFR_INT ((intptr_t) exitstatus), MOMPFR_END ());
+	    }
+	  else
+	    {			/* exitstatus != 0, so failed */
+	      mom_item_tasklet_push_frame
+		(newtskitm, (momval_t) curproclos,
+		 MOMPFR_FOUR_VALUES ((momval_t) curprocitm,
+				     (momval_t) curprocoutstr,
+				     (momval_t) mom_named__failed,
+				     (momval_t)
+				     mom_make_integer (exitstatus)),
+		 MOMPFR_INT ((intptr_t) exitstatus), MOMPFR_END ());
+	    }
+	}
+      else if (WIFSIGNALED (pst))
+	{
+	  int termsig = WTERMSIG (pst);
+	  MOM_DEBUGPRINTF (run,
+			   "check_for_some_child_process %s:%d termsig=%d",
+			   srcfil, srclin, termsig);
+	  mom_item_tasklet_push_frame (newtskitm, (momval_t) curproclos,
+				       MOMPFR_FOUR_VALUES ((momval_t)
+							   curprocitm,
+							   (momval_t)
+							   curprocoutstr,
+							   (momval_t)
+							   mom_named__terminated,
+							   (momval_t)
+							   mom_make_string
+							   (strsignal
+							    (termsig))),
+				       MOMPFR_INT ((intptr_t) termsig),
+				       MOMPFR_END ());
+	}
+      else
+	MOM_FATAPRINTF ("unexpected process status pst=%#x", pst);
+      MOM_DEBUG (run,
+		 MOMOUT_LITERAL ("check_for_some_child_process srcfil="),
+		 MOMOUT_LITERALV (srcfil),
+		 MOMOUT_LITERAL (" srclin="), MOMOUT_DEC_INT (srclin),
+		 MOMOUT_LITERAL ("adding newtskitm="),
+		 MOMOUT_ITEM ((const momitem_t *) newtskitm), MOMOUT_END ());
+      mom_add_tasklet_to_agenda_front (newtskitm);
     }
+  else
+    MOM_WARNPRINTF ("check_for_some_child_process %s:%d wpid=%d not found",
+		    srcfil, srclin, (int) wpid);
 }

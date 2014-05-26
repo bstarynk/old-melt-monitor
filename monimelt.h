@@ -1567,6 +1567,7 @@ mom_initialize_output (struct momout_st *out, FILE * fil, unsigned flags)
 enum momoutdir_en
 {
   MOMOUTDO__END = 0,
+#define MOMOUT_END() ((void*)MOMOUTDO__END)
   ///
   /// literal strings
   MOMOUTDO_LITERAL /*, const char*literalstring */ ,
