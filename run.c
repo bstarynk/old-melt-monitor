@@ -391,6 +391,18 @@ event_loop_handler_mom (int fd, short revent, void *data)
 }
 
 
+void
+mom_stop_event_loop (void)
+{
+  static const char stopmsg[] = { EVLOOP_STOP, 0 };
+  MOM_DEBUGPRINTF (run, "stop_event_loop writepipefd#%d stopmsg=%s",
+		   event_loop_write_pipe_mom, stopmsg);
+  if (write (event_loop_write_pipe_mom, stopmsg, 1) < 0)
+    MOM_FATAPRINTF ("failed to write stop event on writepipefd#%d",
+		    event_loop_write_pipe_mom);
+}
+
+
 static void
 todo_dump_at_termination_mom (void *data)
 {
@@ -399,6 +411,7 @@ todo_dump_at_termination_mom (void *data)
   MOM_DEBUGPRINTF (run, "todo_dump_at_termination_mom should dump dpath=%s",
 		   dpath);
   mom_full_dump ("todo dump at termination", dpath, NULL);
+  mom_stop_event_loop ();
   MOM_INFORMPRINTF ("dumped after SIGTERM signal into directory %s", dpath);
 }
 
@@ -439,7 +452,7 @@ mysignalfd_handler_mom (int fd, short revent, void *data)
 	memset (termpath, 0, sizeof (termpath));
 	time (&nowt);
 	strftime (termpath, sizeof (termpath) - sizeof (pidbuf),
-		  "_monimelt_termdump_%Y%b%D_%Hh%M_",
+		  "_monimelt_termdump_%Y%b%d_%Hh%M_",
 		  localtime_r (&nowt, &nowtm));
 	snprintf (pidbuf, sizeof (pidbuf), "pid%d", (int) getpid ());
 	strcat (termpath, pidbuf);

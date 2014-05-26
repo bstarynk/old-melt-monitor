@@ -47,6 +47,7 @@ RM= rm -fv
 all: monimelt modules
 clean:
 	$(RM) *~ *.o *.so *.orig _tmp_* monimelt core* webdir/*~ *.tmp  _timestamp.* *dbsqlite*-journal *%
+	$(RM) -r _monimelt_termdump*
 ################
 monimelt: $(OBJECTS) _timestamp.o
 	@if [ -f $@ ]; then echo -n backup old executable: ' ' ; mv -v $@ $@~ ; fi

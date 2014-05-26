@@ -1902,7 +1902,7 @@ void mom_add_tasklet_to_agenda_front (momitem_t *tkitm);
 typedef void mom_todoafterstop_fun_t (void *data);
 void mom_stop_work_with_todo (mom_todoafterstop_fun_t * todofun, void *data);
 void mom_run_workers (void);
-
+void mom_stop_event_loop (void);
 
 
 /// two prefixes known by our Makefile!
