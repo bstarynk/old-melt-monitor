@@ -327,10 +327,55 @@ end:
 }
 
 
+static void
+initialize_signals_mom (void)
+{
+  // set up the signalfd 
+  sigset_t mysetsig;
+  sigemptyset (&mysetsig);
+  errno = 0;
+  sigaddset (&mysetsig, SIGTERM);
+  sigaddset (&mysetsig, SIGQUIT);
+  sigaddset (&mysetsig, SIGPIPE);
+  sigaddset (&mysetsig, SIGCHLD);
+  // according to signalfd(2) we need to block the signals
+  MOM_DEBUG (run,
+	     "handling signals SIGTERM=%d SIGQUIT=%d SIGPIPE=%d SIGCHLD=%d",
+	     SIGTERM, SIGQUIT, SIGPIPE, SIGCHLD);
+  MOM_DEBUG (run, "before sigprocmask");
+  if (sigprocmask (SIG_BLOCK, &mysetsig, NULL))
+    MOM_FATAPRINTF ("failed to block signals with sigprocmask");
+  MOM_DEBUG (run, "before signalfd");
+  my_signals_fd_mom = signalfd (-1, &mysetsig, SFD_NONBLOCK | SFD_CLOEXEC);
+  if (MOM_UNLIKELY (my_signals_fd_mom <= 0))
+    MOM_FATAPRINTF ("signalfd failed");
+  MOM_DEBUG (run, "my_signals_fd=%d", my_signals_fd_mom);
+}
+
+
+#define POLL_MAX_MOM 100
+static void *
+event_loop_mom (void *p __attribute__ ((unused)))
+{
+  long long evloopcnt = 0;
+  bool repeat_loop = false;
+  struct pollfd polltab[POLL_MAX_MOM];
+  memset (polltab, 0, sizeof (polltab));
+  assert (my_signals_fd_mom > 0);
+}
+
+#define check_for_some_child_process_mom() \
+  check_for_some_child_process_at_mom(__FILE__,__LINE__)
+static void check_for_some_child_process_at_mom (const char *srcfil,
+						 int srclin);
+
 void
 mom_run_workers (void)
 {
   bool again = false;
+  MOM_DEBUGPRINTF (run, "mom_run_workers starting mom_nb_workers=%d",
+		   mom_nb_workers);
+  initialize_signals_mom ();
   do
     {
       if (mom_nb_workers < MOM_MIN_WORKERS)
@@ -533,4 +578,61 @@ start_some_pending_jobs_mom (void)
       mom_unlock_item (curprocitm);
     }
   pthread_mutex_unlock (&job_mtx_mom);
+}
+
+
+
+static void
+check_for_some_child_process_at_mom (const char *srcfil, int srclin)
+{
+  int pst = 0;
+  momitem_t *curprocitm = NULL;
+  const momnode_t *curproclos = NULL;
+  const momstring_t *curprocoutstr = NULL;
+  MOM_DEBUGPRINTF (run, "check_for_some_child_process %s:%d start", srcfil,
+		   srclin);
+  pid_t wpid = waitpid (-1, &pst, WNOHANG);
+  MOM_DEBUGPRINTF (run, "check_for_some_child_process %s:%d wpid=%d pst=%#x",
+		   srcfil, srclin, wpid, pst);
+  if (wpid < 0)
+    return;
+  pthread_mutex_lock (&job_mtx_mom);
+  for (unsigned jix = 1; jix <= MOM_MAX_WORKERS && !curprocitm; jix++)
+    {
+      momitem_t *curjobitm = running_jobs_mom[jix];
+      if (!curjobitm)
+	continue;
+      if (!mom_lock_item (curjobitm))
+	continue;
+      if (curjobitm->i_paylkind != mompayk_process)
+	goto endjob;
+      struct mom_process_data_st *curjobdata = curjobitm->i_payload;
+      assert (curjobdata != NULL
+	      && curjobdata->iproc_magic == MOM_PROCESS_MAGIC);
+      if (curjobdata->iproc_jobnum == jix && curjobdata->iproc_pid > 0
+	  && curjobdata->iproc_pid == wpid)
+	{
+	  curprocitm = curjobitm;
+	  curproclos = curjobdata->iproc_closure;
+	  if (curjobdata->iproc_outbuf)
+	    curprocoutstr =
+	      mom_make_string_len (curjobdata->iproc_outbuf,
+				   curjobdata->iproc_outpos);
+	  if (curjobdata->iproc_outfd > 0)
+	    close (curjobdata->iproc_outfd), (curjobdata->iproc_outfd = -1);
+	  MOM_GC_FREE (curjobdata->iproc_outbuf);
+	  curjobdata->iproc_outsize = 0;
+	  curjobdata->iproc_outpos = 0;
+	  curjobdata->iproc_pid = 0;
+	}
+    endjob:
+      mom_unlock_item (curjobitm);
+    }
+  goto end;
+end:
+  pthread_mutex_unlock (&job_mtx_mom);
+  if (curprocitm && curproclos && curprocoutstr)
+    {
+#warning should make a tasklet for process completing
+    }
 }
