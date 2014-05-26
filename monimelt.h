@@ -593,7 +593,7 @@ mom_is_item (momval_t v)
 	  && v.pitem->i_magic == MOM_ITEM_MAGIC);
 }
 
-// lock an item & return true
+// lock an item & return true if successful
 static inline bool
 mom_lock_item (momitem_t *itm)
 {

@@ -366,8 +366,7 @@ mom_run_workers (void)
       for (unsigned ix = 1; ix <= curnbwork; ix++)
 	{
 	  void *retwork = NULL;
-	  if (GC_pthread_join
-	      (&work_data_array_mom[ix].work_thread, &retwork))
+	  if (GC_pthread_join (work_data_array_mom[ix].work_thread, &retwork))
 	    MOM_FATAPRINTF ("failed to join work thread #%d", ix);
 	}
       MOM_DEBUGPRINTF (run, "mom_start_workers joined %d work threads",
@@ -414,9 +413,14 @@ start_some_pending_jobs_mom (void)
       momitem_t *curjobitm = running_jobs_mom[jix];
       if (!curjobitm)
 	continue;
-      assert (curjobitm->i_typnum == momty_item
-	      && curjobitm->i_paylkind == mompayk_process);
-      struct mom_process_data_st *curjobproc = curjobitm->i_payload;
+      assert (curjobitm->i_typnum == momty_item);
+      pthread_mutex_lock (&curjobitm->i_mtx);
+      struct mom_process_data_st *curjobproc =
+	(curjobitm->i_paylkind ==
+	 mompayk_process) ? curjobitm->i_payload : NULL;
+      pthread_mutex_unlock (&curjobitm->i_mtx);
+      if (!curjobproc)
+	continue;
       assert (curjobproc != NULL
 	      && curjobproc->iproc_magic == MOM_PROCESS_MAGIC);
       if (curjobproc->iproc_jobnum == jix && curjobproc->iproc_pid > 0
@@ -427,7 +431,7 @@ start_some_pending_jobs_mom (void)
 	 && !mom_queue_is_empty (&pending_jobs_queue_mom))
     {
       momitem_t *curjobitm =
-	mom_value_as_item (mom_queue_pop_value_front
+	mom_value_to_item (mom_queue_pop_value_front
 			   (&pending_jobs_queue_mom));
       assert (curjobitm && curjobitm->i_typnum == momty_item);
       if (curjobitm->i_paylkind != mompayk_process)
@@ -436,52 +440,56 @@ start_some_pending_jobs_mom (void)
     }
   MOM_DEBUGPRINTF (run, "start_some_pending_jobs nbstarting=%d, nbrunning=%d",
 		   nbstarting, nbrunning);
-#warning incomplete start_some_pending_jobs
-#if 0
-  ////++++@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-  /// old code to be modified
-  for (unsigned rix = 0; rix < nbstarting; rix++)
+  for (unsigned rix = 0; rix < (unsigned) nbstarting; rix++)
     {
-      momit_process_t *curproc = proctab[rix];
+      momitem_t *curprocitm = proctab[rix];
+      if (!mom_lock_item (curprocitm))
+	continue;
+      if (curprocitm->i_paylkind != mompayk_process)
+	goto endcurproc;
+      struct mom_process_data_st *curprocdata = curprocitm->i_payload;
+      assert (curprocdata && curprocdata->iproc_magic == MOM_PROCESS_MAGIC);
       int pipetab[2] = { -1, -1 };
       int jobnum = -1;
       for (unsigned j = 1; j <= MOM_MAX_WORKERS && jobnum < 0; j++)
-	if (!running_jobs[j])
+	if (!running_jobs_mom[j])
 	  jobnum = j;
-      MOM_DBG_ITEM (run, "start_some_pending_jobs curproc=",
-		    (mom_anyitem_t *) curproc);
-      MOM_DEBUG (run, "start_some_pending_jobs jobnum=%d", jobnum);
-      assert (curproc && curproc->iproc_item.typnum == momty_processitem);
-      assert (curproc->iproc_pid <= 0 && curproc->iproc_outfd < 0);
-      assert (jobnum > 0);
-      pthread_mutex_lock (&curproc->iproc_item.i_mtx);
       const char *progname =
-	mom_string_cstr ((momval_t) curproc->iproc_progname);
+	mom_string_cstr ((momval_t) curprocdata->iproc_progname);
+      assert (progname && progname[0]);
+      MOM_DEBUG (run, MOMOUT_LITERAL ("start_some_pending_jobs jobnum="),
+		 MOMOUT_DEC_INT (jobnum),
+		 MOMOUT_LITERAL (" curprocitm="),
+		 MOMOUT_ITEM ((const momitem_t *) curprocitm),
+		 MOMOUT_LITERAL (" progname="), MOMOUT_LITERALV (progname));
+      assert (curprocdata->iproc_pid <= 0 && curprocdata->iproc_outfd < 0);
+      assert (jobnum > 0);
       const char **progargv =
 	MOM_GC_ALLOC ("start_some_pending_jobs program argv",
-		      (curproc->iproc_argcount + 2) * sizeof (char *));
+		      (curprocdata->iproc_argcount + 2) * sizeof (char *));
       progargv[0] = progname;
       unsigned argcnt = 1;
-      for (unsigned aix = 0; aix < curproc->iproc_argcount; aix++)
+      for (unsigned aix = 0; aix < curprocdata->iproc_argcount; aix++)
 	{
 	  const char *argstr =
-	    mom_string_cstr ((momval_t) (curproc->iproc_argv[aix]));
+	    mom_string_cstr ((momval_t) (curprocdata->iproc_argv[aix]));
 	  if (argstr)
 	    progargv[argcnt++] = argstr;
 	}
       progargv[argcnt] = NULL;
       for (unsigned aix = 0; aix < argcnt; aix++)
-	MOM_DEBUG (run, "run progargv[%d]=%s", aix, progargv[aix]);
-      assert (progname != NULL);
+	MOM_DEBUGPRINTF (run, "run progargv[%d]=%s", aix, progargv[aix]);
       if (pipe (pipetab))
-	MOM_FATAL ("failed to create pipe for process %s", progname);
-      MOM_DEBUG (run, "pipetab={r:%d,w:%d}", pipetab[0], pipetab[1]);
+	MOM_FATAPRINTF ("failed to create pipe for process %s", progname);
+      MOM_DEBUGPRINTF (run, "pipetab={r:%d,w:%d}", pipetab[0], pipetab[1]);
       fflush (NULL);
       pid_t newpid = fork ();
       if (newpid == 0)
 	{
 	  /* child process */
-	  for (int fd = 3; fd < 128; fd++)
+	  // most of our file descriptors should be close-on-exec, but
+	  // to be safe we close a few of them...
+	  for (int fd = 3; fd < 64; fd++)
 	    if (fd != pipetab[1])
 	      close (fd);
 	  int nullfd = open ("/dev/null", O_RDONLY);
@@ -495,6 +503,9 @@ start_some_pending_jobs_mom (void)
 	  dup2 (pipetab[1], STDOUT_FILENO);
 	  dup2 (pipetab[1], STDERR_FILENO);
 	  nice (1);
+	  signal (SIGTERM, SIG_DFL);
+	  signal (SIGQUIT, SIG_DFL);
+	  signal (SIGCHLD, SIG_DFL);
 	  sigset_t mysetsig;
 	  sigemptyset (&mysetsig);
 	  sigaddset (&mysetsig, SIGTERM);
@@ -502,9 +513,6 @@ start_some_pending_jobs_mom (void)
 	  sigaddset (&mysetsig, SIGPIPE);
 	  sigaddset (&mysetsig, SIGCHLD);
 	  sigprocmask (SIG_UNBLOCK, &mysetsig, NULL);
-	  signal (SIGTERM, SIG_DFL);
-	  signal (SIGQUIT, SIG_DFL);
-	  signal (SIGCHLD, SIG_DFL);
 	  execvp ((const char *) progname, (char *const *) progargv);
 	  fprintf (stderr, "execution of %s failed : %s\n", progname,
 		   strerror (errno));
@@ -514,16 +522,15 @@ start_some_pending_jobs_mom (void)
       else if (newpid < 0)
 	MOM_FATAL ("fork failed for %s", progname);
       // parent process:
-      MOM_DEBUG (run, "start_some_pending_jobs newpid=%d, jobnum=%d",
-		 (int) newpid, jobnum);
-      curproc->iproc_outfd = pipetab[0];
-      curproc->iproc_pid = newpid;
-      curproc->iproc_jobnum = jobnum;
-      running_jobs[jobnum] = curproc;
-      pthread_mutex_unlock (&curproc->iproc_item.i_mtx);
-      GC_FREE (progargv), progargv = NULL;
+      MOM_DEBUGPRINTF (run,
+		       "start_some_pending_jobs progname=%s newpid=%d, jobnum=%d",
+		       progname, (int) newpid, jobnum);
+      curprocdata->iproc_outfd = pipetab[0];
+      curprocdata->iproc_pid = newpid;
+      curprocdata->iproc_jobnum = jobnum;
+      running_jobs_mom[jobnum] = curprocitm;
+    endcurproc:
+      mom_unlock_item (curprocitm);
     }
-  ////----@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-#endif /* old code */
   pthread_mutex_unlock (&job_mtx_mom);
 }
