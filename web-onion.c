@@ -379,8 +379,6 @@ void
 mom_webxout_at (const char *sfil, int lin, momitem_t *webitm, ...)
 {
   va_list alist;
-  if (!mom_lock_item (webitm))
-    return;
   if (webitm->i_paylkind != mompayk_webexchange)
     {
       MOM_WARNING (MOMOUT_LITERAL ("bad webxout "), MOMOUT_LITERALV (sfil),
@@ -396,8 +394,7 @@ mom_webxout_at (const char *sfil, int lin, momitem_t *webitm, ...)
   if (wxd->webx_out.mout_file)
     mom_outva_at (sfil, lin, &wxd->webx_out, alist);
   va_end (alist);
-end:
-  mom_unlock_item (webitm);
+end:;
 }
 
 
@@ -434,8 +431,6 @@ mom_webx_reply (momitem_t *webitm, const char *mime, int httpcode)
 #undef COMMON_MIME_PREFIX_UTF8
 #undef COMMON_MIME_TYPE
   ///
-  if (!mom_lock_item (webitm))
-    return;
   if (webitm->i_paylkind != mompayk_webexchange)
     {
       MOM_WARNING (MOMOUT_LITERAL ("bad webxreply; non webexchange webitem:"),
@@ -470,5 +465,5 @@ mom_webx_reply (momitem_t *webitm, const char *mime, int httpcode)
   wxd->webx_httpcode = httpcode;
   pthread_cond_broadcast (&wxd->webx_cond);
 end:
-  mom_unlock_item (webitm);
+  return;
 }
