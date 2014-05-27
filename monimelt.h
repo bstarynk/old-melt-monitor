@@ -158,11 +158,16 @@ mom_timespec (double t)
 
 
 typedef uint8_t momtynum_t;
+typedef uint8_t momvflags_t;
 typedef uint16_t momspaceid_t;
 typedef uint32_t momhash_t;
 typedef uint32_t momusize_t;
 
 
+enum mom_flags_en
+{
+  momflag_transient = (1 << 0)
+};
 
 pthread_mutexattr_t mom_normal_mutex_attr;
 pthread_mutexattr_t mom_recursive_mutex_attr;
@@ -458,6 +463,11 @@ union momvalueptr_un
 {
   void *ptr;
   const momtynum_t *ptype;
+  struct
+  {
+    const momtynum_t htype;
+    momvflags_t hflags;
+  } *phead;
   const momint_t *pint;
   const momdouble_t *pdouble;
   const momstring_t *pstring;
@@ -488,10 +498,60 @@ mom_type (const momval_t v)
     return *v.ptype;
 }
 
+static inline momvflags_t
+mom_flags (const momval_t v)
+{
+  if (v.ptr == NULL)
+    return 0;
+  else
+    return __atomic_load_n (&v.phead->hflags, __ATOMIC_SEQ_CST);
+}
+
+static inline bool
+mom_has_flags (const momval_t v, unsigned flags)
+{
+  if (v.ptr == NULL)
+    return false;
+  return (__atomic_load_n (&v.phead->hflags, __ATOMIC_SEQ_CST) & flags) != 0;
+}
+
+
+// return the previous values of the flags
+static inline momvflags_t
+mom_set_flags (momval_t v, unsigned flags)
+{
+  if (v.ptr == NULL)
+    return 0;
+  return __atomic_fetch_or (&v.phead->hflags, (momvflags_t) flags,
+			    __ATOMIC_SEQ_CST);
+}
+
+static inline momvflags_t
+mom_clear_flags (momval_t v, unsigned flags)
+{
+  if (v.ptr == NULL)
+    return 0;
+  __atomic_fetch_and (&v.phead->hflags, (momvflags_t) ~flags,
+		      __ATOMIC_SEQ_CST);
+}
+
+
+static inline momvflags_t
+mom_put_flags (momval_t v, unsigned flags)
+{
+  if (v.ptr == NULL)
+    return 0;
+  momvflags_t f = flags;
+  return __atomic_exchange_n (&v.phead->hflags, &f, __ATOMIC_SEQ_CST);
+}
+
+
+
 /*************************** boxed integers ***************************/
 struct momint_st
 {
   momtynum_t typnum;
+  momvflags_t flags;
   int64_t intval;
 };
 
@@ -516,6 +576,7 @@ momval_t mom_make_integer (int64_t c);
 struct momdouble_st
 {
   momtynum_t typnum;
+  momvflags_t flags;
   double dblval;
 };
 static inline bool
@@ -540,6 +601,7 @@ momval_t mom_make_double (double d);
 struct momstring_st
 {
   momtynum_t typnum;
+  momvflags_t flags;
   momusize_t slen;		/* length in bytes of cstr */
   momhash_t hash;
   char cstr[];			/* zero terminated */
@@ -595,6 +657,7 @@ mom_string_same (momval_t v, const char *cstr)
 struct momjsonarray_st
 {
   momtynum_t typnum;
+  momvflags_t flags;
   momusize_t slen;
   momhash_t hash;
   momval_t jarrtab[];
@@ -615,6 +678,7 @@ struct mom_jsonentry_st
 struct momjsonobject_st
 {
   momtynum_t typnum;
+  momvflags_t flags;
   momusize_t slen;
   momhash_t hash;
   struct mom_jsonentry_st jobjtab[];
@@ -779,6 +843,7 @@ struct mom_itemattributes_st	// an hash table
 struct momitem_st
 {
   const momtynum_t i_typnum;	/* always momty_item */
+  momvflags_t i_flags;
   momspaceid_t i_space;
   const momhash_t i_hash;	/* same as i_idstr->hash */
   const unsigned i_magic;	/* always MOM_ITEM_MAGIC */
@@ -1362,6 +1427,7 @@ const momitem_t *mom_get_item_bool (bool v);
 struct momseqitem_st
 {
   momtynum_t typnum;
+  momvflags_t flags;
   momusize_t slen;
   momhash_t hash;
   const momitem_t *itemseq[];
@@ -1488,6 +1554,7 @@ mom_seqitem_nth_item (momval_t seqv, int rk)
 struct momnode_st
 {
   momtynum_t typnum;
+  momvflags_t flags;
   momusize_t slen;
   momhash_t hash;
   const momitem_t *connitm;

@@ -14,3 +14,4 @@
 -T momtynum_t
 -T momusize_t
 -T momval_t
+-T momvflags_t

@@ -204,6 +204,8 @@ mom_dump_scan_value (struct mom_dumper_st *dmp, const momval_t val)
   if (MOM_UNLIKELY (dmp->dmp_state != dus_scan))
     MOM_FATAPRINTF ("invalid dump state #%d", (int) dmp->dmp_state);
   unsigned typ = *val.ptype;
+  if (mom_has_flags (val, momflag_transient))
+    return;
   switch ((enum momvaltype_en) typ)
     {
     case momty_null:
@@ -430,6 +432,8 @@ raw_dump_emit_json_mom (struct mom_dumper_st *dmp, const momval_t val)
   if (!val.ptr)
     return MOM_NULLV;
   unsigned typ = *val.ptype;
+  if (mom_has_flags (val, momflag_transient))
+    return MOM_NULLV;
   switch ((enum momvaltype_en) typ)
     {
     case momty_null:
