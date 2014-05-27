@@ -30,7 +30,7 @@ struct workdata_mom_st
 };
 
 #define TODO_MAX_MOM (MOM_MAX_WORKERS)
-// In practice we'll have only one thing to do at most
+// In practice we'll usually have only one thing to do at most
 static struct
 {
   mom_todoafterstop_fun_t *todo_fun;
@@ -62,8 +62,8 @@ static pthread_mutex_t job_mtx_mom = PTHREAD_MUTEX_INITIALIZER;
 static momitem_t *running_jobs_mom[MOM_MAX_WORKERS + 1];
 static struct mom_valuequeue_st pending_jobs_queue_mom;
 
-// the poll timeout is 1.8 seconds without debugging, and 4.5 with debugging 'run'
-#define MOM_POLL_TIMEOUT (MOM_IS_DEBUGGING(run)?4500:1800)	/* milliseconds for mom poll timeout */
+// the poll timeout is 2.1 seconds without debugging, and 4.9 with debugging 'run'
+#define MOM_POLL_TIMEOUT (MOM_IS_DEBUGGING(run)?4900:2100)	/* milliseconds for mom poll timeout */
 
 
 
@@ -315,7 +315,7 @@ run_one_tasklet_mom (momitem_t *tkitm)
       stepcount++;
       if (tkitm->i_payload != itd)
 	break;
-      if (stepix % 2 == 0 && mom_clock_time (CLOCK_REALTIME) > timelimit)
+      if (stepcount % 2 == 0 && mom_clock_time (CLOCK_REALTIME) > timelimit)
 	break;
     }
   MOM_DEBUG (run, MOMOUT_LITERAL ("run_one_tasklet_mom done stepcount="),
