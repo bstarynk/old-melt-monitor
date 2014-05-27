@@ -1592,6 +1592,7 @@ mom_full_dump (const char *reason, const char *dumpdir,
 	  mom_get_attribute (predefitm->i_attrs, mom_named__comment);
 	if (mom_is_string (commentv))
 	  MOM_OUT (&outs,
+		   MOMOUT_NEWLINE (),
 		   MOMOUT_SLASHCOMMENT_STRING (mom_string_cstr (commentv)));
 	if (predefitm->i_name)
 	  MOM_OUT (&outs, MOMOUT_LITERAL ("MOM_PREDEFINED_NAMED("),
