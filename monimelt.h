@@ -1343,6 +1343,11 @@ void mom_webx_reply (momitem_t *webitm, const char *mime, int httpcode);
 
 #define MOM_WEB_DIRECTORY "webdir"
 #define MOM_WEB_ROOT_PAGE "mom-root-page.html"
+
+// called from main
+void mom_start_web (const char *webhost);
+
+
 /************* misc items *********/
 // convert a boolean to a predefined item json_true or json_false
 const momitem_t *mom_get_item_bool (bool v);

@@ -370,8 +370,14 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 	      mom_item_clear_payload (webxitm);
 	      mom_unlock_item (webxitm);
 	    }
-	}
+	  MOM_DEBUG (web, "processed webrequest #", MOMOUT_DEC_INT (webnum),
+		     MOMOUT_LITERAL (" webxitm:"),
+		     MOMOUT_ITEM ((const momitem_t *) webxitm));
+	  return OCS_PROCESSED;
+	}			/* end if wclosv is node */
     }
+  MOM_DEBUGPRINTF (web, "not processed webreq#%d", webnum);
+  return OCS_NOT_PROCESSED;
 }
 
 
@@ -467,3 +473,45 @@ mom_webx_reply (momitem_t *webitm, const char *mime, int httpcode)
 end:
   return;
 }
+
+// called at most once from main
+void
+mom_start_web (const char *webhost)
+{
+  char webuf[128];
+  memset (webuf, 0, sizeof (webuf));
+  assert (webhost != NULL);
+  if (strlen (webhost) + 2 >= sizeof (webuf))
+    MOM_FATAPRINTF ("too long webhost %s", webhost);
+  strncpy (webuf, webhost, sizeof (webuf) - 1);
+  onion_mom = onion_new (O_THREADED | O_DETACH_LISTEN);
+  if (!onion_mom)
+    MOM_FATAPRINTF ("failed to create onion");
+  char *lastcolon = strchr (webuf, ':');
+  char *portstr = NULL;
+  char *hoststr = NULL;
+  if (lastcolon && isdigit (lastcolon[1]))
+    {
+      *lastcolon = (char) 0;
+      portstr = lastcolon + 1;
+    }
+  if (webuf[0])
+    hoststr = webuf;
+  if (hoststr && hoststr[0])
+    onion_set_hostname (onion_mom, hoststr);
+  if (portstr && portstr[0])
+    onion_set_port (onion_mom, portstr);
+  MOM_INFORMPRINTF ("start web hoststr=%s portstr=%s", hoststr, portstr);
+  onion_root_url_mom = onion_root_url (onion_mom);
+  onion_handler *hdlr = onion_handler_new ((onion_handler_handler)
+					   handle_web_exchange_mom, NULL,
+					   NULL);
+  onion_url_add_handler (onion_root_url_mom, "^", hdlr);
+  onion_url_add_handler (onion_root_url_mom, "status",
+			 onion_internal_status ());
+  onion_url_add_handler (onion_root_url_mom, "^",
+			 onion_handler_export_local_new (MOM_WEB_DIRECTORY));
+  MOM_INFORM ("before listening web host %s", webhost);
+  onion_listen (onion_mom);
+  MOM_INFORM ("after listening web host %s", webhost);
+}				/* end mom_start_web */

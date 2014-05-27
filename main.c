@@ -944,6 +944,8 @@ main (int argc, char **argv)
   do_after_initial_load_with_plugins_mom ();
   if (new_predefined_mom)
     add_new_predefined_mom ();
+  if (mom_web_host)
+    mom_start_web (mom_web_host);
   if (mom_nb_workers)
     mom_run_workers ();
   ///
