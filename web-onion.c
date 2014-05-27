@@ -372,11 +372,16 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 	    }
 	  MOM_DEBUG (web, "processed webrequest #", MOMOUT_DEC_INT (webnum),
 		     MOMOUT_LITERAL (" webxitm:"),
-		     MOMOUT_ITEM ((const momitem_t *) webxitm));
+		     MOMOUT_ITEM ((const momitem_t *) webxitm),
+		     MOMOUT_LITERAL (" fullpath:"),
+		     MOMOUT_LITERALV ((const char *) fullpath),
+		     MOMOUT_LITERAL (" method:"),
+		     MOMOUT_LITERALV ((const char *) method));
 	  return OCS_PROCESSED;
 	}			/* end if wclosv is node */
     }
-  MOM_DEBUGPRINTF (web, "not processed webreq#%d", webnum);
+  MOM_DEBUGPRINTF (web, "not processed webreq#%d=%#x fullpath=%s method=%s",
+		   webnum, webnum, fullpath, method);
   return OCS_NOT_PROCESSED;
 }
 
