@@ -26,6 +26,29 @@ static pthread_mutex_t onion_mtx_mom = PTHREAD_MUTEX_INITIALIZER;
 static int onion_nb_web_requests_mom;
 
 
+struct webdict_mom_st
+{
+  unsigned webd_size;
+  unsigned webd_count;
+  struct mom_jsonentry_st webd_pairtab[];
+};
+
+
+// used thru onion_dict_preorder
+static void
+webdict_add_mom (void *data, const char *key, const void *value, int flags
+		 __attribute__ ((unused)))
+{
+  struct webdict_mom_st *wd = data;
+  unsigned cnt = wd->webd_count;
+  assert (cnt < wd->webd_size);
+  wd->webd_pairtab[cnt].je_name = (momval_t) mom_make_string (key);
+  wd->webd_pairtab[cnt].je_attr = (momval_t) mom_make_string (value);
+  wd->webd_count = cnt + 1;
+}
+
+
+
 //internally used in payload.c
 void
 mom_paylwebx_finalize (momitem_t *witm, void *wdata)
@@ -215,7 +238,52 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 	  wxd->webx_requ = req;
 	  wxd->webx_resp = resp;
 	  pthread_cond_init (&wxd->webx_cond, NULL);
-#warning should probably set the query & post jsonobjects....
+	  // set the query arguments
+	  {
+	    const onion_dict *odicquery = onion_request_get_query_dict (req);
+	    int cntdicquery = onion_dict_count (odicquery);
+	    if (cntdicquery > 0)
+	      {
+		struct webdict_mom_st *pdic =	////
+		  MOM_GC_ALLOC ("new query dictionnary",
+				sizeof (struct webdict_mom_st)
+				+
+				cntdicquery *
+				sizeof (struct mom_jsonentry_st));
+		pdic->webd_size = cntdicquery;
+		onion_dict_preorder (odicquery, webdict_add_mom, pdic);
+		wxd->webx_jobquery = (momval_t) mom_make_json_object
+		  (MOMJSOB_COUNTED_ENTRIES
+		   (pdic->webd_count,
+		    (struct mom_jsonentry_st *) pdic->webd_pairtab),
+		   MOMJSON_END);
+		MOM_GC_FREE (pdic);
+	      }
+	  }
+	  /// set the post arguments
+	  if (methoditm == (momitem_t *) mom_named__POST)
+	    {
+	      const onion_dict *odicpost = onion_request_get_post_dict (req);
+	      int cntdicpost = onion_dict_count (odicpost);
+	      if (cntdicpost > 0)
+		{
+		  struct webdict_mom_st *pdic =	////
+		    MOM_GC_ALLOC ("new post dictionnary",
+				  sizeof (struct webdict_mom_st)
+				  +
+				  cntdicpost *
+				  sizeof (struct mom_jsonentry_st));
+		  pdic->webd_size = cntdicpost;
+		  onion_dict_preorder (odicpost, webdict_add_mom, pdic);
+		  wxd->webx_jobpost = (momval_t) mom_make_json_object
+		    (MOMJSOB_COUNTED_ENTRIES
+		     (pdic->webd_count,
+		      (struct mom_jsonentry_st *) pdic->webd_pairtab),
+		     MOMJSON_END);
+		  MOM_GC_FREE (pdic);
+		}
+	    }
+	  /// open a memory stream for reply content
 	  FILE *webf = open_memstream (&wxd->webx_obuf, &wxd->webx_osize);
 	  if (!webf)
 	    MOM_FATAPRINTF ("failed to open memstream for webreq#%d", webnum);

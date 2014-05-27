@@ -1322,9 +1322,11 @@ struct mom_webexchange_data_st
   onion_response *webx_resp;
   char *webx_obuf;		/* malloc-ed, not GC_malloced! */
   size_t webx_osize;
+  char *webx_mime;
+  momval_t webx_jobpost;	/* jobject for POST arguments */
+  momval_t webx_jobquery;	/* jobject for query arguments */
   struct momout_st webx_out;
   pthread_cond_t webx_cond;
-  char *webx_mime;
   int webx_httpcode;
 };
 
