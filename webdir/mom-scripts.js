@@ -22,7 +22,8 @@ var maindiv_mom;		// the main division
 
 // jquery ready function for our document
 $(function(){
-    maindiv_mom=$('#mom_maindiv');
+    maindiv_mom= $('#mom_maindiv');
+    console.debug("maindiv_mom=", maindiv_mom);
 });
 
 function mom_do_menu_system(itm) {
@@ -35,5 +36,5 @@ function mom_do_menu_system(itm) {
 		 console.debug("mom_do_menu_system ajax_system gotdata=", gotdata);
 		 maindiv_mom.html(gotdata);
 	     }
-
-}
+	   });
+};

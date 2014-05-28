@@ -304,6 +304,9 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 				 (momval_t) mom_make_string (restpath)),
 	     MOMPFR_END ());
 	  mom_add_tasklet_to_agenda_front (wtskitm);
+	  MOM_DEBUG (web, "webrequest #", MOMOUT_DEC_INT (webnum),
+		     MOMOUT_LITERAL ("added tasklet wtskitm:"),
+		     MOMOUT_ITEM ((const momitem_t *) wtskitm));
 	  double minidelay = 0.002;
 	  double curtim = 0.0;
 	  bool replied = false;

@@ -877,7 +877,6 @@ add_new_predefined_mom (void)
 		      new_predefined_mom);
 }
 
-
 int
 main (int argc, char **argv)
 {

@@ -72,6 +72,8 @@ static void run_one_tasklet_mom (momitem_t *tskitm);
 void
 mom_add_tasklet_to_agenda_back (momitem_t *tkitm)
 {
+  bool agendawasempty = false;
+  int agendaqlen = 0;
   // we don't bother locking the tkitm to test its taskletness
   if (!tkitm || tkitm->i_typnum != momty_item
       || tkitm->i_paylkind != mompayk_tasklet)
@@ -81,16 +83,27 @@ mom_add_tasklet_to_agenda_back (momitem_t *tkitm)
   pthread_mutex_lock (&mom_named__agenda->i_mtx);
   if (MOM_UNLIKELY (mom_named__agenda->i_paylkind != mompayk_queue))
     mom_item_start_queue (mom_named__agenda);
-  bool agendawasempty = mom_item_queue_is_empty (mom_named__agenda);
+  agendawasempty = mom_item_queue_is_empty (mom_named__agenda);
   mom_item_queue_add_back (mom_named__agenda, (momval_t) tkitm);
+  if (MOM_IS_DEBUGGING(run))
+    agendaqlen = mom_item_queue_length(mom_named__agenda);
   if (agendawasempty)
     pthread_cond_broadcast (&agenda_cond_mom);
   pthread_mutex_unlock (&mom_named__agenda->i_mtx);
+  MOM_DEBUG(run, MOMOUT_LITERAL("did add tasklet to agenda back tkitm="),
+	    MOMOUT_ITEM((const momitem_t*)tkitm),
+	    MOMOUT_LITERAL("; agendaqlen="),
+	    MOMOUT_DEC_INT((int)agendaqlen),
+	    MOMOUT_LITERAL(" agendawasempty="),
+	    MOMOUT_LITERALV((const char*)(agendawasempty?"true":"false")),
+	    NULL);
+	    
 }
 
 void
 mom_add_tasklet_to_agenda_front (momitem_t *tkitm)
 {
+  int agendaqlen = 0;
   // we don't bother locking the tkitm to test its taskletness
   if (!tkitm || tkitm->i_typnum != momty_item
       || tkitm->i_paylkind != mompayk_tasklet)
@@ -102,9 +115,17 @@ mom_add_tasklet_to_agenda_front (momitem_t *tkitm)
     mom_item_start_queue (mom_named__agenda);
   bool agendawasempty = mom_item_queue_is_empty (mom_named__agenda);
   mom_item_queue_add_front (mom_named__agenda, (momval_t) tkitm);
+  if (MOM_IS_DEBUGGING(run))
+    agendaqlen = mom_item_queue_length(mom_named__agenda);
   if (agendawasempty)
     pthread_cond_broadcast (&agenda_cond_mom);
   pthread_mutex_unlock (&mom_named__agenda->i_mtx);
+  MOM_DEBUG(run, MOMOUT_LITERAL("did add tasklet to agenda front tkitm="),
+	    MOMOUT_ITEM((const momitem_t*)tkitm),
+	    MOMOUT_LITERAL("; agendaqlen="),
+	    MOMOUT_DEC_INT((int)agendaqlen),
+	    MOMOUT_LITERAL(" agendawasempty="),
+	    MOMOUT_LITERALV((const char*)(agendawasempty?"true":"false")));
 }
 
 static void *
