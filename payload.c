@@ -605,6 +605,8 @@ compute_pushed_data_size_mom (const momnode_t *closn,
 	  MOM_FATAPRINTF ("impossible MOMPFRDO__LAST");
 	  break;
 	}			/* end switch push frame dir */
+      if (again)
+	dir = va_arg (args, enum mom_pushframedirective_en);
     }				/* end while again */
 
   if (rdescr)
@@ -836,6 +838,8 @@ fill_frame_data_mom (intptr_t * numdata, double *dbldata, momval_t *valdata,
 	  MOM_FATAPRINTF ("impossible MOMPFRDO__LAST");
 	  break;
 	}			/* end switch push frame dir */
+      if (again)
+	dir = va_arg (args, enum mom_pushframedirective_en);
     }				/* end while again */
 }				//// end fill_frame_data_mom
 

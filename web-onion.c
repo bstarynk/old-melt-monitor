@@ -206,8 +206,8 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
       momval_t wclosv = MOM_NULLV;
       const char *restpath = fullpath + pos;
       MOM_DEBUGPRINTF (web,
-		       "request #%d fullpath %s method %s good namidpath %s pos %d",
-		       webnum, fullpath, method, namidpath, pos);
+		       "request #%d=%#x fullpath %s method %s good namidpath %s pos %d",
+		       webnum, webnum, fullpath, method, namidpath, pos);
       assert (namiditm && namiditm->i_typnum == momty_item
 	      && namiditm->i_magic == MOM_ITEM_MAGIC);
       {
@@ -217,6 +217,7 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 	mom_unlock_item (namiditm);
       }
       MOM_DEBUG (web, "request #", MOMOUT_DEC_INT (webnum),
+		 MOMOUT_LITERAL ("=H"), MOMOUT_HEX_INT (webnum),
 		 MOMOUT_LITERAL (" namiditm:"),
 		 MOMOUT_ITEM ((const momitem_t *) namiditm),
 		 MOMOUT_LITERAL (" methoditm:"),
