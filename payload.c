@@ -189,7 +189,7 @@ mom_item_start_routine (momitem_t *itm, const char *routname)
   if (!routname || !routname[0])
     return;
   snprintf (symbuf, sizeof (symbuf), MOM_ROUTINE_NAME_FMT, routname);
-  assert (symbuf[MOM_SYMBNAME_LEN] - 1 == '\0');
+  assert (symbuf[MOM_SYMBNAME_LEN - 1] == '\0');
   for (const char *pc = symbuf; *pc; pc++)
     if (!isalnum (*pc) && *pc != '_')
       return;
