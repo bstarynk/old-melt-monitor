@@ -387,7 +387,7 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 
 
 void
-mom_webxout_at (const char *sfil, int lin, momitem_t *webitm, ...)
+mom_webx_out_at (const char *sfil, int lin, momitem_t *webitm, ...)
 {
   va_list alist;
   if (webitm->i_paylkind != mompayk_webexchange)

@@ -42,14 +42,26 @@ enum ajax_system_numbers_en
 };
 
 
+static void
+todo_dump_at_exit_mom (void *data)
+{
+  char *dpath = data;
+  assert (dpath && dpath[0]);
+  MOM_DEBUGPRINTF (run, "todo_dump_at_exit_mom should dump dpath=%s",
+		   dpath);
+  mom_full_dump ("todo dump at exit", dpath, NULL);
+  mom_stop_event_loop ();
+  MOM_INFORMPRINTF ("dumped before exiting into directory %s", dpath);
+}
+
 static int
 ajax_system_codmom (int momstate_, momitem_t *momtasklet_,
 		    const momnode_t *momclosure_, momval_t *momlocvals_,
 		    intptr_t * momlocnums_, double *momlocdbls_)
 {
-#define _L(Nam) momlocvals_[ajaxsyst_v_##Nam]
-#define _C(Nam) momclosure_->sontab[ajaxsyst_c_##Nam]
-#define _N(Nam) momlocnums_[ajaxsyst_n_##Nam]
+#define _L(Nam) (momlocvals_[ajaxsyst_v_##Nam])
+#define _C(Nam) (momclosure_->sontab[ajaxsyst_c_##Nam])
+#define _N(Nam) (momlocnums_[ajaxsyst_n_##Nam])
   enum ajax_system_state_en
   {
     ajaxsyst_s_start,
@@ -75,7 +87,35 @@ ajax_system_codmom (int momstate_, momitem_t *momtasklet_,
 ajaxsyst_lab_start:
   _L (webx) = _L (arg0res);
   MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_system_codmom webx="),
-	     MOMOUT_VALUE (_L (webx)));
+	     MOMOUT_VALUE ((const momval_t)_L (webx)));
+  assert (mom_is_item(_L(webx)));
+  {
+    mom_lock_item(_L(webx).pitem);
+    MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_system_codmom postjsob="),
+	       MOMOUT_VALUE((const momval_t)mom_webx_jsob_post(_L(webx).pitem)));
+    momval_t todov = mom_webx_post_arg(_L(webx).pitem,"todo");
+    if (mom_string_same(todov,"mom_menuitem_save_exit")) {
+	mom_stop_work_with_todo (todo_dump_at_exit_mom,
+				 (char *) ".");
+	MOM_WEBX_OUT(_L(webx).pitem,
+		     MOMOUT_LITERAL("<em>Monimelt</em> <b>save then exit</b> at </i>"),
+		     MOMOUT_DOUBLE_TIME((const char*)"%c", mom_clock_time(CLOCK_REALTIME)),
+		     MOMOUT_LITERAL("</i>"), MOMOUT_SPACE(32));
+	mom_webx_reply(_L(webx).ptr, "text/html", HTTP_OK);
+    }
+    else if  (mom_string_same(todov,"mom_menuitem_quit")) {
+      mom_stop_work_with_todo (NULL, NULL);
+	MOM_WEBX_OUT
+	  (_L(webx).pitem,
+	   MOMOUT_LITERAL("<em>Monimelt</em> <b>quit without saving</b> at </i>"),
+	   MOMOUT_DOUBLE_TIME((const char*)"%c", mom_clock_time(CLOCK_REALTIME)),
+	   MOMOUT_LITERAL("</i>"), MOMOUT_SPACE(32),
+	   NULL
+	   );
+	mom_webx_reply(_L(webx).pitem, "text/html", HTTP_OK);
+    }    
+    mom_unlock_item(_L(webx).pitem);
+  }
   ;
 #undef _L
 #undef _C

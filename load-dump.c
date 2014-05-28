@@ -985,7 +985,7 @@ mom_load_value_json (struct mom_loader_st *ld, const momval_t jval)
 		for (unsigned ix = 0; ix < nbsons; ix++)
 		  sons[ix] =
 		    mom_load_value_json (ld, mom_json_array_nth (jsons, ix));
-		jres = (momval_t) mom_make_node_sized (connitm, nbsons, sons);
+		jres = (momval_t) mom_make_node_from_array (connitm, nbsons, sons);
 		if (sons != tinysons)
 		  MOM_GC_FREE (sons);
 	      }

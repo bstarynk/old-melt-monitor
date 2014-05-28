@@ -39,6 +39,13 @@ nav.momnav_cl {
     font-size: 90%;
 }
 
+div.mom_main_cl {
+    background-color: azure;
+    font-size: 100;
+    gap: 10px;
+    border: 1px;
+}
+
 .mom_icon_system_cl {
     /* icon from http://www.pngfactory.net/png/20828/system under GPL
        license */

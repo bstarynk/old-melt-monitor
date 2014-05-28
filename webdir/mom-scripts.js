@@ -18,8 +18,22 @@
     <http://www.gnu.org/licenses/>.
 **/
 
+var maindiv_mom;		// the main division
 
+// jquery ready function for our document
+$(function(){
+    maindiv_mom=$('#mom_maindiv');
+});
 
 function mom_do_menu_system(itm) {
     console.debug ("mom_do_menu_system itm=", itm);
+    $.ajax({ url: '/ajax_system',
+	     method: 'POST',
+	     data: { todo_mom: itm.id },
+	     dataType: 'html',
+	     success: function (gotdata) {
+		 console.debug("mom_do_menu_system ajax_system gotdata=", gotdata);
+		 maindiv_mom.html(gotdata);
+	     }
+
 }

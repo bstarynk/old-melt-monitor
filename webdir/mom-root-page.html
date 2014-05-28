@@ -47,8 +47,8 @@
     </div>
     
     <div class="easyui-menu" id="mom_menu_system"  data-options="onClick:mom_do_menu_system" style="width:150px;">
-      <div id="mom_menuitem_save" data-options="iconCls:'icon-save'">save &amp; Exit</div>
-      <div id="mom_menuitem_save_as"  data-options="iconCls:'mom_icon_save_as_cl'">Save as</div>
+      <!-- the id is known by ajax_system routine -->
+      <div id="mom_menuitem_save_exit" data-options="iconCls:'icon-save'">save &amp; Exit</div>
       <div  id="mom_menuitem_quit" data-options="iconCls:'icon-no'">Quit</div>
     </div>
     
@@ -64,5 +64,7 @@
       <div>Select All</div>
     </div>
   </nav>
+  <hr/>
+  <div id='mom_maindiv' class='mom_main_cl'></div>
 </body>
 </html>

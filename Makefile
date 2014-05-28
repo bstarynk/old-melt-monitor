@@ -43,10 +43,10 @@ PLUGINS=  $(patsubst %.c,%.so,$(PLUGIN_SOURCES))
 OBJECTS= $(patsubst %.c,%.o,$(SOURCES))
 RM= rm -fv
 .PHONY: all modules plugins clean tests indent restore-state dump-state
-.SUFFIXES: .so
+.SUFFIXES: .so .i
 all: monimelt modules plugins
 clean:
-	$(RM) *~ *.o *.so *.orig _tmp_* monimelt core* webdir/*~ *.tmp  _timestamp.* *dbsqlite*-journal *%
+	$(RM) *~ *.o *.so *.i *.orig _tmp_* monimelt core* webdir/*~ *.tmp  _timestamp.* *dbsqlite*-journal *%
 	$(RM) -r _monimelt_termdump*
 ################
 monimelt: $(OBJECTS) _timestamp.o
@@ -69,6 +69,9 @@ $(OBJECTS): monimelt.h predef-monimelt.h
 
 .indent.pro: monimelt.h
 	sed -n 's/typedef.*\(mom[a-z0-9_]*_t\);/-T \1/p' monimelt.h | sort -u > $@
+
+%.i: %.c
+	$(COMPILE.c) -C -E $< | sed s:^#://#: > $@
 
 modules: $(MODULES)
 

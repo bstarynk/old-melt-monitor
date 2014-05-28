@@ -40,6 +40,14 @@ create_stuff_mom (void)
     (ajax_system_item->i_attrs,
      mom_named__comment,
      (momval_t) mom_make_string ("handle 'ajax_system' webrequests"));
+  ajax_system_item->i_attrs = mom_put_attribute
+    (ajax_system_item->i_attrs,
+     mom_named__web_handler,
+     (momval_t) mom_make_node_til_nil
+     (ajax_system_item,
+      (momval_t) mom_make_string ("{spare1 ajax-system}"),
+      (momval_t) mom_make_string ("{spare2 ajax-system}"),
+      (momval_t) mom_make_string ("{spare3 ajax-system}"), MOM_EMPTY, NULL));
   MOM_INFORMPRINTF ("created ajax_system");
 }
 
