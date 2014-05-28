@@ -17,3 +17,9 @@
     along with GCC; see the file COPYING3.   If not see
     <http://www.gnu.org/licenses/>.
 **/
+
+
+
+function mom_do_menu_system(itm) {
+    console.debug ("mom_do_menu_system itm=", itm);
+}

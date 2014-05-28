@@ -41,6 +41,11 @@ nav.momnav_cl {
 
 .mom_icon_system_cl {
     /* icon from http://www.pngfactory.net/png/20828/system under GPL
-license */
+       license */
     background:url('mom-icons/system-32x32.png') no-repeat center center;
+}
+
+.mom_icon_save_as_cl {
+    /* icon from /usr/share/icons/oxygen/22x22/actions/document-save-as.png  */
+    background:url('mom-icons/document-save-as-22x22.png') no-repeat center center;
 }

@@ -38,16 +38,21 @@
   <nav class='momnav_cl'>
     
     <div class="easyui-panel" style="padding:9px; gap:3px">
-      <a href="javascript:(void)0" class="easyui-menubutton" data-options="menu:'#mom_menu_system',iconCls:'mom_icon_system_cl'">System</a>
-      <a href="javascript:(void)0" class="easyui-menubutton" data-options="menu:'#mom_menu_edit',iconCls:'icon-edit'">Edit</a>
+      <a href="javascript:(void)0" class="easyui-menubutton"
+	 data-options="menu:'#mom_menu_system',iconCls:'mom_icon_system_cl'">
+	System</a>
+      <a href="javascript:(void)0" class="easyui-menubutton"
+	 data-options="menu:'#mom_menu_edit',iconCls:'icon-edit'">
+	Edit</a>
     </div>
     
-    <div id="mom_menu_system" style="width:150px;">
-      <div data-options="iconCls:'icon-save'">save &amp; Exit</div>
-      <div data-options="iconCls:'icon-no'">Quit</div>
+    <div class="easyui-menu" id="mom_menu_system"  data-options="onClick:mom_do_menu_system" style="width:150px;">
+      <div id="mom_menuitem_save" data-options="iconCls:'icon-save'">save &amp; Exit</div>
+      <div id="mom_menuitem_save_as"  data-options="iconCls:'mom_icon_save_as_cl'">Save as</div>
+      <div  id="mom_menuitem_quit" data-options="iconCls:'icon-no'">Quit</div>
     </div>
     
-    <div id="mom_menu_edit" style="width:150px;">
+    <div class="easyui-menu" id="mom_menu_edit" style="width:150px;">
       <div data-options="iconCls:'icon-undo'">Undo</div>
       <div data-options="iconCls:'icon-redo'">Redo</div>
       <div class="menu-sep"></div>
