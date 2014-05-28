@@ -33,57 +33,14 @@ h1 {
     text-align: center;
 }
 
-div.toolbar_cl {
-    background-color: peachpuff;
-    color: navy;
-    border: 1px;
-}
-
-div.toped_cl {
-    background-color: lightblue;
-    margin-left:auto;
-    margin-right:auto;
-    width: 77%;
-    min-height: 100px;
-    border: 2px solid brown;
-    border-spacing: 15px;
-}
-
-span.start_label_cl {
-    font-size: 90%;
-}
-
-p.status_cl {
-    background-color: grey;
-    color: yellow;
-    min-height: 10px;
-    width: 75%
-}
-
-span.message_cl {
-    font-size: 90%;
-    font-family: Andale;
-    color: darkblue;
-}
-
-nav.nav_cl {
+nav.momnav_cl {
     background-color: lightgreen;
     min-height: 10px;
     font-size: 90%;
 }
 
-.menu_cl {
-    border: 5px navy;
-}
-
-.menu_container_cl {
-    margin: 5px;
-    background-color: ivory;
-    display: inline-block;
-}
-
-div#workzone_id {
-    border: 1px darkblue;
-    min-width: 80%;
-    min-height: 20px;
+.mom_icon_system_cl {
+    /* icon from http://www.pngfactory.net/png/20828/system under GPL
+license */
+    background:url('mom-icons/system-32x32.png') no-repeat center center;
 }

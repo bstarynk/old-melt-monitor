@@ -23,67 +23,41 @@
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <link rel="stylesheet" type="text/css" href="codemirror.css"/>
   <link rel="stylesheet" type="text/css" href="jqueryui-smoothness/jquery-ui.min.css"/>
-  <link rel="stylesheet" type="text/css" href="jquery.jui_dropdown.css"/>
+  <link rel="stylesheet" type="text/css" href="jeasyui/easyui.css"/>
+  <link rel="stylesheet" type="text/css" href="jeasyui/icon.css"/>
   <link rel="stylesheet" type="text/css" href="mom-style.css"/>
   <script src="jquery.js"></script>
   <script src="jquery-ui.min.js"></script>
+  <script src="jeasyui.min.js"></script>
   <script src="codemirror.js"></script>
   <script src="styles-codemirror/clike.js"></script>
-  <script src="jquery.jui_dropdown.min.js"></script>
   <script src="mom-scripts.js"></script>
-  <!-- perhaps use http://www.jeasyui.com/ -->
 </head>
 <body>
   <h1>Monimelt</h1>
-  <p>* <span id='momstart_id' class='start_label_cl'></span><br />
-    <span id='mom_message_id' class='message_cl'>-</span></p>
-
-  <p class='status_cl' id='status_id'></p>
-
-  <p class='periodic_cl'><select id='period_id' onchange='period_changed()'><option selected='true'>1</option><option>3</option><option>10</option><option>30</option><option>120</option></select> &nbsp;
-    <input type='submit' name='forcegc_id' value='force gc' onclick='send_force_gc();'/>
-    &nbsp; <span id='periodic_state_id'></span></p>
-  
-  <nav class='nav_cl' id='nav_id'>
-
-    <!-- the exit menu -->
-    <div id='exit_drop_id'>
-    <div id='exit_container_id'>
-      <button id='exit_launcher_id' class='menubutton_cl'>exit...</button>
-    </div>
-    <ul id='exit_menu_id'>
-      <li id='exit_save_id'><a href='javascript:void(0);'>Save &amp; exit</a></li>
-      <li id='exit_quit_id'><a href='javascript:void(0);'>Quit <small>(without saving)</small></a></li>
-    </ul>
+  <nav class='momnav_cl'>
+    
+    <div class="easyui-panel" style="padding:9px; gap:3px">
+      <a href="javascript:(void)0" class="easyui-menubutton" data-options="menu:'#mom_menu_system',iconCls:'mom_icon_system_cl'">System</a>
+      <a href="javascript:(void)0" class="easyui-menubutton" data-options="menu:'#mom_menu_edit',iconCls:'icon-edit'">Edit</a>
     </div>
     
-    <!-- the named menu -->
-    <div id='named_drop_id'>
-    <div id='named_container_id'>
-      <button id='named_launcher_id' class='menubutton_cl'>named...</button>
+    <div id="mom_menu_system" style="width:150px;">
+      <div data-options="iconCls:'icon-save'">save &amp; Exit</div>
+      <div data-options="iconCls:'icon-no'">Quit</div>
     </div>
-    <ul id='named_menu_id'>
-      <li id='named_forget_id'><a href='javascript:void(0);'>forget named</a></li>
-      <li id='named_create_id'><a href='javascript:void(0);'>create named</a></li>
-    </ul>
+    
+    <div id="mom_menu_edit" style="width:150px;">
+      <div data-options="iconCls:'icon-undo'">Undo</div>
+      <div data-options="iconCls:'icon-redo'">Redo</div>
+      <div class="menu-sep"></div>
+      <div>Cut</div>
+      <div>Copy</div>
+      <div>Paste</div>
+      <div class="menu-sep"></div>
+      <div data-options="iconCls:'icon-remove'">Delete</div>
+      <div>Select All</div>
     </div>
-
-    <!-- the routine menu -->
-    <div id='routine_drop_id'>
-    <div id='routine_container_id'>
-      <button id='routine_launcher_id' class='menubutton_cl'>routine...</button>
-    </div>
-    <ul id='routine_menu_id'>
-      <li id='routine_compile_id'><a href='javascript:void(0);'>compile <small>(all routines of <tt>first_module</tt>)</small></a></li>
-      <li id='routine_add_id'><a href='javascript:void(0);'>add routine <small>(to <tt>first_module</tt>)</small></a></li>
-      <li id='routine_remove_id'><a href='javascript:void(0);'>remove routine <small>(from <tt>first_module</tt>)</small></a></li>
-      <li id='routine_edit_id'><a href='javascript:void(0);'>edit routine</a></li>
-    </ul>
-    </div>
-
   </nav>
-
-<div id='workzone_id'>
-</div>
 </body>
 </html>
