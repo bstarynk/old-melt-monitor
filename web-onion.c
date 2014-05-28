@@ -414,6 +414,8 @@ mom_webx_reply (momitem_t *webitm, const char *mime, int httpcode)
 {
   /// onion has this in response.c, but does not export it...
   extern const char *onion_response_code_description (int code);
+  if (!webitm || webitm->i_typnum != momty_item)
+    return;
 
   if (!mime)
     mime = "text/plain; charset=utf-8";
@@ -478,6 +480,91 @@ mom_webx_reply (momitem_t *webitm, const char *mime, int httpcode)
 end:
   return;
 }
+
+
+
+momval_t
+mom_webx_jsob_post (momitem_t *webitm)
+{
+  if (!webitm || webitm->i_typnum != momty_item)
+    return MOM_NULLV;
+  if (webitm->i_paylkind != mompayk_webexchange)
+    {
+      MOM_WARNING (MOMOUT_LITERAL
+		   ("bad webxjosbpost; non webexchange webitem:"),
+		   MOMOUT_ITEM ((const momitem_t *) webitm),
+		   MOMOUT_LITERAL (" ...from "), MOMOUT_BACKTRACE (5));
+      return MOM_NULLV;
+    }
+  struct mom_webexchange_data_st *wxd = webitm->i_payload;
+  assert (wxd && wxd->webx_magic == MOM_WEBX_MAGIC);
+  return wxd->webx_jobpost;
+}
+
+
+momval_t
+mom_webx_post_arg (momitem_t *webitm, const char *argname)
+{
+  if (!webitm || webitm->i_typnum != momty_item)
+    return MOM_NULLV;
+  if (!argname || !argname[0])
+    return MOM_NULLV;
+  if (webitm->i_paylkind != mompayk_webexchange)
+    {
+      MOM_WARNING (MOMOUT_LITERAL
+		   ("bad webxpostarg; non webexchange webitem:"),
+		   MOMOUT_ITEM ((const momitem_t *) webitm),
+		   MOMOUT_LITERAL (" ...from "), MOMOUT_BACKTRACE (5));
+      return MOM_NULLV;
+    }
+  struct mom_webexchange_data_st *wxd = webitm->i_payload;
+  assert (wxd && wxd->webx_magic == MOM_WEBX_MAGIC);
+  return mom_jsonob_getstr (wxd->webx_jobpost, argname);
+}
+
+
+
+momval_t
+mom_webx_jsob_query (momitem_t *webitm)
+{
+  if (!webitm || webitm->i_typnum != momty_item)
+    return MOM_NULLV;
+  if (webitm->i_paylkind != mompayk_webexchange)
+    {
+      MOM_WARNING (MOMOUT_LITERAL
+		   ("bad webxjsobquery; non webexchange webitem:"),
+		   MOMOUT_ITEM ((const momitem_t *) webitm),
+		   MOMOUT_LITERAL (" ...from "), MOMOUT_BACKTRACE (5));
+      return MOM_NULLV;
+    }
+  struct mom_webexchange_data_st *wxd = webitm->i_payload;
+  assert (wxd && wxd->webx_magic == MOM_WEBX_MAGIC);
+  return wxd->webx_jobquery;
+}
+
+
+
+momval_t
+mom_webx_query_arg (momitem_t *webitm, const char *argname)
+{
+  if (!webitm || webitm->i_typnum != momty_item)
+    return MOM_NULLV;
+  if (!argname || !argname[0])
+    return MOM_NULLV;
+  if (webitm->i_paylkind != mompayk_webexchange)
+    {
+      MOM_WARNING (MOMOUT_LITERAL
+		   ("bad webxqueryarg; non webexchange webitem:"),
+		   MOMOUT_ITEM ((const momitem_t *) webitm),
+		   MOMOUT_LITERAL (" ...from "), MOMOUT_BACKTRACE (5));
+      return MOM_NULLV;
+    }
+  struct mom_webexchange_data_st *wxd = webitm->i_payload;
+  assert (wxd && wxd->webx_magic == MOM_WEBX_MAGIC);
+  return mom_jsonob_getstr (wxd->webx_jobquery, argname);
+}
+
+
 
 // called at most once from main
 void

@@ -391,6 +391,7 @@ mom_inform_at (const char *sfil, int slin, ...)
 static const char *wanted_dir_mom;
 static const char *write_pid_file_mom;
 static const char *dump_cold_dir_mom;
+static const char *dump_exit_dir_mom;
 static const char *new_predefined_mom;
 static const char *new_comment_mom;
 
@@ -750,6 +751,9 @@ parse_program_arguments_and_load_modules_mom (int *pargc, char **argv)
 	case xtraopt_chdir:
 	  wanted_dir_mom = optarg;
 	  break;
+	case xtraopt_dumpstate:
+	  dump_exit_dir_mom = optarg;
+	  break;
 	case xtraopt_randomidstr:
 	  {
 	    errno = 0;
@@ -948,6 +952,13 @@ main (int argc, char **argv)
     mom_start_web (mom_web_host);
   if (mom_nb_workers)
     mom_run_workers ();
+  if (dump_exit_dir_mom)
+    {
+      MOM_INFORMPRINTF ("trying to dump exit directory %s",
+			dump_exit_dir_mom);
+      mom_full_dump ("exit dump", dump_exit_dir_mom, NULL);
+      MOM_INFORMPRINTF ("done exit dump to directory %s", dump_exit_dir_mom);
+    }
   ///
   return 0;
 }

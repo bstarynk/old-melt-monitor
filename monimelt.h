@@ -1113,10 +1113,10 @@ momval_t mom_item_queue_pop_front (momitem_t *itm);
 #define MOM_ROUTINE_NAME_FMT  MOM_ROUTINE_NAME_PREFIX "%s"
 // the routine item FOO has descriptor momrout_FOO
 // the routine's code returns a positive state, or 
-enum routres_en
+enum mom_routres_en
 {
-  routres_steady = 0,		/* don't change the current state or tasklet */
-  routres_pop = -1,		/* pop the current frame */
+  momroutres_steady = 0,	/* don't change the current state or tasklet */
+  momroutres_pop = -1,		/* pop the current frame */
 };
 typedef int mom_routine_sig_t (int state, momitem_t *tasklet,
 			       const momnode_t *closure, momval_t *locvals,
@@ -1403,8 +1403,19 @@ void mom_webx_out_at (const char *sfil, int lin, momitem_t *webitm, ...)
 #define MOM_WEBX_OUT_AT_BIS(Fil,Lin,Witm,...) mom_webx_out_at(Fil,Lin,Witm,##__VA_ARGS__,NULL)
 #define MOM_WEBX_OUT_AT(Fil,Lin,Witm,...) MOM_WEBX_OUT_AT_BIS(Fil,Lin,Witm,##__VA_ARGS__)
 #define MOM_WEBX_OUT(Witm,...) MOM_WEBX_OUT_AT(__FILE__,__LINE__,(Witm),##__VA_ARGS__)
+
 /// caller should have locked webitm
 void mom_webx_reply (momitem_t *webitm, const char *mime, int httpcode);
+// gives the JSON object of POST arguments
+momval_t mom_webx_jsob_post (momitem_t *webitm);
+// give the value of a given POST argument
+momval_t mom_webx_post_arg (momitem_t *webitm, const char *argname);
+// gives the JSON object of query arguments
+momval_t mom_webx_jsob_query (momitem_t *webitm);
+// give the value of a given query argument
+momval_t mom_webx_query_arg (momitem_t *webitm, const char *argname);
+
+
 
 #define MOM_WEB_DIRECTORY "webdir"
 #define MOM_WEB_ROOT_PAGE "mom-root-page.html"
@@ -1647,6 +1658,17 @@ extern struct mom_spacedescr_st
   // finalize the space for loading, only done if initialized
   void (*space_fini_load_fun) (struct mom_loader_st * ld, unsigned spacix);
 } *mom_spacedescr_array[momspa__last + 1];
+
+static inline void
+mom_item_set_space (momitem_t *itm, unsigned space)
+{
+  if (itm && itm->i_typnum == momty_item)
+    {
+      assert (itm->i_magic == MOM_ITEM_MAGIC);
+      if (space <= momspa__last)
+	itm->i_space = space;
+    }
+}
 
 ////////////////////////////////////////////////////////////////
 /////////// DIAGNOSTICS

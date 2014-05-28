@@ -279,7 +279,7 @@ end:
 		 MOMOUT_ITEM ((const momitem_t *) tkitm));
       int newstate =
 	routcod (state, tkitm, curclo, locvals, locnums, locdbls);
-      if (newstate == routres_pop)
+      if (newstate == momroutres_pop)
 	popframe = true;
       else
 	(itd->dtk_frames + fratop)->fr_state = newstate;
