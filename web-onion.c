@@ -101,7 +101,7 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
     onion_nb_web_requests_mom++;
     webnum = onion_nb_web_requests_mom;
     pthread_mutex_unlock (&onion_mtx_mom);
-    snprintf (thrname, sizeof (thrname), "mom-web%05x", webnum);
+    snprintf (thrname, sizeof (thrname), "mom-web%05d", webnum);
     pthread_setname_np (pthread_self (), thrname);
   }
   const char *fullpath = onion_request_get_fullpath (req);
@@ -126,7 +126,7 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 		  MOM_WEB_ROOT_PAGE);
 	MOM_DEBUGPRINTF (web, "MOM web root page: %s", bufpath);
 	if (access (bufpath, R_OK))
-	  MOM_FATAL ("cannot open web root page %s", bufpath);
+	  MOM_FATAPRINTF ("cannot open web root page %s", bufpath);
 	return onion_shortcut_response_file (bufpath, req, resp);
       }
     if (fullpath && fullpath[0] == '/' && isalpha (fullpath[1])
@@ -306,7 +306,7 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 	     MOMPFR_END ());
 	  mom_add_tasklet_to_agenda_front (wtskitm);
 	  MOM_DEBUG (web, "webrequest #", MOMOUT_DEC_INT (webnum),
-		     MOMOUT_LITERAL ("added tasklet wtskitm:"),
+		     MOMOUT_LITERAL ("; added tasklet wtskitm:"),
 		     MOMOUT_ITEM ((const momitem_t *) wtskitm));
 	  double minidelay = 0.002;
 	  double curtim = 0.0;
