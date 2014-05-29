@@ -69,10 +69,10 @@ mom_paylwebx_finalize (momitem_t *witm, void *wdata)
     // we need to free, not GC_free, the webx_obuf, because
     // open_memstream wants it like that...
     free (wxd->webx_obuf), wxd->webx_obuf = NULL;
-  if (wxd->webx_requ)
-    onion_request_free (wxd->webx_requ), wxd->webx_requ = NULL;
-  if (wxd->webx_resp)
-    onion_response_free (wxd->webx_resp), wxd->webx_resp = NULL;
+  /// we don't call onion_request_free or onion_response_free since the
+  /// web thread would free them.
+  wxd->webx_requ = NULL;
+  wxd->webx_resp = NULL;
   pthread_cond_destroy (&wxd->webx_cond);
 }
 
@@ -81,7 +81,7 @@ mom_paylwebx_finalize (momitem_t *witm, void *wdata)
 #define WEB_ANSWER_DELAY_MOM ((MOM_IS_DEBUGGING(web))?16.0:4.0)
 static onion_connection_status
 handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
-			 onion_request * req, onion_response * resp)
+			 onion_request * requ, onion_response * resp)
 {
   double webtim = mom_clock_time (CLOCK_REALTIME);
   double endtim = webtim + WEB_ANSWER_DELAY_MOM;
@@ -104,9 +104,9 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
     snprintf (thrname, sizeof (thrname), "mom-web%05d", webnum);
     pthread_setname_np (pthread_self (), thrname);
   }
-  const char *fullpath = onion_request_get_fullpath (req);
-  const char *path = onion_request_get_path (req);
-  unsigned flags = onion_request_get_flags (req);
+  const char *fullpath = onion_request_get_fullpath (requ);
+  const char *path = onion_request_get_path (requ);
+  unsigned flags = onion_request_get_flags (requ);
   MOM_DEBUGPRINTF (web,
 		   "process_request tid %ld webnum#%d=%#x webtim=%.3f endtim=%.3f fullpath=%s, path %s, flags %#x",
 		   (long) mom_gettid (), webnum, webnum, webtim, endtim,
@@ -127,7 +127,7 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 	MOM_DEBUGPRINTF (web, "MOM web root page: %s", bufpath);
 	if (access (bufpath, R_OK))
 	  MOM_FATAPRINTF ("cannot open web root page %s", bufpath);
-	return onion_shortcut_response_file (bufpath, req, resp);
+	return onion_shortcut_response_file (bufpath, requ, resp);
       }
     if (fullpath && fullpath[0] == '/' && isalpha (fullpath[1])
 	&& !strstr (fullpath, "..")
@@ -143,7 +143,7 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 	  {
 	    MOM_DEBUGPRINTF (web, "shortcutting readable file bufpath=%s",
 			     bufpath);
-	    return onion_shortcut_response_file (bufpath, req, resp);
+	    return onion_shortcut_response_file (bufpath, requ, resp);
 	  }
       }
     MOM_DEBUGPRINTF (web,
@@ -186,7 +186,7 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 	  snprintf (lenbuf, sizeof (lenbuf), "%d", (int) strlen (buf));
 	  return onion_shortcut_response_extra_headers
 	    (buf,
-	     HTTP_METHOD_NOT_ALLOWED, req, resp,
+	     HTTP_METHOD_NOT_ALLOWED, requ, resp,
 	     "Content-Length", lenbuf,
 	     "Content-Type", "text/html; charset=utf-8", NULL);
 	}
@@ -236,12 +236,12 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 	  wxd->webx_magic = MOM_WEBX_MAGIC;
 	  wxd->webx_num = webnum;
 	  wxd->webx_time = webtim;
-	  wxd->webx_requ = req;
+	  wxd->webx_requ = requ;
 	  wxd->webx_resp = resp;
 	  pthread_cond_init (&wxd->webx_cond, NULL);
 	  // set the query arguments
 	  {
-	    const onion_dict *odicquery = onion_request_get_query_dict (req);
+	    const onion_dict *odicquery = onion_request_get_query_dict (requ);
 	    int cntdicquery = onion_dict_count (odicquery);
 	    if (cntdicquery > 0)
 	      {
@@ -264,7 +264,7 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 	  /// set the post arguments
 	  if (methoditm == (momitem_t *) mom_named__POST)
 	    {
-	      const onion_dict *odicpost = onion_request_get_post_dict (req);
+	      const onion_dict *odicpost = onion_request_get_post_dict (requ);
 	      int cntdicpost = onion_dict_count (odicpost);
 	      if (cntdicpost > 0)
 		{
@@ -325,6 +325,33 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 		  endtim = curtim - 0.001;
 		  if (wxd->webx_resp)
 		    {
+		      bool istext = wxd->webx_mime && wxd->webx_mime[0]
+			&& strncmp (wxd->webx_mime, "text/", 5);
+		      MOM_DEBUG (web, "replying to webrequest #",
+				 MOMOUT_DEC_INT (webnum),
+				 MOMOUT_LITERAL (" webxitm:"),
+				 MOMOUT_ITEM ((const momitem_t *) webxitm),
+				 MOMOUT_LITERAL (" fullpath:"),
+				 MOMOUT_LITERALV ((const char *) fullpath),
+				 MOMOUT_LITERAL (" method:"),
+				 MOMOUT_LITERALV ((const char *) method),
+				 MOMOUT_LITERAL (" httpcode:"),
+				 MOMOUT_LITERALV
+				 (onion_response_code_description
+				  (wxd->webx_httpcode)),
+				 MOMOUT_LITERAL (" mime:"),
+				 MOMOUT_LITERALV ((const char
+						   *) (wxd->webx_mime)),
+				 MOMOUT_LITERAL (" size:"),
+				 MOMOUT_DEC_INT ((int) wxd->webx_osize),
+				 MOMOUT_LITERALV ((const char *) (istext ?
+								  " text:" :
+								  " binary")),
+				 MOMOUT_LITERALV ((const char *) (istext
+								  ?
+								  (wxd->webx_obuf)
+								  : "!")),
+				 MOMOUT_NEWLINE ());
 		      onion_response_set_code (wxd->webx_resp,
 					       wxd->webx_httpcode);
 		      if (wxd->webx_osize > 0)
@@ -342,6 +369,7 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 			}
 		      onion_response_flush (wxd->webx_resp);
 		      wxd->webx_resp = NULL;
+		      wxd->webx_requ = NULL;
 		      replied = true;
 		      mom_item_clear_payload (webxitm);
 		    }
@@ -353,13 +381,20 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 	    }
 	  while (curtim < endtim && !replied);
 	  if (!replied)
-	    {
+	    {			//// timeout
 	      mom_lock_item (webxitm);
-	      MOM_DEBUGPRINTF (web, "timedout webnum#%d", webnum);
-	      onion_response_free (wxd->webx_resp), wxd->webx_resp = resp =
-		NULL;
-	      onion_response *timoutresp =
-		onion_response_new (wxd->webx_requ);
+	      MOM_DEBUG (web, "timedout webrequest #",
+			 MOMOUT_DEC_INT (webnum),
+			 MOMOUT_LITERAL (" webxitm:"),
+			 MOMOUT_ITEM ((const momitem_t *) webxitm),
+			 MOMOUT_LITERAL (" fullpath:"),
+			 MOMOUT_LITERALV ((const char *) fullpath),
+			 MOMOUT_LITERAL (" method:"),
+			 MOMOUT_LITERALV ((const char *) method));
+	      onion_response_free (resp);
+	      wxd->webx_resp = resp = NULL;
+	      wxd->webx_requ = NULL;
+	      onion_response *timoutresp = onion_response_new (requ);
 	      onion_response_set_header (timoutresp, "Content-Type",
 					 "text/html; charset=utf-8");
 	      onion_response_printf (timoutresp,
@@ -373,15 +408,8 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 	      onion_response_flush (timoutresp);
 	      mom_item_clear_payload (webxitm);
 	      mom_unlock_item (webxitm);
+	      return OCS_PROCESSED;
 	    }
-	  MOM_DEBUG (web, "processed webrequest #", MOMOUT_DEC_INT (webnum),
-		     MOMOUT_LITERAL (" webxitm:"),
-		     MOMOUT_ITEM ((const momitem_t *) webxitm),
-		     MOMOUT_LITERAL (" fullpath:"),
-		     MOMOUT_LITERALV ((const char *) fullpath),
-		     MOMOUT_LITERAL (" method:"),
-		     MOMOUT_LITERALV ((const char *) method));
-	  return OCS_PROCESSED;
 	}			/* end if wclosv is node */
     }
   MOM_DEBUGPRINTF (web, "not processed webreq#%d=%#x fullpath=%s method=%s",
