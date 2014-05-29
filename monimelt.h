@@ -1151,13 +1151,16 @@ struct momframe_st
 // the payload is a GC_MALLOC-ed struct  mom_tasklet_data_st 
 struct mom_taskletdata_st
 {
-  intptr_t *dtk_scalars;	/* space for scalar data, intptr_t or double-s */
+  intptr_t *dtk_ints;		/* space for intptr_t  */
+  double *dtk_doubles;		/* space for doubles */
   momval_t *dtk_values;		/* space for value data */
   const momnode_t **dtk_closures;	/* stack of closure nodes */
   struct momframe_st *dtk_frames;	/* stack of scalar frames */
   pthread_t dtk_thread;		/* the thread executing this, or else 0 */
-  uint32_t dtk_scalsize;	/* size of dtk_scalars */
-  uint32_t dtk_scaltop;		/* top of stack offset on dtk_scalars */
+  uint32_t dtk_intsize;		/* size of dtk_ints */
+  uint32_t dtk_inttop;		/* top of stack offset on dtk_ints */
+  uint32_t dtk_dblsize;		/* size of dtk_doubles */
+  uint32_t dtk_dbltop;		/* top of stack offset on dtk_doubles */
   uint32_t dtk_valsize;		/* size of dtk_values */
   uint32_t dtk_valtop;		/* top of stack offset on its_values */
   uint32_t dtk_frasize;		/* size of dtk_closures & dtk_frames */
@@ -1342,11 +1345,10 @@ unsigned mom_item_tasklet_depth (momitem_t *itm);
 int mom_item_tasklet_frame_state (momitem_t *itm, int frk);
 momval_t mom_item_tasklet_frame_closure (momitem_t *itm, int frk);
 unsigned mom_item_tasklet_frame_nb_values (momitem_t *itm, int frk);
-unsigned mom_item_tasklet_frame_nb_numbers (momitem_t *itm, int frk);
+unsigned mom_item_tasklet_frame_nb_ints (momitem_t *itm, int frk);
 unsigned mom_item_tasklet_frame_nb_doubles (momitem_t *itm, int frk);
 momval_t mom_item_tasklet_frame_nth_value (momitem_t *itm, int frk, int vtk);
-intptr_t mom_item_tasklet_frame_nth_numbers (momitem_t *itm, int frk,
-					     int nrk);
+intptr_t mom_item_tasklet_frame_nth_int (momitem_t *itm, int frk, int nrk);
 double mom_item_tasklet_frame_nth_double (momitem_t *itm, int frk, int drk);
 
 /*********** buffer items ****************/

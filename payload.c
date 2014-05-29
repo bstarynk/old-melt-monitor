@@ -265,20 +265,12 @@ mom_item_start_tasklet (momitem_t *itm)
     mom_item_clear_payload (itm);
   struct mom_taskletdata_st *itd =
     MOM_GC_ALLOC ("item tasklet", sizeof (struct mom_taskletdata_st));
-  const unsigned scalsize = 8;
-  const unsigned valsize = 8;
   const unsigned frasize = 6;
-  itd->dtk_scalars =
-    MOM_GC_SCALAR_ALLOC ("tasklet scalars", scalsize * sizeof (intptr_t));
-  itd->dtk_values =
-    MOM_GC_ALLOC ("tasklet values", valsize * sizeof (momval_t));
   itd->dtk_closures =
     MOM_GC_ALLOC ("tasklet closures", frasize * sizeof (momnode_t *));
   itd->dtk_frames =
     MOM_GC_SCALAR_ALLOC ("tasklet frames",
 			 frasize * sizeof (struct momframe_st));
-  itd->dtk_scalsize = scalsize;
-  itd->dtk_valsize = valsize;
   itd->dtk_frasize = frasize;
   itm->i_payload = itd;
   itm->i_paylkind = mompayk_tasklet;
@@ -294,30 +286,44 @@ mom_item_tasklet_reserve (momitem_t *itm, unsigned nbint, unsigned nbdbl,
   if (!itm->i_payload || itm->i_paylkind != mompayk_tasklet)
     return;
   struct mom_taskletdata_st *itd = itm->i_payload;
-  /// resize the scalars if needed
-  unsigned scalwant =
-    itd->dtk_scaltop +
-    ((nbint * sizeof (intptr_t) +
-      nbdbl * sizeof (double)) / sizeof (intptr_t));
-  if (MOM_UNLIKELY (scalwant > itd->dtk_scalsize
-		    || (itd->dtk_scalsize > TASKLET_THRESHOLD
-			&& 2 * scalwant < itd->dtk_scalsize)))
+  /// resize the integers if needed
+  unsigned intwant = itd->dtk_inttop + nbint;
+  if (MOM_UNLIKELY (intwant > itd->dtk_intsize
+		    || (itd->dtk_intsize > TASKLET_THRESHOLD
+			&& 2 * intwant < itd->dtk_intsize)))
     {
-      unsigned newscalsize =
-	((5 * itd->dtk_scaltop / 4 + 3 +
-	  ((nbint * sizeof (intptr_t) +
-	    nbdbl * sizeof (double)) / sizeof (intptr_t))) | 7) + 1;
-      if (newscalsize != itd->dtk_scalsize)
+      unsigned newintsize = ((5 * itd->dtk_inttop / 4 + 3 + nbint) | 7) + 1;
+      if (newintsize != itd->dtk_intsize)
 	{
-	  intptr_t *newscalars
-	    = MOM_GC_SCALAR_ALLOC ("reserved tasklet scalars",
-				   newscalsize * sizeof (intptr_t));
-	  if (itd->dtk_scaltop > 0)
-	    memcpy (newscalars, itd->dtk_scalars,
-		    itd->dtk_scaltop * sizeof (intptr_t));
-	  MOM_GC_FREE (itd->dtk_scalars);
-	  itd->dtk_scalars = newscalars;
-	  itd->dtk_scalsize = newscalsize;
+	  intptr_t *newints
+	    = MOM_GC_SCALAR_ALLOC ("reserved tasklet integers",
+				   newintsize * sizeof (intptr_t));
+	  if (itd->dtk_inttop > 0)
+	    memcpy (newints, itd->dtk_ints,
+		    itd->dtk_inttop * sizeof (intptr_t));
+	  MOM_GC_FREE (itd->dtk_ints);
+	  itd->dtk_ints = newints;
+	  itd->dtk_intsize = newintsize;
+	}
+    };
+  /// resize the doubles if needed
+  unsigned dblwant = itd->dtk_dbltop + nbdbl;
+  if (MOM_UNLIKELY (dblwant > itd->dtk_dblsize
+		    || (itd->dtk_dblsize > TASKLET_THRESHOLD
+			&& 2 * dblwant < itd->dtk_dblsize)))
+    {
+      unsigned newdblsize = ((5 * itd->dtk_dbltop / 4 + 3 + nbdbl) | 7) + 1;
+      if (newdblsize != itd->dtk_dblsize)
+	{
+	  double *newdbls = MOM_GC_SCALAR_ALLOC ("reserved tasklet doubles",
+						 newdblsize *
+						 sizeof (double));
+	  if (itd->dtk_dbltop > 0)
+	    memcpy (newdbls, itd->dtk_doubles,
+		    itd->dtk_dbltop * sizeof (double));
+	  MOM_GC_FREE (itd->dtk_doubles);
+	  itd->dtk_doubles = newdbls;
+	  itd->dtk_dblsize = newdblsize;
 	}
     };
   /// resize the values if needed
@@ -850,7 +856,7 @@ void
 mom_item_tasklet_push_frame (momitem_t *itm, momval_t clo,
 			     enum mom_pushframedirective_en firstdir, ...)
 {
-  unsigned nbval = 0, nbnum = 0, nbdbl = 0;
+  unsigned nbval = 0, nbint = 0, nbdbl = 0;
   int state = 0;
   va_list alist;
   assert (itm && itm->i_typnum == momty_item);
@@ -861,31 +867,37 @@ mom_item_tasklet_push_frame (momitem_t *itm, momval_t clo,
   struct mom_taskletdata_st *itd = itm->i_payload;
   va_start (alist, firstdir);
   if (!compute_pushed_data_size_mom (clo.pnode,
-				     &nbval, &nbnum, &nbdbl,
+				     &nbval, &nbint, &nbdbl,
 				     &state, firstdir, alist))
     return;
   va_end (alist);
-  /// grow the scalars if needed
-  if (MOM_UNLIKELY (itd->dtk_scaltop +
-		    (sizeof (intptr_t) * nbnum +
-		     sizeof (double) * nbdbl) / sizeof (intptr_t)
-		    >= itd->dtk_scalsize))
+  /// grow the integers if needed
+  if (MOM_UNLIKELY (nbint > 0 && itd->dtk_inttop + nbint >= itd->dtk_intsize))
     {
-      unsigned newscalsize =
-	((5 * itd->dtk_scaltop / 4 +
-	  (sizeof (intptr_t *) * nbnum +
-	   sizeof (double) * nbdbl) / sizeof (intptr_t) + 5) | 7) + 1;
-      intptr_t *newscalars = MOM_GC_SCALAR_ALLOC ("tasklet grown scalar zone",
-						  newscalsize *
-						  sizeof (intptr_t));
-      memcpy (newscalars, itd->dtk_scalars,
-	      itd->dtk_scaltop * sizeof (intptr_t));
-      MOM_GC_FREE (itd->dtk_scalars);
-      itd->dtk_scalars = newscalars;
-      itd->dtk_scalsize = newscalsize;
+      unsigned newintsize = ((5 * itd->dtk_inttop / 4 + 3 + nbint) | 7) + 1;
+      intptr_t *newints = MOM_GC_SCALAR_ALLOC ("tasklet grown integers",
+					       newintsize *
+					       sizeof (intptr_t));
+      if (itd->dtk_inttop > 0)
+	memcpy (newints, itd->dtk_ints, itd->dtk_inttop * sizeof (intptr_t));
+      MOM_GC_FREE (itd->dtk_ints);
+      itd->dtk_ints = newints;
+      itd->dtk_intsize = newintsize;
+    };
+  /// grow the doubles if needed
+  if (MOM_UNLIKELY (nbdbl > 0 && itd->dtk_dbltop + nbint > itd->dtk_dblsize))
+    {
+      unsigned newdblsize = ((5 * itd->dtk_dbltop / 4 + 3 + nbdbl) | 7) + 1;
+      double *newdbls = MOM_GC_SCALAR_ALLOC ("tasklet grown doubles",
+					     newdblsize * sizeof (double));
+      if (itd->dtk_dbltop > 0)
+	memcpy (newdbls, itd->dtk_doubles, itd->dtk_dbltop * sizeof (double));
+      MOM_GC_FREE (itd->dtk_doubles);
+      itd->dtk_doubles = newdbls;
+      itd->dtk_dblsize = newdblsize;
     };
   /// grow the values if needed
-  if (MOM_UNLIKELY (itd->dtk_valtop + nbval >= itd->dtk_valsize))
+  if (MOM_UNLIKELY (itd->dtk_valtop + nbval > itd->dtk_valsize))
     {
       unsigned newvalsize = ((5 * itd->dtk_valtop / 4 + nbval + 6) | 7) + 1;
       momval_t *newvalues =
@@ -918,23 +930,33 @@ mom_item_tasklet_push_frame (momitem_t *itm, momval_t clo,
     }
   struct momframe_st *newframe = itd->dtk_frames + itd->dtk_fratop;
   newframe->fr_state = state;
-  unsigned froint = newframe->fr_intoff = itd->dtk_scaltop;
-  unsigned frodbl = newframe->fr_dbloff = itd->dtk_scaltop + nbnum;
+  unsigned froint = newframe->fr_intoff = itd->dtk_inttop;
+  unsigned frodbl = newframe->fr_dbloff = itd->dtk_dbltop;
   unsigned froval = newframe->fr_valoff = itd->dtk_valtop;
   unsigned fratop = itd->dtk_fratop;
-  memset (itd->dtk_scalars + itd->dtk_scaltop, 0,
-	  (nbnum * sizeof (intptr_t) + nbdbl * sizeof (double)));
-  memset (itd->dtk_values + itd->dtk_valtop, 0, nbval * sizeof (momval_t));
-  itd->dtk_scaltop +=
-    (nbnum * sizeof (intptr_t) + nbdbl * sizeof (double)) / sizeof (intptr_t);
-  itd->dtk_valtop += nbval;
+  if (nbint > 0)
+    {
+      memset (itd->dtk_ints + itd->dtk_inttop, 0, nbint * sizeof (intptr_t));
+      itd->dtk_inttop += nbint;
+    }
+  if (nbdbl > 0)
+    {
+      memset (itd->dtk_doubles + itd->dtk_dbltop, 0, nbdbl * sizeof (double));
+      itd->dtk_dbltop += nbdbl;
+    }
+  if (nbval > 0)
+    {
+      memset (itd->dtk_values + itd->dtk_valtop, 0,
+	      nbval * sizeof (momval_t));
+      itd->dtk_valtop += nbval;
+    }
   itd->dtk_closures[fratop] = clo.pnode;
   itd->dtk_fratop = fratop + 1;
   va_start (alist, firstdir);
-  fill_frame_data_mom ((intptr_t *) (itd->dtk_scalars + froint),
-		       (double *) (itd->dtk_scalars + frodbl),
-		       (momval_t *) (itd->dtk_values + froval), firstdir,
-		       alist);
+  fill_frame_data_mom ((nbint > 0) ? (itd->dtk_ints + froint) : NULL,
+		       (nbdbl > 0) ? (itd->dtk_doubles + frodbl) : NULL,
+		       (nbval > 0) ? (itd->dtk_values + froval) : NULL,
+		       firstdir, alist);
   va_end (alist);
 }
 
@@ -944,7 +966,7 @@ mom_item_tasklet_replace_top_frame (momitem_t *itm, momval_t clo,
 				    enum mom_pushframedirective_en firstdir,
 				    ...)
 {
-  unsigned nbval = 0, nbnum = 0, nbdbl = 0;
+  unsigned nbval = 0, nbint = 0, nbdbl = 0;
   int state = 0;
   va_list alist;
   assert (itm && itm->i_typnum == momty_item);
@@ -957,76 +979,98 @@ mom_item_tasklet_replace_top_frame (momitem_t *itm, momval_t clo,
     return;
   va_start (alist, firstdir);
   if (!compute_pushed_data_size_mom (clo.pnode,
-				     &nbval, &nbnum, &nbdbl,
+				     &nbval, &nbint, &nbdbl,
 				     &state, firstdir, alist))
     return;
   va_end (alist);
   // pop the old top frame
   struct momframe_st *prevframe = itd->dtk_frames + itd->dtk_fratop - 1;
-  unsigned ofpscal = prevframe->fr_intoff;
+  unsigned ofpint = prevframe->fr_intoff;
+  unsigned ofpdbl = prevframe->fr_dbloff;
   unsigned ofpvalu = prevframe->fr_valoff;
-  if (itd->dtk_scaltop > ofpscal)
-    memset (itd->dtk_scalars + ofpscal, 0,
-	    (itd->dtk_scaltop - ofpscal) * sizeof (intptr_t));
+  if (itd->dtk_inttop > ofpint)
+    memset (itd->dtk_ints + ofpint, 0,
+	    (itd->dtk_inttop - ofpint) * sizeof (intptr_t));
+  if (itd->dtk_dbltop > ofpdbl)
+    memset (itd->dtk_doubles + ofpdbl, 0,
+	    (itd->dtk_dbltop - ofpdbl) * sizeof (double));
   if (itd->dtk_valtop > ofpvalu)
     memset (itd->dtk_values + ofpvalu, 0,
 	    (itd->dtk_valtop - ofpvalu) * sizeof (momval_t));
-  itd->dtk_scaltop = ofpscal;
+  itd->dtk_inttop = ofpint;
+  itd->dtk_dbltop = ofpdbl;
   itd->dtk_valtop = ofpvalu;
   memset (prevframe, 0, sizeof (struct momframe_st));
   itd->dtk_closures[itd->dtk_fratop - 1] = NULL;
   itd->dtk_fratop--;
   unsigned fratop = itd->dtk_fratop;
-  /// grow the scalars if needed
-  if (MOM_UNLIKELY (itd->dtk_scaltop +
-		    (sizeof (intptr_t) * nbnum +
-		     sizeof (double) * nbdbl) / sizeof (intptr_t)
-		    >= itd->dtk_scalsize))
+  /// grow the ints if needed
+  if (MOM_UNLIKELY (nbint > 0 && itd->dtk_inttop + nbint >= itd->dtk_intsize))
     {
-      unsigned newscalsize =
-	((5 * itd->dtk_scaltop / 4 +
-	  (sizeof (intptr_t *) * nbnum +
-	   sizeof (double) * nbdbl) / sizeof (intptr_t) + 5) | 7) + 1;
-      intptr_t *newscalars = MOM_GC_SCALAR_ALLOC ("tasklet grown scalar zone",
-						  newscalsize *
-						  sizeof (intptr_t));
-      memcpy (newscalars, itd->dtk_scalars,
-	      itd->dtk_scaltop * sizeof (intptr_t));
-      MOM_GC_FREE (itd->dtk_scalars);
-      itd->dtk_scalars = newscalars;
-      itd->dtk_scalsize = newscalsize;
+      unsigned newintsize = ((5 * itd->dtk_inttop / 4 + nbint + 3) | 7) + 1;
+      intptr_t *newints = MOM_GC_SCALAR_ALLOC ("tasklet grown integers",
+					       newintsize *
+					       sizeof (intptr_t));
+      if (itd->dtk_inttop > 0)
+	memcpy (newints, itd->dtk_ints, itd->dtk_inttop * sizeof (intptr_t));
+      MOM_GC_FREE (itd->dtk_ints);
+      itd->dtk_ints = newints;
+      itd->dtk_intsize = newintsize;
+    };
+  /// grow the doubles if needed
+  if (MOM_UNLIKELY (nbdbl > 0 && itd->dtk_dbltop + nbdbl >= itd->dtk_dblsize))
+    {
+      unsigned newdblsize = ((5 * itd->dtk_dbltop / 4 + nbdbl + 3) | 7) + 1;
+      double *newdbls = MOM_GC_SCALAR_ALLOC ("tasklet grown doubles",
+					     newdblsize * sizeof (double));
+      if (itd->dtk_dbltop > 0)
+	memcpy (newdbls, itd->dtk_doubles, itd->dtk_dbltop * sizeof (double));
+      MOM_GC_FREE (itd->dtk_doubles);
+      itd->dtk_doubles = newdbls;
+      itd->dtk_dblsize = newdblsize;
     };
   /// grow the values if needed
-  if (MOM_UNLIKELY (itd->dtk_valtop + nbval >= itd->dtk_valsize))
+  if (MOM_UNLIKELY (nbval > 0 && itd->dtk_valtop + nbval >= itd->dtk_valsize))
     {
       unsigned newvalsize = ((5 * itd->dtk_valtop / 4 + nbval + 6) | 7) + 1;
       momval_t *newvalues =
 	MOM_GC_ALLOC ("tasklet grown values", newvalsize * sizeof (momval_t));
-      memcpy (newvalues, itd->dtk_values,
-	      itd->dtk_valtop * sizeof (momval_t));
+      if (itd->dtk_valtop)
+	memcpy (newvalues, itd->dtk_values,
+		itd->dtk_valtop * sizeof (momval_t));
       MOM_GC_FREE (itd->dtk_values);
       itd->dtk_values = newvalues;
       itd->dtk_valsize = newvalsize;
     }
   /// dont need to grow frames or closures, they are sure to fit
   struct momframe_st *newframe = itd->dtk_frames + itd->dtk_fratop;
-  unsigned froint = newframe->fr_intoff = itd->dtk_scaltop;
-  unsigned frodbl = newframe->fr_dbloff = itd->dtk_scaltop + nbnum;
+  unsigned froint = newframe->fr_intoff = itd->dtk_inttop;
+  unsigned frodbl = newframe->fr_dbloff = itd->dtk_dbltop;
   unsigned froval = newframe->fr_valoff = itd->dtk_valtop;
   fratop = itd->dtk_fratop;
-  memset (itd->dtk_scalars + itd->dtk_scaltop, 0,
-	  (nbnum * sizeof (intptr_t) + nbdbl * sizeof (double)));
-  memset (itd->dtk_values + itd->dtk_valtop, 0, nbval * sizeof (momval_t));
-  itd->dtk_scaltop +=
-    (nbnum * sizeof (intptr_t) + nbdbl * sizeof (double)) / sizeof (intptr_t);
-  itd->dtk_valtop += nbval;
+  if (nbint > 0)
+    {
+      memset (itd->dtk_ints + itd->dtk_inttop, 0, nbint * sizeof (intptr_t));
+      itd->dtk_inttop += nbint;
+    }
+  if (nbdbl > 0)
+    {
+      memset (itd->dtk_doubles + itd->dtk_dbltop, 0, nbdbl * sizeof (double));
+      itd->dtk_dbltop += nbdbl;
+    }
+  if (nbval > 0)
+    {
+      memset (itd->dtk_values + itd->dtk_valtop, 0,
+	      nbval * sizeof (momval_t));
+      itd->dtk_valtop += nbval;
+    }
   itd->dtk_closures[fratop] = clo.pnode;
   itd->dtk_fratop = fratop + 1;
   va_start (alist, firstdir);
-  fill_frame_data_mom ((intptr_t *) (itd->dtk_scalars + froint),
-		       (double *) (itd->dtk_scalars + frodbl),
-		       (momval_t *) (itd->dtk_values + froval), firstdir,
-		       alist);
+  fill_frame_data_mom ((nbint > 0) ? (itd->dtk_ints + froint) : NULL,
+		       (nbdbl > 0) ? (itd->dtk_doubles + frodbl) : NULL,
+		       (nbval > 0) ? (itd->dtk_values + froval) : NULL,
+		       firstdir, alist);
   va_end (alist);
 }
 
@@ -1043,31 +1087,50 @@ mom_item_tasklet_pop_frame (momitem_t *itm)
   if (fratop == 0)
     return;
   struct momframe_st *prevframe = itd->dtk_frames + fratop - 1;
-  unsigned ofpscal = prevframe->fr_intoff;
+  unsigned ofpint = prevframe->fr_intoff;
+  unsigned ofpdbl = prevframe->fr_dbloff;
   unsigned ofpvalu = prevframe->fr_valoff;
-  if (itd->dtk_scaltop > ofpscal)
-    memset (itd->dtk_scalars + ofpscal, 0,
-	    (itd->dtk_scaltop - ofpscal) * sizeof (intptr_t));
+  if (itd->dtk_inttop > ofpint)
+    memset (itd->dtk_ints + ofpint, 0,
+	    (itd->dtk_inttop - ofpint) * sizeof (intptr_t));
+  if (itd->dtk_dbltop > ofpdbl)
+    memset (itd->dtk_doubles + ofpdbl, 0,
+	    (itd->dtk_dbltop - ofpdbl) * sizeof (double));
   if (itd->dtk_valtop > ofpvalu)
     memset (itd->dtk_values + ofpvalu, 0,
 	    (itd->dtk_valtop - ofpvalu) * sizeof (momval_t));
-  itd->dtk_scaltop = ofpscal;
+  itd->dtk_inttop = ofpint;
+  itd->dtk_dbltop = ofpdbl;
   itd->dtk_valtop = ofpvalu;
   memset (prevframe, 0, sizeof (struct momframe_st));
   itd->dtk_closures[fratop - 1] = NULL;
   itd->dtk_fratop = fratop - 1;
-  /// shrink perhaps the scalars
-  if (MOM_UNLIKELY (itd->dtk_scalsize > TASKLET_THRESHOLD
-		    && 2 * ofpscal < itd->dtk_scalsize))
+  /// shrink perhaps the integers
+  if (MOM_UNLIKELY (itd->dtk_intsize > TASKLET_THRESHOLD
+		    && 2 * ofpint < itd->dtk_intsize))
     {
-      unsigned newscalsize = ((5 * ofpscal / 4 + 3) | 7) + 1;
-      intptr_t *newscalars =
-	MOM_GC_SCALAR_ALLOC ("tasklet shrink scalar zone",
-			     newscalsize * sizeof (intptr_t));
-      memcpy (newscalars, itd->dtk_scalars, ofpscal * sizeof (intptr_t));
-      MOM_GC_FREE (itd->dtk_scalars);
-      itd->dtk_scalars = newscalars;
-      itd->dtk_scalsize = newscalsize;
+      unsigned newintsize = ((5 * ofpint / 4 + 3) | 7) + 1;
+      intptr_t *newints = MOM_GC_SCALAR_ALLOC ("tasklet shrink integers",
+					       newintsize *
+					       sizeof (intptr_t));
+      if (ofpint > 0)
+	memcpy (newints, itd->dtk_ints, ofpint * sizeof (intptr_t));
+      MOM_GC_FREE (itd->dtk_ints);
+      itd->dtk_ints = newints;
+      itd->dtk_intsize = newintsize;
+    }
+  /// shrink perhaps the doubles
+  if (MOM_UNLIKELY (itd->dtk_dblsize > TASKLET_THRESHOLD
+		    && 2 * ofpdbl < itd->dtk_dblsize))
+    {
+      unsigned newdblsize = ((5 * ofpdbl / 4 + 3) | 7) + 1;
+      double *newdbls = MOM_GC_SCALAR_ALLOC ("tasklet shrink doubles",
+					     newdblsize * sizeof (double));
+      if (ofpdbl > 0)
+	memcpy (newdbls, itd->dtk_doubles, ofpint * sizeof (double));
+      MOM_GC_FREE (itd->dtk_doubles);
+      itd->dtk_doubles = newdbls;
+      itd->dtk_dblsize = newdblsize;
     }
   /// shrink perhaps the values
   if (MOM_UNLIKELY (itd->dtk_valsize > TASKLET_THRESHOLD
@@ -1203,49 +1266,9 @@ mom_item_tasklet_frame_nth_value (momitem_t *itm, int frk, int vrk)
 }
 
 unsigned
-mom_item_tasklet_frame_nb_numbers (momitem_t *itm, int frk)
+mom_item_tasklet_frame_nb_ints (momitem_t *itm, int frk)
 {
-  unsigned nbnum = 0;
-  assert (itm && itm->i_typnum == momty_item);
-  if (!itm->i_payload || itm->i_paylkind != mompayk_tasklet)
-    return 0;
-  struct mom_taskletdata_st *itd = itm->i_payload;
-  unsigned fratop = itd->dtk_fratop;
-  if (frk < 0)
-    frk += fratop;
-  if (frk < 0 || frk >= (int) fratop)
-    return 0;
-  struct momframe_st *curfram = itd->dtk_frames + frk;
-  nbnum = curfram->fr_dbloff - curfram->fr_intoff;
-  return nbnum;
-}
-
-intptr_t
-mom_item_tasklet_frame_nth_number (momitem_t *itm, int frk, int nrk)
-{
-  unsigned nbnum = 0;
-  assert (itm && itm->i_typnum == momty_item);
-  if (!itm->i_payload || itm->i_paylkind != mompayk_tasklet)
-    return 0;
-  struct mom_taskletdata_st *itd = itm->i_payload;
-  unsigned fratop = itd->dtk_fratop;
-  if (frk < 0)
-    frk += fratop;
-  if (frk < 0 || frk >= (int) fratop)
-    return 0;
-  struct momframe_st *curfram = itd->dtk_frames + frk;
-  nbnum = curfram->fr_dbloff - curfram->fr_intoff;
-  if (nrk < 0)
-    nrk += nbnum;
-  if (nrk >= 0 && nrk < (int) nbnum)
-    return itd->dtk_scalars[curfram->fr_intoff + nrk];
-  return 0;
-}
-
-
-unsigned
-mom_item_tasklet_frame_nb_doubles (momitem_t *itm, int frk)
-{
+  unsigned nbint = 0;
   assert (itm && itm->i_typnum == momty_item);
   if (!itm->i_payload || itm->i_paylkind != mompayk_tasklet)
     return 0;
@@ -1259,12 +1282,64 @@ mom_item_tasklet_frame_nb_doubles (momitem_t *itm, int frk)
   if (frk + 1 < (int) fratop)
     {
       struct momframe_st *nxtfram = itd->dtk_frames + frk + 1;
-      return ((nxtfram->fr_intoff -
-	       curfram->fr_dbloff) * sizeof (intptr_t)) / sizeof (double);
+      nbint = nxtfram->fr_intoff - curfram->fr_intoff;
     }
   else
-    return ((itd->dtk_scaltop -
-	     curfram->fr_dbloff) * sizeof (intptr_t)) / sizeof (double);
+    nbint = itd->dtk_inttop - curfram->fr_intoff;
+  return nbint;
+}
+
+intptr_t
+mom_item_tasklet_frame_nth_int (momitem_t *itm, int frk, int nrk)
+{
+  unsigned nbint = 0;
+  assert (itm && itm->i_typnum == momty_item);
+  if (!itm->i_payload || itm->i_paylkind != mompayk_tasklet)
+    return 0;
+  struct mom_taskletdata_st *itd = itm->i_payload;
+  unsigned fratop = itd->dtk_fratop;
+  if (frk < 0)
+    frk += fratop;
+  if (frk < 0 || frk >= (int) fratop)
+    return 0;
+  struct momframe_st *curfram = itd->dtk_frames + frk;
+  if (frk + 1 < (int) fratop)
+    {
+      struct momframe_st *nxtfram = itd->dtk_frames + frk + 1;
+      nbint = nxtfram->fr_intoff - curfram->fr_intoff;
+    }
+  else
+    nbint = itd->dtk_inttop - curfram->fr_intoff;
+  if (nrk < 0)
+    nrk += nbint;
+  if (nrk >= 0 && nrk < (int) nbint)
+    return itd->dtk_ints[curfram->fr_intoff + nrk];
+  return 0;
+}
+
+
+unsigned
+mom_item_tasklet_frame_nb_doubles (momitem_t *itm, int frk)
+{
+  unsigned nbdbl = 0;
+  assert (itm && itm->i_typnum == momty_item);
+  if (!itm->i_payload || itm->i_paylkind != mompayk_tasklet)
+    return 0;
+  struct mom_taskletdata_st *itd = itm->i_payload;
+  unsigned fratop = itd->dtk_fratop;
+  if (frk < 0)
+    frk += fratop;
+  if (frk < 0 || frk >= (int) fratop)
+    return 0;
+  struct momframe_st *curfram = itd->dtk_frames + frk;
+  if (frk + 1 < (int) fratop)
+    {
+      struct momframe_st *nxtfram = itd->dtk_frames + frk + 1;
+      nbdbl = nxtfram->fr_dbloff - curfram->fr_dbloff;
+    }
+  else
+    nbdbl = itd->dtk_dbltop - curfram->fr_dbloff;
+  return nbdbl;
 }
 
 double
@@ -1284,18 +1359,14 @@ mom_item_tasklet_frame_nth_double (momitem_t *itm, int frk, int drk)
   if (frk + 1 < (int) fratop)
     {
       struct momframe_st *nxtfram = itd->dtk_frames + frk + 1;
-      nbdbl = ((nxtfram->fr_intoff -
-		curfram->fr_dbloff) * sizeof (intptr_t)) / sizeof (double);
+      nbdbl = nxtfram->fr_dbloff - curfram->fr_dbloff;
     }
   else
-    {
-      nbdbl = ((itd->dtk_scaltop -
-		curfram->fr_dbloff) * sizeof (intptr_t)) / sizeof (double);
-    }
+    nbdbl = itd->dtk_dbltop - curfram->fr_dbloff;
   if (drk < 0)
     drk += nbdbl;
   if (drk >= 0 && drk < (int) nbdbl)
-    return ((double *) (itd->dtk_scalars + curfram->fr_dbloff))[drk];
+    return itd->dtk_doubles[curfram->fr_dbloff + drk];
   return 0.0;
 }
 
@@ -1315,6 +1386,7 @@ payl_tasklet_dump_scan_mom (struct mom_dumper_st *du, momitem_t *itm)
     mom_dump_scan_value (du, (momval_t) itd->dtk_closures[frix]);
 }
 
+
 static momval_t
 payl_tasklet_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
 {
@@ -1333,33 +1405,31 @@ payl_tasklet_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
     {
       struct momframe_st *curfram = itd->dtk_frames + frix;
       const momnode_t *curclo = itd->dtk_closures[frix];
-      unsigned nbnum = curfram->fr_dbloff - curfram->fr_intoff;
-      unsigned nbdbl = 0, nbval = 0;
-      if (frix + 1 >= fratop)
+      unsigned nbint = 0, nbdbl = 0, nbval = 0;
+      if (frix + 1 < fratop)
 	{
-	  nbdbl =
-	    ((itd->dtk_scaltop -
-	      curfram->fr_dbloff) * sizeof (intptr_t)) / sizeof (double);
-	  nbval = (itd->dtk_valtop - curfram->fr_valoff);
+	  struct momframe_st *nxtfram = itd->dtk_frames + frix + 1;
+	  nbval = nxtfram->fr_valoff - curfram->fr_valoff;
+	  nbint = nxtfram->fr_intoff - curfram->fr_intoff;
+	  nbdbl = nxtfram->fr_dbloff - curfram->fr_dbloff;
 	}
       else
 	{
-	  struct momframe_st *nxtfram = itd->dtk_frames + frix;
-	  nbdbl =
-	    ((nxtfram->fr_intoff -
-	      curfram->fr_dbloff) * sizeof (intptr_t)) / sizeof (double);
-	  nbval = nxtfram->fr_valoff - curfram->fr_valoff;
+	  nbval = (itd->dtk_valtop - curfram->fr_valoff);
+	  nbint = (itd->dtk_inttop - curfram->fr_intoff);
+	  nbdbl = (itd->dtk_dbltop - curfram->fr_dbloff);
 	}
       momval_t valtiny[MOM_TINY_MAX] = { MOM_NULLV };
-      momval_t numtiny[MOM_TINY_MAX] = { MOM_NULLV };
+      momval_t inttiny[MOM_TINY_MAX] = { MOM_NULLV };
       momval_t dbltiny[MOM_TINY_MAX] = { MOM_NULLV };
       momval_t *jvalarr = (nbval < MOM_TINY_MAX) ? valtiny
 	: MOM_GC_ALLOC ("tasklet dump values frame",
 			nbval * sizeof (momval_t));
-      momval_t *jnumarr =
-	(nbnum <
-	 MOM_TINY_MAX) ? numtiny : MOM_GC_ALLOC ("tasklet dump numbers frame",
-						 nbval * sizeof (momval_t));
+      momval_t *jintarr =
+	(nbint <
+	 MOM_TINY_MAX) ? inttiny :
+	MOM_GC_ALLOC ("tasklet dump integers frame",
+		      nbint * sizeof (momval_t));
       momval_t *jdblarr =
 	(nbdbl <
 	 MOM_TINY_MAX) ? dbltiny : MOM_GC_ALLOC ("tasklet dump doubles frame",
@@ -1368,15 +1438,15 @@ payl_tasklet_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
 	jvalarr[vix]
 	  = mom_dump_emit_json (du,
 				itd->dtk_values[curfram->fr_valoff + vix]);
-      for (unsigned nix = 0; nix < nbnum; nix++)
-	jnumarr[nix]
-	  = mom_make_integer (itd->dtk_scalars[curfram->fr_intoff + nix]);
+      for (unsigned nix = 0; nix < nbint; nix++)
+	jintarr[nix]
+	  = mom_make_integer (itd->dtk_ints[curfram->fr_intoff + nix]);
       for (unsigned dix = 0; dix < nbdbl; dix++)
 	jdblarr[dix]
-	  = mom_make_double ((itd->dtk_scalars + curfram->fr_dbloff)[dix]);
-      momval_t jnums
-	= (nbnum > 0)
-	? (momval_t) mom_make_json_array_count (nbnum, jnumarr) : MOM_NULLV;
+	  = mom_make_double ((itd->dtk_doubles + curfram->fr_dbloff)[dix]);
+      momval_t jints
+	= (nbint > 0)
+	? (momval_t) mom_make_json_array_count (nbint, jintarr) : MOM_NULLV;
       momval_t jdbls
 	= (nbdbl > 0)
 	? (momval_t) mom_make_json_array_count (nbdbl, jdblarr) : MOM_NULLV;
@@ -1389,7 +1459,7 @@ payl_tasklet_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
 	= (momval_t)
 	mom_make_json_object
 	(MOMJSOB_ENTRY ((momval_t) mom_named__closure, jclos),
-	 MOMJSOB_ENTRY ((momval_t) mom_named__numbers, jnums),
+	 MOMJSOB_ENTRY ((momval_t) mom_named__numbers, jints),
 	 MOMJSOB_ENTRY ((momval_t) mom_named__doubles, jdbls),
 	 MOMJSOB_ENTRY ((momval_t) mom_named__values, jvals),
 	 MOMJSOB_ENTRY ((momval_t) mom_named__state, jstate),
@@ -1397,8 +1467,8 @@ payl_tasklet_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
       jarr[frix] = jframe;
       if (jvalarr != valtiny)
 	MOM_GC_FREE (jvalarr);
-      if (jnumarr != numtiny)
-	MOM_GC_FREE (jnumarr);
+      if (jintarr != inttiny)
+	MOM_GC_FREE (jintarr);
       if (jdblarr != dbltiny)
 	MOM_GC_FREE (jdblarr);
     }
@@ -1418,10 +1488,10 @@ payl_tasklet_load_mom (struct mom_loader_st *ld, momitem_t *litm,
   mom_item_start_tasklet (litm);
   unsigned nbfra = mom_json_array_size (jsarr);
   if (nbfra > 0)
-    // a guess about the tasklet needs
+    // a wild guess about the tasklet needs
     mom_item_tasklet_reserve (litm,
 			      /*nbint: */ nbfra * 2,
-			      /*nbdbl: */ nbfra / 2,
+			      /*nbdbl: */ (nbfra - 1) / 3,
 			      /*nbval: */ nbfra * 3,
 			      /*nbfram: */ nbfra + 1);
   for (unsigned frix = 0; frix < nbfra; frix++)

@@ -251,7 +251,7 @@ step_tasklet_mom (momitem_t *tkitm, struct mom_taskletdata_st *itd)
     return false;
   int state = 0;
   momval_t *locvals = NULL;
-  intptr_t *locnums = NULL;
+  intptr_t *locints = NULL;
   double *locdbls = NULL;
   struct momroutinedescr_st *rdescr = NULL;
   mom_routine_sig_t *routcod = NULL;
@@ -289,9 +289,9 @@ step_tasklet_mom (momitem_t *tkitm, struct mom_taskletdata_st *itd)
       goto end;
     }
   state = curfram->fr_state;
-  locvals = itd->dtk_values + curfram->fr_valoff;
-  locnums = itd->dtk_scalars + curfram->fr_intoff;
-  locdbls = (double *) (itd->dtk_scalars + curfram->fr_dbloff);
+  locvals = itd->dtk_valtop ? (itd->dtk_values + curfram->fr_valoff) : NULL;
+  locints = itd->dtk_inttop ? (itd->dtk_ints + curfram->fr_intoff) : NULL;
+  locdbls = itd->dtk_dbltop ? (itd->dtk_doubles + curfram->fr_dbloff) : NULL;
   routcod = rdescr->rout_codefun;
 end:
   pthread_mutex_unlock (&routitm->i_mtx);
@@ -304,7 +304,7 @@ end:
 		 MOMOUT_LITERAL (" with taskitem:"),
 		 MOMOUT_ITEM ((const momitem_t *) tkitm));
       int newstate =
-	routcod (state, tkitm, curclo, locvals, locnums, locdbls);
+	routcod (state, tkitm, curclo, locvals, locints, locdbls);
       if (newstate == momroutres_pop)
 	popframe = true;
       else
@@ -325,7 +325,11 @@ run_one_tasklet_mom (momitem_t *tkitm)
 	     MOMOUT_ITEM ((const momitem_t *) tkitm));
   pthread_mutex_lock (&tkitm->i_mtx);
   if (tkitm->i_paylkind != mompayk_tasklet)
-    goto end;
+    {
+      MOM_DEBUG (run, MOMOUT_LITERAL ("run_one_tasklet_mom bad paylkind"),
+		 MOMOUT_DEC_INT ((int) (tkitm->i_paylkind)));
+      goto end;
+    }
   double timestart = mom_clock_time (CLOCK_REALTIME);
   double timelimit = timestart + TASKLET_TIMEOUT;
   itd = tkitm->i_payload;
