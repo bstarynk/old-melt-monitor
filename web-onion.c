@@ -308,26 +308,39 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 	  MOM_DEBUG (web, "webrequest #", MOMOUT_DEC_INT (webnum),
 		     MOMOUT_LITERAL ("; added tasklet wtskitm:"),
 		     MOMOUT_ITEM ((const momitem_t *) wtskitm));
-	  double minidelay = 0.002;
+	  double minidelay = MOM_IS_DEBUGGING (web) ? 0.25 : 0.002;
 	  double curtim = 0.0;
 	  bool replied = false;
 	  do
 	    {
-	      usleep (300);
+	      usleep (100);
 	      curtim = mom_clock_time (CLOCK_REALTIME);
 	      mom_lock_item (webxitm);
 	      struct timespec ts = mom_timespec (curtim + minidelay);
-	      if (!pthread_cond_timedwait (&wxd->webx_cond,
-					   &webxitm->i_mtx,
-					   &ts) && wxd->webx_mime != NULL
-		  && wxd->webx_httpcode > 0)
+	      pthread_cond_timedwait (&wxd->webx_cond, &webxitm->i_mtx, &ts);
+	      if (webxitm->i_paylkind == mompayk_webexchange)
 		{
+		  wxd = webxitm->i_payload;
+		  assert (wxd && wxd->webx_magic == MOM_WEBX_MAGIC);
+		}
+	      else
+		wxd = NULL;
+	      if (wxd && wxd->webx_mime != NULL && wxd->webx_httpcode > 0)
+		{
+		  MOM_DEBUG (web,
+			     MOMOUT_LITERAL ("got reply for webrequest #"),
+			     MOMOUT_DEC_INT (webnum),
+			     MOMOUT_LITERAL (" webxitm:"),
+			     MOMOUT_ITEM ((const momitem_t *) webxitm),
+			     MOMOUT_LITERAL (" httpcode:"),
+			     MOMOUT_DEC_INT (wxd->webx_httpcode));
 		  endtim = curtim - 0.001;
 		  if (wxd->webx_resp)
 		    {
 		      bool istext = wxd->webx_mime && wxd->webx_mime[0]
 			&& strncmp (wxd->webx_mime, "text/", 5);
-		      MOM_DEBUG (web, "replying to webrequest #",
+		      MOM_DEBUG (web,
+				 MOMOUT_LITERAL ("replying to webrequest #"),
 				 MOMOUT_DEC_INT (webnum),
 				 MOMOUT_LITERAL (" webxitm:"),
 				 MOMOUT_ITEM ((const momitem_t *) webxitm),
@@ -352,8 +365,6 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 								  (wxd->webx_obuf)
 								  : "!")),
 				 MOMOUT_NEWLINE ());
-		      onion_response_set_code (wxd->webx_resp,
-					       wxd->webx_httpcode);
 		      if (wxd->webx_osize > 0)
 			onion_response_set_length (wxd->webx_resp,
 						   wxd->webx_osize);
@@ -361,6 +372,8 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 			onion_response_set_header (wxd->webx_resp,
 						   "Content-Type",
 						   wxd->webx_mime);
+		      onion_response_set_code (wxd->webx_resp,
+					       wxd->webx_httpcode);
 		      if (wxd->webx_obuf && wxd->webx_osize > 0 && !reqishead)
 			{
 			  onion_response_write (wxd->webx_resp,
@@ -373,10 +386,18 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 		      replied = true;
 		      mom_item_clear_payload (webxitm);
 		    }
+		  else
+		    MOM_DEBUGPRINTF (web, "webrequest#%d nilwebxresp",
+				     webnum);
 		}
-	      else		// timedout
-	      if (minidelay < 0.25)
-		minidelay = 1.5 * minidelay + 0.001;
+	      else
+		{		// timedout 
+		  if (minidelay < (MOM_IS_DEBUGGING (web) ? 1.23 : 0.5))
+		    minidelay = 1.5 * minidelay + 0.001;
+		  MOM_DEBUGPRINTF (web,
+				   "waiting again for webrequest #%d minidelay=%.4f, wxd@%p",
+				   webnum, minidelay, wxd);
+		}
 	      mom_unlock_item (webxitm);
 	    }
 	  while (curtim < endtim && !replied);
@@ -444,8 +465,11 @@ end:;
 void
 mom_webx_reply (momitem_t *webitm, const char *mime, int httpcode)
 {
-  /// onion has this in response.c, but does not export it...
-  extern const char *onion_response_code_description (int code);
+  MOM_DEBUG (web, MOMOUT_LITERAL ("webx_reply webitm="),
+	     MOMOUT_ITEM ((const momitem_t *) webitm),
+	     MOMOUT_LITERAL ("; mime="),
+	     MOMOUT_LITERALV (mime),
+	     MOMOUT_LITERAL (" httpcode#"), MOMOUT_DEC_INT (httpcode));
   if (!webitm || webitm->i_typnum != momty_item)
     return;
 
@@ -485,6 +509,11 @@ mom_webx_reply (momitem_t *webitm, const char *mime, int httpcode)
     }
   struct mom_webexchange_data_st *wxd = webitm->i_payload;
   assert (wxd && wxd->webx_magic == MOM_WEBX_MAGIC);
+  assert (wxd->webx_out.mout_magic == MOM_MOUT_MAGIC);
+  if (wxd->webx_out.mout_file)
+    fflush (wxd->webx_out.mout_file);
+  else
+    MOM_WARNPRINTF ("webnum#%d no momoutfile", wxd->webx_num);
   MOM_DEBUG (web, MOMOUT_LITERAL ("webreply webnum#"),
 	     MOMOUT_DEC_INT ((int) wxd->webx_num),
 	     MOMOUT_LITERAL (" mime:"),
@@ -494,7 +523,8 @@ mom_webx_reply (momitem_t *webitm, const char *mime, int httpcode)
 	     MOMOUT_LITERAL ("="),
 	     MOMOUT_LITERALV ((const char *)
 			      onion_response_code_description (httpcode)),
-	     NULL);
+	     MOMOUT_LITERAL ("; osize="),
+	     MOMOUT_DEC_INT ((int) wxd->webx_osize), NULL);
   if (!wxd->webx_resp)
     {
       MOM_WARNING (MOMOUT_LITERAL ("bad webxreply; already replied webnum#"),
@@ -504,11 +534,12 @@ mom_webx_reply (momitem_t *webitm, const char *mime, int httpcode)
 		   MOMOUT_LITERAL (" ...from "), MOMOUT_BACKTRACE (5), NULL);
       goto end;
     };
-  if (wxd->webx_out.mout_file)
-    fclose (wxd->webx_out.mout_file), wxd->webx_out.mout_file = NULL;
   wxd->webx_mime = (char *) mime;
   wxd->webx_httpcode = httpcode;
   pthread_cond_broadcast (&wxd->webx_cond);
+  usleep (100);
+  MOM_DEBUGPRINTF (web, "webxreply ending webnum#%d mime=%s httpcode=%d",
+		   wxd->webx_num, mime, httpcode);
 end:
   return;
 }

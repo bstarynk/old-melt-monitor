@@ -1102,8 +1102,9 @@ momval_t mom_item_queue_pop_front (momitem_t *itm);
 /**************** routine item ****************/
 
 /// the Makefile should define that for momg_* modules!
+#define MOM_EMPTY_MODULE "."
 #ifndef MONIMELT_CURRENT_MODULE
-#define MONIMELT_CURRENT_MODULE "."
+#define MONIMELT_CURRENT_MODULE MOM_EMPTY_MODULE
 #endif
 
 // routine descriptor is read-only

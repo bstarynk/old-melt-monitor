@@ -239,7 +239,8 @@ payl_routine_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
   const struct momroutinedescr_st *rdescr = itm->i_payload;
   assert (rdescr != NULL && rdescr->rout_magic == MOM_ROUTINE_MAGIC
 	  && rdescr->rout_name != NULL && rdescr->rout_module);
-  mom_dump_require_module (du, rdescr->rout_module);
+  if (strcmp (rdescr->rout_module, MOM_EMPTY_MODULE) != 0)
+    mom_dump_require_module (du, rdescr->rout_module);
   return (momval_t) mom_make_string (rdescr->rout_name);
 }
 

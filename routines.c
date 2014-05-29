@@ -93,7 +93,9 @@ ajaxsyst_lab_start:
     MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_system_codmom postjsob="),
 	       MOMOUT_VALUE ((const momval_t)
 			     mom_webx_jsob_post (_L (webx).pitem)));
-    momval_t todov = mom_webx_post_arg (_L (webx).pitem, "todo");
+    momval_t todov = mom_webx_post_arg (_L (webx).pitem, "todo_mom");
+    MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_system_codmom todov="),
+	       MOMOUT_VALUE ((const momval_t) todov));
     if (mom_string_same (todov, "mom_menuitem_save_exit"))
       {
 	mom_stop_work_with_todo (todo_dump_at_exit_mom, (char *) ".");
@@ -104,6 +106,8 @@ ajaxsyst_lab_start:
 					  mom_clock_time (CLOCK_REALTIME)),
 		      MOMOUT_LITERAL ("</i>"), MOMOUT_SPACE (32));
 	mom_webx_reply (_L (webx).ptr, "text/html", HTTP_OK);
+	usleep (1000);
+	goto end;
       }
     else if (mom_string_same (todov, "mom_menuitem_quit"))
       {
@@ -116,7 +120,10 @@ ajaxsyst_lab_start:
 			       mom_clock_time (CLOCK_REALTIME)),
 	   MOMOUT_LITERAL ("</i>"), MOMOUT_SPACE (32), NULL);
 	mom_webx_reply (_L (webx).pitem, "text/html", HTTP_OK);
+	usleep (1000);
+	goto end;
       }
+  end:
     mom_unlock_item (_L (webx).pitem);
   }
   ;
