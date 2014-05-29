@@ -248,30 +248,51 @@ step_tasklet_mom (momitem_t *tkitm, struct mom_taskletdata_st *itd)
   bool popframe = false;
   unsigned fratop = itd->dtk_fratop;
   if (!fratop)
-    return false;
+    {
+      MOM_DEBUG (run,
+		 MOMOUT_LITERAL ("step_tasklet_mom empty tkitm:"),
+		 MOMOUT_ITEM ((const momitem_t *) tkitm));
+      return false;
+    }
   int state = 0;
   momval_t *locvals = NULL;
   intptr_t *locints = NULL;
   double *locdbls = NULL;
   struct momroutinedescr_st *rdescr = NULL;
   mom_routine_sig_t *routcod = NULL;
+  MOM_DEBUG (run,
+	     MOMOUT_LITERAL ("step_tasklet_mom tkitm:"),
+	     MOMOUT_ITEM ((const momitem_t *) tkitm),
+	     MOMOUT_LITERAL ("; fratop="), MOMOUT_DEC_INT ((int) fratop));
   assert (fratop < itd->dtk_frasize);
-  struct momframe_st *curfram = itd->dtk_frames + fratop;
-  const momnode_t *curclo = itd->dtk_closures[fratop];
+  struct momframe_st *curfram = itd->dtk_frames + fratop - 1;
+  const momnode_t *curclo = itd->dtk_closures[fratop - 1];
+  MOM_DEBUG (run,
+	     MOMOUT_LITERAL ("step_tasklet_mom curclo:"),
+	     MOMOUT_VALUE ((const momval_t) curclo));
   if (!curclo || curclo->typnum != momty_node)
     {
       mom_item_tasklet_pop_frame (tkitm);
       return itd->dtk_fratop > 0;
     }
   momitem_t *routitm = (momitem_t *) curclo->connitm;
-  if (routitm || routitm->i_typnum != momty_item)
+  MOM_DEBUG (run,
+	     MOMOUT_LITERAL ("step_tasklet_mom routitm:"),
+	     MOMOUT_ITEM ((const momitem_t *) routitm));
+  if (!routitm || routitm->i_typnum != momty_item)
     {
       mom_item_tasklet_pop_frame (tkitm);
+      MOM_DEBUG (run,
+		 MOMOUT_LITERAL ("step_tasklet_mom no routitm;"),
+		 MOMOUT_BACKTRACE (5));
       return itd->dtk_fratop > 0;
     }
   pthread_mutex_lock (&routitm->i_mtx);
   if (routitm->i_paylkind != mompayk_routine)
     {
+      MOM_DEBUG (run,
+		 MOMOUT_LITERAL ("step_tasklet_mom non-routine routitm;"),
+		 MOMOUT_BACKTRACE (5));
       popframe = true;
       goto end;
     }
@@ -280,6 +301,9 @@ step_tasklet_mom (momitem_t *tkitm, struct mom_taskletdata_st *itd)
       (!rdescr || rdescr->rout_magic != MOM_ROUTINE_MAGIC
        || !rdescr->rout_codefun))
     {
+      MOM_DEBUG (run,
+		 MOMOUT_LITERAL ("step_tasklet_mom corrupted routitm;"),
+		 MOMOUT_BACKTRACE (5));
       popframe = true;
       goto end;
     }
@@ -297,7 +321,7 @@ end:
   pthread_mutex_unlock (&routitm->i_mtx);
   if (routcod)
     {
-      MOM_DEBUG (run, MOMOUT_LITERAL ("step_tasklet_mom alling routine "),
+      MOM_DEBUG (run, MOMOUT_LITERAL ("step_tasklet_mom calling routine "),
 		 MOMOUT_LITERALV (rdescr->rout_name),
 		 MOMOUT_LITERAL (" at state#"),
 		 MOMOUT_DEC_INT (state),
@@ -305,6 +329,9 @@ end:
 		 MOMOUT_ITEM ((const momitem_t *) tkitm));
       int newstate =
 	routcod (state, tkitm, curclo, locvals, locints, locdbls);
+      MOM_DEBUG (run, MOMOUT_LITERAL ("step_tasklet_mom called routine "),
+		 MOMOUT_LITERALV (rdescr->rout_name),
+		 MOMOUT_LITERAL (" newstate#"), MOMOUT_DEC_INT (newstate));
       if (newstate == momroutres_pop)
 	popframe = true;
       else
@@ -354,6 +381,8 @@ end:
   if (itd)
     itd->dtk_thread = 0;
   pthread_mutex_unlock (&tkitm->i_mtx);
+  MOM_DEBUG (run, MOMOUT_LITERAL ("run_one_tasklet_mom done tkitm:"),
+	     MOMOUT_ITEM ((const momitem_t *) tkitm));
 }
 
 
