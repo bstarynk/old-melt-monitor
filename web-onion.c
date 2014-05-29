@@ -337,8 +337,8 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 		  endtim = curtim - 0.001;
 		  if (wxd->webx_resp)
 		    {
-		      bool istext = wxd->webx_mime && wxd->webx_mime[0]
-			&& strncmp (wxd->webx_mime, "text/", 5);
+		      bool istext = wxd->webx_mime
+			&& (0 == strncmp (wxd->webx_mime, "text/", 5));
 		      MOM_DEBUG (web,
 				 MOMOUT_LITERAL ("replying to webrequest #"),
 				 MOMOUT_DEC_INT (webnum),
@@ -429,6 +429,11 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 	      onion_response_flush (timoutresp);
 	      mom_item_clear_payload (webxitm);
 	      mom_unlock_item (webxitm);
+	      return OCS_PROCESSED;
+	    }
+	  else
+	    {
+	      MOM_DEBUGPRINTF (web, "done webreq#%d", webnum);
 	      return OCS_PROCESSED;
 	    }
 	}			/* end if wclosv is node */
