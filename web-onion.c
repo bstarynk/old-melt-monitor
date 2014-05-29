@@ -78,7 +78,7 @@ mom_paylwebx_finalize (momitem_t *witm, void *wdata)
 
 
 
-#define WEB_ANSWER_DELAY_MOM ((MOM_IS_DEBUGGING(web))?7.0:4.0)
+#define WEB_ANSWER_DELAY_MOM ((MOM_IS_DEBUGGING(web))?16.0:4.0)
 static onion_connection_status
 handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 			 onion_request * req, onion_response * resp)

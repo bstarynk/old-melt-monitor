@@ -33,13 +33,13 @@ PREPROFLAGS= $(shell $(PKGCONFIG) --cflags $(PACKAGES))
 OPTIMFLAGS= -Og -g
 LIBES= -lgc  $(shell $(PKGCONFIG) --libs $(PACKAGES)) -lonion_handlers -lonion -lpthread -lm -ldl
 SQLITE= sqlite3
-SOURCES= $(sort $(filter-out $(wildcard mod_*.c), $(wildcard [a-z]*.c)))
 # modules are monimelt generated code
 MODULE_SOURCES= $(sort $(wildcard momg_*.c))
 MODULES= $(patsubst %.c,%.so,$(MODULE_SOURCES))
 # plugins are extra code
 PLUGIN_SOURCES= $(sort $(wildcard momplug_*.c))
 PLUGINS=  $(patsubst %.c,%.so,$(PLUGIN_SOURCES))
+SOURCES= $(sort $(filter-out $(PLUGIN_SOURCES) $(MODULE_SOURCES), $(wildcard [a-z]*.c)))
 OBJECTS= $(patsubst %.c,%.o,$(SOURCES))
 RM= rm -fv
 .PHONY: all modules plugins clean tests indent restore-state dump-state
