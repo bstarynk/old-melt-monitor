@@ -55,3 +55,8 @@ div.mom_main_cl {
     /* icon from /usr/share/icons/oxygen/22x22/actions/document-save-as.png  */
     background:url('mom-icons/document-save-as-22x22.png') no-repeat center center;
 }
+
+.mom_icon_objects_cl {
+ /* icon from Gnome 2, and http://findicons.com/icon/189070/stock_macro_objects?id=192365 */
+    background:url('mom-icons/objects-24x24.png') no-repeat center center;
+}

@@ -38,3 +38,7 @@ function mom_do_menu_system(itm) {
 	     }
 	   });
 };
+
+function mom_do_menu_objects(itm) {
+    console.debug ("mom_do_menu_objects itm=", itm);
+}
