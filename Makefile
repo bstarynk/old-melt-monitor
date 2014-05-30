@@ -22,16 +22,16 @@
 ## gmime is also Gnome related, see https://developer.gnome.org/gmime/
 ## onion is not packaged, see https://github.com/davidmoreno/onion
 ## Boehm GC is from http://www.hboehm.info/gc/
-PACKAGES= sqlite3 glib-2.0 gmime-2.6 libcurl
+PACKAGES= sqlite3 glib-2.0 #gmime-2.6 libcurl
 PKGCONFIG= pkg-config
 CC=gcc
 CFLAGS= -std=gnu11 -Wall -Wextra $(PREPROFLAGS) $(OPTIMFLAGS)
 CXX=g++
 CXXFLAGS= -std=c++11 -Wall -pthread  $(PREPROFLAGS) $(OPTIMFLAGS)
 INDENT= indent -gnu
-PREPROFLAGS= $(shell $(PKGCONFIG) --cflags $(PACKAGES))
+PREPROFLAGS= -I/usr/local/include $(shell $(PKGCONFIG) --cflags $(PACKAGES))
 OPTIMFLAGS= -Og -g
-LIBES= -lgc  $(shell $(PKGCONFIG) --libs $(PACKAGES)) -lonion_handlers -lonion -lpthread -lm -ldl
+LIBES= -L/usr/local/lib -lgc  $(shell $(PKGCONFIG) --libs $(PACKAGES)) -lonion_handlers -lonion -lpthread -lm -ldl
 SQLITE= sqlite3
 # modules are monimelt generated code
 MODULE_SOURCES= $(sort $(wildcard momg_*.c))
