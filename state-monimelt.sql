@@ -85,10 +85,11 @@ INSERT INTO t_items VALUES('_4mha85xcfwi_9zqcvkiy3dk','{"kind": null, "payload":
    "val": "The false of JSON.\nWe cannot use false because it is a #define-ed macro."}],
  "content": null}
 ');
-INSERT INTO t_items VALUES('_5stus2s46vy_sh0rz3zppvh','{"kind": "routine", "payload": "ajax_objects", "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
-   "val": "handle \''ajax_objects\'' webrequests"}, {"attr": "_7sav6zery1v_24sa6jwwu6c",
-   "val": {"sons": ["{spare1 ajax-objects}", "{spare2 ajax-objects}", "{spare3 ajax-objects}",
-     null], "node": "_5stus2s46vy_sh0rz3zppvh", "jtype": "node"}}], "content": null}
+INSERT INTO t_items VALUES('_4v93t3jzrtz_srt9ear8fm8','{"kind": "routine", "payload": "ajax_complete_name", "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "handle \''ajax_complete_name\'' webrequests"}, {"attr": "_7sav6zery1v_24sa6jwwu6c",
+   "val": {"sons": ["{spare1 ajax-complete_name}", "{spare2 ajax-complete_name}",
+     "{spare3 ajax-complete_name}", null], "node": "_4v93t3jzrtz_srt9ear8fm8",
+    "jtype": "node"}}], "content": null}
 ');
 INSERT INTO t_items VALUES('_5wmusj136kq_u5qpehp89aq','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "indicates the HTTP POST method"}], "content": null}
@@ -98,6 +99,11 @@ INSERT INTO t_items VALUES('_6f9870y6v8t_kp8fcmq2ezv','{"kind": null, "payload":
 ');
 INSERT INTO t_items VALUES('_6hf2vzmrsee_t35suhjvtj4','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "gives the item reference, at least in dumped JSON..."}], "content": null}
+');
+INSERT INTO t_items VALUES('_6mwwr0i4y9p_5aupdxjxdk1','{"kind": "routine", "payload": "ajax_objects", "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "handle \''ajax_objects\'' webrequests"}, {"attr": "_7sav6zery1v_24sa6jwwu6c",
+   "val": {"sons": ["{spare1 ajax-objects}", "{spare2 ajax-objects}", "{spare3 ajax-objects}",
+     null], "node": "_6mwwr0i4y9p_5aupdxjxdk1", "jtype": "node"}}], "content": null}
 ');
 INSERT INTO t_items VALUES('_6w3dvx83dfw_xzc6aif6isv','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "gives the attribute[s], at least in dumped JSON..."}], "content": null}
@@ -143,7 +149,8 @@ INSERT INTO t_names VALUES('GET','_9dsak0qcy0v_1c5z9th7x3i','.predef');
 INSERT INTO t_names VALUES('HEAD','_47fatww79x6_vh8ap22c0ch','.predef');
 INSERT INTO t_names VALUES('POST','_5wmusj136kq_u5qpehp89aq','.predef');
 INSERT INTO t_names VALUES('agenda','_02u53qxa7dm_sttmhffpchr','.predef');
-INSERT INTO t_names VALUES('ajax_objects','_5stus2s46vy_sh0rz3zppvh','.root');
+INSERT INTO t_names VALUES('ajax_complete_name','_4v93t3jzrtz_srt9ear8fm8','.root');
+INSERT INTO t_names VALUES('ajax_objects','_6mwwr0i4y9p_5aupdxjxdk1','.root');
 INSERT INTO t_names VALUES('ajax_system','_3xz3qrc6mfy_4r51up6u3pa','.root');
 INSERT INTO t_names VALUES('attr','_6w3dvx83dfw_xzc6aif6isv','.predef');
 INSERT INTO t_names VALUES('closure','_97zkxf62r11_6eedwwv3eu8','.predef');
