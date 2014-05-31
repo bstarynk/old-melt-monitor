@@ -232,22 +232,20 @@ ajaxobjs_lab_start:
 		   MOMOUT_VALUE ((const momval_t) jsarrnames));
 	MOM_WEBX_OUT (_L (webx).pitem,
 		      MOMOUT_LITERAL
-		      ("<div class='ui-widget'>Edit (or create) a <b>named</b> item at </i>"),
+		      ("Edit (or create) a <b>named</b> item <small>at </i>"),
 		      MOMOUT_DOUBLE_TIME ((const char *) "%c",
 					  mom_clock_time (CLOCK_REALTIME)),
-		      MOMOUT_LITERAL ("</i><br/>"), MOMOUT_SPACE (32),
+		      MOMOUT_LITERAL ("</i></small><br/>"), MOMOUT_SPACE (32),
 		      MOMOUT_LITERAL
-		      ("<label for='mom_name_entry'>Name:</label>"
-		       "<input type='text' id='mom_name_input'>"),
-		      MOMOUT_SPACE (32),
+		      ("<div class='ui-widget'><label for='mom_name_entry'>Name:</label>"
+		       " <input type='text' id='mom_name_input'/>"),
+		      MOMOUT_NEWLINE (),
 		      MOMOUT_LITERAL
 		      ("<script type='text/javascript'>mom_set_name_entry_completion($('#mom_name_input'),"),
 		      MOMOUT_JSON_VALUE ((const momval_t) jsarrnames),
-		      MOMOUT_LITERAL (");"), MOMOUT_SPACE (32),
-		      MOMOUT_LITERAL
-		      ("$('#mom_name_input').on('change',mom_name_entry_changed);"),
+		      MOMOUT_LITERAL (",mom_name_entry_changed);"),
 		      MOMOUT_SPACE (32), MOMOUT_LITERAL ("</script></div>"),
-		      NULL);
+		      MOMOUT_NEWLINE (), NULL);
 	mom_webx_reply (_L (webx).pitem, "text/html", HTTP_OK);
 	goto end;
       }
@@ -261,7 +259,7 @@ ajaxobjs_lab_start:
 #undef _L
 #undef _C
 #undef _N
-#undef SET_STATE
+#undef _SET_STATE
   return momroutres_pop;
 }
 
@@ -274,5 +272,98 @@ const struct momroutinedescr_st momrout_ajax_objects = {
   .rout_name = "ajax_objects",
   .rout_module = MONIMELT_CURRENT_MODULE,
   .rout_codefun = ajax_objects_codmom,
+  .rout_timestamp = __DATE__ "@" __TIME__
+};
+
+
+
+////////////////////////////////////////////////////////////////
+///// ajax_complete_name
+enum ajax_complete_name_values_en
+{
+  ajaxcompnam_v_arg0res,
+  ajaxcompnam_v_method,
+  ajaxcompnam_v_namid,
+  ajaxcompnam_v_restpath,
+  ajaxcompnam_v__spare,
+  ajaxcompnam_v_webx,
+  ajaxcompnam_v__lastval
+};
+
+enum ajax_complete_name_closure_en
+{
+  ajaxcompnam_c__lastclosure
+};
+
+enum ajax_complete_name_numbers_en
+{
+  ajaxcompnam_n__lastnum
+};
+
+
+static int
+ajax_complete_name_codmom (int momstate_, momitem_t *momtasklet_,
+			   const momnode_t *momclosure_,
+			   momval_t *momlocvals_, intptr_t * momlocnums_,
+			   double *momlocdbls_)
+{
+#define _L(Nam) (momlocvals_[ajaxcompnam_v_##Nam])
+#define _C(Nam) (momclosure_->sontab[ajaxcompnam_c_##Nam])
+#define _N(Nam) (momlocnums_[ajaxcompnam_n_##Nam])
+  enum ajax_complete_name_state_en
+  {
+    ajaxcompnam_s_start,
+    ajaxcompnam_s__laststate
+  };
+#define _SET_STATE(St) do {						\
+    MOM_DEBUGPRINTF (run,						\
+		     "ajax_complete_name_codmom setstate " #St " = %d",	\
+	       (int)ajaxcompnamm_s_##St);					\
+    return ajaxcompnamm_s_##St; } while(0)
+  MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_complete_name_codmom tasklet:"),
+	     MOMOUT_ITEM ((const momitem_t *) momtasklet_),
+	     MOMOUT_LITERAL (" state#"), MOMOUT_DEC_INT ((int) momstate_));
+  if (momstate_ >= 0 && momstate_ < ajaxcompnam_s__laststate)
+    switch ((enum ajax_complete_name_state_en) momstate_)
+      {
+      case ajaxcompnam_s_start:
+	goto ajaxcompnam_lab_start;
+      case ajaxcompnam_s__laststate:;
+      }
+  MOM_FATAPRINTF ("ajax_complete_name invalid state #%d", momstate_);
+  ////
+ajaxcompnam_lab_start:
+  _L (webx) = _L (arg0res);
+  MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_complete_name_codmom webx="),
+	     MOMOUT_VALUE ((const momval_t) _L (webx)));
+  assert (mom_is_item (_L (webx)));
+  {
+    mom_lock_item (_L (webx).pitem);
+    MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_complete_name_codmom postjsob="),
+	       MOMOUT_VALUE ((const momval_t)
+			     mom_webx_jsob_post (_L (webx).pitem)));
+    MOM_FATAL (MOMOUT_LITERAL ("ajax_complete_name incomplete webx="),
+	       MOMOUT_VALUE ((const momval_t) (_L (webx))));
+    goto end;
+  end:
+    mom_unlock_item (_L (webx).pitem);
+  }
+  ;
+#undef _L
+#undef _C
+#undef _N
+#undef _SET_STATE
+  return momroutres_pop;
+}
+
+const struct momroutinedescr_st momrout_ajax_complete_name = {
+  .rout_magic = MOM_ROUTINE_MAGIC,
+  .rout_minclosize = ajaxcompnam_c__lastclosure,
+  .rout_frame_nbval = ajaxcompnam_v__lastval,
+  .rout_frame_nbnum = ajaxcompnam_n__lastnum,
+  .rout_frame_nbdbl = 0,
+  .rout_name = "ajax_complete_name",
+  .rout_module = MONIMELT_CURRENT_MODULE,
+  .rout_codefun = ajax_complete_name_codmom,
   .rout_timestamp = __DATE__ "@" __TIME__
 };

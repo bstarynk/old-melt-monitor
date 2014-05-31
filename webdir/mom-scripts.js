@@ -53,9 +53,16 @@ function mom_do_menu_objects(itm) {
 }
 
 
-function mom_set_name_entry_completion(jentry,jsarr) {
-    console.debug ("mom_set_name_entry_completion jentry=", jentry, "; jsarr=", jsarr);
-    jentry.autocomplete({source: jsarr});
+function mom_set_name_entry_completion(jentry,jsarr,onchgcb) {
+    console.debug ("mom_set_name_entry_completion jentry=", jentry, "; jsarr=", jsarr, "; onchgcb=", onchgcb);
+    $(function(){
+	console.debug ("mom_set_name_entry_completion delayed jentry=", jentry, "; jsarr=", jsarr, "; onchgcb=", onchgcb);
+	jentry.on('change',onchgcb);
+	console.debug ("mom_set_name_entry_completion delayed afteronchange jentry=", jentry);
+	console.debug ("mom_set_name_entry_completion delayed afteronchange jentry.autocomplete=", jentry.autocomplete, "; jsarr=", jsarr);
+	jentry.autocomplete({source: "/ajax_complete_name"});
+	console.debug ("mom_set_name_entry_completion delayed done with jsarr=", jsarr);
+    });
 }
 
 function mom_name_entry_changed(ev) {
