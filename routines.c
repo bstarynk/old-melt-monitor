@@ -126,8 +126,8 @@ ajaxsyst_lab_start:
 	goto end;
       }
     else
-      MOM_FATAL(MOMOUT_LITERAL("ajax_system unexpected todov:"),
-		MOMOUT_VALUE((const momval_t)todov));
+      MOM_FATAL (MOMOUT_LITERAL ("ajax_system unexpected todov:"),
+		 MOMOUT_VALUE ((const momval_t) todov));
   end:
     mom_unlock_item (_L (webx).pitem);
   }
@@ -135,7 +135,7 @@ ajaxsyst_lab_start:
 #undef _L
 #undef _C
 #undef _N
-#undef SET_STATE
+#undef _SET_STATE
   return momroutres_pop;
 }
 
@@ -179,8 +179,8 @@ enum ajax_objects_numbers_en
 
 static int
 ajax_objects_codmom (int momstate_, momitem_t *momtasklet_,
-		    const momnode_t *momclosure_, momval_t *momlocvals_,
-		    intptr_t * momlocnums_, double *momlocdbls_)
+		     const momnode_t *momclosure_, momval_t *momlocvals_,
+		     intptr_t * momlocnums_, double *momlocdbls_)
 {
 #define _L(Nam) (momlocvals_[ajaxobjs_v_##Nam])
 #define _C(Nam) (momclosure_->sontab[ajaxobjs_c_##Nam])
@@ -220,13 +220,40 @@ ajaxobjs_lab_start:
     momval_t todov = mom_webx_post_arg (_L (webx).pitem, "todo_mom");
     MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_objects_codmom todov="),
 	       MOMOUT_VALUE ((const momval_t) todov));
-    if (mom_string_same (todov, "mom_menuobjects"))
+    if (mom_string_same (todov, "mom_menuitem_named"))
       {
+	momval_t tupnamed = MOM_NULLV;
+	momval_t jsarrnames = MOM_NULLV;
+	tupnamed =
+	  (momval_t) mom_alpha_ordered_tuple_of_named_items (&jsarrnames);
+	MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_objects_codmom tupnamed="),
+		   MOMOUT_VALUE ((const momval_t) tupnamed),
+		   MOMOUT_SPACE (24), MOMOUT_LITERAL ("jsarrnames="),
+		   MOMOUT_VALUE ((const momval_t) jsarrnames));
+	MOM_WEBX_OUT (_L (webx).pitem,
+		      MOMOUT_LITERAL
+		      ("<div class='ui-widget'>Edit (or create) a <b>named</b> item at </i>"),
+		      MOMOUT_DOUBLE_TIME ((const char *) "%c",
+					  mom_clock_time (CLOCK_REALTIME)),
+		      MOMOUT_LITERAL ("</i><br/>"), MOMOUT_SPACE (32),
+		      MOMOUT_LITERAL
+		      ("<label for='mom_name_entry'>Name:</label>"
+		       "<input type='text' id='mom_name_input'>"),
+		      MOMOUT_SPACE (32),
+		      MOMOUT_LITERAL
+		      ("<script type='text/javascript'>mom_set_name_entry_completion($('#mom_name_input'),"),
+		      MOMOUT_JSON_VALUE ((const momval_t) jsarrnames),
+		      MOMOUT_LITERAL (");"), MOMOUT_SPACE (32),
+		      MOMOUT_LITERAL
+		      ("$('#mom_name_input').on('change',mom_name_entry_changed);"),
+		      MOMOUT_SPACE (32), MOMOUT_LITERAL ("</script></div>"),
+		      NULL);
+	mom_webx_reply (_L (webx).pitem, "text/html", HTTP_OK);
 	goto end;
       }
     else
-      MOM_FATAL(MOMOUT_LITERAL("ajax_objects unexpected todov:"),
-		MOMOUT_VALUE((const momval_t)todov));
+      MOM_FATAL (MOMOUT_LITERAL ("ajax_objects unexpected todov:"),
+		 MOMOUT_VALUE ((const momval_t) todov));
   end:
     mom_unlock_item (_L (webx).pitem);
   }

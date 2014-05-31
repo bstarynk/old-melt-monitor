@@ -41,4 +41,23 @@ function mom_do_menu_system(itm) {
 
 function mom_do_menu_objects(itm) {
     console.debug ("mom_do_menu_objects itm=", itm);
+    $.ajax({ url: '/ajax_objects',
+	     method: 'POST',
+	     data: { todo_mom: itm.id },
+	     dataType: 'html',
+	     success: function (gotdata) {
+		 console.debug("mom_do_menu_objects ajax_objects gotdata=", gotdata);
+		 maindiv_mom.html(gotdata);
+	     }
+	   });
+}
+
+
+function mom_set_name_entry_completion(jentry,jsarr) {
+    console.debug ("mom_set_name_entry_completion jentry=", jentry, "; jsarr=", jsarr);
+    jentry.autocomplete({source: jsarr});
+}
+
+function mom_name_entry_changed(ev) {
+    console.debug ("mom_name_entry_changed ev=", ev);
 }
