@@ -53,15 +53,15 @@ function mom_do_menu_objects(itm) {
 }
 
 
-function mom_set_name_entry_completion(jentry,jsarr,onchgcb) {
-    console.debug ("mom_set_name_entry_completion jentry=", jentry, "; jsarr=", jsarr, "; onchgcb=", onchgcb);
+function mom_set_name_entry_combobox(jcombo) {
+    console.debug ("mom_set_name_entry_combobox jcombo=", jcombo);
     $(function(){
-	console.debug ("mom_set_name_entry_completion delayed jentry=", jentry, "; jsarr=", jsarr, "; onchgcb=", onchgcb);
-	jentry.on('change',onchgcb);
-	console.debug ("mom_set_name_entry_completion delayed afteronchange jentry=", jentry);
-	console.debug ("mom_set_name_entry_completion delayed afteronchange jentry.autocomplete=", jentry.autocomplete, "; jsarr=", jsarr);
-	jentry.autocomplete({source: "/ajax_complete_name"});
-	console.debug ("mom_set_name_entry_completion delayed done with jsarr=", jsarr);
+	console.debug ("mom_set_name_entry_combobox delayed jcombo=", jcombo);
+	jcombo.combobox({url: '/ajax_complete_name',
+			 valueField:'id',
+			 textField:'name'
+			});
+	console.debug ("mom_set_name_entry_combobox delayed done");
     });
 }
 

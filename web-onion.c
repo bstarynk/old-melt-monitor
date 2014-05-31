@@ -633,6 +633,62 @@ mom_webx_query_arg (momitem_t *webitm, const char *argname)
 }
 
 
+momval_t
+mom_webx_fullpath (momitem_t *webitm)
+{
+  if (!webitm || webitm->i_typnum != momty_item)
+    return MOM_NULLV;
+  if (webitm->i_paylkind != mompayk_webexchange)
+    {
+      MOM_WARNING (MOMOUT_LITERAL
+		   ("bad webxfullpath; non webexchange webitem:"),
+		   MOMOUT_ITEM ((const momitem_t *) webitm),
+		   MOMOUT_LITERAL (" ...from "), MOMOUT_BACKTRACE (5));
+      return MOM_NULLV;
+    }
+  struct mom_webexchange_data_st *wxd = webitm->i_payload;
+  assert (wxd && wxd->webx_magic == MOM_WEBX_MAGIC);
+  if (wxd->webx_requ)
+    return (momval_t)
+      mom_make_string (onion_request_get_fullpath (wxd->webx_requ));
+  return MOM_NULLV;
+}
+
+
+momval_t
+mom_webx_method (momitem_t *webitm)
+{
+  if (!webitm || webitm->i_typnum != momty_item)
+    return MOM_NULLV;
+  if (webitm->i_paylkind != mompayk_webexchange)
+    {
+      MOM_WARNING (MOMOUT_LITERAL
+		   ("bad webxfullpath; non webexchange webitem:"),
+		   MOMOUT_ITEM ((const momitem_t *) webitm),
+		   MOMOUT_LITERAL (" ...from "), MOMOUT_BACKTRACE (5));
+      return MOM_NULLV;
+    }
+  struct mom_webexchange_data_st *wxd = webitm->i_payload;
+  assert (wxd && wxd->webx_magic == MOM_WEBX_MAGIC);
+  if (wxd->webx_requ)
+    {
+      unsigned flags = onion_request_get_flags (wxd->webx_requ);
+      switch (flags & OR_METHODS)
+	{
+	case OR_GET:
+	  return (momval_t) mom_named__GET;
+	case OR_POST:
+	  return (momval_t) mom_named__POST;
+	case OR_HEAD:
+	  return (momval_t) mom_named__HEAD;
+	default:
+	  break;
+	}
+    }
+  return MOM_NULLV;
+}
+
+
 
 // called at most once from main
 void

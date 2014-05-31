@@ -34,7 +34,8 @@ create_stuff_mom (void)
 {
   momitem_t *ajax_complete_name_item = mom_make_item ();
   mom_item_set_space (ajax_complete_name_item, momspa_root);
-  mom_register_item_named_cstr (ajax_complete_name_item, "ajax_complete_name");
+  mom_register_item_named_cstr (ajax_complete_name_item,
+				"ajax_complete_name");
   mom_item_start_routine (ajax_complete_name_item, "ajax_complete_name");
   ajax_complete_name_item->i_attrs = mom_put_attribute
     (ajax_complete_name_item->i_attrs,
@@ -47,7 +48,8 @@ create_stuff_mom (void)
      (ajax_complete_name_item,
       (momval_t) mom_make_string ("{spare1 ajax-complete_name}"),
       (momval_t) mom_make_string ("{spare2 ajax-complete_name}"),
-      (momval_t) mom_make_string ("{spare3 ajax-complete_name}"), MOM_EMPTY, NULL));
+      (momval_t) mom_make_string ("{spare3 ajax-complete_name}"), MOM_EMPTY,
+      NULL));
   MOM_INFORMPRINTF ("created ajax_complete_name");
 }
 

@@ -775,24 +775,25 @@ const momjsonobject_t *mom_make_json_object (int, ...)
 enum momjsondirective_en
 {
   MOMJSON__END,
-  MOMJSONDIR__ENTRY,		/* momval_t nameval, momval_t attrval */
-  MOMJSONDIR__STRING,		/* const char*namestr, momval_t attval */
-  MOMJSONDIR__COUNTED_ENTRIES,	/* unsigned count, struct mom_jsonentry_st* */
-};
-
 #define MOMJSON_END ((void*)MOMJSON__END)
-
+  //
+  MOMJSONDIR__ENTRY,		/* momval_t nameval, momval_t attrval */
 #define MOMJSOB_ENTRY(N,V) MOMJSONDIR__ENTRY,	\
     MOM_REQUIRES_TYPE(N,momval_t,mombad_value), \
     MOM_REQUIRES_TYPE(V,momval_t,mombad_value)
-
+  //
+  MOMJSONDIR__STRING,		/* const char*namestr, momval_t attval */
 #define MOMJSOB_STRING(S,V) MOMJSONDIR__STRING,		\
     MOM_REQUIRES_TYPE(S,const char*,mombad_string),	\
     MOM_REQUIRES_TYPE(V,momval_t,mombad_value)
-
+  //
+  MOMJSONDIR__COUNTED_ENTRIES,	/* unsigned count, struct mom_jsonentry_st* */
 #define MOMJSOB_COUNTED_ENTRIES(C,E)  MOMJSONDIR__COUNTED_ENTRIES,	\
     MOM_REQUIRES_TYPE(C,unsigned,mombad_unsigned),			\
     MOM_REQUIRES_TYPE(E,struct mom_jsonentry_st*,mombad_entries)
+  //
+};
+
 
 
 // make a JSON array of given count
@@ -1417,6 +1418,8 @@ momval_t mom_webx_post_arg (momitem_t *webitm, const char *argname);
 momval_t mom_webx_jsob_query (momitem_t *webitm);
 // give the value of a given query argument
 momval_t mom_webx_query_arg (momitem_t *webitm, const char *argname);
+// get the fullpath of a webitm
+momval_t mom_webx_fullpath (momitem_t *webitm);
 
 
 

@@ -193,8 +193,8 @@ ajax_objects_codmom (int momstate_, momitem_t *momtasklet_,
 #define _SET_STATE(St) do {						\
     MOM_DEBUGPRINTF (run,						\
 		     "ajax_objects_codmom setstate " #St " = %d",	\
-	       (int)ajaxobjsm_s_##St);					\
-    return ajaxobjsm_s_##St; } while(0)
+	       (int)ajaxobjs_s_##St);					\
+    return ajaxobjs_s_##St; } while(0)
   MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_objects_codmom tasklet:"),
 	     MOMOUT_ITEM ((const momitem_t *) momtasklet_),
 	     MOMOUT_LITERAL (" state#"), MOMOUT_DEC_INT ((int) momstate_));
@@ -222,14 +222,6 @@ ajaxobjs_lab_start:
 	       MOMOUT_VALUE ((const momval_t) todov));
     if (mom_string_same (todov, "mom_menuitem_named"))
       {
-	momval_t tupnamed = MOM_NULLV;
-	momval_t jsarrnames = MOM_NULLV;
-	tupnamed =
-	  (momval_t) mom_alpha_ordered_tuple_of_named_items (&jsarrnames);
-	MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_objects_codmom tupnamed="),
-		   MOMOUT_VALUE ((const momval_t) tupnamed),
-		   MOMOUT_SPACE (24), MOMOUT_LITERAL ("jsarrnames="),
-		   MOMOUT_VALUE ((const momval_t) jsarrnames));
 	MOM_WEBX_OUT (_L (webx).pitem,
 		      MOMOUT_LITERAL
 		      ("Edit (or create) a <b>named</b> item <small>at </i>"),
@@ -237,14 +229,12 @@ ajaxobjs_lab_start:
 					  mom_clock_time (CLOCK_REALTIME)),
 		      MOMOUT_LITERAL ("</i></small><br/>"), MOMOUT_SPACE (32),
 		      MOMOUT_LITERAL
-		      ("<div class='ui-widget'><label for='mom_name_entry'>Name:</label>"
-		       " <input type='text' id='mom_name_input'/>"),
+		      ("<label for='mom_name_input'>Name:</label>"
+		       " <input' id='mom_name_input'/>"),
 		      MOMOUT_NEWLINE (),
 		      MOMOUT_LITERAL
-		      ("<script type='text/javascript'>mom_set_name_entry_completion($('#mom_name_input'),"),
-		      MOMOUT_JSON_VALUE ((const momval_t) jsarrnames),
-		      MOMOUT_LITERAL (",mom_name_entry_changed);"),
-		      MOMOUT_SPACE (32), MOMOUT_LITERAL ("</script></div>"),
+		      ("<script type='text/javascript'>mom_set_name_entry_combobox($('#mom_name_input'));"),
+		      MOMOUT_SPACE (32), MOMOUT_LITERAL ("</script>"),
 		      MOMOUT_NEWLINE (), NULL);
 	mom_webx_reply (_L (webx).pitem, "text/html", HTTP_OK);
 	goto end;
@@ -318,8 +308,8 @@ ajax_complete_name_codmom (int momstate_, momitem_t *momtasklet_,
 #define _SET_STATE(St) do {						\
     MOM_DEBUGPRINTF (run,						\
 		     "ajax_complete_name_codmom setstate " #St " = %d",	\
-	       (int)ajaxcompnamm_s_##St);					\
-    return ajaxcompnamm_s_##St; } while(0)
+	       (int)ajaxcompnam_s_##St);				\
+    return ajaxcompnam_s_##St; } while(0)
   MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_complete_name_codmom tasklet:"),
 	     MOMOUT_ITEM ((const momitem_t *) momtasklet_),
 	     MOMOUT_LITERAL (" state#"), MOMOUT_DEC_INT ((int) momstate_));
@@ -339,11 +329,53 @@ ajaxcompnam_lab_start:
   assert (mom_is_item (_L (webx)));
   {
     mom_lock_item (_L (webx).pitem);
-    MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_complete_name_codmom postjsob="),
+    MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_complete_name_codmom queryjsob="),
 	       MOMOUT_VALUE ((const momval_t)
-			     mom_webx_jsob_post (_L (webx).pitem)));
+			     mom_webx_jsob_query (_L (webx).pitem)),
+	       MOMOUT_NEWLINE (),
+	       MOMOUT_LITERAL ("ajax_complete_name_codmom postjsob="),
+	       MOMOUT_VALUE ((const momval_t)
+			     mom_webx_jsob_post (_L (webx).pitem)),
+	       MOMOUT_NEWLINE (),
+	       MOMOUT_LITERAL ("ajax_complete_name_codmom method="),
+	       MOMOUT_VALUE ((const momval_t) (_L (method))), NULL);
+    if (_L (method).pitem == mom_named__POST
+	&& !mom_webx_jsob_post (_L (webx).pitem).ptr)
+      {
+	momval_t tupnamed = MOM_NULLV;
+	momval_t jsarrnames = MOM_NULLV;
+	tupnamed =
+	  (momval_t) mom_alpha_ordered_tuple_of_named_items (&jsarrnames);
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL ("ajax_complete_name_codmom tupnamed="),
+		   MOMOUT_VALUE ((const momval_t) tupnamed),
+		   MOMOUT_SPACE (24), MOMOUT_LITERAL ("jsarrnames="),
+		   MOMOUT_VALUE ((const momval_t) jsarrnames));
+	unsigned nbnames = mom_tuple_length (tupnamed);
+	momval_t *jarr =
+	  MOM_GC_ALLOC ("json named array", nbnames * sizeof (momval_t));
+	for (unsigned nix = 0; nix < nbnames; nix++)
+	  {
+	    const momitem_t *curnamitm = mom_tuple_nth_item (tupnamed, nix);
+	    momval_t curnamstr = mom_json_array_nth (jsarrnames, nix);
+	    jarr[nix] = (momval_t)	////
+	      mom_make_json_object (MOMJSOB_STRING
+				    ((const char *) "name",
+				     (momval_t) curnamstr),
+				    MOMJSOB_STRING ((const char *) "id",
+						    (momval_t)
+						    mom_item_get_idstr ((momitem_t *) curnamitm)), NULL);
+	  }
+	momval_t jres = (momval_t) mom_make_json_array_count (nbnames, jarr);
+	MOM_GC_FREE (jarr);
+	MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_complete_name_codmom jres="),
+		   MOMOUT_VALUE ((const momval_t) jres));
+	MOM_WEBX_OUT (_L (webx).pitem, MOMOUT_JSON_VALUE (jres));
+	mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
+	goto end;
+      }
     MOM_FATAL (MOMOUT_LITERAL ("ajax_complete_name incomplete webx="),
-	       MOMOUT_VALUE ((const momval_t) (_L (webx))));
+	       MOMOUT_VALUE ((const momval_t) (_L (webx))), NULL);
     goto end;
   end:
     mom_unlock_item (_L (webx).pitem);
