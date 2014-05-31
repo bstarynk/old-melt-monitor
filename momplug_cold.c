@@ -32,23 +32,23 @@ momplugin_init (const char *arg)
 static void
 create_stuff_mom (void)
 {
-  momitem_t *ajax_system_item = mom_make_item ();
-  mom_item_set_space (ajax_system_item, momspa_root);
-  mom_register_item_named_cstr (ajax_system_item, "ajax_system");
-  mom_item_start_routine (ajax_system_item, "ajax_system");
-  ajax_system_item->i_attrs = mom_put_attribute
-    (ajax_system_item->i_attrs,
+  momitem_t *ajax_objects_item = mom_make_item ();
+  mom_item_set_space (ajax_objects_item, momspa_root);
+  mom_register_item_named_cstr (ajax_objects_item, "ajax_objects");
+  mom_item_start_routine (ajax_objects_item, "ajax_objects");
+  ajax_objects_item->i_attrs = mom_put_attribute
+    (ajax_objects_item->i_attrs,
      mom_named__comment,
-     (momval_t) mom_make_string ("handle 'ajax_system' webrequests"));
-  ajax_system_item->i_attrs = mom_put_attribute
-    (ajax_system_item->i_attrs,
+     (momval_t) mom_make_string ("handle 'ajax_objects' webrequests"));
+  ajax_objects_item->i_attrs = mom_put_attribute
+    (ajax_objects_item->i_attrs,
      mom_named__web_handler,
      (momval_t) mom_make_node_til_nil
-     (ajax_system_item,
-      (momval_t) mom_make_string ("{spare1 ajax-system}"),
-      (momval_t) mom_make_string ("{spare2 ajax-system}"),
-      (momval_t) mom_make_string ("{spare3 ajax-system}"), MOM_EMPTY, NULL));
-  MOM_INFORMPRINTF ("created ajax_system");
+     (ajax_objects_item,
+      (momval_t) mom_make_string ("{spare1 ajax-objects}"),
+      (momval_t) mom_make_string ("{spare2 ajax-objects}"),
+      (momval_t) mom_make_string ("{spare3 ajax-objects}"), MOM_EMPTY, NULL));
+  MOM_INFORMPRINTF ("created ajax_objects");
 }
 
 void

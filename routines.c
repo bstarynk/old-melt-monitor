@@ -20,6 +20,8 @@
 
 #include "monimelt.h"
 
+////////////////////////////////////////////////////////////////
+///// ajax_system
 enum ajax_system_values_en
 {
   ajaxsyst_v_arg0res,
@@ -123,6 +125,9 @@ ajaxsyst_lab_start:
 	usleep (1000);
 	goto end;
       }
+    else
+      MOM_FATAL(MOMOUT_LITERAL("ajax_system unexpected todov:"),
+		MOMOUT_VALUE((const momval_t)todov));
   end:
     mom_unlock_item (_L (webx).pitem);
   }
@@ -143,5 +148,104 @@ const struct momroutinedescr_st momrout_ajax_system = {
   .rout_name = "ajax_system",
   .rout_module = MONIMELT_CURRENT_MODULE,
   .rout_codefun = ajax_system_codmom,
+  .rout_timestamp = __DATE__ "@" __TIME__
+};
+
+
+
+////////////////////////////////////////////////////////////////
+///// ajax_objects
+enum ajax_objects_values_en
+{
+  ajaxobjs_v_arg0res,
+  ajaxobjs_v_method,
+  ajaxobjs_v_namid,
+  ajaxobjs_v_restpath,
+  ajaxobjs_v__spare,
+  ajaxobjs_v_webx,
+  ajaxobjs_v__lastval
+};
+
+enum ajax_objects_closure_en
+{
+  ajaxobjs_c__lastclosure
+};
+
+enum ajax_objects_numbers_en
+{
+  ajaxobjs_n__lastnum
+};
+
+
+static int
+ajax_objects_codmom (int momstate_, momitem_t *momtasklet_,
+		    const momnode_t *momclosure_, momval_t *momlocvals_,
+		    intptr_t * momlocnums_, double *momlocdbls_)
+{
+#define _L(Nam) (momlocvals_[ajaxobjs_v_##Nam])
+#define _C(Nam) (momclosure_->sontab[ajaxobjs_c_##Nam])
+#define _N(Nam) (momlocnums_[ajaxobjs_n_##Nam])
+  enum ajax_objects_state_en
+  {
+    ajaxobjs_s_start,
+    ajaxobjs_s__laststate
+  };
+#define _SET_STATE(St) do {						\
+    MOM_DEBUGPRINTF (run,						\
+		     "ajax_objects_codmom setstate " #St " = %d",	\
+	       (int)ajaxobjsm_s_##St);					\
+    return ajaxobjsm_s_##St; } while(0)
+  MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_objects_codmom tasklet:"),
+	     MOMOUT_ITEM ((const momitem_t *) momtasklet_),
+	     MOMOUT_LITERAL (" state#"), MOMOUT_DEC_INT ((int) momstate_));
+  if (momstate_ >= 0 && momstate_ < ajaxobjs_s__laststate)
+    switch ((enum ajax_objects_state_en) momstate_)
+      {
+      case ajaxobjs_s_start:
+	goto ajaxobjs_lab_start;
+      case ajaxobjs_s__laststate:;
+      }
+  MOM_FATAPRINTF ("ajax_objects invalid state #%d", momstate_);
+  ////
+ajaxobjs_lab_start:
+  _L (webx) = _L (arg0res);
+  MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_objects_codmom webx="),
+	     MOMOUT_VALUE ((const momval_t) _L (webx)));
+  assert (mom_is_item (_L (webx)));
+  {
+    mom_lock_item (_L (webx).pitem);
+    MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_objects_codmom postjsob="),
+	       MOMOUT_VALUE ((const momval_t)
+			     mom_webx_jsob_post (_L (webx).pitem)));
+    momval_t todov = mom_webx_post_arg (_L (webx).pitem, "todo_mom");
+    MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_objects_codmom todov="),
+	       MOMOUT_VALUE ((const momval_t) todov));
+    if (mom_string_same (todov, "mom_menuobjects"))
+      {
+	goto end;
+      }
+    else
+      MOM_FATAL(MOMOUT_LITERAL("ajax_objects unexpected todov:"),
+		MOMOUT_VALUE((const momval_t)todov));
+  end:
+    mom_unlock_item (_L (webx).pitem);
+  }
+  ;
+#undef _L
+#undef _C
+#undef _N
+#undef SET_STATE
+  return momroutres_pop;
+}
+
+const struct momroutinedescr_st momrout_ajax_objects = {
+  .rout_magic = MOM_ROUTINE_MAGIC,
+  .rout_minclosize = ajaxobjs_c__lastclosure,
+  .rout_frame_nbval = ajaxobjs_v__lastval,
+  .rout_frame_nbnum = ajaxobjs_n__lastnum,
+  .rout_frame_nbdbl = 0,
+  .rout_name = "ajax_objects",
+  .rout_module = MONIMELT_CURRENT_MODULE,
+  .rout_codefun = ajax_objects_codmom,
   .rout_timestamp = __DATE__ "@" __TIME__
 };
