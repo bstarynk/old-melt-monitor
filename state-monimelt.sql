@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 May 31
+-- state-monimelt dump 2014 Jun 01
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -35,6 +35,10 @@ INSERT INTO t_items VALUES('_06yp8ueq6yf_5ts408yww29','{"kind": null, "payload":
 INSERT INTO t_items VALUES('_17spwr8dkzv_tsf2s8diazu','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "Gives the double floating-point numbers of Json for frames of tasklets."}],
  "content": null}
+');
+INSERT INTO t_items VALUES('_240dwt57s08_a8uy366sev5','{"kind": "routine", "payload": "noop", "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "useless noop routine"}], "content": {"sons": ["{spare1 noop}",
+   "{spare2 noop}", null], "node": "_240dwt57s08_a8uy366sev5", "jtype": "node"}}
 ');
 INSERT INTO t_items VALUES('_2v75mmyph64_4h4kys78740','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "in JSON dumps, indicate sets of item, or give their array of elements"}],
@@ -167,6 +171,7 @@ INSERT INTO t_names VALUES('json_true','_2vmrrvq5kdk_9um63pstcu9','.predef');
 INSERT INTO t_names VALUES('jtype','_7urjeiw3evy_m7k72uv6790','.predef');
 INSERT INTO t_names VALUES('kind','_06yp8ueq6yf_5ts408yww29','.predef');
 INSERT INTO t_names VALUES('node','_4m7x6811f6j_t480zu575mz','.predef');
+INSERT INTO t_names VALUES('noop','_240dwt57s08_a8uy366sev5','.root');
 INSERT INTO t_names VALUES('notice','_7diyc1cwj8z_x630afccr8e','.predef');
 INSERT INTO t_names VALUES('numbers','_3fw5acswe59_9016fqe4d41','.predef');
 INSERT INTO t_names VALUES('payload','_41v0erax6my_m6pytj0793u','.predef');
