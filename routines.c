@@ -174,6 +174,7 @@ enum ajax_objects_values_en
 
 enum ajax_objects_closure_en
 {
+  ajaxobjs_c_editvalueclos,
   ajaxobjs_c__lastclosure
 };
 
@@ -545,6 +546,88 @@ const struct momroutinedescr_st momrout_ajax_complete_name = {
   .rout_timestamp = __DATE__ "@" __TIME__
 };
 
+
+
+////////////////////////////////////////////////////////////////
+///// edit_value
+enum edit_value_values_en
+{
+  edit_value_v_arg0res,
+  edit_value_v__lastval
+};
+
+enum edit_value_closure_en
+{
+  edit_value_c__lastclosure
+};
+
+enum edit_value_numbers_en
+{
+  edit_value_n__lastnum
+};
+
+
+static int
+edit_value_codmom (int momstate_, momitem_t *momtasklet_,
+		   const momnode_t *momclosure_,
+		   momval_t *momlocvals_, intptr_t * momlocnums_,
+		   double *momlocdbls_)
+{
+#define _L(Nam) (momlocvals_[edit_value_v_##Nam])
+#define _C(Nam) (momclosure_->sontab[edit_value_c_##Nam])
+#define _N(Nam) (momlocnums_[edit_value_n_##Nam])
+  enum edit_value_state_en
+  {
+    edit_value_s_start,
+    edit_value_s_impossible,
+    edit_value_s__laststate
+  };
+#define _SET_STATE(St) do {					\
+    MOM_DEBUGPRINTF (run,					\
+		     "edit_value_codmom setstate " #St " = %d",	\
+		     (int)edit_value_s_##St);				\
+    return edit_value_s_##St; } while(0)
+  if (momstate_ >= 0 && momstate_ < edit_value_s__laststate)
+    switch ((enum edit_value_state_en) momstate_)
+      {
+      case edit_value_s_start:
+	goto edit_value_lab_start;
+      case edit_value_s_impossible:
+	goto edit_value_lab_impossible;
+      case edit_value_s__laststate:;
+      }
+  MOM_FATAPRINTF ("edit_value invalid state #%d", momstate_);
+edit_value_lab_start:
+  MOM_DEBUG (run, MOMOUT_LITERAL ("edit_value start arg0res="),
+	     MOMOUT_VALUE ((const momval_t) _L (arg0res)));
+  if (_L (arg0res).ptr == MOM_EMPTY)
+    _SET_STATE (impossible);
+  return momroutres_pop;
+edit_value_lab_impossible:
+  MOM_FATAPRINTF ("edit_value impossible state reached!");
+#undef _L
+#undef _C
+#undef _N
+#undef _SET_STATE
+  return momroutres_pop;
+}
+
+const struct momroutinedescr_st momrout_edit_value = {
+  .rout_magic = MOM_ROUTINE_MAGIC,
+  .rout_minclosize = edit_value_c__lastclosure,
+  .rout_frame_nbval = edit_value_v__lastval,
+  .rout_frame_nbnum = edit_value_n__lastnum,
+  .rout_frame_nbdbl = 0,
+  .rout_name = "edit_value",
+  .rout_module = MONIMELT_CURRENT_MODULE,
+  .rout_codefun = edit_value_codmom,
+  .rout_timestamp = __DATE__ "@" __TIME__
+};
+
+
+
+
+
 ////////////////////////////////////////////////////////////////
 ///// noop
 enum noop_values_en
@@ -602,7 +685,6 @@ noop_lab_start:
   return momroutres_pop;
 noop_lab_impossible:
   MOM_FATAPRINTF ("noop impossible state reached!");
-
 #undef _L
 #undef _C
 #undef _N

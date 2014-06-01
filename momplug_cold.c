@@ -34,19 +34,28 @@ create_stuff_mom (void)
 {
   momitem_t *ajax_objects_item = mom_get_item_of_name ("ajax_objects");
   assert (ajax_objects_item != NULL);
-  momitem_t *noop_item = mom_make_item ();
-  mom_item_set_space (noop_item, momspa_root);
-  mom_register_item_named_cstr (noop_item, "noop");
-  mom_item_start_routine (noop_item, "noop");
-  noop_item->i_attrs = mom_put_attribute
-    (noop_item->i_attrs,
-     mom_named__comment, (momval_t) mom_make_string ("useless noop routine"));
-  noop_item->i_content =
-    (momval_t) mom_make_node_til_nil
-    (noop_item,
-     (momval_t) mom_make_string ("{spare1 noop}"),
-     (momval_t) mom_make_string ("{spare2 noop}"), MOM_EMPTY, NULL);
-  MOM_INFORMPRINTF ("created noop");
+  momitem_t *edit_value_item = mom_make_item ();
+  mom_item_set_space (edit_value_item, momspa_root);
+  mom_register_item_named_cstr (edit_value_item, "edit_value");
+  mom_item_start_routine (edit_value_item, "edit_value");
+  edit_value_item->i_attrs = mom_put_attribute
+    (edit_value_item->i_attrs,
+     mom_named__comment,
+     (momval_t)
+     mom_make_string
+     ("routine to edit a value during edition in ajax_objects"));
+  ajax_objects_item->i_attrs = mom_put_attribute (ajax_objects_item->i_attrs, mom_named__web_handler, (momval_t) mom_make_node_til_nil	//
+						  (ajax_objects_item, (momval_t) mom_make_node_til_nil	//
+						   (edit_value_item,
+						    (momval_t)
+						    mom_make_string
+						    ("{spare1-edit_value}"),
+						    NULL),
+						   (momval_t)
+						   mom_make_string
+						   ("{spare2-ajax_objects}"),
+						   MOM_EMPTY, NULL));
+  MOM_INFORMPRINTF ("created edit_value");
 }
 
 void
