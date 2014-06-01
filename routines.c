@@ -163,6 +163,7 @@ enum ajax_objects_values_en
   ajaxobjs_v_restpath,
   ajaxobjs_v__spare,
   ajaxobjs_v_webx,
+  ajaxobjs_v_edititem,
   ajaxobjs_v__lastval
 };
 
@@ -188,6 +189,7 @@ ajax_objects_codmom (int momstate_, momitem_t *momtasklet_,
   enum ajax_objects_state_en
   {
     ajaxobjs_s_start,
+    ajaxobjs_s_beginedit,
     ajaxobjs_s__laststate
   };
 #define _SET_STATE(St) do {						\
@@ -203,6 +205,8 @@ ajax_objects_codmom (int momstate_, momitem_t *momtasklet_,
       {
       case ajaxobjs_s_start:
 	goto ajaxobjs_lab_start;
+      case ajaxobjs_s_beginedit:
+	goto ajaxobjs_lab_beginedit;
       case ajaxobjs_s__laststate:;
       }
   MOM_FATAPRINTF ("ajax_objects invalid state #%d", momstate_);
@@ -222,6 +226,7 @@ ajaxobjs_lab_start:
 	       MOMOUT_VALUE ((const momval_t) todov));
     if (mom_string_same (todov, "mom_menuitem_named"))
       {
+	MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_objects_codmom named"));
 	MOM_WEBX_OUT (_L (webx).pitem,
 		      MOMOUT_LITERAL
 		      ("Edit an existing <b>named</b> item <small>at </i>"),
@@ -240,8 +245,9 @@ ajaxobjs_lab_start:
 	mom_webx_reply (_L (webx).pitem, "text/html", HTTP_OK);
 	goto end;
       }
-    if (mom_string_same (todov, "mom_menuitem_new"))
+    else if (mom_string_same (todov, "mom_menuitem_new"))
       {
+	MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_objects_codmom new"));
 	MOM_WEBX_OUT (_L (webx).pitem,
 		      MOMOUT_LITERAL
 		      ("Edit a <b>new</b> item <small>at </i>"),
@@ -260,6 +266,46 @@ ajaxobjs_lab_start:
 	mom_webx_reply (_L (webx).pitem, "text/html", HTTP_OK);
 	goto end;
       }
+    else if (mom_string_same (todov, "mom_domakenamed"))
+      {
+	momval_t namev = mom_webx_post_arg (_L (webx).pitem, "name_mom");
+	momval_t commentv =
+	  mom_webx_post_arg (_L (webx).pitem, "comment_mom");
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL ("ajax_objects_codmom makenamed namev="),
+		   MOMOUT_VALUE ((const momval_t) namev),
+		   MOMOUT_LITERAL ("; commentv="),
+		   MOMOUT_VALUE ((const momval_t) commentv));
+	_L (edititem) = (momval_t) mom_make_item ();
+	_L (edititem).pitem->i_attrs =
+	  mom_put_attribute (_L (edititem).pitem->i_attrs, mom_named__comment,
+			     commentv);
+	mom_register_item_named (_L (edititem).pitem, mom_to_string (namev));
+	mom_item_set_space (_L (edititem).pitem, momspa_root);
+	{
+	  mom_unlock_item (_L (webx).pitem);
+	  _SET_STATE (beginedit);
+	}
+      }
+    else if (mom_string_same (todov, "mom_doeditnamed"))
+      {
+	momval_t namev = mom_webx_post_arg (_L (webx).pitem, "name_mom");
+	momval_t idv = mom_webx_post_arg (_L (webx).pitem, "id_mom");
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL ("ajax_objects_codmom doeditnamed namev="),
+		   MOMOUT_VALUE ((const momval_t) namev),
+		   MOMOUT_LITERAL ("; idv="),
+		   MOMOUT_VALUE ((const momval_t) idv));
+	_L (edititem) =
+	  (momval_t) mom_get_item_of_name_or_ident_string (namev);
+	if (!_L (edititem).ptr)
+	  _L (edititem) =
+	    (momval_t) mom_get_item_of_name_or_ident_string (idv);
+	{
+	  mom_unlock_item (_L (webx).pitem);
+	  _SET_STATE (beginedit);
+	}
+      }
     else
       MOM_FATAL (MOMOUT_LITERAL ("ajax_objects unexpected todov:"),
 		 MOMOUT_VALUE ((const momval_t) todov));
@@ -267,6 +313,16 @@ ajaxobjs_lab_start:
     mom_unlock_item (_L (webx).pitem);
   }
   ;
+  ////
+ajaxobjs_lab_beginedit:
+  {
+    MOM_DEBUG (run,
+	       MOMOUT_LITERAL ("ajax_objects_codmom beginedit edititem="),
+	       MOMOUT_VALUE ((const momval_t) _L (edititem)));
+    MOM_FATAL (MOMOUT_LITERAL ("ajax_objects unimplemented beginedit"));
+  }
+  ;
+  ////
 #undef _L
 #undef _C
 #undef _N

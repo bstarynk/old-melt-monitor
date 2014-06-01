@@ -1005,7 +1005,8 @@ fetch_param_mom (struct mom_loader_st *ld, const char *parname)
   // parname at index 1
   if (sqlite3_bind_text
       (ld->ldr_sqlstmt_param_fetch, 1, parname, -1, SQLITE_STATIC))
-    MOM_FATAL ("failed to bind parrame: %s", sqlite3_errmsg (ld->ldr_sqlite));
+    MOM_FATAPRINTF ("failed to bind parrame: %s",
+		    sqlite3_errmsg (ld->ldr_sqlite));
   int stepres = sqlite3_step (ld->ldr_sqlstmt_param_fetch);
   if (stepres == SQLITE_ROW)
     {
@@ -1640,7 +1641,7 @@ end:
   sqlite3_finalize (dmp.dmp_sqlstmt_module_insert),
     dmp.dmp_sqlstmt_module_insert = NULL;
   if (sqlite3_exec (dmp.dmp_sqlite, "END TRANSACTION", NULL, NULL, &errmsg))
-    MOM_FATAL ("failed to END TRANSACTION: %s", errmsg);
+    MOM_FATAPRINTF ("failed to END TRANSACTION: %s", errmsg);
   int errclo = sqlite3_close_v2 (dmp.dmp_sqlite);
   if (errclo != SQLITE_OK)
     MOM_FATAPRINTF ("failed to close sqlite3 %s: %s", dmp.dmp_sqlpath,
@@ -1879,7 +1880,8 @@ spacerootpredef_fetch_item_mom (struct mom_loader_st *ld, momitem_t *itm)
   // idstr at index 1
   if (sqlite3_bind_text
       (ld->ldr_sqlstmt_item_fetch, 1, ids, -1, SQLITE_STATIC))
-    MOM_FATAL ("failed to bind idstr: %s", sqlite3_errmsg (ld->ldr_sqlite));
+    MOM_FATAPRINTF ("failed to bind idstr: %s",
+		    sqlite3_errmsg (ld->ldr_sqlite));
   int stepres = sqlite3_step (ld->ldr_sqlstmt_item_fetch);
   if (stepres == SQLITE_ROW)
     {

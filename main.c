@@ -682,7 +682,7 @@ add_debugging_mom (const char *dbgopt)
   char dbuf[256];
   memset (dbuf, 0, sizeof (dbuf));
   if (strlen (dbgopt) >= sizeof (dbuf) - 1)
-    MOM_FATAL ("too long debug option %s", dbgopt);
+    MOM_FATAPRINTF ("too long debug option %s", dbgopt);
   strcpy (dbuf, dbgopt);
   char *comma = NULL;
   if (!strcmp (dbuf, ".") || !strcmp (dbuf, "_"))

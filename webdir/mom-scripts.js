@@ -56,6 +56,16 @@ function mom_do_menu_objects(itm) {
 
 function mom_name_entry_selected(rec) {
     console.debug ("mom_name_entry_selected rec=", rec);
+    $.ajax({ url: '/ajax_objects',
+	     method: 'POST',
+	     data: { todo_mom: "mom_doeditnamed",
+		     name_mom: rec.name,
+		     id_mom: rec.id },
+	     dataType: 'html',
+	     success: function (gotdata) {
+		 console.debug ("mom_name_entry_selected gotdata=", gotdata);
+	     }
+	   });
 }
 
 
@@ -79,6 +89,16 @@ function mom_make_named()
     var newinp = $('#mom_name_new');
     var comminp = $('#mom_comment');
     console.debug ("mom_make_named newimp.val=", newimp.val(), " commimp.val=", commimp.val());
+    $.ajax({ url: '/ajax_objects',
+	     method: 'POST',
+	     data: { todo_mom: "mom_domakenamed",
+		     name_mom: newimp.val(),
+		     comment_mom: commimp.val() },
+	     dataType: 'html',
+	     success: function (gotdata) {
+		 console.debug ("mom_make_named gotdata=", gotdata);
+	     }
+	   });
 }
 
 function mom_erase_maindiv() {

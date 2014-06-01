@@ -942,7 +942,7 @@ start_some_pending_jobs_mom (void)
 	  _exit (127);
 	}
       else if (newpid < 0)
-	MOM_FATAL ("fork failed for %s", progname);
+	MOM_FATAPRINTF ("fork failed for %s", progname);
       // parent process:
       MOM_DEBUGPRINTF (run,
 		       "start_some_pending_jobs progname=%s newpid=%d, jobnum=%d",

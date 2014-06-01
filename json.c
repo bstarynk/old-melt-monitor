@@ -42,8 +42,8 @@ mom_json_parser_data (const struct jsonparser_st *jp)
   if (!jp)
     return NULL;
   if (jp->jsonp_magic != MOMJSONP_MAGIC)
-    MOM_FATAL ("invalid json parser (magic %x, expecting %x)",
-	       jp->jsonp_magic, MOMJSONP_MAGIC);
+    MOM_FATAPRINTF ("invalid json parser (magic %x, expecting %x)",
+		    jp->jsonp_magic, MOMJSONP_MAGIC);
   return jp->jsonp_data;
 }
 
@@ -53,8 +53,8 @@ mom_end_json_parser (struct jsonparser_st *jp)
   if (!jp)
     return;
   if (jp->jsonp_magic != MOMJSONP_MAGIC)
-    MOM_FATAL ("invalid json parser (magic %x, expecting %x)",
-	       jp->jsonp_magic, MOMJSONP_MAGIC);
+    MOM_FATAPRINTF ("invalid json parser (magic %x, expecting %x)",
+		    jp->jsonp_magic, MOMJSONP_MAGIC);
   pthread_mutex_destroy (&jp->jsonp_mtx);
   memset (jp, 0, sizeof (struct jsonparser_st));
 }
@@ -65,8 +65,8 @@ mom_close_json_parser (struct jsonparser_st *jp)
   if (!jp)
     return;
   if (jp->jsonp_magic != MOMJSONP_MAGIC)
-    MOM_FATAL ("invalid json parser (magic %x, expecting %x)",
-	       jp->jsonp_magic, MOMJSONP_MAGIC);
+    MOM_FATAPRINTF ("invalid json parser (magic %x, expecting %x)",
+		    jp->jsonp_magic, MOMJSONP_MAGIC);
   pthread_mutex_destroy (&jp->jsonp_mtx);
   fclose (jp->jsonp_file);
   memset (jp, 0, sizeof (struct jsonparser_st));
@@ -392,7 +392,7 @@ again:
 	      unsigned newsize = ((5 * namesize / 4 + 10) | 0xf) + 1;
 	      char *newname = MOM_GC_SCALAR_ALLOC ("JSON new name", newsize);
 	      if (!newname)
-		MOM_FATAL ("no space for JSON name of size %u", newsize);
+		MOM_FATAPRINTF ("no space for JSON name of size %u", newsize);
 	      memset (newname, 0, newsize);
 	      strcpy (newname, namestr);
 	      if (namestr != namebuf)
@@ -608,7 +608,7 @@ mom_make_json_object (int firstdir, ...)
 	  }
 	  break;
 	default:
-	  MOM_FATAL ("unexpected JSON directive %d", dir);
+	  MOM_FATAPRINTF ("unexpected JSON directive %d", dir);
 	}
     }
   va_end (args);
@@ -687,7 +687,7 @@ mom_make_json_object (int firstdir, ...)
 	  }
 	  break;
 	default:
-	  MOM_FATAL ("unexpected JSON directive %d", dir);
+	  MOM_FATAPRINTF ("unexpected JSON directive %d", dir);
 	}
     }
   va_end (args);
@@ -741,10 +741,8 @@ mom_make_json_object (int firstdir, ...)
   if (MOM_UNLIKELY (shrink))
     {
       struct momjsonobject_st *newjsob
-	= GC_MALLOC (sizeof (struct momjsonobject_st)
-		     + count * sizeof (struct mom_jsonentry_st));
-      if (MOM_UNLIKELY (!newjsob))
-	MOM_FATAL ("failed to reallocate JSON object with %d entries", size);
+	= MOM_GC_ALLOC ("shrink JSON object", sizeof (struct momjsonobject_st)
+			+ count * sizeof (struct mom_jsonentry_st));
       memcpy (newjsob, jsob,
 	      sizeof (struct momjsonobject_st) +
 	      count * sizeof (struct mom_jsonentry_st));

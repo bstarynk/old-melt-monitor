@@ -941,9 +941,6 @@ mom_make_set_without (momval_t s1, momval_t v2)
 	      sres =
 		MOM_GC_ALLOC ("result of set without", sizeof (momset_t) +
 			      (s1len - 1) * sizeof (momitem_t *));
-	      if (MOM_UNLIKELY (!sres))
-		MOM_FATAL ("failed to allocate set of %d elements",
-			   (int) (s1len - 1));
 	      memset (sres, 0,
 		      sizeof (momset_t) + (s1len - 1) * sizeof (momitem_t *));
 	      if (ix1 > 0)

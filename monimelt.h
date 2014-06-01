@@ -624,6 +624,12 @@ mom_is_string (momval_t v)
   return (v.ptr && v.pstring->typnum == momty_string);
 }
 
+static inline const momstring_t *
+mom_to_string (momval_t v)
+{
+  return (v.ptr && v.pstring->typnum == momty_string) ? v.pstring : NULL;
+}
+
 static inline momhash_t
 mom_string_hash (momval_t v)
 {
@@ -1001,6 +1007,14 @@ const momstring_t *mom_item_get_name_or_idstr (momitem_t *itm);
 // get an item of given name
 momitem_t *mom_get_item_of_name_hash (const char *s, momhash_t h);
 #define mom_get_item_of_name(S) mom_get_item_of_name_hash((S),0)
+
+static inline momitem_t *
+mom_get_item_of_name_string (momval_t s)
+{
+  if (s.ptr && s.pstring->typnum == momty_string)
+    return mom_get_item_of_name_hash (s.pstring->cstr, s.pstring->hash);
+  return NULL;
+}
 
 static inline const char *
 mom_ident_cstr_of_item (const momitem_t *itm)
@@ -1828,7 +1842,7 @@ void mom_fatal_at (const char *fil, int lin, ...) __attribute__ ((sentinel));
   MOM_FATAL_AT(Fil,Lin,Fmt,			\
 		    ##__VA_ARGS__)
 
-#define MOM_FATAL(Dbg,Fmt,...)		\
+#define MOM_FATAL(Fmt,...)		\
   MOM_FATAL_AT_BIS(__FILE__,__LINE__,Fmt,	\
 			##__VA_ARGS__)
 
