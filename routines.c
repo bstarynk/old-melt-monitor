@@ -382,10 +382,14 @@ ajaxobjs_lab_beginedit:
 	    (momval_t) mom_item_get_name_or_idstr (_L (curattritm).pitem);
 	  assert (mom_is_item (_L (webx)));
 	  mom_lock_item (_L (webx).pitem);
-	  MOM_WEBX_OUT (_L (webx).pitem, MOMOUT_LITERAL ("<li class='mom_attrentry_cl'><span class='mom_attritem_cl'>"), MOMOUT_HTML (mom_string_cstr (namidatv)), MOMOUT_LITERAL ("</span> " "&#8594;"	/* U+2192 RIGHTWARDS ARROW → */
-																						   " <span class='mom_value_cl'>"),
+	  MOM_WEBX_OUT (_L (webx).pitem,
+			//
+			MOMOUT_LITERAL ("<li class='mom_attrentry_cl'><span class='mom_attritem_cl'>"), MOMOUT_HTML (mom_string_cstr (namidatv)),	//
+			MOMOUT_LITERAL ("</span> " "&#8594;"	/* U+2192 RIGHTWARDS ARROW → */
+					" <span class='mom_value_cl'>"),
 			NULL);
 	  mom_unlock_item (_L (webx).pitem);
+	  assert (mom_is_node (_C (editvalueclos)));
 	}
 	MOM_FATAL (MOMOUT_LITERAL ("ajax_objects unimplemented beginedit"));
       }

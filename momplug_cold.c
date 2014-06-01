@@ -44,17 +44,18 @@ create_stuff_mom (void)
      (momval_t)
      mom_make_string
      ("routine to edit a value during edition in ajax_objects"));
-  ajax_objects_item->i_attrs = mom_put_attribute (ajax_objects_item->i_attrs, mom_named__web_handler, (momval_t) mom_make_node_til_nil	//
-						  (ajax_objects_item, (momval_t) mom_make_node_til_nil	//
-						   (edit_value_item,
-						    (momval_t)
-						    mom_make_string
-						    ("{spare1-edit_value}"),
-						    NULL),
-						   (momval_t)
-						   mom_make_string
-						   ("{spare2-ajax_objects}"),
-						   MOM_EMPTY, NULL));
+  ajax_objects_item->i_attrs =	//
+    mom_put_attribute (ajax_objects_item->i_attrs, mom_named__web_handler,	//
+		       (momval_t) mom_make_node_til_nil	//
+		       (ajax_objects_item, (momval_t) mom_make_node_til_nil	//
+			(edit_value_item,
+			 (momval_t)
+			 mom_make_string
+			 ("{spare1-edit_value}"),
+			 NULL),
+			(momval_t)
+			mom_make_string
+			("{spare2-ajax_objects}"), MOM_EMPTY, NULL));
   MOM_INFORMPRINTF ("created edit_value");
 }
 

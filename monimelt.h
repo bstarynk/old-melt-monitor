@@ -1044,6 +1044,7 @@ enum mom_kindpayload_en
   mompayk_routine,
   mompayk_tasklet,
   mompayk_buffer,
+  mompayk_vector,
   mompayk_process,
   mompayk_webexchange,
 
@@ -1399,6 +1400,80 @@ momval_t mom_webx_fullpath (momitem_t *webitm);
 // called from main
 void mom_start_web (const char *webhost);
 
+/**************** vector items ****************/
+
+/** the vector payload data is a GC_MALLOC-ed struct mom_valuevector_st */
+
+struct mom_valuevector_st
+{
+  unsigned vvec_size;
+  unsigned vvec_count;
+  momval_t *vvec_array;
+};
+
+static inline unsigned
+mom_item_vector_count (const momitem_t *itm)
+{
+  if (!itm || itm->i_typnum != momty_item)
+    return 0;
+  assert (itm->i_magic == MOM_ITEM_MAGIC);
+  if (itm->i_paylkind != mompayk_vector)
+    return 0;
+  struct mom_valuevector_st *vvec = itm->i_payload;
+  assert (vvec != NULL);
+  return vvec->vvec_count;
+}
+
+static inline momval_t
+mom_item_vector_nth (const momitem_t *itm, int rk)
+{
+  if (!itm || itm->i_typnum != momty_item)
+    return MOM_NULLV;
+  assert (itm->i_magic == MOM_ITEM_MAGIC);
+  if (itm->i_paylkind != mompayk_vector)
+    return MOM_NULLV;
+  struct mom_valuevector_st *vvec = itm->i_payload;
+  assert (vvec != NULL);
+  unsigned cnt = vvec->vvec_count;
+  if (!cnt)
+    return MOM_NULLV;
+  if (rk < 0)
+    rk += (int) cnt;
+  if (rk >= 0 && rk < (int) cnt)
+    return vvec->vvec_array[rk];
+  return MOM_NULLV;
+}
+
+
+static inline void
+mom_item_vector_put_nth (const momitem_t *itm, int rk, momval_t val)
+{
+  if (!itm || itm->i_typnum != momty_item)
+    return;
+  assert (itm->i_magic == MOM_ITEM_MAGIC);
+  if (itm->i_paylkind != mompayk_vector)
+    return;
+  struct mom_valuevector_st *vvec = itm->i_payload;
+  assert (vvec != NULL);
+  unsigned cnt = vvec->vvec_count;
+  if (!cnt)
+    return;
+  if (rk < 0)
+    rk += (int) cnt;
+  if (rk >= 0 && rk < (int) cnt)
+    vvec->vvec_array[rk] = val;
+}
+
+
+void mom_item_start_vector (momitem_t *itm);
+void mom_item_vector_reserve (momitem_t *itm, unsigned gap);
+void mom_item_vector_append1 (momitem_t *itm, momval_t val);
+void mom_item_vector_append_sized (momitem_t *itm, unsigned cnt, ...);
+void mom_item_vector_append_til_nil (momitem_t *itm, ...)
+  __attribute__ ((sentinel));
+void mom_item_vector_append_from_array (momitem_t *itm, unsigned count,
+					const momval_t *arr);
+void mom_item_vector_append_from_node (momitem_t *itm, momval_t nodv);
 
 /************* misc items *********/
 // convert a boolean to a predefined item json_true or json_false

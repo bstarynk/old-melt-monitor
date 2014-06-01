@@ -173,6 +173,220 @@ static const struct mom_payload_descr_st payldescr_queue_mom = {
 
 
 ////////////////////////////////////////////////////////////////
+///// VECTOR PAYLOAD
+////////////////////////////////////////////////////////////////
+
+
+void
+mom_item_start_vector (momitem_t *itm)
+{
+  assert (itm && itm->i_typnum == momty_item);
+  if (itm->i_payload)
+    mom_item_clear_payload (itm);
+  itm->i_payload =
+    MOM_GC_ALLOC ("item vector", sizeof (struct mom_valuevector_st));
+  itm->i_paylkind = mompayk_vector;
+}
+
+
+#define VECTOR_THRESHOLD 64
+void
+mom_item_vector_reserve (momitem_t *itm, unsigned gap)
+{
+  assert (itm && itm->i_typnum == momty_item);
+  if (itm->i_paylkind != mompayk_vector)
+    return;
+  assert (itm->i_payload != NULL);
+  struct mom_valuevector_st *vvec = itm->i_payload;
+  if (vvec->vvec_count + gap >= vvec->vvec_size)
+    {
+      momval_t *oldarr = vvec->vvec_array;
+      unsigned oldcnt = vvec->vvec_count;
+      unsigned newsiz = (((5 * oldcnt / 4 + gap + 3) | 7) + 1);
+      momval_t *newarr =
+	MOM_GC_ALLOC ("grow vector", newsiz * sizeof (momval_t));
+      if (oldcnt > 0)
+	memcpy (newarr, oldarr, oldcnt * sizeof (momval_t));
+      vvec->vvec_size = newsiz;
+      vvec->vvec_array = newarr;
+      MOM_GC_FREE (oldarr);
+    }
+  else if (vvec->vvec_size > VECTOR_THRESHOLD
+	   && 2 * (vvec->vvec_count + gap) < vvec->vvec_size)
+    {
+      momval_t *oldarr = vvec->vvec_array;
+      unsigned oldcnt = vvec->vvec_count;
+      unsigned newsiz = (((5 * oldcnt / 4 + gap + 3) | 7) + 1);
+      momval_t *newarr =
+	MOM_GC_ALLOC ("shrink vector", newsiz * sizeof (momval_t));
+      if (oldcnt > 0)
+	memcpy (newarr, oldarr, oldcnt * sizeof (momval_t));
+      vvec->vvec_size = newsiz;
+      vvec->vvec_array = newarr;
+      MOM_GC_FREE (oldarr);
+    }
+}
+
+void
+mom_item_vector_append1 (momitem_t *itm, momval_t val)
+{
+  assert (itm && itm->i_typnum == momty_item);
+  if (itm->i_paylkind != mompayk_vector)
+    return;
+  assert (itm->i_payload != NULL);
+  struct mom_valuevector_st *vvec = itm->i_payload;
+  if (vvec->vvec_count + 1 >= vvec->vvec_size)
+    mom_item_vector_reserve (itm, 2);
+  assert (vvec->vvec_count + 1 < vvec->vvec_size);
+  vvec->vvec_array[vvec->vvec_count] = val;
+  vvec->vvec_count++;
+}
+
+void
+mom_item_vector_append_sized (momitem_t *itm, unsigned cnt, ...)
+{
+  va_list alist;
+  assert (itm && itm->i_typnum == momty_item);
+  if (itm->i_paylkind != mompayk_vector)
+    return;
+  assert (itm->i_payload != NULL);
+  struct mom_valuevector_st *vvec = itm->i_payload;
+  unsigned oldcnt = vvec->vvec_count;
+  if (oldcnt + cnt >= vvec->vvec_size)
+    mom_item_vector_reserve (itm, cnt + 2);
+  va_start (alist, cnt);
+  memset (vvec->vvec_array + oldcnt, 0, cnt * sizeof (momval_t));
+  vvec->vvec_count = oldcnt + cnt;
+  for (unsigned ix = 0; ix < cnt; ix++)
+    {
+      momval_t val = va_arg (alist, momval_t);
+      vvec->vvec_array[oldcnt + ix] = val;
+    }
+  va_end (alist);
+}
+
+void
+mom_item_vector_append_til_nil (momitem_t *itm, ...)
+{
+  va_list alist;
+  unsigned cnt = 0;
+  assert (itm && itm->i_typnum == momty_item);
+  if (itm->i_paylkind != mompayk_vector)
+    return;
+  assert (itm->i_payload != NULL);
+  struct mom_valuevector_st *vvec = itm->i_payload;
+  unsigned oldcnt = vvec->vvec_count;
+  va_start (alist, itm);
+  while (va_arg (alist, momval_t).ptr != NULL)
+      cnt++;
+  va_end (alist);
+  if (oldcnt + cnt >= vvec->vvec_size)
+    mom_item_vector_reserve (itm, cnt + 2);
+  va_start (alist, itm);
+  memset (vvec->vvec_array + oldcnt, 0, cnt * sizeof (momval_t));
+  vvec->vvec_count = oldcnt + cnt;
+  for (unsigned ix = 0; ix < cnt; ix++)
+    {
+      momval_t val = va_arg (alist, momval_t);
+      if (val.ptr == MOM_EMPTY)
+	val = MOM_NULLV;
+      vvec->vvec_array[oldcnt + ix] = val;
+    }
+  va_end (alist);
+}
+
+void
+mom_item_vector_append_from_array (momitem_t *itm, unsigned cnt,
+				   const momval_t *arr)
+{
+  assert (itm && itm->i_typnum == momty_item);
+  if (itm->i_paylkind != mompayk_vector)
+    return;
+  if (!cnt || !arr)
+    return;
+  assert (itm->i_payload != NULL);
+  struct mom_valuevector_st *vvec = itm->i_payload;
+  unsigned oldcnt = vvec->vvec_count;
+  if (oldcnt + cnt >= vvec->vvec_size)
+    mom_item_vector_reserve (itm, cnt + 2);
+  vvec->vvec_count = oldcnt + cnt;
+  for (unsigned ix = 0; ix < cnt; ix++)
+    vvec->vvec_array[oldcnt + ix] = arr[ix];
+}
+
+void
+mom_item_vector_append_from_node (momitem_t *itm, const momval_t nodv)
+{
+  assert (itm && itm->i_typnum == momty_item);
+  if (itm->i_paylkind != mompayk_vector)
+    return;
+  if (!nodv.ptr || *nodv.ptype != momty_node)
+    return;
+  mom_item_vector_append_from_array (itm, nodv.pnode->slen,
+				     nodv.pnode->sontab);
+}
+
+static void
+payl_vector_load_mom (struct mom_loader_st *ld, momitem_t *itm,
+		      momval_t jpayl)
+{
+  assert (ld != NULL);
+  assert (itm && itm->i_typnum == momty_item);
+  mom_item_start_vector (itm);
+  unsigned len = mom_json_array_size (jpayl);
+  if (!len)
+    return;
+  mom_item_vector_reserve (itm, 9 * len / 8 + 2);
+  for (unsigned ix = 0; ix < len; ix++)
+    mom_item_vector_append1 (itm,
+			     mom_load_value_json (ld,
+						  mom_json_array_nth (jpayl,
+								      ix)));
+}
+
+static void
+payl_vector_dump_scan_mom (struct mom_dumper_st *du, momitem_t *itm)
+{
+  assert (du != NULL);
+  assert (itm && itm->i_typnum == momty_item);
+  assert (itm->i_paylkind == mompayk_vector);
+  assert (itm->i_payload != NULL);
+  struct mom_valuevector_st *vvec = itm->i_payload;
+  unsigned len = vvec->vvec_count;
+  for (unsigned ix = 0; ix < len; ix++)
+    mom_dump_scan_value (du, vvec->vvec_array[ix]);
+}
+
+static momval_t
+payl_vector_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
+{
+  momval_t jarr = MOM_NULLV;
+  assert (du != NULL);
+  assert (itm && itm->i_typnum == momty_item);
+  assert (itm->i_paylkind == mompayk_vector);
+  struct mom_valuevector_st *vvec = itm->i_payload;
+  unsigned len = vvec->vvec_count;
+  momval_t tinyarr[MOM_TINY_MAX] = { MOM_NULLV };
+  momval_t *arrval =
+    (len < MOM_TINY_MAX) ? tinyarr
+    : MOM_GC_ALLOC ("dump vector array", len * sizeof (momval_t));
+  for (unsigned ix = 0; ix < len; ix++)
+    arrval[ix] = mom_dump_emit_json (du, vvec->vvec_array[ix]);
+  jarr = (momval_t) mom_make_json_array_count (len, arrval);
+  if (arrval != tinyarr)
+    MOM_GC_FREE (arrval);
+  return jarr;
+}
+
+static const struct mom_payload_descr_st payldescr_vector_mom = {
+  .dpayl_magic = MOM_PAYLOAD_MAGIC,
+  .dpayl_name = "vector",
+  .dpayl_loadfun = payl_vector_load_mom,
+  .dpayl_dumpscanfun = payl_vector_dump_scan_mom,
+  .dpayl_dumpjsonfun = payl_vector_dump_json_mom,
+};
+
+////////////////////////////////////////////////////////////////
 ///// ROUTINE PAYLOAD
 ////////////////////////////////////////////////////////////////
 
