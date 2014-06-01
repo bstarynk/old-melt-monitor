@@ -426,8 +426,20 @@ ajaxobjs_lab_beginedit:
 	MOM_DEBUG (run,
 		   MOMOUT_LITERAL ("ajax_objects_codmom afterattredit atix="),
 		   MOMOUT_DEC_INT ((int) _N (atix)));
+	mom_lock_item (_L (webx).pitem);
+	MOM_WEBX_OUT (_L (webx).pitem,
+		      MOMOUT_LITERAL ("</li>"), MOMOUT_NEWLINE (), NULL);
+	mom_unlock_item (_L (webx).pitem);
 	continue;
       }				// end for atix
+    mom_lock_item (_L (webx).pitem);
+    MOM_WEBX_OUT (_L (webx).pitem,
+		  MOMOUT_LITERAL ("</ul>"), MOMOUT_NEWLINE (), NULL);
+#warning should edit the content, and perhaps the payload!
+    mom_webx_reply (_L (webx).pitem, "text/html", HTTP_OK);
+    mom_unlock_item (_L (webx).pitem);
+
+
   }
   ;
   ////
