@@ -230,9 +230,9 @@ output_json_mom (momout_t *pout, momval_t v)
 	  }
 	if (pout->mout_flags & outf_jsonindent)
 	  MOM_OUT (pout, MOMOUT_SPACE (48));
+	putc ('}', out);
 	if (pout->mout_flags & (outf_jsonhalfindent | outf_jsonindent))
 	  MOM_OUT (pout, MOMOUT_INDENT_LESS ());
-	putc ('}', out);
       }
       break;
     case momty_jsonarray:

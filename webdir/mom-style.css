@@ -60,3 +60,15 @@ div.mom_main_cl {
  /* icon from Gnome 2, and http://findicons.com/icon/189070/stock_macro_objects?id=192365 */
     background:url('mom-icons/objects-24x24.png') no-repeat center center;
 }
+
+.ui-autocomplete {
+    max-height: 100px;
+    overflow-y: auto;
+    /* prevent horizontal scrollbar */
+    overflow-x: hidden;
+}
+
+input.mom_cancel_cl {
+    background-color: mistyrose;
+    margin: 3px;
+}

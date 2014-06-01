@@ -53,18 +53,30 @@ function mom_do_menu_objects(itm) {
 }
 
 
-function mom_set_name_entry_combobox(jcombo) {
-    console.debug ("mom_set_name_entry_combobox jcombo=", jcombo);
+
+function mom_name_entry_selected(rec) {
+    console.debug ("mom_name_entry_selected rec=", rec);
+}
+
+
+function mom_set_name_entry(inp)
+{
+    console.debug ("mom_set_name_entry inp=", inp);
     $(function(){
-	console.debug ("mom_set_name_entry_combobox delayed jcombo=", jcombo);
-	jcombo.combobox({url: '/ajax_complete_name',
-			 valueField:'id',
-			 textField:'name'
-			});
-	console.debug ("mom_set_name_entry_combobox delayed done");
+	console.debug ("mom_set_name_entry delayed inp=", inp);
+	inp.combobox({
+	    url:"ajax_complete_name",
+	    valueField:'id',
+	    textField:'name',
+	    onSelect: mom_name_entry_selected
+	});
+	console.debug ("mom_set_name_entry delayed after combobox inp=", inp);
     });
 }
 
-function mom_name_entry_changed(ev) {
-    console.debug ("mom_name_entry_changed ev=", ev);
+
+function mom_erase_maindiv() {
+    console.debug ("mom_erase_maindiv");
+    maindiv_mom.empty();
 }
+    

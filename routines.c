@@ -224,16 +224,17 @@ ajaxobjs_lab_start:
       {
 	MOM_WEBX_OUT (_L (webx).pitem,
 		      MOMOUT_LITERAL
-		      ("Edit (or create) a <b>named</b> item <small>at </i>"),
+		      ("Edit an existing <b>named</b> item <small>at </i>"),
 		      MOMOUT_DOUBLE_TIME ((const char *) "%c",
 					  mom_clock_time (CLOCK_REALTIME)),
 		      MOMOUT_LITERAL ("</i></small><br/>"), MOMOUT_SPACE (32),
 		      MOMOUT_LITERAL
 		      ("<label for='mom_name_input'>Name:</label>"
-		       " <input' id='mom_name_input'/>"),
+		       " <input id='mom_name_input' class='easyui-combobox' name='mom_name'/>"
+		       " <input type='submit' id='mom_cancel' class='mom_cancel_cl' value='cancel' onclick='mom_erase_maindiv()'/>"),
 		      MOMOUT_NEWLINE (),
 		      MOMOUT_LITERAL
-		      ("<script type='text/javascript'>mom_set_name_entry_combobox($('#mom_name_input'));"),
+		      ("<script type='text/javascript'>mom_set_name_entry($('#mom_name_input'));"),
 		      MOMOUT_SPACE (32), MOMOUT_LITERAL ("</script>"),
 		      MOMOUT_NEWLINE (), NULL);
 	mom_webx_reply (_L (webx).pitem, "text/html", HTTP_OK);
