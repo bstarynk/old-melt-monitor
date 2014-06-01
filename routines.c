@@ -240,6 +240,26 @@ ajaxobjs_lab_start:
 	mom_webx_reply (_L (webx).pitem, "text/html", HTTP_OK);
 	goto end;
       }
+    if (mom_string_same (todov, "mom_menuitem_new"))
+      {
+	MOM_WEBX_OUT (_L (webx).pitem,
+		      MOMOUT_LITERAL
+		      ("Edit a <b>new</b> item <small>at </i>"),
+		      MOMOUT_DOUBLE_TIME ((const char *) "%c",
+					  mom_clock_time (CLOCK_REALTIME)),
+		      MOMOUT_LITERAL ("</i></small><br/>"), MOMOUT_SPACE (32),
+		      MOMOUT_LITERAL
+		      ("<label for='mom_name_new'>Name:</label>"
+		       " <input id='mom_name_new' class='mom_newname_cl' name='mom_new_name' pattern='[A-Za-z_][A-Za-z0-9_]*' /> "
+		       "<label for='mom_comment'>Comment:</label>"
+		       " <input id='mom_comment' class='mom_newcomment_cl' name='mom_new_comment'/>"
+		       "<br/>"
+		       " <input type='submit' id='mom_make_named' class='mom_make_named_cl' value='make' onclick='mom_make_named()'/>"
+		       " <input type='submit' id='mom_cancel' class='mom_cancel_cl' value='cancel' onclick='mom_erase_maindiv()'/>"),
+		      MOMOUT_NEWLINE (), NULL);
+	mom_webx_reply (_L (webx).pitem, "text/html", HTTP_OK);
+	goto end;
+      }
     else
       MOM_FATAL (MOMOUT_LITERAL ("ajax_objects unexpected todov:"),
 		 MOMOUT_VALUE ((const momval_t) todov));

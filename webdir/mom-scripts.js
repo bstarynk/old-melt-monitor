@@ -74,6 +74,12 @@ function mom_set_name_entry(inp)
     });
 }
 
+function mom_make_named()
+{
+    var newinp = $('#mom_name_new');
+    var comminp = $('#mom_comment');
+    console.debug ("mom_make_named newimp.val=", newimp.val(), " commimp.val=", commimp.val());
+}
 
 function mom_erase_maindiv() {
     console.debug ("mom_erase_maindiv");

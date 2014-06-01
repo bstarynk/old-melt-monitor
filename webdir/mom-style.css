@@ -72,3 +72,16 @@ input.mom_cancel_cl {
     background-color: mistyrose;
     margin: 3px;
 }
+
+input.mom_newname_cl {
+    background-color: lightskyblue;
+    margin: 3px;
+    border: 1px navy;
+    width: 30%;
+}
+input.mom_newcomment_cl {
+    background-color: ivory;
+    margin: 3px;
+    border: 1px black;
+    width: 50%;
+}
