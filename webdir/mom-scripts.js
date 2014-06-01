@@ -88,12 +88,12 @@ function mom_make_named()
 {
     var newinp = $('#mom_name_new');
     var comminp = $('#mom_comment');
-    console.debug ("mom_make_named newimp.val=", newimp.val(), " commimp.val=", commimp.val());
+    console.debug ("mom_make_named newinp.val=", newinp.val(), " comminp.val=", comminp.val());
     $.ajax({ url: '/ajax_objects',
 	     method: 'POST',
 	     data: { todo_mom: "mom_domakenamed",
-		     name_mom: newimp.val(),
-		     comment_mom: commimp.val() },
+		     name_mom: newinp.val(),
+		     comment_mom: comminp.val() },
 	     dataType: 'html',
 	     success: function (gotdata) {
 		 console.debug ("mom_make_named gotdata=", gotdata);

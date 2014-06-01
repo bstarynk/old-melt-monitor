@@ -1082,6 +1082,33 @@ mom_remove_attribute (struct mom_itemattributes_st *attrs,
   return attrs;
 }
 
+const momset_t *
+mom_set_attributes (const struct mom_itemattributes_st *attrs)
+{
+  const momset_t *setat = NULL;
+  if (!attrs)
+    return NULL;
+  unsigned nbat = attrs->nbattr;
+  unsigned siz = attrs->size;
+  unsigned cnt = 0;
+  const momitem_t *tinyattrs[MOM_TINY_MAX] = { 0 };
+  const momitem_t **arrattrs = (nbat < MOM_TINY_MAX) ? tinyattrs
+    : MOM_GC_ALLOC ("set attrs", nbat * sizeof (momitem_t *));
+  for (unsigned ix = 0; ix < siz; ix++)
+    {
+      momitem_t *curatitm = attrs->itattrtab[ix].aten_itm;
+      if (!curatitm || curatitm == MOM_EMPTY)
+	continue;
+      assert (cnt < nbat);
+      arrattrs[cnt++] = curatitm;
+    }
+  assert (cnt == nbat);
+  setat = mom_make_set_from_array (nbat, arrattrs);
+  if (arrattrs != tinyattrs)
+    MOM_GC_FREE (arrattrs);
+  return setat;
+}
+
 ////////////////////////////////////////////////////////////////
 void
 mom_create_predefined_items (void)

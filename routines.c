@@ -58,7 +58,8 @@ todo_dump_at_exit_mom (void *data)
 static int
 ajax_system_codmom (int momstate_, momitem_t *momtasklet_,
 		    const momnode_t *momclosure_, momval_t *momlocvals_,
-		    intptr_t * momlocnums_, double *momlocdbls_)
+		    intptr_t * momlocnums_, double *momlocdbls_
+		    __attribute__ ((unused)))
 {
 #define _L(Nam) (momlocvals_[ajaxsyst_v_##Nam])
 #define _C(Nam) (momclosure_->sontab[ajaxsyst_c_##Nam])
@@ -163,7 +164,8 @@ enum ajax_objects_values_en
   ajaxobjs_v_restpath,
   ajaxobjs_v__spare,
   ajaxobjs_v_webx,
-  ajaxobjs_v_edititem,
+  ajaxobjs_v_editeditm,
+  ajaxobjs_v_editor,
   ajaxobjs_v__lastval
 };
 
@@ -276,12 +278,12 @@ ajaxobjs_lab_start:
 		   MOMOUT_VALUE ((const momval_t) namev),
 		   MOMOUT_LITERAL ("; commentv="),
 		   MOMOUT_VALUE ((const momval_t) commentv));
-	_L (edititem) = (momval_t) mom_make_item ();
-	_L (edititem).pitem->i_attrs =
-	  mom_put_attribute (_L (edititem).pitem->i_attrs, mom_named__comment,
-			     commentv);
-	mom_register_item_named (_L (edititem).pitem, mom_to_string (namev));
-	mom_item_set_space (_L (edititem).pitem, momspa_root);
+	_L (editeditm) = (momval_t) mom_make_item ();
+	_L (editeditm).pitem->i_attrs =
+	  mom_put_attribute (_L (editeditm).pitem->i_attrs,
+			     mom_named__comment, commentv);
+	mom_register_item_named (_L (editeditm).pitem, mom_to_string (namev));
+	mom_item_set_space (_L (editeditm).pitem, momspa_root);
 	{
 	  mom_unlock_item (_L (webx).pitem);
 	  _SET_STATE (beginedit);
@@ -296,10 +298,10 @@ ajaxobjs_lab_start:
 		   MOMOUT_VALUE ((const momval_t) namev),
 		   MOMOUT_LITERAL ("; idv="),
 		   MOMOUT_VALUE ((const momval_t) idv));
-	_L (edititem) =
+	_L (editeditm) =
 	  (momval_t) mom_get_item_of_name_or_ident_string (namev);
-	if (!_L (edititem).ptr)
-	  _L (edititem) =
+	if (!_L (editeditm).ptr)
+	  _L (editeditm) =
 	    (momval_t) mom_get_item_of_name_or_ident_string (idv);
 	{
 	  mom_unlock_item (_L (webx).pitem);
@@ -311,14 +313,18 @@ ajaxobjs_lab_start:
 		 MOMOUT_VALUE ((const momval_t) todov));
   end:
     mom_unlock_item (_L (webx).pitem);
+    return momroutres_pop;
   }
   ;
   ////
 ajaxobjs_lab_beginedit:
   {
+    _L (editor) = (momval_t) mom_make_item ();
     MOM_DEBUG (run,
-	       MOMOUT_LITERAL ("ajax_objects_codmom beginedit edititem="),
-	       MOMOUT_VALUE ((const momval_t) _L (edititem)));
+	       MOMOUT_LITERAL ("ajax_objects_codmom beginedit editeditm="),
+	       MOMOUT_VALUE ((const momval_t) _L (editeditm)),
+	       MOMOUT_LITERAL ("; editor="),
+	       MOMOUT_VALUE ((const momval_t) _L (editor)));
     MOM_FATAL (MOMOUT_LITERAL ("ajax_objects unimplemented beginedit"));
   }
   ;

@@ -498,54 +498,6 @@ mom_type (const momval_t v)
     return *v.ptype;
 }
 
-static inline momvflags_t
-mom_flags (const momval_t v)
-{
-  if (v.ptr == NULL)
-    return 0;
-  else
-    return __atomic_load_n (&v.phead->hflags, __ATOMIC_SEQ_CST);
-}
-
-static inline bool
-mom_has_flags (const momval_t v, unsigned flags)
-{
-  if (v.ptr == NULL)
-    return false;
-  return (__atomic_load_n (&v.phead->hflags, __ATOMIC_SEQ_CST) & flags) != 0;
-}
-
-
-// return the previous values of the flags
-static inline momvflags_t
-mom_set_flags (momval_t v, unsigned flags)
-{
-  if (v.ptr == NULL)
-    return 0;
-  return __atomic_fetch_or (&v.phead->hflags, (momvflags_t) flags,
-			    __ATOMIC_SEQ_CST);
-}
-
-static inline momvflags_t
-mom_clear_flags (momval_t v, unsigned flags)
-{
-  if (v.ptr == NULL)
-    return 0;
-  __atomic_fetch_and (&v.phead->hflags, (momvflags_t) ~flags,
-		      __ATOMIC_SEQ_CST);
-}
-
-
-static inline momvflags_t
-mom_put_flags (momval_t v, unsigned flags)
-{
-  if (v.ptr == NULL)
-    return 0;
-  momvflags_t f = flags;
-  return __atomic_exchange_n (&v.phead->hflags, &f, __ATOMIC_SEQ_CST);
-}
-
-
 
 /*************************** boxed integers ***************************/
 struct momint_st
@@ -950,6 +902,10 @@ struct mom_itemattributes_st *mom_remove_attribute (struct
 struct mom_itemattributes_st *mom_reserve_attribute (struct
 						     mom_itemattributes_st *,
 						     unsigned gap);
+
+const momset_t *mom_set_attributes (const struct mom_itemattributes_st
+				    *attrs);
+
 static inline momval_t
 mom_get_attribute (const struct mom_itemattributes_st *const attrs,
 		   const momitem_t *atitm)
@@ -1643,6 +1599,84 @@ mom_node_nth (momval_t nodv, int rk)
     return nodv.pnode->sontab[rk];
   return MOM_NULLV;
 }
+
+
+////////////////////////////////////////////////////////////////
+///// FLAGS
+////////////////////////////////////////////////////////////////
+static inline bool
+mom_with_flags (const momval_t v)
+{
+  if (v.ptr == NULL)
+    return false;
+  switch ((enum momvaltype_en) (*v.ptype))
+    {
+    case momty_null:
+    case momty_int:
+    case momty_double:
+    case momty_string:
+    case momty_jsonarray:
+    case momty_jsonobject:
+      return false;
+    case momty_set:
+    case momty_tuple:
+      return v.pseqitems->slen > 0;
+    case momty_node:
+      return true;
+    case momty_item:
+      return false;
+    }
+  return false;
+}
+
+
+static inline momvflags_t
+mom_flags (const momval_t v)
+{
+  if (!mom_with_flags (v))
+    return 0;
+  else
+    return __atomic_load_n (&v.phead->hflags, __ATOMIC_SEQ_CST);
+}
+
+static inline bool
+mom_has_flags (const momval_t v, unsigned flags)
+{
+  if (!mom_with_flags (v))
+    return false;
+  return (__atomic_load_n (&v.phead->hflags, __ATOMIC_SEQ_CST) & flags) != 0;
+}
+
+
+// return the previous values of the flags
+static inline momvflags_t
+mom_set_flags (momval_t v, unsigned flags)
+{
+  if (!mom_with_flags (v))
+    return 0;
+  return __atomic_fetch_or (&v.phead->hflags, (momvflags_t) flags,
+			    __ATOMIC_SEQ_CST);
+}
+
+static inline momvflags_t
+mom_clear_flags (momval_t v, unsigned flags)
+{
+  if (!mom_with_flags (v))
+    return 0;
+  __atomic_fetch_and (&v.phead->hflags, (momvflags_t) ~flags,
+		      __ATOMIC_SEQ_CST);
+}
+
+
+static inline momvflags_t
+mom_put_flags (momval_t v, unsigned flags)
+{
+  if (!mom_with_flags (v))
+    return 0;
+  momvflags_t f = flags;
+  return __atomic_exchange_n (&v.phead->hflags, &f, __ATOMIC_SEQ_CST);
+}
+
 
 ////////////////////////////////////////////////////////////////
 /////////// SPACES
