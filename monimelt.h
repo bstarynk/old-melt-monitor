@@ -171,7 +171,7 @@ enum mom_flags_en
 
 pthread_mutexattr_t mom_normal_mutex_attr;
 pthread_mutexattr_t mom_recursive_mutex_attr;
-
+typedef union momvalueptr_un momval_t;
 
 
 //////////////// wrapping Boehm GC allocation
@@ -253,6 +253,12 @@ enum outflags_en
 void mom_out_at (const char *sfil, int lin, momout_t *pout, ...)
   __attribute__ ((sentinel));
 void mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist);
+/// output into a string value
+momval_t mom_outstring_at (unsigned flags, const char *sfil, int lin, ...)
+  __attribute__ ((sentinel));
+#define MOM_OUTSTRING_AT_BIS(Flag,Fil,Lin,...) mom_outstring_at(Flag,Fil,Lin,##__VA_ARGS__)
+#define MOM_OUTSTRING_AT(Flag,Fil,Lin,...) MOM_OUTSTRING_AT_BIS((Flag),Fil,Lin,##__VA_ARGS__,NULL)
+#define MOM_OUTSTRING(Flag,...) MOM_OUTSTRING_AT((Flag),__FILE__,__LINE__,##__VA_ARGS__)
 #define MOM_OUTVA(Out,Alist) mom_outva_at(__FILE__,__LINE__,Out,Alist)
 #define MOM_OUT_AT_BIS(Fil,Lin,Out,...) mom_out_at(Fil,Lin,Out,##__VA_ARGS__,NULL)
 #define MOM_OUT_AT(Fil,Lin,Out,...) MOM_OUT_AT_BIS(Fil,Lin,Out,##__VA_ARGS__)
@@ -498,6 +504,7 @@ mom_type (const momval_t v)
     return *v.ptype;
 }
 
+const char *mom_type_cstring (momtynum_t ty);
 
 /*************************** boxed integers ***************************/
 struct momint_st

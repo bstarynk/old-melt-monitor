@@ -2054,6 +2054,7 @@ struct mom_payload_descr_st *mom_payloadescr[mompayk__last + 1] = {
   [mompayk_routine] = (struct mom_payload_descr_st *) &payldescr_routine_mom,
   [mompayk_tasklet] = (struct mom_payload_descr_st *) &payldescr_tasklet_mom,
   [mompayk_buffer] = (struct mom_payload_descr_st *) &payldescr_buffer_mom,
+  [mompayk_vector] = (struct mom_payload_descr_st *) &payldescr_vector_mom,
   [mompayk_process] = (struct mom_payload_descr_st *) &payldescr_process_mom,
   [mompayk_webexchange] =
     (struct mom_payload_descr_st *) &payldescr_webexchange_mom,

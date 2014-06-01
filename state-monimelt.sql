@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','exit dump');
+INSERT INTO t_params VALUES('dump_reason','after predefined item');
 INSERT INTO t_items VALUES('_02u53qxa7dm_sttmhffpchr','{"kind": "queue", "payload": [], "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "The agenda is central to Monimelt.\nIt is the queue of taskets to be executed by worker threads."}],
  "content": null}
@@ -95,6 +95,9 @@ INSERT INTO t_items VALUES('_4v93t3jzrtz_srt9ear8fm8','{"kind": "routine", "payl
      "{spare3 ajax-complete_name}", null], "node": "_4v93t3jzrtz_srt9ear8fm8",
     "jtype": "node"}}], "content": null}
 ');
+INSERT INTO t_items VALUES('_53748kde7s1_pkz810exr27','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "used in editor, etc. to reference some item"}], "content": null}
+');
 INSERT INTO t_items VALUES('_5wmusj136kq_u5qpehp89aq','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "indicates the HTTP POST method"}], "content": null}
 ');
@@ -163,6 +166,7 @@ INSERT INTO t_names VALUES('content','_8s357rq2dzk_k8ze95tikjm','.predef');
 INSERT INTO t_names VALUES('doubles','_17spwr8dkzv_tsf2s8diazu','.predef');
 INSERT INTO t_names VALUES('exited','_3v4d7uzex6f_euek4pztiuh','.predef');
 INSERT INTO t_names VALUES('failed','_9sd1mh9q1zf_3duewi6fsaq','.predef');
+INSERT INTO t_names VALUES('item','_53748kde7s1_pkz810exr27','.predef');
 INSERT INTO t_names VALUES('item_ref','_6hf2vzmrsee_t35suhjvtj4','.predef');
 INSERT INTO t_names VALUES('json_array','_35vp60aw7em_d436vfie4ud','.predef');
 INSERT INTO t_names VALUES('json_false','_4mha85xcfwi_9zqcvkiy3dk','.predef');

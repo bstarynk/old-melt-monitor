@@ -890,3 +890,26 @@ mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist)
 	}			/// end switch dir
     }				/// end while again
 }
+
+momval_t
+mom_outstring_at (unsigned flags, const char *sfil, int lin, ...)
+{
+  va_list alist;
+  char *outbuf = NULL;
+  size_t sizbuf = 0;
+  momval_t res = MOM_NULLV;
+  FILE *fout = open_memstream (&outbuf, &sizbuf);
+  if (!fout)
+    MOM_FATAPRINTF ("failed to open stream for outstring %s:%d", sfil, lin);
+  struct momout_st mout;
+  memset (&mout, 0, sizeof (mout));
+  mom_initialize_output (&mout, fout, flags);
+  va_start (alist, lin);
+  mom_outva_at (sfil, lin, &mout, alist);
+  va_end (alist);
+  fflush (fout);
+  res = (momval_t) mom_make_string (outbuf);
+  free (outbuf), outbuf = NULL;
+  fclose (fout);
+  return res;
+}

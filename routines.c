@@ -198,6 +198,7 @@ ajax_objects_codmom (int momstate_, momitem_t *momtasklet_,
   {
     ajaxobjs_s_start,
     ajaxobjs_s_beginedit,
+    ajaxobjs_s_didattredit,
     ajaxobjs_s__laststate
   };
 #define _SET_STATE(St) do {						\
@@ -215,6 +216,8 @@ ajax_objects_codmom (int momstate_, momitem_t *momtasklet_,
 	goto ajaxobjs_lab_start;
       case ajaxobjs_s_beginedit:
 	goto ajaxobjs_lab_beginedit;
+      case ajaxobjs_s_didattredit:
+	goto ajaxobjs_lab_didattredit;
       case ajaxobjs_s__laststate:;
       }
   MOM_FATAPRINTF ("ajax_objects invalid state #%d", momstate_);
@@ -326,6 +329,8 @@ ajaxobjs_lab_start:
 ajaxobjs_lab_beginedit:
   {
     _L (editor) = (momval_t) mom_make_item ();
+    mom_item_start_vector (_L (editor).pitem);
+    mom_item_vector_reserve (_L (editor).pitem, 16);
     {
       mom_lock_item (_L (editeditm).pitem);
       _L (setattrs) =
@@ -339,7 +344,9 @@ ajaxobjs_lab_beginedit:
 	       MOMOUT_LITERAL ("; setattrs="),
 	       MOMOUT_VALUE ((const momval_t) _L (setattrs)),
 	       MOMOUT_LITERAL ("; editor="),
-	       MOMOUT_VALUE ((const momval_t) _L (editor)));
+	       MOMOUT_VALUE ((const momval_t) _L (editor)),
+	       MOMOUT_LITERAL ("; editvalueclos="),
+	       MOMOUT_VALUE ((const momval_t) _C (editvalueclos)));
     {
       assert (mom_is_item (_L (webx)));
       momval_t namidv =
@@ -370,6 +377,7 @@ ajaxobjs_lab_beginedit:
 					  _L (curattritm).pitem);
 	  mom_unlock_item (_L (editeditm).pitem);
 	}
+	assert (mom_is_node (_C (editvalueclos)));
 	MOM_DEBUG (run,
 		   MOMOUT_LITERAL ("ajax_objects_codmom atix="),
 		   MOMOUT_DEC_INT ((int) _N (atix)),
@@ -381,18 +389,45 @@ ajaxobjs_lab_beginedit:
 	  momval_t namidatv =
 	    (momval_t) mom_item_get_name_or_idstr (_L (curattritm).pitem);
 	  assert (mom_is_item (_L (webx)));
+	  momval_t jorig = (momval_t)
+	    mom_make_json_object (MOMJSOB_ENTRY ((momval_t) mom_named__kind,
+						 (momval_t) mom_named__attr),
+				  MOMJSOB_ENTRY ((momval_t) mom_named__item,
+						 (momval_t)
+						 mom_item_get_idstr
+						 (mom_value_to_item
+						  (_L (editeditm)))),
+				  MOMJSOB_ENTRY ((momval_t) mom_named__attr,
+						 (momval_t)
+						 mom_item_get_idstr
+						 (mom_value_to_item
+						  (_L (curattritm)))),
+				  NULL);
+	  MOM_DEBUG (run,
+		     MOMOUT_LITERAL ("ajax_objects_codmom jorig="),
+		     MOMOUT_JSON_VALUE (jorig));
 	  mom_lock_item (_L (webx).pitem);
 	  MOM_WEBX_OUT (_L (webx).pitem,
 			//
 			MOMOUT_LITERAL ("<li class='mom_attrentry_cl'><span class='mom_attritem_cl'>"), MOMOUT_HTML (mom_string_cstr (namidatv)),	//
 			MOMOUT_LITERAL ("</span> " "&#8594;"	/* U+2192 RIGHTWARDS ARROW → */
-					" <span class='mom_value_cl'>"),
-			NULL);
+					" "), NULL);
 	  mom_unlock_item (_L (webx).pitem);
-	  assert (mom_is_node (_C (editvalueclos)));
+	  mom_item_tasklet_push_frame (momtasklet_, _C (editvalueclos),
+				       MOMPFR_FOUR_VALUES (_L (editor),
+							   _L (webx),
+							   jorig,
+							   _L (curvalattr)),
+				       MOMPFR_INT ((intptr_t) 0), NULL);
+	  _SET_STATE (didattredit);
 	}
-	MOM_FATAL (MOMOUT_LITERAL ("ajax_objects unimplemented beginedit"));
-      }
+	////
+      ajaxobjs_lab_didattredit:
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL ("ajax_objects_codmom afterattredit atix="),
+		   MOMOUT_DEC_INT ((int) _N (atix)));
+	continue;
+      }				// end for atix
   }
   ;
   ////
@@ -557,6 +592,13 @@ const struct momroutinedescr_st momrout_ajax_complete_name = {
 enum edit_value_values_en
 {
   edit_value_v_arg0res,
+  edit_value_v_webx,
+  edit_value_v_jorig,
+  edit_value_v_curval,
+  edit_value_v_spare,
+  edit_value_v_editor,
+  edit_value_v_connitm,
+  edit_value_v_curson,
   edit_value_v__lastval
 };
 
@@ -567,6 +609,10 @@ enum edit_value_closure_en
 
 enum edit_value_numbers_en
 {
+  edit_value_n_depth,
+  edit_value_n_numval,
+  edit_value_n_nbsons,
+  edit_value_n_sonix,
   edit_value_n__lastnum
 };
 
@@ -583,13 +629,14 @@ edit_value_codmom (int momstate_, momitem_t *momtasklet_,
   enum edit_value_state_en
   {
     edit_value_s_start,
+    edit_value_s_didsonedit,
     edit_value_s_impossible,
     edit_value_s__laststate
   };
 #define _SET_STATE(St) do {					\
     MOM_DEBUGPRINTF (run,					\
 		     "edit_value_codmom setstate " #St " = %d",	\
-		     (int)edit_value_s_##St);				\
+		     (int)edit_value_s_##St);			\
     return edit_value_s_##St; } while(0)
   if (momstate_ >= 0 && momstate_ < edit_value_s__laststate)
     switch ((enum edit_value_state_en) momstate_)
@@ -598,14 +645,303 @@ edit_value_codmom (int momstate_, momitem_t *momtasklet_,
 	goto edit_value_lab_start;
       case edit_value_s_impossible:
 	goto edit_value_lab_impossible;
+      case edit_value_s_didsonedit:
+	goto edit_value_lab_didsonedit;
       case edit_value_s__laststate:;
       }
   MOM_FATAPRINTF ("edit_value invalid state #%d", momstate_);
 edit_value_lab_start:
   MOM_DEBUG (run, MOMOUT_LITERAL ("edit_value start arg0res="),
-	     MOMOUT_VALUE ((const momval_t) _L (arg0res)));
+	     MOMOUT_VALUE ((const momval_t) _L (arg0res)),
+	     MOMOUT_LITERAL ("; webx="),
+	     MOMOUT_VALUE ((const momval_t) _L (webx)),
+	     MOMOUT_LITERAL ("; curval="),
+	     MOMOUT_VALUE ((const momval_t) _L (curval)));
   if (_L (arg0res).ptr == MOM_EMPTY)
     _SET_STATE (impossible);
+  _L (editor) = _L (arg0res);
+  if (mom_lock_item (_L (editor).pitem))
+    {
+      mom_item_vector_append1 (_L (editor).pitem, _L (curval));
+      _N (numval) = mom_item_vector_count (_L (editor).pitem);
+      mom_unlock_item (_L (editor).pitem);
+    }
+  MOM_DEBUG (run, MOMOUT_LITERAL ("edit_value numval="),
+	     MOMOUT_DEC_INT ((int) _N (numval)));
+  assert (_N (numval) > 0);
+  if (mom_lock_item (_L (webx).pitem))
+    {
+      MOM_WEBX_OUT (_L (webx).pitem,
+		    //
+		    MOMOUT_LITERAL ("<span class='mom_value_cl' id='momedval_"), MOMOUT_LITERALV (mom_ident_cstr_of_item (mom_value_to_item (_L (editor)))),	//
+		    MOMOUT_LITERAL ("_n"), MOMOUT_DEC_INT ((int) _N (numval)), MOMOUT_LITERAL ("' data-momeditor='"), MOMOUT_LITERALV (mom_ident_cstr_of_item (mom_value_to_item (_L (editor)))),	//
+		    MOMOUT_LITERAL ("' data-momorig='"), MOMOUT_JSON_VALUE (_L (jorig)),	//
+		    MOMOUT_LITERAL ("' data-momnumval='"), MOMOUT_DEC_INT ((int) _N (numval)),	//
+		    MOMOUT_LITERAL ("' data-momtype='"), MOMOUT_LITERALV (mom_type_cstring (mom_type (_L (curval)))),	//
+		    MOMOUT_LITERAL ("'>"),	// end span
+		    NULL);
+      switch ((enum momvaltype_en) mom_type (_L (curval)))
+	{
+	case momty_null:
+	  MOM_WEBX_OUT (_L (webx).pitem,
+			//
+			MOMOUT_LITERAL
+			("<span class='mom_nullval_cl'>_</span>"), NULL);
+	  break;
+	case momty_int:
+	  MOM_WEBX_OUT (_L (webx).pitem,
+			//
+			MOMOUT_LITERAL ("<span class='mom_intval_cl'>"),
+			MOMOUT_JSON_VALUE (_L (curval)),
+			MOMOUT_LITERAL ("</span>"), NULL);
+	  break;
+	case momty_double:
+	  MOM_WEBX_OUT (_L (webx).pitem,
+			//
+			MOMOUT_LITERAL ("<span class='mom_doubleval_cl'>"),
+			MOMOUT_JSON_VALUE (_L (curval)),
+			MOMOUT_LITERAL ("</span>"), NULL);
+	  break;
+	case momty_string:
+	  MOM_WEBX_OUT (_L (webx).pitem,
+			//
+			MOMOUT_LITERAL ("<span class='mom_stringval_cl'>"),
+			MOMOUT_HTML ((const char *)
+				     mom_string_cstr (_L (curval))),
+			MOMOUT_LITERAL ("</span>"), NULL);
+	  break;
+	case momty_jsonarray:
+	  MOM_WEBX_OUT (_L (webx).pitem,
+			//
+			MOMOUT_LITERAL ("<span class='mom_jsonarrayval_cl'>"),
+			MOMOUT_HTML ((const char *)
+				     mom_string_cstr (MOM_OUTSTRING
+						      (outf_jsonhalfindent,
+						       MOMOUT_JSON_VALUE (_L
+									  (curval))))),
+			MOMOUT_LITERAL ("</span>"), NULL);
+	  break;
+	case momty_jsonobject:
+	  MOM_WEBX_OUT (_L (webx).pitem,
+			//
+			MOMOUT_LITERAL
+			("<span class='mom_jsonobjectval_cl'>"),
+			MOMOUT_HTML ((const char *)
+				     mom_string_cstr (MOM_OUTSTRING
+						      (outf_jsonhalfindent,
+						       MOMOUT_JSON_VALUE (_L
+									  (curval))))),
+			MOMOUT_LITERAL ("</span>"), NULL);
+	  break;
+	case momty_item:
+	  {
+	    momval_t nsidv =
+	      (momval_t)
+	      mom_item_get_name_or_idstr (mom_value_to_item (_L (curval)));
+	    bool isanonym =
+	      mom_looks_like_random_id_cstr (mom_string_cstr (nsidv), NULL);
+	    if (isanonym)
+	      MOM_WEBX_OUT (_L (webx).pitem,
+			    //
+			    MOMOUT_LITERAL
+			    ("<span class='mom_anonymousitemval_cl' id='momitem'"),
+			    MOMOUT_LITERALV (mom_string_cstr (nsidv)),
+			    MOMOUT_LITERAL (">"),
+			    MOMOUT_LITERALV (mom_string_cstr (nsidv)),
+			    MOMOUT_LITERAL ("</span>"), NULL);
+	    else
+	      MOM_WEBX_OUT (_L (webx).pitem,
+			    //
+			    MOMOUT_LITERAL
+			    ("<span class='mom_nameditemval_cl' id='momitem'"),
+			    MOMOUT_LITERALV (mom_string_cstr
+					     ((momval_t)
+					      mom_item_get_idstr
+					      (mom_value_to_item
+					       (_L (curval))))),
+			    MOMOUT_LITERAL (">"),
+			    MOMOUT_LITERALV (mom_string_cstr (nsidv)),
+			    MOMOUT_LITERAL ("</span>"), NULL);
+	    break;
+	  }
+	case momty_set:
+	case momty_tuple:
+	  {
+	    unsigned slen = mom_seqitem_length (_L (curval));
+	    bool isset = mom_is_set (_L (curval));
+	    if (slen == 0)
+	      {
+		if (isset)	// the empty set
+		  MOM_WEBX_OUT (_L (webx).pitem,
+				//
+				MOMOUT_LITERAL ("<span class='mom_emptysetval_cl'>" "&#8709;"	/* U+2205 EMPTY SET ∅ */
+						"</span>"), NULL);
+		else		// the empty tuple
+		  MOM_WEBX_OUT (_L (webx).pitem,
+				//
+				MOMOUT_LITERAL
+				("<span class='mom_emptytupleval_cl'>" "[]"
+				 "</span>"), NULL);
+	      }
+	    else
+	      {
+		unsigned ix = 0;
+		if (isset)
+		  MOM_WEBX_OUT (_L (webx).pitem,
+				//
+				MOMOUT_LITERAL
+				("<span class='mom_setval_cl'>{"), NULL);
+		else
+		  MOM_WEBX_OUT (_L (webx).pitem,
+				//
+				MOMOUT_LITERAL
+				("<span class='mom_tupleval_cl'>["), NULL);
+		for (ix = 0; ix < slen; ix++)
+		  {
+		    if (ix > 0)
+		      MOM_WEBX_OUT (_L (webx).pitem,
+				    //
+				    MOMOUT_LITERAL (","), MOMOUT_SPACE (48),
+				    NULL);
+		    momitem_t *cursubitem =
+		      mom_seqitem_nth_item (_L (curval), ix);
+		    if (!cursubitem)
+		      MOM_WEBX_OUT (_L (webx).pitem,
+				    //
+				    MOMOUT_LITERAL
+				    ("<span class='mom_nullitem_cl'>_</span>"),
+				    NULL);
+		    else
+		      {
+			momval_t nsubidv =
+			  (momval_t) mom_item_get_name_or_idstr (cursubitem);
+			bool subisanonym =
+			  mom_looks_like_random_id_cstr (mom_string_cstr
+							 (nsubidv), NULL);
+			if (subisanonym)
+			  MOM_WEBX_OUT (_L (webx).pitem,
+					//
+					MOMOUT_LITERAL
+					("<span class='mom_anonymousitemval_cl' id='momitem'"),
+					MOMOUT_LITERALV (mom_string_cstr
+							 (nsubidv)),
+					MOMOUT_LITERAL (">"),
+					MOMOUT_LITERALV (mom_string_cstr
+							 (nsubidv)),
+					MOMOUT_LITERAL ("</span>"), NULL);
+			else
+			  MOM_WEBX_OUT (_L (webx).pitem,
+					//
+					MOMOUT_LITERAL
+					("<span class='mom_nameditemval_cl' id='momitem'"),
+					MOMOUT_LITERALV (mom_string_cstr
+							 ((momval_t)
+							  mom_item_get_idstr
+							  (cursubitem))),
+					MOMOUT_LITERAL (">"),
+					MOMOUT_LITERALV (mom_string_cstr
+							 (nsubidv)),
+					MOMOUT_LITERAL ("</span>"), NULL);
+		      }
+		  }
+		if (isset)
+		  MOM_WEBX_OUT (_L (webx).pitem,
+				//
+				MOMOUT_LITERAL ("}</span>"), NULL);
+		else
+		  MOM_WEBX_OUT (_L (webx).pitem,
+				//
+				MOMOUT_LITERAL ("]</span>"), NULL);
+	      }
+	    break;
+	  }			// end case momty_set, momty_tuple
+	case momty_node:
+	  {
+	    _L (connitm) = (momval_t) mom_node_conn (_L (curval));
+	    _N (nbsons) = mom_node_arity (_L (curval));
+	    MOM_DEBUG (run, MOMOUT_LITERAL ("edit_value node connitm="),
+		       MOMOUT_VALUE (_L (connitm)),
+		       MOMOUT_LITERAL ("; nbsons="),
+		       MOMOUT_DEC_INT ((int) _N (nbsons)), NULL);
+	    MOM_WEBX_OUT (_L (webx).pitem,
+			  //
+			  MOMOUT_LITERAL
+			  ("<span class='mom_nodeval_cl'>&nbsp;*"), NULL);
+	    {
+	      momval_t connidv =
+		(momval_t) mom_item_get_name_or_idstr (_L (connitm).pitem);
+	      bool connisanonym =
+		mom_looks_like_random_id_cstr (mom_string_cstr (connidv),
+					       NULL);
+	      if (connisanonym)
+		MOM_WEBX_OUT (_L (webx).pitem,
+			      //
+			      MOMOUT_LITERAL
+			      ("<span class='mom_anonymousitemval_cl' id='momitem'"),
+			      MOMOUT_LITERALV (mom_string_cstr (connidv)),
+			      MOMOUT_LITERAL (">"),
+			      MOMOUT_LITERALV (mom_string_cstr (connidv)),
+			      MOMOUT_LITERAL ("</span>("), NULL);
+	      else
+		MOM_WEBX_OUT (_L (webx).pitem,
+			      //
+			      MOMOUT_LITERAL
+			      ("<span class='mom_nameditemval_cl' id='momitem'"),
+			      MOMOUT_LITERALV (mom_string_cstr
+					       ((momval_t)
+						mom_item_get_idstr (_L
+								    (connitm).pitem))),
+			      MOMOUT_LITERAL (">"),
+			      MOMOUT_LITERALV (mom_string_cstr (connidv)),
+			      MOMOUT_LITERAL ("</span>("),
+			      MOMOUT_INDENT_MORE (), NULL);
+	    }
+	    for (_N (sonix) = 0; _N (sonix) < _N (nbsons); _N (sonix)++)
+	      {
+		if (_N (sonix) > 0)
+		  MOM_WEBX_OUT (_L (webx).pitem,
+				//
+				MOMOUT_LITERAL (","), MOMOUT_SPACE (48),
+				NULL);
+		mom_unlock_item (_L (webx).pitem);
+		_L (curson) = mom_node_nth (_L (curval), _N (sonix));
+		momval_t jnodorig = (momval_t)
+		  mom_make_json_object (MOMJSOB_ENTRY
+					((momval_t) mom_named__kind,
+					 (momval_t) mom_named__node),
+					MOMJSOB_ENTRY ((momval_t)
+						       mom_named__node,
+						       _L (jorig)),
+					MOMJSOB_ENTRY ((momval_t)
+						       mom_named__sons,
+						       mom_make_integer (_N
+									 (sonix))),
+					NULL);
+		mom_item_tasklet_push_frame (momtasklet_,
+					     (momval_t) momclosure_,
+					     MOMPFR_FOUR_VALUES (_L (editor),
+								 _L (webx),
+								 jnodorig,
+								 _L (curson)),
+					     MOMPFR_INT (_N (depth) + 1),
+					     NULL);
+		_SET_STATE (didsonedit);
+	      edit_value_lab_didsonedit:
+		if (!mom_lock_item (_L (webx).pitem))
+		  break;
+	      }
+	    MOM_WEBX_OUT (_L (webx).pitem,
+			  //
+			  MOMOUT_INDENT_LESS (),
+			  MOMOUT_LITERAL (")</span>"), NULL);
+	  }
+	  break;
+	}
+      MOM_WEBX_OUT (_L (webx).pitem,
+		    //
+		    MOMOUT_LITERAL ("</span>"), NULL);
+      mom_unlock_item (_L (webx).pitem);
+    }
   return momroutres_pop;
 edit_value_lab_impossible:
   MOM_FATAPRINTF ("edit_value impossible state reached!");

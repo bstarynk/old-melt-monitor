@@ -64,6 +64,9 @@ MOM_PREDEFINED_NAMED(exited,_3v4d7uzex6f_euek4pztiuh)
 ////!for exited processes with exit code >0
 MOM_PREDEFINED_NAMED(failed,_9sd1mh9q1zf_3duewi6fsaq)
 
+////!used in editor, etc. to reference some item
+MOM_PREDEFINED_NAMED(item,_53748kde7s1_pkz810exr27)
+
 ////!gives the item reference, at least in dumped JSON...
 MOM_PREDEFINED_NAMED(item_ref,_6hf2vzmrsee_t35suhjvtj4)
 

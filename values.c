@@ -1170,3 +1170,38 @@ mom_make_node_from_array (const momitem_t *conn, unsigned siz, momval_t *arr)
   update_node_hash_mom (nd);
   return nd;
 }
+
+const char *
+mom_type_cstring (momtynum_t ty)
+{
+  switch (ty)
+    {
+    case momty_null:
+      return "null";
+    case momty_int:
+      return "int";
+    case momty_double:
+      return "double";
+    case momty_string:
+      return "string";
+    case momty_jsonarray:
+      return "jsonarray";
+    case momty_jsonobject:
+      return "jsonobject";
+    case momty_set:
+      return "set";
+    case momty_tuple:
+      return "tuple";
+    case momty_node:
+      return "node";
+    case momty_item:
+      return "item";
+    default:
+      {
+	char tbuf[16];
+	memset (tbuf, 0, sizeof (tbuf));
+	snprintf (tbuf, sizeof (tbuf), "?typ#%d?", (int) ty);
+	return MOM_GC_STRDUP ("strange type cstring", tbuf);
+      }
+    }
+}
