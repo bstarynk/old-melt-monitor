@@ -166,6 +166,9 @@ enum ajax_objects_values_en
   ajaxobjs_v_webx,
   ajaxobjs_v_editeditm,
   ajaxobjs_v_editor,
+  ajaxobjs_v_setattrs,
+  ajaxobjs_v_curattritm,
+  ajaxobjs_v_curvalattr,
   ajaxobjs_v__lastval
 };
 
@@ -176,6 +179,8 @@ enum ajax_objects_closure_en
 
 enum ajax_objects_numbers_en
 {
+  ajaxobjs_n_nbattrs,
+  ajaxobjs_n_atix,
   ajaxobjs_n__lastnum
 };
 
@@ -197,7 +202,7 @@ ajax_objects_codmom (int momstate_, momitem_t *momtasklet_,
 #define _SET_STATE(St) do {						\
     MOM_DEBUGPRINTF (run,						\
 		     "ajax_objects_codmom setstate " #St " = %d",	\
-	       (int)ajaxobjs_s_##St);					\
+		     (int)ajaxobjs_s_##St);				\
     return ajaxobjs_s_##St; } while(0)
   MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_objects_codmom tasklet:"),
 	     MOMOUT_ITEM ((const momitem_t *) momtasklet_),
@@ -320,12 +325,69 @@ ajaxobjs_lab_start:
 ajaxobjs_lab_beginedit:
   {
     _L (editor) = (momval_t) mom_make_item ();
+    {
+      mom_lock_item (_L (editeditm).pitem);
+      _L (setattrs) =
+	(momval_t) mom_set_attributes (_L (editeditm).pitem->i_attrs);
+      _N (nbattrs) = mom_set_cardinal (_L (setattrs));
+      mom_unlock_item (_L (editeditm).pitem);
+    }
     MOM_DEBUG (run,
 	       MOMOUT_LITERAL ("ajax_objects_codmom beginedit editeditm="),
 	       MOMOUT_VALUE ((const momval_t) _L (editeditm)),
+	       MOMOUT_LITERAL ("; setattrs="),
+	       MOMOUT_VALUE ((const momval_t) _L (setattrs)),
 	       MOMOUT_LITERAL ("; editor="),
 	       MOMOUT_VALUE ((const momval_t) _L (editor)));
-    MOM_FATAL (MOMOUT_LITERAL ("ajax_objects unimplemented beginedit"));
+    {
+      assert (mom_is_item (_L (webx)));
+      momval_t namidv =
+	(momval_t) mom_item_get_name_or_idstr (_L (editeditm).pitem);
+      mom_lock_item (_L (webx).pitem);
+      MOM_WEBX_OUT (_L (webx).pitem,
+		    MOMOUT_LITERAL
+		    ("<p class='mom_edit_title_cl'>Item <tt>"),
+		    MOMOUT_HTML (mom_string_cstr (namidv)),
+		    MOMOUT_LITERAL ("</tt></span> <small>at "),
+		    MOMOUT_DOUBLE_TIME ((const char *) "%c",
+					mom_clock_time (CLOCK_REALTIME)),
+		    MOMOUT_LITERAL ("</small></p>"),
+		    MOMOUT_NEWLINE (),
+		    MOMOUT_LITERAL ("<ul class='mom_attrlist_cl'>"), NULL);
+      mom_unlock_item (_L (webx).pitem);
+    }
+    for (_N (atix) = 0; _N (atix) < _N (nbattrs); _N (atix)++)
+      {
+	_L (curattritm) =
+	  (momval_t) mom_set_nth_item (_L (setattrs), _N (atix));
+	{
+	  assert (mom_is_item (_L (editeditm)));
+	  assert (mom_is_item (_L (curattritm)));
+	  mom_lock_item (_L (editeditm).pitem);
+	  _L (curvalattr) =
+	    (momval_t) mom_get_attribute (_L (editeditm).pitem->i_attrs,
+					  _L (curattritm).pitem);
+	  mom_unlock_item (_L (editeditm).pitem);
+	}
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL ("ajax_objects_codmom atix="),
+		   MOMOUT_DEC_INT ((int) _N (atix)),
+		   MOMOUT_LITERAL ("; curattritm="),
+		   MOMOUT_VALUE ((const momval_t) _L (curattritm)),
+		   MOMOUT_LITERAL ("; curvalattr="),
+		   MOMOUT_VALUE ((const momval_t) _L (curvalattr)), NULL);
+	{
+	  momval_t namidatv =
+	    (momval_t) mom_item_get_name_or_idstr (_L (curattritm).pitem);
+	  assert (mom_is_item (_L (webx)));
+	  mom_lock_item (_L (webx).pitem);
+	  MOM_WEBX_OUT (_L (webx).pitem, MOMOUT_LITERAL ("<li class='mom_attrentry_cl'><span class='mom_attritem_cl'>"), MOMOUT_HTML (mom_string_cstr (namidatv)), MOMOUT_LITERAL ("</span> " "&#8594;"	/* U+2192 RIGHTWARDS ARROW → */
+																						   " <span class='mom_value_cl'>"),
+			NULL);
+	  mom_unlock_item (_L (webx).pitem);
+	}
+	MOM_FATAL (MOMOUT_LITERAL ("ajax_objects unimplemented beginedit"));
+      }
   }
   ;
   ////
@@ -391,7 +453,7 @@ ajax_complete_name_codmom (int momstate_, momitem_t *momtasklet_,
 #define _SET_STATE(St) do {						\
     MOM_DEBUGPRINTF (run,						\
 		     "ajax_complete_name_codmom setstate " #St " = %d",	\
-	       (int)ajaxcompnam_s_##St);				\
+		     (int)ajaxcompnam_s_##St);				\
     return ajaxcompnam_s_##St; } while(0)
   MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_complete_name_codmom tasklet:"),
 	     MOMOUT_ITEM ((const momitem_t *) momtasklet_),
@@ -480,5 +542,82 @@ const struct momroutinedescr_st momrout_ajax_complete_name = {
   .rout_name = "ajax_complete_name",
   .rout_module = MONIMELT_CURRENT_MODULE,
   .rout_codefun = ajax_complete_name_codmom,
+  .rout_timestamp = __DATE__ "@" __TIME__
+};
+
+////////////////////////////////////////////////////////////////
+///// noop
+enum noop_values_en
+{
+  noop_v_arg0res,
+  noop_v__lastval
+};
+
+enum noop_closure_en
+{
+  noop_c__lastclosure
+};
+
+enum noop_numbers_en
+{
+  noop_n__lastnum
+};
+
+
+static int
+noop_codmom (int momstate_, momitem_t *momtasklet_,
+	     const momnode_t *momclosure_,
+	     momval_t *momlocvals_, intptr_t * momlocnums_,
+	     double *momlocdbls_)
+{
+#define _L(Nam) (momlocvals_[noop_v_##Nam])
+#define _C(Nam) (momclosure_->sontab[noop_c_##Nam])
+#define _N(Nam) (momlocnums_[noop_n_##Nam])
+  enum noop_state_en
+  {
+    noop_s_start,
+    noop_s_impossible,
+    noop_s__laststate
+  };
+#define _SET_STATE(St) do {					\
+    MOM_DEBUGPRINTF (run,					\
+		     "noop_codmom setstate " #St " = %d",	\
+		     (int)noop_s_##St);				\
+    return noop_s_##St; } while(0)
+  if (momstate_ >= 0 && momstate_ < noop_s__laststate)
+    switch ((enum noop_state_en) momstate_)
+      {
+      case noop_s_start:
+	goto noop_lab_start;
+      case noop_s_impossible:
+	goto noop_lab_impossible;
+      case noop_s__laststate:;
+      }
+  MOM_FATAPRINTF ("noop invalid state #%d", momstate_);
+noop_lab_start:
+  MOM_DEBUG (run, MOMOUT_LITERAL ("noop start arg0res="),
+	     MOMOUT_VALUE ((const momval_t) _L (arg0res)));
+  if (_L (arg0res).ptr == MOM_EMPTY)
+    _SET_STATE (impossible);
+  return momroutres_pop;
+noop_lab_impossible:
+  MOM_FATAPRINTF ("noop impossible state reached!");
+
+#undef _L
+#undef _C
+#undef _N
+#undef _SET_STATE
+  return momroutres_pop;
+}
+
+const struct momroutinedescr_st momrout_noop = {
+  .rout_magic = MOM_ROUTINE_MAGIC,
+  .rout_minclosize = noop_c__lastclosure,
+  .rout_frame_nbval = noop_v__lastval,
+  .rout_frame_nbnum = noop_n__lastnum,
+  .rout_frame_nbdbl = 0,
+  .rout_name = "noop",
+  .rout_module = MONIMELT_CURRENT_MODULE,
+  .rout_codefun = noop_codmom,
   .rout_timestamp = __DATE__ "@" __TIME__
 };

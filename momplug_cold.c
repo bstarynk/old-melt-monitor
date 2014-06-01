@@ -32,25 +32,21 @@ momplugin_init (const char *arg)
 static void
 create_stuff_mom (void)
 {
-  momitem_t *ajax_complete_name_item = mom_make_item ();
-  mom_item_set_space (ajax_complete_name_item, momspa_root);
-  mom_register_item_named_cstr (ajax_complete_name_item,
-				"ajax_complete_name");
-  mom_item_start_routine (ajax_complete_name_item, "ajax_complete_name");
-  ajax_complete_name_item->i_attrs = mom_put_attribute
-    (ajax_complete_name_item->i_attrs,
-     mom_named__comment,
-     (momval_t) mom_make_string ("handle 'ajax_complete_name' webrequests"));
-  ajax_complete_name_item->i_attrs = mom_put_attribute
-    (ajax_complete_name_item->i_attrs,
-     mom_named__web_handler,
-     (momval_t) mom_make_node_til_nil
-     (ajax_complete_name_item,
-      (momval_t) mom_make_string ("{spare1 ajax-complete_name}"),
-      (momval_t) mom_make_string ("{spare2 ajax-complete_name}"),
-      (momval_t) mom_make_string ("{spare3 ajax-complete_name}"), MOM_EMPTY,
-      NULL));
-  MOM_INFORMPRINTF ("created ajax_complete_name");
+  momitem_t *ajax_objects_item = mom_get_item_of_name ("ajax_objects");
+  assert (ajax_objects_item != NULL);
+  momitem_t *noop_item = mom_make_item ();
+  mom_item_set_space (noop_item, momspa_root);
+  mom_register_item_named_cstr (noop_item, "noop");
+  mom_item_start_routine (noop_item, "noop");
+  noop_item->i_attrs = mom_put_attribute
+    (noop_item->i_attrs,
+     mom_named__comment, (momval_t) mom_make_string ("useless noop routine"));
+  noop_item->i_content =
+    (momval_t) mom_make_node_til_nil
+    (noop_item,
+     (momval_t) mom_make_string ("{spare1 noop}"),
+     (momval_t) mom_make_string ("{spare2 noop}"), MOM_EMPTY, NULL);
+  MOM_INFORMPRINTF ("created noop");
 }
 
 void
