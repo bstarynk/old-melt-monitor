@@ -436,7 +436,8 @@ ajaxobjs_lab_beginedit:
 	  momval_t namidatv =
 	    (momval_t) mom_item_get_name_or_idstr (_L (curattritm).pitem);
 	  assert (mom_is_item (_L (webx)));
-	  momval_t jorig = (momval_t)
+	  momval_t jorigat =	////
+	    (momval_t)
 	    mom_make_json_object (MOMJSOB_ENTRY ((momval_t) mom_named__kind,
 						 (momval_t) mom_named__attr),
 				  MOMJSOB_ENTRY ((momval_t) mom_named__item,
@@ -450,9 +451,16 @@ ajaxobjs_lab_beginedit:
 						 (mom_value_to_item
 						  (_L (curattritm)))),
 				  NULL);
+	  momval_t exprat =	///
+	    (momval_t) mom_make_node_til_nil (mom_named__attr,
+					      _L (editeditm),
+					      _L (curattritm),
+					      NULL);
 	  MOM_DEBUG (run,
-		     MOMOUT_LITERAL ("ajax_objects_codmom jorig="),
-		     MOMOUT_JSON_VALUE (jorig));
+		     MOMOUT_LITERAL ("ajax_objects_codmom jorigat="),
+		     MOMOUT_JSON_VALUE (jorigat),
+		     MOMOUT_LITERAL ("; exprat="),
+		     MOMOUT_JSON_VALUE (exprat));
 	  mom_lock_item (_L (webx).pitem);
 	  MOM_WEBX_OUT (_L (webx).pitem,
 			//
@@ -464,14 +472,9 @@ ajaxobjs_lab_beginedit:
 	    (momtasklet_, _C (editvalueclos),
 	     MOMPFR_FIVE_VALUES (_L (editor),
 				 _L (webx),
-				 jorig,
-				 (momval_t) mom_make_node_til_nil
-				 (mom_named__attr,
-				  _L (editeditm),
-				  _L (curattritm),
-				  NULL),
-				 _L (curvalattr)),
-	     MOMPFR_INT ((intptr_t) 0), NULL);
+				 _L (curvalattr),
+				 jorigat,
+				 exprat), MOMPFR_INT ((intptr_t) 0), NULL);
 	  _SET_STATE (didattredit);
 	}
 	////
@@ -510,8 +513,7 @@ ajaxobjs_lab_beginedit:
 					   (momval_t)
 					   mom_item_get_idstr
 					   (mom_value_to_item
-					    (_L (editeditm)))),
-			    NULL);
+					    (_L (editeditm)))), NULL);
     momval_t exprcont = (momval_t)
       mom_make_node_til_nil (mom_named__content, _L (editeditm), NULL);
     MOM_DEBUG (run,
@@ -525,9 +527,9 @@ ajaxobjs_lab_beginedit:
       (momtasklet_, _C (editvalueclos),
        MOMPFR_FIVE_VALUES (_L (editor),
 			   _L (webx),
+			   _L (curcontent),
 			   jorigcont,
-			   exprcont,
-			   _L (curcontent)), MOMPFR_INT ((intptr_t) 0), NULL);
+			   exprcont), MOMPFR_INT ((intptr_t) 0), NULL);
     _SET_STATE (didcontentedit);
   ajaxobjs_lab_didcontentedit:
     MOM_DEBUG (run,
@@ -548,15 +550,12 @@ ajaxobjs_lab_beginedit:
 }
 
 const struct momroutinedescr_st momrout_ajax_objects = {
-  .rout_magic = MOM_ROUTINE_MAGIC,
-  .rout_minclosize = ajaxobjs_c__lastclosure,
-  .rout_frame_nbval = ajaxobjs_v__lastval,
-  .rout_frame_nbnum = ajaxobjs_n__lastnum,
-  .rout_frame_nbdbl = 0,
-  .rout_name = "ajax_objects",
-  .rout_module = MONIMELT_CURRENT_MODULE,
-  .rout_codefun = ajax_objects_codmom,
-  .rout_timestamp = __DATE__ "@" __TIME__
+  .rout_magic = MOM_ROUTINE_MAGIC,.rout_minclosize =
+    ajaxobjs_c__lastclosure,.rout_frame_nbval =
+    ajaxobjs_v__lastval,.rout_frame_nbnum =
+    ajaxobjs_n__lastnum,.rout_frame_nbdbl = 0,.rout_name =
+    "ajax_objects",.rout_module = MONIMELT_CURRENT_MODULE,.rout_codefun =
+    ajax_objects_codmom,.rout_timestamp = __DATE__ "@" __TIME__
 };
 
 
@@ -566,10 +565,10 @@ const struct momroutinedescr_st momrout_ajax_objects = {
 ///// edit_value
 enum edit_value_values_en
 {
-  edit_value_v_arg0res,
+  edit_value_v_arg0res,		/* arg0 is the editor */
   edit_value_v_webx,
-  edit_value_v_jorig,
   edit_value_v_curval,
+  edit_value_v_jorig,
   edit_value_v_expr,
   edit_value_v_spare,
   edit_value_v_editor,
@@ -894,22 +893,17 @@ edit_value_lab_start:
 		   MOMJSOB_ENTRY ((momval_t) mom_named__node,
 				  mom_make_integer (_N (numval))),
 		   MOMJSOB_ENTRY ((momval_t) mom_named__sons,
-				  mom_make_integer (_N (sonix))),
-		   NULL);
+				  mom_make_integer (_N (sonix))), NULL);
 		momval_t nodexpr = (momval_t)
 		  mom_make_node_til_nil (mom_named__node,
 					 mom_make_integer (_N (numval)),
-					 mom_make_integer (_N (sonix)),
-					 NULL);
-		mom_item_tasklet_push_frame (momtasklet_,
-					     (momval_t) momclosure_,
-					     MOMPFR_FIVE_VALUES (_L (editor),
-								 _L (webx),
-								 jnodorig,
-								 nodexpr,
-								 _L (curson)),
-					     MOMPFR_INT (_N (depth) + 1),
-					     NULL);
+					 mom_make_integer (_N (sonix)), NULL);
+		mom_item_tasklet_push_frame	//
+		  (momtasklet_, (momval_t) momclosure_,
+		   MOMPFR_FIVE_VALUES (_L (editor), _L (webx), _L (curson),
+				       jnodorig,
+				       nodexpr),
+		   MOMPFR_INT (_N (depth) + 1), NULL);
 		_SET_STATE (didsonedit);
 	      edit_value_lab_didsonedit:
 		if (!mom_lock_item (_L (webx).pitem))
@@ -938,15 +932,12 @@ edit_value_lab_impossible:
 }
 
 const struct momroutinedescr_st momrout_edit_value = {
-  .rout_magic = MOM_ROUTINE_MAGIC,
-  .rout_minclosize = edit_value_c__lastclosure,
-  .rout_frame_nbval = edit_value_v__lastval,
-  .rout_frame_nbnum = edit_value_n__lastnum,
-  .rout_frame_nbdbl = 0,
-  .rout_name = "edit_value",
-  .rout_module = MONIMELT_CURRENT_MODULE,
-  .rout_codefun = edit_value_codmom,
-  .rout_timestamp = __DATE__ "@" __TIME__
+  .rout_magic = MOM_ROUTINE_MAGIC,.rout_minclosize =
+    edit_value_c__lastclosure,.rout_frame_nbval =
+    edit_value_v__lastval,.rout_frame_nbnum =
+    edit_value_n__lastnum,.rout_frame_nbdbl = 0,.rout_name =
+    "edit_value",.rout_module = MONIMELT_CURRENT_MODULE,.rout_codefun =
+    edit_value_codmom,.rout_timestamp = __DATE__ "@" __TIME__
 };
 
 
@@ -1075,15 +1066,13 @@ ajaxcompnam_lab_start:
 }
 
 const struct momroutinedescr_st momrout_ajax_complete_name = {
-  .rout_magic = MOM_ROUTINE_MAGIC,
-  .rout_minclosize = ajaxcompnam_c__lastclosure,
-  .rout_frame_nbval = ajaxcompnam_v__lastval,
-  .rout_frame_nbnum = ajaxcompnam_n__lastnum,
-  .rout_frame_nbdbl = 0,
-  .rout_name = "ajax_complete_name",
-  .rout_module = MONIMELT_CURRENT_MODULE,
-  .rout_codefun = ajax_complete_name_codmom,
-  .rout_timestamp = __DATE__ "@" __TIME__
+  .rout_magic = MOM_ROUTINE_MAGIC,.rout_minclosize =
+    ajaxcompnam_c__lastclosure,.rout_frame_nbval =
+    ajaxcompnam_v__lastval,.rout_frame_nbnum =
+    ajaxcompnam_n__lastnum,.rout_frame_nbdbl = 0,.rout_name =
+    "ajax_complete_name",.rout_module =
+    MONIMELT_CURRENT_MODULE,.rout_codefun =
+    ajax_complete_name_codmom,.rout_timestamp = __DATE__ "@" __TIME__
 };
 
 
@@ -1152,13 +1141,10 @@ noop_lab_impossible:
 }
 
 const struct momroutinedescr_st momrout_noop = {
-  .rout_magic = MOM_ROUTINE_MAGIC,
-  .rout_minclosize = noop_c__lastclosure,
-  .rout_frame_nbval = noop_v__lastval,
-  .rout_frame_nbnum = noop_n__lastnum,
-  .rout_frame_nbdbl = 0,
-  .rout_name = "noop",
-  .rout_module = MONIMELT_CURRENT_MODULE,
-  .rout_codefun = noop_codmom,
-  .rout_timestamp = __DATE__ "@" __TIME__
+  .rout_magic = MOM_ROUTINE_MAGIC,.rout_minclosize =
+    noop_c__lastclosure,.rout_frame_nbval =
+    noop_v__lastval,.rout_frame_nbnum = noop_n__lastnum,.rout_frame_nbdbl =
+    0,.rout_name = "noop",.rout_module =
+    MONIMELT_CURRENT_MODULE,.rout_codefun = noop_codmom,.rout_timestamp =
+    __DATE__ "@" __TIME__
 };

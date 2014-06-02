@@ -321,35 +321,41 @@ end:
   pthread_mutex_unlock (&routitm->i_mtx);
   if (routcod)
     {
+      unsigned oldfratop = fratop;
       MOM_DEBUG (run, MOMOUT_LITERAL ("step_tasklet_mom calling routine "),
 		 MOMOUT_LITERALV (rdescr->rout_name),
-		 MOMOUT_LITERAL (" at state#"),
-		 MOMOUT_DEC_INT (state),
+		 MOMOUT_LITERAL (" at state#"), MOMOUT_DEC_INT (state),
+		 MOMOUT_LITERAL (" oldfratop#"),
+		 MOMOUT_DEC_INT ((int) oldfratop),
 		 MOMOUT_LITERAL (" with taskitem:"),
 		 MOMOUT_ITEM ((const momitem_t *) tkitm));
       int newstate =
 	routcod (state, tkitm, curclo, locvals, locints, locdbls);
-      MOM_DEBUG (run,
-		 MOMOUT_LITERAL ("step_tasklet_mom did routine "),
+      MOM_DEBUG (run, MOMOUT_LITERAL ("step_tasklet_mom did routine "),
 		 MOMOUT_LITERALV (rdescr->rout_name),
 		 MOMOUT_LITERAL (" newstate#"), MOMOUT_DEC_INT (newstate),
 		 MOMOUT_LITERAL (" with taskitem:"),
 		 MOMOUT_ITEM ((const momitem_t *) tkitm),
-		 MOMOUT_LITERAL (" fratop#"), MOMOUT_DEC_INT ((int) fratop));
+		 MOMOUT_LITERAL (" oldfratop#"),
+		 MOMOUT_DEC_INT ((int) oldfratop),
+		 MOMOUT_LITERAL (" new fratop#"),
+		 MOMOUT_DEC_INT ((int) (itd->dtk_fratop)));
       if (newstate == momroutres_pop)
 	popframe = true;
       else if (newstate == momroutres_steady)
 	res = true;
-      else if ((fratop = itd->dtk_fratop) > 0 && !popframe)
+      else if (oldfratop > 0 && !popframe && newstate >= 0)
 	{
 	  MOM_DEBUG (run,
 		     MOMOUT_LITERAL ("step_tasklet_mom taskitem:"),
 		     MOMOUT_ITEM ((const momitem_t *) tkitm),
-		     MOMOUT_LITERAL (" fratop#"),
-		     MOMOUT_DEC_INT ((int) fratop),
+		     MOMOUT_LITERAL (" oldfratop#"),
+		     MOMOUT_DEC_INT ((int) oldfratop),
 		     MOMOUT_LITERAL (" set state#"),
 		     MOMOUT_DEC_INT ((int) newstate));
-	  (itd->dtk_frames + fratop - 1)->fr_state = newstate;
+	  /// we should change the state of the old current frame. The
+	  /// dtk_frames array might have been resized...
+	  (itd->dtk_frames + oldfratop - 1)->fr_state = newstate;
 	  res = true;
 	}
       else
