@@ -41,8 +41,9 @@ nav.momnav_cl {
 
 div.mom_main_cl {
     background-color: azure;
-    font-size: 100;
+    font-size: 105%;
     border: 1px;
+    margin: 2px;
 }
 
 .mom_icon_system_cl {
@@ -88,13 +89,33 @@ input.mom_newcomment_cl {
 
 /* the title of an edited item */
 p.mom_edit_title_cl {
-    align: center;
+    text-align: center;
     color: navy;
     font-size: 120%;
     font-weight: bold;
     font-family: Georgia, "Times New Roman", Times, serif;
-    border: 1px brown;
+    border: 1px;
     min-width: 50%;
+}
+
+tt.mom_edititemname_cl {
+    font-family: "Lucida Console", Monaco, monospace;
+    font-weight: bold;
+    color: #211001;
+    font-size: 105%;
+}
+
+tt.mom_edititemid_cl {
+    font-family: "Lucida Console", Monaco, monospace;
+    font-weight: bold;
+    color: darkred;
+    font-size: 105%;
+}
+
+code.mom_itemid_cl{
+    font-family: "Courier New", Courier, monospace;
+    font-size: 80%;
+    color: #011902;
 }
 
 /* the attribute list of an edited item */
@@ -174,39 +195,39 @@ span.mom_nameditemval_cl {
 span.mom_emptysetval_cl {
     font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
     font-weight: bold;
-    size: 110%;
+    font-size: 110%;
     color: #0A0A0A;
 }
 
 span.mom_emptytupleval_cl {
     font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
     font-weight: bold;
-    size: 110%;
+    font-size: 110%;
     color: #252525;
 }
 
 span.mom_setval_cl {
     font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
     font-weight: bold;
-    size: 105%;
+    font-size: 105%;
     color: #0C0C0C;
 }
 
 span.mom_tupleval_cl {
     font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
     font-weight: bold;
-    size: 105%;
+    font-size: 105%;
     color: #100C0F;
 }
 
 span.mom_nullitem_cl {
-    size: 110%;
+    font-size: 110%;
     font-weight: bold;
     color: #08120e;
 }
 
 span.mom_nodeval_cl {
-    size: 105%;
+    font-size: 105%;
     font-weight: bold;
     color: #060615;
 }

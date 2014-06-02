@@ -73,6 +73,7 @@ function mom_name_entry_selected(rec) {
 	     dataType: 'html',
 	     success: function (gotdata) {
 		 console.debug ("mom_name_entry_selected gotdata=", gotdata);
+		 maindiv_mom.html(gotdata);
 	     }
 	   });
 }

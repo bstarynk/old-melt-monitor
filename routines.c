@@ -394,17 +394,41 @@ ajaxobjs_lab_beginedit:
       assert (mom_is_item (_L (webx)));
       momval_t namidv =
 	(momval_t) mom_item_get_name_or_idstr (_L (editeditm).pitem);
+      momval_t idv = (momval_t) mom_item_get_idstr (_L (editeditm).pitem);
+      bool anonymous = (namidv.ptr == idv.ptr);
       mom_lock_item (_L (webx).pitem);
-      MOM_WEBX_OUT (_L (webx).pitem,
-		    MOMOUT_LITERAL
-		    ("<p class='mom_edit_title_cl'>Item <tt>"),
-		    MOMOUT_HTML (mom_string_cstr (namidv)),
-		    MOMOUT_LITERAL ("</tt></span> <small>at "),
-		    MOMOUT_DOUBLE_TIME ((const char *) "%c",
-					mom_clock_time (CLOCK_REALTIME)),
-		    MOMOUT_LITERAL ("</small></p>"),
-		    MOMOUT_NEWLINE (),
-		    MOMOUT_LITERAL ("<ul class='mom_attrlist_cl'>"), NULL);
+      if (anonymous)
+	{
+	  MOM_WEBX_OUT (_L (webx).pitem,
+			MOMOUT_LITERAL
+			("<p class='mom_edit_title_cl'>item $"
+			 "<tt class='mom_edititemid_cl'>"),
+			MOMOUT_HTML (mom_string_cstr (namidv)),
+			MOMOUT_LITERAL ("</tt> <small>at "),
+			MOMOUT_DOUBLE_TIME ((const char *) "%c",
+					    mom_clock_time (CLOCK_REALTIME)),
+			MOMOUT_LITERAL ("</small></p>"),
+			MOMOUT_NEWLINE (),
+			MOMOUT_LITERAL ("<ul class='mom_attrlist_cl'>"),
+			NULL);
+	}
+      else
+	{
+	  MOM_WEBX_OUT (_L (webx).pitem,
+			MOMOUT_LITERAL
+			("<p class='mom_edit_title_cl'>item "
+			 "<tt class='mom_edititemname_cl'>"),
+			MOMOUT_HTML (mom_string_cstr (namidv)),
+			MOMOUT_LITERAL
+			("</tt> <small>id <code class='mom_itemid_cl'>"),
+			MOMOUT_HTML (mom_string_cstr (idv)),
+			MOMOUT_LITERAL ("</code> at "),
+			MOMOUT_DOUBLE_TIME ((const char *) "%c",
+					    mom_clock_time (CLOCK_REALTIME)),
+			MOMOUT_LITERAL ("</small></p>"), MOMOUT_NEWLINE (),
+			MOMOUT_LITERAL ("<ul class='mom_attrlist_cl'>"),
+			NULL);
+	}
       mom_unlock_item (_L (webx).pitem);
     }
     MOM_DEBUG (run,
