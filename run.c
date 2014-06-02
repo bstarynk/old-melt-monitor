@@ -329,13 +329,19 @@ end:
 		 MOMOUT_ITEM ((const momitem_t *) tkitm));
       int newstate =
 	routcod (state, tkitm, curclo, locvals, locints, locdbls);
-      MOM_DEBUG (run, MOMOUT_LITERAL ("step_tasklet_mom called routine "),
+      MOM_DEBUG (run,
+		 MOMOUT_LITERAL ("step_tasklet_mom returned from routine "),
 		 MOMOUT_LITERALV (rdescr->rout_name),
-		 MOMOUT_LITERAL (" newstate#"), MOMOUT_DEC_INT (newstate));
+		 MOMOUT_LITERAL (" newstate#"), MOMOUT_DEC_INT (newstate),
+		 MOMOUT_LITERAL (" with taskitem:"),
+		 MOMOUT_ITEM ((const momitem_t *) tkitm),
+		 MOMOUT_LITERAL (" fratop#"), MOMOUT_DEC_INT ((int) fratop));
       if (newstate == momroutres_pop)
 	popframe = true;
       else
-	(itd->dtk_frames + fratop)->fr_state = newstate;
+	{
+	  (itd->dtk_frames + fratop)->fr_state = newstate;
+	}
     }
   if (popframe)
     mom_item_tasklet_pop_frame (tkitm);
@@ -347,10 +353,13 @@ end:
 void
 run_one_tasklet_mom (momitem_t *tkitm)
 {
+  unsigned stepcount = 0;
   struct mom_taskletdata_st *itd = NULL;
   MOM_DEBUG (run, MOMOUT_LITERAL ("run_one_tasklet_mom start tkitm:"),
 	     MOMOUT_ITEM ((const momitem_t *) tkitm));
-  pthread_mutex_lock (&tkitm->i_mtx);
+  assert (tkitm != NULL && tkitm->i_typnum == momty_item);
+  if (!mom_lock_item (tkitm))
+    return;
   if (tkitm->i_paylkind != mompayk_tasklet)
     {
       MOM_DEBUG (run, MOMOUT_LITERAL ("run_one_tasklet_mom bad paylkind"),
@@ -362,11 +371,16 @@ run_one_tasklet_mom (momitem_t *tkitm)
   itd = tkitm->i_payload;
   itd->dtk_thread = pthread_self ();
   unsigned nbsteps = mom_random_32 () % 16 + 3;
-  unsigned stepcount = 0;
   MOM_DEBUG (run, MOMOUT_LITERAL ("run_one_tasklet_mom nbsteps:"),
-	     MOMOUT_DEC_INT ((int) nbsteps));
+	     MOMOUT_DEC_INT ((int) nbsteps),
+	     MOMOUT_LITERAL (" tkitm:"),
+	     MOMOUT_ITEM ((const momitem_t *) tkitm));
   for (unsigned stepix = 0; stepix < nbsteps; stepix++)
     {
+      MOM_DEBUG (run, MOMOUT_LITERAL ("run_one_tasklet_mom stepix="),
+		 MOMOUT_DEC_INT ((int) stepix),
+		 MOMOUT_LITERAL (" tkitm:"),
+		 MOMOUT_ITEM ((const momitem_t *) tkitm));
       if (!step_tasklet_mom (tkitm, itd))
 	break;
       stepcount++;
@@ -376,13 +390,17 @@ run_one_tasklet_mom (momitem_t *tkitm)
 	break;
     }
   MOM_DEBUG (run, MOMOUT_LITERAL ("run_one_tasklet_mom done stepcount="),
-	     MOMOUT_DEC_INT ((int) stepcount));
+	     MOMOUT_DEC_INT ((int) stepcount),
+	     MOMOUT_LITERAL (" tkitm:"),
+	     MOMOUT_ITEM ((const momitem_t *) tkitm));
 end:
   if (itd)
     itd->dtk_thread = 0;
-  pthread_mutex_unlock (&tkitm->i_mtx);
   MOM_DEBUG (run, MOMOUT_LITERAL ("run_one_tasklet_mom done tkitm:"),
-	     MOMOUT_ITEM ((const momitem_t *) tkitm));
+	     MOMOUT_ITEM ((const momitem_t *) tkitm),
+	     MOMOUT_LITERAL (" stepcount="),
+	     MOMOUT_DEC_INT ((int) stepcount));
+  mom_unlock_item (tkitm);
 }
 
 
