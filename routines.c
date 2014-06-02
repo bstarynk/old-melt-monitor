@@ -236,12 +236,16 @@ ajax_objects_codmom (int momstate_, momitem_t *momtasklet_,
       {
       case ajaxobjs_s_start:
 	goto ajaxobjs_lab_start;
+	//
       case ajaxobjs_s_beginedit:
 	goto ajaxobjs_lab_beginedit;
+	//
       case ajaxobjs_s_didattredit:
 	goto ajaxobjs_lab_didattredit;
+	//
       case ajaxobjs_s_didcontentedit:
 	goto ajaxobjs_lab_didcontentedit;
+	//
       case ajaxobjs_s__laststate:;
       }
   MOM_FATAPRINTF ("ajax_objects invalid state #%d", momstate_);
@@ -303,6 +307,7 @@ ajaxobjs_lab_start:
       }
     else if (mom_string_same (todov, "mom_domakenamed"))
       {
+	MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_objects_codmom makenamed"));
 	momval_t namev = mom_webx_post_arg (_L (webx).pitem, "name_mom");
 	momval_t commentv =
 	  mom_webx_post_arg (_L (webx).pitem, "comment_mom");
@@ -324,6 +329,7 @@ ajaxobjs_lab_start:
       }
     else if (mom_string_same (todov, "mom_doeditnamed"))
       {
+	MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_objects_codmom editnamed"));
 	momval_t namev = mom_webx_post_arg (_L (webx).pitem, "name_mom");
 	momval_t idv = mom_webx_post_arg (_L (webx).pitem, "id_mom");
 	MOM_DEBUG (run,
@@ -336,6 +342,10 @@ ajaxobjs_lab_start:
 	if (!_L (editeditm).ptr)
 	  _L (editeditm) =
 	    (momval_t) mom_get_item_of_name_or_ident_string (idv);
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL
+		   ("ajax_objects_codmom doeditnamed editeditm="),
+		   MOMOUT_VALUE ((const momval_t) _L (editeditm)));
 	{
 	  mom_unlock_item (_L (webx).pitem);
 	  _SET_STATE (beginedit);
@@ -359,7 +369,9 @@ ajaxobjs_lab_beginedit:
 	       MOMOUT_LITERAL ("ajax_objects_codmom beginedit editor="),
 	       MOMOUT_VALUE ((const momval_t) _L (editor)),
 	       MOMOUT_LITERAL ("; webx="),
-	       MOMOUT_VALUE ((const momval_t) _L (webx)), NULL);
+	       MOMOUT_VALUE ((const momval_t) _L (webx)),
+	       MOMOUT_LITERAL ("; editeditm="),
+	       MOMOUT_VALUE ((const momval_t) _L (editeditm)), NULL);
     {
       mom_lock_item (_L (editeditm).pitem);
       _L (setattrs) =
@@ -372,6 +384,8 @@ ajaxobjs_lab_beginedit:
 	       MOMOUT_VALUE ((const momval_t) _L (editeditm)),
 	       MOMOUT_LITERAL ("; setattrs="),
 	       MOMOUT_VALUE ((const momval_t) _L (setattrs)),
+	       MOMOUT_LITERAL ("; nbattrs="),
+	       MOMOUT_DEC_INT ((int) _N (nbattrs)),
 	       MOMOUT_LITERAL ("; editor="),
 	       MOMOUT_VALUE ((const momval_t) _L (editor)),
 	       MOMOUT_LITERAL ("; editvalueclos="),
@@ -393,6 +407,10 @@ ajaxobjs_lab_beginedit:
 		    MOMOUT_LITERAL ("<ul class='mom_attrlist_cl'>"), NULL);
       mom_unlock_item (_L (webx).pitem);
     }
+    MOM_DEBUG (run,
+	       MOMOUT_LITERAL
+	       ("ajax_objects_codmom before atix loop nbattrs="),
+	       MOMOUT_DEC_INT ((int) _N (nbattrs)));
     for (_N (atix) = 0; _N (atix) < _N (nbattrs); _N (atix)++)
       {
 	_L (curattritm) =
@@ -474,7 +492,10 @@ ajaxobjs_lab_beginedit:
       mom_lock_item (_L (editeditm).pitem);
       _L (curcontent) = _L (editeditm).pitem->i_content;
       mom_unlock_item (_L (editeditm).pitem);
-    }
+    }				// end for atix
+    MOM_DEBUG (run,
+	       MOMOUT_LITERAL ("ajax_objects_codmom curcontent="),
+	       MOMOUT_VALUE ((const momval_t) _L (curcontent)));
     mom_lock_item (_L (webx).pitem);
     MOM_WEBX_OUT (_L (webx).pitem,
 		  MOMOUT_LITERAL ("</ul>"), MOMOUT_NEWLINE (), NULL);
@@ -493,6 +514,13 @@ ajaxobjs_lab_beginedit:
 			    NULL);
     momval_t exprcont = (momval_t)
       mom_make_node_til_nil (mom_named__content, _L (editeditm), NULL);
+    MOM_DEBUG (run,
+	       MOMOUT_LITERAL ("ajax_objects_codmom momtasklet_="),
+	       MOMOUT_VALUE ((const momval_t) momtasklet_),
+	       MOMOUT_LITERAL ("; jorigcont="),
+	       MOMOUT_VALUE ((const momval_t) jorigcont),
+	       MOMOUT_LITERAL ("; exprcont="),
+	       MOMOUT_VALUE ((const momval_t) exprcont));
     mom_item_tasklet_push_frame	///
       (momtasklet_, _C (editvalueclos),
        MOMPFR_FIVE_VALUES (_L (editor),
