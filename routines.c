@@ -126,6 +126,26 @@ ajaxsyst_lab_start:
 	usleep (1000);
 	goto end;
       }
+    else if (mom_string_same (todov, "mom_initial_system"))
+      {
+	MOM_WEBX_OUT
+	  (_L (webx).pitem,
+	   MOMOUT_LITERAL
+	   ("<em>Monimelt</em> started at <i>"),
+	   MOMOUT_DOUBLE_TIME ((const char *) "%c",
+			       mom_clock_time (CLOCK_REALTIME)),
+	   MOMOUT_LITERAL ("</i> process "),
+	   MOMOUT_DEC_INT ((int) getpid ()),
+	   MOMOUT_LITERAL ("<br/> build <tt>"),
+	   MOMOUT_LITERAL (monimelt_timestamp),
+	   MOMOUT_LITERAL ("</tt> <small>version <tt>"),
+	   MOMOUT_LITERAL (monimelt_lastgitcommit),
+	   MOMOUT_LITERAL ("</tt></small>"), MOMOUT_NEWLINE (), NULL);
+	mom_webx_reply (_L (webx).pitem, "text/html", HTTP_OK);
+	usleep (1000);
+	goto end;
+      }
+
     else
       MOM_FATAL (MOMOUT_LITERAL ("ajax_system unexpected todov:"),
 		 MOMOUT_VALUE ((const momval_t) todov));
@@ -228,7 +248,7 @@ ajax_objects_codmom (int momstate_, momitem_t *momtasklet_,
   ////
 ajaxobjs_lab_start:
   _L (webx) = _L (arg0res);
-  MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_objects_codmom webx="),
+  MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_objects_codmom start webx="),
 	     MOMOUT_VALUE ((const momval_t) _L (webx)));
   assert (mom_is_item (_L (webx)));
   {
@@ -335,6 +355,11 @@ ajaxobjs_lab_beginedit:
     _L (editor) = (momval_t) mom_make_item ();
     mom_item_start_vector (_L (editor).pitem);
     mom_item_vector_reserve (_L (editor).pitem, 16);
+    MOM_DEBUG (run,
+	       MOMOUT_LITERAL ("ajax_objects_codmom beginedit editor="),
+	       MOMOUT_VALUE ((const momval_t) _L (editor)),
+	       MOMOUT_LITERAL ("; webx="),
+	       MOMOUT_VALUE ((const momval_t) _L (webx)), NULL);
     {
       mom_lock_item (_L (editeditm).pitem);
       _L (setattrs) =
@@ -434,7 +459,7 @@ ajaxobjs_lab_beginedit:
 	////
       ajaxobjs_lab_didattredit:
 	MOM_DEBUG (run,
-		   MOMOUT_LITERAL ("ajax_objects_codmom afterattredit atix="),
+		   MOMOUT_LITERAL ("ajax_objects_codmom didattredit atix="),
 		   MOMOUT_DEC_INT ((int) _N (atix)));
 	mom_lock_item (_L (webx).pitem);
 	MOM_WEBX_OUT (_L (webx).pitem,
@@ -442,6 +467,9 @@ ajaxobjs_lab_beginedit:
 	mom_unlock_item (_L (webx).pitem);
 	continue;
       }				// end for atix
+    MOM_DEBUG (run,
+	       MOMOUT_LITERAL ("ajax_objects_codmom endloop nbattrs="),
+	       MOMOUT_DEC_INT ((int) _N (nbattrs)));
     {
       mom_lock_item (_L (editeditm).pitem);
       _L (curcontent) = _L (editeditm).pitem->i_content;
@@ -476,13 +504,11 @@ ajaxobjs_lab_beginedit:
   ajaxobjs_lab_didcontentedit:
     MOM_DEBUG (run,
 	       MOMOUT_LITERAL
-	       ("ajax_objects_codmom aftercontentedit curcontent="),
+	       ("ajax_objects_codmom didcontentedit curcontent="),
 	       MOMOUT_VALUE (_L (curcontent)));
     mom_lock_item (_L (webx).pitem);
     mom_webx_reply (_L (webx).pitem, "text/html", HTTP_OK);
     mom_unlock_item (_L (webx).pitem);
-
-
   }
   ;
   ////

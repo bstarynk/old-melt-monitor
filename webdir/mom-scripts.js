@@ -24,6 +24,15 @@ var maindiv_mom;		// the main division
 $(function(){
     maindiv_mom= $('#mom_maindiv');
     console.debug("maindiv_mom=", maindiv_mom);
+    $.ajax({ url: '/ajax_system',
+	     method: 'POST',
+	     data: { todo_mom: "mom_initial_system" },
+	     dataType: 'html',
+	     success: function (gotdata) {
+		 console.debug("mom_initial_system ajax_system gotdata=", gotdata);
+		 maindiv_mom.html(gotdata);
+	     }
+	   });
 });
 
 function mom_do_menu_system(itm) {
