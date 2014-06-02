@@ -330,7 +330,7 @@ end:
       int newstate =
 	routcod (state, tkitm, curclo, locvals, locints, locdbls);
       MOM_DEBUG (run,
-		 MOMOUT_LITERAL ("step_tasklet_mom returned from routine "),
+		 MOMOUT_LITERAL ("step_tasklet_mom did routine "),
 		 MOMOUT_LITERALV (rdescr->rout_name),
 		 MOMOUT_LITERAL (" newstate#"), MOMOUT_DEC_INT (newstate),
 		 MOMOUT_LITERAL (" with taskitem:"),
@@ -338,13 +338,22 @@ end:
 		 MOMOUT_LITERAL (" fratop#"), MOMOUT_DEC_INT ((int) fratop));
       if (newstate == momroutres_pop)
 	popframe = true;
+      else if (newstate == momroutres_steady)
+	res = true;
       else
 	{
 	  (itd->dtk_frames + fratop)->fr_state = newstate;
+	  res = true;
 	}
     }
   if (popframe)
-    mom_item_tasklet_pop_frame (tkitm);
+    {
+      mom_item_tasklet_pop_frame (tkitm);
+      res = mom_item_tasklet_depth (tkitm) > 0;
+    }
+  MOM_DEBUG (run,
+	     MOMOUT_LITERAL ("step_tasklet_mom final res "),
+	     MOMOUT_LITERALV ((const char *) (res ? "true" : "false")));
   return res;
 }
 
