@@ -363,6 +363,7 @@ void
 run_one_tasklet_mom (momitem_t *tkitm)
 {
   unsigned stepcount = 0;
+  bool requeue = false;
   struct mom_taskletdata_st *itd = NULL;
   MOM_DEBUG (run, MOMOUT_LITERAL ("run_one_tasklet_mom start tkitm:"),
 	     MOMOUT_ITEM ((const momitem_t *) tkitm));
@@ -375,6 +376,7 @@ run_one_tasklet_mom (momitem_t *tkitm)
 		 MOMOUT_DEC_INT ((int) (tkitm->i_paylkind)));
       goto end;
     }
+  requeue = true;
   double timestart = mom_clock_time (CLOCK_REALTIME);
   double timelimit = timestart + TASKLET_TIMEOUT;
   itd = tkitm->i_payload;
@@ -391,7 +393,10 @@ run_one_tasklet_mom (momitem_t *tkitm)
 		 MOMOUT_LITERAL (" tkitm:"),
 		 MOMOUT_ITEM ((const momitem_t *) tkitm));
       if (!step_tasklet_mom (tkitm, itd))
-	break;
+	{
+	  requeue = false;
+	  break;
+	}
       stepcount++;
       if (tkitm->i_payload != itd)
 	break;
@@ -401,7 +406,11 @@ run_one_tasklet_mom (momitem_t *tkitm)
   MOM_DEBUG (run, MOMOUT_LITERAL ("run_one_tasklet_mom done stepcount="),
 	     MOMOUT_DEC_INT ((int) stepcount),
 	     MOMOUT_LITERAL (" tkitm:"),
-	     MOMOUT_ITEM ((const momitem_t *) tkitm));
+	     MOMOUT_ITEM ((const momitem_t *) tkitm),
+	     MOMOUT_LITERALV ((const char *) (requeue ? " requeued" :
+					      " vanished")));
+  if (requeue)
+    mom_add_tasklet_to_agenda_back (tkitm);
 end:
   if (itd)
     itd->dtk_thread = 0;
