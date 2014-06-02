@@ -154,6 +154,10 @@ span.mom_value_cl:hover {
     background-color: lightpink;
 }
 
+span.mom_value_cl > .momvalue_cl:hover > {
+    background-color: #fed6fd;
+}
+
 span.mom_nullval_cl {
     font-size: 110%;
     font-weight: bold;
