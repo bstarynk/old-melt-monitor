@@ -340,11 +340,20 @@ end:
 	popframe = true;
       else if (newstate == momroutres_steady)
 	res = true;
-      else
+      else if ((fratop = itd->dtk_fratop) > 0 && !popframe)
 	{
-	  (itd->dtk_frames + fratop)->fr_state = newstate;
+	  MOM_DEBUG (run,
+		     MOMOUT_LITERAL ("step_tasklet_mom taskitem:"),
+		     MOMOUT_ITEM ((const momitem_t *) tkitm),
+		     MOMOUT_LITERAL (" fratop#"),
+		     MOMOUT_DEC_INT ((int) fratop),
+		     MOMOUT_LITERAL (" set state#"),
+		     MOMOUT_DEC_INT ((int) newstate));
+	  (itd->dtk_frames + fratop - 1)->fr_state = newstate;
 	  res = true;
 	}
+      else
+	res = false;
     }
   if (popframe)
     {
