@@ -36,6 +36,7 @@ $(function(){
 		 maindiv_mom.html(gotdata);
 	     }
 	   });
+    console.warn("tabs are from jeasyui, not jqueryui");
     tabdiv_mom.tabs();
     tabdiv_mom.find( ".ui-tabs-nav" ).sortable({
 	axis: "x",
