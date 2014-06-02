@@ -448,14 +448,16 @@ ajaxobjs_lab_beginedit:
 					  _L (curattritm).pitem);
 	  mom_unlock_item (_L (editeditm).pitem);
 	}
-	assert (mom_is_node (_C (editvalueclos)));
 	MOM_DEBUG (run,
 		   MOMOUT_LITERAL ("ajax_objects_codmom atix="),
 		   MOMOUT_DEC_INT ((int) _N (atix)),
 		   MOMOUT_LITERAL ("; curattritm="),
 		   MOMOUT_VALUE ((const momval_t) _L (curattritm)),
 		   MOMOUT_LITERAL ("; curvalattr="),
-		   MOMOUT_VALUE ((const momval_t) _L (curvalattr)), NULL);
+		   MOMOUT_VALUE ((const momval_t) _L (curvalattr)),
+		   MOMOUT_LITERAL ("; editvalueclos="),
+		   MOMOUT_VALUE ((const momval_t) _C (editvalueclos)), NULL);
+	assert (mom_is_node (_C (editvalueclos)));
 	{
 	  momval_t namidatv =
 	    (momval_t) mom_item_get_name_or_idstr (_L (curattritm).pitem);

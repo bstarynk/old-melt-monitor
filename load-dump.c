@@ -1048,10 +1048,10 @@ compare_predefined_mom (const void *p1, const void *p2)
 void
 mom_initial_load (const char *ldirnam)
 {
-  char filpath[MOM_PATH_MAX];
-  memset (filpath, 0, sizeof (filpath));
   double startrealtime = mom_clock_time (CLOCK_REALTIME);
   double startcputime = mom_clock_time (CLOCK_PROCESS_CPUTIME_ID);
+  const char *dbpath = NULL;
+  const char *sqlpath = NULL;
   if (!ldirnam || !ldirnam[0])
     {
       char dirpath[MOM_PATH_MAX];
@@ -1060,10 +1060,29 @@ mom_initial_load (const char *ldirnam)
 		      getcwd (dirpath, sizeof (dirpath)));
       ldirnam = ".";
     };
-  snprintf (filpath, sizeof (filpath), "%s/%s.dbsqlite", ldirnam,
-	    MOM_STATE_FILE_BASENAME);
-  if (access (filpath, R_OK))
-    MOM_FATAPRINTF ("cannot access initial state file %s", filpath);
+  if (strlen (ldirnam) > MOM_PATH_MAX - 32)
+    MOM_FATAPRINTF ("too long load directory name %s", ldirnam);
+  {
+    char filpath[MOM_PATH_MAX];
+    memset (filpath, 0, sizeof (filpath));
+    struct stat dbstat, sqlstat;
+    memset (&dbstat, 0, sizeof (dbstat));
+    memset (&sqlstat, 0, sizeof (sqlstat));
+    snprintf (filpath, sizeof (filpath), "%s/%s.dbsqlite", ldirnam,
+	      MOM_STATE_FILE_BASENAME);
+    if (stat (filpath, &dbstat))
+      MOM_FATAPRINTF ("failed to stat database file %s", filpath);
+    dbpath = MOM_GC_STRDUP ("database file", filpath);
+    memset (filpath, 0, sizeof (filpath));
+    snprintf (filpath, sizeof (filpath), "%s/%s.sql", ldirnam,
+	      MOM_STATE_FILE_BASENAME);
+    if (stat (filpath, &sqlstat))
+      MOM_FATAPRINTF ("failed to stat SQL file %s", filpath);
+    sqlpath = MOM_GC_STRDUP ("sql file", filpath);
+    if (dbstat.st_mtime < sqlstat.st_mtime)
+      MOM_FATAPRINTF ("loaded database file %s is older than SQL file %s",
+		      dbpath, sqlpath);
+  }
   struct mom_loader_st ldr;
   memset (&ldr, 0, sizeof (ldr));
   ldr.ldr_magic = LOADER_MAGIC;
@@ -1076,11 +1095,11 @@ mom_initial_load (const char *ldirnam)
   ldr.ldr_dirpath = MOM_GC_STRDUP ("initial loader dirpath", ldirnam);
   /// open the database
   int errcod =
-    sqlite3_open_v2 (filpath, &ldr.ldr_sqlite, SQLITE_OPEN_READONLY, NULL);
+    sqlite3_open_v2 (dbpath, &ldr.ldr_sqlite, SQLITE_OPEN_READONLY, NULL);
   if (errcod)
     MOM_FATAPRINTF ("failed to open loaded state sqlite3 file %s: %s",
-		    filpath, sqlite3_errmsg (ldr.ldr_sqlite));
-  ldr.ldr_sqlpath = MOM_GC_STRDUP ("initial loader sqldb", filpath);
+		    dbpath, sqlite3_errmsg (ldr.ldr_sqlite));
+  ldr.ldr_sqlpath = dbpath;
   /// prepare some statements
   if (sqlite3_prepare_v2 (ldr.ldr_sqlite,
 			  "SELECT parvalue FROM t_params WHERE parname = ?1",
