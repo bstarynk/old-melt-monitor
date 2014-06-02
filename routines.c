@@ -420,7 +420,7 @@ ajaxobjs_lab_beginedit:
 			 "<tt class='mom_edititemname_cl'>"),
 			MOMOUT_HTML (mom_string_cstr (namidv)),
 			MOMOUT_LITERAL
-			("</tt> <small>id <code class='mom_itemid_cl'>"),
+			("</tt> <br/> <small>id <code class='mom_itemid_cl'>"),
 			MOMOUT_HTML (mom_string_cstr (idv)),
 			MOMOUT_LITERAL ("</code> at "),
 			MOMOUT_DOUBLE_TIME ((const char *) "%c",
@@ -527,7 +527,8 @@ ajaxobjs_lab_beginedit:
     MOM_WEBX_OUT (_L (webx).pitem,
 		  MOMOUT_LITERAL ("</ul>"), MOMOUT_NEWLINE (), NULL);
     MOM_WEBX_OUT (_L (webx).pitem,
-		  MOMOUT_LITERAL ("<p class='mom_content_cl'>"),
+		  MOMOUT_LITERAL ("<p class='mom_content_cl'>" "&#8281; "
+				  /* U+2059 FIVE DOT PUNCTUATION ⁙ */ ),
 		  MOMOUT_NEWLINE (), NULL);
     mom_unlock_item (_L (webx).pitem);
     momval_t jorigcont = (momval_t)
@@ -697,24 +698,24 @@ edit_value_lab_start:
 	case momty_int:
 	  MOM_WEBX_OUT (_L (webx).pitem,
 			//
-			MOMOUT_LITERAL ("<span class='mom_intval_cl'>"),
+			MOMOUT_LITERAL ("&nbsp;<span class='mom_intval_cl'>"),
 			MOMOUT_JSON_VALUE (_L (curval)),
 			MOMOUT_LITERAL ("</span>"), NULL);
 	  break;
 	case momty_double:
 	  MOM_WEBX_OUT (_L (webx).pitem,
 			//
-			MOMOUT_LITERAL ("<span class='mom_doubleval_cl'>"),
+			MOMOUT_LITERAL
+			("&nbsp;<span class='mom_doubleval_cl'>"),
 			MOMOUT_JSON_VALUE (_L (curval)),
 			MOMOUT_LITERAL ("</span>"), NULL);
 	  break;
 	case momty_string:
 	  MOM_WEBX_OUT (_L (webx).pitem,
 			//
-			MOMOUT_LITERAL ("<span class='mom_stringval_cl'>"),
-			MOMOUT_HTML ((const char *)
-				     mom_string_cstr (_L (curval))),
-			MOMOUT_LITERAL ("</span>"), NULL);
+			MOMOUT_LITERAL ("&#8220;"	/* U+201C LEFT DOUBLE QUOTATION MARK “ */
+					"<span class='mom_stringval_cl'>"), MOMOUT_HTML ((const char *) mom_string_cstr (_L (curval))), MOMOUT_LITERAL ("</span>" "&#8221;"	/* U+201D RIGHT DOUBLE QUOTATION MARK ” */
+			), NULL);
 	  break;
 	case momty_jsonarray:
 	  MOM_WEBX_OUT (_L (webx).pitem,

@@ -156,28 +156,40 @@ span.mom_value_cl:hover {
 
 span.mom_nullval_cl {
     font-size: 110%;
-    font-weight: blue;
+    font-weight: bold;
     color: DarkSlateGray;
 }
 
 span.mom_intval_cl {
     font-family: "Lucida Console", Monaco, monospace;
+    font-weight: normal;
     background-color: Beige;
 }
 
 span.mom_doubleval_cl  {
     font-family: "Lucida Console", Monaco, monospace;
+    font-weight: normal;
     background-color: Bisque;
 }
 
 span.mom_stringval_cl  {
     font-family: "Courier New", Courier, monospace;
+    font-weight: normal;
     background-color: Gainsboro;
 }
 
 span.mom_jsonobjectval_cl {
     font-family: "Lucida Console", Monaco, monospace;
+    font-weight: normal;
     background-color: LemonChiffon;
+    color: #1F013d;
+}
+
+span.mom_jsonarrayval_cl {
+    font-family: "Lucida Console", Monaco, monospace;
+    font-weight: normal;
+    background-color: LemonChiffon;
+    color: #250c01;
 }
 
 span.mom_anonymousitemval_cl {

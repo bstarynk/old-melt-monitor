@@ -100,7 +100,7 @@ so `libglib2.0-dev` Debian package
   package.
  
 - [onion HTTP server library](https://github.com/davidmoreno/onion) by
-  David Moreno. You want a recent version (may 2014 github snapshot),
+  David Moreno. You want a recent version (late may 2014 github snapshot),
   and it may be sadly not packaged by Debian.
 
 - [JQuery2](http://http://jquery.com/) which might be bundled in the monitor
