@@ -169,6 +169,7 @@ enum ajax_objects_values_en
   ajaxobjs_v_setattrs,
   ajaxobjs_v_curattritm,
   ajaxobjs_v_curvalattr,
+  ajaxobjs_v_curcontent,
   ajaxobjs_v__lastval
 };
 
@@ -199,6 +200,7 @@ ajax_objects_codmom (int momstate_, momitem_t *momtasklet_,
     ajaxobjs_s_start,
     ajaxobjs_s_beginedit,
     ajaxobjs_s_didattredit,
+    ajaxobjs_s_didcontentedit,
     ajaxobjs_s__laststate
   };
 #define _SET_STATE(St) do {						\
@@ -218,6 +220,8 @@ ajax_objects_codmom (int momstate_, momitem_t *momtasklet_,
 	goto ajaxobjs_lab_beginedit;
       case ajaxobjs_s_didattredit:
 	goto ajaxobjs_lab_didattredit;
+      case ajaxobjs_s_didcontentedit:
+	goto ajaxobjs_lab_didcontentedit;
       case ajaxobjs_s__laststate:;
       }
   MOM_FATAPRINTF ("ajax_objects invalid state #%d", momstate_);
@@ -413,12 +417,18 @@ ajaxobjs_lab_beginedit:
 			MOMOUT_LITERAL ("</span> " "&#8594;"	/* U+2192 RIGHTWARDS ARROW → */
 					" "), NULL);
 	  mom_unlock_item (_L (webx).pitem);
-	  mom_item_tasklet_push_frame (momtasklet_, _C (editvalueclos),
-				       MOMPFR_FOUR_VALUES (_L (editor),
-							   _L (webx),
-							   jorig,
-							   _L (curvalattr)),
-				       MOMPFR_INT ((intptr_t) 0), NULL);
+	  mom_item_tasklet_push_frame	///
+	    (momtasklet_, _C (editvalueclos),
+	     MOMPFR_FIVE_VALUES (_L (editor),
+				 _L (webx),
+				 jorig,
+				 (momval_t) mom_make_node_til_nil
+				 (mom_named__attr,
+				  _L (editeditm),
+				  _L (curattritm),
+				  NULL),
+				 _L (curvalattr)),
+	     MOMPFR_INT ((intptr_t) 0), NULL);
 	  _SET_STATE (didattredit);
 	}
 	////
@@ -432,10 +442,43 @@ ajaxobjs_lab_beginedit:
 	mom_unlock_item (_L (webx).pitem);
 	continue;
       }				// end for atix
+    {
+      mom_lock_item (_L (editeditm).pitem);
+      _L (curcontent) = _L (editeditm).pitem->i_content;
+      mom_unlock_item (_L (editeditm).pitem);
+    }
     mom_lock_item (_L (webx).pitem);
     MOM_WEBX_OUT (_L (webx).pitem,
 		  MOMOUT_LITERAL ("</ul>"), MOMOUT_NEWLINE (), NULL);
-#warning should edit the content, and perhaps the payload!
+    MOM_WEBX_OUT (_L (webx).pitem,
+		  MOMOUT_LITERAL ("<p class='mom_content_cl'>"),
+		  MOMOUT_NEWLINE (), NULL);
+    mom_unlock_item (_L (webx).pitem);
+    momval_t jorigcont = (momval_t)
+      mom_make_json_object (MOMJSOB_ENTRY ((momval_t) mom_named__kind,
+					   (momval_t) mom_named__content),
+			    MOMJSOB_ENTRY ((momval_t) mom_named__item,
+					   (momval_t)
+					   mom_item_get_idstr
+					   (mom_value_to_item
+					    (_L (editeditm)))),
+			    NULL);
+    momval_t exprcont = (momval_t)
+      mom_make_node_til_nil (mom_named__content, _L (editeditm), NULL);
+    mom_item_tasklet_push_frame	///
+      (momtasklet_, _C (editvalueclos),
+       MOMPFR_FIVE_VALUES (_L (editor),
+			   _L (webx),
+			   jorigcont,
+			   exprcont,
+			   _L (curcontent)), MOMPFR_INT ((intptr_t) 0), NULL);
+    _SET_STATE (didcontentedit);
+  ajaxobjs_lab_didcontentedit:
+    MOM_DEBUG (run,
+	       MOMOUT_LITERAL
+	       ("ajax_objects_codmom aftercontentedit curcontent="),
+	       MOMOUT_VALUE (_L (curcontent)));
+    mom_lock_item (_L (webx).pitem);
     mom_webx_reply (_L (webx).pitem, "text/html", HTTP_OK);
     mom_unlock_item (_L (webx).pitem);
 
@@ -464,140 +507,6 @@ const struct momroutinedescr_st momrout_ajax_objects = {
 
 
 
-////////////////////////////////////////////////////////////////
-///// ajax_complete_name
-enum ajax_complete_name_values_en
-{
-  ajaxcompnam_v_arg0res,
-  ajaxcompnam_v_method,
-  ajaxcompnam_v_namid,
-  ajaxcompnam_v_restpath,
-  ajaxcompnam_v__spare,
-  ajaxcompnam_v_webx,
-  ajaxcompnam_v__lastval
-};
-
-enum ajax_complete_name_closure_en
-{
-  ajaxcompnam_c__lastclosure
-};
-
-enum ajax_complete_name_numbers_en
-{
-  ajaxcompnam_n__lastnum
-};
-
-
-static int
-ajax_complete_name_codmom (int momstate_, momitem_t *momtasklet_,
-			   const momnode_t *momclosure_,
-			   momval_t *momlocvals_, intptr_t * momlocnums_,
-			   double *momlocdbls_)
-{
-#define _L(Nam) (momlocvals_[ajaxcompnam_v_##Nam])
-#define _C(Nam) (momclosure_->sontab[ajaxcompnam_c_##Nam])
-#define _N(Nam) (momlocnums_[ajaxcompnam_n_##Nam])
-  enum ajax_complete_name_state_en
-  {
-    ajaxcompnam_s_start,
-    ajaxcompnam_s__laststate
-  };
-#define _SET_STATE(St) do {						\
-    MOM_DEBUGPRINTF (run,						\
-		     "ajax_complete_name_codmom setstate " #St " = %d",	\
-		     (int)ajaxcompnam_s_##St);				\
-    return ajaxcompnam_s_##St; } while(0)
-  MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_complete_name_codmom tasklet:"),
-	     MOMOUT_ITEM ((const momitem_t *) momtasklet_),
-	     MOMOUT_LITERAL (" state#"), MOMOUT_DEC_INT ((int) momstate_));
-  if (momstate_ >= 0 && momstate_ < ajaxcompnam_s__laststate)
-    switch ((enum ajax_complete_name_state_en) momstate_)
-      {
-      case ajaxcompnam_s_start:
-	goto ajaxcompnam_lab_start;
-      case ajaxcompnam_s__laststate:;
-      }
-  MOM_FATAPRINTF ("ajax_complete_name invalid state #%d", momstate_);
-  ////
-ajaxcompnam_lab_start:
-  _L (webx) = _L (arg0res);
-  MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_complete_name_codmom webx="),
-	     MOMOUT_VALUE ((const momval_t) _L (webx)));
-  assert (mom_is_item (_L (webx)));
-  {
-    mom_lock_item (_L (webx).pitem);
-    MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_complete_name_codmom queryjsob="),
-	       MOMOUT_VALUE ((const momval_t)
-			     mom_webx_jsob_query (_L (webx).pitem)),
-	       MOMOUT_NEWLINE (),
-	       MOMOUT_LITERAL ("ajax_complete_name_codmom postjsob="),
-	       MOMOUT_VALUE ((const momval_t)
-			     mom_webx_jsob_post (_L (webx).pitem)),
-	       MOMOUT_NEWLINE (),
-	       MOMOUT_LITERAL ("ajax_complete_name_codmom method="),
-	       MOMOUT_VALUE ((const momval_t) (_L (method))), NULL);
-    if (_L (method).pitem == mom_named__POST
-	&& !mom_webx_jsob_post (_L (webx).pitem).ptr)
-      {
-	momval_t tupnamed = MOM_NULLV;
-	momval_t jsarrnames = MOM_NULLV;
-	tupnamed =
-	  (momval_t) mom_alpha_ordered_tuple_of_named_items (&jsarrnames);
-	MOM_DEBUG (run,
-		   MOMOUT_LITERAL ("ajax_complete_name_codmom tupnamed="),
-		   MOMOUT_VALUE ((const momval_t) tupnamed),
-		   MOMOUT_SPACE (24), MOMOUT_LITERAL ("jsarrnames="),
-		   MOMOUT_VALUE ((const momval_t) jsarrnames));
-	unsigned nbnames = mom_tuple_length (tupnamed);
-	momval_t *jarr =
-	  MOM_GC_ALLOC ("json named array", nbnames * sizeof (momval_t));
-	for (unsigned nix = 0; nix < nbnames; nix++)
-	  {
-	    const momitem_t *curnamitm = mom_tuple_nth_item (tupnamed, nix);
-	    momval_t curnamstr = mom_json_array_nth (jsarrnames, nix);
-	    jarr[nix] = (momval_t)	////
-	      mom_make_json_object (MOMJSOB_STRING
-				    ((const char *) "name",
-				     (momval_t) curnamstr),
-				    MOMJSOB_STRING ((const char *) "id",
-						    (momval_t)
-						    mom_item_get_idstr ((momitem_t *) curnamitm)), NULL);
-	  }
-	momval_t jres = (momval_t) mom_make_json_array_count (nbnames, jarr);
-	MOM_GC_FREE (jarr);
-	MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_complete_name_codmom jres="),
-		   MOMOUT_VALUE ((const momval_t) jres));
-	MOM_WEBX_OUT (_L (webx).pitem, MOMOUT_JSON_VALUE (jres));
-	mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
-	goto end;
-      }
-    MOM_FATAL (MOMOUT_LITERAL ("ajax_complete_name incomplete webx="),
-	       MOMOUT_VALUE ((const momval_t) (_L (webx))), NULL);
-    goto end;
-  end:
-    mom_unlock_item (_L (webx).pitem);
-  }
-  ;
-#undef _L
-#undef _C
-#undef _N
-#undef _SET_STATE
-  return momroutres_pop;
-}
-
-const struct momroutinedescr_st momrout_ajax_complete_name = {
-  .rout_magic = MOM_ROUTINE_MAGIC,
-  .rout_minclosize = ajaxcompnam_c__lastclosure,
-  .rout_frame_nbval = ajaxcompnam_v__lastval,
-  .rout_frame_nbnum = ajaxcompnam_n__lastnum,
-  .rout_frame_nbdbl = 0,
-  .rout_name = "ajax_complete_name",
-  .rout_module = MONIMELT_CURRENT_MODULE,
-  .rout_codefun = ajax_complete_name_codmom,
-  .rout_timestamp = __DATE__ "@" __TIME__
-};
-
-
 
 ////////////////////////////////////////////////////////////////
 ///// edit_value
@@ -607,6 +516,7 @@ enum edit_value_values_en
   edit_value_v_webx,
   edit_value_v_jorig,
   edit_value_v_curval,
+  edit_value_v_expr,
   edit_value_v_spare,
   edit_value_v_editor,
   edit_value_v_connitm,
@@ -667,14 +577,21 @@ edit_value_lab_start:
 	     MOMOUT_VALUE ((const momval_t) _L (arg0res)),
 	     MOMOUT_LITERAL ("; webx="),
 	     MOMOUT_VALUE ((const momval_t) _L (webx)),
+	     MOMOUT_LITERAL ("; jorig="),
+	     MOMOUT_VALUE ((const momval_t) _L (jorig)),
 	     MOMOUT_LITERAL ("; curval="),
-	     MOMOUT_VALUE ((const momval_t) _L (curval)));
+	     MOMOUT_VALUE ((const momval_t) _L (curval)),
+	     MOMOUT_LITERAL ("; expr="),
+	     MOMOUT_VALUE ((const momval_t) _L (expr)));
   if (_L (arg0res).ptr == MOM_EMPTY)
     _SET_STATE (impossible);
   _L (editor) = _L (arg0res);
   if (mom_lock_item (_L (editor).pitem))
     {
-      mom_item_vector_append1 (_L (editor).pitem, _L (curval));
+      mom_item_vector_append1	///
+	(_L (editor).pitem,
+	 (momval_t) mom_make_node_til_nil (mom_named__val,
+					   _L (curval), _L (expr), NULL));
       _N (numval) = mom_item_vector_count (_L (editor).pitem);
       mom_unlock_item (_L (editor).pitem);
     }
@@ -834,10 +751,10 @@ edit_value_lab_start:
 			  MOM_WEBX_OUT (_L (webx).pitem,
 					//
 					MOMOUT_LITERAL
-					("<span class='mom_anonymousitemval_cl' id='momitem'"),
+					("<span class='mom_anonymousitemval_cl' id='momitem"),
 					MOMOUT_LITERALV (mom_string_cstr
 							 (nsubidv)),
-					MOMOUT_LITERAL (">"),
+					MOMOUT_LITERAL ("'>"),
 					MOMOUT_LITERALV (mom_string_cstr
 							 (nsubidv)),
 					MOMOUT_LITERAL ("</span>"), NULL);
@@ -845,12 +762,12 @@ edit_value_lab_start:
 			  MOM_WEBX_OUT (_L (webx).pitem,
 					//
 					MOMOUT_LITERAL
-					("<span class='mom_nameditemval_cl' id='momitem'"),
+					("<span class='mom_nameditemval_cl' id='momitem"),
 					MOMOUT_LITERALV (mom_string_cstr
 							 ((momval_t)
 							  mom_item_get_idstr
 							  (cursubitem))),
-					MOMOUT_LITERAL (">"),
+					MOMOUT_LITERAL ("'>"),
 					MOMOUT_LITERALV (mom_string_cstr
 							 (nsubidv)),
 					MOMOUT_LITERAL ("</span>"), NULL);
@@ -878,7 +795,7 @@ edit_value_lab_start:
 	    MOM_WEBX_OUT (_L (webx).pitem,
 			  //
 			  MOMOUT_LITERAL
-			  ("<span class='mom_nodeval_cl'>&nbsp;*"), NULL);
+			  ("<span class='mom_nodeval_cl'>*"), NULL);
 	    {
 	      momval_t connidv =
 		(momval_t) mom_item_get_name_or_idstr (_L (connitm).pitem);
@@ -917,23 +834,25 @@ edit_value_lab_start:
 				NULL);
 		mom_unlock_item (_L (webx).pitem);
 		_L (curson) = mom_node_nth (_L (curval), _N (sonix));
-		momval_t jnodorig = (momval_t)
-		  mom_make_json_object (MOMJSOB_ENTRY
-					((momval_t) mom_named__kind,
-					 (momval_t) mom_named__node),
-					MOMJSOB_ENTRY ((momval_t)
-						       mom_named__node,
-						       _L (jorig)),
-					MOMJSOB_ENTRY ((momval_t)
-						       mom_named__sons,
-						       mom_make_integer (_N
-									 (sonix))),
-					NULL);
+		momval_t jnodorig = (momval_t) mom_make_json_object	//
+		  (MOMJSOB_ENTRY ((momval_t) mom_named__kind,
+				  (momval_t) mom_named__node),
+		   MOMJSOB_ENTRY ((momval_t) mom_named__node,
+				  mom_make_integer (_N (numval))),
+		   MOMJSOB_ENTRY ((momval_t) mom_named__sons,
+				  mom_make_integer (_N (sonix))),
+		   NULL);
+		momval_t nodexpr = (momval_t)
+		  mom_make_node_til_nil (mom_named__node,
+					 mom_make_integer (_N (numval)),
+					 mom_make_integer (_N (sonix)),
+					 NULL);
 		mom_item_tasklet_push_frame (momtasklet_,
 					     (momval_t) momclosure_,
-					     MOMPFR_FOUR_VALUES (_L (editor),
+					     MOMPFR_FIVE_VALUES (_L (editor),
 								 _L (webx),
 								 jnodorig,
+								 nodexpr,
 								 _L (curson)),
 					     MOMPFR_INT (_N (depth) + 1),
 					     NULL);
@@ -978,6 +897,140 @@ const struct momroutinedescr_st momrout_edit_value = {
 
 
 
+
+
+////////////////////////////////////////////////////////////////
+///// ajax_complete_name
+enum ajax_complete_name_values_en
+{
+  ajaxcompnam_v_arg0res,
+  ajaxcompnam_v_method,
+  ajaxcompnam_v_namid,
+  ajaxcompnam_v_restpath,
+  ajaxcompnam_v__spare,
+  ajaxcompnam_v_webx,
+  ajaxcompnam_v__lastval
+};
+
+enum ajax_complete_name_closure_en
+{
+  ajaxcompnam_c__lastclosure
+};
+
+enum ajax_complete_name_numbers_en
+{
+  ajaxcompnam_n__lastnum
+};
+
+
+static int
+ajax_complete_name_codmom (int momstate_, momitem_t *momtasklet_,
+			   const momnode_t *momclosure_,
+			   momval_t *momlocvals_, intptr_t * momlocnums_,
+			   double *momlocdbls_)
+{
+#define _L(Nam) (momlocvals_[ajaxcompnam_v_##Nam])
+#define _C(Nam) (momclosure_->sontab[ajaxcompnam_c_##Nam])
+#define _N(Nam) (momlocnums_[ajaxcompnam_n_##Nam])
+  enum ajax_complete_name_state_en
+  {
+    ajaxcompnam_s_start,
+    ajaxcompnam_s__laststate
+  };
+#define _SET_STATE(St) do {						\
+    MOM_DEBUGPRINTF (run,						\
+		     "ajax_complete_name_codmom setstate " #St " = %d",	\
+		     (int)ajaxcompnam_s_##St);				\
+    return ajaxcompnam_s_##St; } while(0)
+  MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_complete_name_codmom tasklet:"),
+	     MOMOUT_ITEM ((const momitem_t *) momtasklet_),
+	     MOMOUT_LITERAL (" state#"), MOMOUT_DEC_INT ((int) momstate_));
+  if (momstate_ >= 0 && momstate_ < ajaxcompnam_s__laststate)
+    switch ((enum ajax_complete_name_state_en) momstate_)
+      {
+      case ajaxcompnam_s_start:
+	goto ajaxcompnam_lab_start;
+      case ajaxcompnam_s__laststate:;
+      }
+  MOM_FATAPRINTF ("ajax_complete_name invalid state #%d", momstate_);
+  ////
+ajaxcompnam_lab_start:
+  _L (webx) = _L (arg0res);
+  MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_complete_name_codmom webx="),
+	     MOMOUT_VALUE ((const momval_t) _L (webx)));
+  assert (mom_is_item (_L (webx)));
+  {
+    mom_lock_item (_L (webx).pitem);
+    MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_complete_name_codmom queryjsob="),
+	       MOMOUT_VALUE ((const momval_t)
+			     mom_webx_jsob_query (_L (webx).pitem)),
+	       MOMOUT_NEWLINE (),
+	       MOMOUT_LITERAL ("ajax_complete_name_codmom postjsob="),
+	       MOMOUT_VALUE ((const momval_t)
+			     mom_webx_jsob_post (_L (webx).pitem)),
+	       MOMOUT_NEWLINE (),
+	       MOMOUT_LITERAL ("ajax_complete_name_codmom method="),
+	       MOMOUT_VALUE ((const momval_t) (_L (method))), NULL);
+    if (_L (method).pitem == mom_named__POST
+	&& !mom_webx_jsob_post (_L (webx).pitem).ptr)
+      {
+	momval_t tupnamed = MOM_NULLV;
+	momval_t jsarrnames = MOM_NULLV;
+	tupnamed =
+	  (momval_t) mom_alpha_ordered_tuple_of_named_items (&jsarrnames);
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL ("ajax_complete_name_codmom tupnamed="),
+		   MOMOUT_VALUE ((const momval_t) tupnamed),
+		   MOMOUT_SPACE (24), MOMOUT_LITERAL ("jsarrnames="),
+		   MOMOUT_VALUE ((const momval_t) jsarrnames));
+	unsigned nbnames = mom_tuple_length (tupnamed);
+	momval_t *jarr =
+	  MOM_GC_ALLOC ("json named array", nbnames * sizeof (momval_t));
+	for (unsigned nix = 0; nix < nbnames; nix++)
+	  {
+	    const momitem_t *curnamitm = mom_tuple_nth_item (tupnamed, nix);
+	    momval_t curnamstr = mom_json_array_nth (jsarrnames, nix);
+	    jarr[nix] = (momval_t)	////
+	      mom_make_json_object (MOMJSOB_STRING
+				    ((const char *) "name",
+				     (momval_t) curnamstr),
+				    MOMJSOB_STRING ((const char *) "id",
+						    (momval_t)
+						    mom_item_get_idstr ((momitem_t *) curnamitm)), NULL);
+	  }
+	momval_t jres = (momval_t) mom_make_json_array_count (nbnames, jarr);
+	MOM_GC_FREE (jarr);
+	MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_complete_name_codmom jres="),
+		   MOMOUT_VALUE ((const momval_t) jres));
+	MOM_WEBX_OUT (_L (webx).pitem, MOMOUT_JSON_VALUE (jres));
+	mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
+	goto end;
+      }
+    MOM_FATAL (MOMOUT_LITERAL ("ajax_complete_name incomplete webx="),
+	       MOMOUT_VALUE ((const momval_t) (_L (webx))), NULL);
+    goto end;
+  end:
+    mom_unlock_item (_L (webx).pitem);
+  }
+  ;
+#undef _L
+#undef _C
+#undef _N
+#undef _SET_STATE
+  return momroutres_pop;
+}
+
+const struct momroutinedescr_st momrout_ajax_complete_name = {
+  .rout_magic = MOM_ROUTINE_MAGIC,
+  .rout_minclosize = ajaxcompnam_c__lastclosure,
+  .rout_frame_nbval = ajaxcompnam_v__lastval,
+  .rout_frame_nbnum = ajaxcompnam_n__lastnum,
+  .rout_frame_nbdbl = 0,
+  .rout_name = "ajax_complete_name",
+  .rout_module = MONIMELT_CURRENT_MODULE,
+  .rout_codefun = ajax_complete_name_codmom,
+  .rout_timestamp = __DATE__ "@" __TIME__
+};
 
 
 ////////////////////////////////////////////////////////////////
