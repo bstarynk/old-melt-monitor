@@ -397,6 +397,13 @@ ajaxobjs_lab_beginedit:
       momval_t idv = (momval_t) mom_item_get_idstr (_L (editeditm).pitem);
       bool anonymous = (namidv.ptr == idv.ptr);
       mom_lock_item (_L (webx).pitem);
+      MOM_WEBX_OUT (_L (webx).pitem,
+		    MOMOUT_LITERAL ("<div id='momeditor_"),
+		    MOMOUT_LITERALV ((const char *)
+				     mom_string_cstr ((momval_t)
+						      mom_item_get_idstr (_L
+									  (editor).pitem))),
+		    MOMOUT_LITERAL ("' class='mom_editor_cl'>"));
       if (anonymous)
 	{
 	  MOM_WEBX_OUT (_L (webx).pitem,
@@ -564,6 +571,38 @@ ajaxobjs_lab_beginedit:
 	       ("ajax_objects_codmom didcontentedit curcontent="),
 	       MOMOUT_VALUE (_L (curcontent)));
     mom_lock_item (_L (webx).pitem);
+    {
+      momval_t namidv =
+	(momval_t) mom_item_get_name_or_idstr (_L (editeditm).pitem);
+      momval_t idv = (momval_t) mom_item_get_idstr (_L (editeditm).pitem);
+      bool anonymous = (namidv.ptr == idv.ptr);
+      MOM_WEBX_OUT		//
+	(_L (webx).pitem,
+	 MOMOUT_LITERAL ("</div> <!-- end momeditor_"),
+	 MOMOUT_LITERALV ((const char *)
+			  mom_string_cstr ((momval_t)
+					   mom_item_get_idstr (_L
+							       (editor).pitem))),
+	 MOMOUT_LITERAL (" -->"), MOMOUT_NEWLINE (),
+	 MOMOUT_LITERAL
+	 ("<script type='text/javascript'>mom_add_editor_tab($('#momeditor_"),
+	 MOMOUT_LITERALV ((const char *)
+			  mom_string_cstr ((momval_t)
+					   mom_item_get_idstr (_L
+							       (editor).pitem))),
+	 MOMOUT_LITERAL
+	 ("'), '<li class=\"mom_editab_cl\"><a href=\"#momeditor_"),
+	 MOMOUT_LITERALV ((const char *)
+			  mom_string_cstr ((momval_t)
+					   mom_item_get_idstr (_L
+							       (editor).pitem))),
+	 MOMOUT_LITERAL ("\" class=\""),
+	 MOMOUT_LITERALV ((const char *) (anonymous ? "mom_anonitemtab_cl" :
+					  "mom_nameditemtab_cl")),
+	 MOMOUT_LITERAL ("\">"),
+	 MOMOUT_LITERALV ((const char *) mom_string_cstr (namidv)),
+	 MOMOUT_LITERAL ("</a></li>'"), MOMOUT_LITERAL (");</script>"));
+    }
     mom_webx_reply (_L (webx).pitem, "text/html", HTTP_OK);
     mom_unlock_item (_L (webx).pitem);
   }

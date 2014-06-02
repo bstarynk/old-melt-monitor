@@ -19,11 +19,14 @@
 **/
 
 var maindiv_mom;		// the main division
-
+var tabdiv_mom;			// the tab division
+var tabul_mom;			// the tab ul
 // jquery ready function for our document
 $(function(){
     maindiv_mom= $('#mom_maindiv');
-    console.debug("maindiv_mom=", maindiv_mom);
+    tabdiv_mom= $('#mom_tabdiv');
+    tabul_mom= $('#mom_tabul');
+    console.debug("maindiv_mom=", maindiv_mom, " tabdiv_mom=", tabdiv_mom, " tabul_mom=", tabul_mom);
     $.ajax({ url: '/ajax_system',
 	     method: 'POST',
 	     data: { todo_mom: "mom_initial_system" },
@@ -33,6 +36,13 @@ $(function(){
 		 maindiv_mom.html(gotdata);
 	     }
 	   });
+    tabdiv_mom.tabs();
+    tabdiv_mom.find( ".ui-tabs-nav" ).sortable({
+	axis: "x",
+	stop: function() {
+	    tabsdiv_mom.tabs( "refresh" );
+	}
+    });
 });
 
 function mom_do_menu_system(itm) {
@@ -62,6 +72,16 @@ function mom_do_menu_objects(itm) {
 }
 
 
+function mom_install_editor(hdata) {
+    console.debug ("mom_install_editor hdata=", hdata);
+    tabdiv_mom.append(hdata);
+}
+
+function mom_add_editor_tab(divtab,htmli) {
+    console.debug ("mom_add_editor_tab divtab=", divtab, "; htmli=", htmli);
+    tabul_mom.append(htmli);
+    tabdiv_mom.tabs("refresh");
+}
 
 function mom_name_entry_selected(rec) {
     console.debug ("mom_name_entry_selected rec=", rec);
@@ -72,8 +92,8 @@ function mom_name_entry_selected(rec) {
 		     id_mom: rec.id },
 	     dataType: 'html',
 	     success: function (gotdata) {
-		 console.debug ("mom_name_entry_selected gotdata=", gotdata);
-		 maindiv_mom.html(gotdata);
+		 console.debug ("mom_name_entry_selected doeditnamed gotdata=", gotdata);
+		 mom_install_editor(gotdata);
 	     }
 	   });
 }
@@ -107,6 +127,7 @@ function mom_make_named()
 	     dataType: 'html',
 	     success: function (gotdata) {
 		 console.debug ("mom_make_named gotdata=", gotdata);
+		 mom_install_editor(gotdata);
 	     }
 	   });
 }
