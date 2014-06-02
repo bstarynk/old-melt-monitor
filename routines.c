@@ -673,9 +673,9 @@ edit_value_lab_start:
 	      MOM_WEBX_OUT (_L (webx).pitem,
 			    //
 			    MOMOUT_LITERAL
-			    ("<span class='mom_anonymousitemval_cl' id='momitem'"),
+			    ("<span class='mom_anonymousitemval_cl' id='momitem"),
 			    MOMOUT_LITERALV (mom_string_cstr (nsidv)),
-			    MOMOUT_LITERAL (">"),
+			    MOMOUT_LITERAL ("'>"),
 			    MOMOUT_LITERALV (mom_string_cstr (nsidv)),
 			    MOMOUT_LITERAL ("</span>"), NULL);
 	    else

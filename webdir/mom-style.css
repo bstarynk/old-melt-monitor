@@ -85,3 +85,128 @@ input.mom_newcomment_cl {
     border: 1px black;
     width: 50%;
 }
+
+/* the title of an edited item */
+p.mom_edit_title_cl {
+    align: center;
+    color: navy;
+    font-size: 120%;
+    font-weight: bold;
+    font-family: Georgia, "Times New Roman", Times, serif;
+    border: 1px brown;
+    min-width: 50%;
+}
+
+/* the attribute list of an edited item */
+ul.mom_attrlist_cl {
+    padding: 2px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    background-color: lightcyan;
+}
+
+li.mom_attrentry_cl {
+    list-style-type: square;
+}
+
+li.mom_attrentry_cl:hover {
+    background-color: yellow;
+}
+
+span.mom_attritem_cl {
+    font-family: "Arial Black", Gadget, sans-serif;
+    font-weight: bold;
+    font-size: 110%;
+    color: midnightblue;
+}
+
+p.mom_content_cl {
+    font-family: Tahoma, Geneva, sans-serif;
+    font-size: 105%;
+}
+
+span.mom_value_cl {
+    font-family: Verdana, Geneva, sans-serif;
+}
+
+span.mom_value_cl:hover {
+    background-color: lightpink;
+}
+
+span.mom_nullval_cl {
+    font-size: 110%;
+    font-weight: blue;
+    color: DarkSlateGray;
+}
+
+span.mom_intval_cl {
+    font-family: "Lucida Console", Monaco, monospace;
+    background-color: Beige;
+}
+
+span.mom_doubleval_cl  {
+    font-family: "Lucida Console", Monaco, monospace;
+    background-color: Bisque;
+}
+
+span.mom_stringval_cl  {
+    font-family: "Courier New", Courier, monospace;
+    background-color: Gainsboro;
+}
+
+span.mom_jsonobjectval_cl {
+    font-family: "Lucida Console", Monaco, monospace;
+    background-color: LemonChiffon;
+}
+
+span.mom_anonymousitemval_cl {
+    font-family: Verdana, Geneva, sans-serif;
+    color: Indigo;
+    font-style: italic;
+}
+
+span.mom_nameditemval_cl {
+    font-family: Verdana, Geneva, sans-serif;
+    font-weight: bold;
+    color: #00004C;
+}
+
+span.mom_emptysetval_cl {
+    font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+    font-weight: bold;
+    size: 110%;
+    color: #0A0A0A;
+}
+
+span.mom_emptytupleval_cl {
+    font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+    font-weight: bold;
+    size: 110%;
+    color: #252525;
+}
+
+span.mom_setval_cl {
+    font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+    font-weight: bold;
+    size: 105%;
+    color: #0C0C0C;
+}
+
+span.mom_tupleval_cl {
+    font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+    font-weight: bold;
+    size: 105%;
+    color: #100C0F;
+}
+
+span.mom_nullitem_cl {
+    size: 110%;
+    font-weight: bold;
+    color: #08120e;
+}
+
+span.mom_nodeval_cl {
+    size: 105%;
+    font-weight: bold;
+    color: #060615;
+}

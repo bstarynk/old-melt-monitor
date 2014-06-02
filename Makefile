@@ -95,4 +95,4 @@ restore-state:
 	$(SQLITE) state-monimelt.dbsqlite < state-monimelt.sql
 
 dump-state:
-	./dump-state.sh
+	./monimelt-dump-state.sh
