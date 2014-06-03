@@ -559,8 +559,7 @@ ajaxobjs_lab_beginedit:
 			  mom_string_cstr ((momval_t)
 					   mom_item_get_idstr (_L
 							       (editor).pitem))),
-	 MOMOUT_LITERAL
-	 ("'));</script>"));
+	 MOMOUT_LITERAL ("'));</script>"));
     }
     mom_webx_reply (_L (webx).pitem, "text/html", HTTP_OK);
     mom_unlock_item (_L (webx).pitem);
