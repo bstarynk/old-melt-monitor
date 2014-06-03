@@ -103,16 +103,25 @@ function mom_add_editor_tab_id(divtab,id) {
     console.debug ("mom_add_editor_tab tab=", tab);
     tab.mousedown(function (ev) {
 	console.debug ("mom_add_editor_tab mousedown ev=", ev, " ev.target=", ev.target,
-		       " evclx=", ev.clientX, " evcly=", ev.clientY);
+		       " evclx=", ev.clientX, " evcly=", ev.clientY,
+		       " evpgx=", ev.pageX, " evpgy=", ev.pageY);
 	curval_mom = mom_containing_val($(ev.target));
 	curval_mom.addClass("mom_selvalue_cl");
 	console.debug ("mom_add_editor_tab mousedown curval_mom=", curval_mom,
 		       " isaselvalue=", curval_mom.hasClass("mom_selvalue_cl"));
 	console.debug ("mom_add_editor_tab mousedown menuvaledit_mom=", menuvaledit_mom);
-	menuvaledit_mom.menu('show',{
-	    left: ev.clientX,
-	    top: ev.clientY
-	});
+	var curvoff = curval_mom.offset();
+	console.debug ("mom_add_editor_tab curvoff=", curvoff);
+	menuvaledit_mom.menu('show',
+			     curvoff
+			     /*
+			     {
+				 left: ev.pageX,
+				 top: ev.pageY
+			     }
+			     */
+			    );
+	console.debug ("mom_add_editor_tab menuvaledit_mom=", menuvaledit_mom);
     });
     tab.mouseup(function (ev) {
 	console.debug ("mom_add_editor_tab mouseup ev=", ev, " ev.target=", ev.target, " curval_mom=", curval_mom,
