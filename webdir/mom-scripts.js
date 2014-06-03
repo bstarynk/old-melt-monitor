@@ -34,7 +34,6 @@ $(function(){
 		 maindiv_mom.html(gotdata);
 	     }
 	   });
-    console.warn("tabs are from jeasyui, not jqueryui");
     tabdiv_mom.tabs({
 	border: true
     });

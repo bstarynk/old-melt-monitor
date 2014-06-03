@@ -112,6 +112,13 @@ tt.mom_edititemid_cl {
     font-size: 105%;
 }
 
+span.mom_editdate_cl {
+    font-family: "Times New Roman", Times, serif;
+    font-style: italic;
+    font-size: 80%;
+    color: #0A1906;
+}
+
 code.mom_itemid_cl{
     font-family: "Courier New", Courier, monospace;
     font-size: 80%;
