@@ -502,6 +502,9 @@ ajaxobjs_lab_beginedit:
 		    MOMOUT_DOUBLE_TIME ((const char *) "%c",
 					mom_clock_time (CLOCK_REALTIME)),
 		    MOMOUT_LITERAL ("</span></p>"), MOMOUT_NEWLINE ());
+      MOM_WEBX_OUT (_L (webx).pitem,
+		    MOMOUT_LITERAL ("<ul class='mom_attrlist_cl'>"),
+		    MOMOUT_NEWLINE ());
       mom_unlock_item (_L (webx).pitem);
     }
     MOM_DEBUG (run,
