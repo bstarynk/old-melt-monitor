@@ -395,7 +395,6 @@ ajaxobjs_lab_beginedit:
       momval_t namidv =
 	(momval_t) mom_item_get_name_or_idstr (_L (editeditm).pitem);
       momval_t idv = (momval_t) mom_item_get_idstr (_L (editeditm).pitem);
-      bool anonymous = (namidv.ptr == idv.ptr);
       mom_lock_item (_L (webx).pitem);
       MOM_WEBX_OUT (_L (webx).pitem,
 		    MOMOUT_LITERAL ("<div id='momeditor_"),
@@ -403,39 +402,10 @@ ajaxobjs_lab_beginedit:
 				     mom_string_cstr ((momval_t)
 						      mom_item_get_idstr (_L
 									  (editor).pitem))),
-		    MOMOUT_LITERAL ("' class='mom_editor_cl'>"));
-      if (anonymous)
-	{
-	  MOM_WEBX_OUT (_L (webx).pitem,
-			MOMOUT_LITERAL
-			("<p class='mom_edit_title_cl'>item $"
-			 "<tt class='mom_edititemid_cl'>"),
-			MOMOUT_HTML (mom_string_cstr (namidv)),
-			MOMOUT_LITERAL ("</tt> <small>at "),
-			MOMOUT_DOUBLE_TIME ((const char *) "%c",
-					    mom_clock_time (CLOCK_REALTIME)),
-			MOMOUT_LITERAL ("</small></p>"),
-			MOMOUT_NEWLINE (),
-			MOMOUT_LITERAL ("<ul class='mom_attrlist_cl'>"),
-			NULL);
-	}
-      else
-	{
-	  MOM_WEBX_OUT (_L (webx).pitem,
-			MOMOUT_LITERAL
-			("<p class='mom_edit_title_cl'>item "
-			 "<tt class='mom_edititemname_cl'>"),
-			MOMOUT_HTML (mom_string_cstr (namidv)),
-			MOMOUT_LITERAL
-			("</tt> <br/> <small>id <code class='mom_itemid_cl'>"),
-			MOMOUT_HTML (mom_string_cstr (idv)),
-			MOMOUT_LITERAL ("</code> at "),
-			MOMOUT_DOUBLE_TIME ((const char *) "%c",
-					    mom_clock_time (CLOCK_REALTIME)),
-			MOMOUT_LITERAL ("</small></p>"), MOMOUT_NEWLINE (),
-			MOMOUT_LITERAL ("<ul class='mom_attrlist_cl'>"),
-			NULL);
-	}
+		    MOMOUT_LITERAL ("' class='mom_editor_cl' title='"),
+		    MOMOUT_LITERALV ((const char *)
+				     mom_string_cstr ((namidv))),
+		    MOMOUT_LITERAL ("'>"));
       mom_unlock_item (_L (webx).pitem);
     }
     MOM_DEBUG (run,
@@ -575,7 +545,6 @@ ajaxobjs_lab_beginedit:
       momval_t namidv =
 	(momval_t) mom_item_get_name_or_idstr (_L (editeditm).pitem);
       momval_t idv = (momval_t) mom_item_get_idstr (_L (editeditm).pitem);
-      bool anonymous = (namidv.ptr == idv.ptr);
       MOM_WEBX_OUT		//
 	(_L (webx).pitem,
 	 MOMOUT_LITERAL ("</div> <!-- end momeditor_"),
@@ -591,17 +560,7 @@ ajaxobjs_lab_beginedit:
 					   mom_item_get_idstr (_L
 							       (editor).pitem))),
 	 MOMOUT_LITERAL
-	 ("'), '<li class=\"mom_editab_cl\"><a href=\"#momeditor_"),
-	 MOMOUT_LITERALV ((const char *)
-			  mom_string_cstr ((momval_t)
-					   mom_item_get_idstr (_L
-							       (editor).pitem))),
-	 MOMOUT_LITERAL ("\" class=\""),
-	 MOMOUT_LITERALV ((const char *) (anonymous ? "mom_anonitemtab_cl" :
-					  "mom_nameditemtab_cl")),
-	 MOMOUT_LITERAL ("\">"),
-	 MOMOUT_LITERALV ((const char *) mom_string_cstr (namidv)),
-	 MOMOUT_LITERAL ("</a></li>'"), MOMOUT_LITERAL (");</script>"));
+	 ("'));</script>"));
     }
     mom_webx_reply (_L (webx).pitem, "text/html", HTTP_OK);
     mom_unlock_item (_L (webx).pitem);

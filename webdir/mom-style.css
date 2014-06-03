@@ -247,3 +247,12 @@ span.mom_nodeval_cl {
     font-weight: bold;
     color: #060615;
 }
+
+div.mom_tab_cl {
+    min-width: 80%;
+    min-height: 15px;
+}
+
+div.mom_editor_cl {
+    display: none;
+}

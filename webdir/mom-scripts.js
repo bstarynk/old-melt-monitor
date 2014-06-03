@@ -20,13 +20,11 @@
 
 var maindiv_mom;		// the main division
 var tabdiv_mom;			// the tab division
-var tabul_mom;			// the tab ul
 // jquery ready function for our document
 $(function(){
     maindiv_mom= $('#mom_maindiv');
     tabdiv_mom= $('#mom_tabdiv');
-    tabul_mom= $('#mom_tabul');
-    console.debug("maindiv_mom=", maindiv_mom, " tabdiv_mom=", tabdiv_mom, " tabul_mom=", tabul_mom);
+    console.debug("maindiv_mom=", maindiv_mom, " tabdiv_mom=", tabdiv_mom);
     $.ajax({ url: '/ajax_system',
 	     method: 'POST',
 	     data: { todo_mom: "mom_initial_system" },
@@ -37,12 +35,8 @@ $(function(){
 	     }
 	   });
     console.warn("tabs are from jeasyui, not jqueryui");
-    tabdiv_mom.tabs();
-    tabdiv_mom.find( ".ui-tabs-nav" ).sortable({
-	axis: "x",
-	stop: function() {
-	    tabsdiv_mom.tabs( "refresh" );
-	}
+    tabdiv_mom.tabs({
+	border: true
     });
 });
 
@@ -78,10 +72,13 @@ function mom_install_editor(hdata) {
     tabdiv_mom.append(hdata);
 }
 
-function mom_add_editor_tab(divtab,htmli) {
-    console.debug ("mom_add_editor_tab divtab=", divtab, "; htmli=", htmli);
-    tabul_mom.append(htmli);
-    tabdiv_mom.tabs("refresh");
+function mom_add_editor_tab(divtab) {
+    console.debug ("mom_add_editor_tab divtab=", divtab);
+    tabdiv_mom.tabs("add",{
+	title: divtab.attr('title'),
+	content: divtab.html(),
+	closable: true
+    });
 }
 
 function mom_name_entry_selected(rec) {
