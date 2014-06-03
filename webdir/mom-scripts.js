@@ -88,7 +88,10 @@ function mom_add_editor_tab_id(divtab,id) {
     var tab = $('#' + divtabid);
     console.debug ("mom_add_editor_tab tab=", tab);
     tab.mousedown(function (ev) {
-	console.debug ("mom_add_editor_tab mousedown ev=", ev);
+	console.debug ("mom_add_editor_tab mousedown ev=", ev, " ev.target=", ev.target);
+    });
+    tab.mouseup(function (ev) {
+	console.debug ("mom_add_editor_tab mouseup ev=", ev, " ev.target=", ev.target);
     });
 }
 

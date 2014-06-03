@@ -159,6 +159,11 @@ span.mom_value_cl {
     font-family: Verdana, Geneva, sans-serif;
 }
 
+span.mom_selvalue_cl {
+    font-weight: bold;
+    color: #330197;
+}
+
 span.mom_nullval_cl {
     font-size: 110%;
     font-weight: bold;

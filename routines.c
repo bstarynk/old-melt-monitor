@@ -853,13 +853,13 @@ edit_value_lab_start:
 	      MOM_WEBX_OUT (_L (webx).pitem,
 			    //
 			    MOMOUT_LITERAL
-			    ("<span class='mom_nameditemval_cl' id='momitem'"),
+			    ("<span class='mom_nameditemval_cl' id='momitem"),
 			    MOMOUT_LITERALV (mom_string_cstr
 					     ((momval_t)
 					      mom_item_get_idstr
 					      (mom_value_to_item
 					       (_L (curval))))),
-			    MOMOUT_LITERAL (">"),
+			    MOMOUT_LITERAL ("'>"),
 			    MOMOUT_LITERALV (mom_string_cstr (nsidv)),
 			    MOMOUT_LITERAL ("</span>"), NULL);
 	    break;
