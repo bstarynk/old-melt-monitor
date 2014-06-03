@@ -72,16 +72,23 @@ function mom_install_editor(hdata) {
     tabdiv_mom.append(hdata);
 }
 
+// when an editor dir is generated, it is followed by a <script> calling this
 function mom_add_editor_tab_id(divtab,id) {
     console.debug ("mom_add_editor_tab_id divtab=", divtab, " id=", id);
     var divtabhtml = divtab.html();
     var divtabid = "momeditab" + id;
-    console.debug ("mom_add_editor_tab divtabid=", divtabid);
+    console.debug ("mom_add_editor_tab divtabid=", divtabid,
+		   "; divtabhtml=", divtabhtml);
     tabdiv_mom.tabs("add",{
 	title: divtab.attr('title'),
 	content: divtabhtml,
 	id: divtabid,
 	closable: true
+    });
+    var tab = $('#' + divtabid);
+    console.debug ("mom_add_editor_tab tab=", tab);
+    tab.mousedown(function (ev) {
+	console.debug ("mom_add_editor_tab mousedown ev=", ev);
     });
 }
 

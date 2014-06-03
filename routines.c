@@ -772,8 +772,9 @@ edit_value_lab_start:
     {
       MOM_WEBX_OUT (_L (webx).pitem,
 		    //
-		    MOMOUT_LITERAL ("<span class='mom_value_cl' id='momedval_"), MOMOUT_LITERALV (mom_ident_cstr_of_item (mom_value_to_item (_L (editor)))),	//
-		    MOMOUT_LITERAL ("_n"), MOMOUT_DEC_INT ((int) _N (numval)), MOMOUT_LITERAL ("' data-momeditor='"), MOMOUT_LITERALV (mom_ident_cstr_of_item (mom_value_to_item (_L (editor)))),	//
+		    MOMOUT_LITERAL ("<span class='mom_value_cl' id='momedval"), MOMOUT_LITERALV (mom_ident_cstr_of_item (mom_value_to_item (_L (editor)))),	//
+		    MOMOUT_LITERAL ("_N"), MOMOUT_DEC_INT ((int) _N (numval)),
+		    // no need for a data-momeditor, it can be found from the id!
 		    MOMOUT_LITERAL ("' data-momorig='"), MOMOUT_JSON_VALUE (_L (jorig)),	//
 		    MOMOUT_LITERAL ("' data-momnumval='"), MOMOUT_DEC_INT ((int) _N (numval)),	//
 		    MOMOUT_LITERAL ("' data-momtype='"), MOMOUT_LITERALV (mom_type_cstring (mom_type (_L (curval)))),	//
