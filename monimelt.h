@@ -840,6 +840,15 @@ mom_lock_item (momitem_t *itm)
   return (pthread_mutex_lock (&itm->i_mtx) == 0);
 }
 
+#define mom_should_lock_item_at(Lin,Itm) do {			\
+  momitem_t* _itm_##Lin = (Itm);				\
+  if (!mom_lock_item(_itm_##Lin))				\
+    MOM_FATAL(MOMOUT_LITERAL("failed to lock item"),		\
+	      MOMOUT_ITEM((const momitem_t*)_itm_##Lin),	\
+	      NULL);						\
+  } while(0)
+#define mom_should_lock_item(Itm) mom_should_lock_item_at(__LINE__,(Itm))
+
 // unlock an item
 static inline void
 mom_unlock_item (momitem_t *itm)

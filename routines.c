@@ -196,6 +196,7 @@ enum ajax_objects_values_en
 enum ajax_objects_closure_en
 {
   ajaxobjs_c_editvalueclos,
+  ajaxobjs_c_editors,
   ajaxobjs_c__lastclosure
 };
 
@@ -371,7 +372,16 @@ ajaxobjs_lab_beginedit:
 	       MOMOUT_LITERAL ("; webx="),
 	       MOMOUT_VALUE ((const momval_t) _L (webx)),
 	       MOMOUT_LITERAL ("; editeditm="),
-	       MOMOUT_VALUE ((const momval_t) _L (editeditm)), NULL);
+	       MOMOUT_VALUE ((const momval_t) _L (editeditm)), 
+	       MOMOUT_LITERAL ("; editors="),
+	       MOMOUT_VALUE ((const momval_t) _C (editors)), NULL);
+    {
+      mom_should_lock_item(_C (editors).pitem);
+      if (_C (editors).pitem->i_paylkind != mompayk_assoc)
+	mom_item_start_assoc(_C (editors).pitem);
+      mom_item_assoc_put(_C (editors).pitem, _L (editeditm).pitem, _L (editor));
+      mom_unlock_item(_C (editors).pitem);
+    }
     {
       mom_lock_item (_L (editeditm).pitem);
       _L (setattrs) =
@@ -603,6 +613,7 @@ enum edit_value_values_en
 
 enum edit_value_closure_en
 {
+  edit_value_c_editors,
   edit_value_c__lastclosure
 };
 
