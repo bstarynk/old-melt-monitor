@@ -72,6 +72,13 @@ function mom_install_editor(hdata) {
     tabdiv_mom.append(hdata);
 }
 
+function mom_containing_val(elem) {
+    if (elem.hasClass("mom_value_cl")) return elem;
+    else return elem.parents(".mom_value_cl:first");
+}
+
+var curval_mom;
+
 // when an editor dir is generated, it is followed by a <script> calling this
 function mom_add_editor_tab_id(divtab,id) {
     console.debug ("mom_add_editor_tab_id divtab=", divtab, " id=", id);
@@ -89,9 +96,13 @@ function mom_add_editor_tab_id(divtab,id) {
     console.debug ("mom_add_editor_tab tab=", tab);
     tab.mousedown(function (ev) {
 	console.debug ("mom_add_editor_tab mousedown ev=", ev, " ev.target=", ev.target);
+	curval_mom = mom_containing_val(ev.target);
+	console.debug ("mom_add_editor_tab mousedown curval_mom=", curval_mom);
+	curval_mom.addClass("mom_selvalue_cl");
     });
     tab.mouseup(function (ev) {
-	console.debug ("mom_add_editor_tab mouseup ev=", ev, " ev.target=", ev.target);
+	console.debug ("mom_add_editor_tab mouseup ev=", ev, " ev.target=", ev.target, " curval_mom=", curval_mom);
+	curval_mom.removeClass("mom_selvalue_cl");	
     });
 }
 

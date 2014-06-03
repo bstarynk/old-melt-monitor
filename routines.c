@@ -977,21 +977,21 @@ edit_value_lab_start:
 		MOM_WEBX_OUT (_L (webx).pitem,
 			      //
 			      MOMOUT_LITERAL
-			      ("<span class='mom_anonymousitemval_cl' id='momitem'"),
+			      ("<span class='mom_anonymousitemval_cl' id='momitem"),
 			      MOMOUT_LITERALV (mom_string_cstr (connidv)),
-			      MOMOUT_LITERAL (">"),
+			      MOMOUT_LITERAL ("'>"),
 			      MOMOUT_LITERALV (mom_string_cstr (connidv)),
 			      MOMOUT_LITERAL ("</span>("), NULL);
 	      else
 		MOM_WEBX_OUT (_L (webx).pitem,
 			      //
 			      MOMOUT_LITERAL
-			      ("<span class='mom_nameditemval_cl' id='momitem'"),
+			      ("<span class='mom_nameditemval_cl' id='momitem"),
 			      MOMOUT_LITERALV (mom_string_cstr
 					       ((momval_t)
 						mom_item_get_idstr (_L
 								    (connitm).pitem))),
-			      MOMOUT_LITERAL (">"),
+			      MOMOUT_LITERAL ("'>"),
 			      MOMOUT_LITERALV (mom_string_cstr (connidv)),
 			      MOMOUT_LITERAL ("</span>("),
 			      MOMOUT_INDENT_MORE (), NULL);
