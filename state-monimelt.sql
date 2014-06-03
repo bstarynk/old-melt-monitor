@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','todo dump at exit');
+INSERT INTO t_params VALUES('dump_reason','exit dump');
 INSERT INTO t_items VALUES('_02u53qxa7dm_sttmhffpchr','{"kind": "queue", "payload": [], "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "The agenda is central to Monimelt.\nIt is the queue of taskets to be executed by worker threads."}],
  "content": null}
@@ -109,8 +109,10 @@ INSERT INTO t_items VALUES('_6hf2vzmrsee_t35suhjvtj4','{"kind": null, "payload":
 ');
 INSERT INTO t_items VALUES('_6mwwr0i4y9p_5aupdxjxdk1','{"kind": "routine", "payload": "ajax_objects", "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "handle \''ajax_objects\'' webrequests"}, {"attr": "_7sav6zery1v_24sa6jwwu6c",
-   "val": {"sons": [{"sons": ["{spare1-edit_value}"], "node": "_73im2zryfij_a7zmkketcfc",
-      "jtype": "node"}, "{spare2-ajax_objects}", null], "node": "_6mwwr0i4y9p_5aupdxjxdk1",
+   "val": {"sons": [{"sons": [{"item_ref": "_7qk90k9vx0u_31ivff77td7", "space": ".root",
+"jtype": "item_ref"}, "{spare1-edit_value}"], "node": "_73im2zryfij_a7zmkketcfc",
+      "jtype": "node"}, {"item_ref": "_7qk90k9vx0u_31ivff77td7", "space": ".root",
+      "jtype": "item_ref"}, "{spare3-ajax_objects}", null], "node": "_6mwwr0i4y9p_5aupdxjxdk1",
     "jtype": "node"}}], "content": null}
 ');
 INSERT INTO t_items VALUES('_6w3dvx83dfw_xzc6aif6isv','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",

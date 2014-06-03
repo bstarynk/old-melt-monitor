@@ -787,7 +787,7 @@ parse_program_arguments_and_load_modules_mom (int *pargc, char **argv)
 	  break;
 	default:
 	  {
-	    if (opt > 0 && opt < UCHAR_MAX && isalpha (opt))
+	    if (opt > 0 && opt < UCHAR_MAX && isalpha ((char) opt))
 	      MOM_FATAPRINTF ("unknown option %c", opt);
 	    else
 	      MOM_FATAPRINTF ("unknown option #%d", opt);
