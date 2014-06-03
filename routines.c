@@ -318,9 +318,8 @@ ajaxobjs_lab_start:
 		   MOMOUT_LITERAL ("; commentv="),
 		   MOMOUT_VALUE ((const momval_t) commentv));
 	_L (editeditm) = (momval_t) mom_make_item ();
-	_L (editeditm).pitem->i_attrs =
-	  mom_put_attribute (_L (editeditm).pitem->i_attrs,
-			     mom_named__comment, commentv);
+	mom_item_put_attribute (_L (editeditm).pitem,
+				mom_named__comment, commentv);
 	mom_register_item_named (_L (editeditm).pitem, mom_to_string (namev));
 	mom_item_set_space (_L (editeditm).pitem, momspa_root);
 	{
@@ -352,6 +351,56 @@ ajaxobjs_lab_start:
 	  _SET_STATE (beginedit);
 	}
       }
+    else if (mom_string_same (todov, "mom_doeditorclose"))
+      {
+	momval_t editoridv =
+	  mom_webx_post_arg (_L (webx).pitem, "closedid_mom");
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL
+		   ("ajax_objects_codmom doeditorclose editoridv="),
+		   MOMOUT_VALUE ((const momval_t) editoridv));
+	assert (mom_is_string (editoridv));
+	const char *editoridstr = mom_string_cstr (editoridv);
+	assert (editoridstr != NULL
+		&& strncmp (editoridstr, "momeditor",
+			    strlen ("momeditor")) == 0);
+	momitem_t *editoritm =
+	  mom_get_item_of_identcstr (editoridstr + strlen ("momeditor"));
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL
+		   ("ajax_objects_codmom doeditorclose editoritm="),
+		   MOMOUT_ITEM ((const momitem_t *) editoritm));
+	assert (mom_is_item ((momval_t) editoritm));
+	momitem_t *editeditm = NULL;
+	{
+	  mom_should_lock_item (editoritm);
+	  editeditm =
+	    mom_value_to_item (mom_item_get_attribute
+			       (editoritm, mom_named__item));
+	  mom_unlock_item (editoritm);
+	}
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL
+		   ("ajax_objects_codmom doeditorclose editeditm="),
+		   MOMOUT_ITEM ((const momitem_t *) editeditm));
+	assert (mom_is_item ((momval_t) editeditm));
+	assert (mom_is_item ((momval_t) _C (editors)));
+	{
+	  mom_should_lock_item (_C (editors).pitem);
+	  mom_item_assoc_remove (_C (editors).pitem, editeditm);
+	  mom_unlock_item (_C (editors).pitem);
+	}
+	MOM_WEBX_OUT (_L (webx).pitem,
+		      MOMOUT_LITERAL ("Closed editor for <tt>"),
+		      MOMOUT_LITERALV (mom_string_cstr
+				       ((momval_t)
+					mom_item_get_name_or_idstr
+					(editeditm))),
+		      MOMOUT_LITERAL ("</tt>."
+				      " <input type='submit' id='mom_cancel' class='mom_cancel_cl' value='cancel' onclick='mom_erase_maindiv()'/>"),
+		      NULL);
+	mom_webx_reply (_L (webx).pitem, "text/html", HTTP_OK);
+      }
     else
       MOM_FATAL (MOMOUT_LITERAL ("ajax_objects unexpected todov:"),
 		 MOMOUT_VALUE ((const momval_t) todov));
@@ -366,8 +415,9 @@ ajaxobjs_lab_beginedit:
     _L (editor) = (momval_t) mom_make_item ();
     mom_item_start_vector (_L (editor).pitem);
     mom_item_vector_reserve (_L (editor).pitem, 16);
-    MOM_DEBUG (run,
-	       MOMOUT_LITERAL ("ajax_objects_codmom beginedit editor="),
+    mom_item_put_attribute (_L (editor).pitem, mom_named__item,
+			    _L (editeditm));
+    MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_objects_codmom beginedit editor="),
 	       MOMOUT_VALUE ((const momval_t) _L (editor)),
 	       MOMOUT_LITERAL ("; webx="),
 	       MOMOUT_VALUE ((const momval_t) _L (webx)),
@@ -386,7 +436,7 @@ ajaxobjs_lab_beginedit:
     {
       mom_lock_item (_L (editeditm).pitem);
       _L (setattrs) =
-	(momval_t) mom_set_attributes (_L (editeditm).pitem->i_attrs);
+	(momval_t) mom_item_set_attributes (_L (editeditm).pitem);
       _N (nbattrs) = mom_set_cardinal (_L (setattrs));
       mom_unlock_item (_L (editeditm).pitem);
     }
@@ -430,7 +480,7 @@ ajaxobjs_lab_beginedit:
 			("anonymous item <tt class='mom_edititemid_cl'>"),
 			MOMOUT_LITERALV ((const char *)
 					 mom_string_cstr ((momval_t) idv)),
-			MOMOUT_LITERAL ("</tt>"));
+			MOMOUT_LITERAL ("</tt>"), MOMOUT_NEWLINE ());
 	}
       else
 	{
@@ -439,7 +489,11 @@ ajaxobjs_lab_beginedit:
 			("item <tt class='mom_edititemname_cl'>"),
 			MOMOUT_LITERALV ((const char *)
 					 mom_string_cstr ((momval_t) namidv)),
-			MOMOUT_LITERAL ("</tt>"));
+			MOMOUT_LITERAL
+			("</tt> <small>of id:</small> <code class='mom_itemid_cl'>"),
+			MOMOUT_LITERALV ((const char *)
+					 mom_string_cstr ((momval_t) idv)),
+			MOMOUT_LITERAL ("</code>"), MOMOUT_NEWLINE ());
 	}
       MOM_WEBX_OUT (_L (webx).pitem,
 		    MOMOUT_LITERAL ("<br/>"),
@@ -462,9 +516,8 @@ ajaxobjs_lab_beginedit:
 	  assert (mom_is_item (_L (editeditm)));
 	  assert (mom_is_item (_L (curattritm)));
 	  mom_lock_item (_L (editeditm).pitem);
-	  _L (curvalattr) =
-	    (momval_t) mom_get_attribute (_L (editeditm).pitem->i_attrs,
-					  _L (curattritm).pitem);
+	  _L (curvalattr) = mom_item_get_attribute (_L (editeditm).pitem,
+						    _L (curattritm).pitem);
 	  mom_unlock_item (_L (editeditm).pitem);
 	}
 	MOM_DEBUG (run,
@@ -584,21 +637,19 @@ ajaxobjs_lab_beginedit:
 	       MOMOUT_VALUE (_L (curcontent)));
     mom_lock_item (_L (webx).pitem);
     {
+      const char *editoridstr =
+	mom_string_cstr ((momval_t) mom_item_get_idstr (_L (editor).pitem));
       MOM_WEBX_OUT		//
 	(_L (webx).pitem,
 	 MOMOUT_LITERAL ("</div> <!-- end momeditor_"),
-	 MOMOUT_LITERALV ((const char *)
-			  mom_string_cstr ((momval_t)
-					   mom_item_get_idstr (_L
-							       (editor).pitem))),
+	 MOMOUT_LITERALV ((const char *) editoridstr),
 	 MOMOUT_LITERAL (" -->"), MOMOUT_NEWLINE (),
 	 MOMOUT_LITERAL
-	 ("<script type='text/javascript'>mom_add_editor_tab($('#momeditor_"),
-	 MOMOUT_LITERALV ((const char *)
-			  mom_string_cstr ((momval_t)
-					   mom_item_get_idstr (_L
-							       (editor).pitem))),
-	 MOMOUT_LITERAL ("'));</script>"));
+	 ("<script type='text/javascript'>mom_add_editor_tab_id($('#momeditor_"),
+	 MOMOUT_LITERALV ((const char *) editoridstr),
+	 MOMOUT_LITERAL ("'),'"),
+	 MOMOUT_LITERALV ((const char *) editoridstr),
+	 MOMOUT_LITERAL ("');</script>"));
     }
     mom_webx_reply (_L (webx).pitem, "text/html", HTTP_OK);
     mom_unlock_item (_L (webx).pitem);

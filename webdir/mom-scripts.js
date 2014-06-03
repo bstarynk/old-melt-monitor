@@ -35,7 +35,8 @@ $(function(){
 	     }
 	   });
     tabdiv_mom.tabs({
-	border: true
+	border: true,
+	onBeforeClose: mom_before_close_editor_tab
     });
 });
 
@@ -71,13 +72,38 @@ function mom_install_editor(hdata) {
     tabdiv_mom.append(hdata);
 }
 
-function mom_add_editor_tab(divtab) {
-    console.debug ("mom_add_editor_tab divtab=", divtab);
+function mom_add_editor_tab_id(divtab,id) {
+    console.debug ("mom_add_editor_tab_id divtab=", divtab, " id=", id);
+    var divtabhtml = divtab.html();
+    var divtabid = "momeditab" + id;
+    console.debug ("mom_add_editor_tab divtabid=", divtabid);
     tabdiv_mom.tabs("add",{
 	title: divtab.attr('title'),
-	content: divtab.html(),
+	content: divtabhtml,
+	id: divtabid,
 	closable: true
     });
+}
+
+function mom_before_close_editor_tab(title,index) {
+    console.debug ("mom_before_close_editor_tab title=", title, " index=", index);
+    var closedtab = tabdiv_mom.tabs("getTab", index);
+    var closedid = closedtab.attr("id");
+    console.debug ("mom_before_close_editor_tab closedtab=", closedtab, " closedid=", closedid);
+    var editorid = closedid.replace ("momeditab","momeditor");
+    console.debug ("mom_before_close_editor_tab editorid=", editorid);
+    $.ajax({ url: '/ajax_objects',
+	     method: 'POST',
+	     data: { todo_mom: "mom_doeditorclose",
+		     closedid_mom: editorid },
+	     dataType: 'html',
+	     success: function (gotdata) {
+		 console.debug ("mom_before_close_editor_tab doeditorclose gotdata=",
+				gotdata);
+		 maindiv_mom.html(gotdata);
+	     }
+	   });
+    return true;		// to permit the closing
 }
 
 function mom_name_entry_selected(rec) {

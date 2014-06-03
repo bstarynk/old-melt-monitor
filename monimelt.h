@@ -964,6 +964,49 @@ mom_get_attribute (const struct mom_itemattributes_st *const attrs,
   return MOM_NULLV;
 }
 
+/// raw access/modification of item attributes should be done with the
+/// item locked!
+static inline momval_t
+mom_item_get_attribute (const momitem_t *itm, const momitem_t *atitm)
+{
+  if (!itm || !atitm || itm->i_typnum != momty_item)
+    return MOM_NULLV;
+  return mom_get_attribute (itm->i_attrs, atitm);
+}
+
+static inline void
+mom_item_put_attribute (momitem_t *itm, const momitem_t *atitm,
+			const momval_t val)
+{
+  if (!itm || !atitm || itm->i_typnum != momty_item)
+    return;
+  itm->i_attrs = mom_put_attribute (itm->i_attrs, atitm, val);
+}
+
+static inline void
+mom_item_remove_attribute (momitem_t *itm, const momitem_t *atitm)
+{
+  if (!itm || !atitm || itm->i_typnum != momty_item)
+    return;
+  itm->i_attrs = mom_remove_attribute (itm->i_attrs, atitm);
+}
+
+static inline void
+mom_item_reserve_attribute (momitem_t *itm, unsigned gap)
+{
+  if (!itm || itm->i_typnum != momty_item)
+    return;
+  itm->i_attrs = mom_reserve_attribute (itm->i_attrs, gap);
+}
+
+static inline const momset_t *
+mom_item_set_attributes (momitem_t *itm)
+{
+  if (!itm || itm->i_typnum != momty_item)
+    return NULL;
+  return mom_set_attributes (itm->i_attrs);
+}
+
 /// clear the payload of an item - should be called under the item's
 /// lock. Can call the payload finalizer
 void mom_item_clear_payload (momitem_t *itm);

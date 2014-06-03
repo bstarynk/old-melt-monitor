@@ -128,13 +128,15 @@ code.mom_itemid_cl{
 /* the attribute list of an edited item */
 ul.mom_attrlist_cl {
     padding: 2px;
-    margin-top: 5px;
-    margin-bottom: 5px;
+    margin: 5px;
     background-color: lightcyan;
 }
 
 li.mom_attrentry_cl {
     list-style-type: square;
+    list-style-position: inside;
+    padding-left: 6px;
+    padding-top: 2px;
 }
 
 li.mom_attrentry_cl:hover {
@@ -155,14 +157,6 @@ p.mom_content_cl {
 
 span.mom_value_cl {
     font-family: Verdana, Geneva, sans-serif;
-}
-
-span.mom_value_cl:hover {
-    background-color: lightpink;
-}
-
-span.mom_value_cl > .momvalue_cl:hover > {
-    background-color: #fed6fd;
 }
 
 span.mom_nullval_cl {
@@ -232,14 +226,12 @@ span.mom_emptytupleval_cl {
 span.mom_setval_cl {
     font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
     font-weight: bold;
-    font-size: 105%;
     color: #0C0C0C;
 }
 
 span.mom_tupleval_cl {
     font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
     font-weight: bold;
-    font-size: 105%;
     color: #100C0F;
 }
 
@@ -250,7 +242,6 @@ span.mom_nullitem_cl {
 }
 
 span.mom_nodeval_cl {
-    font-size: 105%;
     font-weight: bold;
     color: #060615;
 }
