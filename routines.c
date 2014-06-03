@@ -533,6 +533,8 @@ ajaxobjs_lab_beginedit:
 	{
 	  momval_t namidatv =
 	    (momval_t) mom_item_get_name_or_idstr (_L (curattritm).pitem);
+	  momval_t idatv =
+	    (momval_t) mom_item_get_idstr (_L (curattritm).pitem);
 	  assert (mom_is_item (_L (webx)));
 	  momval_t jorigat =	////
 	    (momval_t)
@@ -544,10 +546,7 @@ ajaxobjs_lab_beginedit:
 						 (mom_value_to_item
 						  (_L (editeditm)))),
 				  MOMJSOB_ENTRY ((momval_t) mom_named__attr,
-						 (momval_t)
-						 mom_item_get_idstr
-						 (mom_value_to_item
-						  (_L (curattritm)))),
+						 (momval_t) idatv),
 				  NULL);
 	  momval_t exprat =	///
 	    (momval_t) mom_make_node_til_nil (mom_named__attr,
@@ -562,7 +561,7 @@ ajaxobjs_lab_beginedit:
 	  mom_lock_item (_L (webx).pitem);
 	  MOM_WEBX_OUT (_L (webx).pitem,
 			//
-			MOMOUT_LITERAL ("<li class='mom_attrentry_cl'><span class='mom_attritem_cl'>"), MOMOUT_HTML (mom_string_cstr (namidatv)),	//
+			MOMOUT_LITERAL ("<li class='mom_attrentry_cl'>" "<span class='mom_attritem_cl' data-momitemid='"), MOMOUT_LITERALV ((const char *) mom_string_cstr (idatv)), MOMOUT_LITERAL ("'>"), MOMOUT_HTML (mom_string_cstr (namidatv)),	//
 			MOMOUT_LITERAL ("</span> " "&#8594;"	/* U+2192 RIGHTWARDS ARROW → */
 					" "), NULL);
 	  mom_unlock_item (_L (webx).pitem);
