@@ -140,7 +140,7 @@ li.mom_attrentry_cl {
 }
 
 li.mom_attrentry_cl:hover {
-    background-color: yellow;
+    background-color: #cdffce;
 }
 
 span.mom_attritem_cl {
@@ -161,6 +161,8 @@ span.mom_value_cl {
 
 span.mom_selvalue_cl {
     font-weight: bold;
+    text-decoration: underline;
+    background-color: #fffee1;
     color: #330197;
 }
 

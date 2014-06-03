@@ -20,11 +20,14 @@
 
 var maindiv_mom;		// the main division
 var tabdiv_mom;			// the tab division
+var menuvaledit_mom;
 // jquery ready function for our document
 $(function(){
     maindiv_mom= $('#mom_maindiv');
     tabdiv_mom= $('#mom_tabdiv');
-    console.debug("maindiv_mom=", maindiv_mom, " tabdiv_mom=", tabdiv_mom);
+    menuvaledit_mom= $('#mom_menu_valedit');
+    console.debug("maindiv_mom=", maindiv_mom, " tabdiv_mom=", tabdiv_mom,
+		  " menuvaledit_mom=", menuvaledit_mom);
     $.ajax({ url: '/ajax_system',
 	     method: 'POST',
 	     data: { todo_mom: "mom_initial_system" },
@@ -66,6 +69,9 @@ function mom_do_menu_objects(itm) {
 	   });
 }
 
+function mom_do_menu_valedit(itm) {
+    console.debug ("mom_do_menu_valedit itm=", itm);
+}
 
 function mom_install_editor(hdata) {
     console.debug ("mom_install_editor hdata=", hdata);
@@ -93,16 +99,26 @@ function mom_add_editor_tab_id(divtab,id) {
 	closable: true
     });
     var tab = $('#' + divtabid);
+    tab.bind("contextmenu",function (ev) { return false; });
     console.debug ("mom_add_editor_tab tab=", tab);
     tab.mousedown(function (ev) {
-	console.debug ("mom_add_editor_tab mousedown ev=", ev, " ev.target=", ev.target);
-	curval_mom = mom_containing_val(ev.target);
-	console.debug ("mom_add_editor_tab mousedown curval_mom=", curval_mom);
+	console.debug ("mom_add_editor_tab mousedown ev=", ev, " ev.target=", ev.target,
+		       " evclx=", ev.clientX, " evcly=", ev.clientY);
+	curval_mom = mom_containing_val($(ev.target));
 	curval_mom.addClass("mom_selvalue_cl");
+	console.debug ("mom_add_editor_tab mousedown curval_mom=", curval_mom,
+		       " isaselvalue=", curval_mom.hasClass("mom_selvalue_cl"));
+	console.debug ("mom_add_editor_tab mousedown menuvaledit_mom=", menuvaledit_mom);
+	menuvaledit_mom.menu('show',{
+	    left: ev.clientX,
+	    top: ev.clientY
+	});
     });
     tab.mouseup(function (ev) {
-	console.debug ("mom_add_editor_tab mouseup ev=", ev, " ev.target=", ev.target, " curval_mom=", curval_mom);
-	curval_mom.removeClass("mom_selvalue_cl");	
+	console.debug ("mom_add_editor_tab mouseup ev=", ev, " ev.target=", ev.target, " curval_mom=", curval_mom,
+		       " isaselvalue=", curval_mom.hasClass("mom_selvalue_cl"));
+	curval_mom.removeClass("mom_selvalue_cl");
+	menuvaledit_mom.menu('hide');
     });
 }
 
