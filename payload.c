@@ -387,6 +387,199 @@ static const struct mom_payload_descr_st payldescr_vector_mom = {
 };
 
 ////////////////////////////////////////////////////////////////
+///// ASSOC PAYLOAD
+////////////////////////////////////////////////////////////////
+
+/** the assoc payload data is a GC_MALLOC-ed struct mom_itemattributes_st */
+
+void
+mom_item_start_assoc (momitem_t *itm)
+{
+  assert (itm && itm->i_typnum == momty_item);
+  if (itm->i_payload)
+    mom_item_clear_payload (itm);
+  const unsigned asiz = 8;
+  struct mom_itemattributes_st *assoc = MOM_GC_ALLOC ("item assoc",
+						      sizeof (struct
+							      mom_itemattributes_st)
+						      +
+						      asiz *
+						      sizeof (struct
+							      mom_attrentry_st));
+  assoc->size = asiz;
+  itm->i_payload = assoc;
+  itm->i_paylkind = mompayk_queue;
+}
+
+void
+mom_item_assoc_reserve (momitem_t *itm, unsigned gap)
+{
+  assert (itm && itm->i_typnum == momty_item);
+  if (itm->i_paylkind != mompayk_assoc)
+    return;
+  assert (itm->i_payload != NULL);
+  struct mom_itemattributes_st *assoc = itm->i_payload;
+  assoc = mom_reserve_attribute (assoc, gap);
+  itm->i_payload = assoc;
+}
+
+momval_t
+mom_item_assoc_get (momitem_t *itm, const momitem_t *atitm)
+{
+  momval_t res = MOM_NULLV;
+  assert (itm && itm->i_typnum == momty_item);
+  if (itm->i_paylkind != mompayk_assoc || !atitm)
+    return MOM_NULLV;
+  assert (itm->i_payload != NULL);
+  struct mom_itemattributes_st *assoc = itm->i_payload;
+  res = mom_get_attribute (assoc, atitm);
+  return res;
+}
+
+momval_t
+mom_item_assoc_set_attrs (momitem_t *itm)
+{
+  momval_t res = MOM_NULLV;
+  assert (itm && itm->i_typnum == momty_item);
+  if (itm->i_paylkind != mompayk_assoc)
+    return MOM_NULLV;
+  assert (itm->i_payload != NULL);
+  struct mom_itemattributes_st *assoc = itm->i_payload;
+  res = (momval_t) mom_set_attributes (assoc);
+  return res;
+}
+
+void
+mom_item_assoc_put (momitem_t *itm, const momitem_t *atitm,
+		    const momval_t val)
+{
+  assert (itm && itm->i_typnum == momty_item);
+  if (itm->i_paylkind != mompayk_assoc || !atitm)
+    return;
+  assert (itm->i_payload != NULL);
+  struct mom_itemattributes_st *assoc = itm->i_payload;
+  assoc = mom_put_attribute (assoc, atitm, val);
+  itm->i_payload = assoc;
+}
+
+void
+mom_item_assoc_remove (momitem_t *itm, const momitem_t *atitm)
+{
+  assert (itm && itm->i_typnum == momty_item);
+  if (itm->i_paylkind != mompayk_assoc || !atitm)
+    return;
+  assert (itm->i_payload != NULL);
+  struct mom_itemattributes_st *assoc = itm->i_payload;
+  assoc = mom_remove_attribute (assoc, atitm);
+  itm->i_payload = assoc;
+}
+
+static void
+payl_assoc_load_mom (struct mom_loader_st *ld, momitem_t *itm, momval_t jpayl)
+{
+  assert (ld != NULL);
+  assert (itm && itm->i_typnum == momty_item);
+  mom_item_start_assoc (itm);
+  unsigned len = mom_json_array_size (jpayl);
+  mom_item_assoc_reserve (itm, 5 * len / 4 + 2);
+  for (unsigned aix = 0; aix < len; aix++)
+    {
+      momval_t jent = mom_json_array_nth (jpayl, (int) aix);
+      momval_t jcurattr = mom_jsonob_get (jent, (momval_t) mom_named__attr);
+      momval_t jcurval = mom_jsonob_get (jent, (momval_t) mom_named__val);
+      momitem_t *curatitm = mom_load_item_json (ld, jcurattr);
+      if (!curatitm)
+	continue;
+      momval_t curval = mom_load_value_json (ld, jcurval);
+      mom_item_assoc_put (itm, curatitm, curval);
+    }
+}
+
+static void
+payl_assoc_dump_scan_mom (struct mom_dumper_st *du, momitem_t *itm)
+{
+  assert (itm && itm->i_typnum == momty_item);
+  if (itm->i_paylkind != mompayk_assoc)
+    return;
+  assert (itm->i_payload != NULL);
+  struct mom_itemattributes_st *assoc = itm->i_payload;
+  unsigned asiz = assoc->size;
+  for (unsigned aix = 0; aix < asiz; aix++)
+    {
+      momitem_t *curitm = assoc->itattrtab[aix].aten_itm;
+      if (!curitm || curitm == MOM_EMPTY)
+	continue;
+      assert (curitm->i_typnum == momty_item
+	      && curitm->i_magic == MOM_ITEM_MAGIC);
+      if (curitm->i_space == momspa_none)
+	continue;
+      momval_t curval = assoc->itattrtab[aix].aten_val;
+      if (!curval.ptr || curval.ptr == MOM_EMPTY)
+	continue;
+      if (mom_has_flags (curval, momflag_transient))
+	continue;
+      mom_dump_add_scanned_item (du, curitm);
+      mom_dump_scan_value (du, curval);
+    }
+}
+
+static momval_t
+payl_assoc_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
+{
+  momval_t jres = MOM_NULLV;
+  assert (du != NULL);
+  assert (itm && itm->i_typnum == momty_item);
+  if (itm->i_paylkind != mompayk_assoc)
+    return MOM_NULLV;
+  assert (itm->i_payload != NULL);
+  struct mom_itemattributes_st *assoc = itm->i_payload;
+  unsigned asiz = assoc->size;
+  momval_t tinyarr[MOM_TINY_MAX] = { MOM_NULLV };
+  momval_t *arrj = (asiz < MOM_TINY_MAX)
+    ? tinyarr : MOM_GC_ALLOC ("assoc dump arrj", asiz * sizeof (momval_t));
+  unsigned cnt = 0;
+  for (unsigned aix = 0; aix < asiz; aix++)
+    {
+      assert (cnt < asiz);
+      momitem_t *curitm = assoc->itattrtab[aix].aten_itm;
+      if (!curitm || curitm == MOM_EMPTY)
+	continue;
+      assert (curitm->i_typnum == momty_item
+	      && curitm->i_magic == MOM_ITEM_MAGIC);
+      if (curitm->i_space == momspa_none)
+	continue;
+      momval_t curval = assoc->itattrtab[aix].aten_val;
+      if (!curval.ptr || curval.ptr == MOM_EMPTY)
+	continue;
+      if (mom_has_flags (curval, momflag_transient))
+	continue;
+      momval_t jattr = mom_emit_short_item_json (du, curitm);
+      if (!jattr.ptr)
+	continue;
+      momval_t jval = mom_dump_emit_json (du, curval);
+      if (!jval.ptr)
+	continue;
+      momval_t jent = (momval_t) mom_make_json_object
+	(MOMJSOB_ENTRY ((momval_t) mom_named__attr, (momval_t) jattr),
+	 MOMJSOB_ENTRY ((momval_t) mom_named__val, (momval_t) jval),
+	 MOMJSON_END);
+      arrj[cnt++] = jent;
+    }
+  jres = (momval_t) mom_make_json_array_count (cnt, arrj);
+  if (arrj != tinyarr)
+    MOM_GC_FREE (arrj);
+  return jres;
+}
+
+static const struct mom_payload_descr_st payldescr_assoc_mom = {
+  .dpayl_magic = MOM_PAYLOAD_MAGIC,
+  .dpayl_name = "assoc",
+  .dpayl_loadfun = payl_assoc_load_mom,
+  .dpayl_dumpscanfun = payl_assoc_dump_scan_mom,
+  .dpayl_dumpjsonfun = payl_assoc_dump_json_mom,
+};
+
+////////////////////////////////////////////////////////////////
 ///// ROUTINE PAYLOAD
 ////////////////////////////////////////////////////////////////
 
@@ -2055,6 +2248,7 @@ struct mom_payload_descr_st *mom_payloadescr[mompayk__last + 1] = {
   [mompayk_tasklet] = (struct mom_payload_descr_st *) &payldescr_tasklet_mom,
   [mompayk_buffer] = (struct mom_payload_descr_st *) &payldescr_buffer_mom,
   [mompayk_vector] = (struct mom_payload_descr_st *) &payldescr_vector_mom,
+  [mompayk_assoc] = (struct mom_payload_descr_st *) &payldescr_assoc_mom,
   [mompayk_process] = (struct mom_payload_descr_st *) &payldescr_process_mom,
   [mompayk_webexchange] =
     (struct mom_payload_descr_st *) &payldescr_webexchange_mom,

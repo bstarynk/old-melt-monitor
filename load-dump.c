@@ -286,8 +286,8 @@ mom_dump_emit_json (struct mom_dumper_st *dmp, const momval_t val)
 
 // emit a short representation of an item: if it is in the current
 // space, just its id string...
-static momval_t
-emit_short_item_json_mom (struct mom_dumper_st *dmp, const momitem_t *itm)
+momval_t
+mom_emit_short_item_json (struct mom_dumper_st *dmp, const momitem_t *itm)
 {
   if (!itm)
     return MOM_NULLV;
@@ -340,6 +340,7 @@ mom_dump_scan_inside_item (struct mom_dumper_st *dmp, momitem_t *itm)
 	  if (atent[aix].aten_itm && atent[aix].aten_itm != MOM_EMPTY
 	      && atent[aix].aten_val.ptr
 	      && atent[aix].aten_val.ptr != MOM_EMPTY
+	      && !mom_has_flags (atent[aix].aten_val, momflag_transient)
 	      && atent[aix].aten_itm->i_space != momspa_none)
 	    {
 	      mom_dump_add_scanned_item (dmp, atent[aix].aten_itm);
@@ -372,7 +373,7 @@ jsonarray_emit_itemseq_mom (struct mom_dumper_st *dmp,
 	{
 	  momitem_t *curitm = (momitem_t *) (si->itemseq[ix]);
 	  if (curitm)
-	    tab[ix] = emit_short_item_json_mom (dmp, curitm);
+	    tab[ix] = mom_emit_short_item_json (dmp, curitm);
 	  else
 	    tab[ix] = MOM_NULLV;
 	}
@@ -386,7 +387,7 @@ jsonarray_emit_itemseq_mom (struct mom_dumper_st *dmp,
 	{
 	  momitem_t *curitm = (momitem_t *) (si->itemseq[ix]);
 	  if (curitm && curitm->i_space > 0)
-	    arr[ix] = emit_short_item_json_mom (dmp, curitm);
+	    arr[ix] = mom_emit_short_item_json (dmp, curitm);
 	  else
 	    arr[ix].ptr = NULL;
 	}
@@ -587,7 +588,7 @@ raw_dump_emit_json_mom (struct mom_dumper_st *dmp, const momval_t val)
 	const momitem_t *curconn = val.pnode->connitm;
 	if (curconn && curconn->i_space > 0)
 	  {
-	    momval_t jconn = emit_short_item_json_mom (dmp, curconn);
+	    momval_t jconn = mom_emit_short_item_json (dmp, curconn);
 	    if (jconn.ptr)
 	      jsval = (momval_t) mom_make_json_object
 		(MOMJSOB_ENTRY
@@ -654,10 +655,14 @@ mom_dump_data_inside_item (struct mom_dumper_st *dmp, momitem_t *itm)
       momitem_t *curatitm = itm->i_attrs->itattrtab[aix].aten_itm;
       if (!curatitm || curatitm == MOM_EMPTY)
 	continue;
+      if (curatitm->i_space == momspa_none)
+	continue;
       momval_t curval = itm->i_attrs->itattrtab[aix].aten_val;
       if (!curval.ptr || curval.ptr == MOM_EMPTY)
 	continue;
-      momval_t jattr = emit_short_item_json_mom (dmp, curatitm);
+      if (mom_has_flags (curval, momflag_transient))
+	continue;
+      momval_t jattr = mom_emit_short_item_json (dmp, curatitm);
       if (!jattr.ptr)
 	continue;
       momval_t jval = mom_dump_emit_json (dmp, curval);

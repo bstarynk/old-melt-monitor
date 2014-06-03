@@ -1052,6 +1052,7 @@ enum mom_kindpayload_en
   mompayk_tasklet,
   mompayk_buffer,
   mompayk_vector,
+  mompayk_assoc,
   mompayk_process,
   mompayk_webexchange,
 
@@ -1482,6 +1483,17 @@ void mom_item_vector_append_from_array (momitem_t *itm, unsigned count,
 					const momval_t *arr);
 void mom_item_vector_append_from_node (momitem_t *itm, momval_t nodv);
 
+/**************** assoc items ****************/
+
+/** the assoc payload data is a GC_MALLOC-ed struct mom_itemattributes_st */
+
+void mom_item_start_assoc (momitem_t *itm);
+void mom_item_assoc_reserve (momitem_t *itm, unsigned gap);
+momval_t mom_item_assoc_get (momitem_t *itm, const momitem_t *atitm);
+momval_t mom_item_assoc_set_attrs (momitem_t *itm);
+void mom_item_assoc_put (momitem_t *itm, const momitem_t *atitm,
+			 const momval_t val);
+void mom_item_assoc_remove (momitem_t *itm, const momitem_t *atitm);
 /************* misc items *********/
 // convert a boolean to a predefined item json_true or json_false
 const momitem_t *mom_get_item_bool (bool v);
@@ -2171,6 +2183,11 @@ void mom_dump_add_scanned_item (struct mom_dumper_st *du,
 				const momitem_t *itm);
 
 momval_t mom_dump_emit_json (struct mom_dumper_st *dmp, const momval_t val);
+
+// emit a short representation of an item: if it is in the current
+// space, just its id string...
+momval_t mom_emit_short_item_json (struct mom_dumper_st *dmp,
+				   const momitem_t *itm);
 
 // initial load
 void mom_initial_load (const char *ldirnam);
