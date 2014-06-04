@@ -459,7 +459,7 @@ ajaxobjs_lab_beginedit:
       bool anonymous = (namidv.ptr == idv.ptr);
       mom_lock_item (_L (webx).pitem);
       MOM_WEBX_OUT (_L (webx).pitem,
-		    MOMOUT_LITERAL ("<div id='momeditor_"),
+		    MOMOUT_LITERAL ("<div id='momeditor"),
 		    MOMOUT_LITERALV ((const char *)
 				     mom_string_cstr ((momval_t)
 						      mom_item_get_idstr (_L
@@ -468,16 +468,18 @@ ajaxobjs_lab_beginedit:
 		    MOMOUT_LITERALV ((const char *)
 				     mom_string_cstr ((namidv))),
 		    MOMOUT_LITERAL ("'>"), MOMOUT_NEWLINE (),
-		    MOMOUT_LITERAL
-		    ("<p class='mom_edit_title_cl' data-momediteditemid='"),
-		    MOMOUT_LITERALV ((const char *)
-				     mom_string_cstr ((momval_t) idv)),
-		    MOMOUT_LITERAL ("'>"));
+		    MOMOUT_LITERAL ("<p class='mom_edit_title_cl'>"));
       if (anonymous)
 	{
 	  MOM_WEBX_OUT (_L (webx).pitem,
 			MOMOUT_LITERAL
-			("anonymous item <tt class='mom_edititemid_cl'>"),
+			("anonymous item <tt class='mom_edititemid_cl'"),
+			MOMOUT_LITERAL
+			(" data-momitemid='"),
+			MOMOUT_LITERALV ((const char *)
+					 mom_string_cstr ((momval_t) idv)),
+			MOMOUT_LITERAL
+			("'>"),
 			MOMOUT_LITERALV ((const char *)
 					 mom_string_cstr ((momval_t) idv)),
 			MOMOUT_LITERAL ("</tt>"), MOMOUT_NEWLINE ());
@@ -486,7 +488,11 @@ ajaxobjs_lab_beginedit:
 	{
 	  MOM_WEBX_OUT (_L (webx).pitem,
 			MOMOUT_LITERAL
-			("item <tt class='mom_edititemname_cl'>"),
+			("item <tt class='mom_edititemname_cl' data-momitemid='"),
+			MOMOUT_LITERALV ((const char *)
+					 mom_string_cstr ((momval_t) idv)),
+			MOMOUT_LITERAL
+			("'>"),
 			MOMOUT_LITERALV ((const char *)
 					 mom_string_cstr ((momval_t) namidv)),
 			MOMOUT_LITERAL
@@ -643,11 +649,11 @@ ajaxobjs_lab_beginedit:
 	mom_string_cstr ((momval_t) mom_item_get_idstr (_L (editor).pitem));
       MOM_WEBX_OUT		//
 	(_L (webx).pitem,
-	 MOMOUT_LITERAL ("</div> <!-- end momeditor_"),
+	 MOMOUT_LITERAL ("</div> <!-- end momeditor"),
 	 MOMOUT_LITERALV ((const char *) editoridstr),
 	 MOMOUT_LITERAL (" -->"), MOMOUT_NEWLINE (),
 	 MOMOUT_LITERAL
-	 ("<script type='text/javascript'>mom_add_editor_tab_id($('#momeditor_"),
+	 ("<script type='text/javascript'>mom_add_editor_tab_id($('#momeditor"),
 	 MOMOUT_LITERALV ((const char *) editoridstr),
 	 MOMOUT_LITERAL ("'),'"),
 	 MOMOUT_LITERALV ((const char *) editoridstr),

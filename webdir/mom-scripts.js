@@ -114,7 +114,7 @@ $(function(){
 	console.debug ("tabdiv_mom contextmenu ev=", ev,
 		       " valev=", valev, "; curval_mom=", curval_mom);
 	if (valev) {
-	    mom_set_current_val(valev);
+	    mom_set_current_val(valev,true);
 	    editvalul_mom.css({top: ev.pageY, left: ev.pageX,
 			       'z-index': 10000}).show();
 	    console.debug ("tabdiv_mom contextmenu editvalul_mom=",
@@ -124,7 +124,12 @@ $(function(){
 		editvalul_mom.hide();
 	    });
 	}
+	else mom_set_current_val(null,true);
 	return valev == null;
+    });
+    tabdiv_mom.on('mousemove', function(ev) {
+	var valev = mom_containing_val($(ev.target));
+	mom_set_current_val(valev,false);
     });
     ///// initial system request
     $.ajax({ url: '/ajax_system',
@@ -189,6 +194,7 @@ function mom_install_editor(hdata) {
 }
 
 function mom_containing_val(elem) {
+    if (elem == null) return null;
     if (elem.hasClass("mom_value_cl")) return elem;
     else {
 	var elc = elem.parents(".mom_value_cl:first");
@@ -199,17 +205,17 @@ function mom_containing_val(elem) {
 
 var curval_mom;
 
-function mom_set_current_val(elem)
+function mom_set_current_val(elem,strong)
 {
-    console.debug ("mom_set_current_val elem=", elem,
-		   "; curval_mom=", curval_mom);
-    if (curval_mom === elem) return;
+    if (curval_mom == elem) return;
     if (curval_mom) {
 	curval_mom.removeClass("mom_selvalue_cl");
+	curval_mom.removeClass("mom_hovervalue_cl");
 	curval_mom = null;
     }
-    if (elem.hasClass("mom_value_cl")) {
-	elem.addClass("mom_selvalue_cl");
+    if (elem && elem.hasClass("mom_value_cl")) {
+	if (strong) elem.addClass("mom_selvalue_cl");
+	else elem.addClass("mom_hovervalue_cl");
 	curval_mom = elem;
     }
 }
@@ -223,7 +229,11 @@ function mom_add_editor_tab_id(divtab,id) {
     console.debug ("mom_add_editor_tab_id divtabid=", divtabid,
 		   "; divtabhtml=", divtabhtml);
     console.debug ("mom_add_editor_tab_id divtitle=", divtitle);
-    var tablistr = "<li id='" + divtabid + "' class='mom_tabtitle_cl'><a href='#momeditor_"  + id + "'>" + divtitle + "</a></li>";
+    var tablistr = "<li id='" + divtabid
+	+ "' class='mom_tabtitle_cl'><a href='#momeditor"  + id
+	+ "'>" + divtitle
+	+ "</a><span class='ui-icon ui-icon-close' role='presentation'>Untab</span>"
+	+ "</li>";
     console.debug ("mom_add_editor_tab_id tablistr=", tablistr);
     tabul_mom.append(tablistr);
     tabdiv_mom.append(divtab);
@@ -232,47 +242,35 @@ function mom_add_editor_tab_id(divtab,id) {
     tabdiv_mom.tabs("refresh");
     console.debug ("mom_add_editor_tab_id done tabdiv_mom=", tabdiv_mom);
     tabdiv_mom.tabs("option","active",divindex);
+    tabdiv_mom.delegate( "span.ui-icon-close", "click", function(ev) {
+	var pantab = $(this).closest("li");
+	console.debug ("mom_add_editor_tab_id wantremove ev=", ev,
+		       "; pantab=", pantab);
+	var panid = pantab.attr('id');
+	var editorid = panid.replace("momeditab","momeditor");
+	console.debug ("mom_add_editor_tab_id wantremove panid=", panid,
+		       " editorid=", editorid);
+	mom_set_current_val(null,true);
+	editortab= $('#'+editorid);
+	console.debug ("mom_add_editor_tab_id wantremove editortab=", editortab);
+	editortab.remove();
+	pantab.remove();
+	$.ajax({ url: '/ajax_objects',
+		 method: 'POST',
+		 data: { todo_mom: "mom_doeditorclose",
+			 closedid_mom: editorid },
+		 dataType: 'html',
+		 success: function (gotdata) {
+		     console.debug ("mom_before_close_editor_tab doeditorclose gotdata=",
+				    gotdata);
+		     maindiv_mom.html(gotdata);
+		 }
+	       });
+	tabdiv_mom.tabs("refresh");	
+    });
     var edtab = $('#' + divtabid);
     console.debug("mom_add_editor_tab_id edtab=", edtab);
 }
-
-    // tabdiv_mom.add,{
-    // 	title: divtab.attr('title'),
-    // 	content: divtabhtml,
-    // 	id: divtabid,
-    // 	closable: true
-    // });
-    // var tab = $('#' + divtabid);
-    // tab.bind("contextmenu",function (ev) { return false; });
-    // console.debug ("mom_add_editor_tab tab=", tab);
-    // tab.mousedown(function (ev) {
-    // 	console.debug ("mom_add_editor_tab mousedown ev=", ev, " ev.target=", ev.target,
-    // 		       " evclx=", ev.clientX, " evcly=", ev.clientY,
-    // 		       " evpgx=", ev.pageX, " evpgy=", ev.pageY);
-    // 	curval_mom = mom_containing_val($(ev.target));
-    // 	curval_mom.addClass("mom_selvalue_cl");
-    // 	console.debug ("mom_add_editor_tab mousedown curval_mom=", curval_mom,
-    // 		       " isaselvalue=", curval_mom.hasClass("mom_selvalue_cl"));
-    // 	console.debug ("mom_add_editor_tab mousedown menuvaledit_mom=", menuvaledit_mom);
-    // 	var curvoff = curval_mom.offset();
-    // 	console.debug ("mom_add_editor_tab curvoff=", curvoff);
-    // 	menuvaledit_mom.menu('show',
-    // 			     curvoff
-    // 			     
-    // 			     //{
-    // 			     //	 left: ev.pageX,
-    // 			     //	 top: ev.pageY
-    // 			     //}
-    // 			     
-    // 			    );
-    // 	console.debug ("mom_add_editor_tab menuvaledit_mom=", menuvaledit_mom);
-    // });
-    // tab.mouseup(function (ev) {
-    // 	console.debug ("mom_add_editor_tab mouseup ev=", ev, " ev.target=", ev.target, " curval_mom=", curval_mom,
-    // 		       " isaselvalue=", curval_mom.hasClass("mom_selvalue_cl"));
-    // 	curval_mom.removeClass("mom_selvalue_cl");
-    // 	menuvaledit_mom.menu('hide');
-    // });
 
 
 function mom_before_close_editor_tab(title,index) {

@@ -167,6 +167,16 @@ span.mom_value_cl {
     font-family: Verdana, Geneva, sans-serif;
 }
 
+span.mom_hovervalue_cl {
+    background-color: #e1fee1;
+    color: #382097;
+    border-bottom: 2px dashed #090aF4;
+    bottom-margin: 6px;
+    bottom-padding: 3px;
+    box-sizing: border-box;
+}
+
+
 span.mom_selvalue_cl {
     font-weight: bold;
     text-decoration: underline;
@@ -183,32 +193,34 @@ span.mom_nullval_cl {
 span.mom_intval_cl {
     font-family: "Lucida Console", Monaco, monospace;
     font-weight: normal;
-    background-color: Beige;
+    background-color:  rgba(200,225,210,0.7);
 }
 
 span.mom_doubleval_cl  {
     font-family: "Lucida Console", Monaco, monospace;
     font-weight: normal;
-    background-color: Bisque;
+    background-color: rgba(207,205,210,0.7);
 }
 
 span.mom_stringval_cl  {
     font-family: "Courier New", Courier, monospace;
     font-weight: normal;
-    background-color: Gainsboro;
+    background-color: rgba(200,205,210,0.7);
+    bottom-margin: 2px;
+    padding-bottom: 1px;
 }
 
 span.mom_jsonobjectval_cl {
     font-family: "Lucida Console", Monaco, monospace;
     font-weight: normal;
-    background-color: LemonChiffon;
+    background-color:  rgba(205,200,190,0.7);
     color: #1F013d;
 }
 
 span.mom_jsonarrayval_cl {
     font-family: "Lucida Console", Monaco, monospace;
     font-weight: normal;
-    background-color: LemonChiffon;
+    background-color:  rgba(205,220,190,0.7);
     color: #250c01;
 }
 
@@ -264,6 +276,12 @@ span.mom_nodeval_cl {
 div.mom_tab_cl {
     min-width: 80%;
     min-height: 15px;
+}
+
+li.mom_tabtitle_cl {
+    min-width: 100px;
+    margin: 3px;
+    border: 1px blue;
 }
 
 div.mom_editor_cl {
