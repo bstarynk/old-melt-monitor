@@ -85,7 +85,7 @@ function mom_containing_val(elem) {
 
 var curval_mom;
 
-// when an editor dir is generated, it is followed by a <script> calling this
+// when an editor div is generated, it is followed by a <script> calling this
 function mom_add_editor_tab_id(divtab,id) {
     console.debug ("mom_add_editor_tab_id divtab=", divtab, " id=", id);
     var divtabhtml = divtab.html();
