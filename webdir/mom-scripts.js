@@ -178,9 +178,11 @@ function mom_add_editor_tab_id(divtab,id) {
     console.debug ("mom_add_editor_tab_id tablistr=", tablistr);
     tabul_mom.append(tablistr);
     tabdiv_mom.append(divtab);
+    var divindex = divtab.index();
+    console.debug ("mom_add_editor_tab_id divindex=", divindex);
     tabdiv_mom.tabs("refresh");
     console.debug ("mom_add_editor_tab_id done tabdiv_mom=", tabdiv_mom);
-    
+    tabdiv_mom.tabs("option","active",divindex);
     // tabdiv_mom.add,{
     // 	title: divtab.attr('title'),
     // 	content: divtabhtml,
