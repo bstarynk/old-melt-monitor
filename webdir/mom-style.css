@@ -43,6 +43,7 @@ ul.mom_menu_cl {
     /*width: 180px;*/
     min-height: 10px;
     position: absolute;
+    display: none;
     font-size: 90%;
 }
 

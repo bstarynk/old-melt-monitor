@@ -21,17 +21,19 @@
 var maindiv_mom;		// the main division
 var tabdiv_mom;			// the tab division
 var tabul_mom;
-var menuvaledit_mom;
+var editvalul_mom;
 
 var system_menu_mom;
 // jquery ready function for our document
 $(function(){
-    // create the system button with its menu
-    var systembut = $('#mom_system_but');
-    var systemul = $('#mom_system_ul');
     maindiv_mom = $('#mom_maindiv');
     tabdiv_mom = $('#mom_tabdiv');
     tabul_mom = $('#mom_tabul');
+    editvalul_mom = $('#mom_editval_ul');
+    //
+    // create the system button with its menu
+    var systembut = $('#mom_system_but');
+    var systemul = $('#mom_system_ul');
     ///
     systembut.button({
 	text: true,
@@ -56,7 +58,7 @@ $(function(){
 		   });
 	},
 	role: null 
-    }).hide();
+    });
     systembut.click(function (ev) {
 	console.debug ("systembut click ev=", ev);
 	systemul.toggle().position({ my: "left top", at: "left bottom", of: this });
@@ -88,10 +90,20 @@ $(function(){
 		   });
 	},
 	role: null
-    }).hide();
+    });
     objectbut.click(function (ev) {
 	console.debug ("objectbut click ev=", ev);
 	objectul.toggle().position({ my: "left top", at: "left bottom", of: this });
+    });
+    /////
+    /// create the editval menu
+    editvalul_mom.menu({
+	select: function (ev, ui) {
+	    var idui= $(ui.item).attr("id");
+	    console.debug ("editvalul menu select ev=", ev, " ui=", ui,
+			   " idui=", idui);
+	},
+	role: null
     });
     /////
     // initialize the tabs
@@ -183,6 +195,16 @@ function mom_add_editor_tab_id(divtab,id) {
     tabdiv_mom.tabs("refresh");
     console.debug ("mom_add_editor_tab_id done tabdiv_mom=", tabdiv_mom);
     tabdiv_mom.tabs("option","active",divindex);
+    var edtab = $('#' + divtabid);
+    console.debug("mom_add_editor_tab_id edtab=", edtab);
+    edtab.on('contextmenu', function(ev) {
+    console.debug("mom_add_editor_tab_id contextmenu ev=", ev);
+	editvalul_mom.css({top: ev.pageY, left: ev.pageX}).show();
+	$(document).one("click", function() {
+	    editvalul_mom.hide();
+	});
+	return false;
+    });
     // tabdiv_mom.add,{
     // 	title: divtab.attr('title'),
     // 	content: divtabhtml,
