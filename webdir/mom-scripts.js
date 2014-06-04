@@ -22,6 +22,7 @@ var maindiv_mom;		// the main division
 var tabdiv_mom;			// the tab division
 var tabul_mom;
 var editvalul_mom;
+var curval_mom;
 
 var system_menu_mom;
 // jquery ready function for our document
@@ -108,6 +109,23 @@ $(function(){
     /////
     // initialize the tabs
     tabdiv_mom.tabs();
+    tabdiv_mom.on('contextmenu', function(ev) {
+	var valev = mom_containing_val($(ev.target));
+	console.debug ("tabdiv_mom contextmenu ev=", ev,
+		       " valev=", valev, "; curval_mom=", curval_mom);
+	if (valev) {
+	    mom_set_current_val(valev);
+	    editvalul_mom.css({top: ev.pageY, left: ev.pageX,
+			       'z-index': 10000}).show();
+	    console.debug ("tabdiv_mom contextmenu editvalul_mom=",
+			   editvalul_mom);
+	    $(document).one("click", function() {
+		console.debug ("tabdiv_mom hiding editvalul");
+		editvalul_mom.hide();
+	    });
+	}
+	return valev == null;
+    });
     ///// initial system request
     $.ajax({ url: '/ajax_system',
  	     method: 'POST',
@@ -172,10 +190,29 @@ function mom_install_editor(hdata) {
 
 function mom_containing_val(elem) {
     if (elem.hasClass("mom_value_cl")) return elem;
-    else return elem.parents(".mom_value_cl:first");
+    else {
+	var elc = elem.parents(".mom_value_cl:first");
+	if (elc.hasClass("mom_value_cl")) return elc;
+	else return null;
+    }
 }
 
 var curval_mom;
+
+function mom_set_current_val(elem)
+{
+    console.debug ("mom_set_current_val elem=", elem,
+		   "; curval_mom=", curval_mom);
+    if (curval_mom === elem) return;
+    if (curval_mom) {
+	curval_mom.removeClass("mom_selvalue_cl");
+	curval_mom = null;
+    }
+    if (elem.hasClass("mom_value_cl")) {
+	elem.addClass("mom_selvalue_cl");
+	curval_mom = elem;
+    }
+}
 
 // when an editor div is generated, it is followed by a <script> calling this
 function mom_add_editor_tab_id(divtab,id) {
@@ -197,14 +234,8 @@ function mom_add_editor_tab_id(divtab,id) {
     tabdiv_mom.tabs("option","active",divindex);
     var edtab = $('#' + divtabid);
     console.debug("mom_add_editor_tab_id edtab=", edtab);
-    edtab.on('contextmenu', function(ev) {
-    console.debug("mom_add_editor_tab_id contextmenu ev=", ev);
-	editvalul_mom.css({top: ev.pageY, left: ev.pageX}).show();
-	$(document).one("click", function() {
-	    editvalul_mom.hide();
-	});
-	return false;
-    });
+}
+
     // tabdiv_mom.add,{
     // 	title: divtab.attr('title'),
     // 	content: divtabhtml,
@@ -242,7 +273,7 @@ function mom_add_editor_tab_id(divtab,id) {
     // 	curval_mom.removeClass("mom_selvalue_cl");
     // 	menuvaledit_mom.menu('hide');
     // });
-}
+
 
 function mom_before_close_editor_tab(title,index) {
     console.debug ("mom_before_close_editor_tab title=", title, " index=", index);
