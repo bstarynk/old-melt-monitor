@@ -20,51 +20,131 @@
 
 var maindiv_mom;		// the main division
 var tabdiv_mom;			// the tab division
+var tabul_mom;
 var menuvaledit_mom;
+
+var system_menu_mom;
 // jquery ready function for our document
 $(function(){
-    maindiv_mom= $('#mom_maindiv');
-    tabdiv_mom= $('#mom_tabdiv');
-    menuvaledit_mom= $('#mom_menu_valedit');
-    console.debug("maindiv_mom=", maindiv_mom, " tabdiv_mom=", tabdiv_mom,
-		  " menuvaledit_mom=", menuvaledit_mom);
-    $.ajax({ url: '/ajax_system',
-	     method: 'POST',
-	     data: { todo_mom: "mom_initial_system" },
-	     dataType: 'html',
-	     success: function (gotdata) {
-		 console.debug("mom_initial_system ajax_system gotdata=", gotdata);
-		 maindiv_mom.html(gotdata);
-	     }
-	   });
-    tabdiv_mom.tabs({
-	border: true,
-	onBeforeClose: mom_before_close_editor_tab
+    // create the system button with its menu
+    var systembut = $('#mom_system_but');
+    var systemul = $('#mom_system_ul');
+    maindiv_mom = $('#mom_maindiv');
+    tabdiv_mom = $('#mom_tabdiv');
+    tabul_mom = $('#mom_tabul');
+    ///
+    systembut.button({
+	text: true,
+	icons: {
+	    primary: "ui-icon-triangle-1-s"
+	}
     });
+    systemul.menu({
+	select: function (ev, ui) {
+	    var idui= $(ui.item).attr("id");
+	    console.debug ("systemul menu select ev=", ev,
+			   " ui=", ui, " idui=", idui);
+	    $.ajax({ url: '/ajax_system',
+ 		     method: 'POST',
+ 		     data: { todo_mom: idui },
+		     dataType: 'html',
+		     success: function (gotdata) {
+			 console.debug ("systemul ajax gotdata=", gotdata);
+			 maindiv_mom.html(gotdata);
+			 systemul.delay(500).hide();
+		     }
+		   });
+	},
+	role: null 
+    }).hide();
+    systembut.click(function (ev) {
+	console.debug ("systembut click ev=", ev);
+	systemul.toggle().position({ my: "left top", at: "left bottom", of: this });
+    });
+    //////
+    // create the object button with its menu
+    var objectbut = $('#mom_object_but');
+    var objectul = $('#mom_object_ul');
+    objectbut.button({
+	text: true,
+	icons: {
+	    primary: "ui-icon-triangle-1-s"
+	}
+    });
+    objectul.menu({
+	select: function (ev, ui) {
+	    var idui= $(ui.item).attr("id");
+	    console.debug ("objectul menu select ev=", ev, " ui=", ui,
+			   " idui=", idui);
+	    $.ajax({ url: '/ajax_objects',
+ 		     method: 'POST',
+ 		     data: { todo_mom: idui },
+		     dataType: 'html',
+		     success: function (gotdata) {
+			 console.debug ("objectul ajax gotdata=", gotdata);
+			 maindiv_mom.html(gotdata);
+			 objectul.delay(500).hide();
+		     }
+		   });
+	},
+	role: null
+    }).hide();
+    objectbut.click(function (ev) {
+	console.debug ("objectbut click ev=", ev);
+	objectul.toggle().position({ my: "left top", at: "left bottom", of: this });
+    });
+    /////
+    // initialize the tabs
+    tabdiv_mom.tabs();
+    ///// initial system request
+    $.ajax({ url: '/ajax_system',
+ 	     method: 'POST',
+ 	     data: { todo_mom: "mom_initial_system" },
+ 	     dataType: 'html',
+ 	     success: function (gotdata) {
+ 		 console.debug("mom_initial_system ajax_system gotdata=", gotdata);
+ 		 maindiv_mom.html(gotdata);
+ 	     }
+ 	   });
+    //
 });
 
-function mom_do_menu_system(itm) {
-    console.debug ("mom_do_menu_system itm=", itm);
-    $.ajax({ url: '/ajax_system',
+/* When the "Obj -> Named" menu is selected [mom_menuitem_obj_named]
+  The ajax_object is replying by creating the mom_name_input, ended by
+  a <script> element invoking the following function: */
+function mom_set_name_entry(inp)
+{
+    console.debug ("mom_set_name_entry inp=", inp);
+    $.ajax({ url: '/ajax_complete_name',
 	     method: 'POST',
-	     data: { todo_mom: itm.id },
-	     dataType: 'html',
-	     success: function (gotdata) {
-		 console.debug("mom_do_menu_system ajax_system gotdata=", gotdata);
-		 maindiv_mom.html(gotdata);
+	     dataType: 'json',
+	     success: function (gotjsarr) {
+		 console.debug ("mom_set_name_entry completename gotjsarr=",
+				gotjsarr);
+		 inp.autocomplete({
+		     source: gotjsarr
+		 });
 	     }
 	   });
-};
+}
 
-function mom_do_menu_objects(itm) {
-    console.debug ("mom_do_menu_objects itm=", itm);
+// the "Obj -> Named" menu replied by creating the mom_name_input
+// whose onChange calls this function
+function mom_name_input_changed(inp)
+{
+    console.debug ("mom_name_input_changed inp=", inp,
+		   " of value=", inp.value);
     $.ajax({ url: '/ajax_objects',
 	     method: 'POST',
-	     data: { todo_mom: itm.id },
-	     dataType: 'html',
+	     data: { todo_mom: "mom_doeditnamed",
+		     name_mom: inp.value
+		   },
 	     success: function (gotdata) {
-		 console.debug("mom_do_menu_objects ajax_objects gotdata=", gotdata);
-		 maindiv_mom.html(gotdata);
+		 // we are getting a long reply, which is a big
+		 // <div id='momeditor_..' followed by a <script>
+		 // element to call mom_add_editor_tab_id
+		 console.debug ("mom_name_input_changed gotdata=", gotdata);
+		 mom_install_editor(gotdata);
 	     }
 	   });
 }
@@ -90,45 +170,54 @@ function mom_add_editor_tab_id(divtab,id) {
     console.debug ("mom_add_editor_tab_id divtab=", divtab, " id=", id);
     var divtabhtml = divtab.html();
     var divtabid = "momeditab" + id;
-    console.debug ("mom_add_editor_tab divtabid=", divtabid,
+    var divtitle = divtab.attr('title');
+    console.debug ("mom_add_editor_tab_id divtabid=", divtabid,
 		   "; divtabhtml=", divtabhtml);
-    tabdiv_mom.tabs("add",{
-	title: divtab.attr('title'),
-	content: divtabhtml,
-	id: divtabid,
-	closable: true
-    });
-    var tab = $('#' + divtabid);
-    tab.bind("contextmenu",function (ev) { return false; });
-    console.debug ("mom_add_editor_tab tab=", tab);
-    tab.mousedown(function (ev) {
-	console.debug ("mom_add_editor_tab mousedown ev=", ev, " ev.target=", ev.target,
-		       " evclx=", ev.clientX, " evcly=", ev.clientY,
-		       " evpgx=", ev.pageX, " evpgy=", ev.pageY);
-	curval_mom = mom_containing_val($(ev.target));
-	curval_mom.addClass("mom_selvalue_cl");
-	console.debug ("mom_add_editor_tab mousedown curval_mom=", curval_mom,
-		       " isaselvalue=", curval_mom.hasClass("mom_selvalue_cl"));
-	console.debug ("mom_add_editor_tab mousedown menuvaledit_mom=", menuvaledit_mom);
-	var curvoff = curval_mom.offset();
-	console.debug ("mom_add_editor_tab curvoff=", curvoff);
-	menuvaledit_mom.menu('show',
-			     curvoff
-			     /*
-			     {
-				 left: ev.pageX,
-				 top: ev.pageY
-			     }
-			     */
-			    );
-	console.debug ("mom_add_editor_tab menuvaledit_mom=", menuvaledit_mom);
-    });
-    tab.mouseup(function (ev) {
-	console.debug ("mom_add_editor_tab mouseup ev=", ev, " ev.target=", ev.target, " curval_mom=", curval_mom,
-		       " isaselvalue=", curval_mom.hasClass("mom_selvalue_cl"));
-	curval_mom.removeClass("mom_selvalue_cl");
-	menuvaledit_mom.menu('hide');
-    });
+    console.debug ("mom_add_editor_tab_id divtitle=", divtitle);
+    var tablistr = "<li id='" + divtabid + "' class='mom_tabtitle_cl'><a href='#momeditor_"  + id + "'>" + divtitle + "</a></li>";
+    console.debug ("mom_add_editor_tab_id tablistr=", tablistr);
+    tabul_mom.append(tablistr);
+    tabdiv_mom.append(divtab);
+    tabdiv_mom.tabs("refresh");
+    console.debug ("mom_add_editor_tab_id done tabdiv_mom=", tabdiv_mom);
+    
+    // tabdiv_mom.add,{
+    // 	title: divtab.attr('title'),
+    // 	content: divtabhtml,
+    // 	id: divtabid,
+    // 	closable: true
+    // });
+    // var tab = $('#' + divtabid);
+    // tab.bind("contextmenu",function (ev) { return false; });
+    // console.debug ("mom_add_editor_tab tab=", tab);
+    // tab.mousedown(function (ev) {
+    // 	console.debug ("mom_add_editor_tab mousedown ev=", ev, " ev.target=", ev.target,
+    // 		       " evclx=", ev.clientX, " evcly=", ev.clientY,
+    // 		       " evpgx=", ev.pageX, " evpgy=", ev.pageY);
+    // 	curval_mom = mom_containing_val($(ev.target));
+    // 	curval_mom.addClass("mom_selvalue_cl");
+    // 	console.debug ("mom_add_editor_tab mousedown curval_mom=", curval_mom,
+    // 		       " isaselvalue=", curval_mom.hasClass("mom_selvalue_cl"));
+    // 	console.debug ("mom_add_editor_tab mousedown menuvaledit_mom=", menuvaledit_mom);
+    // 	var curvoff = curval_mom.offset();
+    // 	console.debug ("mom_add_editor_tab curvoff=", curvoff);
+    // 	menuvaledit_mom.menu('show',
+    // 			     curvoff
+    // 			     
+    // 			     //{
+    // 			     //	 left: ev.pageX,
+    // 			     //	 top: ev.pageY
+    // 			     //}
+    // 			     
+    // 			    );
+    // 	console.debug ("mom_add_editor_tab menuvaledit_mom=", menuvaledit_mom);
+    // });
+    // tab.mouseup(function (ev) {
+    // 	console.debug ("mom_add_editor_tab mouseup ev=", ev, " ev.target=", ev.target, " curval_mom=", curval_mom,
+    // 		       " isaselvalue=", curval_mom.hasClass("mom_selvalue_cl"));
+    // 	curval_mom.removeClass("mom_selvalue_cl");
+    // 	menuvaledit_mom.menu('hide');
+    // });
 }
 
 function mom_before_close_editor_tab(title,index) {
@@ -167,21 +256,6 @@ function mom_name_entry_selected(rec) {
 	   });
 }
 
-
-function mom_set_name_entry(inp)
-{
-    console.debug ("mom_set_name_entry inp=", inp);
-    $(function(){
-	console.debug ("mom_set_name_entry delayed inp=", inp);
-	inp.combobox({
-	    url:"ajax_complete_name",
-	    valueField:'id',
-	    textField:'name',
-	    onSelect: mom_name_entry_selected
-	});
-	console.debug ("mom_set_name_entry delayed after combobox inp=", inp);
-    });
-}
 
 function mom_make_named()
 {

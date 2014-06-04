@@ -99,7 +99,7 @@ ajaxsyst_lab_start:
     momval_t todov = mom_webx_post_arg (_L (webx).pitem, "todo_mom");
     MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_system_codmom todov="),
 	       MOMOUT_VALUE ((const momval_t) todov));
-    if (mom_string_same (todov, "mom_menuitem_save_exit"))
+    if (mom_string_same (todov, "mom_menuitem_sys_close"))
       {
 	mom_stop_work_with_todo (todo_dump_at_exit_mom, (char *) ".");
 	MOM_WEBX_OUT (_L (webx).pitem,
@@ -112,7 +112,7 @@ ajaxsyst_lab_start:
 	usleep (1000);
 	goto end;
       }
-    else if (mom_string_same (todov, "mom_menuitem_quit"))
+    else if (mom_string_same (todov, "mom_menuitem_sys_quit"))
       {
 	mom_stop_work_with_todo (NULL, NULL);
 	MOM_WEBX_OUT
@@ -264,7 +264,7 @@ ajaxobjs_lab_start:
     momval_t todov = mom_webx_post_arg (_L (webx).pitem, "todo_mom");
     MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_objects_codmom todov="),
 	       MOMOUT_VALUE ((const momval_t) todov));
-    if (mom_string_same (todov, "mom_menuitem_named"))
+    if (mom_string_same (todov, "mom_menuitem_obj_named"))
       {
 	MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_objects_codmom named"));
 	MOM_WEBX_OUT (_L (webx).pitem,
@@ -275,17 +275,17 @@ ajaxobjs_lab_start:
 		      MOMOUT_LITERAL ("</i></small><br/>"), MOMOUT_SPACE (32),
 		      MOMOUT_LITERAL
 		      ("<label for='mom_name_input'>Name:</label>"
-		       " <input id='mom_name_input' class='easyui-combobox' name='mom_name'/>"
+		       " <input id='mom_name_input' class='mom_nameinput_cl' name='mom_name' onChange='mom_name_input_changed(this)'/>"
 		       " <input type='submit' id='mom_cancel' class='mom_cancel_cl' value='cancel' onclick='mom_erase_maindiv()'/>"),
 		      MOMOUT_NEWLINE (),
 		      MOMOUT_LITERAL
-		      ("<script type='text/javascript'>mom_set_name_entry($('#mom_name_input'));"),
+		      ("<script>mom_set_name_entry($('#mom_name_input'));"),
 		      MOMOUT_SPACE (32), MOMOUT_LITERAL ("</script>"),
 		      MOMOUT_NEWLINE (), NULL);
 	mom_webx_reply (_L (webx).pitem, "text/html", HTTP_OK);
 	goto end;
       }
-    else if (mom_string_same (todov, "mom_menuitem_new"))
+    else if (mom_string_same (todov, "mom_menuitem_obj_new"))
       {
 	MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_objects_codmom new"));
 	MOM_WEBX_OUT (_L (webx).pitem,
@@ -1146,26 +1146,7 @@ ajaxcompnam_lab_start:
 		   MOMOUT_VALUE ((const momval_t) tupnamed),
 		   MOMOUT_SPACE (24), MOMOUT_LITERAL ("jsarrnames="),
 		   MOMOUT_VALUE ((const momval_t) jsarrnames));
-	unsigned nbnames = mom_tuple_length (tupnamed);
-	momval_t *jarr =
-	  MOM_GC_ALLOC ("json named array", nbnames * sizeof (momval_t));
-	for (unsigned nix = 0; nix < nbnames; nix++)
-	  {
-	    const momitem_t *curnamitm = mom_tuple_nth_item (tupnamed, nix);
-	    momval_t curnamstr = mom_json_array_nth (jsarrnames, nix);
-	    jarr[nix] = (momval_t)	////
-	      mom_make_json_object (MOMJSOB_STRING
-				    ((const char *) "name",
-				     (momval_t) curnamstr),
-				    MOMJSOB_STRING ((const char *) "id",
-						    (momval_t)
-						    mom_item_get_idstr ((momitem_t *) curnamitm)), NULL);
-	  }
-	momval_t jres = (momval_t) mom_make_json_array_count (nbnames, jarr);
-	MOM_GC_FREE (jarr);
-	MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_complete_name_codmom jres="),
-		   MOMOUT_VALUE ((const momval_t) jres));
-	MOM_WEBX_OUT (_L (webx).pitem, MOMOUT_JSON_VALUE (jres));
+	MOM_WEBX_OUT (_L (webx).pitem, MOMOUT_JSON_VALUE (jsarrnames));
 	mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
 	goto end;
       }

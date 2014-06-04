@@ -39,6 +39,13 @@ nav.momnav_cl {
     font-size: 90%;
 }
 
+ul.mom_menu_cl {
+    /*width: 180px;*/
+    min-height: 10px;
+    position: absolute;
+    font-size: 90%;
+}
+
 div.mom_main_cl {
     background-color: azure;
     font-size: 105%;
