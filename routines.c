@@ -258,9 +258,20 @@ ajaxobjs_lab_start:
   assert (mom_is_item (_L (webx)));
   {
     mom_lock_item (_L (webx).pitem);
-    MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_objects_codmom postjsob="),
+    MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_objects_codmom webx postjsob="),
 	       MOMOUT_VALUE ((const momval_t)
-			     mom_webx_jsob_post (_L (webx).pitem)));
+			     mom_webx_jsob_post (_L (webx).pitem)),
+	       MOMOUT_NEWLINE (),
+	       MOMOUT_LITERAL (" queryjsob="),
+	       MOMOUT_VALUE ((const momval_t)
+			     mom_webx_jsob_query (_L (webx).pitem)),
+	       MOMOUT_NEWLINE (),
+	       MOMOUT_LITERAL (" fullpath="),
+	       MOMOUT_VALUE ((const momval_t) (const momval_t)
+			     mom_webx_fullpath ((_L (webx).pitem))),
+	       MOMOUT_LITERAL ("; method="),
+	       MOMOUT_VALUE ((const momval_t) (const momval_t)
+			     mom_webx_method ((_L (webx).pitem))));
     momval_t todov = mom_webx_post_arg (_L (webx).pitem, "todo_mom");
     MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_objects_codmom todov="),
 	       MOMOUT_VALUE ((const momval_t) todov));
@@ -473,14 +484,14 @@ ajaxobjs_lab_beginedit:
 	const char *editoridstr =
 	  mom_string_cstr ((momval_t) mom_item_get_idstr (_L (editor).pitem));
 	MOM_WEBX_OUT (_L (webx).pitem,
-		      MOMOUT_LITERAL ("{ momeditorj_id: \""),
+		      MOMOUT_LITERAL ("{ \"momeditorj_id\": \""),
 		      MOMOUT_JS_STRING (editoridstr),
 		      MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE ());
 
 
 	// output the tab title JSON field
 	MOM_WEBX_OUT (_L (webx).pitem,
-		      MOMOUT_LITERAL ("  momeditorj_tabtitle: \""));
+		      MOMOUT_LITERAL ("  \"momeditorj_tabtitle\": \""));
 	if (anonymous)
 	  MOM_WEBX_OUT (_L (webx).pitem,
 			MOMOUT_JS_LITERAL
@@ -504,7 +515,7 @@ ajaxobjs_lab_beginedit:
 
 	// begin outputting the tab content JS field
 	MOM_WEBX_OUT (_L (webx).pitem,
-		      MOMOUT_LITERAL ("  momeditorj_tabcontent: \""),
+		      MOMOUT_LITERAL ("  \"momeditorj_tabcontent\": \""),
 		      MOMOUT_JS_LITERAL ("<div id='momeditor"),
 		      MOMOUT_JS_LITERALV ((const char *) editoridstr),
 		      MOMOUT_JS_LITERAL ("' class='mom_editor_cl'>"),
@@ -552,7 +563,7 @@ ajaxobjs_lab_beginedit:
 		    ("<span class='mom_editdate_cl'>edited at "),
 		    MOMOUT_DOUBLE_TIME ((const char *) "%c",
 					mom_clock_time (CLOCK_REALTIME)),
-		    MOMOUT_JS_LITERAL ("</span></p>"), MOMOUT_NEWLINE ());
+		    MOMOUT_JS_LITERAL ("</span></p>"));
       MOM_WEBX_OUT (_L (webx).pitem,
 		    MOMOUT_JS_LITERAL ("<ul class='mom_attrlist_cl'>"),
 		    MOMOUT_JS_RAW_NEWLINE ());

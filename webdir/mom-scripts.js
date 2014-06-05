@@ -132,6 +132,7 @@ $(function(){
 	mom_set_current_val(valev,false);
     });
     ///// initial system request
+    console.debug ("mom_initial_system before initial ajax_system");
     $.ajax({ url: '/ajax_system',
  	     method: 'POST',
  	     data: { todo_mom: "mom_initial_system" },
@@ -145,11 +146,10 @@ $(function(){
 });
 
 /* When the "Obj -> Named" menu is selected [mom_menuitem_obj_named]
-  The ajax_object is replying by creating the mom_name_input, ended by
-  a <script> element invoking the following function: */
+  The ajax_object is replying by creating the mom_name_input */
 function mom_set_name_entry(inp)
 {
-    console.debug ("mom_set_name_entry inp=", inp);
+    console.debug ("mom_set_name_entry inp=", inp, " before ajax_complete_name");
     $.ajax({ url: '/ajax_complete_name',
 	     method: 'POST',
 	     dataType: 'json',
@@ -168,17 +168,22 @@ function mom_set_name_entry(inp)
 function mom_name_input_changed(inp)
 {
     console.debug ("mom_name_input_changed inp=", inp,
-		   " of value=", inp.value);
+		   " of value=", inp.value, " before ajax_object mom_doeditnamed");
     $.ajax({ url: '/ajax_objects',
 	     method: 'POST',
-	     dataType: 'json',
 	     data: { todo_mom: "mom_doeditnamed",
 		     name_mom: inp.value
 		   },
+	     dataType: 'json',
 	     success: function (gotdata) {
 		 /** we are expecting a large JSON reply */
-		 console.debug ("mom_name_input_changed gotdata=", gotdata);
+		 console.debug ("mom_name_input_changed  ajax_object mom_doeditnamed",
+				" gotdata=", gotdata);
 		 mom_install_editor(gotdata);
+	     },
+	     error: function (jq,status,errmsg) {
+		 console.error ("mom_name_input_changed ajax_object mom_doeditnamed",
+				" error jq=", jq, " status=", status, " errmsg=", errmsg);
 	     }
 	   });
 }
@@ -275,15 +280,21 @@ function mom_add_editor_tab(editorid, tabtitle, tabcontent) {
 	console.debug ("mom_add_editor_tab wantremove editortab=", editortab);
 	editortab.remove();
 	pantab.remove();
+	console.debug ("mom_add_editor_tab before ajax_object mom_doeditorclose",
+		       " editorid=", editorid);
 	$.ajax({ url: '/ajax_objects',
 		 method: 'POST',
 		 data: { todo_mom: "mom_doeditorclose",
 			 closedid_mom: editorid },
 		 dataType: 'html',
 		 success: function (gotdata) {
-		     console.debug ("mom_before_close_editor_tab doeditorclose gotdata=",
+		     console.debug ("mom_add_editor_tab doeditorclose gotdata=",
 				    gotdata);
 		     maindiv_mom.html(gotdata);
+		 },
+		 error: function (jq,status,errmsg) {
+		     console.error ("mom_add_editor_tab  ajax_object doeditorclose",
+				    " error jq=", jq, " status=", status, " errmsg=", errmsg);
 		 }
 	       });
 	tabdiv_mom.tabs("refresh");	
@@ -307,13 +318,18 @@ function mom_before_close_editor_tab(title,index) {
 		 console.debug ("mom_before_close_editor_tab doeditorclose gotdata=",
 				gotdata);
 		 maindiv_mom.html(gotdata);
+	     },
+	     error: function (jq,status,errmsg) {
+		 console.error ("mom_before_close_editor_tab  ajax_object doeditorclose",
+				    " error jq=", jq, " status=", status, " errmsg=", errmsg);
 	     }
 	   });
     return true;		// to permit the closing
 }
 
 function mom_name_entry_selected(rec) {
-    console.debug ("mom_name_entry_selected rec=", rec);
+    console.debug ("mom_name_entry_selected rec=", rec,
+		   " before ajax_objects mom_doeditnamed recname=", rec.name);
     $.ajax({ url: '/ajax_objects',
 	     method: 'POST',
 	     data: { todo_mom: "mom_doeditnamed",
@@ -323,6 +339,10 @@ function mom_name_entry_selected(rec) {
 	     success: function (gotdata) {
 		 console.debug ("mom_name_entry_selected doeditnamed gotdata=", gotdata);
 		 mom_install_editor(gotdata);
+	     },
+	     error: function (jq,status,errmsg) {
+		 console.error ("mom_name_entry_selected ajax_object mom_doeditnamed",
+				" error jq=", jq, " status=", status, " errmsg=", errmsg);
 	     }
 	   });
 }
@@ -342,6 +362,10 @@ function mom_make_named()
 	     success: function (gotdata) {
 		 console.debug ("mom_make_named gotdata=", gotdata);
 		 mom_install_editor(gotdata);
+	     },
+	     error: function (jq,status,errmsg) {
+		 console.error ("mom_make_named ajax_object mom_domakenamed",
+				" error jq=", jq, " status=", status, " errmsg=", errmsg);
 	     }
 	   });
 }

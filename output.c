@@ -672,7 +672,7 @@ mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist)
 		    fputs ("\\\\", out);
 		    break;
 		  case '\'':
-		    fputs ("\\'", out);
+		    fputs ("\'", out);
 		    break;
 		  case '\"':
 		    fputs ("\\\"", out);

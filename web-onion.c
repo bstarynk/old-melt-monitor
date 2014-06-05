@@ -338,7 +338,8 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 		  if (wxd->webx_resp)
 		    {
 		      bool istext = wxd->webx_mime
-			&& (0 == strncmp (wxd->webx_mime, "text/", 5));
+			&& (!strncmp (wxd->webx_mime, "text/", 5)
+			    || !strcmp (wxd->webx_mime, "application/json"));
 		      MOM_DEBUG (web,
 				 MOMOUT_LITERAL ("replying to webrequest #"),
 				 MOMOUT_DEC_INT (webnum),
@@ -360,10 +361,11 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 				 MOMOUT_LITERALV ((const char *) (istext ?
 								  " text:" :
 								  " binary")),
+				 MOMOUT_NEWLINE (),
 				 MOMOUT_LITERALV ((const char *) (istext
 								  ?
 								  (wxd->webx_obuf)
-								  : "!")),
+								  : NULL)),
 				 MOMOUT_NEWLINE ());
 		      if (wxd->webx_osize > 0)
 			onion_response_set_length (wxd->webx_resp,
@@ -519,13 +521,12 @@ mom_webx_reply (momitem_t *webitm, const char *mime, int httpcode)
     fflush (wxd->webx_out.mout_file);
   else
     MOM_WARNPRINTF ("webnum#%d no momoutfile", wxd->webx_num);
-  bool istext = !strncmp (mime, "text/", 5);
+  bool istext = (!strncmp (mime, "text/", 5)
+		 || !strcmp (mime, "application/json"));
   MOM_DEBUG (web, MOMOUT_LITERAL ("webreply webnum#"),
-	     MOMOUT_DEC_INT ((int) wxd->webx_num),
-	     MOMOUT_LITERAL (" mime:"),
+	     MOMOUT_DEC_INT ((int) wxd->webx_num), MOMOUT_LITERAL (" mime:"),
 	     MOMOUT_LITERALV ((const char *) mime),
-	     MOMOUT_LITERAL (" httpcode:"),
-	     MOMOUT_DEC_INT (httpcode),
+	     MOMOUT_LITERAL (" httpcode:"), MOMOUT_DEC_INT (httpcode),
 	     MOMOUT_LITERAL ("="),
 	     MOMOUT_LITERALV ((const char *)
 			      onion_response_code_description (httpcode)),
@@ -533,6 +534,7 @@ mom_webx_reply (momitem_t *webitm, const char *mime, int httpcode)
 	     MOMOUT_DEC_INT ((int) wxd->webx_osize),
 	     MOMOUT_LITERALV ((const char *) (istext ? "; text.obuf=" :
 					      "; bin.obuf")),
+	     MOMOUT_NEWLINE (),
 	     MOMOUT_LITERALV ((const char *) (istext ? wxd->webx_obuf :
 					      NULL)),
 	     istext ? MOMOUT_NEWLINE () : MOMOUT_FLUSH (), NULL);
