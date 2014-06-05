@@ -138,9 +138,10 @@ $(function(){
 			       'z-index': 10000}).show();
 	    console.debug ("tabdiv_mom contextmenu editvalul_mom=",
 			   editvalul_mom, "; valev=", valev);
-	    $(document).one("click", function() {
+	    $(document).one("mouseup", function() {
 		console.debug ("tabdiv_mom hiding editvalul");
 		editvalul_mom.hide();
+		mom_set_current_val(valev,false);
 	    });
 	}
 	else if (itemev) {
@@ -150,9 +151,10 @@ $(function(){
 			       'z-index': 10000}).show();
 	    console.debug ("tabdiv_mom contextmenu edititemul_mom=",
 			   edititemul_mom, " iemev=", itemev);
-	    $(document).one("click", function() {
+	    $(document).one("mouseup", function() {
 		console.debug ("tabdiv_mom hiding editvalitem");
 		edititemul_mom.hide();
+		mom_set_current_item(itemev,false);
 	    });
 	}
 	else {
@@ -280,7 +282,18 @@ function mom_containing_item(elem) {
 
 function mom_set_current_val(elem,strong)
 {
-    if (curval_mom == elem) return;
+    if (curval_mom == elem) {
+	if (elem == null) return;
+	if (strong) {
+	    elem.addClass("mom_selvalue_cl");
+	    elem.removeClass("mom_hovervalue_cl");
+	}
+	else {
+	    elem.addClass("mom_hovervalue_cl");
+	    elem.removeClass("mom_selvalue_cl");
+	}
+	return;
+    }
     if (curval_mom) {
 	curval_mom.removeClass("mom_selvalue_cl");
 	curval_mom.removeClass("mom_hovervalue_cl");
@@ -295,7 +308,17 @@ function mom_set_current_val(elem,strong)
 
 function mom_set_current_item(elem,strong)
 {
-    if (curitem_mom == elem) return;
+    if (curitem_mom == elem) {
+	if (elem == null) return;
+	if (strong) {
+	    elem.addClass("mom_selitem_cl");
+	    elem.removeClass("mom_hoveritem_cl");
+	} else {
+	    elem.addClass("mom_hoveritem_cl");
+	    elem.removeClass("mom_selitem_cl");
+	}
+	return;
+    };
     if (curitem_mom) {
 	curitem_mom.removeClass("mom_selitem_cl");
 	curitem_mom.removeClass("mom_hoveritem_cl");
