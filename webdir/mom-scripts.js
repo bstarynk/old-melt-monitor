@@ -203,6 +203,17 @@ function mom_containing_val(elem) {
     }
 }
 
+
+function mom_containg_item(elem) {
+    if (elem == null) return null;
+    if (typeof(elem.attr("data-momitemid")) == 'string')
+	return elem;
+    var par = elem.parent();
+    if (typeof(par.attr("data-momitemid")) == 'string')
+	return par;
+    return null;
+}
+
 var curval_mom;
 
 function mom_set_current_val(elem,strong)
