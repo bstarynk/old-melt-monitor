@@ -249,6 +249,7 @@ enum outflags_en
   outf_cname = 1 << 0,
   outf_jsonhalfindent = 1 << 1,
   outf_jsonindent = 1 << 2,
+  outf_isbuffer = 1 << 15,	/* internal flag */
 };
 
 void mom_out_at (const char *sfil, int lin, momout_t *pout, ...)
@@ -279,6 +280,8 @@ mom_initialize_output (struct momout_st *out, FILE * fil, unsigned flags)
 
 // initialize a buffer output, ie using open_memstream with mout_data & mout_size fields
 void mom_initialize_buffer_output (struct momout_st *out, unsigned flags);
+// finalize a buffer output, so free the data
+void mom_finalize_buffer_output (struct momout_st *out);
 
 enum momoutdir_en
 {
@@ -289,14 +292,24 @@ enum momoutdir_en
   MOMOUTDO_LITERAL /*, const char*literalstring */ ,
 #define MOMOUT_LITERAL(S) MOMOUTDO_LITERAL, MOM_REQUIRES_TYPE(S,const char[],mombad_literal)
 #define MOMOUT_LITERALV(S) MOMOUTDO_LITERAL, MOM_REQUIRES_TYPE(S,const char*,mombad_literal)
+  // Javascript encoded literal raw newline
+#define MOMOUT_JS_RAW_NEWLINE() MOMOUT_LITERAL("\\n")
+  ///
   ///
   /// HTML encoded strings
   MOMOUTDO_HTML /*, const char*htmlstring */ ,
 #define MOMOUT_HTML(S) MOMOUTDO_HTML, MOM_REQUIRES_TYPE(S,const char*,mombad_html)
   ///
+  ///
+  /// HTML + JS encoded strings, so newlines are \n...
+  MOMOUTDO_JS_HTML /*, const char*htmlstring */ ,
+#define MOMOUT_JS_HTML(S) MOMOUTDO_JS_HTML, MOM_REQUIRES_TYPE(S,const char*,mombad_html)
+  ///
   /// Javascript encoded strings
   MOMOUTDO_JS_STRING /*, const char*jsstring */ ,
 #define MOMOUT_JS_STRING(S) MOMOUTDO_JS_STRING, MOM_REQUIRES_TYPE(S,const char*,mombad_js)
+#define MOMOUT_JS_LITERAL(S) MOMOUTDO_JS_STRING, MOM_REQUIRES_TYPE(S,const char[],mombad_literal)
+#define MOMOUT_JS_LITERALV(S) MOMOUT_JS_STRING(S)
   ///
   ///
   ///  comment encoded strings

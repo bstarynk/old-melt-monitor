@@ -102,7 +102,8 @@ end:
 }
 
 
-void mom_initialize_buffer_output (struct momout_st *out, unsigned flags)
+void
+mom_initialize_buffer_output (struct momout_st *out, unsigned flags)
 {
   if (!out)
     return;
@@ -112,7 +113,21 @@ void mom_initialize_buffer_output (struct momout_st *out, unsigned flags)
     open_memstream ((char **) &out->mout_data, &out->mout_size);
   if (!out->mout_file)
     MOM_FATAPRINTF ("failed to initialize buffer output");
-  out->mout_flags = flags;
+  out->mout_flags = flags | outf_isbuffer;
+}
+
+void
+mom_finalize_buffer_output (struct momout_st *out)
+{
+  if (!out)
+    return;
+  assert (out->mout_magic == MOM_MOUT_MAGIC);
+  assert (out->mout_flags & outf_isbuffer);
+  if (out->mout_file)
+    fclose (out->mout_file), out->mout_file = NULL;
+  if (out->mout_data)
+    free (out->mout_data), out->mout_data = NULL;
+  memset (out, 0, sizeof (struct momout_st));
 }
 
 void
@@ -519,6 +534,7 @@ mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist)
     return;
   while (again)
     {
+      bool jsctrl = false;
       enum momoutdir_en dir = va_arg (alist, enum momoutdir_en);
       switch (dir)
 	{
@@ -532,6 +548,9 @@ mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist)
 	      fputs (s, out);
 	  }
 	  break;
+	case MOMOUTDO_JS_HTML:
+	  jsctrl = true;
+	  // failthru!
 	case MOMOUTDO_HTML:
 	  {
 	    const char *s = va_arg (alist, const char *);
@@ -547,6 +566,42 @@ mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist)
 		gunichar c = g_utf8_get_char (pc);
 		switch (c)
 		  {
+		  case '\n':
+		    if (jsctrl)
+		      fputs ("\\n", out);
+		    else
+		      putc ('\n', out);
+		    break;
+		  case '\r':
+		    if (jsctrl)
+		      fputs ("\\r", out);
+		    else
+		      putc ('\r', out);
+		    break;
+		  case '\t':
+		    if (jsctrl)
+		      fputs ("\\t", out);
+		    else
+		      putc ('\t', out);
+		    break;
+		  case '\v':
+		    if (jsctrl)
+		      fputs ("\\v", out);
+		    else
+		      putc ('\v', out);
+		    break;
+		  case '\f':
+		    if (jsctrl)
+		      fputs ("\\f", out);
+		    else
+		      putc ('\f', out);
+		    break;
+		  case '\\':
+		    if (jsctrl)
+		      fputs ("\\\\", out);
+		    else
+		      putc ('\\', out);
+		    break;
 		  case '&':
 		    fputs ("&amp;", out);
 		    break;

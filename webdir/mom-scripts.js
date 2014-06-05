@@ -171,13 +171,12 @@ function mom_name_input_changed(inp)
 		   " of value=", inp.value);
     $.ajax({ url: '/ajax_objects',
 	     method: 'POST',
+	     dataType: 'json',
 	     data: { todo_mom: "mom_doeditnamed",
 		     name_mom: inp.value
 		   },
 	     success: function (gotdata) {
-		 // we are getting a long reply, which is a big
-		 // <div id='momeditor_..' followed by a <script>
-		 // element to call mom_add_editor_tab_id
+		 /** we are expecting a large JSON reply */
 		 console.debug ("mom_name_input_changed gotdata=", gotdata);
 		 mom_install_editor(gotdata);
 	     }
@@ -188,9 +187,21 @@ function mom_do_menu_valedit(itm) {
     console.debug ("mom_do_menu_valedit itm=", itm);
 }
 
-function mom_install_editor(hdata) {
-    console.debug ("mom_install_editor hdata=", hdata);
-    tabdiv_mom.append(hdata);
+/** The json data is built in ajax_objects routine file routines.c,
+    starting at beginedit state; we expect something like
+   { momeditorj_id: "_0u15i1z87ei_jf2wwmpim72",       // editor id
+     momeditorj_tabtitle: "<span...",      // the HTML for the tab title
+     momeditorj_tabcontent: "<div..."      // the HTML for the tab content
+   }
+**/
+function mom_install_editor(jdata) {
+    console.debug ("mom_install_editor jdata=", jdata);
+    var editorid = jdata.momeditorj_id;
+    if (typeof(editorid) != "string")
+	console.error("mom_install_editor bad editorid=", editorid);
+    var tabtitle = jdata.momeditorj_tabtitle;
+    var tabcontent = jdata.momeditorj_tabcontent;
+    mom_add_editor_tab(editorid,tabtitle,tabcontent);
 }
 
 function mom_containing_val(elem) {
@@ -231,21 +242,19 @@ function mom_set_current_val(elem,strong)
     }
 }
 
-// when an editor div is generated, it is followed by a <script> calling this
-function mom_add_editor_tab_id(divtab,id) {
-    console.debug ("mom_add_editor_tab_id divtab=", divtab, " id=", id);
-    var divtabhtml = divtab.html();
-    var divtabid = "momeditab" + id;
-    var divtitle = divtab.attr('title');
-    console.debug ("mom_add_editor_tab_id divtabid=", divtabid,
-		   "; divtabhtml=", divtabhtml);
-    console.debug ("mom_add_editor_tab_id divtitle=", divtitle);
+function mom_add_editor_tab(editorid, tabtitle, tabcontent) {
+    console.debug ("mom_add_editor_tab_id editorid=", editorid,
+		   "; tabtitle=", tabtitle,
+		   ";\n tabcontent=", tabcontent);
+    var divtabid = "momeditab" + editorid;
     var tablistr = "<li id='" + divtabid
-	+ "' class='mom_tabtitle_cl'><a href='#momeditor"  + id
-	+ "'>" + divtitle
+	+ "' class='mom_tabtitle_cl'><a href='#momeditor"  + editorid
+	+ "'>" + tabtitle
 	+ "</a><span class='ui-icon ui-icon-close' role='presentation'>Untab</span>"
 	+ "</li>";
-    console.debug ("mom_add_editor_tab_id tablistr=", tablistr);
+    console.debug ("mom_add_editor_tab tablistr=", tablistr);
+    divtab = $(tabcontent);
+    console.debug ("mom_add_editor_tab divtab=", divtab);
     tabul_mom.append(tablistr);
     tabdiv_mom.append(divtab);
     var divindex = divtab.index();
@@ -255,15 +264,15 @@ function mom_add_editor_tab_id(divtab,id) {
     tabdiv_mom.tabs("option","active",divindex);
     tabdiv_mom.delegate( "span.ui-icon-close", "click", function(ev) {
 	var pantab = $(this).closest("li");
-	console.debug ("mom_add_editor_tab_id wantremove ev=", ev,
+	console.debug ("mom_add_editor_tab wantremove ev=", ev,
 		       "; pantab=", pantab);
 	var panid = pantab.attr('id');
 	var editorid = panid.replace("momeditab","momeditor");
-	console.debug ("mom_add_editor_tab_id wantremove panid=", panid,
+	console.debug ("mom_add_editor_tab wantremove panid=", panid,
 		       " editorid=", editorid);
 	mom_set_current_val(null,true);
 	editortab= $('#'+editorid);
-	console.debug ("mom_add_editor_tab_id wantremove editortab=", editortab);
+	console.debug ("mom_add_editor_tab wantremove editortab=", editortab);
 	editortab.remove();
 	pantab.remove();
 	$.ajax({ url: '/ajax_objects',
@@ -279,8 +288,6 @@ function mom_add_editor_tab_id(divtab,id) {
 	       });
 	tabdiv_mom.tabs("refresh");	
     });
-    var edtab = $('#' + divtabid);
-    console.debug("mom_add_editor_tab_id edtab=", edtab);
 }
 
 
@@ -312,7 +319,7 @@ function mom_name_entry_selected(rec) {
 	     data: { todo_mom: "mom_doeditnamed",
 		     name_mom: rec.name,
 		     id_mom: rec.id },
-	     dataType: 'html',
+	     dataType: 'json',
 	     success: function (gotdata) {
 		 console.debug ("mom_name_entry_selected doeditnamed gotdata=", gotdata);
 		 mom_install_editor(gotdata);
@@ -331,7 +338,7 @@ function mom_make_named()
 	     data: { todo_mom: "mom_domakenamed",
 		     name_mom: newinp.val(),
 		     comment_mom: comminp.val() },
-	     dataType: 'html',
+	     dataType: 'json',
 	     success: function (gotdata) {
 		 console.debug ("mom_make_named gotdata=", gotdata);
 		 mom_install_editor(gotdata);
