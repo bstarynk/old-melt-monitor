@@ -102,22 +102,22 @@ $(function(){
     /////
     /// create the editval menu
     editvalul_mom.menu({
-	select: function (ev, ui) {
-	    var idui= $(ui.item).attr("id");
-	    console.debug ("editvalul menu select ev=", ev, " ui=", ui,
-			   " idui=", idui);
-	},
 	role: null
+    });
+    editvalul_mom.on("menuselect",function(ev,ui) {
+	    var idui= $(ui.item).attr("id");
+	    console.debug ("editvalul menu menuselect ev=", ev, " ui=", ui,
+			   " idui=", idui);
     });
     /////
     /// create the edititem menu
     edititemul_mom.menu({
-	select: function (ev, ui) {
-	    var idui= $(ui.item).attr("id");
-	    console.debug ("edititemul menu select ev=", ev, " ui=", ui,
-			   " idui=", idui);
-	},
 	role: null
+    });
+    edititemul_mom.on("menuselect",function(ev,ui) {
+	    var idui= $(ui.item).attr("id");
+	    console.debug ("edititemul menu menuselect ev=", ev, " ui=", ui,
+			   " idui=", idui);
     });
     /////
     // initialize the tabs
@@ -138,9 +138,9 @@ $(function(){
 			       'z-index': 10000}).show();
 	    console.debug ("tabdiv_mom contextmenu editvalul_mom=",
 			   editvalul_mom, "; valev=", valev);
-	    $(document).one("mouseup", function() {
+	    $(document).one("click", function() {
 		console.debug ("tabdiv_mom hiding editvalul");
-		editvalul_mom.hide();
+		editvalul_mom.delay(350).hide();
 		mom_set_current_val(valev,false);
 	    });
 	}
@@ -150,10 +150,11 @@ $(function(){
 	    edititemul_mom.css({top: ev.pageY, left: ev.pageX,
 			       'z-index': 10000}).show();
 	    console.debug ("tabdiv_mom contextmenu edititemul_mom=",
-			   edititemul_mom, " iemev=", itemev);
-	    $(document).one("mouseup", function() {
+			   edititemul_mom, " itemev=", itemev);
+	    $(document).one("click", function() {
 		console.debug ("tabdiv_mom hiding editvalitem");
-		edititemul_mom.hide();
+		edititemul_mom.delay(350).hide();
+		console.debug ("tabdiv_mom hided editvalitem");
 		mom_set_current_item(itemev,false);
 	    });
 	}

@@ -77,6 +77,14 @@ div.mom_main_cl {
     overflow-x: hidden;
 }
 
+input.mom_nameinput_cl {
+    background-color: #e8e8f5;
+}
+
+input.mom_nameinput_cl:focus {
+    background-color: #e8e8ff;
+}
+
 input.mom_cancel_cl {
     background-color: mistyrose;
     margin: 3px;
