@@ -22,7 +22,9 @@ var maindiv_mom;		// the main division
 var tabdiv_mom;			// the tab division
 var tabul_mom;
 var editvalul_mom;
-var curval_mom;
+var edititemul_mom;
+var curval_mom = null;
+var curitem_mom = null;
 
 var system_menu_mom;
 // jquery ready function for our document
@@ -31,6 +33,7 @@ $(function(){
     tabdiv_mom = $('#mom_tabdiv');
     tabul_mom = $('#mom_tabul');
     editvalul_mom = $('#mom_editval_ul');
+    edititemul_mom = $('#mom_edititem_ul');
     //
     // create the system button with its menu
     var systembut = $('#mom_system_but');
@@ -107,29 +110,73 @@ $(function(){
 	role: null
     });
     /////
+    /// create the edititem menu
+    edititemul_mom.menu({
+	select: function (ev, ui) {
+	    var idui= $(ui.item).attr("id");
+	    console.debug ("edititemul menu select ev=", ev, " ui=", ui,
+			   " idui=", idui);
+	},
+	role: null
+    });
+    /////
     // initialize the tabs
     tabdiv_mom.tabs();
     tabdiv_mom.on('contextmenu', function(ev) {
-	var valev = mom_containing_val($(ev.target));
+	var valev = null;
+	var itemev = null;
+	valev = mom_containing_val($(ev.target));
+	if (valev == null)
+	    itemev = mom_containing_item($(ev.target));
 	console.debug ("tabdiv_mom contextmenu ev=", ev,
-		       " valev=", valev, "; curval_mom=", curval_mom);
+		       " valev=", valev, "; curval_mom=", curval_mom,
+		       " itemev=", itemev, "; curitem_mom=", curitem_mom);
 	if (valev) {
 	    mom_set_current_val(valev,true);
+	    mom_set_current_item(null,true);
 	    editvalul_mom.css({top: ev.pageY, left: ev.pageX,
 			       'z-index': 10000}).show();
 	    console.debug ("tabdiv_mom contextmenu editvalul_mom=",
-			   editvalul_mom);
+			   editvalul_mom, "; valev=", valev);
 	    $(document).one("click", function() {
 		console.debug ("tabdiv_mom hiding editvalul");
 		editvalul_mom.hide();
 	    });
 	}
-	else mom_set_current_val(null,true);
-	return valev == null;
+	else if (itemev) {
+	    mom_set_current_val(null,true);
+	    mom_set_current_item(itemev,true);
+	    edititemul_mom.css({top: ev.pageY, left: ev.pageX,
+			       'z-index': 10000}).show();
+	    console.debug ("tabdiv_mom contextmenu edititemul_mom=",
+			   edititemul_mom, " iemev=", itemev);
+	    $(document).one("click", function() {
+		console.debug ("tabdiv_mom hiding editvalitem");
+		edititemul_mom.hide();
+	    });
+	}
+	else {
+	    mom_set_current_val(null,true);
+	    mom_set_current_item(null,true);
+	}
+	return valev == null && itemev == null;
     });
     tabdiv_mom.on('mousemove', function(ev) {
 	var valev = mom_containing_val($(ev.target));
-	mom_set_current_val(valev,false);
+	if (valev) {
+	    mom_set_current_val(valev,false);
+	    mom_set_current_item(null,false);
+	} else {
+	    var itmev = mom_containing_item($(ev.target));
+	    if (itmev) {
+		mom_set_current_item(itmev,false);
+		mom_set_current_val(null,false);
+	    }
+	    else {
+		mom_set_current_item(null,false);
+		mom_set_current_val(null,false);
+	    }
+	}
     });
     ///// initial system request
     console.debug ("mom_initial_system before initial ajax_system");
@@ -220,7 +267,7 @@ function mom_containing_val(elem) {
 }
 
 
-function mom_containg_item(elem) {
+function mom_containing_item(elem) {
     if (elem == null) return null;
     if (typeof(elem.attr("data-momitemid")) == 'string')
 	return elem;
@@ -230,7 +277,6 @@ function mom_containg_item(elem) {
     return null;
 }
 
-var curval_mom;
 
 function mom_set_current_val(elem,strong)
 {
@@ -247,6 +293,21 @@ function mom_set_current_val(elem,strong)
     }
 }
 
+function mom_set_current_item(elem,strong)
+{
+    if (curitem_mom == elem) return;
+    if (curitem_mom) {
+	curitem_mom.removeClass("mom_selitem_cl");
+	curitem_mom.removeClass("mom_hoveritem_cl");
+	curitem_mom = null;
+    }
+    if (elem && elem.attr("data-momitemid")) {
+	if (strong) elem.addClass("mom_selitem_cl");
+	else elem.addClass("mom_hoveritem_cl");
+	curitem_mom = elem;
+    }
+}
+    
 function mom_add_editor_tab(editorid, tabtitle, tabcontent) {
     console.debug ("mom_add_editor_tab_id editorid=", editorid,
 		   "; tabtitle=", tabtitle,
@@ -264,8 +325,8 @@ function mom_add_editor_tab(editorid, tabtitle, tabcontent) {
     tabdiv_mom.append(divtab);
     var divindex = divtab.index();
     console.debug ("mom_add_editor_tab_id divindex=", divindex);
-    tabdiv_mom.tabs("refresh");
     console.debug ("mom_add_editor_tab_id done tabdiv_mom=", tabdiv_mom);
+    tabdiv_mom.tabs("refresh");
     tabdiv_mom.tabs("option","active",divindex);
     tabdiv_mom.delegate( "span.ui-icon-close", "click", function(ev) {
 	var pantab = $(this).closest("li");
@@ -276,6 +337,7 @@ function mom_add_editor_tab(editorid, tabtitle, tabcontent) {
 	console.debug ("mom_add_editor_tab wantremove panid=", panid,
 		       " editorid=", editorid);
 	mom_set_current_val(null,true);
+	mom_set_current_item(null,true);
 	editortab= $('#'+editorid);
 	console.debug ("mom_add_editor_tab wantremove editortab=", editortab);
 	editortab.remove();
