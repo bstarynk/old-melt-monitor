@@ -231,6 +231,7 @@ struct momout_st
   int mout_indent;
   FILE *mout_file;
   void *mout_data;
+  size_t mout_size;
   long mout_lastnl;		/* offset at last newline with MOMOUT_NEWLINE or MOMOUT_SPACE */
   unsigned mout_flags;
 };
@@ -275,6 +276,9 @@ mom_initialize_output (struct momout_st *out, FILE * fil, unsigned flags)
   out->mout_flags = flags;
   return true;
 }
+
+// initialize a buffer output, ie using open_memstream with mout_data & mout_size fields
+void mom_initialize_buffer_output (struct momout_st *out, unsigned flags);
 
 enum momoutdir_en
 {

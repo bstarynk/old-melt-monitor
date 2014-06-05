@@ -101,6 +101,20 @@ end:
   pthread_mutex_unlock (&renamcontchg_mtx_mom);
 }
 
+
+void mom_initialize_buffer_output (struct momout_st *out, unsigned flags)
+{
+  if (!out)
+    return;
+  memset (out, 0, sizeof (struct momout_st));
+  out->mout_magic = MOM_MOUT_MAGIC;
+  out->mout_file =
+    open_memstream ((char **) &out->mout_data, &out->mout_size);
+  if (!out->mout_file)
+    MOM_FATAPRINTF ("failed to initialize buffer output");
+  out->mout_flags = flags;
+}
+
 void
 mom_out_at (const char *sfil, int lin, momout_t *pout, ...)
 {
