@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','todo dump at exit');
+INSERT INTO t_params VALUES('dump_reason','exit dump');
 INSERT INTO t_items VALUES('_02u53qxa7dm_sttmhffpchr','{"kind": "queue", "payload": [], "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "The agenda is central to Monimelt.\nIt is the queue of taskets to be executed by worker threads."}],
  "content": null}
@@ -48,8 +48,13 @@ INSERT INTO t_items VALUES('_2vmrrvq5kdk_9um63pstcu9','{"kind": null, "payload":
    "val": "The true of JSON.\nWe cannot use true because it is a #define-ed macro."}],
  "content": null}
 ');
-INSERT INTO t_items VALUES('_35a1p2kdx9h_ap5pe704vtr','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
-   "val": "ajax routine for edition"}], "content": null}
+INSERT INTO t_items VALUES('_35a1p2kdx9h_ap5pe704vtr','{"kind": "routine", "payload": "ajax_edit", "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "ajax routine for edition"}, {"attr": "_7sav6zery1v_24sa6jwwu6c",
+   "val": {"sons": [{"sons": [{"item_ref": "_7qk90k9vx0u_31ivff77td7", "space": ".root",
+"jtype": "item_ref"}, "{spare1-edit_value}"], "node": "_73im2zryfij_a7zmkketcfc",
+      "jtype": "node"}, {"item_ref": "_7qk90k9vx0u_31ivff77td7", "space": ".root",
+      "jtype": "item_ref"}, "{spare3-ajax_edit}", null], "node": "_35a1p2kdx9h_ap5pe704vtr",
+    "jtype": "node"}}], "content": null}
 ');
 INSERT INTO t_items VALUES('_35vp60aw7em_d436vfie4ud','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "in JSON dump, jtype of JSON array values"}], "content": null}
