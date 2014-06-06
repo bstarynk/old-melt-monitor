@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','exit dump');
+INSERT INTO t_params VALUES('dump_reason','after predefined buffer');
 INSERT INTO t_items VALUES('_02u53qxa7dm_sttmhffpchr','{"kind": "queue", "payload": [], "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "The agenda is central to Monimelt.\nIt is the queue of taskets to be executed by worker threads."}],
  "content": null}
@@ -76,6 +76,10 @@ INSERT INTO t_items VALUES('_3xz3qrc6mfy_4r51up6u3pa','{"kind": "routine", "payl
    "val": "handle ''ajax_system'' webrequests"}, {"attr": "_7sav6zery1v_24sa6jwwu6c",
    "val": {"sons": ["{spare1 ajax-system}", "{spare2 ajax-system}", "{spare3 ajax-system}",
      null], "node": "_3xz3qrc6mfy_4r51up6u3pa", "jtype": "node"}}], "content": null}
+');
+INSERT INTO t_items VALUES('_3zqd7ai3rtu_md9athkx17u','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "the buffer payload kind, and also the clipboard buffer in editors"}],
+ "content": null}
 ');
 INSERT INTO t_items VALUES('_41u1utcxyek_22cftxt3xxm','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "gives a human-readable comment"}], "content": null}
@@ -178,6 +182,7 @@ INSERT INTO t_names VALUES('ajax_edit','_35a1p2kdx9h_ap5pe704vtr','.root');
 INSERT INTO t_names VALUES('ajax_objects','_6mwwr0i4y9p_5aupdxjxdk1','.root');
 INSERT INTO t_names VALUES('ajax_system','_3xz3qrc6mfy_4r51up6u3pa','.root');
 INSERT INTO t_names VALUES('attr','_6w3dvx83dfw_xzc6aif6isv','.predef');
+INSERT INTO t_names VALUES('buffer','_3zqd7ai3rtu_md9athkx17u','.predef');
 INSERT INTO t_names VALUES('closure','_97zkxf62r11_6eedwwv3eu8','.predef');
 INSERT INTO t_names VALUES('comment','_41u1utcxyek_22cftxt3xxm','.predef');
 INSERT INTO t_names VALUES('content','_8s357rq2dzk_k8ze95tikjm','.predef');

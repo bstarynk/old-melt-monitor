@@ -46,6 +46,9 @@ MOM_PREDEFINED_NAMED(agenda,_02u53qxa7dm_sttmhffpchr)
 ////!gives the attribute[s], at least in dumped JSON...
 MOM_PREDEFINED_NAMED(attr,_6w3dvx83dfw_xzc6aif6isv)
 
+////!the buffer payload kind, and also the clipboard buffer in editors
+MOM_PREDEFINED_NAMED(buffer,_3zqd7ai3rtu_md9athkx17u)
+
 ////!Gives the closure of Json for frames of tasklets
 MOM_PREDEFINED_NAMED(closure,_97zkxf62r11_6eedwwv3eu8)
 
