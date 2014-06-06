@@ -27,11 +27,11 @@
 // number of buffers
 #define MOM_NB_EDIT_BUFFER 10
 
-struct editor_mom_st
+static struct editor_mom_st
 {
   momval_t ed_buf[MOM_NB_EDIT_BUFFER];
-} mom_editor;
-#define MOM_EDITOR(F) mom_editor.F
+} editor_mom;
+#define EDITOR_MOM(Fld) editor_mom.Fld
 
 ////////////////////////////////////////////////////////////////
 ///// ajax_system
@@ -1275,6 +1275,8 @@ enum ajax_edit_values_en
 
 enum ajax_edit_closure_en
 {
+  ajaxedit_c_edit_value,
+  ajaxedit_c_editors,
   ajaxedit_c__lastclosure
 };
 
@@ -1286,9 +1288,9 @@ enum ajax_edit_numbers_en
 
 static int
 ajax_edit_codmom (int momstate_, momitem_t *momtasklet_,
-			   const momnode_t *momclosure_,
-			   momval_t *momlocvals_, intptr_t * momlocnums_,
-			   double *momlocdbls_)
+		  const momnode_t *momclosure_,
+		  momval_t *momlocvals_, intptr_t * momlocnums_,
+		  double *momlocdbls_)
 {
 #define _L(Nam) (momlocvals_[ajaxedit_v_##Nam])
 #define _C(Nam) (momclosure_->sontab[ajaxedit_c_##Nam])
@@ -1333,7 +1335,7 @@ ajaxedit_lab_start:
 	       MOMOUT_NEWLINE (),
 	       MOMOUT_LITERAL ("ajax_edit_codmom method="),
 	       MOMOUT_VALUE ((const momval_t) (_L (method))), NULL);
-    MOM_FATAPRINTF("ajax_edit incomplete");
+    MOM_FATAPRINTF ("ajax_edit incomplete");
 #warning ajax_edit incomplete
     goto end;
   end:

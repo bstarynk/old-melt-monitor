@@ -78,8 +78,8 @@ add_editors_mom (void)
 	     MOMOUT_ITEM ((const momitem_t *) edit_value_item),
 	     MOMOUT_LITERAL ("; editors="),
 	     MOMOUT_ITEM ((const momitem_t *) editors_item), NULL);
-  mom_item_put_attribute //
-    (ajax_edit_item, 	//
+  mom_item_put_attribute	//
+    (ajax_edit_item,		//
      mom_named__web_handler,	//
      (momval_t) mom_make_node_til_nil	//
      (ajax_edit_item, (momval_t) mom_make_node_til_nil	//
