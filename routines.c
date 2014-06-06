@@ -830,16 +830,18 @@ edit_value_lab_start:
   _L (editor) = _L (arg0res);
   if (mom_lock_item (_L (editor).pitem))
     {
+      _N (numval) = mom_item_vector_count (_L (editor).pitem);
       mom_item_vector_append1	///
 	(_L (editor).pitem,
 	 (momval_t) mom_make_node_til_nil (mom_named__val,
 					   _L (curval), _L (expr), NULL));
-      _N (numval) = mom_item_vector_count (_L (editor).pitem);
       mom_unlock_item (_L (editor).pitem);
     }
+  else
+    _N (numval) = -1;
   MOM_DEBUG (run, MOMOUT_LITERAL ("edit_value numval="),
 	     MOMOUT_DEC_INT ((int) _N (numval)));
-  assert (_N (numval) > 0);
+  assert (_N (numval) >= 0);
   if (mom_lock_item (_L (webx).pitem))
     {
       MOM_WEBX_OUT (_L (webx).pitem,
@@ -1355,7 +1357,7 @@ ajaxedit_lab_start:
 	if (idvalstr && !strncmp (idvalstr, "momedval", strlen ("momedval"))
 	    && mom_looks_like_random_id_cstr (idvalstr + strlen ("momedval"),
 					      &end) && end
-	    && sscanf (end, "_%d", &numval) > 0 && numval >= 0)
+	    && sscanf (end, "_N%d", &numval) > 0 && numval >= 0)
 	  {
 	    strncpy (editidbuf, idvalstr + strlen ("momedval"),
 		     MOM_IDSTRING_LEN);
@@ -1380,6 +1382,9 @@ ajaxedit_lab_start:
 		       ("ajax_edit_codmom editval_copy curval="),
 		       MOMOUT_VALUE (_L (curval)));
 	  }
+	else
+	  MOM_FATAPRINTF ("ajax_edit bad idvalstr=%s end=%s numval=%d",
+			  idvalstr, end, numval);
       }
     MOM_FATAPRINTF ("ajax_edit incomplete");
 #warning ajax_edit incomplete
