@@ -113,21 +113,21 @@ $(function(){
 	console.debug ("editvalul menuselect ev=", ev, " ui=", ui,
 		       " idui=", idui, " curval_mom=", curval_mom);
 	$.ajax({ url: '/ajax_edit',
- 		     method: 'POST',
- 		     data: { todo_mom: idui,
-			     idval_mom: curval_mom.attr("id")
-			   },
-		     dataType: 'json',
-		     success: function (gotdata) {
-			 console.debug("editvalul menuselect ajax_edit gotdata=", gotdata);
-			 mom_ajax_edit_got(gotdata,ev,idui,curval_mom);
-		     },
-		     error: function (jq,status,errmsg) {
-			 console.error ("editvalul menuselect ajax_edit error jq=", jq,
-					" status=", status,
-					" errmsg=", errmsg);
-		     }
-		   });
+ 		 method: 'POST',
+ 		 data: { todo_mom: idui,
+			 idval_mom: curval_mom.attr("id")
+		       },
+		 dataType: 'json',
+		 success: function (gotdata) {
+		     console.debug("editvalul menuselect ajax_edit gotdata=", gotdata);
+		     mom_ajax_edit_got(gotdata,ev,idui,curval_mom);
+		 },
+		 error: function (jq,status,errmsg) {
+		     console.error ("editvalul menuselect ajax_edit error jq=", jq,
+				    " status=", status,
+				    " errmsg=", errmsg);
+		 }
+	       });
     });
     /////
     /// create the edititem menu
@@ -139,21 +139,21 @@ $(function(){
 	console.debug ("edititemul menu menuselect ev=", ev, " ui=", ui,
 		       " idui=", idui, " curitem_mom=", curitem_mom);
 	$.ajax({ url: '/ajax_edit',
- 		     method: 'POST',
- 		     data: { todo_mom: idui,
-			     iditem_mom: curitem_mom.attr("data-momitemid")
-			   },
-		     dataType: 'json',
-		     success: function (gotdata) {
-			 console.debug("edititemul menuselect ajax_edit gotdata=", gotdata);
-			 mom_ajax_edit_got(gotdata,ev,idui,curval_mom);
-		     },
-		     error: function (jq,status,errmsg) {
-			 console.error ("edititemul menuselect ajax_edit error jq=", jq,
-					" status=", status,
-					" errmsg=", errmsg);
-		     }
-		   });
+ 		 method: 'POST',
+ 		 data: { todo_mom: idui,
+			 iditem_mom: curitem_mom.attr("data-momitemid")
+		       },
+		 dataType: 'json',
+		 success: function (gotdata) {
+		     console.debug("edititemul menuselect ajax_edit gotdata=", gotdata);
+		     mom_ajax_edit_got(gotdata,ev,idui,curval_mom);
+		 },
+		 error: function (jq,status,errmsg) {
+		     console.error ("edititemul menuselect ajax_edit error jq=", jq,
+				    " status=", status,
+				    " errmsg=", errmsg);
+		 }
+	       });
     });
     /////
     // initialize the tabs
@@ -161,6 +161,7 @@ $(function(){
     tabdiv_mom.on('contextmenu', function(ev) {
 	var valev = null;
 	var itemev = null;
+	editvalul_mom.remove(":gt(0)");
 	valev = mom_containing_val($(ev.target));
 	if (valev == null)
 	    itemev = mom_containing_item($(ev.target));
@@ -168,12 +169,38 @@ $(function(){
 		       " valev=", valev, "; curval_mom=", curval_mom,
 		       " itemev=", itemev, "; curitem_mom=", curitem_mom);
 	if (valev) {
-	    mom_set_current_val(valev,true);
 	    mom_set_current_item(null,true);
+	    mom_set_current_val(valev,true);
 	    console.debug ("tabdiv_mom contextmenu editvalul_mom=",
 			   editvalul_mom, "; valev=", valev);
 	    //// make an ajax_edit call here, to ask what are the
 	    //// possible editions...
+	    $.ajax({ url: '/ajax_edit',
+ 		     method: 'POST',
+		     async: false,
+ 		     data: { todo_mom: 'mom_prepare_editval_menu',
+		             idval_mom: valev.attr('id')
+			   },
+		     success: function (jdata) {
+			 console.debug ("editval menuselect contextmenu prepared jdata=", jdata);
+			 if (jdata.momedit_do == "momedit_add_to_editval_menu") {
+			     var items = jdata.momedit_menuitems;
+			     console.debug ("editval menuselect contextmenu items=", items);
+			     var nbitems = items.length;
+			     for (var ix=0; ix<nbitems; ix++) {
+				 var elem = items[ix];
+				 console.debug ("editval menuselect contextmenu ix=", ix, " elem=", elem);
+				 editvalul_mom.append(elem);
+			     };
+			     editvalul_mom.menu("refresh");
+			 }
+		     },
+		     error:  function (jq,status,errmsg) {
+			 console.error ("editval menuselect  contextmenu prepared error jq=", jq,
+					" status=", status,
+					" errmsg=", errmsg);
+		     }
+		   });
 	    editvalul_mom.css({top: ev.pageY, left: ev.pageX,
 			       'z-index': 10000}).show();
 	    $(document).one("click", function() {
@@ -186,7 +213,7 @@ $(function(){
 	    mom_set_current_val(null,true);
 	    mom_set_current_item(itemev,true);
 	    edititemul_mom.css({top: ev.pageY, left: ev.pageX,
-			       'z-index': 10000}).show();
+				'z-index': 10000}).show();
 	    console.debug ("tabdiv_mom contextmenu edititemul_mom=",
 			   edititemul_mom, " itemev=", itemev);
 	    $(document).one("click", function() {

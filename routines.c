@@ -1283,6 +1283,7 @@ enum ajax_edit_values_en
   ajaxedit_v_editor,
   ajaxedit_v_edinode,
   ajaxedit_v_curval,
+  ajaxedit_v_origin,
   ajaxedit_v__lastval
 };
 
@@ -1441,12 +1442,12 @@ ajaxedit_lab_start:
 	MOM_DEBUG (run,
 		   MOMOUT_LITERAL ("ajax_edit_codmom edititem_copy curval="),
 		   MOMOUT_VALUE (_L (curval)), NULL);
-      /**** we send a JSON like
-	    { "momedit_do": "momedit_copytobuffer",
-	    "momedit_editors_id": id of 'editors' item,
-	    "momedit_content": "<span..." // HTML for the buffer content
-	    }
-      ****/
+	/**** we send a JSON like
+	      { "momedit_do": "momedit_copytobuffer",
+	      "momedit_editors_id": id of 'editors' item,
+	      "momedit_content": "<span..." // HTML for the buffer content
+	      }
+	****/
 	const char *editorsidstr =
 	  mom_string_cstr ((momval_t)
 			   mom_item_get_idstr (_C (editors).pitem));
@@ -1467,12 +1468,95 @@ ajaxedit_lab_start:
 	   MOMPFR_INT ((intptr_t) 0), NULL);
 	mom_unlock_item (_L (webx).pitem);
 	_SET_STATE (dideditcopy);
-      }
+      }				//// end if todo is mom_menuitem_edititem_copy
+
+    //
+    else if (mom_string_same (todov, "mom_prepare_editval_menu"))
+      {
+	momval_t idvalv = mom_webx_post_arg (_L (webx).pitem, "idval_mom");
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL
+		   ("ajax_edit_codmom prepareditvalmenu idvalv="),
+		   MOMOUT_VALUE ((const momval_t) idvalv));
+	const char *idvalstr = mom_string_cstr (idvalv);
+	char editidbuf[MOM_IDSTRING_LEN + 8];
+	memset (editidbuf, 0, sizeof (editidbuf));
+	int numval = -1;
+	const char *end = NULL;
+	if (idvalstr && !strncmp (idvalstr, "momedval", strlen ("momedval"))
+	    && mom_looks_like_random_id_cstr (idvalstr + strlen ("momedval"),
+					      &end) && end
+	    && sscanf (end, "_N%d", &numval) > 0 && numval >= 0)
+	  {
+	    strncpy (editidbuf, idvalstr + strlen ("momedval"),
+		     MOM_IDSTRING_LEN);
+	    _L (editor) = (momval_t) (mom_get_item_of_identcstr (editidbuf));
+	    MOM_DEBUG (run,
+		       MOMOUT_LITERAL
+		       ("ajax_edit_codmom  prepareditvalmenu editidbuf="),
+		       MOMOUT_LITERALV ((const char *) editidbuf),
+		       MOMOUT_LITERAL ("; editor="),
+		       MOMOUT_VALUE ((const momval_t) _L (editor)),
+		       MOMOUT_LITERAL ("; end="),
+		       MOMOUT_LITERALV ((const char *) end),
+		       MOMOUT_LITERAL ("; numval="),
+		       MOMOUT_DEC_INT ((int) numval));
+	    {
+	      mom_should_lock_item (_L (editor).pitem);
+	      _L (edinode) = mom_item_vector_nth (_L (editor).pitem, numval);
+	      mom_unlock_item (_L (editor).pitem);
+	    }
+	    MOM_DEBUG (run,
+		       MOMOUT_LITERAL
+		       ("ajax_edit_codmom prepareditvalmenu edinode="),
+		       MOMOUT_VALUE (_L (edinode)));
+	  }
+	else
+	  MOM_FATAPRINTF ("ajax_edit bad idvalstr=%s end=%s numval=%d",
+			  idvalstr, end, numval);
+	/// here we got the correct edinode. It should be a binary
+	/// node of connective val whose first son is the edited
+	/// value, and whose second son describes how to get it.
+	assert (mom_node_conn (_L (edinode)) == mom_named__val);
+	_L (curval) = mom_node_nth (_L (edinode), 0);
+	_L (origin) = mom_node_nth (_L (edinode), 1);
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL
+		   ("ajax_edit_codmom prepareditvalmenu  curval="),
+		   MOMOUT_VALUE (_L (curval)), MOMOUT_LITERAL (";"),
+		   MOMOUT_SPACE (48),
+		   MOMOUT_LITERAL
+		   ("ajax_edit_codmom prepareditvalmenu origin"),
+		   MOMOUT_VALUE (_L (origin)), NULL);
+	if (mom_node_conn (_L (origin)) == mom_named__attr)
+	  {			// node: *attr(<item>,<attr>)
+	    MOM_DEBUG (run,
+		       MOMOUT_LITERAL
+		       ("ajax_edit_codmom prepareditvalmenu attr origin"));
+	    MOM_WEBX_OUT (_L (webx).pitem,
+			  MOMOUT_LITERAL
+			  ("{ \"momedit_do\": \"momedit_add_to_editval_menu\","),
+			  MOMOUT_NEWLINE (),
+			  MOMOUT_LITERAL (" \"momedit_menuitems\": ["),
+			  MOMOUT_NEWLINE (),
+			  MOMOUT_LITERAL
+			  (" \"<li id='mom_menuitem_edititem_removeattr'><a href='#'>Remove attribute</a></li>\","),
+			  MOMOUT_NEWLINE (),
+			  MOMOUT_LITERAL
+			  (" \"<li id='mom_menuitem_edititem_replaceattr'><a href='#'>Replace attribute</a></li>\" ]"),
+			  MOMOUT_NEWLINE (), MOMOUT_LITERAL ("}"),
+			  MOMOUT_NEWLINE (), NULL);
+	    mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
+	    goto end;
+	  }
+      }				//// end if todo is mom_prepare_editval_menu
     MOM_FATAPRINTF ("ajax_edit incomplete");
 #warning ajax_edit incomplete
     goto end;
   end:
     mom_unlock_item (_L (webx).pitem);
+    MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_edit_codmom return pop"));
+    return momroutres_pop;
   }
   ;
   ////
