@@ -21,6 +21,19 @@
 #include "monimelt.h"
 
 ////////////////////////////////////////////////////////////////
+/// the editor needs some global data, we use a structure and a macro
+/// to access it.
+
+// number of buffers
+#define MOM_NB_EDIT_BUFFER 10
+
+struct editor_mom_st
+{
+  momval_t ed_buf[MOM_NB_EDIT_BUFFER];
+} mom_editor;
+#define MOM_EDITOR(F) mom_editor.F
+
+////////////////////////////////////////////////////////////////
 ///// ajax_system
 enum ajax_system_values_en
 {

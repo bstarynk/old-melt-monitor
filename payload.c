@@ -44,8 +44,8 @@ mom_item_queue_add_back (momitem_t *itm, momval_t val)
   if (itm->i_paylkind != mompayk_queue)
     return;
   assert (itm->i_payload != NULL);
-  mom_queue_add_value_back ((struct mom_valuequeue_st *) (itm->i_payload),
-			    val);
+  struct mom_valuequeue_st *vq = itm->i_payload;
+  mom_queue_add_value_back (vq, val);
 }
 
 void
@@ -55,8 +55,8 @@ mom_item_queue_add_front (momitem_t *itm, momval_t val)
   if (itm->i_paylkind != mompayk_queue)
     return;
   assert (itm->i_payload != NULL);
-  mom_queue_add_value_front ((struct mom_valuequeue_st *) (itm->i_payload),
-			     val);
+  struct mom_valuequeue_st *vq = itm->i_payload;
+  mom_queue_add_value_front (vq, val);
 }
 
 bool
@@ -66,7 +66,8 @@ mom_item_queue_is_empty (momitem_t *itm)
   if (itm->i_paylkind != mompayk_queue)
     return true;
   assert (itm->i_payload != NULL);
-  return mom_queue_is_empty ((struct mom_valuequeue_st *) (itm->i_payload));
+  struct mom_valuequeue_st *vq = itm->i_payload;
+  return mom_queue_is_empty (vq);
 }
 
 unsigned
@@ -76,7 +77,8 @@ mom_item_queue_length (momitem_t *itm)
   if (itm->i_paylkind != mompayk_queue)
     return 0;
   assert (itm->i_payload != NULL);
-  return mom_queue_length ((struct mom_valuequeue_st *) (itm->i_payload));
+  struct mom_valuequeue_st *vq = itm->i_payload;
+  return mom_queue_length (vq);
 }
 
 momval_t
@@ -86,9 +88,8 @@ mom_item_queue_peek_front (momitem_t *itm)
   if (itm->i_paylkind != mompayk_queue)
     return MOM_NULLV;
   assert (itm->i_payload != NULL);
-  return
-    mom_queue_peek_value_front ((struct mom_valuequeue_st
-				 *) (itm->i_payload));
+  struct mom_valuequeue_st *vq = itm->i_payload;
+  return mom_queue_peek_value_front (vq);
 }
 
 momval_t
@@ -98,8 +99,8 @@ mom_item_queue_peek_back (momitem_t *itm)
   if (itm->i_paylkind != mompayk_queue)
     return MOM_NULLV;
   assert (itm->i_payload != NULL);
-  return
-    mom_queue_peek_value_back ((struct mom_valuequeue_st *) (itm->i_payload));
+  struct mom_valuequeue_st *vq = itm->i_payload;
+  return mom_queue_peek_value_back (vq);
 }
 
 momval_t
@@ -109,8 +110,8 @@ mom_item_queue_pop_front (momitem_t *itm)
   if (itm->i_paylkind != mompayk_queue)
     return MOM_NULLV;
   assert (itm->i_payload != NULL);
-  return
-    mom_queue_pop_value_front ((struct mom_valuequeue_st *) (itm->i_payload));
+  struct mom_valuequeue_st *vq = itm->i_payload;
+  return mom_queue_pop_value_front (vq);
 }
 
 static void
@@ -132,9 +133,9 @@ payl_queue_dump_scan_mom (struct mom_dumper_st *du, momitem_t *itm)
   assert (itm && itm->i_typnum == momty_item);
   assert (itm->i_paylkind == mompayk_queue);
   assert (itm->i_payload != NULL);
+  struct mom_valuequeue_st *vq = itm->i_payload;
   for (struct mom_vaqelem_st * qel
-       = ((struct mom_valuequeue_st *)itm->i_payload)->vaq_first;
-       qel != NULL; qel = qel->vqe_next)
+       = vq->vaq_first; qel != NULL; qel = qel->vqe_next)
     mom_dump_scan_value (du, qel->vqe_val);
 }
 
@@ -146,15 +147,15 @@ payl_queue_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
   assert (itm && itm->i_typnum == momty_item);
   assert (itm->i_paylkind == mompayk_queue);
   assert (itm->i_payload != NULL);
-  unsigned qlen =
-    mom_queue_length (((struct mom_valuequeue_st *) itm->i_payload));
+  struct mom_valuequeue_st *vq = itm->i_payload;
+  unsigned qlen = mom_queue_length (vq);
   momval_t tinyarr[MOM_TINY_MAX] = { MOM_NULLV };
   momval_t *arrval =
     (qlen < MOM_TINY_MAX) ? tinyarr
     : MOM_GC_ALLOC ("dump queue array", qlen * sizeof (momval_t));
   unsigned cnt = 0;
   for (struct mom_vaqelem_st * qel
-       = ((struct mom_valuequeue_st *)itm->i_payload)->vaq_first;
+       = vq->vaq_first;
        qel != NULL && cnt < qlen; (qel = qel->vqe_next), cnt++)
     arrval[cnt] = mom_dump_emit_json (du, qel->vqe_val);
   jarr = (momval_t) mom_make_json_array_count (qlen, arrval);
