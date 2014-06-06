@@ -48,6 +48,9 @@ INSERT INTO t_items VALUES('_2vmrrvq5kdk_9um63pstcu9','{"kind": null, "payload":
    "val": "The true of JSON.\nWe cannot use true because it is a #define-ed macro."}],
  "content": null}
 ');
+INSERT INTO t_items VALUES('_35a1p2kdx9h_ap5pe704vtr','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "ajax routine for edition"}], "content": null}
+');
 INSERT INTO t_items VALUES('_35vp60aw7em_d436vfie4ud','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "in JSON dump, jtype of JSON array values"}], "content": null}
 ');
@@ -124,7 +127,7 @@ INSERT INTO t_items VALUES('_73im2zryfij_a7zmkketcfc','{"kind": "routine", "payl
 INSERT INTO t_items VALUES('_7diyc1cwj8z_x630afccr8e','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "Group together all noticed values in dump outcome."}], "content": null}
 ');
-INSERT INTO t_items VALUES('_7qk90k9vx0u_31ivff77td7','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+INSERT INTO t_items VALUES('_7qk90k9vx0u_31ivff77td7','{"kind": "assoc", "payload": [], "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "keep association between edited items and their editor"}], "content": null}
 ');
 INSERT INTO t_items VALUES('_7rf7axuc9h4_2aw6utwmsas','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
@@ -166,6 +169,7 @@ INSERT INTO t_names VALUES('HEAD','_47fatww79x6_vh8ap22c0ch','.predef');
 INSERT INTO t_names VALUES('POST','_5wmusj136kq_u5qpehp89aq','.predef');
 INSERT INTO t_names VALUES('agenda','_02u53qxa7dm_sttmhffpchr','.predef');
 INSERT INTO t_names VALUES('ajax_complete_name','_4v93t3jzrtz_srt9ear8fm8','.root');
+INSERT INTO t_names VALUES('ajax_edit','_35a1p2kdx9h_ap5pe704vtr','.root');
 INSERT INTO t_names VALUES('ajax_objects','_6mwwr0i4y9p_5aupdxjxdk1','.root');
 INSERT INTO t_names VALUES('ajax_system','_3xz3qrc6mfy_4r51up6u3pa','.root');
 INSERT INTO t_names VALUES('attr','_6w3dvx83dfw_xzc6aif6isv','.predef');

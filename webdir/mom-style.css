@@ -91,6 +91,12 @@ input.mom_cancel_cl {
 }
 
 input.mom_newname_cl {
+    background-color: #e8e9ff;
+    margin: 3px;
+    border: 1px navy;
+    width: 30%;
+}
+input.mom_newname_cl:focus {
     background-color: lightskyblue;
     margin: 3px;
     border: 1px navy;
@@ -98,6 +104,13 @@ input.mom_newname_cl {
 }
 input.mom_newcomment_cl {
     background-color: lightyellow;
+    margin: 3px;
+    border: 1px black;
+    width: 50%;
+}
+
+input.mom_newcomment_cl:focus {
+    background-color: yellow;
     margin: 3px;
     border: 1px black;
     width: 50%;

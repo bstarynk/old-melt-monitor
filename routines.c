@@ -1261,6 +1261,103 @@ const struct momroutinedescr_st momrout_ajax_complete_name = {
 
 
 ////////////////////////////////////////////////////////////////
+///// ajax_edit
+enum ajax_edit_values_en
+{
+  ajaxedit_v_arg0res,
+  ajaxedit_v_method,
+  ajaxedit_v_namid,
+  ajaxedit_v_restpath,
+  ajaxedit_v__spare,
+  ajaxedit_v_webx,
+  ajaxedit_v__lastval
+};
+
+enum ajax_edit_closure_en
+{
+  ajaxedit_c__lastclosure
+};
+
+enum ajax_edit_numbers_en
+{
+  ajaxedit_n__lastnum
+};
+
+
+static int
+ajax_edit_codmom (int momstate_, momitem_t *momtasklet_,
+			   const momnode_t *momclosure_,
+			   momval_t *momlocvals_, intptr_t * momlocnums_,
+			   double *momlocdbls_)
+{
+#define _L(Nam) (momlocvals_[ajaxedit_v_##Nam])
+#define _C(Nam) (momclosure_->sontab[ajaxedit_c_##Nam])
+#define _N(Nam) (momlocnums_[ajaxedit_n_##Nam])
+  enum ajax_edit_state_en
+  {
+    ajaxedit_s_start,
+    ajaxedit_s__laststate
+  };
+#define _SET_STATE(St) do {					\
+    MOM_DEBUGPRINTF (run,					\
+		     "ajax_edit_codmom setstate " #St " = %d",	\
+		     (int)ajaxedit_s_##St);			\
+    return ajaxedit_s_##St; } while(0)
+  //
+  MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_edit_codmom tasklet:"),
+	     MOMOUT_ITEM ((const momitem_t *) momtasklet_),
+	     MOMOUT_LITERAL (" state#"), MOMOUT_DEC_INT ((int) momstate_));
+  if (momstate_ >= 0 && momstate_ < ajaxedit_s__laststate)
+    switch ((enum ajax_edit_state_en) momstate_)
+      {
+      case ajaxedit_s_start:
+	goto ajaxedit_lab_start;
+      case ajaxedit_s__laststate:;
+      }
+  MOM_FATAPRINTF ("ajax_edit invalid state #%d", momstate_);
+  ////
+ajaxedit_lab_start:
+  _L (webx) = _L (arg0res);
+  MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_edit_codmom webx="),
+	     MOMOUT_VALUE ((const momval_t) _L (webx)));
+  assert (mom_is_item (_L (webx)));
+  {
+    mom_lock_item (_L (webx).pitem);
+    MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_edit_codmom queryjsob="),
+	       MOMOUT_VALUE ((const momval_t)
+			     mom_webx_jsob_query (_L (webx).pitem)),
+	       MOMOUT_NEWLINE (),
+	       MOMOUT_LITERAL ("ajax_edit_codmom postjsob="),
+	       MOMOUT_VALUE ((const momval_t)
+			     mom_webx_jsob_post (_L (webx).pitem)),
+	       MOMOUT_NEWLINE (),
+	       MOMOUT_LITERAL ("ajax_edit_codmom method="),
+	       MOMOUT_VALUE ((const momval_t) (_L (method))), NULL);
+    MOM_FATAPRINTF("ajax_edit incomplete");
+#warning ajax_edit incomplete
+    goto end;
+  end:
+    mom_unlock_item (_L (webx).pitem);
+  }
+  ;
+#undef _L
+#undef _C
+#undef _N
+#undef _SET_STATE
+  return momroutres_pop;
+}
+
+const struct momroutinedescr_st momrout_ajax_edit = {
+  .rout_magic = MOM_ROUTINE_MAGIC,.rout_minclosize =
+    ajaxedit_c__lastclosure,.rout_frame_nbval =
+    ajaxedit_v__lastval,.rout_frame_nbnum =
+    ajaxedit_n__lastnum,.rout_frame_nbdbl = 0,.rout_name =
+    "ajax_edit",.rout_module =
+    MONIMELT_CURRENT_MODULE,.rout_codefun =
+    ajax_edit_codmom,.rout_timestamp = __DATE__ "@" __TIME__
+};
+
+////////////////////////////////////////////////////////////////
 ///// noop
 enum noop_values_en
 {
