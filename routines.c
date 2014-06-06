@@ -20,18 +20,6 @@
 
 #include "monimelt.h"
 
-////////////////////////////////////////////////////////////////
-/// the editor needs some global data, we use a structure and a macro
-/// to access it.
-
-// number of buffers
-#define MOM_NB_EDIT_BUFFER 10
-
-static struct editor_mom_st
-{
-  momval_t ed_buf[MOM_NB_EDIT_BUFFER];
-} editor_mom;
-#define EDITOR_MOM(Fld) editor_mom.Fld
 
 ////////////////////////////////////////////////////////////////
 ///// ajax_system
@@ -370,10 +358,22 @@ ajaxobjs_lab_start:
 		   MOMOUT_LITERAL
 		   ("ajax_objects_codmom doeditnamed editeditm="),
 		   MOMOUT_VALUE ((const momval_t) _L (editeditm)));
-	{
-	  mom_unlock_item (_L (webx).pitem);
-	  _SET_STATE (beginedit);
-	}
+	if (_L (editeditm).ptr)
+	  {
+	    mom_unlock_item (_L (webx).pitem);
+	    _SET_STATE (beginedit);
+	  }
+	else
+	  {
+	    MOM_WEBX_OUT (_L (webx).pitem,
+			  MOMOUT_LITERAL ("Unknown item <tt>"),
+			  MOMOUT_HTML (mom_string_cstr (namev)),
+			  MOMOUT_LITERAL ("</tt>"));
+	    mom_webx_reply (_L (webx).pitem, "text/html", HTTP_NOT_FOUND);
+	    MOM_WARNPRINTF ("unknown item to edit named %s",
+			    mom_string_cstr (namev));
+	    goto end;
+	  }
       }
     else if (mom_string_same (todov, "mom_doeditorclose"))
       {
@@ -738,12 +738,15 @@ ajaxobjs_lab_beginedit:
 }
 
 const struct momroutinedescr_st momrout_ajax_objects = {
-  .rout_magic = MOM_ROUTINE_MAGIC,.rout_minclosize =
-    ajaxobjs_c__lastclosure,.rout_frame_nbval =
-    ajaxobjs_v__lastval,.rout_frame_nbnum =
-    ajaxobjs_n__lastnum,.rout_frame_nbdbl = 0,.rout_name =
-    "ajax_objects",.rout_module = MONIMELT_CURRENT_MODULE,.rout_codefun =
-    ajax_objects_codmom,.rout_timestamp = __DATE__ "@" __TIME__
+  .rout_magic = MOM_ROUTINE_MAGIC,	//
+  .rout_minclosize = ajaxobjs_c__lastclosure,	//
+  .rout_frame_nbval = ajaxobjs_v__lastval,	//
+  .rout_frame_nbnum = ajaxobjs_n__lastnum,	//
+  .rout_frame_nbdbl = 0,	//
+  .rout_name = "ajax_objects",	//
+  .rout_module = MONIMELT_CURRENT_MODULE,	//
+  .rout_codefun = ajax_objects_codmom,	//
+  .rout_timestamp = __DATE__ "@" __TIME__
 };
 
 
@@ -1137,12 +1140,15 @@ edit_value_lab_impossible:
 }
 
 const struct momroutinedescr_st momrout_edit_value = {
-  .rout_magic = MOM_ROUTINE_MAGIC,.rout_minclosize =
-    edit_value_c__lastclosure,.rout_frame_nbval =
-    edit_value_v__lastval,.rout_frame_nbnum =
-    edit_value_n__lastnum,.rout_frame_nbdbl = 0,.rout_name =
-    "edit_value",.rout_module = MONIMELT_CURRENT_MODULE,.rout_codefun =
-    edit_value_codmom,.rout_timestamp = __DATE__ "@" __TIME__
+  .rout_magic = MOM_ROUTINE_MAGIC,	//
+  .rout_minclosize = edit_value_c__lastclosure,	//
+  .rout_frame_nbval = edit_value_v__lastval,	//
+  .rout_frame_nbnum = edit_value_n__lastnum,	//
+  .rout_frame_nbdbl = 0,	//
+  .rout_name = "edit_value",	//
+  .rout_module = MONIMELT_CURRENT_MODULE,	//
+  .rout_codefun = edit_value_codmom,	//
+  .rout_timestamp = __DATE__ "@" __TIME__
 };
 
 
@@ -1252,13 +1258,15 @@ ajaxcompnam_lab_start:
 }
 
 const struct momroutinedescr_st momrout_ajax_complete_name = {
-  .rout_magic = MOM_ROUTINE_MAGIC,.rout_minclosize =
-    ajaxcompnam_c__lastclosure,.rout_frame_nbval =
-    ajaxcompnam_v__lastval,.rout_frame_nbnum =
-    ajaxcompnam_n__lastnum,.rout_frame_nbdbl = 0,.rout_name =
-    "ajax_complete_name",.rout_module =
-    MONIMELT_CURRENT_MODULE,.rout_codefun =
-    ajax_complete_name_codmom,.rout_timestamp = __DATE__ "@" __TIME__
+  .rout_magic = MOM_ROUTINE_MAGIC,	//
+  .rout_minclosize = ajaxcompnam_c__lastclosure,	//
+  .rout_frame_nbval = ajaxcompnam_v__lastval,	//
+  .rout_frame_nbnum = ajaxcompnam_n__lastnum,	//
+  .rout_frame_nbdbl = 0,	//
+  .rout_name = "ajax_complete_name",	//
+  .rout_module = MONIMELT_CURRENT_MODULE,	//
+  .rout_codefun = ajax_complete_name_codmom,	//
+  .rout_timestamp = __DATE__ "@" __TIME__
 };
 
 
@@ -1273,7 +1281,7 @@ enum ajax_edit_values_en
   ajaxedit_v__spare,
   ajaxedit_v_webx,
   ajaxedit_v_editor,
-  ajaxedit_v_curval,
+  ajaxedit_v_edinode,
   ajaxedit_v__lastval
 };
 
@@ -1374,13 +1382,13 @@ ajaxedit_lab_start:
 		       MOMOUT_DEC_INT ((int) numval));
 	    {
 	      mom_should_lock_item (_L (editor).pitem);
-	      _L (curval) = mom_item_vector_nth (_L (editor).pitem, numval);
+	      _L (edinode) = mom_item_vector_nth (_L (editor).pitem, numval);
 	      mom_unlock_item (_L (editor).pitem);
 	    }
 	    MOM_DEBUG (run,
 		       MOMOUT_LITERAL
-		       ("ajax_edit_codmom editval_copy curval="),
-		       MOMOUT_VALUE (_L (curval)));
+		       ("ajax_edit_codmom editval_copy edinode="),
+		       MOMOUT_VALUE (_L (edinode)));
 	  }
 	else
 	  MOM_FATAPRINTF ("ajax_edit bad idvalstr=%s end=%s numval=%d",
@@ -1401,13 +1409,15 @@ ajaxedit_lab_start:
 }
 
 const struct momroutinedescr_st momrout_ajax_edit = {
-  .rout_magic = MOM_ROUTINE_MAGIC,.rout_minclosize =
-    ajaxedit_c__lastclosure,.rout_frame_nbval =
-    ajaxedit_v__lastval,.rout_frame_nbnum =
-    ajaxedit_n__lastnum,.rout_frame_nbdbl = 0,.rout_name =
-    "ajax_edit",.rout_module =
-    MONIMELT_CURRENT_MODULE,.rout_codefun =
-    ajax_edit_codmom,.rout_timestamp = __DATE__ "@" __TIME__
+  .rout_magic = MOM_ROUTINE_MAGIC,	//
+  .rout_minclosize = ajaxedit_c__lastclosure,	//
+  .rout_frame_nbval = ajaxedit_v__lastval,	//
+  .rout_frame_nbnum = ajaxedit_n__lastnum,	//
+  .rout_frame_nbdbl = 0,	//
+  .rout_name = "ajax_edit",	//
+  .rout_module = MONIMELT_CURRENT_MODULE,	//
+  .rout_codefun = ajax_edit_codmom,	//
+  .rout_timestamp = __DATE__ "@" __TIME__
 };
 
 ////////////////////////////////////////////////////////////////
@@ -1475,10 +1485,13 @@ noop_lab_impossible:
 }
 
 const struct momroutinedescr_st momrout_noop = {
-  .rout_magic = MOM_ROUTINE_MAGIC,.rout_minclosize =
-    noop_c__lastclosure,.rout_frame_nbval =
-    noop_v__lastval,.rout_frame_nbnum = noop_n__lastnum,.rout_frame_nbdbl =
-    0,.rout_name = "noop",.rout_module =
-    MONIMELT_CURRENT_MODULE,.rout_codefun = noop_codmom,.rout_timestamp =
-    __DATE__ "@" __TIME__
+  .rout_magic = MOM_ROUTINE_MAGIC,	//
+  .rout_minclosize = noop_c__lastclosure,	//
+  .rout_frame_nbval = noop_v__lastval,	//
+  .rout_frame_nbnum = noop_n__lastnum,	//
+  .rout_frame_nbdbl = 0,	//
+  .rout_name = "noop",		//
+  .rout_module = MONIMELT_CURRENT_MODULE,	//
+  .rout_codefun = noop_codmom,	//
+  .rout_timestamp = __DATE__ "@" __TIME__
 };
