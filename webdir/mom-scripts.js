@@ -172,6 +172,8 @@ $(function(){
 	    mom_set_current_item(null,true);
 	    console.debug ("tabdiv_mom contextmenu editvalul_mom=",
 			   editvalul_mom, "; valev=", valev);
+	    //// make an ajax_edit call here, to ask what are the
+	    //// possible editions...
 	    editvalul_mom.css({top: ev.pageY, left: ev.pageX,
 			       'z-index': 10000}).show();
 	    $(document).one("click", function() {
