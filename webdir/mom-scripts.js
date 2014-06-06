@@ -138,6 +138,22 @@ $(function(){
 	var idui= $(ui.item).attr("id");
 	console.debug ("edititemul menu menuselect ev=", ev, " ui=", ui,
 		       " idui=", idui, " curitem_mom=", curitem_mom);
+	$.ajax({ url: '/ajax_edit',
+ 		     method: 'POST',
+ 		     data: { todo_mom: idui,
+			     iditem_mom: curitem_mom.attr("data-momitemid")
+			   },
+		     dataType: 'json',
+		     success: function (gotdata) {
+			 console.debug("edititemul menuselect ajax_edit gotdata=", gotdata);
+			 mom_ajax_edit_got(gotdata,ev,idui,curval_mom);
+		     },
+		     error: function (jq,status,errmsg) {
+			 console.error ("edititemul menuselect ajax_edit error jq=", jq,
+					" status=", status,
+					" errmsg=", errmsg);
+		     }
+		   });
     });
     /////
     // initialize the tabs

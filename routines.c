@@ -1408,8 +1408,8 @@ ajaxedit_lab_start:
 		   MOMOUT_VALUE (_L (curval)));
 	/**** we send a JSON like
 	      { "momedit_do": "momedit_copytobuffer",
-	        "momedit_editors_id": id of 'editors' item,
-	        "momedit_content": "<span..." // HTML for the buffer content
+	      "momedit_editors_id": id of 'editors' item,
+	      "momedit_content": "<span..." // HTML for the buffer content
               }
 	****/
 	const char *editorsidstr =
@@ -1433,7 +1433,41 @@ ajaxedit_lab_start:
 	mom_unlock_item (_L (webx).pitem);
 	_SET_STATE (dideditcopy);
       }				// end if todov is mom_menuitem_editval_copy
-
+    //
+    else if (mom_string_same (todov, "mom_menuitem_edititem_copy"))
+      {
+	momval_t iditemv = mom_webx_post_arg (_L (webx).pitem, "iditem_mom");
+	_L (curval) = (momval_t) mom_make_item_of_ident (iditemv.pstring);
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL ("ajax_edit_codmom edititem_copy curval="),
+		   MOMOUT_VALUE (_L (curval)), NULL);
+      /**** we send a JSON like
+	    { "momedit_do": "momedit_copytobuffer",
+	    "momedit_editors_id": id of 'editors' item,
+	    "momedit_content": "<span..." // HTML for the buffer content
+	    }
+      ****/
+	const char *editorsidstr =
+	  mom_string_cstr ((momval_t)
+			   mom_item_get_idstr (_C (editors).pitem));
+	assert (editorsidstr != NULL);
+	MOM_WEBX_OUT (_L (webx).pitem,
+		      MOMOUT_LITERAL
+		      ("{ \"momedit_do\": \"momedit_copytobuffer\","),
+		      MOMOUT_NEWLINE (),
+		      MOMOUT_LITERAL ("  \"momedit_editors_id\": \""),
+		      MOMOUT_JS_STRING (editorsidstr), MOMOUT_LITERAL ("\","),
+		      MOMOUT_NEWLINE (),
+		      MOMOUT_LITERAL ("  \"momedit_content\": \""), NULL);
+	mom_item_tasklet_push_frame	//
+	  (momtasklet_, (momval_t) _C (edit_value),
+	   MOMPFR_FIVE_VALUES (_C (editors), _L (webx), _L (curval),
+			       /*jorig: */ (momval_t) mom_named__buffer,
+			       /*nodexpr: */ (momval_t) mom_named__buffer),
+	   MOMPFR_INT ((intptr_t) 0), NULL);
+	mom_unlock_item (_L (webx).pitem);
+	_SET_STATE (dideditcopy);
+      }
     MOM_FATAPRINTF ("ajax_edit incomplete");
 #warning ajax_edit incomplete
     goto end;
