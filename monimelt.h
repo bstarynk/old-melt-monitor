@@ -594,6 +594,9 @@ const momstring_t *mom_make_random_idstr ();
 // or a space or delimiter and is stored in *pend if pend non-null.
 bool mom_looks_like_random_id_cstr (const char *s, const char **pend);
 #define MOM_IDSTRING_LEN 24
+  // 31 different chars; notice that 31 is prime
+#define MOM_IDRANDCHARS "acdefhijkmpqrstuvwxyz0123456789"
+#define MOM_IDSTRING_FMT "%24["MOM_IDRANDCHARS"_]"
 static inline bool
 mom_is_string (momval_t v)
 {

@@ -131,14 +131,12 @@ mom_random_64 (void)
   return r;
 }
 
-  // 31 different chars; notice that 31 is prime
-#define RANDCHARS_MOM "acdefhijkmpqrstuvwxyz0123456789"
-#define NBRANDCHARS_MOM (sizeof(RANDCHARS_MOM)-1)
+#define NBMOM_IDRANDCHARS (sizeof(MOM_IDRANDCHARS)-1)
 const momstring_t *
 mom_make_random_idstr (void)
 {
   char resbuf[32];
-  assert (NBRANDCHARS_MOM == 31);
+  assert (NBMOM_IDRANDCHARS == 31);
   uint32_t r0, r1, r2, r3;
   memset (resbuf, 0, sizeof (resbuf));
   resbuf[0] = '_';
@@ -156,49 +154,49 @@ mom_make_random_idstr (void)
   r2 = random32_unlocked_mom ();
   r3 = random32_unlocked_mom ();
   (resbuf[1] = '0' + (r0 % 10)), r0 = r0 / 10;
-  (resbuf[2] = RANDCHARS_MOM[r0 % NBRANDCHARS_MOM]), r0 =
-    r0 / NBRANDCHARS_MOM;
-  (resbuf[3] = RANDCHARS_MOM[r0 % NBRANDCHARS_MOM]), r0 =
-    r0 / NBRANDCHARS_MOM;
-  (resbuf[4] = RANDCHARS_MOM[r0 % NBRANDCHARS_MOM]), r0 =
-    r0 / NBRANDCHARS_MOM;
-  (resbuf[5] = RANDCHARS_MOM[r0 % NBRANDCHARS_MOM]), r0 =
-    r0 / NBRANDCHARS_MOM;
-  (resbuf[6] = RANDCHARS_MOM[r1 % NBRANDCHARS_MOM]), r1 =
-    r1 / NBRANDCHARS_MOM;
-  (resbuf[7] = RANDCHARS_MOM[r1 % NBRANDCHARS_MOM]), r1 =
-    r1 / NBRANDCHARS_MOM;
-  (resbuf[8] = RANDCHARS_MOM[r1 % NBRANDCHARS_MOM]), r1 =
-    r1 / NBRANDCHARS_MOM;
-  (resbuf[9] = RANDCHARS_MOM[r1 % NBRANDCHARS_MOM]), r1 =
-    r1 / NBRANDCHARS_MOM;
-  (resbuf[10] = RANDCHARS_MOM[r1 % NBRANDCHARS_MOM]), r1 =
-    r1 / NBRANDCHARS_MOM;
-  (resbuf[11] = RANDCHARS_MOM[r1 % NBRANDCHARS_MOM]), r1 =
-    r1 / NBRANDCHARS_MOM;
+  (resbuf[2] = MOM_IDRANDCHARS[r0 % NBMOM_IDRANDCHARS]), r0 =
+    r0 / NBMOM_IDRANDCHARS;
+  (resbuf[3] = MOM_IDRANDCHARS[r0 % NBMOM_IDRANDCHARS]), r0 =
+    r0 / NBMOM_IDRANDCHARS;
+  (resbuf[4] = MOM_IDRANDCHARS[r0 % NBMOM_IDRANDCHARS]), r0 =
+    r0 / NBMOM_IDRANDCHARS;
+  (resbuf[5] = MOM_IDRANDCHARS[r0 % NBMOM_IDRANDCHARS]), r0 =
+    r0 / NBMOM_IDRANDCHARS;
+  (resbuf[6] = MOM_IDRANDCHARS[r1 % NBMOM_IDRANDCHARS]), r1 =
+    r1 / NBMOM_IDRANDCHARS;
+  (resbuf[7] = MOM_IDRANDCHARS[r1 % NBMOM_IDRANDCHARS]), r1 =
+    r1 / NBMOM_IDRANDCHARS;
+  (resbuf[8] = MOM_IDRANDCHARS[r1 % NBMOM_IDRANDCHARS]), r1 =
+    r1 / NBMOM_IDRANDCHARS;
+  (resbuf[9] = MOM_IDRANDCHARS[r1 % NBMOM_IDRANDCHARS]), r1 =
+    r1 / NBMOM_IDRANDCHARS;
+  (resbuf[10] = MOM_IDRANDCHARS[r1 % NBMOM_IDRANDCHARS]), r1 =
+    r1 / NBMOM_IDRANDCHARS;
+  (resbuf[11] = MOM_IDRANDCHARS[r1 % NBMOM_IDRANDCHARS]), r1 =
+    r1 / NBMOM_IDRANDCHARS;
   resbuf[12] = '_';
-  (resbuf[13] = RANDCHARS_MOM[r2 % NBRANDCHARS_MOM]), r2 =
-    r2 / NBRANDCHARS_MOM;
-  (resbuf[14] = RANDCHARS_MOM[r2 % NBRANDCHARS_MOM]), r2 =
-    r2 / NBRANDCHARS_MOM;
-  (resbuf[15] = RANDCHARS_MOM[r2 % NBRANDCHARS_MOM]), r2 =
-    r2 / NBRANDCHARS_MOM;
-  (resbuf[16] = RANDCHARS_MOM[r2 % NBRANDCHARS_MOM]), r2 =
-    r2 / NBRANDCHARS_MOM;
-  (resbuf[17] = RANDCHARS_MOM[r2 % NBRANDCHARS_MOM]), r2 =
-    r2 / NBRANDCHARS_MOM;
-  (resbuf[18] = RANDCHARS_MOM[r2 % NBRANDCHARS_MOM]), r2 =
-    r2 / NBRANDCHARS_MOM;
-  (resbuf[19] = RANDCHARS_MOM[r3 % NBRANDCHARS_MOM]), r3 =
-    r3 / NBRANDCHARS_MOM;
-  (resbuf[20] = RANDCHARS_MOM[r3 % NBRANDCHARS_MOM]), r3 =
-    r3 / NBRANDCHARS_MOM;
-  (resbuf[21] = RANDCHARS_MOM[r3 % NBRANDCHARS_MOM]), r3 =
-    r3 / NBRANDCHARS_MOM;
-  (resbuf[22] = RANDCHARS_MOM[r3 % NBRANDCHARS_MOM]), r3 =
-    r3 / NBRANDCHARS_MOM;
-  (resbuf[23] = RANDCHARS_MOM[r3 % NBRANDCHARS_MOM]), r3 =
-    r3 / NBRANDCHARS_MOM;
+  (resbuf[13] = MOM_IDRANDCHARS[r2 % NBMOM_IDRANDCHARS]), r2 =
+    r2 / NBMOM_IDRANDCHARS;
+  (resbuf[14] = MOM_IDRANDCHARS[r2 % NBMOM_IDRANDCHARS]), r2 =
+    r2 / NBMOM_IDRANDCHARS;
+  (resbuf[15] = MOM_IDRANDCHARS[r2 % NBMOM_IDRANDCHARS]), r2 =
+    r2 / NBMOM_IDRANDCHARS;
+  (resbuf[16] = MOM_IDRANDCHARS[r2 % NBMOM_IDRANDCHARS]), r2 =
+    r2 / NBMOM_IDRANDCHARS;
+  (resbuf[17] = MOM_IDRANDCHARS[r2 % NBMOM_IDRANDCHARS]), r2 =
+    r2 / NBMOM_IDRANDCHARS;
+  (resbuf[18] = MOM_IDRANDCHARS[r2 % NBMOM_IDRANDCHARS]), r2 =
+    r2 / NBMOM_IDRANDCHARS;
+  (resbuf[19] = MOM_IDRANDCHARS[r3 % NBMOM_IDRANDCHARS]), r3 =
+    r3 / NBMOM_IDRANDCHARS;
+  (resbuf[20] = MOM_IDRANDCHARS[r3 % NBMOM_IDRANDCHARS]), r3 =
+    r3 / NBMOM_IDRANDCHARS;
+  (resbuf[21] = MOM_IDRANDCHARS[r3 % NBMOM_IDRANDCHARS]), r3 =
+    r3 / NBMOM_IDRANDCHARS;
+  (resbuf[22] = MOM_IDRANDCHARS[r3 % NBMOM_IDRANDCHARS]), r3 =
+    r3 / NBMOM_IDRANDCHARS;
+  (resbuf[23] = MOM_IDRANDCHARS[r3 % NBMOM_IDRANDCHARS]), r3 =
+    r3 / NBMOM_IDRANDCHARS;
   pthread_mutex_unlock (&mtx_random_mom);
   return mom_make_string (resbuf);
 }
@@ -215,7 +213,7 @@ mom_looks_like_random_id_cstr (const char *s, const char **pend)
     return false;
   if (!isdigit (s[1]))
     return false;
-#define CHECKRANDCHAR(C) ((C) && strchr(RANDCHARS_MOM, (C)))
+#define CHECKRANDCHAR(C) ((C) && strchr(MOM_IDRANDCHARS, (C)))
   if (!CHECKRANDCHAR (s[2]))
     return false;
   if (!CHECKRANDCHAR (s[3]))

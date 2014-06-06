@@ -111,7 +111,7 @@ $(function(){
 	$.ajax({ url: '/ajax_edit',
  		     method: 'POST',
  		     data: { todo_mom: idui,
-			     valid_mom: curval_mom.attr("id")
+			     idval_mom: curval_mom.attr("id")
 			   },
 		     dataType: 'json',
 		     success: function (gotdata) {
