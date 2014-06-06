@@ -400,16 +400,13 @@ mom_item_start_assoc (momitem_t *itm)
   if (itm->i_payload)
     mom_item_clear_payload (itm);
   const unsigned asiz = 8;
-  struct mom_itemattributes_st *assoc = MOM_GC_ALLOC ("item assoc",
-						      sizeof (struct
-							      mom_itemattributes_st)
-						      +
-						      asiz *
-						      sizeof (struct
-							      mom_attrentry_st));
+  struct mom_itemattributes_st *assoc	//
+    = MOM_GC_ALLOC ("item assoc",
+		    sizeof (struct mom_itemattributes_st)
+		    + asiz * sizeof (struct mom_attrentry_st));
   assoc->size = asiz;
   itm->i_payload = assoc;
-  itm->i_paylkind = mompayk_queue;
+  itm->i_paylkind = mompayk_assoc;
 }
 
 void

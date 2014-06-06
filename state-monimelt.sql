@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 Jun 04
+-- state-monimelt dump 2014 Jun 06
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -65,7 +65,7 @@ INSERT INTO t_items VALUES('_3xpyd539p4m_23h7wi59xi9','{"kind": null, "payload":
    "val": "in JSON dump, jtype of JSON object values"}], "content": null}
 ');
 INSERT INTO t_items VALUES('_3xz3qrc6mfy_4r51up6u3pa','{"kind": "routine", "payload": "ajax_system", "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
-   "val": "handle \''ajax_system\'' webrequests"}, {"attr": "_7sav6zery1v_24sa6jwwu6c",
+   "val": "handle ''ajax_system'' webrequests"}, {"attr": "_7sav6zery1v_24sa6jwwu6c",
    "val": {"sons": ["{spare1 ajax-system}", "{spare2 ajax-system}", "{spare3 ajax-system}",
      null], "node": "_3xz3qrc6mfy_4r51up6u3pa", "jtype": "node"}}], "content": null}
 ');
@@ -90,7 +90,7 @@ INSERT INTO t_items VALUES('_4mha85xcfwi_9zqcvkiy3dk','{"kind": null, "payload":
  "content": null}
 ');
 INSERT INTO t_items VALUES('_4v93t3jzrtz_srt9ear8fm8','{"kind": "routine", "payload": "ajax_complete_name", "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
-   "val": "handle \''ajax_complete_name\'' webrequests"}, {"attr": "_7sav6zery1v_24sa6jwwu6c",
+   "val": "handle ''ajax_complete_name'' webrequests"}, {"attr": "_7sav6zery1v_24sa6jwwu6c",
    "val": {"sons": ["{spare1 ajax-complete_name}", "{spare2 ajax-complete_name}",
      "{spare3 ajax-complete_name}", null], "node": "_4v93t3jzrtz_srt9ear8fm8",
     "jtype": "node"}}], "content": null}
@@ -108,7 +108,7 @@ INSERT INTO t_items VALUES('_6hf2vzmrsee_t35suhjvtj4','{"kind": null, "payload":
    "val": "gives the item reference, at least in dumped JSON..."}], "content": null}
 ');
 INSERT INTO t_items VALUES('_6mwwr0i4y9p_5aupdxjxdk1','{"kind": "routine", "payload": "ajax_objects", "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
-   "val": "handle \''ajax_objects\'' webrequests"}, {"attr": "_7sav6zery1v_24sa6jwwu6c",
+   "val": "handle ''ajax_objects'' webrequests"}, {"attr": "_7sav6zery1v_24sa6jwwu6c",
    "val": {"sons": [{"sons": [{"item_ref": "_7qk90k9vx0u_31ivff77td7", "space": ".root",
 "jtype": "item_ref"}, "{spare1-edit_value}"], "node": "_73im2zryfij_a7zmkketcfc",
       "jtype": "node"}, {"item_ref": "_7qk90k9vx0u_31ivff77td7", "space": ".root",
