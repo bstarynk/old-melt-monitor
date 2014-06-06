@@ -484,9 +484,9 @@ ajaxobjs_lab_beginedit:
       /*** see comment in mom-scripts.js regarding mom_install_editor
 	   javascript function; we should send something like:
 
-   { momeditorj_id: "_0u15i1z87ei_jf2wwmpim72",       // editor id
-     momeditorj_tabtitle: "<span...",      // the HTML for the tab title
-     momeditorj_tabcontent: "<div..."      // the HTML for the tab content
+   { "momeditorj_id": "_0u15i1z87ei_jf2wwmpim72",       // editor id
+     "momeditorj_tabtitle": "<span...",      // the HTML for the tab title
+     "momeditorj_tabcontent": "<div..."      // the HTML for the tab content
    }
 
       ****/
@@ -1282,6 +1282,7 @@ enum ajax_edit_values_en
   ajaxedit_v_webx,
   ajaxedit_v_editor,
   ajaxedit_v_edinode,
+  ajaxedit_v_curval,
   ajaxedit_v__lastval
 };
 
@@ -1310,6 +1311,7 @@ ajax_edit_codmom (int momstate_, momitem_t *momtasklet_,
   enum ajax_edit_state_en
   {
     ajaxedit_s_start,
+    ajaxedit_s_dideditcopy,
     ajaxedit_s__laststate
   };
 #define _SET_STATE(St) do {					\
@@ -1326,6 +1328,8 @@ ajax_edit_codmom (int momstate_, momitem_t *momtasklet_,
       {
       case ajaxedit_s_start:
 	goto ajaxedit_lab_start;
+      case ajaxedit_s_dideditcopy:
+	goto ajaxedit_lab_dideditcopy;
       case ajaxedit_s__laststate:;
       }
   MOM_FATAPRINTF ("ajax_edit invalid state #%d", momstate_);
@@ -1393,7 +1397,43 @@ ajaxedit_lab_start:
 	else
 	  MOM_FATAPRINTF ("ajax_edit bad idvalstr=%s end=%s numval=%d",
 			  idvalstr, end, numval);
-      }
+	/// here we got the correct edinode. It should be a binary
+	/// node of connective val whose first son is the copied
+	/// value, and whose second son describes how to get it.
+	assert (mom_node_conn (_L (edinode)) == mom_named__val);
+	_L (curval) = mom_node_nth (_L (edinode), 0);
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL
+		   ("ajax_edit_codmom editval_copy curval="),
+		   MOMOUT_VALUE (_L (curval)));
+	/**** we send a JSON like
+	      { "momedit_do": "momedit_copytobuffer",
+	        "momedit_editors_id": id of 'editors' item,
+	        "momedit_content": "<span..." // HTML for the buffer content
+              }
+	****/
+	const char *editorsidstr =
+	  mom_string_cstr ((momval_t)
+			   mom_item_get_idstr (_C (editors).pitem));
+	assert (editorsidstr != NULL);
+	MOM_WEBX_OUT (_L (webx).pitem,
+		      MOMOUT_LITERAL
+		      ("{ \"momedit_do\": \"momedit_copytobuffer\","),
+		      MOMOUT_NEWLINE (),
+		      MOMOUT_LITERAL ("  \"momedit_editors_id\": \""),
+		      MOMOUT_JS_STRING (editorsidstr), MOMOUT_LITERAL ("\","),
+		      MOMOUT_NEWLINE (),
+		      MOMOUT_LITERAL ("  \"momedit_content\": \""), NULL);
+	mom_item_tasklet_push_frame	//
+	  (momtasklet_, (momval_t) _C (edit_value),
+	   MOMPFR_FIVE_VALUES (_C (editors), _L (webx), _L (curval),
+			       /*jorig: */ (momval_t) mom_named__buffer,
+			       /*nodexpr: */ (momval_t) mom_named__buffer),
+	   MOMPFR_INT ((intptr_t) 0), NULL);
+	mom_unlock_item (_L (webx).pitem);
+	_SET_STATE (dideditcopy);
+      }				// end if todov is mom_menuitem_editval_copy
+
     MOM_FATAPRINTF ("ajax_edit incomplete");
 #warning ajax_edit incomplete
     goto end;
@@ -1401,6 +1441,28 @@ ajaxedit_lab_start:
     mom_unlock_item (_L (webx).pitem);
   }
   ;
+  ////
+ajaxedit_lab_dideditcopy:
+  {
+    mom_should_lock_item (_L (webx).pitem);
+    MOM_DEBUG (run,
+	       MOMOUT_LITERAL ("ajax_edit_codmom dideditcopy curval="),
+	       MOMOUT_VALUE (_L (curval)),
+	       MOMOUT_LITERAL (" webx="), MOMOUT_VALUE (_L (webx)), NULL);
+    MOM_WEBX_OUT (_L (webx).pitem,
+		  MOMOUT_LITERAL ("\" }"), MOMOUT_NEWLINE ());
+    {
+      mom_should_lock_item (_C (editors).pitem);
+      mom_item_put_attribute (_C (editors).pitem, mom_named__buffer,
+			      _L (curval));
+      mom_unlock_item (_C (editors).pitem);
+    }
+    mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
+    mom_unlock_item (_L (webx).pitem);
+    return momroutres_pop;
+  }
+  ;
+  ////
 #undef _L
 #undef _C
 #undef _N

@@ -23,6 +23,8 @@ var tabdiv_mom;			// the tab division
 var tabul_mom;
 var editvalul_mom;
 var edititemul_mom;
+var commonol_mom;
+var commonbufferli_mom;
 var curval_mom = null;
 var curitem_mom = null;
 
@@ -34,6 +36,8 @@ $(function(){
     tabul_mom = $('#mom_tabul');
     editvalul_mom = $('#mom_editval_ul');
     edititemul_mom = $('#mom_edititem_ul');
+    commonol_mom = $('#mom_commonol');
+    commonbufferli_mom= $('#mom_commonbuffer_li');
     //
     // create the system button with its menu
     var systembut = $('#mom_system_but');
@@ -477,7 +481,17 @@ function mom_erase_maindiv() {
     maindiv_mom.empty();
 }
     
-function mom_ajax_edit_got(jdata,ev,idui,elem) {
+function mom_ajax_edit_got(jdata,ev,idui,elem)
+{
     console.debug("mom_ajax_edit_got jdata=", jdata, " ev=", ev,
 		  " idui=", idui, " elem=", elem);
+    if (jdata.momedit_do == "momedit_copytobuffer") {
+	var editorsid = jdata.momedit_editors_id;
+	var content = jdata.momedit_content;
+	console.debug("mom_ajax_edit_got copytobuffer content=", content,
+		      "; commonbufferli_mom=", commonbufferli_mom);
+	commonbufferli_mom.html(content);
+	console.debug("mom_ajax_edit_got copytobuffer set commonbufferli_mom=",
+		      commonbufferli_mom);
+    }
 }
