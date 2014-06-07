@@ -578,6 +578,14 @@ ajaxobjs_lab_beginedit:
 					mom_clock_time (CLOCK_REALTIME)),
 		    MOMOUT_JS_LITERAL ("</span></p>"));
       MOM_WEBX_OUT (_L (webx).pitem,
+		    //
+		    MOMOUT_JS_LITERAL ("<div class='mom_attributes_cl'>"),
+		    MOMOUT_JS_LITERAL ("<p class='mom_attrtitle_cl'>"),
+		    MOMOUT_DEC_INT ((int) _N (nbattrs)),
+		    MOMOUT_JS_LITERAL (" attributes:"),
+		    MOMOUT_JS_LITERAL ("</p>"), MOMOUT_JS_RAW_NEWLINE ());
+      //
+      MOM_WEBX_OUT (_L (webx).pitem,
 		    MOMOUT_JS_LITERAL ("<ul class='mom_attrlist_cl'>"),
 		    MOMOUT_JS_RAW_NEWLINE ());
       mom_unlock_item (_L (webx).pitem);
@@ -678,6 +686,7 @@ ajaxobjs_lab_beginedit:
     mom_lock_item (_L (webx).pitem);
     MOM_WEBX_OUT (_L (webx).pitem,
 		  MOMOUT_JS_LITERAL ("</ul>"), MOMOUT_JS_RAW_NEWLINE (),
+		  MOMOUT_JS_LITERAL ("</div>"), MOMOUT_JS_RAW_NEWLINE (),
 		  NULL);
     MOM_WEBX_OUT (_L (webx).pitem,
 		  MOMOUT_JS_LITERAL ("<p class='mom_content_cl'>" "&#8281; "
@@ -1562,6 +1571,9 @@ ajaxedit_lab_start:
 			  MOMOUT_NEWLINE (),
 			  MOMOUT_LITERAL
 			  (" \"<li id='mom_menuitem_edititem_removeson'><a href='#'>Remove son</a></li>\","),
+			  MOMOUT_NEWLINE (),
+			  MOMOUT_LITERAL
+			  (" \"<li id='mom_menuitem_edititem_pasteson'><a href='#'>Paste as son</a></li>\","),
 			  MOMOUT_NEWLINE (),
 			  MOMOUT_LITERAL
 			  (" \"<li id='mom_menuitem_edititem_replaceson'><a href='#'>Replace son</a></li>\" ]"),

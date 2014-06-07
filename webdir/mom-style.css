@@ -156,6 +156,16 @@ code.mom_itemid_cl{
     color: #011902;
 }
 
+div.mom_attrlist_cl {
+    border: 1px;
+}
+
+p.mom_attrtitle_cl {
+    text-align: left;
+    font-size: 90%;
+    color: #070803;
+}
+
 /* the attribute list of an edited item */
 ul.mom_attrlist_cl {
     padding: 2px;
