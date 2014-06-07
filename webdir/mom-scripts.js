@@ -161,7 +161,8 @@ $(function(){
     tabdiv_mom.on('contextmenu', function(ev) {
 	var valev = null;
 	var itemev = null;
-	editvalul_mom.remove(":gt(0)");
+	// remove all but the first children
+	editvalul_mom.children().slice(1).remove();
 	valev = mom_containing_val($(ev.target));
 	if (valev == null)
 	    itemev = mom_containing_item($(ev.target));

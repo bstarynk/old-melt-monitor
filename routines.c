@@ -1549,6 +1549,27 @@ ajaxedit_lab_start:
 	    mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
 	    goto end;
 	  }
+	else if (mom_node_conn (_L (origin)) == mom_named__node)
+	  {			/* *node(<parentix>,<sonrank>) */
+	    MOM_DEBUG (run,
+		       MOMOUT_LITERAL
+		       ("ajax_edit_codmom prepareditvalmenu node origin"));
+	    MOM_WEBX_OUT (_L (webx).pitem,
+			  MOMOUT_LITERAL
+			  ("{ \"momedit_do\": \"momedit_add_to_editval_menu\","),
+			  MOMOUT_NEWLINE (),
+			  MOMOUT_LITERAL (" \"momedit_menuitems\": ["),
+			  MOMOUT_NEWLINE (),
+			  MOMOUT_LITERAL
+			  (" \"<li id='mom_menuitem_edititem_removeson'><a href='#'>Remove son</a></li>\","),
+			  MOMOUT_NEWLINE (),
+			  MOMOUT_LITERAL
+			  (" \"<li id='mom_menuitem_edititem_replaceson'><a href='#'>Replace son</a></li>\" ]"),
+			  MOMOUT_NEWLINE (), MOMOUT_LITERAL ("}"),
+			  MOMOUT_NEWLINE (), NULL);
+	    mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
+	    goto end;
+	  }
       }				//// end if todo is mom_prepare_editval_menu
     MOM_FATAPRINTF ("ajax_edit incomplete");
 #warning ajax_edit incomplete
