@@ -110,12 +110,14 @@ $(function(){
     });
     editvalul_mom.on("menuselect",function(ev,ui) {
 	var idui= $(ui.item).attr("id");
+	var datavaleditid= editvalul_mom.attr("data-momeditedval");
 	console.debug ("editvalul menuselect ev=", ev, " ui=", ui,
-		       " idui=", idui, " curval_mom=", curval_mom);
+		       " idui=", idui, " curval_mom=", curval_mom,
+		       " datavaleditid=", datavaleditid);
 	$.ajax({ url: '/ajax_edit',
  		 method: 'POST',
  		 data: { todo_mom: idui,
-			 idval_mom: curval_mom.attr("id")
+			 idval_mom: datavaleditid
 		       },
 		 dataType: 'json',
 		 success: function (gotdata) {
@@ -161,8 +163,8 @@ $(function(){
     tabdiv_mom.on('contextmenu', function(ev) {
 	var valev = null;
 	var itemev = null;
-	// remove all but the first children
-	editvalul_mom.children().slice(1).remove();
+	// remove all but the first & second children (keep title & copy menuitems)
+	editvalul_mom.children().slice(2).remove();
 	valev = mom_containing_val($(ev.target));
 	if (valev == null)
 	    itemev = mom_containing_item($(ev.target));
@@ -172,18 +174,20 @@ $(function(){
 	if (valev) {
 	    mom_set_current_item(null,true);
 	    mom_set_current_val(valev,true);
+	    var valevid =  valev.attr('id');
 	    console.debug ("tabdiv_mom contextmenu editvalul_mom=",
-			   editvalul_mom, "; valev=", valev);
+			   editvalul_mom, "; valev=", valev, "; valevid=", valevid);
 	    //// make an ajax_edit call here, to ask what are the
 	    //// possible editions...
 	    $.ajax({ url: '/ajax_edit',
  		     method: 'POST',
 		     async: false,
  		     data: { todo_mom: 'mom_prepare_editval_menu',
-		             idval_mom: valev.attr('id')
+		             idval_mom: valevid
 			   },
 		     success: function (jdata) {
 			 console.debug ("editval menuselect contextmenu prepared jdata=", jdata);
+			 editvalul_mom.attr("data-momeditedval", valevid);
 			 if (jdata.momedit_do == "momedit_add_to_editval_menu") {
 			     var items = jdata.momedit_menuitems;
 			     console.debug ("editval menuselect contextmenu items=", items);
