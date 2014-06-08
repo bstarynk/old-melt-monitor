@@ -1,0 +1,2 @@
+This modules/ directory should contain the generated modules (both
+their C code and the .so binary module).

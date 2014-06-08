@@ -1334,7 +1334,7 @@ mom_load_module (const char *dirpath, const char *modulename)
     dirpath = ".";
   assert (dirpath != NULL);
   if (!modulename || !modulename[0])
-    return;
+    return false;
   memset (srcpath, 0, sizeof (srcpath));
   memset (sopath, 0, sizeof (sopath));
   if (strlen (dirpath) + strlen (modulename) + 16 > MOM_PATH_MAX)
