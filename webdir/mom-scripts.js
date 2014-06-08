@@ -166,9 +166,10 @@ $(function(){
 	role: null
     });
     editattrul_mom.on("menuselect",function(ev,ui) {
+	console.debug ("editattrul menu menuselect ev=", ev, " ui=", ui);
 	var idui= $(ui.item).attr("id");
-	console.debug ("editattrul menu menuselect ev=", ev, " ui=", ui,
-		       " idui=", idui);
+	var editorid = editattrul_mom.attr("data-momeditorid");
+	console.debug ("editattrul menu menuselect idui=", idui, " editorid=", editorid);
     });
     /////
     // initialize the tabs
@@ -243,16 +244,20 @@ $(function(){
 	}
 	else if ($(ev.target).parents(".mom_attrtitle_cl")) {
 	    console.debug ("tabdiv_mom parents attrtitle ev=", ev);
+	    var editorid = $(ev.target).parents(".mom_editor_cl").attr("id").replace("momeditor","");
+	    console.debug ("tabdiv_mom parents attrtitle editorid=", editorid);
 	    mom_set_current_val(null,true);
 	    mom_set_current_item(null,true);
 	    editattrul_mom.css({top: ev.pageY, left: ev.pageX,
 				'z-index': 10000}).show();
+	    editattrul_mom.attr("data-momeditorid", editorid);
 	    console.debug ("tabdiv_mom contextmenu editattrul_mom=",
 			   editattrul_mom);
 	    $(document).one("click", function() {
 		console.debug ("tabdiv_mom hiding editattr");
 		editattrul_mom.delay(350).hide();
 		console.debug ("tabdiv_mom hided editattr");
+		editattrul_mom.attr("data-momeditorid", null);
 	    });
 	    return false;
 	}
