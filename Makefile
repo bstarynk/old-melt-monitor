@@ -81,7 +81,7 @@ plugins: $(PLUGINS)
 ## MONIMELT generated code starts with momg_ followed by alphanum or +
 ## or - or _ characters, conventionally by the name or identstr of the
 ## module item. see MONIMELT_SHARED_MODULE_PREFIX in monimelt.h
-momg_%.so: momg_%.c | monimelt.h predef-monimelt.h
+modules/momg_%.so: modules/momg_%.c | monimelt.h predef-monimelt.h
 	$(LINK.c) -DMONIMELT_CURRENT_MODULE=\"$(patsubst momg_%.so,%,$(*F))\" -fPIC $< -shared -o $@
 	@logger -t makemonimelt -p user.info -s compiled $< into \
 	        shared module $@ named $(patsubst momg_%.so,%,$(*F)) \
