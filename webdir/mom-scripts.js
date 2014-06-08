@@ -177,7 +177,7 @@ $(function(){
 	    var valevid =  valev.attr('id');
 	    console.debug ("tabdiv_mom contextmenu editvalul_mom=",
 			   editvalul_mom, "; valev=", valev, "; valevid=", valevid);
-	    //// make an ajax_edit call here, to ask what are the
+	    //// make an synchronous ajax_edit call here, to ask what are the
 	    //// possible editions...
 	    $.ajax({ url: '/ajax_edit',
  		     method: 'POST',
@@ -189,7 +189,7 @@ $(function(){
 			 console.debug ("editval menuselect contextmenu prepared jdata=", jdata);
 			 editvalul_mom.attr("data-momeditedval", valevid);
 			 if (jdata.momedit_do == "momedit_add_to_editval_menu") {
-			     var items = jdata.momedit_menuitems;
+			     var items = jdata.momedit_menuval;
 			     console.debug ("editval menuselect contextmenu items=", items);
 			     var nbitems = items.length;
 			     for (var ix=0; ix<nbitems; ix++) {
@@ -543,5 +543,14 @@ function mom_ajax_edit_got(jdata,ev,idui,elem)
 	commonbufferdd_mom.html(content);
 	console.debug("mom_ajax_edit_got copytobuffer set commonbufferdd_mom=",
 		      commonbufferdd_mom);
+    }
+    else if (jdata.momedit_do == "momedit_replaceinput") {
+	var oldid = jdata.momedit_oldid;
+	var newid = jdata.momedit_newid;
+	console.debug ("mom_ajax_edit_got momedit_replaceinput oldid=", oldid,
+		       " newid=", newid);
+	var newinphtml = "<input class='mom_newvalinput_cl' type='text' id='" + newid +"'/>";
+	$('#' + oldid).replaceWith(newinphtml);
+	// should be autocompleted
     }
 }
