@@ -45,6 +45,7 @@ ul.mom_menu_cl {
     position: absolute;
     display: none;
     font-size: 90%;
+    background-color: #f0f0fe;
 }
 
 div.mom_main_cl {
@@ -163,7 +164,13 @@ div.mom_attrlist_cl {
 p.mom_attrtitle_cl {
     text-align: left;
     font-size: 90%;
-    color: #070803;
+    color: #072803;
+}
+
+p.mom_attrtitle_cl:hover {
+    border: 2px navy;
+    color: #084504;
+    background-color: #c0d2e4;
 }
 
 /* the attribute list of an edited item */
@@ -337,6 +344,15 @@ li.mom_tabtitle_cl {
 
 div.mom_editor_cl {
     display: none;
+}
+
+.mom_newvaltooltip_cl {
+    background-color: rgba(255,210,190,0.7);
+    font-size: 75%;
+}
+
+tt.mom_example_cl {
+    color: navy;
 }
 
 input.mom_newvalinput_cl {

@@ -23,6 +23,7 @@ var tabdiv_mom;			// the tab division
 var tabul_mom;
 var editvalul_mom;
 var edititemul_mom;
+var editattrul_mom;
 var commondl_mom;
 var commonbufferdd_mom;
 var curval_mom = null;
@@ -37,6 +38,7 @@ $(function(){
     tabul_mom = $('#mom_tabul');
     editvalul_mom = $('#mom_editval_ul');
     edititemul_mom = $('#mom_edititem_ul');
+    editattrul_mom = $('#mom_editattr_ul');
     commondl_mom = $('#mom_commondl');
     commonbufferdd_mom= $('#mom_commonbuffer_dd');
     //
@@ -159,6 +161,16 @@ $(function(){
 	       });
     });
     /////
+    /// create the editattr menu
+    editattrul_mom.menu({
+	role: null
+    });
+    editattrul_mom.on("menuselect",function(ev,ui) {
+	var idui= $(ui.item).attr("id");
+	console.debug ("editattrul menu menuselect ev=", ev, " ui=", ui,
+		       " idui=", idui);
+    });
+    /////
     // initialize the tabs
     tabdiv_mom.tabs();
     tabdiv_mom.on('contextmenu', function(ev) {
@@ -228,6 +240,21 @@ $(function(){
 		console.debug ("tabdiv_mom hided editvalitem");
 		mom_set_current_item(itemev,false);
 	    });
+	}
+	else if ($(ev.target).parents(".mom_attrtitle_cl")) {
+	    console.debug ("tabdiv_mom parents attrtitle ev=", ev);
+	    mom_set_current_val(null,true);
+	    mom_set_current_item(null,true);
+	    editattrul_mom.css({top: ev.pageY, left: ev.pageX,
+				'z-index': 10000}).show();
+	    console.debug ("tabdiv_mom contextmenu editattrul_mom=",
+			   editattrul_mom);
+	    $(document).one("click", function() {
+		console.debug ("tabdiv_mom hiding editattr");
+		editattrul_mom.delay(350).hide();
+		console.debug ("tabdiv_mom hided editattr");
+	    });
+	    return false;
 	}
 	else {
 	    mom_set_current_val(null,true);
@@ -610,15 +637,17 @@ function mom_ajax_edit_got(jdata,ev,idui,elem)
 			       " ui=", ui, " val=", newinp.val(), " newinp=", newinp);
 	    }
 	});
-	//newinp.autocomplete("enable");
-	/***
+	newinp.tooltip({tooltipClass: "mom_newvaltooltip_cl",
+			content: "<b>value input:</b> e.g.<br/><ul>"
+			+"<li><tt class='mom_example_cl'>agenda</tt> for an <i>item</i></li>"
+			+"<li><tt class='mom_example_cl'>-12</tt> for an <i>integer</i></li>"
+			+"<li><tt class='mom_example_cl'>\"ab c</tt> for a <i>string</i></li>"
+			+"<li><tt class='mom_example_cl'>*attr</tt> for a <i>node</i> of given connective <code>attr</code></li>"
+			+"</ul>",
+			items:'#'+newid});
 	newinp.on("input", function (ev) {
 	    console.debug ("mom_ajax_edit_got momedit_replaceinput inputev newinp=", newinp, " input ev=", ev);
 	});
-	newinp.on("change", function (ev) {
-	    console.debug ("mom_ajax_edit_got momedit_replaceinput changev newinp=", newinp, " input ev=", ev);
-	});
-	***/
 	console.debug ("mom_ajax_edit_got momedit_replaceinput final newinp=", newinp);
     }
 }
