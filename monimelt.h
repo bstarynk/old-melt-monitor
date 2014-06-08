@@ -2221,7 +2221,7 @@ void mom_load_plugin (const char *plugname, const char *plugarg);
 //// load a module, return true on success
 bool mom_load_module (const char *dirname, const char *modulename);
 /// modules are required to define
-extern const char mommodule_GPL_compatible[];	// a string describing the licence
+extern const char mom_module_GPL_compatible[];	// a string describing the licence
 
 //////// random numbers
 uint32_t mom_random_nonzero_32 (void);
@@ -2289,8 +2289,8 @@ void mom_stop_event_loop (void);
 #define MOM_PLUGIN_PREFIX "momplug_"
 #define MOM_SHARED_MODULE_DIRECTORY "modules"
 /// plugins are required to define
-extern const char momplugin_GPL_compatible[];	// a string describing the licence
-extern void momplugin_init (const char *pluginarg);	// the plugin initializer
+extern const char mom_plugin_GPL_compatible[];	// a string describing the licence
+extern void mom_plugin_init (const char *pluginarg);	// the plugin initializer
 /// they may also define a function to be called after load
 extern void momplugin_after_load (void);
 

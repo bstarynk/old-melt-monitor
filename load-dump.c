@@ -1373,11 +1373,11 @@ mom_load_module (const char *dirpath, const char *modulename)
 		      dlerror ());
       return false;
     }
-  const char *lic = dlsym (dlh, "mommodule_GPL_compatible");
+  const char *lic = dlsym (dlh, "mom_module_GPL_compatible");
   if (!lic)
     {
       MOM_WARNPRINTF
-	("loaded module %s lacks a mommodule_GPL_compatible symbol: %s",
+	("loaded module %s lacks a mom_module_GPL_compatible symbol: %s",
 	 sopath, dlerror ());
       dlclose (dlh);
       return false;

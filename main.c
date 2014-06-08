@@ -594,13 +594,15 @@ mom_load_plugin (const char *plugname, const char *plugarg)
   void *plugdlh = GC_dlopen (plugpath, RTLD_NOW | RTLD_GLOBAL);
   if (!plugdlh)
     MOM_FATAPRINTF ("failed to load plugin %s: %s", plugpath, dlerror ());
-  const char *pluggplcompatible = dlsym (plugdlh, "momplugin_GPL_compatible");
+  const char *pluggplcompatible =
+    dlsym (plugdlh, "mom_plugin_GPL_compatible");
   if (!pluggplcompatible)
-    MOM_FATAPRINTF ("plugin %s without 'momplugin_GPL_compatible' string: %s",
-		    plugpath, dlerror ());
-  typeof (momplugin_init) * pluginit = dlsym (plugdlh, "momplugin_init");
+    MOM_FATAPRINTF
+      ("plugin %s without 'mom_plugin_GPL_compatible' string: %s", plugpath,
+       dlerror ());
+  typeof (mom_plugin_init) * pluginit = dlsym (plugdlh, "mom_plugin_init");
   if (!pluginit)
-    MOM_FATAPRINTF ("plugin %s without 'momplugin_init' function: %s",
+    MOM_FATAPRINTF ("plugin %s without 'mom_plugin_init' function: %s",
 		    plugpath, dlerror ());
   /// we don't use the index 0 on purpose!
   unsigned plugix = ++plugins_mom.plugins_count;

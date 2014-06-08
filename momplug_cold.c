@@ -20,10 +20,10 @@
 
 #include "monimelt.h"
 
-const char momplugin_GPL_compatible[] = "GPLv3+";
+const char mom_plugin_GPL_compatible[] = "GPLv3+";
 
 void
-momplugin_init (const char *arg)
+mom_plugin_init (const char *arg)
 {
   MOM_DEBUGPRINTF (run, "start of " __FILE__ " arg=%s", arg);
 }
