@@ -63,7 +63,7 @@ _timestamp.c:
 	@mv _timestamp.tmp _timestamp.c
 
 indent: .indent.pro # don't indent predef-monimelt.h
-	@for f in *.c $(filter-out predef-monimelt.h, $(wildcard *.h)); do \
+	@for f in *.c $(filter-out predef-monimelt.h, $(wildcard *.h)) $(MODULE_SOURCES); do \
 	  echo indenting $$f; $(INDENT) $$f ;$(INDENT) $$f; done
 
 $(OBJECTS): monimelt.h predef-monimelt.h

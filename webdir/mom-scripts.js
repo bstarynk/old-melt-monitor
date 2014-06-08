@@ -569,16 +569,21 @@ function mom_ajax_edit_got(jdata,ev,idui,elem)
 	console.debug ("mom_ajax_edit_got momedit_replaceinput oldid=", oldid,
 		       " newid=", newid);
 	var newinphtml = "<input class='mom_newvalinput_cl' type='text' id='" + newid +"'/>";
-	var newinp = $('#' + oldid).replaceWith(newinphtml);
+	$('#' + oldid).replaceWith(newinphtml);
+	var newinp = $('#' + newid);
 	// should be autocompleted and notify its input
 	var namescompl = mom_names_completion();
 	var nbcompl = namescompl.length;
+	console.debug ("mom_ajax_edit_got momedit_replaceinput nbcompl=", nbcompl,
+		       " newinp=", newinp);
 	newinp.autocomplete({
 	    minLength: 3,
 	    delay: 250,
 	    source: function (requ,responsefun) {
-		console.debug ("mom_ajax_edit_got momedit_replaceinput newid=", newid,
-			       " requ=", requ);
+		console.debug ("mom_ajax_edit_got momedit_replaceinput source newinp=", newinp,
+			       " requ=", requ, " responsefun=", responsefun);
+		console.debug ("mom_ajax_edit_got momedit_replaceinput source newid=", newid,
+			       " requ=", requ, " responsefun=", responsefun);
 		var curterm = requ.term;
 		var lastwordregexp = /([A-Za-z]\w*)$/;
 		if (curterm.match(lastwordregexp)) {
@@ -593,13 +598,27 @@ function mom_ajax_edit_got(jdata,ev,idui,elem)
 		    console.debug ("mom_ajax_edit_got momedit_replaceinput subnames=", subnames);
 		    var rescomp = subnames.map(function(nam,ix,_){return {label:nam, value:termprefix+nam};});
 		    console.debug ("mom_ajax_edit_got momedit_replaceinput rescomp=", rescomp);
-		    response(rescomp);
+		    responsefun(rescomp);
 		}
-		else response([curterm]);
+		else {
+		    console.debug ("mom_ajax_edit_got momedit_replaceinput same curterm=", curterm);
+		    responsefun([curterm]);
+		}
+	    },
+	    change: function (ev, ui) {
+		console.debug ("mom_ajax_edit_got momedit_replaceinput change ev=", ev,
+			       " ui=", ui, " val=", newinp.val(), " newinp=", newinp);
 	    }
 	});
-	newinp.change(function (ev) {
-	    console.debug("mom_ajax_edit_got momedit_replaceinput change ev=", ev, " val=", newinp.val());
+	//newinp.autocomplete("enable");
+	/***
+	newinp.on("input", function (ev) {
+	    console.debug ("mom_ajax_edit_got momedit_replaceinput inputev newinp=", newinp, " input ev=", ev);
 	});
+	newinp.on("change", function (ev) {
+	    console.debug ("mom_ajax_edit_got momedit_replaceinput changev newinp=", newinp, " input ev=", ev);
+	});
+	***/
+	console.debug ("mom_ajax_edit_got momedit_replaceinput final newinp=", newinp);
     }
 }
