@@ -342,11 +342,11 @@ div.mom_editor_cl {
 input.mom_newvalinput_cl {
     font-family: "Lucida Console", Monaco, monospace;
     font-weight: bold;
-    background-color: rgba(245,240,240,0.7);
+    background-color: rgba(236,242,245,0.7);
 }
 
 input.mom_newvalinput_cl:focus {
     font-family: "Lucida Console", Monaco, monospace;
     font-weight: bold;
-    background-color: rgba(255,245,240,0.7);
+    background-color: rgba(255,240,240,0.7);
 }

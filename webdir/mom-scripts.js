@@ -27,6 +27,7 @@ var commondl_mom;
 var commonbufferdd_mom;
 var curval_mom = null;
 var curitem_mom = null;
+var namescompletion_mom = null;
 
 var system_menu_mom;
 // jquery ready function for our document
@@ -201,7 +202,7 @@ $(function(){
 			 }
 		     },
 		     error:  function (jq,status,errmsg) {
-			 console.error ("editval menuselect  contextmenu prepared error jq=", jq,
+			 console.error ("editval menuselect contextmenu prepared error jq=", jq,
 					" status=", status,
 					" errmsg=", errmsg);
 		     }
@@ -251,6 +252,8 @@ $(function(){
 	    }
 	}
     });
+    ///// initialize the names completion
+    mom_names_completion();
     ///// initial system request
     console.debug ("mom_initial_system before initial ajax_system");
     $.ajax({ url: '/ajax_system',
@@ -265,28 +268,42 @@ $(function(){
     //
 });
 
+function mom_names_completion()
+{
+    if (!namescompletion_mom) {
+	console.debug ("mom_names_completion ajaxing");
+	$.ajax({ url: '/ajax_complete_name',
+		 method: 'POST',
+		 async: false,
+		 dataType: 'json',
+		 success: function (gotjsarr) {
+		     namescompletion_mom= gotjsarr;
+		     console.debug ("mom_names_completion gotjsarr=", gotjsarr);
+		 },
+		 error:  function (jq,status,errmsg) {
+		     console.error ("mom_names_completion failed jq=", jq,
+				    " status=", status, " errmsg=", errmsg);
+		 }
+	       });
+    }
+    return namescompletion_mom;
+}
+
 /* When the "Obj -> Named" menu is selected [mom_menuitem_obj_named]
   The ajax_object is replying by creating the mom_name_input */
 function mom_set_name_entry(inp)
 {
     console.debug ("mom_set_name_entry inp=", inp, " before ajax_complete_name");
-    $.ajax({ url: '/ajax_complete_name',
-	     method: 'POST',
-	     dataType: 'json',
-	     success: function (gotjsarr) {
-		 console.debug ("mom_set_name_entry completename gotjsarr=",
-				gotjsarr);
-		 inp.autocomplete({
-		     source: gotjsarr
-		 });
-	     }
-	   });
+    inp.autocomplete({
+	source: (mom_names_completion())
+    });
 }
 
 // the "Obj -> Named" menu replied by creating the mom_name_input
 // whose onChange calls this function
 function mom_name_input_changed(inp)
 {
+    namescompletion_mom = null;
     console.debug ("mom_name_input_changed inp=", inp,
 		   " of value=", inp.value, " before ajax_object mom_doeditnamed");
     $.ajax({ url: '/ajax_objects',
@@ -486,6 +503,7 @@ function mom_before_close_editor_tab(title,index) {
 function mom_name_entry_selected(rec) {
     console.debug ("mom_name_entry_selected rec=", rec,
 		   " before ajax_objects mom_doeditnamed recname=", rec.name);
+    namescompletion_mom = null;
     $.ajax({ url: '/ajax_objects',
 	     method: 'POST',
 	     data: { todo_mom: "mom_doeditnamed",
@@ -509,6 +527,7 @@ function mom_make_named()
     var newinp = $('#mom_name_new');
     var comminp = $('#mom_comment');
     console.debug ("mom_make_named newinp.val=", newinp.val(), " comminp.val=", comminp.val());
+    namescompletion_mom = null;
     $.ajax({ url: '/ajax_objects',
 	     method: 'POST',
 	     data: { todo_mom: "mom_domakenamed",
@@ -550,7 +569,37 @@ function mom_ajax_edit_got(jdata,ev,idui,elem)
 	console.debug ("mom_ajax_edit_got momedit_replaceinput oldid=", oldid,
 		       " newid=", newid);
 	var newinphtml = "<input class='mom_newvalinput_cl' type='text' id='" + newid +"'/>";
-	$('#' + oldid).replaceWith(newinphtml);
-	// should be autocompleted
+	var newinp = $('#' + oldid).replaceWith(newinphtml);
+	// should be autocompleted and notify its input
+	var namescompl = mom_names_completion();
+	var nbcompl = namescompl.length;
+	newinp.autocomplete({
+	    minLength: 3,
+	    delay: 250,
+	    source: function (requ,responsefun) {
+		console.debug ("mom_ajax_edit_got momedit_replaceinput newid=", newid,
+			       " requ=", requ);
+		var curterm = requ.term;
+		var lastwordregexp = /([A-Za-z]\w*)$/;
+		if (curterm.match(lastwordregexp)) {
+		    var lastword = RegExp.$1;
+		    var lastwordlen = lastword.length;
+		    var termprefix = curterm.slice(0, curterm.length - lastwordlen);
+		    console.debug ("mom_ajax_edit_got momedit_replaceinput lastword=", lastword,
+				   " termprefix=", termprefix);
+		    var subnames = namescompl.filter (function (nam,ix,_) {
+			return nam.length>=lastwordlen && nam.slice(0, lastwordlen)==lastword;
+		    });
+		    console.debug ("mom_ajax_edit_got momedit_replaceinput subnames=", subnames);
+		    var rescomp = subnames.map(function(nam,ix,_){return {label:nam, value:termprefix+nam};});
+		    console.debug ("mom_ajax_edit_got momedit_replaceinput rescomp=", rescomp);
+		    response(rescomp);
+		}
+		else response([curterm]);
+	    }
+	});
+	newinp.change(function (ev) {
+	    console.debug("mom_ajax_edit_got momedit_replaceinput change ev=", ev, " val=", newinp.val());
+	});
     }
 }

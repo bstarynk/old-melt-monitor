@@ -34,7 +34,7 @@ OPTIMFLAGS= -Og -g
 LIBES= -L/usr/local/lib -lgc  $(shell $(PKGCONFIG) --libs $(PACKAGES)) -lonion_handlers -lonion -lpthread -lm -ldl
 SQLITE= sqlite3
 # modules are monimelt generated code
-MODULE_SOURCES= $(sort $(wildcard momg_*.c))
+MODULE_SOURCES= $(sort $(wildcard modules/momg_*.c))
 MODULES= $(patsubst %.c,%.so,$(MODULE_SOURCES))
 # plugins are extra code
 PLUGIN_SOURCES= $(sort $(wildcard momplug_*.c))
@@ -47,6 +47,7 @@ RM= rm -fv
 all: monimelt modules plugins
 clean:
 	$(RM) *~ *.o *.so *.i *.orig _tmp_* monimelt core* webdir/*~ *.tmp  _timestamp.* *dbsqlite*-journal *%
+	$(RM) modules/*.so modules/*~
 	$(RM) -r _monimelt_termdump*
 ################
 monimelt: $(OBJECTS) _timestamp.o

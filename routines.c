@@ -564,7 +564,7 @@ ajaxobjs_lab_beginedit:
 					    mom_string_cstr ((momval_t)
 							     namidv)),
 			MOMOUT_JS_LITERAL
-			("</tt> <small>of id:</small> <code class='mom_itemid_cl'>"),
+			("</tt><br/><small>of id: </small><code class='mom_itemid_cl'>"),
 			MOMOUT_JS_LITERALV ((const char *)
 					    mom_string_cstr ((momval_t) idv)),
 			MOMOUT_JS_LITERAL ("</code>"),
@@ -1546,13 +1546,13 @@ ajaxedit_lab_start:
 			  MOMOUT_LITERAL
 			  ("{ \"momedit_do\": \"momedit_add_to_editval_menu\","),
 			  MOMOUT_NEWLINE (),
-			  MOMOUT_LITERAL (" \"momedit_menuitems\": ["),
+			  MOMOUT_LITERAL (" \"momedit_menuval\": ["),
 			  MOMOUT_NEWLINE (),
 			  MOMOUT_LITERAL
-			  (" \"<li id='mom_menuitem_edititem_removeattr'><a href='#'>Remove attribute</a></li>\","),
+			  (" \"<li id='mom_menuitem_editval_removeattr'><a href='#'>Remove attribute</a></li>\","),
 			  MOMOUT_NEWLINE (),
 			  MOMOUT_LITERAL
-			  (" \"<li id='mom_menuitem_edititem_replaceattr'><a href='#'>Replace attribute</a></li>\" ]"),
+			  (" \"<li id='mom_menuitem_editval_replaceattr'><a href='#'>Replace attribute</a></li>\" ]"),
 			  MOMOUT_NEWLINE (), MOMOUT_LITERAL ("}"),
 			  MOMOUT_NEWLINE (), NULL);
 	    mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
@@ -1653,6 +1653,76 @@ ajaxedit_lab_start:
 	    goto end;
 	  }
       }				/* end if todo mom_menuitem_editval_replace_son */
+    else if (mom_string_same (todov, "mom_menuitem_editval_replaceattr"))
+      {
+	/**** we send a JSON like
+	      { "momedit_do": "momedit_replaceinput",
+	        "momedit_oldid": <id-of-old-element>,
+		"momedit_newid": <id-of-new-input>
+	      }
+	****/
+	momval_t idvalv = mom_webx_post_arg (_L (webx).pitem, "idval_mom");
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL
+		   ("ajax_edit_codmom editval_replaceattr idvalv="),
+		   MOMOUT_VALUE ((const momval_t) idvalv));
+	const char *idvalstr = mom_string_cstr (idvalv);
+	char editidbuf[MOM_IDSTRING_LEN + 8];
+	memset (editidbuf, 0, sizeof (editidbuf));
+	int numval = -1;
+	int newnum = -1;
+	const char *end = NULL;
+	if (idvalstr && !strncmp (idvalstr, "momedval", strlen ("momedval"))
+	    && mom_looks_like_random_id_cstr (idvalstr + strlen ("momedval"),
+					      &end) && end
+	    && sscanf (end, "_N%d", &numval) > 0 && numval >= 0)
+	  {
+	    strncpy (editidbuf, idvalstr + strlen ("momedval"),
+		     MOM_IDSTRING_LEN);
+	    _L (editor) = (momval_t) (mom_get_item_of_identcstr (editidbuf));
+	    MOM_DEBUG (run,
+		       MOMOUT_LITERAL
+		       ("ajax_edit_codmom editval_replaceattr editidbuf="),
+		       MOMOUT_LITERALV ((const char *) editidbuf),
+		       MOMOUT_LITERAL ("; editor="),
+		       MOMOUT_VALUE ((const momval_t) _L (editor)),
+		       MOMOUT_LITERAL ("; end="),
+		       MOMOUT_LITERALV ((const char *) end),
+		       MOMOUT_LITERAL ("; numval="),
+		       MOMOUT_DEC_INT ((int) numval));
+	    {
+	      mom_should_lock_item (_L (editor).pitem);
+	      _L (edinode) = mom_item_vector_nth (_L (editor).pitem, numval);
+	      newnum = mom_item_vector_count (_L (editor).pitem);
+	      mom_item_vector_append1 (_L (editor).pitem, MOM_NULLV);
+	      mom_unlock_item (_L (editor).pitem);
+	    }
+	    MOM_DEBUG (run,
+		       MOMOUT_LITERAL
+		       ("ajax_edit_codmom editval_replaceattr edinode="),
+		       MOMOUT_VALUE (_L (edinode)),
+		       MOMOUT_LITERAL (" newnum#"), MOMOUT_DEC_INT (newnum));
+	    MOM_WEBX_OUT (_L (webx).pitem,
+			  MOMOUT_LITERAL
+			  ("{ \"momedit_do\": \"momedit_replaceinput\","),
+			  MOMOUT_NEWLINE (),
+			  MOMOUT_LITERAL ("  \"momedit_oldid\": \""),
+			  MOMOUT_LITERALV ((const char *) idvalstr),
+			  MOMOUT_LITERAL ("\","),
+			  MOMOUT_NEWLINE (),
+			  MOMOUT_LITERAL ("  \"momedit_newid\": \"momedval"),
+			  MOMOUT_LITERALV ((const char *)
+					   mom_string_cstr ((momval_t)
+							    mom_item_get_idstr
+							    (_L
+							     (editor).pitem))),
+			  MOMOUT_LITERAL ("_N"),
+			  MOMOUT_DEC_INT ((int) newnum),
+			  MOMOUT_LITERAL ("\" }"), MOMOUT_NEWLINE (), NULL);
+	    mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
+	    goto end;
+	  }
+      }				/* end if todo mom_menuitem_editval_replaceattr */
     MOM_FATAPRINTF ("ajax_edit incomplete");
 #warning ajax_edit incomplete
     goto end;

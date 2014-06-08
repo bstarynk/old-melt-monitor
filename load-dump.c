@@ -41,6 +41,8 @@ struct mom_loader_st
   sqlite3_stmt *ldr_sqlstmt_param_fetch;
   // statement for named fetching
   sqlite3_stmt *ldr_sqlstmt_named_fetch;
+  // statement for module fetching
+  sqlite3_stmt *ldr_sqlstmt_module_fetch;
   // statement for item fetching
   sqlite3_stmt *ldr_sqlstmt_item_fetch;
   /// queue of items whose content should be loaded:
@@ -1105,17 +1107,26 @@ mom_initial_load (const char *ldirnam)
     MOM_FATAPRINTF ("failed to open loaded state sqlite3 file %s: %s",
 		    dbpath, sqlite3_errmsg (ldr.ldr_sqlite));
   ldr.ldr_sqlpath = dbpath;
-  /// prepare some statements
+  /********** prepare some statements **********/
+  // statement to fetch a parameter
   if (sqlite3_prepare_v2 (ldr.ldr_sqlite,
 			  "SELECT parvalue FROM t_params WHERE parname = ?1",
 			  -1, &ldr.ldr_sqlstmt_param_fetch, NULL))
     MOM_FATAPRINTF ("failed to prepare fetchparam query: %s",
 		    sqlite3_errmsg (ldr.ldr_sqlite));
+  /// statement to fetch all the names
   if (sqlite3_prepare_v2 (ldr.ldr_sqlite,
 			  "SELECT name, n_idstr, n_spacename FROM t_names ORDER BY name",
 			  -1, &ldr.ldr_sqlstmt_named_fetch, NULL))
     MOM_FATAPRINTF ("failed to prepare fetchparam query: %s",
 		    sqlite3_errmsg (ldr.ldr_sqlite));
+  /// statement to fetch all the modules
+  if (sqlite3_prepare_v2 (ldr.ldr_sqlite,
+			  "SELECT modname FROM t_modules ORDER BY modname",
+			  -1, &ldr.ldr_sqlstmt_module_fetch, NULL))
+    MOM_FATAPRINTF ("failed to prepare fetchmodule query: %s",
+		    sqlite3_errmsg (ldr.ldr_sqlite));
+  /// statement to retrive an item data
   if (sqlite3_prepare_v2 (ldr.ldr_sqlite,
 			  "SELECT itm_jdata FROM t_items WHERE itm_idstr = ?1",
 			  -1, &ldr.ldr_sqlstmt_item_fetch, NULL))
@@ -1128,6 +1139,26 @@ mom_initial_load (const char *ldirnam)
     MOM_FATAPRINTF ("incompatible version in %s, expected %s got %s",
 		    ldr.ldr_sqlpath, MOM_DUMP_VERSION,
 		    vers ? vers : "*nothing*");
+  /// load the modules
+  int modulecount = 0;
+  for (;;)
+    {
+      int stepres = sqlite3_step (ldr.ldr_sqlstmt_module_fetch);
+      if (stepres == SQLITE_DONE)
+	break;
+      else if (stepres == SQLITE_ROW)
+	{
+	  modulecount++;
+	  const unsigned char *modulename
+	    = sqlite3_column_text (ldr.ldr_sqlstmt_module_fetch, 0);
+	  MOM_DEBUGPRINTF (load, "loading module #%d %s", modulecount,
+			   modulename);
+	  if (!mom_load_module (ldr.ldr_dirpath, (const char *) modulename))
+	    MOM_FATAPRINTF ("failed to load module  #%d %s", modulecount,
+			    modulename);
+	}
+    }
+  MOM_INFORMPRINTF ("loaded #%d modules", modulecount);
   /// load the named items
   int namedrowcount = 0;
   for (;;)
@@ -1269,12 +1300,14 @@ mom_initial_load (const char *ldirnam)
 	}
     }
   // finalize the sqlite3 statements
-  sqlite3_finalize (ldr.ldr_sqlstmt_param_fetch),
+  sqlite3_finalize (ldr.ldr_sqlstmt_param_fetch),	//
     ldr.ldr_sqlstmt_param_fetch = NULL;
-  sqlite3_finalize (ldr.ldr_sqlstmt_named_fetch),
+  sqlite3_finalize (ldr.ldr_sqlstmt_named_fetch),	//
     ldr.ldr_sqlstmt_named_fetch = NULL;
-  sqlite3_finalize (ldr.ldr_sqlstmt_item_fetch), ldr.ldr_sqlstmt_item_fetch =
-    NULL;
+  sqlite3_finalize (ldr.ldr_sqlstmt_module_fetch),	//
+    ldr.ldr_sqlstmt_module_fetch = NULL;
+  sqlite3_finalize (ldr.ldr_sqlstmt_item_fetch),	//
+    ldr.ldr_sqlstmt_item_fetch = NULL;
   int errclo = sqlite3_close_v2 (ldr.ldr_sqlite);
   if (errclo != SQLITE_OK)
     MOM_FATAPRINTF ("failed to close loaded sqlite3 %s: %s", ldr.ldr_sqlpath,
@@ -1287,6 +1320,71 @@ mom_initial_load (const char *ldirnam)
      endrealtime - startrealtime, endcputime - startcputime);
 }
 
+
+
+
+bool
+mom_load_module (const char *dirpath, const char *modulename)
+{
+  char srcpath[MOM_PATH_MAX] = { 0 };
+  char sopath[MOM_PATH_MAX] = { 0 };
+  struct stat srcstat = { 0 };
+  struct stat sostat = { 0 };
+  if (!dirpath)
+    dirpath = ".";
+  assert (dirpath != NULL);
+  if (!modulename || !modulename[0])
+    return;
+  memset (srcpath, 0, sizeof (srcpath));
+  memset (sopath, 0, sizeof (sopath));
+  if (strlen (dirpath) + strlen (modulename) + 16 > MOM_PATH_MAX)
+    MOM_FATAPRINTF ("too long directory %s or module name %s to load",
+		    dirpath, modulename);
+  if (strchr (modulename, '/')
+      || (!isalnum (modulename[0]) && modulename[0] != '_'))
+    MOM_FATAPRINTF ("invalid module name %s to load", modulename);
+  snprintf (srcpath, sizeof (srcpath),
+	    "%s/" MOM_SHARED_MODULE_DIRECTORY "/" MOM_SHARED_MODULE_PREFIX
+	    "%s.c", dirpath, modulename);
+  snprintf (sopath, sizeof (sopath),
+	    "%s/" MOM_SHARED_MODULE_DIRECTORY "/" MOM_SHARED_MODULE_PREFIX
+	    "%s.so", dirpath, modulename);
+  if (stat (srcpath, &srcstat))
+    {
+      MOM_WARNPRINTF ("stat on loaded module source %s failed", srcpath);
+      return false;
+    };
+  if (stat (sopath, &sostat))
+    {
+      MOM_WARNPRINTF ("stat on loaded module binary %s failed", sopath);
+      return false;
+    };
+  if (srcstat.st_mtime > sostat.st_mtime)
+    {
+      MOM_WARNPRINTF
+	("loaded module source %s is more recent that its binary %s", srcpath,
+	 sopath);
+      return false;
+    }
+  void *dlh = GC_dlopen (sopath, RTLD_NOW | RTLD_GLOBAL);
+  if (!dlh)
+    {
+      MOM_WARNPRINTF ("failed dlopen on loaded module binary %s: %s", sopath,
+		      dlerror ());
+      return false;
+    }
+  const char *lic = dlsym (dlh, "mommodule_GPL_compatible");
+  if (!lic)
+    {
+      MOM_WARNPRINTF
+	("loaded module %s lacks a mommodule_GPL_compatible symbol: %s",
+	 sopath, dlerror ());
+      dlclose (dlh);
+      return false;
+    }
+  MOM_INFORMPRINTF ("loaded module %s (license info: %s)", sopath, lic);
+  return true;
+}
 
 
 static void

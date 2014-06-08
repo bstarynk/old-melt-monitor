@@ -2218,6 +2218,10 @@ mom_queue_peek_value_back (struct mom_valuequeue_st *vq)
 void *mom_prog_dlhandle;
 //// load a plugin
 void mom_load_plugin (const char *plugname, const char *plugarg);
+//// load a module, return true on success
+bool mom_load_module (const char *dirname, const char *modulename);
+/// modules are required to define
+extern const char mommodule_GPL_compatible[];	// a string describing the licence
 
 //////// random numbers
 uint32_t mom_random_nonzero_32 (void);
@@ -2283,7 +2287,7 @@ void mom_stop_event_loop (void);
 #define MOM_SHARED_MODULE_PREFIX "momg_"
 // plugins path start with
 #define MOM_PLUGIN_PREFIX "momplug_"
-
+#define MOM_SHARED_MODULE_DIRECTORY "modules"
 /// plugins are required to define
 extern const char momplugin_GPL_compatible[];	// a string describing the licence
 extern void momplugin_init (const char *pluginarg);	// the plugin initializer
