@@ -1271,7 +1271,7 @@ ajaxcompnam_lab_start:
 	MOM_DEBUG (run,
 		   MOMOUT_LITERAL ("ajax_complete_name_codmom tupnamed="),
 		   MOMOUT_VALUE ((const momval_t) tupnamed),
-		   MOMOUT_SPACE (24), MOMOUT_LITERAL ("jsarrnames="),
+		   MOMOUT_NEWLINE (), MOMOUT_LITERAL (" jsarrnames="),
 		   MOMOUT_VALUE ((const momval_t) jsarrnames));
 	MOM_WEBX_OUT (_L (webx).pitem, MOMOUT_JSON_VALUE (jsarrnames));
 	mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
@@ -1756,8 +1756,8 @@ ajaxedit_lab_start:
 	  }
       }				/* end if todo mom_menuitem_editval_replaceattr */
     //
-    /***** todo= mom_newinput ****/
-    else if (mom_string_same (todov, "mom_newinput"))
+    /***** todo= momedit_newinput ****/
+    else if (mom_string_same (todov, "momedit_newinput"))
       {
 	momval_t idvalv = mom_webx_post_arg (_L (webx).pitem, "idval_mom");
 	momval_t inputv = mom_webx_post_arg (_L (webx).pitem, "input_mom");
@@ -1793,6 +1793,9 @@ ajaxedit_lab_start:
 		       MOMOUT_LITERAL ("; numval="),
 		       MOMOUT_DEC_INT ((int) numval));
 	  }
+	MOM_FATAPRINTF
+	  ("ajax_edit_codmom editval_newinput should parse inputstr=%s",
+	   inputstr);
 #warning ajax_edit todo mom_newinput should parse inputstr
       }				/* end if todo mom_newinput */
     //
@@ -1817,6 +1820,8 @@ ajaxedit_lab_start:
 	if (_L (curattr).pitem && _L (editor).pitem)
 	  {
 	    int newnum = -1;
+	    momval_t newnodv = MOM_NULLV;
+	    momitem_t *curitem = NULL;
 	    const char *editoridstr =
 	      mom_string_cstr ((momval_t)
 			       mom_item_get_idstr (_L (editor).pitem));
@@ -1827,22 +1832,33 @@ ajaxedit_lab_start:
 	      (momval_t) mom_item_get_name_or_idstr (_L (curattr).pitem);
 	    {
 	      mom_should_lock_item (_L (editor).pitem);
+	      curitem =
+		mom_value_to_item (mom_item_get_attribute
+				   (_L (editor).pitem, mom_named__item));
+	      newnodv =
+		(momval_t) mom_make_node_sized (mom_named__attr, 2,
+						(momval_t) curitem,
+						(momval_t) _L (curattr));
 	      newnum = mom_item_vector_count (_L (editor).pitem);
-	      mom_item_vector_append1 (_L (editor).pitem, MOM_NULLV);
+	      mom_item_vector_append1 (_L (editor).pitem, newnodv);
 	      mom_unlock_item (_L (editor).pitem);
 	    }
+	    MOM_DEBUG (run,
+		       MOMOUT_LITERAL
+		       ("ajax_edit_codmom add_attribute newnodv="),
+		       MOMOUT_VALUE ((const momval_t) newnodv),
+		       MOMOUT_LITERAL ("; newnum="), MOMOUT_DEC_INT (newnum),
+		       NULL);
 	    MOM_WEBX_OUT (_L (webx).pitem,
 			  MOMOUT_LITERAL
 			  ("{ \"momedit_do\": \"momedit_newattr\","),
 			  MOMOUT_NEWLINE (),
 			  MOMOUT_LITERAL (" \"momedit_editorid\": \""),
 			  MOMOUT_LITERALV (editoridstr),
-			  MOMOUT_LITERAL ("\", "),
-			  MOMOUT_NEWLINE (),
+			  MOMOUT_LITERAL ("\", "), MOMOUT_NEWLINE (),
 			  MOMOUT_LITERAL (" \"momedit_attrid\": \""),
 			  MOMOUT_LITERALV (attridstr),
-			  MOMOUT_LITERAL ("\", "),
-			  MOMOUT_NEWLINE (),
+			  MOMOUT_LITERAL ("\", "), MOMOUT_NEWLINE (),
 			  MOMOUT_LITERAL (" \"momedit_attrspan\": \""),
 			  MOMOUT_JS_LITERAL
 			  ("<span class='mom_newattritem_cl' data-momitemid='"),
@@ -1862,6 +1878,18 @@ ajaxedit_lab_start:
 	  }
 	else
 	  {
+	    const char *editoridstr =
+	      mom_string_cstr ((momval_t)
+			       mom_item_get_idstr (_L (editor).pitem));
+	    MOM_WEBX_OUT (_L (webx).pitem,
+			  MOMOUT_LITERAL
+			  ("{ \"momedit_do\": \"momedit_badnewattr\","),
+			  MOMOUT_NEWLINE (),
+			  MOMOUT_LITERAL (" \"momedit_editorid\": \""),
+			  MOMOUT_LITERALV (editoridstr),
+			  MOMOUT_LITERAL ("\" } "), MOMOUT_NEWLINE (), NULL);
+	    mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
+	    goto end;
 	  }
       }				/* end if todo mom_add_attribute */
 

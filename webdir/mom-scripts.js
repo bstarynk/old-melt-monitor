@@ -211,6 +211,11 @@ $(function(){
 				   mom_add_new_attr(gotdata);
 				   addattrdlg_mom.dialog("close");
 			       }
+			       else if (gotdata.momedit_do == 'momedit_badnewattr') {
+				   attrinp.val("");
+				   var warn = $('#mom_addedattr_input').after("<b class='mom_warning_cl'>bad attribute!</b>");
+				   warn.delay(600).effect("fade").remove();
+			       }
 			       else console.error("addattrdlg add ajax_edit strange gotdatado:", gotdata.momedit_do);
 			   }
 			 });
