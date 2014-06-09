@@ -29,6 +29,8 @@ var commonbufferdd_mom;
 var curval_mom = null;
 var curitem_mom = null;
 var namescompletion_mom = null;
+var addattrdlg_mom;
+var addedattrinp_mom;
 
 var system_menu_mom;
 // jquery ready function for our document
@@ -41,6 +43,8 @@ $(function(){
     editattrul_mom = $('#mom_editattr_ul');
     commondl_mom = $('#mom_commondl');
     commonbufferdd_mom= $('#mom_commonbuffer_dd');
+    addattrdlg_mom= $('#mom_addattr_dlg');
+    addedattrinp_mom= $('#mom_addedattr_input');
     //
     // create the system button with its menu
     var systembut = $('#mom_system_but');
@@ -170,6 +174,52 @@ $(function(){
 	var idui= $(ui.item).attr("id");
 	var editorid = editattrul_mom.attr("data-momeditorid");
 	console.debug ("editattrul menu menuselect idui=", idui, " editorid=", editorid);
+	if (idui == 'mom_menuitem_editattr_add') 
+	    mom_editor_attr_add(editorid);
+    });
+    /////
+    /// create the addattr dialog and input
+    addattrdlg_mom.dialog({
+	autoOpen: false,
+	open: function(ev, ui) {
+	    addedattrinp_mom.autocomplete("option","source", mom_names_completion());
+	},
+	close: function (ev,ui) {
+	    addattrdlg_mom.attr("data-momeditor",null);
+	},
+	modal: true,
+	buttons: [
+	    { text: 'Add',
+	      click: function () {
+		  var editorid= addattrdlg_mom.attr("data-momeditor");
+		  var attrinp= addedattrinp_mom.val();
+		  console.debug ("addattrdlg add editorid=", editorid, " attrinp=", attrinp);
+		  $.ajax({ url: '/ajax_edit',
+ 			   method: 'POST',
+ 			   data: { todo_mom: 'mom_add_attribute',
+				   editor_mom: editorid,
+				   attr_mom: attrinp
+				 },
+			   error: function (jq,status,errmsg) {
+			       console.error ("addattrdlg add ajax_edit error jq=", jq,
+					      " status=", status,
+					      " errmsg=", errmsg);
+			   },
+			   success: function (gotdata) {
+			       console.warning ("addattrdlg add ajax_edit unimplemented gotdata=", gotdata);
+			   }
+			 });
+	      }},
+	    { text: 'Cancel',
+	      click: function () {
+		  $(this).dialog("close");
+	      }}
+	]
+    });
+    addedattrinp_mom.autocomplete({
+	delay: 300,
+	minLength: 2,
+	source: mom_names_completion()
     });
     /////
     // initialize the tabs
@@ -674,4 +724,11 @@ function mom_ajax_edit_got(jdata,ev,idui,elem)
 
 function mom_ajax_edit_input(jdata,inp) {
     console.debug ("mom_ajax_edit_input jdata=", jdata, " inp=", inp);
+}
+
+
+function mom_editor_attr_add(editorid) {
+    console.debug ("mom_editor_attr_add editorid=", editorid);
+    addattrdlg_mom.attr("data-momeditor",editorid);
+    addattrdlg_mom.dialog("open");
 }

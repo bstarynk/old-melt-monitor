@@ -366,3 +366,7 @@ input.mom_newvalinput_cl:focus {
     font-weight: bold;
     background-color: rgba(255,240,240,0.7);
 }
+
+div.mom_addattrdialog_cl {
+    background-color: rgba(245,254,240,0.8);
+}

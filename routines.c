@@ -1318,6 +1318,7 @@ enum ajax_edit_values_en
   ajaxedit_v_edinode,
   ajaxedit_v_curval,
   ajaxedit_v_origin,
+  ajaxedit_v_curattr,
   ajaxedit_v__lastval
 };
 
@@ -1390,6 +1391,7 @@ ajaxedit_lab_start:
 	       MOMOUT_NEWLINE (),
 	       MOMOUT_LITERAL (" todo="),
 	       MOMOUT_VALUE ((const momval_t) todov), NULL);
+    /***** todo= mom_menuitem_editval_copy ****/
     if (mom_string_same (todov, "mom_menuitem_editval_copy"))
       {
 	momval_t idvalv = mom_webx_post_arg (_L (webx).pitem, "idval_mom");
@@ -1469,6 +1471,7 @@ ajaxedit_lab_start:
 	_SET_STATE (dideditcopy);
       }				// end if todov is mom_menuitem_editval_copy
     //
+    /***** todo= mom_menuitem_edititem_copy ****/
     else if (mom_string_same (todov, "mom_menuitem_edititem_copy"))
       {
 	momval_t iditemv = mom_webx_post_arg (_L (webx).pitem, "iditem_mom");
@@ -1503,8 +1506,8 @@ ajaxedit_lab_start:
 	mom_unlock_item (_L (webx).pitem);
 	_SET_STATE (dideditcopy);
       }				//// end if todo is mom_menuitem_edititem_copy
-
     //
+    /***** todo= mom_prepare_editval_menu ****/
     else if (mom_string_same (todov, "mom_prepare_editval_menu"))
       {
 	momval_t idvalv = mom_webx_post_arg (_L (webx).pitem, "idval_mom");
@@ -1608,6 +1611,8 @@ ajaxedit_lab_start:
 	    goto end;
 	  }
       }				//// end if todo is mom_prepare_editval_menu
+    //
+    /***** todo= mom_menuitem_editval_replaceson ****/
     else if (mom_string_same (todov, "mom_menuitem_editval_replaceson"))
       {
 	/**** we send a JSON like
@@ -1678,6 +1683,8 @@ ajaxedit_lab_start:
 	    goto end;
 	  }
       }				/* end if todo mom_menuitem_editval_replace_son */
+    //
+    /***** todo= mom_menuitem_editval_replaceattr ****/
     else if (mom_string_same (todov, "mom_menuitem_editval_replaceattr"))
       {
 	/**** we send a JSON like
@@ -1748,6 +1755,8 @@ ajaxedit_lab_start:
 	    goto end;
 	  }
       }				/* end if todo mom_menuitem_editval_replaceattr */
+    //
+    /***** todo= mom_newinput ****/
     else if (mom_string_same (todov, "mom_newinput"))
       {
 	momval_t idvalv = mom_webx_post_arg (_L (webx).pitem, "idval_mom");
@@ -1786,6 +1795,24 @@ ajaxedit_lab_start:
 	  }
 #warning ajax_edit todo mom_newinput should parse inputstr
       }				/* end if todo mom_newinput */
+    //
+    /***** todo= mom_add_attribute ****/
+    else if (mom_string_same (todov, "mom_add_attribute"))
+      {
+	momval_t attrstrv = mom_webx_post_arg (_L (webx).pitem, "attr_mom");
+	momval_t editoridv =
+	  mom_webx_post_arg (_L (webx).pitem, "editor_mom");
+	_L (curattr) =
+	  (momval_t) mom_get_item_of_name_or_ident_string (attrstrv);
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL
+		   ("ajax_edit_codmom add_attribute attrstrv="),
+		   MOMOUT_VALUE ((const momval_t) attrstrv),
+		   MOMOUT_LITERAL (" editoridv="),
+		   MOMOUT_VALUE ((const momval_t) editoridv),
+		   MOMOUT_LITERAL (" curattr="), MOMOUT_VALUE (_L (curattr)));
+      }				/* end if todo mom_add_attribute */
+
     MOM_FATAPRINTF ("ajax_edit incomplete");
 #warning ajax_edit incomplete
     goto end;
