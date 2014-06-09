@@ -206,7 +206,12 @@ $(function(){
 					      " errmsg=", errmsg);
 			   },
 			   success: function (gotdata) {
-			       console.warning ("addattrdlg add ajax_edit unimplemented gotdata=", gotdata);
+			       console.debug ("addattrdlg add ajax_edit gotdata=", gotdata);
+			       if (gotdata.momedit_do == 'momedit_newattr') {
+				   mom_add_new_attr(gotdata);
+				   addattrdlg_mom.dialog("close");
+			       }
+			       else console.error("addattrdlg add ajax_edit strange gotdatado:", gotdata.momedit_do);
 			   }
 			 });
 	      }},
@@ -293,8 +298,10 @@ $(function(){
 	    });
 	}
 	else if ($(ev.target).parents(".mom_attrtitle_cl")) {
-	    console.debug ("tabdiv_mom parents attrtitle ev=", ev);
-	    var editorid = $(ev.target).parents(".mom_editor_cl").attr("id").replace("momeditor","");
+	    console.debug ("tabdiv_mom parents attrtitle ev=", ev, " target=", $(ev.target));
+	    var editortab = $(ev.target).parents(".mom_editor_cl");
+	    console.debug ("tabdiv_mom parents editortab=", editortab);
+	    var editorid = editortab.attr("id").replace("momeditor","");
 	    console.debug ("tabdiv_mom parents attrtitle editorid=", editorid);
 	    mom_set_current_val(null,true);
 	    mom_set_current_item(null,true);
@@ -653,18 +660,18 @@ function mom_ajax_edit_got(jdata,ev,idui,elem)
 	var newinphtml = "<input class='mom_newvalinput_cl' type='text' id='" + newid +"'/>";
 	$('#' + oldid).replaceWith(newinphtml);
 	var newinp = $('#' + newid);
-	mom_install_new_input(newinp);
+	mom_install_new_input(newinp,newid);
 	console.debug ("mom_ajax_edit_got momedit_replaceinput final newinp=", newinp);
     }
 }
 
-function mom_install_new_input(newinp)
+function mom_install_new_input(newinp,newid)
 {
     // should be autocompleted and notify its input
     var namescompl = mom_names_completion();
     var nbcompl = namescompl.length;
     console.debug ("mom_install_new_input nbcompl=", nbcompl,
-		   " newinp=", newinp);
+		   " newinp=", newinp, " newid=", newid);
     newinp.autocomplete({
 	minLength: 3,
 	delay: 250,
@@ -736,4 +743,21 @@ function mom_editor_attr_add(editorid) {
     console.debug ("mom_editor_attr_add editorid=", editorid);
     addattrdlg_mom.attr("data-momeditor",editorid);
     addattrdlg_mom.dialog("open");
+}
+
+
+function mom_add_new_attr(jdata) {
+    console.debug ("mom_add_new_attr jdata=", jdata);
+    var editorid=jdata.momedit_editorid;
+    var attrid=jdata.momedit_attrid;
+    var attrspan=jdata.momedit_attrspan;
+    var newvalid=jdata.momedit_newvalid;
+    var newinphtml = "<input class='mom_newvalinput_cl' type='text' id='" + newvalid +"'/>";
+    var editordiv = $('#momeditor'+editorid);
+    // get the mom_attrlist_cl inside the mom_attributes_cl inside the editordiv
+    console.debug("mom_add_new_attr editordiv=", editordiv, " jdata=", jdata);
+    var attrlist = editordiv.find('.mom_attributes_cl').find('.mom_attrlist_cl');
+    attrlist.append("<li class='mom_newattrentry_cl'>" + attrspan + " &#8658; " + newinphtml + "</li>");
+    var newinp = $('#'+newvalid);
+    mom_install_new_input(newinp,newvalid)
 }
