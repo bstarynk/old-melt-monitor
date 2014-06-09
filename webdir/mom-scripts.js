@@ -653,73 +653,78 @@ function mom_ajax_edit_got(jdata,ev,idui,elem)
 	var newinphtml = "<input class='mom_newvalinput_cl' type='text' id='" + newid +"'/>";
 	$('#' + oldid).replaceWith(newinphtml);
 	var newinp = $('#' + newid);
-	// should be autocompleted and notify its input
-	var namescompl = mom_names_completion();
-	var nbcompl = namescompl.length;
-	console.debug ("mom_ajax_edit_got momedit_replaceinput nbcompl=", nbcompl,
-		       " newinp=", newinp);
-	newinp.autocomplete({
-	    minLength: 3,
-	    delay: 250,
-	    source: function (requ,responsefun) {
-		console.debug ("mom_ajax_edit_got momedit_replaceinput source newinp=", newinp,
-			       " requ=", requ, " responsefun=", responsefun);
-		console.debug ("mom_ajax_edit_got momedit_replaceinput source newid=", newid,
-			       " requ=", requ, " responsefun=", responsefun);
-		var curterm = requ.term;
-		var lastwordregexp = /([A-Za-z]\w*)$/;
-		if (curterm.match(lastwordregexp)) {
-		    var lastword = RegExp.$1;
-		    var lastwordlen = lastword.length;
-		    var termprefix = curterm.slice(0, curterm.length - lastwordlen);
-		    console.debug ("mom_ajax_edit_got momedit_replaceinput lastword=", lastword,
-				   " termprefix=", termprefix);
-		    var subnames = namescompl.filter (function (nam,ix,_) {
-			return nam.length>=lastwordlen && nam.slice(0, lastwordlen)==lastword;
-		    });
-		    console.debug ("mom_ajax_edit_got momedit_replaceinput subnames=", subnames);
-		    var rescomp = subnames.map(function(nam,ix,_){return {label:nam, value:termprefix+nam};});
-		    console.debug ("mom_ajax_edit_got momedit_replaceinput rescomp=", rescomp);
-		    responsefun(rescomp);
-		}
-		else {
-		    console.debug ("mom_ajax_edit_got momedit_replaceinput same curterm=", curterm);
-		    responsefun([curterm]);
-		}
-	    },
-	    change: function (ev, ui) {
-		console.debug ("mom_ajax_edit_got momedit_replaceinput change ev=", ev,
-			       " ui=", ui, " val=", newinp.val(), " newinp=", newinp);
-		$.ajax({ url: '/ajax_edit',
-			 method: 'POST',
-			 data: { todo_mom: "momedit_newinput",
-				 idval_mom: newinp.attr("id"),
-				 input_mom: newinp.val() },
-			 dataType: 'json',
-			 success: function (gotdata) {
-			     console.debug ("mom_ajax_edit_got momedit_newinput gotdata=", gotdata);
-			     mom_ajax_edit_input (gotdata, newinp);
-			 },
-			 error: function (jq,status,errmsg) {
-			     console.error ("mom_ajax_edit_got momedit_newinput",
-					    " error jq=", jq, " status=", status, " errmsg=", errmsg);
-			 }
-		       });
-	    }
-	});
-	newinp.tooltip({tooltipClass: "mom_newvaltooltip_cl",
-			content: "<b>value input:</b> e.g.<br/><ul>"
-			+"<li><tt class='mom_example_cl'>agenda</tt> for an <i>item</i></li>"
-			+"<li><tt class='mom_example_cl'>-12</tt> for an <i>integer</i></li>"
-			+"<li><tt class='mom_example_cl'>\"ab c</tt> for a <i>string</i></li>"
-			+"<li><tt class='mom_example_cl'>*attr</tt> for a <i>node</i> of given connective <code>attr</code></li>"
-			+"</ul>",
-			items:'#'+newid});
-	newinp.on("input", function (ev) {
-	    console.debug ("mom_ajax_edit_got momedit_replaceinput inputev newinp=", newinp, " input ev=", ev);
-	});
+	mom_install_new_input(newinp);
 	console.debug ("mom_ajax_edit_got momedit_replaceinput final newinp=", newinp);
     }
+}
+
+function mom_install_new_input(newinp)
+{
+    // should be autocompleted and notify its input
+    var namescompl = mom_names_completion();
+    var nbcompl = namescompl.length;
+    console.debug ("mom_install_new_input nbcompl=", nbcompl,
+		   " newinp=", newinp);
+    newinp.autocomplete({
+	minLength: 3,
+	delay: 250,
+	source: function (requ,responsefun) {
+	    console.debug ("mom_install_new_input source newinp=", newinp,
+			   " requ=", requ, " responsefun=", responsefun);
+	    console.debug ("mom_install_new_input source newid=", newid,
+			   " requ=", requ, " responsefun=", responsefun);
+	    var curterm = requ.term;
+	    var lastwordregexp = /([A-Za-z]\w*)$/;
+	    if (curterm.match(lastwordregexp)) {
+		var lastword = RegExp.$1;
+		var lastwordlen = lastword.length;
+		var termprefix = curterm.slice(0, curterm.length - lastwordlen);
+		console.debug ("mom_install_new_input lastword=", lastword,
+			       " termprefix=", termprefix);
+		var subnames = namescompl.filter (function (nam,ix,_) {
+		    return nam.length>=lastwordlen && nam.slice(0, lastwordlen)==lastword;
+		});
+		console.debug ("mom_install_new_input subnames=", subnames);
+		var rescomp = subnames.map(function(nam,ix,_){return {label:nam, value:termprefix+nam};});
+		console.debug ("mom_install_new_input rescomp=", rescomp);
+		responsefun(rescomp);
+	    }
+	    else {
+		console.debug ("mom_install_new_input same curterm=", curterm);
+		responsefun([curterm]);
+	    }
+	},
+	change: function (ev, ui) {
+	    console.debug ("mom_install_new_input change ev=", ev,
+			   " ui=", ui, " val=", newinp.val(), " newinp=", newinp);
+	    $.ajax({ url: '/ajax_edit',
+		     method: 'POST',
+		     data: { todo_mom: "momedit_newinput",
+			     idval_mom: newinp.attr("id"),
+			     input_mom: newinp.val() },
+		     dataType: 'json',
+		     success: function (gotdata) {
+			 console.debug ("mom_install_new_input change gotdata=", gotdata);
+			 mom_ajax_edit_input (gotdata, newinp);
+		     },
+		     error: function (jq,status,errmsg) {
+			 console.error ("mom_install_new_input change",
+					" error jq=", jq, " status=", status, " errmsg=", errmsg);
+		     }
+		   });
+	}
+    });
+    newinp.tooltip({tooltipClass: "mom_newvaltooltip_cl",
+		    content: "<b>value input:</b> e.g.<br/><ul>"
+		    +"<li><tt class='mom_example_cl'>agenda</tt> for an <i>item</i></li>"
+		    +"<li><tt class='mom_example_cl'>-12</tt> for an <i>integer</i></li>"
+		    +"<li><tt class='mom_example_cl'>\"ab c</tt> for a <i>string</i></li>"
+		    +"<li><tt class='mom_example_cl'>*attr</tt> for a <i>node</i> of given connective <code>attr</code></li>"
+		    +"</ul>",
+		    items:'#'+newid});
+    newinp.on("input", function (ev) {
+	console.debug ("mom_install_new_input input newinp=", newinp, " input ev=", ev);
+    });
 }
 
 function mom_ajax_edit_input(jdata,inp) {

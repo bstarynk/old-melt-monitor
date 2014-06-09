@@ -1804,13 +1804,65 @@ ajaxedit_lab_start:
 	  mom_webx_post_arg (_L (webx).pitem, "editor_mom");
 	_L (curattr) =
 	  (momval_t) mom_get_item_of_name_or_ident_string (attrstrv);
+	_L (editor) = (momval_t) (mom_get_item_of_ident (editoridv.pstring));
 	MOM_DEBUG (run,
 		   MOMOUT_LITERAL
 		   ("ajax_edit_codmom add_attribute attrstrv="),
 		   MOMOUT_VALUE ((const momval_t) attrstrv),
 		   MOMOUT_LITERAL (" editoridv="),
 		   MOMOUT_VALUE ((const momval_t) editoridv),
-		   MOMOUT_LITERAL (" curattr="), MOMOUT_VALUE (_L (curattr)));
+		   MOMOUT_LITERAL (" curattr="), MOMOUT_VALUE (_L (curattr)),
+		   MOMOUT_LITERAL (" editor="), MOMOUT_VALUE (_L (editor)),
+		   NULL);
+	if (_L (curattr).pitem && _L (editor).pitem)
+	  {
+	    int newnum = -1;
+	    const char *editoridstr =
+	      mom_string_cstr ((momval_t)
+			       mom_item_get_idstr (_L (editor).pitem));
+	    const char *attridstr =
+	      mom_string_cstr ((momval_t)
+			       mom_item_get_idstr (_L (curattr).pitem));
+	    momval_t namidatv =
+	      (momval_t) mom_item_get_name_or_idstr (_L (curattr).pitem);
+	    {
+	      mom_should_lock_item (_L (editor).pitem);
+	      newnum = mom_item_vector_count (_L (editor).pitem);
+	      mom_item_vector_append1 (_L (editor).pitem, MOM_NULLV);
+	      mom_unlock_item (_L (editor).pitem);
+	    }
+	    MOM_WEBX_OUT (_L (webx).pitem,
+			  MOMOUT_LITERAL
+			  ("{ \"momedit_do\": \"momedit_newattr\","),
+			  MOMOUT_NEWLINE (),
+			  MOMOUT_LITERAL (" \"momedit_editorid\": \""),
+			  MOMOUT_LITERALV (editoridstr),
+			  MOMOUT_LITERAL ("\", "),
+			  MOMOUT_NEWLINE (),
+			  MOMOUT_LITERAL (" \"momedit_attrid\": \""),
+			  MOMOUT_LITERALV (attridstr),
+			  MOMOUT_LITERAL ("\", "),
+			  MOMOUT_NEWLINE (),
+			  MOMOUT_LITERAL (" \"momedit_attrspan\": \""),
+			  MOMOUT_JS_LITERAL
+			  ("<span class='mom_newattritem_cl' data-momitemid='"),
+			  MOMOUT_LITERALV (attridstr),
+			  MOMOUT_JS_LITERAL ("'>"),
+			  MOMOUT_HTML (mom_string_cstr (namidatv)),
+			  MOMOUT_JS_LITERAL ("</span>"),
+			  MOMOUT_LITERAL ("\", "), MOMOUT_NEWLINE (),
+			  MOMOUT_LITERAL
+			  ("  \"momedit_newvalid\": \"momedval"),
+			  MOMOUT_LITERALV (editoridstr),
+			  MOMOUT_LITERAL ("_N"),
+			  MOMOUT_DEC_INT ((int) newnum),
+			  MOMOUT_LITERAL ("\" }"), MOMOUT_NEWLINE (), NULL);
+	    mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
+	    goto end;
+	  }
+	else
+	  {
+	  }
       }				/* end if todo mom_add_attribute */
 
     MOM_FATAPRINTF ("ajax_edit incomplete");
