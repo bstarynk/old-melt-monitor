@@ -640,6 +640,21 @@ function mom_ajax_edit_got(jdata,ev,idui,elem)
 	    change: function (ev, ui) {
 		console.debug ("mom_ajax_edit_got momedit_replaceinput change ev=", ev,
 			       " ui=", ui, " val=", newinp.val(), " newinp=", newinp);
+		$.ajax({ url: '/ajax_edit',
+			 method: 'POST',
+			 data: { todo_mom: "momedit_newinput",
+				 idval_mom: newinp.attr("id"),
+				 input_mom: newinp.val() },
+			 dataType: 'json',
+			 success: function (gotdata) {
+			     console.debug ("mom_ajax_edit_got momedit_newinput gotdata=", gotdata);
+			     mom_ajax_edit_input (gotdata, newinp);
+			 },
+			 error: function (jq,status,errmsg) {
+			     console.error ("mom_ajax_edit_got momedit_newinput",
+					    " error jq=", jq, " status=", status, " errmsg=", errmsg);
+			 }
+		       });
 	    }
 	});
 	newinp.tooltip({tooltipClass: "mom_newvaltooltip_cl",
@@ -655,4 +670,8 @@ function mom_ajax_edit_got(jdata,ev,idui,elem)
 	});
 	console.debug ("mom_ajax_edit_got momedit_replaceinput final newinp=", newinp);
     }
+}
+
+function mom_ajax_edit_input(jdata,inp) {
+    console.debug ("mom_ajax_edit_input jdata=", jdata, " inp=", inp);
 }

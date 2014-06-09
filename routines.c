@@ -1723,6 +1723,44 @@ ajaxedit_lab_start:
 	    goto end;
 	  }
       }				/* end if todo mom_menuitem_editval_replaceattr */
+    else if (mom_string_same (todov, "mom_newinput"))
+      {
+	momval_t idvalv = mom_webx_post_arg (_L (webx).pitem, "idval_mom");
+	momval_t inputv = mom_webx_post_arg (_L (webx).pitem, "input_mom");
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL
+		   ("ajax_edit_codmom editval_newinput idvalv="),
+		   MOMOUT_VALUE ((const momval_t) idvalv),
+		   MOMOUT_LITERAL (" input="),
+		   MOMOUT_VALUE ((const momval_t) inputv));
+	const char *idvalstr = mom_string_cstr (idvalv);
+	const char *inputstr = mom_string_cstr (inputv);
+	char editidbuf[MOM_IDSTRING_LEN + 8];
+	memset (editidbuf, 0, sizeof (editidbuf));
+	int numval = -1;
+	int newnum = -1;
+	const char *end = NULL;
+	if (idvalstr && !strncmp (idvalstr, "momedval", strlen ("momedval"))
+	    && mom_looks_like_random_id_cstr (idvalstr + strlen ("momedval"),
+					      &end) && end
+	    && sscanf (end, "_N%d", &numval) > 0 && numval >= 0)
+	  {
+	    strncpy (editidbuf, idvalstr + strlen ("momedval"),
+		     MOM_IDSTRING_LEN);
+	    _L (editor) = (momval_t) (mom_get_item_of_identcstr (editidbuf));
+	    MOM_DEBUG (run,
+		       MOMOUT_LITERAL
+		       ("ajax_edit_codmom editval_newinput editidbuf="),
+		       MOMOUT_LITERALV ((const char *) editidbuf),
+		       MOMOUT_LITERAL ("; editor="),
+		       MOMOUT_VALUE ((const momval_t) _L (editor)),
+		       MOMOUT_LITERAL ("; end="),
+		       MOMOUT_LITERALV ((const char *) end),
+		       MOMOUT_LITERAL ("; numval="),
+		       MOMOUT_DEC_INT ((int) numval));
+	  }
+#warning ajax_edit todo mom_newinput should parse inputstr
+      }				/* end if todo mom_newinput */
     MOM_FATAPRINTF ("ajax_edit incomplete");
 #warning ajax_edit incomplete
     goto end;
