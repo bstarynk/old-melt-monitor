@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','after predefined size');
+INSERT INTO t_params VALUES('dump_reason','todo dump at exit');
 INSERT INTO t_items VALUES('_02u53qxa7dm_sttmhffpchr','{"kind": "queue", "payload": [], "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "The agenda is central to Monimelt.\nIt is the queue of taskets to be executed by worker threads."}],
  "content": null}
@@ -140,7 +140,8 @@ INSERT INTO t_items VALUES('_7diyc1cwj8z_x630afccr8e','{"kind": null, "payload":
    "val": "Group together all noticed values in dump outcome."}], "content": null}
 ');
 INSERT INTO t_items VALUES('_7qk90k9vx0u_31ivff77td7','{"kind": "assoc", "payload": [], "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
-   "val": "keep association between edited items and their editor"}], "content": null}
+   "val": "keep association between edited items and their editor"}, {"attr": "_3zqd7ai3rtu_md9athkx17u",
+   "val": "ajax routine for edition"}], "content": null}
 ');
 INSERT INTO t_items VALUES('_7rf7axuc9h4_2aw6utwmsas','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "in JSON dumps, give the space of items"}], "content": null}
@@ -157,6 +158,9 @@ INSERT INTO t_items VALUES('_7vw56h18sw0_hv77m6q8uxu','{"kind": null, "payload":
 INSERT INTO t_items VALUES('_7wk9y7e7r0z_575esi8ys5x','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "in JSON dumps, used for values in attribute lists of items"}],
  "content": null}
+');
+INSERT INTO t_items VALUES('_85rz4j0q982_67im8sstj9s','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "miscellanous attribute, e.g. to test the editor"}], "content": null}
 ');
 INSERT INTO t_items VALUES('_8j516kuv89j_4hc4w6ykmr6','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "in JSON dumps, used for long chunked strings"}], "content": null}
@@ -202,6 +206,7 @@ INSERT INTO t_names VALUES('json_object','_3xpyd539p4m_23h7wi59xi9','.predef');
 INSERT INTO t_names VALUES('json_true','_2vmrrvq5kdk_9um63pstcu9','.predef');
 INSERT INTO t_names VALUES('jtype','_7urjeiw3evy_m7k72uv6790','.predef');
 INSERT INTO t_names VALUES('kind','_06yp8ueq6yf_5ts408yww29','.predef');
+INSERT INTO t_names VALUES('misc','_85rz4j0q982_67im8sstj9s','.root');
 INSERT INTO t_names VALUES('node','_4m7x6811f6j_t480zu575mz','.predef');
 INSERT INTO t_names VALUES('noop','_240dwt57s08_a8uy366sev5','.root');
 INSERT INTO t_names VALUES('notice','_7diyc1cwj8z_x630afccr8e','.predef');
