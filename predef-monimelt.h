@@ -108,6 +108,9 @@ MOM_PREDEFINED_NAMED(payload,_41v0erax6my_m6pytj0793u)
 ////!in JSON dumps, indicate sets of item, or give their array of elements
 MOM_PREDEFINED_NAMED(set,_2v75mmyph64_4h4kys78740)
 
+////!gives the size, e.g. in editors
+MOM_PREDEFINED_NAMED(size,_5s59qeamxta_70k0mt77r9i)
+
 ////!in JSON dumps, give the sons of nodes
 MOM_PREDEFINED_NAMED(sons,_4ezpkss1akd_94f4h25sqe4)
 

@@ -725,8 +725,33 @@ ajaxobjs_lab_beginedit:
 	       MOMOUT_VALUE (_L (curcontent)));
     mom_lock_item (_L (webx).pitem);
     {
-      const char *editoridstr =
-	mom_string_cstr ((momval_t) mom_item_get_idstr (_L (editor).pitem));
+      int sizedit = -1;
+      {
+	mom_should_lock_item (_L (editor).pitem);
+	sizedit = mom_item_vector_count (_L (editor).pitem);
+	mom_item_put_attribute (_L (editor).pitem, mom_named__size,
+				mom_make_integer (sizedit));
+	if (MOM_IS_DEBUGGING (run))
+	  {
+	    MOM_DEBUG (run,
+		       MOMOUT_LITERAL
+		       ("ajax_objects_codmom didcontentedit editor:"),
+		       MOMOUT_VALUE (_L (editor)),
+		       MOMOUT_LITERAL (" sizedit="),
+		       MOMOUT_DEC_INT (sizedit));
+	    for (int eix = 0; eix < sizedit; eix++)
+	      {
+		MOM_DEBUG (run,
+			   MOMOUT_LITERAL
+			   ("ajax_objects_codmom didcontentedit eix#"),
+			   MOMOUT_DEC_INT (eix),
+			   MOMOUT_LITERAL (" editorcomp: "),
+			   MOMOUT_VALUE ((mom_item_vector_nth
+					  (_L (editor).pitem, eix))), NULL);
+	      }
+	  }
+	mom_unlock_item (_L (editor).pitem);
+      }
       MOM_WEBX_OUT		//
 	(_L (webx).pitem,
 	 MOMOUT_JS_LITERAL ("</div>"), MOMOUT_JS_RAW_NEWLINE (),
