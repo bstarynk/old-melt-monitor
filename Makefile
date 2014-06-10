@@ -31,7 +31,7 @@ CXXFLAGS= -std=c++11 -Wall -pthread  $(PREPROFLAGS) $(OPTIMFLAGS)
 INDENT= indent -gnu
 PREPROFLAGS= -I/usr/local/include $(shell $(PKGCONFIG) --cflags $(PACKAGES))
 OPTIMFLAGS= -Og -g
-LIBES= -L/usr/local/lib -lgc  $(shell $(PKGCONFIG) --libs $(PACKAGES)) -lonion_handlers -lonion -lpthread -lm -ldl
+LIBES= -L/usr/local/lib -lunistring -lgc  $(shell $(PKGCONFIG) --libs $(PACKAGES)) -lonion_handlers -lonion -lpthread -lm -ldl
 SQLITE= sqlite3
 # modules are monimelt generated code
 MODULE_SOURCES= $(sort $(wildcard modules/momg_*.c))

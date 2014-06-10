@@ -54,6 +54,10 @@
 #include <fcntl.h>
 #include <dlfcn.h>
 #include <execinfo.h>
+
+// libunistring: https://www.gnu.org/software/libunistring/
+#include <unistr.h>
+
 // eventfd(2) & signalfd(2) & timerfd_create(2) are Linux specific
 #include <sys/eventfd.h>
 #include <sys/signalfd.h>
