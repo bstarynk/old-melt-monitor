@@ -23,7 +23,7 @@
 
 ////////////////////////////////////////////////////////////////
 ///// ajax_system
-enum ajax_system_values_en
+enum ajax_system_valindex_en
 {
   ajaxsyst_v_arg0res,
   ajaxsyst_v_method,
@@ -198,19 +198,146 @@ const struct momroutinedescr_st momrout_ajax_system = {
   Display for a node:
 
      display: node(<item:connective>,<tuple:sons-displays>)
+     origin: <origin-display>
 
   Display for an item:
 
      display: item
      item:  <item>
 
+  Display for null:
+     display: empty
   Display for a string:
      display: string
      string: <string-value>
 
+  Display for some user input
+     display: input
 
  *****/
 
+
+
+////////////////////////////////////////////////////////////////
+///// display_value
+enum display_value_valindex_en
+{
+  display_value_v_editor,
+  display_value_v_webx,
+  display_value_v_curval,
+  display_value_v_orig,
+  display_value_v_spare,
+  display_value_v_backup,
+  display_value_v_newdisplay,
+  display_value_v__lastval
+};
+
+enum display_value_closure_en
+{
+  display_value_c__lastclosure
+};
+
+enum display_value_numbers_en
+{
+  display_value_n__lastnum
+};
+
+
+static int
+display_value_codmom (int momstate_, momitem_t *momtasklet_,
+		      const momnode_t *momclosure_,
+		      momval_t *momlocvals_, intptr_t * momlocnums_,
+		      double *momlocdbls_)
+{
+#define _L(Nam) (momlocvals_[display_value_v_##Nam])
+#define _C(Nam) (momclosure_->sontab[display_value_c_##Nam])
+#define _N(Nam) (momlocnums_[display_value_n_##Nam])
+  enum display_value_state_en
+  {
+    display_value_s_start,
+    display_value_s_impossible,
+    display_value_s__laststate
+  };
+#define DISPLAY_VALUE_UNLOCK() do { \
+    mom_unlock_item(_L(editor).pitem); \
+    mom_unlock_item(_L(webx).pitem); } while(0)
+#define _SET_STATE(St) do {						\
+    MOM_DEBUGPRINTF (run,						\
+		     "display_value_codmom setstate " #St " = %d",	\
+		     (int)display_value_s_##St);			\
+    return display_value_s_##St; } while(0)
+#define DISPLAY_VALUE_SET_STATE(St) \
+  do { DISPLAY_VALUE_UNLOCK(); _SET_STATE(St) } while(0)
+  //
+#define DISPLAY_VALUE_POP_RETURN()				\
+  do { DISPLAY_VALUE_UNLOCK(); 					\
+    MOM_DEBUGPRINTF (run, "display_value_codmom popreturn");	\
+    return momroutres_pop; } while(0)
+  // lock the webx & the editor
+  {
+    mom_should_lock_item (_L (webx).pitem);
+    mom_should_lock_item (_L (editor).pitem);
+  }
+  //
+  if (momstate_ >= 0 && momstate_ < display_value_s__laststate)
+    switch ((enum display_value_state_en) momstate_)
+      {
+      case display_value_s_start:
+	goto display_value_lab_start;
+      case display_value_s_impossible:
+	goto display_value_lab_impossible;
+      case display_value_s__laststate:;
+      }
+  MOM_FATAPRINTF ("display_value invalid state #%d", momstate_);
+display_value_lab_start:
+  MOM_DEBUG (run, MOMOUT_LITERAL ("display_value start editor="),
+	     MOMOUT_VALUE ((const momval_t) _L (editor)));
+  //
+  if (MOM_UNLIKELY (_L (editor).ptr == MOM_EMPTY))	// this cannot happen!
+    _SET_STATE (impossible);
+  //
+  switch ((enum momvaltype_en) mom_type (_L (curval)))
+    {
+    case momty_null:
+      _L (newdisplay).pitem = mom_make_item ();
+      mom_item_put_attribute (_L (newdisplay).pitem, mom_named__display,
+			      (momval_t) mom_named__empty);
+      mom_item_put_attribute (_L (newdisplay).pitem, mom_named__origin,
+			      _L (orig));
+      MOM_WEBX_OUT (_L (webx).pitem,
+		    //
+		    MOMOUT_JS_LITERAL
+		    ("<span class='mom_nullval_cl' id='momdisplay"),
+		    MOMOUT_LITERALV (mom_ident_cstr_of_item
+				     (_L (newdisplay).pitem)),
+		    MOMOUT_JS_LITERAL ("'>_</span>"));
+#warning a lot of code is missing in display_value
+      break;
+    }
+  //
+display_value_lab_impossible:
+  MOM_FATAPRINTF ("display_value impossible state reached!");
+  return momroutres_pop;
+#undef _L
+#undef _C
+#undef _N
+#undef _SET_STATE
+#undef DISPLAY_VALUE_UNLOCK
+#undef DISPLAY_VALUE_POP_RETURN
+#undef DISPLAY_VALUE_SET_STATE
+}				/* end routine display_value_codmom */
+
+const struct momroutinedescr_st momrout_display_value = {
+  .rout_magic = MOM_ROUTINE_MAGIC,	//
+  .rout_minclosize = display_value_c__lastclosure,	//
+  .rout_frame_nbval = display_value_v__lastval,	//
+  .rout_frame_nbnum = display_value_n__lastnum,	//
+  .rout_frame_nbdbl = 0,	//
+  .rout_name = "display_value",	//
+  .rout_module = MONIMELT_CURRENT_MODULE,	//
+  .rout_codefun = display_value_codmom,	//
+  .rout_timestamp = __DATE__ "@" __TIME__
+};
 
 
 
@@ -218,7 +345,7 @@ const struct momroutinedescr_st momrout_ajax_system = {
 
 ////////////////////////////////////////////////////////////////
 ///// ajax_edit
-enum ajax_edit_values_en
+enum ajax_edit_valindex_en
 {
   ajaxedit_v_arg0res,
   ajaxedit_v_method,
@@ -858,7 +985,7 @@ const struct momroutinedescr_st momrout_ajax_edit = {
 
 ////////////////////////////////////////////////////////////////
 ///// ajax_objects
-enum ajax_objects_values_en
+enum ajax_objects_valindex_en
 {
   ajaxobjs_v_arg0res,
   ajaxobjs_v_method,
@@ -1469,7 +1596,7 @@ const struct momroutinedescr_st momrout_ajax_objects = {
 
 ////////////////////////////////////////////////////////////////
 ///// edit_value
-enum edit_value_values_en
+enum edit_value_valindex_en
 {
   edit_value_v_arg0res,		/* arg0 is the editor */
   edit_value_v_webx,
@@ -1872,7 +1999,7 @@ const struct momroutinedescr_st momrout_edit_value = {
 
 ////////////////////////////////////////////////////////////////
 ///// ajax_complete_name
-enum ajax_complete_name_values_en
+enum ajax_complete_name_valindex_en
 {
   ajaxcompnam_v_arg0res,
   ajaxcompnam_v_method,
@@ -1987,7 +2114,7 @@ const struct momroutinedescr_st momrout_ajax_complete_name = {
 
 ////////////////////////////////////////////////////////////////
 ///// noop
-enum noop_values_en
+enum noop_valindex_en
 {
   noop_v_arg0res,
   noop_v__lastval

@@ -58,8 +58,14 @@ MOM_PREDEFINED_NAMED(comment,_41u1utcxyek_22cftxt3xxm)
 ////!gives the item content, at least in dumped JSON...
 MOM_PREDEFINED_NAMED(content,_8s357rq2dzk_k8ze95tikjm)
 
+////!to be used inside display items
+MOM_PREDEFINED_NAMED(display,_085krqf192t_z1m3zs77ww5)
+
 ////!Gives the double floating-point numbers of Json for frames of tasklets.
 MOM_PREDEFINED_NAMED(doubles,_17spwr8dkzv_tsf2s8diazu)
+
+////!to be used inside display items for null
+MOM_PREDEFINED_NAMED(empty,_8s4wcve2u49_252vwyzyrxd)
 
 ////!for exited processes
 MOM_PREDEFINED_NAMED(exited,_3v4d7uzex6f_euek4pztiuh)
@@ -101,6 +107,9 @@ MOM_PREDEFINED_NAMED(notice,_7diyc1cwj8z_x630afccr8e)
 
 ////!Gives the integer numbers of Json for frames of tasklets.
 MOM_PREDEFINED_NAMED(numbers,_3fw5acswe59_9016fqe4d41)
+
+////!to be used inside display items to give the origin
+MOM_PREDEFINED_NAMED(origin,_5sw59dauckp_8eustjwf58u)
 
 ////!in JSON dumps, give the payload of items
 MOM_PREDEFINED_NAMED(payload,_41v0erax6my_m6pytj0793u)
