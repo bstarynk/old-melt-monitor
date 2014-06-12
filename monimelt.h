@@ -355,40 +355,41 @@ enum momoutdir_en
   /// format giving a format a double
   MOMOUTDO_FMT_DOUBLE /*, const char*fmt, double x */ ,
 #define MOMOUT_FMT_DOUBLE(F,D) MOMOUTDO_FMT_DOUBLE,	\
-  MOM_REQUIRES_TYPE(F,const char*,mombad_fmt) \
-    MOM_REQUIRES_TYPE(D,double,mombad_double)
+  MOM_REQUIRES_TYPE(F,const char*,mombad_fmt),		\
+  MOM_REQUIRES_TYPE(D,double,mombad_double)
   ///
   ///
   /// format giving a format a long
   MOMOUTDO_FMT_LONG /*, const char*fmt, long l */ ,
 #define MOMOUT_FMT_LONG(F,L) MOMOUTDO_FMT_LONG,	\
-  MOM_REQUIRES_TYPE(F,const char*,mombad_fmt) \
-    MOM_REQUIRES_TYPE(L,long,mombad_long)
+  MOM_REQUIRES_TYPE(F,const char*,mombad_fmt),	\
+  MOM_REQUIRES_TYPE(L,long,mombad_long)
   ///
   /// format giving a format a long
   MOMOUTDO_FMT_LONG_LONG /*, const char*fmt, long long l */ ,
 #define MOMOUT_FMT_LONG_LONG(F,L) MOMOUTDO_FMT_LONG_LONG,	\
-  MOM_REQUIRES_TYPE(F,const char*,mombad_fmt) \
-    MOM_REQUIRES_TYPE(L,long long,mombad_longlong)
+  MOM_REQUIRES_TYPE(F,const char*,mombad_fmt),			\
+  MOM_REQUIRES_TYPE(L,long long,mombad_longlong)
   ///
   /// format giving a format an int
   MOMOUTDO_FMT_INT /*, const char*fmt, long l */ ,
 #define MOMOUT_FMT_INT(F,L) MOMOUTDO_FMT_INT,	\
-  MOM_REQUIRES_TYPE(F,const char*,mombad_fmt) \
-    MOM_REQUIRES_TYPE(L,int,mombad_int)
+  MOM_REQUIRES_TYPE(F,const char*,mombad_fmt),	\
+  MOM_REQUIRES_TYPE(L,int,mombad_int)
   ///
   ///
   /// format giving a format an unsigned
   MOMOUTDO_FMT_UNSIGNED /*, const char*fmt, unsigned l */ ,
 #define MOMOUT_FMT_UNSIGNED(F,L) MOMOUTDO_FMT_UNSIGNED,	\
-  MOM_REQUIRES_TYPE(F,const char*,mombad_fmt) \
-    MOM_REQUIRES_TYPE(L,unsigned,mombad_unsigned)
+  MOM_REQUIRES_TYPE(F,const char*,mombad_fmt),		\
+  MOM_REQUIRES_TYPE(L,unsigned,mombad_unsigned)
   ///
   ///
   /// format a double as a time using mom_strftime_centi
   MOMOUTDO_DOUBLE_TIME /*, const char*fmt, double time */ ,
 #define MOMOUT_DOUBLE_TIME(F,D) MOMOUTDO_DOUBLE_TIME, \
-  MOM_REQUIRES_TYPE(F,const char*,mombad_fmt), MOM_REQUIRES_TYPE(D,double,mombad_double)
+  MOM_REQUIRES_TYPE(F,const char*,mombad_fmt), \
+  MOM_REQUIRES_TYPE(D,double,mombad_double)
   ///
   ///
   /// copy verbatim the bytes of an opened FILE*

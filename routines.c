@@ -219,6 +219,44 @@ const struct momroutinedescr_st momrout_ajax_system = {
 
 
 ////////////////////////////////////////////////////////////////
+///// utility function for display_value routine
+static void
+display_item_occ_mom (momitem_t *webx, momitem_t *itm)
+{
+  assert (webx && webx->i_typnum == momty_item
+	  && webx->i_paylkind == mompayk_webexchange);
+  if (!itm)
+    {
+      MOM_WEBX_OUT (webx, MOMOUT_JS_LITERAL ("<span class='mom_nil_itemocc_cl'>"	///
+					     "&#9671;"	/* U+25C7 WHITE DIAMOND ◇ */
+					     "</span>"));
+      return;
+    }
+  assert (itm && itm->i_typnum == momty_item);
+  const momstring_t *namestrv = mom_item_get_name (itm);
+  const momstring_t *idstrv = mom_item_get_idstr (itm);
+  if (namestrv)
+    {
+      MOM_WEBX_OUT (webx,
+		    MOMOUT_JS_LITERAL
+		    ("<span class='mom_named_itemocc_cl' data-momitemid='"),
+		    MOMOUT_LITERALV (mom_string_cstr ((momval_t) idstrv)),
+		    MOMOUT_JS_LITERAL ("'>"),
+		    MOMOUT_JS_HTML (mom_string_cstr ((momval_t) namestrv)),
+		    MOMOUT_JS_LITERAL ("</span>"));
+    }
+  else
+    {
+      MOM_WEBX_OUT (webx,
+		    MOMOUT_JS_LITERAL
+		    ("<span class='mom_anonymous_itemocc_cl' data-momitemid='"),
+		    MOMOUT_LITERALV (mom_string_cstr ((momval_t) idstrv)),
+		    MOMOUT_JS_LITERAL ("'>"),
+		    MOMOUT_LITERALV (mom_string_cstr ((momval_t) idstrv)),
+		    MOMOUT_JS_LITERAL ("</span>"));
+    }
+}
+
 ///// display_value
 enum display_value_valindex_en
 {
@@ -239,6 +277,7 @@ enum display_value_closure_en
 
 enum display_value_numbers_en
 {
+  display_value_n_rank,
   display_value_n__lastnum
 };
 
@@ -296,22 +335,104 @@ display_value_lab_start:
   if (MOM_UNLIKELY (_L (editor).ptr == MOM_EMPTY))	// this cannot happen!
     _SET_STATE (impossible);
   //
+  _N (rank) = mom_item_vector_count (_L (editor).pitem);
+  _L (newdisplay) = (momval_t) mom_make_item ();
+  mom_item_put_attribute (_L (newdisplay).pitem, mom_named__editor,
+			  _L (editor));
+  mom_item_put_attribute (_L (newdisplay).pitem, mom_named__rank,
+			  mom_make_integer (_N (rank)));
+  mom_item_put_attribute (_L (newdisplay).pitem, mom_named__origin,
+			  _L (orig));
+  mom_item_vector_append1 (_L (editor).pitem, _L (newdisplay));
   switch ((enum momvaltype_en) mom_type (_L (curval)))
     {
-    case momty_null:
-      _L (newdisplay).pitem = mom_make_item ();
+    case momty_null:		///// nil
       mom_item_put_attribute (_L (newdisplay).pitem, mom_named__display,
 			      (momval_t) mom_named__empty);
-      mom_item_put_attribute (_L (newdisplay).pitem, mom_named__origin,
-			      _L (orig));
+      MOM_WEBX_OUT (_L (webx).pitem,
+		    //
+		    MOMOUT_JS_LITERAL ("<span class='mom_null_value_cl' id='momdisplay"), MOMOUT_LITERALV (mom_ident_cstr_of_item (_L (newdisplay).pitem)), MOMOUT_JS_LITERAL ("'>" "&#9109;"	/* U+2395 APL FUNCTIONAL SYMBOL QUAD ⎕ */
+																					       "</span>"));
+      mom_item_tasklet_set_1res (momtasklet_, _L (newdisplay));
+      DISPLAY_VALUE_POP_RETURN ();
+      break;
+      /*****************/
+    case momty_int:		///// integer value
+      mom_item_put_attribute (_L (newdisplay).pitem, mom_named__display,
+			      (momval_t) mom_named__integer);
+      mom_item_put_attribute (_L (newdisplay).pitem, mom_named__val,
+			      _L (curval));
       MOM_WEBX_OUT (_L (webx).pitem,
 		    //
 		    MOMOUT_JS_LITERAL
-		    ("<span class='mom_nullval_cl' id='momdisplay"),
+		    ("<span class='mom_integer_value_cl' id='momdisplay"),
 		    MOMOUT_LITERALV (mom_ident_cstr_of_item
 				     (_L (newdisplay).pitem)),
-		    MOMOUT_JS_LITERAL ("'>_</span>"));
-#warning a lot of code is missing in display_value
+		    MOMOUT_JS_LITERAL ("'>"),
+		    MOMOUT_FMT_LONG_LONG ((const char *) "%lld",
+					  ((long long)
+					   mom_integer_val (_L (curval)))),
+		    MOMOUT_JS_LITERAL ("</span>"));
+      mom_item_tasklet_set_1res (momtasklet_, _L (newdisplay));
+      DISPLAY_VALUE_POP_RETURN ();
+      break;
+      /*****************/
+    case momty_double:		///// double value
+      mom_item_put_attribute (_L (newdisplay).pitem, mom_named__display,
+			      (momval_t) mom_named__double);
+      mom_item_put_attribute (_L (newdisplay).pitem, mom_named__val,
+			      _L (curval));
+      MOM_WEBX_OUT (_L (webx).pitem,
+		    //
+		    MOMOUT_JS_LITERAL
+		    ("<span class='mom_double_value_cl' id='momdisplay"),
+		    MOMOUT_LITERALV (mom_ident_cstr_of_item
+				     (_L (newdisplay).pitem)),
+		    MOMOUT_JS_LITERAL ("'>"),
+		    MOMOUT_FMT_DOUBLE ((const char *) "%.8g",
+				       ((double)
+					mom_double_val (_L (curval)))),
+		    MOMOUT_JS_LITERAL ("</span>"));
+      mom_item_tasklet_set_1res (momtasklet_, _L (newdisplay));
+      DISPLAY_VALUE_POP_RETURN ();
+      break;
+      /*****************/
+    case momty_string:		///// string value
+      mom_item_put_attribute (_L (newdisplay).pitem, mom_named__display,
+			      (momval_t) mom_named__string);
+      mom_item_put_attribute (_L (newdisplay).pitem, mom_named__val,
+			      _L (curval));
+      MOM_WEBX_OUT (_L (webx).pitem,
+		    //
+		    MOMOUT_JS_LITERAL
+		    ("<span class='mom_string_value_cl' id='momdisplay"),
+		    MOMOUT_LITERALV (mom_ident_cstr_of_item
+				     (_L (newdisplay).pitem)),
+		    MOMOUT_JS_LITERAL ("'>"),
+		    MOMOUT_JS_HTML (mom_string_cstr (_L (curval))),
+		    MOMOUT_JS_LITERAL ("</span>"));
+      mom_item_tasklet_set_1res (momtasklet_, _L (newdisplay));
+      DISPLAY_VALUE_POP_RETURN ();
+      break;
+      /*****************/
+    case momty_item:		///// item value
+      mom_item_put_attribute (_L (newdisplay).pitem, mom_named__display,
+			      (momval_t) mom_named__item);
+      mom_item_put_attribute (_L (newdisplay).pitem, mom_named__val,
+			      _L (curval));
+      MOM_WEBX_OUT (_L (webx).pitem,
+		    //
+		    MOMOUT_JS_LITERAL
+		    ("<span class='mom_item_value_cl' id='momdisplay"),
+		    MOMOUT_LITERALV (mom_ident_cstr_of_item
+				     (_L (newdisplay).pitem)),
+		    MOMOUT_JS_LITERAL ("'>"));
+      display_item_occ_mom (_L (webx).pitem, _L (curval).pitem);
+      MOM_WEBX_OUT (_L (webx).pitem,
+		    //
+		    MOMOUT_JS_LITERAL ("</span>"));
+      mom_item_tasklet_set_1res (momtasklet_, _L (newdisplay));
+      DISPLAY_VALUE_POP_RETURN ();
       break;
     }
   //

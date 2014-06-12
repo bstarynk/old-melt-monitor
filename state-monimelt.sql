@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','after predefined frames');
+INSERT INTO t_params VALUES('dump_reason','after predefined double');
 INSERT INTO t_items VALUES('_02u53qxa7dm_sttmhffpchr','{"kind": "queue", "payload": [], "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "The agenda is central to Monimelt.\nIt is the queue of taskets to be executed by worker threads."}],
  "content": null}
@@ -61,6 +61,9 @@ INSERT INTO t_items VALUES('_35a1p2kdx9h_ap5pe704vtr','{"kind": "routine", "payl
 ');
 INSERT INTO t_items VALUES('_35vp60aw7em_d436vfie4ud','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "in JSON dump, jtype of JSON array values"}], "content": null}
+');
+INSERT INTO t_items VALUES('_38s7ihasu0m_xzipyerxm3j','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "gives the editor inside a display"}], "content": null}
 ');
 INSERT INTO t_items VALUES('_3fw5acswe59_9016fqe4d41','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "Gives the integer numbers of Json for frames of tasklets."}], "content":
@@ -154,6 +157,9 @@ INSERT INTO t_items VALUES('_73im2zryfij_a7zmkketcfc','{"kind": "routine", "payl
 INSERT INTO t_items VALUES('_7diyc1cwj8z_x630afccr8e','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "Group together all noticed values in dump outcome."}], "content": null}
 ');
+INSERT INTO t_items VALUES('_7kkh6qiq1vc_e69zp2feuhe','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "gives the rank"}], "content": null}
+');
 INSERT INTO t_items VALUES('_7qk90k9vx0u_31ivff77td7','{"kind": "assoc", "payload": [], "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "keep association between edited items and their editor"}, {"attr": "_3zqd7ai3rtu_md9athkx17u",
    "val": "ajax routine for edition"}], "content": null}
@@ -177,6 +183,9 @@ INSERT INTO t_items VALUES('_7wk9y7e7r0z_575esi8ys5x','{"kind": null, "payload":
 INSERT INTO t_items VALUES('_85rz4j0q982_67im8sstj9s','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "miscellanous attribute, e.g. to test the editor"}], "content": null}
 ');
+INSERT INTO t_items VALUES('_89ejvxupprm_f219pqwz13s','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "for double values and displays"}], "content": null}
+');
 INSERT INTO t_items VALUES('_8j516kuv89j_4hc4w6ykmr6','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "in JSON dumps, used for long chunked strings"}], "content": null}
 ');
@@ -198,6 +207,9 @@ INSERT INTO t_items VALUES('_97zkxf62r11_6eedwwv3eu8','{"kind": null, "payload":
 INSERT INTO t_items VALUES('_9dsak0qcy0v_1c5z9th7x3i','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "indicates the HTTP GET method"}], "content": null}
 ');
+INSERT INTO t_items VALUES('_9jeymqk2732_wiq5kyczi9c','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "for integer values and displays"}], "content": null}
+');
 INSERT INTO t_items VALUES('_9sd1mh9q1zf_3duewi6fsaq','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "for exited processes with exit code >0"}], "content": null}
 ');
@@ -215,13 +227,16 @@ INSERT INTO t_names VALUES('closure','_97zkxf62r11_6eedwwv3eu8','.predef');
 INSERT INTO t_names VALUES('comment','_41u1utcxyek_22cftxt3xxm','.predef');
 INSERT INTO t_names VALUES('content','_8s357rq2dzk_k8ze95tikjm','.predef');
 INSERT INTO t_names VALUES('display','_085krqf192t_z1m3zs77ww5','.predef');
+INSERT INTO t_names VALUES('double','_89ejvxupprm_f219pqwz13s','.predef');
 INSERT INTO t_names VALUES('doubles','_17spwr8dkzv_tsf2s8diazu','.predef');
 INSERT INTO t_names VALUES('edit_value','_73im2zryfij_a7zmkketcfc','.root');
+INSERT INTO t_names VALUES('editor','_38s7ihasu0m_xzipyerxm3j','.predef');
 INSERT INTO t_names VALUES('editors','_7qk90k9vx0u_31ivff77td7','.root');
 INSERT INTO t_names VALUES('empty','_8s4wcve2u49_252vwyzyrxd','.predef');
 INSERT INTO t_names VALUES('exited','_3v4d7uzex6f_euek4pztiuh','.predef');
 INSERT INTO t_names VALUES('failed','_9sd1mh9q1zf_3duewi6fsaq','.predef');
 INSERT INTO t_names VALUES('frames','_4cw8jv45vsk_4mh9ex64904','.predef');
+INSERT INTO t_names VALUES('integer','_9jeymqk2732_wiq5kyczi9c','.predef');
 INSERT INTO t_names VALUES('item','_53748kde7s1_pkz810exr27','.predef');
 INSERT INTO t_names VALUES('item_ref','_6hf2vzmrsee_t35suhjvtj4','.predef');
 INSERT INTO t_names VALUES('json_array','_35vp60aw7em_d436vfie4ud','.predef');
@@ -237,6 +252,7 @@ INSERT INTO t_names VALUES('notice','_7diyc1cwj8z_x630afccr8e','.predef');
 INSERT INTO t_names VALUES('numbers','_3fw5acswe59_9016fqe4d41','.predef');
 INSERT INTO t_names VALUES('origin','_5sw59dauckp_8eustjwf58u','.predef');
 INSERT INTO t_names VALUES('payload','_41v0erax6my_m6pytj0793u','.predef');
+INSERT INTO t_names VALUES('rank','_7kkh6qiq1vc_e69zp2feuhe','.predef');
 INSERT INTO t_names VALUES('res1','_3j3s2e0510a_096chqpijq7','.predef');
 INSERT INTO t_names VALUES('res2','_8u5ar84utwm_99k5mq2d589','.predef');
 INSERT INTO t_names VALUES('res3','_60ist2ad22c_cfpjp5ay6uj','.predef');

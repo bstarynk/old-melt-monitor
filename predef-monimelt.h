@@ -61,8 +61,14 @@ MOM_PREDEFINED_NAMED(content,_8s357rq2dzk_k8ze95tikjm)
 ////!to be used inside display items
 MOM_PREDEFINED_NAMED(display,_085krqf192t_z1m3zs77ww5)
 
+////!for double values and displays
+MOM_PREDEFINED_NAMED(double,_89ejvxupprm_f219pqwz13s)
+
 ////!Gives the double floating-point numbers of Json for frames of tasklets.
 MOM_PREDEFINED_NAMED(doubles,_17spwr8dkzv_tsf2s8diazu)
+
+////!gives the editor inside a display
+MOM_PREDEFINED_NAMED(editor,_38s7ihasu0m_xzipyerxm3j)
 
 ////!to be used inside display items for null
 MOM_PREDEFINED_NAMED(empty,_8s4wcve2u49_252vwyzyrxd)
@@ -75,6 +81,9 @@ MOM_PREDEFINED_NAMED(failed,_9sd1mh9q1zf_3duewi6fsaq)
 
 ////!frames in tasklet
 MOM_PREDEFINED_NAMED(frames,_4cw8jv45vsk_4mh9ex64904)
+
+////!for integer values and displays
+MOM_PREDEFINED_NAMED(integer,_9jeymqk2732_wiq5kyczi9c)
 
 ////!used in editor, etc. to reference some item
 MOM_PREDEFINED_NAMED(item,_53748kde7s1_pkz810exr27)
@@ -116,6 +125,9 @@ MOM_PREDEFINED_NAMED(origin,_5sw59dauckp_8eustjwf58u)
 
 ////!in JSON dumps, give the payload of items
 MOM_PREDEFINED_NAMED(payload,_41v0erax6my_m6pytj0793u)
+
+////!gives the rank
+MOM_PREDEFINED_NAMED(rank,_7kkh6qiq1vc_e69zp2feuhe)
 
 ////!first result in tasklet
 MOM_PREDEFINED_NAMED(res1,_3j3s2e0510a_096chqpijq7)
