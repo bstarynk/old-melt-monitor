@@ -1784,6 +1784,9 @@ payl_tasklet_dump_scan_mom (struct mom_dumper_st *du, momitem_t *itm)
   assert (itm != NULL && itm->i_typnum == momty_item);
   assert (itm->i_paylkind == mompayk_tasklet && itm->i_payload);
   struct mom_taskletdata_st *itd = itm->i_payload;
+  mom_dump_scan_value (du, itd->dtk_res1);
+  mom_dump_scan_value (du, itd->dtk_res2);
+  mom_dump_scan_value (du, itd->dtk_res3);
   unsigned valtop = itd->dtk_valtop;
   for (unsigned vix = 0; vix < valtop; vix++)
     mom_dump_scan_value (du, itd->dtk_values[vix]);
@@ -1797,6 +1800,7 @@ static momval_t
 payl_tasklet_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
 {
   momval_t jres = MOM_NULLV;
+  momval_t jframes = MOM_NULLV;
   assert (du != NULL);
   assert (itm != NULL && itm->i_typnum == momty_item);
   assert (itm->i_paylkind == mompayk_tasklet && itm->i_payload);
@@ -1878,21 +1882,33 @@ payl_tasklet_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
       if (jdblarr != dbltiny)
 	MOM_GC_FREE (jdblarr);
     }
-  jres =
+  momval_t jres1 = mom_dump_emit_json (du, (momval_t) itd->dtk_res1);
+  momval_t jres2 = mom_dump_emit_json (du, (momval_t) itd->dtk_res2);
+  momval_t jres3 = mom_dump_emit_json (du, (momval_t) itd->dtk_res3);
+  jframes =
     fratop ? (momval_t) mom_make_json_array_count (fratop, jarr) : MOM_NULLV;
   if (jarr != tinyarr)
     MOM_GC_FREE (jarr);
+  jres = (momval_t) mom_make_json_object
+    (MOMJSOB_ENTRY ((momval_t) mom_named__frames, jframes),
+     MOMJSOB_ENTRY ((momval_t) mom_named__res1, jres1),
+     MOMJSOB_ENTRY ((momval_t) mom_named__res2, jres2),
+     MOMJSOB_ENTRY ((momval_t) mom_named__res3, jres3), MOMJSON_END);
   return jres;
 }
 
 static void
 payl_tasklet_load_mom (struct mom_loader_st *ld, momitem_t *litm,
-		       momval_t jsarr)
+		       momval_t jtasklet)
 {
   assert (ld != NULL);
   assert (litm != NULL && litm->i_typnum == momty_item);
   mom_item_start_tasklet (litm);
-  unsigned nbfra = mom_json_array_size (jsarr);
+  momval_t jframes = mom_jsonob_get (jtasklet, (momval_t) mom_named__frames);
+  momval_t jres1 = mom_jsonob_get (jtasklet, (momval_t) mom_named__res1);
+  momval_t jres2 = mom_jsonob_get (jtasklet, (momval_t) mom_named__res2);
+  momval_t jres3 = mom_jsonob_get (jtasklet, (momval_t) mom_named__res3);
+  unsigned nbfra = mom_json_array_size (jframes);
   if (nbfra > 0)
     // a wild guess about the tasklet needs
     mom_item_tasklet_reserve (litm,
@@ -1902,7 +1918,7 @@ payl_tasklet_load_mom (struct mom_loader_st *ld, momitem_t *litm,
 			      /*nbfram: */ nbfra + 1);
   for (unsigned frix = 0; frix < nbfra; frix++)
     {
-      momval_t jfram = mom_json_array_nth (jsarr, frix);
+      momval_t jfram = mom_json_array_nth (jframes, frix);
       momval_t jstate = mom_jsonob_get (jfram, (momval_t) mom_named__state);
       momval_t jclos = mom_jsonob_get (jfram, (momval_t) mom_named__closure);
       momval_t jnums = mom_jsonob_get (jfram, (momval_t) mom_named__numbers);
@@ -1939,6 +1955,12 @@ payl_tasklet_load_mom (struct mom_loader_st *ld, momitem_t *litm,
 				   MOMPFR_ARRAY_DOUBLES (nbdbls, dblarr),
 				   MOMPFR_END ());
     }
+  {
+    momval_t res1 = mom_load_value_json (ld, jres1);
+    momval_t res2 = mom_load_value_json (ld, jres2);
+    momval_t res3 = mom_load_value_json (ld, jres3);
+    mom_item_tasklet_set_3res (litm, res1, res2, res3);
+  }
 }
 
 static const struct mom_payload_descr_st payldescr_tasklet_mom = {

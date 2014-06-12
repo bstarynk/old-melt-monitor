@@ -1213,6 +1213,7 @@ struct mom_taskletdata_st
   momval_t *dtk_values;		/* space for value data */
   const momnode_t **dtk_closures;	/* stack of closure nodes */
   struct momframe_st *dtk_frames;	/* stack of scalar frames */
+  momval_t dtk_res1, dtk_res2, dtk_res3;	/* three results max */
   pthread_t dtk_thread;		/* the thread executing this, or else 0 */
   uint32_t dtk_intsize;		/* size of dtk_ints */
   uint32_t dtk_inttop;		/* top of stack offset on dtk_ints */
@@ -1407,6 +1408,86 @@ unsigned mom_item_tasklet_frame_nb_doubles (momitem_t *itm, int frk);
 momval_t mom_item_tasklet_frame_nth_value (momitem_t *itm, int frk, int vtk);
 intptr_t mom_item_tasklet_frame_nth_int (momitem_t *itm, int frk, int nrk);
 double mom_item_tasklet_frame_nth_double (momitem_t *itm, int frk, int drk);
+
+static inline momval_t
+mom_item_tasklet_res1 (momitem_t *itm)
+{
+  struct mom_taskletdata_st *itd = NULL;
+  if (itm && itm->i_typnum == momty_item && itm->i_paylkind == mompayk_tasklet
+      && (itd = (struct mom_taskletdata_st *) itm->i_payload) != NULL)
+    return itd->dtk_res1;
+  return MOM_NULLV;
+}
+
+static inline momval_t
+mom_item_tasklet_res2 (momitem_t *itm)
+{
+  struct mom_taskletdata_st *itd = NULL;
+  if (itm && itm->i_typnum == momty_item && itm->i_paylkind == mompayk_tasklet
+      && (itd = (struct mom_taskletdata_st *) itm->i_payload) != NULL)
+    return itd->dtk_res2;
+  return MOM_NULLV;
+}
+
+static inline momval_t
+mom_item_tasklet_res3 (momitem_t *itm)
+{
+  struct mom_taskletdata_st *itd = NULL;
+  if (itm && itm->i_typnum == momty_item && itm->i_paylkind == mompayk_tasklet
+      && (itd = (struct mom_taskletdata_st *) itm->i_payload) != NULL)
+    return itd->dtk_res3;
+  return MOM_NULLV;
+}
+
+static inline void
+mom_item_tasklet_clear_res (momitem_t *itm)
+{
+  struct mom_taskletdata_st *itd = NULL;
+  if (itm && itm->i_typnum == momty_item && itm->i_paylkind == mompayk_tasklet
+      && (itd = (struct mom_taskletdata_st *) itm->i_payload) != NULL)
+    {
+      itd->dtk_res1 = itd->dtk_res2 = itd->dtk_res3 = MOM_NULLV;
+    }
+}
+
+static inline void
+mom_item_tasklet_set_1res (momitem_t *itm, momval_t r1)
+{
+  struct mom_taskletdata_st *itd = NULL;
+  if (itm && itm->i_typnum == momty_item && itm->i_paylkind == mompayk_tasklet
+      && (itd = (struct mom_taskletdata_st *) itm->i_payload) != NULL)
+    {
+      itd->dtk_res1 = r1;
+      itd->dtk_res2 = itd->dtk_res3 = MOM_NULLV;
+    }
+}
+
+static inline void
+mom_item_tasklet_set_2res (momitem_t *itm, momval_t r1, momval_t r2)
+{
+  struct mom_taskletdata_st *itd = NULL;
+  if (itm && itm->i_typnum == momty_item && itm->i_paylkind == mompayk_tasklet
+      && (itd = (struct mom_taskletdata_st *) itm->i_payload) != NULL)
+    {
+      itd->dtk_res1 = r1;
+      itd->dtk_res2 = r2;
+      itd->dtk_res3 = MOM_NULLV;
+    }
+}
+
+static inline void
+mom_item_tasklet_set_3res (momitem_t *itm, momval_t r1, momval_t r2,
+			   momval_t r3)
+{
+  struct mom_taskletdata_st *itd = NULL;
+  if (itm && itm->i_typnum == momty_item && itm->i_paylkind == mompayk_tasklet
+      && (itd = (struct mom_taskletdata_st *) itm->i_payload) != NULL)
+    {
+      itd->dtk_res1 = r1;
+      itd->dtk_res2 = r2;
+      itd->dtk_res3 = r3;
+    }
+}
 
 /*********** buffer items ****************/
 void mom_item_start_buffer (momitem_t *itm);

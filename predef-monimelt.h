@@ -73,6 +73,9 @@ MOM_PREDEFINED_NAMED(exited,_3v4d7uzex6f_euek4pztiuh)
 ////!for exited processes with exit code >0
 MOM_PREDEFINED_NAMED(failed,_9sd1mh9q1zf_3duewi6fsaq)
 
+////!frames in tasklet
+MOM_PREDEFINED_NAMED(frames,_4cw8jv45vsk_4mh9ex64904)
+
 ////!used in editor, etc. to reference some item
 MOM_PREDEFINED_NAMED(item,_53748kde7s1_pkz810exr27)
 
@@ -113,6 +116,15 @@ MOM_PREDEFINED_NAMED(origin,_5sw59dauckp_8eustjwf58u)
 
 ////!in JSON dumps, give the payload of items
 MOM_PREDEFINED_NAMED(payload,_41v0erax6my_m6pytj0793u)
+
+////!first result in tasklet
+MOM_PREDEFINED_NAMED(res1,_3j3s2e0510a_096chqpijq7)
+
+////!second result in tasklet
+MOM_PREDEFINED_NAMED(res2,_8u5ar84utwm_99k5mq2d589)
+
+////!third result in tasklet
+MOM_PREDEFINED_NAMED(res3,_60ist2ad22c_cfpjp5ay6uj)
 
 ////!in JSON dumps, indicate sets of item, or give their array of elements
 MOM_PREDEFINED_NAMED(set,_2v75mmyph64_4h4kys78740)
