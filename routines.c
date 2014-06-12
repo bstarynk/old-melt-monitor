@@ -344,6 +344,7 @@ display_value_lab_start:
   mom_item_put_attribute (_L (newdisplay).pitem, mom_named__origin,
 			  _L (orig));
   mom_item_vector_append1 (_L (editor).pitem, _L (newdisplay));
+  mom_item_put_attribute (_L (newdisplay).pitem, mom_named__val, _L (curval));
   switch ((enum momvaltype_en) mom_type (_L (curval)))
     {
     case momty_null:		///// nil
@@ -360,8 +361,6 @@ display_value_lab_start:
     case momty_int:		///// integer value
       mom_item_put_attribute (_L (newdisplay).pitem, mom_named__display,
 			      (momval_t) mom_named__integer);
-      mom_item_put_attribute (_L (newdisplay).pitem, mom_named__val,
-			      _L (curval));
       MOM_WEBX_OUT (_L (webx).pitem,
 		    //
 		    MOMOUT_JS_LITERAL
@@ -380,8 +379,6 @@ display_value_lab_start:
     case momty_double:		///// double value
       mom_item_put_attribute (_L (newdisplay).pitem, mom_named__display,
 			      (momval_t) mom_named__double);
-      mom_item_put_attribute (_L (newdisplay).pitem, mom_named__val,
-			      _L (curval));
       MOM_WEBX_OUT (_L (webx).pitem,
 		    //
 		    MOMOUT_JS_LITERAL
@@ -400,8 +397,6 @@ display_value_lab_start:
     case momty_string:		///// string value
       mom_item_put_attribute (_L (newdisplay).pitem, mom_named__display,
 			      (momval_t) mom_named__string);
-      mom_item_put_attribute (_L (newdisplay).pitem, mom_named__val,
-			      _L (curval));
       MOM_WEBX_OUT (_L (webx).pitem,
 		    //
 		    MOMOUT_JS_LITERAL
@@ -418,8 +413,6 @@ display_value_lab_start:
     case momty_item:		///// item value
       mom_item_put_attribute (_L (newdisplay).pitem, mom_named__display,
 			      (momval_t) mom_named__item);
-      mom_item_put_attribute (_L (newdisplay).pitem, mom_named__val,
-			      _L (curval));
       MOM_WEBX_OUT (_L (webx).pitem,
 		    //
 		    MOMOUT_JS_LITERAL
@@ -428,6 +421,60 @@ display_value_lab_start:
 				     (_L (newdisplay).pitem)),
 		    MOMOUT_JS_LITERAL ("'>"));
       display_item_occ_mom (_L (webx).pitem, _L (curval).pitem);
+      MOM_WEBX_OUT (_L (webx).pitem,
+		    //
+		    MOMOUT_JS_LITERAL ("</span>"));
+      mom_item_tasklet_set_1res (momtasklet_, _L (newdisplay));
+      DISPLAY_VALUE_POP_RETURN ();
+      break;
+      /*****************/
+    case momty_set:		///// set value
+      mom_item_put_attribute (_L (newdisplay).pitem, mom_named__display,
+			      (momval_t) mom_named__set);
+      MOM_WEBX_OUT (_L (webx).pitem,
+		    //
+		    MOMOUT_JS_LITERAL
+		    ("<span class='mom_set_value_cl' id='momdisplay"),
+		    MOMOUT_LITERALV (mom_ident_cstr_of_item
+				     (_L (newdisplay).pitem)),
+		    MOMOUT_JS_LITERAL ("'>"));
+      {
+	unsigned card = mom_set_cardinal (_L (curval));
+	for (unsigned ix = 0; ix < card; ix++)
+	  {
+	    if (ix > 0)
+	      MOM_WEBX_OUT (_L (webx).pitem, MOMOUT_LITERAL (", "));
+	    display_item_occ_mom (_L (webx).pitem,
+				  mom_set_nth_item (_L (curval), ix));
+	  }
+      }
+      MOM_WEBX_OUT (_L (webx).pitem,
+		    //
+		    MOMOUT_JS_LITERAL ("</span>"));
+      mom_item_tasklet_set_1res (momtasklet_, _L (newdisplay));
+      DISPLAY_VALUE_POP_RETURN ();
+      break;
+      /*****************/
+    case momty_tuple:		///// tuple value
+      mom_item_put_attribute (_L (newdisplay).pitem, mom_named__display,
+			      (momval_t) mom_named__tuple);
+      MOM_WEBX_OUT (_L (webx).pitem,
+		    //
+		    MOMOUT_JS_LITERAL
+		    ("<span class='mom_tuple_value_cl' id='momdisplay"),
+		    MOMOUT_LITERALV (mom_ident_cstr_of_item
+				     (_L (newdisplay).pitem)),
+		    MOMOUT_JS_LITERAL ("'>"));
+      {
+	unsigned card = mom_tuple_length (_L (curval));
+	for (unsigned ix = 0; ix < card; ix++)
+	  {
+	    if (ix > 0)
+	      MOM_WEBX_OUT (_L (webx).pitem, MOMOUT_LITERAL (", "));
+	    display_item_occ_mom (_L (webx).pitem,
+				  mom_tuple_nth_item (_L (curval), ix));
+	  }
+      }
       MOM_WEBX_OUT (_L (webx).pitem,
 		    //
 		    MOMOUT_JS_LITERAL ("</span>"));
