@@ -270,6 +270,7 @@ enum display_value_valindex_en
   display_value_v_conn,
   display_value_v_curson,
   display_value_v_vectsubdisp,
+  display_value_v_subdisplay,
   display_value_v__lastval
 };
 
@@ -523,16 +524,30 @@ display_value_lab_start:
 	  mom_item_tasklet_clear_res (momtasklet_);
 	  DISPLAY_VALUE_SET_STATE (didson);
 	display_value_lab_didson:
-	  ;
-#warning incomplete display_value for son of node
+	  _L (subdisplay) = mom_item_tasklet_res1 (momtasklet_);
+	  mom_item_tasklet_clear_res (momtasklet_);
+	  mom_item_vector_append1 (_L (vectsubdisp).pitem, _L (subdisplay));
 	}
       MOM_WEBX_OUT (_L (webx).pitem, MOMOUT_LITERAL (")"));
       MOM_WEBX_OUT (_L (webx).pitem,
 		    //
 		    MOMOUT_JS_LITERAL ("</span>"));
+      /// display: node(<item:connective>,<tuple:sons-displays>)
+      mom_item_put_attribute	//
+	(_L (newdisplay).pitem, mom_named__display,
+	 (momval_t)
+	 mom_make_node_sized (mom_named__node, 2,
+			      _L (conn),
+			      (momval_t) mom_make_tuple_from_array
+			      ((unsigned) _N (nbsons),
+			       (const momitem_t **)
+			       mom_item_vector_ptr_nth (_L
+							(vectsubdisp).pitem,
+							0))));
       mom_item_tasklet_set_1res (momtasklet_, _L (newdisplay));
       DISPLAY_VALUE_POP_RETURN ();
       break;
+#warning missing cases for momty_jsonarray & momty_jsonobject
     }
   //
 display_value_lab_impossible:

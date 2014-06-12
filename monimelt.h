@@ -1611,6 +1611,26 @@ mom_item_vector_nth (const momitem_t *itm, int rk)
   return MOM_NULLV;
 }
 
+static inline momval_t *
+mom_item_vector_ptr_nth (const momitem_t *itm, int rk)
+{
+  if (!itm || itm->i_typnum != momty_item)
+    return NULL;
+  assert (itm->i_magic == MOM_ITEM_MAGIC);
+  if (itm->i_paylkind != mompayk_vector)
+    return NULL;
+  struct mom_valuevector_st *vvec = itm->i_payload;
+  assert (vvec != NULL);
+  unsigned cnt = vvec->vvec_count;
+  if (!cnt)
+    return NULL;
+  if (rk < 0)
+    rk += (int) cnt;
+  if (rk >= 0 && rk < (int) cnt)
+    return vvec->vvec_array + rk;
+  return NULL;
+}
+
 
 static inline void
 mom_item_vector_put_nth (const momitem_t *itm, int rk, momval_t val)
