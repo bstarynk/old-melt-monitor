@@ -267,6 +267,9 @@ enum display_value_valindex_en
   display_value_v_spare,
   display_value_v_backup,
   display_value_v_newdisplay,
+  display_value_v_conn,
+  display_value_v_curson,
+  display_value_v_vectsubdisp,
   display_value_v__lastval
 };
 
@@ -278,6 +281,8 @@ enum display_value_closure_en
 enum display_value_numbers_en
 {
   display_value_n_rank,
+  display_value_n_nbsons,
+  display_value_n_sonix,
   display_value_n__lastnum
 };
 
@@ -295,18 +300,22 @@ display_value_codmom (int momstate_, momitem_t *momtasklet_,
   {
     display_value_s_start,
     display_value_s_impossible,
+    display_value_s_didson,
     display_value_s__laststate
   };
-#define DISPLAY_VALUE_UNLOCK() do { \
-    mom_unlock_item(_L(editor).pitem); \
+#define DISPLAY_VALUE_UNLOCK() do {		\
+    mom_unlock_item(_L(editor).pitem);		\
+    if (_L(vectsubdisp).pitem)			\
+      mom_unlock_item(_L(vectsubdisp).pitem);	\
     mom_unlock_item(_L(webx).pitem); } while(0)
+  //
 #define _SET_STATE(St) do {						\
     MOM_DEBUGPRINTF (run,						\
 		     "display_value_codmom setstate " #St " = %d",	\
 		     (int)display_value_s_##St);			\
     return display_value_s_##St; } while(0)
 #define DISPLAY_VALUE_SET_STATE(St) \
-  do { DISPLAY_VALUE_UNLOCK(); _SET_STATE(St) } while(0)
+  do { DISPLAY_VALUE_UNLOCK(); _SET_STATE(St); } while(0)
   //
 #define DISPLAY_VALUE_POP_RETURN()				\
   do { DISPLAY_VALUE_UNLOCK(); 					\
@@ -325,6 +334,8 @@ display_value_codmom (int momstate_, momitem_t *momtasklet_,
 	goto display_value_lab_start;
       case display_value_s_impossible:
 	goto display_value_lab_impossible;
+      case display_value_s_didson:
+	goto display_value_lab_didson;
       case display_value_s__laststate:;
       }
   MOM_FATAPRINTF ("display_value invalid state #%d", momstate_);
@@ -475,6 +486,47 @@ display_value_lab_start:
 				  mom_tuple_nth_item (_L (curval), ix));
 	  }
       }
+      MOM_WEBX_OUT (_L (webx).pitem,
+		    //
+		    MOMOUT_JS_LITERAL ("</span>"));
+      mom_item_tasklet_set_1res (momtasklet_, _L (newdisplay));
+      DISPLAY_VALUE_POP_RETURN ();
+      break;
+      /*****************/
+    case momty_node:		///// node value
+      mom_item_put_attribute (_L (newdisplay).pitem, mom_named__display,
+			      (momval_t) mom_named__node);
+      _L (conn) = (momval_t) mom_node_conn (_L (curval));
+      _N (nbsons) = mom_node_arity (_L (curval));
+      _L (vectsubdisp) = (momval_t) mom_make_item ();
+      mom_should_lock_item (_L (vectsubdisp).pitem);
+      mom_item_start_vector (_L (vectsubdisp).pitem);
+      MOM_WEBX_OUT (_L (webx).pitem,
+		    //
+		    MOMOUT_JS_LITERAL
+		    ("<span class='mom_node_value_cl' id='momdisplay"),
+		    MOMOUT_LITERALV (mom_ident_cstr_of_item
+				     (_L (newdisplay).pitem)),
+		    MOMOUT_JS_LITERAL ("'>*"));
+      display_item_occ_mom (_L (webx).pitem, _L (conn).pitem);
+      _N (nbsons) = mom_node_arity (_L (curval));
+      MOM_WEBX_OUT (_L (webx).pitem, MOMOUT_LITERAL (" ("));
+      for (_N (sonix) = 0; _N (sonix) < _N (nbsons); _N (sonix)++)
+	{
+	  if (_N (sonix) > 0)
+	    MOM_WEBX_OUT (_L (webx).pitem, MOMOUT_LITERAL (", "));
+	  _L (curson) = mom_node_nth (_L (curval), _N (sonix));
+	  mom_item_tasklet_push_frame	//
+	    (momtasklet_, (momval_t) momclosure_,
+	     MOMPFR_FOUR_VALUES (_L (editor),
+				 _L (webx), _L (curson), _L (orig)), NULL);
+	  mom_item_tasklet_clear_res (momtasklet_);
+	  DISPLAY_VALUE_SET_STATE (didson);
+	display_value_lab_didson:
+	  ;
+#warning incomplete display_value for son of node
+	}
+      MOM_WEBX_OUT (_L (webx).pitem, MOMOUT_LITERAL (")"));
       MOM_WEBX_OUT (_L (webx).pitem,
 		    //
 		    MOMOUT_JS_LITERAL ("</span>"));
