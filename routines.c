@@ -422,6 +422,46 @@ display_value_lab_start:
       DISPLAY_VALUE_POP_RETURN ();
       break;
       /*****************/
+    case momty_jsonarray:	/// jsonarray value, displayed as a whole
+      {
+	struct momout_st outb = { 0 };
+	mom_initialize_buffer_output (&outb, outf_jsonhalfindent);
+	MOM_OUT (&outb, MOMOUT_JSON_VALUE (_L (curval)), MOMOUT_FLUSH ());
+	MOM_WEBX_OUT (_L (webx).pitem,
+		      //
+		      MOMOUT_JS_LITERAL
+		      ("<span class='mom_jsonarray_value_cl' id='momdisplay"),
+		      MOMOUT_LITERALV (mom_ident_cstr_of_item
+				       (_L (newdisplay).pitem)),
+		      MOMOUT_JS_LITERAL ("'>"),
+		      MOMOUT_JS_HTML ((const char *) outb.mout_data),
+		      MOMOUT_JS_LITERAL ("</span>"));
+	mom_finalize_buffer_output (&outb);
+	mom_item_tasklet_set_1res (momtasklet_, _L (newdisplay));
+	DISPLAY_VALUE_POP_RETURN ();
+	break;
+      }
+      /*****************/
+    case momty_jsonobject:	/// jsonobject value, displayed as a whole
+      {
+	struct momout_st outb = { 0 };
+	mom_initialize_buffer_output (&outb, outf_jsonhalfindent);
+	MOM_OUT (&outb, MOMOUT_JSON_VALUE (_L (curval)), MOMOUT_FLUSH ());
+	MOM_WEBX_OUT (_L (webx).pitem,
+		      //
+		      MOMOUT_JS_LITERAL
+		      ("<span class='mom_jsonobject_value_cl' id='momdisplay"),
+		      MOMOUT_LITERALV (mom_ident_cstr_of_item
+				       (_L (newdisplay).pitem)),
+		      MOMOUT_JS_LITERAL ("'>"),
+		      MOMOUT_JS_HTML ((const char *) outb.mout_data),
+		      MOMOUT_JS_LITERAL ("</span>"));
+	mom_finalize_buffer_output (&outb);
+	mom_item_tasklet_set_1res (momtasklet_, _L (newdisplay));
+	DISPLAY_VALUE_POP_RETURN ();
+	break;
+      }
+      /*****************/
     case momty_item:		///// item value
       mom_item_put_attribute (_L (newdisplay).pitem, mom_named__display,
 			      (momval_t) mom_named__item);
