@@ -364,7 +364,9 @@ display_value_lab_start:
 			      (momval_t) mom_named__empty);
       MOM_WEBX_OUT (_L (webx).pitem,
 		    //
-		    MOMOUT_JS_LITERAL ("<span class='mom_null_value_cl' id='momdisplay"), MOMOUT_LITERALV (mom_ident_cstr_of_item (_L (newdisplay).pitem)), MOMOUT_JS_LITERAL ("'>" "&#9109;"	/* U+2395 APL FUNCTIONAL SYMBOL QUAD ⎕ */
+		    MOMOUT_JS_LITERAL ("<span class='mom_null_value_cl' id='momdisplay"),
+		    MOMOUT_LITERALV (mom_ident_cstr_of_item (_L (newdisplay).pitem)),
+		    MOMOUT_JS_LITERAL ("'>" "&#9109;"	/* U+2395 APL FUNCTIONAL SYMBOL QUAD ⎕ */
 																					       "</span>"));
       mom_item_tasklet_set_1res (momtasklet_, _L (newdisplay));
       DISPLAY_VALUE_POP_RETURN ();
@@ -415,9 +417,9 @@ display_value_lab_start:
 		    ("<span class='mom_string_value_cl' id='momdisplay"),
 		    MOMOUT_LITERALV (mom_ident_cstr_of_item
 				     (_L (newdisplay).pitem)),
-		    MOMOUT_JS_LITERAL ("'>"),
+		    MOMOUT_JS_LITERAL ("'>""&#8220;<span class='mom_string_content_cl'>"	/* U+201C LEFT DOUBLE QUOTATION MARK “ */),
 		    MOMOUT_JS_HTML (mom_string_cstr (_L (curval))),
-		    MOMOUT_JS_LITERAL ("</span>"));
+		    MOMOUT_JS_LITERAL ("</span>" "&#8221;"	/* U+201D RIGHT DOUBLE QUOTATION MARK ” */ "</span>"));
       mom_item_tasklet_set_1res (momtasklet_, _L (newdisplay));
       DISPLAY_VALUE_POP_RETURN ();
       break;
@@ -587,7 +589,6 @@ display_value_lab_start:
       mom_item_tasklet_set_1res (momtasklet_, _L (newdisplay));
       DISPLAY_VALUE_POP_RETURN ();
       break;
-#warning missing cases for momty_jsonarray & momty_jsonobject
     }
   //
 display_value_lab_impossible:
@@ -1359,6 +1360,27 @@ ajaxobjs_lab_start:
     momval_t todov = mom_webx_post_arg (_L (webx).pitem, "todo_mom");
     MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_objects_codmom todov="),
 	       MOMOUT_VALUE ((const momval_t) todov));
+    if (mom_string_same (todov, "mom_menuitem_obj_named"))
+      {
+	MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_objects_codmom named"));
+	MOM_WEBX_OUT (_L (webx).pitem,
+		      MOMOUT_LITERAL
+		      ("Edit an existing <b>named</b> item <small>at </i>"),
+		      MOMOUT_DOUBLE_TIME ((const char *) "%c",
+					  mom_clock_time (CLOCK_REALTIME)),
+		      MOMOUT_LITERAL ("</i></small><br/>"), MOMOUT_SPACE (32),
+		      MOMOUT_LITERAL
+		      ("<label for='mom_name_input'>Name:</label>"
+		       " <input id='mom_name_input' class='mom_nameinput_cl' name='mom_name' onChange='mom_name_input_changed(this)'/>"
+		       " <input type='submit' id='mom_cancel' class='mom_cancel_cl' value='cancel' onclick='mom_erase_maindiv()'/>"),
+		      MOMOUT_NEWLINE (),
+		      MOMOUT_LITERAL
+		      ("<script>mom_set_name_entry($('#mom_name_input'));"),
+		      MOMOUT_SPACE (32), MOMOUT_LITERAL ("</script>"),
+		      MOMOUT_NEWLINE (), NULL);
+	mom_webx_reply (_L (webx).pitem, "text/html", HTTP_OK);
+	goto end;
+      }
     if (mom_string_same (todov, "mom_menuitem_obj_named"))
       {
 	MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_objects_codmom named"));

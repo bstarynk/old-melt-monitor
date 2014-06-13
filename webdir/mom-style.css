@@ -242,6 +242,68 @@ span.mom_selitem_cl {
     color: #360297;
 }
 
+
+/* new display based editor: */
+span.mom_null_value_cl {
+    font-weight: bold;
+    color: #8B451340;
+}
+
+span.mom_integer_value_cl {
+    font-family: Verdana,Helvetica;
+    color: #171F3B90;
+}
+
+span.mom_double_value_cl {
+    font-family: Verdana,Helvetica;
+    color: #44066D90;
+}
+
+span.mom_string_value_cl {
+    font-family: Verdana, Geneva, sans-serif;
+    color: #5C133890;
+}
+
+span.mom_string_content_cl {
+    font-family: "Lucida Console", Monaco, monospace;
+    font-weight: normal;
+    background-color: #DEE69C60;
+    bottom-margin: 2px;
+    padding-bottom: 1px;
+}
+
+span.mom_jsonarray_value_cl {
+    color: #A43C1460;
+    font-family: "Lucida Console", Monaco, monospace;
+}
+
+span.mom_jsonobject_value_cl {
+    color: #895F1260;
+    font-family: "Lucida Console", Monaco, monospace;
+}
+
+span.mom_item_value_cl {
+    font-family: Verdana, Geneva, sans-serif;
+    font-weight: bold;
+    color: #223E4440;
+}
+
+span.mom_set_value_cl {
+    font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+    color: #1F295055;
+}
+
+span.mom_tuple_value_cl {
+    font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+    color: #210E3857;
+}
+
+span.mom_node_value_cl {
+    font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+    color: #52112F61;
+}
+
+/* old editor: */
 span.mom_nullval_cl {
     font-size: 110%;
     font-weight: bold;
