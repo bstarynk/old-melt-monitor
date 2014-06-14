@@ -419,6 +419,36 @@ function mom_name_input_changed(inp)
 	   });
 }
 
+
+
+// the "Obj -> Named" menu replied by creating the mom_name_input
+// whose onChange calls this function
+function mom_display_name_input_changed(inp)
+{
+    namescompletion_mom = null;
+    console.debug ("mom_display_name_input_changed inp=", inp,
+		   " of value=", inp.value, " before ajax_object mom_doeditnamed");
+    $.ajax({ url: '/ajax_objects',
+	     method: 'POST',
+	     data: { todo_mom: "mom_dodisplaynamed",
+		     name_mom: inp.value
+		   },
+	     dataType: 'json',
+	     success: function (gotdata) {
+		 /** we are expecting a large JSON reply */
+		 console.debug ("mom_display_name_input_changed  ajax_object mom_doeditnamed",
+				" gotdata=", gotdata);
+		 mom_install_display(gotdata);
+	     },
+	     error: function (jq,status,errmsg) {
+		 console.error ("mom_display_name_input_changed ajax_object mom_doeditnamed",
+				" error jq=", jq, " status=", status, " errmsg=", errmsg);
+	     }
+	   });
+}
+
+
+
 function mom_do_menu_valedit(itm) {
     console.debug ("mom_do_menu_valedit itm=", itm);
 }
@@ -438,6 +468,11 @@ function mom_install_editor(jdata) {
     var tabtitle = jdata.momeditorj_tabtitle;
     var tabcontent = jdata.momeditorj_tabcontent;
     mom_add_editor_tab(editorid,tabtitle,tabcontent);
+}
+
+
+function mom_install_display(jdata) {
+    console.warning ("mom_install_display jdata=", jdata);
 }
 
 function mom_containing_val(elem) {

@@ -364,9 +364,7 @@ display_value_lab_start:
 			      (momval_t) mom_named__empty);
       MOM_WEBX_OUT (_L (webx).pitem,
 		    //
-		    MOMOUT_JS_LITERAL ("<span class='mom_null_value_cl' id='momdisplay"),
-		    MOMOUT_LITERALV (mom_ident_cstr_of_item (_L (newdisplay).pitem)),
-		    MOMOUT_JS_LITERAL ("'>" "&#9109;"	/* U+2395 APL FUNCTIONAL SYMBOL QUAD ⎕ */
+		    MOMOUT_JS_LITERAL ("<span class='mom_null_value_cl' id='momdisplay"), MOMOUT_LITERALV (mom_ident_cstr_of_item (_L (newdisplay).pitem)), MOMOUT_JS_LITERAL ("'>" "&#9109;"	/* U+2395 APL FUNCTIONAL SYMBOL QUAD ⎕ */
 																					       "</span>"));
       mom_item_tasklet_set_1res (momtasklet_, _L (newdisplay));
       DISPLAY_VALUE_POP_RETURN ();
@@ -417,9 +415,14 @@ display_value_lab_start:
 		    ("<span class='mom_string_value_cl' id='momdisplay"),
 		    MOMOUT_LITERALV (mom_ident_cstr_of_item
 				     (_L (newdisplay).pitem)),
-		    MOMOUT_JS_LITERAL ("'>""&#8220;<span class='mom_string_content_cl'>"	/* U+201C LEFT DOUBLE QUOTATION MARK “ */),
+		    MOMOUT_JS_LITERAL ("'>"
+				       "&#8220;<span class='mom_string_content_cl'>"
+				       /* U+201C LEFT DOUBLE QUOTATION MARK “ */
+		    ),
 		    MOMOUT_JS_HTML (mom_string_cstr (_L (curval))),
-		    MOMOUT_JS_LITERAL ("</span>" "&#8221;"	/* U+201D RIGHT DOUBLE QUOTATION MARK ” */ "</span>"));
+		    MOMOUT_JS_LITERAL ("</span>" "&#8221;"
+				       /* U+201D RIGHT DOUBLE QUOTATION MARK ” */
+				       "</span>"));
       mom_item_tasklet_set_1res (momtasklet_, _L (newdisplay));
       DISPLAY_VALUE_POP_RETURN ();
       break;
@@ -1307,6 +1310,9 @@ ajax_objects_codmom (int momstate_, momitem_t *momtasklet_,
     ajaxobjs_s_beginedit,
     ajaxobjs_s_didattredit,
     ajaxobjs_s_didcontentedit,
+    ajaxobjs_s_begindisplay,
+    ajaxobjs_s_didattrdisplay,
+    ajaxobjs_s_didcontentdisplay,
     ajaxobjs_s__laststate
   };
 #define _SET_STATE(St) do {						\
@@ -1331,6 +1337,15 @@ ajax_objects_codmom (int momstate_, momitem_t *momtasklet_,
 	//
       case ajaxobjs_s_didcontentedit:
 	goto ajaxobjs_lab_didcontentedit;
+	//
+      case ajaxobjs_s_begindisplay:
+	goto ajaxobjs_lab_begindisplay;
+	//
+      case ajaxobjs_s_didattrdisplay:
+	goto ajaxobjs_lab_didattrdisplay;
+	//
+      case ajaxobjs_s_didcontentdisplay:
+	goto ajaxobjs_lab_didcontentdisplay;
 	//
       case ajaxobjs_s__laststate:;
       }
@@ -1381,22 +1396,22 @@ ajaxobjs_lab_start:
 	mom_webx_reply (_L (webx).pitem, "text/html", HTTP_OK);
 	goto end;
       }
-    if (mom_string_same (todov, "mom_menuitem_obj_named"))
+    else if (mom_string_same (todov, "mom_menuitem_obj_dispnamed"))
       {
-	MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_objects_codmom named"));
+	MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_objects_codmom dispnamed"));
 	MOM_WEBX_OUT (_L (webx).pitem,
 		      MOMOUT_LITERAL
-		      ("Edit an existing <b>named</b> item <small>at </i>"),
+		      ("Display an existing <b>named</b> item <small>at </i>"),
 		      MOMOUT_DOUBLE_TIME ((const char *) "%c",
 					  mom_clock_time (CLOCK_REALTIME)),
 		      MOMOUT_LITERAL ("</i></small><br/>"), MOMOUT_SPACE (32),
 		      MOMOUT_LITERAL
-		      ("<label for='mom_name_input'>Name:</label>"
-		       " <input id='mom_name_input' class='mom_nameinput_cl' name='mom_name' onChange='mom_name_input_changed(this)'/>"
+		      ("<label for='mom_display_name_input'>Name:</label>"
+		       " <input id='mom_name_input' class='mom_nameinput_cl' name='mom_name' onChange='mom_display_name_input_changed(this)'/>"
 		       " <input type='submit' id='mom_cancel' class='mom_cancel_cl' value='cancel' onclick='mom_erase_maindiv()'/>"),
 		      MOMOUT_NEWLINE (),
 		      MOMOUT_LITERAL
-		      ("<script>mom_set_name_entry($('#mom_name_input'));"),
+		      ("<script>mom_set_name_entry($('#mom_display_name_input'));"),
 		      MOMOUT_SPACE (32), MOMOUT_LITERAL ("</script>"),
 		      MOMOUT_NEWLINE (), NULL);
 	mom_webx_reply (_L (webx).pitem, "text/html", HTTP_OK);
@@ -1480,6 +1495,45 @@ ajaxobjs_lab_start:
 	    goto end;
 	  }
       }
+
+    else if (mom_string_same (todov, "mom_dodisplaynamed"))
+      {
+	MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_objects_codmom displaynamed"));
+	momval_t namev = mom_webx_post_arg (_L (webx).pitem, "name_mom");
+	momval_t idv = mom_webx_post_arg (_L (webx).pitem, "id_mom");
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL ("ajax_objects_codmom doeditnamed namev="),
+		   MOMOUT_VALUE ((const momval_t) namev),
+		   MOMOUT_LITERAL ("; idv="),
+		   MOMOUT_VALUE ((const momval_t) idv));
+	_L (editeditm) =
+	  (momval_t) mom_get_item_of_name_or_ident_string (namev);
+	if (!_L (editeditm).ptr)
+	  _L (editeditm) =
+	    (momval_t) mom_get_item_of_name_or_ident_string (idv);
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL
+		   ("ajax_objects_codmom dodisplaynamed editeditm="),
+		   MOMOUT_VALUE ((const momval_t) _L (editeditm)));
+
+	if (_L (editeditm).ptr)
+	  {
+	    mom_unlock_item (_L (webx).pitem);
+	    _SET_STATE (begindisplay);
+	  }
+	else
+	  {
+	    MOM_WEBX_OUT (_L (webx).pitem,
+			  MOMOUT_LITERAL ("Unknown item <tt>"),
+			  MOMOUT_HTML (mom_string_cstr (namev)),
+			  MOMOUT_LITERAL ("</tt> to display"));
+	    mom_webx_reply (_L (webx).pitem, "text/html", HTTP_NOT_FOUND);
+	    MOM_WARNPRINTF ("unknown item to display named %s",
+			    mom_string_cstr (namev));
+	    goto end;
+	  }
+      }
+
     else if (mom_string_same (todov, "mom_doeditorclose"))
       {
 	momval_t editoridv =
@@ -1868,6 +1922,46 @@ ajaxobjs_lab_beginedit:
     mom_unlock_item (_L (webx).pitem);
   }
   ;
+ajaxobjs_lab_begindisplay:
+  {
+    _L (editor) = (momval_t) mom_make_item ();
+    mom_item_start_vector (_L (editor).pitem);
+    mom_item_vector_reserve (_L (editor).pitem, 16);
+    mom_item_put_attribute (_L (editor).pitem, mom_named__item,
+			    _L (editeditm));
+    MOM_DEBUG (run,
+	       MOMOUT_LITERAL ("ajax_objects_codmom begindisplay editor="),
+	       MOMOUT_VALUE ((const momval_t) _L (editor)),
+	       MOMOUT_LITERAL ("; webx="),
+	       MOMOUT_VALUE ((const momval_t) _L (webx)),
+	       MOMOUT_LITERAL ("; editeditm="),
+	       MOMOUT_VALUE ((const momval_t) _L (editeditm)),
+	       MOMOUT_LITERAL ("; editors="),
+	       MOMOUT_VALUE ((const momval_t) _C (editors)), NULL);
+    {
+      mom_should_lock_item (_C (editors).pitem);
+      if (_C (editors).pitem->i_paylkind != mompayk_assoc)
+	mom_item_start_assoc (_C (editors).pitem);
+      mom_item_assoc_put (_C (editors).pitem, _L (editeditm).pitem,
+			  _L (editor));
+      mom_unlock_item (_C (editors).pitem);
+    }
+    {
+      mom_lock_item (_L (editeditm).pitem);
+      _L (setattrs) =
+	(momval_t) mom_item_set_attributes (_L (editeditm).pitem);
+      _N (nbattrs) = mom_set_cardinal (_L (setattrs));
+      mom_unlock_item (_L (editeditm).pitem);
+    }
+  }
+  MOM_FATAPRINTF ("ajax_objects_codmom begindisplay incomplete");
+  ////
+ajaxobjs_lab_didattrdisplay:
+#warning unimplemented  ajaxobjs_lab_didattrdisplay
+  MOM_FATAPRINTF ("ajaxobjs_lab_didattrdisplay unimplemented");
+ajaxobjs_lab_didcontentdisplay:
+#warning unimplemented  ajaxobjs_lab_didcontentdisplay
+  MOM_FATAPRINTF ("ajaxobjs_lab_didcontentdisplay unimplemented");
   ////
 #undef _L
 #undef _C
