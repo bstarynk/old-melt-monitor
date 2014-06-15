@@ -388,8 +388,12 @@ function mom_names_completion()
 function mom_set_name_entry(inp)
 {
     console.debug ("mom_set_name_entry inp=", inp, " before ajax_complete_name");
+    var namcomp = mom_names_completion();
+    console.debug ("mom_set_name_entry namcomp=", namcomp);
     inp.autocomplete({
-	source: (mom_names_completion())
+	minLength: 3,
+	delay: 250,
+	source: namcomp
     });
 }
 
