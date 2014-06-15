@@ -86,12 +86,13 @@ add_editors_mom (void)
     (ajax_edit_item,		//
      mom_named__web_handler,	//
      (momval_t) mom_make_node_til_nil	//
-     (ajax_edit_item, (momval_t) mom_make_node_til_nil	//
-      (edit_value_item,
+     (ajax_edit_item,		//
+      (momval_t) editors_item, (momval_t) mom_make_node_til_nil	//
+      (edit_value_item, (momval_t) editors_item, (momval_t) mom_make_string ("{spare1-edit_value}"), NULL), (momval_t) mom_make_node_til_nil	//
+      (display_value_item,
        (momval_t) editors_item,
-       (momval_t) mom_make_string ("{spare1-edit_value}"),
+       (momval_t) mom_make_string ("{spare1-display_value}"),
        NULL),
-      (momval_t) editors_item,
       (momval_t) mom_make_string ("{spare4-ajax_edit}"), MOM_EMPTY, NULL));
   MOM_INFORMPRINTF
     ("updated to keep editors in closures for edit_value & ajax_edit");

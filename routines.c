@@ -1407,7 +1407,7 @@ ajaxobjs_lab_start:
 					  mom_clock_time (CLOCK_REALTIME)),
 		      MOMOUT_LITERAL ("</i></small><br/>"), MOMOUT_SPACE (32),
 		      MOMOUT_LITERAL
-		      ("<label for='mom_display_name_input'>Name:</label>"
+		      ("<label for='mom_display_name_input'>Display name:</label>"
 		       " <input id='mom_name_input' class='mom_nameinput_cl' name='mom_name' onChange='mom_display_name_input_changed(this)'/>"
 		       " <input type='submit' id='mom_cancel' class='mom_cancel_cl' value='cancel' onclick='mom_erase_maindiv()'/>"),
 		      MOMOUT_NEWLINE (),
@@ -1975,6 +1975,7 @@ ajaxobjs_lab_begindisplay:
 		   MOMOUT_VALUE ((const momval_t) _L (curvalattr)),
 		   MOMOUT_LITERAL ("; editvalueclos="),
 		   MOMOUT_VALUE ((const momval_t) _C (editvalueclos)), NULL);
+
       }
   }
   MOM_FATAPRINTF ("ajax_objects_codmom begindisplay incomplete");

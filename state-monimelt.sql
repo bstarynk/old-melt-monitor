@@ -56,7 +56,7 @@ INSERT INTO t_items VALUES('_35a1p2kdx9h_ap5pe704vtr','{"kind": "routine", "payl
    "val": {"sons": [{"sons": [{"item_ref": "_7qk90k9vx0u_31ivff77td7", "space": ".root",
 "jtype": "item_ref"}, "{spare1-edit_value}"], "node": "_73im2zryfij_a7zmkketcfc",
       "jtype": "node"}, {"item_ref": "_7qk90k9vx0u_31ivff77td7", "space": ".root",
-      "jtype": "item_ref"}, "{spare3-ajax_edit}", null], "node": "_35a1p2kdx9h_ap5pe704vtr",
+      "jtype": "item_ref"}, "{spare4-ajax_edit}", null], "node": "_35a1p2kdx9h_ap5pe704vtr",
     "jtype": "node"}}], "content": null}
 ');
 INSERT INTO t_items VALUES('_35vp60aw7em_d436vfie4ud','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
