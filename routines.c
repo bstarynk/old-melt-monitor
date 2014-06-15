@@ -642,8 +642,9 @@ enum ajax_edit_valindex_en
 
 enum ajax_edit_closure_en
 {
-  ajaxedit_c_edit_value,
   ajaxedit_c_editors,
+  ajaxedit_c_edit_value,
+  ajaxedit_c_display_value,
   ajaxedit_c__lastclosure
 };
 
@@ -1953,6 +1954,28 @@ ajaxobjs_lab_begindisplay:
       _N (nbattrs) = mom_set_cardinal (_L (setattrs));
       mom_unlock_item (_L (editeditm).pitem);
     }
+    for (_N (atix) = 0; _N (atix) < _N (nbattrs); _N (atix)++)
+      {
+	_L (curattritm) =
+	  (momval_t) mom_set_nth_item (_L (setattrs), _N (atix));
+	{
+	  assert (mom_is_item (_L (editeditm)));
+	  assert (mom_is_item (_L (curattritm)));
+	  mom_lock_item (_L (editeditm).pitem);
+	  _L (curvalattr) = mom_item_get_attribute (_L (editeditm).pitem,
+						    _L (curattritm).pitem);
+	  mom_unlock_item (_L (editeditm).pitem);
+	}
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL ("ajax_objects_codmom display atix="),
+		   MOMOUT_DEC_INT ((int) _N (atix)),
+		   MOMOUT_LITERAL ("; curattritm="),
+		   MOMOUT_VALUE ((const momval_t) _L (curattritm)),
+		   MOMOUT_LITERAL ("; curvalattr="),
+		   MOMOUT_VALUE ((const momval_t) _L (curvalattr)),
+		   MOMOUT_LITERAL ("; editvalueclos="),
+		   MOMOUT_VALUE ((const momval_t) _C (editvalueclos)), NULL);
+      }
   }
   MOM_FATAPRINTF ("ajax_objects_codmom begindisplay incomplete");
   ////

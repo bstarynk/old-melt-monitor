@@ -29,37 +29,39 @@ mom_plugin_init (const char *arg)
 }
 
 
-#if 0 && old
+//#if 0 && old
 static void
 create_stuff_mom (void)
 {
   momitem_t *ajax_objects_item = mom_get_item_of_name ("ajax_objects");
   assert (ajax_objects_item != NULL);
-  momitem_t *edit_value_item = mom_make_item ();
-  mom_item_set_space (edit_value_item, momspa_root);
-  mom_register_item_named_cstr (edit_value_item, "edit_value");
-  mom_item_start_routine (edit_value_item, "edit_value");
-  edit_value_item->i_attrs = mom_put_attribute
-    (edit_value_item->i_attrs,
+  momitem_t *display_value_item = mom_make_item ();
+  mom_item_set_space (display_value_item, momspa_root);
+  mom_register_item_named_cstr (display_value_item, "display_value");
+  mom_item_start_routine (display_value_item, "display_value");
+  display_value_item->i_attrs = mom_put_attribute
+    (display_value_item->i_attrs,
      mom_named__comment,
      (momval_t)
      mom_make_string
-     ("routine to edit a value during edition in ajax_objects"));
+     ("routine to display a value during edition in ajax_objects"));
+#if 0
   ajax_objects_item->i_attrs =	//
     mom_put_attribute (ajax_objects_item->i_attrs, mom_named__web_handler,	//
 		       (momval_t) mom_make_node_til_nil	//
 		       (ajax_objects_item, (momval_t) mom_make_node_til_nil	//
-			(edit_value_item,
+			(display_value_item,
 			 (momval_t)
 			 mom_make_string
-			 ("{spare1-edit_value}"),
+			 ("{spare1-display_value}"),
 			 NULL),
 			(momval_t)
 			mom_make_string
 			("{spare2-ajax_objects}"), MOM_EMPTY, NULL));
-  MOM_INFORMPRINTF ("created edit_value");
-}
 #endif
+  MOM_INFORMPRINTF ("created display_value");
+}
+
 
 
 void
@@ -69,6 +71,8 @@ add_editors_mom (void)
   assert (ajax_edit_item != NULL);
   momitem_t *edit_value_item = mom_get_item_of_name ("edit_value");
   assert (edit_value_item != NULL);
+  momitem_t *display_value_item = mom_get_item_of_name ("display_value");
+  assert (display_value_item != NULL);
   momitem_t *editors_item = mom_get_item_of_name ("editors");
   assert (editors_item != NULL);
   mom_item_start_routine (ajax_edit_item, "ajax_edit");
@@ -88,7 +92,7 @@ add_editors_mom (void)
        (momval_t) mom_make_string ("{spare1-edit_value}"),
        NULL),
       (momval_t) editors_item,
-      (momval_t) mom_make_string ("{spare3-ajax_edit}"), MOM_EMPTY, NULL));
+      (momval_t) mom_make_string ("{spare4-ajax_edit}"), MOM_EMPTY, NULL));
   MOM_INFORMPRINTF
     ("updated to keep editors in closures for edit_value & ajax_edit");
 }
@@ -98,5 +102,6 @@ momplugin_after_load (void)
 {
   MOM_DEBUGPRINTF (run,
 		   "after load in " __FILE__ " build " __DATE__ "@" __TIME__);
+  //create_stuff_mom ();
   add_editors_mom ();
 }

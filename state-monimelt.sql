@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 Jun 12
+-- state-monimelt dump 2014 Jun 15
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','after predefined double');
+INSERT INTO t_params VALUES('dump_reason','exit dump');
 INSERT INTO t_items VALUES('_02u53qxa7dm_sttmhffpchr','{"kind": "queue", "payload": [], "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "The agenda is central to Monimelt.\nIt is the queue of taskets to be executed by worker threads."}],
  "content": null}
@@ -160,6 +160,10 @@ INSERT INTO t_items VALUES('_7diyc1cwj8z_x630afccr8e','{"kind": null, "payload":
 INSERT INTO t_items VALUES('_7kkh6qiq1vc_e69zp2feuhe','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "gives the rank"}], "content": null}
 ');
+INSERT INTO t_items VALUES('_7pyjxst21ce_vhc0tk0em0u','{"kind": "routine", "payload": "display_value", "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "routine to display a value during edition in ajax_objects"}], "content":
+ null}
+');
 INSERT INTO t_items VALUES('_7qk90k9vx0u_31ivff77td7','{"kind": "assoc", "payload": [], "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "keep association between edited items and their editor"}, {"attr": "_3zqd7ai3rtu_md9athkx17u",
    "val": "ajax routine for edition"}], "content": null}
@@ -227,6 +231,7 @@ INSERT INTO t_names VALUES('closure','_97zkxf62r11_6eedwwv3eu8','.predef');
 INSERT INTO t_names VALUES('comment','_41u1utcxyek_22cftxt3xxm','.predef');
 INSERT INTO t_names VALUES('content','_8s357rq2dzk_k8ze95tikjm','.predef');
 INSERT INTO t_names VALUES('display','_085krqf192t_z1m3zs77ww5','.predef');
+INSERT INTO t_names VALUES('display_value','_7pyjxst21ce_vhc0tk0em0u','.root');
 INSERT INTO t_names VALUES('double','_89ejvxupprm_f219pqwz13s','.predef');
 INSERT INTO t_names VALUES('doubles','_17spwr8dkzv_tsf2s8diazu','.predef');
 INSERT INTO t_names VALUES('edit_value','_73im2zryfij_a7zmkketcfc','.root');
