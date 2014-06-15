@@ -1279,6 +1279,7 @@ enum ajax_objects_valindex_en
   ajaxobjs_v_curattritm,
   ajaxobjs_v_curvalattr,
   ajaxobjs_v_curcontent,
+  ajaxobjs_v_orig,
   ajaxobjs_v__lastval
 };
 
@@ -2078,17 +2079,39 @@ ajaxobjs_lab_begindisplay:
 		     MOMOUT_VALUE ((const momval_t) _L (curattritm)),
 		     MOMOUT_LITERAL ("; curvalattr="),
 		     MOMOUT_VALUE ((const momval_t) _L (curvalattr)),
-		     MOMOUT_LITERAL ("; editvalueclos="),
-		     MOMOUT_VALUE ((const momval_t) _C (editvalueclos)),
+		     MOMOUT_LITERAL ("; displayvalueclos="),
+		     MOMOUT_VALUE ((const momval_t) _C (displayvalueclos)),
 		     NULL);
-	}
+	  {
+	    mom_should_lock_item (_L (webx).pitem);
+	    MOM_WEBX_OUT (_L (webx).pitem,
+			  MOMOUT_JS_LITERAL
+			  ("<ul class='mom_attr_entry_cl'>"));
+	    display_item_occ_mom (_L (webx).pitem, _L (curattritm).pitem);
+	    MOM_WEBX_OUT (_L (webx).pitem, MOMOUT_JS_LITERAL (" " "&#9659;"	/*U+25BB WHITE RIGHT-POINTING POINTER ▻ */
+							      " "));
+	    mom_unlock_item (_L (webx).pitem);
+	  }
+#warning ajax_objects display attr should compute orig
+	  mom_item_tasklet_push_frame	///
+	    (momtasklet_, _C (displayvalueclos), MOMPFR_FOUR_VALUES (_L (editor), _L (webx), _L (curvalattr),	//curval
+								     _L (orig)	//orig
+	     ), MOMPFR_INT ((intptr_t) 0), NULL);
+	  _SET_STATE (didattrdisplay);
+	ajaxobjs_lab_didattrdisplay:
+#warning unimplemented  ajaxobjs_lab_didattrdisplay
+	  MOM_FATAPRINTF ("ajaxobjs_lab_didattrdisplay unimplemented");
+	  //////
+	  {
+	    mom_should_lock_item (_L (webx).pitem);
+	    MOM_WEBX_OUT (_L (webx).pitem, MOMOUT_JS_LITERAL ("</ul>"));
+	    mom_unlock_item (_L (webx).pitem);
+	  }
+	}			// end for _N(atix)
     }
   }
   MOM_FATAPRINTF ("ajax_objects_codmom begindisplay incomplete");
   ////
-ajaxobjs_lab_didattrdisplay:
-#warning unimplemented  ajaxobjs_lab_didattrdisplay
-  MOM_FATAPRINTF ("ajaxobjs_lab_didattrdisplay unimplemented");
 ajaxobjs_lab_didcontentdisplay:
 #warning unimplemented  ajaxobjs_lab_didcontentdisplay
   MOM_FATAPRINTF ("ajaxobjs_lab_didcontentdisplay unimplemented");
