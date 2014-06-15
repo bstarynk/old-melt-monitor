@@ -1284,8 +1284,9 @@ enum ajax_objects_valindex_en
 
 enum ajax_objects_closure_en
 {
-  ajaxobjs_c_editvalueclos,
   ajaxobjs_c_editors,
+  ajaxobjs_c_editvalueclos,
+  ajaxobjs_c_displayvalueclos,
   ajaxobjs_c__lastclosure
 };
 
@@ -1644,10 +1645,10 @@ ajaxobjs_lab_beginedit:
       /*** see comment in mom-scripts.js regarding mom_install_editor
 	   javascript function; we should send something like:
 
-   { "momeditorj_id": "_0u15i1z87ei_jf2wwmpim72",       // editor id
-     "momeditorj_tabtitle": "<span...",      // the HTML for the tab title
-     "momeditorj_tabcontent": "<div..."      // the HTML for the tab content
-   }
+	   { "momeditorj_id": "_0u15i1z87ei_jf2wwmpim72",       // editor id
+	   "momeditorj_tabtitle": "<span...",      // the HTML for the tab title
+	   "momeditorj_tabcontent": "<div..."      // the HTML for the tab content
+	   }
 
       ****/
       mom_lock_item (_L (webx).pitem);
@@ -1947,36 +1948,141 @@ ajaxobjs_lab_begindisplay:
 			  _L (editor));
       mom_unlock_item (_C (editors).pitem);
     }
+    /////
     {
-      mom_lock_item (_L (editeditm).pitem);
-      _L (setattrs) =
-	(momval_t) mom_item_set_attributes (_L (editeditm).pitem);
-      _N (nbattrs) = mom_set_cardinal (_L (setattrs));
-      mom_unlock_item (_L (editeditm).pitem);
-    }
-    for (_N (atix) = 0; _N (atix) < _N (nbattrs); _N (atix)++)
+      momval_t namidv =
+	(momval_t) mom_item_get_name_or_idstr (_L (editeditm).pitem);
+      momval_t idv = (momval_t) mom_item_get_idstr (_L (editeditm).pitem);
+      bool anonymous = (namidv.ptr == idv.ptr);
+      mom_should_lock_item (_L (webx).pitem);
       {
-	_L (curattritm) =
-	  (momval_t) mom_set_nth_item (_L (setattrs), _N (atix));
-	{
-	  assert (mom_is_item (_L (editeditm)));
-	  assert (mom_is_item (_L (curattritm)));
-	  mom_lock_item (_L (editeditm).pitem);
-	  _L (curvalattr) = mom_item_get_attribute (_L (editeditm).pitem,
-						    _L (curattritm).pitem);
-	  mom_unlock_item (_L (editeditm).pitem);
-	}
-	MOM_DEBUG (run,
-		   MOMOUT_LITERAL ("ajax_objects_codmom display atix="),
-		   MOMOUT_DEC_INT ((int) _N (atix)),
-		   MOMOUT_LITERAL ("; curattritm="),
-		   MOMOUT_VALUE ((const momval_t) _L (curattritm)),
-		   MOMOUT_LITERAL ("; curvalattr="),
-		   MOMOUT_VALUE ((const momval_t) _L (curvalattr)),
-		   MOMOUT_LITERAL ("; editvalueclos="),
-		   MOMOUT_VALUE ((const momval_t) _C (editvalueclos)), NULL);
+	// output the editor id JSON field:
+	const char *editoridstr =
+	  mom_string_cstr ((momval_t) mom_item_get_idstr (_L (editor).pitem));
+	MOM_WEBX_OUT (_L (webx).pitem,
+		      MOMOUT_LITERAL ("{ \"momeditorj_id\": \""),
+		      MOMOUT_JS_STRING (editoridstr),
+		      MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE ());
 
+
+	// output the tab title JSON field
+	MOM_WEBX_OUT (_L (webx).pitem,
+		      MOMOUT_LITERAL ("  \"momeditorj_tabtitle\": \""));
+	if (anonymous)
+	  MOM_WEBX_OUT (_L (webx).pitem,
+			MOMOUT_JS_LITERAL
+			("<span class='mom_displaytabanon_cl' id='momeditab"),
+			MOMOUT_LITERALV (editoridstr),
+			MOMOUT_JS_LITERAL ("'>"),
+			MOMOUT_JS_LITERALV ((const char *)
+					    mom_string_cstr ((idv))),
+			MOMOUT_JS_LITERAL ("</span>"));
+	else
+	  MOM_WEBX_OUT (_L (webx).pitem,
+			MOMOUT_JS_LITERAL
+			("<span class='mom_displaytabnamed_cl' id='momeditab"),
+			MOMOUT_LITERALV (editoridstr),
+			MOMOUT_JS_LITERAL ("'>"),
+			MOMOUT_JS_LITERALV ((const char *)
+					    mom_string_cstr ((namidv))),
+			MOMOUT_JS_LITERAL ("</span>"));
+	MOM_WEBX_OUT (_L (webx).pitem, MOMOUT_LITERAL ("\","),
+		      MOMOUT_NEWLINE ());
+
+	// begin outputting the tab content JS field
+	MOM_WEBX_OUT (_L (webx).pitem,
+		      MOMOUT_LITERAL ("  \"momeditorj_tabcontent\": \""),
+		      MOMOUT_JS_LITERAL ("<div id='momeditor"),
+		      MOMOUT_JS_LITERALV ((const char *) editoridstr),
+		      MOMOUT_JS_LITERAL ("' class='mom_editor_cl'>"),
+		      MOMOUT_JS_RAW_NEWLINE (),
+		      MOMOUT_JS_LITERAL ("<p class='mom_edit_title_cl'>"));
       }
+      if (anonymous)
+	{
+	  MOM_WEBX_OUT (_L (webx).pitem,
+			MOMOUT_JS_LITERAL
+			("anonymous item <tt class='mom_edititemid_cl'"),
+			MOMOUT_JS_LITERAL
+			(" data-momitemid='"),
+			MOMOUT_JS_LITERALV ((const char *)
+					    mom_string_cstr ((momval_t) idv)),
+			MOMOUT_JS_LITERAL
+			("'>"),
+			MOMOUT_JS_LITERALV ((const char *)
+					    mom_string_cstr ((momval_t) idv)),
+			MOMOUT_JS_LITERAL ("</tt>"),
+			MOMOUT_JS_RAW_NEWLINE ());
+	}
+      else
+	{
+	  MOM_WEBX_OUT (_L (webx).pitem,
+			MOMOUT_JS_LITERAL
+			("item <tt class='mom_edititemname_cl' data-momitemid='"),
+			MOMOUT_JS_LITERALV ((const char *)
+					    mom_string_cstr ((momval_t) idv)),
+			MOMOUT_JS_LITERAL
+			("'>"),
+			MOMOUT_JS_LITERALV ((const char *)
+					    mom_string_cstr ((momval_t)
+							     namidv)),
+			MOMOUT_JS_LITERAL
+			("</tt><br/><small>of id: </small><code class='mom_itemid_cl'>"),
+			MOMOUT_JS_LITERALV ((const char *)
+					    mom_string_cstr ((momval_t) idv)),
+			MOMOUT_JS_LITERAL ("</code>"),
+			MOMOUT_JS_RAW_NEWLINE ());
+	}
+      MOM_WEBX_OUT (_L (webx).pitem,
+		    MOMOUT_JS_LITERAL ("<br/>"),
+		    MOMOUT_JS_LITERAL
+		    ("<span class='mom_editdate_cl'>edited at "),
+		    MOMOUT_DOUBLE_TIME ((const char *) "%c",
+					mom_clock_time (CLOCK_REALTIME)),
+		    MOMOUT_JS_LITERAL ("</span></p>"));
+      MOM_WEBX_OUT (_L (webx).pitem,
+		    //
+		    MOMOUT_JS_LITERAL ("<div class='mom_attributes_cl'>"),
+		    MOMOUT_JS_LITERAL ("<p class='mom_attrtitle_cl'>"),
+		    MOMOUT_DEC_INT ((int) _N (nbattrs)),
+		    MOMOUT_JS_LITERAL (" attributes:"),
+		    MOMOUT_JS_LITERAL ("</p>"), MOMOUT_JS_RAW_NEWLINE ());
+      //
+      MOM_WEBX_OUT (_L (webx).pitem,
+		    MOMOUT_JS_LITERAL ("<ul class='mom_attrlist_cl'>"),
+		    MOMOUT_JS_RAW_NEWLINE ());
+      mom_unlock_item (_L (webx).pitem);
+      {
+	mom_lock_item (_L (editeditm).pitem);
+	_L (setattrs) =
+	  (momval_t) mom_item_set_attributes (_L (editeditm).pitem);
+	_N (nbattrs) = mom_set_cardinal (_L (setattrs));
+	mom_unlock_item (_L (editeditm).pitem);
+      }
+      for (_N (atix) = 0; _N (atix) < _N (nbattrs); _N (atix)++)
+	{
+	  _L (curattritm) =
+	    (momval_t) mom_set_nth_item (_L (setattrs), _N (atix));
+	  {
+	    assert (mom_is_item (_L (editeditm)));
+	    assert (mom_is_item (_L (curattritm)));
+	    mom_lock_item (_L (editeditm).pitem);
+	    _L (curvalattr) = mom_item_get_attribute (_L (editeditm).pitem,
+						      _L (curattritm).pitem);
+	    mom_unlock_item (_L (editeditm).pitem);
+	  }
+	  MOM_DEBUG (run,
+		     MOMOUT_LITERAL ("ajax_objects_codmom display atix="),
+		     MOMOUT_DEC_INT ((int) _N (atix)),
+		     MOMOUT_LITERAL ("; curattritm="),
+		     MOMOUT_VALUE ((const momval_t) _L (curattritm)),
+		     MOMOUT_LITERAL ("; curvalattr="),
+		     MOMOUT_VALUE ((const momval_t) _L (curvalattr)),
+		     MOMOUT_LITERAL ("; editvalueclos="),
+		     MOMOUT_VALUE ((const momval_t) _C (editvalueclos)),
+		     NULL);
+	}
+    }
   }
   MOM_FATAPRINTF ("ajax_objects_codmom begindisplay incomplete");
   ////
