@@ -389,8 +389,8 @@ display_value_lab_start:
 			      (momval_t) mom_named__empty);
       MOM_WEBX_OUT (_L (webx).pitem,
 		    //
-		    MOMOUT_JS_LITERAL ("<span class='mom_null_value_cl' id='momdisplay"), MOMOUT_LITERALV (mom_ident_cstr_of_item (_L (newdisplay).pitem)), MOMOUT_JS_LITERAL ("'>" "&#9109;"	/* U+2395 APL FUNCTIONAL SYMBOL QUAD ⎕ */
-																					       "</span>"));
+		    MOMOUT_JS_LITERAL ("<span class='mom_null_value_cl mom_value_cl' id='momdisplay"), MOMOUT_LITERALV (mom_ident_cstr_of_item (_L (newdisplay).pitem)), MOMOUT_JS_LITERAL ("'>" "&#9109;"	/* U+2395 APL FUNCTIONAL SYMBOL QUAD ⎕ */
+																							    "</span>"));
       mom_item_tasklet_set_1res (momtasklet_, _L (newdisplay));
       DISPLAY_VALUE_POP_RETURN ();
       break;
@@ -401,7 +401,7 @@ display_value_lab_start:
       MOM_WEBX_OUT (_L (webx).pitem,
 		    //
 		    MOMOUT_JS_LITERAL
-		    ("<span class='mom_integer_value_cl' id='momdisplay"),
+		    ("<span class='mom_integer_value_cl mom_value_cl' id='momdisplay"),
 		    MOMOUT_LITERALV (mom_ident_cstr_of_item
 				     (_L (newdisplay).pitem)),
 		    MOMOUT_JS_LITERAL ("'>"),
@@ -419,7 +419,7 @@ display_value_lab_start:
       MOM_WEBX_OUT (_L (webx).pitem,
 		    //
 		    MOMOUT_JS_LITERAL
-		    ("<span class='mom_double_value_cl' id='momdisplay"),
+		    ("<span class='mom_double_value_cl mom_value_cl' id='momdisplay"),
 		    MOMOUT_LITERALV (mom_ident_cstr_of_item
 				     (_L (newdisplay).pitem)),
 		    MOMOUT_JS_LITERAL ("'>"),
@@ -437,7 +437,7 @@ display_value_lab_start:
       MOM_WEBX_OUT (_L (webx).pitem,
 		    //
 		    MOMOUT_JS_LITERAL
-		    ("<span class='mom_string_value_cl' id='momdisplay"),
+		    ("<span class='mom_string_value_cl mom_value_cl' id='momdisplay"),
 		    MOMOUT_LITERALV (mom_ident_cstr_of_item
 				     (_L (newdisplay).pitem)),
 		    MOMOUT_JS_LITERAL ("'>"
@@ -460,7 +460,7 @@ display_value_lab_start:
 	MOM_WEBX_OUT (_L (webx).pitem,
 		      //
 		      MOMOUT_JS_LITERAL
-		      ("<span class='mom_jsonarray_value_cl' id='momdisplay"),
+		      ("<span class='mom_jsonarray_value_cl mom_value_cl' id='momdisplay"),
 		      MOMOUT_LITERALV (mom_ident_cstr_of_item
 				       (_L (newdisplay).pitem)),
 		      MOMOUT_JS_LITERAL ("'>"),
@@ -480,7 +480,7 @@ display_value_lab_start:
 	MOM_WEBX_OUT (_L (webx).pitem,
 		      //
 		      MOMOUT_JS_LITERAL
-		      ("<span class='mom_jsonobject_value_cl' id='momdisplay"),
+		      ("<span class='mom_jsonobject_value_cl mom_value_cl' id='momdisplay"),
 		      MOMOUT_LITERALV (mom_ident_cstr_of_item
 				       (_L (newdisplay).pitem)),
 		      MOMOUT_JS_LITERAL ("'>"),
@@ -498,7 +498,7 @@ display_value_lab_start:
       MOM_WEBX_OUT (_L (webx).pitem,
 		    //
 		    MOMOUT_JS_LITERAL
-		    ("<span class='mom_item_value_cl' id='momdisplay"),
+		    ("<span class='mom_item_value_cl mom_value_cl' id='momdisplay"),
 		    MOMOUT_LITERALV (mom_ident_cstr_of_item
 				     (_L (newdisplay).pitem)),
 		    MOMOUT_JS_LITERAL ("'>"));
@@ -516,7 +516,7 @@ display_value_lab_start:
       MOM_WEBX_OUT (_L (webx).pitem,
 		    //
 		    MOMOUT_JS_LITERAL
-		    ("<span class='mom_set_value_cl' id='momdisplay"),
+		    ("<span class='mom_set_value_cl mom_value_cl' id='momdisplay"),
 		    MOMOUT_LITERALV (mom_ident_cstr_of_item
 				     (_L (newdisplay).pitem)),
 		    MOMOUT_JS_LITERAL ("'>"));
@@ -543,7 +543,7 @@ display_value_lab_start:
       MOM_WEBX_OUT (_L (webx).pitem,
 		    //
 		    MOMOUT_JS_LITERAL
-		    ("<span class='mom_tuple_value_cl' id='momdisplay"),
+		    ("<span class='mom_tuple_value_cl mom_value_cl' id='momdisplay"),
 		    MOMOUT_LITERALV (mom_ident_cstr_of_item
 				     (_L (newdisplay).pitem)),
 		    MOMOUT_JS_LITERAL ("'>"));
@@ -575,7 +575,7 @@ display_value_lab_start:
       MOM_WEBX_OUT (_L (webx).pitem,
 		    //
 		    MOMOUT_JS_LITERAL
-		    ("<span class='mom_node_value_cl' id='momdisplay"),
+		    ("<span class='mom_node_value_cl mom_value_cl' id='momdisplay"),
 		    MOMOUT_LITERALV (mom_ident_cstr_of_item
 				     (_L (newdisplay).pitem)),
 		    MOMOUT_JS_LITERAL ("'>*"));
@@ -662,7 +662,9 @@ enum ajax_edit_valindex_en
   ajaxedit_v__spare,
   ajaxedit_v_webx,
   ajaxedit_v_editor,
+  ajaxedit_v_display,
   ajaxedit_v_edinode,
+  ajaxedit_v_dispnode,
   ajaxedit_v_curval,
   ajaxedit_v_origin,
   ajaxedit_v_curattr,
@@ -864,55 +866,55 @@ ajaxedit_lab_start:
 		   ("ajax_edit_codmom prepareditvalmenu idvalv="),
 		   MOMOUT_VALUE ((const momval_t) idvalv));
 	const char *idvalstr = mom_string_cstr (idvalv);
-	char editidbuf[MOM_IDSTRING_LEN + 8];
-	memset (editidbuf, 0, sizeof (editidbuf));
-	int numval = -1;
+	char dispidbuf[MOM_IDSTRING_LEN + 8];
+	memset (dispidbuf, 0, sizeof (dispidbuf));
 	const char *end = NULL;
-	if (idvalstr && !strncmp (idvalstr, "momedval", strlen ("momedval"))
-	    && mom_looks_like_random_id_cstr (idvalstr + strlen ("momedval"),
-					      &end) && end
-	    && sscanf (end, "_N%d", &numval) > 0 && numval >= 0)
+	if (idvalstr
+	    && !strncmp (idvalstr, "momdisplay", strlen ("momdisplay"))
+	    && mom_looks_like_random_id_cstr (idvalstr +
+					      strlen ("momdisplay"), &end)
+	    && end)
 	  {
-	    strncpy (editidbuf, idvalstr + strlen ("momedval"),
+	    strncpy (dispidbuf, idvalstr + strlen ("momdisplay"),
 		     MOM_IDSTRING_LEN);
-	    _L (editor) = (momval_t) (mom_get_item_of_identcstr (editidbuf));
+	    _L (display) = (momval_t) (mom_get_item_of_identcstr (dispidbuf));
 	    MOM_DEBUG (run,
 		       MOMOUT_LITERAL
-		       ("ajax_edit_codmom  prepareditvalmenu editidbuf="),
-		       MOMOUT_LITERALV ((const char *) editidbuf),
-		       MOMOUT_LITERAL ("; editor="),
-		       MOMOUT_VALUE ((const momval_t) _L (editor)),
+		       ("ajax_edit_codmom  prepareditvalmenu dispidbuf="),
+		       MOMOUT_LITERALV ((const char *) dispidbuf),
+		       MOMOUT_LITERAL ("; display="),
+		       MOMOUT_VALUE ((const momval_t) _L (display)),
 		       MOMOUT_LITERAL ("; end="),
-		       MOMOUT_LITERALV ((const char *) end),
-		       MOMOUT_LITERAL ("; numval="),
-		       MOMOUT_DEC_INT ((int) numval));
+		       MOMOUT_LITERALV ((const char *) end), NULL);
 	    {
-	      mom_should_lock_item (_L (editor).pitem);
-	      _L (edinode) = mom_item_vector_nth (_L (editor).pitem, numval);
+	      mom_should_lock_item (_L (display).pitem);
+	      _L (dispnode) =
+		mom_item_get_attribute (_L (display).pitem,
+					mom_named__display);
+	      _L (editor) =
+		mom_item_get_attribute (_L (display).pitem,
+					mom_named__editor);
+	      _L (origin) =
+		mom_item_get_attribute (_L (display).pitem,
+					mom_named__origin);
 	      mom_unlock_item (_L (editor).pitem);
 	    }
-	    MOM_DEBUG (run,
-		       MOMOUT_LITERAL
-		       ("ajax_edit_codmom prepareditvalmenu edinode="),
-		       MOMOUT_VALUE (_L (edinode)));
+	    MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_edit_codmom prepareditvalmenu "),	//
+		       MOMOUT_LITERAL (" dispnode="), MOMOUT_VALUE (_L (dispnode)),	//
+		       MOMOUT_LITERAL ("; display="), MOMOUT_VALUE (_L (display)),	//
+		       MOMOUT_LITERAL ("; editor="), MOMOUT_VALUE (_L (editor)),	//
+		       MOMOUT_LITERAL ("; curval="), MOMOUT_VALUE (_L (curval)),	//
+		       MOMOUT_LITERAL ("; origin="), MOMOUT_VALUE (_L (origin)),	//
+		       NULL);
 	  }
 	else
-	  MOM_FATAPRINTF ("ajax_edit bad idvalstr=%s end=%s numval=%d",
-			  idvalstr, end, numval);
-	/// here we got the correct edinode. It should be a binary
-	/// node of connective val whose first son is the edited
-	/// value, and whose second son describes how to get it.
-	assert (mom_node_conn (_L (edinode)) == mom_named__val);
-	_L (curval) = mom_node_nth (_L (edinode), 0);
-	_L (origin) = mom_node_nth (_L (edinode), 1);
-	MOM_DEBUG (run,
-		   MOMOUT_LITERAL
-		   ("ajax_edit_codmom prepareditvalmenu  curval="),
-		   MOMOUT_VALUE (_L (curval)), MOMOUT_LITERAL (";"),
-		   MOMOUT_SPACE (48),
-		   MOMOUT_LITERAL
-		   ("ajax_edit_codmom prepareditvalmenu origin"),
-		   MOMOUT_VALUE (_L (origin)), NULL);
+	  MOM_FATAPRINTF ("ajax_edit bad idvalstr=%s end=%s", idvalstr, end);
+	/// here we got the correct dispnode. 
+	assert (_L (dispnode).ptr != NULL);
+	MOM_FATAL (MOMOUT_LITERAL
+		   ("ajax_edit_codmom should handle dispnode="),
+		   MOMOUT_VALUE (_L (dispnode)));
+#warning ajax_edit_codmom should handle dispnode
 	if (mom_node_conn (_L (origin)) == mom_named__attr)
 	  {			// node: *attr(<item>,<attr>)
 	    MOM_DEBUG (run,

@@ -261,7 +261,7 @@ span.mom_double_value_cl {
 
 span.mom_string_value_cl {
     font-family: Verdana, Geneva, sans-serif;
-    color: rgba(92,19,56,0.9); /* était 0.7 */
+    color: rgba(92,19,56,0.9);
 }
 
 span.mom_string_content_cl {
@@ -303,7 +303,6 @@ span.mom_node_value_cl {
     color: rgba(82,15,62,0.9);
 }
 
-/* old editor: */
 
 div.mom_tab_cl {
     min-width: 80%;
