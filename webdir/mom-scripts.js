@@ -383,7 +383,7 @@ function mom_names_completion()
     return namescompletion_mom;
 }
 
-/* When the "Obj -> Named" menu is selected [mom_menuitem_obj_named]
+/* When the "Obj -> Display Named" menu is selected [mom_menuitem_obj_dispnamed]
   The ajax_object is replying by creating the mom_name_input */
 function mom_set_name_entry(inp)
 {
@@ -397,32 +397,6 @@ function mom_set_name_entry(inp)
     });
 }
 
-// the "Obj -> Named" menu replied by creating the mom_name_input
-// whose onChange calls this function
-function mom_name_input_changed(inp)
-{
-    namescompletion_mom = null;
-    console.debug ("mom_name_input_changed inp=", inp,
-		   " of value=", inp.value, " before ajax_object mom_doeditnamed");
-    $.ajax({ url: '/ajax_objects',
-	     method: 'POST',
-	     data: { todo_mom: "mom_doeditnamed",
-		     name_mom: inp.value
-		   },
-	     dataType: 'json',
-	     success: function (gotdata) {
-		 /** we are expecting a large JSON reply */
-		 console.debug ("mom_name_input_changed  ajax_object mom_doeditnamed",
-				" gotdata=", gotdata);
-		 mom_install_editor(gotdata);
-	     },
-	     error: function (jq,status,errmsg) {
-		 console.error ("mom_name_input_changed ajax_object mom_doeditnamed",
-				" error jq=", jq, " status=", status, " errmsg=", errmsg);
-	     }
-	   });
-}
-
 
 
 // the "Obj -> Named" menu replied by creating the mom_name_input
@@ -431,7 +405,7 @@ function mom_display_name_input_changed(inp)
 {
     namescompletion_mom = null;
     console.debug ("mom_display_name_input_changed inp=", inp,
-		   " of value=", inp.value, " before ajax_object mom_doeditnamed");
+		   " of value=", inp.value, " before ajax_object mom_dodisplaynamed");
     $.ajax({ url: '/ajax_objects',
 	     method: 'POST',
 	     data: { todo_mom: "mom_dodisplaynamed",
@@ -440,12 +414,13 @@ function mom_display_name_input_changed(inp)
 	     dataType: 'json',
 	     success: function (gotdata) {
 		 /** we are expecting a large JSON reply */
-		 console.debug ("mom_display_name_input_changed  ajax_object mom_doeditnamed",
+		 console.debug ("mom_display_name_input_changed  ajax_object mom_dodisplaynamed",
 				" gotdata=", gotdata);
 		 mom_install_display(gotdata);
 	     },
 	     error: function (jq,status,errmsg) {
-		 console.error ("mom_display_name_input_changed ajax_object mom_doeditnamed",
+		 /* should put the HTML message on the screen */
+		 console.error ("mom_display_name_input_changed ajax_object mom_dodisplaynamed",
 				" error jq=", jq, " status=", status, " errmsg=", errmsg);
 	     }
 	   });
@@ -641,51 +616,6 @@ function mom_before_close_editor_tab(title,index) {
     return true;		// to permit the closing
 }
 
-function mom_name_entry_selected(rec) {
-    console.debug ("mom_name_entry_selected rec=", rec,
-		   " before ajax_objects mom_doeditnamed recname=", rec.name);
-    namescompletion_mom = null;
-    $.ajax({ url: '/ajax_objects',
-	     method: 'POST',
-	     data: { todo_mom: "mom_doeditnamed",
-		     name_mom: rec.name,
-		     id_mom: rec.id },
-	     dataType: 'json',
-	     success: function (gotdata) {
-		 console.debug ("mom_name_entry_selected doeditnamed gotdata=", gotdata);
-		 mom_install_editor(gotdata);
-	     },
-	     error: function (jq,status,errmsg) {
-		 console.error ("mom_name_entry_selected ajax_object mom_doeditnamed",
-				" error jq=", jq, " status=", status, " errmsg=", errmsg);
-	     }
-	   });
-}
-
-
-/* this is the onclick function of an input tag dynamically output */
-function mom_make_named()
-{
-    var newinp = $('#mom_name_new');
-    var comminp = $('#mom_comment');
-    console.debug ("mom_make_named newinp.val=", newinp.val(), " comminp.val=", comminp.val());
-    namescompletion_mom = null;
-    $.ajax({ url: '/ajax_objects',
-	     method: 'POST',
-	     data: { todo_mom: "mom_domakenamed",
-		     name_mom: newinp.val(),
-		     comment_mom: comminp.val() },
-	     dataType: 'json',
-	     success: function (gotdata) {
-		 console.debug ("mom_make_named gotdata=", gotdata);
-		 mom_install_editor(gotdata);
-	     },
-	     error: function (jq,status,errmsg) {
-		 console.error ("mom_make_named ajax_object mom_domakenamed",
-				" error jq=", jq, " status=", status, " errmsg=", errmsg);
-	     }
-	   });
-}
 
 /* this is the onclick function of an input tag dynamically output */
 function mom_make_disp_named()
