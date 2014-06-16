@@ -1953,6 +1953,12 @@ ajaxobjs_lab_begindisplay:
   }
   /////
   {
+    mom_lock_item (_L (editeditm).pitem);
+    _L (setattrs) = (momval_t) mom_item_set_attributes (_L (editeditm).pitem);
+    _N (nbattrs) = mom_set_cardinal (_L (setattrs));
+    mom_unlock_item (_L (editeditm).pitem);
+  }
+  {
     momval_t namidv =
       (momval_t) mom_item_get_name_or_idstr (_L (editeditm).pitem);
     momval_t idv = (momval_t) mom_item_get_idstr (_L (editeditm).pitem);
@@ -2038,7 +2044,7 @@ ajaxobjs_lab_begindisplay:
     MOM_WEBX_OUT (_L (webx).pitem,
 		  MOMOUT_JS_LITERAL ("<br/>"),
 		  MOMOUT_JS_LITERAL
-		  ("<span class='mom_editdate_cl'>edited at "),
+		  ("<span class='mom_editdate_cl'>displayed on "),
 		  MOMOUT_DOUBLE_TIME ((const char *) "%c",
 				      mom_clock_time (CLOCK_REALTIME)),
 		  MOMOUT_JS_LITERAL ("</span></p>"));
@@ -2054,13 +2060,6 @@ ajaxobjs_lab_begindisplay:
 		  MOMOUT_JS_LITERAL ("<ul class='mom_attrlist_cl'>"),
 		  MOMOUT_JS_RAW_NEWLINE ());
     mom_unlock_item (_L (webx).pitem);
-    {
-      mom_lock_item (_L (editeditm).pitem);
-      _L (setattrs) =
-	(momval_t) mom_item_set_attributes (_L (editeditm).pitem);
-      _N (nbattrs) = mom_set_cardinal (_L (setattrs));
-      mom_unlock_item (_L (editeditm).pitem);
-    }
     for (_N (atix) = 0; _N (atix) < _N (nbattrs); _N (atix)++)
       {
 	_L (curattritm) =

@@ -476,7 +476,15 @@ function mom_install_editor(jdata) {
 
 
 function mom_install_display(jdata) {
-    console.warning ("mom_install_display jdata=", jdata);
+    console.debug ("mom_install_display jdata=", jdata);
+    var editorid = jdata.momeditorj_id;
+    if (typeof(editorid) != "string")
+	console.error("mom_install_display bad editorid=", editorid);
+    var tabtitle = jdata.momeditorj_tabtitle;
+    var tabcontent = jdata.momeditorj_tabcontent;
+    mom_add_editor_tab(editorid,tabtitle,tabcontent);
+    console.debug ("mom_install_display added editorid=", editorid,
+		   " tabtitle=", tabtitle, " tabcontent=", tabcontent);
 }
 
 function mom_containing_val(elem) {
