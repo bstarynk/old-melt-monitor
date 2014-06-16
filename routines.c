@@ -312,15 +312,15 @@ display_value_codmom (int momstate_, momitem_t *momtasklet_,
     if (momlocvals_)						\
       momlocvals_						\
 	=  mom_item_tasklet_frame_values_pointer(momtasklet_,	\
-						 taskdepth);	\
+						 taskdepth-1);	\
     if (momlocnums_)						\
       momlocnums_						\
 	=  mom_item_tasklet_frame_ints_pointer(momtasklet_,	\
-					       taskdepth);	\
+					       taskdepth-1);	\
     if (momlocdbls_)						\
       momlocdbls_						\
 	= mom_item_tasklet_frame_doubles_pointer(momtasklet_,	\
-						 taskdepth);	\
+						 taskdepth-1);	\
   } while(0)
 #define DISPLAY_VALUE_UNLOCK() do {		\
     mom_unlock_item(_L(editor).pitem);		\
@@ -350,7 +350,9 @@ display_value_codmom (int momstate_, momitem_t *momtasklet_,
 	     MOMOUT_DEC_INT ((int) momstate_),
 	     MOMOUT_LITERAL ("; curval="),
 	     MOMOUT_VALUE ((const momval_t) _L (curval)),
-	     MOMOUT_LITERAL ("; depth="), MOMOUT_DEC_INT ((int) _N (depth)));
+	     MOMOUT_LITERAL ("; depth="), MOMOUT_DEC_INT ((int) _N (depth)),
+	     MOMOUT_LITERAL ("; taskdepth="),
+	     MOMOUT_DEC_INT ((int) taskdepth), NULL);
   if (momstate_ >= 0 && momstate_ < display_value_s__laststate)
     switch ((enum display_value_state_en) momstate_)
       {
