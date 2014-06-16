@@ -246,61 +246,61 @@ span.mom_selitem_cl {
 /* new display based editor: */
 span.mom_null_value_cl {
     font-weight: bold;
-    color: #8B451340;
+    color: rgba(139,69,19,0.3);
 }
 
 span.mom_integer_value_cl {
     font-family: Verdana,Helvetica;
-    color: #171F3B90;
+    color: rgba(23,31,59,0.5);
 }
 
 span.mom_double_value_cl {
     font-family: Verdana,Helvetica;
-    color: #44066D90;
+    color: rgba(68,6,109,0.6);
 }
 
 span.mom_string_value_cl {
     font-family: Verdana, Geneva, sans-serif;
-    color: #5C133890;
+    color: rgba(92,19,56,0.7);
 }
 
 span.mom_string_content_cl {
     font-family: "Lucida Console", Monaco, monospace;
     font-weight: normal;
-    background-color: #DEE69C60;
+    background-color:  rgba(222,230,156,0.75);
     bottom-margin: 2px;
     padding-bottom: 1px;
 }
 
 span.mom_jsonarray_value_cl {
-    color: #A43C1460;
+    color: rgba(164,60,20,0.66);
     font-family: "Lucida Console", Monaco, monospace;
 }
 
 span.mom_jsonobject_value_cl {
-    color: #895F1260;
+    color: rgba(152,95,18,0.66);
     font-family: "Lucida Console", Monaco, monospace;
 }
 
 span.mom_item_value_cl {
     font-family: Verdana, Geneva, sans-serif;
     font-weight: bold;
-    color: #223E4440;
+    color: rgba(34,62,68,0.55);
 }
 
 span.mom_set_value_cl {
     font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
-    color: #1F295055;
+    color: rgba(31,41,80,0.6);
 }
 
 span.mom_tuple_value_cl {
     font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
-    color: #210E3857;
+    color: rgba(33,14,56,0.6);
 }
 
 span.mom_node_value_cl {
     font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
-    color: #52112F61;
+    color: rgba(82,15,62,0.6);
 }
 
 /* old editor: */

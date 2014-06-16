@@ -281,6 +281,7 @@ enum display_value_closure_en
 
 enum display_value_numbers_en
 {
+  display_value_n_depth,
   display_value_n_rank,
   display_value_n_nbsons,
   display_value_n_sonix,
@@ -294,6 +295,7 @@ display_value_codmom (int momstate_, momitem_t *momtasklet_,
 		      momval_t *momlocvals_, intptr_t * momlocnums_,
 		      double *momlocdbls_)
 {
+
 #define _L(Nam) (momlocvals_[display_value_v_##Nam])
 #define _C(Nam) (momclosure_->sontab[display_value_c_##Nam])
 #define _N(Nam) (momlocnums_[display_value_n_##Nam])
@@ -304,6 +306,22 @@ display_value_codmom (int momstate_, momitem_t *momtasklet_,
     display_value_s_didson,
     display_value_s__laststate
   };
+  unsigned taskdepth = mom_item_tasklet_depth (momtasklet_);
+  // after a push, rebase the arrays
+#define DISPLAY_VALUE_REBASE() do  {				\
+    if (momlocvals_)						\
+      momlocvals_						\
+	=  mom_item_tasklet_frame_values_pointer(momtasklet_,	\
+						 taskdepth);	\
+    if (momlocnums_)						\
+      momlocnums_						\
+	=  mom_item_tasklet_frame_ints_pointer(momtasklet_,	\
+					       taskdepth);	\
+    if (momlocdbls_)						\
+      momlocdbls_						\
+	= mom_item_tasklet_frame_doubles_pointer(momtasklet_,	\
+						 taskdepth);	\
+  } while(0)
 #define DISPLAY_VALUE_UNLOCK() do {		\
     mom_unlock_item(_L(editor).pitem);		\
     if (_L(vectsubdisp).pitem)			\
@@ -328,6 +346,11 @@ display_value_codmom (int momstate_, momitem_t *momtasklet_,
     mom_should_lock_item (_L (editor).pitem);
   }
   //
+  MOM_DEBUG (run, MOMOUT_LITERAL ("display_value_codmom start state#"),
+	     MOMOUT_DEC_INT ((int) momstate_),
+	     MOMOUT_LITERAL ("; curval="),
+	     MOMOUT_VALUE ((const momval_t) _L (curval)),
+	     MOMOUT_LITERAL ("; depth="), MOMOUT_DEC_INT ((int) _N (depth)));
   if (momstate_ >= 0 && momstate_ < display_value_s__laststate)
     switch ((enum display_value_state_en) momstate_)
       {
@@ -565,8 +588,10 @@ display_value_lab_start:
 	  mom_item_tasklet_push_frame	//
 	    (momtasklet_, (momval_t) momclosure_,
 	     MOMPFR_FOUR_VALUES (_L (editor),
-				 _L (webx), _L (curson), _L (orig)), NULL);
+				 _L (webx), _L (curson), _L (orig)),
+	     MOMPFR_INT ((intptr_t) (_N (depth) + 1)), NULL);
 	  mom_item_tasklet_clear_res (momtasklet_);
+	  DISPLAY_VALUE_REBASE ();
 	  DISPLAY_VALUE_SET_STATE (didson);
 	display_value_lab_didson:
 	  _L (subdisplay) = mom_item_tasklet_res1 (momtasklet_);
@@ -590,6 +615,7 @@ display_value_lab_start:
 							(vectsubdisp).pitem,
 							0))));
       mom_item_tasklet_set_1res (momtasklet_, _L (newdisplay));
+      DISPLAY_VALUE_REBASE ();
       DISPLAY_VALUE_POP_RETURN ();
       break;
     }
@@ -602,6 +628,7 @@ display_value_lab_impossible:
 #undef _N
 #undef _SET_STATE
 #undef DISPLAY_VALUE_UNLOCK
+#undef DISPLAY_VALUE_REBASE
 #undef DISPLAY_VALUE_POP_RETURN
 #undef DISPLAY_VALUE_SET_STATE
 }				/* end routine display_value_codmom */

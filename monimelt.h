@@ -1422,8 +1422,11 @@ momval_t mom_item_tasklet_frame_closure (momitem_t *itm, int frk);
 unsigned mom_item_tasklet_frame_nb_values (momitem_t *itm, int frk);
 unsigned mom_item_tasklet_frame_nb_ints (momitem_t *itm, int frk);
 unsigned mom_item_tasklet_frame_nb_doubles (momitem_t *itm, int frk);
+momval_t *mom_item_tasklet_frame_values_pointer (momitem_t *itm, int frk);
 momval_t mom_item_tasklet_frame_nth_value (momitem_t *itm, int frk, int vtk);
+intptr_t *mom_item_tasklet_frame_ints_pointer (momitem_t *itm, int frk);
 intptr_t mom_item_tasklet_frame_nth_int (momitem_t *itm, int frk, int nrk);
+double *mom_item_tasklet_frame_doubles_pointer (momitem_t *itm, int frk);
 double mom_item_tasklet_frame_nth_double (momitem_t *itm, int frk, int drk);
 
 static inline momval_t

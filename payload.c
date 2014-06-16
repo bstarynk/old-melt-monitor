@@ -1643,6 +1643,23 @@ mom_item_tasklet_frame_nb_values (momitem_t *itm, int frk)
 }
 
 
+momval_t *
+mom_item_tasklet_frame_values_pointer (momitem_t *itm, int frk)
+{
+  unsigned nbval = 0;
+  assert (itm && itm->i_typnum == momty_item);
+  if (!itm->i_payload || itm->i_paylkind != mompayk_tasklet)
+    return NULL;
+  struct mom_taskletdata_st *itd = itm->i_payload;
+  unsigned fratop = itd->dtk_fratop;
+  if (frk < 0)
+    frk += fratop;
+  if (frk < 0 || frk >= (int) fratop)
+    return NULL;
+  struct momframe_st *curfram = itd->dtk_frames + frk;
+  return itd->dtk_values + curfram->fr_valoff;
+}
+
 momval_t
 mom_item_tasklet_frame_nth_value (momitem_t *itm, int frk, int vrk)
 {
@@ -1723,6 +1740,22 @@ mom_item_tasklet_frame_nth_int (momitem_t *itm, int frk, int nrk)
   return 0;
 }
 
+intptr_t *
+mom_item_tasklet_frame_ints_pointer (momitem_t *itm, int frk)
+{
+  unsigned nbint = 0;
+  assert (itm && itm->i_typnum == momty_item);
+  if (!itm->i_payload || itm->i_paylkind != mompayk_tasklet)
+    return NULL;
+  struct mom_taskletdata_st *itd = itm->i_payload;
+  unsigned fratop = itd->dtk_fratop;
+  if (frk < 0)
+    frk += fratop;
+  if (frk < 0 || frk >= (int) fratop)
+    return NULL;
+  struct momframe_st *curfram = itd->dtk_frames + frk;
+  return itd->dtk_ints + curfram->fr_intoff;
+}
 
 unsigned
 mom_item_tasklet_frame_nb_doubles (momitem_t *itm, int frk)
@@ -1746,6 +1779,25 @@ mom_item_tasklet_frame_nb_doubles (momitem_t *itm, int frk)
   else
     nbdbl = itd->dtk_dbltop - curfram->fr_dbloff;
   return nbdbl;
+}
+
+
+
+double *
+mom_item_tasklet_frame_doubles_pointer (momitem_t *itm, int frk)
+{
+  unsigned nbdbl = 0;
+  assert (itm && itm->i_typnum == momty_item);
+  if (!itm->i_payload || itm->i_paylkind != mompayk_tasklet)
+    return NULL;
+  struct mom_taskletdata_st *itd = itm->i_payload;
+  unsigned fratop = itd->dtk_fratop;
+  if (frk < 0)
+    frk += fratop;
+  if (frk < 0 || frk >= (int) fratop)
+    return NULL;
+  struct momframe_st *curfram = itd->dtk_frames + frk;
+  return itd->dtk_doubles + curfram->fr_dbloff;
 }
 
 double
