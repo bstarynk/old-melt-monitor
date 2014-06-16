@@ -663,6 +663,7 @@ function mom_name_entry_selected(rec) {
 }
 
 
+/* this is the onclick function of an input tag dynamically output */
 function mom_make_named()
 {
     var newinp = $('#mom_name_new');
@@ -685,6 +686,31 @@ function mom_make_named()
 	     }
 	   });
 }
+
+/* this is the onclick function of an input tag dynamically output */
+function mom_make_disp_named()
+{
+    var newinp = $('#mom_name_new');
+    var comminp = $('#mom_comment');
+    console.debug ("mom_make_disp_named newinp.val=", newinp.val(), " comminp.val=", comminp.val());
+    namescompletion_mom = null;
+    $.ajax({ url: '/ajax_objects',
+	     method: 'POST',
+	     data: { todo_mom: "mom_domakedispnamed",
+		     name_mom: newinp.val(),
+		     comment_mom: comminp.val() },
+	     dataType: 'json',
+	     success: function (gotdata) {
+		 console.debug ("mom_make_disp_named gotdata=", gotdata);
+		 mom_install_editor(gotdata);
+	     },
+	     error: function (jq,status,errmsg) {
+		 console.error ("mom_make_disp_named ajax_object mom_domakenamed",
+				" error jq=", jq, " status=", status, " errmsg=", errmsg);
+	     }
+	   });
+}
+
 
 function mom_erase_maindiv() {
     console.debug ("mom_erase_maindiv");

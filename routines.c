@@ -1439,12 +1439,33 @@ ajaxobjs_lab_start:
 		      MOMOUT_LITERAL ("</i></small><br/>"), MOMOUT_SPACE (32),
 		      MOMOUT_LITERAL
 		      ("<label for='mom_display_name_input'>Display name:</label>"
-		       " <input id='mom_name_input' class='mom_nameinput_cl' name='mom_name' onChange='mom_display_name_input_changed(this)'/>"
+		       " <input id='mom_display_name_input' class='mom_nameinput_cl' name='mom_name' onChange='mom_display_name_input_changed(this)'/>"
 		       " <input type='submit' id='mom_cancel' class='mom_cancel_cl' value='cancel' onclick='mom_erase_maindiv()'/>"),
 		      MOMOUT_NEWLINE (),
 		      MOMOUT_LITERAL
 		      ("<script>mom_set_name_entry($('#mom_display_name_input'));"),
 		      MOMOUT_SPACE (32), MOMOUT_LITERAL ("</script>"),
+		      MOMOUT_NEWLINE (), NULL);
+	mom_webx_reply (_L (webx).pitem, "text/html", HTTP_OK);
+	goto end;
+      }
+    else if (mom_string_same (todov, "mom_menuitem_obj_dispnew"))
+      {
+	MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_objects_codmom dispnew"));
+	MOM_WEBX_OUT (_L (webx).pitem,
+		      MOMOUT_LITERAL
+		      ("Display a <b>new</b> item <small>at </i>"),
+		      MOMOUT_DOUBLE_TIME ((const char *) "%c",
+					  mom_clock_time (CLOCK_REALTIME)),
+		      MOMOUT_LITERAL ("</i></small><br/>"), MOMOUT_SPACE (32),
+		      MOMOUT_LITERAL
+		      ("<label for='mom_name_new'>Name:</label>"
+		       " <input id='mom_name_new' class='mom_newname_cl' name='mom_new_name' pattern='[A-Za-z_][A-Za-z0-9_]*' /> "
+		       "<label for='mom_comment'>Comment:</label>"
+		       " <input id='mom_comment' class='mom_newcomment_cl' name='mom_new_comment'/>"
+		       "<br/>"
+		       " <input type='submit' id='mom_make_named' class='mom_make_named_cl' value='make' onclick='mom_make_disp_named()'/>"
+		       " <input type='submit' id='mom_cancel' class='mom_cancel_cl' value='cancel' onclick='mom_erase_maindiv()'/>"),
 		      MOMOUT_NEWLINE (), NULL);
 	mom_webx_reply (_L (webx).pitem, "text/html", HTTP_OK);
 	goto end;
@@ -1564,6 +1585,27 @@ ajaxobjs_lab_start:
 			    mom_string_cstr (namev));
 	    goto end;
 	  }
+      }
+    else if (mom_string_same (todov, "mom_domakedispnamed"))
+      {
+	MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_objects_codmom makedispnamed"));
+	momval_t namev = mom_webx_post_arg (_L (webx).pitem, "name_mom");
+	momval_t commentv =
+	  mom_webx_post_arg (_L (webx).pitem, "comment_mom");
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL ("ajax_objects_codmom makenamed namev="),
+		   MOMOUT_VALUE ((const momval_t) namev),
+		   MOMOUT_LITERAL ("; commentv="),
+		   MOMOUT_VALUE ((const momval_t) commentv));
+	_L (editeditm) = (momval_t) mom_make_item ();
+	mom_item_put_attribute (_L (editeditm).pitem,
+				mom_named__comment, commentv);
+	mom_register_item_named (_L (editeditm).pitem, mom_to_string (namev));
+	mom_item_set_space (_L (editeditm).pitem, momspa_root);
+	{
+	  mom_unlock_item (_L (webx).pitem);
+	  _SET_STATE (begindisplay);
+	}
       }
 
     else if (mom_string_same (todov, "mom_doeditorclose"))
