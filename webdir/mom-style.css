@@ -180,14 +180,14 @@ ul.mom_attrlist_cl {
     background-color: lightcyan;
 }
 
-li.mom_attrentry_cl {
+li.mom_display_attr_entry_cl {
     list-style-type: square;
     list-style-position: inside;
     padding-left: 6px;
     padding-top: 2px;
 }
 
-li.mom_attrentry_cl:hover {
+li.mom_display_attr_entry_cl:hover {
     background-color: #cdffce;
 }
 
