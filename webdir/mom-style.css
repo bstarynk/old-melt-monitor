@@ -246,22 +246,22 @@ span.mom_selitem_cl {
 /* new display based editor: */
 span.mom_null_value_cl {
     font-weight: bold;
-    color: rgba(139,69,19,0.3);
+    color: rgba(139,69,19,0.9);
 }
 
 span.mom_integer_value_cl {
     font-family: Verdana,Helvetica;
-    color: rgba(23,31,59,0.5);
+    color: rgba(23,31,59,0.9);
 }
 
 span.mom_double_value_cl {
     font-family: Verdana,Helvetica;
-    color: rgba(68,6,109,0.6);
+    color: rgba(68,6,109,0.9);
 }
 
 span.mom_string_value_cl {
     font-family: Verdana, Geneva, sans-serif;
-    color: rgba(92,19,56,0.7);
+    color: rgba(92,19,56,0.9); /* était 0.7 */
 }
 
 span.mom_string_content_cl {
@@ -273,34 +273,34 @@ span.mom_string_content_cl {
 }
 
 span.mom_jsonarray_value_cl {
-    color: rgba(164,60,20,0.66);
+    color: rgba(164,60,20,0.9);
     font-family: "Lucida Console", Monaco, monospace;
 }
 
 span.mom_jsonobject_value_cl {
-    color: rgba(152,95,18,0.66);
+    color: rgba(152,95,18,0.9);
     font-family: "Lucida Console", Monaco, monospace;
 }
 
 span.mom_item_value_cl {
     font-family: Verdana, Geneva, sans-serif;
     font-weight: bold;
-    color: rgba(34,62,68,0.55);
+    color: rgba(34,62,68,0.9);
 }
 
 span.mom_set_value_cl {
     font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
-    color: rgba(31,41,80,0.6);
+    color: rgba(31,41,80,0.9);
 }
 
 span.mom_tuple_value_cl {
     font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
-    color: rgba(33,14,56,0.6);
+    color: rgba(33,14,56,0.9);
 }
 
 span.mom_node_value_cl {
     font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
-    color: rgba(82,15,62,0.6);
+    color: rgba(82,15,62,0.9);
 }
 
 /* old editor: */

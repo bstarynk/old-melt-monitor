@@ -2135,7 +2135,7 @@ ajaxobjs_lab_begindisplay:
 	  mom_should_lock_item (_L (webx).pitem);
 	  MOM_WEBX_OUT (_L (webx).pitem,
 			MOMOUT_JS_LITERAL
-			("<ul class='mom_display_attr_entry_cl' id='momdisplay"),
+			("<li class='mom_display_attr_entry_cl' id='momdisplay"),
 			MOMOUT_LITERALV ((const char *)
 					 mom_string_cstr ((momval_t)
 							  mom_item_get_idstr
@@ -2157,7 +2157,7 @@ ajaxobjs_lab_begindisplay:
 	//////
 	{
 	  mom_should_lock_item (_L (webx).pitem);
-	  MOM_WEBX_OUT (_L (webx).pitem, MOMOUT_JS_LITERAL ("</ul>"),
+	  MOM_WEBX_OUT (_L (webx).pitem, MOMOUT_JS_LITERAL ("</li>"),
 			MOMOUT_JS_RAW_NEWLINE ());
 	  mom_unlock_item (_L (webx).pitem);
 	}
@@ -2186,8 +2186,8 @@ ajaxobjs_lab_begindisplay:
   }
   {
     mom_should_lock_item (_L (webx).pitem);
-    MOM_WEBX_OUT (_L (webx).pitem, MOMOUT_JS_LITERAL ("<p class='mom_displaycontent_cl' id='momdisplay"), MOMOUT_LITERALV ((const char *) mom_string_cstr ((momval_t) mom_item_get_idstr (_L (orig).pitem))), MOMOUT_JS_LITERAL ("'>" "&#8258;"	/* U+2042 ASTERISM ⁂ */
-																												 " "));
+    MOM_WEBX_OUT (_L (webx).pitem, MOMOUT_JS_LITERAL ("</ul>"), MOMOUT_JS_LITERAL ("<p class='mom_displaycontent_cl' id='momdisplay"), MOMOUT_LITERALV ((const char *) mom_string_cstr ((momval_t) mom_item_get_idstr (_L (orig).pitem))), MOMOUT_JS_LITERAL ("'>" "&#8258;"	/* U+2042 ASTERISM ⁂ */
+																															      " "));
     mom_unlock_item (_L (webx).pitem);
   }
   MOM_DEBUG (run,
