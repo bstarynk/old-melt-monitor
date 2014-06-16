@@ -753,6 +753,30 @@ function mom_editor_attr_add(editorid) {
     addattrdlg_mom.dialog("open");
 }
 
+function mom_editor_add_update_buttons(editorid) {
+    var editordiv = $('#momeditor'+editorid);
+    console.debug ("mom_editor_show_update_buttons editorid=", editorid, " editordiv=", editordiv);
+    // dont add the buttons if they are already here.
+    if (editordiv.find(".mom_editbuttons_cl"))
+	return;
+    // find the mom_editdate_cl inside the editor
+    var editdate= editordiv.find(".mom_editdate_cl");
+    console.debug ("mom_editor_show_update_buttons editdate=", editdate);
+    editdate.after("<input type='submit' class='mom_editbuttons_cl' name='update' value='Update' onclick='mom_editor_update(\""
+		   + editorid + "\")'/>"
+		  + "<input type='submit' class='mom_editbuttons_cl' name='revert' value='Revert' onclick='mom_editor_revert(\""
+		   + editorid + "\")'/>");
+}
+
+function mom_editor_update(editorid) {
+    var editordiv = $('#momeditor'+editorid);
+    console.debug ("mom_editor_update editorid=", editorid, " editordiv=", editordiv);
+}
+
+function mom_editor_revert(editorid) {
+    var editordiv = $('#momeditor'+editorid);
+    console.debug ("mom_editor_revert editorid=", editorid, " editordiv=", editordiv);
+}
 
 function mom_add_new_attr(jdata) {
     console.debug ("mom_add_new_attr jdata=", jdata);
@@ -767,5 +791,6 @@ function mom_add_new_attr(jdata) {
     var attrlist = editordiv.find('.mom_attributes_cl').find('.mom_attrlist_cl');
     attrlist.append("<li class='mom_newattrentry_cl'>" + attrspan + " &#8658; " + newinphtml + "</li>");
     var newinp = $('#'+newvalid);
-    mom_install_new_input(newinp,newvalid)
+    mom_install_new_input(newinp,newvalid);
+    mom_editor_add_update_buttons(editorid);
 }

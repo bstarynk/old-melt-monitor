@@ -191,6 +191,13 @@ li.mom_attrentry_cl:hover {
     background-color: #cdffce;
 }
 
+li.mom_newattrentry_cl {
+    list-style-type: round;
+    list-style-position: inside;
+    background-color: rgba(232,192,192,0.5);
+    border: 1px dotted dashed #D10D0D;
+}
+
 span.mom_attritem_cl {
     font-family: "Arial Black", Gadget, sans-serif;
     font-weight: bold;
@@ -342,4 +349,13 @@ input.mom_newvalinput_cl:focus {
 
 div.mom_addattrdialog_cl {
     background-color: rgba(245,254,240,0.8);
+}
+
+input.mom_editbuttons_cl {
+    background-color: rgba(237,177,177,0.5);
+    color: rgba(16,47,93,0.7);
+    font-family: Verdana;
+    font-weight: bold;
+    margin: 4px;
+    padding: 3px;
 }

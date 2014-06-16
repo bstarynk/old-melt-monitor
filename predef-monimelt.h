@@ -162,6 +162,9 @@ MOM_PREDEFINED_NAMED(terminated,_3jpt8yuzuyw_ti1pyz3me1c)
 ////!in JSON dumps, used for tuples of items
 MOM_PREDEFINED_NAMED(tuple,_7vw56h18sw0_hv77m6q8uxu)
 
+////!gives the update time when applicable
+MOM_PREDEFINED_NAMED(updated,_5x41iah0kis_x8rrv3ww44t)
+
 ////!in JSON dumps, used for values in attribute lists of items
 MOM_PREDEFINED_NAMED(val,_7wk9y7e7r0z_575esi8ys5x)
 

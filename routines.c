@@ -1683,7 +1683,9 @@ ajaxobjs_lab_begindisplay:
 		  MOMOUT_JS_LITERAL ("<div class='mom_attributes_cl'>"),
 		  MOMOUT_JS_LITERAL ("<p class='mom_attrtitle_cl'>"),
 		  MOMOUT_DEC_INT ((int) _N (nbattrs)),
-		  MOMOUT_JS_LITERAL (" attributes:"),
+		  MOMOUT_JS_LITERAL
+		  ("<span class='mom_moreattributes_cl'></span>"),
+		  MOMOUT_JS_LITERAL (" attribute[s]:"),
 		  MOMOUT_JS_LITERAL ("</p>"), MOMOUT_JS_RAW_NEWLINE ());
     //
     MOM_WEBX_OUT (_L (webx).pitem,
