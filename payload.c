@@ -1646,7 +1646,6 @@ mom_item_tasklet_frame_nb_values (momitem_t *itm, int frk)
 momval_t *
 mom_item_tasklet_frame_values_pointer (momitem_t *itm, int frk)
 {
-  unsigned nbval = 0;
   assert (itm && itm->i_typnum == momty_item);
   if (!itm->i_payload || itm->i_paylkind != mompayk_tasklet)
     return NULL;
@@ -1743,7 +1742,6 @@ mom_item_tasklet_frame_nth_int (momitem_t *itm, int frk, int nrk)
 intptr_t *
 mom_item_tasklet_frame_ints_pointer (momitem_t *itm, int frk)
 {
-  unsigned nbint = 0;
   assert (itm && itm->i_typnum == momty_item);
   if (!itm->i_payload || itm->i_paylkind != mompayk_tasklet)
     return NULL;
@@ -1786,7 +1784,6 @@ mom_item_tasklet_frame_nb_doubles (momitem_t *itm, int frk)
 double *
 mom_item_tasklet_frame_doubles_pointer (momitem_t *itm, int frk)
 {
-  unsigned nbdbl = 0;
   assert (itm && itm->i_typnum == momty_item);
   if (!itm->i_payload || itm->i_paylkind != mompayk_tasklet)
     return NULL;
