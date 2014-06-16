@@ -1032,6 +1032,22 @@ mom_item_set_attributes (momitem_t *itm)
   return mom_set_attributes (itm->i_attrs);
 }
 
+static inline momval_t
+mom_item_content (momitem_t *itm)
+{
+  if (!itm || itm->i_typnum != momty_item)
+    return MOM_NULLV;
+  return itm->i_content;
+}
+
+static inline void
+mom_item_put_content (momitem_t *itm, momval_t val)
+{
+  if (!itm || itm->i_typnum != momty_item)
+    return;
+  itm->i_content = val;
+}
+
 /// clear the payload of an item - should be called under the item's
 /// lock. Can call the payload finalizer
 void mom_item_clear_payload (momitem_t *itm);
