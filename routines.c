@@ -1306,6 +1306,7 @@ ajaxedit_lab_start:
 		   MOMOUT_LITERAL ("; curval="), MOMOUT_VALUE (_L (curval)),
 		   MOMOUT_LITERAL ("; origin="), MOMOUT_VALUE (_L (origin)),
 		   MOMOUT_LITERAL ("; display="), MOMOUT_VALUE (_L (display)),
+		   MOMOUT_LITERAL ("; webx="), MOMOUT_VALUE (_L (webx)),
 		   MOMOUT_LITERAL ("; display_value="),
 		   MOMOUT_VALUE (_C (display_value)), NULL);
 	MOM_WEBX_OUT (_L (webx).pitem,
@@ -1314,6 +1315,7 @@ ajaxedit_lab_start:
 		      MOMOUT_NEWLINE (),
 		      MOMOUT_LITERAL ("  \"momedit_replacebyhtml\": \""),
 		      NULL);
+	assert (_L (webx).pitem != NULL);
 	mom_item_tasklet_clear_res (momtasklet_);
 	mom_item_tasklet_push_frame	//
 	  (momtasklet_, (momval_t) _C (display_value),
