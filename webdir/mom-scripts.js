@@ -735,6 +735,11 @@ function mom_install_new_input(newinp,newid)
 		    +"<li><tt class='mom_example_cl'>-12</tt> for an <i>integer</i></li>"
 		    +"<li><tt class='mom_example_cl'>\"ab c</tt> for a <i>string</i></li>"
 		    +"<li><tt class='mom_example_cl'>*attr</tt> for a <i>node</i> of given connective <code>attr</code></li>"
+		    +"<li><tt class='mom_example_cl'>*node/3</tt> for a <i>node</i> of given connective <code>node</code> with 3 nil sons</li>"
+		    +"<li><tt class='mom_example_cl'>[</tt> for an empty <i>tuple</i></li>"
+		    +"<li><tt class='mom_example_cl'>[misc</tt> for a  1-<i>tuple</i> with component <code>misc</code></li>"
+		    +"<li><tt class='mom_example_cl'>{</tt> for an empty <i>set</i></li>"
+		    +"<li><tt class='mom_example_cl'>{misc</tt> for a  1-<i>set</i> with element <code>misc</code></li>"
 		    +"</ul>",
 		    items:'#'+newid});
     newinp.on("input", function (ev) {
