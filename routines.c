@@ -193,7 +193,7 @@ const struct momroutinedescr_st momrout_ajax_system = {
 
   Display for an attribute:
 
-     display: attr(<item>,<display:value-of-attr>)
+     display: attr(<item>,<attr>,<display:value-of-attr>)
 
   Display for a node:
 
@@ -682,6 +682,7 @@ enum ajax_edit_closure_en
 enum ajax_edit_numbers_en
 {
   ajaxedit_n_rank,
+  ajaxedit_n_num,
   ajaxedit_n__lastnum
 };
 
@@ -1110,6 +1111,10 @@ ajaxedit_lab_start:
     /***** todo= momedit_newinput ****/
     else if (mom_string_same (todov, "momedit_newinput"))
       {
+	_L (display) = MOM_NULLV;
+	_L (editor) = MOM_NULLV;
+	_L (dispnode) = MOM_NULLV;
+	_L (origin) = MOM_NULLV;
 	momval_t idvalv = mom_webx_post_arg (_L (webx).pitem, "idval_mom");
 	momval_t inputv = mom_webx_post_arg (_L (webx).pitem, "input_mom");
 	MOM_DEBUG (run,
@@ -1120,28 +1125,63 @@ ajaxedit_lab_start:
 		   MOMOUT_VALUE ((const momval_t) inputv));
 	const char *idvalstr = mom_string_cstr (idvalv);
 	const char *inputstr = mom_string_cstr (inputv);
-	char editidbuf[MOM_IDSTRING_LEN + 8];
-	memset (editidbuf, 0, sizeof (editidbuf));
-	int numval = -1;
+	MOM_DEBUGPRINTF (run,
+			 "ajax_edit_codmom edit_newinput idvalstr=%s inputstr=%s",
+			 idvalstr, inputstr);
+	char dispidbuf[MOM_IDSTRING_LEN + 8];
+	memset (dispidbuf, 0, sizeof (dispidbuf));
 	const char *end = NULL;
-	if (idvalstr && !strncmp (idvalstr, "momedval", strlen ("momedval"))
-	    && mom_looks_like_random_id_cstr (idvalstr + strlen ("momedval"),
-					      &end) && end
-	    && sscanf (end, "_N%d", &numval) > 0 && numval >= 0)
+	if (idvalstr && !strncmp (idvalstr, "momvalinp", strlen ("momvalinp"))
+	    && mom_looks_like_random_id_cstr (idvalstr + strlen ("momvalinp"),
+					      &end) && end)
 	  {
-	    strncpy (editidbuf, idvalstr + strlen ("momedval"),
+	    strncpy (dispidbuf, idvalstr + strlen ("momvalinp"),
 		     MOM_IDSTRING_LEN);
-	    _L (editor) = (momval_t) (mom_get_item_of_identcstr (editidbuf));
+	    _L (display) = (momval_t) (mom_get_item_of_identcstr (dispidbuf));
 	    MOM_DEBUG (run,
 		       MOMOUT_LITERAL
-		       ("ajax_edit_codmom editval_newinput editidbuf="),
-		       MOMOUT_LITERALV ((const char *) editidbuf),
-		       MOMOUT_LITERAL ("; editor="),
-		       MOMOUT_VALUE ((const momval_t) _L (editor)),
+		       ("ajax_edit_codmom edit_newinput dispidbuf="),
+		       MOMOUT_LITERALV ((const char *) dispidbuf),
+		       MOMOUT_LITERAL ("; display="),
+		       MOMOUT_VALUE ((const momval_t) _L (display)),
 		       MOMOUT_LITERAL ("; end="),
-		       MOMOUT_LITERALV ((const char *) end),
-		       MOMOUT_LITERAL ("; numval="),
-		       MOMOUT_DEC_INT ((int) numval));
+		       MOMOUT_LITERALV ((const char *) end), NULL);
+	  }
+	else
+	  MOM_FATAPRINTF
+	    ("ajax_edit_codmom edit_newinput bad idval=%s input=%s", idvalstr,
+	     inputstr);
+	if (!_L (display).ptr)
+	  MOM_FATAPRINTF ("ajax_edit_codmom edit_newinput invalid idval=%s",
+			  idvalstr);
+	{
+	  mom_should_lock_item (_L (display).pitem);
+	  _L (editor) =
+	    mom_item_get_attribute (_L (display).pitem, mom_named__editor);
+	  _L (dispnode) =
+	    mom_item_get_attribute (_L (display).pitem, mom_named__display);
+	  _L (origin) =
+	    mom_item_get_attribute (_L (display).pitem, mom_named__origin);
+	  mom_unlock_item (_L (display).pitem);
+	}
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL ("ajax_edit_codmom edit_newinput editor="),
+		   MOMOUT_VALUE ((const momval_t) _L (editor)),
+		   MOMOUT_LITERAL ("; dispnode="),
+		   MOMOUT_VALUE ((const momval_t) _L (dispnode)),
+		   MOMOUT_LITERAL ("; origin="),
+		   MOMOUT_VALUE ((const momval_t) _L (origin)), NULL);
+	char *endp = NULL;
+	_N (num) = strtoll (inputstr, &endp, 0);
+	if (endp && *endp == (char) 0)
+	  {
+	    MOM_DEBUG (run,
+		       MOMOUT_LITERAL
+		       ("ajax_edit_codmom edit_newinput got num="),
+		       MOMOUT_DEC_INT ((int) _N (num)), NULL);
+	    MOM_FATAPRINTF
+	      ("ajax_edit_codmom editval_newinput should handle num=%ld",
+	       (long) _N (num));
 	  }
 	MOM_FATAPRINTF
 	  ("ajax_edit_codmom editval_newinput should parse inputstr=%s",
@@ -1178,8 +1218,6 @@ ajaxedit_lab_start:
 	    const char *attridstr =
 	      mom_string_cstr ((momval_t)
 			       mom_item_get_idstr (_L (curattr).pitem));
-	    momval_t namidatv =
-	      (momval_t) mom_item_get_name_or_idstr (_L (curattr).pitem);
 	    {
 	      mom_should_lock_item (_L (editor).pitem);
 	      curitem =
@@ -1231,6 +1269,7 @@ ajaxedit_lab_start:
 			  MOMOUT_LITERAL ("\", "), MOMOUT_NEWLINE (),
 			  MOMOUT_LITERAL (" \"momedit_attrid\": \""),
 			  MOMOUT_LITERALV (attridstr),
+			  MOMOUT_LITERAL ("\", "), MOMOUT_NEWLINE (),
 			  MOMOUT_LITERAL (" \"momedit_inputid\": \""),
 			  MOMOUT_LITERALV (mom_string_cstr ((momval_t)
 							    mom_item_get_idstr

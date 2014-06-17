@@ -789,7 +789,7 @@ function mom_add_new_attr(jdata) {
     console.debug("mom_add_new_attr editordiv=", editordiv, " jdata=", jdata);
     var attrlist = editordiv.find('.mom_attributes_cl').find('.mom_attrlist_cl');
     attrlist.append(attrlihtml);
-    var newinp = $('#'+inputid);
-    mom_install_new_input(newinp,newvalid);
+    var newinp = $('#momvalinp'+inputid);
+    mom_install_new_input(newinp,inputid);
     mom_editor_add_update_buttons(editorid);
 }
