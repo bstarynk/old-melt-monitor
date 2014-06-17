@@ -82,6 +82,9 @@ MOM_PREDEFINED_NAMED(failed,_9sd1mh9q1zf_3duewi6fsaq)
 ////!frames in tasklet
 MOM_PREDEFINED_NAMED(frames,_4cw8jv45vsk_4mh9ex64904)
 
+////!for input display
+MOM_PREDEFINED_NAMED(input,_356014y9ueu_xv6j0eskszw)
+
 ////!for integer values and displays
 MOM_PREDEFINED_NAMED(integer,_9jeymqk2732_wiq5kyczi9c)
 

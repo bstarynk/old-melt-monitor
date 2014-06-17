@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 Jun 16
+-- state-monimelt dump 2014 Jun 17
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','after predefined updated');
+INSERT INTO t_params VALUES('dump_reason','after predefined input');
 INSERT INTO t_items VALUES('_02u53qxa7dm_sttmhffpchr','{"kind": "queue", "payload": [], "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "The agenda is central to Monimelt.\nIt is the queue of taskets to be executed by worker threads."}],
  "content": null}
@@ -50,6 +50,9 @@ INSERT INTO t_items VALUES('_2v75mmyph64_4h4kys78740','{"kind": null, "payload":
 INSERT INTO t_items VALUES('_2vmrrvq5kdk_9um63pstcu9','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "The true of JSON.\nWe cannot use true because it is a #define-ed macro."}],
  "content": null}
+');
+INSERT INTO t_items VALUES('_356014y9ueu_xv6j0eskszw','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "for input display"}], "content": null}
 ');
 INSERT INTO t_items VALUES('_35a1p2kdx9h_ap5pe704vtr','{"kind": "routine", "payload": "ajax_edit", "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "ajax routine for edition"}, {"attr": "_7sav6zery1v_24sa6jwwu6c",
@@ -246,6 +249,7 @@ INSERT INTO t_names VALUES('empty','_8s4wcve2u49_252vwyzyrxd','.predef');
 INSERT INTO t_names VALUES('exited','_3v4d7uzex6f_euek4pztiuh','.predef');
 INSERT INTO t_names VALUES('failed','_9sd1mh9q1zf_3duewi6fsaq','.predef');
 INSERT INTO t_names VALUES('frames','_4cw8jv45vsk_4mh9ex64904','.predef');
+INSERT INTO t_names VALUES('input','_356014y9ueu_xv6j0eskszw','.predef');
 INSERT INTO t_names VALUES('integer','_9jeymqk2732_wiq5kyczi9c','.predef');
 INSERT INTO t_names VALUES('item','_53748kde7s1_pkz810exr27','.predef');
 INSERT INTO t_names VALUES('item_ref','_6hf2vzmrsee_t35suhjvtj4','.predef');

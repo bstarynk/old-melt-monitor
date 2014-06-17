@@ -207,7 +207,7 @@ $(function(){
 			   },
 			   success: function (gotdata) {
 			       console.debug ("addattrdlg add ajax_edit gotdata=", gotdata);
-			       if (gotdata.momedit_do == 'momedit_newattr') {
+			       if (gotdata.momedit_do == 'momedit_dispnewattr') {
 				   mom_add_new_attr(gotdata);
 				   addattrdlg_mom.dialog("close");
 			       }
@@ -782,15 +782,14 @@ function mom_add_new_attr(jdata) {
     console.debug ("mom_add_new_attr jdata=", jdata);
     var editorid=jdata.momedit_editorid;
     var attrid=jdata.momedit_attrid;
-    var attrspan=jdata.momedit_attrspan;
-    var newvalid=jdata.momedit_newvalid;
-    var newinphtml = "<input class='mom_newvalinput_cl' type='text' id='" + newvalid +"'/>";
+    var inputid=jdata.momedit_inputid;
+    var attrlihtml=jdata.momedit_attrlihtml;
     var editordiv = $('#momeditor'+editorid);
     // get the mom_attrlist_cl inside the mom_attributes_cl inside the editordiv
     console.debug("mom_add_new_attr editordiv=", editordiv, " jdata=", jdata);
     var attrlist = editordiv.find('.mom_attributes_cl').find('.mom_attrlist_cl');
-    attrlist.append("<li class='mom_newattrentry_cl'>" + attrspan + " &#8658; " + newinphtml + "</li>");
-    var newinp = $('#'+newvalid);
+    attrlist.append(attrlihtml);
+    var newinp = $('#'+inputid);
     mom_install_new_input(newinp,newvalid);
     mom_editor_add_update_buttons(editorid);
 }

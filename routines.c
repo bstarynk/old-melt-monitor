@@ -681,6 +681,7 @@ enum ajax_edit_closure_en
 
 enum ajax_edit_numbers_en
 {
+  ajaxedit_n_rank,
   ajaxedit_n__lastnum
 };
 
@@ -1189,7 +1190,30 @@ ajaxedit_lab_start:
 						(momval_t) curitem,
 						(momval_t) _L (curattr));
 	      newnum = mom_item_vector_count (_L (editor).pitem);
-	      mom_item_vector_append1 (_L (editor).pitem, newnodv);
+	      _N (rank) = newnum;
+	      _L (origin) = (momval_t) mom_make_item ();
+	      mom_item_put_attribute (_L (origin).pitem, mom_named__editor,
+				      _L (editor));
+	      mom_item_put_attribute (_L (origin).pitem, mom_named__rank,
+				      mom_make_integer (_N (rank)));
+	      mom_item_put_attribute (_L (origin).pitem, mom_named__display,
+				      newnodv);
+	      momval_t nowtimv =
+		mom_make_double (mom_clock_time (CLOCK_REALTIME));
+	      mom_item_put_attribute (_L (origin).pitem, mom_named__updated,
+				      nowtimv);
+	      mom_item_vector_append1 (_L (editor).pitem, _L (origin));
+	      _L (display) = (momval_t) mom_make_item ();
+	      mom_item_put_attribute (_L (display).pitem, mom_named__editor,
+				      _L (editor));
+	      mom_item_put_attribute (_L (display).pitem, mom_named__rank,
+				      mom_make_integer (1 + _N (rank)));
+	      mom_item_put_attribute (_L (display).pitem, mom_named__display,
+				      (momval_t) mom_named__input);
+	      mom_item_put_attribute (_L (display).pitem, mom_named__origin,
+				      _L (origin));
+	      mom_item_vector_append1 (_L (editor).pitem, _L (display));
+#warning make a new display for the added attr input like before  ajaxobjs_lab_didattrdisplay
 	      mom_unlock_item (_L (editor).pitem);
 	    }
 	    MOM_DEBUG (run,
@@ -1197,30 +1221,44 @@ ajaxedit_lab_start:
 		       ("ajax_edit_codmom add_attribute newnodv="),
 		       MOMOUT_VALUE ((const momval_t) newnodv),
 		       MOMOUT_LITERAL ("; newnum="), MOMOUT_DEC_INT (newnum),
-		       NULL);
+		       MOMOUT_LITERAL ("; origin="),
+		       MOMOUT_VALUE (_L (origin)), NULL);
 	    MOM_WEBX_OUT (_L (webx).pitem,
 			  MOMOUT_LITERAL
-			  ("{ \"momedit_do\": \"momedit_newattr\","),
+			  ("{ \"momedit_do\": \"momedit_dispnewattr\","),
 			  MOMOUT_NEWLINE (),
 			  MOMOUT_LITERAL (" \"momedit_editorid\": \""),
 			  MOMOUT_LITERALV (editoridstr),
 			  MOMOUT_LITERAL ("\", "), MOMOUT_NEWLINE (),
 			  MOMOUT_LITERAL (" \"momedit_attrid\": \""),
 			  MOMOUT_LITERALV (attridstr),
+			  MOMOUT_LITERAL (" \"momedit_inputid\": \""),
+			  MOMOUT_LITERALV (mom_string_cstr ((momval_t)
+							    mom_item_get_idstr
+							    (_L
+							     (display).pitem))),
 			  MOMOUT_LITERAL ("\", "), MOMOUT_NEWLINE (),
-			  MOMOUT_LITERAL (" \"momedit_attrspan\": \""),
+			  MOMOUT_LITERAL (" \"momedit_attrlihtml\": \""),
 			  MOMOUT_JS_LITERAL
-			  ("<span class='mom_newattritem_cl' data-momitemid='"),
-			  MOMOUT_LITERALV (attridstr),
-			  MOMOUT_JS_LITERAL ("'>"),
-			  MOMOUT_HTML (mom_string_cstr (namidatv)),
-			  MOMOUT_JS_LITERAL ("</span>"),
-			  MOMOUT_LITERAL ("\", "), MOMOUT_NEWLINE (),
-			  MOMOUT_LITERAL
-			  ("  \"momedit_newvalid\": \"momedval"),
-			  MOMOUT_LITERALV (editoridstr),
-			  MOMOUT_LITERAL ("_N"),
-			  MOMOUT_DEC_INT ((int) newnum),
+			  ("<li class='mom_display_new_attr_entry_cl' id='momdisplay"),
+			  MOMOUT_LITERALV ((const char *)
+					   mom_string_cstr ((momval_t)
+							    mom_item_get_idstr
+							    (_L
+							     (origin).pitem))),
+			  MOMOUT_JS_LITERAL ("'>"));
+	    display_item_occ_mom (_L (webx).pitem, _L (curattr).pitem);
+	    MOM_WEBX_OUT (_L (webx).pitem, MOMOUT_JS_LITERAL (" " "&#8674;"
+							      /* U+21E2 RIGHTWARDS DASHED ARROW ⇢ */
+							      " "),
+			  MOMOUT_JS_LITERAL
+			  ("<input type='text' class='mom_newvalinput_cl' id='momvalinp"),
+			  MOMOUT_LITERALV ((const char *)
+					   mom_string_cstr ((momval_t)
+							    mom_item_get_idstr
+							    (_L
+							     (display).pitem))),
+			  MOMOUT_JS_LITERAL ("'/></li>"),
 			  MOMOUT_LITERAL ("\" }"), MOMOUT_NEWLINE (), NULL);
 	    mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
 	    goto end;
