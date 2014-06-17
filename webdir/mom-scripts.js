@@ -749,6 +749,8 @@ function mom_install_new_input(newinp,newid)
 
 function mom_ajax_edit_input(jdata,inp) {
     console.debug ("mom_ajax_edit_input jdata=", jdata, " inp=", inp);
+    var htmlspan = jdata.momedit_replacebyhtml;
+    inp.replaceWith(htmlspan);
 }
 
 

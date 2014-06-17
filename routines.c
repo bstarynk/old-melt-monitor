@@ -1307,8 +1307,8 @@ ajaxedit_lab_start:
 		   MOMOUT_LITERAL ("; origin="), MOMOUT_VALUE (_L (origin)),
 		   MOMOUT_LITERAL ("; display="), MOMOUT_VALUE (_L (display)),
 		   MOMOUT_LITERAL ("; webx="), MOMOUT_VALUE (_L (webx)),
-		   MOMOUT_LITERAL ("; display_value="),
-		   MOMOUT_VALUE (_C (display_value)), NULL);
+		   MOMOUT_LITERAL ("; display_value="),	MOMOUT_VALUE (_C (display_value)), //
+		   NULL);
 	MOM_WEBX_OUT (_L (webx).pitem,
 		      MOMOUT_LITERAL
 		      ("{ \"momedit_do\": \"momedit_replaceinput\","),
@@ -1317,13 +1317,13 @@ ajaxedit_lab_start:
 		      NULL);
 	assert (_L (webx).pitem != NULL);
 	mom_item_tasklet_clear_res (momtasklet_);
+	mom_unlock_item (_L (webx).pitem);
 	mom_item_tasklet_push_frame	//
 	  (momtasklet_, (momval_t) _C (display_value),
 	   MOMPFR_FIVE_VALUES (_L (editor), _L (webx), _L (curval),
 			       /*orig: */ (momval_t) _L (origin),
 			       /*olddisplay: */ _L (display)),
 	   MOMPFR_INT ((intptr_t) 0), NULL);
-	mom_unlock_item (_L (webx).pitem);
 	_SET_STATE (didputvalue);
       }				/* end if todo mom_newinput */
     //
@@ -1494,8 +1494,10 @@ ajaxedit_lab_didputvalue:	///// **********
     MOM_DEBUG (run,
 	       MOMOUT_LITERAL ("ajax_edit_codmom didputvalue curval="),
 	       MOMOUT_VALUE (_L (curval)),
-	       MOMOUT_LITERAL (" display="), MOMOUT_VALUE (_L (display)),
-	       MOMOUT_LITERAL (" webx="), MOMOUT_VALUE (_L (webx)), NULL);
+	       MOMOUT_LITERAL (" display="), MOMOUT_VALUE (_L (display)), //
+	       MOMOUT_LITERAL (" webx="), MOMOUT_VALUE (_L (webx)), //
+	       MOMOUT_LITERAL(" editor="), MOMOUT_VALUE (_L(editor)), //
+	       NULL);
     MOM_WEBX_OUT (_L (webx).pitem,
 		  MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE (),
 		  MOMOUT_LITERAL (" \"momeditor_displayid\": \""),
@@ -1504,6 +1506,13 @@ ajaxedit_lab_didputvalue:	///// **********
 						       mom_item_get_idstr
 						       (_L
 							(display).pitem))),
+		  MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE (),
+		  MOMOUT_LITERAL (" \"momeditor_editorid\": \""),
+		  MOMOUT_JS_LITERALV ((const char *)
+				      mom_string_cstr ((momval_t)
+						       mom_item_get_idstr
+						       (_L
+							(editor).pitem))),
 		  MOMOUT_LITERAL ("\" }"), MOMOUT_NEWLINE (), NULL);
     mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
     mom_unlock_item (_L (webx).pitem);
