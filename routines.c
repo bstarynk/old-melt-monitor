@@ -1185,10 +1185,6 @@ ajaxedit_lab_start:
 	      curitem =
 		mom_value_to_item (mom_item_get_attribute
 				   (_L (editor).pitem, mom_named__item));
-	      newnodv =
-		(momval_t) mom_make_node_sized (mom_named__attr, 2,
-						(momval_t) curitem,
-						(momval_t) _L (curattr));
 	      newnum = mom_item_vector_count (_L (editor).pitem);
 	      _N (rank) = newnum;
 	      _L (origin) = (momval_t) mom_make_item ();
@@ -1196,8 +1192,6 @@ ajaxedit_lab_start:
 				      _L (editor));
 	      mom_item_put_attribute (_L (origin).pitem, mom_named__rank,
 				      mom_make_integer (_N (rank)));
-	      mom_item_put_attribute (_L (origin).pitem, mom_named__display,
-				      newnodv);
 	      momval_t nowtimv =
 		mom_make_double (mom_clock_time (CLOCK_REALTIME));
 	      mom_item_put_attribute (_L (origin).pitem, mom_named__updated,
@@ -1213,7 +1207,12 @@ ajaxedit_lab_start:
 	      mom_item_put_attribute (_L (display).pitem, mom_named__origin,
 				      _L (origin));
 	      mom_item_vector_append1 (_L (editor).pitem, _L (display));
-#warning make a new display for the added attr input like before  ajaxobjs_lab_didattrdisplay
+	      newnodv =
+		(momval_t) mom_make_node_sized (mom_named__attr, 3,
+						(momval_t) curitem,
+						_L (curattr), _L (display));
+	      mom_item_put_attribute (_L (origin).pitem, mom_named__display,
+				      newnodv);
 	      mom_unlock_item (_L (editor).pitem);
 	    }
 	    MOM_DEBUG (run,
@@ -1348,6 +1347,7 @@ enum ajax_objects_valindex_en
   ajaxobjs_v_curvalattr,
   ajaxobjs_v_curcontent,
   ajaxobjs_v_orig,
+  ajaxobjs_v_display,
   ajaxobjs_v__lastval
 };
 
@@ -1752,11 +1752,6 @@ ajaxobjs_lab_begindisplay:
 				  _L (editor));
 	  mom_item_put_attribute (_L (orig).pitem, mom_named__rank,
 				  mom_make_integer (_N (rank)));
-	  mom_item_put_attribute
-	    (_L (orig).pitem, mom_named__display,
-	     (momval_t) mom_make_node_til_nil (mom_named__attr,
-					       _L (editeditm),
-					       _L (curattritm), NULL));
 	  mom_item_vector_append1 (_L (editor).pitem, _L (orig));
 	  mom_unlock_item (_L (editor).pitem);
 	}
@@ -1794,8 +1789,24 @@ ajaxobjs_lab_begindisplay:
 	   ), MOMPFR_INT ((intptr_t) 0), NULL);
 	mom_item_tasklet_clear_res (momtasklet_);
 	_SET_STATE (didattrdisplay);
-      ajaxobjs_lab_didattrdisplay:
+	///
+      ajaxobjs_lab_didattrdisplay:	////// **********************
 	//////
+	_L (display) = mom_item_tasklet_res1 (momtasklet_);
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL
+		   ("ajax_objects_codmom didattrdisplay display="),
+		   MOMOUT_VALUE ((const momval_t) _L (display)));
+	mom_item_tasklet_clear_res (momtasklet_);
+	{
+	  mom_should_lock_item (_L (orig).pitem);
+	  mom_item_put_attribute
+	    (_L (orig).pitem, mom_named__display,
+	     (momval_t) mom_make_node_sized (mom_named__attr, 3,
+					     _L (editeditm),
+					     _L (curattritm), _L (display)));
+	  mom_unlock_item (_L (orig).pitem);
+	}
 	{
 	  mom_should_lock_item (_L (webx).pitem);
 	  MOM_WEBX_OUT (_L (webx).pitem, MOMOUT_JS_LITERAL ("</li>"),
@@ -1813,10 +1824,6 @@ ajaxobjs_lab_begindisplay:
     mom_item_put_attribute (_L (orig).pitem, mom_named__editor, _L (editor));
     mom_item_put_attribute (_L (orig).pitem, mom_named__rank,
 			    mom_make_integer (_N (rank)));
-    mom_item_put_attribute
-      (_L (orig).pitem, mom_named__display,
-       (momval_t) mom_make_node_til_nil (mom_named__content,
-					 _L (editeditm), NULL));
     mom_item_vector_append1 (_L (editor).pitem, _L (orig));
     mom_unlock_item (_L (editor).pitem);
   }
@@ -1844,14 +1851,21 @@ ajaxobjs_lab_begindisplay:
   _SET_STATE (didcontentdisplay);
   ////
 ajaxobjs_lab_didcontentdisplay:
+  _L (display) = mom_item_tasklet_res1 (momtasklet_);
+  mom_item_tasklet_clear_res (momtasklet_);
   MOM_DEBUG (run,
 	     MOMOUT_LITERAL
 	     ("ajax_objects_codmom didcontentdisplay content="),
-	     MOMOUT_VALUE (_L (curcontent)));
+	     MOMOUT_VALUE (_L (curcontent)),
+	     MOMOUT_LITERAL (" display="), MOMOUT_VALUE (_L (display)));
   ////// finalize the editor
   {
     int sizedit = -1;
     mom_should_lock_item (_L (editor).pitem);
+    mom_item_put_attribute
+      (_L (orig).pitem, mom_named__display,
+       (momval_t) mom_make_node_sized (mom_named__content, 2,
+				       _L (editeditm), _L (display)));
     sizedit = mom_item_vector_count (_L (editor).pitem);
     mom_item_put_attribute (_L (editor).pitem, mom_named__size,
 			    mom_make_integer (sizedit));
