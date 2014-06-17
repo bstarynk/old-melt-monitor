@@ -1162,8 +1162,9 @@ mom_make_node_from_array (const momitem_t *conn, unsigned siz, momval_t *arr)
   nd =
     MOM_GC_ALLOC ("new node from array",
 		  sizeof (momnode_t) + siz * sizeof (momval_t));
-  for (unsigned ix = 0; ix < siz; ix++)
-    ((momval_t *) nd->sontab)[ix] = arr[ix];
+  if (arr)
+    for (unsigned ix = 0; ix < siz; ix++)
+      ((momval_t *) nd->sontab)[ix] = arr[ix];
   nd->typnum = momty_node;
   nd->connitm = conn;
   nd->slen = siz;

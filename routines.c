@@ -695,6 +695,7 @@ enum ajax_edit_valindex_en
   ajaxedit_v_curval,
   ajaxedit_v_origin,
   ajaxedit_v_curattr,
+  ajaxedit_v_curitem,
   ajaxedit_v__lastval
 };
 
@@ -1201,9 +1202,15 @@ ajaxedit_lab_start:
 		   MOMOUT_LITERAL ("; origin="),
 		   MOMOUT_VALUE ((const momval_t) _L (origin)), NULL);
 	char *endp = NULL;
+	int pos = -1;
+	int arity = 0;
+	char nambuf[72];
+	memset (nambuf, 0, sizeof (nambuf));
 	_L (curval) = MOM_NULLV;
 	_N (good_input) = 0;
-	if (isdigit (inputstr[0]) || inputstr[0] == '+' || inputstr[0] == '-')
+	if (isdigit (inputstr[0])
+	    || ((inputstr[0] == '+' || inputstr[0] == '-')
+		&& isdigit (inputstr[1])))
 	  {
 	    _N (num) = strtoll (inputstr, &endp, 0);
 	    if (endp && *endp == (char) 0)
@@ -1221,7 +1228,77 @@ ajaxedit_lab_start:
 	    _L (curval) = (momval_t) mom_make_string (inputstr + 1);
 	    _N (good_input) = __LINE__;
 	  }
-#warning ajax_edit todo mom_newinput should parse more inputstr and run the display value with the olddisplay
+	else if (isalpha (inputstr[0])
+		 && (_L (curval) =
+		     (momval_t) mom_get_item_of_name (inputstr)).pitem !=
+		 NULL)
+	  {
+	    _N (good_input) = __LINE__;
+	  }
+	// explicit nil
+	else if ((inputstr[0] == '_' || inputstr[0] == '~') && !inputstr[1])
+	  {
+	    _L (curval) = MOM_NULLV;
+	    _N (good_input) = __LINE__;
+	  }
+	else if (inputstr[0] == '_' && isdigit (inputstr[1])
+		 && (_L (curval) =
+		     (momval_t) mom_get_item_of_identcstr (inputstr)).pitem !=
+		 NULL)
+	  {
+	    _N (good_input) = __LINE__;
+	  }
+	else if (sscanf (inputstr, "*%70[a-zA-Z0-9_]/%d", nambuf, &arity) > 0
+		 && (_L (curitem) =
+		     (momval_t) mom_get_item_of_name (nambuf)).pitem)
+	  {
+	    _L (curval) =
+	      (momval_t) mom_make_node_from_array (_L (curitem).pitem, arity,
+						   NULL);
+	    if (_L (curval).ptr)
+	      _N (good_input) = __LINE__;
+	  }
+	else if (sscanf (inputstr, "*%40[0-9_]/%d", nambuf, &arity) > 0
+		 && (_L (curitem) =
+		     (momval_t) mom_get_item_of_identcstr (nambuf)).pitem)
+	  {
+	    _L (curval) =
+	      (momval_t) mom_make_node_from_array (_L (curitem).pitem, arity,
+						   NULL);
+	    if (_L (curval).ptr)
+	      _N (good_input) = __LINE__;
+	  }
+	else if (inputstr[0] == "{")
+	  {
+	    _L (curitem) = MOM_NULLV;
+	    if (isalpha (inputstr[1]))
+	      _L (curitem) = (momval_t) mom_get_item_of_name (inputstr + 1);
+	    else if (inputstr[1] == '_')
+	      _L (curitem) =
+		(momval_t) mom_get_item_of_identcstr (inputstr + 1);
+	    if (_L (curitem).pitem)
+	      _L (curval) =
+		(momval_t) mom_make_set_sized (1, _L (curitem).pitem);
+	    else
+	      _L (curval) = (momval_t) mom_make_set_sized (0);
+	    _N (good_input) = __LINE__;
+	  }
+	else if (inputstr[0] == "[")
+	  {
+	    _L (curitem) = MOM_NULLV;
+	    if (isalpha (inputstr[1]))
+	      _L (curitem) = (momval_t) mom_get_item_of_name (inputstr + 1);
+	    else if (inputstr[1] == '_')
+	      _L (curitem) =
+		(momval_t) mom_get_item_of_identcstr (inputstr + 1);
+	    if (_L (curitem).pitem)
+	      _L (curval) =
+		(momval_t) mom_make_tuple_sized (1, _L (curitem).pitem);
+	    else
+	      _L (curval) = (momval_t) mom_make_tuple_sized (0);
+	    _N (good_input) = __LINE__;
+	  }
+#warning ajax_edit todo mom_newinput should run the display value with the olddisplay
 	MOM_FATAPRINTF
 	  ("ajax_edit_codmom editval_newinput should parse inputstr=%s",
 	   inputstr);
