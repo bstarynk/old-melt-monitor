@@ -1306,13 +1306,14 @@ ajaxedit_lab_start:
 		   MOMOUT_LITERAL ("; curval="), MOMOUT_VALUE (_L (curval)),
 		   MOMOUT_LITERAL ("; origin="), MOMOUT_VALUE (_L (origin)),
 		   MOMOUT_LITERAL ("; display="), MOMOUT_VALUE (_L (display)),
-		   NULL);
+		   MOMOUT_LITERAL ("; display_value="),
+		   MOMOUT_VALUE (_C (display_value)), NULL);
 	MOM_WEBX_OUT (_L (webx).pitem,
 		      MOMOUT_LITERAL
 		      ("{ \"momedit_do\": \"momedit_replaceinput\","),
 		      MOMOUT_NEWLINE (),
-		      MOMOUT_LITERAL
-		      ("  \"momedit_replacebyhtml\": \""), NULL);
+		      MOMOUT_LITERAL ("  \"momedit_replacebyhtml\": \""),
+		      NULL);
 	mom_item_tasklet_clear_res (momtasklet_);
 	mom_item_tasklet_push_frame	//
 	  (momtasklet_, (momval_t) _C (display_value),
