@@ -264,6 +264,7 @@ enum display_value_valindex_en
   display_value_v_webx,
   display_value_v_curval,
   display_value_v_orig,
+  display_value_v_olddisplay,
   display_value_v_spare,
   display_value_v_backup,
   display_value_v_newdisplay,
@@ -373,15 +374,40 @@ display_value_lab_start:
     _SET_STATE (impossible);
   //
   _N (rank) = mom_item_vector_count (_L (editor).pitem);
-  _L (newdisplay) = (momval_t) mom_make_item ();
-  mom_item_put_attribute (_L (newdisplay).pitem, mom_named__editor,
-			  _L (editor));
-  mom_item_put_attribute (_L (newdisplay).pitem, mom_named__rank,
-			  mom_make_integer (_N (rank)));
-  mom_item_put_attribute (_L (newdisplay).pitem, mom_named__origin,
-			  _L (orig));
-  mom_item_vector_append1 (_L (editor).pitem, _L (newdisplay));
-  mom_item_put_attribute (_L (newdisplay).pitem, mom_named__val, _L (curval));
+  if (_L (olddisplay).pitem)
+    {
+      bool goodolddisplay = true;
+      mom_should_lock_item (_L (olddisplay).pitem);
+      if (mom_item_get_attribute
+	  (_L (newdisplay).pitem, mom_named__editor).ptr != _L (editor).ptr)
+	goodolddisplay = false;
+      if (mom_item_get_attribute
+	  (_L (newdisplay).pitem, mom_named__origin).ptr != _L (orig).ptr)
+	goodolddisplay = false;
+      if (goodolddisplay)
+	{
+	  _L (newdisplay) = _L (olddisplay);
+	  _N (rank) =
+	    mom_integer_val ((mom_item_get_attribute
+			      (_L (newdisplay).pitem, mom_named__rank)));
+	  mom_item_put_attribute (_L (olddisplay).pitem, mom_named__val,
+				  _L (curval));
+	}
+      mom_unlock_item (_L (olddisplay).pitem);
+    }
+  if (!_L (newdisplay).pitem)
+    {
+      _L (newdisplay) = (momval_t) mom_make_item ();
+      mom_item_put_attribute (_L (newdisplay).pitem, mom_named__editor,
+			      _L (editor));
+      mom_item_put_attribute (_L (newdisplay).pitem, mom_named__rank,
+			      mom_make_integer (_N (rank)));
+      mom_item_put_attribute (_L (newdisplay).pitem, mom_named__origin,
+			      _L (orig));
+      mom_item_vector_append1 (_L (editor).pitem, _L (newdisplay));
+      mom_item_put_attribute (_L (newdisplay).pitem, mom_named__val,
+			      _L (curval));
+    }
   switch ((enum momvaltype_en) mom_type (_L (curval)))
     {
     case momty_null:		///// nil
@@ -589,8 +615,9 @@ display_value_lab_start:
 	  _L (curson) = mom_node_nth (_L (curval), _N (sonix));
 	  mom_item_tasklet_push_frame	//
 	    (momtasklet_, (momval_t) momclosure_,
-	     MOMPFR_FOUR_VALUES (_L (editor),
-				 _L (webx), _L (curson), _L (orig)),
+	     MOMPFR_FIVE_VALUES (_L (editor),
+				 _L (webx), _L (curson), _L (orig),
+				 MOM_NULLV),
 	     MOMPFR_INT ((intptr_t) (_N (depth) + 1)), NULL);
 	  mom_item_tasklet_clear_res (momtasklet_);
 	  DISPLAY_VALUE_REBASE ();
@@ -683,6 +710,7 @@ enum ajax_edit_numbers_en
 {
   ajaxedit_n_rank,
   ajaxedit_n_num,
+  ajaxedit_n_good_input,
   ajaxedit_n__lastnum
 };
 
@@ -813,11 +841,12 @@ ajaxedit_lab_start:
 		      MOMOUT_JS_STRING (editorsidstr), MOMOUT_LITERAL ("\","),
 		      MOMOUT_NEWLINE (),
 		      MOMOUT_LITERAL ("  \"momedit_content\": \""), NULL);
+#warning editval_copy perhaps wrong push frame
 	mom_item_tasklet_push_frame	//
-	  (momtasklet_, (momval_t) _C (edit_value),
+	  (momtasklet_, (momval_t) _C (display_value),
 	   MOMPFR_FIVE_VALUES (_C (editors), _L (webx), _L (curval),
-			       /*jorig: */ (momval_t) mom_named__buffer,
-			       /*nodexpr: */ (momval_t) mom_named__buffer),
+			       /*orig: */ (momval_t) mom_named__buffer,
+			       /*olddisplay: */ MOM_NULLV),
 	   MOMPFR_INT ((intptr_t) 0), NULL);
 	mom_unlock_item (_L (webx).pitem);
 	_SET_STATE (dideditcopy);
@@ -850,10 +879,10 @@ ajaxedit_lab_start:
 		      MOMOUT_NEWLINE (),
 		      MOMOUT_LITERAL ("  \"momedit_content\": \""), NULL);
 	mom_item_tasklet_push_frame	//
-	  (momtasklet_, (momval_t) _C (edit_value),
+	  (momtasklet_, (momval_t) _C (display_value),
 	   MOMPFR_FIVE_VALUES (_C (editors), _L (webx), _L (curval),
-			       /*jorig: */ (momval_t) mom_named__buffer,
-			       /*nodexpr: */ (momval_t) mom_named__buffer),
+			       /*orig: */ (momval_t) mom_named__buffer,
+			       /*olddisplay: */ MOM_NULLV),
 	   MOMPFR_INT ((intptr_t) 0), NULL);
 	mom_unlock_item (_L (webx).pitem);
 	_SET_STATE (dideditcopy);
@@ -1172,21 +1201,30 @@ ajaxedit_lab_start:
 		   MOMOUT_LITERAL ("; origin="),
 		   MOMOUT_VALUE ((const momval_t) _L (origin)), NULL);
 	char *endp = NULL;
-	_N (num) = strtoll (inputstr, &endp, 0);
-	if (endp && *endp == (char) 0)
+	_L (curval) = MOM_NULLV;
+	_N (good_input) = 0;
+	if (isdigit (inputstr[0]) || inputstr[0] == '+' || inputstr[0] == '-')
 	  {
-	    MOM_DEBUG (run,
-		       MOMOUT_LITERAL
-		       ("ajax_edit_codmom edit_newinput got num="),
-		       MOMOUT_DEC_INT ((int) _N (num)), NULL);
-	    MOM_FATAPRINTF
-	      ("ajax_edit_codmom editval_newinput should handle num=%ld",
-	       (long) _N (num));
+	    _N (num) = strtoll (inputstr, &endp, 0);
+	    if (endp && *endp == (char) 0)
+	      {
+		MOM_DEBUG (run,
+			   MOMOUT_LITERAL
+			   ("ajax_edit_codmom edit_newinput got num="),
+			   MOMOUT_DEC_INT ((int) _N (num)), NULL);
+		_L (curval) = mom_make_integer (_N (num));
+		_N (good_input) = __LINE__;
+	      }
 	  }
+	else if (inputstr[0] == '"' && inputstr[1])
+	  {
+	    _L (curval) = (momval_t) mom_make_string (inputstr + 1);
+	    _N (good_input) = __LINE__;
+	  }
+#warning ajax_edit todo mom_newinput should parse more inputstr and run the display value with the olddisplay
 	MOM_FATAPRINTF
 	  ("ajax_edit_codmom editval_newinput should parse inputstr=%s",
 	   inputstr);
-#warning ajax_edit todo mom_newinput should parse inputstr
       }				/* end if todo mom_newinput */
     //
     /***** todo= mom_add_attribute ****/
@@ -1823,8 +1861,9 @@ ajaxobjs_lab_begindisplay:
 	}
 	mom_item_tasklet_push_frame	///
 	  (momtasklet_, _C (displayvalueclos),	//
-	   MOMPFR_FOUR_VALUES (_L (editor), _L (webx), _L (curvalattr),	//curval
-			       _L (orig)	//orig
+	   MOMPFR_FIVE_VALUES (_L (editor), _L (webx), _L (curvalattr),	//curval
+			       _L (orig),	//orig
+			       /*olddisplay: */ MOM_NULLV
 	   ), MOMPFR_INT ((intptr_t) 0), NULL);
 	mom_item_tasklet_clear_res (momtasklet_);
 	_SET_STATE (didattrdisplay);
@@ -1883,8 +1922,9 @@ ajaxobjs_lab_begindisplay:
 	     MOMOUT_LITERAL ("; orig="), MOMOUT_VALUE (_L (orig)));
   mom_item_tasklet_push_frame	///
     (momtasklet_, _C (displayvalueclos),	//
-     MOMPFR_FOUR_VALUES (_L (editor), _L (webx), _L (curcontent),	//curval
-			 _L (orig)	//orig
+     MOMPFR_FIVE_VALUES (_L (editor), _L (webx), _L (curcontent),	//curval
+			 _L (orig),	//orig
+			 /*olddisplay: */ MOM_NULLV
      ), MOMPFR_INT ((intptr_t) 0), NULL);
   mom_item_tasklet_clear_res (momtasklet_);
   _SET_STATE (didcontentdisplay);
