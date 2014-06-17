@@ -725,10 +725,16 @@ ajax_edit_codmom (int momstate_, momitem_t *momtasklet_,
 #define _L(Nam) (momlocvals_[ajaxedit_v_##Nam])
 #define _C(Nam) (momclosure_->sontab[ajaxedit_c_##Nam])
 #define _N(Nam) (momlocnums_[ajaxedit_n_##Nam])
+  char *endp = NULL;
+  int pos = -1;
+  int arity = 0;
+  char nambuf[72];
+  memset (nambuf, 0, sizeof (nambuf));
   enum ajax_edit_state_en
   {
     ajaxedit_s_start,
     ajaxedit_s_dideditcopy,
+    ajaxedit_s_didputvalue,
     ajaxedit_s__laststate
   };
 #define _SET_STATE(St) do {					\
@@ -747,6 +753,8 @@ ajax_edit_codmom (int momstate_, momitem_t *momtasklet_,
 	goto ajaxedit_lab_start;
       case ajaxedit_s_dideditcopy:
 	goto ajaxedit_lab_dideditcopy;
+      case ajaxedit_s_didputvalue:
+	goto ajaxedit_lab_didputvalue;
       case ajaxedit_s__laststate:;
       }
   MOM_FATAPRINTF ("ajax_edit invalid state #%d", momstate_);
@@ -1201,11 +1209,6 @@ ajaxedit_lab_start:
 		   MOMOUT_VALUE ((const momval_t) _L (dispnode)),
 		   MOMOUT_LITERAL ("; origin="),
 		   MOMOUT_VALUE ((const momval_t) _L (origin)), NULL);
-	char *endp = NULL;
-	int pos = -1;
-	int arity = 0;
-	char nambuf[72];
-	memset (nambuf, 0, sizeof (nambuf));
 	_L (curval) = MOM_NULLV;
 	_N (good_input) = 0;
 	if (isdigit (inputstr[0])
@@ -1268,7 +1271,7 @@ ajaxedit_lab_start:
 	    if (_L (curval).ptr)
 	      _N (good_input) = __LINE__;
 	  }
-	else if (inputstr[0] == "{")
+	else if (inputstr[0] == '{')
 	  {
 	    _L (curitem) = MOM_NULLV;
 	    if (isalpha (inputstr[1]))
@@ -1283,7 +1286,7 @@ ajaxedit_lab_start:
 	      _L (curval) = (momval_t) mom_make_set_sized (0);
 	    _N (good_input) = __LINE__;
 	  }
-	else if (inputstr[0] == "[")
+	else if (inputstr[0] == '[')
 	  {
 	    _L (curitem) = MOM_NULLV;
 	    if (isalpha (inputstr[1]))
@@ -1298,10 +1301,27 @@ ajaxedit_lab_start:
 	      _L (curval) = (momval_t) mom_make_tuple_sized (0);
 	    _N (good_input) = __LINE__;
 	  }
-#warning ajax_edit todo mom_newinput should run the display value with the olddisplay
-	MOM_FATAPRINTF
-	  ("ajax_edit_codmom editval_newinput should parse inputstr=%s",
-	   inputstr);
+	MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_edit_codmom good_input="),
+		   MOMOUT_DEC_INT ((int) _N (good_input)),
+		   MOMOUT_LITERAL ("; curval="), MOMOUT_VALUE (_L (curval)),
+		   MOMOUT_LITERAL ("; origin="), MOMOUT_VALUE (_L (origin)),
+		   MOMOUT_LITERAL ("; display="), MOMOUT_VALUE (_L (display)),
+		   NULL);
+	MOM_WEBX_OUT (_L (webx).pitem,
+		      MOMOUT_LITERAL
+		      ("{ \"momedit_do\": \"momedit_replaceinput\","),
+		      MOMOUT_NEWLINE (),
+		      MOMOUT_LITERAL
+		      ("  \"momedit_replacebyhtml\": \""), NULL);
+	mom_item_tasklet_clear_res (momtasklet_);
+	mom_item_tasklet_push_frame	//
+	  (momtasklet_, (momval_t) _C (display_value),
+	   MOMPFR_FIVE_VALUES (_L (editor), _L (webx), _L (curval),
+			       /*orig: */ (momval_t) _L (origin),
+			       /*olddisplay: */ _L (display)),
+	   MOMPFR_INT ((intptr_t) 0), NULL);
+	mom_unlock_item (_L (webx).pitem);
+	_SET_STATE (didputvalue);
       }				/* end if todo mom_newinput */
     //
     /***** todo= mom_add_attribute ****/
@@ -1443,7 +1463,7 @@ ajaxedit_lab_start:
   }
   ;
   ////
-ajaxedit_lab_dideditcopy:
+ajaxedit_lab_dideditcopy:	///// **********
   {
     mom_should_lock_item (_L (webx).pitem);
     MOM_DEBUG (run,
@@ -1463,6 +1483,29 @@ ajaxedit_lab_dideditcopy:
     return momroutres_pop;
   }
   ;
+  ////
+ajaxedit_lab_didputvalue:	///// **********
+  {
+    _L (display) = mom_item_tasklet_res1 (momtasklet_);
+    mom_should_lock_item (_L (webx).pitem);
+    MOM_DEBUG (run,
+	       MOMOUT_LITERAL ("ajax_edit_codmom didputvalue curval="),
+	       MOMOUT_VALUE (_L (curval)),
+	       MOMOUT_LITERAL (" display="), MOMOUT_VALUE (_L (display)),
+	       MOMOUT_LITERAL (" webx="), MOMOUT_VALUE (_L (webx)), NULL);
+    MOM_WEBX_OUT (_L (webx).pitem,
+		  MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE (),
+		  MOMOUT_LITERAL (" \"momeditor_displayid\": \""),
+		  MOMOUT_JS_LITERALV ((const char *)
+				      mom_string_cstr ((momval_t)
+						       mom_item_get_idstr
+						       (_L
+							(display).pitem))),
+		  MOMOUT_LITERAL ("\" }"), MOMOUT_NEWLINE (), NULL);
+    mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
+    mom_unlock_item (_L (webx).pitem);
+    return momroutres_pop;
+  }
   ////
 #undef _L
 #undef _C
