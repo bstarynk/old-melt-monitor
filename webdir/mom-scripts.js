@@ -750,7 +750,10 @@ function mom_install_new_input(newinp,newid)
 function mom_ajax_edit_input(jdata,inp) {
     console.debug ("mom_ajax_edit_input jdata=", jdata, " inp=", inp);
     var htmlspan = jdata.momedit_replacebyhtml;
+    var editorid = jdata.momeditor_editorid;
     inp.replaceWith(htmlspan);
+    console.debug ("mom_ajax_edit_input editorid=", editorid);
+    mom_editor_add_update_buttons(editorid);
 }
 
 
@@ -764,8 +767,11 @@ function mom_editor_add_update_buttons(editorid) {
     var editordiv = $('#momeditor'+editorid);
     console.debug ("mom_editor_show_update_buttons editorid=", editorid, " editordiv=", editordiv);
     // dont add the buttons if they are already here.
-    if (editordiv.find(".mom_editbuttons_cl"))
+    var oldbutt=editordiv.find(".mom_editbuttons_cl");
+    if (oldbutt.length>0) {
+	console.debug("mom_editor_show_update_buttons found oldbutt=", oldbutt);
 	return;
+    }
     // find the mom_editdate_cl inside the editor
     var editdate= editordiv.find(".mom_editdate_cl");
     console.debug ("mom_editor_show_update_buttons editdate=", editdate);
