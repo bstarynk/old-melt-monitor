@@ -726,7 +726,6 @@ ajax_edit_codmom (int momstate_, momitem_t *momtasklet_,
 #define _C(Nam) (momclosure_->sontab[ajaxedit_c_##Nam])
 #define _N(Nam) (momlocnums_[ajaxedit_n_##Nam])
   char *endp = NULL;
-  int pos = -1;
   int arity = 0;
   char nambuf[72];
   memset (nambuf, 0, sizeof (nambuf));
@@ -788,32 +787,19 @@ ajaxedit_lab_start:
 		   MOMOUT_LITERAL ("ajax_edit_codmom editval_copy idvalv="),
 		   MOMOUT_VALUE ((const momval_t) idvalv));
 	const char *idvalstr = mom_string_cstr (idvalv);
-	char editidbuf[MOM_IDSTRING_LEN + 8];
-	memset (editidbuf, 0, sizeof (editidbuf));
-	int numval = -1;
-	const char *end = NULL;
-	if (idvalstr && !strncmp (idvalstr, "momedval", strlen ("momedval"))
-	    && mom_looks_like_random_id_cstr (idvalstr + strlen ("momedval"),
-					      &end) && end
-	    && sscanf (end, "_N%d", &numval) > 0 && numval >= 0)
+	_L(display) = MOM_NULLV;
+	MOM_DEBUGPRINTF(run, "ajax_edit_codmom editval_copy idvalstr=%s", idvalstr);
+	if (idvalstr && !strncmp (idvalstr, "momdisplay", strlen ("momdisplay"))
+	    && (_L (display) = (momval_t) (mom_get_item_of_identcstr (idvalstr + strlen ("momdisplay")))).ptr)
 	  {
-	    strncpy (editidbuf, idvalstr + strlen ("momedval"),
-		     MOM_IDSTRING_LEN);
-	    _L (editor) = (momval_t) (mom_get_item_of_identcstr (editidbuf));
 	    MOM_DEBUG (run,
-		       MOMOUT_LITERAL
-		       ("ajax_edit_codmom editval_copy editidbuf="),
-		       MOMOUT_LITERALV ((const char *) editidbuf),
-		       MOMOUT_LITERAL ("; editor="),
-		       MOMOUT_VALUE ((const momval_t) _L (editor)),
-		       MOMOUT_LITERAL ("; end="),
-		       MOMOUT_LITERALV ((const char *) end),
-		       MOMOUT_LITERAL ("; numval="),
-		       MOMOUT_DEC_INT ((int) numval));
+		       MOMOUT_LITERAL("ajax_edit_codmom editval_copy display="),
+		       MOMOUT_VALUE ((const momval_t) _L (display)),
+		       NULL);
 	    {
-	      mom_should_lock_item (_L (editor).pitem);
-	      _L (edinode) = mom_item_vector_nth (_L (editor).pitem, numval);
-	      mom_unlock_item (_L (editor).pitem);
+	      mom_should_lock_item (_L (display).pitem);
+	      _L (edinode) = mom_item_get_attribute(_L(display).pitem, mom_named__display);
+	      mom_unlock_item (_L (display).pitem);
 	    }
 	    MOM_DEBUG (run,
 		       MOMOUT_LITERAL
@@ -821,8 +807,7 @@ ajaxedit_lab_start:
 		       MOMOUT_VALUE (_L (edinode)));
 	  }
 	else
-	  MOM_FATAPRINTF ("ajax_edit bad idvalstr=%s end=%s numval=%d",
-			  idvalstr, end, numval);
+	  MOM_FATAPRINTF ("ajax_edit bad idvalstr=%s", idvalstr);
 	/// here we got the correct edinode. It should be a binary
 	/// node of connective val whose first son is the copied
 	/// value, and whose second son describes how to get it.
@@ -951,9 +936,6 @@ ajaxedit_lab_start:
 	  MOM_FATAPRINTF ("ajax_edit bad idvalstr=%s end=%s", idvalstr, end);
 	/// here we got the correct dispnode. 
 	assert (_L (dispnode).ptr != NULL);
-	MOM_FATAL (MOMOUT_LITERAL
-		   ("ajax_edit_codmom should handle dispnode="),
-		   MOMOUT_VALUE (_L (dispnode)));
 	if (mom_node_conn (_L (dispnode)) == mom_named__attr)
 	  {			// node: *attr(<item>,<attr>,<disp>)
 	    MOM_DEBUG (run,

@@ -622,19 +622,15 @@ mom_register_item_named (momitem_t *itm, const momstring_t *name)
       momitem_t *olditm = dict_mom.dict_array[nix].dicent_item;
       assert (olditm && olditm != MOM_EMPTY
 	      && olditm->i_typnum == momty_item);
-      pthread_mutex_lock (&olditm->i_mtx);
       assert (olditm->i_name == dict_mom.dict_array[nix].dicent_name);
-      olditm->i_name = NULL;
-      pthread_mutex_unlock (&olditm->i_mtx);
+      __atomic_store(olditm->i_name, NULL, __ATOMIC_SEQ_CST);
       dict_mom.dict_array[nix].dicent_item = itm;
     }
   else
     {
       add_dict_mom (name, itm);
     };
-  pthread_mutex_lock (&itm->i_mtx);
-  itm->i_name = name;
-  pthread_mutex_unlock (&itm->i_mtx);
+  __atomic_store(itm->i_name, (momstring_t *) name, __ATOMIC_SEQ_CST);
   pthread_mutex_unlock (&globitem_mtx_mom);
 }
 
@@ -652,10 +648,8 @@ mom_forget_name (const char *namestr)
       momitem_t *olditm = dict_mom.dict_array[nix].dicent_item;
       assert (olditm && olditm != MOM_EMPTY
 	      && olditm->i_typnum == momty_item);
-      pthread_mutex_lock (&olditm->i_mtx);
       assert (olditm->i_name == dict_mom.dict_array[nix].dicent_name);
-      olditm->i_name = NULL;
-      pthread_mutex_unlock (&olditm->i_mtx);
+      __atomic_store(olditm->i_name, NULL, __ATOMIC_SEQ_CST);
       dict_mom.dict_count--;
       if (dict_mom.dict_size > 100
 	  && 4 * dict_mom.dict_count < dict_mom.dict_size)
@@ -670,9 +664,7 @@ mom_item_get_name (momitem_t *itm)
   const momstring_t *namev = NULL;
   if (!itm || !itm->i_typnum == momty_item)
     return NULL;
-  pthread_mutex_lock (&itm->i_mtx);
-  namev = itm->i_name;
-  pthread_mutex_unlock (&itm->i_mtx);
+  namev =  __atomic_load_n(itm->i_name, __ATOMIC_SEQ_CST);
   return namev;
 }
 
@@ -682,9 +674,7 @@ mom_item_get_idstr (momitem_t *itm)
   const momstring_t *idsv = NULL;
   if (!itm || !itm->i_typnum == momty_item)
     return NULL;
-  pthread_mutex_lock (&itm->i_mtx);
-  idsv = itm->i_idstr;
-  pthread_mutex_unlock (&itm->i_mtx);
+  idsv =  __atomic_load_n(itm->i_idstr, __ATOMIC_SEQ_CST);
   return idsv;
 }
 
@@ -695,11 +685,9 @@ mom_item_get_name_or_idstr (momitem_t *itm)
   const momstring_t *strv = NULL;
   if (!itm || !itm->i_typnum == momty_item)
     return NULL;
-  pthread_mutex_lock (&itm->i_mtx);
-  strv = itm->i_name;
+  strv = __atomic_load_n(itm->i_name, __ATOMIC_SEQ_CST);
   if (!strv)
-    strv = itm->i_idstr;
-  pthread_mutex_unlock (&itm->i_mtx);
+    strv =  __atomic_load_n(itm->i_idstr, __ATOMIC_SEQ_CST);
   return strv;
 }
 
