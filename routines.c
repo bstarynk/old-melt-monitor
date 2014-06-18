@@ -805,15 +805,22 @@ ajaxedit_lab_start:
 	      _L (edinode) =
 		mom_item_get_attribute (_L (display).pitem,
 					mom_named__display);
+	      _L (curval) =
+		mom_item_get_attribute (_L (display).pitem, mom_named__val);
 	      mom_unlock_item (_L (display).pitem);
 	    }
 	    MOM_DEBUG (run,
 		       MOMOUT_LITERAL
 		       ("ajax_edit_codmom editval_copy edinode="),
-		       MOMOUT_VALUE (_L (edinode)));
+		       MOMOUT_VALUE (_L (edinode)),
+		       MOMOUT_LITERAL (" curval="),
+		       MOMOUT_VALUE (_L (curval)), NULL);
 	  }
 	else
 	  MOM_FATAPRINTF ("ajax_edit bad idvalstr=%s", idvalstr);
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL ("ajax_edit_codmom editval_copy edinode="),
+		   MOMOUT_VALUE (_L (edinode)));
 	/// here we got the correct edinode. It should be a binary
 	/// node of connective val whose first son is the copied
 	/// value, and whose second son describes how to get it.
