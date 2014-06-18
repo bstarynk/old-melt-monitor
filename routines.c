@@ -954,9 +954,8 @@ ajaxedit_lab_start:
 	MOM_FATAL (MOMOUT_LITERAL
 		   ("ajax_edit_codmom should handle dispnode="),
 		   MOMOUT_VALUE (_L (dispnode)));
-#warning ajax_edit_codmom should handle dispnode
-	if (mom_node_conn (_L (origin)) == mom_named__attr)
-	  {			// node: *attr(<item>,<attr>)
+	if (mom_node_conn (_L (dispnode)) == mom_named__attr)
+	  {			// node: *attr(<item>,<attr>,<disp>)
 	    MOM_DEBUG (run,
 		       MOMOUT_LITERAL
 		       ("ajax_edit_codmom prepareditvalmenu attr origin"));
@@ -976,8 +975,8 @@ ajaxedit_lab_start:
 	    mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
 	    goto end;
 	  }
-	else if (mom_node_conn (_L (origin)) == mom_named__node)
-	  {			/* *node(<parentix>,<sonrank>) */
+	else if (mom_node_conn (_L (dispnode)) == mom_named__node)
+	  {			/* *node(<conn>,<tuple-disp>) */
 	    MOM_DEBUG (run,
 		       MOMOUT_LITERAL
 		       ("ajax_edit_codmom prepareditvalmenu node origin"));
@@ -1000,6 +999,9 @@ ajaxedit_lab_start:
 	    mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
 	    goto end;
 	  }
+	else
+	  MOM_FATAL (MOMOUT_LITERAL ("unhandled dispnode="),
+		     MOMOUT_VALUE (_L (dispnode)));
       }				//// end if todo is mom_prepare_editval_menu
     //
     /***** todo= mom_menuitem_editval_replaceson ****/
@@ -1301,13 +1303,7 @@ ajaxedit_lab_start:
 	      _L (curval) = (momval_t) mom_make_tuple_sized (0);
 	    _N (good_input) = __LINE__;
 	  }
-	MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_edit_codmom good_input="),
-		   MOMOUT_DEC_INT ((int) _N (good_input)),
-		   MOMOUT_LITERAL ("; curval="), MOMOUT_VALUE (_L (curval)),
-		   MOMOUT_LITERAL ("; origin="), MOMOUT_VALUE (_L (origin)),
-		   MOMOUT_LITERAL ("; display="), MOMOUT_VALUE (_L (display)),
-		   MOMOUT_LITERAL ("; webx="), MOMOUT_VALUE (_L (webx)),
-		   MOMOUT_LITERAL ("; display_value="),	MOMOUT_VALUE (_C (display_value)), //
+	MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_edit_codmom good_input="), MOMOUT_DEC_INT ((int) _N (good_input)), MOMOUT_LITERAL ("; curval="), MOMOUT_VALUE (_L (curval)), MOMOUT_LITERAL ("; origin="), MOMOUT_VALUE (_L (origin)), MOMOUT_LITERAL ("; display="), MOMOUT_VALUE (_L (display)), MOMOUT_LITERAL ("; webx="), MOMOUT_VALUE (_L (webx)), MOMOUT_LITERAL ("; display_value="), MOMOUT_VALUE (_C (display_value)),	//
 		   NULL);
 	MOM_WEBX_OUT (_L (webx).pitem,
 		      MOMOUT_LITERAL
@@ -1491,12 +1487,9 @@ ajaxedit_lab_didputvalue:	///// **********
   {
     _L (display) = mom_item_tasklet_res1 (momtasklet_);
     mom_should_lock_item (_L (webx).pitem);
-    MOM_DEBUG (run,
-	       MOMOUT_LITERAL ("ajax_edit_codmom didputvalue curval="),
-	       MOMOUT_VALUE (_L (curval)),
-	       MOMOUT_LITERAL (" display="), MOMOUT_VALUE (_L (display)), //
-	       MOMOUT_LITERAL (" webx="), MOMOUT_VALUE (_L (webx)), //
-	       MOMOUT_LITERAL(" editor="), MOMOUT_VALUE (_L(editor)), //
+    MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_edit_codmom didputvalue curval="), MOMOUT_VALUE (_L (curval)), MOMOUT_LITERAL (" display="), MOMOUT_VALUE (_L (display)),	//
+	       MOMOUT_LITERAL (" webx="), MOMOUT_VALUE (_L (webx)),	//
+	       MOMOUT_LITERAL (" editor="), MOMOUT_VALUE (_L (editor)),	//
 	       NULL);
     MOM_WEBX_OUT (_L (webx).pitem,
 		  MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE (),
