@@ -623,14 +623,14 @@ mom_register_item_named (momitem_t *itm, const momstring_t *name)
       assert (olditm && olditm != MOM_EMPTY
 	      && olditm->i_typnum == momty_item);
       assert (olditm->i_name == dict_mom.dict_array[nix].dicent_name);
-      __atomic_store(olditm->i_name, NULL, __ATOMIC_SEQ_CST);
+      __atomic_store_n (&olditm->i_name, NULL, __ATOMIC_SEQ_CST);
       dict_mom.dict_array[nix].dicent_item = itm;
     }
   else
     {
       add_dict_mom (name, itm);
     };
-  __atomic_store(itm->i_name, (momstring_t *) name, __ATOMIC_SEQ_CST);
+  __atomic_store_n (&itm->i_name, (momstring_t *) name, __ATOMIC_SEQ_CST);
   pthread_mutex_unlock (&globitem_mtx_mom);
 }
 
@@ -649,7 +649,7 @@ mom_forget_name (const char *namestr)
       assert (olditm && olditm != MOM_EMPTY
 	      && olditm->i_typnum == momty_item);
       assert (olditm->i_name == dict_mom.dict_array[nix].dicent_name);
-      __atomic_store(olditm->i_name, NULL, __ATOMIC_SEQ_CST);
+      __atomic_store_n (&olditm->i_name, NULL, __ATOMIC_SEQ_CST);
       dict_mom.dict_count--;
       if (dict_mom.dict_size > 100
 	  && 4 * dict_mom.dict_count < dict_mom.dict_size)
@@ -664,7 +664,7 @@ mom_item_get_name (momitem_t *itm)
   const momstring_t *namev = NULL;
   if (!itm || !itm->i_typnum == momty_item)
     return NULL;
-  namev =  __atomic_load_n(itm->i_name, __ATOMIC_SEQ_CST);
+  namev = __atomic_load_n (&itm->i_name, __ATOMIC_SEQ_CST);
   return namev;
 }
 
@@ -674,7 +674,7 @@ mom_item_get_idstr (momitem_t *itm)
   const momstring_t *idsv = NULL;
   if (!itm || !itm->i_typnum == momty_item)
     return NULL;
-  idsv =  __atomic_load_n(itm->i_idstr, __ATOMIC_SEQ_CST);
+  idsv = __atomic_load_n (&itm->i_idstr, __ATOMIC_SEQ_CST);
   return idsv;
 }
 
@@ -685,9 +685,9 @@ mom_item_get_name_or_idstr (momitem_t *itm)
   const momstring_t *strv = NULL;
   if (!itm || !itm->i_typnum == momty_item)
     return NULL;
-  strv = __atomic_load_n(itm->i_name, __ATOMIC_SEQ_CST);
+  strv = __atomic_load_n (&itm->i_name, __ATOMIC_SEQ_CST);
   if (!strv)
-    strv =  __atomic_load_n(itm->i_idstr, __ATOMIC_SEQ_CST);
+    strv = __atomic_load_n (&itm->i_idstr, __ATOMIC_SEQ_CST);
   return strv;
 }
 

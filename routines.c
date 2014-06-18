@@ -787,18 +787,24 @@ ajaxedit_lab_start:
 		   MOMOUT_LITERAL ("ajax_edit_codmom editval_copy idvalv="),
 		   MOMOUT_VALUE ((const momval_t) idvalv));
 	const char *idvalstr = mom_string_cstr (idvalv);
-	_L(display) = MOM_NULLV;
-	MOM_DEBUGPRINTF(run, "ajax_edit_codmom editval_copy idvalstr=%s", idvalstr);
-	if (idvalstr && !strncmp (idvalstr, "momdisplay", strlen ("momdisplay"))
-	    && (_L (display) = (momval_t) (mom_get_item_of_identcstr (idvalstr + strlen ("momdisplay")))).ptr)
+	_L (display) = MOM_NULLV;
+	MOM_DEBUGPRINTF (run, "ajax_edit_codmom editval_copy idvalstr=%s",
+			 idvalstr);
+	if (idvalstr
+	    && !strncmp (idvalstr, "momdisplay", strlen ("momdisplay"))
+	    && (_L (display) =
+		(momval_t) (mom_get_item_of_identcstr
+			    (idvalstr + strlen ("momdisplay")))).ptr)
 	  {
 	    MOM_DEBUG (run,
-		       MOMOUT_LITERAL("ajax_edit_codmom editval_copy display="),
-		       MOMOUT_VALUE ((const momval_t) _L (display)),
-		       NULL);
+		       MOMOUT_LITERAL
+		       ("ajax_edit_codmom editval_copy display="),
+		       MOMOUT_VALUE ((const momval_t) _L (display)), NULL);
 	    {
 	      mom_should_lock_item (_L (display).pitem);
-	      _L (edinode) = mom_item_get_attribute(_L(display).pitem, mom_named__display);
+	      _L (edinode) =
+		mom_item_get_attribute (_L (display).pitem,
+					mom_named__display);
 	      mom_unlock_item (_L (display).pitem);
 	    }
 	    MOM_DEBUG (run,
