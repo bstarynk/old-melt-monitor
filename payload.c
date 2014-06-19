@@ -809,10 +809,10 @@ compute_pushed_data_size_mom (const momnode_t *closn,
     return false;
   momitem_t *connitm = (momitem_t *) closn->connitm;
   assert (connitm && connitm->i_typnum == momty_item);
-  pthread_mutex_lock (&connitm->i_mtx);
+  mom_should_lock_item (connitm);
   if (connitm->i_paylkind == mompayk_routine)
     rdescr = connitm->i_payload;
-  pthread_mutex_unlock (&connitm->i_mtx);
+  mom_unlock_item (connitm);
   assert (!rdescr || rdescr->rout_magic == MOM_ROUTINE_MAGIC);
   while (again && dir != MOMPFRDO__END)
     {

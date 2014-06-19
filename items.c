@@ -460,10 +460,10 @@ finalize_item_mom (void *itmad, void *data __attribute__ ((unused)))
 {
   momitem_t *itm = (momitem_t *) itmad;
   assert (itm->i_typnum == momty_item && itm->i_magic == MOM_ITEM_MAGIC);
-  pthread_mutex_lock (&itm->i_mtx);
+  mom_should_lock_item (itm);
   if (itm->i_payload != NULL)
     mom_item_clear_payload (itm);
-  pthread_mutex_unlock (&itm->i_mtx);
+  mom_unlock_item (itm);
   pthread_mutex_lock (&globitem_mtx_mom);
   pthread_mutex_destroy (&itm->i_mtx);
   memset (itmad, 0, sizeof (momitem_t));

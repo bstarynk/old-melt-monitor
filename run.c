@@ -82,7 +82,7 @@ mom_add_tasklet_to_agenda_back (momitem_t *tkitm)
     return;
   assert (mom_named__agenda != NULL
 	  && mom_named__agenda->i_typnum == momty_item);
-  pthread_mutex_lock (&mom_named__agenda->i_mtx);
+  mom_should_lock_item (mom_named__agenda);
   if (MOM_UNLIKELY (mom_named__agenda->i_paylkind != mompayk_queue))
     mom_item_start_queue (mom_named__agenda);
   agendawasempty = mom_item_queue_is_empty (mom_named__agenda);
@@ -91,7 +91,7 @@ mom_add_tasklet_to_agenda_back (momitem_t *tkitm)
     agendaqlen = mom_item_queue_length (mom_named__agenda);
   if (agendawasempty)
     pthread_cond_broadcast (&agenda_cond_mom);
-  pthread_mutex_unlock (&mom_named__agenda->i_mtx);
+  mom_unlock_item (mom_named__agenda);
   MOM_DEBUG (run, MOMOUT_LITERAL ("did add tasklet to agenda back tkitm="),
 	     MOMOUT_ITEM ((const momitem_t *) tkitm),
 	     MOMOUT_LITERAL ("; agendaqlen="),
@@ -114,7 +114,7 @@ mom_add_tasklet_to_agenda_front (momitem_t *tkitm)
     return;
   assert (mom_named__agenda != NULL
 	  && mom_named__agenda->i_typnum == momty_item);
-  pthread_mutex_lock (&mom_named__agenda->i_mtx);
+  mom_should_lock_item (mom_named__agenda);
   if (MOM_UNLIKELY (mom_named__agenda->i_paylkind != mompayk_queue))
     mom_item_start_queue (mom_named__agenda);
   bool agendawasempty = mom_item_queue_is_empty (mom_named__agenda);
@@ -123,7 +123,7 @@ mom_add_tasklet_to_agenda_front (momitem_t *tkitm)
     agendaqlen = mom_item_queue_length (mom_named__agenda);
   if (agendawasempty)
     pthread_cond_broadcast (&agenda_cond_mom);
-  pthread_mutex_unlock (&mom_named__agenda->i_mtx);
+  mom_unlock_item (mom_named__agenda);
   MOM_DEBUG (run, MOMOUT_LITERAL ("did add tasklet to agenda front tkitm="),
 	     MOMOUT_ITEM ((const momitem_t *) tkitm),
 	     MOMOUT_LITERAL ("; agendaqlen="),
@@ -160,7 +160,7 @@ work_run_mom (void *p)
   while (again)
     {
       bool agendaempty = false;
-      pthread_mutex_lock (&mom_named__agenda->i_mtx);
+      mom_should_lock_item (mom_named__agenda);
       if (MOM_UNLIKELY (mom_named__agenda->i_paylkind != mompayk_queue))
 	mom_item_start_queue (mom_named__agenda);
       agendaempty = mom_item_queue_is_empty (mom_named__agenda);
@@ -201,7 +201,7 @@ work_run_mom (void *p)
 			       "work_run_mom: wix#%d wcount=%ld task_counter_mom=%lld",
 			       wix, (long) wcount,
 			       (long long) task_counter_mom);
-	      pthread_mutex_unlock (&mom_named__agenda->i_mtx);
+	      mom_unlock_item (mom_named__agenda);
 	      run_one_tasklet_mom (curtskitm);
 	      continue;
 	    }
@@ -219,7 +219,7 @@ mom_stop_work_with_todo (mom_todoafterstop_fun_t * todof, void *data)
 	  && mom_named__agenda->i_typnum == momty_item);
   MOM_DEBUGPRINTF (run, "mom_stop_work_with_todo todof@%p data@%p", todof,
 		   data);
-  pthread_mutex_lock (&mom_named__agenda->i_mtx);
+  mom_should_lock_item (mom_named__agenda);
   stop_working_mom = true;
   if (todof)
     {
@@ -234,7 +234,7 @@ mom_stop_work_with_todo (mom_todoafterstop_fun_t * todof, void *data)
       if (!foundslot)
 	MOM_FATAPRINTF ("failed to find todo slot");
     }
-  pthread_mutex_unlock (&mom_named__agenda->i_mtx);
+  mom_unlock_item (mom_named__agenda);
 }
 
 
@@ -287,7 +287,7 @@ step_tasklet_mom (momitem_t *tkitm, struct mom_taskletdata_st *itd)
 		 MOMOUT_BACKTRACE (5));
       return itd->dtk_fratop > 0;
     }
-  pthread_mutex_lock (&routitm->i_mtx);
+  mom_should_lock_item (routitm);
   if (routitm->i_paylkind != mompayk_routine)
     {
       MOM_DEBUG (run,
@@ -318,7 +318,7 @@ step_tasklet_mom (momitem_t *tkitm, struct mom_taskletdata_st *itd)
   locdbls = itd->dtk_dbltop ? (itd->dtk_doubles + curfram->fr_dbloff) : NULL;
   routcod = rdescr->rout_codefun;
 end:
-  pthread_mutex_unlock (&routitm->i_mtx);
+  mom_unlock_item (routitm);
   if (routcod)
     {
       unsigned oldfratop = fratop;
@@ -697,11 +697,11 @@ event_loop_mom (void *p __attribute__ ((unused)))
 	    if (!curjobitm)
 	      continue;
 	    assert (curjobitm->i_typnum == momty_item);
-	    pthread_mutex_lock (&curjobitm->i_mtx);
+	    mom_should_lock_item (curjobitm);
 	    struct mom_process_data_st *curjobdata =
 	      (curjobitm->i_paylkind ==
 	       mompayk_process) ? curjobitm->i_payload : NULL;
-	    pthread_mutex_unlock (&curjobitm->i_mtx);
+	    mom_unlock_item (curjobitm);
 	    if (!curjobdata)
 	      continue;
 	    assert (curjobdata->iproc_magic == MOM_PROCESS_MAGIC);
@@ -804,13 +804,11 @@ mom_run_workers (void)
       assert (mom_named__agenda != NULL
 	      && mom_named__agenda->i_typnum == momty_item);
       {
-	pthread_mutex_lock (&mom_named__agenda->i_mtx);
 	if (stop_working_mom)
 	  again = false;
 	else
 	  again = true;
 	stop_working_mom = false;
-	pthread_mutex_unlock (&mom_named__agenda->i_mtx);
       }
       if (!again)
 	{
@@ -843,7 +841,7 @@ mom_run_workers (void)
 		       curnbwork, workcnt);
       {
 	unsigned nbtodo = 0;
-	pthread_mutex_lock (&mom_named__agenda->i_mtx);
+	mom_should_lock_item (mom_named__agenda);
 	for (unsigned dix = 0; dix < TODO_MAX_MOM; dix++)
 	  {
 	    if (todo_after_stop_mom[dix].todo_fun)
@@ -860,7 +858,7 @@ mom_run_workers (void)
 	if (continue_working_mom)
 	  again = true;
 	continue_working_mom = false;
-	pthread_mutex_unlock (&mom_named__agenda->i_mtx);
+	mom_unlock_item (mom_named__agenda);
       }
       MOM_DEBUGPRINTF (run, "mom_start_workers again %s workcnt=%ld",
 		       again ? "true" : "false", workcnt);
@@ -887,11 +885,11 @@ start_some_pending_jobs_mom (void)
       if (!curjobitm)
 	continue;
       assert (curjobitm->i_typnum == momty_item);
-      pthread_mutex_lock (&curjobitm->i_mtx);
+      mom_should_lock_item (curjobitm);
       struct mom_process_data_st *curjobproc =
 	(curjobitm->i_paylkind ==
 	 mompayk_process) ? curjobitm->i_payload : NULL;
-      pthread_mutex_unlock (&curjobitm->i_mtx);
+      mom_unlock_item (curjobitm);
       if (!curjobproc)
 	continue;
       assert (curjobproc != NULL

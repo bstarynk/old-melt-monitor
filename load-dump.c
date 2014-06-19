@@ -330,7 +330,7 @@ mom_dump_scan_inside_item (struct mom_dumper_st *dmp, momitem_t *itm)
 	  && itm->i_magic == MOM_ITEM_MAGIC);
   if (itm->i_space == momspa_none)
     return;
-  pthread_mutex_lock (&itm->i_mtx);
+  mom_should_lock_item (itm);
   if (itm->i_content.ptr)
     mom_dump_scan_value (dmp, itm->i_content);
   if (itm->i_attrs)
@@ -358,7 +358,7 @@ mom_dump_scan_inside_item (struct mom_dumper_st *dmp, momitem_t *itm)
       if (payld->dpayl_dumpscanfun)
 	payld->dpayl_dumpscanfun (dmp, itm);
     }
-  pthread_mutex_unlock (&itm->i_mtx);
+  mom_unlock_item (itm);
 }
 
 static const momjsonarray_t *
@@ -1585,7 +1585,7 @@ mom_full_dump (const char *reason, const char *dumpdir,
 		   MOMOUT_ITEM ((const momitem_t *) curitm));
 	assert (curitm->i_typnum == momty_item
 		&& curitm->i_magic == MOM_ITEM_MAGIC);
-	pthread_mutex_lock (&curitm->i_mtx);
+	mom_should_lock_item (curitm);
 	unsigned ispa = curitm->i_space;
 	assert (ispa < momspa__last);
 	struct mom_spacedescr_st *spad = mom_spacedescr_array[ispa];
@@ -1624,7 +1624,7 @@ mom_full_dump (const char *reason, const char *dumpdir,
 	    dmp.dmp_curspace = oldmpspa;
 	  }
       done_item:
-	pthread_mutex_unlock (&curitm->i_mtx);
+	mom_unlock_item (curitm);
       }
     /// finish all the initialized spaces
     for (unsigned six = momspa_root; six < momspa__last; six++)
@@ -1711,7 +1711,7 @@ mom_full_dump (const char *reason, const char *dumpdir,
 	momitem_t *predefitm = (momitem_t *) dmp.dmp_predefarray[pix];
 	assert (predefitm && predefitm->i_typnum == momty_item
 		&& predefitm->i_space == momspa_predefined);
-	pthread_mutex_lock (&predefitm->i_mtx);
+	mom_should_lock_item (predefitm);
 	momval_t commentv =
 	  mom_get_attribute (predefitm->i_attrs, mom_named__comment);
 	if (mom_is_string (commentv))
@@ -1731,7 +1731,7 @@ mom_full_dump (const char *reason, const char *dumpdir,
 		   MOMOUT_LITERALV (mom_string_cstr
 				    ((momval_t) predefitm->i_idstr)),
 		   MOMOUT_LITERAL (")"), MOMOUT_NEWLINE ());
-	pthread_mutex_unlock (&predefitm->i_mtx);
+	mom_unlock_item (predefitm);
       }
     MOM_OUT (&outs, MOMOUT_NEWLINE (),
 	     MOMOUT_LITERAL ("#undef MOM_PREDEFINED_NAMED"),
