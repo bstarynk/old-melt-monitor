@@ -443,7 +443,7 @@ output_item_attributes_mom (momout_t *pout, const momitem_t *itm)
       momval_t curval = attrs->itattrtab[ix].aten_val;
       MOM_OUT (pout, MOMOUT_NEWLINE (),
 	       MOMOUT_LITERAL ("*"), MOMOUT_DEC_INT ((int) ix),
-	       MOMOUT_LITERAL (" "),
+	       MOMOUT_LITERAL (": "),
 	       MOMOUT_ITEM ((const momitem_t *) curatitm),
 	       MOMOUT_LITERAL (":: "),
 	       MOMOUT_VALUE ((const momval_t) curval), NULL);
