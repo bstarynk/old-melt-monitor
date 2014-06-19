@@ -1385,7 +1385,13 @@ ajaxedit_lab_start:
 		       MOMOUT_VALUE ((const momval_t) newnodv),
 		       MOMOUT_LITERAL ("; newnum="), MOMOUT_DEC_INT (newnum),
 		       MOMOUT_LITERAL ("; origin="),
-		       MOMOUT_VALUE (_L (origin)), NULL);
+		       MOMOUT_VALUE (_L (origin)),
+		       MOMOUT_LITERAL ("; display="),
+		       MOMOUT_VALUE (_L (display)), MOMOUT_SPACE (48),
+		       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+					       mom_value_to_item (_L
+								  (display))),
+		       NULL);
 	    MOM_WEBX_OUT (_L (webx).pitem,
 			  MOMOUT_LITERAL
 			  ("{ \"momedit_do\": \"momedit_dispnewattr\","),
@@ -1397,10 +1403,10 @@ ajaxedit_lab_start:
 			  MOMOUT_LITERALV (attridstr),
 			  MOMOUT_LITERAL ("\", "), MOMOUT_NEWLINE (),
 			  MOMOUT_LITERAL (" \"momedit_inputid\": \""),
-			  MOMOUT_LITERALV (mom_string_cstr ((momval_t)
-							    mom_item_get_idstr
-							    (_L
-							     (display).pitem))),
+			  MOMOUT_LITERALV (mom_string_cstr
+					   ((momval_t)
+					    mom_item_get_idstr (_L
+								(display).pitem))),
 			  MOMOUT_LITERAL ("\", "), MOMOUT_NEWLINE (),
 			  MOMOUT_LITERAL (" \"momedit_attrlihtml\": \""),
 			  MOMOUT_JS_LITERAL
@@ -2116,7 +2122,11 @@ ajaxobjs_lab_didcontentdisplay:
 	     MOMOUT_LITERAL
 	     ("ajax_objects_codmom didcontentdisplay content="),
 	     MOMOUT_VALUE (_L (curcontent)),
-	     MOMOUT_LITERAL (" display="), MOMOUT_VALUE (_L (display)));
+	     MOMOUT_LITERAL (" display="), MOMOUT_VALUE (_L (display)),
+	     MOMOUT_SPACE (48),
+	     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+				     mom_value_to_item (_L (display))),
+	     MOMOUT_NEWLINE (), NULL);
   ////// finalize the editor
   {
     int sizedit = -1;
