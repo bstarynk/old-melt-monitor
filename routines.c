@@ -1442,7 +1442,28 @@ ajaxedit_lab_start:
 	  }
       }				/* end if todo mom_add_attribute */
 
-    MOM_FATAPRINTF ("ajax_edit incomplete");
+    /***** todo= momedit_update ****/
+    else if (mom_string_same (todov, "momedit_update"))
+      {
+	momval_t editoridv =
+	  mom_webx_post_arg (_L (webx).pitem, "editorid_mom");
+	_L (editor) =
+	  (momval_t) mom_get_item_of_ident (mom_to_string (editoridv));
+	MOM_FATAL (MOMOUT_LITERAL
+		   ("ajax edit edit_update unimplemented editoridv="),
+		   MOMOUT_VALUE ((const momval_t) editoridv),
+		   MOMOUT_LITERAL ("; editor="), MOMOUT_VALUE (_L (editor)),
+		   NULL);
+      }
+
+    else
+      MOM_FATAL (MOMOUT_LITERAL ("ajax edit bad todov="),
+		 MOMOUT_VALUE (todov), MOMOUT_NEWLINE (),
+		 MOMOUT_LITERAL (" postjsob="),
+		 MOMOUT_VALUE ((const momval_t)
+			       mom_webx_jsob_post (_L (webx).pitem)),
+		 MOMOUT_NEWLINE (), MOMOUT_LITERAL (" webx="),
+		 MOMOUT_VALUE (_L (webx)), NULL);
 #warning ajax_edit incomplete
     goto end;
   end:

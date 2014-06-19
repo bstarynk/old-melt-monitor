@@ -784,6 +784,19 @@ function mom_editor_add_update_buttons(editorid) {
 function mom_editor_update(editorid) {
     var editordiv = $('#momeditor'+editorid);
     console.debug ("mom_editor_update editorid=", editorid, " editordiv=", editordiv);
+    $.ajax({ url: '/ajax_edit',
+	     method: 'POST',
+	     data: { todo_mom: "momedit_update",
+		     editorid_mom: editorid },
+	     dataType: 'json',
+	     success: function (gotdata) {
+		 console.debug ("mom_editor_update gotdata=", gotdata);
+	     },
+	     error: function (jq,status,errmsg) {
+			 console.error ("mom_editor_update ",
+					" error jq=", jq, " status=", status, " errmsg=", errmsg);
+	     }
+	   });
 }
 
 function mom_editor_revert(editorid) {
