@@ -802,6 +802,19 @@ function mom_editor_update(editorid) {
 function mom_editor_revert(editorid) {
     var editordiv = $('#momeditor'+editorid);
     console.debug ("mom_editor_revert editorid=", editorid, " editordiv=", editordiv);
+    $.ajax({ url: '/ajax_edit',
+	     method: 'POST',
+	     data: { todo_mom: "momedit_revert",
+		     editorid_mom: editorid },
+	     dataType: 'json',
+	     success: function (gotdata) {
+		 console.debug ("mom_editor_revert gotdata=", gotdata);
+	     },
+	     error: function (jq,status,errmsg) {
+			 console.error ("mom_editor_revert ",
+					" error jq=", jq, " status=", status, " errmsg=", errmsg);
+	     }
+	   });
 }
 
 function mom_add_new_attr(jdata) {

@@ -334,6 +334,11 @@ enum momoutdir_en
   MOMOUTDO_ITEM /*, momitem_t* itm */ ,
 #define MOMOUT_ITEM(S) MOMOUTDO_ITEM, MOM_REQUIRES_TYPE(S,const momitem_t*,mombad_item)
   ///
+  /// any item attributes
+  MOMOUTDO_ITEM_ATTRIBUTES /*, momitem_t* itm */ ,
+#define MOMOUT_ITEM_ATTRIBUTES(S) MOMOUTDO_ITEM_ATTRIBUTES, \
+  MOM_REQUIRES_TYPE(S,const momitem_t*,mombad_item)
+  ///
   /// decimal int
   MOMOUTDO_DEC_INT /*, int num */ ,
 #define MOMOUT_DEC_INT(N) MOMOUTDO_DEC_INT, MOM_REQUIRES_TYPE(N,int,mombad_int)

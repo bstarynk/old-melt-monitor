@@ -712,6 +712,8 @@ enum ajax_edit_numbers_en
   ajaxedit_n_rank,
   ajaxedit_n_num,
   ajaxedit_n_good_input,
+  ajaxedit_n_size,
+  ajaxedit_n_ix,
   ajaxedit_n__lastnum
 };
 
@@ -1445,15 +1447,57 @@ ajaxedit_lab_start:
     /***** todo= momedit_update ****/
     else if (mom_string_same (todov, "momedit_update"))
       {
-	momval_t editoridv =
-	  mom_webx_post_arg (_L (webx).pitem, "editorid_mom");
-	_L (editor) =
-	  (momval_t) mom_get_item_of_ident (mom_to_string (editoridv));
+	{
+	  momval_t editoridv =
+	    mom_webx_post_arg (_L (webx).pitem, "editorid_mom");
+	  _L (editor) =
+	    (momval_t) mom_get_item_of_ident (mom_to_string (editoridv));
+	}
+	{
+	  mom_should_lock_item (_L (editor).pitem);
+	  _N (size) = mom_item_vector_count (_L (editor).pitem);
+	  mom_unlock_item (_L (editor).pitem);
+	}
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL ("ajax edit edit_update editor="),
+		   MOMOUT_VALUE ((const momval_t) _L (editor)),
+		   MOMOUT_LITERAL (", size="),
+		   MOMOUT_DEC_INT ((int) _N (size)), NULL);
+	for (_N (ix) = 0; _N (ix) < _N (size); _N (ix)++)
+	  {
+	    {
+	      mom_should_lock_item (_L (editor).pitem);
+	      _L (display) = mom_item_vector_nth (_L (editor).pitem, _N (ix));
+	      mom_unlock_item (_L (editor).pitem);
+	    }
+	    MOM_DEBUG (run,
+		       MOMOUT_LITERAL ("ajax edit edit_update ix="),
+		       MOMOUT_DEC_INT ((int) _N (ix)),
+		       MOMOUT_LITERAL (" display="),
+		       MOMOUT_VALUE (_L (display)),
+		       MOMOUT_LITERAL (" "),
+		       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+					       mom_value_to_item (_L
+								  (display))),
+		       NULL);
+	  }
 	MOM_FATAL (MOMOUT_LITERAL
-		   ("ajax edit edit_update unimplemented editoridv="),
-		   MOMOUT_VALUE ((const momval_t) editoridv),
-		   MOMOUT_LITERAL ("; editor="), MOMOUT_VALUE (_L (editor)),
-		   NULL);
+		   ("ajax edit edit_update unimplemented editor="),
+		   MOMOUT_VALUE (_L (editor)), NULL);
+      }
+
+    /***** todo= momedit_revert ****/
+    else if (mom_string_same (todov, "momedit_revert"))
+      {
+	{
+	  momval_t editoridv =
+	    mom_webx_post_arg (_L (webx).pitem, "editorid_mom");
+	  _L (editor) =
+	    (momval_t) mom_get_item_of_ident (mom_to_string (editoridv));
+	}
+	MOM_FATAL (MOMOUT_LITERAL
+		   ("ajax edit unimplemented edit_revert editor="),
+		   MOMOUT_VALUE (_L (editor)), NULL);
       }
 
     else

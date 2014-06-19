@@ -298,6 +298,8 @@ output_json_mom (momout_t *pout, momval_t v)
 
 static void output_item_mom (momout_t *pout, const momitem_t *itm);
 
+static void output_item_attributes_mom (momout_t *pout, const momitem_t *itm);
+
 static void
 output_value_mom (momout_t *pout, const momval_t v)
 {
@@ -415,6 +417,38 @@ output_item_mom (momout_t *pout, const momitem_t *itm)
 	 ((momval_t) mom_item_get_name_or_idstr ((momitem_t *) itm)), out);
 }
 
+
+static void
+output_item_attributes_mom (momout_t *pout, const momitem_t *itm)
+{
+  assert (pout && pout->mout_magic == MOM_MOUT_MAGIC);
+  FILE *out = pout->mout_file;
+  if (!out)
+    return;
+  if (!itm)
+    return;
+  assert (itm->i_typnum == momty_item);
+  struct mom_itemattributes_st *attrs = itm->i_attrs;
+  if (!attrs)
+    {
+      fputs ("?noattrs?", out);
+      return;
+    }
+  fprintf (out, "[%d attrs]", attrs->nbattr);
+  for (unsigned ix = 0; ix < attrs->size; ix++)
+    {
+      momitem_t *curatitm = attrs->itattrtab[ix].aten_itm;
+      if (!curatitm || curatitm == MOM_EMPTY)
+	continue;
+      momval_t curval = attrs->itattrtab[ix].aten_val;
+      MOM_OUT (pout, MOMOUT_NEWLINE (),
+	       MOMOUT_LITERAL ("*"), MOMOUT_DEC_INT ((int) ix),
+	       MOMOUT_LITERAL (" "),
+	       MOMOUT_ITEM ((const momitem_t *) curatitm),
+	       MOMOUT_LITERAL (":: "),
+	       MOMOUT_VALUE ((const momval_t) curval), NULL);
+    }
+}
 
 static void
 output_backtrace_mom (momout_t *pout, void **bbuf, int depth, int lev)
@@ -927,6 +961,13 @@ mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist)
 	  {
 	    const momitem_t *itm = va_arg (alist, momitem_t *);
 	    output_item_mom (pout, itm);
+	  }
+	  break;
+	  ///
+	case MOMOUTDO_ITEM_ATTRIBUTES:
+	  {
+	    const momitem_t *itm = va_arg (alist, momitem_t *);
+	    output_item_attributes_mom (pout, itm);
 	  }
 	  break;
 	  ///
