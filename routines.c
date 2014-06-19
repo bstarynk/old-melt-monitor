@@ -368,12 +368,26 @@ display_value_codmom (int momstate_, momitem_t *momtasklet_,
   MOM_FATAPRINTF ("display_value invalid state #%d", momstate_);
 display_value_lab_start:
   MOM_DEBUG (run, MOMOUT_LITERAL ("display_value start editor="),
-	     MOMOUT_VALUE ((const momval_t) _L (editor)));
+	     MOMOUT_VALUE ((const momval_t) _L (editor)),
+	     MOMOUT_SPACE (48),
+	     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+				     mom_value_to_item (_L (editor))),
+	     MOMOUT_NEWLINE (), MOMOUT_LITERAL (" olddisplay="),
+	     MOMOUT_VALUE ((const momval_t) _L (olddisplay)),
+	     MOMOUT_SPACE (48),
+	     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+				     mom_value_to_item (_L (olddisplay))),
+	     MOMOUT_NEWLINE (), MOMOUT_LITERAL (" orig="),
+	     MOMOUT_VALUE ((const momval_t) _L (orig)), MOMOUT_SPACE (48),
+	     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+				     mom_value_to_item (_L (orig))),
+	     MOMOUT_NEWLINE (), NULL);
   //
   if (MOM_UNLIKELY (_L (editor).ptr == MOM_EMPTY))	// this cannot happen!
     _SET_STATE (impossible);
   //
   _N (rank) = mom_item_vector_count (_L (editor).pitem);
+  _L (newdisplay) = MOM_NULLV;
   if (_L (olddisplay).pitem)
     {
       bool goodolddisplay = true;
@@ -384,6 +398,11 @@ display_value_lab_start:
       if (mom_item_get_attribute
 	  (_L (newdisplay).pitem, mom_named__origin).ptr != _L (orig).ptr)
 	goodolddisplay = false;
+      MOM_DEBUG (run,
+		 MOMOUT_LITERALV ((const char *) (goodolddisplay ?
+						  "display_value start goodolddisplay true"
+						  :
+						  "display_value start goodolddisplay false")));
       if (goodolddisplay)
 	{
 	  _L (newdisplay) = _L (olddisplay);
@@ -392,6 +411,14 @@ display_value_lab_start:
 			      (_L (newdisplay).pitem, mom_named__rank)));
 	  mom_item_put_attribute (_L (olddisplay).pitem, mom_named__val,
 				  _L (curval));
+	  MOM_DEBUG (run,
+		     MOMOUT_LITERAL
+		     ("display_value start newdisplay=olddisplay="),
+		     MOMOUT_VALUE (_L (olddisplay)), MOMOUT_LITERAL (" !:"),
+		     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+					     mom_value_to_item (_L
+								(olddisplay))),
+		     NULL);
 	}
       mom_unlock_item (_L (olddisplay).pitem);
     }
@@ -407,6 +434,12 @@ display_value_lab_start:
       mom_item_vector_append1 (_L (editor).pitem, _L (newdisplay));
       mom_item_put_attribute (_L (newdisplay).pitem, mom_named__val,
 			      _L (curval));
+      MOM_DEBUG (run, MOMOUT_LITERAL ("display_value start made newdisplay="),
+		 MOMOUT_VALUE (_L (newdisplay)),
+		 MOMOUT_LITERAL (" !:"),
+		 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+					 mom_value_to_item (_L (newdisplay))),
+		 NULL);
     }
   switch ((enum momvaltype_en) mom_type (_L (curval)))
     {
@@ -1295,7 +1328,15 @@ ajaxedit_lab_start:
 	      _L (curval) = (momval_t) mom_make_tuple_sized (0);
 	    _N (good_input) = __LINE__;
 	  }
-	MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_edit_codmom good_input="), MOMOUT_DEC_INT ((int) _N (good_input)), MOMOUT_LITERAL ("; curval="), MOMOUT_VALUE (_L (curval)), MOMOUT_LITERAL ("; origin="), MOMOUT_VALUE (_L (origin)), MOMOUT_LITERAL ("; display="), MOMOUT_VALUE (_L (display)), MOMOUT_LITERAL ("; webx="), MOMOUT_VALUE (_L (webx)), MOMOUT_LITERAL ("; display_value="), MOMOUT_VALUE (_C (display_value)),	//
+	MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_edit_codmom good_input="), MOMOUT_DEC_INT ((int) _N (good_input)),	//
+		   MOMOUT_LITERAL ("; curval="), MOMOUT_VALUE (_L (curval)),	//
+		   MOMOUT_LITERAL ("; origin="), MOMOUT_VALUE (_L (origin)),	//
+		   MOMOUT_LITERAL (" !: "), MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) mom_value_to_item ((_L (origin)))),	//
+		   MOMOUT_SPACE (48),	//
+		   MOMOUT_LITERAL ("; display="), MOMOUT_VALUE (_L (display)),	//
+		   MOMOUT_LITERAL (" !: "), MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) mom_value_to_item ((_L (display)))),	//
+		   MOMOUT_NEWLINE (), MOMOUT_LITERAL ("webx="), MOMOUT_VALUE (_L (webx)),	//
+		   MOMOUT_LITERAL ("; display_value="), MOMOUT_VALUE (_C (display_value)),	//
 		   NULL);
 	MOM_WEBX_OUT (_L (webx).pitem,
 		      MOMOUT_LITERAL
@@ -1548,7 +1589,9 @@ ajaxedit_lab_didputvalue:	///// **********
   {
     _L (display) = mom_item_tasklet_res1 (momtasklet_);
     mom_should_lock_item (_L (webx).pitem);
-    MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_edit_codmom didputvalue curval="), MOMOUT_VALUE (_L (curval)), MOMOUT_LITERAL (" display="), MOMOUT_VALUE (_L (display)),	//
+    MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_edit_codmom didputvalue curval="), MOMOUT_VALUE (_L (curval)),	//
+	       MOMOUT_LITERAL (" display="), MOMOUT_VALUE (_L (display)),	//
+	       MOMOUT_SPACE (48), MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) mom_value_to_item (_L (display))),	//
 	       MOMOUT_LITERAL (" webx="), MOMOUT_VALUE (_L (webx)),	//
 	       MOMOUT_LITERAL (" editor="), MOMOUT_VALUE (_L (editor)),	//
 	       NULL);
