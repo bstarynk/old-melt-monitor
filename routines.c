@@ -393,10 +393,10 @@ display_value_lab_start:
       bool goodolddisplay = true;
       mom_should_lock_item (_L (olddisplay).pitem);
       if (mom_item_get_attribute
-	  (_L (newdisplay).pitem, mom_named__editor).ptr != _L (editor).ptr)
+	  (_L (olddisplay).pitem, mom_named__editor).ptr != _L (editor).ptr)
 	goodolddisplay = false;
       if (mom_item_get_attribute
-	  (_L (newdisplay).pitem, mom_named__origin).ptr != _L (orig).ptr)
+	  (_L (olddisplay).pitem, mom_named__origin).ptr != _L (orig).ptr)
 	goodolddisplay = false;
       MOM_DEBUG (run,
 		 MOMOUT_LITERALV ((const char *) (goodolddisplay ?
@@ -450,6 +450,13 @@ display_value_lab_start:
 		    //
 		    MOMOUT_JS_LITERAL ("<span class='mom_null_value_cl mom_value_cl' id='momdisplay"), MOMOUT_LITERALV (mom_ident_cstr_of_item (_L (newdisplay).pitem)), MOMOUT_JS_LITERAL ("'>" "&#9109;"	/* U+2395 APL FUNCTIONAL SYMBOL QUAD ⎕ */
 																							    "</span>"));
+      MOM_DEBUG (run,
+		 MOMOUT_LITERAL
+		 ("display_value for null updated newdisplay="),
+		 MOMOUT_VALUE (_L (newdisplay)), MOMOUT_LITERAL (" !:"),
+		 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+					 mom_value_to_item (_L (newdisplay))),
+		 NULL);
       mom_item_tasklet_set_1res (momtasklet_, _L (newdisplay));
       DISPLAY_VALUE_POP_RETURN ();
       break;
@@ -468,6 +475,12 @@ display_value_lab_start:
 					  ((long long)
 					   mom_integer_val (_L (curval)))),
 		    MOMOUT_JS_LITERAL ("</span>"));
+      MOM_DEBUG (run,
+		 MOMOUT_LITERAL ("display_value for int updated newdisplay="),
+		 MOMOUT_VALUE (_L (newdisplay)), MOMOUT_LITERAL (" !:"),
+		 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+					 mom_value_to_item (_L (newdisplay))),
+		 NULL);
       mom_item_tasklet_set_1res (momtasklet_, _L (newdisplay));
       DISPLAY_VALUE_POP_RETURN ();
       break;
@@ -486,6 +499,13 @@ display_value_lab_start:
 				       ((double)
 					mom_double_val (_L (curval)))),
 		    MOMOUT_JS_LITERAL ("</span>"));
+      MOM_DEBUG (run,
+		 MOMOUT_LITERAL
+		 ("display_value for double updated newdisplay="),
+		 MOMOUT_VALUE (_L (newdisplay)), MOMOUT_LITERAL (" !:"),
+		 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+					 mom_value_to_item (_L (newdisplay))),
+		 NULL);
       mom_item_tasklet_set_1res (momtasklet_, _L (newdisplay));
       DISPLAY_VALUE_POP_RETURN ();
       break;
@@ -508,6 +528,13 @@ display_value_lab_start:
 				       /* U+201D RIGHT DOUBLE QUOTATION MARK ” */
 				       "</span>"));
       mom_item_tasklet_set_1res (momtasklet_, _L (newdisplay));
+      MOM_DEBUG (run,
+		 MOMOUT_LITERAL
+		 ("display_value for string updated newdisplay="),
+		 MOMOUT_VALUE (_L (newdisplay)), MOMOUT_LITERAL (" !:"),
+		 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+					 mom_value_to_item (_L (newdisplay))),
+		 NULL);
       DISPLAY_VALUE_POP_RETURN ();
       break;
       /*****************/
@@ -526,6 +553,14 @@ display_value_lab_start:
 		      MOMOUT_JS_HTML ((const char *) outb.mout_data),
 		      MOMOUT_JS_LITERAL ("</span>"));
 	mom_finalize_buffer_output (&outb);
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL
+		   ("display_value for jsonarray updated newdisplay="),
+		   MOMOUT_VALUE (_L (newdisplay)), MOMOUT_LITERAL (" !:"),
+		   MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+					   mom_value_to_item (_L
+							      (newdisplay))),
+		   NULL);
 	mom_item_tasklet_set_1res (momtasklet_, _L (newdisplay));
 	DISPLAY_VALUE_POP_RETURN ();
 	break;
@@ -546,6 +581,14 @@ display_value_lab_start:
 		      MOMOUT_JS_HTML ((const char *) outb.mout_data),
 		      MOMOUT_JS_LITERAL ("</span>"));
 	mom_finalize_buffer_output (&outb);
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL
+		   ("display_value for jsonobject updated newdisplay="),
+		   MOMOUT_VALUE (_L (newdisplay)), MOMOUT_LITERAL (" !:"),
+		   MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+					   mom_value_to_item (_L
+							      (newdisplay))),
+		   NULL);
 	mom_item_tasklet_set_1res (momtasklet_, _L (newdisplay));
 	DISPLAY_VALUE_POP_RETURN ();
 	break;
@@ -565,6 +608,13 @@ display_value_lab_start:
       MOM_WEBX_OUT (_L (webx).pitem,
 		    //
 		    MOMOUT_JS_LITERAL ("</span>"));
+      MOM_DEBUG (run,
+		 MOMOUT_LITERAL
+		 ("display_value for item updated newdisplay="),
+		 MOMOUT_VALUE (_L (newdisplay)), MOMOUT_LITERAL (" !:"),
+		 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+					 mom_value_to_item (_L (newdisplay))),
+		 NULL);
       mom_item_tasklet_set_1res (momtasklet_, _L (newdisplay));
       DISPLAY_VALUE_POP_RETURN ();
       break;
@@ -592,6 +642,12 @@ display_value_lab_start:
       MOM_WEBX_OUT (_L (webx).pitem,
 		    //
 		    MOMOUT_JS_LITERAL ("</span>"));
+      MOM_DEBUG (run,
+		 MOMOUT_LITERAL ("display_value for set updated newdisplay="),
+		 MOMOUT_VALUE (_L (newdisplay)), MOMOUT_LITERAL (" !:"),
+		 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+					 mom_value_to_item (_L (newdisplay))),
+		 NULL);
       mom_item_tasklet_set_1res (momtasklet_, _L (newdisplay));
       DISPLAY_VALUE_POP_RETURN ();
       break;
@@ -619,6 +675,13 @@ display_value_lab_start:
       MOM_WEBX_OUT (_L (webx).pitem,
 		    //
 		    MOMOUT_JS_LITERAL ("</span>"));
+      MOM_DEBUG (run,
+		 MOMOUT_LITERAL
+		 ("display_value for tuple updated newdisplay="),
+		 MOMOUT_VALUE (_L (newdisplay)), MOMOUT_LITERAL (" !:"),
+		 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+					 mom_value_to_item (_L (newdisplay))),
+		 NULL);
       mom_item_tasklet_set_1res (momtasklet_, _L (newdisplay));
       DISPLAY_VALUE_POP_RETURN ();
       break;
@@ -676,6 +739,13 @@ display_value_lab_start:
 			       mom_item_vector_ptr_nth (_L
 							(vectsubdisp).pitem,
 							0))));
+      MOM_DEBUG (run,
+		 MOMOUT_LITERAL
+		 ("display_value for node updated newdisplay="),
+		 MOMOUT_VALUE (_L (newdisplay)), MOMOUT_LITERAL (" !:"),
+		 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+					 mom_value_to_item (_L (newdisplay))),
+		 NULL);
       mom_item_tasklet_set_1res (momtasklet_, _L (newdisplay));
       DISPLAY_VALUE_REBASE ();
       DISPLAY_VALUE_POP_RETURN ();
