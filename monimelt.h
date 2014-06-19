@@ -865,6 +865,11 @@ mom_lock_item (momitem_t *itm)
   return (pthread_mutex_lock (&itm->i_mtx) == 0);
 }
 
+bool mom_lock_item_at (momitem_t *itm, const char *fil, int lin);
+#ifndef NDEBUG
+#define mom_lock_item(Itm) mom_lock_item_at(Itm,__FILE__,__LINE__)
+#endif
+
 #define mom_should_lock_item_at(Lin,Itm) do {			\
   momitem_t* _itm_##Lin = (Itm);				\
   if (!mom_lock_item(_itm_##Lin))				\
@@ -882,6 +887,11 @@ mom_unlock_item (momitem_t *itm)
 	  && itm->i_magic == MOM_ITEM_MAGIC);
   pthread_mutex_unlock (&itm->i_mtx);
 }
+
+void mom_unlock_item_at (momitem_t *itm, const char *fil, int lin);
+#ifndef NDEBUG
+#define mom_unlock_item(Itm) mom_unlock_item_at(Itm,__FILE__,__LINE__)
+#endif
 
 static inline momitem_t *
 mom_value_to_item (momval_t v)
@@ -2046,18 +2056,18 @@ void
 mom_debug_at (enum mom_debug_en dbg, const char *fil, int lin, ...)
 __attribute__ ((sentinel));
 
-#define MOM_DEBUG_AT(Dbg,Fil,Lin,Fmt,...) do {	\
+#define MOM_DEBUG_AT(Dbg,Fil,Lin,...) do {	\
     if (MOM_IS_DEBUGGING(Dbg))			\
-      mom_debug_at (momdbg_##Dbg,Fil,Lin,Fmt,	\
+      mom_debug_at (momdbg_##Dbg,Fil,Lin,	\
 		    ##__VA_ARGS__, NULL);	\
   } while(0)
 
-#define MOM_DEBUG_AT_BIS(Dbg,Fil,Lin,Fmt,...)	\
-  MOM_DEBUG_AT(Dbg,Fil,Lin,Fmt,			\
+#define MOM_DEBUG_AT_BIS(Dbg,Fil,Lin,...)	\
+  MOM_DEBUG_AT(Dbg,Fil,Lin,			\
 		    ##__VA_ARGS__)
 
-#define MOM_DEBUG(Dbg,Fmt,...)			\
-  MOM_DEBUG_AT_BIS(Dbg,__FILE__,__LINE__,Fmt,	\
+#define MOM_DEBUG(Dbg,...)			\
+  MOM_DEBUG_AT_BIS(Dbg,__FILE__,__LINE__,	\
 			##__VA_ARGS__)
 
 

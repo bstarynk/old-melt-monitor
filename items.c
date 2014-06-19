@@ -1098,6 +1098,37 @@ mom_set_attributes (const struct mom_itemattributes_st *attrs)
 }
 
 ////////////////////////////////////////////////////////////////
+
+bool
+mom_lock_item_at (momitem_t *itm, const char *fil, int lin)
+{
+  if (MOM_UNLIKELY (MOM_IS_DEBUGGING (item)))
+    {
+      mom_debug_at (momdbg_item, fil, lin,
+		    MOMOUT_LITERAL ("mom_lock_item "),
+		    MOMOUT_ITEM ((const momitem_t *) itm), NULL);
+    }
+  if (!itm || itm->i_typnum != momty_item)
+    return false;
+  assert (itm->i_magic == MOM_ITEM_MAGIC);
+  return (pthread_mutex_lock (&itm->i_mtx) == 0);
+}
+
+void
+mom_unlock_item_at (momitem_t *itm, const char *fil, int lin)
+{
+  if (MOM_UNLIKELY (MOM_IS_DEBUGGING (item)))
+    {
+      mom_debug_at (momdbg_item, fil, lin,
+		    MOMOUT_LITERAL ("mom_unlock_item "),
+		    MOMOUT_ITEM ((const momitem_t *) itm), NULL);
+    }
+  assert (itm && itm->i_typnum == momty_item
+	  && itm->i_magic == MOM_ITEM_MAGIC);
+  pthread_mutex_unlock (&itm->i_mtx);
+}
+
+////////////////////////////////////////////////////////////////
 void
 mom_create_predefined_items (void)
 {
