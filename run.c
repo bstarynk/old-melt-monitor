@@ -206,7 +206,7 @@ work_run_mom (void *p)
 	      continue;
 	    }
 	}
-      pthread_mutex_unlock (&mom_named__agenda->i_mtx);
+      mom_unlock_item (mom_named__agenda);
     }				/* end while again */
   cur_worker_mom = NULL;
   return NULL;

@@ -821,11 +821,7 @@ ajaxedit_lab_start:
 	MOM_DEBUG (run,
 		   MOMOUT_LITERAL ("ajax_edit_codmom editval_copy edinode="),
 		   MOMOUT_VALUE (_L (edinode)));
-	/// here we got the correct edinode. It should be a binary
-	/// node of connective val whose first son is the copied
-	/// value, and whose second son describes how to get it.
-	assert (mom_node_conn (_L (edinode)) == mom_named__val);
-	_L (curval) = mom_node_nth (_L (edinode), 0);
+	/// here we got the correct curval
 	MOM_DEBUG (run,
 		   MOMOUT_LITERAL
 		   ("ajax_edit_codmom editval_copy curval="),
@@ -848,14 +844,13 @@ ajaxedit_lab_start:
 		      MOMOUT_JS_STRING (editorsidstr), MOMOUT_LITERAL ("\","),
 		      MOMOUT_NEWLINE (),
 		      MOMOUT_LITERAL ("  \"momedit_content\": \""), NULL);
-#warning editval_copy perhaps wrong push frame
+	mom_unlock_item (_L (webx).pitem);
 	mom_item_tasklet_push_frame	//
 	  (momtasklet_, (momval_t) _C (display_value),
 	   MOMPFR_FIVE_VALUES (_C (editors), _L (webx), _L (curval),
 			       /*orig: */ (momval_t) mom_named__buffer,
 			       /*olddisplay: */ MOM_NULLV),
 	   MOMPFR_INT ((intptr_t) 0), NULL);
-	mom_unlock_item (_L (webx).pitem);
 	_SET_STATE (dideditcopy);
       }				// end if todov is mom_menuitem_editval_copy
     //
