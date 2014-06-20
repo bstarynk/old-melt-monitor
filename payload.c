@@ -327,6 +327,119 @@ mom_item_vector_append_from_node (momitem_t *itm, const momval_t nodv)
 				     nodv.pnode->sontab);
 }
 
+
+momval_t
+mom_make_node_from_item_vector (const momitem_t *connitm, momitem_t *vectitm)
+{
+  if (!connitm || connitm->i_typnum != momty_item)
+    return MOM_NULLV;
+  if (!vectitm || vectitm->i_typnum != momty_item)
+    return MOM_NULLV;
+  if (vectitm->i_paylkind != mompayk_vector)
+    return MOM_NULLV;
+  struct mom_valuevector_st *vvec = vectitm->i_payload;
+  unsigned cnt = vvec->vvec_count;
+  return (momval_t) mom_make_node_from_array (connitm, cnt, vvec->vvec_array);
+}
+
+momval_t
+mom_make_node_from_item_vector_slice (const momitem_t *connitm,
+				      momitem_t *vectitm, int firstix,
+				      int afterix)
+{
+  if (!connitm || connitm->i_typnum != momty_item)
+    return MOM_NULLV;
+  if (!vectitm || vectitm->i_typnum != momty_item)
+    return MOM_NULLV;
+  if (vectitm->i_paylkind != mompayk_vector)
+    return MOM_NULLV;
+  struct mom_valuevector_st *vvec = vectitm->i_payload;
+  unsigned cnt = vvec->vvec_count;
+  if (firstix < 0)
+    firstix += cnt;
+  if (afterix < 0)
+    afterix += cnt;
+  if (firstix >= 0 && firstix < (int) cnt
+      && afterix >= firstix && afterix < (int) cnt)
+    return (momval_t) mom_make_node_from_array (connitm, afterix - firstix,
+						vvec->vvec_array + firstix);
+  return MOM_NULLV;
+}
+
+momval_t
+mom_make_set_from_item_vector (momitem_t *vectitm)
+{
+  if (!vectitm || vectitm->i_typnum != momty_item)
+    return MOM_NULLV;
+  if (vectitm->i_paylkind != mompayk_vector)
+    return MOM_NULLV;
+  struct mom_valuevector_st *vvec = vectitm->i_payload;
+  unsigned cnt = vvec->vvec_count;
+  return (momval_t) mom_make_set_from_array (cnt,
+					     (const momitem_t
+					      **) (vvec->vvec_array));
+}
+
+momval_t
+mom_make_set_from_item_vector_slice (momitem_t *vectitm, int firstix,
+				     int afterix)
+{
+  if (!vectitm || vectitm->i_typnum != momty_item)
+    return MOM_NULLV;
+  if (vectitm->i_paylkind != mompayk_vector)
+    return MOM_NULLV;
+  struct mom_valuevector_st *vvec = vectitm->i_payload;
+  unsigned cnt = vvec->vvec_count;
+  if (firstix < 0)
+    firstix += cnt;
+  if (afterix < 0)
+    afterix += cnt;
+  if (firstix >= 0 && firstix < (int) cnt
+      && afterix >= firstix && afterix < (int) cnt)
+    return (momval_t) mom_make_set_from_array (afterix - firstix,
+					       (const momitem_t
+						**) (vvec->vvec_array +
+						     firstix));
+  return MOM_NULLV;
+}
+
+momval_t
+mom_make_tuple_from_item_vector (momitem_t *vectitm)
+{
+  if (!vectitm || vectitm->i_typnum != momty_item)
+    return MOM_NULLV;
+  if (vectitm->i_paylkind != mompayk_vector)
+    return MOM_NULLV;
+  struct mom_valuevector_st *vvec = vectitm->i_payload;
+  unsigned cnt = vvec->vvec_count;
+  return (momval_t) mom_make_tuple_from_array (cnt,
+					       (const momitem_t
+						**) (vvec->vvec_array));
+}
+
+momval_t
+mom_make_tuple_from_item_vector_slice (momitem_t *vectitm, int firstix,
+				       int afterix)
+{
+  if (!vectitm || vectitm->i_typnum != momty_item)
+    return MOM_NULLV;
+  if (vectitm->i_paylkind != mompayk_vector)
+    return MOM_NULLV;
+  struct mom_valuevector_st *vvec = vectitm->i_payload;
+  unsigned cnt = vvec->vvec_count;
+  if (firstix < 0)
+    firstix += cnt;
+  if (afterix < 0)
+    afterix += cnt;
+  if (firstix >= 0 && firstix < (int) cnt
+      && afterix >= firstix && afterix < (int) cnt)
+    return (momval_t) mom_make_tuple_from_array (afterix - firstix,
+						 (const momitem_t
+						  **) (vvec->vvec_array +
+						       firstix));
+  return MOM_NULLV;
+}
+
 static void
 payl_vector_load_mom (struct mom_loader_st *ld, momitem_t *itm,
 		      momval_t jpayl)

@@ -1695,6 +1695,17 @@ void mom_item_vector_append_til_nil (momitem_t *itm, ...)
 void mom_item_vector_append_from_array (momitem_t *itm, unsigned count,
 					const momval_t *arr);
 void mom_item_vector_append_from_node (momitem_t *itm, momval_t nodv);
+momval_t mom_make_node_from_item_vector (const momitem_t *connitm,
+					 momitem_t *vectitm);
+momval_t mom_make_node_from_item_vector_slice (const momitem_t *connitm,
+					       momitem_t *vectitm,
+					       int firstix, int afterix);
+momval_t mom_make_set_from_item_vector (momitem_t *vectitm);
+momval_t mom_make_set_from_item_vector_slice (momitem_t *vectitm, int firstix,
+					      int afterix);
+momval_t mom_make_tuple_from_item_vector (momitem_t *vectitm);
+momval_t mom_make_tuple_from_item_vector_slice (momitem_t *vectitm,
+						int firstix, int afterix);
 
 /**************** assoc items ****************/
 
