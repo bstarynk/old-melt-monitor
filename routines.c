@@ -1103,8 +1103,22 @@ ajaxedit_lab_start:
 	    goto end;
 	  }
 	else
-	  MOM_FATAL (MOMOUT_LITERAL ("unhandled dispnode="),
-		     MOMOUT_VALUE (_L (dispnode)));
+	  {
+	    MOM_WARNING (MOMOUT_LITERAL
+			 ("ajax_exit prepareditvalmenu unhandled dispnode="),
+			 MOMOUT_VALUE (_L (dispnode)));
+	    MOM_WEBX_OUT (_L (webx).pitem,
+			  MOMOUT_LITERAL
+			  ("{ \"momedit_do\": \"momedit_add_to_editval_menu\","),
+			  MOMOUT_NEWLINE (),
+			  MOMOUT_LITERAL (" \"momedit_menuval\": ["),
+			  MOMOUT_NEWLINE (),
+			  MOMOUT_LITERAL (" \"<li>-</li>\" "),
+			  MOMOUT_NEWLINE (), MOMOUT_LITERAL ("}"),
+			  MOMOUT_NEWLINE (), NULL);
+	    mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
+	    goto end;
+	  }
       }				//// end if todo is mom_prepare_editval_menu
     //
     /***** todo= mom_menuitem_editval_replaceson ****/
