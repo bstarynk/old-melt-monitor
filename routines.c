@@ -2441,6 +2441,7 @@ enum update_display_value_valindex_en
   update_display_value_v_subdisplay,
   update_display_value_v_curval,
   update_display_value_v_sondisplays,
+  update_display_value_v_vectvalues,
   update_display_value_v__lastval
 };
 
@@ -2466,12 +2467,17 @@ update_display_value_codmom (int momstate_, momitem_t *momtasklet_,
 #define _L(Nam) (momlocvals_[update_display_value_v_##Nam])
 #define _C(Nam) (momclosure_->sontab[update_display_value_c_##Nam])
 #define _N(Nam) (momlocnums_[update_display_value_n_##Nam])
+#define _DO_ON_STATES(A)			\
+  A(start)					\
+    A(impossible)				\
+    A(didupdateattrdisp)			\
+    A(didupdatesondisp)
   enum update_display_value_state_en
   {
-    update_display_value_s_start,
-    update_display_value_s_impossible,
-    update_display_value_s_didupdateattrdisp,
-    update_display_value_s__laststate
+#define UpdateDisplayValue_DefineState(S) update_display_value_s_##S,
+    _DO_ON_STATES (UpdateDisplayValue_DefineState)
+      update_display_value_s__laststate
+#undef UpdateDisplayValue_DefineState
   };
 #define _SET_STATE(St) do {						\
     MOM_DEBUGPRINTF (run,						\
@@ -2481,15 +2487,9 @@ update_display_value_codmom (int momstate_, momitem_t *momtasklet_,
   if (momstate_ >= 0 && momstate_ < update_display_value_s__laststate)
     switch ((enum update_display_value_state_en) momstate_)
       {
-      case update_display_value_s_start:
-	goto update_display_value_lab_start;
-	///
-      case update_display_value_s_didupdateattrdisp:
-	goto update_display_value_lab_didupdateattrdisp;
-	///
-      case update_display_value_s_impossible:
-	goto update_display_value_lab_impossible;
-	///
+#define UpdateDisplayValue_JumpState(S) case update_display_value_s_##S: goto update_display_value_lab_##S;
+	_DO_ON_STATES (UpdateDisplayValue_JumpState)
+#undef UpdateDisplayValue_JumpState
       case update_display_value_s__laststate:;
       }
   MOM_FATAPRINTF ("update_display_value invalid state #%d", momstate_);
@@ -2532,11 +2532,13 @@ update_display_value_lab_start:
     {
       MOM_FATAL (MOMOUT_LITERAL ("update_display_value unimplemented set"),
 		 NULL);
+#warning update_display_value unimplemented set
     }
   else if (_L (dispnode).pitem == mom_named__tuple)
     {
       MOM_FATAL (MOMOUT_LITERAL ("update_display_value unimplemented tuple"),
 		 NULL);
+#warning update_display_value unimplemented tuple
     }
   else if (_L (dispconn).pitem == mom_named__attr
 	   && mom_node_arity (_L (dispnode)) == 3)
@@ -2583,21 +2585,66 @@ update_display_value_lab_start:
       _L (curitem) = mom_node_nth (_L (dispnode), 0);
       _L (sondisplays) = mom_node_nth (_L (dispnode), 1);
       _N (nbsons) = mom_tuple_length (_L (sondisplays));
+      _L (vectvalues) = (momval_t) mom_make_item ();
+      mom_item_start_vector (_L (vectvalues).pitem);
+      mom_item_vector_reserve (_L (vectvalues).pitem, _N (nbsons));
       MOM_DEBUG (run,
 		 MOMOUT_LITERAL ("update_display_value start node curitem="),
 		 MOMOUT_VALUE (_L (curitem)),
 		 MOMOUT_LITERAL (" sondisplays="),
 		 MOMOUT_VALUE (_L (sondisplays)),
 		 MOMOUT_LITERAL (" nbsons="),
-		 MOMOUT_DEC_INT ((int) _N (nbsons)));
-#warning shoould create a vector item for the son values
+		 MOMOUT_DEC_INT ((int) _N (nbsons)),
+		 MOMOUT_LITERAL (" vectvalues="),
+		 MOMOUT_VALUE (_L (vectvalues)), NULL);
       for (_N (ix) = 0; _N (ix) < _N (nbsons); _N (ix)++)
 	{
 	  _L (subdisplay) =
 	    (momval_t) mom_tuple_nth_item (_L (sondisplays), _N (ix));
-#warning should process the subdisplay
-	}
 
+	  MOM_DEBUG (run,
+		     MOMOUT_LITERAL ("update_display_value node ix="),
+		     MOMOUT_DEC_INT ((int) _N (ix)),
+		     MOMOUT_LITERAL (" subdisplay="),
+		     MOMOUT_VALUE ((const momval_t) _L (subdisplay)),
+		     MOMOUT_LITERAL (" !: "),
+		     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+					     mom_value_to_item (_L
+								(subdisplay))),
+		     NULL);
+
+	  mom_item_tasklet_push_frame (momtasklet_, (momval_t) momclosure_,
+				       MOMPFR_VALUE (_L (subdisplay)), NULL);
+	  mom_item_tasklet_clear_res (momtasklet_);
+	  _SET_STATE (didupdatesondisp);
+	  ////// ********
+	update_display_value_lab_didupdatesondisp:
+	  _L (curval) = mom_item_tasklet_res1 (momtasklet_);
+	  mom_item_tasklet_clear_res (momtasklet_);
+	  MOM_DEBUG (run,
+		     MOMOUT_LITERAL ("update_display_value node ix="),
+		     MOMOUT_DEC_INT ((int) _N (ix)),
+		     MOMOUT_LITERAL (" curval="),
+		     MOMOUT_VALUE ((const momval_t) _L (curval)), NULL);
+	  {
+	    mom_should_lock_item (_L (vectvalues).pitem);
+	    mom_item_vector_append1 (_L (vectvalues).pitem, _L (curval));
+	    mom_unlock_item (_L (vectvalues).pitem);
+	  }
+	}			/* end for _N(ix) */
+      _L (curval) = MOM_NULLV;
+      {
+	mom_should_lock_item (_L (vectvalues).pitem);
+	_L (curval) =
+	  mom_make_node_from_item_vector (_L (curitem).pitem,
+					  _L (vectvalues).pitem);
+	mom_unlock_item (_L (vectvalues).pitem);
+      }
+      MOM_DEBUG (run,
+		 MOMOUT_LITERAL ("update_display_value node result curval="),
+		 MOMOUT_VALUE (_L (curval)), NULL);
+      mom_item_tasklet_set_1res (momtasklet_, _L (curval));
+      return momroutres_pop;
     }
   else
     MOM_FATAL (MOMOUT_LITERAL
@@ -2612,6 +2659,7 @@ update_display_value_lab_impossible:
 #undef _C
 #undef _N
 #undef _SET_STATE
+#undef _DO_ON_STATES
   return momroutres_pop;
 }
 
