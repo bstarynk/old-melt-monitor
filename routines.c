@@ -2440,6 +2440,7 @@ enum update_display_value_valindex_en
   update_display_value_v_curattr,
   update_display_value_v_subdisplay,
   update_display_value_v_curval,
+  update_display_value_v_sondisplays,
   update_display_value_v__lastval
 };
 
@@ -2450,6 +2451,8 @@ enum update_display_value_closure_en
 
 enum update_display_value_numbers_en
 {
+  update_display_value_n_nbsons,
+  update_display_value_n_ix,
   update_display_value_n__lastnum
 };
 
@@ -2507,15 +2510,33 @@ update_display_value_lab_start:
     mom_unlock_item (_L (display).pitem);
   }
   _L (dispconn) = (momval_t) mom_node_conn (_L (dispnode));
-  if (_L (dispnode).pitem == mom_named__integer
-      || _L (dispnode).pitem == mom_named__double
-      || _L (dispnode).pitem == mom_named__string)
+  if (_L (dispnode).pitem == mom_named__empty)
+    {
+      MOM_DEBUG (run, MOMOUT_LITERAL ("update_display_value empty"), NULL);
+      _L (curval) = MOM_NULLV;
+      mom_item_tasklet_set_1res (momtasklet_, MOM_NULLV);
+      return momroutres_pop;
+    }
+  else if (_L (dispnode).pitem == mom_named__integer
+	   || _L (dispnode).pitem == mom_named__item
+	   || _L (dispnode).pitem == mom_named__double
+	   || _L (dispnode).pitem == mom_named__string)
     {
       MOM_DEBUG (run, MOMOUT_LITERAL ("update_display_value scalar curval="),
 		 MOMOUT_VALUE ((const momval_t) _L (curval)), NULL);
       assert (_L (curval).ptr != NULL);
       mom_item_tasklet_set_1res (momtasklet_, _L (curval));
       return momroutres_pop;
+    }
+  else if (_L (dispnode).pitem == mom_named__set)
+    {
+      MOM_FATAL (MOMOUT_LITERAL ("update_display_value unimplemented set"),
+		 NULL);
+    }
+  else if (_L (dispnode).pitem == mom_named__tuple)
+    {
+      MOM_FATAL (MOMOUT_LITERAL ("update_display_value unimplemented tuple"),
+		 NULL);
     }
   else if (_L (dispconn).pitem == mom_named__attr
 	   && mom_node_arity (_L (dispnode)) == 3)
@@ -2555,6 +2576,28 @@ update_display_value_lab_start:
 	mom_unlock_item (_L (curitem).pitem);
       }
       return momroutres_pop;
+    }
+  else if (_L (dispconn).pitem == mom_named__node
+	   && mom_node_arity (_L (dispnode)) == 2)
+    {
+      _L (curitem) = mom_node_nth (_L (dispnode), 0);
+      _L (sondisplays) = mom_node_nth (_L (dispnode), 1);
+      _N (nbsons) = mom_tuple_length (_L (sondisplays));
+      MOM_DEBUG (run,
+		 MOMOUT_LITERAL ("update_display_value start node curitem="),
+		 MOMOUT_VALUE (_L (curitem)),
+		 MOMOUT_LITERAL (" sondisplays="),
+		 MOMOUT_VALUE (_L (sondisplays)),
+		 MOMOUT_LITERAL (" nbsons="),
+		 MOMOUT_DEC_INT ((int) _N (nbsons)));
+#warning shoould create a vector item for the son values
+      for (_N (ix) = 0; _N (ix) < _N (nbsons); _N (ix)++)
+	{
+	  _L (subdisplay) =
+	    (momval_t) mom_tuple_nth_item (_L (sondisplays), _N (ix));
+#warning should process the subdisplay
+	}
+
     }
   else
     MOM_FATAL (MOMOUT_LITERAL
