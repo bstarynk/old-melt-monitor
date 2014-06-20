@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 Jun 17
+-- state-monimelt dump 2014 Jun 20
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -38,6 +38,9 @@ INSERT INTO t_items VALUES('_085krqf192t_z1m3zs77ww5','{"kind": null, "payload":
 INSERT INTO t_items VALUES('_17spwr8dkzv_tsf2s8diazu','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "Gives the double floating-point numbers of Json for frames of tasklets."}],
  "content": null}
+');
+INSERT INTO t_items VALUES('_1f94j87qumw_mhzkriesx7c','{"kind": "routine", "payload": "update_display_value", "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "routine to update the value in displays after edition."}], "content": null}
 ');
 INSERT INTO t_items VALUES('_240dwt57s08_a8uy366sev5','{"kind": "routine", "payload": "noop", "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "useless noop routine"}], "content": {"sons": ["{spare1 noop}",
@@ -280,6 +283,7 @@ INSERT INTO t_names VALUES('state','_6f9870y6v8t_kp8fcmq2ezv','.predef');
 INSERT INTO t_names VALUES('string','_8j516kuv89j_4hc4w6ykmr6','.predef');
 INSERT INTO t_names VALUES('terminated','_3jpt8yuzuyw_ti1pyz3me1c','.predef');
 INSERT INTO t_names VALUES('tuple','_7vw56h18sw0_hv77m6q8uxu','.predef');
+INSERT INTO t_names VALUES('update_display_value','_1f94j87qumw_mhzkriesx7c','.root');
 INSERT INTO t_names VALUES('updated','_5x41iah0kis_x8rrv3ww44t','.predef');
 INSERT INTO t_names VALUES('val','_7wk9y7e7r0z_575esi8ys5x','.predef');
 INSERT INTO t_names VALUES('values','_91pketvc5pz_wq0v0wpauw8','.predef');

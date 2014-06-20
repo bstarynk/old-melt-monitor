@@ -105,11 +105,23 @@ add_editors_mom (void)
     ("updated to keep editors in closures for edit_value & ajax_edit");
 }
 
+static void
+add_update_display_value_mom (void)
+{
+  momitem_t *update_display_value_item =
+    mom_get_item_of_name ("update_display_value");
+  assert (update_display_value_item != NULL);
+  mom_item_start_routine (update_display_value_item, "update_display_value");
+}
+
 void
 momplugin_after_load (void)
 {
   MOM_DEBUGPRINTF (run,
 		   "after load in " __FILE__ " build " __DATE__ "@" __TIME__);
-  //create_stuff_mom ();
-  add_editors_mom ();
+  if (0)
+    create_stuff_mom ();
+  if (0)
+    add_editors_mom ();
+  add_update_display_value_mom ();
 }

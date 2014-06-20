@@ -2417,6 +2417,83 @@ const struct momroutinedescr_st momrout_edit_value = {
 
 
 
+/**************************************************************/
+////////////////////////////////////////////////////////////////
+///// update_display_value
+enum update_display_value_valindex_en
+{
+  update_display_value_v_display,
+  update_display_value_v__lastval
+};
+
+enum update_display_value_closure_en
+{
+  update_display_value_c__lastclosure
+};
+
+enum update_display_value_numbers_en
+{
+  update_display_value_n__lastnum
+};
+
+
+static int
+update_display_value_codmom (int momstate_, momitem_t *momtasklet_,
+			     const momnode_t *momclosure_,
+			     momval_t *momlocvals_, intptr_t * momlocnums_,
+			     double *momlocdbls_)
+{
+#define _L(Nam) (momlocvals_[update_display_value_v_##Nam])
+#define _C(Nam) (momclosure_->sontab[update_display_value_c_##Nam])
+#define _N(Nam) (momlocnums_[update_display_value_n_##Nam])
+  enum update_display_value_state_en
+  {
+    update_display_value_s_start,
+    update_display_value_s_impossible,
+    update_display_value_s__laststate
+  };
+#define _SET_STATE(St) do {					\
+    MOM_DEBUGPRINTF (run,					\
+		     "update_display_value_codmom setstate " #St " = %d",	\
+		     (int)update_display_value_s_##St);				\
+    return update_display_value_s_##St; } while(0)
+  if (momstate_ >= 0 && momstate_ < update_display_value_s__laststate)
+    switch ((enum update_display_value_state_en) momstate_)
+      {
+      case update_display_value_s_start:
+	goto update_display_value_lab_start;
+      case update_display_value_s_impossible:
+	goto update_display_value_lab_impossible;
+      case update_display_value_s__laststate:;
+      }
+  MOM_FATAPRINTF ("update_display_value invalid state #%d", momstate_);
+update_display_value_lab_start:
+  MOM_DEBUG (run, MOMOUT_LITERAL ("update_display_value start display="),
+	     MOMOUT_VALUE ((const momval_t) _L (display)));
+  if (_L (display).ptr == MOM_EMPTY)
+    _SET_STATE (impossible);
+  return momroutres_pop;
+update_display_value_lab_impossible:
+  MOM_FATAPRINTF ("update_display_value impossible state reached!");
+#undef _L
+#undef _C
+#undef _N
+#undef _SET_STATE
+  return momroutres_pop;
+}
+
+const struct momroutinedescr_st momrout_update_display_value = {
+  .rout_magic = MOM_ROUTINE_MAGIC,	//
+  .rout_minclosize = update_display_value_c__lastclosure,	//
+  .rout_frame_nbval = update_display_value_v__lastval,	//
+  .rout_frame_nbnum = update_display_value_n__lastnum,	//
+  .rout_frame_nbdbl = 0,	//
+  .rout_name = "update_display_value",	//
+  .rout_module = MONIMELT_CURRENT_MODULE,	//
+  .rout_codefun = update_display_value_codmom,	//
+  .rout_timestamp = __DATE__ "@" __TIME__
+};
+
 
 
 ////////////////////////////////////////////////////////////////
