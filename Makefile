@@ -44,6 +44,7 @@ OBJECTS= $(patsubst %.c,%.o,$(SOURCES))
 RM= rm -fv
 .PHONY: all modules plugins clean tests indent restore-state dump-state
 .SUFFIXES: .so .i
+# to make with tsan: make OPTIMFLAGS='-g3 -fsanitize=thread -fPIE' LINKFLAGS=-pie
 all: monimelt modules plugins
 clean:
 	$(RM) *~ *.o *.so *.i *.orig _tmp_* monimelt core* webdir/*~ *.tmp  _timestamp.* *dbsqlite*-journal *%
@@ -52,7 +53,7 @@ clean:
 ################
 monimelt: $(OBJECTS) _timestamp.o
 	@if [ -f $@ ]; then echo -n backup old executable: ' ' ; mv -v $@ $@~ ; fi
-	$(LINK.c)  -rdynamic $^ $(LIBES) -o $@
+	$(LINK.c)  $(LINKFLAGS) -rdynamic $^ $(LIBES) -o $@
 	rm _timestamp.*
 
 _timestamp.c:
