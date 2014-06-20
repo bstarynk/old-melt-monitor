@@ -2503,11 +2503,22 @@ update_display_value_lab_start:
 	       NULL);
     _L (dispnode) =
       mom_item_get_attribute (_L (display).pitem, mom_named__display);
+    _L (curval) = mom_item_get_attribute (_L (display).pitem, mom_named__val);
     mom_unlock_item (_L (display).pitem);
   }
   _L (dispconn) = (momval_t) mom_node_conn (_L (dispnode));
-  if (_L (dispconn).pitem == mom_named__attr
-      && mom_node_arity (_L (dispnode)) == 3)
+  if (_L (dispnode).pitem == mom_named__integer
+      || _L (dispnode).pitem == mom_named__double
+      || _L (dispnode).pitem == mom_named__string)
+    {
+      MOM_DEBUG (run, MOMOUT_LITERAL ("update_display_value scalar curval="),
+		 MOMOUT_VALUE ((const momval_t) _L (curval)), NULL);
+      assert (_L (curval).ptr != NULL);
+      mom_item_tasklet_set_1res (momtasklet_, _L (curval));
+      return momroutres_pop;
+    }
+  else if (_L (dispconn).pitem == mom_named__attr
+	   && mom_node_arity (_L (dispnode)) == 3)
     {
       _L (curitem) = mom_node_nth (_L (dispnode), 0);
       _L (curattr) = mom_node_nth (_L (dispnode), 1);
