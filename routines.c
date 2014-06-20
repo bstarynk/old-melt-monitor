@@ -1113,7 +1113,7 @@ ajaxedit_lab_start:
 			  MOMOUT_NEWLINE (),
 			  MOMOUT_LITERAL (" \"momedit_menuval\": ["),
 			  MOMOUT_NEWLINE (),
-			  MOMOUT_LITERAL (" \"<li>-</li>\" "),
+			  MOMOUT_LITERAL (" \"<li>-</li>\" ]"),
 			  MOMOUT_NEWLINE (), MOMOUT_LITERAL ("}"),
 			  MOMOUT_NEWLINE (), NULL);
 	    mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
