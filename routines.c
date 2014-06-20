@@ -811,6 +811,7 @@ enum ajax_edit_closure_en
   ajaxedit_c_editors,
   ajaxedit_c_edit_value,
   ajaxedit_c_display_value,
+  ajaxedit_c_update_display_value,
   ajaxedit_c__lastclosure
 };
 
@@ -843,6 +844,7 @@ ajax_edit_codmom (int momstate_, momitem_t *momtasklet_,
     ajaxedit_s_start,
     ajaxedit_s_dideditcopy,
     ajaxedit_s_didputvalue,
+    ajaxedit_s_didupdatedisplayvalue,
     ajaxedit_s__laststate
   };
 #define _SET_STATE(St) do {					\
@@ -863,6 +865,8 @@ ajax_edit_codmom (int momstate_, momitem_t *momtasklet_,
 	goto ajaxedit_lab_dideditcopy;
       case ajaxedit_s_didputvalue:
 	goto ajaxedit_lab_didputvalue;
+      case ajaxedit_s_didupdatedisplayvalue:
+	goto ajaxedit_lab_didupdatedisplayvalue;
       case ajaxedit_s__laststate:;
       }
   MOM_FATAPRINTF ("ajax_edit invalid state #%d", momstate_);
@@ -1583,7 +1587,10 @@ ajaxedit_lab_start:
 		   MOMOUT_LITERAL ("ajax edit edit_update editor="),
 		   MOMOUT_VALUE ((const momval_t) _L (editor)),
 		   MOMOUT_LITERAL (", size="),
-		   MOMOUT_DEC_INT ((int) _N (size)), NULL);
+		   MOMOUT_DEC_INT ((int) _N (size)),
+		   MOMOUT_LITERAL (", update_display_value="),
+		   MOMOUT_VALUE ((const momval_t) _C (update_display_value)),
+		   NULL);
 	for (_N (ix) = 0; _N (ix) < _N (size); _N (ix)++)
 	  {
 	    {
@@ -1611,6 +1618,7 @@ ajaxedit_lab_start:
 					mom_named__display);
 	      mom_unlock_item (_L (display).pitem);
 	    }
+	    _L (subval) = MOM_NULLV;
 	    MOM_DEBUG (run,
 		       MOMOUT_LITERAL ("ajax_edit edit_update ix="),
 		       MOMOUT_DEC_INT ((int) _N (ix)),
@@ -1620,44 +1628,46 @@ ajaxedit_lab_start:
 		       MOMOUT_VALUE (_L (dispnode)), NULL);
 	    if (_L (updated).ptr)
 	      {
-		_L (dispconn) = (momval_t) mom_node_conn (_L (dispnode));
-		if (_L (dispconn).pitem == mom_named__attr)
-		  {
-		    _L (curitem) = mom_node_nth (_L (dispnode), 0);
-		    _L (curattr) = mom_node_nth (_L (dispnode), 1);
-		    _L (subdisplay) = mom_node_nth (_L (dispnode), 2);
-		    {
-		      mom_should_lock_item (_L (subdisplay).pitem);
-		      _L (subval) =
-			mom_item_get_attribute (_L (subdisplay).pitem,
-						mom_named__val);
-		      mom_unlock_item (_L (subdisplay).pitem);
-		    }
-		    MOM_DEBUG (run,
-			       MOMOUT_LITERAL ("ajax_edit edit_update ix="),
-			       MOMOUT_DEC_INT ((int) _N (ix)),
-			       MOMOUT_LITERAL (" putattr curitem="),
-			       MOMOUT_VALUE (_L (curitem)),
-			       MOMOUT_LITERAL (" curattr="),
-			       MOMOUT_VALUE (_L (curattr)),
-			       MOMOUT_LITERAL (" subval="),
-			       MOMOUT_VALUE (_L (subval)), NULL);
-		    {
-		      mom_should_lock_item (_L (curitem).pitem);
-		      mom_item_put_attribute (_L (curitem).pitem,
-					      _L (curattr).pitem,
-					      _L (subval));
-		      mom_unlock_item (_L (curitem).pitem);
-		    }
-		  }
-		else
-		  MOM_FATAL (MOMOUT_LITERAL ("ajax_edit unhandled dispnode="),
-			     MOMOUT_VALUE (_L (dispnode)), NULL);
+		mom_item_tasklet_push_frame
+		  (momtasklet_, (momval_t) _C (update_display_value),
+		   MOMPFR_VALUE (_L (display)), NULL);
+		mom_item_tasklet_clear_res (momtasklet_);
+		_SET_STATE (didupdatedisplayvalue);
+		////
+	      ajaxedit_lab_didupdatedisplayvalue:	////// ****************
+		_L (subval) = mom_item_tasklet_res1 (momtasklet_);
+		mom_item_tasklet_clear_res (momtasklet_);
+		MOM_DEBUG (run,
+			   MOMOUT_LITERAL
+			   ("ajax_edit didupdatedisplayvalue ix="),
+			   MOMOUT_DEC_INT ((int) _N (ix)),
+			   MOMOUT_LITERAL (" display="),
+			   MOMOUT_VALUE (_L (display)),
+			   MOMOUT_LITERAL (" !: "),
+			   MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+						   _L (display).pitem),
+			   MOMOUT_SPACE (32), MOMOUT_LITERAL ("subval="),
+			   MOMOUT_VALUE (_L (subval)), NULL);
+		{
+		  mom_should_lock_item (_L (display).pitem);
+		  mom_item_put_attribute (_L (display).pitem, mom_named__val,
+					  _L (subval));
+		  mom_item_remove_attribute (_L (display).pitem,
+					     mom_named__updated);
+		  MOM_DEBUG (run,
+			     MOMOUT_LITERAL
+			     ("ajax_edit didupdatedisplayvalue ix="),
+			     MOMOUT_DEC_INT ((int) _N (ix)),
+			     MOMOUT_LITERAL (" updated display="),
+			     MOMOUT_VALUE (_L (display)),
+			     MOMOUT_LITERAL (" !: "),
+			     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+						     _L (display).pitem),
+			     NULL);
+		  mom_unlock_item (_L (display).pitem);
+		}
 	      }
 	  }			/* end for _N(ix) */
-	MOM_FATAL (MOMOUT_LITERAL
-		   ("ajax edit edit_update unimplemented editor="),
-		   MOMOUT_VALUE (_L (editor)), NULL);
       }
 
     /***** todo= momedit_revert ****/
@@ -2423,6 +2433,8 @@ const struct momroutinedescr_st momrout_edit_value = {
 enum update_display_value_valindex_en
 {
   update_display_value_v_display,
+  update_display_value_v_spare,
+  update_display_value_v_dispnode,
   update_display_value_v__lastval
 };
 
@@ -2469,7 +2481,10 @@ update_display_value_codmom (int momstate_, momitem_t *momtasklet_,
   MOM_FATAPRINTF ("update_display_value invalid state #%d", momstate_);
 update_display_value_lab_start:
   MOM_DEBUG (run, MOMOUT_LITERAL ("update_display_value start display="),
-	     MOMOUT_VALUE ((const momval_t) _L (display)));
+	     MOMOUT_VALUE ((const momval_t) _L (display)),
+	     MOMOUT_LITERAL (" !: "),
+	     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+				     mom_value_to_item (_L (display))));
   if (_L (display).ptr == MOM_EMPTY)
     _SET_STATE (impossible);
   return momroutres_pop;

@@ -75,13 +75,22 @@ add_editors_mom (void)
   assert (display_value_item != NULL);
   momitem_t *editors_item = mom_get_item_of_name ("editors");
   assert (editors_item != NULL);
-  mom_item_start_routine (ajax_edit_item, "ajax_edit");
+  momitem_t *update_display_value_item =
+    mom_get_item_of_name ("update_display_value");
+  assert (update_display_value_item != NULL);
+  //mom_item_start_routine (ajax_edit_item, "ajax_edit");
   MOM_DEBUG (run, MOMOUT_LITERAL ("add_editors ajax_edit="),
 	     MOMOUT_ITEM ((const momitem_t *) ajax_edit_item),
+	     MOMOUT_LITERAL (" !: "),
+	     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) ajax_edit_item),
 	     MOMOUT_LITERAL ("; edit_value="),
 	     MOMOUT_ITEM ((const momitem_t *) edit_value_item),
+	     MOMOUT_LITERAL (" !: "),
+	     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) edit_value_item),
 	     MOMOUT_LITERAL ("; editors="),
-	     MOMOUT_ITEM ((const momitem_t *) editors_item), NULL);
+	     MOMOUT_ITEM ((const momitem_t *) editors_item),
+	     MOMOUT_LITERAL (" !: "),
+	     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) editors_item), NULL);
   momval_t nodev = (momval_t) mom_make_node_til_nil	//
     (ajax_edit_item,		//
      (momval_t) editors_item,	//
@@ -92,13 +101,20 @@ add_editors_mom (void)
       (momval_t) editors_item,
       (momval_t) mom_make_string ("{spare1-display_value}"),
       NULL),
-     (momval_t) mom_make_string ("{spare4-ajax_edit}"), MOM_EMPTY, NULL);
+     (momval_t) mom_make_node_til_nil	//
+     (update_display_value_item,
+      (momval_t) editors_item,
+      (momval_t) mom_make_string ("{spare1-update_display_value}"),
+      NULL),
+     (momval_t) mom_make_string ("{spare5-ajax_edit}"), MOM_EMPTY, NULL);
   mom_item_put_attribute	//
     (ajax_edit_item,		//
      mom_named__web_handler,	//
      nodev);
   MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_edit="),
 	     MOMOUT_ITEM ((const momitem_t *) ajax_edit_item),
+	     MOMOUT_LITERAL (" !: "),
+	     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) ajax_edit_item),
 	     MOMOUT_LITERAL (" nodev="),
 	     MOMOUT_VALUE ((const momval_t) nodev));
   MOM_INFORMPRINTF
@@ -121,7 +137,7 @@ momplugin_after_load (void)
 		   "after load in " __FILE__ " build " __DATE__ "@" __TIME__);
   if (0)
     create_stuff_mom ();
+  add_editors_mom ();
   if (0)
-    add_editors_mom ();
-  add_update_display_value_mom ();
+    add_update_display_value_mom ();
 }

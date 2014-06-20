@@ -64,8 +64,10 @@ INSERT INTO t_items VALUES('_35a1p2kdx9h_ap5pe704vtr','{"kind": "routine", "payl
 "space": ".root", "jtype": "item_ref"}, "{spare1-edit_value}"], "node": "_73im2zryfij_a7zmkketcfc",
       "jtype": "node"}, {"sons": [{"item_ref": "_7qk90k9vx0u_31ivff77td7",
 "space": ".root", "jtype": "item_ref"}, "{spare1-display_value}"], "node": "_7pyjxst21ce_vhc0tk0em0u",
-      "jtype": "node"}, "{spare4-ajax_edit}", null], "node": "_35a1p2kdx9h_ap5pe704vtr",
-    "jtype": "node"}}], "content": null}
+      "jtype": "node"}, {"sons": [{"item_ref": "_7qk90k9vx0u_31ivff77td7",
+"space": ".root", "jtype": "item_ref"}, "{spare1-update_display_value}"],
+      "node": "_1f94j87qumw_mhzkriesx7c", "jtype": "node"}, "{spare5-ajax_edit}",
+     null], "node": "_35a1p2kdx9h_ap5pe704vtr", "jtype": "node"}}], "content": null}
 ');
 INSERT INTO t_items VALUES('_35vp60aw7em_d436vfie4ud','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "in JSON dump, jtype of JSON array values"}], "content": null}
