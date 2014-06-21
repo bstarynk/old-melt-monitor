@@ -1682,6 +1682,20 @@ ajaxedit_lab_start:
 		}
 	      }
 	  }			/* end for _N(ix) */
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL ("ajax edit edit_update done editor="),
+		   MOMOUT_VALUE ((const momval_t) _L (editor)), NULL);
+	const char *editoridstr =
+	  mom_string_cstr ((momval_t) mom_item_get_idstr (_L (editor).pitem));
+	MOM_WEBX_OUT (_L (webx).pitem,
+		      MOMOUT_LITERAL
+		      ("{ \"momedit_do\": \"momedit_updated\","),
+		      MOMOUT_NEWLINE (),
+		      MOMOUT_LITERAL (" \"momedit_editorid\": \""),
+		      MOMOUT_LITERALV (editoridstr),
+		      MOMOUT_LITERAL ("\" } "), MOMOUT_NEWLINE (), NULL);
+	mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
+	goto end;
       }
 
     /***** todo= momedit_revert ****/
@@ -1693,9 +1707,17 @@ ajaxedit_lab_start:
 	  _L (editor) =
 	    (momval_t) mom_get_item_of_ident (mom_to_string (editoridv));
 	}
-	MOM_FATAL (MOMOUT_LITERAL
-		   ("ajax edit unimplemented edit_revert editor="),
-		   MOMOUT_VALUE (_L (editor)), NULL);
+	const char *editoridstr =
+	  mom_string_cstr ((momval_t) mom_item_get_idstr (_L (editor).pitem));
+	MOM_WEBX_OUT (_L (webx).pitem,
+		      MOMOUT_LITERAL
+		      ("{ \"momedit_do\": \"momedit_reverted\","),
+		      MOMOUT_NEWLINE (),
+		      MOMOUT_LITERAL (" \"momedit_editorid\": \""),
+		      MOMOUT_LITERALV (editoridstr),
+		      MOMOUT_LITERAL ("\" } "), MOMOUT_NEWLINE (), NULL);
+	mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
+	goto end;
       }
 
     else
