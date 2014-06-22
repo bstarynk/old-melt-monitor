@@ -628,7 +628,7 @@ display_value_lab_start:
 		    ("<span class='mom_set_value_cl mom_value_cl' id='momdisplay"),
 		    MOMOUT_LITERALV (mom_ident_cstr_of_item
 				     (_L (newdisplay).pitem)),
-		    MOMOUT_JS_LITERAL ("'>"));
+		    MOMOUT_JS_LITERAL ("'>{"));
       {
 	unsigned card = mom_set_cardinal (_L (curval));
 	for (unsigned ix = 0; ix < card; ix++)
@@ -641,7 +641,7 @@ display_value_lab_start:
       }
       MOM_WEBX_OUT (_L (webx).pitem,
 		    //
-		    MOMOUT_JS_LITERAL ("</span>"));
+		    MOMOUT_JS_LITERAL ("}</span>"));
       MOM_DEBUG (run,
 		 MOMOUT_LITERAL ("display_value for set updated newdisplay="),
 		 MOMOUT_VALUE (_L (newdisplay)), MOMOUT_LITERAL (" !:"),
@@ -661,7 +661,7 @@ display_value_lab_start:
 		    ("<span class='mom_tuple_value_cl mom_value_cl' id='momdisplay"),
 		    MOMOUT_LITERALV (mom_ident_cstr_of_item
 				     (_L (newdisplay).pitem)),
-		    MOMOUT_JS_LITERAL ("'>"));
+		    MOMOUT_JS_LITERAL ("'>["));
       {
 	unsigned card = mom_tuple_length (_L (curval));
 	for (unsigned ix = 0; ix < card; ix++)
@@ -674,7 +674,7 @@ display_value_lab_start:
       }
       MOM_WEBX_OUT (_L (webx).pitem,
 		    //
-		    MOMOUT_JS_LITERAL ("</span>"));
+		    MOMOUT_JS_LITERAL ("]</span>"));
       MOM_DEBUG (run,
 		 MOMOUT_LITERAL
 		 ("display_value for tuple updated newdisplay="),
