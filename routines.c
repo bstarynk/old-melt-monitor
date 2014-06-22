@@ -1046,7 +1046,7 @@ ajaxedit_lab_start:
 		   ("ajax_edit_codmom editval_replace done idvalv="),
 		   MOMOUT_VALUE ((const momval_t) idvalv),
 		   MOMOUT_LITERAL (" webx="),
-		   MOMOUT_VALUE ((const momval_t) _L(webx)), NULL);
+		   MOMOUT_VALUE ((const momval_t) _L (webx)), NULL);
 	goto end;
       }				// end if todov is mom_menuitem_editval_replace
     //
@@ -1118,6 +1118,14 @@ ajaxedit_lab_start:
 		       MOMOUT_LITERALV ((const char *) end), NULL);
 	    {
 	      mom_should_lock_item (_L (display).pitem);
+	      MOM_DEBUG (run,
+			 MOMOUT_LITERAL
+			 ("ajax_edit_codmom  prepareditvalmenu locked display="),
+			 MOMOUT_VALUE ((const momval_t) _L (display)),
+			 MOMOUT_LITERAL (" !: "),
+			 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
+						  *) (_L (display).pitem)),
+			 NULL);
 	      _L (dispnode) =
 		mom_item_get_attribute (_L (display).pitem,
 					mom_named__display);
