@@ -832,7 +832,8 @@ function mom_editor_update(editorid) {
 		 console.debug ("mom_editor_update gotdata=", gotdata);
 		 if (gotdata.momedit_do == 'momedit_updated') {
 		     var updateditorid= gotdata.momedit_editorid;
-		     mom_editor_close("momeditor"+updateditorid);
+		     console.debug ("mom_editor_update closing editor ", updateditorid);
+		     mom_editor_close(updateditorid);
 		 }
 	     },
 	     error: function (jq,status,errmsg) {
