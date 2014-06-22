@@ -2658,15 +2658,19 @@ update_display_value_lab_start:
     }
   else if (_L (dispnode).pitem == mom_named__set)
     {
-      MOM_FATAL (MOMOUT_LITERAL ("update_display_value unimplemented set"),
-		 NULL);
-#warning update_display_value unimplemented set
+      MOM_DEBUG (run, MOMOUT_LITERAL ("update_display_value set curval="),
+		 MOMOUT_VALUE ((const momval_t) _L (curval)), NULL);
+      assert (mom_is_set (_L (curval)));
+      mom_item_tasklet_set_1res (momtasklet_, _L (curval));
+      return momroutres_pop;
     }
   else if (_L (dispnode).pitem == mom_named__tuple)
     {
-      MOM_FATAL (MOMOUT_LITERAL ("update_display_value unimplemented tuple"),
-		 NULL);
-#warning update_display_value unimplemented tuple
+      MOM_DEBUG (run, MOMOUT_LITERAL ("update_display_value tuple curval="),
+		 MOMOUT_VALUE ((const momval_t) _L (curval)), NULL);
+      assert (mom_is_tuple (_L (curval)));
+      mom_item_tasklet_set_1res (momtasklet_, _L (curval));
+      return momroutres_pop;
     }
   else if (_L (dispconn).pitem == mom_named__attr
 	   && mom_node_arity (_L (dispnode)) == 3)
