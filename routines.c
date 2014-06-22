@@ -1046,7 +1046,7 @@ ajaxedit_lab_start:
 		   ("ajax_edit_codmom editval_replace done idvalv="),
 		   MOMOUT_VALUE ((const momval_t) idvalv),
 		   MOMOUT_LITERAL (" webx="),
-		   MOMOUT_VALUE ((const momval_t) webx), NULL);
+		   MOMOUT_VALUE ((const momval_t) _L(webx)), NULL);
 	goto end;
       }				// end if todov is mom_menuitem_editval_replace
     //
