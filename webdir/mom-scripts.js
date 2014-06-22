@@ -660,6 +660,9 @@ function mom_ajax_edit_got(jdata,ev,idui,elem)
 	console.debug("mom_ajax_edit_got copytobuffer set commonbufferdd_mom=",
 		      commonbufferdd_mom);
     }
+    else if (jdata.momedit_do == "momedit_replacebyinput") {
+	console.debug ("mom_ajax_edit_got momedit_replacebyinput");
+    }
     else if (jdata.momedit_do == "momedit_replaceinput") {
 	var oldid = jdata.momedit_oldid;
 	var newid = jdata.momedit_newid;

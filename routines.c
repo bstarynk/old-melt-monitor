@@ -628,7 +628,7 @@ display_value_lab_start:
 		    ("<span class='mom_set_value_cl mom_value_cl' id='momdisplay"),
 		    MOMOUT_LITERALV (mom_ident_cstr_of_item
 				     (_L (newdisplay).pitem)),
-		    MOMOUT_JS_LITERAL ("'>{"));
+		    MOMOUT_JS_LITERAL ("'>{ "));
       {
 	unsigned card = mom_set_cardinal (_L (curval));
 	for (unsigned ix = 0; ix < card; ix++)
@@ -641,7 +641,7 @@ display_value_lab_start:
       }
       MOM_WEBX_OUT (_L (webx).pitem,
 		    //
-		    MOMOUT_JS_LITERAL ("}</span>"));
+		    MOMOUT_JS_LITERAL (" }</span>"));
       MOM_DEBUG (run,
 		 MOMOUT_LITERAL ("display_value for set updated newdisplay="),
 		 MOMOUT_VALUE (_L (newdisplay)), MOMOUT_LITERAL (" !:"),
@@ -661,7 +661,7 @@ display_value_lab_start:
 		    ("<span class='mom_tuple_value_cl mom_value_cl' id='momdisplay"),
 		    MOMOUT_LITERALV (mom_ident_cstr_of_item
 				     (_L (newdisplay).pitem)),
-		    MOMOUT_JS_LITERAL ("'>["));
+		    MOMOUT_JS_LITERAL ("'>[ "));
       {
 	unsigned card = mom_tuple_length (_L (curval));
 	for (unsigned ix = 0; ix < card; ix++)
@@ -674,7 +674,7 @@ display_value_lab_start:
       }
       MOM_WEBX_OUT (_L (webx).pitem,
 		    //
-		    MOMOUT_JS_LITERAL ("]</span>"));
+		    MOMOUT_JS_LITERAL (" ]</span>"));
       MOM_DEBUG (run,
 		 MOMOUT_LITERAL
 		 ("display_value for tuple updated newdisplay="),
@@ -967,6 +967,84 @@ ajaxedit_lab_start:
 	_SET_STATE (dideditcopy);
       }				// end if todov is mom_menuitem_editval_copy
     //
+
+    /***** todo= mom_menuitem_editval_replace ****/
+    if (mom_string_same (todov, "mom_menuitem_editval_replace"))
+      {
+	momval_t idvalv = mom_webx_post_arg (_L (webx).pitem, "idval_mom");
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL
+		   ("ajax_edit_codmom editval_replace idvalv="),
+		   MOMOUT_VALUE ((const momval_t) idvalv));
+	const char *idvalstr = mom_string_cstr (idvalv);
+	_L (display) = MOM_NULLV;
+	MOM_DEBUGPRINTF (run, "ajax_edit_codmom editval_replace idvalstr=%s",
+			 idvalstr);
+	if (idvalstr
+	    && !strncmp (idvalstr, "momdisplay", strlen ("momdisplay"))
+	    && (_L (display) =
+		(momval_t) (mom_get_item_of_identcstr
+			    (idvalstr + strlen ("momdisplay")))).ptr)
+	  {
+	    MOM_DEBUG (run,
+		       MOMOUT_LITERAL
+		       ("ajax_edit_codmom editval_replace display="),
+		       MOMOUT_VALUE ((const momval_t) _L (display)),
+		       MOMOUT_LITERAL (" "),
+		       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+					       _L (display).pitem), NULL);
+	  }
+	else
+	  MOM_FATAPRINTF ("ajax_edit bad idvalstr=%s", idvalstr);
+	{
+	  momval_t nowv = mom_make_double (mom_clock_time (CLOCK_REALTIME));
+	  {
+	    mom_should_lock_item (_L (display).pitem);
+	    _L (origin) =
+	      mom_item_get_attribute (_L (display).pitem, mom_named__origin);
+	    mom_item_put_attribute (_L (display).pitem, mom_named__display,
+				    (momval_t) mom_named__input);
+	    mom_item_remove_attribute (_L (display).pitem, mom_named__val);
+	    mom_unlock_item (_L (display).pitem);
+	  }
+	  {
+	    mom_should_lock_item (_L (origin).pitem);
+	    mom_item_put_attribute (_L (origin).pitem,
+				    mom_named__updated, (momval_t) nowv);
+	    MOM_DEBUG (run,
+		       MOMOUT_LITERAL
+		       ("ajax_edit_codmom editval_replace origin="),
+		       MOMOUT_VALUE ((const momval_t) _L (origin)),
+		       MOMOUT_LITERAL (" "),
+		       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+					       _L (origin).pitem), NULL);
+	    mom_unlock_item (_L (origin).pitem);
+	  }
+	}
+	MOM_WEBX_OUT (_L (webx).pitem,
+		      MOMOUT_LITERAL
+		      ("{ \"momedit_do\": \"momedit_replacebyinput\","),
+		      MOMOUT_NEWLINE (),
+		      MOMOUT_LITERAL ("  \"momedit_displayid\": \""),
+		      MOMOUT_LITERALV ((const char *)
+				       mom_string_cstr ((momval_t)
+							mom_item_get_idstr (_L
+									    (display).pitem))),
+		      MOMOUT_LITERAL ("\", "), MOMOUT_NEWLINE (),
+		      MOMOUT_LITERAL (" \"momedit_inputspan\": \""),
+		      MOMOUT_JS_LITERAL
+		      ("<input type='text' class='mom_newvalinput_cl' id='momvalinp"),
+		      MOMOUT_LITERALV ((const char *)
+				       mom_string_cstr ((momval_t)
+							mom_item_get_idstr (_L
+									    (display).pitem))),
+		      MOMOUT_JS_LITERAL ("'/>"), MOMOUT_LITERAL ("\" }"),
+		      MOMOUT_NEWLINE (), NULL);
+	mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
+	goto end;
+      }				// end if todov is mom_menuitem_editval_replace
+    //
+
     /***** todo= mom_menuitem_edititem_copy ****/
     else if (mom_string_same (todov, "mom_menuitem_edititem_copy"))
       {
