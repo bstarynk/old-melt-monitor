@@ -1041,6 +1041,12 @@ ajaxedit_lab_start:
 		      MOMOUT_JS_LITERAL ("'/>"), MOMOUT_LITERAL ("\" }"),
 		      MOMOUT_NEWLINE (), NULL);
 	mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL
+		   ("ajax_edit_codmom editval_replace done idvalv="),
+		   MOMOUT_VALUE ((const momval_t) idvalv),
+		   MOMOUT_LITERAL (" webx="),
+		   MOMOUT_VALUE ((const momval_t) webx), NULL);
 	goto end;
       }				// end if todov is mom_menuitem_editval_replace
     //
