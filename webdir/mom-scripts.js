@@ -832,7 +832,7 @@ function mom_editor_update(editorid) {
 		 console.debug ("mom_editor_update gotdata=", gotdata);
 		 if (gotdata.momedit_do == 'momedit_updated') {
 		     var updateditorid= gotdata.momedit_editorid;
-		     mom_editor_close(updateditorid);
+		     mom_editor_close("momeditor"+updateditorid);
 		 }
 	     },
 	     error: function (jq,status,errmsg) {
@@ -854,7 +854,7 @@ function mom_editor_revert(editorid) {
 		 console.debug ("mom_editor_revert gotdata=", gotdata);
 		 if (gotdata.momedit_do == 'momedit_reverted') {
 		     var reverteditorid= gotdata.momedit_editorid;
-		     mom_editor_close(reverteditorid);
+		     mom_editor_close("momeditor"+reverteditorid);
 		 }
 	     },
 	     error: function (jq,status,errmsg) {

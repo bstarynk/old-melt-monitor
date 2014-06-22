@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 Jun 20
+-- state-monimelt dump 2014 Jun 22
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','exit dump');
+INSERT INTO t_params VALUES('dump_reason','todo dump at exit');
 INSERT INTO t_items VALUES('_02u53qxa7dm_sttmhffpchr','{"kind": "queue", "payload": [], "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "The agenda is central to Monimelt.\nIt is the queue of taskets to be executed by worker threads."}],
  "content": null}
@@ -200,7 +200,10 @@ INSERT INTO t_items VALUES('_7wk9y7e7r0z_575esi8ys5x','{"kind": null, "payload":
  "content": null}
 ');
 INSERT INTO t_items VALUES('_85rz4j0q982_67im8sstj9s','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
-   "val": "miscellanous attribute, e.g. to test the editor"}], "content": null}
+   "val": "miscellanous attribute, e.g. to test the editor"}, {"attr": "_2v75mmyph64_4h4kys78740",
+   "val": {"set": ["_91pketvc5pz_wq0v0wpauw8"], "jtype": "set"}}, {"attr": "_7vw56h18sw0_hv77m6q8uxu",
+   "val": {"jtype": "tuple", "tuple": ["_7wk9y7e7r0z_575esi8ys5x"]}}], "content":
+ null}
 ');
 INSERT INTO t_items VALUES('_89ejvxupprm_f219pqwz13s','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "for double values and displays"}], "content": null}
