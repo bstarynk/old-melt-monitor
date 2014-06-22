@@ -969,7 +969,7 @@ ajaxedit_lab_start:
     //
 
     /***** todo= mom_menuitem_editval_replace ****/
-    if (mom_string_same (todov, "mom_menuitem_editval_replace"))
+    else if (mom_string_same (todov, "mom_menuitem_editval_replace"))
       {
 	momval_t idvalv = mom_webx_post_arg (_L (webx).pitem, "idval_mom");
 	MOM_DEBUG (run,
@@ -1031,7 +1031,7 @@ ajaxedit_lab_start:
 							mom_item_get_idstr (_L
 									    (display).pitem))),
 		      MOMOUT_LITERAL ("\", "), MOMOUT_NEWLINE (),
-		      MOMOUT_LITERAL (" \"momedit_inputspan\": \""),
+		      MOMOUT_LITERAL (" \"momedit_inputhtml\": \""),
 		      MOMOUT_JS_LITERAL
 		      ("<input type='text' class='mom_newvalinput_cl' id='momvalinp"),
 		      MOMOUT_LITERALV ((const char *)

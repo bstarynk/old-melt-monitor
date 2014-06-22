@@ -237,8 +237,8 @@ $(function(){
     tabdiv_mom.on('contextmenu', function(ev) {
 	var valev = null;
 	var itemev = null;
-	// remove all but the first & second children (keep title & copy menuitems)
-	editvalul_mom.children().slice(2).remove();
+	// remove all but the first 3 children (keep title & copy & replace menuitems)
+	editvalul_mom.children().slice(3).remove();
 	valev = mom_containing_val($(ev.target));
 	if (valev == null)
 	    itemev = mom_containing_item($(ev.target));
@@ -661,7 +661,15 @@ function mom_ajax_edit_got(jdata,ev,idui,elem)
 		      commonbufferdd_mom);
     }
     else if (jdata.momedit_do == "momedit_replacebyinput") {
-	console.debug ("mom_ajax_edit_got momedit_replacebyinput");
+	var dispid = jdata.momedit_displayid;
+	var inphtml = jdata.momedit_inputhtml;
+	var disp= $('#momdisplay' + dispid);
+	console.debug ("mom_ajax_edit_got momedit_replacebyinput dispid=",
+		       dispid, " inphtml=", inphtml, " disp=", disp);
+	disp.replaceWith(inphtml);
+	var newinp = $('#momvalinp'+dispid);
+	mom_install_new_input(newinp,'#momvalinp'+dispid);
+	console.debug ("mom_ajax_edit_got momedit_replacebyinput final newinp=", newinp);
     }
     else if (jdata.momedit_do == "momedit_replaceinput") {
 	var oldid = jdata.momedit_oldid;
