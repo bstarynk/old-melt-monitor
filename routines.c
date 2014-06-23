@@ -634,7 +634,11 @@ display_value_lab_start:
 	for (unsigned ix = 0; ix < card; ix++)
 	  {
 	    if (ix > 0)
-	      MOM_WEBX_OUT (_L (webx).pitem, MOMOUT_LITERAL (", "));
+	      MOM_WEBX_OUT (_L (webx).pitem,
+			    MOMOUT_LITERAL
+			    ("<span class='mom_separ_cl' data-momsepar='"),
+			    MOMOUT_DEC_INT ((int) ix),
+			    MOMOUT_LITERAL ("'>, </span>"), NULL);
 	    display_item_occ_mom (_L (webx).pitem,
 				  mom_set_nth_item (_L (curval), ix));
 	  }
@@ -667,7 +671,11 @@ display_value_lab_start:
 	for (unsigned ix = 0; ix < card; ix++)
 	  {
 	    if (ix > 0)
-	      MOM_WEBX_OUT (_L (webx).pitem, MOMOUT_LITERAL (", "));
+	      MOM_WEBX_OUT (_L (webx).pitem,
+			    MOMOUT_LITERAL
+			    ("<span class='mom_separ_cl' data-momsepar='"),
+			    MOMOUT_DEC_INT ((int) ix),
+			    MOMOUT_LITERAL ("'>, </span>"), NULL);
 	    display_item_occ_mom (_L (webx).pitem,
 				  mom_tuple_nth_item (_L (curval), ix));
 	  }
@@ -706,8 +714,13 @@ display_value_lab_start:
       MOM_WEBX_OUT (_L (webx).pitem, MOMOUT_LITERAL (" ("));
       for (_N (sonix) = 0; _N (sonix) < _N (nbsons); _N (sonix)++)
 	{
+	  //
 	  if (_N (sonix) > 0)
-	    MOM_WEBX_OUT (_L (webx).pitem, MOMOUT_LITERAL (", "));
+	    MOM_WEBX_OUT (_L (webx).pitem,
+			  MOMOUT_LITERAL
+			  ("<span class='mom_separ_cl' data-momsepar='"),
+			  MOMOUT_DEC_INT ((int) _N (sonix)),
+			  MOMOUT_LITERAL ("'>, </span>"), NULL);
 	  _L (curson) = mom_node_nth (_L (curval), _N (sonix));
 	  mom_item_tasklet_push_frame	//
 	    (momtasklet_, (momval_t) momclosure_,
