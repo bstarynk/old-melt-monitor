@@ -1194,6 +1194,51 @@ ajaxedit_lab_start:
 	    mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
 	    goto end;
 	  }
+	else if (_L (dispnode).pitem == mom_named__tuple)
+	  {			/* tuple */
+	    MOM_DEBUG (run,
+		       MOMOUT_LITERAL
+		       ("ajax_edit_codmom prepareditvalmenu tuple origin"));
+	    MOM_WEBX_OUT (_L (webx).pitem,
+			  MOMOUT_LITERAL
+			  ("{ \"momedit_do\": \"momedit_add_to_editval_menu\","),
+			  MOMOUT_NEWLINE (),
+			  MOMOUT_LITERAL (" \"momedit_menuval\": ["),
+			  MOMOUT_NEWLINE (),
+			  MOMOUT_LITERAL
+			  (" \"<li id='mom_menuitem_editval_appendtuple'><a href='#'>Append to tuple</a></li>\","),
+			  MOMOUT_NEWLINE (),
+			  MOMOUT_LITERAL
+			  (" \"<li id='mom_menuitem_editval_prependtuple'><a href='#'>Prepend to tuple</a></li>\" "),
+			  MOMOUT_NEWLINE (),
+			  MOMOUT_LITERAL
+			  ("  ]"),
+			  MOMOUT_NEWLINE (), MOMOUT_LITERAL ("}"),
+			  MOMOUT_NEWLINE (), NULL);
+	    mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
+	    goto end;
+	  }
+	else if (_L (dispnode).pitem == mom_named__set)
+	  {			/* set */
+	    MOM_DEBUG (run,
+		       MOMOUT_LITERAL
+		       ("ajax_edit_codmom prepareditvalmenu set origin"));
+	    MOM_WEBX_OUT (_L (webx).pitem,
+			  MOMOUT_LITERAL
+			  ("{ \"momedit_do\": \"momedit_add_to_editval_menu\","),
+			  MOMOUT_NEWLINE (),
+			  MOMOUT_LITERAL (" \"momedit_menuval\": ["),
+			  MOMOUT_NEWLINE (),
+			  MOMOUT_LITERAL
+			  (" \"<li id='mom_menuitem_editval_addset'><a href='#'>Add to set</a></li>\" "),
+			  MOMOUT_NEWLINE (),
+			  MOMOUT_LITERAL
+			  ("  ]"),
+			  MOMOUT_NEWLINE (), MOMOUT_LITERAL ("}"),
+			  MOMOUT_NEWLINE (), NULL);
+	    mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
+	    goto end;
+	  }
 	else
 	  {
 	    MOM_WARNING (MOMOUT_LITERAL
