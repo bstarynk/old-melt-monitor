@@ -571,6 +571,7 @@ function mom_add_editor_tab(editorid, tabtitle, tabcontent) {
 	pantab.remove();
 	console.debug ("mom_add_editor_tab before ajax_object mom_doeditorclose",
 		       " editorid=", editorid);
+	console.trace();
 	$.ajax({ url: '/ajax_objects',
 		 method: 'POST',
 		 data: { todo_mom: "mom_doeditorclose",
@@ -598,6 +599,7 @@ function mom_before_close_editor_tab(title,index) {
     console.debug ("mom_before_close_editor_tab closedtab=", closedtab, " closedid=", closedid);
     var editorid = closedid.replace ("momeditab","momeditor");
     console.debug ("mom_before_close_editor_tab editorid=", editorid);
+    console.trace ();
     $.ajax({ url: '/ajax_objects',
 	     method: 'POST',
 	     data: { todo_mom: "mom_doeditorclose",
@@ -801,10 +803,11 @@ function mom_editor_close(editorid) {
     editordiv.remove();
     console.debug ("mom_editor_close before ajax_object mom_doeditorclose",
 		   " editorid=", editorid);
+    console.trace();
     $.ajax({ url: '/ajax_objects',
 	     method: 'POST',
 	     data: { todo_mom: "mom_doeditorclose",
-		     closedid_mom: editorid },
+		     closedid_mom: 'momeditor'+editorid },
 	     dataType: 'html',
 	     success: function (gotdata) {
 		 console.debug ("mom_editor_close doeditorclose gotdata=",
@@ -823,6 +826,7 @@ function mom_editor_close(editorid) {
 function mom_editor_update(editorid) {
     var editordiv = $('#momeditor'+editorid);
     console.debug ("mom_editor_update editorid=", editorid, " editordiv=", editordiv);
+    console.trace ();
     $.ajax({ url: '/ajax_edit',
 	     method: 'POST',
 	     data: { todo_mom: "momedit_update",
@@ -837,8 +841,8 @@ function mom_editor_update(editorid) {
 		 }
 	     },
 	     error: function (jq,status,errmsg) {
-			 console.error ("mom_editor_update ",
-					" error jq=", jq, " status=", status, " errmsg=", errmsg);
+		 console.error ("mom_editor_update ",
+				" error jq=", jq, " status=", status, " errmsg=", errmsg);
 	     }
 	   });
 }
@@ -855,7 +859,7 @@ function mom_editor_revert(editorid) {
 		 console.debug ("mom_editor_revert gotdata=", gotdata);
 		 if (gotdata.momedit_do == 'momedit_reverted') {
 		     var reverteditorid= gotdata.momedit_editorid;
-		     mom_editor_close("momeditor"+reverteditorid);
+		     mom_editor_close(reverteditorid);
 		 }
 	     },
 	     error: function (jq,status,errmsg) {

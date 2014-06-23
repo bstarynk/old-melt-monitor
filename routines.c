@@ -2640,13 +2640,12 @@ update_display_value_lab_start:
   _L (dispconn) = (momval_t) mom_node_conn (_L (dispnode));
   //
   MOM_DEBUG (run, MOMOUT_LITERAL ("update_display_value dispnode="),
-	     MOMOUT_VALUE(_L(dispnode)),
+	     MOMOUT_VALUE (_L (dispnode)),
 	     MOMOUT_LITERAL (" curval="),
-	     MOMOUT_VALUE(_L(curval)),
+	     MOMOUT_VALUE (_L (curval)),
 	     MOMOUT_LITERAL (" dispconn="),
-	     MOMOUT_VALUE(_L(dispconn)),
-	     NULL);
-  //	     
+	     MOMOUT_VALUE (_L (dispconn)), NULL);
+  //         
   if (_L (dispnode).pitem == mom_named__empty)
     {
       MOM_DEBUG (run, MOMOUT_LITERAL ("update_display_value empty"), NULL);
