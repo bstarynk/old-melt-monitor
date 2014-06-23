@@ -249,16 +249,23 @@ $(function(){
 	    mom_set_current_item(null,true);
 	    mom_set_current_val(valev,true);
 	    var valevid =  valev.attr('id');
+	    var separix = $(ev.target).attr("data-momsepar");
 	    console.debug ("tabdiv_mom contextmenu editvalul_mom=",
-			   editvalul_mom, "; valev=", valev, "; valevid=", valevid);
+			   editvalul_mom, "; valev=", valev, "; valevid=", valevid, "; separix=", separix);
 	    //// make an synchronous ajax_edit call here, to ask what are the
 	    //// possible editions...
 	    $.ajax({ url: '/ajax_edit',
  		     method: 'POST',
 		     async: false,
- 		     data: { todo_mom: 'mom_prepare_editval_menu',
-		             idval_mom: valevid
-			   },
+ 		     data: (separix
+			    ? { todo_mom: 'mom_prepare_editval_menu',
+				idval_mom: valevid,
+				separix_mom: separix
+			      }
+			    : { todo_mom: 'mom_prepare_editval_menu',
+				idval_mom: valevid
+			      })
+			    ,
 		     success: function (jdata) {
 			 console.debug ("editval menuselect contextmenu prepared jdata=", jdata);
 			 editvalul_mom.attr("data-momeditedval", valevid);

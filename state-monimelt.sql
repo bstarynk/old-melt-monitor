@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 Jun 22
+-- state-monimelt dump 2014 Jun 23
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','todo dump at exit');
+INSERT INTO t_params VALUES('dump_reason','after predefined parent');
 INSERT INTO t_items VALUES('_02u53qxa7dm_sttmhffpchr','{"kind": "queue", "payload": [], "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "The agenda is central to Monimelt.\nIt is the queue of taskets to be executed by worker threads."}],
  "content": null}
@@ -71,6 +71,10 @@ INSERT INTO t_items VALUES('_35a1p2kdx9h_ap5pe704vtr','{"kind": "routine", "payl
 ');
 INSERT INTO t_items VALUES('_35vp60aw7em_d436vfie4ud','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "in JSON dump, jtype of JSON array values"}], "content": null}
+');
+INSERT INTO t_items VALUES('_36tp2s8s5s2_jzjm0cxdpjz','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "attribute giving parent of a display, or of some graph, etc..."}],
+ "content": null}
 ');
 INSERT INTO t_items VALUES('_38s7ihasu0m_xzipyerxm3j','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "gives the editor inside a display"}], "content": null}
@@ -275,6 +279,7 @@ INSERT INTO t_names VALUES('noop','_240dwt57s08_a8uy366sev5','.root');
 INSERT INTO t_names VALUES('notice','_7diyc1cwj8z_x630afccr8e','.predef');
 INSERT INTO t_names VALUES('numbers','_3fw5acswe59_9016fqe4d41','.predef');
 INSERT INTO t_names VALUES('origin','_5sw59dauckp_8eustjwf58u','.predef');
+INSERT INTO t_names VALUES('parent','_36tp2s8s5s2_jzjm0cxdpjz','.predef');
 INSERT INTO t_names VALUES('payload','_41v0erax6my_m6pytj0793u','.predef');
 INSERT INTO t_names VALUES('rank','_7kkh6qiq1vc_e69zp2feuhe','.predef');
 INSERT INTO t_names VALUES('res1','_3j3s2e0510a_096chqpijq7','.predef');

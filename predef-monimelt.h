@@ -126,6 +126,9 @@ MOM_PREDEFINED_NAMED(numbers,_3fw5acswe59_9016fqe4d41)
 ////!to be used inside display items to give the origin
 MOM_PREDEFINED_NAMED(origin,_5sw59dauckp_8eustjwf58u)
 
+////!attribute giving parent of a display, or of some graph, etc...
+MOM_PREDEFINED_NAMED(parent,_36tp2s8s5s2_jzjm0cxdpjz)
+
 ////!in JSON dumps, give the payload of items
 MOM_PREDEFINED_NAMED(payload,_41v0erax6my_m6pytj0793u)
 

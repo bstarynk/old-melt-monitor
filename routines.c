@@ -735,6 +735,12 @@ display_value_lab_start:
 	  _L (subdisplay) = mom_item_tasklet_res1 (momtasklet_);
 	  mom_item_tasklet_clear_res (momtasklet_);
 	  mom_item_vector_append1 (_L (vectsubdisp).pitem, _L (subdisplay));
+	  {
+	    mom_should_lock_item (_L (subdisplay).pitem);
+	    mom_item_put_attribute (_L (subdisplay).pitem, mom_named__parent,
+				    _L (newdisplay));
+	    mom_unlock_item (_L (subdisplay).pitem);
+	  }
 	}
       MOM_WEBX_OUT (_L (webx).pitem, MOMOUT_LITERAL (")"));
       MOM_WEBX_OUT (_L (webx).pitem,
@@ -1104,11 +1110,22 @@ ajaxedit_lab_start:
     else if (mom_string_same (todov, "mom_prepare_editval_menu"))
       {
 	momval_t idvalv = mom_webx_post_arg (_L (webx).pitem, "idval_mom");
+	momval_t separixv =
+	  mom_webx_post_arg (_L (webx).pitem, "separix_mom");
+	int separindex = -1;
 	MOM_DEBUG (run,
 		   MOMOUT_LITERAL
 		   ("ajax_edit_codmom prepareditvalmenu idvalv="),
-		   MOMOUT_VALUE ((const momval_t) idvalv));
+		   MOMOUT_VALUE ((const momval_t) idvalv),
+		   MOMOUT_LITERAL
+		   (" separixv="),
+		   MOMOUT_VALUE ((const momval_t) separixv), NULL);
 	const char *idvalstr = mom_string_cstr (idvalv);
+	{
+	  const char *separixstr = mom_string_cstr (separixv);
+	  if (separixstr && isdigit (separixstr[0]))
+	    separindex = atoi (separixstr);
+	}
 	char dispidbuf[MOM_IDSTRING_LEN + 8];
 	memset (dispidbuf, 0, sizeof (dispidbuf));
 	const char *end = NULL;
@@ -1196,7 +1213,18 @@ ajaxedit_lab_start:
 			  MOMOUT_NEWLINE (),
 			  MOMOUT_LITERAL
 			  (" \"<li id='mom_menuitem_editval_removeson'><a href='#'>Remove son</a></li>\","),
-			  MOMOUT_NEWLINE (),
+			  MOMOUT_NEWLINE (), NULL);
+	    if (separindex >= 0)
+	      MOM_WEBX_OUT (_L (webx).pitem,
+			    MOMOUT_LITERAL
+			    (" \"<li id='mom_menuitem_editval_insertson' data-momindex='"),
+			    MOMOUT_DEC_INT ((int) separindex),
+			    MOMOUT_LITERAL ("'><a href='#'>Insert at "),
+			    MOMOUT_DEC_INT ((int) separindex),
+			    MOMOUT_LITERAL (" son</a></li>\","),
+			    MOMOUT_NEWLINE (), NULL);
+
+	    MOM_WEBX_OUT (_L (webx).pitem,
 			  MOMOUT_LITERAL
 			  (" \"<li id='mom_menuitem_editval_pasteson'><a href='#'>Paste as son</a></li>\","),
 			  MOMOUT_NEWLINE (),
@@ -1219,10 +1247,20 @@ ajaxedit_lab_start:
 			  MOMOUT_LITERAL (" \"momedit_menuval\": ["),
 			  MOMOUT_NEWLINE (),
 			  MOMOUT_LITERAL
-			  (" \"<li id='mom_menuitem_editval_appendtuple'><a href='#'>Append to tuple</a></li>\","),
-			  MOMOUT_NEWLINE (),
+			  (" \"<li id='mom_menuitem_editval_appendtuple'><a href='#'>Append to tuple</a></li>\""),
+			  MOMOUT_NEWLINE (), NULL);
+	    if (separindex >= 0)
+	      MOM_WEBX_OUT (_L (webx).pitem,
+			    MOMOUT_LITERAL
+			    (", \"<li id='mom_menuitem_editval_inserttuple' data-momindex='"),
+			    MOMOUT_DEC_INT ((int) separindex),
+			    MOMOUT_LITERAL ("'><a href='#'>Insert at "),
+			    MOMOUT_DEC_INT ((int) separindex),
+			    MOMOUT_LITERAL (" in tuple</a></li>\" "),
+			    MOMOUT_NEWLINE (), NULL);
+	    MOM_WEBX_OUT (_L (webx).pitem,
 			  MOMOUT_LITERAL
-			  (" \"<li id='mom_menuitem_editval_prependtuple'><a href='#'>Prepend to tuple</a></li>\" "),
+			  (", \"<li id='mom_menuitem_editval_prependtuple'><a href='#'>Prepend to tuple</a></li>\" "),
 			  MOMOUT_NEWLINE (),
 			  MOMOUT_LITERAL
 			  ("  ]"),
