@@ -63,7 +63,7 @@ static momitem_t *running_jobs_mom[MOM_MAX_WORKERS + 1];
 static struct mom_valuequeue_st pending_jobs_queue_mom;
 
 // the poll timeout is 2.1 seconds without debugging, and 4.9 with debugging 'run'
-#define MOM_POLL_TIMEOUT (MOM_IS_DEBUGGING(run)?4900:2100)	/* milliseconds for mom poll timeout */
+#define MOM_POLL_TIMEOUT (MOM_IS_DEBUGGING(run)?5900:2150)	/* milliseconds for mom poll timeout */
 
 
 
