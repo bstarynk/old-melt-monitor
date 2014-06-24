@@ -137,7 +137,7 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 	strcpy (bufpath, MOM_WEB_DIRECTORY);
 	strcat (bufpath, fullpath);
 	assert (strlen (bufpath) < sizeof (bufpath) - 1);
-	MOM_DEBUG (web, "testing for access of bufpath=%s", bufpath);
+	MOM_DEBUGPRINTF (web, "testing for access of bufpath=%s", bufpath);
 	if (!access (bufpath, R_OK) && !stat (bufpath, &stpath)
 	    && S_ISREG (stpath.st_mode))
 	  {
@@ -292,8 +292,8 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 	  // we don't need to lock the webxitm, nobody know it yet!
 	  webxitm->i_payload = wxd;
 	  webxitm->i_paylkind = mompayk_webexchange;
-	  MOM_DEBUG (web, "webrequest #", MOMOUT_DEC_INT (webnum),
-		     MOMOUT_LITERAL (" webxitm:"),
+	  MOM_DEBUG (web, MOMOUT_LITERAL ("webrequest #"),
+		     MOMOUT_DEC_INT (webnum), MOMOUT_LITERAL (" webxitm:"),
 		     MOMOUT_ITEM ((const momitem_t *) webxitm));
 	  momitem_t *wtskitm = mom_make_item ();
 	  // dont need to lock the tasklet item, nobody knows it!
@@ -305,7 +305,8 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 				 (momval_t) mom_make_string (restpath)),
 	     MOMPFR_END ());
 	  mom_add_tasklet_to_agenda_front (wtskitm);
-	  MOM_DEBUG (web, "webrequest #", MOMOUT_DEC_INT (webnum),
+	  MOM_DEBUG (web, MOMOUT_LITERAL ("webrequest #"),
+		     MOMOUT_DEC_INT (webnum),
 		     MOMOUT_LITERAL ("; added tasklet wtskitm:"),
 		     MOMOUT_ITEM ((const momitem_t *) wtskitm));
 	  double minidelay = MOM_IS_DEBUGGING (web) ? 0.25 : 0.002;
