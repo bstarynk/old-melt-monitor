@@ -1578,6 +1578,14 @@ ajaxedit_lab_start:
 	    if (_L (curval).ptr)
 	      _N (good_input) = __LINE__;
 	  }
+	else if (!strcmp (inputstr, "$"))
+	  {
+	    mom_should_lock_item (_C (editors).pitem);
+	    _L (curval) =
+	      mom_item_get_attribute (_C (editors).pitem, mom_named__buffer);
+	    mom_unlock_item (_C (editors).pitem);
+	    _N (good_input) = __LINE__;
+	  }
 	else if (inputstr[0] == '{')
 	  {
 	    _L (curitem) = MOM_NULLV;
@@ -1906,6 +1914,15 @@ ajaxedit_lab_start:
 		      MOMOUT_LITERAL ("\" } "), MOMOUT_NEWLINE (), NULL);
 	mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
 	goto end;
+      }
+    /***** todo= mom_menuitem_editval_addset ****/
+    else if (mom_string_same (todov, "mom_menuitem_editval_addset"))
+      {
+	momval_t idvalv = mom_webx_post_arg (_L (webx).pitem, "idval_mom");
+	_L (display) =
+	  (momval_t) mom_get_item_of_ident (mom_to_string (idvalv));
+	assert (_L (display).pitem != NULL);
+#warning addset not fully implemented
       }
 
     else

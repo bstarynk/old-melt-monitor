@@ -31,6 +31,9 @@ var curitem_mom = null;
 var namescompletion_mom = null;
 var addattrdlg_mom;
 var addedattrinp_mom;
+var additemdlg_mom;
+var addediteminp_mom;
+var addingitemlab_mom;
 
 var system_menu_mom;
 // jquery ready function for our document
@@ -45,6 +48,9 @@ $(function(){
     commonbufferdd_mom= $('#mom_commonbuffer_dd');
     addattrdlg_mom= $('#mom_addattr_dlg');
     addedattrinp_mom= $('#mom_addedattr_input');
+    additemdlg_mom= $('#mom_additem_dlg');
+    addediteminp_mom= $('#mom_addeditem_input');
+    addingitemlab_mom= $('#mom_adding_item');
     //
     // create the system button with its menu
     var systembut = $('#mom_system_but');
@@ -231,6 +237,63 @@ $(function(){
 	minLength: 2,
 	source: mom_names_completion()
     });
+    /////
+    
+    /////
+    /// create the additem dialog and input
+    additemdlg_mom.dialog({
+	autoOpen: false,
+	open: function(ev, ui) {
+	    addediteminp_mom.autocomplete("option","source", mom_names_completion());
+	},
+	close: function (ev,ui) {
+	    additemdlg_mom.attr("data-momeditor",null);
+	},
+	modal: true,
+	buttons: [
+	    { text: 'Add',
+	      click: function () {
+		  var editorid= additemdlg_mom.attr("data-momeditor");
+		  var iteminp= addediteminp_mom.val();
+		  console.debug ("additemdlg add editorid=", editorid, " iteminp=", iteminp);
+		  $.ajax({ url: '/ajax_edit',
+ 			   method: 'POST',
+ 			   data: { todo_mom: 'mom_add_item',
+				   editor_mom: editorid,
+				   item_mom: iteminp
+				 },
+			   error: function (jq,status,errmsg) {
+			       console.error ("additemdlg add ajax_edit error jq=", jq,
+					      " status=", status,
+					      " errmsg=", errmsg);
+			   },
+			   success: function (gotdata) {
+			       console.debug ("additemdlg add ajax_edit gotdata=", gotdata);
+			       if (gotdata.momedit_do == 'momedit_dispnewitem') {
+				   mom_add_new_item(gotdata);
+				   additemdlg_mom.dialog("close");
+			       }
+			       else if (gotdata.momedit_do == 'momedit_badnewitem') {
+				   iteminp.val("");
+				   var warn = $('#mom_addeditem_input').after("<b class='mom_warning_cl'>bad itemibute!</b>");
+				   warn.delay(600).effect("fade").remove();
+			       }
+			       else console.error("additemdlg add ajax_edit strange gotdatado:", gotdata.momedit_do);
+			   }
+			 });
+	      }},
+	    { text: 'Cancel',
+	      click: function () {
+		  $(this).dialog("close");
+	      }}
+	]
+    });
+    addediteminp_mom.autocomplete({
+	delay: 300,
+	minLength: 2,
+	source: mom_names_completion()
+    });
+    
     /////
     // initialize the tabs
     tabdiv_mom.tabs();
