@@ -62,8 +62,8 @@ static pthread_mutex_t job_mtx_mom = PTHREAD_MUTEX_INITIALIZER;
 static momitem_t *running_jobs_mom[MOM_MAX_WORKERS + 1];
 static struct mom_valuequeue_st pending_jobs_queue_mom;
 
-// the poll timeout is 2.1 seconds without debugging, and 4.9 with debugging 'run'
-#define MOM_POLL_TIMEOUT (MOM_IS_DEBUGGING(run)?5900:2150)	/* milliseconds for mom poll timeout */
+// the poll timeout is 2.15 seconds without debugging, and 6.9 with debugging 'run'
+#define MOM_POLL_TIMEOUT (MOM_IS_DEBUGGING(run)?6900:2150)	/* milliseconds for mom poll timeout */
 
 
 
