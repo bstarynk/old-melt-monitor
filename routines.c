@@ -1212,7 +1212,7 @@ ajaxedit_lab_start:
 			  MOMOUT_LITERAL (" \"momedit_menuval\": ["),
 			  MOMOUT_NEWLINE (),
 			  MOMOUT_LITERAL
-			  (" \"<li id='mom_menuitem_editval_removeson'><a href='#'>Remove son</a></li>\","),
+			  (" \"<li id='mom_menuitem_editval_appendson'><a href='#'>Append son</a></li>\","),
 			  MOMOUT_NEWLINE (), NULL);
 	    if (separindex >= 0)
 	      MOM_WEBX_OUT (_L (webx).pitem,
@@ -1226,10 +1226,10 @@ ajaxedit_lab_start:
 
 	    MOM_WEBX_OUT (_L (webx).pitem,
 			  MOMOUT_LITERAL
-			  (" \"<li id='mom_menuitem_editval_pasteson'><a href='#'>Paste as son</a></li>\","),
+			  (" \"<li id='mom_menuitem_editval_prependson'><a href='#'>Prepend son</a></li>\" "),
 			  MOMOUT_NEWLINE (),
 			  MOMOUT_LITERAL
-			  (" \"<li id='mom_menuitem_editval_replaceson'><a href='#'>Replace son</a></li>\" ]"),
+			  (" ]"),
 			  MOMOUT_NEWLINE (), MOMOUT_LITERAL ("}"),
 			  MOMOUT_NEWLINE (), NULL);
 	    mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
@@ -1922,9 +1922,29 @@ ajaxedit_lab_start:
 	_L (display) =
 	  (momval_t) mom_get_item_of_ident (mom_to_string (idvalv));
 	assert (_L (display).pitem != NULL);
+	MOM_FATAL (MOMOUT_LITERAL
+		   ("ajax edit editval_addset unimplemented display="),
+		   MOMOUT_VALUE ((const momval_t) _L (display)),
+		   MOMOUT_LITERAL (" :: "),
+		   MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
+					    *) (_L (display).pitem)), NULL);
 #warning addset not fully implemented
       }
-
+    /***** todo= mom_menuitem_editval_appendson ****/
+    else if (mom_string_same (todov, "mom_menuitem_editval_appendson"))
+      {
+	momval_t idvalv = mom_webx_post_arg (_L (webx).pitem, "idval_mom");
+	_L (display) =
+	  (momval_t) mom_get_item_of_ident (mom_to_string (idvalv));
+	assert (_L (display).pitem != NULL);
+	MOM_FATAL (MOMOUT_LITERAL
+		   ("ajax edit editval_appendson unimplemented display="),
+		   MOMOUT_VALUE ((const momval_t) _L (display)),
+		   MOMOUT_LITERAL (" :: "),
+		   MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
+					    *) (_L (display).pitem)), NULL);
+      }
+    ////
     else
       MOM_FATAL (MOMOUT_LITERAL ("ajax edit bad todov="),
 		 MOMOUT_VALUE (todov), MOMOUT_NEWLINE (),

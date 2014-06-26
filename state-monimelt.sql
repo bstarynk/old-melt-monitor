@@ -210,7 +210,7 @@ INSERT INTO t_items VALUES('_85rz4j0q982_67im8sstj9s','{"kind": null, "payload":
    "val": {"sons": [{"sons": [{"set": ["_2v75mmyph64_4h4kys78740"], "jtype": "set"}],
       "node": "_2v75mmyph64_4h4kys78740", "jtype": "node"}, {"sons": [{"jtype": "tuple",
 "tuple": ["_7vw56h18sw0_hv77m6q8uxu"]}], "node": "_7vw56h18sw0_hv77m6q8uxu",
-      "jtype": "node"}, {"sons": [null, null, null], "node": "_4m7x6811f6j_t480zu575mz",
+      "jtype": "node"}, {"sons": [123, "some long string", null], "node": "_4m7x6811f6j_t480zu575mz",
       "jtype": "node"}, null], "node": "_4m7x6811f6j_t480zu575mz", "jtype": "node"}}],
  "content": null}
 ');
