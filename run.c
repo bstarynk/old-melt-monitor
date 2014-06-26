@@ -409,10 +409,22 @@ run_one_tasklet_mom (momitem_t *tkitm)
 		 MOMOUT_ITEM ((const momitem_t *) tkitm));
       if (!step_tasklet_mom (tkitm, itd))
 	{
+	  MOM_DEBUG (run, MOMOUT_LITERAL ("run_one_tasklet_mom stepix="),
+		     MOMOUT_DEC_INT ((int) stepix),
+		     MOMOUT_LITERAL (" didnot stepcount="),
+		     MOMOUT_DEC_INT ((int) stepcount),
+		     MOMOUT_LITERAL (" no step"), NULL);
 	  requeue = false;
 	  break;
 	}
-      stepcount++;
+      else
+	{
+	  MOM_DEBUG (run, MOMOUT_LITERAL ("run_one_tasklet_mom stepix="),
+		     MOMOUT_DEC_INT ((int) stepix),
+		     MOMOUT_LITERAL (" did stepcount="),
+		     MOMOUT_DEC_INT ((int) stepcount), NULL);
+	  stepcount++;
+	}
       if (tkitm->i_payload != itd)
 	break;
       if (stepcount % 2 == 0 && mom_clock_time (CLOCK_REALTIME) > timelimit)
