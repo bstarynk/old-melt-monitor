@@ -783,18 +783,22 @@ function mom_ajax_edit_got(jdata,ev,idui,elem)
 	mom_install_new_input(newinp,'#momvalinp'+dispid);
 	console.debug ("mom_ajax_edit_got momedit_replacebyinput final newinp=", newinp);
     }
-    else if (jdata.momedit_do == "momedit_appendinput") {
+    else if (jdata.momedit_do == "momedit_appendnodeinput") {
+	console.debug ("mom_ajax_edit_got momedit_appendnodeinput jdata=", jdata);
 	var dispid = jdata.momedit_displayid;
 	var newdispid = jdata.momedit_newdispid;
 	var inphtml = jdata.momedit_inputhtml;
 	var disp= $('#momdisplay' + dispid);
-	console.debug ("mom_ajax_edit_got momedit_appendinput dispid=",
+	console.debug ("mom_ajax_edit_got momedit_appendnodeinput dispid=",
 		       dispid, " inphtml=", inphtml, " disp=", disp);
-	disp.append(inphtml);
-	console.debug ("mom_ajax_edit_got momedit_appendinput appended disp=",
+	var endpar = $('#momnodendpar'+dispid);
+	console.debug ("mom_ajax_edit_got momedit_appendnodeinput endpar=", endpar);
+	endpar.before(inphtml);
+	console.debug ("mom_ajax_edit_got momedit_appendnodeinput appended disp=",
 		       disp, " newdispid=", newdispid);
 	var newinp = $('#momvalinp'+newdispid);
-	console.debug ("mom_ajax_edit_got newinp=", newinp, " thru ", '#momvalinp'+newdispid);
+	console.debug ("mom_ajax_edit_got  momedit_appendnodeinput newinp=", newinp, 
+		       " thru ", '#momvalinp'+newdispid);
 	mom_install_new_input(newinp,'momvalinp'+newdispid);
 	console.debug ("mom_ajax_edit_got momedit_appendinput final newinp=", newinp);
     }

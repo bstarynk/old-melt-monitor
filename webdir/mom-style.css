@@ -310,6 +310,14 @@ span.mom_node_value_cl {
     color: rgba(82,15,62,0.9);
 }
 
+span.mom_node_startparen_cl {
+    color: rgba(82,15,69,0.9);
+}
+
+span.mom_node_endparen_cl {
+    color: rgba(82,15,69,0.9);
+}
+
 span.mom_separ_cl {
     color: rgba(116,21,23,0.7);
 }

@@ -711,7 +711,12 @@ display_value_lab_start:
 		    MOMOUT_JS_LITERAL ("'>*"));
       display_item_occ_mom (_L (webx).pitem, _L (conn).pitem);
       _N (nbsons) = mom_node_arity (_L (curval));
-      MOM_WEBX_OUT (_L (webx).pitem, MOMOUT_LITERAL (" ("));
+      MOM_WEBX_OUT (_L (webx).pitem,
+		    MOMOUT_LITERAL
+		    (" <span class='mom_node_startparen_cl' id='momnodstapar"),
+		    MOMOUT_LITERALV (mom_ident_cstr_of_item
+				     (_L (newdisplay).pitem)),
+		    MOMOUT_LITERAL ("'>(</span>"), NULL);
       for (_N (sonix) = 0; _N (sonix) < _N (nbsons); _N (sonix)++)
 	{
 	  //
@@ -742,7 +747,12 @@ display_value_lab_start:
 	    mom_unlock_item (_L (subdisplay).pitem);
 	  }
 	}
-      MOM_WEBX_OUT (_L (webx).pitem, MOMOUT_LITERAL (")"));
+      MOM_WEBX_OUT (_L (webx).pitem,
+		    MOMOUT_LITERAL
+		    (" <span class='mom_node_endparen_cl' id='momnodendpar"),
+		    MOMOUT_LITERALV (mom_ident_cstr_of_item
+				     (_L (newdisplay).pitem)),
+		    MOMOUT_LITERAL ("'>)</span>"), NULL);
       MOM_WEBX_OUT (_L (webx).pitem,
 		    //
 		    MOMOUT_JS_LITERAL ("</span>"));
@@ -1058,7 +1068,7 @@ ajaxedit_lab_start:
 				       mom_string_cstr ((momval_t)
 							mom_item_get_idstr (_L
 									    (display).pitem))),
-		      MOMOUT_JS_LITERAL ("'/>"), MOMOUT_LITERAL ("\" }"),
+		      MOMOUT_JS_LITERAL ("' />"), MOMOUT_LITERAL ("\" }"),
 		      MOMOUT_NEWLINE (), NULL);
 	mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
 	MOM_DEBUG (run,
@@ -1758,7 +1768,7 @@ ajaxedit_lab_start:
 							    mom_item_get_idstr
 							    (_L
 							     (display).pitem))),
-			  MOMOUT_JS_LITERAL ("'/></li>"),
+			  MOMOUT_JS_LITERAL ("' /></li>"),
 			  MOMOUT_LITERAL ("\" }"), MOMOUT_NEWLINE (), NULL);
 	    mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
 	    goto end;
@@ -2044,7 +2054,7 @@ ajaxedit_lab_start:
 			     mom_item_get_idstr (_L (subdisplay).pitem));
 	  MOM_WEBX_OUT (_L (webx).pitem,
 			MOMOUT_LITERAL
-			("{ \"momedit_do\": \"momedit_appendinput\","),
+			("{ \"momedit_do\": \"momedit_appendnodeinput\","),
 			MOMOUT_LITERAL (" \"momedit_displayid\": \""),
 			MOMOUT_LITERALV (displayidstr),
 			MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE (),
@@ -2062,7 +2072,7 @@ ajaxedit_lab_start:
 			MOMOUT_JS_LITERAL
 			("<input type='text' class='mom_newvalinput_cl' id='momvalinp"),
 			MOMOUT_LITERALV (subdisplayidstr),
-			MOMOUT_JS_LITERAL ("'/>"), MOMOUT_LITERAL ("\" }"),
+			MOMOUT_JS_LITERAL ("' />"), MOMOUT_LITERAL ("\" }"),
 			MOMOUT_NEWLINE (), NULL);
 	  mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
 	  MOM_DEBUG (run,
