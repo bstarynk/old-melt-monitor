@@ -821,6 +821,7 @@ enum ajax_edit_valindex_en
   ajaxedit_v_updated,
   ajaxedit_v_dispconn,
   ajaxedit_v_subdisplay,
+  ajaxedit_v_tupledisplays,
   ajaxedit_v_subval,
   ajaxedit_v__lastval
 };
@@ -1935,13 +1936,145 @@ ajaxedit_lab_start:
     /***** todo= mom_menuitem_editval_appendson ****/
     else if (mom_string_same (todov, "mom_menuitem_editval_appendson"))
       {
+	_L (display) = MOM_NULLV;
 	momval_t idvalv = mom_webx_post_arg (_L (webx).pitem, "idval_mom");
 	MOM_DEBUG (run,
 		   MOMOUT_LITERAL ("ajax_edit editval_appendson idvalv="),
 		   MOMOUT_VALUE ((const momval_t) idvalv));
-	_L (display) =
-	  (momval_t) mom_get_item_of_ident (mom_to_string (idvalv));
+	const char *idvalstr = mom_string_cstr (idvalv);
+	if (idvalstr
+	    && !strncmp (idvalstr, "momdisplay", strlen ("momdisplay"))
+	    && (_L (display) =
+		(momval_t) (mom_get_item_of_identcstr
+			    (idvalstr + strlen ("momdisplay")))).ptr)
+	  {
+	    MOM_DEBUG (run,
+		       MOMOUT_LITERAL
+		       ("ajax_edit_codmom editval_appendson got display="),
+		       MOMOUT_VALUE ((const momval_t) _L (display)),
+		       MOMOUT_LITERAL (" :: "),
+		       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
+						*) (_L (display).pitem)),
+		       NULL);
+	  };
 	assert (_L (display).pitem != NULL);
+	_L (origin) = MOM_NULLV;
+	_L (subdisplay) = (momval_t) mom_make_item ();
+	_L (updated) = mom_make_double (mom_clock_time (CLOCK_REALTIME));
+	/// update the display
+	{
+	  mom_should_lock_item (_L (display).pitem);
+	  _L (origin) =
+	    mom_item_get_attribute (_L (display).pitem, mom_named__origin);
+	  _L (editor) =
+	    mom_item_get_attribute (_L (display).pitem, mom_named__editor);
+	  _L (dispnode) =
+	    mom_item_get_attribute (_L (display).pitem, mom_named__display);
+	  _L (curitem) = (momval_t) mom_node_nth (_L (dispnode), 0);
+	  _L (tupledisplays) = (momval_t) mom_node_nth (_L (dispnode), 1);
+	  _N (num) = mom_tuple_length (_L (tupledisplays));
+	  _L (tupledisplays) =
+	    (momval_t) mom_make_tuple_til_nil (_L (tupledisplays),
+					       _L (subdisplay), NULL);
+	  _L (dispnode) =
+	    (momval_t) mom_make_node_sized (mom_named__node, 2, _L (curitem),
+					    _L (tupledisplays), NULL);
+	  mom_item_put_attribute (_L (display).pitem, mom_named__display,
+				  _L (dispnode));
+	  mom_item_put_attribute (_L (display).pitem, mom_named__updated,
+				  _L (updated));
+	  mom_item_remove_attribute (_L (display).pitem, mom_named__val);
+	  MOM_DEBUG (run,
+		     MOMOUT_LITERAL
+		     ("ajax_edit_codmom editval_appendson update display="),
+		     MOMOUT_VALUE ((const momval_t) _L (display)),
+		     MOMOUT_LITERAL (" :: "),
+		     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
+					      *) (_L (display).pitem)), NULL);
+	  mom_unlock_item (_L (display).pitem);
+	}
+	//// update the origin
+	{
+	  mom_should_lock_item (_L (origin).pitem);
+	  mom_item_put_attribute (_L (origin).pitem, mom_named__updated,
+				  _L (updated));
+	  MOM_DEBUG (run,
+		     MOMOUT_LITERAL
+		     ("ajax_edit_codmom editval_appendson update origin="),
+		     MOMOUT_VALUE ((const momval_t) _L (origin)),
+		     MOMOUT_LITERAL (" :: "),
+		     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
+					      *) (_L (display).pitem)), NULL);
+	  mom_unlock_item (_L (origin).pitem);
+	}
+	//// update the editor
+	{
+	  mom_should_lock_item (_L (editor).pitem);
+	  unsigned newnum = mom_item_vector_count (_L (editor).pitem);
+	  _N (rank) = newnum;
+	  mom_item_vector_append1 (_L (editor).pitem, _L (subdisplay));
+	  mom_unlock_item (_L (editor).pitem);
+	}
+	//// fill the subdisplay, don't bother to lock it!
+	{
+	  mom_item_put_attribute (_L (subdisplay).pitem, mom_named__display,
+				  (momval_t) mom_named__input);
+	  mom_item_put_attribute (_L (subdisplay).pitem, mom_named__parent,
+				  _L (display));
+	  mom_item_put_attribute (_L (subdisplay).pitem, mom_named__editor,
+				  _L (editor));
+	  mom_item_put_attribute (_L (subdisplay).pitem, mom_named__rank,
+				  mom_make_integer (_N (rank)));
+	  MOM_DEBUG (run,
+		     MOMOUT_LITERAL
+		     ("ajax_edit_codmom editval_appendson update subdisplay="),
+		     MOMOUT_VALUE ((const momval_t) _L (subdisplay)),
+		     MOMOUT_LITERAL (" :: "),
+		     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
+					      *) (_L (subdisplay).pitem)),
+		     NULL);
+	}
+#warning ajax edit editval_appendson should output a json
+	{
+	  const char *displayidstr =
+	    mom_string_cstr ((momval_t)
+			     mom_item_get_idstr (_L (display).pitem));
+	  const char *subdisplayidstr =
+	    mom_string_cstr ((momval_t)
+			     mom_item_get_idstr (_L (subdisplay).pitem));
+	  MOM_WEBX_OUT (_L (webx).pitem,
+			MOMOUT_LITERAL
+			("{ \"momedit_do\": \"momedit_appendinput\","),
+			MOMOUT_LITERAL (" \"momedit_displayid\": \""),
+			MOMOUT_LITERALV (displayidstr),
+			MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE (),
+			MOMOUT_LITERAL (" \"momedit_newdispid\": \""),
+			MOMOUT_LITERALV (subdisplayidstr),
+			MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE (),
+			MOMOUT_LITERAL (" \"momedit_inphtml\": \""), NULL);
+	  if (_N (num) > 0)
+	    MOM_WEBX_OUT (_L (webx).pitem,
+			  MOMOUT_JS_LITERAL
+			  ("<span class='mom_separ_cl' data-momsepar='"),
+			  MOMOUT_DEC_INT ((int) _N (num)),
+			  MOMOUT_JS_LITERAL ("'>, </span>"), NULL);
+	  MOM_WEBX_OUT (_L (webx).pitem,
+			MOMOUT_JS_LITERAL
+			("<input type='text' class='mom_newvalinput_cl' id='momvalinp"),
+			MOMOUT_LITERALV (subdisplayidstr),
+			MOMOUT_JS_LITERAL ("'/>"), MOMOUT_LITERAL ("\" }"),
+			MOMOUT_NEWLINE (), NULL);
+	  mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
+	  MOM_DEBUG (run,
+		     MOMOUT_LITERAL
+		     ("ajax_edit_codmom editval_appendson done displayidstr="),
+		     MOMOUT_LITERALV ((const char *) displayidstr),
+		     MOMOUT_LITERAL (" subdisplayidstr="),
+		     MOMOUT_LITERALV ((const char *) subdisplayidstr),
+		     MOMOUT_LITERAL (" num="),
+		     MOMOUT_DEC_INT ((int) _N (num)), NULL);
+	  goto end;
+	}
 	MOM_FATAL (MOMOUT_LITERAL
 		   ("ajax edit editval_appendson unimplemented display="),
 		   MOMOUT_VALUE ((const momval_t) _L (display)),

@@ -127,6 +127,7 @@ $(function(){
 	console.debug ("editvalul menuselect ev=", ev, " ui=", ui,
 		       " idui=", idui, " curval_mom=", curval_mom,
 		       " datavaleditid=", datavaleditid);
+	console.trace ();
 	$.ajax({ url: '/ajax_edit',
  		 method: 'POST',
  		 data: { todo_mom: idui,
@@ -781,6 +782,19 @@ function mom_ajax_edit_got(jdata,ev,idui,elem)
 	var newinp = $('#momvalinp'+dispid);
 	mom_install_new_input(newinp,'#momvalinp'+dispid);
 	console.debug ("mom_ajax_edit_got momedit_replacebyinput final newinp=", newinp);
+    }
+    else if (jdata.momedit_do == "momedit_appendinput") {
+	var dispid = jdata.momedit_displayid;
+	var newdispid = jdata.momedit_newdispid;
+	var inphtml = jdata.momedit_inputhtml;
+	var disp= $('#momdisplay' + dispid);
+	console.debug ("mom_ajax_edit_got momedit_appendinput dispid=",
+		       dispid, " inphtml=", inphtml, " disp=", disp);
+	disp.append(inphtml);
+	var newinp = $('#momvalinp'+newdispid);
+	console.debug ("mom_ajax_edit_got newinp=", newinp);
+	mom_install_new_input(newinp,'#momvalinp'+newdispid);
+	console.debug ("mom_ajax_edit_got momedit_appendinput final newinp=", newinp);
     }
     else if (jdata.momedit_do == "momedit_replaceinput") {
 	var oldid = jdata.momedit_oldid;
