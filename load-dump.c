@@ -621,7 +621,7 @@ mom_dump_data_inside_item (struct mom_dumper_st *dmp, momitem_t *itm)
 	  && itm->i_magic == MOM_ITEM_MAGIC);
   if (itm->i_space == momspa_none)
     return MOM_NULLV;
-  pthread_mutex_lock (&itm->i_mtx);
+  mom_should_lock_item (itm);
   if (itm->i_payload)
     {
       unsigned kindpayl = itm->i_paylkind;
@@ -684,7 +684,7 @@ mom_dump_data_inside_item (struct mom_dumper_st *dmp, momitem_t *itm)
      MOMJSOB_ENTRY ((momval_t) mom_named__payload, jpayl),
      MOMJSOB_ENTRY ((momval_t) mom_named__content, jcontent),
      MOMJSOB_ENTRY ((momval_t) mom_named__kind, jkind), MOMJSON_END);
-  pthread_mutex_unlock (&itm->i_mtx);
+  mom_unlock_item (itm);
   return jdata;
 }
 

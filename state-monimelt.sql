@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 Jun 24
+-- state-monimelt dump 2014 Jun 26
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -207,8 +207,9 @@ INSERT INTO t_items VALUES('_85rz4j0q982_67im8sstj9s','{"kind": null, "payload":
    "val": "miscellanous attribute, e.g. to test the editor"}, {"attr": "_2v75mmyph64_4h4kys78740",
    "val": {"set": ["_91pketvc5pz_wq0v0wpauw8"], "jtype": "set"}}, {"attr": "_7vw56h18sw0_hv77m6q8uxu",
    "val": {"jtype": "tuple", "tuple": ["_7wk9y7e7r0z_575esi8ys5x"]}}, {"attr": "_4m7x6811f6j_t480zu575mz",
-   "val": {"sons": [null, null, null, null], "node": "_4m7x6811f6j_t480zu575mz",
-    "jtype": "node"}}], "content": null}
+   "val": {"sons": [{"sons": [{"set": ["_2v75mmyph64_4h4kys78740"], "jtype": "set"}],
+      "node": "_2v75mmyph64_4h4kys78740", "jtype": "node"}, null, null, null],
+    "node": "_4m7x6811f6j_t480zu575mz", "jtype": "node"}}], "content": null}
 ');
 INSERT INTO t_items VALUES('_89ejvxupprm_f219pqwz13s','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "for double values and displays"}], "content": null}

@@ -1165,7 +1165,7 @@ ajaxedit_lab_start:
 	      _L (origin) =
 		mom_item_get_attribute (_L (display).pitem,
 					mom_named__origin);
-	      mom_unlock_item (_L (editor).pitem);
+	      mom_unlock_item (_L (display).pitem);
 	    }
 	    MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_edit_codmom prepareditvalmenu "),	//
 		       MOMOUT_LITERAL (" dispnode="), MOMOUT_VALUE (_L (dispnode)),	//
