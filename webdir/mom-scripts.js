@@ -467,6 +467,17 @@ function mom_set_name_entry(inp)
     });
 }
 
+/* for "Obj -> Display Named" menu, we prefer a select */
+function mom_set_name_select(sel)
+{
+    console.debug ("mom_set_name_select=", sel);
+    var namcomp = mom_names_completion();
+    var nbnames = namcomp.length;
+    for (var ix=0; ix<nbnames; ix++) {
+	var curname = namcomp[ix];
+	sel.append("<option value=" + curname + ">" + curname + "</option>");
+    }
+}
 
 
 // the "Obj -> Named" menu replied by creating the mom_name_input
@@ -491,6 +502,34 @@ function mom_display_name_input_changed(inp)
 	     error: function (jq,status,errmsg) {
 		 /* should put the HTML message on the screen */
 		 console.error ("mom_display_name_input_changed ajax_object mom_dodisplaynamed",
+				" error jq=", jq, " status=", status, " errmsg=", errmsg);
+	     }
+	   });
+}
+
+
+// the "Obj -> Named" menu replied by creating the mom_name_input
+// whose onChange calls this function
+function mom_display_name_select_changed(inp)
+{
+    namescompletion_mom = null;
+    console.debug ("mom_display_name_select_changed inp=", inp,
+		   " of value=", inp.value, " before ajax_object mom_dodisplaynamed");
+    $.ajax({ url: '/ajax_objects',
+	     method: 'POST',
+	     data: { todo_mom: "mom_dodisplaynamed",
+		     name_mom: inp.value
+		   },
+	     dataType: 'json',
+	     success: function (gotdata) {
+		 /** we are expecting a large JSON reply */
+		 console.debug ("mom_display_name_select_changed  ajax_object mom_dodisplaynamed",
+				" gotdata=", gotdata);
+		 mom_install_display(gotdata);
+	     },
+	     error: function (jq,status,errmsg) {
+		 /* should put the HTML message on the screen */
+		 console.error ("mom_display_name_select_changed ajax_object mom_dodisplaynamed",
 				" error jq=", jq, " status=", status, " errmsg=", errmsg);
 	     }
 	   });

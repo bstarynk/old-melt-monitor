@@ -1919,6 +1919,8 @@ ajaxedit_lab_start:
     else if (mom_string_same (todov, "mom_menuitem_editval_addset"))
       {
 	momval_t idvalv = mom_webx_post_arg (_L (webx).pitem, "idval_mom");
+	MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_edit editval_addset idvalv="),
+		   MOMOUT_VALUE ((const momval_t) idvalv));
 	_L (display) =
 	  (momval_t) mom_get_item_of_ident (mom_to_string (idvalv));
 	assert (_L (display).pitem != NULL);
@@ -1934,6 +1936,9 @@ ajaxedit_lab_start:
     else if (mom_string_same (todov, "mom_menuitem_editval_appendson"))
       {
 	momval_t idvalv = mom_webx_post_arg (_L (webx).pitem, "idval_mom");
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL ("ajax_edit editval_appendson idvalv="),
+		   MOMOUT_VALUE ((const momval_t) idvalv));
 	_L (display) =
 	  (momval_t) mom_get_item_of_ident (mom_to_string (idvalv));
 	assert (_L (display).pitem != NULL);
@@ -2149,12 +2154,12 @@ ajaxobjs_lab_start:
 					  mom_clock_time (CLOCK_REALTIME)),
 		      MOMOUT_LITERAL ("</i></small><br/>"), MOMOUT_SPACE (32),
 		      MOMOUT_LITERAL
-		      ("<label for='mom_display_name_input'>Display name:</label>"
-		       " <input id='mom_display_name_input' class='mom_nameinput_cl' name='mom_name' onChange='mom_display_name_input_changed(this)'/>"
+		      ("<label for='mom_display_name_select'>Display name:</label>"
+		       " <select id='mom_display_name_select' class='mom_nameselect_cl' name='mom_name' onChange='mom_display_name_select_changed(this)' size='9'/>"
 		       " <input type='submit' id='mom_cancel' class='mom_cancel_cl' value='cancel' onclick='mom_erase_maindiv()'/>"),
 		      MOMOUT_NEWLINE (),
 		      MOMOUT_LITERAL
-		      ("<script>mom_set_name_entry($('#mom_display_name_input'));"),
+		      ("<script>mom_set_name_select($('#mom_display_name_select'));"),
 		      MOMOUT_SPACE (32), MOMOUT_LITERAL ("</script>"),
 		      MOMOUT_NEWLINE (), NULL);
 	mom_webx_reply (_L (webx).pitem, "text/html", HTTP_OK);
