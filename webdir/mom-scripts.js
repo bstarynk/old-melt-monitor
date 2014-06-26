@@ -791,9 +791,11 @@ function mom_ajax_edit_got(jdata,ev,idui,elem)
 	console.debug ("mom_ajax_edit_got momedit_appendinput dispid=",
 		       dispid, " inphtml=", inphtml, " disp=", disp);
 	disp.append(inphtml);
+	console.debug ("mom_ajax_edit_got momedit_appendinput appended disp=",
+		       disp, " newdispid=", newdispid);
 	var newinp = $('#momvalinp'+newdispid);
-	console.debug ("mom_ajax_edit_got newinp=", newinp);
-	mom_install_new_input(newinp,'#momvalinp'+newdispid);
+	console.debug ("mom_ajax_edit_got newinp=", newinp, " thru ", '#momvalinp'+newdispid);
+	mom_install_new_input(newinp,'momvalinp'+newdispid);
 	console.debug ("mom_ajax_edit_got momedit_appendinput final newinp=", newinp);
     }
     else if (jdata.momedit_do == "momedit_replaceinput") {
