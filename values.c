@@ -997,7 +997,6 @@ mom_make_tuple_til_nil (momval_t first, ...)
   itup =
     MOM_GC_ALLOC ("new tuple til nil",
 		  sizeof (momtuple_t) + siz * sizeof (momitem_t *));
-  siz = 0;
   ix = 0;
   val = first;
   va_start (args, first);
