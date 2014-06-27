@@ -2441,15 +2441,72 @@ ajaxedit_lab_start:
 	_L (curitem) = MOM_NULLV;
 	momval_t dispidv = mom_webx_post_arg (_L (webx).pitem, "display_mom");
 	momval_t itemnamv = mom_webx_post_arg (_L (webx).pitem, "item_mom");
+	momval_t doaddv = mom_webx_post_arg (_L (webx).pitem, "mom_do_add");
 	MOM_DEBUG (run,
 		   MOMOUT_LITERAL ("ajax_edit additem dispid="),
 		   MOMOUT_VALUE ((const momval_t) dispidv),
 		   MOMOUT_LITERAL (" itemnamv="),
-		   MOMOUT_VALUE ((const momval_t) itemnamv), NULL);
+		   MOMOUT_VALUE ((const momval_t) itemnamv),
+		   MOMOUT_LITERAL (" doaddv="),
+		   MOMOUT_VALUE ((const momval_t) doaddv), NULL);
 	_L (display) =
 	  (momval_t) (mom_get_item_of_identcstr (mom_string_cstr (dispidv)));
 	_L (curitem) =
 	  (momval_t) (mom_get_item_of_name_or_ident_string (itemnamv));
+	_L (dispnode) = MOM_NULLV;
+	assert (_L (display).pitem != NULL);
+	{
+	  mom_should_lock_item (_L (display).pitem);
+	  _L (dispnode) =
+	    mom_item_get_attribute (_L (display).pitem, mom_named__display);
+	  _L (curval) =
+	    mom_item_get_attribute (_L (display).pitem, mom_named__val);
+	  _L (origin) =
+	    mom_item_get_attribute (_L (display).pitem, mom_named__origin);
+	  mom_unlock_item (_L (display).pitem);
+	}
+	_L (updated) = mom_make_double (mom_clock_time (CLOCK_REALTIME));
+	if (mom_string_same (doaddv, "mom_add_element")
+	    && _L (dispnode).pitem == mom_named__set
+	    && mom_is_set (_L (curval)) && mom_is_item (_L (curitem)))
+	  {
+	    _L (curval) =
+	      (momval_t) mom_make_set_til_nil (_L (curval), _L (curitem),
+					       NULL);
+	    /// update the display
+	    {
+	      mom_should_lock_item (_L (display).pitem);
+	      mom_item_put_attribute (_L (display).pitem, mom_named__val,
+				      _L (curval));
+	      mom_item_put_attribute (_L (display).pitem, mom_named__updated,
+				      _L (updated));
+	      MOM_DEBUG (run,
+			 MOMOUT_LITERAL
+			 ("ajax_edit additem addelem updated display="),
+			 MOMOUT_VALUE ((const momval_t) _L (display)),
+			 MOMOUT_LITERAL (" :: "),
+			 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
+						  *) (_L (display).pitem)),
+			 NULL);
+	      mom_unlock_item (_L (display).pitem);
+	    }
+	    /// touch the origin
+	    {
+	      mom_should_lock_item (_L (origin).pitem);
+	      mom_item_put_attribute (_L (origin).pitem, mom_named__updated,
+				      _L (updated));
+	      MOM_DEBUG (run,
+			 MOMOUT_LITERAL
+			 ("ajax_edit additem addelem updated origin="),
+			 MOMOUT_VALUE ((const momval_t) _L (origin)),
+			 MOMOUT_LITERAL (" :: "),
+			 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
+						  *) (_L (origin).pitem)),
+			 NULL);
+	      mom_unlock_item (_L (origin).pitem);
+	    }
+#warning should probably emit a json with the updated display HTML...
+	  }			// end if doadd is mom_add_element
 	MOM_FATAL (MOMOUT_LITERAL
 		   ("ajax_edit additem unimplemented display="),
 		   MOMOUT_VALUE ((const momval_t) _L (display)),

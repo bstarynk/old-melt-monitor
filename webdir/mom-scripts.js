@@ -269,14 +269,16 @@ $(function(){
 		  var displayid= additemdlg_mom.attr("data-momdisplay");
 		  var xtra= additemdlg_mom.attr("data-momxtra");
 		  var iteminp= addediteminp_mom.val();
+		  console.debug (" additemdlg_mom add displayid=", displayid, " xtra=", xtra, " iteminp=", iteminp);
 		  var jdata= { todo_mom: 'mom_add_item',
 			       display_mom: displayid,
 			       item_mom: iteminp
 			     };
 		  if (xtra) {
-		      for (var datakey in xtra)
-			  if (xtra.hasOwnProperty(datakey) && datakey.substring(0,3) == "mom") {
-			      jdata[datakey] = xtra[datakey];
+		      var jxtra = JSON.parse(xtra);
+		      for (var datakey in jxtra)
+			  if (jxtra.hasOwnProperty(datakey) && datakey.substring(0,3) == "mom") {
+			      jdata[datakey] = jxtra[datakey];
 			  }
 		  };
 		  console.debug ("additemdlg add displayid=", displayid, " iteminp=", iteminp, " jdata=", jdata);
@@ -476,10 +478,10 @@ function mom_names_completion()
 
 function mom_show_add_item(labelhtml,dispid,xtra)
 {
-    console.debug("mom_show_add_item labelhtml=", labelhtml, " dispid=", dispid);
+    console.debug("mom_show_add_item labelhtml=", labelhtml, " dispid=", dispid, " xtra=", xtra);
     additemdlg_mom.attr("data-momdisplay",dispid);
     if (xtra)
-	additemdlg_mom.attr("data-momxtra", xtra);
+	additemdlg_mom.attr("data-momxtra", JSON.stringify(xtra));
     $('#mom_adding_item_lab').html(labelhtml);
     additemdlg_mom.dialog("open");
 }
