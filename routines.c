@@ -2434,6 +2434,36 @@ ajaxedit_lab_start:
 	  goto end;
 	}
       }
+    /***** todo= mom_add_item ****/
+    else if (mom_string_same (todov, "mom_add_item"))
+      {
+	_L (display) = MOM_NULLV;
+	_L (curitem) = MOM_NULLV;
+	momval_t dispidv = mom_webx_post_arg (_L (webx).pitem, "display_mom");
+	momval_t itemnamv = mom_webx_post_arg (_L (webx).pitem, "item_mom");
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL ("ajax_edit additem dispid="),
+		   MOMOUT_VALUE ((const momval_t) dispidv),
+		   MOMOUT_LITERAL (" itemnamv="),
+		   MOMOUT_VALUE ((const momval_t) itemnamv), NULL);
+	_L (display) =
+	  (momval_t) (mom_get_item_of_identcstr (mom_string_cstr (dispidv)));
+	_L (curitem) =
+	  (momval_t) (mom_get_item_of_name_or_ident_string (itemnamv));
+	MOM_FATAL (MOMOUT_LITERAL
+		   ("ajax_edit additem unimplemented display="),
+		   MOMOUT_VALUE ((const momval_t) _L (display)),
+		   MOMOUT_LITERAL (" :: "),
+		   MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
+					    *) (_L (display).pitem)),
+		   MOMOUT_NEWLINE (), MOMOUT_LITERAL (" curitem="),
+		   MOMOUT_VALUE ((const momval_t) _L (curitem)),
+		   MOMOUT_LITERAL (" :: "),
+		   MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
+					    *) (_L (curitem).pitem)), NULL);
+#warning ajax_edit additem unimplemented
+      }
+    ////
     ////
     else
       MOM_FATAL (MOMOUT_LITERAL ("ajax edit bad todov="),

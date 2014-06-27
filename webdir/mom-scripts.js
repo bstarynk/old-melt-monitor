@@ -1,21 +1,21 @@
 // file melt-script.js
 
 /**   Copyright (C)  2014 Free Software Foundation, Inc.
-    MONIMELT is a monitor for MELT - see http://gcc-melt.org/
-    This file is part of GCC.
-  
-    GCC is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 3, or (at your option)
-    any later version.
-  
-    GCC is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-    You should have received a copy of the GNU General Public License
-    along with GCC; see the file COPYING3.   If not see
-    <http://www.gnu.org/licenses/>.
+      MONIMELT is a monitor for MELT - see http://gcc-melt.org/
+      This file is part of GCC.
+      
+      GCC is free software; you can redistribute it and/or modify
+      it under the terms of the GNU General Public License as published by
+      the Free Software Foundation; either version 3, or (at your option)
+      any later version.
+      
+      GCC is distributed in the hope that it will be useful,
+      but WITHOUT ANY WARRANTY; without even the implied warranty of
+      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      GNU General Public License for more details.
+      You should have received a copy of the GNU General Public License
+      along with GCC; see the file COPYING3.   If not see
+      <http://www.gnu.org/licenses/>.
 **/
 
 var maindiv_mom;		// the main division
@@ -258,21 +258,31 @@ $(function(){
 	    addediteminp_mom.autocomplete("option","source", mom_names_completion());
 	},
 	close: function (ev,ui) {
-	    additemdlg_mom.attr("data-momeditor",null);
+	    additemdlg_mom.attr("data-momdisplay",null);
+	    additemdlg_mom.attr("data-momxtra",null);
+	    $('#mom_adding_item_lab').html("");
 	},
 	modal: true,
 	buttons: [
 	    { text: 'Add',
 	      click: function () {
-		  var editorid= additemdlg_mom.attr("data-momeditor");
+		  var displayid= additemdlg_mom.attr("data-momdisplay");
+		  var xtra= additemdlg_mom.attr("data-momxtra");
 		  var iteminp= addediteminp_mom.val();
-		  console.debug ("additemdlg add editorid=", editorid, " iteminp=", iteminp);
+		  var jdata= { todo_mom: 'mom_add_item',
+			       display_mom: displayid,
+			       item_mom: iteminp
+			     };
+		  if (xtra) {
+		      for (var datakey in xtra)
+			  if (xtra.hasOwnProperty(datakey) && datakey.substring(0,3) == "mom") {
+			      jdata[datakey] = xtra[datakey];
+			  }
+		  };
+		  console.debug ("additemdlg add displayid=", displayid, " iteminp=", iteminp, " jdata=", jdata);
 		  $.ajax({ url: '/ajax_edit',
  			   method: 'POST',
- 			   data: { todo_mom: 'mom_add_item',
-				   editor_mom: editorid,
-				   item_mom: iteminp
-				 },
+ 			   data: jdata,
 			   error: function (jq,status,errmsg) {
 			       console.error ("additemdlg add ajax_edit error jq=", jq,
 					      " status=", status,
@@ -339,7 +349,7 @@ $(function(){
 			    : { todo_mom: 'mom_prepare_editval_menu',
 				idval_mom: valevid
 			      })
-			    ,
+		     ,
 		     success: function (jdata) {
 			 console.debug ("editval menuselect contextmenu prepared jdata=", jdata);
 			 editvalul_mom.attr("data-momeditedval", valevid);
@@ -464,8 +474,18 @@ function mom_names_completion()
     return namescompletion_mom;
 }
 
+function mom_show_add_item(labelhtml,dispid,xtra)
+{
+    console.debug("mom_show_add_item labelhtml=", labelhtml, " dispid=", dispid);
+    additemdlg_mom.attr("data-momdisplay",dispid);
+    if (xtra)
+	additemdlg_mom.attr("data-momxtra", xtra);
+    $('#mom_adding_item_lab').html(labelhtml);
+    additemdlg_mom.dialog("open");
+}
+
 /* When the "Obj -> Display Named" menu is selected [mom_menuitem_obj_dispnamed]
-  The ajax_object is replying by creating the mom_name_input */
+   The ajax_object is replying by creating the mom_name_input */
 function mom_set_name_entry(inp)
 {
     console.debug ("mom_set_name_entry inp=", inp, " before ajax_complete_name");
@@ -554,10 +574,10 @@ function mom_do_menu_valedit(itm) {
 
 /** The json data is built in ajax_objects routine file routines.c,
     starting at beginedit state; we expect something like
-   { momeditorj_id: "_0u15i1z87ei_jf2wwmpim72",       // editor id
-     momeditorj_tabtitle: "<span...",      // the HTML for the tab title
-     momeditorj_tabcontent: "<div..."      // the HTML for the tab content
-   }
+    { momeditorj_id: "_0u15i1z87ei_jf2wwmpim72",       // editor id
+    momeditorj_tabtitle: "<span...",      // the HTML for the tab title
+    momeditorj_tabcontent: "<div..."      // the HTML for the tab content
+    }
 **/
 function mom_install_editor(jdata) {
     console.debug ("mom_install_editor jdata=", jdata);
@@ -654,7 +674,7 @@ function mom_set_current_item(elem,strong)
 	curitem_mom = elem;
     }
 }
-    
+
 function mom_add_editor_tab(editorid, tabtitle, tabcontent) {
     console.debug ("mom_add_editor_tab_id editorid=", editorid,
 		   "; tabtitle=", tabtitle,
@@ -732,7 +752,7 @@ function mom_before_close_editor_tab(title,index) {
 	     },
 	     error: function (jq,status,errmsg) {
 		 console.error ("mom_before_close_editor_tab  ajax_object doeditorclose",
-				    " error jq=", jq, " status=", status, " errmsg=", errmsg);
+				" error jq=", jq, " status=", status, " errmsg=", errmsg);
 	     }
 	   });
     return true;		// to permit the closing
@@ -768,7 +788,7 @@ function mom_erase_maindiv() {
     console.debug ("mom_erase_maindiv");
     maindiv_mom.empty();
 }
-    
+
 function mom_ajax_edit_got(jdata,ev,idui,elem)
 {
     console.debug("mom_ajax_edit_got jdata=", jdata, " ev=", ev,
@@ -864,6 +884,16 @@ function mom_ajax_edit_got(jdata,ev,idui,elem)
 	var newinp = $('#' + newid);
 	mom_install_new_input(newinp,newid);
 	console.debug ("mom_ajax_edit_got momedit_replaceinput final newinp=", newinp);
+    }
+    else if (jdata.momedit_do == "momedit_addtosetdialog") {
+	var dispid = jdata.momedit_displayid;
+	var disp= $('#momdisplay' + dispid);
+	console.debug ("mom_ajax_edit_got addtosetdialog dispid=", dispid, " disp=", disp);
+	mom_show_add_item("<i>add element to set</i>",dispid, { mom_do_add: "mom_add_element" });
+    }
+    else {
+	console.error("mom_ajax_edit_got unexpected jdata=", jdata);
+	console.trace();
     }
 }
 
@@ -983,7 +1013,7 @@ function mom_editor_add_update_buttons(editorid) {
     console.debug ("mom_editor_show_update_buttons editdate=", editdate);
     editdate.after("<input type='submit' class='mom_editbuttons_cl' name='update' value='Update' onclick='mom_editor_update(\""
 		   + editorid + "\")'/>"
-		  + "<input type='submit' class='mom_editbuttons_cl' name='revert' value='Revert' onclick='mom_editor_revert(\""
+		   + "<input type='submit' class='mom_editbuttons_cl' name='revert' value='Revert' onclick='mom_editor_revert(\""
 		   + editorid + "\")'/>");
 }
 
