@@ -2112,7 +2112,6 @@ ajaxedit_lab_start:
 	  };
 	assert (_L (display).pitem != NULL);
 	_L (origin) = MOM_NULLV;
-
 	_L (subdisplay) = (momval_t) mom_make_item ();
 	_L (updated) = mom_make_double (mom_clock_time (CLOCK_REALTIME));
 	/// update the display
@@ -2229,6 +2228,184 @@ ajaxedit_lab_start:
 		     MOMOUT_DEC_INT ((int) _N (num)), NULL);
 	  goto end;
 	}
+      }
+    /***** todo= mom_menuitem_editval_insertson ****/
+    else if (mom_string_same (todov, "mom_menuitem_editval_insertson"))
+      {
+	_L (display) = MOM_NULLV;
+	_N (ix) = -1;
+	momval_t idvalv = mom_webx_post_arg (_L (webx).pitem, "idval_mom");
+	momval_t indexstrv = mom_webx_post_arg (_L (webx).pitem, "momindex");
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL ("ajax_edit editval_insertson idvalv="),
+		   MOMOUT_VALUE ((const momval_t) idvalv),
+		   MOMOUT_LITERAL (" indexstrv="),
+		   MOMOUT_VALUE ((const momval_t) indexstrv), NULL);
+	{
+	  const char *idvalstr = mom_string_cstr (idvalv);
+	  if (idvalstr
+	      && !strncmp (idvalstr, "momdisplay", strlen ("momdisplay"))
+	      && (_L (display) =
+		  (momval_t) (mom_get_item_of_identcstr
+			      (idvalstr + strlen ("momdisplay")))).ptr)
+	    {
+	      MOM_DEBUG (run,
+			 MOMOUT_LITERAL
+			 ("ajax_edit_codmom editval_insertson got display="),
+			 MOMOUT_VALUE ((const momval_t) _L (display)),
+			 MOMOUT_LITERAL (" :: "),
+			 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
+						  *) (_L (display).pitem)),
+			 NULL);
+	    };
+	}
+	assert (_L (display).pitem != NULL);
+	//
+	{
+	  const char *indexstr = mom_string_cstr (indexstrv);
+	  if (indexstr
+	      && (isdigit (*indexstr) || (*indexstr == '-')
+		  || (*indexstr == '+')))
+	    _N (ix) = atoi (indexstr);
+	}
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL
+		   ("ajax_edit_codmom editval_insertson ix="),
+		   MOMOUT_DEC_INT ((int) _N (ix)), NULL);
+	_L (origin) = MOM_NULLV;
+	_L (subdisplay) = (momval_t) mom_make_item ();
+	_L (updated) = mom_make_double (mom_clock_time (CLOCK_REALTIME));
+	/// update the display
+	{
+	  mom_should_lock_item (_L (display).pitem);
+	  _L (origin) =
+	    mom_item_get_attribute (_L (display).pitem, mom_named__origin);
+	  _L (editor) =
+	    mom_item_get_attribute (_L (display).pitem, mom_named__editor);
+	  _L (dispnode) =
+	    mom_item_get_attribute (_L (display).pitem, mom_named__display);
+	  _L (curitem) = (momval_t) mom_node_nth (_L (dispnode), 0);
+	  _L (tupledisplays) = (momval_t) mom_node_nth (_L (dispnode), 1);
+	  _N (num) = mom_tuple_length (_L (tupledisplays));
+	  {
+	    const momitem_t *tinyarr[MOM_TINY_MAX] = { NULL };
+	    unsigned siz = _N (num) + 1;
+	    assert ((int) _N (ix) >= 0 && (int) _N (ix) < (int) siz);
+	    const momitem_t **arr =
+	      (siz < MOM_TINY_MAX) ? tinyarr : MOM_GC_ALLOC ("inserted tuple",
+							     siz *
+							     sizeof
+							     (momval_t));
+	    for (unsigned j = 0; j < _N (ix); j++)
+	      arr[j] = mom_tuple_nth_item (_L (tupledisplays), j);
+	    arr[_N (ix)] = _L (subdisplay).pitem;
+	    for (unsigned j = (unsigned)_N (ix); j < (unsigned) _N (num); j++)
+	      arr[j + 1] = mom_tuple_nth_item (_L (tupledisplays), j);
+	    _L (tupledisplays) =
+	      (momval_t) mom_make_tuple_from_array (siz, arr);
+	    if (arr != tinyarr)
+	      MOM_GC_FREE (arr);
+	  }
+	  _L (dispnode) =
+	    (momval_t) mom_make_node_sized (mom_named__node, 2, _L (curitem),
+					    _L (tupledisplays), NULL);
+	  mom_item_put_attribute (_L (display).pitem, mom_named__display,
+				  _L (dispnode));
+	  mom_item_put_attribute (_L (display).pitem, mom_named__updated,
+				  _L (updated));
+	  mom_item_remove_attribute (_L (display).pitem, mom_named__val);
+	  MOM_DEBUG (run,
+		     MOMOUT_LITERAL
+		     ("ajax_edit_codmom editval_insertson update display="),
+		     MOMOUT_VALUE ((const momval_t) _L (display)),
+		     MOMOUT_LITERAL (" :: "),
+		     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
+					      *) (_L (display).pitem)), NULL);
+	  mom_unlock_item (_L (display).pitem);
+	}
+	//// update the origin
+	{
+	  mom_should_lock_item (_L (origin).pitem);
+	  mom_item_put_attribute (_L (origin).pitem, mom_named__updated,
+				  _L (updated));
+	  MOM_DEBUG (run,
+		     MOMOUT_LITERAL
+		     ("ajax_edit_codmom editval_prependson update origin="),
+		     MOMOUT_VALUE ((const momval_t) _L (origin)),
+		     MOMOUT_LITERAL (" :: "),
+		     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
+					      *) (_L (display).pitem)), NULL);
+	  mom_unlock_item (_L (origin).pitem);
+	}
+	//// update the editor
+	{
+	  mom_should_lock_item (_L (editor).pitem);
+	  unsigned newnum = mom_item_vector_count (_L (editor).pitem);
+	  _N (rank) = newnum;
+	  mom_item_vector_append1 (_L (editor).pitem, _L (subdisplay));
+	  mom_unlock_item (_L (editor).pitem);
+	}
+	//// fill the subdisplay, don't bother to lock it!
+	{
+	  mom_item_put_attribute (_L (subdisplay).pitem, mom_named__display,
+				  (momval_t) mom_named__input);
+	  mom_item_put_attribute (_L (subdisplay).pitem, mom_named__parent,
+				  _L (display));
+	  mom_item_put_attribute (_L (subdisplay).pitem, mom_named__editor,
+				  _L (editor));
+	  mom_item_put_attribute (_L (subdisplay).pitem, mom_named__rank,
+				  mom_make_integer (_N (rank)));
+	  MOM_DEBUG (run,
+		     MOMOUT_LITERAL
+		     ("ajax_edit_codmom editval_insertson update subdisplay="),
+		     MOMOUT_VALUE ((const momval_t) _L (subdisplay)),
+		     MOMOUT_LITERAL (" :: "),
+		     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
+					      *) (_L (subdisplay).pitem)),
+		     NULL);
+	}
+	/// output the json
+	{
+	  const char *displayidstr =
+	    mom_string_cstr ((momval_t)
+			     mom_item_get_idstr (_L (display).pitem));
+	  const char *subdisplayidstr =
+	    mom_string_cstr ((momval_t)
+			     mom_item_get_idstr (_L (subdisplay).pitem));
+	  MOM_WEBX_OUT (_L (webx).pitem,
+			MOMOUT_LITERAL
+			("{ \"momedit_do\": \"momedit_insertnodeinput\","),
+			MOMOUT_LITERAL (" \"momedit_displayid\": \""),
+			MOMOUT_LITERALV (displayidstr),
+			MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE (),
+			MOMOUT_LITERAL (" \"momedit_newdispid\": \""),
+			MOMOUT_LITERALV (subdisplayidstr),
+			MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE (),
+			MOMOUT_LITERAL (" \"momedit_insertrank\": "),
+			MOMOUT_DEC_INT ((int) _N (ix)),
+			MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
+			MOMOUT_LITERAL (" \"momedit_inphtml\": \""), NULL);
+	  MOM_WEBX_OUT (_L (webx).pitem,
+			MOMOUT_JS_LITERAL
+			("<span class='mom_separ_cl' data-momsepar='-1'>, </span>"),
+			MOMOUT_JS_LITERAL
+			("<input type='text' class='mom_newvalinput_cl' id='momvalinp"),
+			MOMOUT_LITERALV (subdisplayidstr),
+			MOMOUT_JS_LITERAL ("' />"), NULL);
+	  MOM_WEBX_OUT (_L (webx).pitem, MOMOUT_LITERAL ("\" }"),
+			MOMOUT_NEWLINE (), NULL);
+	  mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
+	  MOM_DEBUG (run,
+		     MOMOUT_LITERAL
+		     ("ajax_edit_codmom editval_prependson done displayidstr="),
+		     MOMOUT_LITERALV ((const char *) displayidstr),
+		     MOMOUT_LITERAL (" subdisplayidstr="),
+		     MOMOUT_LITERALV ((const char *) subdisplayidstr),
+		     MOMOUT_LITERAL (" num="),
+		     MOMOUT_DEC_INT ((int) _N (num)), NULL);
+	  goto end;
+	}
+#warning ajax_edit_codmom editval_insertson unimplemented
       }
     ////
     else

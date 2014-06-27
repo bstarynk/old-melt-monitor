@@ -124,15 +124,25 @@ $(function(){
     editvalul_mom.on("menuselect",function(ev,ui) {
 	var idui= $(ui.item).attr("id");
 	var datavaleditid= editvalul_mom.attr("data-momeditedval");
+	var dataui=$(ui.item).data();
 	console.debug ("editvalul menuselect ev=", ev, " ui=", ui,
-		       " idui=", idui, " curval_mom=", curval_mom,
+		       " idui=", idui, " dataui=", dataui,
+		       " curval_mom=", curval_mom,
 		       " datavaleditid=", datavaleditid);
+	var jdata = { todo_mom: idui,
+		      idval_mom: datavaleditid
+		    };
+	if (dataui) {
+	    for (var datakey in dataui)
+		if (dataui.hasOwnProperty(datakey) && datakey.substring(0,3) == "mom") {
+		    jdata[datakey] = dataui[datakey];
+		}
+	}
+	console.debug ("editvalul menuselect jdata=", jdata);
 	console.trace ();
 	$.ajax({ url: '/ajax_edit',
  		 method: 'POST',
- 		 data: { todo_mom: idui,
-			 idval_mom: datavaleditid
-		       },
+ 		 data: jdata,
 		 dataType: 'json',
 		 success: function (gotdata) {
 		     console.debug("editvalul menuselect ajax_edit gotdata=", gotdata);
