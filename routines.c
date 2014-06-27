@@ -1951,13 +1951,25 @@ ajaxedit_lab_start:
 	    };
 	}
 	assert (_L (display).pitem != NULL);
-	MOM_FATAL (MOMOUT_LITERAL
-		   ("ajax edit editval_addset unimplemented display="),
-		   MOMOUT_VALUE ((const momval_t) _L (display)),
-		   MOMOUT_LITERAL (" :: "),
-		   MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
-					    *) (_L (display).pitem)), NULL);
-#warning addset not fully implemented
+	///
+	/// just output a json asking to display a modal dialog
+	{
+	  const char *displayidstr =
+	    mom_string_cstr ((momval_t)
+			     mom_item_get_idstr (_L (display).pitem));
+	  MOM_WEBX_OUT (_L (webx).pitem,
+			MOMOUT_LITERAL
+			("{ \"momedit_do\": \"momedit_addtosetdialog\","),
+			MOMOUT_LITERAL (" \"momedit_displayid\": \""),
+			MOMOUT_LITERALV (displayidstr),
+			MOMOUT_LITERAL ("\" }"), MOMOUT_NEWLINE (), NULL);
+	  mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
+	  MOM_DEBUG (run,
+		     MOMOUT_LITERAL
+		     ("ajax_edit_codmom editval_addset done displayidstr="),
+		     MOMOUT_LITERALV ((const char *) displayidstr), NULL);
+	  goto end;
+	}
       }
     /***** todo= mom_menuitem_editval_appendson ****/
     else if (mom_string_same (todov, "mom_menuitem_editval_appendson"))
@@ -2413,7 +2425,7 @@ ajaxedit_lab_start:
 	  mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
 	  MOM_DEBUG (run,
 		     MOMOUT_LITERAL
-		     ("ajax_edit_codmom editval_prependson done displayidstr="),
+		     ("ajax_edit_codmom editval_insertson done displayidstr="),
 		     MOMOUT_LITERALV ((const char *) displayidstr),
 		     MOMOUT_LITERAL (" subdisplayidstr="),
 		     MOMOUT_LITERALV ((const char *) subdisplayidstr),
@@ -2421,7 +2433,6 @@ ajaxedit_lab_start:
 		     MOMOUT_DEC_INT ((int) _N (num)), NULL);
 	  goto end;
 	}
-#warning ajax_edit_codmom editval_insertson unimplemented
       }
     ////
     else
