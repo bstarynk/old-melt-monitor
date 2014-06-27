@@ -1932,8 +1932,24 @@ ajaxedit_lab_start:
 	momval_t idvalv = mom_webx_post_arg (_L (webx).pitem, "idval_mom");
 	MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_edit editval_addset idvalv="),
 		   MOMOUT_VALUE ((const momval_t) idvalv));
-	_L (display) =
-	  (momval_t) mom_get_item_of_ident (mom_to_string (idvalv));
+	{
+	  const char *idvalstr = mom_string_cstr (idvalv);
+	  if (idvalstr
+	      && !strncmp (idvalstr, "momdisplay", strlen ("momdisplay"))
+	      && (_L (display) =
+		  (momval_t) (mom_get_item_of_identcstr
+			      (idvalstr + strlen ("momdisplay")))).ptr)
+	    {
+	      MOM_DEBUG (run,
+			 MOMOUT_LITERAL
+			 ("ajax_edit_codmom editval_addset got display="),
+			 MOMOUT_VALUE ((const momval_t) _L (display)),
+			 MOMOUT_LITERAL (" :: "),
+			 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
+						  *) (_L (display).pitem)),
+			 NULL);
+	    };
+	}
 	assert (_L (display).pitem != NULL);
 	MOM_FATAL (MOMOUT_LITERAL
 		   ("ajax edit editval_addset unimplemented display="),
