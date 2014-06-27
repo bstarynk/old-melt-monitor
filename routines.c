@@ -2198,7 +2198,7 @@ ajaxedit_lab_start:
 			     mom_item_get_idstr (_L (subdisplay).pitem));
 	  MOM_WEBX_OUT (_L (webx).pitem,
 			MOMOUT_LITERAL
-			("{ \"momedit_do\": \"momedit_appendnodeinput\","),
+			("{ \"momedit_do\": \"momedit_prependnodeinput\","),
 			MOMOUT_LITERAL (" \"momedit_displayid\": \""),
 			MOMOUT_LITERALV (displayidstr),
 			MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE (),

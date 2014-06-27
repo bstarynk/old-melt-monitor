@@ -802,6 +802,26 @@ function mom_ajax_edit_got(jdata,ev,idui,elem)
 	mom_install_new_input(newinp,'momvalinp'+newdispid);
 	console.debug ("mom_ajax_edit_got momedit_appendinput final newinp=", newinp);
     }
+    else if (jdata.momedit_do == "momedit_prependnodeinput") {
+	console.debug ("mom_ajax_edit_got momedit_prependnodeinput jdata=", jdata);
+	var dispid = jdata.momedit_displayid;
+	var newdispid = jdata.momedit_newdispid;
+	var inphtml = jdata.momedit_inphtml;
+	var disp= $('#momdisplay' + dispid);
+	console.debug ("mom_ajax_edit_got momedit_prependnodeinput dispid=",
+		       dispid, " inphtml=", inphtml, " disp=", disp);
+	var stapar = $('#momnodstapar'+dispid);
+	console.debug ("mom_ajax_edit_got momedit_prependnodeinput stapar=", stapar);
+	stapar.after(inphtml);
+	mom_renumber_separ(disp);
+	console.debug ("mom_ajax_edit_got momedit_prependnodeinput prepended disp=",
+		       disp, " newdispid=", newdispid);
+	var newinp = $('#momvalinp'+newdispid);
+	console.debug ("mom_ajax_edit_got  momedit_prependnodeinput newinp=", newinp, 
+		       " thru ", '#momvalinp'+newdispid);
+	mom_install_new_input(newinp,'momvalinp'+newdispid);
+	console.debug ("mom_ajax_edit_got momedit_prependinput final newinp=", newinp);
+    }
     else if (jdata.momedit_do == "momedit_replaceinput") {
 	var oldid = jdata.momedit_oldid;
 	var newid = jdata.momedit_newid;
@@ -813,6 +833,18 @@ function mom_ajax_edit_got(jdata,ev,idui,elem)
 	mom_install_new_input(newinp,newid);
 	console.debug ("mom_ajax_edit_got momedit_replaceinput final newinp=", newinp);
     }
+}
+
+
+function mom_renumber_separ(disp)
+{
+    console.debug("mom_renumber_separ disp=", disp);
+    disp.find(">.mom_separ_cl").each(function (ix,sep) {
+	console.debug("mom_renumber_separ ix=", ix, " sep=", sep);
+	var nix=""+(ix+1);
+	$(sep).data("momsepar",nix);
+	console.debug("mom_renumber_separ nix=", nix, " updated sep=", sep);
+    });
 }
 
 function mom_install_new_input(newinp,newid)
