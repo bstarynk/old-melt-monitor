@@ -832,6 +832,28 @@ function mom_ajax_edit_got(jdata,ev,idui,elem)
 	mom_install_new_input(newinp,'momvalinp'+newdispid);
 	console.debug ("mom_ajax_edit_got momedit_prependinput final newinp=", newinp);
     }
+    else if (jdata.momedit_do == "momedit_insertnodeinput") {
+	console.debug ("mom_ajax_edit_got momedit_prependnodeinput jdata=", jdata);
+	var dispid = jdata.momedit_displayid;
+	var newdispid = jdata.momedit_newdispid;
+	var inphtml = jdata.momedit_inphtml;
+	var disp= $('#momdisplay' + dispid);
+	var insrank = jdata.momedit_insertrank;
+	console.debug ("mom_ajax_edit_got momedit_insertnodeinput dispid=",
+		       dispid, " inphtml=", inphtml, " disp=", disp,
+		       " insrank=", insrank);
+	var sep = disp.find(">.mom_separ_cl[data-momsepar='" + insrank + "']");
+	console.debug ("mom_ajax_edit_got momedit_insertnodeinput sep=", sep);
+	sep.before(inphtml);
+	mom_renumber_separ(disp);
+	console.debug ("mom_ajax_edit_got momedit_insertnodeinput inserted disp=",
+		       disp, " newdispid=", newdispid);
+	var newinp = $('#momvalinp'+newdispid);
+	console.debug ("mom_ajax_edit_got  momedit_insertnodeinput newinp=", newinp, 
+		       " thru ", '#momvalinp'+newdispid);
+	mom_install_new_input(newinp,'momvalinp'+newdispid);
+	console.debug ("mom_ajax_edit_got momedit_insertinput final newinp=", newinp);
+    }
     else if (jdata.momedit_do == "momedit_replaceinput") {
 	var oldid = jdata.momedit_oldid;
 	var newid = jdata.momedit_newid;
