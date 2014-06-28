@@ -2487,6 +2487,9 @@ ajaxedit_lab_start:
 	    _L (curval) =
 	      (momval_t) mom_make_set_til_nil (_L (curval), _L (curitem),
 					       NULL);
+	    MOM_DEBUG (run,
+		       MOMOUT_LITERAL ("ajax_edit additem addelem curval="),
+		       MOMOUT_VALUE ((const momval_t) _L (curval)), NULL);
 	    /// update the display
 	    {
 	      mom_should_lock_item (_L (display).pitem);
