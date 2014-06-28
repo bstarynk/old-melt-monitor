@@ -2469,6 +2469,17 @@ ajaxedit_lab_start:
 	  mom_unlock_item (_L (display).pitem);
 	}
 	_L (updated) = mom_make_double (mom_clock_time (CLOCK_REALTIME));
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL ("ajax_edit additem dispnode="),
+		   MOMOUT_VALUE ((const momval_t) _L (dispnode)),
+		   MOMOUT_LITERAL (" curval="),
+		   MOMOUT_VALUE ((const momval_t) _L (curval)),
+		   MOMOUT_LITERAL (" origin="),
+		   MOMOUT_VALUE ((const momval_t) _L (curval)),
+		   MOMOUT_LITERAL (" curitem="),
+		   MOMOUT_VALUE ((const momval_t) _L (curitem)),
+		   MOMOUT_LITERAL (" doaddv="),
+		   MOMOUT_VALUE ((const momval_t) doaddv), NULL);
 	if (mom_string_same (doaddv, "mom_add_element")
 	    && _L (dispnode).pitem == mom_named__set
 	    && mom_is_set (_L (curval)) && mom_is_item (_L (curitem)))
@@ -2509,6 +2520,7 @@ ajaxedit_lab_start:
 	      mom_unlock_item (_L (origin).pitem);
 	    }
 	  }			// end if doadd is mom_add_element
+#warning ajax_edit additem should handle user-error like adding a nil to a set....
 	else
 	  MOM_FATAL (MOMOUT_LITERAL
 		     ("ajax_edit additem unimplemented display="),
