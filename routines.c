@@ -875,6 +875,7 @@ ajax_edit_codmom (int momstate_, momitem_t *momtasklet_,
     ajaxedit_s_dideditcopy,
     ajaxedit_s_didputvalue,
     ajaxedit_s_didupdatedisplayvalue,
+    ajaxedit_s_didreplacedisplayforitem,
     ajaxedit_s__laststate
   };
 #define _SET_STATE(St) do {					\
@@ -897,6 +898,8 @@ ajax_edit_codmom (int momstate_, momitem_t *momtasklet_,
 	goto ajaxedit_lab_didputvalue;
       case ajaxedit_s_didupdatedisplayvalue:
 	goto ajaxedit_lab_didupdatedisplayvalue;
+      case ajaxedit_s_didreplacedisplayforitem:
+	goto ajaxedit_lab_didreplacedisplayforitem;
       case ajaxedit_s__laststate:;
       }
   MOM_FATAPRINTF ("ajax_edit invalid state #%d", momstate_);
@@ -2505,20 +2508,62 @@ ajaxedit_lab_start:
 			 NULL);
 	      mom_unlock_item (_L (origin).pitem);
 	    }
-#warning should probably emit a json with the updated display HTML...
 	  }			// end if doadd is mom_add_element
-	MOM_FATAL (MOMOUT_LITERAL
-		   ("ajax_edit additem unimplemented display="),
+	else
+	  MOM_FATAL (MOMOUT_LITERAL
+		     ("ajax_edit additem unimplemented display="),
+		     MOMOUT_VALUE ((const momval_t) _L (display)),
+		     MOMOUT_LITERAL (" :: "),
+		     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
+					      *) (_L (display).pitem)),
+		     MOMOUT_NEWLINE (), MOMOUT_LITERAL (" curitem="),
+		     MOMOUT_VALUE ((const momval_t) _L (curitem)),
+		     MOMOUT_LITERAL (" :: "),
+		     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
+					      *) (_L (curitem).pitem)),
+		     MOMOUT_NEWLINE (), MOMOUT_LITERAL (" doadd="),
+		     MOMOUT_VALUE ((const momval_t) doaddv), NULL);
+	{
+	  const char *displayidstr =
+	    mom_string_cstr ((momval_t)
+			     mom_item_get_idstr (_L (display).pitem));
+	  assert (displayidstr != NULL);
+	  MOM_WEBX_OUT (_L (webx).pitem,
+			MOMOUT_LITERAL
+			("{ \"momedit_do\": \"momedit_replacedisplayforitem\","),
+			MOMOUT_NEWLINE (),
+			MOMOUT_LITERAL ("  \"momedit_displayid\": \""),
+			MOMOUT_LITERALV (displayidstr),
+			MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE (), NULL);
+	}
+	MOM_WEBX_OUT (_L (webx).pitem,
+		      MOMOUT_LITERAL ("  \"momedit_displayhtml\": \""), NULL);
+	mom_unlock_item (_L (webx).pitem);
+	mom_item_tasklet_push_frame	///
+	  (momtasklet_, _C (display_value),	//
+	   MOMPFR_FIVE_VALUES (_L (editor), _L (webx), _L (curval),	//curval
+			       _L (origin),	//orig
+			       /*olddisplay: */ _L (display)
+	   ), MOMPFR_INT ((intptr_t) 0), NULL);
+	mom_item_tasklet_clear_res (momtasklet_);
+	_SET_STATE (didreplacedisplayforitem);
+      ajaxedit_lab_didreplacedisplayforitem:	///// **********
+	_L (display) = mom_item_tasklet_res1 (momtasklet_);
+	mom_item_tasklet_clear_res (momtasklet_);
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL
+		   ("ajax_objects_codmom didreplacedisplayforitem display="),
 		   MOMOUT_VALUE ((const momval_t) _L (display)),
 		   MOMOUT_LITERAL (" :: "),
 		   MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
 					    *) (_L (display).pitem)),
-		   MOMOUT_NEWLINE (), MOMOUT_LITERAL (" curitem="),
-		   MOMOUT_VALUE ((const momval_t) _L (curitem)),
-		   MOMOUT_LITERAL (" :: "),
-		   MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
-					    *) (_L (curitem).pitem)), NULL);
-#warning ajax_edit additem unimplemented
+		   MOMOUT_NEWLINE (), MOMOUT_LITERAL (" webx="),
+		   MOMOUT_VALUE ((const momval_t) _L (webx)), NULL);
+	mom_should_lock_item (_L (webx).pitem);
+	MOM_WEBX_OUT (_L (webx).pitem,
+		      MOMOUT_LITERAL ("\" }"), MOMOUT_NEWLINE (), NULL);
+	mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
+	goto end;
       }
     ////
     ////
