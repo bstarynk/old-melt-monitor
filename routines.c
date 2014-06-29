@@ -2484,6 +2484,10 @@ ajaxedit_lab_start:
 	    && _L (dispnode).pitem == mom_named__set
 	    && mom_is_set (_L (curval)) && mom_is_item (_L (curitem)))
 	  {
+	    MOM_DEBUG (run,
+		       MOMOUT_LITERAL
+		       ("ajax_edit additem adding elem curitem="),
+		       MOMOUT_VALUE (_L (curitem)), NULL);
 	    _L (curval) =
 	      (momval_t) mom_make_set_til_nil (_L (curval), _L (curitem),
 					       NULL);

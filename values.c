@@ -513,11 +513,11 @@ mom_make_set_til_nil (momval_t first, ...)
 	case momty_set:
 	case momty_tuple:
 	  siz += val.pseqitems->slen;
-	  continue;
+	  break;
 	case momty_item:
 	  siz++;
 	default:
-	  continue;
+	  break;
 	}
       val = va_arg (args, momval_t);
     };
