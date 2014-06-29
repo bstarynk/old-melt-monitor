@@ -25,7 +25,8 @@
 PACKAGES= sqlite3 glib-2.0 #gmime-2.6 libcurl
 PKGCONFIG= pkg-config
 CC=gcc
-CFLAGS= -std=gnu11 -Wall -Wextra $(PREPROFLAGS) $(OPTIMFLAGS)
+CCFLAGS=  -std=gnu11 -Wall -Wextra
+CFLAGS= $(CCFLAGS) $(PREPROFLAGS) $(OPTIMFLAGS)
 CXX=g++
 CXXFLAGS= -std=c++11 -Wall -pthread  $(PREPROFLAGS) $(OPTIMFLAGS)
 INDENT= indent -gnu
