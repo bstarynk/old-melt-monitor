@@ -342,6 +342,8 @@ display_value_codmom (int momstate_, momitem_t *momtasklet_,
     MOM_DEBUGPRINTF (run, "display_value_codmom popreturn");	\
     return momroutres_pop; } while(0)
   // lock the webx & the editor
+  assert (mom_is_item (_L (webx)));
+  assert (mom_is_item (_L (editor)));
   {
     mom_should_lock_item (_L (webx).pitem);
     mom_should_lock_item (_L (editor).pitem);
@@ -2466,6 +2468,8 @@ ajaxedit_lab_start:
 	    mom_item_get_attribute (_L (display).pitem, mom_named__val);
 	  _L (origin) =
 	    mom_item_get_attribute (_L (display).pitem, mom_named__origin);
+	  _L (editor) =
+	    mom_item_get_attribute (_L (display).pitem, mom_named__editor);
 	  mom_unlock_item (_L (display).pitem);
 	}
 	_L (updated) = mom_make_double (mom_clock_time (CLOCK_REALTIME));
@@ -2478,6 +2482,8 @@ ajaxedit_lab_start:
 		   MOMOUT_VALUE ((const momval_t) _L (curval)),
 		   MOMOUT_LITERAL (" curitem="),
 		   MOMOUT_VALUE ((const momval_t) _L (curitem)),
+		   MOMOUT_LITERAL (" editor="),
+		   MOMOUT_VALUE ((const momval_t) _L (editor)),
 		   MOMOUT_LITERAL (" doaddv="),
 		   MOMOUT_VALUE ((const momval_t) doaddv), NULL);
 	if (mom_string_same (doaddv, "mom_add_element")
@@ -2558,6 +2564,9 @@ ajaxedit_lab_start:
 	MOM_WEBX_OUT (_L (webx).pitem,
 		      MOMOUT_LITERAL ("  \"momedit_displayhtml\": \""), NULL);
 	mom_unlock_item (_L (webx).pitem);
+	assert (mom_is_item (_L (editor)));
+	assert (mom_is_item (_L (origin)));
+	assert (mom_is_item (_L (display)));
 	mom_item_tasklet_push_frame	///
 	  (momtasklet_, _C (display_value),	//
 	   MOMPFR_FIVE_VALUES (_L (editor), _L (webx), _L (curval),	//curval
