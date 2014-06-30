@@ -931,7 +931,8 @@ function mom_ajax_edit_got(jdata,ev,idui,elem)
 	var ix = jdata.momedit_index;
 	var disp= $('#momdisplay' + dispid);
 	console.debug ("mom_ajax_edit_got prependtotupledialog dispid=", dispid, " disp=", disp, " ix=", ix);
-	mom_show_add_item("<i>insert item "+ (string)ix + " in tuple</i>",dispid, { mom_do_add: "mom_insert_in_tuple"; mom_index: ix });
+	mom_show_add_item("<i>insert item "+ (ix.toString()) + " in tuple</i>", dispid,
+			  { mom_do_add: "mom_insert_in_tuple", mom_index: ix });
     }
     else {
 	console.error("mom_ajax_edit_got unexpected jdata=", jdata);
