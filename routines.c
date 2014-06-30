@@ -2072,7 +2072,7 @@ ajaxedit_lab_start:
 	  goto end;
 	}
       }
-    /***** todo= mom_menuitem_editval_preendtuple ****/
+    /***** todo= mom_menuitem_editval_prependtuple ****/
     else if (mom_string_same (todov, "mom_menuitem_editval_prependtuple"))
       {
 	momval_t idvalv = mom_webx_post_arg (_L (webx).pitem, "idval_mom");
@@ -2114,6 +2114,63 @@ ajaxedit_lab_start:
 	  MOM_DEBUG (run,
 		     MOMOUT_LITERAL
 		     ("ajax_edit_codmom editval_prependtuple done displayidstr="),
+		     MOMOUT_LITERALV ((const char *) displayidstr), NULL);
+	  goto end;
+	}
+      }
+    /***** todo= mom_menuitem_editval_inserttuple ****/
+    else if (mom_string_same (todov, "mom_menuitem_editval_inserttuple"))
+      {
+	int myindex = -1;
+	momval_t idvalv = mom_webx_post_arg (_L (webx).pitem, "idval_mom");
+	momval_t indexv = mom_webx_post_arg (_L (webx).pitem, "momindex");
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL ("ajax_edit editval_inserttuple idvalv="),
+		   MOMOUT_VALUE ((const momval_t) idvalv),
+		   MOMOUT_LITERAL (" indexv="),
+		   MOMOUT_VALUE ((const momval_t) indexv), NULL);
+	{
+	  const char *idvalstr = mom_string_cstr (idvalv);
+	  const char *indexstr = mom_string_cstr (indexv);
+	  if (indexstr && isdigit (indexstr))
+	    myindex = atoi (indexstr);
+	  if (idvalstr
+	      && !strncmp (idvalstr, "momdisplay", strlen ("momdisplay"))
+	      && (_L (display) =
+		  (momval_t) (mom_get_item_of_identcstr
+			      (idvalstr + strlen ("momdisplay")))).ptr)
+	    {
+	      MOM_DEBUG (run,
+			 MOMOUT_LITERAL
+			 ("ajax_edit_codmom editval_inserttuple got display="),
+			 MOMOUT_VALUE ((const momval_t) _L (display)),
+			 MOMOUT_LITERAL (" :: "),
+			 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
+						  *) (_L (display).pitem)),
+			 MOMOUT_LITERAL (" myindex="),
+			 MOMOUT_DEC_INT (myindex), NULL);
+	    };
+	}
+	assert (_L (display).pitem != NULL);
+	///
+	/// just output a json asking to display a modal dialog
+	{
+	  const char *displayidstr =
+	    mom_string_cstr ((momval_t)
+			     mom_item_get_idstr (_L (display).pitem));
+	  MOM_WEBX_OUT (_L (webx).pitem,
+			MOMOUT_LITERAL
+			("{ \"momedit_do\": \"momedit_insertintupledialog\","),
+			MOMOUT_LITERAL (" \"momedit_displayid\": \""),
+			MOMOUT_LITERALV (displayidstr),
+			MOMOUT_LITERAL ("\", "),
+			MOMOUT_LITERAL (" \"momedit_index\": "),
+			MOMOUT_DEC_INT (myindex),
+			MOMOUT_LITERAL (" }"), MOMOUT_NEWLINE (), NULL);
+	  mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
+	  MOM_DEBUG (run,
+		     MOMOUT_LITERAL
+		     ("ajax_edit_codmom editval_inserttuple done displayidstr="),
 		     MOMOUT_LITERALV ((const char *) displayidstr), NULL);
 	  goto end;
 	}
