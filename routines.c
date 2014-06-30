@@ -1298,6 +1298,10 @@ ajaxedit_lab_start:
 			  MOMOUT_NEWLINE (),
 			  MOMOUT_LITERAL
 			  (" \"<li id='mom_menuitem_editval_addset'><a href='#'>Add to set</a></li>\" "),
+			  MOMOUT_LITERAL (", "),
+			  MOMOUT_NEWLINE (),
+			  MOMOUT_LITERAL
+			  (" \"<li id='mom_menuitem_editval_removeset'><a href='#'>Remove from set</a></li>\" "),
 			  MOMOUT_NEWLINE (),
 			  MOMOUT_LITERAL
 			  ("  ]"),
@@ -1976,6 +1980,52 @@ ajaxedit_lab_start:
 	  goto end;
 	}
       }
+    /***** todo= mom_menuitem_editval_removeset ****/
+    else if (mom_string_same (todov, "mom_menuitem_editval_removeset"))
+      {
+	momval_t idvalv = mom_webx_post_arg (_L (webx).pitem, "idval_mom");
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL ("ajax_edit editval_removeset idvalv="),
+		   MOMOUT_VALUE ((const momval_t) idvalv));
+	{
+	  const char *idvalstr = mom_string_cstr (idvalv);
+	  if (idvalstr
+	      && !strncmp (idvalstr, "momdisplay", strlen ("momdisplay"))
+	      && (_L (display) =
+		  (momval_t) (mom_get_item_of_identcstr
+			      (idvalstr + strlen ("momdisplay")))).ptr)
+	    {
+	      MOM_DEBUG (run,
+			 MOMOUT_LITERAL
+			 ("ajax_edit_codmom editval_removeset got display="),
+			 MOMOUT_VALUE ((const momval_t) _L (display)),
+			 MOMOUT_LITERAL (" :: "),
+			 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
+						  *) (_L (display).pitem)),
+			 NULL);
+	    };
+	}
+	assert (_L (display).pitem != NULL);
+	///
+	/// just output a json asking to display a modal dialog
+	{
+	  const char *displayidstr =
+	    mom_string_cstr ((momval_t)
+			     mom_item_get_idstr (_L (display).pitem));
+	  MOM_WEBX_OUT (_L (webx).pitem,
+			MOMOUT_LITERAL
+			("{ \"momedit_do\": \"momedit_removefromsetdialog\","),
+			MOMOUT_LITERAL (" \"momedit_displayid\": \""),
+			MOMOUT_LITERALV (displayidstr),
+			MOMOUT_LITERAL ("\" }"), MOMOUT_NEWLINE (), NULL);
+	  mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
+	  MOM_DEBUG (run,
+		     MOMOUT_LITERAL
+		     ("ajax_edit_codmom editval_removeset done displayidstr="),
+		     MOMOUT_LITERALV ((const char *) displayidstr), NULL);
+	  goto end;
+	}
+      }
     /***** todo= mom_menuitem_editval_appendson ****/
     else if (mom_string_same (todov, "mom_menuitem_editval_appendson"))
       {
@@ -2525,6 +2575,53 @@ ajaxedit_lab_start:
 	      MOM_DEBUG (run,
 			 MOMOUT_LITERAL
 			 ("ajax_edit additem addelem updated origin="),
+			 MOMOUT_VALUE ((const momval_t) _L (origin)),
+			 MOMOUT_LITERAL (" :: "),
+			 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
+						  *) (_L (origin).pitem)),
+			 NULL);
+	      mom_unlock_item (_L (origin).pitem);
+	    }
+	  }			// end if doadd is mom_add_element
+	if (mom_string_same (doaddv, "mom_remove_element")
+	    && _L (dispnode).pitem == mom_named__set
+	    && mom_is_set (_L (curval)) && mom_is_item (_L (curitem)))
+	  {
+	    MOM_DEBUG (run,
+		       MOMOUT_LITERAL
+		       ("ajax_edit additem removing elem curitem="),
+		       MOMOUT_VALUE (_L (curitem)), NULL);
+	    _L (curval) =
+	      (momval_t) mom_make_set_without (_L (curval), _L (curitem));
+	    MOM_DEBUG (run,
+		       MOMOUT_LITERAL
+		       ("ajax_edit additem removeelem curval="),
+		       MOMOUT_VALUE ((const momval_t) _L (curval)), NULL);
+	    /// update the display
+	    {
+	      mom_should_lock_item (_L (display).pitem);
+	      mom_item_put_attribute (_L (display).pitem, mom_named__val,
+				      _L (curval));
+	      mom_item_put_attribute (_L (display).pitem, mom_named__updated,
+				      _L (updated));
+	      MOM_DEBUG (run,
+			 MOMOUT_LITERAL
+			 ("ajax_edit additem removelem updated display="),
+			 MOMOUT_VALUE ((const momval_t) _L (display)),
+			 MOMOUT_LITERAL (" :: "),
+			 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
+						  *) (_L (display).pitem)),
+			 NULL);
+	      mom_unlock_item (_L (display).pitem);
+	    }
+	    /// touch the origin
+	    {
+	      mom_should_lock_item (_L (origin).pitem);
+	      mom_item_put_attribute (_L (origin).pitem, mom_named__updated,
+				      _L (updated));
+	      MOM_DEBUG (run,
+			 MOMOUT_LITERAL
+			 ("ajax_edit additem removelem updated origin="),
 			 MOMOUT_VALUE ((const momval_t) _L (origin)),
 			 MOMOUT_LITERAL (" :: "),
 			 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t

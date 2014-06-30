@@ -905,6 +905,12 @@ function mom_ajax_edit_got(jdata,ev,idui,elem)
 	console.debug ("mom_ajax_edit_got addtosetdialog dispid=", dispid, " disp=", disp);
 	mom_show_add_item("<i>add element to set</i>",dispid, { mom_do_add: "mom_add_element" });
     }
+    else if (jdata.momedit_do == "momedit_removefromsetdialog") {
+	var dispid = jdata.momedit_displayid;
+	var disp= $('#momdisplay' + dispid);
+	console.debug ("mom_ajax_edit_got removefromsetdialog dispid=", dispid, " disp=", disp);
+	mom_show_add_item("<i>remove element from set</i>",dispid, { mom_do_add: "mom_remove_element" });
+    }
     else {
 	console.error("mom_ajax_edit_got unexpected jdata=", jdata);
 	console.trace();
