@@ -1083,6 +1083,37 @@ mom_make_tuple_from_array (unsigned siz, const momitem_t **itemarr)
 }
 
 
+const momtuple_t *
+mom_make_tuple_from_slice (const momval_t srcseq, int startix, int endix)
+{
+  if (!mom_is_seqitem (srcseq))
+    return NULL;
+  unsigned srclen = ((momseqitem_t *) srcseq.pseqitems)->slen;
+  if (startix < 0)
+    startix += srclen;
+  if (endix < 0)
+    endix += srclen;
+  if (startix > endix)
+    {
+      int tmp = endix;
+      endix = startix;
+      startix = tmp;
+    };
+  if (startix < 0)
+    startix = 0;
+  if (endix < 0)
+    return NULL;
+  if (endix >= (int)srclen)
+    endix = (int) srclen - 1;
+  if (endix >= startix && endix < (int)srclen)
+    {
+      return mom_make_tuple_from_array (endix - startix,
+					((momseqitem_t *) srcseq.pseqitems)->itemseq +
+					startix);
+    }
+  return NULL;
+}
+
 
 static inline void
 update_node_hash_mom (struct momnode_st *nd)

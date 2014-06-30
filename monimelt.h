@@ -1761,6 +1761,8 @@ const momtuple_t *mom_make_tuple_til_nil (momval_t first, ...)
 const momtuple_t *mom_make_tuple_sized (unsigned siz, ...);
 const momtuple_t *mom_make_tuple_from_array (unsigned siz,
 					     const momitem_t **itemarr);
+const momtuple_t *mom_make_tuple_from_slice (const momval_t srcseq,
+					     int startix, int endix);
 
 
 static inline bool

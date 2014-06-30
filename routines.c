@@ -2889,6 +2889,64 @@ ajaxedit_lab_start:
 	    }
 	  }			// end if doadd is mom_prepend_to_tuple
 
+	else if (mom_string_same (doaddv, "mom_insert_in_tuple")
+		 && _L (dispnode).pitem == mom_named__tuple
+		 && mom_is_tuple (_L (curval)))
+	  {
+	    MOM_DEBUG (run,
+		       MOMOUT_LITERAL
+		       ("ajax_edit additem inserting in tuple curitem="),
+		       MOMOUT_VALUE (_L (curitem)),
+		       MOMOUT_LITERAL (" tuplecurval="),
+		       MOMOUT_VALUE (_L (curval)), NULL);
+#warning ajax_edit should update tuple for insertion
+	    /*
+	       _L (curval) =
+	       (momval_t)
+	       mom_make_tuple_til_nil ((momval_t)
+	       (_L (curitem).
+	       pitem ? _L (curitem).pitem : (momitem_t
+	       *)
+	       MOM_EMPTY), _L (curval), NULL);
+	     */
+	    MOM_DEBUG (run,
+		       MOMOUT_LITERAL
+		       ("ajax_edit additem inserttuple new curval="),
+		       MOMOUT_VALUE ((const momval_t) _L (curval)), NULL);
+	    /// update the display
+	    {
+	      mom_should_lock_item (_L (display).pitem);
+	      mom_item_put_attribute (_L (display).pitem, mom_named__val,
+				      _L (curval));
+	      mom_item_put_attribute (_L (display).pitem, mom_named__updated,
+				      _L (updated));
+	      MOM_DEBUG (run,
+			 MOMOUT_LITERAL
+			 ("ajax_edit additem inserttuple updated display="),
+			 MOMOUT_VALUE ((const momval_t) _L (display)),
+			 MOMOUT_LITERAL (" :: "),
+			 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
+						  *) (_L (display).pitem)),
+			 NULL);
+	      mom_unlock_item (_L (display).pitem);
+	    }
+	    /// touch the origin
+	    {
+	      mom_should_lock_item (_L (origin).pitem);
+	      mom_item_put_attribute (_L (origin).pitem, mom_named__updated,
+				      _L (updated));
+	      MOM_DEBUG (run,
+			 MOMOUT_LITERAL
+			 ("ajax_edit additem inserttuple updated origin="),
+			 MOMOUT_VALUE ((const momval_t) _L (origin)),
+			 MOMOUT_LITERAL (" :: "),
+			 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
+						  *) (_L (origin).pitem)),
+			 NULL);
+	      mom_unlock_item (_L (origin).pitem);
+	    }
+	  }			// end if doadd is mom_prepend_to_tuple
+
 	else
 	  {
 	    // emit { momedit_do: momedit_baditem } for ajax_edit
