@@ -298,9 +298,9 @@ $(function(){
 				   additemdlg_mom.dialog("close");
 			       }
 			       else if (datado == 'momedit_baditem') {
-				   iteminp.val("");
-				   var warn = $('#mom_addeditem_input').after("<b class='mom_warning_cl'>bad item!</b>");
-				   warn.delay(600).effect("fade").remove();
+				   addediteminp_mom.val("");
+				   $('#mom_addeditem_input').after("<b class='mom_warning_cl'>bad item!</b>");
+				   $('.mom_warning_cl').delay(600).effect("fade").remove();
 			       }
 			       else if (datado == 'momedit_replacedisplayforitem') {
 				   var dispid = gotdata.momedit_displayid;
