@@ -2630,21 +2630,45 @@ ajaxedit_lab_start:
 	      mom_unlock_item (_L (origin).pitem);
 	    }
 	  }			// end if doadd is mom_add_element
-#warning ajax_edit additem should handle user-error like adding a nil to a set....
 	else
-	  MOM_FATAL (MOMOUT_LITERAL
-		     ("ajax_edit additem unimplemented display="),
-		     MOMOUT_VALUE ((const momval_t) _L (display)),
-		     MOMOUT_LITERAL (" :: "),
-		     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
-					      *) (_L (display).pitem)),
-		     MOMOUT_NEWLINE (), MOMOUT_LITERAL (" curitem="),
-		     MOMOUT_VALUE ((const momval_t) _L (curitem)),
-		     MOMOUT_LITERAL (" :: "),
-		     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
-					      *) (_L (curitem).pitem)),
-		     MOMOUT_NEWLINE (), MOMOUT_LITERAL (" doadd="),
-		     MOMOUT_VALUE ((const momval_t) doaddv), NULL);
+	  {
+	    // emit { momedit_do: momedit_baditem } for ajax_edit
+	    const char *displayidstr =
+	      mom_string_cstr ((momval_t)
+			       mom_item_get_idstr (_L (display).pitem));
+	    assert (displayidstr != NULL);
+	    const char *editoridstr =
+	      mom_string_cstr ((momval_t)
+			       mom_item_get_idstr (_L (editor).pitem));
+	    assert (editoridstr != NULL);
+	    MOM_DEBUG (run, MOMOUT_LITERAL
+		       ("ajax_edit additem baditem display="),
+		       MOMOUT_VALUE ((const momval_t) _L (display)),
+		       MOMOUT_LITERAL (" :: "),
+		       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
+						*) (_L (display).pitem)),
+		       MOMOUT_NEWLINE (), MOMOUT_LITERAL (" curitem="),
+		       MOMOUT_VALUE ((const momval_t) _L (curitem)),
+		       MOMOUT_LITERAL (" :: "),
+		       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
+						*) (_L (curitem).pitem)),
+		       MOMOUT_NEWLINE (), MOMOUT_LITERAL (" doadd="),
+		       MOMOUT_VALUE ((const momval_t) doaddv), NULL);
+	    MOM_WEBX_OUT (_L (webx).pitem,
+			  MOMOUT_LITERAL
+			  ("{ \"momedit_do\": \"momedit_baditem\","),
+			  MOMOUT_NEWLINE (),
+			  MOMOUT_LITERAL ("  \"momedit_displayid\": \""),
+			  MOMOUT_LITERALV (displayidstr),
+			  MOMOUT_LITERAL ("\","),
+			  MOMOUT_NEWLINE (),
+			  MOMOUT_LITERAL ("  \"momedit_editorid\": \""),
+			  MOMOUT_LITERALV (editoridstr),
+			  MOMOUT_LITERAL ("\" }"), MOMOUT_NEWLINE (), NULL);
+	    mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
+	    goto end;
+
+	  }
 	{
 	  const char *displayidstr =
 	    mom_string_cstr ((momval_t)
