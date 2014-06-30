@@ -2132,7 +2132,7 @@ ajaxedit_lab_start:
 	{
 	  const char *idvalstr = mom_string_cstr (idvalv);
 	  const char *indexstr = mom_string_cstr (indexv);
-	  if (indexstr && isdigit (indexstr))
+	  if (indexstr && isdigit (*indexstr))
 	    myindex = atoi (indexstr);
 	  if (idvalstr
 	      && !strncmp (idvalstr, "momdisplay", strlen ("momdisplay"))
