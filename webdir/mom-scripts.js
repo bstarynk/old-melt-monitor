@@ -299,8 +299,12 @@ $(function(){
 			       }
 			       else if (datado == 'momedit_baditem') {
 				   addediteminp_mom.val("");
-				   $('#mom_addeditem_input').after("<b class='mom_warning_cl'>bad item!</b>");
-				   $('.mom_warning_cl').delay(600).effect("fade").remove();
+				   /// FIXME: the warning does not appear!
+				   var inp = $('#mom_addeditem_input').after("<br/><b class='mom_warning_cl' id='mom_warnbaditem_id'>bad item!</b>");
+				   additemdlg_mom.dialog({show: true});
+				   $('#mom_warnbaditem_id').delay(600).fadeOut(500).delay(100).remove();
+				   additemdlg_mom.dialog({show: true});
+				   console.debug ("additemdlg add ajax_edit baditem inp=", inp, " additemdlg_mom=", additemdlg_mom);
 			       }
 			       else if (datado == 'momedit_replacedisplayforitem') {
 				   var dispid = gotdata.momedit_displayid;
