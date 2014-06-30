@@ -2026,6 +2026,98 @@ ajaxedit_lab_start:
 	  goto end;
 	}
       }
+    /***** todo= mom_menuitem_editval_appendtuple ****/
+    else if (mom_string_same (todov, "mom_menuitem_editval_appendtuple"))
+      {
+	momval_t idvalv = mom_webx_post_arg (_L (webx).pitem, "idval_mom");
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL ("ajax_edit editval_appendtuple idvalv="),
+		   MOMOUT_VALUE ((const momval_t) idvalv));
+	{
+	  const char *idvalstr = mom_string_cstr (idvalv);
+	  if (idvalstr
+	      && !strncmp (idvalstr, "momdisplay", strlen ("momdisplay"))
+	      && (_L (display) =
+		  (momval_t) (mom_get_item_of_identcstr
+			      (idvalstr + strlen ("momdisplay")))).ptr)
+	    {
+	      MOM_DEBUG (run,
+			 MOMOUT_LITERAL
+			 ("ajax_edit_codmom editval_appendtuple got display="),
+			 MOMOUT_VALUE ((const momval_t) _L (display)),
+			 MOMOUT_LITERAL (" :: "),
+			 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
+						  *) (_L (display).pitem)),
+			 NULL);
+	    };
+	}
+	assert (_L (display).pitem != NULL);
+	///
+	/// just output a json asking to display a modal dialog
+	{
+	  const char *displayidstr =
+	    mom_string_cstr ((momval_t)
+			     mom_item_get_idstr (_L (display).pitem));
+	  MOM_WEBX_OUT (_L (webx).pitem,
+			MOMOUT_LITERAL
+			("{ \"momedit_do\": \"momedit_appendtotuple\","),
+			MOMOUT_LITERAL (" \"momedit_displayid\": \""),
+			MOMOUT_LITERALV (displayidstr),
+			MOMOUT_LITERAL ("\" }"), MOMOUT_NEWLINE (), NULL);
+	  mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
+	  MOM_DEBUG (run,
+		     MOMOUT_LITERAL
+		     ("ajax_edit_codmom editval_appendtuple done displayidstr="),
+		     MOMOUT_LITERALV ((const char *) displayidstr), NULL);
+	  goto end;
+	}
+      }
+    /***** todo= mom_menuitem_editval_preendtuple ****/
+    else if (mom_string_same (todov, "mom_menuitem_editval_prependtuple"))
+      {
+	momval_t idvalv = mom_webx_post_arg (_L (webx).pitem, "idval_mom");
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL ("ajax_edit editval_prependtuple idvalv="),
+		   MOMOUT_VALUE ((const momval_t) idvalv));
+	{
+	  const char *idvalstr = mom_string_cstr (idvalv);
+	  if (idvalstr
+	      && !strncmp (idvalstr, "momdisplay", strlen ("momdisplay"))
+	      && (_L (display) =
+		  (momval_t) (mom_get_item_of_identcstr
+			      (idvalstr + strlen ("momdisplay")))).ptr)
+	    {
+	      MOM_DEBUG (run,
+			 MOMOUT_LITERAL
+			 ("ajax_edit_codmom editval_prependtuple got display="),
+			 MOMOUT_VALUE ((const momval_t) _L (display)),
+			 MOMOUT_LITERAL (" :: "),
+			 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
+						  *) (_L (display).pitem)),
+			 NULL);
+	    };
+	}
+	assert (_L (display).pitem != NULL);
+	///
+	/// just output a json asking to display a modal dialog
+	{
+	  const char *displayidstr =
+	    mom_string_cstr ((momval_t)
+			     mom_item_get_idstr (_L (display).pitem));
+	  MOM_WEBX_OUT (_L (webx).pitem,
+			MOMOUT_LITERAL
+			("{ \"momedit_do\": \"momedit_prependtotuple\","),
+			MOMOUT_LITERAL (" \"momedit_displayid\": \""),
+			MOMOUT_LITERALV (displayidstr),
+			MOMOUT_LITERAL ("\" }"), MOMOUT_NEWLINE (), NULL);
+	  mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
+	  MOM_DEBUG (run,
+		     MOMOUT_LITERAL
+		     ("ajax_edit_codmom editval_prependtuple done displayidstr="),
+		     MOMOUT_LITERALV ((const char *) displayidstr), NULL);
+	  goto end;
+	}
+      }
     /***** todo= mom_menuitem_editval_appendson ****/
     else if (mom_string_same (todov, "mom_menuitem_editval_appendson"))
       {
@@ -2583,9 +2675,9 @@ ajaxedit_lab_start:
 	      mom_unlock_item (_L (origin).pitem);
 	    }
 	  }			// end if doadd is mom_add_element
-	if (mom_string_same (doaddv, "mom_remove_element")
-	    && _L (dispnode).pitem == mom_named__set
-	    && mom_is_set (_L (curval)) && mom_is_item (_L (curitem)))
+	else if (mom_string_same (doaddv, "mom_remove_element")
+		 && _L (dispnode).pitem == mom_named__set
+		 && mom_is_set (_L (curval)) && mom_is_item (_L (curitem)))
 	  {
 	    MOM_DEBUG (run,
 		       MOMOUT_LITERAL
@@ -2630,6 +2722,7 @@ ajaxedit_lab_start:
 	      mom_unlock_item (_L (origin).pitem);
 	    }
 	  }			// end if doadd is mom_add_element
+
 	else
 	  {
 	    // emit { momedit_do: momedit_baditem } for ajax_edit
@@ -2667,8 +2760,9 @@ ajaxedit_lab_start:
 			  MOMOUT_LITERAL ("\" }"), MOMOUT_NEWLINE (), NULL);
 	    mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
 	    goto end;
-
-	  }
+	  };
+	////
+	//// for successful doadds, update the display
 	{
 	  const char *displayidstr =
 	    mom_string_cstr ((momval_t)
