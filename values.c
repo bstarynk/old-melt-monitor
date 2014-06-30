@@ -527,8 +527,8 @@ mom_make_set_til_nil (momval_t first, ...)
   iset =
     MOM_GC_ALLOC ("new set til nil",
 		  sizeof (momset_t) + siz * sizeof (momitem_t *));
-  siz = 0;
   val = first;
+  ix = 0;
   va_start (args, first);
   while (val.ptr != NULL)
     {

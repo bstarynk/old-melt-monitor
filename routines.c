@@ -2553,12 +2553,20 @@ ajaxedit_lab_start:
 	    mom_string_cstr ((momval_t)
 			     mom_item_get_idstr (_L (display).pitem));
 	  assert (displayidstr != NULL);
+	  const char *editoridstr =
+	    mom_string_cstr ((momval_t)
+			     mom_item_get_idstr (_L (editor).pitem));
+	  assert (editoridstr != NULL);
 	  MOM_WEBX_OUT (_L (webx).pitem,
 			MOMOUT_LITERAL
 			("{ \"momedit_do\": \"momedit_replacedisplayforitem\","),
 			MOMOUT_NEWLINE (),
 			MOMOUT_LITERAL ("  \"momedit_displayid\": \""),
 			MOMOUT_LITERALV (displayidstr),
+			MOMOUT_LITERAL ("\","),
+			MOMOUT_NEWLINE (),
+			MOMOUT_LITERAL ("  \"momedit_editorid\": \""),
+			MOMOUT_LITERALV (editoridstr),
 			MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE (), NULL);
 	}
 	MOM_WEBX_OUT (_L (webx).pitem,

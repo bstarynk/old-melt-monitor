@@ -292,16 +292,28 @@ $(function(){
 			   },
 			   success: function (gotdata) {
 			       console.debug ("additemdlg add ajax_edit gotdata=", gotdata);
-			       if (gotdata.momedit_do == 'momedit_dispnewitem') {
+			       var datado = gotdata.momedit_do;
+			       if (datado == 'momedit_dispnewitem') {
 				   mom_add_new_item(gotdata);
 				   additemdlg_mom.dialog("close");
 			       }
-			       else if (gotdata.momedit_do == 'momedit_badnewitem') {
+			       else if (datado == 'momedit_badnewitem') {
 				   iteminp.val("");
 				   var warn = $('#mom_addeditem_input').after("<b class='mom_warning_cl'>bad itemibute!</b>");
 				   warn.delay(600).effect("fade").remove();
 			       }
-			       else console.error("additemdlg add ajax_edit strange gotdatado:", gotdata.momedit_do);
+			       else if (datado == 'momedit_replacedisplayforitem') {
+				   var dispid = gotdata.momedit_displayid;
+				   var editorid = gotdata.momedit_editorid;
+				   var disphtml = gotdata.momedit_displayhtml;
+				   console.debug("additemdlg replacedisplayforitem dispid=", dispid,
+						 " editorid=", editorid, " disphtml=", disphtml);
+				   $('#momdisplay' + dispid).replaceWith(disphtml);
+				   mom_editor_add_update_buttons(editorid);
+				   additemdlg_mom.dialog("close");
+			       }
+			       else
+				   console.error("additemdlg add ajax_edit strange gotdatado:", gotdata.momedit_do);
 			   }
 			 });
 	      }},
