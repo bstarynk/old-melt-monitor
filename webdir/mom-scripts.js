@@ -914,6 +914,18 @@ function mom_ajax_edit_got(jdata,ev,idui,elem)
 	console.debug ("mom_ajax_edit_got removefromsetdialog dispid=", dispid, " disp=", disp);
 	mom_show_add_item("<i>remove element from set</i>",dispid, { mom_do_add: "mom_remove_element" });
     }
+    else if (jdata.momedit_do == "momedit_appendtotupledialog") {
+	var dispid = jdata.momedit_displayid;
+	var disp= $('#momdisplay' + dispid);
+	console.debug ("mom_ajax_edit_got appendtotupledialog dispid=", dispid, " disp=", disp);
+	mom_show_add_item("<i>append item to tuple</i>",dispid, { mom_do_add: "mom_append_to_tuple" });
+    }
+    else if (jdata.momedit_do == "momedit_prependtotupledialog") {
+	var dispid = jdata.momedit_displayid;
+	var disp= $('#momdisplay' + dispid);
+	console.debug ("mom_ajax_edit_got prependtotupledialog dispid=", dispid, " disp=", disp);
+	mom_show_add_item("<i>prepend item to tuple</i>",dispid, { mom_do_add: "mom_prepend_to_tuple" });
+    }
     else {
 	console.error("mom_ajax_edit_got unexpected jdata=", jdata);
 	console.trace();
