@@ -1141,7 +1141,7 @@ mom_make_tuple_insertion (const momval_t srcseq, int rk, momval_t insv)
       const momitem_t **arr = (newlen < MOM_TINY_MAX)
 	? tinyarr
 	: MOM_GC_ALLOC ("insert items", newlen * sizeof (momitem_t *));
-      for (int ix = 0; ix < rk - 1; ix++)
+      for (int ix = 0; ix < rk; ix++)
 	arr[ix] = srcseq.pseqitems->itemseq[ix];
       arr[rk] = insv.pitem;
       for (int ix = rk; ix < (int) srclen; ix++)
@@ -1160,7 +1160,7 @@ mom_make_tuple_insertion (const momval_t srcseq, int rk, momval_t insv)
       const momitem_t **arr = (newlen < MOM_TINY_MAX)
 	? tinyarr
 	: MOM_GC_ALLOC ("insert items", newlen * sizeof (momitem_t *));
-      for (int ix = 0; ix < rk - 1; ix++)
+      for (int ix = 0; ix < rk; ix++)
 	arr[ix] = srcseq.pseqitems->itemseq[ix];
       for (int ix = 0; ix < (int) inslen; ix++)
 	arr[ix + rk] = insv.pseqitems->itemseq[ix];
