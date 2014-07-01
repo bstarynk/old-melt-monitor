@@ -1103,17 +1103,84 @@ mom_make_tuple_from_slice (const momval_t srcseq, int startix, int endix)
     startix = 0;
   if (endix < 0)
     return NULL;
-  if (endix >= (int)srclen)
+  if (endix >= (int) srclen)
     endix = (int) srclen - 1;
-  if (endix >= startix && endix < (int)srclen)
+  if (endix >= startix && endix < (int) srclen)
     {
       return mom_make_tuple_from_array (endix - startix,
-					((momseqitem_t *) srcseq.pseqitems)->itemseq +
-					startix);
+					((momseqitem_t *) srcseq.
+					 pseqitems)->itemseq + startix);
     }
   return NULL;
 }
 
+
+const momtuple_t *
+mom_make_tuple_insertion (const momval_t srcseq, int rk, momval_t insv)
+{
+  const momtuple_t *tupres = NULL;
+  if (!mom_is_seqitem (srcseq))
+    return NULL;
+  unsigned srclen = ((momseqitem_t *) srcseq.pseqitems)->slen;
+  if (rk < 0)
+    rk += srclen;
+  if (rk < 0 || rk > (int) srclen)
+    {
+      if (mom_is_tuple (srcseq))
+	return srcseq.ptuple;
+      else
+	return mom_make_tuple_from_array (srclen,
+					  ((momseqitem_t *)
+					   srcseq.pseqitems)->itemseq);
+    }
+  if (!insv.ptr || mom_is_item (insv))
+    {
+      // insert null or single item
+      unsigned newlen = srclen + 1;
+      const momitem_t *tinyarr[MOM_TINY_MAX] = { NULL };
+      const momitem_t **arr = (newlen < MOM_TINY_MAX)
+	? tinyarr
+	: MOM_GC_ALLOC ("insert items", newlen * sizeof (momitem_t *));
+      for (int ix = 0; ix < rk - 1; ix++)
+	arr[ix] = srcseq.pseqitems->itemseq[ix];
+      arr[rk] = insv.pitem;
+      for (int ix = rk; ix < (int) srclen; ix++)
+	arr[ix + 1] = srcseq.pseqitems->itemseq[ix];
+      tupres = mom_make_tuple_from_array (srclen + 1, arr);
+      if (arr != tinyarr)
+	MOM_GC_FREE (arr);
+      return tupres;
+    }
+  else if (mom_is_seqitem (insv))
+    {
+      // insert a sequence
+      unsigned inslen = insv.pseqitems->slen;
+      unsigned newlen = srclen + inslen;
+      const momitem_t *tinyarr[MOM_TINY_MAX] = { NULL };
+      const momitem_t **arr = (newlen < MOM_TINY_MAX)
+	? tinyarr
+	: MOM_GC_ALLOC ("insert items", newlen * sizeof (momitem_t *));
+      for (int ix = 0; ix < rk - 1; ix++)
+	arr[ix] = srcseq.pseqitems->itemseq[ix];
+      for (int ix = 0; ix < (int) inslen; ix++)
+	arr[ix + rk] = insv.pseqitems->itemseq[ix];
+      for (int ix = rk; ix < (int) srclen; ix++)
+	arr[ix + inslen] = srcseq.pseqitems->itemseq[ix];
+      tupres = mom_make_tuple_from_array (newlen, arr);
+      if (arr != tinyarr)
+	MOM_GC_FREE (arr);
+      return tupres;
+    }
+  else
+    {
+      if (mom_is_tuple (srcseq))
+	return srcseq.ptuple;
+      else
+	return mom_make_tuple_from_array (srclen,
+					  ((momseqitem_t *)
+					   srcseq.pseqitems)->itemseq);
+    }
+}
 
 static inline void
 update_node_hash_mom (struct momnode_st *nd)

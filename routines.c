@@ -2641,11 +2641,13 @@ ajaxedit_lab_start:
     /***** todo= mom_add_item ****/
     else if (mom_string_same (todov, "mom_add_item"))
       {
+	int myindex = -1;
 	_L (display) = MOM_NULLV;
 	_L (curitem) = MOM_NULLV;
 	momval_t dispidv = mom_webx_post_arg (_L (webx).pitem, "display_mom");
 	momval_t itemnamv = mom_webx_post_arg (_L (webx).pitem, "item_mom");
 	momval_t doaddv = mom_webx_post_arg (_L (webx).pitem, "mom_do_add");
+	momval_t indexv = mom_webx_post_arg (_L (webx).pitem, "mom_index");
 	MOM_DEBUG (run,
 		   MOMOUT_LITERAL ("ajax_edit additem dispid="),
 		   MOMOUT_VALUE ((const momval_t) dispidv),
@@ -2893,22 +2895,25 @@ ajaxedit_lab_start:
 		 && _L (dispnode).pitem == mom_named__tuple
 		 && mom_is_tuple (_L (curval)))
 	  {
+	    int ix = 0;
+	    if (mom_is_string (indexv))
+	      {
+		const char *indexstr = mom_string_cstr (indexv);
+		if (indexstr && isdigit (*indexstr))
+		  ix = atoi (indexstr);
+	      }
 	    MOM_DEBUG (run,
 		       MOMOUT_LITERAL
 		       ("ajax_edit additem inserting in tuple curitem="),
 		       MOMOUT_VALUE (_L (curitem)),
 		       MOMOUT_LITERAL (" tuplecurval="),
-		       MOMOUT_VALUE (_L (curval)), NULL);
-#warning ajax_edit should update tuple for insertion
-	    /*
-	       _L (curval) =
-	       (momval_t)
-	       mom_make_tuple_til_nil ((momval_t)
-	       (_L (curitem).
-	       pitem ? _L (curitem).pitem : (momitem_t
-	       *)
-	       MOM_EMPTY), _L (curval), NULL);
-	     */
+		       MOMOUT_VALUE (_L (curval)),
+		       MOMOUT_LITERAL (" indexv="),
+		       MOMOUT_VALUE (indexv),
+		       MOMOUT_LITERAL (" ix="), MOMOUT_DEC_INT (ix), NULL);
+	    _L (curval) =
+	      (momval_t) mom_make_tuple_insertion (_L (curval), ix,
+						   _L (curitem));
 	    MOM_DEBUG (run,
 		       MOMOUT_LITERAL
 		       ("ajax_edit additem inserttuple new curval="),

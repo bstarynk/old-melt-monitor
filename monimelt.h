@@ -1764,6 +1764,9 @@ const momtuple_t *mom_make_tuple_from_array (unsigned siz,
 const momtuple_t *mom_make_tuple_from_slice (const momval_t srcseq,
 					     int startix, int endix);
 
+const momtuple_t *mom_make_tuple_insertion (const momval_t srcseq,
+					    int ix, const momval_t insv);
+
 
 static inline bool
 mom_is_set (momval_t setv)
