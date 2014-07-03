@@ -2641,7 +2641,6 @@ ajaxedit_lab_start:
     /***** todo= mom_add_item ****/
     else if (mom_string_same (todov, "mom_add_item"))
       {
-	int myindex = -1;
 	_L (display) = MOM_NULLV;
 	_L (curitem) = MOM_NULLV;
 	momval_t dispidv = mom_webx_post_arg (_L (webx).pitem, "display_mom");
@@ -4166,6 +4165,95 @@ const struct momroutinedescr_st momrout_ajax_complete_name = {
   .rout_timestamp = __DATE__ "@" __TIME__
 };
 
+
+////////////////////////////////////////////////////////////////
+///// translate_module
+enum translate_module_valindex_en
+{
+  translate_module_v_module,
+  translate_module_v_translation,
+  translate_module_v__lastval
+};
+
+enum translate_module_closure_en
+{
+  translate_module_c__lastclosure
+};
+
+enum translate_module_numbers_en
+{
+  translate_module_n__lastnum
+};
+
+
+static int
+translate_module_codmom (int momstate_, momitem_t *momtasklet_,
+			 const momnode_t *momclosure_,
+			 momval_t *momlocvals_, intptr_t * momlocnums_,
+			 double *momlocdbls_)
+{
+#define _L(Nam) (momlocvals_[translate_module_v_##Nam])
+#define _C(Nam) (momclosure_->sontab[translate_module_c_##Nam])
+#define _N(Nam) (momlocnums_[translate_module_n_##Nam])
+  enum translate_module_state_en
+  {
+    translate_module_s_start,
+    translate_module_s_impossible,
+    translate_module_s__laststate
+  };
+
+#define _SET_STATE(St) do {					\
+    MOM_DEBUGPRINTF (run,					\
+		     "translate_module_codmom setstate " #St	\
+  " = %d",							\
+		     (int)translate_module_s_##St);		\
+    return translate_module_s_##St; } while(0)
+
+  if (momstate_ >= 0 && momstate_ < translate_module_s__laststate)
+    switch ((enum translate_module_state_en) momstate_)
+      {
+      case translate_module_s_start:
+	goto translate_module_lab_start;
+      case translate_module_s_impossible:
+	goto translate_module_lab_impossible;
+      case translate_module_s__laststate:;
+      }
+  MOM_FATAPRINTF ("translate_module invalid state #%d", momstate_);
+translate_module_lab_start:
+  MOM_DEBUG (run, MOMOUT_LITERAL ("translate_module start module="),
+	     MOMOUT_VALUE ((const momval_t) _L (module)));
+  if (_L (module).ptr == MOM_EMPTY)
+    _SET_STATE (impossible);
+  if (!mom_is_item (_L (module)))
+    {
+      MOM_WARNING (MOMOUT_LITERAL ("translate_module bad module:"),
+		   MOMOUT_VALUE ((const momval_t) _L (module)), NULL);
+      return momroutres_pop;
+    };
+  _L (translation) = (momval_t) mom_make_item ();
+  mom_item_put_attribute (_L (translation).pitem, mom_named__module,
+			  _L (module));
+  return momroutres_pop;
+translate_module_lab_impossible:
+  MOM_FATAPRINTF ("translate_module impossible state reached!");
+#undef _L
+#undef _C
+#undef _N
+#undef _SET_STATE
+  return momroutres_pop;
+}
+
+const struct momroutinedescr_st momrout_translate_module = {
+  .rout_magic = MOM_ROUTINE_MAGIC,	//
+  .rout_minclosize = translate_module_c__lastclosure,	//
+  .rout_frame_nbval = translate_module_v__lastval,	//
+  .rout_frame_nbnum = translate_module_n__lastnum,	//
+  .rout_frame_nbdbl = 0,	//
+  .rout_name = "translate_module",	//
+  .rout_module = MONIMELT_CURRENT_MODULE,	//
+  .rout_codefun = translate_module_codmom,	//
+  .rout_timestamp = __DATE__ "@" __TIME__
+};
 
 ////////////////////////////////////////////////////////////////
 ///// noop

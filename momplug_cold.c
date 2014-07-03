@@ -29,7 +29,7 @@ mom_plugin_init (const char *arg)
 }
 
 
-//#if 0 && old
+#if 0 && old
 static void
 create_stuff_mom (void)
 {
@@ -45,7 +45,6 @@ create_stuff_mom (void)
      (momval_t)
      mom_make_string
      ("routine to display a value during edition in ajax_edit"));
-#if 0
   ajax_edit_item->i_attrs =	//
     mom_put_attribute (ajax_edit_item->i_attrs, mom_named__web_handler,	//
 		       (momval_t) mom_make_node_til_nil	//
@@ -58,7 +57,6 @@ create_stuff_mom (void)
 			(momval_t)
 			mom_make_string
 			("{spare2-ajax_edit}"), MOM_EMPTY, NULL));
-#endif
   MOM_INFORMPRINTF ("created display_value");
 }
 
@@ -129,15 +127,25 @@ add_update_display_value_mom (void)
   assert (update_display_value_item != NULL);
   mom_item_start_routine (update_display_value_item, "update_display_value");
 }
+#endif
+
+
+static void
+make_translate_module_routine_mom (void)
+{
+  mom_item_start_routine (mom_named__translate_module, "translate_module");
+  MOM_DEBUG (run, MOMOUT_LITERAL ("translate_module="),
+	     MOMOUT_ITEM ((const momitem_t *) mom_named__translate_module),
+	     MOMOUT_LITERAL (" !: "),
+	     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+				     mom_named__translate_module), NULL);
+
+}
 
 void
 momplugin_after_load (void)
 {
   MOM_DEBUGPRINTF (run,
 		   "after load in " __FILE__ " build " __DATE__ "@" __TIME__);
-  if (0)
-    create_stuff_mom ();
-  add_editors_mom ();
-  if (0)
-    add_update_display_value_mom ();
+  make_translate_module_routine_mom ();
 }
