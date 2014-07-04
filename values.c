@@ -1272,6 +1272,84 @@ mom_make_tuple_insertion (const momval_t srcseq, int rk, momval_t insv)
     }
 }
 
+
+
+const momtuple_t *
+mom_make_tuple_variadic (unsigned nbargs, ...)
+{
+  va_list args;
+  momval_t val = MOM_NULLV;
+  unsigned siz = 0, ix = 0;
+  momtuple_t *itup = NULL;
+  /// count the size
+  va_start (args, nbargs);
+  for (unsigned argix = 0; argix < nbargs; argix++)
+    {
+      val = va_arg (args, momval_t);
+      if (!val.ptr)
+	{
+	  siz++;
+	  continue;
+	}
+      else
+	switch (*val.ptype)
+	  {
+	  case momty_set:
+	  case momty_tuple:
+	    siz += val.pseqitems->slen;
+	    break;
+	  case momty_item:
+	    siz++;
+	    break;
+	  default:
+	    break;
+	  };
+    }				/* end for argix */
+  va_end (args);
+  if (siz == 0)
+    return &empty_tuple_mom;
+  itup =
+    MOM_GC_ALLOC ("new variadic tuple",
+		  sizeof (momtuple_t) + siz * sizeof (momitem_t *));
+  ix = 0;
+  /// second loop to fill the tuple
+  va_start (args, nbargs);
+  for (unsigned argix = 0; argix < nbargs; argix++)
+    {
+      val = va_arg (args, momval_t);
+      assert (ix < siz);
+      if (!val.ptr)
+	{
+	  siz++;
+	  continue;
+	}
+      else
+	switch (*val.ptype)
+	  {
+	  case momty_set:
+	  case momty_tuple:
+	    {
+	      const momseqitem_t *subsi = val.pseqitems;
+	      unsigned subslen = subsi->slen;
+	      for (unsigned j = 0; j < subslen; j++)
+		itup->itemseq[ix++] = subsi->itemseq[j];
+	    }
+	    break;
+	  case momty_item:
+	    itup->itemseq[ix++] = val.pitem;
+	    break;
+	  default:
+	    break;
+	  }
+    }
+  va_end (args);
+  itup->typnum = momty_tuple;
+  assert (ix == siz);
+  itup->slen = siz;
+  update_seqitem_hash_mom (itup);
+  return itup;
+}
+
 static inline void
 update_node_hash_mom (struct momnode_st *nd)
 {

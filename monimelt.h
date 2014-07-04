@@ -1762,6 +1762,9 @@ momval_t mom_make_set_without (momval_t s1, momval_t v2);
 const momtuple_t *mom_make_tuple_til_nil (momval_t first, ...)
   __attribute__ ((sentinel));
 const momtuple_t *mom_make_tuple_sized (unsigned siz, ...);
+// make a tuple from a variadic number of arguments, each being a tuple,
+// a set or an item
+const momtuple_t *mom_make_tuple_variadic (unsigned nbargs, ...);
 const momtuple_t *mom_make_tuple_from_array (unsigned siz,
 					     const momitem_t **itemarr);
 const momtuple_t *mom_make_tuple_from_slice (const momval_t srcseq,
