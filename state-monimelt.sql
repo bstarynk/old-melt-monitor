@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','todo dump but continue');
+INSERT INTO t_params VALUES('dump_reason','todo dump at exit');
 INSERT INTO t_items VALUES('_02u53qxa7dm_sttmhffpchr','{"kind": "queue", "payload": [], "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "The agenda is central to Monimelt.\nIt is the queue of taskets to be executed by worker threads."}],
  "content": null}
@@ -204,10 +204,12 @@ INSERT INTO t_items VALUES('_5sw59dauckp_8eustjwf58u','{"kind": null, "payload":
 ');
 INSERT INTO t_items VALUES('_5vi29c2i54k_i2ufkty9kmp','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "primitive to get the attribute"}, {"attr": "_967fch1xu4h_i87qjq1zt1h",
-   "val": {"sons": [null, null, null, null, null], "node": "_2vxxtir316j_meap5sq6ykr",
-    "jtype": "node"}}, {"attr": "_8um1q4shitk_tpcmedvsfzu", "val": {"jtype": "tuple",
-    "tuple": ["_53748kde7s1_pkz810exr27", "_6w3dvx83dfw_xzc6aif6isv"]}}, {"attr":
-   "_70ty9z1tm4p_eccsxmyfe25", "val": {"item_ref": "_7wk9y7e7r0z_575esi8ys5x",
+   "val": {"sons": ["mom_item_get_attribute(mom_value_to_item(", {"item_ref": "_53748kde7s1_pkz810exr27",
+      "space": ".predef", "jtype": "item_ref"}, "), mom_value_to_item(", {"item_ref":
+      "_6w3dvx83dfw_xzc6aif6isv", "space": ".predef", "jtype": "item_ref"},
+     "))"], "node": "_2vxxtir316j_meap5sq6ykr", "jtype": "node"}}, {"attr": "_8um1q4shitk_tpcmedvsfzu",
+   "val": {"jtype": "tuple", "tuple": ["_53748kde7s1_pkz810exr27", "_6w3dvx83dfw_xzc6aif6isv"]}},
+  {"attr": "_70ty9z1tm4p_eccsxmyfe25", "val": {"item_ref": "_7wk9y7e7r0z_575esi8ys5x",
     "space": ".predef", "jtype": "item_ref"}}], "content": null}
 ');
 INSERT INTO t_items VALUES('_5wmusj136kq_u5qpehp89aq','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
