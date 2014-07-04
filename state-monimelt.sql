@@ -35,6 +35,9 @@ INSERT INTO t_items VALUES('_06yp8ueq6yf_5ts408yww29','{"kind": null, "payload":
 INSERT INTO t_items VALUES('_085krqf192t_z1m3zs77ww5','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "to be used inside display items"}], "content": null}
 ');
+INSERT INTO t_items VALUES('_0acmecj244a_6krws4rx7v1','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "gives the body in a routine, or the routine elsewhere"}], "content": null}
+');
 INSERT INTO t_items VALUES('_0ihu411vkua_z4sh56hicdt','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "body of a routine"}], "content": null}
 ');
@@ -84,6 +87,9 @@ INSERT INTO t_items VALUES('_36tp2s8s5s2_jzjm0cxdpjz','{"kind": null, "payload":
 ');
 INSERT INTO t_items VALUES('_38s7ihasu0m_xzipyerxm3j','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "gives the editor inside a display"}], "content": null}
+');
+INSERT INTO t_items VALUES('_3eu0rdq4upj_dp5ptr6hj04','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "gives the expansion of a routine"}], "content": null}
 ');
 INSERT INTO t_items VALUES('_3fw5acswe59_9016fqe4d41','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "Gives the integer numbers of Json for frames of tasklets."}], "content":
@@ -140,10 +146,35 @@ INSERT INTO t_items VALUES('_4v93t3jzrtz_srt9ear8fm8','{"kind": "routine", "payl
     "jtype": "node"}}], "content": null}
 ');
 INSERT INTO t_items VALUES('_4yxdswc8qwf_vxzy95hd399','{"kind": "routine", "payload": "translate_module", "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
-   "val": "routine to translate modules"}], "content": null}
+   "val": "routine to translate modules"}, {"attr": "_8um1q4shitk_tpcmedvsfzu",
+   "val": {"jtype": "tuple", "tuple": ["_7sqk8vh89xr_6tj8dq7vqju"]}}, {"attr": "_0acmecj244a_6krws4rx7v1",
+   "val": {"sons": [{"sons": [{"item_ref": "_8y1sw8z084j_4ts0y0jydha", "space": ".root",
+"jtype": "item_ref"}], "node": {"item_ref": "_590trid9ycw_f6kaajwca63", "space": ".root",
+       "jtype": "item_ref"}, "jtype": "node"}, {"sons": [{"item_ref": "_8y1sw8z084j_4ts0y0jydha",
+"space": ".root", "jtype": "item_ref"}, {"sons": [{"item_ref": "_7sqk8vh89xr_6tj8dq7vqju",
+  "space": ".predef", "jtype": "item_ref"}], "node": "_53cuy70z4tf_86tzz364trd",
+"jtype": "node"}, {"item_ref": "_7sqk8vh89xr_6tj8dq7vqju", "space": ".predef",
+"jtype": "item_ref"}], "node": {"item_ref": "_547q7emtfsk_ect0yratp6e", "space": ".root",
+       "jtype": "item_ref"}, "jtype": "node"}], "node": "_0ihu411vkua_z4sh56hicdt",
+    "jtype": "node"}}, {"attr": "_3eu0rdq4upj_dp5ptr6hj04", "val": {"jtype": "tuple",
+    "tuple": [{"item_ref": "_8y1sw8z084j_4ts0y0jydha", "space": ".root", "jtype":
+      "item_ref"}]}}], "content": null}
 ');
 INSERT INTO t_items VALUES('_53748kde7s1_pkz810exr27','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "used in editor, etc. to reference some item"}], "content": null}
+');
+INSERT INTO t_items VALUES('_53cuy70z4tf_86tzz364trd','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "to mention some item verbatim or quote-d \u00e0a Lisp"}], "content": null}
+');
+INSERT INTO t_items VALUES('_547q7emtfsk_ect0yratp6e','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "to put in a given item, some attribute with some value"}, {"attr": "_8um1q4shitk_tpcmedvsfzu",
+   "val": {"jtype": "tuple", "tuple": ["_53748kde7s1_pkz810exr27", "_6w3dvx83dfw_xzc6aif6isv",
+     "_7wk9y7e7r0z_575esi8ys5x"]}}, {"attr": "_967fch1xu4h_i87qjq1zt1h", "val": {"sons":
+    ["mom_item_put_attribute(mom_value_to_item(", {"item_ref": "_53748kde7s1_pkz810exr27",
+      "space": ".predef", "jtype": "item_ref"}, "), (", {"item_ref": "_6w3dvx83dfw_xzc6aif6isv",
+      "space": ".predef", "jtype": "item_ref"}, "), (\"", {"item_ref": "_7wk9y7e7r0z_575esi8ys5x",
+      "space": ".predef", "jtype": "item_ref"}, "))"], "node": "_2vxxtir316j_meap5sq6ykr",
+    "jtype": "node"}}], "content": null}
 ');
 INSERT INTO t_items VALUES('_590trid9ycw_f6kaajwca63','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "primitive to make an item"}, {"attr": "_8um1q4shitk_tpcmedvsfzu",
@@ -251,6 +282,9 @@ INSERT INTO t_items VALUES('_8u5ar84utwm_99k5mq2d589','{"kind": null, "payload":
 INSERT INTO t_items VALUES('_8um1q4shitk_tpcmedvsfzu','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "arguments of a routine"}], "content": null}
 ');
+INSERT INTO t_items VALUES('_8y1sw8z084j_4ts0y0jydha','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "value containing the translation"}], "content": null}
+');
 INSERT INTO t_items VALUES('_91pketvc5pz_wq0v0wpauw8','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "Gives the values of Json for frames of tasklets."}], "content": null}
 ');
@@ -306,6 +340,7 @@ INSERT INTO t_names VALUES('json_object','_3xpyd539p4m_23h7wi59xi9','.predef');
 INSERT INTO t_names VALUES('json_true','_2vmrrvq5kdk_9um63pstcu9','.predef');
 INSERT INTO t_names VALUES('jtype','_7urjeiw3evy_m7k72uv6790','.predef');
 INSERT INTO t_names VALUES('kind','_06yp8ueq6yf_5ts408yww29','.predef');
+INSERT INTO t_names VALUES('locals','_3eu0rdq4upj_dp5ptr6hj04','.predef');
 INSERT INTO t_names VALUES('make_item','_590trid9ycw_f6kaajwca63','.root');
 INSERT INTO t_names VALUES('misc','_85rz4j0q982_67im8sstj9s','.root');
 INSERT INTO t_names VALUES('module','_7sqk8vh89xr_6tj8dq7vqju','.predef');
@@ -317,10 +352,12 @@ INSERT INTO t_names VALUES('origin','_5sw59dauckp_8eustjwf58u','.predef');
 INSERT INTO t_names VALUES('parent','_36tp2s8s5s2_jzjm0cxdpjz','.predef');
 INSERT INTO t_names VALUES('payload','_41v0erax6my_m6pytj0793u','.predef');
 INSERT INTO t_names VALUES('primitive','_967fch1xu4h_i87qjq1zt1h','.predef');
+INSERT INTO t_names VALUES('put_attribute','_547q7emtfsk_ect0yratp6e','.root');
 INSERT INTO t_names VALUES('rank','_7kkh6qiq1vc_e69zp2feuhe','.predef');
 INSERT INTO t_names VALUES('res1','_3j3s2e0510a_096chqpijq7','.predef');
 INSERT INTO t_names VALUES('res2','_8u5ar84utwm_99k5mq2d589','.predef');
 INSERT INTO t_names VALUES('res3','_60ist2ad22c_cfpjp5ay6uj','.predef');
+INSERT INTO t_names VALUES('routine','_0acmecj244a_6krws4rx7v1','.predef');
 INSERT INTO t_names VALUES('set','_2v75mmyph64_4h4kys78740','.predef');
 INSERT INTO t_names VALUES('size','_5s59qeamxta_70k0mt77r9i','.predef');
 INSERT INTO t_names VALUES('sons','_4ezpkss1akd_94f4h25sqe4','.predef');
@@ -329,11 +366,13 @@ INSERT INTO t_names VALUES('state','_6f9870y6v8t_kp8fcmq2ezv','.predef');
 INSERT INTO t_names VALUES('string','_8j516kuv89j_4hc4w6ykmr6','.predef');
 INSERT INTO t_names VALUES('terminated','_3jpt8yuzuyw_ti1pyz3me1c','.predef');
 INSERT INTO t_names VALUES('translate_module','_4yxdswc8qwf_vxzy95hd399','.predef');
+INSERT INTO t_names VALUES('translation','_8y1sw8z084j_4ts0y0jydha','.root');
 INSERT INTO t_names VALUES('tuple','_7vw56h18sw0_hv77m6q8uxu','.predef');
 INSERT INTO t_names VALUES('update_display_value','_1f94j87qumw_mhzkriesx7c','.root');
 INSERT INTO t_names VALUES('updated','_5x41iah0kis_x8rrv3ww44t','.predef');
 INSERT INTO t_names VALUES('val','_7wk9y7e7r0z_575esi8ys5x','.predef');
 INSERT INTO t_names VALUES('values','_91pketvc5pz_wq0v0wpauw8','.predef');
+INSERT INTO t_names VALUES('verbatim','_53cuy70z4tf_86tzz364trd','.predef');
 INSERT INTO t_names VALUES('web_handler','_7sav6zery1v_24sa6jwwu6c','.predef');
 COMMIT;
 -- state-monimelt end dump 

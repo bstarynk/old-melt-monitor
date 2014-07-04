@@ -123,6 +123,9 @@ MOM_PREDEFINED_NAMED(jtype,_7urjeiw3evy_m7k72uv6790)
 ////!in JSON dumps, give the kind of the payload of an item
 MOM_PREDEFINED_NAMED(kind,_06yp8ueq6yf_5ts408yww29)
 
+////!gives the expansion of a routine
+MOM_PREDEFINED_NAMED(locals,_3eu0rdq4upj_dp5ptr6hj04)
+
 ////!module to be compiled...
 MOM_PREDEFINED_NAMED(module,_7sqk8vh89xr_6tj8dq7vqju)
 
@@ -159,6 +162,9 @@ MOM_PREDEFINED_NAMED(res2,_8u5ar84utwm_99k5mq2d589)
 ////!third result in tasklet
 MOM_PREDEFINED_NAMED(res3,_60ist2ad22c_cfpjp5ay6uj)
 
+////!gives the body in a routine, or the routine elsewhere
+MOM_PREDEFINED_NAMED(routine,_0acmecj244a_6krws4rx7v1)
+
 ////!in JSON dumps, indicate sets of item, or give their array of elements
 MOM_PREDEFINED_NAMED(set,_2v75mmyph64_4h4kys78740)
 
@@ -194,6 +200,9 @@ MOM_PREDEFINED_NAMED(val,_7wk9y7e7r0z_575esi8ys5x)
 
 ////!Gives the values of Json for frames of tasklets.
 MOM_PREDEFINED_NAMED(values,_91pketvc5pz_wq0v0wpauw8)
+
+////!to mention some item verbatim or quote-d àa Lisp
+MOM_PREDEFINED_NAMED(verbatim,_53cuy70z4tf_86tzz364trd)
 
 ////!attribute giving the web handler inside items
 MOM_PREDEFINED_NAMED(web_handler,_7sav6zery1v_24sa6jwwu6c)
