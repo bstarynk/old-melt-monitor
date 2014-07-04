@@ -774,6 +774,18 @@ display_value_lab_start:
 	    mom_should_lock_item (_L (subdisplay).pitem);
 	    mom_item_put_attribute (_L (subdisplay).pitem, mom_named__parent,
 				    _L (newdisplay));
+	    if (_L (orig).ptr)
+	      mom_item_put_attribute (_L (subdisplay).pitem,
+				      mom_named__origin, _L (orig));
+	    MOM_DEBUG (run,
+		       MOMOUT_LITERAL
+		       ("display_value for son updated subdisplay="),
+		       MOMOUT_VALUE (_L (subdisplay)), MOMOUT_LITERAL (" !:"),
+		       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+					       mom_value_to_item (_L
+								  (subdisplay))),
+		       MOMOUT_LITERAL (" newdisplay="),
+		       MOMOUT_VALUE (_L (newdisplay)), NULL);
 	    mom_unlock_item (_L (subdisplay).pitem);
 	  }
 	}
