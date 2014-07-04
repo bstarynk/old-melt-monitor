@@ -1050,6 +1050,17 @@ compare_predefined_mom (const void *p1, const void *p2)
 }
 
 
+// a callback for sqlite3_exec to set the int pointed by data to the first and only column
+static int
+setintsql_cb_mom (void *data, int nbcol, char **colval, char **colnam)
+{
+  assert (nbcol == 1);
+  assert (colval != NULL);
+  assert (colnam != NULL);
+  assert (data != NULL);
+  *(int *) data = atoi (colval[0]);
+  return 0;
+}
 
 ////////////////////////////////////////////////////////////////
 void
@@ -1159,6 +1170,43 @@ mom_initial_load (const char *ldirnam)
 	}
     }
   MOM_INFORMPRINTF ("loaded #%d modules", modulecount);
+  ///
+  {
+    int nbitems = 0;
+    char *errmsg = NULL;
+    if (sqlite3_exec
+	(ldr.ldr_sqlite, "SELECT COUNT(*) FROM t_items",
+	 setintsql_cb_mom, &nbitems, &errmsg))
+      MOM_FATAPRINTF ("while loading %s failed to count t_items %s",
+		      ldr.ldr_sqlpath, errmsg);
+    MOM_DEBUGPRINTF (load, "got %d items", nbitems);
+    assert (nbitems > 0);
+    // grow the hash table
+    const momitem_t **oldhtbl = ldr.ldr_htable;
+    unsigned oldsize = ldr.ldr_hsize;
+    unsigned oldcount = ldr.ldr_hcount;
+    unsigned newsize = (((4 * nbitems / 3) + 50) | 0x1f) + 1;
+    if (newsize > oldsize)
+      {
+	const momitem_t **newhtbl =
+	  MOM_GC_ALLOC ("load hash table", newsize * sizeof (momitem_t *));
+	ldr.ldr_hsize = newsize;
+	ldr.ldr_htable = newhtbl;
+	ldr.ldr_hcount = 0;
+	for (unsigned oix = 0; oix < oldsize; oix++)
+	  {
+	    const momitem_t *curolditm = oldhtbl[oix];
+	    if (!curolditm)
+	      continue;
+	    if (!add_loaded_item_mom (&ldr, curolditm))
+	      MOM_FATAPRINTF ("corrupted old load hash table");
+	  }
+	MOM_GC_FREE (oldhtbl);
+	assert (ldr.ldr_hcount == oldcount);
+      }
+  }
+
+
   /// load the named items
   int namedrowcount = 0;
   for (;;)
@@ -1216,8 +1264,10 @@ mom_initial_load (const char *ldirnam)
 	MOM_FATAPRINTF ("failed to step on names: %s",
 			sqlite3_errmsg (ldr.ldr_sqlite));
     }
+
   sqlite3_reset (ldr.ldr_sqlstmt_named_fetch);
   bool spaceinited[momspa__last + 1] = { false };
+
   memset (spaceinited, 0, sizeof (spaceinited));
   /// loop on the queue of items
   long loadloopcount = 0;
@@ -1283,6 +1333,7 @@ mom_initial_load (const char *ldirnam)
 	    }
 	}
     };
+
   MOM_INFORMPRINTF ("loaded %ld items from dir %s", loadloopcount,
 		    ldr.ldr_dirpath);
   // finalize the spaces if needed
@@ -1299,6 +1350,7 @@ mom_initial_load (const char *ldirnam)
 	  spad->space_fini_load_fun (&ldr, spix);
 	}
     }
+
   // finalize the sqlite3 statements
   sqlite3_finalize (ldr.ldr_sqlstmt_param_fetch),	//
     ldr.ldr_sqlstmt_param_fetch = NULL;

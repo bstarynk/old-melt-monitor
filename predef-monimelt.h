@@ -43,8 +43,14 @@ MOM_PREDEFINED_NAMED(POST,_5wmusj136kq_u5qpehp89aq)
 ////+It is the queue of taskets to be executed by worker threads.
 MOM_PREDEFINED_NAMED(agenda,_02u53qxa7dm_sttmhffpchr)
 
+////!arguments of a routine
+MOM_PREDEFINED_NAMED(arguments,_8um1q4shitk_tpcmedvsfzu)
+
 ////!gives the attribute[s], at least in dumped JSON...
 MOM_PREDEFINED_NAMED(attr,_6w3dvx83dfw_xzc6aif6isv)
+
+////!body of a routine
+MOM_PREDEFINED_NAMED(body,_0ihu411vkua_z4sh56hicdt)
 
 ////!the buffer payload kind, and also the clipboard buffer in editors
 MOM_PREDEFINED_NAMED(buffer,_3zqd7ai3rtu_md9athkx17u)
@@ -75,6 +81,9 @@ MOM_PREDEFINED_NAMED(empty,_8s4wcve2u49_252vwyzyrxd)
 
 ////!for exited processes
 MOM_PREDEFINED_NAMED(exited,_3v4d7uzex6f_euek4pztiuh)
+
+////!gives the expansion of a primitive
+MOM_PREDEFINED_NAMED(expansion,_2vxxtir316j_meap5sq6ykr)
 
 ////!for exited processes with exit code >0
 MOM_PREDEFINED_NAMED(failed,_9sd1mh9q1zf_3duewi6fsaq)
@@ -134,6 +143,9 @@ MOM_PREDEFINED_NAMED(parent,_36tp2s8s5s2_jzjm0cxdpjz)
 
 ////!in JSON dumps, give the payload of items
 MOM_PREDEFINED_NAMED(payload,_41v0erax6my_m6pytj0793u)
+
+////!for the expansion of a primitive
+MOM_PREDEFINED_NAMED(primitive,_967fch1xu4h_i87qjq1zt1h)
 
 ////!gives the rank
 MOM_PREDEFINED_NAMED(rank,_7kkh6qiq1vc_e69zp2feuhe)
