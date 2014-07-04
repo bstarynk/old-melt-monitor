@@ -438,6 +438,9 @@ display_value_lab_start:
 			      (_L (newdisplay).pitem, mom_named__rank)));
 	  mom_item_put_attribute (_L (olddisplay).pitem, mom_named__val,
 				  _L (curval));
+	  if (_L (orig).pitem)
+	    mom_item_put_attribute (_L (olddisplay).pitem, mom_named__origin,
+				    _L (orig));
 	  MOM_DEBUG (run,
 		     MOMOUT_LITERAL
 		     ("display_value start newdisplay=olddisplay="),
@@ -1065,6 +1068,13 @@ ajaxedit_lab_start:
 	    mom_item_put_attribute (_L (display).pitem, mom_named__display,
 				    (momval_t) mom_named__input);
 	    mom_item_remove_attribute (_L (display).pitem, mom_named__val);
+	    MOM_DEBUG (run,
+		       MOMOUT_LITERAL
+		       ("ajax_edit_codmom editval_replace origin="),
+		       MOMOUT_VALUE ((const momval_t) _L (origin)),
+		       MOMOUT_LITERAL (" "),
+		       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+					       _L (origin).pitem), NULL);
 	    mom_unlock_item (_L (display).pitem);
 	  }
 	  {
