@@ -769,6 +769,10 @@ display_value_lab_start:
 	display_value_lab_didson:
 	  _L (subdisplay) = mom_item_tasklet_res1 (momtasklet_);
 	  mom_item_tasklet_clear_res (momtasklet_);
+	  MOM_DEBUG (run,
+		     MOMOUT_LITERAL
+		     ("display_value for son got subdisplay="),
+		     MOMOUT_VALUE (_L (subdisplay)), NULL);
 	  mom_item_vector_append1 (_L (vectsubdisp).pitem, _L (subdisplay));
 	  {
 	    mom_should_lock_item (_L (subdisplay).pitem);

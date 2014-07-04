@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','todo dump at exit');
+INSERT INTO t_params VALUES('dump_reason','todo dump but continue');
 INSERT INTO t_items VALUES('_02u53qxa7dm_sttmhffpchr','{"kind": "queue", "payload": [], "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "The agenda is central to Monimelt.\nIt is the queue of taskets to be executed by worker threads."}],
  "content": null}
@@ -166,10 +166,16 @@ INSERT INTO t_items VALUES('_4yxdswc8qwf_vxzy95hd399','{"kind": "routine", "payl
   "space": ".predef", "jtype": "item_ref"}], "node": "_53cuy70z4tf_86tzz364trd",
 "jtype": "node"}, {"item_ref": "_7sqk8vh89xr_6tj8dq7vqju", "space": ".predef",
 "jtype": "item_ref"}], "node": {"item_ref": "_547q7emtfsk_ect0yratp6e", "space": ".root",
-       "jtype": "item_ref"}, "jtype": "node"}], "node": "_0ihu411vkua_z4sh56hicdt",
+       "jtype": "item_ref"}, "jtype": "node"}, {"sons": [{"item_ref": "_5yfdp53cpi1_0i5k33wms7c",
+"space": ".predef", "jtype": "item_ref"}, {"sons": [{"item_ref": "_7sqk8vh89xr_6tj8dq7vqju",
+  "space": ".predef", "jtype": "item_ref"}, {"sons": [{"item_ref": "_5yfdp53cpi1_0i5k33wms7c",
+    "space": ".predef", "jtype": "item_ref"}], "node": "_53cuy70z4tf_86tzz364trd",
+  "jtype": "node"}], "node": {"item_ref": "_5vi29c2i54k_i2ufkty9kmp", "space": ".root",
+ "jtype": "item_ref"}, "jtype": "node"}], "node": {"item_ref": "_0zmdkdxj7kp_491yqpcuaz8",
+       "space": ".root", "jtype": "item_ref"}, "jtype": "node"}], "node": "_0ihu411vkua_z4sh56hicdt",
     "jtype": "node"}}, {"attr": "_3eu0rdq4upj_dp5ptr6hj04", "val": {"jtype": "tuple",
     "tuple": [{"item_ref": "_8y1sw8z084j_4ts0y0jydha", "space": ".root", "jtype":
-      "item_ref"}]}}], "content": null}
+      "item_ref"}, "_5yfdp53cpi1_0i5k33wms7c"]}}], "content": null}
 ');
 INSERT INTO t_items VALUES('_53748kde7s1_pkz810exr27','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "used in editor, etc. to reference some item"}], "content": null}

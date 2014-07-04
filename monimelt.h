@@ -1741,6 +1741,9 @@ struct momseqitem_st
 // make a set until a NULL value, argument can be tuples, sets, items.
 const momset_t *mom_make_set_til_nil (momval_t first, ...)
   __attribute__ ((sentinel));
+// make a set from a variadic number of arguments, each being a tuple,
+// a set or an item
+const momset_t *mom_make_set_variadic (unsigned nbargs, ...);
 // make a set of siz items
 const momset_t *mom_make_set_sized (unsigned siz, ...);
 // make a set from an array of items

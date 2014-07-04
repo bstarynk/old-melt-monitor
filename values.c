@@ -505,6 +505,7 @@ mom_make_set_til_nil (momval_t first, ...)
   unsigned siz = 0, ix = 0;
   momset_t *iset = NULL;
   val = first;
+  // first variadic loop to count the size
   va_start (args, first);
   while (val.ptr != NULL)
     {
@@ -524,6 +525,7 @@ mom_make_set_til_nil (momval_t first, ...)
   va_end (args);
   if (siz == 0)
     return &empty_set_mom;
+  /// second variadic loop to fill the set
   iset =
     MOM_GC_ALLOC ("new set til nil",
 		  sizeof (momset_t) + siz * sizeof (momitem_t *));
@@ -581,6 +583,94 @@ mom_make_set_til_nil (momval_t first, ...)
   return iset;
 }
 
+
+const momset_t *
+mom_make_set_variadic (unsigned nbargs, ...)
+{
+  va_list args;
+  momval_t val = MOM_NULLV;
+  unsigned siz = 0, ix = 0;
+  momset_t *iset = NULL;
+  // first variadic loop to count the size
+  va_start (args, nbargs);
+  for (unsigned argix = 0; argix < nbargs; argix++)
+    {
+      val = va_arg (args, momval_t);
+      if (!val.ptr)
+	continue;
+      switch (*val.ptype)
+	{
+	case momty_set:
+	case momty_tuple:
+	  siz += val.pseqitems->slen;
+	  break;
+	case momty_item:
+	  siz++;
+	default:
+	  break;
+	}
+    }
+  va_end (args);
+  /// second variadic loop to fill the set
+  iset =
+    MOM_GC_ALLOC ("new variadic",
+		  sizeof (momset_t) + siz * sizeof (momitem_t *));
+  ix = 0;
+  va_start (args, nbargs);
+  for (unsigned argix = 0; argix < nbargs; argix++)
+    {
+      val = va_arg (args, momval_t);
+      if (!val.ptr)
+	continue;
+      assert (ix < siz);
+      switch (*val.ptype)
+	{
+	case momty_set:
+	case momty_tuple:
+	  {
+	    const momseqitem_t *subsi = val.pseqitems;
+	    unsigned subslen = subsi->slen;
+	    for (unsigned j = 0; j < subslen; j++)
+	      if (subsi->itemseq[j])
+		iset->itemseq[ix++] = subsi->itemseq[j];
+	  }
+	  break;
+	case momty_item:
+	  iset->itemseq[ix++] = val.pitem;
+	  break;
+	default:
+	  break;
+	}
+    }
+  va_end (args);
+  assert (ix == siz);
+  qsort (iset->itemseq, siz, sizeof (momitem_t *), itemptr_cmp_mom);
+  bool shrink = false;
+  for (unsigned ix = 0; siz > 0 && ix + 1 < siz; ix++)
+    {
+      if (iset->itemseq[ix] == iset->itemseq[ix + 1])
+	{
+	  shrink = true;
+	  for (unsigned j = ix; j + 1 < siz; j++)
+	    iset->itemseq[j] = iset->itemseq[j + 1];
+	  iset->itemseq[siz - 1] = NULL;
+	  siz--;
+	}
+    }
+  iset->typnum = momty_set;
+  iset->slen = siz;
+  update_seqitem_hash_mom (iset);
+  if (MOM_UNLIKELY (shrink))
+    {
+      momset_t *newiset = MOM_GC_ALLOC ("new shrinked variadic",
+					sizeof (momset_t) +
+					siz * sizeof (momitem_t *));
+      memcpy (newiset, iset, sizeof (momset_t) + siz * sizeof (momitem_t *));
+      MOM_GC_FREE (iset);
+      iset = newiset;
+    }
+  return iset;
+}
 
 
 const momset_t *
