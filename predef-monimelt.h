@@ -91,6 +91,9 @@ MOM_PREDEFINED_NAMED(failed,_9sd1mh9q1zf_3duewi6fsaq)
 ////!frames in tasklet
 MOM_PREDEFINED_NAMED(frames,_4cw8jv45vsk_4mh9ex64904)
 
+////!within a primitive gives the type of result
+MOM_PREDEFINED_NAMED(gives,_70ty9z1tm4p_eccsxmyfe25)
+
 ////!for input display
 MOM_PREDEFINED_NAMED(input,_356014y9ueu_xv6j0eskszw)
 
@@ -150,6 +153,9 @@ MOM_PREDEFINED_NAMED(payload,_41v0erax6my_m6pytj0793u)
 ////!for the expansion of a primitive
 MOM_PREDEFINED_NAMED(primitive,_967fch1xu4h_i87qjq1zt1h)
 
+////!give the procedures inside a module
+MOM_PREDEFINED_NAMED(procedures,_5yfdp53cpi1_0i5k33wms7c)
+
 ////!gives the rank
 MOM_PREDEFINED_NAMED(rank,_7kkh6qiq1vc_e69zp2feuhe)
 
@@ -203,6 +209,9 @@ MOM_PREDEFINED_NAMED(values,_91pketvc5pz_wq0v0wpauw8)
 
 ////!to mention some item verbatim or quote-d à la Lisp
 MOM_PREDEFINED_NAMED(verbatim,_53cuy70z4tf_86tzz364trd)
+
+////!type for no data
+MOM_PREDEFINED_NAMED(void,_7jzvaihqxfw_0c2y7t976tu)
 
 ////!attribute giving the web handler inside items
 MOM_PREDEFINED_NAMED(web_handler,_7sav6zery1v_24sa6jwwu6c)

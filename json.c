@@ -297,6 +297,7 @@ again:
 				    str[cnt++] = (hexd[4]);
 				    if (hexd[5])
 				      str[cnt++] = (hexd[5]);
+				    assert (hexd[6] == 0);
 				  }
 			      }
 			  }
