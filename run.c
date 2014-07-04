@@ -811,8 +811,11 @@ mom_run_workers (void)
 	mom_nb_workers = MOM_MIN_WORKERS;
       else if (mom_nb_workers > MOM_MAX_WORKERS)
 	mom_nb_workers = MOM_MAX_WORKERS;
-      MOM_DEBUGPRINTF (run, "mom_start_workers nb_workers=%d workcnt=%ld",
-		       mom_nb_workers, workcnt);
+      MOM_DEBUGPRINTF (run,
+		       "mom_start_workers nb_workers=%d workcnt=%ld, stop_working_mom %s, continue_working_mom %s",
+		       mom_nb_workers, workcnt,
+		       stop_working_mom ? "true" : "false",
+		       continue_working_mom ? "true" : "false");
       assert (mom_named__agenda != NULL
 	      && mom_named__agenda->i_typnum == momty_item);
       {
@@ -866,10 +869,17 @@ mom_run_workers (void)
 	memset (todo_after_stop_mom, 0, sizeof (todo_after_stop_mom));
 	MOM_DEBUGPRINTF (run, "did %d todos workcnt=%ld", nbtodo, workcnt);
 	if (stop_working_mom)
-	  again = false;
+	  {
+	    again = false;
+	    MOM_DEBUGPRINTF (run, "mom_run_workers stop_working_mom");
+	    stop_working_mom = false;
+	  }
 	if (continue_working_mom)
-	  again = true;
-	continue_working_mom = false;
+	  {
+	    again = true;
+	    MOM_DEBUGPRINTF (run, "mom_run_workers continue_working_mom");
+	    continue_working_mom = false;
+	  }
 	mom_unlock_item (mom_named__agenda);
       }
       MOM_DEBUGPRINTF (run, "mom_start_workers again %s workcnt=%ld",

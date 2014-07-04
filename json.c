@@ -250,31 +250,53 @@ again:
 		case 'u':
 		  {
 		    int h = 0;
-		    if (fscanf (jp->jsonp_file, "%04x", &h) > 0)
+		    int cc = -2;
+		    char cbuf[8];
+		    memset (cbuf, 0, sizeof (cbuf));
+		    cc = jp->jsonp_c = getc (jp->jsonp_file);
+		    if (isxdigit (cc))
+		      cbuf[0] = cc;
+		    else
+		      continue;
+		    cc = jp->jsonp_c = getc (jp->jsonp_file);
+		    if (isxdigit (cc))
+		      cbuf[1] = cc;
+		    else
+		      continue;
+		    cc = jp->jsonp_c = getc (jp->jsonp_file);
+		    if (isxdigit (cc))
+		      cbuf[2] = cc;
+		    else
+		      continue;
+		    cc = jp->jsonp_c = getc (jp->jsonp_file);
+		    if (isxdigit (cc))
+		      cbuf[3] = cc;
+		    else
+		      continue;
+		    jp->jsonp_c = getc (jp->jsonp_file);
+		    h = (int) strtol (cbuf, NULL, 16);
+		    char hexd[8];
+		    memset (hexd, 0, sizeof (hexd));
+		    uint32_t c = (uint32_t) h;
+		    if (!c)
+		      MOM_WARNPRINTF
+			("null character inside JSON string %s", str);
+		    g_unichar_to_utf8 ((gunichar) c, hexd);
+		    ADD1CHAR (hexd[0]);
+		    if (hexd[1])
 		      {
-			char hexd[8];
-			memset (hexd, 0, sizeof (hexd));
-			uint32_t c = (uint32_t) h;
-			if (!c)
-			  MOM_WARNPRINTF
-			    ("null character inside JSON string %s", str);
-			g_unichar_to_utf8 ((gunichar) c, hexd);
-			ADD1CHAR (hexd[0]);
-			if (hexd[1])
+			ADD1CHAR (hexd[1]);
+			if (hexd[2])
 			  {
-			    ADD1CHAR (hexd[1]);
-			    if (hexd[2])
+			    ADD1CHAR (hexd[2]);
+			    if (hexd[3])
 			      {
-				ADD1CHAR (hexd[2]);
-				if (hexd[3])
+				ADD1CHAR (hexd[3]);
+				if (hexd[4])
 				  {
-				    ADD1CHAR (hexd[3]);
-				    if (hexd[4])
-				      {
-					ADD1CHAR (hexd[4]);
-					if (hexd[5])
-					  ADD1CHAR (hexd[5]);
-				      }
+				    ADD1CHAR (hexd[4]);
+				    if (hexd[5])
+				      ADD1CHAR (hexd[5]);
 				  }
 			      }
 			  }
