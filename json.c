@@ -202,7 +202,7 @@ again:
 	  if (jp->jsonp_c == '"')
 	    break;
 	  // we need extraspace for \u-encoded unicode characters
-	  if (MOM_UNLIKELY (cnt + 7 >= siz))
+	  if (MOM_UNLIKELY (cnt + 8 >= siz))
 	    {
 	      unsigned newsiz = (((5 * cnt / 4) + 12) | 0xf) + 1;
 	      char *newstr =
@@ -282,21 +282,21 @@ again:
 		      MOM_WARNPRINTF
 			("null character inside JSON string %s", str);
 		    g_unichar_to_utf8 ((gunichar) c, hexd);
-		    ADD1CHAR (hexd[0]);
+		    str[cnt++] = (hexd[0]);
 		    if (hexd[1])
 		      {
-			ADD1CHAR (hexd[1]);
+			str[cnt++] = (hexd[1]);
 			if (hexd[2])
 			  {
-			    ADD1CHAR (hexd[2]);
+			    str[cnt++] = (hexd[2]);
 			    if (hexd[3])
 			      {
-				ADD1CHAR (hexd[3]);
+				str[cnt++] = (hexd[3]);
 				if (hexd[4])
 				  {
-				    ADD1CHAR (hexd[4]);
+				    str[cnt++] = (hexd[4]);
 				    if (hexd[5])
-				      ADD1CHAR (hexd[5]);
+				      str[cnt++] = (hexd[5]);
 				  }
 			      }
 			  }
