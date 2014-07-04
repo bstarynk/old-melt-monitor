@@ -1142,3 +1142,14 @@ end:
     MOM_WARNPRINTF ("check_for_some_child_process %s:%d wpid=%d not found",
 		    srcfil, srclin, (int) wpid);
 }
+
+
+void
+mom_continue_working (void)
+{
+  MOM_DEBUG (run, MOMOUT_LITERAL ("mom_continue_working"));
+  mom_should_lock_item (mom_named__agenda);
+  continue_working_mom = true;
+  pthread_cond_broadcast (&agenda_cond_mom);
+  mom_unlock_item (mom_named__agenda);
+}

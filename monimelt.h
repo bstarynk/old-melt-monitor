@@ -2436,6 +2436,7 @@ typedef void mom_todoafterstop_fun_t (void *data);
 void mom_stop_work_with_todo (mom_todoafterstop_fun_t * todofun, void *data);
 void mom_run_workers (void);
 void mom_stop_event_loop (void);
+void mom_continue_working (void);
 
 
 /// two prefixes known by our Makefile!

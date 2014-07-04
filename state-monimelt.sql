@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','todo dump at exit');
+INSERT INTO t_params VALUES('dump_reason','todo dump but continue');
 INSERT INTO t_items VALUES('_02u53qxa7dm_sttmhffpchr','{"kind": "queue", "payload": [], "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "The agenda is central to Monimelt.\nIt is the queue of taskets to be executed by worker threads."}],
  "content": null}
@@ -164,7 +164,7 @@ INSERT INTO t_items VALUES('_53748kde7s1_pkz810exr27','{"kind": null, "payload":
    "val": "used in editor, etc. to reference some item"}], "content": null}
 ');
 INSERT INTO t_items VALUES('_53cuy70z4tf_86tzz364trd','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
-   "val": "to mention some item verbatim or quote-d \u00e0a Lisp"}], "content": null}
+   "val": "to mention some item verbatim or quote-d \u00e0 Lisp"}], "content": null}
 ');
 INSERT INTO t_items VALUES('_547q7emtfsk_ect0yratp6e','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "to put in a given item, some attribute with some value"}, {"attr": "_8um1q4shitk_tpcmedvsfzu",

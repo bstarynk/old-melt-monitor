@@ -56,6 +56,18 @@ todo_dump_at_exit_mom (void *data)
   MOM_INFORMPRINTF ("dumped before exiting into directory %s", dpath);
 }
 
+static void
+todo_dump_continue_mom (void *data)
+{
+  char *dpath = data;
+  assert (dpath && dpath[0]);
+  MOM_DEBUGPRINTF (run, "todo_dump_continue should dump dpath=%s", dpath);
+  mom_full_dump ("todo dump but continue", dpath, NULL);
+  mom_stop_event_loop ();
+  MOM_INFORMPRINTF ("dumped into directory %s before continuing", dpath);
+  mom_continue_working ();
+}
+
 static int
 ajax_system_codmom (int momstate_, momitem_t *momtasklet_,
 		    const momnode_t *momclosure_, momval_t *momlocvals_,
@@ -106,6 +118,19 @@ ajaxsyst_lab_start:
 	MOM_WEBX_OUT (_L (webx).pitem,
 		      MOMOUT_LITERAL
 		      ("<em>Monimelt</em> <b>save then exit</b> at </i>"),
+		      MOMOUT_DOUBLE_TIME ((const char *) "%c",
+					  mom_clock_time (CLOCK_REALTIME)),
+		      MOMOUT_LITERAL ("</i>"), MOMOUT_SPACE (32));
+	mom_webx_reply (_L (webx).ptr, "text/html", HTTP_OK);
+	usleep (1000);
+	goto end;
+      }
+    if (mom_string_same (todov, "mom_menuitem_sys_dump"))
+      {
+	mom_stop_work_with_todo (todo_dump_continue_mom, (char *) ".");
+	MOM_WEBX_OUT (_L (webx).pitem,
+		      MOMOUT_LITERAL
+		      ("<em>Monimelt</em> <b>dump and continue</b> at </i>"),
 		      MOMOUT_DOUBLE_TIME ((const char *) "%c",
 					  mom_clock_time (CLOCK_REALTIME)),
 		      MOMOUT_LITERAL ("</i>"), MOMOUT_SPACE (32));

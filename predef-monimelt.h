@@ -201,7 +201,7 @@ MOM_PREDEFINED_NAMED(val,_7wk9y7e7r0z_575esi8ys5x)
 ////!Gives the values of Json for frames of tasklets.
 MOM_PREDEFINED_NAMED(values,_91pketvc5pz_wq0v0wpauw8)
 
-////!to mention some item verbatim or quote-d àa Lisp
+////!to mention some item verbatim or quote-d à Lisp
 MOM_PREDEFINED_NAMED(verbatim,_53cuy70z4tf_86tzz364trd)
 
 ////!attribute giving the web handler inside items
