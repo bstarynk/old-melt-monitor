@@ -785,6 +785,8 @@ momitem_t *
 mom_load_item_json (struct mom_loader_st *ld, const momval_t jval)
 {
   momitem_t *litm = NULL;
+  MOM_DEBUG (load, MOMOUT_LITERAL ("mom_load_item_json jval="),
+	     MOMOUT_VALUE (jval), NULL);
   if (!jval.ptr || !ld)
     return NULL;
   assert (ld->ldr_magic == LOADER_MAGIC);
@@ -805,6 +807,9 @@ mom_load_item_json (struct mom_loader_st *ld, const momval_t jval)
     {
       momval_t idrefv = mom_jsonob_get (jval, (momval_t) mom_named__item_ref);
       momval_t spav = mom_jsonob_get (jval, (momval_t) mom_named__space);
+      MOM_DEBUG (load, MOMOUT_LITERAL ("mom_load_item_json idrefv="),
+		 MOMOUT_VALUE (idrefv), MOMOUT_LITERAL (" spav="),
+		 MOMOUT_VALUE (spav), NULL);
       if (mom_is_string (idrefv))
 	{
 	  if (mom_looks_like_random_id_cstr (idrefv.pstring->cstr, NULL))
@@ -830,7 +835,15 @@ mom_load_item_json (struct mom_loader_st *ld, const momval_t jval)
 		  };
 	    }
 	}
+      else if (mom_is_item (idrefv))
+	litm = idrefv.pitem;
     }
+  else
+    MOM_FATAL (MOMOUT_LITERAL ("mom_load_item_json bad jval="),
+	       MOMOUT_VALUE (jval), NULL);
+  if (!litm)
+    MOM_FATAL (MOMOUT_LITERAL ("mom_load_item_json no item for jval="),
+	       MOMOUT_VALUE (jval), NULL);
   if (MOM_UNLIKELY (4 * ld->ldr_hcount + 10 > 3 * ld->ldr_hsize))
     {
       // grow the hash table
@@ -1170,7 +1183,7 @@ mom_initial_load (const char *ldirnam)
 	}
     }
   MOM_INFORMPRINTF ("loaded #%d modules", modulecount);
-  ///
+  /// count the items and grow the hash table for them
   {
     int nbitems = 0;
     char *errmsg = NULL;

@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','exit dump');
+INSERT INTO t_params VALUES('dump_reason','todo dump at exit');
 INSERT INTO t_items VALUES('_02u53qxa7dm_sttmhffpchr','{"kind": "queue", "payload": [], "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "The agenda is central to Monimelt.\nIt is the queue of taskets to be executed by worker threads."}],
  "content": null}
@@ -147,8 +147,10 @@ INSERT INTO t_items VALUES('_53748kde7s1_pkz810exr27','{"kind": null, "payload":
 ');
 INSERT INTO t_items VALUES('_590trid9ycw_f6kaajwca63','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "primitive to make an item"}, {"attr": "_8um1q4shitk_tpcmedvsfzu",
-   "val": {"jtype": "tuple", "tuple": ["_3j3s2e0510a_096chqpijq7"]}}], "content":
- null}
+   "val": {"jtype": "tuple", "tuple": ["_3j3s2e0510a_096chqpijq7"]}}, {"attr": "_967fch1xu4h_i87qjq1zt1h",
+   "val": {"sons": [{"item_ref": "_3j3s2e0510a_096chqpijq7", "space": ".predef",
+      "jtype": "item_ref"}, " = (momval_t) mom_make_item()"], "node": "_2vxxtir316j_meap5sq6ykr",
+    "jtype": "node"}}], "content": null}
 ');
 INSERT INTO t_items VALUES('_5s59qeamxta_70k0mt77r9i','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "gives the size, e.g. in editors"}], "content": null}
