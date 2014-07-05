@@ -500,6 +500,8 @@ static const struct mom_payload_descr_st payldescr_vector_mom = {
   .dpayl_dumpjsonfun = payl_vector_dump_json_mom,
 };
 
+
+
 ////////////////////////////////////////////////////////////////
 ///// ASSOC PAYLOAD
 ////////////////////////////////////////////////////////////////
@@ -769,6 +771,144 @@ static const struct mom_payload_descr_st payldescr_routine_mom = {
   .dpayl_dumpjsonfun = payl_routine_dump_json_mom,
 };
 
+
+
+////////////////////////////////////////////////////////////////
+///// CLOSURE PAYLOAD
+////////////////////////////////////////////////////////////////
+#define MOM_CLOSURE_MAGIC 830382377	/* closure magic  0x317ea129 */
+
+void
+mom_item_start_closure_of_routine (momitem_t *itm,
+				   const struct momroutinedescr_st *rdescr,
+				   unsigned len)
+{
+  assert (itm && itm->i_typnum == momty_item);
+  if (itm->i_payload)
+    mom_item_clear_payload (itm);
+  if (!rdescr)
+    return;
+  if (rdescr->rout_magic != MOM_ROUTINE_MAGIC
+      || !rdescr->rout_name || !rdescr->rout_module
+      || !rdescr->rout_codefun || !rdescr->rout_timestamp)
+    MOM_FATAPRINTF ("invalid routine descriptor @%p for closure",
+		    (void *) rdescr);
+  if (len < rdescr->rout_minclosize)
+    len = rdescr->rout_minclosize;
+  struct momclosure_st *clos = MOM_GC_ALLOC ("closure payload",
+					     sizeof (struct momclosure_st) +
+					     len * sizeof (momval_t));
+  clos->clos_len = len;
+  clos->clos_rout = rdescr;
+  clos->clos_magic = MOM_CLOSURE_MAGIC;
+  itm->i_payload = clos;
+  itm->i_paylkind = mompayk_closure;
+}
+
+void
+mom_item_start_closure_named (momitem_t *itm, const char *routname,
+			      unsigned len)
+{
+
+  char symbuf[MOM_SYMBNAME_LEN];
+  memset (symbuf, 0, sizeof (symbuf));
+  assert (itm && itm->i_typnum == momty_item);
+  if (itm->i_payload)
+    mom_item_clear_payload (itm);
+  if (!routname || !routname[0])
+    routname = mom_string_cstr ((momval_t) mom_item_get_name_or_idstr (itm));
+  if (!routname || !routname[0])
+    return;
+  snprintf (symbuf, sizeof (symbuf), MOM_ROUTINE_NAME_FMT, routname);
+  assert (symbuf[MOM_SYMBNAME_LEN - 1] == '\0');
+  for (const char *pc = symbuf; *pc; pc++)
+    if (!isalnum (*pc) && *pc != '_')
+      return;
+  assert (isalpha (symbuf[0]));
+  void *routad = dlsym (mom_prog_dlhandle, symbuf);
+  if (!routad)
+    {
+      MOM_WARNPRINTF ("failed to start closure %s: %s", symbuf, dlerror ());
+      return;
+    };
+  const struct momroutinedescr_st *rdescr = routad;
+  if (rdescr->rout_magic != MOM_ROUTINE_MAGIC
+      || !rdescr->rout_name || !rdescr->rout_module
+      || !rdescr->rout_codefun || !rdescr->rout_timestamp)
+    MOM_FATAPRINTF ("invalid closure routine descriptor @%p for %s", routad,
+		    routname);
+  if (strcmp (routname, rdescr->rout_name))
+    MOM_WARNPRINTF ("strange closure routine descriptor for %s but named %s",
+		    routname, rdescr->rout_name);
+  mom_item_start_closure_of_routine (itm, rdescr, len);
+}
+
+
+
+static void
+payl_closure_load_mom (struct mom_loader_st *ld, momitem_t *itm,
+		       momval_t jpayl)
+{
+  assert (ld != NULL);
+  assert (itm && itm->i_typnum == momty_item);
+#if 0
+  mom_item_start_closure (itm);
+  unsigned len = mom_json_array_size (jpayl);
+  if (!len)
+    return;
+  mom_item_closure_reserve (itm, 9 * len / 8 + 2);
+  for (unsigned ix = 0; ix < len; ix++)
+    mom_item_closure_append1 (itm,
+			      mom_load_value_json (ld,
+						   mom_json_array_nth (jpayl,
+								       ix)));
+#endif
+}
+
+static void
+payl_closure_dump_scan_mom (struct mom_dumper_st *du, momitem_t *itm)
+{
+  assert (du != NULL);
+  assert (itm && itm->i_typnum == momty_item);
+  assert (itm->i_paylkind == mompayk_closure);
+  assert (itm->i_payload != NULL);
+  struct momclosure_st *clos = itm->i_payload;
+  assert (clos && clos->clos_magic == MOM_CLOSURE_MAGIC);
+  unsigned len = clos->clos_len;
+  for (unsigned ix = 0; ix < len; ix++)
+    mom_dump_scan_value (du, clos->clos_valtab[ix]);
+}
+
+static momval_t
+payl_closure_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
+{
+  momval_t jarr = MOM_NULLV;
+  assert (du != NULL);
+  assert (itm && itm->i_typnum == momty_item);
+  assert (itm->i_paylkind == mompayk_closure);
+  struct momclosure_st *clos = itm->i_payload;
+  assert (clos && clos->clos_magic == MOM_CLOSURE_MAGIC);
+  unsigned len = clos->clos_len;
+  momval_t tinyarr[MOM_TINY_MAX] = { MOM_NULLV };
+  momval_t *arrval =
+    (len < MOM_TINY_MAX) ? tinyarr
+    : MOM_GC_ALLOC ("dump closure array", len * sizeof (momval_t));
+  for (unsigned ix = 0; ix < len; ix++)
+    arrval[ix] = mom_dump_emit_json (du, clos->clos_valtab[ix]);
+  jarr = (momval_t) mom_make_json_array_count (len, arrval);
+  if (arrval != tinyarr)
+    MOM_GC_FREE (arrval);
+#warning incomplete payl_closure_dump_json_mom
+  return jarr;
+}
+
+static const struct mom_payload_descr_st payldescr_closure_mom = {
+  .dpayl_magic = MOM_PAYLOAD_MAGIC,
+  .dpayl_name = "closure",
+  .dpayl_loadfun = payl_closure_load_mom,
+  .dpayl_dumpscanfun = payl_closure_dump_scan_mom,
+  .dpayl_dumpjsonfun = payl_closure_dump_json_mom,
+};
 
 
 ////////////////////////////////////////////////////////////////
@@ -2427,6 +2567,7 @@ static const struct mom_payload_descr_st payldescr_webexchange_mom = {
 struct mom_payload_descr_st *mom_payloadescr[mompayk__last + 1] = {
   [mompayk_queue] = (struct mom_payload_descr_st *) &payldescr_queue_mom,
   [mompayk_routine] = (struct mom_payload_descr_st *) &payldescr_routine_mom,
+  [mompayk_closure] = (struct mom_payload_descr_st *) &payldescr_closure_mom,
   [mompayk_tasklet] = (struct mom_payload_descr_st *) &payldescr_tasklet_mom,
   [mompayk_buffer] = (struct mom_payload_descr_st *) &payldescr_buffer_mom,
   [mompayk_vector] = (struct mom_payload_descr_st *) &payldescr_vector_mom,

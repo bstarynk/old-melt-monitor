@@ -1157,6 +1157,7 @@ enum mom_kindpayload_en
   mompayk_none = 0,
   mompayk_queue,
   mompayk_routine,
+  mompayk_closure,
   mompayk_tasklet,
   mompayk_buffer,
   mompayk_vector,
@@ -1226,6 +1227,22 @@ struct momroutinedescr_st
 // start a routine of given name. If name is NULL or empty, use the
 // item's name or identstr...
 void mom_item_start_routine (momitem_t *itm, const char *routname);
+
+
+/************* closure item *********/
+struct momclosure_st
+{				/* the payload of closures */
+  unsigned clos_magic;		/* always MOM_CLOSURE_MAGIC */
+  unsigned clos_len;
+  const struct momroutinedescr_st *clos_rout;
+  momval_t clos_valtab[];
+};
+
+void mom_item_start_closure_of_routine (momitem_t *itm,
+					const struct momroutinedescr_st *rout,
+					unsigned len);
+void mom_item_start_closure_named (momitem_t *itm, const char *routname,
+				   unsigned len);
 
 /************* tasklet item *********/
 
