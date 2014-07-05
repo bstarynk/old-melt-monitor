@@ -55,8 +55,14 @@ MOM_PREDEFINED_NAMED(body,_0ihu411vkua_z4sh56hicdt)
 ////!the buffer payload kind, and also the clipboard buffer in editors
 MOM_PREDEFINED_NAMED(buffer,_3zqd7ai3rtu_md9athkx17u)
 
-////!Gives the closure of Json for frames of tasklets
+////!JSON for closure values
+MOM_PREDEFINED_NAMED(closed_values,_9mxi9e605ay_ihpjyrwq250)
+
+////!JSON for closure payload
 MOM_PREDEFINED_NAMED(closure,_97zkxf62r11_6eedwwv3eu8)
+
+////!JSON for closure routine name
+MOM_PREDEFINED_NAMED(closure_routine,_28941cvehx8_9rf4udyeq8v)
 
 ////!gives a human-readable comment
 MOM_PREDEFINED_NAMED(comment,_41u1utcxyek_22cftxt3xxm)

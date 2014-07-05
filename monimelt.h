@@ -1244,6 +1244,13 @@ void mom_item_start_closure_of_routine (momitem_t *itm,
 void mom_item_start_closure_named (momitem_t *itm, const char *routname,
 				   unsigned len);
 
+void mom_item_closure_set_nth (momitem_t *itm, int rk, momval_t cval);
+
+momval_t mom_item_closure_nth (const momitem_t *itm, int rk);
+
+unsigned mom_item_closure_length (const momitem_t *itm);
+
+const char *mom_item_closure_routine_name (const momitem_t *itm);
 /************* tasklet item *********/
 
 struct momframe_st

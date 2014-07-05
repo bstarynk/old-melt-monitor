@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 Jul 04
+-- state-monimelt dump 2014 Jul 05
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','todo dump but continue');
+INSERT INTO t_params VALUES('dump_reason','exit dump');
 INSERT INTO t_items VALUES('_02u53qxa7dm_sttmhffpchr','{"kind": "queue", "payload": [], "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "The agenda is central to Monimelt.\nIt is the queue of taskets to be executed by worker threads."}],
  "content": null}
@@ -59,6 +59,9 @@ INSERT INTO t_items VALUES('_1f94j87qumw_mhzkriesx7c','{"kind": "routine", "payl
 INSERT INTO t_items VALUES('_240dwt57s08_a8uy366sev5','{"kind": "routine", "payload": "noop", "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "useless noop routine"}], "content": {"sons": ["{spare1 noop}",
    "{spare2 noop}", null], "node": "_240dwt57s08_a8uy366sev5", "jtype": "node"}}
+');
+INSERT INTO t_items VALUES('_28941cvehx8_9rf4udyeq8v','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "JSON for closure routine name"}], "content": null}
 ');
 INSERT INTO t_items VALUES('_2d7i21ihwd8_xjcp4uhs11u','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "some variable"}], "content": null}
@@ -334,13 +337,16 @@ INSERT INTO t_items VALUES('_967fch1xu4h_i87qjq1zt1h','{"kind": null, "payload":
    "val": "for the expansion of a primitive"}], "content": null}
 ');
 INSERT INTO t_items VALUES('_97zkxf62r11_6eedwwv3eu8','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
-   "val": "Gives the closure of Json for frames of tasklets"}], "content": null}
+   "val": "JSON for closure payload"}], "content": null}
 ');
 INSERT INTO t_items VALUES('_9dsak0qcy0v_1c5z9th7x3i','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "indicates the HTTP GET method"}], "content": null}
 ');
 INSERT INTO t_items VALUES('_9jeymqk2732_wiq5kyczi9c','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "for integer values and displays"}], "content": null}
+');
+INSERT INTO t_items VALUES('_9mxi9e605ay_ihpjyrwq250','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "JSON for closure values"}], "content": null}
 ');
 INSERT INTO t_items VALUES('_9sd1mh9q1zf_3duewi6fsaq','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "for exited processes with exit code >0"}], "content": null}
@@ -358,7 +364,9 @@ INSERT INTO t_names VALUES('assign','_0zmdkdxj7kp_491yqpcuaz8','.root');
 INSERT INTO t_names VALUES('attr','_6w3dvx83dfw_xzc6aif6isv','.predef');
 INSERT INTO t_names VALUES('body','_0ihu411vkua_z4sh56hicdt','.predef');
 INSERT INTO t_names VALUES('buffer','_3zqd7ai3rtu_md9athkx17u','.predef');
+INSERT INTO t_names VALUES('closed_values','_9mxi9e605ay_ihpjyrwq250','.predef');
 INSERT INTO t_names VALUES('closure','_97zkxf62r11_6eedwwv3eu8','.predef');
+INSERT INTO t_names VALUES('closure_routine','_28941cvehx8_9rf4udyeq8v','.predef');
 INSERT INTO t_names VALUES('comment','_41u1utcxyek_22cftxt3xxm','.predef');
 INSERT INTO t_names VALUES('content','_8s357rq2dzk_k8ze95tikjm','.predef');
 INSERT INTO t_names VALUES('display','_085krqf192t_z1m3zs77ww5','.predef');

@@ -843,26 +843,82 @@ mom_item_start_closure_named (momitem_t *itm, const char *routname,
   mom_item_start_closure_of_routine (itm, rdescr, len);
 }
 
+void
+mom_item_closure_set_nth (momitem_t *itm, int rk, momval_t cval)
+{
+  if (!itm || itm->i_typnum != momty_item
+      || itm->i_paylkind != mompayk_closure)
+    return;
+  struct momclosure_st *clos = itm->i_payload;
+  assert (clos && clos->clos_magic == MOM_CLOSURE_MAGIC);
+  unsigned clen = clos->clos_len;
+  if (rk < 0)
+    rk += (int) clen;
+  if (rk >= 0 && rk < (int) clen)
+    clos->clos_valtab[rk] = cval;
+}
 
+momval_t
+mom_item_closure_nth (const momitem_t *itm, int rk)
+{
+  if (!itm || itm->i_typnum != momty_item
+      || itm->i_paylkind != mompayk_closure)
+    return MOM_NULLV;
+  struct momclosure_st *clos = itm->i_payload;
+  assert (clos && clos->clos_magic == MOM_CLOSURE_MAGIC);
+  unsigned clen = clos->clos_len;
+  if (rk < 0)
+    rk += (int) clen;
+  if (rk >= 0 && rk < (int) clen)
+    return clos->clos_valtab[rk];
+  return MOM_NULLV;
+}
+
+unsigned
+mom_item_closure_length (const momitem_t *itm)
+{
+  if (!itm || itm->i_typnum != momty_item
+      || itm->i_paylkind != mompayk_closure)
+    return 0;
+  struct momclosure_st *clos = itm->i_payload;
+  assert (clos && clos->clos_magic == MOM_CLOSURE_MAGIC);
+  return clos->clos_len;
+}
+
+const char *
+mom_item_closure_routine_name (const momitem_t *itm)
+{
+  if (!itm || itm->i_typnum != momty_item
+      || itm->i_paylkind != mompayk_closure)
+    return 0;
+  struct momclosure_st *clos = itm->i_payload;
+  assert (clos && clos->clos_magic == MOM_CLOSURE_MAGIC);
+  const struct momroutinedescr_st *rdescr = clos->clos_rout;
+  assert (rdescr && rdescr->rout_magic == MOM_ROUTINE_MAGIC);
+  return rdescr->rout_name;
+}
 
 static void
 payl_closure_load_mom (struct mom_loader_st *ld, momitem_t *itm,
-		       momval_t jpayl)
+		       momval_t jclos)
 {
   assert (ld != NULL);
   assert (itm && itm->i_typnum == momty_item);
-#if 0
-  mom_item_start_closure (itm);
-  unsigned len = mom_json_array_size (jpayl);
-  if (!len)
+  momval_t jrname =
+    mom_jsonob_get (jclos, (momval_t) mom_named__closure_routine);
+  momval_t jcval =
+    mom_jsonob_get (jclos, (momval_t) mom_named__closed_values);
+  assert (mom_is_string (jrname));
+  assert (mom_is_jsonable (jcval));
+  unsigned nbcloval = mom_json_array_size (jcval);
+  mom_item_start_closure_named (itm, mom_string_cstr (jrname), nbcloval);
+  if (!nbcloval)
     return;
-  mom_item_closure_reserve (itm, 9 * len / 8 + 2);
-  for (unsigned ix = 0; ix < len; ix++)
-    mom_item_closure_append1 (itm,
+  for (unsigned ix = 0; ix < nbcloval; ix++)
+    mom_item_closure_set_nth (itm, ix,
 			      mom_load_value_json (ld,
-						   mom_json_array_nth (jpayl,
+						   mom_json_array_nth (jcval,
 								       ix)));
-#endif
 }
 
 static void
@@ -882,6 +938,7 @@ payl_closure_dump_scan_mom (struct mom_dumper_st *du, momitem_t *itm)
 static momval_t
 payl_closure_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
 {
+  momval_t jclos = MOM_NULLV;
   momval_t jarr = MOM_NULLV;
   assert (du != NULL);
   assert (itm && itm->i_typnum == momty_item);
@@ -898,8 +955,16 @@ payl_closure_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
   jarr = (momval_t) mom_make_json_array_count (len, arrval);
   if (arrval != tinyarr)
     MOM_GC_FREE (arrval);
-#warning incomplete payl_closure_dump_json_mom
-  return jarr;
+  const struct momroutinedescr_st *rdescr = clos->clos_rout;
+  if (strcmp (rdescr->rout_module, MOM_EMPTY_MODULE) != 0)
+    mom_dump_require_module (du, rdescr->rout_module);
+  jclos
+    = (momval_t)
+    mom_make_json_object
+    (MOMJSOB_ENTRY ((momval_t) mom_named__closure_routine,
+		    (momval_t) mom_make_string (rdescr->rout_name)),
+     MOMJSOB_ENTRY ((momval_t) mom_named__closed_values, jarr), MOMJSON_END);
+  return jclos;
 }
 
 static const struct mom_payload_descr_st payldescr_closure_mom = {
