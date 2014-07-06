@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 Jul 05
+-- state-monimelt dump 2014 Jul 06
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','exit dump');
+INSERT INTO t_params VALUES('dump_reason','todo dump but continue');
 INSERT INTO t_items VALUES('_02u53qxa7dm_sttmhffpchr','{"kind": "queue", "payload": [], "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "The agenda is central to Monimelt.\nIt is the queue of taskets to be executed by worker threads."}],
  "content": null}
@@ -178,7 +178,8 @@ INSERT INTO t_items VALUES('_4yxdswc8qwf_vxzy95hd399','{"kind": "routine", "payl
        "space": ".root", "jtype": "item_ref"}, "jtype": "node"}], "node": "_0ihu411vkua_z4sh56hicdt",
     "jtype": "node"}}, {"attr": "_3eu0rdq4upj_dp5ptr6hj04", "val": {"jtype": "tuple",
     "tuple": [{"item_ref": "_8y1sw8z084j_4ts0y0jydha", "space": ".root", "jtype":
-      "item_ref"}, "_5yfdp53cpi1_0i5k33wms7c"]}}], "content": null}
+      "item_ref"}, "_5yfdp53cpi1_0i5k33wms7c"]}}, {"attr": "_3fw5acswe59_9016fqe4d41",
+   "val": {"jtype": "tuple", "tuple": []}}], "content": null}
 ');
 INSERT INTO t_items VALUES('_53748kde7s1_pkz810exr27','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "used in editor, etc. to reference some item"}], "content": null}

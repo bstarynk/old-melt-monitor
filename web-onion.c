@@ -338,6 +338,12 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 	      mom_lock_item (webxitm);
 	      struct timespec ts = mom_timespec (curtim + minidelay);
 	      pthread_cond_timedwait (&wxd->webx_cond, &webxitm->i_mtx, &ts);
+	      if (MOM_IS_DEBUGGING (web) && minidelay > 0.6)
+		MOM_DEBUG (web,
+			   MOMOUT_LITERAL ("after condwait webxitm="),
+			   MOMOUT_VALUE ((const momval_t) webxitm),
+			   MOMOUT_LITERAL (" minidelay="),
+			   MOMOUT_FMT_DOUBLE ("%.4f", minidelay), NULL);
 	      if (webxitm->i_paylkind == mompayk_webexchange)
 		{
 		  wxd = webxitm->i_payload;
