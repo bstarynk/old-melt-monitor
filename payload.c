@@ -776,7 +776,6 @@ static const struct mom_payload_descr_st payldescr_routine_mom = {
 ////////////////////////////////////////////////////////////////
 ///// CLOSURE PAYLOAD
 ////////////////////////////////////////////////////////////////
-#define MOM_CLOSURE_MAGIC 830382377	/* closure magic  0x317ea129 */
 
 void
 mom_item_start_closure_of_routine (momitem_t *itm,
@@ -872,6 +871,17 @@ mom_item_closure_nth (const momitem_t *itm, int rk)
   if (rk >= 0 && rk < (int) clen)
     return clos->clos_valtab[rk];
   return MOM_NULLV;
+}
+
+momval_t *
+mom_item_closure_values (const momitem_t *itm)
+{
+  if (!itm || itm->i_typnum != momty_item
+      || itm->i_paylkind != mompayk_closure)
+    return NULL;
+  struct momclosure_st *clos = itm->i_payload;
+  assert (clos && clos->clos_magic == MOM_CLOSURE_MAGIC);
+  return clos->clos_valtab;
 }
 
 unsigned
@@ -990,8 +1000,8 @@ mom_item_start_tasklet (momitem_t *itm)
   struct mom_taskletdata_st *itd =
     MOM_GC_ALLOC ("item tasklet", sizeof (struct mom_taskletdata_st));
   const unsigned frasize = 6;
-  itd->dtk_closures =
-    MOM_GC_ALLOC ("tasklet closures", frasize * sizeof (momnode_t *));
+  itd->dtk_closurevals =
+    MOM_GC_ALLOC ("tasklet closurevals", frasize * sizeof (momval_t));
   itd->dtk_frames =
     MOM_GC_SCALAR_ALLOC ("tasklet frames",
 			 frasize * sizeof (struct momframe_st));
@@ -1082,20 +1092,20 @@ mom_item_tasklet_reserve (momitem_t *itm, unsigned nbint, unsigned nbdbl,
 	  struct momframe_st *newframes =
 	    MOM_GC_SCALAR_ALLOC ("reserved frames of tasklet",
 				 sizeof (struct momframe_st) * newfrasize);
-	  const momnode_t **newclosures =
-	    MOM_GC_ALLOC ("reserved closures of tasklet",
-			  sizeof (momnode_t *) * newfrasize);
+	  momval_t *newclosurevals =
+	    MOM_GC_ALLOC ("reserved closurevals of tasklet",
+			  sizeof (momval_t) * newfrasize);
 	  if (itd->dtk_fratop > 0)
 	    {
 	      memcpy (newframes, itd->dtk_frames,
 		      itd->dtk_fratop * sizeof (struct momframe_st));
-	      memcpy (newclosures, itd->dtk_closures,
-		      itd->dtk_fratop * sizeof (momnode_t *));
+	      memcpy (newclosurevals, itd->dtk_closurevals,
+		      itd->dtk_fratop * sizeof (momval_t));
 	    }
 	  MOM_GC_FREE (itd->dtk_frames);
-	  MOM_GC_FREE (itd->dtk_closures);
+	  MOM_GC_FREE (itd->dtk_closurevals);
 	  itd->dtk_frames = newframes;
-	  itd->dtk_closures = newclosures;
+	  itd->dtk_closurevals = newclosurevals;
 	  itd->dtk_frasize = newfrasize;
 	}
     }
@@ -1639,17 +1649,17 @@ mom_item_tasklet_push_frame (momitem_t *itm, momval_t clo,
       struct momframe_st *newframes =
 	MOM_GC_SCALAR_ALLOC ("tasklet grown frames",
 			     sizeof (struct momframe_st) * newfrasize);
-      const momnode_t **newclosures = MOM_GC_ALLOC ("tasklet grown closures",
-						    sizeof (momnode_t *) *
-						    newfrasize);
+      momval_t *newclosurevals = MOM_GC_ALLOC ("tasklet grown closure vals",
+					       sizeof (momval_t) *
+					       newfrasize);
       memcpy (newframes, itd->dtk_frames,
 	      sizeof (struct momframe_st) * itd->dtk_fratop);
-      memcpy (newclosures, itd->dtk_closures,
-	      sizeof (momnode_t *) * itd->dtk_fratop);
+      memcpy (newclosurevals, itd->dtk_closurevals,
+	      sizeof (momval_t) * itd->dtk_fratop);
       MOM_GC_FREE (itd->dtk_frames);
-      MOM_GC_FREE (itd->dtk_closures);
+      MOM_GC_FREE (itd->dtk_closurevals);
       itd->dtk_frames = newframes;
-      itd->dtk_closures = newclosures;
+      itd->dtk_closurevals = newclosurevals;
       itd->dtk_frasize = newfrasize;
     }
   struct momframe_st *newframe = itd->dtk_frames + itd->dtk_fratop;
@@ -1674,7 +1684,7 @@ mom_item_tasklet_push_frame (momitem_t *itm, momval_t clo,
 	      nbval * sizeof (momval_t));
       itd->dtk_valtop += nbval;
     }
-  itd->dtk_closures[fratop] = clo.pnode;
+  itd->dtk_closurevals[fratop] = clo;
   itd->dtk_fratop = fratop + 1;
   va_start (alist, firstdir);
   fill_frame_data_mom ((nbint > 0) ? (itd->dtk_ints + froint) : NULL,
@@ -1725,7 +1735,7 @@ mom_item_tasklet_replace_top_frame (momitem_t *itm, momval_t clo,
   itd->dtk_dbltop = ofpdbl;
   itd->dtk_valtop = ofpvalu;
   memset (prevframe, 0, sizeof (struct momframe_st));
-  itd->dtk_closures[itd->dtk_fratop - 1] = NULL;
+  itd->dtk_closurevals[itd->dtk_fratop - 1] = MOM_NULLV;
   itd->dtk_fratop--;
   unsigned fratop = itd->dtk_fratop;
   /// grow the ints if needed
@@ -1788,7 +1798,7 @@ mom_item_tasklet_replace_top_frame (momitem_t *itm, momval_t clo,
 	      nbval * sizeof (momval_t));
       itd->dtk_valtop += nbval;
     }
-  itd->dtk_closures[fratop] = clo.pnode;
+  itd->dtk_closurevals[fratop] = clo;
   itd->dtk_fratop = fratop + 1;
   va_start (alist, firstdir);
   fill_frame_data_mom ((nbint > 0) ? (itd->dtk_ints + froint) : NULL,
@@ -1827,7 +1837,7 @@ mom_item_tasklet_pop_frame (momitem_t *itm)
   itd->dtk_dbltop = ofpdbl;
   itd->dtk_valtop = ofpvalu;
   memset (prevframe, 0, sizeof (struct momframe_st));
-  itd->dtk_closures[fratop - 1] = NULL;
+  itd->dtk_closurevals[fratop - 1] = MOM_NULLV;
   itd->dtk_fratop = fratop - 1;
   /// shrink perhaps the integers
   if (MOM_UNLIKELY (itd->dtk_intsize > TASKLET_THRESHOLD
@@ -1876,16 +1886,17 @@ mom_item_tasklet_pop_frame (momitem_t *itm)
       struct momframe_st *newframes =
 	MOM_GC_SCALAR_ALLOC ("tasklet shrink frames",
 			     sizeof (struct momframe_st) * newfrasize);
-      const momnode_t **newclosures = MOM_GC_ALLOC ("tasklet shrink closures",
-						    sizeof (momnode_t *) *
-						    newfrasize);
+      momval_t *newclosurevals = MOM_GC_ALLOC ("tasklet shrink closureval",
+					       sizeof (momval_t) *
+					       newfrasize);
       memcpy (newframes, itd->dtk_frames,
 	      sizeof (struct momframe_st) * fratop);
-      memcpy (newclosures, itd->dtk_closures, sizeof (momnode_t *) * fratop);
+      memcpy (newclosurevals, itd->dtk_closurevals,
+	      sizeof (momval_t) * fratop);
       MOM_GC_FREE (itd->dtk_frames);
-      MOM_GC_FREE (itd->dtk_closures);
+      MOM_GC_FREE (itd->dtk_closurevals);
       itd->dtk_frames = newframes;
-      itd->dtk_closures = newclosures;
+      itd->dtk_closurevals = newclosurevals;
       itd->dtk_frasize = newfrasize;
     }
 }
@@ -1931,7 +1942,7 @@ mom_item_tasklet_frame_closure (momitem_t *itm, int frk)
   if (frk < 0)
     frk += fratop;
   if (frk >= 0 && frk < (int) fratop)
-    return (momval_t) itd->dtk_closures[frk];
+    return itd->dtk_closurevals[frk];
   return MOM_NULLV;
 }
 
@@ -2159,7 +2170,7 @@ payl_tasklet_dump_scan_mom (struct mom_dumper_st *du, momitem_t *itm)
     mom_dump_scan_value (du, itd->dtk_values[vix]);
   unsigned fratop = itd->dtk_fratop;
   for (unsigned frix = 0; frix < fratop; frix++)
-    mom_dump_scan_value (du, (momval_t) itd->dtk_closures[frix]);
+    mom_dump_scan_value (du, (momval_t) itd->dtk_closurevals[frix]);
 }
 
 
@@ -2181,7 +2192,7 @@ payl_tasklet_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
   for (unsigned frix = 0; frix < fratop; frix++)
     {
       struct momframe_st *curfram = itd->dtk_frames + frix;
-      const momnode_t *curclo = itd->dtk_closures[frix];
+      momval_t curclov = itd->dtk_closurevals[frix];
       unsigned nbint = 0, nbdbl = 0, nbval = 0;
       if (frix + 1 < fratop)
 	{
@@ -2230,7 +2241,7 @@ payl_tasklet_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
       momval_t jvals
 	= (nbval > 0)
 	? (momval_t) mom_make_json_array_count (nbval, jvalarr) : MOM_NULLV;
-      momval_t jclos = mom_dump_emit_json (du, (momval_t) curclo);
+      momval_t jclos = mom_dump_emit_json (du, curclov);
       momval_t jstate = (momval_t) mom_make_integer (curfram->fr_state);
       momval_t jframe
 	= (momval_t)

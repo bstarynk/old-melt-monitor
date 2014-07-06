@@ -1209,7 +1209,7 @@ enum mom_routres_en
   momroutres_pop = -1,		/* pop the current frame */
 };
 typedef int mom_routine_sig_t (int state, momitem_t *tasklet,
-			       const momnode_t *closure, momval_t *locvals,
+			       momval_t closv, momval_t *locvals,
 			       intptr_t * locnums, double *locdbls);
 struct momroutinedescr_st
 {
@@ -1230,6 +1230,7 @@ void mom_item_start_routine (momitem_t *itm, const char *routname);
 
 
 /************* closure item *********/
+#define MOM_CLOSURE_MAGIC 830382377	/* closure magic  0x317ea129 */
 struct momclosure_st
 {				/* the payload of closures */
   unsigned clos_magic;		/* always MOM_CLOSURE_MAGIC */
@@ -1247,6 +1248,8 @@ void mom_item_start_closure_named (momitem_t *itm, const char *routname,
 void mom_item_closure_set_nth (momitem_t *itm, int rk, momval_t cval);
 
 momval_t mom_item_closure_nth (const momitem_t *itm, int rk);
+
+momval_t *mom_item_closure_values (const momitem_t *itm);
 
 unsigned mom_item_closure_length (const momitem_t *itm);
 
@@ -1267,7 +1270,7 @@ struct mom_taskletdata_st
   intptr_t *dtk_ints;		/* space for intptr_t  */
   double *dtk_doubles;		/* space for doubles */
   momval_t *dtk_values;		/* space for value data */
-  const momnode_t **dtk_closures;	/* stack of closure nodes */
+  momval_t *dtk_closurevals;	/* stack of closure values */
   struct momframe_st *dtk_frames;	/* stack of scalar frames */
   momval_t dtk_res1, dtk_res2, dtk_res3;	/* three results max */
   pthread_t dtk_thread;		/* the thread executing this, or else 0 */
