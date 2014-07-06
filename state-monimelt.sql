@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','todo dump but continue');
+INSERT INTO t_params VALUES('dump_reason','todo dump at exit');
 INSERT INTO t_items VALUES('_02u53qxa7dm_sttmhffpchr','{"kind": "queue", "payload": [], "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "The agenda is central to Monimelt.\nIt is the queue of taskets to be executed by worker threads."}],
  "content": null}
@@ -65,6 +65,9 @@ INSERT INTO t_items VALUES('_28941cvehx8_9rf4udyeq8v','{"kind": null, "payload":
 ');
 INSERT INTO t_items VALUES('_2d7i21ihwd8_xjcp4uhs11u','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "some variable"}], "content": null}
+');
+INSERT INTO t_items VALUES('_2mayc646pdu_w4d18fmx8u3','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "some sequence"}], "content": null}
 ');
 INSERT INTO t_items VALUES('_2v75mmyph64_4h4kys78740','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "in JSON dumps, indicate sets of item, or give their array of elements"}],
@@ -136,6 +139,14 @@ INSERT INTO t_items VALUES('_41u1utcxyek_22cftxt3xxm','{"kind": null, "payload":
 INSERT INTO t_items VALUES('_41v0erax6my_m6pytj0793u','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "in JSON dumps, give the payload of items"}], "content": null}
 ');
+INSERT INTO t_items VALUES('_41xwu6cpvq9_ezp5wzq7t4x','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "gives the length of some sequence"}, {"attr": "_70ty9z1tm4p_eccsxmyfe25",
+   "val": {"item_ref": "_9jeymqk2732_wiq5kyczi9c", "space": ".predef", "jtype": "item_ref"}},
+  {"attr": "_8um1q4shitk_tpcmedvsfzu", "val": {"jtype": "tuple", "tuple": ["_2mayc646pdu_w4d18fmx8u3"]}},
+  {"attr": "_967fch1xu4h_i87qjq1zt1h", "val": {"sons": ["mom_seqitem_length(",
+     {"item_ref": "_2mayc646pdu_w4d18fmx8u3", "space": ".root", "jtype": "item_ref"},
+     ")"], "node": "_2vxxtir316j_meap5sq6ykr", "jtype": "node"}}], "content": null}
+');
 INSERT INTO t_items VALUES('_47fatww79x6_vh8ap22c0ch','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "indicates the HTTP HEAD method"}], "content": null}
 ');
@@ -159,27 +170,10 @@ INSERT INTO t_items VALUES('_4v93t3jzrtz_srt9ear8fm8','{"kind": "routine", "payl
      "{spare3 ajax-complete_name}", null], "node": "_4v93t3jzrtz_srt9ear8fm8",
     "jtype": "node"}}], "content": null}
 ');
-INSERT INTO t_items VALUES('_4yxdswc8qwf_vxzy95hd399','{"kind": "routine", "payload": "translate_module", "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
-   "val": "routine to translate modules"}, {"attr": "_8um1q4shitk_tpcmedvsfzu",
-   "val": {"jtype": "tuple", "tuple": ["_7sqk8vh89xr_6tj8dq7vqju"]}}, {"attr": "_0acmecj244a_6krws4rx7v1",
-   "val": {"sons": [{"sons": [{"item_ref": "_8y1sw8z084j_4ts0y0jydha", "space": ".root",
-"jtype": "item_ref"}], "node": {"item_ref": "_590trid9ycw_f6kaajwca63", "space": ".root",
-       "jtype": "item_ref"}, "jtype": "node"}, {"sons": [{"item_ref": "_8y1sw8z084j_4ts0y0jydha",
-"space": ".root", "jtype": "item_ref"}, {"sons": [{"item_ref": "_7sqk8vh89xr_6tj8dq7vqju",
-  "space": ".predef", "jtype": "item_ref"}], "node": "_53cuy70z4tf_86tzz364trd",
-"jtype": "node"}, {"item_ref": "_7sqk8vh89xr_6tj8dq7vqju", "space": ".predef",
-"jtype": "item_ref"}], "node": {"item_ref": "_547q7emtfsk_ect0yratp6e", "space": ".root",
-       "jtype": "item_ref"}, "jtype": "node"}, {"sons": [{"item_ref": "_5yfdp53cpi1_0i5k33wms7c",
-"space": ".predef", "jtype": "item_ref"}, {"sons": [{"item_ref": "_7sqk8vh89xr_6tj8dq7vqju",
-  "space": ".predef", "jtype": "item_ref"}, {"sons": [{"item_ref": "_5yfdp53cpi1_0i5k33wms7c",
-    "space": ".predef", "jtype": "item_ref"}], "node": "_53cuy70z4tf_86tzz364trd",
-  "jtype": "node"}], "node": {"item_ref": "_5vi29c2i54k_i2ufkty9kmp", "space": ".root",
- "jtype": "item_ref"}, "jtype": "node"}], "node": {"item_ref": "_0zmdkdxj7kp_491yqpcuaz8",
-       "space": ".root", "jtype": "item_ref"}, "jtype": "node"}], "node": "_0ihu411vkua_z4sh56hicdt",
-    "jtype": "node"}}, {"attr": "_3eu0rdq4upj_dp5ptr6hj04", "val": {"jtype": "tuple",
-    "tuple": [{"item_ref": "_8y1sw8z084j_4ts0y0jydha", "space": ".root", "jtype":
-      "item_ref"}, "_5yfdp53cpi1_0i5k33wms7c"]}}, {"attr": "_3fw5acswe59_9016fqe4d41",
-   "val": {"jtype": "tuple", "tuple": []}}], "content": null}
+INSERT INTO t_items VALUES('_4yxdswc8qwf_vxzy95hd399','{"kind": "routine", "payload": "translate_module", "attr": [{"attr": "_3eu0rdq4upj_dp5ptr6hj04",
+   "val": {"jtype": "tuple", "tuple": [{"item_ref": "_8y1sw8z084j_4ts0y0jydha",
+      "space": ".root", "jtype": "item_ref"}, "_5yfdp53cpi1_0i5k33wms7c"]}}],
+ "content": null}
 ');
 INSERT INTO t_items VALUES('_53748kde7s1_pkz810exr27','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "used in editor, etc. to reference some item"}], "content": null}
@@ -414,6 +408,8 @@ INSERT INTO t_names VALUES('res1','_3j3s2e0510a_096chqpijq7','.predef');
 INSERT INTO t_names VALUES('res2','_8u5ar84utwm_99k5mq2d589','.predef');
 INSERT INTO t_names VALUES('res3','_60ist2ad22c_cfpjp5ay6uj','.predef');
 INSERT INTO t_names VALUES('routine','_0acmecj244a_6krws4rx7v1','.predef');
+INSERT INTO t_names VALUES('seq','_2mayc646pdu_w4d18fmx8u3','.root');
+INSERT INTO t_names VALUES('sequence_length','_41xwu6cpvq9_ezp5wzq7t4x','.root');
 INSERT INTO t_names VALUES('set','_2v75mmyph64_4h4kys78740','.predef');
 INSERT INTO t_names VALUES('size','_5s59qeamxta_70k0mt77r9i','.predef');
 INSERT INTO t_names VALUES('sons','_4ezpkss1akd_94f4h25sqe4','.predef');
