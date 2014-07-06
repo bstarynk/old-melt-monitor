@@ -208,12 +208,14 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
       MOM_DEBUGPRINTF (web,
 		       "request #%d=%#x fullpath %s method %s good namidpath %s pos %d",
 		       webnum, webnum, fullpath, method, namidpath, pos);
+      MOM_DEBUG (web, MOMOUT_LITERAL ("request #"), MOMOUT_DEC_INT (webnum),
+		 MOMOUT_LITERAL (" namiditm="),
+		 MOMOUT_VALUE ((const momval_t) namiditm), NULL);
       assert (namiditm && namiditm->i_typnum == momty_item
 	      && namiditm->i_magic == MOM_ITEM_MAGIC);
       {
 	mom_lock_item (namiditm);
-	wclosv =
-	  mom_get_attribute (namiditm->i_attrs, mom_named__web_handler);
+	wclosv = mom_item_get_attribute (namiditm, mom_named__web_handler);
 	mom_unlock_item (namiditm);
       }
       MOM_DEBUG (web, "request #", MOMOUT_DEC_INT (webnum),

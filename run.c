@@ -346,6 +346,7 @@ step_tasklet_mom (momitem_t *tkitm, struct mom_taskletdata_st *itd)
 	  mom_unlock_item (routitm);
 	  goto end;
 	}
+      mom_unlock_item (routitm);
     }				// end if curclov is a node
   else
     goto end;
