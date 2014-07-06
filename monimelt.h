@@ -1890,10 +1890,10 @@ mom_seqitem_nth_item (momval_t seqv, int rk)
 
 
 ////////////////////////////////////////////////////////////////
-/////////// NODES, notably CLOSURES
+/////////// NODES
 ////////////////////////////////////////////////////////////////
 
-// for nodes & closures
+// for nodes
 struct momnode_st
 {
   momtynum_t typnum;
@@ -1954,6 +1954,20 @@ mom_node_nth (momval_t nodv, int rk)
   if (rk >= 0 && rk < (int) l)
     return nodv.pnode->sontab[rk];
   return MOM_NULLV;
+}
+
+inline const momval_t *
+mom_closed_values (momval_t clov)
+{
+  switch (*clov.ptype)
+    {
+    case momty_item:
+      return mom_item_closure_values (clov.pitem);
+    case momty_node:
+      return clov.pnode->sontab;
+    default:
+      return NULL;
+    }
 }
 
 
