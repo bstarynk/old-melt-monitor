@@ -173,8 +173,8 @@ work_run_mom (void *p)
       else if (agendaempty)
 	{
 	  thiswork->work_running = false;
-	  double delay = (MOM_IS_DEBUGGING (run) ? 4.7 : 2.5)
-	    + 0.002 * (mom_random_32 () % 256) + wix * 0.01;
+	  double delay = (MOM_IS_DEBUGGING (run) ? 6.7 : 2.9)
+	    + 0.002 * (mom_random_32 () % 256) + wix * 0.02;
 	  struct timespec ts
 	    = mom_timespec (mom_clock_time (CLOCK_REALTIME) + delay);
 	  MOM_DEBUGPRINTF (run, "work_run_mom: waiting agenda cond wix#%d",
@@ -258,7 +258,7 @@ step_tasklet_mom (momitem_t *tkitm, struct mom_taskletdata_st *itd)
   momval_t *locvals = NULL;
   intptr_t *locints = NULL;
   double *locdbls = NULL;
-  struct momroutinedescr_st *rdescr = NULL;
+  const struct momroutinedescr_st *rdescr = NULL;
   mom_routine_sig_t *routcod = NULL;
   MOM_DEBUG (run,
 	     MOMOUT_LITERAL ("step_tasklet_mom tkitm:"),
@@ -297,6 +297,9 @@ step_tasklet_mom (momitem_t *tkitm, struct mom_taskletdata_st *itd)
       assert (closd->clos_magic == MOM_CLOSURE_MAGIC);
       rdescr = closd->clos_rout;
       assert (rdescr && rdescr->rout_magic == MOM_ROUTINE_MAGIC);
+      MOM_DEBUG (run,
+		 MOMOUT_LITERAL ("step_tasklet_mom item closure rdescr="),
+		 MOMOUT_LITERALV (rdescr->rout_name), NULL);
     }
   else if (curclotyp == momty_node)
     {
@@ -334,6 +337,9 @@ step_tasklet_mom (momitem_t *tkitm, struct mom_taskletdata_st *itd)
 	  mom_unlock_item (routitm);
 	  goto end;
 	}
+      MOM_DEBUG (run,
+		 MOMOUT_LITERAL ("step_tasklet_mom node closure rdescr="),
+		 MOMOUT_LITERALV (rdescr->rout_name), NULL);
       if (curclov.pnode->slen < rdescr->rout_minclosize)
 	{
 	  popframe = true;

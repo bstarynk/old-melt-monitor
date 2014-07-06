@@ -226,7 +226,7 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 		 MOMOUT_LITERALV (restpath),
 		 MOMOUT_LITERAL (" wclosv:"),
 		 MOMOUT_VALUE ((momval_t) wclosv));
-      if (mom_is_node (wclosv))
+      if (mom_is_node (wclosv) || mom_is_item (wclosv))
 	{
 	  momitem_t *webxitm = mom_make_item ();
 	  /// this is the only place where we are starting a webexchange item
@@ -238,6 +238,11 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 	  wxd->webx_time = webtim;
 	  wxd->webx_requ = requ;
 	  wxd->webx_resp = resp;
+	  MOM_DEBUG (web, MOMOUT_LITERAL ("webexchange webnum#"),
+		     MOMOUT_DEC_INT (webnum), MOMOUT_LITERAL (" webxitm="),
+		     MOMOUT_VALUE ((const momval_t) webxitm),
+		     MOMOUT_LITERAL (" wclosv="),
+		     MOMOUT_VALUE ((const momval_t) wclosv), NULL);
 	  pthread_cond_init (&wxd->webx_cond, NULL);
 	  // set the query arguments
 	  {
@@ -259,7 +264,11 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 		    (struct mom_jsonentry_st *) pdic->webd_pairtab),
 		   MOMJSON_END);
 		MOM_GC_FREE (pdic);
-	      }
+	      };
+	    MOM_DEBUG (web, MOMOUT_LITERAL ("webexchange webnum#"),
+		       MOMOUT_DEC_INT (webnum), MOMOUT_LITERAL (" jobquery="),
+		       MOMOUT_VALUE ((const momval_t) wxd->webx_jobquery),
+		       NULL);
 	  }
 	  /// set the post arguments
 	  if (methoditm == (momitem_t *) mom_named__POST)
@@ -283,6 +292,11 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 		     MOMJSON_END);
 		  MOM_GC_FREE (pdic);
 		}
+	      MOM_DEBUG (web, MOMOUT_LITERAL ("webexchange webnum#"),
+			 MOMOUT_DEC_INT (webnum),
+			 MOMOUT_LITERAL (" jobpost="),
+			 MOMOUT_VALUE ((const momval_t) wxd->webx_jobpost),
+			 NULL);
 	    }
 	  /// open a memory stream for reply content
 	  FILE *webf = open_memstream (&wxd->webx_obuf, &wxd->webx_osize);
@@ -297,6 +311,9 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 		     MOMOUT_ITEM ((const momitem_t *) webxitm));
 	  momitem_t *wtskitm = mom_make_item ();
 	  // dont need to lock the tasklet item, nobody knows it!
+	  MOM_DEBUG (web, MOMOUT_LITERAL ("webexchange webnum#"),
+		     MOMOUT_DEC_INT (webnum), MOMOUT_LITERAL (" wtskitm="),
+		     MOMOUT_VALUE ((const momval_t) wtskitm), NULL);
 	  mom_item_start_tasklet (wtskitm);
 	  mom_item_tasklet_push_frame	/////
 	    (wtskitm, (momval_t) wclosv,
