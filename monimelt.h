@@ -1264,6 +1264,9 @@ momval_t *mom_item_closure_values (const momitem_t *itm);
 unsigned mom_item_closure_length (const momitem_t *itm);
 
 const char *mom_item_closure_routine_name (const momitem_t *itm);
+
+const struct momroutinedescr_st *mom_item_routinedescr (const momitem_t *itm);
+
 /************* tasklet item *********/
 
 struct momframe_st
@@ -1969,6 +1972,8 @@ mom_node_nth (momval_t nodv, int rk)
 inline const momval_t *
 mom_closed_values (momval_t clov)
 {
+  if (clov.ptr == NULL)
+    return NULL;
   switch (*clov.ptype)
     {
     case momty_item:
@@ -1980,6 +1985,21 @@ mom_closed_values (momval_t clov)
     }
 }
 
+inline const struct momroutinedescr_st *
+mom_closed_routdescr (momval_t clov)
+{
+  if (clov.ptr == NULL)
+    return NULL;
+  switch (*clov.ptype)
+    {
+    case momty_item:
+      return mom_item_routinedescr (clov.pitem);
+    case momty_node:
+      return mom_item_routinedescr (clov.pnode->connitm);
+    default:
+      return NULL;
+    }
+}
 
 ////////////////////////////////////////////////////////////////
 ///// FLAGS

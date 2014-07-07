@@ -997,6 +997,25 @@ static const struct mom_payload_descr_st payldescr_closure_mom = {
   .dpayl_dumpjsonfun = payl_closure_dump_json_mom,
 };
 
+const struct momroutinedescr_st *
+mom_item_routinedescr (const momitem_t *itm)
+{
+  const struct momroutinedescr_st *rdescr = NULL;
+  if (!itm || itm->i_typnum != momty_item)
+    return NULL;
+  if (itm->i_paylkind == mompayk_routine)
+    rdescr = (struct momroutinedescr_st *) itm->i_payload;
+  else if (itm->i_paylkind == mompayk_closure)
+    {
+      struct momclosure_st *clos = itm->i_payload;
+      if (clos && clos->clos_magic == MOM_CLOSURE_MAGIC)
+	rdescr = clos->clos_rout;
+    };
+  if (rdescr && rdescr->rout_magic == MOM_ROUTINE_MAGIC)
+    return rdescr;
+  return NULL;
+}
+
 
 ////////////////////////////////////////////////////////////////
 ///// TASKLET PAYLOAD
@@ -1125,7 +1144,7 @@ mom_item_tasklet_reserve (momitem_t *itm, unsigned nbint, unsigned nbdbl,
 
 
 static bool
-compute_pushed_data_size_mom (const momnode_t *closn,
+compute_pushed_data_size_mom (momval_t clov,
 			      unsigned *pnbval,
 			      unsigned *pnbnum,
 			      unsigned *pnbdbl,
@@ -1133,7 +1152,6 @@ compute_pushed_data_size_mom (const momnode_t *closn,
 			      enum mom_pushframedirective_en dir,
 			      va_list args)
 {
-  struct momroutinedescr_st *rdescr = NULL;
   unsigned nbval = 0;
   unsigned nbnum = 0;
   unsigned nbdbl = 0;
@@ -1145,14 +1163,30 @@ compute_pushed_data_size_mom (const momnode_t *closn,
     *pnbnum = 0;
   if (pnbdbl)
     *pnbdbl = 0;
-  if (!closn || closn->typnum != momty_node)
+  const struct momroutinedescr_st *rdescr = NULL;
+  if (!clov.ptr)
     return false;
-  momitem_t *connitm = (momitem_t *) closn->connitm;
-  assert (connitm && connitm->i_typnum == momty_item);
-  mom_should_lock_item (connitm);
-  if (connitm->i_paylkind == mompayk_routine)
-    rdescr = connitm->i_payload;
-  mom_unlock_item (connitm);
+  switch (*clov.ptype)
+    {
+    case momty_item:
+      {
+	mom_should_lock_item (clov.pitem);
+	rdescr = mom_item_routinedescr (clov.pitem);
+	mom_unlock_item (clov.pitem);
+	break;
+      }
+    case momty_node:
+      {
+	momitem_t *citm = (momitem_t *) (clov.pnode->connitm);
+	assert (citm && citm->i_typnum == momty_item);
+	mom_should_lock_item (citm);
+	rdescr = mom_item_routinedescr (citm);
+	mom_unlock_item (citm);
+	break;
+      }
+    default:
+      return false;
+    }
   assert (!rdescr || rdescr->rout_magic == MOM_ROUTINE_MAGIC);
   while (again && dir != MOMPFRDO__END)
     {
@@ -1606,13 +1640,13 @@ mom_item_tasklet_push_frame (momitem_t *itm, momval_t clo,
   int state = 0;
   va_list alist;
   assert (itm && itm->i_typnum == momty_item);
-  if (!clo.ptr || *clo.ptype != momty_node)
+  if (!clo.ptr || (*clo.ptype != momty_item && *clo.ptype != momty_node))
     return;
   if (!itm->i_payload || itm->i_paylkind != mompayk_tasklet)
     return;
   struct mom_taskletdata_st *itd = itm->i_payload;
   va_start (alist, firstdir);
-  if (!compute_pushed_data_size_mom (clo.pnode,
+  if (!compute_pushed_data_size_mom (clo,
 				     &nbval, &nbint, &nbdbl,
 				     &state, firstdir, alist))
     return;
@@ -1716,7 +1750,7 @@ mom_item_tasklet_replace_top_frame (momitem_t *itm, momval_t clo,
   int state = 0;
   va_list alist;
   assert (itm && itm->i_typnum == momty_item);
-  if (!clo.ptr || *clo.ptype != momty_node)
+  if (!clo.ptr || (*clo.ptype != momty_item && *clo.ptype != momty_node))
     return;
   if (!itm->i_payload || itm->i_paylkind != mompayk_tasklet)
     return;
@@ -1724,7 +1758,7 @@ mom_item_tasklet_replace_top_frame (momitem_t *itm, momval_t clo,
   if (itd->dtk_fratop == 0)
     return;
   va_start (alist, firstdir);
-  if (!compute_pushed_data_size_mom (clo.pnode,
+  if (!compute_pushed_data_size_mom (clo,
 				     &nbval, &nbint, &nbdbl,
 				     &state, firstdir, alist))
     return;
