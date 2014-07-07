@@ -157,6 +157,12 @@ code.mom_itemid_cl{
     color: #011902;
 }
 
+span.mom_itemkind_cl {
+    font-family: "Verdana", sanserif;
+    font-size: 75%;
+    color: #10312d;
+};
+
 div.mom_attrlist_cl {
     border: 1px;
 }

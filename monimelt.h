@@ -1096,6 +1096,16 @@ mom_ident_cstr_of_item (const momitem_t *itm)
   return mom_string_cstr ((momval_t) itm->i_idstr);
 }
 
+
+static inline unsigned
+mom_item_payload_kind (const momitem_t *itm)
+{
+  if (!itm || itm->i_typnum != momty_item)
+    return 0;
+  assert (itm->i_magic == MOM_ITEM_MAGIC);
+  return itm->i_paylkind;
+}
+
 // get an item of given name or ident
 momitem_t *mom_get_item_of_name_or_ident_cstr_hash (const char *s,
 						    momhash_t h);

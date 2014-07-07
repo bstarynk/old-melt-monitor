@@ -698,6 +698,12 @@ load_data_inside_item_mom (struct mom_loader_st *ld, momitem_t *itm,
   momval_t jpayl = mom_jsonob_get (jdata, (momval_t) mom_named__payload);
   momval_t jcontent = mom_jsonob_get (jdata, (momval_t) mom_named__content);
   momval_t jkind = mom_jsonob_get (jdata, (momval_t) mom_named__kind);
+  MOM_DEBUG (load, MOMOUT_LITERAL ("load_data_inside_item_mom itm="),
+	     MOMOUT_ITEM ((const momitem_t *) itm),
+	     MOMOUT_LITERAL (" jdata="),
+	     MOMOUT_VALUE ((const momval_t) jdata),
+	     MOMOUT_LITERAL (" jkind="),
+	     MOMOUT_VALUE ((const momval_t) jkind), NULL);
   unsigned nbent = mom_json_array_size (jarrent);
   if (nbent > 0)
     {
@@ -737,6 +743,12 @@ load_data_inside_item_mom (struct mom_loader_st *ld, momitem_t *itm,
       if (mom_string_same ((momval_t) skind, payld->dpayl_name)
 	  && payld->dpayl_loadfun)
 	{
+	  MOM_DEBUG (load,
+		     MOMOUT_LITERAL ("load_data_inside_item_mom kix="),
+		     MOMOUT_DEC_INT ((int) kix),
+		     MOMOUT_LITERAL ("payldname="),
+		     MOMOUT_LITERALV ((const char *) payld->dpayl_name),
+		     NULL);
 	  payld->dpayl_loadfun (ld, itm, jpayl);
 	  break;
 	}

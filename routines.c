@@ -70,12 +70,14 @@ todo_dump_continue_mom (void *data)
 
 static int
 ajax_system_codmom (int momstate_, momitem_t *momtasklet_,
-		    const momnode_t *momclosure_, momval_t *momlocvals_,
+		    const momval_t momclosurv_, momval_t *momlocvals_,
 		    intptr_t * momlocnums_, double *momlocdbls_
 		    __attribute__ ((unused)))
 {
+  const momval_t *momclovals __attribute__ ((unused)) =
+    mom_closed_values (momclosurv_);
 #define _L(Nam) (momlocvals_[ajaxsyst_v_##Nam])
-#define _C(Nam) (momclosure_->sontab[ajaxsyst_c_##Nam])
+#define _C(Nam) (momclovals[ajaxsyst_c_##Nam])
 #define _N(Nam) (momlocnums_[ajaxsyst_n_##Nam])
   enum ajax_system_state_en
   {
@@ -3563,8 +3565,24 @@ ajaxobjs_lab_begindisplay:
 		      MOMOUT_JS_LITERALV ((const char *)
 					  mom_string_cstr ((momval_t) idv)),
 		      MOMOUT_JS_LITERAL ("</code>"),
-		      MOMOUT_JS_RAW_NEWLINE ());
-      }
+		      MOMOUT_JS_RAW_NEWLINE (), NULL);
+      };
+    {
+      unsigned ipk = mom_item_payload_kind (_L (editeditm).pitem);
+      MOM_DEBUG (run,
+		 MOMOUT_LITERAL ("ajax_objects_codmom ipk="),
+		 MOMOUT_DEC_INT ((int) ipk),
+		 MOMOUT_LITERAL (" "),
+		 MOMOUT_LITERALV ((ipk >
+				   0) ? (mom_payloadescr[ipk]->dpayl_name) :
+				  "?"), NULL);
+      if (ipk > 0 && ipk < mompayk__last && mom_payloadescr[ipk] != NULL)
+	MOM_WEBX_OUT (_L (webx).pitem,
+		      MOMOUT_JS_LITERAL (", <span class='mom_itemkind_cl'>"),
+		      MOMOUT_LITERALV ((mom_payloadescr[ipk]->dpayl_name)),
+		      MOMOUT_JS_LITERAL ("</span>"),
+		      MOMOUT_JS_RAW_NEWLINE (), NULL);
+    }
     MOM_WEBX_OUT (_L (webx).pitem,
 		  MOMOUT_JS_LITERAL ("<br/>"),
 		  MOMOUT_JS_LITERAL

@@ -343,7 +343,8 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 			   MOMOUT_LITERAL ("after condwait webxitm="),
 			   MOMOUT_VALUE ((const momval_t) webxitm),
 			   MOMOUT_LITERAL (" minidelay="),
-			   MOMOUT_FMT_DOUBLE ((const char*)"%.4f", minidelay), NULL);
+			   MOMOUT_FMT_DOUBLE ((const char *) "%.4f",
+					      minidelay), NULL);
 	      if (webxitm->i_paylkind == mompayk_webexchange)
 		{
 		  wxd = webxitm->i_payload;
@@ -430,7 +431,7 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 	      if (minidelay > 0.7)
 		MOM_DEBUGPRINTF (web,
 				 "rewaiting webrequest #%d minidelay=%.4f, wxd@%p",
-				 webnum, minidelay, wxd);		
+				 webnum, minidelay, wxd);
 	    }
 	  while (curtim < endtim && !replied);
 	  if (!replied)

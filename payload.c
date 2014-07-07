@@ -738,7 +738,9 @@ mom_item_start_routine (momitem_t *itm, const char *routname)
 	     MOMOUT_LITERAL (" from module "),
 	     MOMOUT_LITERALV (rdescr->rout_module),
 	     MOMOUT_LITERAL (" timestamp "),
-	     MOMOUT_LITERALV (rdescr->rout_timestamp));
+	     MOMOUT_LITERALV (rdescr->rout_timestamp),
+	     MOMOUT_LITERAL (" i_paylkind="),
+	     MOMOUT_DEC_INT ((int) itm->i_paylkind), NULL);
 }
 
 static void
@@ -747,6 +749,11 @@ payl_routine_load_mom (struct mom_loader_st *ld, momitem_t *itm,
 {
   assert (ld != NULL);
   assert (itm != NULL && itm->i_typnum == momty_item);
+  MOM_DEBUG (load,
+	     MOMOUT_LITERAL ("payl_routine_load_mom itm="),
+	     MOMOUT_ITEM ((const momitem_t *) itm),
+	     MOMOUT_LITERAL (" jsonv="),
+	     MOMOUT_VALUE ((const momval_t) jsonv), NULL);
   mom_item_start_routine (itm, mom_string_cstr (jsonv));
 }
 
@@ -913,6 +920,11 @@ payl_closure_load_mom (struct mom_loader_st *ld, momitem_t *itm,
 		       momval_t jclos)
 {
   assert (ld != NULL);
+  MOM_DEBUG (load,
+	     MOMOUT_LITERAL ("payl_closure_load_mom itm="),
+	     MOMOUT_ITEM ((const momitem_t *) itm),
+	     MOMOUT_LITERAL (" jclos="),
+	     MOMOUT_VALUE ((const momval_t) jclos), NULL);
   assert (itm && itm->i_typnum == momty_item);
   momval_t jrname =
     mom_jsonob_get (jclos, (momval_t) mom_named__closure_routine);

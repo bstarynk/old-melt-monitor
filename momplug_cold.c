@@ -118,34 +118,32 @@ add_editors_mom (void)
   MOM_INFORMPRINTF
     ("updated to keep editors in closures for edit_value & ajax_edit");
 }
-
-static void
-add_update_display_value_mom (void)
-{
-  momitem_t *update_display_value_item =
-    mom_get_item_of_name ("update_display_value");
-  assert (update_display_value_item != NULL);
-  mom_item_start_routine (update_display_value_item, "update_display_value");
-}
 #endif
 
-
 static void
-make_translate_module_routine_mom (void)
+make_closure_ajax_system_mom (void)
 {
-  mom_item_start_routine (mom_named__translate_module, "translate_module");
-  MOM_DEBUG (run, MOMOUT_LITERAL ("translate_module="),
-	     MOMOUT_ITEM ((const momitem_t *) mom_named__translate_module),
-	     MOMOUT_LITERAL (" !: "),
-	     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
-				     mom_named__translate_module), NULL);
-
+  momitem_t *ajax_system_item = mom_get_item_of_name ("ajax_system");
+  assert (ajax_system_item != NULL);
+  mom_item_start_closure_named (ajax_system_item, "ajax_system", 2);
+  mom_item_closure_set_nth (ajax_system_item, 0,
+			    (momval_t)
+			    mom_make_string
+			    ("{spare closed-value ajax-system-0}"));
+  mom_item_closure_set_nth (ajax_system_item, 1,
+			    (momval_t)
+			    mom_make_string
+			    ("{spare closed-value ajax-system-1}"));
+  MOM_DEBUG (run, MOMOUT_LITERAL ("closure ajax_system"),
+	     MOMOUT_VALUE ((const momval_t) ajax_system_item), NULL);
 }
+
+
 
 void
 momplugin_after_load (void)
 {
   MOM_DEBUGPRINTF (run,
 		   "after load in " __FILE__ " build " __DATE__ "@" __TIME__);
-  make_translate_module_routine_mom ();
+  make_closure_ajax_system_mom ();
 }
