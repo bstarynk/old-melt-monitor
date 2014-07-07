@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','exit dump');
+INSERT INTO t_params VALUES('dump_reason','todo dump at exit');
 INSERT INTO t_items VALUES('_02u53qxa7dm_sttmhffpchr','{"kind": "queue", "payload": [], "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "The agenda is central to Monimelt.\nIt is the queue of taskets to be executed by worker threads."}],
  "content": null}
@@ -148,6 +148,9 @@ INSERT INTO t_items VALUES('_41xwu6cpvq9_ezp5wzq7t4x','{"kind": null, "payload":
      {"item_ref": "_2mayc646pdu_w4d18fmx8u3", "space": ".root", "jtype": "item_ref"},
      ")"], "node": "_2vxxtir316j_meap5sq6ykr", "jtype": "node"}}], "content": null}
 ');
+INSERT INTO t_items VALUES('_456hz6qd6x2_jyy24w6q84z','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "common length integer"}], "content": null}
+');
 INSERT INTO t_items VALUES('_47fatww79x6_vh8ap22c0ch','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "indicates the HTTP HEAD method"}], "content": null}
 ');
@@ -173,7 +176,10 @@ INSERT INTO t_items VALUES('_4v93t3jzrtz_srt9ear8fm8','{"kind": "routine", "payl
 ');
 INSERT INTO t_items VALUES('_4yxdswc8qwf_vxzy95hd399','{"kind": "routine", "payload": "translate_module", "attr": [{"attr": "_3eu0rdq4upj_dp5ptr6hj04",
    "val": {"jtype": "tuple", "tuple": [{"item_ref": "_8y1sw8z084j_4ts0y0jydha",
-      "space": ".root", "jtype": "item_ref"}, "_5yfdp53cpi1_0i5k33wms7c"]}}],
+      "space": ".root", "jtype": "item_ref"}, "_5yfdp53cpi1_0i5k33wms7c"]}},
+  {"attr": "_3fw5acswe59_9016fqe4d41", "val": {"jtype": "tuple", "tuple": [{"item_ref":
+      "_9wwqwxqcm4p_y7di7fs8tsk", "space": ".root", "jtype": "item_ref"},
+     {"item_ref": "_456hz6qd6x2_jyy24w6q84z", "space": ".root", "jtype": "item_ref"}]}}],
  "content": null}
 ');
 INSERT INTO t_items VALUES('_53748kde7s1_pkz810exr27','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
@@ -347,6 +353,9 @@ INSERT INTO t_items VALUES('_9mxi9e605ay_ihpjyrwq250','{"kind": null, "payload":
 INSERT INTO t_items VALUES('_9sd1mh9q1zf_3duewi6fsaq','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "for exited processes with exit code >0"}], "content": null}
 ');
+INSERT INTO t_items VALUES('_9wwqwxqcm4p_y7di7fs8tsk','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "common index number"}], "content": null}
+');
 INSERT INTO t_names VALUES('GET','_9dsak0qcy0v_1c5z9th7x3i','.predef');
 INSERT INTO t_names VALUES('HEAD','_47fatww79x6_vh8ap22c0ch','.predef');
 INSERT INTO t_names VALUES('POST','_5wmusj136kq_u5qpehp89aq','.predef');
@@ -384,12 +393,14 @@ INSERT INTO t_names VALUES('input','_356014y9ueu_xv6j0eskszw','.predef');
 INSERT INTO t_names VALUES('integer','_9jeymqk2732_wiq5kyczi9c','.predef');
 INSERT INTO t_names VALUES('item','_53748kde7s1_pkz810exr27','.predef');
 INSERT INTO t_names VALUES('item_ref','_6hf2vzmrsee_t35suhjvtj4','.predef');
+INSERT INTO t_names VALUES('ix','_9wwqwxqcm4p_y7di7fs8tsk','.root');
 INSERT INTO t_names VALUES('json_array','_35vp60aw7em_d436vfie4ud','.predef');
 INSERT INTO t_names VALUES('json_false','_4mha85xcfwi_9zqcvkiy3dk','.predef');
 INSERT INTO t_names VALUES('json_object','_3xpyd539p4m_23h7wi59xi9','.predef');
 INSERT INTO t_names VALUES('json_true','_2vmrrvq5kdk_9um63pstcu9','.predef');
 INSERT INTO t_names VALUES('jtype','_7urjeiw3evy_m7k72uv6790','.predef');
 INSERT INTO t_names VALUES('kind','_06yp8ueq6yf_5ts408yww29','.predef');
+INSERT INTO t_names VALUES('len','_456hz6qd6x2_jyy24w6q84z','.root');
 INSERT INTO t_names VALUES('locals','_3eu0rdq4upj_dp5ptr6hj04','.predef');
 INSERT INTO t_names VALUES('make_item','_590trid9ycw_f6kaajwca63','.root');
 INSERT INTO t_names VALUES('misc','_85rz4j0q982_67im8sstj9s','.root');
