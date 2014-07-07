@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 Jul 06
+-- state-monimelt dump 2014 Jul 07
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','todo dump at exit');
+INSERT INTO t_params VALUES('dump_reason','exit dump');
 INSERT INTO t_items VALUES('_02u53qxa7dm_sttmhffpchr','{"kind": "queue", "payload": [], "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "The agenda is central to Monimelt.\nIt is the queue of taskets to be executed by worker threads."}],
  "content": null}
@@ -124,10 +124,11 @@ INSERT INTO t_items VALUES('_3v4d7uzex6f_euek4pztiuh','{"kind": null, "payload":
 INSERT INTO t_items VALUES('_3xpyd539p4m_23h7wi59xi9','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "in JSON dump, jtype of JSON object values"}], "content": null}
 ');
-INSERT INTO t_items VALUES('_3xz3qrc6mfy_4r51up6u3pa','{"kind": "routine", "payload": "ajax_system", "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
-   "val": "handle ''ajax_system'' webrequests"}, {"attr": "_7sav6zery1v_24sa6jwwu6c",
-   "val": {"sons": ["{spare1 ajax-system}", "{spare2 ajax-system}", "{spare3 ajax-system}",
-     null], "node": "_3xz3qrc6mfy_4r51up6u3pa", "jtype": "node"}}], "content": null}
+INSERT INTO t_items VALUES('_3xz3qrc6mfy_4r51up6u3pa','{"kind": "closure", "payload": {"closure_routine": "ajax_system", "closed_values":
+  ["{spare closed-value ajax-system-0}", "{spare closed-value ajax-system-1}"]},
+ "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "handle ''ajax_system'' webrequests"},
+  {"attr": "_7sav6zery1v_24sa6jwwu6c", "val": {"item_ref": "_3xz3qrc6mfy_4r51up6u3pa",
+    "space": ".root", "jtype": "item_ref"}}], "content": null}
 ');
 INSERT INTO t_items VALUES('_3zqd7ai3rtu_md9athkx17u','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "the buffer payload kind, and also the clipboard buffer in editors"}],

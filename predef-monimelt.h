@@ -197,8 +197,6 @@ MOM_PREDEFINED_NAMED(string,_8j516kuv89j_4hc4w6ykmr6)
 
 ////!for terminated processes
 MOM_PREDEFINED_NAMED(terminated,_3jpt8yuzuyw_ti1pyz3me1c)
-
-////!routine to translate modules
 MOM_PREDEFINED_NAMED(translate_module,_4yxdswc8qwf_vxzy95hd399)
 
 ////!in JSON dumps, used for tuples of items

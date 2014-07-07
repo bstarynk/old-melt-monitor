@@ -134,6 +134,8 @@ make_closure_ajax_system_mom (void)
 			    (momval_t)
 			    mom_make_string
 			    ("{spare closed-value ajax-system-1}"));
+  mom_item_put_attribute (ajax_system_item, mom_named__web_handler,
+			  (momval_t) ajax_system_item);
   MOM_DEBUG (run, MOMOUT_LITERAL ("closure ajax_system"),
 	     MOMOUT_VALUE ((const momval_t) ajax_system_item), NULL);
 }
