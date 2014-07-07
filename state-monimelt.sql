@@ -179,8 +179,17 @@ INSERT INTO t_items VALUES('_4yxdswc8qwf_vxzy95hd399','{"kind": "routine", "payl
       "space": ".root", "jtype": "item_ref"}, "_5yfdp53cpi1_0i5k33wms7c"]}},
   {"attr": "_3fw5acswe59_9016fqe4d41", "val": {"jtype": "tuple", "tuple": [{"item_ref":
       "_9wwqwxqcm4p_y7di7fs8tsk", "space": ".root", "jtype": "item_ref"},
-     {"item_ref": "_456hz6qd6x2_jyy24w6q84z", "space": ".root", "jtype": "item_ref"}]}}],
- "content": null}
+     {"item_ref": "_456hz6qd6x2_jyy24w6q84z", "space": ".root", "jtype": "item_ref"}]}},
+  {"attr": "_8um1q4shitk_tpcmedvsfzu", "val": {"jtype": "tuple", "tuple": ["_7sqk8vh89xr_6tj8dq7vqju"]}},
+  {"attr": "_0acmecj244a_6krws4rx7v1", "val": {"sons": [{"sons": [{"item_ref": "_8y1sw8z084j_4ts0y0jydha",
+"space": ".root", "jtype": "item_ref"}], "node": {"item_ref": "_590trid9ycw_f6kaajwca63",
+       "space": ".root", "jtype": "item_ref"}, "jtype": "node"}, {"sons": [{"item_ref":
+"_8y1sw8z084j_4ts0y0jydha", "space": ".root", "jtype": "item_ref"}, {"sons": [{"item_ref":
+  "_7sqk8vh89xr_6tj8dq7vqju", "space": ".predef", "jtype": "item_ref"}], "node": "_53cuy70z4tf_86tzz364trd",
+"jtype": "node"}, {"item_ref": "_7sqk8vh89xr_6tj8dq7vqju", "space": ".predef",
+"jtype": "item_ref"}], "node": {"item_ref": "_547q7emtfsk_ect0yratp6e", "space": ".root",
+       "jtype": "item_ref"}, "jtype": "node"}, null], "node": "_0ihu411vkua_z4sh56hicdt",
+    "jtype": "node"}}], "content": null}
 ');
 INSERT INTO t_items VALUES('_53748kde7s1_pkz810exr27','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "used in editor, etc. to reference some item"}], "content": null}
