@@ -1295,6 +1295,9 @@ ajaxedit_lab_start:
 
 	    MOM_WEBX_OUT (_L (webx).pitem,
 			  MOMOUT_LITERAL
+			  (" \"<li id='mom_menuitem_editval_displayconn'><a href='#'>Display connective</a></li>\","),
+			  MOMOUT_NEWLINE (),
+			  MOMOUT_LITERAL
 			  (" \"<li id='mom_menuitem_editval_prependson'><a href='#'>Prepend son</a></li>\" "),
 			  MOMOUT_NEWLINE (),
 			  MOMOUT_LITERAL
@@ -2777,6 +2780,62 @@ ajaxedit_lab_start:
 		     MOMOUT_DEC_INT ((int) _N (num)), NULL);
 	  goto end;
 	}
+      }
+    /***** todo= mom_menuitem_editval_displayconn ****/
+    else if (mom_string_same (todov, "mom_menuitem_editval_displayconn"))
+      {
+	_L (display) = MOM_NULLV;
+	momval_t idvalv = mom_webx_post_arg (_L (webx).pitem, "idval_mom");
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL ("ajax_edit editval_displayconn idvalv="),
+		   MOMOUT_VALUE ((const momval_t) idvalv));
+	const char *idvalstr = mom_string_cstr (idvalv);
+	if (idvalstr
+	    && !strncmp (idvalstr, "momdisplay", strlen ("momdisplay"))
+	    && (_L (display) =
+		(momval_t) (mom_get_item_of_identcstr
+			    (idvalstr + strlen ("momdisplay")))).ptr)
+	  {
+	    MOM_DEBUG (run,
+		       MOMOUT_LITERAL
+		       ("ajax_edit_codmom editval_displayconn got display="),
+		       MOMOUT_VALUE ((const momval_t) _L (display)),
+		       MOMOUT_LITERAL (" :: "),
+		       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
+						*) (_L (display).pitem)),
+		       NULL);
+	  };
+	assert (_L (display).pitem != NULL);
+	/// access the display
+	{
+	  mom_should_lock_item (_L (display).pitem);
+	  _L (dispnode) =
+	    mom_item_get_attribute (_L (display).pitem, mom_named__display);
+	  _L (curitem) = (momval_t) mom_node_nth (_L (dispnode), 0);
+	  mom_unlock_item (_L (display).pitem);
+	}
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL
+		   ("ajax_edit_codmom editval_displayconn dispnode="),
+		   MOMOUT_VALUE ((const momval_t) _L (dispnode)),
+		   MOMOUT_LITERAL (" curitem="),
+		   MOMOUT_VALUE ((const momval_t) _L (curitem)), NULL);
+	momval_t itemidstr =
+	  (momval_t) mom_item_get_idstr (_L (curitem).pitem);
+	MOM_WEBX_OUT (_L (webx).pitem,
+		      MOMOUT_LITERAL
+		      ("{ \"momedit_do\": \"momedit_displayitem\","),
+		      MOMOUT_LITERAL (" \"momedit_itemid\": \""),
+		      MOMOUT_LITERALV ((const char
+					*) (mom_string_cstr (itemidstr))),
+		      MOMOUT_LITERAL ("\" }"), MOMOUT_NEWLINE (), NULL);
+	mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL
+		   ("ajax_edit_codmom editval_displayconn done itemidstr="),
+		   MOMOUT_LITERALV ((const char
+				     *) (mom_string_cstr (itemidstr))), NULL);
+	goto end;
       }
     /***** todo= mom_add_item ****/
     else if (mom_string_same (todov, "mom_add_item"))
