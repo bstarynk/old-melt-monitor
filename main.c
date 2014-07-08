@@ -495,6 +495,8 @@ initialize_mom (void)
     extern void mom_create_predefined_items (void);
     mom_create_predefined_items ();
   }
+  //// initialize the signals
+  mom_initialize_signals ();
 }
 
 

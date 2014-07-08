@@ -488,8 +488,8 @@ end:
 }
 
 
-static void
-initialize_signals_mom (void)
+void
+mom_initialize_signals (void)
 {
   // set up the signalfd 
   sigset_t mysetsig;
@@ -841,7 +841,6 @@ mom_run_workers (void)
   long workcnt = 0;
   MOM_DEBUGPRINTF (run, "mom_run_workers starting mom_nb_workers=%d",
 		   mom_nb_workers);
-  initialize_signals_mom ();
   mom_start_event_loop ();
   do
     {

@@ -2515,6 +2515,8 @@ void mom_run_workers (void);
 void mom_stop_event_loop (void);
 void mom_continue_working (void);
 
+/// initialize signal processing, should be done very early
+void mom_initialize_signals (void);
 
 /// two prefixes known by our Makefile!
 // generated modules start with:

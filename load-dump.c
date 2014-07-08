@@ -1123,8 +1123,9 @@ mom_initial_load (const char *ldirnam)
       MOM_FATAPRINTF ("failed to stat SQL file %s", filpath);
     sqlpath = MOM_GC_STRDUP ("sql file", filpath);
     if (dbstat.st_mtime < sqlstat.st_mtime)
-      MOM_FATAPRINTF ("loaded database file %s is older than SQL file %s",
-		      dbpath, sqlpath);
+      MOM_FATAPRINTF
+	("loaded database file %s is older than SQL file %s ; consider restoring it with make restore-state",
+	 dbpath, sqlpath);
   }
   struct mom_loader_st ldr;
   memset (&ldr, 0, sizeof (ldr));
