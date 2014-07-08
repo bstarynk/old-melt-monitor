@@ -598,15 +598,24 @@ raw_dump_emit_json_mom (struct mom_dumper_st *dmp, const momval_t val)
 	if (curconn && curconn->i_space > 0)
 	  {
 	    momval_t jconn = mom_emit_short_item_json (dmp, curconn);
+	    momval_t jsons = (momval_t) jsonarray_emit_nodesons_mom
+	      (dmp, val.pnode);
 	    if (jconn.ptr)
 	      jsval = (momval_t) mom_make_json_object
 		(MOMJSOB_ENTRY
 		 ((momval_t) mom_named__jtype, (momval_t) mom_named__node),
 		 MOMJSOB_ENTRY ((momval_t) mom_named__node, jconn),
-		 MOMJSOB_ENTRY ((momval_t) mom_named__sons,
-				(momval_t) jsonarray_emit_nodesons_mom
-				(dmp, val.pnode)), MOMJSON_END);
+		 MOMJSOB_ENTRY ((momval_t) mom_named__sons, jsons),
+		 MOMJSON_END);
 	  }
+	MOM_DEBUG (dump,
+		   MOMOUT_LITERAL ("raw_dump_emit_json node val="),
+		   MOMOUT_VALUE ((const momval_t) val),
+		   MOMOUT_SPACE (48),
+		   MOMOUT_LITERAL (" jconn="),
+		   MOMOUT_VALUE ((const momval_t) jconn), MOMOUT_SPACE (48),
+		   MOMOUT_LITERAL (" jsval="),
+		   MOMOUT_VALUE ((const momval_t) jsval), NULL);
       }
       break;
     }
