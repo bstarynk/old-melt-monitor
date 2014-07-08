@@ -1018,11 +1018,17 @@ mom_load_value_json (struct mom_loader_st *ld, const momval_t jval)
 	  }
 	else if (jtypv.pitem == mom_named__node)
 	  {
+	    MOM_DEBUG (load,
+		       MOMOUT_LITERAL ("load_value_json node jval="),
+		       MOMOUT_VALUE ((const momval_t) jval), NULL);
 	    momval_t jnode =
 	      mom_jsonob_get (jval, (momval_t) mom_named__node);
 	    momval_t jsons =
 	      mom_jsonob_get (jval, (momval_t) mom_named__sons);
 	    const momitem_t *connitm = mom_load_item_json (ld, jnode);
+	    MOM_DEBUG (load,
+		       MOMOUT_LITERAL ("load_value_json node connitm="),
+		       MOMOUT_ITEM (connitm), NULL);
 	    if (connitm != NULL)
 	      {
 		unsigned nbsons = mom_json_array_size (jsons);
@@ -1036,6 +1042,12 @@ mom_load_value_json (struct mom_loader_st *ld, const momval_t jval)
 		  (momval_t) mom_make_node_from_array (connitm, nbsons, sons);
 		if (sons != tinysons)
 		  MOM_GC_FREE (sons);
+		MOM_DEBUG (load,
+			   MOMOUT_LITERAL ("load_value_json node jres="),
+			   MOMOUT_VALUE (jres),
+			   MOMOUT_SPACE (48),
+			   MOMOUT_LITERAL (" for jval="),
+			   MOMOUT_VALUE ((const momval_t) jval), NULL);
 	      }
 	  }
       }
