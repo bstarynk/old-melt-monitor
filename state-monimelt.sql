@@ -209,11 +209,18 @@ INSERT INTO t_items VALUES('_4yxdswc8qwf_vxzy95hd399','{"kind": "routine", "payl
   "jtype": "node"}], "node": {"item_ref": "_5vi29c2i54k_i2ufkty9kmp", "space": ".root",
  "jtype": "item_ref"}, "jtype": "node"}], "node": {"item_ref": "_0zmdkdxj7kp_491yqpcuaz8",
        "space": ".root", "jtype": "item_ref"}, "jtype": "node"}, {"sons": [{"item_ref":
-"_456hz6qd6x2_jyy24w6q84z", "space": ".root", "jtype": "item_ref"}, {"item_ref": "_5yfdp53cpi1_0i5k33wms7c",
-"space": ".predef", "jtype": "item_ref"}], "node": {"item_ref": "_0zmdkdxj7kp_491yqpcuaz8",
-       "space": ".root", "jtype": "item_ref"}, "jtype": "node"}, {"sons": [{"item_ref":
-"_9wwqwxqcm4p_y7di7fs8tsk", "space": ".root", "jtype": "item_ref"}, 0, {"item_ref":
-"_456hz6qd6x2_jyy24w6q84z", "space": ".root", "jtype": "item_ref"}, {"sons": [null],
+"_456hz6qd6x2_jyy24w6q84z", "space": ".root", "jtype": "item_ref"}, {"sons": [{"item_ref":
+  "_5yfdp53cpi1_0i5k33wms7c", "space": ".predef", "jtype": "item_ref"}], "node": {"item_ref":
+ "_41xwu6cpvq9_ezp5wzq7t4x", "space": ".root", "jtype": "item_ref"}, "jtype": "node"}],
+      "node": {"item_ref": "_0zmdkdxj7kp_491yqpcuaz8", "space": ".root", "jtype":
+       "item_ref"}, "jtype": "node"}, {"sons": [{"item_ref": "_9wwqwxqcm4p_y7di7fs8tsk",
+"space": ".root", "jtype": "item_ref"}, 0, {"item_ref": "_456hz6qd6x2_jyy24w6q84z",
+"space": ".root", "jtype": "item_ref"}, {"sons": [{"sons": [{"item_ref": "_70aer7teeui_kvzkiqq2rd2",
+    "space": ".root", "jtype": "item_ref"}, {"sons": [{"item_ref": "_5yfdp53cpi1_0i5k33wms7c",
+      "space": ".predef", "jtype": "item_ref"}, {"item_ref": "_9wwqwxqcm4p_y7di7fs8tsk",
+      "space": ".root", "jtype": "item_ref"}], "node": {"item_ref": "_80wxf4c8q92_qq8k6xc0xxj",
+     "space": ".root", "jtype": "item_ref"}, "jtype": "node"}], "node": {"item_ref":
+   "_0zmdkdxj7kp_491yqpcuaz8", "space": ".root", "jtype": "item_ref"}, "jtype": "node"}],
 "node": "_0ihu411vkua_z4sh56hicdt", "jtype": "node"}], "node": {"item_ref": "_11xee72y1d3_t3cqzi5dq3k",
        "space": ".root", "jtype": "item_ref"}, "jtype": "node"}], "node": "_0ihu411vkua_z4sh56hicdt",
     "jtype": "node"}}], "content": null}
@@ -297,6 +304,9 @@ INSERT INTO t_items VALUES('_6qcw93kypcv_0iiepqtk73j','{"kind": null, "payload":
 INSERT INTO t_items VALUES('_6w3dvx83dfw_xzc6aif6isv','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "gives the attribute[s], at least in dumped JSON..."}], "content": null}
 ');
+INSERT INTO t_items VALUES('_70aer7teeui_kvzkiqq2rd2','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "current procedure, etc..."}], "content": null}
+');
 INSERT INTO t_items VALUES('_70ty9z1tm4p_eccsxmyfe25','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "within a primitive gives the type of result"}], "content": null}
 ');
@@ -340,6 +350,16 @@ INSERT INTO t_items VALUES('_7vw56h18sw0_hv77m6q8uxu','{"kind": null, "payload":
 ');
 INSERT INTO t_items VALUES('_7wk9y7e7r0z_575esi8ys5x','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "in JSON dumps, used for values in attribute lists of items"}],
+ "content": null}
+');
+INSERT INTO t_items VALUES('_80wxf4c8q92_qq8k6xc0xxj','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "gives in sequence seq the element of given rank"}, {"attr": "_70ty9z1tm4p_eccsxmyfe25",
+   "val": {"item_ref": "_7wk9y7e7r0z_575esi8ys5x", "space": ".predef", "jtype": "item_ref"}},
+  {"attr": "_967fch1xu4h_i87qjq1zt1h", "val": {"sons": ["(momval_t) mom_seqitem_nth_item(",
+     {"item_ref": "_2mayc646pdu_w4d18fmx8u3", "space": ".root", "jtype": "item_ref"},
+     ", ", {"item_ref": "_7kkh6qiq1vc_e69zp2feuhe", "space": ".predef", "jtype": "item_ref"},
+     ")"], "node": "_2vxxtir316j_meap5sq6ykr", "jtype": "node"}}, {"attr": "_8um1q4shitk_tpcmedvsfzu",
+   "val": {"jtype": "tuple", "tuple": ["_2mayc646pdu_w4d18fmx8u3", "_7kkh6qiq1vc_e69zp2feuhe"]}}],
  "content": null}
 ');
 INSERT INTO t_items VALUES('_85rz4j0q982_67im8sstj9s','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
@@ -458,6 +478,7 @@ INSERT INTO t_names VALUES('origin','_5sw59dauckp_8eustjwf58u','.predef');
 INSERT INTO t_names VALUES('parent','_36tp2s8s5s2_jzjm0cxdpjz','.predef');
 INSERT INTO t_names VALUES('payload','_41v0erax6my_m6pytj0793u','.predef');
 INSERT INTO t_names VALUES('primitive','_967fch1xu4h_i87qjq1zt1h','.predef');
+INSERT INTO t_names VALUES('proc','_70aer7teeui_kvzkiqq2rd2','.root');
 INSERT INTO t_names VALUES('procedures','_5yfdp53cpi1_0i5k33wms7c','.predef');
 INSERT INTO t_names VALUES('put_attribute','_547q7emtfsk_ect0yratp6e','.root');
 INSERT INTO t_names VALUES('rank','_7kkh6qiq1vc_e69zp2feuhe','.predef');
@@ -467,6 +488,7 @@ INSERT INTO t_names VALUES('res3','_60ist2ad22c_cfpjp5ay6uj','.predef');
 INSERT INTO t_names VALUES('routine','_0acmecj244a_6krws4rx7v1','.predef');
 INSERT INTO t_names VALUES('seq','_2mayc646pdu_w4d18fmx8u3','.root');
 INSERT INTO t_names VALUES('sequence_length','_41xwu6cpvq9_ezp5wzq7t4x','.root');
+INSERT INTO t_names VALUES('sequence_nth','_80wxf4c8q92_qq8k6xc0xxj','.root');
 INSERT INTO t_names VALUES('set','_2v75mmyph64_4h4kys78740','.predef');
 INSERT INTO t_names VALUES('size','_5s59qeamxta_70k0mt77r9i','.predef');
 INSERT INTO t_names VALUES('sons','_4ezpkss1akd_94f4h25sqe4','.predef');

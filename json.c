@@ -159,7 +159,7 @@ again:
 	   || jp->jsonp_c == ']')
     // don't consume the terminator! Leave it available to the caller.
     return (momval_t) MOM_EMPTY;
-  // extension, admit comments à la C slash slash or à la C++ slash star
+  // extension, admit comments à la C++ slash slash, or à la C slash star
   else if (jp->jsonp_c == '/')
     {
       long off = ftell (jp->jsonp_file);
