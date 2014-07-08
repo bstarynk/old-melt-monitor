@@ -934,6 +934,10 @@ function mom_ajax_edit_got(jdata,ev,idui,elem)
 	mom_show_add_item("<i>insert item "+ (ix.toString()) + " in tuple</i>", dispid,
 			  { mom_do_add: "mom_insert_in_tuple", mom_index: ix });
     }
+    else if (jdata.momedit_do == "momedit_displayitem") {
+	var itemid = jdata.momedit_itemid;
+	console.debug ("mom_ajax_edit_got displayitem itemid=", itemid);
+    }
     else {
 	console.error("mom_ajax_edit_got unexpected jdata=", jdata);
 	console.trace();

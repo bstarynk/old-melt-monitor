@@ -1363,10 +1363,31 @@ ajaxedit_lab_start:
 	    mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
 	    goto end;
 	  }
+	else if (_L (dispnode).pitem == mom_named__item)
+	  {			/* item */
+	    MOM_DEBUG (run,
+		       MOMOUT_LITERAL
+		       ("ajax_edit_codmom prepareditvalmenu item origin"));
+	    MOM_WEBX_OUT (_L (webx).pitem,
+			  MOMOUT_LITERAL
+			  ("{ \"momedit_do\": \"momedit_add_to_editval_menu\","),
+			  MOMOUT_NEWLINE (),
+			  MOMOUT_LITERAL (" \"momedit_menuval\": ["),
+			  MOMOUT_NEWLINE (),
+			  MOMOUT_LITERAL
+			  (" \"<li id='mom_menuitem_editval_displayitem'><a href='#'>Display Item</a></li>\" "),
+			  MOMOUT_NEWLINE (),
+			  MOMOUT_LITERAL
+			  ("  ]"),
+			  MOMOUT_NEWLINE (), MOMOUT_LITERAL ("}"),
+			  MOMOUT_NEWLINE (), NULL);
+	    mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
+	    goto end;
+	  }
 	else
 	  {
 	    MOM_WARNING (MOMOUT_LITERAL
-			 ("ajax_exit prepareditvalmenu unhandled dispnode="),
+			 ("ajax_edit prepareditvalmenu unhandled dispnode="),
 			 MOMOUT_VALUE (_L (dispnode)));
 	    MOM_WEBX_OUT (_L (webx).pitem,
 			  MOMOUT_LITERAL
@@ -1996,6 +2017,63 @@ ajaxedit_lab_start:
 		      MOMOUT_LITERALV (editoridstr),
 		      MOMOUT_LITERAL ("\" } "), MOMOUT_NEWLINE (), NULL);
 	mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
+	goto end;
+      }
+    /***** todo= mom_menuitem_editval_displayitem ****/
+    else if (mom_string_same (todov, "mom_menuitem_editval_displayitem"))
+      {
+	momval_t idvalv = mom_webx_post_arg (_L (webx).pitem, "idval_mom");
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL ("ajax_edit editval_displayitem idvalv="),
+		   MOMOUT_VALUE ((const momval_t) idvalv));
+	{
+	  const char *idvalstr = mom_string_cstr (idvalv);
+	  if (idvalstr
+	      && !strncmp (idvalstr, "momdisplay", strlen ("momdisplay"))
+	      && (_L (display) =
+		  (momval_t) (mom_get_item_of_identcstr
+			      (idvalstr + strlen ("momdisplay")))).ptr)
+	    {
+	      MOM_DEBUG (run,
+			 MOMOUT_LITERAL
+			 ("ajax_edit_codmom editval_displayitem got display="),
+			 MOMOUT_VALUE ((const momval_t) _L (display)),
+			 MOMOUT_LITERAL (" :: "),
+			 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
+						  *) (_L (display).pitem)),
+			 NULL);
+	    };
+	}
+	assert (_L (display).pitem != NULL);
+	{
+	  mom_should_lock_item (_L (display).pitem);
+	  assert (mom_item_get_attribute
+		  (_L (display).pitem,
+		   mom_named__display).pitem == mom_named__item);
+	  _L (curval) =
+	    mom_item_get_attribute (_L (display).pitem, mom_named__val);
+	  mom_unlock_item (_L (display).pitem);
+	}
+	assert (mom_is_item (_L (curval)));
+	const char *itemidstr =
+	  mom_string_cstr ((momval_t) mom_item_get_idstr (_L (curval).pitem));
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL
+		   ("ajax_edit_codnom editval_displayitem item curval="),
+		   MOMOUT_VALUE ((const momval_t) _L (curval)),
+		   MOMOUT_LITERAL (" of id="), MOMOUT_LITERALV (itemidstr),
+		   NULL);
+	MOM_WEBX_OUT (_L (webx).pitem,
+		      MOMOUT_LITERAL
+		      ("{ \"momedit_do\": \"momedit_displayitem\","),
+		      MOMOUT_NEWLINE (),
+		      MOMOUT_LITERAL (" \"momedit_itemid\": \""),
+		      MOMOUT_LITERALV (itemidstr), MOMOUT_LITERAL ("\" } "),
+		      MOMOUT_NEWLINE (), NULL);
+	mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
+	goto end;
+#warning ajax_edit editval_displayitem unimplemented
+	MOM_FATAPRINTF ("ajax_edit editval_displayitem unimplemented");
 	goto end;
       }
     /***** todo= mom_menuitem_editval_addset ****/
