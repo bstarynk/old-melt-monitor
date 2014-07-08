@@ -937,6 +937,22 @@ function mom_ajax_edit_got(jdata,ev,idui,elem)
     else if (jdata.momedit_do == "momedit_displayitem") {
 	var itemid = jdata.momedit_itemid;
 	console.debug ("mom_ajax_edit_got displayitem itemid=", itemid);
+	$.ajax({ url: '/ajax_edit',
+ 		 method: 'POST',
+ 		 data: { todo_mom: "mom_dodisplayitembyid",
+			 iditem_mom: itemid
+		       },
+		 dataType: 'json',
+		 success: function (gotdata) {
+		     console.debug("mom_ajax_edit_got displayitem  gotdata=", gotdata);
+		     mom_install_display(gotdata);
+		 },
+		 error: function (jq,status,errmsg) {
+		     console.error ("mom_ajax_edit_got displayitem error jq=", jq,
+				    " status=", status,
+				    " errmsg=", errmsg);
+		 }
+	       });
     }
     else {
 	console.error("mom_ajax_edit_got unexpected jdata=", jdata);

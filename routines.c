@@ -3464,6 +3464,37 @@ ajaxobjs_lab_start:
 	    goto end;
 	  }
       }
+
+    else if (mom_string_same (todov, "mom_dodisplayitembyid"))
+      {
+	momval_t iditemv = mom_webx_post_arg (_L (webx).pitem, "iditem_mom");
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL
+		   ("ajax_objects_codmom dodisplayitembyid iditemv="),
+		   MOMOUT_VALUE ((const momval_t) iditemv), NULL);
+	_L (editeditm) = (momval_t) mom_get_item_of_ident (iditemv.pstring);
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL
+		   ("ajax_objects_codmom dodisplayitembyid editeditm="),
+		   MOMOUT_VALUE (_L (editeditm)), NULL);
+	if (_L (editeditm).ptr)
+	  {
+	    mom_unlock_item (_L (webx).pitem);
+	    _SET_STATE (begindisplay);
+	  }
+	else
+	  {
+	    MOM_WEBX_OUT (_L (webx).pitem,
+			  MOMOUT_LITERAL ("Unknown item <tt>"),
+			  MOMOUT_HTML (mom_string_cstr (iditemv)),
+			  MOMOUT_LITERAL ("</tt> to display"));
+	    mom_webx_reply (_L (webx).pitem, "text/html", HTTP_NOT_FOUND);
+	    MOM_WARNPRINTF ("unknown item to display  %s",
+			    mom_string_cstr (iditemv));
+	    goto end;
+	  }
+      }
+
     else if (mom_string_same (todov, "mom_domakedispnamed"))
       {
 	MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_objects_codmom makedispnamed"));
