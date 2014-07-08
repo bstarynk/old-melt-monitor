@@ -937,7 +937,7 @@ function mom_ajax_edit_got(jdata,ev,idui,elem)
     else if (jdata.momedit_do == "momedit_displayitem") {
 	var itemid = jdata.momedit_itemid;
 	console.debug ("mom_ajax_edit_got displayitem itemid=", itemid);
-	$.ajax({ url: '/ajax_edit',
+	$.ajax({ url: '/ajax_objects',
  		 method: 'POST',
  		 data: { todo_mom: "mom_dodisplayitembyid",
 			 iditem_mom: itemid

@@ -2072,9 +2072,6 @@ ajaxedit_lab_start:
 		      MOMOUT_NEWLINE (), NULL);
 	mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
 	goto end;
-#warning ajax_edit editval_displayitem unimplemented
-	MOM_FATAPRINTF ("ajax_edit editval_displayitem unimplemented");
-	goto end;
       }
     /***** todo= mom_menuitem_editval_addset ****/
     else if (mom_string_same (todov, "mom_menuitem_editval_addset"))
@@ -3187,6 +3184,7 @@ ajaxedit_lab_start:
 	mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
 	goto end;
       }
+
     ////
     ////
     else
@@ -3464,7 +3462,6 @@ ajaxobjs_lab_start:
 	    goto end;
 	  }
       }
-
     else if (mom_string_same (todov, "mom_dodisplayitembyid"))
       {
 	momval_t iditemv = mom_webx_post_arg (_L (webx).pitem, "iditem_mom");
@@ -3494,6 +3491,7 @@ ajaxobjs_lab_start:
 	    goto end;
 	  }
       }
+
 
     else if (mom_string_same (todov, "mom_domakedispnamed"))
       {
