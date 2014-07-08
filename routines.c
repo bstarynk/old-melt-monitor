@@ -480,7 +480,7 @@ display_value_lab_start:
 			      (momval_t) mom_named__empty);
       MOM_WEBX_OUT (_L (webx).pitem,
 		    //
-		    MOMOUT_JS_LITERAL ("<span class='mom_null_value_cl mom_value_cl' id='momdisplay"), MOMOUT_LITERALV (mom_ident_cstr_of_item (_L (newdisplay).pitem)), MOMOUT_JS_LITERAL ("'>" "&#9109;"	/* U+2395 APL FUNCTIONAL SYMBOL QUAD ⎕ */
+		    MOMOUT_JS_LITERAL ("<span class='mom_null_value_cl mom_value_cl' id='momdisplay"), MOMOUT_LITERALV (mom_ident_cstr_of_item (_L (newdisplay).pitem)), MOMOUT_JS_LITERAL ("'>" " &#9109;"	/* U+2395 APL FUNCTIONAL SYMBOL QUAD ⎕ */
 																							    "</span>"));
       MOM_DEBUG (run,
 		 MOMOUT_LITERAL
