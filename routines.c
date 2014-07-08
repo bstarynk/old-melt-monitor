@@ -1634,6 +1634,12 @@ ajaxedit_lab_start:
 	  {
 	    _N (good_input) = __LINE__;
 	  }
+	else if (!strcmp (inputstr, "__"))
+	  {
+	    _L (curval) = (momval_t) mom_make_item ();
+	    mom_item_set_space (_L (curval).pitem, momspa_root);
+	    _N (good_input) = __LINE__;
+	  }
 	else if (sscanf (inputstr, "*%70[a-zA-Z0-9_]/%d", nambuf, &arity) > 0
 		 && (_L (curitem) =
 		     (momval_t) mom_get_item_of_name (nambuf)).pitem)

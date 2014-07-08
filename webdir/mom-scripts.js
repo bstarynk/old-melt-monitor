@@ -1011,6 +1011,7 @@ function mom_install_new_input(newinp,newid)
     newinp.tooltip({tooltipClass: "mom_newvaltooltip_cl",
 		    content: "<b>value input:</b> e.g.<br/><ul>"
 		    +"<li><tt class='mom_example_cl'>agenda</tt> for an <i>item</i></li>"
+		    +"<li><tt class='mom_example_cl'>__</tt> for a new anonymous <i>item</i></li>"
 		    +"<li><tt class='mom_example_cl'>-12</tt> for an <i>integer</i></li>"
 		    +"<li><tt class='mom_example_cl'>\"ab c</tt> for a <i>string</i></li>"
 		    +"<li><tt class='mom_example_cl'>*attr</tt> for a <i>node</i> of given connective <code>attr</code></li>"
