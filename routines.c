@@ -319,13 +319,13 @@ enum display_value_numbers_en
 
 static int
 display_value_codmom (int momstate_, momitem_t *momtasklet_,
-		      const momnode_t *momclosure_,
+		      momval_t momclosv_,
 		      momval_t *momlocvals_, intptr_t * momlocnums_,
 		      double *momlocdbls_)
 {
-
+  const momval_t *closvals = mom_closed_values (momclosv_);
 #define _L(Nam) (momlocvals_[display_value_v_##Nam])
-#define _C(Nam) (momclosure_->sontab[display_value_c_##Nam])
+#define _C(Nam) (closvals[display_value_c_##Nam])
 #define _N(Nam) (momlocnums_[display_value_n_##Nam])
   enum display_value_state_en
   {
@@ -760,7 +760,7 @@ display_value_lab_start:
 			  MOMOUT_LITERAL ("'>, </span>"), NULL);
 	  _L (curson) = mom_node_nth (_L (curval), _N (sonix));
 	  mom_item_tasklet_push_frame	//
-	    (momtasklet_, (momval_t) momclosure_,
+	    (momtasklet_, (momval_t) momclosv_,
 	     MOMPFR_FIVE_VALUES (_L (editor),
 				 _L (webx), _L (curson), _L (orig),
 				 MOM_NULLV),
@@ -1562,6 +1562,9 @@ ajaxedit_lab_start:
 		       MOMOUT_LITERALV ((const char *) dispidbuf),
 		       MOMOUT_LITERAL ("; display="),
 		       MOMOUT_VALUE ((const momval_t) _L (display)),
+		       MOMOUT_LITERAL (" :: "),
+		       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
+						*) (_L (display).pitem)),
 		       MOMOUT_LITERAL ("; end="),
 		       MOMOUT_LITERALV ((const char *) end), NULL);
 	  }
@@ -1699,13 +1702,14 @@ ajaxedit_lab_start:
 		   MOMOUT_NEWLINE (), MOMOUT_LITERAL ("webx="), MOMOUT_VALUE (_L (webx)),	//
 		   MOMOUT_LITERAL ("; display_value="), MOMOUT_VALUE (_C (display_value)),	//
 		   NULL);
+	assert (_L (origin).ptr != NULL);
+	assert (_L (webx).pitem != NULL);
 	MOM_WEBX_OUT (_L (webx).pitem,
 		      MOMOUT_LITERAL
 		      ("{ \"momedit_do\": \"momedit_replaceinput\","),
 		      MOMOUT_NEWLINE (),
 		      MOMOUT_LITERAL ("  \"momedit_replacebyhtml\": \""),
 		      NULL);
-	assert (_L (webx).pitem != NULL);
 	mom_item_tasklet_clear_res (momtasklet_);
 	mom_unlock_item (_L (webx).pitem);
 	mom_item_tasklet_push_frame	//
@@ -2320,6 +2324,8 @@ ajaxedit_lab_start:
 				  _L (editor));
 	  mom_item_put_attribute (_L (subdisplay).pitem, mom_named__rank,
 				  mom_make_integer (_N (rank)));
+	  mom_item_put_attribute (_L (subdisplay).pitem, mom_named__origin,
+				  _L (origin));
 	  MOM_DEBUG (run,
 		     MOMOUT_LITERAL
 		     ("ajax_edit_codmom editval_appendson update subdisplay="),
@@ -3891,12 +3897,13 @@ enum update_display_value_numbers_en
 
 static int
 update_display_value_codmom (int momstate_, momitem_t *momtasklet_,
-			     const momnode_t *momclosure_,
+			     momval_t momclosv_,
 			     momval_t *momlocvals_, intptr_t * momlocnums_,
 			     double *momlocdbls_)
 {
+  momval_t *closvals = mom_closed_values (momclosv_);
 #define _L(Nam) (momlocvals_[update_display_value_v_##Nam])
-#define _C(Nam) (momclosure_->sontab[update_display_value_c_##Nam])
+#define _C(Nam) (closvals[update_display_value_c_##Nam])
 #define _N(Nam) (momlocnums_[update_display_value_n_##Nam])
 #define _DO_ON_STATES(A)			\
   A(start)					\
@@ -3996,9 +4003,10 @@ update_display_value_lab_start:
 		 MOMOUT_LITERAL (" !: "),
 		 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
 					 mom_value_to_item (_L (subdisplay))),
-		 NULL);
+		 MOMOUT_LITERAL (" momclosv="),
+		 MOMOUT_VALUE ((const momval_t) momclosv_), NULL);
 
-      mom_item_tasklet_push_frame (momtasklet_, (momval_t) momclosure_,
+      mom_item_tasklet_push_frame (momtasklet_, (momval_t) momclosv_,
 				   MOMPFR_VALUE (_L (subdisplay)), NULL);
       mom_item_tasklet_clear_res (momtasklet_);
       _SET_STATE (didupdateattrdisp);
@@ -4056,7 +4064,7 @@ update_display_value_lab_start:
 								(subdisplay))),
 		     NULL);
 
-	  mom_item_tasklet_push_frame (momtasklet_, (momval_t) momclosure_,
+	  mom_item_tasklet_push_frame (momtasklet_, (momval_t) momclosv_,
 				       MOMPFR_VALUE (_L (subdisplay)), NULL);
 	  mom_item_tasklet_clear_res (momtasklet_);
 	  _SET_STATE (didupdatesondisp);
