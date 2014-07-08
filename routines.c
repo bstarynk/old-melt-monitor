@@ -3592,7 +3592,10 @@ ajaxobjs_lab_start:
 	MOM_DEBUG (run,
 		   MOMOUT_LITERAL
 		   ("ajax_objects_codmom doeditorclose editoritm="),
-		   MOMOUT_ITEM ((const momitem_t *) editoritm));
+		   MOMOUT_ITEM ((const momitem_t *) editoritm),
+		   MOMOUT_LITERAL(" editoridstr="),
+		   MOMOUT_LITERALV(editoridstr),
+		   NULL);
 	assert (mom_is_item ((momval_t) editoritm));
 	momitem_t *editeditm = NULL;
 	{

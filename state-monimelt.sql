@@ -119,6 +119,12 @@ INSERT INTO t_items VALUES('_36tp2s8s5s2_jzjm0cxdpjz','{"kind": null, "payload":
 INSERT INTO t_items VALUES('_38s7ihasu0m_xzipyerxm3j','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "gives the editor inside a display"}], "content": null}
 ');
+INSERT INTO t_items VALUES('_3dqr46p2xf4_29kf5vdtw4z','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "Call with results in res, in given state, the closure clos with given arguments"},
+  {"attr": "_8um1q4shitk_tpcmedvsfzu", "val": {"jtype": "tuple", "tuple": ["_6djzuwz5pav_cri386ywjhj",
+     "_6f9870y6v8t_kp8fcmq2ezv", "_97zkxf62r11_6eedwwv3eu8", "_8um1q4shitk_tpcmedvsfzu"]}}],
+ "content": null}
+');
 INSERT INTO t_items VALUES('_3eu0rdq4upj_dp5ptr6hj04','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "gives the expansion of a routine"}], "content": null}
 ');
@@ -282,6 +288,9 @@ INSERT INTO t_items VALUES('_65961crktpj_vtt30qeqv21','{"kind": null, "payload":
    "val": "first module, should become able to translate itself."}, {"attr": "_5yfdp53cpi1_0i5k33wms7c",
    "val": {"set": ["_4yxdswc8qwf_vxzy95hd399"], "jtype": "set"}}], "content": null}
 ');
+INSERT INTO t_items VALUES('_6djzuwz5pav_cri386ywjhj','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "for the result name or tuple"}], "content": null}
+');
 INSERT INTO t_items VALUES('_6f9870y6v8t_kp8fcmq2ezv','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "Gives the state of Json for frames of tasklets."}], "content": null}
 ');
@@ -431,6 +440,7 @@ INSERT INTO t_names VALUES('assign','_0zmdkdxj7kp_491yqpcuaz8','.root');
 INSERT INTO t_names VALUES('attr','_6w3dvx83dfw_xzc6aif6isv','.predef');
 INSERT INTO t_names VALUES('body','_0ihu411vkua_z4sh56hicdt','.predef');
 INSERT INTO t_names VALUES('buffer','_3zqd7ai3rtu_md9athkx17u','.predef');
+INSERT INTO t_names VALUES('call_at_state','_3dqr46p2xf4_29kf5vdtw4z','.root');
 INSERT INTO t_names VALUES('closed_values','_9mxi9e605ay_ihpjyrwq250','.predef');
 INSERT INTO t_names VALUES('closure','_97zkxf62r11_6eedwwv3eu8','.predef');
 INSERT INTO t_names VALUES('closure_routine','_28941cvehx8_9rf4udyeq8v','.predef');
@@ -485,6 +495,7 @@ INSERT INTO t_names VALUES('rank','_7kkh6qiq1vc_e69zp2feuhe','.predef');
 INSERT INTO t_names VALUES('res1','_3j3s2e0510a_096chqpijq7','.predef');
 INSERT INTO t_names VALUES('res2','_8u5ar84utwm_99k5mq2d589','.predef');
 INSERT INTO t_names VALUES('res3','_60ist2ad22c_cfpjp5ay6uj','.predef');
+INSERT INTO t_names VALUES('result','_6djzuwz5pav_cri386ywjhj','.root');
 INSERT INTO t_names VALUES('routine','_0acmecj244a_6krws4rx7v1','.predef');
 INSERT INTO t_names VALUES('seq','_2mayc646pdu_w4d18fmx8u3','.root');
 INSERT INTO t_names VALUES('sequence_length','_41xwu6cpvq9_ezp5wzq7t4x','.root');
