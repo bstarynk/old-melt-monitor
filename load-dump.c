@@ -595,9 +595,10 @@ raw_dump_emit_json_mom (struct mom_dumper_st *dmp, const momval_t val)
     case momty_node:
       {
 	const momitem_t *curconn = val.pnode->connitm;
+	momval_t jconn = MOM_NULLV;
 	if (curconn && curconn->i_space > 0)
 	  {
-	    momval_t jconn = mom_emit_short_item_json (dmp, curconn);
+	    jconn = mom_emit_short_item_json (dmp, curconn);
 	    momval_t jsons = (momval_t) jsonarray_emit_nodesons_mom
 	      (dmp, val.pnode);
 	    if (jconn.ptr)
@@ -1020,7 +1021,10 @@ mom_load_value_json (struct mom_loader_st *ld, const momval_t jval)
 	  {
 	    MOM_DEBUG (load,
 		       MOMOUT_LITERAL ("load_value_json node jval="),
-		       MOMOUT_VALUE ((const momval_t) jval), NULL);
+		       MOMOUT_VALUE ((const momval_t) jval),
+		       MOMOUT_SPACE (32),
+		       MOMOUT_LITERAL ("nod.backtr:"),
+		       MOMOUT_BACKTRACE (6), NULL);
 	    momval_t jnode =
 	      mom_jsonob_get (jval, (momval_t) mom_named__node);
 	    momval_t jsons =
@@ -1354,12 +1358,14 @@ mom_initial_load (const char *ldirnam)
 	    spad->space_fetch_load_item_fun (&ldr, curlitm);
 	  if (datastr && datastr[0])
 	    {
-	      MOM_DEBUG (load, MOMOUT_LITERAL ("load item:"),
+	      MOM_DEBUG (load, MOMOUT_LITERAL ("initial load item:"),
 			 MOMOUT_ITEM ((const momitem_t *) curlitm),
-			 MOMOUT_LITERAL (" datastr:"),
-			 MOMOUT_LITERALV (datastr),
-			 //MOMOUT_LITERAL (" backtrace:"), MOMOUT_NEWLINE (), MOMOUT_BACKTRACE (5), 
-			 MOMOUT_NEWLINE ());
+			 MOMOUT_LITERAL (" of id "),
+			 MOMOUT_LITERALV (mom_ident_cstr_of_item (curlitm)),
+			 MOMOUT_SPACE (48), MOMOUT_LITERAL (" datastr:"),
+			 MOMOUT_LITERALV (datastr), MOMOUT_NEWLINE (),
+			 MOMOUT_LITERAL (" backtrace:"), MOMOUT_NEWLINE (),
+			 MOMOUT_BACKTRACE (5), MOMOUT_NEWLINE ());
 	      FILE *fdata =
 		fmemopen ((void *) datastr, strlen (datastr), "r");
 	      if (!fdata)
@@ -2115,10 +2121,12 @@ spacerootpredef_fetch_item_mom (struct mom_loader_st *ld, momitem_t *itm)
     {
       const char *coljdata = (const char *)
 	sqlite3_column_text (ld->ldr_sqlstmt_item_fetch, 0);
-      MOM_DEBUGPRINTF (load, "ids=%s coljdata=%s", ids, coljdata);
+      MOM_DEBUGPRINTF (load, "spacerootpredef_fetch_item ids=%s coljdata=%s",
+		       ids, coljdata);
       assert (coljdata != NULL);
       res = (char *) MOM_GC_STRDUP ("load item data", coljdata);
-      MOM_DEBUG (load, MOMOUT_LITERAL ("fetched data:"),
+      MOM_DEBUG (load,
+		 MOMOUT_LITERAL ("spacerootpredef_fetch_item fetched data:"),
 		 MOMOUT_LITERALV ((const char *) res), MOMOUT_NEWLINE ());
     }
   else

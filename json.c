@@ -474,7 +474,9 @@ again:
 	    {
 	      unsigned newsize = ((5 * arrsize / 4 + 5) | 0xf) + 1;
 	      momval_t *newarr = MOM_GC_ALLOC ("grown json array elements",
-					       arrsize * sizeof (momval_t));
+					       newsize * sizeof (momval_t));
+	      if (arrptr)
+		memcpy (newarr, arrptr, arrlen * sizeof (momval_t));
 	      MOM_GC_FREE (arrptr);
 	      arrptr = newarr;
 	      arrsize = newsize;
