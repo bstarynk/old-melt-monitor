@@ -368,7 +368,7 @@ jsonarray_emit_itemseq_mom (struct mom_dumper_st *dmp,
   unsigned slen = si->slen;
   assert (dmp && dmp->dmp_magic == DUMPER_MAGIC);
   assert (dmp->dmp_state == dus_emit);
-  if (slen <= MOM_TINY_MAX)
+  if (slen < MOM_TINY_MAX)
     {
       momval_t tab[MOM_TINY_MAX] = { MOM_NULLV };
       for (unsigned ix = 0; ix < slen; ix++)
@@ -404,15 +404,16 @@ static const momjsonarray_t *
 jsonarray_emit_nodesons_mom (struct mom_dumper_st *dmp,
 			     const struct momnode_st *nd)
 {
+  const momjsonarray_t *jnodarr = NULL;
   assert (dmp && dmp->dmp_magic == DUMPER_MAGIC);
   assert (dmp->dmp_state == dus_emit);
   unsigned slen = nd->slen;
-  if (slen <= MOM_TINY_MAX)
+  if (slen < MOM_TINY_MAX)
     {
       momval_t tab[MOM_TINY_MAX] = { MOM_NULLV };
       for (unsigned ix = 0; ix < slen; ix++)
 	tab[ix] = mom_dump_emit_json (dmp, (nd->sontab[ix]));
-      return mom_make_json_array_count (slen, tab);
+      jnodarr = mom_make_json_array_count (slen, tab);
     }
   else
     {
@@ -420,10 +421,16 @@ jsonarray_emit_nodesons_mom (struct mom_dumper_st *dmp,
 	MOM_GC_ALLOC ("jsonarray emit node", sizeof (momval_t) * slen);
       for (unsigned ix = 0; ix < slen; ix++)
 	arr[ix] = mom_dump_emit_json (dmp, (nd->sontab[ix]));
-      const momjsonarray_t *jarr = mom_make_json_array_count (slen, arr);
+      jnodarr = mom_make_json_array_count (slen, arr);
       MOM_GC_FREE (arr);
-      return jarr;
     }
+  MOM_DEBUG (dump,
+	     MOMOUT_LITERAL ("jsonarray_emit_nodesons_mom nd="),
+	     MOMOUT_VALUE ((const momval_t) nd),
+	     MOMOUT_LITERAL (" jnodarr="),
+	     MOMOUT_VALUE ((const momval_t) jnodarr), NULL);
+  assert (jnodarr != NULL);
+  return jnodarr;
 }
 
 static momval_t
@@ -597,9 +604,8 @@ raw_dump_emit_json_mom (struct mom_dumper_st *dmp, const momval_t val)
 		 ((momval_t) mom_named__jtype, (momval_t) mom_named__node),
 		 MOMJSOB_ENTRY ((momval_t) mom_named__node, jconn),
 		 MOMJSOB_ENTRY ((momval_t) mom_named__sons,
-				(momval_t) jsonarray_emit_nodesons_mom (dmp,
-									val.pnode)),
-		 MOMJSON_END);
+				(momval_t) jsonarray_emit_nodesons_mom
+				(dmp, val.pnode)), MOMJSON_END);
 	  }
       }
       break;
