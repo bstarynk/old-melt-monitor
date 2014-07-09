@@ -87,6 +87,7 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
   double endtim = webtim + WEB_ANSWER_DELAY_MOM;
   momitem_t *methoditm = NULL;
   const char *method = NULL;
+  const char *reqcontyp = NULL;
   int webnum = 0;
   bool reqishead = false;
   char namidpath[104];		/* should be at least 100 characters,
@@ -204,6 +205,7 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
       && (namiditm = mom_get_item_of_name_or_ident_cstr (namidpath)) != NULL)
     {
       momval_t wclosv = MOM_NULLV;
+      momval_t jsonclosv = MOM_NULLV;
       const char *restpath = fullpath + pos;
       MOM_DEBUGPRINTF (web,
 		       "request #%d=%#x fullpath %s method %s good namidpath %s pos %d",
@@ -216,6 +218,8 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
       {
 	mom_lock_item (namiditm);
 	wclosv = mom_item_get_attribute (namiditm, mom_named__web_handler);
+	jsonclosv =
+	  mom_item_get_attribute (namiditm, mom_named__json_handler);
 	mom_unlock_item (namiditm);
       }
       MOM_DEBUG (web, "request #", MOMOUT_DEC_INT (webnum),
@@ -227,7 +231,9 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 		 MOMOUT_LITERAL (" restpath:"),
 		 MOMOUT_LITERALV (restpath),
 		 MOMOUT_LITERAL (" wclosv:"),
-		 MOMOUT_VALUE ((momval_t) wclosv));
+		 MOMOUT_VALUE ((momval_t) wclosv),
+		 MOMOUT_LITERAL (" jsonclosv:"),
+		 MOMOUT_VALUE ((momval_t) jsonclosv), NULL);
       if (mom_is_node (wclosv) || mom_is_item (wclosv))
 	{
 	  momitem_t *webxitm = mom_make_item ();
@@ -470,6 +476,23 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 	      return OCS_PROCESSED;
 	    }
 	}			/* end if wclosv is node */
+      /// see http://www.simple-is-better.org/json-rpc/transport_http.html
+      /// and http://www.jsonrpc.org/specification
+      else if (mom_is_item (jsonclosv)
+	       && methoditm == (momitem_t *) mom_named__POST
+	       && (reqcontyp =
+		   onion_request_get_header (requ, "Content-Type")) != NULL
+	       && !strncasecmp (reqcontyp, "application/json",
+				sizeof ("application/json") - 1))
+	{
+	  MOM_FATAL (MOMOUT_LITERAL
+		     ("unimplemented HTTP JSONRPC Post webreq#"),
+		     MOMOUT_DEC_INT ((int) webnum),
+		     MOMOUT_LITERAL (" fullpath="),
+		     MOMOUT_LITERALV ((const char *) fullpath),
+		     MOMOUT_LITERAL (" jsonclosv="),
+		     MOMOUT_VALUE ((const momval_t) jsonclosv), NULL);
+	}
     }
   MOM_DEBUGPRINTF (web, "not processed webreq#%d=%#x fullpath=%s method=%s",
 		   webnum, webnum, fullpath, method);

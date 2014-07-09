@@ -119,6 +119,9 @@ MOM_PREDEFINED_NAMED(json_array,_35vp60aw7em_d436vfie4ud)
 ////+We cannot use false because it is a #define-ed macro.
 MOM_PREDEFINED_NAMED(json_false,_4mha85xcfwi_9zqcvkiy3dk)
 
+////!handler for JSON requests
+MOM_PREDEFINED_NAMED(json_handler,_0hpzi8m7wym_1y4ypmm9y47)
+
 ////!in JSON dump, jtype of JSON object values
 MOM_PREDEFINED_NAMED(json_object,_3xpyd539p4m_23h7wi59xi9)
 

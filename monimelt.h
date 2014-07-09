@@ -2197,18 +2197,17 @@ __attribute__ ((format (printf, 4, 5)));
 /************************* inform *************************/
 void mom_inform_at (const char *fil, int lin, ...) __attribute__ ((sentinel));
 
-#define MOM_INFORM_AT(Fil,Lin,Fmt,...) do {	\
-      mom_inform_at (Fil,Lin,Fmt,	\
+#define MOM_INFORM_AT(Fil,Lin,...) do {	\
+      mom_inform_at (Fil,Lin,	\
 		    ##__VA_ARGS__, NULL);	\
   } while(0)
 
-#define MOM_INFORM_AT_BIS(Fil,Lin,Fmt,...)	\
-  MOM_INFORM_AT(Fil,Lin,Fmt,			\
+#define MOM_INFORM_AT_BIS(Fil,Lin,...)	\
+  MOM_INFORM_AT(Fil,Lin,			\
 		    ##__VA_ARGS__)
 
-#define MOM_INFORM(Fmt,...)		\
-  MOM_INFORM_AT_BIS(__FILE__,__LINE__,Fmt,	\
-			##__VA_ARGS__)
+#define MOM_INFORM(...)		\
+  MOM_INFORM_AT_BIS(__FILE__,__LINE__,##__VA_ARGS__)
 
 
 
@@ -2234,17 +2233,17 @@ __attribute__ ((format (printf, 3, 4)));
 void
 mom_warning_at (const char *fil, int lin, ...) __attribute__ ((sentinel));
 
-#define MOM_WARNING_AT(Fil,Lin,Fmt,...) do {	\
-      mom_warning_at (Fil,Lin,Fmt,	\
+#define MOM_WARNING_AT(Fil,Lin,...) do {	\
+      mom_warning_at (Fil,Lin,	\
 		    ##__VA_ARGS__, NULL);	\
   } while(0)
 
-#define MOM_WARNING_AT_BIS(Fil,Lin,Fmt,...)	\
-  MOM_WARNING_AT(Fil,Lin,Fmt,			\
+#define MOM_WARNING_AT_BIS(Fil,Lin,...)	\
+  MOM_WARNING_AT(Fil,Lin,			\
 		    ##__VA_ARGS__)
 
-#define MOM_WARNING(Fmt,...)		\
-  MOM_WARNING_AT_BIS(__FILE__,__LINE__,Fmt,	\
+#define MOM_WARNING(...)		\
+  MOM_WARNING_AT_BIS(__FILE__,__LINE__,	\
 			##__VA_ARGS__)
 
 
@@ -2271,17 +2270,17 @@ __attribute__ ((format (printf, 3, 4)));
 /************************* fatal *************************/
 void mom_fatal_at (const char *fil, int lin, ...) __attribute__ ((sentinel));
 
-#define MOM_FATAL_AT(Fil,Lin,Fmt,...) do {	\
-      mom_fatal_at (Fil,Lin,Fmt,		\
+#define MOM_FATAL_AT(Fil,Lin,...) do {	\
+      mom_fatal_at (Fil,Lin,		\
 		    ##__VA_ARGS__, NULL);	\
   } while(0)
 
-#define MOM_FATAL_AT_BIS(Fil,Lin,Fmt,...)	\
-  MOM_FATAL_AT(Fil,Lin,Fmt,			\
+#define MOM_FATAL_AT_BIS(Fil,Lin,...)	\
+  MOM_FATAL_AT(Fil,Lin,			\
 		    ##__VA_ARGS__)
 
-#define MOM_FATAL(Fmt,...)		\
-  MOM_FATAL_AT_BIS(__FILE__,__LINE__,Fmt,	\
+#define MOM_FATAL(...)		\
+  MOM_FATAL_AT_BIS(__FILE__,__LINE__,	\
 			##__VA_ARGS__)
 
 

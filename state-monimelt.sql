@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','exit dump');
+INSERT INTO t_params VALUES('dump_reason','after predefined json_handler');
 INSERT INTO t_items VALUES('_02u53qxa7dm_sttmhffpchr','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "The agenda is central to Monimelt.\nIt is the queue of taskets to be executed by worker threads."}],
  "content": null, "kind": "queue", "payload": []}
 ');
@@ -38,6 +38,9 @@ INSERT INTO t_items VALUES('_0acmecj244a_6krws4rx7v1','{"attr": [{"attr": "_41u1
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_0afqepa7jkr_qky26hpv98d','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "translate a single procedure"}],
+ "content": null, "kind": null, "payload": null}
+');
+INSERT INTO t_items VALUES('_0hpzi8m7wym_1y4ypmm9y47','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "handler for JSON requests"}],
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_0ihu411vkua_z4sh56hicdt','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "body of a routine"}],
@@ -503,6 +506,7 @@ INSERT INTO t_names VALUES('item_ref','_6hf2vzmrsee_t35suhjvtj4','.predef');
 INSERT INTO t_names VALUES('ix','_9wwqwxqcm4p_y7di7fs8tsk','.root');
 INSERT INTO t_names VALUES('json_array','_35vp60aw7em_d436vfie4ud','.predef');
 INSERT INTO t_names VALUES('json_false','_4mha85xcfwi_9zqcvkiy3dk','.predef');
+INSERT INTO t_names VALUES('json_handler','_0hpzi8m7wym_1y4ypmm9y47','.predef');
 INSERT INTO t_names VALUES('json_object','_3xpyd539p4m_23h7wi59xi9','.predef');
 INSERT INTO t_names VALUES('json_true','_2vmrrvq5kdk_9um63pstcu9','.predef');
 INSERT INTO t_names VALUES('jtype','_7urjeiw3evy_m7k72uv6790','.predef');
