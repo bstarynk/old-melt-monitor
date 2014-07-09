@@ -269,6 +269,18 @@ INSERT INTO t_items VALUES('_590trid9ycw_f6kaajwca63','{"kind": null, "payload":
       "jtype": "item_ref"}, " = (momval_t) mom_make_item()"], "node": "_2vxxtir316j_meap5sq6ykr",
     "jtype": "node"}}], "content": null}
 ');
+INSERT INTO t_items VALUES('_5c5jh9185sv_qru5amf9v18','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "put an item inside an assoc"}, {"attr": "_70ty9z1tm4p_eccsxmyfe25",
+   "val": {"item_ref": "_7jzvaihqxfw_0c2y7t976tu", "space": ".predef", "jtype": "item_ref"}},
+  {"attr": "_967fch1xu4h_i87qjq1zt1h", "val": {"sons": ["mom_item_assoc_put((momitem_t*)",
+     {"item_ref": "_53748kde7s1_pkz810exr27", "space": ".predef", "jtype": "item_ref"},
+     ", mom_value_to_item(", {"item_ref": "_6w3dvx83dfw_xzc6aif6isv", "space": ".predef",
+      "jtype": "item_ref"}, "), ", {"item_ref": "_7wk9y7e7r0z_575esi8ys5x",
+      "space": ".predef", "jtype": "item_ref"}, ")"], "node": "_2vxxtir316j_meap5sq6ykr",
+    "jtype": "node"}}, {"attr": "_8um1q4shitk_tpcmedvsfzu", "val": {"jtype": "tuple",
+    "tuple": ["_53748kde7s1_pkz810exr27", "_6w3dvx83dfw_xzc6aif6isv", "_7wk9y7e7r0z_575esi8ys5x"]}}],
+ "content": null}
+');
 INSERT INTO t_items VALUES('_5s59qeamxta_70k0mt77r9i','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "gives the size, e.g. in editors"}], "content": null}
 ');
@@ -331,6 +343,16 @@ INSERT INTO t_items VALUES('_6w3dvx83dfw_xzc6aif6isv','{"kind": null, "payload":
 ');
 INSERT INTO t_items VALUES('_70aer7teeui_kvzkiqq2rd2','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "current procedure, etc..."}], "content": null}
+');
+INSERT INTO t_items VALUES('_70mt4fvrva2_pk76eevwada','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "get value associated in some assoc item"}, {"attr": "_70ty9z1tm4p_eccsxmyfe25",
+   "val": {"item_ref": "_7wk9y7e7r0z_575esi8ys5x", "space": ".predef", "jtype": "item_ref"}},
+  {"attr": "_8um1q4shitk_tpcmedvsfzu", "val": {"jtype": "tuple", "tuple": ["_53748kde7s1_pkz810exr27",
+     "_6w3dvx83dfw_xzc6aif6isv"]}}, {"attr": "_967fch1xu4h_i87qjq1zt1h", "val": {"sons":
+    ["mom_item_assoc_get((momitem_t*)", {"item_ref": "_53748kde7s1_pkz810exr27",
+      "space": ".predef", "jtype": "item_ref"}, ",", {"item_ref": "_6w3dvx83dfw_xzc6aif6isv",
+      "space": ".predef", "jtype": "item_ref"}, ")"], "node": "_2vxxtir316j_meap5sq6ykr",
+    "jtype": "node"}}], "content": null}
 ');
 INSERT INTO t_items VALUES('_70ty9z1tm4p_eccsxmyfe25','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "within a primitive gives the type of result"}], "content": null}
@@ -461,6 +483,8 @@ INSERT INTO t_names VALUES('ajax_objects','_6mwwr0i4y9p_5aupdxjxdk1','.root');
 INSERT INTO t_names VALUES('ajax_system','_3xz3qrc6mfy_4r51up6u3pa','.root');
 INSERT INTO t_names VALUES('arguments','_8um1q4shitk_tpcmedvsfzu','.predef');
 INSERT INTO t_names VALUES('assign','_0zmdkdxj7kp_491yqpcuaz8','.root');
+INSERT INTO t_names VALUES('assoc_get','_70mt4fvrva2_pk76eevwada','.root');
+INSERT INTO t_names VALUES('assoc_put','_5c5jh9185sv_qru5amf9v18','.root');
 INSERT INTO t_names VALUES('attr','_6w3dvx83dfw_xzc6aif6isv','.predef');
 INSERT INTO t_names VALUES('body','_0ihu411vkua_z4sh56hicdt','.predef');
 INSERT INTO t_names VALUES('buffer','_3zqd7ai3rtu_md9athkx17u','.predef');
