@@ -97,10 +97,14 @@ mom_debug_at (enum mom_debug_en dbg, const char *sfil, int slin, ...)
   free (membuf), membuf = 0;
 }
 
+
+
+static pthread_mutex_t dbgmtx_mom = PTHREAD_MUTEX_INITIALIZER;
 void
 mom_debugprintf_at (enum mom_debug_en dbg, const char *fil, int lin,
 		    const char *fmt, ...)
 {
+  static long countdbg;
   char thrname[24];
   char buf[128];
   char timbuf[64];
@@ -112,7 +116,7 @@ mom_debugprintf_at (enum mom_debug_en dbg, const char *fil, int lin,
   memset (timbuf, 0, sizeof (timbuf));
   pthread_getname_np (pthread_self (), thrname, sizeof (thrname) - 1);
   fflush (NULL);
-  mom_now_strftime_bufcenti (timbuf, "%Y-%b-%d %H:%M:%S.__ %Z");
+  mom_now_strftime_bufcenti (timbuf, "%H:%M:%S.__ %Z");
   va_list alist;
   va_start (alist, fmt);
   len = vsnprintf (buf, sizeof (buf), fmt, alist);
@@ -131,15 +135,32 @@ mom_debugprintf_at (enum mom_debug_en dbg, const char *fil, int lin,
     }
   else
     msg = buf;
-  if (syslogging_mom)
-    syslog (LOG_DEBUG, "MONIMELT DEBUG %s <%s> @%s:%d %s %s",
-	    dbg_level_mom (dbg), thrname, fil, lin, timbuf, msg);
-  else
-    {
-      fprintf (stderr, "MONIMELT DEBUG %s <%s> @%s:%d %s %s\n",
-	       dbg_level_mom (dbg), thrname, fil, lin, timbuf, msg);
-      fflush (NULL);
-    }
+  {
+    pthread_mutex_lock (&dbgmtx_mom);
+    long nbdbg = countdbg++;
+#define DEBUG_DATE_PERIOD_MOM 64
+    char datebuf[48] = { 0 };
+    if (nbdbg % DEBUG_DATE_PERIOD_MOM == 0)
+      {
+	mom_now_strftime_bufcenti (datebuf, "%Y-%b-%d@%H:%M:%S.__ %Z");
+      };
+    if (syslogging_mom)
+      {
+	syslog (LOG_DEBUG, "MONIMELT DEBUG %7s <%s> @%s:%d %s %s",
+		dbg_level_mom (dbg), thrname, fil, lin, timbuf, msg);
+	if (nbdbg % DEBUG_DATE_PERIOD_MOM == 0)
+	  syslog (LOG_DEBUG, "MONIMELT DEBUG#%04ld ~ %s ***", nbdbg, datebuf);
+      }
+    else
+      {
+	fprintf (stderr, "MONIMELT DEBUG %7s <%s> @%s:%d %s %s\n",
+		 dbg_level_mom (dbg), thrname, fil, lin, timbuf, msg);
+	if (nbdbg % DEBUG_DATE_PERIOD_MOM == 0)
+	  fprintf (stderr, "MONIMELT DEBUG#%04ld ~ %s ***\n", nbdbg, datebuf);
+	fflush (NULL);
+      }
+    pthread_mutex_unlock (&dbgmtx_mom);
+  }
   if (bigbuf)
     free (bigbuf);
 }
