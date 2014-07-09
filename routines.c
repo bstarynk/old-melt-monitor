@@ -2645,12 +2645,16 @@ ajaxedit_lab_start:
 		  || (*indexstr == '+')))
 	    _N (ix) = atoi (indexstr);
 	}
+	_L (origin) = MOM_NULLV;
+	_L (subdisplay) = (momval_t) mom_make_item ();
 	MOM_DEBUG (run,
 		   MOMOUT_LITERAL
 		   ("ajax_edit editval_insertson ix="),
-		   MOMOUT_DEC_INT ((int) _N (ix)), NULL);
-	_L (origin) = MOM_NULLV;
-	_L (subdisplay) = (momval_t) mom_make_item ();
+		   MOMOUT_DEC_INT ((int) _N (ix)),
+		   MOMOUT_LITERAL (" display="),
+		   MOMOUT_VALUE ((const momval_t) _L (display)),
+		   MOMOUT_LITERAL (" new subdisplay="),
+		   MOMOUT_VALUE ((const momval_t) _L (subdisplay)), NULL);
 	_L (updated) = mom_make_double (mom_clock_time (CLOCK_REALTIME));
 	/// update the display
 	{
@@ -2730,6 +2734,8 @@ ajaxedit_lab_start:
 				  _L (display));
 	  mom_item_put_attribute (_L (subdisplay).pitem, mom_named__editor,
 				  _L (editor));
+	  mom_item_put_attribute (_L (subdisplay).pitem, mom_named__origin,
+				  _L (origin));
 	  mom_item_put_attribute (_L (subdisplay).pitem, mom_named__rank,
 				  mom_make_integer (_N (rank)));
 	  MOM_DEBUG (run,
