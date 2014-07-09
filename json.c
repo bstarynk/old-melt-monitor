@@ -588,8 +588,9 @@ again:
   return MOM_NULLV;
 }
 
+
 static int
-jsonentry_cmp (const void *l, const void *r)
+jsonentry_cmp_mom (const void *l, const void *r)
 {
   const struct mom_jsonentry_st *le = l;
   const struct mom_jsonentry_st *re = r;
@@ -722,12 +723,12 @@ mom_make_json_object (int firstdir, ...)
 #endif
   // sort the entries and remove the unlikely duplicates
   qsort (jsob->jobjtab, count,
-	 sizeof (struct mom_jsonentry_st), jsonentry_cmp);
+	 sizeof (struct mom_jsonentry_st), jsonentry_cmp_mom);
   bool shrink = false;
   for (unsigned ix = 0; ix + 1 < count; ix++)
     {
-      int cmpj = jsonentry_cmp (jsob->jobjtab + ix,
-				jsob->jobjtab + ix + 1);
+      int cmpj = jsonentry_cmp_mom (jsob->jobjtab + ix,
+				    jsob->jobjtab + ix + 1);
       if (MOM_UNLIKELY (cmpj == 0))
 	{
 	  shrink = true;
@@ -878,7 +879,7 @@ mom_make_json_array_til_nil (momval_t firstv, ...)
 }
 
 int
-mom_json_cmp (momval_t l, momval_t r)
+mom_json_cmp (const momval_t l, const momval_t r)
 {
   if (l.ptr == r.ptr)
     return 0;
@@ -888,6 +889,24 @@ mom_json_cmp (momval_t l, momval_t r)
     return 1;
   if (l.ptr == r.ptr)
     return 0;
+  momval_t leftstrv = MOM_NULLV;
+  momval_t rightstrv = MOM_NULLV;
+  if (mom_is_item (l))
+    leftstrv = (momval_t) mom_item_get_name_or_idstr (l.pitem);
+  else if (mom_is_string (l))
+    leftstrv = l;
+  if (mom_is_item (r))
+    rightstrv = (momval_t) mom_item_get_name_or_idstr (r.pitem);
+  else if (mom_is_string (r))
+    rightstrv = r;
+  if (leftstrv.ptr && rightstrv.ptr)
+    {
+      assert (mom_is_string (leftstrv));
+      assert (mom_is_string (rightstrv));
+      int scmp = strcmp (leftstrv.pstring->cstr, rightstrv.pstring->cstr);
+      if (scmp)
+	return scmp;
+    }
   return mom_value_cmp (l, r);
 }
 

@@ -522,6 +522,10 @@ momhash_t mom_value_hash (const momval_t v);
 // compare
 int mom_value_cmp (const momval_t l, const momval_t r);
 
+// compare, in a JSON friendly way (so a named item compare
+// alphanumerically to a string)
+int mom_json_cmp (const momval_t l, const momval_t r);
+
 static inline momtynum_t
 mom_type (const momval_t v)
 {
