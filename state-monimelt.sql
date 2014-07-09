@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 Jul 08
+-- state-monimelt dump 2014 Jul 09
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -37,6 +37,9 @@ INSERT INTO t_items VALUES('_085krqf192t_z1m3zs77ww5','{"kind": null, "payload":
 ');
 INSERT INTO t_items VALUES('_0acmecj244a_6krws4rx7v1','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "gives the body in a routine, or the routine elsewhere"}], "content": null}
+');
+INSERT INTO t_items VALUES('_0afqepa7jkr_qky26hpv98d','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "translate a single procedure"}], "content": null}
 ');
 INSERT INTO t_items VALUES('_0ihu411vkua_z4sh56hicdt','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "body of a routine"}], "content": null}
@@ -226,9 +229,16 @@ INSERT INTO t_items VALUES('_4yxdswc8qwf_vxzy95hd399','{"kind": "routine", "payl
       "space": ".predef", "jtype": "item_ref"}, {"item_ref": "_9wwqwxqcm4p_y7di7fs8tsk",
       "space": ".root", "jtype": "item_ref"}], "node": {"item_ref": "_80wxf4c8q92_qq8k6xc0xxj",
      "space": ".root", "jtype": "item_ref"}, "jtype": "node"}], "node": {"item_ref":
-   "_0zmdkdxj7kp_491yqpcuaz8", "space": ".root", "jtype": "item_ref"}, "jtype": "node"}],
-"node": "_0ihu411vkua_z4sh56hicdt", "jtype": "node"}], "node": {"item_ref": "_11xee72y1d3_t3cqzi5dq3k",
-       "space": ".root", "jtype": "item_ref"}, "jtype": "node"}], "node": "_0ihu411vkua_z4sh56hicdt",
+   "_0zmdkdxj7kp_491yqpcuaz8", "space": ".root", "jtype": "item_ref"}, "jtype": "node"},
+ {"sons": [{"item_ref": "_3j3s2e0510a_096chqpijq7", "space": ".predef", "jtype": "item_ref"},
+   {"item_ref": "_6qp266amrz7_izi5rx6ukuk", "space": ".root", "jtype": "item_ref"},
+   {"item_ref": "_0afqepa7jkr_qky26hpv98d", "space": ".root", "jtype": "item_ref"},
+   {"item_ref": "_70aer7teeui_kvzkiqq2rd2", "space": ".root", "jtype": "item_ref"},
+   {"item_ref": "_8y1sw8z084j_4ts0y0jydha", "space": ".root", "jtype": "item_ref"}],
+  "node": {"item_ref": "_3dqr46p2xf4_29kf5vdtw4z", "space": ".root", "jtype": "item_ref"},
+  "jtype": "node"}], "node": "_0ihu411vkua_z4sh56hicdt", "jtype": "node"}],
+      "node": {"item_ref": "_11xee72y1d3_t3cqzi5dq3k", "space": ".root", "jtype":
+       "item_ref"}, "jtype": "node"}], "node": "_0ihu411vkua_z4sh56hicdt",
     "jtype": "node"}}], "content": null}
 ');
 INSERT INTO t_items VALUES('_53748kde7s1_pkz810exr27','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
@@ -286,7 +296,8 @@ INSERT INTO t_items VALUES('_60ist2ad22c_cfpjp5ay6uj','{"kind": null, "payload":
 ');
 INSERT INTO t_items VALUES('_65961crktpj_vtt30qeqv21','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "first module, should become able to translate itself."}, {"attr": "_5yfdp53cpi1_0i5k33wms7c",
-   "val": {"set": ["_4yxdswc8qwf_vxzy95hd399"], "jtype": "set"}}], "content": null}
+   "val": {"set": ["_0afqepa7jkr_qky26hpv98d", "_4yxdswc8qwf_vxzy95hd399"],
+    "jtype": "set"}}], "content": null}
 ');
 INSERT INTO t_items VALUES('_6djzuwz5pav_cri386ywjhj','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "for the result name or tuple"}], "content": null}
@@ -309,6 +320,8 @@ INSERT INTO t_items VALUES('_6mwwr0i4y9p_5aupdxjxdk1','{"kind": "routine", "payl
 ');
 INSERT INTO t_items VALUES('_6qcw93kypcv_0iiepqtk73j','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "high bound"}], "content": null}
+');
+INSERT INTO t_items VALUES('_6qp266amrz7_izi5rx6ukuk','{"kind": null, "payload": null, "attr": [], "content": null}
 ');
 INSERT INTO t_items VALUES('_6w3dvx83dfw_xzc6aif6isv','{"kind": null, "payload": null, "attr": [{"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "gives the attribute[s], at least in dumped JSON..."}], "content": null}
@@ -508,6 +521,7 @@ INSERT INTO t_names VALUES('state','_6f9870y6v8t_kp8fcmq2ezv','.predef');
 INSERT INTO t_names VALUES('string','_8j516kuv89j_4hc4w6ykmr6','.predef');
 INSERT INTO t_names VALUES('terminated','_3jpt8yuzuyw_ti1pyz3me1c','.predef');
 INSERT INTO t_names VALUES('translate_module','_4yxdswc8qwf_vxzy95hd399','.predef');
+INSERT INTO t_names VALUES('translate_procedure','_0afqepa7jkr_qky26hpv98d','.root');
 INSERT INTO t_names VALUES('translation','_8y1sw8z084j_4ts0y0jydha','.root');
 INSERT INTO t_names VALUES('tuple','_7vw56h18sw0_hv77m6q8uxu','.predef');
 INSERT INTO t_names VALUES('update_display_value','_1f94j87qumw_mhzkriesx7c','.root');
