@@ -116,7 +116,7 @@ mom_debugprintf_at (enum mom_debug_en dbg, const char *fil, int lin,
   memset (timbuf, 0, sizeof (timbuf));
   pthread_getname_np (pthread_self (), thrname, sizeof (thrname) - 1);
   fflush (NULL);
-  mom_now_strftime_bufcenti (timbuf, "%H:%M:%S.__ %Z");
+  mom_now_strftime_bufcenti (timbuf, "%H:%M:%S.__ ");
   va_list alist;
   va_start (alist, fmt);
   len = vsnprintf (buf, sizeof (buf), fmt, alist);
@@ -149,14 +149,16 @@ mom_debugprintf_at (enum mom_debug_en dbg, const char *fil, int lin,
 	syslog (LOG_DEBUG, "MONIMELT DEBUG %7s <%s> @%s:%d %s %s",
 		dbg_level_mom (dbg), thrname, fil, lin, timbuf, msg);
 	if (nbdbg % DEBUG_DATE_PERIOD_MOM == 0)
-	  syslog (LOG_DEBUG, "MONIMELT DEBUG#%04ld ~ %s ***", nbdbg, datebuf);
+	  syslog (LOG_DEBUG, "MONIMELT DEBUG#%04ld ~ %s *^*^*", nbdbg,
+		  datebuf);
       }
     else
       {
 	fprintf (stderr, "MONIMELT DEBUG %7s <%s> @%s:%d %s %s\n",
 		 dbg_level_mom (dbg), thrname, fil, lin, timbuf, msg);
 	if (nbdbg % DEBUG_DATE_PERIOD_MOM == 0)
-	  fprintf (stderr, "MONIMELT DEBUG#%04ld ~ %s ***\n", nbdbg, datebuf);
+	  fprintf (stderr, "MONIMELT DEBUG#%04ld ~ %s *^*^*\n", nbdbg,
+		   datebuf);
 	fflush (NULL);
       }
     pthread_mutex_unlock (&dbgmtx_mom);
