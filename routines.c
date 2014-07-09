@@ -323,7 +323,8 @@ display_value_codmom (int momstate_, momitem_t *momtasklet_,
 		      momval_t *momlocvals_, intptr_t * momlocnums_,
 		      double *momlocdbls_)
 {
-  const momval_t *closvals = mom_closed_values (momclosv_);
+  const momval_t *closvals __attribute__ ((unused))
+    = mom_closed_values (momclosv_);
 #define _L(Nam) (momlocvals_[display_value_v_##Nam])
 #define _C(Nam) (closvals[display_value_c_##Nam])
 #define _N(Nam) (momlocnums_[display_value_n_##Nam])
@@ -906,12 +907,14 @@ enum ajax_edit_numbers_en
 
 static int
 ajax_edit_codmom (int momstate_, momitem_t *momtasklet_,
-		  const momnode_t *momclosure_,
+		  const momval_t momclov_,
 		  momval_t *momlocvals_, intptr_t * momlocnums_,
 		  double *momlocdbls_)
 {
+  const momval_t *momclosvals __attribute__ ((unused))
+    = mom_closed_values (momclov_);
 #define _L(Nam) (momlocvals_[ajaxedit_v_##Nam])
-#define _C(Nam) (momclosure_->sontab[ajaxedit_c_##Nam])
+#define _C(Nam) (momclosvals[ajaxedit_c_##Nam])
 #define _N(Nam) (momlocnums_[ajaxedit_n_##Nam])
   char *endp = NULL;
   int arity = 0;
@@ -926,13 +929,13 @@ ajax_edit_codmom (int momstate_, momitem_t *momtasklet_,
     ajaxedit_s_didreplacedisplayforitem,
     ajaxedit_s__laststate
   };
-#define _SET_STATE(St) do {					\
-    MOM_DEBUGPRINTF (run,					\
-		     "ajax_edit_codmom setstate " #St " = %d",	\
-		     (int)ajaxedit_s_##St);			\
+#define _SET_STATE(St) do {				\
+    MOM_DEBUGPRINTF (run,				\
+		     "ajax_edit setstate " #St " = %d",	\
+		     (int)ajaxedit_s_##St);		\
     return ajaxedit_s_##St; } while(0)
   //
-  MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_edit_codmom tasklet:"),
+  MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_edit tasklet:"),
 	     MOMOUT_ITEM ((const momitem_t *) momtasklet_),
 	     MOMOUT_LITERAL (" state#"), MOMOUT_DEC_INT ((int) momstate_));
   if (momstate_ >= 0 && momstate_ < ajaxedit_s__laststate)
@@ -954,13 +957,13 @@ ajax_edit_codmom (int momstate_, momitem_t *momtasklet_,
   ////
 ajaxedit_lab_start:
   _L (webx) = _L (arg0res);
-  MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_edit_codmom webx="),
+  MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_edit webx="),
 	     MOMOUT_VALUE ((const momval_t) _L (webx)));
   assert (mom_is_item (_L (webx)));
   {
     mom_lock_item (_L (webx).pitem);
     momval_t todov = mom_webx_post_arg (_L (webx).pitem, "todo_mom");
-    MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_edit_codmom queryjsob="),
+    MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_edit queryjsob="),
 	       MOMOUT_VALUE ((const momval_t)
 			     mom_webx_jsob_query (_L (webx).pitem)),
 	       MOMOUT_NEWLINE (),
@@ -978,12 +981,11 @@ ajaxedit_lab_start:
       {
 	momval_t idvalv = mom_webx_post_arg (_L (webx).pitem, "idval_mom");
 	MOM_DEBUG (run,
-		   MOMOUT_LITERAL ("ajax_edit_codmom editval_copy idvalv="),
+		   MOMOUT_LITERAL ("ajax_edit editval_copy idvalv="),
 		   MOMOUT_VALUE ((const momval_t) idvalv));
 	const char *idvalstr = mom_string_cstr (idvalv);
 	_L (display) = MOM_NULLV;
-	MOM_DEBUGPRINTF (run, "ajax_edit_codmom editval_copy idvalstr=%s",
-			 idvalstr);
+	MOM_DEBUGPRINTF (run, "ajax_edit editval_copy idvalstr=%s", idvalstr);
 	if (idvalstr
 	    && !strncmp (idvalstr, "momdisplay", strlen ("momdisplay"))
 	    && (_L (display) =
@@ -992,7 +994,7 @@ ajaxedit_lab_start:
 	  {
 	    MOM_DEBUG (run,
 		       MOMOUT_LITERAL
-		       ("ajax_edit_codmom editval_copy display="),
+		       ("ajax_edit editval_copy display="),
 		       MOMOUT_VALUE ((const momval_t) _L (display)), NULL);
 	    {
 	      mom_should_lock_item (_L (display).pitem);
@@ -1005,7 +1007,7 @@ ajaxedit_lab_start:
 	    }
 	    MOM_DEBUG (run,
 		       MOMOUT_LITERAL
-		       ("ajax_edit_codmom editval_copy edinode="),
+		       ("ajax_edit editval_copy edinode="),
 		       MOMOUT_VALUE (_L (edinode)),
 		       MOMOUT_LITERAL (" curval="),
 		       MOMOUT_VALUE (_L (curval)), NULL);
@@ -1013,12 +1015,12 @@ ajaxedit_lab_start:
 	else
 	  MOM_FATAPRINTF ("ajax_edit bad idvalstr=%s", idvalstr);
 	MOM_DEBUG (run,
-		   MOMOUT_LITERAL ("ajax_edit_codmom editval_copy edinode="),
+		   MOMOUT_LITERAL ("ajax_edit editval_copy edinode="),
 		   MOMOUT_VALUE (_L (edinode)));
 	/// here we got the correct curval
 	MOM_DEBUG (run,
 		   MOMOUT_LITERAL
-		   ("ajax_edit_codmom editval_copy curval="),
+		   ("ajax_edit editval_copy curval="),
 		   MOMOUT_VALUE (_L (curval)));
 	/**** we send a JSON like
 	      { "momedit_do": "momedit_copytobuffer",
@@ -1055,11 +1057,11 @@ ajaxedit_lab_start:
 	momval_t idvalv = mom_webx_post_arg (_L (webx).pitem, "idval_mom");
 	MOM_DEBUG (run,
 		   MOMOUT_LITERAL
-		   ("ajax_edit_codmom editval_replace idvalv="),
+		   ("ajax_edit editval_replace idvalv="),
 		   MOMOUT_VALUE ((const momval_t) idvalv));
 	const char *idvalstr = mom_string_cstr (idvalv);
 	_L (display) = MOM_NULLV;
-	MOM_DEBUGPRINTF (run, "ajax_edit_codmom editval_replace idvalstr=%s",
+	MOM_DEBUGPRINTF (run, "ajax_edit editval_replace idvalstr=%s",
 			 idvalstr);
 	if (idvalstr
 	    && !strncmp (idvalstr, "momdisplay", strlen ("momdisplay"))
@@ -1069,7 +1071,7 @@ ajaxedit_lab_start:
 	  {
 	    MOM_DEBUG (run,
 		       MOMOUT_LITERAL
-		       ("ajax_edit_codmom editval_replace display="),
+		       ("ajax_edit editval_replace display="),
 		       MOMOUT_VALUE ((const momval_t) _L (display)),
 		       MOMOUT_LITERAL (" "),
 		       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
@@ -1088,7 +1090,7 @@ ajaxedit_lab_start:
 	    mom_item_remove_attribute (_L (display).pitem, mom_named__val);
 	    MOM_DEBUG (run,
 		       MOMOUT_LITERAL
-		       ("ajax_edit_codmom editval_replace origin="),
+		       ("ajax_edit editval_replace origin="),
 		       MOMOUT_VALUE ((const momval_t) _L (origin)),
 		       MOMOUT_LITERAL (" "),
 		       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
@@ -1101,7 +1103,7 @@ ajaxedit_lab_start:
 				    mom_named__updated, (momval_t) nowv);
 	    MOM_DEBUG (run,
 		       MOMOUT_LITERAL
-		       ("ajax_edit_codmom editval_replace origin="),
+		       ("ajax_edit editval_replace origin="),
 		       MOMOUT_VALUE ((const momval_t) _L (origin)),
 		       MOMOUT_LITERAL (" "),
 		       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
@@ -1131,7 +1133,7 @@ ajaxedit_lab_start:
 	mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
 	MOM_DEBUG (run,
 		   MOMOUT_LITERAL
-		   ("ajax_edit_codmom editval_replace done idvalv="),
+		   ("ajax_edit editval_replace done idvalv="),
 		   MOMOUT_VALUE ((const momval_t) idvalv),
 		   MOMOUT_LITERAL (" webx="),
 		   MOMOUT_VALUE ((const momval_t) _L (webx)), NULL);
@@ -1145,7 +1147,7 @@ ajaxedit_lab_start:
 	momval_t iditemv = mom_webx_post_arg (_L (webx).pitem, "iditem_mom");
 	_L (curval) = (momval_t) mom_make_item_of_ident (iditemv.pstring);
 	MOM_DEBUG (run,
-		   MOMOUT_LITERAL ("ajax_edit_codmom edititem_copy curval="),
+		   MOMOUT_LITERAL ("ajax_edit edititem_copy curval="),
 		   MOMOUT_VALUE (_L (curval)), NULL);
 	/**** we send a JSON like
 	      { "momedit_do": "momedit_copytobuffer",
@@ -1184,7 +1186,7 @@ ajaxedit_lab_start:
 	int separindex = -1;
 	MOM_DEBUG (run,
 		   MOMOUT_LITERAL
-		   ("ajax_edit_codmom prepareditvalmenu idvalv="),
+		   ("ajax_edit prepareditvalmenu idvalv="),
 		   MOMOUT_VALUE ((const momval_t) idvalv),
 		   MOMOUT_LITERAL
 		   (" separixv="),
@@ -1209,7 +1211,7 @@ ajaxedit_lab_start:
 	    _L (display) = (momval_t) (mom_get_item_of_identcstr (dispidbuf));
 	    MOM_DEBUG (run,
 		       MOMOUT_LITERAL
-		       ("ajax_edit_codmom  prepareditvalmenu dispidbuf="),
+		       ("ajax_edit  prepareditvalmenu dispidbuf="),
 		       MOMOUT_LITERALV ((const char *) dispidbuf),
 		       MOMOUT_LITERAL ("; display="),
 		       MOMOUT_VALUE ((const momval_t) _L (display)),
@@ -1219,7 +1221,7 @@ ajaxedit_lab_start:
 	      mom_should_lock_item (_L (display).pitem);
 	      MOM_DEBUG (run,
 			 MOMOUT_LITERAL
-			 ("ajax_edit_codmom  prepareditvalmenu locked display="),
+			 ("ajax_edit  prepareditvalmenu locked display="),
 			 MOMOUT_VALUE ((const momval_t) _L (display)),
 			 MOMOUT_LITERAL (" !: "),
 			 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
@@ -1236,7 +1238,7 @@ ajaxedit_lab_start:
 					mom_named__origin);
 	      mom_unlock_item (_L (display).pitem);
 	    }
-	    MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_edit_codmom prepareditvalmenu "),	//
+	    MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_edit prepareditvalmenu "),	//
 		       MOMOUT_LITERAL (" dispnode="), MOMOUT_VALUE (_L (dispnode)),	//
 		       MOMOUT_LITERAL ("; display="), MOMOUT_VALUE (_L (display)),	//
 		       MOMOUT_LITERAL ("; editor="), MOMOUT_VALUE (_L (editor)),	//
@@ -1252,7 +1254,7 @@ ajaxedit_lab_start:
 	  {			// node: *attr(<item>,<attr>,<disp>)
 	    MOM_DEBUG (run,
 		       MOMOUT_LITERAL
-		       ("ajax_edit_codmom prepareditvalmenu attr origin"));
+		       ("ajax_edit prepareditvalmenu attr origin"));
 	    MOM_WEBX_OUT (_L (webx).pitem,
 			  MOMOUT_LITERAL
 			  ("{ \"momedit_do\": \"momedit_add_to_editval_menu\","),
@@ -1273,7 +1275,7 @@ ajaxedit_lab_start:
 	  {			/* *node(<conn>,<tuple-disp>) */
 	    MOM_DEBUG (run,
 		       MOMOUT_LITERAL
-		       ("ajax_edit_codmom prepareditvalmenu node origin"));
+		       ("ajax_edit prepareditvalmenu node origin"));
 	    MOM_WEBX_OUT (_L (webx).pitem,
 			  MOMOUT_LITERAL
 			  ("{ \"momedit_do\": \"momedit_add_to_editval_menu\","),
@@ -1311,7 +1313,7 @@ ajaxedit_lab_start:
 	  {			/* tuple */
 	    MOM_DEBUG (run,
 		       MOMOUT_LITERAL
-		       ("ajax_edit_codmom prepareditvalmenu tuple origin"));
+		       ("ajax_edit prepareditvalmenu tuple origin"));
 	    MOM_WEBX_OUT (_L (webx).pitem,
 			  MOMOUT_LITERAL
 			  ("{ \"momedit_do\": \"momedit_add_to_editval_menu\","),
@@ -1345,7 +1347,7 @@ ajaxedit_lab_start:
 	  {			/* set */
 	    MOM_DEBUG (run,
 		       MOMOUT_LITERAL
-		       ("ajax_edit_codmom prepareditvalmenu set origin"));
+		       ("ajax_edit prepareditvalmenu set origin"));
 	    MOM_WEBX_OUT (_L (webx).pitem,
 			  MOMOUT_LITERAL
 			  ("{ \"momedit_do\": \"momedit_add_to_editval_menu\","),
@@ -1370,7 +1372,7 @@ ajaxedit_lab_start:
 	  {			/* item */
 	    MOM_DEBUG (run,
 		       MOMOUT_LITERAL
-		       ("ajax_edit_codmom prepareditvalmenu item origin"));
+		       ("ajax_edit prepareditvalmenu item origin"));
 	    MOM_WEBX_OUT (_L (webx).pitem,
 			  MOMOUT_LITERAL
 			  ("{ \"momedit_do\": \"momedit_add_to_editval_menu\","),
@@ -1418,7 +1420,7 @@ ajaxedit_lab_start:
 	momval_t idvalv = mom_webx_post_arg (_L (webx).pitem, "idval_mom");
 	MOM_DEBUG (run,
 		   MOMOUT_LITERAL
-		   ("ajax_edit_codmom editval_replace_son idvalv="),
+		   ("ajax_edit editval_replace_son idvalv="),
 		   MOMOUT_VALUE ((const momval_t) idvalv));
 	const char *idvalstr = mom_string_cstr (idvalv);
 	char editidbuf[MOM_IDSTRING_LEN + 8];
@@ -1436,7 +1438,7 @@ ajaxedit_lab_start:
 	    _L (editor) = (momval_t) (mom_get_item_of_identcstr (editidbuf));
 	    MOM_DEBUG (run,
 		       MOMOUT_LITERAL
-		       ("ajax_edit_codmom editval_replaceson editidbuf="),
+		       ("ajax_edit editval_replaceson editidbuf="),
 		       MOMOUT_LITERALV ((const char *) editidbuf),
 		       MOMOUT_LITERAL ("; editor="),
 		       MOMOUT_VALUE ((const momval_t) _L (editor)),
@@ -1453,7 +1455,7 @@ ajaxedit_lab_start:
 	    }
 	    MOM_DEBUG (run,
 		       MOMOUT_LITERAL
-		       ("ajax_edit_codmom editval_replaceson edinode="),
+		       ("ajax_edit editval_replaceson edinode="),
 		       MOMOUT_VALUE (_L (edinode)),
 		       MOMOUT_LITERAL (" newnum#"), MOMOUT_DEC_INT (newnum));
 	    MOM_WEBX_OUT (_L (webx).pitem,
@@ -1490,7 +1492,7 @@ ajaxedit_lab_start:
 	momval_t idvalv = mom_webx_post_arg (_L (webx).pitem, "idval_mom");
 	MOM_DEBUG (run,
 		   MOMOUT_LITERAL
-		   ("ajax_edit_codmom editval_replaceattr idvalv="),
+		   ("ajax_edit editval_replaceattr idvalv="),
 		   MOMOUT_VALUE ((const momval_t) idvalv));
 	const char *idvalstr = mom_string_cstr (idvalv);
 	char editidbuf[MOM_IDSTRING_LEN + 8];
@@ -1508,7 +1510,7 @@ ajaxedit_lab_start:
 	    _L (editor) = (momval_t) (mom_get_item_of_identcstr (editidbuf));
 	    MOM_DEBUG (run,
 		       MOMOUT_LITERAL
-		       ("ajax_edit_codmom editval_replaceattr editidbuf="),
+		       ("ajax_edit editval_replaceattr editidbuf="),
 		       MOMOUT_LITERALV ((const char *) editidbuf),
 		       MOMOUT_LITERAL ("; editor="),
 		       MOMOUT_VALUE ((const momval_t) _L (editor)),
@@ -1525,7 +1527,7 @@ ajaxedit_lab_start:
 	    }
 	    MOM_DEBUG (run,
 		       MOMOUT_LITERAL
-		       ("ajax_edit_codmom editval_replaceattr edinode="),
+		       ("ajax_edit editval_replaceattr edinode="),
 		       MOMOUT_VALUE (_L (edinode)),
 		       MOMOUT_LITERAL (" newnum#"), MOMOUT_DEC_INT (newnum));
 	    MOM_WEBX_OUT (_L (webx).pitem,
@@ -1561,14 +1563,14 @@ ajaxedit_lab_start:
 	momval_t inputv = mom_webx_post_arg (_L (webx).pitem, "input_mom");
 	MOM_DEBUG (run,
 		   MOMOUT_LITERAL
-		   ("ajax_edit_codmom editval_newinput idvalv="),
+		   ("ajax_edit editval_newinput idvalv="),
 		   MOMOUT_VALUE ((const momval_t) idvalv),
 		   MOMOUT_LITERAL (" input="),
 		   MOMOUT_VALUE ((const momval_t) inputv));
 	const char *idvalstr = mom_string_cstr (idvalv);
 	const char *inputstr = mom_string_cstr (inputv);
 	MOM_DEBUGPRINTF (run,
-			 "ajax_edit_codmom edit_newinput idvalstr=%s inputstr=%s",
+			 "ajax_edit edit_newinput idvalstr=%s inputstr=%s",
 			 idvalstr, inputstr);
 	char dispidbuf[MOM_IDSTRING_LEN + 8];
 	memset (dispidbuf, 0, sizeof (dispidbuf));
@@ -1582,7 +1584,7 @@ ajaxedit_lab_start:
 	    _L (display) = (momval_t) (mom_get_item_of_identcstr (dispidbuf));
 	    MOM_DEBUG (run,
 		       MOMOUT_LITERAL
-		       ("ajax_edit_codmom edit_newinput dispidbuf="),
+		       ("ajax_edit edit_newinput dispidbuf="),
 		       MOMOUT_LITERALV ((const char *) dispidbuf),
 		       MOMOUT_LITERAL ("; display="),
 		       MOMOUT_VALUE ((const momval_t) _L (display)),
@@ -1594,10 +1596,10 @@ ajaxedit_lab_start:
 	  }
 	else
 	  MOM_FATAPRINTF
-	    ("ajax_edit_codmom edit_newinput bad idval=%s input=%s", idvalstr,
+	    ("ajax_edit edit_newinput bad idval=%s input=%s", idvalstr,
 	     inputstr);
 	if (!_L (display).ptr)
-	  MOM_FATAPRINTF ("ajax_edit_codmom edit_newinput invalid idval=%s",
+	  MOM_FATAPRINTF ("ajax_edit edit_newinput invalid idval=%s",
 			  idvalstr);
 	{
 	  mom_should_lock_item (_L (display).pitem);
@@ -1610,7 +1612,7 @@ ajaxedit_lab_start:
 	  mom_unlock_item (_L (display).pitem);
 	}
 	MOM_DEBUG (run,
-		   MOMOUT_LITERAL ("ajax_edit_codmom edit_newinput editor="),
+		   MOMOUT_LITERAL ("ajax_edit edit_newinput editor="),
 		   MOMOUT_VALUE ((const momval_t) _L (editor)),
 		   MOMOUT_LITERAL ("; dispnode="),
 		   MOMOUT_VALUE ((const momval_t) _L (dispnode)),
@@ -1627,7 +1629,7 @@ ajaxedit_lab_start:
 	      {
 		MOM_DEBUG (run,
 			   MOMOUT_LITERAL
-			   ("ajax_edit_codmom edit_newinput got num="),
+			   ("ajax_edit edit_newinput got num="),
 			   MOMOUT_DEC_INT ((int) _N (num)), NULL);
 		_L (curval) = mom_make_integer (_N (num));
 		_N (good_input) = __LINE__;
@@ -1722,7 +1724,7 @@ ajaxedit_lab_start:
 	      _L (curval) = (momval_t) mom_make_tuple_sized (0);
 	    _N (good_input) = __LINE__;
 	  }
-	MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_edit_codmom good_input="), MOMOUT_DEC_INT ((int) _N (good_input)),	//
+	MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_edit good_input="), MOMOUT_DEC_INT ((int) _N (good_input)),	//
 		   MOMOUT_LITERAL ("; curval="), MOMOUT_VALUE (_L (curval)),	//
 		   MOMOUT_LITERAL ("; origin="), MOMOUT_VALUE (_L (origin)),	//
 		   MOMOUT_LITERAL (" !: "), MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) mom_value_to_item ((_L (origin)))),	//
@@ -1762,7 +1764,7 @@ ajaxedit_lab_start:
 	_L (editor) = (momval_t) (mom_get_item_of_ident (editoridv.pstring));
 	MOM_DEBUG (run,
 		   MOMOUT_LITERAL
-		   ("ajax_edit_codmom add_attribute attrstrv="),
+		   ("ajax_edit add_attribute attrstrv="),
 		   MOMOUT_VALUE ((const momval_t) attrstrv),
 		   MOMOUT_LITERAL (" editoridv="),
 		   MOMOUT_VALUE ((const momval_t) editoridv),
@@ -1817,7 +1819,7 @@ ajaxedit_lab_start:
 	    }
 	    MOM_DEBUG (run,
 		       MOMOUT_LITERAL
-		       ("ajax_edit_codmom add_attribute newnodv="),
+		       ("ajax_edit add_attribute newnodv="),
 		       MOMOUT_VALUE ((const momval_t) newnodv),
 		       MOMOUT_LITERAL ("; newnum="), MOMOUT_DEC_INT (newnum),
 		       MOMOUT_LITERAL ("; origin="),
@@ -2039,7 +2041,7 @@ ajaxedit_lab_start:
 	    {
 	      MOM_DEBUG (run,
 			 MOMOUT_LITERAL
-			 ("ajax_edit_codmom editval_displayitem got display="),
+			 ("ajax_edit editval_displayitem got display="),
 			 MOMOUT_VALUE ((const momval_t) _L (display)),
 			 MOMOUT_LITERAL (" :: "),
 			 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
@@ -2092,7 +2094,7 @@ ajaxedit_lab_start:
 	    {
 	      MOM_DEBUG (run,
 			 MOMOUT_LITERAL
-			 ("ajax_edit_codmom editval_addset got display="),
+			 ("ajax_edit editval_addset got display="),
 			 MOMOUT_VALUE ((const momval_t) _L (display)),
 			 MOMOUT_LITERAL (" :: "),
 			 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
@@ -2116,7 +2118,7 @@ ajaxedit_lab_start:
 	  mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
 	  MOM_DEBUG (run,
 		     MOMOUT_LITERAL
-		     ("ajax_edit_codmom editval_addset done displayidstr="),
+		     ("ajax_edit editval_addset done displayidstr="),
 		     MOMOUT_LITERALV ((const char *) displayidstr), NULL);
 	  goto end;
 	}
@@ -2138,7 +2140,7 @@ ajaxedit_lab_start:
 	    {
 	      MOM_DEBUG (run,
 			 MOMOUT_LITERAL
-			 ("ajax_edit_codmom editval_removeset got display="),
+			 ("ajax_edit editval_removeset got display="),
 			 MOMOUT_VALUE ((const momval_t) _L (display)),
 			 MOMOUT_LITERAL (" :: "),
 			 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
@@ -2162,7 +2164,7 @@ ajaxedit_lab_start:
 	  mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
 	  MOM_DEBUG (run,
 		     MOMOUT_LITERAL
-		     ("ajax_edit_codmom editval_removeset done displayidstr="),
+		     ("ajax_edit editval_removeset done displayidstr="),
 		     MOMOUT_LITERALV ((const char *) displayidstr), NULL);
 	  goto end;
 	}
@@ -2184,7 +2186,7 @@ ajaxedit_lab_start:
 	    {
 	      MOM_DEBUG (run,
 			 MOMOUT_LITERAL
-			 ("ajax_edit_codmom editval_appendtuple got display="),
+			 ("ajax_edit editval_appendtuple got display="),
 			 MOMOUT_VALUE ((const momval_t) _L (display)),
 			 MOMOUT_LITERAL (" :: "),
 			 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
@@ -2208,7 +2210,7 @@ ajaxedit_lab_start:
 	  mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
 	  MOM_DEBUG (run,
 		     MOMOUT_LITERAL
-		     ("ajax_edit_codmom editval_appendtuple done displayidstr="),
+		     ("ajax_edit editval_appendtuple done displayidstr="),
 		     MOMOUT_LITERALV ((const char *) displayidstr), NULL);
 	  goto end;
 	}
@@ -2230,7 +2232,7 @@ ajaxedit_lab_start:
 	    {
 	      MOM_DEBUG (run,
 			 MOMOUT_LITERAL
-			 ("ajax_edit_codmom editval_prependtuple got display="),
+			 ("ajax_edit editval_prependtuple got display="),
 			 MOMOUT_VALUE ((const momval_t) _L (display)),
 			 MOMOUT_LITERAL (" :: "),
 			 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
@@ -2254,7 +2256,7 @@ ajaxedit_lab_start:
 	  mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
 	  MOM_DEBUG (run,
 		     MOMOUT_LITERAL
-		     ("ajax_edit_codmom editval_prependtuple done displayidstr="),
+		     ("ajax_edit editval_prependtuple done displayidstr="),
 		     MOMOUT_LITERALV ((const char *) displayidstr), NULL);
 	  goto end;
 	}
@@ -2283,7 +2285,7 @@ ajaxedit_lab_start:
 	    {
 	      MOM_DEBUG (run,
 			 MOMOUT_LITERAL
-			 ("ajax_edit_codmom editval_inserttuple got display="),
+			 ("ajax_edit editval_inserttuple got display="),
 			 MOMOUT_VALUE ((const momval_t) _L (display)),
 			 MOMOUT_LITERAL (" :: "),
 			 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
@@ -2311,7 +2313,7 @@ ajaxedit_lab_start:
 	  mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
 	  MOM_DEBUG (run,
 		     MOMOUT_LITERAL
-		     ("ajax_edit_codmom editval_inserttuple done displayidstr="),
+		     ("ajax_edit editval_inserttuple done displayidstr="),
 		     MOMOUT_LITERALV ((const char *) displayidstr), NULL);
 	  goto end;
 	}
@@ -2333,7 +2335,7 @@ ajaxedit_lab_start:
 	  {
 	    MOM_DEBUG (run,
 		       MOMOUT_LITERAL
-		       ("ajax_edit_codmom editval_appendson got display="),
+		       ("ajax_edit editval_appendson got display="),
 		       MOMOUT_VALUE ((const momval_t) _L (display)),
 		       MOMOUT_LITERAL (" :: "),
 		       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
@@ -2369,7 +2371,7 @@ ajaxedit_lab_start:
 	  mom_item_remove_attribute (_L (display).pitem, mom_named__val);
 	  MOM_DEBUG (run,
 		     MOMOUT_LITERAL
-		     ("ajax_edit_codmom editval_appendson update display="),
+		     ("ajax_edit editval_appendson update display="),
 		     MOMOUT_VALUE ((const momval_t) _L (display)),
 		     MOMOUT_LITERAL (" :: "),
 		     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
@@ -2383,7 +2385,7 @@ ajaxedit_lab_start:
 				  _L (updated));
 	  MOM_DEBUG (run,
 		     MOMOUT_LITERAL
-		     ("ajax_edit_codmom editval_appendson update origin="),
+		     ("ajax_edit editval_appendson update origin="),
 		     MOMOUT_VALUE ((const momval_t) _L (origin)),
 		     MOMOUT_LITERAL (" :: "),
 		     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
@@ -2412,7 +2414,7 @@ ajaxedit_lab_start:
 				  _L (origin));
 	  MOM_DEBUG (run,
 		     MOMOUT_LITERAL
-		     ("ajax_edit_codmom editval_appendson update subdisplay="),
+		     ("ajax_edit editval_appendson update subdisplay="),
 		     MOMOUT_VALUE ((const momval_t) _L (subdisplay)),
 		     MOMOUT_LITERAL (" :: "),
 		     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
@@ -2452,7 +2454,7 @@ ajaxedit_lab_start:
 	  mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
 	  MOM_DEBUG (run,
 		     MOMOUT_LITERAL
-		     ("ajax_edit_codmom editval_appendson done displayidstr="),
+		     ("ajax_edit editval_appendson done displayidstr="),
 		     MOMOUT_LITERALV ((const char *) displayidstr),
 		     MOMOUT_LITERAL (" subdisplayidstr="),
 		     MOMOUT_LITERALV ((const char *) subdisplayidstr),
@@ -2478,7 +2480,7 @@ ajaxedit_lab_start:
 	  {
 	    MOM_DEBUG (run,
 		       MOMOUT_LITERAL
-		       ("ajax_edit_codmom editval_prependson got display="),
+		       ("ajax_edit editval_prependson got display="),
 		       MOMOUT_VALUE ((const momval_t) _L (display)),
 		       MOMOUT_LITERAL (" :: "),
 		       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
@@ -2514,7 +2516,7 @@ ajaxedit_lab_start:
 	  mom_item_remove_attribute (_L (display).pitem, mom_named__val);
 	  MOM_DEBUG (run,
 		     MOMOUT_LITERAL
-		     ("ajax_edit_codmom editval_prependson update display="),
+		     ("ajax_edit editval_prependson update display="),
 		     MOMOUT_VALUE ((const momval_t) _L (display)),
 		     MOMOUT_LITERAL (" :: "),
 		     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
@@ -2528,7 +2530,7 @@ ajaxedit_lab_start:
 				  _L (updated));
 	  MOM_DEBUG (run,
 		     MOMOUT_LITERAL
-		     ("ajax_edit_codmom editval_prependson update origin="),
+		     ("ajax_edit editval_prependson update origin="),
 		     MOMOUT_VALUE ((const momval_t) _L (origin)),
 		     MOMOUT_LITERAL (" :: "),
 		     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
@@ -2555,7 +2557,7 @@ ajaxedit_lab_start:
 				  mom_make_integer (_N (rank)));
 	  MOM_DEBUG (run,
 		     MOMOUT_LITERAL
-		     ("ajax_edit_codmom editval_prependson update subdisplay="),
+		     ("ajax_edit editval_prependson update subdisplay="),
 		     MOMOUT_VALUE ((const momval_t) _L (subdisplay)),
 		     MOMOUT_LITERAL (" :: "),
 		     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
@@ -2595,7 +2597,7 @@ ajaxedit_lab_start:
 	  mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
 	  MOM_DEBUG (run,
 		     MOMOUT_LITERAL
-		     ("ajax_edit_codmom editval_prependson done displayidstr="),
+		     ("ajax_edit editval_prependson done displayidstr="),
 		     MOMOUT_LITERALV ((const char *) displayidstr),
 		     MOMOUT_LITERAL (" subdisplayidstr="),
 		     MOMOUT_LITERALV ((const char *) subdisplayidstr),
@@ -2626,7 +2628,7 @@ ajaxedit_lab_start:
 	    {
 	      MOM_DEBUG (run,
 			 MOMOUT_LITERAL
-			 ("ajax_edit_codmom editval_insertson got display="),
+			 ("ajax_edit editval_insertson got display="),
 			 MOMOUT_VALUE ((const momval_t) _L (display)),
 			 MOMOUT_LITERAL (" :: "),
 			 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
@@ -2645,7 +2647,7 @@ ajaxedit_lab_start:
 	}
 	MOM_DEBUG (run,
 		   MOMOUT_LITERAL
-		   ("ajax_edit_codmom editval_insertson ix="),
+		   ("ajax_edit editval_insertson ix="),
 		   MOMOUT_DEC_INT ((int) _N (ix)), NULL);
 	_L (origin) = MOM_NULLV;
 	_L (subdisplay) = (momval_t) mom_make_item ();
@@ -2691,7 +2693,7 @@ ajaxedit_lab_start:
 	  mom_item_remove_attribute (_L (display).pitem, mom_named__val);
 	  MOM_DEBUG (run,
 		     MOMOUT_LITERAL
-		     ("ajax_edit_codmom editval_insertson update display="),
+		     ("ajax_edit editval_insertson update display="),
 		     MOMOUT_VALUE ((const momval_t) _L (display)),
 		     MOMOUT_LITERAL (" :: "),
 		     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
@@ -2705,7 +2707,7 @@ ajaxedit_lab_start:
 				  _L (updated));
 	  MOM_DEBUG (run,
 		     MOMOUT_LITERAL
-		     ("ajax_edit_codmom editval_prependson update origin="),
+		     ("ajax_edit editval_prependson update origin="),
 		     MOMOUT_VALUE ((const momval_t) _L (origin)),
 		     MOMOUT_LITERAL (" :: "),
 		     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
@@ -2732,7 +2734,7 @@ ajaxedit_lab_start:
 				  mom_make_integer (_N (rank)));
 	  MOM_DEBUG (run,
 		     MOMOUT_LITERAL
-		     ("ajax_edit_codmom editval_insertson update subdisplay="),
+		     ("ajax_edit editval_insertson update subdisplay="),
 		     MOMOUT_VALUE ((const momval_t) _L (subdisplay)),
 		     MOMOUT_LITERAL (" :: "),
 		     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
@@ -2772,7 +2774,7 @@ ajaxedit_lab_start:
 	  mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
 	  MOM_DEBUG (run,
 		     MOMOUT_LITERAL
-		     ("ajax_edit_codmom editval_insertson done displayidstr="),
+		     ("ajax_edit editval_insertson done displayidstr="),
 		     MOMOUT_LITERALV ((const char *) displayidstr),
 		     MOMOUT_LITERAL (" subdisplayidstr="),
 		     MOMOUT_LITERALV ((const char *) subdisplayidstr),
@@ -2798,7 +2800,7 @@ ajaxedit_lab_start:
 	  {
 	    MOM_DEBUG (run,
 		       MOMOUT_LITERAL
-		       ("ajax_edit_codmom editval_displayconn got display="),
+		       ("ajax_edit editval_displayconn got display="),
 		       MOMOUT_VALUE ((const momval_t) _L (display)),
 		       MOMOUT_LITERAL (" :: "),
 		       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
@@ -2816,7 +2818,7 @@ ajaxedit_lab_start:
 	}
 	MOM_DEBUG (run,
 		   MOMOUT_LITERAL
-		   ("ajax_edit_codmom editval_displayconn dispnode="),
+		   ("ajax_edit editval_displayconn dispnode="),
 		   MOMOUT_VALUE ((const momval_t) _L (dispnode)),
 		   MOMOUT_LITERAL (" curitem="),
 		   MOMOUT_VALUE ((const momval_t) _L (curitem)), NULL);
@@ -2832,7 +2834,7 @@ ajaxedit_lab_start:
 	mom_webx_reply (_L (webx).pitem, "application/json", HTTP_OK);
 	MOM_DEBUG (run,
 		   MOMOUT_LITERAL
-		   ("ajax_edit_codmom editval_displayconn done itemidstr="),
+		   ("ajax_edit editval_displayconn done itemidstr="),
 		   MOMOUT_LITERALV ((const char
 				     *) (mom_string_cstr (itemidstr))), NULL);
 	goto end;
@@ -3258,7 +3260,7 @@ ajaxedit_lab_start:
     goto end;
   end:
     mom_unlock_item (_L (webx).pitem);
-    MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_edit_codmom return pop"));
+    MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_edit return pop"));
     return momroutres_pop;
   }
   ;
@@ -3267,7 +3269,7 @@ ajaxedit_lab_dideditcopy:	///// **********
   {
     mom_should_lock_item (_L (webx).pitem);
     MOM_DEBUG (run,
-	       MOMOUT_LITERAL ("ajax_edit_codmom dideditcopy curval="),
+	       MOMOUT_LITERAL ("ajax_edit dideditcopy curval="),
 	       MOMOUT_VALUE (_L (curval)),
 	       MOMOUT_LITERAL (" webx="), MOMOUT_VALUE (_L (webx)), NULL);
     MOM_WEBX_OUT (_L (webx).pitem,
@@ -3288,7 +3290,7 @@ ajaxedit_lab_didputvalue:	///// **********
   {
     _L (display) = mom_item_tasklet_res1 (momtasklet_);
     mom_should_lock_item (_L (webx).pitem);
-    MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_edit_codmom didputvalue curval="), MOMOUT_VALUE (_L (curval)),	//
+    MOM_DEBUG (run, MOMOUT_LITERAL ("ajax_edit didputvalue curval="), MOMOUT_VALUE (_L (curval)),	//
 	       MOMOUT_LITERAL (" display="), MOMOUT_VALUE (_L (display)),	//
 	       MOMOUT_SPACE (48), MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) mom_value_to_item (_L (display))),	//
 	       MOMOUT_LITERAL (" webx="), MOMOUT_VALUE (_L (webx)),	//
@@ -3375,11 +3377,13 @@ enum ajax_objects_numbers_en
 
 static int
 ajax_objects_codmom (int momstate_, momitem_t *momtasklet_,
-		     const momnode_t *momclosure_, momval_t *momlocvals_,
+		     const momval_t momclov_, momval_t *momlocvals_,
 		     intptr_t * momlocnums_, double *momlocdbls_)
 {
+  const momval_t *momclosvals __attribute__ ((unused))
+    = mom_closed_values (momclov_);
 #define _L(Nam) (momlocvals_[ajaxobjs_v_##Nam])
-#define _C(Nam) (momclosure_->sontab[ajaxobjs_c_##Nam])
+#define _C(Nam) (momclosvals[ajaxobjs_c_##Nam])
 #define _N(Nam) (momlocnums_[ajaxobjs_n_##Nam])
   enum ajax_objects_state_en
   {
@@ -4009,12 +4013,14 @@ enum edit_value_numbers_en
 
 static int
 edit_value_codmom (int momstate_, momitem_t *momtasklet_,
-		   const momnode_t *momclosure_,
+		   const momval_t momclosurv_,
 		   momval_t *momlocvals_, intptr_t * momlocnums_,
 		   double *momlocdbls_)
 {
+  const momval_t *momclovals __attribute__ ((unused)) =
+    mom_closed_values (momclosurv_);
 #define _L(Nam) (momlocvals_[edit_value_v_##Nam])
-#define _C(Nam) (momclosure_->sontab[edit_value_c_##Nam])
+#define _C(Nam) (momclovals[edit_value_c_##Nam])
 #define _N(Nam) (momlocnums_[edit_value_n_##Nam])
   MOM_FATAPRINTF ("edit_value is obsolete");
 #undef _L
@@ -4527,12 +4533,14 @@ enum noop_numbers_en
 
 static int
 noop_codmom (int momstate_, momitem_t *momtasklet_,
-	     const momnode_t *momclosure_,
+	     const momval_t momclosurv_,
 	     momval_t *momlocvals_, intptr_t * momlocnums_,
 	     double *momlocdbls_)
 {
+  const momval_t *momclovals __attribute__ ((unused)) =
+    mom_closed_values (momclosurv_);
 #define _L(Nam) (momlocvals_[noop_v_##Nam])
-#define _C(Nam) (momclosure_->sontab[noop_c_##Nam])
+#define _C(Nam) (momclovals[noop_c_##Nam])
 #define _N(Nam) (momlocnums_[noop_n_##Nam])
   enum noop_state_en
   {
