@@ -881,16 +881,14 @@ mom_make_json_array_til_nil (momval_t firstv, ...)
 int
 mom_json_cmp (const momval_t l, const momval_t r)
 {
+  momval_t leftstrv = MOM_NULLV;
+  momval_t rightstrv = MOM_NULLV;
   if (l.ptr == r.ptr)
     return 0;
   if (!l.ptr)
     return -1;
   if (!r.ptr)
     return 1;
-  if (l.ptr == r.ptr)
-    return 0;
-  momval_t leftstrv = MOM_NULLV;
-  momval_t rightstrv = MOM_NULLV;
   if (mom_is_item (l))
     leftstrv = (momval_t) mom_item_get_name_or_idstr (l.pitem);
   else if (mom_is_string (l))
