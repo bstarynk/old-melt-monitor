@@ -49,6 +49,7 @@ struct jsonrpc_conn_mom_st
   struct jsonparser_st jrpc_parser;	/* the parser */
   struct sockaddr jrpc_addr;	/* the socket peer address */
   socklen_t jrpc_alen;		/* its length */
+  pthread_t jrpc_thread;	/* the thread parsing that connection */
 };
 
 static bool stop_working_mom;
@@ -900,7 +901,7 @@ jsonrpc_accept_handler_mom (int fd, short revent, void *data)
 	  return;
 	};
       MOM_DEBUGPRINTF (run, "jsonrpc_accept_handler accfd=%d", accfd);
-#warning jsonrpc_accept_handler should use some struct jsonrpc_conn_mom_st
+#warning jsonrpc_accept_handler should use some struct jsonrpc_conn_mom_st and start a thread
     }
   else if (revent & POLLNVAL)
     jsonrpc_socket_mom = -1;
