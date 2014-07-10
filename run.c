@@ -37,12 +37,14 @@ static struct
   void *todo_data;
 } todo_after_stop_mom[TODO_MAX_MOM];
 
-// maximum number of JSONRPC active connections
-#define JSONRPC_CONN_MAX_MOM 8
 #define POLL_MAX_MOM 100
 
 #define JSONRPC_CONN_MAGIC_MOM 0x3a8868f1	/* jsonrpc conn magic 982018289 */
-struct jsonrpc_conn_mom_st
+
+// maximum number of JSONRPC active connections
+#define JSONRPC_CONN_MAX_MOM ((3*MOM_MAX_WORKERS)/2+2)
+#define mom_jsonrpc_conn_threshold() (3*mom_nb_workers/2+1)
+static struct jsonrpc_conn_mom_st
 {
   unsigned jrpc_magic;		/* always JSONRPC_CONN_MAGIC_MOM  */
   int jrpc_socket;		/* the accepted socket */
@@ -50,7 +52,10 @@ struct jsonrpc_conn_mom_st
   struct sockaddr jrpc_addr;	/* the socket peer address */
   socklen_t jrpc_alen;		/* its length */
   pthread_t jrpc_thread;	/* the thread parsing that connection */
-};
+  const char *jrpc_peername;	/* peer hostname, GC_STRDUP-ed */
+} jrpc_mom[JSONRPC_CONN_MAX_MOM];
+static pthread_mutex_t jrpcmtx_mom = PTHREAD_MUTEX_INITIALIZER;
+
 
 static bool stop_working_mom;
 static bool continue_working_mom;
@@ -881,9 +886,30 @@ start_jsonrpc_mom (void)
 		   sockfd, mom_jsonrpc_host);
 }
 
+static void *
+jsonrpc_processor_mom (void *p)
+{
+  char thname[24];
+  memset (thname, 0, sizeof (thname));
+  struct jsonrpc_conn_mom_st *jp = (struct jsonrpc_conn_mom_st *) p;
+  assert (jp && jp->jrpc_magic == JSONRPC_CONN_MAGIC_MOM);
+  snprintf (thname, sizeof (thname), "jsonrpc%03d", jp->jrpc_socket);
+  pthread_setname_np (pthread_self (), thname);
+  usleep (1000);
+  MOM_DEBUGPRINTF (run, "jsonrpc_processor start socket#%d peer %s",
+		   jp->jrpc_socket, jp->jrpc_peername);
+#warning jsonrpc_processor_mom incomplete and should have a parse loop
+}
+
 static void
 jsonrpc_accept_handler_mom (int fd, short revent, void *data)
 {
+  char hn[80] = { 0 };
+  memset (hn, 0, sizeof (hn));
+  pthread_attr_t evthattr;
+  memset (&evthattr, 0, sizeof (evthattr));
+  pthread_attr_init (&evthattr);
+  pthread_attr_setdetachstate (&evthattr, TRUE);
   MOM_DEBUGPRINTF (run, "jsonrpc_accept_handler fd=%d revent %#x", fd,
 		   revent);
   assert (fd == jsonrpc_socket_mom);
@@ -900,8 +926,60 @@ jsonrpc_accept_handler_mom (int fd, short revent, void *data)
 			  strerror (errno));
 	  return;
 	};
-      MOM_DEBUGPRINTF (run, "jsonrpc_accept_handler accfd=%d", accfd);
-#warning jsonrpc_accept_handler should use some struct jsonrpc_conn_mom_st and start a thread
+      int err = getnameinfo (&sad, sln, hn, sizeof (hn), NULL, 0, 0U);
+      if (err)
+	MOM_WARNPRINTF ("getnameinfo failure %s", gai_strerror (err));
+      MOM_DEBUGPRINTF (run, "jsonrpc_accept_handler accfd=%d peerhost=%s",
+		       accfd, hn);
+      {
+	struct jsonrpc_conn_mom_st *jp = NULL;
+	pthread_mutex_lock (&jrpcmtx_mom);
+	unsigned threshold = mom_jsonrpc_conn_threshold ();
+	unsigned count = 0;
+	int pos = -1;
+	for (unsigned ix = 0; ix < JSONRPC_CONN_MAX_MOM; ix++)
+	  {
+	    if (jrpc_mom[ix].jrpc_socket > 0
+		&& jrpc_mom[ix].jrpc_magic == JSONRPC_CONN_MAGIC_MOM)
+	      count++;
+	    else if (pos < 0)
+	      pos = ix;
+	  }
+	if (count > threshold || pos < 0)
+	  {
+	    MOM_WARNPRINTF
+	      ("jsonrpc_accept_handler rejects connection from %s - count %d above %d threshold",
+	       hn, count, threshold);
+	    pos = -1;
+	  }
+	else
+	  {
+	    jp = jrpc_mom + pos;
+	    memset (jp, 0, sizeof (struct jsonrpc_conn_mom_st));
+	    FILE *fil = fdopen (accfd, "r+");
+	    if (!fil)
+	      MOM_FATAPRINTF
+		("jsonrpc_accept_handler failed to fdopen socket#%d from %s",
+		 accfd, hn);
+	    jp->jrpc_socket = accfd;
+	    jp->jrpc_magic = JSONRPC_CONN_MAGIC_MOM;
+	    mom_initialize_json_parser (&jp->jrpc_parser, fil, jp);
+	    jp->jrpc_addr = sad;
+	    jp->jrpc_alen = sln;
+	    jp->jrpc_peername = MOM_GC_STRDUP ("jsonrpc peer host", hn);
+	    if (GC_pthread_create
+		(&jp->jrpc_thread, &evthattr, jsonrpc_processor_mom, jp))
+	      MOM_FATAPRINTF
+		("failed to create jsonrpc processor thread socket#%d peer %s",
+		 accfd, hn);
+	  };
+	pthread_mutex_unlock (&jrpcmtx_mom);
+	if (pos < 0)
+	  {
+	    shutdown (accfd, SHUT_RDWR);
+	    close (accfd);
+	  }
+      }
     }
   else if (revent & POLLNVAL)
     jsonrpc_socket_mom = -1;
