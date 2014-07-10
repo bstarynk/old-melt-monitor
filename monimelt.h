@@ -63,7 +63,11 @@
 #include <sys/signalfd.h>
 #include <sys/timerfd.h>
 #include <sys/syscall.h>
+#include <sys/socket.h>
+#include <sys/un.h>
 #include <sys/ioctl.h>
+#include <netinet/in.h>
+#include <netdb.h>
 ///
 #include <sqlite3.h>
 #include <gc/gc.h>
@@ -2510,6 +2514,7 @@ void mom_initial_load (const char *ldirnam);
 #define MOM_MIN_WORKERS 2
 int mom_nb_workers;
 const char *mom_web_host;
+const char *mom_jsonrpc_host;
 void mom_add_tasklet_to_agenda_back (momitem_t *tkitm);
 void mom_add_tasklet_to_agenda_front (momitem_t *tkitm);
 typedef void mom_todoafterstop_fun_t (void *data);

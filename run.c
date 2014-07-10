@@ -37,6 +37,20 @@ static struct
   void *todo_data;
 } todo_after_stop_mom[TODO_MAX_MOM];
 
+// maximum number of JSONRPC active connections
+#define JSONRPC_CONN_MAX_MOM 8
+#define POLL_MAX_MOM 100
+
+#define JSONRPC_CONN_MAGIC_MOM 0x3a8868f1	/* jsonrpc conn magic 982018289 */
+struct jsonrpc_conn_mom_st
+{
+  unsigned jrpc_magic;		/* always JSONRPC_CONN_MAGIC_MOM  */
+  int jrpc_socket;		/* the accepted socket */
+  struct jsonparser_st jrpc_parser;	/* the parser */
+  struct sockaddr jrpc_addr;	/* the socket peer address */
+  socklen_t jrpc_alen;		/* its length */
+};
+
 static bool stop_working_mom;
 static bool continue_working_mom;
 static __thread struct workdata_mom_st *cur_worker_mom;
@@ -698,7 +712,199 @@ end:
 }
 
 
-#define POLL_MAX_MOM 100
+static int jsonrpc_socket_mom = -1;
+
+static int jsonrpc_family_mom = -1;
+
+// see https://lists.debian.org/debian-glibc/2004/02/msg00274.html
+#define MOM_UNIX_PATH_MAX 100
+
+#define MOM_LISTEN_BACKLOG 8
+
+static void
+start_jsonrpc_mom (void)
+{
+  int sockfd = -1;
+  int portnum = -1;
+  char hnam[80] = { 0 };
+  MOM_DEBUGPRINTF (run, "start_jsonrpc %s", mom_jsonrpc_host);
+  memset (hnam, 0, sizeof (hnam));
+  if (mom_jsonrpc_host[0] == '/')
+    {
+      // AF_UNIX socket
+      if (strlen (mom_jsonrpc_host) >= MOM_UNIX_PATH_MAX)
+	MOM_FATAPRINTF ("too long JSONRPC unix socket path %s",
+			mom_jsonrpc_host);
+      struct sockaddr_un saun = { 0 };
+      memset (&saun, 0, sizeof (saun));
+      saun.sun_family = AF_UNIX;
+      strncpy (saun.sun_path, mom_jsonrpc_host, MOM_UNIX_PATH_MAX);
+      sockfd = socket (AF_UNIX, SOCK_STREAM, 0);
+      if (sockfd < 0)
+	MOM_FATAPRINTF ("failed to get JSONRPC unix socket");
+      if (bind
+	  (sockfd, (struct sockaddr *) &saun,
+	   sizeof (struct sockaddr_un)) < 0)
+	MOM_FATAPRINTF ("failed to bind JSONRPC unix socket to path %s",
+			mom_jsonrpc_host);
+      jsonrpc_family_mom = AF_UNIX;
+      MOM_INFORMPRINTF
+	("bound JSONRPC unix socket of path %s file descriptor %d",
+	 mom_jsonrpc_host, sockfd);
+    }
+  else if (isdigit (mom_jsonrpc_host[0]))
+    {
+      // AF_INET TCP/IPv4 socket on anyhost
+      portnum = atoi (mom_jsonrpc_host);
+      MOM_DEBUGPRINTF (run, "start_jsonrpc TCP/IPv4 anyhost portnum=%d",
+		       portnum);
+      struct sockaddr_in sain = { 0 };
+      memset (&sain, 0, sizeof (sain));
+      sain.sin_family = AF_INET;
+      sain.sin_port = htons (portnum);
+      sockfd = socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
+      if (sockfd < 0)
+	MOM_FATAPRINTF ("failed to get JSONRPC IPv4 socket");
+      if (bind
+	  (sockfd, (struct sockaddr *) &sain,
+	   sizeof (struct sockaddr_in)) < 0)
+	MOM_FATAPRINTF
+	  ("failed to bind JSONRPC IPv4 socket to anyhost, port %d", portnum);
+      jsonrpc_family_mom = AF_INET;
+    }
+  else if (sscanf (mom_jsonrpc_host, "localhost:%d", &portnum) > 0
+	   && portnum > 0)
+    {
+      // AF_INET TCP/IPv4 socket on localhost
+      MOM_DEBUGPRINTF (run, "start_jsonrpc TCP/IPv4 localhost portnum=%d",
+		       portnum);
+      struct sockaddr_in sain = { 0 };
+      memset (&sain, 0, sizeof (sain));
+      sain.sin_family = AF_INET;
+      sain.sin_port = htons (portnum);
+      sain.sin_addr.s_addr = htonl (INADDR_LOOPBACK);
+      sockfd = socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
+      if (sockfd < 0)
+	MOM_FATAPRINTF ("failed to get JSONRPC IPv4 socket");
+      if (bind
+	  (sockfd, (struct sockaddr *) &sain,
+	   sizeof (struct sockaddr_in)) < 0)
+	MOM_FATAPRINTF
+	  ("failed to bind JSONRPC IPv4 socket to localhost, port %d",
+	   portnum);
+    }
+  else if (sscanf (mom_jsonrpc_host, "%70[a-zA-Z0-9_.-]:%d", hnam, &portnum)
+	   >= 2 && isalpha (hnam[0]) && portnum > 0)
+    {
+      int gstatus = -1;
+      // AF_INET6 TCP/IPv6 socket on host named hnam
+      MOM_DEBUGPRINTF (run, "start_jsonrpc TCP/IPv6 hnam=%s portnum=%d", hnam,
+		       portnum);
+      char servicename[8] = { 0 };
+      struct addrinfo hints = { 0 };
+      struct addrinfo *adinf = NULL;
+      memset (&hints, 0, sizeof (hints));
+      hints.ai_family = AF_UNSPEC;
+      hints.ai_socktype = SOCK_STREAM;
+      hints.ai_flags = AI_PASSIVE | AI_CANONNAME;
+      snprintf (servicename, sizeof (servicename), "%d", portnum);
+      if ((gstatus = getaddrinfo (hnam, servicename, &hints, &adinf)) != 0)
+	MOM_FATAPRINTF
+	  ("start_jsonrpc failed to getaddrinfo for host %s service %s : %s",
+	   hnam, servicename, gai_strerror (gstatus));
+      for (struct addrinfo * curadinf = adinf; curadinf != NULL;
+	   curadinf = curadinf->ai_next)
+	{
+	  MOM_DEBUGPRINTF (run,
+			   "start_jsonrpc curadinf@%p family %d protocol %d canonname %s next@%p",
+			   curadinf, curadinf->ai_family,
+			   curadinf->ai_protocol, curadinf->ai_canonname,
+			   curadinf->ai_next);
+	  errno = 0;
+	  sockfd =
+	    socket (curadinf->ai_family, curadinf->ai_socktype,
+		    curadinf->ai_protocol);
+	  struct protoent *protoent =
+	    getprotobynumber (curadinf->ai_protocol);
+	  char protonumbuf[8] = { 0 };
+	  snprintf (protonumbuf, sizeof (protonumbuf), "%d",
+		    curadinf->ai_protocol);
+	  char *protoname = protoent ? (protoent->p_name) : protonumbuf;
+	  if (sockfd < 0)
+	    {
+	      if (curadinf->ai_next)
+		MOM_WARNPRINTF
+		  ("start_jsonrpc family %d protocol %s canonname %s socket failure (%s), trying next",
+		   curadinf->ai_family, protoname, curadinf->ai_canonname,
+		   strerror (errno));
+	      else
+		MOM_FATAPRINTF
+		  ("start_jsonrpc family %d protocol %s canonname %s socket failure",
+		   curadinf->ai_family, protoname, curadinf->ai_canonname);
+	      continue;
+	    };
+	  if (bind
+	      (sockfd, (struct sockaddr *) curadinf->ai_addr,
+	       curadinf->ai_addrlen) < 0)
+	    {
+	      if (curadinf->ai_next)
+		MOM_WARNPRINTF
+		  ("start_jsonrpc family %d protocol %s canonname %s bind failure (%s), trying next",
+		   curadinf->ai_family, protoname, curadinf->ai_canonname,
+		   strerror (errno));
+	      else
+		MOM_FATAPRINTF
+		  ("start_jsonrpc family %d protocol %s canonname %s bind failure",
+		   curadinf->ai_family, protoname, curadinf->ai_canonname);
+	      jsonrpc_family_mom = curadinf->ai_family;
+	      continue;
+	    };
+	  break;
+	}
+      freeaddrinfo (adinf), adinf = NULL;
+    }
+  else
+    MOM_FATAPRINTF ("start_jsonrpc: invalid JSONRPC host %s",
+		    mom_jsonrpc_host);
+  if (sockfd < 0)
+    MOM_FATAPRINTF ("start_jsonrpc got no socket for JSONRPC host %s",
+		    mom_jsonrpc_host);
+  // should call listen(2)
+  if (listen (sockfd, MOM_LISTEN_BACKLOG) < 0)
+    MOM_FATAPRINTF
+      ("start_jsonrpc failed to listen socket#%d for JSONRPC host %s", sockfd,
+       mom_jsonrpc_host);
+  jsonrpc_socket_mom = sockfd;
+  MOM_DEBUGPRINTF (run,
+		   "start_jsonrpc ending with socket#%d for JSONRPC host %s",
+		   sockfd, mom_jsonrpc_host);
+}
+
+static void
+jsonrpc_accept_handler_mom (int fd, short revent, void *data)
+{
+  MOM_DEBUGPRINTF (run, "jsonrpc_accept_handler fd=%d revent %#x", fd,
+		   revent);
+  assert (fd == jsonrpc_socket_mom);
+  assert (data == NULL);
+  if (revent & POLLIN)
+    {
+      struct sockaddr sad = { 0 };
+      memset (&sad, 0, sizeof (sad));
+      socklen_t sln = sizeof (sad);
+      int accfd = accept4 (fd, &sad, &sln, SOCK_CLOEXEC);
+      if (accfd < 0)
+	{
+	  MOM_WARNPRINTF ("jsonrpc_accept_handler fd=%d failed (%s)", fd,
+			  strerror (errno));
+	  return;
+	};
+      MOM_DEBUGPRINTF (run, "jsonrpc_accept_handler accfd=%d", accfd);
+#warning jsonrpc_accept_handler should use some struct jsonrpc_conn_mom_st
+    }
+  else if (revent & POLLNVAL)
+    jsonrpc_socket_mom = -1;
+}
 
 static void *
 event_loop_mom (void *p __attribute__ ((unused)))
@@ -710,6 +916,8 @@ event_loop_mom (void *p __attribute__ ((unused)))
   void **datatab[POLL_MAX_MOM];
   pthread_setname_np (pthread_self (), "mom-evloop");
   assert (my_signals_fd_mom > 0);
+  if (mom_jsonrpc_host)
+    start_jsonrpc_mom ();
   /// our event loop
   do
     {
@@ -764,6 +972,9 @@ event_loop_mom (void *p __attribute__ ((unused)))
 	  }
 	pthread_mutex_unlock (&job_mtx_mom);
       }
+      if (jsonrpc_socket_mom > 0)
+	ADD_POLL (POLLIN, jsonrpc_socket_mom, jsonrpc_accept_handler_mom,
+		  NULL);
       // other polling might go here, eg. perhaps for CURL web client library
       // do the polling
       MOM_DEBUGPRINTF (run, "before poll pollcnt=%d evloopcnt=%lld",
@@ -811,6 +1022,13 @@ event_loop_mom (void *p __attribute__ ((unused)))
 	};
     }
   while (repeat_loop);
+  if (jsonrpc_socket_mom > 0)
+    {
+      MOM_DEBUGPRINTF (run, "event_loop_mom closing jsonrpc socket#%d",
+		       jsonrpc_socket_mom);
+      close (jsonrpc_socket_mom);
+      jsonrpc_socket_mom = -1;
+    }
   return NULL;
 }
 

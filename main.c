@@ -547,6 +547,7 @@ static const struct option mom_long_options[] = {
   {"daemon", no_argument, NULL, 'd'},
   {"syslog", no_argument, NULL, 'l'},
   {"web", required_argument, NULL, 'W'},
+  {"jsonrpc", required_argument, NULL, 'R'},
   // long-only options
   {"write-pid", required_argument, NULL, xtraopt_writepid},
   {"load-state", required_argument, NULL, xtraopt_loadstate},
@@ -683,6 +684,9 @@ usage_mom (const char *argv0)
   putchar ('\n');
   printf ("\t -n | --nice <nice-level> " " \t# Set process nice level.\n");
   printf ("\t -J | --jobs <nb-work-threads> " " \t# Start work threads.\n");
+  printf ("\t -R | --jsonrpc <jsonrpc> " " \t# Start JSONRPC service\n");
+  printf ("\t\t## <jsonrpc> is"
+	  "like localhost:8087 or 8087 for TCP, or /some/path for Unix socket\n");
   printf ("\t -P | --plugin <plugin-name> <plugin-arg> "
 	  " \t# load a plugin.\n");
   printf ("\t -W | --web <webhost>\n");
@@ -767,6 +771,9 @@ parse_program_arguments_and_load_modules_mom (int *pargc, char **argv)
 	  break;
 	case 'W':
 	  mom_web_host = optarg;
+	  break;
+	case 'R':
+	  mom_jsonrpc_host = optarg;
 	  break;
 	case 'P':
 	  {
