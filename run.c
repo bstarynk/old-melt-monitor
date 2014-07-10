@@ -48,7 +48,8 @@ static struct jsonrpc_conn_mom_st
 {
   unsigned jrpc_magic;		/* always JSONRPC_CONN_MAGIC_MOM  */
   int jrpc_socket;		/* the accepted socket */
-  struct jsonparser_st jrpc_parser;	/* the parser */
+  struct mom_jsonparser_st jrpc_parser;	/* the parser */
+  struct momout_st jrpc_out;	/* the output */
   struct sockaddr jrpc_addr;	/* the socket peer address */
   socklen_t jrpc_alen;		/* its length */
   pthread_t jrpc_thread;	/* the thread parsing that connection */
@@ -886,9 +887,24 @@ start_jsonrpc_mom (void)
 		   sockfd, mom_jsonrpc_host);
 }
 
+
+static bool
+batch_jsonrpc_mom (momval_t jreq, struct jsonrpc_conn_mom_st *jp)
+{
+#warning batch_jsonrpc_mom unimplemented
+}
+
+static bool
+request_jsonrpc_mom (momval_t jreq, struct jsonrpc_conn_mom_st *jp)
+{
+#warning request_jsonrpc_mom unimplemented
+}
+
 static void *
 jsonrpc_processor_mom (void *p)
 {
+  bool again = false;
+  long count = 0;
   char thname[24];
   memset (thname, 0, sizeof (thname));
   struct jsonrpc_conn_mom_st *jp = (struct jsonrpc_conn_mom_st *) p;
@@ -898,7 +914,45 @@ jsonrpc_processor_mom (void *p)
   usleep (1000);
   MOM_DEBUGPRINTF (run, "jsonrpc_processor start socket#%d peer %s",
 		   jp->jrpc_socket, jp->jrpc_peername);
-#warning jsonrpc_processor_mom incomplete and should have a parse loop
+  do
+    {
+      again = true;
+      FILE *fil = NULL;
+      char *errmsg = NULL;
+      momval_t jreq = MOM_NULLV;
+      pthread_mutex_lock (&jrpcmtx_mom);
+      assert (jp && jp->jrpc_magic == JSONRPC_CONN_MAGIC_MOM);
+      fil = jp->jrpc_parser.jsonp_file;
+      pthread_mutex_unlock (&jrpcmtx_mom);
+      if (feof (fil))
+	{
+	  again = false;
+	  break;
+	};
+      jreq = mom_parse_json (&jp->jrpc_parser, &errmsg);
+      count++;
+      MOM_DEBUG (run, MOMOUT_LITERAL ("jsonrpc_processor count="),
+		 MOMOUT_FMT_LONG ((const char *) "%ld", count),
+		 MOMOUT_LITERAL (" jreq="),
+		 MOMOUT_JSON_VALUE (jreq),
+		 MOMOUT_SPACE (48),
+		 MOMOUT_LITERALV ((const char *) (errmsg ? "error:" : "ok.")),
+		 MOMOUT_LITERALV ((const char *) errmsg), NULL);
+      if (mom_is_json_array (jreq))
+	again = batch_jsonrpc_mom (jreq, jp);
+      else if (mom_is_json_object (jreq))
+	again = request_jsonrpc_mom (jreq, jp);
+      else
+	again = false;
+      fflush (jp->jrpc_parser.jsonp_file);
+    }
+  while (again);
+  pthread_mutex_lock (&jrpcmtx_mom);
+  shutdown (jp->jrpc_socket, SHUT_RDWR);
+  mom_close_json_parser (&jp->jrpc_parser);
+  memset (jp, 0, sizeof (struct jsonrpc_conn_mom_st));
+  pthread_mutex_unlock (&jrpcmtx_mom);
+  return NULL;
 }
 
 static void
@@ -964,6 +1018,7 @@ jsonrpc_accept_handler_mom (int fd, short revent, void *data)
 	    jp->jrpc_socket = accfd;
 	    jp->jrpc_magic = JSONRPC_CONN_MAGIC_MOM;
 	    mom_initialize_json_parser (&jp->jrpc_parser, fil, jp);
+	    mom_initialize_output (&jp->jrpc_out, fil, 0);
 	    jp->jrpc_addr = sad;
 	    jp->jrpc_alen = sln;
 	    jp->jrpc_peername = MOM_GC_STRDUP ("jsonrpc peer host", hn);

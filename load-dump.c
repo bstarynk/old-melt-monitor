@@ -1370,7 +1370,7 @@ mom_initial_load (const char *ldirnam)
 		fmemopen ((void *) datastr, strlen (datastr), "r");
 	      if (!fdata)
 		MOM_FATAPRINTF ("failed to fmemopen datastr %s", datastr);
-	      struct jsonparser_st jparser = { 0 };
+	      struct mom_jsonparser_st jparser = { 0 };
 	      memset (&jparser, 0, sizeof (jparser));
 	      mom_initialize_json_parser (&jparser, fdata, NULL);
 	      char *errmsgj = NULL;

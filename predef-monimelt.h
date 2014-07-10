@@ -100,6 +100,9 @@ MOM_PREDEFINED_NAMED(frames,_4cw8jv45vsk_4mh9ex64904)
 ////!within a primitive gives the type of result
 MOM_PREDEFINED_NAMED(gives,_70ty9z1tm4p_eccsxmyfe25)
 
+////!for JSONRPC and elsewhere
+MOM_PREDEFINED_NAMED(id,_7a9sxskjhcp_kpf30ka97ex)
+
 ////!for input display
 MOM_PREDEFINED_NAMED(input,_356014y9ueu_xv6j0eskszw)
 
@@ -129,6 +132,9 @@ MOM_PREDEFINED_NAMED(json_object,_3xpyd539p4m_23h7wi59xi9)
 ////+We cannot use true because it is a #define-ed macro.
 MOM_PREDEFINED_NAMED(json_true,_2vmrrvq5kdk_9um63pstcu9)
 
+////!for JSONRPC
+MOM_PREDEFINED_NAMED(jsonrpc,_0h331ch957p_j6a8i7v4e6y)
+
 ////!in JSON dumps, give the type of a value
 MOM_PREDEFINED_NAMED(jtype,_7urjeiw3evy_m7k72uv6790)
 
@@ -137,6 +143,9 @@ MOM_PREDEFINED_NAMED(kind,_06yp8ueq6yf_5ts408yww29)
 
 ////!gives the expansion of a routine
 MOM_PREDEFINED_NAMED(locals,_3eu0rdq4upj_dp5ptr6hj04)
+
+////!for JSONRPC and elsewhere
+MOM_PREDEFINED_NAMED(method,_3hv5ymapjed_y8q6hsvhw8u)
 
 ////!module to be compiled...
 MOM_PREDEFINED_NAMED(module,_7sqk8vh89xr_6tj8dq7vqju)
@@ -152,6 +161,9 @@ MOM_PREDEFINED_NAMED(numbers,_3fw5acswe59_9016fqe4d41)
 
 ////!to be used inside display items to give the origin
 MOM_PREDEFINED_NAMED(origin,_5sw59dauckp_8eustjwf58u)
+
+////!for JSONRPC and elsewhere
+MOM_PREDEFINED_NAMED(params,_4215uc2u6qk_52kqyra86y5)
 
 ////!attribute giving parent of a display, or of some graph, etc...
 MOM_PREDEFINED_NAMED(parent,_36tp2s8s5s2_jzjm0cxdpjz)

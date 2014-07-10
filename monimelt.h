@@ -727,7 +727,7 @@ mom_is_jsonable (momval_t val)
 }
 
 ///// JSON parsing:
-struct jsonparser_st
+struct mom_jsonparser_st
 {
   uint32_t jsonp_magic;		/* always MOMJSONP_MAGIC */
   int jsonp_c;			/* read ahead character */
@@ -739,16 +739,16 @@ struct jsonparser_st
 };
 
 // initialize a JSON parser
-void mom_initialize_json_parser (struct jsonparser_st *jp, FILE * file,
+void mom_initialize_json_parser (struct mom_jsonparser_st *jp, FILE * file,
 				 void *data);
 // get its data
-void *mom_json_parser_data (const struct jsonparser_st *jp);
+void *mom_json_parser_data (const struct mom_jsonparser_st *jp);
 // end the parsing without closing the file
-void mom_end_json_parser (struct jsonparser_st *jp);
+void mom_end_json_parser (struct mom_jsonparser_st *jp);
 // end the parsing and close the file
-void mom_close_json_parser (struct jsonparser_st *jp);
+void mom_close_json_parser (struct mom_jsonparser_st *jp);
 // parse a JSON value, or else set the error message to *perrmsg
-momval_t mom_parse_json (struct jsonparser_st *jp, char **perrmsg);
+momval_t mom_parse_json (struct mom_jsonparser_st *jp, char **perrmsg);
 
 // compare values for JSON
 int mom_json_cmp (momval_t l, momval_t r);
@@ -764,6 +764,16 @@ mom_jsonob_get (const momval_t jsobv, const momval_t namev)
 {
   return mom_jsonob_get_def (jsobv, namev, MOM_NULLV);
 }
+
+static inline bool
+mom_is_json_object (momval_t jsobv)
+{
+  if (!jsobv.ptr || *jsobv.ptype != momty_jsonobject)
+    return false;
+  return true;
+}
+
+#define mom_is_jsonob(Jo) mom_is_json_object(Jo)
 
 static inline unsigned
 mom_jsonob_size (momval_t jsobv)
@@ -805,6 +815,14 @@ const momjsonarray_t *mom_make_json_array_count (unsigned count,
 						 const momval_t *arr);
 const momjsonarray_t *mom_make_json_array_til_nil (momval_t, ...)
   __attribute__ ((sentinel));
+
+static inline bool
+mom_is_json_array (momval_t val)
+{
+  if (!val.ptr || *val.ptype != momty_jsonarray)
+    return false;
+  return true;
+}
 
 static inline unsigned
 mom_json_array_size (momval_t val)

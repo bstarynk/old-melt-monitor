@@ -23,11 +23,12 @@
 #define MOMJSONP_MAGIC 0x48b97a1d	/*jsonp magic 1220114973 */
 
 void
-mom_initialize_json_parser (struct jsonparser_st *jp, FILE * file, void *data)
+mom_initialize_json_parser (struct mom_jsonparser_st *jp, FILE * file,
+			    void *data)
 {
   if (!file || !jp)
     return;
-  memset (jp, 0, sizeof (struct jsonparser_st));
+  memset (jp, 0, sizeof (struct mom_jsonparser_st));
   pthread_mutex_init (&jp->jsonp_mtx, NULL);
   jp->jsonp_c = EOF;
   jp->jsonp_file = file;
@@ -37,7 +38,7 @@ mom_initialize_json_parser (struct jsonparser_st *jp, FILE * file, void *data)
 }
 
 void *
-mom_json_parser_data (const struct jsonparser_st *jp)
+mom_json_parser_data (const struct mom_jsonparser_st *jp)
 {
   if (!jp)
     return NULL;
@@ -48,7 +49,7 @@ mom_json_parser_data (const struct jsonparser_st *jp)
 }
 
 void
-mom_end_json_parser (struct jsonparser_st *jp)
+mom_end_json_parser (struct mom_jsonparser_st *jp)
 {
   if (!jp)
     return;
@@ -56,11 +57,11 @@ mom_end_json_parser (struct jsonparser_st *jp)
     MOM_FATAPRINTF ("invalid json parser (magic %x, expecting %x)",
 		    jp->jsonp_magic, MOMJSONP_MAGIC);
   pthread_mutex_destroy (&jp->jsonp_mtx);
-  memset (jp, 0, sizeof (struct jsonparser_st));
+  memset (jp, 0, sizeof (struct mom_jsonparser_st));
 }
 
 void
-mom_close_json_parser (struct jsonparser_st *jp)
+mom_close_json_parser (struct mom_jsonparser_st *jp)
 {
   if (!jp)
     return;
@@ -69,10 +70,10 @@ mom_close_json_parser (struct jsonparser_st *jp)
 		    jp->jsonp_magic, MOMJSONP_MAGIC);
   pthread_mutex_destroy (&jp->jsonp_mtx);
   fclose (jp->jsonp_file);
-  memset (jp, 0, sizeof (struct jsonparser_st));
+  memset (jp, 0, sizeof (struct mom_jsonparser_st));
 }
 
-static momval_t parse_json_internal_mom (struct jsonparser_st *jp);
+static momval_t parse_json_internal_mom (struct mom_jsonparser_st *jp);
 
 #define JSONPARSE_ERROR_AT(Fil,Lin,Jp,Fmt,...) do {	\
     static char buf##Lin[128];			\
@@ -91,7 +92,7 @@ static momval_t parse_json_internal_mom (struct jsonparser_st *jp);
 static void compute_json_array_hash (momjsonarray_t *jarr);
 
 momval_t
-mom_parse_json (struct jsonparser_st *jp, char **perrmsg)
+mom_parse_json (struct mom_jsonparser_st *jp, char **perrmsg)
 {
   momval_t res = MOM_NULLV;
   if (perrmsg)
@@ -142,7 +143,7 @@ json_item_or_string_mom (const char *buf)
 // may return MOM_EMPTY if found a terminator like comma,
 // right-brace, right-bracket, colon
 static momval_t
-parse_json_internal_mom (struct jsonparser_st *jp)
+parse_json_internal_mom (struct mom_jsonparser_st *jp)
 {
 again:
   if (jp->jsonp_c < 0)
