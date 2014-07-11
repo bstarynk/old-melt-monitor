@@ -1200,6 +1200,7 @@ enum mom_kindpayload_en
   mompayk_assoc,
   mompayk_process,
   mompayk_webexchange,
+  mompayk_jsonrpcexchange,
 
   mompayk__last = 32
 };
@@ -1666,6 +1667,28 @@ momval_t mom_webx_method (momitem_t *webitm);
 
 // called from main
 void mom_start_web (const char *webhost);
+
+/**************** jsonrpcexchange items ***********/
+#define MOM_JSONRPCX_MAGIC 0x148092dd	/* jsonrpcx magic 343970525 */
+enum mom_jsonrpcversion_en
+{
+  momjsonrpc__none,
+  momjsonrpc_v1,		// JSONRPC v1
+  momjsonrpc_v2z,		// JSONRPC v2.0
+  momjsonrpc__last
+};
+
+struct mom_jsonrpcexchange_data_st	/// only created by jsonrpc incoming requests
+{
+  unsigned jrpx_magic;		/* always MOM_JSONRPCX_MAGIC */
+  unsigned jrpx_rank;		/* unique number rank for the connection */
+  enum mom_jsonrpcversion_en jrpx_version;
+  momval_t jrpx_jsmethod;
+  momval_t jrpx_jsparams;
+  momval_t jrpx_jsid;
+};
+
+void mom_payljsonrpc_finalize (momitem_t *jritm, void *jrdata);	// in run.c
 
 /**************** vector items ****************/
 

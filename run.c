@@ -900,6 +900,13 @@ request_jsonrpc_mom (momval_t jreq, struct jsonrpc_conn_mom_st *jp)
 #warning request_jsonrpc_mom unimplemented
 }
 
+
+void
+mom_payljsonrpc_finalize (momitem_t *jritm, void *jrdata)
+{
+#warning mom_payljsonrpc_finalize unimplemented
+}
+
 static void *
 jsonrpc_processor_mom (void *p)
 {
