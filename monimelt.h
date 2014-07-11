@@ -1686,6 +1686,7 @@ struct mom_jsonrpcexchange_data_st	/// only created by jsonrpc incoming requests
   momval_t jrpx_jsmethod;
   momval_t jrpx_jsparams;
   momval_t jrpx_jsid;
+  const struct jsonrpc_conn_mom_st *jrpx_conn;
 };
 
 void mom_payljsonrpc_finalize (momitem_t *jritm, void *jrdata);	// in run.c

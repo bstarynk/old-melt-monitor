@@ -64,6 +64,9 @@ MOM_PREDEFINED_NAMED(closure,_97zkxf62r11_6eedwwv3eu8)
 ////!JSON for closure routine name
 MOM_PREDEFINED_NAMED(closure_routine,_28941cvehx8_9rf4udyeq8v)
 
+////!notably for error code in JSONRPC
+MOM_PREDEFINED_NAMED(code,_0yyp8vmw4si_wf49m4d4zwq)
+
 ////!gives a human-readable comment
 MOM_PREDEFINED_NAMED(comment,_41u1utcxyek_22cftxt3xxm)
 
@@ -84,6 +87,9 @@ MOM_PREDEFINED_NAMED(editor,_38s7ihasu0m_xzipyerxm3j)
 
 ////!to be used inside display items for null
 MOM_PREDEFINED_NAMED(empty,_8s4wcve2u49_252vwyzyrxd)
+
+////!error case, on for JSONRPC
+MOM_PREDEFINED_NAMED(error,_4qcw2mwjswm_j9q0k9d04hm)
 
 ////!for exited processes
 MOM_PREDEFINED_NAMED(exited,_3v4d7uzex6f_euek4pztiuh)
@@ -122,9 +128,6 @@ MOM_PREDEFINED_NAMED(json_array,_35vp60aw7em_d436vfie4ud)
 ////+We cannot use false because it is a #define-ed macro.
 MOM_PREDEFINED_NAMED(json_false,_4mha85xcfwi_9zqcvkiy3dk)
 
-////!handler for JSON requests
-MOM_PREDEFINED_NAMED(jsonrpc_handler,_0hpzi8m7wym_1y4ypmm9y47)
-
 ////!in JSON dump, jtype of JSON object values
 MOM_PREDEFINED_NAMED(json_object,_3xpyd539p4m_23h7wi59xi9)
 
@@ -135,6 +138,9 @@ MOM_PREDEFINED_NAMED(json_true,_2vmrrvq5kdk_9um63pstcu9)
 ////!for JSONRPC
 MOM_PREDEFINED_NAMED(jsonrpc,_0h331ch957p_j6a8i7v4e6y)
 
+////!handler for JSONRPC requests
+MOM_PREDEFINED_NAMED(jsonrpc_handler,_0hpzi8m7wym_1y4ypmm9y47)
+
 ////!in JSON dumps, give the type of a value
 MOM_PREDEFINED_NAMED(jtype,_7urjeiw3evy_m7k72uv6790)
 
@@ -143,6 +149,9 @@ MOM_PREDEFINED_NAMED(kind,_06yp8ueq6yf_5ts408yww29)
 
 ////!gives the expansion of a routine
 MOM_PREDEFINED_NAMED(locals,_3eu0rdq4upj_dp5ptr6hj04)
+
+////!notably for error message in JSONRPC
+MOM_PREDEFINED_NAMED(message,_4jp2meuzru2_a58afyxwxa2)
 
 ////!for JSONRPC and elsewhere
 MOM_PREDEFINED_NAMED(method,_3hv5ymapjed_y8q6hsvhw8u)
@@ -188,6 +197,9 @@ MOM_PREDEFINED_NAMED(res2,_8u5ar84utwm_99k5mq2d589)
 
 ////!third result in tasklet
 MOM_PREDEFINED_NAMED(res3,_60ist2ad22c_cfpjp5ay6uj)
+
+////!notably for error message in JSONRPC
+MOM_PREDEFINED_NAMED(result,_6djzuwz5pav_cri386ywjhj)
 
 ////!gives the body in a routine, or the routine elsewhere
 MOM_PREDEFINED_NAMED(routine,_0acmecj244a_6krws4rx7v1)

@@ -963,6 +963,8 @@ request_jsonrpc_mom (momval_t jreq, struct jsonrpc_conn_mom_st *jp,
 void
 mom_payljsonrpc_finalize (momitem_t *jritm, void *jrdata)
 {
+  struct mom_jsonrpcexchange_data_st *jx = jrdata;
+  assert (jx && jx->jrpx_magic == MOM_JSONRPCX_MAGIC);
 #warning mom_payljsonrpc_finalize unimplemented
 }
 
@@ -1034,14 +1036,82 @@ jsonrpc_processor_mom (void *p)
 		     MOMOUT_LITERALV ((const char *) (errmsg ? errmsg :
 						      "??")), NULL);
 	  if (!mom_is_item (jxch))
-	    again = false;
+	    {
+	      again = false;
+	      if (!errcode)
+		errcode = jrpcerr_internal_error;
+	      if (!errmsg)
+		errmsg = "Internal error, no exchange";
+	    }
+	  if (errcode && errmsg)
+	    {
+	      momval_t jid = mom_jsonob_get (jreq, (momval_t) mom_named__id);
+	      momval_t jrpcv =
+		mom_jsonob_get (jreq, (momval_t) mom_named__jsonrpc);
+	      MOM_WARNING (MOMOUT_LITERAL
+			   ("jsonrpc processor error. socket#"),
+			   MOMOUT_DEC_INT ((int) jp->jrpc_socket),
+			   MOMOUT_LITERAL (", peer "),
+			   MOMOUT_LITERALV ((const char
+					     *) (jp->jrpc_peername)),
+			   MOMOUT_LITERAL (", id="),
+			   MOMOUT_JSON_VALUE ((const momval_t) jid),
+			   MOMOUT_LITERAL (", count="),
+			   MOMOUT_DEC_INT ((int) count),
+			   MOMOUT_LITERAL (", errcode="),
+			   MOMOUT_DEC_INT ((int) errcode),
+			   MOMOUT_LITERAL (", errmsg="),
+			   MOMOUT_LITERALV ((const char *) errmsg), NULL);
+	      momval_t jerrans = MOM_NULLV;
+	      if (mom_string_same (jrpcv, "2.0") && jid.ptr != NULL)
+		{
+		  momval_t jerrobj = (momval_t) mom_make_json_object
+		    (MOMJSOB_ENTRY
+		     ((momval_t) mom_named__code, mom_make_integer (errcode)),
+		     MOMJSOB_ENTRY ((momval_t) mom_named__message,
+				    (momval_t) mom_make_string (errmsg)),
+		     MOMJSON_END);
+		  jerrans = (momval_t) mom_make_json_object
+		    (MOMJSOB_ENTRY ((momval_t) mom_named__jsonrpc, jrpcv),
+		     MOMJSOB_ENTRY ((momval_t) mom_named__id, jid),
+		     MOMJSOB_ENTRY ((momval_t) mom_named__error, jerrobj),
+		     MOMJSON_END);
+		}
+	      else if (jid.ptr != NULL)
+		{
+		  // JSONRPC v1 error
+		  jerrans = (momval_t) mom_make_json_object
+		    (MOMJSOB_ENTRY
+		     ((momval_t) mom_named__result, (momval_t) MOM_NULLV),
+		     MOMJSOB_ENTRY ((momval_t) mom_named__id, (momval_t) jid),
+		     MOMJSOB_ENTRY ((momval_t) mom_named__error,
+				    (momval_t) mom_make_string (errmsg)),
+		     NULL);
+
+		};
+	      if (jerrans.ptr && mom_is_jsonable (jerrans))
+		{
+		  MOM_OUT (&jp->jrpc_out, MOMOUT_JSON_VALUE (jerrans),
+			   MOMOUT_NEWLINE (), MOMOUT_FLUSH (), NULL);
+		}
+	    }
 	}
       else
 	{
 	  errcode = jrpcerr_parse_error;
 	  again = false;
-	  fflush (jp->jrpc_parser.jsonp_file);
+	  MOM_OUT (&jp->jrpc_out,
+		   MOMOUT_LITERAL
+		   ("{\"jsonrpc\":\"2.0\",\"error\":{\"code\":"),
+		   MOMOUT_DEC_INT ((int) jrpcerr_parse_error),
+		   MOMOUT_LITERAL (",\"message\":\"Parse error\","),
+		   MOMOUT_LITERAL (",\"data\":\""),
+		   MOMOUT_JS_STRING ((const char *) errmsg),
+		   MOMOUT_LITERAL ("\"},\"id\":null}"), MOMOUT_NEWLINE (),
+		   MOMOUT_FLUSH ());
+	  break;
 	}
+      fflush (jp->jrpc_parser.jsonp_file);
     }
   while (again);
   pthread_mutex_lock (&jrpcmtx_mom);
@@ -1050,7 +1120,7 @@ jsonrpc_processor_mom (void *p)
   memset (jp, 0, sizeof (struct jsonrpc_conn_mom_st));
   pthread_mutex_unlock (&jrpcmtx_mom);
   return NULL;
-}
+}				// end of jsonrpc_processor_mom
 
 static void
 jsonrpc_accept_handler_mom (int fd, short revent, void *data)
