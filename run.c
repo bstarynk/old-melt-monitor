@@ -57,6 +57,16 @@ static struct jsonrpc_conn_mom_st
 } jrpc_mom[JSONRPC_CONN_MAX_MOM];
 static pthread_mutex_t jrpcmtx_mom = PTHREAD_MUTEX_INITIALIZER;
 
+enum jsonrpc_error_mom_en
+{				/// see http://www.jsonrpc.org/specification
+  jrpcerr_none,
+  jrpcerr_parse_error = -32700,
+  jrpcerr_invalid_request = -32600,
+  jrpcerr_method_not_found = -32601,
+  jrpcerr_invalid_params = -32602,
+  jrpcerr_internal_error = -32603,
+  jrpcerr_server_error_0 = -32000,
+};
 
 static bool stop_working_mom;
 static bool continue_working_mom;
@@ -911,15 +921,41 @@ find_closure_jsonrpc_mom (momval_t jreq)
   return clores;
 }
 
-static bool
-batch_jsonrpc_mom (momval_t jreq, struct jsonrpc_conn_mom_st *jp)
+static momval_t
+batch_jsonrpc_mom (momval_t jreq, struct jsonrpc_conn_mom_st *jp,
+		   unsigned count, int *perrcode, char **perrmsg)
 {
+  // Nota Bene: batch is only a jsonrpc v2 thing
+  unsigned nbreq = mom_json_array_size (jreq);
+  if (perrcode)
+    *perrcode = 0;
+  if (perrmsg)
+    *perrmsg = NULL;
+  assert (jp && jp->jrpc_magic == JSONRPC_CONN_MAGIC_MOM
+	  && jp->jrpc_socket > 0);
+  MOM_DEBUG (run, MOMOUT_LITERAL ("batch_jsonrpc jreq="), MOMOUT_VALUE (jreq),
+	     MOMOUT_SPACE (48), MOMOUT_LITERAL ("socket#"),
+	     MOMOUT_DEC_INT (jp->jrpc_socket), MOMOUT_LITERAL (" count="),
+	     MOMOUT_DEC_INT ((int) count), NULL);
 #warning batch_jsonrpc_mom unimplemented
 }
 
-static bool
-request_jsonrpc_mom (momval_t jreq, struct jsonrpc_conn_mom_st *jp)
+static momval_t
+request_jsonrpc_mom (momval_t jreq, struct jsonrpc_conn_mom_st *jp,
+		     unsigned count, int *perrcode, char **perrmsg)
 {
+  if (perrcode)
+    *perrcode = 0;
+  if (perrmsg)
+    *perrmsg = NULL;
+  assert (jp && jp->jrpc_magic == JSONRPC_CONN_MAGIC_MOM
+	  && jp->jrpc_socket > 0);
+  // Nota Bene: requests can be jsonrpc v1 or jsonrpc v2
+  MOM_DEBUG (run, MOMOUT_LITERAL ("request_jsonrpc jreq="),
+	     MOMOUT_VALUE (jreq), MOMOUT_SPACE (48),
+	     MOMOUT_LITERAL ("socket#"), MOMOUT_DEC_INT (jp->jrpc_socket),
+	     MOMOUT_LITERAL (" count="), MOMOUT_DEC_INT ((int) count), NULL);
+  momval_t idv = mom_jsonob_get (jreq, (momval_t) mom_named__id);
 #warning request_jsonrpc_mom unimplemented
 }
 
@@ -949,7 +985,9 @@ jsonrpc_processor_mom (void *p)
       again = true;
       FILE *fil = NULL;
       char *errmsg = NULL;
+      int errcode = 0;
       momval_t jreq = MOM_NULLV;
+      momval_t jxch = MOM_NULLV;
       pthread_mutex_lock (&jrpcmtx_mom);
       assert (jp && jp->jrpc_magic == JSONRPC_CONN_MAGIC_MOM);
       fil = jp->jrpc_parser.jsonp_file;
@@ -959,6 +997,7 @@ jsonrpc_processor_mom (void *p)
 	  again = false;
 	  break;
 	};
+      errmsg = NULL;
       jreq = mom_parse_json (&jp->jrpc_parser, &errmsg);
       count++;
       MOM_DEBUG (run, MOMOUT_LITERAL ("jsonrpc_processor count="),
@@ -969,12 +1008,40 @@ jsonrpc_processor_mom (void *p)
 		 MOMOUT_LITERALV ((const char *) (errmsg ? "error:" : "ok.")),
 		 MOMOUT_LITERALV ((const char *) errmsg), NULL);
       if (mom_is_json_array (jreq))
-	again = batch_jsonrpc_mom (jreq, jp);
+	{
+	  jxch = batch_jsonrpc_mom (jreq, jp, count, &errcode, &errmsg);
+	  MOM_DEBUG (run,
+		     MOMOUT_LITERAL ("jsonrpc_processor after batch count="),
+		     MOMOUT_FMT_LONG ((const char *) "%ld", (long) count),
+		     MOMOUT_LITERAL (" jxch="), MOMOUT_VALUE (jxch),
+		     MOMOUT_SPACE (40), MOMOUT_LITERAL (" errcode="),
+		     MOMOUT_DEC_INT (errcode), MOMOUT_LITERAL (" errmsg="),
+		     MOMOUT_LITERALV ((const char *) (errmsg ? errmsg :
+						      "??")), NULL);
+	  if (!mom_is_tuple (jxch))
+	    again = false;
+	}
       else if (mom_is_json_object (jreq))
-	again = request_jsonrpc_mom (jreq, jp);
+	{
+	  jxch = request_jsonrpc_mom (jreq, jp, count, &errcode, &errmsg);
+	  MOM_DEBUG (run,
+		     MOMOUT_LITERAL
+		     ("jsonrpc_processor after request count="),
+		     MOMOUT_FMT_LONG ((const char *) "%ld", count),
+		     MOMOUT_LITERAL (" jxch="), MOMOUT_VALUE (jxch),
+		     MOMOUT_SPACE (40), MOMOUT_LITERAL (" errcode="),
+		     MOMOUT_DEC_INT (errcode), MOMOUT_LITERAL (" errmsg="),
+		     MOMOUT_LITERALV ((const char *) (errmsg ? errmsg :
+						      "??")), NULL);
+	  if (!mom_is_item (jxch))
+	    again = false;
+	}
       else
-	again = false;
-      fflush (jp->jrpc_parser.jsonp_file);
+	{
+	  errcode = jrpcerr_parse_error;
+	  again = false;
+	  fflush (jp->jrpc_parser.jsonp_file);
+	}
     }
   while (again);
   pthread_mutex_lock (&jrpcmtx_mom);
