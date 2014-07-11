@@ -926,8 +926,7 @@ find_closure_jsonrpc_mom (momval_t jreq)
 static momitem_t *
 make_jsonrpc_exchange_item_mom (enum mom_jsonrpcversion_en jsonrpcvers,
 				long rank,
-				momval_t jid,
-				const struct jsonrpc_conn_mom_st *jp)
+				momval_t jid, struct jsonrpc_conn_mom_st *jp)
 {
   momitem_t *itm = mom_make_item ();
   assert (rank > 0);
@@ -982,9 +981,10 @@ mom_jsonrpc_reply (momitem_t *jritm, momval_t jresult)
   struct jsonrpc_conn_mom_st *jp = jr->jrpx_conn;
   assert (jp && jp->jrpc_magic == JSONRPC_CONN_MAGIC_MOM
 	  && jp->jrpc_socket > 0);
-  if (jr->jrpx_result.ptr || jr->jrpx_error)	/* already replied */
+  if (jr->jrpx_replied)		/* already replied */
     goto end;
   jr->jrpx_result = jresult;
+  jr->jrpx_replied = true;
   pthread_cond_broadcast (&jp->jrpc_cond);
 end:
   mom_unlock_item (jritm);
@@ -1011,10 +1011,11 @@ mom_jsonrpc_error (momitem_t *jritm, int errcode, const char *errmsg)
   struct jsonrpc_conn_mom_st *jp = jr->jrpx_conn;
   assert (jp && jp->jrpc_magic == JSONRPC_CONN_MAGIC_MOM
 	  && jp->jrpc_socket > 0);
-  if (jr->jrpx_result.ptr || jr->jrpx_error)	/* already replied */
+  if (jr->jrpx_replied)		/* already replied */
     goto end;
   jr->jrpx_error = errcode;
   jr->jrpx_errmsg = errmsg;
+  jr->jrpx_replied = true;
   pthread_cond_broadcast (&jp->jrpc_cond);
 end:
   mom_unlock_item (jritm);
@@ -1053,22 +1054,22 @@ request_jsonrpc_mom (momval_t jreq, struct jsonrpc_conn_mom_st *jp,
 	     MOMOUT_LITERAL (" count="), MOMOUT_DEC_INT ((int) count), NULL);
   if (mom_is_item (clov))
     {
-      momval_t jxitmv = MOM_NULLV;
+      momitem_t *jxitm = NULL;
+      enum mom_jsonrpcversion_en vers =
+	mom_string_same (versionv, "2.0") ? momjsonrpc_v2z : momjsonrpc_v1;
       if (!isnotif)
 	{
-	  jxitmv = (momval_t)
-	    make_jsonrpc_exchange_item_mom
-	    (mom_string_same (versionv, "2.0") ? momjsonrpc_v2z :
-	     momjsonrpc_v1, count, idv, jp);
+	  jxitm = make_jsonrpc_exchange_item_mom (vers, count, idv, jp);
 	  MOM_DEBUG (run, MOMOUT_LITERAL ("request_jsonrpc jxitmv="),
-		     MOMOUT_VALUE (jxitmv), MOMOUT_LITERAL (" count="),
-		     MOMOUT_DEC_INT ((int) count), NULL);
+		     MOMOUT_VALUE ((momval_t) jxitm),
+		     MOMOUT_LITERAL (" count="), MOMOUT_DEC_INT ((int) count),
+		     NULL);
 	};
       momitem_t *tkitm = mom_make_item ();
       mom_item_start_tasklet (tkitm);
       mom_item_tasklet_push_frame	/////
 	(tkitm, (momval_t) clov,
-	 MOMPFR_THREE_VALUES (paramv, jxitmv,
+	 MOMPFR_THREE_VALUES ((momval_t) paramv, (momval_t) jxitm,
 			      (momval_t) (jp->jrpc_peernamstr)),
 	 MOMPFR_INT ((intptr_t) count), MOMPFR_END ());
       MOM_DEBUG (run, MOMOUT_LITERAL ("request_jsonrpc tkitm="),
@@ -1077,10 +1078,69 @@ request_jsonrpc_mom (momval_t jreq, struct jsonrpc_conn_mom_st *jp,
       sched_yield ();
       if (!isnotif)
 	{			// wait for the reply
+	  double delay = 0.05;
+	  double nowtim = 0.0, nextim = 0.0;
+	  bool replied = false;
+	  int errcode = 0;
+	  const char *errmsg = NULL;
+	  while (!replied
+		 && (nextim =
+		     ((nowtim =
+		       mom_clock_time (CLOCK_REALTIME)) + delay)) < endtim)
+	    {
+	      assert (jp && jp->jrpc_magic == JSONRPC_CONN_MAGIC_MOM
+		      && jp->jrpc_socket > 0);
+	      pthread_mutex_lock (&jp->jrpc_mtx);
+	      struct timespec ts = mom_timespec (nextim);
+	      pthread_cond_timedwait (&jp->jrpc_cond, &jp->jrpc_mtx, &ts);
+	      {
+		momval_t jresult = MOM_NULLV;
+		mom_should_lock_item (jxitm);
+		if (jxitm->i_paylkind == mompayk_jsonrpcexchange)
+		  {
+		    struct mom_jsonrpcexchange_data_st *jx = jxitm->i_payload;
+		    assert (jx && jx->jrpx_magic == MOM_JSONRPCX_MAGIC);
+		    assert (jx->jrpx_conn == jp);
+		    if (jx->jrpx_replied)
+		      {
+			replied = true;
+			jresult = jx->jrpx_result;
+			if (!jresult.ptr)
+			  {
+			    errcode = jx->jrpx_error;
+			    errmsg = jx->jrpx_errmsg;
+			  }
+		      }
+		  }
+		mom_unlock_item (jxitm);
+	      }
+	      if (delay < 1.5)
+		delay = 1.5 * delay + 0.001;
+	      pthread_mutex_unlock (&jp->jrpc_mtx);
+	    };			/// end waiting loop
+	  if (!replied)
+	    {
+	      errcode = jrpcerr_server_error_timeout;
+	      errmsg = "Monimelt time-out";
+	    }
+	  {
+	    pthread_mutex_lock (&jp->jrpc_mtx);
+#warning request_jsonrpc_mom should send the reply
+	    if (errcode && errmsg)
+	      {
+		// send an error reply
+	      }
+	    else
+	      {
+		// send a result reply
+	      }
+	    pthread_mutex_unlock (&jp->jrpc_mtx);
+	  }
+
 	}
     }
-#warning request_jsonrpc_mom unimplemented
 }
+
 
 
 void

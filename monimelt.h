@@ -1686,6 +1686,7 @@ struct mom_jsonrpcexchange_data_st	/// only created by jsonrpc incoming requests
   momval_t jrpx_jsid;		/* the "id" for JSONRPC */
   momval_t jrpx_result;		/* the result to transmit */
   int jrpx_error;		/* the error code */
+  bool jrpx_replied;
   const char *jrpx_errmsg;	/* the error message */
   struct jsonrpc_conn_mom_st *jrpx_conn;
 };
