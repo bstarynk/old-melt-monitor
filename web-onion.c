@@ -219,7 +219,7 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 	mom_lock_item (namiditm);
 	wclosv = mom_item_get_attribute (namiditm, mom_named__web_handler);
 	jsonclosv =
-	  mom_item_get_attribute (namiditm, mom_named__json_handler);
+	  mom_item_get_attribute (namiditm, mom_named__jsonrpc_handler);
 	mom_unlock_item (namiditm);
       }
       MOM_DEBUG (web, "request #", MOMOUT_DEC_INT (webnum),

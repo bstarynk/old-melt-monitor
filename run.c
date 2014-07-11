@@ -888,6 +888,29 @@ start_jsonrpc_mom (void)
 }
 
 
+static momval_t
+find_closure_jsonrpc_mom (momval_t jreq)
+{
+  momval_t clores = MOM_NULLV;
+  momval_t jmeth = mom_jsonob_get (jreq, (momval_t) mom_named__method);
+  if (mom_is_string (jmeth))
+    {
+      jmeth = (momval_t) mom_get_item_of_name_string (jmeth);
+      if (!mom_is_item (jmeth)
+	  && mom_looks_like_random_id_cstr (mom_string_cstr (jmeth), NULL))
+	jmeth = (momval_t) mom_get_item_of_ident (jmeth.pstring);
+    };
+  if (mom_lock_item (jmeth.pitem))
+    {
+      clores =
+	mom_item_get_attribute (jmeth.pitem, mom_named__jsonrpc_handler);
+      if (!mom_is_item (clores))
+	clores = MOM_NULLV;
+      mom_unlock_item (jmeth.pitem);
+    }
+  return clores;
+}
+
 static bool
 batch_jsonrpc_mom (momval_t jreq, struct jsonrpc_conn_mom_st *jp)
 {
