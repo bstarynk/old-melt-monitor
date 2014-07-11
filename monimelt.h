@@ -1681,15 +1681,20 @@ enum mom_jsonrpcversion_en
 struct mom_jsonrpcexchange_data_st	/// only created by jsonrpc incoming requests
 {
   unsigned jrpx_magic;		/* always MOM_JSONRPCX_MAGIC */
-  unsigned jrpx_rank;		/* unique number rank for the connection */
   enum mom_jsonrpcversion_en jrpx_version;
-  momval_t jrpx_jsmethod;
-  momval_t jrpx_jsparams;
-  momval_t jrpx_jsid;
-  const struct jsonrpc_conn_mom_st *jrpx_conn;
+  long jrpx_rank;		/* unique number rank for the connection */
+  momval_t jrpx_jsid;		/* the "id" for JSONRPC */
+  momval_t jrpx_result;		/* the result to transmit */
+  int jrpx_error;		/* the error code */
+  const char *jrpx_errmsg;	/* the error message */
+  struct jsonrpc_conn_mom_st *jrpx_conn;
 };
 
 void mom_payljsonrpc_finalize (momitem_t *jritm, void *jrdata);	// in run.c
+
+void mom_jsonrpc_reply (momitem_t *jritm, momval_t jresult);
+
+void mom_jsonrpc_error (momitem_t *jritm, int errcode, const char *errmsg);
 
 /**************** vector items ****************/
 

@@ -53,7 +53,9 @@ static struct jsonrpc_conn_mom_st
   struct sockaddr jrpc_addr;	/* the socket peer address */
   socklen_t jrpc_alen;		/* its length */
   pthread_t jrpc_thread;	/* the thread parsing that connection */
-  const char *jrpc_peername;	/* peer hostname, GC_STRDUP-ed */
+  pthread_mutex_t jrpc_mtx;	/* the mutex for that connection */
+  pthread_cond_t jrpc_cond;	/* the condition variable for that connection */
+  const momstring_t *jrpc_peernamstr;	/* peer hostname string */
 } jrpc_mom[JSONRPC_CONN_MAX_MOM];
 static pthread_mutex_t jrpcmtx_mom = PTHREAD_MUTEX_INITIALIZER;
 
@@ -65,7 +67,7 @@ enum jsonrpc_error_mom_en
   jrpcerr_method_not_found = -32601,
   jrpcerr_invalid_params = -32602,
   jrpcerr_internal_error = -32603,
-  jrpcerr_server_error_0 = -32000,
+  jrpcerr_server_error_timeout = -32000,
 };
 
 static bool stop_working_mom;
@@ -921,9 +923,32 @@ find_closure_jsonrpc_mom (momval_t jreq)
   return clores;
 }
 
+static momitem_t *
+make_jsonrpc_exchange_item_mom (enum mom_jsonrpcversion_en jsonrpcvers,
+				long rank,
+				momval_t jid,
+				const struct jsonrpc_conn_mom_st *jp)
+{
+  momitem_t *itm = mom_make_item ();
+  assert (rank > 0);
+  assert (jp && jp->jrpc_magic == JSONRPC_CONN_MAGIC_MOM
+	  && jp->jrpc_socket > 0);
+  struct mom_jsonrpcexchange_data_st *jx = MOM_GC_ALLOC ("jsonrpcexchange",
+							 sizeof (struct
+								 mom_jsonrpcexchange_data_st));
+  jx->jrpx_magic = MOM_JSONRPCX_MAGIC;
+  jx->jrpx_version = jsonrpcvers;
+  jx->jrpx_rank = rank;
+  jx->jrpx_jsid = jid;
+  jx->jrpx_conn = jp;
+  itm->i_payload = jx;
+  itm->i_paylkind = mompayk_jsonrpcexchange;
+  return itm;
+}
+
 static momval_t
 batch_jsonrpc_mom (momval_t jreq, struct jsonrpc_conn_mom_st *jp,
-		   unsigned count, int *perrcode, char **perrmsg)
+		   unsigned long count, int *perrcode, char **perrmsg)
 {
   // Nota Bene: batch is only a jsonrpc v2 thing
   unsigned nbreq = mom_json_array_size (jreq);
@@ -940,22 +965,120 @@ batch_jsonrpc_mom (momval_t jreq, struct jsonrpc_conn_mom_st *jp,
 #warning batch_jsonrpc_mom unimplemented
 }
 
+void
+mom_jsonrpc_reply (momitem_t *jritm, momval_t jresult)
+{
+  if (!mom_lock_item (jritm))
+    return;
+  MOM_DEBUG (run, MOMOUT_LITERAL ("jsonrpc_reply jritm="),
+	     MOMOUT_ITEM ((const momitem_t *) jritm),
+	     MOMOUT_LITERAL (" jresult="),
+	     MOMOUT_VALUE ((const momval_t) jresult), NULL);
+  if (jritm->i_paylkind != mompayk_jsonrpcexchange)
+    goto end;
+  struct mom_jsonrpcexchange_data_st *jr =
+    (struct mom_jsonrpcexchange_data_st *) jritm->i_payload;
+  assert (jr && jr->jrpx_magic == MOM_JSONRPCX_MAGIC);
+  struct jsonrpc_conn_mom_st *jp = jr->jrpx_conn;
+  assert (jp && jp->jrpc_magic == JSONRPC_CONN_MAGIC_MOM
+	  && jp->jrpc_socket > 0);
+  if (jr->jrpx_result.ptr || jr->jrpx_error)	/* already replied */
+    goto end;
+  jr->jrpx_result = jresult;
+  pthread_cond_broadcast (&jp->jrpc_cond);
+end:
+  mom_unlock_item (jritm);
+}
+
+
+
+void
+mom_jsonrpc_error (momitem_t *jritm, int errcode, const char *errmsg)
+{
+  if (!errcode || !errmsg)
+    return;
+  if (!mom_lock_item (jritm))
+    return;
+  MOM_DEBUG (run, MOMOUT_LITERAL ("jsonrpc_error jritm="),
+	     MOMOUT_ITEM ((const momitem_t *) jritm),
+	     MOMOUT_LITERAL (" errcode="), MOMOUT_DEC_INT (errcode),
+	     MOMOUT_LITERAL (" errmsg="), MOMOUT_LITERALV (errmsg), NULL);
+  if (jritm->i_paylkind != mompayk_jsonrpcexchange)
+    goto end;
+  struct mom_jsonrpcexchange_data_st *jr =
+    (struct mom_jsonrpcexchange_data_st *) jritm->i_payload;
+  assert (jr && jr->jrpx_magic == MOM_JSONRPCX_MAGIC);
+  struct jsonrpc_conn_mom_st *jp = jr->jrpx_conn;
+  assert (jp && jp->jrpc_magic == JSONRPC_CONN_MAGIC_MOM
+	  && jp->jrpc_socket > 0);
+  if (jr->jrpx_result.ptr || jr->jrpx_error)	/* already replied */
+    goto end;
+  jr->jrpx_error = errcode;
+  jr->jrpx_errmsg = errmsg;
+  pthread_cond_broadcast (&jp->jrpc_cond);
+end:
+  mom_unlock_item (jritm);
+}
+
+
+
+#define JSONRPC_ANSWER_DELAY_MOM ((MOM_IS_DEBUGGING(run))?60.0:20.0)
 static momval_t
 request_jsonrpc_mom (momval_t jreq, struct jsonrpc_conn_mom_st *jp,
-		     unsigned count, int *perrcode, char **perrmsg)
+		     unsigned long count, int *perrcode, char **perrmsg)
 {
   if (perrcode)
     *perrcode = 0;
   if (perrmsg)
     *perrmsg = NULL;
+  double reqtim = mom_clock_time (CLOCK_REALTIME);
+  double endtim = reqtim + JSONRPC_ANSWER_DELAY_MOM;
   assert (jp && jp->jrpc_magic == JSONRPC_CONN_MAGIC_MOM
 	  && jp->jrpc_socket > 0);
   // Nota Bene: requests can be jsonrpc v1 or jsonrpc v2
   MOM_DEBUG (run, MOMOUT_LITERAL ("request_jsonrpc jreq="),
 	     MOMOUT_VALUE (jreq), MOMOUT_SPACE (48),
 	     MOMOUT_LITERAL ("socket#"), MOMOUT_DEC_INT (jp->jrpc_socket),
-	     MOMOUT_LITERAL (" count="), MOMOUT_DEC_INT ((int) count), NULL);
+	     MOMOUT_LITERAL (" count="), MOMOUT_DEC_INT ((int) count),
+	     MOMOUT_LITERAL (" reqtim="),
+	     MOMOUT_FMT_DOUBLE ((const char *) "%.3f", reqtim), NULL);
   momval_t idv = mom_jsonob_get (jreq, (momval_t) mom_named__id);
+  bool isnotif = (idv.ptr == NULL);
+  momval_t paramv = mom_jsonob_get (jreq, (momval_t) mom_named__params);
+  momval_t versionv = mom_jsonob_get (jreq, (momval_t) mom_named__jsonrpc);
+  momval_t clov = find_closure_jsonrpc_mom (jreq);
+  MOM_DEBUG (run, MOMOUT_LITERAL ("request_jsonrpc got clov="),
+	     MOMOUT_VALUE (clov), MOMOUT_SPACE (48),
+	     MOMOUT_LITERAL ("socket#"), MOMOUT_DEC_INT (jp->jrpc_socket),
+	     MOMOUT_LITERAL (" count="), MOMOUT_DEC_INT ((int) count), NULL);
+  if (mom_is_item (clov))
+    {
+      momval_t jxitmv = MOM_NULLV;
+      if (!isnotif)
+	{
+	  jxitmv = (momval_t)
+	    make_jsonrpc_exchange_item_mom
+	    (mom_string_same (versionv, "2.0") ? momjsonrpc_v2z :
+	     momjsonrpc_v1, count, idv, jp);
+	  MOM_DEBUG (run, MOMOUT_LITERAL ("request_jsonrpc jxitmv="),
+		     MOMOUT_VALUE (jxitmv), MOMOUT_LITERAL (" count="),
+		     MOMOUT_DEC_INT ((int) count), NULL);
+	};
+      momitem_t *tkitm = mom_make_item ();
+      mom_item_start_tasklet (tkitm);
+      mom_item_tasklet_push_frame	/////
+	(tkitm, (momval_t) clov,
+	 MOMPFR_THREE_VALUES (paramv, jxitmv,
+			      (momval_t) (jp->jrpc_peernamstr)),
+	 MOMPFR_INT ((intptr_t) count), MOMPFR_END ());
+      MOM_DEBUG (run, MOMOUT_LITERAL ("request_jsonrpc tkitm="),
+		 MOMOUT_ITEM ((const momitem_t *) tkitm), NULL);
+      mom_add_tasklet_to_agenda_front (tkitm);
+      sched_yield ();
+      if (!isnotif)
+	{			// wait for the reply
+	}
+    }
 #warning request_jsonrpc_mom unimplemented
 }
 
@@ -980,8 +1103,11 @@ jsonrpc_processor_mom (void *p)
   snprintf (thname, sizeof (thname), "jsonrpc%03d", jp->jrpc_socket);
   pthread_setname_np (pthread_self (), thname);
   usleep (1000);
+  pthread_mutex_init (&jp->jrpc_mtx, NULL);
+  pthread_cond_init (&jp->jrpc_cond, NULL);
   MOM_DEBUGPRINTF (run, "jsonrpc_processor start socket#%d peer %s",
-		   jp->jrpc_socket, jp->jrpc_peername);
+		   jp->jrpc_socket,
+		   mom_string_cstr ((momval_t) jp->jrpc_peernamstr));
   do
     {
       again = true;
@@ -1052,8 +1178,7 @@ jsonrpc_processor_mom (void *p)
 			   ("jsonrpc processor error. socket#"),
 			   MOMOUT_DEC_INT ((int) jp->jrpc_socket),
 			   MOMOUT_LITERAL (", peer "),
-			   MOMOUT_LITERALV ((const char
-					     *) (jp->jrpc_peername)),
+			   MOMOUT_VALUE ((momval_t) (jp->jrpc_peernamstr)),
 			   MOMOUT_LITERAL (", id="),
 			   MOMOUT_JSON_VALUE ((const momval_t) jid),
 			   MOMOUT_LITERAL (", count="),
@@ -1114,11 +1239,15 @@ jsonrpc_processor_mom (void *p)
       fflush (jp->jrpc_parser.jsonp_file);
     }
   while (again);
-  pthread_mutex_lock (&jrpcmtx_mom);
-  shutdown (jp->jrpc_socket, SHUT_RDWR);
-  mom_close_json_parser (&jp->jrpc_parser);
-  memset (jp, 0, sizeof (struct jsonrpc_conn_mom_st));
-  pthread_mutex_unlock (&jrpcmtx_mom);
+  pthread_mutex_destroy (&jp->jrpc_mtx);
+  pthread_cond_destroy (&jp->jrpc_cond);
+  {
+    pthread_mutex_lock (&jrpcmtx_mom);
+    shutdown (jp->jrpc_socket, SHUT_RDWR);
+    mom_close_json_parser (&jp->jrpc_parser);
+    memset (jp, 0, sizeof (struct jsonrpc_conn_mom_st));
+    pthread_mutex_unlock (&jrpcmtx_mom);
+  }
   return NULL;
 }				// end of jsonrpc_processor_mom
 
@@ -1188,7 +1317,7 @@ jsonrpc_accept_handler_mom (int fd, short revent, void *data)
 	    mom_initialize_output (&jp->jrpc_out, fil, 0);
 	    jp->jrpc_addr = sad;
 	    jp->jrpc_alen = sln;
-	    jp->jrpc_peername = MOM_GC_STRDUP ("jsonrpc peer host", hn);
+	    jp->jrpc_peernamstr = mom_make_string (hn);
 	    if (GC_pthread_create
 		(&jp->jrpc_thread, &evthattr, jsonrpc_processor_mom, jp))
 	      MOM_FATAPRINTF
