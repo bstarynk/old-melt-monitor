@@ -4523,7 +4523,10 @@ const struct momroutinedescr_st momrout_translate_module = {
 ///// json_rpc_status
 enum json_rpc_status_valindex_en
 {
-  json_rpc_status_v_arg0res,
+  json_rpc_status_v_jparams,
+  json_rpc_status_v_jxitm,
+  json_rpc_status_v_peername,
+  json_rpc_status_v_jresult,
   json_rpc_status_v__lastval
 };
 
@@ -4534,6 +4537,7 @@ enum json_rpc_status_closure_en
 
 enum json_rpc_status_numbers_en
 {
+  json_rpc_status_n_count,
   json_rpc_status_n__lastnum
 };
 
@@ -4571,10 +4575,32 @@ json_rpc_status_codmom (int momstate_, momitem_t *momtasklet_,
       }
   MOM_FATAPRINTF ("json_rpc_status invalid state #%d", momstate_);
 json_rpc_status_lab_start:
-  MOM_DEBUG (run, MOMOUT_LITERAL ("json_rpc_status start arg0res="),
-	     MOMOUT_VALUE ((const momval_t) _L (arg0res)));
-  if (_L (arg0res).ptr == MOM_EMPTY)
+  MOM_DEBUG (run, MOMOUT_LITERAL ("json_rpc_status start jparams="),
+	     MOMOUT_VALUE ((const momval_t) _L (jparams)),
+	     MOMOUT_LITERAL (" jxitm="),
+	     MOMOUT_VALUE ((const momval_t) _L (jxitm)),
+	     MOMOUT_LITERAL (" peername="),
+	     MOMOUT_VALUE ((const momval_t) _L (peername)),
+	     MOMOUT_LITERAL (" count="), MOMOUT_DEC_INT ((int) _N (count)),
+	     NULL);
+  if (_L (jparams).ptr == MOM_EMPTY)
     _SET_STATE (impossible);
+  _L (jresult) = (momval_t) mom_make_json_object
+    (MOMJSOB_STRING
+     (((const char *) "timestamp"),
+      (momval_t) mom_make_string (monimelt_timestamp)),
+     MOMJSOB_STRING (((const char *) "lastgitcommit"),
+		     (momval_t) mom_make_string (monimelt_lastgitcommit)),
+     MOMJSOB_STRING (((const char *) "elapsedtime"),
+		     (momval_t) mom_make_double (mom_elapsed_real_time ())),
+     MOMJSOB_STRING (((const char *) "cputime"),
+		     (momval_t)
+		     mom_make_double (mom_clock_time
+				      (CLOCK_PROCESS_CPUTIME_ID))),
+     MOMJSON_END);
+  MOM_DEBUG (run, MOMOUT_LITERAL ("json_rpc_status jresult="),
+	     MOMOUT_VALUE (_L (jresult)), NULL);
+  mom_jsonrpc_reply (_L (jxitm).pitem, _L (jresult));
   return momroutres_pop;
 json_rpc_status_lab_impossible:
   MOM_FATAPRINTF ("json_rpc_status impossible state reached!");

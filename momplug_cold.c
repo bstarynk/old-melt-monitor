@@ -127,7 +127,7 @@ make_closure_json_rpc_status_mom (void)
   assert (json_rpc_status_item != NULL);
   momitem_t *state_item = mom_get_item_of_name ("state");
   assert (state_item != NULL);
-  
+
   mom_item_start_closure_named (json_rpc_status_item, "json_rpc_status", 2);
   mom_item_closure_set_nth (json_rpc_status_item, 0,
 			    (momval_t)
