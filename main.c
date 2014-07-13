@@ -741,7 +741,7 @@ parse_program_arguments_and_load_modules_mom (int *pargc, char **argv)
 {
   int argc = *pargc;
   int opt = -1;
-  while ((opt = getopt_long (argc, argv, "lhVdn:P:W:J:D:",
+  while ((opt = getopt_long (argc, argv, "lhVdn:P:W:J:D:R:",
 			     mom_long_options, NULL)) >= 0)
     {
       switch (opt)

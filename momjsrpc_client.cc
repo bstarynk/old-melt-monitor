@@ -48,7 +48,7 @@ int main (int argc, char**argv)
     try
         {
             cxxtools::Arg<std::string> ip(argc, argv, 'i', "localhost");
-            cxxtools::Arg<unsigned short> port(argc, argv, 'p', 8086);
+            cxxtools::Arg<unsigned short> port(argc, argv, 'p', 8087);
             cxxtools::json::RpcClient client(ip, port);
             cxxtools::RemoteProcedure<momcli_status_st> rpc_status(client, "state");
             momcli_status_st status = rpc_status();

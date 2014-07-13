@@ -1207,6 +1207,12 @@ jsonrpc_processor_mom (void *p)
 	  break;
 	};
       errmsg = NULL;
+      MOM_DEBUG (run,
+		 MOMOUT_LITERAL
+		 ("jsonrpc_processor before parsing feof(fil)="),
+		 MOMOUT_DEC_INT ((int) feof (fil)),
+		 MOMOUT_LITERAL (" fileno(fil)="),
+		 MOMOUT_DEC_INT ((int) fileno (fil)), NULL);
       jreq = mom_parse_json (&jp->jrpc_parser, (char **) &errmsg);
       count++;
       if (!jreq.ptr && errmsg)
