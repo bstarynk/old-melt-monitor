@@ -923,6 +923,10 @@ find_closure_jsonrpc_mom (momval_t jreq)
 	clores = MOM_NULLV;
       mom_unlock_item (jmeth.pitem);
     }
+  MOM_DEBUG (run, MOMOUT_LITERAL ("find_closure_jsonrpc jreq="),
+	     MOMOUT_JSON_VALUE (jreq), MOMOUT_LITERAL (" jmeth="),
+	     MOMOUT_VALUE (jmeth), MOMOUT_LITERAL (" clores="),
+	     MOMOUT_VALUE (clores), NULL);
   return clores;
 }
 
