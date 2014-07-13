@@ -30,6 +30,7 @@ CFLAGS= $(CCFLAGS) $(PREPROFLAGS) $(OPTIMFLAGS)
 CXX=g++
 CXXFLAGS= -std=c++11 -Wall -pthread  $(PREPROFLAGS) $(OPTIMFLAGS)
 INDENT= indent -gnu
+ASTYLE= astyle --style=gnu  
 PREPROFLAGS= -I/usr/local/include $(shell $(PKGCONFIG) --cflags $(PACKAGES))
 OPTIMFLAGS= -Og -g3
 LIBES= -L/usr/local/lib -lunistring -lgc  $(shell $(PKGCONFIG) --libs $(PACKAGES)) -lonion_handlers -lonion -lpthread -lm -ldl
@@ -49,7 +50,7 @@ RM= rm -fv
 .PHONY: all modules plugins clean tests indent restore-state dump-state
 .SUFFIXES: .so .i
 # to make with tsan: make OPTIMFLAGS='-g3 -fsanitize=thread -fPIE' LINKFLAGS=-pie
-all: monimelt modules plugins
+all: monimelt modules plugins momjsrpc_client
 clean:
 	$(RM) *~ *.o *.so *.i *.orig _tmp_* monimelt core* webdir/*~ *.tmp  _timestamp.* *dbsqlite*-journal *%
 	$(RM) modules/*.so modules/*~
@@ -70,6 +71,8 @@ _timestamp.c:
 indent: .indent.pro # don't indent predef-monimelt.h
 	@for f in *.c $(filter-out predef-monimelt.h, $(wildcard *.h)) $(MODULE_SOURCES); do \
 	  echo indenting $$f; $(INDENT) $$f ;$(INDENT) $$f; done
+	@for f in *.cc ; do \
+          echo formatting $$f; $(ASTYLE) $$f; done
 
 $(OBJECTS): monimelt.h predef-monimelt.h
 
@@ -102,3 +105,7 @@ restore-state:
 
 dump-state:
 	./monimelt-dump-state.sh
+
+###
+momjsrpc_client: momjsrpc_client.cc
+	$(CXX) $(CXXFLAGS) $(CXXTOOLS_CXXFLAGS) $< -o $@ -lcxxtools-json $(CXXTOOLS_LIBS)

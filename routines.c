@@ -4586,9 +4586,8 @@ json_rpc_status_lab_start:
   if (_L (jparams).ptr == MOM_EMPTY)
     _SET_STATE (impossible);
   _L (jresult) = (momval_t) mom_make_json_object
-    (MOMJSOB_STRING
-     (((const char *) "timestamp"),
-      (momval_t) mom_make_string (monimelt_timestamp)),
+    (MOMJSOB_STRING (((const char *) "timestamp"),
+		     (momval_t) mom_make_string (monimelt_timestamp)),
      MOMJSOB_STRING (((const char *) "lastgitcommit"),
 		     (momval_t) mom_make_string (monimelt_lastgitcommit)),
      MOMJSOB_STRING (((const char *) "elapsedtime"),
