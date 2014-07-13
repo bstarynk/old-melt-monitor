@@ -327,8 +327,9 @@ INSERT INTO t_items VALUES('_6djzuwz5pav_cri386ywjhj','{"attr": [{"attr": "_41u1
 ');
 INSERT INTO t_items VALUES('_6f9870y6v8t_kp8fcmq2ezv','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "Gives the state of Json for frames of tasklets."},
   {"attr": "_0h331ch957p_j6a8i7v4e6y", "val": {"item_ref": "_6p6v25323aq_97d9ude6j12",
-    "jtype": "item_ref", "space": ".root"}}], "content": null, "kind": null,
- "payload": null}
+    "jtype": "item_ref", "space": ".root"}}, {"attr": "_0hpzi8m7wym_1y4ypmm9y47",
+   "val": {"item_ref": "_6p6v25323aq_97d9ude6j12", "jtype": "item_ref", "space": ".root"}}],
+ "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_6hf2vzmrsee_t35suhjvtj4','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "gives the item reference, at least in dumped JSON..."}],
  "content": null, "kind": null, "payload": null}

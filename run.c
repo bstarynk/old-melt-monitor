@@ -921,12 +921,13 @@ find_closure_jsonrpc_mom (momval_t jreq)
 	mom_item_get_attribute (jmeth.pitem, mom_named__jsonrpc_handler);
       if (!mom_is_item (clores))
 	clores = MOM_NULLV;
+      MOM_DEBUG (run, MOMOUT_LITERAL ("find_closure_jsonrpc jreq="), MOMOUT_JSON_VALUE (jreq),	//
+		 MOMOUT_LITERAL (" jmeth="), MOMOUT_VALUE (jmeth),	//
+		 MOMOUT_LITERAL (" == "), MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) jmeth.pitem),	//
+		 MOMOUT_SPACE (48), MOMOUT_LITERAL (" clores="), MOMOUT_VALUE (clores),	//
+		 NULL);
       mom_unlock_item (jmeth.pitem);
     }
-  MOM_DEBUG (run, MOMOUT_LITERAL ("find_closure_jsonrpc jreq="),
-	     MOMOUT_JSON_VALUE (jreq), MOMOUT_LITERAL (" jmeth="),
-	     MOMOUT_VALUE (jmeth), MOMOUT_LITERAL (" clores="),
-	     MOMOUT_VALUE (clores), NULL);
   return clores;
 }
 
