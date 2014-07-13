@@ -4518,6 +4518,85 @@ const struct momroutinedescr_st momrout_translate_module = {
   .rout_timestamp = __DATE__ "@" __TIME__
 };
 
+
+////////////////////////////////////////////////////////////////
+///// json_rpc_status
+enum json_rpc_status_valindex_en
+{
+  json_rpc_status_v_arg0res,
+  json_rpc_status_v__lastval
+};
+
+enum json_rpc_status_closure_en
+{
+  json_rpc_status_c__lastclosure
+};
+
+enum json_rpc_status_numbers_en
+{
+  json_rpc_status_n__lastnum
+};
+
+
+static int
+json_rpc_status_codmom (int momstate_, momitem_t *momtasklet_,
+			const momval_t momclosurv_,
+			momval_t *momlocvals_, intptr_t * momlocnums_,
+			double *momlocdbls_)
+{
+  const momval_t *momclovals __attribute__ ((unused)) =
+    mom_closed_values (momclosurv_);
+#define _L(Nam) (momlocvals_[json_rpc_status_v_##Nam])
+#define _C(Nam) (momclovals[json_rpc_status_c_##Nam])
+#define _N(Nam) (momlocnums_[json_rpc_status_n_##Nam])
+  enum json_rpc_status_state_en
+  {
+    json_rpc_status_s_start,
+    json_rpc_status_s_impossible,
+    json_rpc_status_s__laststate
+  };
+#define _SET_STATE(St) do {						\
+    MOM_DEBUGPRINTF (run,						\
+		     "json_rpc_status_codmom setstate " #St " = %d",	\
+		     (int)json_rpc_status_s_##St);			\
+    return json_rpc_status_s_##St; } while(0)
+  if (momstate_ >= 0 && momstate_ < json_rpc_status_s__laststate)
+    switch ((enum json_rpc_status_state_en) momstate_)
+      {
+      case json_rpc_status_s_start:
+	goto json_rpc_status_lab_start;
+      case json_rpc_status_s_impossible:
+	goto json_rpc_status_lab_impossible;
+      case json_rpc_status_s__laststate:;
+      }
+  MOM_FATAPRINTF ("json_rpc_status invalid state #%d", momstate_);
+json_rpc_status_lab_start:
+  MOM_DEBUG (run, MOMOUT_LITERAL ("json_rpc_status start arg0res="),
+	     MOMOUT_VALUE ((const momval_t) _L (arg0res)));
+  if (_L (arg0res).ptr == MOM_EMPTY)
+    _SET_STATE (impossible);
+  return momroutres_pop;
+json_rpc_status_lab_impossible:
+  MOM_FATAPRINTF ("json_rpc_status impossible state reached!");
+#undef _L
+#undef _C
+#undef _N
+#undef _SET_STATE
+  return momroutres_pop;
+}
+
+const struct momroutinedescr_st momrout_json_rpc_status = {
+  .rout_magic = MOM_ROUTINE_MAGIC,	//
+  .rout_minclosize = json_rpc_status_c__lastclosure,	//
+  .rout_frame_nbval = json_rpc_status_v__lastval,	//
+  .rout_frame_nbnum = json_rpc_status_n__lastnum,	//
+  .rout_frame_nbdbl = 0,	//
+  .rout_name = "json_rpc_status",	//
+  .rout_module = MONIMELT_CURRENT_MODULE,	//
+  .rout_codefun = json_rpc_status_codmom,	//
+  .rout_timestamp = __DATE__ "@" __TIME__
+};
+
 ////////////////////////////////////////////////////////////////
 ///// noop
 enum noop_valindex_en
