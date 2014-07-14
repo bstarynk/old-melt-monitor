@@ -30,7 +30,8 @@ mom_initialize_json_parser (struct mom_jsonparser_st *jp, FILE * file,
     return;
   memset (jp, 0, sizeof (struct mom_jsonparser_st));
   pthread_mutex_init (&jp->jsonp_mtx, NULL);
-  jp->jsonp_c = EOF;
+  jp->jsonp_cc = EOF;
+  jp->jsonp_valid = false;
   jp->jsonp_file = file;
   jp->jsonp_data = data;
   jp->jsonp_magic = MOMJSONP_MAGIC;
@@ -73,15 +74,35 @@ mom_close_json_parser (struct mom_jsonparser_st *jp)
   memset (jp, 0, sizeof (struct mom_jsonparser_st));
 }
 
+
+static inline int
+jsonparser_curchar_mom (struct mom_jsonparser_st *jp)
+{
+  assert (jp && jp->jsonp_magic == MOMJSONP_MAGIC);
+  if (!jp->jsonp_valid && !feof (jp->jsonp_file))
+    {
+      jp->jsonp_cc = fgetc (jp->jsonp_file);
+      jp->jsonp_valid = true;
+    }
+  return jp->jsonp_cc;
+}
+
+static inline void
+jsonparser_eatchar_mom (struct mom_jsonparser_st *jp)
+{
+  assert (jp && jp->jsonp_magic == MOMJSONP_MAGIC);
+  jp->jsonp_valid = false;
+}
+
 static momval_t parse_json_internal_mom (struct mom_jsonparser_st *jp);
 
 #define JSONPARSE_ERROR_AT(Fil,Lin,Jp,Fmt,...) do {	\
-    static char buf##Lin[128];			\
-    snprintf (buf##Lin, sizeof(buf##Lin),	\
-	      "%s:%d: " Fmt,			\
-	      Fil, Lin, ##__VA_ARGS__);		\
-    jp->jsonp_error = GC_STRDUP(buf##Lin);	\
-    longjmp (jp->jsonp_jmpbuf,Lin);		\
+    static char buf##Lin[128];				\
+    snprintf (buf##Lin, sizeof(buf##Lin),		\
+	      "%s:%d: " Fmt,				\
+	      Fil, Lin, ##__VA_ARGS__);			\
+    jp->jsonp_error = GC_STRDUP(buf##Lin);		\
+    longjmp (jp->jsonp_jmpbuf,Lin);			\
   } while(0)
 
 #define JSONPARSE_ERROR_REALLY_AT(Fil,Lin,Jp,Fmt,...) \
@@ -120,7 +141,7 @@ mom_parse_json (struct mom_jsonparser_st *jp, char **perrmsg)
     }
   res = parse_json_internal_mom (jp);
   if (res.ptr == MOM_EMPTY)
-    JSONPARSE_ERROR (jp, "unexpected terminator %c", jp->jsonp_c);
+    JSONPARSE_ERROR (jp, "unexpected terminator %c", jp->jsonp_cc);
   pthread_mutex_unlock (&jp->jsonp_mtx);
   return res;
 }
@@ -145,63 +166,66 @@ json_item_or_string_mom (const char *buf)
 static momval_t
 parse_json_internal_mom (struct mom_jsonparser_st *jp)
 {
+  int c = -1;
 again:
-  if (jp->jsonp_c < 0)
-    jp->jsonp_c = getc (jp->jsonp_file);
-  if (jp->jsonp_c < 0)
+  if (jsonparser_curchar_mom (jp) < 0)
     JSONPARSE_ERROR (jp, "end of file at offset %ld", ftell (jp->jsonp_file));
-  if (isspace (jp->jsonp_c))
+  if ((c = jsonparser_curchar_mom (jp)) > 0 && isspace (c))
     {
-      jp->jsonp_c = getc (jp->jsonp_file);
+      jsonparser_eatchar_mom (jp);
       goto again;
     }
   // terminating character, to be consumed by caller
-  else if (jp->jsonp_c == ',' || jp->jsonp_c == ':' || jp->jsonp_c == '}'
-	   || jp->jsonp_c == ']')
+  else if (c == ',' || c == ':' || c == '}' || c == ']')
     // don't consume the terminator! Leave it available to the caller.
     return (momval_t) MOM_EMPTY;
   // extension, admit comments à la C++ slash slash, or à la C slash star
-  else if (jp->jsonp_c == '/')
+  else if (c == '/')
     {
       long off = ftell (jp->jsonp_file);
-      jp->jsonp_c = getc (jp->jsonp_file);
-      if (jp->jsonp_c == '/')
+      jsonparser_eatchar_mom (jp);
+      c = jsonparser_curchar_mom (jp);
+      if (c == '/')
 	{
 	  do
 	    {
-	      jp->jsonp_c = getc (jp->jsonp_file);
+	      jsonparser_eatchar_mom (jp);
 	    }
-	  while (jp->jsonp_c >= 0 && jp->jsonp_c != '\n'
-		 && jp->jsonp_c != '\r');
+	  while ((c = jsonparser_curchar_mom (jp)) >= 0 && c != '\n'
+		 && c != '\r');
 	  goto again;
 	}
-      else if (jp->jsonp_c == '*')
+      else if (c == '*')
 	{
-	  jp->jsonp_c = EOF;
-	  int pc = EOF;
+	  int pc = -1;
 	  do
 	    {
-	      pc = jp->jsonp_c;
-	      jp->jsonp_c = getc (jp->jsonp_file);
+	      pc = c;
+	      jsonparser_eatchar_mom (jp);
+	      c = jsonparser_curchar_mom (jp);
 	    }
-	  while (jp->jsonp_c >= 0 && jp->jsonp_c != '/' && pc != '*');
+	  while (c >= 0 && c != '/' && pc != '*');
 	  goto again;
 	}
       else
 	JSONPARSE_ERROR (jp, "bad slash at offset %ld", off);
     }
   // strings
-  else if (jp->jsonp_c == '"')
+  else if (c == '"')
     {
-      jp->jsonp_c = getc (jp->jsonp_file);
+      jsonparser_eatchar_mom (jp);
       char tinyarr[2 * MOM_TINY_MAX];
       unsigned siz = 2 * MOM_TINY_MAX, cnt = 0;
       char *str = tinyarr;
       memset (str, 0, siz);
       do
 	{
-	  if (jp->jsonp_c == '"')
-	    break;
+	  c = jsonparser_curchar_mom (jp);
+	  if (c == '"')
+	    {
+	      jsonparser_eatchar_mom (jp);
+	      break;
+	    }
 	  // we need extraspace for \u-encoded unicode characters
 	  if (MOM_UNLIKELY (cnt + 8 >= siz))
 	    {
@@ -214,15 +238,18 @@ again:
 	      str = newstr;
 	      siz = newsiz;
 	    }
-	  if (MOM_UNLIKELY (jp->jsonp_c < 0))
+	  if (MOM_UNLIKELY (c < 0))
 	    JSONPARSE_ERROR (jp, "unterminated string at offset %ld",
 			     ftell (jp->jsonp_file));
-	  if (jp->jsonp_c == '\\')
+	  if (c == '\\')
 	    {
-	      jp->jsonp_c = getc (jp->jsonp_file);
+	      jsonparser_eatchar_mom (jp);
+	      c = jsonparser_curchar_mom (jp);
+
 #define ADD1CHAR(Ch) do { str[cnt++] = Ch;			\
-		jp->jsonp_c = getc(jp->jsonp_file); } while(0)
-	      switch (jp->jsonp_c)
+		jsonparser_eatchar_mom (jp);			\
+		c  = jsonparser_curchar_mom(jp); } while(0)
+	      switch (c)
 		{
 		case 'b':
 		  ADD1CHAR ('\b');
@@ -254,27 +281,32 @@ again:
 		    int cc = -2;
 		    char cbuf[8];
 		    memset (cbuf, 0, sizeof (cbuf));
-		    cc = jp->jsonp_c = getc (jp->jsonp_file);
+		    jsonparser_eatchar_mom (jp);
+		    cc = jsonparser_curchar_mom (jp);
 		    if (isxdigit (cc))
 		      cbuf[0] = cc;
 		    else
 		      continue;
-		    cc = jp->jsonp_c = getc (jp->jsonp_file);
+		    jsonparser_eatchar_mom (jp);
+		    cc = jsonparser_curchar_mom (jp);
 		    if (isxdigit (cc))
 		      cbuf[1] = cc;
 		    else
 		      continue;
-		    cc = jp->jsonp_c = getc (jp->jsonp_file);
+		    jsonparser_eatchar_mom (jp);
+		    cc = jsonparser_curchar_mom (jp);
 		    if (isxdigit (cc))
 		      cbuf[2] = cc;
 		    else
 		      continue;
-		    cc = jp->jsonp_c = getc (jp->jsonp_file);
+		    jsonparser_eatchar_mom (jp);
+		    cc = jsonparser_curchar_mom (jp);
 		    if (isxdigit (cc))
 		      cbuf[3] = cc;
 		    else
 		      continue;
-		    jp->jsonp_c = getc (jp->jsonp_file);
+		    jsonparser_eatchar_mom (jp);
+		    cc = jsonparser_curchar_mom (jp);
 		    h = (int) strtol (cbuf, NULL, 16);
 		    char hexd[8];
 		    memset (hexd, 0, sizeof (hexd));
@@ -308,13 +340,13 @@ again:
 		}
 	    }
 	  else
-	    ADD1CHAR (jp->jsonp_c);
+	    ADD1CHAR (c);
 #undef ADD1CHAR
-	  if (jp->jsonp_c < 0)
+	  if (c < 0)
 	    break;
 	}
-      while (jp->jsonp_c != '"');
-      jp->jsonp_c = getc (jp->jsonp_file);
+      while (jsonparser_curchar_mom (jp) != '"');
+      jsonparser_eatchar_mom (jp);
       if ((isalpha (str[0]) || str[0] == '_') && strlen (str) == cnt)
 	{
 	  // for strings which happen to be names or identifiers, if
@@ -334,7 +366,7 @@ again:
       return (momval_t) mom_make_string (str);
     }
 
-  else if (isdigit (jp->jsonp_c) || jp->jsonp_c == '+' || jp->jsonp_c == '-')
+  else if (isdigit (c) || c == '+' || c == '-')
     {
       char numbuf[64];
       long off = ftell (jp->jsonp_file);
@@ -344,37 +376,42 @@ again:
       do
 	{
 	  if (ix < (int) sizeof (numbuf) - 1)
-	    numbuf[ix++] = jp->jsonp_c;
-	  jp->jsonp_c = getc (jp->jsonp_file);
+	    numbuf[ix++] = c;
+	  jsonparser_eatchar_mom (jp);
+	  c = jsonparser_curchar_mom (jp);
 	}
-      while (isdigit (jp->jsonp_c));
-      if (jp->jsonp_c == '.')
+      while (isdigit (c));
+      if (c == '.')
 	{
 	  isfloat = true;
 	  do
 	    {
 	      if (ix < (int) sizeof (numbuf) - 1)
-		numbuf[ix++] = jp->jsonp_c;
-	      jp->jsonp_c = getc (jp->jsonp_file);
+		numbuf[ix++] = c;
+	      jsonparser_eatchar_mom (jp);
+	      c = jsonparser_curchar_mom (jp);
 	    }
-	  while (isdigit (jp->jsonp_c));
-	  if (jp->jsonp_c == 'E' || jp->jsonp_c == 'e')
+	  while (isdigit (c));
+	  if (c == 'E' || c == 'e')
 	    {
 	      if (ix < (int) sizeof (numbuf) - 1)
-		numbuf[ix++] = jp->jsonp_c;
-	      jp->jsonp_c = getc (jp->jsonp_file);
+		numbuf[ix++] = c;
+	      jsonparser_eatchar_mom (jp);
+	      c = jsonparser_curchar_mom (jp);
 	    };
-	  if (jp->jsonp_c == '+' || jp->jsonp_c == '-')
+	  if (c == '+' || c == '-')
 	    {
 	      if (ix < (int) sizeof (numbuf) - 1)
-		numbuf[ix++] = jp->jsonp_c;
-	      jp->jsonp_c = getc (jp->jsonp_file);
+		numbuf[ix++] = c;
+	      jsonparser_eatchar_mom (jp);
+	      c = jsonparser_curchar_mom (jp);
 	    };
-	  while (isdigit (jp->jsonp_c))
+	  while (isdigit (c))
 	    {
 	      if (ix < (int) sizeof (numbuf) - 1)
-		numbuf[ix++] = jp->jsonp_c;
-	      jp->jsonp_c = getc (jp->jsonp_file);
+		numbuf[ix++] = c;
+	      jsonparser_eatchar_mom (jp);
+	      c = jsonparser_curchar_mom (jp);
 	    };
 	}
       numbuf[sizeof (numbuf) - 1] = (char) 0;
@@ -400,7 +437,7 @@ again:
     }
   // as an extension, C-identifier names can be read as strings or
   // JSON names
-  else if (isalpha (jp->jsonp_c) || jp->jsonp_c == '_')
+  else if (isalpha (c) || c == '_')
     {
       char namebuf[64];		// optimize for small stack-allocated names
       memset (namebuf, 0, sizeof (namebuf));
@@ -410,7 +447,7 @@ again:
       do
 	{
 	  if (ix < namesize)
-	    namestr[ix++] = jp->jsonp_c;
+	    namestr[ix++] = c;
 	  else
 	    {
 	      unsigned newsize = ((5 * namesize / 4 + 10) | 0xf) + 1;
@@ -424,9 +461,10 @@ again:
 	      namestr = newname;
 	      namesize = newsize - 1;
 	    }
-	  jp->jsonp_c = getc (jp->jsonp_file);
+	  jsonparser_eatchar_mom (jp);
+	  c = jsonparser_curchar_mom (jp);
 	}
-      while (isalnum (jp->jsonp_c) || jp->jsonp_c == '_');
+      while (isalnum (c) || c == '_');
       if (!strcmp (namestr, "null"))
 	return MOM_NULLV;
       else if (!strcmp (namestr, "true"))
@@ -436,13 +474,14 @@ again:
       else
 	return json_item_or_string_mom (namestr);
     }
-  else if (jp->jsonp_c == '[')
+  else if (c == '[')
     {
       unsigned arrsize = 8;
       unsigned arrlen = 0;
       momval_t *arrptr =
 	MOM_GC_ALLOC ("json array elements", arrsize * sizeof (momval_t));
-      jp->jsonp_c = getc (jp->jsonp_file);
+      jsonparser_eatchar_mom (jp);
+      c = jsonparser_curchar_mom (jp);
       momval_t comp = MOM_NULLV;
       bool gotcomma = false;
       do
@@ -450,14 +489,18 @@ again:
 	  comp = parse_json_internal_mom (jp);
 	  if (comp.ptr == MOM_EMPTY)
 	    {
-	      if (jp->jsonp_c == ']')
+	      c = jsonparser_curchar_mom (jp);
+	      if (c == ']')
 		{
-		  jp->jsonp_c = getc (jp->jsonp_file);
+		  jsonparser_eatchar_mom (jp);
+		  c = jsonparser_curchar_mom (jp);
+
 		  break;
 		}
-	      else if (jp->jsonp_c == ',')
+	      else if (c == ',')
 		{
-		  jp->jsonp_c = getc (jp->jsonp_file);
+		  jsonparser_eatchar_mom (jp);
+		  c = jsonparser_curchar_mom (jp);
 		  if (gotcomma)
 		    JSONPARSE_ERROR (jp,
 				     "consecutive commas in JSON array at offset %ld",
@@ -468,7 +511,7 @@ again:
 	      else
 		JSONPARSE_ERROR (jp,
 				 "invalid char %c in JSON array at offset %ld",
-				 jp->jsonp_c, ftell (jp->jsonp_file));
+				 c, ftell (jp->jsonp_file));
 	    };
 	  gotcomma = false;
 	  if (MOM_UNLIKELY (arrlen + 1 >= arrsize))
@@ -484,8 +527,9 @@ again:
 	    }
 	  arrptr[arrlen++] = comp;
 	  comp = MOM_NULLV;
+	  c = jsonparser_curchar_mom (jp);
 	}
-      while (jp->jsonp_c >= 0);
+      while (c >= 0);
       struct momjsonarray_st *jarr =
 	MOM_GC_ALLOC ("parsed json array", sizeof (struct momjsonarray_st) +
 		      arrlen * sizeof (momval_t));
@@ -499,30 +543,37 @@ again:
       GC_FREE (arrptr);
       return (momval_t) (const struct momjsonarray_st *) jarr;
     }
-  else if (jp->jsonp_c == '{')
+  else if (c == '{')
     {
       unsigned jsize = MOM_TINY_MAX, jcount = 0;
       struct mom_jsonentry_st tinyent[MOM_TINY_MAX] = { };
       long off = ftell (jp->jsonp_file);
-      jp->jsonp_c = getc (jp->jsonp_file);
+      jsonparser_eatchar_mom (jp);
+      c = jsonparser_curchar_mom (jp);
       struct mom_jsonentry_st *jent = tinyent;
       memset (jent, 0, sizeof (struct mom_jsonentry_st) * jsize);
       do
 	{
-	  while (jp->jsonp_c > 0 && isspace (jp->jsonp_c))
-	    jp->jsonp_c = getc (jp->jsonp_file);
-	  if (jp->jsonp_c == '}')
+	  c = jsonparser_curchar_mom (jp);
+	  while (c > 0 && isspace (c))
 	    {
-	      jp->jsonp_c = getc (jp->jsonp_file);
+	      jsonparser_eatchar_mom (jp);
+	      c = jsonparser_curchar_mom (jp);
+	    }
+	  if (c == '}')
+	    {
+	      jsonparser_eatchar_mom (jp);
+	      c = jsonparser_curchar_mom (jp);
 	      break;
 	    }
 	  momval_t namv = parse_json_internal_mom (jp);
 	  if (namv.ptr == MOM_EMPTY)
 	    {
 	      namv = MOM_NULLV;
-	      if (jp->jsonp_c == '}')
+	      if (c == '}')
 		{
-		  jp->jsonp_c = getc (jp->jsonp_file);
+		  jsonparser_eatchar_mom (jp);
+		  c = jsonparser_curchar_mom (jp);
 		  break;
 		}
 	      else
@@ -530,25 +581,37 @@ again:
 				 "failed to parse attribute in JSON object at offset %ld",
 				 off);
 	    };
-	  while (jp->jsonp_c > 0 && isspace (jp->jsonp_c))
-	    jp->jsonp_c = getc (jp->jsonp_file);
-	  if (jp->jsonp_c == ':')
+	  c = jsonparser_curchar_mom (jp);
+	  while (c > 0 && isspace (c))
 	    {
-	      jp->jsonp_c = getc (jp->jsonp_file);
+	      jsonparser_eatchar_mom (jp);
+	      c = jsonparser_curchar_mom (jp);
+	    }
+	  if (c == ':')
+	    {
+	      jsonparser_eatchar_mom (jp);
+	      c = jsonparser_curchar_mom (jp);
 	    }
 	  else
 	    JSONPARSE_ERROR (jp,
 			     "missing colon in JSON object after name at offset %ld",
 			     ftell (jp->jsonp_file));
-	  while (jp->jsonp_c > 0 && isspace (jp->jsonp_c))
-	    jp->jsonp_c = getc (jp->jsonp_file);
+	  while (c > 0 && isspace (c))
+	    {
+	      jsonparser_eatchar_mom (jp);
+	      c = jsonparser_curchar_mom (jp);
+	    }
 	  momval_t valv = parse_json_internal_mom (jp);
 	  if (valv.ptr == MOM_EMPTY)
 	    JSONPARSE_ERROR (jp,
 			     "failed to parse value in JSON object at offset %ld",
 			     ftell (jp->jsonp_file));
-	  while (isspace (jp->jsonp_c))
-	    jp->jsonp_c = getc (jp->jsonp_file);
+	  c = jsonparser_curchar_mom (jp);
+	  while (isspace (c))
+	    {
+	      jsonparser_eatchar_mom (jp);
+	      c = jsonparser_curchar_mom (jp);
+	    }
 	  if (MOM_UNLIKELY (jcount >= jsize))
 	    {
 	      unsigned newjsize = ((5 * jcount / 4 + 5) | 0x7) + 1;
@@ -569,23 +632,32 @@ again:
 	    }
 	  namv = MOM_NULLV;
 	  valv = MOM_NULLV;
-	  while (jp->jsonp_c > 0 && isspace (jp->jsonp_c))
-	    jp->jsonp_c = getc (jp->jsonp_file);
-	  if (jp->jsonp_c == ',')
+	  c = jsonparser_curchar_mom (jp);
+	  while (c > 0 && isspace (c))
 	    {
-	      jp->jsonp_c = getc (jp->jsonp_file);
-	      while (jp->jsonp_c > 0 && isspace (jp->jsonp_c))
-		jp->jsonp_c = getc (jp->jsonp_file);
+	      jsonparser_eatchar_mom (jp);
+	      c = jsonparser_curchar_mom (jp);
+	    }
+	  if (c == ',')
+	    {
+	      jsonparser_eatchar_mom (jp);
+	      c = jsonparser_curchar_mom (jp);
+	      while (c > 0 && isspace (c))
+		{
+		  jsonparser_eatchar_mom (jp);
+		  c = jsonparser_curchar_mom (jp);
+		}
 	      continue;
 	    }
+	  c = jsonparser_curchar_mom (jp);
 	}
-      while (jp->jsonp_c >= 0);
+      while (c >= 0);
       return (momval_t) mom_make_json_object
 	(MOMJSOB_COUNTED_ENTRIES (jcount, jent), NULL);
     }
   else
     JSONPARSE_ERROR (jp, "unexpected char %c at offset %ld",
-		     jp->jsonp_c, ftell (jp->jsonp_file));
+		     c, ftell (jp->jsonp_file));
   return MOM_NULLV;
 }
 

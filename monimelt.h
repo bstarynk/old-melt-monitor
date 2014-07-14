@@ -730,7 +730,8 @@ mom_is_jsonable (momval_t val)
 struct mom_jsonparser_st
 {
   uint32_t jsonp_magic;		/* always MOMJSONP_MAGIC */
-  int jsonp_c;			/* read ahead character */
+  int16_t jsonp_cc;		/* read ahead character */
+  uint16_t jsonp_valid;		/* jsonp_cc is valid */
   pthread_mutex_t jsonp_mtx;
   FILE *jsonp_file;
   void *jsonp_data;
