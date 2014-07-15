@@ -493,8 +493,7 @@ again:
 	      if (c == ']')
 		{
 		  jsonparser_eatchar_mom (jp);
-		  c = jsonparser_curchar_mom (jp);
-
+		  c = EOF;
 		  break;
 		}
 	      else if (c == ',')
@@ -563,7 +562,7 @@ again:
 	  if (c == '}')
 	    {
 	      jsonparser_eatchar_mom (jp);
-	      c = jsonparser_curchar_mom (jp);
+	      c = EOF;
 	      break;
 	    }
 	  momval_t namv = parse_json_internal_mom (jp);
@@ -573,7 +572,7 @@ again:
 	      if (c == '}')
 		{
 		  jsonparser_eatchar_mom (jp);
-		  c = jsonparser_curchar_mom (jp);
+		  c = EOF;
 		  break;
 		}
 	      else
