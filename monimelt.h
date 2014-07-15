@@ -78,6 +78,7 @@
 #include <onion/low.h>
 #include <onion/request.h>
 #include <onion/response.h>
+#include <onion/block.h>
 #include <onion/handler.h>
 #include <onion/dict.h>
 #include <onion/log.h>

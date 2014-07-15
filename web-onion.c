@@ -476,8 +476,11 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 	      return OCS_PROCESSED;
 	    }
 	}			/* end if wclosv is node */
-      /// see http://www.simple-is-better.org/json-rpc/transport_http.html
-      /// and http://www.jsonrpc.org/specification
+      /// see
+      /// http://www.simple-is-better.org/json-rpc/transport_http.html
+      /// and http://www.jsonrpc.org/specification and on onion-dev
+      /// googlegroup of july 11th 2014 the answer
+      /// https://groups.google.com/a/coralbits.com/d/msg/onion-dev/2dlMoDMOjFg/MW4fjT2LZaoJ
       else if (mom_is_item (jsonclosv)
 	       && methoditm == (momitem_t *) mom_named__POST
 	       && (reqcontyp =
@@ -485,13 +488,43 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 	       && !strncasecmp (reqcontyp, "application/json",
 				sizeof ("application/json") - 1))
 	{
+	  const onion_block *onbd = onion_request_get_data (requ);
+	  const char *odata = onbd ? onion_block_data (onbd) : NULL;
+	  if (!odata)
+	    MOM_FATAL (MOMOUT_LITERAL
+		       ("missing data in HTTP JSONRPC Post webreq#"),
+		       MOMOUT_DEC_INT ((int) webnum),
+		       MOMOUT_LITERAL (" fullpath="),
+		       MOMOUT_LITERALV ((const char *) fullpath), NULL);
+	  FILE *dfil = fmemopen ((void*) odata, onion_block_size (onbd), "r");
+	  if (!dfil)
+	    MOM_FATAL (MOMOUT_LITERAL
+		       ("fmemopen failed in HTTP JSONRPC Post webreq#"),
+		       MOMOUT_DEC_INT ((int) webnum),
+		       MOMOUT_LITERAL (" fullpath="),
+		       MOMOUT_LITERALV ((const char *) fullpath), NULL);
+	  struct mom_jsonparser_st jsonpars = { 0 };
+	  memset (&jsonpars, 0, sizeof (jsonpars));
+	  mom_initialize_json_parser (&jsonpars, dfil, NULL);
+	  char *jperrmsg = NULL;
+	  momval_t jreq = mom_parse_json (&jsonpars, &jperrmsg);
+	  if (jperrmsg)
+	    MOM_FATAL (MOMOUT_LITERAL
+		       ("failed to parse HTTP JSONRPC Post webreq#"),
+		       MOMOUT_DEC_INT ((int) webnum),
+		       MOMOUT_LITERAL (" fullpath="),
+		       MOMOUT_LITERALV ((const char *) fullpath),
+		       MOMOUT_SPACE (48),
+		       MOMOUT_LITERALV ((const char *) jperrmsg), NULL);
+	  mom_close_json_parser (&jsonpars), dfil = NULL;
+#warning handle_web_exchange_mom should process JSONRPC request
 	  MOM_FATAL (MOMOUT_LITERAL
-		     ("unimplemented HTTP JSONRPC Post webreq#"),
+		     ("should process HTTP JSONRPC Post webreq#"),
 		     MOMOUT_DEC_INT ((int) webnum),
 		     MOMOUT_LITERAL (" fullpath="),
 		     MOMOUT_LITERALV ((const char *) fullpath),
-		     MOMOUT_LITERAL (" jsonclosv="),
-		     MOMOUT_VALUE ((const momval_t) jsonclosv), NULL);
+		     MOMOUT_SPACE (48),
+		     MOMOUT_LITERAL (" jreq="), MOMOUT_VALUE (jreq), NULL);
 	}
     }
   MOM_DEBUGPRINTF (web, "not processed webreq#%d=%#x fullpath=%s method=%s",
