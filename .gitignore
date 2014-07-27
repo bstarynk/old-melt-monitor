@@ -12,3 +12,6 @@ make-named
 core*
 _monimelt_sigterm*.*
 momjsrpc_client
+meltmom*.cc
+meltmom*.mk
+meltmom*.[ch]

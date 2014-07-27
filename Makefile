@@ -47,14 +47,16 @@ PLUGINS=  $(patsubst %.c,%.so,$(PLUGIN_SOURCES))
 SOURCES= $(sort $(filter-out $(PLUGIN_SOURCES) $(MODULE_SOURCES), $(wildcard [a-z]*.c)))
 OBJECTS= $(patsubst %.c,%.o,$(SOURCES))
 RM= rm -fv
-.PHONY: all modules plugins clean tests indent restore-state dump-state
+MELTGCCFLAGS=  -fplugin=melt -fplugin-arg-melt-workdir=_meltwork 
+.PHONY: all modules plugins clean tests indent restore-state dump-state melt-process-header
 .SUFFIXES: .so .i
 # to make with tsan: make OPTIMFLAGS='-g3 -fsanitize=thread -fPIE' LINKFLAGS=-pie
 all: monimelt modules plugins momjsrpc_client
 clean:
-	$(RM) *~ *.o *.so *.i *.orig _tmp_* monimelt core* webdir/*~ *.tmp  _timestamp.* *dbsqlite*-journal *%
+	$(RM) *~ *.o *.so *.i *.orig melt*.cc meltmom*.[ch] meltmom*.o meltmom*.so meltmom*.mk _tmp_* monimelt core* webdir/*~ *.tmp  _timestamp.* *dbsqlite*-journal *%
 	$(RM) modules/*.so modules/*~
 	$(RM) -r _monimelt_termdump*
+	$(RM) -r _meltwork
 ################
 monimelt: $(OBJECTS) _timestamp.o
 	@if [ -f $@ ]; then echo -n backup old executable: ' ' ; mv -v $@ $@~ ; fi
@@ -109,3 +111,19 @@ dump-state:
 ###
 momjsrpc_client: momjsrpc_client.cc
 	$(CXX) $(CXXFLAGS) $(CXXTOOLS_CXXFLAGS) $< -o $@ -lcxxtools-json $(CXXTOOLS_LIBS)
+
+###
+melt-process-header: monimelt.h meltmom-process.quicklybuilt.so | _meltwork
+	$(COMPILE.c) -x c $(MELTGCCFLAGS) \
+	    -fplugin-arg-melt-mode=process_monimelt_header \
+	    -fplugin-arg-melt-extra=meltmom-process.quicklybuilt \
+	    -c $< -o /dev/null
+
+_meltwork:
+	@ [ -d _meltwork ] || mkdir _meltwork
+
+meltmom-process.quicklybuilt.so: meltmom-process.melt  | _meltwork
+	$(COMPILE.c) -x c $(MELTGCCFLAGS) \
+	    -fplugin-arg-melt-mode=translatequickly \
+	    -fplugin-arg-melt-arg=$< \
+	    -x c -c /dev/null -o /dev/null
