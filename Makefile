@@ -48,7 +48,7 @@ SOURCES= $(sort $(filter-out $(PLUGIN_SOURCES) $(MODULE_SOURCES), $(wildcard [a-
 OBJECTS= $(patsubst %.c,%.o,$(SOURCES))
 RM= rm -fv
 MELTGCCFLAGS=  -fplugin=melt -fplugin-arg-melt-workdir=_meltwork 
-.PHONY: all modules plugins clean tests indent restore-state dump-state melt-process-header
+.PHONY: all modules plugins clean tests indent restore-state dump-state melt-process-header melt-process-debug
 .SUFFIXES: .so .i
 # to make with tsan: make OPTIMFLAGS='-g3 -fsanitize=thread -fPIE' LINKFLAGS=-pie
 all: monimelt modules plugins momjsrpc_client
@@ -114,10 +114,17 @@ momjsrpc_client: momjsrpc_client.cc
 
 ###
 melt-process-header: monimelt.h meltmom-process.quicklybuilt.so | _meltwork
-	$(COMPILE.c) -x c $(MELTGCCFLAGS) \
+	$(COMPILE.c) -x c $(MELTGCCFLAGS) -DMELTMOM \
 	    -fplugin-arg-melt-mode=process_monimelt_header \
 	    -fplugin-arg-melt-extra=meltmom-process.quicklybuilt \
 	    -c $< -o /dev/null
+
+melt-process-debug: monimelt.h meltmom-process.quicklybuilt.so | _meltwork
+	$(COMPILE.c) -x c $(MELTGCCFLAGS) -DMELTMOM  \
+	    -fplugin-arg-melt-mode=process_monimelt_header \
+	    -fplugin-arg-melt-extra=meltmom-process.quicklybuilt \
+	    -fplugin-arg-melt-debugging=all \
+            -c $< -o /dev/null
 
 _meltwork:
 	@ [ -d _meltwork ] || mkdir _meltwork

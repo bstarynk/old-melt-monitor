@@ -24,16 +24,46 @@
 (module_is_gpl_compatible "GPLv3+")
 
 
+(defun monimelt_finish_decl (decl)
+  (let ( (tdecl  (unbox :tree decl))
+	 )
+    (match
+     tdecl
+     (?(tree_function_decl_named
+	?(and ?tfuname ?(cstring_prefixed "mom_"))
+	?tfunres)
+       (let ( (tfuntype (tree_type tdecl))
+	      )
+	 (debug "monimelt_finish_decl found mom_ function " tdecl ";\n.. tfuname=" tfuname
+		"; tfunres=" tfunres "; tfuntype=" tfuntype "\n")
+	 (inform_at decl "good Monimelt function $1" tfuname)
+	 )
+       )
+     (?(tree_type_declaration
+	;; caveat, many types start with mom without underscore
+	?(and ?(tree_identifier ?(cstring_prefixed "mom")) ?tyname))
+       (debug "monimelt_finish_decl typedecl tyname=" tyname ";\n.. tdecl=" tdecl)
+       (inform_at decl "good Monimelt type $1" tyname)
+       )
+     (?_
+      ())
+     )
+    )
+  )
+
 (defun processmonimelt_docmd (cmd moduldata)
-   (inform_at () "done MELT processing of monimelt.h")
-   ;; at last
-   (return :true)
+  (debug "processmonimelt_docmd start " cmd)
+  (register_finish_decl_first  monimelt_finish_decl)
+  (debug "processmonimelt_docmd end " cmd)
+  (inform_at () "done MELT processing of monimelt.h")
+  ;; at last
+  (return :true)
 )
 
 (definstance process_monimelt_header_mode
   class_melt_mode
   :named_name '"process_monimelt_header"
-  :meltmode_help '"process the monimelt.h header file and send some information to monimelt using JSONRPC"
+  :meltmode_help '"process the monimelt.h header file and send some information about it to monimelt using JSONRPC"
   :meltmode_fun processmonimelt_docmd
 )
 (install_melt_mode process_monimelt_header_mode)
