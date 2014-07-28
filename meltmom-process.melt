@@ -42,9 +42,16 @@
      (?(tree_type_declaration
 	;; caveat, many types start with mom without underscore
 	?(and ?(tree_identifier ?(cstring_prefixed "mom")) ?tyname))
-       (debug "monimelt_finish_decl typedecl tyname=" tyname ";\n.. tdecl=" tdecl)
+       (debug "monimelt_finish_decl typedecl tyname=" tyname ";\n.. tdecl=" tdecl "\n")
        (inform_at decl "good Monimelt type $1" tyname)
        )
+     (?(tree_record_type ?(and ?(tree_identifier ?(cstring_prefixed "mom")) ?recname))
+       (debug "monimelt_finish_decl record recname=" recname ";\n.. tdecl=" tdecl "\n")
+       )
+     (?(tree_expr_at_source_location ?(and ?(some_string_value_containing "monimelt") ?filepath)
+				     ?line ?col)
+       (debug "monimelt_finish_decl monimelt tdecl=" tdecl ";\n.. filepath=" filepath "; line=" line "; col=" col)
+       (inform_at decl "strange Monimelt thing $1" decl))
      (?_
       ())
      )
