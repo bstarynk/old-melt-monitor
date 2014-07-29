@@ -27,6 +27,7 @@
 (defun monimelt_finish_decl (decl)
   (let ( (tdecl  (unbox :tree decl))
 	 )
+    (debug "monimelt_finish_decl tdecl=" tdecl "\n")
     (match
      tdecl
      (?(tree_function_decl_named
@@ -51,7 +52,10 @@
      (?(tree_expr_at_source_location ?(and ?(some_string_value_containing "monimelt") ?filepath)
 				     ?line ?col)
        (debug "monimelt_finish_decl monimelt tdecl=" tdecl ";\n.. filepath=" filepath "; line=" line "; col=" col)
-       (inform_at decl "strange Monimelt thing $1" decl))
+       )
+     (?(tree_expr_at_source_location ?filepath ?line ?col)
+       (debug "monimelt_finish_decl other tdecl=" tdecl ";\n.. filepath=" filepath "; line=" line "; col=" col)
+       )
      (?_
       ())
      )
