@@ -23,8 +23,21 @@
 
 (module_is_gpl_compatible "GPLv3+")
 
+(definstance monimelt_pragma_ok class_reference)
+
+(defun monimelt_enable_pragma_handler (ph)
+  (debug "monimelt_enable_pragma_handler ph=" ph)
+  (set_ref monimelt_pragma_ok :true)
+)
+
+(defun monimelt_disable_pragma_handler (ph)
+  (debug "monimelt_disable_pragma_handler ph=" ph)
+  (set_ref monimelt_pragma_ok ())
+)
 
 (defun monimelt_finish_decl (decl)
+  (if (null !monimelt_pragma_ok)
+     (return)) 
   (let ( (tdecl  (unbox :tree decl))
 	 )
     (debug "monimelt_finish_decl tdecl=" tdecl "\n")
@@ -35,7 +48,8 @@
 	?tfunres)
        (let ( (tfuntype (tree_type tdecl))
 	      )
-	 (debug "monimelt_finish_decl found mom_ function " tdecl ";\n.. tfuname=" tfuname
+	 (debug "monimelt_finish_decl found mom_ function " tdecl
+		";\n.. tfuname=" tfuname
 		"; tfunres=" tfunres "; tfuntype=" tfuntype "\n")
 	 (inform_at decl "good Monimelt function $1" tfuname)
 	 )
@@ -43,18 +57,24 @@
      (?(tree_type_declaration
 	;; caveat, many types start with mom without underscore
 	?(and ?(tree_identifier ?(cstring_prefixed "mom")) ?tyname))
-       (debug "monimelt_finish_decl typedecl tyname=" tyname ";\n.. tdecl=" tdecl "\n")
+       (debug "monimelt_finish_decl typedecl tyname=" tyname 
+	      ";\n.. tdecl=" tdecl "\n")
        (inform_at decl "good Monimelt type $1" tyname)
        )
-     (?(tree_record_type ?(and ?(tree_identifier ?(cstring_prefixed "mom")) ?recname))
-       (debug "monimelt_finish_decl record recname=" recname ";\n.. tdecl=" tdecl "\n")
+     (?(tree_record_type ?(and ?(tree_identifier ?(cstring_prefixed "mom"))
+			       ?recname))
+       (debug "monimelt_finish_decl record recname=" recname
+	      ";\n.. tdecl=" tdecl "\n")
        )
-     (?(tree_expr_at_source_location ?(and ?(some_string_value_containing "monimelt") ?filepath)
-				     ?line ?col)
-       (debug "monimelt_finish_decl monimelt tdecl=" tdecl ";\n.. filepath=" filepath "; line=" line "; col=" col)
+     (?(tree_expr_at_source_location
+	?(and ?(some_string_value_containing "monimelt") ?filepath)
+	?line ?col)
+       (debug "monimelt_finish_decl monimelt tdecl=" tdecl
+	      ";\n.. filepath=" filepath "; line=" line "; col=" col)
        )
      (?(tree_expr_at_source_location ?filepath ?line ?col)
-       (debug "monimelt_finish_decl other tdecl=" tdecl ";\n.. filepath=" filepath "; line=" line "; col=" col)
+       (debug "monimelt_finish_decl other tdecl=" tdecl
+	      ";\n.. filepath=" filepath "; line=" line "; col=" col)
        )
      (?_
       ())
@@ -65,6 +85,12 @@
 (defun processmonimelt_docmd (cmd moduldata)
   (debug "processmonimelt_docmd start " cmd)
   (register_finish_decl_first  monimelt_finish_decl)
+  (register_expanded_pragma 'monimelt 'enable
+			    monimelt_enable_pragma_handler 
+			    :true)
+  (register_expanded_pragma 'monimelt 'disable
+			    monimelt_disable_pragma_handler 
+			    ())
   (debug "processmonimelt_docmd end " cmd)
   (inform_at () "done MELT processing of monimelt.h")
   ;; at last

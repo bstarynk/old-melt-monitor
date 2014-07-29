@@ -90,6 +90,11 @@
 #include <onion/handlers/auth_pam.h>
 
 
+/// for the MELT plugin analyzing this header
+#ifdef MELTMOM
+#pragma MONIMELT enable
+#endif
+
 // in generated _timestamp.c
 extern const char monimelt_timestamp[];
 extern const char monimelt_lastgitcommit[];
@@ -2592,4 +2597,10 @@ extern void momplugin_after_load (void);
 #define MOM_PREDEFINED_NAMED(Name,Id) extern momitem_t* mom_named__##Name;
 #define MOM_PREDEFINED_ANONYMOUS(Id) extern momitem_t* mom_anonymous_##Id;
 #include "predef-monimelt.h"
+
+
+#ifdef MELTMOM
+#pragma MONIMELT disable
+#endif
+
 #endif /*MONIMELT_INCLUDED_ */
