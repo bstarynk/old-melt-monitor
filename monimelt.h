@@ -92,7 +92,7 @@
 
 /// for the MELT plugin analyzing this header
 #ifdef MELTMOM
-#pragma MONIMELT enable
+#pragma MONIMELT ENABLE
 #endif
 
 // in generated _timestamp.c
@@ -178,10 +178,10 @@ typedef uint32_t momhash_t;
 typedef uint32_t momusize_t;
 
 
-enum mom_flags_en
+typedef enum mom_flags_en
 {
   momflag_transient = (1 << 0)
-};
+} momflags_t;
 
 pthread_mutexattr_t mom_normal_mutex_attr;
 pthread_mutexattr_t mom_recursive_mutex_attr;
@@ -257,14 +257,14 @@ extern struct momout_st mom_stderr_data;
 #define mom_stderr &mom_stderr_data
 
 #define MOM_MOUT_MAGIC 0x41f67aa5	/* mom_out_magic 1106672293 */
-enum outflags_en
+typedef enum momoutflags_en
 {
   outf__none = 0,
   outf_cname = 1 << 0,
   outf_jsonhalfindent = 1 << 1,
   outf_jsonindent = 1 << 2,
   outf_isbuffer = 1 << 15,	/* internal flag */
-};
+} momoutflags_t;
 
 void mom_out_at (const char *sfil, int lin, momout_t *pout, ...)
   __attribute__ ((sentinel));
@@ -297,7 +297,7 @@ void mom_initialize_buffer_output (struct momout_st *out, unsigned flags);
 // finalize a buffer output, so free the data
 void mom_finalize_buffer_output (struct momout_st *out);
 
-enum momoutdir_en
+typedef enum momoutdir_en
 {
   MOMOUTDO__END = 0,
 #define MOMOUT_END() ((void*)MOMOUTDO__END)
@@ -470,13 +470,13 @@ enum momoutdir_en
   MOM_REQUIRES_TYPE((F),const char*,mombad_string)
   ///
   ///
-};				/* end enum momoutdir_en */
+} momoutdir_t;			/* end enum momoutdir_en */
 
 
 ////////////////////////////////////////////////////////////////
 //////////////// TYPES AND VALUES
 ////////////////////////////////////////////////////////////////
-enum momvaltype_en
+typedef enum momvaltype_en
 {
   momty_null = 0,
   momty_int,
@@ -488,9 +488,8 @@ enum momvaltype_en
   momty_tuple,
   momty_node,
   momty_item
-};
+} momvaltype_t;
 
-struct momseqitem_st;
 
 typedef struct momint_st momint_t;
 typedef struct momdouble_st momdouble_t;
@@ -2600,7 +2599,7 @@ extern void momplugin_after_load (void);
 
 
 #ifdef MELTMOM
-#pragma MONIMELT disable
+#pragma MONIMELT DISABLE
 #endif
 
 #endif /*MONIMELT_INCLUDED_ */

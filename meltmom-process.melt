@@ -25,8 +25,14 @@
 
 (definstance monimelt_pragma_ok class_reference)
 
+(defvar monimelt_types_list)
+(setq monimelt_types_list (list))
+(defvar monimelt_functions_list)
+(setq monimelt_functions_list (list))
+
 (defun monimelt_enable_pragma_handler (ph)
   (debug "monimelt_enable_pragma_handler ph=" ph)
+  (inform_at (pragma_lex) "MONIMELT enabling MELT")
   (set_ref monimelt_pragma_ok :true)
 )
 
@@ -37,60 +43,50 @@
 
 (defun monimelt_finish_decl (decl)
   (if (null !monimelt_pragma_ok)
-     (return)) 
+      (return)) 
   (let ( (tdecl  (unbox :tree decl))
 	 )
-    (debug "monimelt_finish_decl tdecl=" tdecl "\n")
+    ;; (debug "monimelt_finish_decl" " begin tdecl=" tdecl "\n")
     (match
      tdecl
      (?(tree_function_decl_named
 	?(and ?tfuname ?(cstring_prefixed "mom_"))
 	?tfunres)
-       (let ( (tfuntype (tree_type tdecl))
-	      )
-	 (debug "monimelt_finish_decl found mom_ function " tdecl
-		";\n.. tfuname=" tfuname
-		"; tfunres=" tfunres "; tfuntype=" tfuntype "\n")
-	 (inform_at decl "good Monimelt function $1" tfuname)
-	 )
+       (debug  "monimelt_finish_decl" " function tdecl=" tdecl)
+       (list_append monimelt_functions_list decl)
        )
      (?(tree_type_declaration
 	;; caveat, many types start with mom without underscore
 	?(and ?(tree_identifier ?(cstring_prefixed "mom")) ?tyname))
-       (debug "monimelt_finish_decl typedecl tyname=" tyname 
+       (debug "monimelt_finish_decl" " typedecl tyname=" tyname 
 	      ";\n.. tdecl=" tdecl "\n")
-       (inform_at decl "good Monimelt type $1" tyname)
-       )
-     (?(tree_record_type ?(and ?(tree_identifier ?(cstring_prefixed "mom"))
-			       ?recname))
-       (debug "monimelt_finish_decl record recname=" recname
-	      ";\n.. tdecl=" tdecl "\n")
-       )
-     (?(tree_expr_at_source_location
-	?(and ?(some_string_value_containing "monimelt") ?filepath)
-	?line ?col)
-       (debug "monimelt_finish_decl monimelt tdecl=" tdecl
-	      ";\n.. filepath=" filepath "; line=" line "; col=" col)
-       )
-     (?(tree_expr_at_source_location ?filepath ?line ?col)
-       (debug "monimelt_finish_decl other tdecl=" tdecl
-	      ";\n.. filepath=" filepath "; line=" line "; col=" col)
+       (list_append monimelt_types_list decl)
        )
      (?_
-      ())
+      ;; (debug "monimelt_finish_decl else tdecl=" tdecl)
+      (void)
+      )
      )
     )
   )
 
+
+;;this function should probably do the JSONRPC calls
+(defun monimelt_finish_unit (arg)
+  (debug "monimelt_finish_unit" " arg=" arg ";\n monimelt_types_list=" monimelt_types_list
+	 ";\n monimelt_functions_list=" monimelt_functions_list)
+  )
+
 (defun processmonimelt_docmd (cmd moduldata)
   (debug "processmonimelt_docmd start " cmd)
-  (register_finish_decl_first  monimelt_finish_decl)
   (register_expanded_pragma 'monimelt 'enable
 			    monimelt_enable_pragma_handler 
 			    :true)
   (register_expanded_pragma 'monimelt 'disable
 			    monimelt_disable_pragma_handler 
 			    ())
+  (register_finish_decl_first  monimelt_finish_decl)
+  (at_finish_unit_first monimelt_finish_unit)
   (debug "processmonimelt_docmd end " cmd)
   (inform_at () "done MELT processing of monimelt.h")
   ;; at last

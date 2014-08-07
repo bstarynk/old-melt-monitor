@@ -496,7 +496,8 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
 		       MOMOUT_DEC_INT ((int) webnum),
 		       MOMOUT_LITERAL (" fullpath="),
 		       MOMOUT_LITERALV ((const char *) fullpath), NULL);
-	  FILE *dfil = fmemopen ((void*) odata, onion_block_size (onbd), "r");
+	  FILE *dfil =
+	    fmemopen ((void *) odata, onion_block_size (onbd), "r");
 	  if (!dfil)
 	    MOM_FATAL (MOMOUT_LITERAL
 		       ("fmemopen failed in HTTP JSONRPC Post webreq#"),

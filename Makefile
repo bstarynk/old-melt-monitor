@@ -48,7 +48,7 @@ PLUGINS=  $(patsubst %.c,%.so,$(PLUGIN_SOURCES))
 SOURCES= $(sort $(filter-out $(PLUGIN_SOURCES) $(MODULE_SOURCES), $(wildcard [a-z]*.c)))
 OBJECTS= $(patsubst %.c,%.o,$(SOURCES))
 RM= rm -fv
-MELTGCCFLAGS=  -fplugin=melt -fplugin-arg-melt-workdir=_meltwork 
+MELTGCCFLAGS=  -fplugin=melt -fplugin-arg-melt-init=@melt-default-modules.quicklybuilt -fplugin-arg-melt-workdir=_meltwork 
 .PHONY: all modules plugins clean tests indent restore-state dump-state \
 	melt-process-header melt-process-debug
 .SUFFIXES: .so .i
@@ -129,7 +129,7 @@ melt-process-debug: monimelt.h meltmom-process.quicklybuilt.so | _meltwork
 	$(COMPILE.c) -x c $(MELTGCCFLAGS) -DMELTMOM  \
 	    -fplugin-arg-melt-mode=process_monimelt_header \
 	    -fplugin-arg-melt-extra=meltmom-process.quicklybuilt \
-	    -fplugin-arg-melt-debugging=all \
+	    -fplugin-arg-melt-debugging=mode \
             -c $< -o /dev/null
 
 _meltwork:
