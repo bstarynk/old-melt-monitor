@@ -973,7 +973,8 @@ mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist)
 	  ///
 	case MOMOUTDO_FLUSH:
 	  {
-	    fflush (out);
+	    if (fflush (out))
+	      MOM_FATAPRINTF ("failed to flush out #%d", fileno (out));
 	  }
 	  break;
 	  ///

@@ -49,6 +49,7 @@ static struct jsonrpc_conn_mom_st
   unsigned jrpc_magic;		/* always JSONRPC_CONN_MAGIC_MOM  */
   int jrpc_socket;		/* the accepted socket */
   struct mom_jsonparser_st jrpc_parser;	/* the parser */
+#warning should probably output to a memory file, then send(2) the bytes!
   struct momout_st jrpc_out;	/* the output */
   struct sockaddr jrpc_addr;	/* the socket peer address */
   socklen_t jrpc_alen;		/* its length */
@@ -1341,6 +1342,9 @@ jsonrpc_processor_mom (void *p)
 			     MOMOUT_SPACE (48),
 			     MOMOUT_LITERAL ("errans="),
 			     MOMOUT_JSON_VALUE (jerrans), NULL);
+		  if (fflush (jp->jrpc_parser.jsonp_file))
+		    MOM_FATAPRINTF ("failed to flush jsonrpc #%d",
+				    fileno (jp->jrpc_parser.jsonp_file));
 		  continue;
 		}
 	    }
@@ -1380,6 +1384,9 @@ jsonrpc_processor_mom (void *p)
 			     MOMOUT_SPACE (48),
 			     MOMOUT_LITERAL ("answer="),
 			     MOMOUT_JSON_VALUE (janswer), NULL);
+		  if (fflush (jp->jrpc_parser.jsonp_file))
+		    MOM_FATAPRINTF ("failed to flush jsonrpc #%d",
+				    fileno (jp->jrpc_parser.jsonp_file));
 		  continue;
 		}
 	    }
@@ -1396,10 +1403,15 @@ jsonrpc_processor_mom (void *p)
 		   MOMOUT_LITERAL (",\"data\":\""),
 		   MOMOUT_JS_STRING ((const char *) errmsg),
 		   MOMOUT_LITERAL ("\"},\"id\":null}"), MOMOUT_NEWLINE (),
-		   MOMOUT_FLUSH ());
+		   MOMOUT_FLUSH (), NULL);
+	  if (fflush (jp->jrpc_parser.jsonp_file))
+	    MOM_FATAPRINTF ("failed to flush jsonrpc #%d",
+			    fileno (jp->jrpc_parser.jsonp_file));
 	  break;
 	}
-      fflush (jp->jrpc_parser.jsonp_file);
+      if (fflush (jp->jrpc_parser.jsonp_file))
+	MOM_FATAPRINTF ("failed to flush jsonrpc #%d",
+			fileno (jp->jrpc_parser.jsonp_file));
     }
   while (again);
   pthread_mutex_destroy (&jp->jrpc_mtx);

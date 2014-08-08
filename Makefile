@@ -154,10 +154,10 @@ melt-process-header: monimelt.h meltmom-process.quicklybuilt.so | _meltwork moni
 
 melt-process-debug: monimelt.h meltmom-process.quicklybuilt.so | _meltwork monimelt
 	@echo MONI_MELT_TMP= $(MONI_MELT_TMP)
-	./monimelt $(MONI_MELT_DEBUG_FLAGS) --daemon-noclose --chdir $(PWD) $(MONI_MELT_RUN_FLAGS)  \
+	$(MONI_MELT_PREFIXMONI) ./monimelt $(MONI_MELT_DEBUG_FLAGS) --daemon-noclose --chdir $(PWD) $(MONI_MELT_RUN_FLAGS)  \
           $(MONI_MELT_JOB_FLAGS) $(MONI_MELT_JSONRPC_FLAGS) \
-	  $(if $(MONI_MELT_OUTMONI), > $(MONI_MELT_OUTMONI) 2>&1)
-	$(COMPILE.c) -x c $(MELTGCCFLAGS) -DMELTMOM  \
+	  $(if $(MONI_MELT_OUTMONI), > $(MONI_MELT_OUTMONI) 2>&1) &
+	$(MONI_MELT_PREFIXMELT) $(COMPILE.c) -x c $(MELTGCCFLAGS) -DMELTMOM  \
 	    -fplugin-arg-melt-mode=process_monimelt_header \
 	    -fplugin-arg-melt-extra=meltmom-process.quicklybuilt \
 	    -fplugin-arg-melt-monimelt-tmp=$(MONI_MELT_TMP) \
