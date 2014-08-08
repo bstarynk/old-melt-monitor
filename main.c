@@ -156,6 +156,7 @@ mom_debugprintf_at (enum mom_debug_en dbg, const char *fil, int lin,
       {
 	fprintf (stderr, "MONIMELT DEBUG %7s <%s> @%s:%d %s %s\n",
 		 dbg_level_mom (dbg), thrname, fil, lin, timbuf, msg);
+	fflush (stderr);
 	if (nbdbg % DEBUG_DATE_PERIOD_MOM == 0)
 	  fprintf (stderr, "MONIMELT DEBUG#%04ld ~ %s *^*^*\n", nbdbg,
 		   datebuf);

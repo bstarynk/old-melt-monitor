@@ -764,6 +764,10 @@ start_jsonrpc_mom (void)
       sockfd = socket (AF_UNIX, SOCK_STREAM, 0);
       if (sockfd < 0)
 	MOM_FATAPRINTF ("failed to get JSONRPC unix socket");
+      int optval = 1;
+      if (setsockopt
+	  (sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval))
+	MOM_FATAPRINTF ("failed to SO_REUSEADDR on unix sockfd#%d", sockfd);
       if (bind
 	  (sockfd, (struct sockaddr *) &saun,
 	   sizeof (struct sockaddr_un)) < 0)
@@ -787,6 +791,10 @@ start_jsonrpc_mom (void)
       sockfd = socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
       if (sockfd < 0)
 	MOM_FATAPRINTF ("failed to get JSONRPC IPv4 socket");
+      int optval = 1;
+      if (setsockopt
+	  (sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval))
+	MOM_FATAPRINTF ("failed to SO_REUSEADDR on IPv4 sockfd#%d", sockfd);
       if (bind
 	  (sockfd, (struct sockaddr *) &sain,
 	   sizeof (struct sockaddr_in)) < 0)
@@ -807,7 +815,12 @@ start_jsonrpc_mom (void)
       sain.sin_addr.s_addr = htonl (INADDR_LOOPBACK);
       sockfd = socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
       if (sockfd < 0)
-	MOM_FATAPRINTF ("failed to get JSONRPC IPv4 socket");
+	MOM_FATAPRINTF ("failed to get JSONRPC localhost IPv4 socket");
+      int optval = 1;
+      if (setsockopt
+	  (sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval))
+	MOM_FATAPRINTF ("failed to SO_REUSEADDR on localhost IPv4 sockfd#%d",
+			sockfd);
       if (bind
 	  (sockfd, (struct sockaddr *) &sain,
 	   sizeof (struct sockaddr_in)) < 0)
@@ -865,6 +878,12 @@ start_jsonrpc_mom (void)
 		   curadinf->ai_family, protoname, curadinf->ai_canonname);
 	      continue;
 	    };
+	  int optval = 1;
+	  if (setsockopt
+	      (sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval))
+	    MOM_FATAPRINTF
+	      ("failed to SO_REUSEADDR on IP sockfd#%d protoname %s", sockfd,
+	       protoname);
 	  if (bind
 	      (sockfd, (struct sockaddr *) curadinf->ai_addr,
 	       curadinf->ai_addrlen) < 0)
