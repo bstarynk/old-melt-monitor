@@ -48,7 +48,20 @@ PLUGINS=  $(patsubst %.c,%.so,$(PLUGIN_SOURCES))
 SOURCES= $(sort $(filter-out $(PLUGIN_SOURCES) $(MODULE_SOURCES), $(wildcard [a-z]*.c)))
 OBJECTS= $(patsubst %.c,%.o,$(SOURCES))
 RM= rm -fv
-MELTGCCFLAGS=  -fplugin=melt -fplugin-arg-melt-init=@melt-default-modules.quicklybuilt -fplugin-arg-melt-workdir=_meltwork 
+MELTGCCFLAGS=  -fplugin=melt -fplugin-arg-melt-init=@melt-default-modules.quicklybuilt -fplugin-arg-melt-workdir=_meltwork
+####
+#### MONI_MELT variables are for MELT plugin and the monimelt monitor working together
+## a temporary suffix
+MONI_MELT_TMP:=$(shell mktemp -u -t moni-melt_XXXXXXX)
+## job options
+MONI_MELT_JOB_FLAGS= --jobs 2
+MONI_MELT_RUN_PID=$(MONI_MELT_TMP)_runpid
+MONI_MELT_RUN_FLAGS= --write-pid $(MONI_MELT_RUN_PID)
+MONI_MELT_SOCKET=$(MONI_MELT_TMP)_socket
+MONI_MELT_DEBUG_FLAGS= -D run
+MONI_MELT_JSONRPC_FLAGS= --jsonrpc $(MONI_MELT_SOCKET)
+####
+####
 .PHONY: all modules plugins clean tests indent restore-state dump-state \
 	melt-process-header melt-process-debug
 .SUFFIXES: .so .i
@@ -119,18 +132,32 @@ momjsrpc_client: momjsrpc_client.cc
 	$(CXX) $(CXXFLAGS) $(CXXTOOLS_CXXFLAGS) $< -o $@ -lcxxtools-json $(CXXTOOLS_LIBS)
 
 ###
-melt-process-header: monimelt.h meltmom-process.quicklybuilt.so | _meltwork
+melt-process-header: monimelt.h meltmom-process.quicklybuilt.so | _meltwork monimelt
+	@echo MONI_MELT_TMP= $(MONI_MELT_TMP)
+	./monimelt --daemon-noclose --chdir $(PWD) $(MONI_MELT_RUN_FLAGS) \
+          $(MONI_MELT_JOB_FLAGS) $(MONI_MELT_JSONRPC_FLAGS)
 	$(COMPILE.c) -x c $(MELTGCCFLAGS) -DMELTMOM \
 	    -fplugin-arg-melt-mode=process_monimelt_header \
 	    -fplugin-arg-melt-extra=meltmom-process.quicklybuilt \
+	    -fplugin-arg-melt-monimelt-tmp=$(MONI_MELT_TMP) \
 	    -c $< -o /dev/null
+	kill -TERM $$(cat $(MONI_MELT_RUN_PID))
+	ls -l $(MONI_MELT_TMP)*
+	$(RM) $(MONI_MELT_TMP)*
 
-melt-process-debug: monimelt.h meltmom-process.quicklybuilt.so | _meltwork
+melt-process-debug: monimelt.h meltmom-process.quicklybuilt.so | _meltwork monimelt
+	@echo MONI_MELT_TMP= $(MONI_MELT_TMP)
+	./monimelt $(MONI_MELT_DEBUG_FLAGS) --daemon-noclose --chdir $(PWD) $(MONI_MELT_RUN_FLAGS)  \
+          $(MONI_MELT_JOB_FLAGS) $(MONI_MELT_JSONRPC_FLAGS)
 	$(COMPILE.c) -x c $(MELTGCCFLAGS) -DMELTMOM  \
 	    -fplugin-arg-melt-mode=process_monimelt_header \
 	    -fplugin-arg-melt-extra=meltmom-process.quicklybuilt \
+	    -fplugin-arg-melt-monimelt-tmp=$(MONI_MELT_TMP) \
 	    -fplugin-arg-melt-debugging=mode \
             -c $< -o /dev/null
+	kill -TERM $$(cat $(MONI_MELT_RUN_PID))
+	ls -l $(MONI_MELT_TMP)*
+	$(RM) $(MONI_MELT_TMP)*
 
 _meltwork:
 	@ [ -d _meltwork ] || mkdir _meltwork

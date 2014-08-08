@@ -29,6 +29,12 @@
 (setq monimelt_types_list (list))
 (defvar monimelt_functions_list)
 (setq monimelt_functions_list (list))
+(defvar monimelt_tmp)
+(setq monimelt_tmp (constant_box (melt_argument "monimelt-tmp")))
+(debug "monimelt_tmp=" monimelt_tmp)
+(defvar monimelt_service)
+(setq monimelt_service (string4out discr_string monimelt_tmp "_socket"))
+(debug "monimelt_service=" monimelt_service)
 
 (defun monimelt_enable_pragma_handler (ph)
   (debug "monimelt_enable_pragma_handler ph=" ph)
@@ -75,10 +81,17 @@
 (defun monimelt_finish_unit (arg)
   (debug "monimelt_finish_unit" " arg=" arg ";\n monimelt_types_list=" monimelt_types_list
 	 ";\n monimelt_functions_list=" monimelt_functions_list)
+  (let ( (momstatus (do_blocking_jsonrpc2_call monimelt_service '"state" () 350))
+	 )
+    (debug "monimelt_finish_unit" " momstatus=" momstatus))
   )
 
 (defun processmonimelt_docmd (cmd moduldata)
   (debug "processmonimelt_docmd start " cmd)
+  (debug "processmonimelt_docmd monimelt_service=" monimelt_service)
+  (let ( (momstatus (do_blocking_jsonrpc2_call monimelt_service '"state" () 660))
+	 )
+    (debug "processmonimelt_docmd initial momstatus=" momstatus))
   (register_expanded_pragma 'monimelt 'enable
 			    monimelt_enable_pragma_handler 
 			    :true)

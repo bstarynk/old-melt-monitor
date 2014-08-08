@@ -524,6 +524,7 @@ initialize_mom (void)
 
 
 static bool daemonize_mom = false;
+static bool noclose_daemonize_mom = false;
 /* Option specification for getopt_long.  */
 enum extraopt_en
 {
@@ -536,6 +537,7 @@ enum extraopt_en
   xtraopt_noeventloop,
   xtraopt_randomidstr,
   xtraopt_dumpcoldstate,
+  xtraopt_daemon_noclose,
 };
 
 static const struct option mom_long_options[] = {
@@ -549,6 +551,7 @@ static const struct option mom_long_options[] = {
   {"web", required_argument, NULL, 'W'},
   {"jsonrpc", required_argument, NULL, 'R'},
   // long-only options
+  {"daemon-noclose", no_argument, NULL, xtraopt_daemon_noclose},
   {"write-pid", required_argument, NULL, xtraopt_writepid},
   {"load-state", required_argument, NULL, xtraopt_loadstate},
   {"dump-state", required_argument, NULL, xtraopt_dumpstate},
@@ -696,6 +699,8 @@ usage_mom (const char *argv0)
 	  "\t #write the pid (e.g. --write-pid /var/run/monimelt.pid)\n");
   printf ("\t --random-idstr" "\t #output a random idstr then exit\n");
   printf ("\t --dump-cold-state <dumpdir>" "\t #dump the cold state\n");
+  printf ("\t --daemon-noclose"
+	  "\t daemonize with daemon(3) with nochdir=true noclose=true\n");
   printf ("\t --add-predefined <predefname> [<comment>]"
 	  "\t #add a new predefined and dump\n");
 }
@@ -819,6 +824,9 @@ parse_program_arguments_and_load_modules_mom (int *pargc, char **argv)
 	      };
 	  }
 	  break;
+	case xtraopt_daemon_noclose:
+	  noclose_daemonize_mom = true;
+	  break;
 	default:
 	  {
 	    if (opt > 0 && opt < UCHAR_MAX && isalpha ((char) opt))
@@ -938,6 +946,11 @@ main (int argc, char **argv)
     {
       if (daemon (true, false))
 	MOM_FATAPRINTF ("failed to daemonize");
+    }
+  else if (noclose_daemonize_mom)
+    {
+      if (daemon (true, true))
+	MOM_FATAPRINTF ("failed to daemonize without close");
     }
   if (syslogging_mom)
     start_syslog_mom ();
