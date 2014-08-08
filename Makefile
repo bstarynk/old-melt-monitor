@@ -54,6 +54,11 @@ MELTGCCFLAGS=  -fplugin=melt -fplugin-arg-melt-init=@melt-default-modules.quickl
 ## a temporary suffix
 MONI_MELT_TMP:=$(shell mktemp -u -t moni-melt_XXXXXXX)
 ## job options
+#MONI_MELT_OUTMONI could be the output of the monitor
+#MONI_MELT_OUTMELT could be the output of the MELT enhanced
+#compilation of monimmelt.h
+## for instance: in the terminal:
+###  make MONI_MELT_OUTMONI=/tmp/moni.out MONI_MELT_OUTMELT=/tmp/melt.out melt-process-debug
 MONI_MELT_JOB_FLAGS= --jobs 2
 MONI_MELT_RUN_PID=$(MONI_MELT_TMP)_runpid
 MONI_MELT_RUN_FLAGS= --write-pid $(MONI_MELT_RUN_PID)
@@ -135,12 +140,14 @@ momjsrpc_client: momjsrpc_client.cc
 melt-process-header: monimelt.h meltmom-process.quicklybuilt.so | _meltwork monimelt
 	@echo MONI_MELT_TMP= $(MONI_MELT_TMP)
 	./monimelt --daemon-noclose --chdir $(PWD) $(MONI_MELT_RUN_FLAGS) \
-          $(MONI_MELT_JOB_FLAGS) $(MONI_MELT_JSONRPC_FLAGS)
+          $(MONI_MELT_JOB_FLAGS) $(MONI_MELT_JSONRPC_FLAGS) \
+	  $(if $(MONI_MELT_OUTMONI), > $(MONI_MELT_OUTMONI) 2>&1)
 	$(COMPILE.c) -x c $(MELTGCCFLAGS) -DMELTMOM \
 	    -fplugin-arg-melt-mode=process_monimelt_header \
 	    -fplugin-arg-melt-extra=meltmom-process.quicklybuilt \
 	    -fplugin-arg-melt-monimelt-tmp=$(MONI_MELT_TMP) \
-	    -c $< -o /dev/null
+	    -c $< -o /dev/null \
+	  $(if $(MONI_MELT_OUTMELT),> $(MONI_MELT_OUTMELT) 2>&1)
 	kill -TERM $$(cat $(MONI_MELT_RUN_PID))
 	ls -l $(MONI_MELT_TMP)*
 	$(RM) $(MONI_MELT_TMP)*
@@ -148,13 +155,15 @@ melt-process-header: monimelt.h meltmom-process.quicklybuilt.so | _meltwork moni
 melt-process-debug: monimelt.h meltmom-process.quicklybuilt.so | _meltwork monimelt
 	@echo MONI_MELT_TMP= $(MONI_MELT_TMP)
 	./monimelt $(MONI_MELT_DEBUG_FLAGS) --daemon-noclose --chdir $(PWD) $(MONI_MELT_RUN_FLAGS)  \
-          $(MONI_MELT_JOB_FLAGS) $(MONI_MELT_JSONRPC_FLAGS)
+          $(MONI_MELT_JOB_FLAGS) $(MONI_MELT_JSONRPC_FLAGS) \
+	  $(if $(MONI_MELT_OUTMONI), > $(MONI_MELT_OUTMONI) 2>&1)
 	$(COMPILE.c) -x c $(MELTGCCFLAGS) -DMELTMOM  \
 	    -fplugin-arg-melt-mode=process_monimelt_header \
 	    -fplugin-arg-melt-extra=meltmom-process.quicklybuilt \
 	    -fplugin-arg-melt-monimelt-tmp=$(MONI_MELT_TMP) \
 	    -fplugin-arg-melt-debugging=mode \
-            -c $< -o /dev/null
+            -c $< -o /dev/null \
+	  $(if $(MONI_MELT_OUTMELT),> $(MONI_MELT_OUTMELT)  2>&1)
 	kill -TERM $$(cat $(MONI_MELT_RUN_PID))
 	ls -l $(MONI_MELT_TMP)*
 	$(RM) $(MONI_MELT_TMP)*
