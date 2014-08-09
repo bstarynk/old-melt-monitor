@@ -768,11 +768,15 @@ start_jsonrpc_mom (void)
       if (setsockopt
 	  (sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval))
 	MOM_FATAPRINTF ("failed to SO_REUSEADDR on unix sockfd#%d", sockfd);
-      if (bind
-	  (sockfd, (struct sockaddr *) &saun,
-	   sizeof (struct sockaddr_un)) < 0)
-	MOM_FATAPRINTF ("failed to bind JSONRPC unix socket to path %s",
-			mom_jsonrpc_host);
+      // see unix(7) man page
+      socklen_t saulen =
+	offsetof (struct sockaddr_un, sun_path) + strlen (saun.sun_path) + 1;
+      MOM_DEBUGPRINTF (run, "start_jsonrpc_mom binding unixpath %s saulen %d",
+		       saun.sun_path, saulen);
+      if (bind (sockfd, (struct sockaddr *) &saun, saulen) < 0)
+	MOM_FATAPRINTF
+	  ("failed to bind JSONRPC unix socket to path %s saulen %d",
+	   saun.sun_path, saulen);
       jsonrpc_family_mom = AF_UNIX;
       MOM_INFORMPRINTF
 	("bound JSONRPC unix socket of path %s file descriptor %d",
@@ -1253,6 +1257,7 @@ jsonrpc_processor_mom (void *p)
     {
       again = true;
       FILE *fil = NULL;
+      int goteof = 0;
       const char *errmsg = NULL;
       int errcode = 0;
       momval_t jreq = MOM_NULLV;
@@ -1260,25 +1265,41 @@ jsonrpc_processor_mom (void *p)
       pthread_mutex_lock (&jrpcmtx_mom);
       assert (jp && jp->jrpc_magic == JSONRPC_CONN_MAGIC_MOM);
       fil = jp->jrpc_parser.jsonp_file;
+      if (feof)
+	goteof = __LINE__;
       // peek one char to test against EOF...
       {
 	int c = fgetc (fil);
 	if (c != EOF)
-	  ungetc (c, fil);
+	  {
+	    if (isspace (c) && !goteof && feof (fil))
+	      goteof = __LINE__;
+	    MOM_DEBUGPRINTF (run, "jsonrpc_processor ungetc %d=%c socket#%d",
+			     c, c, jp->jrpc_socket);
+	    ungetc (c, fil);
+	  }
+	else
+	  {
+	    goteof = __LINE__;
+	    MOM_DEBUGPRINTF (run, "jsonrpc_processor eof socket#%d",
+			     jp->jrpc_socket);
+	  }
       }
       pthread_mutex_unlock (&jrpcmtx_mom);
-      if (feof (fil))
-	{
-	  again = false;
-	  break;
-	};
+      if (feof (fil) && !goteof)
+	goteof = __LINE__;
       errmsg = NULL;
       MOM_DEBUG (run,
 		 MOMOUT_LITERAL
-		 ("jsonrpc_processor before parsing feof(fil)="),
-		 MOMOUT_DEC_INT ((int) feof (fil)),
+		 ("jsonrpc_processor before parsing goteof="),
+		 MOMOUT_DEC_INT ((int) goteof),
 		 MOMOUT_LITERAL (" fileno(fil)="),
 		 MOMOUT_DEC_INT ((int) fileno (fil)), NULL);
+      if (goteof)
+	{
+	  again = false;
+	  break;
+	}
       jreq = mom_parse_json (&jp->jrpc_parser, (char **) &errmsg);
       count++;
       if (!jreq.ptr && errmsg)
