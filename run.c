@@ -49,8 +49,7 @@ static struct jsonrpc_conn_mom_st
   unsigned jrpc_magic;		/* always JSONRPC_CONN_MAGIC_MOM  */
   int jrpc_socket;		/* the accepted socket */
   struct mom_jsonparser_st jrpc_parser;	/* the parser */
-#warning should probably output to a memory file, then send(2) the bytes!
-  struct momout_st jrpc_out;	/* the output */
+  struct momout_st jrpc_output;	/* the output buffer */
   struct sockaddr jrpc_addr;	/* the socket peer address */
   socklen_t jrpc_alen;		/* its length */
   pthread_t jrpc_thread;	/* the thread parsing that connection */
@@ -1197,6 +1196,42 @@ mom_payljsonrpc_finalize (momitem_t *jritm, void *jrdata)
 #warning mom_payljsonrpc_finalize unimplemented
 }
 
+
+// we send the output in chunks of maximal size
+#define JSONRPC_OUT_CHUNK_MOM 32768
+static void
+jsonrpc_fclose_send_output_mom (struct jsonrpc_conn_mom_st *jp)
+{
+  assert (jp && jp->jrpc_magic == JSONRPC_CONN_MAGIC_MOM);
+  assert (jp->jrpc_output.mout_magic == MOM_MOUT_MAGIC);
+  assert (jp->jrpc_output.mout_file != NULL);
+  fclose (jp->jrpc_output.mout_file), jp->jrpc_output.mout_file = NULL;
+  size_t outsiz = jp->jrpc_output.mout_size;
+  char *outbuf = jp->jrpc_output.mout_data;
+  assert (outbuf != NULL);
+  MOM_DEBUGPRINTF (run, "close send output socket #%d size %zd buffer:\n%s\n",
+		   jp->jrpc_socket, outsiz, outbuf);
+  size_t remsiz = outsiz;
+  char *rembuf = outbuf;
+  while (remsiz > 0)
+    {
+      ssize_t sendsiz = 0;
+      if (remsiz < JSONRPC_OUT_CHUNK_MOM)
+	sendsiz = send (jp->jrpc_socket, rembuf, remsiz, 0);
+      else
+	sendsiz =
+	  send (jp->jrpc_socket, rembuf, JSONRPC_OUT_CHUNK_MOM, MSG_MORE);
+      if (sendsiz < 0 && errno == EINTR)
+	continue;
+      else if (sendsiz < 0)
+	MOM_FATAPRINTF ("failed to send %d bytes on JSON socket #%d", remsiz,
+			jp->jrpc_socket);
+      rembuf += sendsiz;
+      remsiz -= sendsiz;
+    }
+  mom_finalize_buffer_output (&jp->jrpc_output);
+}
+
 static void *
 jsonrpc_processor_mom (void *p)
 {
@@ -1249,6 +1284,7 @@ jsonrpc_processor_mom (void *p)
 		 MOMOUT_SPACE (48),
 		 MOMOUT_LITERALV ((const char *) (errmsg ? "error:" : "ok.")),
 		 MOMOUT_LITERALV ((const char *) errmsg), NULL);
+      mom_initialize_buffer_output (&jp->jrpc_output, 0);
       if (mom_is_json_array (jreq))
 	{
 	  jresult = batch_jsonrpc_mom (jreq, jp, count, &errcode, &errmsg);
@@ -1328,7 +1364,7 @@ jsonrpc_processor_mom (void *p)
 		};
 	      if (jerrans.ptr && mom_is_jsonable (jerrans))
 		{
-		  MOM_OUT (&jp->jrpc_out, MOMOUT_JSON_VALUE (jerrans),
+		  MOM_OUT (&jp->jrpc_output, MOMOUT_JSON_VALUE (jerrans),
 			   MOMOUT_NEWLINE (), MOMOUT_FLUSH (), NULL);
 		  MOM_DEBUG (run, MOMOUT_LITERAL
 			     ("jsonrpc processor error answer socket#"),
@@ -1342,12 +1378,9 @@ jsonrpc_processor_mom (void *p)
 			     MOMOUT_SPACE (48),
 			     MOMOUT_LITERAL ("errans="),
 			     MOMOUT_JSON_VALUE (jerrans), NULL);
-		  if (fflush (jp->jrpc_parser.jsonp_file))
-		    MOM_FATAPRINTF ("failed to flush jsonrpc #%d",
-				    fileno (jp->jrpc_parser.jsonp_file));
 		  continue;
 		}
-	    }
+	    }			/* end if error */
 	  else if (mom_is_jsonable (jresult))
 	    {
 	      // normal result
@@ -1370,7 +1403,7 @@ jsonrpc_processor_mom (void *p)
 		}
 	      if (janswer.ptr && mom_is_jsonable (janswer))
 		{
-		  MOM_OUT (&jp->jrpc_out, MOMOUT_JSON_VALUE (janswer),
+		  MOM_OUT (&jp->jrpc_output, MOMOUT_JSON_VALUE (janswer),
 			   MOMOUT_NEWLINE (), MOMOUT_FLUSH (), NULL);
 		  MOM_DEBUG (run, MOMOUT_LITERAL
 			     ("jsonrpc processor result answer socket#"),
@@ -1384,9 +1417,7 @@ jsonrpc_processor_mom (void *p)
 			     MOMOUT_SPACE (48),
 			     MOMOUT_LITERAL ("answer="),
 			     MOMOUT_JSON_VALUE (janswer), NULL);
-		  if (fflush (jp->jrpc_parser.jsonp_file))
-		    MOM_FATAPRINTF ("failed to flush jsonrpc #%d",
-				    fileno (jp->jrpc_parser.jsonp_file));
+		  jsonrpc_fclose_send_output_mom (jp);
 		  continue;
 		}
 	    }
@@ -1395,7 +1426,9 @@ jsonrpc_processor_mom (void *p)
 	{
 	  errcode = jrpcerr_parse_error;
 	  again = false;
-	  MOM_OUT (&jp->jrpc_out,
+	  MOM_DEBUGPRINTF (run, "JSON socket#%d parse-error %s",
+			   jp->jrpc_socket, errmsg);
+	  MOM_OUT (&jp->jrpc_output,
 		   MOMOUT_LITERAL
 		   ("{\"jsonrpc\":\"2.0\",\"error\":{\"code\":"),
 		   MOMOUT_DEC_INT ((int) jrpcerr_parse_error),
@@ -1404,14 +1437,9 @@ jsonrpc_processor_mom (void *p)
 		   MOMOUT_JS_STRING ((const char *) errmsg),
 		   MOMOUT_LITERAL ("\"},\"id\":null}"), MOMOUT_NEWLINE (),
 		   MOMOUT_FLUSH (), NULL);
-	  if (fflush (jp->jrpc_parser.jsonp_file))
-	    MOM_FATAPRINTF ("failed to flush jsonrpc #%d",
-			    fileno (jp->jrpc_parser.jsonp_file));
+	  jsonrpc_fclose_send_output_mom (jp);
 	  break;
 	}
-      if (fflush (jp->jrpc_parser.jsonp_file))
-	MOM_FATAPRINTF ("failed to flush jsonrpc #%d",
-			fileno (jp->jrpc_parser.jsonp_file));
     }
   while (again);
   pthread_mutex_destroy (&jp->jrpc_mtx);
@@ -1481,15 +1509,14 @@ jsonrpc_accept_handler_mom (int fd, short revent, void *data)
 	  {
 	    jp = jrpc_mom + pos;
 	    memset (jp, 0, sizeof (struct jsonrpc_conn_mom_st));
-	    FILE *fil = fdopen (accfd, "r+");
-	    if (!fil)
+	    FILE *infil = fdopen (accfd, "r");
+	    if (!infil)
 	      MOM_FATAPRINTF
 		("jsonrpc_accept_handler failed to fdopen socket#%d from %s",
 		 accfd, hn);
 	    jp->jrpc_socket = accfd;
 	    jp->jrpc_magic = JSONRPC_CONN_MAGIC_MOM;
-	    mom_initialize_json_parser (&jp->jrpc_parser, fil, jp);
-	    mom_initialize_output (&jp->jrpc_out, fil, 0);
+	    mom_initialize_json_parser (&jp->jrpc_parser, infil, jp);
 	    jp->jrpc_addr = sad;
 	    jp->jrpc_alen = sln;
 	    jp->jrpc_peernamstr = mom_make_string (hn);
