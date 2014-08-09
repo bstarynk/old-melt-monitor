@@ -1260,6 +1260,12 @@ jsonrpc_processor_mom (void *p)
       pthread_mutex_lock (&jrpcmtx_mom);
       assert (jp && jp->jrpc_magic == JSONRPC_CONN_MAGIC_MOM);
       fil = jp->jrpc_parser.jsonp_file;
+      // peek one char to test against EOF...
+      {
+	int c = fgetc (fil);
+	if (c != EOF)
+	  ungetc (c, fil);
+      }
       pthread_mutex_unlock (&jrpcmtx_mom);
       if (feof (fil))
 	{
