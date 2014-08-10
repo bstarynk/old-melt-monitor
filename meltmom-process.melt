@@ -33,7 +33,11 @@
 (setq monimelt_tmp (constant_box (melt_argument "monimelt-tmp")))
 (debug "monimelt_tmp=" monimelt_tmp)
 (defvar monimelt_service)
-(setq monimelt_service (string4out discr_string monimelt_tmp "_socket"))
+(setq monimelt_service
+      (let ( (monimelt_socket (melt_argument "monimelt-socket"))
+	     )
+	(if monimelt_socket (constant_box monimelt_socket)
+	  (string4out discr_string monimelt_tmp "_socket"))))
 (debug "monimelt_service=" monimelt_service)
 
 (defun monimelt_enable_pragma_handler (ph)

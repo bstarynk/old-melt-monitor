@@ -138,7 +138,7 @@ momjsrpc_client: momjsrpc_client.cc
 
 ###
 melt-process-header: monimelt.h meltmom-process.quicklybuilt.so | _meltwork monimelt
-	@echo MONI_MELT_TMP= $(MONI_MELT_TMP)
+	@echo MONI_MELT_TMP= $(MONI_MELT_TMP) MONI_MELT_SOCKET= $(MONI_MELT_SOCKET)
 	./monimelt --daemon-noclose --chdir $(PWD) $(MONI_MELT_RUN_FLAGS) \
           $(MONI_MELT_JOB_FLAGS) $(MONI_MELT_JSONRPC_FLAGS) \
 	  $(if $(MONI_MELT_OUTMONI), > $(MONI_MELT_OUTMONI) 2>&1)
@@ -146,14 +146,17 @@ melt-process-header: monimelt.h meltmom-process.quicklybuilt.so | _meltwork moni
 	    -fplugin-arg-melt-mode=process_monimelt_header \
 	    -fplugin-arg-melt-extra=meltmom-process.quicklybuilt \
 	    -fplugin-arg-melt-monimelt-tmp=$(MONI_MELT_TMP) \
+	    -fplugin-arg-melt-monimelt-socket=$(MONI_MELT_SOCKET) \
 	    -c $< -o /dev/null \
 	  $(if $(MONI_MELT_OUTMELT),> $(MONI_MELT_OUTMELT) 2>&1)
+	@ps -l $$(cat $(MONI_MELT_RUN_PID))
+	@echo killing $$(cat $(MONI_MELT_RUN_PID))
 	kill -TERM $$(cat $(MONI_MELT_RUN_PID))
 	ls -l $(MONI_MELT_TMP)*
 	$(RM) $(MONI_MELT_TMP)*
 
 melt-process-debug: monimelt.h meltmom-process.quicklybuilt.so | _meltwork monimelt
-	@echo MONI_MELT_TMP= $(MONI_MELT_TMP)
+	@echo MONI_MELT_TMP= $(MONI_MELT_TMP) MONI_MELT_SOCKET= $(MONI_MELT_SOCKET)
 	$(MONI_MELT_PREFIXMONI) ./monimelt $(MONI_MELT_DEBUG_FLAGS) --daemon-noclose --chdir $(PWD) $(MONI_MELT_RUN_FLAGS)  \
           $(MONI_MELT_JOB_FLAGS) $(MONI_MELT_JSONRPC_FLAGS) \
 	  $(if $(MONI_MELT_OUTMONI), > $(MONI_MELT_OUTMONI) 2>&1) &
@@ -161,9 +164,12 @@ melt-process-debug: monimelt.h meltmom-process.quicklybuilt.so | _meltwork monim
 	    -fplugin-arg-melt-mode=process_monimelt_header \
 	    -fplugin-arg-melt-extra=meltmom-process.quicklybuilt \
 	    -fplugin-arg-melt-monimelt-tmp=$(MONI_MELT_TMP) \
+	    -fplugin-arg-melt-monimelt-socket=$(MONI_MELT_SOCKET) \
 	    -fplugin-arg-melt-debugging=mode \
             -c $< -o /dev/null \
 	  $(if $(MONI_MELT_OUTMELT),> $(MONI_MELT_OUTMELT)  2>&1)
+	@ps -l $$(cat $(MONI_MELT_RUN_PID))
+	@echo killing $$(cat $(MONI_MELT_RUN_PID))
 	kill -TERM $$(cat $(MONI_MELT_RUN_PID))
 	ls -l $(MONI_MELT_TMP)*
 	$(RM) $(MONI_MELT_TMP)*

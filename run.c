@@ -1471,6 +1471,8 @@ jsonrpc_processor_mom (void *p)
   while (again);
   pthread_mutex_destroy (&jp->jrpc_mtx);
   pthread_cond_destroy (&jp->jrpc_cond);
+  MOM_DEBUGPRINTF (run,
+		   "ending jsonrpc_processor_mom socket#%d", jp->jrpc_socket);
   {
     pthread_mutex_lock (&jrpcmtx_mom);
     shutdown (jp->jrpc_socket, SHUT_RDWR);
@@ -1552,6 +1554,8 @@ jsonrpc_accept_handler_mom (int fd, short revent, void *data)
 	      MOM_FATAPRINTF
 		("failed to create jsonrpc processor thread socket#%d peer %s",
 		 accfd, hn);
+	    MOM_DEBUGPRINTF (run,
+			     "jsonrpc_accept_handler created processor thread for peer %s", hn);
 	  };
 	pthread_mutex_unlock (&jrpcmtx_mom);
 	if (pos < 0)
