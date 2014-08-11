@@ -1941,13 +1941,21 @@ end:
       fflush (NULL);
       MOM_INFORMPRINTF ("started dump process #%d", (int) dumpid);
       int dumpstat = 0;
-      while (waitpid (dumpid, &dumpstat, 0) < 0)
+      int wcount = 0;
+#define WAIT_COUNT_MAX 9
+      while (waitpid (dumpid, &dumpstat, 0) < 0 && wcount < WAIT_COUNT_MAX)
 	{
-	  MOM_WARNPRINTF ("failed to wait Sqlite dump process pid#%d",
-			  (int) dumpid);
+	  wcount++;
+	  MOM_WARNPRINTF
+	    ("failed to wait Sqlite dump process pid#%d (%s %s), wait count %d",
+	     (int) dumpid, MOM_DUMP_SCRIPT, basename (dmp.dmp_sqlpath),
+	     wcount);
 	  fflush (NULL);
-	  sleep (2);
+	  sleep (2 + wcount / 3);
 	}
+      if (wcount >= WAIT_COUNT_MAX)
+	MOM_FATAPRINTF ("waited unsuccessfully %d times for dump process",
+			wcount);
       if (WIFEXITED (dumpstat) && WEXITSTATUS (dumpstat) > 0)
 	MOM_WARNPRINTF ("dump command '%s %s' failed, exited %d",
 			MOM_DUMP_SCRIPT, dumpargtab[1],
