@@ -1942,7 +1942,7 @@ end:
       MOM_INFORMPRINTF ("started dump process #%d", (int) dumpid);
       int dumpstat = 0;
       int wcount = 0;
-#define WAIT_COUNT_MAX 9
+#define WAIT_COUNT_MAX 16
       while (waitpid (dumpid, &dumpstat, 0) < 0 && wcount < WAIT_COUNT_MAX)
 	{
 	  wcount++;
@@ -1953,9 +1953,9 @@ end:
 	  fflush (NULL);
 	  sleep (2 + wcount / 3);
 	}
-      if (wcount >= WAIT_COUNT_MAX)
-	MOM_FATAPRINTF ("waited unsuccessfully %d times for dump process",
-			wcount);
+      if (wcount >= WAIT_COUNT_MAX && kill (0, dumpid))
+	MOM_FATAPRINTF ("waited unsuccessfully %d times for dump process #%d",
+			wcount, dumpid);
       if (WIFEXITED (dumpstat) && WEXITSTATUS (dumpstat) > 0)
 	MOM_WARNPRINTF ("dump command '%s %s' failed, exited %d",
 			MOM_DUMP_SCRIPT, dumpargtab[1],
