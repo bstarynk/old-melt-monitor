@@ -1270,13 +1270,16 @@ jsonrpc_processor_mom (void *p)
       // peek one char to test against EOF...
       {
 	int c = fgetc (fil);
-	if (c != EOF)
+	if (c != EOF && !goteof)
 	  {
-	    if (isspace (c) && !goteof && feof (fil))
+	    while (isspace (c))
+	      c = fgetc (fil);
+	    if (!goteof && feof (fil))
 	      goteof = __LINE__;
 	    MOM_DEBUGPRINTF (run, "jsonrpc_processor ungetc %d=%c socket#%d",
 			     c, c, jp->jrpc_socket);
-	    ungetc (c, fil);
+	    if (!goteof && c != EOF && !isspace (c))
+	      ungetc (c, fil);
 	  }
 	else
 	  {
