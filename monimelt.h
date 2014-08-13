@@ -270,11 +270,11 @@ void mom_out_at (const char *sfil, int lin, momout_t *pout, ...)
   __attribute__ ((sentinel));
 void mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist);
 /// output into a string value
-momval_t mom_outstring_at (unsigned flags, const char *sfil, int lin, ...)
+momval_t mom_outstring_at (const char *sfil, int lin, unsigned flags, ...)
   __attribute__ ((sentinel));
-#define MOM_OUTSTRING_AT_BIS(Flag,Fil,Lin,...) mom_outstring_at(Flag,Fil,Lin,##__VA_ARGS__)
-#define MOM_OUTSTRING_AT(Flag,Fil,Lin,...) MOM_OUTSTRING_AT_BIS((Flag),Fil,Lin,##__VA_ARGS__,NULL)
-#define MOM_OUTSTRING(Flag,...) MOM_OUTSTRING_AT((Flag),__FILE__,__LINE__,##__VA_ARGS__)
+#define MOM_OUTSTRING_AT_BIS(Fil,Lin,Flag,...) mom_outstring_at(Fil,Lin,Flag,##__VA_ARGS__)
+#define MOM_OUTSTRING_AT(Fil,Lin,...) MOM_OUTSTRING_AT_BIS(,Fil,Lin,(Flag),##__VA_ARGS__,NULL)
+#define MOM_OUTSTRING(Flag,...) MOM_OUTSTRING_AT(__FILE__,__LINE__,Flag,##__VA_ARGS__)
 #define MOM_OUTVA(Out,Alist) mom_outva_at(__FILE__,__LINE__,Out,Alist)
 #define MOM_OUT_AT_BIS(Fil,Lin,Out,...) mom_out_at(Fil,Lin,Out,##__VA_ARGS__,NULL)
 #define MOM_OUT_AT(Fil,Lin,Out,...) MOM_OUT_AT_BIS(Fil,Lin,Out,##__VA_ARGS__)
@@ -902,9 +902,9 @@ mom_lock_item (momitem_t *itm)
   return (pthread_mutex_lock (&itm->i_mtx) == 0);
 }
 
-bool mom_lock_item_at (momitem_t *itm, const char *fil, int lin);
+bool mom_lock_item_at (const char *fil, int lin, momitem_t *itm);
 #ifndef NDEBUG
-#define mom_lock_item(Itm) mom_lock_item_at(Itm,__FILE__,__LINE__)
+#define mom_lock_item(Itm) mom_lock_item_at(__FILE__,__LINE__,Itm)
 #endif
 
 #define mom_should_lock_item_at(Lin,Itm) do {			\
@@ -925,9 +925,9 @@ mom_unlock_item (momitem_t *itm)
   pthread_mutex_unlock (&itm->i_mtx);
 }
 
-void mom_unlock_item_at (momitem_t *itm, const char *fil, int lin);
+void mom_unlock_item_at (const char *fil, int lin, momitem_t *itm);
 #ifndef NDEBUG
-#define mom_unlock_item(Itm) mom_unlock_item_at(Itm,__FILE__,__LINE__)
+#define mom_unlock_item(Itm) mom_unlock_item_at(__FILE__,__LINE__,Itm)
 #endif
 
 static inline momitem_t *
@@ -2213,42 +2213,42 @@ unsigned mom_debugflags;
 #define MOM_IS_DEBUGGING(Dbg) (mom_debugflags & (1<<momdbg_##Dbg))
 
 void
-mom_debug_at (enum mom_debug_en dbg, const char *fil, int lin, ...)
+mom_debug_at (const char *fil, int lin, enum mom_debug_en dbg, ...)
 __attribute__ ((sentinel));
 
-#define MOM_DEBUG_AT(Dbg,Fil,Lin,...) do {	\
+#define MOM_DEBUG_AT(Fil,Lin,Dbg,...) do {	\
     if (MOM_IS_DEBUGGING(Dbg))			\
-      mom_debug_at (momdbg_##Dbg,Fil,Lin,	\
+      mom_debug_at (Fil,Lin,momdbg_##Dbg,	\
 		    ##__VA_ARGS__, NULL);	\
   } while(0)
 
-#define MOM_DEBUG_AT_BIS(Dbg,Fil,Lin,...)	\
-  MOM_DEBUG_AT(Dbg,Fil,Lin,			\
+#define MOM_DEBUG_AT_BIS(Fil,Lin,Dbg,...)	\
+  MOM_DEBUG_AT(Fil,Lin,Dbg,			\
 		    ##__VA_ARGS__)
 
 #define MOM_DEBUG(Dbg,...)			\
-  MOM_DEBUG_AT_BIS(Dbg,__FILE__,__LINE__,	\
+  MOM_DEBUG_AT_BIS(__FILE__,__LINE__,Dbg,	\
 			##__VA_ARGS__)
 
 
 
 void
-mom_debugprintf_at (enum mom_debug_en dbg, const char *fil, int lin,
+mom_debugprintf_at (const char *fil, int lin, enum mom_debug_en dbg,
 		    const char *fmt, ...)
 __attribute__ ((format (printf, 4, 5)));
 
-#define MOM_DEBUGPRINTF_AT(Dbg,Fil,Lin,Fmt,...) do {	\
+#define MOM_DEBUGPRINTF_AT(Fil,Lin,Dbg,Fmt,...) do {	\
     if (MOM_IS_DEBUGGING(Dbg))				\
-      mom_debugprintf_at (momdbg_##Dbg,Fil,Lin,Fmt,	\
+      mom_debugprintf_at (Fil,Lin,momdbg_##Dbg,Fmt,	\
 		    ##__VA_ARGS__);			\
   } while(0)
 
-#define MOM_DEBUGPRINTF_AT_BIS(Dbg,Fil,Lin,Fmt,...)	\
-  MOM_DEBUGPRINTF_AT(Dbg,Fil,Lin,Fmt,			\
+#define MOM_DEBUGPRINTF_AT_BIS(Fil,Lin,Dbg,Fmt,...)	\
+  MOM_DEBUGPRINTF_AT(Fil,Lin,Dbg,Fmt,			\
 		    ##__VA_ARGS__)
 
 #define MOM_DEBUGPRINTF(Dbg,Fmt,...)			\
-  MOM_DEBUGPRINTF_AT_BIS(Dbg,__FILE__,__LINE__,Fmt,	\
+  MOM_DEBUGPRINTF_AT_BIS(__FILE__,__LINE__,Dbg,Fmt,	\
 			##__VA_ARGS__)
 
 

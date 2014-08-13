@@ -1003,7 +1003,7 @@ mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist)
 }
 
 momval_t
-mom_outstring_at (unsigned flags, const char *sfil, int lin, ...)
+mom_outstring_at (const char *sfil, int lin, unsigned flags, ...)
 {
   va_list alist;
   char *outbuf = NULL;
@@ -1015,7 +1015,7 @@ mom_outstring_at (unsigned flags, const char *sfil, int lin, ...)
   struct momout_st mout;
   memset (&mout, 0, sizeof (mout));
   mom_initialize_output (&mout, fout, flags);
-  va_start (alist, lin);
+  va_start (alist, flags);
   mom_outva_at (sfil, lin, &mout, alist);
   va_end (alist);
   fflush (fout);

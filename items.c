@@ -1100,11 +1100,11 @@ mom_set_attributes (const struct mom_itemattributes_st *attrs)
 ////////////////////////////////////////////////////////////////
 
 bool
-mom_lock_item_at (momitem_t *itm, const char *fil, int lin)
+mom_lock_item_at (const char *fil, int lin, momitem_t *itm)
 {
   if (MOM_UNLIKELY (MOM_IS_DEBUGGING (item)))
     {
-      mom_debug_at (momdbg_item, fil, lin,
+      mom_debug_at (fil, lin, momdbg_item,
 		    MOMOUT_LITERAL ("mom_lock_item "),
 		    MOMOUT_ITEM ((const momitem_t *) itm), NULL);
     }
@@ -1115,11 +1115,11 @@ mom_lock_item_at (momitem_t *itm, const char *fil, int lin)
 }
 
 void
-mom_unlock_item_at (momitem_t *itm, const char *fil, int lin)
+mom_unlock_item_at (const char *fil, int lin, momitem_t *itm)
 {
   if (MOM_UNLIKELY (MOM_IS_DEBUGGING (item)))
     {
-      mom_debug_at (momdbg_item, fil, lin,
+      mom_debug_at (fil, lin, momdbg_item,
 		    MOMOUT_LITERAL ("mom_unlock_item "),
 		    MOMOUT_ITEM ((const momitem_t *) itm), NULL);
     }

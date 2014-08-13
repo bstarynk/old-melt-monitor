@@ -79,7 +79,7 @@ mom_strftime_centi (char *buf, size_t len, const char *fmt, double ti)
 }
 
 void
-mom_debug_at (enum mom_debug_en dbg, const char *sfil, int slin, ...)
+mom_debug_at (const char *sfil, int slin, enum mom_debug_en dbg, ...)
 {
   struct momout_st outd;
   char *membuf = NULL;
@@ -88,12 +88,12 @@ mom_debug_at (enum mom_debug_en dbg, const char *sfil, int slin, ...)
   outd.mout_magic = MOM_MOUT_MAGIC;
   outd.mout_file = open_memstream (&membuf, &memsize);
   va_list alist;
-  va_start (alist, slin);
+  va_start (alist, dbg);
   mom_outva_at (sfil, slin, &outd, alist);
   va_end (alist);
   fclose (outd.mout_file);
   memset (&outd, 0, sizeof (outd));
-  mom_debugprintf_at (dbg, sfil, slin, "%s", membuf);
+  mom_debugprintf_at (sfil, slin, dbg, "%s", membuf);
   free (membuf), membuf = 0;
 }
 
@@ -101,7 +101,7 @@ mom_debug_at (enum mom_debug_en dbg, const char *sfil, int slin, ...)
 
 static pthread_mutex_t dbgmtx_mom = PTHREAD_MUTEX_INITIALIZER;
 void
-mom_debugprintf_at (enum mom_debug_en dbg, const char *fil, int lin,
+mom_debugprintf_at (const char *fil, int lin, enum mom_debug_en dbg,
 		    const char *fmt, ...)
 {
   static long countdbg;
