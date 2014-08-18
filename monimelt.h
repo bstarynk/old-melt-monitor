@@ -93,6 +93,9 @@
 /// for the MELT plugin analyzing this header
 #ifdef MELTMOM
 #pragma MONIMELT ENABLE
+#define MELTMOM_ATTRIBUTE(X) __attribute__((meltmom(#X)))
+#else
+#define MELTMOM_ATTRIBUTE(X)
 #endif
 
 // in generated _timestamp.c
@@ -267,7 +270,8 @@ typedef enum momoutflags_en
 } momoutflags_t;
 
 void mom_out_at (const char *sfil, int lin, momout_t *pout, ...)
-  __attribute__ ((sentinel));
+  __attribute__ ((sentinel))
+MELTMOM_ATTRIBUTE (mom_at_file_line_macro (MOM_OUT));
 void mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist);
 /// output into a string value
 momval_t mom_outstring_at (const char *sfil, int lin, unsigned flags, ...)
