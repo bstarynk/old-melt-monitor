@@ -1943,13 +1943,15 @@ end:
       int dumpstat = 0;
       int wcount = 0;
 #define WAIT_COUNT_MAX 16
+      errno = 0;
       while (waitpid (dumpid, &dumpstat, 0) < 0 && wcount < WAIT_COUNT_MAX)
 	{
+	  int werr = errno;
 	  wcount++;
 	  MOM_WARNPRINTF
-	    ("failed to wait Sqlite dump process pid#%d (%s %s), wait count %d",
+	    ("failed to wait Sqlite dump process pid#%d (%s %s) - %s, wait count %d",
 	     (int) dumpid, MOM_DUMP_SCRIPT, basename (dmp.dmp_sqlpath),
-	     wcount);
+	     strerror (werr), wcount);
 	  fflush (NULL);
 	  sleep (2 + wcount / 3);
 	}

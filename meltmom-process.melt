@@ -38,8 +38,11 @@
 	     )
 	(if monimelt_socket (constant_box monimelt_socket)
 	  (string4out discr_string monimelt_tmp "_socket"))))
+;; we need to usleep a bit to let the monitor warm up
+(code_chunk startusleep_chk #{ /* meltmom-process $STARTUSLEEP_CHK */
+	    usleep (200*1000);
+	    }#)
 (debug "monimelt_service=" monimelt_service)
-
 (defun monimelt_enable_pragma_handler (ph)
   (debug "monimelt_enable_pragma_handler ph=" ph)
   (inform_at (pragma_lex) "MONIMELT enabling MELT")
@@ -94,7 +97,7 @@
 (defun monimelt_finish_unit (arg)
   (debug "monimelt_finish_unit" " arg=" arg ";\n monimelt_types_list=" monimelt_types_list
 	 ";\n monimelt_functions_list=" monimelt_functions_list)
-  (let ( (momstatus (do_blocking_jsonrpc2_call monimelt_service '"state" () 350))
+  (let ( (momstatus (do_blocking_jsonrpc2_call monimelt_service '"state" () 450))
 	 )
     (debug "monimelt_finish_unit" " momstatus=" momstatus))
   )
@@ -102,7 +105,7 @@
 (defun processmonimelt_docmd (cmd moduldata)
   (debug "processmonimelt_docmd start " cmd)
   (debug "processmonimelt_docmd monimelt_service=" monimelt_service)
-  (let ( (momstatus (do_blocking_jsonrpc2_call monimelt_service '"state" () 660))
+  (let ( (momstatus (do_blocking_jsonrpc2_call monimelt_service '"state" '1 660))
 	 (at (instance class_gcc_attribute
 		       :named_name '"meltmom"
 		       :gccattr_data (tuple 'some-data)
