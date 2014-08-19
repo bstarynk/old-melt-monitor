@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 Jul 13
+-- state-monimelt dump 2014 Aug 19
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -83,6 +83,9 @@ INSERT INTO t_items VALUES('_1f94j87qumw_mhzkriesx7c','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_240dwt57s08_a8uy366sev5','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "useless noop routine"}],
  "content": {"jtype": "node", "node": "_240dwt57s08_a8uy366sev5", "sons": ["{spare1 noop}",
    "{spare2 noop}", null]}, "kind": "routine", "payload": "noop"}
+');
+INSERT INTO t_items VALUES('_24w2ce2eq1z_pddi9j2czci','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "related to dump of full state"}],
+ "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_28941cvehx8_9rf4udyeq8v','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "JSON for closure routine name"}],
  "content": null, "kind": null, "payload": null}
@@ -356,6 +359,9 @@ INSERT INTO t_items VALUES('_6qp266amrz7_izi5rx6ukuk','{"attr": [], "content": n
 INSERT INTO t_items VALUES('_6w3dvx83dfw_xzc6aif6isv','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "gives the attribute[s], at least in dumped JSON..."}],
  "content": null, "kind": null, "payload": null}
 ');
+INSERT INTO t_items VALUES('_6zm92afs4yc_60a8ujmi1ef','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "routine for JSONRPC dump & exit"}],
+ "content": null, "kind": null, "payload": null}
+');
 INSERT INTO t_items VALUES('_70aer7teeui_kvzkiqq2rd2','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "current procedure, etc..."}],
  "content": null, "kind": null, "payload": null}
 ');
@@ -515,6 +521,7 @@ INSERT INTO t_names VALUES('display','_085krqf192t_z1m3zs77ww5','.predef');
 INSERT INTO t_names VALUES('display_value','_7pyjxst21ce_vhc0tk0em0u','.root');
 INSERT INTO t_names VALUES('double','_89ejvxupprm_f219pqwz13s','.predef');
 INSERT INTO t_names VALUES('doubles','_17spwr8dkzv_tsf2s8diazu','.predef');
+INSERT INTO t_names VALUES('dump','_24w2ce2eq1z_pddi9j2czci','.root');
 INSERT INTO t_names VALUES('edit_value','_73im2zryfij_a7zmkketcfc','.root');
 INSERT INTO t_names VALUES('editor','_38s7ihasu0m_xzipyerxm3j','.predef');
 INSERT INTO t_names VALUES('editors','_7qk90k9vx0u_31ivff77td7','.root');
@@ -538,6 +545,7 @@ INSERT INTO t_names VALUES('ix','_9wwqwxqcm4p_y7di7fs8tsk','.root');
 INSERT INTO t_names VALUES('json_array','_35vp60aw7em_d436vfie4ud','.predef');
 INSERT INTO t_names VALUES('json_false','_4mha85xcfwi_9zqcvkiy3dk','.predef');
 INSERT INTO t_names VALUES('json_object','_3xpyd539p4m_23h7wi59xi9','.predef');
+INSERT INTO t_names VALUES('json_rpc_dump_exit','_6zm92afs4yc_60a8ujmi1ef','.root');
 INSERT INTO t_names VALUES('json_rpc_status','_6p6v25323aq_97d9ude6j12','.root');
 INSERT INTO t_names VALUES('json_true','_2vmrrvq5kdk_9um63pstcu9','.predef');
 INSERT INTO t_names VALUES('jsonrpc','_0h331ch957p_j6a8i7v4e6y','.predef');

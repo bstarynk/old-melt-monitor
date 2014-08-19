@@ -121,26 +121,26 @@ add_editors_mom (void)
 #endif
 
 static void
-make_closure_json_rpc_status_mom (void)
+make_closure_json_rpc_dump_exit_mom (void)
 {
-  momitem_t *json_rpc_status_item = mom_get_item_of_name ("json_rpc_status");
-  assert (json_rpc_status_item != NULL);
-  momitem_t *state_item = mom_get_item_of_name ("state");
-  assert (state_item != NULL);
+  momitem_t *json_rpc_dump_exit_item = mom_get_item_of_name ("json_rpc_dump_exit");
+  assert (json_rpc_dump_exit_item != NULL);
+  momitem_t *dump_item = mom_get_item_of_name ("dump");
+  assert (dump_item != NULL);
 
-  mom_item_start_closure_named (json_rpc_status_item, "json_rpc_status", 2);
-  mom_item_closure_set_nth (json_rpc_status_item, 0,
+  mom_item_start_closure_named (json_rpc_dump_exit_item, "json_rpc_dump_exit", 2);
+  mom_item_closure_set_nth (json_rpc_dump_exit_item, 0,
 			    (momval_t)
 			    mom_make_string
-			    ("{spare closed-value json-rpc-status-0}"));
-  mom_item_closure_set_nth (json_rpc_status_item, 1,
+			    ("{spare closed-value json-rpc-dump-exit-0}"));
+  mom_item_closure_set_nth (json_rpc_dump_exit_item, 1,
 			    (momval_t)
 			    mom_make_string
-			    ("{spare closed-value json-rpc-status-1}"));
-  mom_item_put_attribute (state_item, mom_named__jsonrpc,
-			  (momval_t) json_rpc_status_item);
-  MOM_DEBUG (run, MOMOUT_LITERAL ("closure json_rpc_status"),
-	     MOMOUT_VALUE ((const momval_t) json_rpc_status_item), NULL);
+			    ("{spare closed-value json-rpc-dump-exit-1}"));
+  mom_item_put_attribute (dump_item, mom_named__jsonrpc_handler,
+			  (momval_t) json_rpc_dump_exit_item);
+  MOM_DEBUG (run, MOMOUT_LITERAL ("closure json_rpc_dump_exit"),
+	     MOMOUT_VALUE ((const momval_t) json_rpc_dump_exit_item), NULL);
 }
 
 
@@ -150,5 +150,5 @@ momplugin_after_load (void)
 {
   MOM_DEBUGPRINTF (run,
 		   "after load in " __FILE__ " build " __DATE__ "@" __TIME__);
-  make_closure_json_rpc_status_mom ();
+  make_closure_json_rpc_dump_exit_mom ();
 }

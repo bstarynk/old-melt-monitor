@@ -4622,6 +4622,89 @@ const struct momroutinedescr_st momrout_json_rpc_status = {
   .rout_timestamp = __DATE__ "@" __TIME__
 };
 
+
+////////////////////////////////////////////////////////////////
+static int
+json_rpc_dump_exit_codmom (int momstate_, momitem_t *momtasklet_,
+			const momval_t momclosurv_,
+			momval_t *momlocvals_, intptr_t * momlocnums_,
+			double *momlocdbls_)
+{
+  const momval_t *momclovals __attribute__ ((unused)) =
+    mom_closed_values (momclosurv_);
+#define _L(Nam) (momlocvals_[json_rpc_dump_exit_v_##Nam])
+#define _C(Nam) (momclovals[json_rpc_dump_exit_c_##Nam])
+#define _N(Nam) (momlocnums_[json_rpc_dump_exit_n_##Nam])
+  enum json_rpc_dump_exit_state_en
+  {
+    json_rpc_dump_exit_s_start,
+    json_rpc_dump_exit_s_impossible,
+    json_rpc_dump_exit_s__laststate
+  };
+#define _SET_STATE(St) do {						\
+    MOM_DEBUGPRINTF (run,						\
+		     "json_rpc_dump_exit_codmom setstate " #St " = %d",	\
+		     (int)json_rpc_dump_exit_s_##St);			\
+    return json_rpc_dump_exit_s_##St; } while(0)
+  if (momstate_ >= 0 && momstate_ < json_rpc_dump_exit_s__laststate)
+    switch ((enum json_rpc_dump_exit_state_en) momstate_)
+      {
+      case json_rpc_dump_exit_s_start:
+	goto json_rpc_dump_exit_lab_start;
+      case json_rpc_dump_exit_s_impossible:
+	goto json_rpc_dump_exit_lab_impossible;
+      case json_rpc_dump_exit_s__laststate:;
+      }
+  MOM_FATAPRINTF ("json_rpc_dump_exit invalid state #%d", momstate_);
+json_rpc_dump_exit_lab_start:
+  MOM_DEBUG (run, MOMOUT_LITERAL ("json_rpc_dump_exit start jparams="),
+	     MOMOUT_VALUE ((const momval_t) _L (jparams)),
+	     MOMOUT_LITERAL (" jxitm="),
+	     MOMOUT_VALUE ((const momval_t) _L (jxitm)),
+	     MOMOUT_LITERAL (" peername="),
+	     MOMOUT_VALUE ((const momval_t) _L (peername)),
+	     MOMOUT_LITERAL (" count="), MOMOUT_DEC_INT ((int) _N (count)),
+	     NULL);
+  if (_L (jparams).ptr == MOM_EMPTY)
+    _SET_STATE (impossible);
+#warning missing real JSONRPC dump exit
+  _L (jresult) = (momval_t) mom_make_json_object
+    (MOMJSOB_STRING (((const char *) "timestamp"),
+		     (momval_t) mom_make_string (monimelt_timestamp)),
+     MOMJSOB_STRING (((const char *) "lastgitcommit"),
+		     (momval_t) mom_make_string (monimelt_lastgitcommit)),
+     MOMJSOB_STRING (((const char *) "elapsedtime"),
+		     (momval_t) mom_make_double (mom_elapsed_real_time ())),
+     MOMJSOB_STRING (((const char *) "cputime"),
+		     (momval_t)
+		     mom_make_double (mom_clock_time
+				      (CLOCK_PROCESS_CPUTIME_ID))),
+     MOMJSON_END);
+  MOM_DEBUG (run, MOMOUT_LITERAL ("json_rpc_dump_exit jresult="),
+	     MOMOUT_VALUE (_L (jresult)), NULL);
+  mom_jsonrpc_reply (_L (jxitm).pitem, _L (jresult));
+  return momroutres_pop;
+json_rpc_dump_exit_lab_impossible:
+  MOM_FATAPRINTF ("json_rpc_dump_exit impossible state reached!");
+#undef _L
+#undef _C
+#undef _N
+#undef _SET_STATE
+  return momroutres_pop;
+}
+
+const struct momroutinedescr_st momrout_json_rpc_dump_exit = {
+  .rout_magic = MOM_ROUTINE_MAGIC,	//
+  .rout_minclosize = json_rpc_dump_exit_c__lastclosure,	//
+  .rout_frame_nbval = json_rpc_dump_exit_v__lastval,	//
+  .rout_frame_nbnum = json_rpc_dump_exit_n__lastnum,	//
+  .rout_frame_nbdbl = 0,	//
+  .rout_name = "json_rpc_dump_exit",	//
+  .rout_module = MONIMELT_CURRENT_MODULE,	//
+  .rout_codefun = json_rpc_dump_exit_codmom,	//
+  .rout_timestamp = __DATE__ "@" __TIME__
+};
+
 ////////////////////////////////////////////////////////////////
 ///// noop
 enum noop_valindex_en

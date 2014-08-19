@@ -1930,8 +1930,8 @@ end:
 	      exit (EXIT_FAILURE);
 	    };
 	  usleep (5000);
-	  if (nice (1))
-	    perror ("nice");
+	  if (nice (1) == -1)
+	    perror ("nice dump");
 	  execvp (MOM_DUMP_SCRIPT, dumpargtab);
 	  execvp (MOM_DUMP_SCRIPT2, dumpargtab);
 	  perror ("exec " MOM_DUMP_SCRIPT " or " MOM_DUMP_SCRIPT2);

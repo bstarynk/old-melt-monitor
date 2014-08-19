@@ -99,6 +99,9 @@
 	 ";\n monimelt_functions_list=" monimelt_functions_list)
   (let ( (momstatus (do_blocking_jsonrpc2_call monimelt_service '"state" () 450))
 	 )
+    (when (null momstatus)
+      (error_at () "failed to get Monimelt final state on service $1" monimelt_service)
+      (return))
     (debug "monimelt_finish_unit" " momstatus=" momstatus))
   )
 
@@ -113,6 +116,9 @@
 	 )
     (debug "processmonimelt_docmd" " initial momstatus=" momstatus
 	   "\n.. at=" at)
+    (when (null momstatus)
+      (error_at () "failed to get Monimelt initial state on service $1" monimelt_service)
+      (return))
     (register_expanded_pragma 'monimelt 'enable
 			      monimelt_enable_pragma_handler 
 			      :true)
