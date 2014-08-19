@@ -4661,6 +4661,7 @@ json_rpc_dump_exit_codmom (int momstate_, momitem_t *momtasklet_,
   {
     json_rpc_dump_exit_s_start,
     json_rpc_dump_exit_s_impossible,
+    json_rpc_dump_exit_s_afterdump,
     json_rpc_dump_exit_s__laststate
   };
 #define _SET_STATE(St) do {						\
@@ -4675,6 +4676,8 @@ json_rpc_dump_exit_codmom (int momstate_, momitem_t *momtasklet_,
 	goto json_rpc_dump_exit_lab_start;
       case json_rpc_dump_exit_s_impossible:
 	goto json_rpc_dump_exit_lab_impossible;
+      case json_rpc_dump_exit_s_afterdump:
+	goto json_rpc_dump_exit_lab_afterdump;
       case json_rpc_dump_exit_s__laststate:;
       }
   MOM_FATAPRINTF ("json_rpc_dump_exit invalid state #%d", momstate_);
@@ -4689,7 +4692,14 @@ json_rpc_dump_exit_lab_start:
 	     NULL);
   if (_L (jparams).ptr == MOM_EMPTY)
     _SET_STATE (impossible);
-#warning missing real JSONRPC dump exit
+  MOM_DEBUG (run,
+	     MOMOUT_LITERAL
+	     ("json_rpc_dump_exit before stop dump continue tasklet="),
+	     MOMOUT_ITEM ((const momitem_t *) momtasklet_), NULL);
+  mom_stop_work_with_todo (todo_dump_continue_mom, (char *) ".");
+  _SET_STATE (afterdump);
+json_rpc_dump_exit_lab_afterdump:
+  MOM_DEBUG (run, MOMOUT_LITERAL ("json_rpc_dump_exit after dump"), NULL);
   _L (jresult) = (momval_t) mom_make_json_object
     (MOMJSOB_STRING (((const char *) "timestamp"),
 		     (momval_t) mom_make_string (monimelt_timestamp)),
@@ -4705,6 +4715,7 @@ json_rpc_dump_exit_lab_start:
   MOM_DEBUG (run, MOMOUT_LITERAL ("json_rpc_dump_exit jresult="),
 	     MOMOUT_VALUE (_L (jresult)), NULL);
   mom_jsonrpc_reply (_L (jxitm).pitem, _L (jresult));
+  mom_stop_work_with_todo (NULL, NULL);
   return momroutres_pop;
 json_rpc_dump_exit_lab_impossible:
   MOM_FATAPRINTF ("json_rpc_dump_exit impossible state reached!");
