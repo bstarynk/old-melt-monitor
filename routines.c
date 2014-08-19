@@ -4696,10 +4696,8 @@ json_rpc_dump_exit_lab_start:
 	     MOMOUT_LITERAL
 	     ("json_rpc_dump_exit before stop dump continue tasklet="),
 	     MOMOUT_ITEM ((const momitem_t *) momtasklet_), NULL);
-  mom_stop_work_with_todo (todo_dump_continue_mom, (char *) ".");
-  _SET_STATE (afterdump);
-json_rpc_dump_exit_lab_afterdump:
-  MOM_DEBUG (run, MOMOUT_LITERAL ("json_rpc_dump_exit after dump"), NULL);
+  mom_stop_work_with_todo (todo_dump_at_exit_mom, (char *) ".");
+  MOM_DEBUG (run, MOMOUT_LITERAL ("json_rpc_dump_exit doing dump"), NULL);
   _L (jresult) = (momval_t) mom_make_json_object
     (MOMJSOB_STRING (((const char *) "timestamp"),
 		     (momval_t) mom_make_string (monimelt_timestamp)),
@@ -4715,7 +4713,15 @@ json_rpc_dump_exit_lab_afterdump:
   MOM_DEBUG (run, MOMOUT_LITERAL ("json_rpc_dump_exit jresult="),
 	     MOMOUT_VALUE (_L (jresult)), NULL);
   mom_jsonrpc_reply (_L (jxitm).pitem, _L (jresult));
+  _SET_STATE (afterdump);
+json_rpc_dump_exit_lab_afterdump:
+  MOM_DEBUG (run,
+	     MOMOUT_LITERAL
+	     ("json_rpc_dump_exit before stop after dump tasklet="),
+	     MOMOUT_ITEM ((const momitem_t *) momtasklet_), NULL);
+  usleep (10000);
   mom_stop_work_with_todo (NULL, NULL);
+  usleep (10000);
   return momroutres_pop;
 json_rpc_dump_exit_lab_impossible:
   MOM_FATAPRINTF ("json_rpc_dump_exit impossible state reached!");

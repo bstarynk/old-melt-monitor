@@ -97,12 +97,12 @@
 (defun monimelt_finish_unit (arg)
   (debug "monimelt_finish_unit" " arg=" arg ";\n monimelt_types_list=" monimelt_types_list
 	 ";\n monimelt_functions_list=" monimelt_functions_list)
-  (let ( (momstatus (do_blocking_jsonrpc2_call monimelt_service '"state" () 450))
+  (let ( (momdump (do_blocking_jsonrpc2_call monimelt_service '"dump" () 1550))
 	 )
-    (when (null momstatus)
-      (error_at () "failed to get Monimelt final state on service $1" monimelt_service)
+    (when (null momdump)
+      (error_at () "failed to do final Monimelt dump on service $1" monimelt_service)
       (return))
-    (debug "monimelt_finish_unit" " momstatus=" momstatus))
+    (debug "monimelt_finish_unit" " momdump=" momdump))
   )
 
 (defun processmonimelt_docmd (cmd moduldata)
