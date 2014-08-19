@@ -4624,11 +4624,33 @@ const struct momroutinedescr_st momrout_json_rpc_status = {
 
 
 ////////////////////////////////////////////////////////////////
+///// json_rpc_dump_exit
+enum json_rpc_dump_exit_valindex_en
+{
+  json_rpc_dump_exit_v_jparams,
+  json_rpc_dump_exit_v_jxitm,
+  json_rpc_dump_exit_v_peername,
+  json_rpc_dump_exit_v_jresult,
+  json_rpc_dump_exit_v__lastval
+};
+
+enum json_rpc_dump_exit_closure_en
+{
+  json_rpc_dump_exit_c__lastclosure
+};
+
+enum json_rpc_dump_exit_numbers_en
+{
+  json_rpc_dump_exit_n_count,
+  json_rpc_dump_exit_n__lastnum
+};
+
+
 static int
 json_rpc_dump_exit_codmom (int momstate_, momitem_t *momtasklet_,
-			const momval_t momclosurv_,
-			momval_t *momlocvals_, intptr_t * momlocnums_,
-			double *momlocdbls_)
+			   const momval_t momclosurv_,
+			   momval_t *momlocvals_, intptr_t * momlocnums_,
+			   double *momlocdbls_)
 {
   const momval_t *momclovals __attribute__ ((unused)) =
     mom_closed_values (momclosurv_);

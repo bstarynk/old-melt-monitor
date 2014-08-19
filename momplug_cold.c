@@ -123,12 +123,14 @@ add_editors_mom (void)
 static void
 make_closure_json_rpc_dump_exit_mom (void)
 {
-  momitem_t *json_rpc_dump_exit_item = mom_get_item_of_name ("json_rpc_dump_exit");
+  momitem_t *json_rpc_dump_exit_item =
+    mom_get_item_of_name ("json_rpc_dump_exit");
   assert (json_rpc_dump_exit_item != NULL);
   momitem_t *dump_item = mom_get_item_of_name ("dump");
   assert (dump_item != NULL);
 
-  mom_item_start_closure_named (json_rpc_dump_exit_item, "json_rpc_dump_exit", 2);
+  mom_item_start_closure_named (json_rpc_dump_exit_item, "json_rpc_dump_exit",
+				2);
   mom_item_closure_set_nth (json_rpc_dump_exit_item, 0,
 			    (momval_t)
 			    mom_make_string

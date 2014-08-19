@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','todo dump at exit');
+INSERT INTO t_params VALUES('dump_reason','exit dump');
 INSERT INTO t_items VALUES('_02u53qxa7dm_sttmhffpchr','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "The agenda is central to Monimelt.\nIt is the queue of taskets to be executed by worker threads."}],
  "content": null, "kind": "queue", "payload": []}
 ');
@@ -84,8 +84,10 @@ INSERT INTO t_items VALUES('_240dwt57s08_a8uy366sev5','{"attr": [{"attr": "_41u1
  "content": {"jtype": "node", "node": "_240dwt57s08_a8uy366sev5", "sons": ["{spare1 noop}",
    "{spare2 noop}", null]}, "kind": "routine", "payload": "noop"}
 ');
-INSERT INTO t_items VALUES('_24w2ce2eq1z_pddi9j2czci','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "related to dump of full state"}],
- "content": null, "kind": null, "payload": null}
+INSERT INTO t_items VALUES('_24w2ce2eq1z_pddi9j2czci','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "related to dump of full state"},
+  {"attr": "_0hpzi8m7wym_1y4ypmm9y47", "val": {"item_ref": "_6zm92afs4yc_60a8ujmi1ef",
+    "jtype": "item_ref", "space": ".root"}}], "content": null, "kind": null,
+ "payload": null}
 ');
 INSERT INTO t_items VALUES('_28941cvehx8_9rf4udyeq8v','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "JSON for closure routine name"}],
  "content": null, "kind": null, "payload": null}
@@ -360,7 +362,8 @@ INSERT INTO t_items VALUES('_6w3dvx83dfw_xzc6aif6isv','{"attr": [{"attr": "_41u1
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_6zm92afs4yc_60a8ujmi1ef','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "routine for JSONRPC dump & exit"}],
- "content": null, "kind": null, "payload": null}
+ "content": null, "kind": "closure", "payload": {"closed_values": ["{spare closed-value json-rpc-dump-exit-0}",
+   "{spare closed-value json-rpc-dump-exit-1}"], "closure_routine": "json_rpc_dump_exit"}}
 ');
 INSERT INTO t_items VALUES('_70aer7teeui_kvzkiqq2rd2','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "current procedure, etc..."}],
  "content": null, "kind": null, "payload": null}
