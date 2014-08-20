@@ -906,7 +906,9 @@ mom_lock_item (momitem_t *itm)
   return (pthread_mutex_lock (&itm->i_mtx) == 0);
 }
 
-bool mom_lock_item_at (const char *fil, int lin, momitem_t *itm);
+bool
+mom_lock_item_at (const char *fil, int lin, momitem_t *itm)
+MELTMOM_ATTRIBUTE (mom_at_file_line_macro (mom_lock_item));
 #ifndef NDEBUG
 #define mom_lock_item(Itm) mom_lock_item_at(__FILE__,__LINE__,Itm)
 #endif
@@ -921,21 +923,21 @@ bool mom_lock_item_at (const char *fil, int lin, momitem_t *itm);
 #define mom_should_lock_item(Itm) mom_should_lock_item_at(__LINE__,(Itm))
 
 // unlock an item
-static inline void
-mom_unlock_item (momitem_t *itm)
+     static inline void mom_unlock_item (momitem_t *itm)
 {
   assert (itm && itm->i_typnum == momty_item
 	  && itm->i_magic == MOM_ITEM_MAGIC);
   pthread_mutex_unlock (&itm->i_mtx);
 }
 
-void mom_unlock_item_at (const char *fil, int lin, momitem_t *itm);
+void
+mom_unlock_item_at (const char *fil, int lin, momitem_t *itm)
+MELTMOM_ATTRIBUTE (mom_at_file_line_macro (mom_unlock_item));
 #ifndef NDEBUG
 #define mom_unlock_item(Itm) mom_unlock_item_at(__FILE__,__LINE__,Itm)
 #endif
 
-static inline momitem_t *
-mom_value_to_item (momval_t v)
+     static inline momitem_t *mom_value_to_item (momval_t v)
 {
   return (v.ptr && v.pitem->i_typnum == momty_item) ? v.pitem : NULL;
 }

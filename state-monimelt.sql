@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 Aug 19
+-- state-monimelt dump 2014 Aug 20
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','todo dump at exit');
+INSERT INTO t_params VALUES('dump_reason','exit dump');
 INSERT INTO t_items VALUES('_02u53qxa7dm_sttmhffpchr','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "The agenda is central to Monimelt.\nIt is the queue of taskets to be executed by worker threads."}],
  "content": null, "kind": "queue", "payload": []}
 ');
@@ -79,6 +79,11 @@ INSERT INTO t_items VALUES('_17spwr8dkzv_tsf2s8diazu','{"attr": [{"attr": "_41u1
 ');
 INSERT INTO t_items VALUES('_1f94j87qumw_mhzkriesx7c','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "routine to update the value in displays after edition."}],
  "content": null, "kind": "routine", "payload": "update_display_value"}
+');
+INSERT INTO t_items VALUES('_1y91p3us9s9_p88di58xuek','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "JSONRPC method to declare some name"},
+  {"attr": "_0hpzi8m7wym_1y4ypmm9y47", "val": {"item_ref": "_6d4dwqa6m09_c5vtjswfpfi",
+    "jtype": "item_ref", "space": ".root"}}], "content": null, "kind": null,
+ "payload": null}
 ');
 INSERT INTO t_items VALUES('_240dwt57s08_a8uy366sev5','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "useless noop routine"}],
  "content": {"jtype": "node", "node": "_240dwt57s08_a8uy366sev5", "sons": ["{spare1 noop}",
@@ -327,6 +332,11 @@ INSERT INTO t_items VALUES('_65961crktpj_vtt30qeqv21','{"attr": [{"attr": "_41u1
   {"attr": "_5yfdp53cpi1_0i5k33wms7c", "val": {"jtype": "set", "set": ["_0afqepa7jkr_qky26hpv98d",
      "_4yxdswc8qwf_vxzy95hd399"]}}], "content": null, "kind": null, "payload": null}
 ');
+INSERT INTO t_items VALUES('_6d4dwqa6m09_c5vtjswfpfi','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "JSONRPC routine to declare some name"}],
+ "content": null, "kind": "closure", "payload": {"closed_values": ["json_rpc_meltmom_declare_name spare 0",
+   "json_rpc_meltmom_declare_name spare 1", "json_rpc_meltmom_declare_name spare 2"],
+  "closure_routine": "json_rpc_meltmom_declare_name"}}
+');
 INSERT INTO t_items VALUES('_6djzuwz5pav_cri386ywjhj','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "notably for error message in JSONRPC"}],
  "content": null, "kind": null, "payload": null}
 ');
@@ -549,6 +559,7 @@ INSERT INTO t_names VALUES('json_array','_35vp60aw7em_d436vfie4ud','.predef');
 INSERT INTO t_names VALUES('json_false','_4mha85xcfwi_9zqcvkiy3dk','.predef');
 INSERT INTO t_names VALUES('json_object','_3xpyd539p4m_23h7wi59xi9','.predef');
 INSERT INTO t_names VALUES('json_rpc_dump_exit','_6zm92afs4yc_60a8ujmi1ef','.root');
+INSERT INTO t_names VALUES('json_rpc_meltmom_declare_name','_6d4dwqa6m09_c5vtjswfpfi','.root');
 INSERT INTO t_names VALUES('json_rpc_status','_6p6v25323aq_97d9ude6j12','.root');
 INSERT INTO t_names VALUES('json_true','_2vmrrvq5kdk_9um63pstcu9','.predef');
 INSERT INTO t_names VALUES('jsonrpc','_0h331ch957p_j6a8i7v4e6y','.predef');
@@ -559,6 +570,7 @@ INSERT INTO t_names VALUES('len','_456hz6qd6x2_jyy24w6q84z','.root');
 INSERT INTO t_names VALUES('locals','_3eu0rdq4upj_dp5ptr6hj04','.predef');
 INSERT INTO t_names VALUES('low','_79vm7uxit6c_53qt1qi2wuj','.root');
 INSERT INTO t_names VALUES('make_item','_590trid9ycw_f6kaajwca63','.root');
+INSERT INTO t_names VALUES('meltmom_declare_name','_1y91p3us9s9_p88di58xuek','.root');
 INSERT INTO t_names VALUES('message','_4jp2meuzru2_a58afyxwxa2','.predef');
 INSERT INTO t_names VALUES('method','_3hv5ymapjed_y8q6hsvhw8u','.predef');
 INSERT INTO t_names VALUES('misc','_85rz4j0q982_67im8sstj9s','.root');

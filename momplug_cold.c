@@ -118,7 +118,6 @@ add_editors_mom (void)
   MOM_INFORMPRINTF
     ("updated to keep editors in closures for edit_value & ajax_edit");
 }
-#endif
 
 static void
 make_closure_json_rpc_dump_exit_mom (void)
@@ -144,13 +143,57 @@ make_closure_json_rpc_dump_exit_mom (void)
   MOM_DEBUG (run, MOMOUT_LITERAL ("closure json_rpc_dump_exit"),
 	     MOMOUT_VALUE ((const momval_t) json_rpc_dump_exit_item), NULL);
 }
+#endif
 
-
+static void
+declare_jsonrpc_mom (const char *jsonrpcname,
+		     const char *jsonrpccomment,
+		     const char *methodname, const char *methodcomment)
+{
+  char buf[64];
+  memset (buf, 0, sizeof (buf));
+  assert (jsonrpcname && isalpha (jsonrpcname[0]));
+  momitem_t *jsonrpcitem = mom_get_item_of_name (jsonrpcname);
+  if (!jsonrpcitem)
+    {
+      jsonrpcitem = mom_make_item ();
+      mom_item_set_space (jsonrpcitem, momspa_root);
+      mom_register_item_named_cstr (jsonrpcitem, jsonrpcname);
+    }
+  assert (methodname && isalpha (methodname[0]));
+  momitem_t *methoditem = mom_get_item_of_name (methodname);
+  if (!methoditem)
+    {
+      methoditem = mom_make_item ();
+      mom_item_set_space (methoditem, momspa_root);
+      mom_register_item_named_cstr (methoditem, methodname);
+    }
+  const int nbspare = 3;
+  mom_item_start_closure_named (jsonrpcitem, jsonrpcname, nbspare);
+  for (int i = 0; i < nbspare; i++)
+    {
+      snprintf (buf, sizeof (buf), "%s spare %d", jsonrpcname, i);
+      mom_item_closure_set_nth (jsonrpcitem, i,
+				(momval_t) mom_make_string (buf));
+      memset (buf, 0, sizeof (buf));
+    }
+  if (methodcomment && methodcomment[0])
+    mom_item_put_attribute (methoditem, mom_named__comment,
+			    (momval_t) mom_make_string (methodcomment));
+  if (jsonrpccomment && jsonrpccomment[0])
+    mom_item_put_attribute (jsonrpcitem, mom_named__comment,
+			    (momval_t) mom_make_string (jsonrpccomment));
+  mom_item_put_attribute (methoditem, mom_named__jsonrpc_handler,
+			  (momval_t) jsonrpcitem);
+}
 
 void
 momplugin_after_load (void)
 {
   MOM_DEBUGPRINTF (run,
 		   "after load in " __FILE__ " build " __DATE__ "@" __TIME__);
-  make_closure_json_rpc_dump_exit_mom ();
+  declare_jsonrpc_mom ("json_rpc_meltmom_declare_name",
+		       "JSONRPC routine to declare some name",
+		       "meltmom_declare_name",
+		       "JSONRPC method to declare some name");
 }
