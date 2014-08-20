@@ -94,7 +94,7 @@
 
 
 (defun monimelt_declare_type (typev)
-  (debug "monimelt_declare_type" "start typev=" typev)
+  (debug "monimelt_declare_type" " start typev=" typev)
   (let ( (tr_type (unbox :tree typev))
 	 )
     (debug "monimelt_declare_type" " tr_type=" tr_type)
@@ -127,7 +127,7 @@
   )
 
 (defun monimelt_declare_function (funcv)
-  (debug "monimelt_declare_function" "start funcv=" funcv)
+  (debug "monimelt_declare_function " "start funcv=" funcv)
   (let ( (tr_func (unbox :tree funcv))
 	 )
     (debug "monimelt_declare_function" " tr_func=" tr_func)
@@ -160,6 +160,50 @@
     )
   )
   
+(defun monimelt_fill_type (typev)
+  (debug "monimelt_fill_type" " start typev=" typev)
+  (let ( (tr_type (unbox :tree typev))
+	 )
+    (debug "monimelt_fill_type" " tr_type=" tr_type)
+    (match tr_type
+	   ( ?(tree_type_declaration ?(tree_identifier ?tyidstr))
+	      (let ( (tr_srctype (tree_type tr_type))
+		     )
+		(debug "monimelt_fill_type" " tr_srctype=" tr_srctype)
+		(match tr_srctype
+		       ( ?(tree_integer_type ?tr_basetype ?minv ?maxv ?tr_size)
+			  (debug "monimelt_fill_type" " integral tr_basetype=" tr_basetype
+				 " minv=" minv " maxv=" maxv " tr_size=" tr_size))
+		       ( ?(tree_record_type_with_fields ?tr_recname ?tr_recfields)
+			  (debug "monimelt_fill_type" " record tr_recname=" tr_recname
+				 " tr_recfields=" tr_recfields)
+			  (let ( (fieldstup (tree_chain_to_tuple discr_multiple tr_recfields))
+				 )
+			    (debug "monimelt_fill_type" " fieldstup=" fieldstup)
+			    (foreach_in_multiple
+			     (fieldstup)
+			     (curfieldv :long ix)
+			     (debug "monimelt_fill_type" " curfieldv=" curfieldv
+				    " === " (unbox :tree curfieldv))
+			     )
+			    )
+			  )
+		       ( ?(tree_union_type_with_fields ?tr_uniname ?tr_unifields)
+			  (debug "monimelt_fill_type" " union tr_uniname=" tr_uniname
+				 " tr_unifields=" tr_unifields)
+			  )
+		       ( ?_
+			 (debug "monimelt_fill_type" " strange type tr_type=" tr_type)
+			 (warning_at typev "monimelt strange type $1" tr_type)
+			 )
+		       )
+		)
+	      )
+	   (?_
+	    (assert_msg "unexpected typev" () typev)))
+    )
+  )
+
 ;;this function should probably do the JSONRPC calls
 (defun monimelt_finish_unit (arg)
   (debug "monimelt_finish_unit" " arg=" arg ";\n monimelt_types_list=" monimelt_types_list
@@ -176,6 +220,12 @@
    monimelt_functions_list
    cfunc
    (monimelt_declare_function cfunc))
+  ;;
+  (debug "monimelt_functions_list" " filling " (list_length monimelt_types_list) " types")
+  (each_component_in_list
+   monimelt_types_list
+   ctype
+   (monimelt_fill_type ctype))
   ;;
   (let ( (momdump (do_blocking_jsonrpc2_call monimelt_service '"dump" () 1550))
 	 )
