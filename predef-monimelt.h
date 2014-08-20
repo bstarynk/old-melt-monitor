@@ -159,6 +159,9 @@ MOM_PREDEFINED_NAMED(method,_3hv5ymapjed_y8q6hsvhw8u)
 ////!module to be compiled...
 MOM_PREDEFINED_NAMED(module,_7sqk8vh89xr_6tj8dq7vqju)
 
+////!gives the line number
+MOM_PREDEFINED_NAMED(monimelt_line,_8hvs0h5a7v9_1ixv3jf2j6j)
+
 ////!in JSON dumps, indicate nodes, or give their connective item
 MOM_PREDEFINED_NAMED(node,_4m7x6811f6j_t480zu575mz)
 

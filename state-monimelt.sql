@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','todo dump at exit');
+INSERT INTO t_params VALUES('dump_reason','exit dump');
 INSERT INTO t_items VALUES('_02u53qxa7dm_sttmhffpchr','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "The agenda is central to Monimelt.\nIt is the queue of taskets to be executed by worker threads."}],
  "content": null, "kind": "queue", "payload": []}
 ');
@@ -504,6 +504,9 @@ INSERT INTO t_items VALUES('_87axj4q44z5_xddqmrkw875','{"attr": [], "content": n
 INSERT INTO t_items VALUES('_89ejvxupprm_f219pqwz13s','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for double values and displays"}],
  "content": null, "kind": null, "payload": null}
 ');
+INSERT INTO t_items VALUES('_8hvs0h5a7v9_1ixv3jf2j6j','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "gives the line number"}],
+ "content": null, "kind": null, "payload": null}
+');
 INSERT INTO t_items VALUES('_8j516kuv89j_4hc4w6ykmr6','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "in JSON dumps, used for long chunked strings"}],
  "content": null, "kind": null, "payload": null}
 ');
@@ -644,6 +647,7 @@ INSERT INTO t_names VALUES('momusize_t','_7scq5tujqpv_itz5521v6cs','.root');
 INSERT INTO t_names VALUES('momval_t','_3vvtdeqxssw_dthyjy2dz5t','.root');
 INSERT INTO t_names VALUES('momvaltype_t','_266cwehdrjc_144jy18dwh1','.root');
 INSERT INTO t_names VALUES('momvflags_t','_1wevxkfudp9_cpeu1adxcrp','.root');
+INSERT INTO t_names VALUES('monimelt_line','_8hvs0h5a7v9_1ixv3jf2j6j','.predef');
 INSERT INTO t_names VALUES('node','_4m7x6811f6j_t480zu575mz','.predef');
 INSERT INTO t_names VALUES('noop','_240dwt57s08_a8uy366sev5','.root');
 INSERT INTO t_names VALUES('notice','_7diyc1cwj8z_x630afccr8e','.predef');

@@ -4846,7 +4846,8 @@ json_rpc_meltmom_declare_name_lab_start:
     }
   {
     mom_should_lock_item (_L (nameditm).pitem);
-#warning should put the monimelt_line inside the nameditm
+    mom_item_put_attribute (_L (nameditm).pitem, mom_named__monimelt_line,
+			    _L (linenum));
     mom_unlock_item (_L (nameditm).pitem);
   }
   MOM_DEBUG (run,

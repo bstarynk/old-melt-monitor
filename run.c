@@ -1462,7 +1462,7 @@ jsonrpc_processor_mom (void *p)
 		   MOMOUT_LITERAL
 		   ("{\"jsonrpc\":\"2.0\",\"error\":{\"code\":"),
 		   MOMOUT_DEC_INT ((int) jrpcerr_parse_error),
-		   MOMOUT_LITERAL (",\"message\":\"Parse error\","),
+		   MOMOUT_LITERAL (",\"message\":\"Parse error\""),
 		   MOMOUT_LITERAL (",\"data\":\""),
 		   MOMOUT_JS_STRING ((const char *) errmsg),
 		   MOMOUT_LITERAL ("\"},\"id\":null}"), MOMOUT_NEWLINE (),
