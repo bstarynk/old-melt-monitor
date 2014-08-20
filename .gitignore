@@ -12,6 +12,7 @@ make-named
 core*
 _monimelt_sigterm*.*
 _monimelt_termdump*
+_monimelt*
 momjsrpc_client
 meltmom*.cc
 meltmom*.mk
