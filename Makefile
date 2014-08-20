@@ -68,7 +68,7 @@ MONI_MELT_JSONRPC_FLAGS= --jsonrpc $(MONI_MELT_SOCKET)
 ####
 ####
 .PHONY: all modules plugins clean tests indent restore-state dump-state \
-	melt-process-header melt-process-debug
+	melt-process-header melt-process-debug melt-process-outdbg
 .SUFFIXES: .so .i
 # to make with tsan: make OPTIMFLAGS='-g3 -fsanitize=thread -fPIE' LINKFLAGS=-pie
 all: monimelt modules plugins momjsrpc_client
@@ -78,6 +78,7 @@ clean:
 	$(RM) modules/*.so modules/*~
 	$(RM) -r _monimelt_termdump*
 	$(RM) -r _meltwork
+	$(RM) -r _monimelt*
 ################
 monimelt: $(OBJECTS) _timestamp.o
 	@if [ -f $@ ]; then echo -n backup old executable: ' ' ; mv -v $@ $@~ ; fi
@@ -189,11 +190,18 @@ melt-process-debug: monimelt.h meltmom-process.quicklybuilt.so | _meltwork monim
 	ls -l $(MONI_MELT_TMP)*
 	$(RM) $(MONI_MELT_TMP)*
 
+
+melt-process-outdbg: 
+	$(MAKE) melt-process-debug \
+          MONI_MELT_OUTMONI=_monimelt_moni.out \
+          MONI_MELT_OUTMELT=_monimelt_melt.out
+
+
 _meltwork:
 	@ [ -d _meltwork ] || mkdir _meltwork
 
 meltmom-process.quicklybuilt.so: meltmom-process.melt  | _meltwork
-	$(COMPILE.c) -x c $(MELTGCCFLAGS) \
+	+$(COMPILE.c) -x c $(MELTGCCFLAGS) \
 	    -fplugin-arg-melt-mode=translatequickly \
 	    -fplugin-arg-melt-arg=$< \
 	    -x c -c /dev/null -o /dev/null

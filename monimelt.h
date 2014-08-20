@@ -1135,6 +1135,16 @@ mom_ident_cstr_of_item (const momitem_t *itm)
 }
 
 
+static inline momval_t
+mom_identv_of_item (const momitem_t *itm)
+{
+  if (!itm || itm->i_typnum != momty_item)
+    return MOM_NULLV;
+  assert (itm->i_magic == MOM_ITEM_MAGIC);
+  return ((momval_t) itm->i_idstr);
+}
+
+
 static inline unsigned
 mom_item_payload_kind (const momitem_t *itm)
 {

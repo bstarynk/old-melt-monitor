@@ -4759,6 +4759,9 @@ enum json_rpc_meltmom_declare_name_valindex_en
   json_rpc_meltmom_declare_name_v_jxitm,
   json_rpc_meltmom_declare_name_v_peername,
   json_rpc_meltmom_declare_name_v_jresult,
+  json_rpc_meltmom_declare_name_v_name,
+  json_rpc_meltmom_declare_name_v_nameditm,
+  json_rpc_meltmom_declare_name_v_linenum,
   json_rpc_meltmom_declare_name_v__lastval
 };
 
@@ -4822,6 +4825,41 @@ json_rpc_meltmom_declare_name_lab_start:
 	     NULL);
   if (_L (jparams).ptr == MOM_EMPTY)
     _SET_STATE (impossible);
+  _L (name) = mom_jsonob_getstr (_L (jparams), "monimelt_name");
+  _L (linenum) = mom_jsonob_getstr (_L (jparams), "monimelt_line");
+  MOM_DEBUG (run,
+	     MOMOUT_LITERAL ("json_rpc_meltmom_declare_name name="),
+	     MOMOUT_VALUE ((const momval_t) _L (name)),
+	     MOMOUT_LITERAL (" linenum="),
+	     MOMOUT_VALUE ((const momval_t) _L (linenum)), NULL);
+  if (!mom_is_string (_L (name)) || !mom_is_integer (_L (linenum)))
+    MOM_FATAL (MOMOUT_LITERAL
+	       ("invalid parameter to json_rpc_meltmom_declare:"),
+	       MOMOUT_VALUE ((const momval_t) _L (jparams)), NULL);
+  _L (nameditm) = (momval_t) mom_get_item_of_name_string (_L (name));
+  if (!_L (nameditm).ptr)
+    {
+      _L (nameditm) = (momval_t) mom_make_item ();
+      mom_item_set_space (_L (nameditm).pitem, momspa_root);
+      mom_register_item_named (_L (nameditm).pitem,
+			       mom_to_string (_L (name)));
+    }
+  {
+    mom_should_lock_item (_L (nameditm).pitem);
+#warning should put the monimelt_line inside the nameditm
+    mom_unlock_item (_L (nameditm).pitem);
+  }
+  MOM_DEBUG (run,
+	     MOMOUT_LITERAL ("json_rpc_meltmom_declare_name nameditm="),
+	     MOMOUT_ITEM ((const momitem_t *) (_L (nameditm).pitem)),
+	     MOMOUT_LITERAL (" of id:"),
+	     MOMOUT_VALUE ((const momval_t)
+			   mom_identv_of_item (_L (nameditm).pitem)), NULL);
+  ///
+  MOM_DEBUG (run,
+	     MOMOUT_LITERAL ("json_rpc_meltmom_declare_name jresult="),
+	     MOMOUT_VALUE ((const momval_t) _L (jresult)), NULL);
+  mom_jsonrpc_reply (_L (jxitm).pitem, _L (jresult));
   return momroutres_pop;
 json_rpc_meltmom_declare_name_lab_impossible:
   MOM_FATAPRINTF ("json_rpc_meltmom_declare_name impossible state reached!");

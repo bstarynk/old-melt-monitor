@@ -93,10 +93,60 @@
   )
 
 
+(defun monimelt_declare_type (typev)
+  (debug "monimelt_declare_type" "start typev=" typev)
+  (let ( (tr_type (unbox :tree typev))
+	 )
+    (debug "monimelt_declare_type" " tr_type=" tr_type)
+    (match tr_type
+	   ( ?(and
+	       ?(tree_type_declaration ?(tree_identifier ?tyidstr))
+	       ?(tree_decl_at_source_location ?filepathv ?linum ?colnum))
+	      (debug "monimelt_declare_type" " tyidstr=" tyidstr
+		     " linum=" linum)
+	      (let ( (linenumv (constant_box linum))
+		     (typenamev (constant_box tyidstr))
+		     (jparam (make_jsonobject discr_jsonobject
+					      'monimelt_name typenamev
+					      'monimelt_line linenumv))
+		     )
+		(debug "monimelt_declare_type" " jparam=" jparam)
+		(let ( (res (do_blocking_jsonrpc2_call monimelt_service
+						       '"meltmom_declare_name" jparam 250)
+			    )
+		       )
+		  (debug "monimelt_declare_type" " jsonrpc res=" res))
+		)
+	      )
+	   ( ?_
+	     (debug  "monimelt_declare_type" " strange tr_type=" tr_type)
+	     (error_at typev "monimelt unexpected type $1" tr_type)
+	     )
+	   )
+    )
+  )
+
+(defun monimelt_declare_function (func)
+  (debug "monimelt_declare_function" "start func=" func)
+  )
+  
 ;;this function should probably do the JSONRPC calls
 (defun monimelt_finish_unit (arg)
   (debug "monimelt_finish_unit" " arg=" arg ";\n monimelt_types_list=" monimelt_types_list
 	 ";\n monimelt_functions_list=" monimelt_functions_list)
+  ;;
+  (debug "monimelt_functions_list" " declaring " (list_length monimelt_types_list) " types")
+  (each_component_in_list
+   monimelt_types_list
+   ctype
+   (monimelt_declare_type ctype))
+  ;;
+  (debug "monimelt_functions_list" " declaring " (list_length monimelt_functions_list) " functions")
+  (each_component_in_list
+   monimelt_functions_list
+   cfunc
+   (monimelt_declare_function cfunc))
+  ;;
   (let ( (momdump (do_blocking_jsonrpc2_call monimelt_service '"dump" () 1550))
 	 )
     (when (null momdump)
@@ -104,6 +154,7 @@
       (return))
     (debug "monimelt_finish_unit" " momdump=" momdump))
   )
+
 
 (defun processmonimelt_docmd (cmd moduldata)
   (debug "processmonimelt_docmd start " cmd)
