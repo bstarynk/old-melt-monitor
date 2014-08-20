@@ -126,8 +126,38 @@
     )
   )
 
-(defun monimelt_declare_function (func)
-  (debug "monimelt_declare_function" "start func=" func)
+(defun monimelt_declare_function (funcv)
+  (debug "monimelt_declare_function" "start funcv=" funcv)
+  (let ( (tr_func (unbox :tree funcv))
+	 )
+    (debug "monimelt_declare_function" " tr_func=" tr_func)
+    (match
+     tr_func
+     ( ?(and
+	 ?(tree_function_decl_named ?funame ?funres)
+	 ?(tree_decl_at_source_location ?filepathv ?linum ?colnum))
+	(debug "monimelt_declare_function" " funame=" funame
+	       " linum=" linum)
+	(let ( (linenumv (constant_box linum))
+	       (funcnamev (constant_box funame))
+	       (jparam (make_jsonobject discr_jsonobject
+					'monimelt_name funcnamev
+					'monimelt_line linenumv))
+	       )
+	  (debug "monimelt_declare_function" " jparam=" jparam)
+	  (let ( (res (do_blocking_jsonrpc2_call monimelt_service
+						 '"meltmom_declare_name" jparam 350)
+		      )
+		 )
+	    (debug "monimelt_declare_function" " jsonrpc res=" res))
+	  )
+	)
+     ( ?_
+       (debug "monimelt_declare_function" " strange tr_func=" tr_func)
+       (error_at funcv "monimelt unexpected function $1" tr_func)
+       )
+     )
+    )
   )
   
 ;;this function should probably do the JSONRPC calls
