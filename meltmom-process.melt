@@ -159,7 +159,12 @@
      )
     )
   )
-  
+
+(defun monimelt_declare_aggregate_field (aggnamev fieldv :long ix)
+  (debug "monimelt_declare_aggregate_field" " aggnamev=" aggnamev
+	 " fieldv=" fieldv "\n.. ix=" ix)
+    )
+
 (defun monimelt_fill_type (typev)
   (debug "monimelt_fill_type" " start typev=" typev)
   (let ( (tr_type (unbox :tree typev))
@@ -183,8 +188,8 @@
 			    (foreach_in_multiple
 			     (fieldstup)
 			     (curfieldv :long ix)
-			     (debug "monimelt_fill_type" " curfieldv=" curfieldv
-				    " === " (unbox :tree curfieldv))
+			     (debug "monimelt_fill_type" " curfieldv=" curfieldv "; ix=" ix)
+			     (monimelt_declare_aggregate_field (constant_box tyidstr) curfieldv ix)
 			     )
 			    )
 			  )
