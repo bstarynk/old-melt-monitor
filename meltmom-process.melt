@@ -160,10 +160,47 @@
     )
   )
 
+
+
 (defun monimelt_declare_aggregate_field (aggnamev fieldv :long ix)
   (debug "monimelt_declare_aggregate_field" " aggnamev=" aggnamev
 	 " fieldv=" fieldv "\n.. ix=" ix)
+  (let ( (tr_field (unbox :tree fieldv))
+	 )
+    (debug "monimelt_declare_aggregate_field" " tr_field=" tr_field)
+    (match tr_field
+	   (?(tree_field_decl ?(tree_identifier ?fldnamestr) ?tr_fldtype)
+	     (debug "monimelt_declare_aggregate_field "
+		    " fldnamestr=" fldnamestr
+		    " tr_fldtype=" tr_fldtype)
+	     (match tr_fldtype
+		    (?(tree_integer_type ?tr_intype ?minv ?maxv ?tr_size)
+		      (debug "monimelt_declare_aggregate_field" " fldtype integer tr_intype=" tr_intype
+			     " minv=" minv " maxv=" maxv " tr_size=" tr_size)
+		      (void)
+		      )
+		    (?(tree_real_type ?tr_realname ?tr_realsize)
+		      (debug "monimelt_declare_aggregate_field" " fldtype real tr_realname=" tr_realname)
+		      (void))
+		    (?(tree_pointer_type ?tr_pointedtype)
+		      (debug "monimelt_declare_aggregate_field" " fldtype pointer tr_pointedtype=" tr_pointedtype)
+		      (void))
+		    (?(tree_union_type ?tr_unitype)
+		      (debug "monimelt_declare_aggregate_field" " fldtype union tr_unitype=" tr_unitype)
+		      (void))
+		    (?(tree_array_type ?tr_arrelemtype ?tr_arrdomaintype)
+		      (debug "monimelt_declare_aggregate_field" " fldtype pointer array tr_arrelemtype=" tr_arrelemtype
+			     " tr_arrdomaintype=" tr_arrdomaintype)
+		      (void))
+		    (?_
+		     (debug "monimelt_declare_aggregate_field" " other fldnamestr=" fldnamestr
+			    " type tr_fldtype=" tr_fldtype)
+		     (void)))
+	     (void))
+	   (?_ (assert_msg "impossible tr_field" () tr_field)
+	       (void)))
     )
+  )
 
 (defun monimelt_fill_type (typev)
   (debug "monimelt_fill_type" " start typev=" typev)
