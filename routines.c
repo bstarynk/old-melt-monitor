@@ -4834,7 +4834,7 @@ json_rpc_meltmom_declare_name_lab_start:
 	     MOMOUT_VALUE ((const momval_t) _L (linenum)), NULL);
   if (!mom_is_string (_L (name)) || !mom_is_integer (_L (linenum)))
     MOM_FATAL (MOMOUT_LITERAL
-	       ("invalid parameter to json_rpc_meltmom_declare:"),
+	       ("invalid parameter to json_rpc_meltmom_declare_name:"),
 	       MOMOUT_VALUE ((const momval_t) _L (jparams)), NULL);
   _L (nameditm) = (momval_t) mom_get_item_of_name_string (_L (name));
   if (!_L (nameditm).ptr)
@@ -4880,6 +4880,143 @@ const struct momroutinedescr_st momrout_json_rpc_meltmom_declare_name = {
   .rout_name = "json_rpc_meltmom_declare_name",	//
   .rout_module = MONIMELT_CURRENT_MODULE,	//
   .rout_codefun = json_rpc_meltmom_declare_name_codmom,	//
+  .rout_timestamp = __DATE__ "@" __TIME__
+};
+
+
+
+
+
+////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////
+///// json_rpc_meltmom_define_field
+enum json_rpc_meltmom_define_field_valindex_en
+{
+  json_rpc_meltmom_define_field_v_jparams,
+  json_rpc_meltmom_define_field_v_jxitm,
+  json_rpc_meltmom_define_field_v_peername,
+  json_rpc_meltmom_define_field_v_jresult,
+  json_rpc_meltmom_define_field_v_name,
+  json_rpc_meltmom_define_field_v_nameditm,
+  json_rpc_meltmom_define_field_v_linenum,
+  json_rpc_meltmom_define_field_v__lastval
+};
+
+enum json_rpc_meltmom_define_field_closure_en
+{
+  json_rpc_meltmom_define_field_c__lastclosure
+};
+
+enum json_rpc_meltmom_define_field_numbers_en
+{
+  json_rpc_meltmom_define_field_n_count,
+  json_rpc_meltmom_define_field_n__lastnum
+};
+
+
+static int
+json_rpc_meltmom_define_field_codmom (int momstate_, momitem_t *momtasklet_,
+				      const momval_t momclosurv_,
+				      momval_t *momlocvals_,
+				      intptr_t * momlocnums_,
+				      double *momlocdbls_)
+{
+  const momval_t *momclovals __attribute__ ((unused)) =
+    mom_closed_values (momclosurv_);
+#define _L(Nam) (momlocvals_[json_rpc_meltmom_define_field_v_##Nam])
+#define _C(Nam) (momclovals[json_rpc_meltmom_define_field_c_##Nam])
+#define _N(Nam) (momlocnums_[json_rpc_meltmom_define_field_n_##Nam])
+  enum json_rpc_meltmom_define_field_state_en
+  {
+    json_rpc_meltmom_define_field_s_start,
+    json_rpc_meltmom_define_field_s_impossible,
+    json_rpc_meltmom_define_field_s__laststate
+  };
+#define _SET_STATE(St) do {						\
+    MOM_DEBUGPRINTF (run,						\
+		     "json_rpc_meltmom_define_field_codmom setstate "	\
+		     #St " = %d",					\
+		     (int)json_rpc_meltmom_define_field_s_##St);	\
+    return json_rpc_meltmom_define_field_s_##St; } while(0)
+  if (momstate_ >= 0
+      && momstate_ < json_rpc_meltmom_define_field_s__laststate)
+    switch ((enum json_rpc_meltmom_define_field_state_en) momstate_)
+      {
+      case json_rpc_meltmom_define_field_s_start:
+	goto json_rpc_meltmom_define_field_lab_start;
+      case json_rpc_meltmom_define_field_s_impossible:
+	goto json_rpc_meltmom_define_field_lab_impossible;
+      case json_rpc_meltmom_define_field_s__laststate:;
+      }
+  MOM_FATAPRINTF ("json_rpc_meltmom_define_field invalid state #%d",
+		  momstate_);
+json_rpc_meltmom_define_field_lab_start:
+  MOM_DEBUG (run,
+	     MOMOUT_LITERAL ("json_rpc_meltmom_define_field start jparams="),
+	     MOMOUT_VALUE ((const momval_t) _L (jparams)),
+	     MOMOUT_LITERAL (" jxitm="),
+	     MOMOUT_VALUE ((const momval_t) _L (jxitm)),
+	     MOMOUT_LITERAL (" peername="),
+	     MOMOUT_VALUE ((const momval_t) _L (peername)),
+	     MOMOUT_LITERAL (" count="), MOMOUT_DEC_INT ((int) _N (count)),
+	     NULL);
+  if (_L (jparams).ptr == MOM_EMPTY)
+    _SET_STATE (impossible);
+  _L (name) = mom_jsonob_getstr (_L (jparams), "monimelt_name");
+  _L (linenum) = mom_jsonob_getstr (_L (jparams), "monimelt_line");
+  MOM_DEBUG (run,
+	     MOMOUT_LITERAL ("json_rpc_meltmom_define_field name="),
+	     MOMOUT_VALUE ((const momval_t) _L (name)),
+	     MOMOUT_LITERAL (" linenum="),
+	     MOMOUT_VALUE ((const momval_t) _L (linenum)), NULL);
+  if (!mom_is_string (_L (name)) || !mom_is_integer (_L (linenum)))
+    MOM_FATAL (MOMOUT_LITERAL
+	       ("invalid parameter to json_rpc_meltmom_define_field:"),
+	       MOMOUT_VALUE ((const momval_t) _L (jparams)), NULL);
+  _L (nameditm) = (momval_t) mom_get_item_of_name_string (_L (name));
+  if (!_L (nameditm).ptr)
+    {
+      _L (nameditm) = (momval_t) mom_make_item ();
+      mom_item_set_space (_L (nameditm).pitem, momspa_root);
+      mom_register_item_named (_L (nameditm).pitem,
+			       mom_to_string (_L (name)));
+    }
+  {
+    mom_should_lock_item (_L (nameditm).pitem);
+    mom_item_put_attribute (_L (nameditm).pitem, mom_named__monimelt_line,
+			    _L (linenum));
+    mom_unlock_item (_L (nameditm).pitem);
+  }
+  MOM_DEBUG (run,
+	     MOMOUT_LITERAL ("json_rpc_meltmom_define_field nameditm="),
+	     MOMOUT_ITEM ((const momitem_t *) (_L (nameditm).pitem)),
+	     MOMOUT_LITERAL (" of id:"),
+	     MOMOUT_VALUE ((const momval_t)
+			   mom_identv_of_item (_L (nameditm).pitem)), NULL);
+  ///
+  MOM_DEBUG (run,
+	     MOMOUT_LITERAL ("json_rpc_meltmom_define_field jresult="),
+	     MOMOUT_VALUE ((const momval_t) _L (jresult)), NULL);
+  mom_jsonrpc_reply (_L (jxitm).pitem, _L (jresult));
+  return momroutres_pop;
+json_rpc_meltmom_define_field_lab_impossible:
+  MOM_FATAPRINTF ("json_rpc_meltmom_define_field impossible state reached!");
+#undef _L
+#undef _C
+#undef _N
+#undef _SET_STATE
+  return momroutres_pop;
+}
+
+const struct momroutinedescr_st momrout_json_rpc_meltmom_define_field = {
+  .rout_magic = MOM_ROUTINE_MAGIC,	//
+  .rout_minclosize = json_rpc_meltmom_define_field_c__lastclosure,	//
+  .rout_frame_nbval = json_rpc_meltmom_define_field_v__lastval,	//
+  .rout_frame_nbnum = json_rpc_meltmom_define_field_n__lastnum,	//
+  .rout_frame_nbdbl = 0,	//
+  .rout_name = "json_rpc_meltmom_define_field",	//
+  .rout_module = MONIMELT_CURRENT_MODULE,	//
+  .rout_codefun = json_rpc_meltmom_define_field_codmom,	//
   .rout_timestamp = __DATE__ "@" __TIME__
 };
 

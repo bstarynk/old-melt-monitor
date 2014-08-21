@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 Aug 20
+-- state-monimelt dump 2014 Aug 21
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','todo dump at exit');
+INSERT INTO t_params VALUES('dump_reason','exit dump');
 INSERT INTO t_items VALUES('_02mtzeca0pf_kc9d1i34ap4','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1832}], "content": null,
  "kind": null, "payload": null}
 ');
@@ -157,6 +157,11 @@ INSERT INTO t_items VALUES('_1hc511xzwc4_3uyk52zy4v5','{"attr": [{"attr": "_8hvs
 ');
 INSERT INTO t_items VALUES('_1he6qfkkr8e_8x22eu10cus','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1172}], "content": null,
  "kind": null, "payload": null}
+');
+INSERT INTO t_items VALUES('_1ij3y9cmvk5_8tkiqiy17ws','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "JSONRPC routine to define some field in union or record"}],
+ "content": null, "kind": "closure", "payload": {"closed_values": ["json_rpc_meltmom_define_field spare 0",
+   "json_rpc_meltmom_define_field spare 1", "json_rpc_meltmom_define_field spare 2"],
+  "closure_routine": "json_rpc_meltmom_define_field"}}
 ');
 INSERT INTO t_items VALUES('_1jriw29kezf_4wx1rtck86x','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 177}], "content": null,
  "kind": null, "payload": null}
@@ -680,6 +685,11 @@ INSERT INTO t_items VALUES('_65961crktpj_vtt30qeqv21','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_66sez2vrdz5_wmm1tkw9976','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1532}], "content": null,
  "kind": null, "payload": null}
 ');
+INSERT INTO t_items VALUES('_66xrheq8zyk_q1z7866a9pp','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "JSONRPC method to define some field"},
+  {"attr": "_0hpzi8m7wym_1y4ypmm9y47", "val": {"item_ref": "_1ij3y9cmvk5_8tkiqiy17ws",
+    "jtype": "item_ref", "space": ".root"}}], "content": null, "kind": null,
+ "payload": null}
+');
 INSERT INTO t_items VALUES('_6c9cs2mx512_exp6t0yzhys','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1311}], "content": null,
  "kind": null, "payload": null}
 ');
@@ -1139,6 +1149,7 @@ INSERT INTO t_names VALUES('json_false','_4mha85xcfwi_9zqcvkiy3dk','.predef');
 INSERT INTO t_names VALUES('json_object','_3xpyd539p4m_23h7wi59xi9','.predef');
 INSERT INTO t_names VALUES('json_rpc_dump_exit','_6zm92afs4yc_60a8ujmi1ef','.root');
 INSERT INTO t_names VALUES('json_rpc_meltmom_declare_name','_6d4dwqa6m09_c5vtjswfpfi','.root');
+INSERT INTO t_names VALUES('json_rpc_meltmom_define_field','_1ij3y9cmvk5_8tkiqiy17ws','.root');
 INSERT INTO t_names VALUES('json_rpc_status','_6p6v25323aq_97d9ude6j12','.root');
 INSERT INTO t_names VALUES('json_true','_2vmrrvq5kdk_9um63pstcu9','.predef');
 INSERT INTO t_names VALUES('jsonrpc','_0h331ch957p_j6a8i7v4e6y','.predef');
@@ -1150,6 +1161,7 @@ INSERT INTO t_names VALUES('locals','_3eu0rdq4upj_dp5ptr6hj04','.predef');
 INSERT INTO t_names VALUES('low','_79vm7uxit6c_53qt1qi2wuj','.root');
 INSERT INTO t_names VALUES('make_item','_590trid9ycw_f6kaajwca63','.root');
 INSERT INTO t_names VALUES('meltmom_declare_name','_1y91p3us9s9_p88di58xuek','.root');
+INSERT INTO t_names VALUES('meltmom_define_field','_66xrheq8zyk_q1z7866a9pp','.root');
 INSERT INTO t_names VALUES('message','_4jp2meuzru2_a58afyxwxa2','.predef');
 INSERT INTO t_names VALUES('method','_3hv5ymapjed_y8q6hsvhw8u','.predef');
 INSERT INTO t_names VALUES('misc','_85rz4j0q982_67im8sstj9s','.root');
