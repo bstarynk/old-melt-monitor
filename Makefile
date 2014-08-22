@@ -191,7 +191,9 @@ melt-process-debug: monimelt.h meltmom-process.quicklybuilt.so | _meltwork monim
 	$(RM) $(MONI_MELT_TMP)*
 
 
-melt-process-outdbg: 
+melt-process-outdbg:
+	+$(MAKE) -j 3 monimelt
+	$(MAKE) restore-state
 	$(MAKE) melt-process-debug \
           MONI_MELT_OUTMONI=_monimelt_moni.out \
           MONI_MELT_OUTMELT=_monimelt_melt.out

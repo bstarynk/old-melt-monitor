@@ -4722,9 +4722,9 @@ json_rpc_dump_exit_lab_afterdump:
 	     MOMOUT_LITERAL
 	     ("json_rpc_dump_exit before stop after dump tasklet="),
 	     MOMOUT_ITEM ((const momitem_t *) momtasklet_), NULL);
-  usleep (10000);
+  usleep (80000);
   mom_stop_work_with_todo (NULL, NULL);
-  usleep (10000);
+  usleep (50000);
   return momroutres_pop;
 json_rpc_dump_exit_lab_impossible:
   MOM_FATAPRINTF ("json_rpc_dump_exit impossible state reached!");

@@ -169,15 +169,24 @@
 	 )
     (debug "monimelt_declare_aggregate_field" " tr_field=" tr_field)
     (match tr_field
-	   (?(tree_field_decl ?(tree_identifier ?fldnamestr) ?tr_fldtype)
+	   (?(and
+	      ?(tree_field_decl ?(tree_identifier ?fldnamestr) ?tr_fldtype)
+	      ?(tree_decl_at_source_location ?filepathv ?linum ?colnum))
 	     (debug "monimelt_declare_aggregate_field "
 		    " fldnamestr=" fldnamestr
-		    " tr_fldtype=" tr_fldtype)
+		    " tr_fldtype=" tr_fldtype "\n.. linum=" linum)
 	     (match tr_fldtype
 		    (?(tree_integer_type ?tr_intype ?minv ?maxv ?tr_size)
 		      (debug "monimelt_declare_aggregate_field" " fldtype integer tr_intype=" tr_intype
 			     " minv=" minv " maxv=" maxv " tr_size=" tr_size)
-		      (void)
+		      (let ( (jparams (make_jsonobject discr_jsonobject
+						       'monimelt_name fldnamestr
+						       'monimelt_line linenumv
+						       ))
+			     )
+			(debug "monimelt_declare_aggregate_field" " integer: jparams=" jparams)
+			(void)
+			)
 		      )
 		    (?(tree_real_type ?tr_realname ?tr_realsize)
 		      (debug "monimelt_declare_aggregate_field" " fldtype real tr_realname=" tr_realname)
