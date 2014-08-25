@@ -1228,7 +1228,7 @@ jsonrpc_fclose_send_output_mom (struct jsonrpc_conn_mom_st *jp)
       if (sendsiz < 0 && errno == EINTR)
 	continue;
       else if (sendsiz < 0)
-	MOM_FATAPRINTF ("failed to send %d bytes on JSON socket #%d", remsiz,
+	MOM_FATAPRINTF ("failed to send %zd bytes on JSON socket #%d", remsiz,
 			jp->jrpc_socket);
       rembuf += sendsiz;
       remsiz -= sendsiz;

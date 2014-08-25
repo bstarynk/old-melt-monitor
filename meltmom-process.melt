@@ -161,6 +161,91 @@
   )
 
 
+(defun monimelt_json_for_type (typev)
+  (debug "monimelt_json_for_type" " start typev=" typev)
+  (let ( (tr_type (unbox :tree typev))
+	 )
+    (assert_msg "monimelt_json_for_type check tr_type" tr_type typev)
+    (match tr_type
+	   ;;
+	   (?(tree_char_type_node)
+	     (debug  "monimelt_json_for_type" " char")
+	     (return '"char")
+	     )
+	   ;;
+	   (?(tree_signed_char_type_node)
+	     (debug  "monimelt_json_for_type" " signed char")
+	     (return '"signed-char")
+	     )
+	   ;;
+	   (?(tree_unsigned_char_type_node)
+	     (debug  "monimelt_json_for_type" " unsigned char")
+	     (return '"unsigned-char")
+	     )
+	   ;;
+	   (?(tree_short_integer_type_node)
+	     (debug  "monimelt_json_for_type" " short")
+	     (return '"short")
+	     )
+	   ;;
+	   (?(tree_short_unsigned_type_node)
+	     (debug  "monimelt_json_for_type" " unsigned short")
+	     (return '"unsigned-short")
+	     )
+	   ;;
+	   (?(tree_integer_type_node)
+	     (debug  "monimelt_json_for_type" " int")
+	     (return '"int")
+	     )
+	   ;;
+	   (?(tree_unsigned_type_node)
+	     (debug  "monimelt_json_for_type" " unsigned")
+	     (return '"unsigned")
+	     )
+	   ;;
+	   (?(tree_long_integer_type_node)
+	     (debug  "monimelt_json_for_type" " long")
+	     (return '"long")
+	     )
+	   ;;
+	   (?(tree_long_unsigned_type_node)
+	     (debug  "monimelt_json_for_type" " unsigned long")
+	     (return '"long")
+	     )
+	   ;;
+	   (?(tree_size_type_node)
+	     (debug  "monimelt_json_for_type" " size_t")
+	     (return '"long")
+	     )
+	   ;;
+	   (?(tree_integer_type ?tr_intype ?minv ?maxv ?tr_size)
+	     (debug "monimelt_json_for_type" " integertype minv=" minv " maxv=" maxv
+		    " tr_size=" tr_size)
+	     (let (
+		   (jintype (monimelt_json_for_type (constant_box tr_intype)))
+		   (jres (make_jsonobject discr_jsonobject
+					   'monimelt_integer_type jintype
+					   )
+			  ) 
+		    )
+	       (debug "monimelt_json_for_type" " integertype jres=" jres)
+	       (return jres)
+	       ))
+	   (?(tree_pointer_type ?tr_pointedtype)
+	     (debug "monimelt_json_for_type" " pointer tr_pointedtype=" tr_pointedtype)
+	     (let ( (jpointedtype (monimelt_json_for_type (constant_box tr_pointedtype)))
+		    (jres (make_jsonobject discr_jsonobject
+					   'monimelt_pointer_type jpointedtype))
+		    )
+	       (debug "monimelt_json_for_type" " pointertype jres=" jres)
+	       (return jres)
+	     ))
+	   (?_ 
+	    (assert_msg "monimelt_json_for_type unexpected tr_type" () tr_type)
+	    (void)))
+))
+
+
 
 (defun monimelt_declare_aggregate_field (aggnamev fieldv :long ix)
   (debug "monimelt_declare_aggregate_field" " aggnamev=" aggnamev
@@ -181,7 +266,7 @@
 			     " minv=" minv " maxv=" maxv " tr_size=" tr_size)
 		      (let ( (jparams (make_jsonobject discr_jsonobject
 						       'monimelt_name fldnamestr
-						       'monimelt_line linenumv
+						       'monimelt_line linum
 						       ))
 			     )
 			(debug "monimelt_declare_aggregate_field" " integer: jparams=" jparams)
