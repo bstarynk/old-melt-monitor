@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','todo dump at exit');
+INSERT INTO t_params VALUES('dump_reason','exit dump');
 INSERT INTO t_items VALUES('_02mtzeca0pf_kc9d1i34ap4','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1832}], "content": null,
  "kind": null, "payload": null}
 ');
@@ -1043,6 +1043,9 @@ INSERT INTO t_items VALUES('_8vj9h91xm9h_7a16r3wayq0','{"attr": [{"attr": "_8hvs
 INSERT INTO t_items VALUES('_8vkj288fipd_djv0q33vwxx','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1716}], "content": null,
  "kind": null, "payload": null}
 ');
+INSERT INTO t_items VALUES('_8xfj0sc82ux_thsk0iw2773','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for types"}], "content": null,
+ "kind": null, "payload": null}
+');
 INSERT INTO t_items VALUES('_8y1sw8z084j_4ts0y0jydha','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "value containing the translation"}],
  "content": null, "kind": null, "payload": null}
 ');
@@ -1102,6 +1105,9 @@ INSERT INTO t_items VALUES('_9e6ecm3ykps_ip69cm3q129','{"attr": [{"attr": "_8hvs
 ');
 INSERT INTO t_items VALUES('_9hrcziczpvp_7yw63a21ev8','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1838}], "content": null,
  "kind": null, "payload": null}
+');
+INSERT INTO t_items VALUES('_9j151ceapqf_dae1vrdueqa','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for Monimelt types"}],
+ "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_9jeymqk2732_wiq5kyczi9c','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for integer values and displays"}],
  "content": null, "kind": null, "payload": null}
@@ -1403,6 +1409,7 @@ INSERT INTO t_names VALUES('momval_t','_3vvtdeqxssw_dthyjy2dz5t','.root');
 INSERT INTO t_names VALUES('momvaltype_t','_266cwehdrjc_144jy18dwh1','.root');
 INSERT INTO t_names VALUES('momvflags_t','_1wevxkfudp9_cpeu1adxcrp','.root');
 INSERT INTO t_names VALUES('monimelt_line','_8hvs0h5a7v9_1ixv3jf2j6j','.predef');
+INSERT INTO t_names VALUES('monimelt_type','_9j151ceapqf_dae1vrdueqa','.predef');
 INSERT INTO t_names VALUES('node','_4m7x6811f6j_t480zu575mz','.predef');
 INSERT INTO t_names VALUES('noop','_240dwt57s08_a8uy366sev5','.root');
 INSERT INTO t_names VALUES('notice','_7diyc1cwj8z_x630afccr8e','.predef');
@@ -1440,6 +1447,7 @@ INSERT INTO t_names VALUES('translate_module','_4yxdswc8qwf_vxzy95hd399','.prede
 INSERT INTO t_names VALUES('translate_procedure','_0afqepa7jkr_qky26hpv98d','.root');
 INSERT INTO t_names VALUES('translation','_8y1sw8z084j_4ts0y0jydha','.root');
 INSERT INTO t_names VALUES('tuple','_7vw56h18sw0_hv77m6q8uxu','.predef');
+INSERT INTO t_names VALUES('type','_8xfj0sc82ux_thsk0iw2773','.predef');
 INSERT INTO t_names VALUES('unsigned','_77xdevxp3zp_yeryy3x1aea','.predef');
 INSERT INTO t_names VALUES('unsigned_char','_61arma4wcjy_4um1arwy09m','.predef');
 INSERT INTO t_names VALUES('unsigned_long','_23ey21s44px_iarreqeqhr5','.predef');

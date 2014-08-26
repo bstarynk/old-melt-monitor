@@ -177,9 +177,91 @@
     (assert_msg "monimelt_json_for_type check tr_type" tr_type typev)
     (match tr_type
 	   ;;
+	   (?(tree_type_decl ?tr_dcltype ?tr_name ?uid)
+	     (debug "monimelt_json_for_type" " typedecl tr_dcltype=" tr_dcltype "\n.. tr_name=" tr_name
+		    "\n.. uid=" uid)
+	     (let ( (namev (constant_box tr_name))
+		    (meltypev (mapstring_getstr monimelt_dict_types namev))
+		    (jres (if meltypev (make_jsonobject discr_jsonobject
+							'monimelt_type namev)
+			    namev))
+		    )
+	       (debug "monimelt_json_for_type" " typedecl jres=" jres)
+	       (return jres)))
+	   ;;
+	   (?(tree_union_type ?tr_union)
+	     (debug "monimelt_json_for_type" " union tr_union=" tr_union)
+	     (let ( (junion (monimelt_json_for_type (constant_box tr_union)))
+		    (jres (make_jsonobject discr_jsonobject
+					   'union junion))
+		    )
+	       (debug "monimelt_json_for_type" " union jres=" jres)
+	       (return jres)
+	       ))
+	   ;;
+	   (?(tree_record_type ?tr_record)
+	     (debug "monimelt_json_for_type" " record tr_record=" tr_record)
+	     (let ( (jrecord (monimelt_json_for_type (constant_box tr_record)))
+		    (jres (make_jsonobject discr_jsonobject
+					   'record jrecord))
+		    )
+	       (debug "monimelt_json_for_type" " record jres=" jres)
+	       (return jres)
+	       ))
+	   ;;
+	   (?(tree_array_type ?tr_arrelemtype ?(tree_integer_type ?tr_intype ?minv ?maxv ?tr_size))
+	     (debug "monimelt_json_for_type" " bounded array tr_arrelemtype=" tr_arrelemtype
+		    "\n.. minv=" minv " maxv=" maxv)
+	     (let ( (jelemtype (monimelt_json_for_type (constant_box tr_arrelemtype)))
+		    (jres (make_jsonobject discr_jsonobject
+					   'array jelemtype
+					   'min minv
+					   'max maxv))
+		    )
+	       (debug "monimelt_json_for_type" " bounded array jres=" jres)
+	       (return jres)
+	       ))
+	   ;;
+	   ;;
+	   (?(tree_array_type ?tr_arrelemtype ?tr_arrdomaintype)
+	     (debug "monimelt_json_for_type" " array tr_arrelemtype=" tr_arrelemtype
+		    "\n.. tr_arrdomaintype=" tr_arrdomaintype)
+	     (let ( (jelemtype (monimelt_json_for_type (constant_box tr_arrelemtype)))
+		    (jres (make_jsonobject discr_jsonobject
+					   'array jelemtype))
+		    )
+	       (debug "monimelt_json_for_type" " general array jres=" jres)
+	       (return jres)
+	       ))
+	   ;;
+	   (?(tree_pointer_type ?tr_pointedtype)
+	     (debug "monimelt_json_for_type" " pointer tr_pointedtype=" tr_pointedtype)
+	     (let ( (jpointedtype (monimelt_json_for_type (constant_box tr_pointedtype)))
+		    (jres (make_jsonobject discr_jsonobject
+					   'pointer jpointedtype))
+		    )
+	       (debug "monimelt_json_for_type" " pointertype jres=" jres)
+	       (return jres)
+	       ))
+	   ;;
 	   (?(tree_char_type_node)
 	     (debug  "monimelt_json_for_type" " char")
 	     (return '"char")
+	     )
+	   ;;
+	   (?(tree_void_type_node)
+	     (debug  "monimelt_json_for_type" " void")
+	     (return '"void")
+	     )
+	   ;;
+	   (?(tree_double_type_node)
+	     (debug  "monimelt_json_for_type" " double")
+	     (return '"double")
+	     )
+	   ;;
+	   (?(tree_float_type_node)
+	     (debug  "monimelt_json_for_type" " float")
+	     (return '"float")
 	     )
 	   ;;
 	   (?(tree_signed_char_type_node)
@@ -242,44 +324,6 @@
 	       (debug "monimelt_json_for_type" " integertype jres=" jres)
 	       (return jres)
 	       ))
-	   (?(tree_pointer_type ?tr_pointedtype)
-	     (debug "monimelt_json_for_type" " pointer tr_pointedtype=" tr_pointedtype)
-	     (let ( (jpointedtype (monimelt_json_for_type (constant_box tr_pointedtype)))
-		    (jres (make_jsonobject discr_jsonobject
-					   'pointer jpointedtype))
-		    )
-	       (debug "monimelt_json_for_type" " pointertype jres=" jres)
-	       (return jres)
-	       ))
-	   (?(tree_type_decl ?tr_dcltype ?tr_name ?uid)
-	     (debug "monimelt_json_for_type" " typedecl tr_dcltype=" tr_dcltype "\n.. tr_name=" tr_name
-		    "\n.. uid=" uid)
-	     (assert_msg "@$@unimplemented monimelt_json_for_type typedecl" () (constant_box tr_dcltype))
-	     )
-	   (?(tree_union_type ?tr_union)
-	     (debug "monimelt_json_for_type" " union tr_union=" tr_union)
-	     (let ( (junion (monimelt_json_for_type (constant_box tr_union)))
-		    (jres (make_jsonobject discr_jsonobject
-					   'union junion))
-		    )
-	       (debug "monimelt_json_for_type" " union jres=" jres)
-	       (return jres)
-	     ))
-	   (?(tree_record_type ?tr_record)
-	     (debug "monimelt_json_for_type" " record tr_record=" tr_record)
-	     (let ( (jrecord (monimelt_json_for_type (constant_box tr_record)))
-		    (jres (make_jsonobject discr_jsonobject
-					   'record jrecord))
-		    )
-	       (debug "monimelt_json_for_type" " record jres=" jres)
-	       (return jres)
-	     ))
-	   (?(tree_array_type ?tr_arrelemtype ?tr_arrdomaintype)
-	     (debug "monimelt_json_for_type" " array tr_arrelemtype=" tr_arrelemtype
-		    "\n.. tr_arrdomaintype=" tr_arrdomaintype)
-	     (assert_msg "@$@unimplemented monimelt_json_for_type array" ()
-			 (constant_box tr_arrelemtype) (constant_box tr_arrdomaintype))
-	     )
 	   (?_ 
 	    (assert_msg "monimelt_json_for_type unexpected tr_type" () (constant_box tr_type))
 	    (void)))

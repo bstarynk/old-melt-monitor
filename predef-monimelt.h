@@ -177,6 +177,9 @@ MOM_PREDEFINED_NAMED(module,_7sqk8vh89xr_6tj8dq7vqju)
 ////!gives the line number
 MOM_PREDEFINED_NAMED(monimelt_line,_8hvs0h5a7v9_1ixv3jf2j6j)
 
+////!for Monimelt types
+MOM_PREDEFINED_NAMED(monimelt_type,_9j151ceapqf_dae1vrdueqa)
+
 ////!in JSON dumps, indicate nodes, or give their connective item
 MOM_PREDEFINED_NAMED(node,_4m7x6811f6j_t480zu575mz)
 
@@ -258,6 +261,9 @@ MOM_PREDEFINED_NAMED(translate_module,_4yxdswc8qwf_vxzy95hd399)
 
 ////!in JSON dumps, used for tuples of items
 MOM_PREDEFINED_NAMED(tuple,_7vw56h18sw0_hv77m6q8uxu)
+
+////!for types
+MOM_PREDEFINED_NAMED(type,_8xfj0sc82ux_thsk0iw2773)
 
 ////!describes unsigned type
 MOM_PREDEFINED_NAMED(unsigned,_77xdevxp3zp_yeryy3x1aea)
