@@ -55,6 +55,9 @@ MOM_PREDEFINED_NAMED(body,_0ihu411vkua_z4sh56hicdt)
 ////!the buffer payload kind, and also the clipboard buffer in editors
 MOM_PREDEFINED_NAMED(buffer,_3zqd7ai3rtu_md9athkx17u)
 
+////!describes char type
+MOM_PREDEFINED_NAMED(char,_72psq1j5keh_d0z70e7tzxu)
+
 ////!JSON for closure values
 MOM_PREDEFINED_NAMED(closed_values,_9mxi9e605ay_ihpjyrwq250)
 
@@ -112,6 +115,9 @@ MOM_PREDEFINED_NAMED(id,_7a9sxskjhcp_kpf30ka97ex)
 ////!for input display
 MOM_PREDEFINED_NAMED(input,_356014y9ueu_xv6j0eskszw)
 
+////!describes int type
+MOM_PREDEFINED_NAMED(int,_7e1ak9qwf9h_wp5tptm4uyi)
+
 ////!for integer values and displays
 MOM_PREDEFINED_NAMED(integer,_9jeymqk2732_wiq5kyczi9c)
 
@@ -150,11 +156,20 @@ MOM_PREDEFINED_NAMED(kind,_06yp8ueq6yf_5ts408yww29)
 ////!gives the expansion of a routine
 MOM_PREDEFINED_NAMED(locals,_3eu0rdq4upj_dp5ptr6hj04)
 
+////!describes long type
+MOM_PREDEFINED_NAMED(long,_92ti1wff0e6_hw240mrry10)
+
+////!for maximum
+MOM_PREDEFINED_NAMED(max,_6me6iv1ieat_mw0zucsqqm5)
+
 ////!notably for error message in JSONRPC
 MOM_PREDEFINED_NAMED(message,_4jp2meuzru2_a58afyxwxa2)
 
 ////!for JSONRPC and elsewhere
 MOM_PREDEFINED_NAMED(method,_3hv5ymapjed_y8q6hsvhw8u)
+
+////!for minimum
+MOM_PREDEFINED_NAMED(min,_2fjizx76kia_567e7h9s69z)
 
 ////!module to be compiled...
 MOM_PREDEFINED_NAMED(module,_7sqk8vh89xr_6tj8dq7vqju)
@@ -183,6 +198,9 @@ MOM_PREDEFINED_NAMED(parent,_36tp2s8s5s2_jzjm0cxdpjz)
 ////!in JSON dumps, give the payload of items
 MOM_PREDEFINED_NAMED(payload,_41v0erax6my_m6pytj0793u)
 
+////!for pointers
+MOM_PREDEFINED_NAMED(pointer,_1vd2t9p4krp_yjsuuc88k61)
+
 ////!for the expansion of a primitive
 MOM_PREDEFINED_NAMED(primitive,_967fch1xu4h_i87qjq1zt1h)
 
@@ -210,8 +228,17 @@ MOM_PREDEFINED_NAMED(routine,_0acmecj244a_6krws4rx7v1)
 ////!in JSON dumps, indicate sets of item, or give their array of elements
 MOM_PREDEFINED_NAMED(set,_2v75mmyph64_4h4kys78740)
 
+////!describes short type
+MOM_PREDEFINED_NAMED(short,_3u5f8v43w3k_acw3tuers2u)
+
+////!describes signed char type
+MOM_PREDEFINED_NAMED(signed_char,_4ztwemps3vr_y2i1hadm57s)
+
 ////!gives the size, e.g. in editors
 MOM_PREDEFINED_NAMED(size,_5s59qeamxta_70k0mt77r9i)
+
+////!describes size_t type
+MOM_PREDEFINED_NAMED(size_t,_8eydfzivw1p_4hss3rfff4y)
 
 ////!in JSON dumps, give the sons of nodes
 MOM_PREDEFINED_NAMED(sons,_4ezpkss1akd_94f4h25sqe4)
@@ -231,6 +258,18 @@ MOM_PREDEFINED_NAMED(translate_module,_4yxdswc8qwf_vxzy95hd399)
 
 ////!in JSON dumps, used for tuples of items
 MOM_PREDEFINED_NAMED(tuple,_7vw56h18sw0_hv77m6q8uxu)
+
+////!describes unsigned type
+MOM_PREDEFINED_NAMED(unsigned,_77xdevxp3zp_yeryy3x1aea)
+
+////!describes unsigned char type
+MOM_PREDEFINED_NAMED(unsigned_char,_61arma4wcjy_4um1arwy09m)
+
+////!describes unsigned_long type
+MOM_PREDEFINED_NAMED(unsigned_long,_23ey21s44px_iarreqeqhr5)
+
+////!describes unsigned_short type
+MOM_PREDEFINED_NAMED(unsigned_short,_0yeu3tyzw9z_jqhcu2z2x34)
 
 ////!gives the update time when applicable
 MOM_PREDEFINED_NAMED(updated,_5x41iah0kis_x8rrv3ww44t)
