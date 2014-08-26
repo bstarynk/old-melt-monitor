@@ -4892,59 +4892,57 @@ const struct momroutinedescr_st momrout_json_rpc_meltmom_declare_name = {
 // utility function to translate a JSON describing a type to some node
 // or value
 static momval_t
-meltmom_json_to_node_mom(momval_t jtype)
+meltmom_json_to_node_mom (momval_t jtype)
 {
   momval_t jinteger = MOM_NULLV, jmin = MOM_NULLV, jmax = MOM_NULLV;
   momval_t jpointer = MOM_NULLV;
-  momitem_t* itm = NULL;
-  if (jtype.pitem == mom_named__char
-      || mom_string_same(jtype, "char"))
-    return (momval_t)mom_named__char;
+  momitem_t *itm = NULL;
+  if (jtype.pitem == mom_named__char || mom_string_same (jtype, "char"))
+    return (momval_t) mom_named__char;
   else if (jtype.pitem == mom_named__signed_char
-	    || mom_string_same(jtype, "signed_char"))
-    return (momval_t)mom_named__signed_char;
+	   || mom_string_same (jtype, "signed_char"))
+    return (momval_t) mom_named__signed_char;
   else if (jtype.pitem == mom_named__unsigned_char
-	    || mom_string_same(jtype, "unsigned_char"))
-    return (momval_t)mom_named__unsigned_char;
+	   || mom_string_same (jtype, "unsigned_char"))
+    return (momval_t) mom_named__unsigned_char;
   else if (jtype.pitem == mom_named__short
-	    || mom_string_same(jtype, "short"))
-    return (momval_t)mom_named__short;
+	   || mom_string_same (jtype, "short"))
+    return (momval_t) mom_named__short;
   else if (jtype.pitem == mom_named__unsigned_short
-	    || mom_string_same(jtype, "unsigned_short"))
-    return (momval_t)mom_named__unsigned_short;
-  else if (jtype.pitem == mom_named__int
-	    || mom_string_same(jtype, "int"))
-    return (momval_t)mom_named__int;
+	   || mom_string_same (jtype, "unsigned_short"))
+    return (momval_t) mom_named__unsigned_short;
+  else if (jtype.pitem == mom_named__int || mom_string_same (jtype, "int"))
+    return (momval_t) mom_named__int;
   else if (jtype.pitem == mom_named__unsigned
-	    || mom_string_same(jtype, "unsigned"))
-    return (momval_t)mom_named__unsigned;
-  else if (jtype.pitem == mom_named__long
-	    || mom_string_same(jtype, "long"))
-    return (momval_t)mom_named__long;
+	   || mom_string_same (jtype, "unsigned"))
+    return (momval_t) mom_named__unsigned;
+  else if (jtype.pitem == mom_named__long || mom_string_same (jtype, "long"))
+    return (momval_t) mom_named__long;
   else if (jtype.pitem == mom_named__unsigned_long
-	    || mom_string_same(jtype, "unsigned_long"))
-    return (momval_t)mom_named__unsigned_long;
+	   || mom_string_same (jtype, "unsigned_long"))
+    return (momval_t) mom_named__unsigned_long;
   else if (jtype.pitem == mom_named__size_t
-	    || mom_string_same(jtype, "size_t"))
-    return (momval_t)mom_named__size_t;
-  else if (mom_is_json_object(jtype)
-	   && (jinteger = mom_jsonob_getstr(jtype, "integer")).ptr != NULL
-	   && (jmin = mom_jsonob_getstr(jtype, "min")).ptr != NULL
-	   && (jmax = mom_jsonob_getstr(jtype, "max")).ptr != NULL)
-    return (momval_t)mom_make_node_sized(mom_named__integer, 3,
-					 meltmom_json_to_node_mom(jinteger),
-					 jmin, jmax);
-  else if (mom_is_json_object(jtype)
-	   && (jpointer = mom_jsonob_getstr(jtype, "pointer")).ptr != NULL)
-    return (momval_t)mom_make_node_sized(mom_named__pointer, 1,
-					 meltmom_json_to_node_mom(jpointer));
-  else if (mom_is_string(jtype)
-	   && (itm = mom_get_item_of_name_string(jtype)) != NULL)
+	   || mom_string_same (jtype, "size_t"))
+    return (momval_t) mom_named__size_t;
+  else if (mom_is_json_object (jtype)
+	   && (jinteger = mom_jsonob_getstr (jtype, "integer")).ptr != NULL
+	   && (jmin = mom_jsonob_getstr (jtype, "min")).ptr != NULL
+	   && (jmax = mom_jsonob_getstr (jtype, "max")).ptr != NULL)
+    return (momval_t) mom_make_node_sized (mom_named__integer, 3,
+					   meltmom_json_to_node_mom
+					   (jinteger), jmin, jmax);
+  else if (mom_is_json_object (jtype)
+	   && (jpointer = mom_jsonob_getstr (jtype, "pointer")).ptr != NULL)
+    return (momval_t) mom_make_node_sized (mom_named__pointer, 1,
+					   meltmom_json_to_node_mom
+					   (jpointer));
+  else if (mom_is_string (jtype)
+	   && (itm = mom_get_item_of_name_string (jtype)) != NULL)
     return (momval_t) itm;
-  else MOM_FATAL(MOMOUT_LITERAL("meltmom_json_to_node_mom:"
-				"unexpected type of json="),
-		 MOMOUT_VALUE(jtype),
-		 NULL);
+  else
+    MOM_FATAL (MOMOUT_LITERAL ("meltmom_json_to_node_mom:"
+			       "unexpected type of json="),
+	       MOMOUT_VALUE (jtype), NULL);
   return MOM_NULLV;
 }
 

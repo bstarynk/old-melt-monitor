@@ -79,6 +79,7 @@ clean:
 	$(RM) -r _monimelt_termdump*
 	$(RM) -r _meltwork
 	$(RM) -r _monimelt*
+	$(RM) momjsrpc_client
 ################
 monimelt: $(OBJECTS) _timestamp.o
 	@if [ -f $@ ]; then echo -n backup old executable: ' ' ; mv -v $@ $@~ ; fi
@@ -181,7 +182,7 @@ melt-process-debug: monimelt.h meltmom-process.quicklybuilt.so | _meltwork monim
 	@sleep 3.5
 	@monimelt_pid=$$(cat $(MONI_MELT_RUN_PID)); \
          if [ -d /proc/$$monimelt_pid/ ]; then \
-	    ps -l $$monimelt_pid ; \
+	    ps -w $$monimelt_pid ; \
             echo killing $$monimelt_pid ; \
 	    kill -TERM $$monimelt_pid ; \
          else  \
