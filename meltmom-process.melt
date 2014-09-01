@@ -494,14 +494,14 @@
 	       " linum=" linum)
 	(error_at agg "MONIMELT strange located aggregation $1" tr_agg)
 	)
-     (  ?(tree_union_type_with_fields ?tr_uniname ?tr_unifields)
-	 (let ( (fieldstup (tree_chain_to_tuple discr_multiple tr_unifields))
+     ( ?(tree_union_type_with_fields ?tr_uniname ?tr_unifields)
+	(let ( (fieldstup (tree_chain_to_tuple discr_multiple tr_unifields))
 		)
 	   (debug "monimelt_declare_aggregation" " nonpositioned union tr_uniname=" tr_uniname
 		  ";\n fieldstup=" fieldstup ";\n.. agg=" agg)
 	   ))
-     (  ?(tree_record_type_with_fields ?tr_recname ?tr_recfields)
-	 (let ( (fieldstup (tree_chain_to_tuple discr_multiple tr_recfields))
+     ( ?(tree_record_type_with_fields ?tr_recname ?tr_recfields)
+	(let ( (fieldstup (tree_chain_to_tuple discr_multiple tr_recfields))
 		)
 	   (debug "monimelt_declare_aggregation" " nonpositioned struct tr_recname=" tr_recname
 		  ";\n fieldstup=" fieldstup ";\n.. agg=" agg)
