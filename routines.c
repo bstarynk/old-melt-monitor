@@ -4087,7 +4087,7 @@ update_display_value_codmom (int momstate_, momitem_t *momtasklet_,
 			     momval_t *momlocvals_, intptr_t * momlocnums_,
 			     double *momlocdbls_)
 {
-  momval_t *closvals = mom_closed_values (momclosv_);
+  const momval_t *closvals = mom_closed_values (momclosv_);
 #define _L(Nam) (momlocvals_[update_display_value_v_##Nam])
 #define _C(Nam) (closvals[update_display_value_c_##Nam])
 #define _N(Nam) (momlocnums_[update_display_value_n_##Nam])
@@ -4340,12 +4340,13 @@ enum ajax_complete_name_numbers_en
 
 static int
 ajax_complete_name_codmom (int momstate_, momitem_t *momtasklet_,
-			   const momnode_t *momclosure_,
+			   momval_t momclosv_,
 			   momval_t *momlocvals_, intptr_t * momlocnums_,
 			   double *momlocdbls_)
 {
+  const momval_t *closvals = mom_closed_values (momclosv_);
 #define _L(Nam) (momlocvals_[ajaxcompnam_v_##Nam])
-#define _C(Nam) (momclosure_->sontab[ajaxcompnam_c_##Nam])
+#define _C(Nam) (closvals[ajaxcompnam_c_##Nam])
 #define _N(Nam) (momlocnums_[ajaxcompnam_n_##Nam])
   enum ajax_complete_name_state_en
   {
@@ -4451,12 +4452,14 @@ enum translate_module_numbers_en
 
 static int
 translate_module_codmom (int momstate_, momitem_t *momtasklet_,
-			 const momnode_t *momclosure_,
+			 momval_t momclosv_,
 			 momval_t *momlocvals_, intptr_t * momlocnums_,
 			 double *momlocdbls_)
 {
+  const momval_t *closvals __attribute__ ((unused))
+    = mom_closed_values (momclosv_);
 #define _L(Nam) (momlocvals_[translate_module_v_##Nam])
-#define _C(Nam) (momclosure_->sontab[translate_module_c_##Nam])
+#define _C(Nam) (closvals[translate_module_c_##Nam])
 #define _N(Nam) (momlocnums_[translate_module_n_##Nam])
   enum translate_module_state_en
   {
@@ -4896,6 +4899,8 @@ meltmom_json_to_node_mom (momval_t jtype)
 {
   momval_t jinteger = MOM_NULLV, jmin = MOM_NULLV, jmax = MOM_NULLV;
   momval_t jpointer = MOM_NULLV;
+  momval_t jmomstruct = MOM_NULLV;
+  momval_t jmomunion = MOM_NULLV;
   momitem_t *itm = NULL;
   if (jtype.pitem == mom_named__char || mom_string_same (jtype, "char"))
     return (momval_t) mom_named__char;
@@ -4936,13 +4941,49 @@ meltmom_json_to_node_mom (momval_t jtype)
     return (momval_t) mom_make_node_sized (mom_named__pointer, 1,
 					   meltmom_json_to_node_mom
 					   (jpointer));
+  else if (mom_is_json_object (jtype)
+	   && (jmomstruct =
+	       mom_jsonob_getstr (jtype, "mom_struct")).ptr != NULL
+	   && mom_is_string (jmomstruct))
+    {
+      momitem_t *itmstruct = mom_get_item_of_name_string (jmomstruct);
+      if (!itmstruct)
+	{
+	  itmstruct = mom_make_item ();
+	  mom_register_item_named (itmstruct, jmomstruct.pstring);
+	  mom_item_set_space (itmstruct, momspa_root);
+	  MOM_DEBUG (run,
+		     MOMOUT_LITERAL
+		     ("meltmom_json_to_node_mom registering mom_struct "),
+		     MOMOUT_ITEM ((const momitem_t *) itmstruct), NULL);
+	}
+      return (momval_t) mom_make_node_sized (mom_named__mom_struct, 1,
+					     (momval_t) itmstruct);
+    }
+  else if (mom_is_json_object (jtype)
+	   && (jmomunion = mom_jsonob_getstr (jtype, "mom_union")).ptr != NULL
+	   && mom_is_string (jmomunion))
+    {
+      momitem_t *itmunion = mom_get_item_of_name_string (jmomunion);
+      if (!itmunion)
+	{
+	  itmunion = mom_make_item ();
+	  mom_register_item_named (itmunion, jmomunion.pstring);
+	  mom_item_set_space (itmunion, momspa_root);
+	  MOM_DEBUG (run,
+		     MOMOUT_LITERAL
+		     ("meltmom_json_to_node_mom registering mom_union "),
+		     MOMOUT_ITEM ((const momitem_t *) itmunion), NULL);
+	}
+      return (momval_t) mom_make_node_sized (mom_named__mom_union, 1,
+					     (momval_t) itmunion);
+    }
   else if (mom_is_string (jtype)
 	   && (itm = mom_get_item_of_name_string (jtype)) != NULL)
     return (momval_t) itm;
-  else
-    MOM_FATAL (MOMOUT_LITERAL ("meltmom_json_to_node_mom:"
-			       "unexpected type of json="),
-	       MOMOUT_VALUE (jtype), NULL);
+  MOM_FATAL (MOMOUT_LITERAL ("meltmom_json_to_node_mom:"
+			     "unexpected type of json="),
+	     MOMOUT_VALUE (jtype), NULL);
   return MOM_NULLV;
 }
 

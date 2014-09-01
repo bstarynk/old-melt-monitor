@@ -1272,8 +1272,12 @@ jsonrpc_processor_mom (void *p)
 	int c = fgetc (fil);
 	if (c != EOF && !goteof)
 	  {
-	    while (isspace (c))
-	      c = fgetc (fil);
+	    while (!goteof && isspace (c))
+	      {
+		c = fgetc (fil);
+		if (c == EOF)
+		  goteof = __LINE__;
+	      };
 	    if (!goteof && feof (fil))
 	      goteof = __LINE__;
 	    MOM_DEBUGPRINTF (run, "jsonrpc_processor ungetc %d=%c socket#%d",

@@ -63,12 +63,19 @@
   (return)
 )
 
+(defun monimelt_pre_genericize (decl)
+  (if (null !monimelt_pragma_ok)
+      (return))
+  (debug "monimelt_pre_genericize" " decl=" decl)
+  )
+
+  
 (defun monimelt_finish_decl (decl)
   (if (null !monimelt_pragma_ok)
       (return)) 
   (let ( (tdecl  (unbox :tree decl))
 	 )
-    ;; (debug "monimelt_finish_decl" " begin tdecl=" tdecl "\n")
+    ;(debug "monimelt_finish_decl" " begin tdecl=" tdecl "\n\n")
     (match
      tdecl
      (?(tree_function_decl_named
@@ -83,6 +90,9 @@
        (debug "monimelt_finish_decl" " typedecl tyname=" tyname 
 	      ";\n.. tdecl=" tdecl "\n")
        (list_append monimelt_types_list decl)
+       )
+     (?(tree_record_type ?tr_record)
+       (debug "monimelt_finish_decl" " record:" tr_record)
        )
      (?_
       ;; (debug "monimelt_finish_decl else tdecl=" tdecl)
@@ -162,6 +172,24 @@
     )
   )
 
+(defvar monimelt_dict_aggregates)
+(setq monimelt_dict_aggregates (make_mapstring discr_map_strings 89))
+
+(defun monimelt_register_aggregate_type (namev typev)
+  (let ( (rectypev (mapstring_getstr monimelt_dict_aggregates namev))
+	 )
+    (cond ( (null rectypev)
+	    (mapstring_putstr monimelt_dict_aggregates namev typev)
+	    (void)
+	    )
+	  ( (==t (unbox :tree typev) (unbox :tree rectypev))
+	    (void)
+	    )
+	  (:else
+	   (error_at typev "incorrect MELTMOM aggregate $1 same as $2 named $3"
+		     typev rectypev namev)
+	   ))
+  ))
 
 (defun monimelt_json_for_type (typev)
   (debug "monimelt_json_for_type" " start typev=" typev)
@@ -189,6 +217,22 @@
 	       (debug "monimelt_json_for_type" " typedecl jres=" jres)
 	       (return jres)))
 	   ;;
+	   (?(tree_union_type ?(and ?tr_uniname
+				    ?(tree_identifier  ?(and
+							 ?(cstring_prefixed "mom")
+							 ?uninamstr)))
+			      )
+	     (let ( (jname (constant_box uninamstr))
+		    (jres (make_jsonobject discr_jsonobject
+					   'mom_union jname))
+		    )
+	       (debug "monimelt_json_for_type" " momunion tr_uniname=" tr_uniname
+		      " jres=" jres)
+	       (monimelt_register_aggregate_type jname typev)
+	       (return jres)
+	       )
+	     )
+	   ;;
 	   (?(tree_union_type ?tr_union)
 	     (debug "monimelt_json_for_type" " union tr_union=" tr_union)
 	     (let ( (junion (monimelt_json_for_type (constant_box tr_union)))
@@ -198,6 +242,21 @@
 	       (debug "monimelt_json_for_type" " union jres=" jres)
 	       (return jres)
 	       ))
+	   ;;
+	   (?(tree_record_type ?(and ?tr_recname
+				     ?(tree_identifier
+				       ?(and ?(cstring_prefixed "mom")
+					     ?recnamestr)))
+			       )
+	     (let ( (jname (constant_box recnamestr))
+		    (jres (make_jsonobject discr_jsonobject
+					   'mom_struct jname))
+		    )
+	       (monimelt_register_aggregate_type jname typev)
+	       (debug "monimelt_json_for_type" " momrecord tr_recname=" tr_recname " jres=" jres)
+	       (return jres)
+	     )
+	     )
 	   ;;
 	   (?(tree_record_type ?tr_record)
 	     (debug "monimelt_json_for_type" " record tr_record=" tr_record)
@@ -452,6 +511,7 @@
 			      ())
     (register_gcc_attribute at :min_length 1)
     (register_finish_decl_first  monimelt_finish_decl)
+    (register_pre_genericize_first monimelt_pre_genericize)
     (at_finish_unit_first monimelt_finish_unit)
   
     (debug "processmonimelt_docmd end " cmd)

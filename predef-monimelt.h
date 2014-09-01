@@ -174,6 +174,12 @@ MOM_PREDEFINED_NAMED(min,_2fjizx76kia_567e7h9s69z)
 ////!module to be compiled...
 MOM_PREDEFINED_NAMED(module,_7sqk8vh89xr_6tj8dq7vqju)
 
+////!for monimelt struct prefixed with mom
+MOM_PREDEFINED_NAMED(mom_struct,_9y82yz8z01a_x0dx4kx0x18)
+
+////!for monimelt union prefixed with mom
+MOM_PREDEFINED_NAMED(mom_union,_2qmau9u6ie1_7ry5vh1vhe0)
+
 ////!gives the line number
 MOM_PREDEFINED_NAMED(monimelt_line,_8hvs0h5a7v9_1ixv3jf2j6j)
 

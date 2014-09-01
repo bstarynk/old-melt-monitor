@@ -167,6 +167,7 @@ melt-process-header: monimelt.h meltmom-process.quicklybuilt.so | _meltwork moni
 melt-process-debug: monimelt.h meltmom-process.quicklybuilt.so | _meltwork monimelt
 	@echo MONI_MELT_TMP= $(MONI_MELT_TMP) MONI_MELT_SOCKET= $(MONI_MELT_SOCKET)
 	@rm -f $(MONI_MELT_OUTMONI)  $(MONI_MELT_OUTMELT)
+	@monimelt_pid=$$(pidof ./monimelt); if [ -n "$$monimelt_pid" ]; then kill $$monimelt_pid; fi
 	$(MONI_MELT_PREFIXMONI) ./monimelt $(MONI_MELT_DEBUG_FLAGS) --daemon-noclose --chdir $(PWD) $(MONI_MELT_RUN_FLAGS)  \
           $(MONI_MELT_JOB_FLAGS) $(MONI_MELT_JSONRPC_FLAGS) \
 	  $(if $(MONI_MELT_OUTMONI), > $(MONI_MELT_OUTMONI) 2>&1) &
