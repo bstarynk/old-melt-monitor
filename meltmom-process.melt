@@ -464,6 +464,8 @@
     )
   )
 
+
+
 (defun monimelt_declare_aggregation (agg)
   (debug "monimelt_declare_aggregation" " start agg=" agg)
   (let ( (tr_agg (unbox :tree agg))
@@ -479,6 +481,12 @@
 	       )
 	  (debug "monimelt_declare_aggregation" " union tr_uniname=" tr_uniname
 		 " linum=" linum ";\n fieldstup=" fieldstup)
+	  (foreach_in_multiple
+	   (fieldstup)
+	   (curfld :long fix) 
+	   (debug "monimelt_declare_aggregation" "union fix#" fix " curfld=" curfld)
+	   (monimelt_declare_aggregate_field (constant_box tr_uniname) curfld fix)
+	   )
 	  ))
      ( ?(and
 	 ?(tree_decl_at_source_location ?filepathv ?linum ?colnum)
@@ -488,6 +496,12 @@
 	       )
 	  (debug "monimelt_declare_aggregation" " struct tr_recname=" tr_recname
 		 " linum=" linum ";\n fieldstup=" fieldstup)
+	  (foreach_in_multiple
+	   (fieldstup)
+	   (curfld :long fix) 
+	   (debug "monimelt_declare_aggregation" "struct fix#" fix " curfld=" curfld)
+	   (monimelt_declare_aggregate_field (constant_box tr_recname) curfld fix)
+	   )
 	  ))
      ( ?(tree_decl_at_source_location ?filepathv ?linum ?colnum)
 	(debug "monimelt_declare_aggregation" " strange located decl tr_agg=" tr_agg
@@ -496,21 +510,35 @@
 	)
      ( ?(tree_union_type_with_fields ?tr_uniname ?tr_unifields)
 	(let ( (fieldstup (tree_chain_to_tuple discr_multiple tr_unifields))
-		)
-	   (debug "monimelt_declare_aggregation" " nonpositioned union tr_uniname=" tr_uniname
-		  ";\n fieldstup=" fieldstup ";\n.. agg=" agg)
-	   ))
+	       )
+	  (debug "monimelt_declare_aggregation" " nonpositioned union tr_uniname=" tr_uniname
+		 ";\n fieldstup=" fieldstup ";\n.. agg=" agg)
+	  (foreach_in_multiple
+	   (fieldstup)
+	   (curfld :long fix) 
+	   (debug "monimelt_declare_aggregation" "union fix#" fix " curfld=" curfld)
+	   (monimelt_declare_aggregate_field (constant_box tr_uniname) curfld fix)
+	   )
+	  ))
      ( ?(tree_record_type_with_fields ?tr_recname ?tr_recfields)
 	(let ( (fieldstup (tree_chain_to_tuple discr_multiple tr_recfields))
-		)
-	   (debug "monimelt_declare_aggregation" " nonpositioned struct tr_recname=" tr_recname
-		  ";\n fieldstup=" fieldstup ";\n.. agg=" agg)
-	   ))
+	       )
+	  (debug "monimelt_declare_aggregation" " nonpositioned struct tr_recname=" tr_recname
+		 ";\n fieldstup=" fieldstup ";\n.. agg=" agg)
+	  (foreach_in_multiple
+	   (fieldstup)
+	   (curfld :long fix) 
+	   (debug "monimelt_declare_aggregation" "struct fix#" fix " curfld=" curfld)
+	   (monimelt_declare_aggregate_field (constant_box tr_recname) curfld fix)
+	   )
+	  ))
      (?_
       (debug "monimelt_declare_aggregation" " unexpected tr_agg=" tr_agg)
       (error_at agg "MONIMELT unexpected aggregation $1" tr_agg)
       )
      )))
+
+
 
 ;;this function should probably do the JSONRPC calls
 (defun monimelt_finish_unit (arg)
