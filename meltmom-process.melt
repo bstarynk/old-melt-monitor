@@ -121,8 +121,10 @@
 					      'monimelt_name typenamev
 					      'monimelt_line linenumv))
 		     )
+		(debug "monimelt_declare_type" " typenamev=" typenamev "; typev=" typev)
 		(mapstring_putstr monimelt_dict_types typenamev typev)
-		(debug "monimelt_declare_type" " jparam=" jparam)
+		(debug "monimelt_declare_type" " updated dict="  debug_more monimelt_dict_types
+		       "\n.. jparam=" jparam)
 		(let ( (res (do_blocking_jsonrpc2_call monimelt_service
 						       '"meltmom_declare_name" jparam 250)
 			    )
@@ -178,8 +180,13 @@
 (defun monimelt_register_aggregate_type (namev typev)
   (let ( (rectypev (mapstring_getstr monimelt_dict_aggregates namev))
 	 )
+    (debug "monimelt_register_aggregate_type" " namev=" namev " typev=" typev " rectypev=" rectypev)
+    (assert_msg "check namev" (is_string namev) namev)
+    (assert_msg "check dictaggr" (is_mapstring monimelt_dict_aggregates) monimelt_dict_aggregates)
+    (shortbacktrace_dbg "monimelt_register_aggregate_type" 10)
     (cond ( (null rectypev)
 	    (mapstring_putstr monimelt_dict_aggregates namev typev)
+	    (debug "monimelt_register_aggregate_type" " updated dictaggr " monimelt_dict_aggregates)
 	    (void)
 	    )
 	  ( (==t (unbox :tree typev) (unbox :tree rectypev))
@@ -187,7 +194,7 @@
 	    )
 	  (:else
 	   (error_at typev "incorrect MELTMOM aggregate $1 same as $2 named $3"
-		     typev rectypev namev)
+		     typev (unbox :tree rectypev) namev)
 	   ))
   ))
 
@@ -457,28 +464,89 @@
     )
   )
 
+(defun monimelt_declare_aggregation (agg)
+  (debug "monimelt_declare_aggregation" " start agg=" agg)
+  (let ( (tr_agg (unbox :tree agg))
+	 )
+    (debug "monimelt_declare_aggregation" " tr_agg=" tr_agg)
+    (match
+     tr_agg
+     ( ?(and
+	 ?(tree_decl_at_source_location ?filepathv ?linum ?colnum)
+	 ?(tree_union_type_with_fields ?tr_uniname ?tr_unifields)
+	 )
+	(let ( (fieldstup (tree_chain_to_tuple discr_multiple tr_unifields))
+	       )
+	  (debug "monimelt_declare_aggregation" " union tr_uniname=" tr_uniname
+		 " linum=" linum ";\n fieldstup=" fieldstup)
+	  ))
+     ( ?(and
+	 ?(tree_decl_at_source_location ?filepathv ?linum ?colnum)
+	 ?(tree_record_type_with_fields ?tr_recname ?tr_recfields)
+	 )
+	(let ( (fieldstup (tree_chain_to_tuple discr_multiple tr_recfields))
+	       )
+	  (debug "monimelt_declare_aggregation" " struct tr_recname=" tr_recname
+		 " linum=" linum ";\n fieldstup=" fieldstup)
+	  ))
+     ( ?(tree_decl_at_source_location ?filepathv ?linum ?colnum)
+	(debug "monimelt_declare_aggregation" " strange located decl tr_agg=" tr_agg
+	       " linum=" linum)
+	(error_at agg "MONIMELT strange located aggregation $1" tr_agg)
+	)
+     (  ?(tree_union_type_with_fields ?tr_uniname ?tr_unifields)
+	 (let ( (fieldstup (tree_chain_to_tuple discr_multiple tr_unifields))
+		)
+	   (debug "monimelt_declare_aggregation" " nonpositioned union tr_uniname=" tr_uniname
+		  ";\n fieldstup=" fieldstup ";\n.. agg=" agg)
+	   ))
+     (  ?(tree_record_type_with_fields ?tr_recname ?tr_recfields)
+	 (let ( (fieldstup (tree_chain_to_tuple discr_multiple tr_recfields))
+		)
+	   (debug "monimelt_declare_aggregation" " nonpositioned struct tr_recname=" tr_recname
+		  ";\n fieldstup=" fieldstup ";\n.. agg=" agg)
+	   ))
+     (?_
+      (debug "monimelt_declare_aggregation" " unexpected tr_agg=" tr_agg)
+      (error_at agg "MONIMELT unexpected aggregation $1" tr_agg)
+      )
+     )))
+
 ;;this function should probably do the JSONRPC calls
 (defun monimelt_finish_unit (arg)
-  (debug "monimelt_finish_unit" " arg=" arg ";\n monimelt_types_list=" monimelt_types_list
-	 ";\n monimelt_functions_list=" monimelt_functions_list)
+  (debug "monimelt_finish_unit" " arg=" arg
+	 ";\n\n\n*** monimelt_types_list=" monimelt_types_list
+	 ";\n\n\n*** monimelt_functions_list=" monimelt_functions_list
+	 ";\n\n\n*** monimelt_dict_aggregates=" monimelt_dict_aggregates
+	 ";\n\n\n*** monimelt_dict_types=" monimelt_dict_types
+	 "\n\n\n\n")
   ;;
-  (debug "monimelt_functions_list" " declaring " (list_length monimelt_types_list) " types")
+  (debug "monimelt_finish_unit" " declaring " (list_length monimelt_types_list) " types")
   (each_component_in_list
    monimelt_types_list
    ctype
    (monimelt_declare_type ctype))
   ;;
-  (debug "monimelt_functions_list" " declaring " (list_length monimelt_functions_list) " functions")
+  (debug "monimelt_finish_unit" " declaring " (list_length monimelt_functions_list) " functions")
   (each_component_in_list
    monimelt_functions_list
    cfunc
    (monimelt_declare_function cfunc))
   ;;
-  (debug "monimelt_functions_list" " filling " (list_length monimelt_types_list) " types")
+  (debug "monimelt_finish_unit" " filling " (list_length monimelt_types_list) " types")
   (each_component_in_list
    monimelt_types_list
    ctype
    (monimelt_fill_type ctype))
+  ;;
+  ;; aggregates should be declared after filling the types
+  (debug "monimelt_finish_unit" " declaring aggregates from " monimelt_dict_aggregates)
+  (foreach_in_mapstring
+   (monimelt_dict_aggregates)
+   (curname curagg)
+   (debug "monimelt_finish_unit" " aggregate curname=" curname " curagg=" curagg)
+   (monimelt_declare_aggregation curagg)
+   )
   ;;
   (let ( (momdump (do_blocking_jsonrpc2_call monimelt_service '"dump" () 1550))
 	 )
