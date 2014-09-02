@@ -4717,10 +4717,13 @@ json_rpc_dump_exit_lab_start:
 		     (momval_t)
 		     mom_make_double (mom_clock_time
 				      (CLOCK_PROCESS_CPUTIME_ID))),
-     MOMJSON_END);
+     MOMJSOB_STRING (((const char *) "dumped"),
+		     (momval_t) mom_make_string (".")), MOMJSON_END);
   MOM_DEBUG (run, MOMOUT_LITERAL ("json_rpc_dump_exit jresult="),
 	     MOMOUT_VALUE (_L (jresult)), NULL);
   mom_jsonrpc_reply (_L (jxitm).pitem, _L (jresult));
+  MOM_INFORMPRINTF ("json_rpc_dump_exit dumped state...");
+  usleep (50000);
   _SET_STATE (afterdump);
 json_rpc_dump_exit_lab_afterdump:
   MOM_DEBUG (run,
@@ -4862,6 +4865,10 @@ json_rpc_meltmom_declare_name_lab_start:
 	     MOMOUT_VALUE ((const momval_t)
 			   mom_identv_of_item (_L (nameditm).pitem)), NULL);
   ///
+  _L (jresult) = (momval_t) mom_make_json_object
+    (MOMJSOB_STRING (((const char *) "name"), (const momval_t) _L (name)),
+     MOMJSOB_STRING (((const char *) "id"), (const momval_t)
+		     mom_identv_of_item (_L (nameditm).pitem)), NULL);
   MOM_DEBUG (run,
 	     MOMOUT_LITERAL ("json_rpc_meltmom_declare_name jresult="),
 	     MOMOUT_VALUE ((const momval_t) _L (jresult)), NULL);

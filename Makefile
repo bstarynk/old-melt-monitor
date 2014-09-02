@@ -48,11 +48,12 @@ PLUGINS=  $(patsubst %.c,%.so,$(PLUGIN_SOURCES))
 SOURCES= $(sort $(filter-out $(PLUGIN_SOURCES) $(MODULE_SOURCES), $(wildcard [a-z]*.c)))
 OBJECTS= $(patsubst %.c,%.o,$(SOURCES))
 RM= rm -fv
-MELTGCCFLAGS=  -fplugin=melt -fplugin-arg-melt-init=@melt-default-modules.quicklybuilt -fplugin-arg-melt-workdir=_meltwork
+#was: MELTGCCFLAGS=  -fplugin=melt -fplugin-arg-melt-init=@melt-default-modules.quicklybuilt -fplugin-arg-melt-workdir=_meltwork
+MELTGCCFLAGS=  -fplugin=melt -fplugin-arg-melt-workdir=_meltwork
 ####
 #### MONI_MELT variables are for MELT plugin and the monimelt monitor working together
 ## a temporary suffix
-MONI_MELT_TMP:=$(shell mktemp -u -t moni-melt_XXXXXXX)
+MONI_MELT_TMP:=$(shell mktemp -u -t monimelt_XXXXXXX)
 ## job options
 #MONI_MELT_OUTMONI could be the output of the monitor
 #MONI_MELT_OUTMELT could be the output of the MELT enhanced

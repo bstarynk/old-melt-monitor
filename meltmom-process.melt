@@ -190,12 +190,19 @@
 	    (void)
 	    )
 	  ( (==t (unbox :tree typev) (unbox :tree rectypev))
+	    (debug "monimelt_register_aggregate_type" " same unboxed typev & rectypev="
+		   (unbox :tree typev))
+	    (void)
+	    )
+	  ( (tree_types_compatible_p (unbox :tree typev) (unbox :tree rectypev))
+	    (debug "monimelt_register_aggregate_type" " compatible typev=" typev ";\n.. with rectypev=" rectypev)
 	    (void)
 	    )
 	  (:else
 	   (debug "monimelt_register_aggregate_type" " erroring typev=" typev
 		  ";\n.. unboxed rectypev=" (unbox :tree rectypev)
-		  ";\n.. namev=" namev)
+		  ";\n.. namev=" namev "\n")
+	   (shortbacktrace_dbg "monimelt_register_aggregate_type error" 15)
 	   (error_at typev "incorrect MELTMOM aggregate $1 same as $2 named $3"
 		     typev (unbox :tree rectypev) namev)
 	   ))
