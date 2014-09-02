@@ -505,15 +505,18 @@ typedef struct momseqitem_st momset_t;
 typedef struct momseqitem_st momtuple_t;
 typedef struct momnode_st momnode_t;
 typedef struct momitem_st momitem_t;
+
+struct momhead_st
+{
+  const momtynum_t htype;
+  momvflags_t hflags;
+};
+
 union momvalueptr_un
 {
   void *ptr;
   const momtynum_t *ptype;
-  struct
-  {
-    const momtynum_t htype;
-    momvflags_t hflags;
-  } *phead;
+  struct momhead_st *phead;
   const momint_t *pint;
   const momdouble_t *pdouble;
   const momstring_t *pstring;

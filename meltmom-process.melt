@@ -193,6 +193,9 @@
 	    (void)
 	    )
 	  (:else
+	   (debug "monimelt_register_aggregate_type" " erroring typev=" typev
+		  ";\n.. unboxed rectypev=" (unbox :tree rectypev)
+		  ";\n.. namev=" namev)
 	   (error_at typev "incorrect MELTMOM aggregate $1 same as $2 named $3"
 		     typev (unbox :tree rectypev) namev)
 	   ))
@@ -412,13 +415,26 @@
 		    " tr_fldtype=" tr_fldtype "\n.. linum=" linum)
 	     (let ( (jfldtype (monimelt_json_for_type (constant_box tr_fldtype)))
 		    )
-	       (debug "monimelt_declare_aggregate_field " " fldnamestr=" fldnamestr
+	       (debug "monimelt_declare_aggregate_field" " fldnamestr=" fldnamestr
 		      " jfldtype=" jfldtype)
 	       (void)))
+	   (?(and
+	      ?(tree_field_decl ?tr_fname ?tr_fldtype)
+	      ?(tree_decl_at_source_location ?filepathv ?linum ?colnum))
+	     (debug "monimelt_declare_aggregate_field" " positioned field tr_fname=" tr_fname
+		    " tr_fldtype=" tr_fldtype
+		    " linum=" linum)
+	     (void))
+	   (?(tree_field_decl ?tr_fname ?tr_fldtype)
+	     (debug "monimelt_declare_aggregate_field" " unpositioned field tr_fname=" tr_fname
+		    " tr_fldtype=" tr_fldtype)
+	     (void))
 	   (?_ (assert_msg "impossible tr_field" () tr_field)
 	       (void)))
     )
   )
+
+
 
 (defun monimelt_fill_type (typev)
   (debug "monimelt_fill_type" " start typev=" typev)

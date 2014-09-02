@@ -179,7 +179,7 @@ melt-process-debug: monimelt.h meltmom-process.quicklybuilt.so | _meltwork monim
 	    -fplugin-arg-melt-monimelt-socket=$(MONI_MELT_SOCKET) \
 	    -fplugin-arg-melt-debugging=mode \
             -c $< -o /dev/null \
-	  $(if $(MONI_MELT_OUTMELT),> $(MONI_MELT_OUTMELT)  2>&1)
+	  $(if $(MONI_MELT_OUTMELT),> $(MONI_MELT_OUTMELT)  2>&1 || (grep error: $(MONI_MELT_OUTMELT); false))
 	@sleep 3.5
 	@monimelt_pid=$$(cat $(MONI_MELT_RUN_PID)); \
          if [ -d /proc/$$monimelt_pid/ ]; then \
