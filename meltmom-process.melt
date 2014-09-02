@@ -599,12 +599,14 @@
    (monimelt_declare_aggregation curagg)
    )
   ;;
-  (let ( (momdump (do_blocking_jsonrpc2_call monimelt_service '"dump" () 1550))
-	 )
-    (when (null momdump)
-      (error_at () "failed to do final Monimelt dump on service $1" monimelt_service)
-      (return))
-    (debug "monimelt_finish_unit" " momdump=" momdump))
+  (multicall
+   (momdump :long dumptime)
+   (do_blocking_jsonrpc2_call monimelt_service '"dump" :true 6550)
+   (debug "monimelt_finish_unit" " final momdump=" momdump ";\n.. dumptime=" dumptime)
+   (when (null momdump)
+     (error_at () "failed to do final Monimelt dump on service $1" monimelt_service)
+     (return))
+   )
   )
 
 

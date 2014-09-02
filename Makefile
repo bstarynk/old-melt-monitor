@@ -48,8 +48,8 @@ PLUGINS=  $(patsubst %.c,%.so,$(PLUGIN_SOURCES))
 SOURCES= $(sort $(filter-out $(PLUGIN_SOURCES) $(MODULE_SOURCES), $(wildcard [a-z]*.c)))
 OBJECTS= $(patsubst %.c,%.o,$(SOURCES))
 RM= rm -fv
-#was: MELTGCCFLAGS=  -fplugin=melt -fplugin-arg-melt-init=@melt-default-modules.quicklybuilt -fplugin-arg-melt-workdir=_meltwork
-MELTGCCFLAGS=  -fplugin=melt -fplugin-arg-melt-workdir=_meltwork
+MELTGCCFLAGS=  -fplugin=melt -fplugin-arg-melt-init=@melt-default-modules.quicklybuilt -fplugin-arg-melt-workdir=_meltwork
+#new: MELTGCCFLAGS=  -fplugin=melt -fplugin-arg-melt-workdir=_meltwork
 ####
 #### MONI_MELT variables are for MELT plugin and the monimelt monitor working together
 ## a temporary suffix
@@ -209,4 +209,8 @@ meltmom-process.quicklybuilt.so: meltmom-process.melt  | _meltwork
 	+$(COMPILE.c) -x c $(MELTGCCFLAGS) \
 	    -fplugin-arg-melt-mode=translatequickly \
 	    -fplugin-arg-melt-arg=$< \
-	    -x c -c /dev/null -o /dev/null
+	    -x c -c /dev/null -o /dev/null \
+	 || ($(COMPILE.c) -x c $(MELTGCCFLAGS) \
+	    -fplugin-arg-melt-mode=translatedebugnoline \
+	    -fplugin-arg-melt-arg=$< \
+	    -x c -c /dev/null -o /dev/null)
