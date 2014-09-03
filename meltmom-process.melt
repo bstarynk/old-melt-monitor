@@ -489,11 +489,11 @@
 
 
 
-(defun monimelt_declare_aggregation (agg)
-  (debug "monimelt_declare_aggregation" " start agg=" agg)
+(defun monimelt_declare_aggregation (agg nam)
+  (debug "monimelt_declare_aggregation" " start agg=" agg "; nam=" nam)
   (let ( (tr_agg (unbox :tree agg))
 	 )
-    (debug "monimelt_declare_aggregation" " tr_agg=" tr_agg)
+    (debug "monimelt_declare_aggregation nam=" nam "\n.. tr_agg=" tr_agg)
     (match
      tr_agg
      ( ?(and
@@ -507,7 +507,7 @@
 	  (foreach_in_multiple
 	   (fieldstup)
 	   (curfld :long fix) 
-	   (debug "monimelt_declare_aggregation" "union fix#" fix " curfld=" curfld)
+	   (debug "monimelt_declare_aggregation" "unionfield fix#" fix " curfld=" curfld)
 	   (monimelt_declare_aggregate_field (constant_box tr_uniname) curfld fix)
 	   )
 	  ))
@@ -522,7 +522,7 @@
 	  (foreach_in_multiple
 	   (fieldstup)
 	   (curfld :long fix) 
-	   (debug "monimelt_declare_aggregation" "struct fix#" fix " curfld=" curfld)
+	   (debug "monimelt_declare_aggregation" "structfield fix#" fix " curfld=" curfld)
 	   (monimelt_declare_aggregate_field (constant_box tr_recname) curfld fix)
 	   )
 	  ))
@@ -539,7 +539,7 @@
 	  (foreach_in_multiple
 	   (fieldstup)
 	   (curfld :long fix) 
-	   (debug "monimelt_declare_aggregation" "union fix#" fix " curfld=" curfld)
+	   (debug "monimelt_declare_aggregation" "unionfield fix#" fix " curfld=" curfld)
 	   (monimelt_declare_aggregate_field (constant_box tr_uniname) curfld fix)
 	   )
 	  ))
@@ -551,7 +551,7 @@
 	  (foreach_in_multiple
 	   (fieldstup)
 	   (curfld :long fix) 
-	   (debug "monimelt_declare_aggregation" "struct fix#" fix " curfld=" curfld)
+	   (debug "monimelt_declare_aggregation" "structfield fix#" fix " curfld=" curfld)
 	   (monimelt_declare_aggregate_field (constant_box tr_recname) curfld fix)
 	   )
 	  ))
@@ -592,11 +592,27 @@
   ;;
   ;; aggregates should be declared after filling the types
   (debug "monimelt_finish_unit" " declaring aggregates from " monimelt_dict_aggregates)
+  ;; first, predeclare the names
+  (foreach_in_mapstring
+   (monimelt_dict_aggregates)
+   (curname curagg)
+   (debug "monimelt_finish_unit" " aggregate curname=" curname)
+   (let ( (jparam (make_jsonobject discr_jsonobject
+				   'monimelt_name curname))
+	  )
+     (debug "monimelt_finish_unit aggregate jparam=" jparam)
+     (let ( (res (do_blocking_jsonrpc2_call monimelt_service
+					    '"meltmom_declare_name" jparam 250)
+		 )
+	    )
+       (debug "monimelt_finish_unite" " aggregate jsonrpc res=" res))
+     ))
+  ;; then declare the aggregation
   (foreach_in_mapstring
    (monimelt_dict_aggregates)
    (curname curagg)
    (debug "monimelt_finish_unit" " aggregate curname=" curname " curagg=" curagg)
-   (monimelt_declare_aggregation curagg)
+   (monimelt_declare_aggregation curagg curname)
    )
   ;;
   (multicall

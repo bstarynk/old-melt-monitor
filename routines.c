@@ -4840,7 +4840,8 @@ json_rpc_meltmom_declare_name_lab_start:
 	     MOMOUT_VALUE ((const momval_t) _L (name)),
 	     MOMOUT_LITERAL (" linenum="),
 	     MOMOUT_VALUE ((const momval_t) _L (linenum)), NULL);
-  if (!mom_is_string (_L (name)) || !mom_is_integer (_L (linenum)))
+  if (!mom_is_string (_L (name))
+      ||  (_L (linenum).ptr != NULL && !mom_is_integer (_L (linenum))))
     MOM_FATAL (MOMOUT_LITERAL
 	       ("invalid parameter to json_rpc_meltmom_declare_name:"),
 	       MOMOUT_VALUE ((const momval_t) _L (jparams)), NULL);
@@ -4852,7 +4853,7 @@ json_rpc_meltmom_declare_name_lab_start:
       mom_register_item_named (_L (nameditm).pitem,
 			       mom_to_string (_L (name)));
     }
-  {
+  if (_L(linenum).ptr) {
     mom_should_lock_item (_L (nameditm).pitem);
     mom_item_put_attribute (_L (nameditm).pitem, mom_named__monimelt_line,
 			    _L (linenum));

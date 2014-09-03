@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 Sep 02
+-- state-monimelt dump 2014 Sep 03
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -424,6 +424,8 @@ INSERT INTO t_items VALUES('_41xwu6cpvq9_ezp5wzq7t4x','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_4215uc2u6qk_52kqyra86y5','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for JSONRPC and elsewhere"}],
  "content": null, "kind": null, "payload": null}
 ');
+INSERT INTO t_items VALUES('_42cx8xskxe3_vu23eezcksq','{"attr": [], "content": null, "kind": null, "payload": null}
+');
 INSERT INTO t_items VALUES('_4363z4ey9pa_zvc1w07qctv','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1669}], "content": null,
  "kind": null, "payload": null}
 ');
@@ -792,6 +794,8 @@ INSERT INTO t_items VALUES('_6vpjccw3f7e_x5d6qrdteuk','{"attr": [{"attr": "_8hvs
 INSERT INTO t_items VALUES('_6w3dvx83dfw_xzc6aif6isv','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "gives the attribute[s], at least in dumped JSON..."}],
  "content": null, "kind": null, "payload": null}
 ');
+INSERT INTO t_items VALUES('_6x2wxwzakid_dh3cphz4ch0','{"attr": [], "content": null, "kind": null, "payload": null}
+');
 INSERT INTO t_items VALUES('_6zm92afs4yc_60a8ujmi1ef','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "routine for JSONRPC dump & exit"}],
  "content": null, "kind": "closure", "payload": {"closed_values": ["{spare closed-value json-rpc-dump-exit-0}",
    "{spare closed-value json-rpc-dump-exit-1}"], "closure_routine": "json_rpc_dump_exit"}}
@@ -954,6 +958,8 @@ INSERT INTO t_items VALUES('_83p6a79fewy_z0hvpk042sz','{"attr": [{"attr": "_8hvs
 ');
 INSERT INTO t_items VALUES('_83vmhzt7vum_rri3v062yc8','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 503}], "content": null,
  "kind": null, "payload": null}
+');
+INSERT INTO t_items VALUES('_842ec6pjy69_6ecqi2w8dv6','{"attr": [], "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_849cwhw4kch_25auqas037a','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 914}], "content": null,
  "kind": null, "payload": null}
@@ -1307,9 +1313,11 @@ INSERT INTO t_names VALUES('mom_item_vector_append_from_node','_96x9fqiw2qa_65hx
 INSERT INTO t_names VALUES('mom_item_vector_append_sized','_5kjhr97p5kk_kdq3zwkvwx4','.root');
 INSERT INTO t_names VALUES('mom_item_vector_append_til_nil','_2ir1y95wiuk_j879f5utux9','.root');
 INSERT INTO t_names VALUES('mom_item_vector_reserve','_75fi7pj3dxj_ewpadt0mi62','.root');
+INSERT INTO t_names VALUES('mom_itemattributes_st','_6x2wxwzakid_dh3cphz4ch0','.root');
 INSERT INTO t_names VALUES('mom_json_cmp','_5ruw4vm56dh_jfjm70uqzdc','.root');
 INSERT INTO t_names VALUES('mom_json_cstr_cmp','_8ycesefrfu9_au4qeqk68jk','.root');
 INSERT INTO t_names VALUES('mom_json_parser_data','_9u0043iaaef_mdrw04fihi6','.root');
+INSERT INTO t_names VALUES('mom_jsonentry_st','_842ec6pjy69_6ecqi2w8dv6','.root');
 INSERT INTO t_names VALUES('mom_jsonob_get_def','_2d28hsmu8zm_fziq009d8q8','.root');
 INSERT INTO t_names VALUES('mom_jsonob_getstr','_3k7s4156a7a_1p1rar740pk','.root');
 INSERT INTO t_names VALUES('mom_jsonrpc_error','_2aeczcr3u9f_cz273p64kkj','.root');
@@ -1415,6 +1423,7 @@ INSERT INTO t_names VALUES('momtynum_t','_1jriw29kezf_4wx1rtck86x','.root');
 INSERT INTO t_names VALUES('momusize_t','_7scq5tujqpv_itz5521v6cs','.root');
 INSERT INTO t_names VALUES('momval_t','_3vvtdeqxssw_dthyjy2dz5t','.root');
 INSERT INTO t_names VALUES('momvaltype_t','_266cwehdrjc_144jy18dwh1','.root');
+INSERT INTO t_names VALUES('momvalueptr_un','_42cx8xskxe3_vu23eezcksq','.root');
 INSERT INTO t_names VALUES('momvflags_t','_1wevxkfudp9_cpeu1adxcrp','.root');
 INSERT INTO t_names VALUES('monimelt_line','_8hvs0h5a7v9_1ixv3jf2j6j','.predef');
 INSERT INTO t_names VALUES('monimelt_type','_9j151ceapqf_dae1vrdueqa','.predef');
