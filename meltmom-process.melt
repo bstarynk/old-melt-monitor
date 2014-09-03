@@ -111,12 +111,12 @@
     (debug "monimelt_declare_type" " tr_type=" tr_type)
     (match tr_type
 	   ( ?(and
-	       ?(tree_type_declaration ?(tree_identifier ?tyidstr))
+	       ?(tree_type_decl ?tr_decltype ?name ?uid)
 	       ?(tree_decl_at_source_location ?filepathv ?linum ?colnum))
-	      (debug "monimelt_declare_type" " tyidstr=" tyidstr
+	      (debug "monimelt_declare_type" " name=" name "; tr_decltype=" tr_decltype
 		     " linum=" linum)
 	      (let ( (linenumv (constant_box linum))
-		     (typenamev (constant_box tyidstr))
+		     (typenamev (constant_box name))
 		     (jparam (make_jsonobject discr_jsonobject
 					      'monimelt_name typenamev
 					      'monimelt_line linenumv))
@@ -133,16 +133,26 @@
 		)
 	      )
 	   ;;
+	   ( ?(tree_type_decl ?tr_decltype ?name ?uid)
+	      (debug "monimelt_declare_type" " unlocated name=" name " tr_decltype=" tr_decltype
+		     " uid=" uid))
+	   ;;
 	   ( ?(tree_type_declaration ?tr_insidetype)
 	      (debug "monimelt_declare_type" " tr_insidetype=" tr_insidetype)
 	      )
 	   ;;
 	   ( ?(and
-		?(tree_enumeral_type ?tr_entype ?tr_enmin ?tr_enmax ?tr_ensize ?tr_envalues)
-		?(tree_decl_at_source_location ?filepathv ?linum ?colnum))
-	      (debug "monimelt_declare_type" " enumeral tr_entype=" tr_entype
+	       ?(tree_enumeral_type ?tr_entype ?tr_enmin ?tr_enmax ?tr_ensize ?tr_envalues)
+	       ?(tree_decl_at_source_location ?filepathv ?linum ?colnum))
+	      (debug "monimelt_declare_type" " located-enumeral linum=" linum "; tr_entype=" tr_entype
 		     " tr_envalues=" tr_envalues)
-		)
+	      )
+	   ;;
+	   ( ?(tree_enumeral_type ?tr_entype ?tr_enmin ?tr_enmax ?tr_ensize ?tr_envalues)
+	      (debug "monimelt_declare_type" " plain-enumeral tr_entype=" tr_entype
+		     " tr_envalues=" tr_envalues)
+	      )
+	   ;;
 	   ( ?_
 	     (debug  "monimelt_declare_type" " strange tr_type=" tr_type)
 	     (error_at typev "monimelt unexpected type $1" tr_type)
