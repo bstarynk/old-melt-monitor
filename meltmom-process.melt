@@ -132,6 +132,17 @@
 		  (debug "monimelt_declare_type" " jsonrpc res=" res))
 		)
 	      )
+	   ;;
+	   ( ?(tree_type_declaration ?tr_insidetype)
+	      (debug "monimelt_declare_type" " tr_insidetype=" tr_insidetype)
+	      )
+	   ;;
+	   ( ?(and
+		?(tree_enumeral_type ?tr_entype ?tr_enmin ?tr_enmax ?tr_ensize ?tr_envalues)
+		?(tree_decl_at_source_location ?filepathv ?linum ?colnum))
+	      (debug "monimelt_declare_type" " enumeral tr_entype=" tr_entype
+		     " tr_envalues=" tr_envalues)
+		)
 	   ( ?_
 	     (debug  "monimelt_declare_type" " strange tr_type=" tr_type)
 	     (error_at typev "monimelt unexpected type $1" tr_type)
