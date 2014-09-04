@@ -2550,6 +2550,9 @@ uint64_t mom_random_64 (void);
 // outcome of successful dump
 struct mom_dumpoutcome_st
 {
+  double odmp_cputime;
+  double odmp_elapsedtime;
+  unsigned odmp_nbdumpeditems;
   momval_t odmp_tuplenamed;
   momval_t odmp_jarrayname;
   momval_t odmp_setpredef;

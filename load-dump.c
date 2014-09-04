@@ -1523,6 +1523,63 @@ set_dump_param_mom (struct mom_dumper_st *du, const char *parname,
 }
 
 
+static void
+create_tables_for_dump_mom (struct mom_dumper_st *du)
+{
+  char *errmsg = NULL;
+  assert (du && du->dmp_magic == DUMPER_MAGIC);
+  /// create the initial tables
+  if (sqlite3_exec
+      (du->dmp_sqlite,
+       "CREATE TABLE IF NOT EXISTS t_params (parname VARCHAR(35) PRIMARY KEY ASC NOT NULL UNIQUE,"
+       " parvalue TEXT NOT NULL)", NULL, NULL, &errmsg))
+    MOM_FATAPRINTF ("in dumped db %s failed to create t_params %s",
+		    du->dmp_sqlpath, errmsg);
+  if (sqlite3_exec
+      (du->dmp_sqlite,
+       "CREATE TABLE IF NOT EXISTS t_items (itm_idstr VARCHAR(30) PRIMARY KEY ASC NOT NULL UNIQUE,"
+       " itm_jdata TEXT NOT NULL)", NULL, NULL, &errmsg))
+    MOM_FATAPRINTF ("in dumped db %s failed to create t_items %s",
+		    du->dmp_sqlpath, errmsg);
+  if (sqlite3_exec
+      (du->dmp_sqlite,
+       "CREATE TABLE IF NOT EXISTS t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE,"
+       // the id can be external so does not always REFERENCES
+       // t_items(itm_idstr)
+       " n_idstr VARCHAR(30) UNIQUE NOT NULL,"
+       " n_spacename VARCHAR(20) NOT NULL)", NULL, NULL, &errmsg))
+    MOM_FATAPRINTF ("failed to create t_names: %s", errmsg);
+  if (sqlite3_exec
+      (du->dmp_sqlite,
+       "CREATE TABLE IF NOT EXISTS t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE)",
+       NULL, NULL, &errmsg))
+    MOM_FATAPRINTF ("failed to create t_modules: %s", errmsg);
+  // it is important that the entire dump is a single transaction,
+  // otherwise it is much more slow...
+  if (sqlite3_exec (du->dmp_sqlite, "BEGIN TRANSACTION", NULL, NULL, &errmsg))
+    MOM_FATAPRINTF ("failed to BEGIN TRANSACTION: %s", errmsg);
+  /// prepare some statements
+  if (sqlite3_prepare_v2 (du->dmp_sqlite,
+			  "INSERT INTO t_items (itm_idstr, itm_jdata) VALUES (?1, ?2)",
+			  -1, &du->dmp_sqlstmt_item_insert, NULL))
+    MOM_FATAPRINTF ("failed to prepare item insert query: %s",
+		    sqlite3_errmsg (du->dmp_sqlite));
+  if (sqlite3_prepare_v2 (du->dmp_sqlite,
+			  "INSERT INTO t_names (name, n_idstr, n_spacename) VALUES (?1, ?2, ?3)",
+			  -1, &du->dmp_sqlstmt_name_insert, NULL))
+    MOM_FATAPRINTF ("failed to prepare name insert query: %s",
+		    sqlite3_errmsg (du->dmp_sqlite));
+  if (sqlite3_prepare_v2 (du->dmp_sqlite,
+			  "INSERT INTO t_params (parname, parvalue) VALUES (?1, ?2)",
+			  -1, &du->dmp_sqlstmt_param_insert, NULL))
+    MOM_FATAPRINTF ("failed to prepare param insert query: %s",
+		    sqlite3_errmsg (du->dmp_sqlite));
+  if (sqlite3_prepare_v2 (du->dmp_sqlite,
+			  "INSERT OR IGNORE INTO t_modules (modname) VALUES (?1)",
+			  -1, &du->dmp_sqlstmt_module_insert, NULL))
+    MOM_FATAPRINTF ("failed to prepare module insert query: %s",
+		    sqlite3_errmsg (du->dmp_sqlite));
+}
 
 void
 mom_full_dump (const char *reason, const char *dumpdir,
@@ -1535,6 +1592,7 @@ mom_full_dump (const char *reason, const char *dumpdir,
   memset (tempsuffix, 0, sizeof (tempsuffix));
   double startrealtime = mom_clock_time (CLOCK_REALTIME);
   double startcputime = mom_clock_time (CLOCK_PROCESS_CPUTIME_ID);
+  unsigned nbdumpeditems = 0;
   MOM_DEBUGPRINTF (dump,
 		   "mom_full_dump reason=%s startrealtime=%.3f startcputime=%.3f",
 		   reason, startrealtime, startcputime);
@@ -1601,63 +1659,14 @@ mom_full_dump (const char *reason, const char *dumpdir,
     MOM_GC_ALLOC ("dumper predefined array",
 		  predefsiz * sizeof (momitem_t *));
   dmp.dmp_predefsize = predefsiz;
+  dmp.dmp_predefhpath = predefhpath;
   dmp.dmp_dirpath = MOM_GC_STRDUP ("dumped directory", dumpdir);
   dmp.dmp_sqlpath = sqlite3path;
   dmp.dmp_sqlite = sqlite3dump;
   dmp.dmp_magic = DUMPER_MAGIC;
   dmp.dmp_state = dus_scan;
   char *errmsg = NULL;
-  /// create the initial tables
-  if (sqlite3_exec
-      (dmp.dmp_sqlite,
-       "CREATE TABLE IF NOT EXISTS t_params (parname VARCHAR(35) PRIMARY KEY ASC NOT NULL UNIQUE,"
-       " parvalue TEXT NOT NULL)", NULL, NULL, &errmsg))
-    MOM_FATAPRINTF ("in dumped db %s failed to create t_params %s",
-		    dmp.dmp_sqlpath, errmsg);
-  if (sqlite3_exec
-      (dmp.dmp_sqlite,
-       "CREATE TABLE IF NOT EXISTS t_items (itm_idstr VARCHAR(30) PRIMARY KEY ASC NOT NULL UNIQUE,"
-       " itm_jdata TEXT NOT NULL)", NULL, NULL, &errmsg))
-    MOM_FATAPRINTF ("in dumped db %s failed to create t_items %s",
-		    dmp.dmp_sqlpath, errmsg);
-  if (sqlite3_exec
-      (dmp.dmp_sqlite,
-       "CREATE TABLE IF NOT EXISTS t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE,"
-       // the id can be external so does not always REFERENCES
-       // t_items(itm_idstr)
-       " n_idstr VARCHAR(30) UNIQUE NOT NULL,"
-       " n_spacename VARCHAR(20) NOT NULL)", NULL, NULL, &errmsg))
-    MOM_FATAPRINTF ("failed to create t_names: %s", errmsg);
-  if (sqlite3_exec
-      (dmp.dmp_sqlite,
-       "CREATE TABLE IF NOT EXISTS t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE)",
-       NULL, NULL, &errmsg))
-    MOM_FATAPRINTF ("failed to create t_modules: %s", errmsg);
-  // it is important that the entire dump is a single transaction,
-  // otherwise it is much more slow...
-  if (sqlite3_exec (dmp.dmp_sqlite, "BEGIN TRANSACTION", NULL, NULL, &errmsg))
-    MOM_FATAPRINTF ("failed to BEGIN TRANSACTION: %s", errmsg);
-  /// prepare some statements
-  if (sqlite3_prepare_v2 (dmp.dmp_sqlite,
-			  "INSERT INTO t_items (itm_idstr, itm_jdata) VALUES (?1, ?2)",
-			  -1, &dmp.dmp_sqlstmt_item_insert, NULL))
-    MOM_FATAPRINTF ("failed to prepare item insert query: %s",
-		    sqlite3_errmsg (dmp.dmp_sqlite));
-  if (sqlite3_prepare_v2 (dmp.dmp_sqlite,
-			  "INSERT INTO t_names (name, n_idstr, n_spacename) VALUES (?1, ?2, ?3)",
-			  -1, &dmp.dmp_sqlstmt_name_insert, NULL))
-    MOM_FATAPRINTF ("failed to prepare name insert query: %s",
-		    sqlite3_errmsg (dmp.dmp_sqlite));
-  if (sqlite3_prepare_v2 (dmp.dmp_sqlite,
-			  "INSERT INTO t_params (parname, parvalue) VALUES (?1, ?2)",
-			  -1, &dmp.dmp_sqlstmt_param_insert, NULL))
-    MOM_FATAPRINTF ("failed to prepare param insert query: %s",
-		    sqlite3_errmsg (dmp.dmp_sqlite));
-  if (sqlite3_prepare_v2 (dmp.dmp_sqlite,
-			  "INSERT OR IGNORE INTO t_modules (modname) VALUES (?1)",
-			  -1, &dmp.dmp_sqlstmt_module_insert, NULL))
-    MOM_FATAPRINTF ("failed to prepare module insert query: %s",
-		    sqlite3_errmsg (dmp.dmp_sqlite));
+  create_tables_for_dump_mom (&dmp);
   ///
   momval_t tupnameditems = MOM_NULLV, jarrnam = MOM_NULLV;
   tupnameditems =
@@ -1733,6 +1742,7 @@ mom_full_dump (const char *reason, const char *dumpdir,
 		free (datastr), datastr = NULL;
 	      }
 	    dmp.dmp_curspace = oldmpspa;
+	    nbdumpeditems++;
 	  }
       done_item:
 	mom_unlock_item (curitm);
@@ -1981,8 +1991,13 @@ end:
       ("dont dump the database %s in SQL form because of strange path",
        dmp.dmp_sqlpath);
   /// fill the outcome, if asked
+  double endrealtime = mom_clock_time (CLOCK_REALTIME);
+  double endcputime = mom_clock_time (CLOCK_PROCESS_CPUTIME_ID);
   if (outd)
     {
+      outd->odmp_nbdumpeditems = nbdumpeditems;
+      outd->odmp_cputime = endcputime - startcputime;
+      outd->odmp_elapsedtime = endrealtime - startrealtime;
       outd->odmp_tuplenamed = tupnameditems;
       outd->odmp_jarrayname = jarrnam;
       outd->odmp_setpredef =
@@ -2006,8 +2021,7 @@ end:
 	MOM_GC_FREE (nvalarr);
     }				/* end filling the outcome */
   pthread_mutex_unlock (&dump_mtx_mom);
-  double endrealtime = mom_clock_time (CLOCK_REALTIME);
-  double endcputime = mom_clock_time (CLOCK_PROCESS_CPUTIME_ID);
+  memset (&dmp, 0, sizeof (struct mom_dumper_st));
   MOM_INFORMPRINTF
     ("end of dump into directory %s in %.3f cpu, %.3f real seconds", dumpdir,
      endcputime - startcputime, endrealtime - startrealtime);

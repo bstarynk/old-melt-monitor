@@ -75,7 +75,7 @@
       (return)) 
   (let ( (tdecl  (unbox :tree decl))
 	 )
-    ;(debug "monimelt_finish_decl" " begin tdecl=" tdecl "\n\n")
+    ;;(debug "monimelt_finish_decl" " begin tdecl=" tdecl "\n\n")
     (match
      tdecl
      (?(tree_function_decl_named
@@ -469,42 +469,52 @@
   (let ( (tr_type (unbox :tree typev))
 	 )
     (debug "monimelt_fill_type" " tr_type=" tr_type)
-    (match tr_type
-	   ( ?(tree_type_declaration ?(tree_identifier ?tyidstr))
-	      (let ( (tr_srctype (tree_type tr_type))
+    (match
+     tr_type
+     ( ?(tree_type_declaration ?(tree_identifier ?tyidstr))
+	(let ( (tr_srctype (tree_type tr_type))
+	       )
+	  (debug "monimelt_fill_type" " tr_srctype=" tr_srctype)
+	  (match
+	   tr_srctype
+	   ( ?(tree_integer_type ?tr_basetype ?minv ?maxv ?tr_size)
+	      (debug "monimelt_fill_type" " integral tr_basetype=" tr_basetype
+		     " minv=" minv " maxv=" maxv " tr_size=" tr_size))
+	   ( ?(tree_record_type_with_fields ?tr_recname ?tr_recfields)
+	      (debug "monimelt_fill_type" " record tr_recname=" tr_recname
+		     " tr_recfields=" tr_recfields)
+	      (let ( (fieldstup (tree_chain_to_tuple discr_multiple tr_recfields))
 		     )
-		(debug "monimelt_fill_type" " tr_srctype=" tr_srctype)
-		(match tr_srctype
-		       ( ?(tree_integer_type ?tr_basetype ?minv ?maxv ?tr_size)
-			  (debug "monimelt_fill_type" " integral tr_basetype=" tr_basetype
-				 " minv=" minv " maxv=" maxv " tr_size=" tr_size))
-		       ( ?(tree_record_type_with_fields ?tr_recname ?tr_recfields)
-			  (debug "monimelt_fill_type" " record tr_recname=" tr_recname
-				 " tr_recfields=" tr_recfields)
-			  (let ( (fieldstup (tree_chain_to_tuple discr_multiple tr_recfields))
-				 )
-			    (debug "monimelt_fill_type" " fieldstup=" fieldstup)
-			    (foreach_in_multiple
-			     (fieldstup)
-			     (curfieldv :long ix)
-			     (debug "monimelt_fill_type" " curfieldv=" curfieldv "; ix=" ix)
-			     (monimelt_declare_aggregate_field (constant_box tyidstr) curfieldv ix)
-			     )
-			    )
-			  )
-		       ( ?(tree_union_type_with_fields ?tr_uniname ?tr_unifields)
-			  (debug "monimelt_fill_type" " union tr_uniname=" tr_uniname
-				 " tr_unifields=" tr_unifields)
-			  )
-		       ( ?_
-			 (debug "monimelt_fill_type" " strange type tr_type=" tr_type)
-			 (warning_at typev "monimelt strange type $1" tr_type)
-			 )
-		       )
+		(debug "monimelt_fill_type" " fieldstup=" fieldstup)
+		(foreach_in_multiple
+		 (fieldstup)
+		 (curfieldv :long ix)
+		 (debug "monimelt_fill_type" " curfieldv=" curfieldv "; ix=" ix)
+		 (monimelt_declare_aggregate_field (constant_box tyidstr) curfieldv ix)
+		 )
 		)
 	      )
-	   (?_
-	    (assert_msg "unexpected typev" () typev)))
+	   ( ?(tree_union_type_with_fields ?tr_uniname ?tr_unifields)
+	      (debug "monimelt_fill_type" " union tr_uniname=" tr_uniname
+		     " tr_unifields=" tr_unifields)
+	      )
+	   ( ?(tree_type_decl ?tr_dcltype ?name ?uid)
+	      (debug "monimelt_fill_type" " typedecl start name=" name
+		     " uid=" uid
+		     "; tr_dcltype=" tr_dcltype
+		     "\n")
+	      (monimelt_fill_type (constant_box tr_dcltype))
+	      (debug "monimelt_fill_type" " typedecl done name=" name)
+	      )
+	   ( ?_
+	     (debug "monimelt_fill_type" " strange type tr_type=" tr_type)
+	     (warning_at typev "monimelt strange type $1" tr_type)
+	     )
+	   )
+	  )
+	)
+     (?_
+      (assert_msg "unexpected typev" () typev)))
     )
   )
 
@@ -638,7 +648,7 @@
   ;;
   (multicall
    (momdump :long dumptime)
-   (do_blocking_jsonrpc2_call monimelt_service '"dump" :true 6550)
+   (do_blocking_jsonrpc2_call monimelt_service '"dump" :true 7550)
    (debug "monimelt_finish_unit" " final momdump=" momdump ";\n.. dumptime=" dumptime)
    (when (null momdump)
      (error_at () "failed to do final Monimelt dump on service $1" monimelt_service)

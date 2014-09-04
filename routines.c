@@ -68,6 +68,26 @@ todo_dump_continue_mom (void *data)
   mom_continue_working ();
 }
 
+static void
+todo_dump_dot_outcome_mom (void *data)
+{
+  struct mom_dumpoutcome_st *doutc = data;
+  assert (doutc);
+  MOM_DEBUGPRINTF (run, "todo_dump_dot_outcome_mom before dump doutc@%p",
+		   doutc);
+  mom_full_dump ("todo dump with outcome", ".", doutc);
+  MOM_DEBUGPRINTF (run,
+		   "todo_dump_dot_outcome_mom before dump doutc cputime=%.4f elapsedtime=%.4f nbdumpeditems=%d",
+		   doutc->odmp_cputime, doutc->odmp_elapsedtime,
+		   doutc->odmp_nbdumpeditems);
+  mom_stop_event_loop ();
+  MOM_INFORMPRINTF
+    ("dumped into dot with outcome before continuing dumped %d items",
+     doutc->odmp_nbdumpeditems);
+  mom_continue_working ();
+
+}
+
 static int
 ajax_system_codmom (int momstate_, momitem_t *momtasklet_,
 		    const momval_t momclosurv_, momval_t *momlocvals_,
@@ -4660,6 +4680,8 @@ json_rpc_dump_exit_codmom (int momstate_, momitem_t *momtasklet_,
 			   momval_t *momlocvals_, intptr_t * momlocnums_,
 			   double *momlocdbls_)
 {
+  static bool dumping;
+  static struct mom_dumpoutcome_st dumpoutcome;
   const momval_t *momclovals __attribute__ ((unused)) =
     mom_closed_values (momclosurv_);
 #define _L(Nam) (momlocvals_[json_rpc_dump_exit_v_##Nam])
@@ -4704,28 +4726,32 @@ json_rpc_dump_exit_lab_start:
 	     MOMOUT_LITERAL
 	     ("json_rpc_dump_exit before stop dump continue tasklet="),
 	     MOMOUT_ITEM ((const momitem_t *) momtasklet_), NULL);
-  mom_stop_work_with_todo (todo_dump_at_exit_mom, (char *) ".");
-  MOM_DEBUG (run, MOMOUT_LITERAL ("json_rpc_dump_exit doing dump"), NULL);
+  assert (!dumping);
+  dumping = true;
+  mom_stop_work_with_todo (todo_dump_dot_outcome_mom, &dumpoutcome);
+  MOM_DEBUG (run, MOMOUT_LITERAL ("json_rpc_dump_exit will dump"), NULL);
+  _SET_STATE (afterdump);
+json_rpc_dump_exit_lab_afterdump:
   _L (jresult) = (momval_t) mom_make_json_object
     (MOMJSOB_STRING (((const char *) "timestamp"),
 		     (momval_t) mom_make_string (monimelt_timestamp)),
      MOMJSOB_STRING (((const char *) "lastgitcommit"),
 		     (momval_t) mom_make_string (monimelt_lastgitcommit)),
-     MOMJSOB_STRING (((const char *) "elapsedtime"),
-		     (momval_t) mom_make_double (mom_elapsed_real_time ())),
-     MOMJSOB_STRING (((const char *) "cputime"),
+     MOMJSOB_STRING (((const char *) "dump_nbitems"),
 		     (momval_t)
-		     mom_make_double (mom_clock_time
-				      (CLOCK_PROCESS_CPUTIME_ID))),
-     MOMJSOB_STRING (((const char *) "dumped"),
-		     (momval_t) mom_make_string (".")), MOMJSON_END);
+		     mom_make_integer (dumpoutcome.odmp_nbdumpeditems)),
+     MOMJSOB_STRING (((const char *) "dump_cputime"),
+		     (momval_t) mom_make_double (dumpoutcome.odmp_cputime)),
+     MOMJSOB_STRING (((const char *) "dump_elapsedtime"),
+		     (momval_t)
+		     mom_make_double (dumpoutcome.odmp_elapsedtime)),
+     MOMJSON_END);
   MOM_DEBUG (run, MOMOUT_LITERAL ("json_rpc_dump_exit jresult="),
 	     MOMOUT_VALUE (_L (jresult)), NULL);
   mom_jsonrpc_reply (_L (jxitm).pitem, _L (jresult));
+  dumping = false;
   MOM_INFORMPRINTF ("json_rpc_dump_exit dumped state...");
   usleep (50000);
-  _SET_STATE (afterdump);
-json_rpc_dump_exit_lab_afterdump:
   MOM_DEBUG (run,
 	     MOMOUT_LITERAL
 	     ("json_rpc_dump_exit before stop after dump tasklet="),
