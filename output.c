@@ -194,20 +194,20 @@ output_json_mom (momout_t *pout, momval_t v)
 	    return;
 	  }
 	snprintf (numbuf, sizeof (numbuf), "%.6f", x);
-	if (atof (numbuf) == x && strlen (numbuf) < 30
-	    && strchr (numbuf, '.'))
+	if ((atof (numbuf) == x || (pout->mout_flags & outf_shortfloat))
+	    && strlen (numbuf) < 30 && strchr (numbuf, '.'))
+	  {
+	    fputs (numbuf, out);
+	    return;
+	  }
+	snprintf (numbuf, sizeof (numbuf), "%#.6g", x);
+	if ((atof (numbuf) == x || (pout->mout_flags & outf_shortfloat))
+	    && strlen (numbuf) < 30 && strchr (numbuf, '.'))
 	  {
 	    fputs (numbuf, out);
 	    return;
 	  }
 	snprintf (numbuf, sizeof (numbuf), "%.9f", x);
-	if (atof (numbuf) == x && strlen (numbuf) < 30
-	    && strchr (numbuf, '.'))
-	  {
-	    fputs (numbuf, out);
-	    return;
-	  }
-	snprintf (numbuf, sizeof (numbuf), "%#.5g", x);
 	if (atof (numbuf) == x && strlen (numbuf) < 30
 	    && strchr (numbuf, '.'))
 	  {

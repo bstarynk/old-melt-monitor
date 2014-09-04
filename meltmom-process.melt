@@ -125,11 +125,11 @@
 		(mapstring_putstr monimelt_dict_types typenamev typev)
 		(debug "monimelt_declare_type" " updated dict="  debug_more monimelt_dict_types
 		       "\n.. jparam=" jparam)
-		(let ( (res (do_blocking_jsonrpc2_call monimelt_service
-						       '"meltmom_declare_name" jparam 250)
-			    )
-		       )
-		  (debug "monimelt_declare_type" " jsonrpc res=" res))
+		(multicall
+		 (res :long time)
+		 (do_blocking_jsonrpc2_call monimelt_service
+					    '"meltmom_declare_name" jparam 250)
+		  (debug "monimelt_declare_type" " jsonrpc res=" res " time=" time))
 		)
 	      )
 	   ;;
@@ -180,11 +180,11 @@
 					'monimelt_line linenumv))
 	       )
 	  (debug "monimelt_declare_function" " jparam=" jparam)
-	  (let ( (res (do_blocking_jsonrpc2_call monimelt_service
-						 '"meltmom_declare_name" jparam 350)
-		      )
-		 )
-	    (debug "monimelt_declare_function" " jsonrpc res=" res))
+	  (multicall
+	   (res :long time)
+	   (do_blocking_jsonrpc2_call monimelt_service
+				      '"meltmom_declare_name" jparam 350)
+	    (debug "monimelt_declare_function" " jsonrpc res=" res " time=" time))
 	  )
 	)
      ( ?_
@@ -632,11 +632,11 @@
 				   'monimelt_name curname))
 	  )
      (debug "monimelt_finish_unit aggregate jparam=" jparam)
-     (let ( (res (do_blocking_jsonrpc2_call monimelt_service
-					    '"meltmom_declare_name" jparam 250)
-		 )
-	    )
-       (debug "monimelt_finish_unite" " aggregate jsonrpc res=" res))
+     (multicall
+      (res :long time)
+      (do_blocking_jsonrpc2_call monimelt_service
+				 '"meltmom_declare_name" jparam 250)
+       (debug "monimelt_finish_unite" " aggregate jsonrpc res=" res " time=" time))
      ))
   ;; then declare the aggregation
   (foreach_in_mapstring

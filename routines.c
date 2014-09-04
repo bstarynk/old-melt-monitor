@@ -4634,7 +4634,7 @@ json_rpc_status_lab_start:
      MOMJSON_END);
   MOM_DEBUG (run, MOMOUT_LITERAL ("json_rpc_status jresult="),
 	     MOMOUT_VALUE (_L (jresult)), NULL);
-  mom_jsonrpc_reply (_L (jxitm).pitem, _L (jresult));
+  mom_jsonrpc_reply (_L (jxitm).pitem, _L (jresult), outf_shortfloat);
   return momroutres_pop;
 json_rpc_status_lab_impossible:
   MOM_FATAPRINTF ("json_rpc_status impossible state reached!");
@@ -4751,21 +4751,25 @@ json_rpc_dump_exit_lab_afterdump:
   {
     unsigned nbitems = 0;
     unsigned nbloop = 0;
-    do
-      {
-	pthread_mutex_lock (&dumpexit_mom.dpex_mtx);
-	nbloop++;
-	MOM_DEBUGPRINTF (run, "json_rpc_dump_exit waiting loop nbloop=%d",
-			 nbloop);
-	pthread_cond_wait (&dumpexit_mom.dpex_cond, &dumpexit_mom.dpex_mtx);
-	nbitems = dumpexit_mom.dpex_outcome.odmp_nbdumpeditems;
-	MOM_DEBUGPRINTF (run, "json_rpc_dump_exit waiting loop nbitems=%d",
-			 nbitems);
-	pthread_mutex_unlock (&dumpexit_mom.dpex_mtx);
-      }
-    while (nbitems == 0);
+    pthread_mutex_lock (&dumpexit_mom.dpex_mtx);
+    nbloop++;
+    MOM_DEBUGPRINTF (run, "json_rpc_dump_exit waiting loop nbloop=%d",
+		     nbloop);
+    {
+      struct timespec ts = { 0, 0 };
+      clock_gettime (CLOCK_REALTIME, &ts);
+      ts.tv_sec++;
+      pthread_cond_timedwait (&dumpexit_mom.dpex_cond, &dumpexit_mom.dpex_mtx,
+			      &ts);
+    }
+    nbitems = dumpexit_mom.dpex_outcome.odmp_nbdumpeditems;
+    MOM_DEBUGPRINTF (run, "json_rpc_dump_exit waiting loop#%d nbitems=%d",
+		     nbloop, nbitems);
+    pthread_mutex_unlock (&dumpexit_mom.dpex_mtx);
     MOM_DEBUGPRINTF (run, "json_rpc_dump_exit after dump outcome nbitems=%d",
 		     nbitems);
+    if (nbitems == 0)
+      _SET_STATE (afterdump);
     _L (jresult) = (momval_t) mom_make_json_object
       (MOMJSOB_STRING (((const char *) "timestamp"),
 		       (momval_t) mom_make_string (monimelt_timestamp)),
@@ -4784,7 +4788,7 @@ json_rpc_dump_exit_lab_afterdump:
   }
   MOM_DEBUG (run, MOMOUT_LITERAL ("json_rpc_dump_exit jresult="),
 	     MOMOUT_VALUE (_L (jresult)), NULL);
-  mom_jsonrpc_reply (_L (jxitm).pitem, _L (jresult));
+  mom_jsonrpc_reply (_L (jxitm).pitem, _L (jresult), outf_shortfloat);
   dumping = false;
   MOM_INFORMPRINTF ("json_rpc_dump_exit dumped state...");
   usleep (50000);
@@ -4936,7 +4940,7 @@ json_rpc_meltmom_declare_name_lab_start:
   MOM_DEBUG (run,
 	     MOMOUT_LITERAL ("json_rpc_meltmom_declare_name jresult="),
 	     MOMOUT_VALUE ((const momval_t) _L (jresult)), NULL);
-  mom_jsonrpc_reply (_L (jxitm).pitem, _L (jresult));
+  mom_jsonrpc_reply (_L (jxitm).pitem, _L (jresult), outf_shortfloat);
   return momroutres_pop;
 json_rpc_meltmom_declare_name_lab_impossible:
   MOM_FATAPRINTF ("json_rpc_meltmom_declare_name impossible state reached!");
@@ -5171,7 +5175,7 @@ json_rpc_meltmom_define_field_lab_start:
   MOM_DEBUG (run,
 	     MOMOUT_LITERAL ("json_rpc_meltmom_define_field jresult="),
 	     MOMOUT_VALUE ((const momval_t) _L (jresult)), NULL);
-  mom_jsonrpc_reply (_L (jxitm).pitem, _L (jresult));
+  mom_jsonrpc_reply (_L (jxitm).pitem, _L (jresult), outf_shortfloat);
   return momroutres_pop;
 json_rpc_meltmom_define_field_lab_impossible:
   MOM_FATAPRINTF ("json_rpc_meltmom_define_field impossible state reached!");

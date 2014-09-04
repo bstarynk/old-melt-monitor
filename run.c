@@ -977,7 +977,7 @@ make_jsonrpc_exchange_item_mom (enum mom_jsonrpcversion_en jsonrpcvers,
 }
 
 void
-mom_jsonrpc_reply (momitem_t *jritm, momval_t jresult)
+mom_jsonrpc_reply (momitem_t *jritm, momval_t jresult, unsigned outflags)
 {
   if (!mom_lock_item (jritm))
     return;
@@ -996,6 +996,7 @@ mom_jsonrpc_reply (momitem_t *jritm, momval_t jresult)
   if (jr->jrpx_replied)		/* already replied */
     goto end;
   jr->jrpx_result = jresult;
+  jr->jrpx_outflags = outflags;
   jr->jrpx_replied = true;
   pthread_cond_broadcast (&jp->jrpc_cond);
 end:
@@ -1059,7 +1060,8 @@ batch_jsonrpc_mom (momval_t jreq, struct jsonrpc_conn_mom_st *jp,
 // jrpcerr_server_no_reply
 static momval_t
 request_jsonrpc_mom (momval_t jreq, struct jsonrpc_conn_mom_st *jp,
-		     unsigned long count, int *perrcode, const char **perrmsg)
+		     unsigned long count, int *perrcode, const char **perrmsg,
+		     unsigned *poutflags)
 {
   assert (perrcode != NULL);
   assert (perrmsg != NULL);
@@ -1126,6 +1128,7 @@ request_jsonrpc_mom (momval_t jreq, struct jsonrpc_conn_mom_st *jp,
 	  int errcode = 0;
 	  const char *errmsg = NULL;
 	  momval_t jresult = MOM_NULLV;
+	  unsigned joutflags = 0;
 	  while (!replied
 		 && (nextim =
 		     ((nowtim =
@@ -1147,6 +1150,7 @@ request_jsonrpc_mom (momval_t jreq, struct jsonrpc_conn_mom_st *jp,
 		      {
 			replied = true;
 			jresult = jx->jrpx_result;
+			joutflags = jx->jrpx_outflags;
 			if (!jresult.ptr)
 			  {
 			    errcode = jx->jrpx_error;
@@ -1156,7 +1160,7 @@ request_jsonrpc_mom (momval_t jreq, struct jsonrpc_conn_mom_st *jp,
 		  }
 		mom_unlock_item (jxitm);
 	      }
-	      if (delay < 1.9)
+	      if (delay < 1.0)
 		delay = 1.5 * delay + 0.001;
 	      pthread_mutex_unlock (&jp->jrpc_mtx);
 	    };			/// end waiting loop
@@ -1179,6 +1183,8 @@ request_jsonrpc_mom (momval_t jreq, struct jsonrpc_conn_mom_st *jp,
 	      *perrcode = errcode;
 	      *perrmsg = errmsg;
 	    };
+	  if (replied && poutflags)
+	    *poutflags = joutflags;
 	  return jresult;
 	}			/* end if !isnotif */
     }				/* end if clov is item */
@@ -1242,6 +1248,7 @@ jsonrpc_processor_mom (void *p)
   bool again = false;
   long count = 0;
   char thname[24];
+  unsigned outflags = 0;
   memset (thname, 0, sizeof (thname));
   struct jsonrpc_conn_mom_st *jp = (struct jsonrpc_conn_mom_st *) p;
   assert (jp && jp->jrpc_magic == JSONRPC_CONN_MAGIC_MOM);
@@ -1340,7 +1347,9 @@ jsonrpc_processor_mom (void *p)
 	  bool isv2 = mom_string_same (jrpcv, "2.0");
 	  errcode = 0;
 	  errmsg = NULL;
-	  jresult = request_jsonrpc_mom (jreq, jp, count, &errcode, &errmsg);
+	  jresult =
+	    request_jsonrpc_mom (jreq, jp, count, &errcode, &errmsg,
+				 &outflags);
 	  MOM_DEBUG (run,
 		     MOMOUT_LITERAL
 		     ("jsonrpc_processor after request count="),
@@ -1437,6 +1446,8 @@ jsonrpc_processor_mom (void *p)
 		}
 	      if (janswer.ptr && mom_is_jsonable (janswer))
 		{
+		  if (outflags)
+		    jp->jrpc_output.mout_flags |= outflags;
 		  MOM_OUT (&jp->jrpc_output, MOMOUT_JSON_VALUE (janswer),
 			   MOMOUT_NEWLINE (), MOMOUT_FLUSH (), NULL);
 		  MOM_DEBUG (run, MOMOUT_LITERAL

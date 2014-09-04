@@ -266,6 +266,7 @@ typedef enum momoutflags_en
   outf_cname = 1 << 0,
   outf_jsonhalfindent = 1 << 1,
   outf_jsonindent = 1 << 2,
+  outf_shortfloat = 1 << 3,	/* print double numbers with 6 digits at most */
   outf_isbuffer = 1 << 15,	/* internal flag */
 } momoutflags_t;
 
@@ -1712,6 +1713,7 @@ struct mom_jsonrpcexchange_data_st	/// only created by jsonrpc incoming requests
   momval_t jrpx_jsid;		/* the "id" for JSONRPC */
   momval_t jrpx_result;		/* the result to transmit */
   int jrpx_error;		/* the error code */
+  unsigned jrpx_outflags;	/* the output flags */
   bool jrpx_replied;
   const char *jrpx_errmsg;	/* the error message */
   struct jsonrpc_conn_mom_st *jrpx_conn;
@@ -1719,7 +1721,8 @@ struct mom_jsonrpcexchange_data_st	/// only created by jsonrpc incoming requests
 
 void mom_payljsonrpc_finalize (momitem_t *jritm, void *jrdata);	// in run.c
 
-void mom_jsonrpc_reply (momitem_t *jritm, momval_t jresult);
+void mom_jsonrpc_reply (momitem_t *jritm, momval_t jresult,
+			unsigned outflags);
 
 void mom_jsonrpc_error (momitem_t *jritm, int errcode, const char *errmsg);
 
