@@ -21,6 +21,37 @@
 #include "monimelt.h"
 
 
+#define DUMPEXIT_MAGIC 0x3bc0ff09	/* dumpexit_magic 1002503945 */
+struct dumpexitmom_st
+{
+  unsigned dpex_magic;		/* always DUMPEXIT_MAGIC */
+  pthread_mutex_t dpex_mtx;
+  pthread_cond_t dpex_cond;
+  struct mom_dumpoutcome_st dpex_outcome;
+};
+
+static void
+todo_dump_dot_outcome_mom (void *data)
+{
+  struct dumpexitmom_st *dpex = data;
+  MOM_DEBUGPRINTF (run, "todo_dump_dot_outcome_mom before dump dpex@%p",
+		   dpex);
+  assert (dpex && dpex->dpex_magic == DUMPEXIT_MAGIC);
+  pthread_mutex_lock (&dpex->dpex_mtx);
+  struct mom_dumpoutcome_st *doutc = &dpex->dpex_outcome;
+  mom_full_dump ("todo dump with outcome", ".", doutc);
+  MOM_DEBUGPRINTF (run,
+		   "todo_dump_dot_outcome_mom before dump doutc cputime=%.4f elapsedtime=%.4f nbdumpeditems=%d",
+		   doutc->odmp_cputime, doutc->odmp_elapsedtime,
+		   doutc->odmp_nbdumpeditems);
+  MOM_INFORMPRINTF
+    ("dumped into dot with outcome before continuing dumped %d items",
+     doutc->odmp_nbdumpeditems);
+  mom_continue_working ();
+  pthread_mutex_unlock (&dpex->dpex_mtx);
+  pthread_cond_broadcast (&dpex->dpex_cond);
+}
+
 ////////////////////////////////////////////////////////////////
 ///// ajax_system
 enum ajax_system_valindex_en
@@ -63,29 +94,8 @@ todo_dump_continue_mom (void *data)
   assert (dpath && dpath[0]);
   MOM_DEBUGPRINTF (run, "todo_dump_continue should dump dpath=%s", dpath);
   mom_full_dump ("todo dump but continue", dpath, NULL);
-  mom_stop_event_loop ();
   MOM_INFORMPRINTF ("dumped into directory %s before continuing", dpath);
   mom_continue_working ();
-}
-
-static void
-todo_dump_dot_outcome_mom (void *data)
-{
-  struct mom_dumpoutcome_st *doutc = data;
-  assert (doutc);
-  MOM_DEBUGPRINTF (run, "todo_dump_dot_outcome_mom before dump doutc@%p",
-		   doutc);
-  mom_full_dump ("todo dump with outcome", ".", doutc);
-  MOM_DEBUGPRINTF (run,
-		   "todo_dump_dot_outcome_mom before dump doutc cputime=%.4f elapsedtime=%.4f nbdumpeditems=%d",
-		   doutc->odmp_cputime, doutc->odmp_elapsedtime,
-		   doutc->odmp_nbdumpeditems);
-  mom_stop_event_loop ();
-  MOM_INFORMPRINTF
-    ("dumped into dot with outcome before continuing dumped %d items",
-     doutc->odmp_nbdumpeditems);
-  mom_continue_working ();
-
 }
 
 static int
@@ -4674,6 +4684,13 @@ enum json_rpc_dump_exit_numbers_en
 };
 
 
+static struct dumpexitmom_st dumpexit_mom = {
+  .dpex_magic = DUMPEXIT_MAGIC,
+  .dpex_mtx = PTHREAD_MUTEX_INITIALIZER,
+  .dpex_cond = PTHREAD_COND_INITIALIZER,
+  .dpex_outcome = {0, 0, 0, 0, 0},
+};
+
 static int
 json_rpc_dump_exit_codmom (int momstate_, momitem_t *momtasklet_,
 			   const momval_t momclosurv_,
@@ -4681,7 +4698,6 @@ json_rpc_dump_exit_codmom (int momstate_, momitem_t *momtasklet_,
 			   double *momlocdbls_)
 {
   static bool dumping;
-  static struct mom_dumpoutcome_st dumpoutcome;
   const momval_t *momclovals __attribute__ ((unused)) =
     mom_closed_values (momclosurv_);
 #define _L(Nam) (momlocvals_[json_rpc_dump_exit_v_##Nam])
@@ -4728,24 +4744,44 @@ json_rpc_dump_exit_lab_start:
 	     MOMOUT_ITEM ((const momitem_t *) momtasklet_), NULL);
   assert (!dumping);
   dumping = true;
-  mom_stop_work_with_todo (todo_dump_dot_outcome_mom, &dumpoutcome);
+  mom_stop_work_with_todo (todo_dump_dot_outcome_mom, &dumpexit_mom);
   MOM_DEBUG (run, MOMOUT_LITERAL ("json_rpc_dump_exit will dump"), NULL);
   _SET_STATE (afterdump);
 json_rpc_dump_exit_lab_afterdump:
-  _L (jresult) = (momval_t) mom_make_json_object
-    (MOMJSOB_STRING (((const char *) "timestamp"),
-		     (momval_t) mom_make_string (monimelt_timestamp)),
-     MOMJSOB_STRING (((const char *) "lastgitcommit"),
-		     (momval_t) mom_make_string (monimelt_lastgitcommit)),
-     MOMJSOB_STRING (((const char *) "dump_nbitems"),
-		     (momval_t)
-		     mom_make_integer (dumpoutcome.odmp_nbdumpeditems)),
-     MOMJSOB_STRING (((const char *) "dump_cputime"),
-		     (momval_t) mom_make_double (dumpoutcome.odmp_cputime)),
-     MOMJSOB_STRING (((const char *) "dump_elapsedtime"),
-		     (momval_t)
-		     mom_make_double (dumpoutcome.odmp_elapsedtime)),
-     MOMJSON_END);
+  {
+    unsigned nbitems = 0;
+    unsigned nbloop = 0;
+    do
+      {
+	pthread_mutex_lock (&dumpexit_mom.dpex_mtx);
+	nbloop++;
+	MOM_DEBUGPRINTF (run, "json_rpc_dump_exit waiting loop nbloop=%d",
+			 nbloop);
+	pthread_cond_wait (&dumpexit_mom.dpex_cond, &dumpexit_mom.dpex_mtx);
+	nbitems = dumpexit_mom.dpex_outcome.odmp_nbdumpeditems;
+	MOM_DEBUGPRINTF (run, "json_rpc_dump_exit waiting loop nbitems=%d",
+			 nbitems);
+	pthread_mutex_unlock (&dumpexit_mom.dpex_mtx);
+      }
+    while (nbitems == 0);
+    MOM_DEBUGPRINTF (run, "json_rpc_dump_exit after dump outcome nbitems=%d",
+		     nbitems);
+    _L (jresult) = (momval_t) mom_make_json_object
+      (MOMJSOB_STRING (((const char *) "timestamp"),
+		       (momval_t) mom_make_string (monimelt_timestamp)),
+       MOMJSOB_STRING (((const char *) "lastgitcommit"),
+		       (momval_t) mom_make_string (monimelt_lastgitcommit)),
+       MOMJSOB_STRING (((const char *) "dump_nbitems"),
+		       (momval_t)
+		       mom_make_integer (nbitems)),
+       MOMJSOB_STRING (((const char *) "dump_cputime"),
+		       (momval_t) mom_make_double (dumpexit_mom.
+						   dpex_outcome.odmp_cputime)),
+       MOMJSOB_STRING (((const char *) "dump_elapsedtime"),
+		       (momval_t) mom_make_double (dumpexit_mom.
+						   dpex_outcome.odmp_elapsedtime)),
+       MOMJSON_END);
+  }
   MOM_DEBUG (run, MOMOUT_LITERAL ("json_rpc_dump_exit jresult="),
 	     MOMOUT_VALUE (_L (jresult)), NULL);
   mom_jsonrpc_reply (_L (jxitm).pitem, _L (jresult));
