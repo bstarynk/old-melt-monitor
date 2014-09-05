@@ -1709,6 +1709,7 @@ struct mom_jsonrpcexchange_data_st	/// only created by jsonrpc incoming requests
 {
   unsigned jrpx_magic;		/* always MOM_JSONRPCX_MAGIC */
   enum mom_jsonrpcversion_en jrpx_version;
+  double jrpx_startime;
   long jrpx_rank;		/* unique number rank for the connection */
   momval_t jrpx_jsid;		/* the "id" for JSONRPC */
   momval_t jrpx_result;		/* the result to transmit */

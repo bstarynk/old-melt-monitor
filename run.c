@@ -969,10 +969,17 @@ make_jsonrpc_exchange_item_mom (enum mom_jsonrpcversion_en jsonrpcvers,
   jx->jrpx_magic = MOM_JSONRPCX_MAGIC;
   jx->jrpx_version = jsonrpcvers;
   jx->jrpx_rank = rank;
+  jx->jrpx_startime = mom_clock_time (CLOCK_REALTIME);
   jx->jrpx_jsid = jid;
   jx->jrpx_conn = jp;
   itm->i_payload = jx;
   itm->i_paylkind = mompayk_jsonrpcexchange;
+  MOM_DEBUG (run, MOMOUT_LITERAL ("jsonrpcexchange itm:"),
+	     MOMOUT_ITEM ((const momitem_t *) itm),
+	     MOMOUT_LITERAL (" rank:"),
+	     MOMOUT_DEC_INT ((int) rank),
+	     MOMOUT_LITERAL (" startime:"),
+	     MOMOUT_DOUBLE_G (jx->jrpx_startime), NULL);
   return itm;
 }
 
@@ -1061,7 +1068,7 @@ batch_jsonrpc_mom (momval_t jreq, struct jsonrpc_conn_mom_st *jp,
 static momval_t
 request_jsonrpc_mom (momval_t jreq, struct jsonrpc_conn_mom_st *jp,
 		     unsigned long count, int *perrcode, const char **perrmsg,
-		     unsigned *poutflags)
+		     unsigned *poutflags, double *pstartime)
 {
   assert (perrcode != NULL);
   assert (perrmsg != NULL);
@@ -1069,6 +1076,7 @@ request_jsonrpc_mom (momval_t jreq, struct jsonrpc_conn_mom_st *jp,
   *perrmsg = NULL;
   double reqtim = mom_clock_time (CLOCK_REALTIME);
   double endtim = reqtim + JSONRPC_ANSWER_DELAY_MOM;
+  double startime = 0.0;
   assert (jp && jp->jrpc_magic == JSONRPC_CONN_MAGIC_MOM
 	  && jp->jrpc_socket > 0);
   // Nota Bene: requests can be jsonrpc v1 or jsonrpc v2
@@ -1151,6 +1159,7 @@ request_jsonrpc_mom (momval_t jreq, struct jsonrpc_conn_mom_st *jp,
 			replied = true;
 			jresult = jx->jrpx_result;
 			joutflags = jx->jrpx_outflags;
+			startime = jx->jrpx_startime;
 			if (!jresult.ptr)
 			  {
 			    errcode = jx->jrpx_error;
@@ -1183,8 +1192,13 @@ request_jsonrpc_mom (momval_t jreq, struct jsonrpc_conn_mom_st *jp,
 	      *perrcode = errcode;
 	      *perrmsg = errmsg;
 	    };
-	  if (replied && poutflags)
-	    *poutflags = joutflags;
+	  if (replied)
+	    {
+	      if (poutflags)
+		*poutflags = joutflags;
+	      if (pstartime)
+		*pstartime = startime;
+	    };
 	  return jresult;
 	}			/* end if !isnotif */
     }				/* end if clov is item */
@@ -1269,6 +1283,7 @@ jsonrpc_processor_mom (void *p)
       int errcode = 0;
       momval_t jreq = MOM_NULLV;
       momval_t jresult = MOM_NULLV;
+      double startime = 0.0;
       pthread_mutex_lock (&jrpcmtx_mom);
       assert (jp && jp->jrpc_magic == JSONRPC_CONN_MAGIC_MOM);
       fil = jp->jrpc_parser.jsonp_file;
@@ -1349,7 +1364,7 @@ jsonrpc_processor_mom (void *p)
 	  errmsg = NULL;
 	  jresult =
 	    request_jsonrpc_mom (jreq, jp, count, &errcode, &errmsg,
-				 &outflags);
+				 &outflags, &startime);
 	  MOM_DEBUG (run,
 		     MOMOUT_LITERAL
 		     ("jsonrpc_processor after request count="),
@@ -1459,8 +1474,11 @@ jsonrpc_processor_mom (void *p)
 			     MOMOUT_JSON_VALUE ((const momval_t) jid),
 			     MOMOUT_LITERAL (", count="),
 			     MOMOUT_DEC_INT ((int) count),
-			     MOMOUT_SPACE (48),
-			     MOMOUT_LITERAL ("answer="),
+			     MOMOUT_LITERAL (", delay="),
+			     MOMOUT_FMT_DOUBLE ((const char *) "%.4f sec",
+						mom_clock_time
+						(CLOCK_REALTIME) - startime),
+			     MOMOUT_SPACE (48), MOMOUT_LITERAL ("answer="),
 			     MOMOUT_JSON_VALUE (janswer), NULL);
 		  jsonrpc_fclose_send_output_mom (jp);
 		  continue;
