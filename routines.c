@@ -39,9 +39,11 @@ todo_dump_dot_outcome_mom (void *data)
   assert (dpex && dpex->dpex_magic == DUMPEXIT_MAGIC);
   pthread_mutex_lock (&dpex->dpex_mtx);
   struct mom_dumpoutcome_st *doutc = &dpex->dpex_outcome;
+  MOM_DEBUGPRINTF (run,
+		   "todo_dump_dot_outcome_mom before dump doutc@%p", doutc);
   mom_full_dump ("todo dump with outcome", ".", doutc);
   MOM_DEBUGPRINTF (run,
-		   "todo_dump_dot_outcome_mom before dump doutc cputime=%.4f elapsedtime=%.4f nbdumpeditems=%d",
+		   "todo_dump_dot_outcome_mom after dump doutc cputime=%.4f elapsedtime=%.4f nbdumpeditems=%d",
 		   doutc->odmp_cputime, doutc->odmp_elapsedtime,
 		   doutc->odmp_nbdumpeditems);
   MOM_INFORMPRINTF
@@ -4746,6 +4748,7 @@ json_rpc_dump_exit_lab_start:
   dumping = true;
   mom_stop_work_with_todo (todo_dump_dot_outcome_mom, &dumpexit_mom);
   MOM_DEBUG (run, MOMOUT_LITERAL ("json_rpc_dump_exit will dump"), NULL);
+  usleep (10 * 1000);
   _SET_STATE (afterdump);
 json_rpc_dump_exit_lab_afterdump:
   {
@@ -4755,14 +4758,15 @@ json_rpc_dump_exit_lab_afterdump:
     nbloop++;
     MOM_DEBUGPRINTF (run, "json_rpc_dump_exit waiting loop nbloop=%d",
 		     nbloop);
-    {
-      struct timespec ts = { 0, 0 };
-      clock_gettime (CLOCK_REALTIME, &ts);
-      ts.tv_sec++;
-      pthread_cond_timedwait (&dumpexit_mom.dpex_cond, &dumpexit_mom.dpex_mtx,
-			      &ts);
-    }
     nbitems = dumpexit_mom.dpex_outcome.odmp_nbdumpeditems;
+    if (nbitems == 0)
+      {
+	double nextime = mom_clock_time (CLOCK_REALTIME) + 0.2;
+	struct timespec ts = mom_timespec (nextime);
+	pthread_cond_timedwait (&dumpexit_mom.dpex_cond,
+				&dumpexit_mom.dpex_mtx, &ts);
+	nbitems = dumpexit_mom.dpex_outcome.odmp_nbdumpeditems;
+      }
     MOM_DEBUGPRINTF (run, "json_rpc_dump_exit waiting loop#%d nbitems=%d",
 		     nbloop, nbitems);
     pthread_mutex_unlock (&dumpexit_mom.dpex_mtx);
@@ -4791,14 +4795,13 @@ json_rpc_dump_exit_lab_afterdump:
   mom_jsonrpc_reply (_L (jxitm).pitem, _L (jresult), outf_shortfloat);
   dumping = false;
   MOM_INFORMPRINTF ("json_rpc_dump_exit dumped state...");
-  usleep (50000);
+  usleep (2000);
   MOM_DEBUG (run,
 	     MOMOUT_LITERAL
 	     ("json_rpc_dump_exit before stop after dump tasklet="),
 	     MOMOUT_ITEM ((const momitem_t *) momtasklet_), NULL);
-  usleep (80000);
   mom_stop_work_with_todo (NULL, NULL);
-  usleep (50000);
+  usleep (5000);
   return momroutres_pop;
 json_rpc_dump_exit_lab_impossible:
   MOM_FATAPRINTF ("json_rpc_dump_exit impossible state reached!");
