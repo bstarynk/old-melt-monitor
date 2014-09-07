@@ -155,7 +155,8 @@
 	      )
 	   ;;
 	   ( ?_
-	     (debug  "monimelt_declare_type" " strange tr_type=" tr_type)
+	     (debug  "monimelt_declare_type" " @@strange tr_type=" tr_type
+		     "\n.. typev=" typev)
 	     (error_at typev "monimelt unexpected type $1" tr_type)
 	     )
 	   )
@@ -189,7 +190,7 @@
 	  )
 	)
      ( ?_
-       (debug "monimelt_declare_function" " strange tr_func=" tr_func)
+       (debug "monimelt_declare_function" " @@strange tr_func=" tr_func "\n.. funcv=" funcv)
        (error_at funcv "monimelt unexpected function $1" tr_func)
        )
      )
@@ -244,12 +245,14 @@
     (assert_msg "monimelt_json_for_type check tr_type" tr_type typev)
     (match tr_type
 	   ;;
-	   (?(tree_type_decl ?tr_dcltype ?tr_name ?tr_ctx ?tr_orig ?uid)
+	   (?(tree_type_decl ?tr_dcltype ?(and ?tr_name ?(tree_identifier ?nameid))
+			     ?tr_ctx ?tr_orig ?uid)
 	     (debug "monimelt_json_for_type" " typedecl tr_dcltype=" tr_dcltype "\n.. tr_name=" tr_name
 		    ";\n.. tr_ctx=" tr_ctx
 		    ";\n.. tr_orig=" tr_orig		    
-		    ";\n.. uid=" uid)
-	     (let ( (namev (constant_box tr_name))
+		    ";\n.. uid=" uid
+		    ";\n.. nameid=" nameid)
+	     (let ( (namev (constant_box nameid))
 		    (meltypev (mapstring_getstr monimelt_dict_types namev))
 		    (jres (if meltypev (make_jsonobject discr_jsonobject
 							'monimelt_type namev)
@@ -424,7 +427,8 @@
 	       (debug "monimelt_json_for_type" " integertype jres=" jres)
 	       (return jres)
 	       ))
-	   (?_ 
+	   (?_
+	    (debug "monimelt_json_for_type " "@@strange tr_type=" tr_type)
 	    (assert_msg "monimelt_json_for_type unexpected tr_type" () (constant_box tr_type))
 	    (void)))
 ))
@@ -460,8 +464,10 @@
 	     (debug "monimelt_declare_aggregate_field" " unpositioned field tr_fname=" tr_fname
 		    " tr_fldtype=" tr_fldtype)
 	     (void))
-	   (?_ (assert_msg "impossible tr_field" () tr_field)
-	       (void)))
+	   (?_
+	    (debug "monimelt_declare_aggregate_field" " @@strange tr_field=" tr_field)
+	    (assert_msg "impossible tr_field" () tr_field)
+	    (void)))
     )
   )
 
@@ -480,11 +486,21 @@
 	  (debug "monimelt_fill_type" " tr_srctype=" tr_srctype)
 	  (match
 	   tr_srctype
+	   ( ?(tree_type_decl ?tr_dcltype ?tr_name ?tr_ctx ?tr_orig ?uid)
+	      (debug "monimelt_fill_type" " typedecl start tr_name=" tr_name
+		     " uid=" uid
+		     "; tr_dcltype=" tr_dcltype
+		     ";\n.. tr_ctx=" tr_ctx
+		     ";\n.. tr_orig=" tr_orig
+		     "\n")
+	      (monimelt_fill_type (constant_box tr_dcltype))
+	      (debug "monimelt_fill_type" " srcty typedecl done tr_name=" tr_name)
+	      )
 	   ( ?(tree_integer_type ?tr_basetype ?minv ?maxv ?tr_size)
-	      (debug "monimelt_fill_type" " integral tr_basetype=" tr_basetype
+	      (debug "monimelt_fill_type" " srcty integral tr_basetype=" tr_basetype
 		     " minv=" minv " maxv=" maxv " tr_size=" tr_size))
 	   ( ?(tree_record_type_with_fields ?tr_recname ?tr_recfields)
-	      (debug "monimelt_fill_type" " record tr_recname=" tr_recname
+	      (debug "monimelt_fill_type" " srcty record tr_recname=" tr_recname
 		     " tr_recfields=" tr_recfields)
 	      (let ( (fieldstup (tree_chain_to_tuple discr_multiple tr_recfields))
 		     )
@@ -498,27 +514,28 @@
 		)
 	      )
 	   ( ?(tree_union_type_with_fields ?tr_uniname ?tr_unifields)
-	      (debug "monimelt_fill_type" " union tr_uniname=" tr_uniname
+	      (debug "monimelt_fill_type" " srcty union tr_uniname=" tr_uniname
 		     " tr_unifields=" tr_unifields)
 	      )
-	   ( ?(tree_type_decl ?tr_dcltype ?tr_name ?tr_ctx ?tr_orig ?uid)
-	      (debug "monimelt_fill_type" " typedecl start tr_name=" tr_name
-		     " uid=" uid
-		     "; tr_dcltype=" tr_dcltype
-		     ";\n.. tr_ctx=" tr_ctx
-		     ";\n.. tr_orig=" tr_orig
-		     "\n")
-	      (monimelt_fill_type (constant_box tr_dcltype))
-	      (debug "monimelt_fill_type" " typedecl done tr_name=" tr_name)
+	   ( ?(tree_enumeral_type ?tr_entype ?tr_enmin ?tr_enmax ?tr_ensize ?tr_envalues
+		)
+	      (debug "monimelt_fill_type" " srcty enumeral tr_entype=" tr_entype
+		     "\n.. tr_envalues=" tr_envalues)
+	      )
+	   ( ?(tree_function_type ?tr_ftype ?tr_argsty)
+	      (debug "monimelt_fill_type" " srcty functionty tr_ftype=" tr_ftype "\n.. tr_argsty=" tr_argsty)
 	      )
 	   ( ?_
-	     (debug "monimelt_fill_type" " strange type tr_type=" tr_type)
-	     (warning_at typev "monimelt strange type $1" tr_type)
+	     (debug "monimelt_fill_type" " @@strange srcty tr_srctype=" tr_srctype
+		    "\n.. typev=" typev)
+	     (warning_at typev "MONIMELT strange type $1 cant be filled"
+			 tr_srctype)
 	     )
 	   )
 	  )
 	)
      (?_
+      (debug "monimelt_fill_type" " @@strange typev=" typev)
       (assert_msg "unexpected typev" () typev)))
     )
   )
@@ -592,7 +609,8 @@
 	   )
 	  ))
      (?_
-      (debug "monimelt_declare_aggregation" " unexpected tr_agg=" tr_agg)
+      (debug "monimelt_declare_aggregation" " @@strange tr_agg=" tr_agg)
+      (shortbacktrace_dbg "monimelt_declare_aggregation @strange" 12)
       (error_at agg "MONIMELT unexpected aggregation $1" tr_agg)
       )
      )))
