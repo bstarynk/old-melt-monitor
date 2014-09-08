@@ -17,7 +17,7 @@
 ;;; along with GCC; see the file COPYING3.   If not see
 ;;; <http://www.gnu.org/licenses/>.
 
-;;; this file is for the MELT 1.1.2 (or later) plugin for GCC
+;;; this file is for the MELT 1.1.3 (or later) plugin for GCC
 ;;; to process the header file monimelt.h
 ;;; see http://gcc-melt.org/ for more
 
@@ -107,62 +107,64 @@
 (defun monimelt_declare_type (typev)
   (debug "monimelt_declare_type" " start typev=" typev)
   (let ( (tr_type (unbox :tree typev))
-	 )
+         )
     (debug "monimelt_declare_type" " tr_type=" tr_type)
     (match tr_type
-	   ( ?(and
-	       ?(tree_type_decl_with_name ?tr_decltype ?name ?uid)
-	       ?(tree_decl_at_source_location ?filepathv ?linum ?colnum))
-	      (debug "monimelt_declare_type" " name=" name "; tr_decltype=" tr_decltype
-		     " linum=" linum)
-	      (let ( (linenumv (constant_box linum))
-		     (typenamev (constant_box name))
-		     (jparam (make_jsonobject discr_jsonobject
-					      'monimelt_name typenamev
-					      'monimelt_line linenumv))
-		     )
-		(debug "monimelt_declare_type" " typenamev=" typenamev "; typev=" typev)
-		(mapstring_putstr monimelt_dict_types typenamev typev)
-		(debug "monimelt_declare_type" " updated dict="  debug_more monimelt_dict_types
-		       "\n.. jparam=" jparam)
-		(multicall
-		 (res :long time)
-		 (do_blocking_jsonrpc2_call monimelt_service
-					    '"meltmom_declare_name" jparam 250)
-		  (debug "monimelt_declare_type" " jsonrpc res=" res " time=" time))
-		)
-	      )
-	   ;;
-	   ( ?(tree_type_decl ?tr_decltype ?tr_name ?tr_ctx ?tr_orig ?uid)
-	      (debug "monimelt_declare_type" " unlocated tr_name=" tr_name " tr_decltype=" tr_decltype
-		     ";\n.. tr_ctx=" tr_ctx ";\n.. tr_orig=" tr_orig
-		     ";\n.. uid=" uid))
-	   ;;
-	   ( ?(tree_type_declaration ?tr_insidetype)
-	      (debug "monimelt_declare_type" " tr_insidetype=" tr_insidetype)
-	      )
-	   ;;
-	   ( ?(and
-	       ?(tree_enumeral_type ?tr_entype ?tr_enmin ?tr_enmax ?tr_ensize ?tr_envalues)
-	       ?(tree_decl_at_source_location ?filepathv ?linum ?colnum))
-	      (debug "monimelt_declare_type" " located-enumeral linum=" linum "; tr_entype=" tr_entype
-		     " tr_envalues=" tr_envalues)
-	      )
-	   ;;
-	   ( ?(tree_enumeral_type ?tr_entype ?tr_enmin ?tr_enmax ?tr_ensize ?tr_envalues)
-	      (debug "monimelt_declare_type" " plain-enumeral tr_entype=" tr_entype
-		     " tr_envalues=" tr_envalues)
-	      )
-	   ;;
-	   ( ?_
-	     (debug  "monimelt_declare_type" " @@strange tr_type=" tr_type
-		     "\n.. typev=" typev)
-	     (error_at typev "monimelt unexpected type $1" tr_type)
-	     )
-	   )
+           ( ?(and
+               ?(tree_type_decl_with_name ?tr_decltype ?name ?uid)
+               ?(tree_decl_at_source_location ?filepathv ?linum ?colnum))
+              (debug "monimelt_declare_type" " name=" name "; tr_decltype=" tr_decltype
+                     " linum=" linum)
+              (let ( (linenumv (constant_box linum))
+                     (typenamev (constant_box name))
+                     (jparam (make_jsonobject discr_jsonobject
+                                              'monimelt_name typenamev
+                                              'monimelt_line linenumv))
+                     )
+                (debug "monimelt_declare_type" " typenamev=" typenamev "; typev=" typev)
+                (mapstring_putstr monimelt_dict_types typenamev typev)
+                (debug "monimelt_declare_type" " updated dict="  debug_more monimelt_dict_types
+                       "\n.. jparam=" jparam)
+                (multicall
+                 (res :long time)
+                 (do_blocking_jsonrpc2_call monimelt_service
+                                            '"meltmom_declare_name" jparam 250)
+                 (debug "monimelt_declare_type" " jsonrpc res=" res " time=" time))
+                )
+              )
+       ;;-  ;;
+       ;;-  ( ?(tree_type_decl ?tr_decltype ?tr_name ?tr_ctx ?tr_orig ?uid)
+       ;;-     (debug "monimelt_declare_type" " ?- unlocated tr_name=" tr_name " tr_decltype=" tr_decltype
+       ;;-            ";\n.. tr_ctx=" tr_ctx ";\n.. tr_orig=" tr_orig
+       ;;-            ";\n.. uid=" uid))
+       ;;-  ;;
+       ;;-  ( ?(tree_type_declaration ?tr_insidetype)
+       ;;-     (debug "monimelt_declare_type" " ?- tr_insidetype=" tr_insidetype)
+       ;;-     )
+       ;;-  ;;
+       ;;-  ( ?(and
+       ;;-      ?(tree_enumeral_type ?tr_entype ?tr_enmin ?tr_enmax ?tr_ensize ?tr_envalues)
+       ;;-      ?(tree_decl_at_source_location ?filepathv ?linum ?colnum))
+       ;;-     (debug "monimelt_declare_type" " ?- located-enumeral linum=" linum "; tr_entype=" tr_entype
+       ;;-            " tr_envalues=" tr_envalues)
+       ;;-     )
+       ;;-  ;;
+       ;;-  ( ?(tree_enumeral_type ?tr_entype ?tr_enmin ?tr_enmax ?tr_ensize ?tr_envalues)
+       ;;-     (debug "monimelt_declare_type" " ?- plain-enumeral tr_entype=" tr_entype
+       ;;-            " tr_envalues=" tr_envalues)
+       ;;-     )
+       ;;-  ;;
+           ( ?_
+             (debug  "monimelt_declare_type" " @@strange tr_type=" tr_type
+                     "\n.. typev=" typev)
+             (error_at typev "monimelt unexpected type $1" tr_type)
+             )
+           )
     )
   )
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun monimelt_declare_function (funcv)
   (debug "monimelt_declare_function " "start funcv=" funcv)
   (let ( (tr_func (unbox :tree funcv))
@@ -528,15 +530,17 @@
 	   ( ?_
 	     (debug "monimelt_fill_type" " @@strange srcty tr_srctype=" tr_srctype
 		    "\n.. typev=" typev)
-	     (warning_at typev "MONIMELT strange type $1 cant be filled"
-			 tr_srctype)
+	     (warning_at typev "MONIMELT strange type $1 cant be filled for $2"
+			 tr_srctype tr_type)
 	     )
 	   )
 	  )
 	)
      (?_
       (debug "monimelt_fill_type" " @@strange typev=" typev)
-      (assert_msg "unexpected typev" () typev)))
+      (error_at typev "MONIMELT unexpected type to fill $1" typev)
+      (assert_msg "unexpected typev" () typev)
+      ))
     )
   )
 
