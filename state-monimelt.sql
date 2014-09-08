@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','todo dump with outcome');
+INSERT INTO t_params VALUES('dump_reason','exit dump');
 INSERT INTO t_items VALUES('_02mtzeca0pf_kc9d1i34ap4','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1840}], "content": null,
  "kind": null, "payload": null}
 ');
@@ -401,6 +401,11 @@ INSERT INTO t_items VALUES('_3zqd7ai3rtu_md9athkx17u','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_3ztr5wx3aws_fkquc120ajj','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1696}], "content": null,
  "kind": null, "payload": null}
 ');
+INSERT INTO t_items VALUES('_413ff3d1ajz_0f0vvj7m1e3','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "JSONRPC routine to define some type"}],
+ "content": null, "kind": "closure", "payload": {"closed_values": ["json_rpc_meltmom_define_type spare 0",
+   "json_rpc_meltmom_define_type spare 1", "json_rpc_meltmom_define_type spare 2"],
+  "closure_routine": "json_rpc_meltmom_define_type"}}
+');
 INSERT INTO t_items VALUES('_41ciqzka19m_wjq6xe7u28h','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 757}], "content": null,
  "kind": null, "payload": null}
 ');
@@ -603,6 +608,11 @@ INSERT INTO t_items VALUES('_590trid9ycw_f6kaajwca63','{"attr": [{"attr": "_41u1
 ');
 INSERT INTO t_items VALUES('_5a4xtuk8i56_2u3zth4hwae','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 2602}], "content": null,
  "kind": null, "payload": null}
+');
+INSERT INTO t_items VALUES('_5c0uvw732ra_eu0u137fimi','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "JSONRPC method to define some type"},
+  {"attr": "_0hpzi8m7wym_1y4ypmm9y47", "val": {"item_ref": "_413ff3d1ajz_0f0vvj7m1e3",
+    "jtype": "item_ref", "space": ".root"}}], "content": null, "kind": null,
+ "payload": null}
 ');
 INSERT INTO t_items VALUES('_5c5jh9185sv_qru5amf9v18','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "put an item inside an assoc"},
   {"attr": "_70ty9z1tm4p_eccsxmyfe25", "val": {"item_ref": "_7jzvaihqxfw_0c2y7t976tu",
@@ -1209,6 +1219,7 @@ INSERT INTO t_names VALUES('json_object','_3xpyd539p4m_23h7wi59xi9','.predef');
 INSERT INTO t_names VALUES('json_rpc_dump_exit','_6zm92afs4yc_60a8ujmi1ef','.root');
 INSERT INTO t_names VALUES('json_rpc_meltmom_declare_name','_6d4dwqa6m09_c5vtjswfpfi','.root');
 INSERT INTO t_names VALUES('json_rpc_meltmom_define_field','_1ij3y9cmvk5_8tkiqiy17ws','.root');
+INSERT INTO t_names VALUES('json_rpc_meltmom_define_type','_413ff3d1ajz_0f0vvj7m1e3','.root');
 INSERT INTO t_names VALUES('json_rpc_status','_6p6v25323aq_97d9ude6j12','.root');
 INSERT INTO t_names VALUES('json_true','_2vmrrvq5kdk_9um63pstcu9','.predef');
 INSERT INTO t_names VALUES('jsonrpc','_0h331ch957p_j6a8i7v4e6y','.predef');
@@ -1223,6 +1234,7 @@ INSERT INTO t_names VALUES('make_item','_590trid9ycw_f6kaajwca63','.root');
 INSERT INTO t_names VALUES('max','_6me6iv1ieat_mw0zucsqqm5','.predef');
 INSERT INTO t_names VALUES('meltmom_declare_name','_1y91p3us9s9_p88di58xuek','.root');
 INSERT INTO t_names VALUES('meltmom_define_field','_66xrheq8zyk_q1z7866a9pp','.root');
+INSERT INTO t_names VALUES('meltmom_define_type','_5c0uvw732ra_eu0u137fimi','.root');
 INSERT INTO t_names VALUES('message','_4jp2meuzru2_a58afyxwxa2','.predef');
 INSERT INTO t_names VALUES('method','_3hv5ymapjed_y8q6hsvhw8u','.predef');
 INSERT INTO t_names VALUES('min','_2fjizx76kia_567e7h9s69z','.predef');

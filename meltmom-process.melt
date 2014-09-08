@@ -646,6 +646,8 @@
   (each_component_in_list
    monimelt_types_list
    ctype
+  ;;
+   (debug "monimelt_finish_unit" " filltype " ctype)
    (monimelt_fill_type ctype))
   ;;
   ;; aggregates should be declared after filling the types
