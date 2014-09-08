@@ -445,7 +445,13 @@
 		(debug "monimelt_json_for_type" " tupenum=" tupenum
 		       "\n.. for typev=" typev "\n.. trchain=" trchain)
 		)
-	     )
+	      )
+	   ;;
+	   ( ?(tree_function_type  ?tr_ftype ?tr_argsty)
+	      (debug "monimelt_json_for_type" " functiontype tr_ftype=" tr_ftype
+		     " tr_argsty=" tr_argsty
+		     "\n.. chaintup=" (tree_chain_to_tuple discr_multiple tr_argsty))
+	      )
 	   ;;
 	   (?_
 	    (debug "monimelt_json_for_type " "@@strange tr_type=" tr_type)
