@@ -658,6 +658,27 @@
 
 
 
+;;; for function signature
+(defun monimelt_function_signature (funv)
+  (debug "monimelt_function_signature" " funv=" funv)
+  (let ( (trfun (unbox :tree funv))
+	 )
+    (debug "monimelt_function_signature" " trfun=" trfun)
+    (match trfun
+	   ( ?(tree_function_decl_full ?tname ?targs ?ttype ?tresult ?tctxt ?builtincode)
+	      (debug "monimelt_function_signature"
+		     " tname=" tname
+		     "\n.. targs=" targs
+		     "\n.. ttype=" ttype
+		     "\n.. tresult=" tresult
+		     "\n.. tctxt=" tctxt
+		     "\n")
+	      (void)
+	      )
+	   (?_
+	    (error_at funv "MONIMELT unexpected function $1" funv)))
+  ))
+
 ;;this function should probably do the JSONRPC calls
 (defun monimelt_finish_unit (arg)
   (debug "monimelt_finish_unit" " arg=" arg
@@ -711,7 +732,13 @@
    (debug "monimelt_finish_unit" " aggregate curname=" curname " curagg=" curagg)
    (monimelt_declare_aggregation curagg curname)
    )
+  ;; define the function's signature
+  (each_component_in_list
+   monimelt_functions_list
+   cfunc
+   (monimelt_function_signature cfunc))
   ;;
+  ;; final dump
   (multicall
    (momdump :long dumptime)
    (do_blocking_jsonrpc2_call monimelt_service '"dump" :true 7550)
