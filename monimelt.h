@@ -70,6 +70,9 @@
 #include <netdb.h>
 ///
 #include <sqlite3.h>
+/// Boehm GC from http://www.hboehm.info/gc/
+/// ...perhaps we should consider MPS from
+///            http://www.ravenbrook.com/project/mps/
 #include <gc/gc.h>
 #include <glib.h>
 // libonion from http://www.coralbits.com/libonion/ &

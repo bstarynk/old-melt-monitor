@@ -194,7 +194,7 @@ melt-process-debug: monimelt.h meltmom-process.quicklybuilt.so | _meltwork monim
 	$(RM) $(MONI_MELT_TMP)*
 
 
-melt-process-outdbg:
+melt-process-outdbg: monimelt.h meltmom-process.quicklybuilt.so meltmom-process.debugnoline.so 
 	+$(MAKE) -j 3 monimelt
 	$(MAKE) restore-state
 	$(MAKE) melt-process-debug \
@@ -214,3 +214,9 @@ meltmom-process.quicklybuilt.so: meltmom-process.melt  | _meltwork
 	    -fplugin-arg-melt-mode=translatedebugnoline \
 	    -fplugin-arg-melt-arg=$< \
 	    -x c -c /dev/null -o /dev/null)
+
+meltmom-process.debugnoline.so: meltmom-process.melt  | _meltwork
+	+$(COMPILE.c) -x c $(MELTGCCFLAGS) \
+	    -fplugin-arg-melt-mode=translatedebug \
+	    -fplugin-arg-melt-arg=$< \
+	    -x c -c /dev/null -o /dev/null 

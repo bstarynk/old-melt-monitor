@@ -192,8 +192,8 @@ momplugin_after_load (void)
 {
   MOM_DEBUGPRINTF (run,
 		   "after load in " __FILE__ " build " __DATE__ "@" __TIME__);
-  declare_jsonrpc_mom ("json_rpc_meltmom_define_type",
-		       "JSONRPC routine to define some type",
-		       "meltmom_define_type",
-		       "JSONRPC method to define some type");
+  declare_jsonrpc_mom ("json_rpc_meltmom_define_function",
+		       "JSONRPC routine to define some function",
+		       "meltmom_define_function",
+		       "JSONRPC method to define some function");
 }

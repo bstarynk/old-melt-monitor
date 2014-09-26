@@ -354,6 +354,11 @@
 	     (return '"char")
 	     )
 	   ;;
+	   (?(tree_boolean_type_node)
+	     (debug  "monimelt_json_for_type" " bool")
+	     (return '"bool")
+	     )
+	   ;;
 	   (?(tree_void_type_node)
 	     (debug  "monimelt_json_for_type" " void")
 	     (return '"void")
@@ -665,10 +670,12 @@
 	 )
     (debug "monimelt_function_signature" " trfun=" trfun)
     (match trfun
-	   ( ?(tree_function_decl_full ?tname ?targs
-				       ?(and ?tftype
-					     ?(tree_function_type ?trsigtype ?trsigargs))
-				       ?tresult ?tctxt ?builtincode)
+	   ( ?(tree_function_decl_full
+	       ?(and ?tname ?(tree_identifier ?namstr))
+	       ?targs
+	       ?(and ?tftype
+		     ?(tree_function_type ?trsigtype ?trsigargs))
+	       ?tresult ?tctxt ?builtincode)
 	      (debug "monimelt_function_signature"
 		     " tname=" tname
 		     "\n.. targs=" targs
@@ -678,18 +685,38 @@
 		     "\n.. trsigargs=" trsigargs
 		     "\n.. tctxt=" tctxt
 		     "\n")
-	      ;; should use foreach_chain_value_purpose_in_tree_list
-	      (foreach_argument_in_function_tree
-	       (tftype)
-	       (:tree trcurarg)
-	       (debug "monimelt_function_signature"
-		      " trcurarg=" trcurarg)
-	       )
+	      (let (
+		    (jname (constant_box namstr))
+		    (jsigtype (monimelt_json_for_type (constant_box trsigtype)))
+		    (ljargs (make_list discr_list))
+		    )
+		(debug "monimelt_function_signature" " jsigtype=" jsigtype)
+		(foreach_chain_value_purpose_in_tree_list
+		 (trsigargs)
+		 (:tree tchain tval tpurp)
+		 (debug "monimelt_function_signature"
+			" tval=" tval "\n.. tpurp=" tpurp)
+		 (let ( (curargv (constant_box tval))
+			(curjtype (monimelt_json_for_type curargv))
+			)
+		   (debug "monimelt_function_signature" " curjtype=" curjtype)
+		   (list_append ljargs curjtype)
+		   ))
+		(debug "monimelt_function_signature" " ljargs=" ljargs)
+		(let ( (jargtup (list_to_multiple ljargs))
+		       (jparam (make_jsonobject discr_jsonobject
+						'monimelt_name jname
+						'monimelt_args jargtup
+						'monimelt_result jsigtype))
+		       )
+		  (debug "monimelt_function_signature" " jparam=" jparam)
+		  )
+		)
 	      (void)
 	      )
 	   (?_
 	    (error_at funv "MONIMELT unexpected function $1" funv)))
-  ))
+    ))
 
 ;;this function should probably do the JSONRPC calls
 (defun monimelt_finish_unit (arg)
