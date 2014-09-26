@@ -710,6 +710,11 @@
 						'monimelt_result jsigtype))
 		       )
 		  (debug "monimelt_function_signature" " jparam=" jparam)
+		  (multicall
+		   (res :long time)
+		   (do_blocking_jsonrpc2_call monimelt_service
+					      '"meltmom_define_function" jparam 450)
+		   (debug "monimelt_function_signature" " jsonrpc res=" res " time=" time))
 		  )
 		)
 	      (void)

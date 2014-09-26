@@ -52,6 +52,9 @@ MOM_PREDEFINED_NAMED(attr,_6w3dvx83dfw_xzc6aif6isv)
 ////!body of a routine
 MOM_PREDEFINED_NAMED(body,_0ihu411vkua_z4sh56hicdt)
 
+////!the C bool type
+MOM_PREDEFINED_NAMED(bool,_57vx8i37ar4_1346w0cep34)
+
 ////!the buffer payload kind, and also the clipboard buffer in editors
 MOM_PREDEFINED_NAMED(buffer,_3zqd7ai3rtu_md9athkx17u)
 
@@ -180,8 +183,14 @@ MOM_PREDEFINED_NAMED(mom_struct,_9y82yz8z01a_x0dx4kx0x18)
 ////!for monimelt union prefixed with mom
 MOM_PREDEFINED_NAMED(mom_union,_2qmau9u6ie1_7ry5vh1vhe0)
 
+////!give arguments of a Monimelt function
+MOM_PREDEFINED_NAMED(monimelt_arguments,_89jhda3v3wj_hvzvs5w6hui)
+
 ////!gives the line number
 MOM_PREDEFINED_NAMED(monimelt_line,_8hvs0h5a7v9_1ixv3jf2j6j)
+
+////!give result type of a Monimelt function
+MOM_PREDEFINED_NAMED(monimelt_result,_7dekms4ck3h_e7c1xm3p74c)
 
 ////!for Monimelt types
 MOM_PREDEFINED_NAMED(monimelt_type,_9j151ceapqf_dae1vrdueqa)
@@ -295,7 +304,7 @@ MOM_PREDEFINED_NAMED(values,_91pketvc5pz_wq0v0wpauw8)
 ////!to mention some item verbatim or quote-d à la Lisp
 MOM_PREDEFINED_NAMED(verbatim,_53cuy70z4tf_86tzz364trd)
 
-////!type for no data
+////!the C void type
 MOM_PREDEFINED_NAMED(void,_7jzvaihqxfw_0c2y7t976tu)
 
 ////!attribute giving the web handler inside items

@@ -5004,6 +5004,13 @@ meltmom_json_to_node_mom (momval_t jtype)
   else if (jtype.pitem == mom_named__unsigned_long
 	   || mom_string_same (jtype, "unsigned_long"))
     return (momval_t) mom_named__unsigned_long;
+  else if (jtype.pitem == mom_named__bool || mom_string_same (jtype, "bool"))
+    return (momval_t) mom_named__bool;
+  else if (jtype.pitem == mom_named__void || mom_string_same (jtype, "void"))
+    return (momval_t) mom_named__void;
+  else if (jtype.pitem == mom_named__double
+	   || mom_string_same (jtype, "double"))
+    return (momval_t) mom_named__double;
   else if (jtype.pitem == mom_named__size_t
 	   || mom_string_same (jtype, "size_t"))
     return (momval_t) mom_named__size_t;
@@ -5350,6 +5357,8 @@ enum json_rpc_meltmom_define_function_valindex_en
   json_rpc_meltmom_define_function_v_jargs,
   json_rpc_meltmom_define_function_v_jrestype,
   json_rpc_meltmom_define_function_v_name,
+  json_rpc_meltmom_define_function_v_argnode,
+  json_rpc_meltmom_define_function_v_resnode,
   json_rpc_meltmom_define_function_v_nameditm,
   json_rpc_meltmom_define_function_v__lastval
 };
@@ -5387,7 +5396,7 @@ json_rpc_meltmom_define_function_codmom (int momstate_,
   };
 #define _SET_STATE(St) do {						\
     MOM_DEBUGPRINTF (run,						\
-		     "json_rpc_meltmom_define_function_codmom setstate "	\
+		     "json_rpc_meltmom_define_function_codmom setstate " \
 		     #St " = %d",					\
 		     (int)json_rpc_meltmom_define_function_s_##St);	\
     return json_rpc_meltmom_define_function_s_##St; } while(0)
@@ -5442,9 +5451,47 @@ json_rpc_meltmom_define_function_lab_start:
 			       mom_to_string (_L (name)));
     }
   {
+    unsigned nbargs = mom_json_array_size (_L (jargs));
+    momval_t *argtab = MOM_GC_ALLOC ("jsonrpc-def-function argtab",
+				     (nbargs + 1) * sizeof (momval_t));
+    for (unsigned ix = 0; ix < nbargs; ix++)
+      {
+	momval_t curjarg = mom_json_array_nth (_L (jargs), ix);
+	momval_t curtyparg = MOM_NULLV;
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL ("json_rpc_meltmom_define_function ix#"),
+		   MOMOUT_DEC_INT ((int) ix),
+		   MOMOUT_LITERAL (" curjarg="),
+		   MOMOUT_VALUE (curjarg), NULL);
+	curtyparg = meltmom_json_to_node_mom (curjarg);
+	MOM_DEBUG (run,
+		   MOMOUT_LITERAL ("json_rpc_meltmom_define_function ix#"),
+		   MOMOUT_DEC_INT ((int) ix),
+		   MOMOUT_LITERAL (" curtyparg="),
+		   MOMOUT_VALUE (curtyparg), NULL);
+	argtab[ix] = curtyparg;
+      };
+    _L (argnode) =
+      (momval_t) mom_make_node_from_array (mom_named__monimelt_arguments,
+					   nbargs, argtab);
+    MOM_GC_FREE (argtab);
+    MOM_DEBUG (run,
+	       MOMOUT_LITERAL ("json_rpc_meltmom_define_function argnode="),
+	       MOMOUT_VALUE (_L (argnode)), NULL);
+  }
+  ///
+  {
+    _L (resnode) = meltmom_json_to_node_mom (_L (jrestype));
+    MOM_DEBUG (run,
+	       MOMOUT_LITERAL ("json_rpc_meltmom_define_function resnode="),
+	       MOMOUT_VALUE (_L (resnode)), NULL);
+  }
+  {
     mom_should_lock_item (_L (nameditm).pitem);
-    //    mom_item_put_attribute (_L (nameditm).pitem, mom_named__monimelt_line,
-    //                      _L (linenum));
+    mom_item_put_attribute (_L (nameditm).pitem,
+			    mom_named__monimelt_arguments, _L (argnode));
+    mom_item_put_attribute (_L (nameditm).pitem, mom_named__monimelt_result,
+			    _L (resnode));
     mom_unlock_item (_L (nameditm).pitem);
   }
   MOM_DEBUG (run,
@@ -5452,7 +5499,10 @@ json_rpc_meltmom_define_function_lab_start:
 	     MOMOUT_ITEM ((const momitem_t *) (_L (nameditm).pitem)),
 	     MOMOUT_LITERAL (" of id:"),
 	     MOMOUT_VALUE ((const momval_t)
-			   mom_identv_of_item (_L (nameditm).pitem)), NULL);
+			   mom_identv_of_item (_L (nameditm).pitem)),
+	     MOMOUT_NEWLINE (),
+	     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t
+				      *) (_L (nameditm).pitem)), NULL);
   ///
   MOM_DEBUG (run,
 	     MOMOUT_LITERAL ("json_rpc_meltmom_define_function jresult="),

@@ -599,6 +599,9 @@ INSERT INTO t_items VALUES('_550t6pz1jt3_s87h5uvaifv','{"attr": [{"attr": "_8hvs
 INSERT INTO t_items VALUES('_55vhwzi1rmq_5w9fpczxsv3','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1323}], "content": null,
  "kind": null, "payload": null}
 ');
+INSERT INTO t_items VALUES('_57vx8i37ar4_1346w0cep34','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "the C bool type"}],
+ "content": null, "kind": null, "payload": null}
+');
 INSERT INTO t_items VALUES('_590trid9ycw_f6kaajwca63','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "primitive to make an item"},
   {"attr": "_8um1q4shitk_tpcmedvsfzu", "val": {"jtype": "tuple", "tuple": ["_3j3s2e0510a_096chqpijq7"]}},
   {"attr": "_967fch1xu4h_i87qjq1zt1h", "val": {"jtype": "node", "node": "_2vxxtir316j_meap5sq6ykr",
@@ -871,6 +874,9 @@ INSERT INTO t_items VALUES('_79vm7uxit6c_53qt1qi2wuj','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_7a9sxskjhcp_kpf30ka97ex','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for JSONRPC and elsewhere"}],
  "content": null, "kind": null, "payload": null}
 ');
+INSERT INTO t_items VALUES('_7dekms4ck3h_e7c1xm3p74c','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "give result type of a Monimelt function"}],
+ "content": null, "kind": null, "payload": null}
+');
 INSERT INTO t_items VALUES('_7diyc1cwj8z_x630afccr8e','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "Group together all noticed values in dump outcome."}],
  "content": null, "kind": null, "payload": null}
 ');
@@ -892,7 +898,7 @@ INSERT INTO t_items VALUES('_7fwerdk2440_xzwtukysz1h','{"attr": [{"attr": "_8hvs
 INSERT INTO t_items VALUES('_7ijk39sk4xp_xxpihysxrp0','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1680}], "content": null,
  "kind": null, "payload": null}
 ');
-INSERT INTO t_items VALUES('_7jzvaihqxfw_0c2y7t976tu','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "type for no data"}],
+INSERT INTO t_items VALUES('_7jzvaihqxfw_0c2y7t976tu','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "the C void type"}],
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_7kkh6qiq1vc_e69zp2feuhe','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "gives the rank"}],
@@ -1006,6 +1012,9 @@ INSERT INTO t_items VALUES('_8907u3qf13t_52v4s8uc60r','{"attr": [{"attr": "_8hvs
  "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_89ejvxupprm_f219pqwz13s','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for double values and displays"}],
+ "content": null, "kind": null, "payload": null}
+');
+INSERT INTO t_items VALUES('_89jhda3v3wj_hvzvs5w6hui','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "give arguments of a Monimelt function"}],
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_89su1uthsk0_zs7yiqr2ir4','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1529}], "content": null,
@@ -1188,6 +1197,7 @@ INSERT INTO t_names VALUES('assoc_get','_70mt4fvrva2_pk76eevwada','.root');
 INSERT INTO t_names VALUES('assoc_put','_5c5jh9185sv_qru5amf9v18','.root');
 INSERT INTO t_names VALUES('attr','_6w3dvx83dfw_xzc6aif6isv','.predef');
 INSERT INTO t_names VALUES('body','_0ihu411vkua_z4sh56hicdt','.predef');
+INSERT INTO t_names VALUES('bool','_57vx8i37ar4_1346w0cep34','.predef');
 INSERT INTO t_names VALUES('buffer','_3zqd7ai3rtu_md9athkx17u','.predef');
 INSERT INTO t_names VALUES('call_at_state','_3dqr46p2xf4_29kf5vdtw4z','.root');
 INSERT INTO t_names VALUES('char','_72psq1j5keh_d0z70e7tzxu','.predef');
@@ -1449,7 +1459,9 @@ INSERT INTO t_names VALUES('momval_t','_3vvtdeqxssw_dthyjy2dz5t','.root');
 INSERT INTO t_names VALUES('momvaltype_t','_266cwehdrjc_144jy18dwh1','.root');
 INSERT INTO t_names VALUES('momvalueptr_un','_42cx8xskxe3_vu23eezcksq','.root');
 INSERT INTO t_names VALUES('momvflags_t','_1wevxkfudp9_cpeu1adxcrp','.root');
+INSERT INTO t_names VALUES('monimelt_arguments','_89jhda3v3wj_hvzvs5w6hui','.predef');
 INSERT INTO t_names VALUES('monimelt_line','_8hvs0h5a7v9_1ixv3jf2j6j','.predef');
+INSERT INTO t_names VALUES('monimelt_result','_7dekms4ck3h_e7c1xm3p74c','.predef');
 INSERT INTO t_names VALUES('monimelt_type','_9j151ceapqf_dae1vrdueqa','.predef');
 INSERT INTO t_names VALUES('node','_4m7x6811f6j_t480zu575mz','.predef');
 INSERT INTO t_names VALUES('noop','_240dwt57s08_a8uy366sev5','.root');
