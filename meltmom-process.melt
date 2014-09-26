@@ -665,14 +665,26 @@
 	 )
     (debug "monimelt_function_signature" " trfun=" trfun)
     (match trfun
-	   ( ?(tree_function_decl_full ?tname ?targs ?ttype ?tresult ?tctxt ?builtincode)
+	   ( ?(tree_function_decl_full ?tname ?targs
+				       ?(and ?tftype
+					     ?(tree_function_type ?trsigtype ?trsigargs))
+				       ?tresult ?tctxt ?builtincode)
 	      (debug "monimelt_function_signature"
 		     " tname=" tname
 		     "\n.. targs=" targs
-		     "\n.. ttype=" ttype
+		     "\n.. tftype=" tftype
 		     "\n.. tresult=" tresult
+		     "\n.. trsigtype=" trsigtype
+		     "\n.. trsigargs=" trsigargs
 		     "\n.. tctxt=" tctxt
 		     "\n")
+	      ;; should use foreach_chain_value_purpose_in_tree_list
+	      (foreach_argument_in_function_tree
+	       (tftype)
+	       (:tree trcurarg)
+	       (debug "monimelt_function_signature"
+		      " trcurarg=" trcurarg)
+	       )
 	      (void)
 	      )
 	   (?_
