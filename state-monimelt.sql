@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 Sep 26
+-- state-monimelt dump 2014 Sep 28
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','exit dump');
+INSERT INTO t_params VALUES('dump_reason','after predefined jit');
 INSERT INTO t_items VALUES('_02mtzeca0pf_kc9d1i34ap4','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1843}], "content": null,
  "kind": null, "payload": null}
 ');
@@ -230,6 +230,9 @@ INSERT INTO t_items VALUES('_24w2ce2eq1z_pddi9j2czci','{"attr": [{"attr": "_41u1
   {"attr": "_0hpzi8m7wym_1y4ypmm9y47", "val": {"item_ref": "_6zm92afs4yc_60a8ujmi1ef",
     "jtype": "item_ref", "space": ".root"}}], "content": null, "kind": null,
  "payload": null}
+');
+INSERT INTO t_items VALUES('_24yt56xf3d5_4w80i326kjz','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for JIT code of JIT-ed routines"}],
+ "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_266cwehdrjc_144jy18dwh1','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 499}], "content": null,
  "kind": null, "payload": null}
@@ -562,7 +565,7 @@ INSERT INTO t_items VALUES('_4yxdswc8qwf_vxzy95hd399','{"attr": [{"attr": "_3eu0
    {"item_ref": "_0afqepa7jkr_qky26hpv98d", "jtype": "item_ref", "space": ".root"},
    {"item_ref": "_70aer7teeui_kvzkiqq2rd2", "jtype": "item_ref", "space": ".root"},
    {"item_ref": "_8y1sw8z084j_4ts0y0jydha", "jtype": "item_ref", "space": ".root"}]}]}]}]}}],
- "content": null, "kind": "routine", "payload": "translate_module"}
+ "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_4z5ma494cak_8711cf2mtuc','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1114}], "content": null,
  "kind": null, "payload": null}
@@ -1233,6 +1236,7 @@ INSERT INTO t_names VALUES('integer','_9jeymqk2732_wiq5kyczi9c','.predef');
 INSERT INTO t_names VALUES('item','_53748kde7s1_pkz810exr27','.predef');
 INSERT INTO t_names VALUES('item_ref','_6hf2vzmrsee_t35suhjvtj4','.predef');
 INSERT INTO t_names VALUES('ix','_9wwqwxqcm4p_y7di7fs8tsk','.root');
+INSERT INTO t_names VALUES('jit','_24yt56xf3d5_4w80i326kjz','.predef');
 INSERT INTO t_names VALUES('json_array','_35vp60aw7em_d436vfie4ud','.predef');
 INSERT INTO t_names VALUES('json_false','_4mha85xcfwi_9zqcvkiy3dk','.predef');
 INSERT INTO t_names VALUES('json_object','_3xpyd539p4m_23h7wi59xi9','.predef');

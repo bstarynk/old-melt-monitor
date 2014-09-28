@@ -754,7 +754,38 @@ payl_routine_load_mom (struct mom_loader_st *ld, momitem_t *itm,
 	     MOMOUT_ITEM ((const momitem_t *) itm),
 	     MOMOUT_LITERAL (" jsonv="),
 	     MOMOUT_VALUE ((const momval_t) jsonv), NULL);
-  mom_item_start_routine (itm, mom_string_cstr (jsonv));
+  if (mom_is_string (jsonv))
+    mom_item_start_routine (itm, mom_string_cstr (jsonv));
+  else if (mom_is_json_object (jsonv))
+    {
+      momval_t jcode = mom_jsonob_get (jsonv, (momval_t) mom_named__jit);
+      char *err = mom_item_generate_jit_routine (itm, jcode);
+      if (err)
+	MOM_FATAL (MOMOUT_LITERAL ("payl_routine_load_mom itm="),
+		   MOMOUT_ITEM ((const momitem_t *) itm),
+		   MOMOUT_SPACE (32),
+		   MOMOUT_LITERAL ("failed:"),
+		   MOMOUT_LITERALV ((const char *) err),
+		   MOMOUT_NEWLINE (),
+		   MOMOUT_LITERAL ("jcode="), MOMOUT_VALUE (jcode), NULL);
+    }
+}
+
+static void
+payl_routine_dump_scan_mom (struct mom_dumper_st *du, momitem_t *itm)
+{
+  assert (du != NULL);
+  assert (itm && itm->i_typnum == momty_item);
+  assert (itm->i_paylkind == mompayk_routine);
+  assert (itm->i_payload != NULL);
+  const struct momroutinedescr_st *rdescr = itm->i_payload;
+  assert (rdescr != NULL && rdescr->rout_magic == MOM_ROUTINE_MAGIC
+	  && rdescr->rout_name != NULL);
+  if (rdescr->rout_jitcode.ptr != NULL)
+    {
+      assert (rdescr->rout_name[0] == '.');
+      mom_dump_scan_value (du, rdescr->rout_jitcode);
+    }
 }
 
 static momval_t
@@ -765,16 +796,31 @@ payl_routine_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
   assert (itm->i_paylkind == mompayk_routine);
   const struct momroutinedescr_st *rdescr = itm->i_payload;
   assert (rdescr != NULL && rdescr->rout_magic == MOM_ROUTINE_MAGIC
-	  && rdescr->rout_name != NULL && rdescr->rout_module);
-  if (strcmp (rdescr->rout_module, MOM_EMPTY_MODULE) != 0)
-    mom_dump_require_module (du, rdescr->rout_module);
-  return (momval_t) mom_make_string (rdescr->rout_name);
+	  && rdescr->rout_name != NULL);
+  if (rdescr->rout_jitcode.ptr)
+    {
+      assert (rdescr->rout_name[0] == '.');
+      momval_t jcode = mom_dump_emit_json (du, rdescr->rout_jitcode);
+      momval_t jvalr = (momval_t) mom_make_json_object
+	(MOMJSOB_ENTRY ((momval_t) mom_named__jit,
+			(momval_t) jcode),
+	 MOMJSON_END);
+      return jvalr;
+    }
+  else
+    {
+      assert (rdescr->rout_module != NULL);
+      if (strcmp (rdescr->rout_module, MOM_EMPTY_MODULE) != 0)
+	mom_dump_require_module (du, rdescr->rout_module);
+      return (momval_t) mom_make_string (rdescr->rout_name);
+    }
 }
 
 static const struct mom_payload_descr_st payldescr_routine_mom = {
   .dpayl_magic = MOM_PAYLOAD_MAGIC,
   .dpayl_name = "routine",
   .dpayl_loadfun = payl_routine_load_mom,
+  .dpayl_dumpscanfun = payl_routine_dump_scan_mom,
   .dpayl_dumpjsonfun = payl_routine_dump_json_mom,
 };
 

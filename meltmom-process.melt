@@ -247,6 +247,76 @@
     (assert_msg "monimelt_json_for_type check tr_type" tr_type typev)
     (match tr_type
 	   ;;
+	   (?(tree_char_type_node)
+	     (debug  "monimelt_json_for_type" " char")
+	     (return '"char")
+	     )
+	   ;;
+	   (?(tree_boolean_type_node)
+	     (debug  "monimelt_json_for_type" " bool")
+	     (return '"bool")
+	     )
+	   ;;
+	   (?(tree_void_type_node)
+	     (debug  "monimelt_json_for_type" " void")
+	     (return '"void")
+	     )
+	   ;;
+	   (?(tree_double_type_node)
+	     (debug  "monimelt_json_for_type" " double")
+	     (return '"double")
+	     )
+	   ;;
+	   (?(tree_float_type_node)
+	     (debug  "monimelt_json_for_type" " float")
+	     (return '"float")
+	     )
+	   ;;
+	   (?(tree_signed_char_type_node)
+	     (debug  "monimelt_json_for_type" " signed char")
+	     (return '"signed_char")
+	     )
+	   ;;
+	   (?(tree_unsigned_char_type_node)
+	     (debug  "monimelt_json_for_type" " unsigned char")
+	     (return '"unsigned_char")
+	     )
+	   ;;
+	   (?(tree_short_integer_type_node)
+	     (debug  "monimelt_json_for_type" " short")
+	     (return '"short")
+	     )
+	   ;;
+	   (?(tree_short_unsigned_type_node)
+	     (debug  "monimelt_json_for_type" " unsigned short")
+	     (return '"unsigned_short")
+	     )
+	   ;;
+	   (?(tree_integer_type_node)
+	     (debug  "monimelt_json_for_type" " int")
+	     (return '"int")
+	     )
+	   ;;
+	   (?(tree_unsigned_type_node)
+	     (debug  "monimelt_json_for_type" " unsigned")
+	     (return '"unsigned")
+	     )
+	   ;;
+	   (?(tree_long_integer_type_node)
+	     (debug  "monimelt_json_for_type" " long")
+	     (return '"long")
+	     )
+	   ;;
+	   (?(tree_long_unsigned_type_node)
+	     (debug  "monimelt_json_for_type" " unsigned long")
+	     (return '"unsigned_long")
+	     )
+	   ;;
+	   (?(tree_size_type_node)
+	     (debug  "monimelt_json_for_type" " size_t")
+	     (return '"size_t")
+	     )
+	   ;;
 	   (?(tree_type_decl ?tr_dcltype ?(and ?tr_name ?(tree_identifier ?nameid))
 			     ?tr_ctx ?tr_orig ?uid)
 	     (debug "monimelt_json_for_type" " typedecl tr_dcltype=" tr_dcltype "\n.. tr_name=" tr_name
@@ -348,76 +418,6 @@
 	       (debug "monimelt_json_for_type" " pointertype jres=" jres)
 	       (return jres)
 	       ))
-	   ;;
-	   (?(tree_char_type_node)
-	     (debug  "monimelt_json_for_type" " char")
-	     (return '"char")
-	     )
-	   ;;
-	   (?(tree_boolean_type_node)
-	     (debug  "monimelt_json_for_type" " bool")
-	     (return '"bool")
-	     )
-	   ;;
-	   (?(tree_void_type_node)
-	     (debug  "monimelt_json_for_type" " void")
-	     (return '"void")
-	     )
-	   ;;
-	   (?(tree_double_type_node)
-	     (debug  "monimelt_json_for_type" " double")
-	     (return '"double")
-	     )
-	   ;;
-	   (?(tree_float_type_node)
-	     (debug  "monimelt_json_for_type" " float")
-	     (return '"float")
-	     )
-	   ;;
-	   (?(tree_signed_char_type_node)
-	     (debug  "monimelt_json_for_type" " signed char")
-	     (return '"signed_char")
-	     )
-	   ;;
-	   (?(tree_unsigned_char_type_node)
-	     (debug  "monimelt_json_for_type" " unsigned char")
-	     (return '"unsigned_char")
-	     )
-	   ;;
-	   (?(tree_short_integer_type_node)
-	     (debug  "monimelt_json_for_type" " short")
-	     (return '"short")
-	     )
-	   ;;
-	   (?(tree_short_unsigned_type_node)
-	     (debug  "monimelt_json_for_type" " unsigned short")
-	     (return '"unsigned_short")
-	     )
-	   ;;
-	   (?(tree_integer_type_node)
-	     (debug  "monimelt_json_for_type" " int")
-	     (return '"int")
-	     )
-	   ;;
-	   (?(tree_unsigned_type_node)
-	     (debug  "monimelt_json_for_type" " unsigned")
-	     (return '"unsigned")
-	     )
-	   ;;
-	   (?(tree_long_integer_type_node)
-	     (debug  "monimelt_json_for_type" " long")
-	     (return '"long")
-	     )
-	   ;;
-	   (?(tree_long_unsigned_type_node)
-	     (debug  "monimelt_json_for_type" " unsigned long")
-	     (return '"unsigned_long")
-	     )
-	   ;;
-	   (?(tree_size_type_node)
-	     (debug  "monimelt_json_for_type" " size_t")
-	     (return '"size_t")
-	     )
 	   ;;
 	   (?(tree_integer_type ?tr_intype ?minv ?maxv ?tr_size)
 	     (debug "monimelt_json_for_type" " integertype minv=" minv " maxv=" maxv

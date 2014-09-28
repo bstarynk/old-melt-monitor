@@ -93,6 +93,11 @@
 #include <onion/handlers/auth_pam.h>
 
 
+
+// libjit, from http://www.gnu.org/software/libjit/
+// but use a recent GIT of it from http://savannah.gnu.org/git/?group=libjit
+#include <jit/jit.h>
+
 /// for the MELT plugin analyzing this header
 #ifdef MELTMOM
 #pragma MONIMELT ENABLE
@@ -1285,8 +1290,9 @@ struct momroutinedescr_st
   unsigned rout_frame_nbval;	/* number of values in its frame */
   unsigned rout_frame_nbnum;	/* number of intptr_t numbers in its frame */
   unsigned rout_frame_nbdbl;	/* number of double numbers in its frame */
-  const char *rout_name;	/* the name FOO */
-  const char *rout_module;	/* always macro MONIMELT_CURRENT_MODULE */
+  const char *rout_name;	/* the name FOO; starts with a dot '.' for Jit-ed routine */
+  const char *rout_module;	/* always macro MONIMELT_CURRENT_MODULE or NULL for JIT-ed routine */
+  const momval_t rout_jitcode;	/* for a JIT-ed routine, the node of its code */
   mom_routine_sig_t *rout_codefun;
   const char *rout_timestamp;	/* generally __DATE__ "@" __TIME__ */
 };
@@ -1294,7 +1300,11 @@ struct momroutinedescr_st
 // start a routine of given name. If name is NULL or empty, use the
 // item's name or identstr...
 void mom_item_start_routine (momitem_t *itm, const char *routname);
-
+// initialize, ie generate the machine code and some name, for a JIT
+// routine. Return NULL on success or some GC_strduped error message
+// on failure.
+const char *mom_item_generate_jit_routine (momitem_t *itm,
+					   const momval_t jitnode);
 
 /************* closure item *********/
 #define MOM_CLOSURE_MAGIC 830382377	/* closure magic  0x317ea129 */

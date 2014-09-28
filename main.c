@@ -942,6 +942,7 @@ main (int argc, char **argv)
   mom_prog_dlhandle = GC_dlopen (NULL, RTLD_NOW | RTLD_GLOBAL);
   if (MOM_UNLIKELY (!mom_prog_dlhandle))
     MOM_FATAPRINTF ("failed to dlopen the program: %s", dlerror ());
+  jit_init ();
   parse_program_arguments_and_load_modules_mom (&argc, argv);
   if (daemonize_mom)
     {

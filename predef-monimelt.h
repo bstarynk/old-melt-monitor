@@ -130,6 +130,9 @@ MOM_PREDEFINED_NAMED(item,_53748kde7s1_pkz810exr27)
 ////!gives the item reference, at least in dumped JSON...
 MOM_PREDEFINED_NAMED(item_ref,_6hf2vzmrsee_t35suhjvtj4)
 
+////!for JIT code of JIT-ed routines
+MOM_PREDEFINED_NAMED(jit,_24yt56xf3d5_4w80i326kjz)
+
 ////!in JSON dump, jtype of JSON array values
 MOM_PREDEFINED_NAMED(json_array,_35vp60aw7em_d436vfie4ud)
 
