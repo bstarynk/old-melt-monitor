@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 Sep 28
+-- state-monimelt dump 2014 Oct 02
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','after predefined jit');
+INSERT INTO t_params VALUES('dump_reason','after predefined va_list');
 INSERT INTO t_items VALUES('_02mtzeca0pf_kc9d1i34ap4','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1843}], "content": null,
  "kind": null, "payload": null}
 ');
@@ -1112,6 +1112,9 @@ INSERT INTO t_items VALUES('_93s0y61hi9e_zvm47r6yhyc','{"attr": [{"attr": "_8hvs
 INSERT INTO t_items VALUES('_94jks4a7y80_cuwu4t0ytjj','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 190}], "content": null,
  "kind": null, "payload": null}
 ');
+INSERT INTO t_items VALUES('_95jrd5tjcsu_41chfihe6za','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "type for va_list in C variadic functions"}],
+ "content": null, "kind": null, "payload": null}
+');
 INSERT INTO t_items VALUES('_967fch1xu4h_i87qjq1zt1h','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for the expansion of a primitive"}],
  "content": null, "kind": null, "payload": null}
 ');
@@ -1511,6 +1514,7 @@ INSERT INTO t_names VALUES('unsigned_long','_23ey21s44px_iarreqeqhr5','.predef')
 INSERT INTO t_names VALUES('unsigned_short','_0yeu3tyzw9z_jqhcu2z2x34','.predef');
 INSERT INTO t_names VALUES('update_display_value','_1f94j87qumw_mhzkriesx7c','.root');
 INSERT INTO t_names VALUES('updated','_5x41iah0kis_x8rrv3ww44t','.predef');
+INSERT INTO t_names VALUES('va_list','_95jrd5tjcsu_41chfihe6za','.predef');
 INSERT INTO t_names VALUES('val','_7wk9y7e7r0z_575esi8ys5x','.predef');
 INSERT INTO t_names VALUES('values','_91pketvc5pz_wq0v0wpauw8','.predef');
 INSERT INTO t_names VALUES('var','_2d7i21ihwd8_xjcp4uhs11u','.root');

@@ -298,6 +298,9 @@ MOM_PREDEFINED_NAMED(unsigned_short,_0yeu3tyzw9z_jqhcu2z2x34)
 ////!gives the update time when applicable
 MOM_PREDEFINED_NAMED(updated,_5x41iah0kis_x8rrv3ww44t)
 
+////!type for va_list in C variadic functions
+MOM_PREDEFINED_NAMED(va_list,_95jrd5tjcsu_41chfihe6za)
+
 ////!in JSON dumps, used for values in attribute lists of items
 MOM_PREDEFINED_NAMED(val,_7wk9y7e7r0z_575esi8ys5x)
 

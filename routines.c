@@ -4979,6 +4979,7 @@ meltmom_json_to_node_mom (momval_t jtype)
   momval_t jpointer = MOM_NULLV;
   momval_t jmomstruct = MOM_NULLV;
   momval_t jmomunion = MOM_NULLV;
+  momval_t jrecord = MOM_NULLV;
   momitem_t *itm = NULL;
   if (jtype.pitem == mom_named__char || mom_string_same (jtype, "char"))
     return (momval_t) mom_named__char;
@@ -5008,6 +5009,9 @@ meltmom_json_to_node_mom (momval_t jtype)
     return (momval_t) mom_named__bool;
   else if (jtype.pitem == mom_named__void || mom_string_same (jtype, "void"))
     return (momval_t) mom_named__void;
+  else if (jtype.pitem == mom_named__va_list
+	   || mom_string_same (jtype, "va_list"))
+    return (momval_t) mom_named__va_list;
   else if (jtype.pitem == mom_named__double
 	   || mom_string_same (jtype, "double"))
     return (momval_t) mom_named__double;
@@ -5062,6 +5066,13 @@ meltmom_json_to_node_mom (momval_t jtype)
 	}
       return (momval_t) mom_make_node_sized (mom_named__mom_union, 1,
 					     (momval_t) itmunion);
+    }
+  else if (mom_is_json_object (jtype)
+	   && (jrecord = mom_jsonob_getstr (jtype, "record")).ptr != NULL)
+    {
+      momval_t trecord = meltmom_json_to_node_mom (jrecord);
+      if (trecord.ptr)
+	return trecord;
     }
   else if (mom_is_string (jtype)
 	   && (itm = mom_get_item_of_name_string (jtype)) != NULL)

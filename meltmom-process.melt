@@ -297,6 +297,11 @@
 	     (return '"int")
 	     )
 	   ;;
+	   (?(tree_va_list_type_node)
+	     (debug  "monimelt_json_for_type" " va_list")
+	     (return '"va_list")
+	     )
+	   ;;
 	   (?(tree_unsigned_type_node)
 	     (debug  "monimelt_json_for_type" " unsigned")
 	     (return '"unsigned")
