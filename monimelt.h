@@ -893,6 +893,7 @@ struct momitem_st
   momspaceid_t i_space;
   const momhash_t i_hash;	/* same as i_idstr->hash */
   const unsigned i_magic;	/* always MOM_ITEM_MAGIC */
+  atomic_ulong i_counter;	/* counter for atomic nodes */
   pthread_mutex_t i_mtx;
   const momstring_t *i_idstr;	/* id string */
   const momstring_t *i_name;	/* name, or NULL */
