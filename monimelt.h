@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdarg.h>
+#include <stdatomic.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <setjmp.h>
@@ -2012,6 +2013,7 @@ struct momnode_st
   momvflags_t flags;
   momusize_t slen;
   momhash_t hash;
+  atomic_ulong serial;
   const momitem_t *connitm;
   const momval_t sontab[];
 };
@@ -2031,6 +2033,8 @@ const momnode_t *mom_make_node_sized (const momitem_t *conn,
 // make a node from an array
 const momnode_t *mom_make_node_from_array (const momitem_t *conn,
 					   unsigned siz, momval_t *arr);
+
+#warning should have unique-node functions which initialize the serial of node
 
 static inline bool
 mom_is_node (momval_t nodv)
