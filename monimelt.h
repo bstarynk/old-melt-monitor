@@ -2059,7 +2059,6 @@ mom_clone_unique (momval_t val)
   return (momval_t) mom_clone_unique_node (val.pnode);
 }
 
-#warning should have unique-node functions which initialize the serial of node
 
 static inline bool
 mom_is_node (momval_t nodv)
