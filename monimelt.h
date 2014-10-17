@@ -87,11 +87,7 @@
 #include <onion/dict.h>
 #include <onion/log.h>
 #include <onion/shortcuts.h>
-#include <onion/handlers/internal_status.h>
-#include <onion/handlers/exportlocal.h>
-#include <onion/handlers/path.h>
-#include <onion/handlers/static.h>
-#include <onion/handlers/auth_pam.h>
+
 
 
 
