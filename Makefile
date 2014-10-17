@@ -34,7 +34,7 @@ ASTYLE= astyle --style=gnu
 PREPROFLAGS= -I/usr/local/include $(shell $(PKGCONFIG) --cflags $(PACKAGES))
 OPTIMFLAGS= -Og -g3
 LIBES= -L/usr/local/lib -lunistring -lgc -ljit $(shell $(PKGCONFIG) --libs $(PACKAGES)) \
-       -lonion_handlers -lonion -lpthread -lm -ldl
+        -lonion -lpthread -lm -ldl
 ## JsonRpc client might use cxxtools http://www.tntnet.org/cxxtools.html
 CXXTOOLS_CXXFLAGS:=$(shell cxxtools-config --cxxflags)
 CXXTOOLS_LIBS:=$(shell cxxtools-config --libs)

@@ -596,18 +596,31 @@ raw_dump_emit_json_mom (struct mom_dumper_st *dmp, const momval_t val)
       {
 	const momitem_t *curconn = val.pnode->connitm;
 	momval_t jconn = MOM_NULLV;
+	atomic_ulong ser = val.pnode->serial;
 	if (curconn && curconn->i_space > 0)
 	  {
 	    jconn = mom_emit_short_item_json (dmp, curconn);
 	    momval_t jsons = (momval_t) jsonarray_emit_nodesons_mom
 	      (dmp, val.pnode);
 	    if (jconn.ptr)
-	      jsval = (momval_t) mom_make_json_object
-		(MOMJSOB_ENTRY
-		 ((momval_t) mom_named__jtype, (momval_t) mom_named__node),
-		 MOMJSOB_ENTRY ((momval_t) mom_named__node, jconn),
-		 MOMJSOB_ENTRY ((momval_t) mom_named__sons, jsons),
-		 MOMJSON_END);
+	      {
+		if (ser)
+		  jsval = (momval_t) mom_make_json_object
+		    (MOMJSOB_ENTRY
+		     ((momval_t) mom_named__jtype,
+		      (momval_t) mom_named__node),
+		     MOMJSOB_ENTRY ((momval_t) mom_named__unique_node, jconn),
+		     MOMJSOB_ENTRY ((momval_t) mom_named__sons, jsons),
+		     MOMJSON_END);
+		else
+		  jsval = (momval_t) mom_make_json_object
+		    (MOMJSOB_ENTRY
+		     ((momval_t) mom_named__jtype,
+		      (momval_t) mom_named__node),
+		     MOMJSOB_ENTRY ((momval_t) mom_named__node, jconn),
+		     MOMJSOB_ENTRY ((momval_t) mom_named__sons, jsons),
+		     MOMJSON_END);
+	      }
 	  }
 	MOM_DEBUG (dump,
 		   MOMOUT_LITERAL ("raw_dump_emit_json node val="),
@@ -1025,8 +1038,16 @@ mom_load_value_json (struct mom_loader_st *ld, const momval_t jval)
 		       MOMOUT_SPACE (32),
 		       MOMOUT_LITERAL ("nod.backtr:"),
 		       MOMOUT_BACKTRACE (6), NULL);
-	    momval_t jnode =
-	      mom_jsonob_get (jval, (momval_t) mom_named__node);
+	    bool unique = false;
+	    momval_t jnode = MOM_NULLV;
+	    jnode = mom_jsonob_get (jval, (momval_t) mom_named__node);
+	    if (!jnode.ptr)
+	      {
+		jnode =
+		  mom_jsonob_get (jval, (momval_t) mom_named__unique_node);
+		if (jnode.ptr)
+		  unique = true;
+	      }
 	    momval_t jsons =
 	      mom_jsonob_get (jval, (momval_t) mom_named__sons);
 	    const momitem_t *connitm = mom_load_item_json (ld, jnode);
@@ -1042,8 +1063,14 @@ mom_load_value_json (struct mom_loader_st *ld, const momval_t jval)
 		for (unsigned ix = 0; ix < nbsons; ix++)
 		  sons[ix] =
 		    mom_load_value_json (ld, mom_json_array_nth (jsons, ix));
-		jres =
-		  (momval_t) mom_make_node_from_array (connitm, nbsons, sons);
+		if (unique)
+		  jres =
+		    (momval_t) mom_make_unique_node_from_array (connitm,
+								nbsons, sons);
+		else
+		  jres =
+		    (momval_t) mom_make_node_from_array (connitm, nbsons,
+							 sons);
 		if (sons != tinysons)
 		  MOM_GC_FREE (sons);
 		MOM_DEBUG (load,

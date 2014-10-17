@@ -283,6 +283,9 @@ MOM_PREDEFINED_NAMED(tuple,_7vw56h18sw0_hv77m6q8uxu)
 ////!for types
 MOM_PREDEFINED_NAMED(type,_8xfj0sc82ux_thsk0iw2773)
 
+////!unique node with unique serial
+MOM_PREDEFINED_NAMED(unique_node,_8p7vfxvyy4x_uvsm9yxvch5)
+
 ////!describes unsigned type
 MOM_PREDEFINED_NAMED(unsigned,_77xdevxp3zp_yeryy3x1aea)
 

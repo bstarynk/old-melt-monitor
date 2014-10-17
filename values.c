@@ -1437,6 +1437,107 @@ mom_make_node_from_array (const momitem_t *conn, unsigned siz, momval_t *arr)
   return nd;
 }
 
+
+
+const momnode_t *
+mom_clone_unique_node (const momnode_t *nd)
+{
+  momnode_t *newnd = NULL;
+  if (!nd)
+    return NULL;
+  assert (nd->typnum == momty_node);
+  if (nd->serial != 0)
+    return nd;
+  momitem_t *itconn = (momitem_t *) (nd->connitm);
+  momusize_t nsiz = nd->slen;
+  assert (itconn != NULL && itconn->i_typnum == momty_item);
+  atomic_ulong s = ++itconn->i_counter;
+  newnd = MOM_GC_ALLOC ("new clone unique node",
+			sizeof (momnode_t) + nsiz * sizeof (momval_t));
+  for (unsigned ix = 0; ix < nsiz; ix++)
+    ((momval_t *) newnd->sontab)[ix] = mom_clone_unique (nd->sontab[ix]);
+  newnd->typnum = momty_node;
+  newnd->connitm = itconn;
+  newnd->slen = nsiz;
+  newnd->serial = s;
+  update_node_hash_mom (newnd);
+  return newnd;
+}
+
+const momnode_t *
+mom_make_unique_node_til_nil (const momitem_t *conn, ...)
+{
+  momnode_t *nd = NULL;
+  unsigned siz = 0;
+  if (!conn || conn->i_typnum != momty_item)
+    return NULL;
+  va_list args;
+  va_start (args, conn);
+  while (va_arg (args, momval_t).ptr != NULL)
+      siz++;
+  va_end (args);
+  nd =
+    MOM_GC_ALLOC ("new node til nil",
+		  sizeof (momnode_t) + siz * sizeof (momval_t));
+  nd->connitm = conn;
+  va_start (args, conn);
+  for (unsigned ix = 0; ix < siz; ix++)
+    {
+      momval_t v = va_arg (args, momval_t);
+      if (v.ptr == MOM_EMPTY)
+	v.ptr = NULL;
+      ((momval_t *) nd->sontab)[ix] = mom_clone_unique (v);
+    }
+  va_end (args);
+  nd->typnum = momty_node;
+  nd->slen = siz;
+  update_node_hash_mom (nd);
+  return nd;
+}
+
+const momnode_t *
+mom_make_unique_node_sized (const momitem_t *conn, unsigned siz, ...)
+{
+  momnode_t *nd = NULL;
+  if (!conn || conn->i_typnum != momty_item)
+    return NULL;
+  va_list args;
+  nd =
+    MOM_GC_ALLOC ("new node sized",
+		  sizeof (momnode_t) + siz * sizeof (momval_t));
+  va_start (args, siz);
+  for (unsigned ix = 0; ix < siz; ix++)
+    ((momval_t *) nd->sontab)[ix] =
+      mom_clone_unique (va_arg (args, momval_t));
+  va_end (args);
+  nd->typnum = momty_node;
+  nd->connitm = conn;
+  nd->slen = siz;
+  update_node_hash_mom (nd);
+  return nd;
+}
+
+const momnode_t *
+mom_make_unique_node_from_array (const momitem_t *conn, unsigned siz,
+				 momval_t *arr)
+{
+  momnode_t *nd = NULL;
+  if (!conn || conn->i_typnum != momty_item)
+    return NULL;
+  nd =
+    MOM_GC_ALLOC ("new node from array",
+		  sizeof (momnode_t) + siz * sizeof (momval_t));
+  if (arr)
+    for (unsigned ix = 0; ix < siz; ix++)
+      ((momval_t *) nd->sontab)[ix] = mom_clone_unique (arr[ix]);
+  nd->typnum = momty_node;
+  nd->connitm = conn;
+  nd->slen = siz;
+  update_node_hash_mom (nd);
+  return nd;
+}
+
+////////////////////////////////////////////////////////////////
 const char *
 mom_type_cstring (momtynum_t ty)
 {
