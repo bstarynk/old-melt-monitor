@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 Oct 17
+-- state-monimelt dump 2014 Oct 22
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','after predefined unique_node');
+INSERT INTO t_params VALUES('dump_reason','exit dump');
 INSERT INTO t_items VALUES('_02mtzeca0pf_kc9d1i34ap4','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1843}], "content": null,
  "kind": null, "payload": null}
 ');
@@ -1055,8 +1055,7 @@ INSERT INTO t_items VALUES('_8mu6t9f63zq_i5kcq3pctjj','{"attr": [{"attr": "_8hvs
 INSERT INTO t_items VALUES('_8mwycdzxapu_x586t0atqjh','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1682}], "content": null,
  "kind": null, "payload": null}
 ');
-INSERT INTO t_items VALUES('_8p7vfxvyy4x_uvsm9yxvch5','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "unique node with unique serial"}],
- "content": null, "kind": null, "payload": null}
+INSERT INTO t_items VALUES('_8p7vfxvyy4x_uvsm9yxvch5','{"attr": [], "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_8s2dqe9qc05_k59cqpuh1wm','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1625}], "content": null,
  "kind": null, "payload": null}

@@ -2010,7 +2010,6 @@ struct momnode_st
   momvflags_t flags;
   momusize_t slen;
   momhash_t hash;
-  atomic_ulong serial;
   const momitem_t *connitm;
   const momval_t sontab[];
 };
@@ -2030,34 +2029,6 @@ const momnode_t *mom_make_node_sized (const momitem_t *conn,
 // make a node from an array
 const momnode_t *mom_make_node_from_array (const momitem_t *conn,
 					   unsigned siz, momval_t *arr);
-
-const momnode_t *mom_clone_unique_node (const momnode_t *);
-
-// make a unique node til nil. MOM_EMPTY arguments are replaced with nil.
-const momnode_t *mom_make_unique_node_til_nil (const momitem_t *conn, ...)
-  __attribute__ ((sentinel));
-
-// make a unique node of given size. all arguments after siz should be
-// genuine values without MOM_EMPTY...
-const momnode_t *mom_make_unique_node_sized (const momitem_t *conn,
-					     unsigned siz, ...);
-
-// make a unique node from an array
-const momnode_t *mom_make_unique_node_from_array (const momitem_t *conn,
-						  unsigned siz,
-						  momval_t *arr);
-
-static inline momval_t
-mom_clone_unique (momval_t val)
-{
-  if (!val.ptr)
-    return MOM_NULLV;
-  if (*val.ptype != momty_node)
-    return val;
-  if (val.pnode->serial != 0)
-    return val;
-  return (momval_t) mom_clone_unique_node (val.pnode);
-}
 
 
 static inline bool
