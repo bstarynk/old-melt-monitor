@@ -46,6 +46,10 @@ todo_dump_dot_outcome_mom (void *data)
 		   "todo_dump_dot_outcome_mom after dump doutc cputime=%.4f elapsedtime=%.4f nbdumpeditems=%d",
 		   doutc->odmp_cputime, doutc->odmp_elapsedtime,
 		   doutc->odmp_nbdumpeditems);
+  MOM_DEBUG (run, MOMOUT_LITERAL ("todo_dump_dot_outcome_mom nodenotice="),
+	     MOMOUT_VALUE (doutc->odmp_nodenotice), NULL);
+  MOM_DEBUG (run, MOMOUT_LITERAL ("todo_dump_dot_outcome_mom setpredef="),
+	     MOMOUT_VALUE (doutc->odmp_setpredef), NULL);
   MOM_INFORMPRINTF
     ("dumped into dot with outcome before continuing dumped %d items",
      doutc->odmp_nbdumpeditems);

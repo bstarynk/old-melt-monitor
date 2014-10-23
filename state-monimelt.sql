@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 Oct 22
+-- state-monimelt dump 2014 Oct 23
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -24,12 +24,12 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','exit dump');
+INSERT INTO t_params VALUES('dump_reason','todo dump at exit');
 INSERT INTO t_items VALUES('_02mtzeca0pf_kc9d1i34ap4','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1843}], "content": null,
  "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_02u53qxa7dm_sttmhffpchr','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "The agenda is central to Monimelt.\nIt is the queue of taskets to be executed by worker threads."}],
- "content": null, "kind": "queue", "payload": [null]}
+ "content": null, "kind": "queue", "payload": []}
 ');
 INSERT INTO t_items VALUES('_031ar4875we_s1xarptwct2','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1835}], "content": null,
  "kind": null, "payload": null}

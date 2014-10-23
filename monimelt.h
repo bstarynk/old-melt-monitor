@@ -1224,16 +1224,16 @@ momval_t mom_load_value_json (struct mom_loader_st *ld, const momval_t jval);
 enum mom_kindpayload_en
 {
   mompayk_none = 0,
-  mompayk_queue,
-  mompayk_routine,
-  mompayk_closure,
-  mompayk_tasklet,
-  mompayk_buffer,
-  mompayk_vector,
-  mompayk_assoc,
-  mompayk_process,
-  mompayk_webexchange,
-  mompayk_jsonrpcexchange,
+  mompayk_queue,		// queue of values
+  mompayk_routine,		// low-level routine
+  mompayk_closure,		// closure, with closed values and routine
+  mompayk_tasklet,		// tasklet with its call stack
+  mompayk_buffer,		// character buffer
+  mompayk_vector,		// vector of values
+  mompayk_assoc,		// association of items to values
+  mompayk_process,		// forked process and buffer for its output pipe
+  mompayk_webexchange,		// HTTP interaction
+  mompayk_jsonrpcexchange,	// JSONRPC interaction
 
   mompayk__last = 32
 };
