@@ -50,7 +50,7 @@ struct mom_loader_st
 };
 
 
-//// dumper, see file load-dump.c
+//// dumper
 struct mom_dumper_st
 {
   unsigned dmp_magic;		/* always DUMPER_MAGIC */
@@ -90,9 +90,19 @@ enum dumpstate_en
   dus_emit
 };
 
+struct dmp_module_mom_st
+{				// private structure
+  unsigned dmod_magic;		/* always DMOD_MAGIC */
+  unsigned dmod_size;		/* the allocated size */
+  unsigned dmod_count;		/* the count */
+  momval_t dmod_valtab[];	/* actual size is dmod_count */
+};
+
 #define DUMPER_MAGIC 0x572bb695	/* dumper magic 1462482581 */
 
 #define LOADER_MAGIC 0x169128bb	/* loader magic 378611899 */
+
+#define DMOD_MAGIC 0x120149bd	/* dmod magic 302074301 */
 
 static inline int
 add_dumped_item_mom (struct mom_dumper_st *dmp, const momitem_t *itm)
@@ -1121,6 +1131,24 @@ setintsql_cb_mom (void *data, int nbcol, char **colval, char **colnam)
   return 0;
 }
 
+// a callback for sqlite3_exec to get the modules into a dmp_module_mom_st
+static int
+get_modname_cb_mom (void *data, int nbcol, char **colval, char **colnam)
+{
+  assert (nbcol == 1);
+  assert (colval != NULL);
+  assert (colnam != NULL);
+  assert (data != NULL);
+  struct dmp_module_mom_st *dmod = (struct dmp_module_mom_st *) data;
+  assert (dmod->dmod_magic == DMOD_MAGIC);
+  assert (dmod->dmod_count < dmod->dmod_size);
+  char *curmod = colval[1];
+  MOM_DEBUGPRINTF (dump, "get_modname_cb_mom curmod=%s count#%d", curmod,
+		   dmod->dmod_count);
+  dmod->dmod_valtab[dmod->dmod_count++] = (momval_t) mom_make_string (curmod);
+  return 0;
+}
+
 ////////////////////////////////////////////////////////////////
 void
 mom_initial_load (const char *ldirnam)
@@ -1584,6 +1612,8 @@ create_tables_for_dump_mom (struct mom_dumper_st *du)
 		    sqlite3_errmsg (du->dmp_sqlite));
 }
 
+
+
 void
 mom_full_dump (const char *reason, const char *dumpdir,
 	       struct mom_dumpoutcome_st *outd)
@@ -2022,6 +2052,34 @@ end:
 					     nvalarr);
       if (nvalarr != tinynval)
 	MOM_GC_FREE (nvalarr);
+      memset (tinynval, 0, sizeof (tinynval));
+      int nbmodules = -1;
+      char *errmsg = NULL;
+      if (sqlite3_exec
+	  (dmp.dmp_sqlite, "SELECT COUNT(*) FROM t_modules",
+	   setintsql_cb_mom, &nbmodules, &errmsg))
+	MOM_FATAPRINTF ("while dumping %s failed to count t_modules %s",
+			dmp.dmp_sqlpath, errmsg);
+      assert (nbmodules >= 0 && nbmodules < INT_MAX / 2);
+      MOM_DEBUGPRINTF (dump, "nbmodules=%d", nbmodules);
+      struct dmp_module_mom_st *dmod = MOM_GC_ALLOC ("dmp_module",
+						     sizeof (struct
+							     dmp_module_mom_st)
+						     +
+						     nbmodules *
+						     sizeof (momval_t));
+      dmod->dmod_magic = DMOD_MAGIC;
+      dmod->dmod_size = (unsigned) nbmodules;
+      if (sqlite3_exec
+	  (dmp.dmp_sqlite, "SELECT modname FROM t_modules ORDER BY modname",
+	   get_modname_cb_mom, dmod, &errmsg))
+	MOM_FATAPRINTF ("while dumping %s failed to get modules %s",
+			dmp.dmp_sqlpath, errmsg);
+      assert (dmod->dmod_size == dmod->dmod_count);
+      outd->odmp_nodemodules =
+	(momval_t) mom_make_node_from_array (mom_named__module, nbmodules,
+					     dmod->dmod_valtab);
+      MOM_GC_FREE (dmod);
     }				/* end filling the outcome */
   pthread_mutex_unlock (&dump_mtx_mom);
   memset (&dmp, 0, sizeof (struct mom_dumper_st));

@@ -87,6 +87,8 @@
 #include <onion/dict.h>
 #include <onion/log.h>
 #include <onion/shortcuts.h>
+#include <onion/exportlocal.h>
+#include <onion/internal_status.h>
 
 
 
@@ -2573,6 +2575,7 @@ struct mom_dumpoutcome_st
   momval_t odmp_jarrayname;
   momval_t odmp_setpredef;
   momval_t odmp_nodenotice;
+  momval_t odmp_nodemodules;
 };
 
 // the initial loading

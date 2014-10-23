@@ -48,6 +48,8 @@ todo_dump_dot_outcome_mom (void *data)
 		   doutc->odmp_nbdumpeditems);
   MOM_DEBUG (run, MOMOUT_LITERAL ("todo_dump_dot_outcome_mom nodenotice="),
 	     MOMOUT_VALUE (doutc->odmp_nodenotice), NULL);
+  MOM_DEBUG (run, MOMOUT_LITERAL ("todo_dump_dot_outcome_mom nodemodules="),
+	     MOMOUT_VALUE (doutc->odmp_nodemodules), NULL);
   MOM_DEBUG (run, MOMOUT_LITERAL ("todo_dump_dot_outcome_mom setpredef="),
 	     MOMOUT_VALUE (doutc->odmp_setpredef), NULL);
   MOM_INFORMPRINTF
@@ -102,7 +104,9 @@ todo_dump_at_exit_mom (void *data)
 	     MOMOUT_LITERAL ("setpredef="),
 	     MOMOUT_VALUE (duoc.odmp_setpredef), MOMOUT_NEWLINE (),
 	     MOMOUT_LITERAL ("nodenotice="),
-	     MOMOUT_VALUE (duoc.odmp_nodenotice), MOMOUT_NEWLINE (), NULL);
+	     MOMOUT_VALUE (duoc.odmp_nodenotice), MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL ("nodemodules="),
+	     MOMOUT_VALUE (duoc.odmp_nodemodules), MOMOUT_NEWLINE (), NULL);
   mom_stop_event_loop ();
   memset (&duoc, 0, sizeof (duoc));
   MOM_INFORMPRINTF ("dumped before exiting into directory %s", dpath);
