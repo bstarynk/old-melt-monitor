@@ -86,10 +86,25 @@ static void
 todo_dump_at_exit_mom (void *data)
 {
   char *dpath = data;
+  struct mom_dumpoutcome_st duoc;
+  memset (&duoc, 0, sizeof (duoc));
   assert (dpath && dpath[0]);
   MOM_DEBUGPRINTF (run, "todo_dump_at_exit_mom should dump dpath=%s", dpath);
-  mom_full_dump ("todo dump at exit", dpath, NULL);
+  mom_full_dump ("todo dump at exit", dpath, &duoc);
+  MOM_DEBUGPRINTF (run,
+		   "todo_dump_at_exit_mom cputime %.3f elapsed %.3f nbdumped %u",
+		   duoc.odmp_cputime, duoc.odmp_elapsedtime,
+		   duoc.odmp_nbdumpeditems);
+  MOM_DEBUG (run, MOMOUT_LITERAL ("todo_dump_at_exit_mom tuplenamed:"),
+	     MOMOUT_VALUE (duoc.odmp_tuplenamed), MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL ("jarrayname="),
+	     MOMOUT_VALUE (duoc.odmp_jarrayname), MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL ("setpredef="),
+	     MOMOUT_VALUE (duoc.odmp_setpredef), MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL ("nodenotice="),
+	     MOMOUT_VALUE (duoc.odmp_nodenotice), MOMOUT_NEWLINE (), NULL);
   mom_stop_event_loop ();
+  memset (&duoc, 0, sizeof (duoc));
   MOM_INFORMPRINTF ("dumped before exiting into directory %s", dpath);
 }
 
@@ -97,9 +112,11 @@ static void
 todo_dump_continue_mom (void *data)
 {
   char *dpath = data;
+  struct mom_dumpoutcome_st duoc;
+  memset (&duoc, 0, sizeof (duoc));
   assert (dpath && dpath[0]);
   MOM_DEBUGPRINTF (run, "todo_dump_continue should dump dpath=%s", dpath);
-  mom_full_dump ("todo dump but continue", dpath, NULL);
+  mom_full_dump ("todo dump but continue", dpath, &duoc);
   MOM_INFORMPRINTF ("dumped into directory %s before continuing", dpath);
   mom_continue_working ();
 }
