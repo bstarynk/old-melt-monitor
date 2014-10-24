@@ -2237,6 +2237,7 @@ mom_item_set_space (momitem_t *itm, unsigned space)
   Dbg(load)					\
   Dbg(json)					\
   Dbg(run)					\
+  Dbg(gencod)					\
   Dbg(web)
 
 #define MOM_DEBUG_DEFINE_OPT(Nam) momdbg_##Nam,
@@ -2596,6 +2597,10 @@ void mom_dump_add_scanned_item (struct mom_dumper_st *du,
 				const momitem_t *itm);
 
 momval_t mom_dump_emit_json (struct mom_dumper_st *dmp, const momval_t val);
+
+
+// generate a C module, returns 0 if ok, else fill *perrmsg
+int mom_generate_c_module (momitem_t *moditm, char **perrmsg);
 
 // emit a short representation of an item: if it is in the current
 // space, just its id string...

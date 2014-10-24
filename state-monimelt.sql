@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 Oct 23
+-- state-monimelt dump 2014 Oct 24
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','todo dump at exit');
+INSERT INTO t_params VALUES('dump_reason','after predefined module_routines');
 INSERT INTO t_items VALUES('_02mtzeca0pf_kc9d1i34ap4','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1843}], "content": null,
  "kind": null, "payload": null}
 ');
@@ -1138,6 +1138,9 @@ INSERT INTO t_items VALUES('_9arrtc64f96_z86ukm7u5sf','{"attr": [{"attr": "_8hvs
 INSERT INTO t_items VALUES('_9asdk3kditj_4y9tyc48mr6','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 977}], "content": null,
  "kind": null, "payload": null}
 ');
+INSERT INTO t_items VALUES('_9dcxaqk8tqe_fam9mcxme9w','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "the routines in a module"}],
+ "content": null, "kind": null, "payload": null}
+');
 INSERT INTO t_items VALUES('_9dsak0qcy0v_1c5z9th7x3i','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "indicates the HTTP GET method"}],
  "content": null, "kind": null, "payload": null}
 ');
@@ -1271,6 +1274,7 @@ INSERT INTO t_names VALUES('method','_3hv5ymapjed_y8q6hsvhw8u','.predef');
 INSERT INTO t_names VALUES('min','_2fjizx76kia_567e7h9s69z','.predef');
 INSERT INTO t_names VALUES('misc','_85rz4j0q982_67im8sstj9s','.root');
 INSERT INTO t_names VALUES('module','_7sqk8vh89xr_6tj8dq7vqju','.predef');
+INSERT INTO t_names VALUES('module_routines','_9dcxaqk8tqe_fam9mcxme9w','.predef');
 INSERT INTO t_names VALUES('mom_add_tasklet_to_agenda_back','_27k36a8racw_as8j0p646ia','.root');
 INSERT INTO t_names VALUES('mom_add_tasklet_to_agenda_front','_5pqcxpi6u8p_kj5sykfd2zy','.root');
 INSERT INTO t_names VALUES('mom_alpha_ordered_tuple_of_named_items','_5hsdpmacvqa_0mciep57uq6','.root');

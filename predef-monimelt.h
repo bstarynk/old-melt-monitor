@@ -180,6 +180,9 @@ MOM_PREDEFINED_NAMED(min,_2fjizx76kia_567e7h9s69z)
 ////!module to be compiled...
 MOM_PREDEFINED_NAMED(module,_7sqk8vh89xr_6tj8dq7vqju)
 
+////!the routines in a module
+MOM_PREDEFINED_NAMED(module_routines,_9dcxaqk8tqe_fam9mcxme9w)
+
 ////!for monimelt struct prefixed with mom
 MOM_PREDEFINED_NAMED(mom_struct,_9y82yz8z01a_x0dx4kx0x18)
 
