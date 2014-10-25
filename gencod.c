@@ -21,7 +21,7 @@
 #include "monimelt.h"
 
 #define CGEN_MAGIC 0x566801a5	/* cgen magic 1449656741 */
-// internal stack allocated structure to allocate the c module
+// internal stack allocated structure to generate the C module
 struct c_generator_mom_st
 {
   unsigned cgen_magic;		// always CGEN_MAGIC
@@ -29,6 +29,7 @@ struct c_generator_mom_st
   momitem_t *cgen_moditm;
   char *cgen_errmsg;
   unsigned cgen_nbrout;
+  momitem_t *cgen_curoutitm;
 };
 
 const char *
@@ -72,6 +73,13 @@ cgen_error_mom_at (int lin, struct c_generator_mom_st *cgen, ...)
 #define CGEN_ERROR_MOM_AT(Lin,Cgen,...) CGEN_ERROR_MOM_AT_BIS(Lin,Cgen,__VA_ARGS__)
 #define CGEN_ERROR_MOM(Cgen,...) CGEN_ERROR_MOM_AT(__LINE__,Cgen,__VA_ARGS__)
 
+
+static void
+cgen_scan_routine_mom (struct c_generator_mom_st *cgen, momitem_t *itrout);
+
+static void
+cgen_scan_block_mom (struct c_generator_mom_st *cgen, momitem_t *itrout);
+
 int
 mom_generate_c_module (momitem_t *moditm, char **perrmsg)
 {
@@ -114,5 +122,25 @@ mom_generate_c_module (momitem_t *moditm, char **perrmsg)
     {
       momitem_t *curoutitm = mom_set_nth_item (modroutv, ix);
       assert (curoutitm && curoutitm->i_typnum == momty_item);
+      cgen.cgen_curoutitm = curoutitm;
+      cgen_scan_routine_mom (&cgen, curoutitm);
+      cgen.cgen_curoutitm = NULL;
     }
+}
+
+
+static void
+cgen_scan_routine_mom (struct c_generator_mom_st *cgen, momitem_t *routitm)
+{
+  assert (cgen && cgen->cgen_magic == CGEN_MAGIC);
+  assert (routitm && routitm->i_typnum == momty_item);
+  MOM_DEBUG (gencod, MOMOUT_LITERAL ("cgen_scan_routine routitm="),
+	     MOMOUT_ITEM ((const momitem_t *) routitm), NULL);
+}
+
+static void
+cgen_scan_block_mom (struct c_generator_mom_st *cgen, momitem_t *blockitm)
+{
+  assert (cgen && cgen->cgen_magic == CGEN_MAGIC);
+  assert (blockitm && blockitm->i_typnum == momty_item);
 }

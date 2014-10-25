@@ -2070,12 +2070,16 @@ end:
 						     sizeof (momval_t));
       dmod->dmod_magic = DMOD_MAGIC;
       dmod->dmod_size = (unsigned) nbmodules;
-      if (sqlite3_exec
-	  (dmp.dmp_sqlite, "SELECT modname FROM t_modules ORDER BY modname",
-	   get_modname_cb_mom, dmod, &errmsg))
-	MOM_FATAPRINTF ("while dumping %s failed to get modules %s",
-			dmp.dmp_sqlpath, errmsg);
-      assert (dmod->dmod_size == dmod->dmod_count);
+      if (nbmodules > 0)
+	{
+	  if (sqlite3_exec
+	      (dmp.dmp_sqlite,
+	       "SELECT modname FROM t_modules ORDER BY modname",
+	       get_modname_cb_mom, dmod, &errmsg))
+	    MOM_FATAPRINTF ("while dumping %s failed to get modules %s",
+			    dmp.dmp_sqlpath, errmsg);
+	  assert (dmod->dmod_size == dmod->dmod_count);
+	}
       outd->odmp_nodemodules =
 	(momval_t) mom_make_node_from_array (mom_named__module, nbmodules,
 					     dmod->dmod_valtab);
