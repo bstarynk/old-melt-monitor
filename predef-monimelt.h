@@ -30,6 +30,9 @@
 #endif /*MOM_PREDEFINED_ANONYMOUS*/
 
 
+////!for standard FILE
+MOM_PREDEFINED_NAMED(FILE,_862u2w97uth_dvy6mmywjyq)
+
 ////!indicates the HTTP GET method
 MOM_PREDEFINED_NAMED(GET,_9dsak0qcy0v_1c5z9th7x3i)
 
@@ -120,6 +123,9 @@ MOM_PREDEFINED_NAMED(input,_356014y9ueu_xv6j0eskszw)
 
 ////!describes int type
 MOM_PREDEFINED_NAMED(int,_7e1ak9qwf9h_wp5tptm4uyi)
+
+////!for 64 bits int
+MOM_PREDEFINED_NAMED(int64_t,_877fh31zk63_2jkwam13i0h)
 
 ////!for integer values and displays
 MOM_PREDEFINED_NAMED(integer,_9jeymqk2732_wiq5kyczi9c)

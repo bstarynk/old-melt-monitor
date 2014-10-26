@@ -5022,6 +5022,9 @@ meltmom_json_to_node_mom (momval_t jtype)
     return (momval_t) mom_named__unsigned_short;
   else if (jtype.pitem == mom_named__int || mom_string_same (jtype, "int"))
     return (momval_t) mom_named__int;
+  else if (jtype.pitem == mom_named__int64_t
+	   || mom_string_same (jtype, "int64_t"))
+    return (momval_t) mom_named__int64_t;
   else if (jtype.pitem == mom_named__unsigned
 	   || mom_string_same (jtype, "unsigned"))
     return (momval_t) mom_named__unsigned;
@@ -5032,6 +5035,8 @@ meltmom_json_to_node_mom (momval_t jtype)
     return (momval_t) mom_named__unsigned_long;
   else if (jtype.pitem == mom_named__bool || mom_string_same (jtype, "bool"))
     return (momval_t) mom_named__bool;
+  else if (jtype.pitem == mom_named__FILE || mom_string_same (jtype, "FILE"))
+    return (momval_t) mom_named__FILE;
   else if (jtype.pitem == mom_named__void || mom_string_same (jtype, "void"))
     return (momval_t) mom_named__void;
   else if (jtype.pitem == mom_named__va_list

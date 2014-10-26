@@ -205,15 +205,23 @@ mom_fataprintf_at (const char *fil, int lin, const char *fmt, ...)
     }
   else
     msg = buf;
+#define BACKTRACE_MAX_MOM 100
+  void *bbuf[BACKTRACE_MAX_MOM];
+  int blev = 0;
+  memset (bbuf, 0, sizeof (bbuf));
+  blev = backtrace (bbuf, BACKTRACE_MAX_MOM - 1);
+  char **bsym = backtrace_symbols (bbuf, blev);
   if (syslogging_mom)
     {
       if (err)
-	syslog (LOG_ALERT, "MONIMELT FATAL @%s:%d <%s:%d> %s %s (%s)",
+	syslog (LOG_ALERT, "MONIMELT FATAL! @%s:%d <%s:%d> %s %s (%s)",
 		fil, lin, thrname, (int) mom_gettid (), timbuf,
 		msg, strerror (err));
       else
-	syslog (LOG_ALERT, "MONIMELT FATAL @%s:%d <%s:%d> %s %s",
+	syslog (LOG_ALERT, "MONIMELT FATAL! @%s:%d <%s:%d> %s %s",
 		fil, lin, thrname, (int) mom_gettid (), timbuf, msg);
+      for (int i = 0; i < blev; i++)
+	syslog (LOG_ALERT, "MONIMELTB![%d]: %s", i, bsym[i]);
     }
   else
     {
@@ -224,6 +232,8 @@ mom_fataprintf_at (const char *fil, int lin, const char *fmt, ...)
       else
 	fprintf (stderr, "MONIMELT FATAL @%s:%d <%s:%d> %s %s\n",
 		 fil, lin, thrname, (int) mom_gettid (), timbuf, msg);
+      for (int i = 0; i < blev; i++)
+	fprintf (stderr, "MONIMELTB[%d]: %s\n", i, bsym[i]);
       fflush (NULL);
     }
   if (bigbuf)

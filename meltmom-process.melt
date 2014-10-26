@@ -237,14 +237,15 @@
   (debug "monimelt_json_for_type" " start typev=" typev)
   (assert_msg "monimelt_json_for_type check nbcall"
 	      (expr_chunk jstycount_chk :long
-			  #{ ({static long counter_$JSTYCOUNT_CHK;
-				      counter_$JSTYCOUNT_CHK++;
-				      counter_$JSTYCOUNT_CHK < 20000;
-				      })
-				      }#))
+                          #{ ({static long counter_$JSTYCOUNT_CHK    ;
+                               counter_$JSTYCOUNT_CHK++ ;
+                               counter_$JSTYCOUNT_CHK < 30000 ;
+                                      })
+			  }#))
   (let ( (tr_type (unbox :tree typev))
 	 )
     (assert_msg "monimelt_json_for_type check tr_type" tr_type typev)
+    (debug "monimelt_json_for_type" " tr_type=" tr_type)
     (match tr_type
 	   ;;
 	   (?(tree_char_type_node)
@@ -322,6 +323,19 @@
 	     (return '"size_t")
 	     )
 	   ;;
+	   (?(tree_type_decl ?(tree_va_list_type_node) ?tnam ?tr_ctx ?tr_orig ?uid)
+	     (debug "monimelt_json_for_type" " typvalist tnam=" tnam
+		    " tr_ctx=" tr_ctx " tr_orig=" tr_orig " uid=" uid)
+	     (return '"va_list"))
+	   ;;
+	   (?(tree_type_decl ?tr_dcltype ?(and ?tr_name ?(tree_identifier ?(cstring_same "__va_list_tag")))
+			     ?tr_ctx ?tr_orig ?uid)
+	     (debug "monimelt_json_for_type" " valisttypedecl tr_dcltype=" tr_dcltype "\n.. tr_name=" tr_name
+		    ";\n.. tr_ctx=" tr_ctx
+		    ";\n.. tr_orig=" tr_orig		    
+		    ";\n.. uid=" uid)
+	     (return '"va_list"))
+	   ;;
 	   (?(tree_type_decl ?tr_dcltype ?(and ?tr_name ?(tree_identifier ?nameid))
 			     ?tr_ctx ?tr_orig ?uid)
 	     (debug "monimelt_json_for_type" " typedecl tr_dcltype=" tr_dcltype "\n.. tr_name=" tr_name
@@ -358,11 +372,23 @@
 	     (debug "monimelt_json_for_type" " union tr_union=" tr_union)
 	     (let ( (junion (monimelt_json_for_type (constant_box tr_union)))
 		    (jres (make_jsonobject discr_jsonobject
-					   'union junion))
+					   'mom_union junion))
 		    )
 	       (debug "monimelt_json_for_type" " union jres=" jres)
 	       (return jres)
 	       ))
+	   ;;
+	   (?(tree_record_type ?(tree_va_list_type_node))
+	     (let ( (jres '"va_list")
+		    )
+	       (debug "monimelt_json_for_type" " record+valist jres=" jres)
+	       (return jres)))  
+	   ;;
+	   (?(tree_record_type  ?(tree_identifier ?(cstring_same "__va_list_tag")))
+	     (let ( (jres '"va_list")
+		    )
+	       (debug "monimelt_json_for_type" " record-valist jres=" jres)
+	       (return jres)))
 	   ;;
 	   (?(tree_record_type ?(and ?tr_recname
 				     ?(tree_identifier
@@ -376,8 +402,15 @@
 	       (monimelt_register_aggregate_type jname typev)
 	       (debug "monimelt_json_for_type" " momrecord tr_recname=" tr_recname " jres=" jres)
 	       (return jres)
+	       )
 	     )
-	     )
+	   ;;
+	   (?(tree_record_type ?(and ?tr_recname
+				     ?(tree_identifier ?(cstring_same "__va_list_tag"))))
+	     (let ( (jres '"va_list")
+		    )
+	       (debug "monimelt_json_for_type" " record-named-valist jres=" jres " tr_recname=" tr_recname)
+	       (return jres)))	     
 	   ;;
 	   (?(tree_record_type ?tr_record)
 	     (debug "monimelt_json_for_type" " record tr_record=" tr_record)
@@ -433,9 +466,9 @@
 					  'integer jintype
 					  'min minv
 					  'max maxv
-					   )
-			  ) 
-		    )
+					  )
+			 ) 
+		   )
 	       (debug "monimelt_json_for_type" " integertype jres=" jres)
 	       (return jres)
 	       ))
@@ -449,7 +482,7 @@
 		     "\n.. tr_ensize=" tr_ensize
 		     "\n.. trvalen=" trvalen "\n.. trpurpose=" trpurpose
 		     "\n.. trchain=" trchain)
-	      ;;; bof???
+;;; bof???
 	      (let ( (tupenum (tree_chain_to_tuple discr_multiple trchain))
 		     )
 		(debug "monimelt_json_for_type" " tupenum=" tupenum
@@ -467,7 +500,7 @@
 	    (debug "monimelt_json_for_type " "@@strange tr_type=" tr_type)
 	    (assert_msg "monimelt_json_for_type unexpected tr_type" () (constant_box tr_type))
 	    (void)))
-))
+    ))
 
 
 
@@ -507,7 +540,7 @@
     )
   )
 
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun monimelt_fill_type (typev)
   (debug "monimelt_fill_type" " start typev=" typev)

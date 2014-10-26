@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 Oct 25
+-- state-monimelt dump 2014 Oct 26
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','todo dump at exit');
+INSERT INTO t_params VALUES('dump_reason','after predefined FILE');
 INSERT INTO t_items VALUES('_02mtzeca0pf_kc9d1i34ap4','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1843}], "content": null,
  "kind": null, "payload": null}
 ');
@@ -994,6 +994,9 @@ INSERT INTO t_items VALUES('_85rz4j0q982_67im8sstj9s','{"attr": [{"attr": "_41u1
       "sons": [123, "some long string", null]}, null]}}], "content": null,
  "kind": null, "payload": null}
 ');
+INSERT INTO t_items VALUES('_862u2w97uth_dvy6mmywjyq','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for standard FILE"}],
+ "content": null, "kind": null, "payload": null}
+');
 INSERT INTO t_items VALUES('_866txyivqvm_t3uv5pca91y','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1325}], "content": null,
  "kind": null, "payload": null}
 ');
@@ -1003,6 +1006,9 @@ INSERT INTO t_items VALUES('_86ft82euar7_cm50jcthhwe','{"attr": [{"attr": "_41u1
     "sons": ["mom_item_start_assoc((momitem_t*)", {"item_ref": "_53748kde7s1_pkz810exr27",
       "jtype": "item_ref", "space": ".predef"}, ")"]}}, {"attr": "_70ty9z1tm4p_eccsxmyfe25",
    "val": {"item_ref": "_7jzvaihqxfw_0c2y7t976tu", "jtype": "item_ref", "space": ".predef"}}],
+ "content": null, "kind": null, "payload": null}
+');
+INSERT INTO t_items VALUES('_877fh31zk63_2jkwam13i0h','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for 64 bits int"}],
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_87axj4q44z5_xddqmrkw875','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 509}], "content": null,
@@ -1194,6 +1200,7 @@ INSERT INTO t_items VALUES('_9y2ss9s9q73_c31m29ckxuf','{"attr": [{"attr": "_8hvs
 INSERT INTO t_items VALUES('_9y82yz8z01a_x0dx4kx0x18','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for monimelt struct prefixed with mom"}],
  "content": null, "kind": null, "payload": null}
 ');
+INSERT INTO t_names VALUES('FILE','_862u2w97uth_dvy6mmywjyq','.predef');
 INSERT INTO t_names VALUES('GET','_9dsak0qcy0v_1c5z9th7x3i','.predef');
 INSERT INTO t_names VALUES('HEAD','_47fatww79x6_vh8ap22c0ch','.predef');
 INSERT INTO t_names VALUES('POST','_5wmusj136kq_u5qpehp89aq','.predef');
@@ -1240,6 +1247,7 @@ INSERT INTO t_names VALUES('high','_6qcw93kypcv_0iiepqtk73j','.root');
 INSERT INTO t_names VALUES('id','_7a9sxskjhcp_kpf30ka97ex','.predef');
 INSERT INTO t_names VALUES('input','_356014y9ueu_xv6j0eskszw','.predef');
 INSERT INTO t_names VALUES('int','_7e1ak9qwf9h_wp5tptm4uyi','.predef');
+INSERT INTO t_names VALUES('int64_t','_877fh31zk63_2jkwam13i0h','.predef');
 INSERT INTO t_names VALUES('integer','_9jeymqk2732_wiq5kyczi9c','.predef');
 INSERT INTO t_names VALUES('item','_53748kde7s1_pkz810exr27','.predef');
 INSERT INTO t_names VALUES('item_ref','_6hf2vzmrsee_t35suhjvtj4','.predef');
