@@ -473,10 +473,11 @@
 	       (return jres)
 	       ))
 	   ;;
-	   ( ?(tree_enumeral_type ?tr_entype ?tr_enmin ?tr_enmax ?tr_ensize 
+	   ( ?(tree_enumeral_type ?(and ?tr_entype ?(tree_identifier ?enumstr)) ?tr_enmin ?tr_enmax ?tr_ensize 
 				  ?(and ?tr_envalues
 					?(tree_list ?trvalen ?trpurpose ?trchain)))
 	      (debug "monimelt_json_for_type" " enumeraltype tr_entype=" tr_entype
+		     "\n.. enumstr=" enumstr
 		     "\n.. tr_envalues=" tr_envalues
 		     "\n.. tr_enmin=" tr_enmin "\n.. tr_enmax=" tr_enmax
 		     "\n.. tr_ensize=" tr_ensize
@@ -484,9 +485,18 @@
 		     "\n.. trchain=" trchain)
 ;;; bof???
 	      (let ( (tupenum (tree_chain_to_tuple discr_multiple trchain))
+		     (tupurp (tree_chain_to_tuple discr_multiple trpurpose))
+		     (tupenval (tree_chain_to_tuple discr_multiple tr_envalues))
+		     (jres (make_jsonobject discr_jsonobject
+					    'enum (constant_box enumstr)
+					    ))
 		     )
-		(debug "monimelt_json_for_type" " tupenum=" tupenum
-		       "\n.. for typev=" typev "\n.. trchain=" trchain)
+		(debug "monimelt_json_for_type" " enumstr=" enumstr "; tupenum=" tupenum
+		       "\n.. for typev=" typev "\n.. trchain=" trchain
+		       "\n.. tupurp=" tupurp
+		       "\n.. tupenval=" tupenval
+		       "\n.. jres=" jres)
+		(return jres)
 		)
 	      )
 	   ;;

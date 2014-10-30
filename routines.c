@@ -5500,15 +5500,17 @@ json_rpc_meltmom_define_function_lab_start:
 	momval_t curjarg = mom_json_array_nth (_L (jargs), ix);
 	momval_t curtyparg = MOM_NULLV;
 	MOM_DEBUG (run,
-		   MOMOUT_LITERAL ("json_rpc_meltmom_define_function ix#"),
-		   MOMOUT_DEC_INT ((int) ix),
-		   MOMOUT_LITERAL (" curjarg="),
+		   MOMOUT_LITERAL
+		   ("json_rpc_meltmom_define_function nameditm:"),
+		   MOMOUT_VALUE (_L (nameditm)), MOMOUT_LITERAL (" ix#"),
+		   MOMOUT_DEC_INT ((int) ix), MOMOUT_LITERAL (" curjarg="),
 		   MOMOUT_VALUE (curjarg), NULL);
 	curtyparg = meltmom_json_to_node_mom (curjarg);
 	MOM_DEBUG (run,
-		   MOMOUT_LITERAL ("json_rpc_meltmom_define_function ix#"),
-		   MOMOUT_DEC_INT ((int) ix),
-		   MOMOUT_LITERAL (" curtyparg="),
+		   MOMOUT_LITERAL
+		   ("json_rpc_meltmom_define_function nameditm:"),
+		   MOMOUT_VALUE (_L (nameditm)), MOMOUT_LITERAL (" ix#"),
+		   MOMOUT_DEC_INT ((int) ix), MOMOUT_LITERAL (" curtyparg="),
 		   MOMOUT_VALUE (curtyparg), NULL);
 	argtab[ix] = curtyparg;
       };
