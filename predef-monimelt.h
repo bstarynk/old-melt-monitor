@@ -124,11 +124,17 @@ MOM_PREDEFINED_NAMED(input,_356014y9ueu_xv6j0eskszw)
 ////!describes int type
 MOM_PREDEFINED_NAMED(int,_7e1ak9qwf9h_wp5tptm4uyi)
 
+////!type for 32 bits signed
+MOM_PREDEFINED_NAMED(int32_t,_0i2zv78m8mm_zrzwkmuv9fy)
+
 ////!for 64 bits int
 MOM_PREDEFINED_NAMED(int64_t,_877fh31zk63_2jkwam13i0h)
 
 ////!for integer values and displays
 MOM_PREDEFINED_NAMED(integer,_9jeymqk2732_wiq5kyczi9c)
+
+////!type for pointer-sized integers
+MOM_PREDEFINED_NAMED(intptr_t,_24i91kxrvwm_10cmfd12dck)
 
 ////!used in editor, etc. to reference some item
 MOM_PREDEFINED_NAMED(item,_53748kde7s1_pkz810exr27)
@@ -294,6 +300,12 @@ MOM_PREDEFINED_NAMED(tuple,_7vw56h18sw0_hv77m6q8uxu)
 
 ////!for types
 MOM_PREDEFINED_NAMED(type,_8xfj0sc82ux_thsk0iw2773)
+
+////!type for 32 bits unsigned
+MOM_PREDEFINED_NAMED(uint32_t,_6fiizwecy7v_pxd0wxx8c1m)
+
+////!type for 64 bits unsigned
+MOM_PREDEFINED_NAMED(uint64_t,_0yavvxi653k_e1ui813cih8)
 MOM_PREDEFINED_NAMED(unique_node,_8p7vfxvyy4x_uvsm9yxvch5)
 
 ////!describes unsigned type

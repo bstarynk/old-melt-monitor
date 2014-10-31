@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','exit dump');
+INSERT INTO t_params VALUES('dump_reason','after predefined int32_t');
 INSERT INTO t_items VALUES('_02mtzeca0pf_kc9d1i34ap4','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1843}], "content": null,
  "kind": null, "payload": null}
 ');
@@ -64,6 +64,9 @@ INSERT INTO t_items VALUES('_0h331ch957p_j6a8i7v4e6y','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_0hpzi8m7wym_1y4ypmm9y47','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "handler for JSONRPC requests"}],
  "content": null, "kind": null, "payload": null}
 ');
+INSERT INTO t_items VALUES('_0i2zv78m8mm_zrzwkmuv9fy','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "type for 32 bits signed"}],
+ "content": null, "kind": null, "payload": null}
+');
 INSERT INTO t_items VALUES('_0ihu411vkua_z4sh56hicdt','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "body of a routine"}],
  "content": null, "kind": null, "payload": null}
 ');
@@ -93,6 +96,9 @@ INSERT INTO t_items VALUES('_0vz73hu7aph_cyhxumztwzy','{"attr": [{"attr": "_8hvs
 ');
 INSERT INTO t_items VALUES('_0xv5kv0peuq_iepz5x197q1','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 274}], "content": null,
  "kind": null, "payload": null}
+');
+INSERT INTO t_items VALUES('_0yavvxi653k_e1ui813cih8','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "type for 64 bits unsigned"}],
+ "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_0yeu3tyzw9z_jqhcu2z2x34','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "describes unsigned_short type"}],
  "content": null, "kind": null, "payload": null}
@@ -228,6 +234,9 @@ INSERT INTO t_items VALUES('_23ucm00wpiw_hhyz7px0c73','{"attr": [{"attr": "_8hvs
 INSERT INTO t_items VALUES('_240dwt57s08_a8uy366sev5','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "useless noop routine"}],
  "content": {"jtype": "node", "node": "_240dwt57s08_a8uy366sev5", "sons": ["{spare1 noop}",
    "{spare2 noop}", null]}, "kind": "routine", "payload": "noop"}
+');
+INSERT INTO t_items VALUES('_24i91kxrvwm_10cmfd12dck','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "type for pointer-sized integers"}],
+ "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_24w2ce2eq1z_pddi9j2czci','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "related to dump of full state"},
   {"attr": "_0hpzi8m7wym_1y4ypmm9y47", "val": {"item_ref": "_6zm92afs4yc_60a8ujmi1ef",
@@ -758,6 +767,9 @@ INSERT INTO t_items VALUES('_6f9870y6v8t_kp8fcmq2ezv','{"attr": [{"attr": "_41u1
    "val": {"item_ref": "_6p6v25323aq_97d9ude6j12", "jtype": "item_ref", "space": ".root"}}],
  "content": null, "kind": null, "payload": null}
 ');
+INSERT INTO t_items VALUES('_6fiizwecy7v_pxd0wxx8c1m','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "type for 32 bits unsigned"}],
+ "content": null, "kind": null, "payload": null}
+');
 INSERT INTO t_items VALUES('_6hf2vzmrsee_t35suhjvtj4','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "gives the item reference, at least in dumped JSON..."}],
  "content": null, "kind": null, "payload": null}
 ');
@@ -1250,8 +1262,10 @@ INSERT INTO t_names VALUES('high','_6qcw93kypcv_0iiepqtk73j','.root');
 INSERT INTO t_names VALUES('id','_7a9sxskjhcp_kpf30ka97ex','.predef');
 INSERT INTO t_names VALUES('input','_356014y9ueu_xv6j0eskszw','.predef');
 INSERT INTO t_names VALUES('int','_7e1ak9qwf9h_wp5tptm4uyi','.predef');
+INSERT INTO t_names VALUES('int32_t','_0i2zv78m8mm_zrzwkmuv9fy','.predef');
 INSERT INTO t_names VALUES('int64_t','_877fh31zk63_2jkwam13i0h','.predef');
 INSERT INTO t_names VALUES('integer','_9jeymqk2732_wiq5kyczi9c','.predef');
+INSERT INTO t_names VALUES('intptr_t','_24i91kxrvwm_10cmfd12dck','.predef');
 INSERT INTO t_names VALUES('item','_53748kde7s1_pkz810exr27','.predef');
 INSERT INTO t_names VALUES('item_ref','_6hf2vzmrsee_t35suhjvtj4','.predef');
 INSERT INTO t_names VALUES('ix','_9wwqwxqcm4p_y7di7fs8tsk','.root');
@@ -1526,6 +1540,8 @@ INSERT INTO t_names VALUES('translate_procedure','_0afqepa7jkr_qky26hpv98d','.ro
 INSERT INTO t_names VALUES('translation','_8y1sw8z084j_4ts0y0jydha','.root');
 INSERT INTO t_names VALUES('tuple','_7vw56h18sw0_hv77m6q8uxu','.predef');
 INSERT INTO t_names VALUES('type','_8xfj0sc82ux_thsk0iw2773','.predef');
+INSERT INTO t_names VALUES('uint32_t','_6fiizwecy7v_pxd0wxx8c1m','.predef');
+INSERT INTO t_names VALUES('uint64_t','_0yavvxi653k_e1ui813cih8','.predef');
 INSERT INTO t_names VALUES('unique_node','_8p7vfxvyy4x_uvsm9yxvch5','.predef');
 INSERT INTO t_names VALUES('unsigned','_77xdevxp3zp_yeryy3x1aea','.predef');
 INSERT INTO t_names VALUES('unsigned_char','_61arma4wcjy_4um1arwy09m','.predef');

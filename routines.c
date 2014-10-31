@@ -5026,6 +5026,18 @@ meltmom_type_json_to_node_mom (momval_t jtype)
   else if (jtype.pitem == mom_named__int64_t
 	   || mom_string_same (jtype, "int64_t"))
     return (momval_t) mom_named__int64_t;
+  else if (jtype.pitem == mom_named__int32_t
+	   || mom_string_same (jtype, "int32_t"))
+    return (momval_t) mom_named__int32_t;
+  else if (jtype.pitem == mom_named__uint64_t
+	   || mom_string_same (jtype, "uint64_t"))
+    return (momval_t) mom_named__uint64_t;
+  else if (jtype.pitem == mom_named__uint32_t
+	   || mom_string_same (jtype, "uint32_t"))
+    return (momval_t) mom_named__uint32_t;
+  else if (jtype.pitem == mom_named__intptr_t
+	   || mom_string_same (jtype, "intptr_t"))
+    return (momval_t) mom_named__intptr_t;
   else if (jtype.pitem == mom_named__unsigned
 	   || mom_string_same (jtype, "unsigned"))
     return (momval_t) mom_named__unsigned;
