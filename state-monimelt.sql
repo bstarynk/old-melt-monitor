@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 Oct 26
+-- state-monimelt dump 2014 Oct 31
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','after predefined FILE');
+INSERT INTO t_params VALUES('dump_reason','exit dump');
 INSERT INTO t_items VALUES('_02mtzeca0pf_kc9d1i34ap4','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1843}], "content": null,
  "kind": null, "payload": null}
 ');
@@ -98,6 +98,9 @@ INSERT INTO t_items VALUES('_0yeu3tyzw9z_jqhcu2z2x34','{"attr": [{"attr": "_41u1
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_0yyp8vmw4si_wf49m4d4zwq','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "notably for error code in JSONRPC"}],
+ "content": null, "kind": null, "payload": null}
+');
+INSERT INTO t_items VALUES('_0z10v92cc0m_ydhtvzrujjz','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for enum types"}],
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_0zmdkdxj7kp_491yqpcuaz8','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "assignment operator"},
@@ -1299,6 +1302,7 @@ INSERT INTO t_names VALUES('mom_dump_scan_value','_6peadks7j6e_jpj05ykzxet','.ro
 INSERT INTO t_names VALUES('mom_elapsed_real_time','_1mv28mq6p9s_aairsjxey8i','.root');
 INSERT INTO t_names VALUES('mom_emit_short_item_json','_350vk8y5jau_wscjm4tmxfr','.root');
 INSERT INTO t_names VALUES('mom_end_json_parser','_8mu6t9f63zq_i5kcq3pctjj','.root');
+INSERT INTO t_names VALUES('mom_enum','_0z10v92cc0m_ydhtvzrujjz','.predef');
 INSERT INTO t_names VALUES('mom_fatal_at','_812uff8y1ms_rh196jde36k','.root');
 INSERT INTO t_names VALUES('mom_fataprintf_at','_1dmki2tps3h_fzcs0sj24m9','.root');
 INSERT INTO t_names VALUES('mom_finalize_buffer_output','_747s72xs8ia_ypcz5ru04k5','.root');

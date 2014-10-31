@@ -4998,13 +4998,14 @@ const struct momroutinedescr_st momrout_json_rpc_meltmom_declare_name = {
 // utility function to translate a JSON describing a type to some node
 // or value
 static momval_t
-meltmom_json_to_node_mom (momval_t jtype)
+meltmom_type_json_to_node_mom (momval_t jtype)
 {
   momval_t jinteger = MOM_NULLV, jmin = MOM_NULLV, jmax = MOM_NULLV;
   momval_t jpointer = MOM_NULLV;
   momval_t jmomstruct = MOM_NULLV;
   momval_t jmomunion = MOM_NULLV;
   momval_t jrecord = MOM_NULLV;
+  momval_t jenum = MOM_NULLV;
   momitem_t *itm = NULL;
   if (jtype.pitem == mom_named__char || mom_string_same (jtype, "char"))
     return (momval_t) mom_named__char;
@@ -5053,12 +5054,12 @@ meltmom_json_to_node_mom (momval_t jtype)
 	   && (jmin = mom_jsonob_getstr (jtype, "min")).ptr != NULL
 	   && (jmax = mom_jsonob_getstr (jtype, "max")).ptr != NULL)
     return (momval_t) mom_make_node_sized (mom_named__integer, 3,
-					   meltmom_json_to_node_mom
+					   meltmom_type_json_to_node_mom
 					   (jinteger), jmin, jmax);
   else if (mom_is_json_object (jtype)
 	   && (jpointer = mom_jsonob_getstr (jtype, "pointer")).ptr != NULL)
     return (momval_t) mom_make_node_sized (mom_named__pointer, 1,
-					   meltmom_json_to_node_mom
+					   meltmom_type_json_to_node_mom
 					   (jpointer));
   else if (mom_is_json_object (jtype)
 	   && (jmomstruct =
@@ -5073,7 +5074,7 @@ meltmom_json_to_node_mom (momval_t jtype)
 	  mom_item_set_space (itmstruct, momspa_root);
 	  MOM_DEBUG (run,
 		     MOMOUT_LITERAL
-		     ("meltmom_json_to_node_mom registering mom_struct "),
+		     ("meltmom_type_json_to_node_mom registering mom_struct "),
 		     MOMOUT_ITEM ((const momitem_t *) itmstruct), NULL);
 	}
       return (momval_t) mom_make_node_sized (mom_named__mom_struct, 1,
@@ -5091,7 +5092,7 @@ meltmom_json_to_node_mom (momval_t jtype)
 	  mom_item_set_space (itmunion, momspa_root);
 	  MOM_DEBUG (run,
 		     MOMOUT_LITERAL
-		     ("meltmom_json_to_node_mom registering mom_union "),
+		     ("meltmom_type_json_to_node_mom registering mom_union "),
 		     MOMOUT_ITEM ((const momitem_t *) itmunion), NULL);
 	}
       return (momval_t) mom_make_node_sized (mom_named__mom_union, 1,
@@ -5100,14 +5101,33 @@ meltmom_json_to_node_mom (momval_t jtype)
   else if (mom_is_json_object (jtype)
 	   && (jrecord = mom_jsonob_getstr (jtype, "record")).ptr != NULL)
     {
-      momval_t trecord = meltmom_json_to_node_mom (jrecord);
+      momval_t trecord = meltmom_type_json_to_node_mom (jrecord);
       if (trecord.ptr)
 	return trecord;
+    }
+  else if (mom_is_json_object (jtype)
+	   && (jenum =
+	       mom_jsonob_getstr (jtype, "enum")).ptr != NULL
+	   && mom_is_string (jenum))
+    {
+      momitem_t *itmenum = mom_get_item_of_name_string (jenum);
+      if (!itmenum)
+	{
+	  itmenum = mom_make_item ();
+	  mom_register_item_named (itmenum, jenum.pstring);
+	  mom_item_set_space (itmenum, momspa_root);
+	  MOM_DEBUG (run,
+		     MOMOUT_LITERAL
+		     ("meltmom_type_json_to_node_mom registering enum "),
+		     MOMOUT_ITEM ((const momitem_t *) itmenum), NULL);
+	}
+      return (momval_t) mom_make_node_sized (mom_named__mom_enum, 1,
+					     (momval_t) itmenum);
     }
   else if (mom_is_string (jtype)
 	   && (itm = mom_get_item_of_name_string (jtype)) != NULL)
     return (momval_t) itm;
-  MOM_FATAL (MOMOUT_LITERAL ("meltmom_json_to_node_mom:"
+  MOM_FATAL (MOMOUT_LITERAL ("meltmom_type_json_to_node_mom:"
 			     "unexpected type of json="),
 	     MOMOUT_VALUE (jtype), NULL);
   return MOM_NULLV;
@@ -5505,7 +5525,7 @@ json_rpc_meltmom_define_function_lab_start:
 		   MOMOUT_VALUE (_L (nameditm)), MOMOUT_LITERAL (" ix#"),
 		   MOMOUT_DEC_INT ((int) ix), MOMOUT_LITERAL (" curjarg="),
 		   MOMOUT_VALUE (curjarg), NULL);
-	curtyparg = meltmom_json_to_node_mom (curjarg);
+	curtyparg = meltmom_type_json_to_node_mom (curjarg);
 	MOM_DEBUG (run,
 		   MOMOUT_LITERAL
 		   ("json_rpc_meltmom_define_function nameditm:"),
@@ -5524,7 +5544,7 @@ json_rpc_meltmom_define_function_lab_start:
   }
   ///
   {
-    _L (resnode) = meltmom_json_to_node_mom (_L (jrestype));
+    _L (resnode) = meltmom_type_json_to_node_mom (_L (jrestype));
     MOM_DEBUG (run,
 	       MOMOUT_LITERAL ("json_rpc_meltmom_define_function resnode="),
 	       MOMOUT_VALUE (_L (resnode)), NULL);

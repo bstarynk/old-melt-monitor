@@ -189,6 +189,9 @@ MOM_PREDEFINED_NAMED(module,_7sqk8vh89xr_6tj8dq7vqju)
 ////!the routines in a module
 MOM_PREDEFINED_NAMED(module_routines,_9dcxaqk8tqe_fam9mcxme9w)
 
+////!for enum types
+MOM_PREDEFINED_NAMED(mom_enum,_0z10v92cc0m_ydhtvzrujjz)
+
 ////!for monimelt struct prefixed with mom
 MOM_PREDEFINED_NAMED(mom_struct,_9y82yz8z01a_x0dx4kx0x18)
 

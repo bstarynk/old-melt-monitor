@@ -233,6 +233,8 @@
 	   ))
   ))
 
+
+;;;;;;;;;;;;;;;;
 (defun monimelt_json_for_type (typev)
   (debug "monimelt_json_for_type" " start typev=" typev)
   (assert_msg "monimelt_json_for_type check nbcall"
@@ -496,6 +498,23 @@
 		       "\n.. tupurp=" tupurp
 		       "\n.. tupenval=" tupenval
 		       "\n.. jres=" jres)
+		(return jres)
+		)
+	      )
+	   ;;
+	   ( ?(tree_enumeral_type  ?(and ?tr_entype ?(tree_type_decl ?tr_srctype ?(tree_identifier ?tyidstr) ?tr_ctx ?tr_orig ?uid))
+				   ?tr_enmin ?tr_enmax ?tr_ensize 
+				   ?tr_envalues)
+	      (debug "monimelt_json_for_type" " enumeraltype.bis"
+		     "\n.. tr_entype=" tr_entype
+		     "\n.. tyidstr=" tyidstr
+		     "\n.. tr_envalues=" tr_envalues
+		     "\n.. tr_enmin=" tr_enmin "\n.. tr_enmax=" tr_enmax
+		     "\n.. tr_ensize=" tr_ensize)
+	      (let ( 
+		     (jres  (constant_box tyidstr))
+		     )
+		(debug "monimelt_json_for_type" " enum gives jres=" jres)
 		(return jres)
 		)
 	      )
