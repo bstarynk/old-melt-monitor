@@ -784,13 +784,18 @@
 		 (trsigargs)
 		 (:tree tchain tval tpurp)
 		 (debug "monimelt_function_signature"
-			" tval=" tval "\n.. tpurp=" tpurp)
-		 (let ( (curargv (constant_box tval))
-			(curjtype (monimelt_json_for_type curargv))
-			)
-		   (debug "monimelt_function_signature" " curjtype=" curjtype)
-		   (list_append ljargs curjtype)
-		   ))
+			" tval=" tval "\n..@ tpurp=" tpurp "\n..@ tchain=" tchain)
+		 (match tval
+			(?(tree_void_type ?tv)
+			  (debug "monimelt_function_signature skipvoid tv=" tv)
+			  (void))
+			(?_
+			 (let ( (curargv (constant_box tval))
+				(curjtype (monimelt_json_for_type curargv))
+				)
+			   (debug "monimelt_function_signature" " curjtype=" curjtype)
+			   (list_append ljargs curjtype)
+			   ))))
 		(debug "monimelt_function_signature" " ljargs=" ljargs)
 		(let ( (jargtup (list_to_multiple ljargs))
 		       (jparam (make_jsonobject discr_jsonobject
