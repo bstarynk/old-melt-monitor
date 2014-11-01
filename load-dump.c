@@ -1621,6 +1621,7 @@ mom_full_dump (const char *reason, const char *dumpdir,
   FILE *filpredefh = NULL;
   char filpath[MOM_PATH_MAX];
   char tempsuffix[32];
+  struct dmp_module_mom_st *dmod = NULL;
   memset (filpath, 0, sizeof (filpath));
   memset (tempsuffix, 0, sizeof (tempsuffix));
   double startrealtime = mom_clock_time (CLOCK_REALTIME);
@@ -1904,6 +1905,37 @@ mom_full_dump (const char *reason, const char *dumpdir,
   set_dump_param_mom (&dmp, MOM_VERSION_PARAM, MOM_DUMP_VERSION);
   set_dump_param_mom (&dmp, "dump_reason", reason);
   memset (filpath, 0, sizeof (filpath));
+  //// compute the set of modules by querying the database
+  {
+    assert (dmp.dmp_sqlite != NULL);
+    int nbmodules = -1;
+    char *errmsg = NULL;
+    int excod = 0;
+    if ((excod = sqlite3_exec
+	 (dmp.dmp_sqlite, "SELECT COUNT(*) FROM t_modules",
+	  setintsql_cb_mom, &nbmodules, &errmsg)))
+      MOM_FATAPRINTF
+	("while dumping %s failed to count t_modules %s (excod=%d, nbmodules=%d)",
+	 dmp.dmp_sqlpath, errmsg, excod, nbmodules);
+    assert (nbmodules >= 0 && nbmodules < INT_MAX / 2);
+    MOM_DEBUGPRINTF (dump, "nbmodules=%d", nbmodules);
+    dmod = MOM_GC_ALLOC ("dmp_module",
+			 sizeof (struct
+				 dmp_module_mom_st)
+			 + nbmodules * sizeof (momval_t));
+    dmod->dmod_magic = DMOD_MAGIC;
+    dmod->dmod_size = (unsigned) nbmodules;
+    if (nbmodules > 0)
+      {
+	if (sqlite3_exec
+	    (dmp.dmp_sqlite,
+	     "SELECT modname FROM t_modules ORDER BY modname",
+	     get_modname_cb_mom, dmod, &errmsg))
+	  MOM_FATAPRINTF ("while dumping %s failed to get modules %s",
+			  dmp.dmp_sqlpath, errmsg);
+	assert (dmod->dmod_size == dmod->dmod_count);
+      }
+  }
   /// at last
   goto end;
 end:
@@ -2053,35 +2085,9 @@ end:
       if (nvalarr != tinynval)
 	MOM_GC_FREE (nvalarr);
       memset (tinynval, 0, sizeof (tinynval));
-      int nbmodules = -1;
-      char *errmsg = NULL;
-      if (sqlite3_exec
-	  (dmp.dmp_sqlite, "SELECT COUNT(*) FROM t_modules",
-	   setintsql_cb_mom, &nbmodules, &errmsg))
-	MOM_FATAPRINTF ("while dumping %s failed to count t_modules %s",
-			dmp.dmp_sqlpath, errmsg);
-      assert (nbmodules >= 0 && nbmodules < INT_MAX / 2);
-      MOM_DEBUGPRINTF (dump, "nbmodules=%d", nbmodules);
-      struct dmp_module_mom_st *dmod = MOM_GC_ALLOC ("dmp_module",
-						     sizeof (struct
-							     dmp_module_mom_st)
-						     +
-						     nbmodules *
-						     sizeof (momval_t));
-      dmod->dmod_magic = DMOD_MAGIC;
-      dmod->dmod_size = (unsigned) nbmodules;
-      if (nbmodules > 0)
-	{
-	  if (sqlite3_exec
-	      (dmp.dmp_sqlite,
-	       "SELECT modname FROM t_modules ORDER BY modname",
-	       get_modname_cb_mom, dmod, &errmsg))
-	    MOM_FATAPRINTF ("while dumping %s failed to get modules %s",
-			    dmp.dmp_sqlpath, errmsg);
-	  assert (dmod->dmod_size == dmod->dmod_count);
-	}
       outd->odmp_nodemodules =
-	(momval_t) mom_make_node_from_array (mom_named__module, nbmodules,
+	(momval_t) mom_make_node_from_array (mom_named__module,
+					     dmod->dmod_size,
 					     dmod->dmod_valtab);
       MOM_GC_FREE (dmod);
     }				/* end filling the outcome */
