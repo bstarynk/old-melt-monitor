@@ -519,11 +519,31 @@
 		)
 	      )
 	   ;;
-	   ( ?(tree_function_type  ?tr_ftype ?tr_argsty)
-	      (debug "monimelt_json_for_type" " functiontype tr_ftype=" tr_ftype
-		     " tr_argsty=" tr_argsty
+	   ( ?(tree_function_type ?(and ?tr_name ?(tree_type_decl_with_name ?trtyp ?namstr ?uid))
+				  ?tr_ftype ?tr_argsty ?tr_ctx)
+	      (debug "monimelt_json_for_type" " functiontype" " tr_name=" tr_name
+		     "\n.. tr_ftype=" tr_ftype
+		     "\n.. namstr=" namstr
+		     "\n.. tr_argsty=" tr_argsty
+		     "\n.. tr_ctx=" tr_ctx
 		     "\n.. chaintup=" (tree_chain_to_tuple discr_multiple tr_argsty))
+	      (let ( (jfunres (make_jsonobject discr_jsonobject
+					    'function_type (constant_box namstr)
+					    ))
+		     )
+		(debug "monimelt_json_for_type" " jfunres=" jfunres)
+		(return jfunres)
+	      ))
+	   ;;
+	   ( ?(tree_function_type ?tr_name ?tr_ftype ?tr_argsty ?tr_ctx)
+	      (debug "monimelt_json_for_type" " functiontype" " tr_name=" tr_name
+		     "\n.. tr_ftype=" tr_ftype
+		     "\n.. tr_argsty=" tr_argsty
+		     "\n.. tr_ctx=" tr_ctx
+		     "\n.. chaintup=" (tree_chain_to_tuple discr_multiple tr_argsty))
+	      (error_at typev "unexpected function type $1" typev)
 	      )
+	   ;;
 	   ;;
 	   (?_
 	    (debug "monimelt_json_for_type " "@@strange tr_type=" tr_type)
@@ -633,8 +653,9 @@
 	    (debug "monimelt_fill_type" " srcty enumeral tr_entype=" tr_entype
 		   "\n.. tr_envalues=" tr_envalues)
 	    )
-	 ( ?(tree_function_type ?tr_ftype ?tr_argsty)
-	    (debug "monimelt_fill_type" " srcty functionty tr_ftype=" tr_ftype "\n.. tr_argsty=" tr_argsty)
+	 ( ?(tree_function_type ?tr_name ?tr_ftype ?tr_argsty ?tr_ctx)
+	    (debug "monimelt_fill_type" " srcty functionty tr_ftype=" tr_ftype "\n.. tr_argsty=" tr_argsty
+		   "\n.. tr_name=" tr_name "\n.. tr_ctx=" tr_ctx)
 	    )
 	 ( ?_
 	   (debug "monimelt_fill_type" " @@strange srcty tr_srctype=" tr_srctype
@@ -741,13 +762,14 @@
 	       ?(and ?tname ?(tree_identifier ?namstr))
 	       ?targs
 	       ?(and ?tftype
-		     ?(tree_function_type ?trsigtype ?trsigargs))
+		     ?(tree_function_type ?trsignam ?trsigtype ?trsigargs ?trsigctx))
 	       ?tresult ?tctxt ?builtincode)
 	      (debug "monimelt_function_signature"
 		     " tname=" tname
 		     "\n.. targs=" targs
 		     "\n.. tftype=" tftype
 		     "\n.. tresult=" tresult
+		     "\n.. trsignam=" trsignam
 		     "\n.. trsigtype=" trsigtype
 		     "\n.. trsigargs=" trsigargs
 		     "\n.. tctxt=" tctxt

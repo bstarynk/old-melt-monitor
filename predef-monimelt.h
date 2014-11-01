@@ -112,6 +112,9 @@ MOM_PREDEFINED_NAMED(failed,_9sd1mh9q1zf_3duewi6fsaq)
 ////!frames in tasklet
 MOM_PREDEFINED_NAMED(frames,_4cw8jv45vsk_4mh9ex64904)
 
+////!for function type in C
+MOM_PREDEFINED_NAMED(function_type,_6u8mxz2694e_chvs7zhz76x)
+
 ////!within a primitive gives the type of result
 MOM_PREDEFINED_NAMED(gives,_70ty9z1tm4p_eccsxmyfe25)
 

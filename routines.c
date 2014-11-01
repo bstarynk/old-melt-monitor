@@ -5006,6 +5006,7 @@ meltmom_type_json_to_node_mom (momval_t jtype)
   momval_t jmomunion = MOM_NULLV;
   momval_t jrecord = MOM_NULLV;
   momval_t jenum = MOM_NULLV;
+  momval_t jfuntype = MOM_NULLV;
   momitem_t *itm = NULL;
   if (jtype.pitem == mom_named__char || mom_string_same (jtype, "char"))
     return (momval_t) mom_named__char;
@@ -5109,6 +5110,25 @@ meltmom_type_json_to_node_mom (momval_t jtype)
 	}
       return (momval_t) mom_make_node_sized (mom_named__mom_union, 1,
 					     (momval_t) itmunion);
+    }
+  else if (mom_is_json_object (jtype)
+	   && (jfuntype =
+	       mom_jsonob_getstr (jtype, "function_type")).ptr != NULL
+	   && mom_is_string (jfuntype))
+    {
+      momitem_t *itmfuntype = mom_get_item_of_name_string (jfuntype);
+      if (!itmfuntype)
+	{
+	  itmfuntype = mom_make_item ();
+	  mom_register_item_named (itmfuntype, jfuntype.pstring);
+	  mom_item_set_space (itmfuntype, momspa_root);
+	  MOM_DEBUG (run,
+		     MOMOUT_LITERAL
+		     ("meltmom_type_json_to_node_mom registering function type "),
+		     MOMOUT_ITEM ((const momitem_t *) itmfuntype), NULL);
+	}
+      return (momval_t) mom_make_node_sized (mom_named__function_type, 1,
+					     (momval_t) itmfuntype);
     }
   else if (mom_is_json_object (jtype)
 	   && (jrecord = mom_jsonob_getstr (jtype, "record")).ptr != NULL)
