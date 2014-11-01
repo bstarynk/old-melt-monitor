@@ -778,6 +778,7 @@
 		    (jname (constant_box namstr))
 		    (jsigtype (monimelt_json_for_type (constant_box trsigtype)))
 		    (ljargs (make_list discr_list))
+		    (isvariadic 1)
 		    )
 		(debug "monimelt_function_signature" " jsigtype=" jsigtype)
 		(foreach_chain_value_purpose_in_tree_list
@@ -788,6 +789,7 @@
 		 (match tval
 			(?(tree_void_type ?tv)
 			  (debug "monimelt_function_signature skipvoid tv=" tv)
+			  (setq isvariadic 0)
 			  (void))
 			(?_
 			 (let ( (curargv (constant_box tval))
@@ -798,10 +800,15 @@
 			   ))))
 		(debug "monimelt_function_signature" " ljargs=" ljargs)
 		(let ( (jargtup (list_to_multiple ljargs))
-		       (jparam (make_jsonobject discr_jsonobject
-						'monimelt_name jname
-						'monimelt_args jargtup
-						'monimelt_result jsigtype))
+		       (jparam (if
+				   isvariadic (make_jsonobject discr_jsonobject
+							       'monimelt_name jname
+							       'monimelt_variadic jargtup
+							       'monimelt_result jsigtype)
+				 (make_jsonobject discr_jsonobject
+						  'monimelt_name jname
+						  'monimelt_args jargtup
+						  'monimelt_result jsigtype)))
 		       )
 		  (debug "monimelt_function_signature" " jparam=" jparam)
 		  (multicall

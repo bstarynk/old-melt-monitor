@@ -219,6 +219,9 @@ MOM_PREDEFINED_NAMED(monimelt_result,_7dekms4ck3h_e7c1xm3p74c)
 ////!for Monimelt types
 MOM_PREDEFINED_NAMED(monimelt_type,_9j151ceapqf_dae1vrdueqa)
 
+////!for variadic functions
+MOM_PREDEFINED_NAMED(monimelt_variadic,_21xtrp170v1_17c7pk1rh4r)
+
 ////!in JSON dumps, indicate nodes, or give their connective item
 MOM_PREDEFINED_NAMED(node,_4m7x6811f6j_t480zu575mz)
 

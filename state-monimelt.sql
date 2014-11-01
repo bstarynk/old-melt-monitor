@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','todo dump with outcome');
+INSERT INTO t_params VALUES('dump_reason','todo dump at exit');
 INSERT INTO t_items VALUES('_02mtzeca0pf_kc9d1i34ap4','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1853}, {"attr": "_89jhda3v3wj_hvzvs5w6hui",
    "val": {"jtype": "node", "node": "_89jhda3v3wj_hvzvs5w6hui", "sons": [{"jtype":
       "node", "node": "_1vd2t9p4krp_yjsuuc88k61", "sons": [{"item_ref": "_28jrsus3ti3_da1ztz7ex3x",
@@ -33,7 +33,7 @@ INSERT INTO t_items VALUES('_02mtzeca0pf_kc9d1i34ap4','{"attr": [{"attr": "_8hvs
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_02u53qxa7dm_sttmhffpchr','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "The agenda is central to Monimelt.\nIt is the queue of taskets to be executed by worker threads."}],
- "content": null, "kind": "queue", "payload": [null]}
+ "content": null, "kind": "queue", "payload": []}
 ');
 INSERT INTO t_items VALUES('_031ar4875we_s1xarptwct2','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1845}, {"attr": "_89jhda3v3wj_hvzvs5w6hui",
    "val": {"jtype": "node", "node": "_89jhda3v3wj_hvzvs5w6hui", "sons": [{"jtype":
@@ -78,14 +78,14 @@ INSERT INTO t_items VALUES('_0cte3uqc744_m1674pufa83','{"attr": [{"attr": "_8hvs
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_0f6fadaa09t_cwsaijsevaq','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1906}, {"attr": "_89jhda3v3wj_hvzvs5w6hui",
-   "val": {"jtype": "node", "node": "_89jhda3v3wj_hvzvs5w6hui", "sons": [{"item_ref":
+   "val": {"jtype": "node", "node": "_21xtrp170v1_17c7pk1rh4r", "sons": [{"item_ref":
       "_77xdevxp3zp_yeryy3x1aea", "jtype": "item_ref", "space": ".predef"}]}},
   {"attr": "_7dekms4ck3h_e7c1xm3p74c", "val": {"jtype": "node", "node": "_1vd2t9p4krp_yjsuuc88k61",
     "sons": [{"item_ref": "_87axj4q44z5_xddqmrkw875", "jtype": "item_ref",
       "space": ".root"}]}}], "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_0frfrj16j0j_tpz51c5ffrj','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 280}, {"attr": "_89jhda3v3wj_hvzvs5w6hui",
-   "val": {"jtype": "node", "node": "_89jhda3v3wj_hvzvs5w6hui", "sons": [{"jtype":
+   "val": {"jtype": "node", "node": "_21xtrp170v1_17c7pk1rh4r", "sons": [{"jtype":
       "node", "node": "_1vd2t9p4krp_yjsuuc88k61", "sons": [{"jtype": "node",
 "node": "_9jeymqk2732_wiq5kyczi9c", "sons": [{"item_ref": "_72psq1j5keh_d0z70e7tzxu",
   "jtype": "item_ref", "space": ".predef"}, -128, 127]}]}, {"item_ref": "_7e1ak9qwf9h_wp5tptm4uyi",
@@ -146,7 +146,7 @@ INSERT INTO t_items VALUES('_0pijqmm7krh_sxxavschmpi','{"attr": [{"attr": "_8hvs
  "payload": null}
 ');
 INSERT INTO t_items VALUES('_0pppmw2yfdj_vpumuxt09y3','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 2331}, {"attr": "_89jhda3v3wj_hvzvs5w6hui",
-   "val": {"jtype": "node", "node": "_89jhda3v3wj_hvzvs5w6hui", "sons": [{"jtype":
+   "val": {"jtype": "node", "node": "_21xtrp170v1_17c7pk1rh4r", "sons": [{"jtype":
       "node", "node": "_1vd2t9p4krp_yjsuuc88k61", "sons": [{"jtype": "node",
 "node": "_9jeymqk2732_wiq5kyczi9c", "sons": [{"item_ref": "_72psq1j5keh_d0z70e7tzxu",
   "jtype": "item_ref", "space": ".predef"}, -128, 127]}]}, {"item_ref": "_7e1ak9qwf9h_wp5tptm4uyi",
@@ -174,7 +174,7 @@ INSERT INTO t_items VALUES('_0v6se8r3uf4_eqye8sq0r3q','{"attr": [{"attr": "_8hvs
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_0vz73hu7aph_cyhxumztwzy','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1881}, {"attr": "_89jhda3v3wj_hvzvs5w6hui",
-   "val": {"jtype": "node", "node": "_89jhda3v3wj_hvzvs5w6hui", "sons": [{"jtype":
+   "val": {"jtype": "node", "node": "_21xtrp170v1_17c7pk1rh4r", "sons": [{"jtype":
       "node", "node": "_2qmau9u6ie1_7ry5vh1vhe0", "sons": [{"item_ref": "_42cx8xskxe3_vu23eezcksq",
 "jtype": "item_ref", "space": ".root"}]}]}}, {"attr": "_7dekms4ck3h_e7c1xm3p74c",
    "val": {"jtype": "node", "node": "_1vd2t9p4krp_yjsuuc88k61", "sons": [{"item_ref":
@@ -254,7 +254,7 @@ INSERT INTO t_items VALUES('_17spwr8dkzv_tsf2s8diazu','{"attr": [{"attr": "_41u1
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_18jez9x90m0_zawc40wpwvz','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1533}, {"attr": "_89jhda3v3wj_hvzvs5w6hui",
-   "val": {"jtype": "node", "node": "_89jhda3v3wj_hvzvs5w6hui", "sons": [{"jtype":
+   "val": {"jtype": "node", "node": "_21xtrp170v1_17c7pk1rh4r", "sons": [{"jtype":
       "node", "node": "_1vd2t9p4krp_yjsuuc88k61", "sons": [{"item_ref": "_28jrsus3ti3_da1ztz7ex3x",
 "jtype": "item_ref", "space": ".root"}]}, {"jtype": "node", "node": "_2qmau9u6ie1_7ry5vh1vhe0",
       "sons": [{"item_ref": "_42cx8xskxe3_vu23eezcksq", "jtype": "item_ref",
@@ -282,7 +282,7 @@ INSERT INTO t_items VALUES('_1akf45cmq0w_pxm7mz4vz4x','{"attr": [{"attr": "_8hvs
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_1dmki2tps3h_fzcs0sj24m9','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 2386}, {"attr": "_89jhda3v3wj_hvzvs5w6hui",
-   "val": {"jtype": "node", "node": "_89jhda3v3wj_hvzvs5w6hui", "sons": [{"jtype":
+   "val": {"jtype": "node", "node": "_21xtrp170v1_17c7pk1rh4r", "sons": [{"jtype":
       "node", "node": "_1vd2t9p4krp_yjsuuc88k61", "sons": [{"jtype": "node",
 "node": "_9jeymqk2732_wiq5kyczi9c", "sons": [{"item_ref": "_72psq1j5keh_d0z70e7tzxu",
   "jtype": "item_ref", "space": ".predef"}, -128, 127]}]}, {"item_ref": "_7e1ak9qwf9h_wp5tptm4uyi",
@@ -394,7 +394,7 @@ INSERT INTO t_items VALUES('_1ttzd8kyed8_15ww8d9c24p','{"attr": [{"attr": "_8hvs
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_1uc4z4204z5_tjmdyvsmc78','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 629}, {"attr": "_89jhda3v3wj_hvzvs5w6hui",
-   "val": {"jtype": "node", "node": "_89jhda3v3wj_hvzvs5w6hui", "sons": []}},
+   "val": {"jtype": "node", "node": "_21xtrp170v1_17c7pk1rh4r", "sons": []}},
   {"attr": "_7dekms4ck3h_e7c1xm3p74c", "val": {"jtype": "node", "node": "_1vd2t9p4krp_yjsuuc88k61",
     "sons": [{"item_ref": "_05utk0hrpcw_usi08r18z82", "jtype": "item_ref",
       "space": ".root"}]}}], "content": null, "kind": null, "payload": null}
@@ -449,6 +449,9 @@ INSERT INTO t_items VALUES('_1y91p3us9s9_p88di58xuek','{"attr": [{"attr": "_41u1
   {"attr": "_0hpzi8m7wym_1y4ypmm9y47", "val": {"item_ref": "_6d4dwqa6m09_c5vtjswfpfi",
     "jtype": "item_ref", "space": ".root"}}], "content": null, "kind": null,
  "payload": null}
+');
+INSERT INTO t_items VALUES('_21xtrp170v1_17c7pk1rh4r','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for variadic functions"}],
+ "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_23ey21s44px_iarreqeqhr5','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "describes unsigned_long type"}],
  "content": null, "kind": null, "payload": null}
@@ -555,7 +558,7 @@ INSERT INTO t_items VALUES('_2fvh1ti34mc_sqjvu53d3i5','{"attr": [{"attr": "_8hvs
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_2ir1y95wiuk_j879f5utux9','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1832}, {"attr": "_89jhda3v3wj_hvzvs5w6hui",
-   "val": {"jtype": "node", "node": "_89jhda3v3wj_hvzvs5w6hui", "sons": [{"jtype":
+   "val": {"jtype": "node", "node": "_21xtrp170v1_17c7pk1rh4r", "sons": [{"jtype":
       "node", "node": "_1vd2t9p4krp_yjsuuc88k61", "sons": [{"item_ref": "_28jrsus3ti3_da1ztz7ex3x",
 "jtype": "item_ref", "space": ".root"}]}]}}, {"attr": "_7dekms4ck3h_e7c1xm3p74c",
    "val": {"item_ref": "_7jzvaihqxfw_0c2y7t976tu", "jtype": "item_ref", "space": ".predef"}}],
@@ -607,7 +610,7 @@ INSERT INTO t_items VALUES('_2xv0dpvp5md_6u53m54kw0i','{"attr": [{"attr": "_8hvs
 "space": ".root"}]}]}}], "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_32dzf3hj8yw_t4yj6mayh8p','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 285}, {"attr": "_89jhda3v3wj_hvzvs5w6hui",
-   "val": {"jtype": "node", "node": "_89jhda3v3wj_hvzvs5w6hui", "sons": [{"jtype":
+   "val": {"jtype": "node", "node": "_21xtrp170v1_17c7pk1rh4r", "sons": [{"jtype":
       "node", "node": "_1vd2t9p4krp_yjsuuc88k61", "sons": [{"jtype": "node",
 "node": "_9jeymqk2732_wiq5kyczi9c", "sons": [{"item_ref": "_72psq1j5keh_d0z70e7tzxu",
   "jtype": "item_ref", "space": ".predef"}, -128, 127]}]}, {"item_ref": "_7e1ak9qwf9h_wp5tptm4uyi",
@@ -736,7 +739,7 @@ INSERT INTO t_items VALUES('_3k7s4156a7a_1p1rar740pk','{"attr": [{"attr": "_8hvs
  "payload": null}
 ');
 INSERT INTO t_items VALUES('_3qf9kmsmfyx_9w5fsqa2tzm','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 2312}, {"attr": "_89jhda3v3wj_hvzvs5w6hui",
-   "val": {"jtype": "node", "node": "_89jhda3v3wj_hvzvs5w6hui", "sons": [{"jtype":
+   "val": {"jtype": "node", "node": "_21xtrp170v1_17c7pk1rh4r", "sons": [{"jtype":
       "node", "node": "_1vd2t9p4krp_yjsuuc88k61", "sons": [{"jtype": "node",
 "node": "_9jeymqk2732_wiq5kyczi9c", "sons": [{"item_ref": "_72psq1j5keh_d0z70e7tzxu",
   "jtype": "item_ref", "space": ".predef"}, -128, 127]}]}, {"item_ref": "_7e1ak9qwf9h_wp5tptm4uyi",
@@ -748,14 +751,14 @@ INSERT INTO t_items VALUES('_3qf9kmsmfyx_9w5fsqa2tzm','{"attr": [{"attr": "_8hvs
  "payload": null}
 ');
 INSERT INTO t_items VALUES('_3r17a3jsysq_8vspi2t8cph','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1903}, {"attr": "_89jhda3v3wj_hvzvs5w6hui",
-   "val": {"jtype": "node", "node": "_89jhda3v3wj_hvzvs5w6hui", "sons": [{"item_ref":
+   "val": {"jtype": "node", "node": "_21xtrp170v1_17c7pk1rh4r", "sons": [{"item_ref":
       "_77xdevxp3zp_yeryy3x1aea", "jtype": "item_ref", "space": ".predef"}]}},
   {"attr": "_7dekms4ck3h_e7c1xm3p74c", "val": {"jtype": "node", "node": "_1vd2t9p4krp_yjsuuc88k61",
     "sons": [{"item_ref": "_87axj4q44z5_xddqmrkw875", "jtype": "item_ref",
       "space": ".root"}]}}], "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_3ru7qrk03jv_v76f8ity5i6','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 808}, {"attr": "_89jhda3v3wj_hvzvs5w6hui",
-   "val": {"jtype": "node", "node": "_89jhda3v3wj_hvzvs5w6hui", "sons": [{"item_ref":
+   "val": {"jtype": "node", "node": "_21xtrp170v1_17c7pk1rh4r", "sons": [{"item_ref":
       "_7e1ak9qwf9h_wp5tptm4uyi", "jtype": "item_ref", "space": ".predef"}]}},
   {"attr": "_7dekms4ck3h_e7c1xm3p74c", "val": {"jtype": "node", "node": "_1vd2t9p4krp_yjsuuc88k61",
     "sons": [{"item_ref": "_835qk04icz0_e6srx044eqq", "jtype": "item_ref",
@@ -822,7 +825,7 @@ INSERT INTO t_items VALUES('_41ciqzka19m_wjq6xe7u28h','{"attr": [{"attr": "_8hvs
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_41r244ahp3q_j09a33vry98','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1901}, {"attr": "_89jhda3v3wj_hvzvs5w6hui",
-   "val": {"jtype": "node", "node": "_89jhda3v3wj_hvzvs5w6hui", "sons": [{"jtype":
+   "val": {"jtype": "node", "node": "_21xtrp170v1_17c7pk1rh4r", "sons": [{"jtype":
       "node", "node": "_2qmau9u6ie1_7ry5vh1vhe0", "sons": [{"item_ref": "_42cx8xskxe3_vu23eezcksq",
 "jtype": "item_ref", "space": ".root"}]}]}}, {"attr": "_7dekms4ck3h_e7c1xm3p74c",
    "val": {"jtype": "node", "node": "_1vd2t9p4krp_yjsuuc88k61", "sons": [{"item_ref":
@@ -849,7 +852,7 @@ INSERT INTO t_items VALUES('_4215uc2u6qk_52kqyra86y5','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_42cx8xskxe3_vu23eezcksq','{"attr": [], "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_4363z4ey9pa_zvc1w07qctv','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1683}, {"attr": "_89jhda3v3wj_hvzvs5w6hui",
-   "val": {"jtype": "node", "node": "_89jhda3v3wj_hvzvs5w6hui", "sons": [{"jtype":
+   "val": {"jtype": "node", "node": "_21xtrp170v1_17c7pk1rh4r", "sons": [{"jtype":
       "node", "node": "_1vd2t9p4krp_yjsuuc88k61", "sons": [{"jtype": "node",
 "node": "_9jeymqk2732_wiq5kyczi9c", "sons": [{"item_ref": "_72psq1j5keh_d0z70e7tzxu",
   "jtype": "item_ref", "space": ".predef"}, -128, 127]}]}, {"item_ref": "_7e1ak9qwf9h_wp5tptm4uyi",
@@ -911,7 +914,7 @@ INSERT INTO t_items VALUES('_4cw8jv45vsk_4mh9ex64904','{"attr": [{"attr": "_41u1
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_4dexizaxjta_1vvp4hchyu6','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 2295}, {"attr": "_89jhda3v3wj_hvzvs5w6hui",
-   "val": {"jtype": "node", "node": "_89jhda3v3wj_hvzvs5w6hui", "sons": [{"jtype":
+   "val": {"jtype": "node", "node": "_21xtrp170v1_17c7pk1rh4r", "sons": [{"jtype":
       "node", "node": "_1vd2t9p4krp_yjsuuc88k61", "sons": [{"jtype": "node",
 "node": "_9jeymqk2732_wiq5kyczi9c", "sons": [{"item_ref": "_72psq1j5keh_d0z70e7tzxu",
   "jtype": "item_ref", "space": ".predef"}, -128, 127]}]}, {"item_ref": "_7e1ak9qwf9h_wp5tptm4uyi",
@@ -994,7 +997,7 @@ INSERT INTO t_items VALUES('_4qywz13t3m7_jkxp06jp1u8','{"attr": [{"attr": "_8hvs
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_4rjaerz2211_6h0xzvp4v4v','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 835}, {"attr": "_89jhda3v3wj_hvzvs5w6hui",
-   "val": {"jtype": "node", "node": "_89jhda3v3wj_hvzvs5w6hui", "sons": [{"item_ref":
+   "val": {"jtype": "node", "node": "_21xtrp170v1_17c7pk1rh4r", "sons": [{"item_ref":
       "_77xdevxp3zp_yeryy3x1aea", "jtype": "item_ref", "space": ".predef"}]}},
   {"attr": "_7dekms4ck3h_e7c1xm3p74c", "val": {"jtype": "node", "node": "_1vd2t9p4krp_yjsuuc88k61",
     "sons": [{"item_ref": "_705c10s4fte_27kjcrw2rxr", "jtype": "item_ref",
@@ -1011,7 +1014,7 @@ INSERT INTO t_items VALUES('_4uqfx2kqr91_ha9rqdwhcwe','{"attr": [{"attr": "_8hvs
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_4v3d25zvxed_mycxxj2mcjr','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 2349}, {"attr": "_89jhda3v3wj_hvzvs5w6hui",
-   "val": {"jtype": "node", "node": "_89jhda3v3wj_hvzvs5w6hui", "sons": [{"jtype":
+   "val": {"jtype": "node", "node": "_21xtrp170v1_17c7pk1rh4r", "sons": [{"jtype":
       "node", "node": "_1vd2t9p4krp_yjsuuc88k61", "sons": [{"jtype": "node",
 "node": "_9jeymqk2732_wiq5kyczi9c", "sons": [{"item_ref": "_72psq1j5keh_d0z70e7tzxu",
   "jtype": "item_ref", "space": ".predef"}, -128, 127]}]}, {"item_ref": "_7e1ak9qwf9h_wp5tptm4uyi",
@@ -1029,7 +1032,7 @@ INSERT INTO t_items VALUES('_4v93t3jzrtz_srt9ear8fm8','{"attr": [{"attr": "_41u1
  "payload": "ajax_complete_name"}
 ');
 INSERT INTO t_items VALUES('_4wd221340d0_9y42sarswa2','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1636}, {"attr": "_89jhda3v3wj_hvzvs5w6hui",
-   "val": {"jtype": "node", "node": "_89jhda3v3wj_hvzvs5w6hui", "sons": [{"jtype":
+   "val": {"jtype": "node", "node": "_21xtrp170v1_17c7pk1rh4r", "sons": [{"jtype":
       "node", "node": "_1vd2t9p4krp_yjsuuc88k61", "sons": [{"item_ref": "_28jrsus3ti3_da1ztz7ex3x",
 "jtype": "item_ref", "space": ".root"}]}]}}, {"attr": "_7dekms4ck3h_e7c1xm3p74c",
    "val": {"item_ref": "_7jzvaihqxfw_0c2y7t976tu", "jtype": "item_ref", "space": ".predef"}}],
@@ -1239,7 +1242,7 @@ INSERT INTO t_items VALUES('_5jsey8w8cfz_h1hqcq0d5sd','{"attr": [{"attr": "_8hvs
  "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_5kjhr97p5kk_kdq3zwkvwx4','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1831}, {"attr": "_89jhda3v3wj_hvzvs5w6hui",
-   "val": {"jtype": "node", "node": "_89jhda3v3wj_hvzvs5w6hui", "sons": [{"jtype":
+   "val": {"jtype": "node", "node": "_21xtrp170v1_17c7pk1rh4r", "sons": [{"jtype":
       "node", "node": "_1vd2t9p4krp_yjsuuc88k61", "sons": [{"item_ref": "_28jrsus3ti3_da1ztz7ex3x",
 "jtype": "item_ref", "space": ".root"}]}, {"item_ref": "_77xdevxp3zp_yeryy3x1aea",
       "jtype": "item_ref", "space": ".predef"}]}}, {"attr": "_7dekms4ck3h_e7c1xm3p74c",
@@ -1275,7 +1278,7 @@ INSERT INTO t_items VALUES('_5rcj09rsct4_dz814x5hvps','{"attr": [{"attr": "_8hvs
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_5rhi4wffs94_fejzfvq6d11','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 2255}, {"attr": "_89jhda3v3wj_hvzvs5w6hui",
-   "val": {"jtype": "node", "node": "_89jhda3v3wj_hvzvs5w6hui", "sons": [{"jtype":
+   "val": {"jtype": "node", "node": "_21xtrp170v1_17c7pk1rh4r", "sons": [{"jtype":
       "node", "node": "_1vd2t9p4krp_yjsuuc88k61", "sons": [{"jtype": "node",
 "node": "_9jeymqk2732_wiq5kyczi9c", "sons": [{"item_ref": "_72psq1j5keh_d0z70e7tzxu",
   "jtype": "item_ref", "space": ".predef"}, -128, 127]}]}, {"item_ref": "_7e1ak9qwf9h_wp5tptm4uyi",
@@ -1358,7 +1361,7 @@ INSERT INTO t_items VALUES('_5yfdp53cpi1_0i5k33wms7c','{"attr": [{"attr": "_41u1
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_5zzuk12vu67_4ti500vktvf','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1887}, {"attr": "_89jhda3v3wj_hvzvs5w6hui",
-   "val": {"jtype": "node", "node": "_89jhda3v3wj_hvzvs5w6hui", "sons": [{"item_ref":
+   "val": {"jtype": "node", "node": "_21xtrp170v1_17c7pk1rh4r", "sons": [{"item_ref":
       "_77xdevxp3zp_yeryy3x1aea", "jtype": "item_ref", "space": ".predef"}]}},
   {"attr": "_7dekms4ck3h_e7c1xm3p74c", "val": {"jtype": "node", "node": "_1vd2t9p4krp_yjsuuc88k61",
     "sons": [{"item_ref": "_2x2u9vdare0_5dj5y8zt6ww", "jtype": "item_ref",
@@ -1500,7 +1503,7 @@ INSERT INTO t_items VALUES('_6peadks7j6e_jpj05ykzxet','{"attr": [{"attr": "_8hvs
  "payload": null}
 ');
 INSERT INTO t_items VALUES('_6pqzy8r1siz_dv8dqhqadud','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 2275}, {"attr": "_89jhda3v3wj_hvzvs5w6hui",
-   "val": {"jtype": "node", "node": "_89jhda3v3wj_hvzvs5w6hui", "sons": [{"jtype":
+   "val": {"jtype": "node", "node": "_21xtrp170v1_17c7pk1rh4r", "sons": [{"jtype":
       "node", "node": "_1vd2t9p4krp_yjsuuc88k61", "sons": [{"jtype": "node",
 "node": "_9jeymqk2732_wiq5kyczi9c", "sons": [{"item_ref": "_72psq1j5keh_d0z70e7tzxu",
   "jtype": "item_ref", "space": ".predef"}, -128, 127]}]}, {"item_ref": "_7e1ak9qwf9h_wp5tptm4uyi",
@@ -1531,7 +1534,7 @@ INSERT INTO t_items VALUES('_6qw6i838e83_7tjmqp3f5tr','{"attr": [{"attr": "_8hvs
  "payload": null}
 ');
 INSERT INTO t_items VALUES('_6tra7xc8iww_0rwpua90935','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1530}, {"attr": "_89jhda3v3wj_hvzvs5w6hui",
-   "val": {"jtype": "node", "node": "_89jhda3v3wj_hvzvs5w6hui", "sons": [{"jtype":
+   "val": {"jtype": "node", "node": "_21xtrp170v1_17c7pk1rh4r", "sons": [{"jtype":
       "node", "node": "_1vd2t9p4krp_yjsuuc88k61", "sons": [{"item_ref": "_28jrsus3ti3_da1ztz7ex3x",
 "jtype": "item_ref", "space": ".root"}]}, {"jtype": "node", "node": "_2qmau9u6ie1_7ry5vh1vhe0",
       "sons": [{"item_ref": "_42cx8xskxe3_vu23eezcksq", "jtype": "item_ref",
@@ -1558,7 +1561,7 @@ INSERT INTO t_items VALUES('_6ump1mcjjzi_jzsmdc52ckm','{"attr": [{"attr": "_8hvs
       "space": ".predef"}]}}], "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_6up2yfutdp6_e1zp422hjat','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1885}, {"attr": "_89jhda3v3wj_hvzvs5w6hui",
-   "val": {"jtype": "node", "node": "_89jhda3v3wj_hvzvs5w6hui", "sons": [{"item_ref":
+   "val": {"jtype": "node", "node": "_21xtrp170v1_17c7pk1rh4r", "sons": [{"item_ref":
       "_77xdevxp3zp_yeryy3x1aea", "jtype": "item_ref", "space": ".predef"}]}},
   {"attr": "_7dekms4ck3h_e7c1xm3p74c", "val": {"jtype": "node", "node": "_1vd2t9p4krp_yjsuuc88k61",
     "sons": [{"item_ref": "_2x2u9vdare0_5dj5y8zt6ww", "jtype": "item_ref",
@@ -1844,7 +1847,7 @@ INSERT INTO t_items VALUES('_80wxf4c8q92_qq8k6xc0xxj','{"attr": [{"attr": "_41u1
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_812uff8y1ms_rh196jde36k','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 2368}, {"attr": "_89jhda3v3wj_hvzvs5w6hui",
-   "val": {"jtype": "node", "node": "_89jhda3v3wj_hvzvs5w6hui", "sons": [{"jtype":
+   "val": {"jtype": "node", "node": "_21xtrp170v1_17c7pk1rh4r", "sons": [{"jtype":
       "node", "node": "_1vd2t9p4krp_yjsuuc88k61", "sons": [{"jtype": "node",
 "node": "_9jeymqk2732_wiq5kyczi9c", "sons": [{"item_ref": "_72psq1j5keh_d0z70e7tzxu",
   "jtype": "item_ref", "space": ".predef"}, -128, 127]}]}, {"item_ref": "_7e1ak9qwf9h_wp5tptm4uyi",
@@ -1864,7 +1867,7 @@ INSERT INTO t_items VALUES('_835qk04icz0_e6srx044eqq','{"attr": [{"attr": "_8hvs
  "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_83p6a79fewy_z0hvpk042sz','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 838}, {"attr": "_89jhda3v3wj_hvzvs5w6hui",
-   "val": {"jtype": "node", "node": "_89jhda3v3wj_hvzvs5w6hui", "sons": [{"jtype":
+   "val": {"jtype": "node", "node": "_21xtrp170v1_17c7pk1rh4r", "sons": [{"jtype":
       "node", "node": "_2qmau9u6ie1_7ry5vh1vhe0", "sons": [{"item_ref": "_42cx8xskxe3_vu23eezcksq",
 "jtype": "item_ref", "space": ".root"}]}]}}, {"attr": "_7dekms4ck3h_e7c1xm3p74c",
    "val": {"jtype": "node", "node": "_1vd2t9p4krp_yjsuuc88k61", "sons": [{"item_ref":
@@ -2112,7 +2115,7 @@ INSERT INTO t_items VALUES('_92ti1wff0e6_hw240mrry10','{"attr": [{"attr": "_41u1
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_938riht0qyi_hp7wh9ys3ur','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 2028}, {"attr": "_89jhda3v3wj_hvzvs5w6hui",
-   "val": {"jtype": "node", "node": "_89jhda3v3wj_hvzvs5w6hui", "sons": [{"jtype":
+   "val": {"jtype": "node", "node": "_21xtrp170v1_17c7pk1rh4r", "sons": [{"jtype":
       "node", "node": "_1vd2t9p4krp_yjsuuc88k61", "sons": [{"item_ref": "_28jrsus3ti3_da1ztz7ex3x",
 "jtype": "item_ref", "space": ".root"}]}, {"item_ref": "_77xdevxp3zp_yeryy3x1aea",
       "jtype": "item_ref", "space": ".predef"}]}}, {"attr": "_7dekms4ck3h_e7c1xm3p74c",
@@ -2212,7 +2215,7 @@ INSERT INTO t_items VALUES('_9jv516up4ee_20as3ydvwjp','{"attr": [{"attr": "_8hvs
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_9m5hjhjuyfr_a6iiw2uu5jj','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 2023}, {"attr": "_89jhda3v3wj_hvzvs5w6hui",
-   "val": {"jtype": "node", "node": "_89jhda3v3wj_hvzvs5w6hui", "sons": [{"jtype":
+   "val": {"jtype": "node", "node": "_21xtrp170v1_17c7pk1rh4r", "sons": [{"jtype":
       "node", "node": "_1vd2t9p4krp_yjsuuc88k61", "sons": [{"item_ref": "_28jrsus3ti3_da1ztz7ex3x",
 "jtype": "item_ref", "space": ".root"}]}]}}, {"attr": "_7dekms4ck3h_e7c1xm3p74c",
    "val": {"jtype": "node", "node": "_1vd2t9p4krp_yjsuuc88k61", "sons": [{"item_ref":
@@ -2586,6 +2589,7 @@ INSERT INTO t_names VALUES('monimelt_arguments','_89jhda3v3wj_hvzvs5w6hui','.pre
 INSERT INTO t_names VALUES('monimelt_line','_8hvs0h5a7v9_1ixv3jf2j6j','.predef');
 INSERT INTO t_names VALUES('monimelt_result','_7dekms4ck3h_e7c1xm3p74c','.predef');
 INSERT INTO t_names VALUES('monimelt_type','_9j151ceapqf_dae1vrdueqa','.predef');
+INSERT INTO t_names VALUES('monimelt_variadic','_21xtrp170v1_17c7pk1rh4r','.predef');
 INSERT INTO t_names VALUES('node','_4m7x6811f6j_t480zu575mz','.predef');
 INSERT INTO t_names VALUES('noop','_240dwt57s08_a8uy366sev5','.root');
 INSERT INTO t_names VALUES('notice','_7diyc1cwj8z_x630afccr8e','.predef');

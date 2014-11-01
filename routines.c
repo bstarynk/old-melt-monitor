@@ -5448,6 +5448,7 @@ enum json_rpc_meltmom_define_function_valindex_en
   json_rpc_meltmom_define_function_v_peername,
   json_rpc_meltmom_define_function_v_jresult,
   json_rpc_meltmom_define_function_v_jargs,
+  json_rpc_meltmom_define_function_v_jvariadic,
   json_rpc_meltmom_define_function_v_jrestype,
   json_rpc_meltmom_define_function_v_name,
   json_rpc_meltmom_define_function_v_argnode,
@@ -5464,6 +5465,7 @@ enum json_rpc_meltmom_define_function_closure_en
 enum json_rpc_meltmom_define_function_numbers_en
 {
   json_rpc_meltmom_define_function_n_count,
+  json_rpc_meltmom_define_function_n_variadic,
   json_rpc_meltmom_define_function_n__lastnum
 };
 
@@ -5520,6 +5522,7 @@ json_rpc_meltmom_define_function_lab_start:
     _SET_STATE (impossible);
   _L (name) = mom_jsonob_getstr (_L (jparams), "monimelt_name");
   _L (jargs) = mom_jsonob_getstr (_L (jparams), "monimelt_args");
+  _L (jvariadic) = mom_jsonob_getstr (_L (jparams), "monimelt_variadic");
   _L (jrestype) = mom_jsonob_getstr (_L (jparams), "monimelt_result");
   MOM_DEBUG (run,
 	     MOMOUT_LITERAL ("json_rpc_meltmom_define_function name="),
@@ -5527,6 +5530,8 @@ json_rpc_meltmom_define_function_lab_start:
 	     MOMOUT_SPACE (32),
 	     MOMOUT_LITERAL ("jargs="),
 	     MOMOUT_VALUE ((const momval_t) _L (jargs)),
+	     MOMOUT_LITERAL ("jvariadic="),
+	     MOMOUT_VALUE ((const momval_t) _L (jvariadic)),
 	     MOMOUT_SPACE (32),
 	     MOMOUT_LITERAL ("jrestype="),
 	     MOMOUT_VALUE ((const momval_t) _L (jrestype)),
@@ -5536,6 +5541,9 @@ json_rpc_meltmom_define_function_lab_start:
 	       ("invalid parameter to json_rpc_meltmom_define_function:"),
 	       MOMOUT_VALUE ((const momval_t) _L (jparams)), NULL);
   _L (nameditm) = (momval_t) mom_get_item_of_name_string (_L (name));
+  _N (variadic) = (_L(jvariadic).ptr != NULL)?1:0;
+  if (_N(variadic))
+    _L(jargs) = _L(jvariadic);
   if (!_L (nameditm).ptr)
     {
       _L (nameditm) = (momval_t) mom_make_item ();
@@ -5567,8 +5575,9 @@ json_rpc_meltmom_define_function_lab_start:
 	argtab[ix] = curtyparg;
       };
     _L (argnode) =
-      (momval_t) mom_make_node_from_array (mom_named__monimelt_arguments,
-					   nbargs, argtab);
+      (momval_t) mom_make_node_from_array
+      (_N(variadic)?mom_named__monimelt_variadic:mom_named__monimelt_arguments,
+       nbargs, argtab);
     MOM_GC_FREE (argtab);
     MOM_DEBUG (run,
 	       MOMOUT_LITERAL ("json_rpc_meltmom_define_function argnode="),
