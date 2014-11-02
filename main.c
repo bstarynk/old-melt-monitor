@@ -258,7 +258,6 @@ mom_fatal_at (const char *sfil, int slin, ...)
   fclose (outd.mout_file);
   memset (&outd, 0, sizeof (outd));
   mom_fataprintf_at (sfil, slin, "%s", membuf);
-  free (membuf), membuf = 0;
 }
 
 

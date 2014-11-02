@@ -2365,7 +2365,8 @@ __attribute__ ((format (printf, 3, 4)));
 
 
 /************************* fatal *************************/
-void mom_fatal_at (const char *fil, int lin, ...) __attribute__ ((sentinel));
+void mom_fatal_at (const char *fil, int lin, ...)
+  __attribute__ ((sentinel, noreturn));
 
 #define MOM_FATAL_AT(Fil,Lin,...) do {	\
       mom_fatal_at (Fil,Lin,		\
@@ -2384,7 +2385,7 @@ void mom_fatal_at (const char *fil, int lin, ...) __attribute__ ((sentinel));
 
 void
 mom_fataprintf_at (const char *fil, int lin, const char *fmt, ...)
-__attribute__ ((format (printf, 3, 4)));
+__attribute__ ((format (printf, 3, 4), noreturn));
 
 #define MOM_FATAPRINTF_AT(Fil,Lin,Fmt,...) do {	\
       mom_fataprintf_at (Fil,Lin,Fmt,		\

@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 Nov 01
+-- state-monimelt dump 2014 Nov 02
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','todo dump at exit');
+INSERT INTO t_params VALUES('dump_reason','exit dump');
 INSERT INTO t_items VALUES('_02mtzeca0pf_kc9d1i34ap4','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1853}, {"attr": "_89jhda3v3wj_hvzvs5w6hui",
    "val": {"jtype": "node", "node": "_89jhda3v3wj_hvzvs5w6hui", "sons": [{"jtype":
       "node", "node": "_1vd2t9p4krp_yjsuuc88k61", "sons": [{"item_ref": "_28jrsus3ti3_da1ztz7ex3x",
@@ -507,6 +507,9 @@ INSERT INTO t_items VALUES('_28qsshh7hwr_k2jdce4atqt','{"attr": [{"attr": "_8hvs
       "node", "node": "_1vd2t9p4krp_yjsuuc88k61", "sons": [{"item_ref": "_28jrsus3ti3_da1ztz7ex3x",
 "jtype": "item_ref", "space": ".root"}]}]}}, {"attr": "_7dekms4ck3h_e7c1xm3p74c",
    "val": {"item_ref": "_77xdevxp3zp_yeryy3x1aea", "jtype": "item_ref", "space": ".predef"}}],
+ "content": null, "kind": null, "payload": null}
+');
+INSERT INTO t_items VALUES('_2a1fq7ks2ak_wvxk68qe4mv','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for block of statements"}],
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_2aeczcr3u9f_cz273p64kkj','{"attr": [{"attr": "_8hvs0h5a7v9_1ixv3jf2j6j", "val": 1741}, {"attr": "_89jhda3v3wj_hvzvs5w6hui",
@@ -2305,6 +2308,7 @@ INSERT INTO t_names VALUES('assign','_0zmdkdxj7kp_491yqpcuaz8','.root');
 INSERT INTO t_names VALUES('assoc_get','_70mt4fvrva2_pk76eevwada','.root');
 INSERT INTO t_names VALUES('assoc_put','_5c5jh9185sv_qru5amf9v18','.root');
 INSERT INTO t_names VALUES('attr','_6w3dvx83dfw_xzc6aif6isv','.predef');
+INSERT INTO t_names VALUES('block','_2a1fq7ks2ak_wvxk68qe4mv','.predef');
 INSERT INTO t_names VALUES('body','_0ihu411vkua_z4sh56hicdt','.predef');
 INSERT INTO t_names VALUES('bool','_57vx8i37ar4_1346w0cep34','.predef');
 INSERT INTO t_names VALUES('buffer','_3zqd7ai3rtu_md9athkx17u','.predef');

@@ -20,7 +20,28 @@
 
 #include "monimelt.h"
 
+/****
+   A module item is an item with a `module_routines` attribute
+   associated to a set of routine items.
+
+   A routine item is an item with a `body` attribute associated to a
+   block item (for the starting state).
+
+   A block item is an item with a `block` attribute associated to a `block` node.
+ ****/
+
+
 #define CGEN_MAGIC 0x566801a5	/* cgen magic 1449656741 */
+
+// routine specific structure
+struct cgen_routine_mom_st
+{
+  momitem_t *cgrout_item;	/* the routine item */
+  unsigned cgrout_nbblock;
+  unsigned cgrout_sizeblock;
+  momitem_t **cgrout_blocktab;	/* of cgrout_sizeblock size */
+};
+
 // internal stack allocated structure to generate the C module
 struct c_generator_mom_st
 {
@@ -30,6 +51,9 @@ struct c_generator_mom_st
   char *cgen_errmsg;
   unsigned cgen_nbrout;
   momitem_t *cgen_curoutitm;
+  struct mom_itemattributes_st *cgen_attrs;
+  struct cgen_routine_mom_st *cgen_routab;
+  struct mom_valuequeue_st cgen_blockqueue;
 };
 
 const char *
@@ -75,10 +99,47 @@ cgen_error_mom_at (int lin, struct c_generator_mom_st *cgen, ...)
 
 
 static void
-cgen_scan_routine_mom (struct c_generator_mom_st *cgen, momitem_t *itrout);
+cgen_scan_routine_mom (struct c_generator_mom_st *cgen, momitem_t *itrout,
+		       int index);
 
 static void
-cgen_scan_block_mom (struct c_generator_mom_st *cgen, momitem_t *itrout);
+cgen_scan_block_mom (struct c_generator_mom_st *cgen, int routix,
+		     momitem_t *itblock);
+
+
+static inline void
+cgen_should_scan_block_mom (struct c_generator_mom_st *cgen, int routix,
+			    momitem_t *blockitm)
+{
+  assert (cgen && cgen->cgen_magic == CGEN_MAGIC);
+  assert (routix >= 0 && routix < (int) cgen->cgen_nbrout);
+  assert (blockitm && blockitm->i_typnum == momty_item);
+  momval_t blockat = mom_get_attribute (cgen->cgen_attrs, blockitm);
+  momval_t ixv = MOM_NULLV;
+  if (blockat.ptr)
+    {
+      if (mom_node_conn (blockat) == mom_named__block
+	  && (ixv = mom_node_nth (blockat, 0)).ptr
+	  && mom_is_integer (ixv) && mom_integer_val_def (ixv, -1) == routix)
+	return;
+      else
+	CGEN_ERROR_MOM (cgen, MOMOUT_LITERAL ("already meet block:"),
+			MOMOUT_ITEM ((const momitem_t *) blockitm),
+			MOMOUT_LITERAL (" in routine:"),
+			MOMOUT_ITEM ((const momitem_t *)
+				     cgen->cgen_curoutitm));
+    }
+  int blockix = (int) cgen->cgen_routab[routix].cgrout_nbblock++;
+  cgen->cgen_routab[routix].cgrout_blocktab[blockix] = blockitm;
+  cgen->cgen_attrs = mom_put_attribute
+    (cgen->cgen_attrs,
+     blockitm,
+     (momval_t) mom_make_node_sized (mom_named__block,
+				     2,
+				     mom_make_integer (routix),
+				     mom_make_integer (blockix)));
+  mom_queue_add_value_back (&cgen->cgen_blockqueue, (momval_t) blockitm);
+}
 
 int
 mom_generate_c_module (momitem_t *moditm, char **perrmsg)
@@ -97,6 +158,7 @@ mom_generate_c_module (momitem_t *moditm, char **perrmsg)
 	     MOMOUT_ITEM ((const momitem_t *) moditm), NULL);
   cgen.cgen_magic = CGEN_MAGIC;
   cgen.cgen_moditm = moditm;
+  cgen.cgen_attrs = mom_reserve_attribute (NULL, 32);
   jr = setjmp (cgen.cgen_jbuf);
   if (jr)
     {
@@ -118,29 +180,84 @@ mom_generate_c_module (momitem_t *moditm, char **perrmsg)
 		      MOMOUT_VALUE (modroutv));
   }
   cgen.cgen_nbrout = mom_set_cardinal (modroutv);
+  cgen.cgen_routab = MOM_GC_ALLOC ("cgen routine",
+				   cgen.cgen_nbrout *
+				   sizeof (struct cgen_routine_mom_st));
   for (unsigned ix = 0; ix < cgen.cgen_nbrout; ix++)
     {
       momitem_t *curoutitm = mom_set_nth_item (modroutv, ix);
       assert (curoutitm && curoutitm->i_typnum == momty_item);
       cgen.cgen_curoutitm = curoutitm;
-      cgen_scan_routine_mom (&cgen, curoutitm);
+      cgen_scan_routine_mom (&cgen, curoutitm, ix);
       cgen.cgen_curoutitm = NULL;
     }
 }
 
 
 static void
-cgen_scan_routine_mom (struct c_generator_mom_st *cgen, momitem_t *routitm)
+cgen_scan_routine_mom (struct c_generator_mom_st *cgen, momitem_t *routitm,
+		       int ix)
 {
+  momitem_t *bodyitm = NULL;
   assert (cgen && cgen->cgen_magic == CGEN_MAGIC);
   assert (routitm && routitm->i_typnum == momty_item);
+  assert (ix >= 0 && ix < (int) cgen->cgen_nbrout);
+  struct cgen_routine_mom_st *cgr = cgen->cgen_routab + ix;
   MOM_DEBUG (gencod, MOMOUT_LITERAL ("cgen_scan_routine routitm="),
 	     MOMOUT_ITEM ((const momitem_t *) routitm), NULL);
+  momval_t routat = mom_get_attribute (cgen->cgen_attrs, routitm);
+  if (routat.ptr)
+    {
+      MOM_DEBUG (gencod, MOMOUT_LITERAL ("cgen_scan_routine routat="),
+		 MOMOUT_VALUE ((const momval_t) routat));
+      CGEN_ERROR_MOM (cgen,
+		      MOMOUT_LITERAL ("scan_routine already meet routitm:"),
+		      MOMOUT_ITEM ((const momitem_t *) routitm),
+		      MOMOUT_LITERAL (" #"), MOMOUT_DEC_INT (ix), NULL);
+    }
+  {
+    mom_should_lock_item (routitm);
+    bodyitm = mom_value_to_item (mom_item_get_attribute (routitm,
+							 mom_named__body));
+    mom_unlock_item (routitm);
+  }
+  if (!bodyitm)
+    CGEN_ERROR_MOM (cgen,
+		    MOMOUT_LITERAL ("scan_routine missing body in routitm:"),
+		    MOMOUT_ITEM ((const momitem_t *) routitm));
+  cgr->cgrout_item = routitm;
+  cgr->cgrout_nbblock = 0;
+  cgr->cgrout_sizeblock = 16;
+  cgr->cgrout_blocktab =
+    MOM_GC_ALLOC ("blocktab", cgr->cgrout_sizeblock * sizeof (momitem_t *));
+  cgen->cgen_attrs = mom_put_attribute
+    (cgen->cgen_attrs,
+     routitm,
+     (momval_t) mom_make_node_sized (mom_named__module_routines, 1,
+				     mom_make_integer (ix)));
+  cgen_should_scan_block_mom (cgen, ix, bodyitm);
+  while (!mom_queue_is_empty (&cgen->cgen_blockqueue))
+    {
+      momitem_t *blockitm =
+	mom_value_to_item (mom_queue_pop_value_front
+			   (&cgen->cgen_blockqueue));
+      assert (blockitm && blockitm->i_typnum == momty_item);
+      cgen_scan_block_mom (cgen, ix, blockitm);
+    }
 }
 
 static void
-cgen_scan_block_mom (struct c_generator_mom_st *cgen, momitem_t *blockitm)
+cgen_scan_block_mom (struct c_generator_mom_st *cgen, int routix,
+		     momitem_t *blockitm)
 {
   assert (cgen && cgen->cgen_magic == CGEN_MAGIC);
+  assert (routix >= 0 && routix < (int) cgen->cgen_nbrout);
   assert (blockitm && blockitm->i_typnum == momty_item);
+  MOM_DEBUG (gencod, MOMOUT_LITERAL ("cgen_scan_block blockitm="),
+	     MOMOUT_ITEM ((const momitem_t *) blockitm), NULL);
+#warning cgen_scan_block_mom should scan the block contents
 }
+
+
+
+//// eof gencod.c

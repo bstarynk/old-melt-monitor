@@ -5541,9 +5541,9 @@ json_rpc_meltmom_define_function_lab_start:
 	       ("invalid parameter to json_rpc_meltmom_define_function:"),
 	       MOMOUT_VALUE ((const momval_t) _L (jparams)), NULL);
   _L (nameditm) = (momval_t) mom_get_item_of_name_string (_L (name));
-  _N (variadic) = (_L(jvariadic).ptr != NULL)?1:0;
-  if (_N(variadic))
-    _L(jargs) = _L(jvariadic);
+  _N (variadic) = (_L (jvariadic).ptr != NULL) ? 1 : 0;
+  if (_N (variadic))
+    _L (jargs) = _L (jvariadic);
   if (!_L (nameditm).ptr)
     {
       _L (nameditm) = (momval_t) mom_make_item ();
@@ -5576,8 +5576,8 @@ json_rpc_meltmom_define_function_lab_start:
       };
     _L (argnode) =
       (momval_t) mom_make_node_from_array
-      (_N(variadic)?mom_named__monimelt_variadic:mom_named__monimelt_arguments,
-       nbargs, argtab);
+      (_N (variadic) ? mom_named__monimelt_variadic :
+       mom_named__monimelt_arguments, nbargs, argtab);
     MOM_GC_FREE (argtab);
     MOM_DEBUG (run,
 	       MOMOUT_LITERAL ("json_rpc_meltmom_define_function argnode="),

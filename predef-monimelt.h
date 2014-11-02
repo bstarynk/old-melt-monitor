@@ -52,6 +52,9 @@ MOM_PREDEFINED_NAMED(arguments,_8um1q4shitk_tpcmedvsfzu)
 ////!gives the attribute[s], at least in dumped JSON...
 MOM_PREDEFINED_NAMED(attr,_6w3dvx83dfw_xzc6aif6isv)
 
+////!for block of statements
+MOM_PREDEFINED_NAMED(block,_2a1fq7ks2ak_wvxk68qe4mv)
+
 ////!body of a routine
 MOM_PREDEFINED_NAMED(body,_0ihu411vkua_z4sh56hicdt)
 
