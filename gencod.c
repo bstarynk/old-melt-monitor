@@ -28,6 +28,7 @@
    block item (for the starting state).
 
    A block item is an item with a `block` attribute associated to a `block` node.
+   The sons of that node are instruction nodes.
  ****/
 
 
@@ -255,13 +256,28 @@ cgen_scan_block_mom (struct c_generator_mom_st *cgen, int routix,
   assert (routix >= 0 && routix < (int) cgen->cgen_nbrout);
   assert (blockitm && blockitm->i_typnum == momty_item);
   MOM_DEBUG (gencod, MOMOUT_LITERAL ("cgen_scan_block blockitm="),
-	     MOMOUT_ITEM ((const momitem_t *) blockitm), NULL);
+	     MOMOUT_ITEM ((const momitem_t *) blockitm),
+	     MOMOUT_SPACE (48),
+	     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) blockitm), NULL);
   {
     mom_should_lock_item (blockitm);
     blockv = mom_item_get_attribute (blockitm, mom_named__block);
     mom_unlock_item (blockitm);
   }
-#warning cgen_scan_block_mom should scan the block contents
+  if (mom_node_conn (blockv) != mom_named__block)
+    CGEN_ERROR_MOM (cgen,
+		    MOMOUT_LITERAL ("bad block value:"),
+		    MOMOUT_VALUE ((const momval_t) blockv),
+		    MOMOUT_LITERAL ("in blockitm:"),
+		    MOMOUT_ITEM ((const momitem_t *) blockitm),
+		    MOMOUT_LITERAL (" routix="),
+		    MOMOUT_DEC_INT (routix), NULL);
+  unsigned aritblock = mom_node_arity (blockv);
+  for (unsigned insix = 0; insix < aritblock; insix++)
+    {
+      momval_t curinsv = mom_node_nth (blockv, insix);
+#warning cgen_scan_block_mom should scan the block contents and curinsv
+    }
 }
 
 
