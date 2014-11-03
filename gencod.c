@@ -250,11 +250,17 @@ static void
 cgen_scan_block_mom (struct c_generator_mom_st *cgen, int routix,
 		     momitem_t *blockitm)
 {
+  momval_t blockv = MOM_NULLV;
   assert (cgen && cgen->cgen_magic == CGEN_MAGIC);
   assert (routix >= 0 && routix < (int) cgen->cgen_nbrout);
   assert (blockitm && blockitm->i_typnum == momty_item);
   MOM_DEBUG (gencod, MOMOUT_LITERAL ("cgen_scan_block blockitm="),
 	     MOMOUT_ITEM ((const momitem_t *) blockitm), NULL);
+  {
+    mom_should_lock_item (blockitm);
+    blockv = mom_item_get_attribute (blockitm, mom_named__block);
+    mom_unlock_item (blockitm);
+  }
 #warning cgen_scan_block_mom should scan the block contents
 }
 
