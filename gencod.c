@@ -108,6 +108,10 @@ cgen_scan_block_mom (struct c_generator_mom_st *cgen, int routix,
 		     momitem_t *itblock);
 
 
+static void
+cgen_scan_instr_mom (struct c_generator_mom_st *cgen, int routix,
+		     const momitem_t *blockitm, int insix, momval_t insv);
+
 static inline void
 cgen_should_scan_block_mom (struct c_generator_mom_st *cgen, int routix,
 			    momitem_t *blockitm)
@@ -276,10 +280,52 @@ cgen_scan_block_mom (struct c_generator_mom_st *cgen, int routix,
   for (unsigned insix = 0; insix < aritblock; insix++)
     {
       momval_t curinsv = mom_node_nth (blockv, insix);
-#warning cgen_scan_block_mom should scan the block contents and curinsv
+      cgen_scan_instr_mom (cgen, routix, blockitm, insix, curinsv);
     }
 }
 
 
+
+static void
+cgen_scan_instr_mom (struct c_generator_mom_st *cgen, int routix,
+		     const momitem_t *blockitm, int insix, momval_t insv)
+{
+  assert (cgen && cgen->cgen_magic == CGEN_MAGIC);
+  const momitem_t *opitm = mom_node_conn (insv);
+  if (!opitm)
+    CGEN_ERROR_MOM (cgen, MOMOUT_LITERAL ("bad instruction#"),
+		    MOMOUT_DEC_INT (insix),
+		    MOMOUT_SPACE (48),
+		    MOMOUT_VALUE ((const momval_t) insv),
+		    MOMOUT_SPACE (48),
+		    MOMOUT_LITERAL ("in block:"),
+		    MOMOUT_ITEM (blockitm),
+		    MOMOUT_SPACE (48),
+		    MOMOUT_LITERAL ("routine#"),
+		    MOMOUT_DEC_INT (routix),
+		    MOMOUT_SPACE (48),
+		    MOMOUT_ITEM ((const momitem_t *) cgen->cgen_curoutitm),
+		    NULL);
+#define OPHASHMOD 2381
+  switch (opitm->i_hash % OPHASHMOD)
+    {
+    case 1548541904 % OPHASHMOD:
+      if (opitm == mom_named__assign)
+	{
+	  momval_t leftv = mom_node_nth (insv, 0);
+	  momval_t rightv = mom_node_nth (insv, 1);
+
+	};
+      break;
+    case 4023442404 % OPHASHMOD:
+      if (opitm == mom_named__perform)
+	{
+	  momval_t exprv = mom_node_nth (insv, 0);
+	};
+      break;
+    }
+#undef OPHASHMOD
+
+}
 
 //// eof gencod.c

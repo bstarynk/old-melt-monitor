@@ -1880,12 +1880,18 @@ mom_full_dump (const char *reason, const char *dumpdir,
 		   MOMOUT_LITERAL (","),
 		   MOMOUT_LITERALV (mom_string_cstr
 				    ((momval_t) predefitm->i_idstr)),
-		   MOMOUT_LITERAL (")"), MOMOUT_NEWLINE ());
+		   MOMOUT_LITERAL (") //"),
+		   MOMOUT_FMT_LONG ((const char *) "%lu",
+				    (long) predefitm->i_hash),
+		   MOMOUT_NEWLINE ());
 	else
 	  MOM_OUT (&outs, MOMOUT_LITERAL ("MOM_PREDEFINED_ANONYMOUS("),
 		   MOMOUT_LITERALV (mom_string_cstr
 				    ((momval_t) predefitm->i_idstr)),
-		   MOMOUT_LITERAL (")"), MOMOUT_NEWLINE ());
+		   MOMOUT_LITERAL (") //"),
+		   MOMOUT_FMT_LONG ((const char *) "%lu",
+				    (long) predefitm->i_hash),
+		   MOMOUT_NEWLINE ());
 	mom_unlock_item (predefitm);
       }
     MOM_OUT (&outs, MOMOUT_NEWLINE (),
