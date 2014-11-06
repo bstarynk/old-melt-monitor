@@ -2641,10 +2641,18 @@ extern void mom_plugin_init (const char *pluginarg);	// the plugin initializer
 extern void momplugin_after_load (void);
 
 /// declare the predefined named and anonymous
-#define MOM_PREDEFINED_NAMED(Name,Id) extern momitem_t* mom_named__##Name;
-#define MOM_PREDEFINED_ANONYMOUS(Id) extern momitem_t* mom_anonymous_##Id;
+#define MOM_PREDEFINED_NAMED(Name,Id,H) extern momitem_t* mom_named__##Name;
+#define MOM_PREDEFINED_ANONYMOUS(Id,H) extern momitem_t* mom_anonymous_##Id;
 #include "predef-monimelt.h"
 
+/// declare the hash of the predefined as an enum
+
+#define MOM_PREDEFINED_NAMED(Name,Id,H) mom_hashname__##Name = H,
+#define MOM_PREDEFINED_ANONYMOUS(Id,H) mom_hashanon__##Id = H,
+enum
+{
+#include "predef-monimelt.h"
+};
 
 #ifdef MELTMOM
 #pragma MONIMELT DISABLE

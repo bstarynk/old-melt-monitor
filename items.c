@@ -1133,13 +1133,13 @@ void
 mom_create_predefined_items (void)
 {
   int nbnamed = 0, nbanonym = 0;
-#define MOM_PREDEFINED_NAMED(Nam,Id) do {			\
+#define MOM_PREDEFINED_NAMED(Nam,Id,H) do {			\
     mom_named__##Nam = mom_make_item_of_identcstr(#Id);		\
     mom_named__##Nam->i_space = momspa_predefined;		\
     mom_register_item_named_cstr (mom_named__##Nam, #Nam);	\
     nbnamed ++;							\
   } while(0);
-#define MOM_PREDEFINED_ANONYMOUS(Id) do {			\
+#define MOM_PREDEFINED_ANONYMOUS(Id,H) do {			\
   mom_anonymous_##Id =  mom_make_item_of_identcstr (#Id);	\
   mom_anonymous_##Id->i_space = momspa_predefined;		\
   nbanonym ++;							\
@@ -1151,7 +1151,7 @@ mom_create_predefined_items (void)
 }				// end of mom_create_predefined_items
 
 // declare the predefined
-#define MOM_PREDEFINED_NAMED(Nam,Id) momitem_t* mom_named__##Nam;
-#define MOM_PREDEFINED_ANONYMOUS(Id) momitem_t* mom_anonymous_##Id;
+#define MOM_PREDEFINED_NAMED(Nam,Id,H) momitem_t* mom_named__##Nam;
+#define MOM_PREDEFINED_ANONYMOUS(Id,H) momitem_t* mom_anonymous_##Id;
 
 #include "predef-monimelt.h"

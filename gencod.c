@@ -309,7 +309,7 @@ cgen_scan_instr_mom (struct c_generator_mom_st *cgen, int routix,
 #define OPHASHMOD 2381
   switch (opitm->i_hash % OPHASHMOD)
     {
-    case 1548541904 % OPHASHMOD:
+    case mom_hashname__assign % OPHASHMOD:
       if (opitm == mom_named__assign)
 	{
 	  momval_t leftv = mom_node_nth (insv, 0);
@@ -317,7 +317,7 @@ cgen_scan_instr_mom (struct c_generator_mom_st *cgen, int routix,
 
 	};
       break;
-    case 4023442404 % OPHASHMOD:
+    case mom_hashname__perform % OPHASHMOD:
       if (opitm == mom_named__perform)
 	{
 	  momval_t exprv = mom_node_nth (insv, 0);
