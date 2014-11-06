@@ -1019,3 +1019,19 @@ main (int argc, char **argv)
   ///
   return 0;
 }
+
+
+// if this routine is compiled, we are sure that all predefined hashes
+// are unique
+const momitem_t *
+mom_predefined_item_of_hashcode (momhash_t h)
+{
+  switch (h)
+    {
+#define MOM_PREDEFINED_NAMED(Nam,Id,Hash) case Hash: return mom_named__##Nam;
+#define MOM_PREDEFINED_ANONYMOUS(Id,Hash) case Hash: return mom_anonymous_##Id;
+#include "predef-monimelt.h"
+    default:
+      return NULL;
+    }
+}
