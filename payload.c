@@ -769,7 +769,7 @@ payl_routine_load_mom (struct mom_loader_st *ld, momitem_t *itm,
   else if (mom_is_json_object (jsonv))
     {
       momval_t jcode = mom_jsonob_get (jsonv, (momval_t) mom_named__jit);
-      char *err = mom_item_generate_jit_routine (itm, jcode);
+      const char *err = mom_item_generate_jit_routine (itm, jcode);
       if (err)
 	MOM_FATAL (MOMOUT_LITERAL ("payl_routine_load_mom itm="),
 		   MOMOUT_ITEM ((const momitem_t *) itm),
@@ -1072,6 +1072,128 @@ mom_item_routinedescr (const momitem_t *itm)
   return NULL;
 }
 
+
+
+////////////////////////////////////////////////////////////////
+///// PROCEDURE PAYLOAD
+////////////////////////////////////////////////////////////////
+void
+mom_item_start_procedure (momitem_t *itm)
+{
+  char symbuf[72];
+  memset (symbuf, 0, sizeof (symbuf));
+  assert (itm && itm->i_typnum == momty_item);
+  if (itm->i_payload)
+    mom_item_clear_payload (itm);
+  struct momprocedure_st *proc = NULL;
+  struct momprocrout_st *prout = NULL;
+  snprintf (symbuf, sizeof (symbuf),
+	    MOM_PROCROUT_PREFIX "%s", mom_ident_cstr_of_item (itm));
+  prout = dlsym (mom_prog_dlhandle, symbuf);
+  if (!prout)
+    {
+      MOM_WARNPRINTF ("failed to start procedure %s: %s", symbuf, dlerror ());
+      return;
+    }
+  if (prout->prout_magic != MOM_PROCROUT_MAGIC
+      || strcmp (prout->prout_id, mom_ident_cstr_of_item (itm))
+      || !prout->prout_addr)
+    MOM_FATAPRINTF ("corrupted procrout for %s", symbuf);
+  unsigned plen = prout->prout_len;
+  proc
+    = MOM_GC_ALLOC ("procedure alloc",
+		    sizeof (struct momprocedure_st) +
+		    plen * sizeof (momval_t));
+  proc->proc_magic = MOM_PROCEDURE_MAGIC;
+  proc->proc_rout = prout;
+  itm->i_payload = proc;
+  itm->i_paylkind = mompayk_procedure;
+}
+
+
+static void
+payl_procedure_load_mom (struct mom_loader_st *ld, momitem_t *itm,
+			 momval_t jproc)
+{
+  assert (ld != NULL);
+  MOM_DEBUG (load,
+	     MOMOUT_LITERAL ("payl_procedure_load_mom itm="),
+	     MOMOUT_ITEM ((const momitem_t *) itm),
+	     MOMOUT_LITERAL (" jclos="),
+	     MOMOUT_VALUE ((const momval_t) jproc), NULL);
+  assert (itm && itm->i_typnum == momty_item);
+  mom_item_start_procedure (itm);
+  if (itm->i_paylkind != mompayk_procedure)
+    MOM_FATAL (MOMOUT_LITERAL ("failed to load procedure:"),
+	       MOMOUT_ITEM ((const momitem_t *) itm));
+  struct momprocedure_st *proc = itm->i_payload;
+  if (!proc || proc->proc_magic != MOM_PROCEDURE_MAGIC
+      || !proc->proc_rout
+      || proc->proc_rout->prout_magic != MOM_PROCROUT_MAGIC)
+    MOM_FATAL (MOMOUT_LITERAL ("corrupted loaded procedure:"),
+	       MOMOUT_ITEM ((const momitem_t *) itm));
+  const struct momprocrout_st *prout = proc->proc_rout;
+  assert (prout && prout->prout_magic == MOM_PROCROUT_MAGIC);
+  unsigned plen = prout->prout_len;
+  for (unsigned ix = 0; ix < plen; ix++)
+    {
+      proc->proc_valtab[ix] =
+	mom_load_value_json (ld, mom_json_array_nth (jproc, ix));
+    }
+}
+
+
+static void
+payl_procedure_dump_scan_mom (struct mom_dumper_st *du, momitem_t *itm)
+{
+  assert (du != NULL);
+  assert (itm && itm->i_typnum == momty_item);
+  assert (itm->i_paylkind == mompayk_procedure);
+  struct momprocedure_st *proc = itm->i_payload;
+  assert (proc && proc->proc_magic == MOM_PROCEDURE_MAGIC);
+  const struct momprocrout_st *prout = proc->proc_rout;
+  assert (prout && prout->prout_magic == MOM_PROCROUT_MAGIC);
+  unsigned plen = prout->prout_len;
+  for (unsigned ix = 0; ix < plen; ix++)
+    mom_dump_scan_value (du, proc->proc_valtab[ix]);
+}
+
+
+static momval_t
+payl_procedure_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
+{
+  momval_t jarr = MOM_NULLV;
+  assert (du != NULL);
+  assert (itm && itm->i_typnum == momty_item);
+  assert (itm->i_paylkind == mompayk_procedure);
+  struct momprocedure_st *proc = itm->i_payload;
+  assert (proc && proc->proc_magic == MOM_PROCEDURE_MAGIC);
+  const struct momprocrout_st *prout = proc->proc_rout;
+  assert (prout && prout->prout_magic == MOM_PROCROUT_MAGIC);
+  unsigned plen = prout->prout_len;
+  momval_t tinyarr[MOM_TINY_MAX] = { MOM_NULLV };
+  momval_t *arrval =
+    (plen < MOM_TINY_MAX) ? tinyarr
+    : MOM_GC_ALLOC ("dump procedure array", plen * sizeof (momval_t));
+  for (unsigned ix = 0; ix < plen; ix++)
+    arrval[ix] = mom_dump_emit_json (du, proc->proc_valtab[ix]);
+  jarr = (momval_t) mom_make_json_array_count (plen, arrval);
+  if (arrval != tinyarr)
+    MOM_GC_FREE (arrval);
+  if (prout->prout_module
+      && strcmp (prout->prout_module, MOM_EMPTY_MODULE) != 0)
+    mom_dump_require_module (du, prout->prout_module);
+  return jarr;
+}
+
+
+static const struct mom_payload_descr_st payldescr_procedure_mom = {
+  .dpayl_magic = MOM_PAYLOAD_MAGIC,
+  .dpayl_name = "procedure",
+  .dpayl_loadfun = payl_procedure_load_mom,
+  .dpayl_dumpscanfun = payl_procedure_dump_scan_mom,
+  .dpayl_dumpjsonfun = payl_procedure_dump_json_mom,
+};
 
 ////////////////////////////////////////////////////////////////
 ///// TASKLET PAYLOAD

@@ -1349,19 +1349,29 @@ typedef enum momtypenc_st momtypenc_t;
 struct momprocedure_st
 {				/* payload of procedures */
   unsigned proc_magic;		/* always MOM_PROCEDURE_MAGIC */
-  unsigned proc_len;
   const struct momprocrout_st *proc_rout;
   momval_t proc_valtab[];
 };
 #define MOM_PROCROUT_MAGIC 407208731	/* procrout magic 0x1845831b */
+
+// for a given ID the momprocrout_st is named momprocdescr_ID
+// and the C function is named momprocfun_ID
+#define MOM_PROCROUT_PREFIX "momprocdescr"
 struct momprocrout_st
 {
   const unsigned prout_magic;	/* always MOM_PROCROUT_MAGIC */
   const momtypenc_t prout_res;	/* type result */
+  unsigned prout_len;
   const char *prout_id;
-  const void *prout_ad;
+  const char *prout_module;
+  const void *prout_addr;
   const char *prout_argsig;	/* signature, in momtypenc_t */
 };
+
+void mom_item_start_procedure (momitem_t *itm);
+momval_t mom_item_procedure_nth (const momitem_t *itm, int rk);
+void mom_item_procedure_set_nth (momitem_t *itm, int rk, momval_t cval);
+
 /************* tasklet item *********/
 
 struct momframe_st
