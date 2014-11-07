@@ -136,7 +136,11 @@ payl_queue_dump_scan_mom (struct mom_dumper_st *du, momitem_t *itm)
   struct mom_valuequeue_st *vq = itm->i_payload;
   for (struct mom_vaqelem_st * qel
        = vq->vaq_first; qel != NULL; qel = qel->vqe_next)
-    mom_dump_scan_value (du, qel->vqe_val);
+    {
+      for (int ix = 0; ix < MOM_QUEUEPACK_LEN; ix++)
+	if (qel->vqe_valtab[ix].ptr)
+	  mom_dump_scan_value (du, qel->vqe_valtab[ix]);
+    }
 }
 
 static momval_t
@@ -154,11 +158,17 @@ payl_queue_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
     (qlen < MOM_TINY_MAX) ? tinyarr
     : MOM_GC_ALLOC ("dump queue array", qlen * sizeof (momval_t));
   unsigned cnt = 0;
-  for (struct mom_vaqelem_st * qel
-       = vq->vaq_first;
-       qel != NULL && cnt < qlen; (qel = qel->vqe_next), cnt++)
-    arrval[cnt] = mom_dump_emit_json (du, qel->vqe_val);
-  jarr = (momval_t) mom_make_json_array_count (qlen, arrval);
+  for (struct mom_vaqelem_st * qel = vq->vaq_first;
+       qel != NULL && cnt < qlen; qel = qel->vqe_next)
+    {
+      for (int ix = 0; ix < MOM_QUEUEPACK_LEN; ix++)
+	{
+	  momval_t curval = qel->vqe_valtab[ix];
+	  if (curval.ptr && cnt < qlen)
+	    arrval[cnt++] = mom_dump_emit_json (du, curval);
+	}
+    }
+  jarr = (momval_t) mom_make_json_array_count (cnt, arrval);
   if (arrval != tinyarr)
     MOM_GC_FREE (arrval);
   return jarr;
@@ -2643,8 +2653,15 @@ payl_buffer_dump_json_mom (struct mom_dumper_st *du, momitem_t *ditm)
   unsigned cntchk = 0;
   for (struct mom_vaqelem_st * qel = que.vaq_first;
        qel != NULL && cntchk < nbchk; qel = qel->vqe_next)
-    arrchk[cntchk++] = qel->vqe_val;
-  jres = (momval_t) mom_make_json_array_count (nbchk, arrchk);
+    {
+      for (int ix = 0; ix < MOM_QUEUEPACK_LEN; ix++)
+	{
+	  momval_t curval = qel->vqe_valtab[ix];
+	  if (curval.ptr && cntchk < nbchk)
+	    arrchk[cntchk++] = curval;
+	}
+    }
+  jres = (momval_t) mom_make_json_array_count (cntchk, arrchk);
   if (arrchk != tinyarr)
     MOM_GC_FREE (arrchk);
   return jres;

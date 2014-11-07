@@ -1229,6 +1229,7 @@ enum mom_kindpayload_en
   mompayk_queue,		// queue of values
   mompayk_routine,		// low-level routine
   mompayk_closure,		// closure, with closed values and routine
+  mompayk_procedure,		// procedure, with closed values
   mompayk_tasklet,		// tasklet with its call stack
   mompayk_buffer,		// character buffer
   mompayk_vector,		// vector of values
@@ -1334,6 +1335,33 @@ const char *mom_item_closure_routine_name (const momitem_t *itm);
 
 const struct momroutinedescr_st *mom_item_routinedescr (const momitem_t *itm);
 
+/************* procedure item *********/
+enum momtypenc_st
+{
+  momtypenc__none,		/* for void result */
+  momtypenc_int = 'i',		/* inptr_t */
+  momtypenc_val = 'v',		/* momval_t */
+  momtypenc_string = 's',	/* const char* string literal */
+  momtypenc_double = 'd',	/* double */
+};
+typedef enum momtypenc_st momtypenc_t;
+#define MOM_PROCEDURE_MAGIC 1038420085	/* procedure magic 0x3de50875 */
+struct momprocedure_st
+{				/* payload of procedures */
+  unsigned proc_magic;		/* always MOM_PROCEDURE_MAGIC */
+  unsigned proc_len;
+  const struct momprocrout_st *proc_rout;
+  momval_t proc_valtab[];
+};
+#define MOM_PROCROUT_MAGIC 407208731	/* procrout magic 0x1845831b */
+struct momprocrout_st
+{
+  const unsigned prout_magic;	/* always MOM_PROCROUT_MAGIC */
+  const momtypenc_t prout_res;	/* type result */
+  const char *prout_id;
+  const void *prout_ad;
+  const char *prout_argsig;	/* signature, in momtypenc_t */
+};
 /************* tasklet item *********/
 
 struct momframe_st
@@ -2441,12 +2469,16 @@ extern const char *mombad_unsigned;
 
 
 ////////////////////////////////////////////////////////////////
-///// QUEUES OF VALUES
+///// QUEUES OF NON-NIL VALUES
 ////////////////////////////////////////////////////////////////
+
+// we pack together several values in queue elements to achieve better
+// cache locality...
+#define MOM_QUEUEPACK_LEN 15
 struct mom_vaqelem_st
 {
   struct mom_vaqelem_st *vqe_next;
-  momval_t vqe_val;
+  momval_t vqe_valtab[MOM_QUEUEPACK_LEN];
 };
 
 struct mom_valuequeue_st
@@ -2469,7 +2501,16 @@ mom_queue_length (struct mom_valuequeue_st *vq)
   unsigned cnt = 0;
   for (struct mom_vaqelem_st * qel = vq->vaq_first;
        qel != NULL; qel = qel->vqe_next)
-    cnt++;
+    {
+      if (qel == vq->vaq_first || qel == vq->vaq_last)
+	{
+	  for (unsigned ix = 0; ix < MOM_QUEUEPACK_LEN; ix++)
+	    if (qel->vqe_valtab[ix].ptr)
+	      cnt++;
+	}
+      else
+	cnt += MOM_QUEUEPACK_LEN;
+    }
   return cnt;
 }
 
@@ -2477,15 +2518,47 @@ static inline void
 mom_queue_add_value_back (struct mom_valuequeue_st *vq, const momval_t val)
 {
   assert (vq != NULL);
-  struct mom_vaqelem_st *qel =
-    MOM_GC_ALLOC ("add back value queue", sizeof (struct mom_vaqelem_st));
-  qel->vqe_val = val;
-  if (MOM_UNLIKELY (vq->vaq_first == NULL))
-    vq->vaq_first = vq->vaq_last = qel;
+  struct mom_vaqelem_st *qel = NULL;
+  if (val.ptr == NULL)
+    return;
+  if (MOM_UNLIKELY (vq->vaq_last == NULL))
+    {
+      qel =
+	MOM_GC_ALLOC ("add back value empty queue",
+		      sizeof (struct mom_vaqelem_st));
+      qel->vqe_valtab[0] = val;
+      vq->vaq_last = vq->vaq_first = qel;
+    }
   else
     {
-      vq->vaq_last->vqe_next = qel;
-      vq->vaq_last = qel;
+      qel = vq->vaq_last;
+      if (qel->vqe_valtab[MOM_QUEUEPACK_LEN - 1].ptr == NULL
+	  || qel->vqe_valtab[0].ptr == NULL)
+	{
+	  momval_t vpack[MOM_QUEUEPACK_LEN] = { MOM_NULLV };
+	  int ix = 0, cnt = 0;
+	  for (ix = 0; ix < MOM_QUEUEPACK_LEN; ix++)
+	    {
+	      momval_t curval = qel->vqe_valtab[ix];
+	      if (curval.ptr)
+		vpack[cnt++] = curval;
+	    }
+	  assert (cnt > 0 && cnt < MOM_QUEUEPACK_LEN - 1);
+	  vpack[cnt++] = val;
+	  for (ix = 0; ix < cnt; ix++)
+	    qel->vqe_valtab[ix] = vpack[cnt];
+	  for (ix = cnt; ix < MOM_QUEUEPACK_LEN; ix++)
+	    qel->vqe_valtab[ix] = MOM_NULLV;
+	}
+      else
+	{
+	  qel =
+	    MOM_GC_ALLOC ("add back value nonempty queue",
+			  sizeof (struct mom_vaqelem_st));
+	  qel->vqe_valtab[0] = val;
+	  vq->vaq_last->vqe_next = qel;
+	  vq->vaq_last = qel;
+	}
     }
 }
 
@@ -2493,15 +2566,47 @@ static inline void
 mom_queue_add_value_front (struct mom_valuequeue_st *vq, const momval_t val)
 {
   assert (vq != NULL);
-  struct mom_vaqelem_st *qel =
-    MOM_GC_ALLOC ("add front value queue", sizeof (struct mom_vaqelem_st));
-  qel->vqe_val = val;
+  if (val.ptr == NULL)
+    return;
+  struct mom_vaqelem_st *qel = NULL;
   if (MOM_UNLIKELY (vq->vaq_first == NULL))
-    vq->vaq_first = vq->vaq_last = qel;
+    {
+      qel =
+	MOM_GC_ALLOC ("add front value empty queue",
+		      sizeof (struct mom_vaqelem_st));
+      qel->vqe_valtab[0] = val;
+      vq->vaq_last = vq->vaq_first = qel;
+    }
   else
     {
-      qel->vqe_next = vq->vaq_first;
-      vq->vaq_first = qel;
+      qel = vq->vaq_last;
+      if (qel->vqe_valtab[MOM_QUEUEPACK_LEN - 1].ptr == NULL
+	  || qel->vqe_valtab[0].ptr == NULL)
+	{
+	  momval_t vpack[MOM_QUEUEPACK_LEN] = { MOM_NULLV };
+	  int ix = 0, cnt = 1;
+	  vpack[0] = val;
+	  for (ix = 0; ix < MOM_QUEUEPACK_LEN; ix++)
+	    {
+	      momval_t curval = qel->vqe_valtab[ix];
+	      if (curval.ptr)
+		vpack[cnt++] = curval;
+	    }
+	  assert (cnt > 0 && cnt < MOM_QUEUEPACK_LEN);
+	  for (ix = 0; ix < cnt; ix++)
+	    qel->vqe_valtab[ix] = vpack[cnt];
+	  for (ix = cnt; ix < MOM_QUEUEPACK_LEN; ix++)
+	    qel->vqe_valtab[ix] = MOM_NULLV;
+	}
+      else
+	{
+	  qel =
+	    MOM_GC_ALLOC ("add front value nonempty queue",
+			  sizeof (struct mom_vaqelem_st));
+	  qel->vqe_valtab[0] = val;
+	  vq->vaq_last->vqe_next = qel;
+	  vq->vaq_last = qel;
+	}
     }
 }
 
@@ -2509,27 +2614,50 @@ static inline momval_t
 mom_queue_peek_value_front (struct mom_valuequeue_st *vq)
 {
   assert (vq != NULL);
-  if (MOM_UNLIKELY (vq->vaq_first == NULL))
+  struct mom_vaqelem_st *qel = vq->vaq_first;
+  if (MOM_UNLIKELY (qel == NULL))
     return MOM_NULLV;
   else
-    return vq->vaq_first->vqe_val;
+    {
+      for (int ix = 0; ix < MOM_QUEUEPACK_LEN; ix++)
+	if (qel->vqe_valtab[ix].ptr)
+	  return qel->vqe_valtab[ix];
+      MOM_FATAPRINTF ("corrupted queue @%p", vq);
+    }
 }
 
 static inline momval_t
 mom_queue_pop_value_front (struct mom_valuequeue_st *vq)
 {
   assert (vq != NULL);
-  if (MOM_UNLIKELY (vq->vaq_first == NULL))
+  struct mom_vaqelem_st *qel = vq->vaq_first;
+  if (MOM_UNLIKELY (qel == NULL))
     return MOM_NULLV;
   else
     {
-      struct mom_vaqelem_st *qel = vq->vaq_first;
-      const momval_t val = qel->vqe_val;
-      if (MOM_UNLIKELY (qel == vq->vaq_last))
-	vq->vaq_first = vq->vaq_last = NULL;
+      momval_t val = MOM_NULLV;
+      momval_t vpack[MOM_QUEUEPACK_LEN] = { MOM_NULLV };
+      int cnt = 0;
+      for (int ix = 0; ix < MOM_QUEUEPACK_LEN; ix++)
+	if (qel->vqe_valtab[ix].ptr)
+	  {
+	    if (!val.ptr)
+	      val = qel->vqe_valtab[ix];
+	    else
+	      vpack[cnt++] = qel->vqe_valtab[ix];
+	  };
+      if (0 == cnt)
+	{
+	  vq->vaq_first = qel->vqe_next;
+	  MOM_GC_FREE (qel);
+	}
       else
-	vq->vaq_first = qel->vqe_next;
-      MOM_GC_FREE (qel);
+	{
+	  for (int ix = 0; ix < MOM_QUEUEPACK_LEN; ix++)
+	    qel->vqe_valtab[ix] = vpack[ix];
+	}
+      if (MOM_UNLIKELY (!val.ptr))
+	MOM_FATAPRINTF ("corrupted queue @%p", vq);
       return val;
     }
 }
@@ -2538,10 +2666,16 @@ static inline momval_t
 mom_queue_peek_value_back (struct mom_valuequeue_st *vq)
 {
   assert (vq != NULL);
-  if (MOM_UNLIKELY (vq->vaq_last == NULL))
+  struct mom_vaqelem_st *qel = vq->vaq_last;
+  if (MOM_UNLIKELY (qel == NULL))
     return MOM_NULLV;
   else
-    return vq->vaq_last->vqe_val;
+    {
+      for (int ix = MOM_QUEUEPACK_LEN - 1; ix >= 0; ix--)
+	if (qel->vqe_valtab[ix].ptr)
+	  return qel->vqe_valtab[ix];
+      MOM_FATAPRINTF ("corrupted queue @%p", vq);
+    }
 }
 
 

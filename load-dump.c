@@ -2084,7 +2084,11 @@ end:
       unsigned cntnotice = 0;
       for (struct mom_vaqelem_st * qel = dmp.dmp_vanoticequeue.vaq_first;
 	   qel != NULL && cntnotice < nbnotice; qel = qel->vqe_next)
-	nvalarr[cntnotice++] = qel->vqe_val;
+	{
+	  for (int ix = 0; ix < MOM_QUEUEPACK_LEN; ix++)
+	    if (qel->vqe_valtab[ix].ptr != NULL && cntnotice < nbnotice)
+	      nvalarr[cntnotice++] = qel->vqe_valtab[ix];
+	}
       outd->odmp_nodenotice =
 	(momval_t) mom_make_node_from_array (mom_named__notice, nbnotice,
 					     nvalarr);
