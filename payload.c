@@ -702,6 +702,206 @@ static const struct mom_payload_descr_st payldescr_assoc_mom = {
   .dpayl_dumpjsonfun = payl_assoc_dump_json_mom,
 };
 
+
+////////////////////////////////////////////////////////////////
+///// HASHSET PAYLOAD
+////////////////////////////////////////////////////////////////
+
+void
+mom_item_start_hset (momitem_t *itm)
+{
+  assert (itm && itm->i_typnum == momty_item);
+  if (itm->i_payload)
+    mom_item_clear_payload (itm);
+  const unsigned siz = 16;
+  struct momhset_st *hset =
+    MOM_GC_ALLOC ("hset init", sizeof (struct momhset_st));
+  hset->hset_magic = MOM_HSET_MAGIC;
+  hset->hset_count = 0;
+  hset->hset_size = siz;
+  hset->hset_arr = MOM_GC_ALLOC ("hset array", siz * sizeof (momval_t));
+  itm->i_paylkind = mompayk_hset;
+  itm->i_payload = hset;
+}
+
+static inline int
+hset_addval_mom (struct momhset_st *hset, momval_t val)
+{
+  assert (hset && hset->hset_magic == MOM_HSET_MAGIC);
+  if (!val.ptr)
+    return -1;
+  unsigned sz = hset->hset_size;
+  assert (hset->hset_count + 3 <= sz);
+  momhash_t h = mom_value_hash (val);
+  momval_t *arr = hset->hset_arr;
+  int pos = -1;
+  unsigned startix = h % sz;
+  for (unsigned ix = startix; ix < sz; ix++)
+    {
+      if (arr[ix].ptr == val.ptr)
+	return -1;
+      else if (arr[ix].ptr == MOM_EMPTY)
+	{
+	  if (pos < 0)
+	    pos = ix;
+	}
+      else if (!arr[ix].ptr)
+	{
+	  if (pos < 0)
+	    pos = ix;
+	  goto put;
+	}
+    }
+  for (unsigned ix = 0; ix < startix; ix++)
+    {
+      if (arr[ix].ptr == val.ptr)
+	return -1;
+      else if (arr[ix].ptr == MOM_EMPTY)
+	{
+	  if (pos < 0)
+	    pos = ix;
+	}
+      else if (!arr[ix].ptr)
+	{
+	  if (pos < 0)
+	    pos = ix;
+	  goto put;
+	}
+    }
+put:
+  assert (pos >= 0);
+  arr[pos] = val;
+  hset->hset_count++;
+  return pos;
+}
+
+static inline int
+hset_find_mom (const struct momhset_st *hset, momval_t val)
+{
+  assert (hset && hset->hset_magic == MOM_HSET_MAGIC);
+  if (!val.ptr)
+    return -1;
+  momhash_t h = mom_value_hash (val);
+  momval_t *arr = hset->hset_arr;
+  unsigned sz = hset->hset_size;
+  unsigned startix = h % sz;
+  for (unsigned ix = startix; ix < sz; ix++)
+    {
+      if (arr[ix].ptr == val.ptr)
+	return ix;
+      else if (arr[ix].ptr == MOM_EMPTY)
+	continue;
+      else if (!arr[ix].ptr)
+	return -1;
+    }
+  for (unsigned ix = 0; ix < startix; ix++)
+    {
+      if (arr[ix].ptr == val.ptr)
+	return ix;
+      else if (arr[ix].ptr == MOM_EMPTY)
+	continue;
+      else if (!arr[ix].ptr)
+	return -1;
+    }
+  return -1;
+}
+
+static void
+hset_reorganize_mom (struct momhset_st *hset, unsigned gap)
+{
+  assert (hset && hset->hset_magic == MOM_HSET_MAGIC);
+  unsigned oldsz = hset->hset_size;
+  unsigned oldcnt = hset->hset_count;
+  momval_t *oldarr = hset->hset_arr;
+  if (7 * oldcnt / 6 + gap + 2 >= oldsz)
+    {
+      unsigned newsz = ((5 * oldcnt / 4 + 9 + gap) | 0xf) + 1;
+      if (newsz == oldsz)
+	return;
+      momval_t *newarr =
+	MOM_GC_ALLOC ("grow hset", newsz * sizeof (momval_t));
+      hset->hset_size = newsz;
+      hset->hset_count = 0;
+      hset->hset_arr = newarr;
+    }
+  else if (3 * oldcnt + gap < oldsz && oldsz > 30)
+    {
+      unsigned newsz = ((5 * oldcnt / 4 + 9 + gap) | 0xf) + 1;
+      if (newsz == oldsz)
+	return;
+      momval_t *newarr =
+	MOM_GC_ALLOC ("shrink hset", newsz * sizeof (momval_t));
+      hset->hset_size = newsz;
+      hset->hset_count = 0;
+      hset->hset_arr = newarr;
+    }
+  for (unsigned ix = 0; ix < oldsz; ix++)
+    {
+      momval_t curval = oldarr[ix];
+      if (curval.ptr == MOM_EMPTY || !curval.ptr)
+	continue;
+      hset_addval_mom (hset, curval);
+    }
+}
+
+void
+mom_item_hset_reserve (momitem_t *itm, unsigned gap)
+{
+  if (!itm || itm->i_typnum != momty_item || itm->i_paylkind != mompayk_hset)
+    return;
+  struct momhset_st *hset = itm->i_payload;
+  assert (hset && hset->hset_magic == MOM_HSET_MAGIC);
+  if (hset->hset_count + gap <= 7 * hset->hset_size / 6)
+    hset_reorganize_mom (hset, gap);
+  else if (4 * hset->hset_count + 5 < hset->hset_size && hset->hset_size > 16)
+    hset_reorganize_mom (hset, gap);
+}
+
+bool
+mom_item_hset_contains (momitem_t *itm, momval_t elem)
+{
+  if (!itm || itm->i_typnum != momty_item
+      || itm->i_paylkind != mompayk_hset || !elem.ptr)
+    return false;
+  struct momhset_st *hset = itm->i_payload;
+  assert (hset && hset->hset_magic == MOM_HSET_MAGIC);
+  return hset_find_mom (hset, elem) >= 0;
+}
+
+bool
+mom_item_hset_add (momitem_t *itm, momval_t elem)
+{
+  if (!itm || itm->i_typnum != momty_item
+      || itm->i_paylkind != mompayk_hset || !elem.ptr)
+    return false;
+  struct momhset_st *hset = itm->i_payload;
+  assert (hset && hset->hset_magic == MOM_HSET_MAGIC);
+  if (6 * hset->hset_count / 5 + 2 >= hset->hset_size)
+    hset_reorganize_mom (hset, hset->hset_count / 32 + 4);
+  int pos = hset_addval_mom (hset, elem);
+  return pos >= 0;
+}
+
+bool
+mom_item_hset_remove (momitem_t *itm, momval_t elem)
+{
+  bool found = false;
+  if (!itm || itm->i_typnum != momty_item
+      || itm->i_paylkind != mompayk_hset || !elem.ptr)
+    return false;
+  struct momhset_st *hset = itm->i_payload;
+  assert (hset && hset->hset_magic == MOM_HSET_MAGIC);
+  int pos = hset_find_mom (hset, elem);
+  if (pos >= 0)
+    {
+      found = true;
+      hset->hset_arr[pos].ptr = MOM_EMPTY;
+      if (hset->hset_size > 30 && hset->hset_count < hset->hset_size / 5)
+	hset_reorganize_mom (hset, 3);
+    }
+  return found;
+}
+
 ////////////////////////////////////////////////////////////////
 ///// ROUTINE PAYLOAD
 ////////////////////////////////////////////////////////////////

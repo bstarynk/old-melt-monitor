@@ -1233,9 +1233,8 @@ enum mom_kindpayload_en
   mompayk_tasklet,		// tasklet with its call stack
   mompayk_buffer,		// character buffer
   mompayk_vector,		// vector of values
+  mompayk_hset,			// hashed set of non-nil values
   mompayk_assoc,		// association of items to values
-  //  mompayk_hset,                     // hashed set of values
-#warning should add hashed set of values
   mompayk_process,		// forked process and buffer for its output pipe
   mompayk_webexchange,		// HTTP interaction
   mompayk_jsonrpcexchange,	// JSONRPC interaction
@@ -2022,6 +2021,23 @@ void mom_item_assoc_remove (momitem_t *itm, const momitem_t *atitm);
 const momitem_t *mom_get_item_bool (bool v);
 
 
+/*************** hset items, hashed set of non-nil values ***********/
+
+
+#define MOM_HSET_MAGIC 0x1aa83675	/* hset magic 447231605 */
+struct momhset_st
+{
+  unsigned hset_magic;		/* always MOM_HSET_MAGIC */
+  unsigned hset_count;		/* used count */
+  unsigned hset_size;		/* allocated size */
+  momval_t *hset_arr;		/* array */
+};
+
+void mom_item_start_hset (momitem_t *itm);
+void mom_item_hset_reserve (momitem_t *itm, unsigned gap);
+bool mom_item_hset_contains (momitem_t *itm, momval_t elem);
+bool mom_item_hset_add (momitem_t *itm, momval_t elem);
+bool mom_item_hset_remove (momitem_t *itm, momval_t elem);
 
 ////////////////////////////////////////////////////////////////
 /////////// SEQUENCE OF ITEMS, SETS & TUPLES
