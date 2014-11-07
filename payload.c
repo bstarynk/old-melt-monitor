@@ -920,57 +920,6 @@ mom_item_closure_set_nth (momitem_t *itm, int rk, momval_t cval)
     clos->clos_valtab[rk] = cval;
 }
 
-momval_t
-mom_item_closure_nth (const momitem_t *itm, int rk)
-{
-  if (!itm || itm->i_typnum != momty_item
-      || itm->i_paylkind != mompayk_closure)
-    return MOM_NULLV;
-  struct momclosure_st *clos = itm->i_payload;
-  assert (clos && clos->clos_magic == MOM_CLOSURE_MAGIC);
-  unsigned clen = clos->clos_len;
-  if (rk < 0)
-    rk += (int) clen;
-  if (rk >= 0 && rk < (int) clen)
-    return clos->clos_valtab[rk];
-  return MOM_NULLV;
-}
-
-momval_t *
-mom_item_closure_values (const momitem_t *itm)
-{
-  if (!itm || itm->i_typnum != momty_item
-      || itm->i_paylkind != mompayk_closure)
-    return NULL;
-  struct momclosure_st *clos = itm->i_payload;
-  assert (clos && clos->clos_magic == MOM_CLOSURE_MAGIC);
-  return clos->clos_valtab;
-}
-
-unsigned
-mom_item_closure_length (const momitem_t *itm)
-{
-  if (!itm || itm->i_typnum != momty_item
-      || itm->i_paylkind != mompayk_closure)
-    return 0;
-  struct momclosure_st *clos = itm->i_payload;
-  assert (clos && clos->clos_magic == MOM_CLOSURE_MAGIC);
-  return clos->clos_len;
-}
-
-const char *
-mom_item_closure_routine_name (const momitem_t *itm)
-{
-  if (!itm || itm->i_typnum != momty_item
-      || itm->i_paylkind != mompayk_closure)
-    return 0;
-  struct momclosure_st *clos = itm->i_payload;
-  assert (clos && clos->clos_magic == MOM_CLOSURE_MAGIC);
-  const struct momroutinedescr_st *rdescr = clos->clos_rout;
-  assert (rdescr && rdescr->rout_magic == MOM_ROUTINE_MAGIC);
-  return rdescr->rout_name;
-}
-
 static void
 payl_closure_load_mom (struct mom_loader_st *ld, momitem_t *itm,
 		       momval_t jclos)
@@ -1052,25 +1001,6 @@ static const struct mom_payload_descr_st payldescr_closure_mom = {
   .dpayl_dumpscanfun = payl_closure_dump_scan_mom,
   .dpayl_dumpjsonfun = payl_closure_dump_json_mom,
 };
-
-const struct momroutinedescr_st *
-mom_item_routinedescr (const momitem_t *itm)
-{
-  const struct momroutinedescr_st *rdescr = NULL;
-  if (!itm || itm->i_typnum != momty_item)
-    return NULL;
-  if (itm->i_paylkind == mompayk_routine)
-    rdescr = (struct momroutinedescr_st *) itm->i_payload;
-  else if (itm->i_paylkind == mompayk_closure)
-    {
-      struct momclosure_st *clos = itm->i_payload;
-      if (clos && clos->clos_magic == MOM_CLOSURE_MAGIC)
-	rdescr = clos->clos_rout;
-    };
-  if (rdescr && rdescr->rout_magic == MOM_ROUTINE_MAGIC)
-    return rdescr;
-  return NULL;
-}
 
 
 
@@ -1194,6 +1124,25 @@ static const struct mom_payload_descr_st payldescr_procedure_mom = {
   .dpayl_dumpscanfun = payl_procedure_dump_scan_mom,
   .dpayl_dumpjsonfun = payl_procedure_dump_json_mom,
 };
+
+void
+mom_item_procedure_set_nth (momitem_t *itm, int rk, momval_t cval)
+{
+  if (!itm || itm->i_typnum != momty_item)
+    return;
+  if (itm->i_paylkind != mompayk_procedure)
+    return;
+  struct momprocedure_st *proc = itm->i_payload;
+  assert (proc && proc->proc_magic == MOM_PROCEDURE_MAGIC);
+  const struct momprocrout_st *prout = proc->proc_rout;
+  assert (prout && prout->prout_magic == MOM_PROCROUT_MAGIC);
+  unsigned plen = prout->prout_len;
+  if (rk < 0)
+    rk += plen;
+  if (rk < 0 || rk >= (int) plen)
+    return;
+  proc->proc_valtab[rk] = cval;
+}
 
 ////////////////////////////////////////////////////////////////
 ///// TASKLET PAYLOAD
@@ -2887,6 +2836,8 @@ struct mom_payload_descr_st *mom_payloadescr[mompayk__last + 1] = {
   [mompayk_vector] = (struct mom_payload_descr_st *) &payldescr_vector_mom,
   [mompayk_assoc] = (struct mom_payload_descr_st *) &payldescr_assoc_mom,
   [mompayk_process] = (struct mom_payload_descr_st *) &payldescr_process_mom,
+  [mompayk_procedure] =
+    (struct mom_payload_descr_st *) &payldescr_procedure_mom,
   [mompayk_webexchange] =
     (struct mom_payload_descr_st *) &payldescr_webexchange_mom,
   [mompayk_jsonrpcexchange] =

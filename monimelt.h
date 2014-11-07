@@ -1234,6 +1234,8 @@ enum mom_kindpayload_en
   mompayk_buffer,		// character buffer
   mompayk_vector,		// vector of values
   mompayk_assoc,		// association of items to values
+  //  mompayk_hset,                     // hashed set of values
+#warning should add hashed set of values
   mompayk_process,		// forked process and buffer for its output pipe
   mompayk_webexchange,		// HTTP interaction
   mompayk_jsonrpcexchange,	// JSONRPC interaction
@@ -1317,6 +1319,25 @@ struct momclosure_st
   momval_t clos_valtab[];
 };
 
+static inline const struct momroutinedescr_st *
+mom_item_routinedescr (const momitem_t *itm)
+{
+  const struct momroutinedescr_st *rdescr = NULL;
+  if (!itm || itm->i_typnum != momty_item)
+    return NULL;
+  if (itm->i_paylkind == mompayk_routine)
+    rdescr = (struct momroutinedescr_st *) itm->i_payload;
+  else if (itm->i_paylkind == mompayk_closure)
+    {
+      struct momclosure_st *clos = itm->i_payload;
+      if (clos && clos->clos_magic == MOM_CLOSURE_MAGIC)
+	rdescr = clos->clos_rout;
+    };
+  if (rdescr && rdescr->rout_magic == MOM_ROUTINE_MAGIC)
+    return rdescr;
+  return NULL;
+}
+
 void mom_item_start_closure_of_routine (momitem_t *itm,
 					const struct momroutinedescr_st *rout,
 					unsigned len);
@@ -1325,15 +1346,56 @@ void mom_item_start_closure_named (momitem_t *itm, const char *routname,
 
 void mom_item_closure_set_nth (momitem_t *itm, int rk, momval_t cval);
 
-momval_t mom_item_closure_nth (const momitem_t *itm, int rk);
+static inline momval_t
+mom_item_closure_nth (const momitem_t *itm, int rk)
+{
+  if (!itm || itm->i_typnum != momty_item
+      || itm->i_paylkind != mompayk_closure)
+    return MOM_NULLV;
+  struct momclosure_st *clos = itm->i_payload;
+  assert (clos && clos->clos_magic == MOM_CLOSURE_MAGIC);
+  unsigned clen = clos->clos_len;
+  if (rk < 0)
+    rk += (int) clen;
+  if (rk >= 0 && rk < (int) clen)
+    return clos->clos_valtab[rk];
+  return MOM_NULLV;
+}
 
-momval_t *mom_item_closure_values (const momitem_t *itm);
+static inline momval_t *
+mom_item_closure_values (const momitem_t *itm)
+{
+  if (!itm || itm->i_typnum != momty_item
+      || itm->i_paylkind != mompayk_closure)
+    return NULL;
+  struct momclosure_st *clos = itm->i_payload;
+  assert (clos && clos->clos_magic == MOM_CLOSURE_MAGIC);
+  return clos->clos_valtab;
+}
 
-unsigned mom_item_closure_length (const momitem_t *itm);
+static inline unsigned
+mom_item_closure_length (const momitem_t *itm)
+{
+  if (!itm || itm->i_typnum != momty_item
+      || itm->i_paylkind != mompayk_closure)
+    return 0;
+  struct momclosure_st *clos = itm->i_payload;
+  assert (clos && clos->clos_magic == MOM_CLOSURE_MAGIC);
+  return clos->clos_len;
+}
 
-const char *mom_item_closure_routine_name (const momitem_t *itm);
-
-const struct momroutinedescr_st *mom_item_routinedescr (const momitem_t *itm);
+static inline const char *
+mom_item_closure_routine_name (const momitem_t *itm)
+{
+  if (!itm || itm->i_typnum != momty_item
+      || itm->i_paylkind != mompayk_closure)
+    return 0;
+  struct momclosure_st *clos = itm->i_payload;
+  assert (clos && clos->clos_magic == MOM_CLOSURE_MAGIC);
+  const struct momroutinedescr_st *rdescr = clos->clos_rout;
+  assert (rdescr && rdescr->rout_magic == MOM_ROUTINE_MAGIC);
+  return rdescr->rout_name;
+}
 
 /************* procedure item *********/
 enum momtypenc_st
@@ -1360,7 +1422,7 @@ struct momprocedure_st
 struct momprocrout_st
 {
   const unsigned prout_magic;	/* always MOM_PROCROUT_MAGIC */
-  const momtypenc_t prout_res;	/* type result */
+  const momtypenc_t prout_resty;	/* type result */
   unsigned prout_len;
   const char *prout_id;
   const char *prout_module;
@@ -1369,7 +1431,67 @@ struct momprocrout_st
 };
 
 void mom_item_start_procedure (momitem_t *itm);
-momval_t mom_item_procedure_nth (const momitem_t *itm, int rk);
+static inline momval_t
+mom_item_procedure_nth (const momitem_t *itm, int rk)
+{
+  if (!itm || itm->i_typnum != momty_item)
+    return MOM_NULLV;
+  if (itm->i_paylkind != mompayk_procedure)
+    return MOM_NULLV;
+  struct momprocedure_st *proc = itm->i_payload;
+  assert (proc && proc->proc_magic == MOM_PROCEDURE_MAGIC);
+  const struct momprocrout_st *prout = proc->proc_rout;
+  assert (prout && prout->prout_magic == MOM_PROCROUT_MAGIC);
+  unsigned plen = prout->prout_len;
+  if (rk < 0)
+    rk += plen;
+  if (rk < 0 || rk >= (int) plen)
+    return MOM_NULLV;
+  return proc->proc_valtab[rk];
+}
+
+static inline const char *
+mom_item_procedure_module (const momitem_t *itm)
+{
+  if (!itm || itm->i_typnum != momty_item)
+    return NULL;
+  if (itm->i_paylkind != mompayk_procedure)
+    return NULL;
+  struct momprocedure_st *proc = itm->i_payload;
+  assert (proc && proc->proc_magic == MOM_PROCEDURE_MAGIC);
+  const struct momprocrout_st *prout = proc->proc_rout;
+  assert (prout && prout->prout_magic == MOM_PROCROUT_MAGIC);
+  return prout->prout_module;
+}
+
+static inline const char *
+mom_item_procedure_argsig (const momitem_t *itm)
+{
+  if (!itm || itm->i_typnum != momty_item)
+    return NULL;
+  if (itm->i_paylkind != mompayk_procedure)
+    return NULL;
+  struct momprocedure_st *proc = itm->i_payload;
+  assert (proc && proc->proc_magic == MOM_PROCEDURE_MAGIC);
+  const struct momprocrout_st *prout = proc->proc_rout;
+  assert (prout && prout->prout_magic == MOM_PROCROUT_MAGIC);
+  return prout->prout_argsig;
+}
+
+static inline momtypenc_t
+mom_item_procedure_restype (const momitem_t *itm)
+{
+  if (!itm || itm->i_typnum != momty_item)
+    return 0;
+  if (itm->i_paylkind != mompayk_procedure)
+    return 0;
+  struct momprocedure_st *proc = itm->i_payload;
+  assert (proc && proc->proc_magic == MOM_PROCEDURE_MAGIC);
+  const struct momprocrout_st *prout = proc->proc_rout;
+  assert (prout && prout->prout_magic == MOM_PROCROUT_MAGIC);
+  return prout->prout_resty;
+}
+
 void mom_item_procedure_set_nth (momitem_t *itm, int rk, momval_t cval);
 
 /************* tasklet item *********/
@@ -1900,6 +2022,7 @@ void mom_item_assoc_remove (momitem_t *itm, const momitem_t *atitm);
 const momitem_t *mom_get_item_bool (bool v);
 
 
+
 ////////////////////////////////////////////////////////////////
 /////////// SEQUENCE OF ITEMS, SETS & TUPLES
 ////////////////////////////////////////////////////////////////
@@ -2107,7 +2230,7 @@ mom_node_nth (momval_t nodv, int rk)
   return MOM_NULLV;
 }
 
-inline const momval_t *
+static inline const momval_t *
 mom_closed_values (momval_t clov)
 {
   if (clov.ptr == NULL)
@@ -2123,7 +2246,8 @@ mom_closed_values (momval_t clov)
     }
 }
 
-inline const struct momroutinedescr_st *
+
+static inline const struct momroutinedescr_st *
 mom_closed_routdescr (momval_t clov)
 {
   if (clov.ptr == NULL)
