@@ -987,7 +987,6 @@ payl_hset_dump_scan_mom (struct mom_dumper_st *du, momitem_t *itm)
 	  && itm->i_paylkind != mompayk_hset);
   struct momhset_st *hset = itm->i_payload;
   assert (hset && hset->hset_magic == MOM_HSET_MAGIC);
-  unsigned cnt = hset->hset_count;
   unsigned sz = hset->hset_size;
   momval_t *arr = hset->hset_arr;
   for (unsigned ix = 0; ix < sz; ix++)
@@ -1007,9 +1006,13 @@ payl_hset_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
 	  && itm->i_paylkind != mompayk_hset);
   struct momhset_st *hset = itm->i_payload;
   assert (hset && hset->hset_magic == MOM_HSET_MAGIC);
+  momval_t *valarr = NULL;
+  unsigned valcnt = 0;
+  unsigned cnt = hset->hset_count;
+  unsigned sz = hset->hset_size;
+  momval_t *arr = hset->hset_arr;
   valarr =
     MOM_GC_ALLOC ("hset valarr sortedtup", (cnt + 1) * sizeof (momval_t));
-  unsigned valcnt = 0;
   for (unsigned ix = 0; ix < sz; ix++)
     {
       momval_t curval = arr[ix];
