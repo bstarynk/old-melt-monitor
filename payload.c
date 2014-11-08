@@ -902,6 +902,139 @@ mom_item_hset_remove (momitem_t *itm, momval_t elem)
   return found;
 }
 
+momval_t
+mom_item_hset_items_set (momitem_t *itm)
+{
+  momval_t res = MOM_NULLV;
+  momitem_t **itmarr = NULL;
+  if (!itm || itm->i_typnum != momty_item || itm->i_paylkind != mompayk_hset)
+    return MOM_NULLV;
+  struct momhset_st *hset = itm->i_payload;
+  assert (hset && hset->hset_magic == MOM_HSET_MAGIC);
+  unsigned cnt = hset->hset_count;
+  unsigned sz = hset->hset_size;
+  momval_t *arr = hset->hset_arr;
+  itmarr =
+    MOM_GC_ALLOC ("hset itmarr for set", (cnt + 1) * sizeof (momitem_t *));
+  unsigned itcnt = 0;
+  for (unsigned ix = 0; ix < sz; ix++)
+    {
+      momval_t curval = arr[ix];
+      if (!curval.ptr || curval.ptr == MOM_EMPTY)
+	continue;
+      assert (itcnt < cnt);
+      if (mom_is_item (curval))
+	itmarr[itcnt++] = curval.pitem;
+    }
+  res =
+    (momval_t) mom_make_set_from_array (itcnt, (const momitem_t **) itmarr);
+  MOM_GC_FREE (itmarr);
+  return res;
+}
+
+
+
+
+momval_t
+mom_item_hset_sorted_values_node (momitem_t *hsetitm, momitem_t *connitm)
+{
+  momval_t res = MOM_NULLV;
+  momval_t *valarr = NULL;
+  if (!hsetitm || hsetitm->i_typnum != momty_item
+      || hsetitm->i_paylkind != mompayk_hset
+      || !connitm || connitm->i_typnum != momty_item)
+    return MOM_NULLV;
+  struct momhset_st *hset = hsetitm->i_payload;
+  assert (hset && hset->hset_magic == MOM_HSET_MAGIC);
+  unsigned cnt = hset->hset_count;
+  unsigned sz = hset->hset_size;
+  momval_t *arr = hset->hset_arr;
+  valarr =
+    MOM_GC_ALLOC ("hset valarr sortedtup", (cnt + 1) * sizeof (momval_t));
+  unsigned valcnt = 0;
+  for (unsigned ix = 0; ix < sz; ix++)
+    {
+      momval_t curval = arr[ix];
+      if (!curval.ptr || curval.ptr == MOM_EMPTY)
+	continue;
+      assert (valcnt < cnt);
+      valarr[valcnt++] = curval;
+    }
+  qsort (valarr, valcnt, sizeof (momval_t), mom_valqsort_cmp);
+  res = (momval_t) mom_make_node_from_array (connitm, valcnt, valarr);
+  MOM_GC_FREE (valarr);
+  return res;
+}
+
+static void
+payl_hset_load_mom (struct mom_loader_st *ld, momitem_t *itm, momval_t jpayl)
+{
+  unsigned len = mom_json_array_size (jpayl);
+  mom_item_start_hset (itm);
+  mom_item_hset_reserve (itm, 5 * len / 4 + len / 16 + 10);
+  for (unsigned aix = 0; aix < len; aix++)
+    {
+      momval_t jent = mom_json_array_nth (jpayl, (int) aix);
+      momval_t curval = mom_load_value_json (ld, jent);
+      mom_item_hset_add (itm, curval);
+    }
+}
+
+static void
+payl_hset_dump_scan_mom (struct mom_dumper_st *du, momitem_t *itm)
+{
+  assert (itm && itm->i_typnum != momty_item
+	  && itm->i_paylkind != mompayk_hset);
+  struct momhset_st *hset = itm->i_payload;
+  assert (hset && hset->hset_magic == MOM_HSET_MAGIC);
+  unsigned cnt = hset->hset_count;
+  unsigned sz = hset->hset_size;
+  momval_t *arr = hset->hset_arr;
+  for (unsigned ix = 0; ix < sz; ix++)
+    {
+      momval_t curval = arr[ix];
+      if (!curval.ptr || curval.ptr == MOM_EMPTY)
+	continue;
+      mom_dump_scan_value (du, curval);
+    }
+}
+
+static momval_t
+payl_hset_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
+{
+  momval_t jres = MOM_NULLV;
+  assert (itm && itm->i_typnum != momty_item
+	  && itm->i_paylkind != mompayk_hset);
+  struct momhset_st *hset = itm->i_payload;
+  assert (hset && hset->hset_magic == MOM_HSET_MAGIC);
+  valarr =
+    MOM_GC_ALLOC ("hset valarr sortedtup", (cnt + 1) * sizeof (momval_t));
+  unsigned valcnt = 0;
+  for (unsigned ix = 0; ix < sz; ix++)
+    {
+      momval_t curval = arr[ix];
+      if (!curval.ptr || curval.ptr == MOM_EMPTY)
+	continue;
+      assert (valcnt < cnt);
+      valarr[valcnt++] = curval;
+    }
+  // we sort the array to have a consistent & reproducible JSON
+  qsort (valarr, valcnt, sizeof (momval_t), mom_valqsort_cmp);
+  for (unsigned ix = 0; ix < valcnt; ix++)
+    valarr[ix] = mom_dump_emit_json (du, valarr[ix]);
+  jres = (momval_t) mom_make_json_array_count (valcnt, valarr);
+  MOM_GC_FREE (valarr);
+  return jres;
+}
+
+static const struct mom_payload_descr_st payldescr_hset_mom = {
+  .dpayl_magic = MOM_PAYLOAD_MAGIC,
+  .dpayl_name = "hset",
+  .dpayl_loadfun = payl_hset_load_mom,
+  .dpayl_dumpscanfun = payl_hset_dump_scan_mom,
+  .dpayl_dumpjsonfun = payl_hset_dump_json_mom,
+};
+
 ////////////////////////////////////////////////////////////////
 ///// ROUTINE PAYLOAD
 ////////////////////////////////////////////////////////////////
@@ -3035,6 +3168,7 @@ struct mom_payload_descr_st *mom_payloadescr[mompayk__last + 1] = {
   [mompayk_buffer] = (struct mom_payload_descr_st *) &payldescr_buffer_mom,
   [mompayk_vector] = (struct mom_payload_descr_st *) &payldescr_vector_mom,
   [mompayk_assoc] = (struct mom_payload_descr_st *) &payldescr_assoc_mom,
+  [mompayk_hset] = (struct mom_payload_descr_st *) &payldescr_hset_mom,
   [mompayk_process] = (struct mom_payload_descr_st *) &payldescr_process_mom,
   [mompayk_procedure] =
     (struct mom_payload_descr_st *) &payldescr_procedure_mom,

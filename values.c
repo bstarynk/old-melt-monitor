@@ -457,6 +457,12 @@ mom_value_cmp (const momval_t l, const momval_t r)
 }
 
 
+int
+mom_valqsort_cmp (const void *pl, const void *pr)
+{
+  assert (pl && pr);
+  return mom_value_cmp (*(const momval_t *) pl, *(const momval_t *) pr);
+}
 
 /// be careful, the hash of empty set or tuple should be consistent
 /// with what update_seqitem_hash_mom would compute!

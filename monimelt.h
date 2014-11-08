@@ -546,6 +546,9 @@ momhash_t mom_value_hash (const momval_t v);
 // compare
 int mom_value_cmp (const momval_t l, const momval_t r);
 
+// compare function for qsort
+int mom_valqsort_cmp (const void *l, const void *r);
+
 // compare, in a JSON friendly way (so a named item compare
 // alphanumerically to a string)
 int mom_json_cmp (const momval_t l, const momval_t r);
@@ -2038,6 +2041,9 @@ void mom_item_hset_reserve (momitem_t *itm, unsigned gap);
 bool mom_item_hset_contains (momitem_t *itm, momval_t elem);
 bool mom_item_hset_add (momitem_t *itm, momval_t elem);
 bool mom_item_hset_remove (momitem_t *itm, momval_t elem);
+momval_t mom_item_hset_items_set (momitem_t *itm);
+momval_t mom_item_hset_sorted_values_node (momitem_t *hsetitm,
+					   momitem_t *connitm);
 
 ////////////////////////////////////////////////////////////////
 /////////// SEQUENCE OF ITEMS, SETS & TUPLES
