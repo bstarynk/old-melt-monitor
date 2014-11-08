@@ -39,37 +39,15 @@ LIBES= -L/usr/local/lib -lunistring -lgc -ljit $(shell $(PKGCONFIG) --libs $(PAC
 CXXTOOLS_CXXFLAGS:=$(shell cxxtools-config --cxxflags)
 CXXTOOLS_LIBS:=$(shell cxxtools-config --libs)
 SQLITE= sqlite3
-# modules are monimelt generated code
-MODULE_SOURCES= $(sort $(wildcard modules/momg_*.c))
-MODULES= $(patsubst %.c,%.so,$(MODULE_SOURCES))
 # plugins are extra code
 PLUGIN_SOURCES= $(sort $(wildcard momplug_*.c))
 PLUGINS=  $(patsubst %.c,%.so,$(PLUGIN_SOURCES))
 SOURCES= $(sort $(filter-out $(PLUGIN_SOURCES) $(MODULE_SOURCES), $(wildcard [a-z]*.c)))
 OBJECTS= $(patsubst %.c,%.o,$(SOURCES))
 RM= rm -fv
-#old: MELTGCCFLAGS= -fplugin=melt -fplugin-arg-melt-init=@melt-default-modules.quicklybuilt -fplugin-arg-melt-workdir=_meltwork
-MELTGCCFLAGS= -fplugin=melt -fplugin-arg-melt-workdir=_meltwork
-####
-#### MONI_MELT variables are for MELT plugin and the monimelt monitor working together
-## a temporary suffix
-MONI_MELT_TMP:=$(shell mktemp -u -t monimelt_XXXXXXX)
-## job options
-#MONI_MELT_OUTMONI could be the output of the monitor
-#MONI_MELT_OUTMELT could be the output of the MELT enhanced
-#compilation of monimmelt.h
-## for instance: in the terminal:
-###  make MONI_MELT_OUTMONI=/tmp/moni.out MONI_MELT_OUTMELT=/tmp/melt.out melt-process-debug
-MONI_MELT_JOB_FLAGS= --jobs 2
-MONI_MELT_RUN_PID=$(MONI_MELT_TMP)_runpid
-MONI_MELT_RUN_FLAGS= --write-pid $(MONI_MELT_RUN_PID)
-MONI_MELT_SOCKET=$(MONI_MELT_TMP)_socket
-MONI_MELT_DEBUG_FLAGS= -D run
-MONI_MELT_JSONRPC_FLAGS= --jsonrpc $(MONI_MELT_SOCKET)
 ####
 ####
-.PHONY: all modules plugins clean tests indent restore-state dump-state \
-	melt-process-header melt-process-debug melt-process-outdbg
+.PHONY: all modules plugins clean tests indent restore-state dump-state
 .SUFFIXES: .so .i
 # to make with tsan: make OPTIMFLAGS='-g3 -fsanitize=thread -fPIE' LINKFLAGS=-pie
 all: monimelt modules plugins momjsrpc_client
@@ -138,85 +116,3 @@ dump-state:
 ###
 momjsrpc_client: momjsrpc_client.cc
 	$(CXX) $(CXXFLAGS) $(CXXTOOLS_CXXFLAGS) $< -o $@ -lcxxtools-json $(CXXTOOLS_LIBS)
-
-###
-melt-process-header: monimelt.h meltmom-process.quicklybuilt.so | _meltwork monimelt
-	@echo MONI_MELT_TMP= $(MONI_MELT_TMP) MONI_MELT_SOCKET= $(MONI_MELT_SOCKET)
-	$(MONI_MELT_PREFIXMONI) ./monimelt --daemon-noclose --chdir $(PWD) $(MONI_MELT_RUN_FLAGS) \
-          $(MONI_MELT_JOB_FLAGS) $(MONI_MELT_JSONRPC_FLAGS) \
-	  $(if $(MONI_MELT_OUTMONI), > $(MONI_MELT_OUTMONI) 2>&1) &	
-	@sleep 1; echo -n monitor process: ; cat $(MONI_MELT_RUN_PID)
-	$(MONI_MELT_PREFIXMELT) $(COMPILE.c) -v -x c $(MELTGCCFLAGS) -S -DMELTMOM \
-	    -fplugin-arg-melt-mode=process_monimelt_header \
-	    -fplugin-arg-melt-extra=meltmom-process.quicklybuilt \
-	    -fplugin-arg-melt-monimelt-tmp=$(MONI_MELT_TMP) \
-	    -fplugin-arg-melt-monimelt-socket=$(MONI_MELT_SOCKET) \
-	    -c $< -o /dev/null \
-	  $(if $(MONI_MELT_OUTMELT),> $(MONI_MELT_OUTMELT) 2>&1)
-	@sleep 1
-	@monimelt_pid=$$(cat $(MONI_MELT_RUN_PID)); \
-         if [ -d /proc/$$monimelt_pid/ ]; then \
-	    ps -l $$monimelt_pid ; \
-            echo killing $$monimelt_pid ; \
-	    kill -TERM $$monimelt_pid ; \
-         else  \
-            echo no more monimelt process $$monimelt_pid ; \
-         fi
-	ls -l $(MONI_MELT_TMP)*
-	$(RM) $(MONI_MELT_TMP)*
-
-melt-process-debug: monimelt.h meltmom-process.quicklybuilt.so | _meltwork monimelt
-	@echo MONI_MELT_TMP= $(MONI_MELT_TMP) MONI_MELT_SOCKET= $(MONI_MELT_SOCKET)
-	@rm -f $(MONI_MELT_OUTMONI)  $(MONI_MELT_OUTMELT)
-	@monimelt_pid=$$(pidof ./monimelt); if [ -n "$$monimelt_pid" ]; then kill $$monimelt_pid; fi
-	$(MONI_MELT_PREFIXMONI) ./monimelt $(MONI_MELT_DEBUG_FLAGS) --daemon-noclose --chdir $(PWD) $(MONI_MELT_RUN_FLAGS)  \
-          $(MONI_MELT_JOB_FLAGS) $(MONI_MELT_JSONRPC_FLAGS) \
-	  $(if $(MONI_MELT_OUTMONI), > $(MONI_MELT_OUTMONI) 2>&1 || (grep 'MONIMELT FATAL' $(MONI_MELT_OUTMONI); false)) &
-	@sleep 1.5; echo -n monitor process: ; cat $(MONI_MELT_RUN_PID)
-	$(MONI_MELT_PREFIXMELT) $(COMPILE.c) -v -x c $(MELTGCCFLAGS) -S -DMELTMOM  \
-	    -fplugin-arg-melt-mode=process_monimelt_header \
-	    -fplugin-arg-melt-extra=meltmom-process.quicklybuilt \
-	    -fplugin-arg-melt-monimelt-tmp=$(MONI_MELT_TMP) \
-	    -fplugin-arg-melt-monimelt-socket=$(MONI_MELT_SOCKET) \
-	    -fplugin-arg-melt-debugging=mode \
-            -c $< -o /dev/null \
-	  $(if $(MONI_MELT_OUTMELT),> $(MONI_MELT_OUTMELT)  2>&1 || (grep error: $(MONI_MELT_OUTMELT); false))
-	@sleep .5
-	@monimelt_pid=$$(cat $(MONI_MELT_RUN_PID)); \
-         if [ -d /proc/$$monimelt_pid/ ]; then \
-	    ps -w $$monimelt_pid ; \
-            echo killing $$monimelt_pid ; \
-	    kill -TERM $$monimelt_pid ; \
-         else  \
-            echo no more monimelt process $$monimelt_pid ; \
-         fi
-	ls -l $(MONI_MELT_TMP)*
-	$(RM) $(MONI_MELT_TMP)*
-
-
-melt-process-outdbg: monimelt.h meltmom-process.quicklybuilt.so meltmom-process.debugnoline.so 
-	+$(MAKE) -j 3 monimelt
-	$(MAKE) restore-state
-	$(MAKE) melt-process-debug \
-          MONI_MELT_OUTMONI=_monimelt_moni.out \
-          MONI_MELT_OUTMELT=_monimelt_melt.out
-
-
-_meltwork:
-	@ [ -d _meltwork ] || mkdir _meltwork
-
-meltmom-process.quicklybuilt.so: meltmom-process.melt  | _meltwork
-	+$(COMPILE.c) -x c $(MELTGCCFLAGS) \
-	    -fplugin-arg-melt-mode=translatequickly \
-	    -fplugin-arg-melt-arg=$< \
-	    -x c -c /dev/null -o /dev/null \
-	 || ($(COMPILE.c) -x c $(MELTGCCFLAGS) \
-	    -fplugin-arg-melt-mode=translatedebugnoline \
-	    -fplugin-arg-melt-arg=$< \
-	    -x c -c /dev/null -o /dev/null)
-
-meltmom-process.debugnoline.so: meltmom-process.melt  | _meltwork
-	+$(COMPILE.c) -x c $(MELTGCCFLAGS) \
-	    -fplugin-arg-melt-mode=translatedebug \
-	    -fplugin-arg-melt-arg=$< \
-	    -x c -c /dev/null -o /dev/null 
