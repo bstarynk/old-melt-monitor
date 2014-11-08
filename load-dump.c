@@ -1373,6 +1373,16 @@ mom_initial_load (const char *ldirnam)
 		 MOMOUT_LITERAL (" ixspace#"),
 		 MOMOUT_DEC_INT ((int) ixspace));
       assert (curlitm != NULL && curlitm->i_typnum == momty_item);
+      if (!ixspace)
+	{
+	  MOM_WARNING (MOMOUT_LITERAL ("in load loop#"),
+		       MOMOUT_DEC_INT ((int) loadloopcount),
+		       MOMOUT_LITERAL ("; skipping current loaded item:"),
+		       MOMOUT_ITEM ((const momitem_t *) curlitm),
+		       MOMOUT_LITERAL (" ixspace#"),
+		       MOMOUT_DEC_INT ((int) ixspace));
+	  continue;
+	}
       assert (ixspace < momspa__last);
       struct mom_spacedescr_st *spad = mom_spacedescr_array[ixspace];
       assert (spad && spad->space_magic == MOM_SPACE_MAGIC);

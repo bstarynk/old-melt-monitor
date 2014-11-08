@@ -156,9 +156,6 @@ MOM_PREDEFINED_NAMED(result,_6djzuwz5pav_cri386ywjhj,2755350724)
 ////!in JSON dumps, indicate sets of item, or give their array of elements
 MOM_PREDEFINED_NAMED(set,_2v75mmyph64_4h4kys78740,2780130992)
 
-
-
-
 ////!in JSON dumps, give the sons of nodes
 MOM_PREDEFINED_NAMED(sons,_4ezpkss1akd_94f4h25sqe4,3753917517)
 
@@ -177,13 +174,11 @@ MOM_PREDEFINED_NAMED(terminated,_3jpt8yuzuyw_ti1pyz3me1c,2596985071)
 ////!in JSON dumps, used for tuples of items
 MOM_PREDEFINED_NAMED(tuple,_7vw56h18sw0_hv77m6q8uxu,3766188650)
 
-
 ////!in JSON dumps, used for values in attribute lists of items
 MOM_PREDEFINED_NAMED(val,_7wk9y7e7r0z_575esi8ys5x,746430217)
 
 ////!Gives the values of Json for frames of tasklets.
 MOM_PREDEFINED_NAMED(values,_91pketvc5pz_wq0v0wpauw8,1652042255)
-
 
 ////!attribute giving the web handler inside items
 MOM_PREDEFINED_NAMED(web_handler,_7sav6zery1v_24sa6jwwu6c,2339220870)

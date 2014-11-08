@@ -953,6 +953,8 @@ MELTMOM_ATTRIBUTE (mom_at_file_line_macro (mom_unlock_item));
 #define mom_unlock_item(Itm) mom_unlock_item_at(__FILE__,__LINE__,Itm)
 #endif
 
+
+
      static inline momitem_t *mom_value_to_item (momval_t v)
 {
   return (v.ptr && v.pitem->i_typnum == momty_item) ? v.pitem : NULL;
@@ -2630,7 +2632,7 @@ extern const char *mombad_unsigned;
 
 // we pack together several values in queue elements to achieve better
 // cache locality...
-#define MOM_QUEUEPACK_LEN 15
+#define MOM_QUEUEPACK_LEN 7
 struct mom_vaqelem_st
 {
   struct mom_vaqelem_st *vqe_next;
@@ -2679,6 +2681,7 @@ mom_queue_add_value_back (struct mom_valuequeue_st *vq, const momval_t val)
     return;
   if (MOM_UNLIKELY (vq->vaq_last == NULL))
     {
+      assert (vq->vaq_first == NULL);
       qel =
 	MOM_GC_ALLOC ("add back value empty queue",
 		      sizeof (struct mom_vaqelem_st));
@@ -2699,12 +2702,10 @@ mom_queue_add_value_back (struct mom_valuequeue_st *vq, const momval_t val)
 	      if (curval.ptr)
 		vpack[cnt++] = curval;
 	    }
-	  assert (cnt > 0 && cnt < MOM_QUEUEPACK_LEN - 1);
+	  assert (cnt >= 0 && cnt < MOM_QUEUEPACK_LEN);
 	  vpack[cnt++] = val;
-	  for (ix = 0; ix < cnt; ix++)
-	    qel->vqe_valtab[ix] = vpack[cnt];
-	  for (ix = cnt; ix < MOM_QUEUEPACK_LEN; ix++)
-	    qel->vqe_valtab[ix] = MOM_NULLV;
+	  for (ix = 0; ix < MOM_QUEUEPACK_LEN; ix++)
+	    qel->vqe_valtab[ix] = vpack[ix];
 	}
       else
 	{
@@ -2727,6 +2728,7 @@ mom_queue_add_value_front (struct mom_valuequeue_st *vq, const momval_t val)
   struct mom_vaqelem_st *qel = NULL;
   if (MOM_UNLIKELY (vq->vaq_first == NULL))
     {
+      assert (vq->vaq_last == NULL);
       qel =
 	MOM_GC_ALLOC ("add front value empty queue",
 		      sizeof (struct mom_vaqelem_st));
@@ -2735,7 +2737,7 @@ mom_queue_add_value_front (struct mom_valuequeue_st *vq, const momval_t val)
     }
   else
     {
-      qel = vq->vaq_last;
+      qel = vq->vaq_first;
       if (qel->vqe_valtab[MOM_QUEUEPACK_LEN - 1].ptr == NULL
 	  || qel->vqe_valtab[0].ptr == NULL)
 	{
@@ -2749,10 +2751,8 @@ mom_queue_add_value_front (struct mom_valuequeue_st *vq, const momval_t val)
 		vpack[cnt++] = curval;
 	    }
 	  assert (cnt > 0 && cnt < MOM_QUEUEPACK_LEN);
-	  for (ix = 0; ix < cnt; ix++)
-	    qel->vqe_valtab[ix] = vpack[cnt];
-	  for (ix = cnt; ix < MOM_QUEUEPACK_LEN; ix++)
-	    qel->vqe_valtab[ix] = MOM_NULLV;
+	  for (ix = 0; ix < MOM_QUEUEPACK_LEN; ix++)
+	    qel->vqe_valtab[ix] = vpack[ix];
 	}
       else
 	{
@@ -2760,8 +2760,8 @@ mom_queue_add_value_front (struct mom_valuequeue_st *vq, const momval_t val)
 	    MOM_GC_ALLOC ("add front value nonempty queue",
 			  sizeof (struct mom_vaqelem_st));
 	  qel->vqe_valtab[0] = val;
-	  vq->vaq_last->vqe_next = qel;
-	  vq->vaq_last = qel;
+	  vq->vaq_first->vqe_next = qel;
+	  vq->vaq_first = qel;
 	}
     }
 }
@@ -2795,16 +2795,22 @@ mom_queue_pop_value_front (struct mom_valuequeue_st *vq)
       momval_t vpack[MOM_QUEUEPACK_LEN] = { MOM_NULLV };
       int cnt = 0;
       for (int ix = 0; ix < MOM_QUEUEPACK_LEN; ix++)
-	if (qel->vqe_valtab[ix].ptr)
-	  {
-	    if (!val.ptr)
-	      val = qel->vqe_valtab[ix];
-	    else
-	      vpack[cnt++] = qel->vqe_valtab[ix];
-	  };
+	{
+	  if (qel->vqe_valtab[ix].ptr)
+	    {
+	      if (!val.ptr)
+		val = qel->vqe_valtab[ix];
+	      else
+		vpack[cnt++] = qel->vqe_valtab[ix];
+	    };
+	};
+      assert (val.ptr);
       if (0 == cnt)
 	{
-	  vq->vaq_first = qel->vqe_next;
+	  if (qel == vq->vaq_last)
+	    vq->vaq_first = vq->vaq_last = NULL;
+	  else
+	    vq->vaq_first = qel->vqe_next;
 	  MOM_GC_FREE (qel);
 	}
       else
