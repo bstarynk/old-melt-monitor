@@ -40,8 +40,8 @@ struct c_generator_mom_st
   jmp_buf cgen_jbuf;
   char *cgen_errmsg;
   momitem_t *cgen_moditm;
-  momitem_t *cgen_curoutitm;
   momitem_t *cgen_globassocitm;
+  momitem_t *cgen_curoutitm;
   momitem_t *cgen_locassocitm;
   FILE *cgen_fil;
   char *cgen_filpath;
@@ -163,6 +163,8 @@ mom_generate_c_module (momitem_t *moditm, const char *dirname, char **perrmsg)
 	      mom_ident_cstr_of_item (moditm));
     mycgen.cgen_filbase = (char *) MOM_GC_STRDUP ("base file", basbuf);
   }
+  mycgen.cgen_globassocitm = mom_make_item ();
+  mom_item_start_assoc (mycgen.cgen_globassocitm);
   /// start the head part
   MOM_OUT (&mycgen.cgen_outhead,
 	   MOMOUT_LITERAL ("// generated monimelt module file "),
@@ -213,6 +215,17 @@ declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
   momval_t procresv = MOM_NULLV;
   momval_t procrestypev = MOM_NULLV;
   momitem_t *curoutitm = cg->cgen_curoutitm;
+  {
+    momval_t oldvalroutv =
+      mom_item_assoc_get (cg->cgen_globassocitm, curoutitm);
+    if (oldvalroutv.ptr)
+      CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("already meet routine:"),
+		      MOMOUT_ITEM ((const momitem_t *) curoutitm),
+		      MOMOUT_LITERAL (" rank#"),
+		      MOMOUT_DEC_INT ((int) routix),
+		      MOMOUT_LITERAL (" as:"),
+		      MOMOUT_VALUE ((const momval_t) oldvalroutv), NULL);
+  }
   {
     mom_should_lock_item (curoutitm);
     procargsv =
@@ -307,11 +320,15 @@ declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	MOM_GC_FREE (argsigbuf);
       MOM_OUT (&cg->cgen_outhead, MOMOUT_LITERAL (");"), MOMOUT_NEWLINE ());
       MOM_OUT (&cg->cgen_outhead,
-	       MOMOUT_LITERAL("static const char " PROCROUTSIG_PREFIX_MOM),
+	       MOMOUT_LITERAL ("static const char " PROCROUTSIG_PREFIX_MOM),
 	       MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
-	       MOMOUT_LITERAL("[] = \""),
-	       MOMOUT_LITERALV (mom_string_cstr(argsigv)),
-	       MOMOUT_LITERAL("\";"),MOMOUT_NEWLINE ());
+	       MOMOUT_LITERAL ("[] = \""),
+	       MOMOUT_LITERALV (mom_string_cstr (argsigv)),
+	       MOMOUT_LITERAL ("\";"), MOMOUT_NEWLINE ());
+      mom_item_assoc_put (cg->cgen_globassocitm, curoutitm,
+			  (momval_t)
+			  mom_make_node_sized (mom_named__procedure, 1,
+					       mom_make_integer (routix)));
     }
   else
     {
@@ -321,6 +338,16 @@ declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	       MOMOUT_ITEM ((const momitem_t *) curoutitm),
 	       MOMOUT_LITERAL (" rank#"), MOMOUT_DEC_INT ((int) routix),
 	       MOMOUT_NEWLINE (), NULL);
+      MOM_OUT (&cg->cgen_outhead,
+	       MOMOUT_LITERAL ("int " MOM_ROUTINE_NAME_PREFIX),
+	       MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
+	       MOMOUT_LITERAL
+	       ("(int, momitem_t*, momval_t, momval_t*, intptr_t*, double*);"),
+	       MOMOUT_NEWLINE (), NULL);
+      mom_item_assoc_put (cg->cgen_globassocitm, curoutitm,
+			  (momval_t)
+			  mom_make_node_sized (mom_named__tasklet_routine, 1,
+					       mom_make_integer (routix)));
     }
 }
 

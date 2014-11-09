@@ -156,6 +156,9 @@ MOM_PREDEFINED_NAMED(params,_4215uc2u6qk_52kqyra86y5,709750062)
 ////!in JSON dumps, give the payload of items
 MOM_PREDEFINED_NAMED(payload,_41v0erax6my_m6pytj0793u,3962456714)
 
+////!for procedure related things
+MOM_PREDEFINED_NAMED(procedure,_4v74chqs1eh_chqd9cqw85t,2329607430)
+
 ////!gives the arguments of a procedure
 MOM_PREDEFINED_NAMED(procedure_arguments,_4qqdvfxxyje_kawwj9z3sqs,2158095583)
 
@@ -188,6 +191,9 @@ MOM_PREDEFINED_NAMED(state,_6f9870y6v8t_kp8fcmq2ezv,1856647655)
 
 ////!in JSON dumps, used for long chunked strings
 MOM_PREDEFINED_NAMED(string,_8j516kuv89j_4hc4w6ykmr6,4254767725)
+
+////!for routines for tasklet
+MOM_PREDEFINED_NAMED(tasklet_routine,_7yxp9xhih4z_9uzrqhkamxa,1188253756)
 
 ////!for terminated processes
 MOM_PREDEFINED_NAMED(terminated,_3jpt8yuzuyw_ti1pyz3me1c,2596985071)
