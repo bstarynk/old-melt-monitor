@@ -579,7 +579,7 @@ reorganize_dict (unsigned more)
   struct dictent_mom_st *newarr =
     GC_MALLOC (newsize * sizeof (struct dictent_mom_st));
   if (MOM_UNLIKELY (!newarr))
-    MOM_FATAPRINTF ("failed to grow dictionnary to %d", newsize);
+    MOM_FATAPRINTF ("failed to resize dictionnary to %d", newsize);
   memset (newarr, 0, newsize * sizeof (struct dictent_mom_st));
   dict_mom.dict_size = newsize;
   dict_mom.dict_count = 0;
@@ -649,6 +649,8 @@ mom_forget_name (const char *namestr)
       assert (olditm && olditm != MOM_EMPTY
 	      && olditm->i_typnum == momty_item);
       assert (olditm->i_name == dict_mom.dict_array[nix].dicent_name);
+      dict_mom.dict_array[nix].dicent_name = MOM_EMPTY;
+      dict_mom.dict_array[nix].dicent_item = MOM_EMPTY;
       __atomic_store_n (&olditm->i_name, NULL, __ATOMIC_SEQ_CST);
       dict_mom.dict_count--;
       if (dict_mom.dict_size > 100

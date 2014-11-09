@@ -1235,7 +1235,7 @@ enum mom_kindpayload_en
   mompayk_webexchange,		// HTTP interaction
   mompayk_jsonrpcexchange,	// JSONRPC interaction
 
-  mompayk__last = 32
+  mompayk__last = 64
 };
 struct mom_payload_descr_st *mom_payloadescr[mompayk__last + 1];
 

@@ -29,9 +29,9 @@ struct c_generator_mom_st
   jmp_buf cgen_jbuf;
   char *cgen_errmsg;
   momitem_t *cgen_moditm;
-  FILE* cgen_fil;
-  char* cgen_filpath;
-  char* cgen_tempath;
+  FILE *cgen_fil;
+  char *cgen_filpath;
+  char *cgen_tempath;
 };
 
 
