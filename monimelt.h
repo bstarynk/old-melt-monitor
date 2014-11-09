@@ -173,7 +173,7 @@ mom_timespec (double t)
   return ts;
 }
 
-
+typedef char *momcstr_t;
 typedef uint8_t momtynum_t;
 typedef uint8_t momvflags_t;
 typedef uint16_t momspaceid_t;
@@ -1304,6 +1304,9 @@ void mom_item_start_routine (momitem_t *itm, const char *routname);
 const char *mom_item_generate_jit_routine (momitem_t *itm,
 					   const momval_t jitnode);
 
+// generate a C module, returns 0 if ok, else fill *perrmsg
+int mom_generate_c_module (momitem_t *moditm, const char *dirname,
+			   char **perrmsg);
 /************* closure item *********/
 #define MOM_CLOSURE_MAGIC 830382377	/* closure magic  0x317ea129 */
 struct momclosure_st
@@ -1396,7 +1399,7 @@ mom_item_closure_routine_name (const momitem_t *itm)
 enum momtypenc_st
 {
   momtypenc__none,		/* for void result */
-  momtypenc_int = 'i',		/* inptr_t */
+  momtypenc_int = 'i',		/* intptr_t */
   momtypenc_val = 'v',		/* momval_t */
   momtypenc_string = 's',	/* const char* string literal */
   momtypenc_double = 'd',	/* double */
@@ -1413,7 +1416,8 @@ struct momprocedure_st
 
 // for a given ID the momprocrout_st is named momprocdescr_ID
 // and the C function is named momprocfun_ID
-#define MOM_PROCROUT_PREFIX "momprocdescr"
+#define MOM_PROCROUTDESCR_PREFIX "momprocdescr_"
+#define MOM_PROCROUTFUN_PREFIX "momprocfun_"
 struct momprocrout_st
 {
   const unsigned prout_magic;	/* always MOM_PROCROUT_MAGIC */
@@ -2887,8 +2891,6 @@ void mom_dump_add_scanned_item (struct mom_dumper_st *du,
 momval_t mom_dump_emit_json (struct mom_dumper_st *dmp, const momval_t val);
 
 
-// generate a C module, returns 0 if ok, else fill *perrmsg
-int mom_generate_c_module (momitem_t *moditm, char **perrmsg);
 
 // emit a short representation of an item: if it is in the current
 // space, just its id string...

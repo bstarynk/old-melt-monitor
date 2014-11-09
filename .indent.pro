@@ -1,3 +1,4 @@
+-T momcstr_t
 -T momdouble_t
 -T momhash_t
 -T momint_t

@@ -64,6 +64,12 @@ MOM_PREDEFINED_NAMED(comment,_41u1utcxyek_22cftxt3xxm,2024771965)
 ////!gives the item content, at least in dumped JSON...
 MOM_PREDEFINED_NAMED(content,_8s357rq2dzk_k8ze95tikjm,1630350867)
 
+////!Attribute giving the C type
+MOM_PREDEFINED_NAMED(ctype,_0ee6afx5850_ji17eq0wmfa,119327747)
+
+////!the double C type
+MOM_PREDEFINED_NAMED(double,_7j7x11c25h3_wkchtuwpusx,3897333387)
+
 ////!Gives the double floating-point numbers of Json for frames of tasklets.
 MOM_PREDEFINED_NAMED(doubles,_17spwr8dkzv_tsf2s8diazu,1135570567)
 
@@ -81,6 +87,9 @@ MOM_PREDEFINED_NAMED(frames,_4cw8jv45vsk_4mh9ex64904,407235052)
 
 ////!for JSONRPC and elsewhere
 MOM_PREDEFINED_NAMED(id,_7a9sxskjhcp_kpf30ka97ex,2687612409)
+
+////!The C type for word integers
+MOM_PREDEFINED_NAMED(intptr_t,_51u3st4u9mc_zdvms6jti0a,2777173293)
 
 ////!gives the item reference, at least in dumped JSON...
 MOM_PREDEFINED_NAMED(item_ref,_6hf2vzmrsee_t35suhjvtj4,3823165917)
@@ -126,6 +135,12 @@ MOM_PREDEFINED_NAMED(module,_7sqk8vh89xr_6tj8dq7vqju,741175951)
 ////!the routines in a module
 MOM_PREDEFINED_NAMED(module_routines,_9dcxaqk8tqe_fam9mcxme9w,3332802288)
 
+////!The C type for constant literal C strings
+MOM_PREDEFINED_NAMED(momcstr_t,_80e7dsukuq3_6p7jffmz1yi,2233584871)
+
+////!the value C type
+MOM_PREDEFINED_NAMED(momval_t,_3uwzqwvj6zj_s63am4qivpt,858334073)
+
 ////!in JSON dumps, indicate nodes, or give their connective item
 MOM_PREDEFINED_NAMED(node,_4m7x6811f6j_t480zu575mz,1812992144)
 
@@ -140,6 +155,12 @@ MOM_PREDEFINED_NAMED(params,_4215uc2u6qk_52kqyra86y5,709750062)
 
 ////!in JSON dumps, give the payload of items
 MOM_PREDEFINED_NAMED(payload,_41v0erax6my_m6pytj0793u,3962456714)
+
+////!gives the arguments of a procedure
+MOM_PREDEFINED_NAMED(procedure_arguments,_4qqdvfxxyje_kawwj9z3sqs,2158095583)
+
+////!gives the result of a procedure
+MOM_PREDEFINED_NAMED(procedure_result,_59z11c536du_v6173xqjct2,1740660605)
 
 ////!first result in tasklet
 MOM_PREDEFINED_NAMED(res1,_3j3s2e0510a_096chqpijq7,3304263536)
@@ -179,6 +200,9 @@ MOM_PREDEFINED_NAMED(val,_7wk9y7e7r0z_575esi8ys5x,746430217)
 
 ////!Gives the values of Json for frames of tasklets.
 MOM_PREDEFINED_NAMED(values,_91pketvc5pz_wq0v0wpauw8,1652042255)
+
+////!the void C type
+MOM_PREDEFINED_NAMED(void,_02q6zk9f5st_im0z75re15f,1828712906)
 
 ////!attribute giving the web handler inside items
 MOM_PREDEFINED_NAMED(web_handler,_7sav6zery1v_24sa6jwwu6c,2339220870)

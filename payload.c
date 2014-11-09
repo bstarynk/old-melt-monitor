@@ -1354,7 +1354,7 @@ mom_item_start_procedure (momitem_t *itm)
   struct momprocedure_st *proc = NULL;
   struct momprocrout_st *prout = NULL;
   snprintf (symbuf, sizeof (symbuf),
-	    MOM_PROCROUT_PREFIX "%s", mom_ident_cstr_of_item (itm));
+	    MOM_PROCROUTDESCR_PREFIX "%s", mom_ident_cstr_of_item (itm));
   prout = dlsym (mom_prog_dlhandle, symbuf);
   if (!prout)
     {
