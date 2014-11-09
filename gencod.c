@@ -498,9 +498,10 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
   MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (")"), MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL ("{"), MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE ());
   unsigned nbprocvals = 0;
-#warning should count and bind the closed and constant values in proc
+#warning should count and bind the constant values in proc
   MOM_OUT (&cg->cgen_outbody,
 	   MOMOUT_LITERAL ("static momitem_t* momprocitem;"),
+	   MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL ("static momval_t* momprocvalues;"),
 	   MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL
@@ -511,7 +512,29 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	   ("if (MOM_UNLIKELY(!momprocvalues)) momprocvalues = mom_item_procedure_values (momprocitem, "),
 	   MOMOUT_DEC_INT ((int) nbprocvals), MOMOUT_LITERAL (");"),
 	   MOMOUT_NEWLINE (), NULL);
-
+  if (procrestypev.pitem == mom_named__momval_t)
+    MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_LITERAL ("momval_t momresult = MOM_NULLV;"),
+	     MOMOUT_NEWLINE ());
+  else if (procrestypev.pitem == mom_named__intptr_t)
+    MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_LITERAL ("intptr_t momresult = 0;"), MOMOUT_NEWLINE ());
+  else if (procrestypev.pitem == mom_named__double)
+    MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_LITERAL ("double momresult = 0.0;"), MOMOUT_NEWLINE ());
+  else if (procrestypev.pitem == mom_named__momcstr_t)
+    MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_LITERAL ("momcstr_t momresult = NULL;"),
+	     MOMOUT_NEWLINE ());
+  if (procrestypev.pitem == NULL || procrestypev.pitem == mom_named__void)
+    MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_LITERAL ("if (MOM_UNLIKELY(!momprocvalues)) return;"),
+	     MOMOUT_NEWLINE ());
+  else
+    MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_LITERAL
+	     ("if (MOM_UNLIKELY(!momprocvalues)) return momresult;"),
+	     MOMOUT_NEWLINE ());
 }
 
 
