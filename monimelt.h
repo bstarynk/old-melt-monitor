@@ -97,13 +97,6 @@
 // but use a recent GIT of it from http://savannah.gnu.org/git/?group=libjit
 #include <jit/jit.h>
 
-/// for the MELT plugin analyzing this header
-#ifdef MELTMOM
-#pragma MONIMELT ENABLE
-#define MELTMOM_ATTRIBUTE(X) __attribute__((meltmom(#X)))
-#else
-#define MELTMOM_ATTRIBUTE(X)
-#endif
 
 // in generated _timestamp.c
 extern const char monimelt_timestamp[];
@@ -278,8 +271,7 @@ typedef enum momoutflags_en
 } momoutflags_t;
 
 void mom_out_at (const char *sfil, int lin, momout_t *pout, ...)
-  __attribute__ ((sentinel))
-MELTMOM_ATTRIBUTE (mom_at_file_line_macro (MOM_OUT));
+  __attribute__ ((sentinel));
 void mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist);
 /// output into a string value
 momval_t mom_outstring_at (const char *sfil, int lin, unsigned flags, ...)
@@ -922,9 +914,7 @@ mom_lock_item (momitem_t *itm)
   return (pthread_mutex_lock (&itm->i_mtx) == 0);
 }
 
-bool
-mom_lock_item_at (const char *fil, int lin, momitem_t *itm)
-MELTMOM_ATTRIBUTE (mom_at_file_line_macro (mom_lock_item));
+bool mom_lock_item_at (const char *fil, int lin, momitem_t *itm);
 #ifndef NDEBUG
 #define mom_lock_item(Itm) mom_lock_item_at(__FILE__,__LINE__,Itm)
 #endif
@@ -939,23 +929,24 @@ MELTMOM_ATTRIBUTE (mom_at_file_line_macro (mom_lock_item));
 #define mom_should_lock_item(Itm) mom_should_lock_item_at(__LINE__,(Itm))
 
 // unlock an item
-     static inline void mom_unlock_item (momitem_t *itm)
+static inline void
+mom_unlock_item (momitem_t *itm)
 {
   assert (itm && itm->i_typnum == momty_item
 	  && itm->i_magic == MOM_ITEM_MAGIC);
   pthread_mutex_unlock (&itm->i_mtx);
 }
 
-void
-mom_unlock_item_at (const char *fil, int lin, momitem_t *itm)
-MELTMOM_ATTRIBUTE (mom_at_file_line_macro (mom_unlock_item));
+void mom_unlock_item_at (const char *fil, int lin, momitem_t *itm);
+
 #ifndef NDEBUG
 #define mom_unlock_item(Itm) mom_unlock_item_at(__FILE__,__LINE__,Itm)
 #endif
 
 
 
-     static inline momitem_t *mom_value_to_item (momval_t v)
+static inline momitem_t *
+mom_value_to_item (momval_t v)
 {
   return (v.ptr && v.pitem->i_typnum == momty_item) ? v.pitem : NULL;
 }
