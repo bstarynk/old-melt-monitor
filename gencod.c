@@ -1,4 +1,4 @@
-// file jit.c
+// file gencod.c
 
 /**   Copyright (C)  2014 Free Software Foundation, Inc.
     MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -19,6 +19,23 @@
 **/
 
 #include "monimelt.h"
+
+#define CGEN_MAGIC 0x566802a5	/* cgen magic 1449656997 */
+
+// internal stack allocated structure to generate the C module
+struct c_generator_mom_st
+{
+  unsigned cgen_magic;		// always CGEN_MAGIC
+  jmp_buf cgen_jbuf;
+  char *cgen_errmsg;
+  momitem_t *cgen_moditm;
+  FILE* cgen_fil;
+  char* cgen_filpath;
+  char* cgen_tempath;
+};
+
+
+
 
 const char *
 mom_item_generate_jit_routine (momitem_t *itm, const momval_t jitnode)

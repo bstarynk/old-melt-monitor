@@ -31,11 +31,26 @@ mom_plugin_init (const char *arg)
 static void
 cleanup_dict (void)
 {
+#warning currently crashes
+  momval_t setnameditems = (momval_t) mom_set_of_named_items();
+  unsigned nbnamed = mom_set_cardinal(setnameditems);
+  unsigned nbforget = 0;
+  for (unsigned ix=0; ix<nbnamed; ix++) {
+    momitem_t* curnameditm = mom_set_nth_item(setnameditems, ix);
+    momval_t curnamev = (momval_t) mom_item_get_name(curnameditm);
+    const char*curnamstr = mom_string_cstr(curnamev);
+    if (!strncmp(curnamstr, "mom_", 4)) {
+      mom_forget_name (curnamstr);
+      nbforget++;
+    }
+  }
+  MOM_INFORMPRINTF("forgot %u names suffixed with mom_", nbforget);
 }
 
 void
 momplugin_after_load (void)
 {
+  cleanup_dict();
   MOM_DEBUGPRINTF (run,
 		   "after load in " __FILE__ " build " __DATE__ "@" __TIME__);
 }
