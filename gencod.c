@@ -102,9 +102,47 @@ static void declare_routine_cgen (struct c_generator_mom_st *cgen,
 				  unsigned routix);
 static void emit_routine_cgen (struct c_generator_mom_st *cgen,
 			       unsigned routix);
+static void emit_procedure_cgen (struct c_generator_mom_st *cgen,
+				 unsigned routix);
+static void emit_taskletroutine_cgen (struct c_generator_mom_st *cgen,
+				      unsigned routix);
 
 static void emit_ctype_cgen (struct c_generator_mom_st *cgen,
 			     struct momout_st *out, momitem_t *typitm);
+
+#define CGEN_CHECK_FRESH_AT_BIS(Lin,Cg,Msg,Itm) do	\
+{ const momitem_t* itm##Lin = (Itm);			\
+  if (!itm##Lin || itm##Lin->i_typnum != momty_item)	\
+    CGEN_ERROR_MOM_AT					\
+      (Lin,Cg,						\
+       MOMOUT_LITERAL(Msg " (non-item)"),		\
+       MOMOUT_VALUE((const momval_t)itm##Lin));		\
+  momval_t globv##Lin					\
+    = mom_item_assoc_get ((Cg)->cgen_globassocitm,	\
+			  itm##Lin);			\
+  if (globv##Lin.ptr)					\
+    CGEN_ERROR_MOM_AT					\
+      (Lin,Cg,						\
+       MOMOUT_LITERAL(Msg " (globally known item):"),	\
+       MOMOUT_ITEM(itm##Lin),				\
+       MOMOUT_LITERAL(" meet as "),			\
+       MOMOUT_VALUE((const momval_t) globv##Lin));	\
+  momval_t locv##Lin					\
+    = mom_item_assoc_get ((Cg)->cgen_locassocitm,	\
+			  itm##Lin);			\
+  if (locv##Lin.ptr)					\
+    CGEN_ERROR_MOM_AT					\
+      (Lin,Cg,						\
+       MOMOUT_LITERAL(Msg " (locally known item):"),	\
+       MOMOUT_ITEM(itm##Lin),				\
+       MOMOUT_LITERAL(" meet as "),			\
+       MOMOUT_VALUE((const momval_t) locv##Lin));	\
+ } while(0)
+
+#define CGEN_CHECK_FRESH_AT(Lin,Cg,Msg,Itm) CGEN_CHECK_FRESH_AT_BIS(Lin,Cg,Msg,Itm)
+
+#define CGEN_CHECK_FRESH(Cg,Msg,Itm) CGEN_CHECK_FRESH_AT(__LINE__,Cg,Msg,Itm)
+
 
 static pthread_mutex_t cgenmtx_mom = PTHREAD_MUTEX_INITIALIZER;
 int
@@ -355,7 +393,135 @@ void
 emit_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
 {
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
+  momitem_t *curoutitm = cg->cgen_curoutitm;
+  assert (curoutitm && curoutitm->i_typnum == momty_item);
+  momval_t curoutval = mom_item_assoc_get (cg->cgen_globassocitm, curoutitm);
+  const momitem_t *curoutconnitm = mom_node_conn (curoutval);
+  assert (curoutconnitm && curoutconnitm->i_typnum == momty_item);
+  cg->cgen_locassocitm = mom_make_item ();
+  mom_item_start_assoc (cg->cgen_locassocitm);
+  if (curoutconnitm == mom_named__procedure)
+    emit_procedure_cgen (cg, routix);
+  else if (curoutconnitm == mom_named__tasklet_routine)
+    emit_taskletroutine_cgen (cg, routix);
+  else
+    MOM_FATAL (MOMOUT_LITERAL ("invalid curoutconnitm:"),
+	       MOMOUT_ITEM ((const momitem_t *) curoutconnitm));
+  cg->cgen_locassocitm = NULL;
 }
+
+#define CGEN_FORMALARG_PREFIX "momparg_"
+void
+emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
+{
+  momitem_t *curoutitm = NULL;
+  momval_t procargsv = MOM_NULLV;
+  momval_t procresv = MOM_NULLV;
+  momval_t procrestypev = MOM_NULLV;
+  assert (cg && cg->cgen_magic == CGEN_MAGIC);
+  curoutitm = cg->cgen_curoutitm;
+  {
+    mom_should_lock_item (curoutitm);
+    procargsv =
+      mom_item_get_attribute (curoutitm, mom_named__procedure_arguments);
+    procresv =
+      mom_item_get_attribute (curoutitm, mom_named__procedure_result);
+    mom_unlock_item (curoutitm);
+  }
+  if (!mom_is_tuple (procargsv))
+    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid procedure arguments:"),
+		    MOMOUT_VALUE ((const momval_t) procargsv),
+		    MOMOUT_LITERAL (" in procedure "),
+		    MOMOUT_ITEM ((const momitem_t *) curoutitm), NULL);
+  unsigned nbargs = mom_tuple_length (procargsv);
+  momitem_t *procresitm = NULL;
+  if (mom_is_item (procresv))
+    {
+      procresitm = procresv.pitem;
+      CGEN_CHECK_FRESH (cg, "result of procedure", procresitm);
+      mom_item_assoc_put
+	(cg->cgen_locassocitm, procresitm,
+	 (momval_t) mom_make_node_sized (mom_named__procedure_result, 1,
+					 mom_make_integer (routix)));
+      mom_should_lock_item (procresitm);
+      procrestypev = mom_item_get_attribute (curoutitm, mom_named__ctype);
+      mom_unlock_item (procresitm);
+    }
+  else if (!procresv.ptr)
+    {
+      procrestypev = (momval_t) mom_named__void;
+    }
+  else
+    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid procedure result:"),
+		    MOMOUT_VALUE ((const momval_t) procresv),
+		    MOMOUT_LITERAL (" in procedure "),
+		    MOMOUT_ITEM ((const momitem_t *) curoutitm), NULL);
+  MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL ("// implementation of procedure #"),
+	   MOMOUT_DEC_INT ((int) routix), MOMOUT_NEWLINE ());
+  emit_ctype_cgen (cg, &cg->cgen_outbody, mom_value_to_item (procrestypev));
+  MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (48),
+	   MOMOUT_LITERAL (MOM_PROCROUTFUN_PREFIX),
+	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
+	   MOMOUT_LITERAL (" ("), NULL);
+  for (unsigned aix = 0; aix < nbargs; aix++)
+    {
+      momitem_t *curargitm = mom_tuple_nth_item (procargsv, aix);
+      momval_t curargtypv = MOM_NULLV;
+      if (!curargitm || curargitm->i_typnum != momty_item)
+	CGEN_ERROR_MOM (cg,
+			MOMOUT_LITERAL ("invalid procedure argument:"),
+			MOMOUT_VALUE ((const momval_t) curargitm),
+			MOMOUT_LITERAL (" in procedure "),
+			MOMOUT_ITEM ((const momitem_t *) curoutitm),
+			MOMOUT_LITERAL (" rank "),
+			MOMOUT_DEC_INT ((int) aix), NULL);
+      CGEN_CHECK_FRESH (cg, "argument of procedure", curargitm);
+      mom_should_lock_item (curargitm);
+      curargtypv = mom_item_get_attribute (curargitm, mom_named__ctype);
+      mom_unlock_item (curargitm);
+      mom_item_assoc_put
+	(cg->cgen_locassocitm, procresitm,
+	 (momval_t) mom_make_node_sized (mom_named__procedure_arguments, 3,
+					 mom_make_integer (routix),
+					 mom_make_integer (aix), curargtypv));
+      if (aix > 0)
+	MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (","), MOMOUT_SPACE (64));
+      emit_ctype_cgen (cg, &cg->cgen_outbody, mom_value_to_item (curargtypv));
+      MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (" " CGEN_FORMALARG_PREFIX),
+	       MOMOUT_DEC_INT ((int) aix),
+	       MOMOUT_LITERAL (" "),
+	       MOMOUT_SLASHCOMMENT_STRING (mom_ident_cstr_of_item
+					   (curargitm)), NULL);
+    }
+  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (")"), MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL ("{"), MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE ());
+  unsigned nbprocvals = 0;
+#warning should count and bind the closed and constant values in proc
+  MOM_OUT (&cg->cgen_outbody,
+	   MOMOUT_LITERAL ("static momitem_t* momprocitem;"),
+	   MOMOUT_LITERAL ("static momval_t* momprocvalues;"),
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL
+	   ("if (MOM_UNLIKELY(!momprocitem)) momprocitem = mom_procedure_item_of_id(\""),
+	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
+	   MOMOUT_LITERAL ("\");"), MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL
+	   ("if (MOM_UNLIKELY(!momprocvalues)) momprocvalues = mom_item_procedure_values (momprocitem, "),
+	   MOMOUT_DEC_INT ((int) nbprocvals), MOMOUT_LITERAL (");"),
+	   MOMOUT_NEWLINE (), NULL);
+
+}
+
+
+void
+emit_taskletroutine_cgen (struct c_generator_mom_st *cg, unsigned routix)
+{
+  assert (cg && cg->cgen_magic == CGEN_MAGIC);
+}
+
+
 
 void
 emit_ctype_cgen (struct c_generator_mom_st *cg, struct momout_st *out,

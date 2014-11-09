@@ -1449,6 +1449,11 @@ mom_item_procedure_nth (const momitem_t *itm, int rk)
   return proc->proc_valtab[rk];
 }
 
+
+// this is called in generated procedure prologue
+static inline momitem_t *mom_procedure_item_of_id (const char *id);
+
+
 static inline const char *
 mom_item_procedure_module (const momitem_t *itm)
 {
@@ -2916,6 +2921,44 @@ void mom_continue_working (void);
 
 /// initialize signal processing, should be done very early
 void mom_initialize_signals (void);
+
+// this is called in generated procedure prologue
+static inline momitem_t *
+mom_procedure_item_of_id (const char *id)
+{
+  momitem_t *pitm = mom_get_item_of_identcstr (id);
+  if (MOM_UNLIKELY (!pitm || pitm->i_typnum != momty_item
+		    || pitm->i_paylkind != mompayk_procedure))
+    {
+      MOM_WARNPRINTF ("failed to find procedure item of id %s", id);
+      return NULL;
+    }
+  return pitm;
+}
+
+
+static inline momval_t *
+mom_item_procedure_values (momitem_t *itm, int nbvals)
+{
+  momval_t *resarr = NULL;
+  if (!itm || itm->i_typnum != momty_item)
+    return NULL;
+  mom_should_lock_item (itm);
+  if (itm->i_paylkind != mompayk_procedure)
+    {
+      mom_unlock_item (itm);
+      return NULL;
+    };
+  struct momprocedure_st *proc = itm->i_payload;
+  assert (proc && proc->proc_magic == MOM_PROCEDURE_MAGIC);
+  const struct momprocrout_st *prout = proc->proc_rout;
+  assert (prout && prout->prout_magic == MOM_PROCROUT_MAGIC);
+  unsigned plen = prout->prout_len;
+  if ((int) nbvals <= (int) plen)
+    resarr = proc->proc_valtab;
+  mom_unlock_item (itm);
+  return resarr;
+}
 
 /// two prefixes known by our Makefile!
 // generated modules start with:
