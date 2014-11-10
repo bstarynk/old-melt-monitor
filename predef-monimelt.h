@@ -132,6 +132,9 @@ MOM_PREDEFINED_NAMED(jtype,_7urjeiw3evy_m7k72uv6790,450999481)
 ////!in JSON dumps, give the kind of the payload of an item
 MOM_PREDEFINED_NAMED(kind,_06yp8ueq6yf_5ts408yww29,3458907209)
 
+////!locals of function
+MOM_PREDEFINED_NAMED(locals,_4p33dhxywm0_id6tti2kyw6,45612953)
+
 ////!notably for error message in JSONRPC
 MOM_PREDEFINED_NAMED(message,_4jp2meuzru2_a58afyxwxa2,1089261779)
 

@@ -372,12 +372,6 @@ declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
       if (argsigbuf != argsigtab)
 	MOM_GC_FREE (argsigbuf);
       MOM_OUT (&cg->cgen_outhead, MOMOUT_LITERAL (");"), MOMOUT_NEWLINE ());
-      MOM_OUT (&cg->cgen_outhead,
-	       MOMOUT_LITERAL ("static const char " PROCROUTSIG_PREFIX_MOM),
-	       MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
-	       MOMOUT_LITERAL ("[] = \""),
-	       MOMOUT_LITERALV (mom_string_cstr (argsigv)),
-	       MOMOUT_LITERAL ("\";"), MOMOUT_NEWLINE ());
       mom_item_assoc_put (cg->cgen_globassocitm, curoutitm,
 			  (momval_t)
 			  mom_make_node_sized (mom_named__procedure, 3,
@@ -582,6 +576,32 @@ bind_blocks_cgen (struct c_generator_mom_st *cg, momval_t blocksv)
 		    MOMOUT_ITEM ((const momitem_t *) cg->cgen_curoutitm),
 		    NULL);
   return nbblocks;
+}
+
+static unsigned
+bind_functionvars_cgen (struct c_generator_mom_st *cg, momval_t varsv,
+			unsigned startix)
+{
+  unsigned nbvars = 0;
+  assert (cg && cg->cgen_magic == CGEN_MAGIC);
+  if (mom_is_seqitem (varsv))
+    {
+      nbvars = mom_seqitem_length (varsv);
+      for (unsigned vix = 0; vix < nbvars; vix++)
+	{
+	  momitem_t *varitm = mom_seqitem_nth_item (varsv, vix);
+	  if (!varitm)
+	    continue;
+	  CGEN_CHECK_FRESH (cg, "variable in function", varitm);
+	}
+    }
+  else if (varsv.ptr)
+    CGEN_ERROR_MOM (cg,
+		    MOMOUT_LITERAL ("invalid vars:"),
+		    MOMOUT_VALUE ((const momval_t) varsv),
+		    MOMOUT_LITERAL (" in function "),
+		    MOMOUT_ITEM ((const momitem_t *) cg->cgen_curoutitm),
+		    NULL);
 }
 
 #define CGEN_FORMALARG_PREFIX "momparg_"
@@ -901,8 +921,25 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 void
 emit_taskletroutine_cgen (struct c_generator_mom_st *cg, unsigned routix)
 {
+  momval_t rouconstantsv = MOM_NULLV;
+  momval_t roublocksv = MOM_NULLV;
+  momval_t rouargsv = MOM_NULLV;
+  momval_t roulocalsv = MOM_NULLV;
+  momval_t roustartv = MOM_NULLV;
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
-}
+  momitem_t *curoutitm = cg->cgen_curoutitm;
+  momval_t routnodev = mom_item_assoc_get (cg->cgen_globassocitm, curoutitm);
+  assert (mom_node_conn (routnodev) == mom_named__tasklet_routine);
+  {
+    mom_should_lock_item (curoutitm);
+    rouconstantsv = mom_item_get_attribute (curoutitm, mom_named__constant);
+    rouargsv = mom_item_get_attribute (curoutitm, mom_named__arguments);
+    roulocalsv = mom_item_get_attribute (curoutitm, mom_named__locals);
+    roublocksv = mom_item_get_attribute (curoutitm, mom_named__blocks);
+    roustartv = mom_item_get_attribute (curoutitm, mom_named__start);
+    mom_unlock_item (curoutitm);
+  }
+}				/* end emit_taskletroutine_cgen */
 
 
 
