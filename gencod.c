@@ -28,6 +28,9 @@
    variable, and a `procedure_arguments` giving its formal
    arguments. But a routine has not them.
 
+   Routines usually have an attribute `constant` giving a set of
+   constant items.
+
 
 ****/
 
@@ -418,6 +421,7 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
   momval_t procargsv = MOM_NULLV;
   momval_t procresv = MOM_NULLV;
   momval_t procrestypev = MOM_NULLV;
+  momval_t proconstantsv = MOM_NULLV;
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
   curoutitm = cg->cgen_curoutitm;
   {
@@ -426,6 +430,7 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
       mom_item_get_attribute (curoutitm, mom_named__procedure_arguments);
     procresv =
       mom_item_get_attribute (curoutitm, mom_named__procedure_result);
+    proconstantsv = mom_item_get_attribute (curoutitm, mom_named__constant);
     mom_unlock_item (curoutitm);
   }
   if (!mom_is_tuple (procargsv))
@@ -498,7 +503,25 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
   MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (")"), MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL ("{"), MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE ());
   unsigned nbprocvals = 0;
-#warning should count and bind the constant values in proc
+  if (mom_is_set (proconstantsv))
+    {
+      nbprocvals = mom_set_cardinal (proconstantsv);
+      for (unsigned cix = 0; cix < nbprocvals; cix++)
+	{
+	  momitem_t *constitm = mom_set_nth_item (proconstantsv, nbprocvals);
+	  CGEN_CHECK_FRESH (cg, "constant in procedure", constitm);
+	  mom_item_assoc_put
+	    (cg->cgen_locassocitm, constitm,
+	     (momval_t) mom_make_node_sized (mom_named__constant, 1,
+					     mom_make_integer (cix)));
+	}
+    }
+  else if (proconstantsv.ptr)
+    CGEN_ERROR_MOM (cg,
+		    MOMOUT_LITERAL ("invalid procedure constants:"),
+		    MOMOUT_VALUE ((const momval_t) proconstantsv),
+		    MOMOUT_LITERAL (" in procedure "),
+		    MOMOUT_ITEM ((const momitem_t *) curoutitm), NULL);
   MOM_OUT (&cg->cgen_outbody,
 	   MOMOUT_LITERAL ("static momitem_t* momprocitem;"),
 	   MOMOUT_NEWLINE (),

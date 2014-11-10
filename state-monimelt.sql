@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 Nov 09
+-- state-monimelt dump 2014 Nov 10
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -182,6 +182,9 @@ INSERT INTO t_items VALUES('_4v93t3jzrtz_srt9ear8fm8','{"attr": [{"attr": "_41u1
     "sons": ["{spare1 ajax-complete_name}", "{spare2 ajax-complete_name}",
      "{spare3 ajax-complete_name}", null]}}], "content": null, "kind": null,
  "payload": null}
+');
+INSERT INTO t_items VALUES('_4zywi5fh3ef_ys9sq93vsc1','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for constant in routines, etc..."}],
+ "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_51u3st4u9mc_zdvms6jti0a','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "The C type for word integers"}],
  "content": null, "kind": null, "payload": null}
@@ -368,6 +371,7 @@ INSERT INTO t_names VALUES('closure','_97zkxf62r11_6eedwwv3eu8','.predef');
 INSERT INTO t_names VALUES('closure_routine','_28941cvehx8_9rf4udyeq8v','.predef');
 INSERT INTO t_names VALUES('code','_0yyp8vmw4si_wf49m4d4zwq','.predef');
 INSERT INTO t_names VALUES('comment','_41u1utcxyek_22cftxt3xxm','.predef');
+INSERT INTO t_names VALUES('constant','_4zywi5fh3ef_ys9sq93vsc1','.predef');
 INSERT INTO t_names VALUES('content','_8s357rq2dzk_k8ze95tikjm','.predef');
 INSERT INTO t_names VALUES('ctype','_0ee6afx5850_ji17eq0wmfa','.predef');
 INSERT INTO t_names VALUES('display_value','_7pyjxst21ce_vhc0tk0em0u','.root');
