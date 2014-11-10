@@ -380,8 +380,9 @@ declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	       MOMOUT_LITERAL ("\";"), MOMOUT_NEWLINE ());
       mom_item_assoc_put (cg->cgen_globassocitm, curoutitm,
 			  (momval_t)
-			  mom_make_node_sized (mom_named__procedure, 1,
-					       mom_make_integer (routix)));
+			  mom_make_node_sized (mom_named__procedure, 3,
+					       mom_make_integer (routix),
+					       argsigv, procrestypev));
     }
   else
     {
@@ -593,6 +594,7 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 {
   momitem_t *curoutitm = NULL;
   momval_t procargsv = MOM_NULLV;
+  momval_t procnodev = MOM_NULLV;
   momval_t procresv = MOM_NULLV;
   momval_t procrestypev = MOM_NULLV;
   momval_t proconstantsv = MOM_NULLV;
@@ -608,6 +610,8 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
   unsigned nbproblocks = 0;
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
   curoutitm = cg->cgen_curoutitm;
+  procnodev = mom_item_assoc_get (cg->cgen_globassocitm, curoutitm);
+  assert (mom_node_conn (procnodev) == mom_named__procedure);
   {
     mom_should_lock_item (curoutitm);
     procargsv =
@@ -822,7 +826,7 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
       MOM_OUT (&cg->cgen_outbody,
 	       MOMOUT_INDENT_LESS (),
 	       MOMOUT_NEWLINE (),
-	       MOMOUT_LITERAL ("} // end procedure block "),
+	       MOMOUT_LITERAL ("}; // end procedure block "),
 	       MOMOUT_LITERALV (mom_string_cstr
 				((momval_t)
 				 mom_item_get_name_or_idstr (blkitm))),
@@ -838,11 +842,60 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
   /// emit epilogue
   MOM_OUT (&cg->cgen_outbody,
 	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL (" } // end of procedure "),
+	   MOMOUT_LITERAL ("} // end of procedure "),
 	   MOMOUT_LITERAL (MOM_PROCROUTFUN_PREFIX),
 	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
 	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
-}
+  /// emit the procedure descriptor
+  MOM_OUT (&cg->cgen_outbody,
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL ("const struct momprocrout_st "
+			   MOM_PROCROUTDESCR_PREFIX),
+	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
+	   MOMOUT_LITERAL (" = { .prout_magic = MOM_PROCROUT_MAGIC,"),
+	   MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE (), NULL);
+  if (procrestypev.pitem == mom_named__momval_t)
+    MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_LITERAL (".prout_resty = momtypenc_val,"),
+	     MOMOUT_NEWLINE ());
+  else if (procrestypev.pitem == mom_named__intptr_t)
+    MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_LITERAL (".prout_resty = momtypenc_int,"),
+	     MOMOUT_NEWLINE ());
+  else if (procrestypev.pitem == mom_named__double)
+    MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_LITERAL (".prout_resty = momtypenc_double,"),
+	     MOMOUT_NEWLINE ());
+  else if (procrestypev.pitem == mom_named__momcstr_t)
+    MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_LITERAL (".prout_resty = momtypenc_string,"),
+	     MOMOUT_NEWLINE ());
+  else if (procrestypev.pitem == NULL
+	   || procrestypev.pitem == mom_named__void)
+    MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_LITERAL (".prout_resty = momtypenc__none,"),
+	     MOMOUT_NEWLINE ());
+  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (".prout_len = "),
+	   MOMOUT_DEC_INT ((int) nbproconsts), MOMOUT_NEWLINE ());
+  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (".prout_id = \""),
+	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
+	   MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE ());
+  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (".prout_module = \""),
+	   MOMOUT_LITERALV (mom_ident_cstr_of_item (cg->cgen_moditm)),
+	   MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE ());
+  MOM_OUT (&cg->cgen_outbody,
+	   MOMOUT_LITERAL (".prout_addr = (void*)" MOM_PROCROUTFUN_PREFIX),
+	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
+	   MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE ());
+  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (".prout_argsig = \""),
+	   MOMOUT_LITERALV (mom_string_cstr (mom_node_nth (procnodev, 1))),
+	   MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE ());
+  MOM_OUT (&cg->cgen_outbody,
+	   MOMOUT_LITERAL (".prout_timestamp= __DATE__ \"@\" __TIME__"),
+	   MOMOUT_INDENT_LESS (), MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL ("}; // end proc descriptor"), MOMOUT_NEWLINE (),
+	   MOMOUT_NEWLINE (), NULL);
+}				/* end emit_procedure_cgen */
 
 
 void

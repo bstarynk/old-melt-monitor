@@ -1427,6 +1427,7 @@ struct momprocrout_st
   const char *prout_module;
   const void *prout_addr;
   const char *prout_argsig;	/* signature, in momtypenc_t */
+  const char *prout_timestamp;
 };
 
 void mom_item_start_procedure (momitem_t *itm);
