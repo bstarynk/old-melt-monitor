@@ -388,14 +388,14 @@ declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
     }
   else
     {
-      // genuine tasklet routine
+      // genuine tasklet function
       MOM_OUT (&cg->cgen_outhead, MOMOUT_NEWLINE (),
-	       MOMOUT_LITERAL ("// declare tasklet routine "),
+	       MOMOUT_LITERAL ("// declare tasklet function "),
 	       MOMOUT_ITEM ((const momitem_t *) curoutitm),
 	       MOMOUT_LITERAL (" rank#"), MOMOUT_DEC_INT ((int) routix),
 	       MOMOUT_NEWLINE (), NULL);
       MOM_OUT (&cg->cgen_outhead,
-	       MOMOUT_LITERAL ("int " MOM_ROUTINE_NAME_PREFIX),
+	       MOMOUT_LITERAL ("static int " MOM_ROUTINE_NAME_PREFIX),
 	       MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
 	       MOMOUT_LITERAL
 	       ("(int, momitem_t*, momval_t, momval_t*, intptr_t*, double*);"),
@@ -573,7 +573,7 @@ bind_blocks_cgen (struct c_generator_mom_st *cg, momval_t blocksv)
 	  mom_item_assoc_put
 	    (cg->cgen_locassocitm, blkitm,
 	     (momval_t) mom_make_node_sized (mom_named__blocks, 1,
-					     mom_make_integer (bix)));
+					     mom_make_integer (bix + 1)));
 	}
     }
   else if (blocksv.ptr)
@@ -648,6 +648,7 @@ bind_functionvars_cgen (struct c_generator_mom_st *cg, momval_t varsv)
 		    MOMOUT_LITERAL (" in function "),
 		    MOMOUT_ITEM ((const momitem_t *) cg->cgen_curoutitm),
 		    NULL);
+  return nbvars;
 }
 
 #define CGEN_FORMALARG_PREFIX "momparg_"
@@ -655,6 +656,8 @@ bind_functionvars_cgen (struct c_generator_mom_st *cg, momval_t varsv)
 #define CGEN_PROC_VALUE_PREFIX "mompval_"
 #define CGEN_PROC_DOUBLE_PREFIX "mompdbl_"
 #define CGEN_PROC_BLOCK_PREFIX "mompblo_"
+
+#define CGEN_FUN_BLOCK_PREFIX "momfblo_"
 void
 emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 {
@@ -861,7 +864,7 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
   int startix = -1;
   if (mom_node_conn (startlocv) == mom_named__blocks)
     startix = mom_integer_val_def (mom_node_nth (startlocv, 0), -2);
-  if (startix < 0 || startix >= (int) nbproblocks)
+  if (startix <= 0 || startix >= (int) nbproblocks + 1)
     CGEN_ERROR_MOM (cg,
 		    MOMOUT_LITERAL ("invalid start "),
 		    MOMOUT_ITEM ((const momitem_t *) startitm),
@@ -887,7 +890,9 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	continue;
       MOM_OUT (&cg->cgen_outbody,
 	       MOMOUT_NEWLINE (),
-	       MOMOUT_LITERAL (" " CGEN_PROC_BLOCK_PREFIX ":;"),
+	       MOMOUT_LITERAL (" " CGEN_PROC_BLOCK_PREFIX),
+	       MOMOUT_DEC_INT ((int) bix + 1),
+	       MOMOUT_LITERAL (":"),
 	       MOMOUT_NEWLINE (),
 	       MOMOUT_LITERAL ("{ // procedure block "),
 	       MOMOUT_LITERALV (mom_string_cstr
@@ -973,24 +978,151 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 void
 emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 {
-  momval_t rouconstantsv = MOM_NULLV;
-  momval_t roublocksv = MOM_NULLV;
-  momval_t rouargsv = MOM_NULLV;
-  momval_t roulocalsv = MOM_NULLV;
-  momval_t roustartv = MOM_NULLV;
+  unsigned nbconstants = 0;
+  unsigned nbblocks = 0;
+  momval_t funconstantsv = MOM_NULLV;
+  momval_t funblocksv = MOM_NULLV;
+  momval_t funargsv = MOM_NULLV;
+  momval_t funlocalsv = MOM_NULLV;
+  momval_t funstartv = MOM_NULLV;
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
   momitem_t *curoutitm = cg->cgen_curoutitm;
   momval_t routnodev = mom_item_assoc_get (cg->cgen_globassocitm, curoutitm);
   assert (mom_node_conn (routnodev) == mom_named__tasklet_function);
   {
     mom_should_lock_item (curoutitm);
-    rouconstantsv = mom_item_get_attribute (curoutitm, mom_named__constant);
-    rouargsv = mom_item_get_attribute (curoutitm, mom_named__arguments);
-    roulocalsv = mom_item_get_attribute (curoutitm, mom_named__locals);
-    roublocksv = mom_item_get_attribute (curoutitm, mom_named__blocks);
-    roustartv = mom_item_get_attribute (curoutitm, mom_named__start);
+    funconstantsv = mom_item_get_attribute (curoutitm, mom_named__constant);
+    funargsv = mom_item_get_attribute (curoutitm, mom_named__arguments);
+    funlocalsv = mom_item_get_attribute (curoutitm, mom_named__locals);
+    funblocksv = mom_item_get_attribute (curoutitm, mom_named__blocks);
+    funstartv = mom_item_get_attribute (curoutitm, mom_named__start);
     mom_unlock_item (curoutitm);
   }
+  // bind the constants for the closure
+  nbconstants = bind_constants_cgen (cg, funconstantsv);
+  // bind the arguments
+  bind_functionvars_cgen (cg, funargsv);
+  // bind the locals
+  bind_functionvars_cgen (cg, funlocalsv);
+  // bind the blocks
+  nbblocks = bind_blocks_cgen (cg, funblocksv);
+  momitem_t *startitm = mom_value_to_item (funstartv);
+  if (!startitm)
+    CGEN_ERROR_MOM (cg,
+		    MOMOUT_LITERAL ("missing start in function "),
+		    MOMOUT_ITEM ((const momitem_t *) curoutitm), NULL);
+  momval_t startlocv = mom_item_assoc_get (cg->cgen_locassocitm, startitm);
+  int startix = -1;
+  if (mom_node_conn (startlocv) == mom_named__blocks)
+    startix = mom_integer_val_def (mom_node_nth (startlocv, 0), -2);
+  if (startix <= 0 || startix >= (int) nbblocks + 1)
+    CGEN_ERROR_MOM (cg,
+		    MOMOUT_LITERAL ("invalid start "),
+		    MOMOUT_ITEM ((const momitem_t *) startitm),
+		    MOMOUT_LITERAL (" bound to "),
+		    MOMOUT_VALUE (startlocv),
+		    MOMOUT_LITERAL (" in function "),
+		    MOMOUT_ITEM ((const momitem_t *) curoutitm), NULL);
+  /// emit start of function
+  MOM_OUT (&cg->cgen_outbody,
+	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL ("// implement tasklet function "),
+	   MOMOUT_ITEM ((const momitem_t *) curoutitm),
+	   MOMOUT_LITERAL (" rank#"), MOMOUT_DEC_INT ((int) routix),
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL ("static int " MOM_ROUTINE_NAME_PREFIX),
+	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
+	   MOMOUT_LITERAL
+	   ("(int momstate, momitem_t *momtasklet, const momval_t momclosure,"),
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL
+	   ("\t momval_t *momvals, intptr_t *momnums, double* momdbls)"),
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL ("{ // start of tasklet function"),
+	   MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE (), NULL);
+  MOM_OUT (&cg->cgen_outbody,
+	   MOMOUT_LITERAL ("if (MOM_UNLIKELY(momstate==0)) return "),
+	   MOMOUT_DEC_INT (startix), MOMOUT_LITERAL (";"), MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL
+	   ("momval_t* momclovals = mom_closed_values (momclosure);"),
+	   MOMOUT_NEWLINE ());
+  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("switch (momstate) {"),
+	   MOMOUT_NEWLINE ());
+  for (unsigned six = 1; six <= nbblocks; six++)
+    {
+      MOM_OUT (&cg->cgen_outbody,
+	       MOMOUT_LITERAL ("case "),
+	       MOMOUT_DEC_INT ((int) six),
+	       MOMOUT_LITERAL (": goto " CGEN_FUN_BLOCK_PREFIX),
+	       MOMOUT_DEC_INT ((int) six),
+	       MOMOUT_LITERAL (";"), MOMOUT_NEWLINE (), NULL);
+    }
+  MOM_OUT (&cg->cgen_outbody,
+	   MOMOUT_LITERAL ("default: return momroutres_pop;"),
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL ("}; // end switch state"),
+	   MOMOUT_NEWLINE (), NULL);
+  for (unsigned six = 1; six <= nbblocks; six++)
+    {
+      momitem_t *blkitm = mom_seqitem_nth_item (funblocksv, six - 1);
+      MOM_OUT (&cg->cgen_outbody,
+	       MOMOUT_NEWLINE (),
+	       MOMOUT_LITERAL ("// function block #"),
+	       MOMOUT_DEC_INT ((int) six),
+	       MOMOUT_LITERAL (" "),
+	       MOMOUT_ITEM ((const momitem_t *) blkitm),
+	       MOMOUT_NEWLINE (),
+	       MOMOUT_LITERAL (CGEN_FUN_BLOCK_PREFIX),
+	       MOMOUT_DEC_INT ((int) six),
+	       MOMOUT_LITERAL (":"),
+	       MOMOUT_NEWLINE (),
+	       MOMOUT_LITERAL ("{"), MOMOUT_INDENT_MORE (), NULL);
+      emit_block_cgen (cg, blkitm);
+      MOM_OUT (&cg->cgen_outbody,
+	       MOMOUT_INDENT_LESS (),
+	       MOMOUT_NEWLINE (),
+	       MOMOUT_LITERAL ("}; // end function block "),
+	       MOMOUT_ITEM ((const momitem_t *) blkitm),
+	       MOMOUT_NEWLINE (),
+	       MOMOUT_LITERAL ("return momroutres_pop;"),
+	       MOMOUT_NEWLINE (), NULL);
+    }
+  // emit end of function
+  MOM_OUT (&cg->cgen_outbody,
+	   MOMOUT_LITERAL ("} // end function "),
+	   MOMOUT_ITEM ((const momitem_t *) curoutitm),
+	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
+  // emit the function descriptor
+  MOM_OUT (&cg->cgen_outbody,
+	   MOMOUT_LITERAL ("const struct momroutinedescr_st "
+			   MOM_ROUTINE_NAME_PREFIX),
+	   MOMOUT_ITEM ((const momitem_t *) curoutitm),
+	   MOMOUT_LITERAL (" = { // function descriptor"),
+	   MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL (".rout_magic = MOM_ROUTINE_MAGIC,"),
+	   MOMOUT_NEWLINE (), MOMOUT_LITERAL (".rout_minclosize = "),
+	   MOMOUT_DEC_INT ((int) nbconstants), MOMOUT_LITERAL (","),
+	   MOMOUT_NEWLINE (), MOMOUT_LITERAL (".rout_frame_nbval = "),
+	   MOMOUT_DEC_INT ((int) mom_item_vector_count (cg->cgen_vecvalitm)),
+	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL (".rout_frame_nbnum = "),
+	   MOMOUT_DEC_INT ((int) mom_item_vector_count (cg->cgen_vecnumitm)),
+	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL (".rout_frame_nbdbl = "),
+	   MOMOUT_DEC_INT ((int) mom_item_vector_count (cg->cgen_vecdblitm)),
+	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL (".rout_name = \""),
+	   MOMOUT_ITEM ((const momitem_t *) curoutitm),
+	   MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL (".rout_module = MONIMELT_CURRENT_MODULE,"),
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL (".rout_codefun = " MOM_ROUTINE_NAME_PREFIX),
+	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL (".rout_timestamp = __DATE__ \"@\" __TIME__"),
+	   MOMOUT_NEWLINE (), MOMOUT_INDENT_LESS (), MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL ("}; // end function descriptor"),
+	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
 }				/* end emit_taskletfunction_cgen */
 
 
