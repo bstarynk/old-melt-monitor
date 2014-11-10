@@ -43,6 +43,9 @@ MOM_PREDEFINED_NAMED(POST,_5wmusj136kq_u5qpehp89aq,919851673)
 ////+It is the queue of taskets to be executed by worker threads.
 MOM_PREDEFINED_NAMED(agenda,_02u53qxa7dm_sttmhffpchr,15591209)
 
+////!arguments of procedure or primitive
+MOM_PREDEFINED_NAMED(arguments,_2x2zpyhfqum_0utui69rzea,3803054010)
+
 ////!gives the attribute[s], at least in dumped JSON...
 MOM_PREDEFINED_NAMED(attr,_6w3dvx83dfw_xzc6aif6isv,4127160085)
 

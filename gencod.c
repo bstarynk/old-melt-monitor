@@ -25,12 +25,12 @@
    associated to a set or tuple of procedure or routine items.
 
    A procedure may have an attribute `procedure_result` giving its result
-   variable, and a `procedure_arguments` giving its formal
+   variable or `void`, and a `procedure_arguments` giving its formal
    arguments. But a routine has not them.
 
-   Routines usually have an attribute `constant` giving a set of
-   constant items, `values` associated to locals, `numbers` associated
-   to numbers, `doubles` associated to doubles.
+   Routines usually have an attribute `constant` giving a sequence
+   -set or tuple- of constant items, `values` associated to locals,
+   `numbers` associated to numbers, `doubles` associated to doubles.
 
 
 ****/
@@ -121,6 +121,9 @@ static void emit_taskletroutine_cgen (struct c_generator_mom_st *cgen,
 
 static void emit_ctype_cgen (struct c_generator_mom_st *cgen,
 			     struct momout_st *out, momitem_t *typitm);
+
+static void emit_block_cgen (struct c_generator_mom_st *cgen,
+			     momitem_t *blkitm);
 
 #define CGEN_CHECK_FRESH_AT_BIS(Lin,Cg,Msg,Itm) do	\
 { const momitem_t* itm##Lin = (Itm);			\
@@ -550,10 +553,41 @@ bind_numbers_cgen (struct c_generator_mom_st *cg, momval_t numbersv)
   return nbnumbers;
 }
 
+static unsigned
+bind_blocks_cgen (struct c_generator_mom_st *cg, momval_t blocksv)
+{
+  unsigned nbblocks = 0;
+  assert (cg && cg->cgen_magic == CGEN_MAGIC);
+  if (mom_is_seqitem (blocksv))
+    {
+      nbblocks = mom_seqitem_length (blocksv);
+      for (unsigned bix = 0; bix < nbblocks; bix++)
+	{
+	  momitem_t *blkitm = mom_seqitem_nth_item (blocksv, bix);
+	  if (!blkitm)
+	    continue;
+	  CGEN_CHECK_FRESH (cg, "block in routine", blkitm);
+	  mom_item_assoc_put
+	    (cg->cgen_locassocitm, blkitm,
+	     (momval_t) mom_make_node_sized (mom_named__blocks, 1,
+					     mom_make_integer (bix)));
+	}
+    }
+  else if (blocksv.ptr)
+    CGEN_ERROR_MOM (cg,
+		    MOMOUT_LITERAL ("invalid blocks:"),
+		    MOMOUT_VALUE ((const momval_t) blocksv),
+		    MOMOUT_LITERAL (" in routine "),
+		    MOMOUT_ITEM ((const momitem_t *) cg->cgen_curoutitm),
+		    NULL);
+  return nbblocks;
+}
+
 #define CGEN_FORMALARG_PREFIX "momparg_"
 #define CGEN_PROC_NUMBER_PREFIX "mompnum_"
 #define CGEN_PROC_VALUE_PREFIX "mompval_"
 #define CGEN_PROC_DOUBLE_PREFIX "mompdbl_"
+#define CGEN_PROC_BLOCK_PREFIX "mompblo_"
 void
 emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 {
@@ -595,6 +629,8 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 		    MOMOUT_ITEM ((const momitem_t *) curoutitm), NULL);
   unsigned nbargs = mom_tuple_length (procargsv);
   momitem_t *procresitm = NULL;
+  if (procresv.pitem == mom_named__void)
+    procrestypev = (momval_t) mom_named__void;
   if (mom_is_item (procresv))
     {
       procresitm = procresv.pitem;
@@ -665,6 +701,12 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
   nbprovalues = bind_values_cgen (cg, provaluesv);
   // count and bind the doubles
   nbprodoubles = bind_doubles_cgen (cg, prodoublesv);
+  // count and bind the blocks
+  nbproblocks = bind_blocks_cgen (cg, problocksv);
+  if (nbproblocks == 0)
+    CGEN_ERROR_MOM (cg,
+		    MOMOUT_LITERAL ("missing blocks in procedure "),
+		    MOMOUT_ITEM ((const momitem_t *) curoutitm), NULL);
   // emit declarations of local numbers
   for (unsigned nix = 0; nix < nbpronumbers; nix++)
     MOM_OUT (&cg->cgen_outbody,
@@ -734,6 +776,72 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	     MOMOUT_LITERAL
 	     ("if (MOM_UNLIKELY(!momprocconstants)) return momresult;"),
 	     MOMOUT_NEWLINE ());
+  momitem_t *startitm = mom_value_to_item (prostartv);
+  if (!startitm)
+    CGEN_ERROR_MOM (cg,
+		    MOMOUT_LITERAL ("missing start in procedure "),
+		    MOMOUT_ITEM ((const momitem_t *) curoutitm), NULL);
+  momval_t startlocv = mom_item_assoc_get (cg->cgen_locassocitm, startitm);
+  int startix = -1;
+  if (mom_node_conn (startlocv) == mom_named__blocks)
+    startix = mom_integer_val_def (mom_node_nth (startlocv, 0), -2);
+  if (startix < 0 || startix >= (int) nbproblocks)
+    CGEN_ERROR_MOM (cg,
+		    MOMOUT_LITERAL ("invalid start "),
+		    MOMOUT_ITEM ((const momitem_t *) startitm),
+		    MOMOUT_LITERAL (" bound to "),
+		    MOMOUT_VALUE (startlocv),
+		    MOMOUT_LITERAL (" in procedure "),
+		    MOMOUT_ITEM ((const momitem_t *) curoutitm), NULL);
+  MOM_OUT (&cg->cgen_outbody,
+	   MOMOUT_LITERAL ("/// starting:"),
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL ("goto " CGEN_PROC_BLOCK_PREFIX),
+	   MOMOUT_DEC_INT (startix),
+	   MOMOUT_LITERAL ("; // start at "),
+	   MOMOUT_LITERALV (mom_string_cstr
+			    ((momval_t)
+			     mom_item_get_name_or_idstr (startitm))),
+	   MOMOUT_NEWLINE (), NULL);
+  /// emit each block
+  for (unsigned bix = 0; bix < nbproblocks; bix++)
+    {
+      momitem_t *blkitm = mom_seqitem_nth_item (problocksv, bix);
+      if (!blkitm)
+	continue;
+      MOM_OUT (&cg->cgen_outbody,
+	       MOMOUT_NEWLINE (),
+	       MOMOUT_LITERAL (" " CGEN_PROC_BLOCK_PREFIX ":;"),
+	       MOMOUT_NEWLINE (),
+	       MOMOUT_LITERAL ("{ // procedure block "),
+	       MOMOUT_LITERALV (mom_string_cstr
+				((momval_t)
+				 mom_item_get_name_or_idstr (blkitm))),
+	       MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE (), NULL);
+      emit_block_cgen (cg, blkitm);
+      MOM_OUT (&cg->cgen_outbody,
+	       MOMOUT_INDENT_LESS (),
+	       MOMOUT_NEWLINE (),
+	       MOMOUT_LITERAL ("} // end procedure block "),
+	       MOMOUT_LITERALV (mom_string_cstr
+				((momval_t)
+				 mom_item_get_name_or_idstr (blkitm))),
+	       MOMOUT_NEWLINE (), NULL);
+      if (procrestypev.pitem == mom_named__void || !procrestypev.ptr)
+	MOM_OUT (&cg->cgen_outbody,
+		 MOMOUT_LITERAL ("return;"), MOMOUT_NEWLINE (), NULL);
+      else
+	MOM_OUT (&cg->cgen_outbody,
+		 MOMOUT_LITERAL ("return momresult;"),
+		 MOMOUT_NEWLINE (), NULL);
+    }
+  /// emit epilogue
+  MOM_OUT (&cg->cgen_outbody,
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL (" } // end of procedure "),
+	   MOMOUT_LITERAL (MOM_PROCROUTFUN_PREFIX),
+	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
+	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
 }
 
 
@@ -767,4 +875,15 @@ emit_ctype_cgen (struct c_generator_mom_st *cg, struct momout_st *out,
   else
     CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid ctype:"),
 		    MOMOUT_ITEM ((const momitem_t *) typitm), NULL);
+}
+
+void
+emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
+{
+  assert (cg && cg->cgen_magic == CGEN_MAGIC);
+  assert (blkitm && blkitm->i_typnum == momty_item);
+#warning unimplemented emit_block_cgen
+  CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("unimplemented emission of block:"),
+		  MOMOUT_ITEM ((const momitem_t *) blkitm), NULL);
+
 }
