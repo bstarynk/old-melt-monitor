@@ -37,6 +37,13 @@
 
 #define CGEN_MAGIC 0x566802a5	/* cgen magic 1449656997 */
 
+enum cgenroutkind_mom_en
+{
+  cgr__none,
+  cgr_proc,
+  cgr_rout,
+};
+
 // internal stack allocated structure to generate the C module
 struct c_generator_mom_st
 {
@@ -51,6 +58,7 @@ struct c_generator_mom_st
   char *cgen_filpath;
   char *cgen_filbase;
   char *cgen_tempath;
+  enum cgenroutkind_mom_en cgen_routkind;
   struct momout_st cgen_outhead;
   struct momout_st cgen_outbody;
 };
@@ -405,13 +413,20 @@ emit_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
   cg->cgen_locassocitm = mom_make_item ();
   mom_item_start_assoc (cg->cgen_locassocitm);
   if (curoutconnitm == mom_named__procedure)
-    emit_procedure_cgen (cg, routix);
+    {
+      cg->cgen_routkind = cgr_proc;
+      emit_procedure_cgen (cg, routix);
+    }
   else if (curoutconnitm == mom_named__tasklet_routine)
-    emit_taskletroutine_cgen (cg, routix);
+    {
+      cg->cgen_routkind = cgr_rout;
+      emit_taskletroutine_cgen (cg, routix);
+    }
   else
     MOM_FATAL (MOMOUT_LITERAL ("invalid curoutconnitm:"),
 	       MOMOUT_ITEM ((const momitem_t *) curoutconnitm));
   cg->cgen_locassocitm = NULL;
+  cg->cgen_routkind = cgr__none;
 }
 
 
@@ -536,6 +551,9 @@ bind_numbers_cgen (struct c_generator_mom_st *cg, momval_t numbersv)
 }
 
 #define CGEN_FORMALARG_PREFIX "momparg_"
+#define CGEN_PROC_NUMBER_PREFIX "mompnum_"
+#define CGEN_PROC_VALUE_PREFIX "mompval_"
+#define CGEN_PROC_DOUBLE_PREFIX "mompdbl_"
 void
 emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 {
@@ -647,6 +665,38 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
   nbprovalues = bind_values_cgen (cg, provaluesv);
   // count and bind the doubles
   nbprodoubles = bind_doubles_cgen (cg, prodoublesv);
+  // emit declarations of local numbers
+  for (unsigned nix = 0; nix < nbpronumbers; nix++)
+    MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_LITERAL ("intptr_t " CGEN_PROC_NUMBER_PREFIX),
+	     MOMOUT_DEC_INT ((int) nix),
+	     MOMOUT_LITERAL (" = 0; "),
+	     MOMOUT_SLASHCOMMENT_STRING
+	     (mom_string_cstr ((momval_t) mom_item_get_name_or_idstr
+			       (mom_seqitem_nth_item (pronumbersv, nix)))),
+	     MOMOUT_NEWLINE ());
+  // emit declarations of local values
+  for (unsigned vix = 0; vix < nbprovalues; vix++)
+    MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_LITERAL ("momval_t " CGEN_PROC_VALUE_PREFIX),
+	     MOMOUT_DEC_INT ((int) vix),
+	     MOMOUT_LITERAL (" = MOM_NULLV; "),
+	     MOMOUT_SLASHCOMMENT_STRING
+	     (mom_string_cstr ((momval_t) mom_item_get_name_or_idstr
+			       (mom_seqitem_nth_item (provaluesv, vix)))),
+	     MOMOUT_NEWLINE ());
+  // emit declarations of local doubles
+  for (unsigned dix = 0; dix < nbprodoubles; dix++)
+    MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_LITERAL ("double " CGEN_PROC_DOUBLE_PREFIX),
+	     MOMOUT_DEC_INT ((int) dix),
+	     MOMOUT_LITERAL (" = 0.0; "),
+	     MOMOUT_SLASHCOMMENT_STRING (mom_string_cstr
+					 ((momval_t)
+					  mom_item_get_name_or_idstr
+					  (mom_seqitem_nth_item
+					   (prodoublesv, dix)))),
+	     MOMOUT_NEWLINE ());
   // emit prologue
   MOM_OUT (&cg->cgen_outbody,
 	   MOMOUT_LITERAL ("static momitem_t* momprocitem;"),
