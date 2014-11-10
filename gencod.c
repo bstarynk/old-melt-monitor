@@ -125,7 +125,7 @@ static void emit_routine_cgen (struct c_generator_mom_st *cgen,
 static void emit_procedure_cgen (struct c_generator_mom_st *cgen,
 				 unsigned routix);
 static void emit_taskletfunction_cgen (struct c_generator_mom_st *cgen,
-				      unsigned routix);
+				       unsigned routix);
 
 static void emit_ctype_cgen (struct c_generator_mom_st *cgen,
 			     struct momout_st *out, momitem_t *typitm);
