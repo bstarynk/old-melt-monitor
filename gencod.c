@@ -1033,10 +1033,10 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	   MOMOUT_LITERAL ("static int " MOM_ROUTINE_NAME_PREFIX),
 	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
 	   MOMOUT_LITERAL
-	   ("(int momstate, momitem_t *momtasklet, const momval_t momclosure,"),
+	   ("(int momstate, momitem_t* momtasklet, const momval_t momclosure,"),
 	   MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL
-	   ("\t momval_t *momvals, intptr_t *momnums, double* momdbls)"),
+	   ("\t momval_t* momvals, intptr_t* momnums, double* momdbls)"),
 	   MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL ("{ // start of tasklet function"),
 	   MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE (), NULL);
@@ -1149,6 +1149,38 @@ emit_ctype_cgen (struct c_generator_mom_st *cg, struct momout_st *out,
   else
     CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid ctype:"),
 		    MOMOUT_ITEM ((const momitem_t *) typitm), NULL);
+}
+
+// emit an expression and gives its type
+static momtypenc_t
+emit_expr_cgen (struct c_generator_mom_st *cg, momval_t expv)
+{
+  if (mom_is_string (expv))
+    {
+      MOM_OUT (&cg->cgen_outbody,
+	       MOMOUT_SPACE (48),
+	       MOMOUT_LITERAL ("\""),
+	       MOMOUT_JS_STRING ((const char *) expv.pstring->cstr),
+	       MOMOUT_LITERAL ("\""), NULL);
+      return momtypenc_string;
+    }
+  else if (mom_is_integer (expv))
+    {
+      MOM_OUT (&cg->cgen_outbody,
+	       MOMOUT_SPACE (48),
+	       MOMOUT_FMT_LONG_LONG ((const char *) "%lld",
+				     (long long) (expv.pint->intval)), NULL);
+      return momtypenc_int;
+    }
+  else if (mom_is_item (expv))
+    {
+      momitem_t *expitm = expv.pitem;
+      momval_t expasv = mom_item_assoc_get (cg->cgen_locassocitm, expitm);
+      if (expasv.ptr == NULL)
+	expasv = mom_item_assoc_get (cg->cgen_globassocitm, expitm);
+#warning incomplete emit_expr_cgen
+    }
+
 }
 
 void
