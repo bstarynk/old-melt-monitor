@@ -33,26 +33,21 @@ cleanup_dict (void)
 {
   momval_t setnameditems = (momval_t) mom_set_of_named_items ();
   unsigned nbnamed = mom_set_cardinal (setnameditems);
-  unsigned nbforgetmom = 0;
+  unsigned nbforgetjs = 0;
   unsigned nbforgetmelt = 0;
   for (unsigned ix = 0; ix < nbnamed; ix++)
     {
       momitem_t *curnameditm = mom_set_nth_item (setnameditems, ix);
       momval_t curnamev = (momval_t) mom_item_get_name (curnameditm);
       const char *curnamstr = mom_string_cstr (curnamev);
-      if (!strncmp (curnamstr, "mom", 3))
+      if (!strncmp (curnamstr, "json_rpc_", 9))
 	{
 	  mom_forget_name (curnamstr);
-	  nbforgetmom++;
-	}
-      if (!strncmp (curnamstr, "melt", 3))
-	{
-	  mom_forget_name (curnamstr);
-	  nbforgetmelt++;
+	  nbforgetjs++;
 	}
     }
-  MOM_INFORMPRINTF ("forgot %u names suffixed with mom & %u with melt",
-		    nbforgetmom, nbforgetmelt);
+  MOM_INFORMPRINTF ("forgot %u names suffixed with json_rpc_ ",
+		    nbforgetjs);
 }
 
 void

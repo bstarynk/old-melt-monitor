@@ -22,16 +22,20 @@
 
 /****
    A module item is an item with a `module_routines` attribute
-   associated to a set or tuple of procedure or routine items.
+   associated to a set or tuple of routines, i.e. procedure or
+   function items.
 
    A procedure may have an attribute `procedure_result` giving its result
    variable or `void`, and a `procedure_arguments` giving its formal
    arguments. But a routine has not them.
 
-   Routines usually have an attribute `constant` giving a sequence
+   Procedures usually have an attribute `constant` giving a sequence
    -set or tuple- of constant items, `values` associated to locals,
    `numbers` associated to numbers, `doubles` associated to doubles.
 
+   Functions have an attribute `constant` giving a sequence -set or
+   tuple- of constant items, `arguments` associated to arguments,
+   `locals` associated to locals variables.
 
 ****/
 
@@ -120,7 +124,7 @@ static void emit_routine_cgen (struct c_generator_mom_st *cgen,
 			       unsigned routix);
 static void emit_procedure_cgen (struct c_generator_mom_st *cgen,
 				 unsigned routix);
-static void emit_taskletroutine_cgen (struct c_generator_mom_st *cgen,
+static void emit_taskletfunction_cgen (struct c_generator_mom_st *cgen,
 				      unsigned routix);
 
 static void emit_ctype_cgen (struct c_generator_mom_st *cgen,
@@ -398,7 +402,7 @@ declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	       MOMOUT_NEWLINE (), NULL);
       mom_item_assoc_put (cg->cgen_globassocitm, curoutitm,
 			  (momval_t)
-			  mom_make_node_sized (mom_named__tasklet_routine, 1,
+			  mom_make_node_sized (mom_named__tasklet_function, 1,
 					       mom_make_integer (routix)));
     }
 }
@@ -419,10 +423,10 @@ emit_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
       cg->cgen_routkind = cgr_proc;
       emit_procedure_cgen (cg, routix);
     }
-  else if (curoutconnitm == mom_named__tasklet_routine)
+  else if (curoutconnitm == mom_named__tasklet_function)
     {
       cg->cgen_routkind = cgr_rout;
-      emit_taskletroutine_cgen (cg, routix);
+      emit_taskletfunction_cgen (cg, routix);
     }
   else
     MOM_FATAL (MOMOUT_LITERAL ("invalid curoutconnitm:"),
@@ -967,7 +971,7 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 
 
 void
-emit_taskletroutine_cgen (struct c_generator_mom_st *cg, unsigned routix)
+emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 {
   momval_t rouconstantsv = MOM_NULLV;
   momval_t roublocksv = MOM_NULLV;
@@ -977,7 +981,7 @@ emit_taskletroutine_cgen (struct c_generator_mom_st *cg, unsigned routix)
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
   momitem_t *curoutitm = cg->cgen_curoutitm;
   momval_t routnodev = mom_item_assoc_get (cg->cgen_globassocitm, curoutitm);
-  assert (mom_node_conn (routnodev) == mom_named__tasklet_routine);
+  assert (mom_node_conn (routnodev) == mom_named__tasklet_function);
   {
     mom_should_lock_item (curoutitm);
     rouconstantsv = mom_item_get_attribute (curoutitm, mom_named__constant);
@@ -987,7 +991,7 @@ emit_taskletroutine_cgen (struct c_generator_mom_st *cg, unsigned routix)
     roustartv = mom_item_get_attribute (curoutitm, mom_named__start);
     mom_unlock_item (curoutitm);
   }
-}				/* end emit_taskletroutine_cgen */
+}				/* end emit_taskletfunction_cgen */
 
 
 

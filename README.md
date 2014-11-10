@@ -143,8 +143,9 @@ They include:
 
 Items have their data, a unique id string, and a mutable payload.
 
-Items also serve for tasklets and routines. Basic blocks and edges as
-known to GCC will be represented as items. Each item has
+Items also serve for tasklets and functions and procedures. Basic
+blocks and edges as known to GCC will be represented as items. Each
+item has
 
 1. A globally unique, randomly generated, string id of 24 characters,
 like e.g. `_41v0erax6my_m6pytj0793u` or `_0477zh15y06_td93ap85p79`,
@@ -194,7 +195,7 @@ indefinitely (sleeping when no tasklet is queued in the agenda).
 
 A tasklet item has as its payload (conceptually) a call stack of
 frames. Each frame has a closure, a state, and local values, numbers
-and doubles. The closure has a routine, which gets executed when a
+and doubles. The closure has a function, which gets executed when a
 worker steps into the tasklet. It may (and often does) enqueue the
 running tasklet -or some other taskets (at the rear of the agenda
 queue.

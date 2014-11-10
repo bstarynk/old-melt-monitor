@@ -208,7 +208,7 @@ MOM_PREDEFINED_NAMED(state,_6f9870y6v8t_kp8fcmq2ezv,1856647655)
 MOM_PREDEFINED_NAMED(string,_8j516kuv89j_4hc4w6ykmr6,4254767725)
 
 ////!for routines for tasklet
-MOM_PREDEFINED_NAMED(tasklet_routine,_7yxp9xhih4z_9uzrqhkamxa,1188253756)
+MOM_PREDEFINED_NAMED(tasklet_function,_7yxp9xhih4z_9uzrqhkamxa,1188253756)
 
 ////!for terminated processes
 MOM_PREDEFINED_NAMED(terminated,_3jpt8yuzuyw_ti1pyz3me1c,2596985071)
