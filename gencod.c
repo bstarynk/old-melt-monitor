@@ -29,7 +29,8 @@
    arguments. But a routine has not them.
 
    Routines usually have an attribute `constant` giving a set of
-   constant items.
+   constant items, `values` associated to locals, `numbers` associated
+   to numbers, `doubles` associated to doubles.
 
 
 ****/
@@ -413,6 +414,127 @@ emit_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
   cg->cgen_locassocitm = NULL;
 }
 
+
+static unsigned
+bind_constants_cgen (struct c_generator_mom_st *cg, momval_t constantsv)
+{
+  unsigned nbconsts = 0;
+  assert (cg && cg->cgen_magic == CGEN_MAGIC);
+  if (mom_is_seqitem (constantsv))
+    {
+      nbconsts = mom_seqitem_length (constantsv);
+      for (unsigned cix = 0; cix < nbconsts; cix++)
+	{
+	  momitem_t *constitm = mom_seqitem_nth_item (constantsv, cix);
+	  if (!constitm)
+	    continue;
+	  CGEN_CHECK_FRESH (cg, "constant in routine", constitm);
+	  mom_item_assoc_put
+	    (cg->cgen_locassocitm, constitm,
+	     (momval_t) mom_make_node_sized (mom_named__constant, 1,
+					     mom_make_integer (cix)));
+	}
+    }
+  else if (constantsv.ptr)
+    CGEN_ERROR_MOM (cg,
+		    MOMOUT_LITERAL ("invalid constants:"),
+		    MOMOUT_VALUE ((const momval_t) constantsv),
+		    MOMOUT_LITERAL (" in routine "),
+		    MOMOUT_ITEM ((const momitem_t *) cg->cgen_curoutitm),
+		    NULL);
+  return nbconsts;
+}
+
+static unsigned
+bind_values_cgen (struct c_generator_mom_st *cg, momval_t valuesv)
+{
+  unsigned nbvalues = 0;
+  assert (cg && cg->cgen_magic == CGEN_MAGIC);
+  if (mom_is_seqitem (valuesv))
+    {
+      nbvalues = mom_seqitem_length (valuesv);
+      for (unsigned vix = 0; vix < nbvalues; vix++)
+	{
+	  momitem_t *valitm = mom_seqitem_nth_item (valuesv, vix);
+	  if (!valitm)
+	    continue;
+	  CGEN_CHECK_FRESH (cg, "value in routine", valitm);
+	  mom_item_assoc_put
+	    (cg->cgen_locassocitm, valitm,
+	     (momval_t) mom_make_node_sized (mom_named__values, 1,
+					     mom_make_integer (vix)));
+	}
+    }
+  else if (valuesv.ptr)
+    CGEN_ERROR_MOM (cg,
+		    MOMOUT_LITERAL ("invalid values:"),
+		    MOMOUT_VALUE ((const momval_t) valuesv),
+		    MOMOUT_LITERAL (" in routine "),
+		    MOMOUT_ITEM ((const momitem_t *) cg->cgen_curoutitm),
+		    NULL);
+  return nbvalues;
+}
+
+static unsigned
+bind_doubles_cgen (struct c_generator_mom_st *cg, momval_t doublesv)
+{
+  unsigned nbdoubles = 0;
+  assert (cg && cg->cgen_magic == CGEN_MAGIC);
+  if (mom_is_seqitem (doublesv))
+    {
+      nbdoubles = mom_seqitem_length (doublesv);
+      for (unsigned dix = 0; dix < nbdoubles; dix++)
+	{
+	  momitem_t *dblitm = mom_seqitem_nth_item (doublesv, dix);
+	  if (!dblitm)
+	    continue;
+	  CGEN_CHECK_FRESH (cg, "double in routine", dblitm);
+	  mom_item_assoc_put
+	    (cg->cgen_locassocitm, dblitm,
+	     (momval_t) mom_make_node_sized (mom_named__doubles, 1,
+					     mom_make_integer (dix)));
+	}
+    }
+  else if (doublesv.ptr)
+    CGEN_ERROR_MOM (cg,
+		    MOMOUT_LITERAL ("invalid doubles:"),
+		    MOMOUT_VALUE ((const momval_t) doublesv),
+		    MOMOUT_LITERAL (" in routine "),
+		    MOMOUT_ITEM ((const momitem_t *) cg->cgen_curoutitm),
+		    NULL);
+  return nbdoubles;
+}
+
+static unsigned
+bind_numbers_cgen (struct c_generator_mom_st *cg, momval_t numbersv)
+{
+  unsigned nbnumbers = 0;
+  assert (cg && cg->cgen_magic == CGEN_MAGIC);
+  if (mom_is_seqitem (numbersv))
+    {
+      nbnumbers = mom_seqitem_length (numbersv);
+      for (unsigned nix = 0; nix < nbnumbers; nix++)
+	{
+	  momitem_t *numitm = mom_seqitem_nth_item (numbersv, nix);
+	  if (!numitm)
+	    continue;
+	  CGEN_CHECK_FRESH (cg, "number in routine", numitm);
+	  mom_item_assoc_put
+	    (cg->cgen_locassocitm, numitm,
+	     (momval_t) mom_make_node_sized (mom_named__numbers, 1,
+					     mom_make_integer (nix)));
+	}
+    }
+  else if (numbersv.ptr)
+    CGEN_ERROR_MOM (cg,
+		    MOMOUT_LITERAL ("invalid numbers:"),
+		    MOMOUT_VALUE ((const momval_t) numbersv),
+		    MOMOUT_LITERAL (" in routine "),
+		    MOMOUT_ITEM ((const momitem_t *) cg->cgen_curoutitm),
+		    NULL);
+  return nbnumbers;
+}
+
 #define CGEN_FORMALARG_PREFIX "momparg_"
 void
 emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
@@ -422,6 +544,16 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
   momval_t procresv = MOM_NULLV;
   momval_t procrestypev = MOM_NULLV;
   momval_t proconstantsv = MOM_NULLV;
+  momval_t provaluesv = MOM_NULLV;
+  momval_t pronumbersv = MOM_NULLV;
+  momval_t prodoublesv = MOM_NULLV;
+  momval_t problocksv = MOM_NULLV;
+  momval_t prostartv = MOM_NULLV;
+  unsigned nbproconsts = 0;
+  unsigned nbprovalues = 0;
+  unsigned nbpronumbers = 0;
+  unsigned nbprodoubles = 0;
+  unsigned nbproblocks = 0;
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
   curoutitm = cg->cgen_curoutitm;
   {
@@ -431,6 +563,11 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
     procresv =
       mom_item_get_attribute (curoutitm, mom_named__procedure_result);
     proconstantsv = mom_item_get_attribute (curoutitm, mom_named__constant);
+    provaluesv = mom_item_get_attribute (curoutitm, mom_named__values);
+    pronumbersv = mom_item_get_attribute (curoutitm, mom_named__numbers);
+    prodoublesv = mom_item_get_attribute (curoutitm, mom_named__doubles);
+    problocksv = mom_item_get_attribute (curoutitm, mom_named__blocks);
+    prostartv = mom_item_get_attribute (curoutitm, mom_named__start);
     mom_unlock_item (curoutitm);
   }
   if (!mom_is_tuple (procargsv))
@@ -502,38 +639,27 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
     }
   MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (")"), MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL ("{"), MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE ());
-  unsigned nbprocvals = 0;
-  if (mom_is_set (proconstantsv))
-    {
-      nbprocvals = mom_set_cardinal (proconstantsv);
-      for (unsigned cix = 0; cix < nbprocvals; cix++)
-	{
-	  momitem_t *constitm = mom_set_nth_item (proconstantsv, nbprocvals);
-	  CGEN_CHECK_FRESH (cg, "constant in procedure", constitm);
-	  mom_item_assoc_put
-	    (cg->cgen_locassocitm, constitm,
-	     (momval_t) mom_make_node_sized (mom_named__constant, 1,
-					     mom_make_integer (cix)));
-	}
-    }
-  else if (proconstantsv.ptr)
-    CGEN_ERROR_MOM (cg,
-		    MOMOUT_LITERAL ("invalid procedure constants:"),
-		    MOMOUT_VALUE ((const momval_t) proconstantsv),
-		    MOMOUT_LITERAL (" in procedure "),
-		    MOMOUT_ITEM ((const momitem_t *) curoutitm), NULL);
+  // count and bind the constants
+  nbproconsts = bind_constants_cgen (cg, proconstantsv);
+  // count and bind the numbers
+  nbpronumbers = bind_numbers_cgen (cg, pronumbersv);
+  // count and bind the values
+  nbprovalues = bind_values_cgen (cg, provaluesv);
+  // count and bind the doubles
+  nbprodoubles = bind_doubles_cgen (cg, prodoublesv);
+  // emit prologue
   MOM_OUT (&cg->cgen_outbody,
 	   MOMOUT_LITERAL ("static momitem_t* momprocitem;"),
 	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL ("static momval_t* momprocvalues;"),
+	   MOMOUT_LITERAL ("static momval_t* momprocconstants;"),
 	   MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL
 	   ("if (MOM_UNLIKELY(!momprocitem)) momprocitem = mom_procedure_item_of_id(\""),
 	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
 	   MOMOUT_LITERAL ("\");"), MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL
-	   ("if (MOM_UNLIKELY(!momprocvalues)) momprocvalues = mom_item_procedure_values (momprocitem, "),
-	   MOMOUT_DEC_INT ((int) nbprocvals), MOMOUT_LITERAL (");"),
+	   ("if (MOM_UNLIKELY(!momprocconstants)) momprocconstants = mom_item_procedure_values (momprocitem, "),
+	   MOMOUT_DEC_INT ((int) nbproconsts), MOMOUT_LITERAL (");"),
 	   MOMOUT_NEWLINE (), NULL);
   if (procrestypev.pitem == mom_named__momval_t)
     MOM_OUT (&cg->cgen_outbody,
@@ -551,12 +677,12 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	     MOMOUT_NEWLINE ());
   if (procrestypev.pitem == NULL || procrestypev.pitem == mom_named__void)
     MOM_OUT (&cg->cgen_outbody,
-	     MOMOUT_LITERAL ("if (MOM_UNLIKELY(!momprocvalues)) return;"),
+	     MOMOUT_LITERAL ("if (MOM_UNLIKELY(!momprocconstants)) return;"),
 	     MOMOUT_NEWLINE ());
   else
     MOM_OUT (&cg->cgen_outbody,
 	     MOMOUT_LITERAL
-	     ("if (MOM_UNLIKELY(!momprocvalues)) return momresult;"),
+	     ("if (MOM_UNLIKELY(!momprocconstants)) return momresult;"),
 	     MOMOUT_NEWLINE ());
 }
 

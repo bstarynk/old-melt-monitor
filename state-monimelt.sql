@@ -61,6 +61,9 @@ INSERT INTO t_items VALUES('_1f94j87qumw_mhzkriesx7c','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_1ij3y9cmvk5_8tkiqiy17ws','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "JSONRPC routine to define some field in union or record"}],
  "content": null, "kind": null, "payload": null}
 ');
+INSERT INTO t_items VALUES('_1r880c1yk3z_i5e8mprcj90','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for blocks in routines, etc..."}],
+ "content": null, "kind": null, "payload": null}
+');
 INSERT INTO t_items VALUES('_240dwt57s08_a8uy366sev5','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "useless noop routine"}],
  "content": {"jtype": "node", "node": "_240dwt57s08_a8uy366sev5", "sons": ["{spare1 noop}",
    "{spare2 noop}", null]}, "kind": null, "payload": null}
@@ -122,6 +125,9 @@ INSERT INTO t_items VALUES('_3uwzqwvj6zj_s63am4qivpt','{"attr": [{"attr": "_41u1
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_3v4d7uzex6f_euek4pztiuh','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for exited processes"}],
+ "content": null, "kind": null, "payload": null}
+');
+INSERT INTO t_items VALUES('_3wh3e88sk28_d27qi2737zi','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for starting block in routines, etc..."}],
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_3xpyd539p4m_23h7wi59xi9','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "in JSON dump, jtype of JSON object values"}],
@@ -365,6 +371,7 @@ INSERT INTO t_names VALUES('ajax_system','_3xz3qrc6mfy_4r51up6u3pa','.root');
 INSERT INTO t_names VALUES('assoc_get','_70mt4fvrva2_pk76eevwada','.root');
 INSERT INTO t_names VALUES('assoc_put','_5c5jh9185sv_qru5amf9v18','.root');
 INSERT INTO t_names VALUES('attr','_6w3dvx83dfw_xzc6aif6isv','.predef');
+INSERT INTO t_names VALUES('blocks','_1r880c1yk3z_i5e8mprcj90','.predef');
 INSERT INTO t_names VALUES('call_at_state','_3dqr46p2xf4_29kf5vdtw4z','.root');
 INSERT INTO t_names VALUES('closed_values','_9mxi9e605ay_ihpjyrwq250','.predef');
 INSERT INTO t_names VALUES('closure','_97zkxf62r11_6eedwwv3eu8','.predef');
@@ -438,6 +445,7 @@ INSERT INTO t_names VALUES('sequence_nth','_80wxf4c8q92_qq8k6xc0xxj','.root');
 INSERT INTO t_names VALUES('set','_2v75mmyph64_4h4kys78740','.predef');
 INSERT INTO t_names VALUES('sons','_4ezpkss1akd_94f4h25sqe4','.predef');
 INSERT INTO t_names VALUES('space','_7rf7axuc9h4_2aw6utwmsas','.predef');
+INSERT INTO t_names VALUES('start','_3wh3e88sk28_d27qi2737zi','.predef');
 INSERT INTO t_names VALUES('start_assoc','_86ft82euar7_cm50jcthhwe','.root');
 INSERT INTO t_names VALUES('state','_6f9870y6v8t_kp8fcmq2ezv','.predef');
 INSERT INTO t_names VALUES('string','_8j516kuv89j_4hc4w6ykmr6','.predef');

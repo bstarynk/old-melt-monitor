@@ -46,6 +46,9 @@ MOM_PREDEFINED_NAMED(agenda,_02u53qxa7dm_sttmhffpchr,15591209)
 ////!gives the attribute[s], at least in dumped JSON...
 MOM_PREDEFINED_NAMED(attr,_6w3dvx83dfw_xzc6aif6isv,4127160085)
 
+////!for blocks in routines, etc...
+MOM_PREDEFINED_NAMED(blocks,_1r880c1yk3z_i5e8mprcj90,1909866882)
+
 ////!JSON for closure values
 MOM_PREDEFINED_NAMED(closed_values,_9mxi9e605ay_ihpjyrwq250,776151069)
 
@@ -188,6 +191,9 @@ MOM_PREDEFINED_NAMED(sons,_4ezpkss1akd_94f4h25sqe4,3753917517)
 
 ////!in JSON dumps, give the space of items
 MOM_PREDEFINED_NAMED(space,_7rf7axuc9h4_2aw6utwmsas,3553961129)
+
+////!for starting block in routines, etc...
+MOM_PREDEFINED_NAMED(start,_3wh3e88sk28_d27qi2737zi,388835065)
 
 ////!Gives the state of Json for frames of tasklets.
 MOM_PREDEFINED_NAMED(state,_6f9870y6v8t_kp8fcmq2ezv,1856647655)
