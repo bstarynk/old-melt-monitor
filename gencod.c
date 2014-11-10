@@ -48,12 +48,16 @@ enum cgenroutkind_mom_en
 struct c_generator_mom_st
 {
   unsigned cgen_magic;		// always CGEN_MAGIC
-  jmp_buf cgen_jbuf;
-  char *cgen_errmsg;
-  momitem_t *cgen_moditm;
-  momitem_t *cgen_globassocitm;
-  momitem_t *cgen_curoutitm;
-  momitem_t *cgen_locassocitm;
+  jmp_buf cgen_jbuf;		// for error
+  char *cgen_errmsg;		// the error message
+  momitem_t *cgen_moditm;	// the module item
+  momitem_t *cgen_globassocitm;	// global association item
+  momitem_t *cgen_curoutitm;	// current routine
+  momitem_t *cgen_locassocitm;	// local association item
+  /// vectors for functions
+  momitem_t *cgen_vecvalitm;	// vector of local value variables
+  momitem_t *cgen_vecnumitm;	// vector of local number variables
+  momitem_t *cgen_vecdblitm;	// vector of local double variables
   FILE *cgen_fil;
   char *cgen_filpath;
   char *cgen_filbase;
@@ -579,8 +583,7 @@ bind_blocks_cgen (struct c_generator_mom_st *cg, momval_t blocksv)
 }
 
 static unsigned
-bind_functionvars_cgen (struct c_generator_mom_st *cg, momval_t varsv,
-			unsigned startix)
+bind_functionvars_cgen (struct c_generator_mom_st *cg, momval_t varsv)
 {
   unsigned nbvars = 0;
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
@@ -590,9 +593,48 @@ bind_functionvars_cgen (struct c_generator_mom_st *cg, momval_t varsv,
       for (unsigned vix = 0; vix < nbvars; vix++)
 	{
 	  momitem_t *varitm = mom_seqitem_nth_item (varsv, vix);
+	  momval_t vctypv = MOM_NULLV;
 	  if (!varitm)
 	    continue;
 	  CGEN_CHECK_FRESH (cg, "variable in function", varitm);
+	  mom_should_lock_item (varitm);
+	  vctypv = mom_item_get_attribute (varitm, mom_named__ctype);
+	  mom_unlock_item (varitm);
+	  if (vctypv.pitem == mom_named__momval_t)
+	    {
+	      unsigned valcnt = mom_item_vector_count (cg->cgen_vecvalitm);
+	      mom_item_vector_append1 (cg->cgen_vecvalitm, (momval_t) varitm);
+	      mom_item_assoc_put
+		(cg->cgen_locassocitm, varitm,
+		 (momval_t) mom_make_node_sized (mom_named__values, 1,
+						 mom_make_integer (valcnt)));
+
+	    }
+	  else if (vctypv.pitem == mom_named__intptr_t)
+	    {
+	      unsigned numcnt = mom_item_vector_count (cg->cgen_vecnumitm);
+	      mom_item_vector_append1 (cg->cgen_vecnumitm, (momval_t) varitm);
+	      mom_item_assoc_put
+		(cg->cgen_locassocitm, varitm,
+		 (momval_t) mom_make_node_sized (mom_named__numbers, 1,
+						 mom_make_integer (numcnt)));
+	    }
+	  else if (vctypv.pitem == mom_named__double)
+	    {
+	      unsigned dblcnt = mom_item_vector_count (cg->cgen_vecdblitm);
+	      mom_item_vector_append1 (cg->cgen_vecdblitm, (momval_t) varitm);
+	      mom_item_assoc_put
+		(cg->cgen_locassocitm, varitm,
+		 (momval_t) mom_make_node_sized (mom_named__doubles, 1,
+						 mom_make_integer (dblcnt)));
+	    }
+	  else
+	    CGEN_ERROR_MOM (cg,
+			    MOMOUT_LITERAL ("bad variable:"),
+			    MOMOUT_VALUE ((const momval_t) varitm),
+			    MOMOUT_LITERAL (" in function "),
+			    MOMOUT_ITEM ((const momitem_t *)
+					 cg->cgen_curoutitm), NULL);
 	}
     }
   else if (varsv.ptr)
@@ -646,6 +688,12 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
     prostartv = mom_item_get_attribute (curoutitm, mom_named__start);
     mom_unlock_item (curoutitm);
   }
+  cg->cgen_vecvalitm = mom_make_item ();
+  mom_item_start_vector (cg->cgen_vecvalitm);
+  cg->cgen_vecnumitm = mom_make_item ();
+  mom_item_start_vector (cg->cgen_vecnumitm);
+  cg->cgen_vecdblitm = mom_make_item ();
+  mom_item_start_vector (cg->cgen_vecdblitm);
   if (!mom_is_tuple (procargsv))
     CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid procedure arguments:"),
 		    MOMOUT_VALUE ((const momval_t) procargsv),
