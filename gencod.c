@@ -25,17 +25,20 @@
    associated to a set or tuple of routines, i.e. procedure or
    function items.
 
-   A procedure may have an attribute `procedure_result` giving its result
+   A procedure should have an attribute `procedure_result` giving its result
    variable or `void`, and a `procedure_arguments` giving its formal
-   arguments. But a routine has not them.
+   arguments. But a function has not them.
 
    Procedures usually have an attribute `constant` giving a sequence
    -set or tuple- of constant items, `values` associated to locals,
    `numbers` associated to numbers, `doubles` associated to doubles.
 
-   Functions have an attribute `constant` giving a sequence -set or
+   Tasklet functions have an attribute `constant` giving a sequence -set or
    tuple- of constant items, `arguments` associated to arguments,
    `locals` associated to locals variables.
+
+   Expressions are often nodes, the connective being a procedure or a
+   primitive.
 
 ****/
 
@@ -132,6 +135,12 @@ static void emit_ctype_cgen (struct c_generator_mom_st *cgen,
 
 static void emit_block_cgen (struct c_generator_mom_st *cgen,
 			     momitem_t *blkitm);
+
+static momtypenc_t emit_expr_cgen (struct c_generator_mom_st *cg,
+				   momval_t expv);
+
+static momtypenc_t emit_node_cgen (struct c_generator_mom_st *cg,
+				   momval_t nodv);
 
 #define CGEN_CHECK_FRESH_AT_BIS(Lin,Cg,Msg,Itm) do	\
 { const momitem_t* itm##Lin = (Itm);			\
@@ -1327,6 +1336,7 @@ emit_var_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
 static momtypenc_t
 emit_expr_cgen (struct c_generator_mom_st *cg, momval_t expv)
 {
+  assert (cg && cg->cgen_magic == CGEN_MAGIC);
   if (mom_is_string (expv))
     {
       MOM_OUT (&cg->cgen_outbody,
@@ -1351,11 +1361,103 @@ emit_expr_cgen (struct c_generator_mom_st *cg, momval_t expv)
       if (typva != momtypenc__none)
 	return typva;
       else
-	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid item:"),
+	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid expression item:"),
 			MOMOUT_ITEM ((const momitem_t *) expitm), NULL);
-#warning incomplete emit_expr_cgen
     }
+  else if (mom_is_node (expv))
+    return emit_node_cgen (cg, expv);
+  else
+    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid expression"),
+		    MOMOUT_VALUE ((const momval_t) expv));
 
+}
+
+// emit a node and gives its type
+static momtypenc_t
+emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
+{
+  momval_t procresv = MOM_NULLV;
+  momval_t procargsv = MOM_NULLV;
+  momval_t primargsv = MOM_NULLV;
+  momval_t primctypev = MOM_NULLV;
+  momval_t primexpv = MOM_NULLV;
+  assert (cg && cg->cgen_magic == CGEN_MAGIC);
+  momitem_t *connitm = (momitem_t *) mom_node_conn (nodv);
+  int arity = mom_node_arity (nodv);
+  if (!connitm)
+    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("non-node"),
+		    MOMOUT_VALUE ((const momval_t) nodv));
+  {
+    mom_lock_item (connitm);
+    procargsv =
+      mom_item_get_attribute (connitm, mom_named__procedure_arguments);
+    procresv = mom_item_get_attribute (connitm, mom_named__procedure_result);
+    primargsv =
+      mom_item_get_attribute (connitm, mom_named__primitive_arguments);
+    primctypev = mom_item_get_attribute (connitm, mom_named__primitive_ctype);
+    primexpv =
+      mom_item_get_attribute (connitm, mom_named__primitive_expansion);
+    mom_unlock_item (connitm);
+  }
+  // handle primitives
+  if (primexpv.ptr)
+    {
+      struct mom_itemattributes_st *argbind = NULL;
+      if (procargsv.ptr || procresv.ptr)
+	MOM_WARNING (MOMOUT_LITERAL ("compiled expression node="),
+		     MOMOUT_VALUE ((const momval_t) nodv),
+		     MOMOUT_LITERAL (" with ambiguous primitive connective:"),
+		     MOMOUT_ITEM ((const momitem_t *) connitm),
+		     MOMOUT_SPACE (48),
+		     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) connitm));
+      if (!mom_is_tuple (primargsv)
+	  || !mom_is_node (primexpv) || !mom_is_item (primctypev))
+	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("bad primitive:"),
+			MOMOUT_ITEM ((const momitem_t *) connitm),
+			MOMOUT_SPACE (48),
+			MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) connitm),
+			MOMOUT_SPACE (48),
+			MOMOUT_LITERAL ("in node:"),
+			MOMOUT_VALUE ((const momval_t) nodv), NULL);
+      if ((int) mom_tuple_length (primargsv) != arity)
+	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("wrong arity for primitive:"),
+			MOMOUT_ITEM ((const momitem_t *) connitm),
+			MOMOUT_SPACE (48),
+			MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) connitm),
+			MOMOUT_SPACE (48),
+			MOMOUT_LITERAL ("in node:"),
+			MOMOUT_VALUE ((const momval_t) nodv), NULL);
+      argbind = mom_reserve_attribute (argbind, 3 * arity / 2 + 5);
+      for (int ix = 0; ix < arity; ix++)
+	{
+	  momitem_t *formalitm = mom_tuple_nth_item (primargsv, ix);
+	  momval_t argv = mom_node_nth (nodv, ix);
+	  if (!formalitm || !argv.ptr)
+	    CGEN_ERROR_MOM (cg,
+			    MOMOUT_LITERAL
+			    ("missing argument for primitive:"),
+			    MOMOUT_ITEM ((const momitem_t *) connitm),
+			    MOMOUT_SPACE (48),
+			    MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+						    connitm),
+			    MOMOUT_SPACE (48), MOMOUT_LITERAL ("rank#"),
+			    MOMOUT_DEC_INT (ix), MOMOUT_LITERAL (" in node:"),
+			    MOMOUT_VALUE ((const momval_t) nodv), NULL);
+	}
+    }
+  // handle procedures
+  else if (procargsv.ptr)
+    {
+      if (!mom_is_tuple (procargsv))
+	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("bad procedure node:"),
+			MOMOUT_VALUE ((const momval_t) nodv),
+			MOMOUT_LITERAL
+			(" without `procedure_arguments` in connective:"),
+			MOMOUT_ITEM ((const momitem_t *) connitm),
+			MOMOUT_SPACE (48),
+			MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) connitm));
+
+    }
 }
 
 void

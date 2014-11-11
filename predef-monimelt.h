@@ -168,6 +168,15 @@ MOM_PREDEFINED_NAMED(params,_4215uc2u6qk_52kqyra86y5,709750062)
 ////!in JSON dumps, give the payload of items
 MOM_PREDEFINED_NAMED(payload,_41v0erax6my_m6pytj0793u,3962456714)
 
+////!the arguments of a primitive
+MOM_PREDEFINED_NAMED(primitive_arguments,_7qwxkws23s2_ya3p05667j8,282978925)
+
+////!the ctype of a primitive
+MOM_PREDEFINED_NAMED(primitive_ctype,_3a8hkk9w2j2_3pu2a5kfavj,454668579)
+
+////!the expansion of a primitive
+MOM_PREDEFINED_NAMED(primitive_expansion,_37x98fyestf_ttup2cu68r6,1061786883)
+
 ////!for procedure related things
 MOM_PREDEFINED_NAMED(procedure,_4v74chqs1eh_chqd9cqw85t,2329607430)
 
