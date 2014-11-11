@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 Nov 10
+-- state-monimelt dump 2014 Nov 11
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','exit dump');
+INSERT INTO t_params VALUES('dump_reason','after predefined verbatim');
 INSERT INTO t_items VALUES('_02q6zk9f5st_im0z75re15f','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "the void C type"}],
  "content": null, "kind": null, "payload": null}
 ');
@@ -44,6 +44,9 @@ INSERT INTO t_items VALUES('_0h331ch957p_j6a8i7v4e6y','{"attr": [{"attr": "_41u1
  null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_0hpzi8m7wym_1y4ypmm9y47','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "handler for JSONRPC requests"}],
+ "content": null, "kind": null, "payload": null}
+');
+INSERT INTO t_items VALUES('_0x2k07ik4tm_ed7vqphf5ak','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "gives verbatim code"}],
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_0yyp8vmw4si_wf49m4d4zwq','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "notably for error code in JSONRPC"}],
@@ -399,6 +402,7 @@ INSERT INTO t_names VALUES('update_display_value','_1f94j87qumw_mhzkriesx7c','.r
 INSERT INTO t_names VALUES('val','_7wk9y7e7r0z_575esi8ys5x','.predef');
 INSERT INTO t_names VALUES('values','_91pketvc5pz_wq0v0wpauw8','.predef');
 INSERT INTO t_names VALUES('var','_2d7i21ihwd8_xjcp4uhs11u','.root');
+INSERT INTO t_names VALUES('verbatim','_0x2k07ik4tm_ed7vqphf5ak','.predef');
 INSERT INTO t_names VALUES('void','_02q6zk9f5st_im0z75re15f','.predef');
 INSERT INTO t_names VALUES('web_handler','_7sav6zery1v_24sa6jwwu6c','.predef');
 COMMIT;

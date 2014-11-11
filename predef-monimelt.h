@@ -222,6 +222,9 @@ MOM_PREDEFINED_NAMED(val,_7wk9y7e7r0z_575esi8ys5x,746430217)
 ////!Gives the values of Json for frames of tasklets.
 MOM_PREDEFINED_NAMED(values,_91pketvc5pz_wq0v0wpauw8,1652042255)
 
+////!gives verbatim code
+MOM_PREDEFINED_NAMED(verbatim,_0x2k07ik4tm_ed7vqphf5ak,661264363)
+
 ////!the void C type
 MOM_PREDEFINED_NAMED(void,_02q6zk9f5st_im0z75re15f,1828712906)
 
