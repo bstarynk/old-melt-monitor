@@ -52,6 +52,9 @@ MOM_PREDEFINED_NAMED(attr,_6w3dvx83dfw_xzc6aif6isv,4127160085)
 ////!for blocks in routines, etc...
 MOM_PREDEFINED_NAMED(blocks,_1r880c1yk3z_i5e8mprcj90,1909866882)
 
+////!used as node of primitive expansions, etc...
+MOM_PREDEFINED_NAMED(chunk,_8x6fxcm4z2k_vdaqicfi4z0,886999649)
+
 ////!JSON for closure values
 MOM_PREDEFINED_NAMED(closed_values,_9mxi9e605ay_ihpjyrwq250,776151069)
 
@@ -72,6 +75,9 @@ MOM_PREDEFINED_NAMED(constant,_4zywi5fh3ef_ys9sq93vsc1,3780502208)
 
 ////!gives the item content, at least in dumped JSON...
 MOM_PREDEFINED_NAMED(content,_8s357rq2dzk_k8ze95tikjm,1630350867)
+
+////!something for counting
+MOM_PREDEFINED_NAMED(count,_6f4k9pqzryk_w25f8vxuyyc,841187505)
 
 ////!Attribute giving the C type
 MOM_PREDEFINED_NAMED(ctype,_0ee6afx5850_ji17eq0wmfa,119327747)
@@ -170,9 +176,6 @@ MOM_PREDEFINED_NAMED(payload,_41v0erax6my_m6pytj0793u,3962456714)
 
 ////!the arguments of a primitive
 MOM_PREDEFINED_NAMED(primitive_arguments,_7qwxkws23s2_ya3p05667j8,282978925)
-
-////!the ctype of a primitive
-MOM_PREDEFINED_NAMED(primitive_ctype,_3a8hkk9w2j2_3pu2a5kfavj,454668579)
 
 ////!the expansion of a primitive
 MOM_PREDEFINED_NAMED(primitive_expansion,_37x98fyestf_ttup2cu68r6,1061786883)

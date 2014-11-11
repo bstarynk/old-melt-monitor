@@ -40,6 +40,10 @@
    Expressions are often nodes, the connective being a procedure or a
    primitive.
 
+   A primitive item (useful as connective in expressions) has a
+   `primitive_expansion` with a node of connective `chunk` and it has
+   a `ctype`
+
 ****/
 
 #define CGEN_MAGIC 0x566802a5	/* cgen magic 1449656997 */
@@ -55,6 +59,7 @@ enum cgenroutkind_mom_en
 struct c_generator_mom_st
 {
   unsigned cgen_magic;		// always CGEN_MAGIC
+  unsigned cgen_count;
   jmp_buf cgen_jbuf;		// for error
   char *cgen_errmsg;		// the error message
   momitem_t *cgen_moditm;	// the module item
@@ -1381,6 +1386,7 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
   momval_t primargsv = MOM_NULLV;
   momval_t primctypev = MOM_NULLV;
   momval_t primexpv = MOM_NULLV;
+  momval_t primcountv = MOM_NULLV;
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
   momitem_t *connitm = (momitem_t *) mom_node_conn (nodv);
   int arity = mom_node_arity (nodv);
@@ -1394,9 +1400,11 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
     procresv = mom_item_get_attribute (connitm, mom_named__procedure_result);
     primargsv =
       mom_item_get_attribute (connitm, mom_named__primitive_arguments);
-    primctypev = mom_item_get_attribute (connitm, mom_named__primitive_ctype);
+    primctypev = mom_item_get_attribute (connitm, mom_named__ctype);
     primexpv =
       mom_item_get_attribute (connitm, mom_named__primitive_expansion);
+    primcountv =
+      mom_item_get_attribute (connitm, mom_named__count);
     mom_unlock_item (connitm);
   }
   // handle primitives
@@ -1411,7 +1419,8 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 		     MOMOUT_SPACE (48),
 		     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) connitm));
       if (!mom_is_tuple (primargsv)
-	  || !mom_is_node (primexpv) || !mom_is_item (primctypev))
+	  || !mom_is_node (primexpv) || !mom_is_item (primctypev)
+	  || mom_node_conn(primexpv) != mom_named__chunk)
 	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("bad primitive:"),
 			MOMOUT_ITEM ((const momitem_t *) connitm),
 			MOMOUT_SPACE (48),
@@ -1427,23 +1436,80 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 			MOMOUT_SPACE (48),
 			MOMOUT_LITERAL ("in node:"),
 			MOMOUT_VALUE ((const momval_t) nodv), NULL);
+      MOM_OUT (&cg->cgen_outbody,
+	       MOMOUT_LITERAL ("(/*primitive "),
+	       MOMOUT_ITEM ((const momitem_t *) connitm),
+	       MOMOUT_LITERAL ("*/ "), NULL);
       argbind = mom_reserve_attribute (argbind, 3 * arity / 2 + 5);
+      char*argctypestr = MOM_GC_SCALAR_ALLOC("argctypestr", arity+3);
+      // first loop to bind the formal arguments and get their `ctype`
       for (int ix = 0; ix < arity; ix++)
 	{
+	  momval_t formctypv = MOM_NULLV;
 	  momitem_t *formalitm = mom_tuple_nth_item (primargsv, ix);
 	  momval_t argv = mom_node_nth (nodv, ix);
 	  if (!formalitm || !argv.ptr)
-	    CGEN_ERROR_MOM (cg,
-			    MOMOUT_LITERAL
-			    ("missing argument for primitive:"),
-			    MOMOUT_ITEM ((const momitem_t *) connitm),
-			    MOMOUT_SPACE (48),
-			    MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
-						    connitm),
-			    MOMOUT_SPACE (48), MOMOUT_LITERAL ("rank#"),
-			    MOMOUT_DEC_INT (ix), MOMOUT_LITERAL (" in node:"),
-			    MOMOUT_VALUE ((const momval_t) nodv), NULL);
+	    CGEN_ERROR_MOM
+	      (cg,
+	       MOMOUT_LITERAL
+	       ("missing argument for primitive:"),
+	       MOMOUT_ITEM ((const momitem_t *) connitm),
+	       MOMOUT_SPACE (48),
+	       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+				       connitm),
+	       MOMOUT_SPACE (48), MOMOUT_LITERAL ("rank#"),
+	       MOMOUT_DEC_INT (ix), MOMOUT_LITERAL (" in node:"),
+	       MOMOUT_VALUE ((const momval_t) nodv), NULL);
+	  {
+	    mom_lock_item (formalitm);
+	    formctypv = mom_item_get_attribute (formalitm, mom_named__ctype);
+	    mom_unlock_item (formalitm);
+	  }
+	  momtypenc_t formtyp = 0;
+	  if (formctypv.pitem == mom_named__intptr_t)
+	    formtyp = momtypenc_int;
+	  else if (formctypv.pitem == mom_named__momval_t)
+	    formtyp = momtypenc_val;
+	  else if (formctypv.pitem == mom_named__double)
+	    formtyp = momtypenc_double;
+	  else if (formctypv.pitem == mom_named__momcstr_t)
+	    formtyp = momtypenc_string;
+	  else if (formctypv.pitem == mom_named__void)
+	    formtyp = momtypenc__none;
+	  else
+	    CGEN_ERROR_MOM
+	      (cg,
+	       MOMOUT_LITERAL ("bad `ctype` of primitive formal argument:"),
+	       MOMOUT_ITEM ((const momitem_t *) formalitm),
+	       MOMOUT_SPACE (48),
+	       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+				       formalitm),
+	       MOMOUT_LITERAL
+	       (" in primitive:"),
+	       MOMOUT_ITEM ((const momitem_t *) connitm),
+	       MOMOUT_SPACE (48),
+	       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+				       connitm),
+	       MOMOUT_SPACE (48), MOMOUT_LITERAL ("rank#"),
+	       MOMOUT_DEC_INT (ix), MOMOUT_LITERAL (" in node:"),
+	       MOMOUT_VALUE ((const momval_t) nodv), NULL);
+	  argctypestr[ix] = formtyp;
+	  if (mom_get_attribute(argbind, formalitm).ptr)
+	    CGEN_ERROR_MOM
+	      (cg,
+	       MOMOUT_LITERAL ("duplicate primitive formal argument:"),
+	       MOMOUT_ITEM ((const momitem_t *) formalitm),
+	       (" in primitive:"),
+	       MOMOUT_ITEM ((const momitem_t *) connitm),
+	       MOMOUT_SPACE (48),
+	       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+				       connitm),
+	       MOMOUT_SPACE (48), MOMOUT_LITERAL ("rank#"),
+	       MOMOUT_DEC_INT (ix), MOMOUT_LITERAL (" in node:"),
+	       MOMOUT_VALUE ((const momval_t) nodv), NULL);
+	  argbind = mom_put_attribute(argbind, formalitm, argv);
 	}
+      // second loop to output the expansion
     }
   // handle procedures
   else if (procargsv.ptr)
