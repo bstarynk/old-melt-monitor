@@ -304,12 +304,9 @@ declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
   }
   {
     mom_should_lock_item (curoutitm);
-    procv =
-      mom_item_get_attribute (curoutitm, mom_named__procedure);
-    procargsv =
-      mom_item_get_attribute (curoutitm, mom_named__formals);
-    procresv =
-      mom_item_get_attribute (curoutitm, mom_named__result);
+    procv = mom_item_get_attribute (curoutitm, mom_named__procedure);
+    procargsv = mom_item_get_attribute (curoutitm, mom_named__formals);
+    procresv = mom_item_get_attribute (curoutitm, mom_named__result);
     mom_unlock_item (curoutitm);
   }
   if (procv.ptr)
@@ -705,10 +702,8 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
   assert (mom_node_conn (procnodev) == mom_named__procedure);
   {
     mom_should_lock_item (curoutitm);
-    procargsv =
-      mom_item_get_attribute (curoutitm, mom_named__formals);
-    procresv =
-      mom_item_get_attribute (curoutitm, mom_named__result);
+    procargsv = mom_item_get_attribute (curoutitm, mom_named__formals);
+    procresv = mom_item_get_attribute (curoutitm, mom_named__result);
     proconstantsv = mom_item_get_attribute (curoutitm, mom_named__constant);
     provaluesv = mom_item_get_attribute (curoutitm, mom_named__values);
     pronumbersv = mom_item_get_attribute (curoutitm, mom_named__numbers);
@@ -1384,7 +1379,6 @@ emit_expr_cgen (struct c_generator_mom_st *cg, momval_t expv)
 static momtypenc_t
 emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 {
-  momval_t procresv = MOM_NULLV;
   momval_t argsv = MOM_NULLV;
   momval_t resv = MOM_NULLV;
   momval_t ctypev = MOM_NULLV;
@@ -1399,31 +1393,22 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 		    MOMOUT_VALUE ((const momval_t) nodv));
   {
     mom_lock_item (connitm);
-    argsv =
-      mom_item_get_attribute (connitm, mom_named__arguments);
+    argsv = mom_item_get_attribute (connitm, mom_named__formals);
     resv = mom_item_get_attribute (connitm, mom_named__result);
     procv = mom_item_get_attribute (connitm, mom_named__procedure);
     ctypev = mom_item_get_attribute (connitm, mom_named__ctype);
     primexpv =
       mom_item_get_attribute (connitm, mom_named__primitive_expansion);
-    primcountv =
-      mom_item_get_attribute (connitm, mom_named__count);
+    primcountv = mom_item_get_attribute (connitm, mom_named__count);
     mom_unlock_item (connitm);
   }
   // handle primitives
   if (primexpv.ptr)
     {
       struct mom_itemattributes_st *argbind = NULL;
-      if (argsv.ptr || resv.ptr)
-	MOM_WARNING (MOMOUT_LITERAL ("compiled expression node="),
-		     MOMOUT_VALUE ((const momval_t) nodv),
-		     MOMOUT_LITERAL (" with ambiguous primitive connective:"),
-		     MOMOUT_ITEM ((const momitem_t *) connitm),
-		     MOMOUT_SPACE (48),
-		     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) connitm));
       if (!mom_is_tuple (argsv)
 	  || !mom_is_node (primexpv) || !mom_is_item (ctypev)
-	  || mom_node_conn(primexpv) != mom_named__chunk)
+	  || mom_node_conn (primexpv) != mom_named__chunk)
 	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("bad primitive:"),
 			MOMOUT_ITEM ((const momitem_t *) connitm),
 			MOMOUT_SPACE (48),
@@ -1443,8 +1428,22 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 	       MOMOUT_LITERAL ("(/*primitive "),
 	       MOMOUT_ITEM ((const momitem_t *) connitm),
 	       MOMOUT_LITERAL ("*/ "), NULL);
+      if (mom_node_conn (primexpv) != mom_named__chunk)
+	CGEN_ERROR_MOM (cg,
+			MOMOUT_LITERAL
+			("no `chunk` for `primitive_expansion` in primitive:"),
+			MOMOUT_ITEM ((const momitem_t *) connitm),
+			MOMOUT_SPACE (48),
+			MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) connitm),
+			MOMOUT_SPACE (48), MOMOUT_LITERAL ("in node:"),
+			MOMOUT_VALUE ((const momval_t) nodv), NULL);
       argbind = mom_reserve_attribute (argbind, 3 * arity / 2 + 5);
-      char*argctypestr = MOM_GC_SCALAR_ALLOC("argctypestr", arity+3);
+      char *argctypestr = MOM_GC_SCALAR_ALLOC ("argctypestr", arity + 3);
+      // bind the count if needed
+      if (mom_is_item (primcountv))
+	argbind =
+	  mom_put_attribute (argbind, primcountv.pitem,
+			     mom_make_integer (++cg->cgen_count));
       // first loop to bind the formal arguments and get their `ctype`
       for (int ix = 0; ix < arity; ix++)
 	{
@@ -1497,7 +1496,7 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 	       MOMOUT_DEC_INT (ix), MOMOUT_LITERAL (" in node:"),
 	       MOMOUT_VALUE ((const momval_t) nodv), NULL);
 	  argctypestr[ix] = formtyp;
-	  if (mom_get_attribute(argbind, formalitm).ptr)
+	  if (mom_get_attribute (argbind, formalitm).ptr)
 	    CGEN_ERROR_MOM
 	      (cg,
 	       MOMOUT_LITERAL ("duplicate primitive formal argument:"),
@@ -1510,9 +1509,59 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 	       MOMOUT_SPACE (48), MOMOUT_LITERAL ("rank#"),
 	       MOMOUT_DEC_INT (ix), MOMOUT_LITERAL (" in node:"),
 	       MOMOUT_VALUE ((const momval_t) nodv), NULL);
-	  argbind = mom_put_attribute(argbind, formalitm, argv);
+	  argbind = mom_put_attribute (argbind, formalitm, argv);
 	}
       // second loop to output the expansion
+      int chunklen = mom_node_arity (primexpv);
+      for (int chix = 0; chix < chunklen; chix++)
+	{
+	  momval_t curchkv = mom_node_nth (primexpv, chix);
+	  if (mom_is_string (curchkv))
+	    MOM_OUT (&cg->cgen_outbody,
+		     MOMOUT_LITERALV ((const char *)
+				      mom_string_cstr (curchkv)));
+	  else if (mom_is_integer (curchkv))
+	    MOM_OUT (&cg->cgen_outbody,
+		     MOMOUT_FMT_LONG_LONG ((const char *) "%lld",
+					   (long long)
+					   mom_integer_val (curchkv)));
+	  else if (mom_is_item (curchkv))
+	    {
+	      momval_t bndvalv = mom_get_attribute (argbind, curchkv.pitem);
+	      if (bndvalv.ptr)
+		{
+		  momtypenc_t vtyp = emit_expr_cgen (cg, bndvalv);
+		  for (unsigned fix = 0; fix < (unsigned) arity; fix++)
+		    if (mom_tuple_nth_item (argsv, fix) == bndvalv.pitem
+			&& (unsigned) vtyp != (unsigned) argctypestr[fix])
+		      CGEN_ERROR_MOM
+			(cg,
+			 MOMOUT_LITERAL ("type mismatch for formal:"),
+			 MOMOUT_ITEM ((const momitem_t *) bndvalv.pitem),
+			 MOMOUT_LITERAL (" rank#"),
+			 MOMOUT_DEC_INT ((int) fix),
+			 MOMOUT_LITERAL (" in node:"),
+			 MOMOUT_VALUE ((const momval_t) nodv), NULL);
+		}
+	    }
+	  else
+	    CGEN_ERROR_MOM
+	      (cg,
+	       MOMOUT_LITERAL ("invalid chunk element:"),
+	       MOMOUT_VALUE ((const momval_t) curchkv),
+	       MOMOUT_DEC_INT (chix), MOMOUT_LITERAL (" in node:"),
+	       MOMOUT_VALUE ((const momval_t) nodv), NULL);
+	};
+      if (ctypev.pitem == mom_named__intptr_t)
+	return momtypenc_int;
+      else if (ctypev.pitem == mom_named__momval_t)
+	return momtypenc_val;
+      else if (ctypev.pitem == mom_named__double)
+	return momtypenc_double;
+      else if (ctypev.pitem == mom_named__momcstr_t)
+	return momtypenc_string;
+      else
+	return momtypenc__none;
     }
   // handle procedures
   else if (procv.ptr)
@@ -1521,11 +1570,11 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("bad procedure node:"),
 			MOMOUT_VALUE ((const momval_t) nodv),
 			MOMOUT_LITERAL
-			(" without `procedure_arguments` in connective:"),
+			(" without `formals` in connective:"),
 			MOMOUT_ITEM ((const momitem_t *) connitm),
 			MOMOUT_SPACE (48),
 			MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) connitm));
-
+#warning should call the procedure and perhaps declare it as external
     }
 }
 
