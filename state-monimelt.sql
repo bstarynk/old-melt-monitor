@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','exit dump');
+INSERT INTO t_params VALUES('dump_reason','after predefined formals');
 INSERT INTO t_items VALUES('_02q6zk9f5st_im0z75re15f','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "the void C type"}],
  "content": null, "kind": null, "payload": null}
 ');
@@ -84,6 +84,9 @@ INSERT INTO t_items VALUES('_2d7i21ihwd8_xjcp4uhs11u','{"attr": [{"attr": "_41u1
 ');
 INSERT INTO t_items VALUES('_2mayc646pdu_w4d18fmx8u3','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "some sequence"}], "content":
  null, "kind": null, "payload": null}
+');
+INSERT INTO t_items VALUES('_2ummst105ck_xracfy8v87y','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "formal arguments..."}],
+ "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_2v75mmyph64_4h4kys78740','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "in JSON dumps, indicate sets of item, or give their array of elements"}],
  "content": null, "kind": null, "payload": null}
@@ -166,9 +169,6 @@ INSERT INTO t_items VALUES('_4p33dhxywm0_id6tti2kyw6','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_4qcw2mwjswm_j9q0k9d04hm','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "error case, on for JSONRPC"}],
  "content": null, "kind": null, "payload": null}
 ');
-INSERT INTO t_items VALUES('_4qqdvfxxyje_kawwj9z3sqs','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "gives the arguments of a procedure"}],
- "content": null, "kind": null, "payload": null}
-');
 INSERT INTO t_items VALUES('_4v74chqs1eh_chqd9cqw85t','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for procedure related things"}],
  "content": null, "kind": null, "payload": null}
 ');
@@ -182,9 +182,6 @@ INSERT INTO t_items VALUES('_547q7emtfsk_ect0yratp6e','{"attr": [{"attr": "_41u1
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_590trid9ycw_f6kaajwca63','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "primitive to make an item"}],
- "content": null, "kind": null, "payload": null}
-');
-INSERT INTO t_items VALUES('_59z11c536du_v6173xqjct2','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "gives the result of a procedure"}],
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_5c5jh9185sv_qru5amf9v18','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "put an item inside an assoc"}],
@@ -255,9 +252,6 @@ INSERT INTO t_items VALUES('_7pyjxst21ce_vhc0tk0em0u','{"attr": [{"attr": "_41u1
 ');
 INSERT INTO t_items VALUES('_7qk90k9vx0u_31ivff77td7','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "keep association between edited items and their editor"}],
  "content": null, "kind": "assoc", "payload": []}
-');
-INSERT INTO t_items VALUES('_7qwxkws23s2_ya3p05667j8','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "the arguments of a primitive"}],
- "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_7rf7axuc9h4_2aw6utwmsas','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "in JSON dumps, give the space of items"}],
  "content": null, "kind": null, "payload": null}
@@ -356,6 +350,7 @@ INSERT INTO t_names VALUES('exited','_3v4d7uzex6f_euek4pztiuh','.predef');
 INSERT INTO t_names VALUES('failed','_9sd1mh9q1zf_3duewi6fsaq','.predef');
 INSERT INTO t_names VALUES('first_module','_65961crktpj_vtt30qeqv21','.root');
 INSERT INTO t_names VALUES('for_each_up_to','_11xee72y1d3_t3cqzi5dq3k','.root');
+INSERT INTO t_names VALUES('formals','_2ummst105ck_xracfy8v87y','.predef');
 INSERT INTO t_names VALUES('frames','_4cw8jv45vsk_4mh9ex64904','.predef');
 INSERT INTO t_names VALUES('get_attribute','_5vi29c2i54k_i2ufkty9kmp','.root');
 INSERT INTO t_names VALUES('high','_6qcw93kypcv_0iiepqtk73j','.root');
@@ -388,12 +383,9 @@ INSERT INTO t_names VALUES('notice','_7diyc1cwj8z_x630afccr8e','.predef');
 INSERT INTO t_names VALUES('numbers','_3fw5acswe59_9016fqe4d41','.predef');
 INSERT INTO t_names VALUES('params','_4215uc2u6qk_52kqyra86y5','.predef');
 INSERT INTO t_names VALUES('payload','_41v0erax6my_m6pytj0793u','.predef');
-INSERT INTO t_names VALUES('primitive_arguments','_7qwxkws23s2_ya3p05667j8','.predef');
 INSERT INTO t_names VALUES('primitive_expansion','_37x98fyestf_ttup2cu68r6','.predef');
 INSERT INTO t_names VALUES('proc','_70aer7teeui_kvzkiqq2rd2','.root');
 INSERT INTO t_names VALUES('procedure','_4v74chqs1eh_chqd9cqw85t','.predef');
-INSERT INTO t_names VALUES('procedure_arguments','_4qqdvfxxyje_kawwj9z3sqs','.predef');
-INSERT INTO t_names VALUES('procedure_result','_59z11c536du_v6173xqjct2','.predef');
 INSERT INTO t_names VALUES('put_attribute','_547q7emtfsk_ect0yratp6e','.root');
 INSERT INTO t_names VALUES('res1','_3j3s2e0510a_096chqpijq7','.predef');
 INSERT INTO t_names VALUES('res2','_8u5ar84utwm_99k5mq2d589','.predef');

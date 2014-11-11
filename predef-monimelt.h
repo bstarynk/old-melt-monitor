@@ -97,6 +97,9 @@ MOM_PREDEFINED_NAMED(exited,_3v4d7uzex6f_euek4pztiuh,1710495600)
 ////!for exited processes with exit code >0
 MOM_PREDEFINED_NAMED(failed,_9sd1mh9q1zf_3duewi6fsaq,2529541293)
 
+////!formal arguments...
+MOM_PREDEFINED_NAMED(formals,_2ummst105ck_xracfy8v87y,2305693407)
+
 ////!frames in tasklet
 MOM_PREDEFINED_NAMED(frames,_4cw8jv45vsk_4mh9ex64904,407235052)
 
@@ -174,20 +177,11 @@ MOM_PREDEFINED_NAMED(params,_4215uc2u6qk_52kqyra86y5,709750062)
 ////!in JSON dumps, give the payload of items
 MOM_PREDEFINED_NAMED(payload,_41v0erax6my_m6pytj0793u,3962456714)
 
-////!the arguments of a primitive
-MOM_PREDEFINED_NAMED(primitive_arguments,_7qwxkws23s2_ya3p05667j8,282978925)
-
 ////!the expansion of a primitive
 MOM_PREDEFINED_NAMED(primitive_expansion,_37x98fyestf_ttup2cu68r6,1061786883)
 
 ////!for procedure related things
 MOM_PREDEFINED_NAMED(procedure,_4v74chqs1eh_chqd9cqw85t,2329607430)
-
-////!gives the arguments of a procedure
-MOM_PREDEFINED_NAMED(procedure_arguments,_4qqdvfxxyje_kawwj9z3sqs,2158095583)
-
-////!gives the result of a procedure
-MOM_PREDEFINED_NAMED(procedure_result,_59z11c536du_v6173xqjct2,1740660605)
 
 ////!first result in tasklet
 MOM_PREDEFINED_NAMED(res1,_3j3s2e0510a_096chqpijq7,3304263536)

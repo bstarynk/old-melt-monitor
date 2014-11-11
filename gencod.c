@@ -25,16 +25,16 @@
    associated to a set or tuple of routines, i.e. procedure or
    function items.
 
-   A procedure should have an attribute `procedure_result` giving its result
-   variable or `void`, and a `procedure_arguments` giving its formal
-   arguments. But a function has not them.
+   A procedure should have an attribute `procedure` giving its blocks,
+   
 
    Procedures usually have an attribute `constant` giving a sequence
-   -set or tuple- of constant items, `values` associated to locals,
-   `numbers` associated to numbers, `doubles` associated to doubles.
+   -set or tuple- of constant items, `formals` associated to formal
+   arguments, `values` associated to locals, `numbers` associated to
+   numbers, `doubles` associated to doubles.
 
    Tasklet functions have an attribute `constant` giving a sequence -set or
-   tuple- of constant items, `arguments` associated to arguments,
+   tuple- of constant items, `formals` associated to formal-arguments,
    `locals` associated to locals variables.
 
    Expressions are often nodes, the connective being a procedure or a
@@ -287,6 +287,7 @@ declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
 {
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
   momval_t procargsv = MOM_NULLV;
+  momval_t procv = MOM_NULLV;
   momval_t procresv = MOM_NULLV;
   momval_t procrestypev = MOM_NULLV;
   momitem_t *curoutitm = cg->cgen_curoutitm;
@@ -303,13 +304,15 @@ declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
   }
   {
     mom_should_lock_item (curoutitm);
+    procv =
+      mom_item_get_attribute (curoutitm, mom_named__procedure);
     procargsv =
-      mom_item_get_attribute (curoutitm, mom_named__procedure_arguments);
+      mom_item_get_attribute (curoutitm, mom_named__formals);
     procresv =
-      mom_item_get_attribute (curoutitm, mom_named__procedure_result);
+      mom_item_get_attribute (curoutitm, mom_named__result);
     mom_unlock_item (curoutitm);
   }
-  if (procargsv.ptr)
+  if (procv.ptr)
     {
       momval_t argsigv = MOM_NULLV;
       // genuine procedure
@@ -319,7 +322,7 @@ declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	       MOMOUT_LITERAL (" rank#"), MOMOUT_DEC_INT ((int) routix),
 	       MOMOUT_NEWLINE (), NULL);
       if (!mom_is_tuple (procargsv))
-	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid procedure arguments:"),
+	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid procedure formals:"),
 			MOMOUT_VALUE ((const momval_t) procargsv),
 			MOMOUT_LITERAL (" in procedure "),
 			MOMOUT_ITEM ((const momitem_t *) curoutitm), NULL);
@@ -703,9 +706,9 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
   {
     mom_should_lock_item (curoutitm);
     procargsv =
-      mom_item_get_attribute (curoutitm, mom_named__procedure_arguments);
+      mom_item_get_attribute (curoutitm, mom_named__formals);
     procresv =
-      mom_item_get_attribute (curoutitm, mom_named__procedure_result);
+      mom_item_get_attribute (curoutitm, mom_named__result);
     proconstantsv = mom_item_get_attribute (curoutitm, mom_named__constant);
     provaluesv = mom_item_get_attribute (curoutitm, mom_named__values);
     pronumbersv = mom_item_get_attribute (curoutitm, mom_named__numbers);
@@ -721,7 +724,7 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
   cg->cgen_vecdblitm = mom_make_item ();
   mom_item_start_vector (cg->cgen_vecdblitm);
   if (!mom_is_tuple (procargsv))
-    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid procedure arguments:"),
+    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid procedure formals:"),
 		    MOMOUT_VALUE ((const momval_t) procargsv),
 		    MOMOUT_LITERAL (" in procedure "),
 		    MOMOUT_ITEM ((const momitem_t *) curoutitm), NULL);
@@ -735,7 +738,7 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
       CGEN_CHECK_FRESH (cg, "result of procedure", procresitm);
       mom_item_assoc_put
 	(cg->cgen_locassocitm, procresitm,
-	 (momval_t) mom_make_node_sized (mom_named__procedure_result, 1,
+	 (momval_t) mom_make_node_sized (mom_named__result, 1,
 					 mom_make_integer (routix)));
       mom_should_lock_item (procresitm);
       procrestypev = mom_item_get_attribute (curoutitm, mom_named__ctype);
@@ -776,8 +779,8 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
       curargtypv = mom_item_get_attribute (curargitm, mom_named__ctype);
       mom_unlock_item (curargitm);
       mom_item_assoc_put
-	(cg->cgen_locassocitm, procresitm,
-	 (momval_t) mom_make_node_sized (mom_named__procedure_arguments, 3,
+	(cg->cgen_locassocitm, curargitm,
+	 (momval_t) mom_make_node_sized (mom_named__formals, 3,
 					 mom_make_integer (routix),
 					 mom_make_integer (aix), curargtypv));
       if (aix > 0)
@@ -1011,7 +1014,7 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
   {
     mom_should_lock_item (curoutitm);
     funconstantsv = mom_item_get_attribute (curoutitm, mom_named__constant);
-    funargsv = mom_item_get_attribute (curoutitm, mom_named__arguments);
+    funargsv = mom_item_get_attribute (curoutitm, mom_named__formals);
     funlocalsv = mom_item_get_attribute (curoutitm, mom_named__locals);
     funblocksv = mom_item_get_attribute (curoutitm, mom_named__blocks);
     funstartv = mom_item_get_attribute (curoutitm, mom_named__start);
@@ -1382,10 +1385,11 @@ static momtypenc_t
 emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 {
   momval_t procresv = MOM_NULLV;
-  momval_t procargsv = MOM_NULLV;
-  momval_t primargsv = MOM_NULLV;
-  momval_t primctypev = MOM_NULLV;
+  momval_t argsv = MOM_NULLV;
+  momval_t resv = MOM_NULLV;
+  momval_t ctypev = MOM_NULLV;
   momval_t primexpv = MOM_NULLV;
+  momval_t procv = MOM_NULLV;
   momval_t primcountv = MOM_NULLV;
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
   momitem_t *connitm = (momitem_t *) mom_node_conn (nodv);
@@ -1395,12 +1399,11 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 		    MOMOUT_VALUE ((const momval_t) nodv));
   {
     mom_lock_item (connitm);
-    procargsv =
-      mom_item_get_attribute (connitm, mom_named__procedure_arguments);
-    procresv = mom_item_get_attribute (connitm, mom_named__procedure_result);
-    primargsv =
-      mom_item_get_attribute (connitm, mom_named__primitive_arguments);
-    primctypev = mom_item_get_attribute (connitm, mom_named__ctype);
+    argsv =
+      mom_item_get_attribute (connitm, mom_named__arguments);
+    resv = mom_item_get_attribute (connitm, mom_named__result);
+    procv = mom_item_get_attribute (connitm, mom_named__procedure);
+    ctypev = mom_item_get_attribute (connitm, mom_named__ctype);
     primexpv =
       mom_item_get_attribute (connitm, mom_named__primitive_expansion);
     primcountv =
@@ -1411,15 +1414,15 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
   if (primexpv.ptr)
     {
       struct mom_itemattributes_st *argbind = NULL;
-      if (procargsv.ptr || procresv.ptr)
+      if (argsv.ptr || resv.ptr)
 	MOM_WARNING (MOMOUT_LITERAL ("compiled expression node="),
 		     MOMOUT_VALUE ((const momval_t) nodv),
 		     MOMOUT_LITERAL (" with ambiguous primitive connective:"),
 		     MOMOUT_ITEM ((const momitem_t *) connitm),
 		     MOMOUT_SPACE (48),
 		     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) connitm));
-      if (!mom_is_tuple (primargsv)
-	  || !mom_is_node (primexpv) || !mom_is_item (primctypev)
+      if (!mom_is_tuple (argsv)
+	  || !mom_is_node (primexpv) || !mom_is_item (ctypev)
 	  || mom_node_conn(primexpv) != mom_named__chunk)
 	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("bad primitive:"),
 			MOMOUT_ITEM ((const momitem_t *) connitm),
@@ -1428,7 +1431,7 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 			MOMOUT_SPACE (48),
 			MOMOUT_LITERAL ("in node:"),
 			MOMOUT_VALUE ((const momval_t) nodv), NULL);
-      if ((int) mom_tuple_length (primargsv) != arity)
+      if ((int) mom_tuple_length (argsv) != arity)
 	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("wrong arity for primitive:"),
 			MOMOUT_ITEM ((const momitem_t *) connitm),
 			MOMOUT_SPACE (48),
@@ -1446,7 +1449,7 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
       for (int ix = 0; ix < arity; ix++)
 	{
 	  momval_t formctypv = MOM_NULLV;
-	  momitem_t *formalitm = mom_tuple_nth_item (primargsv, ix);
+	  momitem_t *formalitm = mom_tuple_nth_item (argsv, ix);
 	  momval_t argv = mom_node_nth (nodv, ix);
 	  if (!formalitm || !argv.ptr)
 	    CGEN_ERROR_MOM
@@ -1512,9 +1515,9 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
       // second loop to output the expansion
     }
   // handle procedures
-  else if (procargsv.ptr)
+  else if (procv.ptr)
     {
-      if (!mom_is_tuple (procargsv))
+      if (!mom_is_tuple (argsv))
 	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("bad procedure node:"),
 			MOMOUT_VALUE ((const momval_t) nodv),
 			MOMOUT_LITERAL
