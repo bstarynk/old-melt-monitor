@@ -1176,6 +1176,7 @@ momtypenc_t
 emit_ctype_cgen (struct c_generator_mom_st *cg, struct momout_st *out,
 		 momitem_t *typitm)
 {
+#warning emit_ctype_cgen should probably inspect value expressions to give their type...
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
   assert (out && out->mout_magic == MOM_MOUT_MAGIC);
   bool repeatagain = false;
@@ -1813,6 +1814,7 @@ cgen_cmp_hash_items_mom (const void *p1, const void *p2, void *arg)
     (mom_item_hash (e2->aten_itm) % h);
 }
 
+
 void
 emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 {
@@ -1902,6 +1904,7 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
       momitem_t *opitm = (momitem_t *) mom_node_conn (curinsv);
       unsigned insarity = mom_node_arity (curinsv);
       assert (opitm != NULL);
+      //// DO instruction
       if (opitm == mom_named__do && insarity == 1)
 	{
 	  /* *do(<expr>) */
@@ -1910,6 +1913,7 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 	  MOM_OUT (&cg->cgen_outbody,
 		   MOMOUT_LITERAL (" /*done*/;"), MOMOUT_NEWLINE ());
 	}
+      //// ASSIGN instruction
       else if (opitm == mom_named__assign && insarity == 2)
 	{
 	  /* *assign(<var>,<expr>) */
@@ -1942,9 +1946,10 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 	  MOM_OUT (&cg->cgen_outbody,
 		   MOMOUT_LITERAL (";"), MOMOUT_NEWLINE ());
 	}
+      //// IF instruction
       else if (opitm == mom_named__if && insarity == 2)
 	{
-	  /* *if(<test-expr>,<dest-block> */
+	  /* *if(<test-expr>,<dest-block>) */
 	  momval_t testv = mom_node_nth (curinsv, 0);
 	  momval_t destblockv = mom_node_nth (curinsv, 1);
 	  if (!mom_is_item (destblockv))
@@ -1979,8 +1984,10 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 	  MOM_OUT (&cg->cgen_outbody, MOMOUT_INDENT_LESS (),
 		   MOMOUT_SPACE (48));
 	}
+      //// SWITCH instruction - integer discriminant
       else if (opitm == mom_named__switch && insarity >= 1)
 	{
+	  /* *switch(<discriminant-expr>,<cases>...) */
 	  MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (),
 		   MOMOUT_LITERAL ("switch ("));
 	  momval_t swixprv = mom_node_nth (curinsv, 0);
@@ -2019,8 +2026,10 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 		   MOMOUT_INDENT_LESS (),
 		   MOMOUT_SPACE (48), MOMOUT_LITERAL ("}/*end-switch*/"));
 	}
+      //// DISPATCH instruction - value discriminant
       else if (opitm == mom_named__dispatch && insarity >= 1)
 	{
+	  /* *dispatch(<discriminant-expr>,<cases>...) */
 	  momval_t dispv = mom_node_nth (curinsv, 0);
 #define CGEN_DISPATCH_PREFIX "momdispatchitm"
 	  int dispix = ++cg->cgen_count;
@@ -2118,6 +2127,85 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 		   MOMOUT_INDENT_LESS (), MOMOUT_NEWLINE ());
 	  MOM_GC_FREE (casentarr);
 	}
+      //// JUMP instruction
+      else if (opitm == mom_named__jump && insarity == 1)
+	{
+	  /* *jump(<dest-block>) */
+	  if (ix != nbinstr - 1)
+	    MOM_WARNING (MOMOUT_LITERAL ("jump instruction:"),
+			 MOMOUT_VALUE ((const momval_t) curinsv),
+			 MOMOUT_SPACE (48),
+			 MOMOUT_LITERAL (" not last at rank#"),
+			 MOMOUT_DEC_INT (ix), MOMOUT_LITERAL ("/"),
+			 MOMOUT_DEC_INT (nbinstr), MOMOUT_SPACE (48),
+			 MOMOUT_LITERAL ("in block:"),
+			 MOMOUT_ITEM ((const momitem_t *) blkitm), NULL);
+	  momval_t destblockv = mom_node_nth (curinsv, 0);
+	  if (!mom_is_item (destblockv))
+	    CGEN_ERROR_MOM (cg,
+			    MOMOUT_LITERAL
+			    ("invalid destination block in jump"),
+			    MOMOUT_VALUE ((const momval_t) curinsv),
+			    MOMOUT_SPACE (48), MOMOUT_LITERAL ("at rank#"),
+			    MOMOUT_DEC_INT (ix), MOMOUT_LITERAL ("/"),
+			    MOMOUT_DEC_INT (nbinstr), MOMOUT_SPACE (48),
+			    MOMOUT_LITERAL ("in block:"),
+			    MOMOUT_ITEM ((const momitem_t *) blkitm), NULL);
+	  momitem_t *destblkitm = destblockv.pitem;
+	  MOM_OUT (&cg->cgen_outbody,
+		   MOMOUT_NEWLINE (),
+		   MOMOUT_LITERAL ("/* jump */"), MOMOUT_NEWLINE ());
+	  emit_goto_block_cgen (cg, destblkitm, lockix);
+	}
+      //// CALL instruction
+      else if (opitm == mom_named__call && insarity >= 2)
+	{
+	  /*   *call(<return-block>,<fun-expr>,<arg-expr>....) in functions only */
+	  momval_t retblockv = mom_node_nth (curinsv, 0);
+	  momval_t funexprv = mom_node_nth (curinsv, 1);
+	  if (cg->cgen_routkind != cgr_funt || !mom_is_item (retblockv))
+	    CGEN_ERROR_MOM (cg,
+			    MOMOUT_LITERALV ((const char *)
+					     ((cg->cgen_routkind !=
+					       cgr_funt) ?
+					      "invalid (outside of function) call:"
+					      : "invalid call:")),
+			    MOMOUT_VALUE ((const momval_t) curinsv),
+			    MOMOUT_SPACE (48), MOMOUT_LITERAL ("at rank#"),
+			    MOMOUT_DEC_INT (ix), MOMOUT_LITERAL ("/"),
+			    MOMOUT_DEC_INT (nbinstr), MOMOUT_SPACE (48),
+			    MOMOUT_LITERAL ("in block:"),
+			    MOMOUT_ITEM ((const momitem_t *) blkitm), NULL);
+	  MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (),
+		   MOMOUT_LITERAL ("/* call */"), MOMOUT_NEWLINE (),
+		   MOMOUT_LITERAL
+		   ("mom_item_tasklet_push_frame(momtasklet, "), NULL);
+	  if (emit_expr_cgen (cg, funexprv) != momtypenc_val)
+	    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("function:"),
+			    MOMOUT_VALUE ((const momval_t) funexprv),
+			    MOMOUT_LITERAL (" of non-value type in call:"),
+			    MOMOUT_VALUE ((const momval_t) curinsv),
+			    MOMOUT_SPACE (48), MOMOUT_LITERAL ("at rank#"),
+			    MOMOUT_DEC_INT (ix), MOMOUT_LITERAL ("/"),
+			    MOMOUT_DEC_INT (nbinstr), MOMOUT_SPACE (48),
+			    MOMOUT_LITERAL ("in block:"),
+			    MOMOUT_ITEM ((const momitem_t *) blkitm), NULL);
+#warning should emit the formal arguments with MOMPFR_INT or MOMPFR_VALUE etc...
+	  MOM_FATAPRINTF ("unimplemented call");
+	}
+      //// RETURN instruction
+      else if ((opitm == mom_named__return && insarity <= 1)
+	       || curinsv.pitem == mom_named__return)
+	{
+	  /* *return(<expr>) or `return` */
+	  MOM_FATAPRINTF ("unimplemented return");
+	}
+      ///// error case - bad instruction
+      else
+	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid instruction:"),
+			MOMOUT_VALUE ((const momval_t) curinsv),
+			MOMOUT_SPACE (48), MOMOUT_LITERAL ("in block:"),
+			MOMOUT_ITEM ((const momitem_t *) blkitm), NULL);
     };
   // emit block epilogue if locking
   if (lockix > 0)
