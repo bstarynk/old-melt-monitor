@@ -55,6 +55,7 @@
      *if (<cond>,<block>) for conditional jumps
      *assign (<var>,<expr>) for assignments
      *switch (<expr>,<case>...); each <case> is *case(<const-expr>,<block>)
+     *dispatch (<expr>,<case>...); each <case> is *case(<const-item>,<block>)
 
   but the last sub-node in a block code could also be:
      *jump(<block>)
@@ -303,7 +304,7 @@ mom_generate_c_module (momitem_t *moditm, const char *dirname, char **perrmsg)
   /// at last
   pthread_mutex_unlock (&cgenmtx_mom);
 #warning incomplete mom_generate_c_module
-  MOM_FATAPRINTF ("incomplete mom_generate_c_module");
+  MOM_WARNPRINTF ("incomplete mom_generate_c_module");
   return jr;
 }
 
@@ -614,7 +615,7 @@ bind_blocks_cgen (struct c_generator_mom_st *cg, momval_t blocksv)
 	  CGEN_CHECK_FRESH (cg, "block in routine", blkitm);
 	  mom_item_assoc_put
 	    (cg->cgen_locassocitm, blkitm,
-	     (momval_t) mom_make_node_sized (mom_named__blocks, 1,
+	     (momval_t) mom_make_node_sized (mom_named__block, 1,
 					     mom_make_integer (bix + 1)));
 	}
     }
@@ -906,7 +907,7 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 		    MOMOUT_ITEM ((const momitem_t *) curoutitm), NULL);
   momval_t startlocv = mom_item_assoc_get (cg->cgen_locassocitm, startitm);
   int startix = -1;
-  if (mom_node_conn (startlocv) == mom_named__blocks)
+  if (mom_node_conn (startlocv) == mom_named__block)
     startix = mom_integer_val_def (mom_node_nth (startlocv, 0), -2);
   if (startix <= 0 || startix >= (int) nbproblocks + 1)
     CGEN_ERROR_MOM (cg,
@@ -1057,7 +1058,7 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 		    MOMOUT_ITEM ((const momitem_t *) curoutitm), NULL);
   momval_t startlocv = mom_item_assoc_get (cg->cgen_locassocitm, startitm);
   int startix = -1;
-  if (mom_node_conn (startlocv) == mom_named__blocks)
+  if (mom_node_conn (startlocv) == mom_named__block)
     startix = mom_integer_val_def (mom_node_nth (startlocv, 0), -2);
   if (startix <= 0 || startix >= (int) nbblocks + 1)
     CGEN_ERROR_MOM (cg,
@@ -1449,7 +1450,7 @@ emit_expr_cgen (struct c_generator_mom_st *cg, momval_t expv)
   else
     CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid expression"),
 		    MOMOUT_VALUE ((const momval_t) expv));
-
+  return 0;
 }
 
 // emit a node and gives its type
@@ -1599,9 +1600,7 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 				      mom_string_cstr (curchkv)));
 	  else if (mom_is_integer (curchkv))
 	    MOM_OUT (&cg->cgen_outbody,
-		     MOMOUT_FMT_LONG_LONG ((const char *) "%lld",
-					   (long long)
-					   mom_integer_val (curchkv)));
+		     MOMOUT_DEC_INTPTR_T (mom_integer_val (curchkv)));
 	  else if (mom_is_item (curchkv))
 	    {
 	      momval_t bndvalv = mom_get_attribute (argbind, curchkv.pitem);
@@ -1791,6 +1790,27 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 		   MOMOUT_SPACE (32), NULL);
 	}
     }
+  return emit_ctype_cgen (cg, NULL, mom_value_to_item (ctypev));
+}
+
+
+static int
+cgen_cmp_case_items_mom (const void *p1, const void *p2)
+{
+  const struct mom_attrentry_st *e1 = p1;
+  const struct mom_attrentry_st *e2 = p2;
+  return mom_item_cmp (e1->aten_itm, e2->aten_itm);
+}
+
+static int
+cgen_cmp_hash_items_mom (const void *p1, const void *p2, void *arg)
+{
+  const struct mom_attrentry_st *e1 = p1;
+  const struct mom_attrentry_st *e2 = p2;
+  intptr_t h = (intptr_t) arg;
+  assert (h > 0);
+  return (mom_item_hash (e1->aten_itm) % h) -
+    (mom_item_hash (e2->aten_itm) % h);
 }
 
 void
@@ -1831,6 +1851,7 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
       if (opitm != mom_named__do
 	  && opitm != mom_named__if
 	  && opitm != mom_named__assign && opitm != mom_named__switch
+	  && opitm != mom_named__assign && opitm != mom_named__dispatch
 	  && (opitm != mom_named__jump || ix < nbinstr - 1)
 	  && (opitm != mom_named__call || ix < nbinstr - 1)
 	  && (opitm != mom_named__return || ix < nbinstr - 1))
@@ -1883,6 +1904,7 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
       assert (opitm != NULL);
       if (opitm == mom_named__do && insarity == 1)
 	{
+	  /* *do(<expr>) */
 	  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("/*do*/ (void) "));
 	  emit_expr_cgen (cg, mom_node_nth (curinsv, 0));
 	  MOM_OUT (&cg->cgen_outbody,
@@ -1890,6 +1912,7 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 	}
       else if (opitm == mom_named__assign && insarity == 2)
 	{
+	  /* *assign(<var>,<expr>) */
 	  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("/*assign*/ "));
 	  momitem_t *lhsitm = mom_value_to_item (mom_node_nth (curinsv, 0));
 	  if (!lhsitm)
@@ -1921,6 +1944,7 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 	}
       else if (opitm == mom_named__if && insarity == 2)
 	{
+	  /* *if(<test-expr>,<dest-block> */
 	  momval_t testv = mom_node_nth (curinsv, 0);
 	  momval_t destblockv = mom_node_nth (curinsv, 1);
 	  if (!mom_is_item (destblockv))
@@ -1952,9 +1976,147 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 	  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (")"),
 		   MOMOUT_INDENT_MORE ());
 	  emit_goto_block_cgen (cg, destblkitm, lockix);
+	  MOM_OUT (&cg->cgen_outbody, MOMOUT_INDENT_LESS (),
+		   MOMOUT_SPACE (48));
 	}
       else if (opitm == mom_named__switch && insarity >= 1)
 	{
+	  MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (),
+		   MOMOUT_LITERAL ("switch ("));
+	  momval_t swixprv = mom_node_nth (curinsv, 0);
+	  if (emit_expr_cgen (cg, swixprv) != momtypenc_int)
+	    CGEN_ERROR_MOM (cg,
+			    MOMOUT_LITERAL
+			    ("invalid non-integral switch expression:"),
+			    MOMOUT_VALUE ((const momval_t) swixprv),
+			    MOMOUT_LITERAL (" in instruction "),
+			    MOMOUT_VALUE ((const momval_t) curinsv));
+	  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (") {"),
+		   MOMOUT_INDENT_MORE ());
+	  for (int casix = 1; casix < (int) insarity; casix++)
+	    {
+	      momval_t casev = mom_node_nth (curinsv, casix);
+	      momval_t casintv = MOM_NULLV;
+	      momval_t casitmv = MOM_NULLV;
+	      if (!mom_is_node (casev)
+		  || mom_node_conn (casev) != mom_named__case
+		  || mom_node_arity (casev) != 2
+		  || !mom_is_integer ((casintv = mom_node_nth (casev, 0)))
+		  || !mom_is_item ((casitmv = mom_node_nth (casev, 1))))
+		CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid case:"),
+				MOMOUT_VALUE ((const momval_t) casev),
+				MOMOUT_LITERAL (" in switch instruction:"),
+				MOMOUT_VALUE ((const momval_t) curinsv));
+	      MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (),
+		       MOMOUT_LITERAL ("case "),
+		       MOMOUT_DEC_INTPTR_T ((const intptr_t) casintv.pint),
+		       MOMOUT_LITERAL (": "), NULL);
+	      emit_goto_block_cgen (cg, casitmv.pitem, lockix);
+	    }
+
+	  MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (),
+		   MOMOUT_LITERAL ("default:;"),
+		   MOMOUT_INDENT_LESS (),
+		   MOMOUT_SPACE (48), MOMOUT_LITERAL ("}/*end-switch*/"));
+	}
+      else if (opitm == mom_named__dispatch && insarity >= 1)
+	{
+	  momval_t dispv = mom_node_nth (curinsv, 0);
+#define CGEN_DISPATCH_PREFIX "momdispatchitm"
+	  int dispix = ++cg->cgen_count;
+	  struct mom_attrentry_st *casentarr =
+	    MOM_GC_ALLOC ("case item entries",
+			  (insarity + 1) * sizeof (struct mom_attrentry_st));
+	  for (int cix = 1; cix < (int) insarity; cix++)
+	    {
+	      momitem_t *curcasitm = NULL;
+	      momitem_t *curblkitm = NULL;
+	      momval_t asscasv = MOM_NULLV;
+	      momval_t assblkv = MOM_NULLV;
+	      momval_t curcasv = mom_node_nth (curinsv, cix);
+	      if (mom_node_conn (curcasv) != mom_named__case
+		  || mom_node_arity (curcasv) != 2
+		  || !(curcasitm =
+		       mom_value_to_item (mom_node_nth (curcasv, 0)))
+		  || !(curblkitm =
+		       mom_value_to_item (mom_node_nth (curcasv, 1)))
+		  || !(asscasv =
+		       mom_item_assoc_get (cg->cgen_locassocitm,
+					   curcasitm)).ptr
+		  || !(assblkv =
+		       mom_item_assoc_get (cg->cgen_locassocitm,
+					   curblkitm)).ptr
+		  || mom_node_conn (asscasv) != mom_named__constant
+		  || mom_node_conn (curcasv) != mom_named__block)
+		CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid case:"),
+				MOMOUT_VALUE ((const momval_t) curcasv),
+				MOMOUT_LITERAL (" in dispatch instruction:"),
+				MOMOUT_VALUE ((const momval_t) curinsv));
+	      else
+		{
+		  casentarr[cix - 1].aten_itm = curcasitm;
+		  casentarr[cix - 1].aten_val = (momval_t) curblkitm;
+		}
+	    };
+	  qsort (casentarr, insarity - 1, sizeof (struct mom_attrentry_st),
+		 cgen_cmp_case_items_mom);
+	  for (int eix = 0; eix < (int) insarity - 1; eix++)
+	    if (casentarr[eix].aten_itm == casentarr[eix + 1].aten_itm)
+	      CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("duplicate case:"),
+			      MOMOUT_ITEM ((const momitem_t *)
+					   casentarr[eix].aten_itm),
+			      MOMOUT_LITERAL (" in dispatch instruction:"),
+			      MOMOUT_VALUE ((const momval_t) curinsv));
+	  int modh = (4 * insarity / 3 + 2) | 7;
+	  qsort_r (casentarr, insarity - 1, sizeof (struct mom_attrentry_st),
+		   cgen_cmp_hash_items_mom, (void *) ((intptr_t) modh));
+	  MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (),
+		   MOMOUT_LITERAL ("// dispatch#"), MOMOUT_DEC_INT (dispix),
+		   MOMOUT_NEWLINE (),
+		   MOMOUT_LITERAL ("momitem_t* " CGEN_DISPATCH_PREFIX),
+		   MOMOUT_DEC_INT (dispix),
+		   MOMOUT_LITERAL ("mom_value_to_item("), NULL);
+	  if (emit_expr_cgen (cg, dispv) != momtypenc_val)
+	    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid dispatcher:"),
+			    MOMOUT_VALUE ((const momval_t) dispv),
+			    MOMOUT_LITERAL (" in dispatch instruction:"),
+			    MOMOUT_VALUE ((const momval_t) curinsv));
+	  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (") /*dispatcher*/;"),
+		   MOMOUT_NEWLINE (),
+		   MOMOUT_LITERAL ("if (" CGEN_DISPATCH_PREFIX),
+		   MOMOUT_DEC_INT (dispix),
+		   MOMOUT_LITERAL (" != NULL) switch (mom_item_hash ("
+				   CGEN_DISPATCH_PREFIX),
+		   MOMOUT_DEC_INT (dispix), MOMOUT_LITERAL (") % "),
+		   MOMOUT_DEC_INT (modh), MOMOUT_LITERAL (")"),
+		   MOMOUT_INDENT_MORE (), NULL);
+	  for (int eix = 0; eix < (int) insarity - 1; eix++)
+	    {
+	      if (eix == 0
+		  || casentarr[eix].aten_itm != casentarr[eix - 1].aten_itm)
+		MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (),
+			 MOMOUT_LITERALV ((const char *) ((eix > 0) ? "break;"
+							  : " ")),
+			 MOMOUT_LITERAL ("case "),
+			 MOMOUT_DEC_INT ((int)
+					 mom_item_hash (casentarr
+							[eix].aten_itm) %
+					 modh), MOMOUT_LITERAL (":"), NULL);
+	      MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (),
+		       MOMOUT_LITERAL ("if (" CGEN_DISPATCH_PREFIX),
+		       MOMOUT_DEC_INT (dispix), MOMOUT_LITERAL (" == "));
+	      emit_expr_cgen (cg, (momval_t) casentarr[eix].aten_itm);
+	      MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (") "));
+	      emit_goto_block_cgen (cg,
+				    mom_value_to_item (casentarr
+						       [eix].aten_val),
+				    lockix);
+	    };
+	  MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (),
+		   MOMOUT_LITERAL ("break;"), MOMOUT_NEWLINE (),
+		   MOMOUT_LITERAL ("default:;} // end dispatch"),
+		   MOMOUT_INDENT_LESS (), MOMOUT_NEWLINE ());
+	  MOM_GC_FREE (casentarr);
 	}
     };
   // emit block epilogue if locking
@@ -1968,10 +2130,6 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 	       MOMOUT_DEC_INT (lockix),
 	       MOMOUT_LITERAL (":;"), MOMOUT_NEWLINE (), NULL);
     }
-#warning unimplemented emit_block_cgen
-  CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("unimplemented emission of block:"),
-		  MOMOUT_ITEM ((const momitem_t *) blkitm), NULL);
-
 }
 
 static void
@@ -1981,8 +2139,10 @@ emit_goto_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm,
   assert (cg != NULL && cg->cgen_magic == CGEN_MAGIC);
   assert (blkitm != NULL && blkitm->i_typnum == momty_item);
   momval_t blockdatav = mom_item_assoc_get (cg->cgen_locassocitm, blkitm);
-  assert (blockdatav.ptr != NULL);
-  assert (mom_node_conn (blockdatav) == mom_named__blocks);
+  if (blockdatav.ptr == NULL
+      || mom_node_conn (blockdatav) != mom_named__block)
+    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("bad block to go to:"),
+		    MOMOUT_ITEM ((const momitem_t *) blkitm));
   int bix = mom_integer_val_def (mom_node_nth (blockdatav, 0), -2) - 1;
   assert (bix >= 0);
   if (lockix > 0)

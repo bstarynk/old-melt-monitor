@@ -743,6 +743,12 @@ mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist)
 	    fprintf (out, "%d", n);
 	  }
 	  break;
+	case MOMOUTDO_HEX_INT:
+	  {
+	    int n = va_arg (alist, int);
+	    fprintf (out, "%x", n);
+	  }
+	  break;
 	  //
 	case MOMOUTDO_JSON_VALUE:
 	  {
@@ -752,10 +758,31 @@ mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist)
 	  }
 	  break;
 	  //
-	case MOMOUTDO_HEX_INT:
+	case MOMOUTDO_DEC_LONG:
 	  {
-	    int n = va_arg (alist, int);
-	    fprintf (out, "%x", n);
+	    long n = va_arg (alist, long);
+	    fprintf (out, "%ld", n);
+	  }
+	  break;
+	  //
+	case MOMOUTDO_HEX_LONG:
+	  {
+	    long n = va_arg (alist, long);
+	    fprintf (out, "%ld", n);
+	  }
+	  break;
+	  //
+	case MOMOUTDO_DEC_INTPTR_T:
+	  {
+	    intptr_t n = va_arg (alist, intptr_t);
+	    fprintf (out, "%" PRIdPTR, n);
+	  }
+	  break;
+	  //
+	case MOMOUTDO_HEX_INTPTR_T:
+	  {
+	    intptr_t n = va_arg (alist, intptr_t);
+	    fprintf (out, "%" PRIxPTR, n);
 	  }
 	  break;
 	  //

@@ -94,6 +94,9 @@ MOM_PREDEFINED_NAMED(count,_6f4k9pqzryk_w25f8vxuyyc,841187505)
 ////!Attribute giving the C type
 MOM_PREDEFINED_NAMED(ctype,_0ee6afx5850_ji17eq0wmfa,119327747)
 
+////!for dispatching statements on items
+MOM_PREDEFINED_NAMED(dispatch,_8fk0de81s9r_5d4v4x7qmxr,2855454226)
+
 ////!for side-effecting instructions in blocks, etc...
 MOM_PREDEFINED_NAMED(do,_5c789try94y_ssy6a22fpep,3287581817)
 
@@ -240,8 +243,8 @@ MOM_PREDEFINED_NAMED(state,_6f9870y6v8t_kp8fcmq2ezv,1856647655)
 ////!in JSON dumps, used for long chunked strings
 MOM_PREDEFINED_NAMED(string,_8j516kuv89j_4hc4w6ykmr6,4254767725)
 
-////!for switches <expr> <case>...
-MOM_PREDEFINED_NAMED(switch,_638zh0145dj_rytv9kuj8v3,3894804359)
+////!for switch statements on integers
+MOM_PREDEFINED_NAMED(switch,_8qpa7j0chkh_k630ujw6jiw,3169022041)
 
 ////!for routines for tasklet
 MOM_PREDEFINED_NAMED(tasklet_function,_7yxp9xhih4z_9uzrqhkamxa,1188253756)

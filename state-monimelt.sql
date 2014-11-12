@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','after predefined call');
+INSERT INTO t_params VALUES('dump_reason','after predefined dispatch');
 INSERT INTO t_items VALUES('_02av6173qvf_pehzhe755j2','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for calls at end of  blocks"}],
  "content": null, "kind": null, "payload": null}
 ');
@@ -211,9 +211,6 @@ INSERT INTO t_items VALUES('_5wmusj136kq_u5qpehp89aq','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_60ist2ad22c_cfpjp5ay6uj','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "third result in tasklet"}],
  "content": null, "kind": null, "payload": null}
 ');
-INSERT INTO t_items VALUES('_638zh0145dj_rytv9kuj8v3','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for switches <expr> <case>..."}],
- "content": null, "kind": null, "payload": null}
-');
 INSERT INTO t_items VALUES('_6443sk5q0zt_8xdi02c6tzu','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for ending some blocks"}],
  "content": null, "kind": null, "payload": null}
 ');
@@ -307,7 +304,13 @@ INSERT INTO t_items VALUES('_86ft82euar7_cm50jcthhwe','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_8ejwdt1a5yx_2meizztvte0','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for conditionals, etc.."}],
  "content": null, "kind": null, "payload": null}
 ');
+INSERT INTO t_items VALUES('_8fk0de81s9r_5d4v4x7qmxr','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for dispatching statements on items"}],
+ "content": null, "kind": null, "payload": null}
+');
 INSERT INTO t_items VALUES('_8j516kuv89j_4hc4w6ykmr6','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "in JSON dumps, used for long chunked strings"}],
+ "content": null, "kind": null, "payload": null}
+');
+INSERT INTO t_items VALUES('_8qpa7j0chkh_k630ujw6jiw','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for switch statements on integers"}],
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_8s357rq2dzk_k8ze95tikjm','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "gives the item content, at least in dumped JSON..."}],
@@ -373,6 +376,7 @@ INSERT INTO t_names VALUES('constant','_4zywi5fh3ef_ys9sq93vsc1','.predef');
 INSERT INTO t_names VALUES('content','_8s357rq2dzk_k8ze95tikjm','.predef');
 INSERT INTO t_names VALUES('count','_6f4k9pqzryk_w25f8vxuyyc','.predef');
 INSERT INTO t_names VALUES('ctype','_0ee6afx5850_ji17eq0wmfa','.predef');
+INSERT INTO t_names VALUES('dispatch','_8fk0de81s9r_5d4v4x7qmxr','.predef');
 INSERT INTO t_names VALUES('display_value','_7pyjxst21ce_vhc0tk0em0u','.root');
 INSERT INTO t_names VALUES('do','_5c789try94y_ssy6a22fpep','.predef');
 INSERT INTO t_names VALUES('double','_7j7x11c25h3_wkchtuwpusx','.predef');
@@ -440,7 +444,7 @@ INSERT INTO t_names VALUES('start','_3wh3e88sk28_d27qi2737zi','.predef');
 INSERT INTO t_names VALUES('start_assoc','_86ft82euar7_cm50jcthhwe','.root');
 INSERT INTO t_names VALUES('state','_6f9870y6v8t_kp8fcmq2ezv','.predef');
 INSERT INTO t_names VALUES('string','_8j516kuv89j_4hc4w6ykmr6','.predef');
-INSERT INTO t_names VALUES('switch','_638zh0145dj_rytv9kuj8v3','.predef');
+INSERT INTO t_names VALUES('switch','_8qpa7j0chkh_k630ujw6jiw','.predef');
 INSERT INTO t_names VALUES('tasklet_function','_7yxp9xhih4z_9uzrqhkamxa','.predef');
 INSERT INTO t_names VALUES('terminated','_3jpt8yuzuyw_ti1pyz3me1c','.predef');
 INSERT INTO t_names VALUES('translate_procedure','_0afqepa7jkr_qky26hpv98d','.root');

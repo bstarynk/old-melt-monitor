@@ -35,6 +35,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <setjmp.h>
+#include <inttypes.h>
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
@@ -360,6 +361,22 @@ typedef enum momoutdir_en
   /// hex int
   MOMOUTDO_HEX_INT /*, int num */ ,
 #define MOMOUT_HEX_INT(N) MOMOUTDO_HEX_INT, MOM_REQUIRES_TYPE(N,int,mombad_int)
+  ///
+  /// decimal long
+  MOMOUTDO_DEC_LONG /*, long num */ ,
+#define MOMOUT_DEC_LONG(N) MOMOUTDO_DEC_LONG, MOM_REQUIRES_TYPE(N,long,mombad_long)
+  //
+  /// hex long
+  MOMOUTDO_HEX_LONG /*, int num */ ,
+#define MOMOUT_HEX_LONG(N) MOMOUTDO_HEX_LONG, MOM_REQUIRES_TYPE(N,long,mombad_long)
+  ///
+  /// decimal intptr_t
+  MOMOUTDO_DEC_INTPTR_T /*, intptr_t num */ ,
+#define MOMOUT_DEC_INTPTR_T(N) MOMOUTDO_DEC_INTPTR_T, MOM_REQUIRES_TYPE(N,intptr_t,mombad_intptr_t)
+  //
+  /// hex long
+  MOMOUTDO_HEX_INTPTR_T /*, intptr_t num */ ,
+#define MOMOUT_HEX_INTPTR_T(N) MOMOUTDO_HEX_INTPTR_T, MOM_REQUIRES_TYPE(N,intptr_t,mombad_intptr_t)
   ///
   /// format a double with %g 
   MOMOUTDO_DOUBLE_G /*, double time */ ,
@@ -912,6 +929,15 @@ mom_lock_item (momitem_t *itm)
     return false;
   assert (itm->i_magic == MOM_ITEM_MAGIC);
   return (pthread_mutex_lock (&itm->i_mtx) == 0);
+}
+
+static inline momhash_t
+mom_item_hash (const momitem_t *itm)
+{
+  if (MOM_UNLIKELY (!itm))
+    return 0;
+  else
+    return itm->i_hash;
 }
 
 bool mom_lock_item_at (const char *fil, int lin, momitem_t *itm);
@@ -2611,6 +2637,8 @@ extern const char *mombad_literal;
 extern const char *mombad_string;
 extern const char *mombad_html;
 extern const char *mombad_int;
+extern const char *mombad_long;
+extern const char *mombad_intptr_t;
 extern const char *mombad_js;
 extern const char *mombad_fmt;
 extern const char *mombad_double;
