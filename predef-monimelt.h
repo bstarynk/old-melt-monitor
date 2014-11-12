@@ -58,6 +58,9 @@ MOM_PREDEFINED_NAMED(block,_94tq2iauet8_jujpjhjrzsm,131104555)
 ////!for blocks in routines, etc...
 MOM_PREDEFINED_NAMED(blocks,_1r880c1yk3z_i5e8mprcj90,1909866882)
 
+////!for calls at end of  blocks
+MOM_PREDEFINED_NAMED(call,_02av6173qvf_pehzhe755j2,838828699)
+
 ////!inside switches: case <constant-expr> <block>
 MOM_PREDEFINED_NAMED(case,_38w4qwrmd6z_74x5z80v5k6,284764426)
 
@@ -153,11 +156,17 @@ MOM_PREDEFINED_NAMED(jsonrpc_handler,_0hpzi8m7wym_1y4ypmm9y47,984209833)
 ////!in JSON dumps, give the type of a value
 MOM_PREDEFINED_NAMED(jtype,_7urjeiw3evy_m7k72uv6790,450999481)
 
+////!for jumps at end of  blocks
+MOM_PREDEFINED_NAMED(jump,_2kxisdsque9_u9awek5wup1,759819674)
+
 ////!in JSON dumps, give the kind of the payload of an item
 MOM_PREDEFINED_NAMED(kind,_06yp8ueq6yf_5ts408yww29,3458907209)
 
 ////!locals of function
 MOM_PREDEFINED_NAMED(locals,_4p33dhxywm0_id6tti2kyw6,45612953)
+
+////!for locked blocks
+MOM_PREDEFINED_NAMED(lock,_232t5qs2v8e_zu2wy53cqe3,668574763)
 
 ////!notably for error message in JSONRPC
 MOM_PREDEFINED_NAMED(message,_4jp2meuzru2_a58afyxwxa2,1089261779)
