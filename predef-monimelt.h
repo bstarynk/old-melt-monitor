@@ -46,11 +46,20 @@ MOM_PREDEFINED_NAMED(agenda,_02u53qxa7dm_sttmhffpchr,15591209)
 ////!arguments of procedure or primitive
 MOM_PREDEFINED_NAMED(arguments,_2x2zpyhfqum_0utui69rzea,3803054010)
 
+////!for assignment <var> := <expr>
+MOM_PREDEFINED_NAMED(assign,_8vzddhpmhp8_z0005cqyqzf,861132230)
+
 ////!gives the attribute[s], at least in dumped JSON...
 MOM_PREDEFINED_NAMED(attr,_6w3dvx83dfw_xzc6aif6isv,4127160085)
 
+////!for block items
+MOM_PREDEFINED_NAMED(block,_94tq2iauet8_jujpjhjrzsm,131104555)
+
 ////!for blocks in routines, etc...
 MOM_PREDEFINED_NAMED(blocks,_1r880c1yk3z_i5e8mprcj90,1909866882)
+
+////!inside switches: case <constant-expr> <block>
+MOM_PREDEFINED_NAMED(case,_38w4qwrmd6z_74x5z80v5k6,284764426)
 
 ////!used as node of primitive expansions, etc...
 MOM_PREDEFINED_NAMED(chunk,_8x6fxcm4z2k_vdaqicfi4z0,886999649)
@@ -82,6 +91,9 @@ MOM_PREDEFINED_NAMED(count,_6f4k9pqzryk_w25f8vxuyyc,841187505)
 ////!Attribute giving the C type
 MOM_PREDEFINED_NAMED(ctype,_0ee6afx5850_ji17eq0wmfa,119327747)
 
+////!for side-effecting instructions in blocks, etc...
+MOM_PREDEFINED_NAMED(do,_5c789try94y_ssy6a22fpep,3287581817)
+
 ////!the double C type
 MOM_PREDEFINED_NAMED(double,_7j7x11c25h3_wkchtuwpusx,3897333387)
 
@@ -105,6 +117,9 @@ MOM_PREDEFINED_NAMED(frames,_4cw8jv45vsk_4mh9ex64904,407235052)
 
 ////!for JSONRPC and elsewhere
 MOM_PREDEFINED_NAMED(id,_7a9sxskjhcp_kpf30ka97ex,2687612409)
+
+////!for conditionals, etc..
+MOM_PREDEFINED_NAMED(if,_8ejwdt1a5yx_2meizztvte0,2841552917)
 
 ////!The C type for word integers
 MOM_PREDEFINED_NAMED(intptr_t,_51u3st4u9mc_zdvms6jti0a,2777173293)
@@ -195,6 +210,9 @@ MOM_PREDEFINED_NAMED(res3,_60ist2ad22c_cfpjp5ay6uj,1346622887)
 ////!notably for error message in JSONRPC
 MOM_PREDEFINED_NAMED(result,_6djzuwz5pav_cri386ywjhj,2755350724)
 
+////!for ending some blocks
+MOM_PREDEFINED_NAMED(return,_6443sk5q0zt_8xdi02c6tzu,305481998)
+
 ////!in JSON dumps, indicate sets of item, or give their array of elements
 MOM_PREDEFINED_NAMED(set,_2v75mmyph64_4h4kys78740,2780130992)
 
@@ -212,6 +230,9 @@ MOM_PREDEFINED_NAMED(state,_6f9870y6v8t_kp8fcmq2ezv,1856647655)
 
 ////!in JSON dumps, used for long chunked strings
 MOM_PREDEFINED_NAMED(string,_8j516kuv89j_4hc4w6ykmr6,4254767725)
+
+////!for switches <expr> <case>...
+MOM_PREDEFINED_NAMED(switch,_638zh0145dj_rytv9kuj8v3,3894804359)
 
 ////!for routines for tasklet
 MOM_PREDEFINED_NAMED(tasklet_function,_7yxp9xhih4z_9uzrqhkamxa,1188253756)

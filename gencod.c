@@ -37,6 +37,9 @@
    tuple- of constant items, `formals` associated to formal-arguments,
    `locals` associated to locals variables.
 
+   Both procedures and functions have a tuple or set of `blocks` and a
+   `start` block item.
+
    Expressions are often nodes, the connective being a procedure or a
    primitive.
 
@@ -44,6 +47,19 @@
    `primitive_expansion` with a node of connective `chunk` and it has
    a `ctype`
 
+   A block item should preferably be unique to its procedure or
+   function. It has a `block` attribute associated to a `code`
+   node. That node should have expression sub-nodes, one of:
+
+     *do (<expr>) for side-effecting expressions
+     *if (<cond>,<block>) for conditional jumps
+     *assign (<var>,<expr>) for assignments
+     *switch (<expr>,<case>...); each <case> is *case(<const-expr>,<block>)
+
+  but the last sub-node in a block code could also be:
+     *jump(<block>)
+     *call(<return-block>,<fun-expr>,<arg-expr>....) in functions only
+     *return(<expr>) or `return`
 ****/
 
 #define CGEN_MAGIC 0x566802a5	/* cgen magic 1449656997 */
@@ -75,6 +91,7 @@ struct c_generator_mom_st
   char *cgen_filbase;
   char *cgen_tempath;
   enum cgenroutkind_mom_en cgen_routkind;
+  momtypenc_t cgen_restype;
   struct momout_st cgen_outhead;
   struct momout_st cgen_outbody;
 };
@@ -752,6 +769,8 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	   MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL ("// implementation of procedure #"),
 	   MOMOUT_DEC_INT ((int) routix), MOMOUT_NEWLINE ());
+#warning should change emit_ctype to give ctype
+  // cg->cgen_restype =
   emit_ctype_cgen (cg, &cg->cgen_outbody, mom_value_to_item (procrestypev));
   MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (48),
 	   MOMOUT_LITERAL (MOM_PROCROUTFUN_PREFIX),
@@ -1173,7 +1192,14 @@ emit_ctype_cgen (struct c_generator_mom_st *cg, struct momout_st *out,
 static momtypenc_t
 emit_var_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
 {
-  momval_t expasv = mom_item_assoc_get (cg->cgen_locassocitm, varitm);
+  momval_t expasv = MOM_NULLV;
+  if (varitm == mom_named__result && cg->cgen_routkind == cgr_proc
+      && cg->cgen_restype)
+    {
+      MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (64), "momresult");
+      return cg->cgen_restype;
+    }
+  expasv = mom_item_assoc_get (cg->cgen_locassocitm, varitm);
   if (expasv.ptr == NULL)
     expasv = mom_item_assoc_get (cg->cgen_globassocitm, varitm);
   const momitem_t *noditm = mom_node_conn (expasv);
