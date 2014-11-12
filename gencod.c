@@ -1933,7 +1933,7 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 			    MOMOUT_DEC_INT (nbinstr), MOMOUT_SPACE (48),
 			    MOMOUT_LITERAL ("in block:"),
 			    MOMOUT_ITEM ((const momitem_t *) blkitm), NULL);
-
+	  momitem_t *destblkitm = destblockv.pitem;
 	  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("/*if*/ if ("));
 	  momtypenc_t ctyp = emit_expr_cgen (cg, testv);
 	  if (ctyp == momtypenc__none)
@@ -1951,7 +1951,7 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 	    MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (".ptr"));
 	  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (")"),
 		   MOMOUT_INDENT_MORE ());
-#warning should have an emit_goto_block_cgen function
+	  emit_goto_block_cgen (cg, destblkitm, lockix);
 	}
       else if (opitm == mom_named__switch && insarity >= 1)
 	{
@@ -1980,18 +1980,39 @@ emit_goto_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm,
 {
   assert (cg != NULL && cg->cgen_magic == CGEN_MAGIC);
   assert (blkitm != NULL && blkitm->i_typnum == momty_item);
+  momval_t blockdatav = mom_item_assoc_get (cg->cgen_locassocitm, blkitm);
+  assert (blockdatav.ptr != NULL);
+  assert (mom_node_conn (blockdatav) == mom_named__blocks);
+  int bix = mom_integer_val_def (mom_node_nth (blockdatav, 0), -2) - 1;
+  assert (bix >= 0);
   if (lockix > 0)
     MOM_OUT (&cg->cgen_outbody,
 	     MOMOUT_LITERAL ("/*unlock-goto*/ { mom_unlock_item ("
 			     CGEN_LOCK_ITEM_PREFIX), MOMOUT_DEC_INT (lockix),
-	     MOMOUT_LITERAL ("); goto "), NULL);
+	     MOMOUT_LITERAL ("); "), NULL);
   else
-    MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("goto "));
+    MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (" "));
   if (cg->cgen_routkind == cgr_proc)
-    {
-#warning goto_block incomplete
-      // should retrieve the bix
-      MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (CGEN_PROC_BLOCK_PREFIX),
-	       NULL);
-    }
+    // should retrieve the bix
+    MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_LITERAL ("goto " CGEN_PROC_BLOCK_PREFIX),
+	     MOMOUT_DEC_INT (bix),
+	     MOMOUT_LITERAL (" /*proc.block "),
+	     MOMOUT_ITEM ((const momitem_t *) blkitm),
+	     MOMOUT_LITERAL ("*/"), NULL);
+  else
+    MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_LITERAL (" return "),
+	     MOMOUT_DEC_INT (bix),
+	     MOMOUT_LITERAL (" /*func.block "),
+	     MOMOUT_ITEM ((const momitem_t *) blkitm),
+	     MOMOUT_LITERAL ("*/"), NULL);
+  if (lockix > 0)
+    MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("}; //unlocked"),
+	     MOMOUT_NEWLINE (), NULL);
 }
+
+
+
+
+//// end of file gencod.c
