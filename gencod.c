@@ -60,6 +60,10 @@
      *jump(<block>)
      *call(<return-block>,<fun-expr>,<arg-expr>....) in functions only
      *return(<expr>) or `return`
+
+  A block item might have a `lock` attribute giving a variable
+  (holding some item) to lock before entering that block, which will
+  be unlocked after exiting from that block.
 ****/
 
 #define CGEN_MAGIC 0x566802a5	/* cgen magic 1449656997 */
@@ -152,8 +156,10 @@ static void emit_procedure_cgen (struct c_generator_mom_st *cgen,
 static void emit_taskletfunction_cgen (struct c_generator_mom_st *cgen,
 				       unsigned routix);
 
-static void emit_ctype_cgen (struct c_generator_mom_st *cgen,
-			     struct momout_st *out, momitem_t *typitm);
+// gives the type encoding, and usually emit the TYPITM. Don't emit
+// anything if OUT is null.
+static momtypenc_t emit_ctype_cgen (struct c_generator_mom_st *cgen,
+				    struct momout_st *out, momitem_t *typitm);
 
 static void emit_block_cgen (struct c_generator_mom_st *cgen,
 			     momitem_t *blkitm);
@@ -769,9 +775,8 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	   MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL ("// implementation of procedure #"),
 	   MOMOUT_DEC_INT ((int) routix), MOMOUT_NEWLINE ());
-#warning should change emit_ctype to give ctype
-  // cg->cgen_restype =
-  emit_ctype_cgen (cg, &cg->cgen_outbody, mom_value_to_item (procrestypev));
+  cg->cgen_restype =
+    emit_ctype_cgen (cg, &cg->cgen_outbody, mom_value_to_item (procrestypev));
   MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (48),
 	   MOMOUT_LITERAL (MOM_PROCROUTFUN_PREFIX),
 	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
@@ -1163,28 +1168,71 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 
 
 
-void
+momtypenc_t
 emit_ctype_cgen (struct c_generator_mom_st *cg, struct momout_st *out,
 		 momitem_t *typitm)
 {
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
   assert (out && out->mout_magic == MOM_MOUT_MAGIC);
-  if (!typitm || typitm->i_typnum != momty_item)
-    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("bad ctype:"),
-		    MOMOUT_VALUE ((const momval_t) typitm), NULL);
-  if (typitm == mom_named__intptr_t)
-    MOM_OUT (out, MOMOUT_LITERAL ("intptr_t"), NULL);
-  else if (typitm == mom_named__momval_t)
-    MOM_OUT (out, MOMOUT_LITERAL ("momval_t"), NULL);
-  else if (typitm == mom_named__double)
-    MOM_OUT (out, MOMOUT_LITERAL ("double"), NULL);
-  else if (typitm == mom_named__void)
-    MOM_OUT (out, MOMOUT_LITERAL ("void"), NULL);
-  else if (typitm == mom_named__momcstr_t)
-    MOM_OUT (out, MOMOUT_LITERAL ("momcstr_t"), NULL);
-  else
-    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid ctype:"),
-		    MOMOUT_ITEM ((const momitem_t *) typitm), NULL);
+  bool repeatagain = false;
+  do
+    {
+      if (!typitm || typitm->i_typnum != momty_item)
+	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("bad ctype:"),
+			MOMOUT_VALUE ((const momval_t) typitm), NULL);
+      if (typitm == mom_named__intptr_t)
+	{
+	  if (out)
+	    MOM_OUT (out, MOMOUT_LITERAL ("intptr_t"), NULL);
+	  return momtypenc_int;
+	}
+      else if (typitm == mom_named__momval_t)
+	{
+	  if (out)
+	    MOM_OUT (out, MOMOUT_LITERAL ("momval_t"), NULL);
+	  return momtypenc_val;
+	}
+      else if (typitm == mom_named__double)
+	{
+	  if (out)
+	    MOM_OUT (out, MOMOUT_LITERAL ("double"), NULL);
+	  return momtypenc_double;
+	}
+      else if (typitm == mom_named__void)
+	{
+	  if (out)
+	    MOM_OUT (out, MOMOUT_LITERAL ("void"), NULL);
+	  return momtypenc__none;
+	}
+      else if (typitm == mom_named__momcstr_t)
+	{
+	  if (out)
+	    MOM_OUT (out, MOMOUT_LITERAL ("momcstr_t"), NULL);
+	  return momtypenc_string;
+	}
+      else if (!repeatagain && typitm)
+	{
+	  momval_t ctypv = MOM_NULLV;
+	  {
+	    mom_lock_item (typitm);
+	    ctypv = mom_item_get_attribute (typitm, mom_named__ctype);
+	    mom_unlock_item (typitm);
+	    if (mom_is_item (ctypv))
+	      {
+		typitm = ctypv.pitem;
+		repeatagain = true;
+	      }
+	    else
+	      CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid ctype item:"),
+			      MOMOUT_ITEM ((const momitem_t *) typitm), NULL);
+	  }
+	}
+      else
+	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid ctype:"),
+			MOMOUT_ITEM ((const momitem_t *) typitm), NULL);
+    }
+  while (repeatagain);
+  return momtypenc__none;
 }
 
 
@@ -1745,8 +1793,51 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 void
 emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 {
+  momval_t blockv = MOM_NULLV;
+  momval_t lockv = MOM_NULLV;
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
   assert (blkitm && blkitm->i_typnum == momty_item);
+  {
+    mom_lock_item (blkitm);
+    blockv = mom_item_get_attribute (blkitm, mom_named__block);
+    //lockv = mom_item_get_attribute(blkitm, mom_named__lock);
+    mom_unlock_item (blkitm);
+  }
+  if (mom_node_conn (blockv) != mom_named__code)
+    CGEN_ERROR_MOM (cg,
+		    MOMOUT_LITERAL
+		    ("invalid block (bad `block`, should be a `code` node):"),
+		    MOMOUT_ITEM ((const momitem_t *) blkitm),
+		    MOMOUT_SPACE (32),
+		    MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) blkitm));
+  if (lockv.ptr && !mom_is_item (lockv))
+    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid `lock` in block:"),
+		    MOMOUT_ITEM ((const momitem_t *) blkitm),
+		    MOMOUT_SPACE (32),
+		    MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) blkitm));
+  int nbinstr = (int) mom_node_arity (blockv);
+  // check the instructions
+  for (int ix = 0; ix < nbinstr; ix++)
+    {
+      momval_t curinsv = mom_node_nth (blockv, ix);
+      momitem_t *opitm = (momitem_t *) mom_node_conn (curinsv);
+      if (opitm != mom_named__do
+	  && opitm != mom_named__if
+	  && opitm != mom_named__assign && opitm != mom_named__switch
+	  // && (opitm != mom_named__jump || ix<nbinstr-1)
+	  // && (opitm != mom_named__call || ix<nbinstr-1)
+	  && (opitm != mom_named__return || ix < nbinstr - 1))
+	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid instruction:"),
+			MOMOUT_VALUE ((const momval_t) curinsv),
+			MOMOUT_SPACE (48),
+			MOMOUT_LITERAL ("at rank#"),
+			MOMOUT_DEC_INT (ix),
+			MOMOUT_LITERAL ("/"),
+			MOMOUT_DEC_INT (nbinstr),
+			MOMOUT_SPACE (48),
+			MOMOUT_LITERAL ("in block:"),
+			MOMOUT_ITEM ((const momitem_t *) blkitm), NULL);
+    }
 #warning unimplemented emit_block_cgen
   CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("unimplemented emission of block:"),
 		  MOMOUT_ITEM ((const momitem_t *) blkitm), NULL);
