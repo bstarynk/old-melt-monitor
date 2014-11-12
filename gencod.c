@@ -1574,7 +1574,145 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 			MOMOUT_ITEM ((const momitem_t *) connitm),
 			MOMOUT_SPACE (48),
 			MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) connitm));
-#warning should call the procedure and perhaps declare it as external
+      if (mom_tuple_length (argsv) != (unsigned) arity)
+	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("arity mismatch for procedure:"),
+			MOMOUT_ITEM ((const momitem_t *) connitm),
+			MOMOUT_LITERAL (" in node:"),
+			MOMOUT_VALUE ((const momval_t) nodv), NULL);
+      if (!ctypev.ptr)
+	{
+	  if (mom_is_item (resv))
+	    {
+	      mom_lock_item (resv.pitem);
+	      ctypev = mom_item_get_attribute (resv.pitem, mom_named__ctype);
+	      mom_unlock_item (resv.pitem);
+	    }
+	}
+      // declare the procedure external if needed
+      if (!mom_item_get_attribute (cg->cgen_globassocitm, connitm).ptr)
+	{
+	  MOM_OUT (&cg->cgen_outhead,
+		   MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
+		   MOMOUT_LITERAL ("// external procedure "),
+		   MOMOUT_ITEM ((const momitem_t *) connitm),
+		   MOMOUT_NEWLINE (), MOMOUT_LITERAL ("extern "), NULL);
+	  emit_ctype_cgen (cg, &cg->cgen_outhead, mom_value_to_item (ctypev));
+	  MOM_OUT (&cg->cgen_outhead,
+		   MOMOUT_LITERAL (" " MOM_PROCROUTFUN_PREFIX),
+		   MOMOUT_LITERALV (mom_ident_cstr_of_item (connitm)),
+		   MOMOUT_LITERAL (" ("), MOMOUT_INDENT_MORE (), NULL);
+	  int nbargs = mom_tuple_length (argsv);
+	  for (int aix = 0; aix < nbargs; aix++)
+	    {
+	      if (aix > 0)
+		MOM_OUT (&cg->cgen_outhead, MOMOUT_LITERAL (","),
+			 MOMOUT_SPACE (48));
+	      momitem_t *curformitm = mom_tuple_nth_item (argsv, aix);
+	      momval_t curformctypv = MOM_NULLV;
+	      if (!curformitm)
+		CGEN_ERROR_MOM (cg,
+				MOMOUT_LITERAL ("bad external procedure:"),
+				MOMOUT_ITEM ((const momitem_t *) connitm),
+				MOMOUT_LITERAL (" missing formal #"),
+				MOMOUT_DEC_INT (aix));
+	      {
+		mom_lock_item (curformitm);
+		curformctypv =
+		  mom_item_get_attribute (curformitm, mom_named__ctype);
+		mom_unlock_item (curformitm);
+	      }
+	      if (!mom_is_item (curformctypv))
+		CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("in external procedure:"),
+				MOMOUT_ITEM ((const momitem_t *) connitm),
+				MOMOUT_LITERAL ("  formal #"),
+				MOMOUT_DEC_INT ((int) aix),
+				MOMOUT_LITERAL ("="),
+				MOMOUT_ITEM ((const momitem_t *) curformitm),
+				MOMOUT_LITERAL (" with missing ctype"));
+	      emit_ctype_cgen (cg, &cg->cgen_outhead,
+			       mom_value_to_item (curformctypv));
+	    }
+	  MOM_OUT (&cg->cgen_outhead, MOMOUT_INDENT_LESS (),
+		   MOMOUT_LITERAL (");"), MOMOUT_NEWLINE ());
+	  mom_item_put_attribute (cg->cgen_globassocitm, connitm,
+				  (momval_t)
+				  mom_make_node_sized (mom_named__procedure,
+						       3, MOM_NULLV, argsv,
+						       ctypev));
+	}
+      if (mom_item_get_name (connitm))
+	MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("/*"),
+		 MOMOUT_ITEM ((const momitem_t *) connitm),
+		 MOMOUT_LITERAL ("*/"), NULL);
+      MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (" " MOM_PROCROUTFUN_PREFIX),
+	       MOMOUT_LITERALV (mom_ident_cstr_of_item (connitm)),
+	       MOMOUT_LITERAL (" ("), MOMOUT_INDENT_MORE (), NULL);
+      for (int aix = 0; aix < arity; aix++)
+	{
+	  momval_t curargv = mom_node_nth (nodv, aix);
+	  momitem_t *curformitm = mom_tuple_nth_item (argsv, aix);
+	  momval_t curformctypv = MOM_NULLV;
+	  if (!curformitm)
+	    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("bad procedure:"),
+			    MOMOUT_ITEM ((const momitem_t *) connitm),
+			    MOMOUT_LITERAL (" missing formal #"),
+			    MOMOUT_DEC_INT (aix));
+	  {
+	    mom_lock_item (curformitm);
+	    curformctypv =
+	      mom_item_get_attribute (curformitm, mom_named__ctype);
+	    mom_unlock_item (curformitm);
+	  }
+	  if (!mom_is_item (curformctypv))
+	    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("in procedure:"),
+			    MOMOUT_ITEM ((const momitem_t *) connitm),
+			    MOMOUT_LITERAL ("  formal #"),
+			    MOMOUT_DEC_INT (aix),
+			    MOMOUT_LITERAL ("="),
+			    MOMOUT_ITEM ((const momitem_t *) curformitm),
+			    MOMOUT_LITERAL (" with missing ctype"));
+	  momtypenc_t curformtyp = 0;
+	  if (curformctypv.pitem == mom_named__intptr_t)
+	    curformtyp = momtypenc_int;
+	  else if (curformctypv.pitem == mom_named__momval_t)
+	    curformtyp = momtypenc_val;
+	  else if (curformctypv.pitem == mom_named__double)
+	    curformtyp = momtypenc_double;
+	  else if (curformctypv.pitem == mom_named__momcstr_t)
+	    curformtyp = momtypenc_string;
+	  else if (curformctypv.pitem == mom_named__void)
+	    curformtyp = momtypenc__none;
+	  else
+	    CGEN_ERROR_MOM
+	      (cg,
+	       MOMOUT_LITERAL ("bad `ctype` of procedure formal argument:"),
+	       MOMOUT_ITEM ((const momitem_t *) curformitm),
+	       MOMOUT_SPACE (48),
+	       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+				       curformitm),
+	       MOMOUT_LITERAL
+	       (" in procedure:"),
+	       MOMOUT_ITEM ((const momitem_t *) connitm),
+	       MOMOUT_SPACE (48),
+	       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+				       connitm),
+	       MOMOUT_SPACE (48), MOMOUT_LITERAL ("rank#"),
+	       MOMOUT_DEC_INT (aix), MOMOUT_LITERAL (" in node:"),
+	       MOMOUT_VALUE ((const momval_t) nodv), NULL);
+	  if (curformtyp != emit_expr_cgen (cg, curargv))
+	    CGEN_ERROR_MOM
+	      (cg, MOMOUT_LITERAL ("procedure argument:"),
+	       MOMOUT_VALUE ((const momval_t) curargv),
+	       MOMOUT_LITERAL (" mismatching type "),
+	       MOMOUT_VALUE ((const momval_t) curformctypv),
+	       MOMOUT_LITERAL (" rank#"),
+	       MOMOUT_DEC_INT (aix),
+	       MOMOUT_LITERAL (" in node "),
+	       MOMOUT_VALUE ((const momval_t) nodv), NULL);
+	  MOM_OUT (&cg->cgen_outbody,
+		   MOMOUT_LITERAL (")"), MOMOUT_INDENT_LESS (),
+		   MOMOUT_SPACE (32), NULL);
+	}
     }
 }
 
