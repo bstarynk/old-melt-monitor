@@ -26,7 +26,7 @@
    function items.
 
    A procedure should have an attribute `procedure` giving its blocks,
-   
+   with `start` giving its starting block.
 
    Procedures usually have an attribute `constant` giving a sequence
    -set or tuple- of constant items, `formals` associated to formal
@@ -160,10 +160,10 @@ static void emit_taskletfunction_cgen (struct c_generator_mom_st *cgen,
 static void emit_goto_block_cgen (struct c_generator_mom_st *cg,
 				  momitem_t *blkitm, int lockix);
 
-// gives the type encoding, and usually emit the TYPITM. Don't emit
-// anything if OUT is null.
+// gives the type encoding, and usually emit the ctype of a
+// value. Don't emit anything if OUT is null.
 static momtypenc_t emit_ctype_cgen (struct c_generator_mom_st *cgen,
-				    struct momout_st *out, momitem_t *typitm);
+				    struct momout_st *out, momval_t val);
 
 static void emit_block_cgen (struct c_generator_mom_st *cgen,
 			     momitem_t *blkitm);
@@ -367,8 +367,7 @@ declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
 			MOMOUT_VALUE ((const momval_t) procresv),
 			MOMOUT_LITERAL (" in procedure "),
 			MOMOUT_ITEM ((const momitem_t *) curoutitm), NULL);
-      emit_ctype_cgen (cg, &cg->cgen_outhead,
-		       mom_value_to_item (procrestypev));
+      emit_ctype_cgen (cg, &cg->cgen_outhead, procrestypev);
       MOM_OUT (&cg->cgen_outhead, MOMOUT_SPACE (48),
 	       MOMOUT_LITERAL (MOM_PROCROUTFUN_PREFIX),
 	       MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
@@ -396,8 +395,7 @@ declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	  if (aix > 0)
 	    MOM_OUT (&cg->cgen_outhead, MOMOUT_LITERAL (","),
 		     MOMOUT_SPACE (64));
-	  emit_ctype_cgen (cg, &cg->cgen_outhead,
-			   mom_value_to_item (curargtypv));
+	  emit_ctype_cgen (cg, &cg->cgen_outhead, curargtypv);
 	  if (curargtypv.pitem == mom_named__intptr_t)
 	    argsigbuf[aix] = momtypenc_int;
 	  else if (curargtypv.pitem == mom_named__momval_t)
@@ -779,8 +777,7 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	   MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL ("// implementation of procedure #"),
 	   MOMOUT_DEC_INT ((int) routix), MOMOUT_NEWLINE ());
-  cg->cgen_restype =
-    emit_ctype_cgen (cg, &cg->cgen_outbody, mom_value_to_item (procrestypev));
+  cg->cgen_restype = emit_ctype_cgen (cg, &cg->cgen_outbody, procrestypev);
   MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (48),
 	   MOMOUT_LITERAL (MOM_PROCROUTFUN_PREFIX),
 	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
@@ -808,7 +805,7 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 					 mom_make_integer (aix), curargtypv));
       if (aix > 0)
 	MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (","), MOMOUT_SPACE (64));
-      emit_ctype_cgen (cg, &cg->cgen_outbody, mom_value_to_item (curargtypv));
+      emit_ctype_cgen (cg, &cg->cgen_outbody, curargtypv);
       MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (" " CGEN_FORMALARG_PREFIX),
 	       MOMOUT_DEC_INT ((int) aix),
 	       MOMOUT_LITERAL (" "),
@@ -1174,17 +1171,29 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 
 momtypenc_t
 emit_ctype_cgen (struct c_generator_mom_st *cg, struct momout_st *out,
-		 momitem_t *typitm)
+		 momval_t val)
 {
-#warning emit_ctype_cgen should probably inspect value expressions to give their type...
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
   assert (out && out->mout_magic == MOM_MOUT_MAGIC);
   bool repeatagain = false;
-  do
+  momitem_t *typitm = NULL;
+  if (mom_is_item (val))
+    typitm = val.pitem;
+  else if (mom_is_node (val))
+    typitm = (momitem_t *) mom_node_conn (val);
+  else if (mom_is_integer (val))
+    typitm = mom_named__intptr_t;
+  else if (mom_is_double (val))
+    typitm = mom_named__double;
+  else if (mom_is_string (val))
+    typitm = mom_named__momcstr_t;
+  for (int count = 10; count > 0; count--)
     {
       if (!typitm || typitm->i_typnum != momty_item)
 	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("bad ctype:"),
-			MOMOUT_VALUE ((const momval_t) typitm), NULL);
+			MOMOUT_ITEM ((const momitem_t *) typitm),
+			MOMOUT_LITERAL (" for value:"),
+			MOMOUT_VALUE ((const momval_t) val), NULL);
       if (typitm == mom_named__intptr_t)
 	{
 	  if (out)
@@ -1215,28 +1224,27 @@ emit_ctype_cgen (struct c_generator_mom_st *cg, struct momout_st *out,
 	    MOM_OUT (out, MOMOUT_LITERAL ("momcstr_t"), NULL);
 	  return momtypenc_string;
 	}
-      else if (!repeatagain && typitm)
+      else if (typitm)
 	{
 	  momval_t ctypv = MOM_NULLV;
+	  momval_t resv = MOM_NULLV;
 	  {
 	    mom_lock_item (typitm);
 	    ctypv = mom_item_get_attribute (typitm, mom_named__ctype);
+	    resv = mom_item_get_attribute (typitm, mom_named__result);
 	    mom_unlock_item (typitm);
 	    if (mom_is_item (ctypv))
-	      {
-		typitm = ctypv.pitem;
-		repeatagain = true;
-	      }
+	      typitm = ctypv.pitem;
+	    else if (mom_is_item (resv))
+	      typitm = resv.pitem;
 	    else
-	      CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid ctype item:"),
-			      MOMOUT_ITEM ((const momitem_t *) typitm), NULL);
+	      typitm = NULL;
 	  }
-	}
-      else
-	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid ctype:"),
-			MOMOUT_ITEM ((const momitem_t *) typitm), NULL);
+	};
+      if (!typitm || count == 0)
+	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid value to type:"),
+			MOMOUT_VALUE ((const momval_t) val), NULL);
     }
-  while (repeatagain);
   return momtypenc__none;
 }
 
@@ -1673,7 +1681,7 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 		   MOMOUT_LITERAL ("// external procedure "),
 		   MOMOUT_ITEM ((const momitem_t *) connitm),
 		   MOMOUT_NEWLINE (), MOMOUT_LITERAL ("extern "), NULL);
-	  emit_ctype_cgen (cg, &cg->cgen_outhead, mom_value_to_item (ctypev));
+	  emit_ctype_cgen (cg, &cg->cgen_outhead, ctypev);
 	  MOM_OUT (&cg->cgen_outhead,
 		   MOMOUT_LITERAL (" " MOM_PROCROUTFUN_PREFIX),
 		   MOMOUT_LITERALV (mom_ident_cstr_of_item (connitm)),
@@ -1706,8 +1714,7 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 				MOMOUT_LITERAL ("="),
 				MOMOUT_ITEM ((const momitem_t *) curformitm),
 				MOMOUT_LITERAL (" with missing ctype"));
-	      emit_ctype_cgen (cg, &cg->cgen_outhead,
-			       mom_value_to_item (curformctypv));
+	      emit_ctype_cgen (cg, &cg->cgen_outhead, curformctypv);
 	    }
 	  MOM_OUT (&cg->cgen_outhead, MOMOUT_INDENT_LESS (),
 		   MOMOUT_LITERAL (");"), MOMOUT_NEWLINE ());
@@ -1791,7 +1798,7 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 		   MOMOUT_SPACE (32), NULL);
 	}
     }
-  return emit_ctype_cgen (cg, NULL, mom_value_to_item (ctypev));
+  return emit_ctype_cgen (cg, NULL, ctypev);
 }
 
 
