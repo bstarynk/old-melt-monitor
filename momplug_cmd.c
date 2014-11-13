@@ -29,6 +29,73 @@
 
 const char mom_plugin_GPL_compatible[] = "GPLv3+";
 
+// the command stack has values and marks
+static momval_t *vst_valarr_mom;
+static char *vst_markarr_mom;
+static unsigned vst_size;
+static unsigned vst_top;
+
+static void
+cmd_stack_push_mom (momval_t val, char mark)
+{
+  if (vst_top >= vst_size)
+    {
+      unsigned newsiz = (4 * vst_size / 3 + 21) | 0x1f;
+      momval_t *newvalarr =
+	MOM_GC_ALLOC ("valarr", newsiz * sizeof (momval_t));
+      char *newmarkarr = MOM_GC_SCALAR_ALLOC ("markarr", newsiz + 1);
+      if (vst_top > 0)
+	{
+	  memcpy (newvalarr, vst_valarr_mom, vst_top * sizeof (momval_t));
+	  memcpy (newmarkarr, vst_markarr_mom, vst_top);
+	  MOM_GC_FREE (vst_valarr_mom);
+	  MOM_GC_FREE (vst_markarr_mom);
+	}
+      vst_valarr_mom = newvalarr;
+      vst_markarr_mom = newmarkarr;
+    }
+  vst_valarr_mom[vst_top] = val;
+  vst_markarr_mom[vst_top] = mark;
+  vst_top++;
+}
+
+static inline momval_t
+cmd_stack_nth_value_mom (int rk)
+{
+  if (rk < 0)
+    rk += vst_top;
+  if (rk >= 0 && rk < (int) vst_top)
+    return vst_valarr_mom[vst_top - rk];
+  return MOM_NULLV;
+}
+
+static inline char
+cmd_stack_nth_mark_mom (int rk)
+{
+  if (rk < 0)
+    rk += vst_top;
+  if (rk >= 0 && rk < (int) vst_top)
+    return vst_markarr_mom[vst_top - rk];
+  return 0;
+}
+
+static void
+cmd_stack_pop_mom (unsigned nb)
+{
+  if (nb < vst_top && nb > 0)
+    {
+      memset (vst_valarr_mom + vst_top - nb, 0, sizeof (momval_t) * nb);
+      memset (vst_markarr_mom + vst_top - nb, 0, sizeof (char) * nb);
+      vst_top -= nb;
+    }
+}
+
+#define COMMANDS				\
+  CMD(quit,"quitting")				\
+  CMD(exit,"dump & exit")			\
+  CMD(stack,"print the stack")			\
+  CMD(dup,"duplicate top")
+
 static bool running_cmd_mom;
 static char *prompt_cmd_mom = "monimelt: ";
 static void
