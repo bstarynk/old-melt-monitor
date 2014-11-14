@@ -309,7 +309,7 @@ output_value_mom (momout_t *pout, const momval_t v)
     return;
   if (!v.ptr)
     {
-      fputs ("nil", out);
+      fputs ("__ ", out);
       return;
     }
   unsigned tynum = *v.ptype;

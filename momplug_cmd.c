@@ -34,6 +34,7 @@ const char mom_plugin_GPL_compatible[] = "GPLv3+";
   CMD(dup,"duplicate top.  Alias %")		\
   CMD(exit,"dump & exit")			\
   CMD(help,"give this help")			\
+  CMD(pop,"pop [N] elements. Alias ^")		\
   CMD(quit,"quit without dumping")		\
   CMD(stack,"print the stack. Alias !")		\
   CMD(status,"print status info")		\
@@ -42,32 +43,48 @@ const char mom_plugin_GPL_compatible[] = "GPLv3+";
 
 // the command stack has values and marks
 static momval_t *vst_valarr_mom;
-static char *vst_markarr_mom;
 static unsigned vst_size_mom;
 static unsigned vst_top_mom;
 
 
+#define ANSI_BOLD "\e[1m"
+#define ANSI_NORMAL "\e[0m"
+
 static void
-cmd_stack_push_mom (momval_t val, char mark)
+cmd_stack_push_mom (momval_t val)
 {
   if (vst_top_mom >= vst_size_mom)
     {
       unsigned newsiz = (4 * vst_size_mom / 3 + 21) | 0x1f;
       momval_t *newvalarr =
 	MOM_GC_ALLOC ("valarr", newsiz * sizeof (momval_t));
-      char *newmarkarr = MOM_GC_SCALAR_ALLOC ("markarr", newsiz + 1);
       if (vst_top_mom > 0)
 	{
 	  memcpy (newvalarr, vst_valarr_mom, vst_top_mom * sizeof (momval_t));
-	  memcpy (newmarkarr, vst_markarr_mom, vst_top_mom);
 	  MOM_GC_FREE (vst_valarr_mom);
-	  MOM_GC_FREE (vst_markarr_mom);
 	}
       vst_valarr_mom = newvalarr;
-      vst_markarr_mom = newmarkarr;
     }
   vst_valarr_mom[vst_top_mom] = val;
-  vst_markarr_mom[vst_top_mom] = mark;
+  vst_top_mom++;
+}
+
+static void
+cmd_stack_push_mark_mom (void)
+{
+  if (vst_top_mom >= vst_size_mom)
+    {
+      unsigned newsiz = (4 * vst_size_mom / 3 + 21) | 0x1f;
+      momval_t *newvalarr =
+	MOM_GC_ALLOC ("valarr", newsiz * sizeof (momval_t));
+      if (vst_top_mom > 0)
+	{
+	  memcpy (newvalarr, vst_valarr_mom, vst_top_mom * sizeof (momval_t));
+	  MOM_GC_FREE (vst_valarr_mom);
+	}
+      vst_valarr_mom = newvalarr;
+    }
+  vst_valarr_mom[vst_top_mom].ptr = MOM_EMPTY;
   vst_top_mom++;
 }
 
@@ -77,18 +94,22 @@ cmd_stack_nth_value_mom (int rk)
   if (rk < 0)
     rk += vst_top_mom;
   if (rk >= 0 && rk < (int) vst_top_mom)
-    return vst_valarr_mom[vst_top_mom - rk];
+    {
+      momval_t v = vst_valarr_mom[vst_top_mom - rk];
+      if (v.ptr != MOM_EMPTY)
+	return v;
+    }
   return MOM_NULLV;
 }
 
-static inline char
+static inline bool
 cmd_stack_nth_mark_mom (int rk)
 {
   if (rk < 0)
     rk += vst_top_mom;
   if (rk >= 0 && rk < (int) vst_top_mom)
-    return vst_markarr_mom[vst_top_mom - rk];
-  return 0;
+    return vst_valarr_mom[vst_top_mom - rk].ptr == MOM_EMPTY;
+  return false;
 }
 
 static void
@@ -97,7 +118,6 @@ cmd_stack_pop_mom (unsigned nb)
   if (nb < vst_top_mom && nb > 0)
     {
       memset (vst_valarr_mom + vst_top_mom - nb, 0, sizeof (momval_t) * nb);
-      memset (vst_markarr_mom + vst_top_mom - nb, 0, sizeof (char) * nb);
       vst_top_mom -= nb;
     }
 }
@@ -223,7 +243,7 @@ static void
 cmd_do_dump_mom (const char *lin)
 {
   MOM_DEBUGPRINTF (cmd, "start do_dump lin=%s", lin);
-  MOM_WARNPRINTF ("unimplemented command %s", lin);
+  MOM_WARNPRINTF ("unimplemented command /dump %s", lin);
 }
 
 
@@ -231,14 +251,14 @@ static void
 cmd_do_dup_mom (const char *lin)
 {
   MOM_DEBUGPRINTF (cmd, "start do_dup lin=%s", lin);
-  MOM_WARNPRINTF ("unimplemented command %s", lin);
+  MOM_WARNPRINTF ("unimplemented command /dup %s", lin);
 }
 
 static void
 cmd_do_exit_mom (const char *lin)
 {
   MOM_DEBUGPRINTF (cmd, "start do_exit lin=%s", lin);
-  MOM_WARNPRINTF ("unimplemented command %s", lin);
+  MOM_WARNPRINTF ("unimplemented command /exit %s", lin);
 }
 
 
@@ -273,7 +293,62 @@ static void
 cmd_do_stack_mom (const char *lin)
 {
   MOM_DEBUGPRINTF (cmd, "start do_stack lin=%s", lin);
-  MOM_WARNPRINTF ("unimplemented command %s", lin);
+  int maxdepth = atoi (lin);
+  if (vst_top_mom == 0)
+    {
+      printf ("\n" ANSI_BOLD "== empty stack ==" ANSI_NORMAL "\n");
+    }
+  else
+    {
+      printf ("\n" ANSI_BOLD "== stack of %d levels ==" ANSI_NORMAL "\n",
+	      vst_top_mom);
+      if (maxdepth <= 0)
+	maxdepth = vst_top_mom + 1;
+      int minix = vst_top_mom - maxdepth;
+      if (minix < 0)
+	minix = 0;
+      for (int ix = (int)minix; ix < (int) vst_top_mom; ix++)
+	{
+	  int depth = (int) vst_top_mom - ix;
+	  if (ix == 0)
+	    printf ("\t" ANSI_BOLD "**bottom**" ANSI_NORMAL "\n");
+	  assert (depth > 0 && depth <= (int) vst_top_mom);
+	  printf (ANSI_BOLD "[%d]" ANSI_NORMAL " ", depth);
+	  if (vst_valarr_mom[ix].ptr == MOM_EMPTY)
+	    printf (ANSI_BOLD "***mark***" ANSI_NORMAL "\n");
+	  else
+	    {
+	      const momval_t curval = vst_valarr_mom[ix];
+	      momval_t namv;
+	      MOM_OUT (mom_stdout, MOMOUT_VALUE (curval));
+	      if (mom_is_item (curval) && !mom_item_get_name (curval.pitem))
+		{
+		  momval_t commentv;
+		  mom_lock_item (curval.pitem);
+		  commentv =
+		    mom_item_get_attribute (curval.pitem, mom_named__comment);
+		  mom_unlock_item (curval.pitem);
+		  if (mom_is_string (commentv))
+		    MOM_OUT (mom_stdout, MOMOUT_SPACE (48),
+			     MOMOUT_LITERAL (" " ANSI_BOLD "//: "
+					     ANSI_NORMAL),
+			     MOMOUT_LITERALV (mom_string_cstr (commentv)),
+			     NULL);
+		}
+	      MOM_OUT (mom_stdout, MOMOUT_NEWLINE ());
+	    }
+	}
+      printf ("\t" ANSI_BOLD "**top**" ANSI_NORMAL "\n");
+    }
+  if (maxdepth < (int) vst_top_mom)
+    {
+      char buf[32];
+      memset (buf, 0, sizeof (buf));
+      snprintf (buf, sizeof (buf), ",stack %d", maxdepth);
+      add_history (buf);
+    }
+  else
+    add_history (",stack");
 }
 
 static void
@@ -284,19 +359,57 @@ cmd_do_status_mom (const char *lin)
   MOM_DEBUGPRINTF (cmd, "start do_status lin=%s", lin);
   int64_t nbcreat = 0, nbdestr = 0, nbitems = 0, nbnamed = 0;
   mom_item_status (&nbcreat, &nbdestr, &nbitems, &nbnamed);
-  MOM_INFORMPRINTF
-    ("status at %s (elapsed %.3f, cpu %.3f sec.): %ld created, %ld destroyed, %ld items, %ld named\n",
+  printf
+    ("\n" ANSI_BOLD "status at %s" ANSI_NORMAL
+     " (elapsed %.3f, cpu %.3f sec.):\n"
+     " %ld created, %ld destroyed, %ld items, %ld named\n",
      mom_strftime_centi (timbuf, sizeof (timbuf), "%H:%M:%S.__",
 			 mom_clock_time (CLOCK_REALTIME)),
      mom_elapsed_real_time (), mom_clock_time (CLOCK_PROCESS_CPUTIME_ID),
      (long) nbcreat, (long) nbdestr, (long) nbitems, (long) nbnamed);
+  add_history (",status");
 }
 
 static void
 cmd_do_top_mom (const char *lin)
 {
   MOM_DEBUGPRINTF (cmd, "start do_top lin=%s", lin);
-  MOM_WARNPRINTF ("unimplemented command %s", lin);
+  if (vst_top_mom == 0)
+    printf ("\n" ANSI_BOLD "== no top because empty ==" ANSI_NORMAL "\n");
+  else
+    {
+      if (vst_valarr_mom[vst_top_mom - 1].ptr == MOM_EMPTY)
+	printf ("\n" ANSI_BOLD "** top mark **" ANSI_NORMAL "\n");
+      else
+	{
+	  const momval_t curval = vst_valarr_mom[vst_top_mom - 1];
+	  momval_t namv;
+	  MOM_OUT (mom_stdout, MOMOUT_VALUE (curval));
+	  if (mom_is_item (curval) && !mom_item_get_name (curval.pitem))
+	    {
+	      momval_t commentv;
+	      mom_lock_item (curval.pitem);
+	      commentv =
+		mom_item_get_attribute (curval.pitem, mom_named__comment);
+	      mom_unlock_item (curval.pitem);
+	      if (mom_is_string (commentv))
+		MOM_OUT (mom_stdout, MOMOUT_SPACE (48),
+			 MOMOUT_LITERAL (" " ANSI_BOLD "//: "
+					 ANSI_NORMAL),
+			 MOMOUT_LITERALV (mom_string_cstr (commentv)), NULL);
+	    }
+	  MOM_OUT (mom_stdout, MOMOUT_NEWLINE ());
+	}
+      add_history (",top");
+    }
+}
+
+
+static void
+cmd_do_pop_mom (const char *lin)
+{
+  MOM_DEBUGPRINTF (cmd, "start do_pop lin=%s", lin);
+  MOM_WARNPRINTF ("unimplemented command /pop %s", lin);
 }
 
 
@@ -311,13 +424,15 @@ mom_plugin_init (const char *arg)
   rl_completion_entry_function = cmd_completion_entry_mom;
 }
 
-#define ANSI_BOLD "\e[1m"
-#define ANSI_NORMAL "\e[0m"
-
 static void
 cmd_push_value_mom (momval_t val)
 {
-  cmd_stack_push_mom (val, 0);
+  MOM_DEBUG (cmd, MOMOUT_LITERAL ("pushing value:"),
+	     MOMOUT_VALUE ((const momval_t) val),
+	     MOMOUT_SPACE (48),
+	     MOMOUT_LITERAL (" at level "),
+	     MOMOUT_DEC_INT ((int) vst_top_mom), NULL);
+  cmd_stack_push_mom (val);
   printf ("pushed, stack height %d\n", vst_top_mom);
 }
 
@@ -356,6 +471,9 @@ cmd_interpret_mom (const char *lin)
 		  mom_item_set_space ((momitem_t *) itm, momspa_root);
 		  MOM_INFORM (MOMOUT_LITERAL ("command created named item:"),
 			      MOMOUT_ITEM ((const momitem_t *) itm));
+		  cmd_push_value_mom ((momval_t) itm);
+		  add_history (lin);
+		  return;
 		}
 	      else
 		{
@@ -364,8 +482,12 @@ cmd_interpret_mom (const char *lin)
 		  return;
 		}
 	    }
-	  else
-	    cmd_push_value_mom ((momval_t) itm);
+	  else			// itm != NULL
+	    {
+	      cmd_push_value_mom ((momval_t) itm);
+	      add_history (lin);
+	      return;
+	    }
 	}
       else
 	goto bad_command;
@@ -378,16 +500,18 @@ cmd_interpret_mom (const char *lin)
       char *enddbl = NULL;
       l = strtol (lin, &endlng, 0);
       d = strtod (lin, &enddbl);
-      if (enddbl > endlng)
+      if (enddbl > endlng && endlng > lin)
 	{
 	  momval_t dblv = mom_make_double (d);
 	  cmd_push_value_mom (dblv);
+	  add_history (lin);
 	  return;
 	}
       else if ((endlng > lin && isdigit (endlng[-1])) || !strcmp (lin, "0"))
 	{
 	  momval_t numv = mom_make_integer (l);
 	  cmd_push_value_mom (numv);
+	  add_history (lin);
 	  return;
 	}
       else
@@ -395,7 +519,13 @@ cmd_interpret_mom (const char *lin)
     }
   else if (lin[0] == '_')
     {
-      if (!lin[1] || isspace (lin[1]))
+      // the __ or _. is for nil
+      if ((lin[1] == '_' || lin[1] == '.') && (!lin[2] || isspace (lin[2])))
+	{
+	  cmd_push_value_mom (MOM_NULLV);
+	  add_history ("__");
+	}
+      else if (!lin[1] || isspace (lin[1]))
 	{
 	  printf ("\n" ANSI_BOLD "Anonymous item" ANSI_NORMAL
 		  ". Creating it (unless comment is empty or .)\n");
@@ -409,6 +539,8 @@ cmd_interpret_mom (const char *lin)
 	      mom_item_set_space (itm, momspa_root);
 	      MOM_INFORM (MOMOUT_LITERAL ("command created anonymous item:"),
 			  MOMOUT_ITEM ((const momitem_t *) itm));
+	      cmd_push_value_mom ((momval_t) itm);
+	      add_history (lin);
 	    }
 	  else
 	    {
@@ -428,8 +560,11 @@ cmd_interpret_mom (const char *lin)
 	      if (!itm)
 		goto bad_command;
 	      else
-		cmd_push_value_mom ((momval_t) itm);
-	      return;
+		{
+		  cmd_push_value_mom ((momval_t) itm);
+		  add_history (lin);
+		  return;
+		}
 	    }
 	  else
 	    goto bad_command;
@@ -459,6 +594,16 @@ cmd_interpret_mom (const char *lin)
       cmd_do_dup_mom (lin + 1);
       return;
     }
+  else if (lin[0] == '=')	/* alias for top */
+    {
+      cmd_do_top_mom (lin + 1);
+      return;
+    }
+  else if (lin[0] == '^')	/* alias for pop */
+    {
+      cmd_do_pop_mom (lin + 1);
+      return;
+    }
 bad_command:
   MOM_WARNPRINTF ("bad command '%s'", lin);
 }
@@ -486,3 +631,6 @@ momplugin_after_load (void)
     };
   MOM_INFORMPRINTF ("momplug_cmd ending after load");
 }
+
+
+// eof momplug_cmd.c
