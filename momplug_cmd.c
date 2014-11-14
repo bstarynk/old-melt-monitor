@@ -144,10 +144,15 @@ cmd_completion_entry_mom (const char *text, int state)
 		break;
 	      if (!strncmp (text + 1, cmdarr_mom[ix], cmdlen))
 		{
-		  jvals[nbent] = (momval_t) mom_make_string (cmdarr_mom[ix]);
+		  jvals[nbent] =
+		    (momval_t) MOM_OUTSTRING (0, MOMOUT_LITERAL (","),
+					      MOMOUT_LITERALV ((const char *)
+							       cmdarr_mom
+							       [ix]));
 		  nbent++;
 		}
 	    }
+	  MOM_DEBUGPRINTF (cmd, "cmd_completion command nbent=%d", nbent);
 	  if (nbent > 0)
 	    {
 	      jarr = (momval_t) mom_make_json_array_count (nbent, jvals);

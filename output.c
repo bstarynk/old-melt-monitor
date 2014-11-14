@@ -1036,18 +1036,14 @@ mom_outstring_at (const char *sfil, int lin, unsigned flags, ...)
   char *outbuf = NULL;
   size_t sizbuf = 0;
   momval_t res = MOM_NULLV;
-  FILE *fout = open_memstream (&outbuf, &sizbuf);
-  if (!fout)
-    MOM_FATAPRINTF ("failed to open stream for outstring %s:%d", sfil, lin);
   struct momout_st mout;
   memset (&mout, 0, sizeof (mout));
-  mom_initialize_output (&mout, fout, flags);
+  mom_initialize_buffer_output (&mout, flags);
   va_start (alist, flags);
   mom_outva_at (sfil, lin, &mout, alist);
   va_end (alist);
-  fflush (fout);
-  res = (momval_t) mom_make_string (outbuf);
-  free (outbuf), outbuf = NULL;
-  fclose (fout);
+  fflush (mout.mout_file);
+  res = (momval_t) mom_make_string (mout.mout_data);
+  mom_finalize_buffer_output (&mout);
   return res;
 }

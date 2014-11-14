@@ -278,7 +278,7 @@ void mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist);
 momval_t mom_outstring_at (const char *sfil, int lin, unsigned flags, ...)
   __attribute__ ((sentinel));
 #define MOM_OUTSTRING_AT_BIS(Fil,Lin,Flag,...) mom_outstring_at(Fil,Lin,Flag,##__VA_ARGS__)
-#define MOM_OUTSTRING_AT(Fil,Lin,...) MOM_OUTSTRING_AT_BIS(,Fil,Lin,(Flag),##__VA_ARGS__,NULL)
+#define MOM_OUTSTRING_AT(Fil,Lin,Flag,...) MOM_OUTSTRING_AT_BIS(Fil,Lin,(Flag),##__VA_ARGS__,NULL)
 #define MOM_OUTSTRING(Flag,...) MOM_OUTSTRING_AT(__FILE__,__LINE__,Flag,##__VA_ARGS__)
 #define MOM_OUTVA(Out,Alist) mom_outva_at(__FILE__,__LINE__,Out,Alist)
 #define MOM_OUT_AT_BIS(Fil,Lin,Out,...) mom_out_at(Fil,Lin,Out,##__VA_ARGS__,NULL)
