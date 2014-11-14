@@ -1415,7 +1415,12 @@ mom_make_node_sized (const momitem_t *conn, unsigned siz, ...)
 		  sizeof (momnode_t) + siz * sizeof (momval_t));
   va_start (args, siz);
   for (unsigned ix = 0; ix < siz; ix++)
-    ((momval_t *) nd->sontab)[ix] = va_arg (args, momval_t);
+    {
+      momval_t v = va_arg (args, momval_t);
+      if (v.ptr == MOM_EMPTY)
+	v.ptr = NULL;
+      ((momval_t *) nd->sontab)[ix] = v;
+    }
   va_end (args);
   nd->typnum = momty_node;
   nd->connitm = conn;
@@ -1435,7 +1440,10 @@ mom_make_node_from_array (const momitem_t *conn, unsigned siz, momval_t *arr)
 		  sizeof (momnode_t) + siz * sizeof (momval_t));
   if (arr)
     for (unsigned ix = 0; ix < siz; ix++)
-      ((momval_t *) nd->sontab)[ix] = arr[ix];
+      {
+	if (arr[ix].ptr != MOM_EMPTY)
+	  ((momval_t *) nd->sontab)[ix] = arr[ix];
+      }
   nd->typnum = momty_node;
   nd->connitm = conn;
   nd->slen = siz;
