@@ -370,6 +370,29 @@ cmd_interpret_mom (const char *lin)
       else
 	goto bad_command;
     }
+  else if (isdigit (lin[0]) || lin[0] == '-' || lin[0] == '+')
+    {
+      long long l = 0;
+      double d = 0;
+      char *endlng = NULL;
+      char *enddbl = NULL;
+      l = strtol (lin, &endlng, 0);
+      d = strtod (lin, &enddbl);
+      if (enddbl > endlng)
+	{
+	  momval_t dblv = mom_make_double (d);
+	  cmd_push_value_mom (dblv);
+	  return;
+	}
+      else if ((endlng > lin && isdigit (endlng[-1])) || !strcmp (lin, "0"))
+	{
+	  momval_t numv = mom_make_integer (l);
+	  cmd_push_value_mom (numv);
+	  return;
+	}
+      else
+	goto bad_command;
+    }
   else if (lin[0] == '_')
     {
       if (!lin[1] || isspace (lin[1]))
