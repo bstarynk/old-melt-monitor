@@ -2465,6 +2465,7 @@ mom_item_set_space (momitem_t *itm, unsigned space)
   Dbg(json)					\
   Dbg(run)					\
   Dbg(gencod)					\
+  Dbg(cmd)					\
   Dbg(web)
 
 #define MOM_DEBUG_DEFINE_OPT(Nam) momdbg_##Nam,

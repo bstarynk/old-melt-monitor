@@ -91,49 +91,91 @@ cmd_stack_pop_mom (unsigned nb)
 }
 
 #define COMMANDS(CMD)				\
-  CMD(quit,"quit without dumping")		\
-  CMD(help,"give help")				\
+  CMD(dump,"dump state & continue")		\
+  CMD(dup,"duplicate top")			\
   CMD(exit,"dump & exit")			\
+  CMD(help,"give help")				\
+  CMD(quit,"quit without dumping")		\
   CMD(stack,"print the stack")			\
   CMD(top,"print the top of stack")		\
-  CMD(dump,"dump state & continue")		\
-  CMD(dup,"duplicate top")
+				/* end of COMMANDS */
 
+static const char *cmdarr_mom[] = {
+#define CMD_NAME(N,C) #N,
+  COMMANDS (CMD_NAME)
+#undef CMD_NAME
+  NULL
+};
+
+#define CMDARRSIZE_MOM (sizeof(cmdarr_mom)/sizeof(cmdarr_mom[0]))
 // readline alternate completion function
 static char *
 cmd_completion_entry_mom (const char *text, int state)
 {
   static momval_t jarr;
-  MOM_DEBUGPRINTF (run, "cmd_completion_entry text=%s state=%d", text, state);
-  if (!state && isalpha (text[0]))
+  MOM_DEBUGPRINTF (cmd, "cmd_completion_entry text='%s' state=%d", text,
+		   state);
+  if (!state)
     {
       jarr = MOM_NULLV;
-      momval_t tup =
-	(momval_t) mom_alpha_ordered_tuple_of_named_prefixed_items (text,
-								    &jarr);
-      unsigned nbent = mom_tuple_length (tup);
-      MOM_DEBUG (run, MOMOUT_LITERAL ("cmd_completion nbent:"),
-		 MOMOUT_DEC_INT ((int) nbent), MOMOUT_SPACE (32),
-		 MOMOUT_LITERAL ("jarr="),
-		 MOMOUT_VALUE ((const momval_t) jarr), NULL);
-      if (!nbent)
-	return NULL;
-    };
+      if (isalpha (text[0]))
+	{
+	  jarr = MOM_NULLV;
+	  momval_t tup =
+	    (momval_t) mom_alpha_ordered_tuple_of_named_prefixed_items (text,
+									&jarr);
+	  unsigned nbent = mom_tuple_length (tup);
+	  MOM_DEBUG (cmd, MOMOUT_LITERAL ("cmd_completion name nbent:"),
+		     MOMOUT_DEC_INT ((int) nbent), MOMOUT_SPACE (32),
+		     MOMOUT_LITERAL ("jarr="),
+		     MOMOUT_VALUE ((const momval_t) jarr), NULL);
+	  if (!nbent)
+	    return NULL;
+	}
+      else if (text[0] == ',')
+	{
+	  jarr = MOM_NULLV;
+	  unsigned cmdlen = strlen (text + 1);
+	  unsigned nbent = 0;
+	  momval_t jvals[CMDARRSIZE_MOM + 1] = { MOM_NULLV };
+	  for (int ix = 0; ix < (int) CMDARRSIZE_MOM; ix++)
+	    {
+	      if (!cmdarr_mom[ix])
+		break;
+	      if (!strncmp (text + 1, cmdarr_mom[ix], cmdlen))
+		{
+		  jvals[nbent] = (momval_t) mom_make_string (cmdarr_mom[ix]);
+		  nbent++;
+		}
+	    }
+	  if (nbent > 0)
+	    {
+	      jarr = (momval_t) mom_make_json_array_count (nbent, jvals);
+	      MOM_DEBUG (cmd,
+			 MOMOUT_LITERAL ("cmd_completion command nbent:"),
+			 MOMOUT_DEC_INT ((int) nbent), MOMOUT_SPACE (32),
+			 MOMOUT_LITERAL ("jarr="),
+			 MOMOUT_VALUE ((const momval_t) jarr), NULL);
+	    }
+	  else
+	    return NULL;
+	}
+    }
   if (state >= 0 && jarr.ptr && state < (int) mom_json_array_size (jarr))
     {
       const char *restr = mom_string_cstr (mom_json_array_nth (jarr, state));
-      MOM_DEBUGPRINTF (run, "cmd_completion state#%d restr=%s", state, restr);
+      MOM_DEBUGPRINTF (cmd, "cmd_completion state#%d restr=%s", state, restr);
       if (restr)
 	return strdup (restr);
     }
-  MOM_DEBUGPRINTF (run, "cmd_completion fail state#%d", state);
+  MOM_DEBUGPRINTF (cmd, "cmd_completion fail state#%d", state);
   return NULL;
 }
 
 void
 mom_plugin_init (const char *arg)
 {
-  MOM_DEBUGPRINTF (run, "start of " __FILE__ " arg=%s", arg);
+  MOM_DEBUGPRINTF (cmd, "start of " __FILE__ " arg=%s", arg);
   rl_initialize ();
   rl_readline_name = "monimelt";
   rl_completion_entry_function = cmd_completion_entry_mom;
@@ -152,10 +194,10 @@ momplugin_after_load (void)
       cnt++;
       snprintf (prompt, sizeof (prompt), "monimelt%03d: ", cnt);
       lin = NULL;
-      MOM_DEBUGPRINTF (run, "before readline prompt=%s", prompt);
+      MOM_DEBUGPRINTF (cmd, "before readline prompt=%s", prompt);
       lin = readline (prompt);
-      MOM_DEBUGPRINTF (run, "after readline lin=%s", lin);
-      if (!lin || !strcmp (lin, "quit"))
+      MOM_DEBUGPRINTF (cmd, "after readline lin=%s", lin);
+      if (!lin || !strcmp (lin, ",quit"))
 	break;
     };
   MOM_INFORMPRINTF ("momplug_cmd ending after load");
