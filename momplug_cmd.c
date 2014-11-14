@@ -34,11 +34,16 @@ const char mom_plugin_GPL_compatible[] = "GPLv3+";
   CMD(dup,"duplicate top.  Alias %")		\
   CMD(exit,"dump & exit")			\
   CMD(help,"give this help")			\
-  CMD(pop,"pop [N] elements. Alias ^")		\
+  CMD(pop,"pop [N] elements.  Alias ^")		\
+  CMD(mark,"push mark. Alias (")		\
   CMD(quit,"quit without dumping")		\
-  CMD(stack,"print the stack. Alias !")		\
+  CMD(node,"make node to mark.  Alias *")      	\
+  CMD(set,"make set to mark.  Alias }")		\
+  CMD(tuple,"make tuple to mark.  Alias ]")	\
+  CMD(stack,"print the stack.  Alias !")	\
   CMD(status,"print status info")		\
-  CMD(top,"print the top of stack. Alias = ")
+  CMD(xplode,"explode top aggregate. Alias &")	\
+  CMD(top,"print the top of stack.  Alias = ")
 				/* end of COMMANDS */
 
 // the command stack has values and marks
@@ -112,6 +117,16 @@ cmd_stack_nth_mark_mom (int rk)
   return false;
 }
 
+// return the depth of the nearest mark or else -1
+static inline int
+cmd_stack_mark_depth_mom (void)
+{
+  for (int ix = (int)vst_top_mom - 1; ix >= 0; ix--)
+    if (vst_valarr_mom[ix].ptr == MOM_EMPTY)
+      return vst_top_mom - ix - 1;
+  return -1;
+}
+
 static void
 cmd_stack_pop_mom (unsigned nb)
 {
@@ -120,6 +135,13 @@ cmd_stack_pop_mom (unsigned nb)
       memset (vst_valarr_mom + vst_top_mom - nb, 0, sizeof (momval_t) * nb);
       vst_top_mom -= nb;
     }
+  else if (nb >= vst_top_mom)
+    {
+      if (vst_top_mom > 0)
+	memset (vst_valarr_mom, 0, vst_top_mom * sizeof (momval_t));
+      vst_top_mom = 0;
+    }
+
 }
 
 
@@ -290,6 +312,156 @@ cmd_do_quit_mom (const char *lin)
 }
 
 static void
+cmd_do_mark_mom (const char *lin)
+{
+  MOM_DEBUGPRINTF (cmd, "start do_mark lin=%s", lin);
+  cmd_stack_push_mark_mom ();
+  printf ("marked, stack height %d\n", vst_top_mom);
+  add_history (",mark");
+}
+
+static void
+cmd_do_xplode_mom (const char *lin)
+{
+  MOM_DEBUGPRINTF (cmd, "start do_xplode lin=%s", lin);
+}
+
+static void
+cmd_do_set_mom (const char *lin)
+{
+  int markdepth = cmd_stack_mark_depth_mom ();
+  int argdepth = atoi (lin);
+  int setdepth = -1;
+  momval_t setv = MOM_NULLV;
+  MOM_DEBUGPRINTF (cmd, "start do_set lin=%s markdepth=%d argdepth=%d", lin,
+		   markdepth, argdepth);
+  if (argdepth > 0 && argdepth < markdepth)
+    setdepth = argdepth;
+  else if (*lin == '0' && argdepth == 0)
+    setdepth = 0;
+  else if (markdepth > 0)
+    setdepth = markdepth;
+  if (setdepth < 0)
+    {
+      printf (ANSI_BOLD "*no mark for set*" ANSI_NORMAL "\n");
+      return;
+    }
+  else if (setdepth == 0)
+    {
+      setv = (momval_t) mom_make_set_sized (0);
+      printf (ANSI_BOLD "*empty set*" ANSI_NORMAL "\n");
+      add_history (",set 0");
+    }
+  else if (setdepth > 0)
+    {
+      momitem_t **setarr =
+	MOM_GC_ALLOC ("setarr", (setdepth + 1) * sizeof (momitem_t *));
+      unsigned nbelem = 0;
+      for (int ix = 0; ix < setdepth; ix++)
+	{
+	  momitem_t *curelemitm =
+	    mom_value_to_item (cmd_stack_nth_value_mom (-(ix + 1)));
+	  if (curelemitm)
+	    setarr[nbelem++] = curelemitm;
+	}
+      setv =
+	(momval_t) mom_make_set_from_array (nbelem,
+					    (const momitem_t **) setarr);
+      MOM_GC_FREE (setarr);
+      if ((int) nbelem == markdepth)
+	add_history (",set");
+      else
+	{
+	  char cmdbuf[32];
+	  snprintf (cmdbuf, sizeof (cmdbuf), ",set %d", nbelem);
+	  add_history (cmdbuf);
+	}
+      if (markdepth > 0)
+	{
+	  cmd_stack_pop_mom (markdepth + 1);
+	  printf (ANSI_BOLD "*set %d of %d*" ANSI_NORMAL "\n", nbelem,
+		  markdepth);
+	}
+      else
+	{
+	  cmd_stack_pop_mom (setdepth);
+	  printf (ANSI_BOLD "*set %d*" ANSI_NORMAL "\n", nbelem);
+	}
+      cmd_stack_push_mom (setv);
+    }
+}
+
+static void
+cmd_do_tuple_mom (const char *lin)
+{
+  int markdepth = cmd_stack_mark_depth_mom ();
+  int argdepth = atoi (lin);
+  int tupledepth = -1;
+  momval_t tuplev = MOM_NULLV;
+  MOM_DEBUGPRINTF (cmd, "start do_tuple lin=%s markdepth=%d argdepth=%d", lin,
+		   markdepth, argdepth);
+  if (argdepth > 0 && argdepth < markdepth)
+    tupledepth = argdepth;
+  else if (*lin == '0' && argdepth == 0)
+    tupledepth = 0;
+  else if (markdepth > 0)
+    tupledepth = markdepth;
+  if (tupledepth < 0)
+    {
+      printf (ANSI_BOLD "*no mark for tuple*" ANSI_NORMAL "\n");
+      return;
+    }
+  else if (tupledepth == 0)
+    {
+      tuplev = (momval_t) mom_make_tuple_sized (0);
+      printf (ANSI_BOLD "*empty tuple*" ANSI_NORMAL "\n");
+      add_history (",tuple 0");
+    }
+  else if (tupledepth > 0)
+    {
+      momitem_t **tuplearr =
+	MOM_GC_ALLOC ("tuplearr", (tupledepth + 1) * sizeof (momitem_t *));
+      unsigned nbelem = 0;
+      for (int ix = 0; ix < tupledepth; ix++)
+	{
+	  momitem_t *curelemitm =
+	    mom_value_to_item (cmd_stack_nth_value_mom (-(ix + 1)));
+	  tuplearr[nbelem++] = curelemitm;
+	}
+      tuplev =
+	(momval_t) mom_make_tuple_from_array (nbelem,
+					      (const momitem_t **) tuplearr);
+      MOM_GC_FREE (tuplearr);
+      if ((int) nbelem == markdepth)
+	add_history (",tuple");
+      else
+	{
+	  char cmdbuf[32];
+	  snprintf (cmdbuf, sizeof (cmdbuf), ",tuple %d", nbelem);
+	  add_history (cmdbuf);
+	}
+      if (markdepth > 0)
+	{
+	  cmd_stack_pop_mom (markdepth + 1);
+	  printf (ANSI_BOLD "*tuple %d of %d*" ANSI_NORMAL "\n", nbelem,
+		  markdepth);
+	}
+      else
+	{
+	  cmd_stack_pop_mom (tupledepth);
+	  printf (ANSI_BOLD "*tuple %d*" ANSI_NORMAL "\n", nbelem);
+	}
+      cmd_stack_push_mom (tuplev);
+    }
+}
+
+static void
+cmd_do_node_mom (const char *lin)
+{
+  MOM_DEBUGPRINTF (cmd, "start do_node lin=%s", lin);
+}
+
+static void
 cmd_do_stack_mom (const char *lin)
 {
   MOM_DEBUGPRINTF (cmd, "start do_stack lin=%s", lin);
@@ -319,7 +491,6 @@ cmd_do_stack_mom (const char *lin)
 	  else
 	    {
 	      const momval_t curval = vst_valarr_mom[ix];
-	      momval_t namv;
 	      MOM_OUT (mom_stdout, MOMOUT_VALUE (curval));
 	      if (mom_is_item (curval) && !mom_item_get_name (curval.pitem))
 		{
@@ -382,9 +553,19 @@ cmd_do_top_mom (const char *lin)
 	printf ("\n" ANSI_BOLD "** top mark **" ANSI_NORMAL "\n");
       else
 	{
+	  int markdepth = cmd_stack_mark_depth_mom ();
 	  const momval_t curval = vst_valarr_mom[vst_top_mom - 1];
-	  momval_t namv;
-	  MOM_OUT (mom_stdout, MOMOUT_VALUE (curval));
+	  MOM_OUT (mom_stdout,
+		   MOMOUT_LITERAL (ANSI_BOLD "top/"),
+		   MOMOUT_DEC_INT ((int) vst_top_mom), NULL);
+	  if (markdepth > 0)
+	    MOM_OUT (mom_stdout,
+		     MOMOUT_LITERAL ("("),
+		     MOMOUT_DEC_INT ((int) markdepth),
+		     MOMOUT_LITERAL (")"), NULL);
+	  MOM_OUT (mom_stdout,
+		   MOMOUT_LITERAL (":" ANSI_NORMAL " "),
+		   MOMOUT_VALUE (curval));
 	  if (mom_is_item (curval) && !mom_item_get_name (curval.pitem))
 	    {
 	      momval_t commentv;
@@ -409,7 +590,29 @@ static void
 cmd_do_pop_mom (const char *lin)
 {
   MOM_DEBUGPRINTF (cmd, "start do_pop lin=%s", lin);
-  MOM_WARNPRINTF ("unimplemented command /pop %s", lin);
+  if (vst_top_mom == 0)
+    {
+      printf (ANSI_BOLD "**stack was empty**" ANSI_NORMAL "\n");
+      return;
+    }
+  int nblev = atoi (lin);
+  if (nblev > 1)
+    {
+      cmd_stack_pop_mom (nblev);
+      char cmdbuf[32];
+      snprintf (cmdbuf, sizeof (cmdbuf), ",pop %d", nblev);
+      add_history (cmdbuf);
+    }
+  else
+    {
+      cmd_stack_pop_mom (1);
+      add_history (",pop");
+    }
+  if (vst_top_mom == 0)
+    printf (ANSI_BOLD "**stack emptied**" ANSI_NORMAL "\n");
+  else
+    printf (ANSI_BOLD "** %d levels remaining on stack**" ANSI_NORMAL "\n",
+	    vst_top_mom);
 }
 
 
@@ -575,7 +778,7 @@ cmd_interpret_mom (const char *lin)
       int pos = -1;
       char cmdbuf[32];
       memset (cmdbuf, 0, sizeof (cmdbuf));
-      if (sscanf (lin, ",%30[a-z_]%n", cmdbuf, &pos) > 0 && pos > 1)
+      if (sscanf (lin, ",%30[a-z_] %n", cmdbuf, &pos) > 0 && pos > 1)
 	{
 	  for (int ix = 0; ix < (int) CMDARRSIZE_MOM; ix++)
 	    {
@@ -602,6 +805,26 @@ cmd_interpret_mom (const char *lin)
   else if (lin[0] == '^')	/* alias for pop */
     {
       cmd_do_pop_mom (lin + 1);
+      return;
+    }
+  else if (lin[0] == '(')	/* alias for mark */
+    {
+      cmd_do_mark_mom (lin + 1);
+      return;
+    }
+  else if (lin[0] == '}')	/* alias for set */
+    {
+      cmd_do_set_mom (lin + 1);
+      return;
+    }
+  else if (lin[0] == ']')	/* alias for tuple */
+    {
+      cmd_do_tuple_mom (lin + 1);
+      return;
+    }
+  else if (lin[0] == '*')	/* alias for node */
+    {
+      cmd_do_node_mom (lin + 1);
       return;
     }
 bad_command:
