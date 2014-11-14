@@ -1141,9 +1141,19 @@ mom_item_put_content (momitem_t *itm, momval_t val)
 void mom_item_clear_payload (momitem_t *itm);
 /// get the set of named items, ordered by item ids
 const momset_t *mom_set_of_named_items (void);
+// get the tuple of named items prefixed by a given prefix, and 
+/// if parrname is not-null, set it to the jsonarray of names
+const momtuple_t *mom_alpha_ordered_tuple_of_named_prefixed_items (const char
+								   *prefix,
+								   momval_t
+								   *parrname);
 /// get the tuple of named items, alphabetically ordered by name
 /// if parrname is not-null, set it to the jsonarray of names
-const momtuple_t *mom_alpha_ordered_tuple_of_named_items (momval_t *parrname);
+static inline const momtuple_t *
+mom_alpha_ordered_tuple_of_named_items (momval_t *parrname)
+{
+  return mom_alpha_ordered_tuple_of_named_prefixed_items ("", parrname);
+}
 
 const momstring_t *mom_item_get_name (momitem_t *itm);
 const momstring_t *mom_item_get_idstr (momitem_t *itm);

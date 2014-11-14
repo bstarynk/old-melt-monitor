@@ -90,62 +90,76 @@ cmd_stack_pop_mom (unsigned nb)
     }
 }
 
-#define COMMANDS				\
-  CMD(quit,"quitting")				\
+#define COMMANDS(CMD)				\
+  CMD(quit,"quit without dumping")		\
+  CMD(help,"give help")				\
   CMD(exit,"dump & exit")			\
   CMD(stack,"print the stack")			\
+  CMD(top,"print the top of stack")		\
+  CMD(dump,"dump state & continue")		\
   CMD(dup,"duplicate top")
 
-static bool running_cmd_mom;
-static char *prompt_cmd_mom = "monimelt: ";
-static void
-linehandler_cmd_mom (char *line)
+// readline alternate completion function
+static char **
+cmd_completion_mom (const char *text, int start, int end)
 {
-  if (line == NULL || !strcmp (line, "quit"))
+  char **resarr = NULL;
+  MOM_DEBUGPRINTF (run, "cmd_completion text=%s start=%d end=%d", text, start,
+		   end);
+  if (start == 0 && end > start && isalpha (text[0]))
     {
-      if (!line)
-	printf ("\n");
-      printf ("MOMCMD exiting\n");
-      rl_callback_handler_remove ();
-      running_cmd_mom = false;
+      momval_t jarr = MOM_NULLV;
+      momval_t tup =
+	(momval_t) mom_alpha_ordered_tuple_of_named_prefixed_items (text,
+								    &jarr);
+      unsigned nbent = mom_tuple_length (tup);
+      MOM_DEBUGPRINTF (run, "cmd_completion nbent=%u", nbent);
+      if (!nbent)
+	return NULL;
+      resarr = calloc (nbent + 1, sizeof (char *));
+      if (MOM_UNLIKELY (!resarr))
+	MOM_FATAPRINTF ("cmd_completion failed to calloc resarr nbent=%d",
+			nbent);
+      for (unsigned ix = 0; ix < nbent; ix++)
+	{
+	  resarr[ix] =
+	    strdup (mom_string_cstr (mom_json_array_nth (jarr, ix)));
+	  if (MOM_UNLIKELY (!resarr[ix]))
+	    MOM_FATAPRINTF ("cmd_completion failed to strdup ix=%d", ix);
+	  MOM_DEBUGPRINTF (run, "cmd_completion resarr[%d]=%s", ix,
+			   resarr[ix]);
+	}
     }
-  else if (line && *line)
-    {
-      add_history (line);
-      printf ("MOMCMD ignoring line %s\n", line);
-      free (line);
-    }
+  return resarr;
 }
-
-
 
 void
 mom_plugin_init (const char *arg)
 {
   MOM_DEBUGPRINTF (run, "start of " __FILE__ " arg=%s", arg);
+  rl_initialize ();
+  rl_readline_name = "monimelt";
+  rl_attempted_completion_function = cmd_completion_mom;
 }
 
 #define POLL_TIMEOUT 500
 void
 momplugin_after_load (void)
 {
-  MOM_INFORMPRINTF ("momplug_cmd starting after load\n");
-  /* Install the line handler. */
-  rl_callback_handler_install (prompt_cmd_mom, linehandler_cmd_mom);
-  /* Enter a simple event loop */
-  running_cmd_mom = true;
-  while (running_cmd_mom)
+  int cnt = 0;
+  MOM_INFORMPRINTF ("momplug_cmd starting after load");
+  char *lin = NULL;
+  for (;;)
     {
-      int rfd = fileno (rl_instream);
-      struct pollfd polltab[2];
-      memset (polltab, 0, sizeof (polltab));
-      polltab[0].fd = rfd;
-      polltab[0].events = POLLIN;
-      if (poll (polltab, 1, POLL_TIMEOUT) > 0)
-	{
-	  rl_callback_read_char ();
-	}
-    }
-
-#warning we should have a readline command line interpreter here.
+      char prompt[64];
+      cnt++;
+      snprintf (prompt, sizeof (prompt), "monimelt%03d: ", cnt);
+      lin = NULL;
+      MOM_DEBUGPRINTF (run, "before readline prompt=%s", prompt);
+      lin = readline (prompt);
+      MOM_DEBUGPRINTF (run, "after readline lin=%s", lin);
+      if (!lin || !strcmp (lin, "quit"))
+	break;
+    };
+  MOM_INFORMPRINTF ("momplug_cmd ending after load");
 }

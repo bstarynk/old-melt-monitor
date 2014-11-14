@@ -798,12 +798,16 @@ item_name_cmp_mom (const void *l, const void *r)
 }
 
 const momtuple_t *
-mom_alpha_ordered_tuple_of_named_items (momval_t *parrname)
+mom_alpha_ordered_tuple_of_named_prefixed_items (const char *prefix,
+						 momval_t *parrname)
 {
   const momtuple_t *tup = NULL;
   const momitem_t **arr = NULL;
   unsigned siz = 0;
   unsigned cnt = 0;
+  if (!prefix)
+    prefix = "";
+  unsigned prefixlen = strlen (prefix);
   pthread_mutex_lock (&globitem_mtx_mom);
   assert (dict_mom.dict_count > 0);
   siz = dict_mom.dict_count + 2;
@@ -813,12 +817,17 @@ mom_alpha_ordered_tuple_of_named_items (momval_t *parrname)
   for (unsigned dix = 0; dix < dicsiz; dix++)
     {
       const momitem_t *curitm = dict_mom.dict_array[dix].dicent_item;
-      if (!curitm || curitm == MOM_EMPTY)
+      const momstring_t *curnam = dict_mom.dict_array[dix].dicent_name;
+      if (!curitm || curitm == MOM_EMPTY || !curnam || curnam == MOM_EMPTY)
+	continue;
+      assert (curitm->i_typnum == momty_item);
+      assert (curnam->typnum == momty_string);
+      if (strncmp (curnam->cstr, prefix, prefixlen))
 	continue;
       assert (cnt < siz);
       arr[cnt++] = curitm;
     };
-  assert (cnt == dict_mom.dict_count);
+  assert (cnt <= dict_mom.dict_count);
   qsort (arr, cnt, sizeof (momitem_t *), item_name_cmp_mom);
   tup = mom_make_tuple_from_array (cnt, arr);
   if (parrname)

@@ -1175,7 +1175,6 @@ emit_ctype_cgen (struct c_generator_mom_st *cg, struct momout_st *out,
 {
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
   assert (out && out->mout_magic == MOM_MOUT_MAGIC);
-  bool repeatagain = false;
   momitem_t *typitm = NULL;
   if (mom_is_item (val))
     typitm = val.pitem;
