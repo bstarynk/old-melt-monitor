@@ -165,6 +165,27 @@ cmd_completion_entry_mom (const char *text, int state)
 	  else
 	    return NULL;
 	}
+      else if (text[0] == '_' && isalnum (text[1]) && isalnum (text[2]))
+	{			// a line starting with some id-like thing is tab-expanded to the set of items of id prefixed by the text       
+	  jarr = MOM_NULLV;
+	  momval_t setv =
+	    (momval_t) mom_set_of_items_of_ident_prefixed (text);
+	  unsigned setcard = mom_set_cardinal (setv);
+	  MOM_DEBUG (cmd, MOMOUT_LITERAL ("cmd_completion idprefix:"),
+		     MOMOUT_LITERALV ((const char *) text), MOMOUT_SPACE (48),
+		     MOMOUT_LITERAL ("set:"), MOMOUT_VALUE (setv));
+	  momval_t *strarr =
+	    MOM_GC_ALLOC ("strarr", (setcard + 1) * sizeof (momval_t));
+	  for (unsigned ix = 0; ix < setcard; ix++)
+	    strarr[ix] =
+	      (momval_t) mom_identv_of_item (mom_set_nth_item (setv, ix));
+	  jarr = (momval_t) mom_make_json_array_count (setcard, strarr);
+	  MOM_DEBUG (cmd,
+		     MOMOUT_LITERAL ("cmd_completion idprefix card:"),
+		     MOMOUT_DEC_INT ((int) setcard), MOMOUT_SPACE (32),
+		     MOMOUT_LITERAL ("jarr="),
+		     MOMOUT_VALUE ((const momval_t) jarr), NULL);
+	}
     }
   if (state >= 0 && jarr.ptr && state < (int) mom_json_array_size (jarr))
     {

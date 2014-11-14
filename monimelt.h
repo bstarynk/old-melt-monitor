@@ -1010,6 +1010,11 @@ momitem_t *mom_get_item_of_ident (const momstring_t *idstr);
 // get an item of given idstr or else NULL
 momitem_t *mom_get_item_of_identcstr (const char *idcstr);
 
+// rarely useful and expensive. Gives the set of items whose ident
+// string has a given prefix starting with _ then at least one
+// alphanum.
+const momset_t *mom_set_of_items_of_ident_prefixed (const char *prefix);
+
 // register an item with a given name
 void mom_register_item_named (momitem_t *itm, const momstring_t *name);
 static inline void

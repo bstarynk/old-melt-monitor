@@ -368,6 +368,80 @@ end:
   return itm;
 }
 
+
+
+#define MOM_MAX_SET_OF_ITEMS_PREFIXED (1024*1024)	/* one mega-items */
+const momset_t *
+mom_set_of_items_of_ident_prefixed (const char *prefix)
+{
+  const momset_t *set = NULL;
+  if (!prefix || !prefix[0] == '_' || !isalnum (prefix[1]))
+    return NULL;
+  unsigned prefixlen = strlen (prefix);
+  pthread_mutex_lock (&globitem_mtx_mom);
+  unsigned long siz =
+    (5 +
+     ((prefixlen >
+       9) ? 2 : (buckets_mom.itbuck_nbitems >> (2 * prefixlen - 1)))) | 0xf;
+  unsigned long itemcount = 0;
+  momitem_t **itemarr =
+    MOM_GC_ALLOC ("itmarr tuple ident prefixed", siz * sizeof (momitem_t *));
+  // big loop on each bucket, filling and growing itemarr to remember every item
+  for (unsigned buckix = 0; buckix < buckets_mom.itbuck_size; buckix++)
+    {
+      struct itembucket_mom_st *curbucket = buckets_mom.itbuck_arr[buckix];
+      if (!curbucket)
+	continue;
+      unsigned curbsize = curbucket->buck_size;
+      // inner loop inside the bucket
+      for (unsigned oix = 0; oix < curbsize; oix++)
+	{
+	  const momitem_t *curitm = curbucket->buck_items[oix];
+	  const momstring_t *curids = NULL;
+	  if (!curitm || curitm == MOM_EMPTY
+	      || !curitm->i_typnum == momty_item
+	      || !(curids = curitm->i_idstr)
+	      || !curids->typnum != momty_string)
+	    continue;
+	  if (curids->slen < prefixlen
+	      || !strncmp (curids->cstr, prefix, prefixlen))
+	    continue;
+	  if (MOM_UNLIKELY (itemcount >= siz))
+	    {
+	      unsigned long newsiz = (5 * itemcount / 4 + 20) | 0xf;
+	      momitem_t **newitemarr =
+		MOM_GC_ALLOC ("grow itmarr tuple ident prefixed",
+			      newsiz * sizeof (momitem_t *));
+	      memcpy (newitemarr, itemarr, itemcount * sizeof (momitem_t *));
+	      MOM_GC_FREE (itemarr);
+	      itemarr = newitemarr;
+	      siz = newsiz;
+	    }
+	  itemarr[itemcount] = (momitem_t *) curitm;
+	  itemcount++;
+	  if (MOM_UNLIKELY (itemcount > MOM_MAX_SET_OF_ITEMS_PREFIXED))
+	    break;
+	};
+      if (MOM_UNLIKELY (itemcount > MOM_MAX_SET_OF_ITEMS_PREFIXED))
+	break;
+    };
+  if (MOM_UNLIKELY (itemcount > MOM_MAX_SET_OF_ITEMS_PREFIXED))
+    {
+      MOM_WARNPRINTF ("set of items prefixed by %s is huge: %ld", prefix,
+		      itemcount);
+      MOM_GC_FREE (itemarr);
+      return NULL;
+    }
+  if (itemcount > 0)
+    set =
+      mom_make_set_from_array ((unsigned) itemcount,
+			       (const momitem_t **) itemarr);
+  MOM_GC_FREE (itemarr);
+  pthread_mutex_unlock (&globitem_mtx_mom);
+  return set;
+}
+
+
 momitem_t *
 mom_make_item_of_identcstr (const char *idstr)
 {
