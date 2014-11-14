@@ -267,6 +267,22 @@ reorganize_items_mom (unsigned morebuckets)
 }
 
 
+void
+mom_item_status (int64_t * pnbcreation, int64_t * pnbdestruct,
+		 int64_t * pnbitems, int64_t * pnamed)
+{
+  pthread_mutex_lock (&globitem_mtx_mom);
+  if (pnbcreation)
+    *pnbcreation = nb_creation_items_mom;
+  if (pnbdestruct)
+    *pnbdestruct = nb_destruction_items_mom;
+  if (pnbitems)
+    *pnbitems = buckets_mom.itbuck_nbitems;
+  if (pnamed)
+    *pnamed = dict_mom.dict_count;
+  pthread_mutex_unlock (&globitem_mtx_mom);
+}
+
 #define REORGANIZE_ITEM_PERIOD_MOM 2048
 
 momitem_t *
@@ -531,6 +547,7 @@ mom_item_clear_payload (momitem_t *itm)
 	}
     }
 }
+
 
 static void
 finalize_item_mom (void *itmad, void *data __attribute__ ((unused)))

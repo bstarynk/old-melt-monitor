@@ -1238,6 +1238,8 @@ mom_forget_item (momitem_t *itm)
   mom_forget_name (mom_string_cstr ((momval_t) mom_item_get_name (itm)));
 };
 
+void mom_item_status (int64_t * pnbcreation, int64_t * pnbdestruct,
+		      int64_t * pnbitems, int64_t * pnamed);
 
 ////////////////////////////////////////////////////////////////
 struct mom_dumper_st;

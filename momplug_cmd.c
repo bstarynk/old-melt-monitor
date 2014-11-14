@@ -36,6 +36,7 @@ const char mom_plugin_GPL_compatible[] = "GPLv3+";
   CMD(help,"give this help")			\
   CMD(quit,"quit without dumping")		\
   CMD(stack,"print the stack. Alias !")		\
+  CMD(status,"print status info")		\
   CMD(top,"print the top of stack. Alias = ")
 				/* end of COMMANDS */
 
@@ -222,6 +223,7 @@ static void
 cmd_do_dump_mom (const char *lin)
 {
   MOM_DEBUGPRINTF (cmd, "start do_dump lin=%s", lin);
+  MOM_WARNPRINTF ("unimplemented command %s", lin);
 }
 
 
@@ -229,12 +231,14 @@ static void
 cmd_do_dup_mom (const char *lin)
 {
   MOM_DEBUGPRINTF (cmd, "start do_dup lin=%s", lin);
+  MOM_WARNPRINTF ("unimplemented command %s", lin);
 }
 
 static void
 cmd_do_exit_mom (const char *lin)
 {
   MOM_DEBUGPRINTF (cmd, "start do_exit lin=%s", lin);
+  MOM_WARNPRINTF ("unimplemented command %s", lin);
 }
 
 
@@ -245,7 +249,7 @@ cmd_do_help_mom (const char *lin)
   putchar ('\n');
   for (struct cmd_descr_st * cd = cmd_array_mom;
        cd != NULL && cd->cmd_name != NULL; cd++)
-    printf (" %s: %s\n", cd->cmd_name, cd->cmd_help);
+    printf (" ,%s : %s\n", cd->cmd_name, cd->cmd_help);
   putchar ('\n');
   fflush (NULL);
 }
@@ -254,18 +258,45 @@ static void
 cmd_do_quit_mom (const char *lin)
 {
   MOM_DEBUGPRINTF (cmd, "start do_quit lin=%s", lin);
+  char timbuf[80];
+  memset (timbuf, 0, sizeof (timbuf));
+  MOM_INFORMPRINTF
+    ("command initiated quit at %s (elapsed %.3f, cpu %.3f sec.)\n",
+     mom_strftime_centi (timbuf, sizeof (timbuf), "%H:%M:%S.__",
+			 mom_clock_time (CLOCK_REALTIME)),
+     mom_elapsed_real_time (), mom_clock_time (CLOCK_PROCESS_CPUTIME_ID));
+  exit (EXIT_SUCCESS);
+
 }
 
 static void
 cmd_do_stack_mom (const char *lin)
 {
   MOM_DEBUGPRINTF (cmd, "start do_stack lin=%s", lin);
+  MOM_WARNPRINTF ("unimplemented command %s", lin);
+}
+
+static void
+cmd_do_status_mom (const char *lin)
+{
+  char timbuf[64];
+  memset (timbuf, 0, sizeof (timbuf));
+  MOM_DEBUGPRINTF (cmd, "start do_status lin=%s", lin);
+  int64_t nbcreat = 0, nbdestr = 0, nbitems = 0, nbnamed = 0;
+  mom_item_status (&nbcreat, &nbdestr, &nbitems, &nbnamed);
+  MOM_INFORMPRINTF
+    ("status at %s (elapsed %.3f, cpu %.3f sec.): %ld created, %ld destroyed, %ld items, %ld named\n",
+     mom_strftime_centi (timbuf, sizeof (timbuf), "%H:%M:%S.__",
+			 mom_clock_time (CLOCK_REALTIME)),
+     mom_elapsed_real_time (), mom_clock_time (CLOCK_PROCESS_CPUTIME_ID),
+     (long) nbcreat, (long) nbdestr, (long) nbitems, (long) nbnamed);
 }
 
 static void
 cmd_do_top_mom (const char *lin)
 {
   MOM_DEBUGPRINTF (cmd, "start do_top lin=%s", lin);
+  MOM_WARNPRINTF ("unimplemented command %s", lin);
 }
 
 
@@ -280,10 +311,133 @@ mom_plugin_init (const char *arg)
   rl_completion_entry_function = cmd_completion_entry_mom;
 }
 
+#define ANSI_BOLD "\e[1m"
+#define ANSI_NORMAL "\e[0m"
+
+static void
+cmd_push_value_mom (momval_t val)
+{
+  cmd_stack_push_mom (val, 0);
+  printf ("pushed, stack height %d\n", vst_top_mom);
+}
+
 static void
 cmd_interpret_mom (const char *lin)
 {
   MOM_DEBUGPRINTF (cmd, "interpreting lin=%s", lin);
+  momitem_t *itm = NULL;
+  if (isalpha (lin[0]))
+    {
+      char name[72];
+      memset (name, 0, sizeof (name));
+      if (sscanf (lin, "%70[a-zA-Z0-9_]", name) > 0 && isalpha (name[0]))
+	{
+	  if (name[70 - 1])
+	    MOM_WARNPRINTF ("too long name in command %s", lin);
+	  itm = mom_get_item_of_name (name);
+	  MOM_DEBUG (cmd, MOMOUT_LITERAL ("got item:"),
+		     MOMOUT_ITEM ((const momitem_t *) itm),
+		     MOMOUT_LITERAL (" of name "),
+		     MOMOUT_LITERALV ((const char *) name));
+	  if (!itm)
+	    {
+	      printf ("\n" ANSI_BOLD "Unknown name" ANSI_NORMAL
+		      " %s. Creating it (unless comment is empty or .)\n",
+		      name);
+	      char *commentline = readline ("comment: ");
+	      if (isprint (commentline[0]) && commentline[0] != '.')
+		{
+		  itm = mom_make_item ();
+		  mom_item_put_attribute ((momitem_t *) itm,
+					  mom_named__comment,
+					  (momval_t)
+					  mom_make_string (commentline));
+		  mom_register_item_named_cstr ((momitem_t *) itm, name);
+		  mom_item_set_space ((momitem_t *) itm, momspa_root);
+		  MOM_INFORM (MOMOUT_LITERAL ("command created named item:"),
+			      MOMOUT_ITEM ((const momitem_t *) itm));
+		}
+	      else
+		{
+		  printf ("\n" ANSI_BOLD "Ignoring item" ANSI_NORMAL " %s\n",
+			  name);
+		  return;
+		}
+	    }
+	  else
+	    cmd_push_value_mom ((momval_t) itm);
+	}
+      else
+	goto bad_command;
+    }
+  else if (lin[0] == '_')
+    {
+      if (!lin[1] || isspace (lin[1]))
+	{
+	  printf ("\n" ANSI_BOLD "Anonymous item" ANSI_NORMAL
+		  ". Creating it (unless comment is empty or .)\n");
+	  char *commentline = readline ("comment: ");
+	  if (isprint (commentline[0]) && commentline[0] != '.')
+	    {
+	      itm = mom_make_item ();
+	      mom_item_put_attribute (itm, mom_named__comment,
+				      (momval_t)
+				      mom_make_string (commentline));
+	      mom_item_set_space (itm, momspa_root);
+	      MOM_INFORM (MOMOUT_LITERAL ("command created anonymous item:"),
+			  MOMOUT_ITEM ((const momitem_t *) itm));
+	    }
+	  else
+	    {
+	      printf ("\n" ANSI_BOLD "Ignoring anonymous item" ANSI_NORMAL
+		      "\n");
+	      return;
+	    }
+	}
+      else if (isalnum (lin[1]))
+	{
+	  char idstr[MOM_IDSTRING_LEN + 1];
+	  memset (idstr, 0, sizeof (idstr));
+	  if (sscanf (lin, MOM_IDSTRING_FMT, idstr) > 0
+	      && mom_looks_like_random_id_cstr (idstr, NULL))
+	    {
+	      itm = mom_get_item_of_identcstr (idstr);
+	      if (!itm)
+		goto bad_command;
+	      else
+		cmd_push_value_mom ((momval_t) itm);
+	      return;
+	    }
+	  else
+	    goto bad_command;
+	}
+    }
+  else if (lin[0] == ',')
+    {
+      int pos = -1;
+      char cmdbuf[32];
+      memset (cmdbuf, 0, sizeof (cmdbuf));
+      if (sscanf (lin, ",%30[a-z_]%n", cmdbuf, &pos) > 0 && pos > 1)
+	{
+	  for (int ix = 0; ix < (int) CMDARRSIZE_MOM; ix++)
+	    {
+	      if (!cmd_array_mom[ix].cmd_name)
+		goto bad_command;
+	      if (!strcmp (cmdbuf, cmd_array_mom[ix].cmd_name))
+		{
+		  cmd_array_mom[ix].cmd_fun (lin + pos);
+		  return;
+		}
+	    }
+	}
+    }
+  else if (lin[0] == '%')	/* alias for dup */
+    {
+      cmd_do_dup_mom (lin + 1);
+      return;
+    }
+bad_command:
+  MOM_WARNPRINTF ("bad command '%s'", lin);
 }
 
 #define POLL_TIMEOUT 500
