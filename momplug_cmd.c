@@ -29,6 +29,16 @@
 
 const char mom_plugin_GPL_compatible[] = "GPLv3+";
 
+#define COMMANDS(CMD)				\
+  CMD(dump,"dump state & continue")		\
+  CMD(dup,"duplicate top.  Alias %")		\
+  CMD(exit,"dump & exit")			\
+  CMD(help,"give this help")			\
+  CMD(quit,"quit without dumping")		\
+  CMD(stack,"print the stack. Alias !")		\
+  CMD(top,"print the top of stack. Alias = ")
+				/* end of COMMANDS */
+
 // the command stack has values and marks
 static momval_t *vst_valarr_mom;
 static char *vst_markarr_mom;
@@ -91,33 +101,25 @@ cmd_stack_pop_mom (unsigned nb)
     }
 }
 
-#define COMMANDS(CMD)				\
-  CMD(dump,"dump state & continue")		\
-  CMD(dup,"duplicate top")			\
-  CMD(exit,"dump & exit")			\
-  CMD(help,"give help")				\
-  CMD(quit,"quit without dumping")		\
-  CMD(stack,"print the stack")			\
-  CMD(top,"print the top of stack")		\
-				/* end of COMMANDS */
 
 #define CMD_DECLARE(N,H) static void cmd_do_##N##_mom (const char*);
-COMMANDS (CMD_DECLARE)
+COMMANDS (CMD_DECLARE);
 #undef CMD_DECLARE
-     typedef void cmd_do_fun_t (const char *);
-     struct cmd_descr_st
-     {
-       const char *cmd_name;
-       cmd_do_fun_t *const cmd_fun;
-       const char *cmd_help;
-     };
 
-     static struct cmd_descr_st cmd_array_mom[] = {
+typedef void cmd_do_fun_t (const char *);
+struct cmd_descr_st
+{
+  const char *cmd_name;
+  cmd_do_fun_t *const cmd_fun;
+  const char *cmd_help;
+};
+
+static struct cmd_descr_st cmd_array_mom[] = {
 #define CMD_DEFINE(N,H) {.cmd_name= #N, .cmd_fun= cmd_do_##N##_mom, .cmd_help= H},
-       COMMANDS (CMD_DEFINE)
+  COMMANDS (CMD_DEFINE)
 #undef CMD_DEFINE
-       {NULL, NULL, NULL}
-     };
+  {NULL, NULL, NULL}
+};
 
 #define CMDARRSIZE_MOM (sizeof(cmd_array_mom)/sizeof(cmd_array_mom[0]))
 
@@ -278,6 +280,12 @@ mom_plugin_init (const char *arg)
   rl_completion_entry_function = cmd_completion_entry_mom;
 }
 
+static void
+cmd_interpret_mom (const char *lin)
+{
+  MOM_DEBUGPRINTF (cmd, "interpreting lin=%s", lin);
+}
+
 #define POLL_TIMEOUT 500
 void
 momplugin_after_load (void)
@@ -285,6 +293,7 @@ momplugin_after_load (void)
   int cnt = 0;
   MOM_INFORMPRINTF ("momplug_cmd starting after load");
   char *lin = NULL;
+  printf ("### type ,help to get some help.\n");
   for (;;)
     {
       char prompt[64];
@@ -293,6 +302,7 @@ momplugin_after_load (void)
       lin = NULL;
       MOM_DEBUGPRINTF (cmd, "before readline prompt=%s", prompt);
       lin = readline (prompt);
+      cmd_interpret_mom (lin);
       MOM_DEBUGPRINTF (cmd, "after readline lin=%s", lin);
       if (!lin)
 	break;

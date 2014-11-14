@@ -380,7 +380,7 @@ mom_set_of_items_of_ident_prefixed (const char *prefix)
   unsigned prefixlen = strlen (prefix);
   pthread_mutex_lock (&globitem_mtx_mom);
   unsigned long siz =
-    (5 +
+    (10 +
      ((prefixlen >
        9) ? 2 : (buckets_mom.itbuck_nbitems >> (2 * prefixlen - 1)))) | 0xf;
   unsigned long itemcount = 0;
@@ -397,14 +397,13 @@ mom_set_of_items_of_ident_prefixed (const char *prefix)
       for (unsigned oix = 0; oix < curbsize; oix++)
 	{
 	  const momitem_t *curitm = curbucket->buck_items[oix];
+	  if (!curitm || curitm == MOM_EMPTY)
+	    continue;
 	  const momstring_t *curids = NULL;
-	  if (!curitm || curitm == MOM_EMPTY
-	      || !curitm->i_typnum == momty_item
-	      || !(curids = curitm->i_idstr)
-	      || !curids->typnum != momty_string)
+	  if (!(curids = curitm->i_idstr) || curids->typnum != momty_string)
 	    continue;
 	  if (curids->slen < prefixlen
-	      || !strncmp (curids->cstr, prefix, prefixlen))
+	      || strncmp (curids->cstr, prefix, prefixlen))
 	    continue;
 	  if (MOM_UNLIKELY (itemcount >= siz))
 	    {
@@ -438,6 +437,10 @@ mom_set_of_items_of_ident_prefixed (const char *prefix)
 			       (const momitem_t **) itemarr);
   MOM_GC_FREE (itemarr);
   pthread_mutex_unlock (&globitem_mtx_mom);
+  MOM_DEBUG (cmd, MOMOUT_LITERAL ("for prefix:"),
+	     MOMOUT_LITERALV ((const char *) prefix), MOMOUT_SPACE (48),
+	     MOMOUT_LITERAL ("result set:"),
+	     MOMOUT_VALUE ((const momval_t) set), MOMOUT_NEWLINE ());
   return set;
 }
 
