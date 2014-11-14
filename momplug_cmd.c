@@ -482,6 +482,14 @@ cmd_do_node_mom (const char *lin)
   int arity = -1;
   int markdepth = cmd_stack_mark_depth_mom ();
   MOM_DEBUGPRINTF (cmd, "start do_node lin=%s", lin);
+#warning still buggy
+  /** buggy for input:
+         (
+         agenda
+         block
+         code
+         *do
+     **/
   if (sscanf (lin, " %d %n", &arity, &pos) > 0 && pos > 0 && arity >= 0
       && arity + 1 < markdepth && arity < (int) vst_top_mom)
     {
@@ -552,10 +560,11 @@ cmd_do_node_mom (const char *lin)
   if (nodv.ptr)
     {
       MOM_OUT (mom_stdout, MOMOUT_LITERAL
-	       (ANSI_BOLD "made node" ANSI_NORMAL " of connective:"),
-	       MOMOUT_ITEM ((const momitem_t *) connitm),
-	       MOMOUT_LITERAL (" of arity "),
-	       MOMOUT_DEC_INT ((int) mom_node_arity (nodv)));
+	       (ANSI_BOLD "made node" ANSI_NORMAL " of connective: "
+		ANSI_BOLD), MOMOUT_ITEM ((const momitem_t *) connitm),
+	       MOMOUT_LITERAL (ANSI_NORMAL " of arity "),
+	       MOMOUT_DEC_INT ((int) mom_node_arity (nodv)),
+	       MOMOUT_NEWLINE ());
       cmd_stack_push_mom (nodv);
     }
   else
