@@ -100,37 +100,34 @@ cmd_stack_pop_mom (unsigned nb)
   CMD(dup,"duplicate top")
 
 // readline alternate completion function
-static char **
-cmd_completion_mom (const char *text, int start, int end)
+static char *
+cmd_completion_entry_mom (const char *text, int state)
 {
-  char **resarr = NULL;
-  MOM_DEBUGPRINTF (run, "cmd_completion text=%s start=%d end=%d", text, start,
-		   end);
-  if (start == 0 && end > start && isalpha (text[0]))
+  static momval_t jarr;
+  MOM_DEBUGPRINTF (run, "cmd_completion_entry text=%s state=%d", text, state);
+  if (!state && isalpha (text[0]))
     {
-      momval_t jarr = MOM_NULLV;
+      jarr = MOM_NULLV;
       momval_t tup =
 	(momval_t) mom_alpha_ordered_tuple_of_named_prefixed_items (text,
 								    &jarr);
       unsigned nbent = mom_tuple_length (tup);
-      MOM_DEBUGPRINTF (run, "cmd_completion nbent=%u", nbent);
+      MOM_DEBUG (run, MOMOUT_LITERAL ("cmd_completion nbent:"),
+		 MOMOUT_DEC_INT ((int) nbent), MOMOUT_SPACE (32),
+		 MOMOUT_LITERAL ("jarr="),
+		 MOMOUT_VALUE ((const momval_t) jarr), NULL);
       if (!nbent)
 	return NULL;
-      resarr = calloc (nbent + 1, sizeof (char *));
-      if (MOM_UNLIKELY (!resarr))
-	MOM_FATAPRINTF ("cmd_completion failed to calloc resarr nbent=%d",
-			nbent);
-      for (unsigned ix = 0; ix < nbent; ix++)
-	{
-	  resarr[ix] =
-	    strdup (mom_string_cstr (mom_json_array_nth (jarr, ix)));
-	  if (MOM_UNLIKELY (!resarr[ix]))
-	    MOM_FATAPRINTF ("cmd_completion failed to strdup ix=%d", ix);
-	  MOM_DEBUGPRINTF (run, "cmd_completion resarr[%d]=%s", ix,
-			   resarr[ix]);
-	}
+    };
+  if (state >= 0 && jarr.ptr && state < (int) mom_json_array_size (jarr))
+    {
+      const char *restr = mom_string_cstr (mom_json_array_nth (jarr, state));
+      MOM_DEBUGPRINTF (run, "cmd_completion state#%d restr=%s", state, restr);
+      if (restr)
+	return strdup (restr);
     }
-  return resarr;
+  MOM_DEBUGPRINTF (run, "cmd_completion fail state#%d", state);
+  return NULL;
 }
 
 void
@@ -139,7 +136,7 @@ mom_plugin_init (const char *arg)
   MOM_DEBUGPRINTF (run, "start of " __FILE__ " arg=%s", arg);
   rl_initialize ();
   rl_readline_name = "monimelt";
-  rl_attempted_completion_function = cmd_completion_mom;
+  rl_completion_entry_function = cmd_completion_entry_mom;
 }
 
 #define POLL_TIMEOUT 500
