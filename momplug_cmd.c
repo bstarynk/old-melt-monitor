@@ -482,8 +482,8 @@ cmd_do_node_mom (const char *lin)
   int arity = -1;
   int markdepth = cmd_stack_mark_depth_mom ();
   MOM_DEBUGPRINTF (cmd, "start do_node lin=%s", lin);
-  if (scanf (lin, " %d %n", &arity, &pos) > 0 && pos > 0 && arity >= 0
-      && arity + 1 < markdepth)
+  if (sscanf (lin, " %d %n", &arity, &pos) > 0 && pos > 0 && arity >= 0
+      && arity + 1 < markdepth && arity < (int) vst_top_mom)
     {
       connitm = mom_value_to_item (cmd_stack_nth_value_mom (1));
       if (connitm)
@@ -498,9 +498,9 @@ cmd_do_node_mom (const char *lin)
 	  add_history (cmdbuf);
 	}
     }
-  else if (scanf (lin, " %70[a-zA-Z0-9_] %d %n", &nambuf, &arity, &pos) >= 2
+  else if (sscanf (lin, " %70[a-zA-Z0-9_] %d %n", &nambuf, &arity, &pos) >= 2
 	   && (isalpha (nambuf[0]) || nambuf[0] == '_')
-	   && arity >= 0 && pos > 0)
+	   && arity >= 0 && pos > 0 && arity < (int) vst_top_mom)
     {
       connitm = mom_get_item_of_name_or_ident_cstr (nambuf);
       nodv = (momval_t)
@@ -516,12 +516,12 @@ cmd_do_node_mom (const char *lin)
 	  add_history (cmdbuf);
 	}
     }
-  else if (scanf (lin, " %70[a-zA-Z0-9_] %n", &nambuf, &pos) >= 1
+  else if (sscanf (lin, " %70[a-zA-Z0-9_] %n", &nambuf, &pos) >= 1
 	   && (isalpha (nambuf[0]) || nambuf[0] == '_') && markdepth >= 0)
     {
       connitm = mom_get_item_of_name_or_ident_cstr (nambuf);
       nodv = (momval_t)
-	mom_make_node_from_array (connitm, arity,
+	mom_make_node_from_array (connitm, markdepth,
 				  cmd_stack_nth_ptr_mom (markdepth + 1));
       if (nodv.ptr)
 	{
@@ -538,7 +538,7 @@ cmd_do_node_mom (const char *lin)
       if (connitm)
 	cmd_stack_pop_mom (1);
       nodv = (momval_t)
-	mom_make_node_from_array (connitm, arity,
+	mom_make_node_from_array (connitm, markdepth,
 				  cmd_stack_nth_ptr_mom (markdepth + 1));
       if (nodv.ptr)
 	{
