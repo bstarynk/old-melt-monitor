@@ -53,7 +53,7 @@ RM= rm -fv
 all: monimelt modules plugins momjsrpc_client
 clean:
 	$(RM) *~ *.o *.so *.i *.orig melt*.cc meltmom*.[ch] meltmom*.o meltmom*.so meltmom*.mk \
-	      _tmp_* monimelt core* webdir/*~ *.tmp  _timestamp.* *dbsqlite*-journal *%
+	      _tmp_* monimelt core* module/*.tmp webdir/*~ *.tmp  _timestamp.* *dbsqlite*-journal *%
 	$(RM) modules/*.so modules/*~
 	$(RM) -r _monimelt_termdump*
 	$(RM) -r _meltwork

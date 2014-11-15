@@ -220,6 +220,7 @@ mom_generate_c_module (momitem_t *moditm, const char *dirname, char **perrmsg)
   mycgen.cgen_moditm = moditm;
   if (!dirname || !dirname[0])
     dirname = ".";
+  char *mydirname = (char *) dirname;
   mom_initialize_buffer_output (&mycgen.cgen_outhead, outf_jsonhalfindent);
   mom_initialize_buffer_output (&mycgen.cgen_outbody, outf_jsonhalfindent);
   pthread_mutex_lock (&cgenmtx_mom);
@@ -229,6 +230,12 @@ mom_generate_c_module (momitem_t *moditm, const char *dirname, char **perrmsg)
       MOM_DEBUGPRINTF (gencod, "generate_c_module got errored #%d: %s", jr,
 		       mycgen.cgen_errmsg);
       assert (mycgen.cgen_errmsg != NULL);
+      MOM_WARNING (MOMOUT_LITERAL ("generate_c_module on module:"),
+		   MOMOUT_ITEM ((const momitem_t *) moditm),
+		   MOMOUT_LITERAL (" failed with error "),
+		   MOMOUT_DEC_INT ((int) jr),
+		   MOMOUT_LITERAL (" : "),
+		   MOMOUT_LITERALV ((const char *) mycgen.cgen_errmsg), NULL);
       *perrmsg = mycgen.cgen_errmsg;
       if (mycgen.cgen_outhead.mout_magic)
 	{
@@ -246,6 +253,24 @@ mom_generate_c_module (momitem_t *moditm, const char *dirname, char **perrmsg)
   if (!mom_is_item ((momval_t) moditm))
     CGEN_ERROR_MOM (&mycgen, MOMOUT_LITERAL ("non item module"),
 		    MOMOUT_VALUE ((const momval_t) moditm), NULL);
+  /// check that the modules/ subdirectory exist, or create it
+  {
+    DIR *mdir = NULL;
+    char dirbuf[MOM_PATH_MAX];
+    memset (dirbuf, 0, sizeof (dirbuf));
+    if (snprintf (dirbuf, sizeof (dirbuf),
+		  "%s/" MOM_SHARED_MODULE_DIRECTORY,
+		  mydirname) >= MOM_PATH_MAX - 1)
+      CGEN_ERROR_MOM (&mycgen, MOMOUT_LITERAL ("too long modules dir:"),
+		      MOMOUT_LITERALV ((const char *) dirbuf));
+    if (!(mdir = opendir (dirbuf)))
+      {
+	if (mkdir (dirbuf, 0700))
+	  MOM_FATAPRINTF ("failed to mkdir %s", dirbuf);
+      }
+    else
+      closedir (mdir);
+  }
   /// get the set of module routines
   {
     mom_should_lock_item (moditm);
@@ -301,12 +326,59 @@ mom_generate_c_module (momitem_t *moditm, const char *dirname, char **perrmsg)
       emit_routine_cgen (&mycgen, routix);
       mycgen.cgen_curoutitm = NULL;
     }
+  // now we should write the file
+  {
+    FILE *f = NULL;
+    char mtempnam[MOM_PATH_MAX];
+    char modnam[MOM_PATH_MAX];
+    memset (mtempnam, 0, sizeof (mtempnam));
+    memset (modnam, 0, sizeof (mtempnam));
+    if (snprintf (modnam, sizeof (modnam),
+		  "%s/" MOM_SHARED_MODULE_DIRECTORY "/"
+		  MOM_SHARED_MODULE_PREFIX "%s.c",
+		  mydirname,
+		  mom_ident_cstr_of_item (moditm)) >= MOM_PATH_MAX - 1)
+      CGEN_ERROR_MOM (&mycgen,
+		      MOMOUT_LITERAL ("failed to name module source file:"),
+		      MOMOUT_LITERALV ((const char *) modnam));
+    if (snprintf
+	(mtempnam, sizeof (mtempnam),
+	 "%s/" MOM_SHARED_MODULE_DIRECTORY "/" MOM_SHARED_MODULE_PREFIX
+	 "%s.p%d-r%x.tmp", mydirname, mom_ident_cstr_of_item (moditm),
+	 (int) getpid (), (unsigned) mom_random_32 ()) >= MOM_PATH_MAX - 1)
+      CGEN_ERROR_MOM (&mycgen,
+		      MOMOUT_LITERAL ("failed to name temporary file:"),
+		      MOMOUT_LITERALV ((const char *) modnam));
+    f = fopen (mtempnam, "w");
+    if (!f)
+      MOM_FATAPRINTF ("failed to open module temporary file %s", mtempnam);
+    fprintf (f,
+	     "// generated MONIMELT module file " MOM_SHARED_MODULE_PREFIX
+	     "%s.c\n", mom_ident_cstr_of_item (moditm));
+    fprintf (f, "// DO NOT EDIT\n\n");
+    fprintf (f, "\n///// declarations\n");
+    fflush (mycgen.cgen_outhead.mout_file);
+    fputs (mycgen.cgen_outhead.mout_data, f);
+    fprintf (f, "\n\n\n//// implementations\n");
+    fflush (mycgen.cgen_outbody.mout_file);
+    fputs (mycgen.cgen_outbody.mout_data, f);
+    fprintf (f,
+	     "\n\n\n//// end of generated file " MOM_SHARED_MODULE_PREFIX
+	     "%s.c\n", mom_ident_cstr_of_item (moditm));
+    if (fclose (f))
+      MOM_FATAPRINTF ("failed to close module temporary file %s", mtempnam);
+    mom_rename_if_content_changed (mtempnam, modnam);
+    mom_finalize_buffer_output (&mycgen.cgen_outhead);
+    mom_finalize_buffer_output (&mycgen.cgen_outbody);
+    MOM_INFORMPRINTF ("generated module file %s", modnam);
+  }
   /// at last
   pthread_mutex_unlock (&cgenmtx_mom);
-#warning incomplete mom_generate_c_module
-  MOM_WARNPRINTF ("incomplete mom_generate_c_module");
   return jr;
 }
+
+
+
 
 #define PROCROUTSIG_PREFIX_MOM "momprocsig_"
 void
