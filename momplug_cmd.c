@@ -481,7 +481,7 @@ cmd_do_node_mom (const char *lin)
   int pos = -1;
   int arity = -1;
   int markdepth = cmd_stack_mark_depth_mom ();
-  MOM_DEBUGPRINTF (cmd, "start do_node lin=%s", lin);
+  MOM_DEBUGPRINTF (cmd, "start do_node lin=%s markdepth=%d", lin, markdepth);
 #warning still buggy
   /** buggy for input:
          (
@@ -493,12 +493,14 @@ cmd_do_node_mom (const char *lin)
   if (sscanf (lin, " %d %n", &arity, &pos) > 0 && pos > 0 && arity >= 0
       && arity + 1 < markdepth && arity < (int) vst_top_mom)
     {
+      MOM_DEBUGPRINTF (cmd, "do_node arity=%d", arity);
       connitm = mom_value_to_item (cmd_stack_nth_value_mom (1));
       if (connitm)
 	cmd_stack_pop_mom (1);
-      nodv = (momval_t)
-	mom_make_node_from_array (connitm, arity,
-				  cmd_stack_nth_ptr_mom (arity + 1));
+      momval_t *varr = cmd_stack_nth_ptr_mom (-(arity + 1));
+      nodv = (momval_t) mom_make_node_from_array (connitm, arity, varr);
+      MOM_DEBUG (cmd, MOMOUT_LITERAL ("do_node nodv="),
+		 MOMOUT_VALUE ((const momval_t) nodv));
       if (nodv.ptr)
 	{
 	  cmd_stack_pop_mom (arity);
@@ -506,35 +508,43 @@ cmd_do_node_mom (const char *lin)
 	  add_history (cmdbuf);
 	}
     }
-  else if (sscanf (lin, " %70[a-zA-Z0-9_] %d %n", &nambuf, &arity, &pos) >= 2
-	   && (isalpha (nambuf[0]) || nambuf[0] == '_')
-	   && arity >= 0 && pos > 0 && arity < (int) vst_top_mom)
+  else
+    if (sscanf (lin, " %70[a-zA-Z0-9_] %d %n", nambuf, &arity,
+		&pos) >= 2 && (isalpha (nambuf[0]) || nambuf[0] == '_')
+	&& arity >= 0 && pos > 0 && arity < (int) vst_top_mom)
     {
+      MOM_DEBUGPRINTF (cmd, "do_node nambuf=%s arity=%d", nambuf, arity);
       connitm = mom_get_item_of_name_or_ident_cstr (nambuf);
-      nodv = (momval_t)
-	mom_make_node_from_array (connitm, arity,
-				  cmd_stack_nth_ptr_mom (arity + 1));
+      momval_t *varr = cmd_stack_nth_ptr_mom (-(arity + 1));
+      nodv = (momval_t) mom_make_node_from_array (connitm, arity, varr);
+      MOM_DEBUG (cmd, MOMOUT_LITERAL ("do_node nodv="),
+		 MOMOUT_VALUE ((const momval_t) nodv));
       if (nodv.ptr)
 	{
 	  cmd_stack_pop_mom (arity);
 	  snprintf (cmdbuf, sizeof (cmdbuf), ",node %s %d",
 		    mom_string_cstr ((momval_t)
-				     mom_item_get_name_or_idstr (connitm)),
-		    arity);
+				     mom_item_get_name_or_idstr
+				     (connitm)), arity);
 	  add_history (cmdbuf);
 	}
     }
-  else if (sscanf (lin, " %70[a-zA-Z0-9_] %n", &nambuf, &pos) >= 1
-	   && (isalpha (nambuf[0]) || nambuf[0] == '_') && markdepth >= 0)
+  else
+    if (sscanf (lin, " %70[a-zA-Z0-9_] %n", nambuf,
+		&pos) >= 1 && (isalpha (nambuf[0])
+			       || nambuf[0] == '_') && markdepth >= 0)
     {
+      MOM_DEBUGPRINTF (cmd, "do_node nambuf=%s", nambuf);
       connitm = mom_get_item_of_name_or_ident_cstr (nambuf);
-      nodv = (momval_t)
-	mom_make_node_from_array (connitm, markdepth,
-				  cmd_stack_nth_ptr_mom (markdepth + 1));
+      momval_t *varr = cmd_stack_nth_ptr_mom (-(markdepth + 1));
+      nodv = (momval_t) mom_make_node_from_array (connitm, markdepth, varr);
+      MOM_DEBUG (cmd, MOMOUT_LITERAL ("do_node nodv="),
+		 MOMOUT_VALUE ((const momval_t) nodv));
       if (nodv.ptr)
 	{
 	  cmd_stack_pop_mom (markdepth + 1);	/* also pop the mark */
-	  snprintf (cmdbuf, sizeof (cmdbuf), ",node %s",
+	  snprintf (cmdbuf, sizeof (cmdbuf),
+		    ",node %s",
 		    mom_string_cstr ((momval_t)
 				     mom_item_get_name_or_idstr (connitm)));
 	  add_history (cmdbuf);
@@ -542,29 +552,42 @@ cmd_do_node_mom (const char *lin)
     }
   else if (!lin[0] && markdepth >= 1)
     {
+      MOM_DEBUGPRINTF (cmd, "do_node plain");
       connitm = mom_value_to_item (cmd_stack_nth_value_mom (1));
       if (connitm)
 	cmd_stack_pop_mom (1);
-      nodv = (momval_t)
-	mom_make_node_from_array (connitm, markdepth,
-				  cmd_stack_nth_ptr_mom (markdepth + 1));
+      momval_t *varr = cmd_stack_nth_ptr_mom (-(markdepth + 1));
+      nodv = (momval_t) mom_make_node_from_array (connitm, markdepth, varr);
+      MOM_DEBUG (cmd,
+		 MOMOUT_LITERAL ("do_node nodv="),
+		 MOMOUT_VALUE ((const momval_t) nodv));
       if (nodv.ptr)
 	{
 	  cmd_stack_pop_mom (markdepth + 1);	/* also pop the mark */
-	  snprintf (cmdbuf, sizeof (cmdbuf), ",node %s",
+	  snprintf (cmdbuf,
+		    sizeof (cmdbuf),
+		    ",node %s",
 		    mom_string_cstr ((momval_t)
 				     mom_item_get_name_or_idstr (connitm)));
 	  add_history (cmdbuf);
 	}
     };
+  MOM_DEBUG (cmd,
+	     MOMOUT_LITERAL ("do_node nodv="),
+	     MOMOUT_VALUE ((const momval_t) nodv));
   if (nodv.ptr)
     {
-      MOM_OUT (mom_stdout, MOMOUT_LITERAL
-	       (ANSI_BOLD "made node" ANSI_NORMAL " of connective: "
-		ANSI_BOLD), MOMOUT_ITEM ((const momitem_t *) connitm),
-	       MOMOUT_LITERAL (ANSI_NORMAL " of arity "),
-	       MOMOUT_DEC_INT ((int) mom_node_arity (nodv)),
-	       MOMOUT_NEWLINE ());
+      MOM_OUT
+	(mom_stdout,
+	 MOMOUT_LITERAL
+	 (ANSI_BOLD
+	  "made node"
+	  ANSI_NORMAL
+	  " of connective: "
+	  ANSI_BOLD),
+	 MOMOUT_ITEM ((const momitem_t *) connitm),
+	 MOMOUT_LITERAL (ANSI_NORMAL " of arity "),
+	 MOMOUT_DEC_INT ((int) mom_node_arity (nodv)), MOMOUT_NEWLINE ());
       cmd_stack_push_mom (nodv);
     }
   else
@@ -582,8 +605,9 @@ cmd_do_stack_mom (const char *lin)
     }
   else
     {
-      printf ("\n" ANSI_BOLD "== stack of %d levels ==" ANSI_NORMAL "\n",
-	      vst_top_mom);
+      printf ("\n"
+	      ANSI_BOLD
+	      "== stack of %d levels ==" ANSI_NORMAL "\n", vst_top_mom);
       if (maxdepth <= 0)
 	maxdepth = vst_top_mom + 1;
       int minix = vst_top_mom - maxdepth;
@@ -610,11 +634,15 @@ cmd_do_stack_mom (const char *lin)
 		    mom_item_get_attribute (curval.pitem, mom_named__comment);
 		  mom_unlock_item (curval.pitem);
 		  if (mom_is_string (commentv))
-		    MOM_OUT (mom_stdout, MOMOUT_SPACE (48),
-			     MOMOUT_LITERAL (" " ANSI_BOLD "//: "
-					     ANSI_NORMAL),
-			     MOMOUT_LITERALV (mom_string_cstr (commentv)),
-			     NULL);
+		    MOM_OUT
+		      (mom_stdout,
+		       MOMOUT_SPACE
+		       (48),
+		       MOMOUT_LITERAL
+		       (" " ANSI_BOLD
+			"//: "
+			ANSI_NORMAL),
+		       MOMOUT_LITERALV (mom_string_cstr (commentv)), NULL);
 		}
 	      MOM_OUT (mom_stdout, MOMOUT_NEWLINE ());
 	    }
@@ -640,14 +668,24 @@ cmd_do_status_mom (const char *lin)
   MOM_DEBUGPRINTF (cmd, "start do_status lin=%s", lin);
   int64_t nbcreat = 0, nbdestr = 0, nbitems = 0, nbnamed = 0;
   mom_item_status (&nbcreat, &nbdestr, &nbitems, &nbnamed);
-  printf
-    ("\n" ANSI_BOLD "status at %s" ANSI_NORMAL
-     " (elapsed %.3f, cpu %.3f sec.):\n"
-     " %ld created, %ld destroyed, %ld items, %ld named\n",
-     mom_strftime_centi (timbuf, sizeof (timbuf), "%H:%M:%S.__",
-			 mom_clock_time (CLOCK_REALTIME)),
-     mom_elapsed_real_time (), mom_clock_time (CLOCK_PROCESS_CPUTIME_ID),
-     (long) nbcreat, (long) nbdestr, (long) nbitems, (long) nbnamed);
+  printf ("\n"
+	  ANSI_BOLD
+	  "status at %s"
+	  ANSI_NORMAL
+	  " (elapsed %.3f, cpu %.3f sec.):\n"
+	  " %ld created, %ld destroyed, %ld items, %ld named\n",
+	  mom_strftime_centi
+	  (timbuf,
+	   sizeof
+	   (timbuf),
+	   "%H:%M:%S.__",
+	   mom_clock_time
+	   (CLOCK_REALTIME)),
+	  mom_elapsed_real_time
+	  (),
+	  mom_clock_time
+	  (CLOCK_PROCESS_CPUTIME_ID),
+	  (long) nbcreat, (long) nbdestr, (long) nbitems, (long) nbnamed);
   add_history (",status");
 }
 
@@ -665,16 +703,15 @@ cmd_do_top_mom (const char *lin)
 	{
 	  int markdepth = cmd_stack_mark_depth_mom ();
 	  const momval_t curval = vst_valarr_mom[vst_top_mom - 1];
-	  MOM_OUT (mom_stdout,
-		   MOMOUT_LITERAL (ANSI_BOLD "top/"),
-		   MOMOUT_DEC_INT ((int) vst_top_mom), NULL);
+	  MOM_OUT
+	    (mom_stdout,
+	     MOMOUT_LITERAL
+	     (ANSI_BOLD "top/"), MOMOUT_DEC_INT ((int) vst_top_mom), NULL);
 	  if (markdepth > 0)
-	    MOM_OUT (mom_stdout,
-		     MOMOUT_LITERAL ("("),
+	    MOM_OUT (mom_stdout, MOMOUT_LITERAL ("("),
 		     MOMOUT_DEC_INT ((int) markdepth),
 		     MOMOUT_LITERAL (")"), NULL);
-	  MOM_OUT (mom_stdout,
-		   MOMOUT_LITERAL (":" ANSI_NORMAL " "),
+	  MOM_OUT (mom_stdout, MOMOUT_LITERAL (":" ANSI_NORMAL " "),
 		   MOMOUT_VALUE (curval));
 	  if (mom_is_item (curval) && !mom_item_get_name (curval.pitem))
 	    {
@@ -684,10 +721,15 @@ cmd_do_top_mom (const char *lin)
 		mom_item_get_attribute (curval.pitem, mom_named__comment);
 	      mom_unlock_item (curval.pitem);
 	      if (mom_is_string (commentv))
-		MOM_OUT (mom_stdout, MOMOUT_SPACE (48),
-			 MOMOUT_LITERAL (" " ANSI_BOLD "//: "
-					 ANSI_NORMAL),
-			 MOMOUT_LITERALV (mom_string_cstr (commentv)), NULL);
+		MOM_OUT
+		  (mom_stdout,
+		   MOMOUT_SPACE
+		   (48),
+		   MOMOUT_LITERAL
+		   (" " ANSI_BOLD
+		    "//: "
+		    ANSI_NORMAL),
+		   MOMOUT_LITERALV (mom_string_cstr (commentv)), NULL);
 	    }
 	  MOM_OUT (mom_stdout, MOMOUT_NEWLINE ());
 	}
@@ -721,8 +763,9 @@ cmd_do_pop_mom (const char *lin)
   if (vst_top_mom == 0)
     printf (ANSI_BOLD "**stack emptied**" ANSI_NORMAL "\n");
   else
-    printf (ANSI_BOLD "** %d levels remaining on stack**" ANSI_NORMAL "\n",
-	    vst_top_mom);
+    printf (ANSI_BOLD
+	    "** %d levels remaining on stack**"
+	    ANSI_NORMAL "\n", vst_top_mom);
 }
 
 
@@ -740,9 +783,11 @@ mom_plugin_init (const char *arg)
 static void
 cmd_push_value_mom (momval_t val)
 {
-  MOM_DEBUG (cmd, MOMOUT_LITERAL ("pushing value:"),
-	     MOMOUT_VALUE ((const momval_t) val),
-	     MOMOUT_SPACE (48),
+  MOM_DEBUG (cmd,
+	     MOMOUT_LITERAL
+	     ("pushing value:"),
+	     MOMOUT_VALUE
+	     ((const momval_t) val), MOMOUT_SPACE (48),
 	     MOMOUT_LITERAL (" at level "),
 	     MOMOUT_DEC_INT ((int) vst_top_mom), NULL);
   cmd_stack_push_mom (val);
@@ -763,35 +808,45 @@ cmd_interpret_mom (const char *lin)
 	  if (name[70 - 1])
 	    MOM_WARNPRINTF ("too long name in command %s", lin);
 	  itm = mom_get_item_of_name (name);
-	  MOM_DEBUG (cmd, MOMOUT_LITERAL ("got item:"),
-		     MOMOUT_ITEM ((const momitem_t *) itm),
+	  MOM_DEBUG (cmd,
+		     MOMOUT_LITERAL
+		     ("got item:"),
+		     MOMOUT_ITEM
+		     ((const momitem_t *) itm),
 		     MOMOUT_LITERAL (" of name "),
 		     MOMOUT_LITERALV ((const char *) name));
 	  if (!itm)
 	    {
-	      printf ("\n" ANSI_BOLD "Unknown name" ANSI_NORMAL
+	      printf ("\n"
+		      ANSI_BOLD
+		      "Unknown name"
+		      ANSI_NORMAL
 		      " %s. Creating it (unless comment is empty or .)\n",
 		      name);
 	      char *commentline = readline ("comment: ");
 	      if (isprint (commentline[0]) && commentline[0] != '.')
 		{
 		  itm = mom_make_item ();
-		  mom_item_put_attribute ((momitem_t *) itm,
-					  mom_named__comment,
-					  (momval_t)
-					  mom_make_string (commentline));
+		  mom_item_put_attribute
+		    ((momitem_t *)
+		     itm,
+		     mom_named__comment,
+		     (momval_t) mom_make_string (commentline));
 		  mom_register_item_named_cstr ((momitem_t *) itm, name);
 		  mom_item_set_space ((momitem_t *) itm, momspa_root);
-		  MOM_INFORM (MOMOUT_LITERAL ("command created named item:"),
-			      MOMOUT_ITEM ((const momitem_t *) itm));
+		  MOM_INFORM
+		    (MOMOUT_LITERAL
+		     ("command created named item:"),
+		     MOMOUT_ITEM ((const momitem_t *) itm));
 		  cmd_push_value_mom ((momval_t) itm);
 		  add_history (lin);
 		  return;
 		}
 	      else
 		{
-		  printf ("\n" ANSI_BOLD "Ignoring item" ANSI_NORMAL " %s\n",
-			  name);
+		  printf ("\n"
+			  ANSI_BOLD
+			  "Ignoring item" ANSI_NORMAL " %s\n", name);
 		  return;
 		}
 	    }
@@ -841,25 +896,31 @@ cmd_interpret_mom (const char *lin)
 	}
       else if (!lin[1] || isspace (lin[1]))
 	{
-	  printf ("\n" ANSI_BOLD "Anonymous item" ANSI_NORMAL
+	  printf ("\n"
+		  ANSI_BOLD
+		  "Anonymous item"
+		  ANSI_NORMAL
 		  ". Creating it (unless comment is empty or .)\n");
 	  char *commentline = readline ("comment: ");
 	  if (isprint (commentline[0]) && commentline[0] != '.')
 	    {
 	      itm = mom_make_item ();
-	      mom_item_put_attribute (itm, mom_named__comment,
-				      (momval_t)
-				      mom_make_string (commentline));
+	      mom_item_put_attribute
+		(itm,
+		 mom_named__comment,
+		 (momval_t) mom_make_string (commentline));
 	      mom_item_set_space (itm, momspa_root);
-	      MOM_INFORM (MOMOUT_LITERAL ("command created anonymous item:"),
-			  MOMOUT_ITEM ((const momitem_t *) itm));
+	      MOM_INFORM
+		(MOMOUT_LITERAL
+		 ("command created anonymous item:"),
+		 MOMOUT_ITEM ((const momitem_t *) itm));
 	      cmd_push_value_mom ((momval_t) itm);
 	      add_history (lin);
 	    }
 	  else
 	    {
-	      printf ("\n" ANSI_BOLD "Ignoring anonymous item" ANSI_NORMAL
-		      "\n");
+	      printf ("\n"
+		      ANSI_BOLD "Ignoring anonymous item" ANSI_NORMAL "\n");
 	      return;
 	    }
 	}
@@ -867,8 +928,10 @@ cmd_interpret_mom (const char *lin)
 	{
 	  char idstr[MOM_IDSTRING_LEN + 1];
 	  memset (idstr, 0, sizeof (idstr));
-	  if (sscanf (lin, MOM_IDSTRING_FMT, idstr) > 0
-	      && mom_looks_like_random_id_cstr (idstr, NULL))
+	  if (sscanf
+	      (lin,
+	       MOM_IDSTRING_FMT,
+	       idstr) > 0 && mom_looks_like_random_id_cstr (idstr, NULL))
 	    {
 	      itm = mom_get_item_of_identcstr (idstr);
 	      if (!itm)
@@ -958,10 +1021,10 @@ momplugin_after_load (void)
       lin = NULL;
       MOM_DEBUGPRINTF (cmd, "before readline prompt=%s", prompt);
       lin = readline (prompt);
-      cmd_interpret_mom (lin);
       MOM_DEBUGPRINTF (cmd, "after readline lin=%s", lin);
       if (!lin)
 	break;
+      cmd_interpret_mom (lin);
     };
   MOM_INFORMPRINTF ("momplug_cmd ending after load");
 }
