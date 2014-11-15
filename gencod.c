@@ -2196,15 +2196,28 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 			    MOMOUT_DEC_INT (nbinstr), MOMOUT_SPACE (48),
 			    MOMOUT_LITERAL ("in block:"),
 			    MOMOUT_ITEM ((const momitem_t *) blkitm), NULL);
-#warning should emit the formal arguments with MOMPFR_INT or MOMPFR_VALUE etc...
-	  MOM_FATAPRINTF ("unimplemented call");
+#warning should emit the call arguments with MOMPFR_INT or MOMPFR_VALUE etc...
+	  MOM_FATAL (MOMOUT_LITERAL ("unimplemented call:"),
+		     MOMOUT_VALUE (curinsv),
+		     MOMOUT_SPACE (48), MOMOUT_LITERAL ("at rank#"),
+		     MOMOUT_DEC_INT (ix), MOMOUT_LITERAL ("/"),
+		     MOMOUT_DEC_INT (nbinstr), MOMOUT_SPACE (48),
+		     MOMOUT_LITERAL (" in block "),
+		     MOMOUT_ITEM ((const momitem_t *) blkitm), NULL);;
 	}
       //// RETURN instruction
       else if ((opitm == mom_named__return && insarity <= 1)
 	       || curinsv.pitem == mom_named__return)
 	{
 	  /* *return(<expr>) or `return` */
-	  MOM_FATAPRINTF ("unimplemented return");
+#warning should emit the return
+	  MOM_FATAL (MOMOUT_LITERAL ("unimplemented return:"),
+		     MOMOUT_VALUE (curinsv),
+		     MOMOUT_SPACE (48), MOMOUT_LITERAL ("at rank#"),
+		     MOMOUT_DEC_INT (ix), MOMOUT_LITERAL ("/"),
+		     MOMOUT_DEC_INT (nbinstr), MOMOUT_SPACE (48),
+		     MOMOUT_LITERAL (" in block "),
+		     MOMOUT_ITEM ((const momitem_t *) blkitm), NULL);;
 	}
       ///// error case - bad instruction
       else

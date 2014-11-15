@@ -29,21 +29,21 @@
 
 const char mom_plugin_GPL_compatible[] = "GPLv3+";
 
-#define COMMANDS(CMD)				\
-  CMD(dump,"dump state & continue")		\
-  CMD(dup,"duplicate top.  Alias %")		\
-  CMD(exit,"dump & exit")			\
-  CMD(help,"give this help")			\
-  CMD(pop,"pop [N] elements.  Alias ^")		\
-  CMD(mark,"push mark. Alias (")		\
-  CMD(quit,"quit without dumping")		\
-  CMD(node,"make node to mark.  Alias *")      	\
-  CMD(set,"make set to mark.  Alias }")		\
-  CMD(tuple,"make tuple to mark.  Alias ]")	\
-  CMD(stack,"print the stack.  Alias !")	\
-  CMD(status,"print status info")		\
-  CMD(xplode,"explode top aggregate. Alias &")	\
-  CMD(top,"print the top of stack.  Alias = ")
+#define COMMANDS(CMD)						\
+  CMD(dump,"dump state & continue")				\
+  CMD(dup,"duplicate top.  Alias %")				\
+  CMD(exit,"dump & exit")					\
+  CMD(help,"give this help")					\
+  CMD(pop,"pop [N] elements, all if ',pop *'.  Alias ^")	\
+  CMD(mark,"push mark. Alias (")				\
+  CMD(quit,"quit without dumping")				\
+  CMD(node,"[Connective]; make node to mark.  Alias *")		\
+  CMD(set,"make set to mark.  Alias }")				\
+  CMD(tuple,"make tuple to mark.  Alias ]")			\
+  CMD(stack,"print the stack.  Alias !")			\
+  CMD(status,"print status info")				\
+  CMD(xplode,"explode top aggregate. Alias &")			\
+  CMD(top,"print the top of stack.  Alias = ")			\
 				/* end of COMMANDS */
 
 // the command stack has values and marks
@@ -323,9 +323,7 @@ cmd_do_quit_mom (const char *lin)
   char timbuf[80];
   memset (timbuf, 0, sizeof (timbuf));
   MOM_INFORMPRINTF
-    ("command initiated quit at %s (elapsed %.3f, cpu %.3f sec.)\n",
-     mom_strftime_centi (timbuf, sizeof (timbuf), "%H:%M:%S.__",
-			 mom_clock_time (CLOCK_REALTIME)),
+    ("command initiated quit (elapsed %.3f, cpu %.3f sec.)",
      mom_elapsed_real_time (), mom_clock_time (CLOCK_PROCESS_CPUTIME_ID));
   exit (EXIT_SUCCESS);
 
@@ -485,65 +483,23 @@ cmd_do_node_mom (const char *lin)
   memset (cmdbuf, 0, sizeof (cmdbuf));
   memset (nambuf, 0, sizeof (nambuf));
   int pos = -1;
-  int arity = -1;
   int markdepth = cmd_stack_mark_depth_mom ();
   MOM_DEBUGPRINTF (cmd, "start do_node lin=%s markdepth=%d", lin, markdepth);
-#warning still buggy
-  /** buggy for input:
-         (
-         agenda
-         block
-         code
-         *do
-     **/
-  if (sscanf (lin, " %d %n", &arity, &pos) > 0 && pos > 0 && arity >= 0
-      && arity + 1 < markdepth && arity < (int) vst_top_mom)
-    {
-      MOM_DEBUGPRINTF (cmd, "do_node arity=%d", arity);
-      connitm = mom_value_to_item (cmd_stack_nth_value_mom (1));
-      if (connitm)
-	cmd_stack_pop_mom (1);
-      momval_t *varr = cmd_stack_nth_ptr_mom (-(arity + 1));
-      nodv = (momval_t) mom_make_node_from_array (connitm, arity, varr);
-      MOM_DEBUG (cmd, MOMOUT_LITERAL ("do_node nodv="),
-		 MOMOUT_VALUE ((const momval_t) nodv));
-      if (nodv.ptr)
-	{
-	  cmd_stack_pop_mom (arity);
-	  snprintf (cmdbuf, sizeof (cmdbuf), ",node %d", arity);
-	  add_history (cmdbuf);
-	}
-    }
-  else
-    if (sscanf (lin, " %70[a-zA-Z0-9_] %d %n", nambuf, &arity,
-		&pos) >= 2 && (isalpha (nambuf[0]) || nambuf[0] == '_')
-	&& arity >= 0 && pos > 0 && arity < (int) vst_top_mom)
-    {
-      MOM_DEBUGPRINTF (cmd, "do_node nambuf=%s arity=%d", nambuf, arity);
-      connitm = mom_get_item_of_name_or_ident_cstr (nambuf);
-      momval_t *varr = cmd_stack_nth_ptr_mom (-(arity));
-      nodv = (momval_t) mom_make_node_from_array (connitm, arity, varr);
-      MOM_DEBUG (cmd, MOMOUT_LITERAL ("do_node nodv="),
-		 MOMOUT_VALUE ((const momval_t) nodv));
-      if (nodv.ptr)
-	{
-	  cmd_stack_pop_mom (arity);
-	  snprintf (cmdbuf, sizeof (cmdbuf), ",node %s %d",
-		    mom_string_cstr ((momval_t)
-				     mom_item_get_name_or_idstr
-				     (connitm)), arity);
-	  add_history (cmdbuf);
-	}
-    }
-  else
-    if (sscanf (lin, " %70[a-zA-Z0-9_] %n", nambuf,
-		&pos) >= 1 && (isalpha (nambuf[0])
-			       || nambuf[0] == '_') && markdepth >= 0)
+  if (sscanf (lin, " %70[a-zA-Z0-9_] %n", nambuf,
+	      &pos) >= 1 && (isalpha (nambuf[0])
+			     || nambuf[0] == '_') && markdepth >= 0)
     {
       MOM_DEBUGPRINTF (cmd, "do_node nambuf=%s markdepth=%d", nambuf,
 		       markdepth);
       connitm = mom_get_item_of_name_or_ident_cstr (nambuf);
-      momval_t *varr = cmd_stack_nth_ptr_mom (-(markdepth - 1));
+      momval_t *varr = NULL;
+      if (markdepth == 0)
+	varr = NULL;
+      else if (markdepth == 1)
+	varr = cmd_stack_nth_ptr_mom (-1);
+      else
+	varr = cmd_stack_nth_ptr_mom (-(markdepth - 1));
+      MOM_DEBUGPRINTF (cmd, "connitm@%p varr@%p", connitm, varr);
       nodv = (momval_t) mom_make_node_from_array (connitm, markdepth, varr);
       MOM_DEBUG (cmd, MOMOUT_LITERAL ("do_node nodv="),
 		 MOMOUT_VALUE ((const momval_t) nodv));
@@ -563,7 +519,9 @@ cmd_do_node_mom (const char *lin)
       connitm = mom_value_to_item (cmd_stack_nth_value_mom (1));
       if (connitm)
 	cmd_stack_pop_mom (1);
-      momval_t *varr = cmd_stack_nth_ptr_mom (-(markdepth - 1));
+      momval_t *varr = NULL;
+      if (markdepth > 1)
+	varr = cmd_stack_nth_ptr_mom (-(markdepth - 1));
       nodv =
 	(momval_t) mom_make_node_from_array (connitm, markdepth - 1, varr);
       MOM_DEBUG (cmd, MOMOUT_LITERAL ("do_node nodv="),
@@ -586,15 +544,12 @@ cmd_do_node_mom (const char *lin)
     {
       MOM_OUT
 	(mom_stdout,
-	 MOMOUT_LITERAL
-	 (ANSI_BOLD
-	  "made node"
-	  ANSI_NORMAL
-	  " of connective: "
-	  ANSI_BOLD),
+	 MOMOUT_LITERAL (ANSI_BOLD "made node" ANSI_NORMAL " of connective: "
+			 ANSI_BOLD),
 	 MOMOUT_ITEM ((const momitem_t *) connitm),
-	 MOMOUT_LITERAL (ANSI_NORMAL " of arity "),
-	 MOMOUT_DEC_INT ((int) mom_node_arity (nodv)), MOMOUT_NEWLINE ());
+	 MOMOUT_LITERAL (ANSI_NORMAL ", arity " ANSI_BOLD),
+	 MOMOUT_DEC_INT ((int) mom_node_arity (nodv)),
+	 MOMOUT_LITERAL (ANSI_NORMAL), MOMOUT_NEWLINE ());
       cmd_stack_push_mom (nodv);
     }
   else
@@ -704,6 +659,10 @@ cmd_do_top_mom (const char *lin)
     printf ("\n" ANSI_BOLD "== no top because empty ==" ANSI_NORMAL "\n");
   else
     {
+      MOM_DEBUGPRINTF (cmd,
+		       "do_top vst_top_mom=%d, vst_valarr_mom[%d].ptr=@%p",
+		       vst_top_mom, vst_top_mom - 1,
+		       (void *) vst_valarr_mom[vst_top_mom - 1].ptr);
       if (vst_valarr_mom[vst_top_mom - 1].ptr == MOM_EMPTY)
 	printf ("\n" ANSI_BOLD "** top mark **" ANSI_NORMAL "\n");
       else
@@ -748,19 +707,25 @@ cmd_do_top_mom (const char *lin)
 static void
 cmd_do_pop_mom (const char *lin)
 {
+  char *endptr = NULL;
   MOM_DEBUGPRINTF (cmd, "start do_pop lin=%s", lin);
   if (vst_top_mom == 0)
     {
       printf (ANSI_BOLD "**stack was empty**" ANSI_NORMAL "\n");
       return;
     }
-  int nblev = atoi (lin);
-  if (nblev > 1)
+  long nblev = strtol (lin, &endptr, 0);
+  if (nblev >= 1 && (*endptr == '\0' || isspace (*endptr)))
     {
       cmd_stack_pop_mom (nblev);
       char cmdbuf[32];
-      snprintf (cmdbuf, sizeof (cmdbuf), ",pop %d", nblev);
+      snprintf (cmdbuf, sizeof (cmdbuf), ",pop %ld", nblev);
       add_history (cmdbuf);
+    }
+  else if (*lin == '*' || *lin == '_')
+    {
+      cmd_stack_pop_mom (vst_top_mom);
+      add_history (",pop *");
     }
   else
     {
@@ -981,6 +946,11 @@ cmd_interpret_mom (const char *lin)
   else if (lin[0] == '=')	/* alias for top */
     {
       cmd_do_top_mom (lin + 1);
+      return;
+    }
+  else if (lin[0] == '!')	/* alias for stack */
+    {
+      cmd_do_stack_mom (lin + 1);
       return;
     }
   else if (lin[0] == '^')	/* alias for pop */
