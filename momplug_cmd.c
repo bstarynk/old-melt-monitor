@@ -69,6 +69,9 @@ cmd_stack_push_mom (momval_t val)
 	  MOM_GC_FREE (vst_valarr_mom);
 	}
       vst_valarr_mom = newvalarr;
+      vst_size_mom = newsiz;
+      MOM_DEBUGPRINTF (cmd, "grow push size=%d valarr@%p",
+		       vst_size_mom, vst_valarr_mom);
     }
   vst_valarr_mom[vst_top_mom] = val;
   vst_top_mom++;
@@ -88,6 +91,9 @@ cmd_stack_push_mark_mom (void)
 	  MOM_GC_FREE (vst_valarr_mom);
 	}
       vst_valarr_mom = newvalarr;
+      vst_size_mom = newsiz;
+      MOM_DEBUGPRINTF (cmd, "grow pushmark size=%d valarr@%p",
+		       vst_size_mom, vst_valarr_mom);
     }
   vst_valarr_mom[vst_top_mom].ptr = MOM_EMPTY;
   vst_top_mom++;
