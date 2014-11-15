@@ -2270,15 +2270,66 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
       else if ((opitm == mom_named__return && insarity <= 1)
 	       || curinsv.pitem == mom_named__return)
 	{
-	  /* *return(<expr>) or `return` */
-#warning should emit the return
-	  MOM_FATAL (MOMOUT_LITERAL ("unimplemented return:"),
-		     MOMOUT_VALUE (curinsv),
-		     MOMOUT_SPACE (48), MOMOUT_LITERAL ("at rank#"),
-		     MOMOUT_DEC_INT (ix), MOMOUT_LITERAL ("/"),
-		     MOMOUT_DEC_INT (nbinstr), MOMOUT_SPACE (48),
-		     MOMOUT_LITERAL (" in block "),
-		     MOMOUT_ITEM ((const momitem_t *) blkitm), NULL);;
+	  /* *return(<expr> [, <expr2> [,<expr3>]]) or `return` */
+	  if (cg->cgen_routkind == cgr_funt)
+	    {
+	      if (insarity > 3)
+		CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("too many results in "),
+				MOMOUT_VALUE (curinsv), MOMOUT_SPACE (48),
+				MOMOUT_LITERAL ("at rank#"),
+				MOMOUT_DEC_INT (ix), MOMOUT_LITERAL ("/"),
+				MOMOUT_DEC_INT (nbinstr),
+				MOMOUT_SPACE (48),
+				MOMOUT_LITERAL (" in block "),
+				MOMOUT_ITEM ((const momitem_t *) blkitm),
+				NULL);
+	      if (insarity > 0)
+		{
+		  MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (),
+			   MOMOUT_LITERAL ("mom_item_taklet_set_"),
+			   MOMOUT_DEC_INT ((int) insarity),
+			   MOMOUT_LITERAL ("res (momtasklet"), NULL);
+		  for (int rix = 0; rix < (int) insarity; rix++)
+		    {
+		      MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (","),
+			       MOMOUT_SPACE (40), MOMOUT_LITERAL ("("));
+		      momval_t curresv = mom_node_nth (curinsv, rix);
+		      if (momtypenc_val != emit_expr_cgen (cg, curresv))
+			CGEN_ERROR_MOM (cg,
+					MOMOUT_LITERAL
+					("non-value result in "),
+					MOMOUT_VALUE (curinsv),
+					MOMOUT_SPACE (48),
+					MOMOUT_LITERAL ("at rank#"),
+					MOMOUT_DEC_INT (ix),
+					MOMOUT_LITERAL ("/"),
+					MOMOUT_DEC_INT (nbinstr),
+					MOMOUT_SPACE (48),
+					MOMOUT_LITERAL (" in block "),
+					MOMOUT_ITEM ((const momitem_t *)
+						     blkitm), NULL);
+		      MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (")"),
+			       MOMOUT_SPACE (40), NULL);
+		    }
+		  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (");"),
+			   MOMOUT_NEWLINE ());
+		}
+	      MOM_OUT (&cg->cgen_outbody,
+		       MOMOUT_LITERAL ("return momroutres_pop;"),
+		       MOMOUT_NEWLINE ());
+	    }
+	  else if (cg->cgen_routkind == cgr_proc)
+	    {
+#warning should return from procedure but check its ctype
+	      MOM_FATAL (MOMOUT_LITERAL ("unimplemented procedure return:"),
+			 MOMOUT_VALUE (curinsv),
+			 MOMOUT_SPACE (48), MOMOUT_LITERAL ("at rank#"),
+			 MOMOUT_DEC_INT (ix), MOMOUT_LITERAL ("/"),
+			 MOMOUT_DEC_INT (nbinstr), MOMOUT_SPACE (48),
+			 MOMOUT_LITERAL (" in block "),
+			 MOMOUT_ITEM ((const momitem_t *) blkitm), NULL);;
+	    }
+
 	}
       ///// error case - bad instruction
       else
