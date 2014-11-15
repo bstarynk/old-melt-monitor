@@ -362,6 +362,10 @@ mom_generate_c_module (momitem_t *moditm, const char *dirname, char **perrmsg)
     fprintf (f, "\n\n\n//// implementations\n");
     fflush (mycgen.cgen_outbody.mout_file);
     fputs (mycgen.cgen_outbody.mout_data, f);
+    fprintf (f, "\n\n // module license\n"
+	     "const char mom_module_GPL_compatible[]=\n"
+	     "\t\"GPLv3+, generated module %s\";\n",
+	     mom_ident_cstr_of_item (moditm));
     fprintf (f,
 	     "\n\n\n//// end of generated file " MOM_SHARED_MODULE_PREFIX
 	     "%s.c\n", mom_ident_cstr_of_item (moditm));

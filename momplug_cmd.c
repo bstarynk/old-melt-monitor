@@ -33,6 +33,7 @@ const char mom_plugin_GPL_compatible[] = "GPLv3+";
   CMD(dump,"dump state & continue")				\
   CMD(dup,"duplicate top.  Alias %")				\
   CMD(exit,"dump & exit")					\
+  CMD(gencmod,"generate C module")				\
   CMD(help,"give this help")					\
   CMD(pop,"pop [N] elements, all if ',pop *'.  Alias ^")	\
   CMD(mark,"push mark. Alias (")				\
@@ -315,6 +316,90 @@ cmd_do_help_mom (const char *lin)
   putchar ('\n');
   fflush (NULL);
 }
+
+static void
+cmd_do_gencmod_mom (const char *lin)
+{
+  momitem_t *moditm = NULL;
+  int pos = -1;
+  char nambuf[80];
+  char cmdbuf[sizeof (nambuf) + 20];
+  char *errmsg = NULL;
+  memset (nambuf, 0, sizeof (nambuf));
+  memset (cmdbuf, 0, sizeof (cmdbuf));
+  MOM_DEBUGPRINTF (cmd, "start do_gencmod lin=%s", lin);
+  if (sscanf (lin, " %70[a-zA-Z0-9_] %n", nambuf,
+	      &pos) >= 1 && (isalpha (nambuf[0]) || nambuf[0] == '_'))
+    {
+      moditm = mom_get_item_of_name_or_ident_cstr (nambuf);
+      if (!moditm)
+	{
+	  printf ("Bad module name %s - no C code generation\n", nambuf);
+	  return;
+	}
+      else
+	{
+	  snprintf (cmdbuf, sizeof (cmdbuf), ",gencmod %s", nambuf);
+	  add_history (cmdbuf);
+	}
+    }
+  else
+    {
+      moditm = mom_value_to_item (cmd_stack_nth_value_mom (-1));
+      if (!moditm)
+	{
+	  printf ("No module item at top of stack\n");
+	  return;
+	}
+      else
+	{
+	  add_history (",gencmod");
+	}
+    };
+  MOM_INFORM (MOMOUT_LITERAL ("before compilation to C of module:"),
+	      MOMOUT_ITEM ((const momitem_t *) moditm));
+  int errcod = mom_generate_c_module (moditm, NULL, &errmsg);
+  if (errcod)
+    {
+      MOM_WARNING (MOMOUT_LITERAL ("failed compilation of module item:"),
+		   MOMOUT_ITEM ((const momitem_t *) moditm),
+		   MOMOUT_SPACE (48),
+		   MOMOUT_LITERALV ((const char *) errmsg),
+		   MOMOUT_SPACE (48),
+		   MOMOUT_LITERAL (". Error code#"), MOMOUT_DEC_INT (errcod));
+      printf (ANSI_BOLD "** module C code generation failed**" ANSI_NORMAL
+	      "\n");
+      return;
+    }
+  MOM_INFORM (MOMOUT_LITERAL ("successful generation of C for module:"),
+	      MOMOUT_ITEM ((const momitem_t *) moditm));
+  snprintf (cmdbuf, sizeof (cmdbuf),
+	    "make " MOM_SHARED_MODULE_DIRECTORY "/" MOM_SHARED_MODULE_PREFIX
+	    "%s.so", mom_ident_cstr_of_item (moditm));
+  printf (ANSI_BOLD "running:" ANSI_NORMAL " %s\n", cmdbuf);
+  fflush (NULL);
+  errcod = system (cmdbuf);
+  if (errcod)
+    {
+      MOM_WARNING (MOMOUT_LITERAL ("failed command:"),
+		   MOMOUT_LITERALV ((const char *) cmdbuf),
+		   MOMOUT_SPACE (48),
+		   MOMOUT_LITERAL ("with error code:"),
+		   MOMOUT_DEC_INT (errcod));
+      return;
+    }
+  if (!mom_load_module (NULL, mom_ident_cstr_of_item (moditm)))
+    {
+      MOM_WARNING (MOMOUT_LITERAL ("failed to load generated module:"),
+		   MOMOUT_ITEM ((const momitem_t *) moditm));
+      return;
+    }
+  MOM_INFORM (MOMOUT_LITERAL ("successful loading of generated module:"),
+	      MOMOUT_ITEM ((const momitem_t *) moditm));
+  printf (ANSI_BOLD "completed generation and loading of module %s"
+	  ANSI_NORMAL "\n", mom_ident_cstr_of_item (moditm));
+}
+
 
 static void
 cmd_do_quit_mom (const char *lin)
