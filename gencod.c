@@ -2198,7 +2198,7 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 			    MOMOUT_DEC_INT (nbinstr), MOMOUT_SPACE (48),
 			    MOMOUT_LITERAL ("in block:"),
 			    MOMOUT_ITEM ((const momitem_t *) blkitm), NULL);
-	  for (int aix = 2; aix < insarity; aix++)
+	  for (int aix = 2; aix < (int) insarity; aix++)
 	    {
 	      momval_t curargexpv = mom_node_nth (curinsv, aix);
 	      MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (","),
@@ -2206,11 +2206,40 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 	      momtypenc_t curargty = emit_ctype_cgen (cg, NULL, curargexpv);
 	      switch (curargty)
 		{
-#warning should emit the call arguments with MOMPFR_INT or MOMPFR_VALUE etc...
 		case momtypenc_int:
+		  MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (48),
+			   MOMOUT_LITERAL ("MOMPFR_INT("), NULL);
+		  if (momtypenc_int != emit_expr_cgen (cg, curargexpv))
+		    MOM_FATAL (MOMOUT_LITERAL ("corrupted call:"),
+			       MOMOUT_VALUE ((const momval_t) curinsv),
+			       MOMOUT_LITERAL ("; corrupted non-int arg:"),
+			       MOMOUT_VALUE ((const momval_t) curargexpv),
+			       NULL);
+		  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (")"));
+		  break;
 		case momtypenc_val:
-		case momtypenc_string:
+		  MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (48),
+			   MOMOUT_LITERAL ("MOMPFR_VAL("), NULL);
+		  if (momtypenc_val != emit_expr_cgen (cg, curargexpv))
+		    MOM_FATAL (MOMOUT_LITERAL ("corrupted call:"),
+			       MOMOUT_VALUE ((const momval_t) curinsv),
+			       MOMOUT_LITERAL ("; corrupted non-val arg:"),
+			       MOMOUT_VALUE ((const momval_t) curargexpv),
+			       NULL);
+		  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (")"));
+		  break;
 		case momtypenc_double:
+		  MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (48),
+			   MOMOUT_LITERAL ("MOMPFR_DOUBLE("), NULL);
+		  if (momtypenc_double != emit_expr_cgen (cg, curargexpv))
+		    MOM_FATAL (MOMOUT_LITERAL ("corrupted call:"),
+			       MOMOUT_VALUE ((const momval_t) curinsv),
+			       MOMOUT_LITERAL ("; corrupted non-double arg:"),
+			       MOMOUT_VALUE ((const momval_t) curargexpv),
+			       NULL);
+		  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (")"));
+		  break;
+		case momtypenc_string:
 		default:
 		  {
 		    char tybuf[4] = { 0 };
@@ -2234,13 +2263,8 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 
 		}
 	    }
-	  MOM_FATAL (MOMOUT_LITERAL ("unimplemented call:"),
-		     MOMOUT_VALUE (curinsv),
-		     MOMOUT_SPACE (48), MOMOUT_LITERAL ("at rank#"),
-		     MOMOUT_DEC_INT (ix), MOMOUT_LITERAL ("/"),
-		     MOMOUT_DEC_INT (nbinstr), MOMOUT_SPACE (48),
-		     MOMOUT_LITERAL (" in block "),
-		     MOMOUT_ITEM ((const momitem_t *) blkitm), NULL);;
+	  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (", NULL);"),
+		   MOMOUT_SPACE (32));
 	}
       //// RETURN instruction
       else if ((opitm == mom_named__return && insarity <= 1)
