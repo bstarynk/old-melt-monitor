@@ -2320,16 +2320,69 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 	    }
 	  else if (cg->cgen_routkind == cgr_proc)
 	    {
-#warning should return from procedure but check its ctype
-	      MOM_FATAL (MOMOUT_LITERAL ("unimplemented procedure return:"),
-			 MOMOUT_VALUE (curinsv),
-			 MOMOUT_SPACE (48), MOMOUT_LITERAL ("at rank#"),
-			 MOMOUT_DEC_INT (ix), MOMOUT_LITERAL ("/"),
-			 MOMOUT_DEC_INT (nbinstr), MOMOUT_SPACE (48),
-			 MOMOUT_LITERAL (" in block "),
-			 MOMOUT_ITEM ((const momitem_t *) blkitm), NULL);;
+	      momval_t procv = mom_item_assoc_get (cg->cgen_globassocitm,
+						   cg->cgen_curoutitm);
+	      assert (mom_node_conn (procv) == mom_named__procedure
+		      && mom_node_arity (procv) == 3);
+	      momval_t prorestypv = mom_node_nth (procv, 2);
+	      if (insarity > 1)
+		CGEN_ERROR_MOM (cg,
+				MOMOUT_LITERAL
+				("too many procedure results in "),
+				MOMOUT_VALUE (curinsv), MOMOUT_SPACE (48),
+				MOMOUT_LITERAL ("at rank#"),
+				MOMOUT_DEC_INT (ix), MOMOUT_LITERAL ("/"),
+				MOMOUT_DEC_INT (nbinstr), MOMOUT_SPACE (48),
+				MOMOUT_LITERAL (" in block "),
+				MOMOUT_ITEM ((const momitem_t *) blkitm),
+				NULL);
+	      if (insarity == 0 || curinsv.pitem == mom_named__return)
+		{
+		  if (!prorestypv.ptr || prorestypv.pitem == mom_named__void)
+		    MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (48),
+			     MOMOUT_LITERAL ("return;"), MOMOUT_NEWLINE ());
+		  else
+		    MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (48),
+			     MOMOUT_LITERAL ("return momresult;"),
+			     MOMOUT_NEWLINE ());
+		}
+	      else if (insarity == 1 && prorestypv.ptr
+		       && prorestypv.pitem != mom_named__void)
+		{
+		  momval_t resexprv = mom_node_nth (curinsv, 0);
+		  MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (48),
+			   MOMOUT_LITERAL ("return"), MOMOUT_SPACE (48),
+			   NULL);
+		  if (emit_ctype_cgen (cg, NULL, prorestypv) !=
+		      emit_expr_cgen (cg, resexprv))
+		    CGEN_ERROR_MOM (cg,
+				    MOMOUT_LITERAL
+				    ("incompatible procedure result in "),
+				    MOMOUT_VALUE (curinsv), MOMOUT_SPACE (48),
+				    MOMOUT_LITERAL ("at rank#"),
+				    MOMOUT_DEC_INT (ix), MOMOUT_LITERAL ("/"),
+				    MOMOUT_DEC_INT (nbinstr),
+				    MOMOUT_SPACE (48),
+				    MOMOUT_LITERAL (" in block "),
+				    MOMOUT_ITEM ((const momitem_t *) blkitm),
+				    NULL);
+		  MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (48),
+			   MOMOUT_LITERAL (";"), MOMOUT_NEWLINE ());
+		}
+	      else
+		CGEN_ERROR_MOM (cg,
+				MOMOUT_LITERAL ("bad procedure result in "),
+				MOMOUT_VALUE (curinsv), MOMOUT_SPACE (48),
+				MOMOUT_LITERAL ("at rank#"),
+				MOMOUT_DEC_INT (ix), MOMOUT_LITERAL ("/"),
+				MOMOUT_DEC_INT (nbinstr), MOMOUT_SPACE (48),
+				MOMOUT_LITERAL (" in block "),
+				MOMOUT_ITEM ((const momitem_t *) blkitm),
+				NULL);
 	    }
-
+	  else
+	    MOM_FATAPRINTF ("invalid cgen_type #%d for return",
+			    (int) cg->cgen_routkind);
 	}
       ///// error case - bad instruction
       else
