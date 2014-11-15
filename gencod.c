@@ -2184,6 +2184,8 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 			    MOMOUT_ITEM ((const momitem_t *) blkitm), NULL);
 	  MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (),
 		   MOMOUT_LITERAL ("/* call */"), MOMOUT_NEWLINE (),
+		   MOMOUT_LITERAL ("mom_item_tasklet_clear_res(momtasklet);"),
+		   MOMOUT_NEWLINE (),
 		   MOMOUT_LITERAL
 		   ("mom_item_tasklet_push_frame(momtasklet, "), NULL);
 	  if (emit_expr_cgen (cg, funexprv) != momtypenc_val)
@@ -2196,7 +2198,42 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 			    MOMOUT_DEC_INT (nbinstr), MOMOUT_SPACE (48),
 			    MOMOUT_LITERAL ("in block:"),
 			    MOMOUT_ITEM ((const momitem_t *) blkitm), NULL);
+	  for (int aix = 2; aix < insarity; aix++)
+	    {
+	      momval_t curargexpv = mom_node_nth (curinsv, aix);
+	      MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (","),
+		       MOMOUT_SPACE (48), NULL);
+	      momtypenc_t curargty = emit_ctype_cgen (cg, NULL, curargexpv);
+	      switch (curargty)
+		{
 #warning should emit the call arguments with MOMPFR_INT or MOMPFR_VALUE etc...
+		case momtypenc_int:
+		case momtypenc_val:
+		case momtypenc_string:
+		case momtypenc_double:
+		default:
+		  {
+		    char tybuf[4] = { 0 };
+		    tybuf[0] = curargty;
+		    tybuf[1] = (char) 0;
+		    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid type "),
+				    MOMOUT_LITERALV ((const char *) tybuf),
+				    MOMOUT_LITERAL (" for argument "),
+				    MOMOUT_VALUE ((const momval_t)
+						  curargexpv),
+				    MOMOUT_LITERAL (" in call "),
+				    MOMOUT_VALUE (curinsv), MOMOUT_SPACE (48),
+				    MOMOUT_LITERAL ("at rank#"),
+				    MOMOUT_DEC_INT (ix), MOMOUT_LITERAL ("/"),
+				    MOMOUT_DEC_INT (nbinstr),
+				    MOMOUT_SPACE (48),
+				    MOMOUT_LITERAL (" in block "),
+				    MOMOUT_ITEM ((const momitem_t *) blkitm),
+				    NULL);;
+		  }
+
+		}
+	    }
 	  MOM_FATAL (MOMOUT_LITERAL ("unimplemented call:"),
 		     MOMOUT_VALUE (curinsv),
 		     MOMOUT_SPACE (48), MOMOUT_LITERAL ("at rank#"),
