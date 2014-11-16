@@ -29,23 +29,26 @@
 
 const char mom_plugin_GPL_compatible[] = "GPLv3+";
 
-#define COMMANDS(CMD)						\
-  CMD(dump,"dump state & continue",non,NULL)			\
-  CMD(dup,"duplicate top.  Alias %",num,"%")			\
-  CMD(exit,"dump & exit",non,NULL)				\
-  CMD(gencmod,"generate C module",non,NULL)			\
-  CMD(help,"give this help",non,"?")				\
-  CMD(pop,"pop [N] elements.  Alias ^",num,"^")			\
-  CMD(clear,"clear the stack",non,NULL)				\
-  CMD(mark,"push mark. Alias (",non,"(")			\
-  CMD(quit,"quit without dumping",non,NULL)			\
-  CMD(node,"[Connective]; make node to mark.  Alias *",itm,"*")	\
-  CMD(set,"make set to mark.  Alias }",non,"}")			\
-  CMD(tuple,"make tuple to mark.  Alias ]",non,"]")		\
-  CMD(stack,"print the stack.  Alias !",non,"!")		\
-  CMD(status,"print status info",non,NULL)			\
-  CMD(xplode,"explode top aggregate. Alias &",non,"&")		\
-  CMD(top,"print the top of stack.  Alias = ",non,"=")		\
+#define COMMANDS(CMD)					\
+  CMD(clear,"clear the stack",non,NULL)			\
+  CMD(dump,"dump state & continue",non,NULL)		\
+  CMD(dup,"duplicate top",num,"%")			\
+  CMD(exit,"dump & exit",non,NULL)			\
+  CMD(gencmod,"generate C module",non,NULL)		\
+  CMD(getat,"[attr]; get attribute",itm,":=")		\
+  CMD(help,"give this help",non,"?")			\
+  CMD(mark,"push mark",non,"(")			        \
+  CMD(node,"[Connective]; make node to mark",itm,"*")	\
+  CMD(pop,"pop [N] elements",num,"^")			\
+  CMD(putat,"[attr]; put attribute",itm,":+")		\
+  CMD(quit,"quit without dumping",non,NULL)		\
+  CMD(remat,"[attr]; remove attribute",itm,":-")	\
+  CMD(set,"make set to mark",non,"}")			\
+  CMD(stack,"print the stack",non,"!")			\
+  CMD(status,"print status info",non,NULL)		\
+  CMD(top,"print the top of stack",non,"=")		\
+  CMD(tuple,"make tuple to mark",non,"]")		\
+  CMD(xplode,"explode top aggregate",non,"&")
 				/* end of COMMANDS */
 
 // the command stack has values and marks
@@ -53,6 +56,7 @@ static momval_t *vst_valarr_mom;
 static unsigned vst_size_mom;
 static unsigned vst_top_mom;
 
+static momval_t vst_letterval_mom[30];
 
 #define ANSI_BOLD "\e[1m"
 #define ANSI_NORMAL "\e[0m"
@@ -307,8 +311,20 @@ cmd_completion_entry_mom (const char *text, int state)
 static void
 cmd_do_dump_mom (const char *lin)
 {
+  char cmdbuf[80];
+  memset (cmdbuf, 0, sizeof (cmdbuf));
   MOM_DEBUGPRINTF (cmd, "start do_dump lin=%s", lin);
-  MOM_WARNPRINTF ("unimplemented command /dump %s", lin);
+  if (lin[0])
+    snprintf (cmdbuf, sizeof (cmdbuf), "command dump %s", lin);
+  else
+    strcpy (cmdbuf, "command dump");
+  printf ("\n" ANSI_BOLD "**dumping per command**" ANSI_NORMAL "\n");
+  mom_full_dump (cmdbuf, ".", NULL);
+  if (lin[0])
+    snprintf (cmdbuf, sizeof (cmdbuf), ",dump %s", lin);
+  else
+    strcpy (cmdbuf, ",dump");
+  add_history (cmdbuf);
 }
 
 
@@ -326,17 +342,28 @@ cmd_do_dup_mom (const char *lin, bool pres, long num)
       cmd_stack_push_mom (valv);
       snprintf (cmdbuf, sizeof (cmdbuf), ",dup %ld", num);
       add_history (cmdbuf);
-      printf (ANSI_BOLD "dupped #%ld" ANSI_NORMAL "/%d\n", num, vst_top_mom);
+      printf (ANSI_BOLD "duplicated #%ld" ANSI_NORMAL "/%d\n", num,
+	      vst_top_mom);
     }
   else
-    printf ("no dupped value\n");
+    printf ("no duplicated value\n");
 }
 
 static void
 cmd_do_exit_mom (const char *lin)
 {
   MOM_DEBUGPRINTF (cmd, "start do_exit lin=%s", lin);
-  MOM_WARNPRINTF ("unimplemented command /exit %s", lin);
+  char cmdbuf[80];
+  memset (cmdbuf, 0, sizeof (cmdbuf));
+  if (lin[0])
+    snprintf (cmdbuf, sizeof (cmdbuf), "command exit dump %s", lin);
+  else
+    strcpy (cmdbuf, "command dump");
+  printf ("\n" ANSI_BOLD "**dumping then exiting per command**" ANSI_NORMAL
+	  "\n");
+  mom_full_dump (cmdbuf, ".", NULL);
+  MOM_INFORMPRINTF ("exiting per command after dump %s", lin);
+  exit (EXIT_SUCCESS);
 }
 
 
@@ -354,6 +381,16 @@ cmd_do_help_mom (const char *lin)
       else
 	putchar ('\n');
     }
+  printf ("## other syntax:\n");
+  printf ("\t \" starts a constant literal string\n");
+  printf ("\t __ or _. push a nil value\n");
+  printf ("\t names or identifiers pushs their corresponding items\n");
+  printf ("\t _ or an unknown name proposes to create an item\n");
+  printf ("\t numbers like 1.2 or -23 are pushed\n");
+  printf ("\t $a ... $z pushes the letter value.\n");
+  printf ("\t $=a ... $=z sets the letter value.\n");
+  printf ("\t $:a ... $:z swaps the letter value with top-of-stack.\n");
+
   putchar ('\n');
   fflush (NULL);
 }
@@ -678,6 +715,131 @@ cmd_do_node_mom (const char *lin, bool pres, momitem_t *itm)
     printf (ANSI_BOLD "**failed to make node**" ANSI_NORMAL "\n");
 }
 
+
+static void
+cmd_do_getat_mom (const char *lin, bool pres, momitem_t *atitm)
+{
+  char cmdbuf[80];
+  memset (cmdbuf, 0, sizeof (cmdbuf));
+  MOM_DEBUGPRINTF (cmd, "do_getat lin=%s atitm@%p", lin, atitm);
+  momitem_t *itm = mom_value_to_item (cmd_stack_nth_value_mom (-1));
+  if (pres && itm && atitm)
+    {
+      momval_t val = MOM_NULLV;
+      mom_lock_item (itm);
+      val = mom_item_get_attribute (itm, atitm);
+      mom_unlock_item (itm);
+      if (val.ptr)
+	{
+	  cmd_stack_push_mom (val);
+	  MOM_OUT (mom_stdout,
+		   MOMOUT_LITERAL (ANSI_BOLD "got attribute" ANSI_NORMAL " "),
+		   MOMOUT_ITEM ((const momitem_t *) atitm),
+		   MOMOUT_LITERAL (" " ANSI_BOLD "from" ANSI_NORMAL " "),
+		   MOMOUT_ITEM ((const momitem_t *) itm), MOMOUT_NEWLINE ());
+	  if (snprintf (cmdbuf, sizeof (cmdbuf),
+			",getat %s",
+			mom_string_cstr ((momval_t)
+					 mom_item_get_name_or_idstr (atitm)))
+	      < (int) sizeof (cmdbuf) - 1)
+	    add_history (cmdbuf);
+	}
+      else
+	{
+	  MOM_OUT (mom_stdout,
+		   MOMOUT_LITERAL (ANSI_BOLD "missing attribute" ANSI_NORMAL
+				   " "),
+		   MOMOUT_ITEM ((const momitem_t *) atitm),
+		   MOMOUT_LITERAL (" " ANSI_BOLD "in" ANSI_NORMAL " "),
+		   MOMOUT_ITEM ((const momitem_t *) itm), MOMOUT_NEWLINE ());
+	}
+    }
+  else if (!atitm)
+    printf (ANSI_BOLD "no attribute" ANSI_NORMAL "\n");
+  else if (!itm)
+    printf (ANSI_BOLD "no item" ANSI_NORMAL "\n");
+}
+
+
+static void
+cmd_do_putat_mom (const char *lin, bool pres, momitem_t *atitm)
+{
+  char cmdbuf[80];
+  memset (cmdbuf, 0, sizeof (cmdbuf));
+  MOM_DEBUGPRINTF (cmd, "do_getat lin=%s atitm@%p", lin, atitm);
+  momitem_t *itm = mom_value_to_item (cmd_stack_nth_value_mom (-2));
+  momval_t atval = cmd_stack_nth_value_mom (-1);
+  if (pres && itm && atitm && atval.ptr)
+    {
+      mom_lock_item (itm);
+      mom_item_put_attribute (itm, atitm, atval);
+      mom_unlock_item (itm);
+      MOM_OUT (mom_stdout,
+	       MOMOUT_LITERAL (ANSI_BOLD "put attribute" ANSI_NORMAL " "),
+	       MOMOUT_ITEM ((const momitem_t *) atitm),
+	       MOMOUT_LITERAL (" " ANSI_BOLD "in" ANSI_NORMAL " "),
+	       MOMOUT_ITEM ((const momitem_t *) itm), MOMOUT_NEWLINE ());
+      if (snprintf (cmdbuf, sizeof (cmdbuf),
+		    ",putat %s",
+		    mom_string_cstr ((momval_t)
+				     mom_item_get_name_or_idstr (atitm)))
+	  < (int) sizeof (cmdbuf) - 1)
+	add_history (cmdbuf);
+      cmd_stack_pop_mom (1);
+    }
+  else if (!atval.ptr)
+    printf (ANSI_BOLD "no value" ANSI_NORMAL "\n");
+  else if (!atitm)
+    printf (ANSI_BOLD "no attribute" ANSI_NORMAL "\n");
+  else if (!itm)
+    printf (ANSI_BOLD "no item" ANSI_NORMAL "\n");
+}
+
+static void
+cmd_do_remat_mom (const char *lin, bool pres, momitem_t *atitm)
+{
+  char cmdbuf[80];
+  memset (cmdbuf, 0, sizeof (cmdbuf));
+  MOM_DEBUGPRINTF (cmd, "do_getat lin=%s atitm@%p", lin, atitm);
+  momitem_t *itm = mom_value_to_item (cmd_stack_nth_value_mom (-1));
+  if (pres && itm && atitm)
+    {
+      momval_t oldvalv = MOM_NULLV;
+      mom_lock_item (itm);
+      oldvalv = mom_item_get_attribute (itm, atitm);
+      mom_item_remove_attribute (itm, atitm);
+      mom_unlock_item (itm);
+      if (oldvalv.ptr)
+	{
+	  MOM_OUT (mom_stdout,
+		   MOMOUT_LITERAL (ANSI_BOLD "removed attribute" ANSI_NORMAL
+				   " "),
+		   MOMOUT_ITEM ((const momitem_t *) atitm),
+		   MOMOUT_LITERAL (" " ANSI_BOLD "from" ANSI_NORMAL " "),
+		   MOMOUT_ITEM ((const momitem_t *) itm), MOMOUT_NEWLINE ());
+	  if (snprintf
+	      (cmdbuf, sizeof (cmdbuf), ",remat %s",
+	       mom_string_cstr ((momval_t)
+				mom_item_get_name_or_idstr (atitm))) <
+	      (int) sizeof (cmdbuf) - 1)
+	    add_history (cmdbuf);
+	}
+      else
+	{
+	  MOM_OUT (mom_stdout,
+		   MOMOUT_LITERAL (ANSI_BOLD "missing attribute" ANSI_NORMAL
+				   " "),
+		   MOMOUT_ITEM ((const momitem_t *) atitm),
+		   MOMOUT_LITERAL (" " ANSI_BOLD "in" ANSI_NORMAL " "),
+		   MOMOUT_ITEM ((const momitem_t *) itm), MOMOUT_NEWLINE ());
+	}
+    }
+  else if (!atitm)
+    printf (ANSI_BOLD "no attribute" ANSI_NORMAL "\n");
+  else if (!itm)
+    printf (ANSI_BOLD "no item" ANSI_NORMAL "\n");
+}
+
 static void
 cmd_do_stack_mom (const char *lin)
 {
@@ -752,24 +914,17 @@ cmd_do_status_mom (const char *lin)
   MOM_DEBUGPRINTF (cmd, "start do_status lin=%s", lin);
   int64_t nbcreat = 0, nbdestr = 0, nbitems = 0, nbnamed = 0;
   mom_item_status (&nbcreat, &nbdestr, &nbitems, &nbnamed);
-  printf ("\n"
-	  ANSI_BOLD
-	  "status at %s"
-	  ANSI_NORMAL
+  printf ("\n" ANSI_BOLD "status at %s" ANSI_NORMAL
 	  " (elapsed %.3f, cpu %.3f sec.):\n"
 	  " %ld created, %ld destroyed, %ld items, %ld named\n",
-	  mom_strftime_centi
-	  (timbuf,
-	   sizeof
-	   (timbuf),
-	   "%H:%M:%S.__",
-	   mom_clock_time
-	   (CLOCK_REALTIME)),
-	  mom_elapsed_real_time
-	  (),
-	  mom_clock_time
-	  (CLOCK_PROCESS_CPUTIME_ID),
+	  mom_strftime_centi (timbuf, sizeof (timbuf),
+			      "%H:%M:%S.__",
+			      mom_clock_time (CLOCK_REALTIME)),
+	  mom_elapsed_real_time (),
+	  mom_clock_time (CLOCK_PROCESS_CPUTIME_ID),
 	  (long) nbcreat, (long) nbdestr, (long) nbitems, (long) nbnamed);
+  printf ("MOMIMELT build time %s version %s\n", monimelt_timestamp,
+	  monimelt_lastgitcommit);
   add_history (",status");
 }
 
@@ -1046,6 +1201,89 @@ cmd_interpret_mom (const char *lin)
 	    goto bad_command;
 	}
     }
+  else if (lin[0] == '"')
+    {
+      momval_t nstrv = (momval_t) mom_make_string (lin + 1);
+      cmd_push_value_mom (nstrv);
+      add_history (lin);
+      printf (ANSI_BOLD "pushed string:" ANSI_NORMAL "%s\n",
+	      mom_string_cstr (nstrv));
+    }
+  else if (lin[0] == '$' && isalpha (lin[1]))
+    {
+      char c = tolower (lin[1]);
+      if (c >= 'a' && c <= 'z')
+	{
+	  momval_t valv = vst_letterval_mom[c - 'a'];
+	  if (valv.ptr)
+	    {
+	      char cmdbuf[8];
+	      printf (ANSI_BOLD "pushed temporary %c" ANSI_NORMAL "\n", c);
+	      snprintf (cmdbuf, sizeof (cmdbuf), "$%c", c);
+	      add_history (cmdbuf);
+	      cmd_stack_push_mom (valv);
+	    }
+	  else
+	    printf (ANSI_BOLD "no temporary %c" ANSI_NORMAL "\n", c);
+	}
+      else
+	goto bad_command;
+    }
+  else if (lin[0] == '$' && lin[1] == '=' && isalpha (lin[2]))
+    {
+      char cmdbuf[8];
+      char c = tolower (lin[2]);
+      if (c >= 'a' && c <= 'z')
+	{
+	  if (vst_top_mom == 0)
+	    {
+	      printf (ANSI_BOLD "empty stack, so untouched temporary %c"
+		      ANSI_NORMAL "\n", c);
+	      return;
+	    }
+	  momval_t valv = cmd_stack_nth_value_mom (-1);
+	  if (valv.ptr)
+	    {
+	      printf (ANSI_BOLD "set temporary %c" ANSI_NORMAL "\n", c);
+	      snprintf (cmdbuf, sizeof (cmdbuf), "$=%c", c);
+	      add_history (cmdbuf);
+	    }
+	  else
+	    {
+	      printf (ANSI_BOLD "cleared temporary %c" ANSI_NORMAL "\n", c);
+	      snprintf (cmdbuf, sizeof (cmdbuf), "$=%c", c);
+	      add_history (cmdbuf);
+	    }
+	  vst_letterval_mom[c - 'a'] = valv;
+	  cmd_stack_pop_mom (1);
+	}
+      else
+	goto bad_command;
+    }
+  else if (lin[0] == '$' && lin[1] == ':' && isalpha (lin[2]))
+    {
+      char c = tolower (lin[2]);
+      if (c >= 'a' && c <= 'z')
+	{
+	  if (vst_top_mom == 0)
+	    {
+	      printf (ANSI_BOLD "empty stack, so untouched temporary %c"
+		      ANSI_NORMAL "\n", c);
+	      return;
+	    }
+	  momval_t valv = cmd_stack_nth_value_mom (-1);
+	  momval_t oldvalv = vst_letterval_mom[c - 'a'];
+	  char cmdbuf[8];
+	  printf (ANSI_BOLD "swap temporary %c" ANSI_NORMAL "\n", c);
+	  snprintf (cmdbuf, sizeof (cmdbuf), "$:%c", c);
+	  add_history (cmdbuf);
+	  vst_letterval_mom[c - 'a'] = valv;
+	  cmd_stack_pop_mom (1);
+	  cmd_stack_push_mom (oldvalv);
+	}
+      else
+	goto bad_command;
+    }
   else if (ispunct (lin[0]))
     {
       int pos = -1;
@@ -1062,7 +1300,8 @@ cmd_interpret_mom (const char *lin)
 	    goto bad_command;
 	  if (!strcmp (cmdbuf, cd->cmd_name)
 	      || (cd->cmd_alias && (alen = strlen (cd->cmd_alias)) > 0
-		  && !strncmp (lin, cd->cmd_alias, alen) && (pos = alen) > 0))
+		  && !strncmp (lin, cd->cmd_alias, alen)
+		  && (!lin[alen] || isspace (lin[alen])) && (pos = alen) > 0))
 	    {
 	      switch (cd->cmd_type)
 		{
