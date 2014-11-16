@@ -30,21 +30,22 @@
 const char mom_plugin_GPL_compatible[] = "GPLv3+";
 
 #define COMMANDS(CMD)						\
-  CMD(dump,"dump state & continue")				\
-  CMD(dup,"duplicate top.  Alias %")				\
-  CMD(exit,"dump & exit")					\
-  CMD(gencmod,"generate C module")				\
-  CMD(help,"give this help")					\
-  CMD(pop,"pop [N] elements, all if ',pop *'.  Alias ^")	\
-  CMD(mark,"push mark. Alias (")				\
-  CMD(quit,"quit without dumping")				\
-  CMD(node,"[Connective]; make node to mark.  Alias *")		\
-  CMD(set,"make set to mark.  Alias }")				\
-  CMD(tuple,"make tuple to mark.  Alias ]")			\
-  CMD(stack,"print the stack.  Alias !")			\
-  CMD(status,"print status info")				\
-  CMD(xplode,"explode top aggregate. Alias &")			\
-  CMD(top,"print the top of stack.  Alias = ")			\
+  CMD(dump,"dump state & continue",non,NULL)			\
+  CMD(dup,"duplicate top.  Alias %",num,"%")			\
+  CMD(exit,"dump & exit",non,NULL)				\
+  CMD(gencmod,"generate C module",non,NULL)			\
+  CMD(help,"give this help",non,"?")				\
+  CMD(pop,"pop [N] elements.  Alias ^",num,"^")			\
+  CMD(clear,"clear the stack",non,NULL)				\
+  CMD(mark,"push mark. Alias (",non,"(")			\
+  CMD(quit,"quit without dumping",non,NULL)			\
+  CMD(node,"[Connective]; make node to mark.  Alias *",itm,"*")	\
+  CMD(set,"make set to mark.  Alias }",non,"}")			\
+  CMD(tuple,"make tuple to mark.  Alias ]",non,"]")		\
+  CMD(stack,"print the stack.  Alias !",non,"!")		\
+  CMD(status,"print status info",non,NULL)			\
+  CMD(xplode,"explode top aggregate. Alias &",non,"&")		\
+  CMD(top,"print the top of stack.  Alias = ",non,"=")		\
 				/* end of COMMANDS */
 
 // the command stack has values and marks
@@ -166,23 +167,44 @@ cmd_stack_pop_mom (unsigned nb)
 }
 
 
-#define CMD_DECLARE(N,H) static void cmd_do_##N##_mom (const char*);
+typedef void cmd_do_fun_non_t (const char *);
+typedef void cmd_do_fun_num_t (const char *, bool, long);
+typedef void cmd_do_fun_itm_t (const char *, bool, momitem_t *);
+
+#define CMD_DECLARE(N,H,T,A) static cmd_do_fun_##T##_t cmd_do_##N##_mom;
 COMMANDS (CMD_DECLARE);
 #undef CMD_DECLARE
 
-typedef void cmd_do_fun_t (const char *);
+enum cmd_type_en
+{
+  cmdt__none,
+  cmdt_non,
+  cmdt_num,
+  cmdt_itm
+};
+
 struct cmd_descr_st
 {
   const char *cmd_name;
-  cmd_do_fun_t *const cmd_fun;
+  enum cmd_type_en cmd_type;
+  union
+  {
+    void *cmd_funptr;
+    cmd_do_fun_non_t *cmd_fun_non;
+    cmd_do_fun_num_t *cmd_fun_num;
+    cmd_do_fun_itm_t *cmd_fun_itm;
+  };
   const char *cmd_help;
+  const char *cmd_alias;
 };
 
-static struct cmd_descr_st cmd_array_mom[] = {
-#define CMD_DEFINE(N,H) {.cmd_name= #N, .cmd_fun= cmd_do_##N##_mom, .cmd_help= H},
+static const struct cmd_descr_st cmd_array_mom[] = {
+#define CMD_DEFINE(N,H,T,A) {.cmd_name= #N, .cmd_type= cmdt_##T, \
+			     .cmd_fun_##T= cmd_do_##N##_mom, .cmd_help= H, .cmd_alias= A},
   COMMANDS (CMD_DEFINE)
 #undef CMD_DEFINE
-  {NULL, NULL, NULL}
+  {.cmd_name = NULL,.cmd_type = cmdt__none,.cmd_funptr = NULL,.cmd_help =
+   NULL,.cmd_alias = NULL}
 };
 
 #define CMDARRSIZE_MOM (sizeof(cmd_array_mom)/sizeof(cmd_array_mom[0]))
@@ -291,10 +313,23 @@ cmd_do_dump_mom (const char *lin)
 
 
 static void
-cmd_do_dup_mom (const char *lin)
+cmd_do_dup_mom (const char *lin, bool pres, long num)
 {
-  MOM_DEBUGPRINTF (cmd, "start do_dup lin=%s", lin);
-  MOM_WARNPRINTF ("unimplemented command /dup %s", lin);
+  MOM_DEBUGPRINTF (cmd, "start do_dup lin=%s num=%ld", lin, num);
+  if (!pres)
+    num = 1;
+  momval_t valv = cmd_stack_nth_value_mom (-num);
+  if (valv.ptr)
+    {
+      char cmdbuf[32];
+      memset (cmdbuf, 0, sizeof (cmdbuf));
+      cmd_stack_push_mom (valv);
+      snprintf (cmdbuf, sizeof (cmdbuf), ",dup %ld", num);
+      add_history (cmdbuf);
+      printf (ANSI_BOLD "dupped #%ld" ANSI_NORMAL "/%d\n", num, vst_top_mom);
+    }
+  else
+    printf ("no dupped value\n");
 }
 
 static void
@@ -310,9 +345,15 @@ cmd_do_help_mom (const char *lin)
 {
   MOM_DEBUGPRINTF (cmd, "start do_help lin=%s", lin);
   putchar ('\n');
-  for (struct cmd_descr_st * cd = cmd_array_mom;
+  for (const struct cmd_descr_st * cd = cmd_array_mom;
        cd != NULL && cd->cmd_name != NULL; cd++)
-    printf (" ,%s : %s\n", cd->cmd_name, cd->cmd_help);
+    {
+      printf (" ,%s : %s", cd->cmd_name, cd->cmd_help);
+      if (cd->cmd_alias)
+	printf ("  alias %s\n", cd->cmd_alias);
+      else
+	putchar ('\n');
+    }
   putchar ('\n');
   fflush (NULL);
 }
@@ -559,7 +600,7 @@ cmd_do_tuple_mom (const char *lin)
 }
 
 static void
-cmd_do_node_mom (const char *lin)
+cmd_do_node_mom (const char *lin, bool pres, momitem_t *itm)
 {
   momitem_t *connitm = NULL;
   momval_t nodv = MOM_NULLV;
@@ -567,16 +608,12 @@ cmd_do_node_mom (const char *lin)
   char cmdbuf[128];
   memset (cmdbuf, 0, sizeof (cmdbuf));
   memset (nambuf, 0, sizeof (nambuf));
-  int pos = -1;
   int markdepth = cmd_stack_mark_depth_mom ();
   MOM_DEBUGPRINTF (cmd, "start do_node lin=%s markdepth=%d", lin, markdepth);
-  if (sscanf (lin, " %70[a-zA-Z0-9_] %n", nambuf,
-	      &pos) >= 1 && (isalpha (nambuf[0])
-			     || nambuf[0] == '_') && markdepth >= 0)
+  if (pres && itm && markdepth >= 0)
     {
-      MOM_DEBUGPRINTF (cmd, "do_node nambuf=%s markdepth=%d", nambuf,
-		       markdepth);
-      connitm = mom_get_item_of_name_or_ident_cstr (nambuf);
+      connitm = itm;
+      MOM_DEBUGPRINTF (cmd, "do_node markdepth=%d", markdepth);
       momval_t *varr = NULL;
       if (markdepth == 0)
 	varr = NULL;
@@ -598,7 +635,7 @@ cmd_do_node_mom (const char *lin)
 	  add_history (cmdbuf);
 	}
     }
-  else if (!lin[0] && markdepth >= 1)
+  else if (!pres && !itm && !lin[0] && markdepth >= 1)
     {
       MOM_DEBUGPRINTF (cmd, "do_node plain markdepth=%d", markdepth);
       connitm = mom_value_to_item (cmd_stack_nth_value_mom (1));
@@ -788,29 +825,34 @@ cmd_do_top_mom (const char *lin)
     }
 }
 
+static void
+cmd_do_clear_mom (const char *lin)
+{
+  MOM_DEBUGPRINTF (cmd, "start do_clear lin=%s", lin);
+  if (vst_valarr_mom)
+    memset (vst_valarr_mom, 0, vst_size_mom * sizeof (momval_t));
+  vst_top_mom = 0;
+  add_history (",clear");
+  printf (ANSI_BOLD "cleared stack" ANSI_NORMAL "\n");
+}
+
 
 static void
-cmd_do_pop_mom (const char *lin)
+cmd_do_pop_mom (const char *lin, bool pres, long num)
 {
-  char *endptr = NULL;
   MOM_DEBUGPRINTF (cmd, "start do_pop lin=%s", lin);
   if (vst_top_mom == 0)
     {
       printf (ANSI_BOLD "**stack was empty**" ANSI_NORMAL "\n");
       return;
     }
-  long nblev = strtol (lin, &endptr, 0);
-  if (nblev >= 1 && (*endptr == '\0' || isspace (*endptr)))
+  long nblev = pres ? num : 1;
+  if (nblev >= 1)
     {
       cmd_stack_pop_mom (nblev);
       char cmdbuf[32];
       snprintf (cmdbuf, sizeof (cmdbuf), ",pop %ld", nblev);
       add_history (cmdbuf);
-    }
-  else if (*lin == '*' || *lin == '_')
-    {
-      cmd_stack_pop_mom (vst_top_mom);
-      add_history (",pop *");
     }
   else
     {
@@ -1004,64 +1046,67 @@ cmd_interpret_mom (const char *lin)
 	    goto bad_command;
 	}
     }
-  else if (lin[0] == ',')
+  else if (ispunct (lin[0]))
     {
       int pos = -1;
       char cmdbuf[32];
+      int cmdix = -1;
+      int alen = 0;
       memset (cmdbuf, 0, sizeof (cmdbuf));
-      if (sscanf (lin, ",%30[a-z_] %n", cmdbuf, &pos) > 0 && pos > 1)
+      if (lin[0] == ',')
+	sscanf (lin, ",%30[a-z_] %n", cmdbuf, &pos);
+      for (cmdix = 0; cmdix < (int) CMDARRSIZE_MOM; cmdix++)
 	{
-	  for (int ix = 0; ix < (int) CMDARRSIZE_MOM; ix++)
+	  const struct cmd_descr_st *cd = cmd_array_mom + cmdix;
+	  if (!cd->cmd_name)
+	    goto bad_command;
+	  if (!strcmp (cmdbuf, cd->cmd_name)
+	      || (cd->cmd_alias && (alen = strlen (cd->cmd_alias)) > 0
+		  && !strncmp (lin, cd->cmd_alias, alen) && (pos = alen) > 0))
 	    {
-	      if (!cmd_array_mom[ix].cmd_name)
-		goto bad_command;
-	      if (!strcmp (cmdbuf, cmd_array_mom[ix].cmd_name))
+	      switch (cd->cmd_type)
 		{
-		  cmd_array_mom[ix].cmd_fun (lin + pos);
+		case cmdt_non:
+		  cd->cmd_fun_non (lin + pos);
+		  return;
+		case cmdt_num:
+		  {
+		    int numpos = -1;
+		    long l = 0;
+		    if (sscanf (lin + pos, " %ld %n", &l, &numpos) > 0
+			&& numpos > 0)
+		      cd->cmd_fun_num (lin + pos + numpos, true, l);
+		    else
+		      cd->cmd_fun_num (lin + pos, false, 0);
+		  }
+		  return;
+		case cmdt_itm:
+		  {
+		    int nampos = -1;
+		    momitem_t *itm = NULL;
+		    char nambuf[80];
+		    memset (nambuf, 0, sizeof (nambuf));
+		    if (sscanf
+			(lin + pos, " %72[a-zA-Z0-9_] %n", nambuf,
+			 &nampos) > 0 && nampos > 0 && (isalpha (nambuf[0])
+							|| nambuf[0] == '_'))
+		      {
+			itm = mom_get_item_of_name_or_ident_cstr (nambuf);
+		      }
+		    if (itm)
+		      cd->cmd_fun_itm (lin + pos + nampos, true, itm);
+		    else
+		      cd->cmd_fun_itm (lin + pos, false, NULL);
+		  }
+		  return;
+		default:
+		  MOM_FATAPRINTF
+		    ("impossible command type for cmdix#%d line %s", cmdix,
+		     lin);
 		  return;
 		}
 	    }
 	}
-    }
-  else if (lin[0] == '%')	/* alias for dup */
-    {
-      cmd_do_dup_mom (lin + 1);
-      return;
-    }
-  else if (lin[0] == '=')	/* alias for top */
-    {
-      cmd_do_top_mom (lin + 1);
-      return;
-    }
-  else if (lin[0] == '!')	/* alias for stack */
-    {
-      cmd_do_stack_mom (lin + 1);
-      return;
-    }
-  else if (lin[0] == '^')	/* alias for pop */
-    {
-      cmd_do_pop_mom (lin + 1);
-      return;
-    }
-  else if (lin[0] == '(')	/* alias for mark */
-    {
-      cmd_do_mark_mom (lin + 1);
-      return;
-    }
-  else if (lin[0] == '}')	/* alias for set */
-    {
-      cmd_do_set_mom (lin + 1);
-      return;
-    }
-  else if (lin[0] == ']')	/* alias for tuple */
-    {
-      cmd_do_tuple_mom (lin + 1);
-      return;
-    }
-  else if (lin[0] == '*')	/* alias for node */
-    {
-      cmd_do_node_mom (lin + 1);
-      return;
     }
 bad_command:
   MOM_WARNPRINTF ("bad command '%s'", lin);
