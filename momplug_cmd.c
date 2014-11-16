@@ -113,7 +113,7 @@ cmd_stack_nth_value_mom (int rk)
     rk += vst_top_mom;
   if (rk >= 0 && rk < (int) vst_top_mom)
     {
-      momval_t v = vst_valarr_mom[vst_top_mom - rk];
+      momval_t v = vst_valarr_mom[rk];
       if (v.ptr != MOM_EMPTY)
 	return v;
     }
@@ -127,7 +127,7 @@ cmd_stack_nth_ptr_mom (int rk)
     rk += vst_top_mom;
   if (rk >= 0 && rk < (int) vst_top_mom)
     {
-      momval_t *v = vst_valarr_mom + vst_top_mom - rk;
+      momval_t *v = vst_valarr_mom + rk;
       if (v->ptr != MOM_EMPTY)
 	return v;
     }
@@ -140,7 +140,7 @@ cmd_stack_nth_mark_mom (int rk)
   if (rk < 0)
     rk += vst_top_mom;
   if (rk >= 0 && rk < (int) vst_top_mom)
-    return vst_valarr_mom[vst_top_mom - rk].ptr == MOM_EMPTY;
+    return vst_valarr_mom[rk].ptr == MOM_EMPTY;
   return false;
 }
 
@@ -525,6 +525,8 @@ cmd_do_xplode_mom (const char *lin)
 {
   MOM_DEBUGPRINTF (cmd, "start do_xplode lin=%s", lin);
   momval_t topv = cmd_stack_nth_value_mom (-1);
+  MOM_DEBUG (cmd, MOMOUT_LITERAL ("do_xplode topv="),
+	     MOMOUT_VALUE ((const momval_t) topv), NULL);
   if (mom_is_tuple (topv))
     {
       unsigned tuplen = mom_tuple_length (topv);
@@ -708,18 +710,34 @@ cmd_do_node_mom (const char *lin, bool pres, momitem_t *itm)
   memset (cmdbuf, 0, sizeof (cmdbuf));
   memset (nambuf, 0, sizeof (nambuf));
   int markdepth = cmd_stack_mark_depth_mom ();
-  MOM_DEBUGPRINTF (cmd, "start do_node lin=%s markdepth=%d", lin, markdepth);
+  MOM_DEBUG (cmd, MOMOUT_LITERAL ("start do_node it lin="),
+	     MOMOUT_LITERALV ((const char *) lin), MOMOUT_SPACE (48),
+	     MOMOUT_LITERAL ("markdepth="), MOMOUT_DEC_INT (markdepth),
+	     MOMOUT_SPACE (32), MOMOUT_LITERAL ("itm="),
+	     MOMOUT_ITEM ((const momitem_t *) itm));
   if (pres && itm && markdepth >= 0)
     {
       connitm = itm;
-      MOM_DEBUGPRINTF (cmd, "do_node markdepth=%d", markdepth);
+      MOM_DEBUGPRINTF (cmd, "do_node it markdepth=%d top=%d", markdepth,
+		       vst_top_mom);
       momval_t *varr = NULL;
       if (markdepth == 0)
 	varr = NULL;
       else if (markdepth == 1)
 	varr = cmd_stack_nth_ptr_mom (-1);
       else
-	varr = cmd_stack_nth_ptr_mom (-(markdepth - 1));
+	varr = cmd_stack_nth_ptr_mom (-markdepth);
+      if (varr)
+	{
+	  MOM_DEBUG (cmd, MOMOUT_LITERAL ("do_node it varr[0]:"),
+		     MOMOUT_VALUE (varr[0]));
+	  if (markdepth > 1)
+	    MOM_DEBUG (cmd, MOMOUT_LITERAL ("do_node it varr["),
+		       MOMOUT_DEC_INT (markdepth - 1), MOMOUT_LITERAL ("]:"),
+		       MOMOUT_VALUE (varr[markdepth - 1]));
+	}
+      else
+	MOM_DEBUGPRINTF (cmd, "do_node it no varr");
       MOM_DEBUGPRINTF (cmd, "connitm@%p varr@%p", connitm, varr);
       nodv = (momval_t) mom_make_node_from_array (connitm, markdepth, varr);
       MOM_DEBUG (cmd, MOMOUT_LITERAL ("do_node nodv="),
@@ -736,16 +754,30 @@ cmd_do_node_mom (const char *lin, bool pres, momitem_t *itm)
     }
   else if (!pres && !itm && !lin[0] && markdepth >= 1)
     {
-      MOM_DEBUGPRINTF (cmd, "do_node plain markdepth=%d", markdepth);
-      connitm = mom_value_to_item (cmd_stack_nth_value_mom (1));
+      MOM_DEBUGPRINTF (cmd, "do_node plain markdepth=%d top=%d", markdepth,
+		       vst_top_mom);
+      connitm = mom_value_to_item (cmd_stack_nth_value_mom (-1));
+      MOM_DEBUG (cmd, MOMOUT_LITERAL ("do_node plain connitm:"),
+		 MOMOUT_ITEM ((const momitem_t *) connitm));
       if (connitm)
 	cmd_stack_pop_mom (1);
       momval_t *varr = NULL;
       if (markdepth > 1)
 	varr = cmd_stack_nth_ptr_mom (-(markdepth - 1));
+      if (varr)
+	{
+	  MOM_DEBUG (cmd, MOMOUT_LITERAL ("do_node plain varr[0]:"),
+		     MOMOUT_VALUE (varr[0]));
+	  if (markdepth > 1)
+	    MOM_DEBUG (cmd, MOMOUT_LITERAL ("do_node plain varr["),
+		       MOMOUT_DEC_INT (markdepth - 1), MOMOUT_LITERAL ("]:"),
+		       MOMOUT_VALUE (varr[markdepth - 1]));
+	}
+      else
+	MOM_DEBUGPRINTF (cmd, "do_node plain no varr");
       nodv =
 	(momval_t) mom_make_node_from_array (connitm, markdepth - 1, varr);
-      MOM_DEBUG (cmd, MOMOUT_LITERAL ("do_node nodv="),
+      MOM_DEBUG (cmd, MOMOUT_LITERAL ("do_node plain nodv="),
 		 MOMOUT_VALUE ((const momval_t) nodv));
       if (nodv.ptr)
 	{
@@ -905,7 +937,7 @@ cmd_do_remat_mom (const char *lin, bool pres, momitem_t *atitm)
 static void
 cmd_do_stack_mom (const char *lin)
 {
-  MOM_DEBUGPRINTF (cmd, "start do_stack lin=%s", lin);
+  MOM_DEBUGPRINTF (cmd, "start do_stack lin=%s top=%d", lin, vst_top_mom);
   int maxdepth = atoi (lin);
   if (vst_top_mom == 0)
     {
@@ -921,6 +953,7 @@ cmd_do_stack_mom (const char *lin)
       int minix = vst_top_mom - maxdepth;
       if (minix < 0)
 	minix = 0;
+      MOM_DEBUGPRINTF (cmd, "do_stack minix=%d top=%d", minix, vst_top_mom);
       for (int ix = (int)minix; ix < (int) vst_top_mom; ix++)
 	{
 	  int depth = (int) vst_top_mom - ix;
@@ -1375,7 +1408,9 @@ cmd_interpret_mom (const char *lin)
 	  if (!strcmp (cmdbuf, cd->cmd_name)
 	      || (cd->cmd_alias && (alen = strlen (cd->cmd_alias)) > 0
 		  && !strncmp (lin, cd->cmd_alias, alen)
-		  && (!lin[alen] || isspace (lin[alen])) && (pos = alen) > 0))
+		  && (!lin[alen] || isspace (lin[alen]) || isalnum (lin[alen])
+		      || lin[alen] == '_' || !ispunct (lin[alen]))
+		  && (pos = alen) > 0))
 	    {
 	      MOM_DEBUGPRINTF (cmd, "got command %s #%d type%d", cd->cmd_name,
 			       cmdix, cd->cmd_type);
