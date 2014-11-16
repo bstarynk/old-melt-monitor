@@ -50,7 +50,7 @@ const char mom_plugin_GPL_compatible[] = "GPLv3+";
   CMD(top,"print the top of stack",non,"=")             \
   CMD(tuple,"make tuple to mark",non,"]")               \
   CMD(xplode,"explode top aggregate",non,"&")           \
-                                /* end of COMMANDS */
+				/* end of COMMANDS */
 
 // the command stack has values and marks
 static momval_t *vst_valarr_mom;
@@ -376,21 +376,22 @@ cmd_do_help_mom (const char *lin)
   for (const struct cmd_descr_st * cd = cmd_array_mom;
        cd != NULL && cd->cmd_name != NULL; cd++)
     {
-      printf (" ,%s : %s", cd->cmd_name, cd->cmd_help);
+      printf (" " ANSI_BOLD ",%-10s" ANSI_NORMAL "  %-40s", cd->cmd_name,
+	      cd->cmd_help);
       if (cd->cmd_alias)
-	printf ("  alias %s\n", cd->cmd_alias);
+	printf ("  alias " ANSI_BOLD "%s" ANSI_NORMAL "\n", cd->cmd_alias);
       else
 	putchar ('\n');
     }
-  printf ("## other syntax:\n");
-  printf ("\t \" starts a constant literal string\n");
-  printf ("\t __ or _. push a nil value\n");
-  printf ("\t names or identifiers pushs their corresponding items\n");
-  printf ("\t _ or an unknown name proposes to create an item\n");
-  printf ("\t numbers like 1.2 or -23 are pushed\n");
-  printf ("\t $a ... $z pushes the letter value.\n");
-  printf ("\t $=a ... $=z sets the letter value.\n");
-  printf ("\t $:a ... $:z swaps the letter value with top-of-stack.\n");
+  printf ("\n## other syntax:\n");
+  printf ("    \" starts a constant literal string\n");
+  printf ("    __ or _. pushes a nil value\n");
+  printf ("    names or identifiers pushes their corresponding items\n");
+  printf ("    _ or an unknown name proposes to create an item\n");
+  printf ("    numbers like 1.2 or -23 are pushed\n");
+  printf ("    $a ... $z pushes the letter value.\n");
+  printf ("    $=a ... $=z sets the letter value.\n");
+  printf ("    $:a ... $:z swaps the letter value with top-of-stack.\n");
 
   putchar ('\n');
   fflush (NULL);
@@ -1168,6 +1169,9 @@ cmd_interpret_mom (const char *lin)
 	  else			// itm != NULL
 	    {
 	      cmd_push_value_mom ((momval_t) itm);
+	      MOM_OUT (mom_stdout, MOMOUT_LITERAL ("pushing item:"),
+		       MOMOUT_ITEM ((const momitem_t *) itm),
+		       MOMOUT_NEWLINE ());
 	      add_history (lin);
 	      return;
 	    }
@@ -1188,12 +1192,16 @@ cmd_interpret_mom (const char *lin)
 	  momval_t dblv = mom_make_double (d);
 	  cmd_push_value_mom (dblv);
 	  add_history (lin);
+	  MOM_OUT (mom_stdout, MOMOUT_LITERAL ("pushing double:"),
+		   MOMOUT_VALUE ((const momval_t) dblv), MOMOUT_NEWLINE ());
 	  return;
 	}
       else if ((endlng > lin && isdigit (endlng[-1])) || !strcmp (lin, "0"))
 	{
 	  momval_t numv = mom_make_integer (l);
 	  cmd_push_value_mom (numv);
+	  MOM_OUT (mom_stdout, MOMOUT_LITERAL ("pushing integer:"),
+		   MOMOUT_VALUE ((const momval_t) numv), MOMOUT_NEWLINE ());
 	  add_history (lin);
 	  return;
 	}
@@ -1206,6 +1214,7 @@ cmd_interpret_mom (const char *lin)
       if ((lin[1] == '_' || lin[1] == '.') && (!lin[2] || isspace (lin[2])))
 	{
 	  cmd_push_value_mom (MOM_NULLV);
+	  printf ("pushing nil\n");
 	  add_history ("_.");
 	  return;
 	}
@@ -1254,6 +1263,9 @@ cmd_interpret_mom (const char *lin)
 	      else
 		{
 		  cmd_push_value_mom ((momval_t) itm);
+		  MOM_OUT (mom_stdout, MOMOUT_LITERAL ("pushing item:"),
+			   MOMOUT_ITEM ((const momitem_t *) itm),
+			   MOMOUT_NEWLINE ());
 		  add_history (lin);
 		  return;
 		}
@@ -1352,6 +1364,7 @@ cmd_interpret_mom (const char *lin)
       int cmdix = -1;
       int alen = 0;
       memset (cmdbuf, 0, sizeof (cmdbuf));
+      MOM_DEBUGPRINTF (cmd, "punctuation line %s", lin);
       if (lin[0] == ',')
 	sscanf (lin, ",%30[a-z_] %n", cmdbuf, &pos);
       for (cmdix = 0; cmdix < (int) CMDARRSIZE_MOM; cmdix++)
@@ -1364,6 +1377,8 @@ cmd_interpret_mom (const char *lin)
 		  && !strncmp (lin, cd->cmd_alias, alen)
 		  && (!lin[alen] || isspace (lin[alen])) && (pos = alen) > 0))
 	    {
+	      MOM_DEBUGPRINTF (cmd, "got command %s #%d type%d", cd->cmd_name,
+			       cmdix, cd->cmd_type);
 	      switch (cd->cmd_type)
 		{
 		case cmdt_non:
