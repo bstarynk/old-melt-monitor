@@ -1061,14 +1061,13 @@ cmd_do_top_mom (const char *lin)
 	      if (mom_is_string (commentv))
 		MOM_OUT
 		  (mom_stdout,
-		   MOMOUT_SPACE
-		   (48),
-		   MOMOUT_LITERAL
-		   (" " ANSI_BOLD
-		    "//: "
-		    ANSI_NORMAL),
+		   MOMOUT_SPACE  (48),
+		   MOMOUT_LITERAL  (" " ANSI_BOLD    "//: "  ANSI_NORMAL),
 		   MOMOUT_LITERALV (mom_string_cstr (commentv)), NULL);
 	    }
+	  if (mom_is_item(curval))
+	    MOM_OUT(mom_stdout, MOMOUT_SPACE(48),
+		    MOMOUT_ITEM_ATTRIBUTES((const momitem_t*)curval.pitem));
 	  MOM_OUT (mom_stdout, MOMOUT_NEWLINE ());
 	}
       add_history (",top");
@@ -1273,6 +1272,7 @@ cmd_interpret_mom (const char *lin)
 		 MOMOUT_ITEM ((const momitem_t *) itm));
 	      cmd_push_value_mom ((momval_t) itm);
 	      add_history (lin);
+	      return;
 	    }
 	  else
 	    {
