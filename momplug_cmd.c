@@ -29,27 +29,28 @@
 
 const char mom_plugin_GPL_compatible[] = "GPLv3+";
 
-#define COMMANDS(CMD)					\
-  CMD(clear,"clear the stack",non,NULL)			\
-  CMD(dump,"dump state & continue",non,NULL)		\
-  CMD(dup,"duplicate top",num,"%")			\
-  CMD(exit,"dump & exit",non,NULL)			\
-  CMD(gencmod,"generate C module",non,NULL)		\
-  CMD(getat,"[attr]; get attribute",itm,":=")		\
-  CMD(help,"give this help",non,"?")			\
-  CMD(mark,"push mark",non,"(")			        \
-  CMD(node,"[Connective]; make node to mark",itm,"*")	\
-  CMD(pop,"pop [N] elements",num,"^")			\
-  CMD(putat,"[attr]; put attribute",itm,":+")		\
-  CMD(quit,"quit without dumping",non,NULL)		\
-  CMD(remat,"[attr]; remove attribute",itm,":-")	\
-  CMD(set,"make set to mark",non,"}")			\
-  CMD(stack,"print the stack",non,"!")			\
-  CMD(status,"print status info",non,NULL)		\
-  CMD(top,"print the top of stack",non,"=")		\
-  CMD(tuple,"make tuple to mark",non,"]")		\
-  CMD(xplode,"explode top aggregate",non,"&")
-				/* end of COMMANDS */
+#define COMMANDS(CMD)                                   \
+  CMD(clear,"clear the stack",non,NULL)                 \
+  CMD(dump,"dump state & continue",non,NULL)            \
+  CMD(dup,"duplicate top",num,"%")                      \
+  CMD(exit,"dump & exit",non,NULL)                      \
+  CMD(forget,"forget named item",itm,NULL)              \
+  CMD(gencmod,"generate C module",non,NULL)             \
+  CMD(getat,"[attr]; get attribute",itm,":=")           \
+  CMD(help,"give this help",non,"?")                    \
+  CMD(mark,"push mark",non,"(")                         \
+  CMD(node,"[Connective]; make node to mark",itm,"*")   \
+  CMD(pop,"pop [N] elements",num,"^")                   \
+  CMD(putat,"[attr]; put attribute",itm,":+")           \
+  CMD(quit,"quit without dumping",non,NULL)             \
+  CMD(remat,"[attr]; remove attribute",itm,":-")        \
+  CMD(set,"make set to mark",non,"}")                   \
+  CMD(stack,"print the stack",non,"!")                  \
+  CMD(status,"print status info",non,NULL)              \
+  CMD(top,"print the top of stack",non,"=")             \
+  CMD(tuple,"make tuple to mark",non,"]")               \
+  CMD(xplode,"explode top aggregate",non,"&")           \
+                                /* end of COMMANDS */
 
 // the command stack has values and marks
 static momval_t *vst_valarr_mom;
@@ -501,10 +502,70 @@ cmd_do_mark_mom (const char *lin)
   add_history (",mark");
 }
 
+
+static void
+cmd_do_forget_mom (const char *lin, bool pres, momitem_t *itm)
+{
+  MOM_DEBUGPRINTF (cmd, "start do_forget lin=%s", lin);
+  if (pres && itm)
+    {
+      // don't add to history
+      mom_forget_item (itm);
+      MOM_OUT (mom_stdout,
+	       MOMOUT_LITERAL (ANSI_BOLD "forgot item:" ANSI_NORMAL),
+	       MOMOUT_ITEM ((const momitem_t *) itm), MOMOUT_NEWLINE ());
+    }
+  else
+    printf ("failed to forget\n");
+}
+
 static void
 cmd_do_xplode_mom (const char *lin)
 {
   MOM_DEBUGPRINTF (cmd, "start do_xplode lin=%s", lin);
+  momval_t topv = cmd_stack_nth_value_mom (-1);
+  if (mom_is_tuple (topv))
+    {
+      unsigned tuplen = mom_tuple_length (topv);
+      cmd_stack_pop_mom (1);
+      cmd_stack_push_mark_mom ();
+      for (unsigned ix = 0; ix < tuplen; ix++)
+	cmd_stack_push_mom ((momval_t) mom_tuple_nth_item (topv, ix));
+      printf (ANSI_BOLD "pushed mark then %d tuple items" ANSI_NORMAL "\n",
+	      (int) tuplen);
+      add_history (",xplode");
+    }
+  else if (mom_is_set (topv))
+    {
+      unsigned setlen = mom_set_cardinal (topv);
+      cmd_stack_pop_mom (1);
+      cmd_stack_push_mark_mom ();
+      for (unsigned ix = 0; ix < setlen; ix++)
+	cmd_stack_push_mom ((momval_t) mom_set_nth_item (topv, ix));
+      printf (ANSI_BOLD "pushed mark then %d set items" ANSI_NORMAL "\n",
+	      (int) setlen);
+      add_history (",xplode");
+    }
+  else if (mom_is_node (topv))
+    {
+      unsigned nodlen = mom_node_arity (topv);
+      cmd_stack_pop_mom (1);
+      cmd_stack_push_mark_mom ();
+      for (unsigned ix = 0; ix < nodlen; ix++)
+	cmd_stack_push_mom (mom_node_nth (topv, ix));
+      const momitem_t *connitm = mom_node_conn (topv);
+      cmd_stack_push_mom ((momval_t) connitm);
+      printf (ANSI_BOLD "pushed mark then %d node sons + connective:"
+	      ANSI_NORMAL "%s" "\n", (int) nodlen,
+	      mom_string_cstr ((momval_t)
+			       mom_item_get_name_or_idstr ((momitem_t *)
+							   connitm)));
+      add_history (",xplode");
+    }
+  else
+    {
+      printf ("invalid top-of-stack to explode\n");
+    }
 }
 
 static void
