@@ -49,9 +49,6 @@ INSERT INTO t_items VALUES('_0h331ch957p_j6a8i7v4e6y','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_0hpzi8m7wym_1y4ypmm9y47','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "handler for JSONRPC requests"}],
  "content": null, "kind": null, "payload": null}
 ');
-INSERT INTO t_items VALUES('_0vde7hj6sdu_4zj9iki3piu','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "starting block for test_fun1"}],
- "content": null, "kind": null, "payload": null}
-');
 INSERT INTO t_items VALUES('_0x2k07ik4tm_ed7vqphf5ak','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "gives verbatim code"}],
  "content": null, "kind": null, "payload": null}
 ');
@@ -61,8 +58,12 @@ INSERT INTO t_items VALUES('_0yyp8vmw4si_wf49m4d4zwq','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_11xee72y1d3_t3cqzi5dq3k','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "iterate on increasing integers"}],
  "content": null, "kind": null, "payload": null}
 ');
-INSERT INTO t_items VALUES('_12uyu6tft74_13jr0kd55u2','{"attr": [{"attr": "_4zywi5fh3ef_ys9sq93vsc1", "val": {"jtype": "set", "set": ["_0yyp8vmw4si_wf49m4d4zwq"]}}],
- "content": null, "kind": null, "payload": null}
+INSERT INTO t_items VALUES('_12uyu6tft74_13jr0kd55u2','{"attr": [{"attr": "_4zywi5fh3ef_ys9sq93vsc1", "val": {"jtype": "set", "set": ["_0yyp8vmw4si_wf49m4d4zwq"]}},
+  {"attr": "_4p33dhxywm0_id6tti2kyw6", "val": {"jtype": "set", "set": ["_7wk9y7e7r0z_575esi8ys5x"]}},
+  {"attr": "_3wh3e88sk28_d27qi2737zi", "val": {"item_ref": "_1u78yyqdic8_1e5jev0ddh4",
+    "jtype": "item_ref", "space": ".root"}}, {"attr": "_1r880c1yk3z_i5e8mprcj90",
+   "val": {"jtype": "set", "set": ["_1u78yyqdic8_1e5jev0ddh4"]}}], "content": null,
+ "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_17spwr8dkzv_tsf2s8diazu','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "Gives the double floating-point numbers of Json for frames of tasklets."}],
  "content": null, "kind": null, "payload": null}
@@ -71,6 +72,9 @@ INSERT INTO t_items VALUES('_1f94j87qumw_mhzkriesx7c','{"attr": [{"attr": "_41u1
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_1r880c1yk3z_i5e8mprcj90','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for blocks in routines, etc..."}],
+ "content": null, "kind": null, "payload": null}
+');
+INSERT INTO t_items VALUES('_1u78yyqdic8_1e5jev0ddh4','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "start block of test_fun1"}],
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_232t5qs2v8e_zu2wy53cqe3','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for locked blocks"}],

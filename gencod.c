@@ -819,6 +819,13 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
   mom_item_start_vector (cg->cgen_vecnumitm);
   cg->cgen_vecdblitm = mom_make_item ();
   mom_item_start_vector (cg->cgen_vecdblitm);
+  MOM_DEBUG (gencod, MOMOUT_LITERAL ("emitprocedure vecvalitm="),
+	     MOMOUT_ITEM ((const momitem_t *) cg->cgen_vecvalitm),
+	     MOMOUT_SPACE (32), MOMOUT_LITERAL (" vecnumitm="),
+	     MOMOUT_ITEM ((const momitem_t *) cg->cgen_vecnumitm),
+	     MOMOUT_SPACE (32), MOMOUT_LITERAL (" vecdblitm="),
+	     MOMOUT_ITEM ((const momitem_t *) cg->cgen_vecdblitm),
+	     MOMOUT_SPACE (32), NULL);
   if (!mom_is_tuple (procargsv))
     CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid procedure formals:"),
 		    MOMOUT_VALUE ((const momval_t) procargsv),
@@ -1116,6 +1123,19 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
     funstartv = mom_item_get_attribute (curoutitm, mom_named__start);
     mom_unlock_item (curoutitm);
   }
+  cg->cgen_vecvalitm = mom_make_item ();
+  mom_item_start_vector (cg->cgen_vecvalitm);
+  cg->cgen_vecnumitm = mom_make_item ();
+  mom_item_start_vector (cg->cgen_vecnumitm);
+  cg->cgen_vecdblitm = mom_make_item ();
+  mom_item_start_vector (cg->cgen_vecdblitm);
+  MOM_DEBUG (gencod, MOMOUT_LITERAL ("emittaskletfunct vecvalitm="),
+	     MOMOUT_ITEM ((const momitem_t *) cg->cgen_vecvalitm),
+	     MOMOUT_SPACE (32), MOMOUT_LITERAL (" vecnumitm="),
+	     MOMOUT_ITEM ((const momitem_t *) cg->cgen_vecnumitm),
+	     MOMOUT_SPACE (32), MOMOUT_LITERAL (" vecdblitm="),
+	     MOMOUT_ITEM ((const momitem_t *) cg->cgen_vecdblitm),
+	     MOMOUT_SPACE (32), NULL);
   // bind the constants for the closure
   nbconstants = bind_constants_cgen (cg, funconstantsv);
   // bind the arguments

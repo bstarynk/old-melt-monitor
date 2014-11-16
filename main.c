@@ -751,7 +751,7 @@ mom_set_debugging (const char *dbgopt)
 	    mom_debugflags &=  ~(1<<momdbg_##Nam); else
 	if (!pc)
 	  break;
-	MOM_DEBUG_LIST_OPTIONS (MOM_TEST_DEBUG_OPTION)
+	MOM_DEBUG_LIST_OPTIONS (MOM_TEST_DEBUG_OPTION) if (pc && *pc)
 	  MOM_WARNPRINTF ("unrecognized debug flag %s", pc);
       }
   char alldebugflags[2 * sizeof (dbuf) + 120];
