@@ -49,6 +49,9 @@ INSERT INTO t_items VALUES('_0h331ch957p_j6a8i7v4e6y','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_0hpzi8m7wym_1y4ypmm9y47','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "handler for JSONRPC requests"}],
  "content": null, "kind": null, "payload": null}
 ');
+INSERT INTO t_items VALUES('_0vde7hj6sdu_4zj9iki3piu','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "starting block for test_fun1"}],
+ "content": null, "kind": null, "payload": null}
+');
 INSERT INTO t_items VALUES('_0x2k07ik4tm_ed7vqphf5ak','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "gives verbatim code"}],
  "content": null, "kind": null, "payload": null}
 ');
@@ -58,12 +61,8 @@ INSERT INTO t_items VALUES('_0yyp8vmw4si_wf49m4d4zwq','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_11xee72y1d3_t3cqzi5dq3k','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "iterate on increasing integers"}],
  "content": null, "kind": null, "payload": null}
 ');
-INSERT INTO t_items VALUES('_12uyu6tft74_13jr0kd55u2','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "first test function."},
-  {"attr": "_4zywi5fh3ef_ys9sq93vsc1", "val": {"jtype": "set", "set": ["_0yyp8vmw4si_wf49m4d4zwq"]}},
-  {"attr": "_4p33dhxywm0_id6tti2kyw6", "val": {"jtype": "set", "set": ["_3ik6qihwfda_v5mjshjaqzr",
-     "_7wk9y7e7r0z_575esi8ys5x"]}}, {"attr": "_2x2zpyhfqum_0utui69rzea", "val": {"jtype":
-    "set", "set": ["_32ihdu9vjfs_dyzi6m6muqt"]}}], "content": null, "kind": null,
- "payload": null}
+INSERT INTO t_items VALUES('_12uyu6tft74_13jr0kd55u2','{"attr": [{"attr": "_4zywi5fh3ef_ys9sq93vsc1", "val": {"jtype": "set", "set": ["_0yyp8vmw4si_wf49m4d4zwq"]}}],
+ "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_17spwr8dkzv_tsf2s8diazu','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "Gives the double floating-point numbers of Json for frames of tasklets."}],
  "content": null, "kind": null, "payload": null}
@@ -238,8 +237,9 @@ INSERT INTO t_items VALUES('_60ist2ad22c_cfpjp5ay6uj','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_6443sk5q0zt_8xdi02c6tzu','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for ending some blocks"}],
  "content": null, "kind": null, "payload": null}
 ');
-INSERT INTO t_items VALUES('_65961crktpj_vtt30qeqv21','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "first module, should become able to translate itself."}],
- "content": null, "kind": null, "payload": null}
+INSERT INTO t_items VALUES('_65961crktpj_vtt30qeqv21','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "first module, should become able to translate itself."},
+  {"attr": "_9dcxaqk8tqe_fam9mcxme9w", "val": {"jtype": "set", "set": ["_12uyu6tft74_13jr0kd55u2",
+     "_3r9q2yaem2m_404fx43aj4a"]}}], "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_6djzuwz5pav_cri386ywjhj','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "notably for error message in JSONRPC"}],
  "content": null, "kind": null, "payload": null}

@@ -31,11 +31,12 @@ const char mom_plugin_GPL_compatible[] = "GPLv3+";
 
 #define COMMANDS(CMD)                                   \
   CMD(clear,"clear the stack",non,NULL)                 \
+  CMD(debugf,"[flags]; set debugflags",non,NULL)        \
   CMD(dump,"dump state & continue",non,NULL)            \
   CMD(dup,"duplicate top",num,"%")                      \
   CMD(exit,"dump & exit",non,NULL)                      \
   CMD(forget,"forget named item",itm,NULL)              \
-  CMD(gencmod,"generate C module",non,NULL)             \
+  CMD(gencmod,"generate C module",itm,NULL)             \
   CMD(getat,"[attr]; get attribute",itm,":=")           \
   CMD(help,"give this help",non,"?")                    \
   CMD(mark,"push mark",non,"(")                         \
@@ -45,6 +46,7 @@ const char mom_plugin_GPL_compatible[] = "GPLv3+";
   CMD(quit,"quit without dumping",non,NULL)             \
   CMD(remat,"[attr]; remove attribute",itm,":-")        \
   CMD(set,"make set to mark",non,"}")                   \
+  CMD(shell,"[command]; run a command",non,"#!")        \
   CMD(stack,"print the stack",non,"!")                  \
   CMD(status,"print status info",non,NULL)              \
   CMD(top,"print the top of stack",non,"=")             \
@@ -368,16 +370,44 @@ cmd_do_exit_mom (const char *lin)
 }
 
 
+static const char *cmdtyp_name_mom[] = {[cmdt_non] = "non",[cmdt_num] =
+    "num",[cmdt_itm] = "itm", NULL, NULL
+};
+
 static void
 cmd_do_help_mom (const char *lin)
 {
   MOM_DEBUGPRINTF (cmd, "start do_help lin=%s", lin);
   putchar ('\n');
+  if (isalpha (lin[0]))
+    {
+      int nbh = 0;
+      int linlen = strlen (lin);
+      for (const struct cmd_descr_st * cd = cmd_array_mom;
+	   cd != NULL && cd->cmd_name != NULL; cd++)
+	{
+	  if (strncmp (cd->cmd_name, lin, linlen))
+	    continue;
+	  nbh++;
+	  printf (" " ANSI_BOLD ",%-10s" ANSI_NORMAL "<%s>" "  %-40s",
+		  cd->cmd_name, cmdtyp_name_mom[cd->cmd_type], cd->cmd_help);
+	  if (cd->cmd_alias)
+	    printf ("  alias " ANSI_BOLD "%s" ANSI_NORMAL "\n",
+		    cd->cmd_alias);
+	  else
+	    putchar ('\n');
+	}
+      if (nbh > 0)
+	{
+	  puts ("...");
+	  return;
+	}
+    }
   for (const struct cmd_descr_st * cd = cmd_array_mom;
        cd != NULL && cd->cmd_name != NULL; cd++)
     {
-      printf (" " ANSI_BOLD ",%-10s" ANSI_NORMAL "  %-40s", cd->cmd_name,
-	      cd->cmd_help);
+      printf (" " ANSI_BOLD ",%-10s" ANSI_NORMAL "<%s>" "  %-40s",
+	      cd->cmd_name, cmdtyp_name_mom[cd->cmd_type], cd->cmd_help);
       if (cd->cmd_alias)
 	printf ("  alias " ANSI_BOLD "%s" ANSI_NORMAL "\n", cd->cmd_alias);
       else
@@ -398,30 +428,30 @@ cmd_do_help_mom (const char *lin)
 }
 
 static void
-cmd_do_gencmod_mom (const char *lin)
+cmd_do_debugf_mom (const char *lin)
 {
-  momitem_t *moditm = NULL;
-  int pos = -1;
+  char cmdbuf[120];
+  snprintf (cmdbuf, sizeof (cmdbuf), ",debugf %s", lin);
+  mom_set_debugging (lin);
+  add_history (cmdbuf);
+}
+
+static void
+cmd_do_gencmod_mom (const char *lin, bool pres, momitem_t *moditm)
+{
   char nambuf[80];
   char cmdbuf[sizeof (nambuf) + 20];
   char *errmsg = NULL;
   memset (nambuf, 0, sizeof (nambuf));
   memset (cmdbuf, 0, sizeof (cmdbuf));
   MOM_DEBUGPRINTF (cmd, "start do_gencmod lin=%s", lin);
-  if (sscanf (lin, " %70[a-zA-Z0-9_] %n", nambuf,
-	      &pos) >= 1 && (isalpha (nambuf[0]) || nambuf[0] == '_'))
+  if (pres && moditm)
     {
-      moditm = mom_get_item_of_name_or_ident_cstr (nambuf);
-      if (!moditm)
-	{
-	  printf ("Bad module name %s - no C code generation\n", nambuf);
-	  return;
-	}
-      else
-	{
-	  snprintf (cmdbuf, sizeof (cmdbuf), ",gencmod %s", nambuf);
-	  add_history (cmdbuf);
-	}
+      snprintf (cmdbuf, sizeof (cmdbuf),
+		",gencmod %s",
+		mom_string_cstr ((momval_t)
+				 mom_item_get_name_or_idstr (moditm)));
+      add_history (cmdbuf);
     }
   else
     {
@@ -935,6 +965,17 @@ cmd_do_remat_mom (const char *lin, bool pres, momitem_t *atitm)
 }
 
 static void
+cmd_do_shell_mom (const char *lin)
+{
+  int res = 0;
+  MOM_DEBUGPRINTF (cmd, "start do_shell lin=%s top=%d", lin, vst_top_mom);
+  MOM_INFORMPRINTF ("Before running command: %s", lin);
+  fflush (NULL);
+  res = system (lin);
+  MOM_INFORMPRINTF ("Command result=%d", res);
+}
+
+static void
 cmd_do_stack_mom (const char *lin)
 {
   MOM_DEBUGPRINTF (cmd, "start do_stack lin=%s top=%d", lin, vst_top_mom);
@@ -1061,13 +1102,14 @@ cmd_do_top_mom (const char *lin)
 	      if (mom_is_string (commentv))
 		MOM_OUT
 		  (mom_stdout,
-		   MOMOUT_SPACE  (48),
-		   MOMOUT_LITERAL  (" " ANSI_BOLD    "//: "  ANSI_NORMAL),
+		   MOMOUT_SPACE (48),
+		   MOMOUT_LITERAL (" " ANSI_BOLD "//: " ANSI_NORMAL),
 		   MOMOUT_LITERALV (mom_string_cstr (commentv)), NULL);
 	    }
-	  if (mom_is_item(curval))
-	    MOM_OUT(mom_stdout, MOMOUT_SPACE(48),
-		    MOMOUT_ITEM_ATTRIBUTES((const momitem_t*)curval.pitem));
+	  if (mom_is_item (curval))
+	    MOM_OUT (mom_stdout, MOMOUT_SPACE (48),
+		     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+					     curval.pitem));
 	  MOM_OUT (mom_stdout, MOMOUT_NEWLINE ());
 	}
       add_history (",top");
@@ -1334,6 +1376,12 @@ cmd_interpret_mom (const char *lin)
 	}
       else
 	goto bad_command;
+    }
+  else if (lin[0] == '$' && isdigit (lin[1]))
+    {
+      int rk = atoi (lin + 1);
+      MOM_DEBUGPRINTF (cmd, "$%d is dup", rk);
+      cmd_do_dup_mom ("", true, rk);
     }
   else if (lin[0] == '$' && lin[1] == '=' && isalpha (lin[2]))
     {

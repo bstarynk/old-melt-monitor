@@ -2486,6 +2486,8 @@ unsigned mom_debugflags;
 
 #define MOM_IS_DEBUGGING(Dbg) (mom_debugflags & (1<<momdbg_##Dbg))
 
+void mom_set_debugging (const char *dbgopt);
+
 void
 mom_debug_at (const char *fil, int lin, enum mom_debug_en dbg, ...)
 __attribute__ ((sentinel));

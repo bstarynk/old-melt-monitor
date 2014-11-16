@@ -722,10 +722,12 @@ print_version_mom (const char *argv0)
 	  monimelt_timestamp, monimelt_lastgitcommit);
 }
 
-static void
-add_debugging_mom (const char *dbgopt)
+void
+mom_set_debugging (const char *dbgopt)
 {
   char dbuf[256];
+  if (!dbgopt)
+    return;
   memset (dbuf, 0, sizeof (dbuf));
   if (strlen (dbgopt) >= sizeof (dbuf) - 1)
     MOM_FATAPRINTF ("too long debug option %s", dbgopt);
@@ -742,13 +744,31 @@ add_debugging_mom (const char *dbgopt)
 	comma = strchr (pc, ',');
 	if (comma)
 	  *comma = (char) 0;
-#define MOM_TEST_DEBUG_OPTION(Nam)					\
-	if (!strcmp(pc,#Nam)) mom_debugflags |=  (1<<momdbg_##Nam); else
+#define MOM_TEST_DEBUG_OPTION(Nam)			\
+	if (!strcmp(pc,#Nam))		{		\
+	  mom_debugflags |=  (1<<momdbg_##Nam); } else	\
+	  if (!strcmp(pc,"!"#Nam))			\
+	    mom_debugflags &=  ~(1<<momdbg_##Nam); else
 	if (!pc)
 	  break;
 	MOM_DEBUG_LIST_OPTIONS (MOM_TEST_DEBUG_OPTION)
-	  MOM_FATAPRINTF ("unrecognized debug flag %s", pc);
+	  MOM_WARNPRINTF ("unrecognized debug flag %s", pc);
       }
+  char alldebugflags[2 * sizeof (dbuf) + 120];
+  memset (alldebugflags, 0, sizeof (alldebugflags));
+  int nbdbg = 0;
+#define MOM_SHOW_DEBUG_OPTION(Nam) do {		\
+    if (mom_debugflags & (1<<momdbg_##Nam)) {	\
+     strcat(alldebugflags, " " #Nam);		\
+     assert (strlen(alldebugflags)		\
+	     <sizeof(alldebugflags)-3);		\
+     nbdbg++;					\
+    } } while(0);
+  MOM_DEBUG_LIST_OPTIONS (MOM_SHOW_DEBUG_OPTION);
+  if (nbdbg > 0)
+    MOM_INFORMPRINTF ("%d debug flags active:%s.", nbdbg, alldebugflags);
+  else
+    MOM_INFORMPRINTF ("no debug flags active.");
 }
 
 static void
@@ -778,7 +798,7 @@ parse_program_arguments_and_load_modules_mom (int *pargc, char **argv)
 	  break;
 	case 'D':
 	  if (optarg)
-	    add_debugging_mom (optarg);
+	    mom_set_debugging (optarg);
 	  break;
 	case 'J':
 	  if (optarg)
