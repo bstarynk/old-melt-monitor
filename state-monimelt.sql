@@ -94,6 +94,9 @@ INSERT INTO t_items VALUES('_2kxisdsque9_u9awek5wup1','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_2mayc646pdu_w4d18fmx8u3','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "some sequence"}], "content":
  null, "kind": null, "payload": null}
 ');
+INSERT INTO t_items VALUES('_2u8svx94yq4_34icz9j1fyx','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for constants in routines..."}],
+ "content": null, "kind": null, "payload": null}
+');
 INSERT INTO t_items VALUES('_2ummst105ck_xracfy8v87y','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "formal arguments..."}],
  "content": null, "kind": null, "payload": null}
 ');
@@ -182,9 +185,6 @@ INSERT INTO t_items VALUES('_4qcw2mwjswm_j9q0k9d04hm','{"attr": [{"attr": "_41u1
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_4v74chqs1eh_chqd9cqw85t','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for procedure related things"}],
- "content": null, "kind": null, "payload": null}
-');
-INSERT INTO t_items VALUES('_4zywi5fh3ef_ys9sq93vsc1','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for constant in routines, etc..."}],
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_51u3st4u9mc_zdvms6jti0a','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "The C type for word integers"}],
@@ -372,7 +372,7 @@ INSERT INTO t_names VALUES('closure','_97zkxf62r11_6eedwwv3eu8','.predef');
 INSERT INTO t_names VALUES('closure_routine','_28941cvehx8_9rf4udyeq8v','.predef');
 INSERT INTO t_names VALUES('code','_0yyp8vmw4si_wf49m4d4zwq','.predef');
 INSERT INTO t_names VALUES('comment','_41u1utcxyek_22cftxt3xxm','.predef');
-INSERT INTO t_names VALUES('constant','_4zywi5fh3ef_ys9sq93vsc1','.predef');
+INSERT INTO t_names VALUES('constants','_2u8svx94yq4_34icz9j1fyx','.predef');
 INSERT INTO t_names VALUES('content','_8s357rq2dzk_k8ze95tikjm','.predef');
 INSERT INTO t_names VALUES('count','_6f4k9pqzryk_w25f8vxuyyc','.predef');
 INSERT INTO t_names VALUES('ctype','_0ee6afx5850_ji17eq0wmfa','.predef');

@@ -82,8 +82,8 @@ MOM_PREDEFINED_NAMED(code,_0yyp8vmw4si_wf49m4d4zwq,163984103)
 ////!gives a human-readable comment
 MOM_PREDEFINED_NAMED(comment,_41u1utcxyek_22cftxt3xxm,2024771965)
 
-////!for constant in routines, etc...
-MOM_PREDEFINED_NAMED(constant,_4zywi5fh3ef_ys9sq93vsc1,3780502208)
+////!for constants in routines...
+MOM_PREDEFINED_NAMED(constants,_2u8svx94yq4_34icz9j1fyx,1592678753)
 
 ////!gives the item content, at least in dumped JSON...
 MOM_PREDEFINED_NAMED(content,_8s357rq2dzk_k8ze95tikjm,1630350867)

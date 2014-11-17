@@ -20,8 +20,6 @@
 
 #include "monimelt.h"
 
-#warning temporary hack for constant
-#define mom_named__constants mom_named__constant
 /****
    A module item is an item with a `module_routines` attribute
    associated to a set or tuple of routines, i.e. procedure or
