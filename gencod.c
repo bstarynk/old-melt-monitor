@@ -588,7 +588,7 @@ bind_constants_cgen (struct c_generator_mom_st *cg, momval_t constantsv)
 	  CGEN_CHECK_FRESH (cg, "constant in routine", constitm);
 	  mom_item_assoc_put
 	    (cg->cgen_locassocitm, constitm,
-	     (momval_t) mom_make_node_sized (mom_named__constant, 2,
+	     (momval_t) mom_make_node_sized (mom_named__constants, 2,
 					     mom_make_integer (cix),
 					     (momval_t) constitm));
 	}
@@ -826,7 +826,7 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
     mom_should_lock_item (curoutitm);
     procargsv = mom_item_get_attribute (curoutitm, mom_named__formals);
     procresv = mom_item_get_attribute (curoutitm, mom_named__result);
-    proconstantsv = mom_item_get_attribute (curoutitm, mom_named__constant);
+    proconstantsv = mom_item_get_attribute (curoutitm, mom_named__constants);
     provaluesv = mom_item_get_attribute (curoutitm, mom_named__values);
     pronumbersv = mom_item_get_attribute (curoutitm, mom_named__numbers);
     prodoublesv = mom_item_get_attribute (curoutitm, mom_named__doubles);
@@ -1137,10 +1137,11 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
   assert (mom_node_conn (routnodev) == mom_named__tasklet_function);
   {
     mom_should_lock_item (curoutitm);
-    funconstantsv = mom_item_get_attribute (curoutitm, mom_named__constant);
+    funconstantsv = mom_item_get_attribute (curoutitm, mom_named__constants);
     funargsv = mom_item_get_attribute (curoutitm, mom_named__formals);
     funlocalsv = mom_item_get_attribute (curoutitm, mom_named__locals);
-    funblocksv = mom_item_get_attribute (curoutitm, mom_named__blocks);
+    funblocksv =
+      mom_item_get_attribute (curoutitm, mom_named__tasklet_function);
     funstartv = mom_item_get_attribute (curoutitm, mom_named__start);
     mom_unlock_item (curoutitm);
   }
@@ -1380,7 +1381,7 @@ emit_var_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
   if (expasv.ptr == NULL)
     expasv = mom_item_assoc_get (cg->cgen_globassocitm, varitm);
   const momitem_t *noditm = mom_node_conn (expasv);
-  if (noditm == mom_named__constant)
+  if (noditm == mom_named__constants)
     {
       int cix = mom_integer_val_def (mom_node_nth (expasv, 0), -1);
       momitem_t *constitm = mom_value_to_item (mom_node_nth (expasv, 1));
@@ -2178,7 +2179,7 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 		  || !(assblkv =
 		       mom_item_assoc_get (cg->cgen_locassocitm,
 					   curblkitm)).ptr
-		  || mom_node_conn (asscasv) != mom_named__constant
+		  || mom_node_conn (asscasv) != mom_named__constants
 		  || mom_node_conn (curcasv) != mom_named__block)
 		CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid case:"),
 				MOMOUT_VALUE ((const momval_t) curcasv),
