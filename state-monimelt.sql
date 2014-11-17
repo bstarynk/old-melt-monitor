@@ -141,8 +141,6 @@ INSERT INTO t_items VALUES('_4qcw2mwjswm_j9q0k9d04hm','{"attr": [], "content": n
 ');
 INSERT INTO t_items VALUES('_4v74chqs1eh_chqd9cqw85t','{"attr": [], "content": null, "kind": null, "payload": null}
 ');
-INSERT INTO t_items VALUES('_4zywi5fh3ef_ys9sq93vsc1','{"attr": [], "content": null, "kind": null, "payload": null}
-');
 INSERT INTO t_items VALUES('_51u3st4u9mc_zdvms6jti0a','{"attr": [], "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_547q7emtfsk_ect0yratp6e','{"attr": [], "content": null, "kind": null, "payload": null}
@@ -267,7 +265,6 @@ INSERT INTO t_names VALUES('closure','_97zkxf62r11_6eedwwv3eu8','.predef');
 INSERT INTO t_names VALUES('closure_routine','_28941cvehx8_9rf4udyeq8v','.predef');
 INSERT INTO t_names VALUES('code','_0yyp8vmw4si_wf49m4d4zwq','.predef');
 INSERT INTO t_names VALUES('comment','_41u1utcxyek_22cftxt3xxm','.predef');
-INSERT INTO t_names VALUES('constant','_4zywi5fh3ef_ys9sq93vsc1','.predef');
 INSERT INTO t_names VALUES('constants','_3kias3fqkqu_dkpev288sm6','.predef');
 INSERT INTO t_names VALUES('content','_8s357rq2dzk_k8ze95tikjm','.predef');
 INSERT INTO t_names VALUES('count','_6f4k9pqzryk_w25f8vxuyyc','.predef');

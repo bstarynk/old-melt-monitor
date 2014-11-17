@@ -747,7 +747,15 @@ mom_forget_name (const char *namestr)
       momitem_t *olditm = dict_mom.dict_array[nix].dicent_item;
       assert (olditm && olditm != MOM_EMPTY
 	      && olditm->i_typnum == momty_item);
-      assert (olditm->i_name == dict_mom.dict_array[nix].dicent_name);
+      assert (olditm->i_name != NULL
+	      && olditm->i_name->typnum == momty_string);
+      assert (dict_mom.dict_array[nix].dicent_name != NULL
+	      && dict_mom.dict_array[nix].dicent_name != MOM_EMPTY
+	      && dict_mom.dict_array[nix].dicent_name->typnum ==
+	      momty_string);
+      assert (olditm->i_name == dict_mom.dict_array[nix].dicent_name
+	      || !strcmp (olditm->i_name->cstr,
+			  dict_mom.dict_array[nix].dicent_name->cstr));
       dict_mom.dict_array[nix].dicent_name = MOM_EMPTY;
       dict_mom.dict_array[nix].dicent_item = MOM_EMPTY;
       __atomic_store_n (&olditm->i_name, NULL, __ATOMIC_SEQ_CST);
