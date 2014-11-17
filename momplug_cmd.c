@@ -1537,6 +1537,7 @@ cmd_interpret_mom (const char *lin)
 	      snprintf (cmdbuf, sizeof (cmdbuf), "$%c", c);
 	      add_history (cmdbuf);
 	      cmd_stack_push_mom (valv);
+	      return;
 	    }
 	  else
 	    printf (ANSI_BOLD "no temporary %c" ANSI_NORMAL "\n", c);
@@ -1577,6 +1578,7 @@ cmd_interpret_mom (const char *lin)
 	    }
 	  vst_letterval_mom[c - 'a'] = valv;
 	  cmd_stack_pop_mom (1);
+	  return;
 	}
       else
 	goto bad_command;
@@ -1601,6 +1603,7 @@ cmd_interpret_mom (const char *lin)
 	  vst_letterval_mom[c - 'a'] = valv;
 	  cmd_stack_pop_mom (1);
 	  cmd_stack_push_mom (oldvalv);
+	  return;
 	}
       else
 	goto bad_command;

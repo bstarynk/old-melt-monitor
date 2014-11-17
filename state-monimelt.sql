@@ -81,7 +81,8 @@ INSERT INTO t_items VALUES('_2x2zpyhfqum_0utui69rzea','{"attr": [], "content": n
 ');
 INSERT INTO t_items VALUES('_32ihdu9vjfs_dyzi6m6muqt','{"attr": [], "content": null, "kind": null, "payload": null}
 ');
-INSERT INTO t_items VALUES('_33c3esia4wc_h7pk6rt983d','{"attr": [], "content": null, "kind": null, "payload": null}
+INSERT INTO t_items VALUES('_33c3esia4wc_h7pk6rt983d','{"attr": [{"attr": "_9dcxaqk8tqe_fam9mcxme9w", "val": {"jtype": "set", "set": ["_12uyu6tft74_13jr0kd55u2",
+     "_3r9q2yaem2m_404fx43aj4a"]}}], "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_35vp60aw7em_d436vfie4ud','{"attr": [], "content": null, "kind": null, "payload": null}
 ');
