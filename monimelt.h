@@ -1235,7 +1235,14 @@ mom_forget_name_string (const momstring_t *namev)
 static inline void
 mom_forget_item (momitem_t *itm)
 {
-  mom_forget_name (mom_string_cstr ((momval_t) mom_item_get_name (itm)));
+  if (!itm)
+    return;
+  assert (itm->i_typnum == momty_item);
+  const momstring_t *nams = mom_item_get_name (itm);
+  if (!nams)
+    return;
+  assert (nams->typnum == momty_string);
+  mom_forget_name (nams->cstr);
 };
 
 void mom_item_status (int64_t * pnbcreation, int64_t * pnbdestruct,

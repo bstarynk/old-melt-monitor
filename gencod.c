@@ -389,9 +389,12 @@ void
 declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
 {
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
-  momval_t procargsv = MOM_NULLV;
+  momval_t formalsv = MOM_NULLV;
+  momval_t localsv = MOM_NULLV;
+  momval_t constantsv = MOM_NULLV;
   momval_t procv = MOM_NULLV;
-  momval_t procresv = MOM_NULLV;
+  momval_t tfunv = MOM_NULLV;
+  momval_t resultv = MOM_NULLV;
   momval_t procrestypev = MOM_NULLV;
   momitem_t *curoutitm = cg->cgen_curoutitm;
   {
@@ -408,10 +411,27 @@ declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
   {
     mom_should_lock_item (curoutitm);
     procv = mom_item_get_attribute (curoutitm, mom_named__procedure);
-    procargsv = mom_item_get_attribute (curoutitm, mom_named__formals);
-    procresv = mom_item_get_attribute (curoutitm, mom_named__result);
+    tfunv = mom_item_get_attribute (curoutitm, mom_named__tasklet_function);
+    formalsv = mom_item_get_attribute (curoutitm, mom_named__formals);
+    constantsv = mom_item_get_attribute (curoutitm, mom_named__constants);
+    localsv = mom_item_get_attribute (curoutitm, mom_named__locals);
+    resultv = mom_item_get_attribute (curoutitm, mom_named__result);
     mom_unlock_item (curoutitm);
   }
+  if (tfunv.ptr && procv.ptr)
+    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("routine:"),
+		    MOMOUT_ITEM ((const momitem_t *) curoutitm),
+		    MOMOUT_LITERAL (" rank#"),
+		    MOMOUT_DEC_INT ((int) routix),
+		    MOMOUT_LITERAL
+		    (" cannot have both `procedure` and `tasklet_function` attributes."));
+  if (!tfunv.ptr && !procv.ptr)
+    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("routine:"),
+		    MOMOUT_ITEM ((const momitem_t *) curoutitm),
+		    MOMOUT_LITERAL (" rank#"),
+		    MOMOUT_DEC_INT ((int) routix),
+		    MOMOUT_LITERAL
+		    (" should have one of `procedure` or `tasklet_function` attribute."));
   if (procv.ptr)
     {
       momval_t argsigv = MOM_NULLV;
@@ -421,26 +441,26 @@ declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	       MOMOUT_ITEM ((const momitem_t *) curoutitm),
 	       MOMOUT_LITERAL (" rank#"), MOMOUT_DEC_INT ((int) routix),
 	       MOMOUT_NEWLINE (), NULL);
-      if (!mom_is_tuple (procargsv))
+      if (!mom_is_tuple (formalsv))
 	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid procedure formals:"),
-			MOMOUT_VALUE ((const momval_t) procargsv),
+			MOMOUT_VALUE ((const momval_t) formalsv),
 			MOMOUT_LITERAL (" in procedure "),
 			MOMOUT_ITEM ((const momitem_t *) curoutitm), NULL);
-      unsigned nbargs = mom_tuple_length (procargsv);
-      if (mom_is_item (procresv))
+      unsigned nbargs = mom_tuple_length (formalsv);
+      if (mom_is_item (resultv))
 	{
-	  momitem_t *procresitm = procresv.pitem;
+	  momitem_t *procresitm = resultv.pitem;
 	  mom_should_lock_item (procresitm);
 	  procrestypev = mom_item_get_attribute (curoutitm, mom_named__ctype);
 	  mom_unlock_item (procresitm);
 	}
-      else if (!procresv.ptr)
+      else if (!resultv.ptr)
 	{
 	  procrestypev = (momval_t) mom_named__void;
 	}
       else
 	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid procedure result:"),
-			MOMOUT_VALUE ((const momval_t) procresv),
+			MOMOUT_VALUE ((const momval_t) resultv),
 			MOMOUT_LITERAL (" in procedure "),
 			MOMOUT_ITEM ((const momitem_t *) curoutitm), NULL);
       emit_ctype_cgen (cg, &cg->cgen_outhead, procrestypev);
@@ -455,11 +475,12 @@ declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	 1) ? argsigtab : (MOM_GC_SCALAR_ALLOC ("argsigbuf", nbargs + 2));
       for (unsigned aix = 0; aix < nbargs; aix++)
 	{
-	  momitem_t *curargitm = mom_tuple_nth_item (procargsv, aix);
+	  momitem_t *curargitm = mom_tuple_nth_item (formalsv, aix);
 	  momval_t curargtypv = MOM_NULLV;
 	  if (!curargitm || curargitm->i_typnum != momty_item)
 	    CGEN_ERROR_MOM (cg,
-			    MOMOUT_LITERAL ("invalid procedure argument:"),
+			    MOMOUT_LITERAL
+			    ("invalid procedure formal argument:"),
 			    MOMOUT_VALUE ((const momval_t) curargitm),
 			    MOMOUT_LITERAL (" in procedure "),
 			    MOMOUT_ITEM ((const momitem_t *) curoutitm),

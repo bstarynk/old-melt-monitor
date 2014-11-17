@@ -24,6 +24,7 @@
 
 #include "monimelt.h"
 
+#include <regex.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 
@@ -41,6 +42,7 @@ const char mom_plugin_GPL_compatible[] = "GPLv3+";
   CMD(getat,"[attr]; get attribute",itm,":=")           \
   CMD(help,"give this help",non,"?")                    \
   CMD(mark,"push mark",non,"(")                         \
+  CMD(named,"[Regexp]",non,NULL)			\
   CMD(node,"[Connective]; make node to mark",itm,"*")   \
   CMD(pop,"pop [N] elements",num,"^")                   \
   CMD(predef,"NAME; create a predefined item",non,"^")	\
@@ -382,6 +384,59 @@ cmd_do_echo_mom (const char *lin)
   add_history (cmdbuf);
 }
 
+static void
+cmd_do_named_mom (const char *lin)
+{
+  char cmdbuf[120];
+  regex_t rx;
+  int err = 0;
+  momval_t tupv = MOM_NULLV;
+  momval_t jarrv = MOM_NULLV;
+  memset (cmdbuf, 0, sizeof (cmdbuf));
+  memset (&rx, 0, sizeof (rx));
+  MOM_DEBUGPRINTF (cmd, "start do_named lin=%s", lin);
+  while (isspace (*lin))
+    lin++;
+  if ((err = regcomp (&rx, lin, REG_EXTENDED | REG_NOSUB)) != 0)
+    {
+      char errbuf[100];
+      memset (errbuf, 0, sizeof (errbuf));
+      regerror (err, &rx, errbuf, sizeof (errbuf));
+      printf (ANSI_BOLD "bad name regexp %s" ANSI_NORMAL ": %s\n",
+	      lin, errbuf);
+      regfree (&rx);
+      return;
+    }
+  tupv = (momval_t) mom_alpha_ordered_tuple_of_named_items (&jarrv);
+  unsigned nbnamed = mom_tuple_length (tupv);
+  unsigned nbmatch = 0;
+  for (unsigned nix = 0; nix < nbnamed; nix++)
+    {
+      momitem_t *curitm = mom_tuple_nth_item (tupv, nix);
+      momval_t curnamv = mom_json_array_nth (jarrv, nix);
+      assert (curitm && curitm->i_typnum == momty_item);
+      assert (mom_is_string (curnamv));
+      if (!regexec (&rx, mom_string_cstr (curnamv), 0, NULL, 0))
+	{
+	  MOM_OUT (mom_stdout, MOMOUT_SPACE (40),
+		   MOMOUT_ITEM ((const momitem_t *) curitm));
+	  nbmatch++;
+	}
+    }
+  if (nbmatch == 0)
+    printf (ANSI_BOLD "no named items (of %d) matching" ANSI_NORMAL " %s\n",
+	    nbnamed, lin);
+  else
+    MOM_OUT (mom_stdout, MOMOUT_SPACE (24),
+	     MOMOUT_LITERAL (" " ANSI_BOLD "/ "),
+	     MOMOUT_DEC_INT ((int) nbmatch),
+	     MOMOUT_LITERAL (" matching items" ANSI_NORMAL " of "),
+	     MOMOUT_DEC_INT ((int) nbnamed), MOMOUT_LITERAL ("."),
+	     MOMOUT_NEWLINE ());
+  snprintf (cmdbuf, sizeof (cmdbuf), ",named %s", lin);
+  add_history (cmdbuf);
+}
+
 
 static void
 cmd_do_predef_mom (const char *lin)
@@ -623,7 +678,10 @@ cmd_do_mark_mom (const char *lin)
 static void
 cmd_do_forget_mom (const char *lin, bool pres, momitem_t *itm)
 {
-  MOM_DEBUGPRINTF (cmd, "start do_forget lin=%s", lin);
+  MOM_DEBUG (cmd, MOMOUT_LITERAL ("start do_forget lin:"),
+	     MOMOUT_LITERALV (lin),
+	     MOMOUT_SPACE (48),
+	     MOMOUT_LITERAL ("item:"), MOMOUT_ITEM ((const momitem_t *) itm));
   if (pres && itm)
     {
       // don't add to history

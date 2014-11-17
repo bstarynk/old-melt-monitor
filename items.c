@@ -576,7 +576,8 @@ index_dict_mom (const char *namcstr, momhash_t namh)
     namh = mom_cstring_hash (namcstr);
   unsigned dsize = dict_mom.dict_size;
   struct dictent_mom_st *darr = dict_mom.dict_array;
-  unsigned istart = namh / dsize;
+  assert (dsize > 0 && darr != NULL);
+  unsigned istart = namh % dsize;
   for (unsigned i = istart; i < dsize; i++)
     {
       const momstring_t *curnam = darr[i].dicent_name;
