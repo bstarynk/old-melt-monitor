@@ -848,7 +848,7 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
     provaluesv = mom_item_get_attribute (curoutitm, mom_named__values);
     pronumbersv = mom_item_get_attribute (curoutitm, mom_named__numbers);
     prodoublesv = mom_item_get_attribute (curoutitm, mom_named__doubles);
-    problocksv = mom_item_get_attribute (curoutitm, mom_named__blocks);
+    problocksv = mom_item_get_attribute (curoutitm, mom_named__procedure);
     prostartv = mom_item_get_attribute (curoutitm, mom_named__start);
     mom_unlock_item (curoutitm);
   }
