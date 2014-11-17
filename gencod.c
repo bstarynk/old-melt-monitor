@@ -20,6 +20,8 @@
 
 #include "monimelt.h"
 
+#warning temporary hack for constant
+#define mom_named__constants mom_named__constant
 /****
    A module item is an item with a `module_routines` attribute
    associated to a set or tuple of routines, i.e. procedure or
@@ -396,7 +398,9 @@ declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
   momval_t procrestypev = MOM_NULLV;
   momitem_t *curoutitm = cg->cgen_curoutitm;
   MOM_DEBUG (gencod, MOMOUT_LITERAL ("declare_routine curoutitm="),
-	     MOMOUT_ITEM ((const momitem_t *) curoutitm), NULL);
+	     MOMOUT_ITEM ((const momitem_t *) curoutitm),
+	     MOMOUT_LITERAL (" routix#"), MOMOUT_DEC_INT ((int) routix),
+	     NULL);
   {
     momval_t oldvalroutv =
       mom_item_assoc_get (cg->cgen_globassocitm, curoutitm);
