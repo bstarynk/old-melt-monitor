@@ -34,6 +34,7 @@ const char mom_plugin_GPL_compatible[] = "GPLv3+";
   CMD(debugf,"[flags]; set debugflags",non,NULL)        \
   CMD(dump,"dump state & continue",non,NULL)            \
   CMD(dup,"duplicate top",num,"%")                      \
+  CMD(echo,"echo the line",non,NULL)                    \
   CMD(exit,"dump & exit",non,NULL)                      \
   CMD(forget,"forget named item",itm,NULL)              \
   CMD(gencmod,"generate C module",itm,NULL)             \
@@ -42,6 +43,7 @@ const char mom_plugin_GPL_compatible[] = "GPLv3+";
   CMD(mark,"push mark",non,"(")                         \
   CMD(node,"[Connective]; make node to mark",itm,"*")   \
   CMD(pop,"pop [N] elements",num,"^")                   \
+  CMD(predef,"NAME; create a predefined item",non,"^")	\
   CMD(putat,"[attr]; put attribute",itm,":+")           \
   CMD(quit,"quit without dumping",non,NULL)             \
   CMD(remat,"[attr]; remove attribute",itm,":-")        \
@@ -369,9 +371,93 @@ cmd_do_exit_mom (const char *lin)
   exit (EXIT_SUCCESS);
 }
 
+static void
+cmd_do_echo_mom (const char *lin)
+{
+  char cmdbuf[120];
+  memset (cmdbuf, 0, sizeof (cmdbuf));
+  MOM_DEBUGPRINTF (cmd, "start do_echo lin=%s", lin);
+  printf (ANSI_BOLD "%s" ANSI_NORMAL "\n", lin);
+  snprintf (cmdbuf, sizeof (cmdbuf), ",echo %s", lin);
+  add_history (cmdbuf);
+}
 
-static const char *cmdtyp_name_mom[] = {[cmdt_non] = "non",[cmdt_num] =
-    "num",[cmdt_itm] = "itm", NULL, NULL
+
+static void
+cmd_do_predef_mom (const char *lin)
+{
+  char cmdbuf[120];
+  char nambuf[80];
+  int pos = -1;
+  momitem_t *itm = NULL;
+  memset (cmdbuf, 0, sizeof (cmdbuf));
+  memset (nambuf, 0, sizeof (nambuf));
+  MOM_DEBUGPRINTF (cmd, "start do_predef lin=%s", lin);
+  if (sscanf (lin, " %72[A-Za-z0-9_] %n", nambuf, &pos) > 0
+      && pos > 0 && isalpha (nambuf[0]))
+    {
+      itm = mom_get_item_of_name (nambuf);
+      if (itm)
+	{
+	  mom_item_set_space ((momitem_t *) itm, momspa_predefined);
+	  MOM_INFORM (MOMOUT_LITERAL ("item:"),
+		      MOMOUT_ITEM ((const momitem_t *) itm),
+		      MOMOUT_LITERAL (" of id "),
+		      MOMOUT_LITERALV ((const char *)
+				       mom_string_cstr ((momval_t)
+							mom_item_get_idstr
+							(itm))),
+		      MOMOUT_LITERAL (" becomes predefined."));
+	}
+      else
+	{
+	  printf (ANSI_BOLD "enter comment of new predefined item %s"
+		  ANSI_NORMAL "\n (or empty or a dot to interrupt):\n",
+		  nambuf);
+	  char *commentline = readline ("comment: ");
+	  if (isprint (commentline[0]) && commentline[0] != '.')
+	    {
+	      itm = mom_make_item ();
+	      mom_item_put_attribute ((momitem_t *) itm,
+				      mom_named__comment,
+				      (momval_t)
+				      mom_make_string (commentline));
+	      mom_register_item_named_cstr ((momitem_t *) itm, nambuf);
+	      mom_item_set_space ((momitem_t *) itm, momspa_predefined);
+	      MOM_INFORM (MOMOUT_LITERAL ("made predefined item:"),
+			  MOMOUT_ITEM ((const momitem_t *) itm),
+			  MOMOUT_LITERAL (" of id "),
+			  MOMOUT_LITERALV ((const char *)
+					   mom_string_cstr ((momval_t)
+							    mom_item_get_idstr
+							    (itm))), NULL);
+	    }
+	  else
+	    {
+	      printf ("no predefined item created\n");
+	      return;
+	    }
+	  printf (ANSI_BOLD "made predefined:" ANSI_NORMAL "%s" "\n", nambuf);
+	}
+      snprintf (cmdbuf, sizeof (cmdbuf), ",predef %s", nambuf);
+      add_history (cmdbuf);
+    }
+  else
+    {
+      printf (ANSI_BOLD "invalid predefined name:" ANSI_NORMAL "%s" "\n",
+	      nambuf);
+      return;
+    };
+  snprintf (cmdbuf, sizeof (cmdbuf), ",predef %s", nambuf);
+  add_history (cmdbuf);
+}
+
+
+static const char *cmdtyp_name_mom[] = {
+  [cmdt_non] = "non",
+  [cmdt_num] = "num",
+  [cmdt_itm] = "itm",
+  NULL, NULL
 };
 
 static void
@@ -542,9 +628,18 @@ cmd_do_forget_mom (const char *lin, bool pres, momitem_t *itm)
     {
       // don't add to history
       mom_forget_item (itm);
-      MOM_OUT (mom_stdout,
-	       MOMOUT_LITERAL (ANSI_BOLD "forgot item:" ANSI_NORMAL),
-	       MOMOUT_ITEM ((const momitem_t *) itm), MOMOUT_NEWLINE ());
+      if (itm->i_space == momspa_predefined)
+	{
+	  itm->i_space = momspa_root;
+	  MOM_OUT (mom_stdout,
+		   MOMOUT_LITERAL (ANSI_BOLD "forgot predefined item:"
+				   ANSI_NORMAL),
+		   MOMOUT_ITEM ((const momitem_t *) itm), MOMOUT_NEWLINE ());
+	}
+      else
+	MOM_OUT (mom_stdout,
+		 MOMOUT_LITERAL (ANSI_BOLD "forgot item:" ANSI_NORMAL),
+		 MOMOUT_ITEM ((const momitem_t *) itm), MOMOUT_NEWLINE ());
     }
   else
     printf ("failed to forget\n");
@@ -968,11 +1063,15 @@ static void
 cmd_do_shell_mom (const char *lin)
 {
   int res = 0;
+  char cmdbuf[200];
+  memset (cmdbuf, 0, sizeof (cmdbuf));
   MOM_DEBUGPRINTF (cmd, "start do_shell lin=%s top=%d", lin, vst_top_mom);
   MOM_INFORMPRINTF ("Before running command: %s", lin);
   fflush (NULL);
   res = system (lin);
-  MOM_INFORMPRINTF ("Command result=%d", res);
+  MOM_INFORMPRINTF ("Command %s result=%d", lin, res);
+  snprintf (cmdbuf, sizeof (cmdbuf), ",shell %s", lin);
+  add_history (cmdbuf);
 }
 
 static void

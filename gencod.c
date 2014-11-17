@@ -23,10 +23,10 @@
 /****
    A module item is an item with a `module_routines` attribute
    associated to a set or tuple of routines, i.e. procedure or
-   function items.
+   function items. Procedures have an attribute `procedure`, and
+   functions have an attribute `tasklet_function` - both associated to
+   a sequence of blocks.
 
-   A procedure should have an attribute `procedure` giving its blocks,
-   with `start` giving its starting block.
 
    Procedures usually have an attribute `constant` giving a sequence
    -set or tuple- of constant items, `formals` associated to formal
@@ -220,7 +220,7 @@ mom_generate_c_module (momitem_t *moditm, const char *dirname, char **perrmsg)
   mycgen.cgen_moditm = moditm;
   if (!dirname || !dirname[0])
     dirname = ".";
-  char *mydirname = (char *) dirname;
+  char *mydirname = (char *) MOM_GC_STRDUP ("cgen dirname", dirname);;
   mom_initialize_buffer_output (&mycgen.cgen_outhead, outf_jsonhalfindent);
   mom_initialize_buffer_output (&mycgen.cgen_outbody, outf_jsonhalfindent);
   pthread_mutex_lock (&cgenmtx_mom);
