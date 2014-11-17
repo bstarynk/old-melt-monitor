@@ -31,7 +31,7 @@ CXX=g++
 CXXFLAGS= -std=c++11 -Wall -pthread  $(PREPROFLAGS) $(OPTIMFLAGS)
 INDENT= indent -gnu
 ASTYLE= astyle --style=gnu  
-PREPROFLAGS= -I/usr/local/include $(shell $(PKGCONFIG) --cflags $(PACKAGES))
+PREPROFLAGS= -I. -I/usr/local/include $(shell $(PKGCONFIG) --cflags $(PACKAGES))
 OPTIMFLAGS= -Og -g3
 LIBES= -L/usr/local/lib -lunistring -lgc -ljit $(shell $(PKGCONFIG) --libs $(PACKAGES)) \
         -lonion -lpthread -lm -ldl
@@ -42,6 +42,9 @@ SQLITE= sqlite3
 # plugins are extra code
 PLUGIN_SOURCES= $(sort $(wildcard momplug_*.c))
 PLUGINS=  $(patsubst %.c,%.so,$(PLUGIN_SOURCES))
+# modules are generated inside modules/
+MODULE_SOURCES= $(sort $(wildcard modules/momg_*.c))
+MODULES=  $(patsubst %.c,%.so,$(MODULE_SOURCES))
 SOURCES= $(sort $(filter-out $(PLUGIN_SOURCES) $(MODULE_SOURCES), $(wildcard [a-z]*.c)))
 OBJECTS= $(patsubst %.c,%.o,$(SOURCES))
 RM= rm -fv

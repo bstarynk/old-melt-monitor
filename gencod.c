@@ -299,6 +299,8 @@ mom_generate_c_module (momitem_t *moditm, const char *dirname, char **perrmsg)
 	   MOMOUT_LITERAL (" ** DO NOT EDIT **"), MOMOUT_NEWLINE (),
 	   MOMOUT_GPLV3P_NOTICE ((const char *) mycgen.cgen_filbase),
 	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL ("#include \"monimelt.h\""),
+	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL ("////++++ declaration of "),
 	   MOMOUT_DEC_INT ((int) nbmodrout), MOMOUT_LITERAL (" routines:"),
 	   MOMOUT_NEWLINE (), NULL);
@@ -1117,7 +1119,8 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	     MOMOUT_LITERAL (".prout_resty = momtypenc__none,"),
 	     MOMOUT_NEWLINE ());
   MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (".prout_len = "),
-	   MOMOUT_DEC_INT ((int) nbproconsts), MOMOUT_NEWLINE ());
+	   MOMOUT_DEC_INT ((int) nbproconsts), MOMOUT_LITERAL (","),
+	   MOMOUT_NEWLINE ());
   MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (".prout_id = \""),
 	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
 	   MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE ());
@@ -1296,6 +1299,7 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	   MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL (".rout_codefun = " MOM_ROUTINE_NAME_PREFIX),
 	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
+	   MOMOUT_LITERAL (","),
 	   MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL (".rout_timestamp = __DATE__ \"@\" __TIME__"),
 	   MOMOUT_NEWLINE (), MOMOUT_INDENT_LESS (), MOMOUT_NEWLINE (),
