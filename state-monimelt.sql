@@ -91,8 +91,9 @@ INSERT INTO t_items VALUES('_2d7i21ihwd8_xjcp4uhs11u','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_2kxisdsque9_u9awek5wup1','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for jumps at end of  blocks"}],
  "content": null, "kind": null, "payload": null}
 ');
-INSERT INTO t_items VALUES('_2ky10qvckv2_kqa0pr8z29z','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "starting block for test_fun1."}],
- "content": null, "kind": null, "payload": null}
+INSERT INTO t_items VALUES('_2ky10qvckv2_kqa0pr8z29z','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "starting block for test_fun1."},
+  {"attr": "_94tq2iauet8_jujpjhjrzsm", "val": {"jtype": "node", "node": "_0yyp8vmw4si_wf49m4d4zwq",
+    "sons": []}}], "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_2mayc646pdu_w4d18fmx8u3','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "some sequence"}], "content":
  null, "kind": null, "payload": null}

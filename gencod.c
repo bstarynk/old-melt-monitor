@@ -1127,7 +1127,7 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
   MOM_OUT (&cg->cgen_outbody,
 	   MOMOUT_LITERAL (".prout_addr = (void*)" MOM_PROCROUTFUN_PREFIX),
 	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
-	   MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE ());
+	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE ());
   MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (".prout_argsig = \""),
 	   MOMOUT_LITERALV (mom_string_cstr (mom_node_nth (procnodev, 1))),
 	   MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE ());
