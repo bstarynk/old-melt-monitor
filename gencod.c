@@ -28,10 +28,10 @@
    a sequence of blocks.
 
 
-   Procedures usually have an attribute `constant` giving a sequence
-   -set or tuple- of constant items, `formals` associated to formal
-   arguments, `values` associated to locals, `numbers` associated to
-   numbers, `doubles` associated to doubles.
+   Routines (procedures or functions) usually have an attribute
+   `constant` giving a sequence -set or tuple- of constant items,
+   `formals` associated to formal arguments, `locals` associated to
+   local variables.
 
    Tasklet functions have an attribute `constant` giving a sequence -set or
    tuple- of constant items, `formals` associated to formal-arguments,
@@ -390,13 +390,13 @@ declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
 {
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
   momval_t formalsv = MOM_NULLV;
-  momval_t localsv = MOM_NULLV;
-  momval_t constantsv = MOM_NULLV;
   momval_t procv = MOM_NULLV;
   momval_t tfunv = MOM_NULLV;
   momval_t resultv = MOM_NULLV;
   momval_t procrestypev = MOM_NULLV;
   momitem_t *curoutitm = cg->cgen_curoutitm;
+  MOM_DEBUG (gencod, MOMOUT_LITERAL ("declare_routine curoutitm="),
+	     MOMOUT_ITEM ((const momitem_t *) curoutitm), NULL);
   {
     momval_t oldvalroutv =
       mom_item_assoc_get (cg->cgen_globassocitm, curoutitm);
@@ -413,8 +413,6 @@ declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
     procv = mom_item_get_attribute (curoutitm, mom_named__procedure);
     tfunv = mom_item_get_attribute (curoutitm, mom_named__tasklet_function);
     formalsv = mom_item_get_attribute (curoutitm, mom_named__formals);
-    constantsv = mom_item_get_attribute (curoutitm, mom_named__constants);
-    localsv = mom_item_get_attribute (curoutitm, mom_named__locals);
     resultv = mom_item_get_attribute (curoutitm, mom_named__result);
     mom_unlock_item (curoutitm);
   }
@@ -516,11 +514,17 @@ declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
       if (argsigbuf != argsigtab)
 	MOM_GC_FREE (argsigbuf);
       MOM_OUT (&cg->cgen_outhead, MOMOUT_LITERAL (");"), MOMOUT_NEWLINE ());
-      mom_item_assoc_put (cg->cgen_globassocitm, curoutitm,
-			  (momval_t)
-			  mom_make_node_sized (mom_named__procedure, 3,
-					       mom_make_integer (routix),
-					       argsigv, procrestypev));
+      momval_t anodv =
+	(momval_t) mom_make_node_sized (mom_named__procedure, 3,
+					mom_make_integer (routix),
+					argsigv, procrestypev);
+      mom_item_assoc_put (cg->cgen_globassocitm, curoutitm, anodv);
+      MOM_DEBUG (gencod,
+		 MOMOUT_LITERAL
+		 ("declare_routine associating proc curoutitm="),
+		 MOMOUT_ITEM ((const momitem_t *) curoutitm),
+		 MOMOUT_LITERAL (" to "),
+		 MOMOUT_VALUE ((const momval_t) anodv), NULL);
     }
   else
     {
@@ -536,10 +540,16 @@ declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	       MOMOUT_LITERAL
 	       ("(int, momitem_t*, momval_t, momval_t*, intptr_t*, double*);"),
 	       MOMOUT_NEWLINE (), NULL);
-      mom_item_assoc_put (cg->cgen_globassocitm, curoutitm,
-			  (momval_t)
-			  mom_make_node_sized (mom_named__tasklet_function, 1,
-					       mom_make_integer (routix)));
+      momval_t anodv = (momval_t)
+	mom_make_node_sized (mom_named__tasklet_function, 1,
+			     mom_make_integer (routix));
+      MOM_DEBUG (gencod,
+		 MOMOUT_LITERAL
+		 ("declare_routine associating tfun curoutitm="),
+		 MOMOUT_ITEM ((const momitem_t *) curoutitm),
+		 MOMOUT_LITERAL (" to "),
+		 MOMOUT_VALUE ((const momval_t) anodv), NULL);
+      mom_item_assoc_put (cg->cgen_globassocitm, curoutitm, anodv);
     }
 }
 
@@ -554,6 +564,10 @@ emit_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
   assert (curoutconnitm && curoutconnitm->i_typnum == momty_item);
   cg->cgen_locassocitm = mom_make_item ();
   mom_item_start_assoc (cg->cgen_locassocitm);
+  MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_routine curoutitm="),
+	     MOMOUT_ITEM ((const momitem_t *) curoutitm),
+	     MOMOUT_LITERAL (" locassoc:"),
+	     MOMOUT_ITEM ((const momitem_t *) cg->cgen_locassocitm));
   if (curoutconnitm == mom_named__procedure)
     {
       cg->cgen_routkind = cgr_proc;
@@ -567,6 +581,8 @@ emit_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
   else
     MOM_FATAL (MOMOUT_LITERAL ("invalid curoutconnitm:"),
 	       MOMOUT_ITEM ((const momitem_t *) curoutconnitm));
+  MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_routine done curoutitm="),
+	     MOMOUT_ITEM ((const momitem_t *) curoutitm));
   cg->cgen_locassocitm = NULL;
   cg->cgen_routkind = cgr__none;
 }
