@@ -433,6 +433,7 @@ cmd_do_named_mom (const char *lin)
 	     MOMOUT_LITERAL (" matching items" ANSI_NORMAL " of "),
 	     MOMOUT_DEC_INT ((int) nbnamed), MOMOUT_LITERAL ("."),
 	     MOMOUT_NEWLINE ());
+  regfree (&rx);
   snprintf (cmdbuf, sizeof (cmdbuf), ",named %s", lin);
   add_history (cmdbuf);
 }
@@ -470,7 +471,8 @@ cmd_do_predef_mom (const char *lin)
 		  ANSI_NORMAL "\n (or empty or a dot to interrupt):\n",
 		  nambuf);
 	  char *commentline = readline ("comment: ");
-	  if (isprint (commentline[0]) && commentline[0] != '.')
+	  if (commentline && isprint (commentline[0])
+	      && commentline[0] != '.')
 	    {
 	      itm = mom_make_item ();
 	      mom_item_put_attribute ((momitem_t *) itm,
@@ -1265,6 +1267,10 @@ cmd_do_top_mom (const char *lin)
 	    }
 	  if (mom_is_item (curval))
 	    MOM_OUT (mom_stdout, MOMOUT_SPACE (48),
+		     MOMOUT_LITERAL (" /id="),
+		     MOMOUT_VALUE ((const momval_t)
+				   mom_item_get_idstr (curval.pitem)),
+		     MOMOUT_SPACE (32),
 		     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
 					     curval.pitem));
 	  MOM_OUT (mom_stdout, MOMOUT_NEWLINE ());
@@ -1344,14 +1350,17 @@ cmd_push_value_mom (momval_t val)
 static void
 cmd_interpret_mom (const char *lin)
 {
-  MOM_DEBUGPRINTF (cmd, "interpreting lin=%s", lin);
+  MOM_DEBUGPRINTF (cmd, "cmd_interpret start lin=%s", lin);
   momitem_t *itm = NULL;
+  if (!lin || !lin[0])
+    return;
   if (isalpha (lin[0]))
     {
       char name[72];
       memset (name, 0, sizeof (name));
       if (sscanf (lin, "%70[a-zA-Z0-9_]", name) > 0 && isalpha (name[0]))
 	{
+	  MOM_DEBUGPRINTF (cmd, "cmd_interpret name=%s", name);
 	  if (name[70 - 1])
 	    MOM_WARNPRINTF ("too long name in command %s", lin);
 	  itm = mom_get_item_of_name (name);
@@ -1371,7 +1380,8 @@ cmd_interpret_mom (const char *lin)
 		      " %s. Creating it (unless comment is empty or .)\n",
 		      name);
 	      char *commentline = readline ("comment: ");
-	      if (isprint (commentline[0]) && commentline[0] != '.')
+	      if (commentline && isprint (commentline[0])
+		  && commentline[0] != '.')
 		{
 		  itm = mom_make_item ();
 		  mom_item_put_attribute
@@ -1630,9 +1640,17 @@ cmd_interpret_mom (const char *lin)
 		    long l = 0;
 		    if (sscanf (lin + pos, " %ld %n", &l, &numpos) > 0
 			&& numpos > 0)
-		      cd->cmd_fun_num (lin + pos + numpos, true, l);
+		      {
+			MOM_DEBUGPRINTF (cmd, "num command %s l=%ld",
+					 cd->cmd_name, l);
+			cd->cmd_fun_num (lin + pos + numpos, true, l);
+		      }
 		    else
-		      cd->cmd_fun_num (lin + pos, false, 0);
+		      {
+			MOM_DEBUGPRINTF (cmd, "num command %s nonum %s",
+					 cd->cmd_name, lin + pos);
+			cd->cmd_fun_num (lin + pos, false, 0);
+		      }
 		  }
 		  return;
 		case cmdt_itm:
@@ -1646,8 +1664,28 @@ cmd_interpret_mom (const char *lin)
 			 &nampos) > 0 && nampos > 0 && (isalpha (nambuf[0])
 							|| nambuf[0] == '_'))
 		      {
+			MOM_DEBUGPRINTF (cmd, "itm command %s nambuf '%s'",
+					 cd->cmd_name, nambuf);
 			itm = mom_get_item_of_name_or_ident_cstr (nambuf);
+			MOM_DEBUG (cmd, MOMOUT_LITERAL ("itm command:"),
+				   MOMOUT_LITERALV ((const char *)
+						    cd->cmd_name),
+				   MOMOUT_LITERAL (" item:"),
+				   MOMOUT_ITEM ((const momitem_t *) itm),
+				   MOMOUT_LITERAL (" lin:"),
+				   MOMOUT_LITERALV ((const char *) lin),
+				   MOMOUT_LITERAL (" pos#"),
+				   MOMOUT_DEC_INT (pos),
+				   MOMOUT_LITERAL (" nambuf'"),
+				   MOMOUT_LITERALV ((const char *) nambuf),
+				   MOMOUT_LITERAL ("'"), NULL);
 		      }
+		    else
+		      {
+			MOM_DEBUGPRINTF (cmd, "itm command %s noname %s",
+					 cd->cmd_name, lin + pos);
+		      }
+
 		    if (itm)
 		      cd->cmd_fun_itm (lin + pos + nampos, true, itm);
 		    else

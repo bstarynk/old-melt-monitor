@@ -580,9 +580,10 @@ index_dict_mom (const char *namcstr, momhash_t namh)
   unsigned istart = namh % dsize;
   for (unsigned i = istart; i < dsize; i++)
     {
-      const momstring_t *curnam = darr[i].dicent_name;
+      struct dictent_mom_st *curd = darr + i;
+      const momstring_t *curnam = curd->dicent_name;
       if ((void *) curnam == MOM_EMPTY
-	  || (void *) darr[i].dicent_item == MOM_EMPTY)
+	  || (void *) curd->dicent_item == MOM_EMPTY)
 	continue;
       if (!curnam)
 	return -1;
@@ -591,9 +592,10 @@ index_dict_mom (const char *namcstr, momhash_t namh)
     }
   for (unsigned i = 0; i < istart; i++)
     {
-      const momstring_t *curnam = darr[i].dicent_name;
+      struct dictent_mom_st *curd = darr + i;
+      const momstring_t *curnam = curd->dicent_name;
       if ((void *) curnam == MOM_EMPTY
-	  || (void *) darr[i].dicent_item == MOM_EMPTY)
+	  || (void *) curd->dicent_item == MOM_EMPTY)
 	continue;
       if (!curnam)
 	return -1;
@@ -615,7 +617,7 @@ add_dict_mom (const momstring_t *nam, const momitem_t *itm)
   assert (dsize > 0);
   struct dictent_mom_st *darr = dict_mom.dict_array;
   assert (dict_mom.dict_count + 1 < dsize);
-  unsigned istart = h / dsize;
+  unsigned istart = h % dsize;
   int pos = -1;
   for (unsigned i = istart; i < dsize; i++)
     {
@@ -709,8 +711,8 @@ mom_register_item_named (momitem_t *itm, const momstring_t *name)
     if (!isalnum (name->cstr[cix]) && name->cstr[cix] != '_')
       return;
   pthread_mutex_lock (&globitem_mtx_mom);
-  if (5 * dict_mom.dict_count + 10 > 4 * dict_mom.dict_size)
-    reorganize_dict (dict_mom.dict_count / 8 + 2);
+  if (MOM_UNLIKELY (4 * dict_mom.dict_count + 15 > 3 * dict_mom.dict_size))
+    reorganize_dict (dict_mom.dict_count / 2 + 9);
   int nix = index_dict_mom (name->cstr, name->hash);
   if (nix >= 0)
     {
@@ -723,7 +725,9 @@ mom_register_item_named (momitem_t *itm, const momstring_t *name)
     }
   else
     {
-      add_dict_mom (name, itm);
+      int newix = add_dict_mom (name, itm);
+      if (MOM_UNLIKELY (newix < 0))
+	MOM_FATAPRINTF ("corrupted dictionnary newix=%d", newix);
     };
   __atomic_store_n (&itm->i_name, (momstring_t *) name, __ATOMIC_SEQ_CST);
   pthread_mutex_unlock (&globitem_mtx_mom);
