@@ -77,6 +77,7 @@
 #define CGEN_PROC_CONSTANTIDS_PREFIX "mompconstid_"
 #define CGEN_FUN_BLOCK_PREFIX "momfblo_"
 #define CGEN_FUN_CONSTANTIDS_PREFIX "momfconstid_"
+#define CGEN_FUN_CONSTANTVALS_PREFIX "momfconstval_"
 #define CGEN_FUN_CODE_PREFIX "momfuncod_"
 
 enum cgenroutkind_mom_en
@@ -1263,20 +1264,29 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	   MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL ("static int " CGEN_FUN_CODE_PREFIX),
 	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
+	   MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL
-	   ("(int momstate, momitem_t* restrict momtasklet, const momval_t momclosure,"),
+	   ("(int momstate,"),
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL
+	   ("\t momitem_t* restrict momtasklet, const momval_t momclosure,"),
 	   MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL
 	   ("\t momval_t* restrict momvals, intptr_t* restrict momnums, double* restrict momdbls)"),
 	   MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL ("{ // start of tasklet function "),
-	   MOMOUT_ITEM ((const momitem_t *) curoutitm),
-	   MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE (), NULL);
+	   MOMOUT_ITEM ((const momitem_t *) curoutitm), MOMOUT_INDENT_MORE (),
+	   MOMOUT_NEWLINE (), NULL);
   MOM_OUT (&cg->cgen_outbody,
 	   MOMOUT_LITERAL ("if (MOM_UNLIKELY(momstate==0)) return "),
 	   MOMOUT_DEC_INT (startix), MOMOUT_LITERAL (";"), MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL
-	   ("momval_t* momclovals = mom_closed_values (momclosure);"),
+	   ("momval_t* momclovals = mom_item_closure_values (momclosure);"),
+	   MOMOUT_NEWLINE ());
+  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("switch (momstate) {"),
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL
+	   ("const momval_t* momconstvals = mom_item_closure_constants (momclosure);"),
 	   MOMOUT_NEWLINE ());
   MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("switch (momstate) {"),
 	   MOMOUT_NEWLINE ());
@@ -1321,13 +1331,20 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
     }
   // emit end of function
   MOM_OUT (&cg->cgen_outbody,
+	   MOMOUT_INDENT_LESS (),
 	   MOMOUT_LITERAL ("} // end function "),
 	   MOMOUT_ITEM ((const momitem_t *) curoutitm),
 	   MOMOUT_INDENT_LESS (), MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
-  // emit the function constant ids
+  // emit the function constant values and constant ids
   {
     unsigned nbconstants = mom_seqitem_length (funconstantsv);
     MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_LITERAL ("static momval_t "
+			     CGEN_FUN_CONSTANTVALS_PREFIX),
+	     MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
+	     MOMOUT_LITERAL ("["), MOMOUT_DEC_INT ((int) nbconstants + 1),
+	     MOMOUT_LITERAL ("]; // constant values of function "),
+	     MOMOUT_ITEM ((const momitem_t *) curoutitm),
 	     MOMOUT_LITERAL ("static const char* "
 			     CGEN_FUN_CONSTANTIDS_PREFIX),
 	     MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
@@ -1364,7 +1381,6 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	   MOMOUT_LITERAL (" = { // function descriptor "),
 	   MOMOUT_ITEM ((const momitem_t *) curoutitm),
 	   MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE (),
-	   MOMOUT_ITEM ((const momitem_t *) curoutitm),
 	   MOMOUT_LITERAL (".rout_magic = MOM_ROUTINE_MAGIC,"),
 	   MOMOUT_NEWLINE (), MOMOUT_LITERAL (".rout_minclosize = "),
 	   MOMOUT_DEC_INT ((int) nbconstants), MOMOUT_LITERAL (","),
@@ -1379,6 +1395,10 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL (".rout_constantids = "
 			   CGEN_FUN_CONSTANTIDS_PREFIX),
+	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
+	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL (".rout_constantvals = "
+			   CGEN_FUN_CONSTANTVALS_PREFIX),
 	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
 	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL (".rout_ident = \""),
@@ -2689,6 +2709,13 @@ emit_moduleinit_cgen (struct c_generator_mom_st *cg)
 			    mom_ident_cstr_of_item (cg->cgen_moditm)),
 	   MOMOUT_LITERAL (" (void) {"), MOMOUT_INDENT_MORE (),
 	   MOMOUT_NEWLINE ());
+  MOM_OUT (&cg->cgen_outbody,
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL ("MOM_INFORMPRINTF(\"module "),
+	   MOMOUT_ITEM ((const momitem_t *) cg->cgen_moditm),
+	   // the MONIMELT_MD5_MODULE is computed in the Makefile
+	   MOMOUT_LITERAL
+	   (" of md5 \" MONIMELT_MD5_MODULE \" initialized.\");"), NULL);
 #warning missing emission of module initialization
   MOM_OUT (&cg->cgen_outbody,
 	   MOMOUT_INDENT_LESS (),

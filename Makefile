@@ -76,9 +76,9 @@ _timestamp.c:
 	    echo '";') >> _timestamp.tmp
 	@mv _timestamp.tmp _timestamp.c
 
-indent: .indent.pro # don't indent predef-monimelt.h
+indent: .indent.pro # don't indent predef-monimelt.h or generated modules/momg*.c
 	@for f in *.c $(filter-out predef-monimelt.h, $(wildcard *.h)) \
-	     $(MODULE_SOURCES); do \
+	    ; do \
 	  echo indenting $$f; $(INDENT) $$f ;$(INDENT) $$f; done
 	@for f in *.cc ; do \
           echo formatting $$f; $(ASTYLE) $$f; done
@@ -100,6 +100,7 @@ plugins: $(PLUGINS)
 ## module item. see MONIMELT_SHARED_MODULE_PREFIX in monimelt.h
 modules/momg_%.so: modules/momg_%.c | monimelt.h predef-monimelt.h
 	$(LINK.c) -DMONIMELT_CURRENT_MODULE=\"$(patsubst momg_%.so,%,$(*F))\" \
+		  -DMONIMELT_MD5_MODULE=\"$(shell md5sum $< | cut '-d ' -f1)\" \
                   -fPIC $< -shared -o $@
 	@logger -t makemonimelt -p user.info -s compiled $< into \
 	        shared module $@ named $(patsubst momg_%.so,%,$(*F)) \
