@@ -1348,7 +1348,7 @@ struct momtfundescr_st
   unsigned tfun_frame_nbnum;	/* number of intptr_t numbers in its frame */
   unsigned tfun_frame_nbdbl;	/* number of double numbers in its frame */
   const char **tfun_constantids;
-  const momitem_t *const *tfun_constantitems;
+  const momitem_t **tfun_constantitems;
   const char *tfun_ident;	/* the cidentifier of FOO; starts with a dot '.' for Jit-ed routine */
   const char *tfun_module;	/* always macro MONIMELT_CURRENT_MODULE or NULL for JIT-ed routine */
   const momval_t tfun_jitcode;	/* for a JIT-ed routine, the node of its code */
@@ -1489,9 +1489,9 @@ struct momprocedure_st
 union momrout_un
 {
   void *rptr;
-  unsigned *rmagic;
-  struct momprocrout_st *rproc;
-  struct momtfundescr_st *rtfun;
+  const unsigned *rmagic;
+  const struct momprocrout_st *rproc;
+  const struct momtfundescr_st *rtfun;
 };
 
 // for a given ID the momprocrout_st is named momprocdescr_ID

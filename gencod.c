@@ -1320,8 +1320,10 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
   MOM_OUT (&cg->cgen_outbody,
 	   MOMOUT_LITERAL ("if (MOM_UNLIKELY(momstate==0)) return "),
 	   MOMOUT_DEC_INT (startix), MOMOUT_LITERAL (";"), MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL ("assert (mom_is_item (momclosure));"),
+	   MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL
-	   ("momval_t* momclovals = mom_item_closure_values (momclosure);"),
+	   ("momval_t* momclovals = mom_item_closure_values (momclosure.pitem);"),
 	   MOMOUT_NEWLINE ());
   MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("switch (momstate) {"),
 	   MOMOUT_NEWLINE ());
@@ -1418,9 +1420,11 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	   MOMOUT_LITERAL (" = { // tasklet function descriptor "),
 	   MOMOUT_ITEM ((const momitem_t *) curoutitm),
 	   MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL (".tfun_magic = MOM_ROUTINE_MAGIC,"),
+	   MOMOUT_LITERAL (".tfun_magic = MOM_TFUN_MAGIC,"),
 	   MOMOUT_NEWLINE (), MOMOUT_LITERAL (".tfun_minclosize = "),
 	   MOMOUT_DEC_INT ((int) nbclosedvalues), MOMOUT_LITERAL (","),
+	   MOMOUT_NEWLINE (), MOMOUT_LITERAL (".tfun_nbconstants = "),
+	   MOMOUT_DEC_INT ((int) nbconstants), MOMOUT_LITERAL (","),
 	   MOMOUT_NEWLINE (), MOMOUT_LITERAL (".tfun_frame_nbval = "),
 	   MOMOUT_DEC_INT ((int) mom_item_vector_count (cg->cgen_vecvalitm)),
 	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
@@ -2761,7 +2765,7 @@ emit_moduleinit_cgen (struct c_generator_mom_st *cg)
 	   ("// declare module routines descriptor array for "),
 	   MOMOUT_ITEM ((const momitem_t *) cg->cgen_moditm),
 	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL ("static const union momrout_un* "
+	   MOMOUT_LITERAL ("static const union momrout_un "
 			   CGEN_DROUTARR_PREFIX),
 	   MOMOUT_LITERALV ((const char *)
 			    mom_ident_cstr_of_item (cg->cgen_moditm)),
@@ -2771,7 +2775,7 @@ emit_moduleinit_cgen (struct c_generator_mom_st *cg)
 	   MOMOUT_LITERAL ("// define module routines descriptor array for "),
 	   MOMOUT_ITEM ((const momitem_t *) cg->cgen_moditm),
 	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL ("static const union momrout_un* "
+	   MOMOUT_LITERAL ("static const union momrout_un "
 			   CGEN_DROUTARR_PREFIX),
 	   MOMOUT_LITERALV ((const char *)
 			    mom_ident_cstr_of_item (cg->cgen_moditm)),
@@ -2788,7 +2792,7 @@ emit_moduleinit_cgen (struct c_generator_mom_st *cg)
 	{
 	  MOM_OUT (&cg->cgen_outbody,
 		   MOMOUT_LITERAL ("["), MOMOUT_DEC_INT ((int) rix),
-		   MOMOUT_LITERAL ("]= {.rproc= " MOM_PROCROUTDESCR_PREFIX),
+		   MOMOUT_LITERAL ("]= {.rproc= &" MOM_PROCROUTDESCR_PREFIX),
 		   MOMOUT_LITERALV (mom_ident_cstr_of_item (routitm)),
 		   MOMOUT_LITERAL ("}, // procedure "),
 		   MOMOUT_ITEM ((const momitem_t *) routitm),
@@ -2798,7 +2802,7 @@ emit_moduleinit_cgen (struct c_generator_mom_st *cg)
 	{
 	  MOM_OUT (&cg->cgen_outbody,
 		   MOMOUT_LITERAL ("["), MOMOUT_DEC_INT ((int) rix),
-		   MOMOUT_LITERAL ("]= {.rtfun= " MOM_TFUN_NAME_PREFIX),
+		   MOMOUT_LITERAL ("]= {.rtfun= &" MOM_TFUN_NAME_PREFIX),
 		   MOMOUT_LITERALV (mom_ident_cstr_of_item (routitm)),
 		   MOMOUT_LITERAL ("}, // taskletfun "),
 		   MOMOUT_ITEM ((const momitem_t *) routitm),
@@ -2822,14 +2826,15 @@ emit_moduleinit_cgen (struct c_generator_mom_st *cg)
 			    mom_ident_cstr_of_item (cg->cgen_moditm)),
 	   MOMOUT_LITERAL (" (void) {"), MOMOUT_INDENT_MORE (),
 	   MOMOUT_NEWLINE ());
-  MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (),
+  MOM_OUT (&cg->cgen_outbody,
 	   MOMOUT_LITERAL ("mom_module_internal_initialize (\""),
 	   MOMOUT_LITERALV ((const char *)
 			    mom_ident_cstr_of_item (cg->cgen_moditm)),
 	   MOMOUT_LITERAL ("\" /* module "),
 	   MOMOUT_ITEM ((const momitem_t *) cg->cgen_moditm),
+	   MOMOUT_LITERAL ("*/,"), MOMOUT_NEWLINE (),
 	   // the MONIMELT_MD5_MODULE is computed in the Makefile
-	   MOMOUT_LITERAL ("*/,  MONIMELT_MD5_MODULE /*see Makefile*/,  "),
+	   MOMOUT_LITERAL ("      MONIMELT_MD5_MODULE /*see Makefile*/,  "),
 	   MOMOUT_DEC_INT ((int) nbrout),
 	   MOMOUT_LITERAL (",  " CGEN_DROUTARR_PREFIX),
 	   MOMOUT_LITERALV ((const char *)
