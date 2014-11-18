@@ -2140,18 +2140,21 @@ end:
 
 
 void
-mom_dump_require_module (struct mom_dumper_st *du, const char *modname)
+mom_dump_scan_need_module (struct mom_dumper_st *du, const char *modname)
 {
+#warning this function should keep the modulename in du... and the t_modules should be dumped later
+  assert (du && du->dmp_magic == DUMPER_MAGIC);
+  if (MOM_UNLIKELY (du->dmp_state != dus_scan))
+    MOM_FATAPRINTF ("invalid dump state #%d", (int) du->dmp_state);
   if (!du || !modname || !modname[0])
     return;
-  MOM_DEBUGPRINTF (dump, "mom_dump_require_module modname=%s", modname);
+  MOM_DEBUGPRINTF (dump, "mom_dump_scan_need_module modname=%s", modname);
   for (const char *pc = modname; *pc; pc++)
     if (!isalnum (*pc) && *pc != '_')
       {
 	MOM_WARNPRINTF ("invalid dumped module %s requirement", modname);
 	return;
       };
-  assert (du->dmp_magic == DUMPER_MAGIC);
   assert (du->dmp_sqlstmt_module_insert != NULL);
   /// modname at rank 1
   int err = sqlite3_bind_text (du->dmp_sqlstmt_module_insert, 1, modname, -1,

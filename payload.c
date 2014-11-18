@@ -1170,6 +1170,9 @@ payl_tfunrout_dump_scan_mom (struct mom_dumper_st *du, momitem_t *itm)
       for (unsigned ix = 0; ix < ln; ix++)
 	mom_dump_add_scanned_item (du, rdescr->tfun_constantitems[ix]);
     }
+  assert (rdescr->tfun_module != NULL);
+  if (strcmp (rdescr->tfun_module, MOM_EMPTY_MODULE) != 0)
+    mom_dump_scan_need_module (du, rdescr->tfun_module);
 }
 
 
@@ -1208,9 +1211,6 @@ payl_tfunrout_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
     }
   else
     {
-      assert (rdescr->tfun_module != NULL);
-      if (strcmp (rdescr->tfun_module, MOM_EMPTY_MODULE) != 0)
-	mom_dump_require_module (du, rdescr->tfun_module);
       momval_t jvalr = (momval_t) mom_make_json_object
 	(MOMJSOB_ENTRY ((momval_t) mom_named__tasklet_function,
 			(momval_t) mom_make_string (rdescr->tfun_ident)),
@@ -1354,6 +1354,9 @@ payl_closure_dump_scan_mom (struct mom_dumper_st *du, momitem_t *itm)
   unsigned len = clos->clos_len;
   for (unsigned ix = 0; ix < len; ix++)
     mom_dump_scan_value (du, clos->clos_valtab[ix]);
+  const struct momtfundescr_st *rdescr = clos->clos_rout;
+  if (strcmp (rdescr->tfun_module, MOM_EMPTY_MODULE) != 0)
+    mom_dump_scan_need_module (du, rdescr->tfun_module);
 }
 
 static momval_t
@@ -1377,10 +1380,8 @@ payl_closure_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
   if (arrval != tinyarr)
     MOM_GC_FREE (arrval);
   const struct momtfundescr_st *rdescr = clos->clos_rout;
-  if (strcmp (rdescr->tfun_module, MOM_EMPTY_MODULE) != 0)
-    mom_dump_require_module (du, rdescr->tfun_module);
-  jclos
-    = (momval_t)
+  assert (rdescr && rdescr->tfun_magic == MOM_TFUN_MAGIC);
+  jclos= (momval_t)
     mom_make_json_object
     (MOMJSOB_ENTRY ((momval_t) mom_named__closure_routine,
 		    (momval_t) mom_make_string (rdescr->tfun_ident)),
@@ -1484,6 +1485,9 @@ payl_procedure_dump_scan_mom (struct mom_dumper_st *du, momitem_t *itm)
       momitem_t *cstitm = prout->prout_constantitems[ix];
       mom_dump_add_scanned_item (du, cstitm);
     }
+  if (prout->prout_module
+      && strcmp (prout->prout_module, MOM_EMPTY_MODULE) != 0)
+    mom_dump_scan_need_module (du, prout->prout_module);
 }
 
 
@@ -1510,9 +1514,6 @@ payl_procedure_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
   jarr = (momval_t) mom_make_json_array_count (plen, arrval);
   if (arrval != tinyarr)
     MOM_GC_FREE (arrval);
-  if (prout->prout_module
-      && strcmp (prout->prout_module, MOM_EMPTY_MODULE) != 0)
-    mom_dump_require_module (du, prout->prout_module);
   return jarr;
 }
 

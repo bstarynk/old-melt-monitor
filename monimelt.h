@@ -2969,8 +2969,8 @@ void mom_initial_load (const char *ldir);
 void mom_full_dump (const char *reason, const char *dumpdir,
 		    struct mom_dumpoutcome_st *outd);
 
-// can be called from dumping routines
-void mom_dump_require_module (struct mom_dumper_st *du, const char *modname);
+// can be called from scanning routines
+void mom_dump_scan_need_module (struct mom_dumper_st *du, const char *modname);
 
 void mom_dump_notice (struct mom_dumper_st *du, momval_t nval);
 
