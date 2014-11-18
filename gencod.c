@@ -79,6 +79,7 @@
 #define CGEN_FUN_CONSTANTIDS_PREFIX "momfconstid_"
 #define CGEN_FUN_CONSTANTITEMS_PREFIX "momfconstitems_"
 #define CGEN_FUN_CODE_PREFIX "momfuncod_"
+#define CGEN_DROUTARR_PREFIX "momdroutarr_"
 
 enum cgenroutkind_mom_en
 {
@@ -95,6 +96,7 @@ struct c_generator_mom_st
   jmp_buf cgen_jbuf;		// for error
   char *cgen_errmsg;		// the error message
   momitem_t *cgen_moditm;	// the module item
+  momval_t cgen_modseqv;	// the sequence of routines
   momitem_t *cgen_globassocitm;	// global association item
   momitem_t *cgen_curoutitm;	// current routine
   momitem_t *cgen_locassocitm;	// local association item
@@ -299,6 +301,7 @@ mom_generate_c_module (momitem_t *moditm, const char *dirname, char **perrmsg)
 		      MOMOUT_VALUE (modroutv));
   }
   unsigned nbmodrout = mom_set_cardinal (modroutv);
+  mycgen.cgen_modseqv = modroutv;
   {
     char basbuf[128];
     snprintf (basbuf, sizeof (basbuf), MOM_SHARED_MODULE_PREFIX "%s.c",
@@ -1409,41 +1412,41 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
   }
   // emit the function descriptor
   MOM_OUT (&cg->cgen_outbody,
-	   MOMOUT_LITERAL ("const struct momroutinedescr_st "
-			   MOM_ROUTINE_NAME_PREFIX),
+	   MOMOUT_LITERAL ("const struct momtfundescr_st "
+			   MOM_TFUN_NAME_PREFIX),
 	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
-	   MOMOUT_LITERAL (" = { // function descriptor "),
+	   MOMOUT_LITERAL (" = { // tasklet function descriptor "),
 	   MOMOUT_ITEM ((const momitem_t *) curoutitm),
 	   MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL (".rout_magic = MOM_ROUTINE_MAGIC,"),
-	   MOMOUT_NEWLINE (), MOMOUT_LITERAL (".rout_minclosize = "),
+	   MOMOUT_LITERAL (".tfun_magic = MOM_ROUTINE_MAGIC,"),
+	   MOMOUT_NEWLINE (), MOMOUT_LITERAL (".tfun_minclosize = "),
 	   MOMOUT_DEC_INT ((int) nbclosedvalues), MOMOUT_LITERAL (","),
-	   MOMOUT_NEWLINE (), MOMOUT_LITERAL (".rout_frame_nbval = "),
+	   MOMOUT_NEWLINE (), MOMOUT_LITERAL (".tfun_frame_nbval = "),
 	   MOMOUT_DEC_INT ((int) mom_item_vector_count (cg->cgen_vecvalitm)),
 	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL (".rout_frame_nbnum = "),
+	   MOMOUT_LITERAL (".tfun_frame_nbnum = "),
 	   MOMOUT_DEC_INT ((int) mom_item_vector_count (cg->cgen_vecnumitm)),
 	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL (".rout_frame_nbdbl = "),
+	   MOMOUT_LITERAL (".tfun_frame_nbdbl = "),
 	   MOMOUT_DEC_INT ((int) mom_item_vector_count (cg->cgen_vecdblitm)),
 	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL (".rout_constantids = "
+	   MOMOUT_LITERAL (".tfun_constantids = "
 			   CGEN_FUN_CONSTANTIDS_PREFIX),
 	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
 	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL (".rout_constantitems = "
+	   MOMOUT_LITERAL (".tfun_constantitems = "
 			   CGEN_FUN_CONSTANTITEMS_PREFIX),
 	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
 	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL (".rout_ident = \""),
+	   MOMOUT_LITERAL (".tfun_ident = \""),
 	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
 	   MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL (".rout_module = MONIMELT_CURRENT_MODULE,"),
+	   MOMOUT_LITERAL (".tfun_module = MONIMELT_CURRENT_MODULE,"),
 	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL (".rout_codefun = " CGEN_FUN_CODE_PREFIX),
+	   MOMOUT_LITERAL (".tfun_codefun = " CGEN_FUN_CODE_PREFIX),
 	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
 	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL (".rout_timestamp = __DATE__ \"@\" __TIME__"),
+	   MOMOUT_LITERAL (".tfun_timestamp = __DATE__ \"@\" __TIME__"),
 	   MOMOUT_NEWLINE (), MOMOUT_INDENT_LESS (), MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL ("}; // end function descriptor"),
 	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
@@ -2750,16 +2753,88 @@ emit_moduleinit_cgen (struct c_generator_mom_st *cg)
 {
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
   assert (mom_is_item ((momval_t) cg->cgen_moditm));
-  MOM_OUT (&cg->cgen_outbody,
-	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL ("// module initialization for "),
+  assert (mom_is_seqitem (cg->cgen_modseqv));
+  unsigned nbrout = mom_seqitem_length (cg->cgen_modseqv);
+  MOM_OUT (&cg->cgen_outhead,
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL
+	   ("// declare module routines descriptor array for "),
 	   MOMOUT_ITEM ((const momitem_t *) cg->cgen_moditm),
 	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL ("void " MOM_MODULE_INIT_PREFIX),
+	   MOMOUT_LITERAL ("static const union momrout_un* "
+			   CGEN_DROUTARR_PREFIX),
+	   MOMOUT_LITERALV ((const char *)
+			    mom_ident_cstr_of_item (cg->cgen_moditm)),
+	   MOMOUT_LITERAL ("["), MOMOUT_DEC_INT ((int) nbrout + 1),
+	   MOMOUT_LITERAL ("];"), MOMOUT_NEWLINE (), NULL);
+  MOM_OUT (&cg->cgen_outbody,
+	   MOMOUT_LITERAL ("// define module routines descriptor array for "),
+	   MOMOUT_ITEM ((const momitem_t *) cg->cgen_moditm),
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL ("static const union momrout_un* "
+			   CGEN_DROUTARR_PREFIX),
+	   MOMOUT_LITERALV ((const char *)
+			    mom_ident_cstr_of_item (cg->cgen_moditm)),
+	   MOMOUT_LITERAL ("["), MOMOUT_DEC_INT ((int) nbrout + 1),
+	   MOMOUT_LITERAL ("] = {"), MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE (),
+	   NULL);
+  for (unsigned rix = 0; rix < nbrout; rix++)
+    {
+      momitem_t *routitm = mom_seqitem_nth_item (cg->cgen_modseqv, rix);
+      if (!routitm)
+	continue;
+      momval_t routnodv = mom_item_assoc_get (cg->cgen_globassocitm, routitm);
+      if (mom_node_conn (routnodv) == mom_named__procedure)
+	{
+	  MOM_OUT (&cg->cgen_outbody,
+		   MOMOUT_LITERAL ("["), MOMOUT_DEC_INT ((int) rix),
+		   MOMOUT_LITERAL ("]= {.rproc= " MOM_PROCROUTDESCR_PREFIX),
+		   MOMOUT_LITERALV (mom_ident_cstr_of_item (routitm)),
+		   MOMOUT_LITERAL ("}, // procedure "),
+		   MOMOUT_ITEM ((const momitem_t *) routitm),
+		   MOMOUT_NEWLINE (), NULL);
+	}
+      else if (mom_node_conn (routnodv) == mom_named__tasklet_function)
+	{
+	  MOM_OUT (&cg->cgen_outbody,
+		   MOMOUT_LITERAL ("["), MOMOUT_DEC_INT ((int) rix),
+		   MOMOUT_LITERAL ("]= {.rtfun= " MOM_TFUN_NAME_PREFIX),
+		   MOMOUT_LITERALV (mom_ident_cstr_of_item (routitm)),
+		   MOMOUT_LITERAL ("}, // taskletfun "),
+		   MOMOUT_ITEM ((const momitem_t *) routitm),
+		   MOMOUT_NEWLINE (), NULL);
+	}
+      else			/* should never happen */
+	MOM_FATAPRINTF ("corrupted routine rix#%d", rix);
+    }
+  MOM_OUT (&cg->cgen_outbody,
+	   MOMOUT_INDENT_LESS (),
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL
+	   ("}; // end of module routines descriptor array for "),
+	   MOMOUT_ITEM ((const momitem_t *) cg->cgen_moditm),
+	   MOMOUT_NEWLINE (), NULL);
+  MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL ("// module initialization for "),
+	   MOMOUT_ITEM ((const momitem_t *) cg->cgen_moditm),
+	   MOMOUT_NEWLINE (), MOMOUT_LITERAL ("void " MOM_MODULE_INIT_PREFIX),
 	   MOMOUT_LITERALV ((const char *)
 			    mom_ident_cstr_of_item (cg->cgen_moditm)),
 	   MOMOUT_LITERAL (" (void) {"), MOMOUT_INDENT_MORE (),
 	   MOMOUT_NEWLINE ());
+  MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL ("mom_module_internal_initialize (\""),
+	   MOMOUT_LITERALV ((const char *)
+			    mom_ident_cstr_of_item (cg->cgen_moditm)),
+	   MOMOUT_LITERAL ("\" /* module "),
+	   MOMOUT_ITEM ((const momitem_t *) cg->cgen_moditm),
+	   // the MONIMELT_MD5_MODULE is computed in the Makefile
+	   MOMOUT_LITERAL ("*/,  MONIMELT_MD5_MODULE /*see Makefile*/,  "),
+	   MOMOUT_DEC_INT ((int) nbrout),
+	   MOMOUT_LITERAL (",  " CGEN_DROUTARR_PREFIX),
+	   MOMOUT_LITERALV ((const char *)
+			    mom_ident_cstr_of_item (cg->cgen_moditm)),
+	   MOMOUT_LITERAL (");"), NULL);
   MOM_OUT (&cg->cgen_outbody,
 	   MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL ("MOM_INFORMPRINTF(\"module "),
@@ -2767,13 +2842,13 @@ emit_moduleinit_cgen (struct c_generator_mom_st *cg)
 	   // the MONIMELT_MD5_MODULE is computed in the Makefile
 	   MOMOUT_LITERAL
 	   (" of md5 \" MONIMELT_MD5_MODULE \" initialized.\");"), NULL);
-#warning missing emission of module initialization
   MOM_OUT (&cg->cgen_outbody,
 	   MOMOUT_INDENT_LESS (),
 	   MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL ("} // end of module initialization"),
 	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
 }
+
 
 
 

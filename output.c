@@ -1033,8 +1033,6 @@ momval_t
 mom_outstring_at (const char *sfil, int lin, unsigned flags, ...)
 {
   va_list alist;
-  char *outbuf = NULL;
-  size_t sizbuf = 0;
   momval_t res = MOM_NULLV;
   struct momout_st mout;
   memset (&mout, 0, sizeof (mout));

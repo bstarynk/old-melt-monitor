@@ -1247,6 +1247,21 @@ mom_unlock_item_at (const char *fil, int lin, momitem_t *itm)
 }
 
 ////////////////////////////////////////////////////////////////
+/// internally called by module initializers
+void
+mom_module_internal_initialize (const char *modid,
+				const char *modmd5,
+				unsigned nbrout,
+				const union momrout_un *routarr)
+{
+  MOM_WARNPRINTF ("unimplemented mom_module_internal_initialize modid=%s"
+		  " modmd5=%s nbrout=%d routarr@%p",
+		  modid, modmd5, nbrout, (void *) routarr);
+#warning  mom_module_internal_initialize
+}
+
+
+////////////////////////////////////////////////////////////////
 void
 mom_create_predefined_items (void)
 {

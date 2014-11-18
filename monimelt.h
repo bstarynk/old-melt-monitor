@@ -1320,11 +1320,11 @@ momval_t mom_item_queue_pop_front (momitem_t *itm);
 #define MONIMELT_CURRENT_MODULE MOM_EMPTY_MODULE
 #endif
 
-// routine descriptor is read-only
-#define MOM_ROUTINE_MAGIC 0x6b9c644d	/* routine magic 1805411405 */
-#define MOM_ROUTINE_NAME_PREFIX "momrout_"
+// tasklet-function descriptor is read-only
+#define MOM_TFUN_MAGIC 0x6b9c644d	/* tfun magic 1805411405 */
+#define MOM_TFUN_NAME_PREFIX "momrout_"
 #define MOM_SYMBNAME_LEN 128
-#define MOM_ROUTINE_NAME_FMT  MOM_ROUTINE_NAME_PREFIX "%s"
+#define MOM_TFUN_NAME_FMT  MOM_TFUN_NAME_PREFIX "%s"
 
 #define MOM_MODULE_INIT_PREFIX "mominitmodule_"
 typedef void mom_module_init_fun_t (void);
@@ -1335,24 +1335,25 @@ enum mom_routres_en
   momroutres_steady = 0,	/* don't change the current state or tasklet */
   momroutres_pop = -1,		/* pop the current frame */
 };
-typedef int mom_routine_sig_t (int state, momitem_t *tasklet,
-			       momval_t closv, momval_t *locvals,
-			       intptr_t * locnums, double *locdbls);
-struct momroutinedescr_st
+typedef int mom_tfunrout_sig_t (int state, momitem_t *tasklet,
+				momval_t closv, momval_t *locvals,
+				intptr_t * locnums, double *locdbls);
+
+struct momtfundescr_st
 {
-  unsigned rout_magic;		/* always MOM_ROUTINE_MAGIC */
-  unsigned rout_minclosize;	/* minimal closure size */
-  unsigned rout_nbconstants;	/* number of constant items */
-  unsigned rout_frame_nbval;	/* number of values in its frame */
-  unsigned rout_frame_nbnum;	/* number of intptr_t numbers in its frame */
-  unsigned rout_frame_nbdbl;	/* number of double numbers in its frame */
-  const char **rout_constantids;
-  const momitem_t *const *rout_constantitems;
-  const char *rout_ident;	/* the cidentifier of FOO; starts with a dot '.' for Jit-ed routine */
-  const char *rout_module;	/* always macro MONIMELT_CURRENT_MODULE or NULL for JIT-ed routine */
-  const momval_t rout_jitcode;	/* for a JIT-ed routine, the node of its code */
-  mom_routine_sig_t *rout_codefun;
-  const char *rout_timestamp;	/* generally __DATE__ "@" __TIME__ */
+  unsigned tfun_magic;		/* always MOM_TFUN_MAGIC */
+  unsigned tfun_minclosize;	/* minimal closure size */
+  unsigned tfun_nbconstants;	/* number of constant items */
+  unsigned tfun_frame_nbval;	/* number of values in its frame */
+  unsigned tfun_frame_nbnum;	/* number of intptr_t numbers in its frame */
+  unsigned tfun_frame_nbdbl;	/* number of double numbers in its frame */
+  const char **tfun_constantids;
+  const momitem_t *const *tfun_constantitems;
+  const char *tfun_ident;	/* the cidentifier of FOO; starts with a dot '.' for Jit-ed routine */
+  const char *tfun_module;	/* always macro MONIMELT_CURRENT_MODULE or NULL for JIT-ed routine */
+  const momval_t tfun_jitcode;	/* for a JIT-ed routine, the node of its code */
+  mom_tfunrout_sig_t *tfun_codefun;
+  const char *tfun_timestamp;	/* generally __DATE__ "@" __TIME__ */
 };
 
 // start a routine.
@@ -1372,31 +1373,31 @@ struct momclosure_st
 {				/* the payload of closures */
   unsigned clos_magic;		/* always MOM_CLOSURE_MAGIC */
   unsigned clos_len;
-  const struct momroutinedescr_st *clos_rout;
+  const struct momtfundescr_st *clos_rout;
   momval_t clos_valtab[];
 };
 
-static inline const struct momroutinedescr_st *
+static inline const struct momtfundescr_st *
 mom_item_routinedescr (const momitem_t *itm)
 {
-  const struct momroutinedescr_st *rdescr = NULL;
+  const struct momtfundescr_st *rdescr = NULL;
   if (!itm || itm->i_typnum != momty_item)
     return NULL;
   if (itm->i_paylkind == mompayk_routine)
-    rdescr = (struct momroutinedescr_st *) itm->i_payload;
+    rdescr = (struct momtfundescr_st *) itm->i_payload;
   else if (itm->i_paylkind == mompayk_closure)
     {
       struct momclosure_st *clos = itm->i_payload;
       if (clos && clos->clos_magic == MOM_CLOSURE_MAGIC)
 	rdescr = clos->clos_rout;
     };
-  if (rdescr && rdescr->rout_magic == MOM_ROUTINE_MAGIC)
+  if (rdescr && rdescr->tfun_magic == MOM_TFUN_MAGIC)
     return rdescr;
   return NULL;
 }
 
 void mom_item_start_closure_of_routine (momitem_t *itm,
-					const struct momroutinedescr_st *rout,
+					const struct momtfundescr_st *rout,
 					unsigned len);
 void mom_item_start_closure (momitem_t *itm, unsigned len);
 
@@ -1437,9 +1438,9 @@ mom_item_closure_constants (const momitem_t *itm)
     return NULL;
   struct momclosure_st *clos = itm->i_payload;
   assert (clos && clos->clos_magic == MOM_CLOSURE_MAGIC);
-  const struct momroutinedescr_st *crout = clos->clos_rout;
-  assert (crout && crout->rout_magic == MOM_ROUTINE_MAGIC);
-  return crout->rout_constantitems;
+  const struct momtfundescr_st *crout = clos->clos_rout;
+  assert (crout && crout->tfun_magic == MOM_TFUN_MAGIC);
+  return crout->tfun_constantitems;
 }
 
 static inline unsigned
@@ -1461,9 +1462,9 @@ mom_item_closure_routine_cident (const momitem_t *itm)
     return 0;
   struct momclosure_st *clos = itm->i_payload;
   assert (clos && clos->clos_magic == MOM_CLOSURE_MAGIC);
-  const struct momroutinedescr_st *rdescr = clos->clos_rout;
-  assert (rdescr && rdescr->rout_magic == MOM_ROUTINE_MAGIC);
-  return rdescr->rout_ident;
+  const struct momtfundescr_st *rdescr = clos->clos_rout;
+  assert (rdescr && rdescr->tfun_magic == MOM_TFUN_MAGIC);
+  return rdescr->tfun_ident;
 }
 
 /************* procedure item *********/
@@ -1484,6 +1485,14 @@ struct momprocedure_st
   momval_t proc_valtab[];
 };
 #define MOM_PROCROUT_MAGIC 407208731	/* procrout magic 0x1845831b */
+
+union momrout_un
+{
+  void *rptr;
+  unsigned *rmagic;
+  struct momprocrout_st *rproc;
+  struct momtfundescr_st *rtfun;
+};
 
 // for a given ID the momprocrout_st is named momprocdescr_ID
 // and the C function is named momprocfun_ID
@@ -2344,7 +2353,7 @@ mom_closed_values (momval_t clov)
 }
 
 
-static inline const struct momroutinedescr_st *
+static inline const struct momtfundescr_st *
 mom_closed_routdescr (momval_t clov)
 {
   if (clov.ptr == NULL)
@@ -2928,6 +2937,12 @@ void *mom_prog_dlhandle;
 void mom_load_plugin (const char *plugname, const char *plugarg);
 //// load a module, return true on success
 bool mom_load_module (const char *dirname, const char *modulename);
+
+//// internal initialization of a module, called inside its initializer
+void mom_module_internal_initialize (const char *modid,
+				     const char *modmd5,
+				     unsigned nbrout,
+				     const union momrout_un *routarr);
 /// modules are required to define
 extern const char mom_module_GPL_compatible[];	// a string describing the licence
 

@@ -1275,9 +1275,11 @@ cmd_do_top_mom (const char *lin)
 	    }
 	  if (mom_is_item (curval))
 	    MOM_OUT (mom_stdout, MOMOUT_SPACE (48),
-		     MOMOUT_LITERAL (" /id="),
-		     MOMOUT_VALUE ((const momval_t)
-				   mom_item_get_idstr (curval.pitem)),
+		     MOMOUT_LITERALV ((const char
+				       *) ((curval.pitem->i_space ==
+					    momspa_predefined) ?
+					   " /predef-id=" : " /id=")),
+		     MOMOUT_LITERALV (mom_ident_cstr_of_item (curval.pitem)),
 		     MOMOUT_SPACE (32),
 		     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
 					     curval.pitem));
