@@ -119,7 +119,7 @@ struct c_generator_mom_st
 
 
 const char *
-mom_item_generate_jit_routine (momitem_t *itm, const momval_t jitnode)
+mom_item_generate_jit_tfun_routine (momitem_t *itm, const momval_t jitnode)
 {
   MOM_FATAL (MOMOUT_LITERAL
 	     ("mom_item_generate_jit_routine unimplemented itm="),

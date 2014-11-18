@@ -1378,7 +1378,7 @@ struct momclosure_st
 };
 
 static inline const struct momtfundescr_st *
-mom_item_routinedescr (const momitem_t *itm)
+mom_item_tfundescr (const momitem_t *itm)
 {
   const struct momtfundescr_st *rdescr = NULL;
   if (!itm || itm->i_typnum != momty_item)
@@ -2354,9 +2354,9 @@ mom_closed_routdescr (momval_t clov)
   switch (*clov.ptype)
     {
     case momty_item:
-      return mom_item_routinedescr (clov.pitem);
+      return mom_item_tfundescr (clov.pitem);
     case momty_node:
-      return mom_item_routinedescr (clov.pnode->connitm);
+      return mom_item_tfundescr (clov.pnode->connitm);
     default:
       return NULL;
     }

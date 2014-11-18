@@ -1282,7 +1282,7 @@ internal_initialize_tfun_mom (momitem_t *moditm, unsigned rix,
     mom_item_clear_payload (funitm);
   unsigned nbconst = dfun->tfun_nbconstants;
   const char *const *constidarr = dfun->tfun_constantids;
-  momitem_t **constitmarr = dfun->tfun_constantitems;
+  momitem_t **constitmarr = (momitem_t **) dfun->tfun_constantitems;
   for (unsigned cix = 0; cix < nbconst; cix++)
     {
       const char *curcid = constidarr[cix];
@@ -1314,7 +1314,7 @@ internal_initialize_tfun_mom (momitem_t *moditm, unsigned rix,
 	  constitmarr[cix] = curcstitm;
 	}
     }
-  funitm->i_payload = dfun;
+  funitm->i_payload = (void *) dfun;
   funitm->i_paylkind = mompayk_tfunrout;
   mom_unlock_item (funitm);
   MOM_DEBUG (run, MOMOUT_LITERAL ("initialize_tfun ending moditm="),
@@ -1360,6 +1360,7 @@ internal_initialize_proc_mom (momitem_t *moditm, unsigned rix,
 		   MOMOUT_LITERALV ((const char *) dproc->prout_id));
     }
   mom_lock_item (procitm);
+#warning incomplete internal_initialize_proc_mom
   mom_unlock_item (procitm);
 }
 

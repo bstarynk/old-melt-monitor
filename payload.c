@@ -1050,7 +1050,8 @@ mom_item_start_tfun_routine (momitem_t *itm)
   assert (itm && itm->i_typnum == momty_item);
   if (itm->i_payload)
     mom_item_clear_payload (itm);
-  char *routname = mom_string_cstr ((momval_t) mom_item_get_idstr (itm));
+  const char *routname =
+    mom_string_cstr ((momval_t) mom_item_get_idstr (itm));
   if (!routname || !routname[0])
     return;
   snprintf (symbuf, sizeof (symbuf), MOM_TFUN_NAME_FMT, routname);
@@ -1100,10 +1101,15 @@ payl_tfunrout_load_mom (struct mom_loader_st *ld, momitem_t *itm,
 	     MOMOUT_LITERAL (" jsonv="),
 	     MOMOUT_VALUE ((const momval_t) jsonv), NULL);
   mom_item_start_tfun_routine (itm);
-  if (mom_is_json_object (jsonv))
+  struct momtfundescr_st *fd = itm->i_payload;
+  assert (fd && fd->tfun_magic == MOM_TFUN_MAGIC);
+  momval_t jcodejit = mom_jsonob_get (jsonv, (momval_t) mom_named__jit);
+  momval_t jconst = mom_jsonob_get (jsonv, (momval_t) mom_named__constants);
+  momval_t jfunid =
+    mom_jsonob_get (jsonv, (momval_t) mom_named__tasklet_function);
+  if (jcodejit.ptr)
     {
-      momval_t jcode = mom_jsonob_get (jsonv, (momval_t) mom_named__jit);
-      const char *err = mom_item_generate_jit_routine (itm, jcode);
+      const char *err = mom_item_generate_jit_tfun_routine (itm, jcodejit);
       if (err)
 	MOM_FATAL (MOMOUT_LITERAL ("payl_tfunrout_load_mom itm="),
 		   MOMOUT_ITEM ((const momitem_t *) itm),
@@ -1111,9 +1117,37 @@ payl_tfunrout_load_mom (struct mom_loader_st *ld, momitem_t *itm,
 		   MOMOUT_LITERAL ("failed:"),
 		   MOMOUT_LITERALV ((const char *) err),
 		   MOMOUT_NEWLINE (),
-		   MOMOUT_LITERAL ("jcode="), MOMOUT_VALUE (jcode), NULL);
+		   MOMOUT_LITERAL ("jcodejit="), MOMOUT_VALUE (jcodejit),
+		   NULL);
+    }
+  if (jconst.ptr)
+    {
+      const momitem_t **oldcstitems = fd->tfun_constantitems;
+      unsigned nbconst = mom_json_array_size (jconst);
+      if (nbconst > fd->tfun_nbconstants)
+	nbconst = fd->tfun_nbconstants;
+      assert (nbconst == 0 || oldcstitems);
+      for (unsigned ix = 0; ix < nbconst; ix++)
+	{
+	  momitem_t *olditm = oldcstitems[ix];
+	  momitem_t *newitm =
+	    mom_load_item_json (ld, mom_json_array_nth (jconst, ix));
+	  if (MOM_UNLIKELY (olditm && newitm && olditm != newitm))
+	    {
+	      MOM_WARNING (MOMOUT_LITERAL ("in loaded task function item:"),
+			   MOMOUT_ITEM ((const momitem_t *) itm),
+			   MOMOUT_LITERAL (" constant-item#"),
+			   MOMOUT_DEC_INT ((int) ix),
+			   MOMOUT_LITERAL (" was:"),
+			   MOMOUT_ITEM ((const momitem_t *) olditm),
+			   MOMOUT_LITERAL (" overriden by:"),
+			   MOMOUT_ITEM ((const momitem_t *) newitm), NULL);
+	      oldcstitems[ix] = newitm;
+	    }
+	}
     }
 }
+
 
 static void
 payl_tfunrout_dump_scan_mom (struct mom_dumper_st *du, momitem_t *itm)
@@ -1130,7 +1164,14 @@ payl_tfunrout_dump_scan_mom (struct mom_dumper_st *du, momitem_t *itm)
       assert (rdescr->tfun_ident[0] == '.');
       mom_dump_scan_value (du, rdescr->tfun_jitcode);
     }
+  else if (rdescr->tfun_constantitems)
+    {
+      unsigned ln = rdescr->tfun_nbconstants;
+      for (unsigned ix = 0; ix < ln; ix++)
+	mom_dump_add_scanned_item (du, rdescr->tfun_constantitems[ix]);
+    }
 }
+
 
 static momval_t
 payl_tfunrout_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
@@ -1139,15 +1180,29 @@ payl_tfunrout_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
   assert (itm != NULL && itm->i_typnum == momty_item);
   assert (itm->i_paylkind == mompayk_tfunrout);
   const struct momtfundescr_st *rdescr = itm->i_payload;
+  momval_t jcstarr = MOM_NULLV;
   assert (rdescr != NULL && rdescr->tfun_magic == MOM_TFUN_MAGIC
 	  && rdescr->tfun_ident != NULL);
+  if (rdescr->tfun_constantitems)
+    {
+      unsigned ln = rdescr->tfun_nbconstants;
+      momval_t tinyarr[MOM_TINY_MAX] = { MOM_NULLV };
+      momval_t *arrj = (ln < MOM_TINY_MAX) ? tinyarr : MOM_GC_ALLOC ("arrj",
+								     ln *
+								     sizeof
+								     (momval_t));
+      for (unsigned ix = 0; ix < ln; ix++)
+	arrj[ix] =
+	  mom_emit_short_item_json (du, rdescr->tfun_constantitems[ix]);
+      jcstarr = (momval_t) mom_make_json_array_count (ln, arrj);
+    }
   if (rdescr->tfun_jitcode.ptr)
     {
       assert (rdescr->tfun_ident[0] == '.');
       momval_t jcode = mom_dump_emit_json (du, rdescr->tfun_jitcode);
       momval_t jvalr = (momval_t) mom_make_json_object
-	(MOMJSOB_ENTRY ((momval_t) mom_named__jit,
-			(momval_t) jcode),
+	(MOMJSOB_ENTRY ((momval_t) mom_named__jit, (momval_t) jcode),
+	 MOMJSOB_ENTRY ((momval_t) mom_named__constants, (momval_t) jcstarr),
 	 MOMJSON_END);
       return jvalr;
     }
@@ -1156,6 +1211,12 @@ payl_tfunrout_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
       assert (rdescr->tfun_module != NULL);
       if (strcmp (rdescr->tfun_module, MOM_EMPTY_MODULE) != 0)
 	mom_dump_require_module (du, rdescr->tfun_module);
+      momval_t jvalr = (momval_t) mom_make_json_object
+	(MOMJSOB_ENTRY ((momval_t) mom_named__tasklet_function,
+			(momval_t) mom_make_string (rdescr->tfun_ident)),
+	 MOMJSOB_ENTRY ((momval_t) mom_named__constants, (momval_t) jcstarr),
+	 MOMJSON_END);
+      return jvalr;
       return (momval_t) mom_make_string (rdescr->tfun_ident);
     }
 }
@@ -1210,7 +1271,7 @@ mom_item_start_closure (momitem_t *itm, unsigned len)
   assert (itm && itm->i_typnum == momty_item);
   if (itm->i_payload)
     mom_item_clear_payload (itm);
-  char *routid =
+  const char *routid =
     mom_string_cstr ((momval_t) mom_item_get_name_or_idstr (itm));
   if (!routid || !routid[0])
     return;
@@ -1348,7 +1409,6 @@ mom_item_start_procedure (momitem_t *itm)
   assert (itm && itm->i_typnum == momty_item);
   if (itm->i_payload)
     mom_item_clear_payload (itm);
-  struct momprocedure_st *proc = NULL;
   struct momprocrout_st *prout = NULL;
   snprintf (symbuf, sizeof (symbuf),
 	    MOM_PROCROUTDESCR_PREFIX "%s", mom_ident_cstr_of_item (itm));
@@ -1375,7 +1435,7 @@ payl_procedure_load_mom (struct mom_loader_st *ld, momitem_t *itm,
   MOM_DEBUG (load,
 	     MOMOUT_LITERAL ("payl_procedure_load_mom itm="),
 	     MOMOUT_ITEM ((const momitem_t *) itm),
-	     MOMOUT_LITERAL (" jclos="),
+	     MOMOUT_LITERAL (" jproc="),
 	     MOMOUT_VALUE ((const momval_t) jproc), NULL);
   assert (itm && itm->i_typnum == momty_item);
   mom_item_start_procedure (itm);
@@ -1391,7 +1451,20 @@ payl_procedure_load_mom (struct mom_loader_st *ld, momitem_t *itm,
   for (unsigned ix = 0; ix < plen; ix++)
     {
       momitem_t *oldcstitm = prout->prout_constantitems[ix];
-#warning should load the constant items
+      momitem_t *newcstitm =
+	mom_load_item_json (ld, mom_json_array_nth (jproc, ix));
+      if (MOM_UNLIKELY (oldcstitm && newcstitm && oldcstitm != newcstitm))
+	{
+	  MOM_WARNING (MOMOUT_LITERAL ("in procedure item:"),
+		       MOMOUT_ITEM ((const momitem_t *) itm),
+		       MOMOUT_LITERAL (" overwriting constant-item#"),
+		       MOMOUT_DEC_INT ((int) ix),
+		       MOMOUT_LITERAL (" old "),
+		       MOMOUT_ITEM ((const momitem_t *) oldcstitm),
+		       MOMOUT_LITERAL (" with new "),
+		       MOMOUT_ITEM ((const momitem_t *) newcstitm), NULL);
+	  ((momitem_t **) prout->prout_constantitems)[ix] = newcstitm;
+	}
     }
 }
 
@@ -1418,7 +1491,6 @@ static momval_t
 payl_procedure_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
 {
   momval_t jarr = MOM_NULLV;
-  momval_t job = MOM_NULLV;
   assert (du != NULL);
   assert (itm && itm->i_typnum == momty_item);
   assert (itm->i_paylkind == mompayk_procedure);
@@ -1438,8 +1510,6 @@ payl_procedure_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
   jarr = (momval_t) mom_make_json_array_count (plen, arrval);
   if (arrval != tinyarr)
     MOM_GC_FREE (arrval);
-#warning should dump the procedure constant items
-
   if (prout->prout_module
       && strcmp (prout->prout_module, MOM_EMPTY_MODULE) != 0)
     mom_dump_require_module (du, prout->prout_module);
@@ -1610,7 +1680,7 @@ compute_pushed_data_size_mom (momval_t clov,
     case momty_item:
       {
 	mom_should_lock_item (clov.pitem);
-	rdescr = mom_item_routinedescr (clov.pitem);
+	rdescr = mom_item_tfundescr (clov.pitem);
 	mom_unlock_item (clov.pitem);
 	break;
       }
@@ -1619,7 +1689,7 @@ compute_pushed_data_size_mom (momval_t clov,
 	momitem_t *citm = (momitem_t *) (clov.pnode->connitm);
 	assert (citm && citm->i_typnum == momty_item);
 	mom_should_lock_item (citm);
-	rdescr = mom_item_routinedescr (citm);
+	rdescr = mom_item_tfundescr (citm);
 	mom_unlock_item (citm);
 	break;
       }
