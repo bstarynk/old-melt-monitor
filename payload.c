@@ -1387,8 +1387,10 @@ payl_procedure_load_mom (struct mom_loader_st *ld, momitem_t *itm,
     MOM_FATAL (MOMOUT_LITERAL ("corrupted loaded procedure:"),
 	       MOMOUT_ITEM ((const momitem_t *) itm));
   unsigned plen = prout->prout_len;
+  assert (plen == 0 || prout->prout_constantitems != NULL);
   for (unsigned ix = 0; ix < plen; ix++)
     {
+      momitem_t *oldcstitm = prout->prout_constantitems[ix];
 #warning should load the constant items
     }
 }
@@ -1403,7 +1405,12 @@ payl_procedure_dump_scan_mom (struct mom_dumper_st *du, momitem_t *itm)
   const struct momprocrout_st *prout = itm->i_payload;
   assert (prout && prout->prout_magic == MOM_PROCROUT_MAGIC);
   unsigned plen = prout->prout_len;
-#warning should scan the constant items
+  assert (plen == 0 || prout->prout_constantitems != NULL);
+  for (unsigned ix = 0; ix < plen; ix++)
+    {
+      momitem_t *cstitm = prout->prout_constantitems[ix];
+      mom_dump_add_scanned_item (du, cstitm);
+    }
 }
 
 
@@ -1411,6 +1418,7 @@ static momval_t
 payl_procedure_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
 {
   momval_t jarr = MOM_NULLV;
+  momval_t job = MOM_NULLV;
   assert (du != NULL);
   assert (itm && itm->i_typnum == momty_item);
   assert (itm->i_paylkind == mompayk_procedure);
@@ -1421,13 +1429,17 @@ payl_procedure_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
   momval_t *arrval =
     (plen < MOM_TINY_MAX) ? tinyarr
     : MOM_GC_ALLOC ("dump procedure array", plen * sizeof (momval_t));
+  assert (plen == 0 || prout->prout_constantitems != NULL);
+  for (unsigned ix = 0; ix < plen; ix++)
+    {
+      arrval[ix] =
+	mom_emit_short_item_json (du, prout->prout_constantitems[ix]);
+    }
+  jarr = (momval_t) mom_make_json_array_count (plen, arrval);
+  if (arrval != tinyarr)
+    MOM_GC_FREE (arrval);
 #warning should dump the procedure constant items
 
-  // for (unsigned ix = 0; ix < plen; ix++)
-  //   arrval[ix] = mom_dump_emit_json (du, proc->proc_valtab[ix]);
-  // jarr = (momval_t) mom_make_json_array_count (plen, arrval);
-  // if (arrval != tinyarr)
-  //   MOM_GC_FREE (arrval);
   if (prout->prout_module
       && strcmp (prout->prout_module, MOM_EMPTY_MODULE) != 0)
     mom_dump_require_module (du, prout->prout_module);

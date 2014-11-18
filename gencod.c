@@ -1036,16 +1036,10 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
   MOM_OUT (&cg->cgen_outbody,
 	   MOMOUT_LITERAL ("static momitem_t* momprocitem;"),
 	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL ("static momval_t* momprocconstants;"),
-	   MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL
 	   ("if (MOM_UNLIKELY(!momprocitem)) momprocitem = mom_procedure_item_of_id(\""),
 	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
-	   MOMOUT_LITERAL ("\");"), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL
-	   ("if (MOM_UNLIKELY(!momprocconstants)) momprocconstants = mom_item_procedure_values (momprocitem, "),
-	   MOMOUT_DEC_INT ((int) nbproconsts), MOMOUT_LITERAL (");"),
-	   MOMOUT_NEWLINE (), NULL);
+	   MOMOUT_LITERAL ("\");"), MOMOUT_NEWLINE (), NULL);
   if (procrestypev.pitem == mom_named__momval_t)
     MOM_OUT (&cg->cgen_outbody,
 	     MOMOUT_LITERAL ("momval_t momresult = MOM_NULLV;"),
@@ -1059,15 +1053,6 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
   else if (procrestypev.pitem == mom_named__momcstr_t)
     MOM_OUT (&cg->cgen_outbody,
 	     MOMOUT_LITERAL ("momcstr_t momresult = NULL;"),
-	     MOMOUT_NEWLINE ());
-  if (procrestypev.pitem == NULL || procrestypev.pitem == mom_named__void)
-    MOM_OUT (&cg->cgen_outbody,
-	     MOMOUT_LITERAL ("if (MOM_UNLIKELY(!momprocconstants)) return;"),
-	     MOMOUT_NEWLINE ());
-  else
-    MOM_OUT (&cg->cgen_outbody,
-	     MOMOUT_LITERAL
-	     ("if (MOM_UNLIKELY(!momprocconstants)) return momresult;"),
 	     MOMOUT_NEWLINE ());
   momitem_t *startitm = mom_value_to_item (prostartv);
   if (!startitm)
@@ -1574,8 +1559,11 @@ emit_var_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
       if (cg->cgen_routkind == cgr_proc)
 	{
 	  MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (64),
-		   MOMOUT_LITERAL ("(momprocconstants["),
-		   MOMOUT_DEC_INT (cix),
+		   MOMOUT_LITERAL ("((momval_t) "
+				   CGEN_PROC_CONSTANTITEMS_PREFIX),
+		   MOMOUT_LITERALV (mom_ident_cstr_of_item
+				    (cg->cgen_curoutitm)),
+		   MOMOUT_LITERAL ("["), MOMOUT_DEC_INT (cix),
 		   MOMOUT_LITERAL ("] /*"),
 		   MOMOUT_ITEM ((const momitem_t *) constitm),
 		   MOMOUT_LITERAL ("*/)"), NULL);
