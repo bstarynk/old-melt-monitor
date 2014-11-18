@@ -1325,6 +1325,9 @@ momval_t mom_item_queue_pop_front (momitem_t *itm);
 #define MOM_ROUTINE_NAME_PREFIX "momrout_"
 #define MOM_SYMBNAME_LEN 128
 #define MOM_ROUTINE_NAME_FMT  MOM_ROUTINE_NAME_PREFIX "%s"
+
+#define MOM_MODULE_INIT_PREFIX "mominitmodule_"
+typedef void mom_module_init_fun_t (void);
 // the routine item FOO has descriptor momrout_FOO
 // the routine's code returns a positive state, or 
 enum mom_routres_en

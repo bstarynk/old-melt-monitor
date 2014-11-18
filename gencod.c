@@ -174,6 +174,10 @@ static momtypenc_t emit_expr_cgen (struct c_generator_mom_st *cg,
 static momtypenc_t emit_node_cgen (struct c_generator_mom_st *cg,
 				   momval_t nodv);
 
+static void emit_moduleinit_cgen (struct c_generator_mom_st *cg);
+
+
+
 #define CGEN_CHECK_FRESH_AT_BIS(Lin,Cg,Msg,Itm) do	\
 { const momitem_t* itm##Lin = (Itm);			\
   if (!itm##Lin || itm##Lin->i_typnum != momty_item)	\
@@ -328,6 +332,8 @@ mom_generate_c_module (momitem_t *moditm, const char *dirname, char **perrmsg)
       emit_routine_cgen (&mycgen, routix);
       mycgen.cgen_curoutitm = NULL;
     }
+  // emit module initialization
+  emit_moduleinit_cgen (&mycgen);
   // now we should write the file
   {
     FILE *f = NULL;
@@ -2584,6 +2590,27 @@ emit_goto_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm,
 	     MOMOUT_NEWLINE (), NULL);
 }
 
+
+
+void
+emit_moduleinit_cgen (struct c_generator_mom_st *cg)
+{
+  assert (cg && cg->cgen_magic == CGEN_MAGIC);
+  MOM_OUT (&cg->cgen_outbody,
+	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL ("// module initialization"),
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL ("void " MOM_MODULE_INIT_PREFIX),
+	   MOMOUT_ITEM ((const momitem_t *) cg->cgen_moditm),
+	   MOMOUT_LITERAL (" (void) {"),
+	   MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE ());
+#warning missing emission of module initialization
+  MOM_OUT (&cg->cgen_outbody,
+	   MOMOUT_INDENT_LESS (),
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL ("} // end of module initialization"),
+	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
+}
 
 
 

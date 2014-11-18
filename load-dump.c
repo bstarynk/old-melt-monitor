@@ -1503,12 +1503,12 @@ mom_load_module (const char *dirpath, const char *modulename)
 	    "%s.so", dirpath, modulename);
   if (stat (srcpath, &srcstat))
     {
-      MOM_WARNPRINTF ("stat on loaded module source %s failed", srcpath);
+      MOM_WARNPRINTF ("stat on loaded module source %s failed (%m)", srcpath);
       return false;
     };
   if (stat (sopath, &sostat))
     {
-      MOM_WARNPRINTF ("stat on loaded module binary %s failed", sopath);
+      MOM_WARNPRINTF ("stat on loaded module binary %s failed (%m)", sopath);
       return false;
     };
   if (srcstat.st_mtime > sostat.st_mtime)
@@ -1534,6 +1534,26 @@ mom_load_module (const char *dirpath, const char *modulename)
       dlclose (dlh);
       return false;
     }
+  {
+    char initname[MOM_SYMBNAME_LEN];
+    memset (initname, 0, sizeof (initname));
+    if (MOM_UNLIKELY
+	(snprintf
+	 (initname, sizeof (initname), MOM_MODULE_INIT_PREFIX "%s",
+	  modulename) >= (int) sizeof (initname) - 2))
+      MOM_FATAPRINTF ("too long module initname %s", initname);
+    void *initad = dlsym (dlh, initname);
+    if (!initad)
+      {
+	MOM_WARNPRINTF
+	  ("loaded module %s lacks an initialization %s symbol: %s", sopath,
+	   initname, dlerror ());
+	dlclose (dlh);
+	return false;
+      };
+    mom_module_init_fun_t *initfun = (mom_module_init_fun_t *) initad;
+    (*initfun) ();
+  }
   MOM_INFORMPRINTF ("loaded module %s (license info: %s)", sopath, lic);
   return true;
 }
