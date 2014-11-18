@@ -1342,11 +1342,12 @@ struct momroutinedescr_st
 {
   unsigned rout_magic;		/* always MOM_ROUTINE_MAGIC */
   unsigned rout_minclosize;	/* minimal closure size */
+  unsigned rout_nbconstants;	/* number of constant items */
   unsigned rout_frame_nbval;	/* number of values in its frame */
   unsigned rout_frame_nbnum;	/* number of intptr_t numbers in its frame */
   unsigned rout_frame_nbdbl;	/* number of double numbers in its frame */
   const char **rout_constantids;
-  const momval_t *rout_constantvals;
+  const momitem_t *const *rout_constantitems;
   const char *rout_ident;	/* the cidentifier of FOO; starts with a dot '.' for Jit-ed routine */
   const char *rout_module;	/* always macro MONIMELT_CURRENT_MODULE or NULL for JIT-ed routine */
   const momval_t rout_jitcode;	/* for a JIT-ed routine, the node of its code */
@@ -1428,7 +1429,7 @@ mom_item_closure_values (const momitem_t *itm)
   return clos->clos_valtab;
 }
 
-static inline const momval_t *
+static inline const momitem_t *const *
 mom_item_closure_constants (const momitem_t *itm)
 {
   if (!itm || itm->i_typnum != momty_item
@@ -1438,7 +1439,7 @@ mom_item_closure_constants (const momitem_t *itm)
   assert (clos && clos->clos_magic == MOM_CLOSURE_MAGIC);
   const struct momroutinedescr_st *crout = clos->clos_rout;
   assert (crout && crout->rout_magic == MOM_ROUTINE_MAGIC);
-  return crout->rout_constantvals;
+  return crout->rout_constantitems;
 }
 
 static inline unsigned
