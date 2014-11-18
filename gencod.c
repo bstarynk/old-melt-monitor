@@ -75,6 +75,7 @@
 #define CGEN_PROC_DOUBLE_PREFIX "mompdbl_"
 #define CGEN_PROC_BLOCK_PREFIX "mompblo_"
 #define CGEN_PROC_CONSTANTIDS_PREFIX "mompconstid_"
+#define CGEN_PROC_CONSTANTITEMS_PREFIX "mompconstitems_"
 #define CGEN_FUN_BLOCK_PREFIX "momfblo_"
 #define CGEN_FUN_CONSTANTIDS_PREFIX "momfconstid_"
 #define CGEN_FUN_CONSTANTITEMS_PREFIX "momfconstitems_"
@@ -1140,8 +1141,15 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
   {
     unsigned nbconsts = mom_seqitem_length (proconstantsv);
 
-    MOM_OUT (&cg->cgen_outbody,
+    MOM_OUT (&cg->cgen_outhead,
 	     MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL ("static momitem_t* "
+			     CGEN_PROC_CONSTANTITEMS_PREFIX),
+	     MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
+	     MOMOUT_LITERAL ("["), MOMOUT_DEC_INT ((int) nbconsts + 1),
+	     MOMOUT_LITERAL ("]; // define constant items of procedure "),
+	     MOMOUT_ITEM ((const momitem_t *) curoutitm), MOMOUT_NEWLINE ());
+    MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (),
 	     MOMOUT_LITERAL ("static const char* "
 			     CGEN_PROC_CONSTANTIDS_PREFIX),
 	     MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
@@ -1164,7 +1172,7 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
     MOM_OUT (&cg->cgen_outbody,
 	     MOMOUT_INDENT_LESS (),
 	     MOMOUT_NEWLINE (),
-	     MOMOUT_LITERAL ("}; // end of procedure constants of "),
+	     MOMOUT_LITERAL ("}; // end of procedure constant item ids of "),
 	     MOMOUT_ITEM ((const momitem_t *) curoutitm),
 	     MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
   }
@@ -1210,6 +1218,11 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
   MOM_OUT (&cg->cgen_outbody,
 	   MOMOUT_LITERAL (".prout_constantids = "
 			   CGEN_PROC_CONSTANTIDS_PREFIX),
+	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
+	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE ());
+  MOM_OUT (&cg->cgen_outbody,
+	   MOMOUT_LITERAL (".prout_constantitems = "
+			   CGEN_PROC_CONSTANTITEMS_PREFIX),
 	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
 	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE ());
   MOM_OUT (&cg->cgen_outbody,
@@ -1381,7 +1394,7 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 			     CGEN_FUN_CONSTANTITEMS_PREFIX),
 	     MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
 	     MOMOUT_LITERAL ("["), MOMOUT_DEC_INT ((int) nbconstants + 1),
-	     MOMOUT_LITERAL ("]; // constant values of function "),
+	     MOMOUT_LITERAL ("]; // constant items of tasklet function "),
 	     MOMOUT_ITEM ((const momitem_t *) curoutitm), MOMOUT_NEWLINE ());
     MOM_OUT (&cg->cgen_outbody,
 	     MOMOUT_LITERAL ("static const char* "

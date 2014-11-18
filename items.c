@@ -1248,16 +1248,154 @@ mom_unlock_item_at (const char *fil, int lin, momitem_t *itm)
 
 ////////////////////////////////////////////////////////////////
 /// internally called by module initializers
+static void
+internal_initialize_tfun_mom (momitem_t *moditm, unsigned rix,
+			      const struct momtfundescr_st *dfun)
+{
+  assert (moditm && moditm->i_typnum == momty_item);
+  assert (dfun && dfun->tfun_magic == MOM_TFUN_MAGIC);
+  MOM_DEBUG (run, MOMOUT_LITERAL ("initialize_tfun moditm="),
+	     MOMOUT_ITEM ((const momitem_t *) moditm),
+	     MOMOUT_LITERAL (" rix="),
+	     MOMOUT_DEC_INT ((int) rix),
+	     MOMOUT_LITERAL (" dfun.ident="),
+	     MOMOUT_LITERALV ((const char *) dfun->tfun_ident));
+  momitem_t *funitm = mom_get_item_of_identcstr (dfun->tfun_ident);
+  MOM_DEBUG (run, MOMOUT_LITERAL ("initialize_tfun funitm="),
+	     MOMOUT_ITEM ((const momitem_t *) funitm), NULL);
+  if (MOM_UNLIKELY (!funitm))
+    {
+      MOM_WARNING (MOMOUT_LITERAL ("When initializing module:"),
+		   MOMOUT_ITEM ((const momitem_t *) moditm),
+		   MOMOUT_LITERAL (" creating missing function item of id: "),
+		   MOMOUT_LITERALV ((const char *) dfun->tfun_ident));
+      funitm = mom_make_item_of_identcstr (dfun->tfun_ident);
+      if (MOM_UNLIKELY (!funitm))
+	MOM_FATAL (MOMOUT_LITERAL ("When initializing module:"),
+		   MOMOUT_ITEM ((const momitem_t *) moditm),
+		   MOMOUT_LITERAL
+		   (" failed to create missing function item of id: "),
+		   MOMOUT_LITERALV ((const char *) dfun->tfun_ident));
+    }
+  mom_lock_item (funitm);
+  if (funitm->i_payload)
+    mom_item_clear_payload (funitm);
+  unsigned nbconst = dfun->tfun_nbconstants;
+  const char *const *constidarr = dfun->tfun_constantids;
+  momitem_t **constitmarr = dfun->tfun_constantitems;
+  for (unsigned cix = 0; cix < nbconst; cix++)
+    {
+      const char *curcid = constidarr[cix];
+      momitem_t *curcstitm = mom_get_item_of_identcstr (curcid);
+      MOM_DEBUG (run, MOMOUT_LITERAL ("initialize_tfun constant item#"),
+		 MOMOUT_DEC_INT ((int) cix),
+		 MOMOUT_LITERAL (" of id "),
+		 MOMOUT_LITERALV (curcid),
+		 MOMOUT_LITERAL (" got "),
+		 MOMOUT_ITEM ((const momitem_t *) curcstitm));
+      if (curcstitm)
+	constitmarr[cix] = curcstitm;
+      else
+	{
+	  MOM_WARNING (MOMOUT_LITERAL ("In initialized module:"),
+		       MOMOUT_ITEM ((const momitem_t *) moditm),
+		       MOMOUT_LITERAL (" creating missing constant item#"),
+		       MOMOUT_DEC_INT ((int) cix),
+		       MOMOUT_LITERAL (" of id "),
+		       MOMOUT_LITERALV (curcid), NULL);
+	  curcstitm = mom_make_item_of_identcstr (curcid);
+	  if (MOM_UNLIKELY (!curcstitm))
+	    MOM_WARNING (MOMOUT_LITERAL ("In initialized module:"),
+			 MOMOUT_ITEM ((const momitem_t *) moditm),
+			 MOMOUT_LITERAL (" failed to create constant item#"),
+			 MOMOUT_DEC_INT ((int) cix),
+			 MOMOUT_LITERAL (" of id "),
+			 MOMOUT_LITERALV (curcid), NULL);
+	  constitmarr[cix] = curcstitm;
+	}
+    }
+  funitm->i_payload = dfun;
+  funitm->i_paylkind = mompayk_tfunrout;
+  mom_unlock_item (funitm);
+  MOM_DEBUG (run, MOMOUT_LITERAL ("initialize_tfun ending moditm="),
+	     MOMOUT_ITEM ((const momitem_t *) moditm),
+	     MOMOUT_LITERAL (" rix="),
+	     MOMOUT_DEC_INT ((int) rix),
+	     MOMOUT_LITERAL (" funitm="),
+	     MOMOUT_ITEM ((const momitem_t *) funitm), NULL);
+}
+
+
+
+
+static void
+internal_initialize_proc_mom (momitem_t *moditm, unsigned rix,
+			      const struct momprocrout_st *dproc)
+{
+  assert (moditm && moditm->i_typnum == momty_item);
+  assert (dproc && dproc->prout_magic == MOM_PROCROUT_MAGIC);
+  MOM_DEBUG (run, MOMOUT_LITERAL ("initialize_proc moditm="),
+	     MOMOUT_ITEM ((const momitem_t *) moditm),
+	     MOMOUT_LITERAL (" rix="),
+	     MOMOUT_DEC_INT ((int) rix),
+	     MOMOUT_LITERAL (" dproc.id="),
+	     MOMOUT_LITERALV ((const char *) dproc->prout_id));
+  assert (dproc->prout_id && dproc->prout_id[0] == '_');
+  momitem_t *procitm = mom_get_item_of_identcstr (dproc->prout_id);
+  MOM_DEBUG (run, MOMOUT_LITERAL ("initialize_proc procitm="),
+	     MOMOUT_ITEM ((const momitem_t *) procitm), NULL);
+  if (MOM_UNLIKELY (!procitm))
+    {
+      MOM_WARNING (MOMOUT_LITERAL ("When initializing module:"),
+		   MOMOUT_ITEM ((const momitem_t *) moditm),
+		   MOMOUT_LITERAL
+		   (" creating missing procedure item of id: "),
+		   MOMOUT_LITERALV ((const char *) dproc->prout_id));
+      procitm = mom_make_item_of_identcstr (dproc->prout_id);
+      if (MOM_UNLIKELY (!procitm))
+	MOM_FATAL (MOMOUT_LITERAL ("When initializing module:"),
+		   MOMOUT_ITEM ((const momitem_t *) moditm),
+		   MOMOUT_LITERAL
+		   (" failed to create missing procedure item of id: "),
+		   MOMOUT_LITERALV ((const char *) dproc->prout_id));
+    }
+  mom_lock_item (procitm);
+  mom_unlock_item (procitm);
+}
+
 void
 mom_module_internal_initialize (const char *modid,
 				const char *modmd5,
 				unsigned nbrout,
 				const union momrout_un *routarr)
 {
-  MOM_WARNPRINTF ("unimplemented mom_module_internal_initialize modid=%s"
-		  " modmd5=%s nbrout=%d routarr@%p",
-		  modid, modmd5, nbrout, (void *) routarr);
-#warning  mom_module_internal_initialize
+  momitem_t *moditm = mom_get_item_of_identcstr (modid);
+  MOM_DEBUG (run, MOMOUT_LITERAL ("module_internal_initialize moditm:"),
+	     MOMOUT_ITEM ((const momitem_t *) moditm));
+  if (!moditm)
+    {
+      MOM_WARNPRINTF ("no module item to initialize from modid=%s", modid);
+      return;
+    };
+  assert (routarr != NULL);
+  for (unsigned rix = 0; rix < nbrout; rix++)
+    {
+      if (!routarr[rix].rptr)
+	continue;
+      if (*routarr[rix].rmagic == MOM_TFUN_MAGIC)
+	{
+	  internal_initialize_tfun_mom (moditm, rix, routarr[rix].rtfun);
+	}
+      else if (*routarr[rix].rmagic == MOM_PROCROUT_MAGIC)
+	{
+	  internal_initialize_proc_mom (moditm, rix, routarr[rix].rproc);
+	}
+      else
+	MOM_FATAPRINTF ("invalid magic %u in module modid=%s rix=%d",
+			*routarr[rix].rmagic, modid, rix);
+    }
+  MOM_DEBUG (run, MOMOUT_LITERAL ("module_internal_initialize done moditm:"),
+	     MOMOUT_ITEM ((const momitem_t *) moditm));
 }
 
 

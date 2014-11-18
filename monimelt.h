@@ -1277,7 +1277,7 @@ enum mom_kindpayload_en
 {
   mompayk_none = 0,
   mompayk_queue,		// queue of values
-  mompayk_routine,		// low-level routine
+  mompayk_tfunrout,		// low-level taskfun routine
   mompayk_closure,		// closure, with closed values and routine
   mompayk_procedure,		// procedure, with closed values
   mompayk_tasklet,		// tasklet with its call stack
@@ -1356,13 +1356,13 @@ struct momtfundescr_st
   const char *tfun_timestamp;	/* generally __DATE__ "@" __TIME__ */
 };
 
-// start a routine.
-void mom_item_start_routine (momitem_t *itm);
+// start a tfun routine.
+void mom_item_start_tfun_routine (momitem_t *itm);
 // initialize, ie generate the machine code and some name, for a JIT
 // routine. Return NULL on success or some GC_strduped error message
 // on failure.
-const char *mom_item_generate_jit_routine (momitem_t *itm,
-					   const momval_t jitnode);
+const char *mom_item_generate_jit_tfun_routine (momitem_t *itm,
+						const momval_t jitnode);
 
 // generate a C module, returns 0 if ok, else fill *perrmsg
 int mom_generate_c_module (momitem_t *moditm, const char *dirname,
@@ -1383,8 +1383,11 @@ mom_item_routinedescr (const momitem_t *itm)
   const struct momtfundescr_st *rdescr = NULL;
   if (!itm || itm->i_typnum != momty_item)
     return NULL;
-  if (itm->i_paylkind == mompayk_routine)
-    rdescr = (struct momtfundescr_st *) itm->i_payload;
+  if (itm->i_paylkind == mompayk_tfunrout)
+    {
+      rdescr = (struct momtfundescr_st *) itm->i_payload;
+      assert (rdescr->tfun_magic == MOM_TFUN_MAGIC);
+    }
   else if (itm->i_paylkind == mompayk_closure)
     {
       struct momclosure_st *clos = itm->i_payload;
@@ -1477,14 +1480,6 @@ enum momtypenc_st
   momtypenc_double = 'd',	/* double */
 };
 typedef enum momtypenc_st momtypenc_t;
-#define MOM_PROCEDURE_MAGIC 1038420085	/* procedure magic 0x3de50875 */
-struct momprocedure_st
-{				/* payload of procedures */
-  unsigned proc_magic;		/* always MOM_PROCEDURE_MAGIC */
-  const struct momprocrout_st *proc_rout;
-  momval_t proc_valtab[];
-};
-#define MOM_PROCROUT_MAGIC 407208731	/* procrout magic 0x1845831b */
 
 union momrout_un
 {
@@ -1498,6 +1493,7 @@ union momrout_un
 // and the C function is named momprocfun_ID
 #define MOM_PROCROUTDESCR_PREFIX "momprocdescr_"
 #define MOM_PROCROUTFUN_PREFIX "momprocfun_"
+#define MOM_PROCROUT_MAGIC 407208731	/* procrout magic 0x1845831b */
 struct momprocrout_st
 {
   const unsigned prout_magic;	/* always MOM_PROCROUT_MAGIC */
@@ -1506,29 +1502,32 @@ struct momprocrout_st
   const char *prout_id;
   const char *prout_module;
   const char **prout_constantids;
+  momitem_t *const *prout_constantitems;
   const void *prout_addr;
   const char *prout_argsig;	/* signature, in momtypenc_t */
   const char *prout_timestamp;
 };
 
 void mom_item_start_procedure (momitem_t *itm);
-static inline momval_t
-mom_item_procedure_nth (const momitem_t *itm, int rk)
+static inline momitem_t *
+mom_item_procedure_nth_constant_item (const momitem_t *itm, int rk)
 {
+  momitem_t *resitm = NULL;
   if (!itm || itm->i_typnum != momty_item)
-    return MOM_NULLV;
+    return NULL;
   if (itm->i_paylkind != mompayk_procedure)
-    return MOM_NULLV;
-  struct momprocedure_st *proc = itm->i_payload;
-  assert (proc && proc->proc_magic == MOM_PROCEDURE_MAGIC);
-  const struct momprocrout_st *prout = proc->proc_rout;
+    return NULL;
+  const struct momprocrout_st *prout = itm->i_payload;
   assert (prout && prout->prout_magic == MOM_PROCROUT_MAGIC);
   unsigned plen = prout->prout_len;
   if (rk < 0)
     rk += plen;
   if (rk < 0 || rk >= (int) plen)
-    return MOM_NULLV;
-  return proc->proc_valtab[rk];
+    return NULL;
+  assert (prout->prout_constantitems != NULL);
+  resitm = prout->prout_constantitems[rk];
+  return resitm;
+
 }
 
 
@@ -1543,9 +1542,7 @@ mom_item_procedure_module (const momitem_t *itm)
     return NULL;
   if (itm->i_paylkind != mompayk_procedure)
     return NULL;
-  struct momprocedure_st *proc = itm->i_payload;
-  assert (proc && proc->proc_magic == MOM_PROCEDURE_MAGIC);
-  const struct momprocrout_st *prout = proc->proc_rout;
+  const struct momprocrout_st *prout = itm->i_payload;
   assert (prout && prout->prout_magic == MOM_PROCROUT_MAGIC);
   return prout->prout_module;
 }
@@ -1557,9 +1554,7 @@ mom_item_procedure_argsig (const momitem_t *itm)
     return NULL;
   if (itm->i_paylkind != mompayk_procedure)
     return NULL;
-  struct momprocedure_st *proc = itm->i_payload;
-  assert (proc && proc->proc_magic == MOM_PROCEDURE_MAGIC);
-  const struct momprocrout_st *prout = proc->proc_rout;
+  const struct momprocrout_st *prout = itm->i_payload;
   assert (prout && prout->prout_magic == MOM_PROCROUT_MAGIC);
   return prout->prout_argsig;
 }
@@ -1571,9 +1566,7 @@ mom_item_procedure_restype (const momitem_t *itm)
     return 0;
   if (itm->i_paylkind != mompayk_procedure)
     return 0;
-  struct momprocedure_st *proc = itm->i_payload;
-  assert (proc && proc->proc_magic == MOM_PROCEDURE_MAGIC);
-  const struct momprocrout_st *prout = proc->proc_rout;
+  const struct momprocrout_st *prout = itm->i_payload;
   assert (prout && prout->prout_magic == MOM_PROCROUT_MAGIC);
   return prout->prout_resty;
 }
@@ -3029,29 +3022,6 @@ mom_procedure_item_of_id (const char *id)
   return pitm;
 }
 
-
-static inline momval_t *
-mom_item_procedure_values (momitem_t *itm, int nbvals)
-{
-  momval_t *resarr = NULL;
-  if (!itm || itm->i_typnum != momty_item)
-    return NULL;
-  mom_should_lock_item (itm);
-  if (itm->i_paylkind != mompayk_procedure)
-    {
-      mom_unlock_item (itm);
-      return NULL;
-    };
-  struct momprocedure_st *proc = itm->i_payload;
-  assert (proc && proc->proc_magic == MOM_PROCEDURE_MAGIC);
-  const struct momprocrout_st *prout = proc->proc_rout;
-  assert (prout && prout->prout_magic == MOM_PROCROUT_MAGIC);
-  unsigned plen = prout->prout_len;
-  if ((int) nbvals <= (int) plen)
-    resarr = proc->proc_valtab;
-  mom_unlock_item (itm);
-  return resarr;
-}
 
 /// two prefixes known by our Makefile!
 // generated modules start with:

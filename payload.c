@@ -1039,19 +1039,18 @@ static const struct mom_payload_descr_st payldescr_hset_mom = {
 };
 
 ////////////////////////////////////////////////////////////////
-///// ROUTINE PAYLOAD
+///// TASKFUN ROUTINE PAYLOAD
 ////////////////////////////////////////////////////////////////
 
 void
-mom_item_start_routine (momitem_t *itm)
+mom_item_start_tfun_routine (momitem_t *itm)
 {
   char symbuf[MOM_SYMBNAME_LEN];
   memset (symbuf, 0, sizeof (symbuf));
   assert (itm && itm->i_typnum == momty_item);
   if (itm->i_payload)
     mom_item_clear_payload (itm);
-  char *routname =
-    mom_string_cstr ((momval_t) mom_item_get_name_or_idstr (itm));
+  char *routname = mom_string_cstr ((momval_t) mom_item_get_idstr (itm));
   if (!routname || !routname[0])
     return;
   snprintf (symbuf, sizeof (symbuf), MOM_TFUN_NAME_FMT, routname);
@@ -1076,7 +1075,7 @@ mom_item_start_routine (momitem_t *itm)
     MOM_WARNPRINTF ("strange routine descriptor for %s but ident %s",
 		    routname, rdescr->tfun_ident);
   itm->i_payload = (void *) rdescr;
-  itm->i_paylkind = mompayk_routine;
+  itm->i_paylkind = mompayk_tfunrout;
   MOM_DEBUG (run, MOMOUT_LITERAL ("starting routine item:"),
 	     MOMOUT_ITEM ((const momitem_t *) itm),
 	     MOMOUT_LITERAL (", ident "),
@@ -1090,23 +1089,23 @@ mom_item_start_routine (momitem_t *itm)
 }
 
 static void
-payl_routine_load_mom (struct mom_loader_st *ld, momitem_t *itm,
-		       momval_t jsonv)
+payl_tfunrout_load_mom (struct mom_loader_st *ld, momitem_t *itm,
+			momval_t jsonv)
 {
   assert (ld != NULL);
   assert (itm != NULL && itm->i_typnum == momty_item);
   MOM_DEBUG (load,
-	     MOMOUT_LITERAL ("payl_routine_load_mom itm="),
+	     MOMOUT_LITERAL ("payl_tfunrout_load_mom itm="),
 	     MOMOUT_ITEM ((const momitem_t *) itm),
 	     MOMOUT_LITERAL (" jsonv="),
 	     MOMOUT_VALUE ((const momval_t) jsonv), NULL);
-  mom_item_start_routine (itm);
+  mom_item_start_tfun_routine (itm);
   if (mom_is_json_object (jsonv))
     {
       momval_t jcode = mom_jsonob_get (jsonv, (momval_t) mom_named__jit);
       const char *err = mom_item_generate_jit_routine (itm, jcode);
       if (err)
-	MOM_FATAL (MOMOUT_LITERAL ("payl_routine_load_mom itm="),
+	MOM_FATAL (MOMOUT_LITERAL ("payl_tfunrout_load_mom itm="),
 		   MOMOUT_ITEM ((const momitem_t *) itm),
 		   MOMOUT_SPACE (32),
 		   MOMOUT_LITERAL ("failed:"),
@@ -1117,11 +1116,11 @@ payl_routine_load_mom (struct mom_loader_st *ld, momitem_t *itm,
 }
 
 static void
-payl_routine_dump_scan_mom (struct mom_dumper_st *du, momitem_t *itm)
+payl_tfunrout_dump_scan_mom (struct mom_dumper_st *du, momitem_t *itm)
 {
   assert (du != NULL);
   assert (itm && itm->i_typnum == momty_item);
-  assert (itm->i_paylkind == mompayk_routine);
+  assert (itm->i_paylkind == mompayk_tfunrout);
   assert (itm->i_payload != NULL);
   const struct momtfundescr_st *rdescr = itm->i_payload;
   assert (rdescr != NULL && rdescr->tfun_magic == MOM_TFUN_MAGIC
@@ -1134,11 +1133,11 @@ payl_routine_dump_scan_mom (struct mom_dumper_st *du, momitem_t *itm)
 }
 
 static momval_t
-payl_routine_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
+payl_tfunrout_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
 {
   assert (du != NULL);
   assert (itm != NULL && itm->i_typnum == momty_item);
-  assert (itm->i_paylkind == mompayk_routine);
+  assert (itm->i_paylkind == mompayk_tfunrout);
   const struct momtfundescr_st *rdescr = itm->i_payload;
   assert (rdescr != NULL && rdescr->tfun_magic == MOM_TFUN_MAGIC
 	  && rdescr->tfun_ident != NULL);
@@ -1161,12 +1160,12 @@ payl_routine_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
     }
 }
 
-static const struct mom_payload_descr_st payldescr_routine_mom = {
+static const struct mom_payload_descr_st payldescr_tfunrout_mom = {
   .dpayl_magic = MOM_PAYLOAD_MAGIC,
-  .dpayl_name = "routine",
-  .dpayl_loadfun = payl_routine_load_mom,
-  .dpayl_dumpscanfun = payl_routine_dump_scan_mom,
-  .dpayl_dumpjsonfun = payl_routine_dump_json_mom,
+  .dpayl_name = "tfunrout",
+  .dpayl_loadfun = payl_tfunrout_load_mom,
+  .dpayl_dumpscanfun = payl_tfunrout_dump_scan_mom,
+  .dpayl_dumpjsonfun = payl_tfunrout_dump_json_mom,
 };
 
 
@@ -1363,14 +1362,7 @@ mom_item_start_procedure (momitem_t *itm)
       || strcmp (prout->prout_id, mom_ident_cstr_of_item (itm))
       || !prout->prout_addr)
     MOM_FATAPRINTF ("corrupted procrout for %s", symbuf);
-  unsigned plen = prout->prout_len;
-  proc
-    = MOM_GC_ALLOC ("procedure alloc",
-		    sizeof (struct momprocedure_st) +
-		    plen * sizeof (momval_t));
-  proc->proc_magic = MOM_PROCEDURE_MAGIC;
-  proc->proc_rout = prout;
-  itm->i_payload = proc;
+  itm->i_payload = prout;
   itm->i_paylkind = mompayk_procedure;
 }
 
@@ -1390,19 +1382,14 @@ payl_procedure_load_mom (struct mom_loader_st *ld, momitem_t *itm,
   if (itm->i_paylkind != mompayk_procedure)
     MOM_FATAL (MOMOUT_LITERAL ("failed to load procedure:"),
 	       MOMOUT_ITEM ((const momitem_t *) itm));
-  struct momprocedure_st *proc = itm->i_payload;
-  if (!proc || proc->proc_magic != MOM_PROCEDURE_MAGIC
-      || !proc->proc_rout
-      || proc->proc_rout->prout_magic != MOM_PROCROUT_MAGIC)
+  struct momprocrout_st *prout = itm->i_payload;
+  if (!prout || prout->prout_magic != MOM_PROCROUT_MAGIC)
     MOM_FATAL (MOMOUT_LITERAL ("corrupted loaded procedure:"),
 	       MOMOUT_ITEM ((const momitem_t *) itm));
-  const struct momprocrout_st *prout = proc->proc_rout;
-  assert (prout && prout->prout_magic == MOM_PROCROUT_MAGIC);
   unsigned plen = prout->prout_len;
   for (unsigned ix = 0; ix < plen; ix++)
     {
-      proc->proc_valtab[ix] =
-	mom_load_value_json (ld, mom_json_array_nth (jproc, ix));
+#warning should load the constant items
     }
 }
 
@@ -1413,13 +1400,10 @@ payl_procedure_dump_scan_mom (struct mom_dumper_st *du, momitem_t *itm)
   assert (du != NULL);
   assert (itm && itm->i_typnum == momty_item);
   assert (itm->i_paylkind == mompayk_procedure);
-  struct momprocedure_st *proc = itm->i_payload;
-  assert (proc && proc->proc_magic == MOM_PROCEDURE_MAGIC);
-  const struct momprocrout_st *prout = proc->proc_rout;
+  const struct momprocrout_st *prout = itm->i_payload;
   assert (prout && prout->prout_magic == MOM_PROCROUT_MAGIC);
   unsigned plen = prout->prout_len;
-  for (unsigned ix = 0; ix < plen; ix++)
-    mom_dump_scan_value (du, proc->proc_valtab[ix]);
+#warning should scan the constant items
 }
 
 
@@ -1430,20 +1414,20 @@ payl_procedure_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
   assert (du != NULL);
   assert (itm && itm->i_typnum == momty_item);
   assert (itm->i_paylkind == mompayk_procedure);
-  struct momprocedure_st *proc = itm->i_payload;
-  assert (proc && proc->proc_magic == MOM_PROCEDURE_MAGIC);
-  const struct momprocrout_st *prout = proc->proc_rout;
+  const struct momprocrout_st *prout = itm->i_payload;
   assert (prout && prout->prout_magic == MOM_PROCROUT_MAGIC);
   unsigned plen = prout->prout_len;
   momval_t tinyarr[MOM_TINY_MAX] = { MOM_NULLV };
   momval_t *arrval =
     (plen < MOM_TINY_MAX) ? tinyarr
     : MOM_GC_ALLOC ("dump procedure array", plen * sizeof (momval_t));
-  for (unsigned ix = 0; ix < plen; ix++)
-    arrval[ix] = mom_dump_emit_json (du, proc->proc_valtab[ix]);
-  jarr = (momval_t) mom_make_json_array_count (plen, arrval);
-  if (arrval != tinyarr)
-    MOM_GC_FREE (arrval);
+#warning should dump the procedure constant items
+
+  // for (unsigned ix = 0; ix < plen; ix++)
+  //   arrval[ix] = mom_dump_emit_json (du, proc->proc_valtab[ix]);
+  // jarr = (momval_t) mom_make_json_array_count (plen, arrval);
+  // if (arrval != tinyarr)
+  //   MOM_GC_FREE (arrval);
   if (prout->prout_module
       && strcmp (prout->prout_module, MOM_EMPTY_MODULE) != 0)
     mom_dump_require_module (du, prout->prout_module);
@@ -1459,24 +1443,6 @@ static const struct mom_payload_descr_st payldescr_procedure_mom = {
   .dpayl_dumpjsonfun = payl_procedure_dump_json_mom,
 };
 
-void
-mom_item_procedure_set_nth (momitem_t *itm, int rk, momval_t cval)
-{
-  if (!itm || itm->i_typnum != momty_item)
-    return;
-  if (itm->i_paylkind != mompayk_procedure)
-    return;
-  struct momprocedure_st *proc = itm->i_payload;
-  assert (proc && proc->proc_magic == MOM_PROCEDURE_MAGIC);
-  const struct momprocrout_st *prout = proc->proc_rout;
-  assert (prout && prout->prout_magic == MOM_PROCROUT_MAGIC);
-  unsigned plen = prout->prout_len;
-  if (rk < 0)
-    rk += plen;
-  if (rk < 0 || rk >= (int) plen)
-    return;
-  proc->proc_valtab[rk] = cval;
-}
 
 ////////////////////////////////////////////////////////////////
 ///// TASKLET PAYLOAD
@@ -3163,7 +3129,8 @@ static const struct mom_payload_descr_st payldescr_jsonrpcexchange_mom = {
 
 struct mom_payload_descr_st *mom_payloadescr[mompayk__last + 1] = {
   [mompayk_queue] = (struct mom_payload_descr_st *) &payldescr_queue_mom,
-  [mompayk_routine] = (struct mom_payload_descr_st *) &payldescr_routine_mom,
+  [mompayk_tfunrout] =
+    (struct mom_payload_descr_st *) &payldescr_tfunrout_mom,
   [mompayk_closure] = (struct mom_payload_descr_st *) &payldescr_closure_mom,
   [mompayk_tasklet] = (struct mom_payload_descr_st *) &payldescr_tasklet_mom,
   [mompayk_buffer] = (struct mom_payload_descr_st *) &payldescr_buffer_mom,

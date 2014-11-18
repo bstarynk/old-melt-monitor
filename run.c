@@ -352,10 +352,11 @@ step_tasklet_mom (momitem_t *tkitm, struct mom_taskletdata_st *itd)
 	  return itd->dtk_fratop > 0;
 	}
       mom_should_lock_item (routitm);
-      if (routitm->i_paylkind != mompayk_routine)
+      if (routitm->i_paylkind != mompayk_tfunrout)
 	{
 	  MOM_DEBUG (run,
-		     MOMOUT_LITERAL ("step_tasklet_mom non-routine routitm;"),
+		     MOMOUT_LITERAL
+		     ("step_tasklet_mom non-tfunrout routitm;"),
 		     MOMOUT_BACKTRACE (5));
 	  popframe = true;
 	  mom_unlock_item (routitm);
