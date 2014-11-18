@@ -1043,15 +1043,15 @@ static const struct mom_payload_descr_st payldescr_hset_mom = {
 ////////////////////////////////////////////////////////////////
 
 void
-mom_item_start_routine (momitem_t *itm, const char *routname)
+mom_item_start_routine (momitem_t *itm)
 {
   char symbuf[MOM_SYMBNAME_LEN];
   memset (symbuf, 0, sizeof (symbuf));
   assert (itm && itm->i_typnum == momty_item);
   if (itm->i_payload)
     mom_item_clear_payload (itm);
-  if (!routname || !routname[0])
-    routname = mom_string_cstr ((momval_t) mom_item_get_name_or_idstr (itm));
+  char *routname =
+    mom_string_cstr ((momval_t) mom_item_get_name_or_idstr (itm));
   if (!routname || !routname[0])
     return;
   snprintf (symbuf, sizeof (symbuf), MOM_ROUTINE_NAME_FMT, routname);
@@ -1068,19 +1068,19 @@ mom_item_start_routine (momitem_t *itm, const char *routname)
     };
   const struct momroutinedescr_st *rdescr = routad;
   if (rdescr->rout_magic != MOM_ROUTINE_MAGIC
-      || !rdescr->rout_name || !rdescr->rout_module
+      || !rdescr->rout_ident || !rdescr->rout_module
       || !rdescr->rout_codefun || !rdescr->rout_timestamp)
     MOM_FATAPRINTF ("invalid routine descriptor @%p for %s", routad,
 		    routname);
-  if (strcmp (routname, rdescr->rout_name))
-    MOM_WARNPRINTF ("strange routine descriptor for %s but named %s",
-		    routname, rdescr->rout_name);
+  if (strcmp (routname, rdescr->rout_ident))
+    MOM_WARNPRINTF ("strange routine descriptor for %s but ident %s",
+		    routname, rdescr->rout_ident);
   itm->i_payload = (void *) rdescr;
   itm->i_paylkind = mompayk_routine;
   MOM_DEBUG (run, MOMOUT_LITERAL ("starting routine item:"),
 	     MOMOUT_ITEM ((const momitem_t *) itm),
-	     MOMOUT_LITERAL (", named "),
-	     MOMOUT_LITERALV (rdescr->rout_name),
+	     MOMOUT_LITERAL (", ident "),
+	     MOMOUT_LITERALV (rdescr->rout_ident),
 	     MOMOUT_LITERAL (" from module "),
 	     MOMOUT_LITERALV (rdescr->rout_module),
 	     MOMOUT_LITERAL (" timestamp "),
@@ -1100,9 +1100,8 @@ payl_routine_load_mom (struct mom_loader_st *ld, momitem_t *itm,
 	     MOMOUT_ITEM ((const momitem_t *) itm),
 	     MOMOUT_LITERAL (" jsonv="),
 	     MOMOUT_VALUE ((const momval_t) jsonv), NULL);
-  if (mom_is_string (jsonv))
-    mom_item_start_routine (itm, mom_string_cstr (jsonv));
-  else if (mom_is_json_object (jsonv))
+  mom_item_start_routine (itm);
+  if (mom_is_json_object (jsonv))
     {
       momval_t jcode = mom_jsonob_get (jsonv, (momval_t) mom_named__jit);
       const char *err = mom_item_generate_jit_routine (itm, jcode);
@@ -1126,10 +1125,10 @@ payl_routine_dump_scan_mom (struct mom_dumper_st *du, momitem_t *itm)
   assert (itm->i_payload != NULL);
   const struct momroutinedescr_st *rdescr = itm->i_payload;
   assert (rdescr != NULL && rdescr->rout_magic == MOM_ROUTINE_MAGIC
-	  && rdescr->rout_name != NULL);
+	  && rdescr->rout_ident != NULL);
   if (rdescr->rout_jitcode.ptr != NULL)
     {
-      assert (rdescr->rout_name[0] == '.');
+      assert (rdescr->rout_ident[0] == '.');
       mom_dump_scan_value (du, rdescr->rout_jitcode);
     }
 }
@@ -1142,10 +1141,10 @@ payl_routine_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
   assert (itm->i_paylkind == mompayk_routine);
   const struct momroutinedescr_st *rdescr = itm->i_payload;
   assert (rdescr != NULL && rdescr->rout_magic == MOM_ROUTINE_MAGIC
-	  && rdescr->rout_name != NULL);
+	  && rdescr->rout_ident != NULL);
   if (rdescr->rout_jitcode.ptr)
     {
-      assert (rdescr->rout_name[0] == '.');
+      assert (rdescr->rout_ident[0] == '.');
       momval_t jcode = mom_dump_emit_json (du, rdescr->rout_jitcode);
       momval_t jvalr = (momval_t) mom_make_json_object
 	(MOMJSOB_ENTRY ((momval_t) mom_named__jit,
@@ -1158,7 +1157,7 @@ payl_routine_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
       assert (rdescr->rout_module != NULL);
       if (strcmp (rdescr->rout_module, MOM_EMPTY_MODULE) != 0)
 	mom_dump_require_module (du, rdescr->rout_module);
-      return (momval_t) mom_make_string (rdescr->rout_name);
+      return (momval_t) mom_make_string (rdescr->rout_ident);
     }
 }
 
@@ -1187,7 +1186,7 @@ mom_item_start_closure_of_routine (momitem_t *itm,
   if (!rdescr)
     return;
   if (rdescr->rout_magic != MOM_ROUTINE_MAGIC
-      || !rdescr->rout_name || !rdescr->rout_module
+      || !rdescr->rout_ident || !rdescr->rout_module
       || !rdescr->rout_codefun || !rdescr->rout_timestamp)
     MOM_FATAPRINTF ("invalid routine descriptor @%p for closure",
 		    (void *) rdescr);
@@ -1204,8 +1203,7 @@ mom_item_start_closure_of_routine (momitem_t *itm,
 }
 
 void
-mom_item_start_closure_named (momitem_t *itm, const char *routname,
-			      unsigned len)
+mom_item_start_closure (momitem_t *itm, unsigned len)
 {
 
   char symbuf[MOM_SYMBNAME_LEN];
@@ -1213,11 +1211,11 @@ mom_item_start_closure_named (momitem_t *itm, const char *routname,
   assert (itm && itm->i_typnum == momty_item);
   if (itm->i_payload)
     mom_item_clear_payload (itm);
-  if (!routname || !routname[0])
-    routname = mom_string_cstr ((momval_t) mom_item_get_name_or_idstr (itm));
-  if (!routname || !routname[0])
+  char *routid =
+    mom_string_cstr ((momval_t) mom_item_get_name_or_idstr (itm));
+  if (!routid || !routid[0])
     return;
-  snprintf (symbuf, sizeof (symbuf), MOM_ROUTINE_NAME_FMT, routname);
+  snprintf (symbuf, sizeof (symbuf), MOM_ROUTINE_NAME_FMT, routid);
   assert (symbuf[MOM_SYMBNAME_LEN - 1] == '\0');
   for (const char *pc = symbuf; *pc; pc++)
     if (!isalnum (*pc) && *pc != '_')
@@ -1231,13 +1229,13 @@ mom_item_start_closure_named (momitem_t *itm, const char *routname,
     };
   const struct momroutinedescr_st *rdescr = routad;
   if (rdescr->rout_magic != MOM_ROUTINE_MAGIC
-      || !rdescr->rout_name || !rdescr->rout_module
+      || !rdescr->rout_ident || !rdescr->rout_module
       || !rdescr->rout_codefun || !rdescr->rout_timestamp)
     MOM_FATAPRINTF ("invalid closure routine descriptor @%p for %s", routad,
-		    routname);
-  if (strcmp (routname, rdescr->rout_name))
+		    routid);
+  if (strcmp (routid, rdescr->rout_ident))
     MOM_WARNPRINTF ("strange closure routine descriptor for %s but named %s",
-		    routname, rdescr->rout_name);
+		    routid, rdescr->rout_ident);
   mom_item_start_closure_of_routine (itm, rdescr, len);
 }
 
@@ -1274,7 +1272,7 @@ payl_closure_load_mom (struct mom_loader_st *ld, momitem_t *itm,
   assert (mom_is_string (jrname));
   assert (mom_is_jsonable (jcval));
   unsigned nbcloval = mom_json_array_size (jcval);
-  mom_item_start_closure_named (itm, mom_string_cstr (jrname), nbcloval);
+  mom_item_start_closure (itm, nbcloval);
   if (!nbcloval)
     return;
   for (unsigned ix = 0; ix < nbcloval; ix++)
@@ -1325,7 +1323,7 @@ payl_closure_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
     = (momval_t)
     mom_make_json_object
     (MOMJSOB_ENTRY ((momval_t) mom_named__closure_routine,
-		    (momval_t) mom_make_string (rdescr->rout_name)),
+		    (momval_t) mom_make_string (rdescr->rout_ident)),
      MOMJSOB_ENTRY ((momval_t) mom_named__closed_values, jarr), MOMJSON_END);
   return jclos;
 }

@@ -69,6 +69,16 @@
 
 #define CGEN_MAGIC 0x566802a5	/* cgen magic 1449656997 */
 
+#define CGEN_FORMALARG_PREFIX "momparg_"
+#define CGEN_PROC_NUMBER_PREFIX "mompnum_"
+#define CGEN_PROC_VALUE_PREFIX "mompval_"
+#define CGEN_PROC_DOUBLE_PREFIX "mompdbl_"
+#define CGEN_PROC_BLOCK_PREFIX "mompblo_"
+#define CGEN_PROC_CONSTANTIDS_PREFIX "mompconstid_"
+#define CGEN_FUN_BLOCK_PREFIX "momfblo_"
+#define CGEN_FUN_CONSTANTIDS_PREFIX "momfconstid_"
+#define CGEN_FUN_CODE_PREFIX "momfuncod_"
+
 enum cgenroutkind_mom_en
 {
   cgr__none,
@@ -545,7 +555,7 @@ declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	       MOMOUT_LITERAL (" rank#"), MOMOUT_DEC_INT ((int) routix),
 	       MOMOUT_NEWLINE (), NULL);
       MOM_OUT (&cg->cgen_outhead,
-	       MOMOUT_LITERAL ("static int " MOM_ROUTINE_NAME_PREFIX),
+	       MOMOUT_LITERAL ("static int " CGEN_FUN_CODE_PREFIX),
 	       MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
 	       MOMOUT_LITERAL
 	       ("(int, momitem_t*, momval_t, momval_t*, intptr_t*, double*);"),
@@ -818,13 +828,7 @@ bind_functionvars_cgen (struct c_generator_mom_st *cg, momval_t varsv)
   return nbvars;
 }
 
-#define CGEN_FORMALARG_PREFIX "momparg_"
-#define CGEN_PROC_NUMBER_PREFIX "mompnum_"
-#define CGEN_PROC_VALUE_PREFIX "mompval_"
-#define CGEN_PROC_DOUBLE_PREFIX "mompdbl_"
-#define CGEN_PROC_BLOCK_PREFIX "mompblo_"
 
-#define CGEN_FUN_BLOCK_PREFIX "momfblo_"
 void
 emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 {
@@ -906,7 +910,9 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
   MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
 	   MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL ("// implementation of procedure #"),
-	   MOMOUT_DEC_INT ((int) routix), MOMOUT_NEWLINE ());
+	   MOMOUT_DEC_INT ((int) routix),
+	   MOMOUT_LITERAL (" = "),
+	   MOMOUT_ITEM ((const momitem_t *) curoutitm), MOMOUT_NEWLINE ());
   cg->cgen_restype = emit_ctype_cgen (cg, &cg->cgen_outbody, procrestypev);
   MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (48),
 	   MOMOUT_LITERAL (MOM_PROCROUTFUN_PREFIX),
@@ -1093,8 +1099,41 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	   MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL ("} // end of procedure "),
 	   MOMOUT_LITERAL (MOM_PROCROUTFUN_PREFIX),
-	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
+	   MOMOUT_ITEM ((const momitem_t *) curoutitm),
 	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
+  /// emit the procedure constant ids
+  {
+    unsigned nbconsts = mom_seqitem_length (proconstantsv);
+
+    MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL ("static const char* "
+			     CGEN_PROC_CONSTANTIDS_PREFIX),
+	     MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
+	     MOMOUT_LITERAL ("["), MOMOUT_DEC_INT ((int) nbconsts + 1),
+	     MOMOUT_LITERAL ("] = {"), MOMOUT_INDENT_MORE (), NULL);
+    for (unsigned cix = 0; cix < nbconsts; cix++)
+      {
+	momitem_t *cstitm = mom_seqitem_nth_item (proconstantsv, cix);
+	if (!cstitm)
+	  continue;
+	MOM_OUT (&cg->cgen_outbody,
+		 MOMOUT_NEWLINE (),
+		 MOMOUT_LITERAL ("["),
+		 MOMOUT_DEC_INT ((int) cix),
+		 MOMOUT_LITERAL ("] = \""),
+		 MOMOUT_LITERALV (mom_ident_cstr_of_item (cstitm)),
+		 MOMOUT_LITERAL ("\", // "),
+		 MOMOUT_ITEM ((const momitem_t *) cstitm), NULL);
+      }
+    MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_INDENT_LESS (),
+	     MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL ("}; // end of procedure constants of "),
+	     MOMOUT_ITEM ((const momitem_t *) curoutitm),
+	     MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
+  }
+
   /// emit the procedure descriptor
   MOM_OUT (&cg->cgen_outbody,
 	   MOMOUT_NEWLINE (),
@@ -1133,6 +1172,11 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
   MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (".prout_module = \""),
 	   MOMOUT_LITERALV (mom_ident_cstr_of_item (cg->cgen_moditm)),
 	   MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE ());
+  MOM_OUT (&cg->cgen_outbody,
+	   MOMOUT_LITERAL (".prout_constantids = "
+			   CGEN_PROC_CONSTANTIDS_PREFIX),
+	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
+	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE ());
   MOM_OUT (&cg->cgen_outbody,
 	   MOMOUT_LITERAL (".prout_addr = (void*)" MOM_PROCROUTFUN_PREFIX),
 	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
@@ -1217,7 +1261,7 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	   MOMOUT_ITEM ((const momitem_t *) curoutitm),
 	   MOMOUT_LITERAL (" rank#"), MOMOUT_DEC_INT ((int) routix),
 	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL ("static int " MOM_ROUTINE_NAME_PREFIX),
+	   MOMOUT_LITERAL ("static int " CGEN_FUN_CODE_PREFIX),
 	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
 	   MOMOUT_LITERAL
 	   ("(int momstate, momitem_t* restrict momtasklet, const momval_t momclosure,"),
@@ -1225,7 +1269,8 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	   MOMOUT_LITERAL
 	   ("\t momval_t* restrict momvals, intptr_t* restrict momnums, double* restrict momdbls)"),
 	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL ("{ // start of tasklet function"),
+	   MOMOUT_LITERAL ("{ // start of tasklet function "),
+	   MOMOUT_ITEM ((const momitem_t *) curoutitm),
 	   MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE (), NULL);
   MOM_OUT (&cg->cgen_outbody,
 	   MOMOUT_LITERAL ("if (MOM_UNLIKELY(momstate==0)) return "),
@@ -1278,14 +1323,48 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
   MOM_OUT (&cg->cgen_outbody,
 	   MOMOUT_LITERAL ("} // end function "),
 	   MOMOUT_ITEM ((const momitem_t *) curoutitm),
-	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
+	   MOMOUT_INDENT_LESS (), MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
+  // emit the function constant ids
+  {
+    unsigned nbconstants = mom_seqitem_length (funconstantsv);
+    MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_LITERAL ("static const char* "
+			     CGEN_FUN_CONSTANTIDS_PREFIX),
+	     MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
+	     MOMOUT_LITERAL ("["), MOMOUT_DEC_INT ((int) nbconstants + 1),
+	     MOMOUT_LITERAL ("] = { // constant ids of function "),
+	     MOMOUT_ITEM ((const momitem_t *) curoutitm),
+	     MOMOUT_INDENT_MORE (), NULL);
+    for (unsigned cix = 0; cix < nbconstants; cix++)
+      {
+	momitem_t *cstitm = mom_seqitem_nth_item (funconstantsv, cix);
+	if (!cstitm)
+	  continue;
+	MOM_OUT (&cg->cgen_outbody,
+		 MOMOUT_NEWLINE (),
+		 MOMOUT_LITERAL ("["),
+		 MOMOUT_DEC_INT ((int) cix),
+		 MOMOUT_LITERAL ("] = \""),
+		 MOMOUT_LITERALV (mom_ident_cstr_of_item (cstitm)),
+		 MOMOUT_LITERAL ("\", // "),
+		 MOMOUT_ITEM ((const momitem_t *) cstitm), NULL);
+      }
+    MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_INDENT_LESS (),
+	     MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL ("}; // end of function constants of "),
+	     MOMOUT_ITEM ((const momitem_t *) curoutitm),
+	     MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
+  }
   // emit the function descriptor
   MOM_OUT (&cg->cgen_outbody,
 	   MOMOUT_LITERAL ("const struct momroutinedescr_st "
 			   MOM_ROUTINE_NAME_PREFIX),
+	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
+	   MOMOUT_LITERAL (" = { // function descriptor "),
 	   MOMOUT_ITEM ((const momitem_t *) curoutitm),
-	   MOMOUT_LITERAL (" = { // function descriptor"),
 	   MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE (),
+	   MOMOUT_ITEM ((const momitem_t *) curoutitm),
 	   MOMOUT_LITERAL (".rout_magic = MOM_ROUTINE_MAGIC,"),
 	   MOMOUT_NEWLINE (), MOMOUT_LITERAL (".rout_minclosize = "),
 	   MOMOUT_DEC_INT ((int) nbconstants), MOMOUT_LITERAL (","),
@@ -1298,15 +1377,18 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	   MOMOUT_LITERAL (".rout_frame_nbdbl = "),
 	   MOMOUT_DEC_INT ((int) mom_item_vector_count (cg->cgen_vecdblitm)),
 	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL (".rout_name = \""),
-	   MOMOUT_ITEM ((const momitem_t *) curoutitm),
+	   MOMOUT_LITERAL (".rout_constantids = "
+			   CGEN_FUN_CONSTANTIDS_PREFIX),
+	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
+	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL (".rout_ident = \""),
+	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
 	   MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL (".rout_module = MONIMELT_CURRENT_MODULE,"),
 	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL (".rout_codefun = " MOM_ROUTINE_NAME_PREFIX),
+	   MOMOUT_LITERAL (".rout_codefun = " CGEN_FUN_CODE_PREFIX),
 	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
-	   MOMOUT_LITERAL (","),
-	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL (".rout_timestamp = __DATE__ \"@\" __TIME__"),
 	   MOMOUT_NEWLINE (), MOMOUT_INDENT_LESS (), MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL ("}; // end function descriptor"),
@@ -2596,14 +2678,17 @@ void
 emit_moduleinit_cgen (struct c_generator_mom_st *cg)
 {
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
+  assert (mom_is_item ((momval_t) cg->cgen_moditm));
   MOM_OUT (&cg->cgen_outbody,
 	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL ("// module initialization"),
+	   MOMOUT_LITERAL ("// module initialization for "),
+	   MOMOUT_ITEM ((const momitem_t *) cg->cgen_moditm),
 	   MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL ("void " MOM_MODULE_INIT_PREFIX),
-	   MOMOUT_ITEM ((const momitem_t *) cg->cgen_moditm),
-	   MOMOUT_LITERAL (" (void) {"),
-	   MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE ());
+	   MOMOUT_LITERALV ((const char *)
+			    mom_ident_cstr_of_item (cg->cgen_moditm)),
+	   MOMOUT_LITERAL (" (void) {"), MOMOUT_INDENT_MORE (),
+	   MOMOUT_NEWLINE ());
 #warning missing emission of module initialization
   MOM_OUT (&cg->cgen_outbody,
 	   MOMOUT_INDENT_LESS (),

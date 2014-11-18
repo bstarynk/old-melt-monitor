@@ -1345,16 +1345,16 @@ struct momroutinedescr_st
   unsigned rout_frame_nbval;	/* number of values in its frame */
   unsigned rout_frame_nbnum;	/* number of intptr_t numbers in its frame */
   unsigned rout_frame_nbdbl;	/* number of double numbers in its frame */
-  const char *rout_name;	/* the name FOO; starts with a dot '.' for Jit-ed routine */
+  const char **rout_constantids;
+  const char *rout_ident;	/* the cidentifier of FOO; starts with a dot '.' for Jit-ed routine */
   const char *rout_module;	/* always macro MONIMELT_CURRENT_MODULE or NULL for JIT-ed routine */
   const momval_t rout_jitcode;	/* for a JIT-ed routine, the node of its code */
   mom_routine_sig_t *rout_codefun;
   const char *rout_timestamp;	/* generally __DATE__ "@" __TIME__ */
 };
 
-// start a routine of given name. If name is NULL or empty, use the
-// item's name or identstr...
-void mom_item_start_routine (momitem_t *itm, const char *routname);
+// start a routine.
+void mom_item_start_routine (momitem_t *itm);
 // initialize, ie generate the machine code and some name, for a JIT
 // routine. Return NULL on success or some GC_strduped error message
 // on failure.
@@ -1396,8 +1396,7 @@ mom_item_routinedescr (const momitem_t *itm)
 void mom_item_start_closure_of_routine (momitem_t *itm,
 					const struct momroutinedescr_st *rout,
 					unsigned len);
-void mom_item_start_closure_named (momitem_t *itm, const char *routname,
-				   unsigned len);
+void mom_item_start_closure (momitem_t *itm, unsigned len);
 
 void mom_item_closure_set_nth (momitem_t *itm, int rk, momval_t cval);
 
@@ -1440,7 +1439,7 @@ mom_item_closure_length (const momitem_t *itm)
 }
 
 static inline const char *
-mom_item_closure_routine_name (const momitem_t *itm)
+mom_item_closure_routine_cident (const momitem_t *itm)
 {
   if (!itm || itm->i_typnum != momty_item
       || itm->i_paylkind != mompayk_closure)
@@ -1449,7 +1448,7 @@ mom_item_closure_routine_name (const momitem_t *itm)
   assert (clos && clos->clos_magic == MOM_CLOSURE_MAGIC);
   const struct momroutinedescr_st *rdescr = clos->clos_rout;
   assert (rdescr && rdescr->rout_magic == MOM_ROUTINE_MAGIC);
-  return rdescr->rout_name;
+  return rdescr->rout_ident;
 }
 
 /************* procedure item *********/
@@ -1482,6 +1481,7 @@ struct momprocrout_st
   unsigned prout_len;
   const char *prout_id;
   const char *prout_module;
+  const char **prout_constantids;
   const void *prout_addr;
   const char *prout_argsig;	/* signature, in momtypenc_t */
   const char *prout_timestamp;

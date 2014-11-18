@@ -335,7 +335,7 @@ step_tasklet_mom (momitem_t *tkitm, struct mom_taskletdata_st *itd)
       assert (rdescr && rdescr->rout_magic == MOM_ROUTINE_MAGIC);
       MOM_DEBUG (run,
 		 MOMOUT_LITERAL ("step_tasklet_mom item closure rdescr="),
-		 MOMOUT_LITERALV (rdescr->rout_name), NULL);
+		 MOMOUT_LITERALV (rdescr->rout_ident), NULL);
     }
   else if (curclotyp == momty_node)
     {
@@ -375,7 +375,7 @@ step_tasklet_mom (momitem_t *tkitm, struct mom_taskletdata_st *itd)
 	}
       MOM_DEBUG (run,
 		 MOMOUT_LITERAL ("step_tasklet_mom node closure rdescr="),
-		 MOMOUT_LITERALV (rdescr->rout_name), NULL);
+		 MOMOUT_LITERALV (rdescr->rout_ident), NULL);
       if (curclov.pnode->slen < rdescr->rout_minclosize)
 	{
 	  popframe = true;
@@ -398,7 +398,7 @@ end:
     {
       unsigned oldfratop = fratop;
       MOM_DEBUG (run, MOMOUT_LITERAL ("step_tasklet_mom calling routine "),
-		 MOMOUT_LITERALV (rdescr->rout_name),
+		 MOMOUT_LITERALV (rdescr->rout_ident),
 		 MOMOUT_LITERAL (" at state#"), MOMOUT_DEC_INT (state),
 		 MOMOUT_LITERAL (" oldfratop#"),
 		 MOMOUT_DEC_INT ((int) oldfratop),
@@ -407,7 +407,7 @@ end:
       int newstate =
 	routcod (state, tkitm, curclov, locvals, locints, locdbls);
       MOM_DEBUG (run, MOMOUT_LITERAL ("step_tasklet_mom did routine "),
-		 MOMOUT_LITERALV (rdescr->rout_name),
+		 MOMOUT_LITERALV (rdescr->rout_ident),
 		 MOMOUT_LITERAL (" newstate#"), MOMOUT_DEC_INT (newstate),
 		 MOMOUT_LITERAL (" with taskitem:"),
 		 MOMOUT_ITEM ((const momitem_t *) tkitm),
