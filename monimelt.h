@@ -1002,6 +1002,7 @@ mom_item_cmp (const momitem_t *itm1, const momitem_t *itm2)
 }
 
 // for qsort of items using mom_item_cmp
+int mom_itemptr_cmp (const void *, const void *);
 
 // make a new item  -- low-level
 momitem_t *mom_make_item (void);

@@ -630,7 +630,7 @@ void
 mom_dump_scan_attributes (struct mom_dumper_st *du,
 			  struct mom_itemattributes_st *at)
 {
-  assert (du & du->dmp_magic == DUMPER_MAGIC);
+  assert (du && du->dmp_magic == DUMPER_MAGIC);
   assert (du->dmp_state == dus_scan);
   if (!at)
     return;
@@ -659,7 +659,7 @@ mom_dump_attributes (struct mom_dumper_st *du,
 		     struct mom_itemattributes_st *at)
 {
   momval_t jarrent = MOM_NULLV;
-  assert (du & du->dmp_magic == DUMPER_MAGIC);
+  assert (du && du->dmp_magic == DUMPER_MAGIC);
   assert (du->dmp_state == dus_emit);
   if (!at)
     return MOM_NULLV;
@@ -667,19 +667,22 @@ mom_dump_attributes (struct mom_dumper_st *du,
   unsigned sizat = at->size;
   assert (cntat <= sizat);
   momitem_t *tinyitemarr[MOM_TINY_MAX] = { NULL };
-  momitem_t *itemarr = (cntat < MOM_TINY_MAX)
+  momitem_t **itemarr = (cntat < MOM_TINY_MAX)
     ? tinyitemarr
     : MOM_GC_ALLOC ("itemarr", (cntat + 1) * sizeof (momitem_t *));
   momval_t tinyjentarr[MOM_TINY_MAX] = { MOM_NULLV };
-  momval_t jentarr = (cntat < MOM_TINY_MAX)
-    ? tinyjentarr : MOM_GC_ALLOC ("jentarr", (cntat + 1) * sizeof (momval_t));
+  momval_t *jentarr = ((cntat < MOM_TINY_MAX)
+		       ? tinyjentarr : MOM_GC_ALLOC ("jentarr",
+						     (cntat +
+						      1) *
+						     sizeof (momval_t)));
   unsigned jentcount = 0;
   // first, collect the attributes
   {
     unsigned count = 0;
     for (unsigned ix = 0; ix < sizat; ix++)
       {
-	momitem_t *curitm = at->itattrtab[aix].aten_itm;
+	momitem_t *curitm = at->itattrtab[ix].aten_itm;
 	if (!curitm || curitm == MOM_EMPTY)
 	  continue;
 	assert (count < cntat);
@@ -688,18 +691,18 @@ mom_dump_attributes (struct mom_dumper_st *du,
     assert (count == cntat);
   }
   // now, sort the attributes to normalize the JSON
-  qsort (itemarr, count, sizeof (momitem_t *), mom_itemptr_cmp);
+  qsort (itemarr, cntat, sizeof (momitem_t *), mom_itemptr_cmp);
   // build jentarr
   for (unsigned ix = 0; ix < cntat; ix++)
     {
       momitem_t *curatitm = itemarr[ix];
-      assert (curatitm && curitm->i_typnum == momty_item);
+      assert (curatitm && curatitm->i_typnum == momty_item);
       if (curatitm->i_space == momspa_none)
 	continue;
       momval_t jattr = mom_emit_short_item_json (du, curatitm);
       if (!jattr.ptr)
 	continue;
-      momval_t curval = mom_get_attribute (at, curitm);
+      momval_t curval = mom_get_attribute (at, curatitm);
       if (mom_has_flags (curval, momflag_transient))
 	continue;
       momval_t jval = mom_dump_emit_json (du, curval);
@@ -711,9 +714,9 @@ mom_dump_attributes (struct mom_dumper_st *du,
 	 MOMJSON_END);
       jentarr[jentcount++] = jent;
     }
-  jarrent = (momval_t) mom_make_json_array_count (jentcount, jentattr);
-  if (jentattr != tinyjentarr)
-    MOM_GC_FREE (jentattr);
+  jarrent = (momval_t) mom_make_json_array_count (jentcount, jentarr);
+  if (jentarr != tinyjentarr)
+    MOM_GC_FREE (jentarr);
   return jarrent;
 }
 
