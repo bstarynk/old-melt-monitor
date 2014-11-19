@@ -1598,7 +1598,7 @@ create_tables_for_dump_mom (struct mom_dumper_st *du)
     MOM_FATAPRINTF ("failed to create t_names: %s", errmsg);
   if (sqlite3_exec
       (du->dmp_sqlite,
-       "CREATE TABLE IF NOT EXISTS t_modules (modname VARCHAR(100) PRIMARY KEY ASC NOT NULL UNIQUE)",
+       "CREATE TABLE IF NOT EXISTS t_modules (modname VARCHAR(40) PRIMARY KEY ASC NOT NULL UNIQUE)",
        NULL, NULL, &errmsg))
     MOM_FATAPRINTF ("failed to create t_modules: %s", errmsg);
   // it is important that the entire dump is a single transaction,
