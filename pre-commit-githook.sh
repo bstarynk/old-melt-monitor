@@ -5,3 +5,4 @@
 # invoked before a commit is made.
 pwd
 ./monimelt-dump-state.sh
+git add state-monimelt.sql
