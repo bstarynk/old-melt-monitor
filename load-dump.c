@@ -1736,12 +1736,17 @@ mom_full_dump (const char *reason, const char *dumpdir,
   dmp.dmp_array = arr;
   dmp.dmp_size = siz;
   dmp.dmp_count = 0;
-  const unsigned predefsiz = 16;
+  const unsigned predefsiz = 32;
   dmp.dmp_predefarray =
     MOM_GC_ALLOC ("dumper predefined array",
 		  predefsiz * sizeof (momitem_t *));
   dmp.dmp_predefsize = predefsiz;
   dmp.dmp_predefhpath = predefhpath;
+  const unsigned modulsiz = 16;
+  dmp.dmp_modularr =
+    MOM_GC_ALLOC("dumper module array",
+		 modulsiz * sizeof(momitem_t*));
+  dmp.dmp_modulsiz = modulsiz;
   dmp.dmp_dirpath = MOM_GC_STRDUP ("dumped directory", dumpdir);
   dmp.dmp_sqlpath = sqlite3path;
   dmp.dmp_sqlite = sqlite3dump;

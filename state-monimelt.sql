@@ -326,9 +326,7 @@ INSERT INTO t_items VALUES('_8j516kuv89j_4hc4w6ykmr6','{"attr": [{"attr": "_41u1
  "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_8qmqy249w63_fxdr6rdz48m','{"attr": [{"attr": "_2u8svx94yq4_34icz9j1fyx", "val": {"jtype": "set", "set": ["_41u1utcxyek_22cftxt3xxm",
-     "_7wk9y7e7r0z_575esi8ys5x"]}}], "content": null, "kind": "tfunrout",
- "payload": {"constants": ["_41u1utcxyek_22cftxt3xxm", "_7wk9y7e7r0z_575esi8ys5x"],
-  "tasklet_function": "_8qmqy249w63_fxdr6rdz48m"}}
+     "_7wk9y7e7r0z_575esi8ys5x"]}}], "content": null, "kind": null, "payload": null}
 ');
 INSERT INTO t_items VALUES('_8qpa7j0chkh_k630ujw6jiw','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for switch statements on integers"}],
  "content": null, "kind": null, "payload": null}
