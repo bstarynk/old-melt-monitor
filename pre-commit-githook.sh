@@ -2,5 +2,6 @@
 # file pre-commit-githook.sh
 
 # This hook is invoked by git commit. It takes no parameter, and is
-# invoked after a commit is made.
-./dump-state.sh
+# invoked before a commit is made.
+pwd
+./monimelt-dump-state.sh
