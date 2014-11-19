@@ -240,7 +240,9 @@ You may want to get debugging output, e.g. all debugging with -D _
 or only running & web debugging with -D web,run program option.
 Look for MOM_DEBUG_LIST_OPTIONS macros in monimelt.h
 
+# Installing Git Hooks
 
+Run `./install-git-hooks.sh` to install the git client hooks.
 
 # Contact information
 
