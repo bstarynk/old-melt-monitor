@@ -324,7 +324,7 @@ cmd_do_dump_mom (const char *lin)
   memset (cmdbuf, 0, sizeof (cmdbuf));
   memset (dirbuf, 0, sizeof (dirbuf));
   MOM_DEBUGPRINTF (cmd, "start do_dump lin=%s", lin);
-  if (sscanf (cmdbuf, " %75[a-zA-Z0-9_/+-] %n", dirbuf, &pos)<=0)
+  if (sscanf (lin, " %75[a-zA-Z0-9_/+.-] %n", dirbuf, &pos)<=0)
     memset (dirbuf, 0, sizeof(dirbuf));
   MOM_DEBUGPRINTF (cmd, "do_dump dirbuf=%s", dirbuf);
   if (dirbuf[0]) {
