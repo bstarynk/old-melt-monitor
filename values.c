@@ -494,12 +494,6 @@ update_seqitem_hash_mom (struct momseqitem_st *si)
   si->hash = h;
 }
 
-static int
-itemptr_cmp_mom (const void *l, const void *r)
-{
-  return mom_item_cmp (*(const momitem_t **) l, *(const momitem_t **) r);
-}
-
 
 
 
@@ -561,7 +555,7 @@ mom_make_set_til_nil (momval_t first, ...)
       val = va_arg (args, momval_t);
     }
   va_end (args);
-  qsort (iset->itemseq, siz, sizeof (momitem_t *), itemptr_cmp_mom);
+  qsort (iset->itemseq, siz, sizeof (momitem_t *), mom_itemptr_cmp);
   bool shrink = false;
   for (unsigned ix = 0; siz > 0 && ix + 1 < siz; ix++)
     {
@@ -650,7 +644,7 @@ mom_make_set_variadic (unsigned nbargs, ...)
     }
   va_end (args);
   assert (ix == siz);
-  qsort (iset->itemseq, siz, sizeof (momitem_t *), itemptr_cmp_mom);
+  qsort (iset->itemseq, siz, sizeof (momitem_t *), mom_itemptr_cmp);
   bool shrink = false;
   for (unsigned ix = 0; siz > 0 && ix + 1 < siz; ix++)
     {
@@ -700,7 +694,7 @@ mom_make_set_sized (unsigned siz, ...)
     }
   va_end (args);
   shrink = count < siz;
-  qsort (iset->itemseq, count, sizeof (momitem_t *), itemptr_cmp_mom);
+  qsort (iset->itemseq, count, sizeof (momitem_t *), mom_itemptr_cmp);
   for (unsigned ix = 0; count > 0 && ix + 1 < count; ix++)
     {
       if (iset->itemseq[ix] == iset->itemseq[ix + 1])
@@ -752,7 +746,7 @@ mom_make_set_from_array (unsigned siz, const momitem_t **itemarr)
   if (count == 0)
     return &empty_set_mom;
   shrink = count < siz;
-  qsort (iset->itemseq, count, sizeof (momitem_t *), itemptr_cmp_mom);
+  qsort (iset->itemseq, count, sizeof (momitem_t *), mom_itemptr_cmp);
   for (unsigned ix = 0; count > 0 && ix + 1 < count; ix++)
     {
       if (iset->itemseq[ix] == iset->itemseq[ix + 1])

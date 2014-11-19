@@ -1001,6 +1001,8 @@ mom_item_cmp (const momitem_t *itm1, const momitem_t *itm2)
   return cmp;
 }
 
+// for qsort of items using mom_item_cmp
+
 // make a new item  -- low-level
 momitem_t *mom_make_item (void);
 
@@ -1043,6 +1045,7 @@ struct mom_itemattributes_st *mom_reserve_attribute (struct
 
 const momset_t *mom_set_attributes (const struct mom_itemattributes_st
 				    *attrs);
+
 
 static inline momval_t
 mom_get_attribute (const struct mom_itemattributes_st *const attrs,
@@ -2973,6 +2976,13 @@ void mom_initial_load (const char *ldir);
 void mom_full_dump (const char *reason, const char *dumpdir,
 		    struct mom_dumpoutcome_st *outd);
 
+/// dump attributes
+momval_t mom_dump_attributes (struct mom_dumper_st *du,
+			      struct mom_itemattributes_st *at);
+
+//// scan attributes
+void mom_dump_scan_attributes (struct mom_dumper_st *du,
+			       struct mom_itemattributes_st *at);
 // can be called from scanning routines
 void mom_dump_scan_need_module (struct mom_dumper_st *du,
 				const char *modname);

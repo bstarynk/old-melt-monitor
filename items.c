@@ -955,6 +955,13 @@ mom_alpha_ordered_tuple_of_named_prefixed_items (const char *prefix,
   return tup;
 }
 
+/// for qsort of items
+int
+mom_itemptr_cmp (const void *l, const void *r)
+{
+  return mom_item_cmp (*(const momitem_t **) l, *(const momitem_t **) r);
+}
+
 ////////////////////////////////////////////////////////////////
 const momitem_t *
 mom_get_item_bool (bool v)

@@ -348,22 +348,7 @@ mom_dump_scan_inside_item (struct mom_dumper_st *dmp, momitem_t *itm)
   if (itm->i_content.ptr)
     mom_dump_scan_value (dmp, itm->i_content);
   if (itm->i_attrs)
-    {
-      unsigned atsiz = itm->i_attrs->size;
-      struct mom_attrentry_st *atent = itm->i_attrs->itattrtab;
-      for (unsigned aix = 0; aix < atsiz; aix++)
-	{
-	  if (atent[aix].aten_itm && atent[aix].aten_itm != MOM_EMPTY
-	      && atent[aix].aten_val.ptr
-	      && atent[aix].aten_val.ptr != MOM_EMPTY
-	      && !mom_has_flags (atent[aix].aten_val, momflag_transient)
-	      && atent[aix].aten_itm->i_space != momspa_none)
-	    {
-	      mom_dump_add_scanned_item (dmp, atent[aix].aten_itm);
-	      mom_dump_scan_value (dmp, atent[aix].aten_val);
-	    }
-	}
-    }
+    mom_dump_scan_attributes (dmp, itm->i_attrs);
   if (itm->i_payload != NULL)
     {
       assert (itm->i_paylkind > 0 && itm->i_paylkind < mompayk__last);
@@ -640,6 +625,98 @@ raw_dump_emit_json_mom (struct mom_dumper_st *dmp, const momval_t val)
   return jsval;
 }
 
+
+void
+mom_dump_scan_attributes (struct mom_dumper_st *du,
+			  struct mom_itemattributes_st *at)
+{
+  assert (du & du->dmp_magic == DUMPER_MAGIC);
+  assert (du->dmp_state == dus_scan);
+  if (!at)
+    return;
+  unsigned asiz = at->size;
+  for (unsigned aix = 0; aix < asiz; aix++)
+    {
+      momitem_t *curitm = at->itattrtab[aix].aten_itm;
+      if (!curitm || curitm == MOM_EMPTY)
+	continue;
+      assert (curitm->i_typnum == momty_item
+	      && curitm->i_magic == MOM_ITEM_MAGIC);
+      if (curitm->i_space == momspa_none)
+	continue;
+      momval_t curval = at->itattrtab[aix].aten_val;
+      if (!curval.ptr || curval.ptr == MOM_EMPTY)
+	continue;
+      if (mom_has_flags (curval, momflag_transient))
+	continue;
+      mom_dump_add_scanned_item (du, curitm);
+      mom_dump_scan_value (du, curval);
+    }
+}
+
+momval_t
+mom_dump_attributes (struct mom_dumper_st *du,
+		     struct mom_itemattributes_st *at)
+{
+  momval_t jarrent = MOM_NULLV;
+  assert (du & du->dmp_magic == DUMPER_MAGIC);
+  assert (du->dmp_state == dus_emit);
+  if (!at)
+    return MOM_NULLV;
+  unsigned cntat = at->nbattr;
+  unsigned sizat = at->size;
+  assert (cntat <= sizat);
+  momitem_t *tinyitemarr[MOM_TINY_MAX] = { NULL };
+  momitem_t *itemarr = (cntat < MOM_TINY_MAX)
+    ? tinyitemarr
+    : MOM_GC_ALLOC ("itemarr", (cntat + 1) * sizeof (momitem_t *));
+  momval_t tinyjentarr[MOM_TINY_MAX] = { MOM_NULLV };
+  momval_t jentarr = (cntat < MOM_TINY_MAX)
+    ? tinyjentarr : MOM_GC_ALLOC ("jentarr", (cntat + 1) * sizeof (momval_t));
+  unsigned jentcount = 0;
+  // first, collect the attributes
+  {
+    unsigned count = 0;
+    for (unsigned ix = 0; ix < sizat; ix++)
+      {
+	momitem_t *curitm = at->itattrtab[aix].aten_itm;
+	if (!curitm || curitm == MOM_EMPTY)
+	  continue;
+	assert (count < cntat);
+	itemarr[count++] = curitm;
+      }
+    assert (count == cntat);
+  }
+  // now, sort the attributes to normalize the JSON
+  qsort (itemarr, count, sizeof (momitem_t *), mom_itemptr_cmp);
+  // build jentarr
+  for (unsigned ix = 0; ix < cntat; ix++)
+    {
+      momitem_t *curatitm = itemarr[ix];
+      assert (curatitm && curitm->i_typnum == momty_item);
+      if (curatitm->i_space == momspa_none)
+	continue;
+      momval_t jattr = mom_emit_short_item_json (du, curatitm);
+      if (!jattr.ptr)
+	continue;
+      momval_t curval = mom_get_attribute (at, curitm);
+      if (mom_has_flags (curval, momflag_transient))
+	continue;
+      momval_t jval = mom_dump_emit_json (du, curval);
+      if (!jval.ptr)
+	continue;
+      momval_t jent = (momval_t) mom_make_json_object
+	(MOMJSOB_ENTRY ((momval_t) mom_named__attr, (momval_t) jattr),
+	 MOMJSOB_ENTRY ((momval_t) mom_named__val, (momval_t) jval),
+	 MOMJSON_END);
+      jentarr[jentcount++] = jent;
+    }
+  jarrent = (momval_t) mom_make_json_array_count (jentcount, jentattr);
+  if (jentattr != tinyjentarr)
+    MOM_GC_FREE (jentattr);
+  return jarrent;
+}
+
 momval_t
 mom_dump_data_inside_item (struct mom_dumper_st *dmp, momitem_t *itm)
 {
@@ -677,41 +754,8 @@ mom_dump_data_inside_item (struct mom_dumper_st *dmp, momitem_t *itm)
     }
   if (itm->i_content.ptr)
     jcontent = mom_dump_emit_json (dmp, itm->i_content);
-  unsigned nbattrs = itm->i_attrs ? (itm->i_attrs->nbattr) : 0;
-  unsigned cntattr = 0;
-  momval_t tinyattr[MOM_TINY_MAX] = { };
-  memset (tinyattr, 0, sizeof (tinyattr));
-  momval_t *arrattr = (nbattrs < MOM_TINY_MAX)
-    ? tinyattr : MOM_GC_ALLOC ("dumped attributes",
-			       sizeof (momval_t) * (nbattrs + 1));
-  for (unsigned aix = 0; aix < nbattrs; aix++)
-    {
-      assert (cntattr < nbattrs);
-      momitem_t *curatitm = itm->i_attrs->itattrtab[aix].aten_itm;
-      if (!curatitm || curatitm == MOM_EMPTY)
-	continue;
-      if (curatitm->i_space == momspa_none)
-	continue;
-      momval_t curval = itm->i_attrs->itattrtab[aix].aten_val;
-      if (!curval.ptr || curval.ptr == MOM_EMPTY)
-	continue;
-      if (mom_has_flags (curval, momflag_transient))
-	continue;
-      momval_t jattr = mom_emit_short_item_json (dmp, curatitm);
-      if (!jattr.ptr)
-	continue;
-      momval_t jval = mom_dump_emit_json (dmp, curval);
-      if (!jval.ptr)
-	continue;
-      momval_t jent = (momval_t) mom_make_json_object
-	(MOMJSOB_ENTRY ((momval_t) mom_named__attr, (momval_t) jattr),
-	 MOMJSOB_ENTRY ((momval_t) mom_named__val, (momval_t) jval),
-	 MOMJSON_END);
-      arrattr[cntattr++] = jent;
-    }
-  jarrent = (momval_t) mom_make_json_array_count (cntattr, arrattr);
-  if (arrattr != tinyattr)
-    MOM_GC_FREE (arrattr);
+  if (itm->i_attrs)
+    jarrent = mom_dump_attributes (dmp, itm->i_attrs);
   jdata = (momval_t) mom_make_json_object
     (MOMJSOB_ENTRY ((momval_t) mom_named__attr, jarrent),
      MOMJSOB_ENTRY ((momval_t) mom_named__payload, jpayl),
@@ -1744,8 +1788,7 @@ mom_full_dump (const char *reason, const char *dumpdir,
   dmp.dmp_predefhpath = predefhpath;
   const unsigned modulsiz = 16;
   dmp.dmp_modularr =
-    MOM_GC_ALLOC("dumper module array",
-		 modulsiz * sizeof(momitem_t*));
+    MOM_GC_ALLOC ("dumper module array", modulsiz * sizeof (momitem_t *));
   dmp.dmp_modulsiz = modulsiz;
   dmp.dmp_dirpath = MOM_GC_STRDUP ("dumped directory", dumpdir);
   dmp.dmp_sqlpath = sqlite3path;
@@ -2198,7 +2241,6 @@ dump_raw_add_module_mom (struct mom_dumper_st *du, momitem_t *moditm)
 void
 mom_dump_scan_need_module (struct mom_dumper_st *du, const char *modname)
 {
-#warning this function should keep the modulename in du... and the t_modules should be dumped later
   assert (du && du->dmp_magic == DUMPER_MAGIC);
   if (MOM_UNLIKELY (du->dmp_state != dus_scan))
     MOM_FATAPRINTF ("invalid dump state #%d", (int) du->dmp_state);

@@ -626,24 +626,7 @@ payl_assoc_dump_scan_mom (struct mom_dumper_st *du, momitem_t *itm)
     return;
   assert (itm->i_payload != NULL);
   struct mom_itemattributes_st *assoc = itm->i_payload;
-  unsigned asiz = assoc->size;
-  for (unsigned aix = 0; aix < asiz; aix++)
-    {
-      momitem_t *curitm = assoc->itattrtab[aix].aten_itm;
-      if (!curitm || curitm == MOM_EMPTY)
-	continue;
-      assert (curitm->i_typnum == momty_item
-	      && curitm->i_magic == MOM_ITEM_MAGIC);
-      if (curitm->i_space == momspa_none)
-	continue;
-      momval_t curval = assoc->itattrtab[aix].aten_val;
-      if (!curval.ptr || curval.ptr == MOM_EMPTY)
-	continue;
-      if (mom_has_flags (curval, momflag_transient))
-	continue;
-      mom_dump_add_scanned_item (du, curitm);
-      mom_dump_scan_value (du, curval);
-    }
+  mom_dump_scan_attributes (du, assoc);
 }
 
 static momval_t
@@ -656,41 +639,7 @@ payl_assoc_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
     return MOM_NULLV;
   assert (itm->i_payload != NULL);
   struct mom_itemattributes_st *assoc = itm->i_payload;
-  unsigned asiz = assoc->size;
-  momval_t tinyarr[MOM_TINY_MAX] = { MOM_NULLV };
-  momval_t *arrj = (asiz < MOM_TINY_MAX)
-    ? tinyarr : MOM_GC_ALLOC ("assoc dump arrj", asiz * sizeof (momval_t));
-  unsigned cnt = 0;
-  for (unsigned aix = 0; aix < asiz; aix++)
-    {
-      assert (cnt < asiz);
-      momitem_t *curitm = assoc->itattrtab[aix].aten_itm;
-      if (!curitm || curitm == MOM_EMPTY)
-	continue;
-      assert (curitm->i_typnum == momty_item
-	      && curitm->i_magic == MOM_ITEM_MAGIC);
-      if (curitm->i_space == momspa_none)
-	continue;
-      momval_t curval = assoc->itattrtab[aix].aten_val;
-      if (!curval.ptr || curval.ptr == MOM_EMPTY)
-	continue;
-      if (mom_has_flags (curval, momflag_transient))
-	continue;
-      momval_t jattr = mom_emit_short_item_json (du, curitm);
-      if (!jattr.ptr)
-	continue;
-      momval_t jval = mom_dump_emit_json (du, curval);
-      if (!jval.ptr)
-	continue;
-      momval_t jent = (momval_t) mom_make_json_object
-	(MOMJSOB_ENTRY ((momval_t) mom_named__attr, (momval_t) jattr),
-	 MOMJSOB_ENTRY ((momval_t) mom_named__val, (momval_t) jval),
-	 MOMJSON_END);
-      arrj[cnt++] = jent;
-    }
-  jres = (momval_t) mom_make_json_array_count (cnt, arrj);
-  if (arrj != tinyarr)
-    MOM_GC_FREE (arrj);
+  jres = mom_dump_attributes (du, assoc);
   return jres;
 }
 
