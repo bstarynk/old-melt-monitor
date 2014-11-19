@@ -797,7 +797,8 @@ bind_blocks_cgen (struct c_generator_mom_st *cg, momval_t blocksv)
 }
 
 static unsigned
-bind_functionvars_cgen (struct c_generator_mom_st *cg, momval_t varsv)
+bind_functionvars_cgen (struct c_generator_mom_st *cg, unsigned offset,
+			momval_t varsv)
 {
   unsigned nbvars = 0;
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
@@ -821,7 +822,8 @@ bind_functionvars_cgen (struct c_generator_mom_st *cg, momval_t varsv)
 	      mom_item_assoc_put
 		(cg->cgen_locassocitm, varitm,
 		 (momval_t) mom_make_node_sized (mom_named__values, 2,
-						 mom_make_integer (valcnt),
+						 mom_make_integer (offset +
+								   valcnt),
 						 (momval_t) varitm));
 
 	    }
@@ -1231,6 +1233,8 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
   unsigned nbconstants = 0;
   unsigned nbblocks = 0;
   unsigned nbclosedvalues = 0;
+  unsigned nbargs = 0;
+  unsigned nblocals = 0;
   momval_t funconstantsv = MOM_NULLV;
   momval_t funblocksv = MOM_NULLV;
   momval_t funargsv = MOM_NULLV;
@@ -1271,9 +1275,12 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
   // bind the closed values
   nbclosedvalues = bind_closed_values_cgen (cg, funclosedvaluesv);
   // bind the arguments
-  bind_functionvars_cgen (cg, funargsv);
+  nbargs = bind_functionvars_cgen (cg, 0, funargsv);
   // bind the locals
-  bind_functionvars_cgen (cg, funlocalsv);
+  nblocals = bind_functionvars_cgen (cg, nbargs, funlocalsv);
+  unsigned nbnumbers = mom_item_vector_count (cg->cgen_vecnumitm);
+  unsigned nbvalues = mom_item_vector_count (cg->cgen_vecvalitm);
+  unsigned nbdoubles = mom_item_vector_count (cg->cgen_vecdblitm);
   // bind the blocks
   nbblocks = bind_blocks_cgen (cg, funblocksv);
   momitem_t *startitm = mom_value_to_item (funstartv);
@@ -1309,20 +1316,54 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	   MOMOUT_LITERAL
 	   ("\t momitem_t* restrict momtasklet, const momval_t momclosure,"),
 	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL
-	   ("\t momval_t* restrict momvals, intptr_t* restrict momnums, double* restrict momdbls)"),
+	   MOMOUT_LITERALV ((const char *)
+			    ((nbvalues > 0)
+			     ? "\t momval_t* restrict momvals,"
+			     : "\t momval_t* restrict momvals_ MOM_UNUSED,")),
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERALV ((const char *)
+			    ((nbnumbers > 0)
+			     ? "\t intptr_t* restrict momnums,"
+			     :
+			     "\t intptr_t* restrict momnums_ MOM_UNUSED),")),
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERALV ((const char *) ((nbdoubles > 0) ?
+					    "\t double* restrict momdbls," :
+					    "\t double* restrict momdbls_ MOM_UNUSED),")),
 	   MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL ("{ // start of tasklet function "),
 	   MOMOUT_ITEM ((const momitem_t *) curoutitm), MOMOUT_INDENT_MORE (),
 	   MOMOUT_NEWLINE (), NULL);
-  MOM_OUT (&cg->cgen_outbody,
+  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("// declared "),
+	   MOMOUT_DEC_INT ((int) nblocals), MOMOUT_LITERAL (" locals, "),
+	   MOMOUT_DEC_INT ((int) nbargs), MOMOUT_LITERAL (" arguments."),
+	   MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL ("if (MOM_UNLIKELY(momstate==0)) return "),
 	   MOMOUT_DEC_INT (startix), MOMOUT_LITERAL (";"), MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL ("assert (mom_is_item (momclosure));"),
 	   MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL
 	   ("momval_t* momclovals = mom_item_closure_values (momclosure.pitem);"),
-	   MOMOUT_NEWLINE ());
+	   MOMOUT_NEWLINE (), MOMOUT_LITERAL ("assert (momclovals != NULL);"),
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL
+	   ("assert (mom_item_payload_kind(momtasklet)== mompayk_tasklet);"),
+	   MOMOUT_NEWLINE (), NULL);
+  if (nbvalues > 0)
+    MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_LITERAL ("assert (momvals != NULL); // "),
+	     MOMOUT_DEC_INT ((int) nbvalues),
+	     MOMOUT_LITERAL (" values."), MOMOUT_NEWLINE (), NULL);
+  if (nbnumbers > 0)
+    MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_LITERAL ("assert (momnums != NULL); //"),
+	     MOMOUT_DEC_INT ((int) nbnumbers),
+	     MOMOUT_LITERAL (" integer numbers."), MOMOUT_NEWLINE (), NULL);
+  if (nbdoubles > 0)
+    MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_LITERAL ("assert (momdbls != NULL); //"),
+	     MOMOUT_DEC_INT ((int) nbdoubles),
+	     MOMOUT_LITERAL (" doubles."), MOMOUT_NEWLINE (), NULL);
   MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("switch (momstate) {"),
 	   MOMOUT_NEWLINE ());
   for (unsigned six = 1; six <= nbblocks; six++)
@@ -1436,7 +1477,7 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 			   CGEN_FUN_CONSTANTIDS_PREFIX),
 	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
 	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL (".tfun_constantitems = "
+	   MOMOUT_LITERAL (".tfun_constantitems = (momitem_t**) "
 			   CGEN_FUN_CONSTANTITEMS_PREFIX),
 	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
 	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),

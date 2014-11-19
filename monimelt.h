@@ -106,8 +106,12 @@ extern const char monimelt_lastgitcommit[];
 // mark unlikely conditions to help optimization
 #ifdef __GNUC__
 #define MOM_UNLIKELY(P) __builtin_expect((P),0)
+#define MOM_LIKELY(P) !__builtin_expect(!(P),0)
+#define MOM_UNUSED __attribute__((unused))
 #else
 #define MOM_UNLIKELY(P) (P)
+#define MOM_LIKELY(P) (P)
+#define MOM_UNUSED
 #endif
 
 static inline pid_t

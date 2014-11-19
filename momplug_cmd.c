@@ -1274,15 +1274,71 @@ cmd_do_top_mom (const char *lin)
 		   MOMOUT_LITERALV (mom_string_cstr (commentv)), NULL);
 	    }
 	  if (mom_is_item (curval))
-	    MOM_OUT (mom_stdout, MOMOUT_SPACE (48),
-		     MOMOUT_LITERALV ((const char
-				       *) ((curval.pitem->i_space ==
-					    momspa_predefined) ?
-					   " /predef-id=" : " /id=")),
-		     MOMOUT_LITERALV (mom_ident_cstr_of_item (curval.pitem)),
-		     MOMOUT_SPACE (32),
-		     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
-					     curval.pitem));
+	    {
+	      MOM_OUT (mom_stdout, MOMOUT_SPACE (48),
+		       MOMOUT_LITERALV ((const char
+					 *) ((curval.pitem->i_space ==
+					      momspa_predefined) ?
+					     " /predef-id=" : " /id=")),
+		       MOMOUT_LITERALV (mom_ident_cstr_of_item
+					(curval.pitem)), MOMOUT_SPACE (32),
+		       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+					       curval.pitem));
+	      char *kinds = NULL;
+	      unsigned k = mom_item_payload_kind (curval.pitem);
+	      switch (k)
+		{
+		case 0:
+		  kinds = NULL;
+		  break;
+		case mompayk_queue:
+		  kinds = "queue";
+		  break;
+		case mompayk_tfunrout:
+		  kinds = "tfunrout";
+		  break;
+		case mompayk_closure:
+		  kinds = "closure";
+		  break;
+		case mompayk_procedure:
+		  kinds = "procedure";
+		  break;
+		case mompayk_tasklet:
+		  kinds = "tasklet";
+		  break;
+		case mompayk_buffer:
+		  kinds = "buffer";
+		  break;
+		case mompayk_vector:
+		  kinds = "vector";
+		  break;
+		case mompayk_hset:
+		  kinds = "hset";
+		  break;
+		case mompayk_assoc:
+		  kinds = "assoc";
+		  break;
+		case mompayk_process:
+		  kinds = "process";
+		  break;
+		case mompayk_webexchange:
+		  kinds = "webexchange";
+		  break;
+		case mompayk_jsonrpcexchange:
+		  kinds = "jsonrpcexchange";
+		  break;
+		default:
+		  {
+		    char kindbuf[32];
+		    snprintf (kindbuf, sizeof (kindbuf), "kind#%d", k);
+		    kinds = MOM_GC_STRDUP (kindbuf);
+		  };
+		  break;
+		}
+	      if (kinds)
+		MOM_OUT (mom_stdout, MOMOUT_SPACE (48),
+			 MOMOUT_LITERALV ((const char*)kinds));
+	    }
 	  MOM_OUT (mom_stdout, MOMOUT_NEWLINE ());
 	}
       add_history (",top");
