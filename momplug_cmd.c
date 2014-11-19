@@ -33,7 +33,7 @@ const char mom_plugin_GPL_compatible[] = "GPLv3+";
 #define COMMANDS(CMD)                                   \
   CMD(clear,"clear the stack",non,NULL)                 \
   CMD(debugf,"[flags]; set debugflags",non,NULL)        \
-  CMD(dump,"dump state & continue",non,NULL)            \
+  CMD(dump,"[dir]; dump state & continue",non,NULL)     \
   CMD(dup,"duplicate top",num,"%")                      \
   CMD(echo,"echo the line",non,NULL)                    \
   CMD(exit,"dump & exit",non,NULL)                      \
@@ -318,19 +318,27 @@ cmd_completion_entry_mom (const char *text, int state)
 static void
 cmd_do_dump_mom (const char *lin)
 {
-  char cmdbuf[80];
+  char cmdbuf[120];
+  char dirbuf[90];
+  int pos= -1;
   memset (cmdbuf, 0, sizeof (cmdbuf));
+  memset (dirbuf, 0, sizeof (dirbuf));
   MOM_DEBUGPRINTF (cmd, "start do_dump lin=%s", lin);
-  if (lin[0])
-    snprintf (cmdbuf, sizeof (cmdbuf), "command dump %s", lin);
-  else
+  if (sscanf (cmdbuf, " %75[a-zA-Z0-9_/+-] %n", dirbuf, &pos)<=0)
+    memset (dirbuf, 0, sizeof(dirbuf));
+  MOM_DEBUGPRINTF (cmd, "do_dump dirbuf=%s", dirbuf);
+  if (dirbuf[0]) {
+    snprintf (cmdbuf, sizeof (cmdbuf), "command dump into %s", dirbuf);
+    printf ("\n" ANSI_BOLD "**dumping per command into %s**" ANSI_NORMAL "\n", dirbuf);
+    mom_full_dump (cmdbuf, dirbuf, NULL);
+    snprintf (cmdbuf, sizeof(cmdbuf), ",.dump %s", dirbuf);
+  }
+  else {
+    printf ("\n" ANSI_BOLD "**dumping per command**" ANSI_NORMAL "\n");
     strcpy (cmdbuf, "command dump");
-  printf ("\n" ANSI_BOLD "**dumping per command**" ANSI_NORMAL "\n");
-  mom_full_dump (cmdbuf, ".", NULL);
-  if (lin[0])
-    snprintf (cmdbuf, sizeof (cmdbuf), ",dump %s", lin);
-  else
+    mom_full_dump (cmdbuf, ".", NULL);
     strcpy (cmdbuf, ",dump");
+  }
   add_history (cmdbuf);
 }
 
