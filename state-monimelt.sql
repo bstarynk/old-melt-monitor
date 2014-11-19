@@ -24,7 +24,8 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(40) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','exit dump');
+INSERT INTO t_params VALUES('dump_reason','command dump');
+INSERT INTO t_modules VALUES('_4q1v3ax0ffi_hv7fwpsv6uf');
 INSERT INTO t_items VALUES('_02av6173qvf_pehzhe755j2','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for calls at end of  blocks"}],
  "content": null, "kind": null, "payload": null}
 ');
@@ -235,7 +236,7 @@ INSERT INTO t_items VALUES('_682ush7cppa_s7vzfd2rsxp','{"attr": [{"attr": "_2u8s
     "jtype": "item_ref", "space": ".root"}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "procedure 1 inside our test_module."}, {"attr": "_4v74chqs1eh_chqd9cqw85t",
    "val": {"jtype": "set", "set": ["_5xa08a3ittw_imt86y9q33c"]}}], "content": null,
- "kind": null, "payload": null}
+ "kind": "procedure", "payload": [null]}
 ');
 INSERT INTO t_items VALUES('_6djzuwz5pav_cri386ywjhj','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "notably for error message in JSONRPC"}],
  "content": null, "kind": null, "payload": null}
@@ -336,7 +337,8 @@ INSERT INTO t_items VALUES('_8qmqy249w63_fxdr6rdz48m','{"attr": [{"attr": "_2u8s
     "_2ky10qvckv2_kqa0pr8z29z", "jtype": "item_ref", "space": ".root"}}, {"attr":
    "_41u1utcxyek_22cftxt3xxm", "val": "function 1 inside our test_module."},
   {"attr": "_7yxp9xhih4z_9uzrqhkamxa", "val": {"jtype": "set", "set": ["_2ky10qvckv2_kqa0pr8z29z"]}}],
- "content": null, "kind": null, "payload": null}
+ "content": null, "kind": "tfunrout", "payload": {"constants": [null, null],
+  "tasklet_function": "_8qmqy249w63_fxdr6rdz48m"}}
 ');
 INSERT INTO t_items VALUES('_8qpa7j0chkh_k630ujw6jiw','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for switch statements on integers"}],
  "content": null, "kind": null, "payload": null}
