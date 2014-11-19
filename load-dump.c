@@ -1700,7 +1700,7 @@ insert_modules_sql_mom (struct mom_dumper_st *du)
       if (err)
 	MOM_FATAPRINTF ("failed to bind dumped module %s: %s, err#%d",
 			modidstr, sqlite3_errmsg (du->dmp_sqlite), err);
-      err = sqlite3_step (du->dmp_sqlstmt_item_insert);
+      err = sqlite3_step (du->dmp_sqlstmt_module_insert);
       if (err != SQLITE_DONE)
 	MOM_WARNPRINTF ("failed to insert dumped module %s: %s, err#%d",
 			modidstr, sqlite3_errmsg (du->dmp_sqlite), err);

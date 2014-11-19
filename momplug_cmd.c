@@ -1286,21 +1286,12 @@ cmd_do_top_mom (const char *lin)
 	    }
 	  if (mom_is_item (curval))
 	    {
-	      MOM_OUT (mom_stdout, MOMOUT_SPACE (48),
-		       MOMOUT_LITERALV ((const char
-					 *) ((curval.pitem->i_space ==
-					      momspa_predefined) ?
-					     " /predef-id=" : " /id=")),
-		       MOMOUT_LITERALV (mom_ident_cstr_of_item
-					(curval.pitem)), MOMOUT_SPACE (32),
-		       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
-					       curval.pitem));
 	      const char *kinds = NULL;
 	      unsigned k = mom_item_payload_kind (curval.pitem);
 	      switch (k)
 		{
 		case mompayk_none:
-		  kinds = "*plain*";
+		  kinds = "*no-payload*";
 		  break;
 		case mompayk_queue:
 		  kinds = "queue";
@@ -1346,9 +1337,17 @@ cmd_do_top_mom (const char *lin)
 		  };
 		  break;
 		}
-	      if (kinds)
-		MOM_OUT (mom_stdout, MOMOUT_SPACE (48),
-			 MOMOUT_LITERALV ((const char *) kinds));
+	      MOM_OUT (mom_stdout, MOMOUT_SPACE (48),
+		       MOMOUT_LITERALV ((const char
+					 *) ((curval.pitem->i_space ==
+					      momspa_predefined) ?
+					     " /predef-id=" : " /id=")),
+		       MOMOUT_LITERALV (mom_ident_cstr_of_item
+					(curval.pitem)), MOMOUT_SPACE (32),
+		       MOMOUT_LITERALV ((const char *) kinds),
+		       MOMOUT_SPACE (32),
+		       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+					       curval.pitem));
 	    }
 	  MOM_OUT (mom_stdout, MOMOUT_NEWLINE ());
 	}
