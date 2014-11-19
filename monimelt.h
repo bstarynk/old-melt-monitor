@@ -1502,6 +1502,7 @@ union momrout_un
 #define MOM_PROCROUTDESCR_PREFIX "momprocdescr_"
 #define MOM_PROCROUTFUN_PREFIX "momprocfun_"
 #define MOM_PROCROUT_MAGIC 407208731	/* procrout magic 0x1845831b */
+/// payload data of procedures
 struct momprocrout_st
 {
   const unsigned prout_magic;	/* always MOM_PROCROUT_MAGIC */

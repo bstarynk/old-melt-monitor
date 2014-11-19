@@ -1309,7 +1309,9 @@ internal_initialize_tfun_mom (momitem_t *moditm, unsigned rix,
 		       MOMOUT_LITERAL (" creating missing constant item#"),
 		       MOMOUT_DEC_INT ((int) cix),
 		       MOMOUT_LITERAL (" of id "),
-		       MOMOUT_LITERALV (curcid), NULL);
+		       MOMOUT_LITERALV (curcid),
+		       MOMOUT_LITERAL (" for tfun "),
+		       MOMOUT_ITEM ((const momitem_t *) funitm), NULL);
 	  curcstitm = mom_make_item_of_identcstr (curcid);
 	  if (MOM_UNLIKELY (!curcstitm))
 	    MOM_WARNING (MOMOUT_LITERAL ("In initialized module:"),
@@ -1317,7 +1319,9 @@ internal_initialize_tfun_mom (momitem_t *moditm, unsigned rix,
 			 MOMOUT_LITERAL (" failed to create constant item#"),
 			 MOMOUT_DEC_INT ((int) cix),
 			 MOMOUT_LITERAL (" of id "),
-			 MOMOUT_LITERALV (curcid), NULL);
+			 MOMOUT_LITERALV (curcid),
+			 MOMOUT_LITERAL (" for tfun "),
+			 MOMOUT_ITEM ((const momitem_t *) funitm), NULL);
 	  constitmarr[cix] = curcstitm;
 	}
     }
@@ -1357,17 +1361,62 @@ internal_initialize_proc_mom (momitem_t *moditm, unsigned rix,
 		   MOMOUT_ITEM ((const momitem_t *) moditm),
 		   MOMOUT_LITERAL
 		   (" creating missing procedure item of id: "),
-		   MOMOUT_LITERALV ((const char *) dproc->prout_id));
+		   MOMOUT_LITERALV ((const char *) dproc->prout_id), NULL);
       procitm = mom_make_item_of_identcstr (dproc->prout_id);
       if (MOM_UNLIKELY (!procitm))
 	MOM_FATAL (MOMOUT_LITERAL ("When initializing module:"),
 		   MOMOUT_ITEM ((const momitem_t *) moditm),
 		   MOMOUT_LITERAL
 		   (" failed to create missing procedure item of id: "),
-		   MOMOUT_LITERALV ((const char *) dproc->prout_id));
+		   MOMOUT_LITERALV ((const char *) dproc->prout_id),
+		   MOMOUT_LITERAL (" in procedure "),
+		   MOMOUT_ITEM ((const momitem_t *) procitm), NULL);
     }
   mom_lock_item (procitm);
-#warning incomplete internal_initialize_proc_mom
+  if (procitm->i_payload)
+    mom_item_clear_payload (procitm);
+  unsigned nbconst = dproc->prout_len;
+  const char *const *constidarr = dproc->prout_constantids;
+  momitem_t **constitmarr = (momitem_t **) dproc->prout_constantitems;
+  for (unsigned cix = 0; cix < nbconst; cix++)
+    {
+      const char *curcid = constidarr[cix];
+      momitem_t *curcstitm = mom_get_item_of_identcstr (curcid);
+      MOM_DEBUG (run, MOMOUT_LITERAL ("initialize_proc constant item#"),
+		 MOMOUT_DEC_INT ((int) cix),
+		 MOMOUT_LITERAL (" of id "),
+		 MOMOUT_LITERALV (curcid),
+		 MOMOUT_LITERAL (" got "),
+		 MOMOUT_ITEM ((const momitem_t *) curcstitm),
+		 MOMOUT_LITERAL (" in procedure "),
+		 MOMOUT_ITEM ((const momitem_t *) procitm), NULL);
+      if (curcstitm)
+	constitmarr[cix] = curcstitm;
+      else
+	{
+	  MOM_WARNING (MOMOUT_LITERAL ("In initialized module:"),
+		       MOMOUT_ITEM ((const momitem_t *) moditm),
+		       MOMOUT_LITERAL (" creating missing constant item#"),
+		       MOMOUT_DEC_INT ((int) cix),
+		       MOMOUT_LITERAL (" of id "),
+		       MOMOUT_LITERALV (curcid),
+		       MOMOUT_LITERAL (" in procedure "),
+		       MOMOUT_ITEM ((const momitem_t *) procitm), NULL);
+	  curcstitm = mom_make_item_of_identcstr (curcid);
+	  if (MOM_UNLIKELY (!curcstitm))
+	    MOM_WARNING (MOMOUT_LITERAL ("In initialized module:"),
+			 MOMOUT_ITEM ((const momitem_t *) moditm),
+			 MOMOUT_LITERAL (" failed to create constant item#"),
+			 MOMOUT_DEC_INT ((int) cix),
+			 MOMOUT_LITERAL (" of id "),
+			 MOMOUT_LITERALV (curcid),
+			 MOMOUT_LITERAL (" in procedure "),
+			 MOMOUT_ITEM ((const momitem_t *) procitm), NULL);
+	  constitmarr[cix] = curcstitm;
+	}
+    }
+  procitm->i_payload = (void *) dproc;
+  procitm->i_paylkind = mompayk_procedure;
   mom_unlock_item (procitm);
 }
 
@@ -1379,7 +1428,9 @@ mom_module_internal_initialize (const char *modid,
 {
   momitem_t *moditm = mom_get_item_of_identcstr (modid);
   MOM_DEBUG (run, MOMOUT_LITERAL ("module_internal_initialize moditm:"),
-	     MOMOUT_ITEM ((const momitem_t *) moditm));
+	     MOMOUT_ITEM ((const momitem_t *) moditm),
+	     MOMOUT_LITERAL (" source md5:"),
+	     MOMOUT_LITERALV ((const char *) modmd5), NULL);
   if (!moditm)
     {
       MOM_WARNPRINTF ("no module item to initialize from modid=%s", modid);
