@@ -1381,7 +1381,7 @@ payl_closure_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
     MOM_GC_FREE (arrval);
   const struct momtfundescr_st *rdescr = clos->clos_rout;
   assert (rdescr && rdescr->tfun_magic == MOM_TFUN_MAGIC);
-  jclos= (momval_t)
+  jclos = (momval_t)
     mom_make_json_object
     (MOMJSOB_ENTRY ((momval_t) mom_named__closure_routine,
 		    (momval_t) mom_make_string (rdescr->tfun_ident)),

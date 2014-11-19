@@ -65,6 +65,14 @@ struct mom_dumper_st
   const momitem_t **dmp_predefarray;	/* table of size dmp_predefsize
 					   for predefined items, last
 					   index is dmp_predefnb */
+  // the queue of items to be dumped
+  struct mom_valuequeue_st dmp_itqueue;
+  // the queue of values to be noticed
+  struct mom_valuequeue_st dmp_vanoticequeue;
+  ///// hash table of module items
+  unsigned dmp_modulsiz;
+  unsigned dmp_modulcnt;
+  momitem_t **dmp_modularr;
   ///
   const char *dmp_reason;
   const char *dmp_dirpath;	/* the directory */
@@ -76,10 +84,6 @@ struct mom_dumper_st
   sqlite3_stmt *dmp_sqlstmt_item_insert;
   sqlite3_stmt *dmp_sqlstmt_name_insert;
   sqlite3_stmt *dmp_sqlstmt_module_insert;
-  // the queue of items to be dumped
-  struct mom_valuequeue_st dmp_itqueue;
-  // the queue of values to be noticed
-  struct mom_valuequeue_st dmp_vanoticequeue;
 };
 static pthread_mutex_t dump_mtx_mom = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 
@@ -1131,24 +1135,6 @@ setintsql_cb_mom (void *data, int nbcol, char **colval, char **colnam)
   return 0;
 }
 
-// a callback for sqlite3_exec to get the modules into a dmp_module_mom_st
-static int
-get_modname_cb_mom (void *data, int nbcol, char **colval, char **colnam)
-{
-  assert (nbcol == 1);
-  assert (colval != NULL);
-  assert (colnam != NULL);
-  assert (data != NULL);
-  struct dmp_module_mom_st *dmod = (struct dmp_module_mom_st *) data;
-  assert (dmod->dmod_magic == DMOD_MAGIC);
-  assert (dmod->dmod_count < dmod->dmod_size);
-  char *curmod = colval[1];
-  MOM_DEBUGPRINTF (dump, "get_modname_cb_mom curmod=%s count#%d", curmod,
-		   dmod->dmod_count);
-  dmod->dmod_valtab[dmod->dmod_count++] = (momval_t) mom_make_string (curmod);
-  return 0;
-}
-
 ////////////////////////////////////////////////////////////////
 void
 mom_initial_load (const char *ldirnam)
@@ -1644,6 +1630,38 @@ create_tables_for_dump_mom (struct mom_dumper_st *du)
 
 
 
+static void
+insert_modules_sql_mom (struct mom_dumper_st *du)
+{
+  assert (du && du->dmp_magic == DUMPER_MAGIC);
+  assert (du->dmp_sqlstmt_module_insert != NULL);
+  unsigned siz = du->dmp_modulsiz;
+  momitem_t **arr = du->dmp_modularr;
+  assert (siz > 0 && arr && du->dmp_modulcnt < siz);
+  unsigned cnt = 0;
+  for (unsigned ix = 0; ix < siz; ix++)
+    {
+      momitem_t *moditm = arr[ix];
+      if (!moditm)
+	continue;
+      const char *modidstr = mom_ident_cstr_of_item (moditm);
+      assert (modidstr != NULL && modidstr[0] == '_');
+      /// modidstr at rank 1
+      int err =
+	sqlite3_bind_text (du->dmp_sqlstmt_module_insert, 1, modidstr, -1,
+			   SQLITE_STATIC);
+      if (err)
+	MOM_FATAPRINTF ("failed to bind dumped module %s: %s, err#%d",
+			modidstr, sqlite3_errmsg (du->dmp_sqlite), err);
+      err = sqlite3_step (du->dmp_sqlstmt_item_insert);
+      if (err != SQLITE_DONE)
+	MOM_WARNPRINTF ("failed to insert dumped module %s: %s, err#%d",
+			modidstr, sqlite3_errmsg (du->dmp_sqlite), err);
+      cnt++;
+    }
+  assert (cnt == du->dmp_modulcnt);
+}
+
 void
 mom_full_dump (const char *reason, const char *dumpdir,
 	       struct mom_dumpoutcome_st *outd)
@@ -1941,36 +1959,32 @@ mom_full_dump (const char *reason, const char *dumpdir,
   set_dump_param_mom (&dmp, MOM_VERSION_PARAM, MOM_DUMP_VERSION);
   set_dump_param_mom (&dmp, "dump_reason", reason);
   memset (filpath, 0, sizeof (filpath));
-  //// compute the set of modules by querying the database
+  // insert the modules
+  insert_modules_sql_mom (&dmp);
+  //// compute the set of modules
   {
-    assert (dmp.dmp_sqlite != NULL);
-    int nbmodules = -1;
-    char *errmsg = NULL;
-    int excod = 0;
-    if ((excod = sqlite3_exec
-	 (dmp.dmp_sqlite, "SELECT COUNT(*) FROM t_modules",
-	  setintsql_cb_mom, &nbmodules, &errmsg)))
-      MOM_FATAPRINTF
-	("while dumping %s failed to count t_modules %s (excod=%d, nbmodules=%d)",
-	 dmp.dmp_sqlpath, errmsg, excod, nbmodules);
-    assert (nbmodules >= 0 && nbmodules < INT_MAX / 2);
-    MOM_DEBUGPRINTF (dump, "nbmodules=%d", nbmodules);
+    unsigned modcnt = dmp.dmp_modulcnt;
+    unsigned modsiz = dmp.dmp_modulsiz;
+    momitem_t **modarr = dmp.dmp_modularr;
+    assert (modcnt < modsiz && modsiz > 2 && modarr);
+    int nbmodules = 0;
     dmod = MOM_GC_ALLOC ("dmp_module",
 			 sizeof (struct
 				 dmp_module_mom_st)
-			 + nbmodules * sizeof (momval_t));
+			 + modcnt * sizeof (momval_t));
+    for (unsigned ix = 0; ix < modsiz; ix++)
+      {
+	momitem_t *moditm = modarr[ix];
+	if (!moditm)
+	  continue;
+	assert (moditm->i_typnum == momty_item);
+	assert (nbmodules < (int) modcnt);
+	dmod->dmod_valtab[nbmodules++] = (momval_t) moditm;
+      }
+    assert (nbmodules == (int) modcnt);
+    MOM_DEBUGPRINTF (dump, "nbmodules=%d", nbmodules);
     dmod->dmod_magic = DMOD_MAGIC;
     dmod->dmod_size = (unsigned) nbmodules;
-    if (nbmodules > 0)
-      {
-	if (sqlite3_exec
-	    (dmp.dmp_sqlite,
-	     "SELECT modname FROM t_modules ORDER BY modname",
-	     get_modname_cb_mom, dmod, &errmsg))
-	  MOM_FATAPRINTF ("while dumping %s failed to get modules %s",
-			  dmp.dmp_sqlpath, errmsg);
-	assert (dmod->dmod_size == dmod->dmod_count);
-      }
   }
   /// at last
   goto end;
@@ -2138,6 +2152,43 @@ end:
      endcputime - startcputime, endrealtime - startrealtime);
 }
 
+static inline void
+dump_raw_add_module_mom (struct mom_dumper_st *du, momitem_t *moditm)
+{
+  assert (du && du->dmp_magic == DUMPER_MAGIC);
+  unsigned siz = du->dmp_modulsiz;
+  assert (siz > 2 && du->dmp_modulcnt + 3 < siz);
+  assert (moditm && moditm->i_typnum == momty_item);
+  momhash_t h = mom_item_hash (moditm);
+  momitem_t **arr = du->dmp_modularr;
+  assert (arr != NULL);
+  unsigned istart = h % siz;
+  for (unsigned ix = istart; ix < siz; ix++)
+    {
+      momitem_t *curitm = arr[ix];
+      if (!curitm)
+	{
+	  arr[ix] = moditm;
+	  du->dmp_modulcnt++;
+	  return;
+	}
+      else if (curitm == moditm)
+	return;
+    }
+  for (unsigned ix = 0; ix < istart; ix++)
+    {
+      momitem_t *curitm = arr[ix];
+      if (!curitm)
+	{
+	  arr[ix] = moditm;
+	  du->dmp_modulcnt++;
+	  return;
+	}
+      else if (curitm == moditm)
+	return;
+    }
+  MOM_FATAPRINTF ("corrupted full %d module table", siz);
+}
 
 void
 mom_dump_scan_need_module (struct mom_dumper_st *du, const char *modname)
@@ -2149,24 +2200,42 @@ mom_dump_scan_need_module (struct mom_dumper_st *du, const char *modname)
   if (!du || !modname || !modname[0])
     return;
   MOM_DEBUGPRINTF (dump, "mom_dump_scan_need_module modname=%s", modname);
-  for (const char *pc = modname; *pc; pc++)
-    if (!isalnum (*pc) && *pc != '_')
-      {
-	MOM_WARNPRINTF ("invalid dumped module %s requirement", modname);
-	return;
-      };
-  assert (du->dmp_sqlstmt_module_insert != NULL);
-  /// modname at rank 1
-  int err = sqlite3_bind_text (du->dmp_sqlstmt_module_insert, 1, modname, -1,
-			       SQLITE_STATIC);
-  if (err)
-    MOM_FATAPRINTF ("failed to bind dumped module %s: %s, err#%d", modname,
-		    sqlite3_errmsg (du->dmp_sqlite), err);
-  err = sqlite3_step (du->dmp_sqlstmt_item_insert);
-  if (err != SQLITE_DONE)
-    MOM_WARNPRINTF ("failed to require dumped module %s: %s, err#%d", modname,
-		    sqlite3_errmsg (du->dmp_sqlite), err);
+  if (!mom_looks_like_random_id_cstr (modname, NULL))
+    {
+      MOM_WARNPRINTF ("incorrect dumped module name %s", modname);
+      return;
+    };
+  momitem_t *moditm = mom_get_item_of_identcstr (modname);
+  if (!moditm)
+    {
+      MOM_WARNPRINTF ("dumped module named %s does not exist", modname);
+      return;
+    }
+  mom_dump_add_scanned_item (du, moditm);
+  if (MOM_UNLIKELY (4 * du->dmp_modulcnt + 6 > 3 * du->dmp_modulsiz))
+    {
+      unsigned newsiz = (3 * du->dmp_modulcnt / 2 + 10) | 0xf;
+      momitem_t **newarr = MOM_GC_ALLOC ("dump modularr",
+					 newsiz * sizeof (momitem_t *));
+      unsigned oldsiz = du->dmp_modulsiz;
+      unsigned oldcount = du->dmp_modulcnt;
+      momitem_t **oldarr = du->dmp_modularr;
+      du->dmp_modularr = newarr;
+      du->dmp_modulsiz = newsiz;
+      du->dmp_modulcnt = 0;
+      for (unsigned ix = 0; ix < oldsiz; ix++)
+	{
+	  momitem_t *olditm = oldarr[ix];
+	  if (!olditm)
+	    continue;
+	  dump_raw_add_module_mom (du, olditm);
+	}
+      assert (du->dmp_modulcnt == oldcount);
+    }
+  dump_raw_add_module_mom (du, moditm);
 }
+
+
 
 void
 mom_dump_notice (struct mom_dumper_st *du, momval_t nval)
