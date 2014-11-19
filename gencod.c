@@ -1301,39 +1301,39 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 		    MOMOUT_LITERAL (" in function "),
 		    MOMOUT_ITEM ((const momitem_t *) curoutitm), NULL);
   /// emit start of function
-  MOM_OUT (&cg->cgen_outbody,
-	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL ("// implement tasklet function "),
-	   MOMOUT_ITEM ((const momitem_t *) curoutitm),
-	   MOMOUT_LITERAL (" rank#"), MOMOUT_DEC_INT ((int) routix),
-	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL ("static int " CGEN_FUN_CODE_PREFIX),
-	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
-	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL
-	   ("(int momstate,"),
-	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL
-	   ("\t momitem_t* restrict momtasklet, const momval_t momclosure,"),
-	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERALV ((const char *)
-			    ((nbvalues > 0)
-			     ? "\t momval_t* restrict momvals,"
-			     : "\t momval_t* restrict momvals_ MOM_UNUSED,")),
-	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERALV ((const char *)
-			    ((nbnumbers > 0)
-			     ? "\t intptr_t* restrict momnums,"
-			     :
-			     "\t intptr_t* restrict momnums_ MOM_UNUSED),")),
-	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERALV ((const char *) ((nbdoubles > 0) ?
-					    "\t double* restrict momdbls," :
-					    "\t double* restrict momdbls_ MOM_UNUSED),")),
-	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL ("{ // start of tasklet function "),
-	   MOMOUT_ITEM ((const momitem_t *) curoutitm), MOMOUT_INDENT_MORE (),
-	   MOMOUT_NEWLINE (), NULL);
+  MOM_OUT
+    (&cg->cgen_outbody,
+     MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL ("// implement tasklet function "),
+     MOMOUT_ITEM ((const momitem_t *) curoutitm),
+     MOMOUT_LITERAL (" rank#"), MOMOUT_DEC_INT ((int) routix),
+     MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL ("static int " CGEN_FUN_CODE_PREFIX),
+     MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
+     MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL
+     ("(int momstate,"),
+     MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL
+     ("\t momitem_t* restrict momtasklet, const momval_t momclosure,"),
+     MOMOUT_NEWLINE (),
+     MOMOUT_LITERALV ((const char *)
+		      ((nbvalues > 0)
+		       ? "\t momval_t* restrict momvals,"
+		       : "\t momval_t* restrict momvals_ MOM_UNUSED,")),
+     MOMOUT_NEWLINE (),
+     MOMOUT_LITERALV ((const char *)
+		      ((nbnumbers > 0)
+		       ? "\t intptr_t* restrict momnums,"
+		       : "\t intptr_t* restrict momnums_ MOM_UNUSED,")),
+     MOMOUT_NEWLINE (),
+     MOMOUT_LITERALV ((const char *) ((nbdoubles > 0) ?
+				      "\t double* restrict momdbls)" :
+				      "\t double* restrict momdbls_ MOM_UNUSED)")),
+     MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL ("{ // start of tasklet function "),
+     MOMOUT_ITEM ((const momitem_t *) curoutitm), MOMOUT_INDENT_MORE (),
+     MOMOUT_NEWLINE (), NULL);
   MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("// declared "),
 	   MOMOUT_DEC_INT ((int) nblocals), MOMOUT_LITERAL (" locals, "),
 	   MOMOUT_DEC_INT ((int) nbargs), MOMOUT_LITERAL (" arguments."),

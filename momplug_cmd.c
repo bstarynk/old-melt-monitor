@@ -1284,7 +1284,7 @@ cmd_do_top_mom (const char *lin)
 					(curval.pitem)), MOMOUT_SPACE (32),
 		       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
 					       curval.pitem));
-	      char *kinds = NULL;
+	      const char *kinds = NULL;
 	      unsigned k = mom_item_payload_kind (curval.pitem);
 	      switch (k)
 		{
@@ -1331,13 +1331,13 @@ cmd_do_top_mom (const char *lin)
 		  {
 		    char kindbuf[32];
 		    snprintf (kindbuf, sizeof (kindbuf), "kind#%d", k);
-		    kinds = MOM_GC_STRDUP (kindbuf);
+		    kinds = MOM_GC_STRDUP ("kindbuf", kindbuf);
 		  };
 		  break;
 		}
 	      if (kinds)
 		MOM_OUT (mom_stdout, MOMOUT_SPACE (48),
-			 MOMOUT_LITERALV ((const char*)kinds));
+			 MOMOUT_LITERALV ((const char *) kinds));
 	    }
 	  MOM_OUT (mom_stdout, MOMOUT_NEWLINE ());
 	}
