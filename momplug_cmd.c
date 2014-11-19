@@ -1299,8 +1299,8 @@ cmd_do_top_mom (const char *lin)
 	      unsigned k = mom_item_payload_kind (curval.pitem);
 	      switch (k)
 		{
-		case 0:
-		  kinds = NULL;
+		case mompayk_none:
+		  kinds = "*plain*";
 		  break;
 		case mompayk_queue:
 		  kinds = "queue";

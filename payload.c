@@ -1071,7 +1071,7 @@ payl_tfunrout_load_mom (struct mom_loader_st *ld, momitem_t *itm,
     }
   if (jconst.ptr)
     {
-      const momitem_t **oldcstitems = fd->tfun_constantitems;
+      momitem_t **oldcstitems = (momitem_t **) fd->tfun_constantitems;
       unsigned nbconst = mom_json_array_size (jconst);
       if (nbconst > fd->tfun_nbconstants)
 	nbconst = fd->tfun_nbconstants;

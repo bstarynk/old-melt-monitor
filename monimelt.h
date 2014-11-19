@@ -1355,8 +1355,8 @@ struct momtfundescr_st
   unsigned tfun_frame_nbval;	/* number of values in its frame */
   unsigned tfun_frame_nbnum;	/* number of intptr_t numbers in its frame */
   unsigned tfun_frame_nbdbl;	/* number of double numbers in its frame */
-  const char **tfun_constantids;
-  const momitem_t **tfun_constantitems;
+  const char *const *tfun_constantids;
+  const momitem_t *const *tfun_constantitems;
   const char *tfun_ident;	/* the cidentifier of FOO; starts with a dot '.' for Jit-ed routine */
   const char *tfun_module;	/* always macro MONIMELT_CURRENT_MODULE or NULL for JIT-ed routine */
   const momval_t tfun_jitcode;	/* for a JIT-ed routine, the node of its code */
@@ -1509,8 +1509,8 @@ struct momprocrout_st
   unsigned prout_len;
   const char *prout_id;
   const char *prout_module;
-  const char **prout_constantids;
-  momitem_t *const *prout_constantitems;
+  const char *const *prout_constantids;
+  const momitem_t *const *prout_constantitems;
   const void *prout_addr;
   const char *prout_argsig;	/* signature, in momtypenc_t */
   const char *prout_timestamp;
@@ -1533,7 +1533,7 @@ mom_item_procedure_nth_constant_item (const momitem_t *itm, int rk)
   if (rk < 0 || rk >= (int) plen)
     return NULL;
   assert (prout->prout_constantitems != NULL);
-  resitm = prout->prout_constantitems[rk];
+  resitm = (momitem_t *) prout->prout_constantitems[rk];
   return resitm;
 
 }
