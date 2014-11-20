@@ -1663,7 +1663,8 @@ create_tables_for_dump_mom (struct mom_dumper_st *du)
   if (sqlite3_exec
       (du->dmp_sqlite,
        "CREATE TABLE IF NOT EXISTS t_items (itm_idstr VARCHAR(30) PRIMARY KEY ASC NOT NULL UNIQUE,"
-       " itm_jdata TEXT NOT NULL)", NULL, NULL, &errmsg))
+       " itm_jdata TEXT NOT NULL, itm_kind VARCHAR(24) NOT NULL)", NULL, NULL,
+       &errmsg))
     MOM_FATAPRINTF ("in dumped db %s failed to create t_items %s",
 		    du->dmp_sqlpath, errmsg);
   if (sqlite3_exec
@@ -1685,7 +1686,7 @@ create_tables_for_dump_mom (struct mom_dumper_st *du)
     MOM_FATAPRINTF ("failed to BEGIN TRANSACTION: %s", errmsg);
   /// prepare some statements
   if (sqlite3_prepare_v2 (du->dmp_sqlite,
-			  "INSERT INTO t_items (itm_idstr, itm_jdata) VALUES (?1, ?2)",
+			  "INSERT INTO t_items (itm_idstr, itm_jdata, itm_kind) VALUES (?1, ?2, ?3)",
 			  -1, &du->dmp_sqlstmt_item_insert, NULL))
     MOM_FATAPRINTF ("failed to prepare item insert query: %s",
 		    sqlite3_errmsg (du->dmp_sqlite));
@@ -2335,6 +2336,7 @@ spaceroot_storeitem_mom (struct mom_dumper_st *du, momitem_t *itm,
   MOM_DEBUG (dump, MOMOUT_LITERAL ("spaceroot_storeitem_mom itm="),
 	     MOMOUT_ITEM ((const momitem_t *) itm),
 	     MOMOUT_LITERAL (" datastr="), MOMOUT_LITERALV (datastr));
+  assert (itm && itm->i_typnum == momty_item);
   assert (du->dmp_sqlstmt_item_insert != NULL);
   // idstr at rank 1
   const char *idstr = mom_string_cstr ((momval_t) mom_item_get_idstr (itm));
@@ -2348,6 +2350,13 @@ spaceroot_storeitem_mom (struct mom_dumper_st *du, momitem_t *itm,
     (du->dmp_sqlstmt_item_insert, 2, datastr, -1, SQLITE_STATIC);
   if (err)
     MOM_FATAPRINTF ("failed to bind dumped item datastr: %s, err#%d",
+		    sqlite3_errmsg (du->dmp_sqlite), err);
+  // kind at rank 3
+  const char *kindstr = mom_item_payload_kindstr (itm);
+  err = sqlite3_bind_text
+    (du->dmp_sqlstmt_item_insert, 2, kindstr, -1, SQLITE_STATIC);
+  if (err)
+    MOM_FATAPRINTF ("failed to bind dumped item kindstr: %s, err#%d",
 		    sqlite3_errmsg (du->dmp_sqlite), err);
   MOM_DEBUGPRINTF (dump,
 		   "spaceroot_storeitem_mom before iteminsert step ?1=idstr=%s\n.. ?2=datastr=%s",

@@ -1216,6 +1216,8 @@ mom_item_payload_kind (const momitem_t *itm)
   return itm->i_paylkind;
 }
 
+const char *mom_item_payload_kindstr (const momitem_t *itm);
+
 // get an item of given name or ident
 momitem_t *mom_get_item_of_name_or_ident_cstr_hash (const char *s,
 						    momhash_t h);
@@ -1381,7 +1383,8 @@ struct momclosure_st
 {				/* the payload of closures */
   unsigned clos_magic;		/* always MOM_CLOSURE_MAGIC */
   unsigned clos_len;
-  const struct momtfundescr_st *clos_rout;
+  const struct momtfundescr_st *clos_tfunrout;
+  const momitem_t *clos_tfunitm;
   momval_t clos_valtab[];
 };
 
@@ -1400,7 +1403,7 @@ mom_item_tfundescr (const momitem_t *itm)
     {
       struct momclosure_st *clos = itm->i_payload;
       if (clos && clos->clos_magic == MOM_CLOSURE_MAGIC)
-	rdescr = clos->clos_rout;
+	rdescr = clos->clos_tfunrout;
     };
   if (rdescr && rdescr->tfun_magic == MOM_TFUN_MAGIC)
     return rdescr;
@@ -1449,9 +1452,22 @@ mom_item_closure_constants (const momitem_t *itm)
     return NULL;
   struct momclosure_st *clos = itm->i_payload;
   assert (clos && clos->clos_magic == MOM_CLOSURE_MAGIC);
-  const struct momtfundescr_st *crout = clos->clos_rout;
+  const struct momtfundescr_st *crout = clos->clos_tfunrout;
   assert (crout && crout->tfun_magic == MOM_TFUN_MAGIC);
   return crout->tfun_constantitems;
+}
+
+static inline momitem_t *
+mom_item_closure_tfun_item (const momitem_t *itm)
+{
+  if (!itm || itm->i_typnum != momty_item
+      || itm->i_paylkind != mompayk_closure)
+    return NULL;
+  struct momclosure_st *clos = itm->i_payload;
+  assert (clos && clos->clos_magic == MOM_CLOSURE_MAGIC);
+  momitem_t *funitm = (momitem_t *) clos->clos_tfunitm;
+  assert (funitm && funitm->i_typnum == momty_item);
+  return funitm;
 }
 
 static inline unsigned
@@ -1473,7 +1489,7 @@ mom_item_closure_routine_cident (const momitem_t *itm)
     return 0;
   struct momclosure_st *clos = itm->i_payload;
   assert (clos && clos->clos_magic == MOM_CLOSURE_MAGIC);
-  const struct momtfundescr_st *rdescr = clos->clos_rout;
+  const struct momtfundescr_st *rdescr = clos->clos_tfunrout;
   assert (rdescr && rdescr->tfun_magic == MOM_TFUN_MAGIC);
   return rdescr->tfun_ident;
 }

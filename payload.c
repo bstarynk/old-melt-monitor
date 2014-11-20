@@ -1205,7 +1205,10 @@ mom_item_start_closure_of_routine (momitem_t *itm,
 					     sizeof (struct momclosure_st) +
 					     len * sizeof (momval_t));
   clos->clos_len = len;
-  clos->clos_rout = rdescr;
+  clos->clos_tfunrout = rdescr;
+  momitem_t *funitm = mom_make_item_of_identcstr (rdescr->tfun_ident);
+  assert (funitm && funitm->i_typnum == momty_item);
+  clos->clos_tfunitm = funitm;
   clos->clos_magic = MOM_CLOSURE_MAGIC;
   itm->i_payload = clos;
   itm->i_paylkind = mompayk_closure;
@@ -1301,9 +1304,11 @@ payl_closure_dump_scan_mom (struct mom_dumper_st *du, momitem_t *itm)
   struct momclosure_st *clos = itm->i_payload;
   assert (clos && clos->clos_magic == MOM_CLOSURE_MAGIC);
   unsigned len = clos->clos_len;
+  assert (clos->clos_tfunitm && clos->clos_tfunitm->i_typnum == momty_item);
+  mom_dump_add_scanned_item (du, clos->clos_tfunitm);
   for (unsigned ix = 0; ix < len; ix++)
     mom_dump_scan_value (du, clos->clos_valtab[ix]);
-  const struct momtfundescr_st *rdescr = clos->clos_rout;
+  const struct momtfundescr_st *rdescr = clos->clos_tfunrout;
   if (strcmp (rdescr->tfun_module, MOM_EMPTY_MODULE) != 0)
     mom_dump_scan_need_module (du, rdescr->tfun_module);
 }
@@ -1328,7 +1333,7 @@ payl_closure_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
   jarr = (momval_t) mom_make_json_array_count (len, arrval);
   if (arrval != tinyarr)
     MOM_GC_FREE (arrval);
-  const struct momtfundescr_st *rdescr = clos->clos_rout;
+  const struct momtfundescr_st *rdescr = clos->clos_tfunrout;
   assert (rdescr && rdescr->tfun_magic == MOM_TFUN_MAGIC);
   jclos = (momval_t)
     mom_make_json_object
@@ -3157,6 +3162,29 @@ static const struct mom_payload_descr_st payldescr_jsonrpcexchange_mom = {
 };
 
 ////////////////////////////////////////////////////////////////
+
+const char *
+mom_item_payload_kindstr (const momitem_t *itm)
+{
+  if (!itm || itm->i_typnum != momty_item)
+    return NULL;
+  unsigned kd = itm->i_paylkind;
+  if (!kd)
+    return "";
+  const char *kindstr = NULL;
+  if (kd < mompayk__last && mom_payloadescr[kd])
+    kindstr = mom_payloadescr[kd]->dpayl_name;
+  if (!kindstr)
+    {
+      char kindbuf[32];
+      memset (kindbuf, 0, sizeof (kindbuf));
+      snprintf (kindbuf, sizeof (kindbuf), "_kind#%d", kd);
+      return MOM_GC_STRDUP ("kindstr", kindbuf);
+    }
+  else
+    return kindstr;
+}
+
 /******************** payload descriptors *********************/
 
 struct mom_payload_descr_st *mom_payloadescr[mompayk__last + 1] = {

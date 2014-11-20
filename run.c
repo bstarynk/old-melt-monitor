@@ -331,7 +331,7 @@ step_tasklet_mom (momitem_t *tkitm, struct mom_taskletdata_st *itd)
 	  goto end;
 	}
       assert (closd->clos_magic == MOM_CLOSURE_MAGIC);
-      rdescr = closd->clos_rout;
+      rdescr = closd->clos_tfunrout;
       assert (rdescr && rdescr->tfun_magic == MOM_TFUN_MAGIC);
       MOM_DEBUG (run,
 		 MOMOUT_LITERAL ("step_tasklet_mom item closure rdescr="),
