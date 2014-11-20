@@ -1182,6 +1182,28 @@ setintsql_cb_mom (void *data, int nbcol, char **colval, char **colnam)
   return 0;
 }
 
+
+////////////////////////////////////////////////////////////////
+// a callback for sqlite3_exec to build the item of id the first and only column
+static int
+build_root_items_cb_mom (void *data MOM_UNUSED, int nbcol, char **colval,
+			 char **colnam)
+{
+  assert (nbcol == 1);
+  assert (colval != NULL);
+  assert (colnam != NULL);
+  const char *itmid = *colval;
+  MOM_DEBUGPRINTF (load, "build_root_item itmid=%s", itmid);
+  assert (itmid && mom_looks_like_random_id_cstr (itmid, NULL));
+  momitem_t *itm = mom_make_item_of_identcstr (itmid);
+  MOM_DEBUG (load, MOMOUT_LITERAL ("build_root_item itm:"),
+	     MOMOUT_ITEM ((const momitem_t *) itm), NULL);
+  assert (itm != NULL);
+  if (itm->i_space == momspa_none)
+    itm->i_space = momspa_root;
+  return 0;
+}
+
 ////////////////////////////////////////////////////////////////
 void
 mom_initial_load (const char *ldirnam)
@@ -1271,6 +1293,15 @@ mom_initial_load (const char *ldirnam)
     MOM_FATAPRINTF ("incompatible version in %s, expected %s got %s",
 		    ldr.ldr_sqlpath, MOM_DUMP_VERSION,
 		    vers ? vers : "*nothing*");
+  /// build the empty items in root
+  {
+    char *errmsg = NULL;
+    if (sqlite3_exec
+	(ldr.ldr_sqlite, "SELECT itm_idstr FROM t_items",
+	 build_root_items_cb_mom, NULL, &errmsg))
+      MOM_FATAPRINTF ("while loading %s failed to load t_items %s",
+		      ldr.ldr_sqlpath, errmsg);
+  }
   /// load the modules
   int modulecount = 0;
   for (;;)

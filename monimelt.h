@@ -1951,7 +1951,7 @@ momval_t mom_webx_method (momitem_t *webitm);
 
 
 #define MOM_WEB_DIRECTORY "webdir"
-#define MOM_WEB_ROOT_PAGE "mom-root-page.html"
+#define MOM_WEB_ROOT_PAGE "monimelt-root-page.html"
 
 // called from main
 void mom_start_web (const char *webhost);

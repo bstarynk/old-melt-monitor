@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 Nov 19
+-- state-monimelt dump 2014 Nov 20
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -236,7 +236,7 @@ INSERT INTO t_items VALUES('_682ush7cppa_s7vzfd2rsxp','{"attr": [{"attr": "_2u8s
     "jtype": "item_ref", "space": ".root"}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "procedure 1 inside our test_module."}, {"attr": "_4v74chqs1eh_chqd9cqw85t",
    "val": {"jtype": "set", "set": ["_5xa08a3ittw_imt86y9q33c"]}}], "content": null,
- "kind": "procedure", "payload": [null]}
+ "kind": "procedure", "payload": ["_0yyp8vmw4si_wf49m4d4zwq"]}
 ');
 INSERT INTO t_items VALUES('_6djzuwz5pav_cri386ywjhj','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "notably for error message in JSONRPC"}],
  "content": null, "kind": null, "payload": null}
@@ -337,8 +337,8 @@ INSERT INTO t_items VALUES('_8qmqy249w63_fxdr6rdz48m','{"attr": [{"attr": "_2u8s
     "_2ky10qvckv2_kqa0pr8z29z", "jtype": "item_ref", "space": ".root"}}, {"attr":
    "_41u1utcxyek_22cftxt3xxm", "val": "function 1 inside our test_module."},
   {"attr": "_7yxp9xhih4z_9uzrqhkamxa", "val": {"jtype": "set", "set": ["_2ky10qvckv2_kqa0pr8z29z"]}}],
- "content": null, "kind": "tfunrout", "payload": {"constants": [null, null],
-  "tasklet_function": "_8qmqy249w63_fxdr6rdz48m"}}
+ "content": null, "kind": "tfunrout", "payload": {"constants": ["_41u1utcxyek_22cftxt3xxm",
+   "_7wk9y7e7r0z_575esi8ys5x"], "tasklet_function": "_8qmqy249w63_fxdr6rdz48m"}}
 ');
 INSERT INTO t_items VALUES('_8qpa7j0chkh_k630ujw6jiw','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for switch statements on integers"}],
  "content": null, "kind": null, "payload": null}
