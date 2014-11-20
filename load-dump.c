@@ -2353,8 +2353,10 @@ spaceroot_storeitem_mom (struct mom_dumper_st *du, momitem_t *itm,
 		    sqlite3_errmsg (du->dmp_sqlite), err);
   // kind at rank 3
   const char *kindstr = mom_item_payload_kindstr (itm);
+  if (!kindstr)
+    kindstr = "";
   err = sqlite3_bind_text
-    (du->dmp_sqlstmt_item_insert, 2, kindstr, -1, SQLITE_STATIC);
+    (du->dmp_sqlstmt_item_insert, 3, kindstr, -1, SQLITE_STATIC);
   if (err)
     MOM_FATAPRINTF ("failed to bind dumped item kindstr: %s, err#%d",
 		    sqlite3_errmsg (du->dmp_sqlite), err);
