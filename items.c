@@ -1183,11 +1183,12 @@ mom_remove_attribute (struct mom_itemattributes_st *attrs,
   if (!attrs || !atitm)
     return attrs;
   int pos = find_index_attribute_mom (attrs, atitm);
-  if (pos > 0)
+  if (pos >= 0)
     {
+      unsigned siz = attrs->size;
+      assert (pos < (int) siz);
       attrs->itattrtab[pos].aten_itm = MOM_EMPTY;
       attrs->itattrtab[pos].aten_val = MOM_NULLV;
-      unsigned siz = attrs->size;
       unsigned cnt = --(attrs->nbattr);
       if (siz > MOM_TINY_MAX && cnt < siz / 2)
 	attrs = mom_reserve_attribute (attrs, 1 + cnt / (2 * MOM_TINY_MAX));

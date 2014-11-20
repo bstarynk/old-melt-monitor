@@ -1098,7 +1098,7 @@ cmd_do_remat_mom (const char *lin, bool pres, momitem_t *atitm)
 {
   char cmdbuf[80];
   memset (cmdbuf, 0, sizeof (cmdbuf));
-  MOM_DEBUGPRINTF (cmd, "do_getat lin=%s atitm@%p", lin, atitm);
+  MOM_DEBUGPRINTF (cmd, "do_remat lin=%s atitm@%p", lin, atitm);
   momitem_t *itm = mom_value_to_item (cmd_stack_nth_value_mom (-1));
   if (pres && itm && atitm)
     {
