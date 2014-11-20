@@ -1650,6 +1650,34 @@ payl_procedure_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
   return jarr;
 }
 
+static void
+payl_procedure_output_mom (momout_t *pout, momitem_t *itm, void *pdata)
+{
+  assert (pout != NULL);
+  assert (itm && itm->i_typnum == momty_item);
+  assert (itm->i_paylkind == mompayk_procedure);
+  assert (itm->i_payload == pdata);
+  const struct momprocrout_st *prout = pdata;
+  assert (prout && prout->prout_magic == MOM_PROCROUT_MAGIC);
+  unsigned plen = prout->prout_len;
+  assert (plen == 0 || prout->prout_constantitems != NULL);
+  MOM_OUT (pout, MOMOUT_LITERAL ("!P"), MOMOUT_LITERALV (prout->prout_id),
+	   MOMOUT_LITERAL (".µ"), MOMOUT_LITERALV (prout->prout_module));
+  if (plen > 0)
+    {
+      MOM_OUT (pout, MOMOUT_LITERAL ("/"), MOMOUT_DEC_INT ((int) plen),
+	       MOMOUT_LITERAL ("-cst("));
+      for (unsigned ix = 0; ix < plen; ix++)
+	{
+	  if (ix > 0)
+	    MOM_OUT (pout, MOMOUT_LITERAL (","), MOMOUT_SPACE (40));
+	  MOM_OUT (pout, MOMOUT_ITEM (prout->prout_constantitems[ix]));
+	}
+      MOM_OUT (pout, MOMOUT_LITERAL (")"));
+    }
+}
+
+
 
 static const struct mom_payload_descr_st payldescr_procedure_mom = {
   .dpayl_magic = MOM_PAYLOAD_MAGIC,
@@ -1657,6 +1685,7 @@ static const struct mom_payload_descr_st payldescr_procedure_mom = {
   .dpayl_loadfun = payl_procedure_load_mom,
   .dpayl_dumpscanfun = payl_procedure_dump_scan_mom,
   .dpayl_dumpjsonfun = payl_procedure_dump_json_mom,
+  .dpayl_outputfun = payl_procedure_output_mom,
 };
 
 
