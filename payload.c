@@ -1252,12 +1252,41 @@ payl_tfunrout_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
     }
 }
 
+
+static void
+payl_tfunrout_output_mom (momout_t *pout, momitem_t *itm, void *pdata)
+{
+  assert (pout != NULL);
+  assert (itm && itm->i_typnum == momty_item);
+  assert (itm->i_paylkind == mompayk_tfunrout);
+  assert (itm->i_payload == pdata);
+  const struct momtfundescr_st *rdescr = itm->i_payload;
+  assert (rdescr != NULL && rdescr->tfun_magic == MOM_TFUN_MAGIC
+	  && rdescr->tfun_ident != NULL);
+  MOM_OUT (pout, MOMOUT_LITERAL ("!"), MOMOUT_LITERALV (rdescr->tfun_ident),
+	   MOMOUT_LITERAL (".µ"), MOMOUT_LITERALV (rdescr->tfun_module));
+  if (rdescr->tfun_constantitems)
+    {
+      unsigned ln = rdescr->tfun_nbconstants;
+      MOM_OUT (pout, MOMOUT_LITERAL ("/"), MOMOUT_DEC_INT ((int) ln),
+	       MOMOUT_LITERAL ("-cst("));
+      for (unsigned ix = 0; ix < ln; ix++)
+	{
+	  if (ix > 0)
+	    MOM_OUT (pout, MOMOUT_LITERAL (","), MOMOUT_SPACE (40));
+	  MOM_OUT (pout, MOMOUT_ITEM (rdescr->tfun_constantitems[ix]));
+	}
+      MOM_OUT (pout, MOMOUT_LITERAL (")"));
+    }
+}
+
 static const struct mom_payload_descr_st payldescr_tfunrout_mom = {
   .dpayl_magic = MOM_PAYLOAD_MAGIC,
   .dpayl_name = "tfunrout",
   .dpayl_loadfun = payl_tfunrout_load_mom,
   .dpayl_dumpscanfun = payl_tfunrout_dump_scan_mom,
   .dpayl_dumpjsonfun = payl_tfunrout_dump_json_mom,
+  .dpayl_outputfun = payl_tfunrout_output_mom,
 };
 
 
@@ -1470,12 +1499,35 @@ payl_closure_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
   return jclos;
 }
 
+static void
+payl_closure_output_mom (struct momout_st *pout, momitem_t *itm, void *data)
+{
+  assert (itm && itm->i_typnum != momty_item
+	  && itm->i_paylkind == mompayk_closure);
+  assert (data == itm->i_payload);
+  struct momclosure_st *clos = data;
+  assert (data == itm->i_payload);
+  assert (clos && clos->clos_magic == MOM_CLOSURE_MAGIC);
+  unsigned len = clos->clos_len;
+  MOM_OUT (pout, MOMOUT_LITERAL ("+funitm:"),
+	   MOMOUT_ITEM (clos->clos_tfunitm), MOMOUT_LITERAL ("/"),
+	   MOMOUT_DEC_INT ((int) len), MOMOUT_LITERAL ("("));
+  for (unsigned ix = 0; ix < len; ix++)
+    {
+      if (ix > 0)
+	MOM_OUT (pout, MOMOUT_LITERAL (","), MOMOUT_SPACE (48));
+      MOM_OUT (pout, MOMOUT_VALUE ((const momval_t) clos->clos_valtab[ix]));
+    }
+  MOM_OUT (pout, MOMOUT_LITERAL (")"));
+}
+
 static const struct mom_payload_descr_st payldescr_closure_mom = {
   .dpayl_magic = MOM_PAYLOAD_MAGIC,
   .dpayl_name = "closure",
   .dpayl_loadfun = payl_closure_load_mom,
   .dpayl_dumpscanfun = payl_closure_dump_scan_mom,
   .dpayl_dumpjsonfun = payl_closure_dump_json_mom,
+  .dpayl_outputfun = payl_closure_output_mom,
 };
 
 
