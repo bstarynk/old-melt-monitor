@@ -1413,7 +1413,13 @@ mom_item_tfundescr (const momitem_t *itm)
 void mom_item_start_closure_of_routine (momitem_t *itm,
 					const struct momtfundescr_st *rout,
 					unsigned len);
-void mom_item_start_closure (momitem_t *itm, unsigned len);
+void mom_item_start_closure_of_function (momitem_t *itm, momitem_t *funitm,
+					 unsigned len);
+
+void mom_item_start_closure_of_length (momitem_t *itm, momitem_t *funitm,
+				       unsigned len, ...);
+void mom_item_start_closure_of_array (momitem_t *itm, momitem_t *funitm,
+				      unsigned count, momval_t *arr);
 
 void mom_item_closure_set_nth (momitem_t *itm, int rk, momval_t cval);
 
@@ -3018,7 +3024,7 @@ momval_t mom_dump_emit_json (struct mom_dumper_st *dmp, const momval_t val);
 
 // emit a short representation of an item: if it is in the current
 // space, just its id string...
-momval_t mom_emit_short_item_json (struct mom_dumper_st *dmp,
+momval_t mom_dump_short_item_json (struct mom_dumper_st *dmp,
 				   const momitem_t *itm);
 
 // initial load

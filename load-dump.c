@@ -303,7 +303,7 @@ mom_dump_emit_json (struct mom_dumper_st *dmp, const momval_t val)
 // emit a short representation of an item: if it is in the current
 // space, just its id string...
 momval_t
-mom_emit_short_item_json (struct mom_dumper_st *dmp, const momitem_t *itm)
+mom_dump_short_item_json (struct mom_dumper_st *dmp, const momitem_t *itm)
 {
   if (!itm)
     return MOM_NULLV;
@@ -374,7 +374,7 @@ jsonarray_emit_itemseq_mom (struct mom_dumper_st *dmp,
 	{
 	  momitem_t *curitm = (momitem_t *) (si->itemseq[ix]);
 	  if (curitm)
-	    tab[ix] = mom_emit_short_item_json (dmp, curitm);
+	    tab[ix] = mom_dump_short_item_json (dmp, curitm);
 	  else
 	    tab[ix] = MOM_NULLV;
 	}
@@ -388,7 +388,7 @@ jsonarray_emit_itemseq_mom (struct mom_dumper_st *dmp,
 	{
 	  momitem_t *curitm = (momitem_t *) (si->itemseq[ix]);
 	  if (curitm && curitm->i_space > 0)
-	    arr[ix] = mom_emit_short_item_json (dmp, curitm);
+	    arr[ix] = mom_dump_short_item_json (dmp, curitm);
 	  else
 	    arr[ix].ptr = NULL;
 	}
@@ -597,7 +597,7 @@ raw_dump_emit_json_mom (struct mom_dumper_st *dmp, const momval_t val)
 	momval_t jconn = MOM_NULLV;
 	if (curconn && curconn->i_space > 0)
 	  {
-	    jconn = mom_emit_short_item_json (dmp, curconn);
+	    jconn = mom_dump_short_item_json (dmp, curconn);
 	    momval_t jsons = (momval_t) jsonarray_emit_nodesons_mom
 	      (dmp, val.pnode);
 	    if (jconn.ptr)
@@ -699,7 +699,7 @@ mom_dump_attributes (struct mom_dumper_st *du,
       assert (curatitm && curatitm->i_typnum == momty_item);
       if (curatitm->i_space == momspa_none)
 	continue;
-      momval_t jattr = mom_emit_short_item_json (du, curatitm);
+      momval_t jattr = mom_dump_short_item_json (du, curatitm);
       if (!jattr.ptr)
 	continue;
       momval_t curval = mom_get_attribute (at, curatitm);

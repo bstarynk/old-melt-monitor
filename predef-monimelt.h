@@ -73,8 +73,8 @@ MOM_PREDEFINED_NAMED(closed_values,_9mxi9e605ay_ihpjyrwq250,776151069)
 ////!JSON for closure payload
 MOM_PREDEFINED_NAMED(closure,_97zkxf62r11_6eedwwv3eu8,2411599826)
 
-////!JSON for closure routine name
-MOM_PREDEFINED_NAMED(closure_routine,_28941cvehx8_9rf4udyeq8v,4235061253)
+////!JSON to give the function in a closure.
+MOM_PREDEFINED_NAMED(closure_function,_3230kudxwis_qs5ss05i85w,1291961203)
 
 ////!notably for error code in JSONRPC
 MOM_PREDEFINED_NAMED(code,_0yyp8vmw4si_wf49m4d4zwq,163984103)

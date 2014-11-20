@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(40) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','exit dump');
+INSERT INTO t_params VALUES('dump_reason','command dump');
 INSERT INTO t_modules VALUES('_4q1v3ax0ffi_hv7fwpsv6uf');
 INSERT INTO t_items VALUES('_02av6173qvf_pehzhe755j2','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for calls at end of  blocks"}],
  "content": null, "kind": null, "payload": null}
@@ -81,9 +81,6 @@ INSERT INTO t_items VALUES('_24w2ce2eq1z_pddi9j2czci','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_24yt56xf3d5_4w80i326kjz','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for JIT code of JIT-ed routines"}],
  "content": null, "kind": null, "payload": null}
 ','');
-INSERT INTO t_items VALUES('_28941cvehx8_9rf4udyeq8v','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "JSON for closure routine name"}],
- "content": null, "kind": null, "payload": null}
-','');
 INSERT INTO t_items VALUES('_2d7i21ihwd8_xjcp4uhs11u','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "some variable"}], "content":
  null, "kind": null, "payload": null}
 ','');
@@ -110,6 +107,9 @@ INSERT INTO t_items VALUES('_2vmrrvq5kdk_9um63pstcu9','{"attr": [{"attr": "_41u1
  "content": null, "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_2x2zpyhfqum_0utui69rzea','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "arguments of procedure or primitive"}],
+ "content": null, "kind": null, "payload": null}
+','');
+INSERT INTO t_items VALUES('_3230kudxwis_qs5ss05i85w','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "JSON to give the function in a closure."}],
  "content": null, "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_35vp60aw7em_d436vfie4ud','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "in JSON dump, jtype of JSON array values"}],
@@ -394,7 +394,7 @@ INSERT INTO t_names VALUES('case','_38w4qwrmd6z_74x5z80v5k6','.predef');
 INSERT INTO t_names VALUES('chunk','_8x6fxcm4z2k_vdaqicfi4z0','.predef');
 INSERT INTO t_names VALUES('closed_values','_9mxi9e605ay_ihpjyrwq250','.predef');
 INSERT INTO t_names VALUES('closure','_97zkxf62r11_6eedwwv3eu8','.predef');
-INSERT INTO t_names VALUES('closure_routine','_28941cvehx8_9rf4udyeq8v','.predef');
+INSERT INTO t_names VALUES('closure_function','_3230kudxwis_qs5ss05i85w','.predef');
 INSERT INTO t_names VALUES('code','_0yyp8vmw4si_wf49m4d4zwq','.predef');
 INSERT INTO t_names VALUES('comment','_41u1utcxyek_22cftxt3xxm','.predef');
 INSERT INTO t_names VALUES('constants','_2u8svx94yq4_34icz9j1fyx','.predef');

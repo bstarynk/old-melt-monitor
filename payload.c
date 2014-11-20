@@ -1054,8 +1054,6 @@ payl_tfunrout_load_mom (struct mom_loader_st *ld, momitem_t *itm,
   assert (fd && fd->tfun_magic == MOM_TFUN_MAGIC);
   momval_t jcodejit = mom_jsonob_get (jsonv, (momval_t) mom_named__jit);
   momval_t jconst = mom_jsonob_get (jsonv, (momval_t) mom_named__constants);
-  momval_t jfunid =
-    mom_jsonob_get (jsonv, (momval_t) mom_named__tasklet_function);
   if (jcodejit.ptr)
     {
       const char *err = mom_item_generate_jit_tfun_routine (itm, jcodejit);
@@ -1145,7 +1143,7 @@ payl_tfunrout_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
 								     (momval_t));
       for (unsigned ix = 0; ix < ln; ix++)
 	arrj[ix] =
-	  mom_emit_short_item_json (du, rdescr->tfun_constantitems[ix]);
+	  mom_dump_short_item_json (du, rdescr->tfun_constantitems[ix]);
       jcstarr = (momval_t) mom_make_json_array_count (ln, arrj);
     }
   if (rdescr->tfun_jitcode.ptr)
@@ -1215,41 +1213,83 @@ mom_item_start_closure_of_routine (momitem_t *itm,
 }
 
 void
-mom_item_start_closure (momitem_t *itm, unsigned len)
+mom_item_start_closure_of_function (momitem_t *itm, momitem_t *funitm,
+				    unsigned len)
 {
 
   char symbuf[MOM_SYMBNAME_LEN];
   memset (symbuf, 0, sizeof (symbuf));
   assert (itm && itm->i_typnum == momty_item);
-  if (itm->i_payload)
-    mom_item_clear_payload (itm);
-  const char *routid =
-    mom_string_cstr ((momval_t) mom_item_get_name_or_idstr (itm));
-  if (!routid || !routid[0])
+  if (!funitm)
     return;
-  snprintf (symbuf, sizeof (symbuf), MOM_TFUN_NAME_FMT, routid);
-  assert (symbuf[MOM_SYMBNAME_LEN - 1] == '\0');
-  for (const char *pc = symbuf; *pc; pc++)
-    if (!isalnum (*pc) && *pc != '_')
-      return;
-  assert (isalpha (symbuf[0]));
-  void *routad = dlsym (mom_prog_dlhandle, symbuf);
-  if (!routad)
+  assert (funitm->i_typnum == momty_item);
+  const struct momtfundescr_st *fdescr = NULL;
+  {
+    mom_lock_item (funitm);
+    fdescr = mom_item_tfundescr (funitm);
+    mom_unlock_item (funitm);
+  }
+  if (MOM_UNLIKELY (!fdescr))
     {
-      MOM_WARNPRINTF ("failed to start closure %s: %s", symbuf, dlerror ());
-      return;
+      char nambuf[MOM_SYMBNAME_LEN];
+      memset (nambuf, 0, sizeof (nambuf));
+      const char *tfunid = mom_ident_cstr_of_item (funitm);
+      assert (tfunid != NULL && tfunid[0] == '_');
+      snprintf (nambuf, sizeof (nambuf), MOM_TFUN_NAME_FMT, tfunid);
+      assert (nambuf[MOM_SYMBNAME_LEN - 2] == (char) 0);
+      void *fdad = dlsym (mom_prog_dlhandle, nambuf);
+      if (MOM_LIKELY (fdad != 0))
+	fdescr = (struct momtfundescr_st *) fdad;
     };
-  const struct momtfundescr_st *rdescr = routad;
-  if (rdescr->tfun_magic != MOM_TFUN_MAGIC
-      || !rdescr->tfun_ident || !rdescr->tfun_module
-      || !rdescr->tfun_codefun || !rdescr->tfun_timestamp)
-    MOM_FATAPRINTF ("invalid closure routine descriptor @%p for %s", routad,
-		    routid);
-  if (strcmp (routid, rdescr->tfun_ident))
-    MOM_WARNPRINTF ("strange closure routine descriptor for %s but named %s",
-		    routid, rdescr->tfun_ident);
-  mom_item_start_closure_of_routine (itm, rdescr, len);
+  if (MOM_UNLIKELY (!fdescr))
+    return;
+  if (fdescr->tfun_magic != MOM_TFUN_MAGIC
+      || !fdescr->tfun_ident || !fdescr->tfun_module
+      || !fdescr->tfun_codefun || !fdescr->tfun_timestamp)
+    MOM_FATAPRINTF ("invalid closure routine descriptor @%p", fdescr);
+  mom_item_start_closure_of_routine (itm, fdescr, len);
 }
+
+
+void
+mom_item_start_closure_of_length (momitem_t *itm, momitem_t *funitm,
+				  unsigned len, ...)
+{
+  mom_item_start_closure_of_function (itm, funitm, len);
+  if (MOM_UNLIKELY (itm->i_paylkind != mompayk_closure))
+    return;
+  struct momclosure_st *clos = (struct momclosure_st *) (itm->i_payload);
+  assert (clos && clos->clos_magic == MOM_CLOSURE_MAGIC);
+  assert (clos->clos_len >= len);
+  va_list args;
+  va_start (args, len);
+  for (unsigned ix = 0; ix < len; ix++)
+    {
+      momval_t curval = va_arg (args, momval_t);
+      clos->clos_valtab[ix] = curval;
+    }
+  va_end (args);
+}
+
+void
+mom_item_start_closure_of_array (momitem_t *itm, momitem_t *funitm,
+				 unsigned count, momval_t *arr)
+{
+  mom_item_start_closure_of_function (itm, funitm, count);
+  if (MOM_UNLIKELY (itm->i_paylkind != mompayk_closure))
+    return;
+  struct momclosure_st *clos = (struct momclosure_st *) (itm->i_payload);
+  assert (clos && clos->clos_magic == MOM_CLOSURE_MAGIC);
+  assert (clos->clos_len >= count);
+  if (MOM_UNLIKELY (!arr))
+    return;
+  for (unsigned ix = 0; ix < count; ix++)
+    {
+      momval_t curval = arr[ix];
+      clos->clos_valtab[ix] = curval;
+    }
+}
+
 
 void
 mom_item_closure_set_nth (momitem_t *itm, int rk, momval_t cval)
@@ -1277,14 +1317,15 @@ payl_closure_load_mom (struct mom_loader_st *ld, momitem_t *itm,
 	     MOMOUT_LITERAL (" jclos="),
 	     MOMOUT_VALUE ((const momval_t) jclos), NULL);
   assert (itm && itm->i_typnum == momty_item);
-  momval_t jrname =
-    mom_jsonob_get (jclos, (momval_t) mom_named__closure_routine);
+  momval_t jfun =
+    mom_jsonob_get (jclos, (momval_t) mom_named__closure_function);
   momval_t jcval =
     mom_jsonob_get (jclos, (momval_t) mom_named__closed_values);
-  assert (mom_is_string (jrname));
+  momitem_t *funitm = mom_load_item_json (ld, jfun);
+  assert (funitm && funitm->i_typnum == momty_item);
   assert (mom_is_jsonable (jcval));
   unsigned nbcloval = mom_json_array_size (jcval);
-  mom_item_start_closure (itm, nbcloval);
+  mom_item_start_closure_of_function (itm, funitm, nbcloval);
   if (!nbcloval)
     return;
   for (unsigned ix = 0; ix < nbcloval; ix++)
@@ -1335,10 +1376,12 @@ payl_closure_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
     MOM_GC_FREE (arrval);
   const struct momtfundescr_st *rdescr = clos->clos_tfunrout;
   assert (rdescr && rdescr->tfun_magic == MOM_TFUN_MAGIC);
+  const momitem_t *funitm = clos->clos_tfunitm;
+  assert (funitm != NULL && funitm->i_typnum == momty_item);
+  momval_t jfun = mom_dump_short_item_json (du, funitm);
   jclos = (momval_t)
     mom_make_json_object
-    (MOMJSOB_ENTRY ((momval_t) mom_named__closure_routine,
-		    (momval_t) mom_make_string (rdescr->tfun_ident)),
+    (MOMJSOB_ENTRY ((momval_t) mom_named__closure_function, jfun),
      MOMJSOB_ENTRY ((momval_t) mom_named__closed_values, jarr), MOMJSON_END);
   return jclos;
 }
@@ -1405,7 +1448,7 @@ payl_procedure_load_mom (struct mom_loader_st *ld, momitem_t *itm,
   assert (plen == 0 || prout->prout_constantitems != NULL);
   for (unsigned ix = 0; ix < plen; ix++)
     {
-      momitem_t *oldcstitm = prout->prout_constantitems[ix];
+      const momitem_t *oldcstitm = prout->prout_constantitems[ix];
       momitem_t *newcstitm =
 	mom_load_item_json (ld, mom_json_array_nth (jproc, ix));
       if (MOM_UNLIKELY (oldcstitm && newcstitm && oldcstitm != newcstitm))
@@ -1436,7 +1479,7 @@ payl_procedure_dump_scan_mom (struct mom_dumper_st *du, momitem_t *itm)
   assert (plen == 0 || prout->prout_constantitems != NULL);
   for (unsigned ix = 0; ix < plen; ix++)
     {
-      momitem_t *cstitm = prout->prout_constantitems[ix];
+      const momitem_t *cstitm = prout->prout_constantitems[ix];
       mom_dump_add_scanned_item (du, cstitm);
     }
   if (prout->prout_module
@@ -1463,7 +1506,7 @@ payl_procedure_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
   for (unsigned ix = 0; ix < plen; ix++)
     {
       arrval[ix] =
-	mom_emit_short_item_json (du, prout->prout_constantitems[ix]);
+	mom_dump_short_item_json (du, prout->prout_constantitems[ix]);
     }
   jarr = (momval_t) mom_make_json_array_count (plen, arrval);
   if (arrval != tinyarr)
