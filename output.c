@@ -300,6 +300,8 @@ static void output_item_mom (momout_t *pout, const momitem_t *itm);
 
 static void output_item_attributes_mom (momout_t *pout, const momitem_t *itm);
 
+static void output_item_payload_mom (momout_t *pout, const momitem_t *itm);
+
 static void
 output_value_mom (momout_t *pout, const momval_t v)
 {
@@ -418,6 +420,28 @@ output_item_mom (momout_t *pout, const momitem_t *itm)
 }
 
 
+void
+mom_output_attributes (struct momout_st *pout,
+		       struct mom_itemattributes_st *attrs)
+{
+  if (!pout || !attrs || !pout->mout_file)
+    return;
+  fprintf (pout->mout_file, "[%d attrs]", attrs->nbattr);
+  for (unsigned ix = 0; ix < attrs->size; ix++)
+    {
+      momitem_t *curatitm = attrs->itattrtab[ix].aten_itm;
+      if (!curatitm || curatitm == MOM_EMPTY)
+	continue;
+      momval_t curval = attrs->itattrtab[ix].aten_val;
+      MOM_OUT (pout, MOMOUT_NEWLINE (),
+	       MOMOUT_LITERAL ("*"), MOMOUT_DEC_INT ((int) ix),
+	       MOMOUT_LITERAL (": "),
+	       MOMOUT_ITEM ((const momitem_t *) curatitm),
+	       MOMOUT_LITERAL (":: "),
+	       MOMOUT_VALUE ((const momval_t) curval), NULL);
+    }
+}
+
 static void
 output_item_attributes_mom (momout_t *pout, const momitem_t *itm)
 {
@@ -434,19 +458,30 @@ output_item_attributes_mom (momout_t *pout, const momitem_t *itm)
       fputs ("?noattrs?", out);
       return;
     }
-  fprintf (out, "[%d attrs]", attrs->nbattr);
-  for (unsigned ix = 0; ix < attrs->size; ix++)
+  else
+    mom_output_attributes (pout, attrs);
+}
+
+static void
+output_item_payload_mom (momout_t *pout, const momitem_t *itm)
+{
+  assert (pout && pout->mout_magic == MOM_MOUT_MAGIC);
+  FILE *out = pout->mout_file;
+  if (!out)
+    return;
+  if (!itm)
+    return;
+  MOM_OUT (pout, MOMOUT_LITERALV (mom_item_payload_kindstr (itm)));
+  unsigned k = itm->i_paylkind;
+  if (k > 0 && k < mompayk__last)
     {
-      momitem_t *curatitm = attrs->itattrtab[ix].aten_itm;
-      if (!curatitm || curatitm == MOM_EMPTY)
-	continue;
-      momval_t curval = attrs->itattrtab[ix].aten_val;
-      MOM_OUT (pout, MOMOUT_NEWLINE (),
-	       MOMOUT_LITERAL ("*"), MOMOUT_DEC_INT ((int) ix),
-	       MOMOUT_LITERAL (": "),
-	       MOMOUT_ITEM ((const momitem_t *) curatitm),
-	       MOMOUT_LITERAL (":: "),
-	       MOMOUT_VALUE ((const momval_t) curval), NULL);
+      struct mom_payload_descr_st *pd = mom_payloadescr[k];
+      if (pd && pd->dpayl_outputfun)
+	{
+	  assert (pd->dpayl_magic == MOM_PAYLOAD_MAGIC);
+	  void *payl = itm->i_payload;
+	  pd->dpayl_outputfun (pout, (momitem_t *) itm, payl);
+	}
     }
 }
 
@@ -994,7 +1029,16 @@ mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist)
 	case MOMOUTDO_ITEM_ATTRIBUTES:
 	  {
 	    const momitem_t *itm = va_arg (alist, momitem_t *);
-	    output_item_attributes_mom (pout, itm);
+	    if (itm)
+	      output_item_attributes_mom (pout, itm);
+	  }
+	  break;
+	  ///
+	case MOMOUTDO_ITEM_PAYLOAD:
+	  {
+	    const momitem_t *itm = va_arg (alist, momitem_t *);
+	    if (itm)
+	      output_item_payload_mom (pout, itm);
 	  }
 	  break;
 	  ///

@@ -174,12 +174,38 @@ payl_queue_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
   return jarr;
 }
 
+static void
+payl_queue_output_mom (momout_t *pout, momitem_t *itm, void *pdata)
+{
+  assert (itm && itm->i_typnum == momty_item);
+  assert (itm->i_paylkind == mompayk_queue);
+  struct mom_valuequeue_st *vq = pdata;
+  MOM_OUT (pout, MOMOUT_LITERAL ("("));
+  unsigned qlen = mom_queue_length (vq);
+  unsigned cnt = 0;
+  for (struct mom_vaqelem_st * qel = vq->vaq_first;
+       qel != NULL && cnt < qlen; qel = qel->vqe_next)
+    {
+      for (int ix = 0; ix < MOM_QUEUEPACK_LEN; ix++)
+	{
+	  momval_t curval = qel->vqe_valtab[ix];
+	  if (curval.ptr)
+	    {
+	      MOM_OUT (pout, MOMOUT_SPACE (32), MOMOUT_VALUE (curval));
+	      cnt++;
+	    }
+	}
+    }
+  MOM_OUT (pout, MOMOUT_LITERAL (")"));
+}
+
 static const struct mom_payload_descr_st payldescr_queue_mom = {
   .dpayl_magic = MOM_PAYLOAD_MAGIC,
   .dpayl_name = "queue",
   .dpayl_loadfun = payl_queue_load_mom,
   .dpayl_dumpscanfun = payl_queue_dump_scan_mom,
   .dpayl_dumpjsonfun = payl_queue_dump_json_mom,
+  .dpayl_outputfun = payl_queue_output_mom,
 };
 
 
@@ -502,12 +528,33 @@ payl_vector_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
   return jarr;
 }
 
+static void
+payl_vector_output_mom (momout_t *pout, momitem_t *itm, void *pdata)
+{
+  assert (pout != NULL);
+  assert (itm && itm->i_typnum == momty_item);
+  assert (itm->i_paylkind == mompayk_vector);
+  assert (itm->i_payload == pdata);
+  struct mom_valuevector_st *vvec = pdata;
+  unsigned len = vvec->vvec_count;
+  MOM_OUT (pout, MOMOUT_LITERAL ("/"), MOMOUT_DEC_INT ((int) len),
+	   MOMOUT_LITERAL ("["));
+  for (unsigned ix = 0; ix < len; ix++)
+    {
+      if (ix > 0)
+	MOM_OUT (pout, MOMOUT_LITERAL (","), MOMOUT_SPACE (40));
+      MOM_OUT (pout, MOMOUT_VALUE ((const momval_t) vvec->vvec_array[ix]));
+    }
+  MOM_OUT (pout, MOMOUT_LITERAL ("]"));
+}
+
 static const struct mom_payload_descr_st payldescr_vector_mom = {
   .dpayl_magic = MOM_PAYLOAD_MAGIC,
   .dpayl_name = "vector",
   .dpayl_loadfun = payl_vector_load_mom,
   .dpayl_dumpscanfun = payl_vector_dump_scan_mom,
   .dpayl_dumpjsonfun = payl_vector_dump_json_mom,
+  .dpayl_outputfun = payl_vector_output_mom,
 };
 
 
@@ -643,12 +690,25 @@ payl_assoc_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
   return jres;
 }
 
+
+static void
+payl_assoc_output_mom (struct momout_st *pout, momitem_t *itm, void *data)
+{
+  struct mom_itemattributes_st *at = data;
+  assert (itm->i_payload == at);
+  if (!at)
+    MOM_OUT (pout, MOMOUT_LITERAL ("*no-attrs*"));
+  else
+    mom_output_attributes (pout, at);
+}
+
 static const struct mom_payload_descr_st payldescr_assoc_mom = {
   .dpayl_magic = MOM_PAYLOAD_MAGIC,
   .dpayl_name = "assoc",
   .dpayl_loadfun = payl_assoc_load_mom,
   .dpayl_dumpscanfun = payl_assoc_dump_scan_mom,
   .dpayl_dumpjsonfun = payl_assoc_dump_json_mom,
+  .dpayl_outputfun = payl_assoc_output_mom,
 };
 
 
@@ -979,12 +1039,36 @@ payl_hset_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
   return jres;
 }
 
+static void
+payl_hset_output_mom (struct momout_st *pout, momitem_t *itm, void *data)
+{
+  assert (itm && itm->i_typnum != momty_item
+	  && itm->i_paylkind != mompayk_hset);
+  struct momhset_st *hset = data;
+  assert (hset == itm->i_payload);
+  assert (hset && hset->hset_magic == MOM_HSET_MAGIC);
+  unsigned sz = hset->hset_size;
+  momval_t *arr = hset->hset_arr;
+  MOM_OUT (pout, MOMOUT_LITERAL ("/"),
+	   MOMOUT_DEC_INT ((int) hset->hset_count), MOMOUT_LITERAL (":{"));
+  for (unsigned ix = 0; ix < sz; ix++)
+    {
+      momval_t curval = arr[ix];
+      if (!curval.ptr || curval.ptr == MOM_EMPTY)
+	continue;
+      MOM_OUT (pout, MOMOUT_SPACE (40),
+	       MOMOUT_VALUE ((const momval_t) curval));
+    }
+  MOM_OUT (pout, MOMOUT_LITERAL ("}:"));
+}
+
 static const struct mom_payload_descr_st payldescr_hset_mom = {
   .dpayl_magic = MOM_PAYLOAD_MAGIC,
   .dpayl_name = "hset",
   .dpayl_loadfun = payl_hset_load_mom,
   .dpayl_dumpscanfun = payl_hset_dump_scan_mom,
   .dpayl_dumpjsonfun = payl_hset_dump_json_mom,
+  .dpayl_outputfun = payl_hset_output_mom,
 };
 
 ////////////////////////////////////////////////////////////////

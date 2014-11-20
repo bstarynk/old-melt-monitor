@@ -32,6 +32,7 @@ const char mom_plugin_GPL_compatible[] = "GPLv3+";
 
 #define COMMANDS(CMD)                                   \
   CMD(clear,"clear the stack",non,NULL)                 \
+  CMD(clos,"start closure from TOS",itm,NULL)           \
   CMD(debugf,"[flags]; set debugflags",non,NULL)        \
   CMD(dump,"[dir]; dump state & continue",non,NULL)     \
   CMD(dup,"duplicate top",num,"%")                      \
@@ -1013,6 +1014,22 @@ cmd_do_node_mom (const char *lin, bool pres, momitem_t *itm)
     printf (ANSI_BOLD "**failed to make node**" ANSI_NORMAL "\n");
 }
 
+
+static void
+cmd_do_clos_mom (const char *lin, bool pres, momitem_t *funitm)
+{
+  char cmdbuf[80];
+  memset (cmdbuf, 0, sizeof (cmdbuf));
+  int markdepth = cmd_stack_mark_depth_mom ();
+  MOM_DEBUGPRINTF (cmd, "do_clos lin=%s funitm@%p", lin, funitm);
+  if (pres && funitm && markdepth >= 1)
+    {
+      MOM_DEBUGPRINTF (cmd, "do_clos it markdepth=%d top=%d", markdepth,
+		       vst_top_mom);
+    }
+  MOM_WARNPRINTF ("unimplemented do_clos lin=%s", lin);
+#warning cmd_do_clos_mom unimplemented
+}
 
 static void
 cmd_do_getat_mom (const char *lin, bool pres, momitem_t *atitm)

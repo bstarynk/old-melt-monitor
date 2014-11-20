@@ -306,6 +306,7 @@ void mom_initialize_buffer_output (struct momout_st *out, unsigned flags);
 // finalize a buffer output, so free the data
 void mom_finalize_buffer_output (struct momout_st *out);
 
+
 typedef enum momoutdir_en
 {
   MOMOUTDO__END = 0,
@@ -356,6 +357,11 @@ typedef enum momoutdir_en
   /// any item attributes
   MOMOUTDO_ITEM_ATTRIBUTES /*, momitem_t* itm */ ,
 #define MOMOUT_ITEM_ATTRIBUTES(S) MOMOUTDO_ITEM_ATTRIBUTES, \
+  MOM_REQUIRES_TYPE(S,const momitem_t*,mombad_item)
+  ///
+  /// any item payload
+  MOMOUTDO_ITEM_PAYLOAD /*, momitem_t* itm */ ,
+#define MOMOUT_ITEM_PAYLOAD(S) MOMOUTDO_ITEM_PAYLOAD, \
   MOM_REQUIRES_TYPE(S,const momitem_t*,mombad_item)
   ///
   /// decimal int
@@ -899,6 +905,10 @@ struct mom_itemattributes_st	// an hash table
   momusize_t size;
   struct mom_attrentry_st itattrtab[];	/* of size entries */
 };
+
+void mom_output_attributes (struct momout_st *out,
+			    struct mom_itemattributes_st *attrs);
+
 #define MOM_ITEM_MAGIC 0x5ce6881	/* mom item magic 97413249 */
 struct momitem_st
 {
@@ -1277,6 +1287,8 @@ struct mom_payload_descr_st
   momval_t (*dpayl_dumpjsonfun) (struct mom_dumper_st * du, momitem_t *ditm);
   // the payload finalizer
   void (*dpayl_finalizefun) (momitem_t *ditm, void *payloadata);
+  // the payload output
+  void (*dpayl_outputfun) (momout_t *pout, momitem_t *ditm, void *payloadata);
   intptr_t dpayl_spare1, dpayl_spare2;
 };
 
