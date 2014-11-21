@@ -3362,6 +3362,12 @@ static const struct mom_payload_descr_st payldescr_webexchange_mom = {
   .dpayl_finalizefun = mom_paylwebx_finalize
 };
 
+static const struct mom_payload_descr_st payldescr_websession_mom = {
+  .dpayl_magic = MOM_PAYLOAD_MAGIC,
+  .dpayl_name = "websession",
+  .dpayl_finalizefun = mom_paylwebsess_finalize
+};
+
 ///
 static const struct mom_payload_descr_st payldescr_jsonrpcexchange_mom = {
   .dpayl_magic = MOM_PAYLOAD_MAGIC,
@@ -3410,6 +3416,8 @@ struct mom_payload_descr_st *mom_payloadescr[mompayk__last + 1] = {
     (struct mom_payload_descr_st *) &payldescr_procedure_mom,
   [mompayk_webexchange] =
     (struct mom_payload_descr_st *) &payldescr_webexchange_mom,
+  [mompayk_websession] =
+    (struct mom_payload_descr_st *) &payldescr_websession_mom,
   [mompayk_jsonrpcexchange] =
     (struct mom_payload_descr_st *) &payldescr_jsonrpcexchange_mom,
 };

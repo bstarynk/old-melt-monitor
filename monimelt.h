@@ -1310,6 +1310,7 @@ enum mom_kindpayload_en
   mompayk_assoc,		// association of items to values
   mompayk_process,		// forked process and buffer for its output pipe
   mompayk_webexchange,		// HTTP interaction
+  mompayk_websession,		// HTTP web sessions
   mompayk_jsonrpcexchange,	// JSONRPC interaction
 
   mompayk__last = 64
@@ -1940,6 +1941,23 @@ struct mom_process_data_st
 };
 
 
+/**************** web session items ****************/
+
+#define MOM_WEBSESS_MAGIC 0x31dcebad	/* websess magic 836561837 */
+#define MOM_WEBSESS_SUFLEN 48
+struct mom_websession_data_st
+{
+  unsigned websess_magic;	/* always MOM_WEBSESS_MAGIC */
+  unsigned websess_rank;	/* unique rank */
+  char websess_suffix[MOM_WEBSESS_SUFLEN];	/* random suffix */
+  double websess_createtime;	/* creation time */
+  double websess_expiretime;	/* expiry time */
+  onion_websocket *websess_websocket;	/* the web socket */
+  struct mom_itemattributes_st *websess_attrs;
+};
+
+void mom_paylwebx_finalize (momitem_t *witm, void *wdata);	// in web-onion.c
+void mom_paylwebsess_finalize (momitem_t *witm, void *wdata);	// in web-onion.c
 /**************** web exchange items ****************/
 
 #define MOM_WEBX_MAGIC 0x11b63c9b	/* webx magic 297155739 */
@@ -1950,6 +1968,7 @@ struct mom_webexchange_data_st
   double webx_time;
   onion_request *webx_requ;
   onion_response *webx_resp;
+  momitem_t *webx_sessitm;	/* the session item */
   char *webx_obuf;		/* malloc-ed, not GC_malloced! */
   size_t webx_osize;
   char *webx_mime;

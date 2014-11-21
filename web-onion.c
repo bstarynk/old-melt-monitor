@@ -33,6 +33,82 @@ struct webdict_mom_st
   struct mom_jsonentry_st webd_pairtab[];
 };
 
+#define WEBSESSION_DURATION_MOM 50400.0	/* 14 hours */
+
+static unsigned websesscount_mom;
+static momitem_t *
+make_websession_mom (struct mom_websession_data_st **pws)
+{
+  momitem_t *wsessitm = NULL;
+  struct mom_websession_data_st *dws = NULL;
+  wsessitm = mom_make_item ();
+  double wt = mom_clock_time (CLOCK_REALTIME);
+  dws =
+    MOM_GC_ALLOC ("websessiondata", sizeof (struct mom_websession_data_st));
+  pthread_mutex_lock (&onion_mtx_mom);
+  websesscount_mom++;
+  dws->websess_rank = websesscount_mom;
+  long n = ((long) getpid () + (long) (wt * 5001.0)) & (LONG_MAX / 2);
+  snprintf (dws->websess_suffix, MOM_WEBSESS_SUFLEN, "c%u_%08lx_%08lx_%08lx",
+	    websesscount_mom, (long) n,
+	    (long) mom_random_nonzero_64 () & (LONG_MAX / 2),
+	    (long) mom_random_nonzero_64 () & (LONG_MAX / 2));
+  dws->websess_createtime = wt;
+  dws->websess_expiretime = wt + WEBSESSION_DURATION_MOM;
+  dws->websess_websocket = NULL;
+  dws->websess_attrs = NULL;
+  dws->websess_magic = MOM_WEBSESS_MAGIC;
+  wsessitm->i_payload = dws;
+  wsessitm->i_paylkind = mompayk_websession;
+  pthread_mutex_unlock (&onion_mtx_mom);
+  if (pws)
+    *pws = dws;
+  return wsessitm;
+}
+
+void
+mom_paylwebsess_finalize (momitem_t *witm, void *wdata)
+{
+  struct mom_websession_data_st *dws = wdata;
+  if (!dws)
+    return;
+  assert (dws->websess_magic == MOM_WEBSESS_MAGIC);
+  assert (witm && witm->i_typnum == momty_item);
+  pthread_mutex_lock (&onion_mtx_mom);
+  if (dws->websess_websocket)
+    onion_websocket_free (dws->websess_websocket);
+  dws->websess_websocket = NULL;
+  memset (dws, 0, sizeof (struct mom_websession_data_st));
+  pthread_mutex_unlock (&onion_mtx_mom);
+}
+
+static momitem_t *
+websession_from_cookie_mom (const char *cookie)
+{
+  bool ok = false;
+  const char *endid = NULL;
+  momitem_t *wsessitm = NULL;
+  if (!mom_looks_like_random_id_cstr (cookie, &endid) || !endid
+      || *endid != '.')
+    return NULL;
+  wsessitm = mom_get_item_of_identcstr (cookie);
+  if (!wsessitm)
+    return NULL;
+  mom_lock_item (wsessitm);
+  if (wsessitm->i_paylkind != mompayk_websession)
+    goto end;
+  struct mom_websession_data_st *dws = wsessitm->i_payload;
+  assert (dws && dws->websess_magic == MOM_WEBSESS_MAGIC);
+  if (strcmp (endid + 1, dws->websess_suffix))
+    goto end;
+  ok = mom_clock_time (CLOCK_REALTIME) < dws->websess_expiretime;
+end:
+  mom_unlock_item (wsessitm);
+  if (ok)
+    return wsessitm;
+  return NULL;
+}
+
 
 // used thru onion_dict_preorder
 static void
@@ -116,6 +192,7 @@ handle_websocket_mom (void *ignore __attribute__ ((unused)),
 }
 
 
+#define COOKIE_NAME_MOM "MoniMeltSession"
 #define WEB_ANSWER_DELAY_MOM ((MOM_IS_DEBUGGING(web))?16.0:4.0)
 static onion_connection_status
 handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
@@ -146,10 +223,34 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
   const char *fullpath = onion_request_get_fullpath (requ);
   const char *path = onion_request_get_path (requ);
   unsigned flags = onion_request_get_flags (requ);
+  const char *sesscookie = onion_request_get_cookie (requ, COOKIE_NAME_MOM);
   MOM_DEBUGPRINTF (web,
-		   "process_request tid %ld webnum#%d=%#x webtim=%.3f endtim=%.3f fullpath=%s, path %s, flags %#x",
+		   "process_request tid %ld webnum#%d=%#x webtim=%.3f endtim=%.3f fullpath=%s, path %s, flags %#x sesscookie=%s",
 		   (long) mom_gettid (), webnum, webnum, webtim, endtim,
-		   fullpath, path, flags);
+		   fullpath, path, flags, sesscookie);
+  momitem_t *wsessitm = NULL;
+  if (sesscookie)
+    {
+      wsessitm = websession_from_cookie_mom (sesscookie);
+      if (!wsessitm)
+	{
+	  onion_response_add_cookie (resp, COOKIE_NAME_MOM, "No_session", 0,
+				     NULL, NULL, 0);
+	}
+    }
+  else
+    {
+      struct mom_websession_data_st *dws = NULL;
+      char cookiebuf[80];
+      memset (cookiebuf, 0, sizeof (cookiebuf));
+      wsessitm = make_websession_mom (&dws);
+      assert (dws && dws->websess_magic == MOM_WEBSESS_MAGIC);
+      snprintf (cookiebuf, sizeof (cookiebuf), "%s.%s",
+		mom_ident_cstr_of_item (wsessitm), dws->websess_suffix);
+      onion_response_add_cookie (resp, COOKIE_NAME_MOM, cookiebuf,
+				 (time_t) WEBSESSION_DURATION_MOM, NULL, NULL,
+				 0);
+    }
   /// hack to deliver local files in MOM_WEB_DIRECTORY and the root
   /// document as MOM_WEB_ROOT_PAGE
   {
