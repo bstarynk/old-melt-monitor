@@ -436,8 +436,8 @@ cmd_do_named_mom (const char *lin)
 	}
     }
   if (nbmatch == 0)
-    printf (ANSI_BOLD "no named items (of %d) matching" ANSI_NORMAL " %s\n",
-	    nbnamed, lin);
+    printf (ANSI_BOLD "no named item" ANSI_NORMAL " (of %d) "
+	    ANSI_BOLD "matching" ANSI_NORMAL " %s\n", nbnamed, lin);
   else
     MOM_OUT (mom_stdout, MOMOUT_SPACE (24),
 	     MOMOUT_LITERAL (" " ANSI_BOLD "/ "),
@@ -1822,7 +1822,8 @@ insertlastcommand_rl_mom (int count, int key)
 {
   MOM_DEBUGPRINTF (cmd, "pastelastcommand count=%d key=%d lastline=%s\n",
 		   count, key, lastline_mom);
-  rl_insert_text (lastline_mom);
+  if (lastline_mom)
+    rl_insert_text (lastline_mom);
 }
 
 void
@@ -1831,8 +1832,8 @@ momplugin_after_load (void)
   int cnt = 0;
   MOM_INFORMPRINTF ("momplug_cmd starting after load");
   char *lin = NULL;
-  printf ("### type ,help to get some help,\n"
-	  "### and Ctrl-L to insert last entered command\n");
+  printf ("### type " ANSI_BOLD ",help" ANSI_NORMAL " to get some help,\n"
+	  "### and Ctrl-L to insert last entered command.\n");
   rl_bind_keyseq ("\\C-l", insertlastcommand_rl_mom);
   for (;;)
     {

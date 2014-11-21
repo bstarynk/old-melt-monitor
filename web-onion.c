@@ -77,6 +77,44 @@ mom_paylwebx_finalize (momitem_t *witm, void *wdata)
 }
 
 
+static onion_connection_status
+handle_websocket_mom (void *ignore __attribute__ ((unused)),
+		      onion_request * requ, onion_response * resp)
+{
+  unsigned flags = onion_request_get_flags (requ);
+  double webtim = mom_clock_time (CLOCK_REALTIME);
+  const char *fullpath = onion_request_get_fullpath (requ);
+  MOM_DEBUGPRINTF (web,
+		   "handle_websocket tid %ld webtim=%.3f fullpath %s flags%#x",
+		   (long) mom_gettid (), webtim, fullpath, flags);
+  if ((flags & OR_METHODS) == OR_GET || (flags & OR_METHODS) == OR_HEAD)
+    {
+      onion_websocket *websock = onion_websocket_new (requ, resp);
+      MOM_DEBUGPRINTF (web, "got websock@%p", (void *) websock);
+      if (websock)
+	return OCS_WEBSOCKET;
+      else
+	MOM_WARNPRINTF ("failed to get web socket for %s flags%#x", fullpath,
+			flags);
+    };
+  char failbuf[320];
+  char timbuf[64];
+  memset (failbuf, 0, sizeof (failbuf));
+  memset (timbuf, 0, sizeof (timbuf));
+  mom_strftime_centi (timbuf, sizeof (timbuf),
+		      "%Y-%b-%d %H:%M:%S.__ %Z", webtim);
+  snprintf (failbuf, sizeof (failbuf),
+	    "<html><head><title>Monimelt Websocket error</title></head>\n"
+	    "<body><h1>Monimelt bad websocket</h1>\n"
+	    "<p>websocket fullpath <tt>%s</tt> at <i>%s</i> method#%d failure.</p>"
+	    "</body></html>\n", fullpath, timbuf, (flags & OR_METHODS));
+  return onion_shortcut_response_extra_headers
+    (failbuf,
+     HTTP_NOT_FOUND, requ, resp,
+     "Content-Length", strlen (failbuf),
+     "Content-Type", "text/html; charset=utf-8", NULL);
+}
+
 
 #define WEB_ANSWER_DELAY_MOM ((MOM_IS_DEBUGGING(web))?16.0:4.0)
 static onion_connection_status
@@ -818,6 +856,7 @@ mom_start_web (const char *webhost)
   onion_handler *hdlr = onion_handler_new ((onion_handler_handler)
 					   handle_web_exchange_mom, NULL,
 					   NULL);
+  onion_url_add (onion_root_url_mom, "websock", handle_websocket_mom);
   onion_url_add_handler (onion_root_url_mom, "^", hdlr);
   onion_url_add_handler (onion_root_url_mom, "status",
 			 onion_internal_status ());

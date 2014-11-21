@@ -90,6 +90,7 @@
 #include <onion/shortcuts.h>
 #include <onion/exportlocal.h>
 #include <onion/internal_status.h>
+#include <onion/websocket.h>
 
 
 
