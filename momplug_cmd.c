@@ -1026,9 +1026,53 @@ cmd_do_clos_mom (const char *lin, bool pres, momitem_t *funitm)
     {
       MOM_DEBUGPRINTF (cmd, "do_clos it markdepth=%d top=%d", markdepth,
 		       vst_top_mom);
+      momval_t *varr = cmd_stack_nth_ptr_mom (-(markdepth - 1));
+      momitem_t *cloitm = mom_value_to_item (cmd_stack_nth_value_mom (-1));
+      if (cloitm && mom_item_payload_kind (funitm) == mompayk_tfunrout)
+	{
+	  mom_item_start_closure_of_array (cloitm, funitm, markdepth - 1,
+					   varr);
+	  MOM_OUT (mom_stdout, MOMOUT_LITERAL (ANSI_BOLD "item "),
+		   MOMOUT_ITEM ((const momitem_t *) cloitm),
+		   MOMOUT_LITERAL (" made closure for "),
+		   MOMOUT_DEC_INT ((int) mom_item_closure_length (cloitm)),
+		   MOMOUT_LITERAL (" values." ANSI_NORMAL),
+		   MOMOUT_NEWLINE ());
+	  cmd_stack_pop_mom (markdepth + 1);	/* also pop the mark */
+	  snprintf (cmdbuf,
+		    sizeof (cmdbuf),
+		    ",clos %s",
+		    mom_string_cstr ((momval_t)
+				     mom_item_get_name_or_idstr (cloitm)));
+	  add_history (cmdbuf);
+	  return;
+	}
     }
-  MOM_WARNPRINTF ("unimplemented do_clos lin=%s", lin);
-#warning cmd_do_clos_mom unimplemented
+  else if (!pres && markdepth >= 2)
+    {
+      MOM_DEBUGPRINTF (cmd, "do_clos plain markdepth=%d top=%d", markdepth,
+		       vst_top_mom);
+      momval_t *varr = cmd_stack_nth_ptr_mom (-(markdepth - 2));
+      momitem_t *cloitm = mom_value_to_item (cmd_stack_nth_value_mom (-2));
+      momitem_t *cfunitm = mom_value_to_item (cmd_stack_nth_value_mom (-1));
+      if (cloitm && mom_item_payload_kind (funitm) == mompayk_tfunrout)
+	{
+	  mom_item_start_closure_of_array (cloitm, cfunitm, markdepth - 1,
+					   varr);
+	  MOM_OUT (mom_stdout, MOMOUT_LITERAL (ANSI_BOLD "item "),
+		   MOMOUT_ITEM ((const momitem_t *) cloitm),
+		   MOMOUT_LITERAL (" made closure for "),
+		   MOMOUT_DEC_INT ((int) mom_item_closure_length (cloitm)),
+		   MOMOUT_LITERAL (" values." ANSI_NORMAL),
+		   MOMOUT_NEWLINE ());
+	  cmd_stack_pop_mom (markdepth + 2);	/* also pop the mark */
+	  add_history (",clos");
+	  return;
+	}
+    }
+  printf (ANSI_BOLD "failed ,clos command." ANSI_NORMAL "\n"
+	  "stack should have: ... mark  closed-values ... closureitem; for ,clos funitem\n"
+	  "\t ... mark closed-values ... closureitem funitem; for ,clos\n");
 }
 
 static void
@@ -1303,57 +1347,6 @@ cmd_do_top_mom (const char *lin)
 	    }
 	  if (mom_is_item (curval))
 	    {
-	      const char *kinds = NULL;
-	      unsigned k = mom_item_payload_kind (curval.pitem);
-	      switch (k)
-		{
-		case mompayk_none:
-		  kinds = "*no-payload*";
-		  break;
-		case mompayk_queue:
-		  kinds = "queue";
-		  break;
-		case mompayk_tfunrout:
-		  kinds = "tfunrout";
-		  break;
-		case mompayk_closure:
-		  kinds = "closure";
-		  break;
-		case mompayk_procedure:
-		  kinds = "procedure";
-		  break;
-		case mompayk_tasklet:
-		  kinds = "tasklet";
-		  break;
-		case mompayk_buffer:
-		  kinds = "buffer";
-		  break;
-		case mompayk_vector:
-		  kinds = "vector";
-		  break;
-		case mompayk_hset:
-		  kinds = "hset";
-		  break;
-		case mompayk_assoc:
-		  kinds = "assoc";
-		  break;
-		case mompayk_process:
-		  kinds = "process";
-		  break;
-		case mompayk_webexchange:
-		  kinds = "webexchange";
-		  break;
-		case mompayk_jsonrpcexchange:
-		  kinds = "jsonrpcexchange";
-		  break;
-		default:
-		  {
-		    char kindbuf[32];
-		    snprintf (kindbuf, sizeof (kindbuf), "kind#%d", k);
-		    kinds = MOM_GC_STRDUP ("kindbuf", kindbuf);
-		  };
-		  break;
-		}
 	      MOM_OUT (mom_stdout, MOMOUT_SPACE (48),
 		       MOMOUT_LITERALV ((const char
 					 *) ((curval.pitem->i_space ==
