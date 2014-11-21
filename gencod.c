@@ -81,6 +81,7 @@
 #define CGEN_FUN_CONSTANTITEMS_PREFIX "momfconstitems_"
 #define CGEN_FUN_CODE_PREFIX "momfuncod_"
 #define CGEN_DROUTARR_PREFIX "momdroutarr_"
+#define CGEN_MD5MOD_PREFIX "mommd5mod_"
 
 enum cgenroutkind_mom_en
 {
@@ -2802,6 +2803,15 @@ emit_moduleinit_cgen (struct c_generator_mom_st *cg)
   assert (mom_is_seqitem (cg->cgen_modseqv));
   unsigned nbrout = mom_seqitem_length (cg->cgen_modseqv);
   MOM_OUT (&cg->cgen_outhead,
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL ("// declare module md5sum for "),
+	   MOMOUT_ITEM ((const momitem_t *) cg->cgen_moditm),
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL ("const char " CGEN_MD5MOD_PREFIX),
+	   MOMOUT_LITERALV ((const char *)
+			    mom_ident_cstr_of_item (cg->cgen_moditm)),
+	   MOMOUT_LITERAL ("[] = MONIMELT_MD5_MODULE; // Makefile generated"),
+	   MOMOUT_NEWLINE (),
 	   MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL
 	   ("// declare module routines descriptor array for "),

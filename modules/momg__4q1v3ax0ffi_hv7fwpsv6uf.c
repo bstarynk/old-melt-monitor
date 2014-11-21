@@ -43,6 +43,9 @@ static const momitem_t* mompconstitems__682ush7cppa_s7vzfd2rsxp[2]; // define co
 
 static momitem_t* momfconstitems__8qmqy249w63_fxdr6rdz48m[3]; // constant items of tasklet function test_fun1
 
+// declare module md5sum for test_module
+const char mommd5mod__4q1v3ax0ffi_hv7fwpsv6uf[] = MONIMELT_MD5_MODULE; // Makefile generated
+
 // declare module routines descriptor array for test_module
 static const union momrout_un momdroutarr__4q1v3ax0ffi_hv7fwpsv6uf[3];
 
