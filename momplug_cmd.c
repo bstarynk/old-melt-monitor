@@ -1815,13 +1815,25 @@ bad_command:
 }
 
 #define POLL_TIMEOUT 500
+static char *lastline_mom;
+
+static int
+insertlastcommand_rl_mom (int count, int key)
+{
+  MOM_DEBUGPRINTF (cmd, "pastelastcommand count=%d key=%d lastline=%s\n",
+		   count, key, lastline_mom);
+  rl_insert_text (lastline_mom);
+}
+
 void
 momplugin_after_load (void)
 {
   int cnt = 0;
   MOM_INFORMPRINTF ("momplug_cmd starting after load");
   char *lin = NULL;
-  printf ("### type ,help to get some help.\n");
+  printf ("### type ,help to get some help,\n"
+	  "### and Ctrl-L to insert last entered command\n");
+  rl_bind_keyseq ("\\C-l", insertlastcommand_rl_mom);
   for (;;)
     {
       char prompt[64];
@@ -1833,6 +1845,7 @@ momplugin_after_load (void)
       MOM_DEBUGPRINTF (cmd, "after readline lin=%s", lin);
       if (!lin)
 	break;
+      lastline_mom = MOM_GC_STRDUP ("lastline", lin);
       cmd_interpret_mom (lin);
     };
   MOM_INFORMPRINTF ("momplug_cmd ending after load");
