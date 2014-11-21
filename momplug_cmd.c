@@ -762,6 +762,24 @@ cmd_do_xplode_mom (const char *lin)
 							   connitm)));
       add_history (",xplode");
     }
+  else if (mom_is_item (topv)
+	   && mom_item_payload_kind (topv.pitem) == mompayk_closure)
+    {
+      momitem_t *cloitm = topv.pitem;
+      unsigned clolen = mom_item_closure_length (cloitm);
+      cmd_stack_pop_mom (1);
+      cmd_stack_push_mark_mom ();
+      for (unsigned ix = 0; ix < clolen; ix++)
+	cmd_stack_push_mom (mom_item_closure_nth (cloitm, ix));
+      cmd_stack_push_mom ((momval_t) mom_item_closure_tfun_item (cloitm));
+      printf (ANSI_BOLD
+	      "from closure pushed mark then %d closed values + tfun.item:"
+	      ANSI_NORMAL "%s" "\n", (int) clolen,
+	      mom_string_cstr ((momval_t)
+			       mom_item_get_name_or_idstr ((momitem_t *)
+							   cloitm)));
+      add_history (",xplode");
+    }
   else
     {
       printf ("invalid top-of-stack to explode\n");
@@ -1026,19 +1044,20 @@ cmd_do_clos_mom (const char *lin, bool pres, momitem_t *funitm)
     {
       MOM_DEBUGPRINTF (cmd, "do_clos it markdepth=%d top=%d", markdepth,
 		       vst_top_mom);
-      momval_t *varr = cmd_stack_nth_ptr_mom (-(markdepth - 1));
+      momval_t *varr = cmd_stack_nth_ptr_mom (-(markdepth - 2));
       momitem_t *cloitm = mom_value_to_item (cmd_stack_nth_value_mom (-1));
       if (cloitm && mom_item_payload_kind (funitm) == mompayk_tfunrout)
 	{
 	  mom_item_start_closure_of_array (cloitm, funitm, markdepth - 1,
 					   varr);
-	  MOM_OUT (mom_stdout, MOMOUT_LITERAL (ANSI_BOLD "item "),
+	  MOM_OUT (mom_stdout, MOMOUT_LITERAL (ANSI_BOLD "pushed item "),
 		   MOMOUT_ITEM ((const momitem_t *) cloitm),
-		   MOMOUT_LITERAL (" made closure for "),
+		   MOMOUT_LITERAL (", closure for "),
 		   MOMOUT_DEC_INT ((int) mom_item_closure_length (cloitm)),
 		   MOMOUT_LITERAL (" values." ANSI_NORMAL),
 		   MOMOUT_NEWLINE ());
 	  cmd_stack_pop_mom (markdepth + 1);	/* also pop the mark */
+	  cmd_stack_push_mom ((momval_t) cloitm);
 	  snprintf (cmdbuf,
 		    sizeof (cmdbuf),
 		    ",clos %s",

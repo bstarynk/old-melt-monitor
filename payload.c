@@ -992,7 +992,7 @@ payl_hset_load_mom (struct mom_loader_st *ld, momitem_t *itm, momval_t jpayl)
 static void
 payl_hset_dump_scan_mom (struct mom_dumper_st *du, momitem_t *itm)
 {
-  assert (itm && itm->i_typnum != momty_item
+  assert (itm && itm->i_typnum == momty_item
 	  && itm->i_paylkind != mompayk_hset);
   struct momhset_st *hset = itm->i_payload;
   assert (hset && hset->hset_magic == MOM_HSET_MAGIC);
@@ -1011,7 +1011,7 @@ static momval_t
 payl_hset_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
 {
   momval_t jres = MOM_NULLV;
-  assert (itm && itm->i_typnum != momty_item
+  assert (itm && itm->i_typnum == momty_item
 	  && itm->i_paylkind != mompayk_hset);
   struct momhset_st *hset = itm->i_payload;
   assert (hset && hset->hset_magic == MOM_HSET_MAGIC);
@@ -1042,7 +1042,7 @@ payl_hset_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
 static void
 payl_hset_output_mom (struct momout_st *pout, momitem_t *itm, void *data)
 {
-  assert (itm && itm->i_typnum != momty_item
+  assert (itm && itm->i_typnum == momty_item
 	  && itm->i_paylkind != mompayk_hset);
   struct momhset_st *hset = data;
   assert (hset == itm->i_payload);
@@ -1407,7 +1407,7 @@ mom_item_start_closure_of_array (momitem_t *itm, momitem_t *funitm,
 void
 mom_item_closure_set_nth (momitem_t *itm, int rk, momval_t cval)
 {
-  if (!itm || itm->i_typnum != momty_item
+  if (!itm || itm->i_typnum == momty_item
       || itm->i_paylkind != mompayk_closure)
     return;
   struct momclosure_st *clos = itm->i_payload;
@@ -1502,7 +1502,7 @@ payl_closure_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
 static void
 payl_closure_output_mom (struct momout_st *pout, momitem_t *itm, void *data)
 {
-  assert (itm && itm->i_typnum != momty_item
+  assert (itm && itm->i_typnum == momty_item
 	  && itm->i_paylkind == mompayk_closure);
   assert (data == itm->i_payload);
   struct momclosure_st *clos = data;
