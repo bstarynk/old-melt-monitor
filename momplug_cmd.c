@@ -1815,7 +1815,7 @@ bad_command:
 }
 
 #define POLL_TIMEOUT 500
-static char *lastline_mom;
+static const char *lastline_mom;
 
 static int
 insertlastcommand_rl_mom (int count, int key)
@@ -1824,6 +1824,7 @@ insertlastcommand_rl_mom (int count, int key)
 		   count, key, lastline_mom);
   if (lastline_mom)
     rl_insert_text (lastline_mom);
+  return 0;
 }
 
 void

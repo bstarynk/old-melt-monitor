@@ -83,15 +83,23 @@ mom_paylwebsess_finalize (momitem_t *witm, void *wdata)
 }
 
 static momitem_t *
-websession_from_cookie_mom (const char *cookie)
+websession_from_cookie_mom (char *cookie)
 {
   bool ok = false;
-  const char *endid = NULL;
+  char *endid = NULL;
   momitem_t *wsessitm = NULL;
-  if (!mom_looks_like_random_id_cstr (cookie, &endid) || !endid
-      || *endid != '.')
-    return NULL;
+  if (!mom_looks_like_random_id_cstr (cookie, (const char **) &endid)
+      || !endid || *endid != '.')
+    {
+      MOM_DEBUGPRINTF (web, "session_from_cookie cookie=%s endid=%s", cookie,
+		       endid);
+      return NULL;
+    }
+  *endid = 0;
   wsessitm = mom_get_item_of_identcstr (cookie);
+  *endid = '.';
+  MOM_DEBUG (web, MOMOUT_LITERAL ("session_from_cookie putative wsessitm:"),
+	     MOMOUT_ITEM ((const momitem_t *) wsessitm));
   if (!wsessitm)
     return NULL;
   mom_lock_item (wsessitm);
@@ -99,14 +107,25 @@ websession_from_cookie_mom (const char *cookie)
     goto end;
   struct mom_websession_data_st *dws = wsessitm->i_payload;
   assert (dws && dws->websess_magic == MOM_WEBSESS_MAGIC);
+  MOM_DEBUGPRINTF (web, "session_from_cookie dws@%p suffix=%s", dws,
+		   dws->websess_suffix);
   if (strcmp (endid + 1, dws->websess_suffix))
     goto end;
   ok = mom_clock_time (CLOCK_REALTIME) < dws->websess_expiretime;
 end:
   mom_unlock_item (wsessitm);
   if (ok)
-    return wsessitm;
-  return NULL;
+    {
+      MOM_DEBUG (web, MOMOUT_LITERAL ("session_from_cookie final wsessitm:"),
+		 MOMOUT_ITEM ((const momitem_t *) wsessitm));
+      return wsessitm;
+    }
+  else
+    {
+      MOM_DEBUGPRINTF (web, "session_from_cookie not found cookie=%s",
+		       cookie);
+      return NULL;
+    }
 }
 
 
@@ -223,22 +242,19 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
   const char *fullpath = onion_request_get_fullpath (requ);
   const char *path = onion_request_get_path (requ);
   unsigned flags = onion_request_get_flags (requ);
-  const char *sesscookie = onion_request_get_cookie (requ, COOKIE_NAME_MOM);
+  char *sesscookie = onion_request_get_cookie (requ, COOKIE_NAME_MOM);
   MOM_DEBUGPRINTF (web,
-		   "process_request tid %ld webnum#%d=%#x webtim=%.3f endtim=%.3f fullpath=%s, path %s, flags %#x sesscookie=%s",
+		   "process_request tid %ld webnum#%d=%#x webtim=%.3f endtim=%.3f fullpath=%s\n.. path %s, flags %#x sesscookie=%s",
 		   (long) mom_gettid (), webnum, webnum, webtim, endtim,
 		   fullpath, path, flags, sesscookie);
   momitem_t *wsessitm = NULL;
-  if (sesscookie)
+  if (sesscookie && sesscookie[0] == '_')
     {
       wsessitm = websession_from_cookie_mom (sesscookie);
-      if (!wsessitm)
-	{
-	  onion_response_add_cookie (resp, COOKIE_NAME_MOM, "No_session", 0,
-				     NULL, NULL, 0);
-	}
+      MOM_DEBUG (web, MOMOUT_LITERAL ("process_request wsessitm="),
+		 MOMOUT_ITEM ((const momitem_t *) wsessitm));
     }
-  else
+  if (!wsessitm)
     {
       struct mom_websession_data_st *dws = NULL;
       char cookiebuf[80];
@@ -250,6 +266,10 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
       onion_response_add_cookie (resp, COOKIE_NAME_MOM, cookiebuf,
 				 (time_t) WEBSESSION_DURATION_MOM, NULL, NULL,
 				 0);
+      MOM_DEBUG (web, MOMOUT_LITERAL ("process_request new wsessitm="),
+		 MOMOUT_ITEM ((const momitem_t *) wsessitm),
+		 MOMOUT_LITERAL (" cookie:"),
+		 MOMOUT_LITERALV ((const char *) cookiebuf));
     }
   /// hack to deliver local files in MOM_WEB_DIRECTORY and the root
   /// document as MOM_WEB_ROOT_PAGE
