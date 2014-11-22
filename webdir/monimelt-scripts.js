@@ -17,3 +17,16 @@
       along with GCC; see the file COPYING3.   If not see
       <http://www.gnu.org/licenses/>.
 **/
+
+var websocket_mom;
+var dochref_mom;
+var wsockhref_mom;
+// jquery ready function for our document
+$(function(){
+    dochref_mom = $(location).attr('href');
+    console.debug ("href=", dochref_mom); // for example, href=http://localhost:8086/
+    wsockhref_mom = dochref_mom.replace(/^http/,"ws") + "websock";
+    console.debug ("wsockhref=", wsockhref_mom);
+    websocket_mom = $.websocket(wsockhref_mom);
+    console.debug ("websocket=", websocket_mom);
+});

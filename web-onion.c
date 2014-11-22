@@ -35,6 +35,8 @@ struct webdict_mom_st
 
 #define WEBSESSION_DURATION_MOM 50400.0	/* 14 hours */
 
+#define COOKIE_NAME_MOM "MoniMeltSession"
+
 static unsigned websesscount_mom;
 static momitem_t *
 make_websession_mom (struct mom_websession_data_st **pws)
@@ -222,36 +224,79 @@ handle_websocket_mom (void *ignore __attribute__ ((unused)),
   MOM_DEBUGPRINTF (web,
 		   "handle_websocket tid %ld webtim=%.3f fullpath %s flags%#x",
 		   (long) mom_gettid (), webtim, fullpath, flags);
-  if ((flags & OR_METHODS) == OR_GET || (flags & OR_METHODS) == OR_HEAD)
-    {
-      onion_websocket *websock = onion_websocket_new (requ, resp);
-      MOM_DEBUGPRINTF (web, "got websock@%p", (void *) websock);
-      if (websock)
-	return OCS_WEBSOCKET;
-      else
-	MOM_WARNPRINTF ("failed to get web socket for %s flags%#x", fullpath,
-			flags);
-    };
+  char *sesscookie =
+    (char *) onion_request_get_cookie (requ, COOKIE_NAME_MOM);
+  momitem_t *wsessitm = NULL;
+  struct mom_websession_data_st *dws = NULL;
+  char *failmsg = NULL;
   char failbuf[320];
   char timbuf[64];
   memset (failbuf, 0, sizeof (failbuf));
   memset (timbuf, 0, sizeof (timbuf));
+  if (sesscookie && sesscookie[0] == '_')
+    {
+      wsessitm = websession_from_cookie_mom (sesscookie);
+      MOM_DEBUG (web, MOMOUT_LITERAL ("handle_websocket wsessitm="),
+		 MOMOUT_ITEM ((const momitem_t *) wsessitm));
+      if (wsessitm)
+	{
+	  mom_lock_item (wsessitm);
+	  if (wsessitm->i_paylkind == mompayk_websession)
+	    dws = (struct mom_websession_data_st *) wsessitm->i_payload;
+	  if (!dws)
+	    {
+	      failmsg = "Bad session";
+	      goto failure;
+	    };
+	  assert (dws && dws->websess_magic == MOM_WEBSESS_MAGIC);
+	}
+      else
+	{
+	  failmsg = "No session cookie.";
+	  goto failure;
+	};
+      if (dws
+	  && ((flags & OR_METHODS) == OR_GET
+	      || (flags & OR_METHODS) == OR_HEAD))
+	{
+	  onion_websocket *websock = onion_websocket_new (requ, resp);
+	  MOM_DEBUGPRINTF (web, "got websock@%p", (void *) websock);
+	  if (websock)
+	    {
+	      dws->websess_websocket = websock;
+	      // this is the only successful return, we unlock the session item
+	      mom_unlock_item (wsessitm);
+	      return OCS_WEBSOCKET;
+	    }
+	  else
+	    {
+	      MOM_WARNPRINTF ("failed to get web socket for %s flags%#x",
+			      fullpath, flags);
+	      failmsg = "No websocket.";
+	      goto failure;
+	    };
+	}
+    }
+failure:
+  if (wsessitm)
+    mom_unlock_item (wsessitm), wsessitm = NULL;
   mom_strftime_centi (timbuf, sizeof (timbuf),
 		      "%Y-%b-%d %H:%M:%S.__ %Z", webtim);
   snprintf (failbuf, sizeof (failbuf),
 	    "<html><head><title>Monimelt Websocket error</title></head>\n"
 	    "<body><h1>Monimelt bad websocket</h1>\n"
-	    "<p>websocket fullpath <tt>%s</tt> at <i>%s</i> method#%d failure.</p>"
-	    "</body></html>\n", fullpath, timbuf, (flags & OR_METHODS));
-  return onion_shortcut_response_extra_headers
-    (failbuf,
-     HTTP_NOT_FOUND, requ, resp,
-     "Content-Length", strlen (failbuf),
-     "Content-Type", "text/html; charset=utf-8", NULL);
+	    "<p>websocket fullpath <tt>%s</tt> at <i>%s</i> method#%d failure. %s</p>"
+	    "</body></html>\n", fullpath, timbuf, (flags & OR_METHODS),
+	    failmsg ? failmsg : "");
+  return onion_shortcut_response_extra_headers (failbuf, HTTP_NOT_FOUND, requ,
+						resp, "Content-Length",
+						strlen (failbuf),
+						"Content-Type",
+						"text/html; charset=utf-8",
+						NULL);
 }
 
 
-#define COOKIE_NAME_MOM "MoniMeltSession"
 #define WEB_ANSWER_DELAY_MOM ((MOM_IS_DEBUGGING(web))?16.0:4.0)
 static onion_connection_status
 handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
@@ -282,7 +327,8 @@ handle_web_exchange_mom (void *ignore __attribute__ ((unused)),
   const char *fullpath = onion_request_get_fullpath (requ);
   const char *path = onion_request_get_path (requ);
   unsigned flags = onion_request_get_flags (requ);
-  char *sesscookie = onion_request_get_cookie (requ, COOKIE_NAME_MOM);
+  char *sesscookie =
+    (char *) onion_request_get_cookie (requ, COOKIE_NAME_MOM);
   MOM_DEBUGPRINTF (web,
 		   "process_request tid %ld webnum#%d=%#x webtim=%.3f endtim=%.3f fullpath=%s\n.. path %s, flags %#x sesscookie=%s",
 		   (long) mom_gettid (), webnum, webnum, webtim, endtim,
