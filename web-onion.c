@@ -67,6 +67,46 @@ make_websession_mom (struct mom_websession_data_st **pws)
 }
 
 void
+mom_item_websession_put (momitem_t *witm, momitem_t *atitm, momval_t val)
+{
+  if (witm && witm->i_typnum == momty_item
+      && witm->i_paylkind == mompayk_websession
+      && atitm && atitm->i_typnum == momty_item && val.ptr)
+    {
+      struct mom_websession_data_st *wds = witm->i_payload;
+      assert (wds->websess_magic == MOM_WEBSESS_MAGIC);
+      wds->websess_attrs = mom_put_attribute (wds->websess_attrs, atitm, val);
+    }
+}
+
+void
+mom_item_websession_remove (momitem_t *witm, momitem_t *atitm)
+{
+  if (witm && witm->i_typnum == momty_item
+      && witm->i_paylkind == mompayk_websession
+      && atitm && atitm->i_typnum == momty_item)
+    {
+      struct mom_websession_data_st *wds = witm->i_payload;
+      assert (wds->websess_magic == MOM_WEBSESS_MAGIC);
+      wds->websess_attrs = mom_remove_attribute (wds->websess_attrs, atitm);
+    }
+}
+
+momval_t
+mom_item_websession_attrset (momitem_t *witm)
+{
+  momval_t res = MOM_NULLV;
+  if (witm && witm->i_typnum == momty_item
+      && witm->i_paylkind == mompayk_websession)
+    {
+      struct mom_websession_data_st *wds = witm->i_payload;
+      assert (wds->websess_magic == MOM_WEBSESS_MAGIC);
+      res = (momval_t) mom_set_attributes (wds->websess_attrs);
+    }
+  return res;
+}
+
+void
 mom_paylwebsess_finalize (momitem_t *witm, void *wdata)
 {
   struct mom_websession_data_st *dws = wdata;

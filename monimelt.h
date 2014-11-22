@@ -1956,7 +1956,55 @@ struct mom_websession_data_st
   struct mom_itemattributes_st *websess_attrs;
 };
 
-void mom_paylwebx_finalize (momitem_t *witm, void *wdata);	// in web-onion.c
+static inline unsigned
+mom_item_websession_rank (momitem_t *itm)
+{
+  if (itm && itm->i_typnum == momty_item
+      && itm->i_paylkind == mompayk_websession)
+    {
+      struct mom_websession_data_st *wds = itm->i_payload;
+      assert (wds->websess_magic == MOM_WEBSESS_MAGIC);
+      return wds->websess_rank;
+    }
+  return 0;
+}
+
+
+static inline onion_websocket *
+mom_item_websession_websocket (momitem_t *itm)
+{
+  if (itm && itm->i_typnum == momty_item
+      && itm->i_paylkind == mompayk_websession)
+    {
+      struct mom_websession_data_st *wds = itm->i_payload;
+      assert (wds->websess_magic == MOM_WEBSESS_MAGIC);
+      return wds->websess_websocket;
+    }
+  return NULL;
+}
+
+static inline momval_t
+mom_item_websession_get (momitem_t *witm, momitem_t *atitm)
+{
+  momval_t res = MOM_NULLV;
+  if (witm && witm->i_typnum == momty_item
+      && witm->i_paylkind == mompayk_websession
+      && atitm && atitm->i_typnum == momty_item)
+    {
+      struct mom_websession_data_st *wds = witm->i_payload;
+      assert (wds->websess_magic == MOM_WEBSESS_MAGIC);
+      res = mom_get_attribute (wds->websess_attrs, atitm);
+    }
+  return res;
+}
+
+void mom_item_websession_put (momitem_t *witm, momitem_t *atitm,
+			      momval_t val);
+
+void mom_item_websession_remove (momitem_t *witm, momitem_t *atitm);
+
+momval_t mom_item_websession_attrset (momitem_t *witm);
+
 void mom_paylwebsess_finalize (momitem_t *witm, void *wdata);	// in web-onion.c
 /**************** web exchange items ****************/
 
