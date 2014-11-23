@@ -1395,7 +1395,8 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	       MOMOUT_DEC_INT ((int) six),
 	       MOMOUT_LITERAL (":"),
 	       MOMOUT_NEWLINE (),
-	       MOMOUT_LITERAL ("{"), MOMOUT_INDENT_MORE (), NULL);
+	       MOMOUT_LITERAL ("{"), MOMOUT_INDENT_MORE (), 
+	       MOMOUT_NEWLINE (), NULL);
       emit_block_cgen (cg, blkitm);
       MOM_OUT (&cg->cgen_outbody,
 	       MOMOUT_INDENT_LESS (),
@@ -1784,7 +1785,7 @@ emit_expr_cgen (struct c_generator_mom_st *cg, momval_t expv)
       MOM_DEBUG (gencod, MOMOUT_LITERAL ("emitexpr string:"),
 		 MOMOUT_VALUE ((const momval_t) expv));
       MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (48),
-	       MOMOUT_LITERAL ("/*!litstr*/ \""),
+	       MOMOUT_LITERAL ("/*!litstr:*/ \""),
 	       MOMOUT_C_STRING ((const char *) expv.pstring->cstr),
 	       MOMOUT_LITERAL ("\""), NULL);
       return momtypenc_string;
@@ -2018,6 +2019,10 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 	       MOMOUT_DEC_INT (chix), MOMOUT_LITERAL (" in node:"),
 	       MOMOUT_VALUE ((const momval_t) nodv), NULL);
 	};
+      MOM_OUT (&cg->cgen_outbody,
+	       MOMOUT_LITERAL ("/*!endprimitive "),
+	       MOMOUT_ITEM ((const momitem_t *) connitm),
+	       MOMOUT_LITERAL ("*/) "), NULL);
       if (ctypev.pitem == mom_named__intptr_t)
 	return momtypenc_int;
       else if (ctypev.pitem == mom_named__momval_t)
@@ -2801,7 +2806,8 @@ emit_goto_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm,
   assert (bix >= 0);
   if (lockix > 0)
     MOM_OUT (&cg->cgen_outbody,
-	     MOMOUT_LITERAL ("/*! unlock-goto*/ { mom_unlock_item ("
+	     MOMOUT_NEWLINE(),
+	     MOMOUT_LITERAL ("/*!unlock-goto*/ { mom_unlock_item ("
 			     CGEN_LOCK_ITEM_PREFIX), MOMOUT_DEC_INT (lockix),
 	     MOMOUT_LITERAL ("); "), NULL);
   else
@@ -2820,9 +2826,9 @@ emit_goto_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm,
 	     MOMOUT_DEC_INT (bix),
 	     MOMOUT_LITERAL (" /*!func.block "),
 	     MOMOUT_ITEM ((const momitem_t *) blkitm),
-	     MOMOUT_LITERAL ("*/"), NULL);
+	     MOMOUT_LITERAL ("*/;"), NULL);
   if (lockix > 0)
-    MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("}; //unlocked"),
+    MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (), MOMOUT_LITERAL ("}; //!unlocked " CGEN_LOCK_ITEM_PREFIX), MOMOUT_DEC_INT (lockix),
 	     MOMOUT_NEWLINE (), NULL);
 }
 

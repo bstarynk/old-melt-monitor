@@ -1635,6 +1635,7 @@ cmd_interpret_mom (const char *lin)
       int rk = atoi (lin + 1);
       MOM_DEBUGPRINTF (cmd, "$%d is dup", rk);
       cmd_do_dup_mom ("", true, rk);
+      return;
     }
   else if (lin[0] == '$' && lin[1] == '=' && isalpha (lin[2]))
     {

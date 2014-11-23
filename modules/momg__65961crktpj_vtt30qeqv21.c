@@ -61,7 +61,7 @@ static int momfuncod__06uk4pppvx9_huv0v11v18j
 	 double* restrict momdbls_ MOM_UNUSED)
 { // start of tasklet function ajax_appl
  // declared 1 locals, 1 arguments.
- if (MOM_UNLIKELY(momstate==0)) return 1;
+ if (MOM_UNLIKELY(momstate==0)) return 3;
  assert (mom_is_item (momclosure));
  momval_t* momclovals = mom_item_closure_values (momclosure.pitem);
  assert (momclovals != NULL);
@@ -69,15 +69,59 @@ static int momfuncod__06uk4pppvx9_huv0v11v18j
  assert (momvals != NULL); // 2 values.
  switch (momstate) {
  case 1: goto momfblo_1;
+ case 2: goto momfblo_2;
+ case 3: goto momfblo_3;
+ case 4: goto momfblo_4;
  default: return momroutres_pop;
  }; // end switch state
  
- // function block #1 _8y756mef2ca_w8cj58726vj
+ // function block #1 _7yyaydvyhpr_teuchcqzs7k
  momfblo_1:
- {/*!assign*/  momvals[2/*:whatv*/] = (/*!primitive mom_webx_post_arg*/  mom_webx_post_arg (mom_value_to_item (
-  momvals[0/*:webx*/]),  /*!litstr*/ "what_mom"));
+ {
+  
+ }; // end function block _7yyaydvyhpr_teuchcqzs7k
+ return momroutres_pop;
+ 
+ // function block #2 _8t137w1z1s9_2tea9xp64s6
+ momfblo_2:
+ {
+  
+ }; // end function block _8t137w1z1s9_2tea9xp64s6
+ return momroutres_pop;
+ 
+ // function block #3 _8y756mef2ca_w8cj58726vj
+ momfblo_3:
+ {
+  
+  // locked-item webx in block _8y756mef2ca_w8cj58726vj
+  momitem_t* momlockeditem_1 = mom_value_to_item ( momvals[0/*:webx*/]) /* locked-item */;
+  if (!mom_lock_item (momlockeditem_1)) goto momendblock_1;
+  /*!assign*/  momvals[2/*:whatv*/] = (/*!primitive mom_webx_post_arg*/ mom_webx_post_arg (mom_value_to_item (
+  momvals[0/*:webx*/]),  /*!litstr:*/ "what_mom")/*!endprimitive mom_webx_post_arg*/) ;
+  /*!if*/ if ((/*!primitive mom_string_same*/ (intptr_t) mom_string_same((
+  momvals[2/*:whatv*/]), ( /*!litstr:*/ "exit"))/*!endprimitive mom_string_same*/) )
+   /*!unlock-goto*/ { mom_unlock_item (momlockeditem_1);  return 1 /*!func.block _8t137w1z1s9_2tea9xp64s6*/;
+   }; //!unlocked momlockeditem_1
+    /*!if*/ if ((/*!primitive mom_string_same*/ (intptr_t) mom_string_same((
+  momvals[2/*:whatv*/]), ( /*!litstr:*/ "quit"))/*!endprimitive mom_string_same*/) )
+   /*!unlock-goto*/ { mom_unlock_item (momlockeditem_1);  return 3 /*!func.block _9u6a6xy2e1p_qeapfc73cm4*/;
+   }; //!unlocked momlockeditem_1
+    /*!if*/ if ((/*!primitive mom_string_same*/ (intptr_t) mom_string_same((
+  momvals[2/*:whatv*/]), ( /*!litstr:*/ "dump"))/*!endprimitive mom_string_same*/) )
+   /*!unlock-goto*/ { mom_unlock_item (momlockeditem_1);  return 0 /*!func.block _7yyaydvyhpr_teuchcqzs7k*/;
+   }; //!unlocked momlockeditem_1
+    
+  /*! epilogue for lock */
+  momendblock_1:;
   
  }; // end function block _8y756mef2ca_w8cj58726vj
+ return momroutres_pop;
+ 
+ // function block #4 _9u6a6xy2e1p_qeapfc73cm4
+ momfblo_4:
+ {
+  
+ }; // end function block _9u6a6xy2e1p_qeapfc73cm4
  return momroutres_pop;
  } // end function ajax_appl
 
