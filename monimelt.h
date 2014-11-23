@@ -336,6 +336,12 @@ typedef enum momoutdir_en
 #define MOMOUT_JS_LITERAL(S) MOMOUTDO_JS_STRING, MOM_REQUIRES_TYPE(S,const char[],mombad_literal)
 #define MOMOUT_JS_LITERALV(S) MOMOUT_JS_STRING(S)
   ///
+  /// C encoded strings
+  MOMOUTDO_C_STRING /*, const char*string */ ,
+#define MOMOUT_C_STRING(S) MOMOUTDO_C_STRING, MOM_REQUIRES_TYPE(S,const char*,mombad_js)
+#define MOMOUT_C_LITERAL(S) MOMOUTDO_C_STRING, MOM_REQUIRES_TYPE(S,const char[],mombad_literal)
+#define MOMOUT_C_LITERALV(S) MOMOUT_C_STRING(S)
+  ///
   ///
   ///  comment encoded strings
   /// start with //! and replace every newline with //+ then a newline

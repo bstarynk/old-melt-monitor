@@ -35,12 +35,13 @@ INSERT INTO t_items VALUES('_02q6zk9f5st_im0z75re15f','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_02u53qxa7dm_sttmhffpchr','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "The agenda is central to Monimelt.\nIt is the queue of taskets to be executed by worker threads."}],
  "content": null, "kind": "queue", "payload": []}
 ','queue');
-INSERT INTO t_items VALUES('_06uk4pppvx9_huv0v11v18j','{"attr": [{"attr": "_2x2zpyhfqum_0utui69rzea", "val": {"jtype": "set", "set": ["_16cd0fvmdrh_r77ajpy26za"]}},
+INSERT INTO t_items VALUES('_06uk4pppvx9_huv0v11v18j','{"attr": [{"attr": "_2ummst105ck_xracfy8v87y", "val": {"jtype": "set", "set": ["_16cd0fvmdrh_r77ajpy26za"]}},
   {"attr": "_3wh3e88sk28_d27qi2737zi", "val": {"item_ref": "_8y756mef2ca_w8cj58726vj",
     "jtype": "item_ref", "space": ".root"}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
-   "val": "AJAX for appl menu"}, {"attr": "_7sav6zery1v_24sa6jwwu6c", "val": {"item_ref":
-    "_06uk4pppvx9_huv0v11v18j", "jtype": "item_ref", "space": ".root"}}, {"attr":
-   "_7yxp9xhih4z_9uzrqhkamxa", "val": {"jtype": "set", "set": ["_8y756mef2ca_w8cj58726vj"]}}],
+   "val": "AJAX for appl menu"}, {"attr": "_4p33dhxywm0_id6tti2kyw6", "val": {"jtype":
+    "set", "set": ["_350hj5kfymd_145tfc1sevi"]}}, {"attr": "_7sav6zery1v_24sa6jwwu6c",
+   "val": {"item_ref": "_06uk4pppvx9_huv0v11v18j", "jtype": "item_ref", "space": ".root"}},
+  {"attr": "_7yxp9xhih4z_9uzrqhkamxa", "val": {"jtype": "set", "set": ["_8y756mef2ca_w8cj58726vj"]}}],
  "content": null, "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_06yp8ueq6yf_5ts408yww29','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "in JSON dumps, give the kind of the payload of an item"}],
@@ -399,11 +400,11 @@ INSERT INTO t_items VALUES('_8zwifiifaf0_pyayp6hpha4','{"attr": [{"attr": "_0ee6
     "jtype": "item_ref", "space": ".predef"}}, {"attr": "_2ummst105ck_xracfy8v87y",
    "val": {"jtype": "tuple", "tuple": ["_16cd0fvmdrh_r77ajpy26za", "_3i8mqyfreeh_2w73i1khumx"]}},
   {"attr": "_37x98fyestf_ttup2cu68r6", "val": {"jtype": "node", "node": "_8x6fxcm4z2k_vdaqicfi4z0",
-    "sons": ["/* mom_webx_post_arg primitive */ mom_webx_post_arg ( mom_value_to_item (",
-     {"item_ref": "_16cd0fvmdrh_r77ajpy26za", "jtype": "item_ref", "space": ".root"},
-     "), \"", {"item_ref": "_3i8mqyfreeh_2w73i1khumx", "jtype": "item_ref",
-      "space": ".root"}, "))"]}}, {"attr": "_41u1utcxyek_22cftxt3xxm", "val": "primitive to get a POST argument."}],
- "content": null, "kind": null, "payload": null}
+    "sons": [" mom_webx_post_arg (mom_value_to_item (", {"item_ref": "_16cd0fvmdrh_r77ajpy26za",
+      "jtype": "item_ref", "space": ".root"}, "), ", {"item_ref": "_3i8mqyfreeh_2w73i1khumx",
+      "jtype": "item_ref", "space": ".root"}, "))"]}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "primitive to get a POST argument."}], "content": null, "kind": null,
+ "payload": null}
 ','');
 INSERT INTO t_items VALUES('_91pketvc5pz_wq0v0wpauw8','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "Gives the values of Json for frames of tasklets."}],
  "content": null, "kind": null, "payload": null}

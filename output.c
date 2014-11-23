@@ -507,6 +507,8 @@ output_backtrace_mom (momout_t *pout, void **bbuf, int depth, int lev)
 
 
 #define INITIAL_COPYRIGHT_YEAR_MOM 2014
+#define MAX_INDENT_MOM 256
+
 static void
 output_gplv3p_notice_mom (momout_t *pout, const char *forfile)
 {
@@ -719,6 +721,50 @@ mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist)
 		  else		// we don't care about UTF8 here
 		    putc (*pc, out);
 		MOM_OUT (pout, MOMOUT_SMALL_NEWLINE ());
+	      }
+	  }
+	  break;
+	  //
+	case MOMOUTDO_C_STRING:
+	  {
+	    const char *s = va_arg (alist, const char *);
+	    int len = s ? strlen (s) : 0;
+	    for (const char *pc = s; pc && *pc && pc < s + len; pc++)
+	      {
+		char c = *pc;
+		switch (c)
+		  {
+		  case '\\':
+		    fputs ("\\\\", out);
+		    break;
+		  case '\'':
+		    fputs ("\'", out);
+		    break;
+		  case '\"':
+		    fputs ("\\\"", out);
+		    break;
+		  case '\n':
+		    fputs ("\\n", out);
+		    break;
+		  case '\r':
+		    fputs ("\\r", out);
+		    break;
+		  case '\t':
+		    fputs ("\\t", out);
+		    break;
+		  case '\v':
+		    fputs ("\\v", out);
+		    break;
+		  case '\f':
+		    fputs ("\\f", out);
+		    break;
+		  default:
+		    if (c >= 127 || c < ' ')
+		      printf (out, "\\x%02x", ((int) c) & 0xff);
+		    else
+		      fputc (c, out);
+		    break;
+		  }
 	      }
 	  }
 	  break;
@@ -950,13 +996,15 @@ mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist)
 	  ///
 	case MOMOUTDO_INDENT_MORE:
 	  {
-	    pout->mout_indent++;
+	    if (pout->mout_indent < MAX_INDENT_MOM)
+	      pout->mout_indent++;
 	  }
 	  break;
 	  ///
 	case MOMOUTDO_INDENT_LESS:
 	  {
-	    pout->mout_indent--;
+	    if (pout->mout_indent > 0)
+	      pout->mout_indent--;
 	  }
 	  break;
 	  ///

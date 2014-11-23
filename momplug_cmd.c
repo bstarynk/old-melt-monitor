@@ -54,6 +54,7 @@ const char mom_plugin_GPL_compatible[] = "GPLv3+";
   CMD(shell,"[command]; run a command",non,"#!")        \
   CMD(stack,"print the stack",non,"!")                  \
   CMD(status,"print status info",non,NULL)              \
+  CMD(swap,"swap with N-th stackelem",num,NULL)         \
   CMD(top,"print the top of stack",non,"=")             \
   CMD(tuple,"make tuple to mark",num,"]")               \
   CMD(xplode,"explode top aggregate",non,"&")           \
@@ -1383,6 +1384,27 @@ cmd_do_pop_mom (const char *lin, bool pres, long num)
 	    ANSI_NORMAL "\n", vst_top_mom);
 }
 
+
+static void
+cmd_do_swap_mom (const char *lin, bool pres, long num)
+{
+  MOM_DEBUGPRINTF (cmd, "start do_swap lin=%s pres=%s num=%ld", lin,
+		   pres ? "pres" : "abs", num);
+  if (pres && num > 1 && num < vst_top_mom)
+    {
+      char cmdbuf[32];
+      memset (cmdbuf, 0, sizeof (cmdbuf));
+      momval_t oldv = vst_valarr_mom[vst_top_mom - num];
+      momval_t topv = vst_valarr_mom[vst_top_mom - 1];
+      vst_valarr_mom[vst_top_mom - num] = topv;
+      vst_valarr_mom[vst_top_mom - 1] = oldv;
+      snprintf (cmdbuf, sizeof (cmdbuf), ",swap %ld", num);
+      add_history (cmdbuf);
+      printf (ANSI_BOLD "swapped with #%d" ANSI_NORMAL "\n", num);
+    }
+  else
+    printf ("cannot swap with level %ld\n", num);
+}
 
 ////////////////////////////////////////////////////////////////
 
