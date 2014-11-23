@@ -1,4 +1,5 @@
-// generated MONIMELT module file momg__4q1v3ax0ffi_hv7fwpsv6uf.c
+// generated MONIMELT module test_module
+// file momg__4q1v3ax0ffi_hv7fwpsv6uf.c
 // DO NOT EDIT
 
 
@@ -116,6 +117,7 @@ void momprocfun__682ush7cppa_s7vzfd2rsxp ()
   // function block #1 _2ky10qvckv2_kqa0pr8z29z
   momfblo_1:
   {
+   
   }; // end function block _2ky10qvckv2_kqa0pr8z29z
   return momroutres_pop;
   } // end function test_fun1
@@ -151,7 +153,7 @@ static const union momrout_un momdroutarr__4q1v3ax0ffi_hv7fwpsv6uf[3] = {
 
 // module initialization for test_module
 void mominitmodule__4q1v3ax0ffi_hv7fwpsv6uf (void) {
- mom_module_internal_initialize ("_4q1v3ax0ffi_hv7fwpsv6uf" /* module test_module*/,
+ mom_module_internal_initialize ("_4q1v3ax0ffi_hv7fwpsv6uf" /*!module test_module*/,
        MONIMELT_MD5_MODULE /*see Makefile*/,  2,  momdroutarr__4q1v3ax0ffi_hv7fwpsv6uf);
  MOM_INFORMPRINTF("module test_module of md5 " MONIMELT_MD5_MODULE " initialized.");
 } // end of module initialization

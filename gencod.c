@@ -377,8 +377,10 @@ mom_generate_c_module (momitem_t *moditm, const char *dirname, char **perrmsg)
     if (!f)
       MOM_FATAPRINTF ("failed to open module temporary file %s", mtempnam);
     fprintf (f,
-	     "// generated MONIMELT module file " MOM_SHARED_MODULE_PREFIX
-	     "%s.c\n", mom_ident_cstr_of_item (moditm));
+	     "// generated MONIMELT module %s\n// file "
+	     MOM_SHARED_MODULE_PREFIX "%s.c\n",
+	     mom_string_cstr ((momval_t) mom_item_get_name_or_idstr (moditm)),
+	     mom_ident_cstr_of_item (moditm));
     fprintf (f, "// DO NOT EDIT\n\n");
     fprintf (f, "\n///// declarations\n");
     fflush (mycgen.cgen_outhead.mout_file);
@@ -2296,6 +2298,12 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
       momval_t curinsv = mom_node_nth (blockv, ix);
       momitem_t *opitm = (momitem_t *) mom_node_conn (curinsv);
       unsigned insarity = mom_node_arity (curinsv);
+      MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (),
+	       MOMOUT_LITERAL ("//! instr#"),
+	       MOMOUT_DEC_INT ((int) (ix + 1)),
+	       MOMOUT_LITERAL (" in block "),
+	       MOMOUT_ITEM ((const momitem_t *) blkitm),
+	       MOMOUT_LITERAL (" ::"), MOMOUT_NEWLINE ());
       assert (opitm != NULL);
       //// DO instruction
       if (opitm == mom_named__do && insarity == 1)
