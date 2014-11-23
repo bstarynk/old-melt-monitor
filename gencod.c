@@ -1395,7 +1395,7 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	       MOMOUT_DEC_INT ((int) six),
 	       MOMOUT_LITERAL (":"),
 	       MOMOUT_NEWLINE (),
-	       MOMOUT_LITERAL ("{"), MOMOUT_INDENT_MORE (), 
+	       MOMOUT_LITERAL ("{"), MOMOUT_INDENT_MORE (),
 	       MOMOUT_NEWLINE (), NULL);
       emit_block_cgen (cg, blkitm);
       MOM_OUT (&cg->cgen_outbody,
@@ -1479,7 +1479,7 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 			   CGEN_FUN_CONSTANTIDS_PREFIX),
 	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
 	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL (".tfun_constantitems = (momitem_t**) "
+	   MOMOUT_LITERAL (".tfun_constantitems = (const momitem_t*const*) "
 			   CGEN_FUN_CONSTANTITEMS_PREFIX),
 	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
 	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
@@ -2806,7 +2806,7 @@ emit_goto_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm,
   assert (bix >= 0);
   if (lockix > 0)
     MOM_OUT (&cg->cgen_outbody,
-	     MOMOUT_NEWLINE(),
+	     MOMOUT_NEWLINE (),
 	     MOMOUT_LITERAL ("/*!unlock-goto*/ { mom_unlock_item ("
 			     CGEN_LOCK_ITEM_PREFIX), MOMOUT_DEC_INT (lockix),
 	     MOMOUT_LITERAL ("); "), NULL);
@@ -2828,8 +2828,9 @@ emit_goto_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm,
 	     MOMOUT_ITEM ((const momitem_t *) blkitm),
 	     MOMOUT_LITERAL ("*/;"), NULL);
   if (lockix > 0)
-    MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (), MOMOUT_LITERAL ("}; //!unlocked " CGEN_LOCK_ITEM_PREFIX), MOMOUT_DEC_INT (lockix),
-	     MOMOUT_NEWLINE (), NULL);
+    MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL ("}; //!unlocked " CGEN_LOCK_ITEM_PREFIX),
+	     MOMOUT_DEC_INT (lockix), MOMOUT_NEWLINE (), NULL);
 }
 
 
