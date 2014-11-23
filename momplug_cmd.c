@@ -797,11 +797,9 @@ cmd_do_tuple_mom (const char *lin, bool pres, long num)
     {
       char cmdbuf[32];
       memset (cmdbuf, 0, sizeof (cmdbuf));
-      tupv = (momval_t) mom_make_tuple_from_array ((unsigned) num,
-						   (const momitem_t **)
-						   cmd_stack_nth_ptr_mom (-
-									  (int)
-									  num));
+      tupv = (momval_t) mom_make_tuple_from_array
+	((unsigned) num,
+	 (const momitem_t **) cmd_stack_nth_ptr_mom (-(int) num));
       MOM_DEBUG (cmd, MOMOUT_LITERAL ("do_tuple explicit num="),
 		 MOMOUT_DEC_INT ((int) num), MOMOUT_SPACE (48),
 		 MOMOUT_LITERAL ("tuple: "),
@@ -817,11 +815,9 @@ cmd_do_tuple_mom (const char *lin, bool pres, long num)
     }
   else if (markdepth >= 0)
     {
-      tupv = (momval_t) mom_make_tuple_from_array ((unsigned) num,
-						   (const momitem_t **)
-						   cmd_stack_nth_ptr_mom (-
-									  (int)
-									  markdepth));
+      tupv = (momval_t) mom_make_tuple_from_array
+	((unsigned) markdepth,
+	 (const momitem_t **) cmd_stack_nth_ptr_mom (-(int) markdepth));
       MOM_DEBUG (cmd, MOMOUT_LITERAL ("do_tuple tomark tuple: "),
 		 MOMOUT_VALUE ((const momval_t) tupv), NULL);
       cmd_stack_pop_mom (markdepth + 1);
@@ -866,10 +862,9 @@ cmd_do_set_mom (const char *lin, bool pres, long num)
     }
   else if (markdepth >= 0)
     {
-      setv = (momval_t) mom_make_set_from_array ((unsigned) num,
-						 (const momitem_t **)
-						 cmd_stack_nth_ptr_mom (-(int)
-									markdepth));
+      setv = (momval_t) mom_make_set_from_array
+	((unsigned) markdepth,
+	 (const momitem_t **) cmd_stack_nth_ptr_mom (-(int) markdepth));
       MOM_DEBUG (cmd, MOMOUT_LITERAL ("do_set tomark set: "),
 		 MOMOUT_VALUE ((const momval_t) setv), NULL);
       cmd_stack_pop_mom (markdepth + 1);

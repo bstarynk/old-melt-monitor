@@ -53,7 +53,7 @@ RM= rm -fv
 .PHONY: all modules plugins clean tests indent restore-state dump-state
 .SUFFIXES: .so .i
 # to make with tsan: make OPTIMFLAGS='-g3 -fsanitize=thread -fPIE' LINKFLAGS=-pie
-all: monimelt modules plugins momjsrpc_client
+all: monimelt modules plugins momjsrpc_client restore-state
 clean:
 	$(RM) *~ *.o *.so *.i *.orig melt*.cc meltmom*.[ch] meltmom*.o meltmom*.so meltmom*.mk \
 	      _tmp_* monimelt core* module/*.tmp webdir/*~ *.tmp  _timestamp.* *dbsqlite*-journal *%
@@ -110,7 +110,7 @@ modules/momg_%.so: modules/momg_%.c | monimelt.h predef-monimelt.h
 momplug_%.so: momplug_%.c  | monimelt.h predef-monimelt.h
 	$(LINK.c) -fPIC $< -shared -o $@ $(shell awk '/MONIMELTLIBS:/{print $$2}' $<)
 
-restore-state: 
+restore-state:
 	-mv -v state-monimelt.dbsqlite  state-monimelt.dbsqlite~
 	$(SQLITE) state-monimelt.dbsqlite < state-monimelt.sql
 
