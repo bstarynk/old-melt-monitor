@@ -21,6 +21,21 @@
 var websocket_mom;
 var dochref_mom;
 var wsockhref_mom;
+
+function mom_app(what) {
+    console.debug ("mom_app what=", what);
+    $.ajax({ url: 'ajax_appl',
+	     method: 'POST',
+	     data: { what_mom: what },
+	     dataType: 'html',
+	     success: function(gotdata) {
+		 console.debug ("success ajax_appl what=", what,
+				" gotdata=", gotdata);
+	     }
+	   });
+}
+
+
 // jquery ready function for our document
 $(function(){
     dochref_mom = $(location).attr('href');

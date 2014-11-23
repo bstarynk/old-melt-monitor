@@ -23,17 +23,26 @@
   <meta charset="utf-8"/>
   <link rel="stylesheet" type="text/css" href="codemirror.css"/>
   <link rel="stylesheet" type="text/css" href="jqueryui-smoothness/jquery-ui.min.css"/>
+  <link rel="stylesheet" type="text/css" href="jquery-easiui-themes/default/easyui.css"/>
+  <link rel="stylesheet" type="text/css" href="jquery-easiui-themes/icon.css"/>
   <link rel="stylesheet" type="text/css" href="mom-style.css"/>
   <script src="jquery.js"></script>
   <script src="jquery.websocket.js"></script>
   <script src="jquery-ui.min.js"></script>
+  <script src="jquery.easyui.min.js"></script>
   <script src="codemirror.js"></script>
   <script src="styles-codemirror/clike.js"></script>
   <script src="monimelt-scripts.js"></script>
 </head>
 <body>
   <h1>Monimelt</h1>
-  <nav class='momnav_cl'>
-    *
+  <nav class='momnav_cl easyui-panel'>
+    <a href='#' class='easyui-menubutton' data-options="menu:'#momappmenu_id'">Application</a>
   </nav>
+
+  <div id='momappmenu_id'>
+    <div id='appexit_id' iconCls='icon-ok' onclick='javascript:mom_app("exit")'>Exit <small>(after dump)</small></div>
+    <div id='appquit_id'  iconCls='icon-no' onclick='javascript:mom_app("quit")'>Quit <small>(without saving)</small></div>
+    <div id='appdump_id' iconCls='icon-save' onclick='javascript:mom_app("dump")'>Dump <small>(save &amp; continue)</small></div>
+  </div>
 </body></html>

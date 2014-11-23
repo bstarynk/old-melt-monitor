@@ -46,16 +46,16 @@ const char mom_plugin_GPL_compatible[] = "GPLv3+";
   CMD(named,"[Regexp]",non,NULL)			\
   CMD(node,"[Connective]; make node to mark",itm,"*")   \
   CMD(pop,"pop [N] elements",num,"^")                   \
-  CMD(predef,"NAME; create a predefined item",non,"^")	\
+  CMD(predef,"NAME; create a predefined item",non,NULL)	\
   CMD(putat,"[attr]; put attribute",itm,":+")           \
   CMD(quit,"quit without dumping",non,NULL)             \
   CMD(remat,"[attr]; remove attribute",itm,":-")        \
-  CMD(set,"make set to mark",non,"}")                   \
+  CMD(set,"make set to mark",num,"}")                   \
   CMD(shell,"[command]; run a command",non,"#!")        \
   CMD(stack,"print the stack",non,"!")                  \
   CMD(status,"print status info",non,NULL)              \
   CMD(top,"print the top of stack",non,"=")             \
-  CMD(tuple,"make tuple to mark",non,"]")               \
+  CMD(tuple,"make tuple to mark",num,"]")               \
   CMD(xplode,"explode top aggregate",non,"&")           \
 				/* end of COMMANDS */
 
@@ -787,140 +787,101 @@ cmd_do_xplode_mom (const char *lin)
 }
 
 static void
-cmd_do_set_mom (const char *lin)
+cmd_do_tuple_mom (const char *lin, bool pres, long num)
 {
   int markdepth = cmd_stack_mark_depth_mom ();
-  int argdepth = atoi (lin);
-  int setdepth = -1;
-  momval_t setv = MOM_NULLV;
-  MOM_DEBUGPRINTF (cmd, "start do_set lin=%s markdepth=%d argdepth=%d", lin,
-		   markdepth, argdepth);
-  if (argdepth > 0 && argdepth < markdepth)
-    setdepth = argdepth;
-  else if (*lin == '0' && argdepth == 0)
-    setdepth = 0;
-  else if (markdepth >= 0)
-    setdepth = markdepth;
-  if (setdepth < 0)
+  MOM_DEBUGPRINTF (cmd, "start do_tuple lin=%s pres=%s num=%ld markdepth=%d",
+		   lin, pres ? "pres" : "abs", num, markdepth);
+  momval_t tupv = MOM_NULLV;
+  if (pres && num >= 0 && num < markdepth && num <= (long) vst_top_mom)
     {
-      printf (ANSI_BOLD "*no mark for set*" ANSI_NORMAL "\n");
+      char cmdbuf[32];
+      memset (cmdbuf, 0, sizeof (cmdbuf));
+      tupv = (momval_t) mom_make_tuple_from_array ((unsigned) num,
+						   (const momitem_t **)
+						   cmd_stack_nth_ptr_mom (-
+									  (int)
+									  num));
+      MOM_DEBUG (cmd, MOMOUT_LITERAL ("do_tuple explicit num="),
+		 MOMOUT_DEC_INT ((int) num), MOMOUT_SPACE (48),
+		 MOMOUT_LITERAL ("tuple: "),
+		 MOMOUT_VALUE ((const momval_t) tupv), NULL);
+      cmd_stack_pop_mom (num);
+      cmd_stack_push_mom (tupv);
+      unsigned len = mom_tuple_length (tupv);
+      printf (ANSI_BOLD "pushed tuple from %d popped values" ANSI_NORMAL "\n",
+	      (int) len);
+      snprintf (cmdbuf, sizeof (cmdbuf), ",tuple %u", len);
+      add_history (cmdbuf);
       return;
     }
-  else if (setdepth == 0)
+  else if (markdepth >= 0)
     {
-      setv = (momval_t) mom_make_set_sized (0);
-      printf (ANSI_BOLD "*empty set*" ANSI_NORMAL "\n");
-      MOM_DEBUG (cmd, MOMOUT_LITERAL ("do_set empty setv:"),
-		 MOMOUT_VALUE ((const momval_t) setv));
-      add_history (",set 0");
-      if (markdepth == 0)
-	cmd_stack_pop_mom (1);
+      tupv = (momval_t) mom_make_tuple_from_array ((unsigned) num,
+						   (const momitem_t **)
+						   cmd_stack_nth_ptr_mom (-
+									  (int)
+									  markdepth));
+      MOM_DEBUG (cmd, MOMOUT_LITERAL ("do_tuple tomark tuple: "),
+		 MOMOUT_VALUE ((const momval_t) tupv), NULL);
+      cmd_stack_pop_mom (markdepth + 1);
+      cmd_stack_push_mom (tupv);
+      unsigned len = mom_tuple_length (tupv);
+      printf (ANSI_BOLD "pushed tuple from %d marked values" ANSI_NORMAL "\n",
+	      (int) len);
+      add_history (",tuple");
+      return;
     }
-  else if (setdepth > 0)
-    {
-      momitem_t **setarr =
-	MOM_GC_ALLOC ("setarr", (setdepth + 1) * sizeof (momitem_t *));
-      unsigned nbelem = 0;
-      for (int ix = 0; ix < setdepth; ix++)
-	{
-	  momitem_t *curelemitm =
-	    mom_value_to_item (cmd_stack_nth_value_mom (-(ix + 1)));
-	  if (curelemitm)
-	    setarr[nbelem++] = curelemitm;
-	}
-      setv =
-	(momval_t) mom_make_set_from_array (nbelem,
-					    (const momitem_t **) setarr);
-      MOM_DEBUG (cmd, MOMOUT_LITERAL ("do_set setv:"),
-		 MOMOUT_VALUE ((const momval_t) setv));
-      MOM_GC_FREE (setarr);
-      if ((int) nbelem == markdepth)
-	add_history (",set");
-      else
-	{
-	  char cmdbuf[32];
-	  snprintf (cmdbuf, sizeof (cmdbuf), ",set %d", nbelem);
-	  add_history (cmdbuf);
-	}
-      if (markdepth >= 0)
-	{
-	  cmd_stack_pop_mom (markdepth + 1);
-	  printf (ANSI_BOLD "*set %d of %d*" ANSI_NORMAL "\n", nbelem,
-		  markdepth);
-	}
-      else
-	{
-	  cmd_stack_pop_mom (setdepth);
-	  printf (ANSI_BOLD "*set %d*" ANSI_NORMAL "\n", nbelem);
-	}
-    }
-  cmd_stack_push_mom (setv);
+  else
+    printf ("invalid ,tuple: num=%ld, markdepth=%d\n", num, markdepth);
 }
 
 static void
-cmd_do_tuple_mom (const char *lin)
+cmd_do_set_mom (const char *lin, bool pres, long num)
 {
   int markdepth = cmd_stack_mark_depth_mom ();
-  int argdepth = atoi (lin);
-  int tupledepth = -1;
-  momval_t tuplev = MOM_NULLV;
-  MOM_DEBUGPRINTF (cmd, "start do_tuple lin=%s markdepth=%d argdepth=%d", lin,
-		   markdepth, argdepth);
-  if (argdepth > 0 && argdepth < markdepth)
-    tupledepth = argdepth;
-  else if (*lin == '0' && argdepth == 0)
-    tupledepth = 0;
-  else if (markdepth >= 0)
-    tupledepth = markdepth;
-  if (tupledepth < 0)
+  MOM_DEBUGPRINTF (cmd, "start do_tuple lin=%s pres=%s num=%ld markdepth=%d",
+		   lin, pres ? "pres" : "abs", num, markdepth);
+  momval_t setv = MOM_NULLV;
+  if (pres && num >= 0 && num < markdepth && num <= (long) vst_top_mom)
     {
-      printf (ANSI_BOLD "*no mark for tuple*" ANSI_NORMAL "\n");
+      char cmdbuf[32];
+      memset (cmdbuf, 0, sizeof (cmdbuf));
+      setv = (momval_t) mom_make_set_from_array ((unsigned) num,
+						 (const momitem_t **)
+						 cmd_stack_nth_ptr_mom (-(int)
+									num));
+      MOM_DEBUG (cmd, MOMOUT_LITERAL ("do_set explicit num="),
+		 MOMOUT_DEC_INT ((int) num), MOMOUT_SPACE (48),
+		 MOMOUT_LITERAL ("set: "),
+		 MOMOUT_VALUE ((const momval_t) setv), NULL);
+      cmd_stack_pop_mom (num);
+      cmd_stack_push_mom (setv);
+      unsigned len = mom_set_cardinal (setv);
+      printf (ANSI_BOLD "pushed set from %d popped values" ANSI_NORMAL "\n",
+	      (int) len);
+      snprintf (cmdbuf, sizeof (cmdbuf), ",set %u", len);
+      add_history (cmdbuf);
       return;
     }
-  else if (tupledepth == 0)
+  else if (markdepth >= 0)
     {
-      tuplev = (momval_t) mom_make_tuple_sized (0);
-      printf (ANSI_BOLD "*empty tuple*" ANSI_NORMAL "\n");
-      add_history (",tuple 0");
+      setv = (momval_t) mom_make_set_from_array ((unsigned) num,
+						 (const momitem_t **)
+						 cmd_stack_nth_ptr_mom (-(int)
+									markdepth));
+      MOM_DEBUG (cmd, MOMOUT_LITERAL ("do_set tomark set: "),
+		 MOMOUT_VALUE ((const momval_t) setv), NULL);
+      cmd_stack_pop_mom (markdepth + 1);
+      cmd_stack_push_mom (setv);
+      unsigned len = mom_set_cardinal (setv);
+      printf (ANSI_BOLD "pushed set from %d marked values" ANSI_NORMAL "\n",
+	      (int) len);
+      add_history (",set");
+      return;
     }
-  else if (tupledepth > 0)
-    {
-      momitem_t **tuplearr =
-	MOM_GC_ALLOC ("tuplearr", (tupledepth + 1) * sizeof (momitem_t *));
-      unsigned nbelem = 0;
-      for (int ix = 0; ix < tupledepth; ix++)
-	{
-	  momitem_t *curelemitm =
-	    mom_value_to_item (cmd_stack_nth_value_mom (-(ix + 1)));
-	  tuplearr[nbelem++] = curelemitm;
-	}
-      tuplev =
-	(momval_t) mom_make_tuple_from_array (nbelem,
-					      (const momitem_t **) tuplearr);
-      MOM_GC_FREE (tuplearr);
-      MOM_DEBUG (cmd, MOMOUT_LITERAL ("do_tuple tuplev:"),
-		 MOMOUT_VALUE ((const momval_t) tuplev));
-      if ((int) nbelem == markdepth)
-	add_history (",tuple");
-      else
-	{
-	  char cmdbuf[32];
-	  snprintf (cmdbuf, sizeof (cmdbuf), ",tuple %d", nbelem);
-	  add_history (cmdbuf);
-	}
-      if (markdepth >= 0)
-	{
-	  cmd_stack_pop_mom (markdepth + 1);
-	  printf (ANSI_BOLD "*tuple %d of %d*" ANSI_NORMAL "\n", nbelem,
-		  markdepth);
-	}
-      else
-	{
-	  cmd_stack_pop_mom (tupledepth);
-	  printf (ANSI_BOLD "*tuple %d*" ANSI_NORMAL "\n", nbelem);
-	}
-    }
-  cmd_stack_push_mom (tuplev);
+  else
+    printf ("invalid ,set: num=%ld, markdepth=%d\n", num, markdepth);
 }
 
 static void
@@ -1031,7 +992,6 @@ cmd_do_node_mom (const char *lin, bool pres, momitem_t *itm)
   else
     printf (ANSI_BOLD "**failed to make node**" ANSI_NORMAL "\n");
 }
-
 
 static void
 cmd_do_clos_mom (const char *lin, bool pres, momitem_t *funitm)
@@ -1400,7 +1360,8 @@ cmd_do_clear_mom (const char *lin)
 static void
 cmd_do_pop_mom (const char *lin, bool pres, long num)
 {
-  MOM_DEBUGPRINTF (cmd, "start do_pop lin=%s", lin);
+  MOM_DEBUGPRINTF (cmd, "start do_pop lin=%s pres=%s num=%ld", lin,
+		   pres ? "pres" : "abs", num);
   if (vst_top_mom == 0)
     {
       printf (ANSI_BOLD "**stack was empty**" ANSI_NORMAL "\n");
@@ -1629,6 +1590,7 @@ cmd_interpret_mom (const char *lin)
       add_history (lin);
       printf (ANSI_BOLD "pushed string:" ANSI_NORMAL "%s\n",
 	      mom_string_cstr (nstrv));
+      return;
     }
   else if (lin[0] == '$' && isalpha (lin[1]))
     {
