@@ -1700,11 +1700,6 @@ create_tables_for_dump_mom (struct mom_dumper_st *du)
 			  -1, &du->dmp_sqlstmt_param_insert, NULL))
     MOM_FATAPRINTF ("failed to prepare param insert query: %s",
 		    sqlite3_errmsg (du->dmp_sqlite));
-  if (sqlite3_prepare_v2 (du->dmp_sqlite,
-			  "INSERT OR IGNORE INTO t_modules (modname) VALUES (?1)",
-			  -1, &du->dmp_sqlstmt_module_insert, NULL))
-    MOM_FATAPRINTF ("failed to prepare module insert query: %s",
-		    sqlite3_errmsg (du->dmp_sqlite));
 }
 
 
@@ -1713,7 +1708,11 @@ static void
 insert_modules_sql_mom (struct mom_dumper_st *du)
 {
   assert (du && du->dmp_magic == DUMPER_MAGIC);
-  assert (du->dmp_sqlstmt_module_insert != NULL);
+  if (sqlite3_prepare_v2 (du->dmp_sqlite,
+			  "INSERT OR IGNORE INTO t_modules (modname) VALUES (?1)",
+			  -1, &du->dmp_sqlstmt_module_insert, NULL))
+    MOM_FATAPRINTF ("failed to prepare module insert query: %s",
+		    sqlite3_errmsg (du->dmp_sqlite));
   unsigned siz = du->dmp_modulsiz;
   momitem_t **arr = du->dmp_modularr;
   assert (siz > 0 && arr && du->dmp_modulcnt < siz);
@@ -1721,22 +1720,29 @@ insert_modules_sql_mom (struct mom_dumper_st *du)
   for (unsigned ix = 0; ix < siz; ix++)
     {
       momitem_t *moditm = arr[ix];
-      if (!moditm)
+      if (!moditm || moditm == MOM_EMPTY)
 	continue;
+      cnt++;
       const char *modidstr = mom_ident_cstr_of_item (moditm);
+      MOM_DEBUG (dump, MOMOUT_LITERAL ("module to dump moditm:"),
+		 MOMOUT_ITEM ((const momitem_t *) moditm),
+		 MOMOUT_SPACE (32), MOMOUT_LITERAL ("cnt#"),
+		 MOMOUT_DEC_INT ((int) cnt), MOMOUT_LITERAL (" modidstr:"),
+		 MOMOUT_LITERALV (modidstr));
       assert (modidstr != NULL && modidstr[0] == '_');
       /// modidstr at rank 1
       int err =
 	sqlite3_bind_text (du->dmp_sqlstmt_module_insert, 1, modidstr, -1,
 			   SQLITE_STATIC);
       if (err)
-	MOM_FATAPRINTF ("failed to bind dumped module %s: %s, err#%d",
-			modidstr, sqlite3_errmsg (du->dmp_sqlite), err);
+	MOM_FATAPRINTF
+	  ("failed to bind dumped module %s (cnt#%d): %s, err#%d", modidstr,
+	   cnt, sqlite3_errmsg (du->dmp_sqlite), err);
       err = sqlite3_step (du->dmp_sqlstmt_module_insert);
       if (err != SQLITE_DONE)
-	MOM_WARNPRINTF ("failed to insert dumped module %s: %s, err#%d",
-			modidstr, sqlite3_errmsg (du->dmp_sqlite), err);
-      cnt++;
+	MOM_WARNPRINTF
+	  ("failed to insert dumped module %s (cnt#%d): %s, err#%d", modidstr,
+	   cnt, sqlite3_errmsg (du->dmp_sqlite), err);
     }
   assert (cnt == du->dmp_modulcnt);
 }
@@ -2042,8 +2048,6 @@ mom_full_dump (const char *reason, const char *dumpdir,
   set_dump_param_mom (&dmp, MOM_VERSION_PARAM, MOM_DUMP_VERSION);
   set_dump_param_mom (&dmp, "dump_reason", reason);
   memset (filpath, 0, sizeof (filpath));
-  // insert the modules
-  insert_modules_sql_mom (&dmp);
   //// compute the set of modules
   {
     unsigned modcnt = dmp.dmp_modulcnt;
@@ -2069,6 +2073,8 @@ mom_full_dump (const char *reason, const char *dumpdir,
     dmod->dmod_magic = DMOD_MAGIC;
     dmod->dmod_size = (unsigned) nbmodules;
   }
+  // insert the modules
+  insert_modules_sql_mom (&dmp);
   /// at last
   goto end;
 end:
