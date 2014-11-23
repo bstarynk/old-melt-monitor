@@ -760,7 +760,7 @@ mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist)
 		    break;
 		  default:
 		    if (c >= 127 || c < ' ')
-		      printf (out, "\\x%02x", ((int) c) & 0xff);
+		      fprintf (out, "\\x%02x", ((int) c) & 0xff);
 		    else
 		      fputc (c, out);
 		    break;

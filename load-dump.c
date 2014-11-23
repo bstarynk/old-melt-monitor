@@ -1142,7 +1142,7 @@ fetch_param_mom (struct mom_loader_st *ld, const char *parname)
       assert (colparam != NULL);
       res = MOM_GC_STRDUP ("load paramvalue", colparam);
     }
-  sqlite3_reset (ld->ldr_sqlstmt_param_fetch);
+  (void) sqlite3_reset (ld->ldr_sqlstmt_param_fetch);
   return res;
 }
 
@@ -1743,6 +1743,7 @@ insert_modules_sql_mom (struct mom_dumper_st *du)
 	MOM_WARNPRINTF
 	  ("failed to insert dumped module %s (cnt#%d): %s, err#%d", modidstr,
 	   cnt, sqlite3_errmsg (du->dmp_sqlite), err);
+      sqlite3_reset (du->dmp_sqlstmt_module_insert);
     }
   assert (cnt == du->dmp_modulcnt);
 }

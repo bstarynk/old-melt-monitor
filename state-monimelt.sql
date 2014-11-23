@@ -26,6 +26,7 @@ CREATE TABLE t_modules (modname VARCHAR(40) PRIMARY KEY ASC NOT NULL UNIQUE);
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
 INSERT INTO t_params VALUES('dump_reason','command dump');
 INSERT INTO t_modules VALUES('_4q1v3ax0ffi_hv7fwpsv6uf');
+INSERT INTO t_modules VALUES('_65961crktpj_vtt30qeqv21');
 INSERT INTO t_items VALUES('_02av6173qvf_pehzhe755j2','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for calls at end of  blocks"}],
  "content": null, "kind": null, "payload": null}
 ','');
@@ -42,8 +43,9 @@ INSERT INTO t_items VALUES('_06uk4pppvx9_huv0v11v18j','{"attr": [{"attr": "_2umm
     "set", "set": ["_350hj5kfymd_145tfc1sevi"]}}, {"attr": "_7sav6zery1v_24sa6jwwu6c",
    "val": {"item_ref": "_06uk4pppvx9_huv0v11v18j", "jtype": "item_ref", "space": ".root"}},
   {"attr": "_7yxp9xhih4z_9uzrqhkamxa", "val": {"jtype": "set", "set": ["_8y756mef2ca_w8cj58726vj"]}}],
- "content": null, "kind": null, "payload": null}
-','');
+ "content": null, "kind": "tfunrout", "payload": {"constants": [], "tasklet_function":
+  "_06uk4pppvx9_huv0v11v18j"}}
+','tfunrout');
 INSERT INTO t_items VALUES('_06yp8ueq6yf_5ts408yww29','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "in JSON dumps, give the kind of the payload of an item"}],
  "content": null, "kind": null, "payload": null}
 ','');
