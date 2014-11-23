@@ -198,6 +198,9 @@ MOM_PREDEFINED_NAMED(notice,_7diyc1cwj8z_x630afccr8e,3456383299)
 ////!Gives the integer numbers of Json for frames of tasklets.
 MOM_PREDEFINED_NAMED(numbers,_3fw5acswe59_9016fqe4d41,1824167294)
 
+////!for output related variadic primitives.
+MOM_PREDEFINED_NAMED(output,_0te6f7f9pz7_m91yy9iv5pd,3255407438)
+
 ////!for JSONRPC and elsewhere
 MOM_PREDEFINED_NAMED(params,_4215uc2u6qk_52kqyra86y5,709750062)
 

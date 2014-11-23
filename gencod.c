@@ -1837,16 +1837,19 @@ emit_expr_cgen (struct c_generator_mom_st *cg, momval_t expv)
   return 0;
 }
 
+
+
 // emit a node and gives its type
 static momtypenc_t
 emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 {
-  momval_t argsv = MOM_NULLV;
+  momval_t formalsv = MOM_NULLV;
   momval_t resv = MOM_NULLV;
   momval_t ctypev = MOM_NULLV;
   momval_t primexpv = MOM_NULLV;
   momval_t procv = MOM_NULLV;
   momval_t primcountv = MOM_NULLV;
+  momval_t primoutputv = MOM_NULLV;
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
   MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_node nodv="),
 	     MOMOUT_VALUE ((const momval_t) nodv));
@@ -1857,20 +1860,22 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 		    MOMOUT_VALUE ((const momval_t) nodv));
   {
     mom_lock_item (connitm);
-    argsv = mom_item_get_attribute (connitm, mom_named__formals);
+    formalsv = mom_item_get_attribute (connitm, mom_named__formals);
     resv = mom_item_get_attribute (connitm, mom_named__result);
     procv = mom_item_get_attribute (connitm, mom_named__procedure);
     ctypev = mom_item_get_attribute (connitm, mom_named__ctype);
     primexpv =
       mom_item_get_attribute (connitm, mom_named__primitive_expansion);
     primcountv = mom_item_get_attribute (connitm, mom_named__count);
+    primoutputv = mom_item_get_attribute (connitm, mom_named__output);
     mom_unlock_item (connitm);
   }
+  unsigned nbformals = mom_tuple_length (formalsv);
   // handle primitives
   if (primexpv.ptr)
     {
       struct mom_itemattributes_st *argbind = NULL;
-      if (!mom_is_tuple (argsv)
+      if (!mom_is_tuple (formalsv)
 	  || !mom_is_node (primexpv) || !mom_is_item (ctypev)
 	  || mom_node_conn (primexpv) != mom_named__chunk)
 	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("bad primitive:"),
@@ -1880,8 +1885,16 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 			MOMOUT_SPACE (48),
 			MOMOUT_LITERAL ("in node:"),
 			MOMOUT_VALUE ((const momval_t) nodv), NULL);
-      if ((int) mom_tuple_length (argsv) != arity)
+      if (!primoutputv.ptr && (int) mom_tuple_length (formalsv) != arity)
 	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("wrong arity for primitive:"),
+			MOMOUT_ITEM ((const momitem_t *) connitm),
+			MOMOUT_SPACE (48),
+			MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) connitm),
+			MOMOUT_SPACE (48),
+			MOMOUT_LITERAL ("in node:"),
+			MOMOUT_VALUE ((const momval_t) nodv), NULL);
+      else if (primoutputv.ptr && (int) mom_tuple_length (formalsv) > arity)
+	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("too small arity for output primitive:"),
 			MOMOUT_ITEM ((const momitem_t *) connitm),
 			MOMOUT_SPACE (48),
 			MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) connitm),
@@ -1912,7 +1925,7 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
       for (int ix = 0; ix < arity; ix++)
 	{
 	  momval_t formctypv = MOM_NULLV;
-	  momitem_t *formalitm = mom_tuple_nth_item (argsv, ix);
+	  momitem_t *formalitm = mom_tuple_nth_item (formalsv, ix);
 	  momval_t argv = mom_node_nth (nodv, ix);
 	  if (!formalitm || !argv.ptr)
 	    CGEN_ERROR_MOM
@@ -1994,7 +2007,7 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 		{
 		  momtypenc_t vtyp = emit_expr_cgen (cg, bndvalv);
 		  for (unsigned fix = 0; fix < (unsigned) arity; fix++)
-		    if (mom_tuple_nth_item (argsv, fix) == bndvalv.pitem
+		    if (mom_tuple_nth_item (formalsv, fix) == bndvalv.pitem
 			&& (unsigned) vtyp != (unsigned) argctypestr[fix])
 		      CGEN_ERROR_MOM
 			(cg,
@@ -2021,6 +2034,31 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 	       MOMOUT_DEC_INT (chix), MOMOUT_LITERAL (" in node:"),
 	       MOMOUT_VALUE ((const momval_t) nodv), NULL);
 	};
+      if (primoutputv.ptr) {
+	for (unsigned outix=nbformals; outix<arity; outix++) { 
+	  momval_t curoutv = mom_node_nth (primexpv, outix);
+	  if (mom_is_string(curoutv)) {
+	    MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL(" /*!litoutstr*/MOMOUTDO_LITERAL, \""),
+		     MOMOUT_C_STRING ((const char *) curoutv.pstring->cstr),
+		     MOMOUT_LITERAL("\""),
+		     MOMOUT_SPACE(50),
+		     NULL);
+	  }
+	  else if (mom_is_integer(curoutv)) {
+	    MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL(" /*!litoutint*/MOMOUTDO_DEC_INTPTR_T, "),
+		     MOMOUT_DEC_INTPTR_T(mom_integer_val(curoutv)),
+		     NULL);
+	  }
+	  else if (mom_is_double(curoutv)) {
+	    MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL(" /*!litoutdbl*/MOMOUTDO_DOUBLE_G_, (double)"),
+		     MOMOUT_DOUBLE_G (mom_double_val(curoutv)),
+		     NULL);
+	  }
+#warning to be completed output processing in expr
+	  else if (mom_is_item(curoutv)) {
+	  }
+	}
+      }
       MOM_OUT (&cg->cgen_outbody,
 	       MOMOUT_LITERAL ("/*!endprimitive "),
 	       MOMOUT_ITEM ((const momitem_t *) connitm),
@@ -2039,7 +2077,7 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
   // handle procedures
   else if (procv.ptr)
     {
-      if (!mom_is_tuple (argsv))
+      if (!mom_is_tuple (formalsv))
 	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("bad procedure node:"),
 			MOMOUT_VALUE ((const momval_t) nodv),
 			MOMOUT_LITERAL
@@ -2047,7 +2085,7 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 			MOMOUT_ITEM ((const momitem_t *) connitm),
 			MOMOUT_SPACE (48),
 			MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) connitm));
-      if (mom_tuple_length (argsv) != (unsigned) arity)
+      if (mom_tuple_length (formalsv) != (unsigned) arity)
 	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("arity mismatch for procedure:"),
 			MOMOUT_ITEM ((const momitem_t *) connitm),
 			MOMOUT_LITERAL (" in node:"),
@@ -2074,13 +2112,13 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 		   MOMOUT_LITERAL (" " MOM_PROCROUTFUN_PREFIX),
 		   MOMOUT_LITERALV (mom_ident_cstr_of_item (connitm)),
 		   MOMOUT_LITERAL (" ("), MOMOUT_INDENT_MORE (), NULL);
-	  int nbargs = mom_tuple_length (argsv);
+	  int nbargs = mom_tuple_length (formalsv);
 	  for (int aix = 0; aix < nbargs; aix++)
 	    {
 	      if (aix > 0)
 		MOM_OUT (&cg->cgen_outhead, MOMOUT_LITERAL (","),
 			 MOMOUT_SPACE (48));
-	      momitem_t *curformitm = mom_tuple_nth_item (argsv, aix);
+	      momitem_t *curformitm = mom_tuple_nth_item (formalsv, aix);
 	      momval_t curformctypv = MOM_NULLV;
 	      if (!curformitm)
 		CGEN_ERROR_MOM (cg,
@@ -2109,7 +2147,7 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 	  mom_item_put_attribute (cg->cgen_globassocitm, connitm,
 				  (momval_t)
 				  mom_make_node_sized (mom_named__procedure,
-						       3, MOM_NULLV, argsv,
+						       3, MOM_NULLV, formalsv,
 						       ctypev));
 	}
       if (mom_item_get_name (connitm))
@@ -2122,7 +2160,7 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
       for (int aix = 0; aix < arity; aix++)
 	{
 	  momval_t curargv = mom_node_nth (nodv, aix);
-	  momitem_t *curformitm = mom_tuple_nth_item (argsv, aix);
+	  momitem_t *curformitm = mom_tuple_nth_item (formalsv, aix);
 	  momval_t curformctypv = MOM_NULLV;
 	  if (!curformitm)
 	    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("bad procedure:"),

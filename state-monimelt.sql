@@ -66,6 +66,9 @@ INSERT INTO t_items VALUES('_0hi99dr3qqs_yuuciyy7xfz','{"attr": [{"attr": "_0ee6
 INSERT INTO t_items VALUES('_0hpzi8m7wym_1y4ypmm9y47','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "handler for JSONRPC requests"}],
  "content": null, "kind": null, "payload": null}
 ','');
+INSERT INTO t_items VALUES('_0te6f7f9pz7_m91yy9iv5pd','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for output related variadic primitives."}],
+ "content": null, "kind": null, "payload": null}
+','');
 INSERT INTO t_items VALUES('_0x2k07ik4tm_ed7vqphf5ak','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "gives verbatim code"}],
  "content": null, "kind": null, "payload": null}
 ','');
@@ -549,6 +552,7 @@ INSERT INTO t_names VALUES('node','_4m7x6811f6j_t480zu575mz','.predef');
 INSERT INTO t_names VALUES('noop','_240dwt57s08_a8uy366sev5','.root');
 INSERT INTO t_names VALUES('notice','_7diyc1cwj8z_x630afccr8e','.predef');
 INSERT INTO t_names VALUES('numbers','_3fw5acswe59_9016fqe4d41','.predef');
+INSERT INTO t_names VALUES('output','_0te6f7f9pz7_m91yy9iv5pd','.predef');
 INSERT INTO t_names VALUES('params','_4215uc2u6qk_52kqyra86y5','.predef');
 INSERT INTO t_names VALUES('payload','_41v0erax6my_m6pytj0793u','.predef');
 INSERT INTO t_names VALUES('primitive_expansion','_37x98fyestf_ttup2cu68r6','.predef');
