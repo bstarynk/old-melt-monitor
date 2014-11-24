@@ -433,8 +433,11 @@ cmd_do_named_mom (const char *lin)
       assert (mom_is_string (curnamv));
       if (!regexec (&rx, mom_string_cstr (curnamv), 0, NULL, 0))
 	{
-	  MOM_OUT (mom_stdout, MOMOUT_SPACE (40),
-		   MOMOUT_ITEM ((const momitem_t *) curitm));
+	  if (nbmatch % 5 == 0 && nbmatch > 0)
+	    MOM_OUT (mom_stdout, MOMOUT_NEWLINE ());
+	  else
+	    MOM_OUT (mom_stdout, MOMOUT_SPACE (48));
+	  MOM_OUT (mom_stdout, MOMOUT_ITEM ((const momitem_t *) curitm));
 	  nbmatch++;
 	}
     }
