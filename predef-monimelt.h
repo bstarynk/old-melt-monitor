@@ -201,6 +201,9 @@ MOM_PREDEFINED_NAMED(numbers,_3fw5acswe59_9016fqe4d41,1824167294)
 ////!for output related variadic primitives.
 MOM_PREDEFINED_NAMED(output,_0te6f7f9pz7_m91yy9iv5pd,3255407438)
 
+////!gives expansion for output related connectives
+MOM_PREDEFINED_NAMED(output_expansion,_19ufza9zf05_muxxhkmm7ww,2030026497)
+
 ////!for JSONRPC and elsewhere
 MOM_PREDEFINED_NAMED(params,_4215uc2u6qk_52kqyra86y5,709750062)
 

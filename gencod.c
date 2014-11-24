@@ -1838,6 +1838,160 @@ emit_expr_cgen (struct c_generator_mom_st *cg, momval_t expv)
 }
 
 
+// emit an output-like argument
+static void
+emit_output_arg_cgen (struct c_generator_mom_st *cg, momval_t curoutv,
+		      momval_t nodv)
+{
+  if (mom_is_string (curoutv))
+    {
+      MOM_OUT (&cg->cgen_outbody,
+	       MOMOUT_LITERAL
+	       (" /*!litoutstr*/MOMOUTDO_LITERAL, \""),
+	       MOMOUT_C_STRING ((const char *) curoutv.pstring->cstr),
+	       MOMOUT_LITERAL ("\""), MOMOUT_SPACE (50), NULL);
+    }
+  else if (mom_is_integer (curoutv))
+    {
+      MOM_OUT (&cg->cgen_outbody,
+	       MOMOUT_LITERAL
+	       (" /*!litoutint*/MOMOUTDO_DEC_INTPTR_T, (intptr_t)"),
+	       MOMOUT_DEC_INTPTR_T (mom_integer_val (curoutv)), NULL);
+    }
+  else if (mom_is_double (curoutv))
+    {
+      MOM_OUT (&cg->cgen_outbody,
+	       MOMOUT_LITERAL
+	       (" /*!litoutdbl*/MOMOUTDO_DOUBLE_G, (double)"),
+	       MOMOUT_DOUBLE_G (mom_double_val (curoutv)), NULL);
+    }
+  else if (mom_is_item (curoutv))
+    {
+      momtypenc_t outyp = emit_ctype_cgen (cg, NULL, curoutv);
+      switch (outyp)
+	{
+	case momtypenc_int:
+	  MOM_OUT (&cg->cgen_outbody,
+		   MOMOUT_LITERAL
+		   (" /*!outintvar*/MOMOUTDO_DEC_INTPTR_T, (intptr_t)"),
+		   NULL);
+	  emit_var_item_cgen (cg, curoutv.pitem);
+	  break;
+	case momtypenc_val:
+	  MOM_OUT (&cg->cgen_outbody,
+		   MOMOUT_LITERAL
+		   (" /*!outvalvar*/MOMOUTDO_VALUE, (momval_t)"), NULL);
+	  emit_var_item_cgen (cg, curoutv.pitem);
+	  break;
+	case momtypenc_double:
+	  MOM_OUT (&cg->cgen_outbody,
+		   MOMOUT_LITERAL
+		   (" /*!outdblvar*/MOMOUTDO_DOUBLE_G, (double)"), NULL);
+	  emit_var_item_cgen (cg, curoutv.pitem);
+	  break;
+	case momtypenc_string:
+	  MOM_OUT (&cg->cgen_outbody,
+		   MOMOUT_LITERAL
+		   (" /*!outcstrvar*/MOMOUTDO_LITERAL, (const char*)"), NULL);
+	  emit_var_item_cgen (cg, curoutv.pitem);
+	  break;
+	default:
+	  CGEN_ERROR_MOM
+	    (cg,
+	     MOMOUT_LITERAL ("invalid output item element:"),
+	     MOMOUT_VALUE ((const momval_t) curoutv),
+	     MOMOUT_LITERAL (" in node:"),
+	     MOMOUT_VALUE ((const momval_t) nodv), NULL);
+	}
+    }
+  else if (mom_is_node (curoutv))
+    {
+      momitem_t *outconnitm = (momitem_t *) mom_node_conn (curoutv);
+      unsigned outarity = mom_node_arity (curoutv);
+      momval_t outexpv = MOM_NULLV;
+      momval_t outformals = MOM_NULLV;
+      {
+	mom_lock_item (outconnitm);
+	outexpv =
+	  mom_item_get_attribute (outconnitm, mom_named__output_expansion);
+	outformals = mom_item_get_attribute (outconnitm, mom_named__formals);
+	mom_unlock_item (outconnitm);
+      }
+      MOM_DEBUG (gencod, MOMOUT_LITERAL ("output connective:"),
+		 MOMOUT_ITEM ((const momitem_t *) outconnitm),
+		 MOMOUT_LITERAL (" with output_expansion:"),
+		 MOMOUT_VALUE ((const momval_t) outexpv));
+      if (outexpv.ptr)
+	{
+	  if (!mom_is_tuple (outformals))
+	    CGEN_ERROR_MOM
+	      (cg,
+	       MOMOUT_LITERAL ("output item element:"),
+	       MOMOUT_VALUE ((const momval_t) curoutv),
+	       MOMOUT_LITERAL (" has output connective:"),
+	       MOMOUT_ITEM ((const momitem_t *) outconnitm),
+	       MOMOUT_LITERAL (" without formals."), NULL);
+	  unsigned formarity = mom_tuple_length (outformals);
+	  if (formarity != outarity)
+	    CGEN_ERROR_MOM
+	      (cg,
+	       MOMOUT_LITERAL ("output item element:"),
+	       MOMOUT_VALUE ((const momval_t) curoutv),
+	       MOMOUT_LITERAL (" has arity mismatch"), NULL);
+	  // handle the output expansion
+#warning incomplete output_expansion by binding formals...
+	}
+      else
+	{
+	  // plain output expression
+	  momtypenc_t outyp = emit_ctype_cgen (cg, NULL, curoutv);
+	  switch (outyp)
+	    {
+	    case momtypenc_int:
+	      MOM_OUT (&cg->cgen_outbody,
+		       MOMOUT_LITERAL
+		       (" /*!outintexp*/MOMOUTDO_DEC_INTPTR_T, (intptr_t)"),
+		       NULL);
+	      emit_expr_cgen (cg, curoutv);
+	      break;
+	    case momtypenc_val:
+	      MOM_OUT (&cg->cgen_outbody,
+		       MOMOUT_LITERAL
+		       (" /*!outvalexp*/MOMOUTDO_VALUE, (momval_t)"), NULL);
+	      emit_expr_cgen (cg, curoutv);
+	      break;
+	    case momtypenc_double:
+	      MOM_OUT (&cg->cgen_outbody,
+		       MOMOUT_LITERAL
+		       (" /*!outdblexp*/MOMOUTDO_DOUBLE_G, (double)"), NULL);
+	      emit_expr_cgen (cg, curoutv);
+	      break;
+	    case momtypenc_string:
+	      MOM_OUT (&cg->cgen_outbody,
+		       MOMOUT_LITERAL
+		       (" /*!outcstrexp*/MOMOUTDO_LITERAL, (const char*)"),
+		       NULL);
+	      emit_expr_cgen (cg, curoutv);
+	      break;
+	    default:
+	      CGEN_ERROR_MOM
+		(cg,
+		 MOMOUT_LITERAL ("invalid output item element:"),
+		 MOMOUT_VALUE ((const momval_t) curoutv),
+		 MOMOUT_LITERAL (" in node:"),
+		 MOMOUT_VALUE ((const momval_t) nodv), NULL);
+	    }
+	}
+    }
+  else
+    CGEN_ERROR_MOM
+      (cg,
+       MOMOUT_LITERAL ("invalid output element:"),
+       MOMOUT_VALUE ((const momval_t) curoutv),
+       MOMOUT_LITERAL (" in node:"),
+       MOMOUT_VALUE ((const momval_t) nodv), NULL);
+}
+
 
 // emit a node and gives its type
 static momtypenc_t
@@ -1894,15 +2048,15 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 			MOMOUT_LITERAL ("in node:"),
 			MOMOUT_VALUE ((const momval_t) nodv), NULL);
       else if (primoutputv.ptr && (int) mom_tuple_length (formalsv) > arity)
-	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("too small arity for output primitive:"),
+	CGEN_ERROR_MOM (cg,
+			MOMOUT_LITERAL
+			("too small arity for output primitive:"),
 			MOMOUT_ITEM ((const momitem_t *) connitm),
 			MOMOUT_SPACE (48),
 			MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) connitm),
-			MOMOUT_SPACE (48),
-			MOMOUT_LITERAL ("in node:"),
+			MOMOUT_SPACE (48), MOMOUT_LITERAL ("in node:"),
 			MOMOUT_VALUE ((const momval_t) nodv), NULL);
-      MOM_OUT (&cg->cgen_outbody,
-	       MOMOUT_LITERAL ("(/*!primitive "),
+      MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("(/*!primitive "),
 	       MOMOUT_ITEM ((const momitem_t *) connitm),
 	       MOMOUT_LITERAL ("*/ "), NULL);
       if (mom_node_conn (primexpv) != mom_named__chunk)
@@ -2034,31 +2188,18 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 	       MOMOUT_DEC_INT (chix), MOMOUT_LITERAL (" in node:"),
 	       MOMOUT_VALUE ((const momval_t) nodv), NULL);
 	};
-      if (primoutputv.ptr) {
-	for (unsigned outix=nbformals; outix<arity; outix++) { 
-	  momval_t curoutv = mom_node_nth (primexpv, outix);
-	  if (mom_is_string(curoutv)) {
-	    MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL(" /*!litoutstr*/MOMOUTDO_LITERAL, \""),
-		     MOMOUT_C_STRING ((const char *) curoutv.pstring->cstr),
-		     MOMOUT_LITERAL("\""),
-		     MOMOUT_SPACE(50),
-		     NULL);
-	  }
-	  else if (mom_is_integer(curoutv)) {
-	    MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL(" /*!litoutint*/MOMOUTDO_DEC_INTPTR_T, "),
-		     MOMOUT_DEC_INTPTR_T(mom_integer_val(curoutv)),
-		     NULL);
-	  }
-	  else if (mom_is_double(curoutv)) {
-	    MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL(" /*!litoutdbl*/MOMOUTDO_DOUBLE_G_, (double)"),
-		     MOMOUT_DOUBLE_G (mom_double_val(curoutv)),
-		     NULL);
-	  }
-#warning to be completed output processing in expr
-	  else if (mom_is_item(curoutv)) {
-	  }
+      if (primoutputv.ptr)
+	{
+	  for (unsigned outix = nbformals; outix < (unsigned) arity; outix++)
+	    {
+	      momval_t curoutv = mom_node_nth (primexpv, outix);
+	      MOM_DEBUG (gencod, MOMOUT_LITERAL ("output argument:"),
+			 MOMOUT_VALUE ((const momval_t) curoutv),
+			 MOMOUT_LITERAL (" outix#"),
+			 MOMOUT_DEC_INT ((int) outix));
+	      emit_output_arg_cgen (cg, curoutv, nodv);
+	    }
 	}
-      }
       MOM_OUT (&cg->cgen_outbody,
 	       MOMOUT_LITERAL ("/*!endprimitive "),
 	       MOMOUT_ITEM ((const momitem_t *) connitm),
