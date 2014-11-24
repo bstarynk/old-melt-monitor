@@ -1485,7 +1485,7 @@ cmd_do_remove_mom (const char *lin, bool pres, long num)
       memset (cmdbuf, 0, sizeof (cmdbuf));
       int pos = vst_top_mom - num;
       momval_t oldv = vst_valarr_mom[pos];
-      for (int ix = pos; ix < vst_top_mom - 1; ix++)
+      for (int ix = pos; ix < (int) vst_top_mom - 1; ix++)
 	vst_valarr_mom[ix] = vst_valarr_mom[ix + 1];
       vst_valarr_mom[vst_top_mom - 1] = oldv;
       snprintf (cmdbuf, sizeof (cmdbuf), ",remove %ld", num);

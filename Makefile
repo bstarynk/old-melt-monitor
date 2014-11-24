@@ -101,6 +101,7 @@ plugins: $(PLUGINS)
 modules/momg_%.so: modules/momg_%.c | monimelt.h predef-monimelt.h
 	$(LINK.c) -DMONIMELT_CURRENT_MODULE=\"$(patsubst momg_%.so,%,$(*F))\" \
 		  -DMONIMELT_MD5_MODULE=\"$(shell md5sum $< | cut '-d ' -f1)\" \
+		  -DMONIMELT_LAST_COMMITID=\"$(shell git log -n 1 --abbrev=16 --format=%h)\" \
                   -fPIC $< -shared -o $@
 	@logger -t makemonimelt -p user.info -s compiled $< into \
 	        shared module $@ named $(patsubst momg_%.so,%,$(*F)) \
