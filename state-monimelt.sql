@@ -95,6 +95,13 @@ INSERT INTO t_items VALUES('_1f94j87qumw_mhzkriesx7c','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_1r880c1yk3z_i5e8mprcj90','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for blocks in routines, etc..."}],
  "content": null, "kind": null, "payload": null}
 ','');
+INSERT INTO t_items VALUES('_1x4wmv7yiym_w3zfpdv8q0m','{"attr": [{"attr": "_19ufza9zf05_muxxhkmm7ww", "val": {"jtype": "node", "node": "_8x6fxcm4z2k_vdaqicfi4z0",
+    "sons": ["MOMOUTDO_C_STRING,", {"item_ref": "_389t77v85ej_fwpy6exy62x",
+      "jtype": "item_ref", "space": ".root"}]}}, {"attr": "_2ummst105ck_xracfy8v87y",
+   "val": {"jtype": "tuple", "tuple": ["_389t77v85ej_fwpy6exy62x"]}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "output connective for C-encoded strings."}], "content": null, "kind": null,
+ "payload": null}
+','');
 INSERT INTO t_items VALUES('_20ds5w0c9z1_tvf5h12wrqp','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_51u3st4u9mc_zdvms6jti0a",
     "jtype": "item_ref", "space": ".predef"}}, {"attr": "_2ummst105ck_xracfy8v87y",
    "val": {"jtype": "tuple", "tuple": ["_0hi99dr3qqs_yuuciyy7xfz", "_389t77v85ej_fwpy6exy62x"]}},
@@ -130,6 +137,13 @@ INSERT INTO t_items VALUES('_2ky10qvckv2_kqa0pr8z29z','{"attr": [{"attr": "_41u1
 ','');
 INSERT INTO t_items VALUES('_2mayc646pdu_w4d18fmx8u3','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "some sequence"}], "content":
  null, "kind": null, "payload": null}
+','');
+INSERT INTO t_items VALUES('_2rpd6wy50xt_etjfuj6s8jr','{"attr": [{"attr": "_19ufza9zf05_muxxhkmm7ww", "val": {"jtype": "node", "node": "_8x6fxcm4z2k_vdaqicfi4z0",
+    "sons": ["MOMOUTDO_ITEM, mom_value_to_item(", {"item_ref": "_0hi99dr3qqs_yuuciyy7xfz",
+      "jtype": "item_ref", "space": ".root"}, ")"]}}, {"attr": "_2ummst105ck_xracfy8v87y",
+   "val": {"jtype": "tuple", "tuple": ["_0hi99dr3qqs_yuuciyy7xfz"]}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "output connective for items."}], "content": null, "kind": null,
+ "payload": null}
 ','');
 INSERT INTO t_items VALUES('_2u8svx94yq4_34icz9j1fyx','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for constants in routines..."}],
  "content": null, "kind": null, "payload": null}
@@ -247,6 +261,13 @@ INSERT INTO t_items VALUES('_4qcw2mwjswm_j9q0k9d04hm','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_4v74chqs1eh_chqd9cqw85t','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for procedure related things"}],
  "content": null, "kind": null, "payload": null}
 ','');
+INSERT INTO t_items VALUES('_4x8e2mwmacp_ekxdw3vqqpd','{"attr": [{"attr": "_19ufza9zf05_muxxhkmm7ww", "val": {"jtype": "node", "node": "_8x6fxcm4z2k_vdaqicfi4z0",
+    "sons": ["MOMOUTDO_JS_HTML, ", {"item_ref": "_389t77v85ej_fwpy6exy62x",
+      "jtype": "item_ref", "space": ".root"}]}}, {"attr": "_2ummst105ck_xracfy8v87y",
+   "val": {"jtype": "tuple", "tuple": ["_389t77v85ej_fwpy6exy62x"]}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "output connective for HTML + Javascript encoded strings."}], "content":
+ null, "kind": null, "payload": null}
+','');
 INSERT INTO t_items VALUES('_51u3st4u9mc_zdvms6jti0a','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "The C type for word integers"}],
  "content": null, "kind": null, "payload": null}
 ','');
@@ -275,6 +296,13 @@ INSERT INTO t_items VALUES('_5s26uzwhveh_fv3twe3s2je','{"attr": [{"attr": "_0ee6
 ','');
 INSERT INTO t_items VALUES('_5vi29c2i54k_i2ufkty9kmp','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "primitive to get the attribute"}],
  "content": null, "kind": null, "payload": null}
+','');
+INSERT INTO t_items VALUES('_5w5idj1j9ah_u00krzevvj7','{"attr": [{"attr": "_19ufza9zf05_muxxhkmm7ww", "val": {"jtype": "node", "node": "_8x6fxcm4z2k_vdaqicfi4z0",
+    "sons": ["MOMOUTDO_LITERAL, ", {"item_ref": "_389t77v85ej_fwpy6exy62x",
+      "jtype": "item_ref", "space": ".root"}]}}, {"attr": "_2ummst105ck_xracfy8v87y",
+   "val": {"jtype": "tuple", "tuple": ["_389t77v85ej_fwpy6exy62x"]}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "output connective for literal or computed strings."}], "content": null,
+ "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_5wmusj136kq_u5qpehp89aq','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "indicates the HTTP POST method"}],
  "content": null, "kind": null, "payload": null}
@@ -331,6 +359,13 @@ INSERT INTO t_items VALUES('_70aer7teeui_kvzkiqq2rd2','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_70mt4fvrva2_pk76eevwada','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "get value associated in some assoc item"}],
  "content": null, "kind": null, "payload": null}
 ','');
+INSERT INTO t_items VALUES('_71a9mq07fvv_448p3r7vikd','{"attr": [{"attr": "_19ufza9zf05_muxxhkmm7ww", "val": {"jtype": "node", "node": "_8x6fxcm4z2k_vdaqicfi4z0",
+    "sons": ["MOMOUTDO_JSON_VALUE,", {"item_ref": "_0hi99dr3qqs_yuuciyy7xfz",
+      "jtype": "item_ref", "space": ".root"}]}}, {"attr": "_2ummst105ck_xracfy8v87y",
+   "val": {"jtype": "tuple", "tuple": ["_0hi99dr3qqs_yuuciyy7xfz"]}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "output connective for JSON values"}], "content": null, "kind": null,
+ "payload": null}
+','');
 INSERT INTO t_items VALUES('_73im2zryfij_a7zmkketcfc','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "routine to edit a value during edition in ajax_objects"}],
  "content": null, "kind": null, "payload": null}
 ','');
@@ -383,6 +418,13 @@ INSERT INTO t_items VALUES('_80e7dsukuq3_6p7jffmz1yi','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_80wxf4c8q92_qq8k6xc0xxj','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "gives in sequence seq the element of given rank"}],
  "content": null, "kind": null, "payload": null}
 ','');
+INSERT INTO t_items VALUES('_822d1dkak1h_cw0598pe64d','{"attr": [{"attr": "_19ufza9zf05_muxxhkmm7ww", "val": {"jtype": "node", "node": "_8x6fxcm4z2k_vdaqicfi4z0",
+    "sons": ["MOMOUTDO_HTML, ", {"item_ref": "_389t77v85ej_fwpy6exy62x", "jtype":
+      "item_ref", "space": ".root"}]}}, {"attr": "_2ummst105ck_xracfy8v87y",
+   "val": {"jtype": "tuple", "tuple": ["_389t77v85ej_fwpy6exy62x"]}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "output connective for HTML string"}], "content": null, "kind": null,
+ "payload": null}
+','');
 INSERT INTO t_items VALUES('_86ft82euar7_cm50jcthhwe','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "start an associative item"}],
  "content": null, "kind": null, "payload": null}
 ','');
@@ -405,6 +447,13 @@ INSERT INTO t_items VALUES('_8qmqy249w63_fxdr6rdz48m','{"attr": [{"attr": "_2u8s
    "_7wk9y7e7r0z_575esi8ys5x"], "tasklet_function": "_8qmqy249w63_fxdr6rdz48m"}}
 ','tfunrout');
 INSERT INTO t_items VALUES('_8qpa7j0chkh_k630ujw6jiw','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for switch statements on integers"}],
+ "content": null, "kind": null, "payload": null}
+','');
+INSERT INTO t_items VALUES('_8qqv70zdmmk_w4qs625q0s7','{"attr": [{"attr": "_19ufza9zf05_muxxhkmm7ww", "val": {"jtype": "node", "node": "_8x6fxcm4z2k_vdaqicfi4z0",
+    "sons": ["MOMOUTDO_SLASHCOMMENT_STRING,", {"item_ref": "_389t77v85ej_fwpy6exy62x",
+      "jtype": "item_ref", "space": ".root"}]}}, {"attr": "_2ummst105ck_xracfy8v87y",
+   "val": {"jtype": "tuple", "tuple": ["_389t77v85ej_fwpy6exy62x"]}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "output connective for C-encoded comment strings starting with //!"}],
  "content": null, "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_8s357rq2dzk_k8ze95tikjm','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "gives the item content, at least in dumped JSON..."}],
@@ -474,6 +523,13 @@ INSERT INTO t_items VALUES('_9dcxaqk8tqe_fam9mcxme9w','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_9dsak0qcy0v_1c5z9th7x3i','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "indicates the HTTP GET method"}],
  "content": null, "kind": null, "payload": null}
 ','');
+INSERT INTO t_items VALUES('_9hjrq1h1s0p_h1qpmj1ucuy','{"attr": [{"attr": "_19ufza9zf05_muxxhkmm7ww", "val": {"jtype": "node", "node": "_8x6fxcm4z2k_vdaqicfi4z0",
+    "sons": ["MOMOUTDO_VALUE,", {"item_ref": "_0hi99dr3qqs_yuuciyy7xfz", "jtype":
+      "item_ref", "space": ".root"}]}}, {"attr": "_2ummst105ck_xracfy8v87y",
+   "val": {"jtype": "tuple", "tuple": ["_0hi99dr3qqs_yuuciyy7xfz"]}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "output connective for Monimelt values."}], "content": null, "kind": null,
+ "payload": null}
+','');
 INSERT INTO t_items VALUES('_9mxi9e605ay_ihpjyrwq250','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "JSON for closure values"}],
  "content": null, "kind": null, "payload": null}
 ','');
@@ -499,6 +555,14 @@ INSERT INTO t_items VALUES('_9wwqwxqcm4p_y7di7fs8tsk','{"attr": [{"attr": "_41u1
 ','');
 INSERT INTO t_names VALUES('GET','_9dsak0qcy0v_1c5z9th7x3i','.predef');
 INSERT INTO t_names VALUES('HEAD','_47fatww79x6_vh8ap22c0ch','.predef');
+INSERT INTO t_names VALUES('MOMOUT_C_STRING','_1x4wmv7yiym_w3zfpdv8q0m','.root');
+INSERT INTO t_names VALUES('MOMOUT_HTML','_822d1dkak1h_cw0598pe64d','.root');
+INSERT INTO t_names VALUES('MOMOUT_ITEM','_2rpd6wy50xt_etjfuj6s8jr','.root');
+INSERT INTO t_names VALUES('MOMOUT_JSON_VALUE','_71a9mq07fvv_448p3r7vikd','.root');
+INSERT INTO t_names VALUES('MOMOUT_JS_HTML','_4x8e2mwmacp_ekxdw3vqqpd','.root');
+INSERT INTO t_names VALUES('MOMOUT_LITERAL','_5w5idj1j9ah_u00krzevvj7','.root');
+INSERT INTO t_names VALUES('MOMOUT_SLASHCOMMENT_STRING','_8qqv70zdmmk_w4qs625q0s7','.root');
+INSERT INTO t_names VALUES('MOMOUT_VALUE','_9hjrq1h1s0p_h1qpmj1ucuy','.root');
 INSERT INTO t_names VALUES('POST','_5wmusj136kq_u5qpehp89aq','.predef');
 INSERT INTO t_names VALUES('agenda','_02u53qxa7dm_sttmhffpchr','.predef');
 INSERT INTO t_names VALUES('ajax_appl','_06uk4pppvx9_huv0v11v18j','.root');
