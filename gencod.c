@@ -1646,6 +1646,15 @@ emit_var_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
       else
 	assert (false && "impossible routkind");
     }
+  else if (noditm == mom_named__formals && cg->cgen_routkind == cgr_proc)
+    {
+      int formix = (int) mom_integer_val_def (mom_node_nth (expasv, 1), -1);
+      assert (formix >= 0);
+      MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (64),
+	       MOMOUT_LITERAL (CGEN_FORMALARG_PREFIX),
+	       MOMOUT_DEC_INT (formix));
+      return emit_ctype_cgen (cg, NULL, mom_node_nth (expasv, 2));
+    }
   else if (noditm == mom_named__closed_values)
     {
       int cix = mom_integer_val_def (mom_node_nth (expasv, 0), -1);

@@ -187,6 +187,10 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
   mompblo_1:
  { // procedure block _1kj1j3878fe_duw3ts10hev
   
+  //! instr#1 in block _1kj1j3878fe_duw3ts10hev ::
+  /*!do*/ /*!primitive-void _1iyd2es3u59_x6uq7vhecjj*/ mom_full_dump("todo dump-at-exit", 
+  momparg_0, NULL); mom_stop_event_loop();/*!endvoidprimitive _1iyd2es3u59_x6uq7vhecjj*/  /*!done*/;
+  
  }; // end procedure block _1kj1j3878fe_duw3ts10hev
  return;
  

@@ -62,8 +62,8 @@ INSERT INTO t_items VALUES('_07zti91e4kd_952zqsd03fz','{"attr": [{"attr": "_0ee6
    "val": {"item_ref": "_1kj1j3878fe_duw3ts10hev", "jtype": "item_ref", "space": ".root"}},
   {"attr": "_41u1utcxyek_22cftxt3xxm", "val": "todo procedure on exit"}, {"attr":
    "_4v74chqs1eh_chqd9cqw85t", "val": {"jtype": "set", "set": ["_1kj1j3878fe_duw3ts10hev"]}}],
- "content": null, "kind": null, "payload": null}
-','');
+ "content": null, "kind": "procedure", "payload": []}
+','procedure');
 INSERT INTO t_items VALUES('_0afqepa7jkr_qky26hpv98d','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "translate a single procedure"}],
  "content": null, "kind": null, "payload": null}
 ','');
@@ -126,9 +126,21 @@ INSERT INTO t_items VALUES('_1eqee5utt20_pyw3mat0zw4','{"attr": [{"attr": "_19uf
 INSERT INTO t_items VALUES('_1f94j87qumw_mhzkriesx7c','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "routine to update the value in displays after edition."}],
  "content": null, "kind": null, "payload": null}
 ','');
+INSERT INTO t_items VALUES('_1iyd2es3u59_x6uq7vhecjj','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_02q6zk9f5st_im0z75re15f",
+    "jtype": "item_ref", "space": ".predef"}}, {"attr": "_2ummst105ck_xracfy8v87y",
+   "val": {"jtype": "tuple", "tuple": ["_389t77v85ej_fwpy6exy62x"]}}, {"attr": "_37x98fyestf_ttup2cu68r6",
+   "val": {"jtype": "node", "node": "_8x6fxcm4z2k_vdaqicfi4z0", "sons": ["mom_full_dump(\"todo dump-at-exit\", ",
+     {"item_ref": "_389t77v85ej_fwpy6exy62x", "jtype": "item_ref", "space": ".root"},
+     ", NULL);", " mom_stop_event_loop();"]}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "primitive inside todo at exit"}], "content": null, "kind": null,
+ "payload": null}
+','');
 INSERT INTO t_items VALUES('_1kj1j3878fe_duw3ts10hev','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "start block of todo proc on exit"},
   {"attr": "_94tq2iauet8_jujpjhjrzsm", "val": {"jtype": "node", "node": "_0yyp8vmw4si_wf49m4d4zwq",
-    "sons": []}}], "content": null, "kind": null, "payload": null}
+    "sons": [{"jtype": "node", "node": "_5c789try94y_ssy6a22fpep", "sons": [{"jtype":
+"node", "node": "_1iyd2es3u59_x6uq7vhecjj", "sons": [{"item_ref": "_389t77v85ej_fwpy6exy62x",
+  "jtype": "item_ref", "space": ".root"}]}]}]}}], "content": null, "kind": null,
+ "payload": null}
 ','');
 INSERT INTO t_items VALUES('_1r880c1yk3z_i5e8mprcj90','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for blocks in routines, etc..."}],
  "content": null, "kind": null, "payload": null}
