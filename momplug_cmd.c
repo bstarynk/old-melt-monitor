@@ -51,6 +51,7 @@ const char mom_plugin_GPL_compatible[] = "GPLv3+";
   CMD(putat,"[attr]; put attribute",itm,":+")           \
   CMD(quit,"quit without dumping",non,NULL)             \
   CMD(remat,"[attr]; remove attribute",itm,":-")        \
+  CMD(remove,"N; remove inside stack & push",num,">-")     \
   CMD(set,"make set to mark",num,"}")                   \
   CMD(shell,"[command]; run a command",non,"#!")        \
   CMD(stack,"print the stack",non,"!")                  \
@@ -1471,6 +1472,28 @@ cmd_do_insert_mom (const char *lin, bool pres, long num)
     }
   else
     printf ("cannot insert at level %ld of %d\n", num, (int) vst_top_mom);
+}
+
+static void
+cmd_do_remove_mom (const char *lin, bool pres, long num)
+{
+  MOM_DEBUGPRINTF (cmd, "start do_remove lin=%s pres=%s num=%ld", lin,
+		   pres ? "pres" : "abs", num);
+  if (pres && num > 1 && num < vst_top_mom)
+    {
+      char cmdbuf[32];
+      memset (cmdbuf, 0, sizeof (cmdbuf));
+      int pos = vst_top_mom - num;
+      momval_t oldv = vst_valarr_mom[pos];
+      for (int ix = pos; ix < vst_top_mom - 1; ix++)
+	vst_valarr_mom[ix] = vst_valarr_mom[ix + 1];
+      vst_valarr_mom[vst_top_mom - 1] = oldv;
+      snprintf (cmdbuf, sizeof (cmdbuf), ",remove %ld", num);
+      add_history (cmdbuf);
+      printf (ANSI_BOLD "removed at #%d" ANSI_NORMAL "\n", (int) num);
+    }
+  else
+    printf ("cannot remove at level %ld of %d\n", num, (int) vst_top_mom);
 }
 
 ////////////////////////////////////////////////////////////////
