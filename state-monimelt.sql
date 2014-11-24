@@ -56,6 +56,14 @@ INSERT INTO t_items VALUES('_06uk4pppvx9_huv0v11v18j','{"attr": [{"attr": "_2umm
 INSERT INTO t_items VALUES('_06yp8ueq6yf_5ts408yww29','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "in JSON dumps, give the kind of the payload of an item"}],
  "content": null, "kind": null, "payload": null}
 ','');
+INSERT INTO t_items VALUES('_07zti91e4kd_952zqsd03fz','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_02q6zk9f5st_im0z75re15f",
+    "jtype": "item_ref", "space": ".predef"}}, {"attr": "_2ummst105ck_xracfy8v87y",
+   "val": {"jtype": "tuple", "tuple": ["_389t77v85ej_fwpy6exy62x"]}}, {"attr": "_3wh3e88sk28_d27qi2737zi",
+   "val": {"item_ref": "_1kj1j3878fe_duw3ts10hev", "jtype": "item_ref", "space": ".root"}},
+  {"attr": "_41u1utcxyek_22cftxt3xxm", "val": "todo procedure on exit"}, {"attr":
+   "_4v74chqs1eh_chqd9cqw85t", "val": {"jtype": "set", "set": ["_1kj1j3878fe_duw3ts10hev"]}}],
+ "content": null, "kind": null, "payload": null}
+','');
 INSERT INTO t_items VALUES('_0afqepa7jkr_qky26hpv98d','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "translate a single procedure"}],
  "content": null, "kind": null, "payload": null}
 ','');
@@ -117,6 +125,10 @@ INSERT INTO t_items VALUES('_1eqee5utt20_pyw3mat0zw4','{"attr": [{"attr": "_19uf
 ','');
 INSERT INTO t_items VALUES('_1f94j87qumw_mhzkriesx7c','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "routine to update the value in displays after edition."}],
  "content": null, "kind": null, "payload": null}
+','');
+INSERT INTO t_items VALUES('_1kj1j3878fe_duw3ts10hev','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "start block of todo proc on exit"},
+  {"attr": "_94tq2iauet8_jujpjhjrzsm", "val": {"jtype": "node", "node": "_0yyp8vmw4si_wf49m4d4zwq",
+    "sons": []}}], "content": null, "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_1r880c1yk3z_i5e8mprcj90','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for blocks in routines, etc..."}],
  "content": null, "kind": null, "payload": null}
@@ -409,8 +421,8 @@ INSERT INTO t_items VALUES('_6443sk5q0zt_8xdi02c6tzu','{"attr": [{"attr": "_41u1
  "content": null, "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_65961crktpj_vtt30qeqv21','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "first module, with core AJAX functions etc..."},
-  {"attr": "_9dcxaqk8tqe_fam9mcxme9w", "val": {"jtype": "set", "set": ["_06uk4pppvx9_huv0v11v18j"]}}],
- "content": null, "kind": null, "payload": null}
+  {"attr": "_9dcxaqk8tqe_fam9mcxme9w", "val": {"jtype": "set", "set": ["_06uk4pppvx9_huv0v11v18j",
+     "_07zti91e4kd_952zqsd03fz"]}}], "content": null, "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_682ush7cppa_s7vzfd2rsxp','{"attr": [{"attr": "_2u8svx94yq4_34icz9j1fyx", "val": {"jtype": "set", "set": ["_0yyp8vmw4si_wf49m4d4zwq"]}},
   {"attr": "_2ummst105ck_xracfy8v87y", "val": {"jtype": "tuple", "tuple": []}},

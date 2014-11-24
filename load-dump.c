@@ -1254,6 +1254,7 @@ mom_initial_load (const char *ldirnam)
   ldr.ldr_hsize = inisiz;
   ldr.ldr_hcount = 0;
   ldr.ldr_dirpath = MOM_GC_STRDUP ("initial loader dirpath", ldirnam);
+  ldr.ldr_curspace = momspa_root;
   /// open the database
   int errcod =
     sqlite3_open_v2 (dbpath, &ldr.ldr_sqlite, SQLITE_OPEN_READONLY, NULL);

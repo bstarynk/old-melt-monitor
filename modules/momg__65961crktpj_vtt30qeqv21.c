@@ -32,27 +32,34 @@
 
 #include "monimelt.h"
 
-////++++ declaration of 1 routines:
+////++++ declaration of 2 routines:
 
 ////!AJAX for appl menu
 
 // declare tasklet function ajax_appl rank#0
 static int momfuncod__06uk4pppvx9_huv0v11v18j(int, momitem_t*, momval_t, momval_t*, intptr_t*, double*);
 
+////!todo procedure on exit
+
+// declare procedure _07zti91e4kd_952zqsd03fz rank#1
+void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t);
+
 static momitem_t* momfconstitems__06uk4pppvx9_huv0v11v18j[1]; // constant items of tasklet function ajax_appl
+
+static const momitem_t* mompconstitems__07zti91e4kd_952zqsd03fz[1]; // define constant items of procedure _07zti91e4kd_952zqsd03fz
 
 // declare module md5sum for first_module
 const char mommd5mod__65961crktpj_vtt30qeqv21[] = MONIMELT_MD5_MODULE; // Makefile generated
 
 // declare module routines descriptor array for first_module
-static const union momrout_un momdroutarr__65961crktpj_vtt30qeqv21[2];
+static const union momrout_un momdroutarr__65961crktpj_vtt30qeqv21[3];
 
 
 
 //// implementations
 
 
-////++++ implementation of 1 routines:
+////++++ implementation of 2 routines:
 
 
 // implement tasklet function ajax_appl rank#0
@@ -165,21 +172,59 @@ const struct momtfundescr_st momrout__06uk4pppvx9_huv0v11v18j = { // tasklet fun
  
 }; // end function descriptor
 
-// define module routines descriptor array for first_module
-static const union momrout_un momdroutarr__65961crktpj_vtt30qeqv21[2] = {
- [0]= {.rtfun= &momrout__06uk4pppvx9_huv0v11v18j}, // taskletfun ajax_appl
+
+
+
+// implementation of procedure #1 = _07zti91e4kd_952zqsd03fz
+void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_fwpy6exy62x
+)
+{
+ static momitem_t* momprocitem;
+ if (MOM_UNLIKELY(!momprocitem)) momprocitem = mom_procedure_item_of_id("_07zti91e4kd_952zqsd03fz");
+ /// starting:
+ goto mompblo_1; // start at _1kj1j3878fe_duw3ts10hev
  
-}; // end of module routines descriptor array for first_module
-
-
-// module initialization for first_module
-void mominitmodule__65961crktpj_vtt30qeqv21 (void) {
- mom_module_internal_initialize ("_65961crktpj_vtt30qeqv21" /*!module first_module*/,
-       MONIMELT_MD5_MODULE /*see Makefile*/,  1,  momdroutarr__65961crktpj_vtt30qeqv21);
- MOM_INFORMPRINTF("module first_module of md5 " MONIMELT_MD5_MODULE " initialized.");
-} // end of module initialization
-
-
+  mompblo_1:
+ { // procedure block _1kj1j3878fe_duw3ts10hev
+  
+ }; // end procedure block _1kj1j3878fe_duw3ts10hev
+ return;
+ 
+ } // end of procedure momprocfun__07zti91e4kd_952zqsd03fz
+ 
+ 
+ static const char* const mompconstid__07zti91e4kd_952zqsd03fz[1] = {
+ }; // end of procedure constant item ids of _07zti91e4kd_952zqsd03fz
+ 
+ 
+ const struct momprocrout_st momprocdescr__07zti91e4kd_952zqsd03fz = { .prout_magic = MOM_PROCROUT_MAGIC,
+  .prout_resty = momtypenc__none,
+  .prout_len = 0,
+  .prout_id = "_07zti91e4kd_952zqsd03fz",
+  .prout_module = "_65961crktpj_vtt30qeqv21",
+  .prout_constantids = mompconstid__07zti91e4kd_952zqsd03fz,
+  .prout_constantitems = mompconstitems__07zti91e4kd_952zqsd03fz,
+  .prout_addr = (void*)momprocfun__07zti91e4kd_952zqsd03fz,
+  .prout_argsig = "s",
+  .prout_timestamp= __DATE__ "@" __TIME__
+ }; // end proc descriptor
+ 
+ // define module routines descriptor array for first_module
+ static const union momrout_un momdroutarr__65961crktpj_vtt30qeqv21[3] = {
+  [0]= {.rtfun= &momrout__06uk4pppvx9_huv0v11v18j}, // taskletfun ajax_appl
+  [1]= {.rproc= &momprocdescr__07zti91e4kd_952zqsd03fz}, // procedure _07zti91e4kd_952zqsd03fz
+  
+ }; // end of module routines descriptor array for first_module
+ 
+ 
+ // module initialization for first_module
+ void mominitmodule__65961crktpj_vtt30qeqv21 (void) {
+  mom_module_internal_initialize ("_65961crktpj_vtt30qeqv21" /*!module first_module*/,
+        MONIMELT_MD5_MODULE /*see Makefile*/,  2,  momdroutarr__65961crktpj_vtt30qeqv21);
+  MOM_INFORMPRINTF("module first_module of md5 " MONIMELT_MD5_MODULE " initialized.");
+ } // end of module initialization
+ 
+ 
 
  // module license
 const char mom_module_GPL_compatible[]=
