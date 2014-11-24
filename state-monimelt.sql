@@ -128,6 +128,12 @@ INSERT INTO t_items VALUES('_1x4wmv7yiym_w3zfpdv8q0m','{"attr": [{"attr": "_19uf
    "val": "output connective for C-encoded strings."}], "content": null, "kind": null,
  "payload": null}
 ','');
+INSERT INTO t_items VALUES('_1yz5fpjm6yt_319wacq9346','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_7j7x11c25h3_wkchtuwpusx",
+    "jtype": "item_ref", "space": ".predef"}}, {"attr": "_2ummst105ck_xracfy8v87y",
+   "val": {"jtype": "tuple", "tuple": ["_2vy0ah3jrd1_mm66ja7rfj7"]}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "primitive to query a time, as a double ..."}], "content": null,
+ "kind": null, "payload": null}
+','');
 INSERT INTO t_items VALUES('_20ds5w0c9z1_tvf5h12wrqp','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_51u3st4u9mc_zdvms6jti0a",
     "jtype": "item_ref", "space": ".predef"}}, {"attr": "_2ummst105ck_xracfy8v87y",
    "val": {"jtype": "tuple", "tuple": ["_0hi99dr3qqs_yuuciyy7xfz", "_389t77v85ej_fwpy6exy62x"]}},
@@ -644,6 +650,11 @@ INSERT INTO t_items VALUES('_9hjrq1h1s0p_h1qpmj1ucuy','{"attr": [{"attr": "_19uf
    "val": "output connective for Monimelt values."}], "content": null, "kind": null,
  "payload": null}
 ','');
+INSERT INTO t_items VALUES('_9jdufs9sew7_u6x3k3wfseq','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_51u3st4u9mc_zdvms6jti0a",
+    "jtype": "item_ref", "space": ".predef"}}, {"attr": "_0x2k07ik4tm_ed7vqphf5ak",
+   "val": "CLOCK_REALTIME"}, {"attr": "_41u1utcxyek_22cftxt3xxm", "val": "literal for identifying the literal clock"}],
+ "content": null, "kind": null, "payload": null}
+','');
 INSERT INTO t_items VALUES('_9ju0dqm82h4_hqi2kjqxa83','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_51u3st4u9mc_zdvms6jti0a",
     "jtype": "item_ref", "space": ".predef"}}, {"attr": "_0x2k07ik4tm_ed7vqphf5ak",
    "val": "HTTP_NOT_FOUND"}, {"attr": "_41u1utcxyek_22cftxt3xxm", "val": "literal for HTTP protocol return code, not found..."}],
@@ -678,6 +689,7 @@ INSERT INTO t_items VALUES('_9w7y4v2xpyr_f48demccutx','{"attr": [{"attr": "_19uf
 INSERT INTO t_items VALUES('_9wwqwxqcm4p_y7di7fs8tsk','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "common index number"}],
  "content": null, "kind": null, "payload": null}
 ','');
+INSERT INTO t_names VALUES('CLOCK_REALTIME','_9jdufs9sew7_u6x3k3wfseq','.root');
 INSERT INTO t_names VALUES('GET','_9dsak0qcy0v_1c5z9th7x3i','.predef');
 INSERT INTO t_names VALUES('HEAD','_47fatww79x6_vh8ap22c0ch','.predef');
 INSERT INTO t_names VALUES('HTTP_NOT_FOUND','_9ju0dqm82h4_hqi2kjqxa83','.root');
@@ -773,6 +785,7 @@ INSERT INTO t_names VALUES('message','_4jp2meuzru2_a58afyxwxa2','.predef');
 INSERT INTO t_names VALUES('method','_3hv5ymapjed_y8q6hsvhw8u','.predef');
 INSERT INTO t_names VALUES('module','_7sqk8vh89xr_6tj8dq7vqju','.predef');
 INSERT INTO t_names VALUES('module_routines','_9dcxaqk8tqe_fam9mcxme9w','.predef');
+INSERT INTO t_names VALUES('mom_clock_time','_1yz5fpjm6yt_319wacq9346','.root');
 INSERT INTO t_names VALUES('mom_string_same','_20ds5w0c9z1_tvf5h12wrqp','.root');
 INSERT INTO t_names VALUES('mom_value_to_item','_5s26uzwhveh_fv3twe3s2je','.root');
 INSERT INTO t_names VALUES('mom_webx_post_arg','_8zwifiifaf0_pyayp6hpha4','.root');
