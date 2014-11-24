@@ -622,6 +622,45 @@ cmd_do_gencmod_mom (const char *lin, bool pres, momitem_t *moditm)
 	  add_history (",gencmod");
 	}
     };
+  char csourcebuf[MOM_PATH_MAX];
+  char cbackupbuf[MOM_PATH_MAX];
+  char cbadbuf[MOM_PATH_MAX];
+  memset (csourcebuf, 0, sizeof (csourcebuf));
+  memset (cbackupbuf, 0, sizeof (cbackupbuf));
+#define RESTORE_BACKUP_MOM() do {					\
+  if (cbackupbuf[0] && csourcebuf[0] && !access(cbackupbuf, F_OK)) {	\
+    if (!access(csourcebuf, F_OK) && !rename (csourcebuf, cbadbuf))	\
+      MOM_INFORMPRINTF("bad generated C source in %s", cbadbuf);	\
+    if (rename(cbackupbuf, csourcebuf)<0)				\
+      MOM_WARNPRINTF("failed to restore backup %s to source %s (%s)",	\
+		     cbackupbuf, csourcebuf, strerror(errno));		\
+    else								\
+      MOM_INFORMPRINTF("restored backup %s to source %s",		\
+		       cbackupbuf, csourcebuf);				\
+  } } while(0)
+  snprintf (csourcebuf, sizeof (csourcebuf),
+	    MOM_SHARED_MODULE_DIRECTORY "/" MOM_SHARED_MODULE_PREFIX "%s.c",
+	    mom_ident_cstr_of_item (moditm));
+  snprintf (cbadbuf, sizeof (cbadbuf),
+	    MOM_SHARED_MODULE_DIRECTORY "/" MOM_SHARED_MODULE_PREFIX
+	    "%s.c-BAD~", mom_ident_cstr_of_item (moditm));
+  snprintf (cbackupbuf, sizeof (cbackupbuf),
+	    MOM_SHARED_MODULE_DIRECTORY "/" MOM_SHARED_MODULE_PREFIX
+	    "%s.c-BAK%d~", mom_ident_cstr_of_item (moditm), (int) getpid ());
+  if (!access (csourcebuf, R_OK))
+    {
+      int backuperr = 0;
+      char backupcmd[2 * MOM_PATH_MAX + 10];
+      memset (backupcmd, 0, sizeof (backupcmd));
+      snprintf (backupcmd, sizeof (backupcmd), "cp -vpb %s %s", csourcebuf,
+		cbackupbuf);
+      printf (ANSI_BOLD "backup copy:" ANSI_NORMAL " %s\n", backupcmd);
+      fflush (NULL);
+      backuperr = system (backupcmd);
+      if (backuperr)
+	MOM_WARNPRINTF ("failed backup %s with code#%d", backupcmd,
+			backuperr);
+    }
   MOM_INFORM (MOMOUT_LITERAL ("before compilation to C of module:"),
 	      MOMOUT_ITEM ((const momitem_t *) moditm));
   int errcod = mom_generate_c_module (moditm, NULL, &errmsg);
@@ -633,6 +672,7 @@ cmd_do_gencmod_mom (const char *lin, bool pres, momitem_t *moditm)
 		   MOMOUT_LITERALV ((const char *) errmsg),
 		   MOMOUT_SPACE (48),
 		   MOMOUT_LITERAL (". Error code#"), MOMOUT_DEC_INT (errcod));
+      RESTORE_BACKUP_MOM ();
       printf (ANSI_BOLD "** module C code generation failed**" ANSI_NORMAL
 	      "\n");
       return;
@@ -652,14 +692,18 @@ cmd_do_gencmod_mom (const char *lin, bool pres, momitem_t *moditm)
 		   MOMOUT_SPACE (48),
 		   MOMOUT_LITERAL ("with error code:"),
 		   MOMOUT_DEC_INT (errcod));
+      RESTORE_BACKUP_MOM ();
       return;
     }
   if (!mom_load_module (NULL, mom_ident_cstr_of_item (moditm)))
     {
       MOM_WARNING (MOMOUT_LITERAL ("failed to load generated module:"),
 		   MOMOUT_ITEM ((const momitem_t *) moditm));
+      RESTORE_BACKUP_MOM ();
       return;
     }
+  if (cbackupbuf[0] && !access (cbackupbuf, F_OK))
+    remove (cbackupbuf);
   MOM_INFORM (MOMOUT_LITERAL ("successful loading of generated module:"),
 	      MOMOUT_ITEM ((const momitem_t *) moditm));
   printf (ANSI_BOLD "completed generation and loading of module %s"
