@@ -421,6 +421,7 @@ declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
   momval_t tfunv = MOM_NULLV;
   momval_t resultv = MOM_NULLV;
   momval_t procrestypev = MOM_NULLV;
+  momval_t commv = MOM_NULLV;
   momitem_t *curoutitm = cg->cgen_curoutitm;
   MOM_DEBUG (gencod, MOMOUT_LITERAL ("declare_routine curoutitm="),
 	     MOMOUT_ITEM ((const momitem_t *) curoutitm),
@@ -443,6 +444,7 @@ declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
     tfunv = mom_item_get_attribute (curoutitm, mom_named__tasklet_function);
     formalsv = mom_item_get_attribute (curoutitm, mom_named__formals);
     resultv = mom_item_get_attribute (curoutitm, mom_named__result);
+    commv = mom_item_get_attribute (curoutitm, mom_named__comment);
     mom_unlock_item (curoutitm);
   }
   if (tfunv.ptr && procv.ptr)
@@ -459,6 +461,9 @@ declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
 		    MOMOUT_DEC_INT ((int) routix),
 		    MOMOUT_LITERAL
 		    (" should have one of `procedure` or `tasklet_function` attribute."));
+  if (mom_is_string (commv))
+    MOM_OUT (&cg->cgen_outhead, MOMOUT_NEWLINE (),
+	     MOMOUT_SLASHCOMMENT_STRING (mom_string_cstr (commv)), NULL);
   if (procv.ptr)
     {
       momval_t argsigv = MOM_NULLV;
