@@ -2457,11 +2457,9 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 			 MOMOUT_VALUE ((const momval_t) nodv), NULL);
 		}
 	      else
-		CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("unbound chunk item:"),
-				MOMOUT_ITEM ((const momitem_t *)
-					     curchkv.pitem),
-				MOMOUT_LITERAL (" in node "),
-				MOMOUT_VALUE ((const momval_t) nodv));
+		/* if an item appears in the chunk and is not bound, we emit it verbatim. */
+		MOM_OUT (&cg->cgen_outbody,
+			 MOMOUT_ITEM ((const momitem_t *) curchkv.pitem));
 
 	    }
 	  else
