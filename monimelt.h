@@ -834,7 +834,7 @@ mom_jsonob_size (momval_t jsobv)
   return jsobv.pjsonobj->slen;
 }
 
-const momjsonobject_t *mom_make_json_object (int, ...)
+const momjsonobject_t *mom_make_json_object (int /*jsondirective */ , ...)
   __attribute__ ((sentinel));
 enum momjsondirective_en
 {
@@ -855,6 +855,10 @@ enum momjsondirective_en
 #define MOMJSOB_COUNTED_ENTRIES(C,E)  MOMJSONDIR__COUNTED_ENTRIES,	\
     MOM_REQUIRES_TYPE(C,unsigned,mombad_unsigned),			\
     MOM_REQUIRES_TYPE(E,struct mom_jsonentry_st*,mombad_entries)
+  //
+  MOMJSONDIR__INDIRECT,		/* momval_t */
+#define MOMJSOB_INDIRECT(V)  MOMJSONDIR__INDIRECT,	\
+    MOM_REQUIRES_TYPE(V,momval_t,mombad_value)
   //
 };
 

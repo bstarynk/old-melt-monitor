@@ -139,6 +139,9 @@ MOM_PREDEFINED_NAMED(jit,_24yt56xf3d5_4w80i326kjz,3601262178)
 ////!in JSON dump, jtype of JSON array values
 MOM_PREDEFINED_NAMED(json_array,_35vp60aw7em_d436vfie4ud,1502443136)
 
+////!for making entries in json_object
+MOM_PREDEFINED_NAMED(json_entry,_37kswkaa035_qjpxwd7e67f,2188702511)
+
 ////!The false of JSON.
 ////+We cannot use false because it is a #define-ed macro.
 MOM_PREDEFINED_NAMED(json_false,_4mha85xcfwi_9zqcvkiy3dk,2247010143)

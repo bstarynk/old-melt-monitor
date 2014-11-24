@@ -1400,7 +1400,7 @@ cmd_do_swap_mom (const char *lin, bool pres, long num)
       vst_valarr_mom[vst_top_mom - 1] = oldv;
       snprintf (cmdbuf, sizeof (cmdbuf), ",swap %ld", num);
       add_history (cmdbuf);
-      printf (ANSI_BOLD "swapped with #%d" ANSI_NORMAL "\n", num);
+      printf (ANSI_BOLD "swapped with #%d" ANSI_NORMAL "\n", (int) num);
     }
   else
     printf ("cannot swap with level %ld\n", num);

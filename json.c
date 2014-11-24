@@ -705,6 +705,13 @@ mom_make_json_object (int firstdir, ...)
 	    count += nbent;
 	  }
 	  break;
+	case MOMJSONDIR__INDIRECT:
+	  {
+	    momval_t indjobv = va_arg (args, momval_t);
+	    dir = va_arg (args, int);
+	    count += mom_jsonob_size (indjobv);
+	  }
+	  break;
 	default:
 	  MOM_FATAPRINTF ("unexpected JSON directive %d", dir);
 	}
@@ -782,6 +789,15 @@ mom_make_json_object (int firstdir, ...)
 		      }
 		  }
 	      }
+	  }
+	  break;
+	case MOMJSONDIR__INDIRECT:
+	  {
+	    momval_t indjobv = va_arg (args, momval_t);
+	    dir = va_arg (args, int);
+	    unsigned sizind = mom_jsonob_size (indjobv);
+	    for (unsigned ix = 0; ix < sizind; ix++)
+	      jsob->jobjtab[count++] = indjobv.pjsonobj->jobjtab[ix];
 	  }
 	  break;
 	default:

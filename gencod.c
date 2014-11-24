@@ -1511,7 +1511,13 @@ emit_ctype_cgen (struct c_generator_mom_st *cg, struct momout_st *out,
   if (mom_is_item (val))
     typitm = val.pitem;
   else if (mom_is_node (val))
-    typitm = (momitem_t *) mom_node_conn (val);
+    {
+      typitm = (momitem_t *) mom_node_conn (val);
+      if (typitm == mom_named__node || typitm == mom_named__set
+	  || typitm == mom_named__tuple || typitm == mom_named__json_array
+	  || typitm == mom_named__json_object)
+	return momtypenc_val;
+    }
   else if (mom_is_integer (val))
     typitm = mom_named__intptr_t;
   else if (mom_is_double (val))
@@ -2025,8 +2031,186 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
     mom_unlock_item (connitm);
   }
   unsigned nbformals = mom_tuple_length (formalsv);
+  // handle tuple nodes
+  if (connitm == mom_named__tuple)
+    {
+      MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("/*!tuple+"),
+	       MOMOUT_DEC_INT ((int) arity),
+	       MOMOUT_LITERAL (":*/ mom_make_tuple_variadic("),
+	       MOMOUT_DEC_INT ((int) arity), NULL);
+      for (int ix = 0; ix < arity; ix++)
+	{
+	  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (", ("), NULL);
+	  momval_t curargv = mom_node_nth (nodv, ix);
+	  if (emit_expr_cgen (cg, curargv) != momtypenc_val)
+	    CGEN_ERROR_MOM (cg,
+			    MOMOUT_LITERAL
+			    ("non-value argument for `tuple`:"),
+			    MOMOUT_VALUE (curargv), MOMOUT_SPACE (48),
+			    MOMOUT_LITERAL ("in expr:"), nodv);
+	  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (")"), NULL);
+	}
+      MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (")/*!endtuple*/"),
+	       MOMOUT_SPACE (32));
+    }
+  // handle set nodes
+  else if (connitm == mom_named__set)
+    {
+      MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("/*!set+"),
+	       MOMOUT_DEC_INT ((int) arity),
+	       MOMOUT_LITERAL (":*/ mom_make_set_variadic("),
+	       MOMOUT_DEC_INT ((int) arity), NULL);
+      for (int ix = 0; ix < arity; ix++)
+	{
+	  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (", ("), NULL);
+	  momval_t curargv = mom_node_nth (nodv, ix);
+	  if (emit_expr_cgen (cg, curargv) != momtypenc_val)
+	    CGEN_ERROR_MOM (cg,
+			    MOMOUT_LITERAL ("non-value argument for `set`:"),
+			    MOMOUT_VALUE (curargv), MOMOUT_SPACE (48),
+			    MOMOUT_LITERAL ("in expr:"),
+			    MOMOUT_VALUE ((const momval_t) nodv));
+	  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (")"), NULL);
+	}
+      MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (")/*!endset*/"),
+	       MOMOUT_SPACE (32));
+    }
+  // handle json_object nodes
+  else if (connitm == mom_named__json_object)
+    {
+      MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("/*!json_object+"),
+	       MOMOUT_DEC_INT ((int) arity),
+	       MOMOUT_LITERAL (":*/ mom_make_json_object("), NULL);
+      for (int jix = 0; jix < arity; jix++)
+	{
+	  momval_t curargv = mom_node_nth (nodv, jix);
+	  const momitem_t *curconnitm = mom_node_conn (curargv);
+	  unsigned curarity = mom_node_arity (curargv);
+	  if (curconnitm == mom_named__json_entry && curarity == 2)
+	    {
+	      momval_t expjnamv = mom_node_nth (curargv, 0);
+	      momval_t expjvalv = mom_node_nth (curargv, 1);
+	      momtypenc_t tnam = emit_ctype_cgen (cg, NULL, expjnamv);
+	      momtypenc_t tval = emit_ctype_cgen (cg, NULL, expjvalv);
+	      if (tnam == momtypenc_string && tval == momtypenc_val)
+		{
+		  MOM_OUT (&cg->cgen_outbody,
+			   MOMOUT_LITERAL ("MOMJSONDIR__STRING,"),
+			   MOMOUT_SPACE (48));
+		  emit_expr_cgen (cg, expjnamv);
+		  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (","),
+			   MOMOUT_SPACE (56));
+		  emit_expr_cgen (cg, expjvalv);
+		  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (","),
+			   MOMOUT_SPACE (32));
+		}
+	      else if (tnam == momtypenc_val && tval == momtypenc_val)
+		{
+		  MOM_OUT (&cg->cgen_outbody,
+			   MOMOUT_LITERAL ("MOMJSONDIR__ENTRY,"),
+			   MOMOUT_SPACE (48));
+		  emit_expr_cgen (cg, expjnamv);
+		  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (","),
+			   MOMOUT_SPACE (56));
+		  emit_expr_cgen (cg, expjvalv);
+		  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (","),
+			   MOMOUT_SPACE (32));
+		}
+	      else
+		CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("bad json_entry:"),
+				MOMOUT_VALUE ((const momval_t) curargv),
+				MOMOUT_LITERAL (" in json_object node "),
+				MOMOUT_VALUE ((momval_t) nodv));
+
+	    }
+	  else if (curconnitm == mom_named__json_object && curarity == 1)
+	    {
+	      momval_t expjobv = mom_node_nth (curargv, 0);
+	      MOM_OUT (&cg->cgen_outbody,
+		       MOMOUT_LITERAL ("MOMJSONDIR__INDIRECT, ("),
+		       MOMOUT_SPACE (48));
+	      if (emit_expr_cgen (cg, expjobv) != momtypenc_val)
+		CGEN_ERROR_MOM (cg,
+				MOMOUT_LITERAL
+				("bad `json_object` argument:"),
+				MOMOUT_VALUE ((const momval_t) expjobv),
+				MOMOUT_LITERAL (" in `json_object` node:"),
+				MOMOUT_VALUE ((const momval_t) nodv));
+	      MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("),"), NULL);
+	    }
+	  else
+	    CGEN_ERROR_MOM (cg,
+			    MOMOUT_LITERAL ("bad argument#"),
+			    MOMOUT_DEC_INT (jix),
+			    MOMOUT_LITERAL (" in `json_object` node:"),
+			    MOMOUT_VALUE ((const momval_t) nodv));
+
+	}
+
+      MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (48),
+	       MOMOUT_LITERAL ("MOMJSON_END)/*!endjsonobject*/"),
+	       MOMOUT_SPACE (32));
+    }
+  // handle json_array nodes
+  else if (connitm == mom_named__json_array)
+    {
+      MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("/*!json_array+"),
+	       MOMOUT_DEC_INT ((int) arity),
+	       MOMOUT_LITERAL (":*/ mom_make_json_array("),
+	       MOMOUT_DEC_INT ((int) arity), NULL);
+      for (int ix = 0; ix < arity; ix++)
+	{
+	  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (", ("), NULL);
+	  momval_t curargv = mom_node_nth (nodv, ix);
+	  if (emit_expr_cgen (cg, curargv) != momtypenc_val)
+	    CGEN_ERROR_MOM (cg,
+			    MOMOUT_LITERAL
+			    ("non-value argument for `json_array`:"),
+			    MOMOUT_VALUE (curargv), MOMOUT_SPACE (48),
+			    MOMOUT_LITERAL ("in expr:"),
+			    MOMOUT_VALUE ((const momval_t) nodv));
+	  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (")"), NULL);
+	}
+      MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (")/*!endjsonarray*/"),
+	       MOMOUT_SPACE (32));
+    }
+  // handle set nodes
+  else if (connitm == mom_named__node)
+    {
+      if (arity == 0)
+	CGEN_ERROR_MOM (cg,
+			MOMOUT_LITERAL
+			("missing argument for `node` in expr:"),
+			MOMOUT_VALUE ((const momval_t) nodv));
+      momval_t connexprv = mom_node_nth (nodv, 0);
+      MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("/*!node+"),
+	       MOMOUT_DEC_INT ((int) arity - 1),
+	       MOMOUT_LITERAL ("*/mom_make_node_sized (mom_value_to_item("),
+	       NULL);
+      if (emit_expr_cgen (cg, connexprv) != momtypenc_val)
+	CGEN_ERROR_MOM (cg,
+			MOMOUT_LITERAL
+			("non-value connective argument for `node` in expr:"),
+			MOMOUT_VALUE ((const momval_t) nodv));
+      MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("),"), MOMOUT_SPACE (48),
+	       MOMOUT_DEC_INT ((int) arity - 1), NULL);
+      for (int ix = 0; ix < arity; ix++)
+	{
+	  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (", ("), NULL);
+	  momval_t curargv = mom_node_nth (nodv, ix);
+	  if (emit_expr_cgen (cg, curargv) != momtypenc_val)
+	    CGEN_ERROR_MOM (cg,
+			    MOMOUT_LITERAL ("non-value argument for `node`:"),
+			    MOMOUT_VALUE (curargv), MOMOUT_SPACE (48),
+			    MOMOUT_LITERAL ("in expr:"),
+			    MOMOUT_VALUE ((const momval_t) nodv));
+	  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (")"), NULL);
+	}
+      MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (")/*!endnode*/"),
+	       MOMOUT_SPACE (48));
+    }
   // handle primitives
-  if (primexpv.ptr)
+  else if (primexpv.ptr)
     {
       struct mom_itemattributes_st *argbind = NULL;
       if (!mom_is_tuple (formalsv)
