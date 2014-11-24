@@ -290,6 +290,11 @@ INSERT INTO t_items VALUES('_4ew7uvid6ep_wzq6f8hruz9','{"attr": [{"attr": "_0ee6
 INSERT INTO t_items VALUES('_4ezpkss1akd_94f4h25sqe4','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "in JSON dumps, give the sons of nodes"}],
  "content": null, "kind": null, "payload": null}
 ','');
+INSERT INTO t_items VALUES('_4ie5pvk8m1x_rzsut0mdza0','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_51u3st4u9mc_zdvms6jti0a",
+    "jtype": "item_ref", "space": ".predef"}}, {"attr": "_0x2k07ik4tm_ed7vqphf5ak",
+   "val": "HTTP_OK"}, {"attr": "_41u1utcxyek_22cftxt3xxm", "val": "literal for HTTP protocol return code, success..."}],
+ "content": null, "kind": null, "payload": null}
+','');
 INSERT INTO t_items VALUES('_4jp2meuzru2_a58afyxwxa2','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "notably for error message in JSONRPC"}],
  "content": null, "kind": null, "payload": null}
 ','');
@@ -465,6 +470,17 @@ INSERT INTO t_items VALUES('_7a9sxskjhcp_kpf30ka97ex','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_7diyc1cwj8z_x630afccr8e','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "Group together all noticed values in dump outcome."}],
  "content": null, "kind": null, "payload": null}
 ','');
+INSERT INTO t_items VALUES('_7j5uq75spm6_wuhuc4pe5th','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_02q6zk9f5st_im0z75re15f",
+    "jtype": "item_ref", "space": ".predef"}}, {"attr": "_2ummst105ck_xracfy8v87y",
+   "val": {"jtype": "tuple", "tuple": ["_16cd0fvmdrh_r77ajpy26za", "_389t77v85ej_fwpy6exy62x",
+     "_2vy0ah3jrd1_mm66ja7rfj7"]}}, {"attr": "_37x98fyestf_ttup2cu68r6", "val": {"jtype":
+    "node", "node": "_8x6fxcm4z2k_vdaqicfi4z0", "sons": ["mom_webx_reply (mom_value_to_item (",
+     {"item_ref": "_16cd0fvmdrh_r77ajpy26za", "jtype": "item_ref", "space": ".root"},
+     "), ", {"item_ref": "_389t77v85ej_fwpy6exy62x", "jtype": "item_ref",
+      "space": ".root"}, ",", {"item_ref": "_2vy0ah3jrd1_mm66ja7rfj7", "jtype": "item_ref",
+      "space": ".root"}]}}, {"attr": "_41u1utcxyek_22cftxt3xxm", "val": "primitive to reply to a web exchange."}],
+ "content": null, "kind": null, "payload": null}
+','');
 INSERT INTO t_items VALUES('_7j7x11c25h3_wkchtuwpusx','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "the double C type"}],
  "content": null, "kind": null, "payload": null}
 ','');
@@ -628,6 +644,11 @@ INSERT INTO t_items VALUES('_9hjrq1h1s0p_h1qpmj1ucuy','{"attr": [{"attr": "_19uf
    "val": "output connective for Monimelt values."}], "content": null, "kind": null,
  "payload": null}
 ','');
+INSERT INTO t_items VALUES('_9ju0dqm82h4_hqi2kjqxa83','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_51u3st4u9mc_zdvms6jti0a",
+    "jtype": "item_ref", "space": ".predef"}}, {"attr": "_0x2k07ik4tm_ed7vqphf5ak",
+   "val": "HTTP_NOT_FOUND"}, {"attr": "_41u1utcxyek_22cftxt3xxm", "val": "literal for HTTP protocol return code, not found..."}],
+ "content": null, "kind": null, "payload": null}
+','');
 INSERT INTO t_items VALUES('_9mxi9e605ay_ihpjyrwq250','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "JSON for closure values"}],
  "content": null, "kind": null, "payload": null}
 ','');
@@ -659,6 +680,8 @@ INSERT INTO t_items VALUES('_9wwqwxqcm4p_y7di7fs8tsk','{"attr": [{"attr": "_41u1
 ','');
 INSERT INTO t_names VALUES('GET','_9dsak0qcy0v_1c5z9th7x3i','.predef');
 INSERT INTO t_names VALUES('HEAD','_47fatww79x6_vh8ap22c0ch','.predef');
+INSERT INTO t_names VALUES('HTTP_NOT_FOUND','_9ju0dqm82h4_hqi2kjqxa83','.root');
+INSERT INTO t_names VALUES('HTTP_OK','_4ie5pvk8m1x_rzsut0mdza0','.root');
 INSERT INTO t_names VALUES('MOMOUT_C_STRING','_1x4wmv7yiym_w3zfpdv8q0m','.root');
 INSERT INTO t_names VALUES('MOMOUT_DEC_INTPTR_T','_89uzitiq84u_50h4cqpkay9','.root');
 INSERT INTO t_names VALUES('MOMOUT_DOUBLE_F','_5k1ph0qwrky_v6a6ap5uxzp','.root');
@@ -753,6 +776,7 @@ INSERT INTO t_names VALUES('module_routines','_9dcxaqk8tqe_fam9mcxme9w','.predef
 INSERT INTO t_names VALUES('mom_string_same','_20ds5w0c9z1_tvf5h12wrqp','.root');
 INSERT INTO t_names VALUES('mom_value_to_item','_5s26uzwhveh_fv3twe3s2je','.root');
 INSERT INTO t_names VALUES('mom_webx_post_arg','_8zwifiifaf0_pyayp6hpha4','.root');
+INSERT INTO t_names VALUES('mom_webx_reply','_7j5uq75spm6_wuhuc4pe5th','.root');
 INSERT INTO t_names VALUES('momcstr_t','_80e7dsukuq3_6p7jffmz1yi','.predef');
 INSERT INTO t_names VALUES('momval_t','_3uwzqwvj6zj_s63am4qivpt','.predef');
 INSERT INTO t_names VALUES('namestr','_3i8mqyfreeh_2w73i1khumx','.root');
