@@ -162,7 +162,7 @@ void mominitmodule__4q1v3ax0ffi_hv7fwpsv6uf (void) {
 
  // module license
 const char mom_module_GPL_compatible[]=
-	"GPLv3+, generated module _4q1v3ax0ffi_hv7fwpsv6uf";
+	"GPLv3+, generated module test_module";
 
 
 

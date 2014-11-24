@@ -171,7 +171,7 @@ void mominitmodule__65961crktpj_vtt30qeqv21 (void) {
 
  // module license
 const char mom_module_GPL_compatible[]=
-	"GPLv3+, generated module _65961crktpj_vtt30qeqv21";
+	"GPLv3+, generated module first_module";
 
 
 

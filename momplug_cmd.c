@@ -42,6 +42,7 @@ const char mom_plugin_GPL_compatible[] = "GPLv3+";
   CMD(gencmod,"generate C module",itm,NULL)             \
   CMD(getat,"[attr]; get attribute",itm,":=")           \
   CMD(help,"give this help",non,"?")                    \
+  CMD(insert,"N; insert top inside stack",num,"<!")     \
   CMD(mark,"push mark",non,"(")                         \
   CMD(named,"[Regexp]",non,NULL)			\
   CMD(node,"[Connective]; make node to mark",itm,"*")   \
@@ -1448,6 +1449,28 @@ cmd_do_swap_mom (const char *lin, bool pres, long num)
     }
   else
     printf ("cannot swap with level %ld\n", num);
+}
+
+static void
+cmd_do_insert_mom (const char *lin, bool pres, long num)
+{
+  MOM_DEBUGPRINTF (cmd, "start do_insert lin=%s pres=%s num=%ld", lin,
+		   pres ? "pres" : "abs", num);
+  if (pres && num > 1 && num < vst_top_mom)
+    {
+      char cmdbuf[32];
+      memset (cmdbuf, 0, sizeof (cmdbuf));
+      momval_t topv = vst_valarr_mom[vst_top_mom - 1];
+      int pos = vst_top_mom - num;
+      for (int ix = (int)vst_top_mom - 1; ix > pos; ix--)
+	vst_valarr_mom[ix] = vst_valarr_mom[ix - 1];
+      vst_valarr_mom[pos] = topv;
+      snprintf (cmdbuf, sizeof (cmdbuf), ",insert %ld", num);
+      add_history (cmdbuf);
+      printf (ANSI_BOLD "inserted at #%d" ANSI_NORMAL "\n", (int) num);
+    }
+  else
+    printf ("cannot insert at level %ld of %d\n", num, (int) vst_top_mom);
 }
 
 ////////////////////////////////////////////////////////////////

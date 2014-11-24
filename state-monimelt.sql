@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(40) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','after predefined json_entry');
+INSERT INTO t_params VALUES('dump_reason','command dump');
 INSERT INTO t_modules VALUES('_4q1v3ax0ffi_hv7fwpsv6uf');
 INSERT INTO t_modules VALUES('_65961crktpj_vtt30qeqv21');
 INSERT INTO t_items VALUES('_02av6173qvf_pehzhe755j2','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for calls at end of  blocks"}],
@@ -262,6 +262,9 @@ INSERT INTO t_items VALUES('_5c5jh9185sv_qru5amf9v18','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_5c789try94y_ssy6a22fpep','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for side-effecting instructions in blocks, etc..."}],
  "content": null, "kind": null, "payload": null}
 ','');
+INSERT INTO t_items VALUES('_5ic5uk22icm_7ws16feu699','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "pseudo-formal for output arguments"}],
+ "content": null, "kind": null, "payload": null}
+','');
 INSERT INTO t_items VALUES('_5s26uzwhveh_fv3twe3s2je','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_3uwzqwvj6zj_s63am4qivpt",
     "jtype": "item_ref", "space": ".predef"}}, {"attr": "_2ummst105ck_xracfy8v87y",
    "val": {"jtype": "tuple", "tuple": ["_0hi99dr3qqs_yuuciyy7xfz"]}}, {"attr": "_37x98fyestf_ttup2cu68r6",
@@ -471,6 +474,16 @@ INSERT INTO t_items VALUES('_9dsak0qcy0v_1c5z9th7x3i','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_9mxi9e605ay_ihpjyrwq250','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "JSON for closure values"}],
  "content": null, "kind": null, "payload": null}
 ','');
+INSERT INTO t_items VALUES('_9r25vmrrk8a_vus02yyfp8w','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_02q6zk9f5st_im0z75re15f",
+    "jtype": "item_ref", "space": ".predef"}}, {"attr": "_0te6f7f9pz7_m91yy9iv5pd",
+   "val": {"item_ref": "_5ic5uk22icm_7ws16feu699", "jtype": "item_ref", "space": ".root"}},
+  {"attr": "_2ummst105ck_xracfy8v87y", "val": {"jtype": "tuple", "tuple": []}},
+  {"attr": "_37x98fyestf_ttup2cu68r6", "val": {"jtype": "node", "node": "_8x6fxcm4z2k_vdaqicfi4z0",
+    "sons": ["MOM_DEBUG(run, ", {"item_ref": "_5ic5uk22icm_7ws16feu699", "jtype":
+      "item_ref", "space": ".root"}, ")"]}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "output primitive for MOM_DEBUG(run, ...)"}], "content": null, "kind": null,
+ "payload": null}
+','');
 INSERT INTO t_items VALUES('_9sd1mh9q1zf_3duewi6fsaq','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for exited processes with exit code >0"}],
  "content": null, "kind": null, "payload": null}
 ','');
@@ -507,6 +520,7 @@ INSERT INTO t_names VALUES('content','_8s357rq2dzk_k8ze95tikjm','.predef');
 INSERT INTO t_names VALUES('count','_6f4k9pqzryk_w25f8vxuyyc','.predef');
 INSERT INTO t_names VALUES('cstr','_389t77v85ej_fwpy6exy62x','.root');
 INSERT INTO t_names VALUES('ctype','_0ee6afx5850_ji17eq0wmfa','.predef');
+INSERT INTO t_names VALUES('debug_run','_9r25vmrrk8a_vus02yyfp8w','.root');
 INSERT INTO t_names VALUES('dispatch','_8fk0de81s9r_5d4v4x7qmxr','.predef');
 INSERT INTO t_names VALUES('display_value','_7pyjxst21ce_vhc0tk0em0u','.root');
 INSERT INTO t_names VALUES('do','_5c789try94y_ssy6a22fpep','.predef');
@@ -559,6 +573,7 @@ INSERT INTO t_names VALUES('node','_4m7x6811f6j_t480zu575mz','.predef');
 INSERT INTO t_names VALUES('noop','_240dwt57s08_a8uy366sev5','.root');
 INSERT INTO t_names VALUES('notice','_7diyc1cwj8z_x630afccr8e','.predef');
 INSERT INTO t_names VALUES('numbers','_3fw5acswe59_9016fqe4d41','.predef');
+INSERT INTO t_names VALUES('outargs','_5ic5uk22icm_7ws16feu699','.root');
 INSERT INTO t_names VALUES('output','_0te6f7f9pz7_m91yy9iv5pd','.predef');
 INSERT INTO t_names VALUES('output_expansion','_19ufza9zf05_muxxhkmm7ww','.predef');
 INSERT INTO t_names VALUES('params','_4215uc2u6qk_52kqyra86y5','.predef');
