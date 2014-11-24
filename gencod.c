@@ -1756,6 +1756,13 @@ emit_var_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
       else
 	assert (false && "impossible routkind");
     }
+  else if (noditm == mom_named__procedure)
+    {				// this is for passing procedure addresses
+      MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (64),
+	       MOMOUT_LITERAL (MOM_PROCROUTFUN_PREFIX),
+	       MOMOUT_LITERALV (mom_ident_cstr_of_item (varitm)));
+      return momtypenc__none;
+    }
   momval_t ctypv = MOM_NULLV;
   momval_t verbatimv = MOM_NULLV;
   {
