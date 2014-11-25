@@ -53,7 +53,7 @@ static momitem_t* momfconstitems__06uk4pppvx9_huv0v11v18j[1]; // constant items 
 
 static const momitem_t* mompconstitems__07zti91e4kd_952zqsd03fz[1]; // define constant items of procedure _07zti91e4kd_952zqsd03fz
 
-static const momitem_t* mompconstitems__7x6as13park_w64mrkx2xtm[1]; // define constant items of procedure _7x6as13park_w64mrkx2xtm
+static const momitem_t* mompconstitems__7x6as13park_w64mrkx2xtm[10]; // define constant items of procedure _7x6as13park_w64mrkx2xtm
 
 // declare module md5sum for first_module
 const char mommd5mod__65961crktpj_vtt30qeqv21[] = MONIMELT_MD5_MODULE; // Makefile generated
@@ -257,13 +257,22 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
   } // end of procedure momprocfun__7x6as13park_w64mrkx2xtm
   
   
-  static const char* const mompconstid__7x6as13park_w64mrkx2xtm[1] = {
+  static const char* const mompconstid__7x6as13park_w64mrkx2xtm[10] = {
+   [0] = "_133zjf1f9zp_jq8kti38sd7", // predefined
+   [1] = "_1tzf3q2dix5_jqxphp9ivcw", // nb_dumped_items
+   [2] = "_50623j9vemk_1hp2q2czrhi", // cpu_time
+   [3] = "_5xw5qm751tv_jvm099ita0w", // named_items
+   [4] = "_6rs26jmh9ya_jv0aiqf4kvx", // dump_state
+   [5] = "_6u6cp2a2tsz_ses4qchc3y3", // elapsed_time
+   [6] = "_6vrzjdj7ij8_dupds6c9895", // names
+   [7] = "_7diyc1cwj8z_x630afccr8e", // notice
+   [8] = "_7sqk8vh89xr_6tj8dq7vqju", // module
   }; // end of procedure constant item ids of _7x6as13park_w64mrkx2xtm
   
   
   const struct momprocrout_st momprocdescr__7x6as13park_w64mrkx2xtm = { .prout_magic = MOM_PROCROUT_MAGIC,
    .prout_resty = momtypenc__none,
-   .prout_len = 0,
+   .prout_len = 9,
    .prout_id = "_7x6as13park_w64mrkx2xtm",
    .prout_module = "_65961crktpj_vtt30qeqv21",
    .prout_constantids = mompconstid__7x6as13park_w64mrkx2xtm,
