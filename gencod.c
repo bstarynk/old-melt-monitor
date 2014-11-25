@@ -1007,6 +1007,19 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
   nbprodoubles = bind_doubles_cgen (cg, prodoublesv);
   // count and bind the blocks
   nbproblocks = bind_blocks_cgen (cg, problocksv);
+  MOM_DEBUG(gencod, MOMOUT_LITERAL("emitproc bound nbproconsts="),
+	    MOMOUT_DEC_INT((int)nbproconsts),
+	    MOMOUT_LITERAL(" nbpronumbers="),
+	    MOMOUT_DEC_INT((int)nbpronumbers),
+	    MOMOUT_LITERAL(" nbprovalues="),
+	    MOMOUT_DEC_INT((int)nbprovalues),
+	    MOMOUT_LITERAL(" nbprodoubles="),
+	    MOMOUT_DEC_INT((int)nbprodoubles),
+	    MOMOUT_NEWLINE(),
+	    MOMOUT_LITERAL(" localbindings:"),
+	    MOMOUT_ITEM((const momitem_t*)cg->cgen_locassocitm),
+	    MOMOUT_SPACE(48),
+	    MOMOUT_ITEM_PAYLOAD((const momitem_t*)cg->cgen_locassocitm));
   if (nbproblocks == 0)
     CGEN_ERROR_MOM (cg,
 		    MOMOUT_LITERAL ("missing blocks in procedure "),
