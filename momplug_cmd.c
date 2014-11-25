@@ -44,6 +44,7 @@ const char mom_plugin_GPL_compatible[] = "GPLv3+";
   CMD(getat,"[attr]; get attribute",itm,":=")           \
   CMD(help,"give this help",non,"?")                    \
   CMD(insert,"N; insert top inside stack",num,"<!")     \
+  CMD(letters,"show letters values",non,"$$")           \
   CMD(mark,"push mark",non,"(")                         \
   CMD(named,"[Regexp]",non,NULL)			\
   CMD(node,"[Connective]; make node to mark",itm,"*")   \
@@ -1428,6 +1429,33 @@ cmd_do_top_mom (const char *lin)
 	}
       add_history (",top");
     }
+}
+
+static void
+cmd_do_letters_mom (const char *lin)
+{
+  MOM_DEBUGPRINTF (cmd, "start do_letter lin=%s", lin);
+  int cnt = 0;
+  for (int c = 'a'; c <= 'z'; c++)
+    {
+      momval_t curv = vst_letterval_mom[c - 'a'];
+      if (!curv.ptr)
+	continue;
+      printf (" " ANSI_BOLD "$%c" ANSI_NORMAL "  ", c);
+      MOM_OUT (mom_stdout, MOMOUT_VALUE (curv));
+      if (mom_is_item (curv))
+	{
+	  momval_t commv =
+	    mom_item_get_attribute (curv.pitem, mom_named__comment);
+	  if (mom_is_string (commv))
+	    printf ("  " ANSI_BOLD "//:" ANSI_NORMAL " %s",
+		    mom_string_cstr (commv));
+	}
+      MOM_OUT (mom_stdout, MOMOUT_NEWLINE (), MOMOUT_FLUSH ());
+      cnt++;
+    }
+  printf (ANSI_BOLD "*** %d letters ***" ANSI_NORMAL "\n", cnt);
+  add_history (",letter");
 }
 
 static void
