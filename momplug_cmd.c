@@ -1674,7 +1674,7 @@ cmd_interpret_mom (const char *lin)
 	    MOM_OUTSTRING (0, MOMOUT_LITERALV (mom_string_cstr (topv)),
 			   MOMOUT_NEWLINE (),
 			   MOMOUT_LITERALV (mom_string_cstr (nstrv)));
-	  cmd_stack_pop_mom (-1);
+	  cmd_stack_pop_mom (1);
 	  cmd_push_value_mom (newstrv);
 	  unsigned slen = mom_string_slen (newstrv);
 	  add_history (lin);
