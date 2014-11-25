@@ -324,9 +324,15 @@ step_tasklet_mom (momitem_t *tkitm, struct mom_taskletdata_st *itd)
       if (!closd)
 	{
 	  MOM_DEBUG (run,
-		     MOMOUT_LITERAL ("step_tasklet_mom non-closure curclov"),
-		     MOMOUT_VALUE (curclov),
-		     MOMOUT_LITERAL ("=="), MOMOUT_BACKTRACE (5));
+		     MOMOUT_LITERAL ("step_tasklet_mom non-closure curclov:"),
+		     MOMOUT_ITEM ((const momitem_t *) curclov.pitem),
+		     MOMOUT_SPACE (48),
+		     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
+					     curclov.pitem),
+		     MOMOUT_SPACE (48),
+		     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) curclov.pitem),
+		     MOMOUT_NEWLINE (), MOMOUT_LITERAL (" backtrace:"),
+		     MOMOUT_BACKTRACE (5));
 	  popframe = true;
 	  goto end;
 	}

@@ -21,6 +21,7 @@
 var websocket_mom;
 var dochref_mom;
 var wsockhref_mom;
+var pmessage_mom;
 
 function mom_app(what) {
     console.debug ("mom_app what=", what);
@@ -31,6 +32,7 @@ function mom_app(what) {
 	     success: function(gotdata) {
 		 console.debug ("success ajax_appl what=", what,
 				" gotdata=", gotdata);
+		 pmessage_mom.html(gotdata);
 	     }
 	   });
 }
@@ -44,4 +46,5 @@ $(function(){
     console.debug ("wsockhref=", wsockhref_mom);
     websocket_mom = $.websocket(wsockhref_mom);
     console.debug ("websocket=", websocket_mom);
+    pmessage_mom = $('#mommessage_id');
 });

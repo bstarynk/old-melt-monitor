@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(40) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','command dump');
+INSERT INTO t_params VALUES('dump_reason','todo dump-at-exit');
 INSERT INTO t_modules VALUES('_65961crktpj_vtt30qeqv21');
 INSERT INTO t_items VALUES('_02av6173qvf_pehzhe755j2','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for calls at end of  blocks"}],
  "content": null, "kind": null, "payload": null}
@@ -46,7 +46,7 @@ INSERT INTO t_items VALUES('_06uk4pppvx9_huv0v11v18j','{"attr": [{"attr": "_2umm
     "jtype": "item_ref", "space": ".root"}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "AJAX for appl menu"}, {"attr": "_4p33dhxywm0_id6tti2kyw6", "val": {"jtype":
     "set", "set": ["_350hj5kfymd_145tfc1sevi"]}}, {"attr": "_7sav6zery1v_24sa6jwwu6c",
-   "val": {"item_ref": "_06uk4pppvx9_huv0v11v18j", "jtype": "item_ref", "space": ".root"}},
+   "val": {"item_ref": "_0ce0mmy7myq_1t5iw2mfrvm", "jtype": "item_ref", "space": ".root"}},
   {"attr": "_7yxp9xhih4z_9uzrqhkamxa", "val": {"jtype": "set", "set": ["_7yyaydvyhpr_teuchcqzs7k",
      "_8t137w1z1s9_2tea9xp64s6", "_8y756mef2ca_w8cj58726vj", "_91471ta1047_pra9zfqc2y1",
      "_9u6a6xy2e1p_qeapfc73cm4"]}}], "content": null, "kind": "tfunrout",
@@ -66,6 +66,10 @@ INSERT INTO t_items VALUES('_07zti91e4kd_952zqsd03fz','{"attr": [{"attr": "_0ee6
 INSERT INTO t_items VALUES('_0afqepa7jkr_qky26hpv98d','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "translate a single procedure"}],
  "content": null, "kind": null, "payload": null}
 ','');
+INSERT INTO t_items VALUES('_0ce0mmy7myq_1t5iw2mfrvm','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "closure for ajax_appl"}],
+ "content": null, "kind": "closure", "payload": {"closed_values": [], "closure_function":
+  "_06uk4pppvx9_huv0v11v18j"}}
+','closure');
 INSERT INTO t_items VALUES('_0ee6afx5850_ji17eq0wmfa','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "Attribute giving the C type"}],
  "content": null, "kind": null, "payload": null}
 ','');
@@ -895,6 +899,7 @@ INSERT INTO t_names VALUES('MOM_WEBX_OUT','_4ew7uvid6ep_wzq6f8hruz9','.root');
 INSERT INTO t_names VALUES('POST','_5wmusj136kq_u5qpehp89aq','.predef');
 INSERT INTO t_names VALUES('agenda','_02u53qxa7dm_sttmhffpchr','.predef');
 INSERT INTO t_names VALUES('ajax_appl','_06uk4pppvx9_huv0v11v18j','.root');
+INSERT INTO t_names VALUES('ajax_appl_closure','_0ce0mmy7myq_1t5iw2mfrvm','.root');
 INSERT INTO t_names VALUES('arguments','_2x2zpyhfqum_0utui69rzea','.predef');
 INSERT INTO t_names VALUES('assign','_8vzddhpmhp8_z0005cqyqzf','.predef');
 INSERT INTO t_names VALUES('assoc_get','_70mt4fvrva2_pk76eevwada','.root');

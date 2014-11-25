@@ -98,6 +98,8 @@ static int momfuncod__06uk4pppvx9_huv0v11v18j
  // function block #1 _7yyaydvyhpr_teuchcqzs7k
  momfblo_1:
  {
+  ////!block to handle ajax_appl when whatv=dump
+  
   
   //! instr#1 in block _7yyaydvyhpr_teuchcqzs7k ::
   /*!do*/ /*!primitive-void mom_stop_work_with_todo*/ mom_stop_work_with_todo (
@@ -113,6 +115,8 @@ static int momfuncod__06uk4pppvx9_huv0v11v18j
  // function block #2 _8t137w1z1s9_2tea9xp64s6
  momfblo_2:
  {
+  ////!block to handle appl with what=exit
+  
   
   //! instr#1 in block _8t137w1z1s9_2tea9xp64s6 ::
   /*!do*/ /*!primitive-void mom_stop_work_with_todo*/ mom_stop_work_with_todo (
@@ -136,6 +140,8 @@ static int momfuncod__06uk4pppvx9_huv0v11v18j
  // function block #3 _8y756mef2ca_w8cj58726vj
  momfblo_3:
  {
+  ////!starting block for ajax_appl.
+  
   
   // locked-item webx in block _8y756mef2ca_w8cj58726vj
   momitem_t* momlockeditem_1 = mom_value_to_item ( momvals[0/*:webx*/]) /* locked-item */;
@@ -183,6 +189,8 @@ static int momfuncod__06uk4pppvx9_huv0v11v18j
  // function block #4 _91471ta1047_pra9zfqc2y1
  momfblo_4:
  {
+  ////!block for ajax_appl continue after dump
+  
   
   //! instr#1 in block _91471ta1047_pra9zfqc2y1 ::
   /*!do*/ /*!primitive-void mom_webx_reply*/ mom_webx_reply (mom_value_to_item (
@@ -202,6 +210,8 @@ static int momfuncod__06uk4pppvx9_huv0v11v18j
  // function block #5 _9u6a6xy2e1p_qeapfc73cm4
  momfblo_5:
  {
+  ////!block to handle ajax_appl when what=quit
+  
   
  }; // end function block _9u6a6xy2e1p_qeapfc73cm4
  return momroutres_pop;
@@ -240,6 +250,8 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
  
   mompblo_1:
  { // procedure block _1kj1j3878fe_duw3ts10hev
+  ////!start block of todo proc on exit
+  
   
   //! instr#1 in block _1kj1j3878fe_duw3ts10hev ::
   /*!do*/ /*!primitive-void _1iyd2es3u59_x6uq7vhecjj*/ mom_full_dump("todo dump-at-exit", 
@@ -281,6 +293,8 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
   
    mompblo_1:
   { // procedure block _39hpqv0jqj6_9sa2v0vhfm6
+   ////!start block of todo on dump
+   
    
    // locked-item dump_data in block _39hpqv0jqj6_9sa2v0vhfm6
    momitem_t* momlockeditem_2 = mom_value_to_item ( ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[3] /*dump_data*/)) /* locked-item */;

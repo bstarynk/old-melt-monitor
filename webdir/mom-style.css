@@ -55,6 +55,13 @@ div.mom_main_cl {
     margin: 2px;
 }
 
+p.mom_message_cl {
+    background-color: ivory;
+    font-size: 95%;
+    border: 2px;
+    margin: 3x;
+}
+
 .mom_icon_system_cl {
     /* icon from http://www.pngfactory.net/png/20828/system under GPL
        license */

@@ -1426,8 +1426,8 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	       MOMOUT_NEWLINE (),
 	       MOMOUT_LITERAL (CGEN_FUN_BLOCK_PREFIX),
 	       MOMOUT_DEC_INT ((int) six),
-	       MOMOUT_LITERAL (":"),
-	       MOMOUT_NEWLINE (),
+	       MOMOUT_LITERAL (":"), MOMOUT_NEWLINE (), NULL);
+      MOM_OUT (&cg->cgen_outbody,
 	       MOMOUT_LITERAL ("{"), MOMOUT_INDENT_MORE (),
 	       MOMOUT_NEWLINE (), NULL);
       emit_block_cgen (cg, blkitm);
@@ -2735,14 +2735,20 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
   int lockix = -1;
   momval_t blockv = MOM_NULLV;
   momval_t lockv = MOM_NULLV;
+  momval_t commv = MOM_NULLV;
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
   assert (blkitm && blkitm->i_typnum == momty_item);
   {
     mom_lock_item (blkitm);
     blockv = mom_item_get_attribute (blkitm, mom_named__block);
     lockv = mom_item_get_attribute (blkitm, mom_named__lock);
+    commv = mom_item_get_attribute (blkitm, mom_named__comment);
     mom_unlock_item (blkitm);
   }
+  if (mom_is_string (commv))
+    MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_SLASHCOMMENT_STRING (mom_string_cstr (commv)),
+	     MOMOUT_NEWLINE ());
   if (mom_node_conn (blockv) != mom_named__code)
     CGEN_ERROR_MOM (cg,
 		    MOMOUT_LITERAL
