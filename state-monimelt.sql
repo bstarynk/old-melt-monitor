@@ -48,9 +48,9 @@ INSERT INTO t_items VALUES('_06uk4pppvx9_huv0v11v18j','{"attr": [{"attr": "_2umm
     "set", "set": ["_350hj5kfymd_145tfc1sevi"]}}, {"attr": "_7sav6zery1v_24sa6jwwu6c",
    "val": {"item_ref": "_06uk4pppvx9_huv0v11v18j", "jtype": "item_ref", "space": ".root"}},
   {"attr": "_7yxp9xhih4z_9uzrqhkamxa", "val": {"jtype": "set", "set": ["_7yyaydvyhpr_teuchcqzs7k",
-     "_8t137w1z1s9_2tea9xp64s6", "_8y756mef2ca_w8cj58726vj", "_9u6a6xy2e1p_qeapfc73cm4"]}}],
- "content": null, "kind": "tfunrout", "payload": {"constants": [], "tasklet_function":
-  "_06uk4pppvx9_huv0v11v18j"}}
+     "_8t137w1z1s9_2tea9xp64s6", "_8y756mef2ca_w8cj58726vj", "_91471ta1047_pra9zfqc2y1",
+     "_9u6a6xy2e1p_qeapfc73cm4"]}}], "content": null, "kind": "tfunrout",
+ "payload": {"constants": [], "tasklet_function": "_06uk4pppvx9_huv0v11v18j"}}
 ','tfunrout');
 INSERT INTO t_items VALUES('_06yp8ueq6yf_5ts408yww29','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "in JSON dumps, give the kind of the payload of an item"}],
  "content": null, "kind": null, "payload": null}
@@ -632,16 +632,9 @@ INSERT INTO t_items VALUES('_7yyaydvyhpr_teuchcqzs7k','{"attr": [{"attr": "_41u1
   {"attr": "_94tq2iauet8_jujpjhjrzsm", "val": {"jtype": "node", "node": "_0yyp8vmw4si_wf49m4d4zwq",
     "sons": [{"jtype": "node", "node": "_5c789try94y_ssy6a22fpep", "sons": [{"jtype":
 "node", "node": "_7x7vwep1fw4_i158put1x07", "sons": [{"item_ref": "_7x6as13park_w64mrkx2xtm",
-  "jtype": "item_ref", "space": ".root"}, "."]}]}, {"jtype": "node", "node": "_5c789try94y_ssy6a22fpep",
-      "sons": [{"jtype": "node", "node": "_4ew7uvid6ep_wzq6f8hruz9", "sons": [{"item_ref":
-  "_16cd0fvmdrh_r77ajpy26za", "jtype": "item_ref", "space": ".root"}, "<em>Monimelt</em> <b>dump then continue</b> at<i>",
- {"jtype": "node", "node": "_4xicv8w07x7_3hzzmpw8iwt", "sons": ["%c", {"jtype": "node",
-    "node": "_1yz5fpjm6yt_319wacq9346", "sons": [{"item_ref": "_9jdufs9sew7_u6x3k3wfseq",
-      "jtype": "item_ref", "space": ".root"}]}]}, "</i>"]}]}, {"jtype": "node",
-      "node": "_5c789try94y_ssy6a22fpep", "sons": [{"jtype": "node", "node": "_7j5uq75spm6_wuhuc4pe5th",
-"sons": [{"item_ref": "_16cd0fvmdrh_r77ajpy26za", "jtype": "item_ref", "space": ".root"},
- "text/html", {"item_ref": "_4ie5pvk8m1x_rzsut0mdza0", "jtype": "item_ref",
-  "space": ".root"}]}]}]}}], "content": null, "kind": null, "payload": null}
+  "jtype": "item_ref", "space": ".root"}, "."]}]}, {"jtype": "node", "node": "_2kxisdsque9_u9awek5wup1",
+      "sons": [{"item_ref": "_91471ta1047_pra9zfqc2y1", "jtype": "item_ref",
+"space": ".root"}]}]}}], "content": null, "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_80e7dsukuq3_6p7jffmz1yi','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "The C type for constant literal C strings"}],
  "content": null, "kind": null, "payload": null}
@@ -796,6 +789,19 @@ INSERT INTO t_items VALUES('_8zwifiifaf0_pyayp6hpha4','{"attr": [{"attr": "_0ee6
       "jtype": "item_ref", "space": ".root"}, ")"]}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "primitive to get a POST argument."}], "content": null, "kind": null,
  "payload": null}
+','');
+INSERT INTO t_items VALUES('_91471ta1047_pra9zfqc2y1','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "block for ajax_appl continue after dump"},
+  {"attr": "_94tq2iauet8_jujpjhjrzsm", "val": {"jtype": "node", "node": "_0yyp8vmw4si_wf49m4d4zwq",
+    "sons": [{"jtype": "node", "node": "_5c789try94y_ssy6a22fpep", "sons": [{"jtype":
+"node", "node": "_7j5uq75spm6_wuhuc4pe5th", "sons": [{"item_ref": "_16cd0fvmdrh_r77ajpy26za",
+  "jtype": "item_ref", "space": ".root"}, "text/html", {"item_ref": "_4ie5pvk8m1x_rzsut0mdza0",
+  "jtype": "item_ref", "space": ".root"}]}]}, {"jtype": "node", "node": "_5c789try94y_ssy6a22fpep",
+      "sons": [{"jtype": "node", "node": "_4ew7uvid6ep_wzq6f8hruz9", "sons": [{"item_ref":
+  "_16cd0fvmdrh_r77ajpy26za", "jtype": "item_ref", "space": ".root"}, "<em>Monimelt</em> <b>dump then continue</b> at<i>",
+ {"jtype": "node", "node": "_4xicv8w07x7_3hzzmpw8iwt", "sons": ["%c", {"jtype": "node",
+    "node": "_1yz5fpjm6yt_319wacq9346", "sons": [{"item_ref": "_9jdufs9sew7_u6x3k3wfseq",
+      "jtype": "item_ref", "space": ".root"}]}]}, "</i>"]}]}]}}], "content": null,
+ "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_91pketvc5pz_wq0v0wpauw8','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "Gives the values of Json for frames of tasklets."}],
  "content": null, "kind": null, "payload": null}
