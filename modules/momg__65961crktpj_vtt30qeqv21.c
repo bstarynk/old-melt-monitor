@@ -163,6 +163,7 @@ static int momfuncod__06uk4pppvx9_huv0v11v18j
    }; //!unlocked momlockeditem_1
     
   /*! epilogue for lock */
+  mom_unlock_item(momlockeditem_1); // unlock webx
   momendblock_1:;
   
  }; // end function block _8y756mef2ca_w8cj58726vj
@@ -259,6 +260,7 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
    /*!do*/ /*!primitive-void _87r5zd69i6m_zr0hupaer90*/ /* empty primitive in start-block of todo-on-dump *//*!endvoidprimitive _87r5zd69i6m_zr0hupaer90*/  /*!done*/;
    
    /*! epilogue for lock */
+   mom_unlock_item(momlockeditem_2); // unlock dump_data
    momendblock_2:;
    
   }; // end procedure block _39hpqv0jqj6_9sa2v0vhfm6
