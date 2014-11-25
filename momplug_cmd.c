@@ -1629,7 +1629,7 @@ cmd_interpret_mom (const char *lin)
       else
 	goto bad_command;
     }
-  else if (lin[0] == '+' lin[1] == '"')
+  else if (lin[0] == '+' && lin[1] == '"')
     {				// catenate string to TOS
       momval_t topv = cmd_stack_nth_value_mom (-1);
       momval_t nstrv = (momval_t) mom_make_string (lin + 2);
