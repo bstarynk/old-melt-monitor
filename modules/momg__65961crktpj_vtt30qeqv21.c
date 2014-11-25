@@ -257,7 +257,31 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
    if (!mom_lock_item (momlockeditem_2)) goto momendblock_2;
    
    //! instr#1 in block _39hpqv0jqj6_9sa2v0vhfm6 ::
-   /*!do*/ /*!primitive-void _87r5zd69i6m_zr0hupaer90*/ /* empty primitive in start-block of todo-on-dump *//*!endvoidprimitive _87r5zd69i6m_zr0hupaer90*/  /*!done*/;
+   /*!do*/ /*!primitive-void _87r5zd69i6m_zr0hupaer90*/ /* primitive _87r5zd... in start-block of todo-on-dump */
+ struct mom_dumpoutcome_st doutc;
+ memset(&doutc, 0, sizeof(doutc)); mom_full_dump("todo-dump-with-outcome", 
+   momparg_0, &doutc);
+ MOM_INFORMPRINTF(" dumped with outcome %d items into %s", doutc.odmp_nbdumpeditems, 
+   momparg_0);
+ mom_item_put_attribute (/*!outsidechunk*/ ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, /*!outsidechunk*/
+   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[6] /*elapsed_time*/).pitem, mom_make_double(doutc.odmp_elapsedtime));
+ mom_item_put_attribute (/*!outsidechunk*/
+   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, /*!outsidechunk*/
+   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[2] /*cpu_time*/).pitem, mom_make_double(doutc.odmp_cputime));
+ mom_item_put_attribute (/*!outsidechunk*/
+   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, /*!outsidechunk*/
+   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[1] /*nb_dumped_items*/).pitem, mom_make_integer(doutc.odmp_nbdumpeditems));
+ mom_item_put_attribute (/*!outsidechunk*/
+   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, /*!outsidechunk*/
+   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[8] /*notice*/).pitem, mom_let_transient(doutc.odmp_nodenotice));
+ mom_item_put_attribute (/*!outsidechunk*/
+   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, /*!outsidechunk*/
+   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[0] /*predefined*/).pitem, mom_let_transient(doutc.odmp_setpredef));
+ mom_item_put_attribute (/*!outsidechunk*/
+   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, /*!outsidechunk*/
+   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[9] /*module*/).pitem, mom_let_transient(doutc.odmp_nodemodules));
+ mom_continue_working();
+/*!endvoidprimitive _87r5zd69i6m_zr0hupaer90*/  /*!done*/;
    
    /*! epilogue for lock */
    mom_unlock_item(momlockeditem_2); // unlock dump_data

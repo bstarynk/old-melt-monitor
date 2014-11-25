@@ -2446,6 +2446,7 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 	  else if (mom_is_item (curchkv))
 	    {
 	      momval_t bndvalv = mom_get_attribute (argbind, curchkv.pitem);
+	      momval_t bndlocv = MOM_NULLV;
 	      if (primoutitm && curchkv.pitem == primoutitm && !bndvalv.ptr)
 		{
 		  for (unsigned outix = nbformals; outix < (unsigned) arity;
@@ -2464,6 +2465,10 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 		}
 	      else if (bndvalv.ptr)
 		{
+		  MOM_DEBUG (gencod, MOMOUT_LITERAL ("chunk item:"),
+			     MOMOUT_ITEM ((const momitem_t *) curchkv.pitem),
+			     MOMOUT_LITERAL (" bound to argument:"),
+			     MOMOUT_VALUE (bndvalv));
 		  momtypenc_t vtyp = emit_expr_cgen (cg, bndvalv);
 		  for (unsigned fix = 0; fix < (unsigned) arity; fix++)
 		    if (mom_tuple_nth_item (formalsv, fix) == bndvalv.pitem
@@ -2478,9 +2483,32 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 			 MOMOUT_VALUE ((const momval_t) nodv), NULL);
 		}
 	      else
-		/* if an item appears in the chunk and is not bound, we emit it verbatim. */
-		MOM_OUT (&cg->cgen_outbody,
-			 MOMOUT_ITEM ((const momitem_t *) curchkv.pitem));
+		if ((bndlocv =
+		     mom_item_assoc_get (cg->cgen_locassocitm,
+					 curchkv.pitem)).ptr
+		    || (bndlocv =
+			mom_item_assoc_get (cg->cgen_globassocitm,
+					    curchkv.pitem)).ptr)
+		{		/* an item in the chunk which is bound is handled as a variable */
+		  MOM_DEBUG (gencod, MOMOUT_LITERAL ("chunk item:"),
+			     MOMOUT_ITEM ((const momitem_t *) curchkv.pitem),
+			     MOMOUT_LITERAL (" bound to outside var:"),
+			     MOMOUT_VALUE (bndvalv));
+		  MOM_OUT (&cg->cgen_outbody,
+			   MOMOUT_LITERAL ("/*!outsidechunk*/"), NULL);
+		  emit_var_item_cgen (cg, curchkv.pitem);
+		}
+	      else
+		{
+		  /* if an item appears in the chunk and is not bound, we emit it verbatim. */
+		  MOM_DEBUG (gencod,
+			     MOMOUT_LITERAL ("unbound verbatim chunk item:"),
+			     MOMOUT_ITEM ((const momitem_t *) curchkv.pitem),
+			     NULL);
+		  MOM_OUT (&cg->cgen_outbody,
+			   MOMOUT_LITERAL ("/*!verbatimchunk*/"),
+			   MOMOUT_ITEM ((const momitem_t *) curchkv.pitem));
+		}
 
 	    }
 	  else
