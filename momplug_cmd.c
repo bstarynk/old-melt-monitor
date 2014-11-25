@@ -437,7 +437,8 @@ cmd_do_named_mom (const char *lin)
 	  if (nbmatch % 5 == 0 && nbmatch > 0)
 	    MOM_OUT (mom_stdout, MOMOUT_NEWLINE ());
 	  MOM_OUT (mom_stdout, MOMOUT_SPACE (48), MOMOUT_SPACE (48));
-	  MOM_OUT (mom_stdout, MOMOUT_ITEM ((const momitem_t *) curitm));
+	  MOM_OUT (mom_stdout, MOMOUT_ITEM ((const momitem_t *) curitm),
+		   MOMOUT_FLUSH ());
 	  nbmatch++;
 	}
     }
@@ -450,7 +451,7 @@ cmd_do_named_mom (const char *lin)
 	     MOMOUT_DEC_INT ((int) nbmatch),
 	     MOMOUT_LITERAL (" matching items" ANSI_NORMAL " of "),
 	     MOMOUT_DEC_INT ((int) nbnamed), MOMOUT_LITERAL ("."),
-	     MOMOUT_NEWLINE ());
+	     MOMOUT_NEWLINE (), MOMOUT_FLUSH ());
   regfree (&rx);
   snprintf (cmdbuf, sizeof (cmdbuf), ",named %s", lin);
   add_history (cmdbuf);
@@ -759,12 +760,14 @@ cmd_do_forget_mom (const char *lin, bool pres, momitem_t *itm)
 	  MOM_OUT (mom_stdout,
 		   MOMOUT_LITERAL (ANSI_BOLD "forgot predefined item:"
 				   ANSI_NORMAL),
-		   MOMOUT_ITEM ((const momitem_t *) itm), MOMOUT_NEWLINE ());
+		   MOMOUT_ITEM ((const momitem_t *) itm), MOMOUT_NEWLINE (),
+		   MOMOUT_FLUSH ());
 	}
       else
 	MOM_OUT (mom_stdout,
 		 MOMOUT_LITERAL (ANSI_BOLD "forgot item:" ANSI_NORMAL),
-		 MOMOUT_ITEM ((const momitem_t *) itm), MOMOUT_NEWLINE ());
+		 MOMOUT_ITEM ((const momitem_t *) itm), MOMOUT_NEWLINE (),
+		 MOMOUT_FLUSH ());
     }
   else
     printf ("failed to forget\n");
@@ -1088,7 +1091,7 @@ cmd_do_clos_mom (const char *lin, bool pres, momitem_t *funitm)
 		   MOMOUT_LITERAL (", closure for "),
 		   MOMOUT_DEC_INT ((int) mom_item_closure_length (cloitm)),
 		   MOMOUT_LITERAL (" values." ANSI_NORMAL),
-		   MOMOUT_NEWLINE ());
+		   MOMOUT_NEWLINE (), MOMOUT_FLUSH ());
 	  cmd_stack_pop_mom (markdepth + 1);	/* also pop the mark */
 	  cmd_stack_push_mom ((momval_t) cloitm);
 	  snprintf (cmdbuf,
@@ -1116,7 +1119,7 @@ cmd_do_clos_mom (const char *lin, bool pres, momitem_t *funitm)
 		   MOMOUT_LITERAL (" made closure for "),
 		   MOMOUT_DEC_INT ((int) mom_item_closure_length (cloitm)),
 		   MOMOUT_LITERAL (" values." ANSI_NORMAL),
-		   MOMOUT_NEWLINE ());
+		   MOMOUT_NEWLINE (), MOMOUT_FLUSH ());
 	  cmd_stack_pop_mom (markdepth + 2);	/* also pop the mark */
 	  add_history (",clos");
 	  return;
@@ -1147,12 +1150,13 @@ cmd_do_getat_mom (const char *lin, bool pres, momitem_t *atitm)
 		   MOMOUT_LITERAL (ANSI_BOLD "got attribute" ANSI_NORMAL " "),
 		   MOMOUT_ITEM ((const momitem_t *) atitm),
 		   MOMOUT_LITERAL (" " ANSI_BOLD "from" ANSI_NORMAL " "),
-		   MOMOUT_ITEM ((const momitem_t *) itm), MOMOUT_NEWLINE ());
-	  if (snprintf (cmdbuf, sizeof (cmdbuf),
-			",getat %s",
-			mom_string_cstr ((momval_t)
-					 mom_item_get_name_or_idstr (atitm)))
-	      < (int) sizeof (cmdbuf) - 1)
+		   MOMOUT_ITEM ((const momitem_t *) itm), MOMOUT_NEWLINE (),
+		   MOMOUT_FLUSH ());
+	  if (snprintf
+	      (cmdbuf, sizeof (cmdbuf), ",getat %s",
+	       mom_string_cstr ((momval_t)
+				mom_item_get_name_or_idstr (atitm))) <
+	      (int) sizeof (cmdbuf) - 1)
 	    add_history (cmdbuf);
 	}
       else
@@ -1162,7 +1166,8 @@ cmd_do_getat_mom (const char *lin, bool pres, momitem_t *atitm)
 				   " "),
 		   MOMOUT_ITEM ((const momitem_t *) atitm),
 		   MOMOUT_LITERAL (" " ANSI_BOLD "in" ANSI_NORMAL " "),
-		   MOMOUT_ITEM ((const momitem_t *) itm), MOMOUT_NEWLINE ());
+		   MOMOUT_ITEM ((const momitem_t *) itm), MOMOUT_NEWLINE (),
+		   MOMOUT_FLUSH ());
 	}
     }
   else if (!atitm)
@@ -1189,12 +1194,12 @@ cmd_do_putat_mom (const char *lin, bool pres, momitem_t *atitm)
 	       MOMOUT_LITERAL (ANSI_BOLD "put attribute" ANSI_NORMAL " "),
 	       MOMOUT_ITEM ((const momitem_t *) atitm),
 	       MOMOUT_LITERAL (" " ANSI_BOLD "in" ANSI_NORMAL " "),
-	       MOMOUT_ITEM ((const momitem_t *) itm), MOMOUT_NEWLINE ());
-      if (snprintf (cmdbuf, sizeof (cmdbuf),
-		    ",putat %s",
-		    mom_string_cstr ((momval_t)
-				     mom_item_get_name_or_idstr (atitm)))
-	  < (int) sizeof (cmdbuf) - 1)
+	       MOMOUT_ITEM ((const momitem_t *) itm), MOMOUT_NEWLINE (),
+	       MOMOUT_FLUSH ());
+      if (snprintf
+	  (cmdbuf, sizeof (cmdbuf), ",putat %s",
+	   mom_string_cstr ((momval_t) mom_item_get_name_or_idstr (atitm))) <
+	  (int) sizeof (cmdbuf) - 1)
 	add_history (cmdbuf);
       cmd_stack_pop_mom (1);
     }
@@ -1227,7 +1232,8 @@ cmd_do_remat_mom (const char *lin, bool pres, momitem_t *atitm)
 				   " "),
 		   MOMOUT_ITEM ((const momitem_t *) atitm),
 		   MOMOUT_LITERAL (" " ANSI_BOLD "from" ANSI_NORMAL " "),
-		   MOMOUT_ITEM ((const momitem_t *) itm), MOMOUT_NEWLINE ());
+		   MOMOUT_ITEM ((const momitem_t *) itm), MOMOUT_NEWLINE (),
+		   MOMOUT_FLUSH ());
 	  if (snprintf
 	      (cmdbuf, sizeof (cmdbuf), ",remat %s",
 	       mom_string_cstr ((momval_t)
@@ -1242,7 +1248,8 @@ cmd_do_remat_mom (const char *lin, bool pres, momitem_t *atitm)
 				   " "),
 		   MOMOUT_ITEM ((const momitem_t *) atitm),
 		   MOMOUT_LITERAL (" " ANSI_BOLD "in" ANSI_NORMAL " "),
-		   MOMOUT_ITEM ((const momitem_t *) itm), MOMOUT_NEWLINE ());
+		   MOMOUT_ITEM ((const momitem_t *) itm), MOMOUT_NEWLINE (),
+		   MOMOUT_FLUSH ());
 	}
     }
   else if (!atitm)
@@ -1317,7 +1324,7 @@ cmd_do_stack_mom (const char *lin)
 			ANSI_NORMAL),
 		       MOMOUT_LITERALV (mom_string_cstr (commentv)), NULL);
 		}
-	      MOM_OUT (mom_stdout, MOMOUT_NEWLINE ());
+	      MOM_OUT (mom_stdout, MOMOUT_NEWLINE (), MOMOUT_FLUSH ());
 	    }
 	}
       printf ("\t" ANSI_BOLD "**top**" ANSI_NORMAL "\n");
@@ -1417,7 +1424,7 @@ cmd_do_top_mom (const char *lin)
 		 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
 					 curval.pitem), NULL);
 	    }
-	  MOM_OUT (mom_stdout, MOMOUT_NEWLINE ());
+	  MOM_OUT (mom_stdout, MOMOUT_NEWLINE (), MOMOUT_FLUSH ());
 	}
       add_history (",top");
     }
@@ -1621,7 +1628,7 @@ cmd_interpret_mom (const char *lin)
 	      cmd_push_value_mom ((momval_t) itm);
 	      MOM_OUT (mom_stdout, MOMOUT_LITERAL ("pushing item:"),
 		       MOMOUT_ITEM ((const momitem_t *) itm),
-		       MOMOUT_NEWLINE ());
+		       MOMOUT_NEWLINE (), MOMOUT_FLUSH ());
 	      add_history (lin);
 	      return;
 	    }
@@ -1671,7 +1678,8 @@ cmd_interpret_mom (const char *lin)
 	  cmd_push_value_mom (dblv);
 	  add_history (lin);
 	  MOM_OUT (mom_stdout, MOMOUT_LITERAL ("pushing double:"),
-		   MOMOUT_VALUE ((const momval_t) dblv), MOMOUT_NEWLINE ());
+		   MOMOUT_VALUE ((const momval_t) dblv), MOMOUT_NEWLINE (),
+		   MOMOUT_FLUSH ());
 	  return;
 	}
       else if ((endlng > lin && isdigit (endlng[-1])) || !strcmp (lin, "0"))
@@ -1679,7 +1687,8 @@ cmd_interpret_mom (const char *lin)
 	  momval_t numv = mom_make_integer (l);
 	  cmd_push_value_mom (numv);
 	  MOM_OUT (mom_stdout, MOMOUT_LITERAL ("pushing integer:"),
-		   MOMOUT_VALUE ((const momval_t) numv), MOMOUT_NEWLINE ());
+		   MOMOUT_VALUE ((const momval_t) numv), MOMOUT_NEWLINE (),
+		   MOMOUT_FLUSH ());
 	  add_history (lin);
 	  return;
 	}
@@ -1744,7 +1753,7 @@ cmd_interpret_mom (const char *lin)
 		  cmd_push_value_mom ((momval_t) itm);
 		  MOM_OUT (mom_stdout, MOMOUT_LITERAL ("pushing item:"),
 			   MOMOUT_ITEM ((const momitem_t *) itm),
-			   MOMOUT_NEWLINE ());
+			   MOMOUT_NEWLINE (), MOMOUT_FLUSH ());
 		  add_history (lin);
 		  return;
 		}

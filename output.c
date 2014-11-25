@@ -839,6 +839,14 @@ mom_outva_at (const char *sfil, int lin, momout_t *pout, va_list alist)
 	  }
 	  break;
 	  //
+	case MOMOUTDO_STRING_VALUE:
+	  {
+	    momval_t v = va_arg (alist, momval_t);
+	    if (mom_is_string (v))
+	      fputs (v.pstring->cstr, out);
+	  }
+	  break;
+	  //
 	case MOMOUTDO_DEC_LONG:
 	  {
 	    long n = va_arg (alist, long);

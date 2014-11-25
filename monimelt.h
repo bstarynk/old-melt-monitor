@@ -353,6 +353,10 @@ typedef enum momoutdir_en
   MOMOUTDO_JSON_VALUE /*, momval_t jsval */ ,
 #define MOMOUT_JSON_VALUE(S) MOMOUTDO_JSON_VALUE, MOM_REQUIRES_TYPE(S,momval_t,mombad_value)
   ///
+  /// string value
+  MOMOUTDO_STRING_VALUE /*, momval_t sval */ ,
+#define MOMOUT_STRING_VALUE(S) MOMOUTDO_STRING_VALUE, MOM_REQUIRES_TYPE(S,momval_t,mombad_value)
+  ///
   /// any value
   MOMOUTDO_VALUE /*, momval_t val */ ,
 #define MOMOUT_VALUE(S) MOMOUTDO_VALUE, MOM_REQUIRES_TYPE(S,momval_t,mombad_value)
