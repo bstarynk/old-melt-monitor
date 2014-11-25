@@ -1832,7 +1832,7 @@ emit_expr_cgen (struct c_generator_mom_st *cg, momval_t expv)
   else if (mom_is_item (expv))
     {
       momitem_t *expitm = expv.pitem;
-      MOM_DEBUG (gencod, MOMOUT_LITERAL ("emitexpr var:"),
+      MOM_DEBUG (gencod, MOMOUT_LITERAL ("emitexpr item var:"),
 		 MOMOUT_VALUE ((const momval_t) expv));
       momtypenc_t typva = emit_var_item_cgen (cg, expitm);
       return typva;
@@ -2731,6 +2731,11 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
   if (lockv.pitem != NULL)
     {
       lockix = ++cg->cgen_count;
+      MOM_DEBUG (gencod, MOMOUT_LITERAL ("lockv:"), MOMOUT_VALUE (lockv),
+		 MOMOUT_LITERAL (" lockix#"),
+		 MOMOUT_DEC_INT (lockix),
+		 MOMOUT_LITERAL (" in block "),
+		 MOMOUT_ITEM ((const momitem_t *) blkitm), NULL);
       MOM_OUT (&cg->cgen_outbody,
 	       MOMOUT_NEWLINE (),
 	       MOMOUT_LITERAL ("// locked-item "),

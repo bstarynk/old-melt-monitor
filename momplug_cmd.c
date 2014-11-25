@@ -1894,17 +1894,19 @@ cmd_interpret_mom (const char *lin)
       MOM_DEBUGPRINTF (cmd, "punctuation line %s", lin);
       if (lin[0] == ',')
 	sscanf (lin, ",%30[a-z_] %n", cmdbuf, &pos);
+      const struct cmd_descr_st *cd = NULL;
       for (cmdix = 0; cmdix < (int) CMDARRSIZE_MOM; cmdix++)
 	{
-	  const struct cmd_descr_st *cd = cmd_array_mom + cmdix;
+	  cd = cmd_array_mom + cmdix;
 	  if (!cd->cmd_name)
-	    goto bad_command;
+	    break;
 	  if (!strcmp (cmdbuf, cd->cmd_name)
 	      || (cd->cmd_alias && (alen = strlen (cd->cmd_alias)) > 0
 		  && !strncmp (lin, cd->cmd_alias, alen)
 		  && (!lin[alen] || isspace (lin[alen]) || isalnum (lin[alen])
 		      || lin[alen] == '_' || !ispunct (lin[alen]))
 		  && (pos = alen) > 0))
+	  found_command:
 	    {
 	      MOM_DEBUGPRINTF (cmd, "got command %s #%d type%d", cd->cmd_name,
 			       cmdix, cd->cmd_type);
@@ -1978,6 +1980,26 @@ cmd_interpret_mom (const char *lin)
 		  return;
 		}
 	    }
+	};			// end first for loop on cmdix
+      cmdix = -1;
+      // second loop to find a command with unique prefix
+      int cmdbuflen = strlen (cmdbuf);
+      for (int cix = 0; cix < (int) CMDARRSIZE_MOM; cix++)
+	{
+	  cd = cmd_array_mom + cix;
+	  if (!cd->cmd_name)
+	    break;
+	  if (!strncmp (cmdbuf, cd->cmd_name, cmdbuflen))
+	    {
+	      if (cmdix > 0)
+		goto bad_command;
+	      cmdix = cix;
+	    }
+	}
+      if (cmdix >= 0)
+	{
+	  cd = cmd_array_mom + cmdix;
+	  goto found_command;
 	}
     }
 bad_command:

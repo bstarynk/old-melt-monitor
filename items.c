@@ -20,7 +20,8 @@
 
 #include "monimelt.h"
 
-static pthread_mutex_t globitem_mtx_mom = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t globitem_mtx_mom =
+  PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 
 
 #define  PREFERRED_BUCKET_SIZE_MOM 7
