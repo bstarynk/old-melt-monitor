@@ -37,6 +37,7 @@ const char mom_plugin_GPL_compatible[] = "GPLv3+";
   CMD(dump,"[dir]; dump state & continue",non,NULL)     \
   CMD(dup,"duplicate top",num,"%")                      \
   CMD(echo,"echo the line",non,NULL)                    \
+  CMD(erase,"erase item payload",itm,NULL)              \
   CMD(exit,"dump & exit",non,NULL)                      \
   CMD(forget,"forget named item",itm,NULL)              \
   CMD(gencmod,"generate C module",itm,NULL)             \
@@ -743,6 +744,8 @@ cmd_do_forget_mom (const char *lin, bool pres, momitem_t *itm)
 {
   MOM_DEBUG (cmd, MOMOUT_LITERAL ("start do_forget lin:"),
 	     MOMOUT_LITERALV (lin),
+	     MOMOUT_SPACE (40),
+	     MOMOUT_LITERALV ((const char *) (pres ? "present" : "absent")),
 	     MOMOUT_SPACE (48),
 	     MOMOUT_LITERAL ("item:"), MOMOUT_ITEM ((const momitem_t *) itm));
   if (pres && itm)
@@ -764,6 +767,31 @@ cmd_do_forget_mom (const char *lin, bool pres, momitem_t *itm)
     }
   else
     printf ("failed to forget\n");
+}
+
+static void
+cmd_do_erase_mom (const char *lin, bool pres, momitem_t *itm)
+{
+  MOM_DEBUG (cmd, MOMOUT_LITERAL ("start do_erase lin:"),
+	     MOMOUT_LITERALV (lin),
+	     MOMOUT_SPACE (40),
+	     MOMOUT_LITERALV ((const char *) (pres ? "present" : "absent")),
+	     MOMOUT_SPACE (48),
+	     MOMOUT_LITERAL ("item:"), MOMOUT_ITEM ((const momitem_t *) itm));
+  if (pres && itm)
+    {
+      char cmdbuf[80];
+      memset (cmdbuf, 0, sizeof (cmdbuf));
+      const char *itnam =
+	mom_string_cstr ((momval_t) mom_item_get_name_or_idstr (itm));
+      mom_item_clear_payload (itm);
+      snprintf (cmdbuf, sizeof (cmdbuf), ",erase %s", itnam);
+      add_history (cmdbuf);
+      printf ("erased payload of item " ANSI_BOLD "%s" ANSI_NORMAL "\n",
+	      itnam);
+    }
+  else
+    printf ("no item given to ,erase\n");
 }
 
 static void
