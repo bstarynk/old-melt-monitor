@@ -33,7 +33,7 @@ cat >> $tmpsql <<EOF
  SELECT printf("monimelt_add_modules %s",group_concat(modname,' ')) 
  FROM t_modules
  WHERE NOT EXISTS (SELECT gitmodname
-                   FROM t_gitmodules WHERE gitmodname=t_modules.modname);
+                   FROM _t_gitmodules WHERE gitmodname=t_modules.modname);
 EOF
 echo "DROP TABLE _t_filemodules;" >> $tmpsql
 echo "DROP TABLE _t_gitmodules;" >> $tmpsql
