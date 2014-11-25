@@ -576,6 +576,7 @@ cmd_do_help_mom (const char *lin)
     }
   printf ("\n## other syntax:\n");
   printf ("    \" starts a constant literal string\n");
+  printf ("    +\" catenate a string to top-of-stack\n");
   printf ("    __ or _. pushes a nil value\n");
   printf ("    names or identifiers pushes their corresponding items\n");
   printf ("    _ or an unknown name proposes to create an item\n");
@@ -1627,6 +1628,34 @@ cmd_interpret_mom (const char *lin)
 	}
       else
 	goto bad_command;
+    }
+  else if (lin[0] == '+' lin[1] == '"')
+    {				// catenate string to TOS
+      momval_t topv = cmd_stack_nth_value_mom (-1);
+      momval_t nstrv = (momval_t) mom_make_string (lin + 2);
+      if (mom_is_string (topv) && mom_is_string (nstrv))
+	{
+	  momval_t newstrv =
+	    MOM_OUTSTRING (0, MOMOUT_LITERALV (mom_string_cstr (topv)),
+			   MOMOUT_NEWLINE (),
+			   MOMOUT_LITERALV (mom_string_cstr (nstrv)));
+	  cmd_stack_pop_mom (-1);
+	  cmd_push_value_mom (newstrv);
+	  unsigned slen = mom_string_slen (newstrv);
+	  add_history (lin);
+	  printf (ANSI_BOLD "catenated %d byte string:" ANSI_NORMAL "%.60s",
+		  slen, mom_string_cstr (newstrv));
+	  if (slen > 66)
+	    printf ("\n" ANSI_BOLD "..." ANSI_NORMAL "%s\n",
+		    mom_string_cstr (newstrv) + slen - 60);
+	  else if (slen > 60)
+	    printf ("%s\n", mom_string_cstr (newstrv) + 60);
+	  else
+	    putchar ('\n');
+	  return;
+	}
+      else
+	printf ("cannot catenate since top-of-stack is not string\n");
     }
   else if (isdigit (lin[0]) || lin[0] == '-' || lin[0] == '+')
     {
