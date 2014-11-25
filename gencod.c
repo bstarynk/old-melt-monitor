@@ -2765,7 +2765,7 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
       if (opitm != mom_named__do
 	  && opitm != mom_named__if
 	  && opitm != mom_named__assign && opitm != mom_named__switch
-	  && opitm != mom_named__assign && opitm != mom_named__dispatch
+	  && opitm != mom_named__comment && opitm != mom_named__dispatch
 	  && (opitm != mom_named__jump || ix < nbinstr - 1)
 	  && (opitm != mom_named__call || ix < nbinstr - 1)
 	  && (opitm != mom_named__return || ix < nbinstr - 1))
@@ -2839,6 +2839,18 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 	  emit_expr_cgen (cg, doexpv);
 	  MOM_OUT (&cg->cgen_outbody,
 		   MOMOUT_LITERAL (" /*!done*/;"), MOMOUT_NEWLINE ());
+	}
+      //// COMMENT instruction
+      else if (opitm == mom_named__comment)
+	{
+	  /* *comment(...) */
+	  momval_t com0v = mom_node_nth (curinsv, 0);
+	  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("/** comment **/"),
+		   MOMOUT_NEWLINE ());
+	  if (mom_is_string (com0v))
+	    MOM_OUT (&cg->cgen_outbody,
+		     MOMOUT_SLASHCOMMENT_STRING (mom_string_cstr (com0v)),
+		     MOMOUT_NEWLINE ());
 	}
       //// ASSIGN instruction
       else if (opitm == mom_named__assign && insarity == 2)
