@@ -1835,20 +1835,7 @@ emit_expr_cgen (struct c_generator_mom_st *cg, momval_t expv)
       MOM_DEBUG (gencod, MOMOUT_LITERAL ("emitexpr var:"),
 		 MOMOUT_VALUE ((const momval_t) expv));
       momtypenc_t typva = emit_var_item_cgen (cg, expitm);
-      if (typva != momtypenc__none)
-	return typva;
-      else
-	{
-	  MOM_DEBUG (gencod, MOMOUT_LITERAL ("invalid expression item:"),
-		     MOMOUT_ITEM ((const momitem_t *) expitm),
-		     MOMOUT_SPACE (48),
-		     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) expitm),
-		     MOMOUT_NEWLINE (), MOMOUT_LITERAL ("current routine="),
-		     MOMOUT_ITEM ((const momitem_t *) cg->cgen_curoutitm),
-		     NULL);
-	  CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid expression item:"),
-			  MOMOUT_ITEM ((const momitem_t *) expitm), NULL);
-	}
+      return typva;
     }
   else if (mom_is_node (expv))
     {

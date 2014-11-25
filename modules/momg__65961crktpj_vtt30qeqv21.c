@@ -96,6 +96,22 @@ static int momfuncod__06uk4pppvx9_huv0v11v18j
  momfblo_2:
  {
   
+  //! instr#1 in block _8t137w1z1s9_2tea9xp64s6 ::
+  /*!do*/ /*!primitive-void mom_stop_work_with_todo*/ mom_stop_work_with_todo (
+  momprocfun__07zti91e4kd_952zqsd03fz, /*!litstr:*/ ".")/*!endvoidprimitive mom_stop_work_with_todo*/  /*!done*/;
+  
+  //! instr#2 in block _8t137w1z1s9_2tea9xp64s6 ::
+  /*!do*/ /*!primitive-void MOM_WEBX_OUT*/ MOM_WEBX_OUT (mom_value_to_item(
+  momvals[0/*:webx*/]), /*!litoutstr*/MOMOUTDO_LITERAL, "<em>Monimelt</em> <b>save then exit</b> at <i>",
+  /*!outexp MOMOUT_DOUBLE_TIME*/ MOMOUTDO_DOUBLE_TIME,
+  /*!litstr:*/ "%c"/*!endoutexp MOMOUT_DOUBLE_TIME*/,  /*!litoutstr*/MOMOUTDO_LITERAL, "</i>",
+  /*!outputend*/NULL )/*!endvoidprimitive MOM_WEBX_OUT*/  /*!done*/;
+  
+  //! instr#3 in block _8t137w1z1s9_2tea9xp64s6 ::
+  /*!do*/ /*!primitive-void mom_webx_reply*/ mom_webx_reply (mom_value_to_item (
+  momvals[0/*:webx*/]),  /*!litstr:*/ "text/html",
+  HTTP_OK)/*!endvoidprimitive mom_webx_reply*/  /*!done*/;
+  
  }; // end function block _8t137w1z1s9_2tea9xp64s6
  return momroutres_pop;
  
