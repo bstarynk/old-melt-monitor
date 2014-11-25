@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 Nov 24
+-- state-monimelt dump 2014 Nov 25
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -193,6 +193,11 @@ INSERT INTO t_items VALUES('_2ky10qvckv2_kqa0pr8z29z','{"attr": [{"attr": "_41u1
 ','');
 INSERT INTO t_items VALUES('_2mayc646pdu_w4d18fmx8u3','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "some sequence"}], "content":
  null, "kind": null, "payload": null}
+','');
+INSERT INTO t_items VALUES('_2qq1dh2ucpr_qtv6staqhti','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_02q6zk9f5st_im0z75re15f",
+    "jtype": "item_ref", "space": ".predef"}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "formal for todo procedure"}], "content": null, "kind": null, "payload":
+ null}
 ','');
 INSERT INTO t_items VALUES('_2rpd6wy50xt_etjfuj6s8jr','{"attr": [{"attr": "_19ufza9zf05_muxxhkmm7ww", "val": {"jtype": "node", "node": "_8x6fxcm4z2k_vdaqicfi4z0",
     "sons": ["MOMOUTDO_ITEM, mom_value_to_item(", {"item_ref": "_0hi99dr3qqs_yuuciyy7xfz",
@@ -538,6 +543,16 @@ INSERT INTO t_items VALUES('_7vw56h18sw0_hv77m6q8uxu','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_7wk9y7e7r0z_575esi8ys5x','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "in JSON dumps, used for values in attribute lists of items"}],
  "content": null, "kind": null, "payload": null}
 ','');
+INSERT INTO t_items VALUES('_7x7vwep1fw4_i158put1x07','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_02q6zk9f5st_im0z75re15f",
+    "jtype": "item_ref", "space": ".predef"}}, {"attr": "_2ummst105ck_xracfy8v87y",
+   "val": {"jtype": "tuple", "tuple": ["_2qq1dh2ucpr_qtv6staqhti", "_389t77v85ej_fwpy6exy62x"]}},
+  {"attr": "_37x98fyestf_ttup2cu68r6", "val": {"jtype": "node", "node": "_0yyp8vmw4si_wf49m4d4zwq",
+    "sons": ["mom_stop_work_with_todo (", {"item_ref": "_2qq1dh2ucpr_qtv6staqhti",
+      "jtype": "item_ref", "space": ".root"}, ",", {"item_ref": "_389t77v85ej_fwpy6exy62x",
+      "jtype": "item_ref", "space": ".root"}, ")"]}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "primitive to stop agenda."}], "content": null, "kind": null, "payload":
+ null}
+','');
 INSERT INTO t_items VALUES('_7yxp9xhih4z_9uzrqhkamxa','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for routines for tasklet"}],
  "content": null, "kind": null, "payload": null}
 ','');
@@ -605,7 +620,18 @@ INSERT INTO t_items VALUES('_8s357rq2dzk_k8ze95tikjm','{"attr": [{"attr": "_41u1
 ','');
 INSERT INTO t_items VALUES('_8t137w1z1s9_2tea9xp64s6','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "block to handle appl with what=exit"},
   {"attr": "_94tq2iauet8_jujpjhjrzsm", "val": {"jtype": "node", "node": "_0yyp8vmw4si_wf49m4d4zwq",
-    "sons": []}}], "content": null, "kind": null, "payload": null}
+    "sons": [{"jtype": "node", "node": "_5c789try94y_ssy6a22fpep", "sons": [{"jtype":
+"node", "node": "_7x7vwep1fw4_i158put1x07", "sons": [{"item_ref": "_07zti91e4kd_952zqsd03fz",
+  "jtype": "item_ref", "space": ".root"}, "."]}]}, {"jtype": "node", "node": "_5c789try94y_ssy6a22fpep",
+      "sons": [{"jtype": "node", "node": "_4ew7uvid6ep_wzq6f8hruz9", "sons": [{"item_ref":
+  "_16cd0fvmdrh_r77ajpy26za", "jtype": "item_ref", "space": ".root"}, "<em>Monimelt</em> <b>save then exit</b> at <i>",
+ {"jtype": "node", "node": "_4xicv8w07x7_3hzzmpw8iwt", "sons": ["%c", {"jtype": "node",
+    "node": "_1yz5fpjm6yt_319wacq9346", "sons": [{"item_ref": "_9jdufs9sew7_u6x3k3wfseq",
+      "jtype": "item_ref", "space": ".root"}]}]}, "</i>"]}]}, {"jtype": "node",
+      "node": "_5c789try94y_ssy6a22fpep", "sons": [{"jtype": "node", "node": "_7j5uq75spm6_wuhuc4pe5th",
+"sons": [{"item_ref": "_16cd0fvmdrh_r77ajpy26za", "jtype": "item_ref", "space": ".root"},
+ "text/html", {"item_ref": "_4ie5pvk8m1x_rzsut0mdza0", "jtype": "item_ref",
+  "space": ".root"}]}]}]}}], "content": null, "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_8u5ar84utwm_99k5mq2d589','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "second result in tasklet"}],
  "content": null, "kind": null, "payload": null}
@@ -812,6 +838,7 @@ INSERT INTO t_names VALUES('method','_3hv5ymapjed_y8q6hsvhw8u','.predef');
 INSERT INTO t_names VALUES('module','_7sqk8vh89xr_6tj8dq7vqju','.predef');
 INSERT INTO t_names VALUES('module_routines','_9dcxaqk8tqe_fam9mcxme9w','.predef');
 INSERT INTO t_names VALUES('mom_clock_time','_1yz5fpjm6yt_319wacq9346','.root');
+INSERT INTO t_names VALUES('mom_stop_work_with_todo','_7x7vwep1fw4_i158put1x07','.root');
 INSERT INTO t_names VALUES('mom_string_same','_20ds5w0c9z1_tvf5h12wrqp','.root');
 INSERT INTO t_names VALUES('mom_value_to_item','_5s26uzwhveh_fv3twe3s2je','.root');
 INSERT INTO t_names VALUES('mom_webx_post_arg','_8zwifiifaf0_pyayp6hpha4','.root');
@@ -853,6 +880,7 @@ INSERT INTO t_names VALUES('terminated','_3jpt8yuzuyw_ti1pyz3me1c','.predef');
 INSERT INTO t_names VALUES('test_fun1','_8qmqy249w63_fxdr6rdz48m','.root');
 INSERT INTO t_names VALUES('test_module','_4q1v3ax0ffi_hv7fwpsv6uf','.root');
 INSERT INTO t_names VALUES('test_proc1','_682ush7cppa_s7vzfd2rsxp','.root');
+INSERT INTO t_names VALUES('todoproc','_2qq1dh2ucpr_qtv6staqhti','.root');
 INSERT INTO t_names VALUES('translate_procedure','_0afqepa7jkr_qky26hpv98d','.root');
 INSERT INTO t_names VALUES('translation','_8y1sw8z084j_4ts0y0jydha','.root');
 INSERT INTO t_names VALUES('tuple','_7vw56h18sw0_hv77m6q8uxu','.predef');
