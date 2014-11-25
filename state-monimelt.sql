@@ -25,7 +25,6 @@ CREATE TABLE t_modules (modname VARCHAR(40) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
 INSERT INTO t_params VALUES('dump_reason','command dump');
-INSERT INTO t_modules VALUES('_4q1v3ax0ffi_hv7fwpsv6uf');
 INSERT INTO t_modules VALUES('_65961crktpj_vtt30qeqv21');
 INSERT INTO t_items VALUES('_02av6173qvf_pehzhe755j2','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for calls at end of  blocks"}],
  "content": null, "kind": null, "payload": null}
@@ -342,10 +341,6 @@ INSERT INTO t_items VALUES('_4mha85xcfwi_9zqcvkiy3dk','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_4p33dhxywm0_id6tti2kyw6','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "locals of function"}],
  "content": null, "kind": null, "payload": null}
 ','');
-INSERT INTO t_items VALUES('_4q1v3ax0ffi_hv7fwpsv6uf','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "our test module, to test the C code generation."},
-  {"attr": "_9dcxaqk8tqe_fam9mcxme9w", "val": {"jtype": "set", "set": ["_682ush7cppa_s7vzfd2rsxp",
-     "_8qmqy249w63_fxdr6rdz48m"]}}], "content": null, "kind": null, "payload": null}
-','');
 INSERT INTO t_items VALUES('_4qcw2mwjswm_j9q0k9d04hm','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "error case, on for JSONRPC"}],
  "content": null, "kind": null, "payload": null}
 ','');
@@ -447,8 +442,8 @@ INSERT INTO t_items VALUES('_682ush7cppa_s7vzfd2rsxp','{"attr": [{"attr": "_2u8s
     "jtype": "item_ref", "space": ".root"}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "procedure 1 inside our test_module."}, {"attr": "_4v74chqs1eh_chqd9cqw85t",
    "val": {"jtype": "set", "set": ["_5xa08a3ittw_imt86y9q33c"]}}], "content": null,
- "kind": "procedure", "payload": ["_0yyp8vmw4si_wf49m4d4zwq"]}
-','procedure');
+ "kind": null, "payload": null}
+','');
 INSERT INTO t_items VALUES('_6djzuwz5pav_cri386ywjhj','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "notably for error message in JSONRPC"}],
  "content": null, "kind": null, "payload": null}
 ','');
@@ -602,9 +597,8 @@ INSERT INTO t_items VALUES('_8qmqy249w63_fxdr6rdz48m','{"attr": [{"attr": "_2u8s
     "_2ky10qvckv2_kqa0pr8z29z", "jtype": "item_ref", "space": ".root"}}, {"attr":
    "_41u1utcxyek_22cftxt3xxm", "val": "function 1 inside our test_module."},
   {"attr": "_7yxp9xhih4z_9uzrqhkamxa", "val": {"jtype": "set", "set": ["_2ky10qvckv2_kqa0pr8z29z"]}}],
- "content": null, "kind": "tfunrout", "payload": {"constants": ["_41u1utcxyek_22cftxt3xxm",
-   "_7wk9y7e7r0z_575esi8ys5x"], "tasklet_function": "_8qmqy249w63_fxdr6rdz48m"}}
-','tfunrout');
+ "content": null, "kind": null, "payload": null}
+','');
 INSERT INTO t_items VALUES('_8qpa7j0chkh_k630ujw6jiw','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for switch statements on integers"}],
  "content": null, "kind": null, "payload": null}
 ','');
@@ -878,7 +872,6 @@ INSERT INTO t_names VALUES('switch','_8qpa7j0chkh_k630ujw6jiw','.predef');
 INSERT INTO t_names VALUES('tasklet_function','_7yxp9xhih4z_9uzrqhkamxa','.predef');
 INSERT INTO t_names VALUES('terminated','_3jpt8yuzuyw_ti1pyz3me1c','.predef');
 INSERT INTO t_names VALUES('test_fun1','_8qmqy249w63_fxdr6rdz48m','.root');
-INSERT INTO t_names VALUES('test_module','_4q1v3ax0ffi_hv7fwpsv6uf','.root');
 INSERT INTO t_names VALUES('test_proc1','_682ush7cppa_s7vzfd2rsxp','.root');
 INSERT INTO t_names VALUES('todoproc','_2qq1dh2ucpr_qtv6staqhti','.root');
 INSERT INTO t_names VALUES('translate_procedure','_0afqepa7jkr_qky26hpv98d','.root');
