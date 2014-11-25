@@ -1386,8 +1386,17 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	     MOMOUT_LITERAL ("assert (momdbls != NULL); //"),
 	     MOMOUT_DEC_INT ((int) nbdoubles),
 	     MOMOUT_LITERAL (" doubles."), MOMOUT_NEWLINE (), NULL);
-  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("switch (momstate) {"),
-	   MOMOUT_NEWLINE ());
+  MOM_OUT (&cg->cgen_outbody,
+	   MOMOUT_LITERAL
+	   (" MOM_DEBUG(run, MOMOUT_LITERAL(\"start tasklet=\"),"
+	    " MOMOUT_ITEM((const momitem_t*)momtasklet),"),
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL ("\t MOMOUT_LITERAL(\" state#\"),"
+			   " MOMOUT_DEC_INT((int)momstate),"
+			   " MOMOUT_LITERAL(\" taskfunc "),
+	   MOMOUT_ITEM ((const momitem_t *) curoutitm),
+	   MOMOUT_LITERAL ("\"));"), MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL ("switch (momstate) {"), MOMOUT_NEWLINE ());
   for (unsigned six = 1; six <= nbblocks; six++)
     {
       MOM_OUT (&cg->cgen_outbody,
@@ -1395,7 +1404,10 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	       MOMOUT_DEC_INT ((int) six),
 	       MOMOUT_LITERAL (": goto " CGEN_FUN_BLOCK_PREFIX),
 	       MOMOUT_DEC_INT ((int) six),
-	       MOMOUT_LITERAL (";"), MOMOUT_NEWLINE (), NULL);
+	       MOMOUT_LITERAL ("; // block "),
+	       MOMOUT_ITEM ((const momitem_t *)
+			    mom_seqitem_nth_item (funblocksv, six - 1)),
+	       MOMOUT_NEWLINE (), NULL);
     }
   MOM_OUT (&cg->cgen_outbody,
 	   MOMOUT_LITERAL ("default: return momroutres_pop;"),

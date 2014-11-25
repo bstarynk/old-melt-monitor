@@ -84,17 +84,35 @@ static int momfuncod__06uk4pppvx9_huv0v11v18j
  assert (momclovals != NULL);
  assert (mom_item_payload_kind(momtasklet)== mompayk_tasklet);
  assert (momvals != NULL); // 2 values.
+  MOM_DEBUG(run, MOMOUT_LITERAL("start tasklet="), MOMOUT_ITEM((const momitem_t*)momtasklet),
+ 	 MOMOUT_LITERAL(" state#"), MOMOUT_DEC_INT((int)momstate), MOMOUT_LITERAL(" taskfunc ajax_appl"));
  switch (momstate) {
- case 1: goto momfblo_1;
- case 2: goto momfblo_2;
- case 3: goto momfblo_3;
- case 4: goto momfblo_4;
+ case 1: goto momfblo_1; // block _7yyaydvyhpr_teuchcqzs7k
+ case 2: goto momfblo_2; // block _8t137w1z1s9_2tea9xp64s6
+ case 3: goto momfblo_3; // block _8y756mef2ca_w8cj58726vj
+ case 4: goto momfblo_4; // block _9u6a6xy2e1p_qeapfc73cm4
  default: return momroutres_pop;
  }; // end switch state
  
  // function block #1 _7yyaydvyhpr_teuchcqzs7k
  momfblo_1:
  {
+  
+  //! instr#1 in block _7yyaydvyhpr_teuchcqzs7k ::
+  /*!do*/ /*!primitive-void mom_stop_work_with_todo*/ mom_stop_work_with_todo (
+  momprocfun__7x6as13park_w64mrkx2xtm, /*!litstr:*/ ".")/*!endvoidprimitive mom_stop_work_with_todo*/  /*!done*/;
+  
+  //! instr#2 in block _7yyaydvyhpr_teuchcqzs7k ::
+  /*!do*/ /*!primitive-void MOM_WEBX_OUT*/ MOM_WEBX_OUT (mom_value_to_item(
+  momvals[0/*:webx*/]), /*!litoutstr*/MOMOUTDO_LITERAL, "<em>Monimelt</em> <b>dump then continue</b> at<i>",
+  /*!outexp MOMOUT_DOUBLE_TIME*/ MOMOUTDO_DOUBLE_TIME,
+  /*!litstr:*/ "%c"/*!endoutexp MOMOUT_DOUBLE_TIME*/,  /*!litoutstr*/MOMOUTDO_LITERAL, "</i>",
+  /*!outputend*/NULL )/*!endvoidprimitive MOM_WEBX_OUT*/  /*!done*/;
+  
+  //! instr#3 in block _7yyaydvyhpr_teuchcqzs7k ::
+  /*!do*/ /*!primitive-void mom_webx_reply*/ mom_webx_reply (mom_value_to_item (
+  momvals[0/*:webx*/]),  /*!litstr:*/ "text/html",
+  HTTP_OK)/*!endvoidprimitive mom_webx_reply*/  /*!done*/;
   
  }; // end function block _7yyaydvyhpr_teuchcqzs7k
  return momroutres_pop;
