@@ -118,6 +118,10 @@ static int momfuncod__06uk4pppvx9_huv0v11v18j
   ////!block to handle appl with what=exit
   
   
+  // locked-item webx in block _8t137w1z1s9_2tea9xp64s6
+  momitem_t* momlockeditem_1 = mom_value_to_item ( momvals[0/*:webx*/]) /* locked-item */;
+  if (!mom_lock_item (momlockeditem_1)) goto momendblock_1;
+  
   //! instr#1 in block _8t137w1z1s9_2tea9xp64s6 ::
   /*!do*/ /*!primitive-void mom_stop_work_with_todo*/ mom_stop_work_with_todo (
   momprocfun__07zti91e4kd_952zqsd03fz, /*!litstr:*/ ".")/*!endvoidprimitive mom_stop_work_with_todo*/  /*!done*/;
@@ -136,6 +140,10 @@ static int momfuncod__06uk4pppvx9_huv0v11v18j
   momvals[0/*:webx*/]),  /*!litstr:*/ "text/html",
   HTTP_OK)/*!endvoidprimitive mom_webx_reply*/  /*!done*/;
   
+  /*! epilogue for lock */
+  mom_unlock_item(momlockeditem_1); // unlock webx
+  momendblock_1:;
+  
  }; // end function block _8t137w1z1s9_2tea9xp64s6
  return momroutres_pop;
  
@@ -146,8 +154,8 @@ static int momfuncod__06uk4pppvx9_huv0v11v18j
   
   
   // locked-item webx in block _8y756mef2ca_w8cj58726vj
-  momitem_t* momlockeditem_1 = mom_value_to_item ( momvals[0/*:webx*/]) /* locked-item */;
-  if (!mom_lock_item (momlockeditem_1)) goto momendblock_1;
+  momitem_t* momlockeditem_2 = mom_value_to_item ( momvals[0/*:webx*/]) /* locked-item */;
+  if (!mom_lock_item (momlockeditem_2)) goto momendblock_2;
   
   //! instr#1 in block _8y756mef2ca_w8cj58726vj ::
   /*!do*/ /*!primitive-void debug_run*/ MOM_DEBUG(run,  /*!litoutstr*/MOMOUTDO_LITERAL, "ajax_appl webx:",
@@ -166,24 +174,24 @@ static int momfuncod__06uk4pppvx9_huv0v11v18j
   //! instr#4 in block _8y756mef2ca_w8cj58726vj ::
   /*!if*/ if ((/*!primitive mom_string_same*/ (intptr_t) mom_string_same((
   momvals[2/*:whatv*/]), ( /*!litstr:*/ "exit"))/*!endprimitive mom_string_same*/) )
-   /*!unlock-goto*/ { mom_unlock_item (momlockeditem_1);  return 2 /*!func.block _8t137w1z1s9_2tea9xp64s6*/;
-   }; //!unlocked momlockeditem_1
+   /*!unlock-goto*/ { mom_unlock_item (momlockeditem_2);  return 2 /*!func.block _8t137w1z1s9_2tea9xp64s6*/;
+   }; //!unlocked momlockeditem_2
     
   //! instr#5 in block _8y756mef2ca_w8cj58726vj ::
   /*!if*/ if ((/*!primitive mom_string_same*/ (intptr_t) mom_string_same((
   momvals[2/*:whatv*/]), ( /*!litstr:*/ "quit"))/*!endprimitive mom_string_same*/) )
-   /*!unlock-goto*/ { mom_unlock_item (momlockeditem_1);  return 5 /*!func.block _9u6a6xy2e1p_qeapfc73cm4*/;
-   }; //!unlocked momlockeditem_1
+   /*!unlock-goto*/ { mom_unlock_item (momlockeditem_2);  return 5 /*!func.block _9u6a6xy2e1p_qeapfc73cm4*/;
+   }; //!unlocked momlockeditem_2
     
   //! instr#6 in block _8y756mef2ca_w8cj58726vj ::
   /*!if*/ if ((/*!primitive mom_string_same*/ (intptr_t) mom_string_same((
   momvals[2/*:whatv*/]), ( /*!litstr:*/ "dump"))/*!endprimitive mom_string_same*/) )
-   /*!unlock-goto*/ { mom_unlock_item (momlockeditem_1);  return 1 /*!func.block _7yyaydvyhpr_teuchcqzs7k*/;
-   }; //!unlocked momlockeditem_1
+   /*!unlock-goto*/ { mom_unlock_item (momlockeditem_2);  return 1 /*!func.block _7yyaydvyhpr_teuchcqzs7k*/;
+   }; //!unlocked momlockeditem_2
     
   /*! epilogue for lock */
-  mom_unlock_item(momlockeditem_1); // unlock webx
-  momendblock_1:;
+  mom_unlock_item(momlockeditem_2); // unlock webx
+  momendblock_2:;
   
  }; // end function block _8y756mef2ca_w8cj58726vj
  return momroutres_pop;
@@ -216,6 +224,33 @@ static int momfuncod__06uk4pppvx9_huv0v11v18j
  {
   ////!block to handle ajax_appl when what=quit
   
+  
+  // locked-item webx in block _9u6a6xy2e1p_qeapfc73cm4
+  momitem_t* momlockeditem_3 = mom_value_to_item ( momvals[0/*:webx*/]) /* locked-item */;
+  if (!mom_lock_item (momlockeditem_3)) goto momendblock_3;
+  
+  //! instr#1 in block _9u6a6xy2e1p_qeapfc73cm4 ::
+  /*!do*/ /*!primitive-void MOM_WEBX_OUT*/ MOM_WEBX_OUT (mom_value_to_item(
+  momvals[0/*:webx*/]), /*!litoutstr*/MOMOUTDO_LITERAL, "<em>Monimelt</em> <b>quitting</b> without saving at <i>",
+  /*!outexp MOMOUT_DOUBLE_TIME*/ MOMOUTDO_DOUBLE_TIME,
+  /*!litstr:*/ "%c", (/*!primitive mom_clock_time*/ mom_clock_time(
+  CLOCK_REALTIME)/*!endprimitive mom_clock_time*/) /*!endoutexp MOMOUT_DOUBLE_TIME*/,
+   /*!litoutstr*/MOMOUTDO_LITERAL, "</i>", /*!outputend*/NULL
+  )/*!endvoidprimitive MOM_WEBX_OUT*/  /*!done*/;
+  
+  //! instr#2 in block _9u6a6xy2e1p_qeapfc73cm4 ::
+  /*!do*/ /*!primitive-void mom_webx_reply*/ mom_webx_reply (mom_value_to_item (
+  momvals[0/*:webx*/]),  /*!litstr:*/ "text/html",
+  HTTP_OK)/*!endvoidprimitive mom_webx_reply*/  /*!done*/;
+  
+  //! instr#3 in block _9u6a6xy2e1p_qeapfc73cm4 ::
+  /** chunk **/
+   MOM_INFORMPRINTF("exiting Monimelt per web request");
+ exit(EXIT_SUCCESS); // per web request
+
+  /*! epilogue for lock */
+  mom_unlock_item(momlockeditem_3); // unlock webx
+  momendblock_3:;
   
  }; // end function block _9u6a6xy2e1p_qeapfc73cm4
  return momroutres_pop;
@@ -301,8 +336,8 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
    
    
    // locked-item dump_data in block _39hpqv0jqj6_9sa2v0vhfm6
-   momitem_t* momlockeditem_2 = mom_value_to_item ( ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[3] /*dump_data*/)) /* locked-item */;
-   if (!mom_lock_item (momlockeditem_2)) goto momendblock_2;
+   momitem_t* momlockeditem_4 = mom_value_to_item ( ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[3] /*dump_data*/)) /* locked-item */;
+   if (!mom_lock_item (momlockeditem_4)) goto momendblock_4;
    
    //! instr#1 in block _39hpqv0jqj6_9sa2v0vhfm6 ::
    /*!do*/ /*!primitive-void _87r5zd69i6m_zr0hupaer90*/ /* primitive _87r5zd... in start-block of todo-on-dump */
@@ -332,8 +367,8 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
 /*!endvoidprimitive _87r5zd69i6m_zr0hupaer90*/  /*!done*/;
    
    /*! epilogue for lock */
-   mom_unlock_item(momlockeditem_2); // unlock dump_data
-   momendblock_2:;
+   mom_unlock_item(momlockeditem_4); // unlock dump_data
+   momendblock_4:;
    
   }; // end procedure block _39hpqv0jqj6_9sa2v0vhfm6
   return;

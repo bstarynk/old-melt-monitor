@@ -729,10 +729,12 @@ INSERT INTO t_items VALUES('_8qqv70zdmmk_w4qs625q0s7','{"attr": [{"attr": "_19uf
 INSERT INTO t_items VALUES('_8s357rq2dzk_k8ze95tikjm','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "gives the item content, at least in dumped JSON..."}],
  "content": null, "kind": null, "payload": null}
 ','');
-INSERT INTO t_items VALUES('_8t137w1z1s9_2tea9xp64s6','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "block to handle appl with what=exit"},
-  {"attr": "_94tq2iauet8_jujpjhjrzsm", "val": {"jtype": "node", "node": "_0yyp8vmw4si_wf49m4d4zwq",
-    "sons": [{"jtype": "node", "node": "_5c789try94y_ssy6a22fpep", "sons": [{"jtype":
-"node", "node": "_7x7vwep1fw4_i158put1x07", "sons": [{"item_ref": "_07zti91e4kd_952zqsd03fz",
+INSERT INTO t_items VALUES('_8t137w1z1s9_2tea9xp64s6','{"attr": [{"attr": "_232t5qs2v8e_zu2wy53cqe3", "val": {"item_ref": "_16cd0fvmdrh_r77ajpy26za",
+    "jtype": "item_ref", "space": ".root"}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "block to handle appl with what=exit"}, {"attr": "_94tq2iauet8_jujpjhjrzsm",
+   "val": {"jtype": "node", "node": "_0yyp8vmw4si_wf49m4d4zwq", "sons": [{"jtype":
+      "node", "node": "_5c789try94y_ssy6a22fpep", "sons": [{"jtype": "node",
+"node": "_7x7vwep1fw4_i158put1x07", "sons": [{"item_ref": "_07zti91e4kd_952zqsd03fz",
   "jtype": "item_ref", "space": ".root"}, "."]}]}, {"jtype": "node", "node": "_5c789try94y_ssy6a22fpep",
       "sons": [{"jtype": "node", "node": "_4ew7uvid6ep_wzq6f8hruz9", "sons": [{"item_ref":
   "_16cd0fvmdrh_r77ajpy26za", "jtype": "item_ref", "space": ".root"}, "<em>Monimelt</em> <b>save then exit</b> at <i>",
@@ -857,9 +859,22 @@ INSERT INTO t_items VALUES('_9r25vmrrk8a_vus02yyfp8w','{"attr": [{"attr": "_0ee6
 INSERT INTO t_items VALUES('_9sd1mh9q1zf_3duewi6fsaq','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for exited processes with exit code >0"}],
  "content": null, "kind": null, "payload": null}
 ','');
-INSERT INTO t_items VALUES('_9u6a6xy2e1p_qeapfc73cm4','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "block to handle ajax_appl when what=quit"},
-  {"attr": "_94tq2iauet8_jujpjhjrzsm", "val": {"jtype": "node", "node": "_0yyp8vmw4si_wf49m4d4zwq",
-    "sons": []}}], "content": null, "kind": null, "payload": null}
+INSERT INTO t_items VALUES('_9u6a6xy2e1p_qeapfc73cm4','{"attr": [{"attr": "_232t5qs2v8e_zu2wy53cqe3", "val": {"item_ref": "_16cd0fvmdrh_r77ajpy26za",
+    "jtype": "item_ref", "space": ".root"}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "block to handle ajax_appl when what=quit"}, {"attr": "_94tq2iauet8_jujpjhjrzsm",
+   "val": {"jtype": "node", "node": "_0yyp8vmw4si_wf49m4d4zwq", "sons": [{"jtype":
+      "node", "node": "_5c789try94y_ssy6a22fpep", "sons": [{"jtype": "node",
+"node": "_4ew7uvid6ep_wzq6f8hruz9", "sons": [{"item_ref": "_16cd0fvmdrh_r77ajpy26za",
+  "jtype": "item_ref", "space": ".root"}, "<em>Monimelt</em> <b>quitting</b> without saving at <i>",
+ {"jtype": "node", "node": "_4xicv8w07x7_3hzzmpw8iwt", "sons": ["%c", {"jtype": "node",
+    "node": "_1yz5fpjm6yt_319wacq9346", "sons": [{"item_ref": "_9jdufs9sew7_u6x3k3wfseq",
+      "jtype": "item_ref", "space": ".root"}]}]}, "</i>"]}]}, {"jtype": "node",
+      "node": "_5c789try94y_ssy6a22fpep", "sons": [{"jtype": "node", "node": "_7j5uq75spm6_wuhuc4pe5th",
+"sons": [{"item_ref": "_16cd0fvmdrh_r77ajpy26za", "jtype": "item_ref", "space": ".root"},
+ "text/html", {"item_ref": "_4ie5pvk8m1x_rzsut0mdza0", "jtype": "item_ref",
+  "space": ".root"}]}]}, {"jtype": "node", "node": "_8x6fxcm4z2k_vdaqicfi4z0",
+      "sons": [" MOM_INFORMPRINTF(\"exiting Monimelt per web request\");\n exit(EXIT_SUCCESS); // per web request\n"]}]}}],
+ "content": null, "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_9w7y4v2xpyr_f48demccutx','{"attr": [{"attr": "_19ufza9zf05_muxxhkmm7ww", "val": {"jtype": "node", "node": "_8x6fxcm4z2k_vdaqicfi4z0",
     "sons": ["MOMOUTDO_SMALL_NEWLINE"]}}, {"attr": "_2ummst105ck_xracfy8v87y",

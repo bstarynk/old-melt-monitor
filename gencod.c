@@ -56,6 +56,7 @@
      *assign (<var>,<expr>) for assignments
      *switch (<expr>,<case>...); each <case> is *case(<const-expr>,<block>)
      *dispatch (<expr>,<case>...); each <case> is *case(<const-item>,<block>)
+     *chunk (...) for some code chunk with variables
 
   but the last sub-node in a block code could also be:
      *jump(<block>)
@@ -2770,6 +2771,7 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
       assert (opitm != NULL);
       if (opitm != mom_named__do
 	  && opitm != mom_named__if
+	  && opitm != mom_named__chunk
 	  && opitm != mom_named__assign && opitm != mom_named__switch
 	  && opitm != mom_named__comment && opitm != mom_named__dispatch
 	  && (opitm != mom_named__jump || ix < nbinstr - 1)
@@ -2846,18 +2848,6 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 	  MOM_OUT (&cg->cgen_outbody,
 		   MOMOUT_LITERAL (" /*!done*/;"), MOMOUT_NEWLINE ());
 	}
-      //// COMMENT instruction
-      else if (opitm == mom_named__comment)
-	{
-	  /* *comment(...) */
-	  momval_t com0v = mom_node_nth (curinsv, 0);
-	  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("/** comment **/"),
-		   MOMOUT_NEWLINE ());
-	  if (mom_is_string (com0v))
-	    MOM_OUT (&cg->cgen_outbody,
-		     MOMOUT_SLASHCOMMENT_STRING (mom_string_cstr (com0v)),
-		     MOMOUT_NEWLINE ());
-	}
       //// ASSIGN instruction
       else if (opitm == mom_named__assign && insarity == 2)
 	{
@@ -2890,6 +2880,34 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 			    MOMOUT_ITEM ((const momitem_t *) blkitm), NULL);
 	  MOM_OUT (&cg->cgen_outbody,
 		   MOMOUT_LITERAL (";"), MOMOUT_NEWLINE ());
+	}
+      //// CHUNK instruction
+      else if (opitm == mom_named__chunk)
+	{
+	  /* *chunk(....) */
+	  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("/** chunk **/"),
+		   MOMOUT_NEWLINE ());
+	  for (unsigned cix=0; cix<insarity; cix++)
+	    {
+	      momval_t curchkv = mom_node_nth(curinsv, cix);
+	      if (mom_is_string (curchkv))
+		MOM_OUT (&cg->cgen_outbody,
+			 MOMOUT_STRING_VALUE ((const momval_t) curchkv));
+	      else
+		(void) emit_expr_cgen(cg, curchkv);
+	    }
+	}
+      //// COMMENT instruction
+      else if (opitm == mom_named__comment)
+	{
+	  /* *comment(...) */
+	  momval_t com0v = mom_node_nth (curinsv, 0);
+	  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("/** comment **/"),
+		   MOMOUT_NEWLINE ());
+	  if (mom_is_string (com0v))
+	    MOM_OUT (&cg->cgen_outbody,
+		     MOMOUT_SLASHCOMMENT_STRING (mom_string_cstr (com0v)),
+		     MOMOUT_NEWLINE ());
 	}
       //// IF instruction
       else if (opitm == mom_named__if && insarity == 2)
