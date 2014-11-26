@@ -642,7 +642,7 @@ mom_double_val_def (momval_t v, double def)
 	  && v.pdouble->typnum == momty_double) ? (v.pdouble->dblval) : def;
 }
 
-#define mom_double_val_else_0(V) mom_double_val_def((V),0.0)
+#define mom_double_val_or0(V) mom_double_val_def((V),0.0)
 #define mom_double_val(V) mom_double_val_def((V),NAN)
 momval_t mom_make_double (double d);
 
