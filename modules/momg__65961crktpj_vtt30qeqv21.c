@@ -32,7 +32,7 @@
 
 #include "monimelt.h"
 
-////++++ declaration of 3 routines:
+////++++ declaration of 4 routines:
 
 ////!AJAX for appl menu
 
@@ -44,14 +44,21 @@ static int momfuncod__06uk4pppvx9_huv0v11v18j(int, momitem_t*, momval_t, momval_
 // declare procedure _07zti91e4kd_952zqsd03fz rank#1
 void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t);
 
+////!procedure to show on webx the HTML code for some item
+
+// declare procedure show_html_for_item_proc rank#2
+void momprocfun__0z0rsvwfkcj_dcpkx68i074 (momval_t, momval_t);
+
 ////!todo procedure on dump
 
-// declare procedure _7x6as13park_w64mrkx2xtm rank#2
+// declare procedure _7x6as13park_w64mrkx2xtm rank#3
 void momprocfun__7x6as13park_w64mrkx2xtm (momcstr_t);
 
 static momitem_t* momfconstitems__06uk4pppvx9_huv0v11v18j[1]; // constant items of tasklet function ajax_appl
 
 static const momitem_t* mompconstitems__07zti91e4kd_952zqsd03fz[1]; // define constant items of procedure _07zti91e4kd_952zqsd03fz
+
+static const momitem_t* mompconstitems__0z0rsvwfkcj_dcpkx68i074[1]; // define constant items of procedure show_html_for_item_proc
 
 static const momitem_t* mompconstitems__7x6as13park_w64mrkx2xtm[11]; // define constant items of procedure _7x6as13park_w64mrkx2xtm
 
@@ -59,14 +66,14 @@ static const momitem_t* mompconstitems__7x6as13park_w64mrkx2xtm[11]; // define c
 const char mommd5mod__65961crktpj_vtt30qeqv21[] = MONIMELT_MD5_MODULE; // Makefile generated
 
 // declare module routines descriptor array for first_module
-static const union momrout_un momdroutarr__65961crktpj_vtt30qeqv21[4];
+static const union momrout_un momdroutarr__65961crktpj_vtt30qeqv21[5];
 
 
 
 //// implementations
 
 
-////++++ implementation of 3 routines:
+////++++ implementation of 4 routines:
 
 
 // implement tasklet function ajax_appl rank#0
@@ -321,104 +328,145 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
  
  
  
- // implementation of procedure #2 = _7x6as13park_w64mrkx2xtm
- void momprocfun__7x6as13park_w64mrkx2xtm (momcstr_t momparg_0 ////!_389t77v85ej_fwpy6exy62x
+ // implementation of procedure #2 = show_html_for_item_proc
+ void momprocfun__0z0rsvwfkcj_dcpkx68i074 (momval_t momparg_0 ////!_16cd0fvmdrh_r77ajpy26za
+ , momval_t momparg_1 ////!_1a2aavj5vir_2hz681zdfqd
  )
  {
   static momitem_t* momprocitem;
-  if (MOM_UNLIKELY(!momprocitem)) momprocitem = mom_procedure_item_of_id("_7x6as13park_w64mrkx2xtm");
+  if (MOM_UNLIKELY(!momprocitem)) momprocitem = mom_procedure_item_of_id("_0z0rsvwfkcj_dcpkx68i074");
   /// starting:
-  goto mompblo_1; // start at _39hpqv0jqj6_9sa2v0vhfm6
+  goto mompblo_1; // start at _02yd241wh4z_tca7i6iamf3
   
    mompblo_1:
-  { // procedure block _39hpqv0jqj6_9sa2v0vhfm6
-   ////!start block of todo on dump
+  { // procedure block _02yd241wh4z_tca7i6iamf3
+   ////!start block of show_html_for_item_proc
    
    
-   // locked-item dump_data in block _39hpqv0jqj6_9sa2v0vhfm6
-   momitem_t* momlockeditem_4 = mom_value_to_item ( ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[3] /*dump_data*/)) /* locked-item */;
-   if (!mom_lock_item (momlockeditem_4)) goto momendblock_4;
-   
-   //! instr#1 in block _39hpqv0jqj6_9sa2v0vhfm6 ::
-   /*!do*/ /*!primitive-void _87r5zd69i6m_zr0hupaer90*/ /* primitive _87r5zd... in start-block of todo-on-dump */
- struct mom_dumpoutcome_st doutc;
- memset(&doutc, 0, sizeof(doutc)); mom_full_dump("todo-dump-with-outcome", 
-   momparg_0, &doutc);
- MOM_INFORMPRINTF(" dumped with outcome %d items into %s", doutc.odmp_nbdumpeditems, 
-   momparg_0);
- mom_item_put_attribute (/*!outsidechunk*/ ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, /*!outsidechunk*/
-   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[6] /*elapsed_time*/).pitem, mom_let_transient(mom_make_double(doutc.odmp_elapsedtime)));
- mom_item_put_attribute (/*!outsidechunk*/
-   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, /*!outsidechunk*/
-   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[2] /*cpu_time*/).pitem, mom_let_transient(mom_make_double(doutc.odmp_cputime)));
- mom_item_put_attribute (/*!outsidechunk*/
-   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, /*!outsidechunk*/
-   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[1] /*nb_dumped_items*/).pitem, mom_let_transient(mom_make_integer(doutc.odmp_nbdumpeditems)));
- mom_item_put_attribute (/*!outsidechunk*/
-   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, /*!outsidechunk*/
-   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[8] /*notice*/).pitem, mom_let_transient(doutc.odmp_nodenotice));
- mom_item_put_attribute (/*!outsidechunk*/
-   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, /*!outsidechunk*/
-   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[0] /*predefined*/).pitem, mom_let_transient(doutc.odmp_setpredef));
- mom_item_put_attribute (/*!outsidechunk*/
-   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, /*!outsidechunk*/
-   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[9] /*module*/).pitem, mom_let_transient(doutc.odmp_nodemodules));
- mom_continue_working();
-/*!endvoidprimitive _87r5zd69i6m_zr0hupaer90*/  /*!done*/;
-   
-   /*! epilogue for lock */
-   mom_unlock_item(momlockeditem_4); // unlock dump_data
-   momendblock_4:;
-   
-  }; // end procedure block _39hpqv0jqj6_9sa2v0vhfm6
+  }; // end procedure block _02yd241wh4z_tca7i6iamf3
   return;
   
-  } // end of procedure momprocfun__7x6as13park_w64mrkx2xtm
+  } // end of procedure momprocfun_show_html_for_item_proc
   
   
-  static const char* const mompconstid__7x6as13park_w64mrkx2xtm[11] = {
-   [0] = "_133zjf1f9zp_jq8kti38sd7", // predefined
-   [1] = "_1tzf3q2dix5_jqxphp9ivcw", // nb_dumped_items
-   [2] = "_50623j9vemk_1hp2q2czrhi", // cpu_time
-   [3] = "_5tihf27p4rj_t80tzx4fxrf", // dump_data
-   [4] = "_5xw5qm751tv_jvm099ita0w", // named_items
-   [5] = "_6rs26jmh9ya_jv0aiqf4kvx", // dump_state
-   [6] = "_6u6cp2a2tsz_ses4qchc3y3", // elapsed_time
-   [7] = "_6vrzjdj7ij8_dupds6c9895", // names
-   [8] = "_7diyc1cwj8z_x630afccr8e", // notice
-   [9] = "_7sqk8vh89xr_6tj8dq7vqju", // module
-  }; // end of procedure constant item ids of _7x6as13park_w64mrkx2xtm
+  static const char* const mompconstid__0z0rsvwfkcj_dcpkx68i074[1] = {
+  }; // end of procedure constant item ids of show_html_for_item_proc
   
   
-  const struct momprocrout_st momprocdescr__7x6as13park_w64mrkx2xtm = { .prout_magic = MOM_PROCROUT_MAGIC,
+  const struct momprocrout_st momprocdescr__0z0rsvwfkcj_dcpkx68i074 = { .prout_magic = MOM_PROCROUT_MAGIC,
    .prout_resty = momtypenc__none,
-   .prout_len = 10,
-   .prout_id = "_7x6as13park_w64mrkx2xtm",
+   .prout_len = 0,
+   .prout_id = "_0z0rsvwfkcj_dcpkx68i074",
    .prout_module = "_65961crktpj_vtt30qeqv21",
-   .prout_constantids = mompconstid__7x6as13park_w64mrkx2xtm,
-   .prout_constantitems = mompconstitems__7x6as13park_w64mrkx2xtm,
-   .prout_addr = (void*)momprocfun__7x6as13park_w64mrkx2xtm,
-   .prout_argsig = "s",
+   .prout_constantids = mompconstid__0z0rsvwfkcj_dcpkx68i074,
+   .prout_constantitems = mompconstitems__0z0rsvwfkcj_dcpkx68i074,
+   .prout_addr = (void*)momprocfun__0z0rsvwfkcj_dcpkx68i074,
+   .prout_argsig = "vv",
    .prout_timestamp= __DATE__ "@" __TIME__
   }; // end proc descriptor
   
-  // define module routines descriptor array for first_module
-  static const union momrout_un momdroutarr__65961crktpj_vtt30qeqv21[4] = {
-   [0]= {.rtfun= &momrout__06uk4pppvx9_huv0v11v18j}, // taskletfun ajax_appl
-   [1]= {.rproc= &momprocdescr__07zti91e4kd_952zqsd03fz}, // procedure _07zti91e4kd_952zqsd03fz
-   [2]= {.rproc= &momprocdescr__7x6as13park_w64mrkx2xtm}, // procedure _7x6as13park_w64mrkx2xtm
+  
+  
+  
+  // implementation of procedure #3 = _7x6as13park_w64mrkx2xtm
+  void momprocfun__7x6as13park_w64mrkx2xtm (momcstr_t momparg_0 ////!_389t77v85ej_fwpy6exy62x
+  )
+  {
+   static momitem_t* momprocitem;
+   if (MOM_UNLIKELY(!momprocitem)) momprocitem = mom_procedure_item_of_id("_7x6as13park_w64mrkx2xtm");
+   /// starting:
+   goto mompblo_1; // start at _39hpqv0jqj6_9sa2v0vhfm6
    
-  }; // end of module routines descriptor array for first_module
-  
-  
-  // module initialization for first_module
-  void mominitmodule__65961crktpj_vtt30qeqv21 (void) {
-   mom_module_internal_initialize ("_65961crktpj_vtt30qeqv21" /*!module first_module*/,
-         MONIMELT_MD5_MODULE /*see Makefile*/,  3,  momdroutarr__65961crktpj_vtt30qeqv21);
-   MOM_INFORMPRINTF("module first_module of md5 " MONIMELT_MD5_MODULE " initialized.");
-  } // end of module initialization
-  
-  
+    mompblo_1:
+   { // procedure block _39hpqv0jqj6_9sa2v0vhfm6
+    ////!start block of todo on dump
+    
+    
+    // locked-item dump_data in block _39hpqv0jqj6_9sa2v0vhfm6
+    momitem_t* momlockeditem_4 = mom_value_to_item ( ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[3] /*dump_data*/)) /* locked-item */;
+    if (!mom_lock_item (momlockeditem_4)) goto momendblock_4;
+    
+    //! instr#1 in block _39hpqv0jqj6_9sa2v0vhfm6 ::
+    /*!do*/ /*!primitive-void _87r5zd69i6m_zr0hupaer90*/ /* primitive _87r5zd... in start-block of todo-on-dump */
+ struct mom_dumpoutcome_st doutc;
+ memset(&doutc, 0, sizeof(doutc)); mom_full_dump("todo-dump-with-outcome", 
+    momparg_0, &doutc);
+ MOM_INFORMPRINTF(" dumped with outcome %d items into %s", doutc.odmp_nbdumpeditems, 
+    momparg_0);
+ mom_item_put_attribute (/*!outsidechunk*/ ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, /*!outsidechunk*/
+    ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[6] /*elapsed_time*/).pitem, mom_let_transient(mom_make_double(doutc.odmp_elapsedtime)));
+ mom_item_put_attribute (/*!outsidechunk*/
+    ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, /*!outsidechunk*/
+    ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[2] /*cpu_time*/).pitem, mom_let_transient(mom_make_double(doutc.odmp_cputime)));
+ mom_item_put_attribute (/*!outsidechunk*/
+    ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, /*!outsidechunk*/
+    ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[1] /*nb_dumped_items*/).pitem, mom_let_transient(mom_make_integer(doutc.odmp_nbdumpeditems)));
+ mom_item_put_attribute (/*!outsidechunk*/
+    ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, /*!outsidechunk*/
+    ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[8] /*notice*/).pitem, mom_let_transient(doutc.odmp_nodenotice));
+ mom_item_put_attribute (/*!outsidechunk*/
+    ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, /*!outsidechunk*/
+    ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[0] /*predefined*/).pitem, mom_let_transient(doutc.odmp_setpredef));
+ mom_item_put_attribute (/*!outsidechunk*/
+    ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, /*!outsidechunk*/
+    ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[9] /*module*/).pitem, mom_let_transient(doutc.odmp_nodemodules));
+ mom_continue_working();
+/*!endvoidprimitive _87r5zd69i6m_zr0hupaer90*/  /*!done*/;
+    
+    /*! epilogue for lock */
+    mom_unlock_item(momlockeditem_4); // unlock dump_data
+    momendblock_4:;
+    
+   }; // end procedure block _39hpqv0jqj6_9sa2v0vhfm6
+   return;
+   
+   } // end of procedure momprocfun__7x6as13park_w64mrkx2xtm
+   
+   
+   static const char* const mompconstid__7x6as13park_w64mrkx2xtm[11] = {
+    [0] = "_133zjf1f9zp_jq8kti38sd7", // predefined
+    [1] = "_1tzf3q2dix5_jqxphp9ivcw", // nb_dumped_items
+    [2] = "_50623j9vemk_1hp2q2czrhi", // cpu_time
+    [3] = "_5tihf27p4rj_t80tzx4fxrf", // dump_data
+    [4] = "_5xw5qm751tv_jvm099ita0w", // named_items
+    [5] = "_6rs26jmh9ya_jv0aiqf4kvx", // dump_state
+    [6] = "_6u6cp2a2tsz_ses4qchc3y3", // elapsed_time
+    [7] = "_6vrzjdj7ij8_dupds6c9895", // names
+    [8] = "_7diyc1cwj8z_x630afccr8e", // notice
+    [9] = "_7sqk8vh89xr_6tj8dq7vqju", // module
+   }; // end of procedure constant item ids of _7x6as13park_w64mrkx2xtm
+   
+   
+   const struct momprocrout_st momprocdescr__7x6as13park_w64mrkx2xtm = { .prout_magic = MOM_PROCROUT_MAGIC,
+    .prout_resty = momtypenc__none,
+    .prout_len = 10,
+    .prout_id = "_7x6as13park_w64mrkx2xtm",
+    .prout_module = "_65961crktpj_vtt30qeqv21",
+    .prout_constantids = mompconstid__7x6as13park_w64mrkx2xtm,
+    .prout_constantitems = mompconstitems__7x6as13park_w64mrkx2xtm,
+    .prout_addr = (void*)momprocfun__7x6as13park_w64mrkx2xtm,
+    .prout_argsig = "s",
+    .prout_timestamp= __DATE__ "@" __TIME__
+   }; // end proc descriptor
+   
+   // define module routines descriptor array for first_module
+   static const union momrout_un momdroutarr__65961crktpj_vtt30qeqv21[5] = {
+    [0]= {.rtfun= &momrout__06uk4pppvx9_huv0v11v18j}, // taskletfun ajax_appl
+    [1]= {.rproc= &momprocdescr__07zti91e4kd_952zqsd03fz}, // procedure _07zti91e4kd_952zqsd03fz
+    [2]= {.rproc= &momprocdescr__0z0rsvwfkcj_dcpkx68i074}, // procedure show_html_for_item_proc
+    [3]= {.rproc= &momprocdescr__7x6as13park_w64mrkx2xtm}, // procedure _7x6as13park_w64mrkx2xtm
+    
+   }; // end of module routines descriptor array for first_module
+   
+   
+   // module initialization for first_module
+   void mominitmodule__65961crktpj_vtt30qeqv21 (void) {
+    mom_module_internal_initialize ("_65961crktpj_vtt30qeqv21" /*!module first_module*/,
+          MONIMELT_MD5_MODULE /*see Makefile*/,  4,  momdroutarr__65961crktpj_vtt30qeqv21);
+    MOM_INFORMPRINTF("module first_module of md5 " MONIMELT_MD5_MODULE " initialized.");
+   } // end of module initialization
+   
+   
 
  // module license
 const char mom_module_GPL_compatible[]=

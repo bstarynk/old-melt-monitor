@@ -35,6 +35,10 @@ INSERT INTO t_items VALUES('_02q6zk9f5st_im0z75re15f','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_02u53qxa7dm_sttmhffpchr','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "The agenda is central to Monimelt.\nIt is the queue of taskets to be executed by worker threads."}],
  "content": null, "kind": "queue", "payload": []}
 ','queue');
+INSERT INTO t_items VALUES('_02yd241wh4z_tca7i6iamf3','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "start block of show_html_for_item_proc"},
+  {"attr": "_94tq2iauet8_jujpjhjrzsm", "val": {"jtype": "node", "node": "_0yyp8vmw4si_wf49m4d4zwq",
+    "sons": []}}], "content": null, "kind": null, "payload": null}
+','');
 INSERT INTO t_items VALUES('_03f56tp7q6w_f1t3fiyivph','{"attr": [{"attr": "_19ufza9zf05_muxxhkmm7ww", "val": {"jtype": "node", "node": "_8x6fxcm4z2k_vdaqicfi4z0",
     "sons": ["MOMOUTDO_INDENT_LESS"]}}, {"attr": "_2ummst105ck_xracfy8v87y",
    "val": {"jtype": "tuple", "tuple": []}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
@@ -98,6 +102,15 @@ INSERT INTO t_items VALUES('_0x2k07ik4tm_ed7vqphf5ak','{"attr": [{"attr": "_41u1
 ','');
 INSERT INTO t_items VALUES('_0yyp8vmw4si_wf49m4d4zwq','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "notably for error code in JSONRPC"}],
  "content": null, "kind": null, "payload": null}
+','');
+INSERT INTO t_items VALUES('_0z0rsvwfkcj_dcpkx68i074','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_02q6zk9f5st_im0z75re15f",
+    "jtype": "item_ref", "space": ".predef"}}, {"attr": "_2ummst105ck_xracfy8v87y",
+   "val": {"jtype": "tuple", "tuple": ["_16cd0fvmdrh_r77ajpy26za", "_1a2aavj5vir_2hz681zdfqd"]}},
+  {"attr": "_3wh3e88sk28_d27qi2737zi", "val": {"item_ref": "_02yd241wh4z_tca7i6iamf3",
+    "jtype": "item_ref", "space": ".root"}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "procedure to show on webx the HTML code for some item"}, {"attr": "_4v74chqs1eh_chqd9cqw85t",
+   "val": {"jtype": "set", "set": ["_02yd241wh4z_tca7i6iamf3"]}}], "content": null,
+ "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_11xee72y1d3_t3cqzi5dq3k','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "iterate on increasing integers"}],
  "content": null, "kind": null, "payload": null}
@@ -515,8 +528,8 @@ INSERT INTO t_items VALUES('_6443sk5q0zt_8xdi02c6tzu','{"attr": [{"attr": "_41u1
 ','');
 INSERT INTO t_items VALUES('_65961crktpj_vtt30qeqv21','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "first module, with core AJAX functions etc..."},
   {"attr": "_9dcxaqk8tqe_fam9mcxme9w", "val": {"jtype": "set", "set": ["_06uk4pppvx9_huv0v11v18j",
-     "_07zti91e4kd_952zqsd03fz", "_7x6as13park_w64mrkx2xtm"]}}], "content": null,
- "kind": null, "payload": null}
+     "_07zti91e4kd_952zqsd03fz", "_0z0rsvwfkcj_dcpkx68i074", "_7x6as13park_w64mrkx2xtm"]}}],
+ "content": null, "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_682ush7cppa_s7vzfd2rsxp','{"attr": [{"attr": "_2u8svx94yq4_34icz9j1fyx", "val": {"jtype": "set", "set": ["_0yyp8vmw4si_wf49m4d4zwq"]}},
   {"attr": "_2ummst105ck_xracfy8v87y", "val": {"jtype": "tuple", "tuple": []}},
@@ -1059,6 +1072,7 @@ INSERT INTO t_names VALUES('seq','_2mayc646pdu_w4d18fmx8u3','.root');
 INSERT INTO t_names VALUES('sequence_length','_41xwu6cpvq9_ezp5wzq7t4x','.root');
 INSERT INTO t_names VALUES('sequence_nth','_80wxf4c8q92_qq8k6xc0xxj','.root');
 INSERT INTO t_names VALUES('set','_2v75mmyph64_4h4kys78740','.predef');
+INSERT INTO t_names VALUES('show_html_for_item_proc','_0z0rsvwfkcj_dcpkx68i074','.root');
 INSERT INTO t_names VALUES('sons','_4ezpkss1akd_94f4h25sqe4','.predef');
 INSERT INTO t_names VALUES('space','_7rf7axuc9h4_2aw6utwmsas','.predef');
 INSERT INTO t_names VALUES('start','_3wh3e88sk28_d27qi2737zi','.predef');
