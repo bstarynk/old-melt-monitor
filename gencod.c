@@ -2887,14 +2887,14 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 	  /* *chunk(....) */
 	  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("/** chunk **/"),
 		   MOMOUT_NEWLINE ());
-	  for (unsigned cix=0; cix<insarity; cix++)
+	  for (unsigned cix = 0; cix < insarity; cix++)
 	    {
-	      momval_t curchkv = mom_node_nth(curinsv, cix);
+	      momval_t curchkv = mom_node_nth (curinsv, cix);
 	      if (mom_is_string (curchkv))
 		MOM_OUT (&cg->cgen_outbody,
 			 MOMOUT_STRING_VALUE ((const momval_t) curchkv));
 	      else
-		(void) emit_expr_cgen(cg, curchkv);
+		(void) emit_expr_cgen (cg, curchkv);
 	    }
 	}
       //// COMMENT instruction

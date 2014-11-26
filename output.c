@@ -128,7 +128,7 @@ mom_copy_file (const char *origpath, const char *destpath)
 	("mom_copy_file failed to open temporary destination %s with orig %s",
 	 tempath, origpath);
     FILE *forig = fopen (origpath, "r");
-    size_t nr = 0;
+    ssize_t nr = 0;
     if (!forig)
       MOM_FATAPRINTF ("mom_copy_file failed to open original file %s",
 		      origpath);
@@ -141,7 +141,7 @@ mom_copy_file (const char *origpath, const char *destpath)
 	  MOM_FATAPRINTF ("mom_copy_file fail to read %s (%m)", origpath);
 	else if (nr > 0)
 	  {
-	    size_t nw = fwrite (cpbuf, 1, nr, ftmp);
+	    ssize_t nw = fwrite (cpbuf, 1, nr, ftmp);
 	    if (nw < nr)
 	      MOM_FATAPRINTF ("mom_copy_file fail to write %s (%m)", tempath);
 	  }

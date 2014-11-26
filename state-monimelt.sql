@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(40) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','todo dump-at-exit');
+INSERT INTO t_params VALUES('dump_reason','command dump');
 INSERT INTO t_modules VALUES('_65961crktpj_vtt30qeqv21');
 INSERT INTO t_items VALUES('_02av6173qvf_pehzhe755j2','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for calls at end of  blocks"}],
  "content": null, "kind": null, "payload": null}
@@ -524,9 +524,7 @@ INSERT INTO t_items VALUES('_6p6v25323aq_97d9ude6j12','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_6qcw93kypcv_0iiepqtk73j','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "high bound"}], "content": null,
  "kind": null, "payload": null}
 ','');
-INSERT INTO t_items VALUES('_6rs26jmh9ya_jv0aiqf4kvx','{"attr": [{"attr": "_1tzf3q2dix5_jqxphp9ivcw", "val": 178}, {"attr": "_41u1utcxyek_22cftxt3xxm",
-   "val": "the dump state hold transient data about last dump."}, {"attr": "_50623j9vemk_1hp2q2czrhi",
-   "val": 0.018212539}, {"attr": "_6u6cp2a2tsz_ses4qchc3y3", "val": 0.763678312301636}],
+INSERT INTO t_items VALUES('_6rs26jmh9ya_jv0aiqf4kvx','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "the dump state hold transient data about last dump."}],
  "content": null, "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_6u6cp2a2tsz_ses4qchc3y3','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "hold the real elapsed time, e.g. in dump_data"}],
