@@ -390,7 +390,7 @@ INSERT INTO t_items VALUES('_4x8e2mwmacp_ekxdw3vqqpd','{"attr": [{"attr": "_19uf
 INSERT INTO t_items VALUES('_4xicv8w07x7_3hzzmpw8iwt','{"attr": [{"attr": "_19ufza9zf05_muxxhkmm7ww", "val": {"jtype": "node", "node": "_8x6fxcm4z2k_vdaqicfi4z0",
     "sons": ["MOMOUTDO_DOUBLE_TIME,", {"item_ref": "_389t77v85ej_fwpy6exy62x",
       "jtype": "item_ref", "space": ".root"}, ", ", {"item_ref": "_837uvkhhyar_tdhv0jy5r72",
-      "jtype": "item_ref", "space": ".root"}, ")"]}}, {"attr": "_2ummst105ck_xracfy8v87y",
+      "jtype": "item_ref", "space": ".root"}]}}, {"attr": "_2ummst105ck_xracfy8v87y",
    "val": {"jtype": "tuple", "tuple": ["_389t77v85ej_fwpy6exy62x", "_837uvkhhyar_tdhv0jy5r72"]}},
   {"attr": "_41u1utcxyek_22cftxt3xxm", "val": "output connective for a double representing a time, cstr is an strftime_centi format & dbl_x is the time."}],
  "content": null, "kind": null, "payload": null}

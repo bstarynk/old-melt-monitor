@@ -126,8 +126,10 @@ static int momfuncod__06uk4pppvx9_huv0v11v18j
   /*!do*/ /*!primitive-void MOM_WEBX_OUT*/ MOM_WEBX_OUT (mom_value_to_item(
   momvals[0/*:webx*/]), /*!litoutstr*/MOMOUTDO_LITERAL, "<em>Monimelt</em> <b>save then exit</b> at <i>",
   /*!outexp MOMOUT_DOUBLE_TIME*/ MOMOUTDO_DOUBLE_TIME,
-  /*!litstr:*/ "%c"/*!endoutexp MOMOUT_DOUBLE_TIME*/,  /*!litoutstr*/MOMOUTDO_LITERAL, "</i>",
-  /*!outputend*/NULL )/*!endvoidprimitive MOM_WEBX_OUT*/  /*!done*/;
+  /*!litstr:*/ "%c", (/*!primitive mom_clock_time*/ mom_clock_time(
+  CLOCK_REALTIME)/*!endprimitive mom_clock_time*/) /*!endoutexp MOMOUT_DOUBLE_TIME*/,
+   /*!litoutstr*/MOMOUTDO_LITERAL, "</i>", /*!outputend*/NULL
+  )/*!endvoidprimitive MOM_WEBX_OUT*/  /*!done*/;
   
   //! instr#3 in block _8t137w1z1s9_2tea9xp64s6 ::
   /*!do*/ /*!primitive-void mom_webx_reply*/ mom_webx_reply (mom_value_to_item (
@@ -201,8 +203,10 @@ static int momfuncod__06uk4pppvx9_huv0v11v18j
   /*!do*/ /*!primitive-void MOM_WEBX_OUT*/ MOM_WEBX_OUT (mom_value_to_item(
   momvals[0/*:webx*/]), /*!litoutstr*/MOMOUTDO_LITERAL, "<em>Monimelt</em> <b>dump then continue</b> at<i>",
   /*!outexp MOMOUT_DOUBLE_TIME*/ MOMOUTDO_DOUBLE_TIME,
-  /*!litstr:*/ "%c"/*!endoutexp MOMOUT_DOUBLE_TIME*/,  /*!litoutstr*/MOMOUTDO_LITERAL, "</i>",
-  /*!outputend*/NULL )/*!endvoidprimitive MOM_WEBX_OUT*/  /*!done*/;
+  /*!litstr:*/ "%c", (/*!primitive mom_clock_time*/ mom_clock_time(
+  CLOCK_REALTIME)/*!endprimitive mom_clock_time*/) /*!endoutexp MOMOUT_DOUBLE_TIME*/,
+   /*!litoutstr*/MOMOUTDO_LITERAL, "</i>", /*!outputend*/NULL
+  )/*!endvoidprimitive MOM_WEBX_OUT*/  /*!done*/;
   
  }; // end function block _91471ta1047_pra9zfqc2y1
  return momroutres_pop;
