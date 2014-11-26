@@ -617,6 +617,9 @@ mom_integer_val_def (momval_t v, int64_t def)
 }
 
 #define mom_integer_val(V) mom_integer_val_def((V),0)
+#define mom_integer_val_or0(V) mom_integer_val_def((V),0)
+#define mom_integer_val_orm1(V) mom_integer_val_def((V),-1)
+
 momval_t mom_make_integer (int64_t c);
 
 /*************************** boxed doubles ***************************/
