@@ -1004,7 +1004,7 @@ mom_webx_method (momitem_t *webitm)
   if (webitm->i_paylkind != mompayk_webexchange)
     {
       MOM_WARNING (MOMOUT_LITERAL
-		   ("bad webxfullpath; non webexchange webitem:"),
+		   ("bad webxmethod; non webexchange webitem:"),
 		   MOMOUT_ITEM ((const momitem_t *) webitm),
 		   MOMOUT_LITERAL (" ...from "), MOMOUT_BACKTRACE (5));
       return MOM_NULLV;
@@ -1030,6 +1030,23 @@ mom_webx_method (momitem_t *webitm)
 }
 
 
+momitem_t *
+mom_webx_session (momitem_t *webitm)
+{
+  if (!webitm || webitm->i_typnum != momty_item)
+    return NULL;
+  if (webitm->i_paylkind != mompayk_webexchange)
+    {
+      MOM_WARNING (MOMOUT_LITERAL
+		   ("bad webxsession; non webexchange webitem:"),
+		   MOMOUT_ITEM ((const momitem_t *) webitm),
+		   MOMOUT_LITERAL (" ...from "), MOMOUT_BACKTRACE (5));
+      return NULL;
+    }
+  struct mom_webexchange_data_st *wxd = webitm->i_payload;
+  assert (wxd && wxd->webx_magic == MOM_WEBX_MAGIC);
+  return wxd->webx_sessitm;
+}
 
 // called at most once from main
 void

@@ -2063,6 +2063,7 @@ momval_t mom_webx_query_arg (momitem_t *webitm, const char *argname);
 // get the fullpath and the method -as string values- of a webitm
 momval_t mom_webx_fullpath (momitem_t *webitm);
 momval_t mom_webx_method (momitem_t *webitm);
+momitem_t *mom_webx_session (momitem_t *webitm);
 
 
 
