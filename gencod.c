@@ -3409,7 +3409,7 @@ emit_goto_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm,
     MOM_OUT (&cg->cgen_outbody,
 	     MOMOUT_NEWLINE (),
 	     MOMOUT_LITERAL ("goto " CGEN_PROC_BLOCK_PREFIX),
-	     MOMOUT_DEC_INT (bix),
+	     MOMOUT_DEC_INT (bix+1),
 	     MOMOUT_LITERAL (" /*!proc.block "),
 	     MOMOUT_ITEM ((const momitem_t *) blkitm),
 	     MOMOUT_LITERAL ("*/;"), NULL);
