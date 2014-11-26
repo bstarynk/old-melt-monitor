@@ -31,6 +31,7 @@
 const char mom_plugin_GPL_compatible[] = "GPLv3+";
 
 #define COMMANDS(CMD)                                   \
+  CMD(append,"append tos to below",non,NULL)            \
   CMD(clear,"clear the stack",non,NULL)                 \
   CMD(clos,"start closure from TOS",itm,NULL)           \
   CMD(debugf,"[flags]; set debugflags",non,NULL)        \
@@ -54,7 +55,7 @@ const char mom_plugin_GPL_compatible[] = "GPLv3+";
   CMD(putat,"[attr]; put attribute",itm,":+")           \
   CMD(quit,"quit without dumping",non,NULL)             \
   CMD(remat,"[attr]; remove attribute",itm,":-")        \
-  CMD(remove,"N; remove inside stack & push",num,">-")     \
+  CMD(remove,"N; remove inside stack & push",num,">-")  \
   CMD(set,"make set to mark",num,"}")                   \
   CMD(shell,"[command]; run a command",non,"#!")        \
   CMD(stack,"print the stack",non,"!")                  \
@@ -1475,6 +1476,68 @@ cmd_do_letters_mom (const char *lin)
   printf (ANSI_BOLD "*** %d letters ***" ANSI_NORMAL "\n", cnt);
   add_history (",letter");
 }
+
+
+static void
+cmd_do_append_mom (const char *lin)
+{
+  MOM_DEBUGPRINTF (cmd, "start do_append lin=%s", lin);
+  if (vst_top_mom >= 2)
+    {
+      momval_t topv = cmd_stack_nth_value_mom (-1);
+      momval_t belv = cmd_stack_nth_value_mom (-2);
+      switch (mom_type (belv))
+	{
+	case momty_node:
+	  {
+	    const momitem_t *connitm = mom_node_conn (belv);
+	    unsigned arity = mom_node_arity (belv);
+	    momval_t *arr = MOM_GC_ALLOC ("arr nod append",
+					  (arity + 2) * sizeof (momval_t));
+	    memcpy (arr, belv.pnode->sontab, arity * sizeof (momval_t));
+	    arr[arity] = topv;
+	    momval_t newnodv =
+	      (momval_t) mom_make_node_from_array (connitm, arity + 1, arr);
+	    MOM_GC_FREE (arr);
+	    cmd_stack_pop_mom (2);
+	    cmd_stack_push_mom (newnodv);
+	    add_history (",append");
+	    printf ("appended node of %d sons\n", arity + 1);
+	  }
+	  break;
+	case momty_set:
+	  {
+	    momval_t newsetv =
+	      (momval_t) mom_make_set_variadic (2, belv, topv);
+	    cmd_stack_pop_mom (2);
+	    cmd_stack_push_mom (newsetv);
+	    add_history (",append");
+	    printf ("appended set of %d elements\n",
+		    mom_set_cardinal (newsetv));
+	  }
+	  break;
+	case momty_tuple:
+	  {
+	    momval_t newtupv =
+	      (momval_t) mom_make_tuple_variadic (2, belv, topv);
+	    cmd_stack_pop_mom (2);
+	    cmd_stack_push_mom (newtupv);
+	    add_history (",append");
+	    printf ("appended tuple of %d components\n",
+		    mom_tuple_length (newtupv));
+	  }
+	  break;
+	default:
+	  goto badappend;
+	}
+      return;
+    }
+  else
+  badappend:
+    printf ("failed to append\n");
+}
+
+
 
 static void
 cmd_do_clear_mom (const char *lin)
