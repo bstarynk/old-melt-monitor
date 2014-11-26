@@ -408,6 +408,18 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
   }; // end procedure block _34w40p46vwp_pw6u3d75ww6
   return;
   
+   mompblo_3:
+  { // procedure block _9xhd87mskav_rqcu5eqk5te
+   ////!block of show_html_for_item_proc to put the given itmv in the hitmv hset
+   
+   
+   //! instr#1 in block _9xhd87mskav_rqcu5eqk5te ::
+   /*!do*/ (void) (/*!primitive mom_item_hset_add*/  (intptr_t) mom_item_hset_add (
+   (mompval_1/*:hitmv*/).pitem,  momparg_1)/*!endprimitive mom_item_hset_add*/)  /*!done*/;
+   
+  }; // end procedure block _9xhd87mskav_rqcu5eqk5te
+  return;
+  
   } // end of procedure momprocfun_show_html_for_item_proc
   
   
