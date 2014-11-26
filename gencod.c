@@ -891,6 +891,7 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
   momval_t prodoublesv = MOM_NULLV;
   momval_t problocksv = MOM_NULLV;
   momval_t prostartv = MOM_NULLV;
+  momval_t prolocalsv = MOM_NULLV;
   unsigned nbproconsts = 0;
   unsigned nbprovalues = 0;
   unsigned nbpronumbers = 0;
@@ -910,8 +911,17 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
     prodoublesv = mom_item_get_attribute (curoutitm, mom_named__doubles);
     problocksv = mom_item_get_attribute (curoutitm, mom_named__procedure);
     prostartv = mom_item_get_attribute (curoutitm, mom_named__start);
+    prolocalsv = mom_item_get_attribute (curoutitm, mom_named__locals);
     mom_unlock_item (curoutitm);
   }
+  // check that we don't have any locals
+  if (prolocalsv.ptr)
+    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid procedure `locals`:"),
+		    MOMOUT_VALUE ((const momval_t) prolocalsv),
+		    MOMOUT_LITERAL (" in procedure "),
+		    MOMOUT_ITEM ((const momitem_t *) curoutitm),
+		    MOMOUT_LITERAL
+		    ("; should use `numbers`, `values`, `doubles` "), NULL);
   cg->cgen_vecvalitm = mom_make_item ();
   mom_item_start_vector (cg->cgen_vecvalitm);
   cg->cgen_vecnumitm = mom_make_item ();

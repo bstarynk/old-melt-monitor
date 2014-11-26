@@ -333,6 +333,8 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
  , momval_t momparg_1 ////!_1a2aavj5vir_2hz681zdfqd
  )
  {
+  momval_t mompval_0 = MOM_NULLV; ////!webses
+  
   static momitem_t* momprocitem;
   if (MOM_UNLIKELY(!momprocitem)) momprocitem = mom_procedure_item_of_id("_0z0rsvwfkcj_dcpkx68i074");
   /// starting:
@@ -342,6 +344,18 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
   { // procedure block _02yd241wh4z_tca7i6iamf3
    ////!start block of show_html_for_item_proc
    
+   
+   // locked-item webx in block _02yd241wh4z_tca7i6iamf3
+   momitem_t* momlockeditem_4 = mom_value_to_item ( momparg_0) /* locked-item */;
+   if (!mom_lock_item (momlockeditem_4)) goto momendblock_4;
+   
+   //! instr#1 in block _02yd241wh4z_tca7i6iamf3 ::
+   /*!assign*/  (mompval_0/*:webses*/) = (/*!primitive mom_webx_session*/  (momval_t) mom_webx_session (
+   momparg_0.pitem) /*!endprimitive mom_webx_session*/) ;
+   
+   /*! epilogue for lock */
+   mom_unlock_item(momlockeditem_4); // unlock webx
+   momendblock_4:;
    
   }; // end procedure block _02yd241wh4z_tca7i6iamf3
   return;
@@ -383,8 +397,8 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
     
     
     // locked-item dump_data in block _39hpqv0jqj6_9sa2v0vhfm6
-    momitem_t* momlockeditem_4 = mom_value_to_item ( ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[3] /*dump_data*/)) /* locked-item */;
-    if (!mom_lock_item (momlockeditem_4)) goto momendblock_4;
+    momitem_t* momlockeditem_5 = mom_value_to_item ( ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[3] /*dump_data*/)) /* locked-item */;
+    if (!mom_lock_item (momlockeditem_5)) goto momendblock_5;
     
     //! instr#1 in block _39hpqv0jqj6_9sa2v0vhfm6 ::
     /*!do*/ /*!primitive-void _87r5zd69i6m_zr0hupaer90*/ /* primitive _87r5zd... in start-block of todo-on-dump */
@@ -414,8 +428,8 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
 /*!endvoidprimitive _87r5zd69i6m_zr0hupaer90*/  /*!done*/;
     
     /*! epilogue for lock */
-    mom_unlock_item(momlockeditem_4); // unlock dump_data
-    momendblock_4:;
+    mom_unlock_item(momlockeditem_5); // unlock dump_data
+    momendblock_5:;
     
    }; // end procedure block _39hpqv0jqj6_9sa2v0vhfm6
    return;
