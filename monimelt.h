@@ -2810,8 +2810,11 @@ __attribute__ ((format (printf, 3, 4), noreturn));
 // e.g.
 //
 /// mom_rename_if_content_changed("dir/foo.c+1234tmp", "dir/foo.c")
-void mom_rename_if_content_changed (const char *origpath,
+// return true if same content
+bool mom_rename_if_content_changed (const char *origpath,
 				    const char *destpath);
+// copy a file, using a temporary & above rename_if_content_changed
+void mom_copy_file (const char *origpath, const char *destpath);
 
 // declare but don't define them. Linker should complain if
 // referenced... which happens only with wrong MOMOUT_... macros

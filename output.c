@@ -21,7 +21,7 @@
 #include "monimelt.h"
 
 static pthread_mutex_t renamcontchg_mtx_mom = PTHREAD_MUTEX_INITIALIZER;
-void
+bool
 mom_rename_if_content_changed (const char *origpath, const char *destpath)
 {
   FILE *origfil = NULL;
@@ -99,8 +99,62 @@ end:
       fclose (destfil);
     };
   pthread_mutex_unlock (&renamcontchg_mtx_mom);
+  return samecontents;
 }
 
+
+void
+mom_copy_file (const char *origpath, const char *destpath)
+{
+  static int count;
+  char tempath[MOM_PATH_MAX + 40];
+  memset (tempath, 0, sizeof (tempath));
+  if (!origpath || !destpath)
+    return;
+  if (!origpath[0] || !destpath[0] || strlen (destpath) >= MOM_PATH_MAX)
+    MOM_FATAPRINTF
+      ("bad arguments to mom_copy_file: origpath=%s, destpath=%s", origpath,
+       destpath);
+  {
+    static char cpbuf[8192];
+    pthread_mutex_lock (&renamcontchg_mtx_mom);
+    count++;
+    snprintf (tempath, sizeof (tempath), "%s-cp%d-p%d-r%x", destpath, count,
+	      (int) getpid (),
+	      (int) mom_random_nonzero_32 () & (INT_MAX / 2));
+    FILE *ftmp = fopen (tempath, "w");
+    if (!ftmp)
+      MOM_FATAPRINTF
+	("mom_copy_file failed to open temporary destination %s with orig %s",
+	 tempath, origpath);
+    FILE *forig = fopen (origpath, "r");
+    size_t nr = 0;
+    if (!forig)
+      MOM_FATAPRINTF ("mom_copy_file failed to open original file %s",
+		      origpath);
+    do
+      {
+	nr = 0;
+	memset (cpbuf, 0, sizeof (cpbuf));
+	nr = fread (cpbuf, 1, sizeof (cpbuf), forig);
+	if (nr < 0)
+	  MOM_FATAPRINTF ("mom_copy_file fail to read %s (%m)", origpath);
+	else if (nr > 0)
+	  {
+	    size_t nw = fwrite (cpbuf, 1, nr, ftmp);
+	    if (nw < nr)
+	      MOM_FATAPRINTF ("mom_copy_file fail to write %s (%m)", tempath);
+	  }
+      }
+    while (!feof (forig) && nr > 0);
+    fclose (forig);
+    if (fclose (ftmp))
+      MOM_FATAPRINTF ("mom_copy_file fail to close written %s (%m)",
+		      tempath);;
+    pthread_mutex_unlock (&renamcontchg_mtx_mom);
+  }
+  mom_rename_if_content_changed (tempath, destpath);
+}
 
 void
 mom_initialize_buffer_output (struct momout_st *out, unsigned flags)

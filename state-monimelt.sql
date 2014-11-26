@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 Nov 25
+-- state-monimelt dump 2014 Nov 26
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(40) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','todo dump-at-exit');
+INSERT INTO t_params VALUES('dump_reason','command dump');
 INSERT INTO t_modules VALUES('_65961crktpj_vtt30qeqv21');
 INSERT INTO t_items VALUES('_02av6173qvf_pehzhe755j2','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for calls at end of  blocks"}],
  "content": null, "kind": null, "payload": null}
@@ -175,9 +175,11 @@ INSERT INTO t_items VALUES('_1x4wmv7yiym_w3zfpdv8q0m','{"attr": [{"attr": "_19uf
 ','');
 INSERT INTO t_items VALUES('_1yz5fpjm6yt_319wacq9346','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_7j7x11c25h3_wkchtuwpusx",
     "jtype": "item_ref", "space": ".predef"}}, {"attr": "_2ummst105ck_xracfy8v87y",
-   "val": {"jtype": "tuple", "tuple": ["_2vy0ah3jrd1_mm66ja7rfj7"]}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
-   "val": "primitive to query a time, as a double ..."}], "content": null,
- "kind": null, "payload": null}
+   "val": {"jtype": "tuple", "tuple": ["_2vy0ah3jrd1_mm66ja7rfj7"]}}, {"attr": "_37x98fyestf_ttup2cu68r6",
+   "val": {"jtype": "node", "node": "_8x6fxcm4z2k_vdaqicfi4z0", "sons": ["mom_clock_time(",
+     {"item_ref": "_2vy0ah3jrd1_mm66ja7rfj7", "jtype": "item_ref", "space": ".root"},
+     ")"]}}, {"attr": "_41u1utcxyek_22cftxt3xxm", "val": "primitive to query a time, as a double ..."}],
+ "content": null, "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_20ds5w0c9z1_tvf5h12wrqp','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_51u3st4u9mc_zdvms6jti0a",
     "jtype": "item_ref", "space": ".predef"}}, {"attr": "_2ummst105ck_xracfy8v87y",
@@ -387,8 +389,8 @@ INSERT INTO t_items VALUES('_4x8e2mwmacp_ekxdw3vqqpd','{"attr": [{"attr": "_19uf
 ','');
 INSERT INTO t_items VALUES('_4xicv8w07x7_3hzzmpw8iwt','{"attr": [{"attr": "_19ufza9zf05_muxxhkmm7ww", "val": {"jtype": "node", "node": "_8x6fxcm4z2k_vdaqicfi4z0",
     "sons": ["MOMOUTDO_DOUBLE_TIME,", {"item_ref": "_389t77v85ej_fwpy6exy62x",
-      "jtype": "item_ref", "space": ".root"}, {"item_ref": "_837uvkhhyar_tdhv0jy5r72",
-      "jtype": "item_ref", "space": ".root"}]}}, {"attr": "_2ummst105ck_xracfy8v87y",
+      "jtype": "item_ref", "space": ".root"}, ", ", {"item_ref": "_837uvkhhyar_tdhv0jy5r72",
+      "jtype": "item_ref", "space": ".root"}, ")"]}}, {"attr": "_2ummst105ck_xracfy8v87y",
    "val": {"jtype": "tuple", "tuple": ["_389t77v85ej_fwpy6exy62x", "_837uvkhhyar_tdhv0jy5r72"]}},
   {"attr": "_41u1utcxyek_22cftxt3xxm", "val": "output connective for a double representing a time, cstr is an strftime_centi format & dbl_x is the time."}],
  "content": null, "kind": null, "payload": null}
