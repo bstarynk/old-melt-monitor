@@ -203,11 +203,6 @@ static int momfuncod__06uk4pppvx9_huv0v11v18j
   
   
   //! instr#1 in block _91471ta1047_pra9zfqc2y1 ::
-  /*!do*/ /*!primitive-void mom_webx_reply*/ mom_webx_reply (mom_value_to_item (
-  momvals[0/*:webx*/]),  /*!litstr:*/ "text/html",
-  HTTP_OK)/*!endvoidprimitive mom_webx_reply*/  /*!done*/;
-  
-  //! instr#2 in block _91471ta1047_pra9zfqc2y1 ::
   /*!do*/ /*!primitive-void MOM_WEBX_OUT*/ MOM_WEBX_OUT (mom_value_to_item(
   momvals[0/*:webx*/]), /*!litoutstr*/MOMOUTDO_LITERAL, "<em>Monimelt</em> <b>dump then continue</b> at<i>",
   /*!outexp MOMOUT_DOUBLE_TIME*/ MOMOUTDO_DOUBLE_TIME,
@@ -215,6 +210,11 @@ static int momfuncod__06uk4pppvx9_huv0v11v18j
   CLOCK_REALTIME)/*!endprimitive mom_clock_time*/) /*!endoutexp MOMOUT_DOUBLE_TIME*/,
    /*!litoutstr*/MOMOUTDO_LITERAL, "</i>", /*!outputend*/NULL
   )/*!endvoidprimitive MOM_WEBX_OUT*/  /*!done*/;
+  
+  //! instr#2 in block _91471ta1047_pra9zfqc2y1 ::
+  /*!do*/ /*!primitive-void mom_webx_reply*/ mom_webx_reply (mom_value_to_item (
+  momvals[0/*:webx*/]),  /*!litstr:*/ "text/html",
+  HTTP_OK)/*!endvoidprimitive mom_webx_reply*/  /*!done*/;
   
  }; // end function block _91471ta1047_pra9zfqc2y1
  return momroutres_pop;
@@ -245,7 +245,7 @@ static int momfuncod__06uk4pppvx9_huv0v11v18j
   
   //! instr#3 in block _9u6a6xy2e1p_qeapfc73cm4 ::
   /** chunk **/
-   MOM_INFORMPRINTF("exiting Monimelt per web request");
+   MOM_INFORMPRINTF("quitting Monimelt per web request");
  exit(EXIT_SUCCESS); // per web request
 
   /*! epilogue for lock */
@@ -347,13 +347,13 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
  MOM_INFORMPRINTF(" dumped with outcome %d items into %s", doutc.odmp_nbdumpeditems, 
    momparg_0);
  mom_item_put_attribute (/*!outsidechunk*/ ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, /*!outsidechunk*/
-   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[6] /*elapsed_time*/).pitem, mom_make_double(doutc.odmp_elapsedtime));
+   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[6] /*elapsed_time*/).pitem, mom_let_transient(mom_make_double(doutc.odmp_elapsedtime)));
  mom_item_put_attribute (/*!outsidechunk*/
    ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, /*!outsidechunk*/
-   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[2] /*cpu_time*/).pitem, mom_make_double(doutc.odmp_cputime));
+   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[2] /*cpu_time*/).pitem, mom_let_transient(mom_make_double(doutc.odmp_cputime)));
  mom_item_put_attribute (/*!outsidechunk*/
    ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, /*!outsidechunk*/
-   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[1] /*nb_dumped_items*/).pitem, mom_make_integer(doutc.odmp_nbdumpeditems));
+   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[1] /*nb_dumped_items*/).pitem, mom_let_transient(mom_make_integer(doutc.odmp_nbdumpeditems)));
  mom_item_put_attribute (/*!outsidechunk*/
    ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, /*!outsidechunk*/
    ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[8] /*notice*/).pitem, mom_let_transient(doutc.odmp_nodenotice));

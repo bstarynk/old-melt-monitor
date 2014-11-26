@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(40) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','command dump');
+INSERT INTO t_params VALUES('dump_reason','todo dump-at-exit');
 INSERT INTO t_modules VALUES('_65961crktpj_vtt30qeqv21');
 INSERT INTO t_items VALUES('_02av6173qvf_pehzhe755j2','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for calls at end of  blocks"}],
  "content": null, "kind": null, "payload": null}
@@ -524,7 +524,9 @@ INSERT INTO t_items VALUES('_6p6v25323aq_97d9ude6j12','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_6qcw93kypcv_0iiepqtk73j','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "high bound"}], "content": null,
  "kind": null, "payload": null}
 ','');
-INSERT INTO t_items VALUES('_6rs26jmh9ya_jv0aiqf4kvx','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "the dump state hold transient data about last dump."}],
+INSERT INTO t_items VALUES('_6rs26jmh9ya_jv0aiqf4kvx','{"attr": [{"attr": "_1tzf3q2dix5_jqxphp9ivcw", "val": 178}, {"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "the dump state hold transient data about last dump."}, {"attr": "_50623j9vemk_1hp2q2czrhi",
+   "val": 0.018212539}, {"attr": "_6u6cp2a2tsz_ses4qchc3y3", "val": 0.763678312301636}],
  "content": null, "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_6u6cp2a2tsz_ses4qchc3y3','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "hold the real elapsed time, e.g. in dump_data"}],
@@ -672,13 +674,13 @@ INSERT INTO t_items VALUES('_87r5zd69i6m_zr0hupaer90','{"attr": [{"attr": "_0ee6
      {"item_ref": "_389t77v85ej_fwpy6exy62x", "jtype": "item_ref", "space": ".root"},
      ");\n", " mom_item_put_attribute (", {"item_ref": "_6rs26jmh9ya_jv0aiqf4kvx",
       "jtype": "item_ref", "space": ".root"}, ".pitem, ", {"item_ref": "_6u6cp2a2tsz_ses4qchc3y3",
-      "jtype": "item_ref", "space": ".root"}, ".pitem, mom_make_double(doutc.odmp_elapsedtime));\n",
+      "jtype": "item_ref", "space": ".root"}, ".pitem, mom_let_transient(mom_make_double(doutc.odmp_elapsedtime)));\n",
      " mom_item_put_attribute (", {"item_ref": "_6rs26jmh9ya_jv0aiqf4kvx",
       "jtype": "item_ref", "space": ".root"}, ".pitem, ", {"item_ref": "_50623j9vemk_1hp2q2czrhi",
-      "jtype": "item_ref", "space": ".root"}, ".pitem, mom_make_double(doutc.odmp_cputime));\n",
+      "jtype": "item_ref", "space": ".root"}, ".pitem, mom_let_transient(mom_make_double(doutc.odmp_cputime)));\n",
      " mom_item_put_attribute (", {"item_ref": "_6rs26jmh9ya_jv0aiqf4kvx",
       "jtype": "item_ref", "space": ".root"}, ".pitem, ", {"item_ref": "_1tzf3q2dix5_jqxphp9ivcw",
-      "jtype": "item_ref", "space": ".root"}, ".pitem, mom_make_integer(doutc.odmp_nbdumpeditems));\n",
+      "jtype": "item_ref", "space": ".root"}, ".pitem, mom_let_transient(mom_make_integer(doutc.odmp_nbdumpeditems)));\n",
      " mom_item_put_attribute (", {"item_ref": "_6rs26jmh9ya_jv0aiqf4kvx",
       "jtype": "item_ref", "space": ".root"}, ".pitem, ", {"item_ref": "_7diyc1cwj8z_x630afccr8e",
       "jtype": "item_ref", "space": ".predef"}, ".pitem, mom_let_transient(doutc.odmp_nodenotice));\n",
@@ -801,15 +803,15 @@ INSERT INTO t_items VALUES('_8zwifiifaf0_pyayp6hpha4','{"attr": [{"attr": "_0ee6
 INSERT INTO t_items VALUES('_91471ta1047_pra9zfqc2y1','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "block for ajax_appl continue after dump"},
   {"attr": "_94tq2iauet8_jujpjhjrzsm", "val": {"jtype": "node", "node": "_0yyp8vmw4si_wf49m4d4zwq",
     "sons": [{"jtype": "node", "node": "_5c789try94y_ssy6a22fpep", "sons": [{"jtype":
-"node", "node": "_7j5uq75spm6_wuhuc4pe5th", "sons": [{"item_ref": "_16cd0fvmdrh_r77ajpy26za",
-  "jtype": "item_ref", "space": ".root"}, "text/html", {"item_ref": "_4ie5pvk8m1x_rzsut0mdza0",
-  "jtype": "item_ref", "space": ".root"}]}]}, {"jtype": "node", "node": "_5c789try94y_ssy6a22fpep",
-      "sons": [{"jtype": "node", "node": "_4ew7uvid6ep_wzq6f8hruz9", "sons": [{"item_ref":
-  "_16cd0fvmdrh_r77ajpy26za", "jtype": "item_ref", "space": ".root"}, "<em>Monimelt</em> <b>dump then continue</b> at<i>",
+"node", "node": "_4ew7uvid6ep_wzq6f8hruz9", "sons": [{"item_ref": "_16cd0fvmdrh_r77ajpy26za",
+  "jtype": "item_ref", "space": ".root"}, "<em>Monimelt</em> <b>dump then continue</b> at<i>",
  {"jtype": "node", "node": "_4xicv8w07x7_3hzzmpw8iwt", "sons": ["%c", {"jtype": "node",
     "node": "_1yz5fpjm6yt_319wacq9346", "sons": [{"item_ref": "_9jdufs9sew7_u6x3k3wfseq",
-      "jtype": "item_ref", "space": ".root"}]}]}, "</i>"]}]}]}}], "content": null,
- "kind": null, "payload": null}
+      "jtype": "item_ref", "space": ".root"}]}]}, "</i>"]}]}, {"jtype": "node",
+      "node": "_5c789try94y_ssy6a22fpep", "sons": [{"jtype": "node", "node": "_7j5uq75spm6_wuhuc4pe5th",
+"sons": [{"item_ref": "_16cd0fvmdrh_r77ajpy26za", "jtype": "item_ref", "space": ".root"},
+ "text/html", {"item_ref": "_4ie5pvk8m1x_rzsut0mdza0", "jtype": "item_ref",
+  "space": ".root"}]}]}]}}], "content": null, "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_91pketvc5pz_wq0v0wpauw8','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "Gives the values of Json for frames of tasklets."}],
  "content": null, "kind": null, "payload": null}
@@ -873,7 +875,7 @@ INSERT INTO t_items VALUES('_9u6a6xy2e1p_qeapfc73cm4','{"attr": [{"attr": "_232t
 "sons": [{"item_ref": "_16cd0fvmdrh_r77ajpy26za", "jtype": "item_ref", "space": ".root"},
  "text/html", {"item_ref": "_4ie5pvk8m1x_rzsut0mdza0", "jtype": "item_ref",
   "space": ".root"}]}]}, {"jtype": "node", "node": "_8x6fxcm4z2k_vdaqicfi4z0",
-      "sons": [" MOM_INFORMPRINTF(\"exiting Monimelt per web request\");\n exit(EXIT_SUCCESS); // per web request\n"]}]}}],
+      "sons": [" MOM_INFORMPRINTF(\"quitting Monimelt per web request\");\n exit(EXIT_SUCCESS); // per web request\n"]}]}}],
  "content": null, "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_9w7y4v2xpyr_f48demccutx','{"attr": [{"attr": "_19ufza9zf05_muxxhkmm7ww", "val": {"jtype": "node", "node": "_8x6fxcm4z2k_vdaqicfi4z0",
