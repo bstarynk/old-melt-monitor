@@ -3127,7 +3127,9 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 	  momitem_t *destblkitm = destblockv.pitem;
 	  MOM_OUT (&cg->cgen_outbody,
 		   MOMOUT_NEWLINE (),
-		   MOMOUT_LITERAL ("/*!jump */"), MOMOUT_NEWLINE ());
+		   MOMOUT_LITERAL ("/*!jump "),
+		   MOMOUT_ITEM ((const momitem_t *) destblkitm),
+		   MOMOUT_LITERAL ("*/"), MOMOUT_NEWLINE ());
 	  emit_goto_block_cgen (cg, destblkitm, lockix);
 	}
       //// CALL instruction
@@ -3365,7 +3367,7 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 	       MOMOUT_NEWLINE (),
 	       MOMOUT_LITERAL ("/*! epilogue for lock */"),
 	       MOMOUT_NEWLINE (),
-	       MOMOUT_LITERAL ("mom_unlock_item(" CGEN_LOCK_ITEM_PREFIX),
+	       MOMOUT_LITERAL ("mom_unlock_item (" CGEN_LOCK_ITEM_PREFIX),
 	       MOMOUT_DEC_INT (lockix),
 	       MOMOUT_LITERAL ("); // unlock "),
 	       MOMOUT_ITEM ((const momitem_t *) lockv.pitem),
@@ -3383,6 +3385,11 @@ emit_goto_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm,
   assert (cg != NULL && cg->cgen_magic == CGEN_MAGIC);
   assert (blkitm != NULL && blkitm->i_typnum == momty_item);
   momval_t blockdatav = mom_item_assoc_get (cg->cgen_locassocitm, blkitm);
+  MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit goto block:"),
+	     MOMOUT_ITEM ((const momitem_t *) blkitm),
+	     MOMOUT_LITERAL (" lockix#"),
+	     MOMOUT_DEC_INT (lockix),
+	     MOMOUT_LITERAL (" blockdatav="), MOMOUT_VALUE (blockdatav));
   if (blockdatav.ptr == NULL
       || mom_node_conn (blockdatav) != mom_named__block)
     CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("bad block to go to:"),
@@ -3400,11 +3407,12 @@ emit_goto_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm,
   if (cg->cgen_routkind == cgr_proc)
     // should retrieve the bix
     MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_NEWLINE (),
 	     MOMOUT_LITERAL ("goto " CGEN_PROC_BLOCK_PREFIX),
 	     MOMOUT_DEC_INT (bix),
 	     MOMOUT_LITERAL (" /*!proc.block "),
 	     MOMOUT_ITEM ((const momitem_t *) blkitm),
-	     MOMOUT_LITERAL ("*/"), NULL);
+	     MOMOUT_LITERAL ("*/;"), NULL);
   else
     MOM_OUT (&cg->cgen_outbody,
 	     MOMOUT_LITERAL (" return "),

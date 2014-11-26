@@ -231,11 +231,19 @@ static const struct cmd_descr_st cmd_array_mom[] = {
 static char *
 cmd_completion_entry_mom (const char *text, int state)
 {
+  static bool star = false;
   static momval_t jarr;
   MOM_DEBUGPRINTF (cmd, "cmd_completion_entry text='%s' state=%d", text,
 		   state);
   if (!state)
     {
+      if (text[0] == '*')
+	{
+	  star = true;
+	  text++;
+	}
+      else
+	star = false;
       jarr = MOM_NULLV;
       if (isalpha (text[0]))
 	{
@@ -308,13 +316,22 @@ cmd_completion_entry_mom (const char *text, int state)
 		     MOMOUT_LITERAL ("jarr="),
 		     MOMOUT_VALUE ((const momval_t) jarr), NULL);
 	}
-    }
+    }				/* end if state==0 */
   if (state >= 0 && jarr.ptr && state < (int) mom_json_array_size (jarr))
     {
       const char *restr = mom_string_cstr (mom_json_array_nth (jarr, state));
       MOM_DEBUGPRINTF (cmd, "cmd_completion state#%d restr=%s", state, restr);
       if (restr)
-	return strdup (restr);
+	{
+	  if (!star)
+	    return strdup (restr);
+	  else
+	    {
+	      char *p = NULL;
+	      asprintf (&p, "*%s", restr);
+	      return p;
+	    }
+	}
     }
   MOM_DEBUGPRINTF (cmd, "cmd_completion fail state#%d", state);
   return NULL;
@@ -1508,7 +1525,7 @@ cmd_do_swap_mom (const char *lin, bool pres, long num)
 {
   MOM_DEBUGPRINTF (cmd, "start do_swap lin=%s pres=%s num=%ld", lin,
 		   pres ? "pres" : "abs", num);
-  if (pres && num > 1 && num < vst_top_mom)
+  if (pres && num > 1 && num <= vst_top_mom)
     {
       char cmdbuf[32];
       memset (cmdbuf, 0, sizeof (cmdbuf));

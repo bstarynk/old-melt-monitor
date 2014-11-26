@@ -394,7 +394,7 @@ output_value_mom (momout_t *pout, const momval_t v)
       {
 	unsigned tuplen = v.ptuple->slen;
 	MOM_OUT (pout, MOMOUT_SMALL_SPACE (48),
-		 MOMOUT_LITERAL ("@tup["), MOMOUT_INDENT_MORE ());
+		 MOMOUT_LITERAL ("["), MOMOUT_INDENT_MORE ());
 	for (unsigned ix = 0; ix < tuplen; ix++)
 	  {
 	    if (ix > 0)
@@ -412,7 +412,7 @@ output_value_mom (momout_t *pout, const momval_t v)
       {
 	unsigned setlen = v.pset->slen;
 	MOM_OUT (pout, MOMOUT_SMALL_SPACE (48),
-		 MOMOUT_LITERAL ("@set{"), MOMOUT_INDENT_MORE ());
+		 MOMOUT_LITERAL ("{"), MOMOUT_INDENT_MORE ());
 	for (unsigned ix = 0; ix < setlen; ix++)
 	  {
 	    if (ix > 0)
