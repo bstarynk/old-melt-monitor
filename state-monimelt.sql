@@ -235,7 +235,9 @@ INSERT INTO t_items VALUES('_2u8svx94yq4_34icz9j1fyx','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_2ummst105ck_xracfy8v87y','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "formal arguments..."}],
  "content": null, "kind": null, "payload": null}
 ','');
-INSERT INTO t_items VALUES('_2v75mmyph64_4h4kys78740','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "in JSON dumps, indicate sets of item, or give their array of elements"}],
+INSERT INTO t_items VALUES('_2v75mmyph64_4h4kys78740','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_51u3st4u9mc_zdvms6jti0a",
+    "jtype": "item_ref", "space": ".predef"}}, {"attr": "_0x2k07ik4tm_ed7vqphf5ak",
+   "val": "momty_set"}, {"attr": "_41u1utcxyek_22cftxt3xxm", "val": "in JSON dumps, indicate sets of item, or give their array of elements"}],
  "content": null, "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_2vmrrvq5kdk_9um63pstcu9','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "The true of JSON.\nWe cannot use true because it is a #define-ed macro."}],
@@ -255,7 +257,14 @@ INSERT INTO t_items VALUES('_350hj5kfymd_145tfc1sevi','{"attr": [{"attr": "_0ee6
     "jtype": "item_ref", "space": ".predef"}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "value variable for what"}], "content": null, "kind": null, "payload": null}
 ','');
-INSERT INTO t_items VALUES('_35vp60aw7em_d436vfie4ud','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "in JSON dump, jtype of JSON array values"}],
+INSERT INTO t_items VALUES('_35vp60aw7em_d436vfie4ud','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_51u3st4u9mc_zdvms6jti0a",
+    "jtype": "item_ref", "space": ".predef"}}, {"attr": "_0x2k07ik4tm_ed7vqphf5ak",
+   "val": "momty_jsonarray"}, {"attr": "_41u1utcxyek_22cftxt3xxm", "val": "in JSON dump, jtype of JSON array values"}],
+ "content": null, "kind": null, "payload": null}
+','');
+INSERT INTO t_items VALUES('_36esaxiqmd5_ciet8ws1f5d','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_51u3st4u9mc_zdvms6jti0a",
+    "jtype": "item_ref", "space": ".predef"}}, {"attr": "_0x2k07ik4tm_ed7vqphf5ak",
+   "val": "momty_item"}, {"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for the item type"}],
  "content": null, "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_37kswkaa035_qjpxwd7e67f','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for making entries in json_object"}],
@@ -292,6 +301,14 @@ INSERT INTO t_items VALUES('_3ff1zzfsxzc_xk423qutvqr','{"attr": [{"attr": "_19uf
 INSERT INTO t_items VALUES('_3fw5acswe59_9016fqe4d41','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "Gives the integer numbers of Json for frames of tasklets."}],
  "content": null, "kind": null, "payload": null}
 ','');
+INSERT INTO t_items VALUES('_3h56h532u19_1ssc4pje2x6','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_51u3st4u9mc_zdvms6jti0a",
+    "jtype": "item_ref", "space": ".predef"}}, {"attr": "_2ummst105ck_xracfy8v87y",
+   "val": {"jtype": "tuple", "tuple": ["_0hi99dr3qqs_yuuciyy7xfz"]}}, {"attr": "_37x98fyestf_ttup2cu68r6",
+   "val": {"jtype": "node", "node": "_8x6fxcm4z2k_vdaqicfi4z0", "sons": ["mom_type(",
+     {"item_ref": "_0hi99dr3qqs_yuuciyy7xfz", "jtype": "item_ref", "space": ".root"},
+     ")"]}}, {"attr": "_41u1utcxyek_22cftxt3xxm", "val": "primitive to get the type of a value"}],
+ "content": null, "kind": null, "payload": null}
+','');
 INSERT INTO t_items VALUES('_3hv5ymapjed_y8q6hsvhw8u','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for JSONRPC and elsewhere"}],
  "content": null, "kind": null, "payload": null}
 ','');
@@ -319,7 +336,9 @@ INSERT INTO t_items VALUES('_3v4d7uzex6f_euek4pztiuh','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_3wh3e88sk28_d27qi2737zi','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for starting block in routines, etc..."}],
  "content": null, "kind": null, "payload": null}
 ','');
-INSERT INTO t_items VALUES('_3xpyd539p4m_23h7wi59xi9','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "in JSON dump, jtype of JSON object values"}],
+INSERT INTO t_items VALUES('_3xpyd539p4m_23h7wi59xi9','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_51u3st4u9mc_zdvms6jti0a",
+    "jtype": "item_ref", "space": ".predef"}}, {"attr": "_0x2k07ik4tm_ed7vqphf5ak",
+   "val": "momty_jsonobject"}, {"attr": "_41u1utcxyek_22cftxt3xxm", "val": "in JSON dump, jtype of JSON object values"}],
  "content": null, "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_41u1utcxyek_22cftxt3xxm','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "gives a human-readable comment"}],
@@ -365,7 +384,9 @@ INSERT INTO t_items VALUES('_4ie5pvk8m1x_rzsut0mdza0','{"attr": [{"attr": "_0ee6
 INSERT INTO t_items VALUES('_4jp2meuzru2_a58afyxwxa2','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "notably for error message in JSONRPC"}],
  "content": null, "kind": null, "payload": null}
 ','');
-INSERT INTO t_items VALUES('_4m7x6811f6j_t480zu575mz','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "in JSON dumps, indicate nodes, or give their connective item"}],
+INSERT INTO t_items VALUES('_4m7x6811f6j_t480zu575mz','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_51u3st4u9mc_zdvms6jti0a",
+    "jtype": "item_ref", "space": ".predef"}}, {"attr": "_0x2k07ik4tm_ed7vqphf5ak",
+   "val": "momty_node"}, {"attr": "_41u1utcxyek_22cftxt3xxm", "val": "in JSON dumps, indicate nodes, or give their connective item"}],
  "content": null, "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_4mha85xcfwi_9zqcvkiy3dk','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "The false of JSON.\nWe cannot use false because it is a #define-ed macro."}],
@@ -398,7 +419,9 @@ INSERT INTO t_items VALUES('_4xicv8w07x7_3hzzmpw8iwt','{"attr": [{"attr": "_19uf
 INSERT INTO t_items VALUES('_50623j9vemk_1hp2q2czrhi','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "hold the cpu time, e.g. in dump_data "}],
  "content": null, "kind": null, "payload": null}
 ','');
-INSERT INTO t_items VALUES('_51u3st4u9mc_zdvms6jti0a','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "The C type for word integers"}],
+INSERT INTO t_items VALUES('_51u3st4u9mc_zdvms6jti0a','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_51u3st4u9mc_zdvms6jti0a",
+    "jtype": "item_ref", "space": ".predef"}}, {"attr": "_0x2k07ik4tm_ed7vqphf5ak",
+   "val": "momty_int"}, {"attr": "_41u1utcxyek_22cftxt3xxm", "val": "The C type for word integers"}],
  "content": null, "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_547q7emtfsk_ect0yratp6e','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_02q6zk9f5st_im0z75re15f",
@@ -582,6 +605,11 @@ INSERT INTO t_items VALUES('_7j5uq75spm6_wuhuc4pe5th','{"attr": [{"attr": "_0ee6
 INSERT INTO t_items VALUES('_7j7x11c25h3_wkchtuwpusx','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "the double C type"}],
  "content": null, "kind": null, "payload": null}
 ','');
+INSERT INTO t_items VALUES('_7mj6c8az5d3_vzmwd2uuiu7','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_51u3st4u9mc_zdvms6jti0a",
+    "jtype": "item_ref", "space": ".predef"}}, {"attr": "_0x2k07ik4tm_ed7vqphf5ak",
+   "val": "momty_null"}, {"attr": "_41u1utcxyek_22cftxt3xxm", "val": "describes the null type of nil."}],
+ "content": null, "kind": null, "payload": null}
+','');
 INSERT INTO t_items VALUES('_7pyjxst21ce_vhc0tk0em0u','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "routine to display a value during edition in ajax_objects"}],
  "content": null, "kind": null, "payload": null}
 ','');
@@ -600,7 +628,9 @@ INSERT INTO t_items VALUES('_7sqk8vh89xr_6tj8dq7vqju','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_7urjeiw3evy_m7k72uv6790','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "in JSON dumps, give the type of a value"}],
  "content": null, "kind": null, "payload": null}
 ','');
-INSERT INTO t_items VALUES('_7vw56h18sw0_hv77m6q8uxu','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "in JSON dumps, used for tuples of items"}],
+INSERT INTO t_items VALUES('_7vw56h18sw0_hv77m6q8uxu','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_51u3st4u9mc_zdvms6jti0a",
+    "jtype": "item_ref", "space": ".predef"}}, {"attr": "_0x2k07ik4tm_ed7vqphf5ak",
+   "val": "momty_tuple"}, {"attr": "_41u1utcxyek_22cftxt3xxm", "val": "in JSON dumps, used for tuples of items"}],
  "content": null, "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_7wk9y7e7r0z_575esi8ys5x','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "in JSON dumps, used for values in attribute lists of items"}],
@@ -705,7 +735,9 @@ INSERT INTO t_items VALUES('_8ejwdt1a5yx_2meizztvte0','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_8fk0de81s9r_5d4v4x7qmxr','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for dispatching statements on items"}],
  "content": null, "kind": null, "payload": null}
 ','');
-INSERT INTO t_items VALUES('_8j516kuv89j_4hc4w6ykmr6','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "in JSON dumps, used for long chunked strings"}],
+INSERT INTO t_items VALUES('_8j516kuv89j_4hc4w6ykmr6','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_51u3st4u9mc_zdvms6jti0a",
+    "jtype": "item_ref", "space": ".predef"}}, {"attr": "_0x2k07ik4tm_ed7vqphf5ak",
+   "val": "momty_string"}, {"attr": "_41u1utcxyek_22cftxt3xxm", "val": "in JSON dumps, used for long chunked strings"}],
  "content": null, "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_8qmqy249w63_fxdr6rdz48m','{"attr": [{"attr": "_2u8svx94yq4_34icz9j1fyx", "val": {"jtype": "set", "set": ["_41u1utcxyek_22cftxt3xxm",
@@ -966,6 +998,7 @@ INSERT INTO t_names VALUES('i','_2vy0ah3jrd1_mm66ja7rfj7','.root');
 INSERT INTO t_names VALUES('id','_7a9sxskjhcp_kpf30ka97ex','.predef');
 INSERT INTO t_names VALUES('if','_8ejwdt1a5yx_2meizztvte0','.predef');
 INSERT INTO t_names VALUES('intptr_t','_51u3st4u9mc_zdvms6jti0a','.predef');
+INSERT INTO t_names VALUES('item','_36esaxiqmd5_ciet8ws1f5d','.root');
 INSERT INTO t_names VALUES('item_ref','_6hf2vzmrsee_t35suhjvtj4','.predef');
 INSERT INTO t_names VALUES('itmv','_1a2aavj5vir_2hz681zdfqd','.root');
 INSERT INTO t_names VALUES('ix','_9wwqwxqcm4p_y7di7fs8tsk','.root');
@@ -992,6 +1025,7 @@ INSERT INTO t_names VALUES('module_routines','_9dcxaqk8tqe_fam9mcxme9w','.predef
 INSERT INTO t_names VALUES('mom_clock_time','_1yz5fpjm6yt_319wacq9346','.root');
 INSERT INTO t_names VALUES('mom_stop_work_with_todo','_7x7vwep1fw4_i158put1x07','.root');
 INSERT INTO t_names VALUES('mom_string_same','_20ds5w0c9z1_tvf5h12wrqp','.root');
+INSERT INTO t_names VALUES('mom_type','_3h56h532u19_1ssc4pje2x6','.root');
 INSERT INTO t_names VALUES('mom_value_to_item','_5s26uzwhveh_fv3twe3s2je','.root');
 INSERT INTO t_names VALUES('mom_webx_post_arg','_8zwifiifaf0_pyayp6hpha4','.root');
 INSERT INTO t_names VALUES('mom_webx_reply','_7j5uq75spm6_wuhuc4pe5th','.root');
@@ -1004,6 +1038,7 @@ INSERT INTO t_names VALUES('nb_dumped_items','_1tzf3q2dix5_jqxphp9ivcw','.root')
 INSERT INTO t_names VALUES('node','_4m7x6811f6j_t480zu575mz','.predef');
 INSERT INTO t_names VALUES('noop','_240dwt57s08_a8uy366sev5','.root');
 INSERT INTO t_names VALUES('notice','_7diyc1cwj8z_x630afccr8e','.predef');
+INSERT INTO t_names VALUES('null','_7mj6c8az5d3_vzmwd2uuiu7','.root');
 INSERT INTO t_names VALUES('numbers','_3fw5acswe59_9016fqe4d41','.predef');
 INSERT INTO t_names VALUES('outargs','_5ic5uk22icm_7ws16feu699','.root');
 INSERT INTO t_names VALUES('output','_0te6f7f9pz7_m91yy9iv5pd','.predef');

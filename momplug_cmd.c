@@ -47,6 +47,7 @@ const char mom_plugin_GPL_compatible[] = "GPLv3+";
   CMD(letters,"show letters values",non,"$$")           \
   CMD(mark,"push mark",non,"(")                         \
   CMD(named,"[Regexp]",non,NULL)			\
+  CMD(nth,"N",num,NULL)   \
   CMD(node,"[Connective]; make node to mark",itm,"*")   \
   CMD(pop,"pop [N] elements",num,"^")                   \
   CMD(predef,"NAME; create a predefined item",non,NULL)	\
@@ -1521,6 +1522,73 @@ cmd_do_swap_mom (const char *lin, bool pres, long num)
     }
   else
     printf ("cannot swap with level %ld\n", num);
+}
+
+static void
+cmd_do_nth_mom (const char *lin, bool pres, long num)
+{
+  MOM_DEBUGPRINTF (cmd, "start do_nth lin=%s pres=%s num=%ld", lin,
+		   pres ? "pres" : "abs", num);
+  if (pres && vst_top_mom > 0)
+    {
+      char cmdbuf[32];
+      memset (cmdbuf, 0, sizeof (cmdbuf));
+      momval_t topv = cmd_stack_nth_value_mom (-1);
+      switch (mom_type (topv))
+	{
+	case momty_string:
+	  {
+	    unsigned slen = mom_string_slen (topv);
+	    if (num < 0)
+	      num += slen;
+	    if (num >= 0 && num < slen)
+	      {
+		int c = mom_string_cstr (topv)[num] & UCHAR_MAX;
+		cmd_stack_push_mom (mom_make_integer (c));
+	      }
+	    else
+	      goto failnth;
+	  }
+	  break;
+	case momty_set:
+	case momty_tuple:
+	  {
+	    unsigned len = mom_seqitem_length (topv);
+	    if (num < 0)
+	      num += len;
+	    if (num > 0 && num < (long) len)
+	      {
+		momval_t val = (momval_t) mom_seqitem_nth_item (topv, num);
+		cmd_stack_push_mom (val);
+	      }
+	    else
+	      goto failnth;
+	  }
+	  break;
+	case momty_node:
+	  {
+	    unsigned len = mom_node_arity (topv);
+	    if (num < 0)
+	      num += len;
+	    if (num > 0 && num < (long) len)
+	      {
+		momval_t val = (momval_t) mom_node_nth (topv, num);
+		cmd_stack_push_mom (val);
+	      }
+	    else
+	      goto failnth;
+	  }
+	  break;
+	default:
+	  goto failnth;
+	}
+      snprintf (cmdbuf, sizeof (cmdbuf), ",nth %ld", num);
+      add_history (cmdbuf);
+      printf ("pushed %d-th component.\n", (int) num);
+    }
+  else
+  failnth:
+    printf ("bad " ANSI_BOLD ",nth" ANSI_NORMAL "command\n");
 }
 
 static void
