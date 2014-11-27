@@ -399,9 +399,13 @@ output_value_mom (momout_t *pout, const momval_t v)
 	  {
 	    if (ix > 0)
 	      {
-		MOM_OUT (pout, MOMOUT_LITERAL (","), MOMOUT_SMALL_SPACE (60));
-		if (ix % 10 == 9)
-		  MOM_OUT (pout, MOMOUT_SMALL_SPACE (60));
+		MOM_OUT (pout, MOMOUT_LITERAL (","), MOMOUT_SMALL_SPACE (50));
+		if (ix % 5 == 4)
+		  {
+		    if (pout->mout_flags & outf_comment)
+		      MOM_OUT (pout, MOMOUT_NEWLINE ());
+		    MOM_OUT (pout, MOMOUT_SPACE (60));
+		  }
 	      }
 	    output_item_mom (pout, v.ptuple->itemseq[ix]);
 	  }
@@ -417,9 +421,13 @@ output_value_mom (momout_t *pout, const momval_t v)
 	  {
 	    if (ix > 0)
 	      {
-		MOM_OUT (pout, MOMOUT_LITERAL (","), MOMOUT_SMALL_SPACE (60));
-		if (ix % 10 == 9)
-		  MOM_OUT (pout, MOMOUT_SMALL_SPACE (60));
+		MOM_OUT (pout, MOMOUT_LITERAL (","), MOMOUT_SMALL_SPACE (50));
+		if (ix % 5 == 4)
+		  {
+		    if (pout->mout_flags & outf_comment)
+		      MOM_OUT (pout, MOMOUT_NEWLINE ());
+		    MOM_OUT (pout, MOMOUT_SPACE (60));
+		  }
 	      }
 	    output_item_mom (pout, v.pset->itemseq[ix]);
 	  }
@@ -445,8 +453,12 @@ output_value_mom (momout_t *pout, const momval_t v)
 	    if (six > 0)
 	      {
 		MOM_OUT (pout, MOMOUT_LITERAL (","), MOMOUT_SMALL_SPACE (60));
-		if (six % 10 == 9)
-		  MOM_OUT (pout, MOMOUT_SMALL_SPACE (60));
+		if (six % 5 == 4)
+		  {
+		    if (pout->mout_flags & outf_comment)
+		      MOM_OUT (pout, MOMOUT_NEWLINE ());
+		    MOM_OUT (pout, MOMOUT_SPACE (60));
+		  }
 	      }
 	    output_value_mom (pout, v.pnode->sontab[six]);
 	  }

@@ -1309,7 +1309,8 @@ cmd_do_comment_mom (const char *lin)
     {
       mom_stdout->mout_flags |= outf_comment;
       printf ("Anonymous items shown "
-	      ANSI_BOLD "with comments" ANSI_NORMAL "\n");
+	      ANSI_BOLD "with comments" ANSI_NORMAL
+	      " (up to backquote or newline).\n");
     }
   add_history (",comment");
 }
