@@ -369,6 +369,14 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
     goto mompblo_2 /*!proc.block _34w40p46vwp_pw6u3d75ww6*/;
     }; //!unlocked momlockeditem_4
      
+   //! instr#4 in block _02yd241wh4z_tca7i6iamf3 ::
+   
+   /*!jump _9xhd87mskav_rqcu5eqk5te*/
+   
+   /*!unlock-goto*/ { mom_unlock_item (momlockeditem_4); 
+   goto mompblo_5 /*!proc.block _9xhd87mskav_rqcu5eqk5te*/;
+   }; //!unlocked momlockeditem_4
+   
    /*! epilogue for lock */
    mom_unlock_item (momlockeditem_4); // unlock webx
    momendblock_4:;

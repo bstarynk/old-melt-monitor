@@ -2778,6 +2778,21 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
     {
       momval_t curinsv = mom_node_nth (blockv, ix);
       momitem_t *opitm = (momitem_t *) mom_node_conn (curinsv);
+      if (!opitm)
+	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("bad instruction:"),
+			MOMOUT_VALUE ((const momval_t) curinsv),
+			MOMOUT_SPACE (48),
+			MOMOUT_LITERAL ("at rank#"),
+			MOMOUT_DEC_INT (ix),
+			MOMOUT_LITERAL ("/"),
+			MOMOUT_DEC_INT (nbinstr),
+			MOMOUT_SPACE (48),
+			MOMOUT_LITERAL ("in block item:"),
+			MOMOUT_ITEM ((const momitem_t *) blkitm), 
+			MOMOUT_LITERAL ("having code:"),
+			MOMOUT_VALUE((const momval_t) blockv),
+			NULL);
+
       assert (opitm != NULL);
       if (opitm != mom_named__do
 	  && opitm != mom_named__if

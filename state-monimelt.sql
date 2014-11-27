@@ -49,8 +49,9 @@ INSERT INTO t_items VALUES('_02yd241wh4z_tca7i6iamf3','{"attr": [{"attr": "_232t
      {"jtype": "node", "node": "_8ejwdt1a5yx_2meizztvte0", "sons": [{"jtype": "node",
 "node": "_63xw30mvx5q_45qi5j4ak1y", "sons": [{"item_ref": "_88565k6xdf0_331xf3x27dp",
   "jtype": "item_ref", "space": ".root"}]}, {"item_ref": "_34w40p46vwp_pw6u3d75ww6",
-"jtype": "item_ref", "space": ".root"}]}]}}], "content": null, "kind": null,
- "payload": null}
+"jtype": "item_ref", "space": ".root"}]}, {"jtype": "node", "node": "_2kxisdsque9_u9awek5wup1",
+      "sons": [{"item_ref": "_9xhd87mskav_rqcu5eqk5te", "jtype": "item_ref",
+"space": ".root"}]}]}}], "content": null, "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_03f56tp7q6w_f1t3fiyivph','{"attr": [{"attr": "_19ufza9zf05_muxxhkmm7ww", "val": {"jtype": "node", "node": "_8x6fxcm4z2k_vdaqicfi4z0",
     "sons": ["MOMOUTDO_INDENT_LESS"]}}, {"attr": "_2ummst105ck_xracfy8v87y",
