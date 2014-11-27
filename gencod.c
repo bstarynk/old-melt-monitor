@@ -1127,7 +1127,7 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	       MOMOUT_LITERAL (" " CGEN_PROC_BLOCK_PREFIX),
 	       MOMOUT_DEC_INT ((int) bix + 1),
 	       MOMOUT_LITERAL (":"),
-	       MOMOUT_NEWLINE (),
+	       MOMOUT_SPACE (64),
 	       MOMOUT_LITERAL ("{ // procedure block "),
 	       MOMOUT_LITERALV (mom_string_cstr
 				((momval_t)
@@ -2788,10 +2788,9 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 			MOMOUT_DEC_INT (nbinstr),
 			MOMOUT_SPACE (48),
 			MOMOUT_LITERAL ("in block item:"),
-			MOMOUT_ITEM ((const momitem_t *) blkitm), 
+			MOMOUT_ITEM ((const momitem_t *) blkitm),
 			MOMOUT_LITERAL ("having code:"),
-			MOMOUT_VALUE((const momval_t) blockv),
-			NULL);
+			MOMOUT_VALUE ((const momval_t) blockv), NULL);
 
       assert (opitm != NULL);
       if (opitm != mom_named__do
