@@ -535,6 +535,7 @@ initialize_mom (void)
 
 static bool daemonize_mom = false;
 static bool noclose_daemonize_mom = false;
+static bool nojit_mom = false;
 /* Option specification for getopt_long.  */
 enum extraopt_en
 {
@@ -548,6 +549,7 @@ enum extraopt_en
   xtraopt_randomidstr,
   xtraopt_dumpcoldstate,
   xtraopt_daemon_noclose,
+  xtraopt_nojit,
 };
 
 static const struct option mom_long_options[] = {
@@ -570,6 +572,7 @@ static const struct option mom_long_options[] = {
   {"random-idstr", no_argument, NULL, xtraopt_randomidstr},
   {"dump-cold-state", required_argument, NULL, xtraopt_dumpcoldstate},
   {"add-predefined", required_argument, NULL, xtraopt_addpredef},
+  {"no-jit", no_argument, NULL, xtraopt_nojit},
   /* Terminating NULL placeholder.  */
   {NULL, no_argument, NULL, 0},
 };
@@ -772,7 +775,7 @@ mom_set_debugging (const char *dbgopt)
 }
 
 static void
-parse_program_arguments_and_load_modules_mom (int *pargc, char **argv)
+parse_program_arguments_and_load_plugins_mom (int *pargc, char **argv)
 {
   int argc = *pargc;
   int opt = -1;
@@ -816,6 +819,9 @@ parse_program_arguments_and_load_modules_mom (int *pargc, char **argv)
 	    char *plugarg = argv[optind++];
 	    mom_load_plugin (plugnam, plugarg);
 	  }
+	  break;
+	case xtraopt_nojit:
+	  nojit_mom = true;
 	  break;
 	case xtraopt_chdir:
 	  wanted_dir_mom = optarg;
@@ -971,8 +977,18 @@ main (int argc, char **argv)
   mom_prog_dlhandle = GC_dlopen (NULL, RTLD_NOW | RTLD_GLOBAL);
   if (MOM_UNLIKELY (!mom_prog_dlhandle))
     MOM_FATAPRINTF ("failed to dlopen the program: %s", dlerror ());
-  jit_init ();
-  parse_program_arguments_and_load_modules_mom (&argc, argv);
+  parse_program_arguments_and_load_plugins_mom (&argc, argv);
+  if (!nojit_mom)
+    {
+      // libjit is installing SIGSEGV handler
+      jit_init ();
+      MOM_INFORMPRINTF ("initialized libjit");
+    }
+  else
+    {
+      // useful if we dont want any SIGSEGV handler
+      MOM_WARNPRINTF ("libjit forcibly uninitialized");
+    };
   if (daemonize_mom)
     {
       if (daemon (true, false))

@@ -30,6 +30,10 @@ struct mom_loader_st
   unsigned ldr_hsize;
   unsigned ldr_hcount;
   const momitem_t **ldr_htable;
+  /// raw vector of root items, to avoid finalizing them
+  unsigned ldr_rootitems_size;
+  unsigned ldr_rootitems_count;
+  const momitem_t **ldr_rootitems_arr;
   momspaceid_t ldr_curspace;
   // the load directory
   const char *ldr_dirpath;
@@ -1186,23 +1190,31 @@ setintsql_cb_mom (void *data, int nbcol, char **colval, char **colnam)
 ////////////////////////////////////////////////////////////////
 // a callback for sqlite3_exec to build the item of id the first and only column
 static int
-build_root_items_cb_mom (void *data MOM_UNUSED, int nbcol, char **colval,
-			 char **colnam)
+build_root_items_cb_mom (void *data, int nbcol, char **colval, char **colnam)
 {
   assert (nbcol == 1);
   assert (colval != NULL);
   assert (colnam != NULL);
+  assert (data != NULL);
+  struct mom_loader_st *ld = (struct mom_loader_st *) data;
+  assert (ld->ldr_magic == LOADER_MAGIC);
   const char *itmid = *colval;
-  MOM_DEBUGPRINTF (load, "build_root_item itmid=%s", itmid);
+  MOM_DEBUGPRINTF (load, "build_root_items_cb itmid=%s", itmid);
   assert (itmid && mom_looks_like_random_id_cstr (itmid, NULL));
   momitem_t *itm = mom_make_item_of_identcstr (itmid);
+  assert (ld->ldr_rootitems_arr
+	  && ld->ldr_rootitems_count < ld->ldr_rootitems_size);
+  ld->ldr_rootitems_arr[ld->ldr_rootitems_count++] = itm;
   MOM_DEBUG (load, MOMOUT_LITERAL ("build_root_item itm:"),
-	     MOMOUT_ITEM ((const momitem_t *) itm), NULL);
+	     MOMOUT_ITEM ((const momitem_t *) itm),
+	     MOMOUT_LITERAL (" of id:"), MOMOUT_LITERALV (itmid), NULL);
   assert (itm != NULL);
   if (itm->i_space == momspa_none)
     itm->i_space = momspa_root;
   return 0;
 }
+
+
 
 ////////////////////////////////////////////////////////////////
 void
@@ -1212,6 +1224,7 @@ mom_initial_load (const char *ldirnam)
   double startcputime = mom_clock_time (CLOCK_PROCESS_CPUTIME_ID);
   const char *dbpath = NULL;
   const char *sqlpath = NULL;
+  int nbitems = 0;
   if (!ldirnam || !ldirnam[0])
     {
       char dirpath[MOM_PATH_MAX];
@@ -1294,38 +1307,9 @@ mom_initial_load (const char *ldirnam)
     MOM_FATAPRINTF ("incompatible version in %s, expected %s got %s",
 		    ldr.ldr_sqlpath, MOM_DUMP_VERSION,
 		    vers ? vers : "*nothing*");
-  /// build the empty items in root
-  {
-    char *errmsg = NULL;
-    if (sqlite3_exec
-	(ldr.ldr_sqlite, "SELECT itm_idstr FROM t_items",
-	 build_root_items_cb_mom, NULL, &errmsg))
-      MOM_FATAPRINTF ("while loading %s failed to load t_items %s",
-		      ldr.ldr_sqlpath, errmsg);
-  }
-  /// load the modules
-  int modulecount = 0;
-  for (;;)
-    {
-      int stepres = sqlite3_step (ldr.ldr_sqlstmt_module_fetch);
-      if (stepres == SQLITE_DONE)
-	break;
-      else if (stepres == SQLITE_ROW)
-	{
-	  modulecount++;
-	  const unsigned char *modulename
-	    = sqlite3_column_text (ldr.ldr_sqlstmt_module_fetch, 0);
-	  MOM_DEBUGPRINTF (load, "loading module #%d %s", modulecount,
-			   modulename);
-	  if (!mom_load_module (ldr.ldr_dirpath, (const char *) modulename))
-	    MOM_FATAPRINTF ("failed to load module  #%d %s", modulecount,
-			    modulename);
-	}
-    }
-  MOM_INFORMPRINTF ("loaded #%d modules", modulecount);
+
   /// count the items and grow the hash table for them
   {
-    int nbitems = 0;
     char *errmsg = NULL;
     if (sqlite3_exec
 	(ldr.ldr_sqlite, "SELECT COUNT(*) FROM t_items",
@@ -1356,10 +1340,43 @@ mom_initial_load (const char *ldirnam)
 	  }
 	MOM_GC_FREE (oldhtbl);
 	assert (ldr.ldr_hcount == oldcount);
-      }
+      };
+    /// set up the root item table
+    unsigned siz = ldr.ldr_rootitems_size = nbitems + 2;
+    ldr.ldr_rootitems_count = 0;
+    ldr.ldr_rootitems_arr =
+      MOM_GC_ALLOC ("load root item array", siz * sizeof (momitem_t *));
   }
-
-
+  /// build the empty items in root and append them to the root item table
+  /// to avoid finalizing them during load
+  {
+    char *errmsg = NULL;
+    if (sqlite3_exec
+	(ldr.ldr_sqlite, "SELECT itm_idstr FROM t_items",
+	 build_root_items_cb_mom, &ldr, &errmsg))
+      MOM_FATAPRINTF ("while loading %s failed to load t_items %s",
+		      ldr.ldr_sqlpath, errmsg);
+  }
+  /// load the modules
+  int modulecount = 0;
+  for (;;)
+    {
+      int stepres = sqlite3_step (ldr.ldr_sqlstmt_module_fetch);
+      if (stepres == SQLITE_DONE)
+	break;
+      else if (stepres == SQLITE_ROW)
+	{
+	  modulecount++;
+	  const unsigned char *modulename
+	    = sqlite3_column_text (ldr.ldr_sqlstmt_module_fetch, 0);
+	  MOM_DEBUGPRINTF (load, "loading module #%d %s", modulecount,
+			   modulename);
+	  if (!mom_load_module (ldr.ldr_dirpath, (const char *) modulename))
+	    MOM_FATAPRINTF ("failed to load module  #%d %s", modulecount,
+			    modulename);
+	}
+    }
+  MOM_INFORMPRINTF ("loaded #%d modules", modulecount);
   /// load the named items
   int namedrowcount = 0;
   for (;;)
@@ -1552,6 +1569,8 @@ mom_load_module (const char *dirpath, const char *modulename)
   assert (dirpath != NULL);
   if (!modulename || !modulename[0])
     return false;
+  MOM_DEBUG (load, MOMOUT_LITERAL ("load_module modulename="),
+	     MOMOUT_LITERALV (modulename));
   memset (srcpath, 0, sizeof (srcpath));
   memset (sopath, 0, sizeof (sopath));
   if (strlen (dirpath) + strlen (modulename) + 16 > MOM_PATH_MAX)
