@@ -470,89 +470,105 @@ complete_command_mom (const char *cmd)
   return MOM_NULLV;
 }
 
-// readline completion entry function
-static char *
-cmd_completion_entry_mom (const char *text, int state)
+// readline attempted completion entry function
+// return a NULL terminated array of strdup-ed strings
+static char **
+cmd_attempt_compl_mom (const char *text, int start, int end)
 {
-  // the text is not physically inside rl_line_buffer
-  static bool star = false;
-  static momval_t jarr;
-  MOM_DEBUGPRINTF
-    (cmd,
-     "cmd_completion_entry text='%s' rl_line_buffer='%s' state=%d",
-     text, rl_line_buffer, state);
-  if (!state)
+  int textlen = strlen (text);
+  char **rescompl = NULL;
+  momval_t jarr = MOM_NULLV;
+  char *prefix = NULL;
+  if (MOM_IS_DEBUGGING (cmd))
     {
-      star = false;
-      jarr = MOM_NULLV;
-      MOM_DEBUGPRINTF (cmd, "point=%d end=%d mark=%d",
-		       rl_point, rl_end, rl_mark);
-      if (rl_line_buffer[0] == '*'
-	  && (isalpha (rl_line_buffer[1] || rl_line_buffer[1] == '_')))
-	{
-	  star = true;
-	  jarr = complete_name_or_ident_mom (text + 1);
-	  MOM_DEBUG (cmd, MOMOUT_LITERAL ("cmd_completion_entry star jarr="),
-		     MOMOUT_VALUE (jarr), NULL);
-	}
-      else if (rl_line_buffer[0] == ',')
-	{
-	  jarr = complete_command_mom (rl_line_buffer + 1);
-	  MOM_DEBUG (cmd,
-		     MOMOUT_LITERAL ("cmd_completion_entry command jarr="),
-		     MOMOUT_VALUE (jarr), NULL);
-	}
-      else if (rl_line_buffer[0] == '$' && isalpha (rl_line_buffer[1]))
-	{
-	  jarr = complete_word_mom (rl_line_buffer + 1);
-	  MOM_DEBUG (cmd,
-		     MOMOUT_LITERAL ("cmd_completion_entry dollar jarr="),
-		     MOMOUT_VALUE (jarr), NULL);
-	}
-      else if (isalpha (text[0]))
-	{
-	  jarr = complete_name_or_ident_mom (text);
-	  MOM_DEBUG (cmd, MOMOUT_LITERAL ("cmd_completion_entry name jarr="),
-		     MOMOUT_VALUE (jarr), NULL);
-	}
-      else if (text[0] == '_' && isalnum (text[1]) && isalnum (text[2]))
-	{
-	  // a line starting with some id-like thing is tab-expanded
-	  // to the set of items of id prefixed by the text
-	  jarr = complete_name_or_ident_mom (text);
-	  MOM_DEBUG (cmd, MOMOUT_LITERAL ("cmd_completion_entry ident jarr="),
-		     MOMOUT_VALUE (jarr), NULL);
-	}
-      MOM_DEBUG (cmd, MOMOUT_LITERAL ("cmd_completion_entry jarr="),
-		 MOMOUT_VALUE (jarr),
-		 MOMOUT_LITERAL (" for text:"),
-		 MOMOUT_LITERALV ((const char *) text));
-    }				/* end if state==0 */
-  ///
-  MOM_DEBUG (cmd, MOMOUT_LITERAL ("cmd_completion_entry jarr="),
-	     MOMOUT_VALUE (jarr),
-	     MOMOUT_LITERAL (" state#"),
-	     MOMOUT_DEC_INT ((int) state),
-	     MOMOUT_LITERAL (" for text:"),
-	     MOMOUT_LITERALV ((const char *) text));
-  if (state >= 0 && jarr.ptr && state < (int) mom_json_array_size (jarr))
+      fputs ("\n\t", stderr);
+      fflush (NULL);
+    };
+  MOM_DEBUGPRINTF (cmd,
+		   "cmd_attempt_compl text='%s' textlen=%d start=%d end=%d rline='%s'",
+		   text, textlen, start, end, rl_line_buffer);
+  // In comments the entering string is quoted, and <tab> means the tab keypress
+  //
+  // special cases first
+  if (rl_line_buffer[0] == ',' && start == 0 && textlen > 0
+      && isalpha (text[1]) && !strncmp (text, rl_line_buffer + 1, textlen))
     {
-      const char *restr = mom_string_cstr (mom_json_array_nth (jarr, state));
-      MOM_DEBUGPRINTF (cmd, "cmd_completion state#%d restr=%s", state, restr);
-      if (restr)
+      // command completion, e.g. entering ",ex"<tab> gives start=0 end=3 rline=",ex" text=",ex"
+      MOM_DEBUGPRINTF (cmd, "cmd_attempt_compl command text='%s'", text);
+      jarr = complete_command_mom (text + 1);
+    }
+  else if (rl_line_buffer[0] == '$' && start == 1 && textlen > 0
+	   && isalpha (text[0]))
+    {
+      // word completion, e.g. entering "$ab"<tab> gives start=1 end=2 rline="$ab" text="ab"
+      MOM_DEBUGPRINTF (cmd, "cmd_attempt_compl word text='%s'", text);
+      jarr = complete_word_mom (text);
+      prefix = "$";
+    }
+  else if (rl_line_buffer[0] == '$' && rl_line_buffer[1] == '='
+	   && isalpha (rl_line_buffer[2]) && start == 2)
+    {
+      // word-assign completion, e.g. entering "$=cd"<tab> gives start=2 end=4 text='cd'
+      MOM_DEBUGPRINTF (cmd, "cmd_attempt_compl wordaasign text='%s'", text);
+      jarr = complete_word_mom (text);
+      prefix = "$=";
+    }
+  else if (rl_line_buffer[0] == '$' && rl_line_buffer[1] == ':'
+	   && isalpha (rl_line_buffer[2]) && start == 2)
+    {
+      // word-exchange completion, e.g. entering "$:cd"<tab> gives start=2 end=4 text='cd'
+      MOM_DEBUGPRINTF (cmd, "cmd_attempt_compl wordexch text='%s'", text);
+      jarr = complete_word_mom (text);
+      prefix = "$:";
+    }
+  else if (rl_line_buffer[0] == '*' && start == 0
+	   && (isalpha (text[1]) || text[1] == '_'))
+    {
+      // connective completion, e.g. entering "*age"<tab> gives start=0 text='*age'
+      MOM_DEBUGPRINTF (cmd, "cmd_attempt_compl connective text='%s'", text);
+      jarr = complete_name_or_ident_mom (text + 1);
+      prefix = "*";
+    }
+  //================
+  //
+  // general case, name or ident completion everywhere on the line
+  else if ((text[0] == '_' && isalnum (text[1])) || isalpha (text[0]))
+    {
+      MOM_DEBUGPRINTF (cmd, "cmd_attempt_compl nameid text='%s'", text);
+      jarr = complete_name_or_ident_mom (text);
+    }
+  MOM_DEBUG (cmd, MOMOUT_LITERAL ("cmd_attempt_compl jarr="),
+	     MOMOUT_VALUE ((const momval_t) jarr),
+	     MOMOUT_LITERALV ((const char *) (prefix ? " prefix=" :
+					      " noprefix")),
+	     MOMOUT_LITERALV ((const char *) prefix), NULL);
+  int sizjarr = mom_json_array_size (jarr);
+  if (sizjarr > 0)
+    {
+      rescompl = calloc (sizjarr + 1, sizeof (char *));
+      if (!rescompl)
+	MOM_FATAPRINTF
+	  ("cmd_attempt_compl failed to allocate rescompl of size %d",
+	   sizjarr);
+      MOM_DEBUGPRINTF (cmd, "cmd_attempt_compl rescompl@%p sizjarr=%d",
+		       (void *) rescompl, sizjarr);
+      for (int ix = 0; ix < sizjarr; ix++)
 	{
-	  if (!star)
-	    return strdup (restr);
+	  const char *curstr =
+	    mom_string_cstr (mom_json_array_nth (jarr, ix));
+	  assert (curstr != NULL);
+	  if (prefix)
+	    asprintf (rescompl + ix, "%s%s", prefix, curstr);
 	  else
-	    {
-	      char *p = NULL;
-	      asprintf (&p, "*%s", restr);
-	      return p;
-	    }
+	    rescompl[ix] = strdup (curstr);
+	  MOM_DEBUGPRINTF (cmd, "cmd_attempt_compl rescompl[%d]=%s", ix,
+			   rescompl[ix]);
 	}
     }
-  MOM_DEBUGPRINTF (cmd, "cmd_completion fail state#%d", state);
-  return NULL;
+  else
+    MOM_DEBUGPRINTF (cmd, "cmd_attempt_compl failure so NULL");
+  rl_attempted_completion_over = true;
+  return rescompl;
 }
 
 
@@ -1990,7 +2006,7 @@ mom_plugin_init (const char *arg)
   MOM_DEBUGPRINTF (cmd, "start of " __FILE__ " arg=%s", arg);
   rl_initialize ();
   rl_readline_name = "monimelt";
-  rl_completion_entry_function = cmd_completion_entry_mom;
+  rl_attempted_completion_function = cmd_attempt_compl_mom;
 }
 
 static void
