@@ -46,7 +46,6 @@ const char mom_plugin_GPL_compatible[] = "GPLv3+";
   CMD(getat,"[attr]; get attribute",itm,":=")                   \
   CMD(help,"give this help",non,"?")                            \
   CMD(insert,"N; insert top inside stack",num,"<!")             \
-  CMD(letters,"show letters values",non,"$$")                   \
   CMD(mark,"push mark",non,"(")                                 \
   CMD(named,"[Regexp]",non,NULL)                                \
   CMD(node,"[Connective]; make node to mark",itm,"*")           \
@@ -57,6 +56,7 @@ const char mom_plugin_GPL_compatible[] = "GPLv3+";
   CMD(quit,"quit without dumping",non,NULL)                     \
   CMD(remat,"[attr]; remove attribute",itm,":-")                \
   CMD(remove,"N; remove inside stack & push",num,">-")          \
+  CMD(remword,"remove word",non,"$<")                           \
   CMD(set,"make set to mark",num,"}")                           \
   CMD(shell,"[command]; run a command",non,"#!")                \
   CMD(stack,"print the stack",non,"!")                          \
@@ -64,6 +64,7 @@ const char mom_plugin_GPL_compatible[] = "GPLv3+";
   CMD(swap,"swap with N-th stackelem",num,NULL)                 \
   CMD(top,"print the top of stack",non,"=")                     \
   CMD(tuple,"make tuple to mark",num,"]")                       \
+  CMD(words,"show words values",non,"$$")                       \
   CMD(xplode,"explode top aggregate",non,"&")                   \
 				/* end of COMMANDS */
 
@@ -72,13 +73,139 @@ static momval_t *vst_valarr_mom;
 static unsigned vst_size_mom;
 static unsigned vst_top_mom;
 
-static momval_t vst_letterval_mom[30];
 
 #define ANSI_BOLD "\e[1m"
 #define ANSI_NORMAL "\e[0m"
 
 #define COMMENTED_OUTPUT_MOM /*commented output:*/ \
   (mom_stdout->mout_flags & outf_comment)
+
+// the word bindings
+#define WORDLEN_MOM 24
+struct wordbind_mom_st
+{
+  char wb_word[WORDLEN_MOM];
+  momval_t wb_val;
+};
+
+// array of bindings in alphanumerical order
+static struct wordbind_mom_st *wbind_arr_mom;
+static unsigned wbind_count_mom;
+static unsigned wbind_size_mom;
+
+// find a word binding
+static momval_t
+word_get_bind_mom (const char *word, int *ppos)
+{
+  int lo = 0, hi = 0, md = 0;
+  if (!word || !isalpha (word[0]) || !wbind_arr_mom || wbind_count_mom == 0)
+    {
+      if (ppos)
+	*ppos = -1;
+      return MOM_NULLV;
+    }
+  assert (wbind_count_mom > 0);
+  assert (wbind_count_mom <= wbind_size_mom);
+  lo = 0;
+  hi = (int) wbind_count_mom - 1;
+  while (lo + 2 < hi)
+    {
+      md = (lo + hi) / 2;
+      struct wordbind_mom_st *cwb = wbind_arr_mom + md;
+      assert (cwb->wb_word[WORDLEN_MOM - 1] == (char) 0);
+      if (strcmp (word, cwb->wb_word) < 0)
+	hi = md;
+      else
+	lo = md;
+    }
+  for (md = lo; md < hi; md++)
+    {
+      struct wordbind_mom_st *cwb = wbind_arr_mom + md;
+      assert (cwb->wb_word[WORDLEN_MOM - 1] == (char) 0);
+      if (!strcmp (word, cwb->wb_word))
+	{
+	  if (ppos)
+	    *ppos = md;
+	  return cwb->wb_val;
+	}
+    }
+  if (ppos)
+    *ppos = -1;
+  return MOM_NULLV;
+}
+
+// internal for qsort
+static int
+word_bind_compare_mom (const void *p1, const void *p2)
+{
+  const struct wordbind_mom_st *b1 = p1;
+  const struct wordbind_mom_st *b2 = p2;
+  return strncmp (b1->wb_word, b2->wb_word, WORDLEN_MOM);
+}
+
+// add a word binding
+static void
+word_add_bind_mom (const char *word, momval_t val, int *ppos)
+{
+  int oldpos = -1;
+  if (!word || !isalpha (word[0]) || strlen (word) >= WORDLEN_MOM)
+    {
+      if (ppos)
+	*ppos = -1;
+      return;
+    }
+  (void) word_get_bind_mom (word, &oldpos);
+  if (oldpos >= 0)
+    {
+      wbind_arr_mom[oldpos].wb_val = val;
+      if (ppos)
+	*ppos = oldpos;
+      return;
+    }
+  if (wbind_count_mom + 2 >= wbind_size_mom)
+    {
+      unsigned newsiz = ((5 + 3 * wbind_count_mom / 2) | 0xf);
+      assert (newsiz > wbind_size_mom);
+      struct wordbind_mom_st *newarr = MOM_GC_ALLOC ("wordbind",
+						     newsiz *
+						     sizeof (struct
+							     wordbind_mom_st));
+      if (wbind_count_mom > 0)
+	{
+	  memcpy (newarr, wbind_arr_mom,
+		  wbind_count_mom * sizeof (struct wordbind_mom_st));
+	  MOM_GC_FREE (wbind_arr_mom);
+	}
+      wbind_arr_mom = newarr;
+      wbind_size_mom = newsiz;
+    }
+  // not cute, but easy... append the binding & sort
+  strncpy (wbind_arr_mom[wbind_count_mom].wb_word, word, WORDLEN_MOM);
+  wbind_arr_mom[wbind_count_mom].wb_val = val;
+  wbind_count_mom++;
+  qsort (wbind_arr_mom, wbind_count_mom, sizeof (struct wordbind_mom_st),
+	 word_bind_compare_mom);
+}
+
+
+static bool
+word_remove_bind_mom (const char *word)
+{
+  int oldpos = -1;
+  if (!word || !isalpha (word[0]) || strlen (word) >= WORDLEN_MOM)
+    return false;
+  (void) word_get_bind_mom (word, &oldpos);
+  if (oldpos >= 0)
+    {
+      for (int ix = oldpos; ix < (int) wbind_count_mom; ix++)
+	wbind_arr_mom[ix] = wbind_arr_mom[ix + 1];
+      memset (wbind_arr_mom + wbind_count_mom, 0,
+	      sizeof (struct wordbind_mom_st));
+      return true;
+    }
+  else
+    return false;
+}
 
 static void
 cmd_stack_push_mom (momval_t val)
@@ -607,9 +734,9 @@ cmd_do_help_mom (const char *lin)
   printf ("    names or identifiers pushes their corresponding items\n");
   printf ("    _ or an unknown name proposes to create an item\n");
   printf ("    numbers like 1.2 or -23 are pushed\n");
-  printf ("    $a ... $z pushes the letter value.\n");
-  printf ("    $=a ... $=z sets the letter value.\n");
-  printf ("    $:a ... $:z swaps the letter value with top-of-stack.\n");
+  printf ("    $word pushes the word value.\n");
+  printf ("    $=word sets the word value.\n");
+  printf ("    $:word swaps the word value with top-of-stack.\n");
 
   putchar ('\n');
   fflush (NULL);
@@ -765,6 +892,29 @@ cmd_do_mark_mom (const char *lin)
   add_history (",mark");
 }
 
+
+static void
+cmd_do_remword_mom (const char *lin)
+{
+  char word[WORDLEN_MOM];
+  memset (word, 0, sizeof (word));
+  const char *pc = lin;
+  int wlen = 0;
+  while (isspace (*pc))
+    pc++;
+  while ((isalpha (*pc) || (wlen > 0 && isalnum (*pc))) && wlen < WORDLEN_MOM)
+    word[wlen++] = *(pc++);
+  if (wlen > 0 && wlen < WORDLEN_MOM && word_remove_bind_mom (word))
+    {
+      char cmdbuf[WORDLEN_MOM + 16];
+      memset (cmdbuf, 0, sizeof (cmdbuf));
+      snprintf (cmdbuf, sizeof (cmdbuf), ",remword %s", word);
+      add_history (cmdbuf);
+      printf ("removed word " ANSI_BOLD "%s" ANSI_NORMAL "\n", word);
+    }
+  else
+    printf ("bad word %s to remove\n", word);
+}
 
 static void
 cmd_do_forget_mom (const char *lin, bool pres, momitem_t *itm)
@@ -1480,16 +1630,19 @@ cmd_do_top_mom (const char *lin)
 }
 
 static void
-cmd_do_letters_mom (const char *lin)
+cmd_do_words_mom (const char *lin)
 {
-  MOM_DEBUGPRINTF (cmd, "start do_letter lin=%s", lin);
+  MOM_DEBUGPRINTF (cmd, "start do_words lin=%s", lin);
   int cnt = 0;
-  for (int c = 'a'; c <= 'z'; c++)
+  for (unsigned wix = 0; wix < wbind_count_mom; wix++)
     {
-      momval_t curv = vst_letterval_mom[c - 'a'];
+      momval_t curv = wbind_arr_mom[wix].wb_val;
       if (!curv.ptr)
 	continue;
-      printf (" " ANSI_BOLD "$%c" ANSI_NORMAL "  ", c);
+      const char *word = wbind_arr_mom[wix].wb_word;
+      assert (wbind_arr_mom[wix].wb_word[WORDLEN_MOM - 1] == (char) 0
+	      && strlen (word) < WORDLEN_MOM);
+      printf (" " ANSI_BOLD "$%s" ANSI_NORMAL "  ", word);
       MOM_OUT (mom_stdout, MOMOUT_VALUE (curv));
       if (mom_is_item (curv) && !COMMENTED_OUTPUT_MOM)
 	{
@@ -1502,8 +1655,8 @@ cmd_do_letters_mom (const char *lin)
       MOM_OUT (mom_stdout, MOMOUT_NEWLINE (), MOMOUT_FLUSH ());
       cnt++;
     }
-  printf (ANSI_BOLD "*** %d letters ***" ANSI_NORMAL "\n", cnt);
-  add_history (",letter");
+  printf (ANSI_BOLD "*** %d words ***" ANSI_NORMAL "\n", cnt);
+  add_history (",words");
 }
 
 
@@ -1977,26 +2130,30 @@ cmd_interpret_mom (const char *lin)
 	      mom_string_cstr (nstrv));
       return;
     }
-  else if (lin[0] == '$' && isalpha (lin[1]))
+  else if (lin[0] == '$' && isalpha (lin[1])
+	   && strlen (lin + 1) <= WORDLEN_MOM)
     {
-      char c = tolower (lin[1]);
-      if (c >= 'a' && c <= 'z')
+      const char *word = lin + 1;
+      int wpos = -1;
+      for (const char *pc = word; *pc; pc++)
+	if (!isalnum (pc) && *pc != '_')
+	  goto bad_command;
+      momval_t valv = word_get_bind_mom (word, &wpos);
+      if (valv.ptr)
 	{
-	  momval_t valv = vst_letterval_mom[c - 'a'];
-	  if (valv.ptr)
-	    {
-	      char cmdbuf[8];
-	      printf (ANSI_BOLD "pushed temporary %c" ANSI_NORMAL "\n", c);
-	      snprintf (cmdbuf, sizeof (cmdbuf), "$%c", c);
-	      add_history (cmdbuf);
-	      cmd_stack_push_mom (valv);
-	      return;
-	    }
-	  else
-	    printf (ANSI_BOLD "no temporary %c" ANSI_NORMAL "\n", c);
+	  char cmdbuf[8 + WORDLEN_MOM];
+	  printf (ANSI_BOLD "pushed temporary word %s" ANSI_NORMAL "\n",
+		  word);
+	  snprintf (cmdbuf, sizeof (cmdbuf), "$%s", word);
+	  add_history (cmdbuf);
+	  cmd_stack_push_mom (valv);
+	  return;
 	}
       else
-	goto bad_command;
+	{
+	  printf (ANSI_BOLD "no temporary word %s" ANSI_NORMAL "\n", word);
+	  goto bad_command;
+	}
     }
   else if (lin[0] == '$' && isdigit (lin[1]))
     {
@@ -2005,56 +2162,66 @@ cmd_interpret_mom (const char *lin)
       cmd_do_dup_mom ("", true, rk);
       return;
     }
-  else if (lin[0] == '$' && lin[1] == '=' && isalpha (lin[2]))
+  else if (lin[0] == '$' && lin[1] == '=' && isalpha (lin[2])
+	   && strlen (lin + 2) < WORDLEN_MOM)
     {
-      char cmdbuf[8];
-      char c = tolower (lin[2]);
-      if (c >= 'a' && c <= 'z')
+      const char *word = lin + 2;
+      int wpos = -1;
+      char cmdbuf[8 + WORDLEN_MOM];
+      memset (cmdbuf, 0, sizeof (cmdbuf));
+      for (const char *pc = word; *pc; pc++)
+	if (!isalnum (pc) && *pc != '_')
+	  goto bad_command;
+      if (vst_top_mom == 0)
 	{
-	  if (vst_top_mom == 0)
-	    {
-	      printf (ANSI_BOLD "empty stack, so untouched temporary %c"
-		      ANSI_NORMAL "\n", c);
-	      return;
-	    }
-	  momval_t valv = cmd_stack_nth_value_mom (-1);
-	  if (valv.ptr)
-	    {
-	      printf (ANSI_BOLD "set temporary %c" ANSI_NORMAL "\n", c);
-	      snprintf (cmdbuf, sizeof (cmdbuf), "$=%c", c);
-	      add_history (cmdbuf);
-	    }
-	  else
-	    {
-	      printf (ANSI_BOLD "cleared temporary %c" ANSI_NORMAL "\n", c);
-	      snprintf (cmdbuf, sizeof (cmdbuf), "$=%c", c);
-	      add_history (cmdbuf);
-	    }
-	  vst_letterval_mom[c - 'a'] = valv;
-	  cmd_stack_pop_mom (1);
+	  printf (ANSI_BOLD "empty stack, so untouched temporary word %s"
+		  ANSI_NORMAL "\n", word);
 	  return;
+	}
+      momval_t valv = cmd_stack_nth_value_mom (-1);
+      if (valv.ptr)
+	{
+	  printf (ANSI_BOLD "set temporary word %s" ANSI_NORMAL "\n", word);
+	  snprintf (cmdbuf, sizeof (cmdbuf), "$=%s", word);
+	  word_add_bind_mom (word, valv, &wpos);
+	  add_history (cmdbuf);
+	}
+      else if (word_remove_bind_mom (word))
+	{
+	  printf (ANSI_BOLD "removed temporary word %s" ANSI_NORMAL "\n",
+		  word);
+	  snprintf (cmdbuf, sizeof (cmdbuf), ",remword %s", word);
+	  add_history (cmdbuf);
 	}
       else
 	goto bad_command;
+      cmd_stack_pop_mom (1);
+      return;
     }
-  else if (lin[0] == '$' && lin[1] == ':' && isalpha (lin[2]))
-    {
-      char c = tolower (lin[2]);
-      if (c >= 'a' && c <= 'z')
+  else if (lin[0] == '$' && lin[1] == ':' && isalpha (lin[2])
+	   && strlen (lin + 2) < WORDLEN_MOM)
+    {				// swap with word
+      const char *word = lin + 2;
+      int wpos = -1;
+      for (const char *pc = word; *pc; pc++)
+	if (!isalnum (pc) && *pc != '_')
+	  goto bad_command;
+      if (vst_top_mom == 0)
 	{
-	  if (vst_top_mom == 0)
-	    {
-	      printf (ANSI_BOLD "empty stack, so untouched temporary %c"
-		      ANSI_NORMAL "\n", c);
-	      return;
-	    }
-	  momval_t valv = cmd_stack_nth_value_mom (-1);
-	  momval_t oldvalv = vst_letterval_mom[c - 'a'];
-	  char cmdbuf[8];
-	  printf (ANSI_BOLD "swap temporary %c" ANSI_NORMAL "\n", c);
-	  snprintf (cmdbuf, sizeof (cmdbuf), "$:%c", c);
+	  printf (ANSI_BOLD "empty stack, so untouched temporary %s"
+		  ANSI_NORMAL "\n", word);
+	  return;
+	}
+      momval_t valv = cmd_stack_nth_value_mom (-1);
+      momval_t oldvalv = word_get_bind_mom (word, &wpos);
+      word_add_bind_mom (word, valv, &wpos);
+      if (wpos > 0)
+	{
+	  char cmdbuf[8 + WORDLEN_MOM];
+	  memset (cmdbuf, 0, sizeof (cmdbuf));
+	  printf (ANSI_BOLD "swap temporary %s" ANSI_NORMAL "\n", word);
+	  snprintf (cmdbuf, sizeof (cmdbuf), "$:%s", word);
 	  add_history (cmdbuf);
-	  vst_letterval_mom[c - 'a'] = valv;
 	  cmd_stack_pop_mom (1);
 	  cmd_stack_push_mom (oldvalv);
 	  return;

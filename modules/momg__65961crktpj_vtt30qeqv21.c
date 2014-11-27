@@ -58,7 +58,7 @@ static momitem_t* momfconstitems__06uk4pppvx9_huv0v11v18j[1]; // constant items 
 
 static const momitem_t* mompconstitems__07zti91e4kd_952zqsd03fz[1]; // define constant items of procedure _07zti91e4kd_952zqsd03fz
 
-static const momitem_t* mompconstitems__0z0rsvwfkcj_dcpkx68i074[2]; // define constant items of procedure show_html_for_item_proc
+static const momitem_t* mompconstitems__0z0rsvwfkcj_dcpkx68i074[3]; // define constant items of procedure show_html_for_item_proc
 
 static const momitem_t* mompconstitems__7x6as13park_w64mrkx2xtm[11]; // define constant items of procedure _7x6as13park_w64mrkx2xtm
 
@@ -359,7 +359,7 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
    
    //! instr#2 in block _02yd241wh4z_tca7i6iamf3 ::
    /*!assign*/  (mompval_3/*:hitmv*/) = (/*!primitive mom_item_websession_get*/  mom_item_websession_get (
-   (mompval_1/*:webses*/).ptr,  ((momval_t) mompconstitems__0z0rsvwfkcj_dcpkx68i074[0] /*hset*/).ptr)/*!endprimitive mom_item_websession_get*/) ;
+   (mompval_1/*:webses*/).ptr,  ((momval_t) mompconstitems__0z0rsvwfkcj_dcpkx68i074[1] /*hset*/).ptr)/*!endprimitive mom_item_websession_get*/) ;
    
    //! instr#3 in block _02yd241wh4z_tca7i6iamf3 ::
    /*!if*/ if ((/*!primitive is_nil*/  (intptr_t) (NULL == ( (mompval_3/*:hitmv*/)).ptr)/*!endprimitive is_nil*/) )
@@ -400,7 +400,7 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
    
    //! instr#3 in block _34w40p46vwp_pw6u3d75ww6 ::
    /*!do*/ /*!primitive-void mom_item_websession_put*/  mom_item_websession_put (
-   (mompval_1/*:webses*/).pitem,  ((momval_t) mompconstitems__0z0rsvwfkcj_dcpkx68i074[0] /*hset*/).pitem, 
+   (mompval_1/*:webses*/).pitem,  ((momval_t) mompconstitems__0z0rsvwfkcj_dcpkx68i074[1] /*hset*/).pitem, 
    (mompval_3/*:hitmv*/))/*!endvoidprimitive mom_item_websession_put*/  /*!done*/;
    
    //! instr#4 in block _34w40p46vwp_pw6u3d75ww6 ::
@@ -421,6 +421,10 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
    mompblo_3: { // procedure block _591chiicj6r_512iim4cf4m
    ////!show anonymous in show_html_for_item..
    
+   
+   //! instr#1 in block _591chiicj6r_512iim4cf4m ::
+   /*!assign*/  (mompval_2/*:commv*/) = (/*!primitive get_attribute*/  mom_item_get_attribute(
+   momparg_1.ptr,  ((momval_t) mompconstitems__0z0rsvwfkcj_dcpkx68i074[0] /*comment*/).ptr)/*!endprimitive get_attribute*/) ;
    
   }; // end procedure block _591chiicj6r_512iim4cf4m
   return;
@@ -459,14 +463,15 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
   } // end of procedure momprocfun_show_html_for_item_proc
   
   
-  static const char* const mompconstid__0z0rsvwfkcj_dcpkx68i074[2] = {
-   [0] = "_7fafkrcdjpd_dy0zpqsshr6", // hset
+  static const char* const mompconstid__0z0rsvwfkcj_dcpkx68i074[3] = {
+   [0] = "_41u1utcxyek_22cftxt3xxm", // comment
+   [1] = "_7fafkrcdjpd_dy0zpqsshr6", // hset
   }; // end of procedure constant item ids of show_html_for_item_proc
   
   
   const struct momprocrout_st momprocdescr__0z0rsvwfkcj_dcpkx68i074 = { .prout_magic = MOM_PROCROUT_MAGIC,
    .prout_resty = momtypenc__none,
-   .prout_len = 1,
+   .prout_len = 2,
    .prout_id = "_0z0rsvwfkcj_dcpkx68i074",
    .prout_module = "_65961crktpj_vtt30qeqv21",
    .prout_constantids = mompconstid__0z0rsvwfkcj_dcpkx68i074,
