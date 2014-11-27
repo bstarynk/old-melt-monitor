@@ -77,6 +77,9 @@ static momval_t vst_letterval_mom[30];
 #define ANSI_BOLD "\e[1m"
 #define ANSI_NORMAL "\e[0m"
 
+#define COMMENTED_OUTPUT_MOM /*commented output:*/ \
+  (mom_stdout->mout_flags & outf_comment)
+
 static void
 cmd_stack_push_mom (momval_t val)
 {
@@ -1300,6 +1303,7 @@ static void
 cmd_do_comment_mom (const char *lin)
 {
   MOM_DEBUGPRINTF (cmd, "start do_comment lin=%s top=%d", lin, vst_top_mom);
+  // see also COMMENTED_OUTPUT_MOM
   if (mom_stdout->mout_flags & outf_comment)
     {
       mom_stdout->mout_flags &= ~outf_comment;
@@ -1351,7 +1355,7 @@ cmd_do_stack_mom (const char *lin)
 	      MOM_OUT (mom_stdout, MOMOUT_VALUE (curval));
 	      if (mom_is_item (curval)
 		  && !mom_item_get_name (curval.pitem)
-		  && !mom_stdout->mout_flags & outf_comment)
+		  && !COMMENTED_OUTPUT_MOM)
 		{
 		  momval_t commentv;
 		  mom_lock_item (curval.pitem);
@@ -1442,8 +1446,7 @@ cmd_do_top_mom (const char *lin)
 	      commentv =
 		mom_item_get_attribute (curval.pitem, mom_named__comment);
 	      mom_unlock_item (curval.pitem);
-	      if (mom_is_string (commentv) &&
-		  !(mom_stdout->mout_flags & outf_comment))
+	      if (mom_is_string (commentv) && !COMMENTED_OUTPUT_MOM)
 		MOM_OUT
 		  (mom_stdout,
 		   MOMOUT_SPACE (48),
@@ -1488,7 +1491,7 @@ cmd_do_letters_mom (const char *lin)
 	continue;
       printf (" " ANSI_BOLD "$%c" ANSI_NORMAL "  ", c);
       MOM_OUT (mom_stdout, MOMOUT_VALUE (curv));
-      if (mom_is_item (curv) && !(mom_stdout->mout_flags & outf_comment))
+      if (mom_is_item (curv) && !COMMENTED_OUTPUT_MOM)
 	{
 	  momval_t commv =
 	    mom_item_get_attribute (curv.pitem, mom_named__comment);
