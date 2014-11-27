@@ -358,7 +358,117 @@ static const struct cmd_descr_st cmd_array_mom[] = {
    NULL,.cmd_alias = NULL}
 };
 
+
 #define CMDARRSIZE_MOM (sizeof(cmd_array_mom)/sizeof(cmd_array_mom[0]))
+
+
+static momval_t
+complete_name_or_ident_mom (const char *text)
+{
+  momval_t jarr = MOM_NULLV;
+  momval_t tup = MOM_NULLV;
+  if (isalpha (text[0]))
+    {
+      tup = (momval_t) mom_alpha_ordered_tuple_of_named_prefixed_items (text,
+									&jarr);
+      unsigned nbent = mom_tuple_length (tup);
+      MOM_DEBUG (cmd, MOMOUT_LITERAL ("complete_name_or_ident_mom nbent:"),
+		 MOMOUT_DEC_INT ((int) nbent), MOMOUT_SPACE (32),
+		 MOMOUT_LITERAL ("jarr="),
+		 MOMOUT_VALUE ((const momval_t) jarr), NULL);
+      if (!nbent)
+	return MOM_NULLV;
+      else
+	return jarr;
+    }
+  else if (text[0] == '_')
+    {
+      momval_t setv = (momval_t) mom_set_of_items_of_ident_prefixed (text);
+      unsigned setcard = mom_set_cardinal (setv);
+      MOM_DEBUG (cmd, MOMOUT_LITERAL ("cmd_completion idprefix:"),
+		 MOMOUT_LITERALV ((const char *) text), MOMOUT_SPACE (48),
+		 MOMOUT_LITERAL ("set:"), MOMOUT_VALUE (setv));
+      momval_t *strarr =
+	MOM_GC_ALLOC ("strarr", (setcard + 1) * sizeof (momval_t));
+      for (unsigned ix = 0; ix < setcard; ix++)
+	strarr[ix] =
+	  (momval_t) mom_identv_of_item (mom_set_nth_item (setv, ix));
+      if (setcard > 0)
+	jarr = (momval_t) mom_make_json_array_count (setcard, strarr);
+      MOM_DEBUG (cmd,
+		 MOMOUT_LITERAL ("complete_name_or_ident idprefix card:"),
+		 MOMOUT_DEC_INT ((int) setcard), MOMOUT_SPACE (32),
+		 MOMOUT_LITERAL ("jarr="),
+		 MOMOUT_VALUE ((const momval_t) jarr), NULL);
+    }
+  return jarr;
+}
+
+static momval_t
+complete_word_mom (const char *word)
+{
+  int wordlen = 0;
+  if (!word || (wordlen = strlen (word)) >= WORDLEN_MOM
+      || !isalpha (word[0]) || wbind_count_mom == 0)
+    return MOM_NULLV;
+  momval_t *arr =
+    MOM_GC_ALLOC ("word-complete", (wbind_count_mom + 1) * sizeof (momval_t));
+  int cnt = 0;
+  for (int ix = 0; ix < (int) wbind_count_mom; ix++)
+    {
+      assert (cnt < (int) wbind_count_mom);
+      assert (wbind_arr_mom[ix].wb_word[WORDLEN_MOM - 1] == (char) 0);
+      if (!strncmp (wbind_arr_mom[ix].wb_word, word, wordlen))
+	{
+	  char buf[WORDLEN_MOM + 4];
+	  memset (buf, 0, sizeof (buf));
+	  buf[0] = '$';
+	  strncpy (buf + 1, wbind_arr_mom[ix].wb_word, WORDLEN_MOM);
+	  arr[cnt++] = (momval_t) mom_make_string (buf);
+	}
+    }
+  momval_t jarr = MOM_NULLV;
+  if (cnt > 0)
+    jarr = (momval_t) mom_make_json_array_count (cnt, arr);
+  MOM_GC_FREE (arr);
+  return jarr;
+}
+
+
+static momval_t
+complete_command_mom (const char *cmd)
+{
+  momval_t jarr = MOM_NULLV;
+  unsigned cmdlen = strlen (cmd);
+  unsigned nbent = 0;
+  momval_t jvals[CMDARRSIZE_MOM + 1] = { MOM_NULLV };
+  for (int ix = 0; ix < (int) CMDARRSIZE_MOM; ix++)
+    {
+      if (!cmd_array_mom[ix].cmd_name)
+	break;
+      if (!strncmp (cmd, cmd_array_mom[ix].cmd_name, cmdlen))
+	{
+	  jvals[nbent] =
+	    (momval_t)
+	    MOM_OUTSTRING (0, MOMOUT_LITERAL (","),
+			   MOMOUT_LITERALV ((const char *)
+					    cmd_array_mom[ix].cmd_name));
+	  nbent++;
+	}
+    }
+  MOM_DEBUGPRINTF (cmd, "completion_command nbent=%d", nbent);
+  if (nbent > 0)
+    {
+      jarr = (momval_t) mom_make_json_array_count (nbent, jvals);
+      MOM_DEBUG (cmd,
+		 MOMOUT_LITERAL ("completion_command nbent:"),
+		 MOMOUT_DEC_INT ((int) nbent), MOMOUT_SPACE (32),
+		 MOMOUT_LITERAL ("jarr="),
+		 MOMOUT_VALUE ((const momval_t) jarr), NULL);
+      return jarr;
+    }
+  return MOM_NULLV;
+}
 
 // readline completion entry function
 static char *
@@ -366,90 +476,61 @@ cmd_completion_entry_mom (const char *text, int state)
 {
   static bool star = false;
   static momval_t jarr;
-  MOM_DEBUGPRINTF (cmd, "cmd_completion_entry text='%s' state=%d", text,
-		   state);
+  MOM_DEBUGPRINTF (cmd,
+		   "cmd_completion_entry text='%s' rl_line_buffer='%s' state=%d",
+		   text, rl_line_buffer, state);
   if (!state)
     {
-      if (text[0] == '*')
+      star = false;
+      jarr = MOM_NULLV;
+      if (rl_line_buffer[0] == '*'
+	  && (isalpha (rl_line_buffer[1] || rl_line_buffer[1] == '_')))
 	{
 	  star = true;
-	  text++;
+	  jarr = complete_name_or_ident_mom (text + 1);
+	  MOM_DEBUG (cmd, MOMOUT_LITERAL ("cmd_completion_entry star jarr="),
+		     MOMOUT_VALUE (jarr), NULL);
 	}
-      else
-	star = false;
-      jarr = MOM_NULLV;
-      if (isalpha (text[0]))
+      else if (rl_line_buffer[0] == ',')
 	{
-	  jarr = MOM_NULLV;
-	  momval_t tup =
-	    (momval_t) mom_alpha_ordered_tuple_of_named_prefixed_items (text,
-									&jarr);
-	  unsigned nbent = mom_tuple_length (tup);
-	  MOM_DEBUG (cmd, MOMOUT_LITERAL ("cmd_completion name nbent:"),
-		     MOMOUT_DEC_INT ((int) nbent), MOMOUT_SPACE (32),
-		     MOMOUT_LITERAL ("jarr="),
-		     MOMOUT_VALUE ((const momval_t) jarr), NULL);
-	  if (!nbent)
-	    return NULL;
+	  jarr = complete_command_mom (rl_line_buffer + 1);
+	  MOM_DEBUG (cmd,
+		     MOMOUT_LITERAL ("cmd_completion_entry command jarr="),
+		     MOMOUT_VALUE (jarr), NULL);
 	}
-      else if (text[0] == ',')
+      else if (rl_line_buffer[0] == '$' && isalpha (rl_line_buffer[1]))
 	{
-	  jarr = MOM_NULLV;
-	  unsigned cmdlen = strlen (text + 1);
-	  unsigned nbent = 0;
-	  momval_t jvals[CMDARRSIZE_MOM + 1] = { MOM_NULLV };
-	  for (int ix = 0; ix < (int) CMDARRSIZE_MOM; ix++)
-	    {
-	      if (!cmd_array_mom[ix].cmd_name)
-		break;
-	      if (!strncmp (text + 1, cmd_array_mom[ix].cmd_name, cmdlen))
-		{
-		  jvals[nbent] =
-		    (momval_t)
-		    MOM_OUTSTRING (0, MOMOUT_LITERAL (","),
-				   MOMOUT_LITERALV ((const char *)
-						    cmd_array_mom
-						    [ix].cmd_name));
-		  nbent++;
-		}
-	    }
-	  MOM_DEBUGPRINTF (cmd, "cmd_completion command nbent=%d", nbent);
-	  if (nbent > 0)
-	    {
-	      jarr = (momval_t) mom_make_json_array_count (nbent, jvals);
-	      MOM_DEBUG (cmd,
-			 MOMOUT_LITERAL ("cmd_completion command nbent:"),
-			 MOMOUT_DEC_INT ((int) nbent), MOMOUT_SPACE (32),
-			 MOMOUT_LITERAL ("jarr="),
-			 MOMOUT_VALUE ((const momval_t) jarr), NULL);
-	    }
-	  else
-	    return NULL;
+	  jarr = complete_word_mom (rl_line_buffer + 1);
+	  MOM_DEBUG (cmd,
+		     MOMOUT_LITERAL ("cmd_completion_entry dollar jarr="),
+		     MOMOUT_VALUE (jarr), NULL);
+	}
+      else if (isalpha (text[0]))
+	{
+	  jarr = complete_name_or_ident_mom (text);
+	  MOM_DEBUG (cmd, MOMOUT_LITERAL ("cmd_completion_entry name jarr="),
+		     MOMOUT_VALUE (jarr), NULL);
 	}
       else if (text[0] == '_' && isalnum (text[1]) && isalnum (text[2]))
 	{
 	  // a line starting with some id-like thing is tab-expanded
 	  // to the set of items of id prefixed by the text
-	  jarr = MOM_NULLV;
-	  momval_t setv =
-	    (momval_t) mom_set_of_items_of_ident_prefixed (text);
-	  unsigned setcard = mom_set_cardinal (setv);
-	  MOM_DEBUG (cmd, MOMOUT_LITERAL ("cmd_completion idprefix:"),
-		     MOMOUT_LITERALV ((const char *) text), MOMOUT_SPACE (48),
-		     MOMOUT_LITERAL ("set:"), MOMOUT_VALUE (setv));
-	  momval_t *strarr =
-	    MOM_GC_ALLOC ("strarr", (setcard + 1) * sizeof (momval_t));
-	  for (unsigned ix = 0; ix < setcard; ix++)
-	    strarr[ix] =
-	      (momval_t) mom_identv_of_item (mom_set_nth_item (setv, ix));
-	  jarr = (momval_t) mom_make_json_array_count (setcard, strarr);
-	  MOM_DEBUG (cmd,
-		     MOMOUT_LITERAL ("cmd_completion idprefix card:"),
-		     MOMOUT_DEC_INT ((int) setcard), MOMOUT_SPACE (32),
-		     MOMOUT_LITERAL ("jarr="),
-		     MOMOUT_VALUE ((const momval_t) jarr), NULL);
+	  jarr = complete_name_or_ident_mom (text);
+	  MOM_DEBUG (cmd, MOMOUT_LITERAL ("cmd_completion_entry ident jarr="),
+		     MOMOUT_VALUE (jarr), NULL);
 	}
+      MOM_DEBUG (cmd, MOMOUT_LITERAL ("cmd_completion_entry jarr="),
+		 MOMOUT_VALUE (jarr),
+		 MOMOUT_LITERAL (" for text:"),
+		 MOMOUT_LITERALV ((const char *) text));
     }				/* end if state==0 */
+  ///
+  MOM_DEBUG (cmd, MOMOUT_LITERAL ("cmd_completion_entry jarr="),
+	     MOMOUT_VALUE (jarr),
+	     MOMOUT_LITERAL (" state#"),
+	     MOMOUT_DEC_INT ((int) state),
+	     MOMOUT_LITERAL (" for text:"),
+	     MOMOUT_LITERALV ((const char *) text));
   if (state >= 0 && jarr.ptr && state < (int) mom_json_array_size (jarr))
     {
       const char *restr = mom_string_cstr (mom_json_array_nth (jarr, state));
@@ -1642,7 +1723,7 @@ cmd_do_words_mom (const char *lin)
       const char *word = wbind_arr_mom[wix].wb_word;
       assert (wbind_arr_mom[wix].wb_word[WORDLEN_MOM - 1] == (char) 0
 	      && strlen (word) < WORDLEN_MOM);
-      printf (" " ANSI_BOLD "$%s" ANSI_NORMAL "  ", word);
+      printf (" " ANSI_BOLD "$%-12s" ANSI_NORMAL "  ", word);
       MOM_OUT (mom_stdout, MOMOUT_VALUE (curv));
       if (mom_is_item (curv) && !COMMENTED_OUTPUT_MOM)
 	{
@@ -2136,7 +2217,7 @@ cmd_interpret_mom (const char *lin)
       const char *word = lin + 1;
       int wpos = -1;
       for (const char *pc = word; *pc; pc++)
-	if (!isalnum (pc) && *pc != '_')
+	if (!isalnum (*pc) && *pc != '_')
 	  goto bad_command;
       momval_t valv = word_get_bind_mom (word, &wpos);
       if (valv.ptr)
@@ -2170,7 +2251,7 @@ cmd_interpret_mom (const char *lin)
       char cmdbuf[8 + WORDLEN_MOM];
       memset (cmdbuf, 0, sizeof (cmdbuf));
       for (const char *pc = word; *pc; pc++)
-	if (!isalnum (pc) && *pc != '_')
+	if (!isalnum (*pc) && *pc != '_')
 	  goto bad_command;
       if (vst_top_mom == 0)
 	{
@@ -2204,7 +2285,7 @@ cmd_interpret_mom (const char *lin)
       const char *word = lin + 2;
       int wpos = -1;
       for (const char *pc = word; *pc; pc++)
-	if (!isalnum (pc) && *pc != '_')
+	if (!isalnum (*pc) && *pc != '_')
 	  goto bad_command;
       if (vst_top_mom == 0)
 	{
