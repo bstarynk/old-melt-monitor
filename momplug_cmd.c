@@ -511,11 +511,12 @@ cmd_attempt_compl_mom (const char *text, int start, int end)
       jarr = complete_word_mom (text);
     }
   else if (rl_line_buffer[0] == '$' && rl_line_buffer[1] == ':'
-	   && isalpha (rl_line_buffer[2]) && start == 2)
+	   && isalpha (rl_line_buffer[2]) && start == 1)
     {
-      // word-exchange completion, e.g. entering "$:cd"<tab> gives start=2 end=4 text='cd'
+      // word-exchange completion, e.g. entering "$:cd"<tab> gives start=1 end=4 text=':cd'
       MOM_DEBUGPRINTF (cmd, "cmd_attempt_compl wordexch text='%s'", text);
-      jarr = complete_word_mom (text);
+      jarr = complete_word_mom (text + 1);
+      prefix = ":";
     }
   else if (rl_line_buffer[0] == '*' && start == 0
 	   && (isalpha (text[1]) || text[1] == '_'))
@@ -2249,6 +2250,10 @@ cmd_interpret_mom (char *lin)
 	}
       MOM_DEBUGPRINTF (cmd, "interpret word='%s'", word);
       momval_t valv = word_get_bind_mom (word, &wpos);
+      MOM_DEBUG (cmd, MOMOUT_LITERAL ("interpret word='"),
+		 MOMOUT_LITERALV ((const char *) word),
+		 MOMOUT_LITERAL ("'; valv="),
+		 MOMOUT_VALUE ((const momval_t) valv));
       if (valv.ptr)
 	{
 	  char cmdbuf[8 + WORDLEN_MOM];
@@ -2322,6 +2327,8 @@ cmd_interpret_mom (char *lin)
     {				// swap with word
       char *word = lin + 2;
       int wpos = -1;
+      MOM_DEBUGPRINTF (cmd, "interpret: swap word='%s' top=%d", word,
+		       vst_top_mom);
       for (char *pc = word; *pc; pc++)
 	{
 	  if (isspace (*pc))
@@ -2340,6 +2347,9 @@ cmd_interpret_mom (char *lin)
 	}
       momval_t valv = cmd_stack_nth_value_mom (-1);
       momval_t oldvalv = word_get_bind_mom (word, &wpos);
+      MOM_DEBUG (cmd, MOMOUT_LITERAL ("interpret swap word="),
+		 MOMOUT_LITERALV ((const char *) word),
+		 MOMOUT_LITERAL (" oldvalv="), MOMOUT_VALUE (oldvalv));
       word_add_bind_mom (word, valv, &wpos);
       if (wpos > 0)
 	{
