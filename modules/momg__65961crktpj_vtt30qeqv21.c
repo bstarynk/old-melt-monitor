@@ -333,9 +333,11 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
  , momval_t momparg_1 ////!_1a2aavj5vir_2hz681zdfqd
  )
  {
-  momval_t mompval_0 = MOM_NULLV; ////!webses
+  momval_t mompval_0 = MOM_NULLV; ////!namv
   
-  momval_t mompval_1 = MOM_NULLV; ////!hitmv
+  momval_t mompval_1 = MOM_NULLV; ////!webses
+  
+  momval_t mompval_2 = MOM_NULLV; ////!hitmv
   
   static momitem_t* momprocitem;
   if (MOM_UNLIKELY(!momprocitem)) momprocitem = mom_procedure_item_of_id("_0z0rsvwfkcj_dcpkx68i074");
@@ -344,7 +346,7 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
   
    mompblo_1:
   { // procedure block _02yd241wh4z_tca7i6iamf3
-   ////!start block of show_html_for_item_proc
+   ////!start of show_html_for_item..` (block)
    
    
    // locked-item webx in block _02yd241wh4z_tca7i6iamf3
@@ -352,15 +354,15 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
    if (!mom_lock_item (momlockeditem_4)) goto momendblock_4;
    
    //! instr#1 in block _02yd241wh4z_tca7i6iamf3 ::
-   /*!assign*/  (mompval_0/*:webses*/) = (/*!primitive mom_webx_session*/  (momval_t) mom_webx_session (
+   /*!assign*/  (mompval_1/*:webses*/) = (/*!primitive mom_webx_session*/  (momval_t) mom_webx_session (
    momparg_0.pitem) /*!endprimitive mom_webx_session*/) ;
    
    //! instr#2 in block _02yd241wh4z_tca7i6iamf3 ::
-   /*!assign*/  (mompval_1/*:hitmv*/) = (/*!primitive mom_item_websession_get*/  mom_item_websession_get (
-   (mompval_0/*:webses*/).ptr,  ((momval_t) mompconstitems__0z0rsvwfkcj_dcpkx68i074[0] /*hset*/).ptr)/*!endprimitive mom_item_websession_get*/) ;
+   /*!assign*/  (mompval_2/*:hitmv*/) = (/*!primitive mom_item_websession_get*/  mom_item_websession_get (
+   (mompval_1/*:webses*/).ptr,  ((momval_t) mompconstitems__0z0rsvwfkcj_dcpkx68i074[0] /*hset*/).ptr)/*!endprimitive mom_item_websession_get*/) ;
    
    //! instr#3 in block _02yd241wh4z_tca7i6iamf3 ::
-   /*!if*/ if ((/*!primitive is_nil*/  (intptr_t) (NULL == ( (mompval_1/*:hitmv*/)).ptr)/*!endprimitive is_nil*/) )
+   /*!if*/ if ((/*!primitive is_nil*/  (intptr_t) (NULL == ( (mompval_2/*:hitmv*/)).ptr)/*!endprimitive is_nil*/) )
     /*!unlock-goto*/ { mom_unlock_item (momlockeditem_4); 
     goto mompblo_2 /*!proc.block _34w40p46vwp_pw6u3d75ww6*/;
     }; //!unlocked momlockeditem_4
@@ -374,24 +376,25 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
   
    mompblo_2:
   { // procedure block _34w40p46vwp_pw6u3d75ww6
-   ////!block to create the item hset in the websession.
+   ////!create hset in show_html_for_item..
+   ////+ block to create the item hset in the web session
    
    
    // locked-item webses in block _34w40p46vwp_pw6u3d75ww6
-   momitem_t* momlockeditem_5 = mom_value_to_item ( (mompval_0/*:webses*/)) /* locked-item */;
+   momitem_t* momlockeditem_5 = mom_value_to_item ( (mompval_1/*:webses*/)) /* locked-item */;
    if (!mom_lock_item (momlockeditem_5)) goto momendblock_5;
    
    //! instr#1 in block _34w40p46vwp_pw6u3d75ww6 ::
-   /*!assign*/  (mompval_1/*:hitmv*/) = (/*!primitive mom_make_item*/  (momval_t)mom_make_item ()/*!endprimitive mom_make_item*/) ;
+   /*!assign*/  (mompval_2/*:hitmv*/) = (/*!primitive mom_make_item*/  (momval_t)mom_make_item ()/*!endprimitive mom_make_item*/) ;
    
    //! instr#2 in block _34w40p46vwp_pw6u3d75ww6 ::
    /*!do*/ /*!primitive-void mom_item_start_hset*/  mom_item_start_hset (
-   (mompval_1/*:hitmv*/).pitem)/*!endvoidprimitive mom_item_start_hset*/  /*!done*/;
+   (mompval_2/*:hitmv*/).pitem)/*!endvoidprimitive mom_item_start_hset*/  /*!done*/;
    
    //! instr#3 in block _34w40p46vwp_pw6u3d75ww6 ::
    /*!do*/ /*!primitive-void mom_item_websession_put*/  mom_item_websession_put (
-   (mompval_0/*:webses*/).pitem,  ((momval_t) mompconstitems__0z0rsvwfkcj_dcpkx68i074[0] /*hset*/).pitem, 
-   (mompval_1/*:hitmv*/))/*!endvoidprimitive mom_item_websession_put*/  /*!done*/;
+   (mompval_1/*:webses*/).pitem,  ((momval_t) mompconstitems__0z0rsvwfkcj_dcpkx68i074[0] /*hset*/).pitem, 
+   (mompval_2/*:hitmv*/))/*!endvoidprimitive mom_item_websession_put*/  /*!done*/;
    
    //! instr#4 in block _34w40p46vwp_pw6u3d75ww6 ::
    
@@ -410,7 +413,7 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
   
    mompblo_3:
   { // procedure block _7rxfx0rruqm_kdtk9pk7wtj
-   ////!block to display the itmv in show_html_for_item_proc 
+   ////!display itmv in show_html_for_item..` (block)
    
    
   }; // end procedure block _7rxfx0rruqm_kdtk9pk7wtj
@@ -418,12 +421,12 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
   
    mompblo_4:
   { // procedure block _9xhd87mskav_rqcu5eqk5te
-   ////!block of show_html_for_item_proc to put the given itmv in the hitmv hset
+   ////!put itmv into hset in show_html_form_item..` (block)
    
    
    //! instr#1 in block _9xhd87mskav_rqcu5eqk5te ::
    /*!do*/ (void) (/*!primitive mom_item_hset_add*/  (intptr_t) mom_item_hset_add (
-   (mompval_1/*:hitmv*/).pitem,  momparg_1)/*!endprimitive mom_item_hset_add*/)  /*!done*/;
+   (mompval_2/*:hitmv*/).pitem,  momparg_1)/*!endprimitive mom_item_hset_add*/)  /*!done*/;
    
   }; // end procedure block _9xhd87mskav_rqcu5eqk5te
   return;

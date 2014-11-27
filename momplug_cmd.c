@@ -223,7 +223,8 @@ static const struct cmd_descr_st cmd_array_mom[] = {
 			     .cmd_fun_##T= cmd_do_##N##_mom, .cmd_help= H, .cmd_alias= A},
   COMMANDS (CMD_DEFINE)
 #undef CMD_DEFINE
-  {.cmd_name = NULL,.cmd_type = cmdt__none,.cmd_funptr = NULL,.cmd_help =
+  {
+   .cmd_name = NULL,.cmd_type = cmdt__none,.cmd_funptr = NULL,.cmd_help =
    NULL,.cmd_alias = NULL}
 };
 
@@ -1348,7 +1349,9 @@ cmd_do_stack_mom (const char *lin)
 	    {
 	      const momval_t curval = vst_valarr_mom[ix];
 	      MOM_OUT (mom_stdout, MOMOUT_VALUE (curval));
-	      if (mom_is_item (curval) && !mom_item_get_name (curval.pitem))
+	      if (mom_is_item (curval)
+		  && !mom_item_get_name (curval.pitem)
+		  && !mom_stdout->mout_flags & outf_comment)
 		{
 		  momval_t commentv;
 		  mom_lock_item (curval.pitem);
@@ -1356,15 +1359,15 @@ cmd_do_stack_mom (const char *lin)
 		    mom_item_get_attribute (curval.pitem, mom_named__comment);
 		  mom_unlock_item (curval.pitem);
 		  if (mom_is_string (commentv))
-		    MOM_OUT
-		      (mom_stdout,
-		       MOMOUT_SPACE
-		       (48),
-		       MOMOUT_LITERAL
-		       (" " ANSI_BOLD
-			"//: "
-			ANSI_NORMAL),
-		       MOMOUT_LITERALV (mom_string_cstr (commentv)), NULL);
+		    MOM_OUT (mom_stdout,
+			     MOMOUT_SPACE
+			     (48),
+			     MOMOUT_LITERAL
+			     (" " ANSI_BOLD
+			      "//: "
+			      ANSI_NORMAL),
+			     MOMOUT_LITERALV (mom_string_cstr (commentv)),
+			     NULL);
 		}
 	      MOM_OUT (mom_stdout, MOMOUT_NEWLINE (), MOMOUT_FLUSH ());
 	    }
@@ -1439,7 +1442,8 @@ cmd_do_top_mom (const char *lin)
 	      commentv =
 		mom_item_get_attribute (curval.pitem, mom_named__comment);
 	      mom_unlock_item (curval.pitem);
-	      if (mom_is_string (commentv))
+	      if (mom_is_string (commentv) &&
+		  !(mom_stdout->mout_flags & outf_comment))
 		MOM_OUT
 		  (mom_stdout,
 		   MOMOUT_SPACE (48),
@@ -1484,7 +1488,7 @@ cmd_do_letters_mom (const char *lin)
 	continue;
       printf (" " ANSI_BOLD "$%c" ANSI_NORMAL "  ", c);
       MOM_OUT (mom_stdout, MOMOUT_VALUE (curv));
-      if (mom_is_item (curv))
+      if (mom_is_item (curv) && !(mom_stdout->mout_flags & outf_comment))
 	{
 	  momval_t commv =
 	    mom_item_get_attribute (curv.pitem, mom_named__comment);
@@ -1835,7 +1839,8 @@ cmd_interpret_mom (const char *lin)
 	goto bad_command;
     }
   else if (lin[0] == '+' && lin[1] == '"')
-    {				// catenate string to TOS
+    {
+      // catenate string to TOS
       momval_t topv = cmd_stack_nth_value_mom (-1);
       momval_t nstrv = (momval_t) mom_make_string (lin + 2);
       if (mom_is_string (topv) && mom_is_string (nstrv))
