@@ -474,15 +474,19 @@ complete_command_mom (const char *cmd)
 static char *
 cmd_completion_entry_mom (const char *text, int state)
 {
+  // the text is not physically inside rl_line_buffer
   static bool star = false;
   static momval_t jarr;
-  MOM_DEBUGPRINTF (cmd,
-		   "cmd_completion_entry text='%s' rl_line_buffer='%s' state=%d",
-		   text, rl_line_buffer, state);
+  MOM_DEBUGPRINTF
+    (cmd,
+     "cmd_completion_entry text='%s' rl_line_buffer='%s' state=%d",
+     text, rl_line_buffer, state);
   if (!state)
     {
       star = false;
       jarr = MOM_NULLV;
+      MOM_DEBUGPRINTF (cmd, "point=%d end=%d mark=%d",
+		       rl_point, rl_end, rl_mark);
       if (rl_line_buffer[0] == '*'
 	  && (isalpha (rl_line_buffer[1] || rl_line_buffer[1] == '_')))
 	{
