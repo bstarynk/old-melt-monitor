@@ -422,8 +422,7 @@ complete_word_mom (const char *word)
 	{
 	  char buf[WORDLEN_MOM + 4];
 	  memset (buf, 0, sizeof (buf));
-	  buf[0] = '$';
-	  strncpy (buf + 1, wbind_arr_mom[ix].wb_word, WORDLEN_MOM);
+	  strncpy (buf, wbind_arr_mom[ix].wb_word, WORDLEN_MOM);
 	  arr[cnt++] = (momval_t) mom_make_string (buf);
 	}
     }
@@ -491,7 +490,7 @@ cmd_attempt_compl_mom (const char *text, int start, int end)
   //
   // special cases first
   if (rl_line_buffer[0] == ',' && start == 0 && textlen > 0
-      && isalpha (text[1]) && !strncmp (text, rl_line_buffer + 1, textlen))
+      && isalpha (text[1]))
     {
       // command completion, e.g. entering ",ex"<tab> gives start=0 end=3 rline=",ex" text=",ex"
       MOM_DEBUGPRINTF (cmd, "cmd_attempt_compl command text='%s'", text);
@@ -503,7 +502,6 @@ cmd_attempt_compl_mom (const char *text, int start, int end)
       // word completion, e.g. entering "$ab"<tab> gives start=1 end=2 rline="$ab" text="ab"
       MOM_DEBUGPRINTF (cmd, "cmd_attempt_compl word text='%s'", text);
       jarr = complete_word_mom (text);
-      prefix = "$";
     }
   else if (rl_line_buffer[0] == '$' && rl_line_buffer[1] == '='
 	   && isalpha (rl_line_buffer[2]) && start == 2)
@@ -511,7 +509,6 @@ cmd_attempt_compl_mom (const char *text, int start, int end)
       // word-assign completion, e.g. entering "$=cd"<tab> gives start=2 end=4 text='cd'
       MOM_DEBUGPRINTF (cmd, "cmd_attempt_compl wordaasign text='%s'", text);
       jarr = complete_word_mom (text);
-      prefix = "$=";
     }
   else if (rl_line_buffer[0] == '$' && rl_line_buffer[1] == ':'
 	   && isalpha (rl_line_buffer[2]) && start == 2)
@@ -519,7 +516,6 @@ cmd_attempt_compl_mom (const char *text, int start, int end)
       // word-exchange completion, e.g. entering "$:cd"<tab> gives start=2 end=4 text='cd'
       MOM_DEBUGPRINTF (cmd, "cmd_attempt_compl wordexch text='%s'", text);
       jarr = complete_word_mom (text);
-      prefix = "$:";
     }
   else if (rl_line_buffer[0] == '*' && start == 0
 	   && (isalpha (text[1]) || text[1] == '_'))
@@ -564,9 +560,13 @@ cmd_attempt_compl_mom (const char *text, int start, int end)
 	  MOM_DEBUGPRINTF (cmd, "cmd_attempt_compl rescompl[%d]=%s", ix,
 			   rescompl[ix]);
 	}
+      // the last debug message needs another newline to be nice
+      MOM_DEBUGPRINTF (cmd, "cmd_attempt_compl succeed %d completions\n",
+		       sizjarr);
     }
   else
-    MOM_DEBUGPRINTF (cmd, "cmd_attempt_compl failure so NULL");
+    // also another newline
+    MOM_DEBUGPRINTF (cmd, "cmd_attempt_compl failure so NULL\n");
   rl_attempted_completion_over = true;
   return rescompl;
 }
@@ -2024,9 +2024,9 @@ cmd_push_value_mom (momval_t val)
 }
 
 static void
-cmd_interpret_mom (const char *lin)
+cmd_interpret_mom (char *lin)
 {
-  MOM_DEBUGPRINTF (cmd, "cmd_interpret start lin=%s", lin);
+  MOM_DEBUGPRINTF (cmd, "cmd_interpret start lin='%s'", lin);
   momitem_t *itm = NULL;
   if (!lin || !lin[0])
     return;
@@ -2234,11 +2234,20 @@ cmd_interpret_mom (const char *lin)
   else if (lin[0] == '$' && isalpha (lin[1])
 	   && strlen (lin + 1) <= WORDLEN_MOM)
     {
-      const char *word = lin + 1;
+      char *word = lin + 1;
       int wpos = -1;
-      for (const char *pc = word; *pc; pc++)
-	if (!isalnum (*pc) && *pc != '_')
-	  goto bad_command;
+      MOM_DEBUGPRINTF (cmd, "interpret wordvar lin='%s'", lin);
+      for (char *pc = word; *pc; pc++)
+	{
+	  if (isspace (*pc))
+	    {
+	      *pc = '\0';
+	      break;
+	    }
+	  else if (!isalnum (*pc) && *pc != '_')
+	    goto bad_command;
+	}
+      MOM_DEBUGPRINTF (cmd, "interpret word='%s'", word);
       momval_t valv = word_get_bind_mom (word, &wpos);
       if (valv.ptr)
 	{
@@ -2266,13 +2275,22 @@ cmd_interpret_mom (const char *lin)
   else if (lin[0] == '$' && lin[1] == '=' && isalpha (lin[2])
 	   && strlen (lin + 2) < WORDLEN_MOM)
     {
-      const char *word = lin + 2;
+      char *word = lin + 2;
       int wpos = -1;
       char cmdbuf[8 + WORDLEN_MOM];
       memset (cmdbuf, 0, sizeof (cmdbuf));
-      for (const char *pc = word; *pc; pc++)
-	if (!isalnum (*pc) && *pc != '_')
-	  goto bad_command;
+      for (char *pc = word; *pc; pc++)
+	{
+	  if (isspace (*pc))
+	    {
+	      *pc = '\0';
+	      break;
+	    }
+	  else if (!isalnum (*pc) && *pc != '_')
+	    goto bad_command;
+	}
+      MOM_DEBUGPRINTF (cmd, "interpret: assign word='%s' top=%d", word,
+		       vst_top_mom);
       if (vst_top_mom == 0)
 	{
 	  printf (ANSI_BOLD "empty stack, so untouched temporary word %s"
@@ -2302,11 +2320,18 @@ cmd_interpret_mom (const char *lin)
   else if (lin[0] == '$' && lin[1] == ':' && isalpha (lin[2])
 	   && strlen (lin + 2) < WORDLEN_MOM)
     {				// swap with word
-      const char *word = lin + 2;
+      char *word = lin + 2;
       int wpos = -1;
-      for (const char *pc = word; *pc; pc++)
-	if (!isalnum (*pc) && *pc != '_')
-	  goto bad_command;
+      for (char *pc = word; *pc; pc++)
+	{
+	  if (isspace (*pc))
+	    {
+	      *pc = '\0';
+	      break;
+	    }
+	  else if (!isalnum (*pc) && *pc != '_')
+	    goto bad_command;
+	}
       if (vst_top_mom == 0)
 	{
 	  printf (ANSI_BOLD "empty stack, so untouched temporary %s"
