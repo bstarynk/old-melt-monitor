@@ -262,8 +262,8 @@ struct momout_st
 typedef struct momout_st momout_t;
 extern struct momout_st mom_stdout_data;
 extern struct momout_st mom_stderr_data;
-#define mom_stdout &mom_stdout_data
-#define mom_stderr &mom_stderr_data
+#define mom_stdout  (&mom_stdout_data)
+#define mom_stderr  (&mom_stderr_data)
 
 #define MOM_MOUT_MAGIC 0x41f67aa5	/* mom_out_magic 1106672293 */
 typedef enum momoutflags_en
@@ -273,7 +273,8 @@ typedef enum momoutflags_en
   outf_jsonhalfindent = 1 << 1,
   outf_jsonindent = 1 << 2,
   outf_shortfloat = 1 << 3,	/* print double numbers with 6 digits at most */
-  outf_isbuffer = 1 << 15,	/* internal flag */
+  outf_comment = 1 << 4,	/* show comments for anonymous items. */
+  outf_isbuffer = 1 << 30,	/* internal flag */
 } momoutflags_t;
 
 void mom_out_at (const char *sfil, int lin, momout_t *pout, ...)

@@ -30,40 +30,41 @@
 
 const char mom_plugin_GPL_compatible[] = "GPLv3+";
 
-#define COMMANDS(CMD)                                   \
-  CMD(append,"append tos to below",non,NULL)            \
-  CMD(clear,"clear the stack",non,NULL)                 \
-  CMD(clos,"start closure from TOS",itm,NULL)           \
-  CMD(debugf,"[flags]; set debugflags",non,NULL)        \
-  CMD(dump,"[dir]; dump state & continue",non,NULL)     \
-  CMD(dup,"duplicate top",num,"%")                      \
-  CMD(echo,"echo the line",non,NULL)                    \
-  CMD(erase,"erase item payload",itm,NULL)              \
-  CMD(exit,"dump & exit",non,NULL)                      \
-  CMD(forget,"forget named item",itm,NULL)              \
-  CMD(gencmod,"generate C module",itm,NULL)             \
-  CMD(getat,"[attr]; get attribute",itm,":=")           \
-  CMD(help,"give this help",non,"?")                    \
-  CMD(insert,"N; insert top inside stack",num,"<!")     \
-  CMD(letters,"show letters values",non,"$$")           \
-  CMD(mark,"push mark",non,"(")                         \
-  CMD(named,"[Regexp]",non,NULL)			\
-  CMD(nth,"N",num,NULL)   \
-  CMD(node,"[Connective]; make node to mark",itm,"*")   \
-  CMD(pop,"pop [N] elements",num,"^")                   \
-  CMD(predef,"NAME; create a predefined item",non,NULL)	\
-  CMD(putat,"[attr]; put attribute",itm,":+")           \
-  CMD(quit,"quit without dumping",non,NULL)             \
-  CMD(remat,"[attr]; remove attribute",itm,":-")        \
-  CMD(remove,"N; remove inside stack & push",num,">-")  \
-  CMD(set,"make set to mark",num,"}")                   \
-  CMD(shell,"[command]; run a command",non,"#!")        \
-  CMD(stack,"print the stack",non,"!")                  \
-  CMD(status,"print status info",non,NULL)              \
-  CMD(swap,"swap with N-th stackelem",num,NULL)         \
-  CMD(top,"print the top of stack",non,"=")             \
-  CMD(tuple,"make tuple to mark",num,"]")               \
-  CMD(xplode,"explode top aggregate",non,"&")           \
+#define COMMANDS(CMD)                                           \
+  CMD(append,"append tos to below",non,NULL)                    \
+  CMD(clear,"clear the stack",non,NULL)                         \
+  CMD(clos,"start closure from TOS",itm,NULL)                   \
+  CMD(comment,"toggle comment display in items",non,NULL)       \
+  CMD(debugf,"[flags]; set debugflags",non,NULL)                \
+  CMD(dump,"[dir]; dump state & continue",non,NULL)             \
+  CMD(dup,"duplicate top",num,"%")                              \
+  CMD(echo,"echo the line",non,NULL)                            \
+  CMD(erase,"erase item payload",itm,NULL)                      \
+  CMD(exit,"dump & exit",non,NULL)                              \
+  CMD(forget,"forget named item",itm,NULL)                      \
+  CMD(gencmod,"generate C module",itm,NULL)                     \
+  CMD(getat,"[attr]; get attribute",itm,":=")                   \
+  CMD(help,"give this help",non,"?")                            \
+  CMD(insert,"N; insert top inside stack",num,"<!")             \
+  CMD(letters,"show letters values",non,"$$")                   \
+  CMD(mark,"push mark",non,"(")                                 \
+  CMD(named,"[Regexp]",non,NULL)                                \
+  CMD(node,"[Connective]; make node to mark",itm,"*")           \
+  CMD(nth,"N",num,NULL)                                         \
+  CMD(pop,"pop [N] elements",num,"^")                           \
+  CMD(predef,"NAME; create a predefined item",non,NULL)         \
+  CMD(putat,"[attr]; put attribute",itm,":+")                   \
+  CMD(quit,"quit without dumping",non,NULL)                     \
+  CMD(remat,"[attr]; remove attribute",itm,":-")                \
+  CMD(remove,"N; remove inside stack & push",num,">-")          \
+  CMD(set,"make set to mark",num,"}")                           \
+  CMD(shell,"[command]; run a command",non,"#!")                \
+  CMD(stack,"print the stack",non,"!")                          \
+  CMD(status,"print status info",non,NULL)                      \
+  CMD(swap,"swap with N-th stackelem",num,NULL)                 \
+  CMD(top,"print the top of stack",non,"=")                     \
+  CMD(tuple,"make tuple to mark",num,"]")                       \
+  CMD(xplode,"explode top aggregate",non,"&")                   \
 				/* end of COMMANDS */
 
 // the command stack has values and marks
@@ -1291,6 +1292,26 @@ cmd_do_shell_mom (const char *lin)
   MOM_INFORMPRINTF ("Command %s result=%d", lin, res);
   snprintf (cmdbuf, sizeof (cmdbuf), ",shell %s", lin);
   add_history (cmdbuf);
+}
+
+
+static void
+cmd_do_comment_mom (const char *lin)
+{
+  MOM_DEBUGPRINTF (cmd, "start do_comment lin=%s top=%d", lin, vst_top_mom);
+  if (mom_stdout->mout_flags & outf_comment)
+    {
+      mom_stdout->mout_flags &= ~outf_comment;
+      printf ("Anonymous items shown "
+	      ANSI_BOLD "without comments" ANSI_NORMAL "\n");
+    }
+  else
+    {
+      mom_stdout->mout_flags |= outf_comment;
+      printf ("Anonymous items shown "
+	      ANSI_BOLD "with comments" ANSI_NORMAL "\n");
+    }
+  add_history (",comment");
 }
 
 static void

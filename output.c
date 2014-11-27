@@ -469,8 +469,32 @@ output_item_mom (momout_t *pout, const momitem_t *itm)
       return;
     }
   assert (itm->i_typnum == momty_item);
+  momval_t namev = (momval_t) mom_item_get_name ((momitem_t *) itm);
+  momval_t commv = MOM_NULLV;
   fputs (mom_string_cstr
 	 ((momval_t) mom_item_get_name_or_idstr ((momitem_t *) itm)), out);
+  if (!namev.ptr && (pout->mout_flags & outf_comment)
+      && (commv = mom_item_get_attribute (itm, mom_named__comment)).ptr
+      && mom_is_string (commv))
+    {
+#define MINIMAL_COMMENT_LEN_MOM 7
+#define MAXIMAL_COMMENT_LEN_MOM 80
+      const char *commstr = commv.pstring->cstr;
+      int clen = strlen (commstr);
+      char *eol = strchr (commstr, '\n');
+      char *bquo = strchr (commstr, '`');
+      if (eol && eol > commstr + MINIMAL_COMMENT_LEN_MOM
+	  && clen > eol - commstr)
+	clen = eol - commstr;
+      if (bquo && bquo > commstr + MINIMAL_COMMENT_LEN_MOM
+	  && clen > bquo - commstr)
+	clen = bquo - commstr;
+      if (clen > MAXIMAL_COMMENT_LEN_MOM)
+	clen = MAXIMAL_COMMENT_LEN_MOM;
+      fputc ('`', out);
+      fwrite (commstr, clen, 1, out);
+      fputc ('`', out);
+    }
 }
 
 
