@@ -118,7 +118,7 @@ word_get_bind_mom (const char *word, int *ppos)
       else
 	lo = md;
     }
-  for (md = lo; md < hi; md++)
+  for (md = lo; md <= hi; md++)
     {
       struct wordbind_mom_st *cwb = wbind_arr_mom + md;
       assert (cwb->wb_word[WORDLEN_MOM - 1] == (char) 0);
@@ -201,6 +201,7 @@ word_remove_bind_mom (const char *word)
 	wbind_arr_mom[ix] = wbind_arr_mom[ix + 1];
       memset (wbind_arr_mom + wbind_count_mom, 0,
 	      sizeof (struct wordbind_mom_st));
+      wbind_count_mom--;
       return true;
     }
   else
@@ -517,6 +518,14 @@ cmd_attempt_compl_mom (const char *text, int start, int end)
       MOM_DEBUGPRINTF (cmd, "cmd_attempt_compl wordexch text='%s'", text);
       jarr = complete_word_mom (text + 1);
       prefix = ":";
+    }
+  else if (rl_line_buffer[0] == '$' && rl_line_buffer[1] == '<'
+	   && isalpha (rl_line_buffer[2]) && start == 2)
+    {
+      // word-remove completion, e.g. entering "$<cd"<tab> gives start=1 end=4 text='cd'
+      MOM_DEBUGPRINTF (cmd, "cmd_attempt_compl wordremov text='%s'", text);
+      jarr = complete_word_mom (text + 1);
+      prefix = "$<";
     }
   else if (rl_line_buffer[0] == '*' && start == 0
 	   && (isalpha (text[1]) || text[1] == '_'))
@@ -838,6 +847,7 @@ cmd_do_help_mom (const char *lin)
   printf ("    numbers like 1.2 or -23 are pushed\n");
   printf ("    $word pushes the word value.\n");
   printf ("    $=word sets the word value.\n");
+  printf ("    $<word removes the word value.\n");
   printf ("    $:word swaps the word value with top-of-stack.\n");
 
   putchar ('\n');
@@ -1744,7 +1754,9 @@ cmd_do_words_mom (const char *lin)
       const char *word = wbind_arr_mom[wix].wb_word;
       assert (wbind_arr_mom[wix].wb_word[WORDLEN_MOM - 1] == (char) 0
 	      && strlen (word) < WORDLEN_MOM);
-      printf (" " ANSI_BOLD "$%-12s" ANSI_NORMAL "  ", word);
+      printf (" " ANSI_BOLD "$%s:" ANSI_NORMAL "  ", word);
+      for (int i = strlen (word); i < 12; i++)
+	putchar (' ');
       MOM_OUT (mom_stdout, MOMOUT_VALUE (curv));
       if (mom_is_item (curv) && !COMMENTED_OUTPUT_MOM)
 	{
