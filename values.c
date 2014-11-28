@@ -227,6 +227,9 @@ mom_make_string_len (const char *str, unsigned slen)
   const gchar *end = NULL;
   if (MOM_UNLIKELY (slen > MOM_MAX_STRING_LENGTH))
     MOM_FATAPRINTF ("too long %d string to make %.50s", slen, str);
+  int l = strlen (str);
+  if ((int) slen > l)
+    slen = (unsigned) l;
   if (MOM_UNLIKELY (!g_utf8_validate ((const gchar *) str, slen, &end)))
     MOM_FATAPRINTF ("invalid UTF8 in %d-sized string %.50s", slen, str);
   momstring_t *res = GC_MALLOC_ATOMIC (sizeof (momstring_t) + slen + 1);

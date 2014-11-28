@@ -444,7 +444,15 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
    /* put into strv the prefix of commv to be shown. */ const char* commvstr = mom_string_cstr (
    (mompval_3/*:commv*/));
  const char* backquotestr = strchr(commvstr, '`');
- const char* eolstr = strchr(commvstr, '\n');
+ const char* eolstr = strchr(commvstr, '\n'); if (backquotestr && (!eolstr || backquotestr < eolstr))
+  
+   (mompval_2/*:strv*/) = (momval_t) mom_make_string_len (commvstr, backquotestr - commvstr);
+ else if (eolstr && eolstr < commvstr + 72)
+  
+   (mompval_2/*:strv*/) = (momval_t) mom_make_string_len (commvstr, eolstr - commvstr);
+ else 
+   (mompval_2/*:strv*/) = (momval_t) mom_make_string_len (commvstr, 70);
+
   }; // end procedure block _591chiicj6r_512iim4cf4m
   return;
   
