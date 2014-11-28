@@ -147,7 +147,7 @@ cgen_error_mom_at (int lin, struct c_generator_mom_st *cgen, ...)
 		    lin);
   struct momout_st mout;
   memset (&mout, 0, sizeof (mout));
-  mom_initialize_output (&mout, fout, 0);
+  mom_initialize_output (&mout, fout, outf_comment);
   va_start (args, cgen);
   mom_outva_at (__FILE__, lin, &mout, args);
   va_end (args);

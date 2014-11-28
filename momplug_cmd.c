@@ -2008,6 +2008,7 @@ mom_plugin_init (const char *arg)
   rl_initialize ();
   rl_readline_name = "monimelt";
   rl_attempted_completion_function = cmd_attempt_compl_mom;
+  mom_stdout->mout_flags |= outf_comment;
 }
 
 static void

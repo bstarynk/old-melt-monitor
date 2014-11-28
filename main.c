@@ -251,6 +251,7 @@ mom_fatal_at (const char *sfil, int slin, ...)
   memset (&outd, 0, sizeof (outd));
   outd.mout_magic = MOM_MOUT_MAGIC;
   outd.mout_file = open_memstream (&membuf, &memsize);
+  outd.mout_flag = outf_comment;
   va_list alist;
   va_start (alist, slin);
   mom_outva_at (sfil, slin, &outd, alist);
@@ -334,6 +335,7 @@ mom_warning_at (const char *sfil, int slin, ...)
   memset (&outd, 0, sizeof (outd));
   outd.mout_magic = MOM_MOUT_MAGIC;
   outd.mout_file = open_memstream (&membuf, &memsize);
+  outd.mout_flag = outf_comment;
   va_list alist;
   va_start (alist, slin);
   mom_outva_at (sfil, slin, &outd, alist);
