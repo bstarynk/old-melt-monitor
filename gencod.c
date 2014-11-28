@@ -2079,26 +2079,22 @@ emit_output_arg_cgen (struct c_generator_mom_st *cg, momval_t curoutv,
 		       MOMOUT_LITERAL
 		       (" /*!outintexp*/MOMOUTDO_DEC_INTPTR_T, (intptr_t)"),
 		       NULL);
-	      emit_expr_cgen (cg, curoutv);
 	      break;
 	    case momtypenc_val:
 	      MOM_OUT (&cg->cgen_outbody,
 		       MOMOUT_LITERAL
 		       (" /*!outvalexp*/MOMOUTDO_VALUE, (momval_t)"), NULL);
-	      emit_expr_cgen (cg, curoutv);
 	      break;
 	    case momtypenc_double:
 	      MOM_OUT (&cg->cgen_outbody,
 		       MOMOUT_LITERAL
 		       (" /*!outdblexp*/MOMOUTDO_DOUBLE_G, (double)"), NULL);
-	      emit_expr_cgen (cg, curoutv);
 	      break;
 	    case momtypenc_string:
 	      MOM_OUT (&cg->cgen_outbody,
 		       MOMOUT_LITERAL
 		       (" /*!outcstrexp*/MOMOUTDO_LITERAL, (const char*)"),
 		       NULL);
-	      emit_expr_cgen (cg, curoutv);
 	      break;
 	    default:
 	      CGEN_ERROR_MOM
@@ -2107,7 +2103,10 @@ emit_output_arg_cgen (struct c_generator_mom_st *cg, momval_t curoutv,
 		 MOMOUT_VALUE ((const momval_t) curoutv),
 		 MOMOUT_LITERAL (" in node:"),
 		 MOMOUT_VALUE ((const momval_t) nodv), NULL);
-	    }
+	    };
+	  emit_expr_cgen (cg, curoutv);
+	  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (","),
+		   MOMOUT_NEWLINE());
 	}
     }
   else

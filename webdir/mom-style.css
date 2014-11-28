@@ -284,6 +284,11 @@ span.mom_string_value_cl {
     color: rgba(92,19,56,0.9);
 }
 
+span.mom_named_item_cl {
+    font-family: Verdana, Geneva, sans-serif;
+    color: rgba(20,25,40,0.9);
+}
+
 span.mom_string_content_cl {
     font-family: "Lucida Console", Monaco, monospace;
     font-weight: normal;

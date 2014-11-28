@@ -189,7 +189,7 @@ INSERT INTO t_items VALUES('_0z0rsvwfkcj_dcpkx68i074','{"attr": [{"attr": "_0ee6
      "_9xhd87mskav_rqcu5eqk5te"]}}, {"attr": "_91pketvc5pz_wq0v0wpauw8", "val": {"jtype":
     "set", "set": ["_0kr2ef10dxy_79js3th0i56", "_4wx5f4704sp_v9kfazsqe9h",
      "_6p9qjdya5cm_c2xad0xzawa", "_88565k6xdf0_331xf3x27dp"]}}], "content": null,
- "kind": "procedure", "payload": ["_7fafkrcdjpd_dy0zpqsshr6"]}
+ "kind": "procedure", "payload": ["_41u1utcxyek_22cftxt3xxm", "_7fafkrcdjpd_dy0zpqsshr6"]}
 ','procedure');
 INSERT INTO t_items VALUES('_10ji3aajfx3_983iz4013ec','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_80e7dsukuq3_6p7jffmz1yi",
     "jtype": "item_ref", "space": ".predef"}}, {"attr": "_2ummst105ck_xracfy8v87y",
@@ -685,7 +685,7 @@ INSERT INTO t_items VALUES('_4ew7uvid6ep_wzq6f8hruz9','{"attr": [{"attr": "_0ee6
   {"attr": "_37x98fyestf_ttup2cu68r6", "val": {"jtype": "node", "node": "_8x6fxcm4z2k_vdaqicfi4z0",
     "sons": ["MOM_WEBX_OUT (mom_value_to_item(", {"item_ref": "_16cd0fvmdrh_r77ajpy26za",
       "jtype": "item_ref", "space": ".root"}, "),", {"item_ref": "_5ic5uk22icm_7ws16feu699",
-      "jtype": "item_ref", "space": ".root"}, ")"]}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
+      "jtype": "item_ref", "space": ".root"}, ", NULL)"]}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "output primitive to fill a web exchange."}], "content": null, "kind": null,
  "payload": null}
 ','');
@@ -840,6 +840,14 @@ INSERT INTO t_items VALUES('_5c5jh9185sv_qru5amf9v18','{"attr": [{"attr": "_41u1
  "content": null, "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_5c789try94y_ssy6a22fpep','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for side-effecting instructions in blocks, etc..."}],
+ "content": null, "kind": null, "payload": null}
+','');
+INSERT INTO t_items VALUES('_5c8yvr53et5_xzwu6v1ri5h','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_51u3st4u9mc_zdvms6jti0a",
+    "jtype": "item_ref", "space": ".predef"}}, {"attr": "_2ummst105ck_xracfy8v87y",
+   "val": {"jtype": "tuple", "tuple": ["_2vy0ah3jrd1_mm66ja7rfj7"]}}, {"attr": "_37x98fyestf_ttup2cu68r6",
+   "val": {"jtype": "node", "node": "_8x6fxcm4z2k_vdaqicfi4z0", "sons": ["!(",
+     {"item_ref": "_2vy0ah3jrd1_mm66ja7rfj7", "jtype": "item_ref", "space": ".root"},
+     ")"]}}, {"attr": "_41u1utcxyek_22cftxt3xxm", "val": "negation primitive & operator"}],
  "content": null, "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_5ic5uk22icm_7ws16feu699','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "pseudo-formal for output arguments"}],
@@ -1147,8 +1155,15 @@ INSERT INTO t_items VALUES('_7rxfx0rruqm_kdtk9pk7wtj','{"attr": [{"attr": "_41u1
   "jtype": "item_ref", "space": ".root"}]}]}, {"jtype": "node", "node": "_8ejwdt1a5yx_2meizztvte0",
       "sons": [{"jtype": "node", "node": "_63xw30mvx5q_45qi5j4ak1y", "sons": [{"item_ref":
   "_0kr2ef10dxy_79js3th0i56", "jtype": "item_ref", "space": ".root"}]}, {"item_ref":
-"_591chiicj6r_512iim4cf4m", "jtype": "item_ref", "space": ".root"}]}]}}],
- "content": null, "kind": null, "payload": null}
+"_591chiicj6r_512iim4cf4m", "jtype": "item_ref", "space": ".root"}]}, {"jtype": "node",
+      "node": "_5c789try94y_ssy6a22fpep", "sons": [{"jtype": "node", "node": "_4ew7uvid6ep_wzq6f8hruz9",
+"sons": [{"item_ref": "_16cd0fvmdrh_r77ajpy26za", "jtype": "item_ref", "space": ".root"},
+ "<span class=''mom_named_item_cl'' data-momitemid=''", {"jtype": "node", "node": "_10ji3aajfx3_983iz4013ec",
+  "sons": [{"jtype": "node", "node": "_24015150dq3_t09vzvi1f00", "sons": [{"item_ref":
+      "_1a2aavj5vir_2hz681zdfqd", "jtype": "item_ref", "space": ".root"}]}]},
+ "''>", {"jtype": "node", "node": "_10ji3aajfx3_983iz4013ec", "sons": [{"item_ref":
+    "_0kr2ef10dxy_79js3th0i56", "jtype": "item_ref", "space": ".root"}]},
+ "</span>"]}]}]}}], "content": null, "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_7sav6zery1v_24sa6jwwu6c','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "attribute giving the web handler inside items"}],
  "content": null, "kind": null, "payload": null}
@@ -1718,6 +1733,7 @@ INSERT INTO t_names VALUES('namv','_0kr2ef10dxy_79js3th0i56','.root');
 INSERT INTO t_names VALUES('nb_dumped_items','_1tzf3q2dix5_jqxphp9ivcw','.root');
 INSERT INTO t_names VALUES('node','_4m7x6811f6j_t480zu575mz','.predef');
 INSERT INTO t_names VALUES('noop','_240dwt57s08_a8uy366sev5','.root');
+INSERT INTO t_names VALUES('not','_5c8yvr53et5_xzwu6v1ri5h','.root');
 INSERT INTO t_names VALUES('notice','_7diyc1cwj8z_x630afccr8e','.predef');
 INSERT INTO t_names VALUES('null','_7mj6c8az5d3_vzmwd2uuiu7','.root');
 INSERT INTO t_names VALUES('numbers','_3fw5acswe59_9016fqe4d41','.predef');
