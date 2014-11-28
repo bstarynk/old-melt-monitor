@@ -185,9 +185,9 @@ INSERT INTO t_items VALUES('_0z0rsvwfkcj_dcpkx68i074','{"attr": [{"attr": "_0ee6
     "_02yd241wh4z_tca7i6iamf3", "jtype": "item_ref", "space": ".root"}}, {"attr":
    "_41u1utcxyek_22cftxt3xxm", "val": "procedure to show on webx the HTML code for some item"},
   {"attr": "_4v74chqs1eh_chqd9cqw85t", "val": {"jtype": "set", "set": ["_02yd241wh4z_tca7i6iamf3",
-     "_34w40p46vwp_pw6u3d75ww6", "_591chiicj6r_512iim4cf4m", "_7rxfx0rruqm_kdtk9pk7wtj",
-     "_9xhd87mskav_rqcu5eqk5te"]}}, {"attr": "_91pketvc5pz_wq0v0wpauw8", "val": {"jtype":
-    "set", "set": ["_0kr2ef10dxy_79js3th0i56", "_4wx5f4704sp_v9kfazsqe9h",
+     "_1witua6ujek_6jadsxtv4cd", "_34w40p46vwp_pw6u3d75ww6", "_591chiicj6r_512iim4cf4m",
+     "_7rxfx0rruqm_kdtk9pk7wtj", "_9xhd87mskav_rqcu5eqk5te"]}}, {"attr": "_91pketvc5pz_wq0v0wpauw8",
+   "val": {"jtype": "set", "set": ["_0kr2ef10dxy_79js3th0i56", "_4wx5f4704sp_v9kfazsqe9h",
      "_5dq5ma9a81c_pdtk3x9sw4w", "_6p9qjdya5cm_c2xad0xzawa", "_88565k6xdf0_331xf3x27dp"]}}],
  "content": null, "kind": "procedure", "payload": ["_41u1utcxyek_22cftxt3xxm",
   "_7fafkrcdjpd_dy0zpqsshr6"]}
@@ -348,6 +348,10 @@ INSERT INTO t_items VALUES('_1uarhtr96qc_28hwh1ueaq4','{"attr": [{"attr": "_0ee6
      {"item_ref": "_0hi99dr3qqs_yuuciyy7xfz", "jtype": "item_ref", "space": ".root"},
      ")"]}}, {"attr": "_41u1utcxyek_22cftxt3xxm", "val": "primitive to get size of JSONarray or else 0"}],
  "content": null, "kind": null, "payload": null}
+','');
+INSERT INTO t_items VALUES('_1witua6ujek_6jadsxtv4cd','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "show uncommented anon in show_html_for_item.."},
+  {"attr": "_94tq2iauet8_jujpjhjrzsm", "val": {"jtype": "node", "node": "_0yyp8vmw4si_wf49m4d4zwq",
+    "sons": []}}], "content": null, "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_1x4wmv7yiym_w3zfpdv8q0m','{"attr": [{"attr": "_19ufza9zf05_muxxhkmm7ww", "val": {"jtype": "node", "node": "_8x6fxcm4z2k_vdaqicfi4z0",
     "sons": ["MOMOUTDO_C_STRING,", {"item_ref": "_389t77v85ej_fwpy6exy62x",
