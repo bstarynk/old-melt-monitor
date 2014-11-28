@@ -437,7 +437,7 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
    
    //! instr#2 in block _591chiicj6r_512iim4cf4m ::
    /*!if*/ if ((/*!primitive is_nil*/  (intptr_t) (NULL == ( (mompval_3/*:commv*/)).ptr)/*!endprimitive is_nil*/) ) 
-    goto mompblo_4 /*!proc.block _591chiicj6r_512iim4cf4m*/;
+    goto mompblo_2 /*!proc.block _1witua6ujek_6jadsxtv4cd*/;
    
    //! instr#3 in block _591chiicj6r_512iim4cf4m ::
    /** chunk **/
