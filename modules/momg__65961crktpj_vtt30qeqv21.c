@@ -435,6 +435,16 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
    /*!assign*/  (mompval_3/*:commv*/) = (/*!primitive get_attribute*/  mom_item_get_attribute(
    momparg_1.ptr,  ((momval_t) mompconstitems__0z0rsvwfkcj_dcpkx68i074[0] /*comment*/).ptr)/*!endprimitive get_attribute*/) ;
    
+   //! instr#2 in block _591chiicj6r_512iim4cf4m ::
+   /*!if*/ if ((/*!primitive is_nil*/  (intptr_t) (NULL == ( (mompval_3/*:commv*/)).ptr)/*!endprimitive is_nil*/) ) 
+    goto mompblo_4 /*!proc.block _591chiicj6r_512iim4cf4m*/;
+   
+   //! instr#3 in block _591chiicj6r_512iim4cf4m ::
+   /** chunk **/
+   /* put into strv the prefix of commv to be shown. */ const char* commvstr = mom_string_cstr (
+   (mompval_3/*:commv*/));
+ const char* backquotestr = strchr(commvstr, '`');
+ const char* eolstr = strchr(commvstr, '\n');
   }; // end procedure block _591chiicj6r_512iim4cf4m
   return;
   

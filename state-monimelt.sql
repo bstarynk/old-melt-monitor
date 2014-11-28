@@ -805,8 +805,15 @@ INSERT INTO t_items VALUES('_591chiicj6r_512iim4cf4m','{"attr": [{"attr": "_41u1
 "_6p9qjdya5cm_c2xad0xzawa", "jtype": "item_ref", "space": ".root"}, {"jtype": "node",
 "node": "_5vi29c2i54k_i2ufkty9kmp", "sons": [{"item_ref": "_1a2aavj5vir_2hz681zdfqd",
   "jtype": "item_ref", "space": ".root"}, {"item_ref": "_41u1utcxyek_22cftxt3xxm",
-  "jtype": "item_ref", "space": ".predef"}]}]}]}}], "content": null, "kind": null,
- "payload": null}
+  "jtype": "item_ref", "space": ".predef"}]}]}, {"jtype": "node", "node": "_8ejwdt1a5yx_2meizztvte0",
+      "sons": [{"jtype": "node", "node": "_63xw30mvx5q_45qi5j4ak1y", "sons": [{"item_ref":
+  "_6p9qjdya5cm_c2xad0xzawa", "jtype": "item_ref", "space": ".root"}]}, {"item_ref":
+"_591chiicj6r_512iim4cf4m", "jtype": "item_ref", "space": ".root"}]}, {"jtype": "node",
+      "node": "_8x6fxcm4z2k_vdaqicfi4z0", "sons": ["/* put into strv the prefix of commv to be shown. */",
+       " const char* commvstr = mom_string_cstr (", {"item_ref": "_6p9qjdya5cm_c2xad0xzawa",
+"jtype": "item_ref", "space": ".root"}, ");\n", " const char* backquotestr = strchr(commvstr, ''`'');\n",
+       " const char* eolstr = strchr(commvstr, ''\\n'');"]}]}}], "content": null,
+ "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_59wxs8qi3jd_vctt2cyuva9','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_51u3st4u9mc_zdvms6jti0a",
     "jtype": "item_ref", "space": ".predef"}}, {"attr": "_2ummst105ck_xracfy8v87y",

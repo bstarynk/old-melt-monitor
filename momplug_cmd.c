@@ -577,8 +577,7 @@ cmd_attempt_compl_mom (const char *text, int start, int end)
   else
     // also another newline
     MOM_DEBUGPRINTF (cmd, "cmd_attempt_compl failure so NULL\n");
-  if (sizjarr <= 1)
-    rl_attempted_completion_over = true;
+  rl_attempted_completion_over = (sizjarr <= 1);
   return rescompl;
 }
 
