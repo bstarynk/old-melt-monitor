@@ -399,7 +399,7 @@ output_value_mom (momout_t *pout, const momval_t v)
 	  {
 	    if (ix > 0)
 	      {
-		MOM_OUT (pout, MOMOUT_LITERAL (","), MOMOUT_SMALL_SPACE (50));
+		MOM_OUT (pout, MOMOUT_LITERAL (","), MOMOUT_SPACE (50));
 		if (ix % 5 == 4)
 		  {
 		    if (pout->mout_flags & outf_comment)
@@ -421,7 +421,7 @@ output_value_mom (momout_t *pout, const momval_t v)
 	  {
 	    if (ix > 0)
 	      {
-		MOM_OUT (pout, MOMOUT_LITERAL (","), MOMOUT_SMALL_SPACE (50));
+		MOM_OUT (pout, MOMOUT_LITERAL (","), MOMOUT_SPACE (50));
 		if (ix % 5 == 4)
 		  {
 		    if (pout->mout_flags & outf_comment)
@@ -510,25 +510,53 @@ output_item_mom (momout_t *pout, const momitem_t *itm)
 }
 
 
+static int
+out_attribute_cmp_mom (const void *p1, const void *p2)
+{
+  const struct mom_attrentry_st *e1 = p1;
+  const struct mom_attrentry_st *e2 = p2;
+  return mom_json_cmp ((momval_t) e1->aten_itm, (momval_t) e2->aten_itm);
+}
+
 void
 mom_output_attributes (struct momout_st *pout,
 		       struct mom_itemattributes_st *attrs)
 {
   if (!pout || !attrs || !pout->mout_file)
     return;
+  unsigned nbattr = attrs->nbattr;
+  struct mom_attrentry_st tinyattrarr[MOM_TINY_MAX];
+  memset (tinyattrarr, 0, sizeof (tinyattrarr));
+  struct mom_attrentry_st *attrarr =
+    (nbattr < MOM_TINY_MAX) ? tinyattrarr : MOM_GC_ALLOC ("attrarr",
+							  (nbattr +
+							   1) *
+							  sizeof (struct
+								  mom_itemattributes_st));
+  unsigned cnt = 0;
   fprintf (pout->mout_file, "[%d attrs]", attrs->nbattr);
   for (unsigned ix = 0; ix < attrs->size; ix++)
     {
       momitem_t *curatitm = attrs->itattrtab[ix].aten_itm;
       if (!curatitm || curatitm == MOM_EMPTY)
 	continue;
-      momval_t curval = attrs->itattrtab[ix].aten_val;
+      assert (cnt < nbattr);
+      attrarr[cnt++] = attrs->itattrtab[ix];
+    }
+  assert (cnt == nbattr);
+  qsort (attrarr, cnt, sizeof (struct mom_attrentry_st),
+	 out_attribute_cmp_mom);
+  for (unsigned ix = 0; ix < cnt; ix++)
+    {
+      momval_t curval = attrarr[ix].aten_val;
       MOM_OUT (pout, MOMOUT_NEWLINE (),
-	       MOMOUT_LITERAL ("*"), MOMOUT_DEC_INT ((int) ix),
-	       MOMOUT_LITERAL (": "),
-	       MOMOUT_ITEM ((const momitem_t *) curatitm),
+	       MOMOUT_LITERAL (":+ "),
+	       MOMOUT_ITEM ((const momitem_t *) attrarr[ix].aten_itm),
 	       MOMOUT_LITERAL (":: "),
-	       MOMOUT_VALUE ((const momval_t) curval), NULL);
+	       MOMOUT_INDENT_MORE (),
+	       MOMOUT_SPACE (60),
+	       MOMOUT_VALUE ((const momval_t) curval),
+	       MOMOUT_INDENT_LESS (), NULL);
     }
 }
 

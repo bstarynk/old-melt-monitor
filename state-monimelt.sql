@@ -188,8 +188,9 @@ INSERT INTO t_items VALUES('_0z0rsvwfkcj_dcpkx68i074','{"attr": [{"attr": "_0ee6
      "_34w40p46vwp_pw6u3d75ww6", "_591chiicj6r_512iim4cf4m", "_7rxfx0rruqm_kdtk9pk7wtj",
      "_9xhd87mskav_rqcu5eqk5te"]}}, {"attr": "_91pketvc5pz_wq0v0wpauw8", "val": {"jtype":
     "set", "set": ["_0kr2ef10dxy_79js3th0i56", "_4wx5f4704sp_v9kfazsqe9h",
-     "_6p9qjdya5cm_c2xad0xzawa", "_88565k6xdf0_331xf3x27dp"]}}], "content": null,
- "kind": "procedure", "payload": ["_41u1utcxyek_22cftxt3xxm", "_7fafkrcdjpd_dy0zpqsshr6"]}
+     "_5dq5ma9a81c_pdtk3x9sw4w", "_6p9qjdya5cm_c2xad0xzawa", "_88565k6xdf0_331xf3x27dp"]}}],
+ "content": null, "kind": "procedure", "payload": ["_41u1utcxyek_22cftxt3xxm",
+  "_7fafkrcdjpd_dy0zpqsshr6"]}
 ','procedure');
 INSERT INTO t_items VALUES('_10ji3aajfx3_983iz4013ec','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_80e7dsukuq3_6p7jffmz1yi",
     "jtype": "item_ref", "space": ".predef"}}, {"attr": "_2ummst105ck_xracfy8v87y",
@@ -849,6 +850,11 @@ INSERT INTO t_items VALUES('_5c8yvr53et5_xzwu6v1ri5h','{"attr": [{"attr": "_0ee6
      {"item_ref": "_2vy0ah3jrd1_mm66ja7rfj7", "jtype": "item_ref", "space": ".root"},
      ")"]}}, {"attr": "_41u1utcxyek_22cftxt3xxm", "val": "negation primitive & operator"}],
  "content": null, "kind": null, "payload": null}
+','');
+INSERT INTO t_items VALUES('_5dq5ma9a81c_pdtk3x9sw4w','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_3uwzqwvj6zj_s63am4qivpt",
+    "jtype": "item_ref", "space": ".predef"}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
+   "val": "variable for string values"}], "content": null, "kind": null, "payload":
+ null}
 ','');
 INSERT INTO t_items VALUES('_5ic5uk22icm_7ws16feu699','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "pseudo-formal for output arguments"}],
  "content": null, "kind": null, "payload": null}
@@ -1763,6 +1769,7 @@ INSERT INTO t_names VALUES('start','_3wh3e88sk28_d27qi2737zi','.predef');
 INSERT INTO t_names VALUES('start_assoc','_86ft82euar7_cm50jcthhwe','.root');
 INSERT INTO t_names VALUES('state','_6f9870y6v8t_kp8fcmq2ezv','.predef');
 INSERT INTO t_names VALUES('string','_8j516kuv89j_4hc4w6ykmr6','.predef');
+INSERT INTO t_names VALUES('strv','_5dq5ma9a81c_pdtk3x9sw4w','.root');
 INSERT INTO t_names VALUES('switch','_8qpa7j0chkh_k630ujw6jiw','.predef');
 INSERT INTO t_names VALUES('tasklet_function','_7yxp9xhih4z_9uzrqhkamxa','.predef');
 INSERT INTO t_names VALUES('terminated','_3jpt8yuzuyw_ti1pyz3me1c','.predef');

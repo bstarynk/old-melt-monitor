@@ -2106,7 +2106,7 @@ emit_output_arg_cgen (struct c_generator_mom_st *cg, momval_t curoutv,
 	    };
 	  emit_expr_cgen (cg, curoutv);
 	  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (","),
-		   MOMOUT_NEWLINE());
+		   MOMOUT_NEWLINE ());
 	}
     }
   else
