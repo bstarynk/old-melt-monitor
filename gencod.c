@@ -1002,9 +1002,9 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
       emit_ctype_cgen (cg, &cg->cgen_outbody, curargtypv);
       MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (" " CGEN_FORMALARG_PREFIX),
 	       MOMOUT_DEC_INT ((int) aix),
-	       MOMOUT_LITERAL (" "),
-	       MOMOUT_SLASHCOMMENT_STRING (mom_ident_cstr_of_item
-					   (curargitm)), NULL);
+	       MOMOUT_LITERAL (" /*!formal:"),
+	       MOMOUT_ITEM ((const momitem_t *) curargitm),
+	       MOMOUT_LITERAL ("*/"), NULL);
     }
   MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (")"), MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL ("{"), MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE ());
@@ -1688,7 +1688,10 @@ emit_var_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
       assert (formix >= 0);
       MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (64),
 	       MOMOUT_LITERAL (CGEN_FORMALARG_PREFIX),
-	       MOMOUT_DEC_INT (formix));
+	       MOMOUT_DEC_INT (formix),
+	       MOMOUT_LITERAL ("/*"),
+	       MOMOUT_ITEM ((const momitem_t *) varitm),
+	       MOMOUT_LITERAL ("*/ "));
       return emit_ctype_cgen (cg, NULL, mom_node_nth (expasv, 2));
     }
   else if (noditm == mom_named__closed_values)

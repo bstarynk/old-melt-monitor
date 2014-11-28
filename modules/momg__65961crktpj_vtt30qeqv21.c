@@ -286,8 +286,7 @@ const struct momtfundescr_st momrout__06uk4pppvx9_huv0v11v18j = { // tasklet fun
 
 
 // implementation of procedure #1 = _07zti91e4kd_952zqsd03fz
-void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_fwpy6exy62x
-)
+void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 /*!formal:cstr*/)
 {
  static momitem_t* momprocitem;
  if (MOM_UNLIKELY(!momprocitem)) momprocitem = mom_procedure_item_of_id("_07zti91e4kd_952zqsd03fz");
@@ -300,7 +299,7 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
   
   //! instr#1 in block _1kj1j3878fe_duw3ts10hev ::
   /*!do*/ /*!primitive-void _1iyd2es3u59_x6uq7vhecjj*/ mom_full_dump("todo dump-at-exit", 
-  momparg_0, NULL); mom_stop_event_loop();/*!endvoidprimitive _1iyd2es3u59_x6uq7vhecjj*/  /*!done*/;
+  momparg_0/*cstr*/ , NULL); mom_stop_event_loop();/*!endvoidprimitive _1iyd2es3u59_x6uq7vhecjj*/  /*!done*/;
   
  }; // end procedure block _1kj1j3878fe_duw3ts10hev
  return;
@@ -328,9 +327,8 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
  
  
  // implementation of procedure #2 = show_html_for_item_proc
- void momprocfun__0z0rsvwfkcj_dcpkx68i074 (momval_t momparg_0 ////!_16cd0fvmdrh_r77ajpy26za
- , momval_t momparg_1 ////!_1a2aavj5vir_2hz681zdfqd
- )
+ void momprocfun__0z0rsvwfkcj_dcpkx68i074 (momval_t momparg_0 /*!formal:webx*/,
+ momval_t momparg_1 /*!formal:itmv*/)
  {
   momval_t mompval_0 = MOM_NULLV; ////!namv
   
@@ -352,12 +350,12 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
    
    
    // locked-item webx in block _02yd241wh4z_tca7i6iamf3
-   momitem_t* momlockeditem_4 = mom_value_to_item ( momparg_0) /* locked-item */;
+   momitem_t* momlockeditem_4 = mom_value_to_item ( momparg_0/*webx*/ ) /* locked-item */;
    if (!mom_lock_item (momlockeditem_4)) goto momendblock_4;
    
    //! instr#1 in block _02yd241wh4z_tca7i6iamf3 ::
    /*!assign*/  (mompval_1/*:webses*/) = (/*!primitive mom_webx_session*/  (momval_t) mom_webx_session (
-   momparg_0.pitem) /*!endprimitive mom_webx_session*/) ;
+   momparg_0/*webx*/ .pitem) /*!endprimitive mom_webx_session*/) ;
    
    //! instr#2 in block _02yd241wh4z_tca7i6iamf3 ::
    /*!assign*/  (mompval_4/*:hitmv*/) = (/*!primitive mom_item_websession_get*/  mom_item_websession_get (
@@ -433,7 +431,7 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
    
    //! instr#1 in block _591chiicj6r_512iim4cf4m ::
    /*!assign*/  (mompval_3/*:commv*/) = (/*!primitive get_attribute*/  mom_item_get_attribute(
-   momparg_1.ptr,  ((momval_t) mompconstitems__0z0rsvwfkcj_dcpkx68i074[0] /*comment*/).ptr)/*!endprimitive get_attribute*/) ;
+   momparg_1/*itmv*/ .ptr,  ((momval_t) mompconstitems__0z0rsvwfkcj_dcpkx68i074[0] /*comment*/).ptr)/*!endprimitive get_attribute*/) ;
    
    //! instr#2 in block _591chiicj6r_512iim4cf4m ::
    /*!if*/ if ((/*!primitive is_nil*/  (intptr_t) (NULL == ( (mompval_3/*:commv*/)).ptr)/*!endprimitive is_nil*/) ) 
@@ -462,7 +460,7 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
    
    //! instr#1 in block _7rxfx0rruqm_kdtk9pk7wtj ::
    /*!assign*/  (mompval_0/*:namv*/) = (/*!primitive mom_item_get_name*/  (momval_t) mom_item_get_name (
-   momparg_1.ptr)/*!endprimitive mom_item_get_name*/) ;
+   momparg_1/*itmv*/ .ptr)/*!endprimitive mom_item_get_name*/) ;
    
    //! instr#2 in block _7rxfx0rruqm_kdtk9pk7wtj ::
    /*!if*/ if ((/*!primitive is_nil*/  (intptr_t) (NULL == ( (mompval_0/*:namv*/)).ptr)/*!endprimitive is_nil*/) ) 
@@ -470,9 +468,9 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
    
    //! instr#3 in block _7rxfx0rruqm_kdtk9pk7wtj ::
    /*!do*/ /*!primitive-void MOM_WEBX_OUT*/ MOM_WEBX_OUT (mom_value_to_item(
-   momparg_0), /*!litoutstr*/MOMOUTDO_LITERAL, "<span class='mom_named_item_cl' data-momitemid='",
+   momparg_0/*webx*/ ), /*!litoutstr*/MOMOUTDO_LITERAL, "<span class='mom_named_item_cl' data-momitemid='",
     /*!outcstrexp*/MOMOUTDO_LITERAL, (const char*)(/*!primitive mom_string_cstr*/  mom_string_cstr ((/*!primitive mom_item_get_idstr*/  (momval_t) mom_item_get_idstr (
-   momparg_1.ptr)/*!endprimitive mom_item_get_idstr*/) )/*!endprimitive mom_string_cstr*/) ,
+   momparg_1/*itmv*/ .ptr)/*!endprimitive mom_item_get_idstr*/) )/*!endprimitive mom_string_cstr*/) ,
     /*!litoutstr*/MOMOUTDO_LITERAL, "'>",  /*!outcstrexp*/MOMOUTDO_LITERAL, (const char*)(/*!primitive mom_string_cstr*/  mom_string_cstr (
    (mompval_0/*:namv*/))/*!endprimitive mom_string_cstr*/) ,
     /*!litoutstr*/MOMOUTDO_LITERAL, "</span>", /*!outputend*/NULL
@@ -487,7 +485,7 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
    
    //! instr#1 in block _9xhd87mskav_rqcu5eqk5te ::
    /*!do*/ (void) (/*!primitive mom_item_hset_add*/  (intptr_t) mom_item_hset_add (
-   (mompval_4/*:hitmv*/).pitem,  momparg_1)/*!endprimitive mom_item_hset_add*/)  /*!done*/;
+   (mompval_4/*:hitmv*/).pitem,  momparg_1/*itmv*/ )/*!endprimitive mom_item_hset_add*/)  /*!done*/;
    
    //! instr#2 in block _9xhd87mskav_rqcu5eqk5te ::
    
@@ -522,8 +520,7 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
   
   
   // implementation of procedure #3 = _7x6as13park_w64mrkx2xtm
-  void momprocfun__7x6as13park_w64mrkx2xtm (momcstr_t momparg_0 ////!_389t77v85ej_fwpy6exy62x
-  )
+  void momprocfun__7x6as13park_w64mrkx2xtm (momcstr_t momparg_0 /*!formal:cstr*/)
   {
    static momitem_t* momprocitem;
    if (MOM_UNLIKELY(!momprocitem)) momprocitem = mom_procedure_item_of_id("_7x6as13park_w64mrkx2xtm");
@@ -542,10 +539,11 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0 ////!_389t77v85ej_
     /*!do*/ /*!primitive-void _87r5zd69i6m_zr0hupaer90*/ /* primitive _87r5zd... in start-block of todo-on-dump */
  struct mom_dumpoutcome_st doutc;
  memset(&doutc, 0, sizeof(doutc)); mom_full_dump("todo-dump-with-outcome", 
-    momparg_0, &doutc);
+    momparg_0/*cstr*/ , &doutc);
  MOM_INFORMPRINTF(" dumped with outcome %d items into %s", doutc.odmp_nbdumpeditems, 
-    momparg_0);
- mom_item_put_attribute (/*!outsidechunk*/ ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, /*!outsidechunk*/
+    momparg_0/*cstr*/ );
+ mom_item_put_attribute (/*!outsidechunk*/
+    ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, /*!outsidechunk*/
     ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[6] /*elapsed_time*/).pitem, mom_let_transient(mom_make_double(doutc.odmp_elapsedtime)));
  mom_item_put_attribute (/*!outsidechunk*/
     ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, /*!outsidechunk*/
