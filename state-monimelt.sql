@@ -1,4 +1,4 @@
--- state-monimelt dump 2014 Nov 28
+-- state-monimelt dump 2014 Nov 30
 
  --   Copyright (C) 2014 Free Software Foundation, Inc.
  --  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -335,6 +335,9 @@ INSERT INTO t_items VALUES('_1kj1j3878fe_duw3ts10hev','{"attr": [{"attr": "_41u1
   "jtype": "item_ref", "space": ".root"}]}]}]}}], "content": null, "kind": null,
  "payload": null}
 ','');
+INSERT INTO t_items VALUES('_1msruhax4jp_7fsudf3yfqc','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "gives the predecessors"}],
+ "content": null, "kind": null, "payload": null}
+','');
 INSERT INTO t_items VALUES('_1r880c1yk3z_i5e8mprcj90','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for blocks in routines, etc..."}],
  "content": null, "kind": null, "payload": null}
 ','');
@@ -555,6 +558,9 @@ INSERT INTO t_items VALUES('_3ewavcvakfi_kf3vxt4f07h','{"attr": [{"attr": "_0ee6
       "jtype": "item_ref", "space": ".root"}, ")"]}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "primitive to test if an hset item contains some value"}], "content": null,
  "kind": null, "payload": null}
+','');
+INSERT INTO t_items VALUES('_3f9ed2t5e6d_j4cz24rt82z','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "Gives some component-of relation, e.g. within a block its containing routine."}],
+ "content": null, "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_3ff1zzfsxzc_xk423qutvqr','{"attr": [{"attr": "_19ufza9zf05_muxxhkmm7ww", "val": {"jtype": "node", "node": "_8x6fxcm4z2k_vdaqicfi4z0",
     "sons": ["MOMOUTDO_NEWLINE"]}}, {"attr": "_2ummst105ck_xracfy8v87y", "val": {"jtype":
@@ -1657,6 +1663,7 @@ INSERT INTO t_names VALUES('hset','_7fafkrcdjpd_dy0zpqsshr6','.root');
 INSERT INTO t_names VALUES('i','_2vy0ah3jrd1_mm66ja7rfj7','.root');
 INSERT INTO t_names VALUES('id','_7a9sxskjhcp_kpf30ka97ex','.predef');
 INSERT INTO t_names VALUES('if','_8ejwdt1a5yx_2meizztvte0','.predef');
+INSERT INTO t_names VALUES('in','_3f9ed2t5e6d_j4cz24rt82z','.predef');
 INSERT INTO t_names VALUES('intptr_t','_51u3st4u9mc_zdvms6jti0a','.predef');
 INSERT INTO t_names VALUES('is_nil','_63xw30mvx5q_45qi5j4ak1y','.root');
 INSERT INTO t_names VALUES('item','_36esaxiqmd5_ciet8ws1f5d','.root');
@@ -1765,6 +1772,7 @@ INSERT INTO t_names VALUES('output','_0te6f7f9pz7_m91yy9iv5pd','.predef');
 INSERT INTO t_names VALUES('output_expansion','_19ufza9zf05_muxxhkmm7ww','.predef');
 INSERT INTO t_names VALUES('params','_4215uc2u6qk_52kqyra86y5','.predef');
 INSERT INTO t_names VALUES('payload','_41v0erax6my_m6pytj0793u','.predef');
+INSERT INTO t_names VALUES('predecessors','_1msruhax4jp_7fsudf3yfqc','.predef');
 INSERT INTO t_names VALUES('predefined','_133zjf1f9zp_jq8kti38sd7','.root');
 INSERT INTO t_names VALUES('primitive_expansion','_37x98fyestf_ttup2cu68r6','.predef');
 INSERT INTO t_names VALUES('proc','_70aer7teeui_kvzkiqq2rd2','.root');

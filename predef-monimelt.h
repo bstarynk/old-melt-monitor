@@ -127,6 +127,9 @@ MOM_PREDEFINED_NAMED(id,_7a9sxskjhcp_kpf30ka97ex,2687612409)
 ////!for conditionals, etc..
 MOM_PREDEFINED_NAMED(if,_8ejwdt1a5yx_2meizztvte0,2841552917)
 
+////!Gives some component-of relation, e.g. within a block its containing routine.
+MOM_PREDEFINED_NAMED(in,_3f9ed2t5e6d_j4cz24rt82z,2260112569)
+
 ////!The C type for word integers
 MOM_PREDEFINED_NAMED(intptr_t,_51u3st4u9mc_zdvms6jti0a,2777173293)
 
@@ -212,6 +215,9 @@ MOM_PREDEFINED_NAMED(params,_4215uc2u6qk_52kqyra86y5,709750062)
 
 ////!in JSON dumps, give the payload of items
 MOM_PREDEFINED_NAMED(payload,_41v0erax6my_m6pytj0793u,3962456714)
+
+////!gives the predecessors
+MOM_PREDEFINED_NAMED(predecessors,_1msruhax4jp_7fsudf3yfqc,1228401282)
 
 ////!the expansion of a primitive
 MOM_PREDEFINED_NAMED(primitive_expansion,_37x98fyestf_ttup2cu68r6,1061786883)

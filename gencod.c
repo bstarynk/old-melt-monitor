@@ -25,7 +25,7 @@
    associated to a set or tuple of routines, i.e. procedure or
    function items. Procedures have an attribute `procedure`, and
    functions have an attribute `tasklet_function` - both associated to
-   a sequence of blocks.
+   a starting block
 
 
    Routines (procedures or functions) usually have an attribute
@@ -37,9 +37,12 @@
    tuple- of constant items, `formals` associated to formal-arguments,
    `locals` associated to locals variables.
 
-   Both procedures and functions have a tuple or set of `blocks` and a
-   `start` block item.
 
+   The code generation, when successful, is updating routines and
+   blocks: Every reachable block gets `predecessors` and `successors`
+   (sets of related blocks), and `in` the routine containing that
+   block.
+   
    Expressions are often nodes, the connective being a procedure or a
    primitive.
 
