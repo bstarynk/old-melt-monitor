@@ -65,7 +65,7 @@
   but the last sub-node in a block code could also be:
      *jump(<block>)
      *call(<return-block>,<fun-expr>,<arg-expr>....) in functions only
-     *return(<expr>) or `return`
+     *return(<expr>) or *return()
 
   A block item might have a `lock` attribute giving a variable
   (holding some item) to lock before entering that block, which will
@@ -1219,13 +1219,20 @@ scan_instr_cgen (struct c_generator_mom_st *cg, momitem_t *blockitm,
       ////
       SCANCASE (_jump);		// *jump(<block>)
       {
-	if (instarity != 1)
+	if (instarity != 1 || !lastinstr)
 	  goto bad_instr;
+	momitem_t *jumpblockitm = mom_value_to_item (mom_node_nth (insv, 0));
+	if (!jumpblockitm)
+	  goto bad_instr;
+	scan_block_cgen (cg, jumpblockitm, insv, blockitm);
       }
       break;
       ////
-      SCANCASE (_return);	// *return(<expr>) or `return`
+      SCANCASE (_return);	// *return(<expr>) or *return
       {
+	if (instarity > 1 || !lastinstr)
+	  goto bad_instr;
+	scan_expr_cgen (cg, insv, mom_node_nth (insv, 0));
       }
       break;
     bad_instr:
