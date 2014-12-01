@@ -587,7 +587,7 @@ int mom_json_cmp (const momval_t l, const momval_t r);
 static inline momtynum_t
 mom_type (const momval_t v)
 {
-  if (v.ptr == NULL)
+  if (MOM_UNLIKELY (v.ptr == NULL))
     return momty_null;
   else
     return *v.ptype;

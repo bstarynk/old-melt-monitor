@@ -224,8 +224,8 @@ static void scan_instr_cgen (struct c_generator_mom_st *cgen,
 static momtypenc_t scan_expr_cgen (struct c_generator_mom_st *cgen,
 				   momval_t insv, momval_t expv);
 
-static momtypenc_t scan_var_cgen (struct c_generator_mom_st *cgen,
-				  momitem_t *varitm);
+static momtypenc_t scan_item_cgen (struct c_generator_mom_st *cgen,
+				   momitem_t *varitm);
 
 static void scan_block_cgen (struct c_generator_mom_st *cgen,
 			     momitem_t *blockitm, momval_t fromv,
@@ -1081,27 +1081,47 @@ scan_expr_cgen (struct c_generator_mom_st *cg, momval_t insv, momval_t expv)
 	     MOMOUT_VALUE ((const momval_t) insv),
 	     MOMOUT_LITERAL (" for exp:"),
 	     MOMOUT_VALUE ((const momval_t) expv), NULL);
-  if (mom_is_integer (expv))
-    return momtypenc_int;
-  else if (mom_is_seqitem (expv))
-    return momtypenc_string;
-  else if (mom_is_double (expv))
-    return momtypenc_double;
+  switch ((momvaltype_t) mom_type (expv))
+    {
+    case momty_null:
+      return momtypenc__none;
+    case momty_int:
+      return momtypenc_int;
+    case momty_string:
+      return momtypenc_string;
+    case momty_double:
+      return momtypenc_double;
+    case momty_jsonarray:
+    case momty_jsonobject:
+      return momtypenc_val;
+    case momty_item:
+      return scan_item_cgen (cg, expv.pitem);
+    case momty_node:
+#warning scan_expr_cgen unimplemented for node
+      ;
+    }
   CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("scan_expr unimplemented in instr:"),
 		  MOMOUT_VALUE ((const momval_t) insv),
 		  MOMOUT_LITERAL (" exp:"),
 		  MOMOUT_VALUE ((const momval_t) expv), NULL);
-#warning scan_expr_cgen unimplemented
 }
 
 
 static momtypenc_t
-scan_var_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
+scan_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
 {
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
-  CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("scan_var unimplemented for varitm:"),
+  if (!varitm)
+    return;
+  assert (varitm->i_typnum == momty_item);
+  cgen_lock_item_mom (cg, varitm);
+  momval_t varv = mom_item_get_attribute (varitm, mom_named__variable);
+  if (mom_is_item (varv))
+    {
+    }
+  CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("scan_item unimplemented for varitm:"),
 		  MOMOUT_ITEM ((const momitem_t *) varitm), NULL);
-#warning scan_var_cgen unimplemented
+#warning scan_item_cgen unimplemented
 }
 
 
@@ -1151,7 +1171,7 @@ scan_instr_cgen (struct c_generator_mom_st *cg, momitem_t *blockitm,
 	momitem_t *leftitm = mom_value_to_item (mom_node_nth (insv, 0));
 	if (!leftitm)
 	  goto bad_instr;
-	momtypenc_t tl = scan_var_cgen (cg, leftitm);
+	momtypenc_t tl = scan_item_cgen (cg, leftitm);
 	momtypenc_t tr = scan_expr_cgen (cg, insv, mom_node_nth (insv, 1));
 	if (tl > momtypenc__none && tr > momtypenc__none && tl != tr)
 	  CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("type mismatch in block:"),
