@@ -974,6 +974,9 @@ scan_procedure_cgen (struct c_generator_mom_st *cg, momitem_t *procitm)
   momval_t proformalsv = MOM_NULLV;
   momval_t proconstantsv = MOM_NULLV;
   momval_t proprocedurev = MOM_NULLV;
+  momval_t oldanodv = mom_item_assoc_get (cg->cgen_globassocitm, procitm);
+  assert (mom_node_conn (oldanodv) == mom_named__procedure
+	  && mom_node_arity (oldanodv) == 3);
   proformalsv = mom_item_get_attribute (procitm, mom_named__formals);
   proconstantsv = mom_item_get_attribute (procitm, mom_named__constants);
   proprocedurev = mom_item_get_attribute (procitm, mom_named__procedure);
@@ -1019,6 +1022,22 @@ scan_procedure_cgen (struct c_generator_mom_st *cg, momitem_t *procitm)
 		    MOMOUT_VALUE (proprocedurev), NULL);
   scan_block_cgen (cg, proprocedurev.pitem, (momval_t) procitm, NULL);
   loop_blocks_to_scan_cgen (cg);
+  momval_t ixv = mom_node_nth (oldanodv, 0);
+  assert (mom_is_integer (ixv));
+  momval_t argsigv = mom_node_nth (oldanodv, 1);
+  momval_t restypv = mom_node_nth (oldanodv, 2);
+  momval_t newanodv = (momval_t) mom_make_node_sized (mom_named__procedure, 4,
+						      ixv, argsigv, restypv,
+						      (momval_t)
+						      cg->cgen_rout.cgrout_blockhsetitm);
+  mom_item_assoc_put (cg->cgen_globassocitm, procitm, newanodv);
+  MOM_DEBUG (gencod,
+	     MOMOUT_LITERAL
+	     ("scan_procedure associating procitm="),
+	     MOMOUT_ITEM ((const momitem_t *) procitm),
+	     MOMOUT_LITERAL (" to "),
+	     MOMOUT_VALUE ((const momval_t) newanodv), NULL);
+
 }
 
 static void
