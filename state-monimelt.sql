@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(40) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','command dump');
+INSERT INTO t_params VALUES('dump_reason','after predefined variable');
 INSERT INTO t_modules VALUES('_65961crktpj_vtt30qeqv21');
 INSERT INTO t_items VALUES('_02av6173qvf_pehzhe755j2','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for calls at end of  blocks"}],
  "content": null, "kind": null, "payload": null}
@@ -1561,6 +1561,9 @@ INSERT INTO t_items VALUES('_9u6a6xy2e1p_qeapfc73cm4','{"attr": [{"attr": "_232t
       "sons": [" MOM_INFORMPRINTF(\"quitting Monimelt per web request\");\n exit(EXIT_SUCCESS); // per web request\n"]}]}}],
  "content": null, "kind": null, "payload": null}
 ','');
+INSERT INTO t_items VALUES('_9u7pp5r3ccq_6fsi3t2a6tq','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "associated to a ctype in variables"}],
+ "content": null, "kind": null, "payload": null}
+','');
 INSERT INTO t_items VALUES('_9w7y4v2xpyr_f48demccutx','{"attr": [{"attr": "_19ufza9zf05_muxxhkmm7ww", "val": {"jtype": "node", "node": "_8x6fxcm4z2k_vdaqicfi4z0",
     "sons": ["MOMOUTDO_SMALL_NEWLINE"]}}, {"attr": "_2ummst105ck_xracfy8v87y",
    "val": {"jtype": "tuple", "tuple": []}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
@@ -1811,6 +1814,7 @@ INSERT INTO t_names VALUES('v2','_96qx16z900r_dw5ppp22a0s','.root');
 INSERT INTO t_names VALUES('val','_7wk9y7e7r0z_575esi8ys5x','.predef');
 INSERT INTO t_names VALUES('values','_91pketvc5pz_wq0v0wpauw8','.predef');
 INSERT INTO t_names VALUES('var','_2d7i21ihwd8_xjcp4uhs11u','.root');
+INSERT INTO t_names VALUES('variable','_9u7pp5r3ccq_6fsi3t2a6tq','.predef');
 INSERT INTO t_names VALUES('verbatim','_0x2k07ik4tm_ed7vqphf5ak','.predef');
 INSERT INTO t_names VALUES('void','_02q6zk9f5st_im0z75re15f','.predef');
 INSERT INTO t_names VALUES('web_handler','_7sav6zery1v_24sa6jwwu6c','.predef');

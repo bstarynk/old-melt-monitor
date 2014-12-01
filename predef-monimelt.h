@@ -276,6 +276,9 @@ MOM_PREDEFINED_NAMED(val,_7wk9y7e7r0z_575esi8ys5x,746430217)
 ////!Gives the values of Json for frames of tasklets.
 MOM_PREDEFINED_NAMED(values,_91pketvc5pz_wq0v0wpauw8,1652042255)
 
+////!associated to a ctype in variables
+MOM_PREDEFINED_NAMED(variable,_9u7pp5r3ccq_6fsi3t2a6tq,3922359103)
+
 ////!gives verbatim code
 MOM_PREDEFINED_NAMED(verbatim,_0x2k07ik4tm_ed7vqphf5ak,661264363)
 

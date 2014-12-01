@@ -30,8 +30,9 @@
 
    Routines (procedures or functions) usually have an attribute
    `constant` giving a sequence -set or tuple- of constant items,
-   `formals` associated to formal arguments, `locals` associated to
-   local variables.
+   `formals` associated to formal arguments, and perhaps `locals`
+   associated to local variables. But any item with `variable`
+   associated to a ctype is considered as a variable.
 
    Tasklet functions have an attribute `constant` giving a sequence -set or
    tuple- of constant items, `formals` associated to formal-arguments,
@@ -661,10 +662,13 @@ emit_routine_cgen (struct c_generator_mom_st *cg, unsigned routix,
   cg->cgen_rout.cgrout_routitm = curoutitm;
   cg->cgen_rout.cgrout_associtm = mom_make_item ();
   mom_item_start_assoc (cg->cgen_rout.cgrout_associtm);
+  cgen_lock_item_mom (cg, cg->cgen_rout.cgrout_associtm);
   cg->cgen_rout.cgrout_blockhsetitm = mom_make_item ();
   mom_item_start_hset (cg->cgen_rout.cgrout_blockhsetitm);
+  cgen_lock_item_mom (cg, cg->cgen_rout.cgrout_blockhsetitm);
   cg->cgen_rout.cgrout_blockqueueitm = mom_make_item ();
   mom_item_start_queue (cg->cgen_rout.cgrout_blockqueueitm);
+  cgen_lock_item_mom (cg, cg->cgen_rout.cgrout_blockqueueitm);
   MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_routine curoutitm="),
 	     MOMOUT_ITEM ((const momitem_t *) curoutitm),
 	     MOMOUT_LITERAL (" locassoc:"),
@@ -948,8 +952,10 @@ bind_functionvars_cgen (struct c_generator_mom_st *cg, unsigned offset,
 		    MOMOUT_ITEM ((const momitem_t *) cg->
 				 cgen_rout.cgrout_routitm), NULL);
   return nbvars;
-}
+}				// end of bind_functionvars_cgen
 #endif
+
+
 
 
 void
@@ -958,6 +964,65 @@ scan_procedure_cgen (struct c_generator_mom_st *cg, momitem_t *procitm)
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
   assert (procitm && procitm->i_typnum == momty_item);
   cgen_lock_item_mom (cg, procitm);
+  momval_t procnodev = mom_item_assoc_get (cg->cgen_globassocitm, procitm);
+  assert (mom_node_conn (procnodev) == mom_named__procedure);
+  momval_t proformalsv = MOM_NULLV;
+  momval_t proconstantsv = MOM_NULLV;
+  momval_t proprocedurev = MOM_NULLV;
+  proformalsv = mom_item_get_attribute (procitm, mom_named__formals);
+  proconstantsv = mom_item_get_attribute (procitm, mom_named__constants);
+  proprocedurev = mom_item_get_attribute (procitm, mom_named__procedure);
+  if (proformalsv.ptr && !mom_is_tuple (proformalsv))
+    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("in procedure:"),
+		    MOMOUT_ITEM ((const momitem_t *) procitm),
+		    MOMOUT_LITERAL (" bad formals:"),
+		    MOMOUT_VALUE (proformalsv), NULL);
+  unsigned nbformals = mom_tuple_length (proformalsv);
+  for (unsigned fix = 0; fix < nbformals; fix++)
+    {
+      momitem_t *curformitm = mom_tuple_nth_item (proformalsv, fix);
+      if (!curformitm)
+	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("nil formal in procedure:"),
+			MOMOUT_ITEM ((const momitem_t *) procitm),
+			MOMOUT_LITERAL (" with formals:"),
+			MOMOUT_VALUE (proformalsv), NULL);
+      CGEN_CHECK_FRESH (cg, "formal of procedure", curformitm);
+      cgen_lock_item_mom (cg, curformitm);
+      momval_t formtypv =
+	mom_item_get_attribute (curformitm, mom_named__variable);
+      if (!formtypv.ptr)
+	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("missing `variable` in formal:"),
+			MOMOUT_ITEM ((const momitem_t *) curformitm),
+			MOMOUT_LITERAL (" of procedure:"),
+			MOMOUT_ITEM ((const momitem_t *) procitm), NULL);
+      mom_item_assoc_put
+	(cg->cgen_rout.cgrout_associtm, curformitm,
+	 (momval_t) mom_make_node_sized (mom_named__formals, 3,
+					 (momval_t) procitm,
+					 mom_make_integer (fix), formtypv));
+    }
+  if (proconstantsv.ptr && !mom_is_seqitem (proconstantsv))
+    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("in procedure:"),
+		    MOMOUT_ITEM ((const momitem_t *) procitm),
+		    MOMOUT_LITERAL (" bad constants:"),
+		    MOMOUT_VALUE (proconstantsv), NULL);
+  unsigned nbconstants = bind_constants_cgen (cg, proconstantsv);
+  if (!mom_is_item (proprocedurev))
+    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("in procedure:"),
+		    MOMOUT_ITEM ((const momitem_t *) procitm),
+		    MOMOUT_LITERAL (" non-item starting block `procedure`:"),
+		    MOMOUT_VALUE (proprocedurev), NULL);
+  scan_block_cgen (cg, proprocedurev.pitem);
+#warning missing block scanning loop
+}
+
+static void
+scan_block_cgen (struct c_generator_mom_st *cgen, momitem_t *blockitm)
+{
+#warning unimplemented scan_block_cgen
+  CGEN_ERROR_MOM (cg,
+		  MOMOUT_LITERAL ("unimplemented scan_block_cgen blockitm:"),
+		  MOMOUT_ITEM ((const momitem_t *) blockitm), NULL);
 }
 
 void
