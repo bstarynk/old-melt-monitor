@@ -1017,7 +1017,7 @@ scan_procedure_cgen (struct c_generator_mom_st *cg, momitem_t *procitm)
 }
 
 static void
-scan_block_cgen (struct c_generator_mom_st *cgen, momitem_t *blockitm)
+scan_block_cgen (struct c_generator_mom_st *cg, momitem_t *blockitm)
 {
 #warning unimplemented scan_block_cgen
   CGEN_ERROR_MOM (cg,
