@@ -218,7 +218,8 @@ static void scan_taskletfunction_cgen (struct c_generator_mom_st *cgen,
 static void scan_procedure_cgen (struct c_generator_mom_st *cgen,
 				 momitem_t *routitm);
 
-static void scan_instr_cgen (struct c_generator_mom_st *cgen, momval_t insv);
+static void scan_instr_cgen (struct c_generator_mom_st *cgen,
+			     momitem_t *blkitm, momval_t insv, bool lastins);
 
 static void scan_expr_cgen (struct c_generator_mom_st *cgen, momval_t expv);
 
@@ -226,7 +227,9 @@ static void scan_var_cgen (struct c_generator_mom_st *cgen,
 			   momitem_t *varitm);
 
 static void scan_block_cgen (struct c_generator_mom_st *cgen,
-			     momitem_t *blockitm);
+			     momitem_t *blockitm, momval_t fromv);
+
+static void loop_blocks_to_scan_cgen (struct c_generator_mom_st *cgen);
 
 static void emit_procedure_cgen (struct c_generator_mom_st *cgen,
 				 unsigned routix);
@@ -1012,17 +1015,89 @@ scan_procedure_cgen (struct c_generator_mom_st *cg, momitem_t *procitm)
 		    MOMOUT_ITEM ((const momitem_t *) procitm),
 		    MOMOUT_LITERAL (" non-item starting block `procedure`:"),
 		    MOMOUT_VALUE (proprocedurev), NULL);
-  scan_block_cgen (cg, proprocedurev.pitem);
-#warning missing block scanning loop
+  scan_block_cgen (cg, proprocedurev.pitem, (momval_t) procitm);
+  loop_blocks_to_scan_cgen (cg);
 }
 
 static void
-scan_block_cgen (struct c_generator_mom_st *cg, momitem_t *blockitm)
+loop_blocks_to_scan_cgen (struct c_generator_mom_st *cg)
 {
-#warning unimplemented scan_block_cgen
-  CGEN_ERROR_MOM (cg,
-		  MOMOUT_LITERAL ("unimplemented scan_block_cgen blockitm:"),
-		  MOMOUT_ITEM ((const momitem_t *) blockitm), NULL);
+  assert (cg && cg->cgen_magic == CGEN_MAGIC);
+  assert (mom_item_payload_kind (cg->cgen_rout.cgrout_blockqueueitm) ==
+	  mompayk_queue);
+  MOM_DEBUG (gencod, MOMOUT_LITERAL ("loop_blocks remaining block count="),
+	     MOMOUT_DEC_INT ((int) mom_item_queue_length
+			     (cg->cgen_rout.cgrout_blockqueueitm)), NULL);
+  while (!mom_item_queue_is_empty (cg->cgen_rout.cgrout_blockqueueitm))
+    {
+      momitem_t *curblkitm =
+	mom_value_to_item (mom_item_queue_pop_front
+			   (cg->cgen_rout.cgrout_blockqueueitm));
+      assert (curblkitm && curblkitm->i_typnum == momty_item);
+      MOM_DEBUG (gencod, MOMOUT_LITERAL ("loop_blocks curblkitm="),
+		 MOMOUT_ITEM ((const momitem_t *) curblkitm), NULL);
+      momval_t blcodev = mom_item_get_attribute (curblkitm, mom_named__block);
+      assert (mom_node_conn (blcodev) == mom_named__code);
+      unsigned nbinstr = mom_node_arity (blcodev);
+      for (unsigned ix = 0; ix < nbinstr; ix++)
+	{
+	  momval_t curinsv = mom_node_nth (blcodev, ix);
+	  scan_instr_cgen (cg, curblkitm, curinsv, ix + 1 >= nbinstr);
+	}
+    }
+}
+
+static void
+scan_instr_cgen (struct c_generator_mom_st *cg, momitem_t *blockitm,
+		 momval_t insv, bool lastinstr)
+{
+  assert (cg && cg->cgen_magic == CGEN_MAGIC);
+  CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("unimplemented scan_instr in block:"),
+		  MOMOUT_ITEM ((const momitem_t *) blockitm),
+		  MOMOUT_LITERAL (" for instr:"),
+		  MOMOUT_VALUE ((const momval_t) insv), NULL);
+#warning scan_instr_cgen incomplete
+}
+
+static void
+scan_block_cgen (struct c_generator_mom_st *cg, momitem_t *blockitm,
+		 momval_t fromv)
+{
+  assert (cg && cg->cgen_magic == CGEN_MAGIC);
+  if (!blockitm)
+    return;
+  assert (blockitm->i_typnum == momty_item);
+  assert (mom_item_payload_kind (cg->cgen_rout.cgrout_blockhsetitm) ==
+	  mompayk_hset);
+  assert (mom_item_payload_kind (cg->cgen_rout.cgrout_blockqueueitm) ==
+	  mompayk_queue);
+  if (!mom_item_hset_add
+      (cg->cgen_rout.cgrout_blockhsetitm, (momval_t) blockitm))
+    {
+      MOM_DEBUG (gencod, MOMOUT_LITERAL ("scan_block known blockitm="),
+		 MOMOUT_ITEM ((const momitem_t *) blockitm), NULL);
+      return;
+    }
+  MOM_DEBUG (gencod, MOMOUT_LITERAL ("scan_block blockitm="),
+	     MOMOUT_ITEM ((const momitem_t *) blockitm),
+	     MOMOUT_LITERAL (" from="), MOMOUT_VALUE ((const momval_t) fromv),
+	     NULL);
+  cgen_lock_item_mom (cg, blockitm);
+  momval_t blcodev = mom_item_get_attribute (blockitm, mom_named__block);
+  if (mom_node_conn (blcodev) != mom_named__code)
+    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("in routine:"),
+		    MOMOUT_ITEM ((const momitem_t *) cg->
+				 cgen_rout.cgrout_routitm),
+		    MOMOUT_LITERAL
+		    (" bad `block` attribute - not a *code node :"),
+		    MOMOUT_VALUE ((const momval_t) blcodev),
+		    MOMOUT_LITERAL ("in block item:"),
+		    MOMOUT_ITEM ((const momitem_t *) blockitm),
+		    MOMOUT_LITERAL (" from:"),
+		    MOMOUT_VALUE ((const momval_t) fromv), NULL);
+  mom_item_queue_add_back (cg->cgen_rout.cgrout_blockqueueitm,
+			   (momval_t) blockitm);
+
 }
 
 void
