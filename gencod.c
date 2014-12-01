@@ -1029,7 +1029,8 @@ scan_procedure_cgen (struct c_generator_mom_st *cg, momitem_t *procitm)
   momval_t newanodv = (momval_t) mom_make_node_sized (mom_named__procedure, 4,
 						      ixv, argsigv, restypv,
 						      (momval_t)
-						      cg->cgen_rout.cgrout_blockhsetitm);
+						      cg->
+						      cgen_rout.cgrout_blockhsetitm);
   mom_item_assoc_put (cg->cgen_globassocitm, procitm, newanodv);
   MOM_DEBUG (gencod,
 	     MOMOUT_LITERAL
@@ -1092,6 +1093,17 @@ scan_expr_cgen (struct c_generator_mom_st *cg, momval_t insv, momval_t expv)
 		  MOMOUT_VALUE ((const momval_t) expv), NULL);
 #warning scan_expr_cgen unimplemented
 }
+
+
+static momtypenc_t
+scan_var_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
+{
+  assert (cg && cg->cgen_magic == CGEN_MAGIC);
+  CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("scan_var unimplemented for varitm:"),
+		  MOMOUT_ITEM ((const momitem_t *) varitm), NULL);
+#warning scan_var_cgen unimplemented
+}
+
 
 static void
 scan_instr_cgen (struct c_generator_mom_st *cg, momitem_t *blockitm,
