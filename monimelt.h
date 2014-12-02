@@ -2254,6 +2254,7 @@ void mom_item_hset_reserve (momitem_t *itm, unsigned gap);
 bool mom_item_hset_contains (momitem_t *itm, momval_t elem);
 bool mom_item_hset_add (momitem_t *itm, momval_t elem);
 bool mom_item_hset_remove (momitem_t *itm, momval_t elem);
+unsigned mom_item_hset_count (momitem_t *itm);
 momval_t mom_item_hset_items_set (momitem_t *itm);
 momval_t mom_item_hset_sorted_values_node (momitem_t *hsetitm,
 					   momitem_t *connitm);

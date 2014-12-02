@@ -127,10 +127,13 @@ struct c_generator_mom_st
   struct
   {
     enum cgenroutkind_mom_en cgrout_kind;
-    momitem_t *cgrout_routitm;
-    momitem_t *cgrout_associtm;
+    momitem_t *cgrout_routitm;	// the current routine.
+    momitem_t *cgrout_associtm;	// local association item
     momitem_t *cgrout_blockhsetitm;	// an hashed set of blocks & *jump(fromblock,toblock) nodes
-    momitem_t *cgrout_blockqueueitm;
+    momitem_t *cgrout_blockqueueitm;	// a queue of block items to be scanned
+    momitem_t *cgrout_hsetintitm;	// hashed set of local integer (intptr_t) variables
+    momitem_t *cgrout_hsetdblitm;	// hashed set of local floating-point (double) variables
+    momitem_t *cgrout_hsetvalitm;	// hashed set of local value (momval_t) variables
   } cgen_rout;
   momtypenc_t cgen_restype;
   struct momout_st cgen_outhead;
@@ -688,6 +691,17 @@ emit_routine_cgen (struct c_generator_mom_st *cg, unsigned routix,
   cg->cgen_rout.cgrout_blockqueueitm = mom_make_item ();
   mom_item_start_queue (cg->cgen_rout.cgrout_blockqueueitm);
   cgen_lock_item_mom (cg, cg->cgen_rout.cgrout_blockqueueitm);
+  // the local variable sets
+  cg->cgen_rout.cgrout_hsetintitm = mom_make_item ();
+  mom_item_start_hset (cg->cgen_rout.cgrout_hsetintitm);
+  cgen_lock_item_mom (cg, cg->cgen_rout.cgrout_hsetintitm);
+  cg->cgen_rout.cgrout_hsetdblitm = mom_make_item ();
+  mom_item_start_hset (cg->cgen_rout.cgrout_hsetdblitm);
+  cgen_lock_item_mom (cg, cg->cgen_rout.cgrout_hsetdblitm);
+  cg->cgen_rout.cgrout_hsetvalitm = mom_make_item ();
+  mom_item_start_hset (cg->cgen_rout.cgrout_hsetvalitm);
+  cgen_lock_item_mom (cg, cg->cgen_rout.cgrout_hsetvalitm);
+  // starting
   MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_routine curoutitm="),
 	     MOMOUT_ITEM ((const momitem_t *) curoutitm),
 	     MOMOUT_LITERAL (" locassoc:"),
@@ -1448,6 +1462,9 @@ scan_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
 	  SCANITCASE (_constants);
 	  return momtypenc_val;
 	  ////
+	  SCANITCASE (_intptr_t);
+	  return momtypenc_int;
+	  ////
 	default:;
 	}
 #undef SCANITCASE
@@ -1462,6 +1479,79 @@ scan_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
   momval_t varv = mom_item_get_attribute (varitm, mom_named__variable);
   if (mom_is_item (varv))
     {
+      momtypenc_t tyvar =
+	typenc_cgen (cg, true, varv.pitem, (momval_t) varitm);
+      switch (tyvar)
+	{
+	  /// integer variables
+	case momtypenc_int:
+	  {
+	    assert (mom_item_payload_kind (cg->cgen_rout.cgrout_hsetintitm) ==
+		    mompayk_hset);
+	    unsigned cnt =
+	      mom_item_hset_count (cg->cgen_rout.cgrout_hsetintitm);
+	    assert (!mom_item_hset_contains
+		    (cg->cgen_rout.cgrout_hsetintitm, (momval_t) varitm));
+	    mom_item_assoc_put (cg->cgen_rout.cgrout_associtm, varitm,
+				(momval_t)
+				mom_make_node_sized (mom_named__intptr_t, 2,
+						     mom_make_integer (cnt),
+						     cg->
+						     cgen_rout.cgrout_routitm));
+	    mom_item_hset_add (cg->cgen_rout.cgrout_hsetintitm,
+			       (momval_t) varitm);
+	    return momtypenc_int;
+	  }
+	  break;
+	  /// double variables
+	case momtypenc_double:
+	  {
+	    assert (mom_item_payload_kind (cg->cgen_rout.cgrout_hsetdblitm) ==
+		    mompayk_hset);
+	    unsigned cnt =
+	      mom_item_hset_count (cg->cgen_rout.cgrout_hsetdblitm);
+	    assert (!mom_item_hset_contains
+		    (cg->cgen_rout.cgrout_hsetdblitm, (momval_t) varitm));
+	    mom_item_assoc_put (cg->cgen_rout.cgrout_associtm, varitm,
+				(momval_t)
+				mom_make_node_sized (mom_named__double, 2,
+						     mom_make_integer (cnt),
+						     cg->
+						     cgen_rout.cgrout_routitm));
+	    mom_item_hset_add (cg->cgen_rout.cgrout_hsetdblitm,
+			       (momval_t) varitm);
+	    return momtypenc_double;
+	  }
+	  break;
+	  /// value variables
+	case momtypenc_val:
+	  {
+	    assert (mom_item_payload_kind (cg->cgen_rout.cgrout_hsetvalitm) ==
+		    mompayk_hset);
+	    unsigned cnt =
+	      mom_item_hset_count (cg->cgen_rout.cgrout_hsetvalitm);
+	    assert (!mom_item_hset_contains
+		    (cg->cgen_rout.cgrout_hsetvalitm, (momval_t) varitm));
+	    mom_item_assoc_put (cg->cgen_rout.cgrout_associtm, varitm,
+				(momval_t)
+				mom_make_node_sized (mom_named__momval_t, 2,
+						     mom_make_integer (cnt),
+						     cg->
+						     cgen_rout.cgrout_routitm));
+	    mom_item_hset_add (cg->cgen_rout.cgrout_hsetvalitm,
+			       (momval_t) varitm);
+	    return momtypenc_val;
+	  }
+	  break;
+	case momtypenc__none:
+	  CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("scan_item bad void variable:"),
+			  MOMOUT_ITEM ((const momitem_t *) varitm), NULL);
+	case momtypenc_string:
+	  /// perhaps we should accept string variables in procedures only
+	  CGEN_ERROR_MOM (cg,
+			  MOMOUT_LITERAL ("scan_item bad string variable:"),
+			  MOMOUT_ITEM ((const momitem_t *) varitm), NULL);
+	}
     }
   CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("scan_item unimplemented for varitm:"),
 		  MOMOUT_ITEM ((const momitem_t *) varitm), NULL);

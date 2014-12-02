@@ -877,6 +877,16 @@ mom_item_hset_contains (momitem_t *itm, momval_t elem)
   return hset_find_mom (hset, elem) >= 0;
 }
 
+unsigned
+mom_item_hset_count (momitem_t *itm)
+{
+  if (!itm || itm->i_typnum != momty_item || itm->i_paylkind != mompayk_hset)
+    return 0;
+  struct momhset_st *hset = itm->i_payload;
+  assert (hset && hset->hset_magic == MOM_HSET_MAGIC);
+  return hset->hset_count;
+}
+
 bool
 mom_item_hset_add (momitem_t *itm, momval_t elem)
 {
