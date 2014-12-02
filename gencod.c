@@ -1140,14 +1140,14 @@ scan_output_cgen (struct c_generator_mom_st *cg, momval_t insv, momval_t outv)
   } while(0)
   if (mom_is_node (outv))
     {
-      momitem_t *oconnitm = mom_node_conn (outv);
+      const momitem_t *oconnitm = mom_node_conn (outv);
       cgen_lock_item_mom (cg, (momitem_t *) oconnitm);
       momval_t outformalsv =
 	mom_item_get_attribute (oconnitm, mom_named__formals);
       momval_t outexpv =
 	mom_item_get_attribute (oconnitm, mom_named__output_expansion);
       if (!mom_is_tuple (outformalsv)
-	  || !mom_node_conn (outexpv) == mom_named__chunk)
+	  || mom_node_conn (outexpv) != mom_named__chunk)
 	OUTSCANFAIL ("bad output connective %s",
 		     mom_item_get_name_or_id_cstr (oconnitm));
       unsigned nbformals = mom_tuple_length (outformalsv);
@@ -1351,7 +1351,7 @@ scan_node_cgen (struct c_generator_mom_st *cg, momval_t insv,
 	    if (!mom_is_item (outputv))
 	      NODESCANFAIL ("bad `output` in node connective %s",
 			    mom_item_get_name_or_id_cstr (connitm));
-	    for (int oix = nbformals; oix < arity; oix++)
+	    for (int oix = nbformals; oix < (int) arity; oix++)
 	      scan_output_cgen (cg, insv, mom_node_nth (nodv, oix));
 	  }
 	return typenc_cgen (cg, true, ctypev.pitem, insv);
@@ -1420,13 +1420,43 @@ scan_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
   if (!varitm)
     return momtypenc__none;
   assert (varitm->i_typnum == momty_item);
-  momval_t asexpv = mom_item_get_attribute (cg->cgen_globassocitm, varitm);
+  momval_t asexpv = mom_item_assoc_get (cg->cgen_globassocitm, varitm);
   if (MOM_LIKELY (asexpv.ptr == NULL))
-    asexpv = mom_item_get_attribute (cg->cgen_rout.cgrout_associtm, varitm);
+    asexpv = mom_item_assoc_get (cg->cgen_rout.cgrout_associtm, varitm);
   if (asexpv.ptr)
     {
-      momitem_t *asitm = mom_node_conn (asexpv);
+      const momitem_t *asitm = mom_node_conn (asexpv);
+      assert (asitm != NULL);
+#define SCANITEMHASHMAX_MOM 79
+#define SCANITCASE(Nam) case mom_hashname_##Nam % SCANITEMHASHMAX_MOM: if (asitm != mom_named_##Nam) break;
+      switch (mom_item_hash (asitm) % SCANITEMHASHMAX_MOM)
+	{
+	  ////
+	  SCANITCASE (_procedure);
+	  return momtypenc__none;
+	  ////
+	  SCANITCASE (_formals);
+	  {
+	    assert (mom_node_arity (asexpv) == 3);
+	    momval_t formtypv = mom_node_nth (asexpv, 2);
+	    assert (mom_is_item (formtypv));
+	    momitem_t *formtypitm = mom_value_to_item (formtypv);
+	    return typenc_cgen (cg, true, formtypitm, (momval_t) varitm);
+	  }
+	  break;
+	  ////
+	  SCANITCASE (_constants);
+	  return momtypenc_val;
+	  ////
+	default:;
+	}
+#undef SCANITCASE
+#undef SCANITEMHASHMAX_MOM
 #warning scan_item_cgen unimplemented
+      CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("scan_item unexpected asexpv="),
+		      MOMOUT_VALUE ((const momval_t) asexpv),
+		      MOMOUT_LITERAL (" for item:"),
+		      MOMOUT_ITEM ((const momitem_t *) varitm), NULL);
     }
   cgen_lock_item_mom (cg, varitm);
   momval_t varv = mom_item_get_attribute (varitm, mom_named__variable);
