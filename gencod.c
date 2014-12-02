@@ -1966,7 +1966,7 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
         MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL("intptr_t " CGEN_PROC_NUMBER_PREFIX),
                  MOMOUT_DEC_INT((int)ix),
                  MOMOUT_LITERAL(" = 0; //!! local int "),
-                 MOMOUT_ITEM(curintitm);
+                 MOMOUT_ITEM(curintitm),
                  MOMOUT_NEWLINE());
       }
   }
@@ -1990,7 +1990,7 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
         MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL("double " CGEN_PROC_DOUBLE_PREFIX),
                  MOMOUT_DEC_INT((int)ix),
                  MOMOUT_LITERAL(" = 0.0; //!! local double "),
-                 MOMOUT_ITEM(curdblitm);
+                 MOMOUT_ITEM(curdblitm),
                  MOMOUT_NEWLINE());
       }
   }
@@ -2014,7 +2014,7 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
         MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL("momval_t " CGEN_PROC_VALUE_PREFIX),
                  MOMOUT_DEC_INT((int)ix),
                  MOMOUT_LITERAL(" = MOM_NULLV; //!! local value "),
-                 MOMOUT_ITEM(curvalitm);
+                 MOMOUT_ITEM(curvalitm),
                  MOMOUT_NEWLINE());
       }
   }
