@@ -1112,8 +1112,16 @@ scan_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
 {
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
   if (!varitm)
-    return;
+    return momtypenc__none;
   assert (varitm->i_typnum == momty_item);
+  momval_t asexpv = mom_item_get_attribute (cg->cgen_globassocitm, varitm);
+  if (MOM_LIKELY (asexpv.ptr == NULL))
+    asexpv = mom_item_get_attribute (cg->cgen_rout.cgrout_associtm, varitm);
+  if (asexpv.ptr)
+    {
+      momitem_t *asitm = mom_node_conn (asexpv);
+#warning scan_item_cgen unimplemented
+    }
   cgen_lock_item_mom (cg, varitm);
   momval_t varv = mom_item_get_attribute (varitm, mom_named__variable);
   if (mom_is_item (varv))
@@ -1121,7 +1129,6 @@ scan_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
     }
   CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("scan_item unimplemented for varitm:"),
 		  MOMOUT_ITEM ((const momitem_t *) varitm), NULL);
-#warning scan_item_cgen unimplemented
 }
 
 
