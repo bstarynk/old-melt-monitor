@@ -747,11 +747,11 @@ emit_routine_cgen (struct c_generator_mom_st *cg, unsigned routix,
              MOMOUT_LITERAL (" locassoc:"),
              MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.cgrout_associtm),
              MOMOUT_LITERAL (" blockhset:"),
-             MOMOUT_ITEM ((const momitem_t *) cg->
-                          cgen_rout.cgrout_blockhsetitm),
+             MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.
+                          cgrout_blockhsetitm),
              MOMOUT_LITERAL (" blockqueue:"),
-             MOMOUT_ITEM ((const momitem_t *) cg->
-                          cgen_rout.cgrout_blockqueueitm), NULL);
+             MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.
+                          cgrout_blockqueueitm), NULL);
   if (curoutconnitm == mom_named__procedure)
     {
       cg->cgen_rout.cgrout_kind = cgr_proc;
@@ -800,8 +800,8 @@ bind_constants_cgen (struct c_generator_mom_st *cg, momval_t constantsv)
                     MOMOUT_LITERAL ("invalid constants:"),
                     MOMOUT_VALUE ((const momval_t) constantsv),
                     MOMOUT_LITERAL (" in routine "),
-                    MOMOUT_ITEM ((const momitem_t *) cg->
-                                 cgen_rout.cgrout_routitm), NULL);
+                    MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.
+                                 cgrout_routitm), NULL);
   return nbconsts;
 }
 
@@ -831,8 +831,8 @@ bind_closed_values_cgen (struct c_generator_mom_st *cg, momval_t closvalsv)
                     MOMOUT_LITERAL ("invalid closed values:"),
                     MOMOUT_VALUE ((const momval_t) closvalsv),
                     MOMOUT_LITERAL (" in routine "),
-                    MOMOUT_ITEM ((const momitem_t *) cg->
-                                 cgen_rout.cgrout_routitm), NULL);
+                    MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.
+                                 cgrout_routitm), NULL);
   return nbclosvals;
 }
 
@@ -861,8 +861,8 @@ bind_values_cgen (struct c_generator_mom_st *cg, momval_t valuesv)
                     MOMOUT_LITERAL ("invalid values:"),
                     MOMOUT_VALUE ((const momval_t) valuesv),
                     MOMOUT_LITERAL (" in routine "),
-                    MOMOUT_ITEM ((const momitem_t *) cg->
-                                 cgen_rout.cgrout_routitm), NULL);
+                    MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.
+                                 cgrout_routitm), NULL);
   return nbvalues;
 }
 
@@ -892,8 +892,8 @@ bind_doubles_cgen (struct c_generator_mom_st *cg, momval_t doublesv)
                     MOMOUT_LITERAL ("invalid doubles:"),
                     MOMOUT_VALUE ((const momval_t) doublesv),
                     MOMOUT_LITERAL (" in routine "),
-                    MOMOUT_ITEM ((const momitem_t *) cg->
-                                 cgen_rout.cgrout_routitm), NULL);
+                    MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.
+                                 cgrout_routitm), NULL);
   return nbdoubles;
 }
 
@@ -922,8 +922,8 @@ bind_numbers_cgen (struct c_generator_mom_st *cg, momval_t numbersv)
                     MOMOUT_LITERAL ("invalid numbers:"),
                     MOMOUT_VALUE ((const momval_t) numbersv),
                     MOMOUT_LITERAL (" in routine "),
-                    MOMOUT_ITEM ((const momitem_t *) cg->
-                                 cgen_rout.cgrout_routitm), NULL);
+                    MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.
+                                 cgrout_routitm), NULL);
   return nbnumbers;
 }
 
@@ -952,8 +952,8 @@ bind_blocks_cgen (struct c_generator_mom_st *cg, momval_t blocksv)
                     MOMOUT_LITERAL ("invalid blocks:"),
                     MOMOUT_VALUE ((const momval_t) blocksv),
                     MOMOUT_LITERAL (" in routine "),
-                    MOMOUT_ITEM ((const momitem_t *) cg->
-                                 cgen_rout.cgrout_routitm), NULL);
+                    MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.
+                                 cgrout_routitm), NULL);
   return nbblocks;
 }
 
@@ -1022,8 +1022,8 @@ bind_functionvars_cgen (struct c_generator_mom_st *cg, unsigned offset,
                     MOMOUT_LITERAL ("invalid vars:"),
                     MOMOUT_VALUE ((const momval_t) varsv),
                     MOMOUT_LITERAL (" in function "),
-                    MOMOUT_ITEM ((const momitem_t *) cg->
-                                 cgen_rout.cgrout_routitm), NULL);
+                    MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.
+                                 cgrout_routitm), NULL);
   return nbvars;
 }				// end of bind_functionvars_cgen
 #endif
@@ -1115,8 +1115,8 @@ scan_procedure_cgen (struct c_generator_mom_st *cg, momitem_t *procitm)
   momval_t newanodv = (momval_t) mom_make_node_sized (mom_named__procedure, 4,
                       ixv, argsigv, restypv,
                       (momval_t)
-                      cg->
-                      cgen_rout.cgrout_blockhsetitm);
+                      cg->cgen_rout.
+                      cgrout_blockhsetitm);
   mom_item_assoc_put (cg->cgen_globassocitm, procitm, newanodv);
   MOM_DEBUG (gencod,
              MOMOUT_LITERAL
@@ -1561,8 +1561,8 @@ scan_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
                               (momval_t)
                               mom_make_node_sized (mom_named__intptr_t, 2,
                                   mom_make_integer (cnt),
-                                  cg->
-                                  cgen_rout.cgrout_routitm));
+                                  cg->cgen_rout.
+                                  cgrout_routitm));
           mom_item_hset_add (cg->cgen_rout.cgrout_hsetintitm,
                              (momval_t) varitm);
           return momtypenc_int;
@@ -1581,8 +1581,8 @@ scan_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
                               (momval_t)
                               mom_make_node_sized (mom_named__double, 2,
                                   mom_make_integer (cnt),
-                                  cg->
-                                  cgen_rout.cgrout_routitm));
+                                  cg->cgen_rout.
+                                  cgrout_routitm));
           mom_item_hset_add (cg->cgen_rout.cgrout_hsetdblitm,
                              (momval_t) varitm);
           return momtypenc_double;
@@ -1601,8 +1601,8 @@ scan_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
                               (momval_t)
                               mom_make_node_sized (mom_named__momval_t, 2,
                                   mom_make_integer (cnt),
-                                  cg->
-                                  cgen_rout.cgrout_routitm));
+                                  cg->cgen_rout.
+                                  cgrout_routitm));
           mom_item_hset_add (cg->cgen_rout.cgrout_hsetvalitm,
                              (momval_t) varitm);
           return momtypenc_val;
@@ -1844,8 +1844,8 @@ scan_block_cgen (struct c_generator_mom_st *cg, momitem_t *blockitm,
   momval_t blcodev = mom_item_get_attribute (blockitm, mom_named__block);
   if (mom_node_conn (blcodev) != mom_named__code)
     CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("in routine:"),
-                    MOMOUT_ITEM ((const momitem_t *) cg->
-                                 cgen_rout.cgrout_routitm),
+                    MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.
+                                 cgrout_routitm),
                     MOMOUT_LITERAL
                     (" bad `block` attribute - not a *code node :"),
                     MOMOUT_VALUE ((const momval_t) blcodev),
@@ -1880,28 +1880,28 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
              MOMOUT_LITERAL (" local-assoc:"),
              MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.cgrout_associtm),
              MOMOUT_SPACE (50),
-             MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
-                                  cgen_rout.cgrout_associtm),
-             MOMOUT_NEWLINE (), MOMOUT_LITERAL (" blockhset:"),
-             MOMOUT_ITEM ((const momitem_t *) cg->
-                          cgen_rout.cgrout_blockhsetitm), MOMOUT_SPACE (50),
-             MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
-                                  cgen_rout.cgrout_blockhsetitm),
-             MOMOUT_NEWLINE (), MOMOUT_LITERAL (" hsetint:"),
-             MOMOUT_ITEM ((const momitem_t *) cg->
-                          cgen_rout.cgrout_hsetintitm), MOMOUT_SPACE (50),
-             MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
-                                  cgen_rout.cgrout_hsetintitm),
-             MOMOUT_NEWLINE (), MOMOUT_LITERAL (" hsetdbl:"),
-             MOMOUT_ITEM ((const momitem_t *) cg->
-                          cgen_rout.cgrout_hsetdblitm), MOMOUT_SPACE (50),
-             MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
-                                  cgen_rout.cgrout_hsetdblitm),
-             MOMOUT_NEWLINE (), MOMOUT_LITERAL (" hsetval:"),
-             MOMOUT_ITEM ((const momitem_t *) cg->
-                          cgen_rout.cgrout_hsetvalitm), MOMOUT_SPACE (50),
-             MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
-                                  cgen_rout.cgrout_hsetvalitm), NULL);
+             MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->cgen_rout.
+                                  cgrout_associtm), MOMOUT_NEWLINE (),
+             MOMOUT_LITERAL (" blockhset:"),
+             MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.
+                          cgrout_blockhsetitm), MOMOUT_SPACE (50),
+             MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->cgen_rout.
+                                  cgrout_blockhsetitm), MOMOUT_NEWLINE (),
+             MOMOUT_LITERAL (" hsetint:"),
+             MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.
+                          cgrout_hsetintitm), MOMOUT_SPACE (50),
+             MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->cgen_rout.
+                                  cgrout_hsetintitm), MOMOUT_NEWLINE (),
+             MOMOUT_LITERAL (" hsetdbl:"),
+             MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.
+                          cgrout_hsetdblitm), MOMOUT_SPACE (50),
+             MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->cgen_rout.
+                                  cgrout_hsetdblitm), MOMOUT_NEWLINE (),
+             MOMOUT_LITERAL (" hsetval:"),
+             MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.
+                          cgrout_hsetvalitm), MOMOUT_SPACE (50),
+             MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->cgen_rout.
+                                  cgrout_hsetvalitm), NULL);
   momval_t proctypv = mom_item_get_attribute (procitm, mom_named__ctype);
   MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
            MOMOUT_NEWLINE (),
@@ -1948,81 +1948,99 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
   ////////////
   /// declare the integers
   {
-    const momitem_t* hsetintitm = (const momitem_t *) cg->cgen_rout.cgrout_hsetintitm;
-    unsigned nbints = mom_item_hset_count (hsetintitm);
-    momval_t setintsv = mom_item_hset_items_set (hsetintitm);
+    const momitem_t *hsetintitm =
+      (const momitem_t *) cg->cgen_rout.cgrout_hsetintitm;
+    unsigned nbints = mom_item_hset_count ((momitem_t *) hsetintitm);
+    momval_t setintsv = mom_item_hset_items_set ((momitem_t *) hsetintitm);
     MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_proc setints="),
-               MOMOUT_VALUE((const momval_t)setintsv),MOMOUT_LITERAL (" from inthset:"),
-               MOMOUT_ITEM(hsetintitm), MOMOUT_SPACE(64), MOMOUT_ITEM_PAYLOAD(hsetintitm),
-               NULL);
-    MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL("/// "), MOMOUT_DEC_INT((int)nbints),
-             MOMOUT_LITERAL(" integer locals"), MOMOUT_NEWLINE());
-    for (unsigned ix=0; ix<nbints; ix++)
+               MOMOUT_VALUE ((const momval_t) setintsv),
+               MOMOUT_LITERAL (" from inthset:"), MOMOUT_ITEM (hsetintitm),
+               MOMOUT_SPACE (64), MOMOUT_ITEM_PAYLOAD (hsetintitm), NULL);
+    MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("/// "),
+             MOMOUT_DEC_INT ((int) nbints),
+             MOMOUT_LITERAL (" integer locals"), MOMOUT_NEWLINE ());
+    for (unsigned ix = 0; ix < nbints; ix++)
       {
-        const momitem_t* curintitm = mom_set_nth_item(setintsv, ix);
+        const momitem_t *curintitm = mom_set_nth_item (setintsv, ix);
         MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_proc curintitm="),
-                   MOMOUT_ITEM(curintitm),
-                   NULL);
-        MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL("intptr_t " CGEN_PROC_NUMBER_PREFIX),
-                 MOMOUT_DEC_INT((int)ix),
-                 MOMOUT_LITERAL(" = 0; //!! local int "),
-                 MOMOUT_ITEM(curintitm),
-                 MOMOUT_NEWLINE());
+                   MOMOUT_ITEM (curintitm), NULL);
+        MOM_OUT (&cg->cgen_outbody,
+                 MOMOUT_LITERAL ("intptr_t " CGEN_PROC_NUMBER_PREFIX),
+                 MOMOUT_DEC_INT ((int) ix),
+                 MOMOUT_LITERAL (" = 0; //!! local int "),
+                 MOMOUT_ITEM (curintitm), MOMOUT_NEWLINE ());
       }
   }
   /// declare the doubles
   {
-    const momitem_t* hsetdblitm = (const momitem_t *) cg->cgen_rout.cgrout_hsetdblitm;
+    const momitem_t *hsetdblitm =
+      (const momitem_t *) cg->cgen_rout.cgrout_hsetdblitm;
     unsigned nbdbls = mom_item_hset_count (hsetdblitm);
     momval_t setdblsv = mom_item_hset_items_set (hsetdblitm);
     MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_proc setdbls="),
-               MOMOUT_VALUE((const momval_t)setdblsv),MOMOUT_LITERAL (" from dblhset:"),
-               MOMOUT_ITEM(hsetdblitm), MOMOUT_SPACE(64), MOMOUT_ITEM_PAYLOAD(hsetdblitm),
-               NULL);
-    MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL("/// "), MOMOUT_DEC_INT((int)nbdbls),
-             MOMOUT_LITERAL(" double locals"), MOMOUT_NEWLINE());
-    for (unsigned ix=0; ix<nbdbls; ix++)
+               MOMOUT_VALUE ((const momval_t) setdblsv),
+               MOMOUT_LITERAL (" from dblhset:"), MOMOUT_ITEM (hsetdblitm),
+               MOMOUT_SPACE (64), MOMOUT_ITEM_PAYLOAD (hsetdblitm), NULL);
+    MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("/// "),
+             MOMOUT_DEC_INT ((int) nbdbls), MOMOUT_LITERAL (" double locals"),
+             MOMOUT_NEWLINE ());
+    for (unsigned ix = 0; ix < nbdbls; ix++)
       {
-        const momitem_t* curdblitm = mom_set_nth_item(setdblsv, ix);
+        const momitem_t *curdblitm = mom_set_nth_item (setdblsv, ix);
         MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_proc curdblitm="),
-                   MOMOUT_ITEM(curdblitm),
-                   NULL);
-        MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL("double " CGEN_PROC_DOUBLE_PREFIX),
-                 MOMOUT_DEC_INT((int)ix),
-                 MOMOUT_LITERAL(" = 0.0; //!! local double "),
-                 MOMOUT_ITEM(curdblitm),
-                 MOMOUT_NEWLINE());
+                   MOMOUT_ITEM (curdblitm), NULL);
+        MOM_OUT (&cg->cgen_outbody,
+                 MOMOUT_LITERAL ("double " CGEN_PROC_DOUBLE_PREFIX),
+                 MOMOUT_DEC_INT ((int) ix),
+                 MOMOUT_LITERAL (" = 0.0; //!! local double "),
+                 MOMOUT_ITEM (curdblitm), MOMOUT_NEWLINE ());
       }
   }
   /// declare the values
   {
-    const momitem_t* hsetvalitm = (const momitem_t *) cg->cgen_rout.cgrout_hsetvalitm;
+    const momitem_t *hsetvalitm =
+      (const momitem_t *) cg->cgen_rout.cgrout_hsetvalitm;
     unsigned nbvals = mom_item_hset_count (hsetvalitm);
     momval_t setvalsv = mom_item_hset_items_set (hsetvalitm);
     MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_proc setvals="),
-               MOMOUT_VALUE((const momval_t)setvalsv),MOMOUT_LITERAL (" from valhset:"),
-               MOMOUT_ITEM(hsetvalitm), MOMOUT_SPACE(64), MOMOUT_ITEM_PAYLOAD(hsetvalitm),
-               NULL);
-    MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL("/// "), MOMOUT_DEC_INT((int)nbvals),
-             MOMOUT_LITERAL(" values locals"), MOMOUT_NEWLINE());
-    for (unsigned ix=0; ix<nbvals; ix++)
+               MOMOUT_VALUE ((const momval_t) setvalsv),
+               MOMOUT_LITERAL (" from valhset:"), MOMOUT_ITEM (hsetvalitm),
+               MOMOUT_SPACE (64), MOMOUT_ITEM_PAYLOAD (hsetvalitm), NULL);
+    MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("/// "),
+             MOMOUT_DEC_INT ((int) nbvals), MOMOUT_LITERAL (" values locals"),
+             MOMOUT_NEWLINE ());
+    for (unsigned ix = 0; ix < nbvals; ix++)
       {
-        const momitem_t* curvalitm = mom_set_nth_item(setvalsv, ix);
+        const momitem_t *curvalitm = mom_set_nth_item (setvalsv, ix);
         MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_proc curvalitm="),
-                   MOMOUT_ITEM(curvalitm),
-                   NULL);
-        MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL("momval_t " CGEN_PROC_VALUE_PREFIX),
-                 MOMOUT_DEC_INT((int)ix),
-                 MOMOUT_LITERAL(" = MOM_NULLV; //!! local value "),
-                 MOMOUT_ITEM(curvalitm),
-                 MOMOUT_NEWLINE());
+                   MOMOUT_ITEM (curvalitm), NULL);
+        MOM_OUT (&cg->cgen_outbody,
+                 MOMOUT_LITERAL ("momval_t " CGEN_PROC_VALUE_PREFIX),
+                 MOMOUT_DEC_INT ((int) ix),
+                 MOMOUT_LITERAL (" = MOM_NULLV; //!! local value "),
+                 MOMOUT_ITEM (curvalitm), MOMOUT_NEWLINE ());
       }
+  }
+  //// emit the starting prologue all the blocks
+  {
+    const momitem_t *hsetblkitm =
+      (const momitem_t *) cg->cgen_rout.cgrout_blockhsetitm;
+    const momitem_t *startblkitm =
+      mom_value_to_item (mom_node_nth (procnodev, 2));
+    momval_t setblksv = mom_item_hset_items_set (hsetblkitm);
+    MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_proc setblksv="),
+               MOMOUT_VALUE ((const momval_t) setblksv),
+               MOMOUT_LITERAL (" from blockset:"), MOMOUT_ITEM (hsetblkitm),
+               MOMOUT_SPACE (64), MOMOUT_ITEM_PAYLOAD (hsetblkitm),
+               MOMOUT_NEWLINE (), MOMOUT_LITERAL (" with startblkitm:"),
+               MOMOUT_ITEM (startblkitm), NULL);
+
   }
   CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("incomplete emit_procedure procitm="),
                   MOMOUT_ITEM ((const momitem_t *) procitm),
                   MOMOUT_LITERAL (" procnodev="),
                   MOMOUT_VALUE ((momval_t) procnodev), NULL);
-} /* end of emit_procedure_cgen */
+}				/* end of emit_procedure_cgen */
 
 
 
@@ -2180,8 +2198,8 @@ _old_emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
              MOMOUT_LITERAL (" localbindings:"),
              MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.cgrout_associtm),
              MOMOUT_SPACE (48),
-             MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
-                                  cgen_rout.cgrout_associtm));
+             MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->cgen_rout.
+                                  cgrout_associtm));
   if (nbproblocks == 0)
     CGEN_ERROR_MOM (cg,
                     MOMOUT_LITERAL ("missing blocks in procedure "),
@@ -4524,8 +4542,8 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
           else if (cg->cgen_rout.cgrout_kind == cgr_proc)
             {
               momval_t procv = mom_item_assoc_get (cg->cgen_globassocitm,
-                                                   cg->
-                                                   cgen_rout.cgrout_routitm);
+                                                   cg->cgen_rout.
+                                                   cgrout_routitm);
               assert (mom_node_conn (procv) == mom_named__procedure
                       && mom_node_arity (procv) == 3);
               momval_t prorestypv = mom_node_nth (procv, 2);
