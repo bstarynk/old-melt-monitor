@@ -1124,6 +1124,38 @@ typenc_cgen (struct c_generator_mom_st *cg, bool check, momitem_t *typitm,
 }
 
 
+void
+scan_output_cgen (struct c_generator_mom_st *cg, momval_t insv, momval_t outv)
+{
+  int errline = 0;
+  const char *errmsg = NULL;
+  assert (cg && cg->cgen_magic == CGEN_MAGIC);
+  char errbuf[96];
+  memset (errbuf, 0, sizeof (errbuf));
+#define OUTSCANFAIL(Fmt,...) do {				\
+    snprintf(errbuf, sizeof(errbuf), Fmt, ##__VA_ARGS__);	\
+    errmsg = errbuf;						\
+    errline = __LINE__;						\
+    goto bad_output;						\
+  } while(0)
+  if (mom_is_node (outv))
+    {
+#warning scan_output_cgen incomplete
+    }
+  OUTSCANFAIL ("unimpelemented scan_output");
+bad_output:
+  assert (errline > 0);
+  cgen_error_mom_at (errline, cg,
+		     MOMOUT_LITERAL ("in scan_output outv="),
+		     MOMOUT_VALUE ((const momval_t) outv),
+		     MOMOUT_LITERAL (" in instr:"),
+		     MOMOUT_VALUE ((const momval_t) insv),
+		     MOMOUT_LITERAL (" got error "),
+		     MOMOUT_LITERALV ((const char *) errmsg), NULL);
+#undef OUTSCANFAIL
+
+}
+
 static momtypenc_t
 scan_node_cgen (struct c_generator_mom_st *cg, momval_t insv,
 		const momnode_t *nod)
@@ -1136,8 +1168,8 @@ scan_node_cgen (struct c_generator_mom_st *cg, momval_t insv,
   const momitem_t *connitm = mom_node_conn (nodv);
   unsigned arity = mom_node_arity (nodv);
   cgen_lock_item_mom (cg, (momitem_t *) connitm);
-  char errbuf[80];
-  memset (errbuf, 0, sizeof(errbuf));
+  char errbuf[96];
+  memset (errbuf, 0, sizeof (errbuf));
 #define NODESCANFAIL(Fmt,...) do {			\
   snprintf(errbuf, sizeof(errbuf), Fmt, ##__VA_ARGS__);	\
   errmsg = errbuf;					\
@@ -1218,7 +1250,7 @@ scan_node_cgen (struct c_generator_mom_st *cg, momval_t insv,
 		momval_t argv = mom_node_nth (nodv, ix);
 		momtypenc_t targ = scan_expr_cgen (cg, insv, argv);
 		if (targ > momtypenc__none && targ != momtypenc_val)
-		  NODESCANFAIL ("non-value #%d in *node", (int)ix);
+		  NODESCANFAIL ("non-value #%d in *node", (int) ix);
 	      }
 	  }
 	else
@@ -1238,7 +1270,7 @@ scan_node_cgen (struct c_generator_mom_st *cg, momval_t insv,
 	  mom_item_get_attribute (connitm, mom_named__output);
 	if (!mom_is_tuple (formalsv) || !mom_is_item (ctypev))
 	  NODESCANFAIL ("node connective %s without `formals` or `ctype`",
-			mom_item_get_name_or_id_cstr(connitm));
+			mom_item_get_name_or_id_cstr (connitm));
 	unsigned nbformals = mom_tuple_length (formalsv);
 	if (nbformals > arity)
 	  NODESCANFAIL ("missing %d arguments", nbformals - arity);
@@ -1247,9 +1279,30 @@ scan_node_cgen (struct c_generator_mom_st *cg, momval_t insv,
 	for (unsigned fix = 0; fix < nbformals; fix++)
 	  {
 	    const momitem_t *formitm = mom_tuple_nth_item (formalsv, fix);
+	    momval_t argv = mom_node_nth (nodv, fix);
 	    if (!formitm)
-	      NODESCANFAIL ("bad formal #%d", (int)fix);
-#warning unimplemented scan_node_cgen
+	      NODESCANFAIL ("bad formal #%d", (int) fix);
+	    cgen_lock_item_mom (cg, (momitem_t *) formitm);
+	    momval_t formctypv =
+	      mom_item_get_attribute (formitm, mom_named__ctype);
+	    if (!mom_is_item (formctypv))
+	      NODESCANFAIL ("formal #%d %s without `ctype`", (int) fix,
+			    mom_item_get_name_or_id_cstr (formitm));
+	    momtypenc_t formtyp =
+	      typenc_cgen (cg, true, formctypv.pitem, insv);
+	    momtypenc_t argtyp = scan_expr_cgen (cg, insv, argv);
+	    if (formtyp > momtypenc__none && argtyp > momtypenc__none
+		&& formtyp != argtyp)
+	      NODESCANFAIL ("formal #%d %s type mismatch", (int) fix,
+			    mom_item_get_name_or_id_cstr (formitm));
+	  }
+	if (outputv.ptr)
+	  {
+	    if (!mom_is_item (outputv))
+	      NODESCANFAIL ("bad `output` in node connective %s",
+			    mom_item_get_name_or_id_cstr (connitm));
+	    for (int oix = nbformals; oix < arity; oix++)
+	      scan_output_cgen (cg, insv, mom_node_nth (nodv, oix));
 	  }
 	return typenc_cgen (cg, true, ctypev.pitem, insv);
       }
@@ -1267,6 +1320,8 @@ bad_node:
 		     MOMOUT_SPACE (60),
 		     MOMOUT_LITERALV ((const char *) errmsg), NULL);
 }
+
+
 
 static momtypenc_t
 scan_expr_cgen (struct c_generator_mom_st *cg, momval_t insv, momval_t expv)
@@ -1304,6 +1359,8 @@ scan_expr_cgen (struct c_generator_mom_st *cg, momval_t insv, momval_t expv)
 		  MOMOUT_LITERAL (" exp:"),
 		  MOMOUT_VALUE ((const momval_t) expv), NULL);
 }
+
+
 
 
 static momtypenc_t

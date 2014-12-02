@@ -1208,10 +1208,10 @@ mom_get_item_of_name (const char *s)
   return mom_get_item_of_name_hash (s, 0);
 };
 
-static inline const char*
-mom_item_get_name_or_id_cstr(const momitem_t *itm)
+static inline const char *
+mom_item_get_name_or_id_cstr (const momitem_t *itm)
 {
-  return mom_string_cstr((momval_t)mom_item_get_name_or_idstr (itm));
+  return mom_string_cstr ((momval_t) mom_item_get_name_or_idstr (itm));
 }
 
 static inline momitem_t *
