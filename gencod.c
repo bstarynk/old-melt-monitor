@@ -607,9 +607,8 @@ declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	  cgen_lock_item_mom (cg, curargitm);
 	  curargtypv =
 	    mom_item_get_attribute (curargitm, mom_named__variable);
-	  MOM_DEBUG (gencod, MOMOUT_VALUE ((const momval_t) curargitm),
-		     MOMOUT_LITERAL (" in procedure "),
-		     MOMOUT_ITEM ((const momitem_t *) curoutitm),
+	  MOM_DEBUG (gencod, MOMOUT_LITERAL ("declare_routine in procedure "),
+		     MOMOUT_VALUE ((const momval_t) curargitm),
 		     MOMOUT_LITERAL (" rank "), MOMOUT_DEC_INT ((int) aix),
 		     MOMOUT_LITERAL (" curargtypv "),
 		     MOMOUT_VALUE ((const momval_t) curargtypv), NULL);
