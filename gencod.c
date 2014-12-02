@@ -222,10 +222,10 @@ cgen_error_mom_at (int lin, struct c_generator_mom_st *cgen, ...)
 	(gencod,
 	 MOMOUT_LITERAL ("cgen_error"), MOMOUT_BACKTRACE (20),
 	 MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
-	 MOMOUT_LITERAL ("~~~cgen_outhead:"), MOMOUT_NEWLINE (),
+	 MOMOUT_LITERAL ("~*~*~cgen_outhead:"), MOMOUT_NEWLINE (),
 	 MOMOUT_LITERALV ((const char *) cgen->cgen_outhead.mout_data),
 	 MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
-	 MOMOUT_LITERAL ("~~~cgen_outbody:"), MOMOUT_NEWLINE (),
+	 MOMOUT_LITERAL ("~*~*~cgen_outbody:"), MOMOUT_NEWLINE (),
 	 MOMOUT_LITERALV ((const char *) cgen->cgen_outbody.mout_data),
 	 MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
     }
@@ -415,10 +415,8 @@ mom_generate_c_module (momitem_t *moditm, const char *dirname, char **perrmsg)
   mom_item_start_assoc (mycgen.cgen_globassocitm);
   /// start the head part
   MOM_OUT (&mycgen.cgen_outhead,
-	   MOMOUT_LITERAL ("// generated monimelt module file "),
-	   MOMOUT_LITERALV ((const char *) mycgen.cgen_filbase),
-	   MOMOUT_LITERAL (" ** DO NOT EDIT **"), MOMOUT_NEWLINE (),
-	   MOMOUT_GPLV3P_NOTICE ((const char *) mycgen.cgen_filbase),
+	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL ("//// header part"),
 	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL ("#include \"monimelt.h\""),
 	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
@@ -427,6 +425,8 @@ mom_generate_c_module (momitem_t *moditm, const char *dirname, char **perrmsg)
 	   MOMOUT_NEWLINE (), NULL);
   /// start the body part
   MOM_OUT (&mycgen.cgen_outbody,
+	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL ("//// body part"),
 	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL ("////++++ implementation of "),
 	   MOMOUT_DEC_INT ((int) nbmodrout), MOMOUT_LITERAL (" routines:"),
@@ -482,21 +482,41 @@ mom_generate_c_module (momitem_t *moditm, const char *dirname, char **perrmsg)
 	     MOM_SHARED_MODULE_PREFIX "%s.c\n",
 	     mom_string_cstr ((momval_t) mom_item_get_name_or_idstr (moditm)),
 	     mom_ident_cstr_of_item (moditm));
-    fprintf (f, "// DO NOT EDIT\n\n");
-    fprintf (f, "\n///// declarations\n");
+    struct momout_st outf = { 0 };
+    mom_initialize_output (&outf, f, 0);
     fflush (mycgen.cgen_outhead.mout_file);
-    fputs (mycgen.cgen_outhead.mout_data, f);
-    fprintf (f, "\n\n\n//// implementations\n");
     fflush (mycgen.cgen_outbody.mout_file);
-    fputs (mycgen.cgen_outbody.mout_data, f);
-    fprintf (f, "\n\n // module license\n"
-	     "const char mom_module_GPL_compatible[]=\n"
-	     "\t\"GPLv3+, generated module %s; commit \" MONIMELT_LAST_COMMITID;\n",
-	     mom_string_cstr ((momval_t)
-			      mom_item_get_name_or_idstr (moditm)));
-    fprintf (f,
-	     "\n\n\n//// end of generated file " MOM_SHARED_MODULE_PREFIX
-	     "%s.c\n", mom_ident_cstr_of_item (moditm));
+    MOM_OUT (&outf,
+	     MOMOUT_LITERAL ("// generated monimelt module file "),
+	     MOMOUT_LITERALV ((const char *) mycgen.cgen_filbase),
+	     MOMOUT_LITERAL (" ** DO NOT EDIT **"), MOMOUT_NEWLINE (),
+	     MOMOUT_NEWLINE (),
+	     MOMOUT_GPLV3P_NOTICE ((const char *) mycgen.cgen_filbase),
+	     MOMOUT_NEWLINE (), MOMOUT_FLUSH (), MOMOUT_NEWLINE (),
+	     MOMOUT_NEWLINE (), NULL);
+    MOM_OUT (&outf, MOMOUT_LITERAL ("//// **** head of "),
+	     MOMOUT_LITERALV ((const char *) mycgen.cgen_filbase),
+	     MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
+	     MOMOUT_LITERALV ((const char *) mycgen.cgen_outhead.mout_data),
+	     MOMOUT_NEWLINE (), MOMOUT_FLUSH (), MOMOUT_NEWLINE (),
+	     MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
+    MOM_OUT (&outf, MOMOUT_LITERAL ("//// **** body of "),
+	     MOMOUT_LITERALV ((const char *) mycgen.cgen_filbase),
+	     MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
+	     MOMOUT_LITERALV ((const char *) mycgen.cgen_outbody.mout_data),
+	     MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), MOMOUT_FLUSH (),
+	     MOMOUT_NEWLINE (), NULL);
+    MOM_OUT (&outf, MOMOUT_LITERAL ("//// **** license info of "),
+	     MOMOUT_LITERALV ((const char *) mycgen.cgen_filbase),
+	     MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL ("const char mom_module_GPL_compatible[]="),
+	     MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL ("\t\"GPLv3+, generated module "),
+	     MOMOUT_ITEM ((const momitem_t *) moditm), MOMOUT_NEWLINE (),
+	     MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL ("//// **** eof " MOM_SHARED_MODULE_PREFIX),
+	     MOMOUT_LITERALV ((const char *) mom_ident_cstr_of_item (moditm)),
+	     MOMOUT_NEWLINE (), MOMOUT_FLUSH (), NULL);
     if (fclose (f))
       MOM_FATAPRINTF ("failed to close module temporary file %s", mtempnam);
     mom_rename_if_content_changed (mtempnam, modnam);
