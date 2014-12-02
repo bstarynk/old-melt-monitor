@@ -1140,9 +1140,59 @@ scan_output_cgen (struct c_generator_mom_st *cg, momval_t insv, momval_t outv)
   } while(0)
   if (mom_is_node (outv))
     {
-#warning scan_output_cgen incomplete
+      momitem_t *oconnitm = mom_node_conn (outv);
+      cgen_lock_item_mom (cg, (momitem_t *) oconnitm);
+      momval_t outformalsv =
+	mom_item_get_attribute (oconnitm, mom_named__formals);
+      momval_t outexpv =
+	mom_item_get_attribute (oconnitm, mom_named__output_expansion);
+      if (!mom_is_tuple (outformalsv)
+	  || !mom_node_conn (outexpv) == mom_named__chunk)
+	OUTSCANFAIL ("bad output connective %s",
+		     mom_item_get_name_or_id_cstr (oconnitm));
+      unsigned nbformals = mom_tuple_length (outformalsv);
+      unsigned nbargs = mom_node_arity (outv);
+      if (nbformals != nbargs)
+	OUTSCANFAIL
+	  ("output connective %s arity mismatch, want %d got %d args",
+	   mom_item_get_name_or_id_cstr (oconnitm), nbformals, nbargs);
+      for (unsigned ix = 0; ix < nbargs; ix++)
+	{
+	  momitem_t *outformitm = mom_tuple_nth_item (outformalsv, ix);
+	  momval_t outargv = mom_node_nth (outv, ix);
+	  if (!outformitm)
+	    OUTSCANFAIL ("output connective %s missing formal#%d",
+			 mom_item_get_name_or_id_cstr (oconnitm), ix);
+	  cgen_lock_item_mom (cg, (momitem_t *) outformitm);
+	  momval_t outypv =
+	    mom_item_get_attribute (outformitm, mom_named__variable);
+	  if (!mom_is_item (outypv))
+	    OUTSCANFAIL
+	      ("output connective %s formal #%d %s with bad `variable` :: type",
+	       mom_item_get_name_or_id_cstr (oconnitm), ix,
+	       mom_item_get_name_or_id_cstr (outformitm));
+	  momtypenc_t tparam = typenc_cgen (cg, true, outypv.pitem, outv);
+	  momtypenc_t targ = scan_expr_cgen (cg, insv, outargv);
+	  if (tparam > momtypenc__none && targ > momtypenc__none
+	      && targ != tparam)
+	    OUTSCANFAIL ("output connective %s type mismatch for arg#%d",
+			 mom_item_get_name_or_id_cstr (oconnitm), ix);
+	}
+      return;
     }
-  OUTSCANFAIL ("unimpelemented scan_output");
+  else if (mom_is_integer (outv))
+    return;
+  else if (mom_is_double (outv))
+    return;
+  else if (mom_is_string (outv))
+    return;
+  else if (mom_is_item (outv))
+    {
+      scan_item_cgen (cg, outv.pitem);
+      return;
+    }
+  else
+    OUTSCANFAIL ("bad output");
 bad_output:
   assert (errline > 0);
   cgen_error_mom_at (errline, cg,
