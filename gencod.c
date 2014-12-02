@@ -1944,6 +1944,8 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
   MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (")"), MOMOUT_NEWLINE (),
            MOMOUT_LITERAL ("{"), MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE (),
            NULL);
+  //////////// declare the locals
+  ////////////
   /// declare the integers
   {
     const momitem_t* hsetintitm = (const momitem_t *) cg->cgen_rout.cgrout_hsetintitm;
@@ -1961,6 +1963,11 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
         MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_proc curintitm="),
                    MOMOUT_ITEM(curintitm),
                    NULL);
+        MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL("intptr_t " CGEN_PROC_NUMBER_PREFIX),
+                 MOMOUT_DEC_INT((int)ix),
+                 MOMOUT_LITERAL(" = 0; //!! local int "),
+                 MOMOUT_ITEM(curintitm);
+                 MOMOUT_NEWLINE());
       }
   }
   /// declare the doubles
@@ -1980,6 +1987,11 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
         MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_proc curdblitm="),
                    MOMOUT_ITEM(curdblitm),
                    NULL);
+        MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL("double " CGEN_PROC_DOUBLE_PREFIX),
+                 MOMOUT_DEC_INT((int)ix),
+                 MOMOUT_LITERAL(" = 0.0; //!! local double "),
+                 MOMOUT_ITEM(curdblitm);
+                 MOMOUT_NEWLINE());
       }
   }
   /// declare the values
@@ -1999,6 +2011,11 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
         MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_proc curvalitm="),
                    MOMOUT_ITEM(curvalitm),
                    NULL);
+        MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL("momval_t " CGEN_PROC_VALUE_PREFIX),
+                 MOMOUT_DEC_INT((int)ix),
+                 MOMOUT_LITERAL(" = MOM_NULLV; //!! local value "),
+                 MOMOUT_ITEM(curvalitm);
+                 MOMOUT_NEWLINE());
       }
   }
   CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("incomplete emit_procedure procitm="),
