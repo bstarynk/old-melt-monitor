@@ -45,11 +45,25 @@
    block.
    
    Expressions are often nodes, the connective being a procedure or a
-   primitive.
+   primitive or a constructor.
 
    A primitive item (useful as connective in expressions) has a
    `primitive_expansion` with a node of connective `chunk` and it has
    a `ctype`
+
+   Constructor items are for expressions like:
+
+     *tuple(<expr>...) to build a tuple using mom_make_tuple_variadic
+
+     *set(<expr>...) to build a set using mom_make_set_variadic
+
+     *json_array(<expr>...) to build a JSON array using mom_make_json_array
+
+     *json_object(<entry>...) to build a JSON object using mom_make_json_object
+       where each <entry> is *json_entry(<name>,<value>) or *json_object(<expr>)
+     
+     *node(<conn-expr>,<arg-expr>...) to build a node
+
 
    A block item should preferably be unique to its procedure or
    function. It has a `block` attribute associated to a `code`
@@ -1074,6 +1088,114 @@ loop_blocks_to_scan_cgen (struct c_generator_mom_st *cg)
 
 
 static momtypenc_t
+scan_node_cgen (struct c_generator_mom_st *cg, momval_t insv,
+		const momnode_t *nod)
+{
+  assert (cg && cg->cgen_magic == CGEN_MAGIC);
+  assert (nod && nod->typnum == momty_node);
+  momval_t nodv = (momval_t) nod;
+  const momitem_t *connitm = mom_node_conn (nodv);
+  unsigned arity = mom_node_arity (nodv);
+  cgen_lock_item_mom (cg, (momitem_t *) connitm);
+#define SCANODHASHMAX_MOM 131
+#define SCANCASE(Nam) case mom_hashname_##Nam % SCANODHASHMAX_MOM: if (connitm != mom_named_##Nam) break;
+  momhash_t conh = mom_item_hash (connitm);
+  switch (conh % SCANODHASHMAX_MOM)
+    {
+      //////
+      SCANCASE (_tuple);	// *tuple(<expr>...)
+      SCANCASE (_set);		// *set(<expr>...)
+      SCANCASE (_json_array);	// *json_array(<expr>...)
+      {
+	for (unsigned ix = 0; ix < arity; ix++)
+	  {
+	    momval_t sonv = mom_node_nth (nodv, ix);
+	    momtypenc_t ts = scan_expr_cgen (cg, insv, sonv);
+	    if (ts > momtypenc__none && ts != momtypenc_val)
+	      CGEN_ERROR_MOM (cg,
+			      MOMOUT_LITERAL
+			      ("non-value expression in variadic constructor:"),
+			      MOMOUT_VALUE ((const momval_t) nodv),
+			      MOMOUT_LITERAL (" at index#"),
+			      MOMOUT_DEC_INT ((int) ix),
+			      MOMOUT_LITERAL (" in instr:"),
+			      MOMOUT_VALUE ((const momval_t) insv), NULL);
+
+	  }
+      }
+      break;
+      //////
+      SCANCASE (_json_object);	//  *json_object(<entry>...)
+      {
+	for (unsigned ix = 0; ix < arity; ix++)
+	  {
+	    momval_t entrv = mom_node_nth (nodv, ix);
+	    momitem_t *entitm = mom_node_conn (entrv);
+	    unsigned entarity = mom_node_arity (entrv);
+	    if (entitm == mom_named__json_entry && entarity == 2)
+	      {			// *json_entry(<name>,<value>)
+		momtypenc_t tnam =
+		  scan_expr_cgen (cg, insv, mom_node_nth (entrv, 0));
+		momtypenc_t tval =
+		  scan_expr_cgen (cg, insv, mom_node_nth (entrv, 1));
+		if (tnam > momtypenc__none && tnam != momtypenc_string
+		    && tnam != momtypenc_val && tval > momtypenc__none
+		    && tval != momtypenc_val)
+		  goto bad_json_entry;
+	      }
+	    else if (entitm == mom_named__json_object && entarity == 1)
+	      {			// *json_object(<expr>)
+		momtypenc_t texp =
+		  scan_expr_cgen (cg, insv, mom_node_nth (entrv, 0));
+		if (texp > momtypenc__none && texp != momtypenc_val)
+		  goto bad_json_entry;
+	      }
+	    else
+	    bad_json_entry:
+	      CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("bad entry #"),
+			      MOMOUT_DEC_INT ((int) ix),
+			      MOMOUT_LITERAL (" in json_object node "),
+			      MOMOUT_VALUE ((const momval_t) nodv),
+			      MOMOUT_LITERAL (" in instr:"),
+			      MOMOUT_VALUE ((const momval_t) insv), NULL);
+	  }
+      }
+      break;
+      /////
+      SCANCASE (_node);		// *node(<conn-expr>,<arg-expr>...)
+      {
+	if (arity > 0)
+	  {
+	    for (unsigned ix = 0; ix < arity; ix++)
+	      {
+		momval_t argv = mom_node_nth (nodv, ix);
+		momtypenc_t targ = scan_expr_cgen (cg, insv, argv);
+		if (targ > momtypenc__none && targ != momtypenc_val)
+		  goto bad_node;
+	      }
+	  }
+	else
+	bad_node:
+	  CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("bad `node` expression:"),
+			  MOMOUT_VALUE ((const momval_t) nodv),
+			  MOMOUT_LITERAL (" in instr:"),
+			  MOMOUT_VALUE ((const momval_t) insv), NULL);
+      }
+      break;
+#undef SCANCASE
+#undef SCANODHASHMAX_MOM
+    default:
+#warning unimplemented scan_node_cgen
+      CGEN_ERROR_MOM (cg,
+		      MOMOUT_LITERAL ("unimplemented scan_node expression:"),
+		      MOMOUT_VALUE ((const momval_t) nodv),
+		      MOMOUT_LITERAL (" in instr:"),
+		      MOMOUT_VALUE ((const momval_t) insv), NULL);
+      break;
+    }
+}
+
+static momtypenc_t
 scan_expr_cgen (struct c_generator_mom_st *cg, momval_t insv, momval_t expv)
 {
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
@@ -1093,12 +1215,16 @@ scan_expr_cgen (struct c_generator_mom_st *cg, momval_t insv, momval_t expv)
       return momtypenc_double;
     case momty_jsonarray:
     case momty_jsonobject:
-      return momtypenc_val;
+    case momty_tuple:
+    case momty_set:
+      CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("scan_expr in instr:"),
+		      MOMOUT_VALUE ((const momval_t) insv),
+		      MOMOUT_LITERAL (" unexpected exp:"),
+		      MOMOUT_VALUE ((const momval_t) expv), NULL);
     case momty_item:
       return scan_item_cgen (cg, expv.pitem);
     case momty_node:
-#warning scan_expr_cgen unimplemented for node
-      ;
+      return scan_node_cgen (cg, insv, expv.pnode);
     }
   CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("scan_expr unimplemented in instr:"),
 		  MOMOUT_VALUE ((const momval_t) insv),
@@ -1148,7 +1274,7 @@ scan_instr_cgen (struct c_generator_mom_st *cg, momitem_t *blockitm,
   cgen_lock_item_mom (cg, opitm);
   momhash_t oph = mom_item_hash (opitm);
 #define SCANINSOPHASHMAX_MOM 127
-#define SCANCASE(Nam) case mom_hashname_##Nam: if (opitm != mom_named_##Nam) break;
+#define SCANCASE(Nam) case mom_hashname_##Nam % SCANINSOPHASHMAX_MOM: if (opitm != mom_named_##Nam) break;
   switch (oph % SCANINSOPHASHMAX_MOM)
     {
       SCANCASE (_do);		//   *do (<expr>) for side-effecting expressions
