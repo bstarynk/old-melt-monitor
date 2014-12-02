@@ -1002,9 +1002,13 @@ scan_procedure_cgen (struct c_generator_mom_st *cg, momitem_t *procitm)
   momval_t proformalsv = MOM_NULLV;
   momval_t proconstantsv = MOM_NULLV;
   momval_t proprocedurev = MOM_NULLV;
-  momval_t oldanodv = mom_item_assoc_get (cg->cgen_globassocitm, procitm);
-  assert (mom_node_conn (oldanodv) == mom_named__procedure
-	  && mom_node_arity (oldanodv) == 3);
+  //momval_t oldanodv = mom_item_assoc_get (cg->cgen_globassocitm, procitm);
+  assert (mom_node_conn (procnodev) == mom_named__procedure
+	  && mom_node_arity (procnodev) == 3);
+  MOM_DEBUG (gencod, MOMOUT_LITERAL ("scan_procedure procitm="),
+	     MOMOUT_ITEM ((const momitem_t *) procitm),
+	     MOMOUT_SPACE (40),
+	     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) procitm), NULL);
   proformalsv = mom_item_get_attribute (procitm, mom_named__formals);
   proconstantsv = mom_item_get_attribute (procitm, mom_named__constants);
   proprocedurev = mom_item_get_attribute (procitm, mom_named__procedure);
@@ -1050,10 +1054,10 @@ scan_procedure_cgen (struct c_generator_mom_st *cg, momitem_t *procitm)
 		    MOMOUT_VALUE (proprocedurev), NULL);
   scan_block_cgen (cg, proprocedurev.pitem, (momval_t) procitm, NULL);
   loop_blocks_to_scan_cgen (cg);
-  momval_t ixv = mom_node_nth (oldanodv, 0);
+  momval_t ixv = mom_node_nth (procnodev, 0);
   assert (mom_is_integer (ixv));
-  momval_t argsigv = mom_node_nth (oldanodv, 1);
-  momval_t restypv = mom_node_nth (oldanodv, 2);
+  momval_t argsigv = mom_node_nth (procnodev, 1);
+  momval_t restypv = mom_node_nth (procnodev, 2);
   momval_t newanodv = (momval_t) mom_make_node_sized (mom_named__procedure, 4,
 						      ixv, argsigv, restypv,
 						      (momval_t)
@@ -1437,6 +1441,10 @@ scan_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
   momval_t asexpv = mom_item_assoc_get (cg->cgen_globassocitm, varitm);
   if (MOM_LIKELY (asexpv.ptr == NULL))
     asexpv = mom_item_assoc_get (cg->cgen_rout.cgrout_associtm, varitm);
+  MOM_DEBUG (gencod, MOMOUT_LITERAL ("scan_item varitm="),
+	     MOMOUT_ITEM ((const momitem_t *) varitm),
+	     MOMOUT_LITERAL (" asexpv="),
+	     MOMOUT_VALUE ((const momval_t) asexpv), NULL);
   if (asexpv.ptr)
     {
       const momitem_t *asitm = mom_node_conn (asexpv);
@@ -1571,6 +1579,10 @@ scan_instr_cgen (struct c_generator_mom_st *cg, momitem_t *blockitm,
 		    MOMOUT_ITEM ((const momitem_t *) blockitm),
 		    MOMOUT_LITERAL (" bad instr:"),
 		    MOMOUT_VALUE ((const momval_t) insv), NULL);
+  MOM_DEBUG (gencod, MOMOUT_LITERAL ("scan_instr blockitm:"),
+	     MOMOUT_ITEM ((const momitem_t *) blockitm),
+	     MOMOUT_LITERAL (" instr:"),
+	     MOMOUT_VALUE ((const momval_t) insv), NULL);
   cgen_lock_item_mom (cg, opitm);
   momhash_t oph = mom_item_hash (opitm);
 #define SCANINSOPHASHMAX_MOM 127
@@ -1746,6 +1758,12 @@ scan_block_cgen (struct c_generator_mom_st *cg, momitem_t *blockitm,
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
   if (!blockitm)
     return;
+  MOM_DEBUG (gencod, MOMOUT_LITERAL ("scan_block blockitm="),
+	     MOMOUT_ITEM ((const momitem_t *) blockitm),
+	     MOMOUT_LITERAL (" fromv="),
+	     MOMOUT_VALUE ((const momval_t) fromv),
+	     MOMOUT_LITERAL (" fromblitm="),
+	     MOMOUT_ITEM ((const momitem_t *) fromblitm), NULL);
   assert (blockitm->i_typnum == momty_item);
   assert (!fromblitm || fromblitm->i_typnum == momty_item);
   assert (mom_item_payload_kind (cg->cgen_rout.cgrout_blockhsetitm) ==
@@ -1786,13 +1804,62 @@ scan_block_cgen (struct c_generator_mom_st *cg, momitem_t *blockitm,
 		    MOMOUT_VALUE ((const momval_t) fromv), NULL);
   mom_item_queue_add_back (cg->cgen_rout.cgrout_blockqueueitm,
 			   (momval_t) blockitm);
+}				/* end scan_block_cgen */
 
-}
 
 void
 emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 {
+  momitem_t *procitm = NULL;
+  momval_t procnodev = MOM_NULLV;
+  assert (cg && cg->cgen_magic == CGEN_MAGIC);
+  procitm = cg->cgen_rout.cgrout_routitm;
+  procnodev = mom_item_assoc_get (cg->cgen_globassocitm, procitm);
+  assert (mom_node_conn (procnodev) == mom_named__procedure);
+  MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_procedure procitm="),
+	     MOMOUT_ITEM ((const momitem_t *) procitm),
+	     MOMOUT_LITERAL (" procnodev="),
+	     MOMOUT_VALUE ((momval_t) procnodev),
+	     MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL (" local-assoc:"),
+	     MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.cgrout_associtm),
+	     MOMOUT_SPACE (50),
+	     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
+				  cgen_rout.cgrout_associtm),
+	     MOMOUT_NEWLINE (), MOMOUT_LITERAL (" blockhset:"),
+	     MOMOUT_ITEM ((const momitem_t *) cg->
+			  cgen_rout.cgrout_blockhsetitm), MOMOUT_SPACE (50),
+	     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
+				  cgen_rout.cgrout_blockhsetitm),
+	     MOMOUT_NEWLINE (), MOMOUT_LITERAL (" hsetint:"),
+	     MOMOUT_ITEM ((const momitem_t *) cg->
+			  cgen_rout.cgrout_hsetintitm), MOMOUT_SPACE (50),
+	     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
+				  cgen_rout.cgrout_hsetintitm),
+	     MOMOUT_NEWLINE (), MOMOUT_LITERAL (" hsetdbl:"),
+	     MOMOUT_ITEM ((const momitem_t *) cg->
+			  cgen_rout.cgrout_hsetdblitm), MOMOUT_SPACE (50),
+	     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
+				  cgen_rout.cgrout_hsetdblitm),
+	     MOMOUT_NEWLINE (), MOMOUT_LITERAL (" hsetval:"),
+	     MOMOUT_ITEM ((const momitem_t *) cg->
+			  cgen_rout.cgrout_hsetvalitm), MOMOUT_SPACE (50),
+	     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
+				  cgen_rout.cgrout_hsetvalitm), NULL);
+  CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("incomplete emit_procedure procitm="),
+		  MOMOUT_ITEM ((const momitem_t *) procitm),
+		  MOMOUT_LITERAL (" procnodev="),
+		  MOMOUT_VALUE ((momval_t) procnodev), NULL);
+}
+
+
+
 #if 0
+void
+_old_emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
+{
+
+
   momitem_t *curoutitm = NULL;
   momval_t procargsv = MOM_NULLV;
   momval_t procnodev = MOM_NULLV;
@@ -2174,9 +2241,9 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	   MOMOUT_INDENT_LESS (), MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL ("}; // end proc descriptor"),
 	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
-#endif
-}				/* end emit_procedure_cgen */
+}				/* end _old_emit_procedure_cgen */
 
+#endif // 0 for _old_emit_procedure_cgen
 
 
 void
@@ -3536,7 +3603,7 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 	{
 	  if (mom_is_item (resv))
 	    {
-	      cg_lock_item_mom (cg, resv.pitem);
+	      cgen_lock_item_mom (cg, resv.pitem);
 	      ctypev = mom_item_get_attribute (resv.pitem, mom_named__ctype);
 	    }
 	}
