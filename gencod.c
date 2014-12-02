@@ -214,7 +214,21 @@ cgen_error_mom_at (int lin, struct c_generator_mom_st *cgen, ...)
   fflush (fout);
   cgen->cgen_errmsg = (char *) MOM_GC_STRDUP ("cgen_error", outbuf);
   MOM_DEBUGPRINTF (gencod, "cgen_error_mom #%d: %s", lin, cgen->cgen_errmsg);
-  MOM_DEBUG (gencod, MOMOUT_LITERAL ("cgen_error"), MOMOUT_BACKTRACE (20));
+  if (MOM_IS_DEBUGGING (gencod))
+    {
+      MOM_OUT (&cgen->cgen_outhead, MOMOUT_FLUSH ());
+      MOM_OUT (&cgen->cgen_outbody, MOMOUT_FLUSH ());
+      MOM_DEBUG
+	(gencod,
+	 MOMOUT_LITERAL ("cgen_error"), MOMOUT_BACKTRACE (20),
+	 MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
+	 MOMOUT_LITERAL ("~~~cgen_outhead:"), MOMOUT_NEWLINE (),
+	 MOMOUT_LITERALV ((const char *) cgen->cgen_outhead.mout_data),
+	 MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
+	 MOMOUT_LITERAL ("~~~cgen_outbody:"), MOMOUT_NEWLINE (),
+	 MOMOUT_LITERALV ((const char *) cgen->cgen_outbody.mout_data),
+	 MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
+    }
   free (outbuf), outbuf = NULL;
   longjmp (cgen->cgen_jbuf, lin);
 }
@@ -1863,7 +1877,32 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 			  cgen_rout.cgrout_hsetvalitm), MOMOUT_SPACE (50),
 	     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
 				  cgen_rout.cgrout_hsetvalitm), NULL);
-
+  momval_t proctypv = mom_item_get_attribute (procitm, mom_named__ctype);
+  MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL ("// implementation of procedure #"),
+	   MOMOUT_DEC_INT ((int) routix),
+	   MOMOUT_LITERAL (" = "),
+	   MOMOUT_ITEM ((const momitem_t *) procitm), MOMOUT_NEWLINE ());
+  cg->cgen_restype = emit_ctype_cgen (cg, &cg->cgen_outbody, proctypv);
+  MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (48),
+	   MOMOUT_LITERAL (MOM_PROCROUTFUN_PREFIX),
+	   MOMOUT_LITERALV (mom_ident_cstr_of_item (procitm)),
+	   MOMOUT_LITERAL (" ("), NULL);
+  /*
+     for (unsigned aix = 0; aix < 0; aix++)
+     {
+     momitem_t *curargitm = mom_tuple_nth_item (procargsv, aix);
+     assert (mom_is_item((momval_t)curargitm));
+     momval_t curargav = mom_item_assoc_get (cg->cgen_rout.cgrout_associtm, curargitm);
+     MOM_DEBUG(gencod, MOMOUT_LITERAL ("emit_proc curargitm="),
+     MOMOUT_ITEM((const momitem_t*)curargitm),
+     MOMOUT_LITERAL (" curargv="),
+     MOMOUT_VALUE((const momval_t)curargav),
+     NULL);
+     assert (curargav.ptr != NULL);
+     }
+   */
   CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("incomplete emit_procedure procitm="),
 		  MOMOUT_ITEM ((const momitem_t *) procitm),
 		  MOMOUT_LITERAL (" procnodev="),
