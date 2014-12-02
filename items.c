@@ -771,7 +771,7 @@ mom_forget_name (const char *namestr)
 }
 
 const momstring_t *
-mom_item_get_name (momitem_t *itm)
+mom_item_get_name (const momitem_t *itm)
 {
   const momstring_t *namev = NULL;
   if (!itm || !itm->i_typnum == momty_item)
@@ -781,7 +781,7 @@ mom_item_get_name (momitem_t *itm)
 }
 
 const momstring_t *
-mom_item_get_idstr (momitem_t *itm)
+mom_item_get_idstr (const momitem_t *itm)
 {
   const momstring_t *idsv = NULL;
   if (!itm || !itm->i_typnum == momty_item)
@@ -792,7 +792,7 @@ mom_item_get_idstr (momitem_t *itm)
 
 
 const momstring_t *
-mom_item_get_name_or_idstr (momitem_t *itm)
+mom_item_get_name_or_idstr (const momitem_t *itm)
 {
   const momstring_t *strv = NULL;
   if (!itm || !itm->i_typnum == momty_item)

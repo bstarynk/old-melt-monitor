@@ -1086,17 +1086,64 @@ loop_blocks_to_scan_cgen (struct c_generator_mom_st *cg)
 
 
 
+static momtypenc_t
+typenc_cgen (struct c_generator_mom_st *cg, bool check, momitem_t *typitm,
+	     momval_t fromv)
+{
+  assert (cg && cg->cgen_magic == CGEN_MAGIC);
+#define TYPEHASHMAX_MOM 103
+#define TYPECASE(Nam) case mom_hashname_##Nam % TYPEHASHMAX_MOM: if (typitm != mom_named_##Nam) break;
+  if (typitm)
+    {
+      switch (mom_item_hash (typitm) % TYPEHASHMAX_MOM)
+	{
+	  TYPECASE (_intptr_t);
+	  return momtypenc_int;
+	  TYPECASE (_double);
+	  return momtypenc_double;
+	  TYPECASE (_momval_t);
+	  return momtypenc_val;
+	  TYPECASE (_momcstr_t);
+	  return momtypenc_string;
+	  TYPECASE (_void);
+	  return momtypenc__none;
+	default:
+	  if (!check)
+	    return momtypenc__none;
+	}
+#undef TYPEHASHMAX_MOM
+#undef TYPECASE
+    }
+  if (check)
+    CGEN_ERROR_MOM (cg,
+		    MOMOUT_LITERAL ("bad type:"),
+		    MOMOUT_ITEM ((const momitem_t *) typitm),
+		    MOMOUT_LITERAL (" from:"),
+		    MOMOUT_VALUE ((const momval_t) fromv), NULL);
+  return momtypenc__none;
+}
+
 
 static momtypenc_t
 scan_node_cgen (struct c_generator_mom_st *cg, momval_t insv,
 		const momnode_t *nod)
 {
+  int errline = 0;
+  const char *errmsg = NULL;
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
   assert (nod && nod->typnum == momty_node);
   momval_t nodv = (momval_t) nod;
   const momitem_t *connitm = mom_node_conn (nodv);
   unsigned arity = mom_node_arity (nodv);
   cgen_lock_item_mom (cg, (momitem_t *) connitm);
+  char errbuf[80];
+  memset (errbuf, 0, sizeof(errbuf));
+#define NODESCANFAIL(Fmt,...) do {			\
+  snprintf(errbuf, sizeof(errbuf), Fmt, ##__VA_ARGS__);	\
+  errmsg = errbuf;					\
+  errline = __LINE__;					\
+  goto bad_node;					\
+} while(0)
 #define SCANODHASHMAX_MOM 131
 #define SCANCASE(Nam) case mom_hashname_##Nam % SCANODHASHMAX_MOM: if (connitm != mom_named_##Nam) break;
   momhash_t conh = mom_item_hash (connitm);
@@ -1130,7 +1177,7 @@ scan_node_cgen (struct c_generator_mom_st *cg, momval_t insv,
 	for (unsigned ix = 0; ix < arity; ix++)
 	  {
 	    momval_t entrv = mom_node_nth (nodv, ix);
-	    momitem_t *entitm = mom_node_conn (entrv);
+	    const momitem_t *entitm = mom_node_conn (entrv);
 	    unsigned entarity = mom_node_arity (entrv);
 	    if (entitm == mom_named__json_entry && entarity == 2)
 	      {			// *json_entry(<name>,<value>)
@@ -1171,28 +1218,54 @@ scan_node_cgen (struct c_generator_mom_st *cg, momval_t insv,
 		momval_t argv = mom_node_nth (nodv, ix);
 		momtypenc_t targ = scan_expr_cgen (cg, insv, argv);
 		if (targ > momtypenc__none && targ != momtypenc_val)
-		  goto bad_node;
+		  NODESCANFAIL ("non-value #%d in *node", (int)ix);
 	      }
 	  }
 	else
-	bad_node:
-	  CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("bad `node` expression:"),
-			  MOMOUT_VALUE ((const momval_t) nodv),
-			  MOMOUT_LITERAL (" in instr:"),
-			  MOMOUT_VALUE ((const momval_t) insv), NULL);
+	  NODESCANFAIL ("empty *node");
       }
       break;
 #undef SCANCASE
 #undef SCANODHASHMAX_MOM
+      //////////
     default:
+      {
+	/// both procedure and primitives have `formals` and `ctype` attributes
+	momval_t formalsv =
+	  mom_item_get_attribute (connitm, mom_named__formals);
+	momval_t ctypev = mom_item_get_attribute (connitm, mom_named__ctype);
+	momval_t outputv =
+	  mom_item_get_attribute (connitm, mom_named__output);
+	if (!mom_is_tuple (formalsv) || !mom_is_item (ctypev))
+	  NODESCANFAIL ("node connective %s without `formals` or `ctype`",
+			mom_item_get_name_or_id_cstr(connitm));
+	unsigned nbformals = mom_tuple_length (formalsv);
+	if (nbformals > arity)
+	  NODESCANFAIL ("missing %d arguments", nbformals - arity);
+	if (!outputv.ptr && nbformals < arity)
+	  NODESCANFAIL ("too much %d arguments", arity - nbformals);
+	for (unsigned fix = 0; fix < nbformals; fix++)
+	  {
+	    const momitem_t *formitm = mom_tuple_nth_item (formalsv, fix);
+	    if (!formitm)
+	      NODESCANFAIL ("bad formal #%d", (int)fix);
 #warning unimplemented scan_node_cgen
-      CGEN_ERROR_MOM (cg,
-		      MOMOUT_LITERAL ("unimplemented scan_node expression:"),
-		      MOMOUT_VALUE ((const momval_t) nodv),
-		      MOMOUT_LITERAL (" in instr:"),
-		      MOMOUT_VALUE ((const momval_t) insv), NULL);
+	  }
+	return typenc_cgen (cg, true, ctypev.pitem, insv);
+      }
       break;
     }
+  NODESCANFAIL ("unexpected");
+#undef NODESCANFAIL
+bad_node:
+  assert (errline > 0);
+  cgen_error_mom_at (errline, cg,
+		     MOMOUT_LITERAL ("in scan_node bad expression:"),
+		     MOMOUT_VALUE ((const momval_t) nodv),
+		     MOMOUT_LITERAL (" in instr:"),
+		     MOMOUT_VALUE ((const momval_t) insv),
+		     MOMOUT_SPACE (60),
+		     MOMOUT_LITERALV ((const char *) errmsg), NULL);
 }
 
 static momtypenc_t

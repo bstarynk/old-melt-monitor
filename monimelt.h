@@ -1197,9 +1197,9 @@ mom_alpha_ordered_tuple_of_named_items (momval_t *parrname)
   return mom_alpha_ordered_tuple_of_named_prefixed_items ("", parrname);
 }
 
-const momstring_t *mom_item_get_name (momitem_t *itm);
-const momstring_t *mom_item_get_idstr (momitem_t *itm);
-const momstring_t *mom_item_get_name_or_idstr (momitem_t *itm);
+const momstring_t *mom_item_get_name (const momitem_t *itm);
+const momstring_t *mom_item_get_idstr (const momitem_t *itm);
+const momstring_t *mom_item_get_name_or_idstr (const momitem_t *itm);
 // get an item of given name
 momitem_t *mom_get_item_of_name_hash (const char *s, momhash_t h);
 static inline momitem_t *
@@ -1207,6 +1207,12 @@ mom_get_item_of_name (const char *s)
 {
   return mom_get_item_of_name_hash (s, 0);
 };
+
+static inline const char*
+mom_item_get_name_or_id_cstr(const momitem_t *itm)
+{
+  return mom_string_cstr((momval_t)mom_item_get_name_or_idstr (itm));
+}
 
 static inline momitem_t *
 mom_get_item_of_name_string (momval_t s)
