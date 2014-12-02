@@ -605,7 +605,14 @@ declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
 			    MOMOUT_LITERAL (" rank "),
 			    MOMOUT_DEC_INT ((int) aix), NULL);
 	  cgen_lock_item_mom (cg, curargitm);
-	  curargtypv = mom_item_get_attribute (curargitm, mom_named__ctype);
+	  curargtypv =
+	    mom_item_get_attribute (curargitm, mom_named__variable);
+	  MOM_DEBUG (gencod, MOMOUT_VALUE ((const momval_t) curargitm),
+		     MOMOUT_LITERAL (" in procedure "),
+		     MOMOUT_ITEM ((const momitem_t *) curoutitm),
+		     MOMOUT_LITERAL (" rank "), MOMOUT_DEC_INT ((int) aix),
+		     MOMOUT_LITERAL (" curargtypv "),
+		     MOMOUT_VALUE ((const momval_t) curargtypv), NULL);
 	  if (aix > 0)
 	    MOM_OUT (&cg->cgen_outhead, MOMOUT_LITERAL (","),
 		     MOMOUT_SPACE (64));

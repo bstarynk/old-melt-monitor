@@ -24,7 +24,7 @@ CREATE TABLE t_names (name TEXT PRIMARY KEY ASC NOT NULL UNIQUE, n_idstr VARCHAR
 CREATE TABLE t_modules (modname VARCHAR(40) PRIMARY KEY ASC NOT NULL UNIQUE);
 -- state-monimelt tables contents
 INSERT INTO t_params VALUES('dump_format_version','MoniMelt2014B');
-INSERT INTO t_params VALUES('dump_reason','after predefined variable');
+INSERT INTO t_params VALUES('dump_reason','command dump');
 INSERT INTO t_modules VALUES('_65961crktpj_vtt30qeqv21');
 INSERT INTO t_items VALUES('_02av6173qvf_pehzhe755j2','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for calls at end of  blocks"}],
  "content": null, "kind": null, "payload": null}
@@ -529,9 +529,9 @@ INSERT INTO t_items VALUES('_37kswkaa035_qjpxwd7e67f','{"attr": [{"attr": "_41u1
 INSERT INTO t_items VALUES('_37x98fyestf_ttup2cu68r6','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "the expansion of a primitive"}],
  "content": null, "kind": null, "payload": null}
 ','');
-INSERT INTO t_items VALUES('_389t77v85ej_fwpy6exy62x','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_80e7dsukuq3_6p7jffmz1yi",
-    "jtype": "item_ref", "space": ".predef"}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
-   "val": "variable, for literal C strings"}], "content": null, "kind": null,
+INSERT INTO t_items VALUES('_389t77v85ej_fwpy6exy62x','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "variable, for literal C strings"},
+  {"attr": "_9u7pp5r3ccq_6fsi3t2a6tq", "val": {"item_ref": "_80e7dsukuq3_6p7jffmz1yi",
+    "jtype": "item_ref", "space": ".predef"}}], "content": null, "kind": null,
  "payload": null}
 ','');
 INSERT INTO t_items VALUES('_38w4qwrmd6z_74x5z80v5k6','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "inside switches: case <constant-expr> <block>"}],
