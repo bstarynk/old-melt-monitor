@@ -1909,20 +1909,20 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	   MOMOUT_LITERAL (MOM_PROCROUTFUN_PREFIX),
 	   MOMOUT_LITERALV (mom_ident_cstr_of_item (procitm)),
 	   MOMOUT_LITERAL (" ("), NULL);
-  /*
-     for (unsigned aix = 0; aix < 0; aix++)
-     {
-     momitem_t *curargitm = mom_tuple_nth_item (procargsv, aix);
-     assert (mom_is_item((momval_t)curargitm));
-     momval_t curargav = mom_item_assoc_get (cg->cgen_rout.cgrout_associtm, curargitm);
-     MOM_DEBUG(gencod, MOMOUT_LITERAL ("emit_proc curargitm="),
-     MOMOUT_ITEM((const momitem_t*)curargitm),
-     MOMOUT_LITERAL (" curargv="),
-     MOMOUT_VALUE((const momval_t)curargav),
-     NULL);
-     assert (curargav.ptr != NULL);
-     }
-   */
+  momval_t formargsv = mom_item_get_attribute (procitm, mom_named__formals);
+  assert (mom_is_tuple (formargsv));
+  for (unsigned aix = 0; aix < 0; aix++)
+    {
+      momitem_t *curargitm = mom_tuple_nth_item (formargsv, aix);
+      assert (mom_is_item ((momval_t) curargitm));
+      momval_t curargav =
+	mom_item_assoc_get (cg->cgen_rout.cgrout_associtm, curargitm);
+      MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_proc curargitm="),
+		 MOMOUT_ITEM ((const momitem_t *) curargitm),
+		 MOMOUT_LITERAL (" curargv="),
+		 MOMOUT_VALUE ((const momval_t) curargav), NULL);
+      assert (curargav.ptr != NULL);
+    }
   CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("incomplete emit_procedure procitm="),
 		  MOMOUT_ITEM ((const momitem_t *) procitm),
 		  MOMOUT_LITERAL (" procnodev="),
