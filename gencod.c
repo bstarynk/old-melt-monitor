@@ -1004,6 +1004,8 @@ scan_procedure_cgen (struct c_generator_mom_st *cg, momitem_t *procitm)
   assert (procitm && procitm->i_typnum == momty_item);
   cgen_lock_item_mom (cg, procitm);
   momval_t procnodev = mom_item_assoc_get (cg->cgen_globassocitm, procitm);
+  MOM_DEBUG (gencod, MOMOUT_LITERAL ("start scan_procedure procitm="),
+	     MOMOUT_ITEM ((const momitem_t *) procitm), NULL);
   assert (mom_node_conn (procnodev) == mom_named__procedure);
   momval_t proformalsv = MOM_NULLV;
   momval_t proconstantsv = MOM_NULLV;
@@ -1027,6 +1029,10 @@ scan_procedure_cgen (struct c_generator_mom_st *cg, momitem_t *procitm)
   for (unsigned fix = 0; fix < nbformals; fix++)
     {
       momitem_t *curformitm = mom_tuple_nth_item (proformalsv, fix);
+      MOM_DEBUG (gencod, MOMOUT_LITERAL ("start scan_procedure procitm="),
+		 MOMOUT_ITEM ((const momitem_t *) procitm),
+		 MOMOUT_LITERAL (" curformitm="),
+		 MOMOUT_ITEM ((const momitem_t *) curformitm), NULL);
       if (!curformitm)
 	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("nil formal in procedure:"),
 			MOMOUT_ITEM ((const momitem_t *) procitm),
@@ -1047,12 +1053,20 @@ scan_procedure_cgen (struct c_generator_mom_st *cg, momitem_t *procitm)
 					 (momval_t) procitm,
 					 mom_make_integer (fix), formtypv));
     }
+  MOM_DEBUG (gencod, MOMOUT_LITERAL ("start scan_procedure procitm="),
+	     MOMOUT_ITEM ((const momitem_t *) procitm),
+	     MOMOUT_LITERAL (" proconstantsv="),
+	     MOMOUT_VALUE ((const momval_t) proconstantsv), NULL);
   if (proconstantsv.ptr && !mom_is_seqitem (proconstantsv))
     CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("in procedure:"),
 		    MOMOUT_ITEM ((const momitem_t *) procitm),
 		    MOMOUT_LITERAL (" bad constants:"),
 		    MOMOUT_VALUE (proconstantsv), NULL);
   unsigned nbconstants = bind_constants_cgen (cg, proconstantsv);
+  MOM_DEBUG (gencod, MOMOUT_LITERAL ("start scan_procedure procitm="),
+	     MOMOUT_ITEM ((const momitem_t *) procitm),
+	     MOMOUT_LITERAL (" proprocedurev="),
+	     MOMOUT_VALUE ((const momval_t) proprocedurev), NULL);
   if (!mom_is_item (proprocedurev))
     CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("in procedure:"),
 		    MOMOUT_ITEM ((const momitem_t *) procitm),
@@ -1358,9 +1372,9 @@ scan_node_cgen (struct c_generator_mom_st *cg, momval_t insv,
 	      NODESCANFAIL ("bad formal #%d", (int) fix);
 	    cgen_lock_item_mom (cg, (momitem_t *) formitm);
 	    momval_t formctypv =
-	      mom_item_get_attribute (formitm, mom_named__ctype);
+	      mom_item_get_attribute (formitm, mom_named__variable);
 	    if (!mom_is_item (formctypv))
-	      NODESCANFAIL ("formal #%d %s without `ctype`", (int) fix,
+	      NODESCANFAIL ("formal #%d %s without `variable`", (int) fix,
 			    mom_item_get_name_or_id_cstr (formitm));
 	    momtypenc_t formtyp =
 	      typenc_cgen (cg, true, formctypv.pitem, insv);
@@ -1747,12 +1761,6 @@ scan_instr_cgen (struct c_generator_mom_st *cg, momitem_t *blockitm,
     }
 #undef SCANCASE
 #undef SCANINSOPHASHMAX_MOM
-  CGEN_ERROR_MOM (cg,
-		  MOMOUT_LITERAL ("unimplemented scan_instr in block:"),
-		  MOMOUT_ITEM ((const momitem_t *) blockitm),
-		  MOMOUT_LITERAL (" for instr:"),
-		  MOMOUT_VALUE ((const momval_t) insv), NULL);
-#warning scan_instr_cgen incomplete
 }
 
 
@@ -1824,6 +1832,9 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
   assert (mom_node_conn (procnodev) == mom_named__procedure);
   MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_procedure procitm="),
 	     MOMOUT_ITEM ((const momitem_t *) procitm),
+	     MOMOUT_SPACE (58),
+	     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) procitm),
+	     MOMOUT_NEWLINE (),
 	     MOMOUT_LITERAL (" procnodev="),
 	     MOMOUT_VALUE ((momval_t) procnodev),
 	     MOMOUT_NEWLINE (),
@@ -1852,6 +1863,7 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 			  cgen_rout.cgrout_hsetvalitm), MOMOUT_SPACE (50),
 	     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
 				  cgen_rout.cgrout_hsetvalitm), NULL);
+
   CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("incomplete emit_procedure procitm="),
 		  MOMOUT_ITEM ((const momitem_t *) procitm),
 		  MOMOUT_LITERAL (" procnodev="),
