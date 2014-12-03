@@ -1859,6 +1859,18 @@ intptr_t *mom_item_tasklet_frame_ints_pointer (momitem_t *itm, int frk);
 intptr_t mom_item_tasklet_frame_nth_int (momitem_t *itm, int frk, int nrk);
 double *mom_item_tasklet_frame_doubles_pointer (momitem_t *itm, int frk);
 double mom_item_tasklet_frame_nth_double (momitem_t *itm, int frk, int drk);
+void mom_item_tasklet_frame_set_state (momitem_t *itm, int frk, int state);
+
+static inline void
+mom_item_tasklet_top_frame_set_state(momitem_t *itm, int state)
+{
+  assert (itm && itm->i_typnum == momty_item);
+  if (!itm->i_payload || itm->i_paylkind != mompayk_tasklet)
+    return;
+  struct mom_taskletdata_st *itd = itm->i_payload;
+  unsigned fratop = itd->dtk_fratop;
+  if (fratop>0) itd->dtk_frames[(int)fratop-1].fr_state = state;
+}
 
 static inline momval_t
 mom_item_tasklet_res1 (momitem_t *itm)

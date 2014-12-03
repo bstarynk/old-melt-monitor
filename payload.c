@@ -2659,6 +2659,21 @@ mom_item_tasklet_frame_state (momitem_t *itm, int frk)
   return 0;
 }
 
+void
+mom_item_tasklet_frame_set_state (momitem_t *itm, int frk, int state)
+{
+  assert (itm && itm->i_typnum == momty_item);
+  if (!itm->i_payload || itm->i_paylkind != mompayk_tasklet)
+    return;
+  struct mom_taskletdata_st *itd = itm->i_payload;
+  unsigned fratop = itd->dtk_fratop;
+  if (frk < 0)
+    frk += fratop;
+  if (frk >= 0 && frk < (int) fratop)
+    itd->dtk_frames[frk].fr_state = state;
+}
+
+
 momval_t
 mom_item_tasklet_frame_closure (momitem_t *itm, int frk)
 {

@@ -2380,8 +2380,20 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
   assert (startix > 0);
   MOM_OUT
     (&cg->cgen_outbody,
-     MOMOUT_LITERAL ("if (MOM_UNLIKELY(momstate==0)) return "),
+     MOMOUT_LITERAL
+     ("assert (mom_item_payload_kind (momtasklet) == mompayk_tasklet);"),
+     MOMOUT_NEWLINE (), 
+     MOMOUT_LITERAL ("if (MOM_UNLIKELY(momstate==0)) {"),
+     MOMOUT_INDENT_MORE(),
+     MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL ("momstate = "),
      MOMOUT_DEC_INT (startix), MOMOUT_LITERAL (";"),
+     MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL ("mom_item_tasklet_top_frame_set_state (momtasklet, "),
+     MOMOUT_DEC_INT (startix), MOMOUT_LITERAL (");"),
+     MOMOUT_INDENT_LESS(),
+     MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL("};"),
      MOMOUT_NEWLINE (),
      MOMOUT_LITERAL ("assert (mom_is_item (momclosure));"),
      MOMOUT_NEWLINE (),
@@ -2389,10 +2401,7 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 		     " mom_item_closure_values (momclosure.pitem);"),
      MOMOUT_NEWLINE (),
      MOMOUT_LITERAL ("assert (momclovals != NULL);"),
-     MOMOUT_NEWLINE (),
-     MOMOUT_LITERAL
-     ("assert (mom_item_payload_kind(momtasklet)== mompayk_tasklet);"),
-     MOMOUT_NEWLINE (), NULL);
+     MOMOUT_NEWLINE (),NULL);
   if (nbvalues > 0)
     MOM_OUT (&cg->cgen_outbody,
 	     MOMOUT_LITERAL
@@ -2415,14 +2424,19 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	     MOMOUT_LITERAL (" doubles."), MOMOUT_NEWLINE (), NULL);
   MOM_OUT (&cg->cgen_outbody,
 	   MOMOUT_LITERAL
-	   (" MOM_DEBUG(run, MOMOUT_LITERAL(\"start tasklet=\"),"
+	   (" MOM_DEBUG(run,"),
+	   MOMOUT_INDENT_MORE(),
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL
+	   (" MOMOUT_LITERAL(\"start tasklet=\"),"
 	    " MOMOUT_ITEM((const momitem_t*)momtasklet),"),
 	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL ("\t MOMOUT_LITERAL(\" state#\"),"
-			   " MOMOUT_DEC_INT((int)momstate),"
-			   " MOMOUT_LITERAL(\" taskfunc "),
+	   MOMOUT_LITERAL (" MOMOUT_LITERAL(\" state#\"),"
+			   " MOMOUT_DEC_INT((int)momstate),"),
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL(" MOMOUT_LITERAL(\" taskfunc "),
 	   MOMOUT_ITEM ((const momitem_t *) tfunitm),
-	   MOMOUT_LITERAL ("\"));"), MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL ("\"));"), MOMOUT_INDENT_LESS(), MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL ("switch (momstate) {"), MOMOUT_NEWLINE ());
   for (unsigned six = 1; six <= nbblocks; six++)
     {
