@@ -842,198 +842,6 @@ bind_closed_values_cgen (struct c_generator_mom_st *cg, momval_t closvalsv)
   return nbclosvals;
 }
 
-static unsigned
-bind_values_cgen (struct c_generator_mom_st *cg, momval_t valuesv)
-{
-  unsigned nbvalues = 0;
-  assert (cg && cg->cgen_magic == CGEN_MAGIC);
-  if (mom_is_seqitem (valuesv))
-    {
-      nbvalues = mom_seqitem_length (valuesv);
-      for (unsigned vix = 0; vix < nbvalues; vix++)
-	{
-	  momitem_t *valitm = mom_seqitem_nth_item (valuesv, vix);
-	  if (!valitm)
-	    continue;
-	  CGEN_CHECK_FRESH (cg, "value in routine", valitm);
-	  mom_item_assoc_put
-	    (cg->cgen_rout.cgrout_associtm, valitm,
-	     (momval_t) mom_make_node_sized (mom_named__values, 2,
-					     mom_make_integer (vix), valitm));
-	}
-    }
-  else if (valuesv.ptr)
-    CGEN_ERROR_MOM (cg,
-		    MOMOUT_LITERAL ("invalid values:"),
-		    MOMOUT_VALUE ((const momval_t) valuesv),
-		    MOMOUT_LITERAL (" in routine "),
-		    MOMOUT_ITEM ((const momitem_t *) cg->
-				 cgen_rout.cgrout_routitm), NULL);
-  return nbvalues;
-}
-
-static unsigned
-bind_doubles_cgen (struct c_generator_mom_st *cg, momval_t doublesv)
-{
-  unsigned nbdoubles = 0;
-  assert (cg && cg->cgen_magic == CGEN_MAGIC);
-  if (mom_is_seqitem (doublesv))
-    {
-      nbdoubles = mom_seqitem_length (doublesv);
-      for (unsigned dix = 0; dix < nbdoubles; dix++)
-	{
-	  momitem_t *dblitm = mom_seqitem_nth_item (doublesv, dix);
-	  if (!dblitm)
-	    continue;
-	  CGEN_CHECK_FRESH (cg, "double in routine", dblitm);
-	  mom_item_assoc_put
-	    (cg->cgen_rout.cgrout_associtm, dblitm,
-	     (momval_t) mom_make_node_sized (mom_named__doubles, 2,
-					     mom_make_integer (dix),
-					     (momval_t) dblitm));
-	}
-    }
-  else if (doublesv.ptr)
-    CGEN_ERROR_MOM (cg,
-		    MOMOUT_LITERAL ("invalid doubles:"),
-		    MOMOUT_VALUE ((const momval_t) doublesv),
-		    MOMOUT_LITERAL (" in routine "),
-		    MOMOUT_ITEM ((const momitem_t *) cg->
-				 cgen_rout.cgrout_routitm), NULL);
-  return nbdoubles;
-}
-
-static unsigned
-bind_numbers_cgen (struct c_generator_mom_st *cg, momval_t numbersv)
-{
-  unsigned nbnumbers = 0;
-  assert (cg && cg->cgen_magic == CGEN_MAGIC);
-  if (mom_is_seqitem (numbersv))
-    {
-      nbnumbers = mom_seqitem_length (numbersv);
-      for (unsigned nix = 0; nix < nbnumbers; nix++)
-	{
-	  momitem_t *numitm = mom_seqitem_nth_item (numbersv, nix);
-	  if (!numitm)
-	    continue;
-	  CGEN_CHECK_FRESH (cg, "number in routine", numitm);
-	  mom_item_assoc_put
-	    (cg->cgen_rout.cgrout_associtm, numitm,
-	     (momval_t) mom_make_node_sized (mom_named__numbers, 2,
-					     mom_make_integer (nix), numitm));
-	}
-    }
-  else if (numbersv.ptr)
-    CGEN_ERROR_MOM (cg,
-		    MOMOUT_LITERAL ("invalid numbers:"),
-		    MOMOUT_VALUE ((const momval_t) numbersv),
-		    MOMOUT_LITERAL (" in routine "),
-		    MOMOUT_ITEM ((const momitem_t *) cg->
-				 cgen_rout.cgrout_routitm), NULL);
-  return nbnumbers;
-}
-
-static unsigned
-bind_blocks_cgen (struct c_generator_mom_st *cg, momval_t blocksv)
-{
-  unsigned nbblocks = 0;
-  assert (cg && cg->cgen_magic == CGEN_MAGIC);
-  if (mom_is_seqitem (blocksv))
-    {
-      nbblocks = mom_seqitem_length (blocksv);
-      for (unsigned bix = 0; bix < nbblocks; bix++)
-	{
-	  momitem_t *blkitm = mom_seqitem_nth_item (blocksv, bix);
-	  if (!blkitm)
-	    continue;
-	  CGEN_CHECK_FRESH (cg, "block in routine", blkitm);
-	  mom_item_assoc_put
-	    (cg->cgen_rout.cgrout_associtm, blkitm,
-	     (momval_t) mom_make_node_sized (mom_named__block, 1,
-					     mom_make_integer (bix + 1)));
-	}
-    }
-  else if (blocksv.ptr)
-    CGEN_ERROR_MOM (cg,
-		    MOMOUT_LITERAL ("invalid blocks:"),
-		    MOMOUT_VALUE ((const momval_t) blocksv),
-		    MOMOUT_LITERAL (" in routine "),
-		    MOMOUT_ITEM ((const momitem_t *) cg->
-				 cgen_rout.cgrout_routitm), NULL);
-  return nbblocks;
-}
-
-#if 0
-static unsigned
-bind_functionvars_cgen (struct c_generator_mom_st *cg, unsigned offset,
-			momval_t varsv)
-{
-  unsigned nbvars = 0;
-  assert (cg && cg->cgen_magic == CGEN_MAGIC);
-  if (mom_is_seqitem (varsv))
-    {
-      nbvars = mom_seqitem_length (varsv);
-      for (unsigned vix = 0; vix < nbvars; vix++)
-	{
-	  momitem_t *varitm = mom_seqitem_nth_item (varsv, vix);
-	  momval_t vctypv = MOM_NULLV;
-	  if (!varitm)
-	    continue;
-	  CGEN_CHECK_FRESH (cg, "variable in function", varitm);
-	  cgen_lock_item_mom (cg, varitm);
-	  vctypv = mom_item_get_attribute (varitm, mom_named__ctype);
-	  if (vctypv.pitem == mom_named__momval_t)
-	    {
-	      unsigned valcnt = mom_item_vector_count (cg->cgen_vecvalitm);
-	      mom_item_vector_append1 (cg->cgen_vecvalitm, (momval_t) varitm);
-	      mom_item_assoc_put
-		(cg->cgen_rout.cgrout_associtm, varitm,
-		 (momval_t) mom_make_node_sized (mom_named__values, 2,
-						 mom_make_integer (offset +
-								   valcnt),
-						 (momval_t) varitm));
-
-	    }
-	  else if (vctypv.pitem == mom_named__intptr_t)
-	    {
-	      unsigned numcnt = mom_item_vector_count (cg->cgen_vecnumitm);
-	      mom_item_vector_append1 (cg->cgen_vecnumitm, (momval_t) varitm);
-	      mom_item_assoc_put
-		(cg->cgen_rout.cgrout_associtm, varitm,
-		 (momval_t) mom_make_node_sized (mom_named__numbers, 2,
-						 mom_make_integer (numcnt),
-						 (momval_t) varitm));
-	    }
-	  else if (vctypv.pitem == mom_named__double)
-	    {
-	      unsigned dblcnt = mom_item_vector_count (cg->cgen_vecdblitm);
-	      mom_item_vector_append1 (cg->cgen_vecdblitm, (momval_t) varitm);
-	      mom_item_assoc_put
-		(cg->cgen_rout.cgrout_associtm, varitm,
-		 (momval_t) mom_make_node_sized (mom_named__doubles, 2,
-						 mom_make_integer (dblcnt),
-						 (momval_t) varitm));
-	    }
-	  else
-	    CGEN_ERROR_MOM (cg,
-			    MOMOUT_LITERAL ("bad variable:"),
-			    MOMOUT_VALUE ((const momval_t) varitm),
-			    MOMOUT_LITERAL (" in function "),
-			    MOMOUT_ITEM ((const momitem_t *)
-					 cg->cgen_rout.cgrout_routitm), NULL);
-	}
-    }
-  else if (varsv.ptr)
-    CGEN_ERROR_MOM (cg,
-		    MOMOUT_LITERAL ("invalid vars:"),
-		    MOMOUT_VALUE ((const momval_t) varsv),
-		    MOMOUT_LITERAL (" in function "),
-		    MOMOUT_ITEM ((const momitem_t *) cg->
-				 cgen_rout.cgrout_routitm), NULL);
-  return nbvars;
-}				// end of bind_functionvars_cgen
-#endif
-
 
 
 
@@ -1565,7 +1373,6 @@ scan_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
 	}
 #undef SCANITCASE
 #undef SCANITEMHASHMAX_MOM
-#warning scan_item_cgen unimplemented
       CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("scan_item unexpected asexpv="),
 		      MOMOUT_VALUE ((const momval_t) asexpv),
 		      MOMOUT_LITERAL (" for item:"),
@@ -2309,6 +2116,8 @@ scan_taskletfunction_cgen (struct c_generator_mom_st *cg, momitem_t *tfunitm)
 {
   momval_t tfunformalsv = MOM_NULLV;
   momval_t tfunconstantsv = MOM_NULLV;
+  momval_t tfunlocalsv = MOM_NULLV;
+  momval_t tfunclosedvalsv = MOM_NULLV;
   momval_t tfuntaskletfunctionv = MOM_NULLV;
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
   assert (tfunitm && tfunitm->i_typnum == momty_item);
@@ -2316,6 +2125,9 @@ scan_taskletfunction_cgen (struct c_generator_mom_st *cg, momitem_t *tfunitm)
   momval_t tfunodev = mom_item_assoc_get (cg->cgen_globassocitm, tfunitm);
   tfunformalsv = mom_item_get_attribute (tfunitm, mom_named__formals);
   tfunconstantsv = mom_item_get_attribute (tfunitm, mom_named__constants);
+  tfunclosedvalsv =
+    mom_item_get_attribute (tfunitm, mom_named__closed_values);
+  tfunlocalsv = mom_item_get_attribute (tfunitm, mom_named__locals);
   tfuntaskletfunctionv =
     mom_item_get_attribute (tfunitm, mom_named__tasklet_function);
   MOM_DEBUG (gencod,
@@ -2370,6 +2182,46 @@ scan_taskletfunction_cgen (struct c_generator_mom_st *cg, momitem_t *tfunitm)
 	     MOMOUT_ITEM ((const momitem_t *) tfunitm),
 	     MOMOUT_LITERAL (" tfuntaskletfunctionv="),
 	     MOMOUT_VALUE ((const momval_t) tfuntaskletfunctionv), NULL);
+  /// scan the explicitly given locals of tfunction
+  MOM_DEBUG (gencod, MOMOUT_LITERAL ("start scan_tfunc tfunitm="),
+	     MOMOUT_ITEM ((const momitem_t *) tfunitm),
+	     MOMOUT_LITERAL (" tfunlocalsv="),
+	     MOMOUT_VALUE ((const momval_t) tfunlocalsv), NULL);
+  if (tfunlocalsv.ptr && !mom_is_seqitem (tfunlocalsv))
+    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("in tfunc:"),
+		    MOMOUT_ITEM ((const momitem_t *) tfunitm),
+		    MOMOUT_LITERAL (" bad locals:"),
+		    MOMOUT_VALUE (tfunlocalsv), NULL);
+  unsigned nblocals = mom_seqitem_length (tfunlocalsv);
+  for (unsigned ix = 0; ix < nblocals; ix++)
+    {
+      momitem_t *locvaritm = mom_seqitem_nth_item (tfunlocalsv, ix);
+      if (!locvaritm)
+	continue;
+      scan_item_cgen (cg, locvaritm);
+    }
+  /// scan the closed values of tfunction
+  MOM_DEBUG (gencod, MOMOUT_LITERAL ("start scan_tfunc tfunitm="),
+	     MOMOUT_ITEM ((const momitem_t *) tfunitm),
+	     MOMOUT_LITERAL (" tfunclosedvalsv="),
+	     MOMOUT_VALUE ((const momval_t) tfunclosedvalsv), NULL);
+  if (tfunclosedvalsv.ptr && !mom_is_seqitem (tfunclosedvalsv))
+    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("in tfunc:"),
+		    MOMOUT_ITEM ((const momitem_t *) tfunitm),
+		    MOMOUT_LITERAL (" bad `closed_values`:"),
+		    MOMOUT_VALUE (tfunclosedvalsv), NULL);
+  unsigned nbclosvals = bind_closed_values_cgen (cg, tfunclosedvalsv);
+  MOM_DEBUG (gencod, MOMOUT_LITERAL ("start scan_taskfun tfunitm="),
+	     MOMOUT_ITEM ((const momitem_t *) tfunitm),
+	     MOMOUT_LITERAL (" tfuntaskletfunctionv="),
+	     MOMOUT_VALUE ((const momval_t) tfuntaskletfunctionv),
+	     MOMOUT_LITERAL (" associtm="),
+	     MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.cgrout_associtm),
+	     MOMOUT_SPACE (60),
+	     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
+				  cgen_rout.cgrout_associtm),
+	     MOMOUT_NEWLINE (), NULL);
+  // scan all the blocks from the start
   if (!mom_is_item (tfuntaskletfunctionv))
     CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("in tfun:"),
 		    MOMOUT_ITEM ((const momitem_t *) tfunitm),
