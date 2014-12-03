@@ -732,6 +732,7 @@ struct mom_jsonentry_st
     momval_t je_name;
     const momstring_t *je_namestr;
     const momitem_t *je_nameitm;
+    const void *je_nameptr;
   };
   momval_t je_attr;
 };

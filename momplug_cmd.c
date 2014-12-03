@@ -41,6 +41,7 @@ const char mom_plugin_GPL_compatible[] = "GPLv3+";
   CMD(echo,"echo the line",non,NULL)                            \
   CMD(erase,"erase item payload",itm,NULL)                      \
   CMD(exit,"dump & exit",non,NULL)                              \
+  CMD(finditem,"find occurences of item",itm,NULL)              \
   CMD(forget,"forget named item",itm,NULL)                      \
   CMD(gencmod,"generate C module",itm,NULL)                     \
   CMD(getat,"[attr]; get attribute",itm,":=")                   \
@@ -1026,6 +1027,136 @@ cmd_do_remword_mom (const char *lin)
     }
   else
     printf ("bad word %s to remove\n", word);
+}
+
+
+static jmp_buf findi_jmpbuf_mom;
+static momitem_t *findi_itm_mom;
+
+static void
+findi_value_mom (momval_t val)
+{
+  switch ((momvaltype_t) mom_type (val))
+    {
+    case momty_null:
+    case momty_int:
+    case momty_double:
+    case momty_string:
+      return;
+    case momty_item:
+      if (val.pitem == findi_itm_mom)
+	longjmp (findi_jmpbuf_mom, __LINE__);
+      return;
+    case momty_jsonarray:
+      {
+	unsigned cnt = mom_json_array_size (val);
+	for (unsigned ix = 0; ix < cnt; ix++)
+	  findi_value_mom (mom_json_array_nth (val, ix));
+      }
+      return;
+    case momty_jsonobject:
+      {
+	unsigned cnt = mom_jsonob_size (val);
+	for (unsigned ix = 0; ix < cnt; ix++)
+	  {
+	    const momval_t curnam = val.pjsonobj->jobjtab[ix].je_name;
+	    if (!curnam.ptr || curnam.ptr == MOM_EMPTY)
+	      continue;
+	    const momval_t curval = val.pjsonobj->jobjtab[ix].je_attr;
+	    if (!curval.ptr || curval.ptr == MOM_EMPTY)
+	      continue;
+	    findi_value_mom (curnam);
+	    findi_value_mom (curval);
+	  }
+      }
+      return;
+    case momty_set:
+    case momty_tuple:
+      {
+	unsigned cnt = mom_seqitem_length (val);
+	for (unsigned ix = 0; ix < cnt; ix++)
+	  {
+	    const momitem_t *curitm = mom_seqitem_nth_item (val, ix);
+	    if (!curitm)
+	      continue;
+	    if (curitm == findi_itm_mom)
+	      longjmp (findi_jmpbuf_mom, __LINE__);
+	  }
+      }
+      return;
+    case momty_node:
+      {
+	unsigned cnt = mom_node_arity (val);
+	if (mom_node_conn (val) == findi_itm_mom)
+	  longjmp (findi_jmpbuf_mom, __LINE__);
+	for (unsigned ix = 0; ix < cnt; ix++)
+	  findi_value_mom (mom_node_nth (val, ix));
+      }
+      return;
+    }
+}
+
+static void
+cmd_do_finditem_mom (const char *lin, bool pres, momitem_t *itm)
+{
+  MOM_DEBUG (cmd, MOMOUT_LITERAL ("start do_finditem lin:"),
+	     MOMOUT_LITERALV (lin),
+	     MOMOUT_SPACE (40),
+	     MOMOUT_LITERALV ((const char *) (pres ? "present" : "absent")),
+	     MOMOUT_SPACE (48),
+	     MOMOUT_LITERAL ("item:"), MOMOUT_ITEM ((const momitem_t *) itm));
+  char cmdbuf[80];
+  memset (cmdbuf, 0, sizeof (cmdbuf));
+  if (pres && itm)
+    {
+      momval_t allitemsv =
+	(momval_t) mom_set_of_items_of_ident_prefixed ("_");
+      unsigned nbitems = mom_set_cardinal (allitemsv);
+      int nbfound = 0;
+      findi_itm_mom = itm;
+      MOM_OUT (mom_stdout, MOMOUT_LITERAL ("searching item: "),
+	       MOMOUT_ITEM ((const momitem_t *) itm),
+	       MOMOUT_LITERAL (" in all "),
+	       MOMOUT_DEC_INT ((int) nbitems),
+	       MOMOUT_LITERAL (" items."),
+	       MOMOUT_NEWLINE (), MOMOUT_FLUSH ());
+      for (unsigned ix = 0; ix < nbitems; ix++)
+	{
+	  momitem_t *curitm = mom_set_nth_item (allitemsv, ix);
+	  int lin = 0;
+	  memset (&findi_jmpbuf_mom, 0, sizeof (jmp_buf));
+	  if ((lin = setjmp (findi_jmpbuf_mom)) > 0)
+	    {
+	      nbfound++;
+	      if (nbfound % 5 == 0)
+		MOM_OUT (mom_stdout, MOMOUT_NEWLINE (), MOMOUT_FLUSH ());
+	      MOM_OUT (mom_stdout, MOMOUT_SPACE (64),
+		       MOMOUT_ITEM ((const momitem_t *) curitm));
+	      continue;
+	    };
+	  findi_value_mom (mom_item_content (curitm));
+	  momval_t setattv = (momval_t) mom_item_set_attributes (curitm);
+	  findi_value_mom (setattv);
+	  unsigned nbatt = mom_set_cardinal (setattv);
+	  for (unsigned ix = 0; ix < nbatt; ix++)
+	    {
+	      const momitem_t *curattitm = mom_set_nth_item (setattv, nbatt);
+	      findi_value_mom (mom_item_get_attribute (curitm, curattitm));
+	    }
+	}
+      MOM_OUT (mom_stdout, MOMOUT_NEWLINE (),
+	       MOMOUT_LITERAL (ANSI_BOLD "Found" ANSI_NORMAL " "),
+	       MOMOUT_DEC_INT (nbfound),
+	       MOMOUT_LITERAL (" items containing "),
+	       MOMOUT_ITEM ((const momitem_t *) itm), MOMOUT_LITERAL ("."),
+	       MOMOUT_NEWLINE (), MOMOUT_FLUSH ());
+      snprintf (cmdbuf, sizeof (cmdbuf), ",finditem %s",
+		mom_string_cstr ((momval_t)
+				 mom_item_get_name_or_idstr (itm)));
+      add_history (cmdbuf);
+    }
+  else
+    printf ("no item to find!\n");
 }
 
 static void

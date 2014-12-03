@@ -1368,6 +1368,15 @@ scan_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
 	  SCANITCASE (_intptr_t);
 	  return momtypenc_int;
 	  ////
+	  SCANITCASE (_momval_t);
+	  return momtypenc_val;
+	  ////
+	  SCANITCASE (_momcstr_t);
+	  return momtypenc_string;
+	  ////
+	  SCANITCASE (_double);
+	  return momtypenc_double;
+	  ////
 	default:
 	  ;
 	}
@@ -2267,7 +2276,7 @@ void
 emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 {
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
-  momitm_t *tfunitm = cg->cgen_rout.cgrout_routitm;
+  momitem_t *tfunitm = cg->cgen_rout.cgrout_routitm;
   assert (tfunitm && tfunitm->i_typnum == momty_item);
   CGEN_ERROR_MOM (cg,
 		  MOMOUT_LITERAL

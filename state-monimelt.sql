@@ -59,12 +59,13 @@ INSERT INTO t_items VALUES('_03f56tp7q6w_f1t3fiyivph','{"attr": [{"attr": "_19uf
    "val": "output connective to indent less."}], "content": null, "kind": null,
  "payload": null}
 ','');
-INSERT INTO t_items VALUES('_06uk4pppvx9_huv0v11v18j','{"attr": [{"attr": "_2ummst105ck_xracfy8v87y", "val": {"jtype": "set", "set": ["_16cd0fvmdrh_r77ajpy26za"]}},
-  {"attr": "_41u1utcxyek_22cftxt3xxm", "val": "AJAX for appl menu"}, {"attr": "_7sav6zery1v_24sa6jwwu6c",
-   "val": {"item_ref": "_0ce0mmy7myq_1t5iw2mfrvm", "jtype": "item_ref", "space": ".root"}},
-  {"attr": "_7yxp9xhih4z_9uzrqhkamxa", "val": {"item_ref": "_8y756mef2ca_w8cj58726vj",
-    "jtype": "item_ref", "space": ".root"}}], "content": null, "kind": "tfunrout",
- "payload": {"constants": [], "tasklet_function": "_06uk4pppvx9_huv0v11v18j"}}
+INSERT INTO t_items VALUES('_06uk4pppvx9_huv0v11v18j','{"attr": [{"attr": "_2ummst105ck_xracfy8v87y", "val": {"jtype": "tuple", "tuple":
+    ["_16cd0fvmdrh_r77ajpy26za"]}}, {"attr": "_41u1utcxyek_22cftxt3xxm", "val": "AJAX for appl menu"},
+  {"attr": "_7sav6zery1v_24sa6jwwu6c", "val": {"item_ref": "_0ce0mmy7myq_1t5iw2mfrvm",
+    "jtype": "item_ref", "space": ".root"}}, {"attr": "_7yxp9xhih4z_9uzrqhkamxa",
+   "val": {"item_ref": "_8y756mef2ca_w8cj58726vj", "jtype": "item_ref", "space": ".root"}}],
+ "content": null, "kind": "tfunrout", "payload": {"constants": [], "tasklet_function":
+  "_06uk4pppvx9_huv0v11v18j"}}
 ','tfunrout');
 INSERT INTO t_items VALUES('_06yp8ueq6yf_5ts408yww29','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "in JSON dumps, give the kind of the payload of an item"}],
  "content": null, "kind": null, "payload": null}
@@ -506,7 +507,9 @@ INSERT INTO t_items VALUES('_34w40p46vwp_pw6u3d75ww6','{"attr": [{"attr": "_232t
 ','');
 INSERT INTO t_items VALUES('_350hj5kfymd_145tfc1sevi','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_3uwzqwvj6zj_s63am4qivpt",
     "jtype": "item_ref", "space": ".predef"}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
-   "val": "value variable for what"}], "content": null, "kind": null, "payload": null}
+   "val": "value variable for what"}, {"attr": "_9u7pp5r3ccq_6fsi3t2a6tq",
+   "val": {"item_ref": "_3uwzqwvj6zj_s63am4qivpt", "jtype": "item_ref", "space": ".predef"}}],
+ "content": null, "kind": null, "payload": null}
 ','');
 INSERT INTO t_items VALUES('_35vp60aw7em_d436vfie4ud','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_51u3st4u9mc_zdvms6jti0a",
     "jtype": "item_ref", "space": ".predef"}}, {"attr": "_0x2k07ik4tm_ed7vqphf5ak",

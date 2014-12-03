@@ -392,7 +392,7 @@ const momset_t *
 mom_set_of_items_of_ident_prefixed (const char *prefix)
 {
   const momset_t *set = NULL;
-  if (!prefix || !prefix[0] == '_' || !isalnum (prefix[1]))
+  if (!prefix || !prefix[0] == '_')
     return NULL;
   unsigned prefixlen = strlen (prefix);
   pthread_mutex_lock (&globitem_mtx_mom);
