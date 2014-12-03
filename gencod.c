@@ -2287,11 +2287,160 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
   momitem_t *tfunitm = cg->cgen_rout.cgrout_routitm;
   assert (tfunitm && tfunitm->i_typnum == momty_item);
+  momval_t tfunodev = mom_item_assoc_get (cg->cgen_globassocitm, tfunitm);
+  MOM_DEBUG (gencod,		//
+	     MOMOUT_LITERAL ("emit_tfun tfunitm="),
+	     MOMOUT_ITEM ((const momitem_t *) tfunitm),
+	     MOMOUT_SPACE (58),
+	     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) tfunitm),
+	     MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL (" tfunodev="),
+	     MOMOUT_VALUE ((momval_t) tfunodev),
+	     MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL (" local-assoc:"),
+	     MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.cgrout_associtm),
+	     MOMOUT_SPACE (50),
+	     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
+				  cgen_rout.cgrout_associtm),
+	     MOMOUT_NEWLINE (), MOMOUT_LITERAL (" blockhset:"),
+	     MOMOUT_ITEM ((const momitem_t *) cg->
+			  cgen_rout.cgrout_blockhsetitm), MOMOUT_SPACE (50),
+	     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
+				  cgen_rout.cgrout_blockhsetitm),
+	     MOMOUT_NEWLINE (), MOMOUT_LITERAL (" hsetint:"),
+	     MOMOUT_ITEM ((const momitem_t *) cg->
+			  cgen_rout.cgrout_hsetintitm), MOMOUT_SPACE (50),
+	     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
+				  cgen_rout.cgrout_hsetintitm),
+	     MOMOUT_NEWLINE (), MOMOUT_LITERAL (" hsetdbl:"),
+	     MOMOUT_ITEM ((const momitem_t *) cg->
+			  cgen_rout.cgrout_hsetdblitm), MOMOUT_SPACE (50),
+	     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
+				  cgen_rout.cgrout_hsetdblitm),
+	     MOMOUT_NEWLINE (), MOMOUT_LITERAL (" hsetval:"),
+	     MOMOUT_ITEM ((const momitem_t *) cg->
+			  cgen_rout.cgrout_hsetvalitm), MOMOUT_SPACE (50),
+	     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
+				  cgen_rout.cgrout_hsetvalitm), NULL);
+  unsigned nbnumbers =		//
+    mom_item_hset_count (cg->cgen_rout.cgrout_hsetintitm);
+  unsigned nbdoubles =		//
+    mom_item_hset_count (cg->cgen_rout.cgrout_hsetdblitm);
+  unsigned nbvalues =		//
+    mom_item_hset_count (cg->cgen_rout.cgrout_hsetvalitm);
+  momval_t blocksetv =		//
+    mom_item_hset_items_set (cg->cgen_rout.cgrout_blockhsetitm);
+  MOM_DEBUG (gencod,
+	     MOMOUT_LITERAL (" emit_tfun blocksetv="),
+	     MOMOUT_VALUE (blocksetv), NULL);
+  unsigned nbblocks = mom_set_cardinal (blocksetv);
+  MOM_OUT
+    (&cg->cgen_outbody,
+     MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL ("// implement tasklet function "),
+     MOMOUT_ITEM ((const momitem_t *) tfunitm),
+     MOMOUT_LITERAL (" rank#"), MOMOUT_DEC_INT ((int) routix),
+     MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL ("static int " CGEN_FUN_CODE_PREFIX),
+     MOMOUT_LITERALV (mom_ident_cstr_of_item (tfunitm)),
+     MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL
+     ("(int momstate,"),
+     MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL
+     ("\t momitem_t* restrict momtasklet, const momval_t momclosure,"),
+     MOMOUT_NEWLINE (),
+     MOMOUT_LITERALV ((const char *)
+		      ((nbvalues > 0)
+		       ? "\t momval_t* restrict momvals,"
+		       :
+		       "\t momval_t* restrict momvals_ MOM_UNUSED,")),
+     MOMOUT_NEWLINE (),
+     MOMOUT_LITERALV ((const char *) ((nbnumbers > 0) ?
+				      "\t intptr_t* restrict momnums,"
+				      :
+				      "\t intptr_t* restrict momnums_ MOM_UNUSED,")),
+     MOMOUT_NEWLINE (),
+     MOMOUT_LITERALV ((const char *) ((nbdoubles > 0) ?
+				      "\t double* restrict momdbls)"
+				      :
+				      "\t double* restrict momdbls_ MOM_UNUSED)")),
+     MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL ("{ // start of tasklet function "),
+     MOMOUT_ITEM ((const momitem_t *) tfunitm),
+     MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE (), NULL);
+  int startix = -__LINE__;
+  MOM_OUT
+    (&cg->cgen_outbody,
+     MOMOUT_LITERAL ("if (MOM_UNLIKELY(momstate==0)) return "),
+     MOMOUT_DEC_INT (startix), MOMOUT_LITERAL (";"),
+     MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL ("assert (mom_is_item (momclosure));"),
+     MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL ("momval_t* momclovals ="
+		     " mom_item_closure_values (momclosure.pitem);"),
+     MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL ("assert (momclovals != NULL);"),
+     MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL
+     ("assert (mom_item_payload_kind(momtasklet)== mompayk_tasklet);"),
+     MOMOUT_NEWLINE (), NULL);
+  if (nbvalues > 0)
+    MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_LITERAL
+	     ("assert (momvals != NULL); // "),
+	     MOMOUT_DEC_INT ((int) nbvalues),
+	     MOMOUT_LITERAL (" values."), MOMOUT_NEWLINE (), NULL);
+  if (nbnumbers > 0)
+    MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_LITERAL
+	     ("assert (momnums != NULL); //"),
+	     MOMOUT_DEC_INT ((int)
+			     nbnumbers),
+	     MOMOUT_LITERAL (" integer numbers."), MOMOUT_NEWLINE (), NULL);
+  if (nbdoubles > 0)
+    MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_LITERAL
+	     ("assert (momdbls != NULL); //"),
+	     MOMOUT_DEC_INT ((int)
+			     nbdoubles),
+	     MOMOUT_LITERAL (" doubles."), MOMOUT_NEWLINE (), NULL);
+  MOM_OUT (&cg->cgen_outbody,
+	   MOMOUT_LITERAL
+	   (" MOM_DEBUG(run, MOMOUT_LITERAL(\"start tasklet=\"),"
+	    " MOMOUT_ITEM((const momitem_t*)momtasklet),"),
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL ("\t MOMOUT_LITERAL(\" state#\"),"
+			   " MOMOUT_DEC_INT((int)momstate),"
+			   " MOMOUT_LITERAL(\" taskfunc "),
+	   MOMOUT_ITEM ((const momitem_t *) tfunitm),
+	   MOMOUT_LITERAL ("\"));"), MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL ("switch (momstate) {"), MOMOUT_NEWLINE ());
+  for (unsigned six = 1; six <= nbblocks; six++)
+    {
+      MOM_OUT (&cg->cgen_outbody,
+	       MOMOUT_LITERAL ("case "),
+	       MOMOUT_DEC_INT ((int) six),
+	       MOMOUT_LITERAL (": goto " CGEN_FUN_BLOCK_PREFIX),
+	       MOMOUT_DEC_INT ((int) six),
+	       MOMOUT_LITERAL ("; // block "),
+	       MOMOUT_ITEM ((const momitem_t *)
+			    mom_seqitem_nth_item (blocksetv, six - 1)),
+	       MOMOUT_NEWLINE (), NULL);
+    }
+  MOM_OUT (&cg->cgen_outbody,
+	   MOMOUT_LITERAL ("default: return momroutres_pop;"),
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL ("}; // end switch state"),
+	   MOMOUT_NEWLINE (), NULL);
+
   CGEN_ERROR_MOM (cg,
 		  MOMOUT_LITERAL
 		  (" unimplemented emit_taskletfunction tfunitm:"),
 		  MOMOUT_ITEM ((const momitem_t *) tfunitm), NULL);
+
 #if 0
+  ////////////////////////////////////////////////////////////////
   unsigned nbconstants = 0;
   unsigned nbblocks = 0;
   unsigned nbclosedvalues = 0;
@@ -2369,111 +2518,6 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 		    MOMOUT_LITERAL (" bound to "), MOMOUT_VALUE (startlocv),
 		    MOMOUT_LITERAL (" in function "),
 		    MOMOUT_ITEM ((const momitem_t *) curoutitm), NULL);
-  /// emit start of function
-  MOM_OUT
-    (&cg->cgen_outbody,
-     MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
-     MOMOUT_LITERAL ("// implement tasklet function "),
-     MOMOUT_ITEM ((const momitem_t *) curoutitm),
-     MOMOUT_LITERAL (" rank#"), MOMOUT_DEC_INT ((int) routix),
-     MOMOUT_NEWLINE (),
-     MOMOUT_LITERAL ("static int " CGEN_FUN_CODE_PREFIX),
-     MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
-     MOMOUT_NEWLINE (),
-     MOMOUT_LITERAL
-     ("(int momstate,"),
-     MOMOUT_NEWLINE (),
-     MOMOUT_LITERAL
-     ("\t momitem_t* restrict momtasklet, const momval_t momclosure,"),
-     MOMOUT_NEWLINE (),
-     MOMOUT_LITERALV ((const char *)
-		      ((nbvalues > 0)
-		       ? "\t momval_t* restrict momvals,"
-		       :
-		       "\t momval_t* restrict momvals_ MOM_UNUSED,")),
-     MOMOUT_NEWLINE (),
-     MOMOUT_LITERALV ((const char *) ((nbnumbers > 0) ?
-				      "\t intptr_t* restrict momnums,"
-				      :
-				      "\t intptr_t* restrict momnums_ MOM_UNUSED,")),
-     MOMOUT_NEWLINE (),
-     MOMOUT_LITERALV ((const char *) ((nbdoubles > 0) ?
-				      "\t double* restrict momdbls)"
-				      :
-				      "\t double* restrict momdbls_ MOM_UNUSED)")),
-     MOMOUT_NEWLINE (),
-     MOMOUT_LITERAL ("{ // start of tasklet function "),
-     MOMOUT_ITEM ((const momitem_t *) curoutitm),
-     MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE (), NULL);
-  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("// declared "),
-	   MOMOUT_DEC_INT ((int) nblocals),
-	   MOMOUT_LITERAL (" locals, "),
-	   MOMOUT_DEC_INT ((int) nbargs),
-	   MOMOUT_LITERAL (" arguments."), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL
-	   ("if (MOM_UNLIKELY(momstate==0)) return "),
-	   MOMOUT_DEC_INT (startix), MOMOUT_LITERAL (";"),
-	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL
-	   ("assert (mom_is_item (momclosure));"),
-	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL
-	   ("momval_t* momclovals = mom_item_closure_values (momclosure.pitem);"),
-	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL ("assert (momclovals != NULL);"),
-	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL
-	   ("assert (mom_item_payload_kind(momtasklet)== mompayk_tasklet);"),
-	   MOMOUT_NEWLINE (), NULL);
-  if (nbvalues > 0)
-    MOM_OUT (&cg->cgen_outbody,
-	     MOMOUT_LITERAL
-	     ("assert (momvals != NULL); // "),
-	     MOMOUT_DEC_INT ((int) nbvalues),
-	     MOMOUT_LITERAL (" values."), MOMOUT_NEWLINE (), NULL);
-  if (nbnumbers > 0)
-    MOM_OUT (&cg->cgen_outbody,
-	     MOMOUT_LITERAL
-	     ("assert (momnums != NULL); //"),
-	     MOMOUT_DEC_INT ((int)
-			     nbnumbers),
-	     MOMOUT_LITERAL (" integer numbers."), MOMOUT_NEWLINE (), NULL);
-  if (nbdoubles > 0)
-    MOM_OUT (&cg->cgen_outbody,
-	     MOMOUT_LITERAL
-	     ("assert (momdbls != NULL); //"),
-	     MOMOUT_DEC_INT ((int)
-			     nbdoubles),
-	     MOMOUT_LITERAL (" doubles."), MOMOUT_NEWLINE (), NULL);
-  MOM_OUT (&cg->cgen_outbody,
-	   MOMOUT_LITERAL
-	   (" MOM_DEBUG(run, MOMOUT_LITERAL(\"start tasklet=\"),"
-	    " MOMOUT_ITEM((const momitem_t*)momtasklet),"),
-	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL ("\t MOMOUT_LITERAL(\" state#\"),"
-			   " MOMOUT_DEC_INT((int)momstate),"
-			   " MOMOUT_LITERAL(\" taskfunc "),
-	   MOMOUT_ITEM ((const momitem_t *) curoutitm),
-	   MOMOUT_LITERAL ("\"));"), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL ("switch (momstate) {"), MOMOUT_NEWLINE ());
-  for (unsigned six = 1; six <= nbblocks; six++)
-    {
-      MOM_OUT (&cg->cgen_outbody,
-	       MOMOUT_LITERAL ("case "),
-	       MOMOUT_DEC_INT ((int) six),
-	       MOMOUT_LITERAL (": goto " CGEN_FUN_BLOCK_PREFIX),
-	       MOMOUT_DEC_INT ((int) six),
-	       MOMOUT_LITERAL ("; // block "),
-	       MOMOUT_ITEM ((const momitem_t *)
-			    mom_seqitem_nth_item (funblocksv,
-						  six - 1)),
-	       MOMOUT_NEWLINE (), NULL);
-    }
-  MOM_OUT (&cg->cgen_outbody,
-	   MOMOUT_LITERAL ("default: return momroutres_pop;"),
-	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL ("}; // end switch state"),
-	   MOMOUT_NEWLINE (), NULL);
   for (unsigned six = 1; six <= nbblocks; six++)
     {
       momitem_t *blkitm = mom_seqitem_nth_item (funblocksv, six - 1);
