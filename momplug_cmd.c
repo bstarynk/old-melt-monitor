@@ -1113,6 +1113,9 @@ cmd_do_finditem_mom (const char *lin, bool pres, momitem_t *itm)
 	(momval_t) mom_set_of_items_of_ident_prefixed ("_");
       unsigned nbitems = mom_set_cardinal (allitemsv);
       int nbfound = 0;
+      momitem_t *vecitm = mom_make_item ();
+      mom_item_start_vector (vecitm);
+      mom_item_vector_reserve (vecitm, nbitems / 6 + 5);
       findi_itm_mom = itm;
       MOM_OUT (mom_stdout, MOMOUT_LITERAL ("searching item: "),
 	       MOMOUT_ITEM ((const momitem_t *) itm),
@@ -1127,6 +1130,7 @@ cmd_do_finditem_mom (const char *lin, bool pres, momitem_t *itm)
 	  memset (&findi_jmpbuf_mom, 0, sizeof (jmp_buf));
 	  if ((lin = setjmp (findi_jmpbuf_mom)) > 0)
 	    {
+	      mom_item_vector_append1 (vecitm, (momval_t) curitm);
 	      nbfound++;
 	      if (nbfound % 5 == 0)
 		MOM_OUT (mom_stdout, MOMOUT_NEWLINE (), MOMOUT_FLUSH ());
@@ -1149,7 +1153,9 @@ cmd_do_finditem_mom (const char *lin, bool pres, momitem_t *itm)
 	       MOMOUT_DEC_INT (nbfound),
 	       MOMOUT_LITERAL (" items containing "),
 	       MOMOUT_ITEM ((const momitem_t *) itm), MOMOUT_LITERAL ("."),
+	       MOMOUT_LITERAL (" so pushed their set."),
 	       MOMOUT_NEWLINE (), MOMOUT_FLUSH ());
+      cmd_stack_push_mom ((momval_t) mom_make_set_from_item_vector (vecitm));
       snprintf (cmdbuf, sizeof (cmdbuf), ",finditem %s",
 		mom_string_cstr ((momval_t)
 				 mom_item_get_name_or_idstr (itm)));
