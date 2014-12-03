@@ -2316,7 +2316,8 @@ scan_taskletfunction_cgen (struct c_generator_mom_st *cg, momitem_t *tfunitm)
   momval_t tfunodev = mom_item_assoc_get (cg->cgen_globassocitm, tfunitm);
   tfunformalsv = mom_item_get_attribute (tfunitm, mom_named__formals);
   tfunconstantsv = mom_item_get_attribute (tfunitm, mom_named__constants);
-  tfuntaskletfunctionv = mom_item_get_attribute (tfunitm, mom_named__tasklet_function);
+  tfuntaskletfunctionv =
+    mom_item_get_attribute (tfunitm, mom_named__tasklet_function);
   MOM_DEBUG (gencod,
 	     MOMOUT_LITERAL ("start scan_taskletfunction_cgen tfunitm="),
 	     MOMOUT_ITEM ((const momitem_t *) tfunitm), MOMOUT_SPACE (60),
@@ -2352,7 +2353,7 @@ scan_taskletfunction_cgen (struct c_generator_mom_st *cg, momitem_t *tfunitm)
 			MOMOUT_ITEM ((const momitem_t *) curformitm),
 			MOMOUT_LITERAL (" of tfun:"),
 			MOMOUT_ITEM ((const momitem_t *) tfunitm), NULL);
-      scan_item_cgen(cg, curformitm);
+      scan_item_cgen (cg, curformitm);
     }
   /// scan the constants of tfunction
   MOM_DEBUG (gencod, MOMOUT_LITERAL ("start scan_tfunc tfunitm="),
@@ -2372,39 +2373,40 @@ scan_taskletfunction_cgen (struct c_generator_mom_st *cg, momitem_t *tfunitm)
   if (!mom_is_item (tfuntaskletfunctionv))
     CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("in tfun:"),
 		    MOMOUT_ITEM ((const momitem_t *) tfunitm),
-		    MOMOUT_LITERAL (" non-item starting block `tasklet_function`:"),
+		    MOMOUT_LITERAL
+		    (" non-item starting block `tasklet_function`:"),
 		    MOMOUT_VALUE (tfuntaskletfunctionv), NULL);
   scan_block_cgen (cg, tfuntaskletfunctionv.pitem, (momval_t) tfunitm, NULL);
   loop_blocks_to_scan_cgen (cg);
-  MOM_DEBUG //
+  MOM_DEBUG			//
     (gencod, MOMOUT_LITERAL ("end scan_taskfun tfunitm="),
      MOMOUT_ITEM ((const momitem_t *) tfunitm),
-     MOMOUT_NEWLINE(),
-     MOMOUT_LITERAL( " associtm="),
-     MOMOUT_ITEM((const momitem_t*)cg->cgen_rout.cgrout_associtm),
-     MOMOUT_SPACE(60),
-     MOMOUT_ITEM_PAYLOAD((const momitem_t*)cg->cgen_rout.cgrout_associtm),
-     MOMOUT_NEWLINE(),
-     MOMOUT_LITERAL( " blockhsetitm="),
-     MOMOUT_ITEM((const momitem_t*)cg->cgen_rout.cgrout_blockhsetitm),
-     MOMOUT_SPACE(60),
-     MOMOUT_ITEM_PAYLOAD((const momitem_t*)cg->cgen_rout.cgrout_blockhsetitm),
-     MOMOUT_NEWLINE(),
-     MOMOUT_LITERAL( " hsetint="),
-     MOMOUT_ITEM((const momitem_t*)cg->cgen_rout.cgrout_hsetintitm),
-     MOMOUT_SPACE(60),
-     MOMOUT_ITEM_PAYLOAD((const momitem_t*)cg->cgen_rout.cgrout_hsetintitm),
-     MOMOUT_NEWLINE(),
-     MOMOUT_LITERAL( " hsetdbl="),
-     MOMOUT_ITEM((const momitem_t*)cg->cgen_rout.cgrout_hsetdblitm),
-     MOMOUT_SPACE(60),
-     MOMOUT_ITEM_PAYLOAD((const momitem_t*)cg->cgen_rout.cgrout_hsetdblitm),
-     MOMOUT_NEWLINE(),
-     MOMOUT_LITERAL( " hsetval="),
-     MOMOUT_ITEM((const momitem_t*)cg->cgen_rout.cgrout_hsetvalitm),
-     MOMOUT_SPACE(60),
-     MOMOUT_ITEM_PAYLOAD((const momitem_t*)cg->cgen_rout.cgrout_hsetvalitm),
-     MOMOUT_NEWLINE(),
+     MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL (" associtm="),
+     MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.cgrout_associtm),
+     MOMOUT_SPACE (60),
+     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->cgen_rout.cgrout_associtm),
+     MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL (" blockhsetitm="),
+     MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.cgrout_blockhsetitm),
+     MOMOUT_SPACE (60),
+     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
+			  cgen_rout.cgrout_blockhsetitm), MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL (" hsetint="),
+     MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.cgrout_hsetintitm),
+     MOMOUT_SPACE (60),
+     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
+			  cgen_rout.cgrout_hsetintitm), MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL (" hsetdbl="),
+     MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.cgrout_hsetdblitm),
+     MOMOUT_SPACE (60),
+     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
+			  cgen_rout.cgrout_hsetdblitm), MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL (" hsetval="),
+     MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.cgrout_hsetvalitm),
+     MOMOUT_SPACE (60),
+     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
+			  cgen_rout.cgrout_hsetvalitm), MOMOUT_NEWLINE (),
      NULL);
 }
 
