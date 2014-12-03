@@ -2348,7 +2348,7 @@ mom_set_item_index (momval_t setv, momitem_t *itm)
     return -1;
   unsigned slen = setv.pset->slen;
   int lo = 0, hi = (int) slen - 1, md = 0;
-  while (lo + 2 < hi)
+  while (lo + 4 < hi)
     {
       md = (lo + hi) / 2;
       const momitem_t *miditm = setv.pset->itemseq[md];
