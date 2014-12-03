@@ -1117,10 +1117,11 @@ scan_procedure_cgen (struct c_generator_mom_st *cg, momitem_t *procitm)
   assert (mom_is_integer (ixv));
   momval_t argsigv = mom_node_nth (procnodev, 1);
   momval_t restypv = mom_node_nth (procnodev, 2);
-  momval_t newanodv = (momval_t) mom_make_node_sized (mom_named__procedure, 4,
-						      ixv, argsigv, restypv,
-						      (momval_t)
-						      cg->cgen_rout.cgrout_blockhsetitm);
+  momval_t newanodv =		//
+    (momval_t) mom_make_node_sized (mom_named__procedure, 4,
+				    ixv, argsigv, restypv,
+				    (momval_t)
+				    cg->cgen_rout.cgrout_blockhsetitm);
   mom_item_assoc_put (cg->cgen_rout.cgrout_associtm, procitm, newanodv);
   assert (mom_is_item (restypv));
   if (proresultv.ptr)
@@ -1135,7 +1136,7 @@ scan_procedure_cgen (struct c_generator_mom_st *cg, momitem_t *procitm)
 		 MOMOUT_VALUE ((const momval_t) proresultv),
 		 MOMOUT_LITERAL (" for procitm="),
 		 MOMOUT_ITEM ((const momitem_t *) procitm), NULL);
-      momtypenc_t tres = scan_expr_cgen (cg, (momval_t) procitm, proresultv);
+      momtypenc_t tres = scan_item_cgen (cg, proresultv.pitem);
       momtypenc_t trestyp =
 	typenc_cgen (cg, true, restypv.pitem, (momval_t) procitm);
       if (tres > momtypenc__none && trestyp > momtypenc__none
@@ -1898,15 +1899,23 @@ scan_block_cgen (struct c_generator_mom_st *cg, momitem_t *blockitm,
 
 
 
+static momtypenc_t emit_var_item_cgen (struct c_generator_mom_st *cg,
+				       momitem_t *varitm);
 
+
+////////////////
 void
 emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 {
   momitem_t *procitm = NULL;
   momval_t procnodev = MOM_NULLV;
+  momval_t proconstantsv = MOM_NULLV;
+  unsigned nbconstants = 0;
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
   procitm = cg->cgen_rout.cgrout_routitm;
   procnodev = mom_item_assoc_get (cg->cgen_globassocitm, procitm);
+  proconstantsv = mom_item_get_attribute (procitm, mom_named__constants);
+  nbconstants = mom_seqitem_length (proconstantsv);
   assert (mom_node_conn (procnodev) == mom_named__procedure);
   MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_procedure procitm="),
 	     MOMOUT_ITEM ((const momitem_t *) procitm),
@@ -2014,8 +2023,8 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
   {
     const momitem_t *hsetdblitm =
       (const momitem_t *) cg->cgen_rout.cgrout_hsetdblitm;
-    unsigned nbdbls = mom_item_hset_count (hsetdblitm);
-    momval_t setdblsv = mom_item_hset_items_set (hsetdblitm);
+    unsigned nbdbls = mom_item_hset_count ((momitem_t *) hsetdblitm);
+    momval_t setdblsv = mom_item_hset_items_set ((momitem_t *) hsetdblitm);
     MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_proc setdbls="),
 	       MOMOUT_VALUE ((const momval_t) setdblsv),
 	       MOMOUT_LITERAL (" from dblhset:"), MOMOUT_ITEM (hsetdblitm),
@@ -2039,8 +2048,8 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
   {
     const momitem_t *hsetvalitm =
       (const momitem_t *) cg->cgen_rout.cgrout_hsetvalitm;
-    unsigned nbvals = mom_item_hset_count (hsetvalitm);
-    momval_t setvalsv = mom_item_hset_items_set (hsetvalitm);
+    unsigned nbvals = mom_item_hset_count ((momitem_t *) hsetvalitm);
+    momval_t setvalsv = mom_item_hset_items_set ((momitem_t *) hsetvalitm);
     MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_proc setvals="),
 	       MOMOUT_VALUE ((const momval_t) setvalsv),
 	       MOMOUT_LITERAL (" from valhset:"), MOMOUT_ITEM (hsetvalitm),
@@ -2071,7 +2080,7 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 			 (procitm, mom_named__procedure));
     momval_t startacv =
       mom_item_assoc_get (cg->cgen_rout.cgrout_associtm, startblkitm);
-    momval_t setblksv = mom_item_hset_items_set (hsetblkitm);
+    momval_t setblksv = mom_item_hset_items_set ((momitem_t *) hsetblkitm);
     MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_proc setblksv="),
 	       MOMOUT_VALUE ((const momval_t) setblksv),
 	       MOMOUT_SPACE (64), MOMOUT_LITERAL (" from blockset:"),
@@ -2140,410 +2149,164 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
   }
   //// should have an epilogue to return a default result
   //// and emit the procedure descriptor
-#warning should emit epilogue & procedure descriptor
-  CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("incomplete emit_procedure procitm="),
-		  MOMOUT_ITEM ((const momitem_t *) procitm),
-		  MOMOUT_LITERAL (" procnodev="),
-		  MOMOUT_VALUE ((momval_t) procnodev), NULL);
-}				/* end of emit_procedure_cgen */
-
-
-
-#if 0
-void
-_old_emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
-{
-
-
-  momitem_t *curoutitm = NULL;
-  momval_t procargsv = MOM_NULLV;
-  momval_t procnodev = MOM_NULLV;
-  momval_t procresv = MOM_NULLV;
-  momval_t procrestypev = MOM_NULLV;
-  momval_t proconstantsv = MOM_NULLV;
-  momval_t provaluesv = MOM_NULLV;
-  momval_t pronumbersv = MOM_NULLV;
-  momval_t prodoublesv = MOM_NULLV;
-  momval_t problocksv = MOM_NULLV;
-  momval_t prostartv = MOM_NULLV;
-  momval_t prolocalsv = MOM_NULLV;
-  unsigned nbproconsts = 0;
-  unsigned nbprovalues = 0;
-  unsigned nbpronumbers = 0;
-  unsigned nbprodoubles = 0;
-  unsigned nbproblocks = 0;
-  assert (cg && cg->cgen_magic == CGEN_MAGIC);
-  curoutitm = cg->cgen_rout.cgrout_routitm;
-  procnodev = mom_item_assoc_get (cg->cgen_globassocitm, curoutitm);
-  assert (mom_node_conn (procnodev) == mom_named__procedure);
   {
-    cgen_lock_item_mom (cg, curoutitm);
-    procargsv = mom_item_get_attribute (curoutitm, mom_named__formals);
-    procresv = mom_item_get_attribute (curoutitm, mom_named__result);
-    proconstantsv = mom_item_get_attribute (curoutitm, mom_named__constants);
-    provaluesv = mom_item_get_attribute (curoutitm, mom_named__values);
-    pronumbersv = mom_item_get_attribute (curoutitm, mom_named__numbers);
-    prodoublesv = mom_item_get_attribute (curoutitm, mom_named__doubles);
-    problocksv = mom_item_get_attribute (curoutitm, mom_named__procedure);
-    prostartv = mom_item_get_attribute (curoutitm, mom_named__start);
-    prolocalsv = mom_item_get_attribute (curoutitm, mom_named__locals);
-  }
-  // check that we don't have any locals
-  if (prolocalsv.ptr)
-    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid procedure `locals`:"),
-		    MOMOUT_VALUE ((const momval_t) prolocalsv),
-		    MOMOUT_LITERAL (" in procedure "),
-		    MOMOUT_ITEM ((const momitem_t *) curoutitm),
-		    MOMOUT_LITERAL
-		    ("; should use `numbers`, `values`, `doubles` "), NULL);
-  cg->cgen_vecvalitm = mom_make_item ();
-  mom_item_start_vector (cg->cgen_vecvalitm);
-  cg->cgen_vecnumitm = mom_make_item ();
-  mom_item_start_vector (cg->cgen_vecnumitm);
-  cg->cgen_vecdblitm = mom_make_item ();
-  mom_item_start_vector (cg->cgen_vecdblitm);
-  MOM_DEBUG (gencod, MOMOUT_LITERAL ("emitprocedure vecvalitm="),
-	     MOMOUT_ITEM ((const momitem_t *) cg->cgen_vecvalitm),
-	     MOMOUT_SPACE (32), MOMOUT_LITERAL (" vecnumitm="),
-	     MOMOUT_ITEM ((const momitem_t *) cg->cgen_vecnumitm),
-	     MOMOUT_SPACE (32), MOMOUT_LITERAL (" vecdblitm="),
-	     MOMOUT_ITEM ((const momitem_t *) cg->cgen_vecdblitm),
-	     MOMOUT_SPACE (32), NULL);
-  if (!mom_is_tuple (procargsv))
-    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid procedure formals:"),
-		    MOMOUT_VALUE ((const momval_t) procargsv),
-		    MOMOUT_LITERAL (" in procedure "),
-		    MOMOUT_ITEM ((const momitem_t *) curoutitm), NULL);
-  unsigned nbargs = mom_tuple_length (procargsv);
-  momitem_t *procresitm = NULL;
-  if (procresv.pitem == mom_named__void)
-    procrestypev = (momval_t) mom_named__void;
-  if (mom_is_item (procresv))
-    {
-      procresitm = procresv.pitem;
-      CGEN_CHECK_FRESH (cg, "result of procedure", procresitm);
-      mom_item_assoc_put
-	(cg->cgen_rout.cgrout_associtm, procresitm,
-	 (momval_t) mom_make_node_sized (mom_named__result, 1,
-					 mom_make_integer (routix)));
-      cgen_lock_item_mom (cg, procresitm);
-      procrestypev = mom_item_get_attribute (curoutitm, mom_named__ctype);
-    }
-  else if (!procresv.ptr)
-    {
-      procrestypev = (momval_t) mom_named__void;
-    }
-  else
-    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid procedure result:"),
-		    MOMOUT_VALUE ((const momval_t) procresv),
-		    MOMOUT_LITERAL (" in procedure "),
-		    MOMOUT_ITEM ((const momitem_t *) curoutitm), NULL);
-  MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
-	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL ("// implementation of procedure #"),
-	   MOMOUT_DEC_INT ((int) routix),
-	   MOMOUT_LITERAL (" = "),
-	   MOMOUT_ITEM ((const momitem_t *) curoutitm), MOMOUT_NEWLINE ());
-  cg->cgen_restype = emit_ctype_cgen (cg, &cg->cgen_outbody, procrestypev);
-  MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (48),
-	   MOMOUT_LITERAL (MOM_PROCROUTFUN_PREFIX),
-	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
-	   MOMOUT_LITERAL (" ("), NULL);
-  for (unsigned aix = 0; aix < nbargs; aix++)
-    {
-      momitem_t *curargitm = mom_tuple_nth_item (procargsv, aix);
-      momval_t curargtypv = MOM_NULLV;
-      if (!curargitm || curargitm->i_typnum != momty_item)
-	CGEN_ERROR_MOM (cg,
-			MOMOUT_LITERAL ("invalid procedure argument:"),
-			MOMOUT_VALUE ((const momval_t) curargitm),
-			MOMOUT_LITERAL (" in procedure "),
-			MOMOUT_ITEM ((const momitem_t *) curoutitm),
-			MOMOUT_LITERAL (" rank "),
-			MOMOUT_DEC_INT ((int) aix), NULL);
-      CGEN_CHECK_FRESH (cg, "argument of procedure", curargitm);
-      cgen_lock_item_mom (cg, curargitm);
-      curargtypv = mom_item_get_attribute (curargitm, mom_named__ctype);
-      mom_item_assoc_put
-	(cg->cgen_rout.cgrout_associtm, curargitm,
-	 (momval_t) mom_make_node_sized (mom_named__formals, 3,
-					 mom_make_integer (routix),
-					 mom_make_integer (aix), curargtypv));
-      if (aix > 0)
-	MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (","), MOMOUT_SPACE (64));
-      emit_ctype_cgen (cg, &cg->cgen_outbody, curargtypv);
-      MOM_OUT (&cg->cgen_outbody,
-	       MOMOUT_LITERAL (" " CGEN_FORMALARG_PREFIX),
-	       MOMOUT_DEC_INT ((int) aix),
-	       MOMOUT_LITERAL (" /*!formal:"),
-	       MOMOUT_ITEM ((const momitem_t *) curargitm),
-	       MOMOUT_LITERAL ("*/"), NULL);
-    }
-  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (")"), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL ("{"), MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE ());
-  // count and bind the constants
-  nbproconsts = bind_constants_cgen (cg, proconstantsv);
-  // count and bind the numbers
-  nbpronumbers = bind_numbers_cgen (cg, pronumbersv);
-  // count and bind the values
-  nbprovalues = bind_values_cgen (cg, provaluesv);
-  // count and bind the doubles
-  nbprodoubles = bind_doubles_cgen (cg, prodoublesv);
-  // count and bind the blocks
-  nbproblocks = bind_blocks_cgen (cg, problocksv);
-  MOM_DEBUG (gencod, MOMOUT_LITERAL ("emitproc bound nbproconsts="),
-	     MOMOUT_DEC_INT ((int) nbproconsts),
-	     MOMOUT_LITERAL (" nbpronumbers="),
-	     MOMOUT_DEC_INT ((int) nbpronumbers),
-	     MOMOUT_LITERAL (" nbprovalues="),
-	     MOMOUT_DEC_INT ((int) nbprovalues),
-	     MOMOUT_LITERAL (" nbprodoubles="),
-	     MOMOUT_DEC_INT ((int) nbprodoubles),
+    const momitem_t *procresitm
+      =
+      mom_value_to_item (mom_item_get_attribute (procitm, mom_named__result));
+    momtypenc_t protyp = typenc_cgen (cg, true, mom_value_to_item (proctypv),
+				      (momval_t) procitm);
+    if (procresitm)
+      {
+	MOM_OUT (&cg->cgen_outbody,
+		 MOMOUT_LITERAL ("//!explicit result "),
+		 MOMOUT_ITEM (procresitm),
+		 MOMOUT_NEWLINE (), MOMOUT_LITERAL ("return "), NULL);
+	emit_var_item_cgen (cg, (momitem_t *) procresitm);
+      }
+    else
+      {
+	MOM_OUT (&cg->cgen_outbody,
+		 MOMOUT_LITERAL ("/*!defreturn*/return "), NULL);
+	switch (protyp)
+	  {
+	  case momtypenc__none:
+	    break;
+	  case momtypenc_int:
+	    MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("0L"));
+	    break;
+	  case momtypenc_double:
+	    MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("0.0"));
+	    break;
+	  case momtypenc_val:
+	    MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("MOM_NULLV"));
+	  case momtypenc_string:
+	    MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("NULL"));
+	    break;
+	  }
+      }
+    MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (";"),
+	     MOMOUT_INDENT_LESS (),
 	     MOMOUT_NEWLINE (),
-	     MOMOUT_LITERAL (" localbindings:"),
-	     MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.cgrout_associtm),
-	     MOMOUT_SPACE (48),
-	     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
-				  cgen_rout.cgrout_associtm));
-  if (nbproblocks == 0)
-    CGEN_ERROR_MOM (cg,
-		    MOMOUT_LITERAL ("missing blocks in procedure "),
-		    MOMOUT_ITEM ((const momitem_t *) curoutitm), NULL);
-  // emit declarations of local numbers
-  for (unsigned nix = 0; nix < nbpronumbers; nix++)
+	     MOMOUT_LITERAL ("} // end proc.code "),
+	     MOMOUT_ITEM ((const momitem_t *) procitm),
+	     MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
+    // emit the constant ids
     MOM_OUT (&cg->cgen_outbody,
-	     MOMOUT_LITERAL ("intptr_t " CGEN_PROC_NUMBER_PREFIX),
-	     MOMOUT_DEC_INT ((int) nix),
-	     MOMOUT_LITERAL (" = 0; "),
-	     MOMOUT_SLASHCOMMENT_STRING
-	     (mom_string_cstr ((momval_t) mom_item_get_name_or_idstr
-			       (mom_seqitem_nth_item
-				(pronumbersv, nix)))), MOMOUT_NEWLINE ());
-  // emit declarations of local values
-  for (unsigned vix = 0; vix < nbprovalues; vix++)
-    MOM_OUT (&cg->cgen_outbody,
-	     MOMOUT_LITERAL ("momval_t " CGEN_PROC_VALUE_PREFIX),
-	     MOMOUT_DEC_INT ((int) vix),
-	     MOMOUT_LITERAL (" = MOM_NULLV; "),
-	     MOMOUT_SLASHCOMMENT_STRING
-	     (mom_string_cstr ((momval_t) mom_item_get_name_or_idstr
-			       (mom_seqitem_nth_item
-				(provaluesv, vix)))), MOMOUT_NEWLINE ());
-  // emit declarations of local doubles
-  for (unsigned dix = 0; dix < nbprodoubles; dix++)
-    MOM_OUT (&cg->cgen_outbody,
-	     MOMOUT_LITERAL ("double " CGEN_PROC_DOUBLE_PREFIX),
-	     MOMOUT_DEC_INT ((int) dix),
-	     MOMOUT_LITERAL (" = 0.0; "),
-	     MOMOUT_SLASHCOMMENT_STRING (mom_string_cstr
-					 ((momval_t)
-					  mom_item_get_name_or_idstr
-					  (mom_seqitem_nth_item
-					   (prodoublesv, dix)))),
-	     MOMOUT_NEWLINE ());
-  // emit prologue
-  MOM_OUT (&cg->cgen_outbody,
-	   MOMOUT_LITERAL ("static momitem_t* momprocitem;"),
-	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL
-	   ("if (MOM_UNLIKELY(!momprocitem)) momprocitem = mom_procedure_item_of_id(\""),
-	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
-	   MOMOUT_LITERAL ("\");"), MOMOUT_NEWLINE (), NULL);
-  if (procrestypev.pitem == mom_named__momval_t)
-    MOM_OUT (&cg->cgen_outbody,
-	     MOMOUT_LITERAL ("momval_t momresult = MOM_NULLV;"),
-	     MOMOUT_NEWLINE ());
-  else if (procrestypev.pitem == mom_named__intptr_t)
-    MOM_OUT (&cg->cgen_outbody,
-	     MOMOUT_LITERAL ("intptr_t momresult = 0;"), MOMOUT_NEWLINE ());
-  else if (procrestypev.pitem == mom_named__double)
-    MOM_OUT (&cg->cgen_outbody,
-	     MOMOUT_LITERAL ("double momresult = 0.0;"), MOMOUT_NEWLINE ());
-  else if (procrestypev.pitem == mom_named__momcstr_t)
-    MOM_OUT (&cg->cgen_outbody,
-	     MOMOUT_LITERAL ("momcstr_t momresult = NULL;"),
-	     MOMOUT_NEWLINE ());
-  momitem_t *startitm = mom_value_to_item (prostartv);
-  if (!startitm)
-    CGEN_ERROR_MOM (cg,
-		    MOMOUT_LITERAL ("missing start in procedure "),
-		    MOMOUT_ITEM ((const momitem_t *) curoutitm), NULL);
-  momval_t startlocv =
-    mom_item_assoc_get (cg->cgen_rout.cgrout_associtm, startitm);
-  int startix = -1;
-  if (mom_node_conn (startlocv) == mom_named__block)
-    startix = mom_integer_val_def (mom_node_nth (startlocv, 0), -2);
-  if (startix <= 0 || startix >= (int) nbproblocks + 1)
-    CGEN_ERROR_MOM (cg,
-		    MOMOUT_LITERAL ("invalid start "),
-		    MOMOUT_ITEM ((const momitem_t *) startitm),
-		    MOMOUT_LITERAL (" bound to "),
-		    MOMOUT_VALUE (startlocv),
-		    MOMOUT_LITERAL (" in procedure "),
-		    MOMOUT_ITEM ((const momitem_t *) curoutitm), NULL);
-  MOM_OUT (&cg->cgen_outbody,
-	   MOMOUT_LITERAL ("/// starting:"),
-	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL ("goto " CGEN_PROC_BLOCK_PREFIX),
-	   MOMOUT_DEC_INT (startix),
-	   MOMOUT_LITERAL ("; // start at "),
-	   MOMOUT_LITERALV (mom_string_cstr
-			    ((momval_t)
-			     mom_item_get_name_or_idstr (startitm))),
-	   MOMOUT_NEWLINE (), NULL);
-  /// emit each block
-  for (unsigned bix = 0; bix < nbproblocks; bix++)
-    {
-      momitem_t *blkitm = mom_seqitem_nth_item (problocksv, bix);
-      if (!blkitm)
-	continue;
-      MOM_OUT (&cg->cgen_outbody,
-	       MOMOUT_NEWLINE (),
-	       MOMOUT_LITERAL (" " CGEN_PROC_BLOCK_PREFIX),
-	       MOMOUT_DEC_INT ((int) bix + 1),
-	       MOMOUT_LITERAL (":"),
-	       MOMOUT_SPACE (64),
-	       MOMOUT_LITERAL ("{ // procedure block "),
-	       MOMOUT_LITERALV (mom_string_cstr
-				((momval_t)
-				 mom_item_get_name_or_idstr (blkitm))),
-	       MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE (), NULL);
-      emit_block_cgen (cg, blkitm);
-      MOM_OUT (&cg->cgen_outbody,
-	       MOMOUT_INDENT_LESS (),
-	       MOMOUT_NEWLINE (),
-	       MOMOUT_LITERAL ("}; // end procedure block "),
-	       MOMOUT_LITERALV (mom_string_cstr
-				((momval_t)
-				 mom_item_get_name_or_idstr (blkitm))),
-	       MOMOUT_NEWLINE (), NULL);
-      if (procrestypev.pitem == mom_named__void || !procrestypev.ptr)
+	     MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL ("static const char* const "
+			     CGEN_PROC_CONSTANTIDS_PREFIX),
+	     MOMOUT_LITERALV (mom_ident_cstr_of_item (procitm)),
+	     MOMOUT_LITERAL ("["), MOMOUT_DEC_INT (1 + (int) nbconstants),
+	     MOMOUT_LITERAL ("] = { //! for "),
+	     MOMOUT_ITEM ((const momitem_t *) procitm), MOMOUT_INDENT_MORE (),
+	     MOMOUT_NEWLINE (), NULL);
+    for (unsigned cix = 0; cix < nbconstants; cix++)
+      {
+	const momitem_t *curcstitm = mom_tuple_nth_item (proconstantsv, cix);
+	assert (curcstitm != NULL);
 	MOM_OUT (&cg->cgen_outbody,
-		 MOMOUT_LITERAL ("return;"), MOMOUT_NEWLINE (), NULL);
-      else
+		 MOMOUT_NEWLINE (),
+		 MOMOUT_LITERAL ("\""),
+		 MOMOUT_LITERALV (mom_ident_cstr_of_item (curcstitm)),
+		 MOMOUT_LITERAL ("\", //="),
+		 MOMOUT_ITEM ((const momitem_t *) curcstitm), NULL);
+      }
+    MOM_OUT (&cg->cgen_outbody, MOMOUT_INDENT_LESS (),
+	     MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL (" NULL }; // end constid proc "),
+	     MOMOUT_ITEM ((const momitem_t *) procitm),
+	     MOMOUT_NEWLINE (), NULL);
+    // emit the descriptor
+    MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL ("const struct momprocrout_st "
+			     MOM_PROCROUTDESCR_PREFIX),
+	     MOMOUT_LITERALV (mom_ident_cstr_of_item (procitm)),
+	     MOMOUT_LITERAL ("// proc.descriptor "),
+	     MOMOUT_ITEM ((const momitem_t *) procitm), MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL (" = { .prout_magic = MOM_PROCROUT_MAGIC,"),
+	     MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE (), NULL);
+    switch (protyp)
+      {
+      case momtypenc__none:
 	MOM_OUT (&cg->cgen_outbody,
-		 MOMOUT_LITERAL ("return momresult;"),
-		 MOMOUT_NEWLINE (), NULL);
-    }
-  /// emit epilogue
-  MOM_OUT (&cg->cgen_outbody,
-	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL ("} // end of procedure "),
-	   MOMOUT_LITERAL (MOM_PROCROUTFUN_PREFIX),
-	   MOMOUT_ITEM ((const momitem_t *) curoutitm),
-	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
-  /// emit the procedure constant ids
-  {
-    unsigned nbconsts = mom_seqitem_length (proconstantsv);
-
+		 MOMOUT_LITERAL (".prout_resty = momtypenc__none,"));
+	break;
+      case momtypenc_int:
+	MOM_OUT (&cg->cgen_outbody,
+		 MOMOUT_LITERAL (".prout_resty = momtypenc_int,"));
+	break;
+      case momtypenc_double:
+	MOM_OUT (&cg->cgen_outbody,
+		 MOMOUT_LITERAL (".prout_resty = momtypenc_double,"));
+	break;
+      case momtypenc_val:
+	MOM_OUT (&cg->cgen_outbody,
+		 MOMOUT_LITERAL (".prout_resty = momtypenc_val,"));
+	break;
+      case momtypenc_string:
+	MOM_OUT (&cg->cgen_outbody,
+		 MOMOUT_LITERAL (".prout_resty = momtypenc_string,"));
+	break;
+      };
+    MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (".prout_len = "),
+	     MOMOUT_DEC_INT ((int) nbconstants), MOMOUT_LITERAL (","),
+	     MOMOUT_NEWLINE ());
+    MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (".prout_id = \""),
+	     MOMOUT_LITERALV (mom_ident_cstr_of_item (procitm)),
+	     MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE ());
+    MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (".prout_module = \""),
+	     MOMOUT_LITERALV (mom_ident_cstr_of_item (cg->cgen_moditm)),
+	     MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE ());
+    MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_LITERAL (".prout_constantids = "
+			     CGEN_PROC_CONSTANTIDS_PREFIX),
+	     MOMOUT_LITERALV (mom_ident_cstr_of_item (procitm)),
+	     MOMOUT_LITERAL (","), MOMOUT_NEWLINE ());
+    MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_LITERAL (".prout_constantitems = "
+			     CGEN_PROC_CONSTANTITEMS_PREFIX),
+	     MOMOUT_LITERALV (mom_ident_cstr_of_item (procitm)),
+	     MOMOUT_LITERAL (","), MOMOUT_NEWLINE ());
+    MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_LITERAL (".prout_addr = (void*)"
+			     MOM_PROCROUTFUN_PREFIX),
+	     MOMOUT_LITERALV (mom_ident_cstr_of_item (procitm)),
+	     MOMOUT_LITERAL (","), MOMOUT_NEWLINE ());
+    MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (".prout_argsig = \""),
+	     MOMOUT_LITERALV (mom_string_cstr
+			      (mom_node_nth (procnodev, 1))),
+	     MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE ());
+    MOM_OUT (&cg->cgen_outbody,
+	     MOMOUT_LITERAL (".prout_timestamp= __DATE__ \"@\" __TIME__"),
+	     MOMOUT_INDENT_LESS (), MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL ("}; // end proc descriptor"),
+	     MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
+    /// emit the constant items declarations
     MOM_OUT (&cg->cgen_outhead,
+	     MOMOUT_LITERAL ("// constant items of proc. "),
+	     MOMOUT_ITEM ((const momitem_t *) procitm),
 	     MOMOUT_NEWLINE (),
 	     MOMOUT_LITERAL ("static const momitem_t* "
 			     CGEN_PROC_CONSTANTITEMS_PREFIX),
-	     MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
-	     MOMOUT_LITERAL ("["), MOMOUT_DEC_INT ((int) nbconsts + 1),
-	     MOMOUT_LITERAL
-	     ("]; // define constant items of procedure "),
-	     MOMOUT_ITEM ((const momitem_t *) curoutitm), MOMOUT_NEWLINE ());
-    MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (),
-	     MOMOUT_LITERAL ("static const char* const "
-			     CGEN_PROC_CONSTANTIDS_PREFIX),
-	     MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
-	     MOMOUT_LITERAL ("["), MOMOUT_DEC_INT ((int) nbconsts + 1),
-	     MOMOUT_LITERAL ("] = {"), MOMOUT_INDENT_MORE (), NULL);
-    for (unsigned cix = 0; cix < nbconsts; cix++)
-      {
-	momitem_t *cstitm = mom_seqitem_nth_item (proconstantsv, cix);
-	if (!cstitm)
-	  continue;
-	MOM_OUT (&cg->cgen_outbody,
-		 MOMOUT_NEWLINE (),
-		 MOMOUT_LITERAL ("["),
-		 MOMOUT_DEC_INT ((int) cix),
-		 MOMOUT_LITERAL ("] = \""),
-		 MOMOUT_LITERALV (mom_ident_cstr_of_item (cstitm)),
-		 MOMOUT_LITERAL ("\", // "),
-		 MOMOUT_ITEM ((const momitem_t *) cstitm), NULL);
-      }
-    MOM_OUT (&cg->cgen_outbody,
-	     MOMOUT_INDENT_LESS (),
-	     MOMOUT_NEWLINE (),
-	     MOMOUT_LITERAL
-	     ("}; // end of procedure constant item ids of "),
-	     MOMOUT_ITEM ((const momitem_t *) curoutitm),
-	     MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
+	     MOMOUT_LITERALV (mom_ident_cstr_of_item (procitm)),
+	     MOMOUT_LITERAL ("["), MOMOUT_DEC_INT (1 + (int) nbconstants),
+	     MOMOUT_LITERAL ("]; //! for "),
+	     MOMOUT_ITEM ((const momitem_t *) procitm), MOMOUT_NEWLINE (),
+	     NULL);
+
   }
-
-  /// emit the procedure descriptor
-  MOM_OUT (&cg->cgen_outbody,
-	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL ("const struct momprocrout_st "
-			   MOM_PROCROUTDESCR_PREFIX),
-	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
-	   MOMOUT_LITERAL (" = { .prout_magic = MOM_PROCROUT_MAGIC,"),
-	   MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE (), NULL);
-  if (procrestypev.pitem == mom_named__momval_t)
-    MOM_OUT (&cg->cgen_outbody,
-	     MOMOUT_LITERAL (".prout_resty = momtypenc_val,"),
-	     MOMOUT_NEWLINE ());
-  else if (procrestypev.pitem == mom_named__intptr_t)
-    MOM_OUT (&cg->cgen_outbody,
-	     MOMOUT_LITERAL (".prout_resty = momtypenc_int,"),
-	     MOMOUT_NEWLINE ());
-  else if (procrestypev.pitem == mom_named__double)
-    MOM_OUT (&cg->cgen_outbody,
-	     MOMOUT_LITERAL (".prout_resty = momtypenc_double,"),
-	     MOMOUT_NEWLINE ());
-  else if (procrestypev.pitem == mom_named__momcstr_t)
-    MOM_OUT (&cg->cgen_outbody,
-	     MOMOUT_LITERAL (".prout_resty = momtypenc_string,"),
-	     MOMOUT_NEWLINE ());
-  else if (procrestypev.pitem == NULL
-	   || procrestypev.pitem == mom_named__void)
-    MOM_OUT (&cg->cgen_outbody,
-	     MOMOUT_LITERAL (".prout_resty = momtypenc__none,"),
-	     MOMOUT_NEWLINE ());
-  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (".prout_len = "),
-	   MOMOUT_DEC_INT ((int) nbproconsts), MOMOUT_LITERAL (","),
-	   MOMOUT_NEWLINE ());
-  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (".prout_id = \""),
-	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
-	   MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE ());
-  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (".prout_module = \""),
-	   MOMOUT_LITERALV (mom_ident_cstr_of_item (cg->cgen_moditm)),
-	   MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE ());
-  MOM_OUT (&cg->cgen_outbody,
-	   MOMOUT_LITERAL (".prout_constantids = "
-			   CGEN_PROC_CONSTANTIDS_PREFIX),
-	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
-	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE ());
-  MOM_OUT (&cg->cgen_outbody,
-	   MOMOUT_LITERAL (".prout_constantitems = "
-			   CGEN_PROC_CONSTANTITEMS_PREFIX),
-	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
-	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE ());
-  MOM_OUT (&cg->cgen_outbody,
-	   MOMOUT_LITERAL (".prout_addr = (void*)"
-			   MOM_PROCROUTFUN_PREFIX),
-	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
-	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE ());
-  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (".prout_argsig = \""),
-	   MOMOUT_LITERALV (mom_string_cstr
-			    (mom_node_nth (procnodev, 1))),
-	   MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE ());
-  MOM_OUT (&cg->cgen_outbody,
-	   MOMOUT_LITERAL (".prout_timestamp= __DATE__ \"@\" __TIME__"),
-	   MOMOUT_INDENT_LESS (), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL ("}; // end proc descriptor"),
-	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
-}				/* end _old_emit_procedure_cgen */
-
-#endif // 0 for _old_emit_procedure_cgen
+}				/* end of emit_procedure_cgen */
 
 
 void
 scan_taskletfunction_cgen (struct c_generator_mom_st *cg, momitem_t *tfunitm)
 {
+  CGEN_ERROR_MOM (cg,
+		  MOMOUT_LITERAL
+		  ("unimplemented scan_taskletfunction tfunitm:"),
+		  MOMOUT_ITEM ((const momitem_t *) tfunitm), NULL);
+#warning scan_taskletfunction
 }
 
 void
@@ -2582,13 +2345,18 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
   mom_item_start_vector (cg->cgen_vecnumitm);
   cg->cgen_vecdblitm = mom_make_item ();
   mom_item_start_vector (cg->cgen_vecdblitm);
-  MOM_DEBUG (gencod, MOMOUT_LITERAL ("emittaskletfunct vecvalitm="),
-	     MOMOUT_ITEM ((const momitem_t *) cg->cgen_vecvalitm),
-	     MOMOUT_SPACE (32), MOMOUT_LITERAL (" vecnumitm="),
-	     MOMOUT_ITEM ((const momitem_t *) cg->cgen_vecnumitm),
-	     MOMOUT_SPACE (32), MOMOUT_LITERAL (" vecdblitm="),
-	     MOMOUT_ITEM ((const momitem_t *) cg->cgen_vecdblitm),
-	     MOMOUT_SPACE (32), NULL);
+  MOM_DEBUG (gencod,
+	     MOMOUT_LITERAL ("emittaskletfunct vecvalitm="),
+	     MOMOUT_ITEM ((const momitem_t *)
+			  cg->cgen_vecvalitm),
+	     MOMOUT_SPACE (32),
+	     MOMOUT_LITERAL (" vecnumitm="),
+	     MOMOUT_ITEM ((const momitem_t *)
+			  cg->cgen_vecnumitm),
+	     MOMOUT_SPACE (32),
+	     MOMOUT_LITERAL (" vecdblitm="),
+	     MOMOUT_ITEM ((const momitem_t *)
+			  cg->cgen_vecdblitm), MOMOUT_SPACE (32), NULL);
   // bind the constants for the closure
   nbconstants = bind_constants_cgen (cg, funconstantsv);
   // bind the closed values
@@ -2605,19 +2373,21 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
   momitem_t *startitm = mom_value_to_item (funstartv);
   if (!startitm)
     CGEN_ERROR_MOM (cg,
-		    MOMOUT_LITERAL ("missing start in function "),
+		    MOMOUT_LITERAL
+		    ("missing start in function "),
 		    MOMOUT_ITEM ((const momitem_t *) curoutitm), NULL);
-  momval_t startlocv =
-    mom_item_assoc_get (cg->cgen_rout.cgrout_associtm, startitm);
+  momval_t startlocv = mom_item_assoc_get (cg->cgen_rout.cgrout_associtm,
+					   startitm);
   int startix = -1;
   if (mom_node_conn (startlocv) == mom_named__block)
     startix = mom_integer_val_def (mom_node_nth (startlocv, 0), -2);
   if (startix <= 0 || startix >= (int) nbblocks + 1)
     CGEN_ERROR_MOM (cg,
-		    MOMOUT_LITERAL ("invalid start "),
-		    MOMOUT_ITEM ((const momitem_t *) startitm),
-		    MOMOUT_LITERAL (" bound to "),
-		    MOMOUT_VALUE (startlocv),
+		    MOMOUT_LITERAL
+		    ("invalid start "),
+		    MOMOUT_ITEM
+		    ((const momitem_t *) startitm),
+		    MOMOUT_LITERAL (" bound to "), MOMOUT_VALUE (startlocv),
 		    MOMOUT_LITERAL (" in function "),
 		    MOMOUT_ITEM ((const momitem_t *) curoutitm), NULL);
   /// emit start of function
@@ -2640,28 +2410,33 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
      MOMOUT_LITERALV ((const char *)
 		      ((nbvalues > 0)
 		       ? "\t momval_t* restrict momvals,"
-		       : "\t momval_t* restrict momvals_ MOM_UNUSED,")),
+		       :
+		       "\t momval_t* restrict momvals_ MOM_UNUSED,")),
      MOMOUT_NEWLINE (),
-     MOMOUT_LITERALV ((const char *)
-		      ((nbnumbers > 0)
-		       ? "\t intptr_t* restrict momnums,"
-		       : "\t intptr_t* restrict momnums_ MOM_UNUSED,")),
+     MOMOUT_LITERALV ((const char *) ((nbnumbers > 0) ?
+				      "\t intptr_t* restrict momnums,"
+				      :
+				      "\t intptr_t* restrict momnums_ MOM_UNUSED,")),
      MOMOUT_NEWLINE (),
      MOMOUT_LITERALV ((const char *) ((nbdoubles > 0) ?
-				      "\t double* restrict momdbls)" :
+				      "\t double* restrict momdbls)"
+				      :
 				      "\t double* restrict momdbls_ MOM_UNUSED)")),
      MOMOUT_NEWLINE (),
      MOMOUT_LITERAL ("{ // start of tasklet function "),
-     MOMOUT_ITEM ((const momitem_t *) curoutitm), MOMOUT_INDENT_MORE (),
-     MOMOUT_NEWLINE (), NULL);
+     MOMOUT_ITEM ((const momitem_t *) curoutitm),
+     MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE (), NULL);
   MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("// declared "),
 	   MOMOUT_DEC_INT ((int) nblocals),
-	   MOMOUT_LITERAL (" locals, "), MOMOUT_DEC_INT ((int) nbargs),
+	   MOMOUT_LITERAL (" locals, "),
+	   MOMOUT_DEC_INT ((int) nbargs),
 	   MOMOUT_LITERAL (" arguments."), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL ("if (MOM_UNLIKELY(momstate==0)) return "),
+	   MOMOUT_LITERAL
+	   ("if (MOM_UNLIKELY(momstate==0)) return "),
 	   MOMOUT_DEC_INT (startix), MOMOUT_LITERAL (";"),
 	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL ("assert (mom_is_item (momclosure));"),
+	   MOMOUT_LITERAL
+	   ("assert (mom_is_item (momclosure));"),
 	   MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL
 	   ("momval_t* momclovals = mom_item_closure_values (momclosure.pitem);"),
@@ -2673,18 +2448,23 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	   MOMOUT_NEWLINE (), NULL);
   if (nbvalues > 0)
     MOM_OUT (&cg->cgen_outbody,
-	     MOMOUT_LITERAL ("assert (momvals != NULL); // "),
+	     MOMOUT_LITERAL
+	     ("assert (momvals != NULL); // "),
 	     MOMOUT_DEC_INT ((int) nbvalues),
 	     MOMOUT_LITERAL (" values."), MOMOUT_NEWLINE (), NULL);
   if (nbnumbers > 0)
     MOM_OUT (&cg->cgen_outbody,
-	     MOMOUT_LITERAL ("assert (momnums != NULL); //"),
-	     MOMOUT_DEC_INT ((int) nbnumbers),
+	     MOMOUT_LITERAL
+	     ("assert (momnums != NULL); //"),
+	     MOMOUT_DEC_INT ((int)
+			     nbnumbers),
 	     MOMOUT_LITERAL (" integer numbers."), MOMOUT_NEWLINE (), NULL);
   if (nbdoubles > 0)
     MOM_OUT (&cg->cgen_outbody,
-	     MOMOUT_LITERAL ("assert (momdbls != NULL); //"),
-	     MOMOUT_DEC_INT ((int) nbdoubles),
+	     MOMOUT_LITERAL
+	     ("assert (momdbls != NULL); //"),
+	     MOMOUT_DEC_INT ((int)
+			     nbdoubles),
 	     MOMOUT_LITERAL (" doubles."), MOMOUT_NEWLINE (), NULL);
   MOM_OUT (&cg->cgen_outbody,
 	   MOMOUT_LITERAL
@@ -2706,7 +2486,8 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	       MOMOUT_DEC_INT ((int) six),
 	       MOMOUT_LITERAL ("; // block "),
 	       MOMOUT_ITEM ((const momitem_t *)
-			    mom_seqitem_nth_item (funblocksv, six - 1)),
+			    mom_seqitem_nth_item (funblocksv,
+						  six - 1)),
 	       MOMOUT_NEWLINE (), NULL);
     }
   MOM_OUT (&cg->cgen_outbody,
@@ -2717,22 +2498,18 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
   for (unsigned six = 1; six <= nbblocks; six++)
     {
       momitem_t *blkitm = mom_seqitem_nth_item (funblocksv, six - 1);
-      MOM_OUT (&cg->cgen_outbody,
-	       MOMOUT_NEWLINE (),
+      MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (),
 	       MOMOUT_LITERAL ("// function block #"),
-	       MOMOUT_DEC_INT ((int) six),
-	       MOMOUT_LITERAL (" "),
+	       MOMOUT_DEC_INT ((int) six), MOMOUT_LITERAL (" "),
 	       MOMOUT_ITEM ((const momitem_t *) blkitm),
 	       MOMOUT_NEWLINE (),
 	       MOMOUT_LITERAL (CGEN_FUN_BLOCK_PREFIX),
-	       MOMOUT_DEC_INT ((int) six),
-	       MOMOUT_LITERAL (":"), MOMOUT_NEWLINE (), NULL);
-      MOM_OUT (&cg->cgen_outbody,
-	       MOMOUT_LITERAL ("{"), MOMOUT_INDENT_MORE (),
+	       MOMOUT_DEC_INT ((int) six), MOMOUT_LITERAL (":"),
 	       MOMOUT_NEWLINE (), NULL);
+      MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("{"),
+	       MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE (), NULL);
       emit_block_cgen (cg, blkitm);
-      MOM_OUT (&cg->cgen_outbody,
-	       MOMOUT_INDENT_LESS (),
+      MOM_OUT (&cg->cgen_outbody, MOMOUT_INDENT_LESS (),
 	       MOMOUT_NEWLINE (),
 	       MOMOUT_LITERAL ("}; // end function block "),
 	       MOMOUT_ITEM ((const momitem_t *) blkitm),
@@ -2753,7 +2530,8 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	     MOMOUT_NEWLINE (),
 	     MOMOUT_LITERAL ("static momitem_t* "
 			     CGEN_FUN_CONSTANTITEMS_PREFIX),
-	     MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
+	     MOMOUT_LITERALV (mom_ident_cstr_of_item
+			      (curoutitm)),
 	     MOMOUT_LITERAL ("["),
 	     MOMOUT_DEC_INT ((int) nbconstants + 1),
 	     MOMOUT_LITERAL
@@ -2762,10 +2540,12 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
     MOM_OUT (&cg->cgen_outbody,
 	     MOMOUT_LITERAL ("static const char* const "
 			     CGEN_FUN_CONSTANTIDS_PREFIX),
-	     MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
+	     MOMOUT_LITERALV (mom_ident_cstr_of_item
+			      (curoutitm)),
 	     MOMOUT_LITERAL ("["),
 	     MOMOUT_DEC_INT ((int) nbconstants + 1),
-	     MOMOUT_LITERAL ("] = { // constant ids of function "),
+	     MOMOUT_LITERAL
+	     ("] = { // constant ids of function "),
 	     MOMOUT_ITEM ((const momitem_t *) curoutitm),
 	     MOMOUT_INDENT_MORE (), NULL);
     for (unsigned cix = 0; cix < nbconstants; cix++)
@@ -2773,19 +2553,17 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	momitem_t *cstitm = mom_seqitem_nth_item (funconstantsv, cix);
 	if (!cstitm)
 	  continue;
-	MOM_OUT (&cg->cgen_outbody,
-		 MOMOUT_NEWLINE (),
-		 MOMOUT_LITERAL ("["),
-		 MOMOUT_DEC_INT ((int) cix),
+	MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (),
+		 MOMOUT_LITERAL ("["), MOMOUT_DEC_INT ((int) cix),
 		 MOMOUT_LITERAL ("] = \""),
 		 MOMOUT_LITERALV (mom_ident_cstr_of_item (cstitm)),
 		 MOMOUT_LITERAL ("\", // "),
 		 MOMOUT_ITEM ((const momitem_t *) cstitm), NULL);
       }
-    MOM_OUT (&cg->cgen_outbody,
-	     MOMOUT_INDENT_LESS (),
+    MOM_OUT (&cg->cgen_outbody, MOMOUT_INDENT_LESS (),
 	     MOMOUT_NEWLINE (),
-	     MOMOUT_LITERAL ("}; // end of function constants of "),
+	     MOMOUT_LITERAL
+	     ("}; // end of function constants of "),
 	     MOMOUT_ITEM ((const momitem_t *) curoutitm),
 	     MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
   }
@@ -2793,46 +2571,62 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
   MOM_OUT (&cg->cgen_outbody,
 	   MOMOUT_LITERAL ("const struct momtfundescr_st "
 			   MOM_TFUN_NAME_PREFIX),
-	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
-	   MOMOUT_LITERAL (" = { // tasklet function descriptor "),
+	   MOMOUT_LITERALV (mom_ident_cstr_of_item
+			    (curoutitm)),
+	   MOMOUT_LITERAL
+	   (" = { // tasklet function descriptor "),
 	   MOMOUT_ITEM ((const momitem_t *) curoutitm),
 	   MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL (".tfun_magic = MOM_TFUN_MAGIC,"),
-	   MOMOUT_NEWLINE (), MOMOUT_LITERAL (".tfun_minclosize = "),
-	   MOMOUT_DEC_INT ((int) nbclosedvalues), MOMOUT_LITERAL (","),
-	   MOMOUT_NEWLINE (), MOMOUT_LITERAL (".tfun_nbconstants = "),
-	   MOMOUT_DEC_INT ((int) nbconstants), MOMOUT_LITERAL (","),
-	   MOMOUT_NEWLINE (), MOMOUT_LITERAL (".tfun_frame_nbval = "),
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL (".tfun_minclosize = "),
+	   MOMOUT_DEC_INT ((int) nbclosedvalues),
+	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL (".tfun_nbconstants = "),
+	   MOMOUT_DEC_INT ((int) nbconstants),
+	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL (".tfun_frame_nbval = "),
 	   MOMOUT_DEC_INT ((int)
-			   mom_item_vector_count (cg->cgen_vecvalitm)),
+			   mom_item_vector_count
+			   (cg->cgen_vecvalitm)),
 	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL (".tfun_frame_nbnum = "),
 	   MOMOUT_DEC_INT ((int)
-			   mom_item_vector_count (cg->cgen_vecnumitm)),
+			   mom_item_vector_count
+			   (cg->cgen_vecnumitm)),
 	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL (".tfun_frame_nbdbl = "),
 	   MOMOUT_DEC_INT ((int)
-			   mom_item_vector_count (cg->cgen_vecdblitm)),
+			   mom_item_vector_count
+			   (cg->cgen_vecdblitm)),
 	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL (".tfun_constantids = "
 			   CGEN_FUN_CONSTANTIDS_PREFIX),
-	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
+	   MOMOUT_LITERALV (mom_ident_cstr_of_item
+			    (curoutitm)),
 	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL
 	   (".tfun_constantitems = (const momitem_t*const*) "
 	    CGEN_FUN_CONSTANTITEMS_PREFIX),
-	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
+	   MOMOUT_LITERALV (mom_ident_cstr_of_item
+			    (curoutitm)),
 	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL (".tfun_ident = \""),
-	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
+	   MOMOUT_LITERALV (mom_ident_cstr_of_item
+			    (curoutitm)),
 	   MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL (".tfun_module = MONIMELT_CURRENT_MODULE,"),
+	   MOMOUT_LITERAL
+	   (".tfun_module = MONIMELT_CURRENT_MODULE,"),
 	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL (".tfun_codefun = " CGEN_FUN_CODE_PREFIX),
-	   MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
+	   MOMOUT_LITERAL (".tfun_codefun = "
+			   CGEN_FUN_CODE_PREFIX),
+	   MOMOUT_LITERALV (mom_ident_cstr_of_item
+			    (curoutitm)),
 	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL (".tfun_timestamp = __DATE__ \"@\" __TIME__"),
-	   MOMOUT_NEWLINE (), MOMOUT_INDENT_LESS (), MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL
+	   (".tfun_timestamp = __DATE__ \"@\" __TIME__"),
+	   MOMOUT_NEWLINE (), MOMOUT_INDENT_LESS (),
+	   MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL ("}; // end function descriptor"),
 	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
 #endif
@@ -2841,8 +2635,8 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 
 
 momtypenc_t
-emit_ctype_cgen (struct c_generator_mom_st *cg, struct momout_st *out,
-		 momval_t val)
+emit_ctype_cgen (struct c_generator_mom_st *cg,
+		 struct momout_st *out, momval_t val)
 {
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
   assert (!out || out->mout_magic == MOM_MOUT_MAGIC);
@@ -2918,7 +2712,8 @@ emit_ctype_cgen (struct c_generator_mom_st *cg, struct momout_st *out,
 	  }
 	};
       if (!typitm || count == 0)
-	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid value to type:"),
+	CGEN_ERROR_MOM (cg,
+			MOMOUT_LITERAL ("invalid value to type:"),
 			MOMOUT_VALUE ((const momval_t) val), NULL);
     }
   return momtypenc__none;
@@ -2986,8 +2781,7 @@ emit_var_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
       assert (formix >= 0);
       MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (64),
 	       MOMOUT_LITERAL (CGEN_FORMALARG_PREFIX),
-	       MOMOUT_DEC_INT (formix),
-	       MOMOUT_LITERAL ("/*"),
+	       MOMOUT_DEC_INT (formix), MOMOUT_LITERAL ("/*"),
 	       MOMOUT_ITEM ((const momitem_t *) varitm),
 	       MOMOUT_LITERAL ("*/ "));
       return emit_ctype_cgen (cg, NULL, mom_node_nth (expasv, 2));
@@ -3001,8 +2795,7 @@ emit_var_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
       assert (cg->cgen_rout.cgrout_kind == cgr_funt);
       MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (64),
 	       MOMOUT_LITERAL ("(momclovals["),
-	       MOMOUT_DEC_INT (cix),
-	       MOMOUT_LITERAL ("] /*"),
+	       MOMOUT_DEC_INT (cix), MOMOUT_LITERAL ("] /*"),
 	       MOMOUT_ITEM ((const momitem_t *) clositm),
 	       MOMOUT_LITERAL ("*/)"), NULL);
     }
@@ -3192,8 +2985,8 @@ emit_expr_cgen (struct c_generator_mom_st *cg, momval_t expv)
 
 // emit an output-like argument
 static void
-emit_output_arg_cgen (struct c_generator_mom_st *cg, momval_t curoutv,
-		      momval_t nodv)
+emit_output_arg_cgen (struct c_generator_mom_st *cg,
+		      momval_t curoutv, momval_t nodv)
 {
   if (mom_is_string (curoutv))
     {
@@ -3350,8 +3143,8 @@ emit_output_arg_cgen (struct c_generator_mom_st *cg, momval_t curoutv,
 			   MOMOUT_DEC_INTPTR_T (mom_integer_val (curchkv)));
 		}
 	      else if ((chkitm = mom_value_to_item (curchkv))
-		       && ((chkexpv =
-			    mom_get_attribute (argbind, chkitm)).ptr))
+		       &&
+		       ((chkexpv = mom_get_attribute (argbind, chkitm)).ptr))
 		emit_expr_cgen (cg, chkexpv);
 	      else
 		CGEN_ERROR_MOM
@@ -3472,8 +3265,8 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 			    MOMOUT_LITERAL ("in expr:"), nodv);
 	  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (")"), NULL);
 	}
-      MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (")/*!endtuple*/"),
-	       MOMOUT_SPACE (32));
+      MOM_OUT (&cg->cgen_outbody,
+	       MOMOUT_LITERAL (")/*!endtuple*/"), MOMOUT_SPACE (32));
     }
   // handle set nodes
   else if (connitm == mom_named__set)
@@ -3501,7 +3294,8 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
   // handle json_object nodes
   else if (connitm == mom_named__json_object)
     {
-      MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("/*!json_object+"),
+      MOM_OUT (&cg->cgen_outbody,
+	       MOMOUT_LITERAL ("/*!json_object+"),
 	       MOMOUT_DEC_INT ((int) arity),
 	       MOMOUT_LITERAL (":*/ mom_make_json_object("), NULL);
       for (int jix = 0; jix < arity; jix++)
@@ -3545,7 +3339,6 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 				MOMOUT_LITERAL
 				(" in json_object node "),
 				MOMOUT_VALUE ((momval_t) nodv));
-
 	    }
 	  else if (curconnitm == mom_named__json_object && curarity == 1)
 	    {
@@ -3569,7 +3362,6 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 			    MOMOUT_DEC_INT (jix),
 			    MOMOUT_LITERAL (" in `json_object` node:"),
 			    MOMOUT_VALUE ((const momval_t) nodv));
-
 	}
 
       MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (48),
@@ -3579,7 +3371,8 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
   // handle json_array nodes
   else if (connitm == mom_named__json_array)
     {
-      MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("/*!json_array+"),
+      MOM_OUT (&cg->cgen_outbody,
+	       MOMOUT_LITERAL ("/*!json_array+"),
 	       MOMOUT_DEC_INT ((int) arity),
 	       MOMOUT_LITERAL (":*/ mom_make_json_array("),
 	       MOMOUT_DEC_INT ((int) arity), NULL);
@@ -3596,8 +3389,8 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 			    MOMOUT_VALUE ((const momval_t) nodv));
 	  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (")"), NULL);
 	}
-      MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (")/*!endjsonarray*/"),
-	       MOMOUT_SPACE (32));
+      MOM_OUT (&cg->cgen_outbody,
+	       MOMOUT_LITERAL (")/*!endjsonarray*/"), MOMOUT_SPACE (32));
     }
   // handle set nodes
   else if (connitm == mom_named__node)
@@ -3632,8 +3425,8 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 			    MOMOUT_VALUE ((const momval_t) nodv));
 	  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (")"), NULL);
 	}
-      MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (")/*!endnode*/"),
-	       MOMOUT_SPACE (48));
+      MOM_OUT (&cg->cgen_outbody,
+	       MOMOUT_LITERAL (")/*!endnode*/"), MOMOUT_SPACE (48));
     }
   // handle primitives
   else if (primexpv.ptr)
@@ -3648,15 +3441,16 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 			MOMOUT_SPACE (48),
 			MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
 						connitm),
-			MOMOUT_SPACE (48), MOMOUT_LITERAL ("in node:"),
+			MOMOUT_SPACE (48),
+			MOMOUT_LITERAL ("in node:"),
 			MOMOUT_VALUE ((const momval_t) nodv), NULL);
       if (!primoutitm && formalarity != arity)
 	CGEN_ERROR_MOM (cg,
-			MOMOUT_LITERAL ("wrong arity for primitive:"),
+			MOMOUT_LITERAL
+			("wrong arity for primitive:"),
 			MOMOUT_ITEM ((const momitem_t *) connitm),
 			MOMOUT_SPACE (48),
-			MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
-						connitm),
+			MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) connitm),
 			MOMOUT_SPACE (48), MOMOUT_LITERAL ("in node:"),
 			MOMOUT_VALUE ((const momval_t) nodv), NULL);
       else if (primoutitm && formalarity > arity)
@@ -3667,26 +3461,35 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 			MOMOUT_SPACE (48),
 			MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
 						connitm),
-			MOMOUT_SPACE (48), MOMOUT_LITERAL ("in node:"),
+			MOMOUT_SPACE (48),
+			MOMOUT_LITERAL ("in node:"),
 			MOMOUT_VALUE ((const momval_t) nodv), NULL);
       if (ctypev.pitem == mom_named__void)
 	MOM_OUT (&cg->cgen_outbody,
-		 MOMOUT_LITERAL ("/*!primitive-void "),
-		 MOMOUT_ITEM ((const momitem_t *) connitm),
-		 MOMOUT_LITERAL ("*/ "), NULL);
+		 MOMOUT_LITERAL
+		 ("/*!primitive-void "),
+		 MOMOUT_ITEM ((const momitem_t
+			       *) connitm), MOMOUT_LITERAL ("*/ "), NULL);
       else
-	MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("(/*!primitive "),
+	MOM_OUT (&cg->cgen_outbody,
+		 MOMOUT_LITERAL ("(/*!primitive "),
 		 MOMOUT_ITEM ((const momitem_t *) connitm),
 		 MOMOUT_LITERAL ("*/ "), NULL);
       if (mom_node_conn (primexpv) != mom_named__chunk)
 	CGEN_ERROR_MOM (cg,
 			MOMOUT_LITERAL
 			("no `chunk` for `primitive_expansion` in primitive:"),
-			MOMOUT_ITEM ((const momitem_t *) connitm),
+			MOMOUT_ITEM ((const
+				      momitem_t
+				      *)
+				     connitm),
 			MOMOUT_SPACE (48),
-			MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *)
-						connitm),
-			MOMOUT_SPACE (48), MOMOUT_LITERAL ("in node:"),
+			MOMOUT_ITEM_ATTRIBUTES
+			((const momitem_t *)
+			 connitm),
+			MOMOUT_SPACE (48),
+			MOMOUT_LITERAL
+			("in node:"),
 			MOMOUT_VALUE ((const momval_t) nodv), NULL);
       argbind = mom_reserve_attribute (argbind, 3 * arity / 2 + 5);
       char *argctypestr = MOM_GC_SCALAR_ALLOC ("argctypestr", arity + 3);
@@ -3866,7 +3669,6 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 		 MOMOUT_LITERAL ("/*!endprimitive "),
 		 MOMOUT_ITEM ((const momitem_t *) connitm),
 		 MOMOUT_LITERAL ("*/) "), NULL);
-
       if (ctypev.pitem == mom_named__intptr_t)
 	return momtypenc_int;
       else if (ctypev.pitem == mom_named__momval_t)
@@ -3893,8 +3695,12 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 	CGEN_ERROR_MOM (cg,
 			MOMOUT_LITERAL
 			("arity mismatch for procedure:"),
-			MOMOUT_ITEM ((const momitem_t *) connitm),
-			MOMOUT_LITERAL (" in node:"),
+			MOMOUT_ITEM ((const
+				      momitem_t
+				      *)
+				     connitm),
+			MOMOUT_LITERAL
+			(" in node:"),
 			MOMOUT_VALUE ((const momval_t) nodv), NULL);
       if (!ctypev.ptr)
 	{
@@ -4076,17 +3882,22 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
   }
   if (mom_is_string (commv))
     MOM_OUT (&cg->cgen_outbody,
-	     MOMOUT_SLASHCOMMENT_STRING (mom_string_cstr (commv)),
-	     MOMOUT_NEWLINE ());
+	     MOMOUT_SLASHCOMMENT_STRING
+	     (mom_string_cstr (commv)), MOMOUT_NEWLINE ());
   if (mom_node_conn (blockv) != mom_named__code)
     CGEN_ERROR_MOM (cg,
 		    MOMOUT_LITERAL
 		    ("invalid block (bad `block`, should be a `code` node):"),
-		    MOMOUT_ITEM ((const momitem_t *) blkitm),
+		    MOMOUT_ITEM ((const
+				  momitem_t
+				  *)
+				 blkitm),
 		    MOMOUT_SPACE (32),
 		    MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) blkitm));
   if (lockv.ptr && !mom_is_item (lockv))
-    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid `lock` in block:"),
+    CGEN_ERROR_MOM (cg,
+		    MOMOUT_LITERAL
+		    ("invalid `lock` in block:"),
 		    MOMOUT_ITEM ((const momitem_t *) blkitm),
 		    MOMOUT_SPACE (32),
 		    MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) blkitm));
@@ -4109,24 +3920,23 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 			MOMOUT_ITEM ((const momitem_t *) blkitm),
 			MOMOUT_LITERAL ("having code:"),
 			MOMOUT_VALUE ((const momval_t) blockv), NULL);
-
       assert (opitm != NULL);
-      if (opitm != mom_named__do
-	  && opitm != mom_named__if
+      if (opitm != mom_named__do && opitm != mom_named__if
 	  && opitm != mom_named__chunk
-	  && opitm != mom_named__assign && opitm != mom_named__switch
-	  && opitm != mom_named__comment && opitm != mom_named__dispatch
+	  && opitm != mom_named__assign
+	  && opitm != mom_named__switch
+	  && opitm != mom_named__comment
+	  && opitm != mom_named__dispatch
 	  && (opitm != mom_named__jump || ix < nbinstr - 1)
 	  && (opitm != mom_named__call || ix < nbinstr - 1)
 	  && (opitm != mom_named__return || ix < nbinstr - 1))
-	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid instruction:"),
+	CGEN_ERROR_MOM (cg,
+			MOMOUT_LITERAL
+			("invalid instruction:"),
 			MOMOUT_VALUE ((const momval_t) curinsv),
-			MOMOUT_SPACE (48),
-			MOMOUT_LITERAL ("at rank#"),
-			MOMOUT_DEC_INT (ix),
-			MOMOUT_LITERAL ("/"),
-			MOMOUT_DEC_INT (nbinstr),
-			MOMOUT_SPACE (48),
+			MOMOUT_SPACE (48), MOMOUT_LITERAL ("at rank#"),
+			MOMOUT_DEC_INT (ix), MOMOUT_LITERAL ("/"),
+			MOMOUT_DEC_INT (nbinstr), MOMOUT_SPACE (48),
 			MOMOUT_LITERAL ("in block:"),
 			MOMOUT_ITEM ((const momitem_t *) blkitm), NULL);
     }
@@ -4135,8 +3945,10 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
     {
       lockix = ++cg->cgen_count;
       MOM_DEBUG (gencod, MOMOUT_LITERAL ("lockv:"),
-		 MOMOUT_VALUE (lockv), MOMOUT_LITERAL (" lockix#"),
-		 MOMOUT_DEC_INT (lockix), MOMOUT_LITERAL (" in block "),
+		 MOMOUT_VALUE (lockv),
+		 MOMOUT_LITERAL (" lockix#"),
+		 MOMOUT_DEC_INT (lockix),
+		 MOMOUT_LITERAL (" in block "),
 		 MOMOUT_ITEM ((const momitem_t *) blkitm), NULL);
       MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (),
 	       MOMOUT_LITERAL ("// locked-item "),
@@ -4144,14 +3956,20 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 	       MOMOUT_LITERAL (" in block "),
 	       MOMOUT_ITEM ((const momitem_t *) blkitm),
 	       MOMOUT_NEWLINE (),
-	       MOMOUT_LITERAL ("momitem_t* " CGEN_LOCK_ITEM_PREFIX),
+	       MOMOUT_LITERAL ("momitem_t* "
+			       CGEN_LOCK_ITEM_PREFIX),
 	       MOMOUT_DEC_INT (lockix),
 	       MOMOUT_LITERAL (" = mom_value_to_item ("));
       if (emit_expr_cgen (cg, lockv) != momtypenc_val)
-	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("bad non-value lock:"),
-			MOMOUT_VALUE ((const momval_t) lockv),
+	CGEN_ERROR_MOM (cg,
+			MOMOUT_LITERAL
+			("bad non-value lock:"),
+			MOMOUT_VALUE ((const
+				       momval_t)
+				      lockv),
 			MOMOUT_SPACE (48),
-			MOMOUT_LITERAL ("in block:"),
+			MOMOUT_LITERAL
+			("in block:"),
 			MOMOUT_ITEM ((const momitem_t *) blkitm), NULL);
       MOM_OUT (&cg->cgen_outbody,
 	       MOMOUT_LITERAL (") /* locked-item */;"),
@@ -4199,11 +4017,14 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 	    CGEN_ERROR_MOM (cg,
 			    MOMOUT_LITERAL
 			    ("bad left-hand-side in assign:"),
-			    MOMOUT_VALUE ((const momval_t) curinsv),
+			    MOMOUT_VALUE ((const momval_t)
+					  curinsv),
 			    MOMOUT_SPACE (48),
 			    MOMOUT_LITERAL ("at rank#"),
-			    MOMOUT_DEC_INT (ix), MOMOUT_LITERAL ("/"),
-			    MOMOUT_DEC_INT (nbinstr), MOMOUT_SPACE (48),
+			    MOMOUT_DEC_INT (ix),
+			    MOMOUT_LITERAL ("/"),
+			    MOMOUT_DEC_INT (nbinstr),
+			    MOMOUT_SPACE (48),
 			    MOMOUT_LITERAL ("in block:"),
 			    MOMOUT_ITEM ((const momitem_t *) blkitm), NULL);
 	  momtypenc_t lhstyp = emit_var_item_cgen (cg, lhsitm);
@@ -4212,13 +4033,21 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 	  momtypenc_t rtyp = emit_expr_cgen (cg, rhsv);
 	  if (lhstyp != rtyp)
 	    CGEN_ERROR_MOM (cg,
-			    MOMOUT_LITERAL ("type mismatch in assign:"),
-			    MOMOUT_VALUE ((const momval_t) curinsv),
+			    MOMOUT_LITERAL
+			    ("type mismatch in assign:"),
+			    MOMOUT_VALUE ((const
+					   momval_t)
+					  curinsv),
 			    MOMOUT_SPACE (48),
-			    MOMOUT_LITERAL ("at rank#"),
-			    MOMOUT_DEC_INT (ix), MOMOUT_LITERAL ("/"),
-			    MOMOUT_DEC_INT (nbinstr), MOMOUT_SPACE (48),
-			    MOMOUT_LITERAL ("in block:"),
+			    MOMOUT_LITERAL
+			    ("at rank#"),
+			    MOMOUT_DEC_INT (ix),
+			    MOMOUT_LITERAL ("/"),
+			    MOMOUT_DEC_INT
+			    (nbinstr),
+			    MOMOUT_SPACE (48),
+			    MOMOUT_LITERAL
+			    ("in block:"),
 			    MOMOUT_ITEM ((const momitem_t *) blkitm), NULL);
 	  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (";"),
 		   MOMOUT_NEWLINE ());
@@ -4227,8 +4056,8 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
       else if (opitm == mom_named__chunk)
 	{
 	  /* *chunk(....) */
-	  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("/** chunk **/"),
-		   MOMOUT_NEWLINE ());
+	  MOM_OUT (&cg->cgen_outbody,
+		   MOMOUT_LITERAL ("/** chunk **/"), MOMOUT_NEWLINE ());
 	  for (unsigned cix = 0; cix < insarity; cix++)
 	    {
 	      momval_t curchkv = mom_node_nth (curinsv, cix);
@@ -4248,8 +4077,8 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 		   MOMOUT_LITERAL ("/** comment **/"), MOMOUT_NEWLINE ());
 	  if (mom_is_string (com0v))
 	    MOM_OUT (&cg->cgen_outbody,
-		     MOMOUT_SLASHCOMMENT_STRING (mom_string_cstr
-						 (com0v)), MOMOUT_NEWLINE ());
+		     MOMOUT_SLASHCOMMENT_STRING
+		     (mom_string_cstr (com0v)), MOMOUT_NEWLINE ());
 	}
       //// IF instruction
       else if (opitm == mom_named__if && insarity == 2)
@@ -4273,10 +4102,10 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 	  momtypenc_t ctyp = emit_expr_cgen (cg, testv);
 	  if (ctyp == momtypenc__none)
 	    CGEN_ERROR_MOM (cg,
-			    MOMOUT_LITERAL ("invalid condition in if:"),
+			    MOMOUT_LITERAL
+			    ("invalid condition in if:"),
 			    MOMOUT_VALUE ((const momval_t) curinsv),
-			    MOMOUT_SPACE (48),
-			    MOMOUT_LITERAL ("at rank#"),
+			    MOMOUT_SPACE (48), MOMOUT_LITERAL ("at rank#"),
 			    MOMOUT_DEC_INT (ix), MOMOUT_LITERAL ("/"),
 			    MOMOUT_DEC_INT (nbinstr), MOMOUT_SPACE (48),
 			    MOMOUT_LITERAL ("in block:"),
@@ -4380,9 +4209,15 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 		 sizeof (struct mom_attrentry_st), cgen_cmp_case_items_mom);
 	  for (int eix = 0; eix < (int) insarity - 1; eix++)
 	    if (casentarr[eix].aten_itm == casentarr[eix + 1].aten_itm)
-	      CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("duplicate case:"),
-			      MOMOUT_ITEM ((const momitem_t *)
-					   casentarr[eix].aten_itm),
+	      CGEN_ERROR_MOM (cg,
+			      MOMOUT_LITERAL
+			      ("duplicate case:"),
+			      MOMOUT_ITEM
+			      ((const
+				momitem_t
+				*)
+			       casentarr
+			       [eix].aten_itm),
 			      MOMOUT_LITERAL
 			      (" in dispatch instruction:"),
 			      MOMOUT_VALUE ((const momval_t) curinsv));
@@ -4393,12 +4228,17 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 	  MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (),
 		   MOMOUT_LITERAL ("// dispatch#"),
 		   MOMOUT_DEC_INT (dispix), MOMOUT_NEWLINE (),
-		   MOMOUT_LITERAL ("momitem_t* " CGEN_DISPATCH_PREFIX),
+		   MOMOUT_LITERAL ("momitem_t* "
+				   CGEN_DISPATCH_PREFIX),
 		   MOMOUT_DEC_INT (dispix),
 		   MOMOUT_LITERAL ("mom_value_to_item("), NULL);
 	  if (emit_expr_cgen (cg, dispv) != momtypenc_val)
-	    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid dispatcher:"),
-			    MOMOUT_VALUE ((const momval_t) dispv),
+	    CGEN_ERROR_MOM (cg,
+			    MOMOUT_LITERAL
+			    ("invalid dispatcher:"),
+			    MOMOUT_VALUE ((const
+					   momval_t)
+					  dispv),
 			    MOMOUT_LITERAL
 			    (" in dispatch instruction:"),
 			    MOMOUT_VALUE ((const momval_t) curinsv));
@@ -4416,15 +4256,15 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 	    {
 	      if (eix == 0
 		  || casentarr[eix].aten_itm != casentarr[eix - 1].aten_itm)
-		MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (),
-			 MOMOUT_LITERALV ((const char *) ((eix > 0) ?
-							  "break;" :
-							  " ")),
+		MOM_OUT (&cg->cgen_outbody,
+			 MOMOUT_NEWLINE (),
+			 MOMOUT_LITERALV ((const char *) ((eix > 0) ? "break;"
+							  : " ")),
 			 MOMOUT_LITERAL ("case "),
 			 MOMOUT_DEC_INT ((int)
 					 mom_item_hash (casentarr
-							[eix].aten_itm)
-					 % modh), MOMOUT_LITERAL (":"), NULL);
+							[eix].aten_itm) %
+					 modh), MOMOUT_LITERAL (":"), NULL);
 	      MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (),
 		       MOMOUT_LITERAL ("if (" CGEN_DISPATCH_PREFIX),
 		       MOMOUT_DEC_INT (dispix), MOMOUT_LITERAL (" == "));
@@ -4459,16 +4299,27 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 	    CGEN_ERROR_MOM (cg,
 			    MOMOUT_LITERAL
 			    ("invalid destination block in jump"),
-			    MOMOUT_VALUE ((const momval_t) curinsv),
-			    MOMOUT_SPACE (48),
-			    MOMOUT_LITERAL ("at rank#"),
-			    MOMOUT_DEC_INT (ix), MOMOUT_LITERAL ("/"),
-			    MOMOUT_DEC_INT (nbinstr), MOMOUT_SPACE (48),
-			    MOMOUT_LITERAL ("in block:"),
+			    MOMOUT_VALUE
+			    ((const
+			      momval_t)
+			     curinsv),
+			    MOMOUT_SPACE
+			    (48),
+			    MOMOUT_LITERAL
+			    ("at rank#"),
+			    MOMOUT_DEC_INT
+			    (ix),
+			    MOMOUT_LITERAL
+			    ("/"),
+			    MOMOUT_DEC_INT
+			    (nbinstr),
+			    MOMOUT_SPACE
+			    (48),
+			    MOMOUT_LITERAL
+			    ("in block:"),
 			    MOMOUT_ITEM ((const momitem_t *) blkitm), NULL);
 	  momitem_t *destblkitm = destblockv.pitem;
-	  MOM_OUT (&cg->cgen_outbody,
-		   MOMOUT_NEWLINE (),
+	  MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (),
 		   MOMOUT_LITERAL ("/*!jump "),
 		   MOMOUT_ITEM ((const momitem_t *) destblkitm),
 		   MOMOUT_LITERAL ("*/"), MOMOUT_NEWLINE ());
@@ -4504,16 +4355,26 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 		   MOMOUT_LITERAL
 		   ("mom_item_tasklet_push_frame(momtasklet, "), NULL);
 	  if (emit_expr_cgen (cg, funexprv) != momtypenc_val)
-	    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("function:"),
-			    MOMOUT_VALUE ((const momval_t) funexprv),
+	    CGEN_ERROR_MOM (cg,
+			    MOMOUT_LITERAL
+			    ("function:"),
+			    MOMOUT_VALUE ((const
+					   momval_t)
+					  funexprv),
 			    MOMOUT_LITERAL
 			    (" of non-value type in call:"),
-			    MOMOUT_VALUE ((const momval_t) curinsv),
+			    MOMOUT_VALUE ((const
+					   momval_t)
+					  curinsv),
 			    MOMOUT_SPACE (48),
-			    MOMOUT_LITERAL ("at rank#"),
-			    MOMOUT_DEC_INT (ix), MOMOUT_LITERAL ("/"),
-			    MOMOUT_DEC_INT (nbinstr), MOMOUT_SPACE (48),
-			    MOMOUT_LITERAL ("in block:"),
+			    MOMOUT_LITERAL
+			    ("at rank#"),
+			    MOMOUT_DEC_INT (ix),
+			    MOMOUT_LITERAL ("/"),
+			    MOMOUT_DEC_INT (nbinstr),
+			    MOMOUT_SPACE (48),
+			    MOMOUT_LITERAL
+			    ("in block:"),
 			    MOMOUT_ITEM ((const momitem_t *) blkitm), NULL);
 	  for (int aix = 2; aix < (int) insarity; aix++)
 	    {
@@ -4529,10 +4390,9 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 		  if (momtypenc_int != emit_expr_cgen (cg, curargexpv))
 		    MOM_FATAL (MOMOUT_LITERAL ("corrupted call:"),
 			       MOMOUT_VALUE ((const momval_t) curinsv),
-			       MOMOUT_LITERAL
-			       ("; corrupted non-int arg:"),
-			       MOMOUT_VALUE ((const momval_t)
-					     curargexpv), NULL);
+			       MOMOUT_LITERAL ("; corrupted non-int arg:"),
+			       MOMOUT_VALUE ((const momval_t) curargexpv),
+			       NULL);
 		  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (")"));
 		  break;
 		case momtypenc_val:
@@ -4541,10 +4401,9 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 		  if (momtypenc_val != emit_expr_cgen (cg, curargexpv))
 		    MOM_FATAL (MOMOUT_LITERAL ("corrupted call:"),
 			       MOMOUT_VALUE ((const momval_t) curinsv),
-			       MOMOUT_LITERAL
-			       ("; corrupted non-val arg:"),
-			       MOMOUT_VALUE ((const momval_t)
-					     curargexpv), NULL);
+			       MOMOUT_LITERAL ("; corrupted non-val arg:"),
+			       MOMOUT_VALUE ((const momval_t) curargexpv),
+			       NULL);
 		  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (")"));
 		  break;
 		case momtypenc_double:
@@ -4553,16 +4412,17 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 		  if (momtypenc_double != emit_expr_cgen (cg, curargexpv))
 		    MOM_FATAL (MOMOUT_LITERAL ("corrupted call:"),
 			       MOMOUT_VALUE ((const momval_t) curinsv),
-			       MOMOUT_LITERAL
-			       ("; corrupted non-double arg:"),
-			       MOMOUT_VALUE ((const momval_t)
-					     curargexpv), NULL);
+			       MOMOUT_LITERAL ("; corrupted non-double arg:"),
+			       MOMOUT_VALUE ((const momval_t) curargexpv),
+			       NULL);
 		  MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (")"));
 		  break;
 		case momtypenc_string:
 		default:
 		  {
-		    char tybuf[4] = { 0 };
+		    char tybuf[4] = {
+		      0
+		    };
 		    tybuf[0] = curargty;
 		    tybuf[1] = (char) 0;
 		    CGEN_ERROR_MOM (cg,
@@ -4659,14 +4519,16 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 				("too many procedure results in "),
 				MOMOUT_VALUE (curinsv),
 				MOMOUT_SPACE (48),
-				MOMOUT_LITERAL ("at rank#"),
+				MOMOUT_LITERAL
+				("at rank#"),
 				MOMOUT_DEC_INT (ix),
 				MOMOUT_LITERAL ("/"),
 				MOMOUT_DEC_INT (nbinstr),
 				MOMOUT_SPACE (48),
-				MOMOUT_LITERAL (" in block "),
-				MOMOUT_ITEM ((const momitem_t *)
-					     blkitm), NULL);
+				MOMOUT_LITERAL
+				(" in block "),
+				MOMOUT_ITEM ((const
+					      momitem_t *) blkitm), NULL);
 	      if (insarity == 0 || curinsv.pitem == mom_named__return)
 		{
 		  if (!prorestypv.ptr || prorestypv.pitem == mom_named__void)
@@ -4725,7 +4587,8 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
       else
 	CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("invalid instruction:"),
 			MOMOUT_VALUE ((const momval_t) curinsv),
-			MOMOUT_SPACE (48), MOMOUT_LITERAL ("in block:"),
+			MOMOUT_SPACE (48),
+			MOMOUT_LITERAL ("in block:"),
 			MOMOUT_ITEM ((const momitem_t *) blkitm), NULL);
     };
   // emit block epilogue if locking
@@ -4757,19 +4620,23 @@ emit_goto_block_cgen (struct c_generator_mom_st *cg,
     mom_item_assoc_get (cg->cgen_rout.cgrout_associtm, blkitm);
   MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit goto block:"),
 	     MOMOUT_ITEM ((const momitem_t *) blkitm),
-	     MOMOUT_LITERAL (" lockix#"), MOMOUT_DEC_INT (lockix),
+	     MOMOUT_LITERAL (" lockix#"),
+	     MOMOUT_DEC_INT (lockix),
 	     MOMOUT_LITERAL (" blockdatav="), MOMOUT_VALUE (blockdatav));
   if (blockdatav.ptr == NULL
       || mom_node_conn (blockdatav) != mom_named__block)
-    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("bad block to go to:"),
+    CGEN_ERROR_MOM (cg,
+		    MOMOUT_LITERAL
+		    ("bad block to go to:"),
 		    MOMOUT_ITEM ((const momitem_t *) blkitm));
   int bix = mom_integer_val_def (mom_node_nth (blockdatav, 0), -2) - 1;
   assert (bix >= 0);
   if (lockix > 0)
     MOM_OUT (&cg->cgen_outbody,
 	     MOMOUT_NEWLINE (),
-	     MOMOUT_LITERAL ("/*!unlock-goto*/ { mom_unlock_item ("
-			     CGEN_LOCK_ITEM_PREFIX),
+	     MOMOUT_LITERAL
+	     ("/*!unlock-goto*/ { mom_unlock_item ("
+	      CGEN_LOCK_ITEM_PREFIX),
 	     MOMOUT_DEC_INT (lockix), MOMOUT_LITERAL ("); "), NULL);
   else
     MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL (" "));
@@ -4791,7 +4658,8 @@ emit_goto_block_cgen (struct c_generator_mom_st *cg,
 	     MOMOUT_LITERAL ("*/;"), NULL);
   if (lockix > 0)
     MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (),
-	     MOMOUT_LITERAL ("}; //!unlocked " CGEN_LOCK_ITEM_PREFIX),
+	     MOMOUT_LITERAL ("}; //!unlocked "
+			     CGEN_LOCK_ITEM_PREFIX),
 	     MOMOUT_DEC_INT (lockix), MOMOUT_NEWLINE (), NULL);
 }
 
@@ -4811,7 +4679,8 @@ emit_moduleinit_cgen (struct c_generator_mom_st *cg)
 	   MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL ("const char " CGEN_MD5MOD_PREFIX),
 	   MOMOUT_LITERALV ((const char *)
-			    mom_ident_cstr_of_item (cg->cgen_moditm)),
+			    mom_ident_cstr_of_item
+			    (cg->cgen_moditm)),
 	   MOMOUT_LITERAL
 	   ("[] = MONIMELT_MD5_MODULE; // Makefile generated"),
 	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
@@ -4822,8 +4691,10 @@ emit_moduleinit_cgen (struct c_generator_mom_st *cg)
 	   MOMOUT_LITERAL ("static const union momrout_un "
 			   CGEN_DROUTARR_PREFIX),
 	   MOMOUT_LITERALV ((const char *)
-			    mom_ident_cstr_of_item (cg->cgen_moditm)),
-	   MOMOUT_LITERAL ("["), MOMOUT_DEC_INT ((int) nbrout + 1),
+			    mom_ident_cstr_of_item
+			    (cg->cgen_moditm)),
+	   MOMOUT_LITERAL ("["),
+	   MOMOUT_DEC_INT ((int) nbrout + 1),
 	   MOMOUT_LITERAL ("];"), MOMOUT_NEWLINE (), NULL);
   MOM_OUT (&cg->cgen_outbody,
 	   MOMOUT_LITERAL
@@ -4833,8 +4704,10 @@ emit_moduleinit_cgen (struct c_generator_mom_st *cg)
 	   MOMOUT_LITERAL ("static const union momrout_un "
 			   CGEN_DROUTARR_PREFIX),
 	   MOMOUT_LITERALV ((const char *)
-			    mom_ident_cstr_of_item (cg->cgen_moditm)),
-	   MOMOUT_LITERAL ("["), MOMOUT_DEC_INT ((int) nbrout + 1),
+			    mom_ident_cstr_of_item
+			    (cg->cgen_moditm)),
+	   MOMOUT_LITERAL ("["),
+	   MOMOUT_DEC_INT ((int) nbrout + 1),
 	   MOMOUT_LITERAL ("] = {"), MOMOUT_INDENT_MORE (),
 	   MOMOUT_NEWLINE (), NULL);
   for (unsigned rix = 0; rix < nbrout; rix++)
@@ -4875,19 +4748,23 @@ emit_moduleinit_cgen (struct c_generator_mom_st *cg)
 	   ("}; // end of module routines descriptor array for "),
 	   MOMOUT_ITEM ((const momitem_t *) cg->cgen_moditm),
 	   MOMOUT_NEWLINE (), NULL);
-  MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
+  MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (),
+	   MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL ("// module initialization for "),
 	   MOMOUT_ITEM ((const momitem_t *) cg->cgen_moditm),
 	   MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL ("void " MOM_MODULE_INIT_PREFIX),
 	   MOMOUT_LITERALV ((const char *)
-			    mom_ident_cstr_of_item (cg->cgen_moditm)),
-	   MOMOUT_LITERAL (" (void) {"), MOMOUT_INDENT_MORE (),
-	   MOMOUT_NEWLINE ());
+			    mom_ident_cstr_of_item
+			    (cg->cgen_moditm)),
+	   MOMOUT_LITERAL (" (void) {"),
+	   MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE ());
   MOM_OUT (&cg->cgen_outbody,
-	   MOMOUT_LITERAL ("mom_module_internal_initialize (\""),
+	   MOMOUT_LITERAL
+	   ("mom_module_internal_initialize (\""),
 	   MOMOUT_LITERALV ((const char *)
-			    mom_ident_cstr_of_item (cg->cgen_moditm)),
+			    mom_ident_cstr_of_item
+			    (cg->cgen_moditm)),
 	   MOMOUT_LITERAL ("\" /*!module "),
 	   MOMOUT_ITEM ((const momitem_t *) cg->cgen_moditm),
 	   MOMOUT_LITERAL ("*/,"), MOMOUT_NEWLINE (),
@@ -4897,16 +4774,18 @@ emit_moduleinit_cgen (struct c_generator_mom_st *cg)
 	   MOMOUT_DEC_INT ((int) nbrout),
 	   MOMOUT_LITERAL (",  " CGEN_DROUTARR_PREFIX),
 	   MOMOUT_LITERALV ((const char *)
-			    mom_ident_cstr_of_item (cg->cgen_moditm)),
-	   MOMOUT_LITERAL (");"), NULL);
+			    mom_ident_cstr_of_item
+			    (cg->cgen_moditm)), MOMOUT_LITERAL (");"), NULL);
   MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (),
 	   MOMOUT_LITERAL ("MOM_INFORMPRINTF(\"module "),
 	   MOMOUT_ITEM ((const momitem_t *) cg->cgen_moditm),
 	   // the MONIMELT_MD5_MODULE is computed in the Makefile
 	   MOMOUT_LITERAL
 	   (" of md5 \" MONIMELT_MD5_MODULE \" initialized.\");"), NULL);
-  MOM_OUT (&cg->cgen_outbody, MOMOUT_INDENT_LESS (), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL ("} // end of module initialization"),
+  MOM_OUT (&cg->cgen_outbody, MOMOUT_INDENT_LESS (),
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL
+	   ("} // end of module initialization"),
 	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
 }
 
