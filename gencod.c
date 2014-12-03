@@ -350,6 +350,7 @@ mom_generate_c_module (momitem_t *moditm, const char *dirname, char **perrmsg)
       MOM_DEBUGPRINTF (gencod, "generate_c_module got errored #%d: %s", jr,
 		       mycgen.cgen_errmsg);
       assert (mycgen.cgen_errmsg != NULL);
+      errno = 0;
       MOM_WARNING (MOMOUT_LITERAL ("generate_c_module on module:"),
 		   MOMOUT_ITEM ((const momitem_t *) moditm),
 		   MOMOUT_LITERAL (" failed with error "),
@@ -1465,8 +1466,16 @@ scan_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
 			  MOMOUT_ITEM ((const momitem_t *) varitm), NULL);
 	}
     }
-  CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("scan_item unimplemented for varitm:"),
-		  MOMOUT_ITEM ((const momitem_t *) varitm), NULL);
+  momval_t verbatimv = mom_item_get_attribute (varitm, mom_named__verbatim);
+  if (mom_is_string (verbatimv))
+    {
+      momval_t verbtypv = mom_item_get_attribute (varitm, mom_named__ctype);
+      if (mom_is_item (verbtypv))
+	return typenc_cgen (cg, true, verbtypv.pitem, (momval_t) varitm);
+    }
+  CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("scan_item failure for varitm:"),
+		  MOMOUT_ITEM ((const momitem_t *) varitm),
+		  MOMOUT_SPACE (64), NULL);
 }
 
 
