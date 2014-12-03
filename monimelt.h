@@ -2340,6 +2340,42 @@ mom_set_nth_item (momval_t setv, int rk)
   return NULL;
 }
 
+static inline int
+mom_set_item_index (momval_t setv, momitem_t *itm)
+{
+  if (!setv.ptr || *setv.ptype != momty_set
+      || !itm || itm->i_typnum != momty_item)
+    return -1;
+  unsigned slen = setv.pset->slen;
+  int lo = 0, hi = (int) slen - 1, md = 0;
+  while (lo + 2 < hi)
+    {
+      md = (lo + hi) / 2;
+      const momitem_t *miditm = setv.pset->itemseq[md];
+      assert (miditm != NULL && miditm->i_typnum == momty_item);
+      if (MOM_UNLIKELY (miditm == itm))
+	return md;
+      else if (mom_item_cmp (miditm, itm) < 0)
+	lo = md;
+      else
+	hi = md;
+    }
+  for (md = lo; md <= hi; md++)
+    {
+      const momitem_t *miditm = setv.pset->itemseq[md];
+      assert (miditm != NULL && miditm->i_typnum == momty_item);
+      if (MOM_UNLIKELY (miditm == itm))
+	return md;
+    }
+  return -1;
+}
+
+static inline bool
+mom_set_contains (momval_t setv, momitem_t *itm)
+{
+  return mom_set_item_index (setv, itm) >= 0;
+}
+
 static inline bool
 mom_is_tuple (momval_t tupv)
 {

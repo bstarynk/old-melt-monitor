@@ -2369,7 +2369,15 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
      MOMOUT_LITERAL ("{ // start of tasklet function "),
      MOMOUT_ITEM ((const momitem_t *) tfunitm),
      MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE (), NULL);
-  int startix = -__LINE__;
+  momitem_t *startblockitm =
+    mom_value_to_item (mom_item_get_attribute (tfunitm,
+					       mom_named__tasklet_function));
+  int startix = 1 + mom_set_item_index (blocksetv, startblockitm);
+  MOM_DEBUG (gencod,
+	     MOMOUT_LITERAL (" emit_tfun startblockitm="),
+	     MOMOUT_ITEM ((const momitem_t *) startblockitm),
+	     MOMOUT_LITERAL (" startix="), MOMOUT_DEC_INT (startix));
+  assert (startix > 0);
   MOM_OUT
     (&cg->cgen_outbody,
      MOMOUT_LITERAL ("if (MOM_UNLIKELY(momstate==0)) return "),
