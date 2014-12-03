@@ -2266,6 +2266,13 @@ scan_taskletfunction_cgen (struct c_generator_mom_st *cg, momitem_t *tfunitm)
 void
 emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 {
+  assert (cg && cg->cgen_magic == CGEN_MAGIC);
+  momitm_t *tfunitm = cg->cgen_rout.cgrout_routitm;
+  assert (tfunitm && tfunitm->i_typnum == momty_item);
+  CGEN_ERROR_MOM (cg,
+		  MOMOUT_LITERAL
+		  (" unimplemented emit_taskletfunction tfunitm:"),
+		  MOMOUT_ITEM ((const momitem_t *) tfunitm), NULL);
 #if 0
   unsigned nbconstants = 0;
   unsigned nbblocks = 0;
