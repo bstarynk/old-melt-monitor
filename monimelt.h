@@ -1393,11 +1393,21 @@ struct momtfundescr_st
   unsigned tfun_magic;		/* always MOM_TFUN_MAGIC */
   unsigned tfun_minclosize;	/* minimal closure size */
   unsigned tfun_nbconstants;	/* number of constant items */
+  unsigned tfun_nbblocks;	/* number of blocks or states */
   unsigned tfun_frame_nbval;	/* number of values in its frame */
   unsigned tfun_frame_nbnum;	/* number of intptr_t numbers in its frame */
   unsigned tfun_frame_nbdbl;	/* number of double numbers in its frame */
+  /// the array of constant ids and of constant items
   const char *const *tfun_constantids;
   const momitem_t *const *tfun_constantitems;
+  /// the array of block ids
+  const char *const *tfun_blockids;
+  /// the array of local values ids
+  const char *const *tfun_valids;
+  /// the array of local numbers ids
+  const char *const *tfun_numids;
+  /// the array of local double ids
+  const char *const *tfun_dblids;
   const char *tfun_ident;	/* the cidentifier of FOO; starts with a dot '.' for Jit-ed routine */
   const char *tfun_module;	/* always macro MONIMELT_CURRENT_MODULE or NULL for JIT-ed routine */
   const momval_t tfun_jitcode;	/* for a JIT-ed routine, the node of its code */
@@ -1862,14 +1872,15 @@ double mom_item_tasklet_frame_nth_double (momitem_t *itm, int frk, int drk);
 void mom_item_tasklet_frame_set_state (momitem_t *itm, int frk, int state);
 
 static inline void
-mom_item_tasklet_top_frame_set_state(momitem_t *itm, int state)
+mom_item_tasklet_top_frame_set_state (momitem_t *itm, int state)
 {
   assert (itm && itm->i_typnum == momty_item);
   if (!itm->i_payload || itm->i_paylkind != mompayk_tasklet)
     return;
   struct mom_taskletdata_st *itd = itm->i_payload;
   unsigned fratop = itd->dtk_fratop;
-  if (fratop>0) itd->dtk_frames[(int)fratop-1].fr_state = state;
+  if (fratop > 0)
+    itd->dtk_frames[(int) fratop - 1].fr_state = state;
 }
 
 static inline momval_t
