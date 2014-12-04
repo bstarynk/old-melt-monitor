@@ -1414,12 +1414,11 @@ scan_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
 	      mom_item_hset_count (cg->cgen_rout.cgrout_hsetintitm);
 	    assert (!mom_item_hset_contains
 		    (cg->cgen_rout.cgrout_hsetintitm, (momval_t) varitm));
-	    mom_item_assoc_put (cg->cgen_rout.cgrout_associtm, varitm,
-				(momval_t)
-				mom_make_node_sized (mom_named__intptr_t, 2,
-						     mom_make_integer (cnt),
-						     cg->
-						     cgen_rout.cgrout_routitm));
+	    mom_item_assoc_put	////
+	      (cg->cgen_rout.cgrout_associtm, varitm,
+	       (momval_t) mom_make_node_sized (mom_named__intptr_t, 2,
+					       mom_make_integer (cnt),
+					       cg->cgen_rout.cgrout_routitm));
 	    mom_item_hset_add (cg->cgen_rout.cgrout_hsetintitm,
 			       (momval_t) varitm);
 	    return momtypenc_int;
@@ -1434,12 +1433,11 @@ scan_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
 	      mom_item_hset_count (cg->cgen_rout.cgrout_hsetdblitm);
 	    assert (!mom_item_hset_contains
 		    (cg->cgen_rout.cgrout_hsetdblitm, (momval_t) varitm));
-	    mom_item_assoc_put (cg->cgen_rout.cgrout_associtm, varitm,
-				(momval_t)
-				mom_make_node_sized (mom_named__double, 2,
-						     mom_make_integer (cnt),
-						     cg->
-						     cgen_rout.cgrout_routitm));
+	    mom_item_assoc_put	////
+	      (cg->cgen_rout.cgrout_associtm, varitm,
+	       (momval_t) mom_make_node_sized (mom_named__double, 2,
+					       mom_make_integer (cnt),
+					       cg->cgen_rout.cgrout_routitm));
 	    mom_item_hset_add (cg->cgen_rout.cgrout_hsetdblitm,
 			       (momval_t) varitm);
 	    return momtypenc_double;
@@ -1454,12 +1452,11 @@ scan_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
 	      mom_item_hset_count (cg->cgen_rout.cgrout_hsetvalitm);
 	    assert (!mom_item_hset_contains
 		    (cg->cgen_rout.cgrout_hsetvalitm, (momval_t) varitm));
-	    mom_item_assoc_put (cg->cgen_rout.cgrout_associtm, varitm,
-				(momval_t)
-				mom_make_node_sized (mom_named__momval_t, 2,
-						     mom_make_integer (cnt),
-						     cg->
-						     cgen_rout.cgrout_routitm));
+	    mom_item_assoc_put	////
+	      (cg->cgen_rout.cgrout_associtm, varitm,
+	       (momval_t) mom_make_node_sized (mom_named__momval_t, 2,
+					       mom_make_integer (cnt),
+					       cg->cgen_rout.cgrout_routitm));
 	    mom_item_hset_add (cg->cgen_rout.cgrout_hsetvalitm,
 			       (momval_t) varitm);
 	    return momtypenc_val;
@@ -2808,161 +2805,191 @@ emit_var_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
 	     MOMOUT_NEWLINE (), MOMOUT_LITERAL ("expasv="),
 	     MOMOUT_VALUE ((const momval_t) expasv), NULL);
   const momitem_t *noditm = mom_node_conn (expasv);
-  if (noditm == mom_named__constants)
-    {
-      int cix = mom_integer_val_def (mom_node_nth (expasv, 0), -1);
-      momitem_t *constitm = mom_value_to_item (mom_node_nth (expasv, 1));
-      assert (constitm != NULL && constitm->i_typnum == momty_item);
-      assert (cix >= 0);
-      if (cg->cgen_rout.cgrout_kind == cgr_proc)
+#define EMITITEMASNODHMAX_MOM 61
+#define ASNODECASE(Nam) case mom_hashname_##Nam % EMITITEMASNODHMAX_MOM: \
+  if (noditm != mom_named_##Nam) goto other_noditm;
+  if (noditm)
+    switch (mom_item_hash (noditm) % EMITITEMASNODHMAX_MOM)
+      {
+	//
+	ASNODECASE (_constants);
 	{
+	  int cix = mom_integer_val_def (mom_node_nth (expasv, 0), -1);
+	  momitem_t *constitm = mom_value_to_item (mom_node_nth (expasv, 1));
+	  assert (constitm != NULL && constitm->i_typnum == momty_item);
+	  assert (cix >= 0);
+	  if (cg->cgen_rout.cgrout_kind == cgr_proc)
+	    {
+	      MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (64),
+		       MOMOUT_LITERAL ("((momval_t) "
+				       CGEN_PROC_CONSTANTITEMS_PREFIX),
+		       MOMOUT_LITERALV (mom_ident_cstr_of_item
+					(cg->cgen_rout.cgrout_routitm)),
+		       MOMOUT_LITERAL ("["), MOMOUT_DEC_INT (cix),
+		       MOMOUT_LITERAL ("] /*"),
+		       MOMOUT_ITEM ((const momitem_t *) constitm),
+		       MOMOUT_LITERAL ("*/)"), NULL);
+	      return momtypenc_val;
+	    }
+	  else if (cg->cgen_rout.cgrout_kind == cgr_funt)
+	    {
+	      MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (64),
+		       MOMOUT_LITERAL ("((momval_t) "
+				       CGEN_FUN_CONSTANTITEMS_PREFIX),
+		       MOMOUT_LITERALV (mom_ident_cstr_of_item
+					(cg->cgen_rout.cgrout_routitm)),
+		       MOMOUT_LITERAL ("["), MOMOUT_DEC_INT (cix),
+		       MOMOUT_LITERAL ("] /*"),
+		       MOMOUT_ITEM ((const momitem_t *) constitm),
+		       MOMOUT_LITERAL ("*/)"), NULL);
+	      return momtypenc_val;
+	    }
+	  else
+	    assert (false && "impossible routkind");
+	};
+	break;
+	////
+	ASNODECASE (_formals);
+	if (cg->cgen_rout.cgrout_kind == cgr_proc)
+	  {
+	    int formix =
+	      (int) mom_integer_val_def (mom_node_nth (expasv, 1), -1);
+	    assert (formix >= 0);
+	    MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (64),
+		     MOMOUT_LITERAL (CGEN_FORMALARG_PREFIX),
+		     MOMOUT_DEC_INT (formix), MOMOUT_LITERAL ("/*"),
+		     MOMOUT_ITEM ((const momitem_t *) varitm),
+		     MOMOUT_LITERAL ("*/ "));
+	    return emit_ctype_cgen (cg, NULL, mom_node_nth (expasv, 2));
+	  }
+	else
+	  goto other_noditm;
+	////
+	ASNODECASE (_closed_values);
+	{
+	  int cix = mom_integer_val_def (mom_node_nth (expasv, 0), -1);
+	  momitem_t *clositm = mom_value_to_item (mom_node_nth (expasv, 1));
+	  assert (clositm != NULL && clositm->i_typnum == momty_item);
+	  assert (cix >= 0);
+	  assert (cg->cgen_rout.cgrout_kind == cgr_funt);
 	  MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (64),
-		   MOMOUT_LITERAL ("((momval_t) "
-				   CGEN_PROC_CONSTANTITEMS_PREFIX),
-		   MOMOUT_LITERALV (mom_ident_cstr_of_item
-				    (cg->cgen_rout.cgrout_routitm)),
-		   MOMOUT_LITERAL ("["), MOMOUT_DEC_INT (cix),
-		   MOMOUT_LITERAL ("] /*"),
-		   MOMOUT_ITEM ((const momitem_t *) constitm),
+		   MOMOUT_LITERAL ("(momclovals["),
+		   MOMOUT_DEC_INT (cix), MOMOUT_LITERAL ("] /*"),
+		   MOMOUT_ITEM ((const momitem_t *) clositm),
 		   MOMOUT_LITERAL ("*/)"), NULL);
 	  return momtypenc_val;
 	}
-      else if (cg->cgen_rout.cgrout_kind == cgr_funt)
+	goto other_noditm;
+	////
+	ASNODECASE (_momval_t)
 	{
-	  MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (64),
-		   MOMOUT_LITERAL ("((momval_t) "
-				   CGEN_FUN_CONSTANTITEMS_PREFIX),
-		   MOMOUT_LITERALV (mom_ident_cstr_of_item
-				    (cg->cgen_rout.cgrout_routitm)),
-		   MOMOUT_LITERAL ("["), MOMOUT_DEC_INT (cix),
-		   MOMOUT_LITERAL ("] /*"),
-		   MOMOUT_ITEM ((const momitem_t *) constitm),
-		   MOMOUT_LITERAL ("*/)"), NULL);
-	  return momtypenc_val;
+	  int vix = mom_integer_val_def (mom_node_nth (expasv, 0), -1);
+	  assert (vix >= 0);
+	  if (cg->cgen_rout.cgrout_kind == cgr_proc)
+	    {
+	      MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (64),
+		       MOMOUT_LITERAL ("(" CGEN_PROC_VALUE_PREFIX),
+		       MOMOUT_DEC_INT ((int) vix),
+		       MOMOUT_LITERAL ("/*:"),
+		       MOMOUT_ITEM ((const momitem_t *) varitm),
+		       MOMOUT_LITERAL ("*/)"), NULL);
+	      return momtypenc_val;
+	    }
+	  else if (cg->cgen_rout.cgrout_kind == cgr_funt)
+	    {
+	      MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (64),
+		       MOMOUT_LITERAL ("momvals["),
+		       MOMOUT_DEC_INT ((int) vix),
+		       MOMOUT_LITERAL ("/*:"),
+		       MOMOUT_ITEM ((const momitem_t *) varitm),
+		       MOMOUT_LITERAL ("*/]"), NULL);
+	      return momtypenc_val;
+	    }
+	  else
+	    assert (false && "impossible routkind");
 	}
-      else
-	assert (false && "impossible routkind");
-    }
-  else if (noditm == mom_named__formals
-	   && cg->cgen_rout.cgrout_kind == cgr_proc)
-    {
-      int formix = (int) mom_integer_val_def (mom_node_nth (expasv, 1), -1);
-      assert (formix >= 0);
-      MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (64),
-	       MOMOUT_LITERAL (CGEN_FORMALARG_PREFIX),
-	       MOMOUT_DEC_INT (formix), MOMOUT_LITERAL ("/*"),
-	       MOMOUT_ITEM ((const momitem_t *) varitm),
-	       MOMOUT_LITERAL ("*/ "));
-      return emit_ctype_cgen (cg, NULL, mom_node_nth (expasv, 2));
-    }
-  else if (noditm == mom_named__closed_values)
-    {
-      int cix = mom_integer_val_def (mom_node_nth (expasv, 0), -1);
-      momitem_t *clositm = mom_value_to_item (mom_node_nth (expasv, 1));
-      assert (clositm != NULL && clositm->i_typnum == momty_item);
-      assert (cix >= 0);
-      assert (cg->cgen_rout.cgrout_kind == cgr_funt);
-      MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (64),
-	       MOMOUT_LITERAL ("(momclovals["),
-	       MOMOUT_DEC_INT (cix), MOMOUT_LITERAL ("] /*"),
-	       MOMOUT_ITEM ((const momitem_t *) clositm),
-	       MOMOUT_LITERAL ("*/)"), NULL);
-    }
-  else if (noditm == mom_named__values)
-    {
-      int vix = mom_integer_val_def (mom_node_nth (expasv, 0), -1);
-      momitem_t *valitm = mom_value_to_item (mom_node_nth (expasv, 1));
-      assert (valitm != NULL && valitm->i_typnum == momty_item);
-      assert (vix >= 0);
-      if (cg->cgen_rout.cgrout_kind == cgr_proc)
+	goto other_noditm;
+	///
+	ASNODECASE (_intptr_t);
 	{
-	  MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (64),
-		   MOMOUT_LITERAL ("(" CGEN_PROC_VALUE_PREFIX),
-		   MOMOUT_DEC_INT ((int) vix),
-		   MOMOUT_LITERAL ("/*:"),
-		   MOMOUT_ITEM ((const momitem_t *) valitm),
-		   MOMOUT_LITERAL ("*/)"), NULL);
-	  return momtypenc_val;
+	  int nix = mom_integer_val_def (mom_node_nth (expasv, 0), -1);
+	  assert (nix >= 0);
+	  if (cg->cgen_rout.cgrout_kind == cgr_proc)
+	    {
+	      MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (64),
+		       MOMOUT_LITERAL ("(" CGEN_PROC_NUMBER_PREFIX),
+		       MOMOUT_DEC_INT ((int) nix),
+		       MOMOUT_LITERAL ("/*:"),
+		       MOMOUT_ITEM ((const momitem_t *) varitm),
+		       MOMOUT_LITERAL ("*/)"), NULL);
+	      return momtypenc_int;
+	    }
+	  else if (cg->cgen_rout.cgrout_kind == cgr_funt)
+	    {
+	      MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (64),
+		       MOMOUT_LITERAL ("momnums["),
+		       MOMOUT_DEC_INT ((int) nix),
+		       MOMOUT_LITERAL ("/*:"),
+		       MOMOUT_ITEM ((const momitem_t *) varitm),
+		       MOMOUT_LITERAL ("*/]"), NULL);
+	      return momtypenc_int;
+	    }
+	  else
+	    assert (false && "impossible routkind");
 	}
-      else if (cg->cgen_rout.cgrout_kind == cgr_funt)
+	goto other_noditm;
+	////
+	ASNODECASE (_double);
 	{
-	  MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (64),
-		   MOMOUT_LITERAL ("momvals["),
-		   MOMOUT_DEC_INT ((int) vix),
-		   MOMOUT_LITERAL ("/*:"),
-		   MOMOUT_ITEM ((const momitem_t *) valitm),
-		   MOMOUT_LITERAL ("*/]"), NULL);
-	  return momtypenc_val;
+	  int dix = mom_integer_val_def (mom_node_nth (expasv, 0), -1);
+	  assert (dix >= 0);
+	  if (cg->cgen_rout.cgrout_kind == cgr_proc)
+	    {
+	      MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (64),
+		       MOMOUT_LITERAL ("(" CGEN_PROC_DOUBLE_PREFIX),
+		       MOMOUT_DEC_INT ((int) dix),
+		       MOMOUT_LITERAL ("/*:"),
+		       MOMOUT_ITEM ((const momitem_t *) varitm),
+		       MOMOUT_LITERAL ("*/)"), NULL);
+	      return momtypenc_double;
+	    }
+	  else if (cg->cgen_rout.cgrout_kind == cgr_funt)
+	    {
+	      MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (64),
+		       MOMOUT_LITERAL ("momdbls["),
+		       MOMOUT_DEC_INT ((int) dix),
+		       MOMOUT_LITERAL ("/*:"),
+		       MOMOUT_ITEM ((const momitem_t *) varitm),
+		       MOMOUT_LITERAL ("*/]"), NULL);
+	      return momtypenc_double;
+	    }
+	  else
+	    assert (false && "impossible routkind");
 	}
-      else
-	assert (false && "impossible routkind");
-    }
-  else if (noditm == mom_named__numbers)
-    {
-      int nix = mom_integer_val_def (mom_node_nth (expasv, 0), -1);
-      momitem_t *numitm = mom_value_to_item (mom_node_nth (expasv, 1));
-      assert (numitm != NULL && numitm->i_typnum == momty_item);
-      assert (nix >= 0);
-      if (cg->cgen_rout.cgrout_kind == cgr_proc)
+	goto other_noditm;
+	////
+	ASNODECASE (_procedure)
 	{
+	  // this is for passing procedure addresses
 	  MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (64),
-		   MOMOUT_LITERAL ("(" CGEN_PROC_NUMBER_PREFIX),
-		   MOMOUT_DEC_INT ((int) nix),
-		   MOMOUT_LITERAL ("/*:"),
-		   MOMOUT_ITEM ((const momitem_t *) numitm),
-		   MOMOUT_LITERAL ("*/)"), NULL);
-	  return momtypenc_int;
+		   MOMOUT_LITERAL (MOM_PROCROUTFUN_PREFIX),
+		   MOMOUT_LITERALV (mom_ident_cstr_of_item (varitm)));
+	  return momtypenc__none;
 	}
-      else if (cg->cgen_rout.cgrout_kind == cgr_funt)
-	{
-	  MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (64),
-		   MOMOUT_LITERAL ("momnums["),
-		   MOMOUT_DEC_INT ((int) nix),
-		   MOMOUT_LITERAL ("/*:"),
-		   MOMOUT_ITEM ((const momitem_t *) numitm),
-		   MOMOUT_LITERAL ("*/]"), NULL);
-	  return momtypenc_int;
-	}
-      else
-	assert (false && "impossible routkind");
-    }
-  else if (noditm == mom_named__doubles)
-    {
-      int dix = mom_integer_val_def (mom_node_nth (expasv, 0), -1);
-      momitem_t *dblitm = mom_value_to_item (mom_node_nth (expasv, 1));
-      assert (dblitm != NULL && dblitm->i_typnum == momty_item);
-      assert (dix >= 0);
-      if (cg->cgen_rout.cgrout_kind == cgr_proc)
-	{
-	  MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (64),
-		   MOMOUT_LITERAL ("(" CGEN_PROC_DOUBLE_PREFIX),
-		   MOMOUT_DEC_INT ((int) dix),
-		   MOMOUT_LITERAL ("/*:"),
-		   MOMOUT_ITEM ((const momitem_t *) dblitm),
-		   MOMOUT_LITERAL ("*/)"), NULL);
-	  return momtypenc_double;
-	}
-      else if (cg->cgen_rout.cgrout_kind == cgr_funt)
-	{
-	  MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (64),
-		   MOMOUT_LITERAL ("momdbls["),
-		   MOMOUT_DEC_INT ((int) dix),
-		   MOMOUT_LITERAL ("/*:"),
-		   MOMOUT_ITEM ((const momitem_t *) dblitm),
-		   MOMOUT_LITERAL ("*/]"), NULL);
-	  return momtypenc_double;
-	}
-      else
-	assert (false && "impossible routkind");
-    }
-  else if (noditm == mom_named__procedure)
-    {
-      // this is for passing procedure addresses
-      MOM_OUT (&cg->cgen_outbody, MOMOUT_SPACE (64),
-	       MOMOUT_LITERAL (MOM_PROCROUTFUN_PREFIX),
-	       MOMOUT_LITERALV (mom_ident_cstr_of_item (varitm)));
-      return momtypenc__none;
-    }
+	goto other_noditm;
+	////
+      default:
+      other_noditm:
+	CGEN_ERROR_MOM		//
+	  (cg,
+	   MOMOUT_LITERAL ("emit_varitem "),
+	   MOMOUT_ITEM ((const momitem_t *) varitm),
+	   MOMOUT_LITERAL (" has unexpected node expasv "),
+	   MOMOUT_VALUE ((const momval_t) expasv), NULL);
+#undef EMITITEMASNODHMAX_MOM
+#undef ASNODECASE
+      }
+  /////
   momval_t ctypv = MOM_NULLV;
   momval_t verbatimv = MOM_NULLV;
   {
@@ -4030,16 +4057,14 @@ emit_block_cgen (struct c_generator_mom_st *cg, momitem_t *blkitm)
 	       MOMOUT_DEC_INT (lockix),
 	       MOMOUT_LITERAL (" = mom_value_to_item ("));
       if (emit_expr_cgen (cg, lockv) != momtypenc_val)
-	CGEN_ERROR_MOM (cg,
-			MOMOUT_LITERAL
-			("bad non-value lock:"),
-			MOMOUT_VALUE ((const
-				       momval_t)
-				      lockv),
-			MOMOUT_SPACE (48),
-			MOMOUT_LITERAL
-			("in block:"),
-			MOMOUT_ITEM ((const momitem_t *) blkitm), NULL);
+	CGEN_ERROR_MOM		////
+	  (cg,
+	   MOMOUT_LITERAL
+	   ("bad non-value lock:"),
+	   MOMOUT_VALUE ((const momval_t) lockv),
+	   MOMOUT_SPACE (48),
+	   MOMOUT_LITERAL
+	   ("in block:"), MOMOUT_ITEM ((const momitem_t *) blkitm), NULL);
       MOM_OUT (&cg->cgen_outbody,
 	       MOMOUT_LITERAL (") /* locked-item */;"),
 	       MOMOUT_NEWLINE (),
