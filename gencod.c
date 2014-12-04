@@ -100,6 +100,8 @@
 #define CGEN_FUN_CONSTANTITEMS_PREFIX "momfconstitems_"
 #define CGEN_FUN_BLOCKIDS_PREFIX "momfblockid_"
 #define CGEN_FUN_LOCVALIDS_PREFIX "momflocvalid_"
+#define CGEN_FUN_LOCINTIDS_PREFIX "momflocintid_"
+#define CGEN_FUN_LOCDBLIDS_PREFIX "momflocdblid_"
 #define CGEN_FUN_CODE_PREFIX "momfuncod_"
 #define CGEN_DROUTARR_PREFIX "momdroutarr_"
 #define CGEN_MD5MOD_PREFIX "mommd5mod_"
@@ -2325,6 +2327,56 @@ cmpr_valitems_by_rank_cgen (const void *p1, const void *p2, void *data)
   assert (itm2 && itm2->i_typnum == momty_item);
   assert (asitm && asitm->i_typnum == momty_item
 	  && asitm->i_paylkind == mompayk_assoc);
+  momval_t nod1 = mom_item_assoc_get (asitm, itm1);
+  momval_t nod2 = mom_item_assoc_get (asitm, itm2);
+  assert (mom_node_conn (nod1) == mom_named__momval_t);
+  assert (mom_node_conn (nod2) == mom_named__momval_t);
+  int rk1 = mom_integer_val_def (mom_node_nth (nod1, 0), -1);
+  int rk2 = mom_integer_val_def (mom_node_nth (nod2, 0), -1);
+  assert (rk1 >= 0 && rk2 >= 0);
+  return rk1 - rk2;
+}
+
+// for qsort_r
+static int
+cmpr_intitems_by_rank_cgen (const void *p1, const void *p2, void *data)
+{
+  momitem_t *itm1 = *(momitem_t **) p1;
+  momitem_t *itm2 = *(momitem_t **) p2;
+  momitem_t *asitm = data;
+  assert (itm1 && itm1->i_typnum == momty_item);
+  assert (itm2 && itm2->i_typnum == momty_item);
+  assert (asitm && asitm->i_typnum == momty_item
+	  && asitm->i_paylkind == mompayk_assoc);
+  momval_t nod1 = mom_item_assoc_get (asitm, itm1);
+  momval_t nod2 = mom_item_assoc_get (asitm, itm2);
+  assert (mom_node_conn (nod1) == mom_named__intptr_t);
+  assert (mom_node_conn (nod2) == mom_named__intptr_t);
+  int rk1 = mom_integer_val_def (mom_node_nth (nod1, 0), -1);
+  int rk2 = mom_integer_val_def (mom_node_nth (nod2, 0), -1);
+  assert (rk1 >= 0 && rk2 >= 0);
+  return rk1 - rk2;
+}
+
+// for qsort_r
+static int
+cmpr_dblitems_by_rank_cgen (const void *p1, const void *p2, void *data)
+{
+  momitem_t *itm1 = *(momitem_t **) p1;
+  momitem_t *itm2 = *(momitem_t **) p2;
+  momitem_t *asitm = data;
+  assert (itm1 && itm1->i_typnum == momty_item);
+  assert (itm2 && itm2->i_typnum == momty_item);
+  assert (asitm && asitm->i_typnum == momty_item
+	  && asitm->i_paylkind == mompayk_assoc);
+  momval_t nod1 = mom_item_assoc_get (asitm, itm1);
+  momval_t nod2 = mom_item_assoc_get (asitm, itm2);
+  assert (mom_node_conn (nod1) == mom_named__double);
+  assert (mom_node_conn (nod2) == mom_named__double);
+  int rk1 = mom_integer_val_def (mom_node_nth (nod1, 0), -1);
+  int rk2 = mom_integer_val_def (mom_node_nth (nod2, 0), -1);
+  assert (rk1 >= 0 && rk2 >= 0);
+  return rk1 - rk2;
 }
 
 void
@@ -2378,6 +2430,10 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
     mom_item_hset_count (cg->cgen_rout.cgrout_hsetvalitm);
   momval_t valsetv =
     mom_item_hset_items_set (cg->cgen_rout.cgrout_hsetvalitm);
+  momval_t intsetv =
+    mom_item_hset_items_set (cg->cgen_rout.cgrout_hsetintitm);
+  momval_t dblsetv =
+    mom_item_hset_items_set (cg->cgen_rout.cgrout_hsetdblitm);
   momval_t blocksetv =		//
     mom_item_hset_items_set (cg->cgen_rout.cgrout_blockhsetitm);
   MOM_DEBUG (gencod,
@@ -2616,21 +2672,279 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
   }
   // emit the value ids sorted by rank
   {
-    momitem_t *valitemsarr = MOM_GC_ALLOC ("valitemsarr",
-					   (nbvalues +
-					    1) * sizeof (momitem_t *));
+    // collect and sort the valitems
+    momitem_t *tinyitemsarr[MOM_TINY_MAX];
+    memset (tinyitemsarr, 0, sizeof (tinyitemsarr));
+    momitem_t **valitemsarr =	//
+      (nbvalues < MOM_TINY_MAX - 1) ? tinyitemsarr	//
+      : MOM_GC_ALLOC ("valitemsarr",
+		      (nbvalues + 1) * sizeof (momitem_t *));
+    const momitem_t *asitm = cg->cgen_rout.cgrout_associtm;
     MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_tfun valsetv="),
-	       MOMOUT_VALUE (valsetv), NULL);
+	       MOMOUT_VALUE (valsetv),
+	       MOMOUT_LITERAL (" asitm="),
+	       MOMOUT_ITEM (asitm),
+	       MOMOUT_SPACE (60), MOMOUT_ITEM_PAYLOAD (asitm), NULL);
     assert (mom_is_set (valsetv));
     memcpy (valitemsarr, valsetv.pset->itemseq,
 	    nbvalues * sizeof (momitem_t *));
-    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("emit_tfun should sort valsetv="),
-		    MOMOUT_VALUE (valsetv), NULL);
     qsort_r (valitemsarr, nbvalues, sizeof (momitem_t *),
-	     cmpr_valitems_by_rank_cgen, cg->cgen_rout.cgrout_associtm);
-
+	     cmpr_valitems_by_rank_cgen, (void *) asitm);
+    /// emit them
+    MOM_OUT			///
+      (&cg->cgen_outbody,
+       MOMOUT_LITERAL ("static const char* const "
+		       CGEN_FUN_LOCVALIDS_PREFIX),
+       MOMOUT_LITERALV (mom_ident_cstr_of_item
+			(tfunitm)),
+       MOMOUT_LITERAL ("["),
+       MOMOUT_DEC_INT ((int) nbvalues + 1),
+       MOMOUT_LITERAL
+       ("] = { // value ids of function "),
+       MOMOUT_ITEM ((const momitem_t *) tfunitm),
+       MOMOUT_INDENT_MORE (), NULL);
+    for (unsigned vix = 0; vix < nbvalues; vix++)
+      {
+	const momitem_t *curvalitm = (const momitem_t *) valitemsarr[vix];
+	assert (curvalitm != NULL);
+	momval_t asnodval =
+	  mom_item_assoc_get ((momitem_t *) asitm, curvalitm);
+	int vnum = mom_integer_val_def (mom_node_nth (asnodval, 0), -1);
+	MOM_DEBUG		//
+	  (gencod,
+	   MOMOUT_LITERAL ("emit_tfun vix="), MOMOUT_DEC_INT ((int) vix),
+	   MOMOUT_LITERAL (" curvalitm:"), MOMOUT_ITEM (curvalitm),
+	   MOMOUT_LITERAL (" asnodval:"),
+	   MOMOUT_VALUE ((const momval_t) asnodval),
+	   MOMOUT_LITERAL ("; vnum#"), MOMOUT_DEC_INT ((int) vnum), NULL);
+	assert (vnum == (int) vix);
+	MOM_OUT			///
+	  (&cg->cgen_outbody,
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL (" ["),
+	   MOMOUT_DEC_INT ((int) vnum),
+	   MOMOUT_LITERAL ("] = \""),
+	   MOMOUT_LITERALV ((const char *)
+			    mom_ident_cstr_of_item (curvalitm)),
+	   MOMOUT_LITERAL ("\", //!! val.var. "),
+	   MOMOUT_ITEM ((const momitem_t *) curvalitm), NULL);
+      }
+    MOM_OUT			///
+      (&cg->cgen_outbody,
+       MOMOUT_INDENT_LESS (),
+       MOMOUT_NEWLINE (),
+       MOMOUT_LITERAL ("}; // end val.var. of "),
+       MOMOUT_ITEM ((const momitem_t *) tfunitm), MOMOUT_NEWLINE (), NULL);
+    if (valitemsarr != tinyitemsarr)
+      MOM_GC_FREE (valitemsarr);
   }
-#warning should emit the value ids sorted by their rank
+  // emit the value ids sorted by rank
+  if (nbvalues > 0)
+    {
+      // collect and sort the valitems
+      momitem_t *tinyitemsarr[MOM_TINY_MAX];
+      memset (tinyitemsarr, 0, sizeof (tinyitemsarr));
+      momitem_t **valitemsarr =	//
+	(nbvalues < MOM_TINY_MAX - 1) ? tinyitemsarr	//
+	: MOM_GC_ALLOC ("valitemsarr",
+			(nbvalues + 1) * sizeof (momitem_t *));
+      const momitem_t *asitm = cg->cgen_rout.cgrout_associtm;
+      MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_tfun valsetv="),
+		 MOMOUT_VALUE (valsetv),
+		 MOMOUT_LITERAL (" asitm="),
+		 MOMOUT_ITEM (asitm),
+		 MOMOUT_SPACE (60), MOMOUT_ITEM_PAYLOAD (asitm), NULL);
+      assert (mom_is_set (valsetv));
+      memcpy (valitemsarr, valsetv.pset->itemseq,
+	      nbvalues * sizeof (momitem_t *));
+      qsort_r (valitemsarr, nbvalues, sizeof (momitem_t *),
+	       cmpr_valitems_by_rank_cgen, (void *) asitm);
+      /// emit them
+      MOM_OUT			///
+	(&cg->cgen_outbody,
+	 MOMOUT_LITERAL ("static const char* const "
+			 CGEN_FUN_LOCVALIDS_PREFIX),
+	 MOMOUT_LITERALV (mom_ident_cstr_of_item
+			  (tfunitm)),
+	 MOMOUT_LITERAL ("["),
+	 MOMOUT_DEC_INT ((int) nbvalues + 1),
+	 MOMOUT_LITERAL
+	 ("] = { // value var.ids of function "),
+	 MOMOUT_ITEM ((const momitem_t *) tfunitm),
+	 MOMOUT_INDENT_MORE (), NULL);
+      for (unsigned vix = 0; vix < nbvalues; vix++)
+	{
+	  const momitem_t *curvalitm = (const momitem_t *) valitemsarr[vix];
+	  assert (curvalitm != NULL);
+	  momval_t asnodval =
+	    mom_item_assoc_get ((momitem_t *) asitm, curvalitm);
+	  int vnum = mom_integer_val_def (mom_node_nth (asnodval, 0), -1);
+	  MOM_DEBUG		//
+	    (gencod,
+	     MOMOUT_LITERAL ("emit_tfun vix="), MOMOUT_DEC_INT ((int) vix),
+	     MOMOUT_LITERAL (" curvalitm:"), MOMOUT_ITEM (curvalitm),
+	     MOMOUT_LITERAL (" asnodval:"),
+	     MOMOUT_VALUE ((const momval_t) asnodval),
+	     MOMOUT_LITERAL ("; vnum#"), MOMOUT_DEC_INT ((int) vnum), NULL);
+	  assert (vnum == (int) vix);
+	  MOM_OUT		///
+	    (&cg->cgen_outbody,
+	     MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL (" ["),
+	     MOMOUT_DEC_INT ((int) vnum),
+	     MOMOUT_LITERAL ("] = \""),
+	     MOMOUT_LITERALV ((const char *)
+			      mom_ident_cstr_of_item (curvalitm)),
+	     MOMOUT_LITERAL ("\", //!! val.var. "),
+	     MOMOUT_ITEM ((const momitem_t *) curvalitm), NULL);
+	}
+      MOM_OUT			///
+	(&cg->cgen_outbody,
+	 MOMOUT_INDENT_LESS (),
+	 MOMOUT_NEWLINE (),
+	 MOMOUT_LITERAL ("}; // end val.var. of "),
+	 MOMOUT_ITEM ((const momitem_t *) tfunitm), MOMOUT_NEWLINE (), NULL);
+      if (valitemsarr != tinyitemsarr)
+	MOM_GC_FREE (valitemsarr);
+    }
+  // emit the integers ids sorted by rank
+  if (nbnumbers > 0)
+    {
+      // collect and sort the intitems
+      momitem_t *tinyitemsarr[MOM_TINY_MAX];
+      memset (tinyitemsarr, 0, sizeof (tinyitemsarr));
+      momitem_t **intitemsarr =	//
+	(nbnumbers < MOM_TINY_MAX - 1) ? tinyitemsarr	//
+	: MOM_GC_ALLOC ("intitemsarr",
+			(nbnumbers + 1) * sizeof (momitem_t *));
+      const momitem_t *asitm = cg->cgen_rout.cgrout_associtm;
+      MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_tfun intsetv="),
+		 MOMOUT_VALUE (intsetv),
+		 MOMOUT_LITERAL (" asitm="),
+		 MOMOUT_ITEM (asitm),
+		 MOMOUT_SPACE (60), MOMOUT_ITEM_PAYLOAD (asitm), NULL);
+      assert (mom_is_set (intsetv));
+      memcpy (intitemsarr, intsetv.pset->itemseq,
+	      nbnumbers * sizeof (momitem_t *));
+      qsort_r (intitemsarr, nbnumbers, sizeof (momitem_t *),
+	       cmpr_intitems_by_rank_cgen, (void *) asitm);
+      /// emit them
+      MOM_OUT			///
+	(&cg->cgen_outbody,
+	 MOMOUT_LITERAL ("static const char* const "
+			 CGEN_FUN_LOCINTIDS_PREFIX),
+	 MOMOUT_LITERALV (mom_ident_cstr_of_item
+			  (tfunitm)),
+	 MOMOUT_LITERAL ("["),
+	 MOMOUT_DEC_INT ((int) nbnumbers + 1),
+	 MOMOUT_LITERAL
+	 ("] = { // integer var.ids of function "),
+	 MOMOUT_ITEM ((const momitem_t *) tfunitm),
+	 MOMOUT_INDENT_MORE (), NULL);
+      for (unsigned vix = 0; vix < nbnumbers; vix++)
+	{
+	  const momitem_t *curintitm = (const momitem_t *) intitemsarr[vix];
+	  assert (curintitm != NULL);
+	  momval_t asnodint =
+	    mom_item_assoc_get ((momitem_t *) asitm, curintitm);
+	  int vnum = mom_integer_val_def (mom_node_nth (asnodint, 0), -1);
+	  MOM_DEBUG		//
+	    (gencod,
+	     MOMOUT_LITERAL ("emit_tfun vix="), MOMOUT_DEC_INT ((int) vix),
+	     MOMOUT_LITERAL (" curintitm:"), MOMOUT_ITEM (curintitm),
+	     MOMOUT_LITERAL (" asnodint:"),
+	     MOMOUT_VALUE ((const momval_t) asnodint),
+	     MOMOUT_LITERAL ("; vnum#"), MOMOUT_DEC_INT ((int) vnum), NULL);
+	  assert (vnum == (int) vix);
+	  MOM_OUT		///
+	    (&cg->cgen_outbody,
+	     MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL (" ["),
+	     MOMOUT_DEC_INT ((int) vnum),
+	     MOMOUT_LITERAL ("] = \""),
+	     MOMOUT_LITERALV ((const char *)
+			      mom_ident_cstr_of_item (curintitm)),
+	     MOMOUT_LITERAL ("\", //!! int.var. "),
+	     MOMOUT_ITEM ((const momitem_t *) curintitm), NULL);
+	}
+      MOM_OUT			///
+	(&cg->cgen_outbody,
+	 MOMOUT_INDENT_LESS (),
+	 MOMOUT_NEWLINE (),
+	 MOMOUT_LITERAL ("}; // end int.var. of "),
+	 MOMOUT_ITEM ((const momitem_t *) tfunitm), MOMOUT_NEWLINE (), NULL);
+      if (intitemsarr != tinyitemsarr)
+	MOM_GC_FREE (intitemsarr);
+    }
+  // emit the double var. ids sorted by rank
+  if (nbdoubles > 0)
+    {
+      // collect and sort the dblitems
+      momitem_t *tinyitemsarr[MOM_TINY_MAX];
+      memset (tinyitemsarr, 0, sizeof (tinyitemsarr));
+      momitem_t **dblitemsarr =	//
+	(nbdoubles < MOM_TINY_MAX - 1) ? tinyitemsarr	//
+	: MOM_GC_ALLOC ("dblitemsarr",
+			(nbdoubles + 1) * sizeof (momitem_t *));
+      const momitem_t *asitm = cg->cgen_rout.cgrout_associtm;
+      MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_tfun dblsetv="),
+		 MOMOUT_VALUE (dblsetv),
+		 MOMOUT_LITERAL (" asitm="),
+		 MOMOUT_ITEM (asitm),
+		 MOMOUT_SPACE (60), MOMOUT_ITEM_PAYLOAD (asitm), NULL);
+      assert (mom_is_set (dblsetv));
+      memcpy (dblitemsarr, dblsetv.pset->itemseq,
+	      nbdoubles * sizeof (momitem_t *));
+      qsort_r (dblitemsarr, nbdoubles, sizeof (momitem_t *),
+	       cmpr_dblitems_by_rank_cgen, (void *) asitm);
+      /// emit them
+      MOM_OUT			///
+	(&cg->cgen_outbody,
+	 MOMOUT_LITERAL ("static const char* const "
+			 CGEN_FUN_LOCDBLIDS_PREFIX),
+	 MOMOUT_LITERALV (mom_ident_cstr_of_item
+			  (tfunitm)),
+	 MOMOUT_LITERAL ("["),
+	 MOMOUT_DEC_INT ((int) nbdoubles + 1),
+	 MOMOUT_LITERAL
+	 ("] = { // integer var.ids of function "),
+	 MOMOUT_ITEM ((const momitem_t *) tfunitm),
+	 MOMOUT_INDENT_MORE (), NULL);
+      for (unsigned vix = 0; vix < nbdoubles; vix++)
+	{
+	  const momitem_t *curdblitm = (const momitem_t *) dblitemsarr[vix];
+	  assert (curdblitm != NULL);
+	  momval_t asnoddbl =
+	    mom_item_assoc_get ((const momitem_t *) asitm, curdblitm);
+	  int vnum = mom_integer_val_def (mom_node_nth (asnoddbl, 0), -1);
+	  MOM_DEBUG		//
+	    (gencod,
+	     MOMOUT_LITERAL ("emit_tfun vix="), MOMOUT_DEC_INT ((int) vix),
+	     MOMOUT_LITERAL (" curdblitm:"), MOMOUT_ITEM (curdblitm),
+	     MOMOUT_LITERAL (" asnoddbl:"),
+	     MOMOUT_VALUE ((const momval_t) asnoddbl),
+	     MOMOUT_LITERAL ("; vnum#"), MOMOUT_DEC_INT ((int) vnum), NULL);
+	  assert (vnum == (int) vix);
+	  MOM_OUT		///
+	    (&cg->cgen_outbody,
+	     MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL (" ["),
+	     MOMOUT_DEC_INT ((int) vnum),
+	     MOMOUT_LITERAL ("] = \""),
+	     MOMOUT_LITERALV ((const char *)
+			      mom_ident_cstr_of_item (curdblitm)),
+	     MOMOUT_LITERAL ("\", //!! dbl.var. "),
+	     MOMOUT_ITEM ((const momitem_t *) curdblitm), NULL);
+	}
+      MOM_OUT			///
+	(&cg->cgen_outbody,
+	 MOMOUT_INDENT_LESS (),
+	 MOMOUT_NEWLINE (),
+	 MOMOUT_LITERAL ("}; // end dbl.var. of "),
+	 MOMOUT_ITEM ((const momitem_t *) tfunitm), MOMOUT_NEWLINE (), NULL);
+      if (dblitemsarr != tinyitemsarr)
+	MOM_GC_FREE (dblitemsarr);
+    }
   // emit the function descriptor
   MOM_OUT (&cg->cgen_outbody,
 	   MOMOUT_LITERAL ("const struct momtfundescr_st "
@@ -2765,22 +3079,30 @@ emit_ctype_cgen (struct c_generator_mom_st *cg,
 	{
 	  momval_t ctypv = MOM_NULLV;
 	  momval_t resv = MOM_NULLV;
+	  momval_t varv = MOM_NULLV;
 	  {
 	    cgen_lock_item_mom (cg, typitm);
 	    ctypv = mom_item_get_attribute (typitm, mom_named__ctype);
 	    resv = mom_item_get_attribute (typitm, mom_named__result);
+	    varv = mom_item_get_attribute (typitm, mom_named__variable);
 	    if (mom_is_item (ctypv))
 	      typitm = ctypv.pitem;
 	    else if (mom_is_item (resv))
 	      typitm = resv.pitem;
+	    else if (mom_is_item (varv))
+	      typitm = varv.pitem;
 	    else
 	      typitm = NULL;
 	  }
 	};
       if (!typitm || count == 0)
-	CGEN_ERROR_MOM (cg,
-			MOMOUT_LITERAL ("invalid value to type:"),
-			MOMOUT_VALUE ((const momval_t) val), NULL);
+	CGEN_ERROR_MOM		//
+	  (cg,
+	   MOMOUT_LITERAL ("invalid value to type:"),
+	   MOMOUT_VALUE ((const momval_t) val),
+	   MOMOUT_LITERAL (" typitm="),
+	   MOMOUT_ITEM ((const momitem_t *) typitm),
+	   MOMOUT_LITERAL (" count#"), MOMOUT_DEC_INT ((int) count), NULL);
     }
   return momtypenc__none;
 }
