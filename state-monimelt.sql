@@ -178,12 +178,9 @@ INSERT INTO t_items VALUES('_0z0rsvwfkcj_dcpkx68i074','{"attr": [{"attr": "_0ee6
     "jtype": "item_ref", "space": ".predef"}}, {"attr": "_2u8svx94yq4_34icz9j1fyx",
    "val": {"jtype": "set", "set": ["_41u1utcxyek_22cftxt3xxm", "_7fafkrcdjpd_dy0zpqsshr6"]}},
   {"attr": "_2ummst105ck_xracfy8v87y", "val": {"jtype": "tuple", "tuple": ["_16cd0fvmdrh_r77ajpy26za",
-     "_1a2aavj5vir_2hz681zdfqd"]}}, {"attr": "_3wh3e88sk28_d27qi2737zi", "val": {"item_ref":
-    "_02yd241wh4z_tca7i6iamf3", "jtype": "item_ref", "space": ".root"}}, {"attr":
-   "_41u1utcxyek_22cftxt3xxm", "val": "procedure to show on webx the HTML code for some item"},
-  {"attr": "_4v74chqs1eh_chqd9cqw85t", "val": {"jtype": "set", "set": ["_02yd241wh4z_tca7i6iamf3",
-     "_1witua6ujek_6jadsxtv4cd", "_34w40p46vwp_pw6u3d75ww6", "_591chiicj6r_512iim4cf4m",
-     "_7rxfx0rruqm_kdtk9pk7wtj", "_9xhd87mskav_rqcu5eqk5te"]}}, {"attr": "_91pketvc5pz_wq0v0wpauw8",
+     "_1a2aavj5vir_2hz681zdfqd"]}}, {"attr": "_41u1utcxyek_22cftxt3xxm", "val": "procedure to show on webx the HTML code for some item"},
+  {"attr": "_4v74chqs1eh_chqd9cqw85t", "val": {"item_ref": "_02yd241wh4z_tca7i6iamf3",
+    "jtype": "item_ref", "space": ".root"}}, {"attr": "_91pketvc5pz_wq0v0wpauw8",
    "val": {"jtype": "set", "set": ["_0kr2ef10dxy_79js3th0i56", "_4wx5f4704sp_v9kfazsqe9h",
      "_5dq5ma9a81c_pdtk3x9sw4w", "_6p9qjdya5cm_c2xad0xzawa", "_88565k6xdf0_331xf3x27dp"]}}],
  "content": null, "kind": "procedure", "payload": ["_41u1utcxyek_22cftxt3xxm",

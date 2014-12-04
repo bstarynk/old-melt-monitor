@@ -2670,75 +2670,7 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	     MOMOUT_ITEM ((const momitem_t *) tfunitm),
 	     MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
   }
-  // emit the value ids sorted by rank
-  {
-    // collect and sort the valitems
-    momitem_t *tinyitemsarr[MOM_TINY_MAX];
-    memset (tinyitemsarr, 0, sizeof (tinyitemsarr));
-    momitem_t **valitemsarr =	//
-      (nbvalues < MOM_TINY_MAX - 1) ? tinyitemsarr	//
-      : MOM_GC_ALLOC ("valitemsarr",
-		      (nbvalues + 1) * sizeof (momitem_t *));
-    const momitem_t *asitm = cg->cgen_rout.cgrout_associtm;
-    MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_tfun valsetv="),
-	       MOMOUT_VALUE (valsetv),
-	       MOMOUT_LITERAL (" asitm="),
-	       MOMOUT_ITEM (asitm),
-	       MOMOUT_SPACE (60), MOMOUT_ITEM_PAYLOAD (asitm), NULL);
-    assert (mom_is_set (valsetv));
-    memcpy (valitemsarr, valsetv.pset->itemseq,
-	    nbvalues * sizeof (momitem_t *));
-    qsort_r (valitemsarr, nbvalues, sizeof (momitem_t *),
-	     cmpr_valitems_by_rank_cgen, (void *) asitm);
-    /// emit them
-    MOM_OUT			///
-      (&cg->cgen_outbody,
-       MOMOUT_LITERAL ("static const char* const "
-		       CGEN_FUN_LOCVALIDS_PREFIX),
-       MOMOUT_LITERALV (mom_ident_cstr_of_item
-			(tfunitm)),
-       MOMOUT_LITERAL ("["),
-       MOMOUT_DEC_INT ((int) nbvalues + 1),
-       MOMOUT_LITERAL
-       ("] = { // value ids of function "),
-       MOMOUT_ITEM ((const momitem_t *) tfunitm),
-       MOMOUT_INDENT_MORE (), NULL);
-    for (unsigned vix = 0; vix < nbvalues; vix++)
-      {
-	const momitem_t *curvalitm = (const momitem_t *) valitemsarr[vix];
-	assert (curvalitm != NULL);
-	momval_t asnodval =
-	  mom_item_assoc_get ((momitem_t *) asitm, curvalitm);
-	int vnum = mom_integer_val_def (mom_node_nth (asnodval, 0), -1);
-	MOM_DEBUG		//
-	  (gencod,
-	   MOMOUT_LITERAL ("emit_tfun vix="), MOMOUT_DEC_INT ((int) vix),
-	   MOMOUT_LITERAL (" curvalitm:"), MOMOUT_ITEM (curvalitm),
-	   MOMOUT_LITERAL (" asnodval:"),
-	   MOMOUT_VALUE ((const momval_t) asnodval),
-	   MOMOUT_LITERAL ("; vnum#"), MOMOUT_DEC_INT ((int) vnum), NULL);
-	assert (vnum == (int) vix);
-	MOM_OUT			///
-	  (&cg->cgen_outbody,
-	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL (" ["),
-	   MOMOUT_DEC_INT ((int) vnum),
-	   MOMOUT_LITERAL ("] = \""),
-	   MOMOUT_LITERALV ((const char *)
-			    mom_ident_cstr_of_item (curvalitm)),
-	   MOMOUT_LITERAL ("\", //!! val.var. "),
-	   MOMOUT_ITEM ((const momitem_t *) curvalitm), NULL);
-      }
-    MOM_OUT			///
-      (&cg->cgen_outbody,
-       MOMOUT_INDENT_LESS (),
-       MOMOUT_NEWLINE (),
-       MOMOUT_LITERAL ("}; // end val.var. of "),
-       MOMOUT_ITEM ((const momitem_t *) tfunitm), MOMOUT_NEWLINE (), NULL);
-    if (valitemsarr != tinyitemsarr)
-      MOM_GC_FREE (valitemsarr);
-  }
-  // emit the value ids sorted by rank
+  // emit the value var.ids sorted by rank
   if (nbvalues > 0)
     {
       // collect and sort the valitems
@@ -2762,6 +2694,7 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
       /// emit them
       MOM_OUT			///
 	(&cg->cgen_outbody,
+	 MOMOUT_NEWLINE (),
 	 MOMOUT_LITERAL ("static const char* const "
 			 CGEN_FUN_LOCVALIDS_PREFIX),
 	 MOMOUT_LITERALV (mom_ident_cstr_of_item
@@ -2807,6 +2740,14 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
       if (valitemsarr != tinyitemsarr)
 	MOM_GC_FREE (valitemsarr);
     }
+  else
+    {
+      MOM_OUT			///
+	(&cg->cgen_outbody,
+	 MOMOUT_NEWLINE (),
+	 MOMOUT_LITERAL ("// no val.var.ids for "),
+	 MOMOUT_ITEM ((const momitem_t *) tfunitm), MOMOUT_NEWLINE (), NULL);
+    };
   // emit the integers ids sorted by rank
   if (nbnumbers > 0)
     {
@@ -2831,6 +2772,7 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
       /// emit them
       MOM_OUT			///
 	(&cg->cgen_outbody,
+	 MOMOUT_NEWLINE (),
 	 MOMOUT_LITERAL ("static const char* const "
 			 CGEN_FUN_LOCINTIDS_PREFIX),
 	 MOMOUT_LITERALV (mom_ident_cstr_of_item
@@ -2876,6 +2818,14 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
       if (intitemsarr != tinyitemsarr)
 	MOM_GC_FREE (intitemsarr);
     }
+  else
+    {
+      MOM_OUT			///
+	(&cg->cgen_outbody,
+	 MOMOUT_NEWLINE (),
+	 MOMOUT_LITERAL ("// no number.var.ids for "),
+	 MOMOUT_ITEM ((const momitem_t *) tfunitm), MOMOUT_NEWLINE (), NULL);
+    };
   // emit the double var. ids sorted by rank
   if (nbdoubles > 0)
     {
@@ -2900,6 +2850,7 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
       /// emit them
       MOM_OUT			///
 	(&cg->cgen_outbody,
+	 MOMOUT_NEWLINE (),
 	 MOMOUT_LITERAL ("static const char* const "
 			 CGEN_FUN_LOCDBLIDS_PREFIX),
 	 MOMOUT_LITERALV (mom_ident_cstr_of_item
@@ -2945,9 +2896,18 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
       if (dblitemsarr != tinyitemsarr)
 	MOM_GC_FREE (dblitemsarr);
     }
+  else
+    {
+      MOM_OUT			///
+	(&cg->cgen_outbody,
+	 MOMOUT_NEWLINE (),
+	 MOMOUT_LITERAL ("// no dbl.var.ids for "),
+	 MOMOUT_ITEM ((const momitem_t *) tfunitm), MOMOUT_NEWLINE (), NULL);
+    };
   // emit the function descriptor
   MOM_OUT			///
     (&cg->cgen_outbody,
+     MOMOUT_NEWLINE (),
      MOMOUT_LITERAL ("const struct momtfundescr_st "
 		     MOM_TFUN_NAME_PREFIX),
      MOMOUT_LITERALV (mom_ident_cstr_of_item
