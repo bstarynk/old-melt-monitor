@@ -119,10 +119,10 @@ INSERT INTO t_items VALUES('_0ju7898wddc_1296qwc3a30','{"attr": [{"attr": "_0ee6
      ")"]}}, {"attr": "_41u1utcxyek_22cftxt3xxm", "val": "primitive to get the value in a double or else NaN."}],
  "content": null, "kind": null, "payload": null}
 ','');
-INSERT INTO t_items VALUES('_0kr2ef10dxy_79js3th0i56','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_3uwzqwvj6zj_s63am4qivpt",
-    "jtype": "item_ref", "space": ".predef"}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
-   "val": "variable for name values."}], "content": null, "kind": null, "payload":
- null}
+INSERT INTO t_items VALUES('_0kr2ef10dxy_79js3th0i56','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "variable for name values."},
+  {"attr": "_9u7pp5r3ccq_6fsi3t2a6tq", "val": {"item_ref": "_3uwzqwvj6zj_s63am4qivpt",
+    "jtype": "item_ref", "space": ".predef"}}], "content": null, "kind": null,
+ "payload": null}
 ','');
 INSERT INTO t_items VALUES('_0pqeesw57dy_1q3yyp3a7um','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_51u3st4u9mc_zdvms6jti0a",
     "jtype": "item_ref", "space": ".predef"}}, {"attr": "_2ummst105ck_xracfy8v87y",
@@ -1047,9 +1047,9 @@ INSERT INTO t_items VALUES('_6mutx3sq2eu_23r4mvpac6m','{"attr": [{"attr": "_0ee6
 INSERT INTO t_items VALUES('_6p6v25323aq_97d9ude6j12','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "Gives thru JSONRPC the state of monimelt"}],
  "content": null, "kind": null, "payload": null}
 ','');
-INSERT INTO t_items VALUES('_6p9qjdya5cm_c2xad0xzawa','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_3uwzqwvj6zj_s63am4qivpt",
-    "jtype": "item_ref", "space": ".predef"}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
-   "val": "variable for comment string"}], "content": null, "kind": null,
+INSERT INTO t_items VALUES('_6p9qjdya5cm_c2xad0xzawa','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "variable for comment string"},
+  {"attr": "_9u7pp5r3ccq_6fsi3t2a6tq", "val": {"item_ref": "_3uwzqwvj6zj_s63am4qivpt",
+    "jtype": "item_ref", "space": ".predef"}}], "content": null, "kind": null,
  "payload": null}
 ','');
 INSERT INTO t_items VALUES('_6qcw93kypcv_0iiepqtk73j','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "high bound"}], "content": null,

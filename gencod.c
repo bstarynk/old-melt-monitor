@@ -263,6 +263,9 @@ static void scan_instr_cgen (struct c_generator_mom_st *cgen,
 static momtypenc_t scan_expr_cgen (struct c_generator_mom_st *cgen,
 				   momval_t insv, momval_t expv);
 
+static momtypenc_t scan_node_cgen (struct c_generator_mom_st *cg, momval_t insv,
+				   const momnode_t *nod);
+
 static momtypenc_t scan_item_cgen (struct c_generator_mom_st *cgen,
 				   momitem_t *varitm);
 
@@ -1061,6 +1064,13 @@ scan_output_cgen (struct c_generator_mom_st *cg, momval_t insv, momval_t outv)
     errline = __LINE__;						\
     goto bad_output;						\
   } while(0)
+  ///
+  
+      MOM_DEBUG //
+	(gencod,
+	 MOMOUT_LITERAL("scan_output start outv="),
+	 MOMOUT_VALUE((const momval_t)outv),
+	 NULL);
   if (mom_is_node (outv))
     {
       const momitem_t *oconnitm = mom_node_conn (outv);
@@ -1069,6 +1079,13 @@ scan_output_cgen (struct c_generator_mom_st *cg, momval_t insv, momval_t outv)
 	mom_item_get_attribute (oconnitm, mom_named__formals);
       momval_t outexpv =
 	mom_item_get_attribute (oconnitm, mom_named__output_expansion);
+      momval_t outoutputv  =
+	mom_item_get_attribute (oconnitm, mom_named__output);
+      if (!outexpv.ptr && !outoutputv.ptr) {
+	// output node which is a usual expression node
+	scan_node_cgen(cg, insv, outv.pnode);
+	return;
+      }
       if (!mom_is_tuple (outformalsv)
 	  || mom_node_conn (outexpv) != mom_named__chunk)
 	OUTSCANFAIL ("bad output connective %s",
@@ -1150,7 +1167,7 @@ scan_node_cgen (struct c_generator_mom_st *cg, momval_t insv,
   goto bad_node;					\
 } while(0)
 #define SCANODHASHMAX_MOM 131
-#define SCANCASE(Nam) case mom_hashname_##Nam % SCANODHASHMAX_MOM: if (connitm != mom_named_##Nam) break;
+#define SCANCASE(Nam) case mom_hashname_##Nam % SCANODHASHMAX_MOM: if (connitm != mom_named_##Nam) goto other_node;
   momhash_t conh = mom_item_hash (connitm);
   switch (conh % SCANODHASHMAX_MOM)
     {
@@ -1235,6 +1252,7 @@ scan_node_cgen (struct c_generator_mom_st *cg, momval_t insv,
 #undef SCANCASE
 #undef SCANODHASHMAX_MOM
       //////////
+    other_node:
     default:
       {
 	/// both procedure and primitives have `formals` and `ctype` attributes
@@ -1243,6 +1261,15 @@ scan_node_cgen (struct c_generator_mom_st *cg, momval_t insv,
 	momval_t ctypev = mom_item_get_attribute (connitm, mom_named__ctype);
 	momval_t outputv =
 	  mom_item_get_attribute (connitm, mom_named__output);
+	MOM_DEBUG		//
+	  (gencod,
+	   MOMOUT_LITERAL ("scan_node quasiprim nodv="),
+	   MOMOUT_VALUE ((const momval_t) nodv),
+	   MOMOUT_NEWLINE (),
+	   MOMOUT_LITERAL (" connitm:"),
+	   MOMOUT_ITEM ((const momitem_t *) connitm),
+	   MOMOUT_SPACE (48),
+	   MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) connitm), NULL);
 	if (!mom_is_tuple (formalsv) || !mom_is_item (ctypev))
 	  NODESCANFAIL ("node connective %s without `formals` or `ctype`",
 			mom_item_get_name_or_id_cstr (connitm));
@@ -1283,18 +1310,6 @@ scan_node_cgen (struct c_generator_mom_st *cg, momval_t insv,
       }
       break;
     }
-  momval_t connformalsv =
-    mom_item_get_attribute (connitm, mom_named__formals);
-  momval_t connprimexpv =
-    mom_item_get_attribute (connitm, mom_named__primitive_expansion);
-  momval_t connctypev =
-    mom_item_get_attribute (connitm, mom_named__ctype);
-  if (mom_is_tuple(connformalsv)
-      && mom_node_conn(connprimexpv) == mom_named__chunk
-      && mom_is_item(connctypev)) {
-    NODESCANFAIL("unimplemented primitive node scan");
-#warning scan_node should handle primitive invocation
-  }
   NODESCANFAIL ("unexpected");
 #undef NODESCANFAIL
 bad_node:
@@ -2075,6 +2090,11 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	     MOMOUT_LITERAL ("] = { //! for "),
 	     MOMOUT_ITEM ((const momitem_t *) procitm), MOMOUT_INDENT_MORE (),
 	     MOMOUT_NEWLINE (), NULL);
+    MOM_DEBUG ///
+      (gencod,
+       MOMOUT_LITERAL("emitproc proconstantsv="),
+       MOMOUT_VALUE((const momval_t)proconstantsv),
+       NULL);
     for (unsigned cix = 0; cix < nbconstants; cix++)
       {
 	const momitem_t *curcstitm = mom_tuple_nth_item (proconstantsv, cix);
