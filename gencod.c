@@ -1283,6 +1283,18 @@ scan_node_cgen (struct c_generator_mom_st *cg, momval_t insv,
       }
       break;
     }
+  momval_t connformalsv =
+    mom_item_get_attribute (connitm, mom_named__formals);
+  momval_t connprimexpv =
+    mom_item_get_attribute (connitm, mom_named__primitive_expansion);
+  momval_t connctypev =
+    mom_item_get_attribute (connitm, mom_named__ctype);
+  if (mom_is_tuple(connformalsv)
+      && mom_node_conn(connprimexpv) == mom_named__chunk
+      && mom_is_item(connctypev)) {
+    NODESCANFAIL("unimplemented primitive node scan");
+#warning scan_node should handle primitive invocation
+  }
   NODESCANFAIL ("unexpected");
 #undef NODESCANFAIL
 bad_node:

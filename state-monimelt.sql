@@ -759,9 +759,9 @@ INSERT INTO t_items VALUES('_4v7s8xjeh8e_q8h93d2f43y','{"attr": [{"attr": "_0ee6
      ")"]}}, {"attr": "_41u1utcxyek_22cftxt3xxm", "val": "primitive to test if value is a JSONobject"}],
  "content": null, "kind": null, "payload": null}
 ','');
-INSERT INTO t_items VALUES('_4wx5f4704sp_v9kfazsqe9h','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_3uwzqwvj6zj_s63am4qivpt",
-    "jtype": "item_ref", "space": ".predef"}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
-   "val": "variable with the web session"}], "content": null, "kind": null,
+INSERT INTO t_items VALUES('_4wx5f4704sp_v9kfazsqe9h','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "variable with the web session"},
+  {"attr": "_9u7pp5r3ccq_6fsi3t2a6tq", "val": {"item_ref": "_3uwzqwvj6zj_s63am4qivpt",
+    "jtype": "item_ref", "space": ".predef"}}], "content": null, "kind": null,
  "payload": null}
 ','');
 INSERT INTO t_items VALUES('_4x8e2mwmacp_ekxdw3vqqpd','{"attr": [{"attr": "_19ufza9zf05_muxxhkmm7ww", "val": {"jtype": "node", "node": "_8x6fxcm4z2k_vdaqicfi4z0",
@@ -1303,10 +1303,10 @@ INSERT INTO t_items VALUES('_87r5zd69i6m_zr0hupaer90','{"attr": [{"attr": "_0ee6
    "val": "primitive in start block of todo on dump"}], "content": null, "kind": null,
  "payload": null}
 ','');
-INSERT INTO t_items VALUES('_88565k6xdf0_331xf3x27dp','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_3uwzqwvj6zj_s63am4qivpt",
-    "jtype": "item_ref", "space": ".predef"}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
-   "val": "variable for some hashing related item..."}], "content": null,
- "kind": null, "payload": null}
+INSERT INTO t_items VALUES('_88565k6xdf0_331xf3x27dp','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "variable for some hashing related item..."},
+  {"attr": "_9u7pp5r3ccq_6fsi3t2a6tq", "val": {"item_ref": "_3uwzqwvj6zj_s63am4qivpt",
+    "jtype": "item_ref", "space": ".predef"}}], "content": null, "kind": null,
+ "payload": null}
 ','');
 INSERT INTO t_items VALUES('_89uzitiq84u_50h4cqpkay9','{"attr": [{"attr": "_19ufza9zf05_muxxhkmm7ww", "val": {"jtype": "node", "node": "_8x6fxcm4z2k_vdaqicfi4z0",
     "sons": ["MOMOUTDO_DEC_INTPTR_T,", {"item_ref": "_2vy0ah3jrd1_mm66ja7rfj7",
@@ -1428,9 +1428,9 @@ INSERT INTO t_items VALUES('_8y756mef2ca_w8cj58726vj','{"attr": [{"attr": "_232t
        {"item_ref": "_7yyaydvyhpr_teuchcqzs7k", "jtype": "item_ref", "space": ".root"}]}]}}],
  "content": null, "kind": null, "payload": null}
 ','');
-INSERT INTO t_items VALUES('_8yepyw577hd_yr28eiysfss','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_3uwzqwvj6zj_s63am4qivpt",
-    "jtype": "item_ref", "space": ".predef"}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
-   "val": "value variable for some attribute item"}], "content": null, "kind": null,
+INSERT INTO t_items VALUES('_8yepyw577hd_yr28eiysfss','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "value variable for some attribute item"},
+  {"attr": "_9u7pp5r3ccq_6fsi3t2a6tq", "val": {"item_ref": "_3uwzqwvj6zj_s63am4qivpt",
+    "jtype": "item_ref", "space": ".predef"}}], "content": null, "kind": null,
  "payload": null}
 ','');
 INSERT INTO t_items VALUES('_8zwifiifaf0_pyayp6hpha4','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_3uwzqwvj6zj_s63am4qivpt",
