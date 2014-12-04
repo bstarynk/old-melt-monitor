@@ -1708,16 +1708,43 @@ scan_block_cgen (struct c_generator_mom_st *cg, momitem_t *blockitm,
   cgen_lock_item_mom (cg, blockitm);
   momval_t blcodev = mom_item_get_attribute (blockitm, mom_named__block);
   if (mom_node_conn (blcodev) != mom_named__code)
-    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("in routine:"),
-		    MOMOUT_ITEM ((const momitem_t *) cg->
-				 cgen_rout.cgrout_routitm),
-		    MOMOUT_LITERAL
-		    (" bad `block` attribute - not a *code node :"),
-		    MOMOUT_VALUE ((const momval_t) blcodev),
-		    MOMOUT_LITERAL ("in block item:"),
-		    MOMOUT_ITEM ((const momitem_t *) blockitm),
-		    MOMOUT_LITERAL (" from:"),
-		    MOMOUT_VALUE ((const momval_t) fromv), NULL);
+    CGEN_ERROR_MOM		///
+      (cg, MOMOUT_LITERAL ("in routine:"),
+       MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.cgrout_routitm),
+       MOMOUT_LITERAL
+       (" bad `block` attribute - not a *code node :"),
+       MOMOUT_VALUE ((const momval_t) blcodev),
+       MOMOUT_LITERAL ("in block item:"),
+       MOMOUT_ITEM ((const momitem_t *) blockitm),
+       MOMOUT_LITERAL (" from:"),
+       MOMOUT_VALUE ((const momval_t) fromv), NULL);
+  momval_t blilockv = mom_item_get_attribute (blockitm, mom_named__lock);
+  if (blilockv.ptr)
+    {
+      if (!mom_is_item (blilockv))
+	CGEN_ERROR_MOM		///
+	  (cg, MOMOUT_LITERAL ("in routine:"),
+	   MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.cgrout_routitm),
+	   MOMOUT_LITERAL
+	   (" bad `lock` attribute - not an item :"),
+	   MOMOUT_VALUE ((const momval_t) blilockv),
+	   MOMOUT_LITERAL ("in block item:"),
+	   MOMOUT_ITEM ((const momitem_t *) blockitm),
+	   MOMOUT_LITERAL (" from:"),
+	   MOMOUT_VALUE ((const momval_t) fromv), NULL);
+      momitem_t *lockitm = blilockv.pitem;
+      if (scan_item_cgen (cg, lockitm) != momtypenc_val)
+	CGEN_ERROR_MOM		///
+	  (cg, MOMOUT_LITERAL ("in routine:"),
+	   MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.cgrout_routitm),
+	   MOMOUT_LITERAL
+	   (" bad `lock` attribute - not a value variable :"),
+	   MOMOUT_VALUE ((const momval_t) blilockv),
+	   MOMOUT_LITERAL ("in block item:"),
+	   MOMOUT_ITEM ((const momitem_t *) blockitm),
+	   MOMOUT_LITERAL (" from:"),
+	   MOMOUT_VALUE ((const momval_t) fromv), NULL);
+    }
   mom_item_queue_add_back (cg->cgen_rout.cgrout_blockqueueitm,
 			   (momval_t) blockitm);
   cg->cgen_rout.cgrout_blockcount++;
@@ -2290,6 +2317,19 @@ scan_taskletfunction_cgen (struct c_generator_mom_st *cg, momitem_t *tfunitm)
 }
 
 
+// for qsort_r
+static int
+cmpr_valitems_by_rank_cgen (const void *p1, const void *p2, void *data)
+{
+  momitem_t *itm1 = *(momitem_t **) p1;
+  momitem_t *itm2 = *(momitem_t **) p2;
+  momitem_t *asitm = data;
+  assert (itm1 && itm1->i_typnum == momty_item);
+  assert (itm2 && itm2->i_typnum == momty_item);
+  assert (asitm && asitm->i_typnum == momty_item
+	  && asitm->i_paylkind == mompayk_assoc);
+}
+
 void
 emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 {
@@ -2339,6 +2379,8 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
     mom_item_hset_count (cg->cgen_rout.cgrout_hsetdblitm);
   unsigned nbvalues =		//
     mom_item_hset_count (cg->cgen_rout.cgrout_hsetvalitm);
+  momval_t valsetv =
+    mom_item_hset_items_set (cg->cgen_rout.cgrout_hsetvalitm);
   momval_t blocksetv =		//
     mom_item_hset_items_set (cg->cgen_rout.cgrout_blockhsetitm);
   MOM_DEBUG (gencod,
@@ -2474,7 +2516,7 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
     {
       momitem_t *blkitm = mom_seqitem_nth_item (blocksetv, six - 1);
       MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (),
-	       MOMOUT_LITERAL ("// function block #"),
+	       MOMOUT_LITERAL ("// +++++++ function block #"),
 	       MOMOUT_DEC_INT ((int) six), MOMOUT_LITERAL (" "),
 	       MOMOUT_ITEM ((const momitem_t *) blkitm),
 	       MOMOUT_NEWLINE (),
@@ -2486,7 +2528,7 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
       emit_block_cgen (cg, blkitm);
       MOM_OUT (&cg->cgen_outbody, MOMOUT_INDENT_LESS (),
 	       MOMOUT_NEWLINE (),
-	       MOMOUT_LITERAL ("}; // end function block "),
+	       MOMOUT_LITERAL ("}; // -------- end function block "),
 	       MOMOUT_ITEM ((const momitem_t *) blkitm),
 	       MOMOUT_NEWLINE (),
 	       MOMOUT_LITERAL ("return momroutres_pop;"),
@@ -2574,6 +2616,22 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	     ("}; // end of function block-ids of "),
 	     MOMOUT_ITEM ((const momitem_t *) tfunitm),
 	     MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
+  }
+  // emit the value ids sorted by rank
+  {
+    momitem_t *valitemsarr = MOM_GC_ALLOC ("valitemsarr",
+					   (nbvalues +
+					    1) * sizeof (momitem_t *));
+    MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_tfun valsetv="),
+	       MOMOUT_VALUE (valsetv), NULL);
+    assert (mom_is_set (valsetv));
+    memcpy (valitemsarr, valsetv.pset->itemseq,
+	    nbvalues * sizeof (momitem_t *));
+    CGEN_ERROR_MOM (cg, MOMOUT_LITERAL ("emit_tfun should sort valsetv="),
+		    MOMOUT_VALUE (valsetv), NULL);
+    qsort_r (valitemsarr, nbvalues, sizeof (momitem_t *),
+	     cmpr_valitems_by_rank_cgen, cg->cgen_rout.cgrout_associtm);
+
   }
 #warning should emit the value ids sorted by their rank
   // emit the function descriptor
