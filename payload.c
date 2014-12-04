@@ -815,6 +815,25 @@ hset_find_mom (const struct momhset_st *hset, momval_t val)
   return -1;
 }
 
+static inline unsigned
+item_hset_full_count_mom (momitem_t *itm)
+{
+  if (!itm || itm->i_typnum != momty_item || itm->i_paylkind != mompayk_hset)
+    return 0;
+  struct momhset_st *hset = itm->i_payload;
+  assert (hset && hset->hset_magic == MOM_HSET_MAGIC);
+  unsigned sz = hset->hset_size;
+  unsigned cnt = 0;
+  for (unsigned ix = 0; ix < sz; ix++)
+    {
+      momval_t curval = hset->hset_arr[ix];
+      if (!curval.ptr || curval.ptr == MOM_EMPTY)
+	continue;
+      cnt++;
+    }
+  return cnt;
+}
+
 static void
 hset_reorganize_mom (struct momhset_st *hset, unsigned gap)
 {
@@ -874,6 +893,7 @@ mom_item_hset_reserve (momitem_t *itm, unsigned gap)
     hset_reorganize_mom (hset, gap);
   else if (4 * hset->hset_count + 5 < hset->hset_size && hset->hset_size > 16)
     hset_reorganize_mom (hset, gap);
+  assert (hset->hset_count == item_hset_full_count_mom (itm));
 }
 
 bool
@@ -907,11 +927,19 @@ mom_item_hset_add (momitem_t *itm, momval_t elem)
     return false;
   struct momhset_st *hset = itm->i_payload;
   assert (hset && hset->hset_magic == MOM_HSET_MAGIC);
-  assert (hset->hset_count < hset->hset_size);
-  if (6 * hset->hset_count / 5 + 3 >= hset->hset_size)
-    hset_reorganize_mom (hset, hset->hset_count / 8 + 5);
+  assert (hset->hset_count == item_hset_full_count_mom (itm));
+  unsigned oldcount = hset->hset_count;
+  assert (oldcount < hset->hset_size);
+  assert (oldcount == item_hset_full_count_mom (itm));
+  if (6 * oldcount / 5 + 3 >= hset->hset_size)
+    {
+      hset_reorganize_mom (hset, oldcount / 5 + 6);
+      assert (hset->hset_count == item_hset_full_count_mom (itm));
+    }
   int pos = hset_addval_mom (hset, elem);
   assert (hset->hset_count < hset->hset_size);
+  assert (hset->hset_count >= oldcount);
+  assert (hset->hset_count == item_hset_full_count_mom (itm));
   return pos >= 0;
 }
 
@@ -947,6 +975,21 @@ mom_item_hset_items_set (momitem_t *itm)
   struct momhset_st *hset = itm->i_payload;
   assert (hset && hset->hset_magic == MOM_HSET_MAGIC);
   assert (hset->hset_count < hset->hset_size);
+  assert (hset->hset_count == item_hset_full_count_mom (itm));
+#if 0
+  if (hset->hset_count != item_hset_full_count_mom (itm))
+    {
+      static unsigned cnt;
+      cnt++;
+      MOM_DEBUG (gencod, MOMOUT_LITERAL ("corrupted hset:"),
+		 MOMOUT_ITEM ((const momitem_t *) itm),
+		 MOMOUT_ITEM_PAYLOAD ((const momitem_t *) itm), NULL);
+      MOM_WARNPRINTF ("hset_count %d != hset_full_count %d in hset@%p cnt.%d",
+		      hset->hset_count, item_hset_full_count_mom (itm),
+		      (void *) hset, cnt);
+      assert (cnt < 100);
+    };
+#endif
   unsigned cnt = hset->hset_count;
   unsigned sz = hset->hset_size;
   momval_t *arr = hset->hset_arr;
