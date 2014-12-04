@@ -2946,69 +2946,96 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	MOM_GC_FREE (dblitemsarr);
     }
   // emit the function descriptor
-  MOM_OUT (&cg->cgen_outbody,
-	   MOMOUT_LITERAL ("const struct momtfundescr_st "
-			   MOM_TFUN_NAME_PREFIX),
-	   MOMOUT_LITERALV (mom_ident_cstr_of_item
-			    (tfunitm)),
-	   MOMOUT_LITERAL
-	   (" = { // tasklet function descriptor "),
-	   MOMOUT_ITEM ((const momitem_t *) tfunitm),
-	   MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL (".tfun_magic = MOM_TFUN_MAGIC,"),
-	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL (".tfun_minclosize = "),
-	   MOMOUT_DEC_INT ((int) nbclosedvals),
-	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL (".tfun_nbconstants = "),
-	   MOMOUT_DEC_INT ((int) nbconstants),
-	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL (".tfun_nbblocks = "),
-	   MOMOUT_DEC_INT ((int) nbblocks),
-	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL (".tfun_frame_nbval = "),
-	   MOMOUT_DEC_INT ((int) nbvalues),
-	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL (".tfun_frame_nbnum = "),
-	   MOMOUT_DEC_INT ((int) nbnumbers),
-	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL (".tfun_frame_nbdbl = "),
-	   MOMOUT_DEC_INT ((int) nbdoubles),
-	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL (".tfun_constantids = "
-			   CGEN_FUN_CONSTANTIDS_PREFIX),
-	   MOMOUT_LITERALV (mom_ident_cstr_of_item
-			    (tfunitm)),
-	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL
-	   (".tfun_constantitems = (const momitem_t*const*) "
-	    CGEN_FUN_CONSTANTITEMS_PREFIX),
-	   MOMOUT_LITERALV (mom_ident_cstr_of_item
-			    (tfunitm)),
-	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL (".tfun_ident = \""),
-	   MOMOUT_LITERALV (mom_ident_cstr_of_item
-			    (tfunitm)),
-	   MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL (".tfun_blockids = "
-			   CGEN_FUN_BLOCKIDS_PREFIX),
-	   MOMOUT_LITERALV (mom_ident_cstr_of_item
-			    (tfunitm)),
-	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL
-	   (".tfun_module = MONIMELT_CURRENT_MODULE,"),
-	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL (".tfun_codefun = "
-			   CGEN_FUN_CODE_PREFIX),
-	   MOMOUT_LITERALV (mom_ident_cstr_of_item
-			    (tfunitm)),
-	   MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL
-	   (".tfun_timestamp = __DATE__ \"@\" __TIME__"),
-	   MOMOUT_NEWLINE (), MOMOUT_INDENT_LESS (),
-	   MOMOUT_NEWLINE (),
-	   MOMOUT_LITERAL ("}; // end function descriptor"),
-	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
+  MOM_OUT			///
+    (&cg->cgen_outbody,
+     MOMOUT_LITERAL ("const struct momtfundescr_st "
+		     MOM_TFUN_NAME_PREFIX),
+     MOMOUT_LITERALV (mom_ident_cstr_of_item
+		      (tfunitm)),
+     MOMOUT_LITERAL
+     (" = { // tasklet function descriptor "),
+     MOMOUT_ITEM ((const momitem_t *) tfunitm),
+     MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL (".tfun_magic = MOM_TFUN_MAGIC,"),
+     MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL (".tfun_minclosize = "),
+     MOMOUT_DEC_INT ((int) nbclosedvals),
+     MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL (".tfun_nbconstants = "),
+     MOMOUT_DEC_INT ((int) nbconstants),
+     MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL (".tfun_nbblocks = "),
+     MOMOUT_DEC_INT ((int) nbblocks),
+     MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL (".tfun_frame_nbval = "),
+     MOMOUT_DEC_INT ((int) nbvalues),
+     MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL (".tfun_frame_nbnum = "),
+     MOMOUT_DEC_INT ((int) nbnumbers),
+     MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL (".tfun_frame_nbdbl = "),
+     MOMOUT_DEC_INT ((int) nbdoubles),
+     MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL (".tfun_constantids = "
+		     CGEN_FUN_CONSTANTIDS_PREFIX),
+     MOMOUT_LITERALV (mom_ident_cstr_of_item
+		      (tfunitm)),
+     MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL
+     (".tfun_constantitems = (const momitem_t*const*) "
+      CGEN_FUN_CONSTANTITEMS_PREFIX),
+     MOMOUT_LITERALV (mom_ident_cstr_of_item
+		      (tfunitm)),
+     MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL (".tfun_ident = \""),
+     MOMOUT_LITERALV (mom_ident_cstr_of_item
+		      (tfunitm)),
+     MOMOUT_LITERAL ("\","), MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL (".tfun_blockids = "
+		     CGEN_FUN_BLOCKIDS_PREFIX),
+     MOMOUT_LITERALV (mom_ident_cstr_of_item
+		      (tfunitm)),
+     MOMOUT_LITERAL (","), MOMOUT_NEWLINE (), NULL);
+  if (nbvalues > 0)
+    MOM_OUT			///
+      (&cg->cgen_outbody,
+       MOMOUT_LITERAL (".tfun_valids = "
+		       CGEN_FUN_LOCVALIDS_PREFIX),
+       MOMOUT_LITERALV (mom_ident_cstr_of_item
+			(tfunitm)),
+       MOMOUT_LITERAL (","), MOMOUT_NEWLINE (), NULL);
+  if (nbnumbers > 0)
+    MOM_OUT			///
+      (&cg->cgen_outbody,
+       MOMOUT_LITERAL (".tfun_numids = "
+		       CGEN_FUN_LOCINTIDS_PREFIX),
+       MOMOUT_LITERALV (mom_ident_cstr_of_item
+			(tfunitm)),
+       MOMOUT_LITERAL (","), MOMOUT_NEWLINE (), NULL);
+  if (nbdoubles > 0)
+    MOM_OUT			///
+      (&cg->cgen_outbody,
+       MOMOUT_LITERAL (".tfun_dblids = "
+		       CGEN_FUN_LOCDBLIDS_PREFIX),
+       MOMOUT_LITERALV (mom_ident_cstr_of_item
+			(tfunitm)),
+       MOMOUT_LITERAL (","), MOMOUT_NEWLINE (), NULL);
+  MOM_OUT			///
+    (&cg->cgen_outbody,
+     MOMOUT_LITERAL
+     (".tfun_module = MONIMELT_CURRENT_MODULE,"),
+     MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL (".tfun_codefun = "
+		     CGEN_FUN_CODE_PREFIX),
+     MOMOUT_LITERALV (mom_ident_cstr_of_item
+		      (tfunitm)),
+     MOMOUT_LITERAL (","), MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL
+     (".tfun_timestamp = __DATE__ \"@\" __TIME__"),
+     MOMOUT_NEWLINE (), MOMOUT_INDENT_LESS (),
+     MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL ("}; // end function descriptor"),
+     MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
 
 }				/* end emit_taskletfunction_cgen */
 
