@@ -263,8 +263,8 @@ static void scan_instr_cgen (struct c_generator_mom_st *cgen,
 static momtypenc_t scan_expr_cgen (struct c_generator_mom_st *cgen,
 				   momval_t insv, momval_t expv);
 
-static momtypenc_t scan_node_cgen (struct c_generator_mom_st *cg, momval_t insv,
-				   const momnode_t *nod);
+static momtypenc_t scan_node_cgen (struct c_generator_mom_st *cg,
+				   momval_t insv, const momnode_t *nod);
 
 static momtypenc_t scan_item_cgen (struct c_generator_mom_st *cgen,
 				   momitem_t *varitm);
@@ -1065,12 +1065,11 @@ scan_output_cgen (struct c_generator_mom_st *cg, momval_t insv, momval_t outv)
     goto bad_output;						\
   } while(0)
   ///
-  
-      MOM_DEBUG //
-	(gencod,
-	 MOMOUT_LITERAL("scan_output start outv="),
-	 MOMOUT_VALUE((const momval_t)outv),
-	 NULL);
+
+  MOM_DEBUG			//
+    (gencod,
+     MOMOUT_LITERAL ("scan_output start outv="),
+     MOMOUT_VALUE ((const momval_t) outv), NULL);
   if (mom_is_node (outv))
     {
       const momitem_t *oconnitm = mom_node_conn (outv);
@@ -1079,13 +1078,14 @@ scan_output_cgen (struct c_generator_mom_st *cg, momval_t insv, momval_t outv)
 	mom_item_get_attribute (oconnitm, mom_named__formals);
       momval_t outexpv =
 	mom_item_get_attribute (oconnitm, mom_named__output_expansion);
-      momval_t outoutputv  =
+      momval_t outoutputv =
 	mom_item_get_attribute (oconnitm, mom_named__output);
-      if (!outexpv.ptr && !outoutputv.ptr) {
-	// output node which is a usual expression node
-	scan_node_cgen(cg, insv, outv.pnode);
-	return;
-      }
+      if (!outexpv.ptr && !outoutputv.ptr)
+	{
+	  // output node which is a usual expression node
+	  scan_node_cgen (cg, insv, outv.pnode);
+	  return;
+	}
       if (!mom_is_tuple (outformalsv)
 	  || mom_node_conn (outexpv) != mom_named__chunk)
 	OUTSCANFAIL ("bad output connective %s",
@@ -2090,11 +2090,10 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	     MOMOUT_LITERAL ("] = { //! for "),
 	     MOMOUT_ITEM ((const momitem_t *) procitm), MOMOUT_INDENT_MORE (),
 	     MOMOUT_NEWLINE (), NULL);
-    MOM_DEBUG ///
+    MOM_DEBUG			///
       (gencod,
-       MOMOUT_LITERAL("emitproc proconstantsv="),
-       MOMOUT_VALUE((const momval_t)proconstantsv),
-       NULL);
+       MOMOUT_LITERAL ("emitproc proconstantsv="),
+       MOMOUT_VALUE ((const momval_t) proconstantsv), NULL);
     for (unsigned cix = 0; cix < nbconstants; cix++)
       {
 	const momitem_t *curcstitm = mom_tuple_nth_item (proconstantsv, cix);

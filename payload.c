@@ -822,8 +822,9 @@ hset_reorganize_mom (struct momhset_st *hset, unsigned gap)
   unsigned oldsz = hset->hset_size;
   unsigned oldcnt = hset->hset_count;
   momval_t *oldarr = hset->hset_arr;
+  assert (oldcnt + 1 < oldsz);
   if (7 * oldcnt / 6 + gap + 2 >= oldsz)
-    {
+    {				//// grow the hset
       unsigned newsz = ((5 * oldcnt / 4 + 9 + gap) | 0xf) + 1;
       if (newsz == oldsz)
 	return;
@@ -834,7 +835,7 @@ hset_reorganize_mom (struct momhset_st *hset, unsigned gap)
       hset->hset_arr = newarr;
     }
   else if (3 * oldcnt + gap < oldsz && oldsz > 30)
-    {
+    {				//// shrink the hset
       unsigned newsz = ((5 * oldcnt / 4 + 9 + gap) | 0xf) + 1;
       if (newsz == oldsz)
 	return;
@@ -844,6 +845,12 @@ hset_reorganize_mom (struct momhset_st *hset, unsigned gap)
       hset->hset_count = 0;
       hset->hset_arr = newarr;
     }
+  else
+    {
+      // we don't need to grow or shrink, so we just return
+      assert (hset->hset_arr == oldarr);
+      return;
+    };
   for (unsigned ix = 0; ix < oldsz; ix++)
     {
       momval_t curval = oldarr[ix];
@@ -851,6 +858,8 @@ hset_reorganize_mom (struct momhset_st *hset, unsigned gap)
 	continue;
       hset_addval_mom (hset, curval);
     }
+  assert (hset->hset_count == oldcnt);
+  assert (oldcnt < hset->hset_size);
 }
 
 void
@@ -860,6 +869,7 @@ mom_item_hset_reserve (momitem_t *itm, unsigned gap)
     return;
   struct momhset_st *hset = itm->i_payload;
   assert (hset && hset->hset_magic == MOM_HSET_MAGIC);
+  assert (hset->hset_count < hset->hset_size);
   if (hset->hset_count + gap <= 7 * hset->hset_size / 6)
     hset_reorganize_mom (hset, gap);
   else if (4 * hset->hset_count + 5 < hset->hset_size && hset->hset_size > 16)
@@ -874,6 +884,7 @@ mom_item_hset_contains (momitem_t *itm, momval_t elem)
     return false;
   struct momhset_st *hset = itm->i_payload;
   assert (hset && hset->hset_magic == MOM_HSET_MAGIC);
+  assert (hset->hset_count < hset->hset_size);
   return hset_find_mom (hset, elem) >= 0;
 }
 
@@ -884,6 +895,7 @@ mom_item_hset_count (momitem_t *itm)
     return 0;
   struct momhset_st *hset = itm->i_payload;
   assert (hset && hset->hset_magic == MOM_HSET_MAGIC);
+  assert (hset->hset_count < hset->hset_size);
   return hset->hset_count;
 }
 
@@ -895,9 +907,11 @@ mom_item_hset_add (momitem_t *itm, momval_t elem)
     return false;
   struct momhset_st *hset = itm->i_payload;
   assert (hset && hset->hset_magic == MOM_HSET_MAGIC);
-  if (6 * hset->hset_count / 5 + 2 >= hset->hset_size)
-    hset_reorganize_mom (hset, hset->hset_count / 32 + 4);
+  assert (hset->hset_count < hset->hset_size);
+  if (6 * hset->hset_count / 5 + 3 >= hset->hset_size)
+    hset_reorganize_mom (hset, hset->hset_count / 8 + 5);
   int pos = hset_addval_mom (hset, elem);
+  assert (hset->hset_count < hset->hset_size);
   return pos >= 0;
 }
 
@@ -910,6 +924,7 @@ mom_item_hset_remove (momitem_t *itm, momval_t elem)
     return false;
   struct momhset_st *hset = itm->i_payload;
   assert (hset && hset->hset_magic == MOM_HSET_MAGIC);
+  assert (hset->hset_count < hset->hset_size);
   int pos = hset_find_mom (hset, elem);
   if (pos >= 0)
     {
@@ -918,6 +933,7 @@ mom_item_hset_remove (momitem_t *itm, momval_t elem)
       if (hset->hset_size > 30 && hset->hset_count < hset->hset_size / 5)
 	hset_reorganize_mom (hset, 3);
     }
+  assert (hset->hset_count < hset->hset_size);
   return found;
 }
 
@@ -930,6 +946,7 @@ mom_item_hset_items_set (momitem_t *itm)
     return MOM_NULLV;
   struct momhset_st *hset = itm->i_payload;
   assert (hset && hset->hset_magic == MOM_HSET_MAGIC);
+  assert (hset->hset_count < hset->hset_size);
   unsigned cnt = hset->hset_count;
   unsigned sz = hset->hset_size;
   momval_t *arr = hset->hset_arr;
@@ -965,6 +982,7 @@ mom_item_hset_sorted_values_node (momitem_t *hsetitm, momitem_t *connitm)
     return MOM_NULLV;
   struct momhset_st *hset = hsetitm->i_payload;
   assert (hset && hset->hset_magic == MOM_HSET_MAGIC);
+  assert (hset->hset_count < hset->hset_size);
   unsigned cnt = hset->hset_count;
   unsigned sz = hset->hset_size;
   momval_t *arr = hset->hset_arr;
