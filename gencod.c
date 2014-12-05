@@ -2310,7 +2310,8 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
   {
     const momitem_t *hsetblkitm =
       (const momitem_t *) cg->cgen_rout.cgrout_blockhsetitm;
-    procnodev = mom_make_node_sized (procnodev, 1, (momval_t) hsetblkitm);
+    procnodev =
+      (momval_t) mom_make_node_sized (procnodev, 1, (momval_t) hsetblkitm);
     mom_item_assoc_put (cg->cgen_globassocitm, procitm, procnodev);
     MOM_DEBUG
       (gencod, MOMOUT_LITERAL ("emit_procedure ending updated procnodev="),
@@ -2319,9 +2320,10 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
        MOMOUT_LITERAL ("for procitm:"),
        MOMOUT_ITEM ((const momitem_t *) procitm),
        MOMOUT_LITERAL ("updated globassocitm:"),
-       MOMOUT_ITEM (cg->cgen_globassocitm),
+       MOMOUT_ITEM ((const momitem_t *) cg->cgen_globassocitm),
        MOMOUT_NEWLINE (),
-       MOMOUT_ITEM_PAYLOAD (cg->cgen_globassocitm), MOMOUT_NEWLINE (), NULL);
+       MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->cgen_globassocitm),
+       MOMOUT_NEWLINE (), NULL);
   }
   return;
 }				/* end of emit_procedure_cgen */
@@ -2553,6 +2555,9 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
   momval_t tfunodev = mom_item_assoc_get (cg->cgen_globassocitm, tfunitm);
   momval_t tfunclosedvalsv =
     mom_item_get_attribute (tfunitm, mom_named__closed_values);
+  momval_t intvarsv = MOM_NULLV;
+  momval_t dblvarsv = MOM_NULLV;
+  momval_t valvarsv = MOM_NULLV;
   MOM_DEBUG (gencod,		//
 	     MOMOUT_LITERAL ("emit_tfun tfunitm="),
 	     MOMOUT_ITEM ((const momitem_t *) tfunitm),
@@ -2874,6 +2879,9 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	      nbvalues * sizeof (momitem_t *));
       qsort_r (valitemsarr, nbvalues, sizeof (momitem_t *),
 	       cmpr_valitems_by_rank_cgen, (void *) asitm);
+      valvarsv =
+	(momval_t) mom_make_node_sized ((momval_t) mom_named__values,
+					nbvalues, (momval_t *) valitemsarr);
       /// emit them
       MOM_OUT			///
 	(&cg->cgen_outbody,
@@ -2952,6 +2960,9 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	      nbnumbers * sizeof (momitem_t *));
       qsort_r (intitemsarr, nbnumbers, sizeof (momitem_t *),
 	       cmpr_intitems_by_rank_cgen, (void *) asitm);
+      intvarsv =
+	(momval_t) mom_make_node_sized ((momval_t) mom_named__numbers,
+					nbnumbers, (momval_t *) intitemsarr);
       /// emit them
       MOM_OUT			///
 	(&cg->cgen_outbody,
@@ -3030,6 +3041,9 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	      nbdoubles * sizeof (momitem_t *));
       qsort_r (dblitemsarr, nbdoubles, sizeof (momitem_t *),
 	       cmpr_dblitems_by_rank_cgen, (void *) asitm);
+      dblvarsv =
+	(momval_t) mom_make_node_sized ((momval_t) mom_named__doubles,
+					nbdoubles, (momval_t *) dblitemsarr);
       /// emit them
       MOM_OUT			///
 	(&cg->cgen_outbody,
@@ -3179,7 +3193,26 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
      MOMOUT_NEWLINE (),
      MOMOUT_LITERAL ("}; // end function descriptor"),
      MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
-
+  /// update the associated node in the globalassoc
+  {
+    tfunodev = (momval_t) mom_make_node_sized (tfunodev, 4,
+					       intvarsv, dblvarsv, valvarsv,
+					       (momval_t) cg->
+					       cgen_rout.cgrout_blockhsetitm);
+    mom_item_assoc_put (cg->cgen_globassocitm, tfunitm, tfunodev);
+    MOM_DEBUG
+      (gencod, MOMOUT_LITERAL ("emit_tfun ending updated tfunodev="),
+       MOMOUT_VALUE ((const momval_t) tfunodev),
+       MOMOUT_NEWLINE (),
+       MOMOUT_LITERAL ("for tfunitm:"),
+       MOMOUT_ITEM ((const momitem_t *) tfunitm),
+       MOMOUT_LITERAL ("updated globassocitm:"),
+       MOMOUT_ITEM ((const momitem_t *) cg->cgen_globassocitm),
+       MOMOUT_NEWLINE (),
+       MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->cgen_globassocitm),
+       MOMOUT_NEWLINE (), NULL);
+  }
+  return;
 }				/* end emit_taskletfunction_cgen */
 
 
@@ -3991,8 +4024,7 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
       momval_t connexprv = mom_node_nth (nodv, 0);
       MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("/*!node+"),
 	       MOMOUT_DEC_INT ((int) arity - 1),
-	       MOMOUT_LITERAL
-	       ("*/mom_make_node_sized (mom_value_to_item("), NULL);
+	       MOMOUT_LITERAL ("*/mom_make_node_sized (("), NULL);
       if (emit_expr_cgen (cg, connexprv) != momtypenc_val)
 	CGEN_ERROR_MOM (cg,
 			MOMOUT_LITERAL
