@@ -2886,8 +2886,9 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
       qsort_r (valitemsarr, nbvalues, sizeof (momitem_t *),
 	       cmpr_valitems_by_rank_cgen, (void *) asitm);
       valvarsv =
-	(momval_t) mom_make_node_sized ((momval_t) mom_named__values,
-					nbvalues, (momval_t *) valitemsarr);
+	(momval_t) mom_make_node_from_array ((momval_t) mom_named__values,
+					     nbvalues,
+					     (momval_t *) valitemsarr);
       /// emit them
       MOM_OUT			///
 	(&cg->cgen_outbody,
