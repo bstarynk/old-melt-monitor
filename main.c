@@ -87,6 +87,7 @@ mom_debug_at (const char *sfil, int slin, enum mom_debug_en dbg, ...)
   memset (&outd, 0, sizeof (outd));
   outd.mout_magic = MOM_MOUT_MAGIC;
   outd.mout_file = open_memstream (&membuf, &memsize);
+  outd.mout_flags = outf_comment;
   va_list alist;
   va_start (alist, dbg);
   mom_outva_at (sfil, slin, &outd, alist);

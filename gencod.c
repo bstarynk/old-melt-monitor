@@ -1874,39 +1874,39 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
   proconstantsv = mom_item_get_attribute (procitm, mom_named__constants);
   nbconstants = mom_seqitem_length (proconstantsv);
   assert (mom_node_conn (procnodev) == mom_named__procedure);
-  MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_procedure procitm="),
-	     MOMOUT_ITEM ((const momitem_t *) procitm),
-	     MOMOUT_SPACE (58),
-	     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) procitm),
-	     MOMOUT_NEWLINE (),
-	     MOMOUT_LITERAL (" procnodev="),
-	     MOMOUT_VALUE ((momval_t) procnodev),
-	     MOMOUT_NEWLINE (),
-	     MOMOUT_LITERAL (" local-assoc:"),
-	     MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.cgrout_associtm),
-	     MOMOUT_SPACE (50),
-	     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
-				  cgen_rout.cgrout_associtm),
-	     MOMOUT_NEWLINE (), MOMOUT_LITERAL (" blockhset:"),
-	     MOMOUT_ITEM ((const momitem_t *) cg->
-			  cgen_rout.cgrout_blockhsetitm), MOMOUT_SPACE (50),
-	     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
-				  cgen_rout.cgrout_blockhsetitm),
-	     MOMOUT_NEWLINE (), MOMOUT_LITERAL (" hsetint:"),
-	     MOMOUT_ITEM ((const momitem_t *) cg->
-			  cgen_rout.cgrout_hsetintitm), MOMOUT_SPACE (50),
-	     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
-				  cgen_rout.cgrout_hsetintitm),
-	     MOMOUT_NEWLINE (), MOMOUT_LITERAL (" hsetdbl:"),
-	     MOMOUT_ITEM ((const momitem_t *) cg->
-			  cgen_rout.cgrout_hsetdblitm), MOMOUT_SPACE (50),
-	     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
-				  cgen_rout.cgrout_hsetdblitm),
-	     MOMOUT_NEWLINE (), MOMOUT_LITERAL (" hsetval:"),
-	     MOMOUT_ITEM ((const momitem_t *) cg->
-			  cgen_rout.cgrout_hsetvalitm), MOMOUT_SPACE (50),
-	     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
-				  cgen_rout.cgrout_hsetvalitm), NULL);
+  MOM_DEBUG			//
+    (gencod, MOMOUT_LITERAL ("emit_procedure procitm="),
+     MOMOUT_ITEM ((const momitem_t *) procitm),
+     MOMOUT_SPACE (58),
+     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) procitm),
+     MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL (" procnodev="),
+     MOMOUT_VALUE ((momval_t) procnodev),
+     MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL (" local-assoc:"),
+     MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.cgrout_associtm),
+     MOMOUT_SPACE (50),
+     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->cgen_rout.cgrout_associtm),
+     MOMOUT_NEWLINE (), MOMOUT_LITERAL (" blockhset:"),
+     MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.cgrout_blockhsetitm),
+     MOMOUT_SPACE (50),
+     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
+			  cgen_rout.cgrout_blockhsetitm), MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL (" hsetint:"),
+     MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.cgrout_hsetintitm),
+     MOMOUT_SPACE (50),
+     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
+			  cgen_rout.cgrout_hsetintitm), MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL (" hsetdbl:"),
+     MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.cgrout_hsetdblitm),
+     MOMOUT_SPACE (50),
+     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
+			  cgen_rout.cgrout_hsetdblitm), MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL (" hsetval:"),
+     MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.cgrout_hsetvalitm),
+     MOMOUT_SPACE (50),
+     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
+			  cgen_rout.cgrout_hsetvalitm), NULL);
   momval_t proctypv = mom_item_get_attribute (procitm, mom_named__ctype);
   MOM_OUT (&cg->cgen_outbody, MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
 	   MOMOUT_NEWLINE (),
@@ -2081,7 +2081,13 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_proc bix#"),
 		   MOMOUT_DEC_INT ((int) bix),
 		   MOMOUT_LITERAL (" curblkitm="),
-		   MOMOUT_ITEM ((const momitem_t *) curblkitm), NULL);
+		   MOMOUT_ITEM ((const momitem_t *) curblkitm),
+		   MOMOUT_SPACE (48),
+		   MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) curblkitm),
+		   MOMOUT_NEWLINE (), NULL);
+	mom_item_hset_check_integrity (cg->cgen_rout.cgrout_hsetintitm);
+	mom_item_hset_check_integrity (cg->cgen_rout.cgrout_hsetdblitm);
+	mom_item_hset_check_integrity (cg->cgen_rout.cgrout_hsetvalitm);
 	MOM_OUT (&cg->cgen_outbody,
 		 MOMOUT_NEWLINE (),
 		 MOMOUT_NEWLINE (),
@@ -2150,6 +2156,9 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	     MOMOUT_LITERAL ("} // end proc.code "),
 	     MOMOUT_ITEM ((const momitem_t *) procitm),
 	     MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
+    mom_item_hset_check_integrity (cg->cgen_rout.cgrout_hsetintitm);
+    mom_item_hset_check_integrity (cg->cgen_rout.cgrout_hsetdblitm);
+    mom_item_hset_check_integrity (cg->cgen_rout.cgrout_hsetvalitm);
     // emit the constant ids
     MOM_OUT (&cg->cgen_outbody,
 	     MOMOUT_NEWLINE (),
@@ -2540,6 +2549,9 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
   MOM_DEBUG (gencod,
 	     MOMOUT_LITERAL (" emit_tfun blocksetv="),
 	     MOMOUT_VALUE (blocksetv), NULL);
+  mom_item_hset_check_integrity (cg->cgen_rout.cgrout_hsetintitm);
+  mom_item_hset_check_integrity (cg->cgen_rout.cgrout_hsetdblitm);
+  mom_item_hset_check_integrity (cg->cgen_rout.cgrout_hsetvalitm);
   unsigned nbblocks = mom_set_cardinal (blocksetv);
   unsigned nbclosedvals = mom_seqitem_length (tfunclosedvalsv);
   momval_t funconstantsv
@@ -2677,6 +2689,9 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	       MOMOUT_LITERAL (CGEN_FUN_BLOCK_PREFIX),
 	       MOMOUT_DEC_INT ((int) six), MOMOUT_LITERAL (":"),
 	       MOMOUT_NEWLINE (), NULL);
+      mom_item_hset_check_integrity (cg->cgen_rout.cgrout_hsetintitm);
+      mom_item_hset_check_integrity (cg->cgen_rout.cgrout_hsetdblitm);
+      mom_item_hset_check_integrity (cg->cgen_rout.cgrout_hsetvalitm);
       MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("{"),
 	       MOMOUT_INDENT_MORE (), MOMOUT_NEWLINE (), NULL);
       emit_block_cgen (cg, blkitm);
@@ -2688,6 +2703,9 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	       MOMOUT_LITERAL ("return momroutres_pop;"),
 	       MOMOUT_NEWLINE (), NULL);
     }
+  mom_item_hset_check_integrity (cg->cgen_rout.cgrout_hsetintitm);
+  mom_item_hset_check_integrity (cg->cgen_rout.cgrout_hsetdblitm);
+  mom_item_hset_check_integrity (cg->cgen_rout.cgrout_hsetvalitm);
   // emit end of function
   MOM_OUT (&cg->cgen_outbody,
 	   MOMOUT_INDENT_LESS (),

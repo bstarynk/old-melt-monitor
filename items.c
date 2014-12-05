@@ -555,7 +555,7 @@ finalize_item_mom (void *itmad, void *data __attribute__ ((unused)))
 {
   momitem_t *itm = (momitem_t *) itmad;
   assert (itm->i_typnum == momty_item && itm->i_magic == MOM_ITEM_MAGIC);
-  MOM_DEBUG (run, MOMOUT_LITERAL ("finalize_item itm="),
+  MOM_DEBUG (low, MOMOUT_LITERAL ("finalize_item itm="),
 	     MOMOUT_ITEM ((const momitem_t *) itm), MOMOUT_BACKTRACE (20));
   mom_should_lock_item (itm);
   if (itm->i_payload != NULL)
