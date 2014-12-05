@@ -5604,11 +5604,17 @@ cgen_update_block_info (struct c_generator_mom_st *cg,
   for (unsigned bix = 0; bix < nbblocks; bix++)
     {
       momitem_t *curblitm = mom_set_nth_item (blsetv, bix);
-      //      mom_item_put_attribute
-      //        (curblitm,
-      //         mom_named__in,
-      //         (momval_t) mom_make_node_sized()
-      //         );
+      momval_t inodv = (momval_t)	//
+	mom_make_node_sized ((momval_t) mom_node_conn (blval),
+			     2,
+			     mom_make_integer (bix + 1),
+			     (momval_t) routitm);
+      mom_item_put_attribute (curblitm, mom_named__in, inodv);
+      MOM_DEBUG (gencod,
+		 MOMOUT_LITERAL ("updateblock curblitm:"),
+		 MOMOUT_ITEM ((const momitem_t *) curblitm),
+		 MOMOUT_LITERAL (" in "),
+		 MOMOUT_VALUE ((const momval_t) inodv), NULL);
     }
   // we have nbblocks items in blnodv, and the rest is for jumps, with
   // a jump and a from node for each of them.
