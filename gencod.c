@@ -385,6 +385,8 @@ mom_generate_c_module (momitem_t *moditm, const char *dirname, char **perrmsg)
   mycgen.cgen_locksetitm = mom_make_item ();
   mom_item_start_hset (mycgen.cgen_locksetitm);
   mom_item_hset_reserve (mycgen.cgen_locksetitm, 250);
+  MOM_DEBUG (gencod, MOMOUT_LITERAL ("generate_c_module locksetitm:"),
+	     MOMOUT_ITEM ((const momitem_t *) mycgen.cgen_locksetitm), NULL);
   cgen_lock_item_mom (&mycgen, mycgen.cgen_locksetitm);
   /// check that the modules/ subdirectory exist, or create it
   {
@@ -761,18 +763,23 @@ emit_routine_cgen (struct c_generator_mom_st *cg, unsigned routix,
   mom_item_start_hset (cg->cgen_rout.cgrout_hsetvalitm);
   cgen_lock_item_mom (cg, cg->cgen_rout.cgrout_hsetvalitm);
   // starting
-  MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_routine curoutitm="),
-	     MOMOUT_ITEM ((const momitem_t *) curoutitm),
-	     MOMOUT_LITERAL (" routix#"), MOMOUT_DEC_INT ((int) routix),
-	     MOMOUT_NEWLINE (), MOMOUT_LITERAL (" locassoc:"),
-	     MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.cgrout_associtm),
-	     MOMOUT_LITERAL (" blockhset:"),
-	     MOMOUT_ITEM ((const momitem_t *) cg->
-			  cgen_rout.cgrout_blockhsetitm),
-	     MOMOUT_LITERAL (" blockqueue:"),
-	     MOMOUT_ITEM ((const momitem_t *) cg->
-			  cgen_rout.cgrout_blockqueueitm), MOMOUT_NEWLINE (),
-	     NULL);
+  MOM_DEBUG			//
+    (gencod, MOMOUT_LITERAL ("emit_routine curoutitm="),
+     MOMOUT_ITEM ((const momitem_t *) curoutitm),
+     MOMOUT_LITERAL (" routix#"), MOMOUT_DEC_INT ((int) routix),
+     MOMOUT_NEWLINE (), MOMOUT_LITERAL (" locassoc:"),
+     MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.cgrout_associtm),
+     MOMOUT_NEWLINE (), MOMOUT_LITERAL (" blockhset:"),
+     MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.cgrout_blockhsetitm),
+     MOMOUT_NEWLINE (), MOMOUT_LITERAL (" blockqueue:"),
+     MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.cgrout_blockqueueitm),
+     MOMOUT_NEWLINE (), MOMOUT_LITERAL (" hsetint:"),
+     MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.cgrout_hsetintitm),
+     MOMOUT_NEWLINE (), MOMOUT_LITERAL (" hsetdbl:"),
+     MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.cgrout_hsetdblitm),
+     MOMOUT_NEWLINE (), MOMOUT_LITERAL (" hsetval:"),
+     MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.cgrout_hsetvalitm),
+     MOMOUT_NEWLINE (), NULL);
   if (curoutconnitm == mom_named__procedure)
     {
       cg->cgen_rout.cgrout_kind = cgr_proc;

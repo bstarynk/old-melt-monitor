@@ -988,6 +988,8 @@ mom_item_hset_items_set (momitem_t *itm)
     return MOM_NULLV;
   struct momhset_st *hset = itm->i_payload;
   assert (hset && hset->hset_magic == MOM_HSET_MAGIC);
+  MOM_DEBUG (low, MOMOUT_LITERAL ("hset_items_set start itm="),
+	     MOMOUT_ITEM ((const momitem_t *) itm), NULL);
   assert (hset->hset_count < hset->hset_size);
   assert (hset->hset_count == hset_full_count_mom (hset));
   unsigned cnt = hset->hset_count;
