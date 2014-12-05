@@ -2187,7 +2187,14 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
        MOMOUT_VALUE ((const momval_t) proconstantsv), NULL);
     for (unsigned cix = 0; cix < nbconstants; cix++)
       {
-	const momitem_t *curcstitm = mom_tuple_nth_item (proconstantsv, cix);
+	const momitem_t *curcstitm =
+	  mom_seqitem_nth_item (proconstantsv, cix);
+	MOM_DEBUG		///
+	  (gencod,
+	   MOMOUT_LITERAL ("emitproc cix#"),
+	   MOMOUT_DEC_INT ((int) cix),
+	   MOMOUT_LITERAL (" curcstitm:"),
+	   MOMOUT_ITEM ((const momitem_t *) curcstitm), NULL);
 	assert (curcstitm != NULL);
 	MOM_OUT (&cg->cgen_outbody,
 		 MOMOUT_NEWLINE (),
