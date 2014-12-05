@@ -2233,11 +2233,14 @@ void mom_item_vector_append_til_nil (momitem_t *itm, ...)
 void mom_item_vector_append_from_array (momitem_t *itm, unsigned count,
 					const momval_t *arr);
 void mom_item_vector_append_from_node (momitem_t *itm, momval_t nodv);
-momval_t mom_make_node_from_item_vector (const momitem_t *connitm,
-					 momitem_t *vectitm);
-momval_t mom_make_node_from_item_vector_slice (const momitem_t *connitm,
+
+// if the connective value is a node, the new sons are appended to in
+// in the new node.
+momval_t mom_make_node_from_item_vector (momval_t connv, momitem_t *vectitm);
+momval_t mom_make_node_from_item_vector_slice (momval_t connv,
 					       momitem_t *vectitm,
 					       int firstix, int afterix);
+
 momval_t mom_make_set_from_item_vector (momitem_t *vectitm);
 momval_t mom_make_set_from_item_vector_slice (momitem_t *vectitm, int firstix,
 					      int afterix);
@@ -2484,20 +2487,21 @@ struct momnode_st
   const momval_t sontab[];
 };
 
-// node making functions would return nil if the connective is not an
-// item...
+// node making functions are constructing a node from a connective
+// value. If that value is an item, it becomes the connective; if that
+// value is already a node, the returned node is appending the new
+// sons to those of the connective-node.
 
 // make a node til nil. MOM_EMPTY arguments are replaced with nil.
-const momnode_t *mom_make_node_til_nil (const momitem_t *conn, ...)
+const momnode_t *mom_make_node_til_nil (momval_t connv, ...)
   __attribute__ ((sentinel));
 
 // make a node of given size. all arguments after siz should be
 // genuine values without MOM_EMPTY...
-const momnode_t *mom_make_node_sized (const momitem_t *conn,
-				      unsigned siz, ...);
+const momnode_t *mom_make_node_sized (momval_t connv, unsigned siz, ...);
 
 // make a node from an array
-const momnode_t *mom_make_node_from_array (const momitem_t *conn,
+const momnode_t *mom_make_node_from_array (momval_t connv,
 					   unsigned siz, momval_t *arr);
 
 

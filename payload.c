@@ -365,9 +365,11 @@ mom_item_vector_append_from_node (momitem_t *itm, const momval_t nodv)
 
 
 momval_t
-mom_make_node_from_item_vector (const momitem_t *connitm, momitem_t *vectitm)
+mom_make_node_from_item_vector (momval_t connv, momitem_t *vectitm)
 {
-  if (!connitm || connitm->i_typnum != momty_item)
+  if (!connv.ptr)
+    return MOM_NULLV;
+  if (!mom_is_item (connv) && !mom_is_node (connv))
     return MOM_NULLV;
   if (!vectitm || vectitm->i_typnum != momty_item)
     return MOM_NULLV;
@@ -375,15 +377,17 @@ mom_make_node_from_item_vector (const momitem_t *connitm, momitem_t *vectitm)
     return MOM_NULLV;
   struct mom_valuevector_st *vvec = vectitm->i_payload;
   unsigned cnt = vvec->vvec_count;
-  return (momval_t) mom_make_node_from_array (connitm, cnt, vvec->vvec_array);
+  return (momval_t) mom_make_node_from_array (connv, cnt, vvec->vvec_array);
 }
 
 momval_t
-mom_make_node_from_item_vector_slice (const momitem_t *connitm,
+mom_make_node_from_item_vector_slice (momval_t connv,
 				      momitem_t *vectitm, int firstix,
 				      int afterix)
 {
-  if (!connitm || connitm->i_typnum != momty_item)
+  if (!connv.ptr)
+    return MOM_NULLV;
+  if (!mom_is_item (connv) && !mom_is_node (connv))
     return MOM_NULLV;
   if (!vectitm || vectitm->i_typnum != momty_item)
     return MOM_NULLV;
@@ -397,7 +401,7 @@ mom_make_node_from_item_vector_slice (const momitem_t *connitm,
     afterix += cnt;
   if (firstix >= 0 && firstix < (int) cnt
       && afterix >= firstix && afterix < (int) cnt)
-    return (momval_t) mom_make_node_from_array (connitm, afterix - firstix,
+    return (momval_t) mom_make_node_from_array (connv, afterix - firstix,
 						vvec->vvec_array + firstix);
   return MOM_NULLV;
 }
@@ -1128,7 +1132,8 @@ mom_item_hset_sorted_values_node (momitem_t *hsetitm, momitem_t *connitm)
       valarr[valcnt++] = curval;
     }
   qsort (valarr, valcnt, sizeof (momval_t), mom_valqsort_cmp);
-  res = (momval_t) mom_make_node_from_array (connitm, valcnt, valarr);
+  res =
+    (momval_t) mom_make_node_from_array ((momval_t) connitm, valcnt, valarr);
   MOM_GC_FREE (valarr);
   MOM_DEBUG (low, MOMOUT_LITERAL ("hset_sorted_values_node itm="),
 	     MOMOUT_ITEM ((const momitem_t *) hsetitm),

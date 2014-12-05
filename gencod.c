@@ -429,9 +429,8 @@ mom_generate_c_module (momitem_t *moditm, const char *dirname, char **perrmsg)
   mom_item_put_attribute
     (mycgen.cgen_globassocitm,
      mom_named__comment,
-     MOM_OUTSTRING(0, MOMOUT_LITERAL("global association for module "),
-		   MOMOUT_ITEM((const momitem_t*)moditm),
-		   NULL));
+     MOM_OUTSTRING (0, MOMOUT_LITERAL ("global association for module "),
+		    MOMOUT_ITEM ((const momitem_t *) moditm), NULL));
   mom_item_start_assoc (mycgen.cgen_globassocitm);
   cgen_lock_item_mom (&mycgen, mycgen.cgen_globassocitm);
   /// start the head part
@@ -473,22 +472,19 @@ mom_generate_c_module (momitem_t *moditm, const char *dirname, char **perrmsg)
   // emit module initialization
   emit_moduleinit_cgen (&mycgen);
 
-  MOM_DEBUG ////
+  MOM_DEBUG			////
     (gencod,
-     MOMOUT_LITERAL("finished module generation, need to update the routines info"),
-     MOMOUT_NEWLINE(),
-     MOMOUT_LITERAL(" globassocitm="),
-     MOMOUT_ITEM((const momitem_t*)mycgen.cgen_globassocitm),
-     MOMOUT_NEWLINE(),
-     MOMOUT_ITEM_ATTRIBUTES((const momitem_t*)mycgen.cgen_globassocitm),
-     MOMOUT_NEWLINE(),
-     MOMOUT_ITEM_PAYLOAD((const momitem_t*)mycgen.cgen_globassocitm),
-     MOMOUT_NEWLINE(),
-     MOMOUT_LITERAL(" moditm="),
-     MOMOUT_ITEM((const momitem_t*)moditm),
-     MOMOUT_NEWLINE(),
-     MOMOUT_ITEM_ATTRIBUTES((const momitem_t*)moditm),
-     NULL);
+     MOMOUT_LITERAL
+     ("finished module generation, need to update the routines info"),
+     MOMOUT_NEWLINE (), MOMOUT_LITERAL (" globassocitm="),
+     MOMOUT_ITEM ((const momitem_t *) mycgen.cgen_globassocitm),
+     MOMOUT_NEWLINE (),
+     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) mycgen.cgen_globassocitm),
+     MOMOUT_NEWLINE (),
+     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) mycgen.cgen_globassocitm),
+     MOMOUT_NEWLINE (), MOMOUT_LITERAL (" moditm="),
+     MOMOUT_ITEM ((const momitem_t *) moditm), MOMOUT_NEWLINE (),
+     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) moditm), NULL);
 
 #warning we should do something with the computed information
   CGEN_ERROR_MOM (&mycgen,
@@ -719,7 +715,7 @@ declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	MOM_GC_FREE (argsigbuf);
       MOM_OUT (&cg->cgen_outhead, MOMOUT_LITERAL (");"), MOMOUT_NEWLINE ());
       momval_t anodv =
-	(momval_t) mom_make_node_sized (mom_named__procedure, 3,
+	(momval_t) mom_make_node_sized ((momval_t) mom_named__procedure, 3,
 					mom_make_integer (routix),
 					argsigv, procrestypev);
       mom_item_assoc_put (cg->cgen_globassocitm, curoutitm, anodv);
@@ -745,7 +741,7 @@ declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	       ("(int, momitem_t*, momval_t, momval_t*, intptr_t*, double*);"),
 	       MOMOUT_NEWLINE (), NULL);
       momval_t anodv = (momval_t)
-	mom_make_node_sized (mom_named__tasklet_function, 1,
+	mom_make_node_sized ((momval_t) mom_named__tasklet_function, 1,
 			     mom_make_integer (routix));
       MOM_DEBUG (gencod,
 		 MOMOUT_LITERAL
@@ -886,8 +882,8 @@ bind_constants_cgen (struct c_generator_mom_st *cg, momval_t constantsv)
 	  CGEN_CHECK_FRESH (cg, "constant in routine", constitm);
 	  mom_item_assoc_put
 	    (cg->cgen_rout.cgrout_associtm, constitm,
-	     (momval_t) mom_make_node_sized (mom_named__constants, 2,
-					     mom_make_integer (cix),
+	     (momval_t) mom_make_node_sized ((momval_t) mom_named__constants,
+					     2, mom_make_integer (cix),
 					     (momval_t) constitm));
 	}
     }
@@ -917,7 +913,8 @@ bind_closed_values_cgen (struct c_generator_mom_st *cg, momval_t closvalsv)
 	  CGEN_CHECK_FRESH (cg, "closed value in routine", clositm);
 	  mom_item_assoc_put
 	    (cg->cgen_rout.cgrout_associtm, clositm,
-	     (momval_t) mom_make_node_sized (mom_named__closed_values, 2,
+	     (momval_t) mom_make_node_sized ((momval_t)
+					     mom_named__closed_values, 2,
 					     mom_make_integer (cix),
 					     (momval_t) clositm));
 	}
@@ -988,7 +985,7 @@ scan_procedure_cgen (struct c_generator_mom_st *cg, momitem_t *procitm)
 			MOMOUT_ITEM ((const momitem_t *) procitm), NULL);
       mom_item_assoc_put
 	(cg->cgen_rout.cgrout_associtm, curformitm,
-	 (momval_t) mom_make_node_sized (mom_named__formals, 3,
+	 (momval_t) mom_make_node_sized ((momval_t) mom_named__formals, 3,
 					 (momval_t) procitm,
 					 mom_make_integer (fix), formtypv));
     }
@@ -1019,7 +1016,7 @@ scan_procedure_cgen (struct c_generator_mom_st *cg, momitem_t *procitm)
   momval_t argsigv = mom_node_nth (procnodev, 1);
   momval_t restypv = mom_node_nth (procnodev, 2);
   momval_t newanodv =		//
-    (momval_t) mom_make_node_sized (mom_named__procedure, 4,
+    (momval_t) mom_make_node_sized ((momval_t) mom_named__procedure, 4,
 				    ixv, argsigv, restypv,
 				    (momval_t)
 				    cg->cgen_rout.cgrout_blockhsetitm);
@@ -1522,8 +1519,8 @@ scan_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
 		    (cg->cgen_rout.cgrout_hsetintitm, (momval_t) varitm));
 	    mom_item_assoc_put	////
 	      (cg->cgen_rout.cgrout_associtm, varitm,
-	       (momval_t) mom_make_node_sized (mom_named__intptr_t, 2,
-					       mom_make_integer (cnt),
+	       (momval_t) mom_make_node_sized ((momval_t) mom_named__intptr_t,
+					       2, mom_make_integer (cnt),
 					       cg->cgen_rout.cgrout_routitm));
 	    mom_item_hset_add (cg->cgen_rout.cgrout_hsetintitm,
 			       (momval_t) varitm);
@@ -1545,8 +1542,8 @@ scan_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
 		    (cg->cgen_rout.cgrout_hsetdblitm, (momval_t) varitm));
 	    mom_item_assoc_put	////
 	      (cg->cgen_rout.cgrout_associtm, varitm,
-	       (momval_t) mom_make_node_sized (mom_named__double, 2,
-					       mom_make_integer (cnt),
+	       (momval_t) mom_make_node_sized ((momval_t) mom_named__double,
+					       2, mom_make_integer (cnt),
 					       cg->cgen_rout.cgrout_routitm));
 	    mom_item_hset_add (cg->cgen_rout.cgrout_hsetdblitm,
 			       (momval_t) varitm);
@@ -1568,8 +1565,8 @@ scan_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
 		    (cg->cgen_rout.cgrout_hsetvalitm, (momval_t) varitm));
 	    mom_item_assoc_put	////
 	      (cg->cgen_rout.cgrout_associtm, varitm,
-	       (momval_t) mom_make_node_sized (mom_named__momval_t, 2,
-					       mom_make_integer (cnt),
+	       (momval_t) mom_make_node_sized ((momval_t) mom_named__momval_t,
+					       2, mom_make_integer (cnt),
 					       cg->cgen_rout.cgrout_routitm));
 	    mom_item_hset_add (cg->cgen_rout.cgrout_hsetvalitm,
 			       (momval_t) varitm);
@@ -1814,7 +1811,7 @@ scan_block_cgen (struct c_generator_mom_st *cg, momitem_t *blockitm,
   if (fromblitm)
     (void) mom_item_hset_add
       (cg->cgen_rout.cgrout_blockhsetitm,
-       (momval_t) mom_make_node_sized (mom_named__jump, 2,
+       (momval_t) mom_make_node_sized ((momval_t) mom_named__jump, 2,
 				       (momval_t) fromblitm,
 				       (momval_t) blockitm));
   if (!mom_item_hset_add
@@ -1873,12 +1870,10 @@ scan_block_cgen (struct c_generator_mom_st *cg, momitem_t *blockitm,
   mom_item_queue_add_back (cg->cgen_rout.cgrout_blockqueueitm,
 			   (momval_t) blockitm);
   cg->cgen_rout.cgrout_blockcount++;
-  momval_t nodv = (momval_t) mom_make_node_sized (mom_named__block, 2,
-						  mom_make_integer
-						  (cg->
-						   cgen_rout.cgrout_blockcount),
-						  cg->cgen_rout.
-						  cgrout_routitm);
+  momval_t nodv = (momval_t)	//
+    mom_make_node_sized ((momval_t) mom_named__block, 2,
+			 mom_make_integer (cg->cgen_rout.cgrout_blockcount),
+			 cg->cgen_rout.cgrout_routitm);
   mom_item_assoc_put (cg->cgen_rout.cgrout_associtm, blockitm, nodv);
   MOM_DEBUG (gencod, MOMOUT_LITERAL ("scan_block nodv="),
 	     MOMOUT_VALUE ((const momval_t) nodv),
@@ -4339,8 +4334,8 @@ emit_node_cgen (struct c_generator_mom_st *cg, momval_t nodv)
 	  mom_item_put_attribute (cg->cgen_globassocitm, connitm,
 				  (momval_t)
 				  mom_make_node_sized
-				  (mom_named__procedure, 3, MOM_NULLV,
-				   formalsv, ctypev));
+				  ((momval_t) mom_named__procedure, 3,
+				   MOM_NULLV, formalsv, ctypev));
 	}
       if (mom_item_get_name (connitm))
 	MOM_OUT (&cg->cgen_outbody, MOMOUT_LITERAL ("/*!"),

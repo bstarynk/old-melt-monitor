@@ -1109,7 +1109,8 @@ mom_load_value_json (struct mom_loader_st *ld, const momval_t jval)
 		  sons[ix] =
 		    mom_load_value_json (ld, mom_json_array_nth (jsons, ix));
 		jres =
-		  (momval_t) mom_make_node_from_array (connitm, nbsons, sons);
+		  (momval_t) mom_make_node_from_array ((momval_t) connitm,
+						       nbsons, sons);
 		if (sons != tinysons)
 		  MOM_GC_FREE (sons);
 		MOM_DEBUG (load,
@@ -2238,13 +2239,13 @@ end:
 	      nvalarr[cntnotice++] = qel->vqe_valtab[ix];
 	}
       outd->odmp_nodenotice =
-	(momval_t) mom_make_node_from_array (mom_named__notice, nbnotice,
-					     nvalarr);
+	(momval_t) mom_make_node_from_array ((momval_t) mom_named__notice,
+					     nbnotice, nvalarr);
       if (nvalarr != tinynval)
 	MOM_GC_FREE (nvalarr);
       memset (tinynval, 0, sizeof (tinynval));
       outd->odmp_nodemodules =
-	(momval_t) mom_make_node_from_array (mom_named__module,
+	(momval_t) mom_make_node_from_array ((momval_t) mom_named__module,
 					     dmod->dmod_size,
 					     dmod->dmod_valtab);
       MOM_GC_FREE (dmod);

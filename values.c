@@ -1369,24 +1369,39 @@ update_node_hash_mom (struct momnode_st *nd)
   nd->hash = h;
 }
 
+
 const momnode_t *
-mom_make_node_til_nil (const momitem_t *conn, ...)
+mom_make_node_til_nil (momval_t connv, ...)
 {
   momnode_t *nd = NULL;
   unsigned siz = 0;
-  if (!conn || conn->i_typnum != momty_item)
+  const momitem_t *connitm = NULL;
+  unsigned connarity = 0;
+  if (!connv.ptr)
+    return NULL;
+  if (mom_is_item (connv))
+    connitm = connv.pitem;
+  else if (mom_is_node (connv))
+    {
+      connitm = mom_node_conn (connv);
+      siz = connarity = mom_node_arity (connv);
+    }
+  else
     return NULL;
   va_list args;
-  va_start (args, conn);
+  va_start (args, connv);
   while (va_arg (args, momval_t).ptr != NULL)
       siz++;
   va_end (args);
   nd =
     MOM_GC_ALLOC ("new node til nil",
 		  sizeof (momnode_t) + siz * sizeof (momval_t));
-  nd->connitm = conn;
-  va_start (args, conn);
-  for (unsigned ix = 0; ix < siz; ix++)
+  nd->connitm = connitm;
+  va_start (args, connv);
+  if (connarity > 0)
+    memcpy ((momval_t *) nd->sontab, connv.pnode->sontab,
+	    connarity * sizeof (momval_t));
+  for (unsigned ix = connarity; ix < siz; ix++)
     {
       momval_t v = va_arg (args, momval_t);
       if (v.ptr == MOM_EMPTY)
@@ -1401,48 +1416,78 @@ mom_make_node_til_nil (const momitem_t *conn, ...)
 }
 
 const momnode_t *
-mom_make_node_sized (const momitem_t *conn, unsigned siz, ...)
+mom_make_node_sized (momval_t connv, unsigned len, ...)
 {
   momnode_t *nd = NULL;
-  if (!conn || conn->i_typnum != momty_item)
+  const momitem_t *connitm = NULL;
+  unsigned connarity = 0;
+  if (!connv.ptr)
     return NULL;
+  if (mom_is_item (connv))
+    connitm = connv.pitem;
+  else if (mom_is_node (connv))
+    {
+      connitm = mom_node_conn (connv);
+      connarity = mom_node_arity (connv);
+    }
+  else
+    return NULL;
+  unsigned siz = len + connarity;
   va_list args;
   nd =
     MOM_GC_ALLOC ("new node sized",
 		  sizeof (momnode_t) + siz * sizeof (momval_t));
-  va_start (args, siz);
-  for (unsigned ix = 0; ix < siz; ix++)
+  va_start (args, len);
+  if (connarity > 0)
+    memcpy ((momval_t *) nd->sontab, connv.pnode->sontab,
+	    connarity * sizeof (momval_t));
+  for (unsigned ix = 0; ix < len; ix++)
     {
       momval_t v = va_arg (args, momval_t);
       if (v.ptr == MOM_EMPTY)
 	v.ptr = NULL;
-      ((momval_t *) nd->sontab)[ix] = v;
+      ((momval_t *) nd->sontab)[ix + connarity] = v;
     }
   va_end (args);
   nd->typnum = momty_node;
-  nd->connitm = conn;
-  nd->slen = siz;
+  nd->connitm = connitm;
+  nd->slen = siz + connarity;
   update_node_hash_mom (nd);
   return nd;
 }
 
 const momnode_t *
-mom_make_node_from_array (const momitem_t *conn, unsigned siz, momval_t *arr)
+mom_make_node_from_array (momval_t connv, unsigned len, momval_t *arr)
 {
   momnode_t *nd = NULL;
-  if (!conn || conn->i_typnum != momty_item)
+  const momitem_t *connitm = NULL;
+  unsigned connarity = 0;
+  if (!connv.ptr)
     return NULL;
+  if (mom_is_item (connv))
+    connitm = connv.pitem;
+  else if (mom_is_node (connv))
+    {
+      connitm = mom_node_conn (connv);
+      connarity = mom_node_arity (connv);
+    }
+  else
+    return NULL;
+  unsigned siz = len + connarity;
   nd =
     MOM_GC_ALLOC ("new node from array",
 		  sizeof (momnode_t) + siz * sizeof (momval_t));
+  if (connarity > 0)
+    memcpy ((momval_t *) nd->sontab, connv.pnode->sontab,
+	    connarity * sizeof (momval_t));
   if (arr)
-    for (unsigned ix = 0; ix < siz; ix++)
+    for (unsigned ix = 0; ix < len; ix++)
       {
 	if (arr[ix].ptr != MOM_EMPTY)
 	  ((momval_t *) nd->sontab)[ix] = arr[ix];
       }
   nd->typnum = momty_node;
-  nd->connitm = conn;
+  nd->connitm = connitm;
   nd->slen = siz;
   update_node_hash_mom (nd);
   return nd;

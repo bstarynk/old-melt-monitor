@@ -1423,7 +1423,9 @@ cmd_do_node_mom (const char *lin, bool pres, momitem_t *itm)
       else
 	MOM_DEBUGPRINTF (cmd, "do_node it no varr");
       MOM_DEBUGPRINTF (cmd, "connitm@%p varr@%p", connitm, varr);
-      nodv = (momval_t) mom_make_node_from_array (connitm, markdepth, varr);
+      nodv =
+	(momval_t) mom_make_node_from_array ((momval_t) connitm, markdepth,
+					     varr);
       MOM_DEBUG (cmd, MOMOUT_LITERAL ("do_node nodv="),
 		 MOMOUT_VALUE ((const momval_t) nodv));
       if (nodv.ptr)
@@ -1460,7 +1462,8 @@ cmd_do_node_mom (const char *lin, bool pres, momitem_t *itm)
       else
 	MOM_DEBUGPRINTF (cmd, "do_node plain no varr");
       nodv =
-	(momval_t) mom_make_node_from_array (connitm, markdepth - 1, varr);
+	(momval_t) mom_make_node_from_array ((momval_t) connitm,
+					     markdepth - 1, varr);
       MOM_DEBUG (cmd, MOMOUT_LITERAL ("do_node plain nodv="),
 		 MOMOUT_VALUE ((const momval_t) nodv));
       if (nodv.ptr)
@@ -1930,7 +1933,8 @@ cmd_do_append_mom (const char *lin)
 	    memcpy (arr, belv.pnode->sontab, arity * sizeof (momval_t));
 	    arr[arity] = topv;
 	    momval_t newnodv =
-	      (momval_t) mom_make_node_from_array (connitm, arity + 1, arr);
+	      (momval_t) mom_make_node_from_array ((momval_t) connitm,
+						   arity + 1, arr);
 	    MOM_GC_FREE (arr);
 	    cmd_stack_pop_mom (2);
 	    cmd_stack_push_mom (newnodv);
