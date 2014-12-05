@@ -822,6 +822,7 @@ hset_full_count_mom (struct momhset_st *hset)
 {
   assert (hset && hset->hset_magic == MOM_HSET_MAGIC);
   unsigned sz = hset->hset_size;
+  assert (hset->hset_count < sz);
   unsigned cnt = 0;
   for (unsigned ix = 0; ix < sz; ix++)
     {
@@ -911,15 +912,16 @@ mom_item_hset_contains (momitem_t *itm, momval_t elem)
   return hset_find_mom (hset, elem) >= 0;
 }
 
+static int hset_integrity_chkcount_mom;
 void
 mom_item_hset_check_integrity_at (const char *fil, int lin, const char *func,
 				  const char *msg, momitem_t *itm)
 {
-  static int chkcount;
   if (!itm || itm->i_typnum != momty_item || itm->i_paylkind != mompayk_hset)
     return;
   struct momhset_st *hset = itm->i_payload;
-  chkcount++;
+  hset_integrity_chkcount_mom++;
+  int chkcount = hset_integrity_chkcount_mom;
   assert (hset && hset->hset_magic == MOM_HSET_MAGIC);
   if (hset->hset_count >= hset->hset_size
       || hset->hset_count != hset_full_count_mom (hset))
@@ -951,9 +953,11 @@ mom_item_hset_check_integrity_at (const char *fil, int lin, const char *func,
 			 ((int) hset->hset_count)),
 	 MOMOUT_FMT_INT ((const char *) " fullcount=%d",
 			 ((int) hset_full_count_mom (hset))),
-	 MOMOUT_NEWLINE (), MOMOUT_FMT_LONG ((const char *) "itm@%lx",
-					     ((long) itm)),
-	 MOMOUT_FMT_LONG ((const char *) " hset@%lx", ((long) hset)), NULL);
+	 MOMOUT_NEWLINE (),
+	 MOMOUT_FMT_LONG ((const char *) "itm@%lx",
+			  ((long) itm)),
+	 MOMOUT_FMT_LONG ((const char *) " hset@%lx",
+			  ((long) (intptr_t) (void *) hset)), NULL);
     };
   MOM_DEBUG_AT			//
     (fil, lin, low,
