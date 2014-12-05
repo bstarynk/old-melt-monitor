@@ -940,25 +940,24 @@ mom_item_hset_check_integrity_at (const char *fil, int lin, momitem_t *itm)
        MOMOUT_LITERAL (" hset payload:"),
        MOMOUT_ITEM_PAYLOAD ((const momitem_t *) itm),
        MOMOUT_NEWLINE (),
-       MOMOUT_FMT_INT ("hsetcount=%d", (int) hset->hset_count),
-       MOMOUT_FMT_INT (" fullcount=%d", (int) hset_full_count_mom (hset)),
-       MOMOUT_NEWLINE (),
-       MOMOUT_FMT_LONG ("itm@%#lx", (long) itm),
-       MOMOUT_FMT_LONG (" hset@%#lx", (long) hset), NULL);
-  MOM_DEBUG_AT (fil, lin, low,
-		MOMOUT_LITERAL ("with chkcount="),
+       MOMOUT_FMT_INT ((const char *) "hsetcount=%d",
+		       ((int) hset->hset_count)),
+       MOMOUT_FMT_INT ((const char *) " fullcount=%d",
+		       ((int) hset_full_count_mom (hset))), MOMOUT_NEWLINE (),
+       MOMOUT_FMT_LONG ((const char *) "itm@%lx", ((long) itm)),
+       MOMOUT_FMT_LONG ((const char *) " hset@%lx", ((long) hset)), NULL);
+  MOM_DEBUG_AT (fil, lin, low, MOMOUT_LITERAL ("with chkcount="),
 		MOMOUT_DEC_INT (chkcount),
 		MOMOUT_LITERAL (" checked integrity of hset item:"),
-		MOMOUT_ITEM ((const momitem_t *) itm),
-		MOMOUT_NEWLINE (),
+		MOMOUT_ITEM ((const momitem_t *) itm), MOMOUT_NEWLINE (),
 		MOMOUT_LITERAL ("hset attrs:"),
 		MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) itm),
-		MOMOUT_NEWLINE (),
-		MOMOUT_LITERAL (" hset payload:"),
+		MOMOUT_NEWLINE (), MOMOUT_LITERAL (" hset payload:"),
 		MOMOUT_ITEM_PAYLOAD ((const momitem_t *) itm),
-		MOMOUT_NEWLINE (),
-		MOMOUT_FMT_LONG ("itm@%#lx", (long) itm),
-		MOMOUT_FMT_LONG (" hset@%#lx", (long) hset), NULL);
+		MOMOUT_NEWLINE (), MOMOUT_FMT_LONG ((const char *) "itm@%#lx",
+						    (long) itm),
+		MOMOUT_FMT_LONG ((const char *) " hset@%#lx", (long) hset),
+		NULL);
   ///
   if (chkcount % 8 == 0)
     fflush (NULL);

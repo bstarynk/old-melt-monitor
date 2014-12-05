@@ -421,7 +421,7 @@ typedef enum momoutdir_en
   MOMOUTDO_FMT_LONG /*, const char*fmt, long l */ ,
 #define MOMOUT_FMT_LONG(F,L) MOMOUTDO_FMT_LONG,	\
   MOM_REQUIRES_TYPE(F,const char*,mombad_fmt),	\
-  MOM_REQUIRES_TYPE(L,long,mombad_long)
+  MOM_REQUIRES_TYPE((L),long,mombad_long)
   ///
   /// format giving a format a long
   MOMOUTDO_FMT_LONG_LONG /*, const char*fmt, long long l */ ,
