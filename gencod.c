@@ -752,17 +752,57 @@ emit_routine_cgen (struct c_generator_mom_st *cg, unsigned routix,
   cg->cgen_rout.cgrout_blockqueueitm = mom_make_item ();
   mom_item_start_queue (cg->cgen_rout.cgrout_blockqueueitm);
   cgen_lock_item_mom (cg, cg->cgen_rout.cgrout_blockqueueitm);
-  // the local variable sets
-  cg->cgen_rout.cgrout_hsetintitm = mom_make_item ();
-  mom_item_start_hset (cg->cgen_rout.cgrout_hsetintitm);
-  cgen_lock_item_mom (cg, cg->cgen_rout.cgrout_hsetintitm);
-  cg->cgen_rout.cgrout_hsetdblitm = mom_make_item ();
-  mom_item_start_hset (cg->cgen_rout.cgrout_hsetdblitm);
-  cgen_lock_item_mom (cg, cg->cgen_rout.cgrout_hsetdblitm);
-  cg->cgen_rout.cgrout_hsetvalitm = mom_make_item ();
-  mom_item_start_hset (cg->cgen_rout.cgrout_hsetvalitm);
-  mom_item_hset_check_integrity (cg->cgen_rout.cgrout_hsetvalitm);
-  cgen_lock_item_mom (cg, cg->cgen_rout.cgrout_hsetvalitm);
+  ///// ========== the local variable sets
+  /// local ints
+  {
+    momitem_t *hsintitm = cg->cgen_rout.cgrout_hsetintitm = mom_make_item ();
+    mom_item_start_hset (hsintitm);
+    mom_item_put_attribute
+      (hsintitm,
+       mom_named__comment,
+       MOM_OUTSTRING (MOMOUT_LITERAL ("local ints hset for "),
+		      MOMOUT_ITEM ((const momitem_t *) curoutitm)));
+    MOM_DEBUG			//
+      (gencod, MOMOUT_LITERAL ("emit_routine hsetintitm="),
+       MOMOUT_ITEM ((const momitem_t *) hsintitm),
+       MOMOUT_NEWLINE (),
+       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) hsintitm), NULL);
+    cgen_lock_item_mom (cg, hsintitm);
+    mom_item_hset_check_integrity (hsintitm);
+  }
+  /// local dbls
+  {
+    momitem_t *hsdblitm = cg->cgen_rout.cgrout_hsetdblitm = mom_make_item ();
+    mom_item_start_hset (hsdblitm);
+    mom_item_put_attribute
+      (hsdblitm,
+       mom_named__comment,
+       MOM_OUTSTRING (MOMOUT_LITERAL ("local dbls hset for "),
+		      MOMOUT_ITEM ((const momitem_t *) curoutitm)));
+    MOM_DEBUG			//
+      (gencod, MOMOUT_LITERAL ("emit_routine hsetdblitm="),
+       MOMOUT_ITEM ((const momitem_t *) hsdblitm),
+       MOMOUT_NEWLINE (),
+       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) hsdblitm), NULL);
+    cgen_lock_item_mom (cg, hsdblitm);
+    mom_item_hset_check_integrity (hsdblitm);
+  }
+  /// local vals
+  {
+    momitem_t *hsvalitm = cg->cgen_rout.cgrout_hsetvalitm = mom_make_item ();
+    mom_item_start_hset (hsvalitm);
+    mom_item_put_attribute
+      (hsvalitm,
+       mom_named__comment,
+       MOM_OUTSTRING (MOMOUT_LITERAL ("local vals hset for "),
+		      MOMOUT_ITEM ((const momitem_t *) curoutitm)));
+    MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_routine hsetvalitm="),
+	       MOMOUT_ITEM ((const momitem_t *) hsvalitm),
+	       MOMOUT_NEWLINE (),
+	       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) hsvalitm), NULL);
+    cgen_lock_item_mom (cg, hsvalitm);
+    mom_item_hset_check_integrity (hsvalitm);
+  }
   // starting
   MOM_DEBUG			//
     (gencod, MOMOUT_LITERAL ("emit_routine curoutitm="),
