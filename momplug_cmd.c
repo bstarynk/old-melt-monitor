@@ -1387,7 +1387,7 @@ cmd_do_set_mom (const char *lin, bool pres, long num)
 static void
 cmd_do_node_mom (const char *lin, bool pres, momitem_t *itm)
 {
-  momitem_t *connitm = NULL;
+  momval_t connv = MOM_NULLV;
   momval_t nodv = MOM_NULLV;
   char nambuf[80];
   char cmdbuf[128];
@@ -1401,7 +1401,7 @@ cmd_do_node_mom (const char *lin, bool pres, momitem_t *itm)
 	     MOMOUT_ITEM ((const momitem_t *) itm));
   if (pres && itm && markdepth >= 0)
     {
-      connitm = itm;
+      connv = (momval_t) itm;
       MOM_DEBUGPRINTF (cmd, "do_node it markdepth=%d top=%d", markdepth,
 		       vst_top_mom);
       momval_t *varr = NULL;
@@ -1422,9 +1422,9 @@ cmd_do_node_mom (const char *lin, bool pres, momitem_t *itm)
 	}
       else
 	MOM_DEBUGPRINTF (cmd, "do_node it no varr");
-      MOM_DEBUGPRINTF (cmd, "connitm@%p varr@%p", connitm, varr);
+      MOM_DEBUGPRINTF (cmd, "connv@%p varr@%p", connv.ptr, varr);
       nodv =
-	(momval_t) mom_make_node_from_array ((momval_t) connitm, markdepth,
+	(momval_t) mom_make_node_from_array ((momval_t) connv, markdepth,
 					     varr);
       MOM_DEBUG (cmd, MOMOUT_LITERAL ("do_node nodv="),
 		 MOMOUT_VALUE ((const momval_t) nodv));
@@ -1434,7 +1434,8 @@ cmd_do_node_mom (const char *lin, bool pres, momitem_t *itm)
 	  snprintf (cmdbuf, sizeof (cmdbuf),
 		    ",node %s",
 		    mom_string_cstr ((momval_t)
-				     mom_item_get_name_or_idstr (connitm)));
+				     mom_item_get_name_or_idstr (mom_node_conn
+								 (nodv))));
 	  add_history (cmdbuf);
 	}
     }
@@ -1442,10 +1443,10 @@ cmd_do_node_mom (const char *lin, bool pres, momitem_t *itm)
     {
       MOM_DEBUGPRINTF (cmd, "do_node plain markdepth=%d top=%d", markdepth,
 		       vst_top_mom);
-      connitm = mom_value_to_item (cmd_stack_nth_value_mom (-1));
-      MOM_DEBUG (cmd, MOMOUT_LITERAL ("do_node plain connitm:"),
-		 MOMOUT_ITEM ((const momitem_t *) connitm));
-      if (connitm)
+      connv = cmd_stack_nth_value_mom (-1);
+      MOM_DEBUG (cmd, MOMOUT_LITERAL ("do_node plain connv:"),
+		 MOMOUT_VALUE ((const momval_t) connv));
+      if (connv.ptr)
 	cmd_stack_pop_mom (1);
       momval_t *varr = NULL;
       if (markdepth > 1)
@@ -1462,7 +1463,7 @@ cmd_do_node_mom (const char *lin, bool pres, momitem_t *itm)
       else
 	MOM_DEBUGPRINTF (cmd, "do_node plain no varr");
       nodv =
-	(momval_t) mom_make_node_from_array ((momval_t) connitm,
+	(momval_t) mom_make_node_from_array ((momval_t) connv,
 					     markdepth - 1, varr);
       MOM_DEBUG (cmd, MOMOUT_LITERAL ("do_node plain nodv="),
 		 MOMOUT_VALUE ((const momval_t) nodv));
@@ -1473,7 +1474,8 @@ cmd_do_node_mom (const char *lin, bool pres, momitem_t *itm)
 		    sizeof (cmdbuf),
 		    ",node %s",
 		    mom_string_cstr ((momval_t)
-				     mom_item_get_name_or_idstr (connitm)));
+				     mom_item_get_name_or_idstr (mom_node_conn
+								 (nodv))));
 	  add_history (cmdbuf);
 	}
     };
@@ -1486,7 +1488,7 @@ cmd_do_node_mom (const char *lin, bool pres, momitem_t *itm)
 	(mom_stdout,
 	 MOMOUT_LITERAL (ANSI_BOLD "made node" ANSI_NORMAL " of connective: "
 			 ANSI_BOLD),
-	 MOMOUT_ITEM ((const momitem_t *) connitm),
+	 MOMOUT_ITEM ((const momitem_t *) mom_node_conn (nodv)),
 	 MOMOUT_LITERAL (ANSI_NORMAL ", arity " ANSI_BOLD),
 	 MOMOUT_DEC_INT ((int) mom_node_arity (nodv)),
 	 MOMOUT_LITERAL (ANSI_NORMAL), MOMOUT_NEWLINE ());
