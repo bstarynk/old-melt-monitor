@@ -748,6 +748,10 @@ INSERT INTO t_items VALUES('_4s3eqwipr0q_pt7afrpt1c8','{"attr": [{"attr": "_0ee6
      ".pitem)"]}}, {"attr": "_41u1utcxyek_22cftxt3xxm", "val": "primitive to get name or else ident string of item or else nil."}],
  "content": null, "kind": null, "payload": null}
 ','');
+INSERT INTO t_items VALUES('_4u0zjv26zd1_p4ajmewfuu3','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "a test module with only show_html_for_item_proc "},
+  {"attr": "_9dcxaqk8tqe_fam9mcxme9w", "val": {"jtype": "set", "set": ["_0z0rsvwfkcj_dcpkx68i074"]}}],
+ "content": null, "kind": null, "payload": null}
+','');
 INSERT INTO t_items VALUES('_4v74chqs1eh_chqd9cqw85t','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "for procedure related things"}],
  "content": null, "kind": null, "payload": null}
 ','');
@@ -1799,6 +1803,7 @@ INSERT INTO t_names VALUES('strv','_5dq5ma9a81c_pdtk3x9sw4w','.root');
 INSERT INTO t_names VALUES('switch','_8qpa7j0chkh_k630ujw6jiw','.predef');
 INSERT INTO t_names VALUES('tasklet_function','_7yxp9xhih4z_9uzrqhkamxa','.predef');
 INSERT INTO t_names VALUES('terminated','_3jpt8yuzuyw_ti1pyz3me1c','.predef');
+INSERT INTO t_names VALUES('test1_module','_4u0zjv26zd1_p4ajmewfuu3','.root');
 INSERT INTO t_names VALUES('test_fun1','_8qmqy249w63_fxdr6rdz48m','.root');
 INSERT INTO t_names VALUES('test_proc1','_682ush7cppa_s7vzfd2rsxp','.root');
 INSERT INTO t_names VALUES('todoproc','_2qq1dh2ucpr_qtv6staqhti','.root');
