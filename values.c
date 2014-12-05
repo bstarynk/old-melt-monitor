@@ -1451,7 +1451,7 @@ mom_make_node_sized (momval_t connv, unsigned len, ...)
   va_end (args);
   nd->typnum = momty_node;
   nd->connitm = connitm;
-  nd->slen = siz + connarity;
+  nd->slen = siz;
   update_node_hash_mom (nd);
   return nd;
 }

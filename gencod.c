@@ -2308,12 +2308,20 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
   {
     const momitem_t *hsetblkitm =
       (const momitem_t *) cg->cgen_rout.cgrout_blockhsetitm;
-    procnodev =
-      (momval_t) mom_make_node_sized (procnodev, 1, (momval_t) hsetblkitm);
-    mom_item_assoc_put (cg->cgen_globassocitm, procitm, procnodev);
+    MOM_DEBUG
+      (gencod, MOMOUT_LITERAL ("emit_procedure ending old procnodev="),
+       MOMOUT_VALUE ((const momval_t) procnodev),
+       MOMOUT_NEWLINE (),
+       MOMOUT_LITERAL (" hsetblkitm="),
+       MOMOUT_ITEM ((const momitem_t *) hsetblkitm), NULL);
+    ///
+    momval_t newprocnodev =
+      (momval_t) mom_make_node_sized (procnodev, 1, (momval_t) hsetblkitm,
+				      NULL);
+    mom_item_assoc_put (cg->cgen_globassocitm, procitm, newprocnodev);
     MOM_DEBUG
       (gencod, MOMOUT_LITERAL ("emit_procedure ending updated procnodev="),
-       MOMOUT_VALUE ((const momval_t) procnodev),
+       MOMOUT_VALUE ((const momval_t) newprocnodev),
        MOMOUT_NEWLINE (),
        MOMOUT_LITERAL ("for procitm:"),
        MOMOUT_ITEM ((const momitem_t *) procitm),
