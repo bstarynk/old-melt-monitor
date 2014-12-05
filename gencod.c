@@ -5419,15 +5419,104 @@ void
 cgen_update_module_info_mom (struct c_generator_mom_st *cg)
 {
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
+  momitem_t *globitm = cg->cgen_globassocitm;
+  momitem_t *moditm = cg->cgen_moditm;
+  momval_t setatv = mom_item_assoc_set_attrs (globitm);
   MOM_DEBUG			//
     (gencod,
-     MOMOUT_LITERAL ("cgen_update_module_info start; globassoc:"),
-     MOMOUT_ITEM ((const momitem_t *) cg->cgen_globassocitm),
+     MOMOUT_LITERAL ("update_module_info start; globassoc:"),
+     MOMOUT_ITEM ((const momitem_t *) globitm),
      MOMOUT_NEWLINE (),
-     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) cg->cgen_globassocitm),
+     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) globitm),
      MOMOUT_NEWLINE (),
-     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->cgen_globassocitm),
-     MOMOUT_NEWLINE (), NULL);
+     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) globitm),
+     MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL ("setatv="),
+     MOMOUT_VALUE ((const momval_t) setatv), NULL);
+  unsigned nbelem = mom_set_cardinal (setatv);
+  for (unsigned ix = 0; ix < nbelem; ix++)
+    {
+      const momitem_t *curelitm = mom_set_nth_item (setatv, ix);
+      const momval_t curval = mom_item_assoc_get (globitm, curelitm);
+      MOM_DEBUG			//
+	(gencod,
+	 MOMOUT_LITERAL ("update_module_info ix#"),
+	 MOMOUT_DEC_INT ((int) ix),
+	 MOMOUT_LITERAL (":"),
+	 MOMOUT_ITEM (curelitm),
+	 MOMOUT_NEWLINE (),
+	 MOMOUT_LITERAL ("curval="), MOMOUT_VALUE (curval),
+	 MOMOUT_NEWLINE (), NULL);
+      momitem_t *connitm = mom_node_conn (curval);
+      const momitem_t *blhitm = NULL;
+      if (connitm == mom_named__procedure && mom_node_arity (curval) == 3)
+	{
+	/** *procedure(<rank>,<sigstring>,<restype>,<blockhset>) */
+	  blhitm = mom_value_to_item (mom_node_nth (curval, 3));
+	  momval_t rankv = mom_node_nth (curval, 0);
+	  momval_t sigstrv = mom_node_nth (curval, 1);
+	  momval_t inodv = (momval_t)	//
+	    mom_make_node_sized ((momval_t) mom_named__module,
+				 2,
+				 (momval_t) moditm,
+				 rankv);
+	  mom_item_put_attribute (curelitm, mom_named__in, inodv);
+	  MOM_DEBUG
+	    (gencod,
+	     MOMOUT_LITERAL ("update_module_info proc="),
+	     MOMOUT_ITEM (curelitm),
+	     MOMOUT_SPACE (48), MOMOUT_LITERAL ("inodv:"),
+	     MOMOUT_VALUE ((const momval_t) inodv),
+	     MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL ("blhitm:"),
+	     MOMOUT_ITEM (blhitm),
+	     MOMOUT_NEWLINE (),
+	     MOMOUT_ITEM_ATTRIBUTES (blhitm),
+	     MOMOUT_NEWLINE (), MOMOUT_ITEM_PAYLOAD (blhitm), NULL);
+	}
+      else if (connitm == mom_named__tasklet_function
+	       && mom_node_arity (curval) == 5)
+	{
+	/** *tasklet_function(<rank>,<numbers>,<doubles>,<values>,<blockhset>) */
+	  momval_t rankv = mom_node_nth (curval, 0);
+	  momval_t numbersv = mom_node_nth (curval, 1);
+	  momval_t doublesv = mom_node_nth (curval, 2);
+	  momval_t valuesv = mom_node_nth (curval, 3);
+	  blhitm = mom_value_to_item (mom_node_nth (curval, 4));
+	  momval_t inodv = (momval_t)	//
+	    mom_make_node_sized ((momval_t) mom_named__module,
+				 2,
+				 (momval_t) moditm,
+				 rankv);
+	  mom_item_put_attribute (curelitm, mom_named__in, inodv);
+	  MOM_DEBUG
+	    (gencod,
+	     MOMOUT_LITERAL ("update_module_info tfun="),
+	     MOMOUT_ITEM (curelitm),
+	     MOMOUT_SPACE (48), MOMOUT_LITERAL ("inodv:"),
+	     MOMOUT_VALUE ((const momval_t) inodv),
+	     MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL ("numbersv:"),
+	     MOMOUT_VALUE ((const momval_t) numbersv),
+	     MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL ("doublesv:"),
+	     MOMOUT_VALUE ((const momval_t) doublesv),
+	     MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL ("valuesv:"),
+	     MOMOUT_VALUE ((const momval_t) valuesv),
+	     MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL ("blhitm:"),
+	     MOMOUT_ITEM (blhitm),
+	     MOMOUT_NEWLINE (),
+	     MOMOUT_ITEM_ATTRIBUTES (blhitm),
+	     MOMOUT_NEWLINE (), MOMOUT_ITEM_PAYLOAD (blhitm), NULL);
+	}
+      else
+	CGEN_ERROR_MOM
+	  (cg, MOMOUT_LITERAL ("update_module_info unexpected curval="),
+	   MOMOUT_VALUE (curval),
+	   MOMOUT_LITERAL (" for curelitm="), MOMOUT_ITEM (curelitm));
+    }
 #warning cgen_update_module_info unimplemented
   CGEN_ERROR_MOM
     (cg, MOMOUT_LITERAL ("cgen_update_module_info unimplemented; globassoc="),
