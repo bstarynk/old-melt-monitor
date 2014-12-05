@@ -2897,7 +2897,7 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	  const momitem_t *curdblitm = (const momitem_t *) dblitemsarr[vix];
 	  assert (curdblitm != NULL);
 	  momval_t asnoddbl =
-	    mom_item_assoc_get ((const momitem_t *) asitm, curdblitm);
+	    mom_item_assoc_get ((momitem_t *) asitm, curdblitm);
 	  int vnum = mom_integer_val_def (mom_node_nth (asnoddbl, 0), -1);
 	  MOM_DEBUG		//
 	    (gencod,
