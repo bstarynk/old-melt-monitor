@@ -426,7 +426,14 @@ mom_generate_c_module (momitem_t *moditm, const char *dirname, char **perrmsg)
     mycgen.cgen_filbase = (char *) MOM_GC_STRDUP ("base file", basbuf);
   }
   mycgen.cgen_globassocitm = mom_make_item ();
+  mom_item_put_attribute
+    (mycgen.cgen_globassocitm,
+     mom_named__comment,
+     MOM_OUTSTRING(0, MOMOUT_LITERAL("global association for module "),
+		   MOMOUT_ITEM((const momitem_t*)moditm),
+		   NULL));
   mom_item_start_assoc (mycgen.cgen_globassocitm);
+  cgen_lock_item_mom (&mycgen, mycgen.cgen_globassocitm);
   /// start the head part
   MOM_OUT (&mycgen.cgen_outhead,
 	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
@@ -465,6 +472,23 @@ mom_generate_c_module (momitem_t *moditm, const char *dirname, char **perrmsg)
     }
   // emit module initialization
   emit_moduleinit_cgen (&mycgen);
+
+  MOM_DEBUG ////
+    (gencod,
+     MOMOUT_LITERAL("finished module generation, need to update the routines info"),
+     MOMOUT_NEWLINE(),
+     MOMOUT_LITERAL(" globassocitm="),
+     MOMOUT_ITEM((const momitem_t*)mycgen.cgen_globassocitm),
+     MOMOUT_NEWLINE(),
+     MOMOUT_ITEM_ATTRIBUTES((const momitem_t*)mycgen.cgen_globassocitm),
+     MOMOUT_NEWLINE(),
+     MOMOUT_ITEM_PAYLOAD((const momitem_t*)mycgen.cgen_globassocitm),
+     MOMOUT_NEWLINE(),
+     MOMOUT_LITERAL(" moditm="),
+     MOMOUT_ITEM((const momitem_t*)moditm),
+     MOMOUT_NEWLINE(),
+     MOMOUT_ITEM_ATTRIBUTES((const momitem_t*)moditm),
+     NULL);
 
 #warning we should do something with the computed information
   CGEN_ERROR_MOM (&mycgen,
