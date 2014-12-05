@@ -542,6 +542,9 @@ INSERT INTO t_items VALUES('_39hpqv0jqj6_9sa2v0vhfm6','{"attr": [{"attr": "_232t
   "jtype": "item_ref", "space": ".root"}]}]}]}}], "content": null, "kind": null,
  "payload": null}
 ','');
+INSERT INTO t_items VALUES('_3cfxuz69srd_ry3wq7r7702','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "used to indicate a from relationship,...."}],
+ "content": null, "kind": null, "payload": null}
+','');
 INSERT INTO t_items VALUES('_3dqr46p2xf4_29kf5vdtw4z','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "Call with results in res, in given state, the closure clos with given arguments"}],
  "content": null, "kind": null, "payload": null}
 ','');
@@ -1662,6 +1665,7 @@ INSERT INTO t_names VALUES('first_module','_65961crktpj_vtt30qeqv21','.root');
 INSERT INTO t_names VALUES('for_each_up_to','_11xee72y1d3_t3cqzi5dq3k','.root');
 INSERT INTO t_names VALUES('formals','_2ummst105ck_xracfy8v87y','.predef');
 INSERT INTO t_names VALUES('frames','_4cw8jv45vsk_4mh9ex64904','.predef');
+INSERT INTO t_names VALUES('from','_3cfxuz69srd_ry3wq7r7702','.predef');
 INSERT INTO t_names VALUES('get_attribute','_5vi29c2i54k_i2ufkty9kmp','.root');
 INSERT INTO t_names VALUES('high','_6qcw93kypcv_0iiepqtk73j','.root');
 INSERT INTO t_names VALUES('hitmv','_88565k6xdf0_331xf3x27dp','.root');

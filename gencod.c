@@ -1807,11 +1807,18 @@ scan_block_cgen (struct c_generator_mom_st *cg, momitem_t *blockitm,
   assert (mom_item_payload_kind (cg->cgen_rout.cgrout_blockqueueitm) ==
 	  mompayk_queue);
   if (fromblitm)
-    (void) mom_item_hset_add
-      (cg->cgen_rout.cgrout_blockhsetitm,
-       (momval_t) mom_make_node_sized ((momval_t) mom_named__jump, 2,
-				       (momval_t) fromblitm,
-				       (momval_t) blockitm));
+    {
+      (void) mom_item_hset_add
+	(cg->cgen_rout.cgrout_blockhsetitm,
+	 (momval_t) mom_make_node_sized ((momval_t) mom_named__jump, 2,
+					 (momval_t) fromblitm,
+					 (momval_t) blockitm));
+      (void) mom_item_hset_add
+	(cg->cgen_rout.cgrout_blockhsetitm,
+	 (momval_t) mom_make_node_sized ((momval_t) mom_named__from, 2,
+					 (momval_t) blockitm,
+					 (momval_t) fromblitm));
+    }
   if (!mom_item_hset_add
       (cg->cgen_rout.cgrout_blockhsetitm, (momval_t) blockitm))
     {
@@ -5414,7 +5421,9 @@ emit_moduleinit_cgen (struct c_generator_mom_st *cg)
 	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
 }				/* end emit_moduleinit_cgen */
 
-
+static void
+cgen_update_block_info (struct c_generator_mom_st *cg,
+			momitem_t *routitm, momitem_t *blhitm);
 void
 cgen_update_module_info_mom (struct c_generator_mom_st *cg)
 {
@@ -5460,19 +5469,15 @@ cgen_update_module_info_mom (struct c_generator_mom_st *cg)
 				 2,
 				 (momval_t) moditm,
 				 rankv);
-	  mom_item_put_attribute (curelitm, mom_named__in, inodv);
-	  MOM_DEBUG
-	    (gencod,
-	     MOMOUT_LITERAL ("update_module_info proc="),
-	     MOMOUT_ITEM (curelitm),
-	     MOMOUT_SPACE (48), MOMOUT_LITERAL ("inodv:"),
-	     MOMOUT_VALUE ((const momval_t) inodv),
-	     MOMOUT_NEWLINE (),
-	     MOMOUT_LITERAL ("blhitm:"),
-	     MOMOUT_ITEM (blhitm),
-	     MOMOUT_NEWLINE (),
-	     MOMOUT_ITEM_ATTRIBUTES (blhitm),
-	     MOMOUT_NEWLINE (), MOMOUT_ITEM_PAYLOAD (blhitm), NULL);
+	  mom_item_put_attribute ((momitem_t *) curelitm, mom_named__in,
+				  inodv);
+	  MOM_DEBUG (gencod, MOMOUT_LITERAL ("update_module_info proc="),
+		     MOMOUT_ITEM (curelitm), MOMOUT_SPACE (48),
+		     MOMOUT_LITERAL ("inodv:"),
+		     MOMOUT_VALUE ((const momval_t) inodv), MOMOUT_NEWLINE (),
+		     MOMOUT_LITERAL ("blhitm:"), MOMOUT_ITEM (blhitm),
+		     MOMOUT_NEWLINE (), MOMOUT_ITEM_ATTRIBUTES (blhitm),
+		     MOMOUT_NEWLINE (), MOMOUT_ITEM_PAYLOAD (blhitm), NULL);
 	}
       else if (connitm == mom_named__tasklet_function
 	       && mom_node_arity (curval) == 5)
@@ -5488,34 +5493,69 @@ cgen_update_module_info_mom (struct c_generator_mom_st *cg)
 				 2,
 				 (momval_t) moditm,
 				 rankv);
-	  mom_item_put_attribute (curelitm, mom_named__in, inodv);
-	  MOM_DEBUG
-	    (gencod,
-	     MOMOUT_LITERAL ("update_module_info tfun="),
-	     MOMOUT_ITEM (curelitm),
-	     MOMOUT_SPACE (48), MOMOUT_LITERAL ("inodv:"),
-	     MOMOUT_VALUE ((const momval_t) inodv),
-	     MOMOUT_NEWLINE (),
-	     MOMOUT_LITERAL ("numbersv:"),
-	     MOMOUT_VALUE ((const momval_t) numbersv),
-	     MOMOUT_NEWLINE (),
-	     MOMOUT_LITERAL ("doublesv:"),
-	     MOMOUT_VALUE ((const momval_t) doublesv),
-	     MOMOUT_NEWLINE (),
-	     MOMOUT_LITERAL ("valuesv:"),
-	     MOMOUT_VALUE ((const momval_t) valuesv),
-	     MOMOUT_NEWLINE (),
-	     MOMOUT_LITERAL ("blhitm:"),
-	     MOMOUT_ITEM (blhitm),
-	     MOMOUT_NEWLINE (),
-	     MOMOUT_ITEM_ATTRIBUTES (blhitm),
-	     MOMOUT_NEWLINE (), MOMOUT_ITEM_PAYLOAD (blhitm), NULL);
+	  mom_item_put_attribute ((momitem_t *) curelitm, mom_named__in,
+				  inodv);
+	  MOM_DEBUG (gencod, MOMOUT_LITERAL ("update_module_info tfun="),
+		     MOMOUT_ITEM (curelitm), MOMOUT_SPACE (48),
+		     MOMOUT_LITERAL ("inodv:"),
+		     MOMOUT_VALUE ((const momval_t) inodv), MOMOUT_NEWLINE (),
+		     MOMOUT_LITERAL ("numbersv:"),
+		     MOMOUT_VALUE ((const momval_t) numbersv),
+		     MOMOUT_NEWLINE (), MOMOUT_LITERAL ("doublesv:"),
+		     MOMOUT_VALUE ((const momval_t) doublesv),
+		     MOMOUT_NEWLINE (), MOMOUT_LITERAL ("valuesv:"),
+		     MOMOUT_VALUE ((const momval_t) valuesv),
+		     MOMOUT_NEWLINE (), MOMOUT_LITERAL ("blhitm:"),
+		     MOMOUT_ITEM (blhitm), MOMOUT_NEWLINE (),
+		     MOMOUT_ITEM_ATTRIBUTES (blhitm), MOMOUT_NEWLINE (),
+		     MOMOUT_ITEM_PAYLOAD (blhitm), NULL);
+	  //// update `numbers`
+	  if (numbersv.ptr)
+	    {
+	      assert (mom_node_conn (numbersv) == mom_named__numbers);
+	      unsigned nbnum = mom_node_arity (numbersv);
+	      mom_item_put_attribute	//
+		((momitem_t *) curelitm, mom_named__numbers,	//
+		 (momval_t) mom_make_tuple_from_array	//
+		 (nbnum, (const momitem_t **) numbersv.pnode->sontab));
+	    }
+	  else
+	    mom_item_remove_attribute ((momitem_t *) curelitm,
+				       mom_named__numbers);
+	  //// update `doubles`
+	  if (doublesv.ptr)
+	    {
+	      assert (mom_node_conn (doublesv) == mom_named__doubles);
+	      unsigned nbdbl = mom_node_arity (doublesv);
+	      mom_item_put_attribute	//
+		((momitem_t *) curelitm, mom_named__doubles,	//
+		 (momval_t) mom_make_tuple_from_array	//
+		 (nbdbl, (const momitem_t **) doublesv.pnode->sontab));
+	    }
+	  else
+	    mom_item_remove_attribute ((momitem_t *) curelitm,
+				       mom_named__doubles);
+	  //// update `values`
+	  if (valuesv.ptr)
+	    {
+	      assert (mom_node_conn (valuesv) == mom_named__values);
+	      unsigned nbval = mom_node_arity (valuesv);
+	      mom_item_put_attribute	//
+		((momitem_t *) curelitm, mom_named__values,	//
+		 (momval_t) mom_make_tuple_from_array	//
+		 (nbval, (const momitem_t **) valuesv.pnode->sontab));
+	    }
+	  else
+	    mom_item_remove_attribute ((momitem_t *) curelitm,
+				       mom_named__values);
 	}
       else
 	CGEN_ERROR_MOM
 	  (cg, MOMOUT_LITERAL ("update_module_info unexpected curval="),
 	   MOMOUT_VALUE (curval),
 	   MOMOUT_LITERAL (" for curelitm="), MOMOUT_ITEM (curelitm));
+      if (blhitm)
+	cgen_update_block_info (cg, curelitm, blhitm);
       MOM_DEBUG
 	(gencod,
 	 MOMOUT_LITERAL ("update_module_info updated curelitm="),
@@ -5523,14 +5563,32 @@ cgen_update_module_info_mom (struct c_generator_mom_st *cg)
 	 MOMOUT_NEWLINE (),
 	 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) curelitm), NULL);
     }
-#warning cgen_update_module_info unimplemented
-  CGEN_ERROR_MOM
-    (cg, MOMOUT_LITERAL ("cgen_update_module_info unimplemented; globassoc="),
-     MOMOUT_ITEM ((const momitem_t *) cg->cgen_globassocitm), NULL);
 
 }				/* end cgen_update_module_info_mom */
 
 
 
+
+static void
+cgen_update_block_info (struct c_generator_mom_st *cg,
+			momitem_t *routitm, momitem_t *blhitm)
+{
+  assert (cg && cg->cgen_magic == CGEN_MAGIC);
+  MOM_DEBUG
+    (gencod,
+     MOMOUT_LITERAL ("update_block_info routitm="),
+     MOMOUT_ITEM ((const momitem_t *) routitm),
+     MOMOUT_LITERAL (" blhitm="),
+     MOMOUT_ITEM ((const momitem_t *) blhitm),
+     MOMOUT_NEWLINE (),
+     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) blhitm),
+     MOMOUT_NEWLINE (),
+     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) blhitm), NULL);
+  MOM_FATAL
+    (MOMOUT_LITERAL ("unimplemented update_block_info routitm="),
+     MOMOUT_ITEM ((const momitem_t *) routitm),
+     MOMOUT_LITERAL (" blhitm="),
+     MOMOUT_ITEM ((const momitem_t *) blhitm), NULL);
+}
 
 //// end of file gencod.c

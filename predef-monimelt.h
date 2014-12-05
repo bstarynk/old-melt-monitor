@@ -121,6 +121,9 @@ MOM_PREDEFINED_NAMED(formals,_2ummst105ck_xracfy8v87y,2305693407)
 ////!frames in tasklet
 MOM_PREDEFINED_NAMED(frames,_4cw8jv45vsk_4mh9ex64904,407235052)
 
+////!used to indicate a from relationship,....
+MOM_PREDEFINED_NAMED(from,_3cfxuz69srd_ry3wq7r7702,1699146250)
+
 ////!for JSONRPC and elsewhere
 MOM_PREDEFINED_NAMED(id,_7a9sxskjhcp_kpf30ka97ex,2687612409)
 
