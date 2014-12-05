@@ -5584,6 +5584,58 @@ cgen_update_block_info (struct c_generator_mom_st *cg,
      MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) blhitm),
      MOMOUT_NEWLINE (),
      MOMOUT_ITEM_PAYLOAD ((const momitem_t *) blhitm), NULL);
+  momval_t blsetv = mom_item_hset_items_set (blhitm);
+  momval_t blnodv =
+    mom_item_hset_sorted_values_node (blhitm, mom_named__blocks);
+  MOM_DEBUG (gencod, MOMOUT_LITERAL ("update_block_info routitm="),
+	     MOMOUT_ITEM ((const momitem_t *) routitm), MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL (" blsetv="),
+	     MOMOUT_VALUE ((const momval_t) blsetv), MOMOUT_NEWLINE (),
+	     MOMOUT_LITERAL (" blnodv="),
+	     MOMOUT_VALUE ((const momval_t) blnodv), NULL);
+  mom_item_put_attribute (routitm, mom_named__blocks, blsetv);
+  unsigned nbblocks = mom_set_cardinal (blsetv);
+  unsigned nodlen = mom_node_arity (blnodv);
+  // we have nbblocks items in blnodv, and the rest is for jumps, with
+  // a jump and a from node for each of them.
+  unsigned nbjumps = (nodlen - nbblocks) / 2;
+  momval_t *fromarr =
+    MOM_GC_ALLOC ("fromarr", (nbjumps + 2) * sizeof (momval_t));
+  momval_t *jumparr =
+    MOM_GC_ALLOC ("jumparr", (nbjumps + 2) * sizeof (momval_t));
+  unsigned cntfrom = 0, cntjump = 0;
+  for (unsigned nix = 0; nix < nodlen; nix++)
+    {
+      const momval_t curcompv = mom_node_nth (blnodv, nix);
+      if (!mom_is_node (curcompv))
+	continue;
+      const momitem_t *compconnitm = mom_node_conn (curcompv);
+      if (compconnitm == mom_named__jump)
+	{
+	  assert (cntjump < nbjumps);
+	  jumparr[cntjump] = curcompv;
+	  MOM_DEBUG (gencod,
+		     MOMOUT_LITERAL ("jumparr["),
+		     MOMOUT_DEC_INT ((int) cntjump),
+		     MOMOUT_LITERAL ("]="), MOMOUT_VALUE (curcompv), NULL);
+	  cntjump++;
+	}
+      else if (compconnitm == mom_named__from)
+	{
+	  assert (cntfrom < nbjumps);
+	  fromarr[cntfrom] = curcompv;
+	  MOM_DEBUG (gencod,
+		     MOMOUT_LITERAL ("fromarr["),
+		     MOMOUT_DEC_INT ((int) cntfrom),
+		     MOMOUT_LITERAL ("]="), MOMOUT_VALUE (curcompv), NULL);
+	  cntfrom++;
+	}
+      else
+	MOM_FATAL
+	  (MOMOUT_LITERAL ("invalid component curcompv="),
+	   MOMOUT_VALUE (curcompv));
+    }
+#warning should compute successors & predessors of each block
   MOM_FATAL
     (MOMOUT_LITERAL ("unimplemented update_block_info routitm="),
      MOMOUT_ITEM ((const momitem_t *) routitm),

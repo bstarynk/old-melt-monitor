@@ -806,6 +806,9 @@ INSERT INTO t_items VALUES('_547q7emtfsk_ect0yratp6e','{"attr": [{"attr": "_0ee6
    "val": "to put in a given item, some attribute with some value"}], "content": null,
  "kind": null, "payload": null}
 ','');
+INSERT INTO t_items VALUES('_57e682ahv0x_qp6ac9jzkq0','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "gives the set of successors"}],
+ "content": null, "kind": null, "payload": null}
+','');
 INSERT INTO t_items VALUES('_590trid9ycw_f6kaajwca63','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "primitive to make an item"}],
  "content": null, "kind": null, "payload": null}
 ','');
@@ -1805,6 +1808,7 @@ INSERT INTO t_names VALUES('start_assoc','_86ft82euar7_cm50jcthhwe','.root');
 INSERT INTO t_names VALUES('state','_6f9870y6v8t_kp8fcmq2ezv','.predef');
 INSERT INTO t_names VALUES('string','_8j516kuv89j_4hc4w6ykmr6','.predef');
 INSERT INTO t_names VALUES('strv','_5dq5ma9a81c_pdtk3x9sw4w','.root');
+INSERT INTO t_names VALUES('successors','_57e682ahv0x_qp6ac9jzkq0','.predef');
 INSERT INTO t_names VALUES('switch','_8qpa7j0chkh_k630ujw6jiw','.predef');
 INSERT INTO t_names VALUES('tasklet_function','_7yxp9xhih4z_9uzrqhkamxa','.predef');
 INSERT INTO t_names VALUES('terminated','_3jpt8yuzuyw_ti1pyz3me1c','.predef');

@@ -261,6 +261,9 @@ MOM_PREDEFINED_NAMED(state,_6f9870y6v8t_kp8fcmq2ezv,1856647655)
 ////!in JSON dumps, used for long chunked strings
 MOM_PREDEFINED_NAMED(string,_8j516kuv89j_4hc4w6ykmr6,4254767725)
 
+////!gives the set of successors
+MOM_PREDEFINED_NAMED(successors,_57e682ahv0x_qp6ac9jzkq0,3828219738)
+
 ////!for switch statements on integers
 MOM_PREDEFINED_NAMED(switch,_8qpa7j0chkh_k630ujw6jiw,3169022041)
 
