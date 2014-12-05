@@ -2305,8 +2305,25 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 	     MOMOUT_LITERAL ("]; //! for "),
 	     MOMOUT_ITEM ((const momitem_t *) procitm), MOMOUT_NEWLINE (),
 	     NULL);
-
   }
+  //// append the block hset to the procedure associated node
+  {
+    const momitem_t *hsetblkitm =
+      (const momitem_t *) cg->cgen_rout.cgrout_blockhsetitm;
+    procnodev = mom_make_node_sized (procnodev, 1, (momval_t) hsetblkitm);
+    mom_item_assoc_put (cg->cgen_globassocitm, procitm, procnodev);
+    MOM_DEBUG
+      (gencod, MOMOUT_LITERAL ("emit_procedure ending updated procnodev="),
+       MOMOUT_VALUE ((const momval_t) procnodev),
+       MOMOUT_NEWLINE (),
+       MOMOUT_LITERAL ("for procitm:"),
+       MOMOUT_ITEM ((const momitem_t *) procitm),
+       MOMOUT_LITERAL ("updated globassocitm:"),
+       MOMOUT_ITEM (cg->cgen_globassocitm),
+       MOMOUT_NEWLINE (),
+       MOMOUT_ITEM_PAYLOAD (cg->cgen_globassocitm), MOMOUT_NEWLINE (), NULL);
+  }
+  return;
 }				/* end of emit_procedure_cgen */
 
 
