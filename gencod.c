@@ -5516,6 +5516,12 @@ cgen_update_module_info_mom (struct c_generator_mom_st *cg)
 	  (cg, MOMOUT_LITERAL ("update_module_info unexpected curval="),
 	   MOMOUT_VALUE (curval),
 	   MOMOUT_LITERAL (" for curelitm="), MOMOUT_ITEM (curelitm));
+      MOM_DEBUG
+	(gencod,
+	 MOMOUT_LITERAL ("update_module_info updated curelitm="),
+	 MOMOUT_ITEM ((const momitem_t *) curelitm),
+	 MOMOUT_NEWLINE (),
+	 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) curelitm), NULL);
     }
 #warning cgen_update_module_info unimplemented
   CGEN_ERROR_MOM
