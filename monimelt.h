@@ -2281,11 +2281,13 @@ bool mom_item_hset_remove (momitem_t *itm, momval_t elem);
 
 #ifndef NDEBUG
 void mom_item_hset_check_integrity_at (const char *fil, int lin,
+				       const char *func, const char *msg,
 				       momitem_t *itm);
-#define mom_item_hset_check_integrity(Itm) do { \
-    mom_item_hset_check_integrity_at(__FILE__,__LINE__,(Itm)); }while(0)
+#define mom_item_hset_check_integrity(Msg,Itm) do {			\
+    mom_item_hset_check_integrity_at(__FILE__,__LINE__,__FUNCTION__,	\
+				     Msg,(Itm)); }while(0)
 #else
-#define mom_item_hset_check_integrity(Itm) do {}while(0)
+#define mom_item_hset_check_integrity(Msg,Itm) do {}while(0)
 #endif /*NDEBUG*/
 unsigned mom_item_hset_count (momitem_t *itm);
 momval_t mom_item_hset_items_set (momitem_t *itm);
