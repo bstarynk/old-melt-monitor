@@ -675,11 +675,9 @@ mom_dump_attributes (struct mom_dumper_st *du,
     ? tinyitemarr
     : MOM_GC_ALLOC ("itemarr", (cntat + 1) * sizeof (momitem_t *));
   momval_t tinyjentarr[MOM_TINY_MAX] = { MOM_NULLV };
-  momval_t *jentarr = ((cntat < MOM_TINY_MAX)
-		       ? tinyjentarr : MOM_GC_ALLOC ("jentarr",
-						     (cntat +
-						      1) *
-						     sizeof (momval_t)));
+  momval_t *jentarr = ((cntat < MOM_TINY_MAX) ? tinyjentarr :	////
+		       MOM_GC_ALLOC ("jentarr",
+				     (cntat + 1) * sizeof (momval_t)));
   unsigned jentcount = 0;
   // first, collect the attributes
   {
@@ -2077,8 +2075,7 @@ mom_full_dump (const char *reason, const char *dumpdir,
     assert (modcnt < modsiz && modsiz > 2 && modarr);
     int nbmodules = 0;
     dmod = MOM_GC_ALLOC ("dmp_module",
-			 sizeof (struct
-				 dmp_module_mom_st)
+			 sizeof (struct dmp_module_mom_st)
 			 + modcnt * sizeof (momval_t));
     for (unsigned ix = 0; ix < modsiz; ix++)
       {
@@ -2230,11 +2227,8 @@ end:
 					    dmp.dmp_predefarray);
       unsigned nbnotice = mom_queue_length (&dmp.dmp_vanoticequeue);
       momval_t tinynval[MOM_TINY_MAX] = { MOM_NULLV };
-      momval_t *nvalarr =
-	(nbnotice < MOM_TINY_MAX) ? tinynval : MOM_GC_ALLOC ("notice array",
-							     nbnotice *
-							     sizeof
-							     (momval_t));
+      momval_t *nvalarr = (nbnotice < MOM_TINY_MAX) ? tinynval	////
+	: MOM_GC_ALLOC ("notice array", nbnotice * sizeof (momval_t));
       unsigned cntnotice = 0;
       for (struct mom_vaqelem_st * qel = dmp.dmp_vanoticequeue.vaq_first;
 	   qel != NULL && cntnotice < nbnotice; qel = qel->vqe_next)

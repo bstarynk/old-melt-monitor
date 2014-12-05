@@ -860,7 +860,7 @@ mom_make_json_object (int firstdir, ...)
       memcpy (newjsob, jsob,
 	      sizeof (struct momjsonobject_st) +
 	      count * sizeof (struct mom_jsonentry_st));
-      GC_FREE (jsob);
+      MOM_GC_FREE (jsob);
       jsob = newjsob;
     }
   jsob->hash = h;

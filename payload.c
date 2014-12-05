@@ -949,13 +949,17 @@ mom_item_hset_check_integrity_at (const char *fil, int lin, const char *func,
 	 MOMOUT_LITERAL (" hset payload:"),
 	 MOMOUT_ITEM_PAYLOAD ((const momitem_t *) itm),
 	 MOMOUT_NEWLINE (),
+	 MOMOUT_FMT_LONG ((const char *) " hset@%#lx", (long) hset),
+	 MOMOUT_FMT_LONG ((const char *) " hsetarr@%#lx",
+			  (long) (hset->hset_arr)),
 	 MOMOUT_FMT_INT ((const char *) "hsetcount=%d",
 			 ((int) hset->hset_count)),
 	 MOMOUT_FMT_INT ((const char *) " fullcount=%d",
 			 ((int) hset_full_count_mom (hset))),
+	 MOMOUT_FMT_INT ((const char *) " hsetsize=%d",
+			 ((int) hset->hset_size)),
 	 MOMOUT_NEWLINE (),
-	 MOMOUT_FMT_LONG ((const char *) "itm@%lx",
-			  ((long) itm)),
+	 MOMOUT_FMT_LONG ((const char *) "itm@%lx", ((long) itm)),
 	 MOMOUT_FMT_LONG ((const char *) " hset@%lx",
 			  ((long) (intptr_t) (void *) hset)), NULL);
     };
@@ -976,11 +980,13 @@ mom_item_hset_check_integrity_at (const char *fil, int lin, const char *func,
      MOMOUT_NEWLINE (), MOMOUT_FMT_LONG ((const char *) "itm@%#lx",
 					 (long) itm),
      MOMOUT_FMT_LONG ((const char *) " hset@%#lx", (long) hset),
-     MOMOUT_NEWLINE (),
-     MOMOUT_FMT_INT ((const char *) "hsetcount=%d",
-		     ((int) hset->hset_count)),
+     MOMOUT_FMT_LONG ((const char *) " hsetarr@%#lx",
+		      (long) (hset->hset_arr)), MOMOUT_NEWLINE (),
+     MOMOUT_FMT_INT ((const char *) "hsetcount=%d", ((int) hset->hset_count)),
      MOMOUT_FMT_INT ((const char *) " fullcount=%d",
-		     ((int) hset_full_count_mom (hset))), NULL);
+		     ((int) hset_full_count_mom (hset))),
+     MOMOUT_FMT_INT ((const char *) " hsetsize=%d", ((int) hset->hset_size)),
+     NULL);
   ///
   if (chkcount % 8 == 0)
     fflush (NULL);

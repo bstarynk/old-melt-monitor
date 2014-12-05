@@ -527,12 +527,9 @@ mom_output_attributes (struct momout_st *pout,
   unsigned nbattr = attrs->nbattr;
   struct mom_attrentry_st tinyattrarr[MOM_TINY_MAX];
   memset (tinyattrarr, 0, sizeof (tinyattrarr));
-  struct mom_attrentry_st *attrarr =
-    (nbattr < MOM_TINY_MAX) ? tinyattrarr : MOM_GC_ALLOC ("attrarr",
-							  (nbattr +
-							   1) *
-							  sizeof (struct
-								  mom_itemattributes_st));
+  struct mom_attrentry_st *attrarr = (nbattr < MOM_TINY_MAX) ? tinyattrarr	//
+    : MOM_GC_ALLOC ("attrarr",
+		    (nbattr + 1) * sizeof (struct mom_attrentry_st));
   unsigned cnt = 0;
   fprintf (pout->mout_file, "[%d attrs]", attrs->nbattr);
   for (unsigned ix = 0; ix < attrs->size; ix++)
