@@ -911,6 +911,59 @@ mom_item_hset_contains (momitem_t *itm, momval_t elem)
   return hset_find_mom (hset, elem) >= 0;
 }
 
+void
+mom_item_hset_check_integrity_at (const char *fil, int lin, momitem_t *itm)
+{
+  static int chkcount;
+  if (!itm || itm->i_typnum != momty_item || itm->i_paylkind != mompayk_hset)
+    return;
+  struct momhset_st *hset = itm->i_payload;
+  chkcount++;
+  assert (hset && hset->hset_magic == MOM_HSET_MAGIC);
+  if (hset->hset_count >= hset->hset_size
+      || hset->hset_count != hset_full_count_mom (hset))
+    mom_fatal_at		//
+      (fil, lin,
+       MOMOUT_LITERAL ("with chkcount="),
+       MOMOUT_DEC_INT (chkcount),
+       MOMOUT_LITERAL (" corrupted hset:"),
+       MOMOUT_ITEM ((const momitem_t *) itm),
+       MOMOUT_NEWLINE (),
+       MOMOUT_BACKTRACE (20),
+       MOMOUT_NEWLINE (),
+       MOMOUT_LITERAL ("hset item:"),
+       MOMOUT_ITEM ((const momitem_t *) itm),
+       MOMOUT_NEWLINE (),
+       MOMOUT_LITERAL ("hset attrs:"),
+       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) itm),
+       MOMOUT_NEWLINE (),
+       MOMOUT_LITERAL (" hset payload:"),
+       MOMOUT_ITEM_PAYLOAD ((const momitem_t *) itm),
+       MOMOUT_NEWLINE (),
+       MOMOUT_FMT_INT ("hsetcount=%d", (int) hset->hset_count),
+       MOMOUT_FMT_INT (" fullcount=%d", (int) hset_full_count_mom (hset)),
+       MOMOUT_NEWLINE (),
+       MOMOUT_FMT_LONG ("itm@%#lx", (long) itm),
+       MOMOUT_FMT_LONG (" hset@%#lx", (long) hset), NULL);
+  MOM_DEBUG_AT (fil, lin, low,
+		MOMOUT_LITERAL ("with chkcount="),
+		MOMOUT_DEC_INT (chkcount),
+		MOMOUT_LITERAL (" checked integrity of hset item:"),
+		MOMOUT_ITEM ((const momitem_t *) itm),
+		MOMOUT_NEWLINE (),
+		MOMOUT_LITERAL ("hset attrs:"),
+		MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) itm),
+		MOMOUT_NEWLINE (),
+		MOMOUT_LITERAL (" hset payload:"),
+		MOMOUT_ITEM_PAYLOAD ((const momitem_t *) itm),
+		MOMOUT_NEWLINE (),
+		MOMOUT_FMT_LONG ("itm@%#lx", (long) itm),
+		MOMOUT_FMT_LONG (" hset@%#lx", (long) hset), NULL);
+  ///
+  if (chkcount % 8 == 0)
+    fflush (NULL);
+}
+
 unsigned
 mom_item_hset_count (momitem_t *itm)
 {

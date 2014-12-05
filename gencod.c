@@ -761,6 +761,7 @@ emit_routine_cgen (struct c_generator_mom_st *cg, unsigned routix,
   cgen_lock_item_mom (cg, cg->cgen_rout.cgrout_hsetdblitm);
   cg->cgen_rout.cgrout_hsetvalitm = mom_make_item ();
   mom_item_start_hset (cg->cgen_rout.cgrout_hsetvalitm);
+  mom_item_hset_check_integrity (cg->cgen_rout.cgrout_hsetvalitm);
   cgen_lock_item_mom (cg, cg->cgen_rout.cgrout_hsetvalitm);
   // starting
   MOM_DEBUG			//
@@ -1446,6 +1447,7 @@ scan_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
 	  {
 	    assert (mom_item_payload_kind (cg->cgen_rout.cgrout_hsetintitm) ==
 		    mompayk_hset);
+	    mom_item_hset_check_integrity (cg->cgen_rout.cgrout_hsetintitm);
 	    unsigned cnt =
 	      mom_item_hset_count (cg->cgen_rout.cgrout_hsetintitm);
 	    assert (!mom_item_hset_contains
@@ -1457,6 +1459,7 @@ scan_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
 					       cg->cgen_rout.cgrout_routitm));
 	    mom_item_hset_add (cg->cgen_rout.cgrout_hsetintitm,
 			       (momval_t) varitm);
+	    mom_item_hset_check_integrity (cg->cgen_rout.cgrout_hsetintitm);
 	    return momtypenc_int;
 	  }
 	  break;
@@ -1465,6 +1468,7 @@ scan_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
 	  {
 	    assert (mom_item_payload_kind (cg->cgen_rout.cgrout_hsetdblitm) ==
 		    mompayk_hset);
+	    mom_item_hset_check_integrity (cg->cgen_rout.cgrout_hsetdblitm);
 	    unsigned cnt =
 	      mom_item_hset_count (cg->cgen_rout.cgrout_hsetdblitm);
 	    assert (!mom_item_hset_contains
@@ -1476,6 +1480,7 @@ scan_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
 					       cg->cgen_rout.cgrout_routitm));
 	    mom_item_hset_add (cg->cgen_rout.cgrout_hsetdblitm,
 			       (momval_t) varitm);
+	    mom_item_hset_check_integrity (cg->cgen_rout.cgrout_hsetdblitm);
 	    return momtypenc_double;
 	  }
 	  break;
@@ -1484,6 +1489,7 @@ scan_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
 	  {
 	    assert (mom_item_payload_kind (cg->cgen_rout.cgrout_hsetvalitm) ==
 		    mompayk_hset);
+	    mom_item_hset_check_integrity (cg->cgen_rout.cgrout_hsetvalitm);
 	    unsigned cnt =
 	      mom_item_hset_count (cg->cgen_rout.cgrout_hsetvalitm);
 	    assert (!mom_item_hset_contains
@@ -1495,6 +1501,7 @@ scan_item_cgen (struct c_generator_mom_st *cg, momitem_t *varitm)
 					       cg->cgen_rout.cgrout_routitm));
 	    mom_item_hset_add (cg->cgen_rout.cgrout_hsetvalitm,
 			       (momval_t) varitm);
+	    mom_item_hset_check_integrity (cg->cgen_rout.cgrout_hsetvalitm);
 	    return momtypenc_val;
 	  }
 	  break;
@@ -1534,10 +1541,19 @@ scan_instr_cgen (struct c_generator_mom_st *cg, momitem_t *blockitm,
 		    MOMOUT_ITEM ((const momitem_t *) blockitm),
 		    MOMOUT_LITERAL (" bad instr:"),
 		    MOMOUT_VALUE ((const momval_t) insv), NULL);
-  MOM_DEBUG (gencod, MOMOUT_LITERAL ("scan_instr blockitm:"),
-	     MOMOUT_ITEM ((const momitem_t *) blockitm),
-	     MOMOUT_LITERAL (" instr:"),
-	     MOMOUT_VALUE ((const momval_t) insv), NULL);
+  MOM_DEBUG			//
+    (gencod,
+     MOMOUT_LITERAL ("scan_instr blockitm:"),
+     MOMOUT_ITEM ((const momitem_t *) blockitm),
+     MOMOUT_LITERAL (" instr:"),
+     MOMOUT_VALUE ((const momval_t) insv),
+     MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL (" valhset:"),
+     MOMOUT_ITEM ((const momitem_t *) cg->cgen_rout.cgrout_hsetvalitm),
+     MOMOUT_SPACE (48),
+     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->
+			  cgen_rout.cgrout_hsetvalitm), NULL);
+  mom_item_hset_check_integrity (cg->cgen_rout.cgrout_hsetvalitm);
   cgen_lock_item_mom (cg, opitm);
   momhash_t oph = mom_item_hash (opitm);
 #define SCANINSOPHASHMAX_MOM 127
@@ -1696,6 +1712,7 @@ scan_instr_cgen (struct c_generator_mom_st *cg, momitem_t *blockitm,
     }
 #undef SCANCASE
 #undef SCANINSOPHASHMAX_MOM
+  mom_item_hset_check_integrity (cg->cgen_rout.cgrout_hsetvalitm);
 }
 
 
@@ -1896,6 +1913,7 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
     const momitem_t *hsetintitm =
       (const momitem_t *) cg->cgen_rout.cgrout_hsetintitm;
     unsigned nbints = mom_item_hset_count ((momitem_t *) hsetintitm);
+    mom_item_hset_check_integrity (cg->cgen_rout.cgrout_hsetintitm);
     momval_t setintsv = mom_item_hset_items_set ((momitem_t *) hsetintitm);
     MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_proc setints="),
 	       MOMOUT_VALUE ((const momval_t) setintsv),
@@ -1921,6 +1939,7 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
     const momitem_t *hsetdblitm =
       (const momitem_t *) cg->cgen_rout.cgrout_hsetdblitm;
     unsigned nbdbls = mom_item_hset_count ((momitem_t *) hsetdblitm);
+    mom_item_hset_check_integrity (cg->cgen_rout.cgrout_hsetdblitm);
     momval_t setdblsv = mom_item_hset_items_set ((momitem_t *) hsetdblitm);
     MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_proc setdbls="),
 	       MOMOUT_VALUE ((const momval_t) setdblsv),
@@ -1946,6 +1965,7 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
     const momitem_t *hsetvalitm =
       (const momitem_t *) cg->cgen_rout.cgrout_hsetvalitm;
     unsigned nbvals = mom_item_hset_count ((momitem_t *) hsetvalitm);
+    mom_item_hset_check_integrity (cg->cgen_rout.cgrout_hsetvalitm);
     momval_t setvalsv = mom_item_hset_items_set ((momitem_t *) hsetvalitm);
     MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_proc setvals="),
 	       MOMOUT_VALUE ((const momval_t) setvalsv),
