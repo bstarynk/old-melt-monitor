@@ -162,6 +162,7 @@ mom_item_generate_jit_tfun_routine (momitem_t *itm, const momval_t jitnode)
 static void cgen_error_mom_at (int lin, struct c_generator_mom_st *cgen, ...)
   __attribute__ ((sentinel));
 
+static void cgen_update_module_info_mom (struct c_generator_mom_st *cg);
 
 static void
 cgen_unlock_all_items_mom (struct c_generator_mom_st *cgen)
@@ -486,11 +487,8 @@ mom_generate_c_module (momitem_t *moditm, const char *dirname, char **perrmsg)
      MOMOUT_ITEM ((const momitem_t *) moditm), MOMOUT_NEWLINE (),
      MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) moditm), NULL);
 
-#warning we should do something with the computed information
-  CGEN_ERROR_MOM (&mycgen,
-		  MOMOUT_LITERAL
-		  (" incomplete module generation :"),
-		  MOMOUT_ITEM ((const momitem_t *) moditm), NULL);
+  cgen_update_module_info_mom (&mycgen);
+
 
   // now we should write the file
   {
@@ -5405,7 +5403,28 @@ emit_moduleinit_cgen (struct c_generator_mom_st *cg)
 	   MOMOUT_LITERAL
 	   ("} // end of module initialization"),
 	   MOMOUT_NEWLINE (), MOMOUT_NEWLINE (), NULL);
-}
+}				/* end emit_moduleinit_cgen */
+
+
+void
+cgen_update_module_info_mom (struct c_generator_mom_st *cg)
+{
+  assert (cg && cg->cgen_magic == CGEN_MAGIC);
+  MOM_DEBUG			//
+    (gencod,
+     MOMOUT_LITERAL ("cgen_update_module_info start; globassoc:"),
+     MOMOUT_ITEM ((const momitem_t *) cg->cgen_globassocitm),
+     MOMOUT_NEWLINE (),
+     MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) cg->cgen_globassocitm),
+     MOMOUT_NEWLINE (),
+     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) cg->cgen_globassocitm),
+     MOMOUT_NEWLINE (), NULL);
+#warning cgen_update_module_info unimplemented
+  CGEN_ERROR_MOM
+    (cg, MOMOUT_LITERAL ("cgen_update_module_info unimplemented; globassoc="),
+     MOMOUT_ITEM ((const momitem_t *) cg->cgen_globassocitm), NULL);
+
+}				/* end cgen_update_module_info_mom */
 
 
 
