@@ -2150,6 +2150,8 @@ cmd_do_remove_mom (const char *lin, bool pres, long num)
 
 ////////////////////////////////////////////////////////////////
 
+static const char *initcommand_mom;
+
 void
 mom_plugin_init (const char *arg)
 {
@@ -2157,6 +2159,8 @@ mom_plugin_init (const char *arg)
   rl_initialize ();
   rl_readline_name = "monimelt";
   rl_attempted_completion_function = cmd_attempt_compl_mom;
+  if (arg && arg[0] && arg[0] != '_')
+    initcommand_mom = MOM_GC_STRDUP ("initcommand", arg);
   mom_stdout->mout_flags |= outf_comment;
 }
 
@@ -2654,7 +2658,10 @@ void
 momplugin_after_load (void)
 {
   int cnt = 0;
-  MOM_INFORMPRINTF ("momplug_cmd starting after load");
+  MOM_INFORMPRINTF ("momplug_cmd starting after load, initcommand=%s",
+		    initcommand_mom);
+  if (initcommand_mom && initcommand_mom[0])
+    cmd_interpret_mom ((char *) initcommand_mom);
   char *lin = NULL;
   printf ("### type " ANSI_BOLD ",help" ANSI_NORMAL " to get some help,\n"
 	  "### and Ctrl-L to insert last entered command.\n");

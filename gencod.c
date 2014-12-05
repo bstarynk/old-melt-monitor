@@ -760,13 +760,14 @@ emit_routine_cgen (struct c_generator_mom_st *cg, unsigned routix,
     mom_item_put_attribute
       (hsintitm,
        mom_named__comment,
-       MOM_OUTSTRING (MOMOUT_LITERAL ("local ints hset for "),
+       MOM_OUTSTRING (0, MOMOUT_LITERAL ("local ints hset for "),
 		      MOMOUT_ITEM ((const momitem_t *) curoutitm)));
     MOM_DEBUG			//
       (gencod, MOMOUT_LITERAL ("emit_routine hsetintitm="),
        MOMOUT_ITEM ((const momitem_t *) hsintitm),
        MOMOUT_NEWLINE (),
-       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) hsintitm), NULL);
+       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) hsintitm),
+       MOMOUT_FLUSH (), NULL);
     cgen_lock_item_mom (cg, hsintitm);
     mom_item_hset_check_integrity (hsintitm);
   }
@@ -777,13 +778,14 @@ emit_routine_cgen (struct c_generator_mom_st *cg, unsigned routix,
     mom_item_put_attribute
       (hsdblitm,
        mom_named__comment,
-       MOM_OUTSTRING (MOMOUT_LITERAL ("local dbls hset for "),
+       MOM_OUTSTRING (0, MOMOUT_LITERAL ("local dbls hset for "),
 		      MOMOUT_ITEM ((const momitem_t *) curoutitm)));
     MOM_DEBUG			//
       (gencod, MOMOUT_LITERAL ("emit_routine hsetdblitm="),
        MOMOUT_ITEM ((const momitem_t *) hsdblitm),
        MOMOUT_NEWLINE (),
-       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) hsdblitm), NULL);
+       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) hsdblitm),
+       MOMOUT_FLUSH (), NULL);
     cgen_lock_item_mom (cg, hsdblitm);
     mom_item_hset_check_integrity (hsdblitm);
   }
@@ -794,12 +796,13 @@ emit_routine_cgen (struct c_generator_mom_st *cg, unsigned routix,
     mom_item_put_attribute
       (hsvalitm,
        mom_named__comment,
-       MOM_OUTSTRING (MOMOUT_LITERAL ("local vals hset for "),
+       MOM_OUTSTRING (0, MOMOUT_LITERAL ("local vals hset for "),
 		      MOMOUT_ITEM ((const momitem_t *) curoutitm)));
     MOM_DEBUG (gencod, MOMOUT_LITERAL ("emit_routine hsetvalitm="),
 	       MOMOUT_ITEM ((const momitem_t *) hsvalitm),
 	       MOMOUT_NEWLINE (),
-	       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) hsvalitm), NULL);
+	       MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) hsvalitm),
+	       MOMOUT_FLUSH (), NULL);
     cgen_lock_item_mom (cg, hsvalitm);
     mom_item_hset_check_integrity (hsvalitm);
   }
