@@ -5423,7 +5423,8 @@ emit_moduleinit_cgen (struct c_generator_mom_st *cg)
 
 static void
 cgen_update_block_info (struct c_generator_mom_st *cg,
-			momitem_t *routitm, momitem_t *blhitm);
+			momitem_t *routitm, momitem_t *blhitm,
+			const momval_t routval);
 void
 cgen_update_module_info_mom (struct c_generator_mom_st *cg)
 {
@@ -5555,7 +5556,7 @@ cgen_update_module_info_mom (struct c_generator_mom_st *cg)
 	   MOMOUT_VALUE (curval),
 	   MOMOUT_LITERAL (" for curelitm="), MOMOUT_ITEM (curelitm));
       if (blhitm)
-	cgen_update_block_info (cg, curelitm, blhitm);
+	cgen_update_block_info (cg, curelitm, blhitm, curval);
       MOM_DEBUG
 	(gencod,
 	 MOMOUT_LITERAL ("update_module_info updated curelitm="),
@@ -5571,7 +5572,8 @@ cgen_update_module_info_mom (struct c_generator_mom_st *cg)
 
 static void
 cgen_update_block_info (struct c_generator_mom_st *cg,
-			momitem_t *routitm, momitem_t *blhitm)
+			momitem_t *routitm, momitem_t *blhitm,
+			const momval_t blval)
 {
   assert (cg && cg->cgen_magic == CGEN_MAGIC);
   MOM_DEBUG
@@ -5583,7 +5585,10 @@ cgen_update_block_info (struct c_generator_mom_st *cg,
      MOMOUT_NEWLINE (),
      MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) blhitm),
      MOMOUT_NEWLINE (),
-     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) blhitm), NULL);
+     MOMOUT_ITEM_PAYLOAD ((const momitem_t *) blhitm),
+     MOMOUT_NEWLINE (),
+     MOMOUT_LITERAL ("blval="),
+     MOMOUT_VALUE (blval), MOMOUT_NEWLINE (), NULL);
   momval_t blsetv = mom_item_hset_items_set (blhitm);
   momval_t blnodv =
     mom_item_hset_sorted_values_node (blhitm, mom_named__blocks);
@@ -5596,6 +5601,15 @@ cgen_update_block_info (struct c_generator_mom_st *cg,
   mom_item_put_attribute (routitm, mom_named__blocks, blsetv);
   unsigned nbblocks = mom_set_cardinal (blsetv);
   unsigned nodlen = mom_node_arity (blnodv);
+  for (unsigned bix = 0; bix < nbblocks; bix++)
+    {
+      momitem_t *curblitm = mom_set_nth_item (blsetv, bix);
+      //      mom_item_put_attribute
+      //        (curblitm,
+      //         mom_named__in,
+      //         (momval_t) mom_make_node_sized()
+      //         );
+    }
   // we have nbblocks items in blnodv, and the rest is for jumps, with
   // a jump and a from node for each of them.
   unsigned nbjumps = (nodlen - nbblocks) / 2;
