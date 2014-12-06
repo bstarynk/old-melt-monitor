@@ -160,7 +160,7 @@ mom_item_generate_jit_tfun_routine (momitem_t *itm, const momval_t jitnode)
 
 
 static void cgen_error_mom_at (int lin, struct c_generator_mom_st *cgen, ...)
-  __attribute__ ((sentinel));
+  __attribute__ ((sentinel, noreturn));
 
 static void cgen_update_module_info_mom (struct c_generator_mom_st *cg);
 
@@ -1000,6 +1000,8 @@ scan_procedure_cgen (struct c_generator_mom_st *cg, momitem_t *procitm)
   unsigned nbconstants = bind_constants_cgen (cg, proconstantsv);
   MOM_DEBUG (gencod, MOMOUT_LITERAL ("start scan_procedure procitm="),
 	     MOMOUT_ITEM ((const momitem_t *) procitm),
+	     MOMOUT_LITERAL (" nbconstants#"),
+	     MOMOUT_DEC_INT ((int) nbconstants),
 	     MOMOUT_LITERAL (" proprocedurev="),
 	     MOMOUT_VALUE ((const momval_t) proprocedurev), NULL);
   if (!mom_is_item (proprocedurev))
@@ -2413,6 +2415,8 @@ scan_taskletfunction_cgen (struct c_generator_mom_st *cg, momitem_t *tfunitm)
   unsigned nbconstants = bind_constants_cgen (cg, tfunconstantsv);
   MOM_DEBUG (gencod, MOMOUT_LITERAL ("start scan_taskfun tfunitm="),
 	     MOMOUT_ITEM ((const momitem_t *) tfunitm),
+	     MOMOUT_LITERAL (" nbconstants#"),
+	     MOMOUT_DEC_INT ((int) nbconstants),
 	     MOMOUT_LITERAL (" tfuntaskletfunctionv="),
 	     MOMOUT_VALUE ((const momval_t) tfuntaskletfunctionv), NULL);
   /// scan the explicitly given locals of tfunction
@@ -2446,6 +2450,8 @@ scan_taskletfunction_cgen (struct c_generator_mom_st *cg, momitem_t *tfunitm)
   unsigned nbclosvals = bind_closed_values_cgen (cg, tfunclosedvalsv);
   MOM_DEBUG (gencod, MOMOUT_LITERAL ("start scan_taskfun tfunitm="),
 	     MOMOUT_ITEM ((const momitem_t *) tfunitm),
+	     MOMOUT_LITERAL (" nbclosvals#"),
+	     MOMOUT_DEC_INT ((int) nbclosvals),
 	     MOMOUT_LITERAL (" tfuntaskletfunctionv="),
 	     MOMOUT_VALUE ((const momval_t) tfuntaskletfunctionv),
 	     MOMOUT_LITERAL (" associtm="),
@@ -5457,7 +5463,7 @@ cgen_update_module_info_mom (struct c_generator_mom_st *cg)
 	 MOMOUT_NEWLINE (),
 	 MOMOUT_LITERAL ("curval="), MOMOUT_VALUE (curval),
 	 MOMOUT_NEWLINE (), NULL);
-      momitem_t *connitm = mom_node_conn (curval);
+      const momitem_t *connitm = mom_node_conn (curval);
       const momitem_t *blhitm = NULL;
       if (connitm == mom_named__procedure && mom_node_arity (curval) == 3)
 	{
@@ -5556,13 +5562,13 @@ cgen_update_module_info_mom (struct c_generator_mom_st *cg)
 	   MOMOUT_VALUE (curval),
 	   MOMOUT_LITERAL (" for curelitm="), MOMOUT_ITEM (curelitm));
       if (blhitm)
-	cgen_update_block_info (cg, curelitm, blhitm, curval);
-      MOM_DEBUG
-	(gencod,
-	 MOMOUT_LITERAL ("update_module_info updated curelitm="),
-	 MOMOUT_ITEM ((const momitem_t *) curelitm),
-	 MOMOUT_NEWLINE (),
-	 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) curelitm), NULL);
+	cgen_update_block_info (cg, (momitem_t *) curelitm,
+				(momitem_t *) blhitm, curval);
+      MOM_DEBUG (gencod,
+		 MOMOUT_LITERAL ("update_module_info updated curelitm="),
+		 MOMOUT_ITEM ((const momitem_t *) curelitm),
+		 MOMOUT_NEWLINE (),
+		 MOMOUT_ITEM_ATTRIBUTES ((const momitem_t *) curelitm), NULL);
     }
 
 }				/* end cgen_update_module_info_mom */
@@ -5651,16 +5657,99 @@ cgen_update_block_info (struct c_generator_mom_st *cg,
 	  cntfrom++;
 	}
       else
+	// this should never happen
 	MOM_FATAL
 	  (MOMOUT_LITERAL ("invalid component curcompv="),
 	   MOMOUT_VALUE (curcompv));
     }
-#warning should compute successors & predessors of each block
-  MOM_FATAL
-    (MOMOUT_LITERAL ("unimplemented update_block_info routitm="),
-     MOMOUT_ITEM ((const momitem_t *) routitm),
-     MOMOUT_LITERAL (" blhitm="),
-     MOMOUT_ITEM ((const momitem_t *) blhitm), NULL);
-}
+  //// use the fromarr to compute the predecessors relation
+  int fromix = 0;
+  while (fromix < (int) cntfrom)
+    {
+      momitem_t *fromitm =
+	mom_value_to_item (mom_node_nth (fromarr[fromix], 0));
+      assert (fromitm != NULL);
+      int nextfromix = fromix;
+      do
+	{
+	  nextfromix++;
+	}
+      while (nextfromix < (int) cntfrom
+	     && mom_value_to_item
+	     (mom_node_nth (fromarr[nextfromix], 0)) == fromitm);
+      int fromdelta = nextfromix - fromix;
+      momitem_t *samefromtinyarr[MOM_TINY_MAX];
+      memset (samefromtinyarr, 0, sizeof (samefromtinyarr));
+      momitem_t **samefromarr = (fromdelta < MOM_TINY_MAX) ? samefromtinyarr
+	: MOM_GC_ALLOC ("samefromarr",
+			(fromdelta + 1) * sizeof (momitem_t *));
+      for (int frof = 0; frof < fromdelta; frof++)
+	{
+	  samefromarr[frof] =
+	    mom_value_to_item (mom_node_nth (fromarr[fromix + frof], 1));
+	}
+      momval_t samefromsetv = (momval_t) mom_make_set_from_array (fromdelta,
+								  (const
+								   momitem_t
+								   **)
+								  samefromarr);
+      if (samefromarr != samefromtinyarr)
+	MOM_GC_FREE (samefromarr);
+      mom_item_put_attribute (fromitm, mom_named__predecessors, samefromsetv);
+      MOM_DEBUG (gencod, MOMOUT_LITERAL ("update_block_info fromix#"),
+		 MOMOUT_DEC_INT (fromix),
+		 MOMOUT_LITERAL (" nextfromix#"),
+		 MOMOUT_DEC_INT (nextfromix),
+		 MOMOUT_LITERAL (" fromitm="),
+		 MOMOUT_ITEM ((const momitem_t *) fromitm),
+		 MOMOUT_LITERAL (" samefromsetv="),
+		 MOMOUT_VALUE ((const momval_t) samefromsetv), NULL);
+      fromix = nextfromix;
+    };
+  //// use the jumparr to compute the successors relation
+  int jumpix = 0;
+  while (jumpix < (int) cntjump)
+    {
+      momitem_t *jumpitm =
+	mom_value_to_item (mom_node_nth (jumparr[jumpix], 0));
+      assert (jumpitm != NULL);
+      int nextjumpix = jumpix;
+      do
+	{
+	  nextjumpix++;
+	}
+      while (nextjumpix < (int) cntjump
+	     && mom_value_to_item
+	     (mom_node_nth (jumparr[nextjumpix], 0)) == jumpitm);
+      int jumpdelta = nextjumpix - jumpix;
+      momitem_t *samejumptinyarr[MOM_TINY_MAX];
+      memset (samejumptinyarr, 0, sizeof (samejumptinyarr));
+      momitem_t **samejumparr = (jumpdelta < MOM_TINY_MAX) ? samejumptinyarr
+	: MOM_GC_ALLOC ("samejumparr",
+			(jumpdelta + 1) * sizeof (momitem_t *));
+      for (int frof = 0; frof < jumpdelta; frof++)
+	{
+	  samejumparr[frof] =
+	    mom_value_to_item (mom_node_nth (jumparr[jumpix + frof], 1));
+	}
+      momval_t samejumpsetv = (momval_t) mom_make_set_from_array (jumpdelta,
+								  (const
+								   momitem_t
+								   **)
+								  samejumparr);
+      if (samejumparr != samejumptinyarr)
+	MOM_GC_FREE (samejumparr);
+      mom_item_put_attribute (jumpitm, mom_named__successors, samejumpsetv);
+      MOM_DEBUG (gencod, MOMOUT_LITERAL ("update_block_info jumpix#"),
+		 MOMOUT_DEC_INT (jumpix),
+		 MOMOUT_LITERAL (" nextjumpix#"),
+		 MOMOUT_DEC_INT (nextjumpix),
+		 MOMOUT_LITERAL (" jumpitm="),
+		 MOMOUT_ITEM ((const momitem_t *) jumpitm),
+		 MOMOUT_LITERAL (" samejumpsetv="),
+		 MOMOUT_VALUE ((const momval_t) samejumpsetv), NULL);
+      jumpix = nextjumpix;
+    };
+}				/* end cgen_update_block_info */
 
 //// end of file gencod.c
