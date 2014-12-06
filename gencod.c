@@ -5465,12 +5465,12 @@ cgen_update_module_info_mom (struct c_generator_mom_st *cg)
 	 MOMOUT_NEWLINE (), NULL);
       const momitem_t *connitm = mom_node_conn (curval);
       const momitem_t *blhitm = NULL;
-      if (connitm == mom_named__procedure && mom_node_arity (curval) == 3)
+      if (connitm == mom_named__procedure && mom_node_arity (curval) == 4)
 	{
 	/** *procedure(<rank>,<sigstring>,<restype>,<blockhset>) */
-	  blhitm = mom_value_to_item (mom_node_nth (curval, 3));
+	  blhitm = mom_value_to_item (mom_node_nth (curval, 4));
 	  momval_t rankv = mom_node_nth (curval, 0);
-	  momval_t sigstrv = mom_node_nth (curval, 1);
+	  // momval_t sigstrv = mom_node_nth (curval, 1);
 	  momval_t inodv = (momval_t)	//
 	    mom_make_node_sized ((momval_t) mom_named__module,
 				 2,
