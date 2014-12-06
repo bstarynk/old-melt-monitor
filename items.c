@@ -1489,3 +1489,5 @@ mom_create_predefined_items (void)
 #define MOM_PREDEFINED_ANONYMOUS(Id,H) momitem_t* mom_anonymous_##Id;
 
 #include "predef-monimelt.h"
+
+// eof items.c
