@@ -38,7 +38,7 @@
 ////++++ declaration of 4 routines:
 
 
-///°°°declare routine #0
+///~~~declare routine #0
 ////!AJAX for appl menu
 // declare tasklet function ajax_appl
 static int
@@ -46,21 +46,21 @@ static int
 
 
 
-///°°°declare routine #1
+///~~~declare routine #1
 ////!todo procedure on exit
 // declare procedure _07zti91e4kd_952zqsd03fz
 void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t);
 
 
 
-///°°°declare routine #2
+///~~~declare routine #2
 ////!procedure to show on webx the HTML code for some item
 // declare procedure show_html_for_item_proc
 void momprocfun__0z0rsvwfkcj_dcpkx68i074 (momval_t, momval_t);
 
 
 
-///°°°declare routine #3
+///~~~declare routine #3
 ////!todo procedure on dump
 // declare procedure _7x6as13park_w64mrkx2xtm
 void momprocfun__7x6as13park_w64mrkx2xtm (momcstr_t);

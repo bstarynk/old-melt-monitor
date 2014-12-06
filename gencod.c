@@ -633,7 +633,7 @@ declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
 		    (" should have one of `procedure` or `tasklet_function` attribute."));
   if (mom_is_string (commv))
     MOM_OUT (&cg->cgen_outhead, MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
-	     MOMOUT_LITERAL ("///°°°declare routine #"),
+	     MOMOUT_LITERAL ("///~~~declare routine #"),
 	     MOMOUT_DEC_INT ((int) routix),
 	     MOMOUT_NEWLINE(),
 	     MOMOUT_SLASHCOMMENT_STRING (mom_string_cstr (commv)), NULL);
