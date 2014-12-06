@@ -881,10 +881,10 @@ INSERT INTO t_items VALUES('_5c8yvr53et5_xzwu6v1ri5h','{"attr": [{"attr": "_0ee6
      ")"]}}, {"attr": "_41u1utcxyek_22cftxt3xxm", "val": "negation primitive & operator"}],
  "content": null, "kind": null, "payload": null}
 ','');
-INSERT INTO t_items VALUES('_5dq5ma9a81c_pdtk3x9sw4w','{"attr": [{"attr": "_0ee6afx5850_ji17eq0wmfa", "val": {"item_ref": "_3uwzqwvj6zj_s63am4qivpt",
-    "jtype": "item_ref", "space": ".predef"}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
-   "val": "variable for string values"}], "content": null, "kind": null, "payload":
- null}
+INSERT INTO t_items VALUES('_5dq5ma9a81c_pdtk3x9sw4w','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "variable for string values"},
+  {"attr": "_9u7pp5r3ccq_6fsi3t2a6tq", "val": {"item_ref": "_3uwzqwvj6zj_s63am4qivpt",
+    "jtype": "item_ref", "space": ".predef"}}], "content": null, "kind": null,
+ "payload": null}
 ','');
 INSERT INTO t_items VALUES('_5ic5uk22icm_7ws16feu699','{"attr": [{"attr": "_41u1utcxyek_22cftxt3xxm", "val": "pseudo-formal for output arguments"}],
  "content": null, "kind": null, "payload": null}
@@ -1238,7 +1238,7 @@ INSERT INTO t_items VALUES('_7x7vwep1fw4_i158put1x07','{"attr": [{"attr": "_0ee6
     "jtype": "item_ref", "space": ".predef"}}, {"attr": "_2ummst105ck_xracfy8v87y",
    "val": {"jtype": "tuple", "tuple": ["_2qq1dh2ucpr_qtv6staqhti", "_389t77v85ej_fwpy6exy62x"]}},
   {"attr": "_37x98fyestf_ttup2cu68r6", "val": {"jtype": "node", "node": "_8x6fxcm4z2k_vdaqicfi4z0",
-    "sons": ["mom_stop_work_with_todo (", {"item_ref": "_2qq1dh2ucpr_qtv6staqhti",
+    "sons": ["mom_stop_work_with_todo((mom_todoafterstop_fun_t *)", {"item_ref": "_2qq1dh2ucpr_qtv6staqhti",
       "jtype": "item_ref", "space": ".root"}, ",", {"item_ref": "_389t77v85ej_fwpy6exy62x",
       "jtype": "item_ref", "space": ".root"}, ")"]}}, {"attr": "_41u1utcxyek_22cftxt3xxm",
    "val": "primitive to stop agenda."}], "content": null, "kind": null, "payload":

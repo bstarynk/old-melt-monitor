@@ -1112,7 +1112,7 @@ cmd_do_finditem_mom (const char *lin, bool pres, momitem_t *itm)
       momval_t allitemsv =
 	(momval_t) mom_set_of_items_of_ident_prefixed ("_");
       unsigned nbitems = mom_set_cardinal (allitemsv);
-      int nbfound = 0;
+      volatile int nbfound = 0;	// to avoid warning: variable may be clobbered by 'longjmp'
       momitem_t *vecitm = mom_make_item ();
       mom_item_start_vector (vecitm);
       mom_item_vector_reserve (vecitm, nbitems / 6 + 5);
@@ -1123,7 +1123,7 @@ cmd_do_finditem_mom (const char *lin, bool pres, momitem_t *itm)
 	       MOMOUT_DEC_INT ((int) nbitems),
 	       MOMOUT_LITERAL (" items."),
 	       MOMOUT_NEWLINE (), MOMOUT_FLUSH ());
-      for (unsigned ix = 0; ix < nbitems; ix++)
+      for (volatile unsigned ix = 0; ix < nbitems; ix++)
 	{
 	  momitem_t *curitm = mom_set_nth_item (allitemsv, ix);
 	  int lin = 0;
