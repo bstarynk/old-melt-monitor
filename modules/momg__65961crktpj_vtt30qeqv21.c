@@ -37,33 +37,45 @@
 
 ////++++ declaration of 4 routines:
 
+
+///°°°declare routine #0
 ////!AJAX for appl menu
+// declare tasklet function ajax_appl
+static int
+ momfuncod__06uk4pppvx9_huv0v11v18j(int, momitem_t*, momval_t, momval_t*, intptr_t*, double*);
 
-// declare tasklet function ajax_appl rank#0
-static int momfuncod__06uk4pppvx9_huv0v11v18j(int, momitem_t*, momval_t, momval_t*, intptr_t*, double*);
 
+
+///°°°declare routine #1
 ////!todo procedure on exit
-
-// declare procedure _07zti91e4kd_952zqsd03fz rank#1
+// declare procedure _07zti91e4kd_952zqsd03fz
 void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t);
 
-////!procedure to show on webx the HTML code for some item
 
-// declare procedure show_html_for_item_proc rank#2
+
+///°°°declare routine #2
+////!procedure to show on webx the HTML code for some item
+// declare procedure show_html_for_item_proc
 void momprocfun__0z0rsvwfkcj_dcpkx68i074 (momval_t, momval_t);
 
-////!todo procedure on dump
 
-// declare procedure _7x6as13park_w64mrkx2xtm rank#3
+
+///°°°declare routine #3
+////!todo procedure on dump
+// declare procedure _7x6as13park_w64mrkx2xtm
 void momprocfun__7x6as13park_w64mrkx2xtm (momcstr_t);
 
-static momitem_t* momfconstitems__06uk4pppvx9_huv0v11v18j[1]; // constant items of tasklet function ajax_appl
-// constant items of proc. _07zti91e4kd_952zqsd03fz
-static const momitem_t* mompconstitems__07zti91e4kd_952zqsd03fz[1]; //! for _07zti91e4kd_952zqsd03fz
-// constant items of proc. show_html_for_item_proc
-static const momitem_t* mompconstitems__0z0rsvwfkcj_dcpkx68i074[3]; //! for show_html_for_item_proc
-// constant items of proc. _7x6as13park_w64mrkx2xtm
-static const momitem_t* mompconstitems__7x6as13park_w64mrkx2xtm[11]; //! for _7x6as13park_w64mrkx2xtm
+
+ // constant items of tasklet function ajax_appl
+static momitem_t* momfconstitems__06uk4pppvx9_huv0v11v18j[1];
+// constant items of procedure _07zti91e4kd_952zqsd03fz
+static const momitem_t* mompconstitems__07zti91e4kd_952zqsd03fz[1];
+
+// constant items of procedure show_html_for_item_proc
+static const momitem_t* mompconstitems__0z0rsvwfkcj_dcpkx68i074[3];
+
+// constant items of procedure _7x6as13park_w64mrkx2xtm
+static const momitem_t* mompconstitems__7x6as13park_w64mrkx2xtm[11];
 
 // declare module md5sum for first_module
 const char mommd5mod__65961crktpj_vtt30qeqv21[] = MONIMELT_MD5_MODULE; // Makefile generated
@@ -81,6 +93,16 @@ static const union momrout_un momdroutarr__65961crktpj_vtt30qeqv21[5];
 //// body part
 
 ////++++ implementation of 4 routines:
+
+
+
+
+
+
+
+
+//===***===***=== start routine #0: ajax_appl
+
 
 
 // implement tasklet function ajax_appl rank#0
@@ -116,6 +138,7 @@ static int momfuncod__06uk4pppvx9_huv0v11v18j
  // +++++++ function block #1 _7yyaydvyhpr_teuchcqzs7k
  momfblo_1:
  {
+  
   ////!block to handle ajax_appl when whatv=dump
   
   
@@ -133,6 +156,7 @@ static int momfuncod__06uk4pppvx9_huv0v11v18j
  // +++++++ function block #2 _8t137w1z1s9_2tea9xp64s6
  momfblo_2:
  {
+  
   ////!block to handle appl with what=exit
   
   
@@ -168,6 +192,7 @@ static int momfuncod__06uk4pppvx9_huv0v11v18j
  // +++++++ function block #3 _8y756mef2ca_w8cj58726vj
  momfblo_3:
  {
+  
   ////!starting block for ajax_appl.
   
   
@@ -217,6 +242,7 @@ static int momfuncod__06uk4pppvx9_huv0v11v18j
  // +++++++ function block #4 _91471ta1047_pra9zfqc2y1
  momfblo_4:
  {
+  
   ////!block for ajax_appl continue after dump
   
   
@@ -240,6 +266,7 @@ static int momfuncod__06uk4pppvx9_huv0v11v18j
  // +++++++ function block #5 _9u6a6xy2e1p_qeapfc73cm4
  momfblo_5:
  {
+  
   ////!block to handle ajax_appl when what=quit
   
   
@@ -311,8 +338,20 @@ const struct momtfundescr_st momrout__06uk4pppvx9_huv0v11v18j = { // tasklet fun
  .tfun_module = MONIMELT_CURRENT_MODULE,
  .tfun_codefun = momfuncod__06uk4pppvx9_huv0v11v18j,
  .tfun_timestamp = __DATE__ "@" __TIME__
- 
-}; // end function descriptor
+}; // end function descriptor of ajax_appl
+
+
+
+
+
+
+
+
+
+
+
+
+//===***===***=== start routine #1: _07zti91e4kd_952zqsd03fz
 
 
 
@@ -332,6 +371,7 @@ void momprocfun__07zti91e4kd_952zqsd03fz (momcstr_t momparg_0/*!formal:cstr*/)
  
  /******** block#1: _1kj1j3878fe_duw3ts10hev ********/
   mompblo_1: { //! start procedure block _1kj1j3878fe_duw3ts10hev
+  
   ////!start block of todo proc on exit
   
   
@@ -364,6 +404,18 @@ const struct momprocrout_st momprocdescr__07zti91e4kd_952zqsd03fz// proc.descrip
 
 
 
+
+
+
+
+
+
+
+//===***===***=== start routine #2: show_html_for_item_proc
+
+
+
+
 // implementation of procedure #2 = show_html_for_item_proc
 void momprocfun__0z0rsvwfkcj_dcpkx68i074 (momval_t momparg_0/*!formal:webx*/,
 momval_t momparg_1/*!formal:itmv*/)
@@ -385,6 +437,7 @@ momval_t momparg_1/*!formal:itmv*/)
  
  /******** block#1: _02yd241wh4z_tca7i6iamf3 ********/
   mompblo_1: { //! start procedure block _02yd241wh4z_tca7i6iamf3
+  
   ////!start of show_html_for_item..` (block)
   
   
@@ -424,6 +477,7 @@ momval_t momparg_1/*!formal:itmv*/)
  
  /******** block#2: _1witua6ujek_6jadsxtv4cd ********/
   mompblo_2: { //! start procedure block _1witua6ujek_6jadsxtv4cd
+  
   ////!show uncommented anon in show_html_for_item..
   
   
@@ -433,6 +487,7 @@ momval_t momparg_1/*!formal:itmv*/)
  
  /******** block#3: _34w40p46vwp_pw6u3d75ww6 ********/
   mompblo_3: { //! start procedure block _34w40p46vwp_pw6u3d75ww6
+  
   ////!create hset in show_html_for_item..
   ////+ block to create the item hset in the web session
   
@@ -471,6 +526,7 @@ momval_t momparg_1/*!formal:itmv*/)
  
  /******** block#4: _591chiicj6r_512iim4cf4m ********/
   mompblo_4: { //! start procedure block _591chiicj6r_512iim4cf4m
+  
   ////!show anonymous in show_html_for_item..
   
   
@@ -502,6 +558,7 @@ momval_t momparg_1/*!formal:itmv*/)
  
  /******** block#5: _7rxfx0rruqm_kdtk9pk7wtj ********/
   mompblo_5: { //! start procedure block _7rxfx0rruqm_kdtk9pk7wtj
+  
   ////!get namv from itmv in show_html_for_item..
   
   
@@ -529,6 +586,7 @@ momval_t momparg_1/*!formal:itmv*/)
  
  /******** block#6: _9xhd87mskav_rqcu5eqk5te ********/
   mompblo_6: { //! start procedure block _9xhd87mskav_rqcu5eqk5te
+  
   ////!put itmv into hset in show_html_form_item..` (block)
   
   
@@ -568,6 +626,18 @@ const struct momprocrout_st momprocdescr__0z0rsvwfkcj_dcpkx68i074// proc.descrip
 
 
 
+
+
+
+
+
+
+
+//===***===***=== start routine #3: _7x6as13park_w64mrkx2xtm
+
+
+
+
 // implementation of procedure #3 = _7x6as13park_w64mrkx2xtm
 void momprocfun__7x6as13park_w64mrkx2xtm (momcstr_t momparg_0/*!formal:cstr*/)
 {
@@ -583,6 +653,7 @@ void momprocfun__7x6as13park_w64mrkx2xtm (momcstr_t momparg_0/*!formal:cstr*/)
  
  /******** block#1: _39hpqv0jqj6_9sa2v0vhfm6 ********/
   mompblo_1: { //! start procedure block _39hpqv0jqj6_9sa2v0vhfm6
+  
   ////!start block of todo on dump
   
   
@@ -591,33 +662,32 @@ void momprocfun__7x6as13park_w64mrkx2xtm (momcstr_t momparg_0/*!formal:cstr*/)
   if (!mom_lock_item (momlockeditem_6)) goto momendblock_6;
   
   //! instr#1 in block _39hpqv0jqj6_9sa2v0vhfm6 ::
-  /*!do*/ /*!primitive-void _87r5zd69i6m_zr0hupaer90*/ /* primitive _87r5zd... in start-block of todo-on-dump */
+  /** chunk **/
+  /* chunk in start-block of todo-on-dump */
  struct mom_dumpoutcome_st doutc;
  memset(&doutc, 0, sizeof(doutc)); mom_full_dump("todo-dump-with-outcome", 
   momparg_0/*cstr*/ , &doutc);
  MOM_INFORMPRINTF(" dumped with outcome %d items into %s", doutc.odmp_nbdumpeditems, 
   momparg_0/*cstr*/ );
- mom_item_put_attribute (/*!outsidechunk*/
-  ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, /*!outsidechunk*/
+ mom_item_put_attribute ( ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, 
   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[6] /*elapsed_time*/).pitem, mom_let_transient(mom_make_double(doutc.odmp_elapsedtime)));
- mom_item_put_attribute (/*!outsidechunk*/
-  ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, /*!outsidechunk*/
+ mom_item_put_attribute (
+  ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, 
   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[2] /*cpu_time*/).pitem, mom_let_transient(mom_make_double(doutc.odmp_cputime)));
- mom_item_put_attribute (/*!outsidechunk*/
-  ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, /*!outsidechunk*/
+ mom_item_put_attribute (
+  ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, 
   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[1] /*nb_dumped_items*/).pitem, mom_let_transient(mom_make_integer(doutc.odmp_nbdumpeditems)));
- mom_item_put_attribute (/*!outsidechunk*/
-  ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, /*!outsidechunk*/
+ mom_item_put_attribute (
+  ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, 
   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[8] /*notice*/).pitem, mom_let_transient(doutc.odmp_nodenotice));
- mom_item_put_attribute (/*!outsidechunk*/
-  ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, /*!outsidechunk*/
+ mom_item_put_attribute (
+  ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, 
   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[0] /*predefined*/).pitem, mom_let_transient(doutc.odmp_setpredef));
- mom_item_put_attribute (/*!outsidechunk*/
-  ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, /*!outsidechunk*/
+ mom_item_put_attribute (
+  ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[5] /*dump_state*/).pitem, 
   ((momval_t) mompconstitems__7x6as13park_w64mrkx2xtm[9] /*module*/).pitem, mom_let_transient(doutc.odmp_nodemodules));
  mom_continue_working();
-/*!endvoidprimitive _87r5zd69i6m_zr0hupaer90*/  /*!done*/;
-  
+
   /*! epilogue for lock */
   mom_unlock_item (momlockeditem_6); // unlock dump_data
   momendblock_6:;
@@ -653,6 +723,10 @@ const struct momprocrout_st momprocdescr__7x6as13park_w64mrkx2xtm// proc.descrip
  .prout_argsig = "s",
  .prout_timestamp= __DATE__ "@" __TIME__
 }; // end proc descriptor
+
+
+
+
 
 // define module routines descriptor array for first_module
 static const union momrout_un momdroutarr__65961crktpj_vtt30qeqv21[5] = {
