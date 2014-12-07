@@ -109,7 +109,7 @@ modules/momg_%.so: modules/momg_%.c | monimelt.h predef-monimelt.h
 
 ## extra plugins
 momplug_%.so: momplug_%.c  | monimelt.h predef-monimelt.h
-	$(LINK.c) -fPIC $< -shared -o $@ $(shell awk '/MONIMELTLIBS:/{print $$2}' $<)
+	$(LINK.c) -fPIC $< -shared -o $@ $(shell grep MONIMELTLIBS: $< | sed s/MONIMELTLIBS://)
 
 restore-state:
 	-mv -v state-monimelt.dbsqlite  state-monimelt.dbsqlite~
