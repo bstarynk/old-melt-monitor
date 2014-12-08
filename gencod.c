@@ -635,7 +635,7 @@ declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
     MOM_OUT (&cg->cgen_outhead, MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
 	     MOMOUT_LITERAL ("///~~~declare routine #"),
 	     MOMOUT_DEC_INT ((int) routix),
-	     MOMOUT_NEWLINE(),
+	     MOMOUT_NEWLINE (),
 	     MOMOUT_SLASHCOMMENT_STRING (mom_string_cstr (commv)), NULL);
   else
     MOM_OUT (&cg->cgen_outhead, MOMOUT_NEWLINE (), MOMOUT_NEWLINE (),
@@ -744,12 +744,12 @@ declare_routine_cgen (struct c_generator_mom_st *cg, unsigned routix)
   else
     {
       // genuine tasklet function
-      MOM_OUT (&cg->cgen_outhead, 
+      MOM_OUT (&cg->cgen_outhead,
 	       MOMOUT_LITERAL ("// declare tasklet function "),
 	       MOMOUT_ITEM ((const momitem_t *) curoutitm),
 	       MOMOUT_NEWLINE (), NULL);
       MOM_OUT (&cg->cgen_outhead,
-	       MOMOUT_LITERAL ("static int"),MOMOUT_NEWLINE (),
+	       MOMOUT_LITERAL ("static int"), MOMOUT_NEWLINE (),
 	       MOMOUT_LITERAL (" " CGEN_FUN_CODE_PREFIX),
 	       MOMOUT_LITERALV (mom_ident_cstr_of_item (curoutitm)),
 	       MOMOUT_LITERAL
@@ -2399,8 +2399,7 @@ emit_procedure_cgen (struct c_generator_mom_st *cg, unsigned routix)
 			     CGEN_PROC_CONSTANTITEMS_PREFIX),
 	     MOMOUT_LITERALV (mom_ident_cstr_of_item (procitm)),
 	     MOMOUT_LITERAL ("["), MOMOUT_DEC_INT (1 + (int) nbconstants),
-	     MOMOUT_LITERAL ("];"), MOMOUT_NEWLINE (),
-	     NULL);
+	     MOMOUT_LITERAL ("];"), MOMOUT_NEWLINE (), NULL);
   }
   //// append the block hset to the procedure associated node
   {
@@ -2900,9 +2899,7 @@ emit_taskletfunction_cgen (struct c_generator_mom_st *cg, unsigned routix)
 		       CGEN_FUN_CONSTANTITEMS_PREFIX),
        MOMOUT_LITERALV (mom_ident_cstr_of_item (tfunitm)),
        MOMOUT_LITERAL ("["),
-       MOMOUT_DEC_INT ((int) nbconstants + 1),
-       MOMOUT_LITERAL ("];"),
-       NULL);
+       MOMOUT_DEC_INT ((int) nbconstants + 1), MOMOUT_LITERAL ("];"), NULL);
     MOM_OUT			///
       (&cg->cgen_outbody,
        MOMOUT_LITERAL ("static const char* const "

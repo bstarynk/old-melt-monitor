@@ -1332,6 +1332,7 @@ enum mom_kindpayload_en
   mompayk_buffer,		// character buffer
   mompayk_vector,		// vector of values
   mompayk_hset,			// hashed set of non-nil values
+  mompayk_dict,			// association of strings to values
   mompayk_assoc,		// association of items to values
   mompayk_process,		// forked process and buffer for its output pipe
   mompayk_webexchange,		// HTTP interaction
@@ -2259,6 +2260,30 @@ momval_t mom_item_assoc_set_attrs (momitem_t *itm);
 void mom_item_assoc_put (momitem_t *itm, const momitem_t *atitm,
 			 const momval_t val);
 void mom_item_assoc_remove (momitem_t *itm, const momitem_t *atitm);
+/**************** dict items ****************/
+// entries
+struct mom_idictent_st
+{
+  const momstring_t *idice_str;	/* string or MOM_EMPTY */
+  momval_t idice_val;		/* non-nil value */
+};
+// payload data
+#define MOM_IDICT_MAGIC 0x34abad57	/* idict magic 883666263 */
+struct mom_idict_st
+{
+  unsigned idict_magic;		/* always MOM_IDICT_MAGIC */
+  unsigned idict_count;		/* used count */
+  unsigned idict_size;		/* allocated size */
+  struct mom_idictent_st *idict_arr;	/* array */
+};
+
+void mom_item_start_dict (momitem_t *itm);
+void mom_item_dict_reserve (momitem_t *itm, unsigned gap);
+momval_t mom_item_dict_get (momitem_t *itm, const momstring_t *str);
+void mom_item_dict_put (momitem_t *itm, const momstring_t *str,
+			momval_t valv);
+
+
 /************* misc items *********/
 // convert a boolean to a predefined item json_true or json_false
 const momitem_t *mom_get_item_bool (bool v);

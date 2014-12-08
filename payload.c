@@ -717,6 +717,217 @@ static const struct mom_payload_descr_st payldescr_assoc_mom = {
 
 
 ////////////////////////////////////////////////////////////////
+///// DICTIONNARY PAYLOAD
+////////////////////////////////////////////////////////////////
+
+/** the dict payload data is a GC_MALLOC-ed struct mom_idict_st */
+
+void
+mom_item_start_dict (momitem_t *itm)
+{
+  assert (itm && itm->i_typnum == momty_item);
+  if (itm->i_payload)
+    mom_item_clear_payload (itm);
+  const unsigned siz = 12;
+  struct mom_idict_st *idic	//
+    = MOM_GC_ALLOC ("item dict",
+		    sizeof (struct mom_idict_st));
+  idic->idict_arr =
+    MOM_GC_ALLOC ("idictarr", sizeof (struct mom_idictent_st) * siz);
+  idic->idict_size = siz;
+  idic->idict_magic = MOM_IDICT_MAGIC;
+  itm->i_payload = idic;
+  itm->i_paylkind = mompayk_dict;
+}
+
+// return index of put entry
+static int
+idict_put_mom (struct mom_idict_st *idic, const momstring_t *str,
+	       momval_t val)
+{
+  assert (idic && idic->idict_magic == MOM_IDICT_MAGIC && idic->idict_size > 0
+	  && idic->idict_count < idic->idict_size && idic->idict_arr);
+  if (!str || str->typnum != momty_string || !val.ptr)
+    return -1;
+  momhash_t hstr = str->hash;
+  unsigned siz = idic->idict_size;
+  unsigned startix = hstr % siz;
+  int pos = -1;
+  bool add = false;
+  for (unsigned ix = startix; ix < siz; ix++)
+    {
+      const momstring_t *curstr = idic->idict_arr[ix].idice_str;
+      if (!curstr)
+	{
+	  if (pos < 0)
+	    pos = ix;
+	  add = true;
+	  goto put;
+	}
+      else if (curstr == MOM_EMPTY)
+	{
+	  if (pos < 0)
+	    pos = ix;
+	  continue;
+	}
+      else if (curstr->hash == str->hash && !strcmp (curstr->cstr, str->cstr))
+	{
+	  pos = ix;
+	  add = false;
+	  goto put;
+	};
+    }
+  for (unsigned ix = 0; ix < startix; ix++)
+    {
+      const momstring_t *curstr = idic->idict_arr[ix].idice_str;
+      if (!curstr)
+	{
+	  if (pos < 0)
+	    pos = ix;
+	  add = true;
+	  goto put;
+	}
+      else if (curstr == MOM_EMPTY)
+	{
+	  if (pos < 0)
+	    pos = ix;
+	  continue;
+	}
+      else if (curstr->hash == str->hash && !strcmp (curstr->cstr, str->cstr))
+	{
+	  pos = ix;
+	  add = false;
+	  goto put;
+	};
+    }
+  // should never happen
+  MOM_FATAPRINTF ("corrupted idic@%p", idic);
+put:
+  assert (pos >= 0 && pos < (int) siz);
+  if (add)
+    {
+      idic->idict_arr[pos].idice_str = str;
+      idic->idict_count++;
+    }
+  idic->idict_arr[pos].idice_val = val;
+  return pos;
+}
+
+// return index of found entry or else -1
+static int
+idict_find_mom (struct mom_idict_st *idic, const momstring_t *str)
+{
+  momhash_t hstr = str->hash;
+  unsigned siz = idic->idict_size;
+  unsigned startix = hstr % siz;
+  assert (idic && idic->idict_magic == MOM_IDICT_MAGIC && idic->idict_size > 0
+	  && idic->idict_count < idic->idict_size && idic->idict_arr);
+  if (!str || str->typnum != momty_string)
+    return -1;
+  for (unsigned ix = startix; ix < siz; ix++)
+    {
+      const momstring_t *curstr = idic->idict_arr[ix].idice_str;
+      if (!curstr)
+	return -1;
+      else if (curstr == MOM_EMPTY)
+	continue;
+      else if (curstr->hash == str->hash && !strcmp (curstr->cstr, str->cstr))
+	return ix;
+    }
+  for (unsigned ix = 0; ix < startix; ix++)
+    {
+      const momstring_t *curstr = idic->idict_arr[ix].idice_str;
+      if (!curstr)
+	return -1;
+      else if (curstr == MOM_EMPTY)
+	continue;
+      else if (curstr->hash == str->hash && !strcmp (curstr->cstr, str->cstr))
+	return ix;
+    }
+  return -1;
+}
+
+static void
+idict_reorganize_mom (struct mom_idict_st *idic, unsigned gap)
+{
+  assert (idic && idic->idict_magic == MOM_IDICT_MAGIC && idic->idict_size > 0
+	  && idic->idict_count < idic->idict_size && idic->idict_arr);
+  unsigned oldsiz = idic->idict_size;
+  unsigned oldcnt = idic->idict_count;
+  struct mom_idictent_st *oldarr = idic->idict_arr;
+  unsigned newsiz = ((4 * oldcnt / 3 + 5 + gap) | 0xf) + 1;
+  if (oldsiz == newsiz)
+    return;
+  idic->idict_arr =
+    MOM_GC_ALLOC ("idictnewarr", sizeof (struct mom_idictent_st) * newsiz);
+  idic->idict_size = newsiz;
+  idic->idict_count = 0;
+  for (unsigned ix = 0; ix < oldsiz; ix++)
+    {
+      const momstring_t *curstr = oldarr[ix].idice_str;
+      if (!curstr || curstr == MOM_EMPTY)
+	continue;
+      int pos = idict_put_mom (idic, curstr, oldarr[ix].idice_val);
+      // should never happen
+      if (MOM_UNLIKELY (pos < 0))
+	MOM_FATAPRINTF ("corrupted idic@%p", idic);
+    }
+  MOM_GC_FREE (oldarr);
+  assert (idic->idict_count == oldcnt);
+}
+
+momval_t
+mom_item_dict_get (momitem_t *itm, const momstring_t *str)
+{
+  if (!itm || itm->i_typnum != momty_item || itm->i_paylkind != mompayk_dict
+      || !str || str->typnum != momty_string)
+    return MOM_NULLV;
+  struct mom_idict_st *idic = (struct mom_idict_st *) itm->i_payload;
+  assert (idic && idic->idict_magic == MOM_IDICT_MAGIC && idic->idict_size > 0
+	  && idic->idict_count < idic->idict_size && idic->idict_arr);
+  int pos = idict_find_mom (idic, str);
+  if (pos >= 0)
+    {
+      assert (pos < (int) idic->idict_size);
+      return idic->idict_arr[pos].idice_val;
+    }
+  return MOM_NULLV;
+}
+
+void
+mom_item_dict_reserve (momitem_t *itm, unsigned gap)
+{
+  if (!itm || itm->i_typnum != momty_item || itm->i_paylkind != mompayk_dict)
+    return;
+  struct mom_idict_st *idic = (struct mom_idict_st *) itm->i_payload;
+  assert (idic && idic->idict_magic == MOM_IDICT_MAGIC && idic->idict_size > 0
+	  && idic->idict_count < idic->idict_size && idic->idict_arr);
+  idict_reorganize_mom (idic, gap);
+}
+
+void
+mom_item_dict_put (momitem_t *itm, const momstring_t *str, momval_t valv)
+{
+  if (!itm || itm->i_typnum != momty_item || itm->i_paylkind != mompayk_dict
+      || !str || str->typnum != momty_string || str->slen == 0 || !valv.ptr)
+    return;
+  struct mom_idict_st *idic = (struct mom_idict_st *) itm->i_payload;
+  assert (idic && idic->idict_magic == MOM_IDICT_MAGIC && idic->idict_size > 0
+	  && idic->idict_count < idic->idict_size && idic->idict_arr);
+  unsigned cnt = idic->idict_count;
+  unsigned siz = idic->idict_size;
+  if (MOM_UNLIKELY (5 * cnt + 4 >= 4 * siz))
+    {
+      idict_reorganize_mom (idic, cnt / 5 + 1);
+      siz = idic->idict_size;
+    };
+  int pos = idict_put_mom (idic, str, valv);
+  if (MOM_UNLIKELY (pos < 0))
+    MOM_FATAL (MOMOUT_LITERAL ("corrupted dict-item:"),
+	       MOMOUT_ITEM ((const momitem_t *) itm), NULL);
+}
+
+////////////////////////////////////////////////////////////////
 ///// HASHSET PAYLOAD
 ////////////////////////////////////////////////////////////////
 
