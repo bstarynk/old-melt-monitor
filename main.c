@@ -499,7 +499,7 @@ checked_gc_calloc (gsize nblock, gsize bsize)
 static GMemVTable gc_mem_vtable_mom = {
   .malloc = checked_gc_malloc,
   .realloc = checked_gc_realloc,
-  .free = GC_free,
+  .free = NULL,			// was GC_free,
   .calloc = checked_gc_calloc,
   .try_malloc = GC_malloc,
   .try_realloc = GC_realloc
