@@ -466,45 +466,6 @@ informexit_cb_mom (void)
 }
 
 
-static gpointer
-checked_gc_malloc (gsize sz)
-{
-  void *p = GC_MALLOC (sz);	// leave that GC_MALLOC
-  if (MOM_UNLIKELY (!p))
-    MOM_FATAPRINTF ("failed to GC malloc %ld bytes", (long) sz);
-  memset (p, 0, sz);
-  return p;
-}
-
-static gpointer
-checked_gc_realloc (gpointer m, gsize sz)
-{
-  void *p = GC_REALLOC (m, sz);	// leave that GC_REALLOC
-  if (MOM_UNLIKELY (!p))
-    MOM_FATAPRINTF ("failed to GC realloc %ld bytes", (long) sz);
-  return p;
-}
-
-static gpointer
-checked_gc_calloc (gsize nblock, gsize bsize)
-{
-  void *p = GC_MALLOC (nblock * bsize);	// leave that GC_MALLOC
-  if (MOM_UNLIKELY (!p && nblock > 0 && bsize > 0))
-    MOM_FATAPRINTF ("failed to GC calloc %ld blocks of %ld bytes",
-		    (long) nblock, (long) bsize);
-  memset (p, 0, nblock * bsize);
-  return p;
-}
-
-static GMemVTable gc_mem_vtable_mom = {
-  .malloc = checked_gc_malloc,
-  .realloc = checked_gc_realloc,
-  .free = NULL,			// was GC_free,
-  .calloc = checked_gc_calloc,
-  .try_malloc = GC_malloc,
-  .try_realloc = GC_realloc
-};
-
 static void
 memory_failure_onion_mom (const char *msg)
 {
@@ -969,7 +930,6 @@ main (int argc, char **argv)
   GC_INIT ();
   pthread_setname_np (pthread_self (), "mom-main");
   g_mem_gc_friendly = TRUE;
-  g_mem_set_vtable (&gc_mem_vtable_mom);
   startime_mom = mom_clock_time (CLOCK_REALTIME);
   mom_stdout_data.mout_file = stdout;
   mom_stderr_data.mout_file = stderr;
