@@ -23,3 +23,21 @@
 **/
 
 #include "monimelt.h"
+
+#include <gtk/gtk.h>
+#include <regex.h>
+
+const char mom_plugin_GPL_compatible[] = "GPLv3+";
+void
+mom_plugin_init (const char *arg, int *pargc, char ***pargv)
+{
+  MOM_INFORMPRINTF ("start of " __FILE__ " build %s arg=%s (argc=%d)",
+		    __DATE__ "@" __TIME__, arg, *pargc);
+  gtk_init (pargc, pargv);
+}
+
+void
+momplugin_after_load (void)
+{
+  MOM_INFORMPRINTF ("after load " __FILE__);
+}

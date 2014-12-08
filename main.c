@@ -607,7 +607,8 @@ static struct
 
 
 void
-mom_load_plugin (const char *plugname, const char *plugarg)
+mom_load_plugin (const char *plugname, const char *plugarg, int *pargc,
+		 char ***pargv)
 {
   char plugpath[MOM_PATH_MAX];
   memset (plugpath, 0, sizeof (plugpath));
@@ -657,7 +658,7 @@ mom_load_plugin (const char *plugname, const char *plugarg)
   MOM_DEBUGPRINTF (run,
 		   "initializing plugin #%d %s from %s argument %s GPL compatible %s",
 		   plugix, plugname, plugpath, plugarg, pluggplcompatible);
-  pluginit (plugarg);
+  pluginit (plugarg, pargc, pargv);
   MOM_INFORMPRINTF ("using plugin #%d %s from %s, GPL compatible: %s",
 		    plugix, plugname, plugpath, pluggplcompatible);
   pthread_mutex_unlock (&plugins_mom.plugins_mtx);
@@ -778,9 +779,10 @@ mom_set_debugging (const char *dbgopt)
 }
 
 static void
-parse_program_arguments_and_load_plugins_mom (int *pargc, char **argv)
+parse_program_arguments_and_load_plugins_mom (int *pargc, char ***pargv)
 {
   int argc = *pargc;
+  char **argv = *pargv;
   int opt = -1;
   while ((opt = getopt_long (argc, argv, "lhVdn:P:W:J:D:R:",
 			     mom_long_options, NULL)) >= 0)
@@ -820,7 +822,7 @@ parse_program_arguments_and_load_plugins_mom (int *pargc, char **argv)
 	  {
 	    char *plugnam = optarg;
 	    char *plugarg = argv[optind++];
-	    mom_load_plugin (plugnam, plugarg);
+	    mom_load_plugin (plugnam, plugarg, pargc, pargv);
 	  }
 	  break;
 	case xtraopt_nojit:
@@ -876,7 +878,10 @@ parse_program_arguments_and_load_plugins_mom (int *pargc, char **argv)
 	  break;
 	}
     }
-
+  argc -= optind;
+  argv += optind;
+  *pargc = argc;
+  *pargv = argv;
 }
 
 static double startime_mom;
@@ -980,7 +985,7 @@ main (int argc, char **argv)
   mom_prog_dlhandle = GC_dlopen (NULL, RTLD_NOW | RTLD_GLOBAL);
   if (MOM_UNLIKELY (!mom_prog_dlhandle))
     MOM_FATAPRINTF ("failed to dlopen the program: %s", dlerror ());
-  parse_program_arguments_and_load_plugins_mom (&argc, argv);
+  parse_program_arguments_and_load_plugins_mom (&argc, &argv);
   if (!nojit_mom)
     {
       // libjit is installing SIGSEGV handler

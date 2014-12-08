@@ -3174,8 +3174,9 @@ mom_queue_peek_value_back (struct mom_valuequeue_st *vq)
 ////////////////////////////////////////////////////////////////
 // the program handle from GC_dlopen with NULL
 void *mom_prog_dlhandle;
-//// load a plugin
-void mom_load_plugin (const char *plugname, const char *plugarg);
+//// load a plugin from main
+void mom_load_plugin (const char *plugname, const char *plugarg, int *pargc,
+		      char ***pargv);
 //// load a module, return true on success
 bool mom_load_module (const char *dirname, const char *modulename);
 
@@ -3287,7 +3288,7 @@ mom_procedure_item_of_id (const char *id)
 #define MOM_SHARED_MODULE_DIRECTORY "modules"
 /// plugins are required to define
 extern const char mom_plugin_GPL_compatible[];	// a string describing the licence
-extern void mom_plugin_init (const char *pluginarg);	// the plugin initializer
+extern void mom_plugin_init (const char *pluginarg, int *pargc, char ***pargv);	// the plugin initializer
 /// they may also define a function to be called after load
 extern void momplugin_after_load (void);
 

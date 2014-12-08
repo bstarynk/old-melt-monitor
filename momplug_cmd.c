@@ -2159,7 +2159,8 @@ cmd_do_remove_mom (const char *lin, bool pres, long num)
 static const char *initcommand_mom;
 
 void
-mom_plugin_init (const char *arg)
+mom_plugin_init (const char *arg, int *pargc MOM_UNUSED,
+		 char ***pargv MOM_UNUSED)
 {
   MOM_DEBUGPRINTF (cmd, "start of " __FILE__ " arg=%s", arg);
   rl_initialize ();
