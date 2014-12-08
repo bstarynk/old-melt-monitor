@@ -927,6 +927,179 @@ mom_item_dict_put (momitem_t *itm, const momstring_t *str, momval_t valv)
 	       MOMOUT_ITEM ((const momitem_t *) itm), NULL);
 }
 
+momval_t
+mom_item_dict_sorted_names_node (momitem_t *itm, momval_t connv)
+{
+  momval_t resv = MOM_NULLV;
+  if (!itm || itm->i_typnum != momty_item || itm->i_paylkind != mompayk_dict
+      || !connv.ptr)
+    return MOM_NULLV;
+  struct mom_idict_st *idic = (struct mom_idict_st *) itm->i_payload;
+  assert (idic && idic->idict_magic == MOM_IDICT_MAGIC && idic->idict_size > 0
+	  && idic->idict_count < idic->idict_size && idic->idict_arr);
+  unsigned cnt = idic->idict_count;
+  unsigned siz = idic->idict_size;
+  struct mom_idictent_st *arrdic = idic->idict_arr;
+  momval_t tinyarr[MOM_TINY_MAX];
+  memset (tinyarr, 0, sizeof (tinyarr));
+  momval_t *arr = (cnt < MOM_TINY_MAX) ? tinyarr
+    : MOM_GC_ALLOC ("sortarr", (cnt + 1) * sizeof (momval_t));
+  unsigned curcnt = 0;
+  for (unsigned ix = 0; ix < siz; ix++)
+    {
+      const momstring_t *curstr = arrdic[ix].idice_str;
+      if (!curstr || curstr == MOM_EMPTY)
+	continue;
+      assert (curcnt < cnt);
+      momval_t curval = arr[curcnt++] = arrdic[ix].idice_val;
+      if (!curval.ptr)
+	MOM_FATAL (MOMOUT_LITERAL ("corrupted dict-item:"),
+		   MOMOUT_ITEM ((const momitem_t *) itm), NULL);
+    }
+  assert (curcnt == cnt);
+  qsort (arr, curcnt, sizeof (momval_t), mom_valqsort_cmp);
+  resv = (momval_t) mom_make_node_from_array (connv, curcnt, arr);
+  if (arr != tinyarr)
+    MOM_GC_FREE (arr);
+  return resv;
+}
+
+unsigned
+mom_item_dict_count (momitem_t *itm)
+{
+  if (!itm || itm->i_typnum != momty_item || itm->i_paylkind != mompayk_dict)
+    return 0;
+  struct mom_idict_st *idic = (struct mom_idict_st *) itm->i_payload;
+  assert (idic && idic->idict_magic == MOM_IDICT_MAGIC && idic->idict_size > 0
+	  && idic->idict_count < idic->idict_size && idic->idict_arr);
+  return idic->idict_count;
+}
+
+static void
+payl_dict_load_mom (struct mom_loader_st *ld, momitem_t *itm, momval_t jpayl)
+{
+  unsigned len = mom_json_array_size (jpayl);
+  mom_item_start_dict (itm);
+  if (len > 0)
+    mom_item_dict_reserve (itm, 4 * len / 3 + 5);
+  for (unsigned ix = 0; ix < len; ix++)
+    {
+      momval_t jent = mom_json_array_nth (jpayl, (int) ix);
+      if (mom_is_json_object (jent))
+	{
+	  momval_t curnamv =
+	    mom_jsonob_get (jent, (momval_t) mom_named__string);
+	  momval_t jval = mom_jsonob_get (jent, (momval_t) mom_named__val);
+	  if (!mom_is_string (curnamv))
+	    continue;
+	  momval_t val = mom_load_value_json (ld, jval);
+	  if (!val.ptr)
+	    continue;
+	  mom_item_dict_put (itm, curnamv.pstring, val);
+	}
+    }
+}
+
+static void
+payl_dict_dump_scan_mom (struct mom_dumper_st *du, momitem_t *itm)
+{
+  assert (itm && itm->i_typnum == momty_item
+	  && itm->i_paylkind == mompayk_dict);
+  struct mom_idict_st *idic = (struct mom_idict_st *) itm->i_payload;
+  assert (idic && idic->idict_magic == MOM_IDICT_MAGIC && idic->idict_size > 0
+	  && idic->idict_count < idic->idict_size && idic->idict_arr);
+  unsigned siz = idic->idict_size;
+  struct mom_idictent_st *arrdic = idic->idict_arr;
+  for (unsigned ix = 0; ix < siz; ix++)
+    {
+      const momstring_t *curstr = arrdic[ix].idice_str;
+      if (!curstr || curstr == MOM_EMPTY)
+	continue;
+      mom_dump_scan_value (du, (momval_t) curstr);
+      mom_dump_scan_value (du, arrdic[ix].idice_val);
+    }
+}
+
+
+
+
+static momval_t
+payl_dict_dump_json_mom (struct mom_dumper_st *du, momitem_t *itm)
+{
+  momval_t jres = MOM_NULLV;
+  struct mom_idict_st *idic = (struct mom_idict_st *) itm->i_payload;
+  assert (idic && idic->idict_magic == MOM_IDICT_MAGIC && idic->idict_size > 0
+	  && idic->idict_count < idic->idict_size && idic->idict_arr);
+  unsigned siz = idic->idict_size;
+  unsigned dicnt = idic->idict_count;
+  if (MOM_UNLIKELY (dicnt == 0))
+    return jres;
+  momval_t snamv =
+    mom_item_dict_sorted_names_node (itm, (momval_t) mom_named__string);
+  unsigned nodcnt = mom_node_arity (snamv);
+  momval_t tinyarr[MOM_TINY_MAX];
+  memset (tinyarr, 0, sizeof (tinyarr));
+  momval_t *jarr = (nodcnt < MOM_TINY_MAX) ? tinyarr	//
+    : MOM_GC_ALLOC ("arrdump", sizeof (momval_t) * (nodcnt + 1));
+  unsigned jcnt = 0;
+  for (unsigned ix = 0; ix < nodcnt; ix++)
+    {
+      momval_t curnamv = mom_node_nth (snamv, ix);
+      assert (mom_is_string (curnamv));
+      int pos = idict_find_mom (idic, curnamv.pstring);
+      assert (pos >= 0 && pos < (int) siz);
+      momval_t curval = idic->idict_arr[pos].idice_val;
+      momval_t jval = mom_dump_emit_json (du, curval);
+      if (!jval.ptr)
+	continue;
+      assert (jcnt < nodcnt);
+      jarr[jcnt++] = (momval_t) mom_make_json_object	//
+	(MOMJSOB_ENTRY ((momval_t) mom_named__string, curnamv),
+	 MOMJSOB_ENTRY ((momval_t) mom_named__val, jval), MOMJSON_END);
+    }
+  jres = (momval_t) mom_make_json_array_count (jcnt, jarr);
+  if (jarr != tinyarr)
+    MOM_GC_FREE (jarr);
+  return jres;
+}
+
+static void
+payl_dict_output_mom (struct momout_st *pout, momitem_t *itm, void *data)
+{
+  assert (itm && itm->i_typnum == momty_item
+	  && itm->i_paylkind == mompayk_dict);
+  struct mom_idict_st *idic = (struct mom_idict_st *) data;
+  assert (idic && idic->idict_magic == MOM_IDICT_MAGIC && idic->idict_size > 0
+	  && idic->idict_count < idic->idict_size && idic->idict_arr);
+  momval_t snamv =
+    mom_item_dict_sorted_names_node (itm, (momval_t) mom_named__string);
+  unsigned nodcnt = mom_node_arity (snamv);
+  MOM_OUT (pout, MOMOUT_LITERAL ("/"),
+	   MOMOUT_DEC_INT ((int) nodcnt), MOMOUT_LITERAL (":{"),
+	   MOMOUT_INDENT_MORE ());
+  for (unsigned ix = 0; ix < nodcnt; ix++)
+    {
+      momval_t curnam = mom_node_nth (snamv, ix);
+      momval_t curval = mom_item_dict_get (itm, curnam.pstring);
+      MOM_OUT (pout, MOMOUT_NEWLINE (),
+	       MOMOUT_VALUE ((const momval_t) curnam),
+	       MOMOUT_LITERAL (" :->"),
+	       MOMOUT_SPACE (64),
+	       MOMOUT_VALUE ((const momval_t) curval), NULL);
+    }
+  MOM_OUT (pout, MOMOUT_SPACE (64), MOMOUT_INDENT_LESS (),
+	   MOMOUT_LITERAL ("}."), NULL);
+}
+
+static const struct mom_payload_descr_st payldescr_dict_mom = {
+  .dpayl_magic = MOM_PAYLOAD_MAGIC,
+  .dpayl_name = "dict",
+  .dpayl_loadfun = payl_dict_load_mom,
+  .dpayl_dumpscanfun = payl_dict_dump_scan_mom,
+  .dpayl_dumpjsonfun = payl_dict_dump_json_mom,
+  .dpayl_outputfun = payl_dict_output_mom,
+};
+
 ////////////////////////////////////////////////////////////////
 ///// HASHSET PAYLOAD
 ////////////////////////////////////////////////////////////////
@@ -3804,6 +3977,7 @@ struct mom_payload_descr_st *mom_payloadescr[mompayk__last + 1] = {
   [mompayk_vector] = (struct mom_payload_descr_st *) &payldescr_vector_mom,
   [mompayk_assoc] = (struct mom_payload_descr_st *) &payldescr_assoc_mom,
   [mompayk_hset] = (struct mom_payload_descr_st *) &payldescr_hset_mom,
+  [mompayk_dict] = (struct mom_payload_descr_st *) &payldescr_dict_mom,
   [mompayk_process] = (struct mom_payload_descr_st *) &payldescr_process_mom,
   [mompayk_procedure] =
     (struct mom_payload_descr_st *) &payldescr_procedure_mom,

@@ -810,8 +810,6 @@ void mom_close_json_parser (struct mom_jsonparser_st *jp);
 // parse a JSON value, or else set the error message to *perrmsg
 momval_t mom_parse_json (struct mom_jsonparser_st *jp, char **perrmsg);
 
-// compare values for JSON
-int mom_json_cmp (momval_t l, momval_t r);
 // compare a JSON value to a non-null string
 int mom_json_cstr_cmp (momval_t jv, const char *str);
 
@@ -2278,10 +2276,12 @@ struct mom_idict_st
 };
 
 void mom_item_start_dict (momitem_t *itm);
+unsigned mom_item_dict_count (momitem_t *itm);
 void mom_item_dict_reserve (momitem_t *itm, unsigned gap);
 momval_t mom_item_dict_get (momitem_t *itm, const momstring_t *str);
 void mom_item_dict_put (momitem_t *itm, const momstring_t *str,
 			momval_t valv);
+momval_t mom_item_dict_sorted_names_node (momitem_t *itm, momval_t connv);
 
 
 /************* misc items *********/
