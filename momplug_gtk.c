@@ -27,6 +27,8 @@
 #include <gtk/gtk.h>
 #include <regex.h>
 
+#define GTKUIFILE_MOM "gtkmom.ui"
+
 const char mom_plugin_GPL_compatible[] = "GPLv3+";
 
 
@@ -37,10 +39,13 @@ mom_plugin_init (const char *arg, int *pargc, char ***pargv)
 		    __DATE__ "@" __TIME__, arg, *pargc);
   g_mem_gc_friendly = true;	/* from <glib/gmem.h> */
   gtk_init (pargc, pargv);
+  GtkBuilder *builder = gtk_builder_new_from_file (GTKUIFILE_MOM);
+  g_object_unref (builder);
 }
 
 void
 momplugin_after_load (void)
 {
   MOM_INFORMPRINTF ("after load " __FILE__);
+  gtk_main ();
 }
