@@ -1,6 +1,6 @@
 // file random.c
 
-/**   Copyright (C)  2014 Free Software Foundation, Inc.
+/**   Copyright (C)  2015 Free Software Foundation, Inc.
     MONIMELT is a monitor for MELT - see http://gcc-melt.org/
     This file is part of GCC.
   
@@ -21,247 +21,165 @@
 #include "monimelt.h"
 
 
-static pthread_mutex_t mtx_random_mom = PTHREAD_MUTEX_INITIALIZER;
+#define NB_RANDOM_GEN_MOM 16
 
-static struct random_data randata_mom;
+static pthread_mutex_t mtx_random_mom[NB_RANDOM_GEN_MOM];
+static struct random_data randata_mom[NB_RANDOM_GEN_MOM];
 
-static unsigned randcount_mom;
-
-static unsigned rand_reseed_period_mom;
-
-static void
-seed_random_mom (void)
+void
+mom_initialize_random (void)
 {
 #define RANDSTATELEN 64
-  static union
-  {
-    char state[RANDSTATELEN];
-    struct
-    {
-      pid_t pid;
-      struct timespec ts;
-      char stuff[RANDSTATELEN - sizeof (pid_t) - sizeof (struct timespec)];
-    } data;
-  } u;
-  static unsigned rseed;
+  static const pthread_mutex_t inimtx = PTHREAD_MUTEX_INITIALIZER;
+  for (int ix = 0; ix < NB_RANDOM_GEN_MOM; ix++)
+    memcpy (mtx_random_mom + ix, &inimtx, sizeof (pthread_mutex_t));
   FILE *filr = fopen ("/dev/urandom", "r");
-  u.data.pid = getpid ();
-  clock_gettime (CLOCK_REALTIME, &u.data.ts);
-  if (!rseed)
+  if (!filr)
+    MOM_FATAPRINTF ("failed to open /dev/urandom: %m");
+  unsigned rseed;
+  for (int ix = 0; ix < NB_RANDOM_GEN_MOM; ix++)
     {
-      rseed = u.data.pid ^ (u.data.ts.tv_sec ^ u.data.ts.tv_nsec);
-    }
-  if (filr)
-    {
+      union
+      {
+	char state[RANDSTATELEN];
+	struct
+	{
+	  pid_t pid;
+	  struct timespec ts;
+	  char stuff[RANDSTATELEN - sizeof (pid_t) -
+		     sizeof (struct timespec)];
+	} data;
+      } u;
+      memset (&u, 0, sizeof (u));
+      u.data.pid = getpid ();
+      clock_gettime (CLOCK_REALTIME, &u.data.ts);
+      if (!rseed)
+	{
+	  rseed = u.data.pid ^ (u.data.ts.tv_sec ^ u.data.ts.tv_nsec);
+	}
       fread (u.data.stuff, sizeof (u.data.stuff), 1, filr);
       fread (&rseed, sizeof (rseed), 1, filr);
-      fclose (filr);
+      initstate_r (rseed, u.state, RANDSTATELEN, randata_mom + ix);
     }
+}
+
+uint32_t
+mom_random_nonzero_32 (unsigned num)
+{
+  unsigned rk = num % NB_RANDOM_GEN_MOM;
+  uint32_t r;
+  pthread_mutex_lock (mtx_random_mom + rk);
+  do
+    {
+      int32_t sr;
+      random_r (randata_mom + rk, &sr);
+      r = (uint32_t) sr;
+    }
+  while (MOM_UNLIKELY (r == 0));
+  pthread_mutex_unlock (mtx_random_mom + rk);
+  return r;
+}
+
+uint32_t
+mom_random_32 (unsigned num)
+{
+  unsigned rk = num % NB_RANDOM_GEN_MOM;
+  uint32_t r;
+  pthread_mutex_lock (mtx_random_mom + rk);
+  int32_t sr;
+  random_r (randata_mom + rk, &sr);
+  r = (uint32_t) sr;
+  pthread_mutex_unlock (mtx_random_mom + rk);
+  return r;
+}
+
+uint64_t
+mom_random_64 (unsigned num)
+{
+  unsigned rk = num % NB_RANDOM_GEN_MOM;
+  uint32_t r1, r2;
+  pthread_mutex_lock (mtx_random_mom + rk);
+  int32_t sr;
+  random_r (randata_mom + rk, &sr);
+  r1 = (uint32_t) sr;
+  random_r (randata_mom + rk, &sr);
+  r2 = (uint32_t) sr;
+  pthread_mutex_unlock (mtx_random_mom + rk);
+  return ((uint64_t) r1 << 32) | (uint64_t) r2;
+}
+
+uintptr_t
+mom_random_intptr (unsigned num)
+{
+  if (sizeof (uintptr_t) == sizeof (uint32_t))
+    return mom_random_32 (num);
+  else if (sizeof (uintptr_t) == sizeof (uint64_t))
+    return mom_random_64 (num);
   else
-    MOM_WARNPRINTF ("failed to open /dev/urandom");
-  initstate_r (rseed, u.state, RANDSTATELEN, &randata_mom);
-  int32_t res;
-  random_r (&randata_mom, &res);
-  rand_reseed_period_mom = (((res % 283) & 0xff) + 32);
+    MOM_FATAPRINTF ("unsupported architecture with strange pointer size %d",
+		    (int) sizeof (uintptr_t));
 }
 
-static uint32_t
-random32_unlocked_mom (void)
+void
+mom_random_two_nonzero_32 (unsigned num, uint32_t * r1, uint32_t * r2)
 {
-  int32_t r;
-  if (MOM_UNLIKELY (randcount_mom >= rand_reseed_period_mom))
-    {
-      randcount_mom = 0;
-      seed_random_mom ();
-    };
-  random_r (&randata_mom, &r);
-  return (uint32_t) r;
-}
-
-uint32_t
-mom_random_nonzero_32 (void)
-{
+  assert (r1);
+  assert (r2);
+  unsigned rk = num % NB_RANDOM_GEN_MOM;
   uint32_t r;
-  pthread_mutex_lock (&mtx_random_mom);
+  pthread_mutex_lock (mtx_random_mom + rk);
   do
     {
-      r = random32_unlocked_mom ();
+      int32_t sr;
+      random_r (randata_mom + rk, &sr);
+      r = (uint32_t) sr;
     }
   while (MOM_UNLIKELY (r == 0));
-  pthread_mutex_unlock (&mtx_random_mom);
-  return r;
-}
-
-
-uint32_t
-mom_random_32 (void)
-{
-  uint32_t r;
-  pthread_mutex_lock (&mtx_random_mom);
-  r = random32_unlocked_mom ();
-  pthread_mutex_unlock (&mtx_random_mom);
-  return r;
-}
-
-uint64_t
-mom_random_nonzero_64 (void)
-{
-  uint64_t r;
-  pthread_mutex_lock (&mtx_random_mom);
+  *r1 = r;
   do
     {
-      uint32_t h = random32_unlocked_mom ();
-      uint32_t l = random32_unlocked_mom ();
-      r = ((uint64_t) h << 32) + (uint64_t) l;
+      int32_t sr;
+      random_r (randata_mom + rk, &sr);
+      r = (uint32_t) sr;
     }
   while (MOM_UNLIKELY (r == 0));
-  pthread_mutex_unlock (&mtx_random_mom);
-  return r;
+  *r2 = r;
+  pthread_mutex_unlock (mtx_random_mom + rk);
 }
 
-uint64_t
-mom_random_64 (void)
-{
-  uint64_t r;
-  pthread_mutex_lock (&mtx_random_mom);
-  uint32_t h = random32_unlocked_mom ();
-  uint32_t l = random32_unlocked_mom ();
-  r = ((uint64_t) h << 32) + (uint64_t) l;
-  pthread_mutex_unlock (&mtx_random_mom);
-  return r;
-}
 
-#define NBMOM_IDRANDCHARS (sizeof(MOM_IDRANDCHARS)-1)
-const momstring_t *
-mom_make_random_idstr (void)
+void
+mom_random_three_nonzero_32 (unsigned num, uint32_t * r1, uint32_t * r2,
+			     uint32_t * r3)
 {
-  char resbuf[32];
-  assert (NBMOM_IDRANDCHARS == 31);
-  uint32_t r0, r1, r2, r3;
-  memset (resbuf, 0, sizeof (resbuf));
-  resbuf[0] = '_';
-  pthread_mutex_lock (&mtx_random_mom);
+  assert (r1);
+  assert (r2);
+  unsigned rk = num % NB_RANDOM_GEN_MOM;
+  uint32_t r;
+  pthread_mutex_lock (mtx_random_mom + rk);
   do
     {
-      r0 = random32_unlocked_mom ();
+      int32_t sr;
+      random_r (randata_mom + rk, &sr);
+      r = (uint32_t) sr;
     }
-  while (MOM_UNLIKELY ((r0 < 4096)));
+  while (MOM_UNLIKELY (r == 0));
+  *r1 = r;
   do
     {
-      r1 = random32_unlocked_mom ();
+      int32_t sr;
+      random_r (randata_mom + rk, &sr);
+      r = (uint32_t) sr;
     }
-  while (MOM_UNLIKELY ((r1 < 4096)));
-  r2 = random32_unlocked_mom ();
-  r3 = random32_unlocked_mom ();
-  (resbuf[1] = '0' + (r0 % 10)), r0 = r0 / 10;
-  (resbuf[2] = MOM_IDRANDCHARS[r0 % NBMOM_IDRANDCHARS]), r0 =
-    r0 / NBMOM_IDRANDCHARS;
-  (resbuf[3] = MOM_IDRANDCHARS[r0 % NBMOM_IDRANDCHARS]), r0 =
-    r0 / NBMOM_IDRANDCHARS;
-  (resbuf[4] = MOM_IDRANDCHARS[r0 % NBMOM_IDRANDCHARS]), r0 =
-    r0 / NBMOM_IDRANDCHARS;
-  (resbuf[5] = MOM_IDRANDCHARS[r0 % NBMOM_IDRANDCHARS]), r0 =
-    r0 / NBMOM_IDRANDCHARS;
-  (resbuf[6] = MOM_IDRANDCHARS[r1 % NBMOM_IDRANDCHARS]), r1 =
-    r1 / NBMOM_IDRANDCHARS;
-  (resbuf[7] = MOM_IDRANDCHARS[r1 % NBMOM_IDRANDCHARS]), r1 =
-    r1 / NBMOM_IDRANDCHARS;
-  (resbuf[8] = MOM_IDRANDCHARS[r1 % NBMOM_IDRANDCHARS]), r1 =
-    r1 / NBMOM_IDRANDCHARS;
-  (resbuf[9] = MOM_IDRANDCHARS[r1 % NBMOM_IDRANDCHARS]), r1 =
-    r1 / NBMOM_IDRANDCHARS;
-  (resbuf[10] = MOM_IDRANDCHARS[r1 % NBMOM_IDRANDCHARS]), r1 =
-    r1 / NBMOM_IDRANDCHARS;
-  (resbuf[11] = MOM_IDRANDCHARS[r1 % NBMOM_IDRANDCHARS]), r1 =
-    r1 / NBMOM_IDRANDCHARS;
-  resbuf[12] = '_';
-  (resbuf[13] = MOM_IDRANDCHARS[r2 % NBMOM_IDRANDCHARS]), r2 =
-    r2 / NBMOM_IDRANDCHARS;
-  (resbuf[14] = MOM_IDRANDCHARS[r2 % NBMOM_IDRANDCHARS]), r2 =
-    r2 / NBMOM_IDRANDCHARS;
-  (resbuf[15] = MOM_IDRANDCHARS[r2 % NBMOM_IDRANDCHARS]), r2 =
-    r2 / NBMOM_IDRANDCHARS;
-  (resbuf[16] = MOM_IDRANDCHARS[r2 % NBMOM_IDRANDCHARS]), r2 =
-    r2 / NBMOM_IDRANDCHARS;
-  (resbuf[17] = MOM_IDRANDCHARS[r2 % NBMOM_IDRANDCHARS]), r2 =
-    r2 / NBMOM_IDRANDCHARS;
-  (resbuf[18] = MOM_IDRANDCHARS[r2 % NBMOM_IDRANDCHARS]), r2 =
-    r2 / NBMOM_IDRANDCHARS;
-  (resbuf[19] = MOM_IDRANDCHARS[r3 % NBMOM_IDRANDCHARS]), r3 =
-    r3 / NBMOM_IDRANDCHARS;
-  (resbuf[20] = MOM_IDRANDCHARS[r3 % NBMOM_IDRANDCHARS]), r3 =
-    r3 / NBMOM_IDRANDCHARS;
-  (resbuf[21] = MOM_IDRANDCHARS[r3 % NBMOM_IDRANDCHARS]), r3 =
-    r3 / NBMOM_IDRANDCHARS;
-  (resbuf[22] = MOM_IDRANDCHARS[r3 % NBMOM_IDRANDCHARS]), r3 =
-    r3 / NBMOM_IDRANDCHARS;
-  (resbuf[23] = MOM_IDRANDCHARS[r3 % NBMOM_IDRANDCHARS]), r3 =
-    r3 / NBMOM_IDRANDCHARS;
-  pthread_mutex_unlock (&mtx_random_mom);
-  return mom_make_string (resbuf);
-}
-
-
-bool
-mom_looks_like_random_id_cstr (const char *s, const char **pend)
-{
-  if (!s)
-    return false;
-  if (pend)
-    *pend = NULL;
-  if (s[0] != '_')
-    return false;
-  if (!isdigit (s[1]))
-    return false;
-#define CHECKRANDCHAR(C) ((C) && strchr(MOM_IDRANDCHARS, (C)))
-  if (!CHECKRANDCHAR (s[2]))
-    return false;
-  if (!CHECKRANDCHAR (s[3]))
-    return false;
-  if (!CHECKRANDCHAR (s[4]))
-    return false;
-  if (!CHECKRANDCHAR (s[5]))
-    return false;
-  if (!CHECKRANDCHAR (s[6]))
-    return false;
-  if (!CHECKRANDCHAR (s[7]))
-    return false;
-  if (!CHECKRANDCHAR (s[8]))
-    return false;
-  if (!CHECKRANDCHAR (s[9]))
-    return false;
-  if (!CHECKRANDCHAR (s[10]))
-    return false;
-  if (!CHECKRANDCHAR (s[11]))
-    return false;
-  if (s[12] != '_')
-    return false;
-  if (!CHECKRANDCHAR (s[13]))
-    return false;
-  if (!CHECKRANDCHAR (s[14]))
-    return false;
-  if (!CHECKRANDCHAR (s[15]))
-    return false;
-  if (!CHECKRANDCHAR (s[16]))
-    return false;
-  if (!CHECKRANDCHAR (s[17]))
-    return false;
-  if (!CHECKRANDCHAR (s[18]))
-    return false;
-  if (!CHECKRANDCHAR (s[19]))
-    return false;
-  if (!CHECKRANDCHAR (s[20]))
-    return false;
-  if (!CHECKRANDCHAR (s[21]))
-    return false;
-  if (!CHECKRANDCHAR (s[22]))
-    return false;
-  if (!CHECKRANDCHAR (s[23]))
-    return false;
-  if (isalnum (s[24]))
-    return false;
-  if (pend)
-    *pend = s + 24;
-  return true;
-#undef CHECKRANDCHAR
+  while (MOM_UNLIKELY (r == 0));
+  *r2 = r;
+  do
+    {
+      int32_t sr;
+      random_r (randata_mom + rk, &sr);
+      r = (uint32_t) sr;
+    }
+  while (MOM_UNLIKELY (r == 0));
+  *r3 = r;
+  pthread_mutex_unlock (mtx_random_mom + rk);
 }

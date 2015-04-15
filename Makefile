@@ -1,6 +1,6 @@
 ##
 ## file Makefile
-##   Copyright (C)  2014 Free Software Foundation, Inc.
+##   Copyright (C)  2015 Free Software Foundation, Inc.
 ##  MONIMELT is a monitor for MELT - see http://gcc-melt.org/
 ##  This file is part of GCC.
 ##
@@ -17,12 +17,9 @@
 ##  along with GCC; see the file COPYING3.   If not see
 ##  <http://www.gnu.org/licenses/>.
 ################################################################
-## sqlite3 is commonly available, see http://sqlite.org
-## glib-2.0 are from GTK3, see https://developer.gnome.org/glib/
-## gmime is also Gnome related, see https://developer.gnome.org/gmime/
 ## onion is not packaged, see https://github.com/davidmoreno/onion
 ## Boehm GC is from http://www.hboehm.info/gc/
-PACKAGES= sqlite3 glib-2.0 #gmime-2.6 libcurl
+PACKAGES=  libcurl #sqlite3 glib-2.0 gmime-2.6
 PKGCONFIG= pkg-config
 CC=gcc
 CCFLAGS=  -std=gnu11 -Wall -Wextra -fdiagnostics-color=auto
@@ -33,19 +30,14 @@ INDENT= indent -gnu
 ASTYLE= astyle --style=gnu  
 PREPROFLAGS= -I. -I/usr/local/include $(shell $(PKGCONFIG) --cflags $(PACKAGES))
 OPTIMFLAGS= -Og -g3
-LIBES= -L/usr/local/lib -lunistring -lgc -ljit $(shell $(PKGCONFIG) --libs $(PACKAGES)) \
+LIBES= -L/usr/local/lib -lunistring -lgc $(shell $(PKGCONFIG) --libs $(PACKAGES)) \
         -lonion -lpthread -lm -ldl
-## JsonRpc client might use cxxtools http://www.tntnet.org/cxxtools.html
-CXXTOOLS_CXXFLAGS:=$(shell cxxtools-config --cxxflags)
-CXXTOOLS_LIBS:=$(shell cxxtools-config --libs)
-SQLITE= sqlite3
-# plugins are extra code
 PLUGIN_SOURCES= $(sort $(wildcard momplug_*.c))
 PLUGINS=  $(patsubst %.c,%.so,$(PLUGIN_SOURCES))
-# modules are generated inside modules/
-MODULE_SOURCES= $(sort $(wildcard modules/momg_*.c))
+# modules are generated inside global-modules/ & user-modules
+MODULE_SOURCES= $(sort $(wildcard global-modules/momg_*.c user-modules/momg_*.c))
 MODULES=  $(patsubst %.c,%.so,$(MODULE_SOURCES))
-SOURCES= $(sort $(filter-out $(PLUGIN_SOURCES) $(MODULE_SOURCES), $(wildcard [a-z]*.c)))
+SOURCES= $(sort $(filter-out $(PLUGIN_SOURCES), $(wildcard [a-z]*.c)))
 OBJECTS= $(patsubst %.c,%.o,$(SOURCES))
 RM= rm -fv
 ####
@@ -53,15 +45,11 @@ RM= rm -fv
 .PHONY: all modules plugins clean tests indent restore-state dump-state
 .SUFFIXES: .so .i
 # to make with tsan: make OPTIMFLAGS='-g3 -fsanitize=thread -fPIE' LINKFLAGS=-pie
-all: monimelt modules plugins momjsrpc_client restore-state
+all: monimelt modules plugins
 clean:
-	$(RM) *~ *.o *.so *.i *.orig melt*.cc meltmom*.[ch] meltmom*.o meltmom*.so meltmom*.mk \
+	$(RM) *~ *.o *.so */*.so */*~ */*.orig *.i *.orig melt*.cc meltmom*.[ch] meltmom*.o meltmom*.so meltmom*.mk \
 	      _tmp_* monimelt core* module/*.tmp webdir/*~ *.tmp  _timestamp.* *dbsqlite*-journal *%
-	$(RM) modules/*.so modules/*~
-	$(RM) -r _monimelt_termdump*
-	$(RM) -r _meltwork
-	$(RM) -r _monimelt*
-	$(RM) momjsrpc_client
+	$(RM) global-modules/*.so global-modules/*~ user-modules/*.so user-modules/*~
 ################
 monimelt: $(OBJECTS) _timestamp.o
 	@if [ -f $@ ]; then echo -n backup old executable: ' ' ; mv -v $@ $@~ ; fi
@@ -98,7 +86,15 @@ plugins: $(PLUGINS)
 ## MONIMELT generated code starts with momg_ followed by alphanum or +
 ## or - or _ characters, conventionally by the name or identstr of the
 ## module item. see MONIMELT_SHARED_MODULE_PREFIX in monimelt.h
-modules/momg_%.so: modules/momg_%.c | monimelt.h predef-monimelt.h
+global-modules/momg_%.so: global-modules/momg_%.c | monimelt.h predef-monimelt.h
+	$(LINK.c) -DMONIMELT_CURRENT_MODULE=\"$(patsubst momg_%.so,%,$(*F))\" \
+		  -DMONIMELT_MD5_MODULE=\"$(shell md5sum $< | cut '-d ' -f1)\" \
+		  -DMONIMELT_LAST_COMMITID=\"$(shell git log -n 1 --abbrev=16 --format=%h)\" \
+                  -fPIC $< -shared -o $@
+	@logger -t makemonimelt -p user.info -s compiled $< into \
+	        shared module $@ named $(patsubst momg_%.so,%,$(*F)) \
+	        at $$(date +%c)
+user-modules/momg_%.so: user-modules/momg_%.c | monimelt.h predef-monimelt.h
 	$(LINK.c) -DMONIMELT_CURRENT_MODULE=\"$(patsubst momg_%.so,%,$(*F))\" \
 		  -DMONIMELT_MD5_MODULE=\"$(shell md5sum $< | cut '-d ' -f1)\" \
 		  -DMONIMELT_LAST_COMMITID=\"$(shell git log -n 1 --abbrev=16 --format=%h)\" \
@@ -110,13 +106,6 @@ modules/momg_%.so: modules/momg_%.c | monimelt.h predef-monimelt.h
 ## extra plugins
 momplug_%.so: momplug_%.c  | monimelt.h predef-monimelt.h
 	$(LINK.c) -fPIC $< -shared -o $@ $(shell grep MONIMELTLIBS: $< | sed s/MONIMELTLIBS://)
-
-restore-state:
-	-mv -v state-monimelt.dbsqlite  state-monimelt.dbsqlite~
-	$(SQLITE) state-monimelt.dbsqlite < state-monimelt.sql
-
-dump-state:
-	./monimelt-dump-state.sh
 
 ###
 momjsrpc_client: momjsrpc_client.cc
