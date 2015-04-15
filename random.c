@@ -25,11 +25,16 @@
 
 static pthread_mutex_t mtx_random_mom[NB_RANDOM_GEN_MOM];
 static struct random_data randata_mom[NB_RANDOM_GEN_MOM];
+#define RANDSTATELEN_MOM 32
+struct random_state_mom_st
+{
+  char ranstate[RANDSTATELEN_MOM];
+};
+static struct random_state_mom_st randstate_mom[NB_RANDOM_GEN_MOM];
 
 void
 mom_initialize_random (void)
 {
-#define RANDSTATELEN 64
   static const pthread_mutex_t inimtx = PTHREAD_MUTEX_INITIALIZER;
   for (int ix = 0; ix < NB_RANDOM_GEN_MOM; ix++)
     memcpy (mtx_random_mom + ix, &inimtx, sizeof (pthread_mutex_t));
@@ -37,30 +42,19 @@ mom_initialize_random (void)
   if (!filr)
     MOM_FATAPRINTF ("failed to open /dev/urandom: %m");
   unsigned rseed;
+  pid_t pid = getpid ();
+  struct timespec ts = { 0, 0 };
   for (int ix = 0; ix < NB_RANDOM_GEN_MOM; ix++)
     {
-      union
-      {
-	char state[RANDSTATELEN];
-	struct
-	{
-	  pid_t pid;
-	  struct timespec ts;
-	  char stuff[RANDSTATELEN - sizeof (pid_t) -
-		     sizeof (struct timespec)];
-	} data;
-      } u;
-      memset (&u, 0, sizeof (u));
-      u.data.pid = getpid ();
-      clock_gettime (CLOCK_REALTIME, &u.data.ts);
-      if (!rseed)
-	{
-	  rseed = u.data.pid ^ (u.data.ts.tv_sec ^ u.data.ts.tv_nsec);
-	}
-      fread (u.data.stuff, sizeof (u.data.stuff), 1, filr);
-      fread (&rseed, sizeof (rseed), 1, filr);
-      initstate_r (rseed, u.state, RANDSTATELEN, randata_mom + ix);
+      clock_gettime (CLOCK_REALTIME, &ts);
+      rseed = ((31 * pid) ^ (17 * ts.tv_sec ^ ts.tv_nsec)) + 50033 * ix;
+      if (fread (&rseed, sizeof (rseed), 1, filr) < 1)
+	usleep (5 + (ts.tv_sec + ts.tv_nsec) % 50);
+      initstate_r (rseed, (char *) randstate_mom + ix,
+		   RANDSTATELEN_MOM, randata_mom + ix);
+      setstate_r ((char *) randstate_mom + ix, randata_mom + ix);
     }
+  fclose (filr);
 }
 
 uint32_t
@@ -72,7 +66,8 @@ mom_random_nonzero_32 (unsigned num)
   do
     {
       int32_t sr;
-      random_r (randata_mom + rk, &sr);
+      if (MOM_UNLIKELY (random_r (randata_mom + rk, &sr)))
+	MOM_FATAPRINTF ("random_r failure %m");
       r = (uint32_t) sr;
     }
   while (MOM_UNLIKELY (r == 0));
@@ -84,10 +79,11 @@ uint32_t
 mom_random_32 (unsigned num)
 {
   unsigned rk = num % NB_RANDOM_GEN_MOM;
-  uint32_t r;
+  uint32_t r = 0;
   pthread_mutex_lock (mtx_random_mom + rk);
-  int32_t sr;
-  random_r (randata_mom + rk, &sr);
+  int32_t sr = 0;
+  if (MOM_UNLIKELY (random_r (randata_mom + rk, &sr)))
+    MOM_FATAPRINTF ("random_r failure %m");
   r = (uint32_t) sr;
   pthread_mutex_unlock (mtx_random_mom + rk);
   return r;
@@ -97,15 +93,18 @@ uint64_t
 mom_random_64 (unsigned num)
 {
   unsigned rk = num % NB_RANDOM_GEN_MOM;
-  uint32_t r1, r2;
+  uint32_t r1 = 0, r2 = 0;
   pthread_mutex_lock (mtx_random_mom + rk);
-  int32_t sr;
-  random_r (randata_mom + rk, &sr);
-  r1 = (uint32_t) sr;
-  random_r (randata_mom + rk, &sr);
-  r2 = (uint32_t) sr;
+  int32_t sr1 = 0;
+  int32_t sr2 = 0;
+  if (MOM_UNLIKELY (random_r (randata_mom + rk, &sr1)))
+    MOM_FATAPRINTF ("random_r failure %m");;
+  r1 = (uint32_t) sr1;
+  if (MOM_UNLIKELY (random_r (randata_mom + rk, &sr2)))
+    MOM_FATAPRINTF ("random_r failure %m");;
+  r2 = (uint32_t) sr2;
   pthread_mutex_unlock (mtx_random_mom + rk);
-  return ((uint64_t) r1 << 32) | (uint64_t) r2;
+  return (((uint64_t) r1) << 32) | (uint64_t) r2;
 }
 
 uintptr_t
@@ -130,16 +129,18 @@ mom_random_two_nonzero_32 (unsigned num, uint32_t * r1, uint32_t * r2)
   pthread_mutex_lock (mtx_random_mom + rk);
   do
     {
-      int32_t sr;
-      random_r (randata_mom + rk, &sr);
+      int32_t sr = 0;
+      if (MOM_UNLIKELY (random_r (randata_mom + rk, &sr)))
+	MOM_FATAPRINTF ("random_r failure %m");
       r = (uint32_t) sr;
     }
   while (MOM_UNLIKELY (r == 0));
   *r1 = r;
   do
     {
-      int32_t sr;
-      random_r (randata_mom + rk, &sr);
+      int32_t sr = 0;
+      if (MOM_UNLIKELY (random_r (randata_mom + rk, &sr)))
+	MOM_FATAPRINTF ("random_r failure %m");
       r = (uint32_t) sr;
     }
   while (MOM_UNLIKELY (r == 0));
@@ -159,24 +160,27 @@ mom_random_three_nonzero_32 (unsigned num, uint32_t * r1, uint32_t * r2,
   pthread_mutex_lock (mtx_random_mom + rk);
   do
     {
-      int32_t sr;
-      random_r (randata_mom + rk, &sr);
+      int32_t sr = 0;
+      if (MOM_UNLIKELY (random_r (randata_mom + rk, &sr)))
+	MOM_FATAPRINTF ("random_r failure %m");
       r = (uint32_t) sr;
     }
   while (MOM_UNLIKELY (r == 0));
   *r1 = r;
   do
     {
-      int32_t sr;
-      random_r (randata_mom + rk, &sr);
+      int32_t sr = 0;
+      if (MOM_UNLIKELY (random_r (randata_mom + rk, &sr)))
+	MOM_FATAPRINTF ("random_r failure %m");
       r = (uint32_t) sr;
     }
   while (MOM_UNLIKELY (r == 0));
   *r2 = r;
   do
     {
-      int32_t sr;
-      random_r (randata_mom + rk, &sr);
+      int32_t sr = 0;
+      if (MOM_UNLIKELY (random_r (randata_mom + rk, &sr)))
+	MOM_FATAPRINTF ("random_r failure %m");
       r = (uint32_t) sr;
     }
   while (MOM_UNLIKELY (r == 0));

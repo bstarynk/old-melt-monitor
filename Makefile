@@ -68,7 +68,7 @@ indent: .indent.pro # don't indent predef-monimelt.h or generated modules/momg*.
 	@for f in *.c $(filter-out predef-monimelt.h, $(wildcard *.h)) \
 	    ; do \
 	  echo indenting $$f; $(INDENT) $$f ;$(INDENT) $$f; done
-	@for f in *.cc ; do \
+	@for f in $(wildcard *.cc) ; do \
           echo formatting $$f; $(ASTYLE) $$f; done
 
 $(OBJECTS): monimelt.h predef-monimelt.h

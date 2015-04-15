@@ -85,6 +85,11 @@
 extern const char monimelt_timestamp[];
 extern const char monimelt_lastgitcommit[];
 
+#define MOM_MAX_WORKERS 10
+#define MOM_MIN_WORKERS 2
+int mom_nb_workers;
+const char *mom_web_host;
+const char *mom_user_data;
 // mark unlikely conditions to help optimization
 #ifdef __GNUC__
 #define MOM_UNLIKELY(P) __builtin_expect((P),0)
@@ -112,6 +117,18 @@ extern void *GC_calloc (size_t nbelem, size_t elsiz);
 
 // empty placeholder in hashes
 #define MOM_EMPTY ((void*)(-1L))
+
+// we handle specially "tiny" data, e.g. by stack-allocating temporories.
+#define MOM_TINY_MAX 8
+
+#define MOM_PATH_MAX 256
+
+
+/// two prefixes known by our Makefile!
+// generated modules start with:
+#define MOM_SHARED_MODULE_PREFIX "momg_"
+// plugins path start with
+#define MOM_PLUGIN_PREFIX "momplug_"
 
 // query a clock
 static inline double
@@ -153,6 +170,56 @@ mom_timespec (double t)
   return ts;
 }
 
+//////////////// wrapping Boehm GC allocation
+// using GNU extension: statement expression
+#define MOM_GC_ALLOC_AT(Msg,Siz,Lin) ({ \
+      size_t _sz_##Lin = Siz;					\
+      void* _p_##Lin =						\
+	(_sz_##Lin>0)?GC_MALLOC(_sz_##Lin):NULL;		\
+  if (MOM_UNLIKELY(!_p_##Lin && _sz_##Lin>0))			\
+    MOM_FATAPRINTF("failed to allocate %ld bytes:" Msg,		\
+	      (long) _sz_##Lin);				\
+  if (_sz_##Lin>0)						\
+    memset (_p_##Lin, 0, _sz_##Lin);				\
+  _p_##Lin; })
+#define MOM_GC_ALLOC(Msg,Siz) \
+  MOM_GC_ALLOC_AT(Msg,Siz,__LINE__)
+
+#define MOM_GC_SCALAR_ALLOC_AT(Msg,Siz,Lin) ({			\
+  size_t _sz_##Lin = Siz;					\
+  void* _p_##Lin =						\
+	(_sz_##Lin>0)?GC_MALLOC_ATOMIC(_sz_##Lin):NULL;		\
+  if (MOM_UNLIKELY(!_p_##Lin))					\
+    MOM_FATAPRINTF("failed to allocate %ld scalar bytes:" Msg,	\
+		(long) _sz_##Lin);				\
+  memset (_p_##Lin, 0, _sz_##Lin);				\
+  _p_##Lin; })
+#define MOM_GC_SCALAR_ALLOC(Msg,Siz) \
+  MOM_GC_SCALAR_ALLOC_AT(Msg,Siz,__LINE__)
+
+#define MOM_GC_STRDUP_AT(Msg,Str,Lin) ({		\
+const char* _str_##Lin = (Str);				\
+const char* _dup_##Lin = GC_STRDUP(_str_##Lin);		\
+  if (MOM_UNLIKELY(!_dup_##Lin && _str_##Lin))		\
+    MOM_FATAPRINTF("failed to duplicate string %s",	\
+		   _str_##Lin);				\
+  _dup_##Lin; })
+#define MOM_GC_STRDUP(Msg,Str) MOM_GC_STRDUP_AT((Msg),(Str),__LINE__)
+
+// free a pointer and clear the variable
+#define MOM_GC_FREE_AT(VarPtr,Lin) do {				\
+    void* _fp_##Lin = VarPtr;					\
+    VarPtr = NULL;						\
+    if (_fp_##Lin != NULL) GC_FREE(_fp_##Lin); } while(0)
+#define MOM_GC_FREE(VarPtr) MOM_GC_FREE_AT(VarPtr,__LINE__)
+
+// GCC compiler trick to add some typechecking in variadic functions
+#define MOM_REQUIRES_TYPE_AT(Lin,V,Typ,Else)				\
+  (__builtin_choose_expr((__builtin_types_compatible_p(typeof(V),Typ)), \
+			 (V), (void)((Else)+Lin)))
+#define MOM_REQUIRES_TYPE_AT_BIS(Lin,V,Typ,Else) MOM_REQUIRES_TYPE_AT(Lin,V,Typ,Else)
+#define MOM_REQUIRES_TYPE(V,Typ,Else) MOM_REQUIRES_TYPE_AT_BIS(__LINE__,(V),Typ,Else)
+
 
 
 void
@@ -172,11 +239,94 @@ __attribute__ ((format (printf, 3, 4), noreturn));
   MOM_FATAPRINTF_AT_BIS(__FILE__,__LINE__,Fmt,	\
 			##__VA_ARGS__)
 
+// for debugging:
+#define MOM_DEBUG_LIST_OPTIONS(Dbg)		\
+  Dbg(item)					\
+  Dbg(dump)					\
+  Dbg(load)					\
+  Dbg(json)					\
+  Dbg(run)					\
+  Dbg(gencod)					\
+  Dbg(cmd)					\
+  Dbg(low)					\
+  Dbg(web)
+
+#define MOM_DEBUG_DEFINE_OPT(Nam) momdbg_##Nam,
+enum mom_debug_en
+{
+  momdbg__none,
+  MOM_DEBUG_LIST_OPTIONS (MOM_DEBUG_DEFINE_OPT) momdbg__last
+};
+
+unsigned mom_debugflags;
+
+#define MOM_IS_DEBUGGING(Dbg) (mom_debugflags & (1<<momdbg_##Dbg))
+
+void mom_set_debugging (const char *dbgopt);
+
+
+void
+mom_debugprintf_at (const char *fil, int lin, enum mom_debug_en dbg,
+		    const char *fmt, ...)
+__attribute__ ((format (printf, 4, 5)));
+
+#define MOM_DEBUGPRINTF_AT(Fil,Lin,Dbg,Fmt,...) do {	\
+    if (MOM_IS_DEBUGGING(Dbg))				\
+      mom_debugprintf_at (Fil,Lin,momdbg_##Dbg,Fmt,	\
+		    ##__VA_ARGS__);			\
+  } while(0)
+
+#define MOM_DEBUGPRINTF_AT_BIS(Fil,Lin,Dbg,Fmt,...)	\
+  MOM_DEBUGPRINTF_AT(Fil,Lin,Dbg,Fmt,			\
+		    ##__VA_ARGS__)
+
+#define MOM_DEBUGPRINTF(Dbg,Fmt,...)			\
+  MOM_DEBUGPRINTF_AT_BIS(__FILE__,__LINE__,Dbg,Fmt,	\
+			##__VA_ARGS__)
+
+
+void
+mom_informprintf_at (const char *fil, int lin, const char *fmt, ...)
+__attribute__ ((format (printf, 3, 4)));
+
+#define MOM_INFORMPRINTF_AT(Fil,Lin,Fmt,...) do {	\
+      mom_informprintf_at (Fil,Lin,Fmt,		\
+		    ##__VA_ARGS__);		\
+  } while(0)
+
+#define MOM_INFORMPRINTF_AT_BIS(Fil,Lin,Fmt,...)	\
+  MOM_INFORMPRINTF_AT(Fil,Lin,Fmt,		\
+		    ##__VA_ARGS__)
+
+#define MOM_INFORMPRINTF(Fmt,...)			\
+  MOM_INFORMPRINTF_AT_BIS(__FILE__,__LINE__,Fmt,	\
+			##__VA_ARGS__)
+
+
+void
+mom_warnprintf_at (const char *fil, int lin, const char *fmt, ...)
+__attribute__ ((format (printf, 3, 4)));
+
+#define MOM_WARNPRINTF_AT(Fil,Lin,Fmt,...) do {	\
+      mom_warnprintf_at (Fil,Lin,Fmt,		\
+		    ##__VA_ARGS__);		\
+  } while(0)
+
+#define MOM_WARNPRINTF_AT_BIS(Fil,Lin,Fmt,...)	\
+  MOM_WARNPRINTF_AT(Fil,Lin,Fmt,		\
+		    ##__VA_ARGS__)
+
+#define MOM_WARNPRINTF(Fmt,...)			\
+  MOM_WARNPRINTF_AT_BIS(__FILE__,__LINE__,Fmt,	\
+			##__VA_ARGS__)
+
+
 
 // the program handle from GC_dlopen with NULL
 void *mom_prog_dlhandle;
 
 void mom_initialize_random (void);
+void mom_initialize_items (void);
 
 // get a random non-zero number, the num is some small index of random number
 // generators
@@ -192,61 +342,63 @@ uint32_t mom_random_32 (unsigned num);
 uint64_t mom_random_64 (unsigned num);
 uintptr_t mom_random_intptr (unsigned num);
 
+/// plugins are required to define
+extern const char mom_plugin_GPL_compatible[];	// a string describing the licence
+extern void mom_plugin_init (const char *pluginarg, int *pargc, char ***pargv);	// the plugin initializer
+/// they may also define a function to be called after load
+extern void momplugin_after_load (void);
+
 // every monimelt value starts with a non-zero signed typenum
 typedef int16_t mom_typenum_t;
 
 // every hashcode is a non-zero 32 bits unsigned
 typedef uint32_t mom_hash_t;
 
-typedef struct mom_int_st mom_int_t;
-typedef struct mom_double_st mom_double_t;
-typedef struct mom_string_st mom_string_t;
-typedef struct mom_delim_st mom_delim_t;
-typedef struct mom_item_st mom_item_t;
-typedef struct mom_id_st mom_id_t;
+typedef struct momint_st momint_t;
+typedef struct momdouble_st momdouble_t;
+typedef struct momstring_st momstring_t;
+typedef struct momdelim_st momdelim_t;
+typedef struct momitem_st momitem_t;
 
-struct mom_int_st
+struct momint_st
 {
   mom_typenum_t typn;
   intptr_t inum;
 };
 
-struct mom_double_st
+struct momdouble_st
 {
   mom_typenum_t typn;
   double dnum;
 };
 
-struct mom_string_st
+struct momstring_st
 {
   mom_typenum_t typn;
   uint32_t slen;
   mom_hash_t shash;
-  char schar[];
+  char cstr[];			/* length is slen+1 */
 };
 
-struct mom_delim_st
+struct momdelim_st
 {
   mom_typenum_t typn;
   char dchar[4];
 };
-  
-#define MOM_ID_SIZE 6
-struct mom_id_st
-{
-  mom_typenum_t typn;
-  uint16_t itab[MOM_ID_SIZE];
-};
 
-struct mom_item_st {
+
+struct momitem_st
+{
   mom_typenum_t typn;
   pthread_mutex_t itm_mtx;
   bool itm_anonymous;
-  union {
-    mom_id_t* itm_id;		/* when itm_anonymous */
-    mom_string_t* itm_name;	/* when !itm_anonymous */
+  union
+  {
+    momstring_t *itm_id;	/* when itm_anonymous */
+    momstring_t *itm_name;	/* when !itm_anonymous */
   };
 };
 
-
+momstring_t *mom_make_random_idstr (unsigned salt,
+				    struct momitem_st *protoitem);
 #endif /*MONIMELT_INCLUDED_ */
