@@ -74,6 +74,7 @@ mom_initialize_items (void)
     memcpy (itemtx_random_mom + ix, &inimtx, sizeof (pthread_mutex_t));
   static_assert (sizeof (ID_DIGITS_MOM) - 1 == ID_BASE_MOM,
 		 "invalid number of id digits");
+#if 0
   for (int i = 0; i < 4; i++)
     {
       char buf[48];
@@ -86,6 +87,7 @@ mom_initialize_items (void)
 	      (long long) u);
       assert (buf[0] && strlen (buf) == 10);
     }
+#endif
 }
 
 momstring_t *
@@ -105,6 +107,20 @@ mom_make_random_idstr (unsigned salt, struct momitem_st *protoitem)
       hi |= ((uint64_t) (salt & 0xf) << 40);
       if (hi == 0 || lo == 0)
 	continue;
+      char buf1[16], buf2[16], bufstr[32];
+#define NUM48LEN_MOM 10
+      memset (buf1, 0, sizeof (buf1));
+      memset (buf2, 0, sizeof (buf2));
+      const char *p1 = num48_to_char10_mom (hi, buf1);
+      const char *p2 = num48_to_char10_mom (lo, buf2);
+      if (MOM_UNLIKELY (!p1 || strlen (p1) != NUM48LEN_MOM))
+	MOM_FATAPRINTF ("bad high number %lld", (long long) hi);
+      if (MOM_UNLIKELY (!p2 || strlen (p2) != NUM48LEN_MOM))
+	MOM_FATAPRINTF ("bad low number %lld", (long long) lo);
+      memset (bufstr, 0, sizeof (bufstr));
+      memcpy (bufstr, p1, NUM48LEN_MOM);
+      memcpy (bufstr + NUM48LEN_MOM, p2, NUM48LEN_MOM);
+#warning should allocate the id string
     }
   while (!str);
   return str;
