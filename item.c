@@ -60,6 +60,8 @@ static momitem_t **item_anonarr_mom[ITEM_NUM_SALT_MOM];
 
 
 
+static pthread_mutexattr_t mutexattr_recur_item_mom;
+
 
 
 ////////////////////////////////////////////////////////////////
@@ -158,6 +160,9 @@ mom_valid_item_name_str (const char *id, const char **pend)
 void
 mom_initialize_items (void)
 {
+  pthread_mutexattr_init (&mutexattr_recur_item_mom);
+  pthread_mutexattr_settype (&mutexattr_recur_item_mom,
+			     PTHREAD_MUTEX_RECURSIVE);
   static const pthread_mutex_t inimtx = PTHREAD_MUTEX_INITIALIZER;
   for (int ix = 0; ix < ITEM_NUM_SALT_MOM; ix++)
     memcpy (item_mutex_mom + ix, &inimtx, sizeof (pthread_mutex_t));
@@ -637,4 +642,45 @@ mom_find_item (const char *str)
       return (momitem_t *) itm;
     }
   return NULL;
+}
+
+static void
+initialize_protoitem_mom (momitem_t *protoitm)
+{
+  pthread_mutex_init (&protoitm->itm_mtx, &mutexattr_recur_item_mom);
+}
+
+static void
+finalize_item_mom (void *itmad, void *data __attribute__ ((unused)))
+{
+  momitem_t *itm = (momitem_t *) itmad;
+  assert (itm->typnum == momty_item);
+}
+
+momitem_t *
+mom_make_anonymous_item_salt (unsigned salt)
+{
+  momitem_t *newitm = MOM_GC_ALLOC ("new anonymous item", sizeof (momitem_t));
+  initialize_protoitem_mom (newitm);
+  const momstring_t *ids = mom_make_random_idstr (salt, newitm);
+  newitm->itm_anonymous = true;
+  newitm->itm_id = ids;
+  GC_REGISTER_FINALIZER (newitm, finalize_item_mom, NULL, NULL, NULL);
+  return newitm;
+}
+
+momitem_t *
+mom_make_anonymous_item_by_id (const char *ids)
+{
+  momitem_t *itm = NULL;
+  const char *end = NULL;
+  if (!ids || !mom_valid_item_id_str (ids, &end) || !end || !*end)
+    return NULL;
+  momhash_t hstr = mom_cstring_hash (ids);
+  unsigned hrk = hstr % ITEM_NUM_SALT_MOM;
+  int foundix = -1;
+  pthread_mutex_lock (item_mutex_mom + hrk);
+#warning mom_make_anonymous_item_by_id incomplete
+  pthread_mutex_unlock (item_mutex_mom + hrk);
+  return (momitem_t *) itm;
 }

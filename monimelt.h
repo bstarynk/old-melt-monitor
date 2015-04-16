@@ -353,6 +353,7 @@ typedef uint16_t momtypenum_t;
 typedef enum momvaltype_en
 {
   momty_null = 0,
+  momty_item,
   momty_int,
   momty_double,
   momty_string,
@@ -433,4 +434,16 @@ const momstring_t *mom_make_string (const char *str);
 
 // find some existing item by its id or its name
 momitem_t *mom_find_item (const char *str);
+
+
+momitem_t *mom_make_anonymous_item_salt (unsigned salt);
+static inline momitem_t *
+mom_make_anonymous_item_at (unsigned lin)
+{
+  static _Thread_local unsigned count;
+  count++;
+  return mom_make_anonymous_item_salt (count + lin);
+}
+
+#define mom_make_anonymous_item() mom_make_anonymous_item_at(__LINE__)
 #endif /*MONIMELT_INCLUDED_ */
