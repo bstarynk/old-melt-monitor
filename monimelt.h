@@ -430,4 +430,7 @@ mom_cstring_hash (const char *str)
 }
 
 const momstring_t *mom_make_string (const char *str);
+
+// find some existing item by its id or its name
+momitem_t *mom_find_item (const char *str);
 #endif /*MONIMELT_INCLUDED_ */

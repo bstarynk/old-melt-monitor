@@ -189,7 +189,7 @@ mom_initialize_items (void)
 }
 
 static int
-find_item_position_mom (unsigned hash, const char *idbuf)
+find_anonitem_position_mom (unsigned hash, const char *idbuf)
 {
   if (MOM_UNLIKELY (!hash))
     hash = mom_cstring_hash (idbuf);
@@ -361,7 +361,7 @@ mom_make_random_idstr (unsigned salt, struct momitem_st *protoitem)
       unsigned hrk = hs % ITEM_NUM_SALT_MOM;
       int foundix = -1;
       pthread_mutex_lock (item_mutex_mom + hrk);
-      foundix = find_item_position_mom (hs, bufstr);
+      foundix = find_anonitem_position_mom (hs, bufstr);
       if (MOM_LIKELY (foundix < 0 && protoitem))
 	{			// add the new item
 	  unsigned bsiz = item_size_mom[hrk];
@@ -601,4 +601,40 @@ reorganize_named_items_mom (void)
     }
   assert (namix >= namecount);
   named_count_mom = namecount;
+}
+
+
+momitem_t *
+mom_find_item (const char *str)
+{
+  const momitem_t *itm = NULL;
+  const char *end = NULL;
+  if (!str || !str[0])
+    return NULL;
+  if (isalpha (str[0]) && mom_valid_item_name_str (str, &end) && end && !*end)
+    {
+      pthread_rwlock_rdlock (&named_lock_mom);
+      struct namebucket_mom_st *curbuck = find_named_bucket_mom (str, false);
+      if (curbuck)
+	{
+	  int bix = index_in_bucket_mom (curbuck, str, false);
+	  if (bix >= 0 && bix < (int) curbuck->nambuck_len)
+	    itm = curbuck->nambuck_arr[bix];
+	}
+      pthread_rwlock_unlock (&named_lock_mom);
+      return (momitem_t *) itm;
+    }
+  else if (str[0] == '_' && mom_valid_item_id_str (str, &end) && end && !*end)
+    {
+      momhash_t hstr = mom_cstring_hash (str);
+      unsigned hrk = hstr % ITEM_NUM_SALT_MOM;
+      int foundix = -1;
+      pthread_mutex_lock (item_mutex_mom + hrk);
+      foundix = find_anonitem_position_mom (hstr, str);
+      if (foundix >= 0)
+	itm = item_anonarr_mom[hrk][foundix];
+      pthread_mutex_unlock (item_mutex_mom + hrk);
+      return (momitem_t *) itm;
+    }
+  return NULL;
 }
