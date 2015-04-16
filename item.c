@@ -23,12 +23,19 @@
 #define ITEM_NUM_SALT_MOM 16
 
 
-// we choose base 48, because with a 0-9 digit then 8 digits in base 48
-// we can express a 48-bit number
-// notice that log(2**48/10)/log(48) is 7.9997
+// we choose base 48, because with a 0-9 decimal digit then 8 extended
+// digits in base 48 we can express a 48-bit number.  Notice that
+// log(2**48/10)/log(48) is 7.9997
 #define ID_DIGITS_MOM "0123456789abcdefhijkmnpqrstuvwxyzABCDEFHIJKLMPRU"
 #define ID_BASE_MOM 48
-static pthread_mutex_t itemtx_random_mom[ITEM_NUM_SALT_MOM];
+// mutex for locking access to item of given salthash
+static pthread_mutex_t item_mutex_mom[ITEM_NUM_SALT_MOM];
+// cardinal of items of given salthash
+static unsigned item_card_mom[ITEM_NUM_SALT_MOM];
+// size of nonscanned itemarray of given salthash
+static unsigned item_size_mom[ITEM_NUM_SALT_MOM];
+// nonscanned array of anonymous item pointers of given salthash
+static momitem_t **item_anonarr_mom[ITEM_NUM_SALT_MOM];
 
 // convert a 48 bits number to a 10 char string starting with _ then a
 // 0-9 digit then 8 extended digits
@@ -71,10 +78,9 @@ mom_initialize_items (void)
 {
   static const pthread_mutex_t inimtx = PTHREAD_MUTEX_INITIALIZER;
   for (int ix = 0; ix < ITEM_NUM_SALT_MOM; ix++)
-    memcpy (itemtx_random_mom + ix, &inimtx, sizeof (pthread_mutex_t));
+    memcpy (item_mutex_mom + ix, &inimtx, sizeof (pthread_mutex_t));
   static_assert (sizeof (ID_DIGITS_MOM) - 1 == ID_BASE_MOM,
 		 "invalid number of id digits");
-#if 0
   for (int i = 0; i < 4; i++)
     {
       char buf[48];
@@ -87,13 +93,161 @@ mom_initialize_items (void)
 	      (long long) u);
       assert (buf[0] && strlen (buf) == 10);
     }
-#endif
+  {
+    unsigned salt = getpid () % 8;
+    printf ("salt %u\n", salt);
+    for (int i = 0; i < 8; i++)
+      {
+	const momstring_t *str = mom_make_random_idstr (salt, NULL);
+	assert (str != NULL);
+	printf ("i=%d str:%s hash=%u\n", i, str->cstr, str->shash);
+      }
+  }
 }
 
-momstring_t *
+static int
+find_item_position_mom (unsigned hash, const char *idbuf)
+{
+  if (MOM_UNLIKELY (!hash))
+    hash = mom_cstring_hash (idbuf);
+  unsigned hrk = hash % ITEM_NUM_SALT_MOM;
+  int foundix = -1;
+  momitem_t **arr = item_anonarr_mom[hrk];
+  if (arr)
+    {
+      unsigned sz = item_size_mom[hrk];
+      assert (sz > 0);
+      unsigned startix = hash % sz;
+      for (unsigned ix = startix; ix < sz && foundix < 0; ix++)
+	{
+	  momitem_t *curitm = arr[ix];
+	  if (!curitm)
+	    break;
+	  else if (curitm == MOM_EMPTY)
+	    continue;
+	  const momstring_t *curid = curitm->itm_id;
+	  if (curid->shash == hash && !strcmp (curid->cstr, idbuf))
+	    foundix = (int) ix;
+	}
+      for (unsigned ix = 0; ix < startix && foundix < 0; ix++)
+	{
+	  momitem_t *curitm = arr[ix];
+	  if (!curitm)
+	    break;
+	  else if (curitm == MOM_EMPTY)
+	    continue;
+	  const momstring_t *curid = curitm->itm_id;
+	  if (curid->shash == hash && !strcmp (curid->cstr, idbuf))
+	    foundix = (int) ix;
+	}
+    }
+  return foundix;
+}
+
+static int
+add_item_mom (momitem_t *itm, unsigned salthash)
+{
+  int pos = -1;
+  int foundix = -1;
+  assert (itm != NULL);
+  assert (salthash < ITEM_NUM_SALT_MOM);
+  momhash_t ih = itm->itm_id->shash;
+  assert (ih % ITEM_NUM_SALT_MOM == salthash);
+  unsigned sz = item_size_mom[salthash];
+  assert (sz > 0);
+  momitem_t **arr = item_anonarr_mom[salthash];
+  assert (arr != NULL);
+  unsigned startix = ih % sz;
+  for (unsigned ix = startix; ix < sz && foundix < 0; ix++)
+    {
+      momitem_t *curitm = arr[ix];
+      if (!curitm)
+	{
+	  if (pos < 0)
+	    pos = ix;
+	  foundix = pos;
+	  break;
+	}
+      else if (curitm == MOM_EMPTY)
+	{
+	  if (pos < 0)
+	    pos = ix;
+	  continue;
+	}
+      if (curitm == itm)
+	{
+	  foundix = ix;
+	  pos = -1;
+	};
+      const momstring_t *curid = curitm->itm_id;
+      assert (curid->shash != ih || strcmp (curid->cstr, itm->itm_id->cstr));
+    }
+  for (unsigned ix = 0; ix < startix && foundix < 0; ix++)
+    {
+      momitem_t *curitm = arr[ix];
+      if (!curitm)
+	{
+	  if (pos < 0)
+	    pos = ix;
+	  foundix = pos;
+	  break;
+	}
+      else if (curitm == MOM_EMPTY)
+	{
+	  if (pos < 0)
+	    pos = ix;
+	  continue;
+	}
+      if (curitm == itm)
+	{
+	  foundix = ix;
+	  pos = -1;
+	};
+      const momstring_t *curid = curitm->itm_id;
+      assert (curid->shash != ih || strcmp (curid->cstr, itm->itm_id->cstr));
+    }
+  if (pos > 0)
+    {
+      arr[pos] = itm;
+      item_card_mom[salthash]++;
+    };
+  return foundix;
+}
+
+static void
+reorganize_item_bucket_mom (unsigned salthash)
+{
+  assert (salthash < ITEM_NUM_SALT_MOM);
+  momitem_t **oldarr = item_anonarr_mom[salthash];
+  unsigned oldsiz = item_size_mom[salthash];
+  unsigned oldcard = item_card_mom[salthash];
+  unsigned newsiz = ((3 * oldcard / 2 + 20) | 0x1f) + 1;
+  momitem_t **newarr =
+    MOM_GC_SCALAR_ALLOC ("item bucket", newsiz * sizeof (momitem_t *));
+  item_anonarr_mom[salthash] = newarr;
+  item_size_mom[salthash] = newsiz;
+  item_card_mom[salthash] = 0;
+  for (unsigned ix = 0; ix < oldsiz; ix++)
+    {
+      momitem_t *curitm = oldarr[ix];
+      if (!curitm || curitm == MOM_EMPTY)
+	continue;
+      int ix = add_item_mom (curitm, salthash);
+      if (MOM_UNLIKELY (ix < 0))
+	MOM_FATAPRINTF ("corrupted item bucket salthash=%d", salthash);
+    }
+  assert (item_card_mom[salthash] == oldcard);
+  if (MOM_LIKELY (oldarr && oldsiz > 0))
+    {
+      memset (oldarr, 0, oldsiz * sizeof (momitem_t *));
+      MOM_GC_FREE (oldarr);
+    }
+}
+
+const momstring_t *
 mom_make_random_idstr (unsigned salt, struct momitem_st *protoitem)
 {
-  momstring_t *str = NULL;
+  const momstring_t *str = NULL;
   assert (!protoitem || protoitem->itm_id == NULL);
   do
     {
@@ -103,8 +257,8 @@ mom_make_random_idstr (unsigned salt, struct momitem_st *protoitem)
       hi = ((uint64_t) r1) << 32 | (uint64_t) (r2 >> 16);
       lo = (((uint64_t) (r2 & 0xffff)) << 32) | ((uint64_t) r3);
       // replace the four highest bits of 48 bits number hi with salt&0xf
-      hi &= 0xffffffffff;
-      hi |= ((uint64_t) (salt & 0xf) << 40);
+      hi &= (((uint64_t) 1ULL << 44) - 1);
+      hi |= ((uint64_t) (salt & 0xf) << 44);
       if (hi == 0 || lo == 0)
 	continue;
       char buf1[16], buf2[16], bufstr[32];
@@ -120,7 +274,20 @@ mom_make_random_idstr (unsigned salt, struct momitem_st *protoitem)
       memset (bufstr, 0, sizeof (bufstr));
       memcpy (bufstr, p1, NUM48LEN_MOM);
       memcpy (bufstr + NUM48LEN_MOM, p2, NUM48LEN_MOM);
-#warning should allocate the id string
+      momhash_t hs = mom_cstring_hash (bufstr);
+      unsigned hrk = hs % ITEM_NUM_SALT_MOM;
+      int foundix = -1;
+      pthread_mutex_lock (item_mutex_mom + hrk);
+      foundix = find_item_position_mom (hs, bufstr);
+      pthread_mutex_unlock (item_mutex_mom + hrk);
+      if (foundix >= 0)
+	continue;
+      str = mom_make_string (bufstr);
+      if (protoitem)
+	{
+	  assert (!protoitem->itm_id);
+	  protoitem->itm_id = str;
+	}
     }
   while (!str);
   return str;

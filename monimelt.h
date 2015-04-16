@@ -348,11 +348,17 @@ extern void mom_plugin_init (const char *pluginarg, int *pargc, char ***pargv);	
 /// they may also define a function to be called after load
 extern void momplugin_after_load (void);
 
-// every monimelt value starts with a non-zero signed typenum
-typedef int16_t mom_typenum_t;
-
+// every monimelt value starts with a non-zero unsigned typenum
+typedef uint16_t momtypenum_t;
+typedef enum momvaltype_en
+{
+  momty_null = 0,
+  momty_int,
+  momty_double,
+  momty_string,
+} momvaltype_t;
 // every hashcode is a non-zero 32 bits unsigned
-typedef uint32_t mom_hash_t;
+typedef uint32_t momhash_t;
 
 typedef struct momint_st momint_t;
 typedef struct momdouble_st momdouble_t;
@@ -362,43 +368,56 @@ typedef struct momitem_st momitem_t;
 
 struct momint_st
 {
-  mom_typenum_t typn;
+  momtypenum_t typnum;
   intptr_t inum;
 };
 
 struct momdouble_st
 {
-  mom_typenum_t typn;
+  momtypenum_t typnum;
   double dnum;
 };
 
+#define MOM_MAX_STRING_LENGTH (1<<25)	/* max string length 33554432 */
 struct momstring_st
 {
-  mom_typenum_t typn;
+  momtypenum_t typnum;
   uint32_t slen;
-  mom_hash_t shash;
+  momhash_t shash;
   char cstr[];			/* length is slen+1 */
 };
 
 struct momdelim_st
 {
-  mom_typenum_t typn;
+  momtypenum_t typnum;
   char dchar[4];
 };
 
 
 struct momitem_st
 {
-  mom_typenum_t typn;
+  momtypenum_t typnum;
   pthread_mutex_t itm_mtx;
   bool itm_anonymous;
   union
   {
-    momstring_t *itm_id;	/* when itm_anonymous */
-    momstring_t *itm_name;	/* when !itm_anonymous */
+    const momstring_t *itm_id;	/* when itm_anonymous */
+    const momstring_t *itm_name;	/* when !itm_anonymous */
   };
 };
 
-momstring_t *mom_make_random_idstr (unsigned salt,
-				    struct momitem_st *protoitem);
+const momstring_t *mom_make_random_idstr (unsigned salt,
+					  struct momitem_st *protoitem);
+
+// hash of a C-string
+
+momhash_t mom_cstring_hash_len (const char *str, int len);
+
+static inline momhash_t
+mom_cstring_hash (const char *str)
+{
+  return mom_cstring_hash_len (str, -1);
+}
+
+const momstring_t *mom_make_string (const char *str);
 #endif /*MONIMELT_INCLUDED_ */

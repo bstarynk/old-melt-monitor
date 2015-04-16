@@ -1,7 +1,7 @@
 -T momdelim_t
 -T momdouble_t
--T mom_hash_t
+-T momhash_t
 -T momint_t
 -T momitem_t
 -T momstring_t
--T mom_typenum_t
+-T momtypenum_t
