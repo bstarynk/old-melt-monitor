@@ -20,8 +20,9 @@
 
 #include "monimelt.h"
 
-#define ITEM_NUM_SALT_MOM 16
 
+//////////////// anonymous items
+#define ITEM_NUM_SALT_MOM 16
 
 // we choose base 48, because with a 0-9 decimal digit then 8 extended
 // digits in base 48 we can express a 48-bit number.  Notice that
@@ -73,6 +74,30 @@ char10_to_num48_mom (const char *buf)
   return num;
 }
 
+bool
+mom_valid_item_id_str (const char *id, const char **pend)
+{
+  if (!id)
+    return false;
+  if (pend)
+    *pend = NULL;
+  for (int ns = 0; ns < 2; ns++)
+    {
+      if (id[ns * 10 + 0] != '_')
+	return false;
+      if (id[ns * 10 + 1] < '0' || id[ns * 10 + 1] > '9')
+	return false;
+      for (int i = 1; i <= 9; i++)
+	if (!strchr (ID_DIGITS_MOM, id[ns * 10 + i]))
+	  return false;
+    }
+  if (isalnum (id[20]) || id[20] == '_')
+    return false;
+  if (pend)
+    *pend = id + 20;
+  return true;
+}
+
 void
 mom_initialize_items (void)
 {
@@ -101,6 +126,7 @@ mom_initialize_items (void)
 	const momstring_t *str = mom_make_random_idstr (salt, NULL);
 	assert (str != NULL);
 	printf ("i=%d str:%s hash=%u\n", i, str->cstr, str->shash);
+	assert (mom_valid_item_id_str (str->cstr, NULL));
       }
   }
 }
@@ -279,6 +305,17 @@ mom_make_random_idstr (unsigned salt, struct momitem_st *protoitem)
       int foundix = -1;
       pthread_mutex_lock (item_mutex_mom + hrk);
       foundix = find_item_position_mom (hs, bufstr);
+      if (MOM_LIKELY (foundix < 0 && protoitem))
+	{			// add the new item
+	  unsigned bsiz = item_size_mom[hrk];
+	  unsigned bcard = item_card_mom[hrk];
+	  assert (bsiz <= bcard);
+	  if (!bsiz || 9 * bcard / 8 + 2 <= bsiz)
+	    reorganize_item_bucket_mom (hrk);
+	  int newix = add_item_mom (protoitem, hrk);
+	  if (MOM_UNLIKELY (newix < 0))
+	    MOM_FATAPRINTF ("failed to add item in salthash bucket %u", hrk);
+	}
       pthread_mutex_unlock (item_mutex_mom + hrk);
       if (foundix >= 0)
 	continue;

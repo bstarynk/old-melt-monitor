@@ -409,6 +409,8 @@ struct momitem_st
 const momstring_t *mom_make_random_idstr (unsigned salt,
 					  struct momitem_st *protoitem);
 
+// check validity of an id string, if good, sets *pend to its end
+bool mom_valid_item_id_str (const char *id, const char **pend);
 // hash of a C-string
 
 momhash_t mom_cstring_hash_len (const char *str, int len);
