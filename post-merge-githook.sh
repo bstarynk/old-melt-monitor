@@ -8,5 +8,4 @@
 gitstatus=$1
 
 echo post-merge-githook.sh gitstatus $gitstatus
-mv -v -f state-monimelt.dbsqlite state-monimelt.dbsqlite~
-sqlite3 -batch -bail state-monimelt.dbsqlite < state-monimelt.sql
+make -j 3
