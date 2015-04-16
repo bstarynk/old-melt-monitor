@@ -193,13 +193,17 @@ mom_initialize_items (void)
   }
 }
 
+// if a ppos is given, we want to add a new item
 static int
-find_anonitem_position_mom (unsigned hash, const char *idbuf)
+find_anonitem_position_mom (unsigned hash, const char *idbuf, int *ptrpos)
 {
   if (MOM_UNLIKELY (!hash))
     hash = mom_cstring_hash (idbuf);
   unsigned hrk = hash % ITEM_NUM_SALT_MOM;
   int foundix = -1;
+  int pos = -1;
+  if (ptrpos)
+    *ptrpos = -1;
   momitem_t **arr = item_anonarr_mom[hrk];
   if (arr)
     {
@@ -210,9 +214,17 @@ find_anonitem_position_mom (unsigned hash, const char *idbuf)
 	{
 	  momitem_t *curitm = arr[ix];
 	  if (!curitm)
-	    break;
+	    {
+	      if (ptrpos && pos < 0)
+		pos = ix;
+	      break;
+	    }
 	  else if (curitm == MOM_EMPTY)
-	    continue;
+	    {
+	      if (ptrpos && pos < 0)
+		pos = ix;
+	      continue;
+	    }
 	  const momstring_t *curid = curitm->itm_id;
 	  if (curid->shash == hash && !strcmp (curid->cstr, idbuf))
 	    foundix = (int) ix;
@@ -221,19 +233,29 @@ find_anonitem_position_mom (unsigned hash, const char *idbuf)
 	{
 	  momitem_t *curitm = arr[ix];
 	  if (!curitm)
-	    break;
+	    {
+	      if (ptrpos && pos < 0)
+		pos = ix;
+	      break;
+	    }
 	  else if (curitm == MOM_EMPTY)
-	    continue;
+	    {
+	      if (ptrpos && pos < 0)
+		pos = ix;
+	      continue;
+	    }
 	  const momstring_t *curid = curitm->itm_id;
 	  if (curid->shash == hash && !strcmp (curid->cstr, idbuf))
 	    foundix = (int) ix;
 	}
     }
+  if (ptrpos && pos >= 0)
+    *ptrpos = pos;
   return foundix;
 }
 
 static int
-add_item_mom (momitem_t *itm, unsigned salthash)
+add_anonitem_mom (momitem_t *itm, unsigned salthash)
 {
   int pos = -1;
   int foundix = -1;
@@ -320,7 +342,7 @@ reorganize_item_bucket_mom (unsigned salthash)
       momitem_t *curitm = oldarr[ix];
       if (!curitm || curitm == MOM_EMPTY)
 	continue;
-      int ix = add_item_mom (curitm, salthash);
+      int ix = add_anonitem_mom (curitm, salthash);
       if (MOM_UNLIKELY (ix < 0))
 	MOM_FATAPRINTF ("corrupted item bucket salthash=%d", salthash);
     }
@@ -365,16 +387,25 @@ mom_make_random_idstr (unsigned salt, struct momitem_st *protoitem)
       momhash_t hs = mom_cstring_hash (bufstr);
       unsigned hrk = hs % ITEM_NUM_SALT_MOM;
       int foundix = -1;
+      int pos = -1;
       pthread_mutex_lock (item_mutex_mom + hrk);
-      foundix = find_anonitem_position_mom (hs, bufstr);
-      if (MOM_LIKELY (foundix < 0 && protoitem))
+      foundix =
+	find_anonitem_position_mom (hs, bufstr, protoitem ? (&pos) : NULL);
+      if (MOM_LIKELY (protoitem))
 	{			// add the new item
+	  int newix = -1;
+	  if (pos >= 0)
+	    {
+	      item_anonarr_mom[hrk][pos] = protoitem;
+	      newix = pos;
+	    }
 	  unsigned bsiz = item_size_mom[hrk];
 	  unsigned bcard = item_card_mom[hrk];
 	  assert (bsiz <= bcard);
 	  if (!bsiz || 9 * bcard / 8 + 2 <= bsiz)
 	    reorganize_item_bucket_mom (hrk);
-	  int newix = add_item_mom (protoitem, hrk);
+	  if (newix < 0)
+	    newix = add_anonitem_mom (protoitem, hrk);
 	  if (MOM_UNLIKELY (newix < 0))
 	    MOM_FATAPRINTF ("failed to add item in salthash bucket %u", hrk);
 	}
@@ -635,7 +666,7 @@ mom_find_item (const char *str)
       unsigned hrk = hstr % ITEM_NUM_SALT_MOM;
       int foundix = -1;
       pthread_mutex_lock (item_mutex_mom + hrk);
-      foundix = find_anonitem_position_mom (hstr, str);
+      foundix = find_anonitem_position_mom (hstr, str, NULL);
       if (foundix >= 0)
 	itm = item_anonarr_mom[hrk][foundix];
       pthread_mutex_unlock (item_mutex_mom + hrk);
@@ -680,7 +711,29 @@ mom_make_anonymous_item_by_id (const char *ids)
   unsigned hrk = hstr % ITEM_NUM_SALT_MOM;
   int foundix = -1;
   pthread_mutex_lock (item_mutex_mom + hrk);
-#warning mom_make_anonymous_item_by_id incomplete
+  foundix = find_anonitem_position_mom (hstr, ids, NULL);
+  if (foundix >= 0)
+    itm = item_anonarr_mom[hrk][foundix];
+  else
+    {
+      unsigned bsiz = item_size_mom[hrk];
+      unsigned bcard = item_card_mom[hrk];
+      assert (bsiz <= bcard);
+      if (!bsiz || 9 * bcard / 8 + 2 <= bsiz)
+	reorganize_item_bucket_mom (hrk);
+      const momstring_t *idstr = mom_make_string (ids);
+      momitem_t *protoitm =
+	MOM_GC_ALLOC ("new anonymous item", sizeof (momitem_t));
+      initialize_protoitem_mom (protoitm);
+      protoitm->itm_id = idstr;
+      protoitm->itm_anonymous = true;
+      int newix = add_anonitem_mom (protoitm, hrk);
+      if (MOM_UNLIKELY (newix < 0))
+	MOM_FATAPRINTF ("failed to add anonitem %s in salthash bucket %u",
+			ids, hrk);
+      GC_REGISTER_FINALIZER (protoitm, finalize_item_mom, NULL, NULL, NULL);
+      itm = protoitm;
+    }
   pthread_mutex_unlock (item_mutex_mom + hrk);
   return (momitem_t *) itm;
 }
