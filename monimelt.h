@@ -352,54 +352,71 @@ extern void momplugin_after_load (void);
 typedef uint16_t momtypenum_t;
 typedef enum momvaltype_en
 {
+  momty_double = -2,
+  momty_int = -1,
   momty_null = 0,
   momty_item,
-  momty_int,
-  momty_double,
+  momty_node,
+  momty_tuple,
+  momty_set,
   momty_string,
 } momvaltype_t;
+
+typedef enum momspace_en
+{
+  momspa_none,
+  momspa_transient,
+  momspa_user,
+  momspa_global,
+  momspa_predefined
+} momspace_t;
+
 // every hashcode is a non-zero 32 bits unsigned
 typedef uint32_t momhash_t;
 
-typedef struct momint_st momint_t;
-typedef struct momdouble_st momdouble_t;
 typedef struct momstring_st momstring_t;
 typedef struct momdelim_st momdelim_t;
 typedef struct momitem_st momitem_t;
+typedef struct momnode_st momnode_t;
+typedef struct momseq_st momseq_t;
+typedef struct momvalue_st momvalue_t;
 
-struct momint_st
+struct momdelim_st
 {
-  momtypenum_t typnum;
-  intptr_t inum;
+  char delim[4];
 };
 
-struct momdouble_st
+struct momvalue_st
 {
-  momtypenum_t typnum;
-  double dnum;
+  int16_t typnum;
+  union
+  {
+    void *vptr;
+    intptr_t vint;
+    double vdbl;
+    momdelim_t vdelim;
+    momitem_t *vitem;
+    momnode_t *vnode;
+    momseq_t *vset;
+    momseq_t *vtuple;
+  };
 };
+
 
 #define MOM_MAX_STRING_LENGTH (1<<25)	/* max string length 33554432 */
 struct momstring_st
 {
-  momtypenum_t typnum;
   uint32_t slen;
   momhash_t shash;
   char cstr[];			/* length is slen+1 */
 };
 
-struct momdelim_st
-{
-  momtypenum_t typnum;
-  char dchar[4];
-};
-
 
 struct momitem_st
 {
-  momtypenum_t typnum;
   pthread_mutex_t itm_mtx;
   bool itm_anonymous;
+  uint8_t itm_space;
   union
   {
     const momstring_t *itm_id;	/* when itm_anonymous */
@@ -436,6 +453,10 @@ const momstring_t *mom_make_string (const char *str);
 momitem_t *mom_find_item (const char *str);
 
 
+momitem_t *mom_make_named_item (const char *namstr);
+
+momitem_t *mom_make_anonymous_item_by_id (const char *ids);
+
 momitem_t *mom_make_anonymous_item_salt (unsigned salt);
 static inline momitem_t *
 mom_make_anonymous_item_at (unsigned lin)
@@ -446,4 +467,15 @@ mom_make_anonymous_item_at (unsigned lin)
 }
 
 #define mom_make_anonymous_item() mom_make_anonymous_item_at(__LINE__)
+
+#define MOM_HAS_PREDEFINED_NAMED(Nam,Hash) extern momitem_t*mompi_##Nam;
+#define MOM_HAS_PREDEFINED_ANONYMOUS(Id,Hash) extern momitem_t*mompi_##Id;
+//
+#include "predef-monimelt.h"
+
+
+#define MOM_PREDEFINED_NAMED(Nam) mompi_##Nam
+#define MOM_PREDEFINED_ANONYMOUS(Id) mompi_##Id
+
+
 #endif /*MONIMELT_INCLUDED_ */

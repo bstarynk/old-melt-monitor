@@ -374,6 +374,7 @@ enum extraopt_en
   xtraopt_dumpstate,
   xtraopt_noeventloop,
   xtraopt_randomidstr,
+  xtraopt_hashstr,
   xtraopt_dumpcoldstate,
   xtraopt_daemon_noclose,
   xtraopt_nojit,
@@ -397,6 +398,7 @@ static const struct option mom_long_options[] = {
   {"chdir", required_argument, NULL, xtraopt_chdir},
   {"no-event-loop", no_argument, NULL, xtraopt_noeventloop},
   {"random-idstr", no_argument, NULL, xtraopt_randomidstr},
+  {"string-hash", required_argument, NULL, xtraopt_hashstr},
   {"dump-cold-state", required_argument, NULL, xtraopt_dumpcoldstate},
   {"add-predefined", required_argument, NULL, xtraopt_addpredef},
   /* Terminating NULL placeholder.  */
@@ -530,6 +532,7 @@ usage_mom (const char *argv0)
   printf ("\t --write-pid <file>"
 	  "\t #write the pid (e.g. --write-pid /var/run/monimelt.pid)\n");
   printf ("\t --random-idstr" "\t #output a random idstr then exit\n");
+  printf ("\t --string-hash <string>" "\t #output the hash of the string\n");
   printf ("\t --dump-cold-state <dumpdir>" "\t #dump the cold state\n");
   printf ("\t --daemon-noclose"
 	  "\t daemonize with daemon(3) with nochdir=true noclose=true\n");
@@ -657,6 +660,18 @@ parse_program_arguments_and_load_plugins_mom (int *pargc, char ***pargv)
 	    exit (EXIT_SUCCESS);
 	  }
 	  break;
+	case xtraopt_hashstr:
+	  {
+	    if (optarg)
+	      {
+		momhash_t hs = mom_cstring_hash (optarg);
+		printf ("hash of string %s is %u = %#x\n", optarg, hs, hs);
+		MOM_WARNPRINTF ("exiting after hashing string '%s' as %u",
+				optarg, hs);
+		exit (EXIT_SUCCESS);
+	      }
+	  }
+	  break;
 	case xtraopt_writepid:
 	  {
 	    write_pid_file_mom = optarg;
@@ -741,5 +756,6 @@ main (int argc_main, char **argv_main)
   }
   parse_program_arguments_and_load_plugins_mom (&argc, &argv);
   mom_initialize_items ();
-
+  printf ("sizeof(momvalue_t)=%zd sizeof(momvaltype_t)=%zd\n",
+	  sizeof (momvalue_t), sizeof (momvaltype_t));
 }

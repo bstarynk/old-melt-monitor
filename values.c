@@ -91,6 +91,5 @@ mom_make_string (const char *str)
   res->slen = slen;
   res->shash = mom_cstring_hash_len (str, slen);
   memcpy (res->cstr, str, slen);
-  res->typnum = momty_string;
   return res;
 }

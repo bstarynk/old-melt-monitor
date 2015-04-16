@@ -20,6 +20,29 @@
 
 #include "monimelt.h"
 
+////////////////
+/// define the predefined items
+#define MOM_HAS_PREDEFINED_NAMED(Nam,Hash) momitem_t*mompi_##Nam;
+#define MOM_HAS_PREDEFINED_ANONYMOUS(Id,Hash) momitem_t*mompi_##Id;
+//
+#include "predef-monimelt.h"
+
+/// routine to create the predefined
+static void
+create_predefined_items_mom (void)
+{
+#define  MOM_HAS_PREDEFINED_NAMED(Nam,Hash) do {	\
+    mompi_##Nam = mom_make_named_item(#Nam);		\
+    mompi_##Nam->itm_space = momspa_predefined;		\
+  } while(0);
+  //
+#define  MOM_HAS_PREDEFINED_ANONYMOUS(Id,Hash) do {	\
+    mompi_##Id = mom_make_anonymous_item_by_id(#Id);	\
+    mompi_##Id->itm_space = momspa_predefined;		\
+  } while(0);
+  //
+#include "predef-monimelt.h"
+}
 
 //////////////// named items Named items are organized in a 2-level
 // tree,i.e. a vector of buckets, with O(sqrt(N)) average complexity
@@ -693,7 +716,6 @@ static void
 finalize_item_mom (void *itmad, void *data __attribute__ ((unused)))
 {
   momitem_t *itm = (momitem_t *) itmad;
-  assert (itm->typnum == momty_item);
 #warning finalize_item_mom incomplete
 }
 
@@ -702,7 +724,6 @@ mom_make_anonymous_item_salt (unsigned salt)
 {
   momitem_t *newitm = MOM_GC_ALLOC ("new anonymous item", sizeof (momitem_t));
   initialize_protoitem_mom (newitm);
-  newitm->typnum = momty_item;
   newitm->itm_anonymous = true;
   const momstring_t *ids = mom_make_random_idstr (salt, newitm);
   newitm->itm_id = ids;
@@ -737,7 +758,6 @@ mom_make_anonymous_item_by_id (const char *ids)
       initialize_protoitem_mom (protoitm);
       protoitm->itm_id = idstr;
       protoitm->itm_anonymous = true;
-      protoitm->typnum = momty_item;
       int newix = add_anonitem_mom (protoitm, hrk);
       if (MOM_UNLIKELY (newix < 0))
 	MOM_FATAPRINTF ("failed to add anonitem %s in salthash bucket %u",
@@ -747,4 +767,12 @@ mom_make_anonymous_item_by_id (const char *ids)
     }
   pthread_mutex_unlock (item_mutex_mom + hrk);
   return (momitem_t *) itm;
+}
+
+momitem_t *
+mom_make_named_item (const char *namstr)
+{
+  const char *end = NULL;
+  if (!namstr || !mom_valid_item_name_str (namstr, &end) || !end || !*end)
+    return NULL;
 }

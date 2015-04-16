@@ -22,12 +22,15 @@
 ////////////////////////////////////////////////////////////////--
 
 
-#ifndef MOM_PREDEFINED_NAMED
-#error missing MOM_PREDEFINED_NAMED
-#endif /*MOM_PREDEFINED_NAMED*/
-#ifndef MOM_PREDEFINED_ANONYMOUS
-#error missing MOM_PREDEFINED_ANONYMOUS
+#ifndef MOM_HAS_PREDEFINED_NAMED
+#error missing MOM_HAS_PREDEFINED_NAMED
+#endif /*MOM_HAS_PREDEFINED_NAMED*/
+#ifndef MOM_HAS_PREDEFINED_ANONYMOUS
+#error missing MOM_HAS_PREDEFINED_ANONYMOUS
 #endif /*MOM_PREDEFINED_ANONYMOUS*/
 
+MOM_HAS_PREDEFINED_NAMED(the_software,2951603580)
 
+#undef MOM_HAS_PREDEFINED_NAMED
+#undef MOM_HAS_PREDEFINED_ANONYMOUS
 // eof predef-monimelt.h
