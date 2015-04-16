@@ -694,6 +694,7 @@ finalize_item_mom (void *itmad, void *data __attribute__ ((unused)))
 {
   momitem_t *itm = (momitem_t *) itmad;
   assert (itm->typnum == momty_item);
+#warning finalize_item_mom incomplete
 }
 
 momitem_t *
