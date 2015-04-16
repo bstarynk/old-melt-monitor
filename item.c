@@ -29,7 +29,7 @@
 static pthread_rwlock_t named_lock_mom = PTHREAD_RWLOCK_INITIALIZER;
 
 struct namebucket_mom_st
-{
+{				//// buckets should be scalar zones, the items in them are weak pointers
   unsigned nambuck_size;	/* allocated size of bucket */
   unsigned nambuck_len;		/* used length */
   const momitem_t *nambuck_arr[];
@@ -507,6 +507,7 @@ index_in_bucket_mom (const struct namebucket_mom_st *buck, const char *name,
 
 
 
+
 momitem_t *
 mom_find_named_item (const char *name)
 {
@@ -525,4 +526,79 @@ mom_find_named_item (const char *name)
     }
   pthread_rwlock_unlock (&named_lock_mom);
   return (momitem_t *) itm;
+}
+
+// reorganize all the named items, should be called under the write lock
+static void
+reorganize_named_items_mom (void)
+{
+  const momitem_t **allnamedarr = NULL;
+  allnamedarr =
+    MOM_GC_ALLOC ("allnamedarr",
+		  sizeof (momitem_t *) * (named_count_mom + 2));
+  unsigned namecount = 0;
+  // first loop to fill name allnamedarr
+  for (unsigned bix = 0; bix < named_nbuck_mom; bix++)
+    {
+      struct namebucket_mom_st *curbuck = named_buckets_mom[bix];
+      assert (curbuck != NULL);
+      unsigned blen = curbuck->nambuck_len;
+      unsigned bsiz = curbuck->nambuck_size;
+      assert (bsiz >= blen);
+      for (unsigned itmix = 0; itmix < blen; itmix++)
+	{
+	  const momitem_t *itm = curbuck->nambuck_arr[itmix];
+	  assert (itm && !itm->itm_anonymous && itm->itm_name);
+	  if (MOM_UNLIKELY (namecount > named_count_mom))
+	    MOM_FATAPRINTF ("more named items than expected %d", namecount);
+	  allnamedarr[namecount] = itm;
+	  if (MOM_LIKELY (namecount > 0))
+	    {
+	      const momitem_t *previtm = allnamedarr[namecount - 1];
+	      if (MOM_UNLIKELY
+		  (strcmp (previtm->itm_name->cstr, itm->itm_name->cstr) >=
+		   0))
+		MOM_FATAPRINTF ("corrupted named item element #%d",
+				namecount);
+	    }
+	}
+      memset (curbuck, 0,
+	      sizeof (struct namebucket_mom_st) +
+	      bsiz * sizeof (momitem_t *));
+      named_buckets_mom[bix] = NULL;
+      MOM_GC_FREE (curbuck);
+    }
+  MOM_GC_FREE (named_buckets_mom);
+  named_buckets_mom = NULL;
+  named_nbuck_mom = 0;
+  unsigned newnbuck = (int) (1.2 * sqrt (namecount)) + 10;
+  unsigned newblen = namecount / newnbuck;
+  if (MOM_UNLIKELY (newblen < 2))
+    newblen++;
+  unsigned newbsiz = ((3 * newblen / 2 + 5) | 0xf) + 1;
+  unsigned namix = 0;
+  named_buckets_mom =
+    MOM_GC_ALLOC ("named buckets",
+		  newnbuck * sizeof (struct namebucket_mom_st *));
+  // second loop to fill the buckets
+  for (unsigned bix = 0; bix < newnbuck; bix++)
+    {
+      if (namix >= namecount)
+	break;
+      struct namebucket_mom_st *curbuck =
+	MOM_GC_SCALAR_ALLOC ("bucket", sizeof (struct namebucket_mom_st)
+			     + newbsiz * sizeof (momitem_t *));
+      curbuck->nambuck_size = newbsiz;
+      unsigned itmix = 0;
+      if (MOM_LIKELY (namix < namecount))
+	for (itmix = 0; itmix < newblen; itmix++)
+	  {
+	    if (MOM_UNLIKELY (namix >= namecount))
+	      break;
+	    curbuck->nambuck_arr[itmix] = allnamedarr[namecount++];
+	  };
+      curbuck->nambuck_len = itmix;
+    }
+  assert (namix >= namecount);
+  named_count_mom = namecount;
 }
