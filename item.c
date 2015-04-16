@@ -191,6 +191,15 @@ mom_initialize_items (void)
 	assert (mom_valid_item_id_str (str->cstr, NULL));
       }
   }
+  {
+    momitem_t *anitm1 = mom_make_anonymous_item ();
+    momitem_t *anitm2 = mom_make_anonymous_item ();
+    printf ("anitm1@%p id %s h %u=%#x\n",
+	    anitm1, anitm1->itm_id->cstr, anitm1->itm_id->shash,
+	    anitm1->itm_id->shash);
+    printf ("anitm2@%p id %s h %u=%#x\n", anitm2, anitm2->itm_id->cstr,
+	    anitm2->itm_id->shash, anitm2->itm_id->shash);
+  }
 }
 
 // if a ppos is given, we want to add a new item
@@ -399,6 +408,9 @@ mom_make_random_idstr (unsigned salt, struct momitem_st *protoitem)
 	      item_anonarr_mom[hrk][pos] = protoitem;
 	      newix = pos;
 	    }
+	  str = mom_make_string (bufstr);
+	  assert (!protoitem->itm_id);
+	  protoitem->itm_id = str;
 	  unsigned bsiz = item_size_mom[hrk];
 	  unsigned bcard = item_card_mom[hrk];
 	  assert (bsiz <= bcard);
@@ -409,15 +421,11 @@ mom_make_random_idstr (unsigned salt, struct momitem_st *protoitem)
 	  if (MOM_UNLIKELY (newix < 0))
 	    MOM_FATAPRINTF ("failed to add item in salthash bucket %u", hrk);
 	}
+      if (foundix < 0 && !protoitem)
+	str = mom_make_string (bufstr);
       pthread_mutex_unlock (item_mutex_mom + hrk);
       if (foundix >= 0)
 	continue;
-      str = mom_make_string (bufstr);
-      if (protoitem)
-	{
-	  assert (!protoitem->itm_id);
-	  protoitem->itm_id = str;
-	}
     }
   while (!str);
   return str;
@@ -693,8 +701,9 @@ mom_make_anonymous_item_salt (unsigned salt)
 {
   momitem_t *newitm = MOM_GC_ALLOC ("new anonymous item", sizeof (momitem_t));
   initialize_protoitem_mom (newitm);
-  const momstring_t *ids = mom_make_random_idstr (salt, newitm);
+  newitm->typnum = momty_item;
   newitm->itm_anonymous = true;
+  const momstring_t *ids = mom_make_random_idstr (salt, newitm);
   newitm->itm_id = ids;
   GC_REGISTER_FINALIZER (newitm, finalize_item_mom, NULL, NULL, NULL);
   return newitm;
@@ -727,6 +736,7 @@ mom_make_anonymous_item_by_id (const char *ids)
       initialize_protoitem_mom (protoitm);
       protoitm->itm_id = idstr;
       protoitm->itm_anonymous = true;
+      protoitm->typnum = momty_item;
       int newix = add_anonitem_mom (protoitm, hrk);
       if (MOM_UNLIKELY (newix < 0))
 	MOM_FATAPRINTF ("failed to add anonitem %s in salthash bucket %u",
