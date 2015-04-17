@@ -447,12 +447,12 @@ mom_make_random_idstr (unsigned salt, struct momitem_st *protoitem)
 static struct namebucket_mom_st *
 find_named_bucket_mom (const char *name, int *insertpix)
 {
-#warning should use some balanced tree for named items
   int lo = 0, hi = (int) named_nbuck_mom, md = 0;
   if (insertpix)
     *insertpix = -1;
   while (lo + 4 < hi)
     {
+      bool hit = false;
       for (md = (lo + hi) / 2; md < hi; md++)
 	{
 	  struct namebucket_mom_st *curbuck = named_buckets_mom[md];
@@ -466,6 +466,7 @@ find_named_bucket_mom (const char *name, int *insertpix)
 	  if (cmpfirstname < 0)
 	    {
 	      hi = md;
+	      hit = true;
 	      break;
 	    }
 	  else if (cmpfirstname == 0)
@@ -479,12 +480,15 @@ find_named_bucket_mom (const char *name, int *insertpix)
 	      if (cmplastname < 0)
 		{
 		  lo = md;
+		  hit = true;
 		  break;
 		}
 	      else
 		return curbuck;
 	    }
-	}
+	};
+      if (!hit)
+	break;
     };
   for (md = lo; md < hi; md++)
     {
@@ -695,6 +699,11 @@ create_predefined_items_mom (void)
   } while(0);
   //
 #include "predef-monimelt.h"
+  {
+    pthread_rwlock_wrlock (&named_lock_mom);
+    reorganize_named_items_mom ();
+    pthread_rwlock_unlock (&named_lock_mom);
+  }
 }
 
 
@@ -744,6 +753,7 @@ static void
 finalize_item_mom (void *itmad, void *data __attribute__ ((unused)))
 {
   momitem_t *itm = (momitem_t *) itmad;
+  MOM_INFORMPRINTF ("finalizing item@%p %s", itm, itm->itm_str->cstr);
 #warning finalize_item_mom incomplete
 }
 
@@ -816,7 +826,7 @@ mom_make_named_item (const char *namstr)
   assert (bix >= 0 && bix < (int) named_nbuck_mom
 	  && named_buckets_mom[bix] == curbuck);
   unsigned bucklen = curbuck->nambuck_len;
-  if (bucklen + 2 >= curbuck->nambuck_size)
+  if (bucklen + 3 >= curbuck->nambuck_size)
     {
       unsigned newbucksize = ((3 * bucklen / 2 + 10) | 0xf) + 1;
       struct namebucket_mom_st *newbuck	//
@@ -835,14 +845,30 @@ mom_make_named_item (const char *namstr)
     }
   int nix = index_in_bucket_mom (curbuck, namstr, true);
   assert (nix >= 0);
-#warning mom_make_named_item incomplete here
-  MOM_FATAPRINTF ("incomplete mom_make_named_item bix=%d nix=%d namstr=%s",
-		  bix, nix, namstr);
   {
     const momitem_t *olditm = curbuck->nambuck_arr[nix];
+    if (olditm && !strcmp (olditm->itm_name->cstr, namstr))
+      itm = (momitem_t *) olditm;
   }
+  if (!itm)
+    {
+      momitem_t *newitm = MOM_GC_ALLOC ("new named item", sizeof (momitem_t));
+      initialize_protoitem_mom (newitm);
+      newitm->itm_name = mom_make_string (namstr);
+      newitm->itm_anonymous = false;
+      if (nix < (int) bucklen)
+	{
+	  memmove (curbuck->nambuck_arr + nix + 1, curbuck->nambuck_arr + nix,
+		   (bucklen - nix) * sizeof (momitem_t *));
+	  bucklen = ++curbuck->nambuck_len;
+	}
+      itm = newitm;
+      GC_REGISTER_FINALIZER (newitm, finalize_item_mom, NULL, NULL, NULL);
+    }
+  if (MOM_UNLIKELY
+      (bucklen > 2 && (2 + bucklen) * bucklen > 3 * named_count_mom))
+    reorganize_named_items_mom ();
   pthread_rwlock_unlock (&named_lock_mom);
-  MOM_DEBUGPRINTF (item, "mom_make_named_item itm=%p", itm);
   assert (itm != NULL);
   return itm;
 }

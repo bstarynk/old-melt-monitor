@@ -33,4 +33,5 @@ MOM_HAS_PREDEFINED_NAMED(the_software,2951603580)
 
 #undef MOM_HAS_PREDEFINED_NAMED
 #undef MOM_HAS_PREDEFINED_ANONYMOUS
+
 // eof predef-monimelt.h

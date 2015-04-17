@@ -756,6 +756,7 @@ main (int argc_main, char **argv_main)
   }
   parse_program_arguments_and_load_plugins_mom (&argc, &argv);
   mom_initialize_items ();
-  printf ("sizeof(momvalue_t)=%zd sizeof(momvaltype_t)=%zd\n",
-	  sizeof (momvalue_t), sizeof (momvaltype_t));
+  printf
+    ("sizeof(momvalue_t)=%zd sizeof(momvaltype_t)=%zd sizeof(momitem_t)=%zd\n",
+     sizeof (momvalue_t), sizeof (momvaltype_t), sizeof (momitem_t));
 }
