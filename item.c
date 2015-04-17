@@ -223,6 +223,8 @@ mom_initialize_items (void)
     printf ("anitm2@%p id %s h %u=%#x\n", anitm2, anitm2->itm_id->cstr,
 	    anitm2->itm_id->shash, anitm2->itm_id->shash);
   }
+  /// create the predefined items
+  create_predefined_items_mom ();
 }
 
 // if a ppos is given, we want to add a new item

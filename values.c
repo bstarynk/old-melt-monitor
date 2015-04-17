@@ -96,6 +96,7 @@ mom_valueptr_hash (momvalue_t *pval)
 	return pitm->itm_str->shash;
       }
     }
+  return 0;
 }
 
 /********************* strings ********************/

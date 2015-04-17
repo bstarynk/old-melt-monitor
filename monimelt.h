@@ -441,7 +441,7 @@ struct momnode_st
 
 struct momentry_st
 {
-  momitem_t *ent_itm;
+  const momitem_t *ent_itm;
   momvalue_t ent_val;
 };
 
@@ -451,6 +451,18 @@ struct momattributes_st
   uint32_t at_cnt;		/* used count */
   struct momentry_st at_entries[];	/* length is at_len */
 };
+
+struct momentry_st *mom_attributes_find_entry (const struct momattributes_st
+					       *attrs, const momitem_t *itma);
+struct momattributes_st *mom_attributes_put (struct momattributes_st *attrs,
+					     const momitem_t *itma,
+					     const momvalue_t *pval);
+struct momattributes_st *mom_attributes_remove (struct momattributes_st
+						*attrs,
+						const momitem_t *itma);
+struct momattributes_st *mom_attributes_make_atva (unsigned nbent, ...
+						   /* item1, val1, item2, val2, ... */
+  );
 
 struct momcomponents_st
 {
