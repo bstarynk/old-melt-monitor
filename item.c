@@ -27,22 +27,9 @@
 //
 #include "predef-monimelt.h"
 
+
 /// routine to create the predefined
-static void
-create_predefined_items_mom (void)
-{
-#define  MOM_HAS_PREDEFINED_NAMED(Nam,Hash) do {	\
-    mompi_##Nam = mom_make_named_item(#Nam);		\
-    mompi_##Nam->itm_space = momspa_predefined;		\
-  } while(0);
-  //
-#define  MOM_HAS_PREDEFINED_ANONYMOUS(Id,Hash) do {	\
-    mompi_##Id = mom_make_anonymous_item_by_id(#Id);	\
-    mompi_##Id->itm_space = momspa_predefined;		\
-  } while(0);
-  //
-#include "predef-monimelt.h"
-}
+static void create_predefined_items_mom (void);
 
 //////////////// named items Named items are organized in a 2-level
 // tree,i.e. a vector of buckets, with O(sqrt(N)) average complexity
@@ -683,8 +670,33 @@ reorganize_named_items_mom (void)
       curbuck->nambuck_len = itmix;
     }
   assert (namix >= namecount);
+  named_nbuck_mom = newnbuck;
   named_count_mom = namecount;
 }
+
+
+static void
+create_predefined_items_mom (void)
+{
+  {
+    pthread_rwlock_wrlock (&named_lock_mom);
+    reorganize_named_items_mom ();	// to initialize the buckets
+    assert (named_nbuck_mom > 0);
+    pthread_rwlock_unlock (&named_lock_mom);
+  }
+#define  MOM_HAS_PREDEFINED_NAMED(Nam,Hash) do {	\
+    mompi_##Nam = mom_make_named_item(#Nam);		\
+    mompi_##Nam->itm_space = momspa_predefined;		\
+  } while(0);
+  //
+#define  MOM_HAS_PREDEFINED_ANONYMOUS(Id,Hash) do {	\
+    mompi_##Id = mom_make_anonymous_item_by_id(#Id);	\
+    mompi_##Id->itm_space = momspa_predefined;		\
+  } while(0);
+  //
+#include "predef-monimelt.h"
+}
+
 
 
 momitem_t *
@@ -826,7 +838,7 @@ mom_make_named_item (const char *namstr)
   MOM_FATAPRINTF ("incomplete mom_make_named_item bix=%d nix=%d namstr=%s",
 		  bix, nix, namstr);
   {
-    momitem_t *olditm = curbuck->nambuck_arr[nix];
+    const momitem_t *olditm = curbuck->nambuck_arr[nix];
   }
   pthread_rwlock_unlock (&named_lock_mom);
   MOM_DEBUGPRINTF (item, "mom_make_named_item itm=%p", itm);
