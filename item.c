@@ -447,6 +447,7 @@ mom_make_random_idstr (unsigned salt, struct momitem_st *protoitem)
 static struct namebucket_mom_st *
 find_named_bucket_mom (const char *name, int *insertpix)
 {
+#warning should use some balanced tree for named items
   int lo = 0, hi = (int) named_nbuck_mom, md = 0;
   if (insertpix)
     *insertpix = -1;
@@ -653,8 +654,6 @@ reorganize_named_items_mom (void)
   // second loop to fill the buckets
   for (unsigned bix = 0; bix < newnbuck; bix++)
     {
-      if (namix >= namecount)
-	break;
       struct namebucket_mom_st *curbuck =
 	MOM_GC_SCALAR_ALLOC ("bucket", sizeof (struct namebucket_mom_st)
 			     + newbsiz * sizeof (momitem_t *));
@@ -668,6 +667,7 @@ reorganize_named_items_mom (void)
 	    curbuck->nambuck_arr[itmix] = allnamedarr[namecount++];
 	  };
       curbuck->nambuck_len = itmix;
+      named_buckets_mom[bix] = curbuck;
     }
   assert (namix >= namecount);
   named_nbuck_mom = newnbuck;
@@ -806,7 +806,8 @@ mom_make_named_item (const char *namstr)
     return NULL;
   pthread_rwlock_wrlock (&named_lock_mom);
   if (MOM_UNLIKELY
-      ((5 * named_nbuck_mom / 4 + 2) * (named_nbuck_mom + 3) >
+      (named_count_mom > 0
+       && (5 * named_nbuck_mom / 4 + 2) * (named_nbuck_mom + 3) >
        named_count_mom))
     reorganize_named_items_mom ();
   int bix = -1;
