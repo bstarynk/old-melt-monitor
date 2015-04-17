@@ -776,3 +776,27 @@ mom_make_named_item (const char *namstr)
   if (!namstr || !mom_valid_item_name_str (namstr, &end) || !end || !*end)
     return NULL;
 }
+
+int
+mom_itemptr_cmp (const void *p1, const void *p2)
+{
+  return mom_item_cmp (*(momitem_t **) p1, *(momitem_t **) p2);
+}
+
+void
+mom_item_qsort (momitem_t **arr, unsigned siz)
+{
+  if (MOM_UNLIKELY (!siz || siz == 1))
+    return;
+  if (MOM_UNLIKELY (siz == 2))
+    {
+      if (mom_item_cmp (arr[0], arr[1]) > 0)
+	{
+	  momitem_t *itmtmp = arr[0];
+	  arr[0] = arr[1];
+	  arr[1] = itmtmp;
+	}
+      return;
+    }
+  qsort (arr, siz, sizeof (momitem_t *), mom_itemptr_cmp);
+}

@@ -473,6 +473,25 @@ mom_item_hash (const momitem_t *itm)
   return itm->itm_str->shash;
 }
 
+static inline int
+mom_item_cmp (const momitem_t *itm1, const momitem_t *itm2)
+{
+  if (itm1 == itm2)
+    return 0;
+  if (!itm1)
+    return -1;
+  if (!itm2)
+    return +1;
+  assert (itm1->itm_str);
+  assert (itm2->itm_str);
+  return strcmp (itm1->itm_str->cstr, itm2->itm_str->cstr);
+}
+
+// call the function above to sort an array of momitem_t*
+int mom_itemptr_cmp (const void *, const void *);
+
+void mom_item_qsort (momitem_t **arr, unsigned siz);
+
 const momstring_t *mom_make_random_idstr (unsigned salt,
 					  struct momitem_st *protoitem);
 
@@ -509,7 +528,7 @@ mom_make_sized_tuple (unsigned nbitems, momitem_t **itmarr)
 };
 
 const momseq_t *mom_make_meta_set (momvalue_t metav, unsigned nbitems, ...);
-const momseq_t *mom_make_set (unsigned nbitems, ...);
+#define mom_make_set(NbItems,...) mom_make_meta_set(MOM_NONEV, (NbItems), __VA_ARGS__)
 const momseq_t *mom_make_sized_meta_set (momvalue_t metav, unsigned nbitems,
 					 momitem_t **itmarr);
 static inline const momseq_t *
