@@ -411,6 +411,42 @@ struct momstring_st
   char cstr[];			/* length is slen+1 */
 };
 
+struct momseq_st
+{
+  uint32_t slen;
+  momhash_t shash;
+  momvalue_t meta;
+  momitem_t *arritm[];		/* length is slen */
+};
+
+struct momnode_st
+{
+  uint32_t slen;
+  momhash_t shash;
+  momitem_t *conn;
+  momvalue_t meta;
+  momvalue_t sons[];		/* length is slen */
+};
+
+struct momentry_st
+{
+  momitem_t *ent_itm;
+  momvalue_t ent_val;
+};
+
+struct momattributes_st
+{
+  uint32_t at_len;		/* allocated length */
+  uint32_t at_cnt;		/* used count */
+  struct momentry_st at_entries[];	/* length is at_len */
+};
+
+struct momcomponents_st
+{
+  uint32_t cp_len;		/* allocated length */
+  uint32_t cp_cnt;		/* used count */
+  momvalue_t cp_comps[];	/* length is cp_len */
+};
 
 struct momitem_st
 {
@@ -422,6 +458,8 @@ struct momitem_st
     const momstring_t *itm_id;	/* when itm_anonymous */
     const momstring_t *itm_name;	/* when !itm_anonymous */
   };
+  struct momattributes_st *itm_attrs;
+  struct momcomponents_st *itm_comps;
 };
 
 const momstring_t *mom_make_random_idstr (unsigned salt,
