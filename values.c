@@ -20,6 +20,84 @@
 
 #include "monimelt.h"
 
+momhash_t
+mom_valueptr_hash (momvalue_t *pval)
+{
+  if (!pval)
+    return 0;
+  momhash_t h = 0;
+  switch ((momvaltype_t) pval->typnum)
+    {
+    case momty_null:
+      return 0;
+    case momty_int:
+      {
+	intptr_t i = pval->vint;
+	h = ((momhash_t) i ^ ((momhash_t) (i >> 27)));
+	if (!h)
+	  {
+	    h = (momhash_t) i;
+	    if (!h)
+	      h = 12753;
+	  }
+	return h;
+      }
+    case momty_double:
+      {
+	double d = pval->vdbl;
+	if (isnan (d))
+	  return 3000229;
+	int e = 0;
+	double x = frexp (d, &e);
+	h = ((momhash_t) (x / (M_PI * M_LN2 * DBL_EPSILON))) ^ e;
+	if (!h)
+	  {
+	    h = e;
+	    if (!h)
+	      h = (x > 0.0) ? 1689767 : (x < 0.0) ? 2000281 : 13;
+	  }
+	return h;
+      }
+    case momty_string:
+      {
+	const momstring_t *ps = pval->vstr;
+	assert (ps);
+	return ps->shash;
+      }
+    case momty_set:
+      {
+	const momseq_t *ps = pval->vset;
+	assert (ps);
+	h = (11 * ps->shash) ^ (31 * ps->slen);
+	if (MOM_UNLIKELY (!h))
+	  h = ((17 * ps->slen) & 0xfffff) + 3;
+	return h;
+      }
+    case momty_tuple:
+      {
+	const momseq_t *pt = pval->vtuple;
+	assert (pt);
+	h = (19 * pt->shash) ^ (59 * pt->slen);
+	if (MOM_UNLIKELY (!h))
+	  h = ((37 * pt->slen) & 0xfffff) + 10;
+	return h;
+      }
+    case momty_node:
+      {
+	const momnode_t *pn = pval->vnode;
+	assert (pn);
+	return pn->shash;
+      }
+    case momty_item:
+      {
+	const momitem_t *pitm = pval->vitem;
+	assert (pitm);
+	assert (pitm->itm_str);
+	return pitm->itm_str->shash;
+      }
+    }
+}
+
 /********************* strings ********************/
 momhash_t
 mom_cstring_hash_len (const char *str, int len)
@@ -94,27 +172,25 @@ mom_make_string (const char *str)
   return res;
 }
 
-////////////////////////////////////////////////////////////////
-////// tuples
-
+//// common for tuples & sets
 static void
-update_tuple_hash_mom (momseq_t *tup)
+update_seq_hash_mom (momseq_t *seq)
 {
-  assert (tup && tup->shash == 0);
+  assert (seq && seq->shash == 0);
   momhash_t h1 = 13, h2 = 1019;
   momhash_t h = 0;
-  unsigned tlen = tup->slen;
+  unsigned tlen = seq->slen;
   for (unsigned ix = 0; ix + 1 < tlen; ix += 2)
     {
-      momhash_t hitm1 = mom_item_hash (tup->arritm[ix]);
+      momhash_t hitm1 = mom_item_hash (seq->arritm[ix]);
       assert (hitm1 != 0);
       h1 = ((13 * h1) ^ (2027 * hitm1)) + ix;
-      momhash_t hitm2 = mom_item_hash (tup->arritm[ix + 1]);
+      momhash_t hitm2 = mom_item_hash (seq->arritm[ix + 1]);
       assert (hitm2 != 0);
       h2 = ((31 * h2) ^ (1049 * hitm2)) - (unsigned) ix;
     }
   if (tlen % 2)
-    h1 = (211 * h1) ^ (17 * mom_item_hash (tup->arritm[tlen - 1]));
+    h1 = (211 * h1) ^ (17 * mom_item_hash (seq->arritm[tlen - 1]));
   h = h1 ^ h2;
   if (MOM_UNLIKELY (!h))
     h = h1;
@@ -122,8 +198,11 @@ update_tuple_hash_mom (momseq_t *tup)
     h = h2;
   if (MOM_UNLIKELY (!h))
     h = ((tlen * 11) & 0xffffff) + 13;
-  tup->shash = h;
+  seq->shash = h;
 }
+
+////////////////////////////////////////////////////////////////
+////// tuples
 
 
 const momseq_t *
@@ -156,7 +235,7 @@ mom_make_meta_tuple (momvalue_t metav, unsigned nbitems, ...)
       MOM_GC_FREE (oldtup);
     }
   tup->slen = cntitems;
-  update_tuple_hash_mom (tup);
+  update_seq_hash_mom (tup);
   tup->meta = metav;
   return tup;
 }
@@ -191,7 +270,7 @@ mom_make_sized_meta_tuple (momvalue_t metav, unsigned nbitems,
       MOM_GC_FREE (oldtup);
     }
   tup->slen = cntitems;
-  update_tuple_hash_mom (tup);
+  update_seq_hash_mom (tup);
   tup->meta = metav;
   return tup;
 }
@@ -251,38 +330,6 @@ sort_set_unique_items_mom (momitem_t **itmarr, unsigned nbitems)
 }
 
 
-static void
-update_set_hash_mom (momseq_t *set)
-{
-  assert (set && set->shash == 0);
-  momhash_t h1 = 13, h2 = 1019;
-  momhash_t h = 0;
-  unsigned tlen = set->slen;
-#ifndef NDEBUG
-  for (unsigned ix = 1; ix < tlen; ix++)
-    assert (mom_item_cmp (set->arritm[ix - 1], set->arritm[ix]) < 0);
-#endif
-  for (unsigned ix = 0; ix + 1 < tlen; ix += 2)
-    {
-      momhash_t hitm1 = mom_item_hash (set->arritm[ix]);
-      assert (hitm1 != 0);
-      h1 = ((17 * h1) ^ (2411 * hitm1)) + ix;
-      momhash_t hitm2 = mom_item_hash (set->arritm[ix + 1]);
-      assert (hitm2 != 0);
-      h2 = ((37 * h2) ^ (2713 * hitm2)) - (unsigned) ix;
-    }
-  if (tlen % 2)
-    h1 = (313 * h1) ^ (11 * mom_item_hash (set->arritm[tlen - 1]));
-  h = h1 ^ h2;
-  if (MOM_UNLIKELY (!h))
-    h = h1;
-  if (MOM_UNLIKELY (!h))
-    h = h2;
-  if (MOM_UNLIKELY (!h))
-    h = ((tlen * 17) & 0xffffff) + 143;
-  set->shash = h;
-}
-
 
 const momseq_t *
 mom_make_meta_set (momvalue_t metav, unsigned nbitems, ...)
@@ -314,8 +361,12 @@ mom_make_meta_set (momvalue_t metav, unsigned nbitems, ...)
       set = newset;
       MOM_GC_FREE (oldset);
     }
+#ifndef NDEBUG
+  for (unsigned ix = 1; ix < cntitems; ix++)
+    assert (mom_item_cmp (set->arritm[ix - 1], set->arritm[ix]) < 0);
+#endif
   set->slen = cntitems;
-  update_set_hash_mom (set);
+  update_seq_hash_mom (set);
   set->meta = metav;
   return set;
 }
@@ -350,8 +401,67 @@ mom_make_sized_meta_set (momvalue_t metav, unsigned nbitems,
       set = newset;
       MOM_GC_FREE (oldset);
     }
+#ifndef NDEBUG
+  for (unsigned ix = 1; ix < cntitems; ix++)
+    assert (mom_item_cmp (set->arritm[ix - 1], set->arritm[ix]) < 0);
+#endif
   set->slen = cntitems;
-  update_set_hash_mom (set);
+  update_seq_hash_mom (set);
   set->meta = metav;
   return set;
+}
+
+////////////////////////////////////////////////////////////////
+////// nodes
+
+static void
+update_node_hash_mom (momnode_t *nod)
+{
+  momhash_t h = 0;
+  assert (nod && nod->shash == 0);
+  momhash_t h1 = 11 * mom_item_hash (nod->conn);
+  momhash_t h2 = 337;
+  unsigned nlen = nod->slen;
+  for (unsigned ix = 0; ix + 1 < nlen; ix += 2)
+    {
+      h1 = ((h1 * 211) ^ (61 * mom_valueptr_hash (nod->arrsons + ix))) + ix;
+      h2 =
+	(h2 * 233) ^ ((73 * mom_valueptr_hash (nod->arrsons + ix + 1)) - ix);
+    }
+  if (nlen % 2)
+    h1 =
+      (163 * h1) ^ (73 * mom_valueptr_hash (nod->arrsons + nlen - 1) + nlen);
+  h = h1 ^ h2;
+  if (MOM_UNLIKELY (!h))
+    h = h1;
+  if (MOM_UNLIKELY (!h))
+    h = h2;
+  if (MOM_UNLIKELY (!h))
+    h = ((nlen * 17) & 0xffffff) + 100;
+  nod->shash = h;
+}
+
+const momnode_t *
+mom_make_meta_node (momvalue_t metav, momitem_t *connitm, unsigned nbsons,
+		    ...)
+{
+  va_list args;
+  if (MOM_UNLIKELY (!connitm))
+    return NULL;
+  if (MOM_UNLIKELY (nbsons > MOM_MAX_NODE_LENGTH))
+    MOM_FATAPRINTF ("too big node %u", nbsons);
+  momnode_t *nod = MOM_GC_ALLOC ("node",
+				 sizeof (momnode_t) +
+				 nbsons * sizeof (momvalue_t));
+  va_start (args, nbsons);
+  for (unsigned ix = 0; ix < nbsons; ix++)
+    {
+      nod->arrsons[ix] = va_arg (args, momvalue_t);
+    }
+  va_end (args);
+  nod->conn = connitm;
+  nod->slen = nbsons;
+  nod->meta = metav;
+  update_node_hash_mom (nod);
+  return nod;
 }

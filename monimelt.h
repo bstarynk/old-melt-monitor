@@ -395,6 +395,7 @@ struct momvalue_st
     intptr_t vint;
     double vdbl;
     momdelim_t vdelim;
+    momstring_t *vstr;
     momitem_t *vitem;
     momnode_t *vnode;
     momseq_t *vset;
@@ -402,6 +403,14 @@ struct momvalue_st
   };
 };
 #define MOM_NONEV (momvalue_t){momty_null,{NULL}}
+
+momhash_t mom_valueptr_hash (momvalue_t *pval);
+
+static inline momhash_t
+mom_value_hash (momvalue_t val)
+{
+  return mom_valueptr_hash (&val);
+}
 
 #define MOM_MAX_STRING_LENGTH (1<<25)	/* max string length 33554432 */
 struct momstring_st
@@ -420,13 +429,14 @@ struct momseq_st
   momitem_t *arritm[];		/* length is slen */
 };
 
+#define MOM_MAX_NODE_LENGTH (1<<24)	/* max node length 16777216 */
 struct momnode_st
 {
   uint32_t slen;
   momhash_t shash;
   momitem_t *conn;
   momvalue_t meta;
-  momvalue_t sons[];		/* length is slen */
+  momvalue_t arrsons[];		/* length is slen */
 };
 
 struct momentry_st
@@ -541,6 +551,19 @@ mom_make_sized_set (unsigned nbitems, momitem_t **itmarr)
   return mom_make_sized_meta_set (MOM_NONEV, nbitems, itmarr);
 };
 
+// make a node from given values.
+const momnode_t *mom_make_meta_node (momvalue_t metav, momitem_t *connitm,
+				     unsigned nbsons, ...);
+#define mom_make_node(ConnItm,NbSons,...) mom_make_meta_node(MOM_NONEV, (ConnItm), (NbSons), __VA_ARGS__)
+const momnode_t *mom_make_sized_meta_node (momvalue_t metav,
+					   momitem_t *connitm,
+					   unsigned nbsons,
+					   momvalue_t *sonarr);
+static inline const momnode_t *
+mom_make_sized_node (momitem_t *connitm, unsigned nbsons, momvalue_t *sonarr)
+{
+  return mom_make_sized_meta_node (MOM_NONEV, connitm, nbsons, sonarr);
+}
 
 // find some existing item by its id or its name
 momitem_t *mom_find_item (const char *str);
