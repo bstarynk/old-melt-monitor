@@ -140,7 +140,7 @@ mom_make_meta_tuple (momvalue_t metav, unsigned nbitems, ...)
   for (unsigned ix = 0; ix < nbitems; ix++)
     {
       momitem_t *itm = va_arg (args, momitem_t *);
-      if (itm)
+      if (itm && itm != MOM_EMPTY)
 	tup->arritm[cntitems++] = itm;
     }
   va_end (args);
@@ -176,7 +176,7 @@ mom_make_sized_meta_tuple (momvalue_t metav, unsigned nbitems,
   for (unsigned ix = 0; ix < nbitems; ix++)
     {
       momitem_t *itm = itmarr[ix];
-      if (itm)
+      if (itm && itm != MOM_EMPTY)
 	tup->arritm[cntitems++] = itm;
     }
   if (MOM_UNLIKELY (cntitems < nbitems))
@@ -202,12 +202,12 @@ mom_make_sized_meta_tuple (momvalue_t metav, unsigned nbitems,
 static unsigned
 sort_set_unique_items_mom (momitem_t **itmarr, unsigned nbitems)
 {
-  if (!itmarr || !nbitems)
+  if (MOM_UNLIKELY (!itmarr || !nbitems))
     return 0;
   assert (itmarr);
-  if (nbitems == 1)
+  if (MOM_UNLIKELY (nbitems == 1))
     return itmarr[0] ? 1 : 0;
-  if (nbitems == 2)
+  if (MOM_UNLIKELY (nbitems == 2))
     {
       if (MOM_UNLIKELY (!itmarr[0] && !itmarr[1]))
 	return 0;
@@ -298,10 +298,46 @@ mom_make_meta_set (momvalue_t metav, unsigned nbitems, ...)
   for (unsigned ix = 0; ix < nbitems; ix++)
     {
       momitem_t *itm = va_arg (args, momitem_t *);
-      if (itm)
+      if (itm && itm != MOM_EMPTY)
 	set->arritm[cntitems++] = itm;
     }
   va_end (args);
+  cntitems = sort_set_unique_items_mom (set->arritm, cntitems);
+  if (MOM_UNLIKELY (cntitems < nbitems))
+    {
+      momseq_t *oldset = set;
+      momseq_t *newset = MOM_GC_ALLOC ("shrinked set",
+				       sizeof (momseq_t) +
+				       cntitems * sizeof (momitem_t *));
+      memcpy (newset->arritm, oldset->arritm,
+	      cntitems * sizeof (momitem_t *));
+      set = newset;
+      MOM_GC_FREE (oldset);
+    }
+  set->slen = cntitems;
+  update_set_hash_mom (set);
+  set->meta = metav;
+  return set;
+}
+
+const momseq_t *
+mom_make_sized_meta_set (momvalue_t metav, unsigned nbitems,
+			 momitem_t **itmarr)
+{
+  if (MOM_UNLIKELY (nbitems && !itmarr))
+    MOM_FATAPRINTF ("missing item array for sized %u meta set", nbitems);
+  if (MOM_UNLIKELY (nbitems > MOM_MAX_SEQ_LENGTH))
+    MOM_FATAPRINTF ("too big set %u", nbitems);
+  momseq_t *set = MOM_GC_ALLOC ("set",
+				sizeof (momseq_t) +
+				nbitems * sizeof (momitem_t *));
+  unsigned cntitems = 0;
+  for (unsigned ix = 0; ix < nbitems; ix++)
+    {
+      momitem_t *itm = itmarr[ix];
+      if (itm && itm != MOM_EMPTY)
+	set->arritm[cntitems++] = itm;
+    }
   cntitems = sort_set_unique_items_mom (set->arritm, cntitems);
   if (MOM_UNLIKELY (cntitems < nbitems))
     {

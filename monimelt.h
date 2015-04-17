@@ -517,6 +517,8 @@ mom_cstring_hash (const char *str)
 
 const momstring_t *mom_make_string (const char *str);
 
+
+// make a tuple from given items. NULL and MOM_EMPTY item pointers are skipped.
 const momseq_t *mom_make_meta_tuple (momvalue_t metav, unsigned nbitems, ...);
 #define mom_make_tuple(NbItems,...) mom_make_meta_tuple(MOM_NONEV, (NbItems), __VA_ARGS__)
 const momseq_t *mom_make_sized_meta_tuple (momvalue_t metav, unsigned nbitems,
@@ -527,6 +529,8 @@ mom_make_sized_tuple (unsigned nbitems, momitem_t **itmarr)
   return mom_make_sized_meta_tuple (MOM_NONEV, nbitems, itmarr);
 };
 
+// make a set from given items. NULL and MOM_EMPTY item pointers are
+// skipped.  Remaining items are sorted, and duplicates are ignored.
 const momseq_t *mom_make_meta_set (momvalue_t metav, unsigned nbitems, ...);
 #define mom_make_set(NbItems,...) mom_make_meta_set(MOM_NONEV, (NbItems), __VA_ARGS__)
 const momseq_t *mom_make_sized_meta_set (momvalue_t metav, unsigned nbitems,
