@@ -93,3 +93,105 @@ mom_make_string (const char *str)
   memcpy (res->cstr, str, slen);
   return res;
 }
+
+////////////////////////////////////////////////////////////////
+////// tuples
+
+static void
+update_tuple_hash_mom (momseq_t *tup)
+{
+  assert (tup && tup->shash == 0);
+  momhash_t h1 = 13, h2 = 1019;
+  momhash_t h = 0;
+  unsigned tlen = tup->slen;
+  for (unsigned ix = 0; ix + 1 < tlen; ix += 2)
+    {
+      momhash_t hitm1 = mom_item_hash (tup->arritm[ix]);
+      assert (hitm1 != 0);
+      h1 = ((13 * h1) ^ (2027 * hitm1)) + ix;
+      momhash_t hitm2 = mom_item_hash (tup->arritm[ix + 1]);
+      assert (hitm2 != 0);
+      h2 = ((31 * h2) ^ (1049 * hitm2)) - (unsigned) ix;
+    }
+  if (tlen % 2)
+    h1 = (211 * h1) ^ (17 * mom_item_hash (tup->arritm[tlen - 1]));
+  h = h1 ^ h2;
+  if (MOM_UNLIKELY (!h))
+    h = h1;
+  if (MOM_UNLIKELY (!h))
+    h = h2;
+  if (MOM_UNLIKELY (!h))
+    h = ((tlen * 11) & 0xffffff) + 13;
+  tup->shash = h;
+}
+
+
+const momseq_t *
+mom_make_meta_tuple (momvalue_t metav, unsigned nbitems, ...)
+{
+  va_list args;
+  if (MOM_UNLIKELY (nbitems > MOM_MAX_SEQ_LENGTH))
+    MOM_FATAPRINTF ("too big tuple %u", nbitems);
+  momseq_t *tup = MOM_GC_ALLOC ("tuple",
+				sizeof (momseq_t) +
+				nbitems * sizeof (momitem_t *));
+  unsigned cntitems = 0;
+  va_start (args, nbitems);
+  for (unsigned ix = 0; ix < nbitems; ix++)
+    {
+      momitem_t *itm = va_arg (args, momitem_t *);
+      if (itm)
+	tup->arritm[cntitems++] = itm;
+    }
+  va_end (args);
+  if (MOM_UNLIKELY (cntitems < nbitems))
+    {
+      momseq_t *oldtup = tup;
+      momseq_t *newtup = MOM_GC_ALLOC ("tuple",
+				       sizeof (momseq_t) +
+				       cntitems * sizeof (momitem_t *));
+      memcpy (newtup->arritm, oldtup->arritm,
+	      cntitems * sizeof (momitem_t *));
+      tup = newtup;
+      MOM_GC_FREE (oldtup);
+    }
+  tup->slen = cntitems;
+  update_tuple_hash_mom (tup);
+  tup->meta = metav;
+  return tup;
+}
+
+const momseq_t *
+mom_make_sized_meta_tuple (momvalue_t metav, unsigned nbitems,
+			   momitem_t **itmarr)
+{
+  if (MOM_UNLIKELY (nbitems && !itmarr))
+    MOM_FATAPRINTF ("missing item array for sized %u meta tuple", nbitems);
+  if (MOM_UNLIKELY (nbitems > MOM_MAX_SEQ_LENGTH))
+    MOM_FATAPRINTF ("too big tuple %u", nbitems);
+  momseq_t *tup = MOM_GC_ALLOC ("tuple",
+				sizeof (momseq_t) +
+				nbitems * sizeof (momitem_t *));
+  unsigned cntitems = 0;
+  for (unsigned ix = 0; ix < nbitems; ix++)
+    {
+      momitem_t *itm = itmarr[ix];
+      if (itm)
+	tup->arritm[cntitems++] = itm;
+    }
+  if (MOM_UNLIKELY (cntitems < nbitems))
+    {
+      momseq_t *oldtup = tup;
+      momseq_t *newtup = MOM_GC_ALLOC ("tuple",
+				       sizeof (momseq_t) +
+				       cntitems * sizeof (momitem_t *));
+      memcpy (newtup->arritm, oldtup->arritm,
+	      cntitems * sizeof (momitem_t *));
+      tup = newtup;
+      MOM_GC_FREE (oldtup);
+    }
+  tup->slen = cntitems;
+  update_tuple_hash_mom (tup);
+  tup->meta = metav;
+  return tup;
+}

@@ -401,7 +401,7 @@ struct momvalue_st
     momseq_t *vtuple;
   };
 };
-
+#define MOM_NONEV (momvalue_t){momty_null,{NULL}}
 
 #define MOM_MAX_STRING_LENGTH (1<<25)	/* max string length 33554432 */
 struct momstring_st
@@ -411,6 +411,7 @@ struct momstring_st
   char cstr[];			/* length is slen+1 */
 };
 
+#define MOM_MAX_SEQ_LENGTH (1<<24)	/* max sequence length 16777216 */
 struct momseq_st
 {
   uint32_t slen;
@@ -455,12 +456,22 @@ struct momitem_st
   uint8_t itm_space;
   union
   {
+    const momstring_t *itm_str;
     const momstring_t *itm_id;	/* when itm_anonymous */
     const momstring_t *itm_name;	/* when !itm_anonymous */
   };
   struct momattributes_st *itm_attrs;
   struct momcomponents_st *itm_comps;
 };
+
+static inline momhash_t
+mom_item_hash (const momitem_t *itm)
+{
+  if (!itm)
+    return 0;
+  assert (itm->itm_str);
+  return itm->itm_str->shash;
+}
 
 const momstring_t *mom_make_random_idstr (unsigned salt,
 					  struct momitem_st *protoitem);
@@ -486,6 +497,27 @@ mom_cstring_hash (const char *str)
 }
 
 const momstring_t *mom_make_string (const char *str);
+
+const momseq_t *mom_make_meta_tuple (momvalue_t metav, unsigned nbitems, ...);
+#define mom_make_tuple(NbItems,...) mom_make_meta_tuple(MOM_NONEV, (NbItems), __VA_ARGS__)
+const momseq_t *mom_make_sized_meta_tuple (momvalue_t metav, unsigned nbitems,
+					   momitem_t **itmarr);
+static inline const momseq_t *
+mom_make_sized_tuple (unsigned nbitems, momitem_t **itmarr)
+{
+  return mom_make_sized_meta_tuple (MOM_NONEV, nbitems, itmarr);
+};
+
+const momseq_t *mom_make_meta_set (momvalue_t metav, unsigned nbitems, ...);
+const momseq_t *mom_make_set (unsigned nbitems, ...);
+const momseq_t *mom_make_sized_meta_set (momvalue_t metav, unsigned nbitems,
+					 momitem_t **itmarr);
+static inline const momseq_t *
+mom_make_sized_set (unsigned nbitems, momitem_t **itmarr)
+{
+  return mom_make_sized_meta_set (MOM_NONEV, nbitems, itmarr);
+};
+
 
 // find some existing item by its id or its name
 momitem_t *mom_find_item (const char *str);
