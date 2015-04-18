@@ -24,6 +24,7 @@
 /// define the predefined items
 #define MOM_HAS_PREDEFINED_NAMED(Nam,Hash) momitem_t*mompi_##Nam;
 #define MOM_HAS_PREDEFINED_ANONYMOUS(Id,Hash) momitem_t*mompi_##Id;
+#define MOM_HAS_PREDEFINED_DELIM(Nam,Str)
 //
 #include "predef-monimelt.h"
 
@@ -167,17 +168,10 @@ mom_valid_item_name_str (const char *id, const char **pend)
   return false;
 }
 
-void
-mom_initialize_items (void)
+#if 0
+static void
+useless_test_mom (void)
 {
-  pthread_mutexattr_init (&mutexattr_recur_item_mom);
-  pthread_mutexattr_settype (&mutexattr_recur_item_mom,
-			     PTHREAD_MUTEX_RECURSIVE);
-  static const pthread_mutex_t inimtx = PTHREAD_MUTEX_INITIALIZER;
-  for (int ix = 0; ix < ITEM_NUM_SALT_MOM; ix++)
-    memcpy (item_mutex_mom + ix, &inimtx, sizeof (pthread_mutex_t));
-  static_assert (sizeof (ID_DIGITS_MOM) - 1 == ID_BASE_MOM,
-		 "invalid number of id digits");
   for (int i = 0; i < 4; i++)
     {
       char buf[48];
@@ -210,6 +204,20 @@ mom_initialize_items (void)
     printf ("anitm2@%p id %s h %u=%#x\n", anitm2, anitm2->itm_id->cstr,
 	    anitm2->itm_id->shash, anitm2->itm_id->shash);
   }
+}
+#endif /* 0 */
+
+void
+mom_initialize_items (void)
+{
+  pthread_mutexattr_init (&mutexattr_recur_item_mom);
+  pthread_mutexattr_settype (&mutexattr_recur_item_mom,
+			     PTHREAD_MUTEX_RECURSIVE);
+  static const pthread_mutex_t inimtx = PTHREAD_MUTEX_INITIALIZER;
+  for (int ix = 0; ix < ITEM_NUM_SALT_MOM; ix++)
+    memcpy (item_mutex_mom + ix, &inimtx, sizeof (pthread_mutex_t));
+  static_assert (sizeof (ID_DIGITS_MOM) - 1 == ID_BASE_MOM,
+		 "invalid number of id digits");
   /// create the predefined items
   create_predefined_items_mom ();
 }
@@ -682,6 +690,7 @@ reorganize_named_items_mom (void)
 static void
 create_predefined_items_mom (void)
 {
+  int nbnamed = 0, nbanon = 0;
   {
     pthread_rwlock_wrlock (&named_lock_mom);
     reorganize_named_items_mom ();	// to initialize the buckets
@@ -690,13 +699,19 @@ create_predefined_items_mom (void)
   }
 #define  MOM_HAS_PREDEFINED_NAMED(Nam,Hash) do {	\
     mompi_##Nam = mom_make_named_item(#Nam);		\
+    assert (mompi_##Nam->itm_name->shash == Hash);      \
     mompi_##Nam->itm_space = momspa_predefined;		\
+    nbnamed++;						\
   } while(0);
   //
 #define  MOM_HAS_PREDEFINED_ANONYMOUS(Id,Hash) do {	\
     mompi_##Id = mom_make_anonymous_item_by_id(#Id);	\
+    assert (mompi_##Id->itm_id->shash == Hash);         \
     mompi_##Id->itm_space = momspa_predefined;		\
+    nbanon++;						\
   } while(0);
+  //
+#define MOM_HAS_PREDEFINED_DELIM(Nam,Str)
   //
 #include "predef-monimelt.h"
   {
@@ -704,6 +719,8 @@ create_predefined_items_mom (void)
     reorganize_named_items_mom ();
     pthread_rwlock_unlock (&named_lock_mom);
   }
+  MOM_INFORMPRINTF ("created %d predefined named & %d predefined anonymous",
+		    nbnamed, nbanon);
 }
 
 

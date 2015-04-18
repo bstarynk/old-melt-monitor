@@ -484,6 +484,9 @@ struct momitem_st
   };
   struct momattributes_st *itm_attrs;
   struct momcomponents_st *itm_comps;
+  momitem_t *itm_kind;
+  void *itm_data1;
+  void *itm_data2;
 };
 
 static inline momhash_t
@@ -598,6 +601,7 @@ mom_make_anonymous_item_at (unsigned lin)
 
 #define MOM_HAS_PREDEFINED_NAMED(Nam,Hash) extern momitem_t*mompi_##Nam;
 #define MOM_HAS_PREDEFINED_ANONYMOUS(Id,Hash) extern momitem_t*mompi_##Id;
+#define MOM_HAS_PREDEFINED_DELIM(Nam,Str)
 //
 #include "predef-monimelt.h"
 

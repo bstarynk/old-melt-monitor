@@ -759,4 +759,5 @@ main (int argc_main, char **argv_main)
   printf
     ("sizeof(momvalue_t)=%zd sizeof(momvaltype_t)=%zd sizeof(momitem_t)=%zd\n",
      sizeof (momvalue_t), sizeof (momvaltype_t), sizeof (momitem_t));
+  return 0;
 }

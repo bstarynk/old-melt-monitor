@@ -272,3 +272,33 @@ mom_attributes_remove (struct momattributes_st *attrs, const momitem_t *itma)
     }
   return attrs;
 }
+
+struct momattributes_st *
+mom_attributes_make_atva (unsigned nbent, ...
+			  /* item1, val1, item2, val2, ... */
+  )
+{
+  va_list args;
+  unsigned siz =
+    (nbent < SMALL_ATTR_LEN_MOM / 2) ? (SMALL_ATTR_LEN_MOM / 2)
+    : (nbent <
+       SMALL_ATTR_LEN_MOM - 1) ? (SMALL_ATTR_LEN_MOM) : (1 +
+							 ((4 * nbent / 3 +
+							   2) | 0xf));
+  struct momattributes_st *attrs =	//
+    MOM_GC_ALLOC ("new attributes",	//
+		  sizeof (struct momattributes_st)
+		  + siz * sizeof (struct momentry_st));
+  attrs->at_len = siz;
+  va_start (args, nbent);
+  for (unsigned ix = 0; ix < nbent; ix++)
+    {
+      momitem_t *itm = va_arg (args, momitem_t *);
+      momvalue_t val = va_arg (args, momvalue_t);
+      if (!itm || val.typnum == momty_null)
+	continue;
+      attrs = mom_attributes_put (attrs, itm, &val);
+    }
+  va_end (args);
+  return attrs;
+}
