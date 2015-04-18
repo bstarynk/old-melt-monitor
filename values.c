@@ -386,9 +386,9 @@ mom_make_sized_meta_set (momvalue_t metav, unsigned nbitems,
   unsigned cntitems = 0;
   for (unsigned ix = 0; ix < nbitems; ix++)
     {
-      momitem_t *itm = itmarr[ix];
+      const momitem_t *itm = itmarr[ix];
       if (itm && itm != MOM_EMPTY)
-	set->arritm[cntitems++] = itm;
+	set->arritm[cntitems++] = (momitem_t *) itm;
     }
   cntitems = sort_set_unique_items_mom (set->arritm, cntitems);
   if (MOM_UNLIKELY (cntitems < nbitems))

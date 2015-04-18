@@ -232,7 +232,102 @@ mom_hashset_put (struct momhashset_st *hset, momitem_t *itm)
 struct momhashset_st *
 mom_hashset_remove (struct momhashset_st *hset, momitem_t *itm)
 {
-#warning unimplemented mom_hashset_remove
+  if (!hset || hset == MOM_EMPTY)
+    return NULL;
+  if (!itm || itm == MOM_EMPTY)
+    return hset;
+  unsigned hslen = hset->hset_len;
+  unsigned hscnt = hset->hset_cnt;
+  if (hslen <= SMALL_HASHSET_LEN_MOM)
+    {
+      for (unsigned ix = 0; ix < hslen; ix++)
+	if (hset->hset_elems[ix] == itm)
+	  {
+	    hset->hset_elems[ix] = MOM_EMPTY;
+	    hset->hset_cnt = hscnt - 1;
+	    break;
+	  }
+      return hset;
+    }
+  else
+    {
+      if (hscnt < 2 * SMALL_HASHSET_LEN_MOM / 3)
+	{
+	  // shrink the plain hashset to a small one
+	  unsigned newsiz = SMALL_HASHSET_LEN_MOM;
+	  struct momhashset_st *newhset	//
+	    = MOM_GC_ALLOC ("new hashset",
+			    sizeof (struct momhashset_st) +
+			    newsiz * sizeof (momitem_t *));
+	  newhset->hset_len = newsiz;
+	  unsigned newcnt = 0;
+	  for (unsigned ix = 0; ix < hslen; ix++)
+	    {
+	      const momitem_t *olditm = hset->hset_elems[ix];
+	      if (olditm == itm)
+		continue;
+	      if (olditm && olditm != MOM_EMPTY)
+		newhset->hset_elems[newcnt++] = olditm;
+	    }
+	  newhset->hset_cnt = newcnt;
+	  memset (hset, 0, sizeof (struct momhashset_st)
+		  + hslen * sizeof (momitem_t *));
+	  MOM_GC_FREE (hset);
+	  hset = newhset;
+	  return hset;
+	}
+      else if (hscnt + 2 > hslen / 2)
+      remove_item_from_plain_hashset:{
+	  // keep the plain hashset, but find the item to remove it
+	  unsigned startix = mom_item_hash (itm) % hslen;
+	  for (unsigned ix = startix; ix < hslen; ix++)
+	    {
+	      const momitem_t *olditm = hset->hset_elems[ix];
+	      if (!olditm)
+		return hset;
+	      else if (olditm == itm)
+		{
+		  hset->hset_elems[ix] = MOM_EMPTY;
+		  hset->hset_cnt = hscnt - 1;
+		  return hset;
+		}
+	    };
+	  for (unsigned ix = 0; ix < startix; ix++)
+	    {
+	      const momitem_t *olditm = hset->hset_elems[ix];
+	      if (!olditm)
+		return hset;
+	      else if (olditm == itm)
+		{
+		  hset->hset_elems[ix] = MOM_EMPTY;
+		  hset->hset_cnt = hscnt - 1;
+		  return hset;
+		}
+	    };
+	  return hset;
+	}
+      else
+	{
+	  // shrink to a smaller plain hashset
+	  unsigned newsiz = ((5 * hscnt / 4 + 2) | 0xf) + 1;
+	  if (newsiz >= hslen)
+	    goto remove_item_from_plain_hashset;
+	  struct momhashset_st *newhset	//
+	    = MOM_GC_ALLOC ("new hashset",
+			    sizeof (struct momhashset_st) +
+			    newsiz * sizeof (momitem_t *));
+	  newhset->hset_len = newsiz;
+	  for (unsigned ix = 0; ix < hslen; ix++)
+	    {
+	      const momitem_t *olditm = hset->hset_elems[ix];
+	      if (olditm == itm)
+		continue;
+	      if (olditm && olditm != MOM_EMPTY)
+		hashset_raw_hash_add_mom (newhset, olditm);
+	    }
+	  return newhset;
+	}
+    }
 }
 
 
@@ -240,7 +335,131 @@ struct momhashset_st *
 mom_hashset_add_items (struct momhashset_st *hset,
 		       unsigned nbitems, ... /* items */ )
 {
-#warning unimplemented mom_hashset_add_items
+  va_list args;
+  if (hset == MOM_EMPTY)
+    hset = NULL;
+  if (!nbitems)
+    return hset;
+  unsigned hslen = hset ? hset->hset_len : 0;
+  unsigned hscnt = hset ? hset->hset_cnt : 0;
+  unsigned newsiz = 0;
+  if (hslen <= SMALL_HASHSET_LEN_MOM && hscnt + nbitems <= hslen)
+    {
+      // small hashset, keep it
+      const momitem_t *itmarr[SMALL_HASHSET_LEN_MOM] = { NULL };
+      memset (itmarr, 0, sizeof (itmarr));
+      unsigned cnt = 0;
+      for (unsigned ix = 0; ix < hslen; ix++)
+	{
+	  const momitem_t *olditm = hset->hset_elems[ix];
+	  if (!olditm || olditm == MOM_EMPTY)
+	    continue;
+	  itmarr[cnt++] = olditm;
+	};
+      assert (cnt + nbitems <= SMALL_HASHSET_LEN_MOM);
+      va_start (args, nbitems);
+      for (unsigned ix = 0; ix < nbitems; ix++)
+	{
+	  const momitem_t *newitm = va_arg (args, const momitem_t *);
+	  if (!newitm || newitm == MOM_EMPTY)
+	    continue;
+	  itmarr[cnt++] = newitm;
+	}
+      va_end (args);
+      assert (cnt <= hslen);
+      memset (hset->hset_elems, 0, hslen * sizeof (momitem_t *));
+      if (cnt)
+	memcpy (hset->hset_elems, itmarr, cnt * sizeof (momitem_t *));
+      if (hset)
+	hset->hset_cnt = cnt;
+      return hset;
+    }
+  else if (hscnt + nbitems <= SMALL_HASHSET_LEN_MOM)
+    {
+      // make a small hashset
+      unsigned newsiz =
+	((hscnt + nbitems) <=
+	 SMALL_HASHSET_LEN_MOM / 2) ? (SMALL_HASHSET_LEN_MOM /
+				       2) : SMALL_HASHSET_LEN_MOM;
+      struct momhashset_st *newhset	//
+	= MOM_GC_ALLOC ("new hashset",
+			sizeof (struct momhashset_st) +
+			newsiz * sizeof (momitem_t *));
+      newhset->hset_len = newsiz;
+      unsigned cnt = 0;
+      for (unsigned ix = 0; ix < hslen; ix++)
+	{
+	  const momitem_t *olditm = hset->hset_elems[ix];
+	  if (!olditm || olditm == MOM_EMPTY)
+	    continue;
+	  newhset->hset_elems[cnt++] = olditm;
+	}
+      assert (cnt + nbitems <= newsiz);
+      va_start (args, nbitems);
+      for (unsigned ix = 0; ix < nbitems; ix++)
+	{
+	  const momitem_t *newitm = va_arg (args, const momitem_t *);
+	  if (!newitm || newitm == MOM_EMPTY)
+	    continue;
+	  newhset->hset_elems[cnt++] = newitm;
+	}
+      va_end (args);
+      newhset->hset_cnt = cnt;
+      if (hset)
+	{
+	  memset (hset, 0,
+		  sizeof (struct momhashset_st) +
+		  hslen * sizeof (momitem_t *));
+	  MOM_GC_FREE (hset);
+	}
+      return newhset;
+    }
+  newsiz = ((5 * (hscnt + nbitems) / 4 + 2) | 0xf) + 1;
+  if (newsiz == hslen)
+    {				// keep the same plain hashset
+      va_start (args, nbitems);
+      for (unsigned ix = 0; ix < nbitems; ix++)
+	{
+	  const momitem_t *newitm = va_arg (args, const momitem_t *);
+	  if (!newitm || newitm == MOM_EMPTY)
+	    continue;
+	  hashset_raw_hash_add_mom (hset, newitm);
+	}
+      va_end (args);
+      return hset;
+    }
+  else
+    {				// reallocate a plain hashset
+      struct momhashset_st *newhset	//
+	= MOM_GC_ALLOC ("new hashset",
+			sizeof (struct momhashset_st) +
+			newsiz * sizeof (momitem_t *));
+      newhset->hset_len = newsiz;
+      for (unsigned ix = 0; ix < hslen; ix++)
+	{
+	  const momitem_t *olditm = hset->hset_elems[ix];
+	  if (!olditm || olditm == MOM_EMPTY)
+	    continue;
+	  hashset_raw_hash_add_mom (newhset, olditm);
+	}
+      va_start (args, nbitems);
+      for (unsigned ix = 0; ix < nbitems; ix++)
+	{
+	  const momitem_t *newitm = va_arg (args, const momitem_t *);
+	  if (!newitm || newitm == MOM_EMPTY)
+	    continue;
+	  hashset_raw_hash_add_mom (newhset, newitm);
+	}
+      va_end (args);
+      if (hset)
+	{
+	  memset (hset, 0,
+		  sizeof (struct momhashset_st) +
+		  hslen * sizeof (momitem_t *));
+	  MOM_GC_FREE (hset);
+	}
+      return newhset;
+    }
 }
 
 
@@ -248,5 +467,123 @@ struct momhashset_st *
 mom_hashset_add_sized_items (struct momhashset_st *hset,
 			     unsigned siz, const momitem_t **itmarr)
 {
-#warning unimplemented mom_hashset_add_sized_items
+  if (!itmarr || itmarr == MOM_EMPTY)
+    siz = 0;
+  if (hset == MOM_EMPTY)
+    hset = NULL;
+  if (!siz)
+    return hset;
+  unsigned hslen = hset ? hset->hset_len : 0;
+  unsigned hscnt = hset ? hset->hset_cnt : 0;
+  unsigned newsiz = 0;
+  if (hslen <= SMALL_HASHSET_LEN_MOM && hscnt + siz <= hslen)
+    {
+      // small hashset, keep it
+      const momitem_t *tmpitmarr[SMALL_HASHSET_LEN_MOM] = { NULL };
+      memset (tmpitmarr, 0, sizeof (tmpitmarr));
+      unsigned cnt = 0;
+      for (unsigned ix = 0; ix < hslen; ix++)
+	{
+	  const momitem_t *olditm = hset->hset_elems[ix];
+	  if (!olditm || olditm == MOM_EMPTY)
+	    continue;
+	  tmpitmarr[cnt++] = olditm;
+	};
+      assert (cnt + siz <= SMALL_HASHSET_LEN_MOM);
+      for (unsigned ix = 0; ix < siz; ix++)
+	{
+	  const momitem_t *newitm = itmarr[ix];
+	  if (!newitm || newitm == MOM_EMPTY)
+	    continue;
+	  tmpitmarr[cnt++] = newitm;
+	}
+      assert (cnt <= hslen);
+      memset (hset->hset_elems, 0, hslen * sizeof (momitem_t *));
+      if (cnt)
+	memcpy (hset->hset_elems, tmpitmarr, cnt * sizeof (momitem_t *));
+      if (hset)
+	hset->hset_cnt = cnt;
+      return hset;
+    }
+  else if (hscnt + siz <= SMALL_HASHSET_LEN_MOM)
+    {
+      // make a small hashset
+      unsigned newsiz =
+	((hscnt + siz) <=
+	 SMALL_HASHSET_LEN_MOM / 2) ? (SMALL_HASHSET_LEN_MOM /
+				       2) : SMALL_HASHSET_LEN_MOM;
+      struct momhashset_st *newhset	//
+	= MOM_GC_ALLOC ("new hashset",
+			sizeof (struct momhashset_st) +
+			newsiz * sizeof (momitem_t *));
+      newhset->hset_len = newsiz;
+      unsigned cnt = 0;
+      for (unsigned ix = 0; ix < hslen; ix++)
+	{
+	  const momitem_t *olditm = hset->hset_elems[ix];
+	  if (!olditm || olditm == MOM_EMPTY)
+	    continue;
+	  newhset->hset_elems[cnt++] = olditm;
+	}
+      assert (cnt + siz <= newsiz);
+      for (unsigned ix = 0; ix < siz; ix++)
+	{
+	  const momitem_t *newitm = itmarr[ix];
+	  if (!newitm || newitm == MOM_EMPTY)
+	    continue;
+	  newhset->hset_elems[cnt++] = newitm;
+	}
+      assert (cnt <= hslen);
+      newhset->hset_cnt = cnt;
+      if (hset)
+	{
+	  memset (hset, 0,
+		  sizeof (struct momhashset_st) +
+		  hslen * sizeof (momitem_t *));
+	  MOM_GC_FREE (hset);
+	}
+      return newhset;
+    }
+  newsiz = ((5 * (hscnt + siz) / 4 + 2) | 0xf) + 1;
+  if (newsiz == hslen)
+    {				// keep the same plain hashset
+      for (unsigned ix = 0; ix < siz; ix++)
+	{
+	  const momitem_t *newitm = itmarr[ix];
+	  if (!newitm || newitm == MOM_EMPTY)
+	    continue;
+	  hashset_raw_hash_add_mom (hset, newitm);
+	}
+      return hset;
+    }
+  else
+    {				// reallocate a plain hashset
+      struct momhashset_st *newhset	//
+	= MOM_GC_ALLOC ("new hashset",
+			sizeof (struct momhashset_st) +
+			newsiz * sizeof (momitem_t *));
+      newhset->hset_len = newsiz;
+      for (unsigned ix = 0; ix < hslen; ix++)
+	{
+	  const momitem_t *olditm = hset->hset_elems[ix];
+	  if (!olditm || olditm == MOM_EMPTY)
+	    continue;
+	  hashset_raw_hash_add_mom (newhset, olditm);
+	}
+      for (unsigned ix = 0; ix < siz; ix++)
+	{
+	  const momitem_t *newitm = itmarr[ix];
+	  if (!newitm || newitm == MOM_EMPTY)
+	    continue;
+	  hashset_raw_hash_add_mom (newhset, newitm);
+	}
+      if (hset)
+	{
+	  memset (hset, 0,
+		  sizeof (struct momhashset_st) +
+		  hslen * sizeof (momitem_t *));
+	  MOM_GC_FREE (hset);
+	}
+      return newhset;
+    }
 }
