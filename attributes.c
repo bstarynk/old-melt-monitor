@@ -295,7 +295,7 @@ mom_attributes_make_atva (unsigned nbent, ...
     {
       momitem_t *itm = va_arg (args, momitem_t *);
       momvalue_t val = va_arg (args, momvalue_t);
-      if (!itm || val.typnum == momty_null)
+      if (!itm || itm == MOM_EMPTY || val.typnum == momty_null)
 	continue;
       attrs = mom_attributes_put (attrs, itm, &val);
     }

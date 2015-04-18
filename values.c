@@ -374,7 +374,7 @@ mom_make_meta_set (momvalue_t metav, unsigned nbitems, ...)
 
 const momseq_t *
 mom_make_sized_meta_set (momvalue_t metav, unsigned nbitems,
-			 momitem_t **itmarr)
+			 const momitem_t **itmarr)
 {
   if (MOM_UNLIKELY (nbitems && !itmarr))
     MOM_FATAPRINTF ("missing item array for sized %u meta set", nbitems);

@@ -471,6 +471,33 @@ struct momcomponents_st
   momvalue_t cp_comps[];	/* length is cp_len */
 };
 
+struct momhashset_st
+{
+  uint32_t hset_len;		/* allocated length */
+  uint32_t hset_cnt;		/* used count */
+  const momitem_t *hset_elems[];
+};
+
+bool mom_hashset_contains (const struct momhashset_st *hset,
+			   const momitem_t *itm);
+struct momhashset_st *mom_hashset_put (struct momhashset_st *hset,
+				       momitem_t *itm);
+struct momhashset_st *mom_hashset_remove (struct momhashset_st *hset,
+					  momitem_t *itm);
+struct momhashset_st *mom_hashset_add_items (struct momhashset_st *hset,
+					     unsigned nbitems,
+					     ... /* items */ );
+struct momhashset_st *mom_hashset_add_sized_items (struct momhashset_st *hset,
+						   unsigned siz,
+						   const momitem_t **itmarr);
+const momseq_t *mom_hashset_elements_set_meta (struct momhashset_st *hset,
+					       momvalue_t metav);
+static inline const momseq_t *
+mom_hashset_elements_set (struct momhashset_st *hset)
+{
+  return mom_hashset_elements_set_meta (hset, MOM_NONEV);
+};
+
 struct momitem_st
 {
   pthread_mutex_t itm_mtx;
@@ -559,9 +586,9 @@ mom_make_sized_tuple (unsigned nbitems, momitem_t **itmarr)
 const momseq_t *mom_make_meta_set (momvalue_t metav, unsigned nbitems, ...);
 #define mom_make_set(NbItems,...) mom_make_meta_set(MOM_NONEV, (NbItems), __VA_ARGS__)
 const momseq_t *mom_make_sized_meta_set (momvalue_t metav, unsigned nbitems,
-					 momitem_t **itmarr);
+					 const momitem_t **itmarr);
 static inline const momseq_t *
-mom_make_sized_set (unsigned nbitems, momitem_t **itmarr)
+mom_make_sized_set (unsigned nbitems, const momitem_t **itmarr)
 {
   return mom_make_sized_meta_set (MOM_NONEV, nbitems, itmarr);
 };
