@@ -467,6 +467,10 @@ struct momattributes_st *mom_attributes_remove (struct momattributes_st
 struct momattributes_st *mom_attributes_make_atva (unsigned nbent, ...
 						   /* item1, val1, item2, val2, ... */
   );
+void mom_attributes_scan_dump (struct momattributes_st *attrs,
+			       struct momdumper_st *du);
+
+
 
 struct momcomponents_st
 {
@@ -501,6 +505,9 @@ mom_hashset_elements_set (struct momhashset_st *hset)
 {
   return mom_hashset_elements_set_meta (hset, MOM_NONEV);
 };
+
+void mom_hashset_scan_dump (struct momhashset_st *hset,
+			    struct momdumper_st *du);
 
 struct momqueuechunk_st;
 struct momqueueitems_st
@@ -688,7 +695,9 @@ mom_make_anonymous_item_at (unsigned lin)
   return mom_make_anonymous_item_salt (count + lin);
 }
 
-void mom_scan_dumped_item (struct momdumper_st *du, const momitem_t *itm);
+// mom_scan_dumped_item returns true for an item to be scanned (non
+// null, non transient)
+bool mom_scan_dumped_item (struct momdumper_st * du, const momitem_t *itm);
 void mom_scan_dumped_value (struct momdumper_st *du, const momvalue_t val);
 
 #define mom_make_anonymous_item() mom_make_anonymous_item_at(__LINE__)

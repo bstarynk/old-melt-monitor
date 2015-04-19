@@ -123,22 +123,23 @@ struct momdumper_st
   struct momqueueitems_st duitemque;
 };
 
-void
+bool
 mom_scan_dumped_item (struct momdumper_st *du, const momitem_t *itm)
 {
   assert (du && du->dumagic == DUMPER_MAGIC_MOM);
   if (!itm || itm == MOM_EMPTY)
-    return;
+    return false;
   mom_item_lock ((momitem_t *) itm);
   if (itm->itm_space == momspa_none || itm->itm_space == momspa_transient)
     {
       mom_item_unlock ((momitem_t *) itm);
-      return;
+      return false;
     }
   if (mom_hashset_contains (du->duitemset, itm))
-    return;
+    return true;
   du->duitemset = mom_hashset_put (du->duitemset, itm);
   mom_queue_push_back (&du->duitemque, itm);
+  return true;
 }
 
 
@@ -163,6 +164,7 @@ mom_scan_dumped_value (struct momdumper_st *du, const momvalue_t val)
       {
 	momseq_t *sq = val.vsequ;
 	assert (sq);
+	mom_scan_dumped_value (du, sq->meta);
 	unsigned slen = sq->slen;
 	for (unsigned ix = 0; ix < slen; ix++)
 	  mom_scan_dumped_item (du, sq->arritm[ix]);
@@ -172,7 +174,8 @@ mom_scan_dumped_value (struct momdumper_st *du, const momvalue_t val)
       {
 	momnode_t *nod = val.vnode;
 	assert (nod);
-	mom_scan_dumped_item (du, nod->conn);
+	if (!mom_scan_dumped_item (du, nod->conn))
+	  return;
 	mom_scan_dumped_value (du, nod->meta);
 	unsigned slen = nod->slen;
 	for (unsigned ix = 0; ix < slen; ix++)
@@ -192,14 +195,14 @@ scan_predefined_items_mom (struct momdumper_st *du)
 }				/* end scan_predefined_items_mom */
 
 static void
-scan_inside_dumped_item_mom(struct momdumper_st*du, momitem_t*itm)
+scan_inside_dumped_item_mom (struct momdumper_st *du, momitem_t *itm)
 {
   assert (du && du->dumagic == DUMPER_MAGIC_MOM);
   assert (itm && itm != MOM_EMPTY);
-  assert (mom_hashset_contains(du->duitemset, itm));
+  assert (mom_hashset_contains (du->duitemset, itm));
   if (itm->itm_space == momspa_predefined)
     du->dupredefineditemset = mom_hashset_put (du->dupredefineditemset, itm);
-  #warning a completer scan_inside_dumped_item_mom
+#warning a completer scan_inside_dumped_item_mom
 }
 
 void

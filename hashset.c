@@ -587,3 +587,21 @@ mom_hashset_add_sized_items (struct momhashset_st *hset,
       return newhset;
     }
 }
+
+
+
+void
+mom_hashset_scan_dump (struct momhashset_st *hset, struct momdumper_st *du)
+{
+  if (!hset || hset == MOM_EMPTY)
+    return;
+  assert (du);
+  unsigned hslen = hset->hset_len;
+  for (unsigned ix = 0; ix < hslen; ix++)
+    {
+      const momitem_t *curitm = hset->hset_elems[ix];
+      if (!curitm || curitm == MOM_EMPTY)
+	continue;
+      mom_scan_dumped_item (du, curitm);
+    }
+}
