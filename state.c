@@ -112,9 +112,17 @@ mom_load_state (const char *globaldata, const char *userdata)
 
 ////////////////////////////////////////////////////////////////
 #define DUMPER_MAGIC_MOM 0x1e78645f	/* dumper magic 511206495 */
+enum dumper_state_mom_en
+{
+  dump_none,
+  dump_scan,
+  dump_emit
+};
+
 struct momdumper_st
 {
   unsigned dumagic;		/* always DUMPER_MAGIC_MOM */
+  enum dumper_state_mom_en dustate;
   const char *duprefix;		/* file prefix */
   const char *duglobalpath;
   const char *duuserpath;
@@ -128,6 +136,8 @@ mom_scan_dumped_item (struct momdumper_st *du, const momitem_t *itm)
 {
   assert (du && du->dumagic == DUMPER_MAGIC_MOM);
   if (!itm || itm == MOM_EMPTY)
+    return false;
+  if (du->dustate != dump_scan)
     return false;
   mom_item_lock ((momitem_t *) itm);
   if (itm->itm_space == momspa_none || itm->itm_space == momspa_transient)
@@ -202,6 +212,14 @@ scan_inside_dumped_item_mom (struct momdumper_st *du, momitem_t *itm)
   assert (mom_hashset_contains (du->duitemset, itm));
   if (itm->itm_space == momspa_predefined)
     du->dupredefineditemset = mom_hashset_put (du->dupredefineditemset, itm);
+  if (itm->itm_attrs)
+    mom_attributes_scan_dump (itm->itm_attrs, du);
+  if (itm->itm_comps)
+    mom_components_scan_dump (itm->itm_comps, du);
+  if (itm->itm_kind)
+    {
+      mom_scan_dumped_item (du, itm->itm_kind);
+    }
 #warning a completer scan_inside_dumped_item_mom
 }
 
@@ -229,5 +247,75 @@ mom_dump_state (const char *prefix, const char *globaldata,
       dmp.duglobalpath = globaldata;
       dmp.duuserpath = userdata;
     };
+  dmp.dustate = dump_scan;
   scan_predefined_items_mom (&dmp);
+  while (mom_queue_size (&dmp.duitemque) > 0)
+    {
+      const momitem_t *curitm = mom_queue_pop_front (&dmp.duitemque);
+      scan_inside_dumped_item_mom (&dmp, (momitem_t*)curitm);
+    }
+}
+
+
+#define BASE_YEAR_MOM 2015
+void
+mom_output_gplv3_notice (FILE *out, const char *prefix, const char *suffix,
+			 const char *filename)
+{
+  time_t now = 0;
+  time (&now);
+  struct tm nowtm;
+  memset (&nowtm, 0, sizeof (nowtm));
+  localtime_r (&now, &nowtm);
+  if (!prefix)
+    prefix = "";
+  if (!suffix)
+    suffix = "";
+  fprintf (out, "%s *** generated file %s - DO NOT EDIT %s\n", prefix,
+	   filename, suffix);
+  if (nowtm.tm_year != BASE_YEAR_MOM - 1900)
+    fprintf (out,
+	     "%s Copyright (C) %d-%d Free Software Foundation, Inc. %s\n",
+	     prefix, BASE_YEAR_MOM, 1900 + nowtm.tm_year, suffix);
+  else
+    fprintf (out,
+	     "%s Copyright (C) %d - %d Free Software Foundation, Inc. %s\n",
+	     prefix, BASE_YEAR_MOM, 1900 + nowtm.tm_year, suffix);
+  fprintf (out,
+	   "%s MONIMELT is a monitor for MELT - see http://gcc-melt.org/ %s\n",
+	   prefix, suffix);
+  fprintf (out,
+	   "%s This generated file %s is part of MONIMELT, part of GCC %s\n",
+	   prefix, filename, suffix);
+  fprintf (out, "%s%s\n", prefix, suffix);
+  fprintf (out,
+	   "%s GCC is free software; you can redistribute it and/or modify %s\n",
+	   prefix, suffix);
+  fprintf (out,
+	   "%s it under the terms of the GNU General Public License as published by %s\n",
+	   prefix, suffix);
+  fprintf (out,
+	   "%s the Free Software Foundation; either version 3, or (at your option) %s\n",
+	   prefix, suffix);
+  fprintf (out, "%s any later version. %s\n", prefix, suffix);
+  fprintf (out, "%s%s\n", prefix, suffix);
+  fprintf (out,
+	   "%s  GCC is distributed in the hope that it will be useful, %s\n",
+	   prefix, suffix);
+  fprintf (out,
+	   "%s  but WITHOUT ANY WARRANTY; without even the implied warranty of %s\n",
+	   prefix, suffix);
+  fprintf (out,
+	   "%s  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the %s\n",
+	   prefix, suffix);
+  fprintf (out, "%s  GNU General Public License for more details. %s\n",
+	   prefix, suffix);
+  fprintf (out,
+	   "%s  You should have received a copy of the GNU General Public License %s\n",
+	   prefix, suffix);
+  fprintf (out,
+	   "%s  along with GCC; see the file COPYING3.   If not see %s\n",
+	   prefix, suffix);
+  fprintf (out, "%s  <http://www.gnu.org/licenses/>. %s\n", prefix, suffix);
+  fprintf (out, "%s%s\n", prefix, suffix);
 }

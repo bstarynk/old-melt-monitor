@@ -724,6 +724,9 @@ mom_make_anonymous_item_at (unsigned lin)
 bool mom_scan_dumped_item (struct momdumper_st * du, const momitem_t *itm);
 void mom_scan_dumped_value (struct momdumper_st *du, const momvalue_t val);
 
+void mom_output_gplv3_notice (FILE *out, const char *prefix,
+			      const char *suffix, const char *filename);
+
 #define mom_make_anonymous_item() mom_make_anonymous_item_at(__LINE__)
 
 #define MOM_HAS_PREDEFINED_NAMED(Nam,Hash) extern momitem_t*mompi_##Nam;
