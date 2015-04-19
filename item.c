@@ -897,7 +897,7 @@ mom_itemptr_cmp (const void *p1, const void *p2)
 }
 
 void
-mom_item_qsort (momitem_t **arr, unsigned siz)
+mom_item_qsort (const momitem_t **arr, unsigned siz)
 {
   if (MOM_UNLIKELY (!siz || siz == 1))
     return;
@@ -905,7 +905,7 @@ mom_item_qsort (momitem_t **arr, unsigned siz)
     {
       if (mom_item_cmp (arr[0], arr[1]) > 0)
 	{
-	  momitem_t *itmtmp = arr[0];
+	  const momitem_t *itmtmp = arr[0];
 	  arr[0] = arr[1];
 	  arr[1] = itmtmp;
 	}

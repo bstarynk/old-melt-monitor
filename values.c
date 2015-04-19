@@ -243,7 +243,7 @@ mom_make_meta_tuple (momvalue_t metav, unsigned nbitems, ...)
 
 const momseq_t *
 mom_make_sized_meta_tuple (momvalue_t metav, unsigned nbitems,
-			   momitem_t **itmarr)
+			   const momitem_t **itmarr)
 {
   if (MOM_UNLIKELY (nbitems && !itmarr))
     MOM_FATAPRINTF ("missing item array for sized %u meta tuple", nbitems);
@@ -255,7 +255,7 @@ mom_make_sized_meta_tuple (momvalue_t metav, unsigned nbitems,
   unsigned cntitems = 0;
   for (unsigned ix = 0; ix < nbitems; ix++)
     {
-      momitem_t *itm = itmarr[ix];
+      const momitem_t *itm = itmarr[ix];
       if (itm && itm != MOM_EMPTY)
 	tup->arritm[cntitems++] = itm;
     }
@@ -280,7 +280,7 @@ mom_make_sized_meta_tuple (momvalue_t metav, unsigned nbitems,
 ////////////////////////////////////////////////////////////////
 ////// sets
 static unsigned
-sort_set_unique_items_mom (momitem_t **itmarr, unsigned nbitems)
+sort_set_unique_items_mom (const momitem_t **itmarr, unsigned nbitems)
 {
   if (MOM_UNLIKELY (!itmarr || !nbitems))
     return 0;
@@ -305,7 +305,7 @@ sort_set_unique_items_mom (momitem_t **itmarr, unsigned nbitems)
 	};
       if (cmp > 0)
 	{
-	  momitem_t *tmpitm = itmarr[0];
+	  const momitem_t *tmpitm = itmarr[0];
 	  itmarr[0] = itmarr[1];
 	  itmarr[1] = tmpitm;
 	};

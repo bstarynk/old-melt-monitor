@@ -426,7 +426,7 @@ struct momseq_st
   uint32_t slen;
   momhash_t shash;
   momvalue_t meta;
-  momitem_t *arritm[];		/* length is slen */
+  const momitem_t *arritm[];	/* length is slen */
 };
 
 #define MOM_MAX_NODE_LENGTH (1<<24)	/* max node length 16777216 */
@@ -498,6 +498,52 @@ mom_hashset_elements_set (struct momhashset_st *hset)
   return mom_hashset_elements_set_meta (hset, MOM_NONEV);
 };
 
+struct momqueuechunk_st;
+struct momqueueitems_st
+{
+  unsigned long que_size;
+  struct momqueuechunk_st *que_front;
+  struct momqueuechunk_st *que_back;
+};
+#define MOM_QUEUECHUNK_LEN 6
+struct momqueuechunk_st
+{
+  struct momqueuechunk_st *quech_next;
+  struct momqueuechunk_st *quech_prev;
+  const momitem_t *quech_items[MOM_QUEUECHUNK_LEN];
+};
+
+void mom_queue_push_back (struct momqueueitems_st *qu, const momitem_t *itm);
+
+static inline const momitem_t *
+mom_queue_peek_front (struct momqueueitems_st *qu)
+{
+  if (!qu)
+    return NULL;
+  struct momqueuechunk_st *fr = qu->que_front;
+  if (!fr)
+    return NULL;
+  for (unsigned ix = 0; ix < MOM_QUEUECHUNK_LEN; ix++)
+    {
+      const momitem_t *itm = fr->quech_items[ix];
+      if (itm && itm != MOM_EMPTY)
+	return itm;
+    };
+  return NULL;
+}
+
+static inline unsigned long
+mom_queue_size (struct momqueueitems_st *qu)
+{
+  if (!qu)
+    return 0;
+  return qu->que_size;
+}
+
+const momitem_t *mom_queue_pop_front (struct momqueueitems_st *qu);
+const momseq_t *mom_queue_tuple (struct momqueueitems_st *qu,
+				 momvalue_t metav);
+
 struct momitem_st
 {
   pthread_mutex_t itm_mtx;
@@ -542,7 +588,7 @@ mom_item_cmp (const momitem_t *itm1, const momitem_t *itm2)
 // call the function above to sort an array of momitem_t*
 int mom_itemptr_cmp (const void *, const void *);
 
-void mom_item_qsort (momitem_t **arr, unsigned siz);
+void mom_item_qsort (const momitem_t **arr, unsigned siz);
 
 const momstring_t *mom_make_random_idstr (unsigned salt,
 					  struct momitem_st *protoitem);
@@ -574,9 +620,9 @@ const momstring_t *mom_make_string (const char *str);
 const momseq_t *mom_make_meta_tuple (momvalue_t metav, unsigned nbitems, ...);
 #define mom_make_tuple(NbItems,...) mom_make_meta_tuple(MOM_NONEV, (NbItems), __VA_ARGS__)
 const momseq_t *mom_make_sized_meta_tuple (momvalue_t metav, unsigned nbitems,
-					   momitem_t **itmarr);
+					   const momitem_t **itmarr);
 static inline const momseq_t *
-mom_make_sized_tuple (unsigned nbitems, momitem_t **itmarr)
+mom_make_sized_tuple (unsigned nbitems, const momitem_t **itmarr)
 {
   return mom_make_sized_meta_tuple (MOM_NONEV, nbitems, itmarr);
 };
