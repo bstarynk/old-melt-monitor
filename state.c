@@ -119,6 +119,7 @@ struct momdumper_st
   const char *duglobalpath;
   const char *duuserpath;
   struct momhashset_st *duitemset;
+  struct momhashset_st *dupredefineditemset;
   struct momqueueitems_st duitemque;
 };
 
@@ -128,12 +129,58 @@ mom_scan_dumped_item (struct momdumper_st *du, const momitem_t *itm)
   assert (du && du->dumagic == DUMPER_MAGIC_MOM);
   if (!itm || itm == MOM_EMPTY)
     return;
+  mom_item_lock ((momitem_t *) itm);
+  if (itm->itm_space == momspa_none || itm->itm_space == momspa_transient)
+    {
+      mom_item_unlock ((momitem_t *) itm);
+      return;
+    }
   if (mom_hashset_contains (du->duitemset, itm))
     return;
   du->duitemset = mom_hashset_put (du->duitemset, itm);
   mom_queue_push_back (&du->duitemque, itm);
 }
 
+
+void
+mom_scan_dumped_value (struct momdumper_st *du, const momvalue_t val)
+{
+  assert (du && du->dumagic == DUMPER_MAGIC_MOM);
+  if (val.istransient)
+    return;
+  switch ((enum momvaltype_en) val.typnum)
+    {
+    case momty_double:
+    case momty_int:
+    case momty_null:
+    case momty_string:
+      return;
+    case momty_item:
+      mom_scan_dumped_item (du, val.vitem);
+      return;
+    case momty_set:
+    case momty_tuple:
+      {
+	momseq_t *sq = val.vsequ;
+	assert (sq);
+	unsigned slen = sq->slen;
+	for (unsigned ix = 0; ix < slen; ix++)
+	  mom_scan_dumped_item (du, sq->arritm[ix]);
+	return;
+      }
+    case momty_node:
+      {
+	momnode_t *nod = val.vnode;
+	assert (nod);
+	mom_scan_dumped_item (du, nod->conn);
+	mom_scan_dumped_value (du, nod->meta);
+	unsigned slen = nod->slen;
+	for (unsigned ix = 0; ix < slen; ix++)
+	  mom_scan_dumped_value (du, nod->arrsons[ix]);
+	return;
+      }
+    }
+}
 
 static void
 scan_predefined_items_mom (struct momdumper_st *du)
@@ -143,6 +190,17 @@ scan_predefined_items_mom (struct momdumper_st *du)
 #define MOM_HAS_PREDEFINED_DELIM(Nam,Str)
 #include "predef-monimelt.h"
 }				/* end scan_predefined_items_mom */
+
+static void
+scan_inside_dumped_item_mom(struct momdumper_st*du, momitem_t*itm)
+{
+  assert (du && du->dumagic == DUMPER_MAGIC_MOM);
+  assert (itm && itm != MOM_EMPTY);
+  assert (mom_hashset_contains(du->duitemset, itm));
+  if (itm->itm_space == momspa_predefined)
+    du->dupredefineditemset = mom_hashset_put (du->dupredefineditemset, itm);
+  #warning a completer scan_inside_dumped_item_mom
+}
 
 void
 mom_dump_state (const char *prefix, const char *globaldata,

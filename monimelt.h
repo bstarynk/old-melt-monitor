@@ -351,7 +351,7 @@ extern void mom_plugin_init (const char *pluginarg, int *pargc, char ***pargv);	
 extern void momplugin_after_load (void);
 
 // every monimelt value starts with a non-zero unsigned typenum
-typedef uint16_t momtypenum_t;
+typedef int8_t momtypenum_t;
 typedef enum momvaltype_en
 {
   momty_double = -2,
@@ -390,7 +390,8 @@ struct momdelim_st
 
 struct momvalue_st
 {
-  int16_t typnum;
+  momtypenum_t typnum;
+  atomic_bool istransient;
   union
   {
     void *vptr;
@@ -400,11 +401,12 @@ struct momvalue_st
     momstring_t *vstr;
     momitem_t *vitem;
     momnode_t *vnode;
+    momseq_t *vsequ;
     momseq_t *vset;
     momseq_t *vtuple;
   };
 };
-#define MOM_NONEV (momvalue_t){momty_null,{NULL}}
+#define MOM_NONEV ((momvalue_t){momty_null,false,{NULL}})
 
 momhash_t mom_valueptr_hash (momvalue_t *pval);
 
@@ -564,6 +566,20 @@ struct momitem_st
   void *itm_data2;
 };
 
+static inline void
+mom_item_lock (momitem_t *itm)
+{
+  assert (itm && itm != MOM_EMPTY);
+  pthread_mutex_lock (&itm->itm_mtx);
+}
+
+static inline void
+mom_item_unlock (momitem_t *itm)
+{
+  assert (itm && itm != MOM_EMPTY);
+  pthread_mutex_unlock (&itm->itm_mtx);
+}
+
 static inline momhash_t
 mom_item_hash (const momitem_t *itm)
 {
@@ -673,6 +689,7 @@ mom_make_anonymous_item_at (unsigned lin)
 }
 
 void mom_scan_dumped_item (struct momdumper_st *du, const momitem_t *itm);
+void mom_scan_dumped_value (struct momdumper_st *du, const momvalue_t val);
 
 #define mom_make_anonymous_item() mom_make_anonymous_item_at(__LINE__)
 
