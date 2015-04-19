@@ -120,7 +120,7 @@ mom_random_intptr (unsigned num)
 }
 
 void
-mom_random_two_nonzero_32 (unsigned num, uint32_t * r1, uint32_t * r2)
+mom_random_two_nonzero_32 (unsigned num, uint32_t *r1, uint32_t *r2)
 {
   assert (r1);
   assert (r2);
@@ -150,8 +150,8 @@ mom_random_two_nonzero_32 (unsigned num, uint32_t * r1, uint32_t * r2)
 
 
 void
-mom_random_three_nonzero_32 (unsigned num, uint32_t * r1, uint32_t * r2,
-			     uint32_t * r3)
+mom_random_three_nonzero_32 (unsigned num, uint32_t *r1, uint32_t *r2,
+			     uint32_t *r3)
 {
   assert (r1);
   assert (r2);

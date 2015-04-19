@@ -111,7 +111,7 @@ hashset_raw_hash_add_mom (struct momhashset_st *hset, const momitem_t *itm)
 
 
 struct momhashset_st *
-mom_hashset_put (struct momhashset_st *hset, momitem_t *itm)
+mom_hashset_put (struct momhashset_st *hset, const momitem_t *itm)
 {
   if (!hset || hset == MOM_EMPTY)
     return NULL;
@@ -230,7 +230,7 @@ mom_hashset_put (struct momhashset_st *hset, momitem_t *itm)
 
 
 struct momhashset_st *
-mom_hashset_remove (struct momhashset_st *hset, momitem_t *itm)
+mom_hashset_remove (struct momhashset_st *hset, const momitem_t *itm)
 {
   if (!hset || hset == MOM_EMPTY)
     return NULL;

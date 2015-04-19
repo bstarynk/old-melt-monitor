@@ -324,6 +324,8 @@ __attribute__ ((format (printf, 3, 4)));
 
 // the program handle from GC_dlopen with NULL
 void *mom_prog_dlhandle;
+struct momloader_st;		/* private to state.c */
+struct momdumper_st;		/* private to state.c */
 
 void mom_initialize_random (void);
 void mom_initialize_items (void);
@@ -333,10 +335,10 @@ void mom_initialize_items (void);
 uint32_t mom_random_nonzero_32 (unsigned num);
 #define mom_random_nonzero_32_here() mom_random_nonzero_32(__LINE__)
 // get two random non-zero numbers
-void mom_random_two_nonzero_32 (unsigned num, uint32_t * r1, uint32_t * r2);
+void mom_random_two_nonzero_32 (unsigned num, uint32_t *r1, uint32_t *r2);
 // get three random non-zero numbers
-void mom_random_three_nonzero_32 (unsigned num, uint32_t * r1, uint32_t * r2,
-				  uint32_t * r3);
+void mom_random_three_nonzero_32 (unsigned num, uint32_t *r1, uint32_t *r2,
+				  uint32_t *r3);
 // get a random, possibly zero, 32 bits or 64 bits number
 uint32_t mom_random_32 (unsigned num);
 uint64_t mom_random_64 (unsigned num);
@@ -481,9 +483,9 @@ struct momhashset_st
 bool mom_hashset_contains (const struct momhashset_st *hset,
 			   const momitem_t *itm);
 struct momhashset_st *mom_hashset_put (struct momhashset_st *hset,
-				       momitem_t *itm);
+				       const momitem_t *itm);
 struct momhashset_st *mom_hashset_remove (struct momhashset_st *hset,
-					  momitem_t *itm);
+					  const momitem_t *itm);
 struct momhashset_st *mom_hashset_add_items (struct momhashset_st *hset,
 					     unsigned nbitems,
 					     ... /* items */ );
@@ -669,6 +671,8 @@ mom_make_anonymous_item_at (unsigned lin)
   count++;
   return mom_make_anonymous_item_salt (count + lin);
 }
+
+void mom_scan_dumped_item (struct momdumper_st *du, const momitem_t *itm);
 
 #define mom_make_anonymous_item() mom_make_anonymous_item_at(__LINE__)
 

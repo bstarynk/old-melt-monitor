@@ -75,6 +75,17 @@ $(OBJECTS): monimelt.h predef-monimelt.h
 
 .indent.pro: monimelt.h
 	sed -n 's/typedef.*\(mom[a-z0-9_]*_t\);/-T \1/p' monimelt.h | sort -u > $@
+	echo '-T FILE' >> $@
+	echo '-T int8_t' >> $@
+	echo '-T int16_t' >> $@
+	echo '-T int32_t' >> $@
+	echo '-T int64_t' >> $@
+	echo '-T intptr_t' >> $@
+	echo '-T uint8_t' >> $@
+	echo '-T uint16_t' >> $@
+	echo '-T uint32_t' >> $@
+	echo '-T uint64_t' >> $@
+	echo '-T uintptr_t' >> $@
 
 %.i: %.c
 	$(COMPILE.c) -C -E $< | sed s:^#://#: > $@
