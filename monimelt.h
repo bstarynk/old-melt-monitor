@@ -479,12 +479,33 @@ struct momcomponents_st
   momvalue_t cp_comps[];	/* length is cp_len */
 };
 
+static inline momvalue_t
+mom_components_nth (const struct momcomponents_st *csq, int rk)
+{
+  if (!csq || csq == MOM_EMPTY)
+    return MOM_NONEV;
+  unsigned cnt = csq->cp_cnt;
+  if (rk < 0)
+    rk += (int) cnt;
+  if (rk >= 0 && rk < (int) cnt)
+    return csq->cp_comps[rk];
+  return MOM_NONEV;
+}
+
+void
+mom_components_put_nth (struct momcomponents_st *csq, int rk,
+			const momvalue_t val);
+
 struct momhashset_st
 {
   uint32_t hset_len;		/* allocated length */
   uint32_t hset_cnt;		/* used count */
   const momitem_t *hset_elems[];
 };
+
+void
+mom_components_scan_dump (struct momcomponents_st *csq,
+			  struct momdumper_st *du);
 
 bool mom_hashset_contains (const struct momhashset_st *hset,
 			   const momitem_t *itm);
