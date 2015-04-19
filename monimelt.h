@@ -555,6 +555,9 @@ const momitem_t *mom_queue_pop_front (struct momqueueitems_st *qu);
 const momseq_t *mom_queue_tuple (struct momqueueitems_st *qu,
 				 momvalue_t metav);
 
+void mom_queue_scan_dump (struct momqueueitems_st *qu,
+			  struct momdumper_st *du);
+
 struct momitem_st
 {
   pthread_mutex_t itm_mtx;

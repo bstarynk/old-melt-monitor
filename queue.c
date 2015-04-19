@@ -120,3 +120,22 @@ mom_queue_tuple (struct momqueueitems_st *qu, momvalue_t metav)
   MOM_GC_FREE (arr);
   return tu;
 }
+
+
+void
+mom_queue_scan_dump (struct momqueueitems_st *qu, struct momdumper_st *du)
+{
+  if (!qu || qu == MOM_EMPTY)
+    return;
+  assert (du);
+
+  for (struct momqueuechunk_st * ch = qu->que_front; ch; ch = ch->quech_next)
+    {
+      for (unsigned ix = 0; ix < MOM_QUEUECHUNK_LEN; ix++)
+	{
+	  const momitem_t *itm = ch->quech_items[ix];
+	  if (itm && itm != MOM_EMPTY)
+	    mom_scan_dumped_item (du, itm);
+	}
+    }
+}
