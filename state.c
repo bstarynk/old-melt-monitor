@@ -32,10 +32,12 @@ struct momloader_st
   FILE *lduserfile;
   struct momhashset_st *lditemset;
   struct momhashset_st *ldmoduleset;
+  bool ldforglobals;
   char *ldlinebuf;
   size_t ldlinesize;
   size_t ldlinelen;
   size_t ldlinecol;
+  size_t ldlinecount;
 };
 
 
@@ -159,6 +161,197 @@ make_modules_load_mom (struct momloader_st *ld)
 bool
 mom_token_load (struct momloader_st *ld, momvalue_t *pval)
 {
+  assert (ld && ld->ldmagic == LOADER_MAGIC_MOM);
+  assert (pval != NULL);
+  memset (pval, 0, sizeof (momvalue_t));
+readagain:
+  if (!ld->ldlinebuf || ld->ldlinecol >= ld->ldlinelen)
+    {
+      if (ld->ldlinebuf)
+	memset (ld->ldlinebuf, 0, ld->ldlinesize);
+      ld->ldlinelen =
+	getline (&ld->ldlinebuf, &ld->ldlinesize,
+		 ld->ldforglobals ? ld->ldglobalfile : ld->lduserfile);
+      if (ld->ldlinelen <= 0)
+	return false;
+      ld->ldlinecount++;
+      if (ld->ldlinebuf[0] == '/' && ld->ldlinebuf[1] == '/')
+	{
+	  ld->ldlinecol = ld->ldlinelen;
+	  goto readagain;
+	}
+    };
+  char c = ld->ldlinebuf[ld->ldlinecol];
+  if (isspace (c))
+    {
+      ld->ldlinecol++;
+      goto readagain;
+    }
+  else if (isdigit (c)
+	   || ((c == '+' || c == '-')
+	       && isdigit (ld->ldlinebuf[ld->ldlinecol + 1])))
+    {
+      char *endflo = NULL;
+      char *endnum = NULL;
+      const char *startc = ld->ldlinebuf + ld->ldlinecol;
+      long long ll = strtol (startc, &endnum, 0);
+      double x = strtod (startc, &endflo);
+      if (endflo > endnum)
+	{
+	  pval->typnum = momty_double;
+	  pval->vdbl = x;
+	  ld->ldlinecol += endflo - startc;
+	}
+      else
+	{
+	  pval->typnum = momty_int;
+	  pval->vint = (intptr_t) ll;
+	  ld->ldlinecol += endnum - startc;
+	}
+      return true;
+    }
+  else if ((c == '+' || c == '-')
+	   && !strncasecmp (ld->ldlinebuf + ld->ldlinecol + 1, "NAN", 3))
+    {
+      pval->typnum = momty_double;
+      pval->vdbl = NAN;
+      ld->ldlinecol += 4;
+      return true;
+    }
+  else if ((c == '+' || c == '-')
+	   && !strncasecmp (ld->ldlinebuf + ld->ldlinecol + 1, "INF", 3))
+    {
+      pval->typnum = momty_double;
+      pval->vdbl = INFINITY;
+      ld->ldlinecol += 4;
+      return true;
+    }
+  else if (c == '"')
+    {
+      const char *startc = ld->ldlinebuf + ld->ldlinecol + 1;
+      const char *eol = ld->ldlinebuf + ld->ldlinelen;
+      char *buf = MOM_GC_SCALAR_ALLOC ("string buffer", eol - startc + 2);
+      unsigned bufsiz = eol - startc + 1;
+      int blen = 0;
+      const char *pc = startc;
+      for (pc = startc; pc < eol && *pc && *pc != '"'; pc++)
+	{
+	  if (*pc != '\\')
+	    buf[blen++] = *pc;
+	  else
+	    {
+	      pc++;
+	      switch (*pc)
+		{
+		case '\"':
+		  buf[blen++] = '\"';
+		  pc++;
+		  break;
+		case '\'':
+		  buf[blen++] = '\'';
+		  pc++;
+		  break;
+		case '\\':
+		  buf[blen++] = '\\';
+		  pc++;
+		  break;
+		case 'a':
+		  buf[blen++] = '\a';
+		  pc++;
+		  break;
+		case 'b':
+		  buf[blen++] = '\b';
+		  pc++;
+		  break;
+		case 'f':
+		  buf[blen++] = '\f';
+		  pc++;
+		  break;
+		case 'n':
+		  buf[blen++] = '\n';
+		  pc++;
+		  break;
+		case 'r':
+		  buf[blen++] = '\r';
+		  pc++;
+		  break;
+		case 't':
+		  buf[blen++] = '\t';
+		  pc++;
+		  break;
+		case 'v':
+		  buf[blen++] = '\v';
+		  pc++;
+		  break;
+		case 'e':
+		  buf[blen++] = 033 /*ESCAPE*/;
+		  pc++;
+		  break;
+		case 'x':
+		  {
+		    unsigned hc = 0;
+		    if (sscanf (pc + 1, "%02x", &hc) > 0)
+		      {
+			buf[blen++] = (char) hc;
+			pc += 3;
+		      }
+		    else
+		      {
+			buf[blen++] = 'x';
+			pc++;
+		      }
+		  }
+		  break;
+		case 'u':
+		  {
+		    int gap = 0;
+		    unsigned hc = 0;
+		    if (sscanf (pc, "u%04x%n", &hc, &gap) > 0)
+		      {
+			int nb =
+			  u8_uctomb ((uint8_t *) buf + blen, (ucs4_t) hc,
+				     bufsiz - blen);
+			if (nb > 0)
+			  blen += nb;
+			pc += gap;
+		      }
+		    else
+		      {
+			buf[blen++] = 'u';
+			pc++;
+		      }
+		    break;
+		  }
+		case 'U':
+		  {
+		    int gap = 0;
+		    unsigned hc = 0;
+		    if (sscanf (pc, "u%08x%n", &hc, &gap) > 0)
+		      {
+			int nb =
+			  u8_uctomb ((uint8_t *) buf + blen, (ucs4_t) hc,
+				     bufsiz - blen);
+			if (nb > 0)
+			  blen += nb;
+			pc += gap;
+		      }
+		    else
+		      {
+			buf[blen++] = 'U';
+			pc++;
+		      }
+		    break;
+		  }
+		}
+	    }
+	}
+      if (*pc == '"')
+	pc++;
+      ld->ldlinecol += pc - startc + 1;
+      pval->typnum = momty_string;
+      pval->vstr = mom_make_string (buf);
+      return true;
+    }
 }
 
 void
@@ -170,6 +363,8 @@ second_pass_load_mom (struct momloader_st *ld, bool global)
       free (ld->ldlinebuf);
       ld->ldlinebuf = NULL;
       ld->ldlinesize = 0;
+      ld->ldlinelen = 0;
+      ld->ldlinecol = 0;
     }
 }
 
@@ -197,10 +392,14 @@ mom_load_state ()
       make_modules_load_mom (&ldr);
     }
   // second pass for global data
+  ldr.ldforglobals = true;
   second_pass_load_mom (&ldr, true);
   // second pass for user data
   if (ldr.lduserfile)
-    second_pass_load_mom (&ldr, false);
+    {
+      ldr.ldforglobals = false;
+      second_pass_load_mom (&ldr, false);
+    }
 }
 
 
@@ -605,7 +804,8 @@ mom_dump_state (const char *prefix)
     const momseq_t *setmod = mom_hashset_elements_set (dmp.duitemmoduleset);
     emit_global_modules_mom (&dmp, setmod);
     emit_global_items_mom (&dmp);
-    fprintf(dmp.dufile, "//// end of global file %s\n", MOM_GLOBAL_DATA_PATH);
+    fprintf (dmp.dufile, "//// end of global file %s\n",
+	     MOM_GLOBAL_DATA_PATH);
     close_generated_file_dump_mom (&dmp, dmp.dufile, MOM_GLOBAL_DATA_PATH);
     dmp.dufile = NULL;
   }
@@ -616,7 +816,7 @@ mom_dump_state (const char *prefix)
     const momseq_t *setmod = mom_hashset_elements_set (dmp.duitemmoduleset);
     emit_user_modules_mom (&dmp, setmod);
     emit_user_items_mom (&dmp);
-    fprintf(dmp.dufile, "//// end of user file %s\n", MOM_USER_DATA_PATH);
+    fprintf (dmp.dufile, "//// end of user file %s\n", MOM_USER_DATA_PATH);
     close_generated_file_dump_mom (&dmp, dmp.dufile, MOM_USER_DATA_PATH);
     dmp.dufile = NULL;
   }
@@ -684,4 +884,64 @@ mom_output_gplv3_notice (FILE *out, const char *prefix, const char *suffix,
 	   prefix, suffix);
   fprintf (out, "%s  <http://www.gnu.org/licenses/>. %s\n", prefix, suffix);
   fprintf (out, "%s%s\n", prefix, suffix);
+}
+
+
+void
+mom_output_utf8cstr_cencoded (FILE *fil, const char *str, int len)
+{
+  if (!fil || !str)
+    return;
+  if (len < 0)
+    len = strlen (str);
+  const char *pc = str;
+  const char *pend = str + len;
+  while (pc < pend)
+    {
+      ucs4_t uc = 0;
+      int lc = u8_strmbtouc (&uc, (const uint8_t *) pc);
+      if (lc <= 0)
+	break;
+      switch (uc)
+	{
+	case (ucs4_t) '\"':
+	  fputs ("\\\"", fil);
+	  break;
+	case (ucs4_t) '\'':
+	  fputs ("\\\'", fil);
+	  break;
+	case (ucs4_t) '\\':
+	  fputs ("\\\\", fil);
+	  break;
+	case (ucs4_t) '\a':
+	  fputs ("\\a", fil);
+	  break;
+	case (ucs4_t) '\b':
+	  fputs ("\\b", fil);
+	  break;
+	case (ucs4_t) '\f':
+	  fputs ("\\f", fil);
+	  break;
+	case (ucs4_t) '\n':
+	  fputs ("\\n", fil);
+	  break;
+	case (ucs4_t) '\r':
+	  fputs ("\\r", fil);
+	  break;
+	case (ucs4_t) '\t':
+	  fputs ("\\t", fil);
+	  break;
+	case (ucs4_t) '\v':
+	  fputs ("\\v", fil);
+	  break;
+	default:
+	  if (uc >= (ucs4_t) ' ' && uc <= 0x7f && isprint ((char) (uc)))
+	    fputc (uc, fil);
+	  else if (uc <= (ucs4_t) 0xffff)
+	    fprintf (fil, "\\u%04x", uc & 0xffff);
+	  else
+	    fprintf (fil, "\\U%08x", (unsigned) uc);
+	}
+      pc += lc;
+    }
 }

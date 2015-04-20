@@ -766,6 +766,8 @@ bool mom_emit_dumped_itemref (struct momdumper_st *du, const momitem_t *itm);
 void mom_emit_dumped_value (struct momdumper_st *du, const momvalue_t val);
 #define mom_make_anonymous_item() mom_make_anonymous_item_at(__LINE__)
 
+void mom_output_utf8cstr_cencoded (FILE *fil, const char *str, int len);
+
 #define MOM_HAS_PREDEFINED_NAMED(Nam,Hash) extern momitem_t*mompi_##Nam;
 #define MOM_HAS_PREDEFINED_ANONYMOUS(Id,Hash) extern momitem_t*mompi_##Id;
 //
