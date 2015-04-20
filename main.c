@@ -761,6 +761,10 @@ main (int argc_main, char **argv_main)
   }
   parse_program_arguments_and_load_plugins_mom (&argc, &argv);
   mom_initialize_items ();
+  if (mom_nb_workers < MOM_MIN_WORKERS)
+    mom_nb_workers = MOM_MIN_WORKERS;
+  else if (mom_nb_workers > MOM_MAX_WORKERS)
+    mom_nb_workers = MOM_MAX_WORKERS;
   mom_load_state ();
   if (nbmorepredef_mom > 0)
     {
@@ -776,10 +780,6 @@ main (int argc_main, char **argv_main)
 	    dump_exit_dir_mom = "./";
 	}
     }
-  if (mom_nb_workers < MOM_MIN_WORKERS)
-    mom_nb_workers = MOM_MIN_WORKERS;
-  else if (mom_nb_workers > MOM_MAX_WORKERS)
-    mom_nb_workers = MOM_MAX_WORKERS;
   printf
     ("sizeof(momvalue_t)=%zd sizeof(momvaltype_t)=%zd sizeof(momitem_t)=%zd\n",
      sizeof (momvalue_t), sizeof (momvaltype_t), sizeof (momitem_t));

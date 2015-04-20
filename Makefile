@@ -34,8 +34,8 @@ LIBES= -L/usr/local/lib -lunistring -lgc $(shell $(PKGCONFIG) --libs $(PACKAGES)
         -lonion -lpthread -lm -ldl
 PLUGIN_SOURCES= $(sort $(wildcard momplug_*.c))
 PLUGINS=  $(patsubst %.c,%.so,$(PLUGIN_SOURCES))
-# modules are generated inside global-modules/ & user-modules
-MODULE_SOURCES= $(sort $(wildcard global-modules/momg_*.c user-modules/momg_*.c))
+# modules are generated inside modules/
+MODULE_SOURCES= $(sort $(wildcard modules/momg_*.c))
 MODULES=  $(patsubst %.c,%.so,$(MODULE_SOURCES))
 SOURCES= $(sort $(filter-out $(PLUGIN_SOURCES), $(wildcard [a-z]*.c)))
 OBJECTS= $(patsubst %.c,%.o,$(SOURCES))
@@ -97,15 +97,7 @@ plugins: $(PLUGINS)
 ## MONIMELT generated code starts with momg_ followed by alphanum or +
 ## or - or _ characters, conventionally by the name or identstr of the
 ## module item. see MONIMELT_SHARED_MODULE_PREFIX in monimelt.h
-global-modules/momg_%.so: global-modules/momg_%.c | monimelt.h predef-monimelt.h
-	$(LINK.c) -DMONIMELT_CURRENT_MODULE=\"$(patsubst momg_%.so,%,$(*F))\" \
-		  -DMONIMELT_MD5_MODULE=\"$(shell md5sum $< | cut '-d ' -f1)\" \
-		  -DMONIMELT_LAST_COMMITID=\"$(shell git log -n 1 --abbrev=16 --format=%h)\" \
-                  -fPIC $< -shared -o $@
-	@logger -t makemonimelt -p user.info -s compiled $< into \
-	        shared module $@ named $(patsubst momg_%.so,%,$(*F)) \
-	        at $$(date +%c)
-user-modules/momg_%.so: user-modules/momg_%.c | monimelt.h predef-monimelt.h
+modules/momg_%.so: modules/momg_%.c | monimelt.h predef-monimelt.h
 	$(LINK.c) -DMONIMELT_CURRENT_MODULE=\"$(patsubst momg_%.so,%,$(*F))\" \
 		  -DMONIMELT_MD5_MODULE=\"$(shell md5sum $< | cut '-d ' -f1)\" \
 		  -DMONIMELT_LAST_COMMITID=\"$(shell git log -n 1 --abbrev=16 --format=%h)\" \
@@ -118,6 +110,3 @@ user-modules/momg_%.so: user-modules/momg_%.c | monimelt.h predef-monimelt.h
 momplug_%.so: momplug_%.c  | monimelt.h predef-monimelt.h
 	$(LINK.c) -fPIC $< -shared -o $@ $(shell grep MONIMELTLIBS: $< | sed s/MONIMELTLIBS://)
 
-###
-momjsrpc_client: momjsrpc_client.cc
-	$(CXX) $(CXXFLAGS) $(CXXTOOLS_CXXFLAGS) $< -o $@ -lcxxtools-json $(CXXTOOLS_LIBS)

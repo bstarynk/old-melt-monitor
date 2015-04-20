@@ -31,6 +31,7 @@ struct momloader_st
   FILE *ldglobalfile;
   FILE *lduserfile;
   struct momhashset_st *lditemset;
+  struct momhashset_st *ldmoduleset;
 };
 
 
@@ -84,8 +85,72 @@ first_pass_load_mom (struct momloader_st *ld, const char *path, FILE *fil)
 	    MOM_FATAPRINTF ("invalid line #%d in file %s:\t%s", lincnt, path,
 			    linbuf);
 	}
+      /// lines like: == <item-name> are requesting a module
+      else if (linlen >= 4 && linbuf[0] == '=' && linbuf[1] == '=')
+	{
+	  char *pc = linbuf + 2;
+	  char *end = NULL;
+	  momitem_t *itm = NULL;
+	  while (isspace (*pc))
+	    pc++;
+	  if (isalpha (*pc)
+	      && mom_valid_item_name_str (pc, (const char **) &end))
+	    {
+	      assert (end);
+	      char endch = *end;
+	      *end = 0;
+	      itm = mom_make_named_item (pc);
+	      *end = endch;
+	      ld->ldmoduleset = mom_hashset_put (ld->ldmoduleset, itm);
+	    }
+	  else if (*pc == '_'
+		   && mom_valid_item_id_str (pc, (const char **) &end))
+	    {
+	      assert (end);
+	      char endch = *end;
+	      *end = 0;
+	      itm = mom_make_anonymous_item_by_id (pc);
+	      *end = endch;
+	      ld->ldmoduleset = mom_hashset_put (ld->ldmoduleset, itm);
+	    }
+	  else
+	    MOM_FATAPRINTF ("invalid line #%d in file %s:\t%s", lincnt, path,
+			    linbuf);
+	}
     }
   free (linbuf);
+}
+
+
+static void
+make_modules_load_mom (struct momloader_st *ld)
+{
+  char makecmd[64];
+  memset (makecmd, 0, sizeof (makecmd));
+  assert (ld && ld->ldmagic == LOADER_MAGIC_MOM);
+  snprintf (makecmd, sizeof (makecmd), "make -j %d modules", mom_nb_workers);
+  const momseq_t *setmod = mom_hashset_elements_set (ld->ldmoduleset);
+  assert (setmod != NULL);
+  fflush (NULL);
+  MOM_INFORMPRINTF ("running %s for %d modules",
+		    makecmd, mom_hashset_count (ld->ldmoduleset));
+  int ok = system (makecmd);
+  if (!ok)
+    MOM_FATAPRINTF ("failed to run %s", makecmd);
+  int nbmod = 0;
+  for (unsigned mix = 0; mix < setmod->slen; mix++)
+    {
+      const momitem_t *moditm = setmod->arritm[mix];
+      assert (moditm && moditm != MOM_EMPTY);
+      assert (moditm->itm_str);
+      const momstring_t *mstr = mom_string_sprintf ("modules/momg_%s.so",
+						    moditm->itm_str->cstr);
+      void *dlh = dlopen (mstr->cstr, RTLD_NOW | RTLD_GLOBAL);
+      if (!dlh)
+	MOM_FATAPRINTF ("failed to dlopen %s : %s", mstr->cstr, dlerror ());
+      nbmod++;
+    }
+  MOM_INFORMPRINTF ("loaded %d modules", nbmod);
 }
 
 void
@@ -107,7 +172,10 @@ mom_load_state ()
   first_pass_load_mom (&ldr, ldr.ldglobalpath, ldr.ldglobalfile);
   if (ldr.lduserpath)
     first_pass_load_mom (&ldr, ldr.lduserpath, ldr.lduserfile);
-#warning mom_load_state should probably build the collected modules
+  if (ldr.ldmoduleset)
+    {
+      make_modules_load_mom (&ldr);
+    }
 }
 
 
@@ -132,6 +200,7 @@ struct momdumper_st
   const char *dupredefheaderpath;
   struct momhashset_st *duitemuserset;
   struct momhashset_st *duitemglobalset;
+  struct momhashset_st *duitemmoduleset;
   struct momhashset_st *dupredefineditemset;
   struct momqueueitems_st duitemque;
 };
@@ -162,6 +231,18 @@ mom_scan_dumped_item (struct momdumper_st *du, const momitem_t *itm)
   return true;
 }
 
+
+void
+mom_scan_dumped_module_item (struct momdumper_st *du, const momitem_t *moditm)
+{
+  assert (du && du->dumagic == DUMPER_MAGIC_MOM);
+  if (!moditm || moditm == MOM_EMPTY)
+    return;
+  if (du->dustate != dump_scan)
+    return;
+  mom_scan_dumped_item (du, moditm);
+  du->duitemmoduleset = mom_hashset_put (du->duitemmoduleset, moditm);
+}
 
 void
 mom_scan_dumped_value (struct momdumper_st *du, const momvalue_t val)

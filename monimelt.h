@@ -690,7 +690,8 @@ mom_cstring_hash (const char *str)
 }
 
 const momstring_t *mom_make_string (const char *str);
-
+const momstring_t *mom_string_sprintf (const char *fmt, ...)
+  __attribute__ ((format (printf, 1, 2)));
 
 // make a tuple from given items. NULL and MOM_EMPTY item pointers are skipped.
 const momseq_t *mom_make_meta_tuple (momvalue_t metav, unsigned nbitems, ...);
@@ -753,7 +754,8 @@ mom_make_anonymous_item_at (unsigned lin)
 // null, non transient)
 bool mom_scan_dumped_item (struct momdumper_st * du, const momitem_t *itm);
 void mom_scan_dumped_value (struct momdumper_st *du, const momvalue_t val);
-
+void mom_scan_dumped_module_item (struct momdumper_st *du,
+				  const momitem_t *moditm);
 void mom_output_gplv3_notice (FILE *out, const char *prefix,
 			      const char *suffix, const char *filename);
 

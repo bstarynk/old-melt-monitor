@@ -173,6 +173,34 @@ mom_make_string (const char *str)
   return res;
 }
 
+
+const momstring_t *
+mom_string_sprintf (const char *fmt, ...)
+{
+  char buf[256];
+  memset (buf, 0, sizeof (buf));
+  va_list args;
+  va_start (args, fmt);
+  int slen = vsnprintf (buf, sizeof (buf), fmt, args);
+  va_end (args);
+  if (slen >= 0 && slen < (int) sizeof (buf))
+    return mom_make_string (buf);
+  else
+    {
+      momstring_t *res = GC_MALLOC_ATOMIC (sizeof (momstring_t) + slen + 1);
+      if (MOM_UNLIKELY (!res))
+	MOM_FATAPRINTF ("failed to allocate string of %d bytes", slen);
+      memset (res, 0, sizeof (momstring_t) + slen + 1);
+      va_start (args, fmt);
+      vsnprintf (res->cstr, slen, fmt, args);
+      va_end (args);
+      res->slen = slen;
+      res->shash = mom_cstring_hash_len (res->cstr, slen);
+      return res;
+    }
+}
+
+
 //// common for tuples & sets
 static void
 update_seq_hash_mom (momseq_t *seq)
