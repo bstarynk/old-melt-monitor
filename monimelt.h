@@ -430,6 +430,9 @@ mom_value_hash (momvalue_t val)
   return mom_valueptr_hash (&val);
 }
 
+bool mom_value_equal (momvalue_t v1, momvalue_t v2);
+int mom_value_compare (momvalue_t v1, momvalue_t v2);
+
 #define MOM_MAX_STRING_LENGTH (1<<25)	/* max string length 33554432 */
 struct momstring_st
 {
@@ -615,6 +618,7 @@ struct momitem_st
   };
   struct momattributes_st *itm_attrs;
   struct momcomponents_st *itm_comps;
+  const momstring_t *itm_comment;
   momitem_t *itm_kind;
   void *itm_data1;
   void *itm_data2;

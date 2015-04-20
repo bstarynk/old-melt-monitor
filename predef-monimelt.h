@@ -1,5 +1,5 @@
 /// *** generated file predef-monimelt.h - DO NOT EDIT +++
-/// Copyright (C) 2015 - 2015 Free Software Foundation, Inc. +++
+/// Copyright (C) 2015 Free Software Foundation, Inc. +++
 /// MONIMELT is a monitor for MELT - see http://gcc-melt.org/ +++
 /// This generated file predef-monimelt.h is part of MONIMELT, part of GCC +++
 ///+++
@@ -34,5 +34,7 @@ MOM_HAS_PREDEFINED_NAMED(two_stars,4012508658)
 #ifndef MOM_NB_PREDEFINED_NAMED
 #define MOM_NB_PREDEFINED_NAMED 3
 #endif /*MOM_NB_PREDEFINED_NAMED*/
+#undef MOM_HAS_PREDEFINED_ANONYMOUS
+#undef MOM_HAS_PREDEFINED_NAMED
 
  // end of generated file predef-monimelt.h

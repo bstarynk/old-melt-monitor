@@ -30,6 +30,10 @@ static const char *dump_cold_dir_mom;
 static const char *dump_exit_dir_mom;
 
 
+unsigned nbmorepredef_mom;
+#define MAX_NEW_PREDEF_MOM 10
+char *newpredefname_mom[MAX_NEW_PREDEF_MOM];
+char *newpredefcomment_mom[MAX_NEW_PREDEF_MOM];
 
 /************************* inform *************************/
 
@@ -684,15 +688,16 @@ parse_program_arguments_and_load_plugins_mom (int *pargc, char ***pargv)
 	  break;
 	case xtraopt_addpredef:
 	  {
-	    /***
-	    new_predefined_mom = optarg;
-	    char *commarg = argv[optind];
-	    if (commarg && isalpha (commarg[0]))
+	    if (nbmorepredef_mom >= MAX_NEW_PREDEF_MOM)
+	      MOM_FATAPRINTF ("too many new predefined %d", nbmorepredef_mom);
+	    char *predname = optarg;
+	    char *comment = argv[optind];
+	    if (predname && comment && isalnum (comment[0]))
 	      {
-		new_comment_mom = commarg;
-		optind++;
-	      };
-	    ***/
+		newpredefname_mom[nbmorepredef_mom] = predname;
+		newpredefcomment_mom[nbmorepredef_mom] = comment;
+		nbmorepredef_mom++;
+	      }
 	  }
 	  break;
 	case xtraopt_daemon_noclose:
@@ -756,10 +761,37 @@ main (int argc_main, char **argv_main)
   }
   parse_program_arguments_and_load_plugins_mom (&argc, &argv);
   mom_initialize_items ();
+  mom_load_state ();
+  if (nbmorepredef_mom > 0)
+    {
+      for (unsigned prix = 0; prix < nbmorepredef_mom; prix++)
+	{
+	  momitem_t *pritm = mom_make_named_item (newpredefname_mom[prix]);
+	  pritm->itm_space = momspa_predefined;
+	  if (newpredefcomment_mom[prix]
+	      && strlen (newpredefcomment_mom[prix]) > 0)
+	    pritm->itm_comment = mom_make_string (newpredefcomment_mom[prix]);
+	  if (!dump_exit_dir_mom)
+	    dump_exit_dir_mom = ".";
+	}
+    }
+  if (mom_nb_workers < MOM_MIN_WORKERS)
+    mom_nb_workers = MOM_MIN_WORKERS;
+  else if (mom_nb_workers > MOM_MAX_WORKERS)
+    mom_nb_workers = MOM_MAX_WORKERS;
   printf
     ("sizeof(momvalue_t)=%zd sizeof(momvaltype_t)=%zd sizeof(momitem_t)=%zd\n",
      sizeof (momvalue_t), sizeof (momvaltype_t), sizeof (momitem_t));
   if (dump_exit_dir_mom)
     mom_dump_state (dump_exit_dir_mom);
+  if (nbmorepredef_mom > 0)
+    {
+      char makebuf[64];
+      memset (makebuf, 0, sizeof (makebuf));
+      snprintf (makebuf, sizeof (makebuf), "make -j %d", mom_nb_workers);
+      if (system (makebuf))
+	MOM_FATAPRINTF ("failed to make -j %d after predefined",
+			mom_nb_workers);
+    }
   return 0;
 }

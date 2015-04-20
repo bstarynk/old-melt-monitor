@@ -345,6 +345,8 @@ emit_predefined_header_mom (struct momdumper_st *du)
   fprintf (hdout, "#define" " MOM_NB_PREDEFINED_NAMED" " %u\n",
 	   cntpredefnamed);
   fprintf (hdout, "#endif /*MOM_NB_PREDEFINED_NAMED*/\n");
+  fprintf (hdout, "#undef " "MOM_HAS_PREDEFINED_ANONYMOUS\n");
+  fprintf (hdout, "#undef " "MOM_HAS_PREDEFINED_NAMED\n");
 
   fprintf (hdout, "\n // end of generated file %s\n", MOM_PREDEFINED_PATH);
   close_generated_file_dump_mom (du, hdout, MOM_PREDEFINED_PATH);

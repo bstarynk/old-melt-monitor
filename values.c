@@ -470,3 +470,132 @@ mom_make_meta_node (momvalue_t metav, momitem_t *connitm, unsigned nbsons,
   update_node_hash_mom (nod);
   return nod;
 }
+
+bool
+mom_value_equal (momvalue_t v1, momvalue_t v2)
+{
+  if (v1.typnum != v2.typnum)
+    return false;
+  switch ((momvaltype_t) v1.typnum)
+    {
+    case momty_null:
+      return true;
+    case momty_int:
+      return v1.vint == v2.vint;
+    case momty_double:
+      return v1.vdbl == v2.vdbl || (isnan (v1.vdbl) && isnan (v2.vdbl));
+    case momty_string:
+      {
+	const momstring_t *ps1 = v1.vstr;
+	const momstring_t *ps2 = v2.vstr;
+	if (ps1 == ps2)
+	  return true;
+	assert (ps1);
+	assert (ps2);
+	if (ps1->shash != ps2->shash)
+	  return false;
+	return !strcmp (ps1->cstr, ps2->cstr);
+      };
+    case momty_item:
+      {
+	const momitem_t *itm1 = v1.vitem;
+	const momitem_t *itm2 = v2.vitem;
+	return itm1 == itm2;
+      }
+    case momty_set:
+    case momty_tuple:
+      {
+	const momseq_t *ps1 = v1.vsequ;
+	const momseq_t *ps2 = v2.vsequ;
+	if (ps1 == ps2)
+	  return true;
+	assert (ps1);
+	assert (ps2);
+	if (ps1->shash != ps2->shash)
+	  return false;
+	if (ps1->slen != ps2->slen)
+	  return false;
+	unsigned l = ps1->slen;
+	for (unsigned ix = 0; ix < l; ix++)
+	  if (ps1->arritm[ix] != ps2->arritm[ix])
+	    return false;
+	return true;
+      }
+    case momty_node:
+      {
+	const momnode_t *pn1 = v1.vnode;
+	const momnode_t *pn2 = v2.vnode;
+	if (pn1 == pn2)
+	  return true;
+	assert (pn1);
+	assert (pn2);
+	if (pn1->shash != pn2->shash)
+	  return false;
+	if (pn1->conn != pn2->conn)
+	  return false;
+	if (pn1->slen != pn2->slen)
+	  return false;
+	unsigned l = pn1->slen;
+	for (unsigned ix = 0; ix < l; ix++)
+	  if (!mom_value_equal (pn1->arrsons[ix], pn2->arrsons[ix]))
+	    return false;
+	return true;
+      }
+    }
+}
+
+int
+mom_value_compare (momvalue_t v1, momvalue_t v2)
+{
+  if (v1.typnum < v2.typnum)
+    return -1;
+  if (v1.typnum > v2.typnum)
+    return 1;
+  switch ((momvaltype_t) v1.typnum)
+    {
+    case momty_null:
+      return 0;
+    case momty_int:
+      if (v1.vint == v2.vint)
+	return 0;
+      else if (v1.vint < v2.vint)
+	return -1;
+      else
+	return 1;
+    case momty_double:
+      if (v1.vdbl == v2.vdbl || (isnan (v1.vdbl) && isnan (v2.vdbl)))
+	return 0;
+      if (v1.vdbl < v2.vdbl)
+	return -1;
+      else
+	return 1;
+    case momty_item:
+      {
+	const momitem_t *itm1 = v1.vitem;
+	const momitem_t *itm2 = v2.vitem;
+	assert (itm1);
+	assert (itm2);
+	if (itm1 == itm2)
+	  return 0;
+	assert (itm1->itm_str);
+	assert (itm2->itm_str);
+	int cmp = strcmp (itm1->itm_str->cstr, itm2->itm_str->cstr);
+	assert (cmp);
+	return cmp;
+      }
+    case momty_string:
+      {
+	const momstring_t *ps1 = v1.vstr;
+	const momstring_t *ps2 = v2.vstr;
+	if (ps1 == ps2)
+	  return 0;
+	assert (ps1);
+	assert (ps2);
+	return strcmp (ps1->cstr, ps2->cstr);
+      };
+#warning incomplete mom_value_compare
+    }
+
+
+
+}
