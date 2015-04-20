@@ -534,6 +534,7 @@ usage_mom (const char *argv0)
   printf ("\t --random-idstr" "\t #output a random idstr then exit\n");
   printf ("\t --string-hash <string>" "\t #output the hash of the string\n");
   printf ("\t --dump-cold-state <dumpdir>" "\t #dump the cold state\n");
+  printf ("\t --dump-state <dumpdir>" "\t #dump the final state\n");
   printf ("\t --daemon-noclose"
 	  "\t daemonize with daemon(3) with nochdir=true noclose=true\n");
   printf ("\t --add-predefined <predefname> [<comment>]"
@@ -759,5 +760,7 @@ main (int argc_main, char **argv_main)
   printf
     ("sizeof(momvalue_t)=%zd sizeof(momvaltype_t)=%zd sizeof(momitem_t)=%zd\n",
      sizeof (momvalue_t), sizeof (momvaltype_t), sizeof (momitem_t));
+  if (dump_exit_dir_mom)
+    mom_dump_state (dump_exit_dir_mom);
   return 0;
 }

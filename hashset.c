@@ -113,10 +113,20 @@ hashset_raw_hash_add_mom (struct momhashset_st *hset, const momitem_t *itm)
 struct momhashset_st *
 mom_hashset_put (struct momhashset_st *hset, const momitem_t *itm)
 {
-  if (!hset || hset == MOM_EMPTY)
-    return NULL;
   if (!itm || itm == MOM_EMPTY)
     return hset;
+  if (!hset || hset == MOM_EMPTY)
+    {
+      unsigned newsiz = SMALL_HASHSET_LEN_MOM / 2;
+      struct momhashset_st *newhset	//
+	= MOM_GC_ALLOC ("new small hset",
+			sizeof (struct momhashset_st) +
+			newsiz * sizeof (momitem_t *));
+      newhset->hset_len = newsiz;
+      newhset->hset_cnt = 1;
+      newhset->hset_elems[0] = itm;
+      return newhset;
+    };
   unsigned hslen = hset->hset_len;
   unsigned hscnt = hset->hset_cnt;
   if (hslen <= SMALL_HASHSET_LEN_MOM)

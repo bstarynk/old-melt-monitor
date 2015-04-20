@@ -327,6 +327,12 @@ void *mom_prog_dlhandle;
 struct momloader_st;		/* private to state.c */
 struct momdumper_st;		/* private to state.c */
 
+#define MOM_GLOBAL_DATA_PATH "global.mom"
+#define MOM_USER_DATA_PATH "user.mom"
+#define MOM_PREDEFINED_PATH "predef-monimelt.h"
+
+void mom_load_state (void);
+void mom_dump_state (const char *prefix);
 void mom_initialize_random (void);
 void mom_initialize_items (void);
 
@@ -496,6 +502,11 @@ void
 mom_components_put_nth (struct momcomponents_st *csq, int rk,
 			const momvalue_t val);
 
+void
+mom_components_scan_dump (struct momcomponents_st *csq,
+			  struct momdumper_st *du);
+
+
 struct momhashset_st
 {
   uint32_t hset_len;		/* allocated length */
@@ -503,11 +514,15 @@ struct momhashset_st
   const momitem_t *hset_elems[];
 };
 
-void
-mom_components_scan_dump (struct momcomponents_st *csq,
-			  struct momdumper_st *du);
+static inline unsigned
+mom_hashset_count (const struct momhashset_st *hset)
+{
+  if (hset && hset != MOM_EMPTY)
+    return hset->hset_cnt;
+  return 0;
+}
 
-bool mom_hashset_contains (const struct momhashset_st *hset,
+bool mom_hashset_contains (const struct momhashset_st * hset,
 			   const momitem_t *itm);
 struct momhashset_st *mom_hashset_put (struct momhashset_st *hset,
 				       const momitem_t *itm);
