@@ -352,6 +352,7 @@ readagain:
       pval->vstr = mom_make_string (buf);
       return true;
     }
+#warning mom_token_load should parse delimiters and item-ids and item-names
 }
 
 void
