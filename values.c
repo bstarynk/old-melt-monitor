@@ -542,6 +542,7 @@ mom_value_equal (momvalue_t v1, momvalue_t v2)
 	return true;
       }
     }
+  MOM_FATAPRINTF ("corrupted values to test for equality");
 }
 
 int
@@ -593,9 +594,73 @@ mom_value_compare (momvalue_t v1, momvalue_t v2)
 	assert (ps2);
 	return strcmp (ps1->cstr, ps2->cstr);
       };
-#warning incomplete mom_value_compare
+    case momty_set:
+    case momty_tuple:
+      {
+	const momseq_t *ps1 = v1.vsequ;
+	const momseq_t *ps2 = v2.vsequ;
+	if (ps1 == ps2)
+	  return 0;
+	assert (ps1);
+	assert (ps2);
+	// if same hash, it is likely that the values are equal, which
+	// is faster to test
+	if (MOM_UNLIKELY (ps1->shash == ps2->shash))
+	  {
+	    if (mom_value_equal (v1, v2))
+	      return 0;
+	  };
+	unsigned l1 = ps1->slen;
+	unsigned l2 = ps2->slen;
+	unsigned lmin = (l1 < l2) ? l1 : l2;
+	for (unsigned ix = 0; ix < lmin; ix++)
+	  {
+	    int cmp = mom_item_cmp (ps1->arritm[ix], ps2->arritm[ix]);
+	    if (cmp)
+	      return cmp;
+	  };
+	if (l1 < l2)
+	  return -1;
+	else if (l1 > l2)
+	  return 1;
+	else
+	  return 0;
+      }
+    case momty_node:
+      {
+	const momnode_t *pn1 = v1.vnode;
+	const momnode_t *pn2 = v2.vnode;
+	if (pn1 == pn2)
+	  return 0;
+	assert (pn1);
+	assert (pn2);
+	int cmpconn = mom_item_cmp (pn1->conn, pn2->conn);
+	if (cmpconn)
+	  return cmpconn;
+	// if same hash, it is likely that the values are equal, which
+	// is faster to test
+	if (MOM_UNLIKELY (pn1->shash == pn2->shash))
+	  {
+	    if (mom_value_equal (v1, v2))
+	      return 0;
+	  };
+	unsigned l1 = pn1->slen;
+	unsigned l2 = pn2->slen;
+	unsigned lmin = (l1 < l2) ? l1 : l2;
+	for (unsigned ix = 0; ix < lmin; ix++)
+	  {
+	    int cmpson =
+	      mom_value_compare (pn1->arrsons[ix], pn2->arrsons[ix]);
+	    if (cmpson)
+	      return cmpson;
+	  }
+	if (l1 < l2)
+	  return -1;
+	else if (l1 > l2)
+	  return 1;
+	else
+	  return 0;
+      }
     }
-
-
-
+  MOM_FATAPRINTF ("corrupted values to compare");
 }
