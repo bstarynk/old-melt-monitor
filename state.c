@@ -32,13 +32,16 @@ struct momloader_st
   FILE *lduserfile;
   struct momhashset_st *lditemset;
   struct momhashset_st *ldmoduleset;
+  char *ldlinebuf;
+  size_t ldlinesize;
+  size_t ldlinelen;
+  size_t ldlinecol;
 };
 
 
 static void
 first_pass_load_mom (struct momloader_st *ld, const char *path, FILE *fil)
 {
-#warning first_pass_load_mom should probably collect module paths
   assert (ld && ld->ldmagic == LOADER_MAGIC_MOM);
   char *linbuf = NULL;
   size_t linsiz = 0;
@@ -153,6 +156,23 @@ make_modules_load_mom (struct momloader_st *ld)
   MOM_INFORMPRINTF ("loaded %d modules", nbmod);
 }
 
+bool
+mom_token_load (struct momloader_st *ld, momvalue_t *pval)
+{
+}
+
+void
+second_pass_load_mom (struct momloader_st *ld, bool global)
+{
+  assert (ld && ld->ldmagic == LOADER_MAGIC_MOM);
+  if (ld->ldlinebuf)
+    {
+      free (ld->ldlinebuf);
+      ld->ldlinebuf = NULL;
+      ld->ldlinesize = 0;
+    }
+}
+
 void
 mom_load_state ()
 {
@@ -176,6 +196,11 @@ mom_load_state ()
     {
       make_modules_load_mom (&ldr);
     }
+  // second pass for global data
+  second_pass_load_mom (&ldr, true);
+  // second pass for user data
+  if (ldr.lduserfile)
+    second_pass_load_mom (&ldr, false);
 }
 
 
@@ -195,14 +220,13 @@ struct momdumper_st
   enum dumper_state_mom_en dustate;
   const char *duprefix;		/* file prefix */
   const char *durandsuffix;	/* random temporary suffix */
-  const char *duglobalpath;
-  const char *duuserpath;
   const char *dupredefheaderpath;
   struct momhashset_st *duitemuserset;
   struct momhashset_st *duitemglobalset;
   struct momhashset_st *duitemmoduleset;
   struct momhashset_st *dupredefineditemset;
   struct momqueueitems_st duitemque;
+  FILE *dufile;
 };
 
 bool
@@ -435,6 +459,111 @@ emit_predefined_header_mom (struct momdumper_st *du)
   close_generated_file_dump_mom (du, hdout, MOM_PREDEFINED_PATH);
 }
 
+static void
+emit_dumped_item_mom (struct momdumper_st *du, const momitem_t *itm)
+{
+  assert (du && du->dumagic == DUMPER_MAGIC_MOM);
+  assert (du->dustate == dump_emit);
+  assert (du->dufile);
+  if (!mom_hashset_contains (du->duitemuserset, itm)
+      && !mom_hashset_contains (du->duitemglobalset, itm))
+    return;
+  putc ('\n', du->dufile);
+  fprintf (du->dufile, "** %s\n", itm->itm_str->cstr);
+}
+
+bool
+mom_emit_dumped_itemref (struct momdumper_st * du, const momitem_t *itm)
+{
+  assert (du && du->dumagic == DUMPER_MAGIC_MOM);
+  assert (du->dustate == dump_emit);
+  assert (du->dufile);
+  if (!itm || itm == MOM_EMPTY
+      || (!mom_hashset_contains (du->duitemuserset, itm)
+	  && !mom_hashset_contains (du->duitemglobalset, itm)))
+    {
+      fputs ("~", du->dufile);
+      return false;
+    }
+  else
+    {
+      assert (itm->itm_str);
+      fprintf (du->dufile, "%s", itm->itm_str->cstr);
+      return true;
+    }
+}
+
+void
+mom_emit_dumped_value (struct momdumper_st *du, const momvalue_t val)
+{
+  assert (du && du->dumagic == DUMPER_MAGIC_MOM);
+  assert (du->dustate == dump_emit);
+  assert (du->dufile);
+}
+
+static void
+emit_global_items_mom (struct momdumper_st *du)
+{
+  assert (du && du->dumagic == DUMPER_MAGIC_MOM);
+  assert (du->dustate == dump_emit);
+  const momseq_t *set = mom_hashset_elements_set (du->duitemglobalset);
+  assert (set);
+  unsigned nbel = set->slen;
+  for (unsigned ix = 0; ix < nbel; ix++)
+    emit_dumped_item_mom (du, set->arritm[ix]);
+}
+
+static void
+emit_global_modules_mom (struct momdumper_st *du, const momseq_t *setmod)
+{
+  assert (du && du->dumagic == DUMPER_MAGIC_MOM);
+  if (!setmod)
+    return;
+  unsigned nbmod = setmod->slen;
+  for (unsigned ix = 0; ix < nbmod; ix++)
+    {
+      const momitem_t *moditm = setmod->arritm[ix];
+      assert (moditm && moditm != MOM_EMPTY);
+      if (moditm->itm_space == momspa_predefined
+	  || moditm->itm_space == momspa_global)
+	fprintf (du->dufile, "!! %s\n", moditm->itm_str->cstr);
+    }
+  if (nbmod > 0)
+    fputc ('\n', du->dufile);
+}
+
+static void
+emit_user_items_mom (struct momdumper_st *du)
+{
+  assert (du && du->dumagic == DUMPER_MAGIC_MOM);
+  assert (du->dustate == dump_emit);
+  const momseq_t *set = mom_hashset_elements_set (du->duitemuserset);
+  if (!set)
+    return;
+  unsigned nbel = set->slen;
+  for (unsigned ix = 0; ix < nbel; ix++)
+    emit_dumped_item_mom (du, set->arritm[ix]);
+}
+
+static void
+emit_user_modules_mom (struct momdumper_st *du, const momseq_t *setmod)
+{
+  assert (du && du->dumagic == DUMPER_MAGIC_MOM);
+  if (!setmod)
+    return;
+  unsigned nbmod = setmod->slen;
+  for (unsigned ix = 0; ix < nbmod; ix++)
+    {
+      const momitem_t *moditm = setmod->arritm[ix];
+      assert (moditm && moditm != MOM_EMPTY);
+      if (moditm->itm_space == momspa_user)
+	fprintf (du->dufile, "!! %s\n", moditm->itm_str->cstr);
+    }
+  if (nbmod > 0)
+    fputc ('\n', du->dufile);
+}
+
+
 void
 mom_dump_state (const char *prefix)
 {
@@ -455,19 +584,7 @@ mom_dump_state (const char *prefix)
       memset (buf, 0, sizeof (buf));
       if (strlen (prefix) > 100)
 	MOM_FATAPRINTF ("too long dump prefix %s", prefix);
-      snprintf (buf, sizeof (buf), "%s%s", prefix, MOM_GLOBAL_DATA_PATH);
-      dmp.duglobalpath = MOM_GC_STRDUP ("dumper global", buf);
-      snprintf (buf, sizeof (buf), "%s%s", prefix, MOM_USER_DATA_PATH);
-      dmp.duuserpath = MOM_GC_STRDUP ("dumper user", buf);
-      snprintf (buf, sizeof (buf), "%s%s", prefix, MOM_PREDEFINED_PATH);
-      dmp.dupredefheaderpath = MOM_GC_STRDUP ("dumper predefined", buf);
     }
-  else
-    {
-      dmp.duglobalpath = MOM_GLOBAL_DATA_PATH;
-      dmp.duuserpath = MOM_USER_DATA_PATH;
-      dmp.dupredefheaderpath = MOM_PREDEFINED_PATH;
-    };
   dmp.dustate = dump_scan;
   scan_predefined_items_mom (&dmp);
   while (mom_queue_size (&dmp.duitemque) > 0)
@@ -479,6 +596,30 @@ mom_dump_state (const char *prefix)
   MOM_INFORMPRINTF ("dumped state to prefix %s : %u global + %u user items",
 		    prefix, mom_hashset_count (dmp.duitemglobalset),
 		    mom_hashset_count (dmp.duitemuserset));
+  ////
+  dmp.dustate = dump_emit;
+  {
+    dmp.dufile = open_generated_file_dump_mom (&dmp, MOM_GLOBAL_DATA_PATH);
+    mom_output_gplv3_notice (dmp.dufile, "///", "", MOM_GLOBAL_DATA_PATH);
+    fputc ('\n', dmp.dufile);
+    const momseq_t *setmod = mom_hashset_elements_set (dmp.duitemmoduleset);
+    emit_global_modules_mom (&dmp, setmod);
+    emit_global_items_mom (&dmp);
+    fprintf(dmp.dufile, "//// end of global file %s\n", MOM_GLOBAL_DATA_PATH);
+    close_generated_file_dump_mom (&dmp, dmp.dufile, MOM_GLOBAL_DATA_PATH);
+    dmp.dufile = NULL;
+  }
+  {
+    dmp.dufile = open_generated_file_dump_mom (&dmp, MOM_USER_DATA_PATH);
+    mom_output_gplv3_notice (dmp.dufile, "///", "", MOM_USER_DATA_PATH);
+    fputc ('\n', dmp.dufile);
+    const momseq_t *setmod = mom_hashset_elements_set (dmp.duitemmoduleset);
+    emit_user_modules_mom (&dmp, setmod);
+    emit_user_items_mom (&dmp);
+    fprintf(dmp.dufile, "//// end of user file %s\n", MOM_USER_DATA_PATH);
+    close_generated_file_dump_mom (&dmp, dmp.dufile, MOM_USER_DATA_PATH);
+    dmp.dufile = NULL;
+  }
 }
 
 

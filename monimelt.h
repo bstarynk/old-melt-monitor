@@ -335,12 +335,15 @@ void *mom_prog_dlhandle;
 struct momloader_st;		/* private to state.c */
 struct momdumper_st;		/* private to state.c */
 
+typedef struct momvalue_st momvalue_t;
+
 #define MOM_GLOBAL_DATA_PATH "global.mom"
 #define MOM_USER_DATA_PATH "user.mom"
 #define MOM_PREDEFINED_PATH "predef-monimelt.h"
 
 void mom_load_state (void);
 void mom_dump_state (const char *prefix);
+bool mom_token_load (struct momloader_st *ld, momvalue_t *pval);
 void mom_initialize_random (void);
 void mom_initialize_items (void);
 
@@ -759,6 +762,8 @@ void mom_scan_dumped_module_item (struct momdumper_st *du,
 void mom_output_gplv3_notice (FILE *out, const char *prefix,
 			      const char *suffix, const char *filename);
 
+bool mom_emit_dumped_itemref (struct momdumper_st *du, const momitem_t *itm);
+void mom_emit_dumped_value (struct momdumper_st *du, const momvalue_t val);
 #define mom_make_anonymous_item() mom_make_anonymous_item_at(__LINE__)
 
 #define MOM_HAS_PREDEFINED_NAMED(Nam,Hash) extern momitem_t*mompi_##Nam;
