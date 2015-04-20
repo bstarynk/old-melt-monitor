@@ -766,13 +766,14 @@ main (int argc_main, char **argv_main)
     {
       for (unsigned prix = 0; prix < nbmorepredef_mom; prix++)
 	{
-	  momitem_t *pritm = mom_make_named_item (newpredefname_mom[prix]);
-	  pritm->itm_space = momspa_predefined;
+	  momitem_t *pritm =
+	    mom_make_predefined_named_item (newpredefname_mom[prix]);
 	  if (newpredefcomment_mom[prix]
 	      && strlen (newpredefcomment_mom[prix]) > 0)
 	    pritm->itm_comment = mom_make_string (newpredefcomment_mom[prix]);
+	  MOM_INFORMPRINTF ("made predefined %s", pritm->itm_name->cstr);
 	  if (!dump_exit_dir_mom)
-	    dump_exit_dir_mom = ".";
+	    dump_exit_dir_mom = "./";
 	}
     }
   if (mom_nb_workers < MOM_MIN_WORKERS)

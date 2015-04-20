@@ -208,9 +208,11 @@ mom_scan_dumped_value (struct momdumper_st *du, const momvalue_t val)
 static void
 scan_predefined_items_mom (struct momdumper_st *du)
 {
-#define MOM_HAS_PREDEFINED_NAMED(Nam,Hash) mom_scan_dumped_item(du,mompi_##Nam);
-#define MOM_HAS_PREDEFINED_ANONYMOUS(Id,Hash) mom_scan_dumped_item(du,mompi_##Id);
-#include "predef-monimelt.h"
+  const momseq_t *set = mom_predefined_items_set ();
+  assert (set);
+  unsigned slen = set->slen;
+  for (unsigned ix = 0; ix < slen; ix++)
+    mom_scan_dumped_item (du, set->arritm[ix]);
 }				/* end scan_predefined_items_mom */
 
 static void

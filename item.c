@@ -28,6 +28,8 @@
 #include "predef-monimelt.h"
 
 
+static struct momhashset_st *predefined_hashset_mom;
+static pthread_mutex_t predefined_mutex_mom = PTHREAD_MUTEX_INITIALIZER;
 /// routine to create the predefined
 static void create_predefined_items_mom (void);
 
@@ -699,6 +701,9 @@ create_predefined_items_mom (void)
     mompi_##Nam = mom_make_named_item(#Nam);		\
     assert (mompi_##Nam->itm_name->shash == Hash);      \
     mompi_##Nam->itm_space = momspa_predefined;		\
+    predefined_hashset_mom =				\
+      mom_hashset_put(predefined_hashset_mom,		\
+		  mompi_##Nam);				\
     nbnamed++;						\
   } while(0);
   //
@@ -706,6 +711,9 @@ create_predefined_items_mom (void)
     mompi_##Id = mom_make_anonymous_item_by_id(#Id);	\
     assert (mompi_##Id->itm_id->shash == Hash);         \
     mompi_##Id->itm_space = momspa_predefined;		\
+    predefined_hashset_mom =				\
+      mom_hashset_put(predefined_hashset_mom,		\
+		  mompi_##Nam);				\
     nbanon++;						\
   } while(0);
   //
@@ -885,6 +893,30 @@ mom_make_named_item (const char *namstr)
   pthread_rwlock_unlock (&named_lock_mom);
   assert (itm != NULL);
   return itm;
+}
+
+momitem_t *
+mom_make_predefined_named_item (const char *namstr)
+{
+  if (!mom_valid_item_name_str (namstr, NULL))
+    MOM_FATAPRINTF ("invalid predefined name %s", namstr);
+  momitem_t *pritm = mom_make_named_item (namstr);
+  assert (pritm);
+  pritm->itm_space = momspa_predefined;
+  pthread_mutex_lock (&predefined_mutex_mom);
+  predefined_hashset_mom = mom_hashset_put (predefined_hashset_mom, pritm);
+  pthread_mutex_unlock (&predefined_mutex_mom);
+  return pritm;
+}
+
+const momseq_t *
+mom_predefined_items_set (void)
+{
+  const momseq_t *set = NULL;
+  pthread_mutex_lock (&predefined_mutex_mom);
+  set = mom_hashset_elements_set (predefined_hashset_mom);
+  pthread_mutex_unlock (&predefined_mutex_mom);
+  return set;
 }
 
 int

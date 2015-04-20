@@ -735,6 +735,9 @@ momitem_t *mom_find_item (const char *str);
 
 momitem_t *mom_make_named_item (const char *namstr);
 
+momitem_t *mom_make_predefined_named_item (const char *namstr);
+const momseq_t *mom_predefined_items_set (void);
+
 momitem_t *mom_make_anonymous_item_by_id (const char *ids);
 
 momitem_t *mom_make_anonymous_item_salt (unsigned salt);
