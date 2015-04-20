@@ -206,12 +206,20 @@ const char* _dup_##Lin = GC_STRDUP(_str_##Lin);		\
   _dup_##Lin; })
 #define MOM_GC_STRDUP(Msg,Str) MOM_GC_STRDUP_AT((Msg),(Str),__LINE__)
 
-// free a pointer and clear the variable
-#define MOM_GC_FREE_AT(VarPtr,Lin) do {				\
-    void* _fp_##Lin = VarPtr;					\
-    VarPtr = NULL;						\
-    if (_fp_##Lin != NULL) GC_FREE(_fp_##Lin); } while(0)
-#define MOM_GC_FREE(VarPtr) MOM_GC_FREE_AT(VarPtr,__LINE__)
+
+// dont bother freeing, per H.Boehm's advice, too small zones
+#define MOM_SMALL_FREE_THRESHOLD (256*sizeof(void*))
+// free a pointer of known sizeand clear the variable
+#define MOM_GC_FREE_AT(VarPtr,Siz,Lin) do {		\
+    void* _fp_##Lin = VarPtr;				\
+    size_t _siz_##Lin = (Siz);				\
+    if (_fp_##Lin &&  _siz_##Lin>0)			\
+      memset(_fp_##Lin, 0, _siz_##Lin);			\
+    VarPtr = NULL;					\
+    if (_fp_##Lin != NULL				\
+	&& _siz_##Lin > MOM_SMALL_FREE_THRESHOLD)	\
+      GC_FREE(_fp_##Lin); } while(0)
+#define MOM_GC_FREE(VarPtr,Siz) MOM_GC_FREE_AT(VarPtr,Siz,__LINE__)
 
 // GCC compiler trick to add some typechecking in variadic functions
 #define MOM_REQUIRES_TYPE_AT(Lin,V,Typ,Else)				\

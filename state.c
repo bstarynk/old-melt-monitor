@@ -282,8 +282,10 @@ close_generated_file_dump_mom (struct momdumper_st *du, FILE *fil,
       if (oldc == EOF || newc == EOF)
 	break;
     };
-  fclose (oldout);
-  fclose (newout);
+  if (oldout)
+    fclose (oldout);
+  if (newout)
+    fclose (newout);
   if (same)
     {
       remove (newpathbuf);
@@ -310,7 +312,7 @@ emit_predefined_header_mom (struct momdumper_st *du)
   fprintf (hdout, "#endif" " /*MOM_HAS_PREDEFINED_NAMED*/" "\n");
   fprintf (hdout, "#ifndef" " MOM_HAS_PREDEFINED_ANONYMOUS" "\n");
   fprintf (hdout, "#error missing " "MOM_HAS_PREDEFINED_ANONYMOUS" "\n");
-  fprintf (hdout, "#endif" " /*MOM_HAS_PREDEFINED_ANONYMOUS*/" "\n");
+  fprintf (hdout, "#endif" " /*MOM_HAS_PREDEFINED_ANONYMOUS*/" "\n\n");
   const momseq_t *setpredef =
     mom_hashset_elements_set (du->dupredefineditemset);
   assert (setpredef);
@@ -412,14 +414,14 @@ mom_output_gplv3_notice (FILE *out, const char *prefix, const char *suffix,
     suffix = "";
   fprintf (out, "%s *** generated file %s - DO NOT EDIT %s\n", prefix,
 	   filename, suffix);
-  if (nowtm.tm_year != BASE_YEAR_MOM - 1900)
-    fprintf (out,
-	     "%s Copyright (C) %d-%d Free Software Foundation, Inc. %s\n",
-	     prefix, BASE_YEAR_MOM, 1900 + nowtm.tm_year, suffix);
-  else
+  if (1900 + nowtm.tm_year != BASE_YEAR_MOM)
     fprintf (out,
 	     "%s Copyright (C) %d - %d Free Software Foundation, Inc. %s\n",
 	     prefix, BASE_YEAR_MOM, 1900 + nowtm.tm_year, suffix);
+  else
+    fprintf (out,
+	     "%s Copyright (C) %d Free Software Foundation, Inc. %s\n",
+	     prefix, BASE_YEAR_MOM, suffix);
   fprintf (out,
 	   "%s MONIMELT is a monitor for MELT - see http://gcc-melt.org/ %s\n",
 	   prefix, suffix);

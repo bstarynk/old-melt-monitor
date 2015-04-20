@@ -451,8 +451,7 @@ mom_load_plugin (const char *plugname, const char *plugarg, int *pargc,
       plugins_mom.plugins_size = newsiz;
       if (oldarr)
 	{
-	  memset (oldarr, 0, oldsiz * sizeof (struct plugin_mom_st));
-	  MOM_GC_FREE (oldarr);
+	  MOM_GC_FREE (oldarr, oldsiz * sizeof (struct plugin_mom_st));
 	}
     }
   void *plugdlh = GC_dlopen (plugpath, RTLD_NOW | RTLD_GLOBAL);

@@ -233,7 +233,8 @@ mom_make_meta_tuple (momvalue_t metav, unsigned nbitems, ...)
       memcpy (newtup->arritm, oldtup->arritm,
 	      cntitems * sizeof (momitem_t *));
       tup = newtup;
-      MOM_GC_FREE (oldtup);
+      MOM_GC_FREE (oldtup, sizeof (momseq_t) +
+		   nbitems * sizeof (momitem_t *));
     }
   tup->slen = cntitems;
   update_seq_hash_mom (tup);
@@ -268,7 +269,8 @@ mom_make_sized_meta_tuple (momvalue_t metav, unsigned nbitems,
       memcpy (newtup->arritm, oldtup->arritm,
 	      cntitems * sizeof (momitem_t *));
       tup = newtup;
-      MOM_GC_FREE (oldtup);
+      MOM_GC_FREE (oldtup, sizeof (momseq_t) +
+		   nbitems * sizeof (momitem_t *));
     }
   tup->slen = cntitems;
   update_seq_hash_mom (tup);
@@ -314,7 +316,7 @@ sort_set_unique_items_mom (const momitem_t **itmarr, unsigned nbitems)
   mom_item_qsort (itmarr, nbitems);
   for (unsigned ix = 1; ix < nbitems; ix++)
     {
-      momitem_t *previtm = itmarr[ix - 1];
+      const momitem_t *previtm = itmarr[ix - 1];
       if (MOM_UNLIKELY (itmarr[ix] == previtm))
 	{
 	  unsigned nextix;
@@ -360,7 +362,8 @@ mom_make_meta_set (momvalue_t metav, unsigned nbitems, ...)
       memcpy (newset->arritm, oldset->arritm,
 	      cntitems * sizeof (momitem_t *));
       set = newset;
-      MOM_GC_FREE (oldset);
+      MOM_GC_FREE (oldset,
+		   sizeof (momseq_t) + nbitems * sizeof (momitem_t *));
     }
 #ifndef NDEBUG
   for (unsigned ix = 1; ix < cntitems; ix++)
@@ -400,7 +403,8 @@ mom_make_sized_meta_set (momvalue_t metav, unsigned nbitems,
       memcpy (newset->arritm, oldset->arritm,
 	      cntitems * sizeof (momitem_t *));
       set = newset;
-      MOM_GC_FREE (oldset);
+      MOM_GC_FREE (oldset,
+		   sizeof (momseq_t) + nbitems * sizeof (momitem_t *));
     }
 #ifndef NDEBUG
   for (unsigned ix = 1; ix < cntitems; ix++)

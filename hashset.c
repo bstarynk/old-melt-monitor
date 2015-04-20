@@ -171,10 +171,9 @@ mom_hashset_put (struct momhashset_st *hset, const momitem_t *itm)
 	      memcpy (newhset->hset_elems, hset->hset_elems,
 		      hslen * sizeof (momitem_t *));
 	      newhset->hset_cnt = hset->hset_cnt;
-	      memset (hset, 0,
-		      sizeof (struct momhashset_st) +
-		      hslen * sizeof (momitem_t *));
-	      MOM_GC_FREE (hset);
+	      MOM_GC_FREE (hset,
+			   sizeof (struct momhashset_st) +
+			   hslen * sizeof (momitem_t *));
 	      hset = newhset;
 	      hslen = siz;
 	      goto small_nonfull_hset;
@@ -195,10 +194,9 @@ mom_hashset_put (struct momhashset_st *hset, const momitem_t *itm)
 		  hashset_raw_hash_add_mom (newhset, olditm);
 		}
 	      hashset_raw_hash_add_mom (newhset, itm);
-	      memset (hset, 0,
-		      sizeof (struct momhashset_st) +
-		      hslen * sizeof (momitem_t *));
-	      MOM_GC_FREE (hset);
+	      MOM_GC_FREE (hset,
+			   sizeof (struct momhashset_st) +
+			   hslen * sizeof (momitem_t *));
 	      hset = newhset;
 	      return hset;
 	    }
@@ -222,10 +220,9 @@ mom_hashset_put (struct momhashset_st *hset, const momitem_t *itm)
 	      hashset_raw_hash_add_mom (newhset, olditm);
 	    }
 	  hashset_raw_hash_add_mom (newhset, itm);
-	  memset (hset, 0,
-		  sizeof (struct momhashset_st) +
-		  hslen * sizeof (momitem_t *));
-	  MOM_GC_FREE (hset);
+	  MOM_GC_FREE (hset,
+		       sizeof (struct momhashset_st) +
+		       hslen * sizeof (momitem_t *));
 	  hset = newhset;
 	  return hset;
 	}
@@ -280,9 +277,8 @@ mom_hashset_remove (struct momhashset_st *hset, const momitem_t *itm)
 		newhset->hset_elems[newcnt++] = olditm;
 	    }
 	  newhset->hset_cnt = newcnt;
-	  memset (hset, 0, sizeof (struct momhashset_st)
-		  + hslen * sizeof (momitem_t *));
-	  MOM_GC_FREE (hset);
+	  MOM_GC_FREE (hset, sizeof (struct momhashset_st)
+		       + hslen * sizeof (momitem_t *));
 	  hset = newhset;
 	  return hset;
 	}
@@ -417,10 +413,9 @@ mom_hashset_add_items (struct momhashset_st *hset,
       newhset->hset_cnt = cnt;
       if (hset)
 	{
-	  memset (hset, 0,
-		  sizeof (struct momhashset_st) +
-		  hslen * sizeof (momitem_t *));
-	  MOM_GC_FREE (hset);
+	  MOM_GC_FREE (hset,
+		       sizeof (struct momhashset_st) +
+		       hslen * sizeof (momitem_t *));
 	}
       return newhset;
     }
@@ -463,10 +458,9 @@ mom_hashset_add_items (struct momhashset_st *hset,
       va_end (args);
       if (hset)
 	{
-	  memset (hset, 0,
-		  sizeof (struct momhashset_st) +
-		  hslen * sizeof (momitem_t *));
-	  MOM_GC_FREE (hset);
+	  MOM_GC_FREE (hset,
+		       sizeof (struct momhashset_st) +
+		       hslen * sizeof (momitem_t *));
 	}
       return newhset;
     }
@@ -547,10 +541,9 @@ mom_hashset_add_sized_items (struct momhashset_st *hset,
       newhset->hset_cnt = cnt;
       if (hset)
 	{
-	  memset (hset, 0,
-		  sizeof (struct momhashset_st) +
-		  hslen * sizeof (momitem_t *));
-	  MOM_GC_FREE (hset);
+	  MOM_GC_FREE (hset,
+		       sizeof (struct momhashset_st) +
+		       hslen * sizeof (momitem_t *));
 	}
       return newhset;
     }
@@ -589,10 +582,9 @@ mom_hashset_add_sized_items (struct momhashset_st *hset,
 	}
       if (hset)
 	{
-	  memset (hset, 0,
-		  sizeof (struct momhashset_st) +
-		  hslen * sizeof (momitem_t *));
-	  MOM_GC_FREE (hset);
+	  MOM_GC_FREE (hset,
+		       sizeof (struct momhashset_st) +
+		       hslen * sizeof (momitem_t *));
 	}
       return newhset;
     }

@@ -378,8 +378,7 @@ reorganize_item_bucket_mom (unsigned salthash)
   assert (item_card_mom[salthash] == oldcard);
   if (MOM_LIKELY (oldarr && oldsiz > 0))
     {
-      memset (oldarr, 0, oldsiz * sizeof (momitem_t *));
-      MOM_GC_FREE (oldarr);
+      MOM_GC_FREE (oldarr, oldsiz * sizeof (momitem_t *));
     }
 }
 
@@ -645,13 +644,13 @@ reorganize_named_items_mom (void)
 				namecount);
 	    }
 	}
-      memset (curbuck, 0,
-	      sizeof (struct namebucket_mom_st) +
-	      bsiz * sizeof (momitem_t *));
       named_buckets_mom[bix] = NULL;
-      MOM_GC_FREE (curbuck);
+      MOM_GC_FREE (curbuck,
+		   sizeof (struct namebucket_mom_st) +
+		   bsiz * sizeof (momitem_t *));
     }
-  MOM_GC_FREE (named_buckets_mom);
+  MOM_GC_FREE (named_buckets_mom,
+	       sizeof (struct namebucket_mom_st *) * named_nbuck_mom);
   named_buckets_mom = NULL;
   named_nbuck_mom = 0;
   unsigned newnbuck = (int) (1.2 * sqrt (namecount)) + 10;
@@ -843,7 +842,8 @@ mom_make_named_item (const char *namstr)
   assert (bix >= 0 && bix < (int) named_nbuck_mom
 	  && named_buckets_mom[bix] == curbuck);
   unsigned bucklen = curbuck->nambuck_len;
-  if (bucklen + 3 >= curbuck->nambuck_size)
+  unsigned oldbucksize = curbuck->nambuck_size;
+  if (bucklen + 3 >= oldbucksize)
     {
       unsigned newbucksize = ((3 * bucklen / 2 + 10) | 0xf) + 1;
       struct namebucket_mom_st *newbuck	//
@@ -854,10 +854,9 @@ mom_make_named_item (const char *namstr)
       memcpy (newbuck->nambuck_arr, curbuck->nambuck_arr,
 	      bucklen * sizeof (momitem_t *));
       newbuck->nambuck_len = bucklen;
-      memset (curbuck, 0,
-	      sizeof (struct namebucket_mom_st) +
-	      bucklen * sizeof (momitem_t *));
-      MOM_GC_FREE (curbuck);
+      MOM_GC_FREE (curbuck,
+		   sizeof (struct namebucket_mom_st) +
+		   oldbucksize * sizeof (momitem_t *));
       curbuck = named_buckets_mom[bix] = newbuck;
     }
   int nix = index_in_bucket_mom (curbuck, namstr, true);

@@ -75,9 +75,8 @@ mom_queue_pop_front (struct momqueueitems_st *qu)
   if (!fr->quech_items[1])
     {
       // front becomes empty, remove it
-      memset (fr, 0, sizeof (*fr));
-      MOM_GC_FREE (fr);
       qu->que_front = fr->quech_next;
+      MOM_GC_FREE (fr, sizeof (*fr));
       qu->que_size--;
       return itm;
     }
@@ -116,8 +115,7 @@ mom_queue_tuple (struct momqueueitems_st *qu, momvalue_t metav)
     };
   assert (cnt == siz);
   const momseq_t *tu = mom_make_sized_meta_tuple (metav, cnt, arr);
-  memset (arr, 0, siz * sizeof (momitem_t *));
-  MOM_GC_FREE (arr);
+  MOM_GC_FREE (arr, siz * sizeof (momitem_t *));
   return tu;
 }
 

@@ -186,10 +186,9 @@ mom_attributes_put (struct momattributes_st *attrs,
 	  newattrs->at_entries[newpos] = attrs->at_entries[ix];
 	  newattrs->at_cnt++;
 	}
-      memset (attrs, 0,
-	      sizeof (struct momattributes_st) +
-	      alen * sizeof (struct momentry_st));
-      MOM_GC_FREE (attrs);
+      MOM_GC_FREE (attrs,
+		   sizeof (struct momattributes_st) +
+		   alen * sizeof (struct momentry_st));
       return newattrs;
     }
 }
@@ -231,10 +230,9 @@ mom_attributes_remove (struct momattributes_st *attrs, const momitem_t *itma)
 	      newattrs->at_entries[newcnt++] = attrs->at_entries[ix];
 	    };
 	  newattrs->at_cnt = newcnt;
-	  memset (attrs, 0,	//
-		  sizeof (struct momattributes_st)
-		  + alen * sizeof (struct momentry_st));
-	  MOM_GC_FREE (attrs);
+	  MOM_GC_FREE (attrs,
+		       sizeof (struct momattributes_st)
+		       + alen * sizeof (struct momentry_st));
 	  return newattrs;
 	}
       else			// acnt >= SMALL_ATTR_LEN_MOM-1
@@ -262,10 +260,9 @@ mom_attributes_remove (struct momattributes_st *attrs, const momitem_t *itma)
 	      newattrs->at_entries[newpos] = attrs->at_entries[ix];
 	      newattrs->at_cnt++;
 	    }
-	  memset (attrs, 0,	//
-		  sizeof (struct momattributes_st)
-		  + alen * sizeof (struct momentry_st));
-	  MOM_GC_FREE (attrs);
+	  MOM_GC_FREE (attrs,	//
+		       sizeof (struct momattributes_st)
+		       + alen * sizeof (struct momentry_st));
 	  return newattrs;
 
 	}
