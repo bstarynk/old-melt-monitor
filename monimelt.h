@@ -371,6 +371,7 @@ extern void momplugin_after_load (void);
 typedef int8_t momtypenum_t;
 typedef enum momvaltype_en
 {
+  momty_delim = -3,
   momty_double = -2,
   momty_int = -1,
   momty_null = 0,
@@ -415,7 +416,7 @@ struct momvalue_st
     intptr_t vint;
     double vdbl;
     momdelim_t vdelim;
-    momstring_t *vstr;
+    const momstring_t *vstr;
     momitem_t *vitem;
     momnode_t *vnode;
     momseq_t *vsequ;

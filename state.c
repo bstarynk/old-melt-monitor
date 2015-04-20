@@ -158,6 +158,142 @@ make_modules_load_mom (struct momloader_st *ld)
   MOM_INFORMPRINTF ("loaded %d modules", nbmod);
 }
 
+static bool
+token_string_load_mom (struct momloader_st *ld, momvalue_t *pval)
+{
+  const char *startc = ld->ldlinebuf + ld->ldlinecol + 1;
+  const char *eol = ld->ldlinebuf + ld->ldlinelen;
+  char *buf = MOM_GC_SCALAR_ALLOC ("string buffer", eol - startc + 2);
+  unsigned bufsiz = eol - startc + 1;
+  int blen = 0;
+  const char *pc = startc;
+  for (pc = startc; pc < eol && *pc && *pc != '"'; pc++)
+    {
+      if (*pc != '\\')
+	buf[blen++] = *pc;
+      else
+	{
+	  pc++;
+	  switch (*pc)
+	    {
+	    case '\"':
+	      buf[blen++] = '\"';
+	      pc++;
+	      break;
+	    case '\'':
+	      buf[blen++] = '\'';
+	      pc++;
+	      break;
+	    case '\\':
+	      buf[blen++] = '\\';
+	      pc++;
+	      break;
+	    case 'a':
+	      buf[blen++] = '\a';
+	      pc++;
+	      break;
+	    case 'b':
+	      buf[blen++] = '\b';
+	      pc++;
+	      break;
+	    case 'f':
+	      buf[blen++] = '\f';
+	      pc++;
+	      break;
+	    case 'n':
+	      buf[blen++] = '\n';
+	      pc++;
+	      break;
+	    case 'r':
+	      buf[blen++] = '\r';
+	      pc++;
+	      break;
+	    case 't':
+	      buf[blen++] = '\t';
+	      pc++;
+	      break;
+	    case 'v':
+	      buf[blen++] = '\v';
+	      pc++;
+	      break;
+	    case 'e':
+	      buf[blen++] = 033 /*ESCAPE*/;
+	      pc++;
+	      break;
+	    case 'x':
+	      {
+		unsigned hc = 0;
+		if (sscanf (pc + 1, "%02x", &hc) > 0)
+		  {
+		    buf[blen++] = (char) hc;
+		    pc += 3;
+		  }
+		else
+		  {
+		    buf[blen++] = 'x';
+		    pc++;
+		  }
+	      }
+	      break;
+	    case 'u':
+	      {
+		int gap = 0;
+		unsigned hc = 0;
+		if (sscanf (pc, "u%04x%n", &hc, &gap) > 0)
+		  {
+		    int nb = u8_uctomb ((uint8_t *) buf + blen, (ucs4_t) hc,
+					bufsiz - blen);
+		    if (nb > 0)
+		      blen += nb;
+		    pc += gap;
+		  }
+		else
+		  {
+		    buf[blen++] = 'u';
+		    pc++;
+		  }
+		break;
+	      }
+	    case 'U':
+	      {
+		int gap = 0;
+		unsigned hc = 0;
+		if (sscanf (pc, "u%08x%n", &hc, &gap) > 0)
+		  {
+		    int nb = u8_uctomb ((uint8_t *) buf + blen, (ucs4_t) hc,
+					bufsiz - blen);
+		    if (nb > 0)
+		      blen += nb;
+		    pc += gap;
+		  }
+		else
+		  {
+		    buf[blen++] = 'U';
+		    pc++;
+		  }
+		break;
+	      }
+	    }
+	}
+    }
+  if (*pc == '"')
+    pc++;
+  ld->ldlinecol += pc - startc + 1;
+  pval->typnum = momty_string;
+  pval->vstr = mom_make_string (buf);
+  return true;
+}
+
+
+const char *const delim_mom[] = {
+  /// first the 2 char delimiters
+  "==",
+  "**", "++", "--", "*", "(", ")", "[", "]",
+  "{", "}", "<", ">",
+  NULL
+};
+
+
 bool
 mom_token_load (struct momloader_st *ld, momvalue_t *pval)
 {
@@ -182,6 +318,8 @@ readagain:
 	}
     };
   char c = ld->ldlinebuf[ld->ldlinecol];
+  char *pstart = ld->ldlinebuf + ld->ldlinecol;
+  char *end = NULL;
   if (isspace (c))
     {
       ld->ldlinecol++;
@@ -228,129 +366,52 @@ readagain:
     }
   else if (c == '"')
     {
-      const char *startc = ld->ldlinebuf + ld->ldlinecol + 1;
-      const char *eol = ld->ldlinebuf + ld->ldlinelen;
-      char *buf = MOM_GC_SCALAR_ALLOC ("string buffer", eol - startc + 2);
-      unsigned bufsiz = eol - startc + 1;
-      int blen = 0;
-      const char *pc = startc;
-      for (pc = startc; pc < eol && *pc && *pc != '"'; pc++)
+      return token_string_load_mom (ld, pval);
+    }
+  else if (ispunct (c))
+    {
+      for (int ix = 0; delim_mom[ix]; ix++)
 	{
-	  if (*pc != '\\')
-	    buf[blen++] = *pc;
-	  else
+	  if (!strncmp
+	      (ld->ldlinebuf + ld->ldlinecol, delim_mom[ix],
+	       strlen (delim_mom[ix])))
 	    {
-	      pc++;
-	      switch (*pc)
-		{
-		case '\"':
-		  buf[blen++] = '\"';
-		  pc++;
-		  break;
-		case '\'':
-		  buf[blen++] = '\'';
-		  pc++;
-		  break;
-		case '\\':
-		  buf[blen++] = '\\';
-		  pc++;
-		  break;
-		case 'a':
-		  buf[blen++] = '\a';
-		  pc++;
-		  break;
-		case 'b':
-		  buf[blen++] = '\b';
-		  pc++;
-		  break;
-		case 'f':
-		  buf[blen++] = '\f';
-		  pc++;
-		  break;
-		case 'n':
-		  buf[blen++] = '\n';
-		  pc++;
-		  break;
-		case 'r':
-		  buf[blen++] = '\r';
-		  pc++;
-		  break;
-		case 't':
-		  buf[blen++] = '\t';
-		  pc++;
-		  break;
-		case 'v':
-		  buf[blen++] = '\v';
-		  pc++;
-		  break;
-		case 'e':
-		  buf[blen++] = 033 /*ESCAPE*/;
-		  pc++;
-		  break;
-		case 'x':
-		  {
-		    unsigned hc = 0;
-		    if (sscanf (pc + 1, "%02x", &hc) > 0)
-		      {
-			buf[blen++] = (char) hc;
-			pc += 3;
-		      }
-		    else
-		      {
-			buf[blen++] = 'x';
-			pc++;
-		      }
-		  }
-		  break;
-		case 'u':
-		  {
-		    int gap = 0;
-		    unsigned hc = 0;
-		    if (sscanf (pc, "u%04x%n", &hc, &gap) > 0)
-		      {
-			int nb =
-			  u8_uctomb ((uint8_t *) buf + blen, (ucs4_t) hc,
-				     bufsiz - blen);
-			if (nb > 0)
-			  blen += nb;
-			pc += gap;
-		      }
-		    else
-		      {
-			buf[blen++] = 'u';
-			pc++;
-		      }
-		    break;
-		  }
-		case 'U':
-		  {
-		    int gap = 0;
-		    unsigned hc = 0;
-		    if (sscanf (pc, "u%08x%n", &hc, &gap) > 0)
-		      {
-			int nb =
-			  u8_uctomb ((uint8_t *) buf + blen, (ucs4_t) hc,
-				     bufsiz - blen);
-			if (nb > 0)
-			  blen += nb;
-			pc += gap;
-		      }
-		    else
-		      {
-			buf[blen++] = 'U';
-			pc++;
-		      }
-		    break;
-		  }
-		}
+	      pval->typnum = momty_delim;
+	      strcpy (pval->vdelim.delim, delim_mom[ix]);
+	      return true;
 	    }
 	}
-      if (*pc == '"')
-	pc++;
-      ld->ldlinecol += pc - startc + 1;
-      pval->typnum = momty_string;
-      pval->vstr = mom_make_string (buf);
-      return true;
+    }
+  else if (c == '_' && mom_valid_item_id_str (pstart, (const char *) &end)
+	   && end && (!isalnum (*end) && *end != '_'))
+    {
+      char olde = *end;
+      *end = NULL;
+      const momitem_t *itm = mom_find_item (pstart);
+      if (itm)
+	{
+	  pval->vitem = itm;
+	  pval->typnum = momty_item;
+	  ld->ldlinecol += end - pstart;
+	  *end = olde;
+	  return true;
+	}
+    }
+  else if (isalpha (c)
+	   && mom_valid_item_name_str (pstart, (const char *) &end) && end
+	   && (!isalnum (*end) && *end != '_'))
+    {
+      char olde = *end;
+      *end = NULL;
+      const momitem_t *itm = mom_find_item (pstart);
+      if (itm)
+	{
+	  pval->typnum = momty_item;
+	  pval->vitem = itm;
+	  ld->ldlinecol += end - pstart;
+	  *end = olde;
+	  return true;
+	}
     }
 #warning mom_token_load should parse delimiters and item-ids and item-names
 }
