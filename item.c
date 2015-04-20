@@ -24,7 +24,6 @@
 /// define the predefined items
 #define MOM_HAS_PREDEFINED_NAMED(Nam,Hash) momitem_t*mompi_##Nam;
 #define MOM_HAS_PREDEFINED_ANONYMOUS(Id,Hash) momitem_t*mompi_##Id;
-#define MOM_HAS_PREDEFINED_DELIM(Nam,Str)
 //
 #include "predef-monimelt.h"
 
@@ -710,7 +709,6 @@ create_predefined_items_mom (void)
     nbanon++;						\
   } while(0);
   //
-#define MOM_HAS_PREDEFINED_DELIM(Nam,Str)
   //
 #include "predef-monimelt.h"
   {

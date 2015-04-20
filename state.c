@@ -210,7 +210,6 @@ scan_predefined_items_mom (struct momdumper_st *du)
 {
 #define MOM_HAS_PREDEFINED_NAMED(Nam,Hash) mom_scan_dumped_item(du,mompi_##Nam);
 #define MOM_HAS_PREDEFINED_ANONYMOUS(Id,Hash) mom_scan_dumped_item(du,mompi_##Id);
-#define MOM_HAS_PREDEFINED_DELIM(Nam,Str)
 #include "predef-monimelt.h"
 }				/* end scan_predefined_items_mom */
 

@@ -754,7 +754,6 @@ void mom_output_gplv3_notice (FILE *out, const char *prefix,
 
 #define MOM_HAS_PREDEFINED_NAMED(Nam,Hash) extern momitem_t*mompi_##Nam;
 #define MOM_HAS_PREDEFINED_ANONYMOUS(Id,Hash) extern momitem_t*mompi_##Id;
-#define MOM_HAS_PREDEFINED_DELIM(Nam,Str)
 //
 #include "predef-monimelt.h"
 
