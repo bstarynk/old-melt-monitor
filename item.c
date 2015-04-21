@@ -492,7 +492,11 @@ find_named_bucket_mom (const char *name, int *insertpix)
 		  break;
 		}
 	      else
-		return curbuck;
+		{
+		  if (insertpix)
+		    *insertpix = md;
+		  return curbuck;
+		}
 	    }
 	};
       if (!hit)
@@ -737,7 +741,7 @@ mom_find_item (const char *str)
   const char *end = NULL;
   if (!str || !str[0])
     return NULL;
-  if (isalpha (str[0]) && mom_valid_item_name_str (str, &end) && end && *end)
+  if (isalpha (str[0]) && mom_valid_item_name_str (str, &end) && end && !*end)
     {
       pthread_rwlock_rdlock (&named_lock_mom);
       struct namebucket_mom_st *curbuck = find_named_bucket_mom (str, NULL);
@@ -882,9 +886,10 @@ mom_make_named_item (const char *namstr)
 	{
 	  memmove (curbuck->nambuck_arr + nix + 1, curbuck->nambuck_arr + nix,
 		   (bucklen - nix) * sizeof (momitem_t *));
-	  bucklen = ++curbuck->nambuck_len;
 	}
       itm = newitm;
+      curbuck->nambuck_arr[nix] = itm;
+      bucklen = ++curbuck->nambuck_len;
       GC_REGISTER_FINALIZER (newitm, finalize_item_mom, NULL, NULL, NULL);
     }
   if (MOM_UNLIKELY

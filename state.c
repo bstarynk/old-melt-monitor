@@ -61,6 +61,9 @@ first_pass_load_mom (struct momloader_st *ld, const char *path, FILE *fil)
       /// lines like: ** <item-name> are defining an item
       if (linlen >= 4 && linbuf[0] == '*' && linbuf[1] == '*')
 	{
+	  MOM_DEBUGPRINTF (load, "first %s pass line#%d: %s",
+			   ld->ldforglobals ? "global" : "user", lincnt,
+			   linbuf);
 	  char *pc = linbuf + 2;
 	  char *end = NULL;
 	  momitem_t *itm = NULL;
@@ -73,6 +76,8 @@ first_pass_load_mom (struct momloader_st *ld, const char *path, FILE *fil)
 	      char endch = *end;
 	      *end = 0;
 	      itm = mom_make_named_item (pc);
+	      MOM_DEBUGPRINTF (load, "first %s pass named item @%p %s",
+			       ld->ldforglobals ? "global" : "user", itm, pc);
 	      *end = endch;
 	      ld->lditemset = mom_hashset_put (ld->lditemset, itm);
 	    }
@@ -83,6 +88,8 @@ first_pass_load_mom (struct momloader_st *ld, const char *path, FILE *fil)
 	      char endch = *end;
 	      *end = 0;
 	      itm = mom_make_anonymous_item_by_id (pc);
+	      MOM_DEBUGPRINTF (load, "first %s pass anonymous item @%p %s",
+			       ld->ldforglobals ? "global" : "user", itm, pc);
 	      *end = endch;
 	      ld->lditemset = mom_hashset_put (ld->lditemset, itm);
 	    }
@@ -382,15 +389,15 @@ readagain:
 	    }
 	}
     }
-  else if (c == '_' && mom_valid_item_id_str (pstart, (const char *) &end)
+  else if (c == '_' && mom_valid_item_id_str (pstart, (const char **) &end)
 	   && end && (!isalnum (*end) && *end != '_'))
     {
       char olde = *end;
-      *end = NULL;
+      *end = '\0';
       const momitem_t *itm = mom_find_item (pstart);
       if (itm)
 	{
-	  pval->vitem = itm;
+	  pval->vitem = (momitem_t *) itm;
 	  pval->typnum = momty_item;
 	  ld->ldlinecol += end - pstart;
 	  *end = olde;
@@ -398,22 +405,22 @@ readagain:
 	}
     }
   else if (isalpha (c)
-	   && mom_valid_item_name_str (pstart, (const char *) &end) && end
+	   && mom_valid_item_name_str (pstart, (const char **) &end) && end
 	   && (!isalnum (*end) && *end != '_'))
     {
       char olde = *end;
-      *end = NULL;
+      *end = '\0';
       const momitem_t *itm = mom_find_item (pstart);
       if (itm)
 	{
 	  pval->typnum = momty_item;
-	  pval->vitem = itm;
+	  pval->vitem = (momitem_t *) itm;
 	  ld->ldlinecol += end - pstart;
 	  *end = olde;
 	  return true;
 	}
     }
-#warning mom_token_load should parse delimiters and item-ids and item-names
+  return false;
 }
 
 void
@@ -421,13 +428,50 @@ second_pass_load_mom (struct momloader_st *ld, bool global)
 {
   assert (ld && ld->ldmagic == LOADER_MAGIC_MOM);
   if (ld->ldlinebuf)
+    free (ld->ldlinebuf);
+  {
+    unsigned siz = 128;
+    char *buf = malloc (siz);
+    if (!buf)
+      MOM_FATAPRINTF ("failed to malloc line buffer of %d", siz);
+    memset (buf, 0, siz);
+    ld->ldlinebuf = buf;
+    ld->ldlinesize = siz;
+  }
+  ld->ldlinelen = 0;
+  ld->ldforglobals = global;
+  rewind (ld->ldforglobals ? ld->ldglobalfile : ld->lduserfile);
+  ld->ldlinecol = ld->ldlinelen = ld->ldlinecount = 0;
+  do
     {
-      free (ld->ldlinebuf);
-      ld->ldlinebuf = NULL;
-      ld->ldlinesize = 0;
-      ld->ldlinelen = 0;
-      ld->ldlinecol = 0;
+      if (ld->ldlinebuf)
+	memset (ld->ldlinebuf, 0, ld->ldlinesize);
+      ld->ldlinelen =
+	getline (&ld->ldlinebuf, &ld->ldlinesize,
+		 ld->ldforglobals ? ld->ldglobalfile : ld->lduserfile);
+      if (ld->ldlinelen <= 0)
+	return;
+      ld->ldlinecount++;
+      MOM_DEBUGPRINTF (load, "second %s pass line#%d: %s",
+		       ld->ldforglobals ? "global" : "user",
+		       (int) ld->ldlinecount, ld->ldlinebuf);
+      if (ld->ldlinelen > 4
+	  && ld->ldlinebuf[0] == '*' && ld->ldlinebuf[1] == '*')
+	{
+	  ld->ldlinecol = 2;
+	  momvalue_t val = MOM_NONEV;
+	  if (!mom_token_load (ld, &val) || val.typnum != momty_item)
+	    MOM_FATAPRINTF ("invalid line %d '%s' of %s file %s",
+			    (int) ld->ldlinecount,
+			    ld->ldlinebuf,
+			    ld->ldforglobals ? "global" : "user",
+			    ld->ldforglobals ? ld->
+			    ldglobalpath : ld->lduserpath);
+	  MOM_WARNPRINTF ("missing load of item %s",
+			  val.vitem->itm_str->cstr);
+	}
     }
+  while (!feof (ld->ldforglobals ? ld->ldglobalfile : ld->lduserfile));
 }
 
 void
@@ -446,9 +490,13 @@ mom_load_state ()
     MOM_WARNPRINTF ("failed to open user data %s: %m", MOM_USER_DATA_PATH);
   else
     ldr.lduserpath = MOM_USER_DATA_PATH;
+  ldr.ldforglobals = true;
   first_pass_load_mom (&ldr, ldr.ldglobalpath, ldr.ldglobalfile);
   if (ldr.lduserpath)
-    first_pass_load_mom (&ldr, ldr.lduserpath, ldr.lduserfile);
+    {
+      ldr.ldforglobals = false;
+      first_pass_load_mom (&ldr, ldr.lduserpath, ldr.lduserfile);
+    }
   if (ldr.ldmoduleset)
     {
       make_modules_load_mom (&ldr);
@@ -462,6 +510,11 @@ mom_load_state ()
       ldr.ldforglobals = false;
       second_pass_load_mom (&ldr, false);
     }
+  MOM_INFORMPRINTF
+    ("loaded %d items and %d modules from global %s and user %s files",
+     (int) mom_hashset_count (ldr.lditemset),
+     (int) mom_hashset_count (ldr.ldmoduleset), ldr.ldglobalpath,
+     ldr.lduserpath);
 }
 
 
@@ -541,6 +594,7 @@ mom_scan_dumped_value (struct momdumper_st *du, const momvalue_t val)
     case momty_int:
     case momty_null:
     case momty_string:
+    case momty_delim:
       return;
     case momty_item:
       mom_scan_dumped_item (du, val.vitem);

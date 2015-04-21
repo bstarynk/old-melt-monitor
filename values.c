@@ -510,6 +510,9 @@ mom_value_equal (momvalue_t v1, momvalue_t v2)
       return true;
     case momty_int:
       return v1.vint == v2.vint;
+    case momty_delim:
+      return !strncmp (v1.vdelim.delim, v2.vdelim.delim,
+		       sizeof (v1.vdelim.delim));
     case momty_double:
       return v1.vdbl == v2.vdbl || (isnan (v1.vdbl) && isnan (v2.vdbl));
     case momty_string:

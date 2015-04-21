@@ -49,7 +49,7 @@ all: monimelt modules plugins
 clean:
 	$(RM) *~ *.o *.so */*.so */*~ */*.orig *.i *.orig melt*.cc meltmom*.[ch] meltmom*.o meltmom*.so meltmom*.mk \
 	      _tmp_* monimelt core* module/*.tmp webdir/*~ *.tmp  _timestamp.* *dbsqlite*-journal *%
-	$(RM) global-modules/*.so global-modules/*~ user-modules/*.so user-modules/*~
+	$(RM) modules/*.so modules/*~ 
 ################
 monimelt: $(OBJECTS) _timestamp.o
 	@if [ -f $@ ]; then echo -n backup old executable: ' ' ; mv -v $@ $@~ ; fi
