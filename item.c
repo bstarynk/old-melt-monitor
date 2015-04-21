@@ -451,166 +451,7 @@ mom_make_random_idstr (unsigned salt, struct momitem_st *protoitem)
   return str;
 }
 
-// if insertpix is given, we want some insertion and we get the bucket index inside it
-static struct namebucket_mom_st *
-find_named_bucket_mom (const char *name, int *insertpix)
-{
-  int lo = 0, hi = (int) named_nbuck_mom, md = 0;
-  if (insertpix)
-    *insertpix = -1;
-  if (MOM_UNLIKELY (named_count_mom == 0))
-    {
-      md = (lo + hi) / 2;
-      struct namebucket_mom_st *curbuck = named_buckets_mom[md];
-      assert (curbuck);
-      if (insertpix)
-	{
-	  *insertpix = md;
-	  return curbuck;
-	}
-      else
-	return NULL;
-    }
-  while (lo + 4 < hi)
-    {
-      bool hit = false;
 
-      struct namebucket_mom_st *curbuck = NULL;
-      while (lo < hi && (curbuck = named_buckets_mom[lo])->nambuck_len == 0)
-	lo++;
-      while (lo < hi
-	     && (curbuck = named_buckets_mom[hi - 1])->nambuck_len == 0)
-	hi--;
-      curbuck = NULL;
-      for (md = (lo + hi) / 2; md < hi; md++)
-	{
-	  struct namebucket_mom_st *curbuck = named_buckets_mom[md];
-	  assert (curbuck);
-	  unsigned blen = curbuck->nambuck_len;
-	  if (blen == 0)
-	    continue;
-	  const momitem_t *firstitm = curbuck->nambuck_arr[0];
-	  assert (firstitm && !firstitm->itm_anonymous && firstitm->itm_name);
-	  int cmpfirstname = strcmp (name, firstitm->itm_name->cstr);
-	  if (cmpfirstname < 0)
-	    {
-	      hi = md;
-	      hit = true;
-	      break;
-	    }
-	  else if (cmpfirstname == 0)
-	    return curbuck;
-	  else
-	    {
-	      const momitem_t *lastitm = curbuck->nambuck_arr[blen - 1];
-	      assert (lastitm && !lastitm->itm_anonymous
-		      && lastitm->itm_name);
-	      int cmplastname = strcmp (name, lastitm->itm_name->cstr);
-	      if (cmplastname < 0)
-		{
-		  lo = md;
-		  hit = true;
-		  break;
-		}
-	      else
-		{
-		  if (insertpix)
-		    *insertpix = md;
-		  return curbuck;
-		}
-	    }
-	};
-      if (!hit)
-	break;
-    };
-  for (md = lo; md < hi; md++)
-    {
-      struct namebucket_mom_st *curbuck = named_buckets_mom[md];
-      assert (curbuck);
-      unsigned blen = curbuck->nambuck_len;
-      if (blen == 0)
-	continue;
-      const momitem_t *firstitm = curbuck->nambuck_arr[0];
-      assert (firstitm && !firstitm->itm_anonymous && firstitm->itm_name);
-      int cmpfirstname = strcmp (name, firstitm->itm_name->cstr);
-      if (cmpfirstname < 0)
-	{
-	  if (!insertpix)
-	    continue;
-	  if (md > 0)
-	    {
-	      struct namebucket_mom_st *prevbuck = named_buckets_mom[md - 1];
-	      if (prevbuck->nambuck_len < curbuck->nambuck_len)
-		{
-		  *insertpix = md - 1;
-		  return prevbuck;
-		}
-	      else
-		{
-		  *insertpix = md;
-		  return curbuck;
-		}
-	    }
-	  else
-	    {
-	      assert (md == 0);
-	      *insertpix = md;
-	      return curbuck;
-	    }
-	}
-      else if (cmpfirstname == 0)
-	return curbuck;
-      const momitem_t *lastitm = curbuck->nambuck_arr[blen - 1];
-      assert (lastitm && !lastitm->itm_anonymous && lastitm->itm_name);
-      int cmplastname = strcmp (name, lastitm->itm_name->cstr);
-      if (cmplastname <= 0)
-	{
-	  if (insertpix)
-	    *insertpix = md;
-	  return curbuck;
-	}
-    }
-  return NULL;
-}				/* end find_named_bucket_mom */
-
-
-
-static int
-index_in_bucket_mom (const struct namebucket_mom_st *buck, const char *name,
-		     bool insert)
-{
-  assert (buck != NULL);
-  unsigned blen = buck->nambuck_len;
-  int lo = 0, hi = (int) blen, md = 0;
-  while (lo + 4 < hi)
-    {
-      md = (lo + hi) / 2;
-      const momitem_t *miditm = buck->nambuck_arr[md];
-      assert (miditm && !miditm->itm_anonymous && miditm->itm_name);
-      int cmpname = strcmp (name, miditm->itm_name->cstr);
-      if (!cmpname)
-	return md;
-      else if (cmpname < 0)
-	hi = md;
-      else
-	lo = md;
-    }
-  for (md = lo; md < hi; md++)
-    {
-      const momitem_t *miditm = buck->nambuck_arr[md];
-      assert (miditm && !miditm->itm_anonymous && miditm->itm_name);
-      int cmpname = strcmp (name, miditm->itm_name->cstr);
-      if (0 == cmpname)
-	return md;
-      else if (cmpname < 0)
-	continue;
-      else if (insert)
-	return md;
-    }
-  if (insert)
-    return blen;
-  return -1;
-}
 
 
 
@@ -624,13 +465,94 @@ mom_find_named_item (const char *name)
       || !endname || *endname != '\0')
     return NULL;
   pthread_rwlock_rdlock (&named_lock_mom);
-  struct namebucket_mom_st *curbuck = find_named_bucket_mom (name, NULL);
-  if (curbuck)
-    {
-      int bix = index_in_bucket_mom (curbuck, name, false);
-      if (bix >= 0 && bix < (int) curbuck->nambuck_len)
-	itm = curbuck->nambuck_arr[bix];
-    }
+  if (MOM_UNLIKELY (named_count_mom == 0))
+    goto end;
+  int bix = -1;
+  {
+    int lobix = 0, hibix = named_nbuck_mom;
+    while (lobix + 2 < hibix)
+      {
+	int mdbix = 0;
+	while (lobix < hibix && named_buckets_mom[lobix]->nambuck_len == 0)
+	  lobix++;
+	while (hibix > lobix
+	       && named_buckets_mom[hibix - 1]->nambuck_len == 0)
+	  hibix--;
+	if (lobix + 2 >= hibix)
+	  break;
+	for (mdbix = (lobix + hibix) / 2;
+	     mdbix < hibix && named_buckets_mom[mdbix]->nambuck_len == 0;
+	     mdbix++);
+	if (mdbix == hibix)
+	  break;
+	const struct namebucket_mom_st *mdbuck = named_buckets_mom[mdbix];
+	unsigned mdlen = mdbuck->nambuck_len;
+	assert (mdlen > 0);
+	if (strcmp (name, mdbuck->nambuck_arr[0]->itm_name->cstr) < 0)
+	  {
+	    hibix = mdbix;
+	    continue;
+	  }
+	else if (strcmp (name, mdbuck->nambuck_arr[mdlen - 1]->itm_name->cstr)
+		 > 0)
+	  {
+	    lobix = mdbix;
+	    continue;
+	  }
+	else
+	  {
+	    bix = mdbix;
+	    break;
+	  };
+      };
+    for (int mdbix = lobix; bix < 0 && mdbix < hibix; mdbix++)
+      {
+	const struct namebucket_mom_st *mdbuck = named_buckets_mom[mdbix];
+	unsigned mdlen = mdbuck->nambuck_len;
+	if (mdlen == 0)
+	  continue;
+	if (strcmp (name, mdbuck->nambuck_arr[0]->itm_name->cstr) >= 0
+	    && strcmp (name,
+		       mdbuck->nambuck_arr[mdlen - 1]->itm_name->cstr) <= 0)
+	  bix = mdbix;
+      };
+    if (bix < 0)
+      goto end;
+    assert (bix >= 0 && bix < (int) named_nbuck_mom);
+    const struct namebucket_mom_st *buck = named_buckets_mom[bix];
+    unsigned blen = buck->nambuck_len;
+    if (blen == 0)
+      goto end;
+    int lo = 0, hi = (int) blen, md = 0;
+    while (lo + 3 < hi)
+      {
+	md = (lo + hi) / 2;
+	const momitem_t *curitm = buck->nambuck_arr[md];
+	assert (curitm && !curitm->itm_anonymous && curitm->itm_name);
+	int cmp = strcmp (name, curitm->itm_name->cstr);
+	if (!cmp)
+	  {
+	    itm = curitm;
+	    goto end;
+	  }
+	else if (cmp < 0)
+	  hi = md;
+	else
+	  lo = md;
+      }
+    for (md = lo; md < hi; md++)
+      {
+	const momitem_t *curitm = buck->nambuck_arr[md];
+	assert (curitm && !curitm->itm_anonymous && curitm->itm_name);
+	int cmp = strcmp (name, curitm->itm_name->cstr);
+	if (!cmp)
+	  {
+	    itm = curitm;
+	    goto end;
+	  }
+      }
+  }
+end:
   pthread_rwlock_unlock (&named_lock_mom);
   return (momitem_t *) itm;
 }
@@ -715,23 +637,25 @@ reorganize_named_items_mom (void)
 }
 
 
+static int
+compare_names_mom (const void *p1, const void *p2)
+{
+  return strcmp (*(const char **) p1, *(const char **) p2);
+}
+
+static void initialize_protoitem_mom (momitem_t *protoitm);
+
 static void
 create_predefined_items_mom (void)
 {
   int nbnamed = 0, nbanon = 0;
-  {
-    pthread_rwlock_wrlock (&named_lock_mom);
-    reorganize_named_items_mom ();	// to initialize the buckets
-    assert (named_nbuck_mom > 0);
-    pthread_rwlock_unlock (&named_lock_mom);
-  }
+  char **arrnames =		//
+    MOM_GC_ALLOC ("predefined names",
+		  (MOM_NB_PREDEFINED_NAMED + 3) * sizeof (char *));
+
 #define  MOM_HAS_PREDEFINED_NAMED(Nam,Hash) do {	\
-    mompi_##Nam = mom_make_named_item(#Nam);		\
-    assert (mompi_##Nam->itm_name->shash == Hash);      \
-    mompi_##Nam->itm_space = momspa_predefined;		\
-    predefined_hashset_mom =				\
-      mom_hashset_put(predefined_hashset_mom,		\
-		  mompi_##Nam);				\
+    arrnames[nbnamed] = #Nam;                           \
+    assert (mom_cstring_hash(#Nam) == Hash);		\
     nbnamed++;						\
   } while(0);
   //
@@ -747,14 +671,134 @@ create_predefined_items_mom (void)
   //
   //
 #include "predef-monimelt.h"
+  //
   {
     pthread_rwlock_wrlock (&named_lock_mom);
-    reorganize_named_items_mom ();
+    assert (nbnamed > 0);
+    qsort (arrnames, nbnamed, sizeof (char *), compare_names_mom);
+    assert (named_count_mom == 0);
+    assert (named_nbuck_mom == 0);
+    assert (named_buckets_mom == NULL);
+    unsigned nbucks = ((int) sqrt ((double) nbnamed)) + 3;
+    unsigned bucklen = nbnamed / nbucks;
+    if (bucklen < 2)
+      bucklen++;
+    unsigned bucksiz = ((5 * bucklen / 4 + 3) | 0xf) + 1;
+    named_buckets_mom =		//
+      MOM_GC_ALLOC ("initial named buckets", nbucks * sizeof (void *));
+    named_nbuck_mom = nbucks;
+    int namecount = 0;
+    for (unsigned bix = 0; bix < nbucks; bix++)
+      {
+	struct namebucket_mom_st *curbuck =	//
+	  MOM_GC_SCALAR_ALLOC ("initial named bucket",
+			       sizeof (struct namebucket_mom_st)
+			       + bucksiz * sizeof (momitem_t *));
+	curbuck->nambuck_size = bucksiz;
+	named_buckets_mom[bix] = curbuck;
+	unsigned blen = 0;
+	for (int ixitm = 0; ixitm < (int) bucklen && namecount < nbnamed;
+	     ixitm++)
+	  {
+	    const char *curname = arrnames[namecount];
+	    momitem_t *itm =	//
+	      MOM_GC_ALLOC ("initial named item",
+			    sizeof (momitem_t));
+	    initialize_protoitem_mom (itm);
+	    itm->itm_anonymous = false;
+	    itm->itm_space = momspa_predefined;
+	    itm->itm_name = mom_make_string (curname);
+	    curbuck->nambuck_arr[ixitm] = itm;
+	    blen = ixitm;
+	    namecount++;
+	  }
+	curbuck->nambuck_len = blen;
+      }
     pthread_rwlock_unlock (&named_lock_mom);
   }
   MOM_INFORMPRINTF ("created %d predefined named & %d predefined anonymous",
 		    nbnamed, nbanon);
-}
+}				/* end create_predefined_items_mom */
+
+
+momitem_t *
+find_named_item_mom (const char *str)
+{
+  assert (mom_valid_item_name_str (str, NULL));
+  assert (named_nbuck_mom > 0);
+  assert (named_count_mom > 0);
+  int lobix = 0, hibix = named_nbuck_mom, mdbix = 0;
+  int bix = -1;
+  while (lobix + 3 < hibix)
+    {
+      while (lobix < hibix && named_buckets_mom[lobix]->nambuck_len == 0)
+	lobix++;
+      while (hibix > lobix && named_buckets_mom[hibix - 1]->nambuck_len == 0)
+	hibix--;
+      if (lobix + 2 >= hibix)
+	break;
+      mdbix = (lobix + hibix) / 2;
+      while (mdbix < hibix && named_buckets_mom[mdbix]->nambuck_len == 0)
+	mdbix++;
+      struct namebucket_mom_st *mdbuck = named_buckets_mom[mdbix];
+      unsigned mdlen = mdbuck->nambuck_len;
+      assert (mdlen > 0);
+      const momitem_t *mditm = mdbuck->nambuck_arr[mdlen / 2];
+      assert (mditm && !mditm->itm_anonymous && mditm->itm_name);
+      if (strcmp (str, mditm->itm_name->cstr) < 0)
+	lobix = mdbix;
+      else
+	hibix = mdbix;
+    }
+  // try to find the appropriate bucket index bix
+  for (mdbix = lobix; mdbix < hibix && bix < 0; mdbix++)
+    {
+      struct namebucket_mom_st *mdbuck = named_buckets_mom[mdbix];
+      unsigned mdlen = mdbuck->nambuck_len;
+      if (mdlen == 0)
+	continue;
+      const momitem_t *firstitm = mdbuck->nambuck_arr[0];
+      assert (firstitm && !firstitm->itm_anonymous && firstitm->itm_name);
+      const momitem_t *lastitm = mdbuck->nambuck_arr[mdlen - 1];
+      assert (lastitm && !lastitm->itm_anonymous && lastitm->itm_name);
+      if (strcmp (firstitm->itm_name->cstr, str) <= 0
+	  && strcmp (str, lastitm->itm_name->cstr) <= 0)
+	bix = mdbix;
+    }
+  if (bix < 0)
+    return NULL;
+  assert (bix < (int) named_nbuck_mom);
+  {
+    struct namebucket_mom_st *buck = named_buckets_mom[bix];
+    assert (buck != NULL);
+    unsigned blen = buck->nambuck_len;
+    assert (blen > 0);
+    int lo = 0, hi = blen, md = 0;
+    while (lo + 3 < hi)
+      {
+	md = (lo + hi) / 2;
+	const momitem_t *itm = buck->nambuck_arr[md];
+	assert (itm && !itm->itm_anonymous && itm->itm_name);
+	int cmp = strcmp (str, itm->itm_name->cstr);
+	if (cmp == 0)
+	  return (momitem_t *) itm;
+	if (cmp < 0)
+	  lo = md;
+	else
+	  hi = md;
+      };
+    for (md = lo; md < hi; md++)
+      {
+	const momitem_t *itm = buck->nambuck_arr[md];
+	assert (itm && !itm->itm_anonymous && itm->itm_name);
+	int cmp = strcmp (str, itm->itm_name->cstr);
+	if (cmp == 0)
+	  return (momitem_t *) itm;
+      }
+  }
+  return NULL;
+}				// end find_named_item_mom
+
 
 
 
@@ -768,13 +812,7 @@ mom_find_item (const char *str)
   if (isalpha (str[0]) && mom_valid_item_name_str (str, &end) && end && !*end)
     {
       pthread_rwlock_rdlock (&named_lock_mom);
-      struct namebucket_mom_st *curbuck = find_named_bucket_mom (str, NULL);
-      if (curbuck)
-	{
-	  int bix = index_in_bucket_mom (curbuck, str, false);
-	  if (bix >= 0 && bix < (int) curbuck->nambuck_len)
-	    itm = curbuck->nambuck_arr[bix];
-	}
+      itm = find_named_item_mom (str);
       pthread_rwlock_unlock (&named_lock_mom);
       return (momitem_t *) itm;
     }
@@ -857,6 +895,9 @@ mom_make_anonymous_item_by_id (const char *ids)
   return (momitem_t *) itm;
 }
 
+
+
+
 momitem_t *
 mom_make_named_item (const char *namstr)
 {
@@ -865,55 +906,132 @@ mom_make_named_item (const char *namstr)
   if (!namstr || !mom_valid_item_name_str (namstr, &end) || !end || *end)
     return NULL;
   pthread_rwlock_wrlock (&named_lock_mom);
+  assert (named_count_mom > 0);	/* we have some predefined names! */
   if (MOM_UNLIKELY
       (named_count_mom > 0
-       && (3 * named_nbuck_mom / 4 + 2) * (named_nbuck_mom + 3) <
+       && (5 * named_nbuck_mom / 4 + 1) * (named_nbuck_mom + 1) <
        named_count_mom))
     reorganize_named_items_mom ();
+  int lobix = 0, hibix = named_nbuck_mom, mdbix = 0;
   int bix = -1;
-  struct namebucket_mom_st *curbuck = find_named_bucket_mom (namstr, &bix);
-  assert (curbuck != NULL);
-  assert (bix >= 0 && bix < (int) named_nbuck_mom
-	  && named_buckets_mom[bix] == curbuck);
-  unsigned bucklen = curbuck->nambuck_len;
-  unsigned oldbucksize = curbuck->nambuck_size;
-  if (bucklen + 3 >= oldbucksize)
+  while (lobix + 3 < hibix)
     {
-      unsigned newbucksize = ((3 * bucklen / 2 + 10) | 0xf) + 1;
-      assert (newbucksize > oldbucksize);
-      struct namebucket_mom_st *newbuck	//
-	= MOM_GC_ALLOC ("new name bucket",
-			sizeof (struct namebucket_mom_st) +
-			newbucksize * sizeof (momitem_t *));
-      newbuck->nambuck_size = newbucksize;
-      memcpy (newbuck->nambuck_arr, curbuck->nambuck_arr,
-	      bucklen * sizeof (momitem_t *));
-      newbuck->nambuck_len = bucklen;
-      MOM_GC_FREE (curbuck,
-		   sizeof (struct namebucket_mom_st) +
-		   oldbucksize * sizeof (momitem_t *));
-      curbuck = named_buckets_mom[bix] = newbuck;
+      while (lobix < hibix && named_buckets_mom[lobix]->nambuck_len == 0)
+	lobix++;
+      while (hibix > lobix && named_buckets_mom[hibix - 1]->nambuck_len == 0)
+	hibix--;
+      if (lobix + 2 >= hibix)
+	break;
+      mdbix = (lobix + hibix) / 2;
+      while (mdbix < hibix && named_buckets_mom[mdbix]->nambuck_len == 0)
+	mdbix++;
+      struct namebucket_mom_st *mdbuck = named_buckets_mom[mdbix];
+      unsigned mdlen = mdbuck->nambuck_len;
+      assert (mdlen > 0);
+      const momitem_t *mditm = mdbuck->nambuck_arr[mdlen / 2];
+      assert (mditm && !mditm->itm_anonymous && mditm->itm_name);
+      if (strcmp (namstr, mditm->itm_name->cstr) < 0)
+	lobix = mdbix;
+      else
+	hibix = mdbix;
     }
-  int nix = index_in_bucket_mom (curbuck, namstr, true);
-  assert (nix >= 0);
-  {
-    const momitem_t *olditm = curbuck->nambuck_arr[nix];
-    if (olditm && !strcmp (olditm->itm_name->cstr, namstr))
-      itm = (momitem_t *) olditm;
-  }
+  // try to find the appropriate bucket index bix
+  for (mdbix = lobix; mdbix < hibix && bix < 0; mdbix++)
+    {
+      struct namebucket_mom_st *mdbuck = named_buckets_mom[mdbix];
+      unsigned mdlen = mdbuck->nambuck_len;
+      if (mdlen == 0)
+	continue;
+      const momitem_t *firstitm = mdbuck->nambuck_arr[0];
+      assert (firstitm && !firstitm->itm_anonymous && firstitm->itm_name);
+      const momitem_t *lastitm = mdbuck->nambuck_arr[mdlen - 1];
+      assert (lastitm && !lastitm->itm_anonymous && lastitm->itm_name);
+      if (strcmp (firstitm->itm_name->cstr, namstr) <= 0
+	  && strcmp (namstr, lastitm->itm_name->cstr) <= 0)
+	bix = mdbix;
+    }
+  int pos = -1;
+  if (bix >= 0)
+    {
+      struct namebucket_mom_st *buck = named_buckets_mom[bix];
+      unsigned blen = buck->nambuck_len;
+      if (blen > 0)
+	{
+	  int lo = 0, hi = (int) blen, md = 0;
+	  while (lo + 3 < hi)
+	    {
+	      int md = (lo + hi) / 2;
+	      const momitem_t *curitm = buck->nambuck_arr[md];
+	      assert (curitm && !curitm->itm_anonymous && curitm->itm_name);
+	      int cmp = strcmp (curitm->itm_name->cstr, namstr);
+	      if (!cmp)
+		{
+		  itm = (momitem_t *) curitm;
+		  goto end;
+		};
+	      if (cmp < 0)
+		lo = md;
+	      else
+		hi = md;
+	    };
+	  for (md = lo; md < hi; md++)
+	    {
+	      const momitem_t *curitm = buck->nambuck_arr[md];
+	      assert (curitm && !curitm->itm_anonymous && curitm->itm_name);
+	      int cmp = strcmp (curitm->itm_name->cstr, namstr);
+	      if (!cmp)
+		{
+		  itm = (momitem_t *) curitm;
+		  goto end;
+		};
+	      if (cmp > 0)
+		{
+		  pos = md;
+		  break;
+		}
+	    }
+	}
+    }
+  else
+    {				// bix<0
+      for (mdbix = lobix; mdbix < (int) named_nbuck_mom - 1 && bix < 0;
+	   mdbix++)
+	{
+	  struct namebucket_mom_st *mdbuck = named_buckets_mom[mdbix];
+	  struct namebucket_mom_st *nxbuck = named_buckets_mom[mdbix + 1];
+	  if (mdbuck->nambuck_len == 0 && nxbuck->nambuck_len > 0
+	      && strcmp (namstr, nxbuck->nambuck_arr[0]->itm_name->cstr) < 0)
+	    {
+	      bix = mdbix;
+	      pos = 0;
+	    }
+	  else if (mdbuck->nambuck_len > 0 && nxbuck->nambuck_len == 0
+		   && strcmp (mdbuck->
+			      nambuck_arr[mdbuck->nambuck_len -
+					  1]->itm_name->cstr, namstr) < 0)
+	    {
+	      bix = mdbix + 1;
+	      pos = 0;
+	    }
+	}
+    };
+  assert (bix >= 0);
+  assert (pos >= 0);
+  struct namebucket_mom_st *curbuck = named_buckets_mom[bix];
+  unsigned bucklen = curbuck->nambuck_len;
   if (!itm)
     {
       momitem_t *newitm = MOM_GC_ALLOC ("new named item", sizeof (momitem_t));
       initialize_protoitem_mom (newitm);
       newitm->itm_name = mom_make_string (namstr);
       newitm->itm_anonymous = false;
-      if (nix < (int) bucklen)
+      if (pos < (int) bucklen)
 	{
-	  memmove (curbuck->nambuck_arr + nix + 1, curbuck->nambuck_arr + nix,
-		   (bucklen - nix) * sizeof (momitem_t *));
+	  memmove (curbuck->nambuck_arr + pos + 1, curbuck->nambuck_arr + pos,
+		   (bucklen - pos) * sizeof (momitem_t *));
 	}
       itm = newitm;
-      curbuck->nambuck_arr[nix] = itm;
+      curbuck->nambuck_arr[pos] = itm;
       bucklen = ++curbuck->nambuck_len;
       named_count_mom++;
       GC_REGISTER_FINALIZER (newitm, finalize_item_mom, NULL, NULL, NULL);
@@ -921,10 +1039,13 @@ mom_make_named_item (const char *namstr)
   if (MOM_UNLIKELY
       (bucklen > 2 && (2 + bucklen) * bucklen > 3 * named_count_mom))
     reorganize_named_items_mom ();
+end:
   pthread_rwlock_unlock (&named_lock_mom);
   assert (itm != NULL);
   return itm;
-}
+}				/* end mom_make_named_item */
+
+
 
 momitem_t *
 mom_make_predefined_named_item (const char *namstr)

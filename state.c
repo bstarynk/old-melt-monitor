@@ -814,6 +814,7 @@ mom_emit_dumped_value (struct momdumper_st *du, const momvalue_t val)
   assert (du && du->dumagic == DUMPER_MAGIC_MOM);
   assert (du->dustate == dump_emit);
   assert (du->dufile);
+#warning mom_emit_dumped_value incomplete
 }
 
 static void
