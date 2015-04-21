@@ -763,6 +763,12 @@ void mom_scan_dumped_module_item (struct momdumper_st *du,
 void mom_output_gplv3_notice (FILE *out, const char *prefix,
 			      const char *suffix, const char *filename);
 
+bool mom_dumpable_value (struct momdumper_st *du, const momvalue_t val);
+bool mom_dumpable_item (struct momdumper_st *du, const momitem_t *itm);
+void mom_emit_dumped_newline (struct momdumper_st *du);
+void mom_emit_dumped_space (struct momdumper_st *du);
+void mom_emit_dump_indent (struct momdumper_st *du);
+void mom_emit_dump_outdent (struct momdumper_st *du);
 bool mom_emit_dumped_itemref (struct momdumper_st *du, const momitem_t *itm);
 void mom_emit_dumped_value (struct momdumper_st *du, const momvalue_t val);
 #define mom_make_anonymous_item() mom_make_anonymous_item_at(__LINE__)

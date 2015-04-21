@@ -547,6 +547,8 @@ struct momdumper_st
   const char *duprefix;		/* file prefix */
   const char *durandsuffix;	/* random temporary suffix */
   const char *dupredefheaderpath;
+  int duindentation;
+  long dulastnloff;
   struct momhashset_st *duitemuserset;
   struct momhashset_st *duitemglobalset;
   struct momhashset_st *duitemmoduleset;
@@ -797,10 +799,36 @@ emit_dumped_item_mom (struct momdumper_st *du, const momitem_t *itm)
     return;
   putc ('\n', du->dufile);
   fprintf (du->dufile, "** %s\n", itm->itm_str->cstr);
+  du->duindentation = 0;
+  du->dulastnloff = ftell (du->dufile);
+}
+
+#define DUMP_INDENT_MAX_MOM 16
+#define DUMP_WIDTH_MAX_MOM 72
+void
+mom_emit_dumped_newline (struct momdumper_st *du)
+{
+  assert (du && du->dumagic == DUMPER_MAGIC_MOM);
+  assert (du->dustate == dump_emit);
+  fputc ('\n', du->dufile);
+  for (int ix = du->duindentation % DUMP_INDENT_MAX_MOM; ix >= 0; ix--)
+    fputc (' ', du->dufile);
+  du->dulastnloff = ftell (du->dufile);
+}
+
+void
+mom_emit_dumped_space (struct momdumper_st *du)
+{
+  assert (du && du->dumagic == DUMPER_MAGIC_MOM);
+  assert (du->dustate == dump_emit);
+  if (ftell (du->dufile) - du->dulastnloff < DUMP_WIDTH_MAX_MOM)
+    fputc (' ', du->dufile);
+  else
+    mom_emit_dumped_newline (du);
 }
 
 bool
-mom_emit_dumped_itemref (struct momdumper_st * du, const momitem_t *itm)
+mom_emit_dumped_itemref (struct momdumper_st *du, const momitem_t *itm)
 {
   assert (du && du->dumagic == DUMPER_MAGIC_MOM);
   assert (du->dustate == dump_emit);
@@ -821,13 +849,223 @@ mom_emit_dumped_itemref (struct momdumper_st * du, const momitem_t *itm)
 }
 
 void
+mom_emit_dump_indent (struct momdumper_st *du)
+{
+  assert (du && du->dumagic == DUMPER_MAGIC_MOM);
+  assert (du->dustate == dump_emit);
+  assert (du->dufile);
+  du->duindentation++;
+}
+
+void
+mom_emit_dump_outdent (struct momdumper_st *du)
+{
+  assert (du && du->dumagic == DUMPER_MAGIC_MOM);
+  assert (du->dustate == dump_emit);
+  assert (du->dufile);
+  du->duindentation++;
+}
+
+bool
+mom_dumpable_item (struct momdumper_st *du, const momitem_t *itm)
+{
+  assert (du && du->dumagic == DUMPER_MAGIC_MOM);
+  assert (du->dustate == dump_emit);
+  if (!itm)
+    return false;
+  return (mom_hashset_contains (du->duitemuserset, itm)
+	  || mom_hashset_contains (du->duitemglobalset, itm));
+}
+
+bool
+mom_dumpable_value (struct momdumper_st * du, const momvalue_t val)
+{
+  assert (du && du->dumagic == DUMPER_MAGIC_MOM);
+  assert (du->dustate == dump_emit);
+  if (val.istransient)
+    return false;
+  switch ((enum momvaltype_en) val.typnum)
+    {
+    case momty_null:
+      return false;
+    case momty_double:
+    case momty_int:
+    case momty_delim:
+    case momty_string:
+    case momty_tuple:
+    case momty_set:
+      return true;
+    case momty_item:
+      return (mom_dumpable_item (du, val.vitem));
+    case momty_node:
+      {
+	momnode_t *nod = val.vnode;
+	assert (nod);
+	return (mom_dumpable_item (du, nod->conn));
+      }
+    }
+  return false;
+}
+
+void
 mom_emit_dumped_value (struct momdumper_st *du, const momvalue_t val)
 {
   assert (du && du->dumagic == DUMPER_MAGIC_MOM);
   assert (du->dustate == dump_emit);
   assert (du->dufile);
-#warning mom_emit_dumped_value incomplete
-}
+  mom_emit_dumped_space (du);
+  if (val.istransient || !mom_dumpable_value (du, val))
+    goto emit_null;
+  switch ((enum momvaltype_en) val.typnum)
+    {
+    case momty_null:
+    emit_null:
+      fputs ("~", du->dufile);
+      return;
+    case momty_double:
+      {
+	double x = val.vdbl;
+	if (isnan (x))
+	  fputs ("+NAN", du->dufile);
+	else if (isinf (x) > 0)
+	  fputs ("+INF", du->dufile);
+	else if (isinf (x) < 0)
+	  fputs ("-INF", du->dufile);
+	char fbuf[48];
+	snprintf (fbuf, sizeof (fbuf), "%.5f", x);
+	if (atof (fbuf) == x)
+	  {
+	    fputs (fbuf, du->dufile);
+	    return;
+	  };
+	snprintf (fbuf, sizeof (fbuf), "%.9f", x);
+	if (atof (fbuf) == x)
+	  {
+	    fputs (fbuf, du->dufile);
+	    return;
+	  };
+	snprintf (fbuf, sizeof (fbuf), "%.15g", x);
+	if (atof (fbuf) == x)
+	  {
+	    fputs (fbuf, du->dufile);
+	    return;
+	  };
+	fprintf (du->dufile, "%a", x);
+	break;
+      }
+    case momty_int:
+      fprintf (du->dufile, "%lld", (long long) val.vint);
+      break;
+    case momty_delim:
+      {
+	char dbuf[8 + sizeof (val.vdelim)];
+	memset (dbuf, 0, sizeof (dbuf));
+	memcpy (dbuf, &val.vdelim, sizeof (val.vdelim));
+	fputs ("° \"", du->dufile);
+	mom_output_utf8cstr_cencoded (du->dufile, dbuf, -1);
+	fputs ("\"", du->dufile);
+      }
+      break;
+    case momty_string:
+      fputs ("\"", du->dufile);
+      mom_output_utf8cstr_cencoded (du->dufile, val.vstr->cstr, -1);
+      fputs ("\"", du->dufile);
+      break;
+    case momty_item:
+      assert (val.vitem && val.vitem->itm_str);
+      if (mom_hashset_contains (du->duitemuserset, val.vitem)
+	  || mom_hashset_contains (du->duitemglobalset, val.vitem))
+	fputs (val.vitem->itm_str->cstr, du->dufile);
+      else
+	fputs ("~", du->dufile);
+      break;
+    case momty_tuple:
+      {
+	momseq_t *tup = val.vtuple;
+	bool something = false;
+	assert (tup);
+	fputs ("[", du->dufile);
+	mom_emit_dump_indent (du);
+	if (mom_dumpable_value (du, tup->meta))
+	  {
+	    mom_emit_dumped_space (du);
+	    fputs ("!", du->dufile);
+	    mom_emit_dumped_value (du, tup->meta);
+	    something = true;
+	  }
+	unsigned len = tup->slen;
+	for (unsigned ix = 0; ix < len; ix++)
+	  {
+	    if (mom_dumpable_item (du, tup->arritm[ix]))
+	      {
+		if (something)
+		  mom_emit_dumped_space (du);
+		mom_emit_dumped_itemref (du, tup->arritm[ix]);
+		something = true;
+	      }
+	  }
+	mom_emit_dump_outdent (du);
+	fputs ("]", du->dufile);
+      }
+      break;
+    case momty_set:
+      {
+	momseq_t *tup = val.vtuple;
+	bool something = false;
+	assert (tup);
+	fputs ("{", du->dufile);
+	mom_emit_dump_indent (du);
+	if (mom_dumpable_value (du, tup->meta))
+	  {
+	    mom_emit_dumped_space (du);
+	    fputs ("!", du->dufile);
+	    mom_emit_dumped_value (du, tup->meta);
+	    something = true;
+	  }
+	unsigned len = tup->slen;
+	for (unsigned ix = 0; ix < len; ix++)
+	  {
+	    if (mom_dumpable_item (du, tup->arritm[ix]))
+	      {
+		if (something)
+		  mom_emit_dumped_space (du);
+		mom_emit_dumped_itemref (du, tup->arritm[ix]);
+		something = true;
+	      }
+	  }
+	mom_emit_dump_outdent (du);
+	fputs ("}", du->dufile);
+      }
+      break;
+    case momty_node:
+      {
+	momnode_t *nod = val.vnode;
+	assert (nod);
+	unsigned ln = nod->slen;
+	if (!mom_dumpable_item (du, nod->conn))
+	  goto emit_null;
+	fputs ("^", du->dufile);
+	mom_emit_dumped_itemref (du, nod->conn);
+	if (mom_dumpable_value (du, nod->meta))
+	  {
+	    mom_emit_dumped_space (du);
+	    fputs ("!", du->dufile);
+	    mom_emit_dumped_value (du, nod->meta);
+	  }
+	fputs ("(", du->dufile);
+	mom_emit_dump_indent (du);
+	for (unsigned ix = 0; ix < ln; ix++)
+	  {
+	    if (ix > 0)
+	      mom_emit_dumped_space (du);
+	    mom_emit_dumped_value (du, nod->arrsons[ix]);
+	  }
+	mom_emit_dump_outdent (du);
+	fputs (")", du->dufile);
+      }
+      break;
+    }
+}				/* end mom_emit_dumped_value */
 
 static void
 emit_global_items_mom (struct momdumper_st *du)

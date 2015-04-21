@@ -64,6 +64,13 @@ mom_valueptr_hash (momvalue_t *pval)
 	assert (ps);
 	return ps->shash;
       }
+    case momty_delim:
+      {
+	char dbuf[8 + sizeof (pval->vdelim)];
+	memset (dbuf, 0, sizeof (dbuf));
+	strncpy (dbuf, (const char *) &pval->vdelim, sizeof (pval->vdelim));
+	return mom_cstring_hash (dbuf);
+      }
     case momty_set:
       {
 	const momseq_t *ps = pval->vset;
@@ -594,6 +601,11 @@ mom_value_compare (momvalue_t v1, momvalue_t v2)
 	return -1;
       else
 	return 1;
+    case momty_delim:
+      {
+	return strncmp ((const char *) &v1.vdelim, (const char *) &v2.vdelim,
+			sizeof (v1.vdelim));
+      }
     case momty_double:
       if (v1.vdbl == v2.vdbl || (isnan (v1.vdbl) && isnan (v2.vdbl)))
 	return 0;
