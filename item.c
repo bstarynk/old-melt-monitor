@@ -523,7 +523,7 @@ find_named_bucket_mom (const char *name, int *insertpix)
       if (cmpfirstname < 0)
 	{
 	  if (!insertpix)
-	    return NULL;
+	    continue;
 	  if (md > 0)
 	    {
 	      struct namebucket_mom_st *prevbuck = named_buckets_mom[md - 1];
