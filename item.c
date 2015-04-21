@@ -652,6 +652,10 @@ create_predefined_items_mom (void)
   char **arrnames =		//
     MOM_GC_ALLOC ("predefined names",
 		  (MOM_NB_PREDEFINED_NAMED + 3) * sizeof (char *));
+  // arritems is needed to avoid premature GC
+  momitem_t **arritems =	//
+    MOM_GC_ALLOC ("predefined items",
+		  (MOM_NB_PREDEFINED_NAMED + 3) * sizeof (momitem_t *));
 
 #define  MOM_HAS_PREDEFINED_NAMED(Nam,Hash) do {	\
     arrnames[nbnamed] = #Nam;                           \
@@ -682,7 +686,7 @@ create_predefined_items_mom (void)
     unsigned nbucks = ((int) sqrt ((double) nbnamed)) + 3;
     unsigned bucklen = nbnamed / nbucks;
     if (bucklen < 2)
-      bucklen++;
+      bucklen = 2;
     unsigned bucksiz = ((5 * bucklen / 4 + 3) | 0xf) + 1;
     named_buckets_mom =		//
       MOM_GC_ALLOC ("initial named buckets", nbucks * sizeof (void *));
@@ -709,13 +713,26 @@ create_predefined_items_mom (void)
 	    itm->itm_space = momspa_predefined;
 	    itm->itm_name = mom_make_string (curname);
 	    curbuck->nambuck_arr[ixitm] = itm;
+	    arritems[namecount] = itm;
 	    blen = ixitm;
 	    namecount++;
 	  }
 	curbuck->nambuck_len = blen;
       }
+    named_count_mom = namecount;
     pthread_rwlock_unlock (&named_lock_mom);
   }
+#define  MOM_HAS_PREDEFINED_NAMED(Nam,Hash) do {	\
+    mompi_##Nam = mom_find_named_item (#Nam);		\
+    assert(mompi_##Nam && !mompi_##Nam->itm_anonymous	\
+	   && mompi_##Nam->itm_name			\
+	   && mompi_##Nam->itm_name->shash == Hash);	\
+  } while(0);
+  //
+#define  MOM_HAS_PREDEFINED_ANONYMOUS(Id,Hash) do {	\
+  } while(0)
+#include "predef-monimelt.h"
+
   MOM_INFORMPRINTF ("created %d predefined named & %d predefined anonymous",
 		    nbnamed, nbanon);
 }				/* end create_predefined_items_mom */
@@ -1006,9 +1023,9 @@ mom_make_named_item (const char *namstr)
 	      pos = 0;
 	    }
 	  else if (mdbuck->nambuck_len > 0 && nxbuck->nambuck_len == 0
-		   && strcmp (mdbuck->
-			      nambuck_arr[mdbuck->nambuck_len -
-					  1]->itm_name->cstr, namstr) < 0)
+		   && strcmp (mdbuck->nambuck_arr[mdbuck->nambuck_len -
+						  1]->itm_name->cstr,
+			      namstr) < 0)
 	    {
 	      bix = mdbix + 1;
 	      pos = 0;
