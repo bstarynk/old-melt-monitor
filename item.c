@@ -465,6 +465,7 @@ mom_find_named_item (const char *name)
       || !endname || *endname != '\0')
     return NULL;
   pthread_rwlock_rdlock (&named_lock_mom);
+  MOM_DEBUGPRINTF (item, "find_named_item name=%s", name);
   if (MOM_UNLIKELY (named_count_mom == 0))
     goto end;
   int bix = -1;
@@ -508,6 +509,7 @@ mom_find_named_item (const char *name)
 	    break;
 	  };
       };
+    MOM_DEBUGPRINTF (item, "lobix=%d hibix=%d bix=%d", lobix, hibix, bix);
     for (int mdbix = lobix; bix < 0 && mdbix < hibix; mdbix++)
       {
 	const struct namebucket_mom_st *mdbuck = named_buckets_mom[mdbix];
@@ -720,11 +722,11 @@ create_predefined_items_mom (void)
 	    itm->itm_name = mom_make_string (curname);
 	    curbuck->nambuck_arr[ixitm] = itm;
 	    arritems[namecount] = itm;
-	    blen = ixitm;
+	    blen = ixitm + 1;
 	    namecount++;
 	    MOM_DEBUGPRINTF (item,
-			     "create predefined named item @%p: %s #%d (bix#%d)",
-			     itm, curname, namecount, bix);
+			     "create predefined named item @%p: %s #%d (bix#%d, ixitm=%d)",
+			     itm, curname, namecount, bix, ixitm);
 	  }
 	curbuck->nambuck_len = blen;
 	assert (named_buckets_mom[bix] != NULL);

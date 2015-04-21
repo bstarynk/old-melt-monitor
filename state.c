@@ -424,6 +424,16 @@ readagain:
 }
 
 void
+load_fill_item_mom (struct momloader_st *ld, momitem_t *itm)
+{
+  assert (ld && ld->ldmagic == LOADER_MAGIC_MOM);
+  assert (itm && itm->itm_str);
+  MOM_DEBUGPRINTF (load, "load fill item %s", itm->itm_str->cstr);
+#warning load_fill_item_mom unimplemented
+  MOM_WARNPRINTF ("load_fill_item_mom %s unimplemented", itm->itm_str->cstr);
+}
+
+void
 second_pass_load_mom (struct momloader_st *ld, bool global)
 {
   assert (ld && ld->ldmagic == LOADER_MAGIC_MOM);
@@ -467,8 +477,10 @@ second_pass_load_mom (struct momloader_st *ld, bool global)
 			    ld->ldforglobals ? "global" : "user",
 			    ld->ldforglobals ? ld->
 			    ldglobalpath : ld->lduserpath);
-	  MOM_WARNPRINTF ("missing load of item %s",
-			  val.vitem->itm_str->cstr);
+	  MOM_DEBUGPRINTF (load, "second %s pass item %s",
+			   ld->ldforglobals ? "global" : "user",
+			   val.vitem->itm_str->cstr);
+	  load_fill_item_mom (ld, val.vitem);
 	}
     }
   while (!feof (ld->ldforglobals ? ld->ldglobalfile : ld->lduserfile));
