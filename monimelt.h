@@ -545,6 +545,20 @@ mom_components_nth (const struct momcomponents_st *csq, int rk)
   return MOM_NONEV;
 }
 
+struct momcomponents_st *mom_components_append1 (struct momcomponents_st *csq,
+						 const momvalue_t val);
+
+struct momcomponents_st *mom_components_append_values (struct momcomponents_st
+						       *csq, unsigned nbval,
+						       ... /*values */ );
+
+struct momcomponents_st *mom_components_append_sized_array (struct
+							    momcomponents_st
+							    *csq,
+							    unsigned nbval,
+							    const momvalue_t
+							    *valarr);
+
 void
 mom_components_put_nth (struct momcomponents_st *csq, int rk,
 			const momvalue_t val);

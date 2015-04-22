@@ -46,3 +46,106 @@ mom_components_scan_dump (struct momcomponents_st *csq,
   for (unsigned ix = 0; ix < cnt; ix++)
     mom_scan_dumped_value (du, csq->cp_comps[ix]);
 }
+
+struct momcomponents_st *
+mom_components_append1 (struct momcomponents_st *csq, const momvalue_t val)
+{
+  if (csq == MOM_EMPTY)
+    csq = NULL;
+  unsigned cnt = csq ? csq->cp_cnt : 0;
+  unsigned len = csq ? csq->cp_len : 0;
+  assert (cnt <= len);
+  if (MOM_UNLIKELY (cnt >= MOM_MAX_SEQ_LENGTH))
+    MOM_FATAPRINTF ("too huge components sequence %d values", cnt);
+  if (MOM_UNLIKELY (!csq || cnt + 1 >= len))
+    {
+      unsigned newsiz = ((5 * cnt / 4 + 3) | 0xf) + 1;
+      struct momcomponents_st *newcsq =	//
+	MOM_GC_ALLOC ("new components seq",
+		      sizeof (struct momcomponents_st) +
+		      newsiz * sizeof (momvalue_t));
+      newcsq->cp_len = newsiz;
+      if (csq)
+	memcpy (newcsq->cp_comps, csq->cp_comps, cnt * sizeof (momvalue_t));
+      newcsq->cp_cnt = cnt;
+      MOM_GC_FREE (csq,
+		   sizeof (struct momcomponents_st) +
+		   len * sizeof (momvalue_t));
+      csq = newcsq;
+    }
+  csq->cp_comps[cnt++] = val;
+  csq->cp_cnt = cnt;
+  return csq;
+}
+
+struct momcomponents_st *
+mom_components_append_values (struct momcomponents_st *csq, unsigned nbval,
+			      ... /*values */ )
+{
+  va_list args;
+  if (csq == MOM_EMPTY)
+    csq = NULL;
+  unsigned cnt = csq ? csq->cp_cnt : 0;
+  unsigned len = csq ? csq->cp_len : 0;
+  assert (cnt <= len);
+  if (MOM_UNLIKELY (nbval == 0))
+    return csq;
+  if (MOM_UNLIKELY (cnt + nbval >= MOM_MAX_SEQ_LENGTH))
+    MOM_FATAPRINTF ("too many components : %d values", cnt);
+  if (MOM_UNLIKELY (!csq || cnt + nbval >= len))
+    {
+      unsigned newsiz = ((5 * cnt / 4 + nbval + 3) | 0xf) + 1;
+      struct momcomponents_st *newcsq =	//
+	MOM_GC_ALLOC ("new components seq",
+		      sizeof (struct momcomponents_st) +
+		      newsiz * sizeof (momvalue_t));
+      newcsq->cp_len = newsiz;
+      if (csq)
+	memcpy (newcsq->cp_comps, csq->cp_comps, cnt * sizeof (momvalue_t));
+      newcsq->cp_cnt = cnt;
+      MOM_GC_FREE (csq,
+		   sizeof (struct momcomponents_st) +
+		   len * sizeof (momvalue_t));
+      csq = newcsq;
+    }
+  va_start (args, nbval);
+  for (unsigned ix = 0; ix < nbval; ix++)
+    csq->cp_comps[cnt++] = va_arg (args, momvalue_t);
+  va_end (args);
+  csq->cp_cnt = cnt;
+  return csq;
+}
+
+struct momcomponents_st *
+mom_components_append_sized_array (struct momcomponents_st *csq,
+				   unsigned nbval, const momvalue_t *valarr)
+{
+  if (csq == MOM_EMPTY)
+    csq = NULL;
+  if (!nbval || !valarr)
+    return csq;
+  unsigned cnt = csq ? csq->cp_cnt : 0;
+  unsigned len = csq ? csq->cp_len : 0;
+  assert (cnt <= len);
+  if (MOM_UNLIKELY (cnt + nbval >= MOM_MAX_SEQ_LENGTH))
+    MOM_FATAPRINTF ("too many components : %d values", cnt);
+  if (MOM_UNLIKELY (!csq || cnt + nbval >= len))
+    {
+      unsigned newsiz = ((5 * cnt / 4 + nbval + 3) | 0xf) + 1;
+      struct momcomponents_st *newcsq =	//
+	MOM_GC_ALLOC ("new components seq",
+		      sizeof (struct momcomponents_st) +
+		      newsiz * sizeof (momvalue_t));
+      newcsq->cp_len = newsiz;
+      if (csq)
+	memcpy (newcsq->cp_comps, csq->cp_comps, cnt * sizeof (momvalue_t));
+      newcsq->cp_cnt = cnt;
+      MOM_GC_FREE (csq,
+		   sizeof (struct momcomponents_st) +
+		   len * sizeof (momvalue_t));
+      csq = newcsq;
+    }
+  for (unsigned ix = 0; ix < nbval; ix++)
+    csq->cp_comps[cnt++] = valarr[ix];
+  return csq;
+}
