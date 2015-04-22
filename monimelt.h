@@ -740,7 +740,6 @@ struct momitem_st
   };
   struct momattributes_st *itm_attrs;
   struct momcomponents_st *itm_comps;
-  const momstring_t *itm_comment;
   momitem_t *itm_kind;
   void *itm_data1;
   void *itm_data2;
@@ -814,6 +813,17 @@ mom_cstring_hash (const char *str)
 const momstring_t *mom_make_string (const char *str);
 const momstring_t *mom_string_sprintf (const char *fmt, ...)
   __attribute__ ((format (printf, 1, 2)));
+static inline momvalue_t
+mom_stringv (const momstring_t *str)
+{
+  momvalue_t val = MOM_NONEV;
+  if (str)
+    {
+      val.typnum = momty_string;
+      val.vstr = str;
+    }
+  return val;
+}
 
 // make a tuple from given items. NULL and MOM_EMPTY item pointers are skipped.
 const momseq_t *mom_make_meta_tuple (momvalue_t metav, unsigned nbitems, ...);

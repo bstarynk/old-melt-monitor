@@ -774,7 +774,14 @@ main (int argc_main, char **argv_main)
 	    mom_make_predefined_named_item (newpredefname_mom[prix]);
 	  if (newpredefcomment_mom[prix]
 	      && strlen (newpredefcomment_mom[prix]) > 0)
-	    pritm->itm_comment = mom_make_string (newpredefcomment_mom[prix]);
+	    {
+	      momvalue_t valstr =
+		mom_stringv (mom_make_string (newpredefcomment_mom[prix]));
+	      pritm->itm_attrs	//
+		= mom_attributes_put (pritm->itm_attrs,
+				      MOM_PREDEFINED_NAMED (comment),
+				      &valstr);
+	    }
 	  MOM_INFORMPRINTF ("made predefined %s", pritm->itm_name->cstr);
 	  if (!dump_exit_dir_mom)
 	    dump_exit_dir_mom = "./";
