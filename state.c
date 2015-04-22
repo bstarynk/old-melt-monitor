@@ -296,7 +296,7 @@ token_string_load_mom (struct momloader_st *ld, momvalue_t *pval)
 const char *const delim_mom[] = {
   /// first the 2 char delimiters
   "==",
-  "**", "++", "--", "°", "*", "(", ")", "[", "]",
+  "**", "++", "--", "[[", "]]", "..", "°", "*", "(", ")", "[", "]",
   "{", "}", "<", ">", "^", "!",
   NULL
 };
@@ -451,7 +451,7 @@ load_fill_item_mom (struct momloader_st *ld, momitem_t *itm)
 	  if (mom_load_value (ld, &vat) && vat.typnum != momty_null)
 	    itm->itm_attrs = mom_attributes_put (itm->itm_attrs, itmat, &vat);
 	}
-      if (!((vtokbis = MOM_NONEV), mom_token_load (ld, &vtokbis))
+      if (!((vtokbis = MOM_NONEV), !mom_token_load (ld, &vtokbis))
 	  || !mom_value_is_delim (vtokbis, "}"))
 	MOM_FATAPRINTF ("expecting } to end attributes of item %s"
 			" in %s file %s line %d", itm->itm_str->cstr,
@@ -460,6 +460,19 @@ load_fill_item_mom (struct momloader_st *ld, momitem_t *itm)
 			(int) ld->ldlinecount);
     }
   // should load the components
+  if (mom_token_load (ld, &vtok) && mom_value_is_delim (vtok, "[["))
+    {
+      momvalue_t valcomp = MOM_NONEV;
+      while ((valcomp = MOM_NONEV), mom_load_value (ld, &valcomp))
+	itm->itm_comps = mom_components_append1 (itm->itm_comps, valcomp);
+      if (!((vtokbis = MOM_NONEV), !mom_token_load (ld, &vtokbis))
+	  || !mom_value_is_delim (vtokbis, "]]"))
+	MOM_FATAPRINTF ("expecting ]] to end attributes of item %s"
+			" in %s file %s line %d", itm->itm_str->cstr,
+			ld->ldforglobals ? "global" : "user",
+			ld->ldforglobals ? ld->ldglobalpath : ld->lduserpath,
+			(int) ld->ldlinecount);
+    }
 #warning load_fill_item_mom unimplemented, see emit_content_dumped_item_mom
   MOM_WARNPRINTF ("load_fill_item_mom %s unimplemented", itm->itm_str->cstr);
 }				/* end load_fill_item_mom */
@@ -1055,6 +1068,24 @@ emit_content_dumped_item_mom (struct momdumper_st *du, const momitem_t *itm)
       mom_emit_dumped_space (du);
       mom_emit_dump_outdent (du);
       fputs ("}", du->dufile);
+      mom_emit_dumped_newline (du);
+    }
+  unsigned cnt = mom_components_count (itm->itm_comps);
+  if (cnt > 0)
+    {
+      fputs ("[[", du->dufile);
+      mom_emit_dump_indent (du);
+      for (unsigned ix = 0; ix < cnt; ix++)
+	{
+	  mom_emit_dumped_space (du);
+	  mom_emit_dumped_value (du,
+				 mom_components_nth (itm->itm_comps,
+						     (int) ix));
+	}
+      mom_emit_dumped_space (du);
+      mom_emit_dump_outdent (du);
+      fputs ("]]", du->dufile);
+      mom_emit_dumped_newline (du);
     }
 #warning emit_content_dumped_item_mom unimplemented, see load_fill_item_mom
 }				/* end emit_content_dumped_item_mom */
@@ -1076,7 +1107,7 @@ emit_dumped_item_mom (struct momdumper_st *du, const momitem_t *itm)
   du->duindentation = 0;
   du->dulastnloff = ftell (du->dufile);
   emit_content_dumped_item_mom (du, itm);
-  putc ('\n', du->dufile);
+  fputs ("\n..\n\n", du->dufile);
   du->duindentation = 0;
   du->dulastnloff = ftell (du->dufile);
 }

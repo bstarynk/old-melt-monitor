@@ -559,6 +559,14 @@ struct momcomponents_st *mom_components_append_sized_array (struct
 							    const momvalue_t
 							    *valarr);
 
+static inline unsigned
+mom_components_count (const struct momcomponents_st *csq)
+{
+  if (!csq || csq == MOM_EMPTY)
+    return 0;
+  return csq->cp_cnt;
+}
+
 void
 mom_components_put_nth (struct momcomponents_st *csq, int rk,
 			const momvalue_t val);

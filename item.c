@@ -739,6 +739,9 @@ create_predefined_items_mom (void)
     assert(mompi_##Nam && !mompi_##Nam->itm_anonymous	\
 	   && mompi_##Nam->itm_name			\
 	   && mompi_##Nam->itm_name->shash == Hash);	\
+    predefined_hashset_mom =				\
+      mom_hashset_put(predefined_hashset_mom,		\
+		  mompi_##Nam);				\
   } while(0);
   //
 #define  MOM_HAS_PREDEFINED_ANONYMOUS(Id,Hash) do {	\
