@@ -297,7 +297,7 @@ const char *const delim_mom[] = {
   /// first the 2 char delimiters
   "==",
   "**", "++", "--", "*", "(", ")", "[", "]",
-  "{", "}", "<", ">",
+  "{", "}", "<", ">", "^", "!", "°",
   NULL
 };
 
@@ -526,6 +526,177 @@ mom_load_queued_tokens_mode (struct momloader_st *ld,
     return NULL;
   return mom_queuevalue_node (&ld->ldquetokens, connitm, meta);
 }
+
+
+
+static bool
+load_metavalue_mom (struct momloader_st *ld, momvalue_t vtok,
+		    momvalue_t *pval)
+{
+  assert (ld && ld->ldmagic == LOADER_MAGIC_MOM);
+  if (!pval)
+    return false;
+  if (mom_value_is_delim (vtok, "!"))
+    return mom_load_value (ld, pval);
+  return false;
+}
+
+bool				// should be in sync with mom_emit_dumped_value
+mom_load_value (struct momloader_st * ld, momvalue_t *pval)
+{
+  assert (ld && ld->ldmagic == LOADER_MAGIC_MOM);
+  if (!pval)
+    return false;
+  memset (pval, 0, sizeof (momvalue_t));
+  momvalue_t vtok = MOM_NONEV;
+  momvalue_t vtokbis = MOM_NONEV;
+  momvalue_t vtokter = MOM_NONEV;
+  if (!mom_token_load (ld, &vtok))
+    return false;
+  if (vtok.typnum == momty_item)
+    {				// items
+      *pval = vtok;
+      return true;
+    }
+  if (mom_value_is_delim (vtok, "~"))
+    {				// null value
+      *pval = MOM_NONEV;
+      return true;
+    }
+  if (vtok.typnum == momty_int || vtok.typnum == momty_string
+      || vtok.typnum == momty_double)
+    {				/// scalars
+      *pval = vtok;
+      return true;
+    }
+  if (mom_value_is_delim (vtok, "°"))
+    {				/// delimiters
+      int linecnt = ld->ldlinecount;
+      if (mom_token_load (ld, &vtokbis) && vtokbis.typnum == momty_string)
+	{
+	  pval->typnum = momty_delim;
+	  strncpy (pval->vdelim.delim, vtokbis.vstr->cstr,
+		   sizeof (pval->vdelim.delim));
+	  return true;
+	}
+      else
+	MOM_FATAPRINTF ("expecting string for delimiter after °"
+			" in %s file %s line %d",
+			ld->ldforglobals ? "global" : "user",
+			ld->ldforglobals ? ld->ldglobalpath : ld->lduserpath,
+			linecnt);
+    }
+  if (mom_value_is_delim (vtok, "["))
+    {				////tuples
+      int linecnt = ld->ldlinecount;
+      if (!mom_token_load (ld, &vtokbis))
+	MOM_FATAPRINTF ("missing tuple content after ["
+			" in %s file %s line %d",
+			ld->ldforglobals ? "global" : "user",
+			ld->ldforglobals ? ld->ldglobalpath : ld->lduserpath,
+			linecnt);
+      momvalue_t metav = MOM_NONEV;
+      const momitem_t *curitm = NULL;
+      struct momqueueitems_st quitems;
+      memset (&quitems, 0, sizeof (quitems));
+      load_metavalue_mom (ld, vtokbis, &metav);
+      while ((curitm = mom_load_itemref (ld)) != NULL)
+	{
+	  mom_queueitem_push_back (&quitems, curitm);
+	  linecnt = ld->ldlinecount;
+	}
+      if (!mom_token_load (ld, &vtokter)
+	  || !mom_value_is_delim (vtokter, "]"))
+	MOM_FATAPRINTF ("missing ] after tuple content"
+			" in %s file %s line %d",
+			ld->ldforglobals ? "global" : "user",
+			ld->ldforglobals ? ld->ldglobalpath : ld->lduserpath,
+			linecnt);
+      pval->typnum = momty_tuple;
+      pval->vtuple = (momseq_t *) mom_queueitem_tuple (&quitems, metav);
+      return true;
+    }				/* done tuples */
+  if (mom_value_is_delim (vtok, "{"))
+    {				//// sets
+      int linecnt = ld->ldlinecount;
+      if (!mom_token_load (ld, &vtokbis))
+	MOM_FATAPRINTF ("missing set content after {"
+			" in %s file %s line %d",
+			ld->ldforglobals ? "global" : "user",
+			ld->ldforglobals ? ld->ldglobalpath : ld->lduserpath,
+			linecnt);
+      momvalue_t metav = MOM_NONEV;
+      const momitem_t *curitm = NULL;
+      struct momqueueitems_st quitems;
+      memset (&quitems, 0, sizeof (quitems));
+      load_metavalue_mom (ld, vtokbis, &metav);
+      while ((curitm = mom_load_itemref (ld)) != NULL)
+	{
+	  mom_queueitem_push_back (&quitems, curitm);
+	  linecnt = ld->ldlinecount;
+	}
+      if (!mom_token_load (ld, &vtokter)
+	  || !mom_value_is_delim (vtokter, "}"))
+	MOM_FATAPRINTF ("missing } after set content"
+			" in %s file %s line %d",
+			ld->ldforglobals ? "global" : "user",
+			ld->ldforglobals ? ld->ldglobalpath : ld->lduserpath,
+			linecnt);
+      {
+	pval->typnum = momty_set;
+	const momseq_t *tup = mom_queueitem_tuple (&quitems, MOM_NONEV);
+	assert (tup);
+	pval->vset =
+	  (momseq_t *) mom_make_sized_meta_set (metav, tup->slen,
+						(const momitem_t **)
+						tup->arritm);
+	return true;
+      }
+    }				/* done sets */
+  if (mom_value_is_delim (vtok, "^"))
+    {				//// nodes
+      int linecnt = ld->ldlinecount;
+      const momitem_t *connitm = mom_load_itemref (ld);
+      momvalue_t metav = MOM_NONEV;
+      if (!connitm || !mom_token_load (ld, &vtokbis))
+	MOM_FATAPRINTF ("missing connective item after ^ "
+			" in %s file %s line %d",
+			ld->ldforglobals ? "global" : "user",
+			ld->ldforglobals ? ld->ldglobalpath : ld->lduserpath,
+			linecnt);
+      load_metavalue_mom (ld, vtokbis, &metav);
+      linecnt = ld->ldlinecount;
+      if (!mom_token_load (ld, &vtokter)
+	  || !mom_value_is_delim (vtokter, "("))
+	MOM_FATAPRINTF ("missing ( in node " " in %s file %s line %d",
+			ld->ldforglobals ? "global" : "user",
+			ld->ldforglobals ? ld->ldglobalpath : ld->lduserpath,
+			linecnt);
+      struct momqueuevalues_st quvals;
+      memset (&quvals, 0, sizeof (quvals));
+      momvalue_t vson = MOM_NONEV;
+      while ((vson = MOM_NONEV), mom_load_value (ld, &vson))
+	{
+	  mom_queuevalue_push_back (&quvals, vson);
+	  linecnt = ld->ldlinecount;
+	}
+      if (!mom_token_load (ld, &vtokter)
+	  || !mom_value_is_delim (vtokter, ")"))
+	MOM_FATAPRINTF ("missing ) to end node " " in %s file %s line %d",
+			ld->ldforglobals ? "global" : "user",
+			ld->ldforglobals ? ld->ldglobalpath : ld->lduserpath,
+			linecnt);
+      pval->typnum = momty_node;
+      pval->vnode =
+	(momnode_t *) mom_queuevalue_node (&quvals, connitm, metav);
+      return true;
+    }				/* done nodes */
+  if (vtok.typnum != momty_null)
+    mom_load_push_front_token (ld, vtok);
+  return false;
+}				/* end mom_load_value */
+
+
 
 void
 mom_load_state ()
@@ -948,7 +1119,7 @@ mom_dumpable_value (struct momdumper_st * du, const momvalue_t val)
   return false;
 }
 
-void
+void				// see also mom_load_value
 mom_emit_dumped_value (struct momdumper_st *du, const momvalue_t val)
 {
   assert (du && du->dumagic == DUMPER_MAGIC_MOM);

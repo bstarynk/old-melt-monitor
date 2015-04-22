@@ -180,6 +180,36 @@ mom_timespec (double t)
   return ts;
 }
 
+// every monimelt value starts with a non-zero unsigned typenum
+typedef int8_t momtypenum_t;
+typedef enum momvaltype_en
+{
+  momty_delim = -3,
+  momty_double = -2,
+  momty_int = -1,
+  momty_null = 0,
+  momty_string,
+  momty_item,
+  momty_tuple,
+  momty_set,
+  momty_node,
+} momvaltype_t;
+
+typedef enum momspace_en
+{
+  momspa_none,
+  momspa_transient,
+  momspa_user,
+  momspa_global,
+  momspa_predefined
+} momspace_t;
+
+
+struct momdelim_st
+{
+  char delim[4];
+};
+
 //////////////// wrapping Boehm GC allocation
 // using GNU extension: statement expression
 #define MOM_GC_ALLOC_AT(Msg,Siz,Lin) ({ \
@@ -354,6 +384,7 @@ typedef struct momvalue_st momvalue_t;
 void mom_load_state (void);
 void mom_dump_state (const char *prefix);
 bool mom_token_load (struct momloader_st *ld, momvalue_t *pval);
+
 unsigned mom_load_nb_queued_tokens (struct momloader_st *ld);
 // return the node of queued tokens, or nil if none
 const momnode_t *mom_load_queued_tokens_mode (struct momloader_st *ld,
@@ -361,6 +392,13 @@ const momnode_t *mom_load_queued_tokens_mode (struct momloader_st *ld,
 					      momvalue_t meta);
 void mom_load_push_front_token (struct momloader_st *ld, momvalue_t valtok);
 void mom_load_push_back_token (struct momloader_st *ld, momvalue_t valtok);
+
+static inline const momitem_t *mom_load_itemref (struct momloader_st *ld);
+
+bool mom_load_value (struct momloader_st *ld, momvalue_t *pval);
+
+
+
 void mom_initialize_random (void);
 void mom_initialize_items (void);
 
@@ -383,36 +421,6 @@ extern const char mom_plugin_GPL_compatible[];	// a string describing the licenc
 extern void mom_plugin_init (const char *pluginarg, int *pargc, char ***pargv);	// the plugin initializer
 /// they may also define a function to be called after load
 extern void momplugin_after_load (void);
-
-// every monimelt value starts with a non-zero unsigned typenum
-typedef int8_t momtypenum_t;
-typedef enum momvaltype_en
-{
-  momty_delim = -3,
-  momty_double = -2,
-  momty_int = -1,
-  momty_null = 0,
-  momty_item,
-  momty_node,
-  momty_tuple,
-  momty_set,
-  momty_string,
-} momvaltype_t;
-
-typedef enum momspace_en
-{
-  momspa_none,
-  momspa_transient,
-  momspa_user,
-  momspa_global,
-  momspa_predefined
-} momspace_t;
-
-
-struct momdelim_st
-{
-  char delim[4];
-};
 
 struct momvalue_st
 {
@@ -440,6 +448,13 @@ static inline momhash_t
 mom_value_hash (momvalue_t val)
 {
   return mom_valueptr_hash (&val);
+}
+
+static inline bool
+mom_value_is_delim (momvalue_t v, const char *delim)
+{
+  return v.typnum == momty_delim
+    && !strncmp (v.vdelim.delim, delim, sizeof (v.vdelim));
 }
 
 bool mom_value_equal (momvalue_t v1, momvalue_t v2);
@@ -855,6 +870,20 @@ void mom_output_utf8cstr_cencoded (FILE *fil, const char *str, int len);
 
 #define MOM_PREDEFINED_NAMED(Nam) mompi_##Nam
 #define MOM_PREDEFINED_ANONYMOUS(Id) mompi_##Id
+
+static inline const momitem_t *
+mom_load_itemref (struct momloader_st *ld)
+{
+  momvalue_t val = MOM_NONEV;
+  if (mom_token_load (ld, &val))
+    {
+      if (val.typnum == momty_item)
+	return val.vitem;
+      else
+	mom_load_push_front_token (ld, val);
+    }
+  return NULL;
+}
 
 
 #endif /*MONIMELT_INCLUDED_ */
