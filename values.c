@@ -506,6 +506,27 @@ mom_make_meta_node (momvalue_t metav, momitem_t *connitm, unsigned nbsons,
   return nod;
 }
 
+const momnode_t *
+mom_make_sized_meta_node (momvalue_t metav,
+			  momitem_t *connitm,
+			  unsigned nbsons, momvalue_t *sonarr)
+{
+  if (MOM_UNLIKELY (!connitm || connitm == MOM_EMPTY || (nbsons && !sonarr)))
+    return NULL;
+  if (MOM_UNLIKELY (nbsons > MOM_MAX_NODE_LENGTH))
+    MOM_FATAPRINTF ("too big node %u", nbsons);
+  momnode_t *nod = MOM_GC_ALLOC ("node",
+				 sizeof (momnode_t) +
+				 nbsons * sizeof (momvalue_t));
+  nod->conn = connitm;
+  nod->slen = nbsons;
+  nod->meta = metav;
+  for (unsigned ix = 0; ix < nbsons; ix++)
+    nod->arrsons[ix] = sonarr[ix];
+  update_node_hash_mom (nod);
+  return nod;
+}
+
 bool
 mom_value_equal (momvalue_t v1, momvalue_t v2)
 {

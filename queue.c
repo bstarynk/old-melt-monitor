@@ -21,31 +21,31 @@
 #include "monimelt.h"
 
 void
-mom_queue_push_back (struct momqueueitems_st *qu, const momitem_t *itm)
+mom_queueitem_push_back (struct momqueueitems_st *qu, const momitem_t *itm)
 {
   if (!qu)
     return;
   if (!itm || itm == MOM_EMPTY)
     return;
-  struct momqueuechunk_st *bk = qu->que_back;
+  struct momqueuechunkitems_st *bk = qu->que_back;
   if (bk)
     {
-      assert (bk->quech_items[0]);	/* cannot be empty chunk */
-      assert (bk->quech_next == NULL);
+      assert (bk->quechi_items[0]);	/* cannot be empty chunk */
+      assert (bk->quechi_next == NULL);
       for (unsigned ix = MOM_QUEUECHUNK_LEN - 1; ix > 0; ix--)
 	{
-	  if (!bk->quech_items[ix] && bk->quech_items[ix - 1])
+	  if (!bk->quechi_items[ix] && bk->quechi_items[ix - 1])
 	    {
-	      bk->quech_items[ix] = itm;
+	      bk->quechi_items[ix] = itm;
 	      qu->que_size++;
 	      return;
 	    }
 	}
-      struct momqueuechunk_st *newch	//
-	= MOM_GC_ALLOC ("queue chunk", sizeof (struct momqueuechunk_st));
-      bk->quech_next = newch;
-      newch->quech_prev = bk;
-      newch->quech_items[0] = itm;
+      struct momqueuechunkitems_st *newch	//
+	= MOM_GC_ALLOC ("queue chunk", sizeof (struct momqueuechunkitems_st));
+      bk->quechi_next = newch;
+      newch->quechi_prev = bk;
+      newch->quechi_items[0] = itm;
       qu->que_size++;
       qu->que_back = bk;
       return;
@@ -53,9 +53,9 @@ mom_queue_push_back (struct momqueueitems_st *qu, const momitem_t *itm)
   else				/* !bk, empty queue */
     {
       assert (qu->que_size == 0);
-      struct momqueuechunk_st *newch	//
-	= MOM_GC_ALLOC ("queue chunk", sizeof (struct momqueuechunk_st));
-      newch->quech_items[0] = itm;
+      struct momqueuechunkitems_st *newch	//
+	= MOM_GC_ALLOC ("queue chunk", sizeof (struct momqueuechunkitems_st));
+      newch->quechi_items[0] = itm;
       qu->que_front = qu->que_back = newch;
       qu->que_size = 1;
       return;
@@ -63,19 +63,19 @@ mom_queue_push_back (struct momqueueitems_st *qu, const momitem_t *itm)
 }
 
 const momitem_t *
-mom_queue_pop_front (struct momqueueitems_st *qu)
+mom_queueitem_pop_front (struct momqueueitems_st *qu)
 {
   const momitem_t *itm = NULL;
   if (!qu || !qu->que_size)
     return NULL;
-  struct momqueuechunk_st *fr = qu->que_front;
+  struct momqueuechunkitems_st *fr = qu->que_front;
   assert (fr);
-  itm = fr->quech_items[0];
+  itm = fr->quechi_items[0];
   assert (itm);
-  if (!fr->quech_items[1])
+  if (!fr->quechi_items[1])
     {
       // front becomes empty, remove it
-      qu->que_front = fr->quech_next;
+      qu->que_front = fr->quechi_next;
       MOM_GC_FREE (fr, sizeof (*fr));
       qu->que_size--;
       return itm;
@@ -84,8 +84,8 @@ mom_queue_pop_front (struct momqueueitems_st *qu)
     {
       for (unsigned ix = 1; ix < MOM_QUEUECHUNK_LEN; ix++)
 	{
-	  fr->quech_items[ix - 1] = fr->quech_items[ix];
-	  fr->quech_items[ix] = NULL;
+	  fr->quechi_items[ix - 1] = fr->quechi_items[ix];
+	  fr->quechi_items[ix] = NULL;
 	}
       qu->que_size--;
       return itm;
@@ -94,7 +94,7 @@ mom_queue_pop_front (struct momqueueitems_st *qu)
 
 
 const momseq_t *
-mom_queue_tuple (struct momqueueitems_st *qu, momvalue_t metav)
+mom_queueitem_tuple (struct momqueueitems_st *qu, momvalue_t metav)
 {
   if (!qu)
     return NULL;
@@ -102,13 +102,14 @@ mom_queue_tuple (struct momqueueitems_st *qu, momvalue_t metav)
     MOM_FATAPRINTF ("too huge %ld queue", (long) qu->que_size);
   unsigned siz = qu->que_size;
   const momitem_t **arr =
-    MOM_GC_ALLOC ("queue array", (siz + 1) * sizeof (momitem_t *));
+    MOM_GC_ALLOC ("queue item array", (siz + 1) * sizeof (momitem_t *));
   unsigned cnt = 0;
-  for (struct momqueuechunk_st * ch = qu->que_front; ch; ch = ch->quech_next)
+  for (struct momqueuechunkitems_st * ch = qu->que_front; ch;
+       ch = ch->quechi_next)
     {
       for (unsigned ix = 0; ix < MOM_QUEUECHUNK_LEN; ix++)
 	{
-	  const momitem_t *itm = ch->quech_items[ix];
+	  const momitem_t *itm = ch->quechi_items[ix];
 	  if (itm && itm != MOM_EMPTY)
 	    arr[cnt++] = itm;
 	}
@@ -121,19 +122,149 @@ mom_queue_tuple (struct momqueueitems_st *qu, momvalue_t metav)
 
 
 void
-mom_queue_scan_dump (struct momqueueitems_st *qu, struct momdumper_st *du)
+mom_queueitem_scan_dump (struct momqueueitems_st *qu, struct momdumper_st *du)
 {
   if (!qu || qu == MOM_EMPTY)
     return;
   assert (du);
 
-  for (struct momqueuechunk_st * ch = qu->que_front; ch; ch = ch->quech_next)
+  for (struct momqueuechunkitems_st * ch = qu->que_front; ch;
+       ch = ch->quechi_next)
     {
       for (unsigned ix = 0; ix < MOM_QUEUECHUNK_LEN; ix++)
 	{
-	  const momitem_t *itm = ch->quech_items[ix];
+	  const momitem_t *itm = ch->quechi_items[ix];
 	  if (itm && itm != MOM_EMPTY)
 	    mom_scan_dumped_item (du, itm);
+	}
+    }
+}
+
+
+////////////////////////////////////////////////////////////////
+
+void
+mom_queuevalue_push_back (struct momqueuevalues_st *qu, const momvalue_t val)
+{
+  if (!qu)
+    return;
+  if (val.typnum == momty_null)
+    return;
+  struct momqueuechunkvalues_st *bk = qu->que_back;
+  if (bk)
+    {
+      assert (bk->quechv_values[0].typnum != momty_null);	/* cannot be empty chunk */
+      assert (bk->quechv_next == NULL);
+      for (unsigned ix = MOM_QUEUECHUNK_LEN - 1; ix > 0; ix--)
+	{
+	  if (bk->quechv_values[ix].typnum == momty_null
+	      && bk->quechv_values[ix - 1].typnum != momty_null)
+	    {
+	      bk->quechv_values[ix] = val;
+	      qu->que_size++;
+	      return;
+	    }
+	}
+      struct momqueuechunkvalues_st *newch	//
+	= MOM_GC_ALLOC ("queue chunk",
+			sizeof (struct momqueuechunkvalues_st));
+      bk->quechv_next = newch;
+      newch->quechv_prev = bk;
+      newch->quechv_values[0] = val;
+      qu->que_size++;
+      qu->que_back = bk;
+      return;
+    }
+  else				/* !bk, empty queue */
+    {
+      assert (qu->que_size == 0);
+      struct momqueuechunkvalues_st *newch	//
+	= MOM_GC_ALLOC ("queue chunk",
+			sizeof (struct momqueuechunkvalues_st));
+      newch->quechv_values[0] = val;
+      qu->que_front = qu->que_back = newch;
+      qu->que_size = 1;
+      return;
+    }
+}
+
+momvalue_t
+mom_queuevalue_pop_front (struct momqueuevalues_st *qu)
+{
+  momvalue_t val = MOM_NONEV;
+  if (!qu || !qu->que_size)
+    return MOM_NONEV;
+  struct momqueuechunkvalues_st *fr = qu->que_front;
+  assert (fr);
+  val = fr->quechv_values[0];
+  assert (val.typnum != momty_null);
+  if (fr->quechv_values[1].typnum != momty_null)
+    {
+      // front becomes empty, remove it
+      qu->que_front = fr->quechv_next;
+      MOM_GC_FREE (fr, sizeof (*fr));
+      qu->que_size--;
+      return val;
+    }
+  else
+    {
+      for (unsigned ix = 1; ix < MOM_QUEUECHUNK_LEN; ix++)
+	{
+	  fr->quechv_values[ix - 1] = fr->quechv_values[ix];
+	  fr->quechv_values[ix] = MOM_NONEV;
+	}
+      qu->que_size--;
+      return val;
+    }
+}
+
+
+const momnode_t *
+mom_queuevalue_node (struct momqueuevalues_st *qu, const momitem_t *connitm,
+		     momvalue_t metav)
+{
+  if (!qu || qu == MOM_EMPTY || !connitm || connitm == MOM_EMPTY)
+    return NULL;
+  if (qu->que_size > MOM_MAX_SEQ_LENGTH)
+    MOM_FATAPRINTF ("too huge %ld queue", (long) qu->que_size);
+  unsigned siz = qu->que_size;
+  momvalue_t *arr =
+    MOM_GC_ALLOC ("value queue array", (siz + 1) * sizeof (momvalue_t));
+  unsigned cnt = 0;
+  for (struct momqueuechunkvalues_st * ch = qu->que_front; ch;
+       ch = ch->quechv_next)
+    {
+      for (unsigned ix = 0; ix < MOM_QUEUECHUNK_LEN; ix++)
+	{
+	  const momvalue_t val = ch->quechv_values[ix];
+	  if (val.typnum != momty_null)
+	    arr[cnt++] = val;
+	}
+    };
+  assert (cnt == siz);
+  const momnode_t *nd =
+    mom_make_sized_meta_node (metav, (momitem_t *) connitm, cnt, arr);
+  MOM_GC_FREE (arr, siz * sizeof (momvalue_t));
+  return nd;
+}
+
+
+void
+mom_queuevalue_scan_dump (struct momqueuevalues_st *qu,
+			  struct momdumper_st *du)
+{
+  if (!qu || qu == MOM_EMPTY)
+    return;
+  assert (du);
+
+  for (struct momqueuechunkvalues_st * ch = qu->que_front; ch;
+       ch = ch->quechv_next)
+    {
+      for (unsigned ix = 0; ix < MOM_QUEUECHUNK_LEN; ix++)
+	{
+	  const momvalue_t val = ch->quechv_values[ix];
+	  if (val.typnum != momty_null)
+	    mom_scan_dumped_value (du, val);
 	}
     }
 }

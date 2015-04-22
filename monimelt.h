@@ -560,34 +560,37 @@ mom_hashset_elements_set (struct momhashset_st *hset)
 void mom_hashset_scan_dump (struct momhashset_st *hset,
 			    struct momdumper_st *du);
 
-struct momqueuechunk_st;
+
+////////////////
+struct momqueuechunkitems_st;
 struct momqueueitems_st
 {
   unsigned long que_size;
-  struct momqueuechunk_st *que_front;
-  struct momqueuechunk_st *que_back;
+  struct momqueuechunkitems_st *que_front;
+  struct momqueuechunkitems_st *que_back;
 };
 #define MOM_QUEUECHUNK_LEN 6
-struct momqueuechunk_st
+struct momqueuechunkitems_st
 {
-  struct momqueuechunk_st *quech_next;
-  struct momqueuechunk_st *quech_prev;
-  const momitem_t *quech_items[MOM_QUEUECHUNK_LEN];
+  struct momqueuechunkitems_st *quechi_next;
+  struct momqueuechunkitems_st *quechi_prev;
+  const momitem_t *quechi_items[MOM_QUEUECHUNK_LEN];
 };
 
-void mom_queue_push_back (struct momqueueitems_st *qu, const momitem_t *itm);
+void mom_queueitem_push_back (struct momqueueitems_st *qu,
+			      const momitem_t *itm);
 
 static inline const momitem_t *
-mom_queue_peek_front (struct momqueueitems_st *qu)
+mom_queueitem_peek_front (struct momqueueitems_st *qu)
 {
   if (!qu)
     return NULL;
-  struct momqueuechunk_st *fr = qu->que_front;
+  struct momqueuechunkitems_st *fr = qu->que_front;
   if (!fr)
     return NULL;
   for (unsigned ix = 0; ix < MOM_QUEUECHUNK_LEN; ix++)
     {
-      const momitem_t *itm = fr->quech_items[ix];
+      const momitem_t *itm = fr->quechi_items[ix];
       if (itm && itm != MOM_EMPTY)
 	return itm;
     };
@@ -595,20 +598,75 @@ mom_queue_peek_front (struct momqueueitems_st *qu)
 }
 
 static inline unsigned long
-mom_queue_size (struct momqueueitems_st *qu)
+mom_queueitem_size (struct momqueueitems_st *qu)
 {
   if (!qu)
     return 0;
   return qu->que_size;
 }
 
-const momitem_t *mom_queue_pop_front (struct momqueueitems_st *qu);
-const momseq_t *mom_queue_tuple (struct momqueueitems_st *qu,
-				 momvalue_t metav);
+const momitem_t *mom_queueitem_pop_front (struct momqueueitems_st *qu);
+const momseq_t *mom_queueitem_tuple (struct momqueueitems_st *qu,
+				     momvalue_t metav);
 
-void mom_queue_scan_dump (struct momqueueitems_st *qu,
-			  struct momdumper_st *du);
+void mom_queueitem_scan_dump (struct momqueueitems_st *qu,
+			      struct momdumper_st *du);
 
+////////////////
+
+struct momqueuechunkvalues_st;
+struct momqueuevalues_st
+{
+  unsigned long que_size;
+  struct momqueuechunkvalues_st *que_front;
+  struct momqueuechunkvalues_st *que_back;
+};
+struct momqueuechunkvalues_st
+{
+  struct momqueuechunkvalues_st *quechv_next;
+  struct momqueuechunkvalues_st *quechv_prev;
+  momvalue_t quechv_values[MOM_QUEUECHUNK_LEN];
+};
+
+void mom_queuevalue_push_back (struct momqueuevalues_st *qu,
+			       const momvalue_t val);
+
+static inline momvalue_t
+mom_queuevalue_peek_front (struct momqueuevalues_st *qu)
+{
+  if (!qu)
+    return MOM_NONEV;
+  struct momqueuechunkvalues_st *fr = qu->que_front;
+  if (!fr)
+    return MOM_NONEV;
+  for (unsigned ix = 0; ix < MOM_QUEUECHUNK_LEN; ix++)
+    {
+      const momvalue_t val = fr->quechv_values[ix];
+      if (val.typnum != momty_null)
+	return val;
+    };
+  return MOM_NONEV;
+}
+
+static inline unsigned long
+mom_queuevalue_size (struct momqueuevalues_st *qu)
+{
+  if (!qu)
+    return 0;
+  return qu->que_size;
+}
+
+momvalue_t mom_queuevalue_pop_front (struct momqueuevalues_st *qu);
+const momnode_t *mom_queuevalue_node (struct momqueuevalues_st *qu,
+				      const momitem_t *conn,
+				      momvalue_t metav);
+
+void mom_queuevalue_scan_dump (struct momqueuevalues_st *qu,
+			       struct momdumper_st *du);
+
+
+
+////////////////////////////////////////////////////////////////
 struct momitem_st
 {
   pthread_mutex_t itm_mtx;

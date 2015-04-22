@@ -579,7 +579,7 @@ mom_scan_dumped_item (struct momdumper_st *du, const momitem_t *itm)
     du->duitemuserset = mom_hashset_put (du->duitemuserset, itm);
   else
     du->duitemglobalset = mom_hashset_put (du->duitemglobalset, itm);
-  mom_queue_push_back (&du->duitemque, itm);
+  mom_queueitem_push_back (&du->duitemque, itm);
   return true;
 }
 
@@ -1153,9 +1153,9 @@ mom_dump_state (const char *prefix)
     }
   dmp.dustate = dump_scan;
   scan_predefined_items_mom (&dmp);
-  while (mom_queue_size (&dmp.duitemque) > 0)
+  while (mom_queueitem_size (&dmp.duitemque) > 0)
     {
-      const momitem_t *curitm = mom_queue_pop_front (&dmp.duitemque);
+      const momitem_t *curitm = mom_queueitem_pop_front (&dmp.duitemque);
       scan_inside_dumped_item_mom (&dmp, (momitem_t *) curitm);
     }
   emit_predefined_header_mom (&dmp);
