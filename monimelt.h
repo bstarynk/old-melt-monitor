@@ -101,6 +101,16 @@ const char *mom_user_data;
 #define MOM_UNUSED
 #endif
 
+// every hashcode is a non-zero 32 bits unsigned
+typedef uint32_t momhash_t;
+
+typedef struct momstring_st momstring_t;
+typedef struct momdelim_st momdelim_t;
+typedef struct momitem_st momitem_t;
+typedef struct momnode_st momnode_t;
+typedef struct momseq_st momseq_t;
+typedef struct momvalue_st momvalue_t;
+
 static inline pid_t
 mom_gettid (void)
 {
@@ -344,6 +354,12 @@ typedef struct momvalue_st momvalue_t;
 void mom_load_state (void);
 void mom_dump_state (const char *prefix);
 bool mom_token_load (struct momloader_st *ld, momvalue_t *pval);
+unsigned mom_load_nb_queued_tokens (struct momloader_st *ld);
+// return the node of queued tokens, or nil if none
+const momnode_t *mom_load_queued_tokens_mode (struct momloader_st *ld,
+					      const momitem_t *connitm,
+					      momvalue_t meta);
+void mom_load_push_token (struct momloader_st *ld, momvalue_t valtok);
 void mom_initialize_random (void);
 void mom_initialize_items (void);
 
@@ -391,15 +407,6 @@ typedef enum momspace_en
   momspa_predefined
 } momspace_t;
 
-// every hashcode is a non-zero 32 bits unsigned
-typedef uint32_t momhash_t;
-
-typedef struct momstring_st momstring_t;
-typedef struct momdelim_st momdelim_t;
-typedef struct momitem_st momitem_t;
-typedef struct momnode_st momnode_t;
-typedef struct momseq_st momseq_t;
-typedef struct momvalue_st momvalue_t;
 
 struct momdelim_st
 {

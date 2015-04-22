@@ -32,6 +32,7 @@ struct momloader_st
   FILE *lduserfile;
   struct momhashset_st *lditemset;
   struct momhashset_st *ldmoduleset;
+  struct momqueuevalues_st ldquetokens;
   bool ldforglobals;
   char *ldlinebuf;
   size_t ldlinesize;
@@ -307,6 +308,11 @@ mom_token_load (struct momloader_st *ld, momvalue_t *pval)
   assert (ld && ld->ldmagic == LOADER_MAGIC_MOM);
   assert (pval != NULL);
   memset (pval, 0, sizeof (momvalue_t));
+  if (mom_queuevalue_size (&ld->ldquetokens))
+    {
+      mom_queuevalue_pop_front (&ld->ldquetokens);
+      return true;
+    }
 readagain:
   if (!ld->ldlinebuf || ld->ldlinecol >= ld->ldlinelen)
     {
@@ -480,10 +486,28 @@ second_pass_load_mom (struct momloader_st *ld, bool global)
 	  MOM_DEBUGPRINTF (load, "second %s pass item %s",
 			   ld->ldforglobals ? "global" : "user",
 			   val.vitem->itm_str->cstr);
+	  memset (&ld->ldquetokens, 0, sizeof (ld->ldquetokens));
 	  load_fill_item_mom (ld, val.vitem);
 	}
     }
   while (!feof (ld->ldforglobals ? ld->ldglobalfile : ld->lduserfile));
+}
+
+unsigned
+mom_load_nb_queued_tokens (struct momloader_st *ld)
+{
+  assert (ld && ld->ldmagic == LOADER_MAGIC_MOM);
+  return mom_queuevalue_size (&ld->ldquetokens);
+}
+
+const momnode_t *
+mom_load_queued_tokens_mode (struct momloader_st *ld,
+			     const momitem_t *connitm, momvalue_t meta)
+{
+  assert (ld && ld->ldmagic == LOADER_MAGIC_MOM);
+  if (!connitm || mom_queuevalue_size (&ld->ldquetokens) == 0)
+    return NULL;
+  return mom_queuevalue_node (&ld->ldquetokens, connitm, meta);
 }
 
 void
