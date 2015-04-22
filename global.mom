@@ -34,7 +34,9 @@
 
 
 ** the_software
-
+{
+  * comment  "describes the entire software system" }
+   
 ..
 
 //// end of global file global.mom

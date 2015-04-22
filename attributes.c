@@ -40,7 +40,7 @@ attributes_find_entry_pos_mom (const struct momattributes_st *attrs,
 	{
 	  const momitem_t *curitm = attrs->at_entries[ix].ent_itm;
 	  if (curitm == itma)
-	    return (struct momentry_st *) &attrs->at_entries[ix].ent_val;
+	    return (struct momentry_st *) &attrs->at_entries[ix];
 	  else if ((!curitm || curitm == MOM_EMPTY) && pos < 0)
 	    pos = (int) ix;
 	}
@@ -331,10 +331,10 @@ mom_attributes_set (struct momattributes_st *attrs, momvalue_t meta)
     MOM_GC_ALLOC ("attributes set", (acnt + 1) * sizeof (momitem_t *));
   for (unsigned ix = 0; ix < asiz; ix++)
     {
-      assert (count < acnt);
       const momitem_t *curitm = attrs->at_entries[ix].ent_itm;
       if (!curitm || curitm == MOM_EMPTY)
 	continue;
+      assert (count < acnt);
       arr[count++] = curitm;
     };
   assert (count == acnt);
