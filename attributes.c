@@ -318,3 +318,27 @@ mom_attributes_scan_dump (struct momattributes_st *attrs,
       mom_scan_dumped_value (du, attrs->at_entries[ix].ent_val);
     }
 }
+
+const momseq_t *
+mom_attributes_set (struct momattributes_st *attrs, momvalue_t meta)
+{
+  if (!attrs || attrs == MOM_EMPTY)
+    return NULL;
+  unsigned acnt = attrs->at_cnt;
+  unsigned asiz = attrs->at_len;
+  unsigned count = 0;
+  const momitem_t **arr =	//
+    MOM_GC_ALLOC ("attributes set", (acnt + 1) * sizeof (momitem_t *));
+  for (unsigned ix = 0; ix < asiz; ix++)
+    {
+      assert (count < acnt);
+      const momitem_t *curitm = attrs->at_entries[ix].ent_itm;
+      if (!curitm || curitm == MOM_EMPTY)
+	continue;
+      arr[count++] = curitm;
+    };
+  assert (count == acnt);
+  const momseq_t *set = mom_make_sized_meta_set (meta, count, arr);
+  MOM_GC_FREE (arr, (acnt + 1) * sizeof (momitem_t *));
+  return set;
+}

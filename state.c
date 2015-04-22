@@ -296,8 +296,8 @@ token_string_load_mom (struct momloader_st *ld, momvalue_t *pval)
 const char *const delim_mom[] = {
   /// first the 2 char delimiters
   "==",
-  "**", "++", "--", "*", "(", ")", "[", "]",
-  "{", "}", "<", ">", "^", "!", "°",
+  "**", "++", "--", "°", "*", "(", ")", "[", "]",
+  "{", "}", "<", ">", "^", "!",
   NULL
 };
 
@@ -381,7 +381,7 @@ readagain:
     {
       return token_string_load_mom (ld, pval);
     }
-  else if (ispunct (c))
+  else if (ispunct (c) || (unsigned char) c >= 0x7f)
     {
       for (int ix = 0; delim_mom[ix]; ix++)
 	{
@@ -429,15 +429,42 @@ readagain:
   return false;
 }
 
+
+////////////////
 void
 load_fill_item_mom (struct momloader_st *ld, momitem_t *itm)
-{
+{				// keep in sync with emit_content_dumped_item_mom
   assert (ld && ld->ldmagic == LOADER_MAGIC_MOM);
   assert (itm && itm->itm_str);
   MOM_DEBUGPRINTF (load, "load fill item %s", itm->itm_str->cstr);
-#warning load_fill_item_mom unimplemented
+  momvalue_t vtok = MOM_NONEV;
+  momvalue_t vtokbis = MOM_NONEV;
+  if (mom_token_load (ld, &vtok) && mom_value_is_delim (vtok, "{"))
+    {
+      while ((vtokbis = MOM_NONEV, mom_token_load (ld, &vtokbis))
+	     && mom_value_is_delim (vtokbis, "*"))
+	{
+	  momvalue_t vat = MOM_NONEV;
+	  const momitem_t *itmat = mom_load_itemref (ld);
+	  if (!itmat)
+	    break;
+	  if (mom_load_value (ld, &vat) && vat.typnum != momty_null)
+	    itm->itm_attrs = mom_attributes_put (itm->itm_attrs, itmat, &vat);
+	}
+      if (!((vtokbis = MOM_NONEV), mom_token_load (ld, &vtokbis))
+	  || !mom_value_is_delim (vtokbis, "}"))
+	MOM_FATAPRINTF ("expecting } to end attributes of item %s"
+			" in %s file %s line %d", itm->itm_str->cstr,
+			ld->ldforglobals ? "global" : "user",
+			ld->ldforglobals ? ld->ldglobalpath : ld->lduserpath,
+			(int) ld->ldlinecount);
+    }
+  // should load the components
+#warning load_fill_item_mom unimplemented, see emit_content_dumped_item_mom
   MOM_WARNPRINTF ("load_fill_item_mom %s unimplemented", itm->itm_str->cstr);
-}
+}				/* end load_fill_item_mom */
+
+////////////////
 
 void
 second_pass_load_mom (struct momloader_st *ld, bool global)
@@ -1000,6 +1027,41 @@ emit_predefined_header_mom (struct momdumper_st *du)
   close_generated_file_dump_mom (du, hdout, MOM_PREDEFINED_PATH);
 }
 
+////////////////
+static void
+emit_content_dumped_item_mom (struct momdumper_st *du, const momitem_t *itm)
+{				//// keep in sync with load_fill_item_mom
+  assert (du && du->dumagic == DUMPER_MAGIC_MOM);
+  assert (itm && itm != MOM_EMPTY);
+  if (mom_attributes_count (itm->itm_attrs) > 0)
+    {
+      fputs ("{", du->dufile);
+      mom_emit_dump_indent (du);
+      const momseq_t *setat = mom_attributes_set (itm->itm_attrs, MOM_NONEV);
+      if (setat)
+	for (unsigned ix = 0; ix < setat->slen; ix++)
+	  {
+	    const momitem_t *itmat = setat->arritm[ix];
+	    struct momentry_st *ent =
+	      mom_attributes_find_entry (itm->itm_attrs, itmat);
+	    if (!ent)
+	      continue;
+	    mom_emit_dumped_newline (du);
+	    fputs ("* ", du->dufile);
+	    mom_emit_dumped_itemref (du, itmat);
+	    mom_emit_dumped_space (du);
+	    mom_emit_dumped_value (du, ent->ent_val);
+	  };
+      mom_emit_dumped_space (du);
+      mom_emit_dump_outdent (du);
+      fputs ("}", du->dufile);
+    }
+#warning emit_content_dumped_item_mom unimplemented, see load_fill_item_mom
+}				/* end emit_content_dumped_item_mom */
+
+
+
+////////////////
 static void
 emit_dumped_item_mom (struct momdumper_st *du, const momitem_t *itm)
 {
@@ -1011,6 +1073,10 @@ emit_dumped_item_mom (struct momdumper_st *du, const momitem_t *itm)
     return;
   putc ('\n', du->dufile);
   fprintf (du->dufile, "** %s\n", itm->itm_str->cstr);
+  du->duindentation = 0;
+  du->dulastnloff = ftell (du->dufile);
+  emit_content_dumped_item_mom (du, itm);
+  putc ('\n', du->dufile);
   du->duindentation = 0;
   du->dulastnloff = ftell (du->dufile);
 }

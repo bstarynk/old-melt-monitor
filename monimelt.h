@@ -513,7 +513,16 @@ struct momattributes_st *mom_attributes_make_atva (unsigned nbent, ...
   );
 void mom_attributes_scan_dump (struct momattributes_st *attrs,
 			       struct momdumper_st *du);
+static inline unsigned
+mom_attributes_count (struct momattributes_st *attrs)
+{
+  if (!attrs || attrs == MOM_EMPTY)
+    return 0;
+  return attrs->at_cnt;
+}
 
+const momseq_t *mom_attributes_set (struct momattributes_st *attrs,
+				    momvalue_t meta);
 
 
 struct momcomponents_st
