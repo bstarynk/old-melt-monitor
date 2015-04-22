@@ -493,6 +493,23 @@ second_pass_load_mom (struct momloader_st *ld, bool global)
   while (!feof (ld->ldforglobals ? ld->ldglobalfile : ld->lduserfile));
 }
 
+void
+mom_load_push_front_token (struct momloader_st *ld, momvalue_t valtok)
+{
+  assert (ld && ld->ldmagic == LOADER_MAGIC_MOM);
+  if (valtok.typnum != momty_null)
+    mom_queuevalue_push_front (&ld->ldquetokens, valtok);
+}
+
+
+void
+mom_load_push_back_token (struct momloader_st *ld, momvalue_t valtok)
+{
+  assert (ld && ld->ldmagic == LOADER_MAGIC_MOM);
+  if (valtok.typnum != momty_null)
+    mom_queuevalue_push_back (&ld->ldquetokens, valtok);
+}
+
 unsigned
 mom_load_nb_queued_tokens (struct momloader_st *ld)
 {

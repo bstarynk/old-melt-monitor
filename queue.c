@@ -47,10 +47,54 @@ mom_queueitem_push_back (struct momqueueitems_st *qu, const momitem_t *itm)
       newch->quechi_prev = bk;
       newch->quechi_items[0] = itm;
       qu->que_size++;
-      qu->que_back = bk;
+      qu->que_back = newch;
       return;
     }
   else				/* !bk, empty queue */
+    {
+      assert (qu->que_size == 0);
+      struct momqueuechunkitems_st *newch	//
+	= MOM_GC_ALLOC ("queue chunk", sizeof (struct momqueuechunkitems_st));
+      newch->quechi_items[0] = itm;
+      qu->que_front = qu->que_back = newch;
+      qu->que_size = 1;
+      return;
+    }
+}
+
+void
+mom_queueitem_push_front (struct momqueueitems_st *qu, const momitem_t *itm)
+{
+  if (!qu)
+    return;
+  if (!itm || itm == MOM_EMPTY)
+    return;
+  struct momqueuechunkitems_st *fr = qu->que_front;
+  if (fr)
+    {
+      assert (fr->quechi_items[0]);	/* cannot be empty chunk */
+      assert (fr->quechi_prev == NULL);
+      for (unsigned ix = 1; ix < MOM_QUEUECHUNK_LEN; ix++)
+	{
+	  if (!fr->quechi_items[ix])
+	    {
+	      for (unsigned j = ix; j > 0; j--)
+		fr->quechi_items[j] = fr->quechi_items[j - 1];
+	      fr->quechi_items[0] = itm;
+	      qu->que_size++;
+	      return;
+	    }
+	}
+      struct momqueuechunkitems_st *newch	//
+	= MOM_GC_ALLOC ("queue chunk", sizeof (struct momqueuechunkitems_st));
+      fr->quechi_prev = newch;
+      newch->quechi_next = fr;
+      newch->quechi_items[0] = itm;
+      qu->que_size++;
+      qu->que_front = newch;
+      return;
+    }
+  else				/* !fr, empty queue */
     {
       assert (qu->que_size == 0);
       struct momqueuechunkitems_st *newch	//
@@ -172,10 +216,56 @@ mom_queuevalue_push_back (struct momqueuevalues_st *qu, const momvalue_t val)
       newch->quechv_prev = bk;
       newch->quechv_values[0] = val;
       qu->que_size++;
-      qu->que_back = bk;
+      qu->que_back = newch;
       return;
     }
   else				/* !bk, empty queue */
+    {
+      assert (qu->que_size == 0);
+      struct momqueuechunkvalues_st *newch	//
+	= MOM_GC_ALLOC ("queue chunk",
+			sizeof (struct momqueuechunkvalues_st));
+      newch->quechv_values[0] = val;
+      qu->que_front = qu->que_back = newch;
+      qu->que_size = 1;
+      return;
+    }
+}
+
+void
+mom_queuevalue_push_front (struct momqueuevalues_st *qu, const momvalue_t val)
+{
+  if (!qu)
+    return;
+  if (val.typnum == momty_null)
+    return;
+  struct momqueuechunkvalues_st *fr = qu->que_front;
+  if (fr)
+    {
+      assert (fr->quechv_values[0].typnum != momty_null);	/* cannot be empty chunk */
+      assert (fr->quechv_prev == NULL);
+      for (unsigned ix = 1; ix < MOM_QUEUECHUNK_LEN; ix++)
+	{
+	  if (fr->quechv_values[ix].typnum == momty_null)
+	    {
+	      for (unsigned j = ix; j > 0; j--)
+		fr->quechv_values[j] = fr->quechv_values[j - 1];
+	      fr->quechv_values[0] = val;
+	      qu->que_size++;
+	      return;
+	    }
+	}
+      struct momqueuechunkvalues_st *newch	//
+	= MOM_GC_ALLOC ("queue chunk",
+			sizeof (struct momqueuechunkvalues_st));
+      fr->quechv_prev = newch;
+      newch->quechv_next = fr;
+      newch->quechv_values[0] = val;
+      qu->que_size++;
+      qu->que_front = newch;
+      return;
+    }
+  else				/* !fr, empty queue */
     {
       assert (qu->que_size == 0);
       struct momqueuechunkvalues_st *newch	//

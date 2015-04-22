@@ -359,7 +359,8 @@ unsigned mom_load_nb_queued_tokens (struct momloader_st *ld);
 const momnode_t *mom_load_queued_tokens_mode (struct momloader_st *ld,
 					      const momitem_t *connitm,
 					      momvalue_t meta);
-void mom_load_push_token (struct momloader_st *ld, momvalue_t valtok);
+void mom_load_push_front_token (struct momloader_st *ld, momvalue_t valtok);
+void mom_load_push_back_token (struct momloader_st *ld, momvalue_t valtok);
 void mom_initialize_random (void);
 void mom_initialize_items (void);
 
@@ -587,6 +588,9 @@ struct momqueuechunkitems_st
 void mom_queueitem_push_back (struct momqueueitems_st *qu,
 			      const momitem_t *itm);
 
+void mom_queueitem_push_front (struct momqueueitems_st *qu,
+			       const momitem_t *itm);
+
 static inline const momitem_t *
 mom_queueitem_peek_front (struct momqueueitems_st *qu)
 {
@@ -637,6 +641,9 @@ struct momqueuechunkvalues_st
 
 void mom_queuevalue_push_back (struct momqueuevalues_st *qu,
 			       const momvalue_t val);
+
+void mom_queuevalue_push_front (struct momqueuevalues_st *qu,
+				const momvalue_t val);
 
 static inline momvalue_t
 mom_queuevalue_peek_front (struct momqueuevalues_st *qu)
