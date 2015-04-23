@@ -382,7 +382,8 @@ typedef struct momvalue_st momvalue_t;
 
 void mom_load_state (void);
 void mom_dump_state (const char *prefix);
-bool mom_token_load (momvalue_t *pval);
+bool mom_token_load_at (momvalue_t *pval, const char *fil, int lin);
+#define mom_token_load(Pval) mom_token_load_at((Pval),__FILE__,__LINE__)
 
 unsigned mom_load_nb_queued_tokens (void);
 // return the node of queued tokens, or nil if none

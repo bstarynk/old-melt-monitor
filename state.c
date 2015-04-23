@@ -312,14 +312,16 @@ const char *const delim_mom[] = {
 
 
 bool
-mom_token_load (momvalue_t *pval)
+mom_token_load_at (momvalue_t *pval, const char *fil, int lin)
 {
   assert (loader_mom && loader_mom->ldmagic == LOADER_MAGIC_MOM);
   assert (pval != NULL);
   memset (pval, 0, sizeof (momvalue_t));
   if (mom_queuevalue_size (&loader_mom->ldquetokens))
     {
-      mom_queuevalue_pop_front (&loader_mom->ldquetokens);
+      *pval = mom_queuevalue_pop_front (&loader_mom->ldquetokens);
+      MOM_DEBUGPRINTF (load, "token_load@%s:%d: got queued token %s",
+		       fil, lin, mom_output_gcstring (*pval));
       return true;
     }
 readagain:
@@ -372,6 +374,8 @@ readagain:
 	  pval->vint = (intptr_t) ll;
 	  loader_mom->ldlinecol += endnum - startc;
 	}
+      MOM_DEBUGPRINTF (load, "token_load@%s:%d: got number token %s", fil,
+		       lin, mom_output_gcstring (*pval));
       return true;
     }
   else if ((c == '+' || c == '-')
@@ -381,6 +385,8 @@ readagain:
       pval->typnum = momty_double;
       pval->vdbl = NAN;
       loader_mom->ldlinecol += 4;
+      MOM_DEBUGPRINTF (load, "token_load@%s:%d: got number token %s", fil,
+		       lin, mom_output_gcstring (*pval));
       return true;
     }
   else if ((c == '+' || c == '-')
@@ -390,11 +396,16 @@ readagain:
       pval->typnum = momty_double;
       pval->vdbl = INFINITY;
       loader_mom->ldlinecol += 4;
+      MOM_DEBUGPRINTF (load, "token_load@%s:%d: got number token %s", fil,
+		       lin, mom_output_gcstring (*pval));
       return true;
     }
   else if (c == '"')
     {
-      return token_string_load_mom (pval);
+      bool res = token_string_load_mom (pval);
+      MOM_DEBUGPRINTF (load, "token_load@%s:%d: got string token %s", fil,
+		       lin, mom_output_gcstring (*pval));
+      return res;
     }
   else if (ispunct (c) || (unsigned char) c >= 0x7f)
     {
@@ -406,6 +417,9 @@ readagain:
 	    {
 	      pval->typnum = momty_delim;
 	      strcpy (pval->vdelim.delim, delim_mom[ix]);
+	      loader_mom->ldlinecol += strlen (delim_mom[ix]);
+	      MOM_DEBUGPRINTF (load, "token_load@%s:%d: got delim token %s",
+			       fil, lin, mom_output_gcstring (*pval));
 	      return true;
 	    }
 	}
@@ -421,6 +435,8 @@ readagain:
 	  pval->vitem = (momitem_t *) itm;
 	  pval->typnum = momty_item;
 	  loader_mom->ldlinecol += end - pstart;
+	  MOM_DEBUGPRINTF (load, "token_load@%s:%d: got anon-item token %s",
+			   fil, lin, mom_output_gcstring (*pval));
 	  *end = olde;
 	  return true;
 	}
@@ -437,10 +453,16 @@ readagain:
 	  pval->typnum = momty_item;
 	  pval->vitem = (momitem_t *) itm;
 	  loader_mom->ldlinecol += end - pstart;
+	  MOM_DEBUGPRINTF (load, "token_load@%s:%d: got named-item token %s",
+			   fil, lin, mom_output_gcstring (*pval));
 	  *end = olde;
 	  return true;
 	}
     }
+  MOM_DEBUGPRINTF (load,
+		   "token_load@%s:%d: failing linecount %d, linecol %d linebuf %s",
+		   fil, lin, (int) loader_mom->ldlinecount,
+		   (int) loader_mom->ldlinecol, loader_mom->ldlinebuf);
   return false;
 }
 
@@ -468,8 +490,10 @@ load_fill_item_mom (momitem_t *itm)
 	}
       if (!((vtokbis = MOM_NONEV), !mom_token_load (&vtokbis))
 	  || !mom_value_is_delim (vtokbis, "}"))
-	MOM_FATAPRINTF ("expecting } to end attributes of item %s"
-			" in %s file %s line %d", itm->itm_str->cstr,
+	MOM_FATAPRINTF ("expecting } but got %s to end attributes of item %s"
+			" in %s file %s line %d",
+			mom_output_gcstring (vtokbis),
+			itm->itm_str->cstr,
 			loader_mom->ldforglobals ? "global" : "user",
 			loader_mom->
 			ldforglobals ? loader_mom->ldglobalpath : loader_mom->
@@ -483,8 +507,10 @@ load_fill_item_mom (momitem_t *itm)
 	itm->itm_comps = mom_components_append1 (itm->itm_comps, valcomp);
       if (!((vtokbis = MOM_NONEV), !mom_token_load (&vtokbis))
 	  || !mom_value_is_delim (vtokbis, "]]"))
-	MOM_FATAPRINTF ("expecting ]] to end attributes of item %s"
-			" in %s file %s line %d", itm->itm_str->cstr,
+	MOM_FATAPRINTF ("expecting ]] but got %s to end attributes of item %s"
+			" in %s file %s line %d",
+			mom_output_gcstring (vtokbis),
+			itm->itm_str->cstr,
 			loader_mom->ldforglobals ? "global" : "user",
 			loader_mom->
 			ldforglobals ? loader_mom->ldglobalpath : loader_mom->
