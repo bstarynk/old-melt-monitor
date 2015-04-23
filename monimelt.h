@@ -1043,6 +1043,12 @@ mom_item_unsync_get_attribute (momitem_t *itm, momitem_t *itmat)
     return MOM_NONEV;
   if (MOM_UNLIKELY (itmat == MOM_PREDEFINED_NAMED (kind)))
     return mom_itemv ((momitem_t *) itm->itm_kind);
+  if (MOM_UNLIKELY
+      ((momitem_t *) itmat->itm_kind ==
+       MOM_PREDEFINED_NAMED (magic_attribute)))
+    {
+#warning do something to get magic attributes
+    }
   if (itm->itm_attrs)
     {
       struct momentry_st *ent =
