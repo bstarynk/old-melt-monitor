@@ -787,6 +787,7 @@ main (int argc_main, char **argv_main)
 	    dump_exit_dir_mom = "./";
 	}
     }
+  do_after_initial_load_with_plugins_mom ();
   printf
     ("sizeof(momvalue_t)=%zd sizeof(momvaltype_t)=%zd sizeof(momitem_t)=%zd\n",
      sizeof (momvalue_t), sizeof (momvaltype_t), sizeof (momitem_t));

@@ -886,7 +886,7 @@ void
 mom_scan_dumped_value (const momvalue_t val)
 {
   if (!dumper_mom || dumper_mom->dumagic != DUMPER_MAGIC_MOM)
-    MOM_FATAPRINTF ("scan value outside of dumping");
+    MOM_FATAPRINTF ("scan dumped value outside of dumping");
   if (val.istransient)
     return;
   switch ((enum momvaltype_en) val.typnum)
@@ -929,6 +929,8 @@ mom_scan_dumped_value (const momvalue_t val)
 static void
 scan_predefined_items_mom (void)
 {
+  if (!dumper_mom || dumper_mom->dumagic != DUMPER_MAGIC_MOM)
+    MOM_FATAPRINTF ("scan predefined items outside of dumping");
   const momseq_t *set = mom_predefined_items_set ();
   assert (set);
   unsigned slen = set->slen;
