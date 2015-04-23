@@ -335,6 +335,7 @@ readagain:
 		 lduserfile);
       if (loader_mom->ldlinelen <= 0)
 	return false;
+      loader_mom->ldlinecol = 0;
       loader_mom->ldlinecount++;
       if (loader_mom->ldlinebuf[0] == '/' && loader_mom->ldlinebuf[1] == '/')
 	{
@@ -450,7 +451,7 @@ load_fill_item_mom (momitem_t *itm)
 {				// keep in sync with emit_content_dumped_item_mom
   assert (loader_mom && loader_mom->ldmagic == LOADER_MAGIC_MOM);
   assert (itm && itm->itm_str);
-  MOM_DEBUGPRINTF (load, "load fill item %s", itm->itm_str->cstr);
+  MOM_DEBUGPRINTF (load, "start load fill item %s", itm->itm_str->cstr);
   momvalue_t vtok = MOM_NONEV;
   momvalue_t vtokbis = MOM_NONEV;
   if (mom_token_load (&vtok) && mom_value_is_delim (vtok, "{"))
@@ -490,7 +491,8 @@ load_fill_item_mom (momitem_t *itm)
 			lduserpath, (int) loader_mom->ldlinecount);
     }
 #warning load_fill_item_mom unimplemented, see emit_content_dumped_item_mom
-  MOM_WARNPRINTF ("load_fill_item_mom %s unimplemented", itm->itm_str->cstr);
+  MOM_WARNPRINTF ("load_fill_item_mom %s not completely unimplemented",
+		  itm->itm_str->cstr);
 }				/* end load_fill_item_mom */
 
 ////////////////
@@ -526,6 +528,7 @@ second_pass_load_mom (bool global)
 		 lduserfile);
       if (loader_mom->ldlinelen <= 0)
 	return;
+      loader_mom->ldlinecol = 0;
       loader_mom->ldlinecount++;
       MOM_DEBUGPRINTF (load, "second %s pass line#%d: %s",
 		       loader_mom->ldforglobals ? "global" : "user",

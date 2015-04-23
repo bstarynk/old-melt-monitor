@@ -766,6 +766,7 @@ main (int argc_main, char **argv_main)
   else if (mom_nb_workers > MOM_MAX_WORKERS)
     mom_nb_workers = MOM_MAX_WORKERS;
   mom_load_state ();
+  MOM_DEBUGPRINTF (load, "loaded state");
   if (nbmorepredef_mom > 0)
     {
       for (unsigned prix = 0; prix < nbmorepredef_mom; prix++)
