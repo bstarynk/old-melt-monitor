@@ -392,7 +392,7 @@ const momnode_t *mom_load_queued_tokens_mode (const momitem_t *connitm,
 void mom_load_push_front_token (momvalue_t valtok);
 void mom_load_push_back_token (momvalue_t valtok);
 
-static inline const momitem_t *mom_load_itemref (void);
+static inline const momitem_t *mom_load_itemref_at (const char *fil, int lin);
 
 bool mom_load_value (momvalue_t *pval);
 
@@ -1019,10 +1019,10 @@ void mom_output_utf8cstr_cencoded (FILE *fil, const char *str, int len);
 #define MOM_PREDEFINED_ANONYMOUS(Id) mompi_##Id
 
 static inline const momitem_t *
-mom_load_itemref (void)
+mom_load_itemref_at (const char *fil, int lin)
 {
   momvalue_t val = MOM_NONEV;
-  if (mom_token_load (&val))
+  if (mom_token_load_at (&val, fil, lin))
     {
       if (val.typnum == momty_item)
 	return val.vitem;
@@ -1031,6 +1031,8 @@ mom_load_itemref (void)
     }
   return NULL;
 }
+
+#define mom_load_itemref() mom_load_itemref_at(__FILE__,__LINE__)
 
 momvalue_t
 mom_item_unsync_get_attribute (momitem_t *itm, momitem_t *itmat)

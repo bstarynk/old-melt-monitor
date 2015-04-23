@@ -473,7 +473,7 @@ load_fill_item_mom (momitem_t *itm)
 {				// keep in sync with emit_content_dumped_item_mom
   assert (loader_mom && loader_mom->ldmagic == LOADER_MAGIC_MOM);
   assert (itm && itm->itm_str);
-  MOM_DEBUGPRINTF (load, "start load fill item %s", itm->itm_str->cstr);
+  MOM_DEBUGPRINTF (load, "start load_fill_item %s", itm->itm_str->cstr);
   momvalue_t vtok = MOM_NONEV;
   momvalue_t vtokbis = MOM_NONEV;
   if (mom_token_load (&vtok) && mom_value_is_delim (vtok, "{"))
@@ -486,10 +486,15 @@ load_fill_item_mom (momitem_t *itm)
 	  if (!itmat)
 	    break;
 	  if (mom_load_value (&vat) && vat.typnum != momty_null)
-	    itm->itm_attrs = mom_attributes_put (itm->itm_attrs, itmat, &vat);
+	    {
+	      MOM_DEBUGPRINTF (load, "load_fill_item %s itmat=%s vat=%s",
+			       itm->itm_str->cstr, itmat->itm_str->cstr,
+			       mom_output_gcstring (vat));
+	      itm->itm_attrs =
+		mom_attributes_put (itm->itm_attrs, itmat, &vat);
+	    }
 	}
-      if (!((vtokbis = MOM_NONEV), !mom_token_load (&vtokbis))
-	  || !mom_value_is_delim (vtokbis, "}"))
+      if (!mom_value_is_delim (vtokbis, "}"))
 	MOM_FATAPRINTF ("expecting } but got %s to end attributes of item %s"
 			" in %s file %s line %d",
 			mom_output_gcstring (vtokbis),
@@ -504,7 +509,11 @@ load_fill_item_mom (momitem_t *itm)
     {
       momvalue_t valcomp = MOM_NONEV;
       while ((valcomp = MOM_NONEV), mom_load_value (&valcomp))
-	itm->itm_comps = mom_components_append1 (itm->itm_comps, valcomp);
+	{
+	  MOM_DEBUGPRINTF (load, "load_fill_item %s valcomp %s",
+			   itm->itm_str->cstr, mom_output_gcstring (valcomp));
+	  itm->itm_comps = mom_components_append1 (itm->itm_comps, valcomp);
+	}
       if (!((vtokbis = MOM_NONEV), !mom_token_load (&vtokbis))
 	  || !mom_value_is_delim (vtokbis, "]]"))
 	MOM_FATAPRINTF ("expecting ]] but got %s to end attributes of item %s"
