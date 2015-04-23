@@ -440,6 +440,13 @@ struct momvalue_st
 };
 #define MOM_NONEV ((momvalue_t){momty_null,false,{NULL}})
 
+// return a GC_STRDUP-ed string with some output for a value
+const char *mom_output_gcstring (const momvalue_t val);
+
+// return a momstring with some output for a value
+const momstring_t *mout_output_string (const momvalue_t val);
+
+
 momhash_t mom_valueptr_hash (momvalue_t *pval);
 
 static inline momhash_t
@@ -864,6 +871,7 @@ mom_stringv (const momstring_t *str)
 
 #define mom_stringv_cstr(S) mom_stringv(mom_make_string_cstr((S)))
 #define mom_stringv_sprintf(F,...) mom_stringv(mom_make_string_sprintf((F),__VA_ARGS__))
+#define mom_stringv_output(V) mom_stringv(mout_output_string((V)))
 
 // make a tuple from given items. NULL and MOM_EMPTY item pointers are skipped.
 const momseq_t *mom_make_meta_tuple (momvalue_t metav, unsigned nbitems, ...);

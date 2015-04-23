@@ -1163,10 +1163,10 @@ mom_emit_dumped_newline (void)
   assert (dumper_mom && dumper_mom->dumagic == DUMPER_MAGIC_MOM);
   assert (dumper_mom->dustate == dump_emit);
   fputc ('\n', dumper_mom->dufile);
+  dumper_mom->dulastnloff = ftell (dumper_mom->dufile);
   for (int ix = dumper_mom->duindentation % DUMP_INDENT_MAX_MOM; ix >= 0;
        ix--)
     fputc (' ', dumper_mom->dufile);
-  dumper_mom->dulastnloff = ftell (dumper_mom->dufile);
 }
 
 void
@@ -1261,6 +1261,268 @@ mom_dumpable_value (const momvalue_t val)
   return false;
 }
 
+
+#define VALOUT_MAGIC_MOM 886023773	/* valout_magic_mom 0x34cfa65d */
+struct momvaloutput_st
+{
+  unsigned vout_magic;		/* always VALOUT_MAGIC_MOM */
+  char *vout_buffer;
+  size_t vout_size;
+  FILE *vout_file;
+  long vout_lastnl;
+  int vout_indentation;
+};
+
+static void output_val_mom (struct momvaloutput_st *ov, const momvalue_t val);
+
+const char *
+mom_output_gcstring (const momvalue_t val)
+{
+  struct momvaloutput_st vout;
+  memset (&vout, 0, sizeof (vout));
+  unsigned bufsiz = 256;
+  vout.vout_buffer = malloc (bufsiz);
+  if (MOM_UNLIKELY (vout.vout_buffer == NULL))
+    MOM_FATAPRINTF
+      ("failed to allocate internal string buffer of %u for output string",
+       bufsiz);
+  memset (vout.vout_buffer, 0, bufsiz);
+  vout.vout_size = bufsiz;
+  vout.vout_file = open_memstream (&vout.vout_buffer, &vout.vout_size);
+  if (MOM_UNLIKELY (!vout.vout_file))
+    MOM_FATAPRINTF ("failed to open_memstream a buffer @%p of %u bytes : %m",
+		    vout.vout_buffer, bufsiz);
+  vout.vout_magic = VALOUT_MAGIC_MOM;
+  output_val_mom (&vout, val);
+  if (ftell (vout.vout_file) - vout.vout_lastnl > DUMP_WIDTH_MAX_MOM / 2)
+    fputc ('\n', vout.vout_file);
+  fflush (vout.vout_file);
+  const char *res = MOM_GC_STRDUP ("output gcstring", vout.vout_buffer);
+  free (vout.vout_buffer), vout.vout_buffer = NULL;
+  memset (&vout, 0, sizeof (vout));
+  return res;
+}
+
+const momstring_t *
+mout_output_string (const momvalue_t val)
+{
+  struct momvaloutput_st vout;
+  memset (&vout, 0, sizeof (vout));
+  unsigned bufsiz = 256;
+  vout.vout_buffer = malloc (bufsiz);
+  if (MOM_UNLIKELY (vout.vout_buffer != NULL))
+    MOM_FATAPRINTF
+      ("failed to allocate internal string buffer of %u for output string",
+       bufsiz);
+  memset (vout.vout_buffer, 0, bufsiz);
+  vout.vout_size = bufsiz;
+  vout.vout_file = open_memstream (&vout.vout_buffer, &vout.vout_size);
+  if (MOM_UNLIKELY (!vout.vout_file))
+    MOM_FATAPRINTF ("failed to open_memstream a buffer @%p of %u bytes : %m",
+		    vout.vout_buffer, bufsiz);
+  vout.vout_magic = VALOUT_MAGIC_MOM;
+  output_val_mom (&vout, val);
+  if (ftell (vout.vout_file) - vout.vout_lastnl > DUMP_WIDTH_MAX_MOM / 2)
+    fputc ('\n', vout.vout_file);
+  fflush (vout.vout_file);
+  const momstring_t *res = mom_make_string_cstr (vout.vout_buffer);
+  free (vout.vout_buffer), vout.vout_buffer = NULL;
+  memset (&vout, 0, sizeof (vout));
+  return res;
+}
+
+
+static void
+output_indent_mom (struct momvaloutput_st *ov)
+{
+  assert (ov && ov->vout_magic == VALOUT_MAGIC_MOM);
+  ov->vout_indentation++;
+}
+
+static void
+output_outdent_mom (struct momvaloutput_st *ov)
+{
+  assert (ov && ov->vout_magic == VALOUT_MAGIC_MOM);
+  ov->vout_indentation--;
+  assert (ov->vout_indentation >= 0);
+}
+
+static void
+output_newline_mom (struct momvaloutput_st *ov)
+{
+  assert (ov && ov->vout_magic == VALOUT_MAGIC_MOM);
+  fputc ('\n', ov->vout_file);
+  ov->vout_lastnl = ftell (ov->vout_file);
+  for (int ix = ov->vout_indentation % DUMP_INDENT_MAX_MOM; ix >= 0; ix--)
+    fputc (' ', ov->vout_file);
+}
+
+static void
+output_space_mom (struct momvaloutput_st *ov)
+{
+  assert (ov && ov->vout_magic == VALOUT_MAGIC_MOM);
+  if (ftell (ov->vout_file) - ov->vout_lastnl < DUMP_WIDTH_MAX_MOM)
+    fputc (' ', ov->vout_file);
+  else
+    output_newline_mom (ov);
+}
+
+static void
+output_item_mom (struct momvaloutput_st *ov, const momitem_t *itm)
+{
+  assert (ov && ov->vout_magic == VALOUT_MAGIC_MOM);
+  if (!itm || itm == MOM_EMPTY)
+    return;
+  assert (itm->itm_str);
+  fputs (itm->itm_str->cstr, ov->vout_file);
+}
+
+
+/// similar to mom_emit_dump_value, except that we don't care about
+/// non-dumpable items, etc...
+static void
+output_val_mom (struct momvaloutput_st *ov, const momvalue_t val)
+{
+  assert (ov && ov->vout_magic == VALOUT_MAGIC_MOM);
+  switch ((enum momvaltype_en) val.typnum)
+    {
+    case momty_null:
+      fputs ("~", ov->vout_file);
+      return;
+    case momty_double:
+      {
+	double x = val.vdbl;
+	if (isnan (x))
+	  fputs ("+NAN", ov->vout_file);
+	else if (isinf (x) > 0)
+	  fputs ("+INF", ov->vout_file);
+	else if (isinf (x) < 0)
+	  fputs ("-INF", ov->vout_file);
+	char fbuf[48];
+	snprintf (fbuf, sizeof (fbuf), "%.5f", x);
+	if (atof (fbuf) == x)
+	  {
+	    fputs (fbuf, ov->vout_file);
+	    return;
+	  };
+	snprintf (fbuf, sizeof (fbuf), "%.9f", x);
+	if (atof (fbuf) == x)
+	  {
+	    fputs (fbuf, ov->vout_file);
+	    return;
+	  };
+	snprintf (fbuf, sizeof (fbuf), "%.15g", x);
+	if (atof (fbuf) == x)
+	  {
+	    fputs (fbuf, ov->vout_file);
+	    return;
+	  };
+	fprintf (ov->vout_file, "%a", x);
+	break;
+      }
+    case momty_int:
+      fprintf (ov->vout_file, "%lld", (long long) val.vint);
+      break;
+    case momty_delim:
+      {
+	char dbuf[8 + sizeof (val.vdelim)];
+	memset (dbuf, 0, sizeof (dbuf));
+	strncpy (dbuf, val.vdelim.delim, sizeof (val.vdelim));
+	fputs ("° \"", ov->vout_file);
+	mom_output_utf8cstr_cencoded (ov->vout_file, dbuf, -1);
+	fputs ("\"", ov->vout_file);
+      }
+      break;
+    case momty_string:
+      fputs ("\"", ov->vout_file);
+      mom_output_utf8cstr_cencoded (ov->vout_file, val.vstr->cstr, -1);
+      fputs ("\"", ov->vout_file);
+      break;
+    case momty_item:
+      assert (val.vitem);
+      output_item_mom (ov, val.vitem);
+      break;
+    case momty_tuple:
+      {
+	momseq_t *tup = val.vtuple;
+	bool something = false;
+	assert (tup);
+	fputs ("[", ov->vout_file);
+	output_indent_mom (ov);
+	if (tup->meta.typnum != momty_null)
+	  {
+	    output_space_mom (ov);
+	    fputs ("!", ov->vout_file);
+	    output_val_mom (ov, tup->meta);
+	    something = true;
+	  }
+	unsigned len = tup->slen;
+	for (unsigned ix = 0; ix < len; ix++)
+	  {
+	    if (something)
+	      output_space_mom (ov);
+	    output_item_mom (ov, tup->arritm[ix]);
+	    something = true;
+	  }
+	output_outdent_mom (ov);
+	fputs ("]", ov->vout_file);
+      }
+      break;
+    case momty_set:
+      {
+	momseq_t *tup = val.vtuple;
+	bool something = false;
+	assert (tup);
+	fputs ("{", ov->vout_file);
+	output_indent_mom (ov);
+	if (tup->meta.typnum != momty_null)
+	  {
+	    output_space_mom (ov);
+	    fputs ("!", ov->vout_file);
+	    output_val_mom (ov, tup->meta);
+	    something = true;
+	  }
+	unsigned len = tup->slen;
+	for (unsigned ix = 0; ix < len; ix++)
+	  {
+	    if (something)
+	      output_space_mom (ov);
+	    output_item_mom (ov, tup->arritm[ix]);
+	    something = true;
+	  }
+	output_outdent_mom (ov);
+	fputs ("}", ov->vout_file);
+      }
+      break;
+    case momty_node:
+      {
+	momnode_t *nod = val.vnode;
+	assert (nod);
+	unsigned ln = nod->slen;
+	fputs ("^", ov->vout_file);
+	output_item_mom (ov, nod->conn);
+	if (nod->meta.typnum != momty_null)
+	  {
+	    output_space_mom (ov);
+	    fputs ("!", ov->vout_file);
+	    output_val_mom (ov, nod->meta);
+	  }
+	fputs ("(", ov->vout_file);
+	output_indent_mom (ov);
+	for (unsigned ix = 0; ix < ln; ix++)
+	  {
+	    if (ix > 0)
+	      output_space_mom (ov);
+	    output_val_mom (ov, nod->arrsons[ix]);
+	  }
+	output_outdent_mom (ov);
+	fputs (")", ov->vout_file);
+      }
+      break;
+    }
+}				/* end output_val_mom */
+
+
 void				// see also mom_load_value
 mom_emit_dumped_value (const momvalue_t val)
 {
@@ -1314,7 +1576,7 @@ mom_emit_dumped_value (const momvalue_t val)
       {
 	char dbuf[8 + sizeof (val.vdelim)];
 	memset (dbuf, 0, sizeof (dbuf));
-	memcpy (dbuf, &val.vdelim, sizeof (val.vdelim));
+	strncpy (dbuf, val.vdelim.delim, sizeof (val.vdelim));
 	fputs ("° \"", dumper_mom->dufile);
 	mom_output_utf8cstr_cencoded (dumper_mom->dufile, dbuf, -1);
 	fputs ("\"", dumper_mom->dufile);
