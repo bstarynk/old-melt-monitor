@@ -23,10 +23,15 @@
 ..
 
 
-
-
 ** kind
 
+..
+
+
+** magic_attribute
+{
+  * comment  "kind of magic attributes" }
+   
 ..
 
 
