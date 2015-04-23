@@ -776,14 +776,15 @@ main (int argc_main, char **argv_main)
 	      && strlen (newpredefcomment_mom[prix]) > 0)
 	    {
 	      momvalue_t valstr =
-		mom_stringv (mom_make_string (newpredefcomment_mom[prix]));
+		mom_stringv (mom_make_string_cstr
+			     (newpredefcomment_mom[prix]));
 	      pritm->itm_attrs	//
 		= mom_attributes_put (pritm->itm_attrs,
 				      MOM_PREDEFINED_NAMED (comment),
 				      &valstr);
 	    }
 	  MOM_INFORMPRINTF ("made predefined %s", pritm->itm_name->cstr);
-	  if (!dump_exit_dir_mom)
+	  if (!dump_exit_dir_mom || !strcmp (dump_exit_dir_mom, "."))
 	    dump_exit_dir_mom = "./";
 	}
     }

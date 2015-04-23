@@ -428,7 +428,7 @@ mom_make_random_idstr (unsigned salt, struct momitem_st *protoitem)
 	      item_anonarr_mom[hrk][pos] = protoitem;
 	      newix = pos;
 	    }
-	  str = mom_make_string (bufstr);
+	  str = mom_make_string_cstr (bufstr);
 	  assert (!protoitem->itm_id);
 	  protoitem->itm_id = str;
 	  unsigned bsiz = item_size_mom[hrk];
@@ -442,7 +442,7 @@ mom_make_random_idstr (unsigned salt, struct momitem_st *protoitem)
 	    MOM_FATAPRINTF ("failed to add item in salthash bucket %u", hrk);
 	}
       if (foundix < 0 && !protoitem)
-	str = mom_make_string (bufstr);
+	str = mom_make_string_cstr (bufstr);
       pthread_mutex_unlock (item_mutex_mom + hrk);
       if (foundix >= 0)
 	continue;
@@ -719,7 +719,7 @@ create_predefined_items_mom (void)
 	    initialize_protoitem_mom (itm);
 	    itm->itm_anonymous = false;
 	    itm->itm_space = momspa_predefined;
-	    itm->itm_name = mom_make_string (curname);
+	    itm->itm_name = mom_make_string_cstr (curname);
 	    curbuck->nambuck_arr[ixitm] = itm;
 	    arritems[namecount] = itm;
 	    blen = ixitm + 1;
@@ -910,7 +910,7 @@ mom_make_anonymous_item_by_id (const char *ids)
       assert (bsiz <= bcard);
       if (!bsiz || 9 * bcard / 8 + 2 <= bsiz)
 	reorganize_item_bucket_mom (hrk);
-      const momstring_t *idstr = mom_make_string (ids);
+      const momstring_t *idstr = mom_make_string_cstr (ids);
       momitem_t *protoitm =
 	MOM_GC_ALLOC ("new anonymous item", sizeof (momitem_t));
       initialize_protoitem_mom (protoitm);
@@ -1055,7 +1055,7 @@ mom_make_named_item (const char *namstr)
     {
       momitem_t *newitm = MOM_GC_ALLOC ("new named item", sizeof (momitem_t));
       initialize_protoitem_mom (newitm);
-      newitm->itm_name = mom_make_string (namstr);
+      newitm->itm_name = mom_make_string_cstr (namstr);
       newitm->itm_anonymous = false;
       if (pos < (int) bucklen)
 	{

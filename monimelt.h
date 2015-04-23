@@ -458,6 +458,48 @@ mom_value_is_delim (momvalue_t v, const char *delim)
 bool mom_value_equal (momvalue_t v1, momvalue_t v2);
 int mom_value_compare (momvalue_t v1, momvalue_t v2);
 
+static inline momvalue_t
+mom_intv (intptr_t i)
+{
+  momvalue_t val = MOM_NONEV;
+  val.typnum = momty_int;
+  val.vint = i;
+  return val;
+}
+
+static inline momvalue_t
+mom_doublev (double x)
+{
+  momvalue_t val = MOM_NONEV;
+  val.typnum = momty_double;
+  val.vdbl = x;
+  return val;
+}
+
+static inline momvalue_t
+mom_itemv (const momitem_t *itm)
+{
+  momvalue_t val = MOM_NONEV;
+  if (itm && itm != MOM_EMPTY)
+    {
+      val.typnum = momty_item;
+      val.vitem = (momitem_t *) itm;
+    }
+  return val;
+}
+
+static inline momvalue_t
+mom_delimv (const char *s)
+{
+  momvalue_t val = MOM_NONEV;
+  if (s)
+    {
+      val.typnum = momty_delim;
+      strncpy (val.vdelim.delim, s, sizeof (val.vdelim.delim));
+    }
+  return val;
+}
+
 #define MOM_MAX_STRING_LENGTH (1<<25)	/* max string length 33554432 */
 struct momstring_st
 {
@@ -723,7 +765,7 @@ struct momitem_st
 {
   pthread_mutex_t itm_mtx;
   bool itm_anonymous;
-  uint8_t itm_space;
+  atomic_uchar itm_space;
   union
   {
     const momstring_t *itm_str;
@@ -732,7 +774,7 @@ struct momitem_st
   };
   struct momattributes_st *itm_attrs;
   struct momcomponents_st *itm_comps;
-  momitem_t *itm_kind;
+  _Atomic momitem_t *itm_kind;
   void *itm_data1;
   void *itm_data2;
 };
@@ -750,6 +792,9 @@ mom_item_unlock (momitem_t *itm)
   assert (itm && itm != MOM_EMPTY);
   pthread_mutex_unlock (&itm->itm_mtx);
 }
+
+static inline
+  momvalue_t mom_item_unsync_get_attribute (momitem_t *itm, momitem_t *itmat);
 
 static inline momhash_t
 mom_item_hash (const momitem_t *itm)
@@ -802,8 +847,8 @@ mom_cstring_hash (const char *str)
   return mom_cstring_hash_len (str, -1);
 }
 
-const momstring_t *mom_make_string (const char *str);
-const momstring_t *mom_string_sprintf (const char *fmt, ...)
+const momstring_t *mom_make_string_cstr (const char *str);
+const momstring_t *mom_make_string_sprintf (const char *fmt, ...)
   __attribute__ ((format (printf, 1, 2)));
 static inline momvalue_t
 mom_stringv (const momstring_t *str)
@@ -817,6 +862,9 @@ mom_stringv (const momstring_t *str)
   return val;
 }
 
+#define mom_stringv_cstr(S) mom_stringv(mom_make_string_cstr((S)))
+#define mom_stringv_sprintf(F,...) mom_stringv(mom_make_string_sprintf((F),__VA_ARGS__))
+
 // make a tuple from given items. NULL and MOM_EMPTY item pointers are skipped.
 const momseq_t *mom_make_meta_tuple (momvalue_t metav, unsigned nbitems, ...);
 #define mom_make_tuple(NbItems,...) mom_make_meta_tuple(MOM_NONEV, (NbItems), __VA_ARGS__)
@@ -827,6 +875,22 @@ mom_make_sized_tuple (unsigned nbitems, const momitem_t **itmarr)
 {
   return mom_make_sized_meta_tuple (MOM_NONEV, nbitems, itmarr);
 };
+
+static inline momvalue_t
+mom_tuplev (const momseq_t *seq)
+{
+  momvalue_t val = MOM_NONEV;
+  if (seq)
+    {
+      val.typnum = momty_tuple;
+      val.vtuple = (momseq_t *) seq;
+    }
+  return val;
+}
+
+#define mom_tuplev_meta_tuple(Meta,Nb,...) mom_tuplev(mom_make_meta_tuple((Meta),(Nb),__VA_ARGS__))
+#define mom_tuplev_tuple(Nb,...) mom_tuplev(mom_make_tuple((Nb),__VA_ARGS__))
+#define mom_tuplev_sized_meta_tuple(Meta,Nb,Arr)  mom_tuplev(mom_make_sized_meta_tuple((Meta),(Nb),(Arr)))
 
 // make a set from given items. NULL and MOM_EMPTY item pointers are
 // skipped.  Remaining items are sorted, and duplicates are ignored.
@@ -839,6 +903,24 @@ mom_make_sized_set (unsigned nbitems, const momitem_t **itmarr)
 {
   return mom_make_sized_meta_set (MOM_NONEV, nbitems, itmarr);
 };
+
+static inline momvalue_t
+// this is unsafe, e.g. if seq is not sorted
+mom_unsafe_setv (const momseq_t *seq)
+{
+  momvalue_t val = MOM_NONEV;
+  if (seq)
+    {
+      val.typnum = momty_set;
+      val.vset = (momseq_t *) seq;
+    }
+  return val;
+}
+
+#define mom_setv_meta_new(Meta,Nb,...) mom_unsafe_setv(mom_make_meta_set((Meta),(Nb),__VA_ARGS__))
+#define mom_setv_new(Nb,...) mom_unsafe_setv(mom_make_set((Nb),__VA_ARGS__))
+#define mom_setv_sized_meta(Meta,Nb,ItmArr) mom_unsafe_setv(mom_make_sized_meta_set((Meta),(Nb),(ItmArr)))
+#define mom_setv_sized(Nb,ItmArr) mom_unsafe_setv(mom_make_sized_set((Nb),(ItmArr)))
 
 // make a node from given values.
 const momnode_t *mom_make_meta_node (momvalue_t metav, momitem_t *connitm,
@@ -853,6 +935,30 @@ mom_make_sized_node (momitem_t *connitm, unsigned nbsons, momvalue_t *sonarr)
 {
   return mom_make_sized_meta_node (MOM_NONEV, connitm, nbsons, sonarr);
 }
+
+static inline momvalue_t
+mom_nodev (const momnode_t *nod)
+{
+  momvalue_t val = MOM_NONEV;
+  if (nod)
+    {
+      val.typnum = momty_node;
+      val.vnode = (momnode_t *) nod;
+    }
+  return val;
+}
+
+#define mom_nodev_meta_new(Meta,Conn,NbSons,...) \
+ mom_nodev(mom_make_meta_node((Meta),(Conn),(NbSons),__VA_ARGS__))
+
+#define mom_nodev_new(Conn,NbSons,...) \
+ mom_nodev(mom_make_node((Conn),(NbSons),__VA_ARGS__))
+
+#define mom_nodev_sized_meta(Meta,Conn,NbSons,ValArr) \
+  mom_nodev(mom_make_sized_meta_node ((Meta),(Conn),(NbSons),(ValArr))
+
+#define mom_nodev_sized(Conn,NbSons,ValArr) \
+  mom_nodev(mom_make_sized_node ((Conn),(NbSons),(ValArr))
 
 // find some existing item by its id or its name
 momitem_t *mom_find_item (const char *str);
@@ -917,5 +1023,23 @@ mom_load_itemref (void)
   return NULL;
 }
 
+momvalue_t
+mom_item_unsync_get_attribute (momitem_t *itm, momitem_t *itmat)
+{
+  if (MOM_UNLIKELY (!itm || itm == MOM_EMPTY))
+    return MOM_NONEV;
+  if (MOM_UNLIKELY (!itmat || itmat == MOM_EMPTY))
+    return MOM_NONEV;
+  if (MOM_UNLIKELY (itmat == MOM_PREDEFINED_NAMED (kind)))
+    return mom_itemv ((momitem_t *) itm->itm_kind);
+  if (itm->itm_attrs)
+    {
+      struct momentry_st *ent =
+	mom_attributes_find_entry (itm->itm_attrs, itmat);
+      if (ent)
+	return ent->ent_val;
+    }
+  return MOM_NONEV;
+}
 
 #endif /*MONIMELT_INCLUDED_ */

@@ -161,7 +161,7 @@ mom_cstring_hash_len (const char *str, int len)
 
 
 const momstring_t *
-mom_make_string (const char *str)
+mom_make_string_cstr (const char *str)
 {
   if (!str)
     return NULL;
@@ -182,7 +182,7 @@ mom_make_string (const char *str)
 
 
 const momstring_t *
-mom_string_sprintf (const char *fmt, ...)
+mom_make_string_sprintf (const char *fmt, ...)
 {
   char buf[256];
   memset (buf, 0, sizeof (buf));
@@ -191,7 +191,7 @@ mom_string_sprintf (const char *fmt, ...)
   int slen = vsnprintf (buf, sizeof (buf), fmt, args);
   va_end (args);
   if (slen >= 0 && slen < (int) sizeof (buf))
-    return mom_make_string (buf);
+    return mom_make_string_cstr (buf);
   else
     {
       momstring_t *res = GC_MALLOC_ATOMIC (sizeof (momstring_t) + slen + 1);

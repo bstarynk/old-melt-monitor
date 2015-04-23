@@ -163,8 +163,9 @@ make_modules_load_mom (void)
       const momitem_t *moditm = setmod->arritm[mix];
       assert (moditm && moditm != MOM_EMPTY);
       assert (moditm->itm_str);
-      const momstring_t *mstr = mom_string_sprintf ("modules/momg_%s.so",
-						    moditm->itm_str->cstr);
+      const momstring_t *mstr = mom_make_string_sprintf ("modules/momg_%s.so",
+							 moditm->
+							 itm_str->cstr);
       void *dlh = dlopen (mstr->cstr, RTLD_NOW | RTLD_GLOBAL);
       if (!dlh)
 	MOM_FATAPRINTF ("failed to dlopen %s : %s", mstr->cstr, dlerror ());
@@ -296,7 +297,7 @@ token_string_load_mom (momvalue_t *pval)
     pc++;
   loader_mom->ldlinecol += pc - startc + 1;
   pval->typnum = momty_string;
-  pval->vstr = mom_make_string (buf);
+  pval->vstr = mom_make_string_cstr (buf);
   return true;
 }
 
@@ -955,7 +956,7 @@ scan_inside_dumped_item_mom (momitem_t *itm)
     mom_components_scan_dump (itm->itm_comps);
   if (itm->itm_kind)
     {
-      mom_scan_dumped_item (itm->itm_kind);
+      mom_scan_dumped_item ((momitem_t *) itm->itm_kind);
     }
 #warning a completer scan_inside_dumped_item_mom
 }
