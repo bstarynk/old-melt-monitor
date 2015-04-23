@@ -372,8 +372,7 @@ __attribute__ ((format (printf, 3, 4)));
 
 // the program handle from GC_dlopen with NULL
 void *mom_prog_dlhandle;
-struct momloader_st;		/* private to state.c */
-struct momdumper_st;		/* private to state.c */
+
 
 typedef struct momvalue_st momvalue_t;
 
@@ -383,19 +382,18 @@ typedef struct momvalue_st momvalue_t;
 
 void mom_load_state (void);
 void mom_dump_state (const char *prefix);
-bool mom_token_load (struct momloader_st *ld, momvalue_t *pval);
+bool mom_token_load (momvalue_t *pval);
 
-unsigned mom_load_nb_queued_tokens (struct momloader_st *ld);
+unsigned mom_load_nb_queued_tokens (void);
 // return the node of queued tokens, or nil if none
-const momnode_t *mom_load_queued_tokens_mode (struct momloader_st *ld,
-					      const momitem_t *connitm,
+const momnode_t *mom_load_queued_tokens_mode (const momitem_t *connitm,
 					      momvalue_t meta);
-void mom_load_push_front_token (struct momloader_st *ld, momvalue_t valtok);
-void mom_load_push_back_token (struct momloader_st *ld, momvalue_t valtok);
+void mom_load_push_front_token (momvalue_t valtok);
+void mom_load_push_back_token (momvalue_t valtok);
 
-static inline const momitem_t *mom_load_itemref (struct momloader_st *ld);
+static inline const momitem_t *mom_load_itemref (void);
 
-bool mom_load_value (struct momloader_st *ld, momvalue_t *pval);
+bool mom_load_value (momvalue_t *pval);
 
 
 
@@ -511,8 +509,7 @@ struct momattributes_st *mom_attributes_remove (struct momattributes_st
 struct momattributes_st *mom_attributes_make_atva (unsigned nbent, ...
 						   /* item1, val1, item2, val2, ... */
   );
-void mom_attributes_scan_dump (struct momattributes_st *attrs,
-			       struct momdumper_st *du);
+void mom_attributes_scan_dump (struct momattributes_st *attrs);
 static inline unsigned
 mom_attributes_count (struct momattributes_st *attrs)
 {
@@ -571,9 +568,7 @@ void
 mom_components_put_nth (struct momcomponents_st *csq, int rk,
 			const momvalue_t val);
 
-void
-mom_components_scan_dump (struct momcomponents_st *csq,
-			  struct momdumper_st *du);
+void mom_components_scan_dump (struct momcomponents_st *csq);
 
 
 struct momhashset_st
@@ -611,8 +606,7 @@ mom_hashset_elements_set (struct momhashset_st *hset)
   return mom_hashset_elements_set_meta (hset, MOM_NONEV);
 };
 
-void mom_hashset_scan_dump (struct momhashset_st *hset,
-			    struct momdumper_st *du);
+void mom_hashset_scan_dump (struct momhashset_st *hset);
 
 
 ////////////////
@@ -666,8 +660,7 @@ const momitem_t *mom_queueitem_pop_front (struct momqueueitems_st *qu);
 const momseq_t *mom_queueitem_tuple (struct momqueueitems_st *qu,
 				     momvalue_t metav);
 
-void mom_queueitem_scan_dump (struct momqueueitems_st *qu,
-			      struct momdumper_st *du);
+void mom_queueitem_scan_dump (struct momqueueitems_st *qu);
 
 ////////////////
 
@@ -721,8 +714,7 @@ const momnode_t *mom_queuevalue_node (struct momqueuevalues_st *qu,
 				      const momitem_t *conn,
 				      momvalue_t metav);
 
-void mom_queuevalue_scan_dump (struct momqueuevalues_st *qu,
-			       struct momdumper_st *du);
+void mom_queuevalue_scan_dump (struct momqueuevalues_st *qu);
 
 
 
@@ -884,21 +876,20 @@ mom_make_anonymous_item_at (unsigned lin)
 
 // mom_scan_dumped_item returns true for an item to be scanned (non
 // null, non transient)
-bool mom_scan_dumped_item (struct momdumper_st * du, const momitem_t *itm);
-void mom_scan_dumped_value (struct momdumper_st *du, const momvalue_t val);
-void mom_scan_dumped_module_item (struct momdumper_st *du,
-				  const momitem_t *moditm);
+bool mom_scan_dumped_item (const momitem_t *itm);
+void mom_scan_dumped_value (const momvalue_t val);
+void mom_scan_dumped_module_item (const momitem_t *moditm);
 void mom_output_gplv3_notice (FILE *out, const char *prefix,
 			      const char *suffix, const char *filename);
 
-bool mom_dumpable_value (struct momdumper_st *du, const momvalue_t val);
-bool mom_dumpable_item (struct momdumper_st *du, const momitem_t *itm);
-void mom_emit_dumped_newline (struct momdumper_st *du);
-void mom_emit_dumped_space (struct momdumper_st *du);
-void mom_emit_dump_indent (struct momdumper_st *du);
-void mom_emit_dump_outdent (struct momdumper_st *du);
-bool mom_emit_dumped_itemref (struct momdumper_st *du, const momitem_t *itm);
-void mom_emit_dumped_value (struct momdumper_st *du, const momvalue_t val);
+bool mom_dumpable_value (const momvalue_t val);
+bool mom_dumpable_item (const momitem_t *itm);
+void mom_emit_dumped_newline (void);
+void mom_emit_dumped_space (void);
+void mom_emit_dump_indent (void);
+void mom_emit_dump_outdent (void);
+bool mom_emit_dumped_itemref (const momitem_t *itm);
+void mom_emit_dumped_value (const momvalue_t val);
 #define mom_make_anonymous_item() mom_make_anonymous_item_at(__LINE__)
 
 void mom_output_utf8cstr_cencoded (FILE *fil, const char *str, int len);
@@ -913,15 +904,15 @@ void mom_output_utf8cstr_cencoded (FILE *fil, const char *str, int len);
 #define MOM_PREDEFINED_ANONYMOUS(Id) mompi_##Id
 
 static inline const momitem_t *
-mom_load_itemref (struct momloader_st *ld)
+mom_load_itemref (void)
 {
   momvalue_t val = MOM_NONEV;
-  if (mom_token_load (ld, &val))
+  if (mom_token_load (&val))
     {
       if (val.typnum == momty_item)
 	return val.vitem;
       else
-	mom_load_push_front_token (ld, val);
+	mom_load_push_front_token (val);
     }
   return NULL;
 }

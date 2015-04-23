@@ -36,15 +36,13 @@ mom_components_put_nth (struct momcomponents_st *csq, int rk,
 }
 
 void
-mom_components_scan_dump (struct momcomponents_st *csq,
-			  struct momdumper_st *du)
+mom_components_scan_dump (struct momcomponents_st *csq)
 {
   if (!csq || csq == MOM_EMPTY)
     return;
-  assert (du);
   unsigned cnt = csq->cp_cnt;
   for (unsigned ix = 0; ix < cnt; ix++)
-    mom_scan_dumped_value (du, csq->cp_comps[ix]);
+    mom_scan_dumped_value (csq->cp_comps[ix]);
 }
 
 struct momcomponents_st *

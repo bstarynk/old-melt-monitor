@@ -301,21 +301,19 @@ mom_attributes_make_atva (unsigned nbent, ...
 }
 
 void
-mom_attributes_scan_dump (struct momattributes_st *attrs,
-			  struct momdumper_st *du)
+mom_attributes_scan_dump (struct momattributes_st *attrs)
 {
   if (!attrs)
     return;
-  assert (du != NULL);
   unsigned alen = attrs->at_len;
   for (unsigned ix = 0; ix < alen; ix++)
     {
       const momitem_t *curitm = attrs->at_entries[ix].ent_itm;
       if (!curitm || curitm == MOM_EMPTY)
 	continue;
-      if (!mom_scan_dumped_item (du, curitm))
+      if (!mom_scan_dumped_item (curitm))
 	continue;
-      mom_scan_dumped_value (du, attrs->at_entries[ix].ent_val);
+      mom_scan_dumped_value (attrs->at_entries[ix].ent_val);
     }
 }
 

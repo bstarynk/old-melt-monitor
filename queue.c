@@ -166,11 +166,10 @@ mom_queueitem_tuple (struct momqueueitems_st *qu, momvalue_t metav)
 
 
 void
-mom_queueitem_scan_dump (struct momqueueitems_st *qu, struct momdumper_st *du)
+mom_queueitem_scan_dump (struct momqueueitems_st *qu)
 {
   if (!qu || qu == MOM_EMPTY)
     return;
-  assert (du);
 
   for (struct momqueuechunkitems_st * ch = qu->que_front; ch;
        ch = ch->quechi_next)
@@ -179,7 +178,7 @@ mom_queueitem_scan_dump (struct momqueueitems_st *qu, struct momdumper_st *du)
 	{
 	  const momitem_t *itm = ch->quechi_items[ix];
 	  if (itm && itm != MOM_EMPTY)
-	    mom_scan_dumped_item (du, itm);
+	    mom_scan_dumped_item (itm);
 	}
     }
 }
@@ -340,12 +339,10 @@ mom_queuevalue_node (struct momqueuevalues_st *qu, const momitem_t *connitm,
 
 
 void
-mom_queuevalue_scan_dump (struct momqueuevalues_st *qu,
-			  struct momdumper_st *du)
+mom_queuevalue_scan_dump (struct momqueuevalues_st *qu)
 {
   if (!qu || qu == MOM_EMPTY)
     return;
-  assert (du);
 
   for (struct momqueuechunkvalues_st * ch = qu->que_front; ch;
        ch = ch->quechv_next)
@@ -354,7 +351,7 @@ mom_queuevalue_scan_dump (struct momqueuevalues_st *qu,
 	{
 	  const momvalue_t val = ch->quechv_values[ix];
 	  if (val.typnum != momty_null)
-	    mom_scan_dumped_value (du, val);
+	    mom_scan_dumped_value (val);
 	}
     }
 }
