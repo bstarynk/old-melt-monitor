@@ -784,7 +784,7 @@ find_named_item_mom (const char *str)
 		       "find_named_item_mom str=%s mdbix=%d lobix=%d hibix=%d mditm=%s",
 		       str, mdbix, lobix, hibix, mditm->itm_name->cstr);
       if (strcmp (str, mditm->itm_name->cstr) < 0)
-	hibix = mdbix;
+	hibix = mdbix + 1;
       else
 	lobix = mdbix;
     }
