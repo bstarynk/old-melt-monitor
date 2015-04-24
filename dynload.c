@@ -30,4 +30,17 @@ the main program handle.
 static pthread_mutex_t dynload_mtx_mom = PTHREAD_MUTEX_INITIALIZER;
 
 
+void *
+mom_dynload_symbol (const char *name)
+{
+  void *ptr = NULL;
+  assert (name && isalpha (name[0]));
+  pthread_mutex_lock (&dynload_mtx_mom);
+  // since plugins are dlopen-ed with RTLD_DEEPBIND we can just gind
+  // symbols using the program handle.
+  ptr = dlsym (mom_prog_dlhandle, name);
+  pthread_mutex_unlock (&dynload_mtx_mom);
+  return ptr;
+}
+
 ////////////////

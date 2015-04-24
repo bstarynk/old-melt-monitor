@@ -1059,4 +1059,30 @@ mom_item_unsync_get_attribute (momitem_t *itm, momitem_t *itmat)
   return MOM_NONEV;
 }
 
+
+void *mom_dynload_symbol (const char *name);
+
+/* Dor functions with 1 value argument and no result, we apply them
+   with an invoking closure. The C function is supposed to return true
+   on success and false on failure (e.g. when the closure is too
+   small). Here is the signature of the function in C.  */
+typedef bool mom_1val_to_void_sig_t (const momnode_t *closnode,
+				     const momvalue_t arg0);
+/* the prefix of such function is: */
+#define MOM_PREFIXFUN_1val_to_void "momfun_1val_to_void"
+/* The kind of the node connective should be
+MOM_PREDEFINED_NAMED(signature_1val_to_void); Its itm_data1 should be
+the address of the C routine. */
+
+bool mom_applyclos_1val_to_void (const momnode_t *closnode,
+				 const momvalue_t arg0);
+
+static inline bool
+mom_applyval_1val_to_void (const momvalue_t cloval, const momvalue_t arg0)
+{
+  if (cloval.typnum != momty_node)
+    return false;
+  return mom_applyclos_1val_to_void (cloval.vnode, arg0);
+}
+
 #endif /*MONIMELT_INCLUDED_ */
