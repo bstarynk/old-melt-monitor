@@ -756,6 +756,7 @@ create_predefined_items_mom (void)
 momitem_t *
 find_named_item_mom (const char *str)
 {
+  MOM_DEBUGPRINTF (item, "find_named_item_mom str=%s", str);
   assert (mom_valid_item_name_str (str, NULL));
   assert (named_nbuck_mom > 0);
   assert (named_count_mom > 0);
@@ -777,10 +778,13 @@ find_named_item_mom (const char *str)
       assert (mdlen > 0);
       const momitem_t *mditm = mdbuck->nambuck_arr[mdlen / 2];
       assert (mditm && !mditm->itm_anonymous && mditm->itm_name);
+      MOM_DEBUGPRINTF (item,
+		       "find_named_item_mom str=%s mdbix=%d lobix=%d hibix=%d mditm=%s",
+		       str, mdbix, lobix, hibix, mditm->itm_name->cstr);
       if (strcmp (str, mditm->itm_name->cstr) < 0)
-	lobix = mdbix;
-      else
 	hibix = mdbix;
+      else
+	lobix = mdbix;
     }
   // try to find the appropriate bucket index bix
   for (mdbix = lobix; mdbix < hibix && bix < 0; mdbix++)
@@ -963,10 +967,13 @@ mom_make_named_item (const char *namstr)
       assert (mdlen > 0);
       const momitem_t *mditm = mdbuck->nambuck_arr[mdlen / 2];
       assert (mditm && !mditm->itm_anonymous && mditm->itm_name);
+      MOM_DEBUGPRINTF (item,
+		       "making named item %s mdbix %d (lobix=%d hibix=%d), mditm %s",
+		       namstr, mdbix, lobix, hibix, mditm->itm_name->cstr);
       if (strcmp (namstr, mditm->itm_name->cstr) < 0)
-	lobix = mdbix;
+	hibix = mdbix + 1;
       else
-	hibix = mdbix;
+	lobix = mdbix;
     }
   MOM_DEBUGPRINTF (item,
 		   "making named item %s lobix=%d (bucklen %d) hibix=%d (bucklen %d)",
@@ -1019,6 +1026,7 @@ mom_make_named_item (const char *namstr)
     {
       struct namebucket_mom_st *buck = named_buckets_mom[bix];
       unsigned blen = buck->nambuck_len;
+      MOM_DEBUGPRINTF (item, "making named item %s blen=%d", namstr, blen);
       if (blen > 0)
 	{
 	  int lo = 0, hi = (int) blen, md = 0;
@@ -1027,6 +1035,9 @@ mom_make_named_item (const char *namstr)
 	      int md = (lo + hi) / 2;
 	      const momitem_t *curitm = buck->nambuck_arr[md];
 	      assert (curitm && !curitm->itm_anonymous && curitm->itm_name);
+	      MOM_DEBUGPRINTF (item,
+			       "making named item %s lo=%d hi=%d md=%d curitm %s",
+			       namstr, lo, hi, md, curitm->itm_name->cstr);
 	      int cmp = strcmp (curitm->itm_name->cstr, namstr);
 	      if (!cmp)
 		{
@@ -1040,16 +1051,22 @@ mom_make_named_item (const char *namstr)
 	      else
 		hi = md;
 	    };
+	  MOM_DEBUGPRINTF (item, "making named item %s lo=%d hi=%d",
+			   namstr, lo, hi);
 	  for (md = lo; md < hi; md++)
 	    {
 	      const momitem_t *curitm = buck->nambuck_arr[md];
 	      assert (curitm && !curitm->itm_anonymous && curitm->itm_name);
+	      MOM_DEBUGPRINTF (item, "making named item %s md=%d curitm %s",
+			       namstr, md, curitm->itm_name->cstr);
 	      int cmp = strcmp (curitm->itm_name->cstr, namstr);
 	      if (!cmp)
 		{
 		  itm = (momitem_t *) curitm;
-		  MOM_DEBUGPRINTF (item, "making named item %s found @%p",
-				   namstr, (void *) itm);
+		  pos = md;
+		  MOM_DEBUGPRINTF (item,
+				   "making named item %s found @%p bix=%d pos=%d",
+				   namstr, (void *) itm, bix, pos);
 		  goto end;
 		};
 	      if (cmp > 0)

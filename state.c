@@ -432,6 +432,9 @@ readagain:
       const momitem_t *itm = mom_find_item (pstart);
       if (itm)
 	{
+	  assert (itm->itm_str);
+	  MOM_DEBUGPRINTF (load, "token_load@%s:%d: found item %s",
+			   fil, lin, itm->itm_str->cstr);
 	  pval->vitem = (momitem_t *) itm;
 	  pval->typnum = momty_item;
 	  loader_mom->ldlinecol += end - pstart;
@@ -440,6 +443,9 @@ readagain:
 	  *end = olde;
 	  return true;
 	}
+      else
+	MOM_DEBUGPRINTF (load, "token_load@%s:%d: did not found anon %s", fil,
+			 lin, pstart);
     }
   else if (isalpha (c)
 	   && mom_valid_item_name_str (pstart, (const char **) &end) && end
@@ -458,6 +464,9 @@ readagain:
 	  *end = olde;
 	  return true;
 	}
+      else
+	MOM_DEBUGPRINTF (load, "token_load@%s:%d: did not found named %s",
+			 fil, lin, pstart);
     }
   MOM_DEBUGPRINTF (load,
 		   "token_load@%s:%d: failing linecount %d, linecol %d linebuf %s",
