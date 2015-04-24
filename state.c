@@ -590,12 +590,15 @@ second_pass_load_mom (bool global)
 			    loader_mom->ldforglobals ? "global" : "user",
 			    loader_mom->ldforglobals ? loader_mom->
 			    ldglobalpath : loader_mom->lduserpath);
-	  MOM_DEBUGPRINTF (load, "second %s pass item %s",
+	  MOM_DEBUGPRINTF (load, "second %s pass filling item %s",
 			   loader_mom->ldforglobals ? "global" : "user",
 			   val.vitem->itm_str->cstr);
 	  memset (&loader_mom->ldquetokens, 0,
 		  sizeof (loader_mom->ldquetokens));
 	  load_fill_item_mom (val.vitem);
+	  MOM_DEBUGPRINTF (load, "second %s pass filled item %s\n",
+			   loader_mom->ldforglobals ? "global" : "user",
+			   val.vitem->itm_str->cstr);
 	}
     }
   while (!feof

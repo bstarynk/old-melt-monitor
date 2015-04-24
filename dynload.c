@@ -20,6 +20,13 @@
 
 #include "monimelt.h"
 
+/***
+We should dlopen every module with RTLD_GLOBAL | RTLD_NOW |
+RTLD_DEEPBIND so that the symbols it is defining are visible from the
+main program and from other modules. Then, we can always use dlopn on
+the main program handle.
+ ***/
+
 static pthread_mutex_t dynload_mtx_mom = PTHREAD_MUTEX_INITIALIZER;
 
 

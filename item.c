@@ -756,7 +756,9 @@ create_predefined_items_mom (void)
 momitem_t *
 find_named_item_mom (const char *str)
 {
-  MOM_DEBUGPRINTF (item, "find_named_item_mom str=%s", str);
+  static unsigned long count;
+  count++;
+  MOM_DEBUGPRINTF (item, "find_named_item_mom str=%s count#%ld", str, count);
   assert (mom_valid_item_name_str (str, NULL));
   assert (named_nbuck_mom > 0);
   assert (named_count_mom > 0);
@@ -787,6 +789,9 @@ find_named_item_mom (const char *str)
 	lobix = mdbix;
     }
   // try to find the appropriate bucket index bix
+  MOM_DEBUGPRINTF (item,
+		   "find_named_item_mom str=%s lobix=%d hibix=%d", str, lobix,
+		   hibix);
   for (mdbix = lobix; mdbix < hibix && bix < 0; mdbix++)
     {
       struct namebucket_mom_st *mdbuck = named_buckets_mom[mdbix];
@@ -797,6 +802,10 @@ find_named_item_mom (const char *str)
       assert (firstitm && !firstitm->itm_anonymous && firstitm->itm_name);
       const momitem_t *lastitm = mdbuck->nambuck_arr[mdlen - 1];
       assert (lastitm && !lastitm->itm_anonymous && lastitm->itm_name);
+      MOM_DEBUGPRINTF (item,
+		       "find_named_item_mom str=%s mdbix=%d mdlen=%d firstitm=%s lastitm=%s",
+		       str, mdbix, mdlen, firstitm->itm_name->cstr,
+		       lastitm->itm_name->cstr);
       if (strcmp (firstitm->itm_name->cstr, str) <= 0
 	  && strcmp (str, lastitm->itm_name->cstr) <= 0)
 	bix = mdbix;
