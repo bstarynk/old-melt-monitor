@@ -1,4 +1,4 @@
-// file values.c
+// file values.c - handle our values
 
 /**   Copyright (C)  2015 Free Software Foundation, Inc.
     MONIMELT is a monitor for MELT - see http://gcc-melt.org/

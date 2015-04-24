@@ -1,4 +1,4 @@
-// file attributes.c
+// file attributes.c - manage attribute hash tables
 
 /**   Copyright (C)  2015 Free Software Foundation, Inc.
     MONIMELT is a monitor for MELT - see http://gcc-melt.org/

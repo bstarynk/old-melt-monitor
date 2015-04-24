@@ -1,4 +1,4 @@
-// file random.c
+// file random.c - [pseudo-] random number generations, e.g. for id of anonymous items
 
 /**   Copyright (C)  2015 Free Software Foundation, Inc.
     MONIMELT is a monitor for MELT - see http://gcc-melt.org/

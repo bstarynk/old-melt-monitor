@@ -1,4 +1,4 @@
-// file main.c
+// file main.c - main program and utilities
 
 /**   Copyright (C)  2015 Free Software Foundation, Inc.
     MONIMELT is a monitor for MELT - see http://gcc-melt.org/

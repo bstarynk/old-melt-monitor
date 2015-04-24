@@ -35,6 +35,21 @@
 ..
 
 
+** signature_1val_to_void
+{
+  * comment  "the signature of functions with a single value arguments and no result"
+  }
+   
+..
+
+
+** signature_void_to_void
+{
+  * comment  "the signature of functions without arguments and results" }
+   
+..
+
+
 ** the_software
 {
   * comment  "describes the entire software system" }

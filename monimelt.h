@@ -1,4 +1,4 @@
-// file monimelt.h
+// file monimelt.h - common header file to be included everywhere.
 
 /**   Copyright (C)  2015 Free Software Foundation, Inc.
     MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -783,9 +783,9 @@ struct momitem_st
   struct momattributes_st *itm_attrs;
   struct momcomponents_st *itm_comps;
   _Atomic momitem_t *itm_kind;
-  void *itm_data1;
-  void *itm_data2;
-};
+  _Atomic void *itm_data1;
+  _Atomic void *itm_data2;
+};				/* end struct momitem_st */
 
 static inline void
 mom_item_lock (momitem_t *itm)

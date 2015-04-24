@@ -1,4 +1,4 @@
-// file hashset.c
+// file hashset.c - manage hashed sets
 
 /**   Copyright (C)  2015 Free Software Foundation, Inc.
     MONIMELT is a monitor for MELT - see http://gcc-melt.org/

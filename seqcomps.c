@@ -1,4 +1,4 @@
-// file seqcomps.c
+// file seqcomps.c - manage sequence of value components
 
 
 /**   Copyright (C)  2015 Free Software Foundation, Inc.

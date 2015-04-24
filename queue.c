@@ -1,4 +1,4 @@
-// file queue.c
+// file queue.c - (FIFO) queues of items and values
 
 /**   Copyright (C)  2015 Free Software Foundation, Inc.
     MONIMELT is a monitor for MELT - see http://gcc-melt.org/

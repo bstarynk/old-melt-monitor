@@ -1,4 +1,4 @@
-// file state.c
+// file state.c - manage the persistent state load & dump
 
 /**   Copyright (C)  2015 Free Software Foundation, Inc.
     MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -303,10 +303,10 @@ token_string_load_mom (momvalue_t *pval)
 
 
 const char *const delim_mom[] = {
-  /// first the 2 char delimiters
+  /// first the 2 bytes delimiters; notice that degree-sign °, section-sign §, are two UTF-8 bytes
   "==",
-  "**", "++", "--", "[[", "]]", "..", "°", "*", "(", ")", "[", "]",
-  "{", "}", "<", ">", "^", "!",
+  "**", "++", "--", "[[", "]]", "..", "°", "§", "*", "(", ")", "[", "]",
+  "{", "}", "<", ">", "^", "!", "%", "@", "|", "&",
   NULL
 };
 
