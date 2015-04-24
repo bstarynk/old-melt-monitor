@@ -21,6 +21,41 @@
 #include "monimelt.h"
 
 bool
+mom_applyclos_void_to_void (const momnode_t *closnode)
+{
+  bool ok = false;
+  if (!closnode)
+    return false;
+  momitem_t *connitm = (momitem_t *) closnode->conn;
+  assert (connitm);
+  mom_item_lock (connitm);
+  if (MOM_UNLIKELY ((const momitem_t *) connitm->itm_kind
+		    != MOM_PREDEFINED_NAMED (signature_1val_to_void)))
+    goto end;
+  void *data1 = connitm->itm_data1;
+  if (MOM_UNLIKELY (data1 == NULL))
+    {
+      char nambuf[256];
+      memset (nambuf, 0, sizeof (nambuf));
+      if (snprintf (nambuf, sizeof (nambuf), MOM_PREFIXFUN_void_to_void "_%s",
+		    connitm->itm_str->cstr) < sizeof (nambuf))
+	((momitem_t *) connitm)->itm_data1 = data1 =
+	  mom_dynload_symbol (nambuf);
+      else
+	MOM_FATAPRINTF ("too long function name %s for 1val to void",
+			connitm->itm_str->cstr);
+    }
+  if (MOM_LIKELY (data1 != NULL && data1 != MOM_EMPTY))
+    {
+      mom_void_to_void_sig_t *fun = (mom_1val_to_void_sig_t *) data1;
+      ok = (*fun) (closnode);
+    }
+end:
+  mom_item_unlock (connitm);
+  return ok;
+}
+
+bool
 mom_applyclos_1val_to_void (const momnode_t *closnode, const momvalue_t arg0)
 {
   bool ok = false;
@@ -42,7 +77,8 @@ mom_applyclos_1val_to_void (const momnode_t *closnode, const momvalue_t arg0)
 	((momitem_t *) connitm)->itm_data1 = data1 =
 	  mom_dynload_symbol (nambuf);
       else
-	MOM_FATAPRINTF ("too long function name %s", connitm->itm_str->cstr);
+	MOM_FATAPRINTF ("too long function name %s for 1val to void",
+			connitm->itm_str->cstr);
     }
   if (MOM_LIKELY (data1 != NULL && data1 != MOM_EMPTY))
     {

@@ -1062,7 +1062,8 @@ mom_item_unsync_get_attribute (momitem_t *itm, momitem_t *itmat)
 
 void *mom_dynload_symbol (const char *name);
 
-/* Dor functions with 1 value argument and no result, we apply them
+//// ========== signature_1val_to_void 
+/* For functions with 1 value argument and no result, we apply them
    with an invoking closure. The C function is supposed to return true
    on success and false on failure (e.g. when the closure is too
    small). Here is the signature of the function in C.  */
@@ -1083,6 +1084,28 @@ mom_applyval_1val_to_void (const momvalue_t cloval, const momvalue_t arg0)
   if (cloval.typnum != momty_node)
     return false;
   return mom_applyclos_1val_to_void (cloval.vnode, arg0);
+}
+
+//// ========== signature_void_to_void 
+/* For functions with no argument and no result, we apply them
+   with an invoking closure. The C function is supposed to return true
+   on success and false on failure (e.g. when the closure is too
+   small). Here is the signature of the function in C.  */
+typedef bool mom_void_to_void_sig_t (const momnode_t *closnode0);
+/* the prefix of such function is: */
+#define MOM_PREFIXFUN_void_to_void "momfun_void_to_void"
+/* The kind of the node connective should be
+MOM_PREDEFINED_NAMED(signature_void_to_void); Its itm_data1 should be
+the address of the C routine. */
+
+bool mom_applyclos_void_to_void (const momnode_t *closnode);
+
+static inline bool
+mom_applyval_void_to_void (const momvalue_t cloval)
+{
+  if (cloval.typnum != momty_node)
+    return false;
+  return mom_applyclos_void_to_void (cloval.vnode);
 }
 
 #endif /*MONIMELT_INCLUDED_ */
