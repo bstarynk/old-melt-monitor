@@ -364,7 +364,8 @@ token_string_load_mom (momvalue_t *pval)
 const char *const delim_mom[] = {
   /// first the 2 bytes delimiters; notice that degree-sign °, section-sign §, are two UTF-8 bytes
   "==",
-  "**", "++", "--", "[[", "]]", "..", "°", "§", "*", "(", ")", "[", "]",
+  "**", "++", "--", "[[", "]]", "..", "_*", "_:", "°", "§", "*", "(", ")",
+  "[", "]",
   "{", "}", "<", ">", "^", "!", "%", "@", "|", "&",
   NULL
 };
@@ -407,6 +408,23 @@ readagain:
   char c = loader_mom->ldlinebuf[loader_mom->ldlinecol];
   char *pstart = loader_mom->ldlinebuf + loader_mom->ldlinecol;
   char *end = NULL;
+  if (pstart[0] == '/' && pstart[1] == '/')
+    {
+      loader_mom->ldlinecol = loader_mom->ldlinelen;
+      goto readagain;
+    }
+  else if (pstart[0] == '/' && pstart[1] == '*')
+    {
+      char *endcomm = strstr (pstart + 2, "*/");
+      if (!endcomm)
+	MOM_FATAPRINTF
+	  ("unterminated /* single-line comment in %s file %s line %d",
+	   loader_mom->ldforglobals ? "global" : "user",
+	   loader_mom->ldforglobals ? loader_mom->ldglobalpath : loader_mom->
+	   lduserpath, (int) loader_mom->ldlinecount);
+      loader_mom->ldlinecol += (endcomm + 2 - pstart);
+      goto readagain;
+    }
   if (isspace (c))
     {
       loader_mom->ldlinecol++;
@@ -505,6 +523,26 @@ readagain:
       else
 	MOM_DEBUGPRINTF (load, "token_load@%s:%d: did not found anon %s", fil,
 			 lin, pstart);
+    }
+  else if (c == '_' && pstart[1] == '*')
+    {
+      // _* is a delimiter to make a global new anonymous item
+      pval->typnum = momty_delim;
+      strcpy (pval->vdelim.delim, "_*");
+      loader_mom->ldlinecol += 2;
+      MOM_DEBUGPRINTF (load, "token_load@%s:%d: got quasidelim token %s",
+		       fil, lin, mom_output_gcstring (*pval));
+      return true;
+    }
+  else if (c == '_' && pstart[1] == ':')
+    {
+      // _: is a delimiter to make a user new anonymous item
+      pval->typnum = momty_delim;
+      strcpy (pval->vdelim.delim, "_:");
+      loader_mom->ldlinecol += 2;
+      MOM_DEBUGPRINTF (load, "token_load@%s:%d: got quasidelim token %s",
+		       fil, lin, mom_output_gcstring (*pval));
+      return true;
     }
   else if (isalpha (c)
 	   && mom_valid_item_name_str (pstart, (const char **) &end) && end
@@ -617,6 +655,30 @@ load_fill_item_mom (momitem_t *itm)
       add_load_transformer_mom (itm, valtransf);
     }
 }				/* end load_fill_item_mom */
+
+////////////////
+const momitem_t *
+mom_load_new_anonymous_item (bool global)
+{
+  momitem_t *newitm = mom_make_anonymous_item ();
+  if (global)
+    newitm->itm_space = momspa_global;
+  else
+    newitm->itm_space = momspa_user;
+  momvalue_t vtok = MOM_NONEV;
+  if (!mom_token_load (&vtok))
+    MOM_FATAPRINTF ("failed to load new anonymous item in %s file %s line %d",
+		    loader_mom->ldforglobals ? "global" : "user",
+		    loader_mom->ldforglobals ? loader_mom->
+		    ldglobalpath : loader_mom->lduserpath,
+		    (int) loader_mom->ldlinecount);
+  if (vtok.typnum == momty_string)
+    {
+      mom_item_unsync_put_attribute (newitm, MOM_PREDEFINED_NAMED (comment),
+				     vtok);
+    }
+#warning mom_load_new_anonymous_item incomplete
+}
 
 ////////////////
 
@@ -1588,6 +1650,52 @@ output_item_mom (struct momvaloutput_st *ov, const momitem_t *itm)
     return;
   assert (itm->itm_str);
   fputs (itm->itm_str->cstr, ov->vout_file);
+  if (itm->itm_anonymous)
+    {
+      momvalue_t vcomm = MOM_NONEV;
+      mom_item_lock (itm);
+      vcomm =
+	mom_item_unsync_get_attribute (itm, MOM_PREDEFINED_NAMED (comment));
+      mom_item_unlock (itm);
+      const char *comstr = mom_value_cstr (vcomm);
+      if (comstr && comstr[0] && comstr[1] && comstr[2] && comstr[3])
+	{
+	  char combuf[80];
+	  memset (combuf, 0, sizeof (combuf));
+	  const char *nl = strchr (comstr, '\n');
+	  const char *eoc = strstr (comstr, "*/");
+	  if (!nl && !eoc)
+	    strncpy (combuf, comstr, sizeof (combuf) - 1);
+	  else if (nl && eoc && nl >= comstr + 3 && eoc >= comstr + 3)
+	    {
+	      int nbc = (nl > eoc) ? (comstr - nl - 1) : (comstr - eoc - 1);
+	      if (nbc >= sizeof (combuf))
+		nbc = sizeof (combuf) - 1;
+	      strncpy (combuf, comstr, nbc);
+	    }
+	  else if (nl && nl >= comstr + 3)
+	    {
+	      int nbc = (comstr - nl - 1);
+	      if (nbc >= sizeof (combuf))
+		nbc = sizeof (combuf) - 1;
+	      strncpy (combuf, comstr, nbc);
+	    }
+	  else if (eoc && eoc >= comstr + 3)
+	    {
+	      int nbc = (comstr - eoc - 1);
+	      if (nbc >= sizeof (combuf))
+		nbc = sizeof (combuf) - 1;
+	      strncpy (combuf, comstr, nbc);
+	    }
+	  if (strlen (combuf) > 4)
+	    {
+	      assert (!strchr (combuf, '\n'));
+	      assert (!strstr (combuf, "*/"));
+	      fprintf (ov->vout_file, "/*%s*/", combuf);
+	      output_space_mom (ov);
+	    }
+	}
+    }
 }
 
 

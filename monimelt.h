@@ -874,6 +874,17 @@ mom_stringv (const momstring_t *str)
 #define mom_stringv_sprintf(F,...) mom_stringv(mom_make_string_sprintf((F),__VA_ARGS__))
 #define mom_stringv_output(V) mom_stringv(mout_output_string((V)))
 
+static inline const char *
+mom_value_cstr (const momvalue_t val)
+{
+  if (val.typnum == momty_string)
+    {
+      assert (val.vstr);
+      return val.vstr->cstr;
+    }
+  return NULL;
+}
+
 // make a tuple from given items. NULL and MOM_EMPTY item pointers are skipped.
 const momseq_t *mom_make_meta_tuple (momvalue_t metav, unsigned nbitems, ...);
 #define mom_make_tuple(NbItems,...) mom_make_meta_tuple(MOM_NONEV, (NbItems), __VA_ARGS__)
@@ -1018,16 +1029,22 @@ void mom_output_utf8cstr_cencoded (FILE *fil, const char *str, int len);
 #define MOM_PREDEFINED_NAMED(Nam) mompi_##Nam
 #define MOM_PREDEFINED_ANONYMOUS(Id) mompi_##Id
 
+const momitem_t *mom_load_new_anonymous_item (bool global);
+
 static inline const momitem_t *
 mom_load_itemref_at (const char *fil, int lin)
 {
-  momvalue_t val = MOM_NONEV;
-  if (mom_token_load_at (&val, fil, lin))
+  momvalue_t valtok = MOM_NONEV;
+  if (mom_token_load_at (&valtok, fil, lin))
     {
-      if (val.typnum == momty_item)
-	return val.vitem;
+      if (valtok.typnum == momty_item)
+	return valtok.vitem;
+      else if (mom_value_is_delim (valtok, "_*"))
+	return mom_load_new_anonymous_item (true);
+      else if (mom_value_is_delim (valtok, "_:"))
+	return mom_load_new_anonymous_item (false);
       else
-	mom_load_push_front_token (val);
+	mom_load_push_front_token (valtok);
     }
   return NULL;
 }
@@ -1059,6 +1076,40 @@ mom_item_unsync_get_attribute (momitem_t *itm, momitem_t *itmat)
   return MOM_NONEV;
 }
 
+static inline bool
+mom_item_unsync_put_attribute (momitem_t *itm, momitem_t *itmat,
+			       const momvalue_t val)
+{
+  if (MOM_UNLIKELY (!itm || itm == MOM_EMPTY))
+    return false;
+  if (MOM_UNLIKELY (!itmat || itmat == MOM_EMPTY))
+    return false;
+  if (MOM_UNLIKELY (itmat == MOM_PREDEFINED_NAMED (kind)))
+    {
+#warning should handle put_attribute for kind
+      return false;
+    }
+  if (MOM_UNLIKELY
+      ((momitem_t *) itmat->itm_kind ==
+       MOM_PREDEFINED_NAMED (magic_attribute)))
+    {
+#warning do something to put magic attributes
+      return false;
+    }
+  if (val.typnum == momty_null)
+    {
+      // erase the attribute
+      itm->itm_attrs = mom_attributes_remove (itm->itm_attrs, itmat);
+      return true;
+    }
+  else
+    {
+      // put the attribute
+      itm->itm_attrs = mom_attributes_put (itm->itm_attrs, itmat, &val);
+      return true;
+    }
+
+}
 
 void *mom_dynload_symbol (const char *name);
 
