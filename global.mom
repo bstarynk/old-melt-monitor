@@ -24,10 +24,7 @@
 
 
 ** dumped_item_emitter
-{
-  * comment  "in the kind of an item, attributes giving the 1-value closure to emit a closure for its dump"
-  }
-   
+
 ..
 
 
@@ -43,6 +40,14 @@
 
 ** magic_attribute
 
+..
+
+
+** signature_1val_to_val
+{
+  * comment  "signature for closures with one value argument and one value result"
+  }
+   
 ..
 
 

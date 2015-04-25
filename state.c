@@ -22,6 +22,19 @@
 
 ////////////////
 
+struct transformpair_mom_st
+{
+  const momitem_t *transp_itm;
+  const momnode_t *transp_node;
+};
+
+struct transformvect_mom_st
+{
+  unsigned transf_size;		/* allocated size */
+  unsigned transf_count;	/* used count */
+  struct transformpair_mom_st transf_pairs[];	/* of length transf_size */
+};
+
 #define LOADER_MAGIC_MOM 0x169128bb
 struct momloader_st
 {
@@ -32,6 +45,7 @@ struct momloader_st
   FILE *lduserfile;
   struct momhashset_st *lditemset;
   struct momhashset_st *ldmoduleset;
+  struct transformvect_mom_st *ldtransfvect;
   struct momqueuevalues_st ldquetokens;
   bool ldforglobals;
   char *ldlinebuf;
@@ -42,6 +56,51 @@ struct momloader_st
 };
 
 static struct momloader_st *loader_mom;
+
+static void
+add_load_transformer_mom (const momitem_t *itm, const momvalue_t vtrans)
+{
+  assert (loader_mom && loader_mom->ldmagic == LOADER_MAGIC_MOM);
+  assert (itm && itm != MOM_EMPTY);
+  assert (vtrans.typnum == momty_node);
+  assert (vtrans.vnode != NULL);
+  struct transformvect_mom_st *transvec = loader_mom->ldtransfvect;
+  unsigned trcount = 0;
+  if (MOM_UNLIKELY (!transvec))
+    {
+      unsigned newsiz = 32;
+      struct transformvect_mom_st *newtrv =	//
+	MOM_GC_ALLOC ("load transformer",
+		      sizeof (struct transformvect_mom_st)
+		      + newsiz * sizeof (struct transformpair_mom_st));
+      newtrv->transf_size = newsiz;
+      loader_mom->ldtransfvect = transvec = newtrv;
+    }
+  else if ((trcount = transvec->transf_count),
+	   MOM_UNLIKELY (trcount + 1 >= transvec->transf_size))
+    {
+      unsigned newsiz = ((5 * trcount / 4 + 30) | 0x1f) + 1;
+      assert (newsiz + 1 > trcount);
+      struct transformvect_mom_st *newtrv =	//
+	MOM_GC_ALLOC ("load transformer",
+		      sizeof (struct transformvect_mom_st)
+		      + newsiz * sizeof (struct transformpair_mom_st));
+      newtrv->transf_size = newsiz;
+      memcpy (newtrv->transf_pairs, transvec->transf_pairs,
+	      trcount * sizeof (struct transformpair_mom_st));
+      newtrv->transf_count = trcount;
+      MOM_GC_FREE (transvec,
+		   sizeof (struct transformvect_mom_st)
+		   +
+		   transvec->transf_size *
+		   sizeof (struct transformpair_mom_st));
+      loader_mom->ldtransfvect = transvec = newtrv;
+    }
+  assert (trcount < transvec->transf_size);
+  transvec->transf_pairs[trcount].transp_itm = itm;
+  transvec->transf_pairs[trcount].transp_node = vtrans.vnode;
+  transvec->transf_count = trcount + 1;
+}
 
 static void
 first_pass_load_mom (const char *path, FILE *fil)
@@ -514,6 +573,7 @@ load_fill_item_mom (momitem_t *itm)
 			lduserpath, (int) loader_mom->ldlinecount);
     }
   // should load the components
+  vtok = MOM_NONEV;
   if (mom_token_load (&vtok) && mom_value_is_delim (vtok, "[["))
     {
       momvalue_t valcomp = MOM_NONEV;
@@ -530,13 +590,32 @@ load_fill_item_mom (momitem_t *itm)
 			mom_output_gcstring (vtokbis),
 			itm->itm_str->cstr,
 			loader_mom->ldforglobals ? "global" : "user",
-			loader_mom->
-			ldforglobals ? loader_mom->ldglobalpath : loader_mom->
-			lduserpath, (int) loader_mom->ldlinecount);
+			loader_mom->ldforglobals ? loader_mom->ldglobalpath
+			: loader_mom->lduserpath,
+			(int) loader_mom->ldlinecount);
     }
-#warning load_fill_item_mom unimplemented, see emit_content_dumped_item_mom
-  MOM_WARNPRINTF ("load_fill_item_mom %s not completely unimplemented",
-		  itm->itm_str->cstr);
+  // should load the transformer closure, if given
+  vtok = MOM_NONEV;
+  if (mom_token_load (&vtok) && mom_value_is_delim (vtok, "%"))
+    {
+      momvalue_t valtransf = MOM_NONEV;
+      if (!mom_load_value (&valtransf))
+	MOM_FATAPRINTF
+	  ("missing transformer for item %s in %s file %s line %d",
+	   itm->itm_str->cstr, loader_mom->ldforglobals ? "global" : "user",
+	   loader_mom->ldforglobals ? loader_mom->
+	   ldglobalpath : loader_mom->lduserpath,
+	   (int) loader_mom->ldlinecount);
+      if (valtransf.typnum != momty_node)
+	MOM_FATAPRINTF
+	  ("bad transformer %s for item %s in %s file %s line %d",
+	   mom_output_gcstring (valtransf), itm->itm_str->cstr,
+	   loader_mom->ldforglobals ? "global" : "user",
+	   loader_mom->ldforglobals ? loader_mom->
+	   ldglobalpath : loader_mom->lduserpath,
+	   (int) loader_mom->ldlinecount);
+      add_load_transformer_mom (itm, valtransf);
+    }
 }				/* end load_fill_item_mom */
 
 ////////////////
@@ -850,10 +929,35 @@ mom_load_state ()
       ldr.ldforglobals = false;
       second_pass_load_mom (false);
     }
+  /// execute the transformations by applying each transformer to the
+  /// corresponding item value
+  unsigned nbtransf = 0;
+  if (ldr.ldtransfvect && (nbtransf = ldr.ldtransfvect->transf_count) > 0)
+    {
+      MOM_INFORMPRINTF
+	("loaded %d items are needing %d transformations",
+	 (int) mom_hashset_count (ldr.lditemset), (int) nbtransf);
+      for (unsigned ix = 0; ix < nbtransf; ix++)
+	{
+	  momitem_t *itmtr =
+	    (momitem_t *) ldr.ldtransfvect->transf_pairs[ix].transp_itm;
+	  const momnode_t *trnode =
+	    ldr.ldtransfvect->transf_pairs[ix].transp_node;
+	  momvalue_t vnode = mom_nodev (trnode);
+	  momvalue_t vitmtr = mom_itemv (itmtr);
+	  MOM_DEBUGPRINTF (load, "transforming item#%d: %s with %s",
+			   ix, itmtr->itm_str->cstr,
+			   mom_output_gcstring (vnode));
+	  if (!mom_applyval_1val_to_void (vnode, vitmtr))
+	    MOM_FATAPRINTF ("failed to transform item#%d: %s with %s",
+			    ix, itmtr->itm_str->cstr,
+			    mom_output_gcstring (vnode));
+	}
+    }
   MOM_INFORMPRINTF
-    ("loaded %d items and %d modules from global %s and user %s files",
+    ("loaded %d items and %d modules with %d transforms from global %s and user %s files",
      (int) mom_hashset_count (ldr.lditemset),
-     (int) mom_hashset_count (ldr.ldmoduleset), ldr.ldglobalpath,
+     (int) mom_hashset_count (ldr.ldmoduleset), nbtransf, ldr.ldglobalpath,
      ldr.lduserpath);
   loader_mom = NULL;
   memset (&ldr, 0, sizeof (ldr));
@@ -1227,11 +1331,19 @@ emit_content_dumped_item_mom (const momitem_t *itm)
 	  dumper_mom->dukindemittermap =	//
 	    mom_attributes_put (dumper_mom->dukindemittermap, itmkd,
 				&valemitter);
-	  /// we should apply the emitter to get a node value, which
-	  /// would be applied at load time....
+	}
+      /// we should apply the emitter to get a transformer node value, which
+      /// would be later applied at load time....
+      momvalue_t valtransformer = MOM_NONEV;
+      if (mom_applyval_1val_to_val
+	  (valemitter, mom_itemv (itm), &valtransformer)
+	  && valtransformer.typnum == momty_node)
+	{
+	  fputs ("% ", dumper_mom->dufile);
+	  mom_emit_dumped_value (valtransformer);
+	  mom_emit_dumped_newline ();
 	}
     }
-#warning emit_content_dumped_item_mom unimplemented, see load_fill_item_mom
 }				/* end emit_content_dumped_item_mom */
 
 
