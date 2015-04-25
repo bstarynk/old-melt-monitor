@@ -884,6 +884,8 @@ struct momdumper_st
   struct momhashset_st *duitemmoduleset;
   struct momhashset_st *dupredefineditemset;
   struct momqueueitems_st duitemque;
+  struct momattributes_st *dukindscannermap;
+  struct momattributes_st *dukindemittermap;
   FILE *dufile;
 };
 
@@ -1004,11 +1006,36 @@ scan_inside_dumped_item_mom (momitem_t *itm)
     mom_attributes_scan_dump (itm->itm_attrs);
   if (itm->itm_comps)
     mom_components_scan_dump (itm->itm_comps);
-  if (itm->itm_kind)
+  momitem_t *itmkd = (momitem_t *) itm->itm_kind;
+  if (itmkd && itmkd != MOM_EMPTY)
     {
-      mom_scan_dumped_item ((momitem_t *) itm->itm_kind);
+      momvalue_t valscanner = MOM_NONEV;
+      mom_scan_dumped_item (itmkd);
+      struct momentry_st *ent =	//
+	mom_attributes_find_entry (dumper_mom->dukindscannermap, itmkd);
+      if (ent)
+	valscanner = ent->ent_val;
+      if (valscanner.typnum == momty_null)
+	{
+	  valscanner =		//
+	    mom_item_unsync_get_attribute (itmkd,
+					   MOM_PREDEFINED_NAMED
+					   (dumped_item_scanner));
+	  if (valscanner.typnum == momty_null)
+	    return;
+	  if (valscanner.typnum != momty_node)
+	    MOM_FATAPRINTF
+	      ("the `dumped_item_scanner` attribute of kind %s is a non-node value %s",
+	       itmkd->itm_str->cstr, mom_output_gcstring (valscanner));
+	  dumper_mom->dukindscannermap =	//
+	    mom_attributes_put (dumper_mom->dukindscannermap, itmkd,
+				&valscanner);
+	}
+      if (!mom_applyval_1val_to_void (valscanner, mom_itemv (itm)))
+	MOM_FATAPRINTF ("failed to apply scanner %s to item %s of kind %s",
+			mom_output_gcstring (valscanner),
+			itm->itm_str->cstr, itmkd->itm_str->cstr);
     }
-#warning a completer scan_inside_dumped_item_mom
 }
 
 static FILE *
@@ -1177,6 +1204,33 @@ emit_content_dumped_item_mom (const momitem_t *itm)
       fputs ("]]", dumper_mom->dufile);
       mom_emit_dumped_newline ();
     }
+  momitem_t *itmkd = (momitem_t *) itm->itm_kind;
+  if (itmkd && mom_dumpable_item (itmkd))
+    {
+      momvalue_t valemitter = MOM_NONEV;
+      struct momentry_st *ent =	//
+	mom_attributes_find_entry (dumper_mom->dukindemittermap, itmkd);
+      if (ent)
+	valemitter = ent->ent_val;
+      if (valemitter.typnum == momty_null)
+	{
+	  valemitter =		//
+	    mom_item_unsync_get_attribute (itmkd,
+					   MOM_PREDEFINED_NAMED
+					   (dumped_item_emitter));
+	  if (valemitter.typnum == momty_null)
+	    return;
+	  if (valemitter.typnum != momty_node)
+	    MOM_FATAPRINTF
+	      ("the `dumped_item_emitter` attribute of kind %s is a non-node value %s",
+	       itmkd->itm_str->cstr, mom_output_gcstring (valemitter));
+	  dumper_mom->dukindemittermap =	//
+	    mom_attributes_put (dumper_mom->dukindemittermap, itmkd,
+				&valemitter);
+	  /// we should apply the emitter to get a node value, which
+	  /// would be applied at load time....
+	}
+    }
 #warning emit_content_dumped_item_mom unimplemented, see load_fill_item_mom
 }				/* end emit_content_dumped_item_mom */
 
@@ -1272,7 +1326,7 @@ mom_dumpable_item (const momitem_t *itm)
 {
   assert (dumper_mom && dumper_mom->dumagic == DUMPER_MAGIC_MOM);
   assert (dumper_mom->dustate == dump_emit);
-  if (!itm)
+  if (!itm || itm == MOM_EMPTY)
     return false;
   return (mom_hashset_contains (dumper_mom->duitemuserset, itm)
 	  || mom_hashset_contains (dumper_mom->duitemglobalset, itm));
