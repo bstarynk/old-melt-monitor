@@ -223,8 +223,8 @@ make_modules_load_mom (void)
       assert (moditm && moditm != MOM_EMPTY);
       assert (moditm->itm_str);
       const momstring_t *mstr = mom_make_string_sprintf ("modules/momg_%s.so",
-							 moditm->
-							 itm_str->cstr);
+							 moditm->itm_str->
+							 cstr);
       void *dlh = dlopen (mstr->cstr, RTLD_NOW | RTLD_GLOBAL);
       if (!dlh)
 	MOM_FATAPRINTF ("failed to dlopen %s : %s", mstr->cstr, dlerror ());
@@ -392,9 +392,8 @@ readagain:
 	memset (loader_mom->ldlinebuf, 0, loader_mom->ldlinesize);
       loader_mom->ldlinelen =
 	getline (&loader_mom->ldlinebuf, &loader_mom->ldlinesize,
-		 loader_mom->
-		 ldforglobals ? loader_mom->ldglobalfile : loader_mom->
-		 lduserfile);
+		 loader_mom->ldforglobals ? loader_mom->
+		 ldglobalfile : loader_mom->lduserfile);
       if (loader_mom->ldlinelen <= 0)
 	return false;
       loader_mom->ldlinecol = 0;
@@ -420,8 +419,9 @@ readagain:
 	MOM_FATAPRINTF
 	  ("unterminated /* single-line comment in %s file %s line %d",
 	   loader_mom->ldforglobals ? "global" : "user",
-	   loader_mom->ldforglobals ? loader_mom->ldglobalpath : loader_mom->
-	   lduserpath, (int) loader_mom->ldlinecount);
+	   loader_mom->ldforglobals ? loader_mom->
+	   ldglobalpath : loader_mom->lduserpath,
+	   (int) loader_mom->ldlinecount);
       loader_mom->ldlinecol += (endcomm + 2 - pstart);
       goto readagain;
     }
@@ -606,9 +606,9 @@ load_fill_item_mom (momitem_t *itm)
 			mom_output_gcstring (vtokbis),
 			itm->itm_str->cstr,
 			loader_mom->ldforglobals ? "global" : "user",
-			loader_mom->
-			ldforglobals ? loader_mom->ldglobalpath : loader_mom->
-			lduserpath, (int) loader_mom->ldlinecount);
+			loader_mom->ldforglobals ? loader_mom->
+			ldglobalpath : loader_mom->lduserpath,
+			(int) loader_mom->ldlinecount);
     }
   // should load the components
   vtok = MOM_NONEV;
@@ -641,17 +641,15 @@ load_fill_item_mom (momitem_t *itm)
 	MOM_FATAPRINTF
 	  ("missing transformer for item %s in %s file %s line %d",
 	   itm->itm_str->cstr, loader_mom->ldforglobals ? "global" : "user",
-	   loader_mom->ldforglobals ? loader_mom->
-	   ldglobalpath : loader_mom->lduserpath,
-	   (int) loader_mom->ldlinecount);
+	   loader_mom->ldforglobals ? loader_mom->ldglobalpath : loader_mom->
+	   lduserpath, (int) loader_mom->ldlinecount);
       if (valtransf.typnum != momty_node)
 	MOM_FATAPRINTF
 	  ("bad transformer %s for item %s in %s file %s line %d",
 	   mom_output_gcstring (valtransf), itm->itm_str->cstr,
 	   loader_mom->ldforglobals ? "global" : "user",
-	   loader_mom->ldforglobals ? loader_mom->
-	   ldglobalpath : loader_mom->lduserpath,
-	   (int) loader_mom->ldlinecount);
+	   loader_mom->ldforglobals ? loader_mom->ldglobalpath : loader_mom->
+	   lduserpath, (int) loader_mom->ldlinecount);
       add_load_transformer_mom (itm, valtransf);
     }
 }				/* end load_fill_item_mom */
@@ -669,9 +667,9 @@ mom_load_new_anonymous_item (bool global)
   if (!mom_token_load (&vtok))
     MOM_FATAPRINTF ("failed to load new anonymous item in %s file %s line %d",
 		    loader_mom->ldforglobals ? "global" : "user",
-		    loader_mom->ldforglobals ? loader_mom->
-		    ldglobalpath : loader_mom->lduserpath,
-		    (int) loader_mom->ldlinecount);
+		    loader_mom->
+		    ldforglobals ? loader_mom->ldglobalpath : loader_mom->
+		    lduserpath, (int) loader_mom->ldlinecount);
   if (vtok.typnum == momty_string)
     {
       mom_item_unsync_put_attribute (newitm, MOM_PREDEFINED_NAMED (comment),
@@ -699,8 +697,8 @@ second_pass_load_mom (bool global)
   }
   loader_mom->ldlinelen = 0;
   loader_mom->ldforglobals = global;
-  rewind (loader_mom->ldforglobals ? loader_mom->
-	  ldglobalfile : loader_mom->lduserfile);
+  rewind (loader_mom->ldforglobals ? loader_mom->ldglobalfile : loader_mom->
+	  lduserfile);
   loader_mom->ldlinecol = loader_mom->ldlinelen = loader_mom->ldlinecount = 0;
   do
     {
@@ -708,9 +706,8 @@ second_pass_load_mom (bool global)
 	memset (loader_mom->ldlinebuf, 0, loader_mom->ldlinesize);
       loader_mom->ldlinelen =
 	getline (&loader_mom->ldlinebuf, &loader_mom->ldlinesize,
-		 loader_mom->
-		 ldforglobals ? loader_mom->ldglobalfile : loader_mom->
-		 lduserfile);
+		 loader_mom->ldforglobals ? loader_mom->
+		 ldglobalfile : loader_mom->lduserfile);
       if (loader_mom->ldlinelen <= 0)
 	return;
       loader_mom->ldlinecol = 0;
@@ -729,8 +726,9 @@ second_pass_load_mom (bool global)
 			    (int) loader_mom->ldlinecount,
 			    loader_mom->ldlinebuf,
 			    loader_mom->ldforglobals ? "global" : "user",
-			    loader_mom->ldforglobals ? loader_mom->
-			    ldglobalpath : loader_mom->lduserpath);
+			    loader_mom->
+			    ldforglobals ? loader_mom->ldglobalpath :
+			    loader_mom->lduserpath);
 	  MOM_DEBUGPRINTF (load, "second %s pass filling item %s",
 			   loader_mom->ldforglobals ? "global" : "user",
 			   val.vitem->itm_str->cstr);
@@ -743,8 +741,8 @@ second_pass_load_mom (bool global)
 	}
     }
   while (!feof
-	 (loader_mom->ldforglobals ? loader_mom->
-	  ldglobalfile : loader_mom->lduserfile));
+	 (loader_mom->ldforglobals ? loader_mom->ldglobalfile : loader_mom->
+	  lduserfile));
 }
 
 void
@@ -835,9 +833,8 @@ mom_load_value (momvalue_t *pval)
 	MOM_FATAPRINTF ("expecting string for delimiter after °"
 			" in %s file %s line %d",
 			loader_mom->ldforglobals ? "global" : "user",
-			loader_mom->
-			ldforglobals ? loader_mom->ldglobalpath : loader_mom->
-			lduserpath, linecnt);
+			loader_mom->ldforglobals ? loader_mom->
+			ldglobalpath : loader_mom->lduserpath, linecnt);
     }
   if (mom_value_is_delim (vtok, "["))
     {				////tuples
@@ -846,9 +843,8 @@ mom_load_value (momvalue_t *pval)
 	MOM_FATAPRINTF ("missing tuple content after ["
 			" in %s file %s line %d",
 			loader_mom->ldforglobals ? "global" : "user",
-			loader_mom->
-			ldforglobals ? loader_mom->ldglobalpath : loader_mom->
-			lduserpath, linecnt);
+			loader_mom->ldforglobals ? loader_mom->
+			ldglobalpath : loader_mom->lduserpath, linecnt);
       momvalue_t metav = MOM_NONEV;
       const momitem_t *curitm = NULL;
       struct momqueueitems_st quitems;
@@ -863,9 +859,8 @@ mom_load_value (momvalue_t *pval)
 	MOM_FATAPRINTF ("missing ] after tuple content"
 			" in %s file %s line %d",
 			loader_mom->ldforglobals ? "global" : "user",
-			loader_mom->
-			ldforglobals ? loader_mom->ldglobalpath : loader_mom->
-			lduserpath, linecnt);
+			loader_mom->ldforglobals ? loader_mom->
+			ldglobalpath : loader_mom->lduserpath, linecnt);
       pval->typnum = momty_tuple;
       pval->vtuple = (momseq_t *) mom_queueitem_tuple (&quitems, metav);
       return true;
@@ -877,9 +872,8 @@ mom_load_value (momvalue_t *pval)
 	MOM_FATAPRINTF ("missing set content after {"
 			" in %s file %s line %d",
 			loader_mom->ldforglobals ? "global" : "user",
-			loader_mom->
-			ldforglobals ? loader_mom->ldglobalpath : loader_mom->
-			lduserpath, linecnt);
+			loader_mom->ldforglobals ? loader_mom->
+			ldglobalpath : loader_mom->lduserpath, linecnt);
       momvalue_t metav = MOM_NONEV;
       const momitem_t *curitm = NULL;
       struct momqueueitems_st quitems;
@@ -894,9 +888,8 @@ mom_load_value (momvalue_t *pval)
 	MOM_FATAPRINTF ("missing } after set content"
 			" in %s file %s line %d",
 			loader_mom->ldforglobals ? "global" : "user",
-			loader_mom->
-			ldforglobals ? loader_mom->ldglobalpath : loader_mom->
-			lduserpath, linecnt);
+			loader_mom->ldforglobals ? loader_mom->
+			ldglobalpath : loader_mom->lduserpath, linecnt);
       {
 	pval->typnum = momty_set;
 	const momseq_t *tup = mom_queueitem_tuple (&quitems, MOM_NONEV);
@@ -917,17 +910,17 @@ mom_load_value (momvalue_t *pval)
 	MOM_FATAPRINTF ("missing connective item after ^ "
 			" in %s file %s line %d",
 			loader_mom->ldforglobals ? "global" : "user",
-			loader_mom->
-			ldforglobals ? loader_mom->ldglobalpath : loader_mom->
-			lduserpath, linecnt);
+			loader_mom->ldforglobals ? loader_mom->
+			ldglobalpath : loader_mom->lduserpath, linecnt);
       load_metavalue_mom (vtokbis, &metav);
       linecnt = loader_mom->ldlinecount;
       if (!mom_token_load (&vtokter) || !mom_value_is_delim (vtokter, "("))
-	MOM_FATAPRINTF ("missing ( in node " " in %s file %s line %d",
+	MOM_FATAPRINTF ("missing ( -got %s- in loaded node "
+			" in %s file %s line %d",
+			mom_output_gcstring (vtokter),
 			loader_mom->ldforglobals ? "global" : "user",
-			loader_mom->
-			ldforglobals ? loader_mom->ldglobalpath : loader_mom->
-			lduserpath, linecnt);
+			loader_mom->ldforglobals ? loader_mom->
+			ldglobalpath : loader_mom->lduserpath, linecnt);
       struct momqueuevalues_st quvals;
       memset (&quvals, 0, sizeof (quvals));
       momvalue_t vson = MOM_NONEV;
@@ -939,9 +932,8 @@ mom_load_value (momvalue_t *pval)
       if (!mom_token_load (&vtokter) || !mom_value_is_delim (vtokter, ")"))
 	MOM_FATAPRINTF ("missing ) to end node " " in %s file %s line %d",
 			loader_mom->ldforglobals ? "global" : "user",
-			loader_mom->
-			ldforglobals ? loader_mom->ldglobalpath : loader_mom->
-			lduserpath, linecnt);
+			loader_mom->ldforglobals ? loader_mom->
+			ldglobalpath : loader_mom->lduserpath, linecnt);
       pval->typnum = momty_node;
       pval->vnode =
 	(momnode_t *) mom_queuevalue_node (&quvals, connitm, metav);
@@ -1669,21 +1661,21 @@ output_item_mom (struct momvaloutput_st *ov, const momitem_t *itm)
 	  else if (nl && eoc && nl >= comstr + 3 && eoc >= comstr + 3)
 	    {
 	      int nbc = (nl > eoc) ? (comstr - nl - 1) : (comstr - eoc - 1);
-	      if (nbc >= sizeof (combuf))
+	      if (nbc >= (int) sizeof (combuf))
 		nbc = sizeof (combuf) - 1;
 	      strncpy (combuf, comstr, nbc);
 	    }
 	  else if (nl && nl >= comstr + 3)
 	    {
 	      int nbc = (comstr - nl - 1);
-	      if (nbc >= sizeof (combuf))
+	      if (nbc >= (int) sizeof (combuf))
 		nbc = sizeof (combuf) - 1;
 	      strncpy (combuf, comstr, nbc);
 	    }
 	  else if (eoc && eoc >= comstr + 3)
 	    {
 	      int nbc = (comstr - eoc - 1);
-	      if (nbc >= sizeof (combuf))
+	      if (nbc >= (int) sizeof (combuf))
 		nbc = sizeof (combuf) - 1;
 	      strncpy (combuf, comstr, nbc);
 	    }
