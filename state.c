@@ -721,10 +721,14 @@ load_fill_item_mom (momitem_t *itm)
 	  if (mom_load_value (&vat) && vat.typnum != momty_null)
 	    {
 	      MOM_DEBUGPRINTF (load, "load_fill_item %s itmat=%s vat=%s",
-			       mom_item_cstring (itm), itmat->itm_str->cstr,
+			       mom_item_cstring (itm),
+			       mom_item_cstring (itmat),
 			       mom_output_gcstring (vat));
 	      itm->itm_attrs =
 		mom_attributes_put (itm->itm_attrs, itmat, &vat);
+	      MOM_DEBUGPRINTF (load, "load_fill_item %s done itmat=%s",
+			       mom_item_cstring (itm),
+			       mom_item_cstring (itmat));
 	    }
 	}
       if (!mom_value_is_delim (vtokbis, "}"))
@@ -1481,6 +1485,9 @@ emit_content_dumped_item_mom (const momitem_t *itm)
     {
       fputs ("{", dumper_mom->dufile);
       const momseq_t *setat = mom_attributes_set (itm->itm_attrs, MOM_NONEV);
+      MOM_DEBUGPRINTF (dump, "content of item %s attributes set %s",
+		       mom_item_cstring (itm),
+		       mom_output_gcstring (mom_unsafe_setv (setat)));
       if (setat)
 	for (unsigned ix = 0; ix < setat->slen; ix++)
 	  {
@@ -1490,7 +1497,7 @@ emit_content_dumped_item_mom (const momitem_t *itm)
 	    if (!ent)
 	      continue;
 	    momvalue_t aval = ent->ent_val;
-	    MOM_DEBUGPRINTF (dump, "dumpcontent itmat=%s val=%s",
+	    MOM_DEBUGPRINTF (dump, "dumpcontent entry itmat=%s val=%s",
 			     mom_item_cstring (itmat),
 			     mom_output_gcstring (aval));
 	    if (!mom_dumpable_item (itmat))
@@ -1511,6 +1518,10 @@ emit_content_dumped_item_mom (const momitem_t *itm)
 	    dumper_mom->duindentation = 1;
 	    mom_emit_dumped_newline ();
 	    fputs ("* ", dumper_mom->dufile);
+	    MOM_DEBUGPRINTF (dump,
+			     "dumpcontent doing entry itmat=%s aval=%s",
+			     mom_item_cstring (itmat),
+			     mom_output_gcstring (aval));
 	    mom_emit_dumped_itemref (itmat);
 	    mom_emit_dumped_space ();
 	    mom_emit_dumped_value (aval);
