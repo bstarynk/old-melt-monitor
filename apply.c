@@ -38,12 +38,12 @@ mom_applyclos_void_to_void (const momnode_t *closnode)
       char nambuf[256];
       memset (nambuf, 0, sizeof (nambuf));
       if (snprintf (nambuf, sizeof (nambuf), MOM_PREFIXFUN_void_to_void "_%s",
-		    connitm->itm_str->cstr) < (int) sizeof (nambuf))
+		    mom_item_cstring (connitm)) < (int) sizeof (nambuf))
 	((momitem_t *) connitm)->itm_data1 = data1 =
 	  mom_dynload_symbol (nambuf);
       else
 	MOM_FATAPRINTF ("too long function name %s for 1val to void",
-			connitm->itm_str->cstr);
+			mom_item_cstring (connitm));
     }
   if (MOM_LIKELY (data1 != NULL && data1 != MOM_EMPTY))
     {
@@ -73,12 +73,12 @@ mom_applyclos_1val_to_void (const momnode_t *closnode, const momvalue_t arg0)
       char nambuf[256];
       memset (nambuf, 0, sizeof (nambuf));
       if (snprintf (nambuf, sizeof (nambuf), MOM_PREFIXFUN_1val_to_void "_%s",
-		    connitm->itm_str->cstr) < (int) sizeof (nambuf))
+		    mom_item_cstring (connitm)) < (int) sizeof (nambuf))
 	((momitem_t *) connitm)->itm_data1 = data1 =
 	  mom_dynload_symbol (nambuf);
       else
 	MOM_FATAPRINTF ("too long function name %s for 1val to void",
-			connitm->itm_str->cstr);
+			mom_item_cstring (connitm));
     }
   if (MOM_LIKELY (data1 != NULL && data1 != MOM_EMPTY))
     {
@@ -111,12 +111,12 @@ mom_applyclos_1val_to_val (const momnode_t *closnode, const momvalue_t arg0,
       char nambuf[256];
       memset (nambuf, 0, sizeof (nambuf));
       if (snprintf (nambuf, sizeof (nambuf), MOM_PREFIXFUN_1val_to_val "_%s",
-		    connitm->itm_str->cstr) < (int) sizeof (nambuf))
+		    mom_item_cstring (connitm)) < (int) sizeof (nambuf))
 	((momitem_t *) connitm)->itm_data1 = data1 =
 	  mom_dynload_symbol (nambuf);
       else
 	MOM_FATAPRINTF ("too long function name %s for 1val to val",
-			connitm->itm_str->cstr);
+			mom_item_cstring (connitm));
     }
   if (MOM_LIKELY (data1 != NULL && data1 != MOM_EMPTY))
     {

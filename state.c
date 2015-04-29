@@ -232,6 +232,7 @@ const momitem_t *
 mom_load_itemref_at (const char *fil, int lin)
 {
   momvalue_t valtok = MOM_NONEV;
+  MOM_DEBUGPRINTF (load, "load_itemref@%s:%d start", fil, lin);
   valtok = mom_peek_token_load_at (fil, lin);
   if (valtok.typnum == momty_item)
     {
@@ -427,13 +428,16 @@ momvalue_t
 mom_peek_token_load_at (const char *fil, int lin)
 {
   assert (loader_mom && loader_mom->ldmagic == LOADER_MAGIC_MOM);
+  MOM_DEBUGPRINTF (load, "peek_token_load@%s:%d: token-queue-size %lu",
+		   fil, lin, mom_queuevalue_size (&loader_mom->ldquetokens));
   if (0 == mom_queuevalue_size (&loader_mom->ldquetokens))
     {
       momvalue_t valtoken = MOM_NONEV;
       if (mom_token_load_at (&valtoken, fil, lin))
 	{
 	  mom_load_push_front_token (valtoken);
-	  MOM_DEBUGPRINTF (load, "peek_token_load@%s:%d: parsed token %s",
+	  MOM_DEBUGPRINTF (load,
+			   "peek_token_load@%s:%d: pushed parsed token %s",
 			   fil, lin, mom_output_gcstring (valtoken));
 	  return valtoken;
 	}
@@ -459,8 +463,10 @@ mom_token_load_at (momvalue_t *pval, const char *fil, int lin)
   memset (pval, 0, sizeof (momvalue_t));
   if (mom_queuevalue_size (&loader_mom->ldquetokens))
     {
+      MOM_DEBUGPRINTF (load, "token_load@%s:%d: popping queued token", fil,
+		       lin);
       *pval = mom_queuevalue_pop_front (&loader_mom->ldquetokens);
-      MOM_DEBUGPRINTF (load, "token_load@%s:%d: got queued token %s near %s",
+      MOM_DEBUGPRINTF (load, "token_load@%s:%d: got popped token %s near %s",
 		       fil, lin, mom_output_gcstring (*pval),
 		       load_position_mom (locbuf, sizeof (locbuf), 0));
       return true;
@@ -587,7 +593,8 @@ readagain:
 	      MOM_DEBUGPRINTF (load,
 			       "token_load@%s:%d: got delim token %s at %s",
 			       fil, lin, mom_output_gcstring (*pval),
-			       load_position_mom (locbuf, sizeof (locbuf), 0));
+			       load_position_mom (locbuf, sizeof (locbuf),
+						  0));
 	      return true;
 	    }
 	}
@@ -602,7 +609,7 @@ readagain:
 	{
 	  assert (itm->itm_str);
 	  MOM_DEBUGPRINTF (load, "token_load@%s:%d: found item %s",
-			   fil, lin, itm->itm_str->cstr);
+			   fil, lin, mom_item_cstring (itm));
 	  pval->vitem = (momitem_t *) itm;
 	  pval->typnum = momty_item;
 	  loader_mom->ldlinecol += end - pstart;
@@ -616,8 +623,8 @@ readagain:
       else
 	MOM_DEBUGPRINTF (load,
 			 "token_load@%s:%d: did not found anon %s at %s", fil,
-			 lin, pstart, load_position_mom (locbuf, sizeof (locbuf),
-							 0));
+			 lin, pstart, load_position_mom (locbuf,
+							 sizeof (locbuf), 0));
     }
   else if (c == '_' && pstart[1] == '*')
     {
@@ -672,7 +679,7 @@ readagain:
 
   MOM_DEBUGPRINTF (load,
 		   "token_load@%s:%d: failing  linecol %d linebuf %s at %s",
-		   fil, lin, (int) loader_mom->ldlinecount,
+		   fil, lin,
 		   (int) loader_mom->ldlinecol, loader_mom->ldlinebuf,
 		   load_position_mom (locbuf, sizeof (locbuf), 0));
   return false;
@@ -685,7 +692,7 @@ load_fill_item_mom (momitem_t *itm)
 {				// keep in sync with emit_content_dumped_item_mom
   assert (loader_mom && loader_mom->ldmagic == LOADER_MAGIC_MOM);
   assert (itm && itm->itm_str);
-  MOM_DEBUGPRINTF (load, "start load_fill_item %s", itm->itm_str->cstr);
+  MOM_DEBUGPRINTF (load, "start load_fill_item %s", mom_item_cstring (itm));
   momvalue_t vtok = MOM_NONEV;
   momvalue_t vtokbis = MOM_NONEV;
   if (mom_token_load (&vtok) && mom_value_is_delim (vtok, "{"))
@@ -700,7 +707,7 @@ load_fill_item_mom (momitem_t *itm)
 	  if (mom_load_value (&vat) && vat.typnum != momty_null)
 	    {
 	      MOM_DEBUGPRINTF (load, "load_fill_item %s itmat=%s vat=%s",
-			       itm->itm_str->cstr, itmat->itm_str->cstr,
+			       mom_item_cstring (itm), itmat->itm_str->cstr,
 			       mom_output_gcstring (vat));
 	      itm->itm_attrs =
 		mom_attributes_put (itm->itm_attrs, itmat, &vat);
@@ -710,7 +717,7 @@ load_fill_item_mom (momitem_t *itm)
 	MOM_FATAPRINTF ("expecting } but got %s to end attributes of item %s"
 			" in %s file %s line %d",
 			mom_output_gcstring (vtokbis),
-			itm->itm_str->cstr,
+			mom_item_cstring (itm),
 			loader_mom->ldforglobals ? "global" : "user",
 			loader_mom->ldforglobals ? loader_mom->
 			ldglobalpath : loader_mom->lduserpath,
@@ -724,7 +731,8 @@ load_fill_item_mom (momitem_t *itm)
       while ((valcomp = MOM_NONEV), mom_load_value (&valcomp))
 	{
 	  MOM_DEBUGPRINTF (load, "load_fill_item %s valcomp %s",
-			   itm->itm_str->cstr, mom_output_gcstring (valcomp));
+			   mom_item_cstring (itm),
+			   mom_output_gcstring (valcomp));
 	  itm->itm_comps = mom_components_append1 (itm->itm_comps, valcomp);
 	}
       int lineno = loader_mom->ldlinecount;
@@ -733,8 +741,8 @@ load_fill_item_mom (momitem_t *itm)
 	MOM_FATAPRINTF ("expecting ]] but got %s to end attributes of item %s"
 			" in %s",
 			mom_output_gcstring (vtokbis),
-			itm->itm_str->cstr, load_position_mom (NULL, 0,
-							       lineno));
+			mom_item_cstring (itm), load_position_mom (NULL, 0,
+								   lineno));
     }
   // should load the transformer closure, if given
   vtok = MOM_NONEV;
@@ -745,11 +753,11 @@ load_fill_item_mom (momitem_t *itm)
       if (!mom_load_value (&valtransf))
 	MOM_FATAPRINTF
 	  ("missing transformer for item %s in %s",
-	   itm->itm_str->cstr, load_position_mom (NULL, 0, lineno));
+	   mom_item_cstring (itm), load_position_mom (NULL, 0, lineno));
       if (valtransf.typnum != momty_node)
 	MOM_FATAPRINTF
 	  ("bad transformer %s for item %s in %s",
-	   mom_output_gcstring (valtransf), itm->itm_str->cstr,
+	   mom_output_gcstring (valtransf), mom_item_cstring (itm),
 	   load_position_mom (NULL, 0, lineno));
       add_load_transformer_mom (itm, valtransf);
     }
@@ -760,6 +768,8 @@ const momitem_t *
 mom_load_new_anonymous_item (bool global)
 {
   momitem_t *newitm = mom_make_anonymous_item ();
+  MOM_DEBUGPRINTF (load, "load_new_anonymous_item %s newitm=%s",
+		   global ? "global" : "user", mom_item_cstring (newitm));
   if (global)
     newitm->itm_space = momspa_global;
   else
@@ -774,6 +784,7 @@ mom_load_new_anonymous_item (bool global)
 				     vtok);
     }
 #warning mom_load_new_anonymous_item incomplete
+  return newitm;
 }
 
 ////////////////
@@ -844,7 +855,9 @@ void
 mom_load_push_front_token (momvalue_t valtok)
 {
   assert (loader_mom && loader_mom->ldmagic == LOADER_MAGIC_MOM);
-  MOM_DEBUGPRINTF (load, "push front token %s", mom_output_gcstring (valtok));
+  MOM_DEBUGPRINTF (load, "load_push_front_token %s, queued %d",
+		   mom_output_gcstring (valtok),
+		   mom_load_nb_queued_tokens ());
   if (valtok.typnum != momty_null)
     mom_queuevalue_push_front (&loader_mom->ldquetokens, valtok);
 }
@@ -854,7 +867,9 @@ void
 mom_load_push_back_token (momvalue_t valtok)
 {
   assert (loader_mom && loader_mom->ldmagic == LOADER_MAGIC_MOM);
-  MOM_DEBUGPRINTF (load, "push back token %s", mom_output_gcstring (valtok));
+  MOM_DEBUGPRINTF (load, "load_push_back_token %s, queued %d",
+		   mom_output_gcstring (valtok),
+		   mom_load_nb_queued_tokens ());
   if (valtok.typnum != momty_null)
     mom_queuevalue_push_back (&loader_mom->ldquetokens, valtok);
 }
@@ -1289,7 +1304,7 @@ scan_inside_dumped_item_mom (momitem_t *itm)
       if (!mom_applyval_1val_to_void (valscanner, mom_itemv (itm)))
 	MOM_FATAPRINTF ("failed to apply scanner %s to item %s of kind %s",
 			mom_output_gcstring (valscanner),
-			itm->itm_str->cstr, itmkd->itm_str->cstr);
+			mom_item_cstring (itm), itmkd->itm_str->cstr);
     }
 }
 
@@ -1510,7 +1525,7 @@ emit_dumped_item_mom (const momitem_t *itm)
       && !mom_hashset_contains (dumper_mom->duitemglobalset, itm))
     return;
   putc ('\n', dumper_mom->dufile);
-  fprintf (dumper_mom->dufile, "** %s\n", itm->itm_str->cstr);
+  fprintf (dumper_mom->dufile, "** %s\n", mom_item_cstring (itm));
   dumper_mom->duindentation = 0;
   dumper_mom->dulastnloff = ftell (dumper_mom->dufile);
   emit_content_dumped_item_mom (itm);
@@ -1561,7 +1576,7 @@ mom_emit_dumped_itemref (const momitem_t *itm)
   else
     {
       assert (itm->itm_str);
-      fprintf (dumper_mom->dufile, "%s", itm->itm_str->cstr);
+      fprintf (dumper_mom->dufile, "%s", mom_item_cstring (itm));
       return true;
     }
 }
@@ -1738,7 +1753,7 @@ output_item_mom (struct momvaloutput_st *ov, const momitem_t *itm)
   if (!itm || itm == MOM_EMPTY)
     return;
   assert (itm->itm_str);
-  fputs (itm->itm_str->cstr, ov->vout_file);
+  fputs (mom_item_cstring (itm), ov->vout_file);
   if (itm->itm_anonymous)
     {
       momvalue_t vcomm = MOM_NONEV;
@@ -2120,7 +2135,7 @@ emit_global_modules_mom (const momseq_t *setmod)
       assert (moditm && moditm != MOM_EMPTY);
       if (moditm->itm_space == momspa_predefined
 	  || moditm->itm_space == momspa_global)
-	fprintf (dumper_mom->dufile, "!! %s\n", moditm->itm_str->cstr);
+	fprintf (dumper_mom->dufile, "!! %s\n", mom_item_cstring (moditm));
     }
   if (nbmod > 0)
     fputc ('\n', dumper_mom->dufile);
@@ -2151,7 +2166,7 @@ emit_user_modules_mom (const momseq_t *setmod)
       const momitem_t *moditm = setmod->arritm[ix];
       assert (moditm && moditm != MOM_EMPTY);
       if (moditm->itm_space == momspa_user)
-	fprintf (dumper_mom->dufile, "!! %s\n", moditm->itm_str->cstr);
+	fprintf (dumper_mom->dufile, "!! %s\n", mom_item_cstring (moditm));
     }
   if (nbmod > 0)
     fputc ('\n', dumper_mom->dufile);

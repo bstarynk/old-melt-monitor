@@ -790,6 +790,15 @@ struct momitem_st
   _Atomic void *itm_data2;
 };				/* end struct momitem_st */
 
+static inline const char *
+mom_item_cstring (const momitem_t *itm)
+{
+  if (!itm || itm == MOM_EMPTY)
+    return "~";
+  assert (itm->itm_str);
+  return itm->itm_str->cstr;
+}
+
 static inline void
 mom_item_lock (momitem_t *itm)
 {
