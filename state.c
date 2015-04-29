@@ -452,17 +452,21 @@ mom_peek_token_load_at (const char *fil, int lin)
 bool
 mom_token_load_at (momvalue_t *pval, const char *fil, int lin)
 {
+  char locbuf[128];
+  memset (locbuf, 0, sizeof (locbuf));
   assert (loader_mom && loader_mom->ldmagic == LOADER_MAGIC_MOM);
   assert (pval != NULL);
   memset (pval, 0, sizeof (momvalue_t));
   if (mom_queuevalue_size (&loader_mom->ldquetokens))
     {
       *pval = mom_queuevalue_pop_front (&loader_mom->ldquetokens);
-      MOM_DEBUGPRINTF (load, "token_load@%s:%d: got queued token %s",
-		       fil, lin, mom_output_gcstring (*pval));
+      MOM_DEBUGPRINTF (load, "token_load@%s:%d: got queued token %s near %s",
+		       fil, lin, mom_output_gcstring (*pval),
+		       load_position_mom (locbuf, sizeof (locbuf), 0));
       return true;
     }
 readagain:
+  memset (locbuf, 0, sizeof (locbuf));
   if (!loader_mom->ldlinebuf
       || loader_mom->ldlinecol >= loader_mom->ldlinelen)
     {
@@ -474,10 +478,8 @@ readagain:
 		 ldglobalfile : loader_mom->lduserfile);
       if (loader_mom->ldlinelen <= 0)
 	{
-	  char lbuf[128];
-	  memset (lbuf, 0, sizeof (lbuf));
 	  MOM_DEBUGPRINTF (load, "token_load@%s:%d: got EOF at %s", fil, lin,
-			   load_position_mom (lbuf, sizeof (lbuf), 0));
+			   load_position_mom (locbuf, sizeof (locbuf), 0));
 	  return false;
 	}
       loader_mom->ldlinecol = 0;
@@ -501,11 +503,8 @@ readagain:
       char *endcomm = strstr (pstart + 2, "*/");
       if (!endcomm)
 	MOM_FATAPRINTF
-	  ("unterminated /* single-line comment in %s file %s line %d",
-	   loader_mom->ldforglobals ? "global" : "user",
-	   loader_mom->ldforglobals ? loader_mom->
-	   ldglobalpath : loader_mom->lduserpath,
-	   (int) loader_mom->ldlinecount);
+	  ("unterminated /* single-line comment in %s",
+	   load_position_mom (locbuf, sizeof (locbuf), 0));
       loader_mom->ldlinecol += (endcomm + 2 - pstart);
       goto readagain;
     }
@@ -535,8 +534,9 @@ readagain:
 	  pval->vint = (intptr_t) ll;
 	  loader_mom->ldlinecol += endnum - startc;
 	}
-      MOM_DEBUGPRINTF (load, "token_load@%s:%d: got number token %s", fil,
-		       lin, mom_output_gcstring (*pval));
+      MOM_DEBUGPRINTF (load, "token_load@%s:%d: got number token %s at %s",
+		       fil, lin, mom_output_gcstring (*pval),
+		       load_position_mom (locbuf, sizeof (locbuf), 0));
       return true;
     }
   else if ((c == '+' || c == '-')
@@ -546,8 +546,10 @@ readagain:
       pval->typnum = momty_double;
       pval->vdbl = NAN;
       loader_mom->ldlinecol += 4;
-      MOM_DEBUGPRINTF (load, "token_load@%s:%d: got number NAN token %s", fil,
-		       lin, mom_output_gcstring (*pval));
+      MOM_DEBUGPRINTF (load,
+		       "token_load@%s:%d: got number NAN token %s at %s", fil,
+		       lin, mom_output_gcstring (*pval),
+		       load_position_mom (locbuf, sizeof (locbuf), 0));
       return true;
     }
   else if ((c == '+' || c == '-')
@@ -557,15 +559,18 @@ readagain:
       pval->typnum = momty_double;
       pval->vdbl = INFINITY;
       loader_mom->ldlinecol += 4;
-      MOM_DEBUGPRINTF (load, "token_load@%s:%d: got number INF token %s", fil,
-		       lin, mom_output_gcstring (*pval));
+      MOM_DEBUGPRINTF (load,
+		       "token_load@%s:%d: got number INF token %s at %s", fil,
+		       lin, mom_output_gcstring (*pval),
+		       load_position_mom (locbuf, sizeof (locbuf), 0));
       return true;
     }
   else if (c == '"')
     {
       bool res = token_string_load_mom (pval);
-      MOM_DEBUGPRINTF (load, "token_load@%s:%d: got string token %s", fil,
-		       lin, mom_output_gcstring (*pval));
+      MOM_DEBUGPRINTF (load, "token_load@%s:%d: got string token %s at %s",
+		       fil, lin, mom_output_gcstring (*pval),
+		       load_position_mom (locbuf, sizeof (locbuf), 0));
       return res;
     }
   else if (ispunct (c) || (unsigned char) c >= 0x7f)
@@ -579,8 +584,10 @@ readagain:
 	      pval->typnum = momty_delim;
 	      strcpy (pval->vdelim.delim, delim_mom[ix]);
 	      loader_mom->ldlinecol += strlen (delim_mom[ix]);
-	      MOM_DEBUGPRINTF (load, "token_load@%s:%d: got delim token %s",
-			       fil, lin, mom_output_gcstring (*pval));
+	      MOM_DEBUGPRINTF (load,
+			       "token_load@%s:%d: got delim token %s at %s",
+			       fil, lin, mom_output_gcstring (*pval),
+			       load_position_mom (locbuf, sizeof (locbuf), 0));
 	      return true;
 	    }
 	}
@@ -599,14 +606,18 @@ readagain:
 	  pval->vitem = (momitem_t *) itm;
 	  pval->typnum = momty_item;
 	  loader_mom->ldlinecol += end - pstart;
-	  MOM_DEBUGPRINTF (load, "token_load@%s:%d: got anon-item token %s",
-			   fil, lin, mom_output_gcstring (*pval));
+	  MOM_DEBUGPRINTF (load,
+			   "token_load@%s:%d: got anon-item token %s at %s",
+			   fil, lin, mom_output_gcstring (*pval),
+			   load_position_mom (locbuf, sizeof (locbuf), 0));
 	  *end = olde;
 	  return true;
 	}
       else
-	MOM_DEBUGPRINTF (load, "token_load@%s:%d: did not found anon %s", fil,
-			 lin, pstart);
+	MOM_DEBUGPRINTF (load,
+			 "token_load@%s:%d: did not found anon %s at %s", fil,
+			 lin, pstart, load_position_mom (locbuf, sizeof (locbuf),
+							 0));
     }
   else if (c == '_' && pstart[1] == '*')
     {
@@ -614,8 +625,10 @@ readagain:
       pval->typnum = momty_delim;
       strcpy (pval->vdelim.delim, "_*");
       loader_mom->ldlinecol += 2;
-      MOM_DEBUGPRINTF (load, "token_load@%s:%d: got quasidelim token %s",
-		       fil, lin, mom_output_gcstring (*pval));
+      MOM_DEBUGPRINTF (load,
+		       "token_load@%s:%d: got quasidelim token %s at %s", fil,
+		       lin, mom_output_gcstring (*pval),
+		       load_position_mom (locbuf, sizeof (locbuf), 0));
       return true;
     }
   else if (c == '_' && pstart[1] == ':')
@@ -624,8 +637,10 @@ readagain:
       pval->typnum = momty_delim;
       strcpy (pval->vdelim.delim, "_:");
       loader_mom->ldlinecol += 2;
-      MOM_DEBUGPRINTF (load, "token_load@%s:%d: got quasidelim token %s",
-		       fil, lin, mom_output_gcstring (*pval));
+      MOM_DEBUGPRINTF (load,
+		       "token_load@%s:%d: got quasidelim token %s at %s", fil,
+		       lin, mom_output_gcstring (*pval),
+		       load_position_mom (locbuf, sizeof (locbuf), 0));
       return true;
     }
   else if (isalpha (c)
@@ -640,20 +655,26 @@ readagain:
 	  pval->typnum = momty_item;
 	  pval->vitem = (momitem_t *) itm;
 	  loader_mom->ldlinecol += end - pstart;
-	  MOM_DEBUGPRINTF (load, "token_load@%s:%d: got named-item token %s",
-			   fil, lin, mom_output_gcstring (*pval));
+	  MOM_DEBUGPRINTF (load,
+			   "token_load@%s:%d: got named-item token %s at %s",
+			   fil, lin, mom_output_gcstring (*pval),
+			   load_position_mom (locbuf, sizeof (locbuf), 0));
 	  *end = olde;
 	  return true;
 	}
       else
-	MOM_DEBUGPRINTF (load, "token_load@%s:%d: did not found named %s",
-			 fil, lin, pstart);
+	MOM_DEBUGPRINTF (load,
+			 "token_load@%s:%d: did not found named %s at %s",
+			 fil, lin, pstart, load_position_mom (locbuf,
+							      sizeof (locbuf),
+							      0));
     }
 
   MOM_DEBUGPRINTF (load,
-		   "token_load@%s:%d: failing linecount %d, linecol %d linebuf %s",
+		   "token_load@%s:%d: failing  linecol %d linebuf %s at %s",
 		   fil, lin, (int) loader_mom->ldlinecount,
-		   (int) loader_mom->ldlinecol, loader_mom->ldlinebuf);
+		   (int) loader_mom->ldlinecol, loader_mom->ldlinebuf,
+		   load_position_mom (locbuf, sizeof (locbuf), 0));
   return false;
 }
 
