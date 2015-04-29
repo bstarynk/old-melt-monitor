@@ -699,16 +699,20 @@ load_fill_item_mom (momitem_t *itm)
 {				// keep in sync with emit_content_dumped_item_mom
   assert (loader_mom && loader_mom->ldmagic == LOADER_MAGIC_MOM);
   assert (itm && itm->itm_str);
-  MOM_DEBUGPRINTF (load, "start load_fill_item %s at %s",
+  MOM_DEBUGPRINTF (load, "load_fill_item start %s at %s",
 		   mom_item_cstring (itm), load_position_mom (NULL, 0, 0));
   momvalue_t vtok = MOM_NONEV;
   momvalue_t vtokbis = MOM_NONEV;
   /// load the attributes
-  if (mom_token_load (&vtok) && mom_value_is_delim (vtok, "{"))
+  vtok = mom_peek_token_load ();
+  MOM_DEBUGPRINTF (load, "load_fill_item %s vtok=%s for attributes at %s",	//
+		   mom_item_cstring (itm), mom_output_gcstring (vtok),	//
+		   load_position_mom (NULL, 0, 0));
+  if (mom_value_is_delim (vtok, "{"))
     {
-      MOM_DEBUGPRINTF (load, "load_fill_item attributes of %s at %s",
-		       mom_item_cstring (itm), load_position_mom (NULL, 0,
-								  0));
+      MOM_DEBUGPRINTF (load, "load_fill_item attributes of %s at %s", mom_item_cstring (itm),	//
+		       load_position_mom (NULL, 0, 0));
+      (void) mom_token_load (&vtok);
       while ((vtokbis = MOM_NONEV, mom_token_load (&vtokbis))
 	     && mom_value_is_delim (vtokbis, "*"))
 	{
@@ -738,13 +742,19 @@ load_fill_item_mom (momitem_t *itm)
 			mom_item_cstring (itm),
 			load_position_mom (NULL, 0, 0));
     }
+  else
+    MOM_DEBUGPRINTF (load, "load_fill_item no attributes for %s",
+		     mom_item_cstring (itm));
   // should load the components
-  vtok = MOM_NONEV;
-  if (mom_token_load (&vtok) && mom_value_is_delim (vtok, "[["))
+  vtok = mom_peek_token_load ();
+  MOM_DEBUGPRINTF (load, "load_fill_item %s vtok=%s for components at %s",	//
+		   mom_item_cstring (itm), mom_output_gcstring (vtok),	//
+		   load_position_mom (NULL, 0, 0));
+  if (mom_value_is_delim (vtok, "[["))
     {
-      MOM_DEBUGPRINTF (load, "load_fill_item components of %s at %s",
-		       mom_item_cstring (itm), load_position_mom (NULL, 0,
-								  0));
+      MOM_DEBUGPRINTF (load, "load_fill_item components of %s at %s", mom_item_cstring (itm),	//
+		       load_position_mom (NULL, 0, 0));
+      (void) mom_token_load (&vtok);
       momvalue_t valcomp = MOM_NONEV;
       while ((valcomp = MOM_NONEV), mom_load_value (&valcomp))
 	{
@@ -762,13 +772,20 @@ load_fill_item_mom (momitem_t *itm)
 			mom_item_cstring (itm), load_position_mom (NULL, 0,
 								   lineno));
     }
+  else
+    MOM_DEBUGPRINTF (load, "load_fill_item no components for %s",
+		     mom_item_cstring (itm));
+
   // should load the transformer closure, if given
-  vtok = MOM_NONEV;
-  if (mom_token_load (&vtok) && mom_value_is_delim (vtok, "%"))
+  vtok = mom_peek_token_load ();
+  MOM_DEBUGPRINTF (load, "load_fill_item %s vtok=%s for transformers at %s",	//
+		   mom_item_cstring (itm), mom_output_gcstring (vtok),	//
+		   load_position_mom (NULL, 0, 0));
+  if (mom_value_is_delim (vtok, "%"))
     {
-      MOM_DEBUGPRINTF (load, "load_fill_item transformer of %s at %s",
-		       mom_item_cstring (itm), load_position_mom (NULL, 0,
-								  0));
+      MOM_DEBUGPRINTF (load, "load_fill_item transformer of %s at %s", mom_item_cstring (itm),	//
+		       load_position_mom (NULL, 0, 0));
+      (void) mom_token_load (&vtok);
       momvalue_t valtransf = MOM_NONEV;
       int lineno = loader_mom->ldlinecount;
       if (!mom_load_value (&valtransf))
@@ -782,6 +799,11 @@ load_fill_item_mom (momitem_t *itm)
 	   load_position_mom (NULL, 0, lineno));
       add_load_transformer_mom (itm, valtransf);
     }
+  vtok = mom_peek_token_load ();
+  if (!mom_value_is_delim (vtok, ".."))
+    MOM_WARNPRINTF ("unexpected token %s in %s, expected ..",
+		    mom_output_gcstring (vtok),
+		    load_position_mom (NULL, 0, 0));
   MOM_DEBUGPRINTF (load, "load_fill_item done %s at %s\n",
 		   mom_item_cstring (itm), load_position_mom (NULL, 0, 0));
 }				/* end load_fill_item_mom */
@@ -1531,6 +1553,9 @@ emit_content_dumped_item_mom (const momitem_t *itm)
       fputs ("}", dumper_mom->dufile);
       mom_emit_dumped_newline ();
     }
+  else
+    MOM_DEBUGPRINTF (dump, "dump_content no attributes for item %s",
+		     mom_item_cstring (itm));
   unsigned cnt = mom_components_count (itm->itm_comps);
   if (cnt > 0)
     {
@@ -1551,6 +1576,9 @@ emit_content_dumped_item_mom (const momitem_t *itm)
       fputs ("]]", dumper_mom->dufile);
       mom_emit_dumped_newline ();
     }
+  else
+    MOM_DEBUGPRINTF (dump, "dump_content no components for item %s",
+		     mom_item_cstring (itm));
   momitem_t *itmkd = (momitem_t *) itm->itm_kind;
   MOM_DEBUGPRINTF (dump, "itmkd=%s", mom_item_cstring (itmkd));
   if (itmkd && mom_dumpable_item (itmkd))
@@ -1591,6 +1619,9 @@ emit_content_dumped_item_mom (const momitem_t *itm)
       dumper_mom->duindentation = 0;
       mom_emit_dumped_newline ();
     }
+  else
+    MOM_DEBUGPRINTF (dump, "dump_content no kind for item %s",
+		     mom_item_cstring (itm));
   dumper_mom->duindentation = 0;
   MOM_DEBUGPRINTF (dump, "done emit content item %s\n",
 		   mom_item_cstring (itm));
@@ -1605,7 +1636,7 @@ emit_dumped_item_mom (const momitem_t *itm)
   assert (dumper_mom && dumper_mom->dumagic == DUMPER_MAGIC_MOM);
   assert (dumper_mom->dustate == dump_emit);
   assert (dumper_mom->dufile);
-  MOM_DEBUGPRINTF (dump, "emit dumped item %s", mom_item_cstring (itm));
+  MOM_DEBUGPRINTF (dump, "emit_dumped_item start %s", mom_item_cstring (itm));
   if (!mom_hashset_contains (dumper_mom->duitemuserset, itm)
       && !mom_hashset_contains (dumper_mom->duitemglobalset, itm))
     return;
@@ -1617,6 +1648,8 @@ emit_dumped_item_mom (const momitem_t *itm)
   fputs ("\n..\n\n", dumper_mom->dufile);
   dumper_mom->duindentation = 0;
   dumper_mom->dulastnloff = ftell (dumper_mom->dufile);
+  MOM_DEBUGPRINTF (dump, "emit_dumped_item done %s\n",
+		   mom_item_cstring (itm));
 }
 
 #define DUMP_INDENT_MAX_MOM 16
