@@ -1187,6 +1187,7 @@ mom_scan_dumped_item (const momitem_t *itm)
     dumper_mom->duitemglobalset =
       mom_hashset_put (dumper_mom->duitemglobalset, itm);
   mom_queueitem_push_back (&dumper_mom->duitemque, itm);
+  MOM_DEBUGPRINTF (dump, "scanned item %s", mom_item_cstring (itm));
   return true;
 }
 
@@ -1267,6 +1268,8 @@ scan_inside_dumped_item_mom (momitem_t *itm)
   if (!dumper_mom || dumper_mom->dumagic != DUMPER_MAGIC_MOM)
     MOM_FATAPRINTF ("scan inside item outside of dumping");
   assert (itm && itm != MOM_EMPTY);
+  MOM_DEBUGPRINTF (dump, "scanning inside dumped item %s",
+		   mom_item_cstring (itm));
   assert (mom_hashset_contains (dumper_mom->duitemglobalset, itm)
 	  || mom_hashset_contains (dumper_mom->duitemuserset, itm));
   if (itm->itm_space == momspa_predefined)
@@ -1306,6 +1309,8 @@ scan_inside_dumped_item_mom (momitem_t *itm)
 			mom_output_gcstring (valscanner),
 			mom_item_cstring (itm), itmkd->itm_str->cstr);
     }
+  MOM_DEBUGPRINTF (dump, "done scanning inside dumped item %s\n",
+		   mom_item_cstring (itm));
 }
 
 static FILE *
@@ -1434,6 +1439,7 @@ emit_content_dumped_item_mom (const momitem_t *itm)
 {				//// keep in sync with load_fill_item_mom
   assert (dumper_mom && dumper_mom->dumagic == DUMPER_MAGIC_MOM);
   assert (itm && itm != MOM_EMPTY);
+  MOM_DEBUGPRINTF (dump, "emit content item %s", mom_item_cstring (itm));
   if (mom_attributes_count (itm->itm_attrs) > 0)
     {
       fputs ("{", dumper_mom->dufile);
@@ -1448,6 +1454,9 @@ emit_content_dumped_item_mom (const momitem_t *itm)
 	    if (!ent)
 	      continue;
 	    mom_emit_dumped_newline ();
+	    MOM_DEBUGPRINTF (dump, "itmat=%s val=%s",
+			     mom_item_cstring (itmat),
+			     mom_output_gcstring (ent->ent_val));
 	    fputs ("* ", dumper_mom->dufile);
 	    mom_emit_dumped_itemref (itmat);
 	    mom_emit_dumped_space ();
@@ -1466,8 +1475,11 @@ emit_content_dumped_item_mom (const momitem_t *itm)
       for (unsigned ix = 0; ix < cnt; ix++)
 	{
 	  mom_emit_dumped_space ();
-	  mom_emit_dumped_value (mom_components_nth (itm->itm_comps,
-						     (int) ix));
+	  momvalue_t valcomp = mom_components_nth (itm->itm_comps,
+						   (int) ix);
+	  MOM_DEBUGPRINTF (dump, "comp#%d %s", ix,
+			   mom_output_gcstring (valcomp));
+	  mom_emit_dumped_value (valcomp);
 	}
       mom_emit_dumped_space ();
       mom_emit_dump_outdent ();
@@ -1475,6 +1487,7 @@ emit_content_dumped_item_mom (const momitem_t *itm)
       mom_emit_dumped_newline ();
     }
   momitem_t *itmkd = (momitem_t *) itm->itm_kind;
+  MOM_DEBUGPRINTF (dump, "itmkd=%s", mom_item_cstring (itmkd));
   if (itmkd && mom_dumpable_item (itmkd))
     {
       momvalue_t valemitter = MOM_NONEV;
@@ -1510,6 +1523,8 @@ emit_content_dumped_item_mom (const momitem_t *itm)
 	  mom_emit_dumped_newline ();
 	}
     }
+  MOM_DEBUGPRINTF (dump, "done emit content item %s\n",
+		   mom_item_cstring (itm));
 }				/* end emit_content_dumped_item_mom */
 
 
@@ -1521,6 +1536,7 @@ emit_dumped_item_mom (const momitem_t *itm)
   assert (dumper_mom && dumper_mom->dumagic == DUMPER_MAGIC_MOM);
   assert (dumper_mom->dustate == dump_emit);
   assert (dumper_mom->dufile);
+  MOM_DEBUGPRINTF (dump, "emit dumped item %s", mom_item_cstring (itm));
   if (!mom_hashset_contains (dumper_mom->duitemuserset, itm)
       && !mom_hashset_contains (dumper_mom->duitemglobalset, itm))
     return;
@@ -2109,7 +2125,7 @@ mom_emit_dumped_value (const momvalue_t val)
     }
 }				/* end mom_emit_dumped_value */
 
-static void
+static int
 emit_global_items_mom (void)
 {
   assert (dumper_mom && dumper_mom->dumagic == DUMPER_MAGIC_MOM);
@@ -2117,120 +2133,172 @@ emit_global_items_mom (void)
   const momseq_t *set =
     mom_hashset_elements_set (dumper_mom->duitemglobalset);
   assert (set);
+  MOM_DEBUGPRINTF (dump, "global items set %s",
+		   mom_output_gcstring (mom_unsafe_setv (set)));
   unsigned nbel = set->slen;
   for (unsigned ix = 0; ix < nbel; ix++)
     emit_dumped_item_mom (set->arritm[ix]);
+  return (int) nbel;
 }
 
-static void
+static int
 emit_global_modules_mom (const momseq_t *setmod)
 {
   assert (dumper_mom && dumper_mom->dumagic == DUMPER_MAGIC_MOM);
   if (!setmod)
-    return;
+    return 0;
   unsigned nbmod = setmod->slen;
+  int modcnt = 0;
   for (unsigned ix = 0; ix < nbmod; ix++)
     {
       const momitem_t *moditm = setmod->arritm[ix];
       assert (moditm && moditm != MOM_EMPTY);
       if (moditm->itm_space == momspa_predefined
 	  || moditm->itm_space == momspa_global)
-	fprintf (dumper_mom->dufile, "!! %s\n", mom_item_cstring (moditm));
+	{
+	  fprintf (dumper_mom->dufile, "!! %s\n", mom_item_cstring (moditm));
+	  modcnt++;
+	}
     }
-  if (nbmod > 0)
+  if (modcnt > 0)
     fputc ('\n', dumper_mom->dufile);
+  return modcnt;
 }
 
-static void
+static int
 emit_user_items_mom (void)
 {
   assert (dumper_mom && dumper_mom->dumagic == DUMPER_MAGIC_MOM);
   assert (dumper_mom->dustate == dump_emit);
   const momseq_t *set = mom_hashset_elements_set (dumper_mom->duitemuserset);
+  MOM_DEBUGPRINTF (dump, "user items set %s",
+		   mom_output_gcstring (mom_unsafe_setv (set)));
   if (!set)
-    return;
+    return 0;
   unsigned nbel = set->slen;
   for (unsigned ix = 0; ix < nbel; ix++)
     emit_dumped_item_mom (set->arritm[ix]);
+  return (int) nbel;
 }
 
-static void
+static int
 emit_user_modules_mom (const momseq_t *setmod)
 {
   assert (dumper_mom && dumper_mom->dumagic == DUMPER_MAGIC_MOM);
   if (!setmod)
-    return;
+    return 0;
+  int modcnt = 0;
   unsigned nbmod = setmod->slen;
   for (unsigned ix = 0; ix < nbmod; ix++)
     {
       const momitem_t *moditm = setmod->arritm[ix];
       assert (moditm && moditm != MOM_EMPTY);
       if (moditm->itm_space == momspa_user)
-	fprintf (dumper_mom->dufile, "!! %s\n", mom_item_cstring (moditm));
+	{
+	  fprintf (dumper_mom->dufile, "!! %s\n", mom_item_cstring (moditm));
+	  modcnt++;
+	}
     }
-  if (nbmod > 0)
+  if (modcnt > 0)
     fputc ('\n', dumper_mom->dufile);
+  return modcnt;
 }
 
 
 void
 mom_dump_state (const char *prefix)
 {
+  double startelapsedtime = mom_elapsed_real_time ();
+  double startcputime = mom_clock_time (CLOCK_THREAD_CPUTIME_ID);
   struct momdumper_st dmp;
   memset (&dmp, 0, sizeof (dmp));
   dmp.dumagic = DUMPER_MAGIC_MOM;
   dmp.duprefix = prefix;
+  MOM_DEBUGPRINTF (dump, "start dumping prefix %s", prefix);
   {
     char sufbuf[64];
     memset (sufbuf, 0, sizeof (sufbuf));
     snprintf (sufbuf, sizeof (sufbuf), "+p%d-r%u.tmp", (int) getpid (),
 	      (unsigned) mom_random_nonzero_32_here ());
     dmp.durandsuffix = MOM_GC_STRDUP ("random suffix", sufbuf);
+    MOM_DEBUGPRINTF (dump, "dumping random suffix %s", dmp.durandsuffix);
   }
   if (prefix && prefix[0])
     {
-      char buf[512];
-      memset (buf, 0, sizeof (buf));
-      if (strlen (prefix) > 100)
+      int preflen = strlen (prefix);
+      if (preflen > 100)
 	MOM_FATAPRINTF ("too long dump prefix %s", prefix);
+      if (preflen > 1 && prefix[preflen - 1] == '/')
+	{
+	  MOM_DEBUGPRINTF (dump, "dumping into directory prefix %s", prefix);
+	  if (access (prefix, F_OK) && errno == ENOENT)
+	    {
+	      if (!mkdir (prefix, 0750 /* drwxr-x--- */ ))
+		MOM_INFORMPRINTF ("made dump directory %s", prefix);
+	      else
+		MOM_FATAPRINTF ("failed to make dump directory %s - %m",
+				prefix);
+	    }
+	  else
+	    MOM_INFORMPRINTF ("will dump into existing directory %s", prefix);
+	}
     }
   dmp.dustate = dump_scan;
   dumper_mom = &dmp;
+  MOM_DEBUGPRINTF (dump, "before scanning predefined items");
   scan_predefined_items_mom ();
+  int nbscan = 0;
+  MOM_DEBUGPRINTF (dump, "before dumpscan loop");
   while (mom_queueitem_size (&dmp.duitemque) > 0)
     {
       const momitem_t *curitm = mom_queueitem_pop_front (&dmp.duitemque);
       scan_inside_dumped_item_mom ((momitem_t *) curitm);
+      nbscan++;
     }
+  MOM_DEBUGPRINTF (dump, "scanned %d items", nbscan);
   emit_predefined_header_mom ();
   MOM_INFORMPRINTF ("dumped state to prefix %s : %u global + %u user items",
 		    prefix, mom_hashset_count (dmp.duitemglobalset),
 		    mom_hashset_count (dmp.duitemuserset));
   ////
   dmp.dustate = dump_emit;
+  int nbglomod = 0, nbgloitm = 0;
   {
     dmp.dufile = open_generated_file_dump_mom (MOM_GLOBAL_DATA_PATH);
     mom_output_gplv3_notice (dmp.dufile, "///", "", MOM_GLOBAL_DATA_PATH);
     fputc ('\n', dmp.dufile);
     const momseq_t *setmod = mom_hashset_elements_set (dmp.duitemmoduleset);
-    emit_global_modules_mom (setmod);
-    emit_global_items_mom ();
+    nbglomod = emit_global_modules_mom (setmod);
+    nbgloitm = emit_global_items_mom ();
     fprintf (dmp.dufile, "//// end of global file %s\n",
 	     MOM_GLOBAL_DATA_PATH);
     close_generated_file_dump_mom (dmp.dufile, MOM_GLOBAL_DATA_PATH);
+    MOM_DEBUGPRINTF (dump, "emitted %d global modules and %d global items",
+		     nbglomod, nbgloitm);
     dmp.dufile = NULL;
   }
+  int nbusrmod = 0, nbusritm = 0;
   {
     dmp.dufile = open_generated_file_dump_mom (MOM_USER_DATA_PATH);
     mom_output_gplv3_notice (dmp.dufile, "///", "", MOM_USER_DATA_PATH);
     fputc ('\n', dmp.dufile);
     const momseq_t *setmod = mom_hashset_elements_set (dmp.duitemmoduleset);
-    emit_user_modules_mom (setmod);
-    emit_user_items_mom ();
+    nbusrmod = emit_user_modules_mom (setmod);
+    nbusritm = emit_user_items_mom ();
     fprintf (dmp.dufile, "//// end of user file %s\n", MOM_USER_DATA_PATH);
     close_generated_file_dump_mom (dmp.dufile, MOM_USER_DATA_PATH);
+    MOM_DEBUGPRINTF (dump, "emitted %d user modules and %d user items",
+		     nbusrmod, nbusritm);
     dmp.dufile = NULL;
   }
+  double endelapsedtime = mom_elapsed_real_time ();
+  double endcputime = mom_clock_time (CLOCK_THREAD_CPUTIME_ID);
+  MOM_INFORMPRINTF
+    ("done dumping in %s, %.3f cpu, %.3f elapsed time in seconds", prefix,
+     endcputime - startcputime, endelapsedtime - startelapsedtime);
+  MOM_INFORMPRINTF
+    ("dumped global %d modules & %d items, user %d modules & %d items",
+     nbglomod, nbgloitm, nbusrmod, nbusritm);
   memset (&dmp, 0, sizeof (dmp));
   dumper_mom = NULL;
 }
