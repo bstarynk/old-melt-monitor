@@ -876,10 +876,10 @@ second_pass_load_mom (bool global)
 	  loader_mom->ldlinecol = 2;
 	  momvalue_t val = MOM_NONEV;
 	  if (!mom_token_load (&val) || val.typnum != momty_item)
-	    MOM_FATAPRINTF ("invalid line %d '%s' of %s",
-			    (int) loader_mom->ldlinecount,
-			    loader_mom->ldlinebuf, load_position_mom (NULL, 0,
-								      0));
+	    MOM_FATAPRINTF ("invalid line %d '%s' of %s (got %s, expecting some item) ",	//
+			    (int) loader_mom->ldlinecount, loader_mom->ldlinebuf,	//
+			    load_position_mom (NULL, 0, 0),
+			    mom_output_gcstring (val));
 	  MOM_DEBUGPRINTF (load, "second %s pass filling item %s",
 			   loader_mom->ldforglobals ? "global" : "user",
 			   val.vitem->itm_str->cstr);
