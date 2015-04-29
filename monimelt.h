@@ -996,6 +996,7 @@ mom_nodev (const momnode_t *nod)
 momitem_t *mom_find_item (const char *str);
 
 
+// find or make a named item; if it is new, it is made transient
 momitem_t *mom_make_named_item (const char *namstr);
 
 momitem_t *mom_make_predefined_named_item (const char *namstr);
@@ -1003,6 +1004,7 @@ const momseq_t *mom_predefined_items_set (void);
 
 momitem_t *mom_make_anonymous_item_by_id (const char *ids);
 
+// make an anonymous transient item
 momitem_t *mom_make_anonymous_item_salt (unsigned salt);
 static inline momitem_t *
 mom_make_anonymous_item_at (unsigned lin)

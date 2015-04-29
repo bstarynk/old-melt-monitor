@@ -166,6 +166,13 @@ first_pass_load_mom (const char *path, FILE *fil)
 	      MOM_DEBUGPRINTF (load, "first %s pass named item @%p %s",
 			       loader_mom->ldforglobals ? "global" : "user",
 			       itm, pc);
+	      if (itm->itm_space == momspa_transient)
+		{
+		  if (loader_mom->ldforglobals)
+		    itm->itm_space = momspa_global;
+		  else
+		    itm->itm_space = momspa_user;
+		}
 	      *end = endch;
 	      loader_mom->lditemset =
 		mom_hashset_put (loader_mom->lditemset, itm);
@@ -1170,7 +1177,7 @@ mom_scan_dumped_item (const momitem_t *itm)
     return false;
   if (dumper_mom->dustate != dump_scan)
     return false;
-  MOM_DEBUGPRINTF (dump, "scanning item %s", mom_item_cstring (itm));
+  MOM_DEBUGPRINTF (dump, "dump-scanning item %s", mom_item_cstring (itm));
   mom_item_lock ((momitem_t *) itm);
   if (itm->itm_space == momspa_none || itm->itm_space == momspa_transient)
     {
@@ -1188,7 +1195,7 @@ mom_scan_dumped_item (const momitem_t *itm)
     dumper_mom->duitemglobalset =
       mom_hashset_put (dumper_mom->duitemglobalset, itm);
   mom_queueitem_push_back (&dumper_mom->duitemque, itm);
-  MOM_DEBUGPRINTF (dump, "scanned item %s", mom_item_cstring (itm));
+  MOM_DEBUGPRINTF (dump, "dump-scanned item %s", mom_item_cstring (itm));
   return true;
 }
 
@@ -1457,7 +1464,6 @@ emit_content_dumped_item_mom (const momitem_t *itm)
   if (mom_attributes_count (itm->itm_attrs) > 0)
     {
       fputs ("{", dumper_mom->dufile);
-      mom_emit_dump_indent ();
       const momseq_t *setat = mom_attributes_set (itm->itm_attrs, MOM_NONEV);
       if (setat)
 	for (unsigned ix = 0; ix < setat->slen; ix++)
@@ -1468,23 +1474,33 @@ emit_content_dumped_item_mom (const momitem_t *itm)
 	    if (!ent)
 	      continue;
 	    momvalue_t aval = ent->ent_val;
-	    MOM_DEBUGPRINTF (dump, "itmat=%s val=%s",
+	    MOM_DEBUGPRINTF (dump, "dumpcontent itmat=%s val=%s",
 			     mom_item_cstring (itmat),
 			     mom_output_gcstring (aval));
 	    if (!mom_dumpable_item (itmat))
 	      {
-		MOM_DEBUGPRINTF (dump, "non dumpable attribute %s",
+		MOM_DEBUGPRINTF (dump,
+				 "dumpcontent non dumpable attribute %s",
 				 mom_item_cstring (itmat));
 		continue;
 	      }
+	    if (!mom_dumpable_value (aval))
+	      {
+		MOM_DEBUGPRINTF (dump,
+				 "dumpcontent non dumpable value %s of attribute %s",
+				 mom_output_gcstring (aval),
+				 mom_item_cstring (itmat));
+		continue;
+	      }
+	    dumper_mom->duindentation = 1;
 	    mom_emit_dumped_newline ();
 	    fputs ("* ", dumper_mom->dufile);
 	    mom_emit_dumped_itemref (itmat);
 	    mom_emit_dumped_space ();
 	    mom_emit_dumped_value (aval);
 	  };
+      dumper_mom->duindentation = 0;
       mom_emit_dumped_space ();
-      mom_emit_dump_outdent ();
       fputs ("}", dumper_mom->dufile);
       mom_emit_dumped_newline ();
     }
@@ -1495,6 +1511,7 @@ emit_content_dumped_item_mom (const momitem_t *itm)
       mom_emit_dump_indent ();
       for (unsigned ix = 0; ix < cnt; ix++)
 	{
+	  dumper_mom->duindentation = 1;
 	  mom_emit_dumped_space ();
 	  momvalue_t valcomp = mom_components_nth (itm->itm_comps,
 						   (int) ix);
@@ -1502,8 +1519,8 @@ emit_content_dumped_item_mom (const momitem_t *itm)
 			   mom_output_gcstring (valcomp));
 	  mom_emit_dumped_value (valcomp);
 	}
+      dumper_mom->duindentation = 0;
       mom_emit_dumped_space ();
-      mom_emit_dump_outdent ();
       fputs ("]]", dumper_mom->dufile);
       mom_emit_dumped_newline ();
     }
@@ -1539,11 +1556,15 @@ emit_content_dumped_item_mom (const momitem_t *itm)
 	  (valemitter, mom_itemv (itm), &valtransformer)
 	  && valtransformer.typnum == momty_node)
 	{
+	  dumper_mom->duindentation = 1;
+	  mom_emit_dumped_newline ();
 	  fputs ("% ", dumper_mom->dufile);
 	  mom_emit_dumped_value (valtransformer);
-	  mom_emit_dumped_newline ();
 	}
+      dumper_mom->duindentation = 0;
+      mom_emit_dumped_newline ();
     }
+  dumper_mom->duindentation = 0;
   MOM_DEBUGPRINTF (dump, "done emit content item %s\n",
 		   mom_item_cstring (itm));
 }				/* end emit_content_dumped_item_mom */
@@ -1643,8 +1664,11 @@ mom_dumpable_item (const momitem_t *itm)
   assert (dumper_mom->dustate == dump_emit);
   if (!itm || itm == MOM_EMPTY)
     return false;
-  return (mom_hashset_contains (dumper_mom->duitemuserset, itm)
-	  || mom_hashset_contains (dumper_mom->duitemglobalset, itm));
+  if (mom_hashset_contains (dumper_mom->duitemuserset, itm)
+      || mom_hashset_contains (dumper_mom->duitemglobalset, itm))
+    return true;
+  MOM_DEBUGPRINTF (dump, "non-dumpable item %s", mom_item_cstring (itm));
+  return false;
 }
 
 bool
@@ -1841,7 +1865,7 @@ output_item_mom (struct momvaloutput_st *ov, const momitem_t *itm)
 }
 
 
-/// similar to mom_emit_dump_value, except that we don't care about
+/// similar to mom_emit_dumped_value, except that we don't care about
 /// non-dumpable items, etc...
 static void
 output_val_mom (struct momvaloutput_st *ov, const momvalue_t val)

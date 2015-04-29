@@ -785,7 +785,8 @@ main (int argc_main, char **argv_main)
 				      &valstr);
 	    }
 	  MOM_INFORMPRINTF ("made predefined %s", pritm->itm_name->cstr);
-	  if (!dump_exit_dir_mom || !strcmp (dump_exit_dir_mom, "."))
+	  if (!dump_exit_dir_mom || !dump_exit_dir_mom[0]
+	      || !strcmp (dump_exit_dir_mom, "."))
 	    dump_exit_dir_mom = "./";
 	}
     }

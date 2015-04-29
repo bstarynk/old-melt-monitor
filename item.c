@@ -896,6 +896,7 @@ mom_make_anonymous_item_salt (unsigned salt)
   momitem_t *newitm = MOM_GC_ALLOC ("new anonymous item", sizeof (momitem_t));
   initialize_protoitem_mom (newitm);
   newitm->itm_anonymous = true;
+  newitm->itm_space = momspa_transient;
   const momstring_t *ids = mom_make_random_idstr (salt, newitm);
   newitm->itm_id = ids;
   GC_REGISTER_FINALIZER (newitm, finalize_item_mom, NULL, NULL, NULL);
@@ -1124,6 +1125,7 @@ mom_make_named_item (const char *namstr)
       momitem_t *newitm = MOM_GC_ALLOC ("new named item", sizeof (momitem_t));
       initialize_protoitem_mom (newitm);
       newitm->itm_name = mom_make_string_cstr (namstr);
+      newitm->itm_space = momspa_transient;
       newitm->itm_anonymous = false;
       if (pos < (int) bucklen)
 	{
