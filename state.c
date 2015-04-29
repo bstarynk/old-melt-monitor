@@ -1170,6 +1170,7 @@ mom_scan_dumped_item (const momitem_t *itm)
     return false;
   if (dumper_mom->dustate != dump_scan)
     return false;
+  MOM_DEBUGPRINTF (dump, "scanning item %s", mom_item_cstring (itm));
   mom_item_lock ((momitem_t *) itm);
   if (itm->itm_space == momspa_none || itm->itm_space == momspa_transient)
     {
@@ -1212,7 +1213,13 @@ mom_scan_dumped_value (const momvalue_t val)
   if (!dumper_mom || dumper_mom->dumagic != DUMPER_MAGIC_MOM)
     MOM_FATAPRINTF ("scan dumped value outside of dumping");
   if (val.istransient)
-    return;
+    {
+      MOM_DEBUGPRINTF (dump, "ignoring transient dumped value %s",
+		       mom_output_gcstring (val));
+      return;
+    }
+  MOM_DEBUGPRINTF (dump, "start scanning dumped value %s",
+		   mom_output_gcstring (val));
   switch ((enum momvaltype_en) val.typnum)
     {
     case momty_double:
@@ -1220,10 +1227,10 @@ mom_scan_dumped_value (const momvalue_t val)
     case momty_null:
     case momty_string:
     case momty_delim:
-      return;
+      goto end;
     case momty_item:
       mom_scan_dumped_item (val.vitem);
-      return;
+      goto end;
     case momty_set:
     case momty_tuple:
       {
@@ -1233,21 +1240,28 @@ mom_scan_dumped_value (const momvalue_t val)
 	unsigned slen = sq->slen;
 	for (unsigned ix = 0; ix < slen; ix++)
 	  mom_scan_dumped_item (sq->arritm[ix]);
-	return;
+	goto end;
       }
     case momty_node:
       {
 	momnode_t *nod = val.vnode;
 	assert (nod);
 	if (!mom_scan_dumped_item (nod->conn))
-	  return;
+	  {
+	    MOM_DEBUGPRINTF (dump, "non dumpable node connective %s",
+			     mom_item_cstring (nod->conn));
+	    goto end;
+	  }
 	mom_scan_dumped_value (nod->meta);
 	unsigned slen = nod->slen;
 	for (unsigned ix = 0; ix < slen; ix++)
 	  mom_scan_dumped_value (nod->arrsons[ix]);
-	return;
+	goto end;
       }
     }
+end:
+  MOM_DEBUGPRINTF (dump, "done scanning dumped value %s",
+		   mom_output_gcstring (val));
 }
 
 static void
@@ -1453,14 +1467,21 @@ emit_content_dumped_item_mom (const momitem_t *itm)
 	      mom_attributes_find_entry (itm->itm_attrs, itmat);
 	    if (!ent)
 	      continue;
-	    mom_emit_dumped_newline ();
+	    momvalue_t aval = ent->ent_val;
 	    MOM_DEBUGPRINTF (dump, "itmat=%s val=%s",
 			     mom_item_cstring (itmat),
-			     mom_output_gcstring (ent->ent_val));
+			     mom_output_gcstring (aval));
+	    if (!mom_dumpable_item (itmat))
+	      {
+		MOM_DEBUGPRINTF (dump, "non dumpable attribute %s",
+				 mom_item_cstring (itmat));
+		continue;
+	      }
+	    mom_emit_dumped_newline ();
 	    fputs ("* ", dumper_mom->dufile);
 	    mom_emit_dumped_itemref (itmat);
 	    mom_emit_dumped_space ();
-	    mom_emit_dumped_value (ent->ent_val);
+	    mom_emit_dumped_value (aval);
 	  };
       mom_emit_dumped_space ();
       mom_emit_dump_outdent ();
