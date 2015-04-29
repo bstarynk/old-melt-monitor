@@ -699,13 +699,16 @@ load_fill_item_mom (momitem_t *itm)
 {				// keep in sync with emit_content_dumped_item_mom
   assert (loader_mom && loader_mom->ldmagic == LOADER_MAGIC_MOM);
   assert (itm && itm->itm_str);
-  MOM_DEBUGPRINTF (load, "start load_fill_item %s", mom_item_cstring (itm));
+  MOM_DEBUGPRINTF (load, "start load_fill_item %s at %s",
+		   mom_item_cstring (itm), load_position_mom (NULL, 0, 0));
   momvalue_t vtok = MOM_NONEV;
   momvalue_t vtokbis = MOM_NONEV;
+  /// load the attributes
   if (mom_token_load (&vtok) && mom_value_is_delim (vtok, "{"))
     {
-      MOM_DEBUGPRINTF (load, "load_fill_item attributes of %s",
-		       mom_item_cstring (itm));
+      MOM_DEBUGPRINTF (load, "load_fill_item attributes of %s at %s",
+		       mom_item_cstring (itm), load_position_mom (NULL, 0,
+								  0));
       while ((vtokbis = MOM_NONEV, mom_token_load (&vtokbis))
 	     && mom_value_is_delim (vtokbis, "*"))
 	{
@@ -726,20 +729,18 @@ load_fill_item_mom (momitem_t *itm)
 	}
       if (!mom_value_is_delim (vtokbis, "}"))
 	MOM_FATAPRINTF ("expecting } but got %s to end attributes of item %s"
-			" in %s file %s line %d",
+			" in %s",
 			mom_output_gcstring (vtokbis),
 			mom_item_cstring (itm),
-			loader_mom->ldforglobals ? "global" : "user",
-			loader_mom->ldforglobals ? loader_mom->
-			ldglobalpath : loader_mom->lduserpath,
-			(int) loader_mom->ldlinecount);
+			load_position_mom (NULL, 0, 0));
     }
   // should load the components
   vtok = MOM_NONEV;
   if (mom_token_load (&vtok) && mom_value_is_delim (vtok, "[["))
     {
-      MOM_DEBUGPRINTF (load, "load_fill_item components of %s",
-		       mom_item_cstring (itm));
+      MOM_DEBUGPRINTF (load, "load_fill_item components of %s at %s",
+		       mom_item_cstring (itm), load_position_mom (NULL, 0,
+								  0));
       momvalue_t valcomp = MOM_NONEV;
       while ((valcomp = MOM_NONEV), mom_load_value (&valcomp))
 	{
@@ -761,8 +762,9 @@ load_fill_item_mom (momitem_t *itm)
   vtok = MOM_NONEV;
   if (mom_token_load (&vtok) && mom_value_is_delim (vtok, "%"))
     {
-      MOM_DEBUGPRINTF (load, "load_fill_item transformer of %s",
-		       mom_item_cstring (itm));
+      MOM_DEBUGPRINTF (load, "load_fill_item transformer of %s at %s",
+		       mom_item_cstring (itm), load_position_mom (NULL, 0,
+								  0));
       momvalue_t valtransf = MOM_NONEV;
       int lineno = loader_mom->ldlinecount;
       if (!mom_load_value (&valtransf))
@@ -776,7 +778,8 @@ load_fill_item_mom (momitem_t *itm)
 	   load_position_mom (NULL, 0, lineno));
       add_load_transformer_mom (itm, valtransf);
     }
-  MOM_DEBUGPRINTF (load, "load_fill_item done %s\n", mom_item_cstring (itm));
+  MOM_DEBUGPRINTF (load, "load_fill_item done %s at %s\n",
+		   mom_item_cstring (itm), load_position_mom (NULL, 0, 0));
 }				/* end load_fill_item_mom */
 
 ////////////////
