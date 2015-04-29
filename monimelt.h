@@ -385,6 +385,9 @@ void mom_dump_state (const char *prefix);
 bool mom_token_load_at (momvalue_t *pval, const char *fil, int lin);
 #define mom_token_load(Pval) mom_token_load_at((Pval),__FILE__,__LINE__)
 
+momvalue_t mom_peek_token_load_at (const char *fil, int lin);
+#define mom_peek_token_load() mom_peek_token_load_at(__FILE__,__LINE__)
+
 unsigned mom_load_nb_queued_tokens (void);
 // return the node of queued tokens, or nil if none
 const momnode_t *mom_load_queued_tokens_mode (const momitem_t *connitm,

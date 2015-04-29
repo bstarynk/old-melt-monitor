@@ -370,6 +370,29 @@ const char *const delim_mom[] = {
   NULL
 };
 
+momvalue_t
+mom_peek_token_load_at (const char *fil, int lin)
+{
+  assert (loader_mom && loader_mom->ldmagic == LOADER_MAGIC_MOM);
+  if (!mom_queuevalue_size (&loader_mom->ldquetokens))
+    {
+      momvalue_t valtoken = MOM_NONEV;
+      if (mom_token_load_at (&valtoken, fil, lin))
+	{
+	  mom_load_push_back_token (valtoken);
+	  return valtoken;
+	}
+      return MOM_NONEV;
+    }
+  else
+    {
+      momvalue_t val = mom_queuevalue_peek_front (&loader_mom->ldquetokens);
+      MOM_DEBUGPRINTF (load, "peek_token_load@%s:%d: queued token %s",
+		       mom_output_gcstring (val));
+      return val;
+    }
+
+}
 
 bool
 mom_token_load_at (momvalue_t *pval, const char *fil, int lin)
