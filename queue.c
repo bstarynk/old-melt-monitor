@@ -120,6 +120,8 @@ mom_queueitem_pop_front (struct momqueueitems_st *qu)
     {
       // front becomes empty, remove it
       qu->que_front = fr->quechi_next;
+      if (!qu->que_front)
+	qu->que_back = NULL;
       MOM_GC_FREE (fr, sizeof (*fr));
       qu->que_size--;
       return itm;
@@ -189,7 +191,7 @@ mom_queueitem_scan_dump (struct momqueueitems_st *qu)
 void
 mom_queuevalue_push_back (struct momqueuevalues_st *qu, const momvalue_t val)
 {
-  if (!qu)
+  if (MOM_UNLIKELY (!qu))
     return;
   if (val.typnum == momty_null)
     return;
@@ -234,7 +236,7 @@ mom_queuevalue_push_back (struct momqueuevalues_st *qu, const momvalue_t val)
 void
 mom_queuevalue_push_front (struct momqueuevalues_st *qu, const momvalue_t val)
 {
-  if (!qu)
+  if (MOM_UNLIKELY (!qu))
     return;
   if (val.typnum == momty_null)
     return;
@@ -291,6 +293,8 @@ mom_queuevalue_pop_front (struct momqueuevalues_st *qu)
     {
       // front becomes empty, remove it
       qu->que_front = fr->quechv_next;
+      if (!qu->que_front)
+	qu->que_back = NULL;
       MOM_GC_FREE (fr, sizeof (*fr));
       qu->que_size--;
       return val;

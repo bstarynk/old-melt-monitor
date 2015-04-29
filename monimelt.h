@@ -1034,24 +1034,7 @@ void mom_output_utf8cstr_cencoded (FILE *fil, const char *str, int len);
 
 const momitem_t *mom_load_new_anonymous_item (bool global);
 
-static inline const momitem_t *
-mom_load_itemref_at (const char *fil, int lin)
-{
-  momvalue_t valtok = MOM_NONEV;
-  if (mom_token_load_at (&valtok, fil, lin))
-    {
-      if (valtok.typnum == momty_item)
-	return valtok.vitem;
-      else if (mom_value_is_delim (valtok, "_*"))
-	return mom_load_new_anonymous_item (true);
-      else if (mom_value_is_delim (valtok, "_:"))
-	return mom_load_new_anonymous_item (false);
-      else
-	mom_load_push_front_token (valtok);
-    }
-  return NULL;
-}
-
+const momitem_t *mom_load_itemref_at (const char *fil, int lin);
 #define mom_load_itemref() mom_load_itemref_at(__FILE__,__LINE__)
 
 momvalue_t
