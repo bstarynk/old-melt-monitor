@@ -26,24 +26,13 @@ queueitem_chunk_count_pack_mom (struct momqueuechunkitems_st *chk,
 {
   if (!chk)
     return 0;
+  assert (pack);
   int cnt = 0;
-  if (pack)
+  for (int ix = MOM_QUEUECHUNK_LEN - 1; ix >= 0; ix--)
     {
-      for (int ix = MOM_QUEUECHUNK_LEN - 1; ix >= 0; ix--)
-	{
-	  const momitem_t *itm = chk->quechi_items[ix];
-	  if (itm)
-	    pack[cnt++] = itm;
-	}
-    }
-  else
-    {
-      for (int ix = MOM_QUEUECHUNK_LEN - 1; ix >= 0; ix--)
-	{
-	  const momitem_t *itm = chk->quechi_items[ix];
-	  if (itm)
-	    cnt++;
-	}
+      const momitem_t *itm = chk->quechi_items[ix];
+      if (itm)
+	pack[cnt++] = itm;
     }
   return cnt;
 }
@@ -232,23 +221,13 @@ queuevalue_chunk_count_pack_mom (struct momqueuechunkvalues_st *chk,
 {
   if (!chk)
     return 0;
+  assert (pack);
   int cnt = 0;
-  if (pack)
+  for (int ix = MOM_QUEUECHUNK_LEN - 1; ix >= 0; ix--)
     {
-      for (int ix = MOM_QUEUECHUNK_LEN - 1; ix >= 0; ix--)
-	{
-	  const momvalue_t val = chk->quechv_values[ix];
-	  if (val.typnum != momty_null)
-	    pack[cnt++] = val;
-	}
-    }
-  else
-    {
-      for (int ix = MOM_QUEUECHUNK_LEN - 1; ix >= 0; ix--)
-	{
-	  if (chk->quechv_values[ix].typnum != momty_null)
-	    cnt++;
-	}
+      const momvalue_t val = chk->quechv_values[ix];
+      if (val.typnum != momty_null)
+	pack[cnt++] = val;
     }
   return cnt;
 }

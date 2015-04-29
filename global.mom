@@ -33,13 +33,18 @@
 ..
 
 
+   
 ** kind
 
 ..
 
 
 ** magic_attribute
-
+{
+  * comment "kind of magic attributes with a getter and a setter closure"
+  * dumped_item_scanner ^ scanner_of_magic_attribute ( )
+  * dumped_item_emitter ^ emitter_of_magic_attribute ( )
+}
 ..
 
 
@@ -66,7 +71,25 @@
 ** the_software
 {
   * comment  "describes the entire software system" }
-   
+
+[[
+ emitter_of_magic_attribute
+ scanner_of_magic_attribute
+]]
+
 ..
 
+/// Basile ajoute
+** emitter_of_magic_attribute
+{
+   * comment "routine to emit magic attribute"
+   }
+..
+
+** scanner_of_magic_attribute
+{
+   * comment "routine to scan magic attribute"
+   }
+..
+   
 //// end of global file global.mom

@@ -736,7 +736,7 @@ load_fill_item_mom (momitem_t *itm)
 	  itm->itm_comps = mom_components_append1 (itm->itm_comps, valcomp);
 	}
       int lineno = loader_mom->ldlinecount;
-      if (!((vtokbis = MOM_NONEV), !mom_token_load (&vtokbis))
+      if (!((vtokbis = MOM_NONEV), mom_token_load (&vtokbis))
 	  || !mom_value_is_delim (vtokbis, "]]"))
 	MOM_FATAPRINTF ("expecting ]] but got %s to end attributes of item %s"
 			" in %s",
