@@ -704,11 +704,15 @@ load_fill_item_mom (momitem_t *itm)
   momvalue_t vtokbis = MOM_NONEV;
   if (mom_token_load (&vtok) && mom_value_is_delim (vtok, "{"))
     {
+      MOM_DEBUGPRINTF (load, "load_fill_item attributes of %s",
+		       mom_item_cstring (itm));
       while ((vtokbis = MOM_NONEV, mom_token_load (&vtokbis))
 	     && mom_value_is_delim (vtokbis, "*"))
 	{
 	  momvalue_t vat = MOM_NONEV;
 	  const momitem_t *itmat = mom_load_itemref ();
+	  MOM_DEBUGPRINTF (load, "load_fill_item itmat=%s",
+			   mom_item_cstring (itmat));
 	  if (!itmat)
 	    break;
 	  if (mom_load_value (&vat) && vat.typnum != momty_null)
@@ -734,6 +738,8 @@ load_fill_item_mom (momitem_t *itm)
   vtok = MOM_NONEV;
   if (mom_token_load (&vtok) && mom_value_is_delim (vtok, "[["))
     {
+      MOM_DEBUGPRINTF (load, "load_fill_item components of %s",
+		       mom_item_cstring (itm));
       momvalue_t valcomp = MOM_NONEV;
       while ((valcomp = MOM_NONEV), mom_load_value (&valcomp))
 	{
@@ -755,6 +761,8 @@ load_fill_item_mom (momitem_t *itm)
   vtok = MOM_NONEV;
   if (mom_token_load (&vtok) && mom_value_is_delim (vtok, "%"))
     {
+      MOM_DEBUGPRINTF (load, "load_fill_item transformer of %s",
+		       mom_item_cstring (itm));
       momvalue_t valtransf = MOM_NONEV;
       int lineno = loader_mom->ldlinecount;
       if (!mom_load_value (&valtransf))
@@ -768,6 +776,7 @@ load_fill_item_mom (momitem_t *itm)
 	   load_position_mom (NULL, 0, lineno));
       add_load_transformer_mom (itm, valtransf);
     }
+  MOM_DEBUGPRINTF (load, "load_fill_item done %s\n", mom_item_cstring (itm));
 }				/* end load_fill_item_mom */
 
 ////////////////
@@ -1083,6 +1092,7 @@ mom_load_state ()
     ldr.lduserpath = MOM_USER_DATA_PATH;
   ldr.ldforglobals = true;
   loader_mom = &ldr;
+  MOM_DEBUGPRINTF (load, "first pass");
   first_pass_load_mom (ldr.ldglobalpath, ldr.ldglobalfile);
   if (ldr.lduserpath)
     {
@@ -1093,6 +1103,7 @@ mom_load_state ()
     {
       make_modules_load_mom ();
     }
+  MOM_DEBUGPRINTF (load, "second pass");
   // second pass for global data
   ldr.ldforglobals = true;
   second_pass_load_mom (true);
@@ -1102,6 +1113,7 @@ mom_load_state ()
       ldr.ldforglobals = false;
       second_pass_load_mom (false);
     }
+  MOM_DEBUGPRINTF (load, "before transformations");
   /// execute the transformations by applying each transformer to the
   /// corresponding item value
   unsigned nbtransf = 0;
@@ -1133,6 +1145,7 @@ mom_load_state ()
      (int) mom_hashset_count (ldr.ldmoduleset), nbtransf, ldr.ldglobalpath,
      ldr.lduserpath);
   loader_mom = NULL;
+  MOM_DEBUGPRINTF (load, "end loading");
   memset (&ldr, 0, sizeof (ldr));
 }
 
