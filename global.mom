@@ -103,6 +103,13 @@
 ..
 
 
+** signature_2itm_to_void
+{
+  * comment  "signature of functions taking two items giving no result" }
+ 
+..
+
+
 ** signature_void_to_void
 {
   * comment  "signature for closures with no arguments and no result" }
