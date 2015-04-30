@@ -87,6 +87,22 @@
 ..
 
 
+** signature_2itm1val_to_val
+{
+  * comment  "signature of functions taking two items and a value and giving a value"
+ }
+ 
+..
+
+
+** signature_2itm_to_val
+{
+  * comment  "signature of functions taking two items and giving one value"
+ }
+ 
+..
+
+
 ** signature_void_to_void
 {
   * comment  "signature for closures with no arguments and no result" }

@@ -1192,4 +1192,17 @@ mom_applyval_1val_to_val (const momvalue_t cloval, const momvalue_t arg0,
   return mom_applyclos_1val_to_val (cloval.vnode, arg0, resptr);
 }
 
+/****************************************************************
+  Informal descriptions of kinds
+  ==============================
+
+magic_attribute-s:
+
+  itm_data1 is the node of a getting closure of  signature_2itm_to_val
+     get-closure(container-item,attribute-item)
+
+  itm_data2 is the node of a putting closure of signature_2itm1val_to_val
+     put-closure(container-item,attribute-item,value)
+
+ ***************************************************************/
 #endif /*MONIMELT_INCLUDED_ */
