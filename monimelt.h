@@ -390,7 +390,7 @@ momvalue_t mom_peek_next_token_load_at (const char *fil, int lin);
 #define mom_peek_next_token_load() mom_peek_token_load_at(__FILE__,__LINE__)
 
 void mom_eat_token_load_at (const char *fil, int lin);
-#define mom_eat_token_load() mom_peek_token_load_at(__FILE__,__LINE__)
+#define mom_eat_token_load() mom_eat_token_load_at(__FILE__,__LINE__)
 
 unsigned mom_load_nb_queued_tokens (void);
 // return the node of queued tokens, or nil if none

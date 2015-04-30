@@ -752,17 +752,22 @@ mom_peek_next_token_load_at (const char *fil, int lin)
 void
 mom_eat_token_load_at (const char *fil, int lin)
 {
-  assert (loader_mom && loader_mom->ldmagic == LOADER_MAGIC_MOM);
-  MOM_DEBUGPRINTF (load, "eat_token_load@%s:%d", fil, lin);
-  if (mom_queuevalue_size (&loader_mom->ldquetokens) > 0)
-    (void) mom_queuevalue_pop_front (&loader_mom->ldquetokens);
   char posbuf[96];
   memset (posbuf, 0, sizeof (posbuf));
+  assert (loader_mom && loader_mom->ldmagic == LOADER_MAGIC_MOM);
+  MOM_DEBUGPRINTF (load, "eat_token_load@%s:%d qusiz=%d near %s", fil, lin,
+		   (int) mom_queuevalue_size (&loader_mom->ldquetokens),
+		   load_position_mom (posbuf, sizeof (posbuf), 0));
+  if (mom_queuevalue_size (&loader_mom->ldquetokens) > 0)
+    (void) mom_queuevalue_pop_front (&loader_mom->ldquetokens);
   if (mom_queuevalue_size (&loader_mom->ldquetokens) == 0
       && !feof (loader_mom->
 		ldforglobals ? loader_mom->ldglobalfile : loader_mom->
 		lduserfile))
     {
+      MOM_DEBUGPRINTF (load, "eat_token_load@%s:%d parsing near %s",
+		       fil, lin,
+		       load_position_mom (posbuf, sizeof (posbuf), 0));
       momvalue_t valtoken = token_parse_load_mom_at (fil, lin);
       if (valtoken.typnum != momty_null)
 	{
@@ -794,7 +799,6 @@ load_fill_item_mom (momitem_t *itm)
   MOM_DEBUGPRINTF (load, "load_fill_item start %s at %s",
 		   mom_item_cstring (itm), load_position_mom (NULL, 0, 0));
   momvalue_t vtok = MOM_NONEV;
-  momvalue_t vtokbis = MOM_NONEV;
   /// load the attributes
   vtok = mom_peek_token_load ();
   MOM_DEBUGPRINTF (load, "load_fill_item %s vtok=%s for attributes at %s",	//
@@ -830,10 +834,10 @@ load_fill_item_mom (momitem_t *itm)
 			       mom_item_cstring (itmat));
 	    }
 	}
-      if (!mom_value_is_delim (vtokbis, "}"))
+      if (!mom_value_is_delim (vtok, "}"))
 	MOM_FATAPRINTF ("expecting } but got %s to end attributes of item %s"
 			" in %s",
-			mom_output_gcstring (vtokbis),
+			mom_output_gcstring (vtok),
 			mom_item_cstring (itm),
 			load_position_mom (NULL, 0, 0));
       mom_eat_token_load ();
@@ -860,11 +864,11 @@ load_fill_item_mom (momitem_t *itm)
 	  itm->itm_comps = mom_components_append1 (itm->itm_comps, valcomp);
 	}
       int lineno = loader_mom->ldlinecount;
-      momvalue_t vtokbis = mom_peek_token_load ();
-      if (!mom_value_is_delim (vtokbis, "]]"))
+      vtok = mom_peek_token_load ();
+      if (!mom_value_is_delim (vtok, "]]"))
 	MOM_FATAPRINTF ("expecting ]] but got %s to end attributes of item %s"
 			" in %s",
-			mom_output_gcstring (vtokbis),
+			mom_output_gcstring (vtok),
 			mom_item_cstring (itm), load_position_mom (NULL, 0,
 								   lineno));
       mom_eat_token_load ();
@@ -897,6 +901,9 @@ load_fill_item_mom (momitem_t *itm)
       add_load_transformer_mom (itm, valtransf);
     }
   vtok = mom_peek_token_load ();
+  MOM_DEBUGPRINTF (load, "load_fill_item final vtok %s near %s",
+		   mom_output_gcstring (vtok),
+		   load_position_mom (NULL, 0, 0));
   if (!mom_value_is_delim (vtok, ".."))
     MOM_FATAPRINTF ("unexpected token %s in %s, expected ..",
 		    mom_output_gcstring (vtok),
