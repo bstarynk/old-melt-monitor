@@ -19,8 +19,9 @@
 
 
 ** comment
-  { * comment "to give comments in items."
-  }
+{
+  * comment  "to give comments in items." }
+ 
 ..
 
 
