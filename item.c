@@ -509,7 +509,8 @@ mom_find_named_item (const char *name)
 	    break;
 	  };
       };
-    MOM_DEBUGPRINTF (item, "lobix=%d hibix=%d bix=%d", lobix, hibix, bix);
+    MOM_DEBUGPRINTF (item, "find_named_item lobix=%d hibix=%d bix=%d", lobix,
+		     hibix, bix);
     for (int mdbix = lobix; bix < 0 && mdbix < hibix; mdbix++)
       {
 	const struct namebucket_mom_st *mdbuck = named_buckets_mom[mdbix];
@@ -529,6 +530,7 @@ mom_find_named_item (const char *name)
     assert (bix >= 0 && bix < (int) named_nbuck_mom);
     const struct namebucket_mom_st *buck = named_buckets_mom[bix];
     unsigned blen = buck->nambuck_len;
+    MOM_DEBUGPRINTF (item, "find_named_item bix=%d blen=%u", bix, blen);
     if (blen == 0)
       goto end;
     int lo = 0, hi = (int) blen, md = 0;
@@ -548,6 +550,7 @@ mom_find_named_item (const char *name)
 	else
 	  lo = md;
       }
+    MOM_DEBUGPRINTF (item, "find_named_item lo=%d hi=%d", lo, hi);
     for (md = lo; md < hi; md++)
       {
 	const momitem_t *curitm = buck->nambuck_arr[md];
@@ -561,6 +564,8 @@ mom_find_named_item (const char *name)
       }
   }
 end:
+  MOM_DEBUGPRINTF (item, "find_named_item name=%s bix=%d itm@%p", name, bix,
+		   itm);
   pthread_rwlock_unlock (&named_lock_mom);
   return (momitem_t *) itm;
 }
@@ -734,14 +739,14 @@ create_predefined_items_mom (void)
     named_count_mom = namecount;
     pthread_rwlock_unlock (&named_lock_mom);
   }
-#define  MOM_HAS_PREDEFINED_NAMED(Nam,Hash) do {	\
-    mompi_##Nam = mom_find_named_item (#Nam);		\
-    assert(mompi_##Nam && !mompi_##Nam->itm_anonymous	\
-	   && mompi_##Nam->itm_name			\
-	   && mompi_##Nam->itm_name->shash == Hash);	\
-    predefined_hashset_mom =				\
-      mom_hashset_put(predefined_hashset_mom,		\
-		  mompi_##Nam);				\
+#define  MOM_HAS_PREDEFINED_NAMED(Nam,Hash) do {		\
+    mompi_##Nam = mom_find_named_item (#Nam);			\
+    assert (mompi_##Nam && !mompi_##Nam->itm_anonymous);	\
+    assert (mompi_##Nam->itm_name				\
+	   && mompi_##Nam->itm_name->shash == Hash);		\
+    predefined_hashset_mom =					\
+      mom_hashset_put(predefined_hashset_mom,			\
+		  mompi_##Nam);					\
   } while(0);
   //
 #define  MOM_HAS_PREDEFINED_ANONYMOUS(Id,Hash) do {	\

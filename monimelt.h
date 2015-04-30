@@ -1192,6 +1192,72 @@ mom_applyval_1val_to_val (const momvalue_t cloval, const momvalue_t arg0,
   return mom_applyclos_1val_to_val (cloval.vnode, arg0, resptr);
 }
 
+//// ========== signature_2itm1val_to_val 
+/* For functions with 2 item arguments, 1 value argument and a value result, we apply them
+   with an invoking closure. The C function is supposed to return true
+   on success and false on failure (e.g. when the closure is too
+   small). Here is the signature of the function in C.  */
+typedef bool mom_2itm1val_to_val_sig_t (const momnode_t *closnode,
+					momitem_t *arg0,
+					momitem_t *arg1,
+					const momvalue_t arg2,
+					momvalue_t *resptr);
+/* the prefix of such function is: */
+#define MOM_PREFIXFUN_2itm1val_to_val "momfun_2itm1val_to_val"
+/* The kind of the node connective should be
+MOM_PREDEFINED_NAMED(signature_2itm1val_to_val); Its itm_data1 should be
+the address of the C routine. */
+
+bool mom_applyclos_2itm1val_to_val (const momnode_t *closnode,
+				    momitem_t *arg0,
+				    momitem_t *arg1,
+				    const momvalue_t arg2,
+				    momvalue_t *resptr);
+
+static inline bool
+mom_applyval_2itm1val_to_val (const momvalue_t cloval,
+			      momitem_t *arg0,
+			      momitem_t *arg1, const momvalue_t arg2,
+			      momvalue_t *resptr)
+{
+  if (cloval.typnum != momty_node || !resptr)
+    return false;
+  return mom_applyclos_2itm1val_to_val (cloval.vnode, arg0, arg1, arg2,
+					resptr);
+}
+
+
+//// ========== signature_2itm1val_to_void 
+/* For functions with 2 item arguments, 1 value argument and a value result, we apply them
+   with an invoking closure. The C function is supposed to return true
+   on success and false on failure (e.g. when the closure is too
+   small). Here is the signature of the function in C.  */
+typedef bool mom_2itm1val_to_void_sig_t (const momnode_t *closnode,
+					 momitem_t *arg0,
+					 momitem_t *arg1,
+					 const momvalue_t arg2);
+/* the prefix of such function is: */
+#define MOM_PREFIXFUN_2itm1val_to_void "momfun_2itm1val_to_void"
+/* The kind of the node connective should be
+MOM_PREDEFINED_NAMED(signature_2itm1val_to_void); Its itm_data1 should be
+the address of the C routine. */
+
+bool mom_applyclos_2itm1val_to_void (const momnode_t *closnode,
+				     momitem_t *arg0,
+				     momitem_t *arg1, const momvalue_t arg2);
+
+static inline bool
+mom_applyval_2itm1val_to_void (const momvalue_t cloval,
+			       momitem_t *arg0,
+			       momitem_t *arg1, const momvalue_t arg2)
+{
+  if (cloval.typnum != momty_node || !arg0 || !arg1)
+    return false;
+  return mom_applyclos_2itm1val_to_void (cloval.vnode, arg0, arg1, arg2);
+}
+
+
+
 /****************************************************************
   Informal descriptions of kinds
   ==============================

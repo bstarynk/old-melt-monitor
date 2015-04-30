@@ -128,7 +128,8 @@
 ** the_software
 {
   * comment  "describes the entire software system" }
- [[  emitter_of_magic_attribute  scanner_of_magic_attribute ]]
+ [[  emitter_of_magic_attribute  scanner_of_magic_attribute
+     ]]
  
 ..
 

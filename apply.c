@@ -127,3 +127,84 @@ end:
   mom_item_unlock (connitm);
   return ok;
 }
+
+bool
+mom_applyclos_2itm1val_to_val (const momnode_t *closnode,
+			       momitem_t *arg0,
+			       momitem_t *arg1,
+			       const momvalue_t arg2, momvalue_t *resptr)
+{
+  bool ok = false;
+  if (!closnode)
+    return false;
+  assert (resptr);
+  *resptr = MOM_NONEV;
+  momitem_t *connitm = (momitem_t *) closnode->conn;
+  assert (connitm);
+  mom_item_lock (connitm);
+  if (MOM_UNLIKELY ((const momitem_t *) connitm->itm_kind
+		    != MOM_PREDEFINED_NAMED (signature_2itm1val_to_val)))
+    goto end;
+  void *data1 = connitm->itm_data1;
+  if (MOM_UNLIKELY (data1 == NULL))
+    {
+      char nambuf[256];
+      memset (nambuf, 0, sizeof (nambuf));
+      if (snprintf
+	  (nambuf, sizeof (nambuf), MOM_PREFIXFUN_2itm1val_to_val "_%s",
+	   mom_item_cstring (connitm)) < (int) sizeof (nambuf))
+	((momitem_t *) connitm)->itm_data1 = data1 =
+	  mom_dynload_symbol (nambuf);
+      else
+	MOM_FATAPRINTF ("too long function name %s for 1val to val",
+			mom_item_cstring (connitm));
+    }
+  if (MOM_LIKELY (data1 != NULL && data1 != MOM_EMPTY))
+    {
+      mom_2itm1val_to_val_sig_t *fun = (mom_2itm1val_to_val_sig_t *) data1;
+      ok = (*fun) (closnode, arg0, arg1, arg2, resptr);
+    }
+end:
+  mom_item_unlock (connitm);
+  return ok;
+}
+
+
+
+bool
+mom_applyclos_2itm1val_to_void (const momnode_t *closnode,
+				momitem_t *arg0,
+				momitem_t *arg1, const momvalue_t arg2)
+{
+  bool ok = false;
+  if (!closnode)
+    return false;
+  momitem_t *connitm = (momitem_t *) closnode->conn;
+  assert (connitm);
+  mom_item_lock (connitm);
+  if (MOM_UNLIKELY ((const momitem_t *) connitm->itm_kind
+		    != MOM_PREDEFINED_NAMED (signature_2itm1val_to_void)))
+    goto end;
+  void *data1 = connitm->itm_data1;
+  if (MOM_UNLIKELY (data1 == NULL))
+    {
+      char nambuf[256];
+      memset (nambuf, 0, sizeof (nambuf));
+      if (snprintf
+	  (nambuf, sizeof (nambuf), MOM_PREFIXFUN_2itm1val_to_void "_%s",
+	   mom_item_cstring (connitm)) < (int) sizeof (nambuf))
+	((momitem_t *) connitm)->itm_data1 = data1 =
+	  mom_dynload_symbol (nambuf);
+      else
+	MOM_FATAPRINTF ("too long function name %s for 1val to void",
+			mom_item_cstring (connitm));
+    }
+  if (MOM_LIKELY (data1 != NULL && data1 != MOM_EMPTY))
+    {
+      mom_2itm1val_to_void_sig_t *fun = (mom_2itm1val_to_void_sig_t *) data1;
+      ok = (*fun) (closnode, arg0, arg1, arg2);
+    }
+end:
+  mom_item_unlock (connitm);
+  return ok;
+}
