@@ -18,6 +18,13 @@
 ///
 
 
+** c_function_prefix   ////// PREDEFINED
+{
+  * comment  "gives the prefix of C functions in signatures" }
+ 
+..
+
+
 ** comment   ////// PREDEFINED
 {
   * comment  "to give comments in items." }
@@ -73,6 +80,7 @@
 
 ** signature_1val_to_val   ////// PREDEFINED
 {
+  * c_function_prefix  "momfun_1val_to_val"
   * comment  "signature for closures with one value argument and one value result"
  }
  
@@ -81,6 +89,7 @@
 
 ** signature_1val_to_void   ////// PREDEFINED
 {
+  * c_function_prefix  "momfun_1val_to_void"
   * comment  "signature for closures with one value argument and no result"
  }
  
@@ -89,6 +98,7 @@
 
 ** signature_2itm1val_to_val   ////// PREDEFINED
 {
+  * c_function_prefix  "momfun_2itm1val_to_val"
   * comment  "signature of functions taking two items and a value and giving a value"
  }
  
@@ -97,6 +107,7 @@
 
 ** signature_2itm1val_to_void   ////// PREDEFINED
 {
+  * c_function_prefix  "momfun_2itm1val_to_void"
   * comment  "signature of functions taking two items and a value and giving no result"
  }
  
@@ -105,6 +116,7 @@
 
 ** signature_2itm_to_val   ////// PREDEFINED
 {
+  * c_function_prefix  "momfun_2itm1val_to_val"
   * comment  "signature of functions taking two items and giving one value"
  }
  
@@ -113,6 +125,7 @@
 
 ** signature_2itm_to_void   ////// PREDEFINED
 {
+  * c_function_prefix  "momfun_2itm_to_void"
   * comment  "signature of functions taking two items giving no result" }
  
 ..
@@ -120,6 +133,7 @@
 
 ** signature_void_to_void   ////// PREDEFINED
 {
+  * c_function_prefix  "momfun_void_to_void"
   * comment  "signature for closures with no arguments and no result" }
  
 ..
