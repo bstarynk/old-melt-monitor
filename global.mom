@@ -95,6 +95,14 @@
 ..
 
 
+** signature_2itm1val_to_void
+{
+  * comment  "signature of functions taking two items and a value and giving no result"
+ }
+ 
+..
+
+
 ** signature_2itm_to_val
 {
   * comment  "signature of functions taking two items and giving one value"
