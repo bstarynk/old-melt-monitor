@@ -26,12 +26,18 @@
 
 
 ** dumped_item_emitter
-
+{
+  * comment  "within a kind, gives the closure applied to all items of that kind giving its transformer."
+ }
+ 
 ..
 
 
 ** dumped_item_scanner
-
+{
+  * comment  "within a kind, gives the closure applied to all items of that kind to scan it."
+ }
+ 
 ..
 
 
@@ -43,12 +49,16 @@
 
 
 ** kind
-
+{
+  * comment  "very magic pseudo attribute giving the kind of items" }
+ 
 ..
 
 
 ** magic_attribute
-
+{
+  * comment  "kind of magic attributes" }
+ 
 ..
 
 
@@ -60,7 +70,10 @@
 
 
 ** signature_1val_to_val
-
+{
+  * comment  "signature for closures with one value argument and one value result"
+ }
+ 
 ..
 
 
@@ -73,7 +86,9 @@
 
 
 ** signature_void_to_void
-
+{
+  * comment  "signature for closures with no arguments and no result" }
+ 
 ..
 
 

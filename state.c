@@ -1476,9 +1476,9 @@ scan_inside_dumped_item_mom (momitem_t *itm)
       if (valscanner.typnum == momty_null)
 	{
 	  valscanner =		//
-	    mom_item_unsync_get_attribute (itmkd,
-					   MOM_PREDEFINED_NAMED
-					   (dumped_item_scanner));
+	    mom_item_unsync_get_attribute	//
+	    (itmkd,		//
+	     MOM_PREDEFINED_NAMED (dumped_item_scanner));
 	  if (valscanner.typnum == momty_null)
 	    return;
 	  if (valscanner.typnum != momty_node)
@@ -1713,9 +1713,9 @@ emit_content_dumped_item_mom (const momitem_t *itm)
       if (valemitter.typnum == momty_null)
 	{
 	  valemitter =		//
-	    mom_item_unsync_get_attribute (itmkd,
-					   MOM_PREDEFINED_NAMED
-					   (dumped_item_emitter));
+	    mom_item_unsync_get_attribute	//
+	    (itmkd,		//
+	     MOM_PREDEFINED_NAMED (dumped_item_emitter));
 	  if (valemitter.typnum == momty_null)
 	    return;
 	  if (valemitter.typnum != momty_node)
