@@ -756,6 +756,8 @@ mom_eat_token_load_at (const char *fil, int lin)
   MOM_DEBUGPRINTF (load, "eat_token_load@%s:%d", fil, lin);
   if (mom_queuevalue_size (&loader_mom->ldquetokens) > 0)
     (void) mom_queuevalue_pop_front (&loader_mom->ldquetokens);
+  char posbuf[96];
+  memset (posbuf, 0, sizeof (posbuf));
   if (mom_queuevalue_size (&loader_mom->ldquetokens) == 0
       && !feof (loader_mom->
 		ldforglobals ? loader_mom->ldglobalfile : loader_mom->
@@ -766,11 +768,21 @@ mom_eat_token_load_at (const char *fil, int lin)
 	{
 	  mom_queuevalue_push_back (&loader_mom->ldquetokens, valtoken);
 	  MOM_DEBUGPRINTF (load,
-			   "peek_token_load@%s:%d: pushed parsed token %s",
-			   fil, lin, mom_output_gcstring (valtoken));
+			   "eat_token_load@%s:%d: pushed parsed token %s near %s",
+			   fil, lin, mom_output_gcstring (valtoken),
+			   load_position_mom (posbuf, sizeof (posbuf), 0));
 	  return;
 	}
+      else
+	MOM_DEBUGPRINTF (load,
+			 "eat_token_load@%s:%d: null probably EOF near %s",
+			 fil, lin, load_position_mom (posbuf, sizeof (posbuf),
+						      0));
     }
+  else
+    MOM_DEBUGPRINTF (load, "eat_token_load@%s:%d: front token %s near %s", fil, lin,	//
+		     mom_output_gcstring (mom_queuevalue_peek_front (&loader_mom->ldquetokens)),	//
+		     load_position_mom (posbuf, sizeof (posbuf), 0));
 }				/* end mom_eat_token_load_at */
 
 ////////////////
@@ -798,9 +810,11 @@ load_fill_item_mom (momitem_t *itm)
 	{
 	  momvalue_t vat = MOM_NONEV;
 	  mom_eat_token_load ();
+	  MOM_DEBUGPRINTF (load, "load_fill_item insideattrs of %s",
+			   mom_item_cstring (itm));
 	  const momitem_t *itmat = mom_load_itemref ();
-	  MOM_DEBUGPRINTF (load, "load_fill_item itmat=%s",
-			   mom_item_cstring (itmat));
+	  MOM_DEBUGPRINTF (load, "load_fill_item %s itmat=%s",
+			   mom_item_cstring (itm), mom_item_cstring (itmat));
 	  if (!itmat)
 	    break;
 	  if (mom_load_value (&vat) && vat.typnum != momty_null)
