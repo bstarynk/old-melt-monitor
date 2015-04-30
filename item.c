@@ -840,19 +840,28 @@ find_named_item_mom (const char *str)
 	if (cmp == 0)
 	  return (momitem_t *) itm;
 	if (cmp < 0)
-	  lo = md;
-	else
 	  hi = md;
+	else
+	  lo = md;
       };
+    MOM_DEBUGPRINTF (item,
+		     "find_named_item_mom str=%s lo=%d hi=%d bix=%d", str, lo,
+		     hi, bix);
     for (md = lo; md < hi; md++)
       {
 	const momitem_t *itm = buck->nambuck_arr[md];
 	assert (itm && !itm->itm_anonymous && itm->itm_name);
 	int cmp = strcmp (str, itm->itm_name->cstr);
 	if (cmp == 0)
-	  return (momitem_t *) itm;
+	  {
+	    MOM_DEBUGPRINTF (item,
+			     "find_named_item_mom str=%s found itm@%p", str,
+			     itm);
+	    return (momitem_t *) itm;
+	  }
       }
   }
+  MOM_DEBUGPRINTF (item, "find_named_item_mom str=%s not-found", str);
   return NULL;
 }				// end find_named_item_mom
 
