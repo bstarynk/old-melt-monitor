@@ -759,7 +759,10 @@ mom_eat_token_load_at (const char *fil, int lin)
 		   (int) mom_queuevalue_size (&loader_mom->ldquetokens),
 		   load_position_mom (posbuf, sizeof (posbuf), 0));
   if (mom_queuevalue_size (&loader_mom->ldquetokens) > 0)
-    (void) mom_queuevalue_pop_front (&loader_mom->ldquetokens);
+    {
+      MOM_DEBUGPRINTF (load, "eat_token_load@%s:%d popping token", fil, lin);
+      (void) mom_queuevalue_pop_front (&loader_mom->ldquetokens);
+    };
   if (mom_queuevalue_size (&loader_mom->ldquetokens) == 0
       && !feof (loader_mom->
 		ldforglobals ? loader_mom->ldglobalfile : loader_mom->
@@ -771,11 +774,11 @@ mom_eat_token_load_at (const char *fil, int lin)
       momvalue_t valtoken = token_parse_load_mom_at (fil, lin);
       if (valtoken.typnum != momty_null)
 	{
-	  mom_queuevalue_push_back (&loader_mom->ldquetokens, valtoken);
 	  MOM_DEBUGPRINTF (load,
-			   "eat_token_load@%s:%d: pushed parsed token %s near %s",
+			   "eat_token_load@%s:%d: pushing parsed token %s near %s",
 			   fil, lin, mom_output_gcstring (valtoken),
 			   load_position_mom (posbuf, sizeof (posbuf), 0));
+	  mom_queuevalue_push_back (&loader_mom->ldquetokens, valtoken);
 	  return;
 	}
       else
@@ -809,8 +812,15 @@ load_fill_item_mom (momitem_t *itm)
       MOM_DEBUGPRINTF (load, "load_fill_item attributes of %s at %s", mom_item_cstring (itm),	//
 		       load_position_mom (NULL, 0, 0));
       mom_eat_token_load ();
-      while ((vtok = mom_peek_token_load ()).typnum != momty_null
-	     && mom_value_is_delim (vtok, "*"))
+      while ((
+	       {
+	       vtok = mom_peek_token_load ();
+	       MOM_DEBUGPRINTF (load,
+				"load_fill_item for %s attr.vtok %s near %s",
+				mom_item_cstring (itm),
+				mom_output_gcstring (vtok),
+				load_position_mom (NULL, 0, 0)); vtok;}
+	     ).typnum != momty_null && mom_value_is_delim (vtok, "*"))
 	{
 	  momvalue_t vat = MOM_NONEV;
 	  mom_eat_token_load ();
@@ -908,7 +918,7 @@ load_fill_item_mom (momitem_t *itm)
     MOM_FATAPRINTF ("unexpected token %s in %s, expected ..",
 		    mom_output_gcstring (vtok),
 		    load_position_mom (NULL, 0, 0));
-  mom_eat_token_load ();
+  // we don't eat the .. token; the caller would skip that line
   MOM_DEBUGPRINTF (load, "load_fill_item done %s at %s\n",
 		   mom_item_cstring (itm), load_position_mom (NULL, 0, 0));
 }				/* end load_fill_item_mom */
@@ -971,9 +981,18 @@ second_pass_load_mom (bool global)
 		 loader_mom->ldforglobals ? loader_mom->
 		 ldglobalfile : loader_mom->lduserfile);
       if (loader_mom->ldlinelen <= 0)
-	return;
+	{
+	  MOM_DEBUGPRINTF (load, "second %s pass end-of-file at %s",
+			   loader_mom->ldforglobals ? "global" : "user",
+			   load_position_mom (NULL, 0, 0));
+	  return;
+	}
       loader_mom->ldlinecol = 0;
       loader_mom->ldlinecount++;
+      if (loader_mom->ldlinelen > 4
+	  && loader_mom->ldlinebuf[0] == '/'
+	  && loader_mom->ldlinebuf[1] == '/')
+	continue;
       MOM_DEBUGPRINTF (load, "second %s pass line#%d: %s",
 		       loader_mom->ldforglobals ? "global" : "user",
 		       (int) loader_mom->ldlinecount, loader_mom->ldlinebuf);
@@ -982,17 +1001,18 @@ second_pass_load_mom (bool global)
 	  && loader_mom->ldlinebuf[1] == '*')
 	{
 	  loader_mom->ldlinecol = 2;
+	  memset (&loader_mom->ldquetokens, 0,
+		  sizeof (loader_mom->ldquetokens));
 	  momvalue_t val = mom_peek_token_load ();
 	  if (val.typnum != momty_item)
 	    MOM_FATAPRINTF ("invalid line %d '%s' of %s (got %s, expecting some item) ",	//
 			    (int) loader_mom->ldlinecount, loader_mom->ldlinebuf,	//
 			    load_position_mom (NULL, 0, 0),
 			    mom_output_gcstring (val));
-	  MOM_DEBUGPRINTF (load, "second %s pass filling item %s",
-			   loader_mom->ldforglobals ? "global" : "user",
-			   val.vitem->itm_str->cstr);
-	  memset (&loader_mom->ldquetokens, 0,
-		  sizeof (loader_mom->ldquetokens));
+	  MOM_DEBUGPRINTF (load, "second pass filling item %s near %s",
+			   mom_item_cstring (val.vitem),
+			   load_position_mom (NULL, 0, 0));
+	  mom_eat_token_load ();
 	  load_fill_item_mom (val.vitem);
 	  MOM_DEBUGPRINTF (load, "second %s pass filled item %s\n",
 			   loader_mom->ldforglobals ? "global" : "user",

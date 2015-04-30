@@ -425,7 +425,7 @@ mom_queuevalue_pop_front (struct momqueuevalues_st *qu)
   assert (fr);
   val = fr->quechv_values[0];
   assert (val.typnum != momty_null);
-  if (fr->quechv_values[1].typnum != momty_null)
+  if (fr->quechv_values[1].typnum == momty_null)
     {
       // front becomes empty, remove it
       qu->que_front = fr->quechv_next;
