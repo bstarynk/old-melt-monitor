@@ -57,7 +57,9 @@
 
 ** magic_attribute
 {
-  * comment  "kind of magic attributes" }
+  * comment  "kind of magic attributes"
+  * dumped_item_emitter  ^emitter_of_magic_attribute()
+  * dumped_item_scanner  ^scanner_of_magic_attribute() }
  
 ..
 
