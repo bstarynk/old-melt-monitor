@@ -18,14 +18,14 @@
 ///
 
 
-** comment
+** comment   ////// PREDEFINED
 {
   * comment  "to give comments in items." }
  
 ..
 
 
-** dumped_item_emitter
+** dumped_item_emitter   ////// PREDEFINED
 {
   * comment  "within a kind, gives the closure applied to all items of that kind giving its transformer."
  }
@@ -33,7 +33,7 @@
 ..
 
 
-** dumped_item_scanner
+** dumped_item_scanner   ////// PREDEFINED
 {
   * comment  "within a kind, gives the closure applied to all items of that kind to scan it."
  }
@@ -48,14 +48,14 @@
 ..
 
 
-** kind
+** kind   ////// PREDEFINED
 {
   * comment  "very magic pseudo attribute giving the kind of items" }
  
 ..
 
 
-** magic_attribute
+** magic_attribute   ////// PREDEFINED
 {
   * comment  "kind of magic attributes"
   * dumped_item_emitter  ^emitter_of_magic_attribute()
@@ -71,7 +71,7 @@
 ..
 
 
-** signature_1val_to_val
+** signature_1val_to_val   ////// PREDEFINED
 {
   * comment  "signature for closures with one value argument and one value result"
  }
@@ -79,7 +79,7 @@
 ..
 
 
-** signature_1val_to_void
+** signature_1val_to_void   ////// PREDEFINED
 {
   * comment  "signature for closures with one value argument and no result"
  }
@@ -87,7 +87,7 @@
 ..
 
 
-** signature_2itm1val_to_val
+** signature_2itm1val_to_val   ////// PREDEFINED
 {
   * comment  "signature of functions taking two items and a value and giving a value"
  }
@@ -95,7 +95,7 @@
 ..
 
 
-** signature_2itm1val_to_void
+** signature_2itm1val_to_void   ////// PREDEFINED
 {
   * comment  "signature of functions taking two items and a value and giving no result"
  }
@@ -103,7 +103,7 @@
 ..
 
 
-** signature_2itm_to_val
+** signature_2itm_to_val   ////// PREDEFINED
 {
   * comment  "signature of functions taking two items and giving one value"
  }
@@ -111,25 +111,24 @@
 ..
 
 
-** signature_2itm_to_void
+** signature_2itm_to_void   ////// PREDEFINED
 {
   * comment  "signature of functions taking two items giving no result" }
  
 ..
 
 
-** signature_void_to_void
+** signature_void_to_void   ////// PREDEFINED
 {
   * comment  "signature for closures with no arguments and no result" }
  
 ..
 
 
-** the_software
+** the_software   ////// PREDEFINED
 {
   * comment  "describes the entire software system" }
- [[  emitter_of_magic_attribute  scanner_of_magic_attribute
-     ]]
+ [[  emitter_of_magic_attribute  scanner_of_magic_attribute ]]
  
 ..
 

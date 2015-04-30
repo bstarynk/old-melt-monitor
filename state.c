@@ -1763,7 +1763,10 @@ emit_dumped_item_mom (const momitem_t *itm)
       && !mom_hashset_contains (dumper_mom->duitemglobalset, itm))
     return;
   putc ('\n', dumper_mom->dufile);
-  fprintf (dumper_mom->dufile, "** %s\n", mom_item_cstring (itm));
+  if (mom_hashset_contains(dumper_mom->dupredefineditemset, itm))
+    fprintf (dumper_mom->dufile, "** %s   ////// PREDEFINED\n", mom_item_cstring (itm));
+  else
+    fprintf (dumper_mom->dufile, "** %s\n", mom_item_cstring (itm));
   dumper_mom->duindentation = 0;
   dumper_mom->dulastnloff = ftell (dumper_mom->dufile);
   emit_content_dumped_item_mom (itm);
