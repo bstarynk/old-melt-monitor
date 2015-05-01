@@ -2556,11 +2556,11 @@ mom_dump_state (const char *prefix)
   {
     const momseq_t *userset =
       mom_hashset_elements_set (dumper_mom->duitemuserset);
+    const momseq_t *globset =
+      mom_hashset_elements_set (dumper_mom->duitemglobalset);
     unsigned nbuseritems = userset->slen;
     for (unsigned ix = 0; ix < nbuseritems; ix++)
       mom_item_unlock ((momitem_t *) userset->arritm[ix]);
-    const momseq_t *globset =
-      mom_hashset_elements_set (dumper_mom->duitemglobalset);
     unsigned nbglobitems = globset->slen;
     for (unsigned ix = 0; ix < nbglobitems; ix++)
       mom_item_unlock ((momitem_t *) globset->arritm[ix]);
