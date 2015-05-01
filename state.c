@@ -1495,7 +1495,7 @@ scan_inside_dumped_item_mom (momitem_t *itm)
 	    mom_attributes_put (dumper_mom->dukindscannermap, itmkd,
 				&valscanner);
 	}
-      if (!mom_applyval_1val_to_void (valscanner, mom_itemv (itm)))
+      if (!mom_applyval_1itm_to_void (valscanner, itm))
 	MOM_FATAPRINTF ("failed to apply scanner %s to item %s of kind %s",
 			mom_output_gcstring (valscanner),
 			mom_item_cstring (itm), itmkd->itm_str->cstr);
@@ -1810,8 +1810,8 @@ emit_content_dumped_item_mom (const momitem_t *itm)
       /// we should apply the emitter to get a transformer node value, which
       /// would be later applied at load time....
       momvalue_t valtransformer = MOM_NONEV;
-      if (mom_applyval_1val_to_val
-	  (valemitter, mom_itemv (itm), &valtransformer)
+      if (mom_applyval_1itm_to_val
+	  (valemitter, (momitem_t *) itm, &valtransformer)
 	  && valtransformer.typnum == momty_node)
 	{
 	  dumper_mom->duindentation = 1;

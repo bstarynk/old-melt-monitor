@@ -48,9 +48,9 @@
 ..
 
 
-** emitter_of_magic_attribute
+** emitter_of_magic_attribute   ////// PREDEFINED
 {
-  * comment  "routine to emit magic attribute" }
+  * comment  "predefined routine to emit magic_attribute-s" }
  
 ..
 
@@ -78,9 +78,24 @@
 ..
 
 
-** scanner_of_magic_attribute
+** scanner_of_magic_attribute   ////// PREDEFINED
 {
-  * comment  "routine to scan magic attribute" }
+  * comment  "predefined routine to scan magic_attribute-s" }
+ 
+..
+
+
+** signature_1itm_to_val   ////// PREDEFINED
+{
+  * comment  "signature for function of 1 item argument and 1 value result"
+ }
+ 
+..
+
+
+** signature_1itm_to_void   ////// PREDEFINED
+{
+  * comment  "signature for function of 1 item argument and no result" }
  
 ..
 

@@ -30,21 +30,9 @@ void
 momplugin_after_load (void)
 {
   MOM_INFORMPRINTF ("cold plugin after load");
-  MOM_PREDEFINED_NAMED (signature_void_to_void)->itm_kind =
+  MOM_PREDEFINED_NAMED (signature_1itm_to_void)->itm_kind =
     MOM_PREDEFINED_NAMED (function_signature);
-  MOM_PREDEFINED_NAMED (signature_1val_to_val)->itm_kind =
-    MOM_PREDEFINED_NAMED (function_signature);
-  MOM_PREDEFINED_NAMED (signature_1val_to_void)->itm_kind =
-    MOM_PREDEFINED_NAMED (function_signature);
-  MOM_PREDEFINED_NAMED (signature_2itm1val_to_val)->itm_kind =
-    MOM_PREDEFINED_NAMED (function_signature);
-  MOM_PREDEFINED_NAMED (signature_2itm1val_to_void)->itm_kind =
-    MOM_PREDEFINED_NAMED (function_signature);
-  MOM_PREDEFINED_NAMED (signature_2itm_to_val)->itm_kind =
-    MOM_PREDEFINED_NAMED (function_signature);
-  MOM_PREDEFINED_NAMED (signature_2itm_to_void)->itm_kind =
-    MOM_PREDEFINED_NAMED (function_signature);
-  MOM_PREDEFINED_NAMED (signature_void_to_void)->itm_kind =
+  MOM_PREDEFINED_NAMED (signature_1itm_to_val)->itm_kind =
     MOM_PREDEFINED_NAMED (function_signature);
   MOM_DEBUGPRINTF (load, "set signatures kind to function_signature");
 }
