@@ -1287,11 +1287,10 @@ mom_load_state ()
 	  const momnode_t *trnode =
 	    ldr.ldtransfvect->transf_pairs[ix].transp_node;
 	  momvalue_t vnode = mom_nodev (trnode);
-	  momvalue_t vitmtr = mom_itemv (itmtr);
 	  MOM_DEBUGPRINTF (load, "transforming item#%d: %s with %s",
 			   ix, itmtr->itm_str->cstr,
 			   mom_output_gcstring (vnode));
-	  if (!mom_applyval_1val_to_void (vnode, vitmtr))
+	  if (!mom_applyval_1itm_to_void (vnode, itmtr))
 	    MOM_FATAPRINTF ("failed to transform item#%d: %s with %s",
 			    ix, itmtr->itm_str->cstr,
 			    mom_output_gcstring (vnode));
