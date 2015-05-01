@@ -2558,12 +2558,12 @@ mom_dump_state (const char *prefix)
       mom_hashset_elements_set (dumper_mom->duitemuserset);
     unsigned nbuseritems = userset->slen;
     for (unsigned ix = 0; ix < nbuseritems; ix++)
-      mom_item_unlock (userset->arritm[ix]);
+      mom_item_unlock ((momitem_t *) userset->arritm[ix]);
     const momseq_t *globset =
       mom_hashset_elements_set (dumper_mom->duitemglobalset);
     unsigned nbglobitems = globset->slen;
     for (unsigned ix = 0; ix < nbglobitems; ix++)
-      mom_item_unlock (globset->arritm[ix]);
+      mom_item_unlock ((momitem_t *) globset->arritm[ix]);
   }
   double endelapsedtime = mom_elapsed_real_time ();
   double endcputime = mom_clock_time (CLOCK_THREAD_CPUTIME_ID);
