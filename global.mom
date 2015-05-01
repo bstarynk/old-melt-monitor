@@ -55,6 +55,13 @@
 ..
 
 
+** filler_of_magic_attribute   ////// PREDEFINED
+{
+  * comment  "function to fill a magic attribute" }
+ 
+..
+
+
 ** function_signature   ////// PREDEFINED
 {
   * comment  "kind of function signatures" }

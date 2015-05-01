@@ -28,7 +28,15 @@ bool
 		   "emitter_of_magic_attribute itm=%s",
 		   mom_item_cstring (itm));
   assert (itm->itm_kind == MOM_PREDEFINED_NAMED (magic_attribute));
-#warning should make a node of filler_of_magic_attribute
+  momvalue_t vclos =
+    mom_nodev_new (MOM_PREDEFINED_NAMED (filler_of_magic_attribute),
+		   2,
+		   mom_nodev (itm->itm_data1),
+		   mom_nodev (itm->itm_data2));
+  MOM_DEBUGPRINTF (dump, "emitter_of_magic_attribute vclos=",
+		   mom_output_gcstring (vclos));
+  *res = vclos;
+  return true;
 }				/* end emitter_of_magic_attribute */
 
 
@@ -51,3 +59,34 @@ bool
 		   mom_item_cstring (itm));
   return true;
 }				/* end scanner_of_magic_attribute */
+
+
+bool
+  momfun_1itm_to_void_filler_of_magic_attribute
+  (const momnode_t *clonode, momitem_t *itm)
+{
+  MOM_DEBUGPRINTF (dump,
+		   "filler_of_magic_attribute itm=%s",
+		   mom_item_cstring (itm));
+  if (!clonode || clonode->slen < 2)
+    MOM_FATAPRINTF ("filler_of_magic_attribute %s has bad closure %s",
+		    mom_item_cstring (itm),
+		    mom_output_gcstring (mom_nodev (clonode)));
+  momvalue_t vgetclos = clonode->arrsons[0];
+  momvalue_t vputclos = clonode->arrsons[1];
+  if (vgetclos.typnum != momty_node)
+    MOM_FATAPRINTF ("filler_of_magic_attribute %s has bad getter %s",
+		    mom_item_cstring (itm), mom_output_gcstring (vgetclos));
+  if (vputclos.typnum != momty_node)
+    MOM_FATAPRINTF ("filler_of_magic_attribute %s has bad getter %s",
+		    mom_item_cstring (itm), mom_output_gcstring (vputclos));
+  itm->itm_kind = MOM_PREDEFINED_NAMED (magic_attribute);
+  itm->itm_data1 = vgetclos.vnode;
+  itm->itm_data2 = vputclos.vnode;
+  MOM_DEBUGPRINTF (dump,
+		   "filler_of_magic_attribute itm=%s done vgetclos=%s vputclos=%s",
+		   mom_item_cstring (itm),
+		   mom_output_gcstring (vgetclos),
+		   mom_output_gcstring (vputclos));
+  return true;
+}				/* end of filler_of_magic_attribute */
