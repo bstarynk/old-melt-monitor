@@ -454,6 +454,13 @@ const char *mom_output_gcstring (const momvalue_t val);
 // return a momstring with some output for a value
 const momstring_t *mout_output_string (const momvalue_t val);
 
+static inline momitem_t *
+mom_value_to_item (const momvalue_t val)
+{
+  if (val.typnum == momty_item)
+    return val.vitem;
+  return NULL;
+}
 
 momhash_t mom_valueptr_hash (momvalue_t *pval);
 

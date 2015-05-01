@@ -94,3 +94,81 @@ bool
 		   mom_output_gcstring (vputclos));
   return true;
 }				/* end of filler_of_magic_attribute */
+
+
+
+bool
+  momfun_1itm_to_val_emitter_of_function
+  (const momnode_t *clonode, momitem_t *itm, momvalue_t *res)
+{
+  momitem_t *itmkind = itm->itm_kind;
+  assert (itmkind);
+  MOM_DEBUGPRINTF (dump,
+		   "emitter_of_function itm=%s kind %s (of kind %s)",
+		   mom_item_cstring (itm), mom_item_cstring (itmkind),
+		   mom_item_cstring (itmkind->itm_kind));
+  assert (itmkind->itm_kind == MOM_PREDEFINED_NAMED (function_signature));
+  momvalue_t vclos = mom_nodev_new (MOM_PREDEFINED_NAMED (filler_of_function),
+				    1,
+				    mom_itemv (itmkind));
+  MOM_DEBUGPRINTF (dump, "emitter_of_function vclos=%s",
+		   mom_output_gcstring (vclos));
+  *res = vclos;
+  return true;
+}				/* end emitter_of_function */
+
+
+
+bool
+  momfun_1itm_to_void_filler_of_function
+  (const momnode_t *clonode, momitem_t *itm)
+{
+  char bufnam[256];
+  memset (bufnam, 0, sizeof (bufnam));
+  MOM_DEBUGPRINTF (dump, "filler_of_function itm=%s", mom_item_cstring (itm));
+  if (!clonode || clonode->slen < 1)
+    MOM_FATAPRINTF ("filler_of_function %s has bad closure %s",
+		    mom_item_cstring (itm),
+		    mom_output_gcstring (mom_nodev (clonode)));
+  momitem_t *itmsig = mom_value_to_item (clonode->arrsons[0]);
+  if (!itmsig
+      || itmsig->itm_kind != MOM_PREDEFINED_NAMED (function_signature))
+    MOM_FATAPRINTF ("filler_of_function %s has bad closed signature %s",
+		    mom_item_cstring (itm),
+		    mom_output_gcstring (clonode->arrsons[0]));
+  momvalue_t cfunprefv = MOM_NONEV;
+  {
+    mom_item_lock (itmsig);
+    cfunprefv =
+      mom_item_unsync_get_attribute (itmsig,
+				     MOM_PREDEFINED_NAMED
+				     (c_function_prefix));
+    mom_item_unlock (itmsig);
+  }
+  if (cfunprefv.typnum != momty_string)
+    MOM_FATAPRINTF
+      ("filler_of_function %s with kind %s and bad `c_function_prefix` %s",
+       mom_item_cstring (itm), mom_item_cstring (itmsig),
+       mom_output_gcstring (cfunprefv));
+  if (snprintf
+      (bufnam, sizeof (bufnam), "%s_%s", mom_value_cstr (cfunprefv),
+       mom_item_cstring (itm)) >= (int) sizeof (bufnam))
+    MOM_FATAPRINTF ("filler_of_function %s with kind %s too long name %s",
+		    mom_item_cstring (itm), mom_item_cstring (itmsig),
+		    bufnam);
+  void *adfun = mom_dynload_symbol (bufnam);
+  if (!adfun)
+    MOM_FATAPRINTF
+      ("filler_of_function %s with kind %s failed to find C function %s",
+       mom_item_cstring (itm), mom_item_cstring (itmsig), bufnam);
+  {
+    mom_item_lock (itm);
+    itm->itm_kind = itmsig;
+    itm->itm_data1 = adfun;
+    mom_item_unlock (itm);
+  }
+  MOM_DEBUGPRINTF (load, "filler_of_function %s done kind %s function %s @%p",
+		   mom_item_cstring (itm), mom_item_cstring (itmsig), bufnam,
+		   adfun);
+  return true;
+}				/* end of filler_of_function */

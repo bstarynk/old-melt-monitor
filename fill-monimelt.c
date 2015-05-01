@@ -19,54 +19,56 @@
 
 #include "monimelt.h"
 
-void mom_predefined_items_fill (void) {
- //// assign predefined kinds
+void
+mom_predefined_items_fill (void)
+{
+  //// assign predefined kinds
 // item emitter_of_magic_attribute of kind signature_1itm_to_val
- MOM_PREDEFINED_NAMED(emitter_of_magic_attribute)->itm_kind
-   = MOM_PREDEFINED_NAMED(signature_1itm_to_val);
+  MOM_PREDEFINED_NAMED (emitter_of_magic_attribute)->itm_kind
+    = MOM_PREDEFINED_NAMED (signature_1itm_to_val);
 // item filler_of_magic_attribute of kind signature_1itm_to_void
- MOM_PREDEFINED_NAMED(filler_of_magic_attribute)->itm_kind
-   = MOM_PREDEFINED_NAMED(signature_1itm_to_void);
+  MOM_PREDEFINED_NAMED (filler_of_magic_attribute)->itm_kind
+    = MOM_PREDEFINED_NAMED (signature_1itm_to_void);
 // item scanner_of_magic_attribute of kind signature_1itm_to_void
- MOM_PREDEFINED_NAMED(scanner_of_magic_attribute)->itm_kind
-   = MOM_PREDEFINED_NAMED(signature_1itm_to_void);
+  MOM_PREDEFINED_NAMED (scanner_of_magic_attribute)->itm_kind
+    = MOM_PREDEFINED_NAMED (signature_1itm_to_void);
 // item signature_1itm_to_val of kind function_signature
- MOM_PREDEFINED_NAMED(signature_1itm_to_val)->itm_kind
-   = MOM_PREDEFINED_NAMED(function_signature);
+  MOM_PREDEFINED_NAMED (signature_1itm_to_val)->itm_kind
+    = MOM_PREDEFINED_NAMED (function_signature);
 // item signature_1itm_to_void of kind function_signature
- MOM_PREDEFINED_NAMED(signature_1itm_to_void)->itm_kind
-   = MOM_PREDEFINED_NAMED(function_signature);
+  MOM_PREDEFINED_NAMED (signature_1itm_to_void)->itm_kind
+    = MOM_PREDEFINED_NAMED (function_signature);
 // item signature_1val_to_val of kind function_signature
- MOM_PREDEFINED_NAMED(signature_1val_to_val)->itm_kind
-   = MOM_PREDEFINED_NAMED(function_signature);
+  MOM_PREDEFINED_NAMED (signature_1val_to_val)->itm_kind
+    = MOM_PREDEFINED_NAMED (function_signature);
 // item signature_1val_to_void of kind function_signature
- MOM_PREDEFINED_NAMED(signature_1val_to_void)->itm_kind
-   = MOM_PREDEFINED_NAMED(function_signature);
+  MOM_PREDEFINED_NAMED (signature_1val_to_void)->itm_kind
+    = MOM_PREDEFINED_NAMED (function_signature);
 // item signature_2itm1val_to_val of kind function_signature
- MOM_PREDEFINED_NAMED(signature_2itm1val_to_val)->itm_kind
-   = MOM_PREDEFINED_NAMED(function_signature);
+  MOM_PREDEFINED_NAMED (signature_2itm1val_to_val)->itm_kind
+    = MOM_PREDEFINED_NAMED (function_signature);
 // item signature_2itm1val_to_void of kind function_signature
- MOM_PREDEFINED_NAMED(signature_2itm1val_to_void)->itm_kind
-   = MOM_PREDEFINED_NAMED(function_signature);
+  MOM_PREDEFINED_NAMED (signature_2itm1val_to_void)->itm_kind
+    = MOM_PREDEFINED_NAMED (function_signature);
 // item signature_2itm_to_val of kind function_signature
- MOM_PREDEFINED_NAMED(signature_2itm_to_val)->itm_kind
-   = MOM_PREDEFINED_NAMED(function_signature);
+  MOM_PREDEFINED_NAMED (signature_2itm_to_val)->itm_kind
+    = MOM_PREDEFINED_NAMED (function_signature);
 // item signature_2itm_to_void of kind function_signature
- MOM_PREDEFINED_NAMED(signature_2itm_to_void)->itm_kind
-   = MOM_PREDEFINED_NAMED(function_signature);
+  MOM_PREDEFINED_NAMED (signature_2itm_to_void)->itm_kind
+    = MOM_PREDEFINED_NAMED (function_signature);
 // item signature_void_to_void of kind function_signature
- MOM_PREDEFINED_NAMED(signature_void_to_void)->itm_kind
-   = MOM_PREDEFINED_NAMED(function_signature);
+  MOM_PREDEFINED_NAMED (signature_void_to_void)->itm_kind
+    = MOM_PREDEFINED_NAMED (function_signature);
 // function item emitter_of_magic_attribute of signature_1itm_to_val:
-MOM_PREDEFINED_NAMED(emitter_of_magic_attribute)->itm_data1 =
-     mom_dynload_symbol("momfun_1val_to_val_emitter_of_magic_attribute");
+  MOM_PREDEFINED_NAMED (emitter_of_magic_attribute)->itm_data1 =
+    mom_dynload_symbol ("momfun_1val_to_val_emitter_of_magic_attribute");
 // function item filler_of_magic_attribute of signature_1itm_to_void:
-MOM_PREDEFINED_NAMED(filler_of_magic_attribute)->itm_data1 =
-     mom_dynload_symbol("momfun_1val_to_void_filler_of_magic_attribute");
+  MOM_PREDEFINED_NAMED (filler_of_magic_attribute)->itm_data1 =
+    mom_dynload_symbol ("momfun_1val_to_void_filler_of_magic_attribute");
 // function item scanner_of_magic_attribute of signature_1itm_to_void:
-MOM_PREDEFINED_NAMED(scanner_of_magic_attribute)->itm_data1 =
-     mom_dynload_symbol("momfun_1val_to_void_scanner_of_magic_attribute");
+  MOM_PREDEFINED_NAMED (scanner_of_magic_attribute)->itm_data1 =
+    mom_dynload_symbol ("momfun_1val_to_void_scanner_of_magic_attribute");
 
-} /* end mom_predefined_items_fill */
+}				/* end mom_predefined_items_fill */
 
  // end of generated file fill-monimelt.c

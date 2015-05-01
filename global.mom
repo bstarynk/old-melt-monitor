@@ -68,6 +68,13 @@
 ..
 
 
+** filler_of_function   ////// PREDEFINED
+{
+  * comment  "routine to fill loaded C functions" }
+ 
+..
+
+
 ** filler_of_magic_attribute   ////// PREDEFINED
 {
   * comment  "function to fill a magic attribute" }
