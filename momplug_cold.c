@@ -30,9 +30,19 @@ void
 momplugin_after_load (void)
 {
   MOM_INFORMPRINTF ("cold plugin after load");
-  MOM_PREDEFINED_NAMED (signature_1itm_to_void)->itm_kind =
-    MOM_PREDEFINED_NAMED (function_signature);
-  MOM_PREDEFINED_NAMED (signature_1itm_to_val)->itm_kind =
-    MOM_PREDEFINED_NAMED (function_signature);
-  MOM_DEBUGPRINTF (load, "set signatures kind to function_signature");
+  MOM_PREDEFINED_NAMED (emitter_of_magic_attribute)->itm_kind
+    = MOM_PREDEFINED_NAMED (signature_1itm_to_val);
+  MOM_PREDEFINED_NAMED (emitter_of_magic_attribute)->itm_data1 =
+    mom_dynload_symbol ("momfun_1itm_to_val_emitter_of_magic_attribute");
+
+  MOM_PREDEFINED_NAMED (scanner_of_magic_attribute)->itm_kind
+    = MOM_PREDEFINED_NAMED (signature_1itm_to_void);
+  MOM_PREDEFINED_NAMED (scanner_of_magic_attribute)->itm_data1 =
+    mom_dynload_symbol ("momfun_1itm_to_void_scanner_of_magic_attribute");
+
+  MOM_PREDEFINED_NAMED (filler_of_magic_attribute)->itm_kind
+    = MOM_PREDEFINED_NAMED (signature_1itm_to_void);
+  MOM_PREDEFINED_NAMED (filler_of_magic_attribute)->itm_data1 =
+    mom_dynload_symbol ("momfun_1itm_to_void_filler_of_magic_attribute");
+  MOM_DEBUGPRINTF (load, "set functions related to magic_attribute");
 }

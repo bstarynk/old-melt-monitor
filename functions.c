@@ -31,9 +31,9 @@ bool
   momvalue_t vclos =
     mom_nodev_new (MOM_PREDEFINED_NAMED (filler_of_magic_attribute),
 		   2,
-		   mom_nodev (itm->itm_data1),
-		   mom_nodev (itm->itm_data2));
-  MOM_DEBUGPRINTF (dump, "emitter_of_magic_attribute vclos=",
+		   mom_nodev ((momnode_t *) itm->itm_data1),
+		   mom_nodev ((momnode_t *) itm->itm_data2));
+  MOM_DEBUGPRINTF (dump, "emitter_of_magic_attribute vclos=%s",
 		   mom_output_gcstring (vclos));
   *res = vclos;
   return true;
@@ -50,8 +50,12 @@ bool
 		   "scanner_of_magic_attribute itm=%s",
 		   mom_item_cstring (itm));
   assert (itm->itm_kind == MOM_PREDEFINED_NAMED (magic_attribute));
-  momvalue_t valgetclos = mom_nodev (itm->itm_data1);
-  momvalue_t valputclos = mom_nodev (itm->itm_data2);
+  momvalue_t valgetclos = mom_nodev ((momnode_t *) itm->itm_data1);
+  momvalue_t valputclos = mom_nodev ((momnode_t *) itm->itm_data2);
+  MOM_DEBUGPRINTF (dump,
+		   "scanner_of_magic_attribute itm=%s valgetclos=%s valputclos=%s",
+		   mom_item_cstring (itm), mom_output_gcstring (valgetclos),
+		   mom_output_gcstring (valputclos));
   mom_scan_dumped_value (valgetclos);
   mom_scan_dumped_value (valputclos);
   MOM_DEBUGPRINTF (dump,
@@ -81,8 +85,8 @@ bool
     MOM_FATAPRINTF ("filler_of_magic_attribute %s has bad getter %s",
 		    mom_item_cstring (itm), mom_output_gcstring (vputclos));
   itm->itm_kind = MOM_PREDEFINED_NAMED (magic_attribute);
-  itm->itm_data1 = vgetclos.vnode;
-  itm->itm_data2 = vputclos.vnode;
+  itm->itm_data1 = (void *) vgetclos.vnode;
+  itm->itm_data2 = (void *) vputclos.vnode;
   MOM_DEBUGPRINTF (dump,
 		   "filler_of_magic_attribute itm=%s done vgetclos=%s vputclos=%s",
 		   mom_item_cstring (itm),

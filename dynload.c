@@ -39,6 +39,8 @@ mom_dynload_symbol (const char *name)
   // since plugins are dlopen-ed with RTLD_DEEPBIND we can just gind
   // symbols using the program handle.
   ptr = dlsym (mom_prog_dlhandle, name);
+  if (!ptr)
+    MOM_WARNPRINTF ("dlsym %s failed : %s", name, dlerror ());
   pthread_mutex_unlock (&dynload_mtx_mom);
   return ptr;
 }

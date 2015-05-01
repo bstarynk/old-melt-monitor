@@ -94,6 +94,7 @@
 
 ** signature_1itm_to_val   ////// PREDEFINED
 {
+  * c_function_prefix  "momfun_1val_to_val"
   * comment  "signature for function of 1 item argument and 1 value result"
  }
  
@@ -102,6 +103,7 @@
 
 ** signature_1itm_to_void   ////// PREDEFINED
 {
+  * c_function_prefix  "momfun_1val_to_void"
   * comment  "signature for function of 1 item argument and no result" }
  
 ..
@@ -145,7 +147,7 @@
 
 ** signature_2itm_to_val   ////// PREDEFINED
 {
-  * c_function_prefix  "momfun_2itm1val_to_val"
+  * c_function_prefix  "momfun_2itm_to_val"
   * comment  "signature of functions taking two items and giving one value"
  }
  

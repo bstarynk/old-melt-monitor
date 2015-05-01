@@ -1673,19 +1673,29 @@ emit_predefined_fill_mom (void)
       const momitem_t *itmkind = itmpredef->itm_kind;
       if (!itmkind)
 	continue;
+      MOM_DEBUGPRINTF (dump,
+		       "emit_predefined_fill ix#%d itmpredef %s kind %s (of kind %s)",
+		       ix, mom_item_cstring (itmpredef),
+		       mom_item_cstring (itmkind),
+		       mom_item_cstring (itmkind->itm_kind) ? : "~");
       if (itmkind->itm_kind == MOM_PREDEFINED_NAMED (function_signature))
 	{
 	  momvalue_t vprefix =
 	    mom_item_unsync_get_attribute ((momitem_t *) itmkind,
 					   MOM_PREDEFINED_NAMED
 					   (c_function_prefix));
+	  MOM_DEBUGPRINTF (dump,
+			   "emit_predefined_fill ix#%d itmpredef %s vprefix %s",
+			   ix, mom_item_cstring (itmpredef),
+			   mom_output_gcstring (vprefix));
 	  if (vprefix.typnum == momty_string)
 	    {
-	      fprintf (fout, "// function item %s of %s \n",
+	      fprintf (fout, "// function item %s of %s:\n",
 		       mom_item_cstring (itmpredef),
 		       mom_item_cstring (itmkind));
 	      emit_predefined_itemref_mom (fout, itmpredef);
-	      fprintf (fout, "->itm_data1 = mom_dynload_symbol(\"%s_%s\");\n",
+	      fprintf (fout,
+		       "->itm_data1 =\n     mom_dynload_symbol(\"%s_%s\");\n",
 		       mom_value_cstr (vprefix),
 		       mom_item_cstring (itmpredef));
 	    }
