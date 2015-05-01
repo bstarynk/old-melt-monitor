@@ -48,9 +48,22 @@
 ..
 
 
+** dumper_of_function   ////// PREDEFINED
+
+..
+
+
+** emitter_of_function   ////// PREDEFINED
+{
+  * comment  "routine to emit C functions" }
+ 
+..
+
+
 ** emitter_of_magic_attribute   ////// PREDEFINED
 {
   * comment  "predefined routine to emit magic_attribute-s" }
+ 
  
 ..
 
@@ -58,6 +71,7 @@
 ** filler_of_magic_attribute   ////// PREDEFINED
 {
   * comment  "function to fill a magic attribute" }
+ 
  
 ..
 
@@ -89,6 +103,7 @@
 {
   * comment  "predefined routine to scan magic_attribute-s" }
  
+ 
 ..
 
 
@@ -96,7 +111,7 @@
 {
   * c_function_prefix  "momfun_1val_to_val"
   * comment  "signature for function of 1 item argument and 1 value result"
- }
+  * dumped_item_emitter  ^dumper_of_function() }
  
 ..
 
@@ -104,7 +119,8 @@
 ** signature_1itm_to_void   ////// PREDEFINED
 {
   * c_function_prefix  "momfun_1val_to_void"
-  * comment  "signature for function of 1 item argument and no result" }
+  * comment  "signature for function of 1 item argument and no result"
+  * dumped_item_emitter  ^dumper_of_function() }
  
 ..
 
@@ -113,7 +129,7 @@
 {
   * c_function_prefix  "momfun_1val_to_val"
   * comment  "signature for closures with one value argument and one value result"
- }
+  * dumped_item_emitter  ^dumper_of_function() }
  
 ..
 
@@ -122,7 +138,7 @@
 {
   * c_function_prefix  "momfun_1val_to_void"
   * comment  "signature for closures with one value argument and no result"
- }
+  * dumped_item_emitter  ^dumper_of_function() }
  
 ..
 
@@ -131,7 +147,7 @@
 {
   * c_function_prefix  "momfun_2itm1val_to_val"
   * comment  "signature of functions taking two items and a value and giving a value"
- }
+  * dumped_item_emitter  ^dumper_of_function() }
  
 ..
 
@@ -140,7 +156,7 @@
 {
   * c_function_prefix  "momfun_2itm1val_to_void"
   * comment  "signature of functions taking two items and a value and giving no result"
- }
+  * dumped_item_emitter  ^dumper_of_function() }
  
 ..
 
@@ -149,7 +165,7 @@
 {
   * c_function_prefix  "momfun_2itm_to_val"
   * comment  "signature of functions taking two items and giving one value"
- }
+  * dumped_item_emitter  ^dumper_of_function() }
  
 ..
 
@@ -165,7 +181,8 @@
 ** signature_void_to_void   ////// PREDEFINED
 {
   * c_function_prefix  "momfun_void_to_void"
-  * comment  "signature for closures with no arguments and no result" }
+  * comment  "signature for closures with no arguments and no result"
+  * dumped_item_emitter  ^dumper_of_function() }
  
 ..
 
