@@ -1625,6 +1625,17 @@ emit_predefined_header_mom (void)
 }
 
 static void
+emit_predefined_itemref_mom (FILE*out, const momitem_t*itm)
+{
+  assert (dumper_mom && dumper_mom->dumagic == DUMPER_MAGIC_MOM);
+  assert (itm && itm->itm_space == momspa_predefined);
+  if (itm->itm_anonymous)
+    fprintf(out, "MOM_PREDEFINED_ANONYMOUS(%s)", mom_item_cstring(itm));
+  else
+    fprintf(out, "MOM_PREDEFINED_NAMED(%s)", mom_item_cstring(itm));    
+}
+
+static void
 emit_predefined_fill_mom (void)
 {
   assert (dumper_mom && dumper_mom->dumagic == DUMPER_MAGIC_MOM);
@@ -1636,10 +1647,21 @@ emit_predefined_fill_mom (void)
     mom_hashset_elements_set (dumper_mom->dupredefineditemset);
   assert (setpredef);
   unsigned nbpredef = setpredef->slen;
+  // first assign the kind
+  fputs(" //// assign predefined kinds\n", fout);
   for (unsigned ix = 0; ix < nbpredef; ix++)
     {
       const momitem_t *itmpredef = setpredef->arritm[ix];
       assert (itmpredef && itmpredef->itm_space == momspa_predefined);
+      MOM_DEBUGPRINTF(dump, "emit_predefined_fill ix#%d itmpredef %s", ix, mom_item_cstring(itmpredef));
+      const momitem_t* itmkind = itmpredef->itm_kind;
+      if (itmkind &&  itmkind->itm_space == momspa_predefined) {
+	fprintf(fout, "// item %s of kind %s\n" " ", mom_item_cstring(itmpredef), mom_item_cstring(itmkind));
+	emit_predefined_itemref_mom(fout, itmpredef);
+	fputs("->itm_kind =\n   ", fout);
+	emit_predefined_itemref_mom(fout, itmkind);
+	fputs(";\n", fout);
+      }
     }
   fprintf (fout, "\n} /* end mom_predefined_items_fill */\n");
   fprintf (fout, "\n // end of generated file %s\n",
