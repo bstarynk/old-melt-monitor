@@ -1264,6 +1264,13 @@ mom_load_state ()
       ldr.ldforglobals = false;
       second_pass_load_mom (false);
     }
+  /// fill the predefined
+  {
+    // this function is in the generated file fill-monimelt.c, see MOM_FILL_PREDEFINED_PATH
+    extern void mom_predefined_items_fill (void);
+    MOM_DEBUGPRINTF (load, "before predefined items fill");
+    mom_predefined_items_fill ();
+  }
   MOM_DEBUGPRINTF (load, "before transformations");
   /// execute the transformations by applying each transformer to the
   /// corresponding item value
@@ -1342,16 +1349,15 @@ mom_scan_dumped_item (const momitem_t *itm)
   if (dumper_mom->dustate != dump_scan)
     return false;
   MOM_DEBUGPRINTF (dump, "dump-scanning item %s", mom_item_cstring (itm));
-  mom_item_lock ((momitem_t *) itm);
   if (itm->itm_space == momspa_none || itm->itm_space == momspa_transient)
     {
-      mom_item_unlock ((momitem_t *) itm);
       return false;
     }
   if (mom_hashset_contains (dumper_mom->duitemuserset, itm))
     return true;
   else if (mom_hashset_contains (dumper_mom->duitemglobalset, itm))
     return true;
+  mom_item_lock ((momitem_t *) itm);
   if (itm->itm_space == momspa_user)
     dumper_mom->duitemuserset =
       mom_hashset_put (dumper_mom->duitemuserset, itm);
@@ -1618,6 +1624,29 @@ emit_predefined_header_mom (void)
   close_generated_file_dump_mom (hdout, MOM_PREDEFINED_PATH);
 }
 
+static void
+emit_predefined_fill_mom (void)
+{
+  assert (dumper_mom && dumper_mom->dumagic == DUMPER_MAGIC_MOM);
+  FILE *fout = open_generated_file_dump_mom (MOM_FILL_PREDEFINED_PATH);
+  mom_output_gplv3_notice (fout, "///", "***", MOM_FILL_PREDEFINED_PATH);
+  fprintf (fout, "\n" "#include" " " "\"monimelt.h\"\n\n");
+  fprintf (fout, "void mom_predefined_items_fill (void) {\n");
+  const momseq_t *setpredef =
+    mom_hashset_elements_set (dumper_mom->dupredefineditemset);
+  assert (setpredef);
+  unsigned nbpredef = setpredef->slen;
+  for (unsigned ix = 0; ix < nbpredef; ix++)
+    {
+      const momitem_t *itmpredef = setpredef->arritm[ix];
+      assert (itmpredef && itmpredef->itm_space == momspa_predefined);
+    }
+  fprintf (fout, "\n} /* end mom_predefined_items_fill */\n");
+  fprintf (fout, "\n // end of generated file %s\n",
+	   MOM_FILL_PREDEFINED_PATH);
+  close_generated_file_dump_mom (fout, MOM_FILL_PREDEFINED_PATH);
+}
+
 ////////////////
 static void
 emit_content_dumped_item_mom (const momitem_t *itm)
@@ -1763,8 +1792,9 @@ emit_dumped_item_mom (const momitem_t *itm)
       && !mom_hashset_contains (dumper_mom->duitemglobalset, itm))
     return;
   putc ('\n', dumper_mom->dufile);
-  if (mom_hashset_contains(dumper_mom->dupredefineditemset, itm))
-    fprintf (dumper_mom->dufile, "** %s   ////// PREDEFINED\n", mom_item_cstring (itm));
+  if (mom_hashset_contains (dumper_mom->dupredefineditemset, itm))
+    fprintf (dumper_mom->dufile, "** %s   ////// PREDEFINED\n",
+	     mom_item_cstring (itm));
   else
     fprintf (dumper_mom->dufile, "** %s\n", mom_item_cstring (itm));
   dumper_mom->duindentation = 0;
@@ -2487,6 +2517,7 @@ mom_dump_state (const char *prefix)
     }
   MOM_DEBUGPRINTF (dump, "scanned %d items", nbscan);
   emit_predefined_header_mom ();
+  emit_predefined_fill_mom ();
   MOM_INFORMPRINTF ("dumped state to prefix %s : %u global + %u user items",
 		    prefix, mom_hashset_count (dmp.duitemglobalset),
 		    mom_hashset_count (dmp.duitemuserset));
@@ -2520,6 +2551,19 @@ mom_dump_state (const char *prefix)
     MOM_DEBUGPRINTF (dump, "emitted %d user modules and %d user items",
 		     nbusrmod, nbusritm);
     dmp.dufile = NULL;
+  }
+  // unlock all the dumped items
+  {
+    const momseq_t *userset =
+      mom_hashset_elements_set (dumper_mom->duitemuserset);
+    unsigned nbuseritems = userset->slen;
+    for (unsigned ix = 0; ix < nbuseritems; ix++)
+      mom_item_unlock (userset->arritm[ix]);
+    const momseq_t *globset =
+      mom_hashset_elements_set (dumper_mom->duitemglobalset);
+    unsigned nbglobitems = globset->slen;
+    for (unsigned ix = 0; ix < nbglobitems; ix++)
+      mom_item_unlock (globset->arritm[ix]);
   }
   double endelapsedtime = mom_elapsed_real_time ();
   double endcputime = mom_clock_time (CLOCK_THREAD_CPUTIME_ID);
