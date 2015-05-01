@@ -795,7 +795,7 @@ struct momitem_st
   };
   struct momattributes_st *itm_attrs;
   struct momcomponents_st *itm_comps;
-  _Atomic momitem_t *itm_kind;
+  momitem_t * _Atomic itm_kind;
   _Atomic void *itm_data1;
   _Atomic void *itm_data2;
 };				/* end struct momitem_st */

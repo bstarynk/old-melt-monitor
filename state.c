@@ -1658,7 +1658,7 @@ emit_predefined_fill_mom (void)
       if (itmkind &&  itmkind->itm_space == momspa_predefined) {
 	fprintf(fout, "// item %s of kind %s\n" " ", mom_item_cstring(itmpredef), mom_item_cstring(itmkind));
 	emit_predefined_itemref_mom(fout, itmpredef);
-	fputs("->itm_kind =\n   ", fout);
+	fputs("->itm_kind\n   = ", fout);
 	emit_predefined_itemref_mom(fout, itmkind);
 	fputs(";\n", fout);
       }

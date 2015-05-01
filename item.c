@@ -1086,7 +1086,7 @@ mom_make_named_item (const char *namstr)
 	      else
 		hi = md;
 	    };
-	  if (hi >= blen)
+	  if (hi >= (int)blen)
 	    hi = blen-1;
 	  MOM_DEBUGPRINTF (item, "make_named_item %s lo=%d hi=%d",
 			   namstr, lo, hi);
