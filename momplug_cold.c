@@ -22,21 +22,29 @@ const char mom_plugin_GPL_compatible[] = "GPLv3+";
 void
 mom_plugin_init (const char *pluginarg, int *pargc, char ***pargv)
 {
-  MOM_INFORMPRINTF("%s plugin init pluginarg=%s\n", __FILE__, pluginarg);
-  MOM_DEBUGPRINTF(load, "cold pluginarg=%s", pluginarg);
+  MOM_INFORMPRINTF ("%s plugin init pluginarg=%s\n", __FILE__, pluginarg);
+  MOM_DEBUGPRINTF (load, "cold pluginarg=%s", pluginarg);
 }
 
 void
 momplugin_after_load (void)
 {
-  MOM_INFORMPRINTF("cold plugin after load");
-  MOM_PREDEFINED_NAMED(signature_void_to_void)->itm_kind = MOM_PREDEFINED_NAMED(function_signature);
-  MOM_PREDEFINED_NAMED(signature_1val_to_val)->itm_kind = MOM_PREDEFINED_NAMED(function_signature);
-  MOM_PREDEFINED_NAMED(signature_1val_to_void)->itm_kind = MOM_PREDEFINED_NAMED(function_signature);
-  MOM_PREDEFINED_NAMED(signature_2itm1val_to_val)->itm_kind = MOM_PREDEFINED_NAMED(function_signature);
-  MOM_PREDEFINED_NAMED(signature_2itm1val_to_void)->itm_kind = MOM_PREDEFINED_NAMED(function_signature);
-  MOM_PREDEFINED_NAMED(signature_2itm_to_val)->itm_kind = MOM_PREDEFINED_NAMED(function_signature);
-  MOM_PREDEFINED_NAMED(signature_2itm_to_void)->itm_kind = MOM_PREDEFINED_NAMED(function_signature);
-  MOM_PREDEFINED_NAMED(signature_void_to_void)->itm_kind = MOM_PREDEFINED_NAMED(function_signature);
-  MOM_DEBUGPRINTF(load, "set signatures kind to function_signature");
+  MOM_INFORMPRINTF ("cold plugin after load");
+  MOM_PREDEFINED_NAMED (signature_void_to_void)->itm_kind =
+    MOM_PREDEFINED_NAMED (function_signature);
+  MOM_PREDEFINED_NAMED (signature_1val_to_val)->itm_kind =
+    MOM_PREDEFINED_NAMED (function_signature);
+  MOM_PREDEFINED_NAMED (signature_1val_to_void)->itm_kind =
+    MOM_PREDEFINED_NAMED (function_signature);
+  MOM_PREDEFINED_NAMED (signature_2itm1val_to_val)->itm_kind =
+    MOM_PREDEFINED_NAMED (function_signature);
+  MOM_PREDEFINED_NAMED (signature_2itm1val_to_void)->itm_kind =
+    MOM_PREDEFINED_NAMED (function_signature);
+  MOM_PREDEFINED_NAMED (signature_2itm_to_val)->itm_kind =
+    MOM_PREDEFINED_NAMED (function_signature);
+  MOM_PREDEFINED_NAMED (signature_2itm_to_void)->itm_kind =
+    MOM_PREDEFINED_NAMED (function_signature);
+  MOM_PREDEFINED_NAMED (signature_void_to_void)->itm_kind =
+    MOM_PREDEFINED_NAMED (function_signature);
+  MOM_DEBUGPRINTF (load, "set signatures kind to function_signature");
 }

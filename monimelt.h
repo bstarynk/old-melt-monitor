@@ -795,7 +795,7 @@ struct momitem_st
   };
   struct momattributes_st *itm_attrs;
   struct momcomponents_st *itm_comps;
-  momitem_t * _Atomic itm_kind;
+  momitem_t *_Atomic itm_kind;
   _Atomic void *itm_data1;
   _Atomic void *itm_data2;
 };				/* end struct momitem_st */
@@ -1058,6 +1058,11 @@ const momitem_t *mom_load_new_anonymous_item (bool global);
 const momitem_t *mom_load_itemref_at (const char *fil, int lin);
 #define mom_load_itemref() mom_load_itemref_at(__FILE__,__LINE__)
 
+static inline bool mom_applyval_2itm_to_val (const momvalue_t cloval,
+					     momitem_t *arg0,
+					     momitem_t *arg1,
+					     momvalue_t *resptr);
+
 momvalue_t
 mom_item_unsync_get_attribute (momitem_t *itm, momitem_t *itmat)
 {
@@ -1071,7 +1076,11 @@ mom_item_unsync_get_attribute (momitem_t *itm, momitem_t *itmat)
       ((momitem_t *) itmat->itm_kind ==
        MOM_PREDEFINED_NAMED (magic_attribute)))
     {
-#warning do something to get magic attributes
+      momvalue_t res = MOM_NONEV;
+      momnode_t *getnod = (momnode_t *) itmat->itm_data1;
+      assert (getnod != NULL);
+      if (mom_applyval_2itm_to_val (mom_nodev (getnod), itm, itmat, &res))
+	return res;
     }
   if (itm->itm_attrs)
     {
@@ -1082,6 +1091,11 @@ mom_item_unsync_get_attribute (momitem_t *itm, momitem_t *itmat)
     }
   return MOM_NONEV;
 }
+
+static inline bool
+mom_applyval_2itm1val_to_void (const momvalue_t cloval,
+			       momitem_t *arg0,
+			       momitem_t *arg1, const momvalue_t arg2);
 
 static inline bool
 mom_item_unsync_put_attribute (momitem_t *itm, momitem_t *itmat,
@@ -1100,9 +1114,12 @@ mom_item_unsync_put_attribute (momitem_t *itm, momitem_t *itmat,
       ((momitem_t *) itmat->itm_kind ==
        MOM_PREDEFINED_NAMED (magic_attribute)))
     {
-#warning do something to put magic attributes
-      return false;
+      momnode_t *putnod = (momnode_t *) itmat->itm_data2;
+      assert (putnod != NULL);
+      return mom_applyval_2itm1val_to_void (mom_nodev (putnod), itm, itmat,
+					    val);
     }
+  //
   if (val.typnum == momty_null)
     {
       // erase the attribute
@@ -1191,6 +1208,36 @@ mom_applyval_1val_to_val (const momvalue_t cloval, const momvalue_t arg0,
     return false;
   return mom_applyclos_1val_to_val (cloval.vnode, arg0, resptr);
 }
+
+//// ========== signature_2itm_to_val 
+/* For functions with 2 item arguments and a value result, we apply them
+   with an invoking closure. The C function is supposed to return true
+   on success and false on failure (e.g. when the closure is too
+   small). Here is the signature of the function in C.  */
+typedef bool mom_2itm_to_val_sig_t (const momnode_t *closnode,
+				    momitem_t *arg0,
+				    momitem_t *arg1, momvalue_t *resptr);
+/* the prefix of such function is: */
+#define MOM_PREFIXFUN_2itm_to_val "momfun_2itm_to_val"
+/* The kind of the node connective should be
+MOM_PREDEFINED_NAMED(signature_2itm_to_val); Its itm_data1 should be
+the address of the C routine. */
+
+bool mom_applyclos_2itm_to_val (const momnode_t *closnode,
+				momitem_t *arg0,
+				momitem_t *arg1, momvalue_t *resptr);
+
+static inline bool
+mom_applyval_2itm_to_val (const momvalue_t cloval,
+			  momitem_t *arg0,
+			  momitem_t *arg1, momvalue_t *resptr)
+{
+  if (cloval.typnum != momty_node || !resptr || !arg0 || !arg1)
+    return false;
+  return mom_applyclos_2itm_to_val (cloval.vnode, arg0, arg1, resptr);
+}
+
+
 
 //// ========== signature_2itm1val_to_val 
 /* For functions with 2 item arguments, 1 value argument and a value result, we apply them

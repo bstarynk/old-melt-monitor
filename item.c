@@ -1041,7 +1041,8 @@ mom_make_named_item (const char *namstr)
 	    bix = mdbix;
 	}
     }
-  MOM_DEBUGPRINTF (item, "make_named_item %s bix=%d lobix=%d hibix=%d", namstr, bix, lobix, hibix);
+  MOM_DEBUGPRINTF (item, "make_named_item %s bix=%d lobix=%d hibix=%d",
+		   namstr, bix, lobix, hibix);
   if (bix < 0 && hibix > 0)
     {
       unsigned prevbix = hibix - 1;
@@ -1086,8 +1087,8 @@ mom_make_named_item (const char *namstr)
 	      else
 		hi = md;
 	    };
-	  if (hi >= (int)blen)
-	    hi = blen-1;
+	  if (hi >= (int) blen)
+	    hi = blen - 1;
 	  MOM_DEBUGPRINTF (item, "make_named_item %s lo=%d hi=%d",
 			   namstr, lo, hi);
 	  for (md = lo; md <= hi; md++)
