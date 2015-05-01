@@ -19,10 +19,8 @@
 
 #include "monimelt.h"
 
-void
-mom_predefined_items_fill (void)
-{
+void mom_predefined_items_fill (void) {
 
-}				/* end mom_predefined_items_fill */
+} /* end mom_predefined_items_fill */
 
  // end of generated file fill-monimelt.c

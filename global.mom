@@ -55,6 +55,13 @@
 ..
 
 
+** function_signature   ////// PREDEFINED
+{
+  * comment  "kind of function signatures" }
+ 
+..
+
+
 ** kind   ////// PREDEFINED
 {
   * comment  "very magic pseudo attribute giving the kind of items" }
