@@ -66,6 +66,15 @@
 ..
 
 
+** emitter_of_plain_kind   ////// PREDEFINED
+{
+  * comment  "routine to emit play kind items" }
+ 
+  %  ^filler_of_function( signature_1itm_to_val)
+ 
+..
+
+
 ** filler_of_function   ////// PREDEFINED
 {
   * comment  "routine to fill loaded C functions" }
@@ -78,6 +87,15 @@
 ** filler_of_magic_attribute   ////// PREDEFINED
 {
   * comment  "function to fill a magic attribute" }
+ 
+  %  ^filler_of_function( signature_1itm_to_void)
+ 
+..
+
+
+** filler_of_plain_kind   ////// PREDEFINED
+{
+  * comment  "routine to fill plain kind items" }
  
   %  ^filler_of_function( signature_1itm_to_void)
  

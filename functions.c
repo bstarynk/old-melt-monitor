@@ -172,3 +172,55 @@ bool
 		   adfun);
   return true;
 }				/* end of filler_of_function */
+
+bool
+  momfun_1itm_to_val_emitter_of_plain_kind
+  (const momnode_t *clonode, momitem_t *itm, momvalue_t *res)
+{
+  momitem_t *itmclokind = NULL;
+  MOM_DEBUGPRINTF (dump,
+		   "emitter_of_plain_kind itm=%s", mom_item_cstring (itm));
+  if (!clonode || clonode->slen == 0
+      || !(itmclokind = mom_value_to_item (clonode->arrsons[0])))
+    MOM_FATAPRINTF ("emitter_of_plain_kind itm=%s bad closure %s",
+		    mom_item_cstring (itm),
+		    mom_output_gcstring (mom_nodev (clonode)));
+
+  momvalue_t vclos =
+    mom_nodev_new (MOM_PREDEFINED_NAMED (filler_of_plain_kind),
+		   1, mom_itemv (itmclokind));
+  MOM_DEBUGPRINTF (dump, "emitter_of_plain_kind vclos=%s",
+		   mom_output_gcstring (vclos));
+  *res = vclos;
+  return true;
+}				/* end emitter_of_plain_kind */
+
+bool
+  momfun_1itm_to_void_filler_of_plain_kind
+  (const momnode_t *clonode, momitem_t *itm)
+{
+  MOM_DEBUGPRINTF (dump,
+		   "filler_of_plain_kind itm=%s", mom_item_cstring (itm));
+  if (!clonode || clonode->slen < 1)
+    MOM_FATAPRINTF ("filler_of_plain_kind %s has bad closure %s",
+		    mom_item_cstring (itm),
+		    mom_output_gcstring (mom_nodev (clonode)));
+  momitem_t *itmkind = mom_value_to_item (clonode->arrsons[0]);
+  if (!itmkind
+      || itmkind->itm_kind != MOM_PREDEFINED_NAMED (function_signature))
+    MOM_FATAPRINTF ("filler_of_plain_kind %s has bad kind %s",
+		    mom_item_cstring (itm),
+		    mom_output_gcstring (clonode->arrsons[0]));
+  assert (!itm->itm_kind || itm->itm_kind == itmkind);
+  {
+    mom_item_lock (itm);
+    itm->itm_kind = itmkind;
+    itm->itm_data1 = NULL;
+    itm->itm_data2 = NULL;
+    mom_item_unlock (itm);
+  }
+  MOM_DEBUGPRINTF (load, "filler_of_plain_kind %s done kind %s",
+		   mom_item_cstring (itm), mom_item_cstring (itmkind));
+  return true;
+
+}

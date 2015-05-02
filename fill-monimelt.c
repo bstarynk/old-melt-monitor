@@ -29,11 +29,17 @@ mom_predefined_items_fill (void)
 // item emitter_of_magic_attribute of kind signature_1itm_to_val
   MOM_PREDEFINED_NAMED (emitter_of_magic_attribute)->itm_kind
     = MOM_PREDEFINED_NAMED (signature_1itm_to_val);
+// item emitter_of_plain_kind of kind signature_1itm_to_val
+  MOM_PREDEFINED_NAMED (emitter_of_plain_kind)->itm_kind
+    = MOM_PREDEFINED_NAMED (signature_1itm_to_val);
 // item filler_of_function of kind signature_1itm_to_void
   MOM_PREDEFINED_NAMED (filler_of_function)->itm_kind
     = MOM_PREDEFINED_NAMED (signature_1itm_to_void);
 // item filler_of_magic_attribute of kind signature_1itm_to_void
   MOM_PREDEFINED_NAMED (filler_of_magic_attribute)->itm_kind
+    = MOM_PREDEFINED_NAMED (signature_1itm_to_void);
+// item filler_of_plain_kind of kind signature_1itm_to_void
+  MOM_PREDEFINED_NAMED (filler_of_plain_kind)->itm_kind
     = MOM_PREDEFINED_NAMED (signature_1itm_to_void);
 // item scanner_of_magic_attribute of kind signature_1itm_to_void
   MOM_PREDEFINED_NAMED (scanner_of_magic_attribute)->itm_kind
@@ -71,12 +77,18 @@ mom_predefined_items_fill (void)
 // function item emitter_of_magic_attribute of signature_1itm_to_val:
   MOM_PREDEFINED_NAMED (emitter_of_magic_attribute)->itm_data1 =
     mom_dynload_symbol ("momfun_1itm_to_val_emitter_of_magic_attribute");
+// function item emitter_of_plain_kind of signature_1itm_to_val:
+  MOM_PREDEFINED_NAMED (emitter_of_plain_kind)->itm_data1 =
+    mom_dynload_symbol ("momfun_1itm_to_val_emitter_of_plain_kind");
 // function item filler_of_function of signature_1itm_to_void:
   MOM_PREDEFINED_NAMED (filler_of_function)->itm_data1 =
     mom_dynload_symbol ("momfun_1itm_to_void_filler_of_function");
 // function item filler_of_magic_attribute of signature_1itm_to_void:
   MOM_PREDEFINED_NAMED (filler_of_magic_attribute)->itm_data1 =
     mom_dynload_symbol ("momfun_1itm_to_void_filler_of_magic_attribute");
+// function item filler_of_plain_kind of signature_1itm_to_void:
+  MOM_PREDEFINED_NAMED (filler_of_plain_kind)->itm_data1 =
+    mom_dynload_symbol ("momfun_1itm_to_void_filler_of_plain_kind");
 // function item scanner_of_magic_attribute of signature_1itm_to_void:
   MOM_PREDEFINED_NAMED (scanner_of_magic_attribute)->itm_data1 =
     mom_dynload_symbol ("momfun_1itm_to_void_scanner_of_magic_attribute");
