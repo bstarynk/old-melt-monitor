@@ -18,9 +18,30 @@
 ///
 
 
+** c_code_generation   ////// PREDEFINED
+{
+  * comment  "kind of transient items for C code generation" }
+ 
+..
+
+
+** c_function   ////// PREDEFINED
+{
+  * comment  "kind of C functions" }
+ 
+..
+
+
 ** c_function_prefix   ////// PREDEFINED
 {
   * comment  "gives the prefix of C functions in signatures" }
+ 
+..
+
+
+** c_module   ////// PREDEFINED
+{
+  * comment  "kind of C modules" }
  
 ..
 
@@ -105,6 +126,16 @@
 ** function_signature   ////// PREDEFINED
 {
   * comment  "kind of function signatures" }
+ 
+..
+
+
+** generate_c_module   ////// PREDEFINED
+{
+  * comment  "routine to generate a C module; returns the item on success, or an error message"
+ }
+ 
+  %  ^filler_of_function( signature_1itm_to_val)
  
 ..
 
