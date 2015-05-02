@@ -425,7 +425,9 @@ token_string_load_mom (momvalue_t *pval)
 const char *const delim_mom[] = {
   /// first the 2 bytes delimiters; notice that degree-sign °, section-sign §, are two UTF-8 bytes
   "==",
-  "**", "++", "--", "[[", "]]", "..", "_*", "_:", "°", "§", "*", "(", ")",
+  "**", "++", "--", "[[", "]]", "..", "_*", "_:",
+  "(!", "!)",
+  "°", "§", "*", "(", ")",
   "[", "]",
   "{", "}", "<", ">", "^", "!", "%", "@", "|", "&",
   NULL
@@ -795,7 +797,7 @@ mom_eat_token_load_at (const char *fil, int lin)
 
 ////////////////
 void
-load_fill_item_mom (momitem_t *itm)
+load_fill_item_mom (momitem_t *itm, bool internal)
 {				// keep in sync with emit_content_dumped_item_mom
   assert (loader_mom && loader_mom->ldmagic == LOADER_MAGIC_MOM);
   assert (itm && itm->itm_str);
@@ -914,10 +916,20 @@ load_fill_item_mom (momitem_t *itm)
   MOM_DEBUGPRINTF (load, "load_fill_item final vtok %s near %s",
 		   mom_output_gcstring (vtok),
 		   load_position_mom (NULL, 0, 0));
-  if (!mom_value_is_delim (vtok, ".."))
-    MOM_FATAPRINTF ("unexpected token %s in %s, expected ..",
-		    mom_output_gcstring (vtok),
-		    load_position_mom (NULL, 0, 0));
+  if (internal)
+    {
+      if (!mom_value_is_delim (vtok, "!)"))
+	MOM_FATAPRINTF ("unexpected token %s in %s, expected !)",
+			mom_output_gcstring (vtok),
+			load_position_mom (NULL, 0, 0));
+    }
+  else
+    {
+      if (!mom_value_is_delim (vtok, ".."))
+	MOM_FATAPRINTF ("unexpected token %s in %s, expected ..",
+			mom_output_gcstring (vtok),
+			load_position_mom (NULL, 0, 0));
+    }
   // we don't eat the .. token; the caller would skip that line
   MOM_DEBUGPRINTF (load, "load_fill_item done %s at %s\n",
 		   mom_item_cstring (itm), load_position_mom (NULL, 0, 0));
@@ -944,9 +956,19 @@ mom_load_new_anonymous_item (bool global)
 				     vtok);
       mom_eat_token_load ();
     }
-#warning mom_load_new_anonymous_item incomplete
-  MOM_FATAPRINTF ("mom_load_new_anonymous_item incomplete at %s",
-		  load_position_mom (NULL, 0, 0));
+  vtok = mom_peek_token_load ();
+  if (!mom_value_is_delim (vtok, "(!"))
+    MOM_FATAPRINTF ("unexpected token %s in %s, expected (!",
+		    mom_output_gcstring (vtok),
+		    load_position_mom (NULL, 0, 0));
+  mom_eat_token_load ();
+  load_fill_item_mom (newitm, true);
+  vtok = mom_peek_token_load ();
+  if (!mom_value_is_delim (vtok, "!)"))
+    MOM_FATAPRINTF ("unexpected token %s in %s, expected !)",
+		    mom_output_gcstring (vtok),
+		    load_position_mom (NULL, 0, 0));
+  mom_eat_token_load ();
   return newitm;
 }
 
@@ -1013,7 +1035,7 @@ second_pass_load_mom (bool global)
 			   mom_item_cstring (val.vitem),
 			   load_position_mom (NULL, 0, 0));
 	  mom_eat_token_load ();
-	  load_fill_item_mom (val.vitem);
+	  load_fill_item_mom (val.vitem, false);
 	  MOM_DEBUGPRINTF (load, "second %s pass filled item %s\n",
 			   loader_mom->ldforglobals ? "global" : "user",
 			   val.vitem->itm_str->cstr);
