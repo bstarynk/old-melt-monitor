@@ -424,9 +424,12 @@ uintptr_t mom_random_intptr (unsigned num);
 
 /// plugins are required to define
 extern const char mom_plugin_GPL_compatible[];	// a string describing the licence
+typedef void mom_plugin_init_t (const char *pluginarg, int *pargc,
+				char ***pargv);
 extern void mom_plugin_init (const char *pluginarg, int *pargc, char ***pargv);	// the plugin initializer
 /// they may also define a function to be called after load
-extern void momplugin_after_load (void);
+typedef void mom_plugin_after_load_t (void);
+extern void mom_plugin_after_load (void);
 
 struct momvalue_st
 {
@@ -554,6 +557,15 @@ struct momentry_st
   const momitem_t *ent_itm;
   momvalue_t ent_val;
 };
+
+static inline const momstring_t *
+mom_value_to_string (const momvalue_t val)
+{
+  if (val.typnum == momty_string)
+    return val.vstr;
+  else
+    return NULL;
+}
 
 struct momattributes_st
 {
@@ -789,6 +801,7 @@ void mom_queuevalue_scan_dump (struct momqueuevalues_st *qu);
 
 
 ////////////////////////////////////////////////////////////////
+/// code is supposed to lock the item with itm_mtx before using the item
 struct momitem_st
 {
   pthread_mutex_t itm_mtx;
@@ -802,9 +815,9 @@ struct momitem_st
   };
   struct momattributes_st *itm_attrs;
   struct momcomponents_st *itm_comps;
-  momitem_t *_Atomic itm_kind;
-  _Atomic void *itm_data1;
-  _Atomic void *itm_data2;
+  momitem_t *itm_kind;
+  void *itm_data1;
+  void *itm_data2;
 };				/* end struct momitem_st */
 
 static inline const char *

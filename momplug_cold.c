@@ -27,7 +27,7 @@ mom_plugin_init (const char *pluginarg, int *pargc, char ***pargv)
 }
 
 void
-momplugin_after_load (void)
+mom_plugin_after_load (void)
 {
   MOM_INFORMPRINTF ("cold plugin after load");
   MOM_PREDEFINED_NAMED (emitter_of_function)->itm_kind

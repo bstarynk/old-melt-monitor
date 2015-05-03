@@ -309,7 +309,7 @@ GC_calloc (size_t nbelem, size_t elsiz)
 char *
 mom_strftime_centi (char *buf, size_t len, const char *fmt, double ti)
 {
-  struct tm tm = { 0 };
+  struct tm tm = { };
   time_t tim = (time_t) ti;
   if (!buf || !fmt || !len)
     return NULL;
@@ -360,7 +360,7 @@ dbg_level_mom (enum mom_debug_en dbg)
 }
 
 const char *const mom_debug_names[momdbg__last] = {
-#define DEFINE_DBG_NAME_MOM(Dbg) [momdbg_##Dbg] #Dbg,
+#define DEFINE_DBG_NAME_MOM(Dbg) [momdbg_##Dbg]= #Dbg,
   MOM_DEBUG_LIST_OPTIONS (DEFINE_DBG_NAME_MOM)
 };
 
@@ -467,7 +467,8 @@ mom_load_plugin (const char *plugname, const char *plugarg, int *pargc,
     MOM_FATAPRINTF
       ("plugin %s without 'mom_plugin_GPL_compatible' string: %s", plugpath,
        dlerror ());
-  typeof (mom_plugin_init) * pluginit = dlsym (plugdlh, "mom_plugin_init");
+  mom_plugin_init_t *pluginit =
+    (mom_plugin_init_t *) dlsym (plugdlh, "mom_plugin_init");
   if (!pluginit)
     MOM_FATAPRINTF ("plugin %s without 'mom_plugin_init' function: %s",
 		    plugpath, dlerror ());
@@ -496,7 +497,7 @@ do_after_initial_load_with_plugins_mom (void)
       void *plugdlh = plugins_mom.plugins_arr[plugix].plugin_dlh;
       const char *plugnam = plugins_mom.plugins_arr[plugix].plugin_name;
       assert (plugdlh != NULL && plugnam != NULL);
-      typeof (momplugin_after_load) * plugafterload =
+      mom_plugin_after_load_t *plugafterload =
 	dlsym (plugdlh, "momplugin_after_load");
       if (plugafterload)
 	{

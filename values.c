@@ -194,9 +194,9 @@ mom_make_string_sprintf (const char *fmt, ...)
     return mom_make_string_cstr (buf);
   else
     {
-      momstring_t *res = GC_MALLOC_ATOMIC (sizeof (momstring_t) + slen + 1);
-      if (MOM_UNLIKELY (!res))
-	MOM_FATAPRINTF ("failed to allocate string of %d bytes", slen);
+      momstring_t *res = MOM_GC_SCALAR_ALLOC ("momstring",
+					      sizeof (momstring_t) + slen +
+					      1);
       memset (res, 0, sizeof (momstring_t) + slen + 1);
       va_start (args, fmt);
       vsnprintf (res->cstr, slen, fmt, args);

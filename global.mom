@@ -46,6 +46,14 @@
 ..
 
 
+** c_preparation   ////// PREDEFINED
+{
+  * comment  "in a C module, attribute giving the closure to prepare it, applied to the module and the code generator items"
+ }
+ 
+..
+
+
 ** comment   ////// PREDEFINED
 {
   * comment  "to give comments in items." }

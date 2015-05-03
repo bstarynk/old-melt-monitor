@@ -27,6 +27,8 @@ bool
   MOM_DEBUGPRINTF (dump,
 		   "emitter_of_magic_attribute itm=%s",
 		   mom_item_cstring (itm));
+  assert (clonode);
+  assert (itm);
   assert (itm->itm_kind == MOM_PREDEFINED_NAMED (magic_attribute));
   momvalue_t vclos =
     mom_nodev_new (MOM_PREDEFINED_NAMED (filler_of_magic_attribute),
@@ -46,6 +48,7 @@ bool
   momfun_1itm_to_void_scanner_of_magic_attribute
   (const momnode_t *clonode, momitem_t *itm)
 {
+  assert (clonode);
   MOM_DEBUGPRINTF (dump,
 		   "scanner_of_magic_attribute itm=%s",
 		   mom_item_cstring (itm));
@@ -103,6 +106,7 @@ bool
 {
   momitem_t *itmkind = itm->itm_kind;
   assert (itmkind);
+  assert (clonode);
   MOM_DEBUGPRINTF (dump,
 		   "emitter_of_function itm=%s kind %s (of kind %s)",
 		   mom_item_cstring (itm), mom_item_cstring (itmkind),

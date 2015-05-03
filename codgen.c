@@ -43,6 +43,22 @@ cgen_lock_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
     }
 }
 
+static void
+cgen_unlock_all_items_mom (struct codegen_mom_st *cg)
+{
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  struct momhashset_st *hset = cg->cg_lockeditemset;
+  assert (hset);
+  unsigned len = hset->hset_len;
+  for (unsigned ix = 0; ix < len; ix++)
+    {
+      momitem_t *itm = (momitem_t *) hset->hset_elems[ix];
+      if (!itm || itm == MOM_EMPTY)
+	continue;
+      mom_item_unlock (itm);
+    }
+}
+
 static void cgen_first_pass_mom (momitem_t *itmcgen);
 
 bool
@@ -55,6 +71,7 @@ bool
 		   mom_output_gcstring (mom_nodev (clonode)));
   if (!itm || itm == MOM_EMPTY)
     return false;
+  *res = MOM_NONEV;
   momitem_t *itmcgen = mom_make_anonymous_item ();
   itmcgen->itm_space = momspa_transient;
   struct codegen_mom_st *cg =
@@ -70,8 +87,12 @@ bool
   if (cg->cg_errormsg)
     goto end;
 end:
+  cgen_unlock_all_items_mom (cg);
   mom_item_unlock (itmcgen);
-  *res = MOM_NONEV;
+  if (cg->cg_errormsg)
+    *res = mom_stringv (cg->cg_errormsg);
+  else
+    *res = mom_itemv (itm);
   return true;
 }				/* end generate_c_module */
 
@@ -89,6 +110,36 @@ cgen_first_pass_mom (momitem_t *itmcgen)
       cg->cg_errormsg =
 	mom_make_string_sprintf ("module item %s is not a `c_module`",
 				 mom_item_cstring (itmmod));
+      return;
+    }
+  ///// prepare the module using its c_preparation
+  momvalue_t resprepv = MOM_NONEV;
+  momvalue_t prepv =		//
+    mom_item_unsync_get_attribute (itmmod,
+				   MOM_PREDEFINED_NAMED (c_preparation));
+  MOM_DEBUGPRINTF (gencod, "c_preparation of %s is %s",
+		   mom_item_cstring (itmmod), mom_output_gcstring (prepv));
+  if (prepv.typnum == momty_node
+      && (!mom_applyval_2itm_to_val (prepv, itmmod, itmcgen, &resprepv)
+	  || resprepv.typnum == momty_string))
+    {
+      MOM_DEBUGPRINTF (gencod, "preparation of %s gave %s",
+		       mom_item_cstring (itmmod),
+		       mom_output_gcstring (resprepv));
+      if (resprepv.typnum == momty_string)
+	cg->cg_errormsg = mom_value_to_string (resprepv);
+      else
+	cg->cg_errormsg =
+	  mom_make_string_sprintf ("module item %s preparation failed",
+				   mom_item_cstring (itmmod));
+      return;
+    }
+  else if (prepv.typnum != momty_null)
+    {
+      cg->cg_errormsg =
+	mom_make_string_sprintf ("module item %s has bad preparation %s",
+				 mom_item_cstring (itmmod),
+				 mom_output_gcstring (prepv));
       return;
     }
 }				/* end cgen_first_pass_mom */
