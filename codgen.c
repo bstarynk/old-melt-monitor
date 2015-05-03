@@ -97,6 +97,9 @@ end:
   return true;
 }				/* end generate_c_module */
 
+static void
+cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun);
+
 void
 cgen_first_pass_mom (momitem_t *itmcgen)
 {
@@ -161,19 +164,13 @@ cgen_first_pass_mom (momitem_t *itmcgen)
 	     mom_output_gcstring (funsetv));
 	  return;
 	}
-      MOM_DEBUGPRINTF (gencod, "in module %s funsv= %s gave",
+      MOM_DEBUGPRINTF (gencod, "in module %s funsv= %s gave %s",
 		       mom_item_cstring (itmmod),
 		       mom_output_gcstring (funsv),
 		       mom_output_gcstring (funsetv));
       funsv = funsetv;
     };
-  if (funsv.typnum == momty_tuple)
-    {
-      momvalue_t newsetv =
-	mom_setv_sized (funsv.vtuple->slen, funsv.vtuple->arritm);
-      funsv = newsetv;
-    }
-  if (funsv.typnum != momty_set)
+  if (funsv.typnum != momty_set && funsv.typnum != momty_tuple)
     {
       cg->cg_errormsg =
 	mom_make_string_sprintf
@@ -181,6 +178,27 @@ cgen_first_pass_mom (momitem_t *itmcgen)
 	 mom_item_cstring (itmmod), mom_output_gcstring (funsv));
       return;
     }
-  cg->cg_functionhset = mom_hashset_add_sized_items (NULL, funsv.vset->slen,
-						     funsv.vset->arritm);
+  cg->cg_functionhset = mom_hashset_add_sized_items (NULL, funsv.vsequ->slen,
+						     funsv.vsequ->arritm);
+  {
+    const momseq_t *fseq = mom_hashset_elements_set (cg->cg_functionhset);
+    assert (fseq != NULL);
+    unsigned nbfun = fseq->slen;
+    for (unsigned ix = 0; ix < nbfun; ix++)
+      {
+	cgen_scan_function_first_mom (cg, (momitem_t *) fseq->arritm[ix]);
+	if (cg->cg_errormsg)
+	  return;
+      }
+  }
 }				/* end cgen_first_pass_mom */
+
+
+static void
+cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
+{
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  assert (itmfun != NULL);
+#warning incomplete cgen_scan_function_first_mom
+  MOM_WARNPRINTF ("unimplemented cgen_scan_function_first_mom");
+}
