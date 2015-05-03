@@ -27,6 +27,7 @@ struct codegen_mom_st
 {
   unsigned cg_magic;		/* always CODEGEN_MAGIC_MOM */
   momitem_t *cg_moduleitm;	/* the module item */
+  struct momhashset_st *cg_functionhset;	/* the set of c functions */
   const momstring_t *cg_errormsg;	/* the error message */
   struct momhashset_st *cg_lockeditemset;	/* the set of locked items */
 };				/* end struct codegen_mom_st */
@@ -142,4 +143,44 @@ cgen_first_pass_mom (momitem_t *itmcgen)
 				 mom_output_gcstring (prepv));
       return;
     }
+  ///// compute into cg_functionhset the hashed set of functions
+  momvalue_t funsv =		//
+    mom_item_unsync_get_attribute (itmmod, MOM_PREDEFINED_NAMED (functions));
+  MOM_DEBUGPRINTF (gencod, "in module %s funsv= %s",
+		   mom_item_cstring (itmmod), mom_output_gcstring (funsv));
+  if (funsv.typnum == momty_node)
+    {
+      momvalue_t funsetv = MOM_NONEV;
+      if (!mom_applyval_2itm_to_val (prepv, itmmod, itmcgen, &funsetv)
+	  || (funsv.typnum != momty_set || funsv.typnum != momty_tuple))
+	{
+	  cg->cg_errormsg =
+	    mom_make_string_sprintf
+	    ("module item %s : application of `functions` clsosure %s gave non-sequence result %s",
+	     mom_item_cstring (itmmod), mom_output_gcstring (funsv),
+	     mom_output_gcstring (funsetv));
+	  return;
+	}
+      MOM_DEBUGPRINTF (gencod, "in module %s funsv= %s gave",
+		       mom_item_cstring (itmmod),
+		       mom_output_gcstring (funsv),
+		       mom_output_gcstring (funsetv));
+      funsv = funsetv;
+    };
+  if (funsv.typnum == momty_tuple)
+    {
+      momvalue_t newsetv =
+	mom_setv_sized (funsv.vtuple->slen, funsv.vtuple->arritm);
+      funsv = newsetv;
+    }
+  if (funsv.typnum != momty_set)
+    {
+      cg->cg_errormsg =
+	mom_make_string_sprintf
+	("module item %s : functions %s are not a set",
+	 mom_item_cstring (itmmod), mom_output_gcstring (funsv));
+      return;
+    }
+  cg->cg_functionhset = mom_hashset_add_sized_items (NULL, funsv.vset->slen,
+						     funsv.vset->arritm);
 }				/* end cgen_first_pass_mom */

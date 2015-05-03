@@ -138,6 +138,14 @@
 ..
 
 
+** functions   ////// PREDEFINED
+{
+  * comment  "in a C module, attribute giving the set or tuple of functions, or a closure to compute them"
+ }
+ 
+..
+
+
 ** generate_c_module   ////// PREDEFINED
 {
   * comment  "routine to generate a C module; returns the item on success, or an error message"
