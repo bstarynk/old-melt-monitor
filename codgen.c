@@ -186,6 +186,7 @@ cgen_first_pass_mom (momitem_t *itmcgen)
     unsigned nbfun = fseq->slen;
     for (unsigned ix = 0; ix < nbfun; ix++)
       {
+	cgen_lock_item_mom (cg, (momitem_t *) fseq->arritm[ix]);
 	cgen_scan_function_first_mom (cg, (momitem_t *) fseq->arritm[ix]);
 	if (cg->cg_errormsg)
 	  return;
@@ -199,6 +200,15 @@ cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
 {
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   assert (itmfun != NULL);
+  MOM_DEBUGPRINTF (gencod, "scanning function %s", mom_item_cstring (itmfun));
+  if (itmfun->itm_kind != MOM_PREDEFINED_NAMED (c_function))
+    {
+      cg->cg_errormsg =
+	mom_make_string_sprintf
+	("module item %s : function %s should have kind `c_function`",
+	 mom_item_cstring (cg->cg_moduleitm), mom_item_cstring (itmfun));
+      return;
+    }
 #warning incomplete cgen_scan_function_first_mom
   MOM_WARNPRINTF ("unimplemented cgen_scan_function_first_mom");
 }
