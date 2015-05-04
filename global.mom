@@ -208,6 +208,13 @@
 ..
 
 
+** input_types   ////// PREDEFINED
+{
+  * comment  "give the tuple of input types inside signatures" }
+ 
+..
+
+
 ** int_switch   ////// PREDEFINED
 {
   * comment  "operation for switch on integer" }
@@ -265,6 +272,13 @@
 ..
 
 
+** output_types   ////// PREDEFINED
+{
+  * comment  "give the tuple of result types inside signatures" }
+ 
+..
+
+
 ** scanner_of_magic_attribute   ////// PREDEFINED
 {
   * comment  "predefined routine to scan magic_attribute-s" }
@@ -285,7 +299,9 @@
 {
   * c_function_prefix  "momfun_1itm_to_val"
   * comment  "signature for function of 1 item argument and 1 value result"
-  * dumped_item_emitter  ^emitter_of_function() }
+  * dumped_item_emitter  ^emitter_of_function()
+  * input_types  [item]
+  * output_types  [value] }
  
   %  ^filler_of_plain_kind( function_signature)
  
@@ -296,7 +312,9 @@
 {
   * c_function_prefix  "momfun_1itm_to_void"
   * comment  "signature for function of 1 item argument and no result"
-  * dumped_item_emitter  ^emitter_of_function() }
+  * dumped_item_emitter  ^emitter_of_function()
+  * input_types  [item]
+  * output_types  [] }
  
   %  ^filler_of_plain_kind( function_signature)
  
@@ -307,7 +325,9 @@
 {
   * c_function_prefix  "momfun_1val_to_val"
   * comment  "signature for closures with one value argument and one value result"
-  * dumped_item_emitter  ^emitter_of_function() }
+  * dumped_item_emitter  ^emitter_of_function()
+  * input_types  [value]
+  * output_types  [value] }
  
   %  ^filler_of_plain_kind( function_signature)
  
@@ -318,7 +338,9 @@
 {
   * c_function_prefix  "momfun_1val_to_void"
   * comment  "signature for closures with one value argument and no result"
-  * dumped_item_emitter  ^emitter_of_function() }
+  * dumped_item_emitter  ^emitter_of_function()
+  * input_types  [value]
+  * output_types  [] }
  
   %  ^filler_of_plain_kind( function_signature)
  
@@ -329,7 +351,9 @@
 {
   * c_function_prefix  "momfun_2itm1val_to_val"
   * comment  "signature of functions taking two items and a value and giving a value"
-  * dumped_item_emitter  ^emitter_of_function() }
+  * dumped_item_emitter  ^emitter_of_function()
+  * input_types  [item item value]
+  * output_types  [value] }
  
   %  ^filler_of_plain_kind( function_signature)
  
@@ -340,7 +364,9 @@
 {
   * c_function_prefix  "momfun_2itm1val_to_void"
   * comment  "signature of functions taking two items and a value and giving no result"
-  * dumped_item_emitter  ^emitter_of_function() }
+  * dumped_item_emitter  ^emitter_of_function()
+  * input_types  [item item value]
+  * output_types  [] }
  
   %  ^filler_of_plain_kind( function_signature)
  
@@ -351,7 +377,9 @@
 {
   * c_function_prefix  "momfun_2itm_to_val"
   * comment  "signature of functions taking two items and giving one value"
-  * dumped_item_emitter  ^emitter_of_function() }
+  * dumped_item_emitter  ^emitter_of_function()
+  * input_types  [item item]
+  * output_types  [value] }
  
   %  ^filler_of_plain_kind( function_signature)
  
@@ -361,7 +389,9 @@
 ** signature_2itm_to_void   ////// PREDEFINED
 {
   * c_function_prefix  "momfun_2itm_to_void"
-  * comment  "signature of functions taking two items giving no result" }
+  * comment  "signature of functions taking two items giving no result"
+  * input_types  [item item]
+  * output_types  [] }
  
   %  ^filler_of_plain_kind( function_signature)
  
@@ -372,7 +402,9 @@
 {
   * c_function_prefix  "momfun_void_to_void"
   * comment  "signature for closures with no arguments and no result"
-  * dumped_item_emitter  ^emitter_of_function() }
+  * dumped_item_emitter  ^emitter_of_function()
+  * input_types  []
+  * output_types  [] }
  
   %  ^filler_of_plain_kind( function_signature)
  
