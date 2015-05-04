@@ -46,11 +46,6 @@
 ..
 
 
-** c_function   ////// PREDEFINED
-{
-  * comment  "kind of C functions" }
- 
-..
 
 
 ** c_function_prefix   ////// PREDEFINED

@@ -215,14 +215,7 @@ cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
   assert (itmfun != NULL);
   cg->cg_curfunitm = NULL;
   MOM_DEBUGPRINTF (gencod, "scanning function %s", mom_item_cstring (itmfun));
-  if (itmfun->itm_kind != MOM_PREDEFINED_NAMED (c_function))
-    {
-      cg->cg_errormsg =
-	mom_make_string_sprintf
-	("module item %s : function %s should have kind `c_function`",
-	 mom_item_cstring (cg->cg_moduleitm), mom_item_cstring (itmfun));
-      return;
-    }
+#warning should accept any item, but expect some attributes. We dont want a c_function kind
   cg->cg_curfunitm = itmfun;
   memset (&cg->cg_blockqueue, 0, sizeof (cg->cg_blockqueue));
   momvalue_t vstart =
@@ -340,7 +333,12 @@ cgen_scan_block_first_mom (struct codegen_mom_st *cg, momitem_t *itmblock)
   assert (vcinstrs.typnum == momty_tuple);
   unsigned nbinstrs = vcinstrs.vtuple->slen;
   for (unsigned ix = 0; ix < nbinstrs && !cg->cg_errormsg; ix++)
-    cgen_scan_instr_first_mom (cg, vcinstrs.vtuple->arritm[ix]);
+    {
+      momitem_t *instritm = vcinstrs.vtuple->arritm[ix];
+      assert (instritm != NULL);
+      cgen_lock_item_mom (cg, instritm);
+      cgen_scan_instr_first_mom (cg, instritm);
+    }
 }				/* end cgen_scan_block_first_mom */
 
 static void
