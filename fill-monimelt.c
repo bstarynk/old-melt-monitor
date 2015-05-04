@@ -19,86 +19,84 @@
 
 #include "monimelt.h"
 
-void
-mom_predefined_items_fill (void)
-{
-  //// assign predefined kinds
+void mom_predefined_items_fill (void) {
+ //// assign predefined kinds
 // item emitter_of_function of kind signature_1itm_to_val
-  MOM_PREDEFINED_NAMED (emitter_of_function)->itm_kind
-    = MOM_PREDEFINED_NAMED (signature_1itm_to_val);
+ MOM_PREDEFINED_NAMED(emitter_of_function)->itm_kind
+   = MOM_PREDEFINED_NAMED(signature_1itm_to_val);
 // item emitter_of_magic_attribute of kind signature_1itm_to_val
-  MOM_PREDEFINED_NAMED (emitter_of_magic_attribute)->itm_kind
-    = MOM_PREDEFINED_NAMED (signature_1itm_to_val);
+ MOM_PREDEFINED_NAMED(emitter_of_magic_attribute)->itm_kind
+   = MOM_PREDEFINED_NAMED(signature_1itm_to_val);
 // item emitter_of_plain_kind of kind signature_1itm_to_val
-  MOM_PREDEFINED_NAMED (emitter_of_plain_kind)->itm_kind
-    = MOM_PREDEFINED_NAMED (signature_1itm_to_val);
+ MOM_PREDEFINED_NAMED(emitter_of_plain_kind)->itm_kind
+   = MOM_PREDEFINED_NAMED(signature_1itm_to_val);
 // item filler_of_function of kind signature_1itm_to_void
-  MOM_PREDEFINED_NAMED (filler_of_function)->itm_kind
-    = MOM_PREDEFINED_NAMED (signature_1itm_to_void);
+ MOM_PREDEFINED_NAMED(filler_of_function)->itm_kind
+   = MOM_PREDEFINED_NAMED(signature_1itm_to_void);
 // item filler_of_magic_attribute of kind signature_1itm_to_void
-  MOM_PREDEFINED_NAMED (filler_of_magic_attribute)->itm_kind
-    = MOM_PREDEFINED_NAMED (signature_1itm_to_void);
+ MOM_PREDEFINED_NAMED(filler_of_magic_attribute)->itm_kind
+   = MOM_PREDEFINED_NAMED(signature_1itm_to_void);
 // item filler_of_plain_kind of kind signature_1itm_to_void
-  MOM_PREDEFINED_NAMED (filler_of_plain_kind)->itm_kind
-    = MOM_PREDEFINED_NAMED (signature_1itm_to_void);
+ MOM_PREDEFINED_NAMED(filler_of_plain_kind)->itm_kind
+   = MOM_PREDEFINED_NAMED(signature_1itm_to_void);
 // item generate_c_module of kind signature_1itm_to_val
-  MOM_PREDEFINED_NAMED (generate_c_module)->itm_kind
-    = MOM_PREDEFINED_NAMED (signature_1itm_to_val);
+ MOM_PREDEFINED_NAMED(generate_c_module)->itm_kind
+   = MOM_PREDEFINED_NAMED(signature_1itm_to_val);
 // item scanner_of_magic_attribute of kind signature_1itm_to_void
-  MOM_PREDEFINED_NAMED (scanner_of_magic_attribute)->itm_kind
-    = MOM_PREDEFINED_NAMED (signature_1itm_to_void);
+ MOM_PREDEFINED_NAMED(scanner_of_magic_attribute)->itm_kind
+   = MOM_PREDEFINED_NAMED(signature_1itm_to_void);
 // item signature_1itm_to_val of kind function_signature
-  MOM_PREDEFINED_NAMED (signature_1itm_to_val)->itm_kind
-    = MOM_PREDEFINED_NAMED (function_signature);
+ MOM_PREDEFINED_NAMED(signature_1itm_to_val)->itm_kind
+   = MOM_PREDEFINED_NAMED(function_signature);
 // item signature_1itm_to_void of kind function_signature
-  MOM_PREDEFINED_NAMED (signature_1itm_to_void)->itm_kind
-    = MOM_PREDEFINED_NAMED (function_signature);
+ MOM_PREDEFINED_NAMED(signature_1itm_to_void)->itm_kind
+   = MOM_PREDEFINED_NAMED(function_signature);
 // item signature_1val_to_val of kind function_signature
-  MOM_PREDEFINED_NAMED (signature_1val_to_val)->itm_kind
-    = MOM_PREDEFINED_NAMED (function_signature);
+ MOM_PREDEFINED_NAMED(signature_1val_to_val)->itm_kind
+   = MOM_PREDEFINED_NAMED(function_signature);
 // item signature_1val_to_void of kind function_signature
-  MOM_PREDEFINED_NAMED (signature_1val_to_void)->itm_kind
-    = MOM_PREDEFINED_NAMED (function_signature);
+ MOM_PREDEFINED_NAMED(signature_1val_to_void)->itm_kind
+   = MOM_PREDEFINED_NAMED(function_signature);
 // item signature_2itm1val_to_val of kind function_signature
-  MOM_PREDEFINED_NAMED (signature_2itm1val_to_val)->itm_kind
-    = MOM_PREDEFINED_NAMED (function_signature);
+ MOM_PREDEFINED_NAMED(signature_2itm1val_to_val)->itm_kind
+   = MOM_PREDEFINED_NAMED(function_signature);
 // item signature_2itm1val_to_void of kind function_signature
-  MOM_PREDEFINED_NAMED (signature_2itm1val_to_void)->itm_kind
-    = MOM_PREDEFINED_NAMED (function_signature);
+ MOM_PREDEFINED_NAMED(signature_2itm1val_to_void)->itm_kind
+   = MOM_PREDEFINED_NAMED(function_signature);
 // item signature_2itm_to_val of kind function_signature
-  MOM_PREDEFINED_NAMED (signature_2itm_to_val)->itm_kind
-    = MOM_PREDEFINED_NAMED (function_signature);
+ MOM_PREDEFINED_NAMED(signature_2itm_to_val)->itm_kind
+   = MOM_PREDEFINED_NAMED(function_signature);
 // item signature_2itm_to_void of kind function_signature
-  MOM_PREDEFINED_NAMED (signature_2itm_to_void)->itm_kind
-    = MOM_PREDEFINED_NAMED (function_signature);
+ MOM_PREDEFINED_NAMED(signature_2itm_to_void)->itm_kind
+   = MOM_PREDEFINED_NAMED(function_signature);
 // item signature_void_to_void of kind function_signature
-  MOM_PREDEFINED_NAMED (signature_void_to_void)->itm_kind
-    = MOM_PREDEFINED_NAMED (function_signature);
+ MOM_PREDEFINED_NAMED(signature_void_to_void)->itm_kind
+   = MOM_PREDEFINED_NAMED(function_signature);
 // function item emitter_of_function of signature_1itm_to_val:
-  MOM_PREDEFINED_NAMED (emitter_of_function)->itm_data1 =
-    mom_dynload_symbol ("momfun_1itm_to_val_emitter_of_function");
+MOM_PREDEFINED_NAMED(emitter_of_function)->itm_data1 =
+     mom_dynload_symbol("momfun_1itm_to_val_emitter_of_function");
 // function item emitter_of_magic_attribute of signature_1itm_to_val:
-  MOM_PREDEFINED_NAMED (emitter_of_magic_attribute)->itm_data1 =
-    mom_dynload_symbol ("momfun_1itm_to_val_emitter_of_magic_attribute");
+MOM_PREDEFINED_NAMED(emitter_of_magic_attribute)->itm_data1 =
+     mom_dynload_symbol("momfun_1itm_to_val_emitter_of_magic_attribute");
 // function item emitter_of_plain_kind of signature_1itm_to_val:
-  MOM_PREDEFINED_NAMED (emitter_of_plain_kind)->itm_data1 =
-    mom_dynload_symbol ("momfun_1itm_to_val_emitter_of_plain_kind");
+MOM_PREDEFINED_NAMED(emitter_of_plain_kind)->itm_data1 =
+     mom_dynload_symbol("momfun_1itm_to_val_emitter_of_plain_kind");
 // function item filler_of_function of signature_1itm_to_void:
-  MOM_PREDEFINED_NAMED (filler_of_function)->itm_data1 =
-    mom_dynload_symbol ("momfun_1itm_to_void_filler_of_function");
+MOM_PREDEFINED_NAMED(filler_of_function)->itm_data1 =
+     mom_dynload_symbol("momfun_1itm_to_void_filler_of_function");
 // function item filler_of_magic_attribute of signature_1itm_to_void:
-  MOM_PREDEFINED_NAMED (filler_of_magic_attribute)->itm_data1 =
-    mom_dynload_symbol ("momfun_1itm_to_void_filler_of_magic_attribute");
+MOM_PREDEFINED_NAMED(filler_of_magic_attribute)->itm_data1 =
+     mom_dynload_symbol("momfun_1itm_to_void_filler_of_magic_attribute");
 // function item filler_of_plain_kind of signature_1itm_to_void:
-  MOM_PREDEFINED_NAMED (filler_of_plain_kind)->itm_data1 =
-    mom_dynload_symbol ("momfun_1itm_to_void_filler_of_plain_kind");
+MOM_PREDEFINED_NAMED(filler_of_plain_kind)->itm_data1 =
+     mom_dynload_symbol("momfun_1itm_to_void_filler_of_plain_kind");
 // function item generate_c_module of signature_1itm_to_val:
-  MOM_PREDEFINED_NAMED (generate_c_module)->itm_data1 =
-    mom_dynload_symbol ("momfun_1itm_to_val_generate_c_module");
+MOM_PREDEFINED_NAMED(generate_c_module)->itm_data1 =
+     mom_dynload_symbol("momfun_1itm_to_val_generate_c_module");
 // function item scanner_of_magic_attribute of signature_1itm_to_void:
-  MOM_PREDEFINED_NAMED (scanner_of_magic_attribute)->itm_data1 =
-    mom_dynload_symbol ("momfun_1itm_to_void_scanner_of_magic_attribute");
+MOM_PREDEFINED_NAMED(scanner_of_magic_attribute)->itm_data1 =
+     mom_dynload_symbol("momfun_1itm_to_void_scanner_of_magic_attribute");
 
-}				/* end mom_predefined_items_fill */
+} /* end mom_predefined_items_fill */
 
  // end of generated file fill-monimelt.c

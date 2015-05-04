@@ -18,6 +18,20 @@
 ///
 
 
+** apply0   ////// PREDEFINED
+{
+  * comment  "operation for application without result" }
+ 
+..
+
+
+** apply1   ////// PREDEFINED
+{
+  * comment  "operation for application with single result" }
+ 
+..
+
+
 ** c_code_generation   ////// PREDEFINED
 {
   * comment  "kind of transient items for C code generation" }
@@ -50,6 +64,13 @@
 {
   * comment  "in a C module, attribute giving the closure to prepare it, applied to the module and the code generator items"
  }
+ 
+..
+
+
+** chunk   ////// PREDEFINED
+{
+  * comment  "operation for C code chunk" }
  
 ..
 
@@ -156,6 +177,27 @@
 ..
 
 
+** int_switch   ////// PREDEFINED
+{
+  * comment  "operation for switch on integer" }
+ 
+..
+
+
+** item_switch   ////// PREDEFINED
+{
+  * comment  "operation for switch on item" }
+ 
+..
+
+
+** jump   ////// PREDEFINED
+{
+  * comment  "operation for jump instruction" }
+ 
+..
+
+
 ** kind   ////// PREDEFINED
 {
   * comment  "very magic pseudo attribute giving the kind of items" }
@@ -177,6 +219,13 @@
   * comment  "predefined routine to scan magic_attribute-s" }
  
   %  ^filler_of_function( signature_1itm_to_void)
+ 
+..
+
+
+** set   ////// PREDEFINED
+{
+  * comment  "operation for assignment instruction" }
  
 ..
 
