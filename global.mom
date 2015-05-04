@@ -39,6 +39,13 @@
 ..
 
 
+** c_code   ////// PREDEFINED
+{
+  * comment  "gives the C code for something" }
+ 
+..
+
+
 ** c_code_generation   ////// PREDEFINED
 {
   * comment  "kind of transient items for C code generation" }
@@ -76,6 +83,13 @@
 ..
 
 
+** c_type   ////// PREDEFINED
+{
+  * comment  "kind of C types" }
+ 
+..
+
+
 ** chunk   ////// PREDEFINED
 {
   * comment  "operation for C code chunk" }
@@ -86,6 +100,13 @@
 ** comment   ////// PREDEFINED
 {
   * comment  "to give comments in items." }
+ 
+..
+
+
+** double   ////// PREDEFINED
+{
+  * comment  "type for double" }
  
 ..
 
@@ -188,6 +209,20 @@
 ** int_switch   ////// PREDEFINED
 {
   * comment  "operation for switch on integer" }
+ 
+..
+
+
+** integer   ////// PREDEFINED
+{
+  * comment  "type for intptr_t" }
+ 
+..
+
+
+** item   ////// PREDEFINED
+{
+  * comment  "type for momitem_t*" }
  
 ..
 
@@ -329,6 +364,13 @@
 {
   * comment  "describes the entire software system" }
  [[  emitter_of_magic_attribute  scanner_of_magic_attribute ]]
+ 
+..
+
+
+** value   ////// PREDEFINED
+{
+  * comment  "type for momvalue_t" }
  
 ..
 

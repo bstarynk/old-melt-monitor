@@ -1112,6 +1112,14 @@ mom_make_named_item (const char *namstr)
 		  pos = md;
 		  break;
 		}
+	    };
+	  if (pos < 0 && blen > 0)
+	    {
+	      const momitem_t *lastitm = buck->nambuck_arr[blen - 1];
+	      assert (lastitm && !lastitm->itm_anonymous
+		      && lastitm->itm_name);
+	      if (strcmp (lastitm->itm_name->cstr, namstr) < 0)
+		pos = blen;
 	    }
 	}
       else			// blen==0
