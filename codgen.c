@@ -26,10 +26,16 @@
 struct codegen_mom_st
 {
   unsigned cg_magic;		/* always CODEGEN_MAGIC_MOM */
+  momitem_t *cg_codgenitm;
   momitem_t *cg_moduleitm;	/* the module item */
   struct momhashset_st *cg_functionhset;	/* the set of c functions */
   const momstring_t *cg_errormsg;	/* the error message */
   struct momhashset_st *cg_lockeditemset;	/* the set of locked items */
+  momitem_t *cg_curfunitm;	/* the current function item */
+  struct momattributes_st *cg_blockassoc;	/* the association of
+						   c_block-s to a node ^c_block(<function>,<intruction-tuple>) */
+  struct momqueueitems_st cg_blockqueue;	/* the queue of c_blocks to be scanned */
+  momitem_t *cg_curblockitm;	/* the current block */
 };				/* end struct codegen_mom_st */
 
 
@@ -79,6 +85,7 @@ bool
     MOM_GC_ALLOC ("codegenerator", sizeof (struct codegen_mom_st));
   cg->cg_magic = CODEGEN_MAGIC_MOM;
   cg->cg_moduleitm = itm;
+  cg->cg_codgenitm = itmcgen;
   mom_item_lock (itmcgen);
   itmcgen->itm_kind = MOM_PREDEFINED_NAMED (c_code_generation);
   itmcgen->itm_data1 = (void *) cg;
@@ -195,11 +202,18 @@ cgen_first_pass_mom (momitem_t *itmcgen)
 }				/* end cgen_first_pass_mom */
 
 
+static void cgen_scan_block_first_mom (struct codegen_mom_st *cg,
+				       momitem_t *itmblock);
+
+static void cgen_scan_instr_first_mom (struct codegen_mom_st *cg,
+				       momitem_t *itminstr);
+
 static void
 cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
 {
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   assert (itmfun != NULL);
+  cg->cg_curfunitm = NULL;
   MOM_DEBUGPRINTF (gencod, "scanning function %s", mom_item_cstring (itmfun));
   if (itmfun->itm_kind != MOM_PREDEFINED_NAMED (c_function))
     {
@@ -209,6 +223,134 @@ cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
 	 mom_item_cstring (cg->cg_moduleitm), mom_item_cstring (itmfun));
       return;
     }
+  cg->cg_curfunitm = itmfun;
+  memset (&cg->cg_blockqueue, 0, sizeof (cg->cg_blockqueue));
+  momvalue_t vstart =
+    mom_item_unsync_get_attribute (itmfun, MOM_PREDEFINED_NAMED (start));
+  if (vstart.typnum != momty_item)
+    {
+      cg->cg_errormsg =
+	mom_make_string_sprintf
+	("module item %s : function %s has bad `start` %s",
+	 mom_item_cstring (cg->cg_moduleitm), mom_item_cstring (itmfun),
+	 mom_output_gcstring (vstart));
+      return;
+    }
+  momitem_t *itmstart = vstart.vitem;
+  cgen_lock_item_mom (cg, itmstart);
+  cgen_scan_block_first_mom (cg, itmstart);
+  while (!cg->cg_errormsg && mom_queueitem_size (&cg->cg_blockqueue) > 0)
+    {
+      momitem_t *itmblock =
+	(momitem_t *) mom_queueitem_pop_front (&cg->cg_blockqueue);
+      assert (itmblock != NULL);
+      cgen_lock_item_mom (cg, itmblock);
+      cgen_scan_block_first_mom (cg, itmblock);
+    };
+  if (cg->cg_errormsg)
+    return;
 #warning incomplete cgen_scan_function_first_mom
   MOM_WARNPRINTF ("unimplemented cgen_scan_function_first_mom");
 }
+
+
+static void
+cgen_scan_block_first_mom (struct codegen_mom_st *cg, momitem_t *itmblock)
+{
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  assert (itmblock != NULL);
+  momvalue_t vcinstrs = MOM_NONEV;
+  cg->cg_curblockitm = NULL;
+  MOM_DEBUGPRINTF (gencod, "scanning block %s", mom_item_cstring (itmblock));
+  if (itmblock->itm_kind != MOM_PREDEFINED_NAMED (c_block))
+    {
+      cg->cg_errormsg =
+	mom_make_string_sprintf
+	("module item %s : function %s has invalid block %s",
+	 mom_item_cstring (cg->cg_moduleitm),
+	 mom_item_cstring (cg->cg_curfunitm), mom_item_cstring (itmblock));
+      return;
+    }
+  {
+    momvalue_t vablock = MOM_NONEV;
+    struct momentry_st *entblock =
+      mom_attributes_find_entry (cg->cg_blockassoc, itmblock);
+    if (entblock)
+      vablock = entblock->ent_val;
+    assert (vablock.typnum == momty_null || vablock.typnum == momty_node);
+    if (vablock.typnum == momty_node)
+      {
+	assert (vablock.vnode->slen == 2
+		&& vablock.vnode->conn == MOM_PREDEFINED_NAMED (c_block));
+	momitem_t *blockfunitm =
+	  mom_value_to_item (vablock.vnode->arrsons[0]);
+	assert (blockfunitm);
+	if (blockfunitm != cg->cg_curfunitm)
+	  {
+	    cg->cg_errormsg =
+	      mom_make_string_sprintf
+	      ("module item %s : function %s has block %s already inside other function %s",
+	       mom_item_cstring (cg->cg_moduleitm),
+	       mom_item_cstring (cg->cg_curfunitm),
+	       mom_item_cstring (blockfunitm));
+	    return;
+	  }
+	else
+	  return;
+      }
+    vcinstrs = mom_item_unsync_get_attribute (itmblock,
+					      MOM_PREDEFINED_NAMED
+					      (c_instructions));
+    if (vcinstrs.typnum == momty_node)
+      {
+	momvalue_t newvcinstrs = MOM_NONEV;
+	if (mom_applyval_2itm_to_val (vcinstrs, itmblock, cg->cg_codgenitm,
+				      &newvcinstrs))
+	  vcinstrs = newvcinstrs;
+	else
+	  {
+	    cg->cg_errormsg =
+	      mom_make_string_sprintf
+	      ("module item %s : function %s has block %s with bad `c_instructions` closure %s",
+	       mom_item_cstring (cg->cg_moduleitm),
+	       mom_item_cstring (cg->cg_curfunitm),
+	       mom_output_gcstring (vcinstrs));
+	    return;
+	  }
+      };
+    if (vcinstrs.typnum == momty_tuple)
+      {
+	vablock = mom_nodev_new (MOM_PREDEFINED_NAMED (c_block), 2,
+				 mom_itemv (cg->cg_curfunitm), vcinstrs);
+	cg->cg_blockassoc = mom_attributes_put (cg->cg_blockassoc,
+						itmblock, &vablock);
+      }
+    else
+      {
+	cg->cg_errormsg =
+	  mom_make_string_sprintf
+	  ("module item %s : function %s has block %s with bad `c_instructions` %s",
+	   mom_item_cstring (cg->cg_moduleitm),
+	   mom_item_cstring (cg->cg_curfunitm),
+	   mom_output_gcstring (vcinstrs));
+	return;
+      }
+  }
+  cg->cg_curblockitm = itmblock;
+  assert (vcinstrs.typnum == momty_tuple);
+  unsigned nbinstrs = vcinstrs.vtuple->slen;
+  for (unsigned ix = 0; ix < nbinstrs && !cg->cg_errormsg; ix++)
+    cgen_scan_instr_first_mom (cg, vcinstrs.vtuple->arritm[ix]);
+}				/* end cgen_scan_block_first_mom */
+
+static void
+cgen_scan_instr_first_mom (struct codegen_mom_st *cg, momitem_t *itminstr)
+{
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  assert (itminstr != NULL);
+#warning cgen_scan_instr_first_mom incomplete
+  MOM_FATAPRINTF ("gen_scan_instr_first itminstr=%s unimplemented",
+		  mom_item_cstring (itminstr));
+}
+
+/// eof codgen.c

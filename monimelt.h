@@ -567,6 +567,15 @@ mom_value_to_string (const momvalue_t val)
     return NULL;
 }
 
+static inline const momseq_t *
+mom_value_to_sequ (const momvalue_t val)
+{
+  if (val.typnum == momty_set || val.typnum == momty_tuple)
+    return val.vsequ;
+  else
+    return NULL;
+}
+
 struct momattributes_st
 {
   uint32_t at_len;		/* allocated length */

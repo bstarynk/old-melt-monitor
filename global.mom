@@ -60,6 +60,14 @@
 ..
 
 
+** c_instructions   ////// PREDEFINED
+{
+  * comment  "attribute giving the tuple of c_instructions inside a block"
+ }
+ 
+..
+
+
 ** c_module   ////// PREDEFINED
 {
   * comment  "kind of C modules" }
