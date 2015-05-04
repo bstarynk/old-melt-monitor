@@ -46,8 +46,6 @@
 ..
 
 
-
-
 ** c_function_prefix   ////// PREDEFINED
 {
   * comment  "gives the prefix of C functions in signatures" }
