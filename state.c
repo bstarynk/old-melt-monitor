@@ -1656,20 +1656,109 @@ emit_predefined_itemref_mom (FILE *out, const momitem_t *itm)
     fprintf (out, "MOM_PREDEFINED_NAMED(%s)", mom_item_cstring (itm));
 }
 
+
+
+
+static void
+emit_signature_application_code_mom (FILE *foutaphd,
+				     FILE *foutapco,
+				     momitem_t *itmpredef,
+				     momvalue_t vprefix,
+				     momvalue_t vinputy, momvalue_t voutputy)
+{
+  char prefixbuf[256];
+  char applyvalbuf[256];
+  char applyclosbuf[256];
+  memset (prefixbuf, 0, sizeof (prefixbuf));
+  memset (applyvalbuf, 0, sizeof (applyvalbuf));
+  memset (applyclosbuf, 0, sizeof (applyclosbuf));
+  assert (dumper_mom && dumper_mom->dumagic == DUMPER_MAGIC_MOM);
+  MOM_DEBUGPRINTF (dump,
+		   "emit_signature_application_code start itmpredef=%s vprefix=%s vinputy=%s outputy=%s",
+		   mom_item_cstring (itmpredef),
+		   mom_output_gcstring (vprefix),
+		   mom_output_gcstring (vinputy),
+		   mom_output_gcstring (voutputy));
+  assert (foutaphd);
+  assert (foutapco);
+  assert (itmpredef);
+  assert (vprefix.typnum == momty_string);
+  assert (vinputy.typnum == momty_tuple);
+  assert (voutputy.typnum == momty_tuple);
+  strncpy (prefixbuf, mom_value_cstr (vprefix), sizeof (prefixbuf) - 1);
+  if (strlen (prefixbuf) >= sizeof (prefixbuf) - 16)
+    MOM_FATAPRINTF ("too long vprefix %s for itmpredef %s",
+		    mom_value_cstr (vprefix), mom_item_cstring (itmpredef));
+  assert (!strncmp (prefixbuf, "momfun_", strlen ("momfun_")));
+  char *suffix = prefixbuf + strlen ("momfun_");
+  unsigned nbinputy = vinputy.vtuple->slen;
+  unsigned nboutputy = voutputy.vtuple->slen;
+  fprintf (foutaphd, "\n\n"
+	   "// signature application support for %s\n",
+	   mom_item_cstring (itmpredef));
+  fprintf (foutapco, "\n\n" "// signature application code for %s\n",
+	   mom_item_cstring (itmpredef));
+  fprintf (foutaphd,
+	   "typedef bool mom_%s_sig_t (const momnode_t*, /* %u inputs, %u outputs: */\n",
+	   suffix, nbinputy, nboutputy);
+  for (unsigned ix = 0; ix < nbinputy; ix++)
+    {
+      momitem_t *itypitm = (momitem_t *) vinputy.vtuple->arritm[ix];
+      MOM_DEBUGPRINTF (dump,
+		       "emit_signature_application_code ix=%d itypitm=%s", ix,
+		       mom_item_cstring (itypitm));
+      assert (itypitm != NULL);
+      assert (mom_hashset_contains (dumper_mom->duitemglobalset, itypitm));
+      assert (itypitm->itm_kind == MOM_PREDEFINED_NAMED (c_type));
+      momvalue_t vccode =	//
+	mom_item_unsync_get_attribute (itypitm,
+				       MOM_PREDEFINED_NAMED (c_code));
+      assert (vccode.typnum == momty_string);
+      fprintf (foutaphd, "\t\t const %s arg%d", mom_value_cstr (vccode), ix);
+      if (ix + 1 < nbinputy || nboutputy > 0)
+	fputs (",\n", foutaphd);
+    };
+  for (unsigned ix = 0; ix < nboutputy; ix++)
+    {
+      momitem_t *otypitm = (momitem_t *) voutputy.vtuple->arritm[ix];
+      MOM_DEBUGPRINTF (dump,
+		       "emit_signature_application_code ix=%d otypitm=%s", ix,
+		       mom_item_cstring (otypitm));
+      assert (otypitm != NULL);
+      assert (mom_hashset_contains (dumper_mom->duitemglobalset, otypitm));
+      assert (otypitm->itm_kind == MOM_PREDEFINED_NAMED (c_type));
+      momvalue_t vccode =	//
+	mom_item_unsync_get_attribute (otypitm,
+				       MOM_PREDEFINED_NAMED (c_code));
+      assert (vccode.typnum == momty_string);
+      fprintf (foutaphd, "\t\t  %s* res%d", mom_value_cstr (vccode), ix);
+      if (ix + 1 < nboutputy)
+	fputs (",\n", foutaphd);
+    };
+  fputs (");\n", foutaphd);
+  fprintf (foutaphd, "\n" "#define MOM_PREFIXFUN_%s \"%s\"\n",
+	   suffix, mom_value_cstr (vprefix));
+}
+
 static void
 emit_predefined_fill_mom (void)
 {
   assert (dumper_mom && dumper_mom->dumagic == DUMPER_MAGIC_MOM);
-  FILE *fout = open_generated_file_dump_mom (MOM_FILL_PREDEFINED_PATH);
-  mom_output_gplv3_notice (fout, "///", "***", MOM_FILL_PREDEFINED_PATH);
-  fprintf (fout, "\n" "#include" " " "\"monimelt.h\"\n\n");
-  fprintf (fout, "void mom_predefined_items_fill (void) {\n");
+  FILE *foutfp = open_generated_file_dump_mom (MOM_FILL_PREDEFINED_PATH);
+  mom_output_gplv3_notice (foutfp, "///", "***", MOM_FILL_PREDEFINED_PATH);
+  FILE *foutaphd = open_generated_file_dump_mom (MOM_APPLY_HEADER_PATH);
+  mom_output_gplv3_notice (foutaphd, "///", "***", MOM_APPLY_HEADER_PATH);
+  FILE *foutapco = open_generated_file_dump_mom (MOM_APPLY_CODE_PATH);
+  mom_output_gplv3_notice (foutapco, "///", "***", MOM_APPLY_CODE_PATH);
+  fprintf (foutfp, "\n" "#include" " " "\"monimelt.h\"\n\n");
+  fprintf (foutapco, "\n" "#include" " " "\"monimelt.h\"\n\n");
+  fprintf (foutfp, "void mom_predefined_items_fill (void) {\n");
   const momseq_t *setpredef =
     mom_hashset_elements_set (dumper_mom->dupredefineditemset);
   assert (setpredef);
   unsigned nbpredef = setpredef->slen;
   // first assign the kind
-  fputs (" //// assign predefined kinds\n", fout);
+  fputs (" //// assign predefined kinds\n", foutfp);
   for (unsigned ix = 0; ix < nbpredef; ix++)
     {
       const momitem_t *itmpredef = setpredef->arritm[ix];
@@ -1679,12 +1768,12 @@ emit_predefined_fill_mom (void)
       const momitem_t *itmkind = itmpredef->itm_kind;
       if (itmkind && itmkind->itm_space == momspa_predefined)
 	{
-	  fprintf (fout, "// item %s of kind %s\n" " ",
+	  fprintf (foutfp, "// item %s of kind %s\n" " ",
 		   mom_item_cstring (itmpredef), mom_item_cstring (itmkind));
-	  emit_predefined_itemref_mom (fout, itmpredef);
-	  fputs ("->itm_kind\n   = ", fout);
-	  emit_predefined_itemref_mom (fout, itmkind);
-	  fputs (";\n", fout);
+	  emit_predefined_itemref_mom (foutfp, itmpredef);
+	  fputs ("->itm_kind\n   = ", foutfp);
+	  emit_predefined_itemref_mom (foutfp, itmkind);
+	  fputs (";\n", foutfp);
 	}
     }
   /// then, load into itm_data1 the symbol of functions
@@ -1710,24 +1799,51 @@ emit_predefined_fill_mom (void)
 			   "emit_predefined_fill ix#%d itmpredef %s vprefix %s",
 			   ix, mom_item_cstring (itmpredef),
 			   mom_output_gcstring (vprefix));
+	  momvalue_t vinputy =
+	    mom_item_unsync_get_attribute ((momitem_t *) itmkind,
+					   MOM_PREDEFINED_NAMED
+					   (input_types));
+	  momvalue_t voutputy =
+	    mom_item_unsync_get_attribute ((momitem_t *) itmkind,
+					   MOM_PREDEFINED_NAMED
+					   (output_types));
+	  MOM_DEBUGPRINTF (dump,
+			   "emit_predefined_fill ix#%d itmpredef %s vinputy %s voutputy %s",
+			   ix, mom_item_cstring (itmpredef),
+			   mom_output_gcstring (vinputy),
+			   mom_output_gcstring (voutputy));
 	  if (vprefix.typnum == momty_string)
 	    {
-	      fprintf (fout, "// function item %s of %s:\n",
+	      fprintf (foutfp, "// function item %s of %s:\n",
 		       mom_item_cstring (itmpredef),
 		       mom_item_cstring (itmkind));
-	      emit_predefined_itemref_mom (fout, itmpredef);
-	      fprintf (fout,
+	      emit_predefined_itemref_mom (foutfp, itmpredef);
+	      fprintf (foutfp,
 		       "->itm_data1 =\n     mom_dynload_symbol(\"%s_%s\");\n",
 		       mom_value_cstr (vprefix),
 		       mom_item_cstring (itmpredef));
+	      if (vinputy.typnum == momty_tuple
+		  && voutputy.typnum == momty_tuple
+		  && !strncmp (mom_value_cstr (vprefix), "momfun_",
+			       strlen ("momfun_")))
+		emit_signature_application_code_mom (foutaphd, foutapco,
+						     (momitem_t *) itmpredef,
+						     vprefix, vinputy,
+						     voutputy);
 	    }
 	}
     }
 
-  fprintf (fout, "\n} /* end mom_predefined_items_fill */\n");
-  fprintf (fout, "\n // end of generated file %s\n",
+  fprintf (foutfp, "\n} /* end mom_predefined_items_fill */\n");
+  fprintf (foutfp, "\n // end of generated file %s\n",
 	   MOM_FILL_PREDEFINED_PATH);
-  close_generated_file_dump_mom (fout, MOM_FILL_PREDEFINED_PATH);
+  close_generated_file_dump_mom (foutfp, MOM_FILL_PREDEFINED_PATH);
+  //
+  fprintf (foutapco, "\n // end of generated apply-code file %s\n", MOM_APPLY_CODE_PATH);
+  close_generated_file_dump_mom (foutapco, MOM_APPLY_CODE_PATH);
+  fprintf (foutaphd, "\n // end of generated apply-header file %s\n",
+	   MOM_APPLY_HEADER_PATH);
+  close_generated_file_dump_mom (foutaphd, MOM_APPLY_HEADER_PATH);
 }
 
 ////////////////

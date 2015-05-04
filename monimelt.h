@@ -381,6 +381,9 @@ typedef struct momvalue_st momvalue_t;
 #define MOM_USER_DATA_PATH "user.mom"
 #define MOM_PREDEFINED_PATH "predef-monimelt.h"
 #define MOM_FILL_PREDEFINED_PATH "fill-monimelt.c"
+#define MOM_APPLY_HEADER_PATH "apply-monimelt.h"
+#define MOM_APPLY_CODE_PATH "apply-monimelt.c"
+
 void mom_load_state (void);
 void mom_dump_state (const char *prefix);
 

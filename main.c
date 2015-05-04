@@ -652,7 +652,10 @@ parse_program_arguments_and_load_plugins_mom (int *pargc, char ***pargv)
 	  wanted_dir_mom = optarg;
 	  break;
 	case xtraopt_dumpstate:
-	  dump_exit_dir_mom = optarg;
+	  if (optarg && !strcmp(optarg, "."))
+	  dump_exit_dir_mom = "./";
+	  else if (optarg)
+	    dump_exit_dir_mom = optarg;	  
 	  break;
 	case xtraopt_randomidstr:
 	  {
