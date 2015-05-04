@@ -1,6 +1,7 @@
 -T momdelim_t
 -T momhash_t
 -T momitem_t
+-T momlockeditem_t
 -T momnode_t
 -T momseq_t
 -T momstring_t

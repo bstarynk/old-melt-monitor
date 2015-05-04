@@ -107,6 +107,7 @@ typedef uint32_t momhash_t;
 typedef struct momstring_st momstring_t;
 typedef struct momdelim_st momdelim_t;
 typedef struct momitem_st momitem_t;
+typedef struct momitem_st momlockeditem_t;
 typedef struct momnode_st momnode_t;
 typedef struct momseq_st momseq_t;
 typedef struct momvalue_st momvalue_t;
