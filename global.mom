@@ -32,6 +32,13 @@
 ..
 
 
+** c_block   ////// PREDEFINED
+{
+  * comment  "kind of C code block" }
+ 
+..
+
+
 ** c_code_generation   ////// PREDEFINED
 {
   * comment  "kind of transient items for C code generation" }
@@ -306,6 +313,13 @@
   * c_function_prefix  "momfun_void_to_void"
   * comment  "signature for closures with no arguments and no result"
   * dumped_item_emitter  ^emitter_of_function() }
+ 
+..
+
+
+** start   ////// PREDEFINED
+{
+  * comment  "attribute giving the starting attribute" }
  
 ..
 
