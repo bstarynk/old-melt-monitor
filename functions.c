@@ -184,8 +184,9 @@ bool
   momitem_t *itmclokind = NULL;
   MOM_DEBUGPRINTF (dump,
 		   "emitter_of_plain_kind itm=%s", mom_item_cstring (itm));
-  if (!clonode || clonode->slen == 0
-      || !(itmclokind = mom_value_to_item (clonode->arrsons[0])))
+  if (!clonode || clonode->slen == 0)
+    itmclokind = itm->itm_kind;
+  else if (!(itmclokind = mom_value_to_item (clonode->arrsons[0])))
     MOM_FATAPRINTF ("emitter_of_plain_kind itm=%s bad closure %s",
 		    mom_item_cstring (itm),
 		    mom_output_gcstring (mom_nodev (clonode)));
@@ -210,9 +211,8 @@ bool
 		    mom_item_cstring (itm),
 		    mom_output_gcstring (mom_nodev (clonode)));
   momitem_t *itmkind = mom_value_to_item (clonode->arrsons[0]);
-  if (!itmkind
-      || itmkind->itm_kind != MOM_PREDEFINED_NAMED (function_signature))
-    MOM_FATAPRINTF ("filler_of_plain_kind %s has bad kind %s",
+  if (!itmkind)
+    MOM_FATAPRINTF ("filler_of_plain_kind %s with bad kind %s",
 		    mom_item_cstring (itm),
 		    mom_output_gcstring (clonode->arrsons[0]));
   assert (!itm->itm_kind || itm->itm_kind == itmkind);

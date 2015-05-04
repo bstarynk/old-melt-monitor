@@ -85,7 +85,8 @@
 
 ** c_type   ////// PREDEFINED
 {
-  * comment  "kind of C types" }
+  * comment  "kind of C types"
+  * dumped_item_emitter  ^emitter_of_plain_kind() }
  
 ..
 
@@ -215,14 +216,20 @@
 
 ** integer   ////// PREDEFINED
 {
+  * c_code  "intptr_t"
   * comment  "type for intptr_t" }
+ 
+  %  ^filler_of_plain_kind( c_type)
  
 ..
 
 
 ** item   ////// PREDEFINED
 {
+  * c_code  "momitem_t*"
   * comment  "type for momitem_t*" }
+ 
+  %  ^filler_of_plain_kind( c_type)
  
 ..
 
@@ -370,7 +377,10 @@
 
 ** value   ////// PREDEFINED
 {
+  * c_code  "momvalue_t"
   * comment  "type for momvalue_t" }
+ 
+  %  ^filler_of_plain_kind( c_type)
  
 ..
 
