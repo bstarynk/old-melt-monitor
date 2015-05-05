@@ -1244,7 +1244,7 @@ mom_item_qsort (const momitem_t **arr, unsigned siz)
 }
 
 
-
+// if this function compiles correctly, it means that all predefined items have distinct hashcode.
 momitem_t *
 mom_predefined_item_of_hash (momhash_t h)
 {
@@ -1256,6 +1256,6 @@ mom_predefined_item_of_hash (momhash_t h)
 #define MOM_HAS_PREDEFINED_ANONYMOUS(Id,Hash) case Hash: return MOM_PREDEFINED_ANONYMOUS(Id);
 #include "predef-monimelt.h"
     default:
-      return 0;
+      return NULL;
     }
 }
