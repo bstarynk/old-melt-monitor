@@ -233,6 +233,13 @@ static void
 cgen_bind_constants_mom (struct codegen_mom_st *cg, momvalue_t vconstants);
 
 static void
+cgen_bind_closed_variables_mom (struct codegen_mom_st *cg,
+				momvalue_t vclosed);
+
+static void
+cgen_bind_closed_item_mom (struct codegen_mom_st *cg, momitem_t *itmc);
+
+static void
 cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
 {
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
@@ -287,6 +294,7 @@ cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
 			   mom_item_cstring (cg->cg_moduleitm),
 			   mom_item_cstring (itmfun),
 			   mom_output_gcstring (vstart));
+  /////
   {				/* bind the formals */
     momvalue_t vformals =	//
       mom_item_unsync_get_attribute (itmfun, MOM_PREDEFINED_NAMED (formals));
@@ -297,9 +305,10 @@ cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
 			     mom_item_cstring (itmfun),
 			     mom_output_gcstring (vformals));
     cgen_bind_formals_mom (cg, itmsignature, vformals);
-    if (cg->cg_errormsg)
-      return;
   }
+  if (cg->cg_errormsg)
+    return;
+  /////
   {				/* bind the explicit constants */
     momvalue_t vconstants =	//
       mom_item_unsync_get_attribute (itmfun,
@@ -315,6 +324,23 @@ cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
   }
   if (cg->cg_errormsg)
     return;
+  /////
+  {				/* bind the explicit closed */
+    momvalue_t vclosed =	//
+      mom_item_unsync_get_attribute (itmfun,
+				     MOM_PREDEFINED_NAMED (closed));
+    if (vclosed.typnum == momty_tuple || vclosed.typnum == momty_set)
+      cgen_bind_closed_variables_mom (cg, vclosed);
+    else if (vclosed.typnum != momty_null)
+      CGEN_ERROR_RETURN_MOM (cg,
+			     "module item %s : function %s has bad `closed` %s",
+			     mom_item_cstring (cg->cg_moduleitm),
+			     mom_item_cstring (itmfun),
+			     mom_output_gcstring (vclosed));
+  }
+  if (cg->cg_errormsg)
+    return;
+  //// 
   momitem_t *itmstart = vstart.vitem;
   cgen_lock_item_mom (cg, itmstart);
   cgen_scan_block_first_mom (cg, itmstart);
@@ -620,5 +646,52 @@ cgen_bind_constants_mom (struct codegen_mom_st *cg, momvalue_t vconstants)
 		   mom_item_cstring (cg->cg_curfunitm),
 		   mom_output_gcstring (vconstants));
 }				/* end cgen_bind_constants_mom */
+
+static void
+cgen_bind_closed_item_mom (struct codegen_mom_st *cg, momitem_t *itmc)
+{
+  MOM_DEBUGPRINTF (gencod, "in function %s binding closed item %s",
+		   mom_item_cstring (cg->cg_curfunitm),
+		   mom_item_cstring (itmc));
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  assert (itmc != NULL);
+  assert (mom_hashset_contains (cg->cg_lockeditemset, itmc));
+  if (mom_hashset_contains (cg->cg_funclosedset, itmc))
+    return;
+  momvalue_t vclobind =		//
+    mom_nodev_new (MOM_PREDEFINED_NAMED (closed),
+		   2,
+		   mom_itemv (cg->cg_curfunitm),
+		   mom_intv (mom_hashset_count (cg->cg_funclosedset)));
+  MOM_DEBUGPRINTF (gencod,
+		   "cgen_bind_constant_item function %s closed item %s bound to %s",
+		   mom_item_cstring (cg->cg_curfunitm),
+		   mom_item_cstring (itmc), mom_output_gcstring (vclobind));
+  cg->cg_funclosedset = mom_hashset_put (cg->cg_funclosedset, itmc);
+  cgen_bind_new_mom (cg, itmc, vclobind);
+}				/* end cgen_bind_closed_item_mom */
+
+
+static void
+cgen_bind_closed_variables_mom (struct codegen_mom_st *cg, momvalue_t vclosed)
+{
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  MOM_DEBUGPRINTF (gencod, "in function %s binding closed variables %s",
+		   mom_item_cstring (cg->cg_curfunitm),
+		   mom_output_gcstring (vclosed));
+  const momseq_t *seqclosed = mom_value_to_sequ (vclosed);
+  assert (seqclosed != NULL);
+  unsigned nbclosed = seqclosed->slen;
+  for (unsigned ixc = 0; ixc < nbclosed && !cg->cg_errormsg; ixc++)
+    {
+      momitem_t *itmc = (momitem_t *) seqclosed->arritm[ixc];
+      assert (itmc != NULL);
+      cgen_lock_item_mom (cg, itmc);
+      cgen_bind_closed_item_mom (cg, itmc);
+    };
+  MOM_DEBUGPRINTF (gencod, "in function %s done closed variables %s",
+		   mom_item_cstring (cg->cg_curfunitm),
+		   mom_output_gcstring (vclosed));
+}				/* end cgen_bind_closed_variables_mom */
 
 /// eof codgen.c
