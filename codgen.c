@@ -421,6 +421,7 @@ cgen_bind_new_mom (struct codegen_mom_st *cg, momitem_t *itm,
   cg->cg_funbind = mom_attributes_put (cg->cg_funbind, itm, &vbind);
 }
 
+
 static void
 cgen_bind_formals_mom (struct codegen_mom_st *cg, momitem_t *itmsignature,
 		       momvalue_t vformals)
@@ -460,9 +461,12 @@ cgen_bind_formals_mom (struct codegen_mom_st *cg, momitem_t *itmsignature,
 			   mom_output_gcstring (vformals),
 			   mom_output_gcstring (vinputy),
 			   mom_output_gcstring (voutputy));
+  //// process input formals
   for (unsigned inix = 0; inix < nbins; inix++)
     {
-      momitem_t *intypitm = tupins->arritm[inix];
+      if (cg->cg_errormsg)
+	return;
+      momitem_t *intypitm = (momitem_t *) tupins->arritm[inix];
       assert (intypitm);
       momitem_t *informalitm = vformals.vtuple->arritm[inix];
       assert (informalitm);
@@ -477,9 +481,56 @@ cgen_bind_formals_mom (struct codegen_mom_st *cg, momitem_t *itmsignature,
 			       mom_item_cstring (cg->cg_moduleitm),
 			       mom_item_cstring (cg->cg_curfunitm), inix,
 			       mom_item_cstring (intypitm));
+      momvalue_t valbind = mom_nodev_new (MOM_PREDEFINED_NAMED (formals),
+					  4,
+					  mom_itemv (cg->cg_curfunitm),
+					  mom_intv (inix),
+					  MOM_PREDEFINED_NAMED (input_types),
+					  mom_itemv (intypitm));
+      MOM_DEBUGPRINTF (gencod,
+		       "cgen_bind_formals function %s inix#%d informalitm %s valbind %s",
+		       mom_item_cstring (cg->cg_curfunitm), inix,
+		       mom_item_cstring (informalitm),
+		       mom_output_gcstring (valbind));
+      cgen_bind_new_mom (cg, informalitm, valbind);
+      if (cg->cg_errormsg)
+	return;
     }
-
-#warning cgen_bind_formals_mom unimplemented
-}
+  //// process output formals
+  for (unsigned outix = 0; outix < nbouts; outix++)
+    {
+      if (cg->cg_errormsg)
+	return;
+      momitem_t *outtypitm = (momitem_t *) tupouts->arritm[outix];
+      assert (outtypitm);
+      momitem_t *outformalitm = vformals.vtuple->arritm[outix + nbins];
+      assert (outformalitm);
+      MOM_DEBUGPRINTF (gencod,
+		       "cgen_bind_formals function %s outix#%d outtypitm %s outformalitm %s",
+		       mom_item_cstring (cg->cg_curfunitm), outix,
+		       mom_item_cstring (outtypitm),
+		       mom_item_cstring (outformalitm));
+      if (outtypitm->itm_kind != MOM_PREDEFINED_NAMED (c_type))
+	CGEN_ERROR_RETURN_MOM (cg,
+			       "module item %s : function %s bad output type #%d %s",
+			       mom_item_cstring (cg->cg_moduleitm),
+			       mom_item_cstring (cg->cg_curfunitm), outix,
+			       mom_item_cstring (outtypitm));
+      momvalue_t valbind = mom_nodev_new (MOM_PREDEFINED_NAMED (formals),
+					  4,
+					  mom_itemv (cg->cg_curfunitm),
+					  mom_intv (outix),
+					  MOM_PREDEFINED_NAMED (output_types),
+					  mom_itemv (outtypitm));
+      MOM_DEBUGPRINTF (gencod,
+		       "cgen_bind_formals function %s outix#%d outformalitm %s valbind %s",
+		       mom_item_cstring (cg->cg_curfunitm), outix,
+		       mom_item_cstring (outformalitm),
+		       mom_output_gcstring (valbind));
+      cgen_bind_new_mom (cg, outformalitm, valbind);
+      if (cg->cg_errormsg)
+	return;
+    }
+}				/* end cgen_bind_formals_mom */
 
 /// eof codgen.c
