@@ -214,10 +214,47 @@ cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   assert (itmfun != NULL);
   cg->cg_curfunitm = NULL;
+  momitem_t *itmsignature = NULL;
   MOM_DEBUGPRINTF (gencod, "scanning function %s", mom_item_cstring (itmfun));
 #warning should accept any item, but expect some attributes. We dont want a c_function kind
   cg->cg_curfunitm = itmfun;
   memset (&cg->cg_blockqueue, 0, sizeof (cg->cg_blockqueue));
+  {
+    momitem_t *itmfunkind = itmfun->itm_kind;
+    if (itmfunkind)
+      {
+	mom_item_lock (itmfunkind);
+	if (itmfunkind->itm_kind == MOM_PREDEFINED_NAMED (function_signature))
+	  {
+	    itmsignature = itmfunkind;
+	    MOM_DEBUGPRINTF (gencod, "scanning function %s itmsignature %s",
+			     mom_item_cstring (itmfun),
+			     mom_item_cstring (itmsignature));
+	  }
+	mom_item_unlock (itmfunkind);
+      }
+    momvalue_t vfunctionsig = MOM_NONEV;
+    if (!itmsignature)
+      {
+	vfunctionsig =
+	  mom_item_unsync_get_attribute (itmfun,
+					 MOM_PREDEFINED_NAMED
+					 (function_signature));
+	MOM_DEBUGPRINTF (gencod, "scanning function %s vfunctionsig=%s",
+			 mom_item_cstring (itmfun),
+			 mom_output_gcstring (vfunctionsig));
+	itmsignature = mom_value_to_item (vfunctionsig);
+      }
+  }
+  if (!itmsignature
+      || itmsignature->itm_kind != MOM_PREDEFINED_NAMED (function_signature))
+    {
+      cg->cg_errormsg =
+	mom_make_string_sprintf
+	("module item %s : function %s without signature",
+	 mom_item_cstring (cg->cg_moduleitm), mom_item_cstring (itmfun));
+      return;
+    }
   momvalue_t vstart =
     mom_item_unsync_get_attribute (itmfun, MOM_PREDEFINED_NAMED (start));
   if (vstart.typnum != momty_item)
