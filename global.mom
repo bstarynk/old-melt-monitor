@@ -107,9 +107,23 @@
 ..
 
 
+** closed   ////// PREDEFINED
+{
+  * comment  "to give set or tuple of closed values in a function" }
+ 
+..
+
+
 ** comment   ////// PREDEFINED
 {
   * comment  "to give comments in items." }
+ 
+..
+
+
+** constants   ////// PREDEFINED
+{
+  * comment  "to give set or tuple of constant values in a function" }
  
 ..
 
