@@ -1545,6 +1545,7 @@ static void
 close_generated_file_dump_mom (FILE *fil, const char *path)
 {
   assert (dumper_mom && dumper_mom->dumagic == DUMPER_MAGIC_MOM);
+  MOM_DEBUGPRINTF (dump, "close_generated_file_dump %s", path);
   assert (strlen (path) < 128);
   assert (fil);
   if (fclose (fil))
@@ -1661,7 +1662,6 @@ emit_predefined_itemref_mom (FILE *out, const momitem_t *itm)
 
 static void
 emit_signature_application_code_mom (FILE *foutaphd,
-				     FILE *foutapco,
 				     momitem_t *itmpredef,
 				     momvalue_t vprefix,
 				     momvalue_t vinputy, momvalue_t voutputy)
@@ -1680,7 +1680,6 @@ emit_signature_application_code_mom (FILE *foutaphd,
 		   mom_output_gcstring (vinputy),
 		   mom_output_gcstring (voutputy));
   assert (foutaphd);
-  assert (foutapco);
   assert (itmpredef);
   assert (vprefix.typnum == momty_string);
   assert (vinputy.typnum == momty_tuple);
@@ -1695,8 +1694,6 @@ emit_signature_application_code_mom (FILE *foutaphd,
   unsigned nboutputy = voutputy.vtuple->slen;
   fprintf (foutaphd, "\n\n"
 	   "// signature application support for %s\n",
-	   mom_item_cstring (itmpredef));
-  fprintf (foutapco, "\n\n" "// signature application code for %s\n",
 	   mom_item_cstring (itmpredef));
   fprintf (foutaphd,
 	   "typedef bool mom_%s_sig_t (const momnode_t*nod_mom, /* %u inputs, %u outputs: */\n",
@@ -1778,7 +1775,7 @@ emit_signature_application_code_mom (FILE *foutaphd,
   for (unsigned ix = 0; ix < nboutputy; ix++)
     fprintf (foutaphd, ", res%d_mom", ix);
   fprintf (foutaphd, ");\n} // end of mom_applyval_%s \n", suffix);
-  fprintf (foutapco,
+  fprintf (foutaphd,
 	   "\n" "bool\n" "mom_applyclos_%s(const momnode_t* nod_mom", suffix);
   for (unsigned ix = 0; ix < nbinputy; ix++)
     {
@@ -1789,7 +1786,7 @@ emit_signature_application_code_mom (FILE *foutaphd,
       momvalue_t vccode =	//
 	mom_item_unsync_get_attribute (itypitm,
 				       MOM_PREDEFINED_NAMED (c_code));
-      fprintf (foutapco, ", %s arg%d_mom", mom_value_cstr (vccode), ix);
+      fprintf (foutaphd, ", %s arg%d_mom", mom_value_cstr (vccode), ix);
     };
   for (unsigned ix = 0; ix < nboutputy; ix++)
     {
@@ -1800,51 +1797,51 @@ emit_signature_application_code_mom (FILE *foutaphd,
       momvalue_t vccode =	//
 	mom_item_unsync_get_attribute (otypitm,
 				       MOM_PREDEFINED_NAMED (c_code));
-      fprintf (foutapco, ",  %s* res%d_mom", mom_value_cstr (vccode), ix);
+      fprintf (foutaphd, ",  %s* res%d_mom", mom_value_cstr (vccode), ix);
     };
-  fprintf (foutapco, ")\n{\n bool ok_mom= false; //// generated in %s\n",
+  fprintf (foutaphd, ")\n{\n bool ok_mom= false; //// generated in %s\n",
 	   __FILE__);
-  fprintf (foutapco, "  if (!nod_mom) return false;\n");
-  fprintf (foutapco,
+  fprintf (foutaphd, "  if (!nod_mom) return false;\n");
+  fprintf (foutaphd,
 	   "  momitem_t* connitm_mom= (momitem_t*) nod_mom->conn;\n");
-  fprintf (foutapco, "  assert (connitm_mom != NULL);\n");
-  fprintf (foutapco,
+  fprintf (foutaphd, "  assert (connitm_mom != NULL);\n");
+  fprintf (foutaphd,
 	   "  if (MOM_UNLIKELY((const momitem_t*) connitm_mom->itm_kind\n");
-  fprintf (foutapco, "      != MOM_PREDEFINED_NAMED(%s))) goto end_mom;\n",
+  fprintf (foutaphd, "      != MOM_PREDEFINED_NAMED(%s))) goto end_mom;\n",
 	   mom_item_cstring (itmpredef));
-  fprintf (foutapco, "  void* data1_mom = connitm_mom->itm_data1;\n");
-  fprintf (foutapco, "  if (MOM_UNLIKELY(data1_mom==NULL)) {");
-  fprintf (foutapco, "    char nambuf_mom[%d];\n",
+  fprintf (foutaphd, "  void* data1_mom = connitm_mom->itm_data1;\n");
+  fprintf (foutaphd, "  if (MOM_UNLIKELY(data1_mom==NULL)) {");
+  fprintf (foutaphd, "    char nambuf_mom[%d];\n",
 	   (int) ((2 * strlen (suffix) + 192) | 0x3f) + 1);
-  fprintf (foutapco, "    memset (nambuf_mom, 0, sizeof(nambuf_mom));\n");
-  fprintf (foutapco,
+  fprintf (foutaphd, "    memset (nambuf_mom, 0, sizeof(nambuf_mom));\n");
+  fprintf (foutaphd,
 	   "    if (snprintf(nambuf_mom, sizeof(nambuf_mom), \"%s_%%s\",\n",
 	   mom_value_cstr (vprefix));
-  fprintf (foutapco,
+  fprintf (foutaphd,
 	   "                 mom_item_cstring(connitm_mom)) < (int)sizeof(nambuf_mom))\n");
-  fprintf (foutapco,
+  fprintf (foutaphd,
 	   "       ((momitem_t*)connitm_mom)->itm_data1 = data1_mom = mom_dynload_symbol(nambuf_mom);\n");
-  fprintf (foutapco,
+  fprintf (foutaphd,
 	   "    else MOM_FATAPRINTF(\"too long function name %%s for %s\","
 	   "  mom_item_cstring(connitm_mom));\n",
 	   mom_item_cstring (itmpredef));
-  fprintf (foutapco, "  };\n");
-  fprintf (foutapco,
+  fprintf (foutaphd, "  };\n");
+  fprintf (foutaphd,
 	   "  if (MOM_LIKELY(data1_mom != NULL && data1_mom != MOM_EMPTY)) {\n");
-  fprintf (foutapco,
+  fprintf (foutaphd,
 	   "     mom_%s_sig_t* fun_mom = (mom_%s_sig_t*) data1_mom;\n",
 	   suffix, suffix);
-  fprintf (foutapco, "     ok_mom = (*fun_mom) (nod_mom");
+  fprintf (foutaphd, "     ok_mom = (*fun_mom) (nod_mom");
   for (unsigned ix = 0; ix < nbinputy; ix++)
-    fprintf (foutapco, ", arg%d_mom", ix);
+    fprintf (foutaphd, ", arg%d_mom", ix);
   for (unsigned ix = 0; ix < nboutputy; ix++)
-    fprintf (foutapco, ", res%d_mom", ix);
-  fprintf (foutapco, ");\n");
-  fprintf (foutapco, "  };\n");
-  fprintf (foutapco, " end_mom:\n");
-  fprintf (foutapco, "  mom_item_unlock(connitm_mom);\n");
-  fprintf (foutapco, "  return ok_mom;\n");
-  fprintf (foutapco, "} // end of mom_applyclos_%s\n\n", suffix);
+    fprintf (foutaphd, ", res%d_mom", ix);
+  fprintf (foutaphd, ");\n");
+  fprintf (foutaphd, "  };\n");
+  fprintf (foutaphd, " end_mom:\n");
+  fprintf (foutaphd, "  mom_item_unlock(connitm_mom);\n");
+  fprintf (foutaphd, "  return ok_mom;\n");
+  fprintf (foutaphd, "} // end of mom_applyclos_%s\n\n", suffix);
 }				/* end of emit_signature_application_code_mom */
 
 
@@ -1857,10 +1854,7 @@ emit_predefined_fill_mom (void)
   mom_output_gplv3_notice (foutfp, "///", "***", MOM_FILL_PREDEFINED_PATH);
   FILE *foutaphd = open_generated_file_dump_mom (MOM_APPLY_HEADER_PATH);
   mom_output_gplv3_notice (foutaphd, "///", "***", MOM_APPLY_HEADER_PATH);
-  FILE *foutapco = open_generated_file_dump_mom (MOM_APPLY_CODE_PATH);
-  mom_output_gplv3_notice (foutapco, "///", "***", MOM_APPLY_CODE_PATH);
   fprintf (foutfp, "\n" "#include" " " "\"monimelt.h\"\n\n");
-  fprintf (foutapco, "\n" "#include" " " "\"monimelt.h\"\n\n");
   fprintf (foutfp, "void mom_predefined_items_fill (void) {\n");
   const momseq_t *setpredef =
     mom_hashset_elements_set (dumper_mom->dupredefineditemset);
@@ -1884,8 +1878,7 @@ emit_predefined_fill_mom (void)
 	  emit_predefined_itemref_mom (foutfp, itmkind);
 	  fputs (";\n", foutfp);
 	}
-    }
-#warning the generated fill-monimelt.c is wrong
+    };
   /// then, load into itm_data1 the symbol of functions
   for (unsigned ix = 0; ix < nbpredef; ix++)
     {
@@ -1948,7 +1941,7 @@ emit_predefined_fill_mom (void)
 	  if (vinputy.typnum == momty_tuple && voutputy.typnum == momty_tuple
 	      && !strncmp (mom_value_cstr (vprefix), "momfun_",
 			   strlen ("momfun_")))
-	    emit_signature_application_code_mom (foutaphd, foutapco,
+	    emit_signature_application_code_mom (foutaphd,
 						 (momitem_t *) itmpredef,
 						 vprefix, vinputy, voutputy);
 	}
@@ -1957,9 +1950,6 @@ emit_predefined_fill_mom (void)
 	       MOM_FILL_PREDEFINED_PATH);
       close_generated_file_dump_mom (foutfp, MOM_FILL_PREDEFINED_PATH);
       //
-      fprintf (foutapco, "\n // end of generated apply-code file %s\n",
-	       MOM_APPLY_CODE_PATH);
-      close_generated_file_dump_mom (foutapco, MOM_APPLY_CODE_PATH);
       fprintf (foutaphd, "\n // end of generated apply-header file %s\n",
 	       MOM_APPLY_HEADER_PATH);
       close_generated_file_dump_mom (foutaphd, MOM_APPLY_HEADER_PATH);
