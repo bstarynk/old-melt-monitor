@@ -1084,6 +1084,7 @@ mom_make_anonymous_item_at (unsigned lin)
   return mom_make_anonymous_item_salt (count + lin);
 }
 
+momitem_t *mom_predefined_item_of_hash (momhash_t h);
 // mom_scan_dumped_item returns true for an item to be scanned (non
 // null, non transient)
 bool mom_scan_dumped_item (const momitem_t *itm);

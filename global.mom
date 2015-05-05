@@ -114,6 +114,13 @@
 ..
 
 
+** code_statement   ////// PREDEFINED
+{
+  * comment  "kind of each instruction in a block" }
+ 
+..
+
+
 ** comment   ////// PREDEFINED
 {
   * comment  "to give comments in items." }

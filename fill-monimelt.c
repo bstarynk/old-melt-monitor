@@ -23,6 +23,9 @@ void
 mom_predefined_items_fill (void)
 {
   //// assign predefined kinds
+// item code_statement of kind kind
+  MOM_PREDEFINED_NAMED (code_statement)->itm_kind
+    = MOM_PREDEFINED_NAMED (kind);
 // item emitter_of_association of kind signature_1itm_to_val
   MOM_PREDEFINED_NAMED (emitter_of_association)->itm_kind
     = MOM_PREDEFINED_NAMED (signature_1itm_to_val);

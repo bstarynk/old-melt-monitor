@@ -1242,3 +1242,20 @@ mom_item_qsort (const momitem_t **arr, unsigned siz)
     }
   qsort (arr, siz, sizeof (momitem_t *), mom_itemptr_cmp);
 }
+
+
+
+momitem_t *
+mom_predefined_item_of_hash (momhash_t h)
+{
+  switch (h)
+    {
+    case 0:
+      return NULL;
+#define MOM_HAS_PREDEFINED_NAMED(Nam,Hash) case Hash: return MOM_PREDEFINED_NAMED(Nam);
+#define MOM_HAS_PREDEFINED_ANONYMOUS(Id,Hash) case Hash: return MOM_PREDEFINED_ANONYMOUS(Id);
+#include "predef-monimelt.h"
+    default:
+      return 0;
+    }
+}
