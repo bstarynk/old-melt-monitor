@@ -1533,11 +1533,17 @@ open_generated_file_dump_mom (const char *path)
   assert (isalpha (path[0]));
   char pathbuf[256];
   memset (pathbuf, 0, sizeof (pathbuf));
-  snprintf (pathbuf, sizeof (pathbuf), "%s%s%s",
-	    dumper_mom->duprefix, path, dumper_mom->durandsuffix);
+  if (snprintf (pathbuf, sizeof (pathbuf), "%s%s%s",
+		dumper_mom->duprefix, path,
+		dumper_mom->durandsuffix) >= (int) sizeof (pathbuf))
+    MOM_FATAPRINTF
+      ("too long path %s duprefix=%s durandsuffix=%s for open_generated_file_dump",
+       path, dumper_mom->duprefix, dumper_mom->durandsuffix);
   FILE *out = fopen (pathbuf, "w");
   if (!out)
     MOM_FATAPRINTF ("failed to open generated file %s: %m", pathbuf);
+  MOM_DEBUGPRINTF (dump, "open_generated_file_dump path=%s pathbuf=%s fd#%d",
+		   path, pathbuf, fileno (out));
   return out;
 }
 
@@ -1545,9 +1551,10 @@ static void
 close_generated_file_dump_mom (FILE *fil, const char *path)
 {
   assert (dumper_mom && dumper_mom->dumagic == DUMPER_MAGIC_MOM);
-  MOM_DEBUGPRINTF (dump, "close_generated_file_dump %s", path);
-  assert (strlen (path) < 128);
   assert (fil);
+  MOM_DEBUGPRINTF (dump, "close_generated_file_dump %s fd#%d", path,
+		   fileno (fil));
+  assert (strlen (path) < 128);
   if (fclose (fil))
     MOM_FATAPRINTF ("failed to close generated file %s: %m", path);
   char newpathbuf[256];
@@ -1880,6 +1887,7 @@ emit_predefined_fill_mom (void)
 	}
     };
   /// then, load into itm_data1 the symbol of functions
+  fflush (foutfp);
   for (unsigned ix = 0; ix < nbpredef; ix++)
     {
       const momitem_t *itmpredef = setpredef->arritm[ix];
@@ -1907,6 +1915,11 @@ emit_predefined_fill_mom (void)
 			   ix, mom_item_cstring (itmpredef));
 	  if (vprefix.typnum == momty_string)
 	    {
+	      MOM_DEBUGPRINTF (dump,
+			       "emit_predefined_fill ix#%d itmpredef=%s itmkind=%s",
+			       ix,
+			       mom_item_cstring (itmpredef),
+			       mom_item_cstring (itmkind));
 	      fprintf (foutfp, "// function item %s of %s:\n",
 		       mom_item_cstring (itmpredef),
 		       mom_item_cstring (itmkind));
@@ -1945,16 +1958,18 @@ emit_predefined_fill_mom (void)
 						 (momitem_t *) itmpredef,
 						 vprefix, vinputy, voutputy);
 	}
-      fprintf (foutfp, "\n} /* end mom_predefined_items_fill */\n");
-      fprintf (foutfp, "\n // end of generated file %s\n",
-	       MOM_FILL_PREDEFINED_PATH);
-      close_generated_file_dump_mom (foutfp, MOM_FILL_PREDEFINED_PATH);
-      //
-      fprintf (foutaphd, "\n // end of generated apply-header file %s\n",
-	       MOM_APPLY_HEADER_PATH);
-      close_generated_file_dump_mom (foutaphd, MOM_APPLY_HEADER_PATH);
     }
-}
+  fprintf (foutfp, "\n} /* end mom_predefined_items_fill */\n");
+  fprintf (foutfp, "\n // end of generated file %s\n",
+	   MOM_FILL_PREDEFINED_PATH);
+  close_generated_file_dump_mom (foutfp, MOM_FILL_PREDEFINED_PATH);
+  foutfp = NULL;
+  //
+  fprintf (foutaphd, "\n // end of generated apply-header file %s\n",
+	   MOM_APPLY_HEADER_PATH);
+  close_generated_file_dump_mom (foutaphd, MOM_APPLY_HEADER_PATH);
+  foutaphd = NULL;
+}				/* end of emit_predefined_fill_mom */
 
 ////////////////
 static void

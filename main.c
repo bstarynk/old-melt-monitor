@@ -309,8 +309,9 @@ GC_calloc (size_t nbelem, size_t elsiz)
 char *
 mom_strftime_centi (char *buf, size_t len, const char *fmt, double ti)
 {
-  struct tm tm = { };
+  struct tm tm;
   time_t tim = (time_t) ti;
+  memset (&tm, 0, sizeof (tm));
   if (!buf || !fmt || !len)
     return NULL;
   strftime (buf, len, fmt, localtime_r (&tim, &tm));
