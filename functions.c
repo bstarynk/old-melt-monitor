@@ -321,7 +321,7 @@ bool
       if (vcomp.typnum != momty_node
 	  || vcomp.vnode->conn != MOM_PREDEFINED_NAMED (association)
 	  || vcomp.vnode->slen != 2)
-	MOM_FATAPRINTF ("filler_of_association %s has bad comp#ix %s",
+	MOM_FATAPRINTF ("filler_of_association %s has bad comp#%d %s",
 			mom_item_cstring (itm), ix,
 			mom_output_gcstring (vcomp));
       assoc =
@@ -336,3 +336,80 @@ bool
 		   mom_item_cstring (itm));
   return true;
 }				/* end of filler_of_association */
+
+
+
+
+////////////////////////////////////////////////////////////////
+////////// hashed_set-s
+
+
+bool
+  momfun_1itm_to_void_scanner_of_hashed_set
+  (const momnode_t *clonode, momitem_t *itm)
+{
+  assert (clonode);
+  MOM_DEBUGPRINTF (dump,
+		   "scanner_of_hashed_set itm=%s", mom_item_cstring (itm));
+  assert (itm->itm_kind == MOM_PREDEFINED_NAMED (hashed_set));
+  struct momhashset_st *hset = itm->itm_data1;
+  if (hset)
+    mom_hashset_scan_dump (hset);
+  MOM_DEBUGPRINTF (dump,
+		   "scanner_of_hashed_set end itm=%s",
+		   mom_item_cstring (itm));
+  return true;
+}				/* end scanner_of_hashed_set */
+
+bool
+  momfun_1itm_to_val_emitter_of_hashed_set
+  (const momnode_t *clonode, momitem_t *itm, momvalue_t *res)
+{
+  MOM_DEBUGPRINTF (dump,
+		   "emitter_of_hashed_set itm=%s", mom_item_cstring (itm));
+  assert (clonode);
+  assert (itm);
+  assert (itm->itm_kind == MOM_PREDEFINED_NAMED (hashed_set));
+  struct momhashset_st *hset = itm->itm_data1;
+  momseq_t *seqset = mom_hashset_elements_set (hset);
+  momvalue_t vclos =
+    mom_nodev_new (MOM_PREDEFINED_NAMED (filler_of_hashed_set),
+		   1,
+		   mom_unsafe_setv (seqset));
+  MOM_DEBUGPRINTF (dump, "emitter_of_hashed_set vclos=%s",
+		   mom_output_gcstring (vclos));
+  *res = vclos;
+  return true;
+}				/* end emitter_of_hashed_set */
+
+
+
+
+bool
+  momfun_1itm_to_void_filler_of_hashed_set
+  (const momnode_t *clonode, momitem_t *itm)
+{
+  MOM_DEBUGPRINTF (dump,
+		   "filler_of_hashed_set itm=%s", mom_item_cstring (itm));
+  if (!clonode)
+    MOM_FATAPRINTF ("filler_of_hashed_set %s without closure",
+		    mom_item_cstring (itm));
+
+  if (clonode->conn != MOM_PREDEFINED_NAMED (filler_of_hashed_set)
+      || clonode->slen != 1 || (clonode->arrsons[0].typnum != momty_null
+				&& clonode->arrsons[0].typnum != momty_set))
+    MOM_FATAPRINTF ("filler_of_hashed_set %s has bad closure",
+		    mom_item_cstring (itm));
+  itm->itm_kind = MOM_PREDEFINED_NAMED (hashed_set);
+  if (clonode->arrsons[0].typnum == momty_set)
+    {
+      struct momhashset_st *hset =	//
+	mom_hashset_add_sized_items (NULL,	//
+				     clonode->arrsons[0].vset->slen,
+				     clonode->arrsons[0].vset->arritm);
+      itm->itm_data1 = hset;
+    }
+  else
+    itm->itm_data1 = NULL;
+  return true;
+}				/* end of filler_of_hashed_set */

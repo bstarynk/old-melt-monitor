@@ -34,7 +34,9 @@
 
 ** association   ////// PREDEFINED
 {
-  * comment  "kind of items with hashed attribute payload" }
+  * comment  "kind of items with hashed attribute payload"
+  * dumped_item_emitter  ^emitter_of_association()
+  * dumped_item_scanner  ^scanner_of_association() }
  
 ..
 
@@ -153,6 +155,15 @@
 ..
 
 
+** emitter_of_hashed_set   ////// PREDEFINED
+{
+  * comment  "emitter routine for hashed set items" }
+ 
+  %  ^filler_of_function( signature_1itm_to_val)
+ 
+..
+
+
 ** emitter_of_magic_attribute   ////// PREDEFINED
 {
   * comment  "predefined routine to emit magic_attribute-s" }
@@ -183,6 +194,15 @@
 ** filler_of_function   ////// PREDEFINED
 {
   * comment  "routine to fill loaded C functions" }
+ 
+  %  ^filler_of_function( signature_1itm_to_void)
+ 
+..
+
+
+** filler_of_hashed_set   ////// PREDEFINED
+{
+  * comment  "filler routine for hashed set items" }
  
   %  ^filler_of_function( signature_1itm_to_void)
  
@@ -242,7 +262,9 @@
 
 ** hashed_set   ////// PREDEFINED
 {
-  * comment  "kind of item with hashed set payload" }
+  * comment  "kind of item with hashed set payload"
+  * dumped_item_emitter  ^emitter_of_hashed_set()
+  * dumped_item_scanner  ^scanner_of_hashed_set() }
  
 ..
 
@@ -321,6 +343,15 @@
 ** scanner_of_association   ////// PREDEFINED
 {
   * comment  "scanner routine for association items" }
+ 
+  %  ^filler_of_function( signature_1itm_to_void)
+ 
+..
+
+
+** scanner_of_hashed_set   ////// PREDEFINED
+{
+  * comment  "scanner routine for hashed set items" }
  
   %  ^filler_of_function( signature_1itm_to_void)
  
