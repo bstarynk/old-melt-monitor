@@ -266,6 +266,17 @@ cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
 	 mom_output_gcstring (vstart));
       return;
     }
+  momvalue_t vformals =
+    mom_item_unsync_get_attribute (itmfun, MOM_PREDEFINED_NAMED (formals));
+  if (vformals.typnum != momty_item)
+    {
+      cg->cg_errormsg =
+	mom_make_string_sprintf
+	("module item %s : function %s has bad `formals` %s",
+	 mom_item_cstring (cg->cg_moduleitm), mom_item_cstring (itmfun),
+	 mom_output_gcstring (vformals));
+      return;
+    }
   momitem_t *itmstart = vstart.vitem;
   cgen_lock_item_mom (cg, itmstart);
   cgen_scan_block_first_mom (cg, itmstart);

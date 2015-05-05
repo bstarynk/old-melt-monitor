@@ -182,6 +182,13 @@
 ..
 
 
+** formals   ////// PREDEFINED
+{
+  * comment  "attribute giving the tuple of formals" }
+ 
+..
+
+
 ** function_signature   ////// PREDEFINED
 {
   * comment  "kind of function signatures"
