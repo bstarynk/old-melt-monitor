@@ -23,6 +23,9 @@ void
 mom_predefined_items_fill (void)
 {
   //// assign predefined kinds
+// item emitter_of_association of kind signature_1itm_to_val
+  MOM_PREDEFINED_NAMED (emitter_of_association)->itm_kind
+    = MOM_PREDEFINED_NAMED (signature_1itm_to_val);
 // item emitter_of_function of kind signature_1itm_to_val
   MOM_PREDEFINED_NAMED (emitter_of_function)->itm_kind
     = MOM_PREDEFINED_NAMED (signature_1itm_to_val);
@@ -32,6 +35,9 @@ mom_predefined_items_fill (void)
 // item emitter_of_plain_kind of kind signature_1itm_to_val
   MOM_PREDEFINED_NAMED (emitter_of_plain_kind)->itm_kind
     = MOM_PREDEFINED_NAMED (signature_1itm_to_val);
+// item filler_of_association of kind signature_1itm_to_void
+  MOM_PREDEFINED_NAMED (filler_of_association)->itm_kind
+    = MOM_PREDEFINED_NAMED (signature_1itm_to_void);
 // item filler_of_function of kind signature_1itm_to_void
   MOM_PREDEFINED_NAMED (filler_of_function)->itm_kind
     = MOM_PREDEFINED_NAMED (signature_1itm_to_void);
@@ -48,6 +54,9 @@ mom_predefined_items_fill (void)
   MOM_PREDEFINED_NAMED (integer)->itm_kind = MOM_PREDEFINED_NAMED (c_type);
 // item item of kind c_type
   MOM_PREDEFINED_NAMED (item)->itm_kind = MOM_PREDEFINED_NAMED (c_type);
+// item scanner_of_association of kind signature_1itm_to_void
+  MOM_PREDEFINED_NAMED (scanner_of_association)->itm_kind
+    = MOM_PREDEFINED_NAMED (signature_1itm_to_void);
 // item scanner_of_magic_attribute of kind signature_1itm_to_void
   MOM_PREDEFINED_NAMED (scanner_of_magic_attribute)->itm_kind
     = MOM_PREDEFINED_NAMED (signature_1itm_to_void);
@@ -80,6 +89,9 @@ mom_predefined_items_fill (void)
     = MOM_PREDEFINED_NAMED (function_signature);
 // item value of kind c_type
   MOM_PREDEFINED_NAMED (value)->itm_kind = MOM_PREDEFINED_NAMED (c_type);
+// function item emitter_of_association of signature_1itm_to_val:
+  MOM_PREDEFINED_NAMED (emitter_of_association)->itm_data1 =
+    mom_dynload_symbol ("momfun_1itm_to_val_emitter_of_association");
 // function item emitter_of_function of signature_1itm_to_val:
   MOM_PREDEFINED_NAMED (emitter_of_function)->itm_data1 =
     mom_dynload_symbol ("momfun_1itm_to_val_emitter_of_function");
@@ -89,6 +101,9 @@ mom_predefined_items_fill (void)
 // function item emitter_of_plain_kind of signature_1itm_to_val:
   MOM_PREDEFINED_NAMED (emitter_of_plain_kind)->itm_data1 =
     mom_dynload_symbol ("momfun_1itm_to_val_emitter_of_plain_kind");
+// function item filler_of_association of signature_1itm_to_void:
+  MOM_PREDEFINED_NAMED (filler_of_association)->itm_data1 =
+    mom_dynload_symbol ("momfun_1itm_to_void_filler_of_association");
 // function item filler_of_function of signature_1itm_to_void:
   MOM_PREDEFINED_NAMED (filler_of_function)->itm_data1 =
     mom_dynload_symbol ("momfun_1itm_to_void_filler_of_function");
@@ -101,6 +116,9 @@ mom_predefined_items_fill (void)
 // function item generate_c_module of signature_1itm_to_val:
   MOM_PREDEFINED_NAMED (generate_c_module)->itm_data1 =
     mom_dynload_symbol ("momfun_1itm_to_val_generate_c_module");
+// function item scanner_of_association of signature_1itm_to_void:
+  MOM_PREDEFINED_NAMED (scanner_of_association)->itm_data1 =
+    mom_dynload_symbol ("momfun_1itm_to_void_scanner_of_association");
 // function item scanner_of_magic_attribute of signature_1itm_to_void:
   MOM_PREDEFINED_NAMED (scanner_of_magic_attribute)->itm_data1 =
     mom_dynload_symbol ("momfun_1itm_to_void_scanner_of_magic_attribute");

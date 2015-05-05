@@ -139,6 +139,8 @@
 {
   * comment  "emitter routine for association items" }
  
+  %  ^filler_of_function( signature_1itm_to_val)
+ 
 ..
 
 
@@ -172,6 +174,8 @@
 ** filler_of_association   ////// PREDEFINED
 {
   * comment  "filler routine for association items" }
+ 
+  %  ^filler_of_function( signature_1itm_to_void)
  
 ..
 
@@ -317,6 +321,8 @@
 ** scanner_of_association   ////// PREDEFINED
 {
   * comment  "scanner routine for association items" }
+ 
+  %  ^filler_of_function( signature_1itm_to_void)
  
 ..
 

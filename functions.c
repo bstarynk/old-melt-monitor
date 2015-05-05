@@ -238,7 +238,6 @@ bool
 ////////////////////////////////////////////////////////////////
 ////////// association-s
 
-#warning should put the associations routines in global.mom
 
 bool
   momfun_1itm_to_void_scanner_of_association
