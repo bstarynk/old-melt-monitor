@@ -580,6 +580,33 @@ mom_value_to_sequ (const momvalue_t val)
     return NULL;
 }
 
+static inline const momseq_t *
+mom_value_to_set (const momvalue_t val)
+{
+  if (val.typnum == momty_set)
+    return val.vset;
+  else
+    return NULL;
+}
+
+static inline const momseq_t *
+mom_value_to_tuple (const momvalue_t val)
+{
+  if (val.typnum == momty_tuple)
+    return val.vtuple;
+  else
+    return NULL;
+}
+
+static inline const momnode_t *
+mom_value_to_node (const momvalue_t val)
+{
+  if (val.typnum == momty_node)
+    return val.vnode;
+  else
+    return NULL;
+}
+
 struct momattributes_st
 {
   uint32_t at_len;		/* allocated length */

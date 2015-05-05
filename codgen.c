@@ -32,11 +32,42 @@ struct codegen_mom_st
   const momstring_t *cg_errormsg;	/* the error message */
   struct momhashset_st *cg_lockeditemset;	/* the set of locked items */
   momitem_t *cg_curfunitm;	/* the current function item */
+  struct momattributes_st *cg_funbind;	/* the function's bindings */
   struct momattributes_st *cg_blockassoc;	/* the association of
 						   c_block-s to a node ^c_block(<function>,<intruction-tuple>) */
   struct momqueueitems_st cg_blockqueue;	/* the queue of c_blocks to be scanned */
   momitem_t *cg_curblockitm;	/* the current block */
 };				/* end struct codegen_mom_st */
+
+
+#define CGEN_ERROR_RETURN_MOM_AT_BIS(Lin,Cg,Fmt,...) do {		\
+  struct codegen_mom_st *cg_##Lin = (Cg);			\
+  assert (cg_##Lin && cg_##Lin->cg_magic == CODEGEN_MAGIC_MOM);	\
+  cg_##Lin->cg_errormsg =					\
+    mom_make_string_sprintf(Fmt,__VA_ARGS__);			\
+  mom_warnprintf_at(__FILE__,Lin,"CODEGEN ERROR: %s",		\
+		    cg_##Lin->cg_errormsg->cstr);		\
+  return;							\
+ }while(0)
+#define CGEN_ERROR_RETURN_MOM_AT(Lin,Cg,Fmt,...) \
+  CGEN_ERROR_RETURN_MOM_AT_BIS(Lin,Cg,Fmt,__VA_ARGS__)
+#define CGEN_ERROR_RETURN_MOM(Cg,Fmt,...) \
+  CGEN_ERROR_RETURN_MOM_AT(__LINE__,(Cg),(Fmt),__VA_ARGS__)
+
+
+#define CGEN_ERROR_FAILURE_AT_BIS(Lin,Cg,Fmt,...) do {		\
+  struct codegen_mom_st *cg_##Lin = (Cg);			\
+  assert (cg_##Lin && cg_##Lin->cg_magic == CODEGEN_MAGIC_MOM);	\
+  cg_##Lin->cg_errormsg =					\
+    mom_make_string_sprintf(Fmt,__VA_ARGS__);			\
+  mom_warnprintf_at(__FILE__,Lin,"CODEGEN FAILURE: %s",		\
+		    cg_##Lin->cg_errormsg->cstr);		\
+  return false;							\
+ }while(0)
+#define CGEN_ERROR_FAILURE_AT(Lin,Cg,Fmt,...) \
+  CGEN_ERROR_FAILURE_AT_BIS(Lin,Cg,Fmt,__VA_ARGS__)
+#define CGEN_ERROR_FAILURE(Cg,Fmt,...) \
+  CGEN_ERROR_FAILURE_AT(__LINE__,(Cg),(Fmt),__VA_ARGS__)
 
 
 static void
@@ -117,12 +148,8 @@ cgen_first_pass_mom (momitem_t *itmcgen)
   momitem_t *itmmod = cg->cg_moduleitm;
   assert (itmmod);
   if (itmmod->itm_kind != MOM_PREDEFINED_NAMED (c_module))
-    {
-      cg->cg_errormsg =
-	mom_make_string_sprintf ("module item %s is not a `c_module`",
-				 mom_item_cstring (itmmod));
-      return;
-    }
+    CGEN_ERROR_RETURN_MOM (cg, "module item %s is not a `c_module`",
+			   mom_item_cstring (itmmod));
   ///// prepare the module using its c_preparation
   momvalue_t resprepv = MOM_NONEV;
   momvalue_t prepv =		//
@@ -140,19 +167,13 @@ cgen_first_pass_mom (momitem_t *itmcgen)
       if (resprepv.typnum == momty_string)
 	cg->cg_errormsg = mom_value_to_string (resprepv);
       else
-	cg->cg_errormsg =
-	  mom_make_string_sprintf ("module item %s preparation failed",
-				   mom_item_cstring (itmmod));
-      return;
+	CGEN_ERROR_RETURN_MOM (cg, "module item %s preparation failed",
+			       mom_item_cstring (itmmod));
     }
   else if (prepv.typnum != momty_null)
-    {
-      cg->cg_errormsg =
-	mom_make_string_sprintf ("module item %s has bad preparation %s",
-				 mom_item_cstring (itmmod),
-				 mom_output_gcstring (prepv));
-      return;
-    }
+    CGEN_ERROR_RETURN_MOM (cg, "module item %s has bad preparation %s",
+			   mom_item_cstring (itmmod),
+			   mom_output_gcstring (prepv));
   ///// compute into cg_functionhset the hashed set of functions
   momvalue_t funsv =		//
     mom_item_unsync_get_attribute (itmmod, MOM_PREDEFINED_NAMED (functions));
@@ -163,30 +184,23 @@ cgen_first_pass_mom (momitem_t *itmcgen)
       momvalue_t funsetv = MOM_NONEV;
       if (!mom_applval_2itm_to_val (prepv, itmmod, itmcgen, &funsetv)
 	  || (funsv.typnum != momty_set || funsv.typnum != momty_tuple))
-	{
-	  cg->cg_errormsg =
-	    mom_make_string_sprintf
-	    ("module item %s : application of `functions` clsosure %s gave non-sequence result %s",
-	     mom_item_cstring (itmmod), mom_output_gcstring (funsv),
-	     mom_output_gcstring (funsetv));
-	  return;
-	}
+	CGEN_ERROR_RETURN_MOM (cg,
+			       "module item %s : application of `functions` clsosure %s gave non-sequence result %s",
+			       mom_item_cstring (itmmod),
+			       mom_output_gcstring (funsv),
+			       mom_output_gcstring (funsetv));
       MOM_DEBUGPRINTF (gencod, "in module %s funsv= %s gave %s",
-		       mom_item_cstring (itmmod),
-		       mom_output_gcstring (funsv),
+		       mom_item_cstring (itmmod), mom_output_gcstring (funsv),
 		       mom_output_gcstring (funsetv));
       funsv = funsetv;
     };
   if (funsv.typnum != momty_set && funsv.typnum != momty_tuple)
-    {
-      cg->cg_errormsg =
-	mom_make_string_sprintf
-	("module item %s : functions %s are not a set",
-	 mom_item_cstring (itmmod), mom_output_gcstring (funsv));
-      return;
-    }
-  cg->cg_functionhset = mom_hashset_add_sized_items (NULL, funsv.vsequ->slen,
-						     funsv.vsequ->arritm);
+    CGEN_ERROR_RETURN_MOM (cg, "module item %s : functions %s are not a set",
+			   mom_item_cstring (itmmod),
+			   mom_output_gcstring (funsv));
+  cg->cg_functionhset =
+    mom_hashset_add_sized_items (NULL, funsv.vsequ->slen,
+				 funsv.vsequ->arritm);
   {
     const momseq_t *fseq = mom_hashset_elements_set (cg->cg_functionhset);
     assert (fseq != NULL);
@@ -209,14 +223,17 @@ static void cgen_scan_instr_first_mom (struct codegen_mom_st *cg,
 				       momitem_t *itminstr);
 
 static void
+cgen_bind_formals_mom (struct codegen_mom_st *cg, momitem_t *itmsignature,
+		       momvalue_t vformals);
+static void
 cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
 {
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   assert (itmfun != NULL);
   cg->cg_curfunitm = NULL;
+  cg->cg_funbind = NULL;
   momitem_t *itmsignature = NULL;
   MOM_DEBUGPRINTF (gencod, "scanning function %s", mom_item_cstring (itmfun));
-#warning should accept any item, but expect some attributes. We dont want a c_function kind
   cg->cg_curfunitm = itmfun;
   memset (&cg->cg_blockqueue, 0, sizeof (cg->cg_blockqueue));
   {
@@ -248,35 +265,30 @@ cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
   }
   if (!itmsignature
       || itmsignature->itm_kind != MOM_PREDEFINED_NAMED (function_signature))
-    {
-      cg->cg_errormsg =
-	mom_make_string_sprintf
-	("module item %s : function %s without signature",
-	 mom_item_cstring (cg->cg_moduleitm), mom_item_cstring (itmfun));
-      return;
-    }
+    CGEN_ERROR_RETURN_MOM (cg,
+			   "module item %s : function %s without signature",
+			   mom_item_cstring (cg->cg_moduleitm),
+			   mom_item_cstring (itmfun));
+  cgen_lock_item_mom (cg, itmsignature);
   momvalue_t vstart =
     mom_item_unsync_get_attribute (itmfun, MOM_PREDEFINED_NAMED (start));
   if (vstart.typnum != momty_item)
-    {
-      cg->cg_errormsg =
-	mom_make_string_sprintf
-	("module item %s : function %s has bad `start` %s",
-	 mom_item_cstring (cg->cg_moduleitm), mom_item_cstring (itmfun),
-	 mom_output_gcstring (vstart));
-      return;
-    }
+    CGEN_ERROR_RETURN_MOM (cg,
+			   "module item %s : function %s has bad `start` %s",
+			   mom_item_cstring (cg->cg_moduleitm),
+			   mom_item_cstring (itmfun),
+			   mom_output_gcstring (vstart));
   momvalue_t vformals =
     mom_item_unsync_get_attribute (itmfun, MOM_PREDEFINED_NAMED (formals));
-  if (vformals.typnum != momty_item)
-    {
-      cg->cg_errormsg =
-	mom_make_string_sprintf
-	("module item %s : function %s has bad `formals` %s",
-	 mom_item_cstring (cg->cg_moduleitm), mom_item_cstring (itmfun),
-	 mom_output_gcstring (vformals));
-      return;
-    }
+  if (vformals.typnum != momty_tuple)
+    CGEN_ERROR_RETURN_MOM (cg,
+			   "module item %s : function %s has bad `formals` %s",
+			   mom_item_cstring (cg->cg_moduleitm),
+			   mom_item_cstring (itmfun),
+			   mom_output_gcstring (vformals));
+  cgen_bind_formals_mom (cg, itmsignature, vformals);
+  if (cg->cg_errormsg)
+    return;
   momitem_t *itmstart = vstart.vitem;
   cgen_lock_item_mom (cg, itmstart);
   cgen_scan_block_first_mom (cg, itmstart);
@@ -304,14 +316,10 @@ cgen_scan_block_first_mom (struct codegen_mom_st *cg, momitem_t *itmblock)
   cg->cg_curblockitm = NULL;
   MOM_DEBUGPRINTF (gencod, "scanning block %s", mom_item_cstring (itmblock));
   if (itmblock->itm_kind != MOM_PREDEFINED_NAMED (c_block))
-    {
-      cg->cg_errormsg =
-	mom_make_string_sprintf
-	("module item %s : function %s has invalid block %s",
-	 mom_item_cstring (cg->cg_moduleitm),
-	 mom_item_cstring (cg->cg_curfunitm), mom_item_cstring (itmblock));
-      return;
-    }
+    CGEN_ERROR_RETURN_MOM
+      (cg, "module item %s : function %s has invalid block %s",
+       mom_item_cstring (cg->cg_moduleitm),
+       mom_item_cstring (cg->cg_curfunitm), mom_item_cstring (itmblock));
   {
     momvalue_t vablock = MOM_NONEV;
     struct momentry_st *entblock =
@@ -327,15 +335,12 @@ cgen_scan_block_first_mom (struct codegen_mom_st *cg, momitem_t *itmblock)
 	  mom_value_to_item (vablock.vnode->arrsons[0]);
 	assert (blockfunitm);
 	if (blockfunitm != cg->cg_curfunitm)
-	  {
-	    cg->cg_errormsg =
-	      mom_make_string_sprintf
-	      ("module item %s : function %s has block %s already inside other function %s",
-	       mom_item_cstring (cg->cg_moduleitm),
-	       mom_item_cstring (cg->cg_curfunitm),
-	       mom_output_gcstring (vablock), mom_item_cstring (blockfunitm));
-	    return;
-	  }
+	  CGEN_ERROR_RETURN_MOM (cg,
+				 "module item %s : function %s has block %s already inside other function %s",
+				 mom_item_cstring (cg->cg_moduleitm),
+				 mom_item_cstring (cg->cg_curfunitm),
+				 mom_output_gcstring (vablock),
+				 mom_item_cstring (blockfunitm));
 	else
 	  return;
       }
@@ -349,15 +354,12 @@ cgen_scan_block_first_mom (struct codegen_mom_st *cg, momitem_t *itmblock)
 				     &newvcinstrs))
 	  vcinstrs = newvcinstrs;
 	else
-	  {
-	    cg->cg_errormsg =
-	      mom_make_string_sprintf
-	      ("module item %s : function %s has block %s with bad `c_instructions` closure %s",
-	       mom_item_cstring (cg->cg_moduleitm),
-	       mom_item_cstring (cg->cg_curfunitm),
-	       mom_output_gcstring (vablock), mom_output_gcstring (vcinstrs));
-	    return;
-	  }
+	  CGEN_ERROR_RETURN_MOM (cg,
+				 "module item %s : function %s has block %s with bad `c_instructions` closure %s",
+				 mom_item_cstring (cg->cg_moduleitm),
+				 mom_item_cstring (cg->cg_curfunitm),
+				 mom_output_gcstring (vablock),
+				 mom_output_gcstring (vcinstrs));
       };
     if (vcinstrs.typnum == momty_tuple)
       {
@@ -367,27 +369,25 @@ cgen_scan_block_first_mom (struct codegen_mom_st *cg, momitem_t *itmblock)
 						itmblock, &vablock);
       }
     else
-      {
-	cg->cg_errormsg =
-	  mom_make_string_sprintf
-	  ("module item %s : function %s has block %s with bad `c_instructions` %s",
-	   mom_item_cstring (cg->cg_moduleitm),
-	   mom_item_cstring (cg->cg_curfunitm),
-	   mom_output_gcstring (vcinstrs));
-	return;
-      }
+      CGEN_ERROR_RETURN_MOM (cg,
+			     "module item %s : function %s has block %s with bad `c_instructions` %s",
+			     mom_item_cstring (cg->cg_moduleitm),
+			     mom_item_cstring (cg->cg_curfunitm),
+			     mom_item_cstring (itmblock),
+			     mom_output_gcstring (vcinstrs));
   }
   cg->cg_curblockitm = itmblock;
   assert (vcinstrs.typnum == momty_tuple);
   unsigned nbinstrs = vcinstrs.vtuple->slen;
   for (unsigned ix = 0; ix < nbinstrs && !cg->cg_errormsg; ix++)
     {
-      momitem_t *instritm = vcinstrs.vtuple->arritm[ix];
+      momitem_t *instritm = (momitem_t *) vcinstrs.vtuple->arritm[ix];
       assert (instritm != NULL);
       cgen_lock_item_mom (cg, instritm);
       cgen_scan_instr_first_mom (cg, instritm);
     }
 }				/* end cgen_scan_block_first_mom */
+
 
 static void
 cgen_scan_instr_first_mom (struct codegen_mom_st *cg, momitem_t *itminstr)
@@ -397,6 +397,89 @@ cgen_scan_instr_first_mom (struct codegen_mom_st *cg, momitem_t *itminstr)
 #warning cgen_scan_instr_first_mom incomplete
   MOM_FATAPRINTF ("gen_scan_instr_first itminstr=%s unimplemented",
 		  mom_item_cstring (itminstr));
+}
+
+static void
+cgen_bind_new_mom (struct codegen_mom_st *cg, momitem_t *itm,
+		   momvalue_t vbind)
+{
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  assert (itm != NULL);
+  assert (mom_hashset_contains (cg->cg_lockeditemset, itm));
+  assert (vbind.typnum != momty_null);
+  struct momentry_st *ent = mom_attributes_find_entry (cg->cg_funbind, itm);
+  if (MOM_UNLIKELY (ent != NULL))
+    CGEN_ERROR_RETURN_MOM (cg,
+			   "module item %s : function %s with already bound item %s to %s",
+			   mom_item_cstring (cg->cg_moduleitm),
+			   mom_item_cstring (cg->cg_curfunitm),
+			   mom_item_cstring (itm),
+			   mom_output_gcstring (ent->ent_val));
+  MOM_DEBUGPRINTF (gencod, "cgen_bind_new func.%s itm=%s vbind=%s",
+		   mom_item_cstring (cg->cg_curfunitm),
+		   mom_item_cstring (itm), mom_output_gcstring (vbind));
+  cg->cg_funbind = mom_attributes_put (cg->cg_funbind, itm, &vbind);
+}
+
+static void
+cgen_bind_formals_mom (struct codegen_mom_st *cg, momitem_t *itmsignature,
+		       momvalue_t vformals)
+{
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  assert (itmsignature != NULL);
+  assert (mom_hashset_contains (cg->cg_lockeditemset, itmsignature));
+  assert (vformals.typnum == momty_tuple && vformals.vtuple);
+  MOM_DEBUGPRINTF (gencod,
+		   "cgen_bind_formals start itmsignature=%s vformals=%s",
+		   mom_item_cstring (itmsignature),
+		   mom_output_gcstring (vformals));
+  unsigned nbformals = vformals.vtuple->slen;
+  if (itmsignature->itm_kind != MOM_PREDEFINED_NAMED (function_signature))
+    CGEN_ERROR_RETURN_MOM (cg,
+			   "module item %s : function %s has bad signature %s",
+			   mom_item_cstring (cg->cg_moduleitm),
+			   mom_item_cstring (cg->cg_curfunitm),
+			   mom_item_cstring (itmsignature));
+  momvalue_t vinputy =		//
+    mom_item_unsync_get_attribute (itmsignature,
+				   MOM_PREDEFINED_NAMED (input_types));
+  momvalue_t voutputy =		//
+    mom_item_unsync_get_attribute (itmsignature,
+				   MOM_PREDEFINED_NAMED (output_types));
+  unsigned nbins = 0, nbouts = 0;
+  const struct momseq_st *tupins = NULL;
+  const struct momseq_st *tupouts = NULL;
+  if (vinputy.typnum != momty_tuple || voutputy.typnum != momty_tuple
+      || !(tupins = mom_value_to_tuple (vinputy))
+      || !(tupouts = mom_value_to_tuple (voutputy))
+      || (nbins = tupins->slen) + (nbouts = tupouts->slen) != nbformals)
+    CGEN_ERROR_RETURN_MOM (cg,
+			   "module item %s : function %s formals %s mismatch with input_types %s & output_types %s",
+			   mom_item_cstring (cg->cg_moduleitm),
+			   mom_item_cstring (cg->cg_curfunitm),
+			   mom_output_gcstring (vformals),
+			   mom_output_gcstring (vinputy),
+			   mom_output_gcstring (voutputy));
+  for (unsigned inix = 0; inix < nbins; inix++)
+    {
+      momitem_t *intypitm = tupins->arritm[inix];
+      assert (intypitm);
+      momitem_t *informalitm = vformals.vtuple->arritm[inix];
+      assert (informalitm);
+      MOM_DEBUGPRINTF (gencod,
+		       "cgen_bind_formals function %s inix#%d intypitm %s informalitm %s",
+		       mom_item_cstring (cg->cg_curfunitm), inix,
+		       mom_item_cstring (intypitm),
+		       mom_item_cstring (informalitm));
+      if (intypitm->itm_kind != MOM_PREDEFINED_NAMED (c_type))
+	CGEN_ERROR_RETURN_MOM (cg,
+			       "module item %s : function %s bad input type #%d %s",
+			       mom_item_cstring (cg->cg_moduleitm),
+			       mom_item_cstring (cg->cg_curfunitm), inix,
+			       mom_item_cstring (intypitm));
+    }
+
+#warning cgen_bind_formals_mom unimplemented
 }
 
 /// eof codgen.c
