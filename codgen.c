@@ -131,7 +131,7 @@ cgen_first_pass_mom (momitem_t *itmcgen)
   MOM_DEBUGPRINTF (gencod, "c_preparation of %s is %s",
 		   mom_item_cstring (itmmod), mom_output_gcstring (prepv));
   if (prepv.typnum == momty_node
-      && (!mom_applyval_2itm_to_val (prepv, itmmod, itmcgen, &resprepv)
+      && (!mom_applval_2itm_to_val (prepv, itmmod, itmcgen, &resprepv)
 	  || resprepv.typnum == momty_string))
     {
       MOM_DEBUGPRINTF (gencod, "preparation of %s gave %s",
@@ -161,7 +161,7 @@ cgen_first_pass_mom (momitem_t *itmcgen)
   if (funsv.typnum == momty_node)
     {
       momvalue_t funsetv = MOM_NONEV;
-      if (!mom_applyval_2itm_to_val (prepv, itmmod, itmcgen, &funsetv)
+      if (!mom_applval_2itm_to_val (prepv, itmmod, itmcgen, &funsetv)
 	  || (funsv.typnum != momty_set || funsv.typnum != momty_tuple))
 	{
 	  cg->cg_errormsg =
@@ -285,8 +285,7 @@ cgen_scan_block_first_mom (struct codegen_mom_st *cg, momitem_t *itmblock)
 	      ("module item %s : function %s has block %s already inside other function %s",
 	       mom_item_cstring (cg->cg_moduleitm),
 	       mom_item_cstring (cg->cg_curfunitm),
-	       mom_output_gcstring(vablock),
-	       mom_item_cstring (blockfunitm));
+	       mom_output_gcstring (vablock), mom_item_cstring (blockfunitm));
 	    return;
 	  }
 	else
@@ -298,8 +297,8 @@ cgen_scan_block_first_mom (struct codegen_mom_st *cg, momitem_t *itmblock)
     if (vcinstrs.typnum == momty_node)
       {
 	momvalue_t newvcinstrs = MOM_NONEV;
-	if (mom_applyval_2itm_to_val (vcinstrs, itmblock, cg->cg_codgenitm,
-				      &newvcinstrs))
+	if (mom_applval_2itm_to_val (vcinstrs, itmblock, cg->cg_codgenitm,
+				     &newvcinstrs))
 	  vcinstrs = newvcinstrs;
 	else
 	  {
@@ -308,8 +307,7 @@ cgen_scan_block_first_mom (struct codegen_mom_st *cg, momitem_t *itmblock)
 	      ("module item %s : function %s has block %s with bad `c_instructions` closure %s",
 	       mom_item_cstring (cg->cg_moduleitm),
 	       mom_item_cstring (cg->cg_curfunitm),
-	       mom_output_gcstring(vablock),
-	       mom_output_gcstring (vcinstrs));
+	       mom_output_gcstring (vablock), mom_output_gcstring (vcinstrs));
 	    return;
 	  }
       };

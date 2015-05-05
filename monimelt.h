@@ -1091,7 +1091,7 @@ void mom_output_utf8cstr_cencoded (FILE *fil, const char *str, int len);
 
 extern void *mom_dynload_symbol (const char *name);
 //
-// appy-monimelt.h is generated
+// apply-monimelt.h is generated
 #include "apply-monimelt.h"
 
 const momitem_t *mom_load_new_anonymous_item (bool global);
@@ -1099,10 +1099,6 @@ const momitem_t *mom_load_new_anonymous_item (bool global);
 const momitem_t *mom_load_itemref_at (const char *fil, int lin);
 #define mom_load_itemref() mom_load_itemref_at(__FILE__,__LINE__)
 
-static inline bool mom_applyval_2itm_to_val (const momvalue_t cloval,
-					     momitem_t *arg0,
-					     momitem_t *arg1,
-					     momvalue_t *resptr);
 
 momvalue_t
 mom_item_unsync_get_attribute (momitem_t *itm, momitem_t *itmat)
@@ -1120,7 +1116,7 @@ mom_item_unsync_get_attribute (momitem_t *itm, momitem_t *itmat)
       momvalue_t res = MOM_NONEV;
       momnode_t *getnod = (momnode_t *) itmat->itm_data1;
       assert (getnod != NULL);
-      if (mom_applyval_2itm_to_val (mom_nodev (getnod), itm, itmat, &res))
+      if (mom_applval_2itm_to_val (mom_nodev (getnod), itm, itmat, &res))
 	return res;
     }
   if (itm->itm_attrs)
@@ -1133,10 +1129,6 @@ mom_item_unsync_get_attribute (momitem_t *itm, momitem_t *itmat)
   return MOM_NONEV;
 }
 
-static inline bool
-mom_applyval_2itm1val_to_void (const momvalue_t cloval,
-			       momitem_t *arg0,
-			       momitem_t *arg1, const momvalue_t arg2);
 
 static inline bool
 mom_item_unsync_put_attribute (momitem_t *itm, momitem_t *itmat,
@@ -1157,8 +1149,8 @@ mom_item_unsync_put_attribute (momitem_t *itm, momitem_t *itmat,
     {
       momnode_t *putnod = (momnode_t *) itmat->itm_data2;
       assert (putnod != NULL);
-      return mom_applyval_2itm1val_to_void (mom_nodev (putnod), itm, itmat,
-					    val);
+      return mom_applval_2itm1val_to_void (mom_nodev (putnod), itm, itmat,
+					   val);
     }
   //
   if (val.typnum == momty_null)
@@ -1174,222 +1166,6 @@ mom_item_unsync_put_attribute (momitem_t *itm, momitem_t *itmat,
       return true;
     }
 
-}
-
-
-//// ========== signature_1val_to_void 
-/* For functions with 1 value argument and no result, we apply them
-   with an invoking closure. The C function is supposed to return true
-   on success and false on failure (e.g. when the closure is too
-   small). Here is the signature of the function in C.  */
-typedef bool mom_1val_to_void_sig_t (const momnode_t *closnode,
-				     const momvalue_t arg0);
-/* the prefix of such function is: */
-#define MOM_PREFIXFUN_1val_to_void "momfun_1val_to_void"
-/* The kind of the node connective should be
-MOM_PREDEFINED_NAMED(signature_1val_to_void); Its itm_data1 should be
-the address of the C routine. */
-
-bool mom_applyclos_1val_to_void (const momnode_t *closnode,
-				 const momvalue_t arg0);
-
-static inline bool
-mom_applyval_1val_to_void (const momvalue_t cloval, const momvalue_t arg0)
-{
-  if (cloval.typnum != momty_node)
-    return false;
-  return mom_applyclos_1val_to_void (cloval.vnode, arg0);
-}
-
-//// ========== signature_1itm_to_void 
-/* For functions with 1 item argument and no result, we apply them
-   with an invoking closure. The C function is supposed to return true
-   on success and false on failure (e.g. when the closure is too
-   small). Here is the signature of the function in C.  */
-typedef bool mom_1itm_to_void_sig_t (const momnode_t *closnode,
-				     momitem_t *arg0itm);
-/* the prefix of such function is: */
-#define MOM_PREFIXFUN_1itm_to_void "momfun_1itm_to_void"
-/* The kind of the node connective should be
-MOM_PREDEFINED_NAMED(signature_1itm_to_void); Its itm_data1 should be
-the address of the C routine. */
-
-bool mom_applyclos_1itm_to_void (const momnode_t *closnode,
-				 momitem_t *arg0itm);
-
-static inline bool
-mom_applyval_1itm_to_void (const momvalue_t cloval, momitem_t *arg0itm)
-{
-  if (cloval.typnum != momty_node || !arg0itm)
-    return false;
-  return mom_applyclos_1itm_to_void (cloval.vnode, arg0itm);
-}
-
-//// ========== signature_1itm_to_val 
-/* For functions with 1 item argument and a value result, we apply them
-   with an invoking closure. The C function is supposed to return true
-   on success and false on failure (e.g. when the closure is too
-   small). Here is the signature of the function in C.  */
-typedef bool mom_1itm_to_val_sig_t (const momnode_t *closnode,
-				    momitem_t *arg0itm, momvalue_t *res);
-/* the prefix of such function is: */
-#define MOM_PREFIXFUN_1itm_to_val "momfun_1itm_to_val"
-/* The kind of the node connective should be
-MOM_PREDEFINED_NAMED(signature_1itm_to_val); Its itm_data1 should be
-the address of the C routine. */
-
-bool mom_applyclos_1itm_to_val (const momnode_t *closnode,
-				momitem_t *arg0itm, momvalue_t *res);
-
-static inline bool
-mom_applyval_1itm_to_val (const momvalue_t cloval, momitem_t *arg0itm,
-			  momvalue_t *res)
-{
-  if (cloval.typnum != momty_node || !arg0itm || !res)
-    return false;
-  return mom_applyclos_1itm_to_val (cloval.vnode, arg0itm, res);
-}
-
-//// ========== signature_void_to_void 
-/* For functions with no argument and no result, we apply them
-   with an invoking closure. The C function is supposed to return true
-   on success and false on failure (e.g. when the closure is too
-   small). Here is the signature of the function in C.  */
-typedef bool mom_void_to_void_sig_t (const momnode_t *closnode0);
-/* the prefix of such function is: */
-#define MOM_PREFIXFUN_void_to_void "momfun_void_to_void"
-/* The kind of the node connective should be
-MOM_PREDEFINED_NAMED(signature_void_to_void); Its itm_data1 should be
-the address of the C routine. */
-
-bool mom_applyclos_void_to_void (const momnode_t *closnode);
-
-static inline bool
-mom_applyval_void_to_void (const momvalue_t cloval)
-{
-  if (cloval.typnum != momty_node)
-    return false;
-  return mom_applyclos_void_to_void (cloval.vnode);
-}
-
-//// ========== signature_1val_to_val 
-/* For functions with 1 value argument and a value result, we apply them
-   with an invoking closure. The C function is supposed to return true
-   on success and false on failure (e.g. when the closure is too
-   small). Here is the signature of the function in C.  */
-typedef bool mom_1val_to_val_sig_t (const momnode_t *closnode,
-				    const momvalue_t arg0,
-				    momvalue_t *resptr);
-/* the prefix of such function is: */
-#define MOM_PREFIXFUN_1val_to_val "momfun_1val_to_val"
-/* The kind of the node connective should be
-MOM_PREDEFINED_NAMED(signature_1val_to_val); Its itm_data1 should be
-the address of the C routine. */
-
-bool mom_applyclos_1val_to_val (const momnode_t *closnode,
-				const momvalue_t arg0, momvalue_t *resptr);
-
-static inline bool
-mom_applyval_1val_to_val (const momvalue_t cloval, const momvalue_t arg0,
-			  momvalue_t *resptr)
-{
-  if (cloval.typnum != momty_node || !resptr)
-    return false;
-  return mom_applyclos_1val_to_val (cloval.vnode, arg0, resptr);
-}
-
-//// ========== signature_2itm_to_val 
-/* For functions with 2 item arguments and a value result, we apply them
-   with an invoking closure. The C function is supposed to return true
-   on success and false on failure (e.g. when the closure is too
-   small). Here is the signature of the function in C.  */
-typedef bool mom_2itm_to_val_sig_t (const momnode_t *closnode,
-				    momitem_t *arg0,
-				    momitem_t *arg1, momvalue_t *resptr);
-/* the prefix of such function is: */
-#define MOM_PREFIXFUN_2itm_to_val "momfun_2itm_to_val"
-/* The kind of the node connective should be
-MOM_PREDEFINED_NAMED(signature_2itm_to_val); Its itm_data1 should be
-the address of the C routine. */
-
-bool mom_applyclos_2itm_to_val (const momnode_t *closnode,
-				momitem_t *arg0,
-				momitem_t *arg1, momvalue_t *resptr);
-
-static inline bool
-mom_applyval_2itm_to_val (const momvalue_t cloval,
-			  momitem_t *arg0,
-			  momitem_t *arg1, momvalue_t *resptr)
-{
-  if (cloval.typnum != momty_node || !resptr || !arg0 || !arg1)
-    return false;
-  return mom_applyclos_2itm_to_val (cloval.vnode, arg0, arg1, resptr);
-}
-
-
-
-//// ========== signature_2itm1val_to_val 
-/* For functions with 2 item arguments, 1 value argument and a value result, we apply them
-   with an invoking closure. The C function is supposed to return true
-   on success and false on failure (e.g. when the closure is too
-   small). Here is the signature of the function in C.  */
-typedef bool mom_2itm1val_to_val_sig_t (const momnode_t *closnode,
-					momitem_t *arg0,
-					momitem_t *arg1,
-					const momvalue_t arg2,
-					momvalue_t *resptr);
-/* the prefix of such function is: */
-#define MOM_PREFIXFUN_2itm1val_to_val "momfun_2itm1val_to_val"
-/* The kind of the node connective should be
-MOM_PREDEFINED_NAMED(signature_2itm1val_to_val); Its itm_data1 should be
-the address of the C routine. */
-
-bool mom_applyclos_2itm1val_to_val (const momnode_t *closnode,
-				    momitem_t *arg0,
-				    momitem_t *arg1,
-				    const momvalue_t arg2,
-				    momvalue_t *resptr);
-
-static inline bool
-mom_applyval_2itm1val_to_val (const momvalue_t cloval,
-			      momitem_t *arg0,
-			      momitem_t *arg1, const momvalue_t arg2,
-			      momvalue_t *resptr)
-{
-  if (cloval.typnum != momty_node || !resptr)
-    return false;
-  return mom_applyclos_2itm1val_to_val (cloval.vnode, arg0, arg1, arg2,
-					resptr);
-}
-
-
-//// ========== signature_2itm1val_to_void 
-/* For functions with 2 item arguments, 1 value argument and a value result, we apply them
-   with an invoking closure. The C function is supposed to return true
-   on success and false on failure (e.g. when the closure is too
-   small). Here is the signature of the function in C.  */
-typedef bool mom_2itm1val_to_void_sig_t (const momnode_t *closnode,
-					 momitem_t *arg0,
-					 momitem_t *arg1,
-					 const momvalue_t arg2);
-/* the prefix of such function is: */
-#define MOM_PREFIXFUN_2itm1val_to_void "momfun_2itm1val_to_void"
-/* The kind of the node connective should be
-MOM_PREDEFINED_NAMED(signature_2itm1val_to_void); Its itm_data1 should be
-the address of the C routine. */
-
-bool mom_applyclos_2itm1val_to_void (const momnode_t *closnode,
-				     momitem_t *arg0,
-				     momitem_t *arg1, const momvalue_t arg2);
-
-static inline bool
-mom_applyval_2itm1val_to_void (const momvalue_t cloval,
-			       momitem_t *arg0,
-			       momitem_t *arg1, const momvalue_t arg2)
-{
-  if (cloval.typnum != momty_node || !arg0 || !arg1)
-    return false;
-  return mom_applyclos_2itm1val_to_void (cloval.vnode, arg0, arg1, arg2);
 }
 
 

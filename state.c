@@ -1312,7 +1312,7 @@ mom_load_state ()
 	  MOM_DEBUGPRINTF (load, "transforming item#%d: %s with %s",
 			   ix, itmtr->itm_str->cstr,
 			   mom_output_gcstring (vnode));
-	  if (!mom_applyval_1itm_to_void (vnode, itmtr))
+	  if (!mom_applval_1itm_to_void (vnode, itmtr))
 	    MOM_FATAPRINTF ("failed to transform item#%d: %s with %s",
 			    ix, itmtr->itm_str->cstr,
 			    mom_output_gcstring (vnode));
@@ -1516,7 +1516,7 @@ scan_inside_dumped_item_mom (momitem_t *itm)
 	    mom_attributes_put (dumper_mom->dukindscannermap, itmkd,
 				&valscanner);
 	}
-      if (!mom_applyval_1itm_to_void (valscanner, itm))
+      if (!mom_applval_1itm_to_void (valscanner, itm))
 	MOM_FATAPRINTF ("failed to apply scanner %s to item %s of kind %s",
 			mom_output_gcstring (valscanner),
 			mom_item_cstring (itm), itmkd->itm_str->cstr);
@@ -1718,8 +1718,7 @@ emit_signature_application_code_mom (FILE *foutaphd,
 	mom_item_unsync_get_attribute (itypitm,
 				       MOM_PREDEFINED_NAMED (c_code));
       assert (vccode.typnum == momty_string);
-      fprintf (foutaphd, ",\n\t\t %s arg%d_mom", mom_value_cstr (vccode),
-	       ix);
+      fprintf (foutaphd, ",\n\t\t %s arg%d_mom", mom_value_cstr (vccode), ix);
     };
   for (unsigned ix = 0; ix < nboutputy; ix++)
     {
@@ -1734,7 +1733,8 @@ emit_signature_application_code_mom (FILE *foutaphd,
 	mom_item_unsync_get_attribute (otypitm,
 				       MOM_PREDEFINED_NAMED (c_code));
       assert (vccode.typnum == momty_string);
-      fprintf (foutaphd, ",\n\t\t  %s* res%d_mom", mom_value_cstr (vccode), ix);
+      fprintf (foutaphd, ",\n\t\t  %s* res%d_mom", mom_value_cstr (vccode),
+	       ix);
     };
   fputs (");\n\n", foutaphd);
   fprintf (foutaphd, "\n" "#define MOM_PREFIXFUN_%s \"%s\"\n",
@@ -1764,7 +1764,8 @@ emit_signature_application_code_mom (FILE *foutaphd,
       momvalue_t vccode =	//
 	mom_item_unsync_get_attribute (otypitm,
 				       MOM_PREDEFINED_NAMED (c_code));
-      fprintf (foutaphd, ",\n\t\t  %s* res%d_mom", mom_value_cstr (vccode), ix);
+      fprintf (foutaphd, ",\n\t\t  %s* res%d_mom", mom_value_cstr (vccode),
+	       ix);
     };
   fputs (")\n{\n", foutaphd);
   fprintf (foutaphd, " if (clo_mom.typnum != momty_node) return false;\n");
@@ -1773,9 +1774,10 @@ emit_signature_application_code_mom (FILE *foutaphd,
     fprintf (foutaphd, ", arg%d_mom", ix);
   for (unsigned ix = 0; ix < nboutputy; ix++)
     fprintf (foutaphd, ", res%d_mom", ix);
-  fprintf (foutaphd, ");\n} // end of mom_applyval_%s \n", suffix);
+  fprintf (foutaphd, ");\n} // end of mom_applval_%s \n", suffix);
   fprintf (foutaphd,
-	   "\n" "static inline bool\n" "mom_applclos_%s(const momnode_t* nod_mom", suffix);
+	   "\n" "static inline bool\n"
+	   "mom_applclos_%s(const momnode_t* nod_mom", suffix);
   for (unsigned ix = 0; ix < nbinputy; ix++)
     {
       momitem_t *itypitm = (momitem_t *) vinputy.vtuple->arritm[ix];
@@ -2081,7 +2083,7 @@ emit_content_dumped_item_mom (const momitem_t *itm)
       /// we should apply the emitter to get a transformer node value, which
       /// would be later applied at load time....
       momvalue_t valtransformer = MOM_NONEV;
-      if (mom_applyval_1itm_to_val
+      if (mom_applval_1itm_to_val
 	  (valemitter, (momitem_t *) itm, &valtransformer)
 	  && valtransformer.typnum == momty_node)
 	{

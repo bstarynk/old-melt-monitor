@@ -32,7 +32,7 @@ static inline bool mom_applval_1itm_to_val(const momvalue_t clo_mom,
 {
  if (clo_mom.typnum != momty_node) return false;
  return mom_applclos_1itm_to_val (clo_mom.vnode, arg0_mom, res0_mom);
-} // end of mom_applyval_1itm_to_val 
+} // end of mom_applval_1itm_to_val 
 
 static inline bool
 mom_applclos_1itm_to_val(const momnode_t* nod_mom, momitem_t* arg0_mom,  momvalue_t* res0_mom)
@@ -75,7 +75,7 @@ static inline bool mom_applval_1itm_to_void(const momvalue_t clo_mom,
 {
  if (clo_mom.typnum != momty_node) return false;
  return mom_applclos_1itm_to_void (clo_mom.vnode, arg0_mom);
-} // end of mom_applyval_1itm_to_void 
+} // end of mom_applval_1itm_to_void 
 
 static inline bool
 mom_applclos_1itm_to_void(const momnode_t* nod_mom, momitem_t* arg0_mom)
@@ -120,7 +120,7 @@ static inline bool mom_applval_1val_to_val(const momvalue_t clo_mom,
 {
  if (clo_mom.typnum != momty_node) return false;
  return mom_applclos_1val_to_val (clo_mom.vnode, arg0_mom, res0_mom);
-} // end of mom_applyval_1val_to_val 
+} // end of mom_applval_1val_to_val 
 
 static inline bool
 mom_applclos_1val_to_val(const momnode_t* nod_mom, momvalue_t arg0_mom,  momvalue_t* res0_mom)
@@ -163,7 +163,7 @@ static inline bool mom_applval_1val_to_void(const momvalue_t clo_mom,
 {
  if (clo_mom.typnum != momty_node) return false;
  return mom_applclos_1val_to_void (clo_mom.vnode, arg0_mom);
-} // end of mom_applyval_1val_to_void 
+} // end of mom_applval_1val_to_void 
 
 static inline bool
 mom_applclos_1val_to_void(const momnode_t* nod_mom, momvalue_t arg0_mom)
@@ -212,7 +212,7 @@ static inline bool mom_applval_2itm1val_to_val(const momvalue_t clo_mom,
 {
  if (clo_mom.typnum != momty_node) return false;
  return mom_applclos_2itm1val_to_val (clo_mom.vnode, arg0_mom, arg1_mom, arg2_mom, res0_mom);
-} // end of mom_applyval_2itm1val_to_val 
+} // end of mom_applval_2itm1val_to_val 
 
 static inline bool
 mom_applclos_2itm1val_to_val(const momnode_t* nod_mom, momitem_t* arg0_mom, momitem_t* arg1_mom, momvalue_t arg2_mom,  momvalue_t* res0_mom)
@@ -259,7 +259,7 @@ static inline bool mom_applval_2itm1val_to_void(const momvalue_t clo_mom,
 {
  if (clo_mom.typnum != momty_node) return false;
  return mom_applclos_2itm1val_to_void (clo_mom.vnode, arg0_mom, arg1_mom, arg2_mom);
-} // end of mom_applyval_2itm1val_to_void 
+} // end of mom_applval_2itm1val_to_void 
 
 static inline bool
 mom_applclos_2itm1val_to_void(const momnode_t* nod_mom, momitem_t* arg0_mom, momitem_t* arg1_mom, momvalue_t arg2_mom)
@@ -306,7 +306,7 @@ static inline bool mom_applval_2itm_to_val(const momvalue_t clo_mom,
 {
  if (clo_mom.typnum != momty_node) return false;
  return mom_applclos_2itm_to_val (clo_mom.vnode, arg0_mom, arg1_mom, res0_mom);
-} // end of mom_applyval_2itm_to_val 
+} // end of mom_applval_2itm_to_val 
 
 static inline bool
 mom_applclos_2itm_to_val(const momnode_t* nod_mom, momitem_t* arg0_mom, momitem_t* arg1_mom,  momvalue_t* res0_mom)
@@ -351,7 +351,7 @@ static inline bool mom_applval_2itm_to_void(const momvalue_t clo_mom,
 {
  if (clo_mom.typnum != momty_node) return false;
  return mom_applclos_2itm_to_void (clo_mom.vnode, arg0_mom, arg1_mom);
-} // end of mom_applyval_2itm_to_void 
+} // end of mom_applval_2itm_to_void 
 
 static inline bool
 mom_applclos_2itm_to_void(const momnode_t* nod_mom, momitem_t* arg0_mom, momitem_t* arg1_mom)
@@ -392,7 +392,7 @@ static inline bool mom_applval_void_to_void(const momvalue_t clo_mom)
 {
  if (clo_mom.typnum != momty_node) return false;
  return mom_applclos_void_to_void (clo_mom.vnode);
-} // end of mom_applyval_void_to_void 
+} // end of mom_applval_void_to_void 
 
 static inline bool
 mom_applclos_void_to_void(const momnode_t* nod_mom)
