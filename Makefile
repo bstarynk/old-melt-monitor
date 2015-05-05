@@ -71,7 +71,7 @@ indent: .indent.pro # don't indent predef-monimelt.h or generated modules/momg*.
 	@for f in $(wildcard *.cc) ; do \
           echo formatting $$f; $(ASTYLE) $$f; done
 
-$(OBJECTS): monimelt.h predef-monimelt.h
+$(OBJECTS): monimelt.h predef-monimelt.h apply-monimelt.h
 
 .indent.pro: monimelt.h
 	sed -n 's/typedef.*\(mom[a-z0-9_]*_t\);/-T \1/p' monimelt.h | sort -u > $@

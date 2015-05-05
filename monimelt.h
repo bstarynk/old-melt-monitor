@@ -1079,12 +1079,20 @@ void mom_output_utf8cstr_cencoded (FILE *fil, const char *str, int len);
 
 #define MOM_HAS_PREDEFINED_NAMED(Nam,Hash) extern momitem_t*mompi_##Nam;
 #define MOM_HAS_PREDEFINED_ANONYMOUS(Id,Hash) extern momitem_t*mompi_##Id;
+
 //
+// predef-monimelt.h is generated
 #include "predef-monimelt.h"
 
 
 #define MOM_PREDEFINED_NAMED(Nam) mompi_##Nam
 #define MOM_PREDEFINED_ANONYMOUS(Id) mompi_##Id
+
+
+extern void *mom_dynload_symbol (const char *name);
+//
+// appy-monimelt.h is generated
+#include "apply-monimelt.h"
 
 const momitem_t *mom_load_new_anonymous_item (bool global);
 
@@ -1168,7 +1176,6 @@ mom_item_unsync_put_attribute (momitem_t *itm, momitem_t *itmat,
 
 }
 
-void *mom_dynload_symbol (const char *name);
 
 //// ========== signature_1val_to_void 
 /* For functions with 1 value argument and no result, we apply them

@@ -1703,7 +1703,7 @@ emit_signature_application_code_mom (FILE *foutaphd,
 	   "// signature application support for %s\n",
 	   mom_item_cstring (itmpredef));
   fprintf (foutaphd,
-	   "typedef bool mom_%s_sig_t (const momnode_t*nod_mom, /* %u inputs, %u outputs: */\n",
+	   "typedef bool mom_%s_sig_t (const momnode_t*nod_mom /* %u inputs, %u outputs: */",
 	   suffix, nbinputy, nboutputy);
   for (unsigned ix = 0; ix < nbinputy; ix++)
     {
@@ -1718,10 +1718,8 @@ emit_signature_application_code_mom (FILE *foutaphd,
 	mom_item_unsync_get_attribute (itypitm,
 				       MOM_PREDEFINED_NAMED (c_code));
       assert (vccode.typnum == momty_string);
-      fprintf (foutaphd, "\t\t const %s arg%d_mom", mom_value_cstr (vccode),
+      fprintf (foutaphd, ",\n\t\t %s arg%d_mom", mom_value_cstr (vccode),
 	       ix);
-      if (ix + 1 < nbinputy || nboutputy > 0)
-	fputs (",\n", foutaphd);
     };
   for (unsigned ix = 0; ix < nboutputy; ix++)
     {
@@ -1736,17 +1734,15 @@ emit_signature_application_code_mom (FILE *foutaphd,
 	mom_item_unsync_get_attribute (otypitm,
 				       MOM_PREDEFINED_NAMED (c_code));
       assert (vccode.typnum == momty_string);
-      fprintf (foutaphd, "\t\t  %s* res%d_mom", mom_value_cstr (vccode), ix);
-      if (ix + 1 < nboutputy)
-	fputs (",\n", foutaphd);
+      fprintf (foutaphd, ",\n\t\t  %s* res%d_mom", mom_value_cstr (vccode), ix);
     };
-  fputs (");\n", foutaphd);
+  fputs (");\n\n", foutaphd);
   fprintf (foutaphd, "\n" "#define MOM_PREFIXFUN_%s \"%s\"\n",
 	   suffix, mom_value_cstr (vprefix));
-  fprintf (foutaphd, "extern mom_%s_sig_t mom_applyclos_%s;\n", suffix,
+  fprintf (foutaphd, "static inline mom_%s_sig_t mom_applclos_%s;\n", suffix,
 	   suffix);
   fprintf (foutaphd,
-	   "static inline bool mom_applyval_%s(const momvalue_t clo_mom,\n",
+	   "static inline bool mom_applval_%s(const momvalue_t clo_mom",
 	   suffix);
   for (unsigned ix = 0; ix < nbinputy; ix++)
     {
@@ -1757,9 +1753,7 @@ emit_signature_application_code_mom (FILE *foutaphd,
       momvalue_t vccode =	//
 	mom_item_unsync_get_attribute (itypitm,
 				       MOM_PREDEFINED_NAMED (c_code));
-      fprintf (foutaphd, "\t\t %s arg%d_mom", mom_value_cstr (vccode), ix);
-      if (ix + 1 < nbinputy || nboutputy > 0)
-	fputs (",\n", foutaphd);
+      fprintf (foutaphd, ",\n\t\t %s arg%d_mom", mom_value_cstr (vccode), ix);
     };
   for (unsigned ix = 0; ix < nboutputy; ix++)
     {
@@ -1770,20 +1764,18 @@ emit_signature_application_code_mom (FILE *foutaphd,
       momvalue_t vccode =	//
 	mom_item_unsync_get_attribute (otypitm,
 				       MOM_PREDEFINED_NAMED (c_code));
-      fprintf (foutaphd, "\t\t  %s* res%d_mom", mom_value_cstr (vccode), ix);
-      if (ix + 1 < nboutputy)
-	fputs (",\n", foutaphd);
+      fprintf (foutaphd, ",\n\t\t  %s* res%d_mom", mom_value_cstr (vccode), ix);
     };
   fputs (")\n{\n", foutaphd);
   fprintf (foutaphd, " if (clo_mom.typnum != momty_node) return false;\n");
-  fprintf (foutaphd, " return mom_applyclos_%s (clo_mom.vnode", suffix);
+  fprintf (foutaphd, " return mom_applclos_%s (clo_mom.vnode", suffix);
   for (unsigned ix = 0; ix < nbinputy; ix++)
     fprintf (foutaphd, ", arg%d_mom", ix);
   for (unsigned ix = 0; ix < nboutputy; ix++)
     fprintf (foutaphd, ", res%d_mom", ix);
   fprintf (foutaphd, ");\n} // end of mom_applyval_%s \n", suffix);
   fprintf (foutaphd,
-	   "\n" "bool\n" "mom_applyclos_%s(const momnode_t* nod_mom", suffix);
+	   "\n" "static inline bool\n" "mom_applclos_%s(const momnode_t* nod_mom", suffix);
   for (unsigned ix = 0; ix < nbinputy; ix++)
     {
       momitem_t *itypitm = (momitem_t *) vinputy.vtuple->arritm[ix];
@@ -1848,7 +1840,8 @@ emit_signature_application_code_mom (FILE *foutaphd,
   fprintf (foutaphd, " end_mom:\n");
   fprintf (foutaphd, "  mom_item_unlock(connitm_mom);\n");
   fprintf (foutaphd, "  return ok_mom;\n");
-  fprintf (foutaphd, "} // end of mom_applyclos_%s\n\n", suffix);
+  fprintf (foutaphd, "} // end of mom_applclos_%s\n\n\n", suffix);
+  fflush (foutaphd);
 }				/* end of emit_signature_application_code_mom */
 
 
@@ -1954,9 +1947,15 @@ emit_predefined_fill_mom (void)
 	  if (vinputy.typnum == momty_tuple && voutputy.typnum == momty_tuple
 	      && !strncmp (mom_value_cstr (vprefix), "momfun_",
 			   strlen ("momfun_")))
-	    emit_signature_application_code_mom (foutaphd,
-						 (momitem_t *) itmpredef,
-						 vprefix, vinputy, voutputy);
+	    {
+	      MOM_DEBUGPRINTF (dump,
+			       "emit_predefined_fill ix#%d itmpredef %s emitting signature app.code",
+			       ix, mom_item_cstring (itmpredef));
+	      emit_signature_application_code_mom (foutaphd,
+						   (momitem_t *) itmpredef,
+						   vprefix, vinputy,
+						   voutputy);
+	    }
 	}
     }
   fprintf (foutfp, "\n} /* end mom_predefined_items_fill */\n");

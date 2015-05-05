@@ -285,6 +285,7 @@ cgen_scan_block_first_mom (struct codegen_mom_st *cg, momitem_t *itmblock)
 	      ("module item %s : function %s has block %s already inside other function %s",
 	       mom_item_cstring (cg->cg_moduleitm),
 	       mom_item_cstring (cg->cg_curfunitm),
+	       mom_output_gcstring(vablock),
 	       mom_item_cstring (blockfunitm));
 	    return;
 	  }
@@ -307,6 +308,7 @@ cgen_scan_block_first_mom (struct codegen_mom_st *cg, momitem_t *itmblock)
 	      ("module item %s : function %s has block %s with bad `c_instructions` closure %s",
 	       mom_item_cstring (cg->cg_moduleitm),
 	       mom_item_cstring (cg->cg_curfunitm),
+	       mom_output_gcstring(vablock),
 	       mom_output_gcstring (vcinstrs));
 	    return;
 	  }
