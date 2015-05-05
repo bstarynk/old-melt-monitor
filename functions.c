@@ -20,6 +20,9 @@
 
 #include "monimelt.h"
 
+
+////////////////////////////////////////////////////////////////
+//// magic_attribute
 bool
   momfun_1itm_to_val_emitter_of_magic_attribute
   (const momnode_t *clonode, momitem_t *itm, momvalue_t *res)
@@ -99,7 +102,7 @@ bool
 }				/* end of filler_of_magic_attribute */
 
 
-
+//////////////// functions
 bool
   momfun_1itm_to_val_emitter_of_function
   (const momnode_t *clonode, momitem_t *itm, momvalue_t *res)
@@ -177,6 +180,8 @@ bool
   return true;
 }				/* end of filler_of_function */
 
+////////////////////////////////////////////////////////////////
+//// plain kind
 bool
   momfun_1itm_to_val_emitter_of_plain_kind
   (const momnode_t *clonode, momitem_t *itm, momvalue_t *res)
@@ -228,3 +233,107 @@ bool
   return true;
 
 }
+
+
+////////////////////////////////////////////////////////////////
+////////// association-s
+
+#warning should put the associations routines in global.mom
+
+bool
+  momfun_1itm_to_void_scanner_of_association
+  (const momnode_t *clonode, momitem_t *itm)
+{
+  assert (clonode);
+  MOM_DEBUGPRINTF (dump,
+		   "scanner_of_association itm=%s", mom_item_cstring (itm));
+  assert (itm->itm_kind == MOM_PREDEFINED_NAMED (association));
+  struct momattributes_st *assoc = itm->itm_data1;
+  if (assoc)
+    mom_attributes_scan_dump (assoc);
+  MOM_DEBUGPRINTF (dump,
+		   "scanner_of_association end itm=%s",
+		   mom_item_cstring (itm));
+  return true;
+}				/* end scanner_of_association */
+
+bool
+  momfun_1itm_to_val_emitter_of_association
+  (const momnode_t *clonode, momitem_t *itm, momvalue_t *res)
+{
+  MOM_DEBUGPRINTF (dump,
+		   "emitter_of_association itm=%s", mom_item_cstring (itm));
+  assert (clonode);
+  assert (itm);
+  assert (itm->itm_kind == MOM_PREDEFINED_NAMED (association));
+  struct momattributes_st *assoc = itm->itm_data1;
+  unsigned nbattr = mom_attributes_count (assoc);
+  const momseq_t *seqattr = mom_attributes_set (assoc, MOM_NONEV);
+  assert (nbattr == 0 || (seqattr && seqattr->slen == nbattr));
+  momvalue_t *assarr =
+    MOM_GC_ALLOC ("associations", (nbattr + 1) * sizeof (momvalue_t));
+  for (unsigned ix = 0; ix < nbattr; ix++)
+    {
+      momitem_t *itm = seqattr->arritm[ix];
+      assert (itm && itm != MOM_EMPTY);
+      struct momentry_st *ent = mom_attributes_find_entry (assoc, itm);
+      assert (ent != NULL);
+      assarr[ix] =		//
+	mom_nodev_new (MOM_PREDEFINED_NAMED (association),
+		       2, mom_itemv (itm), ent->ent_val);
+    };
+  momvalue_t vclos =
+    mom_nodev_sized (MOM_PREDEFINED_NAMED (filler_of_association),
+		     nbattr,
+		     assarr);
+  MOM_DEBUGPRINTF (dump, "emitter_of_association vclos=%s",
+		   mom_output_gcstring (vclos));
+  *res = vclos;
+  return true;
+}				/* end emitter_of_association */
+
+
+
+
+bool
+  momfun_1itm_to_void_filler_of_association
+  (const momnode_t *clonode, momitem_t *itm)
+{
+  MOM_DEBUGPRINTF (dump,
+		   "filler_of_association itm=%s", mom_item_cstring (itm));
+  if (!clonode)
+    MOM_FATAPRINTF ("filler_of_association %s without closure",
+		    mom_item_cstring (itm));
+
+  if (clonode->conn != MOM_PREDEFINED_NAMED (filler_of_association))
+    MOM_FATAPRINTF ("filler_of_association %s has bad closure",
+		    mom_item_cstring (itm));
+  unsigned nbent = clonode->slen;
+  unsigned siz = ((5 * nbent / 4 + 3) | 7) + 1;
+  struct momattributes_st *assoc = MOM_GC_ALLOC ("assoc",
+						 sizeof (struct
+							 momattributes_st) +
+						 siz *
+						 sizeof (struct momentry_st));
+  assoc->at_len = siz;
+  for (unsigned ix = 0; ix < nbent; ix++)
+    {
+      momvalue_t vcomp = clonode->arrsons[ix];
+      if (vcomp.typnum != momty_node
+	  || vcomp.vnode->conn != MOM_PREDEFINED_NAMED (association)
+	  || vcomp.vnode->slen != 2)
+	MOM_FATAPRINTF ("filler_of_association %s has bad comp#ix %s",
+			mom_item_cstring (itm), ix,
+			mom_output_gcstring (vcomp));
+      assoc =
+	mom_attributes_put (assoc,
+			    mom_value_to_item (vcomp.vnode->arrsons[0]),
+			    &vcomp.vnode->arrsons[1]);
+    }
+  itm->itm_kind = MOM_PREDEFINED_NAMED (association);
+  itm->itm_data1 = assoc;
+  MOM_DEBUGPRINTF (dump,
+		   "filler_of_association itm=%s done",
+		   mom_item_cstring (itm));
+  return true;
+}				/* end of filler_of_association */

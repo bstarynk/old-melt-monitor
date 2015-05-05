@@ -1033,7 +1033,7 @@ mom_nodev (const momnode_t *nod)
   mom_nodev(mom_make_sized_meta_node ((Meta),(Conn),(NbSons),(ValArr))
 
 #define mom_nodev_sized(Conn,NbSons,ValArr) \
-  mom_nodev(mom_make_sized_node ((Conn),(NbSons),(ValArr))
+  mom_nodev(mom_make_sized_node ((Conn),(NbSons),(ValArr)))
 
 // find some existing item by its id or its name
 momitem_t *mom_find_item (const char *str);
@@ -1181,6 +1181,12 @@ magic_attribute-s:
 
   itm_data2 is the node of a putting closure of signature_2itm1val_to_val
      put-closure(container-item,attribute-item,value)
+
+association-s
+  itm_data1 is a struct mom_attributes_st
+
+hash_set-s
+  itm_data1 is a struct mom_hashset_st
 
  ***************************************************************/
 #endif /*MONIMELT_INCLUDED_ */

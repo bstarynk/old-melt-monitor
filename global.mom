@@ -32,6 +32,13 @@
 ..
 
 
+** association   ////// PREDEFINED
+{
+  * comment  "kind of items with hashed attribute payload" }
+ 
+..
+
+
 ** c_block   ////// PREDEFINED
 {
   * comment  "kind of C code block" }
@@ -128,6 +135,13 @@
 ..
 
 
+** emitter_of_association   ////// PREDEFINED
+{
+  * comment  "emitter routine for association items" }
+ 
+..
+
+
 ** emitter_of_function   ////// PREDEFINED
 {
   * comment  "routine to emit C functions" }
@@ -151,6 +165,13 @@
   * comment  "routine to emit play kind items" }
  
   %  ^filler_of_function( signature_1itm_to_val)
+ 
+..
+
+
+** filler_of_association   ////// PREDEFINED
+{
+  * comment  "filler routine for association items" }
  
 ..
 
@@ -211,6 +232,13 @@
  }
  
   %  ^filler_of_function( signature_1itm_to_val)
+ 
+..
+
+
+** hashed_set   ////// PREDEFINED
+{
+  * comment  "kind of item with hashed set payload" }
  
 ..
 
@@ -282,6 +310,13 @@
 ** output_types   ////// PREDEFINED
 {
   * comment  "give the tuple of result types inside signatures" }
+ 
+..
+
+
+** scanner_of_association   ////// PREDEFINED
+{
+  * comment  "scanner routine for association items" }
  
 ..
 
