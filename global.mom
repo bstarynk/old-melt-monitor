@@ -356,7 +356,7 @@
 ** locked_item   ////// PREDEFINED
 {
   * c_code  "momlockeditem_t*"
-  * comment  "c_type for momlockeditem_t*" }
+  * comment  "c_type for \"momlockeditem_t*\"" }
  
   %  ^filler_of_plain_kind( c_type)
  
