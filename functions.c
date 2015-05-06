@@ -273,7 +273,7 @@ bool
     MOM_GC_ALLOC ("associations", (nbattr + 1) * sizeof (momvalue_t));
   for (unsigned ix = 0; ix < nbattr; ix++)
     {
-      momitem_t *itm = seqattr->arritm[ix];
+      const momitem_t *itm = seqattr->arritm[ix];
       assert (itm && itm != MOM_EMPTY);
       struct momentry_st *ent = mom_attributes_find_entry (assoc, itm);
       assert (ent != NULL);
@@ -371,7 +371,7 @@ bool
   assert (itm);
   assert (itm->itm_kind == MOM_PREDEFINED_NAMED (hashed_set));
   struct momhashset_st *hset = itm->itm_data1;
-  momseq_t *seqset = mom_hashset_elements_set (hset);
+  const momseq_t *seqset = mom_hashset_elements_set (hset);
   momvalue_t vclos =
     mom_nodev_new (MOM_PREDEFINED_NAMED (filler_of_hashed_set),
 		   1,

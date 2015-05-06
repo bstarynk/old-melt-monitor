@@ -39,6 +39,8 @@ struct transformvect_mom_st
 struct momloader_st
 {
   unsigned ldmagic;		/* always LOADER_MAGIC_MOM */
+  double ldstartelapsedtime;
+  double ldstartcputime;
   const char *ldglobalpath;
   const char *lduserpath;
   FILE *ldglobalfile;
@@ -1253,6 +1255,8 @@ mom_load_state ()
   struct momloader_st ldr;
   memset (&ldr, 0, sizeof (ldr));
   ldr.ldmagic = LOADER_MAGIC_MOM;
+  ldr.ldstartelapsedtime = mom_elapsed_real_time ();
+  ldr.ldstartcputime = mom_clock_time (CLOCK_PROCESS_CPUTIME_ID);
   ldr.ldglobalpath = MOM_GLOBAL_DATA_PATH;
   ldr.ldglobalfile = fopen (MOM_GLOBAL_DATA_PATH, "r");
   if (!ldr.ldglobalfile)
@@ -1319,10 +1323,14 @@ mom_load_state ()
 	}
     }
   MOM_INFORMPRINTF
-    ("loaded %d items and %d modules with %d transforms from global %s and user %s files",
+    ("loaded %d items and %d modules ...\n"
+     ".. with %d transforms from global %s and user %s files ...\n"
+     ".. in %.3f elapsed & %.3f cpu seconds",
      (int) mom_hashset_count (ldr.lditemset),
      (int) mom_hashset_count (ldr.ldmoduleset), nbtransf, ldr.ldglobalpath,
-     ldr.lduserpath);
+     ldr.lduserpath,
+     mom_elapsed_real_time () - ldr.ldstartelapsedtime,
+     mom_clock_time (CLOCK_PROCESS_CPUTIME_ID) - ldr.ldstartcputime);
   loader_mom = NULL;
   MOM_DEBUGPRINTF (load, "end loading");
   memset (&ldr, 0, sizeof (ldr));

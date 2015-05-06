@@ -1062,6 +1062,43 @@ mom_nodev (const momnode_t *nod)
 #define mom_nodev_sized(Conn,NbSons,ValArr) \
   mom_nodev(mom_make_sized_node ((Conn),(NbSons),(ValArr)))
 
+static inline momitem_t *
+mom_node_conn (const momnode_t *nod)
+{
+  if (!nod)
+    return NULL;
+  return nod->conn;
+}
+
+static inline unsigned
+mom_node_arity (const momnode_t *nod)
+{
+  if (!nod)
+    return 0;
+  return nod->slen;
+}
+
+static inline momvalue_t
+mom_node_meta (const momnode_t *nod)
+{
+  if (!nod)
+    return MOM_NONEV;
+  return nod->meta;
+}
+
+static inline momvalue_t
+mom_node_nth (const momnode_t *nod, int rk)
+{
+  if (!nod)
+    return MOM_NONEV;
+  unsigned ln = nod->slen;
+  if (rk < 0)
+    rk += (int) ln;
+  if (rk < (int) ln)
+    return nod->arrsons[rk];
+  return MOM_NONEV;
+}
+
 // find some existing item by its id or its name
 momitem_t *mom_find_item (const char *str);
 
