@@ -562,7 +562,7 @@ mom_seq_meta (const struct momseq_st *seq)
   return seq->meta;
 }
 
-static const momitem_t *
+static inline const momitem_t *
 mom_seq_nth (const struct momseq_st *seq, int rk)
 {
   if (!seq || seq == MOM_EMPTY)

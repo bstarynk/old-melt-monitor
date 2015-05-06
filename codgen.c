@@ -813,8 +813,8 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 	  momitem_t *testctypitm = NULL;
 	  momitem_t *thenitm = NULL;
 	  if (stmtlen != 3
-	      || (vtestexpr = mom_components_nth (stmtcomps,
-						  1)).typnum == momty_null
+	      || (vtestexpr =
+		  mom_components_nth (stmtcomps, 1)).typnum == momty_null
 	      || !(testctypitm =
 		   cgen_type_of_scanned_expr_mom (cg, vtestexpr))
 	      || !(thenitm =
@@ -889,6 +889,31 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 				 mom_item_cstring (cg->cg_curblockitm),
 				 mom_item_cstring (itmstmt),
 				 mom_item_cstring (sigitm));
+	for (unsigned inix = 0; inix < nbin && !cg->cg_errormsg; inix++)
+	  {
+	    momitem_t *incuritm =
+	      mom_value_to_item (mom_components_nth (stmtcomps, 2 + inix));
+	    if (!incuritm)
+	      CGEN_ERROR_RETURN_MOM (cg,
+				     "module item %s : function %s with block %s with apply statement %s with bad result#%d",
+				     mom_item_cstring (cg->cg_moduleitm),
+				     mom_item_cstring (cg->cg_curfunitm),
+				     mom_item_cstring (cg->cg_curblockitm),
+				     mom_item_cstring (itmstmt), inix);
+	    cgen_lock_item_mom (cg, incuritm);
+	    momitem_t *insigtypitm = mom_seq_nth (intyptup, inix);
+	    momitem_t *incurtypitm =
+	      cgen_type_of_scanned_item_mom (cg, incuritm);
+	    if (insigtypitm && insigtypitm == incuritm)
+	      continue;
+	    else
+	      CGEN_ERROR_RETURN_MOM (cg,
+				     "module item %s : function %s with block %s with apply statement %s with invalid result#%d type",
+				     mom_item_cstring (cg->cg_moduleitm),
+				     mom_item_cstring (cg->cg_curfunitm),
+				     mom_item_cstring (cg->cg_curblockitm),
+				     mom_item_cstring (itmstmt), inix);
+	  }
 #warning scanning of apply is incomplete
       }
       break;
