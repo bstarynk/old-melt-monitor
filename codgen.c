@@ -913,8 +913,25 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 				     mom_item_cstring (cg->cg_curfunitm),
 				     mom_item_cstring (cg->cg_curblockitm),
 				     mom_item_cstring (itmstmt), inix);
-	  }
-#warning scanning of apply is incomplete
+	  };
+	for (unsigned outix = 0; outix < nbout && !cg->cg_errormsg; outix++)
+	  {
+	    momvalue_t outcurv =
+	      mom_components_nth (stmtcomps, 2 + nbin + outix);
+	    momitem_t *outsigtypitm = mom_seq_nth (outyptup, outix);
+	    momitem_t *outcurtypitm =
+	      cgen_type_of_scanned_expr_mom (cg, outcurv);
+	    if (outsigtypitm && outsigtypitm == outcurtypitm)
+	      continue;
+	    else
+	      CGEN_ERROR_RETURN_MOM (cg,
+				     "module item %s : function %s with block %s with apply statement %s with invalid argument#%d type",
+				     mom_item_cstring (cg->cg_moduleitm),
+				     mom_item_cstring (cg->cg_curfunitm),
+				     mom_item_cstring (cg->cg_curblockitm),
+				     mom_item_cstring (itmstmt), outix);
+	  };
+#warning scanning of apply is incomplete, should scan the optional final else-block
       }
       break;
     default:
