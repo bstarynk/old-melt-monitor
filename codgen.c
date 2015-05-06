@@ -702,7 +702,43 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
       }
       break;
     case MOM_PREDEFINED_NAMED_CASE (chunk, itmop, otherwiseoplab):
-      {				/// chunk
+      {				/// chunk ...
+	for (unsigned ix = 1; ix < stmtlen && !cg->cg_errormsg; ix++)
+	  {
+	    momvalue_t vchkarg = mom_components_nth (itmstmt->itm_comps, ix);
+	    momitem_t *itmarg = mom_value_to_item (vchkarg);
+	    if (itmarg != NULL)
+	      {
+		cgen_lock_item_mom (cg, itmarg);
+		if (itmarg->itm_kind == MOM_PREDEFINED_NAMED (c_block))
+		  {
+		    cgen_scan_block_first_mom (cg, itmarg);
+		    continue;
+		  }
+		else
+		  {
+		    momitem_t *itmtyp =
+		      cgen_type_of_scanned_item_mom (cg, itmarg);
+		    if (!itmtyp)
+		      goto strangechunkarglab;
+		  }
+	      }
+	    else if (vchkarg.typnum != momty_null)
+	      {
+		momitem_t *itmtyparg =
+		  cgen_type_of_scanned_expr_mom (cg, vchkarg);
+		if (!itmtyparg)
+		strangechunkarglab:
+		  CGEN_ERROR_RETURN_MOM (cg,
+					 "module item %s : function %s with block %s with chunk statement %s with strange arg  %s",
+					 mom_item_cstring (cg->cg_moduleitm),
+					 mom_item_cstring (cg->cg_curfunitm),
+					 mom_item_cstring
+					 (cg->cg_curblockitm),
+					 mom_item_cstring (itmstmt),
+					 mom_output_gcstring (vchkarg));
+	      }
+	  }
       }
       break;
       case MOM_PREDEFINED_NAMED_CASE (if, itmop, otherwiseoplab)

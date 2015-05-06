@@ -461,6 +461,7 @@ mom_find_named_item (const char *name)
 {
   const momitem_t *itm = NULL;
   const char *endname = NULL;
+  int bix = -1;
   if (!name || !mom_valid_item_name_str (name, &endname)
       || !endname || *endname != '\0')
     return NULL;
@@ -468,7 +469,6 @@ mom_find_named_item (const char *name)
   MOM_DEBUGPRINTF (item, "find_named_item name=%s", name);
   if (MOM_UNLIKELY (named_count_mom == 0))
     goto end;
-  int bix = -1;
   {
     int lobix = 0, hibix = named_nbuck_mom;
     while (lobix + 2 < hibix)
