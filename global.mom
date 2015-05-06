@@ -359,6 +359,16 @@
 ..
 
 
+** locked_item   ////// PREDEFINED
+{
+  * c_code  "momitem_t*"
+  * comment  "c_type for \"omlockeditem_t*\"in C" }
+ 
+  %  ^filler_of_plain_kind( c_type)
+ 
+..
+
+
 ** magic_attribute   ////// PREDEFINED
 {
   * comment  "kind of magic attributes"
@@ -561,7 +571,7 @@
 ** void   ////// PREDEFINED
 {
   * c_code  "void"
-  * comment  "c_type for \"oid\"in C" }
+  * comment  "c_type for \"d\" C" }
  
   %  ^filler_of_plain_kind( c_type)
  

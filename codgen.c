@@ -685,6 +685,7 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 			   mom_item_cstring (itmstmt));
   switch (mom_item_hash (itmop))
     {
+      ////////////////
     case MOM_PREDEFINED_NAMED_CASE (set, itmop, otherwiseoplab):
       {				/// set <lvar> <rexpr>
 	momitem_t *itmlvar = NULL;
@@ -698,9 +699,11 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 				 mom_item_cstring (cg->cg_curfunitm),
 				 mom_item_cstring (cg->cg_curblockitm),
 				 mom_item_cstring (itmstmt));
+#warning scan of set instruction not handled, should special case item & locked_item & value...
 
       }
       break;
+      ////////////////
     case MOM_PREDEFINED_NAMED_CASE (chunk, itmop, otherwiseoplab):
       {				/// chunk ...
 	for (unsigned ix = 1; ix < stmtlen && !cg->cg_errormsg; ix++)
@@ -741,8 +744,8 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 	  }
       }
       break;
-      case MOM_PREDEFINED_NAMED_CASE (if, itmop, otherwiseoplab)
-    :
+      ////////////////
+      case MOM_PREDEFINED_NAMED_CASE (if, itmop, otherwiseoplab):
 	{			/// if <expr-cond> <block>
 	}
       break;
