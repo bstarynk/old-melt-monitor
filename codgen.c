@@ -924,6 +924,8 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 				     mom_item_cstring (cg->cg_curblockitm),
 				     mom_item_cstring (itmstmt), inix);
 	  };
+	if (cg->cg_errormsg)
+	  return;
 	momvalue_t vexpfun = mom_components_nth (stmtcomps, 2 + nbin);
 	momitem_t *itmtypfun = cgen_type_of_scanned_expr_mom (cg, vexpfun);
 	MOM_DEBUGPRINTF (gencod,
@@ -940,6 +942,8 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 				 mom_item_cstring (cg->cg_curblockitm),
 				 mom_item_cstring (itmstmt),
 				 mom_output_gcstring (vexpfun));
+	if (cg->cg_errormsg)
+	  return;
 	for (unsigned outix = 0; outix < nbout && !cg->cg_errormsg; outix++)
 	  {
 	    momvalue_t outcurv =
@@ -962,6 +966,8 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 				     mom_item_cstring (cg->cg_curblockitm),
 				     mom_item_cstring (itmstmt), outix);
 	  };
+	if (cg->cg_errormsg)
+	  return;
 	if (stmtlen == 5 + nbin + nbout)
 	  {
 	    momitem_t *itmelse =
@@ -993,6 +999,8 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 				     mom_item_cstring (itmstmt),
 				     mom_item_cstring (itmelse));
 	  }
+	if (cg->cg_errormsg)
+	  return;
       }
       break;
       ////////////////
@@ -1007,6 +1015,42 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 				 mom_item_cstring (itmstmt));
 	momvalue_t exprv = mom_components_nth (stmtcomps, 1);
 	momitem_t *typxitm = cgen_type_of_scanned_expr_mom (cg, exprv);
+	if (typxitm != MOM_PREDEFINED_NAMED (integer))
+	  CGEN_ERROR_RETURN_MOM (cg,
+				 "module item %s : function %s with block %s with non-integer selector %s in int_switch statement %s",
+				 mom_item_cstring (cg->cg_moduleitm),
+				 mom_item_cstring (cg->cg_curfunitm),
+				 mom_item_cstring (cg->cg_curblockitm),
+				 mom_output_gcstring (exprv),
+				 mom_item_cstring (itmstmt));
+	for (unsigned ix = 2; ix < stmtlen && !cg->cg_errormsg; ix++)
+	  {
+	    momvalue_t casev = mom_components_nth (stmtcomps, ix);
+	    momnode_t *casnod = mom_value_to_node (casev);
+	    momvalue_t casevalv = MOM_NONEV;
+	    momvalue_t caseblockv = MOM_NONEV;
+	    momitem_t *caseblockitm = NULL;
+#warning should detect duplicate cases here...
+	    if (!casnod
+		|| mom_node_conn (casnod) != MOM_PREDEFINED_NAMED (case)
+		|| mom_node_arity (casnod) != 2
+		|| ((casevalv = mom_node_nth (casnod, 0)).typnum != momty_int)
+		|| ((caseblockv = mom_node_nth (casnod, 1)).typnum !=
+		    momty_item)
+		|| (!(caseblockitm = mom_value_to_item (caseblockv)))
+		|| (cgen_lock_item_mom (cg, caseblockitm),
+		    cgen_scan_block_first_mom (cg, caseblockitm),
+		    caseblockitm->itm_kind != MOM_PREDEFINED_NAMED (c_block)))
+	      CGEN_ERROR_RETURN_MOM (cg,
+				     "module item %s : function %s with block %s with int_switch statement %s with bad case#%d: %s",
+				     mom_item_cstring (cg->cg_moduleitm),
+				     mom_item_cstring (cg->cg_curfunitm),
+				     mom_item_cstring (cg->cg_curblockitm),
+				     mom_item_cstring (itmstmt), ix - 2,
+				     mom_output_gcstring (casevalv));
+	    if (cg->cg_errormsg)
+	      return;
+	  }
       };
       break;
       ////////////////
