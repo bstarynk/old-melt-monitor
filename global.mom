@@ -307,7 +307,7 @@
 
 ** int_switch   ////// PREDEFINED
 {
-  * comment  "operation for switch on integer" }
+  * comment  "operation for switch on integer: int_switch <expr> <case>..." }
  
 ..
 
@@ -334,7 +334,7 @@
 
 ** item_switch   ////// PREDEFINED
 {
-  * comment  "operation for switch on item" }
+  * comment  "operation for switch on item: item_switch <expr> <case>..." }
  
 ..
 
