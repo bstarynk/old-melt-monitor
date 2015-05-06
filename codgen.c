@@ -854,6 +854,11 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 				 mom_item_cstring (itmstmt));
 	momitem_t *sigitm =
 	  mom_value_to_item (mom_components_nth (stmtcomps, 1));
+	MOM_DEBUGPRINTF (gencod,
+			 "in function %s apply statement %s with signature %s",
+			 mom_item_cstring (cg->cg_curfunitm),
+			 mom_item_cstring (itmstmt),
+			 mom_item_cstring (sigitm));
 	if (!sigitm
 	    || (cgen_lock_item_mom (cg, sigitm),
 		sigitm->itm_kind !=
@@ -893,6 +898,11 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 	  {
 	    momitem_t *incuritm =
 	      mom_value_to_item (mom_components_nth (stmtcomps, 2 + inix));
+	    MOM_DEBUGPRINTF (gencod,
+			     "in function %s apply statement %s with result#%d : %s",
+			     mom_item_cstring (cg->cg_curfunitm),
+			     mom_item_cstring (itmstmt),
+			     inix, mom_item_cstring (incuritm));
 	    if (!incuritm)
 	      CGEN_ERROR_RETURN_MOM (cg,
 				     "module item %s : function %s with block %s with apply statement %s with bad result#%d",
@@ -914,11 +924,31 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 				     mom_item_cstring (cg->cg_curblockitm),
 				     mom_item_cstring (itmstmt), inix);
 	  };
-#warning should test the function argument and shift
+	momvalue_t vexpfun = mom_components_nth (stmtcomps, 2 + nbin);
+	momitem_t *itmtypfun = cgen_type_of_scanned_expr_mom (cg, vexpfun);
+	MOM_DEBUGPRINTF (gencod,
+			 "in function %s apply statement %s with function %s of type %s",
+			 mom_item_cstring (cg->cg_curfunitm),
+			 mom_item_cstring (itmstmt),
+			 mom_output_gcstring (vexpfun),
+			 mom_item_cstring (itmtypfun));
+	if (itmtypfun != MOM_PREDEFINED_NAMED (value))
+	  CGEN_ERROR_RETURN_MOM (cg,
+				 "module item %s : function %s with block %s with apply statement %s with invalid function %s type",
+				 mom_item_cstring (cg->cg_moduleitm),
+				 mom_item_cstring (cg->cg_curfunitm),
+				 mom_item_cstring (cg->cg_curblockitm),
+				 mom_item_cstring (itmstmt),
+				 mom_output_gcstring (vexpfun));
 	for (unsigned outix = 0; outix < nbout && !cg->cg_errormsg; outix++)
 	  {
 	    momvalue_t outcurv =
-	      mom_components_nth (stmtcomps, 2 + nbin + outix);
+	      mom_components_nth (stmtcomps, 3 + nbin + outix);
+	    MOM_DEBUGPRINTF (gencod,
+			     "in function %s apply statement %s with argument#%d : %s",
+			     mom_item_cstring (cg->cg_curfunitm),
+			     mom_item_cstring (itmstmt),
+			     outix, mom_output_gcstring (outcurv));
 	    momitem_t *outsigtypitm = mom_seq_nth (outyptup, outix);
 	    momitem_t *outcurtypitm =
 	      cgen_type_of_scanned_expr_mom (cg, outcurv);
@@ -932,11 +962,16 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 				     mom_item_cstring (cg->cg_curblockitm),
 				     mom_item_cstring (itmstmt), outix);
 	  };
-	if (stmtlen == 4 + nbin + nbout)
+	if (stmtlen == 5 + nbin + nbout)
 	  {
 	    momitem_t *itmelse =
 	      mom_value_to_item (mom_components_nth
-				 (stmtcomps, 3 + nbin + nbout));
+				 (stmtcomps, 4 + nbin + nbout));
+	    MOM_DEBUGPRINTF (gencod,
+			     "in function %s apply statement %s with else %s",
+			     mom_item_cstring (cg->cg_curfunitm),
+			     mom_item_cstring (itmstmt),
+			     mom_item_cstring (itmelse));
 	    if (!itmelse)
 	      CGEN_ERROR_RETURN_MOM (cg,
 				     "module item %s : function %s with block %s with apply statement %s without else block",
