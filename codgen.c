@@ -881,14 +881,14 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 				 mom_item_cstring (sigitm));
 	unsigned nbin = mom_seq_length (intyptup);
 	unsigned nbout = mom_seq_length (outyptup);
-	if (stmtlen < 3 + nbin + nbout)
+	if (stmtlen < 3 + nbin + nbout || stmtlen > 4 + nbin + nbout)
 	  CGEN_ERROR_RETURN_MOM (cg,
-				 "module item %s : function %s with block %s with too short apply statement %s for signature %s",
+				 "module item %s : function %s with block %s with  apply statement %s for signature %s of bad length %d",
 				 mom_item_cstring (cg->cg_moduleitm),
 				 mom_item_cstring (cg->cg_curfunitm),
 				 mom_item_cstring (cg->cg_curblockitm),
 				 mom_item_cstring (itmstmt),
-				 mom_item_cstring (sigitm));
+				 mom_item_cstring (sigitm), stmtlen);
 	for (unsigned inix = 0; inix < nbin && !cg->cg_errormsg; inix++)
 	  {
 	    momitem_t *incuritm =
@@ -931,7 +931,32 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 				     mom_item_cstring (cg->cg_curblockitm),
 				     mom_item_cstring (itmstmt), outix);
 	  };
-#warning scanning of apply is incomplete, should scan the optional final else-block
+	if (stmtlen == 4 + nbin + nbout)
+	  {
+	    momitem_t *itmelse =
+	      mom_value_to_item (mom_components_nth
+				 (stmtcomps, 3 + nbin + nbout));
+	    if (!itmelse)
+	      CGEN_ERROR_RETURN_MOM (cg,
+				     "module item %s : function %s with block %s with apply statement %s without else block",
+				     mom_item_cstring (cg->cg_moduleitm),
+				     mom_item_cstring (cg->cg_curfunitm),
+				     mom_item_cstring (cg->cg_curblockitm),
+				     mom_item_cstring (itmstmt));
+	    cgen_lock_item_mom (cg, itmelse);
+	    if (itmelse->itm_kind == MOM_PREDEFINED_NAMED (c_block))
+	      {
+		cgen_scan_block_first_mom (cg, itmelse);
+	      }
+	    else
+	      CGEN_ERROR_RETURN_MOM (cg,
+				     "module item %s : function %s with block %s with apply statement %s with bad else block %s",
+				     mom_item_cstring (cg->cg_moduleitm),
+				     mom_item_cstring (cg->cg_curfunitm),
+				     mom_item_cstring (cg->cg_curblockitm),
+				     mom_item_cstring (itmstmt),
+				     mom_item_cstring (itmelse));
+	  }
       }
       break;
     default:
