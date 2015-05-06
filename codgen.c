@@ -745,7 +745,23 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 				 mom_output_gcstring (rexprv));
 	if (lvarctypitm == rexpctypitm)
 	  break;
-#warning scan of set instruction not handled, should special case item & locked_item & value...
+	if (cg->cg_errormsg)
+	  return;
+	if ((lvarctypitm == MOM_PREDEFINED_NAMED (item)
+	     || lvarctypitm == MOM_PREDEFINED_NAMED (locked_item))
+	    && (rexpctypitm == MOM_PREDEFINED_NAMED (item)
+		|| rexpctypitm == MOM_PREDEFINED_NAMED (locked_item)))
+	  break;
+	CGEN_ERROR_RETURN_MOM (cg,
+			       "module item %s : function %s with block %s with set statement %s : leftvar %s of type %s is incompatible with rightexpr %s of type %s",
+			       mom_item_cstring (cg->cg_moduleitm),
+			       mom_item_cstring (cg->cg_curfunitm),
+			       mom_item_cstring (cg->cg_curblockitm),
+			       mom_item_cstring (itmstmt),
+			       mom_item_cstring (itmlvar),
+			       mom_item_cstring (lvarctypitm),
+			       mom_output_gcstring (rexprv),
+			       mom_item_cstring (rexpctypitm));
 
       }
       break;
