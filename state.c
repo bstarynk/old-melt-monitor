@@ -302,62 +302,57 @@ token_string_load_mom (momvalue_t *pval)
   assert (loader_mom && loader_mom->ldmagic == LOADER_MAGIC_MOM);
   const char *startc = loader_mom->ldlinebuf + loader_mom->ldlinecol + 1;
   const char *eol = loader_mom->ldlinebuf + loader_mom->ldlinelen;
-  char *buf = MOM_GC_SCALAR_ALLOC ("string buffer", eol - startc + 2);
+  char *buf = MOM_GC_SCALAR_ALLOC ("string buffer", eol - startc + 3);
   unsigned bufsiz = eol - startc + 1;
   int blen = 0;
+  int nbescapes = 0;
   const char *pc = startc;
+  MOM_DEBUGPRINTF (load, "token_string_load startc %s", startc);
   for (pc = startc; pc < eol && *pc && *pc != '"'; pc++)
     {
       if (*pc != '\\')
 	buf[blen++] = *pc;
       else
 	{
+	  nbescapes++;
 	  pc++;
+	  MOM_DEBUGPRINTF (load,
+			   "token_string_load escape#%d buf=<%s> blen#%d pc=<%s>",
+			   nbescapes, buf, blen, pc);
 	  switch (*pc)
 	    {
 	    case '\"':
 	      buf[blen++] = '\"';
-	      pc++;
 	      break;
 	    case '\'':
 	      buf[blen++] = '\'';
-	      pc++;
 	      break;
 	    case '\\':
 	      buf[blen++] = '\\';
-	      pc++;
 	      break;
 	    case 'a':
 	      buf[blen++] = '\a';
-	      pc++;
 	      break;
 	    case 'b':
 	      buf[blen++] = '\b';
-	      pc++;
 	      break;
 	    case 'f':
 	      buf[blen++] = '\f';
-	      pc++;
 	      break;
 	    case 'n':
 	      buf[blen++] = '\n';
-	      pc++;
 	      break;
 	    case 'r':
 	      buf[blen++] = '\r';
-	      pc++;
 	      break;
 	    case 't':
 	      buf[blen++] = '\t';
-	      pc++;
 	      break;
 	    case 'v':
 	      buf[blen++] = '\v';
-	      pc++;
 	      break;
 	    case 'e':
 	      buf[blen++] = 033 /*ESCAPE*/;
-	      pc++;
 	      break;
 	    case 'x':
 	      {
@@ -365,12 +360,11 @@ token_string_load_mom (momvalue_t *pval)
 		if (sscanf (pc + 1, "%02x", &hc) > 0)
 		  {
 		    buf[blen++] = (char) hc;
-		    pc += 3;
+		    pc += 2;
 		  }
 		else
 		  {
 		    buf[blen++] = 'x';
-		    pc++;
 		  }
 	      }
 	      break;
@@ -384,12 +378,11 @@ token_string_load_mom (momvalue_t *pval)
 					bufsiz - blen);
 		    if (nb > 0)
 		      blen += nb;
-		    pc += gap;
+		    pc += gap - 1;
 		  }
 		else
 		  {
 		    buf[blen++] = 'u';
-		    pc++;
 		  }
 		break;
 	      }
@@ -403,12 +396,11 @@ token_string_load_mom (momvalue_t *pval)
 					bufsiz - blen);
 		    if (nb > 0)
 		      blen += nb;
-		    pc += gap;
+		    pc += gap - 1;
 		  }
 		else
 		  {
 		    buf[blen++] = 'U';
-		    pc++;
 		  }
 		break;
 	      }
@@ -420,6 +412,12 @@ token_string_load_mom (momvalue_t *pval)
   loader_mom->ldlinecol += pc - startc + 1;
   pval->typnum = momty_string;
   pval->vstr = mom_make_string_cstr (buf);
+  if (nbescapes > 0)
+    MOM_DEBUGPRINTF (load,
+		     "token_string_load nbescapes=%d escapedbuf <%s> startc: %s",
+		     nbescapes, buf, startc);
+  else
+    MOM_DEBUGPRINTF (load, "token_string_load buf %s", buf);
   return true;
 }
 
