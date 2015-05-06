@@ -468,11 +468,18 @@ cgen_scan_block_first_mom (struct codegen_mom_st *cg, momitem_t *itmblock)
 }				/* end cgen_scan_block_first_mom */
 
 
+static void cgen_bind_variable_item_mom (struct codegen_mom_st *cg,
+					 momitem_t *itmv);
+
+static void cgen_bind_constant_item_mom (struct codegen_mom_st *cg,
+					 momitem_t *itmk, momvalue_t vconst);
+
 static momitem_t *
 cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
 {
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   assert (itm != NULL);
+  assert (mom_hashset_contains (cg->cg_lockeditemset, itm));
   struct momentry_st *ent = mom_attributes_find_entry (cg->cg_funbind, itm);
   if (ent != NULL)
     {
@@ -534,6 +541,82 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
 	     mom_output_gcstring (vbind));
 	}			/* end swith conn vbindnod */
     }
+  //// unbound item:
+  momitem_t *itmkind = itm->itm_kind;
+  MOM_DEBUGPRINTF (gencod, "in function %s item %s (of kind %s) is unbound",
+		   mom_item_cstring (cg->cg_curfunitm),
+		   mom_item_cstring (itm),
+		   itmkind ? mom_item_cstring (itmkind) : "~");
+  switch (mom_item_hash (itmkind))
+    {
+    case MOM_PREDEFINED_NAMED_CASE (closed, itmkind, otherwisekindlab):
+      {
+	cgen_bind_closed_item_mom (cg, itm);
+	MOM_DEBUGPRINTF (gencod, "function %s has new closed value item %s",
+			 mom_item_cstring (cg->cg_curfunitm),
+			 mom_item_cstring (itm));
+	return MOM_PREDEFINED_NAMED (value);
+      }
+      break;
+    case MOM_PREDEFINED_NAMED_CASE (variable, itmkind, otherwisekindlab):
+      {
+	momitem_t *itmctyp = NULL;
+	itmctyp = mom_value_to_item (mom_item_unsync_get_attribute (itm,
+								    MOM_PREDEFINED_NAMED
+								    (c_type)));
+	if (!itmctyp)
+	  CGEN_ERROR_RESULT_MOM (cg, NULL,
+				 "module item %s : function %s has block %s with statment %s with untyped variable %s",
+				 mom_item_cstring (cg->cg_moduleitm),
+				 mom_item_cstring (cg->cg_curfunitm),
+				 mom_item_cstring (cg->cg_curblockitm),
+				 mom_item_cstring (cg->cg_curstmtitm),
+				 mom_item_cstring (itm));
+	if (cg->cg_errormsg)
+	  return NULL;
+	cgen_bind_variable_item_mom (cg, itm);
+	if (cg->cg_errormsg)
+	  return NULL;
+	MOM_DEBUGPRINTF (gencod,
+			 "function %s has new variable item %s of type %s",
+			 mom_item_cstring (cg->cg_curfunitm),
+			 mom_item_cstring (itm), mom_item_cstring (itmctyp));
+	return itmctyp;
+      }
+      break;
+    default:
+    otherwisekindlab:
+    case MOM_PREDEFINED_NAMED_CASE (value, itmkind, otherwisekindlab):
+      // handle the item as a constant
+      {
+	momvalue_t valconst = MOM_NONEV;
+	if (itmkind == MOM_PREDEFINED_NAMED (value))
+	  {
+	    valconst =		//
+	      mom_item_unsync_get_attribute (itm,
+					     MOM_PREDEFINED_NAMED (value));
+	  }
+	if (valconst.typnum == momty_null)
+	  valconst = mom_itemv (itm);
+	cgen_bind_constant_item_mom (cg, itm, valconst);
+	if (cg->cg_errormsg)
+	  return NULL;
+	MOM_DEBUGPRINTF (gencod,
+			 "function %s has new constant item %s of kind %s",
+			 mom_item_cstring (cg->cg_curfunitm),
+			 mom_item_cstring (itm),
+			 itmkind ? mom_item_cstring (itmkind) : "~");
+	return MOM_PREDEFINED_NAMED (value);
+      }
+      break;
+    }
+  CGEN_ERROR_RESULT_MOM (cg, NULL,
+			 "module item %s : function %s has block %s with statment %s with unexpected item %s",
+			 mom_item_cstring (cg->cg_moduleitm),
+			 mom_item_cstring (cg->cg_curfunitm),
+			 mom_item_cstring (cg->cg_curblockitm),
+			 mom_item_cstring (cg->cg_curstmtitm),
+			 mom_item_cstring (itm));
 }				/* end cgen_type_of_scanned_item_mom */
 
 
@@ -561,6 +644,7 @@ cgen_type_of_scanned_expr_mom (struct codegen_mom_st *cg, momvalue_t vexpr)
     case momty_double:
       return MOM_PREDEFINED_NAMED (double);
     case momty_item:
+      cgen_lock_item_mom (cg, vexpr.vitem);
       return cgen_type_of_scanned_item_mom (cg, vexpr.vitem);
     }
 }
@@ -874,7 +958,7 @@ cgen_bind_variable_item_mom (struct codegen_mom_st *cg, momitem_t *itmv)
 		   mom_intv (mom_hashset_count (cg->cg_funvariableset)),
 		   mom_itemv (itmctyp));
   MOM_DEBUGPRINTF (gencod,
-		   "cgen_bind_variable_item function %s varialbe item %s bound to %s",
+		   "cgen_bind_variable_item function %s variable item %s bound to %s",
 		   mom_item_cstring (cg->cg_curfunitm),
 		   mom_item_cstring (itmv), mom_output_gcstring (vvarbind));
   cg->cg_funvariableset = mom_hashset_put (cg->cg_funvariableset, itmv);
@@ -900,6 +984,7 @@ cgen_bind_variables_mom (struct codegen_mom_st *cg, momvalue_t vvariables)
       cgen_bind_variable_item_mom (cg, itmv);
     }
 }				/* end cgen_bind_variables_mom */
+
 
 static void
 cgen_bind_closed_item_mom (struct codegen_mom_st *cg, momitem_t *itmc)

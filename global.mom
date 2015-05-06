@@ -128,6 +128,13 @@
 ..
 
 
+** constant   ////// PREDEFINED
+{
+  * comment  "kind of constant" }
+ 
+..
+
+
 ** constants   ////// PREDEFINED
 {
   * comment  "to give set or tuple of constant values in a function" }
@@ -547,6 +554,16 @@
 {
   * comment  "kind of variable, or attribute giving a set of variables"
   * dumped_item_emitter  ^emitter_of_plain_kind() }
+ 
+..
+
+
+** void   ////// PREDEFINED
+{
+  * c_code  "void"
+  * comment  "c_type for \"oid\"in C" }
+ 
+  %  ^filler_of_plain_kind( c_type)
  
 ..
 

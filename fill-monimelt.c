@@ -101,6 +101,8 @@ mom_predefined_items_fill (void)
     = MOM_PREDEFINED_NAMED (function_signature);
 // item value of kind c_type
   MOM_PREDEFINED_NAMED (value)->itm_kind = MOM_PREDEFINED_NAMED (c_type);
+// item void of kind c_type
+  MOM_PREDEFINED_NAMED (void)->itm_kind = MOM_PREDEFINED_NAMED (c_type);
 // function item emitter_of_association of signature_1itm_to_val:
   MOM_PREDEFINED_NAMED (emitter_of_association)->itm_data1 =
     mom_dynload_symbol ("momfun_1itm_to_val_emitter_of_association");
