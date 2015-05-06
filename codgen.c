@@ -699,6 +699,52 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 				 mom_item_cstring (cg->cg_curfunitm),
 				 mom_item_cstring (cg->cg_curblockitm),
 				 mom_item_cstring (itmstmt));
+	momvalue_t rexprv = mom_components_nth (itmstmt->itm_comps, 2);
+	MOM_DEBUGPRINTF (gencod,
+			 "in function %s block %s set statement %s lvar %s rexpr %s",
+			 mom_item_cstring (cg->cg_curfunitm),
+			 mom_item_cstring (cg->cg_curblockitm),
+			 mom_item_cstring (itmstmt),
+			 mom_item_cstring (itmlvar),
+			 mom_output_gcstring (rexprv));
+	momitem_t *lvarctypitm = cgen_type_of_scanned_item_mom (cg, itmlvar);
+	if (cg->cg_errormsg)
+	  return;
+	MOM_DEBUGPRINTF (gencod,
+			 "in function %s block %s set statement %s lvar %s lvarctyp %s",
+			 mom_item_cstring (cg->cg_curfunitm),
+			 mom_item_cstring (cg->cg_curblockitm),
+			 mom_item_cstring (itmstmt),
+			 mom_item_cstring (itmlvar),
+			 mom_item_cstring (lvarctypitm));
+	if (!lvarctypitm)
+	  CGEN_ERROR_RETURN_MOM (cg,
+				 "module item %s : function %s with block %s with set statement %s with bad lvar %s",
+				 mom_item_cstring (cg->cg_moduleitm),
+				 mom_item_cstring (cg->cg_curfunitm),
+				 mom_item_cstring (cg->cg_curblockitm),
+				 mom_item_cstring (itmstmt),
+				 mom_item_cstring (itmlvar));
+	momitem_t *rexpctypitm = cgen_type_of_scanned_expr_mom (cg, rexprv);
+	MOM_DEBUGPRINTF (gencod,
+			 "in function %s block %s set statement %s rexpr %s of ctype %s",
+			 mom_item_cstring (cg->cg_curfunitm),
+			 mom_item_cstring (cg->cg_curblockitm),
+			 mom_item_cstring (itmstmt),
+			 mom_output_gcstring (rexprv),
+			 mom_item_cstring (rexpctypitm));
+	if (cg->cg_errormsg)
+	  return;
+	if (!rexpctypitm)
+	  CGEN_ERROR_RETURN_MOM (cg,
+				 "module item %s : function %s with block %s with set statement %s with bad rexpr %s",
+				 mom_item_cstring (cg->cg_moduleitm),
+				 mom_item_cstring (cg->cg_curfunitm),
+				 mom_item_cstring (cg->cg_curblockitm),
+				 mom_item_cstring (itmstmt),
+				 mom_output_gcstring (rexprv));
+	if (lvarctypitm == rexpctypitm)
+	  break;
 #warning scan of set instruction not handled, should special case item & locked_item & value...
 
       }
@@ -745,7 +791,8 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
       }
       break;
       ////////////////
-      case MOM_PREDEFINED_NAMED_CASE (if, itmop, otherwiseoplab):
+      case MOM_PREDEFINED_NAMED_CASE (if, itmop, otherwiseoplab)
+    :
 	{			/// if <expr-cond> <block>
 	}
       break;
