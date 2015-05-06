@@ -459,12 +459,68 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 			   mom_item_cstring (cg->cg_curfunitm),
 			   mom_item_cstring (cg->cg_curblockitm),
 			   mom_item_cstring (itmstmt));
+  unsigned stmtlen = mom_components_count (itmstmt->itm_comps);
+  if (stmtlen < 1)
+    CGEN_ERROR_RETURN_MOM (cg,
+			   "module item %s : function %s with block %s with empty statement %s",
+			   mom_item_cstring (cg->cg_moduleitm),
+			   mom_item_cstring (cg->cg_curfunitm),
+			   mom_item_cstring (cg->cg_curblockitm),
+			   mom_item_cstring (itmstmt));
+  momitem_t *itmop =
+    mom_value_to_item (mom_components_nth (itmstmt->itm_comps, 0));
+  if (!itmop)
+    CGEN_ERROR_RETURN_MOM (cg,
+			   "module item %s : function %s with block %s with opless statement %s",
+			   mom_item_cstring (cg->cg_moduleitm),
+			   mom_item_cstring (cg->cg_curfunitm),
+			   mom_item_cstring (cg->cg_curblockitm),
+			   mom_item_cstring (itmstmt));
+  switch (mom_item_hash (itmop))
+    {
+    case MOM_PREDEFINED_NAMED_CASE (set, itmop, otherwiseoplab):
+      {				/// set <lvar> <rexpr>
+	momitem_t *itmlvar = NULL;
+	if (stmtlen != 3
+	    || !(itmlvar =
+		 mom_value_to_item (mom_components_nth
+				    (itmstmt->itm_comps, 1))))
+	  CGEN_ERROR_RETURN_MOM (cg,
+				 "module item %s : function %s with block %s with bad set statement %s",
+				 mom_item_cstring (cg->cg_moduleitm),
+				 mom_item_cstring (cg->cg_curfunitm),
+				 mom_item_cstring (cg->cg_curblockitm),
+				 mom_item_cstring (itmstmt));
 
+      }
+      break;
+    case MOM_PREDEFINED_NAMED_CASE (chunk, itmop, otherwiseoplab):
+      {				/// chunk
+      }
+      break;
+      case MOM_PREDEFINED_NAMED_CASE (if, itmop, otherwiseoplab)
+    :
+	{			/// if <expr-cond> <block>
+	}
+      break;
+    default:
+    otherwiseoplab:
+      CGEN_ERROR_RETURN_MOM (cg,
+			     "module item %s : function %s with block %s with statement %s with strange op %s",
+			     mom_item_cstring (cg->cg_moduleitm),
+			     mom_item_cstring (cg->cg_curfunitm),
+			     mom_item_cstring (cg->cg_curblockitm),
+			     mom_item_cstring (itmstmt),
+			     mom_item_cstring (itmop));
+      break;
+    }
 #warning cgen_scan_statement_first_mom unimplemented
   MOM_DEBUGPRINTF (gencod, "in function %s end scanning statement %s",
 		   mom_item_cstring (cg->cg_curfunitm),
 		   mom_item_cstring (itmstmt));
 }				/* end cgen_scan_statement_first_mom */
+
+
 
 static void
 cgen_bind_new_mom (struct codegen_mom_st *cg, momitem_t *itm,

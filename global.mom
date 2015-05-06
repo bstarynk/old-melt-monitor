@@ -290,6 +290,13 @@
 ..
 
 
+** if   ////// PREDEFINED
+{
+  * comment  "opcode for if <expr> <then-block> instruction" }
+ 
+..
+
+
 ** input_types   ////// PREDEFINED
 {
   * comment  "give the tuple of input types inside signatures" }
