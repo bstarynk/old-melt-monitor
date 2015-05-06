@@ -810,6 +810,38 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
       case MOM_PREDEFINED_NAMED_CASE (if, itmop, otherwiseoplab)
     :
 	{			/// if <expr-cond> <block>
+	  momvalue_t vtestexpr = MOM_NONEV;
+	  momitem_t *testctypitm = NULL;
+	  momitem_t *thenitm = NULL;
+	  if (stmtlen != 3
+	      || (vtestexpr = mom_components_nth (itmstmt->itm_comps,
+						  1)).typnum == momty_null
+	      || !(testctypitm =
+		   cgen_type_of_scanned_expr_mom (cg, vtestexpr))
+	      || !(thenitm =
+		   mom_value_to_item (mom_components_nth
+				      (itmstmt->itm_comps, 2))))
+	    CGEN_ERROR_RETURN_MOM (cg,
+				   "module item %s : function %s with block %s with bad if statement %s",
+				   mom_item_cstring (cg->cg_moduleitm),
+				   mom_item_cstring (cg->cg_curfunitm),
+				   mom_item_cstring (cg->cg_curblockitm),
+				   mom_item_cstring (itmstmt));
+	  if (cg->cg_errormsg)
+	    return;
+	  if (thenitm->itm_kind == MOM_PREDEFINED_NAMED (c_block))
+	    {
+	      cgen_lock_item_mom (cg, thenitm);
+	      cgen_scan_block_first_mom (cg, thenitm);
+	    }
+	  else
+	    CGEN_ERROR_RETURN_MOM (cg,
+				   "module item %s : function %s with block %s with wrong if statement %s - non block then %s",
+				   mom_item_cstring (cg->cg_moduleitm),
+				   mom_item_cstring (cg->cg_curfunitm),
+				   mom_item_cstring (cg->cg_curblockitm),
+				   mom_item_cstring (itmstmt),
+				   mom_item_cstring (thenitm));
 	}
       break;
     default:

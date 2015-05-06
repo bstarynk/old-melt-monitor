@@ -18,16 +18,10 @@
 ///
 
 
-** apply0   ////// PREDEFINED
+** apply   ////// PREDEFINED
 {
-  * comment  "operation for application without result" }
- 
-..
-
-
-** apply1   ////// PREDEFINED
-{
-  * comment  "operation for application with single result" }
+  * comment  "opcode for apply <signature> <result> <fun> <args...> statement"
+ }
  
 ..
 
@@ -362,7 +356,7 @@
 ** locked_item   ////// PREDEFINED
 {
   * c_code  "momitem_t*"
-  * comment  "c_type for \"omlockeditem_t*\"in C" }
+  * comment  "c_type for \"ockeditem_t*\"C" }
  
   %  ^filler_of_plain_kind( c_type)
  
@@ -571,7 +565,7 @@
 ** void   ////// PREDEFINED
 {
   * c_code  "void"
-  * comment  "c_type for \"d\" C" }
+  * comment  "c_type for C \'oid\'type" }
  
   %  ^filler_of_plain_kind( c_type)
  
