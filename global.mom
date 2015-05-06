@@ -20,7 +20,7 @@
 
 ** apply   ////// PREDEFINED
 {
-  * comment  "opcode for apply <signature> <result> <fun> <args...> statement"
+  * comment  "opcode for apply <signature> <results...> <fun> <args...> [<else-block>] statement"
  }
  
 ..

@@ -659,6 +659,7 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 		   mom_item_cstring (cg->cg_curfunitm),
 		   mom_item_cstring (itmstmt));
   assert (mom_hashset_contains (cg->cg_lockeditemset, itmstmt));
+  struct momcomponents_st *stmtcomps = itmstmt->itm_comps;
   if (itmstmt->itm_kind != MOM_PREDEFINED_NAMED (code_statement))
     CGEN_ERROR_RETURN_MOM (cg,
 			   "module item %s : function %s with block %s with bad statement %s",
@@ -666,7 +667,7 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 			   mom_item_cstring (cg->cg_curfunitm),
 			   mom_item_cstring (cg->cg_curblockitm),
 			   mom_item_cstring (itmstmt));
-  unsigned stmtlen = mom_components_count (itmstmt->itm_comps);
+  unsigned stmtlen = mom_components_count (stmtcomps);
   if (stmtlen < 1)
     CGEN_ERROR_RETURN_MOM (cg,
 			   "module item %s : function %s with block %s with empty statement %s",
@@ -674,8 +675,7 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 			   mom_item_cstring (cg->cg_curfunitm),
 			   mom_item_cstring (cg->cg_curblockitm),
 			   mom_item_cstring (itmstmt));
-  momitem_t *itmop =
-    mom_value_to_item (mom_components_nth (itmstmt->itm_comps, 0));
+  momitem_t *itmop = mom_value_to_item (mom_components_nth (stmtcomps, 0));
   if (!itmop)
     CGEN_ERROR_RETURN_MOM (cg,
 			   "module item %s : function %s with block %s with opless statement %s",
@@ -691,15 +691,14 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 	momitem_t *itmlvar = NULL;
 	if (stmtlen != 3
 	    || !(itmlvar =
-		 mom_value_to_item (mom_components_nth
-				    (itmstmt->itm_comps, 1))))
+		 mom_value_to_item (mom_components_nth (stmtcomps, 1))))
 	  CGEN_ERROR_RETURN_MOM (cg,
 				 "module item %s : function %s with block %s with bad set statement %s",
 				 mom_item_cstring (cg->cg_moduleitm),
 				 mom_item_cstring (cg->cg_curfunitm),
 				 mom_item_cstring (cg->cg_curblockitm),
 				 mom_item_cstring (itmstmt));
-	momvalue_t rexprv = mom_components_nth (itmstmt->itm_comps, 2);
+	momvalue_t rexprv = mom_components_nth (stmtcomps, 2);
 	MOM_DEBUGPRINTF (gencod,
 			 "in function %s block %s set statement %s lvar %s rexpr %s",
 			 mom_item_cstring (cg->cg_curfunitm),
@@ -770,7 +769,7 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
       {				/// chunk ...
 	for (unsigned ix = 1; ix < stmtlen && !cg->cg_errormsg; ix++)
 	  {
-	    momvalue_t vchkarg = mom_components_nth (itmstmt->itm_comps, ix);
+	    momvalue_t vchkarg = mom_components_nth (stmtcomps, ix);
 	    momitem_t *itmarg = mom_value_to_item (vchkarg);
 	    if (itmarg != NULL)
 	      {
@@ -814,13 +813,12 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 	  momitem_t *testctypitm = NULL;
 	  momitem_t *thenitm = NULL;
 	  if (stmtlen != 3
-	      || (vtestexpr = mom_components_nth (itmstmt->itm_comps,
+	      || (vtestexpr = mom_components_nth (stmtcomps,
 						  1)).typnum == momty_null
 	      || !(testctypitm =
 		   cgen_type_of_scanned_expr_mom (cg, vtestexpr))
 	      || !(thenitm =
-		   mom_value_to_item (mom_components_nth
-				      (itmstmt->itm_comps, 2))))
+		   mom_value_to_item (mom_components_nth (stmtcomps, 2))))
 	    CGEN_ERROR_RETURN_MOM (cg,
 				   "module item %s : function %s with block %s with bad if statement %s",
 				   mom_item_cstring (cg->cg_moduleitm),
@@ -843,6 +841,56 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 				   mom_item_cstring (itmstmt),
 				   mom_item_cstring (thenitm));
 	}
+      break;
+      ////////////////
+    case MOM_PREDEFINED_NAMED_CASE (apply, itmop, otherwiseoplab):
+      {				/// apply <signature> <results...> <fun> <args...> [<else-block>]
+	if (stmtlen < 3)
+	  CGEN_ERROR_RETURN_MOM (cg,
+				 "module item %s : function %s with block %s with too short apply statement %s",
+				 mom_item_cstring (cg->cg_moduleitm),
+				 mom_item_cstring (cg->cg_curfunitm),
+				 mom_item_cstring (cg->cg_curblockitm),
+				 mom_item_cstring (itmstmt));
+	momitem_t *sigitm =
+	  mom_value_to_item (mom_components_nth (stmtcomps, 1));
+	if (!sigitm
+	    || (cgen_lock_item_mom (cg, sigitm),
+		sigitm->itm_kind !=
+		MOM_PREDEFINED_NAMED (function_signature)))
+	  CGEN_ERROR_RETURN_MOM (cg,
+				 "module item %s : function %s with block %s with  apply statement %s with bad signature %s",
+				 mom_item_cstring (cg->cg_moduleitm),
+				 mom_item_cstring (cg->cg_curfunitm),
+				 mom_item_cstring (cg->cg_curblockitm),
+				 mom_item_cstring (itmstmt),
+				 mom_item_cstring (sigitm));
+	const momseq_t *intyptup =
+	  mom_value_to_tuple (mom_item_unsync_get_attribute
+			      (sigitm, MOM_PREDEFINED_NAMED (input_types)));
+	const momseq_t *outyptup =
+	  mom_value_to_tuple (mom_item_unsync_get_attribute
+			      (sigitm, MOM_PREDEFINED_NAMED (output_types)));
+	if (!intyptup || !outyptup)
+	  CGEN_ERROR_RETURN_MOM (cg,
+				 "module item %s : function %s with block %s with  apply statement %s with mistyped signature %s",
+				 mom_item_cstring (cg->cg_moduleitm),
+				 mom_item_cstring (cg->cg_curfunitm),
+				 mom_item_cstring (cg->cg_curblockitm),
+				 mom_item_cstring (itmstmt),
+				 mom_item_cstring (sigitm));
+	unsigned nbin = mom_seq_length (intyptup);
+	unsigned nbout = mom_seq_length (outyptup);
+	if (stmtlen < 3 + nbin + nbout)
+	  CGEN_ERROR_RETURN_MOM (cg,
+				 "module item %s : function %s with block %s with too short apply statement %s for signature %s",
+				 mom_item_cstring (cg->cg_moduleitm),
+				 mom_item_cstring (cg->cg_curfunitm),
+				 mom_item_cstring (cg->cg_curblockitm),
+				 mom_item_cstring (itmstmt),
+				 mom_item_cstring (sigitm));
+#warning scanning of apply is incomplete
+      }
       break;
     default:
     otherwiseoplab:

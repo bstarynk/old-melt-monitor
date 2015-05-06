@@ -546,6 +546,35 @@ struct momseq_st
   const momitem_t *arritm[];	/* length is slen */
 };
 
+static inline unsigned
+mom_seq_length (const struct momseq_st *seq)
+{
+  if (!seq || seq == MOM_EMPTY)
+    return 0;
+  return seq->slen;
+}
+
+static inline momvalue_t
+mom_seq_meta (const struct momseq_st *seq)
+{
+  if (!seq || seq == MOM_EMPTY)
+    return MOM_NONEV;
+  return seq->meta;
+}
+
+static const momitem_t *
+mom_seq_nth (const struct momseq_st *seq, int rk)
+{
+  if (!seq || seq == MOM_EMPTY)
+    return NULL;
+  unsigned ln = seq->slen;
+  if (rk < 0)
+    rk += (int) ln;
+  if (rk >= 0 && rk < (int) ln)
+    return seq->arritm[rk];
+  return NULL;
+}
+
 #define MOM_MAX_NODE_LENGTH (1<<24)	/* max node length 16777216 */
 struct momnode_st
 {
