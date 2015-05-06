@@ -356,7 +356,7 @@
 ** locked_item   ////// PREDEFINED
 {
   * c_code  "momitem_t*"
-  * comment  "c_type for \"ockeditem_t*\"C" }
+  * comment  "c_type for \"ckeditem_t*\"" }
  
   %  ^filler_of_plain_kind( c_type)
  
@@ -565,7 +565,7 @@
 ** void   ////// PREDEFINED
 {
   * c_code  "void"
-  * comment  "c_type for C \'oid\'type" }
+  * comment  "c_type for C \'void\' type" }
  
   %  ^filler_of_plain_kind( c_type)
  
