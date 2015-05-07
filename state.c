@@ -1920,6 +1920,7 @@ static void
 emit_signature_application_hook_mom (FILE *foutaphd,
 				     momitem_t *itmpredef, momvalue_t vhook)
 {
+#warning emit_signature_application_hook_mom should be called later
   char prefixbuf[256];
   char applyvalbuf[256];
   char applyclosbuf[256];
@@ -1934,7 +1935,7 @@ emit_signature_application_hook_mom (FILE *foutaphd,
 		   mom_item_cstring (itmkindsig),
 		   mom_output_gcstring (vhook));
   assert (foutaphd);
-  assert (itmpredef);
+  assert (itmpredef && itmpredef->itm_space == momspa_predefined);
   if (!itmkindsig
       || itmkindsig->itm_kind != MOM_PREDEFINED_NAMED (function_signature))
     MOM_FATAPRINTF
@@ -1952,11 +1953,76 @@ emit_signature_application_hook_mom (FILE *foutaphd,
     MOM_FATAPRINTF
       ("emit_signature_application_hook itmpredef %s with bad kind %s",
        mom_item_cstring (itmpredef), mom_item_cstring (itmkindsig));
+  unsigned nbins = mom_seq_length (seqins);
+  unsigned nbouts = mom_seq_length (seqouts);
+  fprintf (foutaphd, "static inline bool\n"
+	   "momhook_%s(", mom_item_cstring (itmpredef));
+  int argcnt = 0;
+  for (unsigned ixin = 0; ixin < nbins; ixin++)
+    {
+      momitem_t *intypitm = mom_seq_nth (seqins, ixin);
+      if (argcnt++ > 0)
+	fputs (", ", foutaphd);
+      fprintf (foutaphd, "%s mom_arg%d",
+	       mom_string_cstr (mom_value_to_string
+				(mom_item_unsync_get_attribute
+				 (intypitm, MOM_PREDEFINED_NAMED (c_code)))),
+	       ixin);
+    };
+  for (unsigned ixout = 0; ixout < nbouts; ixout++)
+    {
+      momitem_t *outypitm = mom_seq_nth (seqouts, ixout);
+      if (argcnt++ > 0)
+	fputs (", ", foutaphd);
+      fprintf (foutaphd, "%s* mom_res%d",
+	       mom_string_cstr (mom_value_to_string
+				(mom_item_unsync_get_attribute
+				 (outypitm, MOM_PREDEFINED_NAMED (c_code)))),
+	       ixout);
+    }
+  fprintf (foutaphd, ")\n{\n");
+  fprintf (foutaphd, "  momvalue_t mom_clos = MOM_NONEV;\n");
+  fprintf (foutaphd, "  momitem_t* mom_itm = ");
+  if (itmpredef->itm_anonymous)
+    fprintf (foutaphd, "  MOM_PREDEFINED_ANONYMOUS(%s);\n",
+	     mom_item_cstring (itmpredef));
+  else
+    fprintf (foutaphd, " MOM_PREDEFINED_NAMED(%s);\n",
+	     mom_item_cstring (itmpredef));
+  fprintf (foutaphd, "  mom_item_lock(mom_itm);\n");
+  if (vhook.typnum == momty_int)
+    {
+      fprintf (foutaphd,
+	       "  mom_clos = mom_components_nth(mom_itm->itm_comps, %d);\n",
+	       vhook.vint);
+    }
+  else if (vhook.typnum == momty_item)
+    {
+      momitem_t *itmhook = vhook.vitem;
+      if (itmhook->itm_space != momspa_predefined)
+	MOM_FATAPRINTF ("bad hook item %s for %s", mom_item_cstring (itmhook),
+			mom_item_cstring (itmpredef));
+      fprintf (foutaphd,
+	       "  mom_clos = mom_item_unsync_get_attribute(mom_item, ");
+      if (itmhook->itm_anonymous)
+	fprintf (foutaphd, "MOM_PREDEFINED_ANONYMOUS(%s)",
+		 mom_item_cstring (itmhook));
+      else
+	fprintf (foutaphd, "MOM_PREDEFINED_NAMED(%s)",
+		 mom_item_cstring (itmhook));
+      fputs (foutaphd, ");\n");
+    }
+  else
+    MOM_FATAPRINTF ("bad hook %s for %s", mom_output_gcstring (vhook),
+		    mom_item_cstring (itmpredef));
+  fprintf (foutaphd, "  mom_item_unlock(mom_itm);\n");
 #warning emit_signature_application_hook_mom unimplemented
   MOM_WARNPRINTF ("emit_signature_application_hook_mom unimplemented for %s",
 		  mom_item_cstring (itmpredef));
   fprintf (foutaphd, "\n" "#warning should emit hook code for %s\n",
 	   mom_item_cstring (itmpredef));
+  fprintf (foutaphd, "\n} // end momhook_%s of %s\n\n",
+	   mom_item_cstring (itmpredef), mom_item_cstring (itmkindsig));
 }				/* end of emit_signature_application_hook_mom   */
 
 static void
