@@ -906,6 +906,8 @@ mom_item_cstring (const momitem_t *itm)
   return itm->itm_str->cstr;
 }
 
+const char *mom_item_space_string (const momitem_t *itm);
+
 static inline void
 mom_item_lock (momitem_t *itm)
 {

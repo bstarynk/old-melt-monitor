@@ -169,44 +169,33 @@ mom_valid_item_name_str (const char *id, const char **pend)
   return false;
 }
 
-#if 0
-static void
-useless_test_mom (void)
+
+const char *
+mom_item_space_string (const momitem_t *itm)
 {
-  for (int i = 0; i < 4; i++)
+  if (!itm || itm == MOM_EMPTY)
+    return "~";
+  switch (itm->itm_space)
     {
-      char buf[48];
-      memset (buf, 0, sizeof (buf));
-      uint64_t n = mom_random_64 (__LINE__) & 0xffffffffffffLL;
-      num48_to_char10_mom (n, buf);
-      uint64_t u = char10_to_num48_mom (buf);
-      printf ("i=%d n=%lld=%#llx buf=%s u=%lld=%#llx\n",
-	      i, (long long) n, (long long) n, buf, (long long) u,
-	      (long long) u);
-      assert (buf[0] && strlen (buf) == 10);
-    }
-  {
-    unsigned salt = getpid () % 8;
-    printf ("salt %u\n", salt);
-    for (int i = 0; i < 8; i++)
+    case momspa_none:
+      return "none";
+    case momspa_transient:
+      return "transient";
+    case momspa_user:
+      return "user";
+    case momspa_global:
+      return "global";
+    case momspa_predefined:
+      return "predefined";
+    default:
       {
-	const momstring_t *str = mom_make_random_idstr (salt, NULL);
-	assert (str != NULL);
-	printf ("i=%d str:%s hash=%u\n", i, str->cstr, str->shash);
-	assert (mom_valid_item_id_str (str->cstr, NULL));
+	char buf[32];
+	memset (buf, 0, sizeof (buf));
+	snprintf (buf, sizeof (buf) - 1, "space#%d?", (int) itm->itm_space);
+	return MOM_GC_STRDUP ("strange space", buf);
       }
-  }
-  {
-    momitem_t *anitm1 = mom_make_anonymous_item ();
-    momitem_t *anitm2 = mom_make_anonymous_item ();
-    printf ("anitm1@%p id %s h %u=%#x\n",
-	    anitm1, anitm1->itm_id->cstr, anitm1->itm_id->shash,
-	    anitm1->itm_id->shash);
-    printf ("anitm2@%p id %s h %u=%#x\n", anitm2, anitm2->itm_id->cstr,
-	    anitm2->itm_id->shash, anitm2->itm_id->shash);
-  }
+    }
 }
-#endif /* 0 */
 
 void
 mom_initialize_items (void)

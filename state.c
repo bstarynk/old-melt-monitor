@@ -821,8 +821,9 @@ load_fill_item_mom (momitem_t *itm, bool internal)
 {				// keep in sync with emit_content_dumped_item_mom
   assert (loader_mom && loader_mom->ldmagic == LOADER_MAGIC_MOM);
   assert (itm && itm->itm_str);
-  MOM_DEBUGPRINTF (load, "load_fill_item start %s at %s",
-		   mom_item_cstring (itm), load_position_mom (NULL, 0, 0));
+  MOM_DEBUGPRINTF (load, "load_fill_item start %s (%s), at %s",
+		   mom_item_cstring (itm), mom_item_space_string (itm),
+		   load_position_mom (NULL, 0, 0));
   momvalue_t vtok = MOM_NONEV;
   /// load the attributes
   vtok = mom_peek_token_load ();
