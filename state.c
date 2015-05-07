@@ -1994,7 +1994,7 @@ emit_signature_application_hook_mom (FILE *foutaphd,
     {
       fprintf (foutaphd,
 	       "  mom_clos = mom_components_nth(mom_itm->itm_comps, %d);\n",
-	       vhook.vint);
+	       (int) vhook.vint);
     }
   else if (vhook.typnum == momty_item)
     {
@@ -2101,18 +2101,6 @@ emit_predefined_fill_mom (void)
 		       mom_value_cstr (vprefix),
 		       mom_item_cstring (itmpredef));
 	    }
-	  momvalue_t vhook =	//
-	    mom_item_unsync_get_attribute ((momitem_t *) itmpredef,
-					   MOM_PREDEFINED_NAMED
-					   (hook_closure));
-	  MOM_DEBUGPRINTF (dump,
-			   "emit_predefined_fill ix#%d itmpredef %s vhook %s",
-			   ix, mom_item_cstring (itmpredef),
-			   mom_output_gcstring (vhook));
-	  if (vhook.typnum == momty_int || vhook.typnum == momty_node)
-	    emit_signature_application_hook_mom (foutaphd,
-						 (momitem_t *) itmpredef,
-						 vhook);
 	}
 
       if (itmpredef->itm_kind == MOM_PREDEFINED_NAMED (function_signature))
@@ -2151,6 +2139,31 @@ emit_predefined_fill_mom (void)
 	}
     }
   fprintf (foutfp, "\n} /* end mom_predefined_items_fill */\n");
+  fflush (foutfp);
+  for (unsigned ix = 0; ix < nbpredef; ix++)
+    {
+      const momitem_t *itmpredef = setpredef->arritm[ix];
+      assert (itmpredef && itmpredef->itm_space == momspa_predefined);
+      const momitem_t *itmkind = itmpredef->itm_kind;
+      if (!itmkind)
+	continue;
+      if (itmkind != MOM_PREDEFINED_NAMED (function_signature))
+	continue;
+      MOM_DEBUGPRINTF (dump,
+		       "emit_predefined_fill ix#%d itmpredef %s for hook",
+		       ix, mom_item_cstring (itmpredef));
+      momvalue_t vhook =	//
+	mom_item_unsync_get_attribute ((momitem_t *) itmpredef,
+				       MOM_PREDEFINED_NAMED (hook_closure));
+      MOM_DEBUGPRINTF (dump,
+		       "emit_predefined_fill ix#%d itmpredef %s vhook %s",
+		       ix, mom_item_cstring (itmpredef),
+		       mom_output_gcstring (vhook));
+      if (vhook.typnum == momty_int || vhook.typnum == momty_node)
+	emit_signature_application_hook_mom (foutaphd,
+					     (momitem_t *) itmpredef, vhook);
+    }
+  fflush (foutfp);
   fprintf (foutfp, "\n // end of generated file %s\n",
 	   MOM_FILL_PREDEFINED_PATH);
   close_generated_file_dump_mom (foutfp, MOM_FILL_PREDEFINED_PATH);
