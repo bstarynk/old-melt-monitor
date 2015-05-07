@@ -253,11 +253,15 @@ mom_load_itemref_at (const char *fil, int lin)
   else if (mom_value_is_delim (valtok, "_*"))
     {
       mom_eat_token_load_at (fil, lin);
+      MOM_DEBUGPRINTF (load, "load_itemref@%s:%d start global anonymous", fil,
+		       lin);
       return mom_load_new_anonymous_item (true);
     }
   else if (mom_value_is_delim (valtok, "_:"))
     {
       mom_eat_token_load_at (fil, lin);
+      MOM_DEBUGPRINTF (load, "load_itemref@%s:%d start user anonymous", fil,
+		       lin);
       return mom_load_new_anonymous_item (false);
     }
   return NULL;
@@ -581,10 +585,14 @@ readagain:
 	}
     }
   else if (c == '_' && mom_valid_item_id_str (pstart, (const char **) &end)
-	   && end && (!isalnum (*end) && *end != '_'))
+	   && end && (!isalnum (*end) || *end != '_'))
     {
       char olde = *end;
       *end = '\0';
+      MOM_DEBUGPRINTF (load, "token_parse_load@%s:%d: anonitem %s at %s",
+		       fil, lin, pstart, load_position_mom (locbuf,
+							    sizeof (locbuf),
+							    0));
       const momitem_t *itm = mom_find_item (pstart);
       if (itm)
 	{
@@ -660,7 +668,7 @@ readagain:
     }
 
   MOM_FATAPRINTF
-    ("token_parse_load@%s:%d: failing  linecol %d linebuf %s at %s", fil, lin,
+    ("token_parse_load@%s:%d: failing linecol %d linebuf %s at %s", fil, lin,
      (int) loader_mom->ldlinecol, loader_mom->ldlinebuf,
      load_position_mom (locbuf, sizeof (locbuf), 0));
 }				/* end token_parse_load_mom_at */
@@ -826,8 +834,9 @@ load_fill_item_mom (momitem_t *itm, bool internal)
 	{
 	  momvalue_t vat = MOM_NONEV;
 	  mom_eat_token_load ();
-	  MOM_DEBUGPRINTF (load, "load_fill_item insideattrs of %s",
-			   mom_item_cstring (itm));
+	  MOM_DEBUGPRINTF (load, "load_fill_item insideattrs of %s near %s",
+			   mom_item_cstring (itm), load_position_mom (NULL, 0,
+								      0));
 	  const momitem_t *itmat = mom_load_itemref ();
 	  MOM_DEBUGPRINTF (load, "load_fill_item %s itmat=%s",
 			   mom_item_cstring (itm), mom_item_cstring (itmat));
@@ -940,8 +949,9 @@ const momitem_t *
 mom_load_new_anonymous_item (bool global)
 {
   momitem_t *newitm = mom_make_anonymous_item ();
-  MOM_DEBUGPRINTF (load, "load_new_anonymous_item %s newitm=%s",
-		   global ? "global" : "user", mom_item_cstring (newitm));
+  MOM_DEBUGPRINTF (load, "load_new_anonymous_item %s newitm=%s at %s",
+		   global ? "global" : "user", mom_item_cstring (newitm),
+		   load_position_mom (NULL, 0, 0));
   if (global)
     newitm->itm_space = momspa_global;
   else
@@ -1120,6 +1130,17 @@ mom_load_value (momvalue_t *pval)
     {				// items
       *pval = vtok;
       mom_eat_token_load ();
+      return true;
+    }
+  if (mom_value_is_delim (vtok, "_*") || mom_value_is_delim (vtok, "_:"))
+    {
+      momvalue_t vitem = MOM_NONEV;
+      const momitem_t *anitm = mom_load_itemref ();
+      MOM_DEBUGPRINTF (load, "value anonymous item %s near %s",
+		       mom_item_cstring (anitm), load_position_mom (NULL, 0,
+								    0));
+      vitem = mom_itemv (anitm);
+      *pval = vitem;
       return true;
     }
   if (mom_value_is_delim (vtok, "~"))

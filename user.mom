@@ -18,6 +18,13 @@
 ///
 
 
+** _2yhjRaR72_5sd4haPDv
+{
+  * comment  "start of test_funa" }
+ 
+..
+
+
 ** test_constant_one
 {
   * value  1 }
@@ -33,7 +40,8 @@
 ** test_funa
 {
   * constants  {test_constant_one test_constant_quote}
-  * function_signature  signature_1itm_to_void }
+  * function_signature  signature_1itm_to_void
+  * start  _2yhjRaR72_5sd4haPDv }
  
 ..
 
