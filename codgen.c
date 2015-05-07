@@ -30,10 +30,14 @@ struct codegen_mom_st
   momitem_t *cg_moduleitm;	/* the module item */
   struct momhashset_st *cg_functionhset;	/* the set of c functions */
   struct momattributes_st *cg_functionassoc;	/* associate each function with a node
-						   function_info(<associtm-blocks>,<associtm-bindings>,<set-constants>,<set-closed>,<set-variables>) */
+						   function_info(<itm-signature>,<associtm-blocks>,<associtm-bindings>, <set-constants>,<set-closed>,<set-variables>) */
   const momstring_t *cg_errormsg;	/* the error message */
   struct momhashset_st *cg_lockeditemset;	/* the set of locked items */
+  char *cg_emitbuffer;
+  size_t cg_emitsize;
+  FILE *cg_emitfile;		/* the emitted file */
   momitem_t *cg_curfunitm;	/* the current function item */
+  momitem_t *cg_funsigitm;	/* the signature of the current function */
   struct momattributes_st *cg_funbind;	/* the function's bindings */
   struct momhashset_st *cg_funconstset;	/* the set of constant items */
   struct momhashset_st *cg_funclosedset;	/* the set of closed items */
@@ -138,6 +142,14 @@ bool
     goto end;
 end:
   cgen_unlock_all_items_mom (cg);
+  if (cg->cg_emitfile)
+    fclose (cg->cg_emitfile);
+  if (cg->cg_emitbuffer)
+    {
+      free (cg->cg_emitbuffer);
+      cg->cg_emitbuffer = NULL;
+      cg->cg_emitsize = 0;
+    };
   mom_item_unlock (itmcgen);
   if (cg->cg_errormsg)
     *res = mom_stringv (cg->cg_errormsg);
@@ -321,6 +333,7 @@ cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
   }
   if (cg->cg_errormsg)
     return;
+  cg->cg_funsigitm = itmsignature;
   /////
   {				/* bind the explicit constants */
     momvalue_t vconstants =	//
@@ -410,7 +423,8 @@ cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
   MOM_DEBUGPRINTF (gencod, "for scanned function %s vvarset %s",
 		   mom_item_cstring (itmfun), mom_output_gcstring (vvarset));
   momvalue_t vfuninfo =		//
-    mom_nodev_new (MOM_PREDEFINED_NAMED (function_info), 5,
+    mom_nodev_new (MOM_PREDEFINED_NAMED (function_info), 6,
+		   mom_itemv (itmsignature),
 		   mom_itemv (itmblocks),
 		   mom_itemv (itmbindings),
 		   vconstset,
@@ -1545,6 +1559,61 @@ cgen_second_emitting_pass_mom (momitem_t *itmcgen)
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   momitem_t *itmmod = cg->cg_moduleitm;
   assert (itmmod);
+  char modbuf[128];
+  memset (modbuf, 0, sizeof (modbuf));
+  if (snprintf (modbuf, sizeof (modbuf), MOM_SHARED_MODULE_PREFIX "%s.c",
+		mom_item_cstring (itmmod)) >= (int) sizeof (modbuf))
+    MOM_FATAPRINTF ("too wide module name %s", mom_item_cstring (itmmod));
+  assert (cg->cg_emitfile == NULL && cg->cg_emitbuffer == NULL);
+  {
+    unsigned siz = 24576;
+    cg->cg_emitbuffer = malloc (siz);
+    if (!cg->cg_emitbuffer)
+      MOM_FATAPRINTF
+	("when emitting module %s failed to allocate buffer of %d bytes : %m",
+	 mom_item_cstring (itmmod), siz);
+    memset (cg->cg_emitbuffer, 0, siz);
+    cg->cg_emitsize = siz;
+    cg->cg_emitfile = open_memstream (&cg->cg_emitbuffer, &cg->cg_emitsize);
+    if (!cg->cg_emitfile)
+      MOM_FATAPRINTF
+	("when emitting module %s failed to open memory output : %m",
+	 mom_item_cstring (itmmod));
+  }
+  mom_output_gplv3_notice (cg->cg_emitfile, "///", "///", modbuf);
+  fprintf (cg->cg_emitfile, "\n\n" "#include \"monimelt.h\"\n\n\n");
+  const momseq_t *seqfun = mom_hashset_elements_set (cg->cg_functionhset);
+  unsigned nbfun = mom_seq_length (seqfun);
+  fprintf (cg->cg_emitfile, "\n" "/***** %d functions *****/\n", nbfun);
+  for (unsigned funix = 0; funix < nbfun && !cg->cg_errormsg; funix++)
+    {
+      const momitem_t *curfunitm = mom_seq_nth (seqfun, funix);
+      MOM_DEBUGPRINTF (gencod,
+		       "emitting signature of curfunitm %s #%d in module %s",
+		       mom_item_cstring (curfunitm), funix,
+		       mom_item_cstring (itmmod));
+      assert (curfunitm);
+      struct momentry_st *entfun =
+	mom_attributes_find_entry (cg->cg_functionassoc, curfunitm);
+      momvalue_t vfuninfo = MOM_NONEV;
+      if (entfun)
+	vfuninfo = entfun->ent_val;
+      const momnode_t *funinfonod = mom_value_to_node (vfuninfo);
+      momitem_t *funsigitm = NULL;
+      if (!funinfonod || mom_node_arity (funinfonod) != 6
+	  || mom_node_conn (funinfonod) !=
+	  MOM_PREDEFINED_NAMED (function_info)
+	  || !(funsigitm = mom_value_to_item (mom_node_nth (funinfonod, 0)))
+	  || !mom_hashset_contains (cg->cg_lockeditemset, funsigitm)
+	  || funsigitm->itm_kind != MOM_PREDEFINED_NAMED (function_signature))
+	MOM_FATAPRINTF
+	  ("corrupted function info %s for function %s of module %s",
+	   mom_output_gcstring (vfuninfo), mom_item_cstring (curfunitm),
+	   mom_item_cstring (itmmod));
+      MOM_DEBUGPRINTF (gencod, "emitting signature %s of curfunitm %s",
+		       mom_item_cstring (funsigitm),
+		       mom_item_cstring (curfunitm));
+    }
 #warning cgen_second_emitting_pass_mom empty
   MOM_FATAPRINTF
     ("missing cgen_second_emitting_pass_mom itmcgen=%s itmmod=%s",
