@@ -450,7 +450,7 @@ token_parse_load_mom_at (const char *fil, int lin)
 {
   momvalue_t valtok = MOM_NONEV;
   char locbuf[128];
-  memset (locbuf, 0, sizeof (locbuf));
+  //memset (locbuf, 0, sizeof (locbuf));
   assert (loader_mom && loader_mom->ldmagic == LOADER_MAGIC_MOM);
 readagain:
   memset (locbuf, 0, sizeof (locbuf));
@@ -569,26 +569,6 @@ readagain:
 	  ("failed to parse string (token_parse_load@%s:%d) in %s", fil, lin,
 	   load_position_mom (locbuf, sizeof (locbuf), 0));
     }
-  else if (ispunct (c) || (unsigned char) c >= 0x7f)
-    {
-      for (int ix = 0; delim_mom[ix]; ix++)
-	{
-	  if (!strncmp
-	      (loader_mom->ldlinebuf + loader_mom->ldlinecol, delim_mom[ix],
-	       strlen (delim_mom[ix])))
-	    {
-	      valtok.typnum = momty_delim;
-	      strcpy (valtok.vdelim.delim, delim_mom[ix]);
-	      loader_mom->ldlinecol += strlen (delim_mom[ix]);
-	      MOM_DEBUGPRINTF (load,
-			       "token_parse_load@%s:%d: got delim token %s at %s",
-			       fil, lin, mom_output_gcstring (valtok),
-			       load_position_mom (locbuf, sizeof (locbuf),
-						  0));
-	      return valtok;
-	    }
-	}
-    }
   else if (c == '_' && mom_valid_item_id_str (pstart, (const char **) &end)
 	   && end && !isalnum (*end) && *end != '_')
     {
@@ -670,6 +650,26 @@ readagain:
 			 fil, lin, pstart, load_position_mom (locbuf,
 							      sizeof (locbuf),
 							      0));
+    }
+  else if (ispunct (c) || (unsigned char) c >= 0x7f)
+    {
+      for (int ix = 0; delim_mom[ix]; ix++)
+	{
+	  if (!strncmp
+	      (loader_mom->ldlinebuf + loader_mom->ldlinecol, delim_mom[ix],
+	       strlen (delim_mom[ix])))
+	    {
+	      valtok.typnum = momty_delim;
+	      strcpy (valtok.vdelim.delim, delim_mom[ix]);
+	      loader_mom->ldlinecol += strlen (delim_mom[ix]);
+	      MOM_DEBUGPRINTF (load,
+			       "token_parse_load@%s:%d: got delim token %s at %s",
+			       fil, lin, mom_output_gcstring (valtok),
+			       load_position_mom (locbuf, sizeof (locbuf),
+						  0));
+	      return valtok;
+	    }
+	}
     }
 
   MOM_FATAPRINTF
