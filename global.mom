@@ -298,7 +298,8 @@
 ** generate_c_module   ////// PREDEFINED
 {
   * comment  "routine to generate a C module; returns the item on success, or an error message"
- }
+  * hook_closure  0 }
+ [[  ^generate_c_module() ]]
  
   %  ^filler_of_function( signature_1itm_to_val)
  
@@ -310,6 +311,14 @@
   * comment  "kind of item with hashed set payload"
   * dumped_item_emitter  ^emitter_of_hashed_set()
   * dumped_item_scanner  ^scanner_of_hashed_set() }
+ 
+..
+
+
+** hook_closure   ////// PREDEFINED
+{
+  * comment  "attribute to give the hook closure in predefined functions"
+ }
  
 ..
 

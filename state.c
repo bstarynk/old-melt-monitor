@@ -1916,6 +1916,33 @@ emit_signature_application_code_mom (FILE *foutaphd,
 }				/* end of emit_signature_application_code_mom */
 
 
+static void
+emit_signature_application_hook_mom (FILE *foutaphd,
+				     momitem_t *itmpredef,
+				     momvalue_t vhook,
+				     momvalue_t vinputy, momvalue_t voutputy)
+{
+  char prefixbuf[256];
+  char applyvalbuf[256];
+  char applyclosbuf[256];
+  memset (prefixbuf, 0, sizeof (prefixbuf));
+  memset (applyvalbuf, 0, sizeof (applyvalbuf));
+  memset (applyclosbuf, 0, sizeof (applyclosbuf));
+  assert (dumper_mom && dumper_mom->dumagic == DUMPER_MAGIC_MOM);
+  MOM_DEBUGPRINTF (dump,
+		   "emit_signature_application_hook start itmpredef=%s vhook=%s vinputy=%s outputy=%s",
+		   mom_item_cstring (itmpredef),
+		   mom_output_gcstring (vhook),
+		   mom_output_gcstring (vinputy),
+		   mom_output_gcstring (voutputy));
+  assert (foutaphd);
+  assert (itmpredef);
+#warning emit_signature_application_hook_mom unimplemented
+  MOM_WARNPRINTF ("emit_signature_application_hook_mom unimplemented for %s",
+		  mom_item_cstring (itmpredef));
+  fprintf (foutaphd, "\n" "#warning should emit hook code for %s\n",
+	   mom_item_cstring (itmpredef));
+}				/* end of emit_signature_application_hook_mom   */
 
 static void
 emit_predefined_fill_mom (void)
@@ -2026,6 +2053,16 @@ emit_predefined_fill_mom (void)
 						   (momitem_t *) itmpredef,
 						   vprefix, vinputy,
 						   voutputy);
+	      momvalue_t vhook =	//
+		mom_item_unsync_get_attribute ((momitem_t *) itmpredef,
+					       MOM_PREDEFINED_NAMED
+					       (hook_closure));
+	      if (vhook.typnum == momty_int || vhook.typnum == momty_node)
+		emit_signature_application_hook_mom (foutaphd,
+						     (momitem_t *) itmpredef,
+						     vhook, vinputy,
+						     voutputy);
+
 	    }
 	}
     }
