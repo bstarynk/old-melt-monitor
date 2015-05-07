@@ -363,7 +363,8 @@ cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
   }
   if (cg->cg_errormsg)
     return;
-  //// 
+  ////
+  //// scan start and all the queued blocks 
   momitem_t *itmstart = vstart.vitem;
   cgen_lock_item_mom (cg, itmstart);
   cgen_scan_block_first_mom (cg, itmstart);
@@ -377,8 +378,6 @@ cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
     };
   if (cg->cg_errormsg)
     return;
-#warning incomplete cgen_scan_function_first_mom
-  MOM_WARNPRINTF ("unimplemented cgen_scan_function_first_mom");
 }
 
 
@@ -473,6 +472,18 @@ static void cgen_bind_variable_item_mom (struct codegen_mom_st *cg,
 
 static void cgen_bind_constant_item_mom (struct codegen_mom_st *cg,
 					 momitem_t *itmk, momvalue_t vconst);
+
+static int
+cmp_intptr_mom (const void *p1, const void *p2)
+{
+  intptr_t i1 = *(const intptr_t *) p1;
+  intptr_t i2 = *(const intptr_t *) p2;
+  if (i1 < i2)
+    return -1;
+  else if (i1 > i2)
+    return 1;
+  return 0;
+}
 
 static momitem_t *
 cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
@@ -1015,6 +1026,8 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 				 mom_item_cstring (itmstmt));
 	momvalue_t exprv = mom_components_nth (stmtcomps, 1);
 	momitem_t *typxitm = cgen_type_of_scanned_expr_mom (cg, exprv);
+	intptr_t *intarr =
+	  MOM_GC_SCALAR_ALLOC ("intarr", stmtlen * sizeof (intptr_t));
 	if (typxitm != MOM_PREDEFINED_NAMED (integer))
 	  CGEN_ERROR_RETURN_MOM (cg,
 				 "module item %s : function %s with block %s with non-integer selector %s in int_switch statement %s",
@@ -1030,7 +1043,6 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 	    momvalue_t casevalv = MOM_NONEV;
 	    momvalue_t caseblockv = MOM_NONEV;
 	    momitem_t *caseblockitm = NULL;
-#warning should detect duplicate cases here...
 	    if (!casnod
 		|| mom_node_conn (casnod) != MOM_PREDEFINED_NAMED (case)
 		|| mom_node_arity (casnod) != 2
@@ -1050,7 +1062,18 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 				     mom_output_gcstring (casevalv));
 	    if (cg->cg_errormsg)
 	      return;
+	    intarr[ix - 2] = casevalv.vint;
 	  }
+	qsort (intarr, stmtlen - 2, sizeof (intptr_t), cmp_intptr_mom);
+	for (unsigned ix = 0; ix < stmtlen - 3 && !cg->cg_errormsg; ix++)
+	  if (intarr[ix] == intarr[ix + 1])
+	    CGEN_ERROR_RETURN_MOM (cg,
+				   "module item %s : function %s with block %s with int_switch statement %s with duplicate case number %lld",
+				   mom_item_cstring (cg->cg_moduleitm),
+				   mom_item_cstring (cg->cg_curfunitm),
+				   mom_item_cstring (cg->cg_curblockitm),
+				   mom_item_cstring (itmstmt),
+				   (long long) intarr[ix]);
       };
       break;
       ////////////////
