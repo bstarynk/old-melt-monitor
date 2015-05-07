@@ -74,8 +74,7 @@
 ** c_module   ////// PREDEFINED
 {
   * comment  "kind of C modules"
-  * dumped_item_emitter  ^emitter_of_plain_kind() 
-  }
+  * dumped_item_emitter  ^emitter_of_plain_kind() }
  
 ..
 

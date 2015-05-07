@@ -17,32 +17,41 @@
 ///  <http://www.gnu.org/licenses/>. 
 ///
 
-** test_funa {
-* constants { test_constant_one test_constant_quote }
-}
-  %  ^filler_of_function( signature_1itm_to_void)
+
+** test_constant_one
+{
+  * value  1 }
+ 
+..
 
 
-** test_funb {
-}
-%  ^filler_of_function( signature_2itm_to_val)
+** test_constant_quote
+
+..
+
+
+** test_funa
+{
+  * constants  {test_constant_one test_constant_quote}
+  * function_signature  signature_1itm_to_void }
+ 
+..
+
+
+** test_funb
+{
+  * function_signature  signature_2itm_to_val }
+ 
+..
+
 
 ** test_module
 {
   * comment  "the first test module"
-  * functions { test_funa test_funb }
-  }
+  * functions  {test_funa test_funb} }
+ 
+  %  ^filler_of_plain_kind( c_module)
  
 ..
 
-** test_constant_one
-{
- * value 1
-}
-..
-
-** test_constant_quote
-{
-}
-..
 //// end of user file user.mom

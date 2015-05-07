@@ -1155,6 +1155,8 @@ mom_load_value (momvalue_t *pval)
   if (mom_value_is_delim (vtok, "["))
     {				////tuples
       int linecnt = loader_mom->ldlinecount;
+      MOM_DEBUGPRINTF (load, "start of tuple at position %s",
+		       load_position_mom (NULL, 0, linecnt));
       mom_eat_token_load ();
       momvalue_t metav = MOM_NONEV;
       const momitem_t *curitm = NULL;
@@ -1173,11 +1175,16 @@ mom_load_value (momvalue_t *pval)
       mom_eat_token_load ();
       pval->typnum = momty_tuple;
       pval->vtuple = (momseq_t *) mom_queueitem_tuple (&quitems, metav);
+      MOM_DEBUGPRINTF (load, "end of tuple %s at position %s",
+		       mom_output_gcstring (*pval),
+		       load_position_mom (NULL, 0, linecnt));
       return true;
     }				/* done tuples */
   if (mom_value_is_delim (vtok, "{"))
     {				//// sets
       int linecnt = loader_mom->ldlinecount;
+      MOM_DEBUGPRINTF (load, "start of set at position %s",
+		       load_position_mom (NULL, 0, linecnt));
       mom_eat_token_load ();
       momvalue_t metav = MOM_NONEV;
       const momitem_t *curitm = NULL;
@@ -1188,9 +1195,17 @@ mom_load_value (momvalue_t *pval)
 	{
 	  mom_queueitem_push_back (&quitems, curitm);
 	  linecnt = loader_mom->ldlinecount;
+	  MOM_DEBUGPRINTF (load, "set element item %s at position %s",
+			   mom_item_cstring (curitm), load_position_mom (NULL,
+									 0,
+									 linecnt));
 	}
       momvalue_t vtokend = mom_peek_token_load ();
-      if (! !mom_value_is_delim (vtokend, "}"))
+      MOM_DEBUGPRINTF (load, "end set vtokend=%s position %s",
+		       mom_output_gcstring (vtokend), load_position_mom (NULL,
+									 0,
+									 0));
+      if (!mom_value_is_delim (vtokend, "}"))
 	MOM_FATAPRINTF ("missing } after set content"
 			" in %s", load_position_mom (NULL, 0, linecnt));
       mom_eat_token_load ();
@@ -1202,6 +1217,9 @@ mom_load_value (momvalue_t *pval)
 	  (momseq_t *) mom_make_sized_meta_set (metav, tup->slen,
 						(const momitem_t **)
 						tup->arritm);
+	MOM_DEBUGPRINTF (load, "end of set %s at position %s",
+			 mom_output_gcstring (*pval),
+			 load_position_mom (NULL, 0, linecnt));
 	return true;
       }
     }				/* done sets */
