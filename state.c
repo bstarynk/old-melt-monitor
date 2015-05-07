@@ -150,6 +150,8 @@ first_pass_load_mom (const char *path, FILE *fil)
       /// lines like: ** <item-name> are defining an item
       if (linlen >= 4 && linbuf[0] == '*' && linbuf[1] == '*')
 	{
+	  char locbuf[64];
+	  memset (locbuf, 0, sizeof (locbuf));
 	  MOM_DEBUGPRINTF (load, "first %s pass line#%d: %s",
 			   loader_mom->ldforglobals ? "global" : "user",
 			   lincnt, linbuf);
@@ -185,6 +187,9 @@ first_pass_load_mom (const char *path, FILE *fil)
 	      assert (end);
 	      char endch = *end;
 	      *end = 0;
+	      MOM_DEBUGPRINTF (load, "first pass anonitem <%s> near %s",
+			       pc, load_position_mom (locbuf, sizeof (locbuf),
+						      0));
 	      itm = mom_make_anonymous_item_by_id (pc);
 	      MOM_DEBUGPRINTF (load, "first %s pass anonymous item @%p %s",
 			       loader_mom->ldforglobals ? "global" : "user",
@@ -585,11 +590,11 @@ readagain:
 	}
     }
   else if (c == '_' && mom_valid_item_id_str (pstart, (const char **) &end)
-	   && end && (!isalnum (*end) || *end != '_'))
+	   && end && !isalnum (*end) && *end != '_')
     {
       char olde = *end;
       *end = '\0';
-      MOM_DEBUGPRINTF (load, "token_parse_load@%s:%d: anonitem %s at %s",
+      MOM_DEBUGPRINTF (load, "token_parse_load@%s:%d: anonitem <%s> at %s",
 		       fil, lin, pstart, load_position_mom (locbuf,
 							    sizeof (locbuf),
 							    0));
@@ -1033,6 +1038,10 @@ second_pass_load_mom (bool global)
 	  && loader_mom->ldlinebuf[1] == '*')
 	{
 	  loader_mom->ldlinecol = 2;
+	  MOM_DEBUGPRINTF (load, "second %s pass defining line#%d: %s",
+			   loader_mom->ldforglobals ? "global" : "user",
+			   (int) loader_mom->ldlinecount,
+			   loader_mom->ldlinebuf);
 	  memset (&loader_mom->ldquetokens, 0,
 		  sizeof (loader_mom->ldquetokens));
 	  momvalue_t val = mom_peek_token_load ();
@@ -1321,9 +1330,10 @@ mom_load_state ()
   // second pass for global data
   ldr.ldforglobals = true;
   second_pass_load_mom (true);
-  // second pass for user data
+  // second pass for user data  
   if (ldr.lduserfile)
     {
+      MOM_DEBUGPRINTF (load, "second pass for user file %s", ldr.lduserpath);
       ldr.ldforglobals = false;
       second_pass_load_mom (false);
     }
