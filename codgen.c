@@ -577,7 +577,7 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
 								    (c_type)));
 	if (!itmctyp)
 	  CGEN_ERROR_RESULT_MOM (cg, NULL,
-				 "module item %s : function %s has block %s with statment %s with untyped variable %s",
+				 "module item %s : function %s has block %s with statement %s with untyped variable %s",
 				 mom_item_cstring (cg->cg_moduleitm),
 				 mom_item_cstring (cg->cg_curfunitm),
 				 mom_item_cstring (cg->cg_curblockitm),
@@ -622,7 +622,7 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
       break;
     }
   CGEN_ERROR_RESULT_MOM (cg, NULL,
-			 "module item %s : function %s has block %s with statment %s with unexpected item %s",
+			 "module item %s : function %s has block %s with statement %s with unexpected item %s",
 			 mom_item_cstring (cg->cg_moduleitm),
 			 mom_item_cstring (cg->cg_curfunitm),
 			 mom_item_cstring (cg->cg_curblockitm),
@@ -644,7 +644,7 @@ cgen_type_of_scanned_expr_mom (struct codegen_mom_st *cg, momvalue_t vexpr)
     case momty_set:
       CGEN_ERROR_RESULT_MOM (cg,
 			     (momitem_t *) NULL,
-			     "module item %s : function %s has block %s with statment %s with bad expression %s",
+			     "module item %s : function %s has block %s with statement %s with bad expression %s",
 			     mom_item_cstring (cg->cg_moduleitm),
 			     mom_item_cstring (cg->cg_curfunitm),
 			     mom_item_cstring (cg->cg_curblockitm),
@@ -1133,13 +1133,40 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
       break;
     default:
     otherwiseoplab:
-      CGEN_ERROR_RETURN_MOM (cg,
-			     "module item %s : function %s with block %s with statement %s with strange op %s",
-			     mom_item_cstring (cg->cg_moduleitm),
-			     mom_item_cstring (cg->cg_curfunitm),
-			     mom_item_cstring (cg->cg_curblockitm),
-			     mom_item_cstring (itmstmt),
-			     mom_item_cstring (itmop));
+      if (itmop->itm_kind == MOM_PREDEFINED_NAMED (code_operation))
+	{
+	  cgen_lock_item_mom (cg, itmop);
+	  momvalue_t codscanv = mom_item_unsync_get_attribute (itmop,
+							       MOM_PREDEFINED_NAMED
+							       (statement_scanner));
+	  momvalue_t codemitv = mom_item_unsync_get_attribute (itmop,
+							       MOM_PREDEFINED_NAMED
+							       (statement_emitter));
+	  if (codscanv.typnum != momty_node || codemitv.typnum != momty_node)
+	    CGEN_ERROR_RETURN_MOM (cg,
+				   "module item %s : function %s with block %s with statement %s with bad code operation %s",
+				   mom_item_cstring (cg->cg_moduleitm),
+				   mom_item_cstring (cg->cg_curfunitm),
+				   mom_item_cstring (cg->cg_curblockitm),
+				   mom_item_cstring (itmstmt),
+				   mom_item_cstring (itmop));
+	  if (!mom_applval_2itm_to_void (codscanv, cg->cg_codgenitm, itmstmt))
+	    CGEN_ERROR_RETURN_MOM (cg,
+				   "module item %s : function %s with block %s with statement %s failed to scan code operation %s",
+				   mom_item_cstring (cg->cg_moduleitm),
+				   mom_item_cstring (cg->cg_curfunitm),
+				   mom_item_cstring (cg->cg_curblockitm),
+				   mom_item_cstring (itmstmt),
+				   mom_item_cstring (itmop));
+	}
+      else
+	CGEN_ERROR_RETURN_MOM (cg,
+			       "module item %s : function %s with block %s with statement %s with strange op %s",
+			       mom_item_cstring (cg->cg_moduleitm),
+			       mom_item_cstring (cg->cg_curfunitm),
+			       mom_item_cstring (cg->cg_curblockitm),
+			       mom_item_cstring (itmstmt),
+			       mom_item_cstring (itmop));
       break;
     }
 #warning cgen_scan_statement_first_mom unimplemented

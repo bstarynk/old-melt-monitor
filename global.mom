@@ -116,6 +116,13 @@
 ..
 
 
+** code_operation   ////// PREDEFINED
+{
+  * comment  "kind for (user-provided) code operations" }
+ 
+..
+
+
 ** code_statement   ////// PREDEFINED
 {
   * comment  "kind of each instruction in a block" }
@@ -542,6 +549,20 @@
 ** start   ////// PREDEFINED
 {
   * comment  "attribute giving the starting attribute" }
+ 
+..
+
+
+** statement_emitter   ////// PREDEFINED
+{
+  * comment  "attribute giving the emitting closure in code operations" }
+ 
+..
+
+
+** statement_scanner   ////// PREDEFINED
+{
+  * comment  "attribute giving the scanning closure in code operations" }
  
 ..
 
