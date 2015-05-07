@@ -103,7 +103,9 @@ cgen_unlock_all_items_mom (struct codegen_mom_st *cg)
     }
 }
 
-static void cgen_first_pass_mom (momitem_t *itmcgen);
+static void cgen_first_scanning_pass_mom (momitem_t *itmcgen);
+
+static void cgen_second_emitting_pass_mom (momitem_t *itmcgen);
 
 bool
   momfun_1itm_to_val_generate_c_module
@@ -128,7 +130,10 @@ bool
   itmcgen->itm_data1 = (void *) cg;
   itmcgen->itm_data2 = NULL;
   cgen_lock_item_mom (cg, itm);
-  cgen_first_pass_mom (itmcgen);
+  cgen_first_scanning_pass_mom (itmcgen);
+  if (cg->cg_errormsg)
+    goto end;
+  cgen_second_emitting_pass_mom (itmcgen);
   if (cg->cg_errormsg)
     goto end;
 end:
@@ -145,7 +150,7 @@ static void
 cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun);
 
 void
-cgen_first_pass_mom (momitem_t *itmcgen)
+cgen_first_scanning_pass_mom (momitem_t *itmcgen)
 {
   assert (itmcgen
 	  && itmcgen->itm_kind == MOM_PREDEFINED_NAMED (c_code_generation));
@@ -219,7 +224,7 @@ cgen_first_pass_mom (momitem_t *itmcgen)
 	  return;
       }
   }
-}				/* end cgen_first_pass_mom */
+}				/* end cgen_first_scanning_pass_mom */
 
 
 static void cgen_scan_block_first_mom (struct codegen_mom_st *cg,
@@ -1528,5 +1533,22 @@ cgen_bind_closed_variables_mom (struct codegen_mom_st *cg, momvalue_t vclosed)
 		   mom_item_cstring (cg->cg_curfunitm),
 		   mom_output_gcstring (vclosed));
 }				/* end cgen_bind_closed_variables_mom */
+
+
+
+void
+cgen_second_emitting_pass_mom (momitem_t *itmcgen)
+{
+  assert (itmcgen
+	  && itmcgen->itm_kind == MOM_PREDEFINED_NAMED (c_code_generation));
+  struct codegen_mom_st *cg = (struct codegen_mom_st *) itmcgen->itm_data1;
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  momitem_t *itmmod = cg->cg_moduleitm;
+  assert (itmmod);
+#warning cgen_second_emitting_pass_mom empty
+  MOM_FATAPRINTF
+    ("missing cgen_second_emitting_pass_mom itmcgen=%s itmmod=%s",
+     mom_item_cstring (itmcgen), mom_item_cstring (itmmod));
+}				/* end cgen_second_emitting_pass_mom */
 
 /// eof codgen.c
