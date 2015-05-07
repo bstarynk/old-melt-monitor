@@ -989,6 +989,14 @@ mom_stringv (const momstring_t *str)
   return val;
 }
 
+static inline const char *
+mom_string_cstr (const momstring_t *str)
+{
+  if (str && str != MOM_EMPTY)
+    return str->cstr;
+  return NULL;
+}
+
 #define mom_stringv_cstr(S) mom_stringv(mom_make_string_cstr((S)))
 #define mom_stringv_sprintf(F,...) mom_stringv(mom_make_string_sprintf((F),__VA_ARGS__))
 #define mom_stringv_output(V) mom_stringv(mout_output_string((V)))
