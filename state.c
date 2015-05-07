@@ -191,9 +191,6 @@ first_pass_load_mom (const char *path, FILE *fil)
 			       pc, load_position_mom (locbuf, sizeof (locbuf),
 						      0));
 	      itm = mom_make_anonymous_item_by_id (pc);
-	      MOM_DEBUGPRINTF (load, "first %s pass anonymous item @%p %s",
-			       loader_mom->ldforglobals ? "global" : "user",
-			       itm, pc);
 	      if (itm->itm_space == momspa_transient)
 		{
 		  if (loader_mom->ldforglobals)
@@ -201,6 +198,11 @@ first_pass_load_mom (const char *path, FILE *fil)
 		  else
 		    itm->itm_space = momspa_user;
 		};
+	      MOM_DEBUGPRINTF (load,
+			       "first %s pass anonymous item %s (%s) @%p %s",
+			       loader_mom->ldforglobals ? "global" : "user",
+			       mom_item_cstring (itm),
+			       mom_item_space_string (itm), itm, pc);
 	      *end = endch;
 	      loader_mom->lditemset =
 		mom_hashset_put (loader_mom->lditemset, itm);
@@ -581,7 +583,7 @@ readagain:
     {
       char olde = *end;
       *end = '\0';
-      MOM_DEBUGPRINTF (load, "token_parse_load@%s:%d: anonitem <%s> at %s",
+      MOM_DEBUGPRINTF (load, "token_parse_load@%s:%d: anonitem <%s>  at %s",
 		       fil, lin, pstart, load_position_mom (locbuf,
 							    sizeof (locbuf),
 							    0));
@@ -589,8 +591,10 @@ readagain:
       if (itm)
 	{
 	  assert (itm->itm_str);
-	  MOM_DEBUGPRINTF (load, "token_parse_load@%s:%d: found item %s",
-			   fil, lin, mom_item_cstring (itm));
+	  MOM_DEBUGPRINTF (load,
+			   "token_parse_load@%s:%d: found anonitem %s (%s)",
+			   fil, lin, mom_item_cstring (itm),
+			   mom_item_space_string (itm));
 	  valtok.vitem = (momitem_t *) itm;
 	  valtok.typnum = momty_item;
 	  loader_mom->ldlinecol += end - pstart;
@@ -645,8 +649,10 @@ readagain:
 	  valtok.vitem = (momitem_t *) itm;
 	  loader_mom->ldlinecol += end - pstart;
 	  MOM_DEBUGPRINTF (load,
-			   "token_parse_load@%s:%d: got named-item token %s at %s",
+			   "token_parse_load@%s:%d: got token %s, named-item %s (%s) at %s",
 			   fil, lin, mom_output_gcstring (valtok),
+			   mom_item_cstring (itm),
+			   mom_item_space_string (itm),
 			   load_position_mom (locbuf, sizeof (locbuf), 0));
 	  *end = olde;
 	  return valtok;

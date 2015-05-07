@@ -940,6 +940,7 @@ mom_make_anonymous_item_by_id (const char *ids)
       initialize_protoitem_mom (protoitm);
       protoitm->itm_id = idstr;
       protoitm->itm_anonymous = true;
+      protoitm->itm_space = momspa_transient;
       int newix = add_anonitem_mom (protoitm, hrk);
       if (MOM_UNLIKELY (newix < 0))
 	MOM_FATAPRINTF ("failed to add anonitem %s in salthash bucket %u",
