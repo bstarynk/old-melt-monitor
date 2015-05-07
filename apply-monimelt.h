@@ -538,5 +538,16 @@ end_mom:
 }				// end of mom_applclos_void_to_void
 
 
+static inline bool
+momhook_generate_c_module (momitem_t *mom_arg0, momvalue_t *mom_res0)
+{
+  momvalue_t mom_clos = MOM_NONEV;
+  momitem_t *mom_itm = MOM_PREDEFINED_NAMED (generate_c_module);
+  mom_item_lock (mom_itm);
+  mom_clos = mom_components_nth (mom_itm->itm_comps, 0);
+  mom_item_unlock (mom_itm);
+  return mom_applyval_1itm_to_val (mom_clos, mom_arg0, mom_res0);
+}				// end momhook_generate_c_module of signature_1itm_to_val
+
 
  // end of generated apply-header file apply-monimelt.h
