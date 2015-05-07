@@ -922,7 +922,7 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 				     mom_item_cstring (cg->cg_curblockitm),
 				     mom_item_cstring (itmstmt), inix);
 	    cgen_lock_item_mom (cg, incuritm);
-	    momitem_t *insigtypitm = mom_seq_nth (intyptup, inix);
+	    const momitem_t *insigtypitm = mom_seq_nth (intyptup, inix);
 	    momitem_t *incurtypitm =
 	      cgen_type_of_scanned_item_mom (cg, incuritm);
 	    if (insigtypitm && insigtypitm == incuritm)
@@ -964,7 +964,7 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 			     mom_item_cstring (cg->cg_curfunitm),
 			     mom_item_cstring (itmstmt),
 			     outix, mom_output_gcstring (outcurv));
-	    momitem_t *outsigtypitm = mom_seq_nth (outyptup, outix);
+	    const momitem_t *outsigtypitm = mom_seq_nth (outyptup, outix);
 	    momitem_t *outcurtypitm =
 	      cgen_type_of_scanned_expr_mom (cg, outcurv);
 	    if (outsigtypitm && outsigtypitm == outcurtypitm)
@@ -1036,10 +1036,11 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 				 mom_item_cstring (cg->cg_curblockitm),
 				 mom_output_gcstring (exprv),
 				 mom_item_cstring (itmstmt));
-	for (unsigned ix = 2; ix < stmtlen && !cg->cg_errormsg; ix++)
+	unsigned nbcases = stmtlen - 2;
+	for (unsigned ixc = 0; ixc < nbcases && !cg->cg_errormsg; ixc++)
 	  {
-	    momvalue_t casev = mom_components_nth (stmtcomps, ix);
-	    momnode_t *casnod = mom_value_to_node (casev);
+	    momvalue_t casev = mom_components_nth (stmtcomps, ixc + 2);
+	    const momnode_t *casnod = mom_value_to_node (casev);
 	    momvalue_t casevalv = MOM_NONEV;
 	    momvalue_t caseblockv = MOM_NONEV;
 	    momitem_t *caseblockitm = NULL;
@@ -1058,14 +1059,14 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 				     mom_item_cstring (cg->cg_moduleitm),
 				     mom_item_cstring (cg->cg_curfunitm),
 				     mom_item_cstring (cg->cg_curblockitm),
-				     mom_item_cstring (itmstmt), ix - 2,
+				     mom_item_cstring (itmstmt), ixc,
 				     mom_output_gcstring (casevalv));
 	    if (cg->cg_errormsg)
 	      return;
-	    intarr[ix - 2] = casevalv.vint;
+	    intarr[ixc] = casevalv.vint;
 	  }
-	qsort (intarr, stmtlen - 2, sizeof (intptr_t), cmp_intptr_mom);
-	for (unsigned ix = 0; ix < stmtlen - 3 && !cg->cg_errormsg; ix++)
+	qsort (intarr, nbcases, sizeof (intptr_t), cmp_intptr_mom);
+	for (unsigned ix = 0; ix < nbcases - 1 && !cg->cg_errormsg; ix++)
 	  if (intarr[ix] == intarr[ix + 1])
 	    CGEN_ERROR_RETURN_MOM (cg,
 				   "module item %s : function %s with block %s with int_switch statement %s with duplicate case number %lld",
@@ -1086,6 +1087,48 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 				 mom_item_cstring (cg->cg_curfunitm),
 				 mom_item_cstring (cg->cg_curblockitm),
 				 mom_item_cstring (itmstmt));
+	struct momhashset_st *keyhset = NULL;
+	unsigned nbcases = stmtlen - 2;
+	for (unsigned ixc = 0; ixc < nbcases && !cg->cg_errormsg; ixc++)
+	  {
+	    momvalue_t casev = mom_components_nth (stmtcomps, ixc + 2);
+	    const momnode_t *casnod = mom_value_to_node (casev);
+	    momvalue_t casevalv = MOM_NONEV;
+	    momvalue_t caseblockv = MOM_NONEV;
+	    momitem_t *casevalitm = NULL;
+	    momitem_t *caseblockitm = NULL;
+	    if (!casnod
+		|| mom_node_conn (casnod) != MOM_PREDEFINED_NAMED (case)
+		|| mom_node_arity (casnod) != 2
+		|| ((casevalv = mom_node_nth (casnod, 0)).typnum !=
+		    momty_item)
+		|| !(casevalitm = mom_value_to_item (casevalv))
+		|| ((caseblockv = mom_node_nth (casnod, 1)).typnum !=
+		    momty_item)
+		|| (!(caseblockitm = mom_value_to_item (caseblockv)))
+		|| (cgen_lock_item_mom (cg, caseblockitm),
+		    cgen_scan_block_first_mom (cg, caseblockitm),
+		    caseblockitm->itm_kind != MOM_PREDEFINED_NAMED (c_block)))
+	      CGEN_ERROR_RETURN_MOM (cg,
+				     "module item %s : function %s with block %s with item_switch statement %s with bad case#%d: %s",
+				     mom_item_cstring (cg->cg_moduleitm),
+				     mom_item_cstring (cg->cg_curfunitm),
+				     mom_item_cstring (cg->cg_curblockitm),
+				     mom_item_cstring (itmstmt), ixc,
+				     mom_output_gcstring (casevalv));
+	    cgen_lock_item_mom (cg, casevalitm);
+	    if (mom_hashset_contains (keyhset, casevalitm))
+	      CGEN_ERROR_RETURN_MOM (cg,
+				     "module item %s : function %s with block %s with item_switch statement %s with duplicate case for %s",
+				     mom_item_cstring (cg->cg_moduleitm),
+				     mom_item_cstring (cg->cg_curfunitm),
+				     mom_item_cstring (cg->cg_curblockitm),
+				     mom_item_cstring (itmstmt),
+				     mom_item_cstring (casevalitm));
+	    keyhset = mom_hashset_put (keyhset, casevalitm);
+	    cgen_bind_constant_item_mom (cg, casevalitm,
+					 mom_itemv (casevalitm));
+	  };
       };
       break;
     default:
