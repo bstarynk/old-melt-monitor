@@ -1960,7 +1960,7 @@ emit_signature_application_hook_mom (FILE *foutaphd,
   int argcnt = 0;
   for (unsigned ixin = 0; ixin < nbins; ixin++)
     {
-      momitem_t *intypitm = mom_seq_nth (seqins, ixin);
+      momitem_t *intypitm = (momitem_t *) mom_seq_nth (seqins, ixin);
       if (argcnt++ > 0)
 	fputs (", ", foutaphd);
       fprintf (foutaphd, "%s mom_arg%d",
@@ -1971,7 +1971,7 @@ emit_signature_application_hook_mom (FILE *foutaphd,
     };
   for (unsigned ixout = 0; ixout < nbouts; ixout++)
     {
-      momitem_t *outypitm = mom_seq_nth (seqouts, ixout);
+      momitem_t *outypitm = (momitem_t *) mom_seq_nth (seqouts, ixout);
       if (argcnt++ > 0)
 	fputs (", ", foutaphd);
       fprintf (foutaphd, "%s* mom_res%d",
@@ -2010,17 +2010,27 @@ emit_signature_application_hook_mom (FILE *foutaphd,
       else
 	fprintf (foutaphd, "MOM_PREDEFINED_NAMED(%s)",
 		 mom_item_cstring (itmhook));
-      fputs (foutaphd, ");\n");
+      fputs (");\n", foutaphd);
     }
   else
     MOM_FATAPRINTF ("bad hook %s for %s", mom_output_gcstring (vhook),
 		    mom_item_cstring (itmpredef));
   fprintf (foutaphd, "  mom_item_unlock(mom_itm);\n");
-#warning emit_signature_application_hook_mom unimplemented
-  MOM_WARNPRINTF ("emit_signature_application_hook_mom unimplemented for %s",
-		  mom_item_cstring (itmpredef));
-  fprintf (foutaphd, "\n" "#warning should emit hook code for %s\n",
-	   mom_item_cstring (itmpredef));
+  const momstring_t *strprefix	//
+    = mom_value_to_string (mom_item_unsync_get_attribute (itmkindsig,
+							  MOM_PREDEFINED_NAMED
+							  (c_function_prefix)));
+  if (!strprefix || strncmp (strprefix->cstr, "momfun_", strlen ("momfun_")))
+    MOM_FATAPRINTF ("bad prefix for hooked signature %s of %s",
+		    mom_item_cstring (itmkindsig),
+		    mom_item_cstring (itmpredef));
+  fprintf (foutaphd, "  return mom_applyval_%s(mom_clos",
+	   strprefix->cstr + strlen ("momfun_"));
+  for (unsigned ixin = 0; ixin < nbins; ixin++)
+    fprintf (foutaphd, ", mom_arg%d", (int) ixin);
+  for (unsigned ixout = 0; ixout < nbouts; ixout++)
+    fprintf (foutaphd, ", mom_res%d", (int) ixout);
+  fputs (");", foutaphd);
   fprintf (foutaphd, "\n} // end momhook_%s of %s\n\n",
 	   mom_item_cstring (itmpredef), mom_item_cstring (itmkindsig));
 }				/* end of emit_signature_application_hook_mom   */
@@ -2145,9 +2155,13 @@ emit_predefined_fill_mom (void)
       const momitem_t *itmpredef = setpredef->arritm[ix];
       assert (itmpredef && itmpredef->itm_space == momspa_predefined);
       const momitem_t *itmkind = itmpredef->itm_kind;
+      MOM_DEBUGPRINTF (dump,
+		       "emit_predefined_fill ix#%d itmpredef %s itmkind %s for hook",
+		       ix, mom_item_cstring (itmpredef),
+		       mom_item_cstring (itmkind));
       if (!itmkind)
 	continue;
-      if (itmkind != MOM_PREDEFINED_NAMED (function_signature))
+      if (itmkind->itm_kind != MOM_PREDEFINED_NAMED (function_signature))
 	continue;
       MOM_DEBUGPRINTF (dump,
 		       "emit_predefined_fill ix#%d itmpredef %s for hook",
