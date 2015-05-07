@@ -194,6 +194,13 @@ first_pass_load_mom (const char *path, FILE *fil)
 	      MOM_DEBUGPRINTF (load, "first %s pass anonymous item @%p %s",
 			       loader_mom->ldforglobals ? "global" : "user",
 			       itm, pc);
+	      if (itm->itm_space == momspa_transient)
+		{
+		  if (loader_mom->ldforglobals)
+		    itm->itm_space = momspa_global;
+		  else
+		    itm->itm_space = momspa_user;
+		};
 	      *end = endch;
 	      loader_mom->lditemset =
 		mom_hashset_put (loader_mom->lditemset, itm);
