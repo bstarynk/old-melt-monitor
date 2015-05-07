@@ -1554,6 +1554,10 @@ cgen_emit_function_declaration_mom (struct codegen_mom_st *cg,
 				    unsigned funix, momitem_t *curfunitm);
 
 static void
+cgen_emit_function_code_mom (struct codegen_mom_st *cg,
+			     unsigned funix, momitem_t *curfunitm);
+
+static void
 cgen_second_emitting_pass_mom (momitem_t *itmcgen)
 {
   assert (itmcgen
@@ -1601,6 +1605,16 @@ cgen_second_emitting_pass_mom (momitem_t *itmcgen)
     };
   fprintf (cg->cg_emitfile,
 	   "\n\n" "/***** implementing %d functions *****/\n", nbfun);
+  for (unsigned funix = 0; funix < nbfun && !cg->cg_errormsg; funix++)
+    {
+      const momitem_t *curfunitm = mom_seq_nth (seqfun, funix);
+      MOM_DEBUGPRINTF (gencod,
+		       "emitting signature of curfunitm %s #%d in module %s",
+		       mom_item_cstring (curfunitm), funix,
+		       mom_item_cstring (itmmod));
+      assert (curfunitm);
+      cgen_emit_function_code_mom (cg, funix, (momitem_t *) curfunitm);
+    };
 #warning cgen_second_emitting_pass_mom empty
   MOM_FATAPRINTF
     ("missing cgen_second_emitting_pass_mom itmcgen=%s itmmod=%s",
@@ -1623,8 +1637,7 @@ cgen_emit_function_declaration_mom (struct codegen_mom_st *cg,
   const momnode_t *funinfonod = mom_value_to_node (vfuninfo);
   momitem_t *funsigitm = NULL;
   if (!funinfonod || mom_node_arity (funinfonod) != 6
-      || mom_node_conn (funinfonod) !=
-      MOM_PREDEFINED_NAMED (function_info)
+      || mom_node_conn (funinfonod) != MOM_PREDEFINED_NAMED (function_info)
       || !(funsigitm = mom_value_to_item (mom_node_nth (funinfonod, 0)))
       || !mom_hashset_contains (cg->cg_lockeditemset, funsigitm)
       || funsigitm->itm_kind != MOM_PREDEFINED_NAMED (function_signature))
@@ -1632,7 +1645,8 @@ cgen_emit_function_declaration_mom (struct codegen_mom_st *cg,
       ("corrupted function info %s for function %s of module %s",
        mom_output_gcstring (vfuninfo), mom_item_cstring (curfunitm),
        mom_item_cstring (itmmod));
-  MOM_DEBUGPRINTF (gencod, "emitting signature %s of curfunitm %s",
+  MOM_DEBUGPRINTF (gencod,
+		   "emitting declaration signature %s of curfunitm %s",
 		   mom_item_cstring (funsigitm),
 		   mom_item_cstring (curfunitm));
   const momstring_t *strprefix =	//
@@ -1691,6 +1705,117 @@ cgen_emit_function_declaration_mom (struct codegen_mom_st *cg,
       fprintf (cg->cg_emitfile, ", %s*", mom_string_cstr (typstr));
     };
   fprintf (cg->cg_emitfile, ";\n");
+}				/* end cgen_emit_function_declaration_mom */
+
+
+
+static void
+cgen_emit_function_code_mom (struct codegen_mom_st *cg,
+			     unsigned funix, momitem_t *curfunitm)
+{
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  assert (curfunitm);
+  momitem_t *itmmod = cg->cg_moduleitm;
+  struct momentry_st *entfun =
+    mom_attributes_find_entry (cg->cg_functionassoc, curfunitm);
+  momvalue_t vfuninfo = MOM_NONEV;
+  if (entfun)
+    vfuninfo = entfun->ent_val;
+  const momnode_t *funinfonod = mom_value_to_node (vfuninfo);
+  momitem_t *funsigitm = NULL;
+  momitem_t *funblocksitm = NULL;
+  momitem_t *funbindingsitm = NULL;
+  const momseq_t *funseqconsts = NULL;
+  const momseq_t *funseqclosed = NULL;
+  const momseq_t *funseqvars = NULL;
+  if (!funinfonod || mom_node_arity (funinfonod) != 6
+      || mom_node_conn (funinfonod) != MOM_PREDEFINED_NAMED (function_info)
+      || !(funsigitm = mom_value_to_item (mom_node_nth (funinfonod, 0)))
+      || !mom_hashset_contains (cg->cg_lockeditemset, funsigitm)
+      || funsigitm->itm_kind != MOM_PREDEFINED_NAMED (function_signature)
+      || !(funblocksitm = mom_value_to_item (mom_node_nth (funinfonod, 1)))
+      || !mom_hashset_contains (cg->cg_lockeditemset, funblocksitm)
+      || !(funbindingsitm = mom_value_to_item (mom_node_nth (funinfonod, 2)))
+      || !mom_hashset_contains (cg->cg_lockeditemset, funbindingsitm)
+      || !(funseqconsts = mom_value_to_set (mom_node_nth (funinfonod, 3)))
+      || !(funseqclosed = mom_value_to_set (mom_node_nth (funinfonod, 4)))
+      || !(funseqvars = mom_value_to_set (mom_node_nth (funinfonod, 5))))
+    MOM_FATAPRINTF
+      ("corrupted function info %s for function %s of module %s",
+       mom_output_gcstring (vfuninfo), mom_item_cstring (curfunitm),
+       mom_item_cstring (itmmod));
+  cg->cg_curfunitm = curfunitm;
+  MOM_DEBUGPRINTF (gencod, "emitting code signature %s of curfunitm %s",
+		   mom_item_cstring (funsigitm),
+		   mom_item_cstring (curfunitm));
+  const momstring_t *strprefix =	//
+    mom_value_to_string (mom_item_unsync_get_attribute (funsigitm,
+							MOM_PREDEFINED_NAMED
+							(c_function_prefix)));
+  const momseq_t *seqinputs =	//
+    mom_value_to_tuple (mom_item_unsync_get_attribute (funsigitm,
+						       MOM_PREDEFINED_NAMED
+						       (input_types)));
+  const momseq_t *seqoutputs =	//
+    mom_value_to_tuple (mom_item_unsync_get_attribute (funsigitm,
+						       MOM_PREDEFINED_NAMED
+						       (output_types)));
+  if (!strprefix || !seqinputs || !seqoutputs)
+    MOM_FATAPRINTF ("function %s of module %s has bad signature %s",
+		    mom_item_cstring (curfunitm),
+		    mom_item_cstring (itmmod), mom_item_cstring (funsigitm));
+  unsigned nbinputs = mom_seq_length (seqinputs);
+  unsigned nboutputs = mom_seq_length (seqoutputs);
+  fprintf (cg->cg_emitfile,
+	   "\n\n" "/// implement function #%d: %s\n"
+	   "bool %s_%s (const momnode_t *mom_node", funix,
+	   mom_item_cstring (curfunitm), mom_string_cstr (strprefix),
+	   mom_item_cstring (curfunitm));
+  for (unsigned inix = 0; inix < nbinputs && !cg->cg_errormsg; inix++)
+    {
+      momitem_t *intypitm = (momitem_t *) mom_seq_nth (seqinputs, inix);
+      const momstring_t *typstr = NULL;
+      if (!intypitm || intypitm->itm_kind != MOM_PREDEFINED_NAMED (c_type)
+	  || !mom_hashset_contains (cg->cg_lockeditemset, intypitm)
+	  || !(typstr =
+	       mom_value_to_string (mom_item_unsync_get_attribute (intypitm,
+								   MOM_PREDEFINED_NAMED
+								   (c_code)))))
+	MOM_FATAPRINTF
+	  ("function %s of module %s has signature %s with bad input #%d : %s",
+	   mom_item_cstring (curfunitm), mom_item_cstring (itmmod),
+	   mom_item_cstring (funsigitm), inix, mom_item_cstring (intypitm));
+      fprintf (cg->cg_emitfile, ", %s mom_arg%d", mom_string_cstr (typstr),
+	       inix);
+    }
+  for (unsigned outix = 0; outix < nboutputs && !cg->cg_errormsg; outix++)
+    {
+      momitem_t *outtypitm = (momitem_t *) mom_seq_nth (seqoutputs, outix);
+      const momstring_t *typstr = NULL;
+      if (!outtypitm || outtypitm->itm_kind != MOM_PREDEFINED_NAMED (c_type)
+	  || !mom_hashset_contains (cg->cg_lockeditemset, outtypitm)
+	  || !(typstr =
+	       mom_value_to_string (mom_item_unsync_get_attribute (outtypitm,
+								   MOM_PREDEFINED_NAMED
+								   (c_code)))))
+	MOM_FATAPRINTF
+	  ("function %s of module %s has signature %s with bad output #%d : %s",
+	   mom_item_cstring (curfunitm), mom_item_cstring (itmmod),
+	   mom_item_cstring (funsigitm), outix, mom_item_cstring (outtypitm));
+      fprintf (cg->cg_emitfile, ", %s* mom_res%d", mom_string_cstr (typstr),
+	       outix);
+    };
+  /// emit the early prologue
+  fprintf (cg->cg_emitfile, "\n{\n");
+  fprintf (cg->cg_emitfile, "  bool mom_resflag = false;\n");
+  fprintf (cg->cg_emitfile, "  momitem_t* mom_funcitm = NULL;\n");
+  fprintf (cg->cg_emitfile, "  if (MOM_UNLIKELY(!mom_node\n"
+	   "      || mom_node_arity(mom_node) < %d)\n"
+	   "      || !(mom_funcitm = mom_node_conn(mom_node)))\n"
+	   "  return false;\n", mom_seq_length (funseqclosed));
+  /// emit the epilogue
+  fprintf (cg->cg_emitfile, "} // end of %s_%s \n\n",
+	   mom_item_cstring (curfunitm), mom_string_cstr (strprefix));
 }				/* end cgen_emit_function_declaration_mom */
 
 /// eof codgen.c

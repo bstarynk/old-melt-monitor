@@ -73,7 +73,9 @@
 
 ** c_module   ////// PREDEFINED
 {
-  * comment  "kind of C modules" }
+  * comment  "kind of C modules"
+  * dumped_item_emitter  ^emitter_of_plain_kind() 
+  }
  
 ..
 
@@ -577,7 +579,7 @@
 ** the_software   ////// PREDEFINED
 {
   * comment  "describes the entire software system" }
- [[  emitter_of_magic_attribute  scanner_of_magic_attribute ]]
+ [[  test_module ]]
  
 ..
 
