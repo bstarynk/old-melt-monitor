@@ -1918,9 +1918,7 @@ emit_signature_application_code_mom (FILE *foutaphd,
 
 static void
 emit_signature_application_hook_mom (FILE *foutaphd,
-				     momitem_t *itmpredef,
-				     momvalue_t vhook,
-				     momvalue_t vinputy, momvalue_t voutputy)
+				     momitem_t *itmpredef, momvalue_t vhook)
 {
   char prefixbuf[256];
   char applyvalbuf[256];
@@ -1929,14 +1927,31 @@ emit_signature_application_hook_mom (FILE *foutaphd,
   memset (applyvalbuf, 0, sizeof (applyvalbuf));
   memset (applyclosbuf, 0, sizeof (applyclosbuf));
   assert (dumper_mom && dumper_mom->dumagic == DUMPER_MAGIC_MOM);
+  momitem_t *itmkindsig = itmpredef->itm_kind;
   MOM_DEBUGPRINTF (dump,
-		   "emit_signature_application_hook start itmpredef=%s vhook=%s vinputy=%s outputy=%s",
+		   "emit_signature_application_hook start itmpredef=%s itmkindsig=%s vhook=%s",
 		   mom_item_cstring (itmpredef),
-		   mom_output_gcstring (vhook),
-		   mom_output_gcstring (vinputy),
-		   mom_output_gcstring (voutputy));
+		   mom_item_cstring (itmkindsig),
+		   mom_output_gcstring (vhook));
   assert (foutaphd);
   assert (itmpredef);
+  if (!itmkindsig
+      || itmkindsig->itm_kind != MOM_PREDEFINED_NAMED (function_signature))
+    MOM_FATAPRINTF
+      ("emit_signature_application_hook itmpredef %s with invalid kind %s",
+       mom_item_cstring (itmpredef), mom_item_cstring (itmkindsig));
+  const momseq_t *seqins =	//
+    mom_value_to_tuple (mom_item_unsync_get_attribute
+			((momitem_t *) itmkindsig,
+			 MOM_PREDEFINED_NAMED (input_types)));
+  const momseq_t *seqouts =	//
+    mom_value_to_tuple (mom_item_unsync_get_attribute
+			((momitem_t *) itmkindsig,
+			 MOM_PREDEFINED_NAMED (output_types)));
+  if (!seqins || !seqouts)
+    MOM_FATAPRINTF
+      ("emit_signature_application_hook itmpredef %s with bad kind %s",
+       mom_item_cstring (itmpredef), mom_item_cstring (itmkindsig));
 #warning emit_signature_application_hook_mom unimplemented
   MOM_WARNPRINTF ("emit_signature_application_hook_mom unimplemented for %s",
 		  mom_item_cstring (itmpredef));
@@ -2020,6 +2035,18 @@ emit_predefined_fill_mom (void)
 		       mom_value_cstr (vprefix),
 		       mom_item_cstring (itmpredef));
 	    }
+	  momvalue_t vhook =	//
+	    mom_item_unsync_get_attribute ((momitem_t *) itmpredef,
+					   MOM_PREDEFINED_NAMED
+					   (hook_closure));
+	  MOM_DEBUGPRINTF (dump,
+			   "emit_predefined_fill ix#%d itmpredef %s vhook %s",
+			   ix, mom_item_cstring (itmpredef),
+			   mom_output_gcstring (vhook));
+	  if (vhook.typnum == momty_int || vhook.typnum == momty_node)
+	    emit_signature_application_hook_mom (foutaphd,
+						 (momitem_t *) itmpredef,
+						 vhook);
 	}
 
       if (itmpredef->itm_kind == MOM_PREDEFINED_NAMED (function_signature))
@@ -2053,15 +2080,6 @@ emit_predefined_fill_mom (void)
 						   (momitem_t *) itmpredef,
 						   vprefix, vinputy,
 						   voutputy);
-	      momvalue_t vhook =	//
-		mom_item_unsync_get_attribute ((momitem_t *) itmpredef,
-					       MOM_PREDEFINED_NAMED
-					       (hook_closure));
-	      if (vhook.typnum == momty_int || vhook.typnum == momty_node)
-		emit_signature_application_hook_mom (foutaphd,
-						     (momitem_t *) itmpredef,
-						     vhook, vinputy,
-						     voutputy);
 
 	    }
 	}
