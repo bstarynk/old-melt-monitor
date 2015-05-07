@@ -751,6 +751,14 @@ mom_hashset_elements_set (struct momhashset_st *hset)
   return mom_hashset_elements_set_meta (hset, MOM_NONEV);
 };
 
+static inline momvalue_t mom_unsafe_setv (const momseq_t *seq);
+
+static inline momvalue_t
+mom_hashset_elements_value (struct momhashset_st *hset)
+{
+  return mom_unsafe_setv (mom_hashset_elements_set (hset));
+}
+
 void mom_hashset_scan_dump (struct momhashset_st *hset);
 
 

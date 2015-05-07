@@ -271,6 +271,13 @@
 ..
 
 
+** function_info   ////// PREDEFINED
+{
+  * comment  "gives internal information about functions" }
+ 
+..
+
+
 ** function_signature   ////// PREDEFINED
 {
   * comment  "kind of function signatures"

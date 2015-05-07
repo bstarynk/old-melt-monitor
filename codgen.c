@@ -29,6 +29,8 @@ struct codegen_mom_st
   momitem_t *cg_codgenitm;
   momitem_t *cg_moduleitm;	/* the module item */
   struct momhashset_st *cg_functionhset;	/* the set of c functions */
+  struct momattributes_st *cg_functionassoc;	/* associate each function with a node
+						   function_info(<associtm-blocks>,<associtm-bindings>,<set-constants>,<set-closed>,<set-variables>) */
   const momstring_t *cg_errormsg;	/* the error message */
   struct momhashset_st *cg_lockeditemset;	/* the set of locked items */
   momitem_t *cg_curfunitm;	/* the current function item */
@@ -37,7 +39,7 @@ struct codegen_mom_st
   struct momhashset_st *cg_funclosedset;	/* the set of closed items */
   struct momhashset_st *cg_funvariableset;	/* the set of variable items */
   struct momattributes_st *cg_blockassoc;	/* the association of
-						   c_block-s to a node ^c_block(<function>,<intruction-tuple>) */
+						   c_block-s to a node ^c_block(<function>,<instruction-tuple>) */
   struct momqueueitems_st cg_blockqueue;	/* the queue of c_blocks to be scanned */
   momitem_t *cg_curblockitm;	/* the current block */
   momitem_t *cg_curstmtitm;	/* the current statement */
@@ -378,7 +380,53 @@ cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
     };
   if (cg->cg_errormsg)
     return;
-}
+  momitem_t *itmbindings = mom_make_anonymous_item ();
+  itmbindings->itm_space = momspa_transient;
+  itmbindings->itm_kind = MOM_PREDEFINED_NAMED (association);
+  itmbindings->itm_data1 = cg->cg_funbind;
+  cgen_lock_item_mom (cg, itmbindings);
+  MOM_DEBUGPRINTF (gencod, "for scanned function %s itmbindings %s",
+		   mom_item_cstring (itmfun), mom_item_cstring (itmbindings));
+  momitem_t *itmblocks = mom_make_anonymous_item ();
+  itmblocks->itm_space = momspa_transient;
+  itmblocks->itm_kind = MOM_PREDEFINED_NAMED (association);
+  itmblocks->itm_data1 = cg->cg_blockassoc;
+  MOM_DEBUGPRINTF (gencod, "for scanned function %s itmblocks %s",
+		   mom_item_cstring (itmfun), mom_item_cstring (itmblocks));
+  momvalue_t vconstset = mom_hashset_elements_value (cg->cg_funconstset);
+  MOM_DEBUGPRINTF (gencod, "for scanned function %s vconstset %s",
+		   mom_item_cstring (itmfun),
+		   mom_output_gcstring (vconstset));
+  momvalue_t vclosedset = mom_hashset_elements_value (cg->cg_funclosedset);
+  MOM_DEBUGPRINTF (gencod, "for scanned function %s vclosedset %s",
+		   mom_item_cstring (itmfun),
+		   mom_output_gcstring (vclosedset));
+  momvalue_t vvarset = mom_hashset_elements_value (cg->cg_funvariableset);
+  MOM_DEBUGPRINTF (gencod, "for scanned function %s vvarset %s",
+		   mom_item_cstring (itmfun), mom_output_gcstring (vvarset));
+  momvalue_t vfuninfo =		//
+    mom_nodev_new (MOM_PREDEFINED_NAMED (function_info), 5,
+		   mom_itemv (itmblocks),
+		   mom_itemv (itmbindings),
+		   vconstset,
+		   vclosedset,
+		   vvarset);
+  vfuninfo.istransient = true;
+  MOM_DEBUGPRINTF (gencod, "for scanned function %s vfuninfo %s",
+		   mom_item_cstring (itmfun), mom_output_gcstring (vfuninfo));
+  cg->cg_functionassoc =
+    mom_attributes_put (cg->cg_functionassoc, itmfun, &vfuninfo);
+  cg->cg_errormsg = NULL;
+  cg->cg_curfunitm = NULL;
+  cg->cg_funbind = NULL;
+  cg->cg_funconstset = NULL;
+  cg->cg_funvariableset = NULL;
+  cg->cg_blockassoc = NULL;
+  memset (&cg->cg_blockqueue, 0, sizeof (cg->cg_blockqueue));
+  cg->cg_curblockitm = NULL;
+  cg->cg_curstmtitm = NULL;
+}				/* end cgen_scan_function_first_mom */
+
 
 
 static void
@@ -925,7 +973,7 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 	    const momitem_t *insigtypitm = mom_seq_nth (intyptup, inix);
 	    momitem_t *incurtypitm =
 	      cgen_type_of_scanned_item_mom (cg, incuritm);
-	    if (insigtypitm && insigtypitm == incuritm)
+	    if (insigtypitm && insigtypitm == incurtypitm)
 	      continue;
 	    else
 	      CGEN_ERROR_RETURN_MOM (cg,
