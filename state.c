@@ -2016,16 +2016,15 @@ emit_signature_application_hook_mom (FILE *foutaphd,
     MOM_FATAPRINTF ("bad hook %s for %s", mom_output_gcstring (vhook),
 		    mom_item_cstring (itmpredef));
   fprintf (foutaphd, "  mom_item_unlock(mom_itm);\n");
-  const momstring_t *strprefix	//
+  const momstring_t *strradix	//
     = mom_value_to_string (mom_item_unsync_get_attribute (itmkindsig,
 							  MOM_PREDEFINED_NAMED
-							  (c_function_prefix)));
-  if (!strprefix || strncmp (strprefix->cstr, "momfun_", strlen ("momfun_")))
-    MOM_FATAPRINTF ("bad prefix for hooked signature %s of %s",
+							  (c_function_radix)));
+  if (!strradix)
+    MOM_FATAPRINTF ("missing radix for hooked signature %s of %s",
 		    mom_item_cstring (itmkindsig),
 		    mom_item_cstring (itmpredef));
-  fprintf (foutaphd, "  return mom_applyval_%s(mom_clos",
-	   strprefix->cstr + strlen ("momfun_"));
+  fprintf (foutaphd, "  return mom_applval_%s(mom_clos", strradix->cstr);
   for (unsigned ixin = 0; ixin < nbins; ixin++)
     fprintf (foutaphd, ", mom_arg%d", (int) ixin);
   for (unsigned ixout = 0; ixout < nbouts; ixout++)
@@ -2084,18 +2083,18 @@ emit_predefined_fill_mom (void)
 		       mom_item_cstring (itmkind->itm_kind) ? : "~");
       if (itmkind->itm_kind == MOM_PREDEFINED_NAMED (function_signature))
 	{
-	  momvalue_t vprefix =
+	  momvalue_t vradix =
 	    mom_item_unsync_get_attribute ((momitem_t *) itmkind,
 					   MOM_PREDEFINED_NAMED
-					   (c_function_prefix));
+					   (c_function_radix));
 	  MOM_DEBUGPRINTF (dump,
-			   "emit_predefined_fill ix#%d itmpredef %s vprefix %s",
+			   "emit_predefined_fill ix#%d itmpredef %s vradix %s",
 			   ix, mom_item_cstring (itmpredef),
-			   mom_output_gcstring (vprefix));
+			   mom_output_gcstring (vradix));
 	  MOM_DEBUGPRINTF (dump,
 			   "emit_predefined_fill ix#%d itmpredef %s",
 			   ix, mom_item_cstring (itmpredef));
-	  if (vprefix.typnum == momty_string)
+	  if (vradix.typnum == momty_string)
 	    {
 	      MOM_DEBUGPRINTF (dump,
 			       "emit_predefined_fill ix#%d itmpredef=%s itmkind=%s",
@@ -2107,18 +2106,17 @@ emit_predefined_fill_mom (void)
 		       mom_item_cstring (itmkind));
 	      emit_predefined_itemref_mom (foutfp, itmpredef);
 	      fprintf (foutfp,
-		       "->itm_data1 =\n     mom_dynload_symbol(\"%s_%s\");\n",
-		       mom_value_cstr (vprefix),
-		       mom_item_cstring (itmpredef));
+		       "->itm_data1 =\n     mom_dynload_symbol(\"momfunc_%s_%s\");\n",
+		       mom_value_cstr (vradix), mom_item_cstring (itmpredef));
 	    }
 	}
 
       if (itmpredef->itm_kind == MOM_PREDEFINED_NAMED (function_signature))
 	{
-	  momvalue_t vprefix =
+	  momvalue_t vradix =
 	    mom_item_unsync_get_attribute ((momitem_t *) itmpredef,
 					   MOM_PREDEFINED_NAMED
-					   (c_function_prefix));
+					   (c_function_radix));
 	  momvalue_t vinputy =
 	    mom_item_unsync_get_attribute ((momitem_t *) itmpredef,
 					   MOM_PREDEFINED_NAMED
@@ -2128,22 +2126,20 @@ emit_predefined_fill_mom (void)
 					   MOM_PREDEFINED_NAMED
 					   (output_types));
 	  MOM_DEBUGPRINTF (dump,
-			   "emit_predefined_fill ix#%d itmpredef %s vprefix %s vinputy %s voutputy %s",
+			   "emit_predefined_fill ix#%d itmpredef %s vradix %s vinputy %s voutputy %s",
 			   ix, mom_item_cstring (itmpredef),
-			   mom_output_gcstring (vprefix),
+			   mom_output_gcstring (vradix),
 			   mom_output_gcstring (vinputy),
 			   mom_output_gcstring (voutputy));
 	  if (vinputy.typnum == momty_tuple && voutputy.typnum == momty_tuple
-	      && !strncmp (mom_value_cstr (vprefix), "momfun_",
-			   strlen ("momfun_")))
+	      && vradix.typnum == momty_string)
 	    {
 	      MOM_DEBUGPRINTF (dump,
 			       "emit_predefined_fill ix#%d itmpredef %s emitting signature app.code",
 			       ix, mom_item_cstring (itmpredef));
 	      emit_signature_application_code_mom (foutaphd,
 						   (momitem_t *) itmpredef,
-						   vprefix, vinputy,
-						   voutputy);
+						   vradix, vinputy, voutputy);
 
 	    }
 	}

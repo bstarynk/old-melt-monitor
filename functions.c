@@ -143,22 +143,21 @@ bool
     MOM_FATAPRINTF ("filler_of_function %s has bad closed signature %s",
 		    mom_item_cstring (itm),
 		    mom_output_gcstring (clonode->arrsons[0]));
-  momvalue_t cfunprefv = MOM_NONEV;
+  momvalue_t cfunradv = MOM_NONEV;
   {
     mom_item_lock (itmsig);
-    cfunprefv =
+    cfunradv =
       mom_item_unsync_get_attribute (itmsig,
-				     MOM_PREDEFINED_NAMED
-				     (c_function_prefix));
+				     MOM_PREDEFINED_NAMED (c_function_radix));
     mom_item_unlock (itmsig);
   }
-  if (cfunprefv.typnum != momty_string)
+  if (cfunradv.typnum != momty_string)
     MOM_FATAPRINTF
-      ("filler_of_function %s with kind %s and bad `c_function_prefix` %s",
+      ("filler_of_function %s with kind %s and bad `c_function_radix` %s",
        mom_item_cstring (itm), mom_item_cstring (itmsig),
-       mom_output_gcstring (cfunprefv));
+       mom_output_gcstring (cfunradv));
   if (snprintf
-      (bufnam, sizeof (bufnam), "%s_%s", mom_value_cstr (cfunprefv),
+      (bufnam, sizeof (bufnam), "momfunc_%s_%s", mom_value_cstr (cfunradv),
        mom_item_cstring (itm)) >= (int) sizeof (bufnam))
     MOM_FATAPRINTF ("filler_of_function %s with kind %s too long name %s",
 		    mom_item_cstring (itm), mom_item_cstring (itmsig),

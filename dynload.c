@@ -40,7 +40,12 @@ mom_dynload_symbol (const char *name)
   // symbols using the program handle.
   ptr = dlsym (mom_prog_dlhandle, name);
   if (!ptr)
-    MOM_WARNPRINTF ("dlsym %s failed : %s", name, dlerror ());
+    {
+      MOM_WARNPRINTF ("dlsym %s failed : %s", name, dlerror ());
+      if (!strncmp (name, "momfun_", strlen ("momfun_")))
+	{
+	}
+    }
   pthread_mutex_unlock (&dynload_mtx_mom);
   return ptr;
 }

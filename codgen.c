@@ -1649,10 +1649,10 @@ cgen_emit_function_declaration_mom (struct codegen_mom_st *cg,
 		   "emitting declaration signature %s of curfunitm %s",
 		   mom_item_cstring (funsigitm),
 		   mom_item_cstring (curfunitm));
-  const momstring_t *strprefix =	//
+  const momstring_t *strradix =	//
     mom_value_to_string (mom_item_unsync_get_attribute (funsigitm,
 							MOM_PREDEFINED_NAMED
-							(c_function_prefix)));
+							(c_function_radix)));
   const momseq_t *seqinputs =	//
     mom_value_to_tuple (mom_item_unsync_get_attribute (funsigitm,
 						       MOM_PREDEFINED_NAMED
@@ -1661,7 +1661,7 @@ cgen_emit_function_declaration_mom (struct codegen_mom_st *cg,
     mom_value_to_tuple (mom_item_unsync_get_attribute (funsigitm,
 						       MOM_PREDEFINED_NAMED
 						       (output_types)));
-  if (!strprefix || !seqinputs || !seqoutputs)
+  if (!strradix || !seqinputs || !seqoutputs)
     MOM_FATAPRINTF ("function %s of module %s has bad signature %s",
 		    mom_item_cstring (curfunitm),
 		    mom_item_cstring (itmmod), mom_item_cstring (funsigitm));
@@ -1669,8 +1669,8 @@ cgen_emit_function_declaration_mom (struct codegen_mom_st *cg,
   unsigned nboutputs = mom_seq_length (seqoutputs);
   fprintf (cg->cg_emitfile,
 	   "\n\n" "/// declare function #%d: %s\n"
-	   "extern bool %s_%s (const momnode_t *", funix,
-	   mom_item_cstring (curfunitm), mom_string_cstr (strprefix),
+	   "extern bool momfunc_%s_%s (const momnode_t *", funix,
+	   mom_item_cstring (curfunitm), mom_string_cstr (strradix),
 	   mom_item_cstring (curfunitm));
   for (unsigned inix = 0; inix < nbinputs && !cg->cg_errormsg; inix++)
     {
@@ -1748,10 +1748,10 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
   MOM_DEBUGPRINTF (gencod, "emitting code signature %s of curfunitm %s",
 		   mom_item_cstring (funsigitm),
 		   mom_item_cstring (curfunitm));
-  const momstring_t *strprefix =	//
+  const momstring_t *strradix =	//
     mom_value_to_string (mom_item_unsync_get_attribute (funsigitm,
 							MOM_PREDEFINED_NAMED
-							(c_function_prefix)));
+							(c_function_radix)));
   const momseq_t *seqinputs =	//
     mom_value_to_tuple (mom_item_unsync_get_attribute (funsigitm,
 						       MOM_PREDEFINED_NAMED
@@ -1760,7 +1760,7 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
     mom_value_to_tuple (mom_item_unsync_get_attribute (funsigitm,
 						       MOM_PREDEFINED_NAMED
 						       (output_types)));
-  if (!strprefix || !seqinputs || !seqoutputs)
+  if (!strradix || !seqinputs || !seqoutputs)
     MOM_FATAPRINTF ("function %s of module %s has bad signature %s",
 		    mom_item_cstring (curfunitm),
 		    mom_item_cstring (itmmod), mom_item_cstring (funsigitm));
@@ -1768,8 +1768,8 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
   unsigned nboutputs = mom_seq_length (seqoutputs);
   fprintf (cg->cg_emitfile,
 	   "\n\n" "/// implement function #%d: %s\n"
-	   "bool %s_%s (const momnode_t *mom_node", funix,
-	   mom_item_cstring (curfunitm), mom_string_cstr (strprefix),
+	   "bool momfunc_%s_%s (const momnode_t *mom_node", funix,
+	   mom_item_cstring (curfunitm), mom_string_cstr (strradix),
 	   mom_item_cstring (curfunitm));
   for (unsigned inix = 0; inix < nbinputs && !cg->cg_errormsg; inix++)
     {
@@ -1815,7 +1815,7 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
 	   "  return false;\n", mom_seq_length (funseqclosed));
   /// emit the epilogue
   fprintf (cg->cg_emitfile, "} // end of %s_%s \n\n",
-	   mom_item_cstring (curfunitm), mom_string_cstr (strprefix));
+	   mom_item_cstring (curfunitm), mom_string_cstr (strradix));
 }				/* end cgen_emit_function_declaration_mom */
 
 /// eof codgen.c
