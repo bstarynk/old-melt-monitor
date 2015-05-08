@@ -28,6 +28,7 @@ static const char *dump_exit_dir_mom;
 static const char *write_pid_file_mom;
 static const char *dump_cold_dir_mom;
 static const char *dump_exit_dir_mom;
+static const char *generate_c_module_mom;
 
 
 unsigned nbmorepredef_mom;
@@ -382,7 +383,7 @@ enum extraopt_en
   xtraopt_hashstr,
   xtraopt_dumpcoldstate,
   xtraopt_daemon_noclose,
-  xtraopt_nojit,
+  xtraopt_generate_c_module,
 };
 
 static const struct option mom_long_options[] = {
@@ -406,6 +407,7 @@ static const struct option mom_long_options[] = {
   {"string-hash", required_argument, NULL, xtraopt_hashstr},
   {"dump-cold-state", required_argument, NULL, xtraopt_dumpcoldstate},
   {"add-predefined", required_argument, NULL, xtraopt_addpredef},
+  {"generate-c-module", required_argument, NULL, xtraopt_generate_c_module},
   /* Terminating NULL placeholder.  */
   {NULL, no_argument, NULL, 0},
 };
@@ -544,6 +546,7 @@ usage_mom (const char *argv0)
 	  "\t daemonize with daemon(3) with nochdir=true noclose=true\n");
   printf ("\t --add-predefined <predefname> [<comment>]"
 	  "\t #add a new predefined and dump\n");
+  printf ("\t --generate-c-module <moduleitem>" "\t #generate a C module\n");
 }
 
 static void
@@ -708,6 +711,11 @@ parse_program_arguments_and_load_plugins_mom (int *pargc, char ***pargv)
 	case xtraopt_daemon_noclose:
 	  noclose_daemonize_mom = true;
 	  break;
+	case xtraopt_generate_c_module:
+	  {
+	    generate_c_module_mom = optarg;
+	  }
+	  break;
 	default:
 	  {
 	    if (opt > 0 && opt < UCHAR_MAX && isalpha ((char) opt))
@@ -796,6 +804,22 @@ main (int argc_main, char **argv_main)
 	}
     }
   do_after_initial_load_with_plugins_mom ();
+  if (generate_c_module_mom)
+    {
+      momitem_t *moditm = mom_find_item (generate_c_module_mom);
+      if (!moditm)
+	MOM_FATAPRINTF ("cannot find C module %s", generate_c_module_mom);
+      momvalue_t valgen = MOM_NONEV;
+      MOM_INFORMPRINTF ("before generating C module %s",
+			mom_item_cstring (moditm));
+      if (!momhook_generate_c_module (moditm, &valgen))
+	MOM_WARNPRINTF ("failed to generate C module %s",
+			mom_item_cstring (moditm));
+      else
+	MOM_INFORMPRINTF ("after generating C module %s got %s",
+			  mom_item_cstring (moditm),
+			  mom_output_gcstring (valgen));
+    }
   printf
     ("sizeof(momvalue_t)=%zd sizeof(momvaltype_t)=%zd sizeof(momitem_t)=%zd\n",
      sizeof (momvalue_t), sizeof (momvaltype_t), sizeof (momitem_t));
