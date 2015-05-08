@@ -23,6 +23,8 @@
   * c_instructions  []
   * comment  "start block of test_funa" }
  
+  %  ^filler_of_plain_kind( c_block)
+ 
 ..
 
 
@@ -30,6 +32,8 @@
 {
   * c_instructions  []
   * comment  "start of test_funb" }
+ 
+  %  ^filler_of_plain_kind( c_block)
  
 ..
 
@@ -58,7 +62,7 @@
 
 ** test_funb
 {
-  * formals  [test_itmx test_itmy]
+  * formals  [test_itmy test_itmx test_valres]
   * function_signature  signature_2itm_to_val
   * start  _78Bvf0DAn_3jn0Ue36p }
  
@@ -82,6 +86,11 @@
  
   %  ^filler_of_plain_kind( c_module)
  
+..
+
+
+** test_valres
+
 ..
 
 //// end of user file user.mom

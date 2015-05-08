@@ -422,7 +422,7 @@ mom_make_random_idstr (unsigned salt, struct momitem_st *protoitem)
 	  protoitem->itm_id = str;
 	  unsigned bsiz = item_size_mom[hrk];
 	  unsigned bcard = item_card_mom[hrk];
-	  assert (bsiz <= bcard);
+	  assert (bsiz >= bcard);
 	  if (!bsiz || 9 * bcard / 8 + 2 <= bsiz)
 	    reorganize_item_bucket_mom (hrk);
 	  if (newix < 0)
