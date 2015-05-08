@@ -56,8 +56,6 @@
 ..
 
 
-
-
 ** c_function_radix   ////// PREDEFINED
 {
   * comment  "gives the radix of names related to signatures & functions"

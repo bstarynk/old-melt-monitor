@@ -25,7 +25,7 @@ typedef bool mom_1itm_to_val_sig_t (const momnode_t *nod_mom
 				    momvalue_t *res0_mom);
 
 
-#define MOM_PREFIXFUN_1itm_to_val "momfun_1itm_to_val"
+#define MOM_PREFIXFUN_1itm_to_val "momfunc_1itm_to_val"
 static inline mom_1itm_to_val_sig_t mom_applclos_1itm_to_val;
 static inline bool
 mom_applval_1itm_to_val (const momvalue_t clo_mom,
@@ -53,7 +53,7 @@ mom_applclos_1itm_to_val (const momnode_t *nod_mom, momitem_t *arg0_mom,
     {
       char nambuf_mom[256];
       memset (nambuf_mom, 0, sizeof (nambuf_mom));
-      if (snprintf (nambuf_mom, sizeof (nambuf_mom), "momfun_1itm_to_val_%s",
+      if (snprintf (nambuf_mom, sizeof (nambuf_mom), "momfunc_1itm_to_val_%s",
 		    mom_item_cstring (connitm_mom)) <
 	  (int) sizeof (nambuf_mom))
 	((momitem_t *) connitm_mom)->itm_data1 = data1_mom =
@@ -81,7 +81,7 @@ typedef bool mom_1itm_to_void_sig_t (const momnode_t *nod_mom
 				     momitem_t *arg0_mom);
 
 
-#define MOM_PREFIXFUN_1itm_to_void "momfun_1itm_to_void"
+#define MOM_PREFIXFUN_1itm_to_void "momfunc_1itm_to_void"
 static inline mom_1itm_to_void_sig_t mom_applclos_1itm_to_void;
 static inline bool
 mom_applval_1itm_to_void (const momvalue_t clo_mom, momitem_t *arg0_mom)
@@ -107,9 +107,9 @@ mom_applclos_1itm_to_void (const momnode_t *nod_mom, momitem_t *arg0_mom)
     {
       char nambuf_mom[256];
       memset (nambuf_mom, 0, sizeof (nambuf_mom));
-      if (snprintf (nambuf_mom, sizeof (nambuf_mom), "momfun_1itm_to_void_%s",
-		    mom_item_cstring (connitm_mom)) <
-	  (int) sizeof (nambuf_mom))
+      if (snprintf
+	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_1itm_to_void_%s",
+	   mom_item_cstring (connitm_mom)) < (int) sizeof (nambuf_mom))
 	((momitem_t *) connitm_mom)->itm_data1 = data1_mom =
 	  mom_dynload_symbol (nambuf_mom);
       else
@@ -137,7 +137,7 @@ typedef bool mom_1val_to_val_sig_t (const momnode_t *nod_mom
 				    momvalue_t *res0_mom);
 
 
-#define MOM_PREFIXFUN_1val_to_val "momfun_1val_to_val"
+#define MOM_PREFIXFUN_1val_to_val "momfunc_1val_to_val"
 static inline mom_1val_to_val_sig_t mom_applclos_1val_to_val;
 static inline bool
 mom_applval_1val_to_val (const momvalue_t clo_mom,
@@ -165,7 +165,7 @@ mom_applclos_1val_to_val (const momnode_t *nod_mom, momvalue_t arg0_mom,
     {
       char nambuf_mom[256];
       memset (nambuf_mom, 0, sizeof (nambuf_mom));
-      if (snprintf (nambuf_mom, sizeof (nambuf_mom), "momfun_1val_to_val_%s",
+      if (snprintf (nambuf_mom, sizeof (nambuf_mom), "momfunc_1val_to_val_%s",
 		    mom_item_cstring (connitm_mom)) <
 	  (int) sizeof (nambuf_mom))
 	((momitem_t *) connitm_mom)->itm_data1 = data1_mom =
@@ -193,7 +193,7 @@ typedef bool mom_1val_to_void_sig_t (const momnode_t *nod_mom
 				     momvalue_t arg0_mom);
 
 
-#define MOM_PREFIXFUN_1val_to_void "momfun_1val_to_void"
+#define MOM_PREFIXFUN_1val_to_void "momfunc_1val_to_void"
 static inline mom_1val_to_void_sig_t mom_applclos_1val_to_void;
 static inline bool
 mom_applval_1val_to_void (const momvalue_t clo_mom, momvalue_t arg0_mom)
@@ -219,9 +219,9 @@ mom_applclos_1val_to_void (const momnode_t *nod_mom, momvalue_t arg0_mom)
     {
       char nambuf_mom[256];
       memset (nambuf_mom, 0, sizeof (nambuf_mom));
-      if (snprintf (nambuf_mom, sizeof (nambuf_mom), "momfun_1val_to_void_%s",
-		    mom_item_cstring (connitm_mom)) <
-	  (int) sizeof (nambuf_mom))
+      if (snprintf
+	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_1val_to_void_%s",
+	   mom_item_cstring (connitm_mom)) < (int) sizeof (nambuf_mom))
 	((momitem_t *) connitm_mom)->itm_data1 = data1_mom =
 	  mom_dynload_symbol (nambuf_mom);
       else
@@ -251,7 +251,7 @@ typedef bool mom_2itm1val_to_val_sig_t (const momnode_t *nod_mom
 					momvalue_t *res0_mom);
 
 
-#define MOM_PREFIXFUN_2itm1val_to_val "momfun_2itm1val_to_val"
+#define MOM_PREFIXFUN_2itm1val_to_val "momfunc_2itm1val_to_val"
 static inline mom_2itm1val_to_val_sig_t mom_applclos_2itm1val_to_val;
 static inline bool
 mom_applval_2itm1val_to_val (const momvalue_t clo_mom,
@@ -284,7 +284,7 @@ mom_applclos_2itm1val_to_val (const momnode_t *nod_mom, momitem_t *arg0_mom,
       char nambuf_mom[256];
       memset (nambuf_mom, 0, sizeof (nambuf_mom));
       if (snprintf
-	  (nambuf_mom, sizeof (nambuf_mom), "momfun_2itm1val_to_val_%s",
+	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_2itm1val_to_val_%s",
 	   mom_item_cstring (connitm_mom)) < (int) sizeof (nambuf_mom))
 	((momitem_t *) connitm_mom)->itm_data1 = data1_mom =
 	  mom_dynload_symbol (nambuf_mom);
@@ -315,7 +315,7 @@ typedef bool mom_2itm1val_to_void_sig_t (const momnode_t *nod_mom
 					 momvalue_t arg2_mom);
 
 
-#define MOM_PREFIXFUN_2itm1val_to_void "momfun_2itm1val_to_void"
+#define MOM_PREFIXFUN_2itm1val_to_void "momfunc_2itm1val_to_void"
 static inline mom_2itm1val_to_void_sig_t mom_applclos_2itm1val_to_void;
 static inline bool
 mom_applval_2itm1val_to_void (const momvalue_t clo_mom,
@@ -346,7 +346,7 @@ mom_applclos_2itm1val_to_void (const momnode_t *nod_mom, momitem_t *arg0_mom,
       char nambuf_mom[256];
       memset (nambuf_mom, 0, sizeof (nambuf_mom));
       if (snprintf
-	  (nambuf_mom, sizeof (nambuf_mom), "momfun_2itm1val_to_void_%s",
+	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_2itm1val_to_void_%s",
 	   mom_item_cstring (connitm_mom)) < (int) sizeof (nambuf_mom))
 	((momitem_t *) connitm_mom)->itm_data1 = data1_mom =
 	  mom_dynload_symbol (nambuf_mom);
@@ -376,7 +376,7 @@ typedef bool mom_2itm_to_val_sig_t (const momnode_t *nod_mom
 				    momvalue_t *res0_mom);
 
 
-#define MOM_PREFIXFUN_2itm_to_val "momfun_2itm_to_val"
+#define MOM_PREFIXFUN_2itm_to_val "momfunc_2itm_to_val"
 static inline mom_2itm_to_val_sig_t mom_applclos_2itm_to_val;
 static inline bool
 mom_applval_2itm_to_val (const momvalue_t clo_mom,
@@ -406,7 +406,7 @@ mom_applclos_2itm_to_val (const momnode_t *nod_mom, momitem_t *arg0_mom,
     {
       char nambuf_mom[256];
       memset (nambuf_mom, 0, sizeof (nambuf_mom));
-      if (snprintf (nambuf_mom, sizeof (nambuf_mom), "momfun_2itm_to_val_%s",
+      if (snprintf (nambuf_mom, sizeof (nambuf_mom), "momfunc_2itm_to_val_%s",
 		    mom_item_cstring (connitm_mom)) <
 	  (int) sizeof (nambuf_mom))
 	((momitem_t *) connitm_mom)->itm_data1 = data1_mom =
@@ -435,7 +435,7 @@ typedef bool mom_2itm_to_void_sig_t (const momnode_t *nod_mom
 				     momitem_t *arg1_mom);
 
 
-#define MOM_PREFIXFUN_2itm_to_void "momfun_2itm_to_void"
+#define MOM_PREFIXFUN_2itm_to_void "momfunc_2itm_to_void"
 static inline mom_2itm_to_void_sig_t mom_applclos_2itm_to_void;
 static inline bool
 mom_applval_2itm_to_void (const momvalue_t clo_mom,
@@ -463,9 +463,9 @@ mom_applclos_2itm_to_void (const momnode_t *nod_mom, momitem_t *arg0_mom,
     {
       char nambuf_mom[256];
       memset (nambuf_mom, 0, sizeof (nambuf_mom));
-      if (snprintf (nambuf_mom, sizeof (nambuf_mom), "momfun_2itm_to_void_%s",
-		    mom_item_cstring (connitm_mom)) <
-	  (int) sizeof (nambuf_mom))
+      if (snprintf
+	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_2itm_to_void_%s",
+	   mom_item_cstring (connitm_mom)) < (int) sizeof (nambuf_mom))
 	((momitem_t *) connitm_mom)->itm_data1 = data1_mom =
 	  mom_dynload_symbol (nambuf_mom);
       else
@@ -491,7 +491,7 @@ typedef bool mom_void_to_void_sig_t (const momnode_t *nod_mom
 				     /* 0 inputs, 0 outputs: */ );
 
 
-#define MOM_PREFIXFUN_void_to_void "momfun_void_to_void"
+#define MOM_PREFIXFUN_void_to_void "momfunc_void_to_void"
 static inline mom_void_to_void_sig_t mom_applclos_void_to_void;
 static inline bool
 mom_applval_void_to_void (const momvalue_t clo_mom)
@@ -517,9 +517,9 @@ mom_applclos_void_to_void (const momnode_t *nod_mom)
     {
       char nambuf_mom[256];
       memset (nambuf_mom, 0, sizeof (nambuf_mom));
-      if (snprintf (nambuf_mom, sizeof (nambuf_mom), "momfun_void_to_void_%s",
-		    mom_item_cstring (connitm_mom)) <
-	  (int) sizeof (nambuf_mom))
+      if (snprintf
+	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_void_to_void_%s",
+	   mom_item_cstring (connitm_mom)) < (int) sizeof (nambuf_mom))
 	((momitem_t *) connitm_mom)->itm_data1 = data1_mom =
 	  mom_dynload_symbol (nambuf_mom);
       else
@@ -546,7 +546,7 @@ momhook_generate_c_module (momitem_t *mom_arg0, momvalue_t *mom_res0)
   mom_item_lock (mom_itm);
   mom_clos = mom_components_nth (mom_itm->itm_comps, 0);
   mom_item_unlock (mom_itm);
-  return mom_applyval_1itm_to_val (mom_clos, mom_arg0, mom_res0);
+  return mom_applval_1itm_to_val (mom_clos, mom_arg0, mom_res0);
 }				// end momhook_generate_c_module of signature_1itm_to_val
 
 

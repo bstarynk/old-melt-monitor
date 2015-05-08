@@ -108,46 +108,46 @@ mom_predefined_items_fill (void)
   MOM_PREDEFINED_NAMED (void)->itm_kind = MOM_PREDEFINED_NAMED (c_type);
 // function item emitter_of_association of signature_1itm_to_val:
   MOM_PREDEFINED_NAMED (emitter_of_association)->itm_data1 =
-    mom_dynload_symbol ("momfun_1itm_to_val_emitter_of_association");
+    mom_dynload_symbol ("momfunc_1itm_to_val_emitter_of_association");
 // function item emitter_of_function of signature_1itm_to_val:
   MOM_PREDEFINED_NAMED (emitter_of_function)->itm_data1 =
-    mom_dynload_symbol ("momfun_1itm_to_val_emitter_of_function");
+    mom_dynload_symbol ("momfunc_1itm_to_val_emitter_of_function");
 // function item emitter_of_hashed_set of signature_1itm_to_val:
   MOM_PREDEFINED_NAMED (emitter_of_hashed_set)->itm_data1 =
-    mom_dynload_symbol ("momfun_1itm_to_val_emitter_of_hashed_set");
+    mom_dynload_symbol ("momfunc_1itm_to_val_emitter_of_hashed_set");
 // function item emitter_of_magic_attribute of signature_1itm_to_val:
   MOM_PREDEFINED_NAMED (emitter_of_magic_attribute)->itm_data1 =
-    mom_dynload_symbol ("momfun_1itm_to_val_emitter_of_magic_attribute");
+    mom_dynload_symbol ("momfunc_1itm_to_val_emitter_of_magic_attribute");
 // function item emitter_of_plain_kind of signature_1itm_to_val:
   MOM_PREDEFINED_NAMED (emitter_of_plain_kind)->itm_data1 =
-    mom_dynload_symbol ("momfun_1itm_to_val_emitter_of_plain_kind");
+    mom_dynload_symbol ("momfunc_1itm_to_val_emitter_of_plain_kind");
 // function item filler_of_association of signature_1itm_to_void:
   MOM_PREDEFINED_NAMED (filler_of_association)->itm_data1 =
-    mom_dynload_symbol ("momfun_1itm_to_void_filler_of_association");
+    mom_dynload_symbol ("momfunc_1itm_to_void_filler_of_association");
 // function item filler_of_function of signature_1itm_to_void:
   MOM_PREDEFINED_NAMED (filler_of_function)->itm_data1 =
-    mom_dynload_symbol ("momfun_1itm_to_void_filler_of_function");
+    mom_dynload_symbol ("momfunc_1itm_to_void_filler_of_function");
 // function item filler_of_hashed_set of signature_1itm_to_void:
   MOM_PREDEFINED_NAMED (filler_of_hashed_set)->itm_data1 =
-    mom_dynload_symbol ("momfun_1itm_to_void_filler_of_hashed_set");
+    mom_dynload_symbol ("momfunc_1itm_to_void_filler_of_hashed_set");
 // function item filler_of_magic_attribute of signature_1itm_to_void:
   MOM_PREDEFINED_NAMED (filler_of_magic_attribute)->itm_data1 =
-    mom_dynload_symbol ("momfun_1itm_to_void_filler_of_magic_attribute");
+    mom_dynload_symbol ("momfunc_1itm_to_void_filler_of_magic_attribute");
 // function item filler_of_plain_kind of signature_1itm_to_void:
   MOM_PREDEFINED_NAMED (filler_of_plain_kind)->itm_data1 =
-    mom_dynload_symbol ("momfun_1itm_to_void_filler_of_plain_kind");
+    mom_dynload_symbol ("momfunc_1itm_to_void_filler_of_plain_kind");
 // function item generate_c_module of signature_1itm_to_val:
   MOM_PREDEFINED_NAMED (generate_c_module)->itm_data1 =
-    mom_dynload_symbol ("momfun_1itm_to_val_generate_c_module");
+    mom_dynload_symbol ("momfunc_1itm_to_val_generate_c_module");
 // function item scanner_of_association of signature_1itm_to_void:
   MOM_PREDEFINED_NAMED (scanner_of_association)->itm_data1 =
-    mom_dynload_symbol ("momfun_1itm_to_void_scanner_of_association");
+    mom_dynload_symbol ("momfunc_1itm_to_void_scanner_of_association");
 // function item scanner_of_hashed_set of signature_1itm_to_void:
   MOM_PREDEFINED_NAMED (scanner_of_hashed_set)->itm_data1 =
-    mom_dynload_symbol ("momfun_1itm_to_void_scanner_of_hashed_set");
+    mom_dynload_symbol ("momfunc_1itm_to_void_scanner_of_hashed_set");
 // function item scanner_of_magic_attribute of signature_1itm_to_void:
   MOM_PREDEFINED_NAMED (scanner_of_magic_attribute)->itm_data1 =
-    mom_dynload_symbol ("momfun_1itm_to_void_scanner_of_magic_attribute");
+    mom_dynload_symbol ("momfunc_1itm_to_void_scanner_of_magic_attribute");
 
 }				/* end mom_predefined_items_fill */
 
