@@ -101,7 +101,6 @@ const char *mom_user_data;
 #define MOM_UNUSED
 #endif
 
-#warning use c_function_radix and momfun_ should disappear...
 
 // every hashcode is a non-zero 32 bits unsigned
 typedef uint32_t momhash_t;

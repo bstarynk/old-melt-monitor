@@ -112,7 +112,7 @@ static void cgen_first_scanning_pass_mom (momitem_t *itmcgen);
 static void cgen_second_emitting_pass_mom (momitem_t *itmcgen);
 
 bool
-  momfun_1itm_to_val_generate_c_module
+  momfunc_1itm_to_val_generate_c_module
   (const momnode_t *clonode, momitem_t *itm, momvalue_t *res)
 {
   MOM_DEBUGPRINTF (gencod,

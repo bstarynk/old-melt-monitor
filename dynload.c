@@ -42,19 +42,6 @@ mom_dynload_symbol (const char *name)
   if (!ptr)
     {
       MOM_WARNPRINTF ("dlsym %s failed : %s", name, dlerror ());
-#warning temporary hack in mom_dynload_symbol for momfun_
-      if (!strncmp (name, "momfunc_", strlen ("momfunc_")))
-	{
-	  char buf[128];
-	  memset (buf, 0, sizeof (buf));
-	  snprintf (buf, sizeof (buf), "momfun_%s",
-		    name + strlen ("momfunc_"));
-	  ptr = dlsym (mom_prog_dlhandle, buf);
-	  if (!ptr)
-	    MOM_WARNPRINTF ("dlsym %s hack-failed : %s", buf, dlerror ());
-	  else
-	    MOM_INFORMPRINTF ("dlsym hack %s @%p", buf, ptr);
-	}
     }
   pthread_mutex_unlock (&dynload_mtx_mom);
   return ptr;
