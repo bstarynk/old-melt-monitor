@@ -537,7 +537,7 @@ mom_hashset_add_sized_items (struct momhashset_st *hset,
 	    continue;
 	  newhset->hset_elems[cnt++] = newitm;
 	}
-      assert (cnt <= hslen);
+      assert (cnt <= newsiz);
       newhset->hset_cnt = cnt;
       if (hset)
 	{
