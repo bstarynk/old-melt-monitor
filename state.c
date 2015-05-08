@@ -1739,33 +1739,32 @@ emit_predefined_itemref_mom (FILE *out, const momitem_t *itm)
 static void
 emit_signature_application_code_mom (FILE *foutaphd,
 				     momitem_t *itmpredef,
-				     momvalue_t vprefix,
+				     momvalue_t vradix,
 				     momvalue_t vinputy, momvalue_t voutputy)
 {
-  char prefixbuf[256];
+  char radixbuf[256];
   char applyvalbuf[256];
   char applyclosbuf[256];
-  memset (prefixbuf, 0, sizeof (prefixbuf));
+  memset (radixbuf, 0, sizeof (radixbuf));
   memset (applyvalbuf, 0, sizeof (applyvalbuf));
   memset (applyclosbuf, 0, sizeof (applyclosbuf));
   assert (dumper_mom && dumper_mom->dumagic == DUMPER_MAGIC_MOM);
   MOM_DEBUGPRINTF (dump,
-		   "emit_signature_application_code start itmpredef=%s vprefix=%s vinputy=%s outputy=%s",
+		   "emit_signature_application_code start itmpredef=%s vradix=%s vinputy=%s outputy=%s",
 		   mom_item_cstring (itmpredef),
-		   mom_output_gcstring (vprefix),
+		   mom_output_gcstring (vradix),
 		   mom_output_gcstring (vinputy),
 		   mom_output_gcstring (voutputy));
   assert (foutaphd);
   assert (itmpredef);
-  assert (vprefix.typnum == momty_string);
+  assert (vradix.typnum == momty_string);
   assert (vinputy.typnum == momty_tuple);
   assert (voutputy.typnum == momty_tuple);
-  strncpy (prefixbuf, mom_value_cstr (vprefix), sizeof (prefixbuf) - 1);
-  if (strlen (prefixbuf) >= sizeof (prefixbuf) - 16)
-    MOM_FATAPRINTF ("too long vprefix %s for itmpredef %s",
-		    mom_value_cstr (vprefix), mom_item_cstring (itmpredef));
-  assert (!strncmp (prefixbuf, "momfun_", strlen ("momfun_")));
-  char *suffix = prefixbuf + strlen ("momfun_");
+  strncpy (radixbuf, mom_value_cstr (vradix), sizeof (radixbuf) - 1);
+  if (strlen (radixbuf) >= sizeof (radixbuf) - 16)
+    MOM_FATAPRINTF ("too long vradix %s for itmpredef %s",
+		    mom_value_cstr (vradix), mom_item_cstring (itmpredef));
+  char *suffix = radixbuf;
   unsigned nbinputy = vinputy.vtuple->slen;
   unsigned nboutputy = voutputy.vtuple->slen;
   fprintf (foutaphd, "\n\n"
@@ -1806,8 +1805,8 @@ emit_signature_application_code_mom (FILE *foutaphd,
 	       ix);
     };
   fputs (");\n\n", foutaphd);
-  fprintf (foutaphd, "\n" "#define MOM_PREFIXFUN_%s \"%s\"\n",
-	   suffix, mom_value_cstr (vprefix));
+  fprintf (foutaphd, "\n" "#define MOM_PREFIXFUN_%s \"momfunc_%s\"\n",
+	   suffix, mom_value_cstr (vradix));
   fprintf (foutaphd, "static inline mom_%s_sig_t mom_applclos_%s;\n", suffix,
 	   suffix);
   fprintf (foutaphd,
@@ -1885,8 +1884,8 @@ emit_signature_application_code_mom (FILE *foutaphd,
 	   (int) ((2 * strlen (suffix) + 192) | 0x3f) + 1);
   fprintf (foutaphd, "    memset (nambuf_mom, 0, sizeof(nambuf_mom));\n");
   fprintf (foutaphd,
-	   "    if (snprintf(nambuf_mom, sizeof(nambuf_mom), \"%s_%%s\",\n",
-	   mom_value_cstr (vprefix));
+	   "    if (snprintf(nambuf_mom, sizeof(nambuf_mom), \"momfunc_%s_%%s\",\n",
+	   mom_value_cstr (vradix));
   fprintf (foutaphd,
 	   "                 mom_item_cstring(connitm_mom)) < (int)sizeof(nambuf_mom))\n");
   fprintf (foutaphd,
