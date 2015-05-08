@@ -1249,6 +1249,8 @@ cgen_bind_new_mom (struct codegen_mom_st *cg, momitem_t *itm,
 		   momvalue_t vbind)
 {
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  MOM_DEBUGPRINTF (gencod, "cgen_bind_new itm=%s vbind=%s",
+		   mom_item_cstring (itm), mom_output_gcstring (vbind));
   assert (itm != NULL);
   assert (mom_hashset_contains (cg->cg_lockeditemset, itm));
   assert (vbind.typnum != momty_null);
@@ -1337,6 +1339,7 @@ cgen_bind_formals_mom (struct codegen_mom_st *cg, momitem_t *itmsignature,
 		       mom_item_cstring (cg->cg_curfunitm), inix,
 		       mom_item_cstring (informalitm),
 		       mom_output_gcstring (valbind));
+      cgen_lock_item_mom (cg, informalitm);
       cgen_bind_new_mom (cg, informalitm, valbind);
       if (cg->cg_errormsg)
 	return;
@@ -1373,6 +1376,7 @@ cgen_bind_formals_mom (struct codegen_mom_st *cg, momitem_t *itmsignature,
 		       mom_item_cstring (cg->cg_curfunitm), outix,
 		       mom_item_cstring (outformalitm),
 		       mom_output_gcstring (valbind));
+      cgen_lock_item_mom (cg, outformalitm);
       cgen_bind_new_mom (cg, outformalitm, valbind);
       if (cg->cg_errormsg)
 	return;

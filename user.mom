@@ -20,7 +20,16 @@
 
 ** _2yhjRaR72_5sd4haPDv
 {
+  * c_instructions  []
   * comment  "start block of test_funa" }
+ 
+..
+
+
+** _78Bvf0DAn_3jn0Ue36p
+{
+  * c_instructions  []
+  * comment  "start of test_funb" }
  
 ..
 
@@ -40,6 +49,7 @@
 ** test_funa
 {
   * constants  {test_constant_one test_constant_quote}
+  * formals  [test_itmx]
   * function_signature  signature_1itm_to_void
   * start  _2yhjRaR72_5sd4haPDv }
  
@@ -48,8 +58,20 @@
 
 ** test_funb
 {
-  * function_signature  signature_2itm_to_val }
+  * formals  [test_itmx test_itmy]
+  * function_signature  signature_2itm_to_val
+  * start  _78Bvf0DAn_3jn0Ue36p }
  
+..
+
+
+** test_itmx
+
+..
+
+
+** test_itmy
+
 ..
 
 
