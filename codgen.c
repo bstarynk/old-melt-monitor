@@ -464,7 +464,7 @@ cgen_scan_block_first_mom (struct codegen_mom_st *cg, momitem_t *itmblock)
       (cg, "module item %s : function %s has invalid block %s (of kind %s)",
        mom_item_cstring (cg->cg_moduleitm),
        mom_item_cstring (cg->cg_curfunitm), mom_item_cstring (itmblock),
-       mom_item_cstring(itmblock->itm_kind));
+       mom_item_cstring (itmblock->itm_kind));
   {
     momvalue_t vablock = MOM_NONEV;
     struct momentry_st *entblock =
