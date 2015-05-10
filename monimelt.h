@@ -900,8 +900,9 @@ struct momitem_st
 
 // initialize an unregistered item
 void mom_initialize_protoitem (momitem_t *protoitm);
-void mom_finalize_item (momitem_t *finitm);
-
+void mom_gc_finalize_item (void *itmad, void *data);
+void mom_unregister_anonymous_finalized_item (momitem_t *finitm);
+void mom_unregister_named_finalized_item (momitem_t *finitm);
 static inline const char *
 mom_item_cstring (const momitem_t *itm)
 {

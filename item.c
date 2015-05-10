@@ -577,14 +577,27 @@ mom_initialize_protoitem (momitem_t *protoitm)
 }
 
 void
-mom_finalize_item (momitem_t *finitm)
+mom_unregister_named_finalized_item (momitem_t *finitm)
 {
+#warning mom_unregister_named_finalized_item unimplemented
+}
+
+void
+mom_gc_finalize_item (void *itmad, void *data __attribute__ ((unused)))
+{
+  momitem_t *finitm = itmad;
 #warning mom_finalize_item unimplemented
-  MOM_DEBUGPRINTF (item, "mom_finalize_item finitm@%p = %s", (void *) finitm,
-		   mom_item_cstring (finitm));
+  MOM_DEBUGPRINTF (item, "mom_finalize_item finitm@%p = %s (kind %s)",
+		   (void *) finitm, mom_item_cstring (finitm),
+		   mom_item_cstring (finitm->itm_kind));
+  if (finitm->itm_anonymous)
+    mom_unregister_anonymous_finalized_item (finitm);
+  else
+    mom_unregister_named_finalized_item (finitm);
   MOM_WARNPRINTF ("unimplemented mom_finalize_item %s",
 		  mom_item_cstring (finitm));
   pthread_mutex_destroy (&finitm->itm_mtx);
+  memset (finitm, 0, sizeof (momitem_t));
 }
 
 
@@ -805,7 +818,7 @@ mom_make_named_item (const char *namstr)
 		       namstr, pos, bix, newitm);
       bucklen = ++curbuck->nambuck_len;
       named_count_mom++;
-      GC_REGISTER_FINALIZER (newitm, mom_finalize_item, NULL, NULL, NULL);
+      GC_REGISTER_FINALIZER (newitm, mom_gc_finalize_item, NULL, NULL, NULL);
     }
   if (MOM_UNLIKELY
       (bucklen > 2 && (2 + bucklen) * bucklen > 3 * named_count_mom))

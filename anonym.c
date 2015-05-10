@@ -37,6 +37,7 @@ static struct anon_htable_mom_st *anh_arr_mom[HASH_ANON_MOD_MOM];
 #define ID_DIGITS_MOM "0123456789abcdefhijkmnpqrstuvwxyzABCDEFHIJKLMPRU"
 #define ID_BASE_MOM 48
 
+#define ANH_INITIAL_SIZE_MOM 32
 // called from mom_initialize_items in items.c
 void
 mom_initialize_anonymous_items (void)
@@ -46,7 +47,7 @@ mom_initialize_anonymous_items (void)
   for (int ix = 0; ix < HASH_ANON_MOD_MOM; ix++)
     {
       pthread_mutex_init (&mtx_anon_mom[ix], NULL);
-      unsigned siz = 32;
+      unsigned siz = ANH_INITIAL_SIZE_MOM;
       struct anon_htable_mom_st *an =	//
 	MOM_GC_SCALAR_ALLOC ("anh",
 			     sizeof (struct anon_htable_mom_st) +
@@ -304,7 +305,7 @@ mom_make_anonymous_item_salt (unsigned salt)
   newitm->itm_space = momspa_transient;
   const momstring_t *ids = mom_make_random_idstr (salt, newitm);
   newitm->itm_id = ids;
-  GC_REGISTER_FINALIZER (newitm, mom_finalize_item, NULL, NULL, NULL);
+  GC_REGISTER_FINALIZER (newitm, mom_gc_finalize_item, NULL, NULL, NULL);
   return newitm;
 }
 
@@ -333,8 +334,52 @@ mom_make_anonymous_item_by_id (const char *ids)
       if (anh->anh_count + anh->anh_count / 8 + 2 >= anh->anh_size)
 	reorganize_anon_bucket_mom (hrk);
       raw_add_anon_item_mom (itm, hrk);
-      GC_REGISTER_FINALIZER (newitm, mom_finalize_item, NULL, NULL, NULL);
+      GC_REGISTER_FINALIZER (newitm, mom_gc_finalize_item, NULL, NULL, NULL);
     }
   pthread_mutex_unlock (&mtx_anon_mom[hrk]);
   return (momitem_t *) itm;
+}
+
+void
+mom_unregister_anonymous_finalized_item (momitem_t *finitm)
+{
+  assert (finitm && finitm->itm_anonymous && finitm->itm_id);
+  momhash_t h = finitm->itm_id->shash;
+  unsigned hrk = h % HASH_ANON_MOD_MOM;
+  MOM_DEBUGPRINTF (item,
+		   "unregister_anonymous_finalized_item finitm %s h=%u hrk=%u",
+		   mom_item_cstring (finitm), (unsigned) h, (unsigned) hrk);
+  int pos = -1;
+  pthread_mutex_lock (&mtx_anon_mom[hrk]);
+  struct anon_htable_mom_st *anh = anh_arr_mom[hrk];
+  assert (anh != NULL);
+  assert (anh && anh->anh_size > 0 && anh->anh_count < anh->anh_size);
+  unsigned hsiz = anh->anh_size;
+  unsigned startix = h % hsiz;
+  for (unsigned ix = startix; ix < hsiz && pos < 0; ix++)
+    {
+      momitem_t *curitm = anh->anh_arritm[ix];
+      if (!curitm)
+	break;
+      if (curitm == MOM_EMPTY)
+	continue;
+      if (curitm == finitm)
+	pos = (int) ix;
+    };
+  for (unsigned ix = 0; ix < startix && pos < 0; ix++)
+    {
+      momitem_t *curitm = anh->anh_arritm[ix];
+      if (!curitm)
+	break;
+      if (curitm == MOM_EMPTY)
+	continue;
+      if (curitm == finitm)
+	pos = (int) ix;
+    };
+  assert (pos >= 0 && pos < hsiz && anh->anh_arritm[pos] == finitm);
+  anh->anh_arritm[pos] = MOM_EMPTY;
+  anh->anh_count--;
+  if (anh->anh_count < hsiz / 4 && hsiz > 2 * ANH_INITIAL_SIZE_MOM)
+    reorganize_anon_bucket_mom (hrk);
+  pthread_mutex_unlock (&mtx_anon_mom[hrk]);
 }
