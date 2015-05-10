@@ -579,6 +579,9 @@ mom_initialize_protoitem (momitem_t *protoitm)
 void
 mom_unregister_named_finalized_item (momitem_t *finitm)
 {
+  MOM_WARNPRINTF
+    ("unregister_named_finalized_item unimplemented finitm@%p %s",
+     (void *) finitm, mom_item_cstring (finitm));
 #warning mom_unregister_named_finalized_item unimplemented
 }
 
