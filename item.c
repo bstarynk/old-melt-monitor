@@ -579,11 +579,108 @@ mom_initialize_protoitem (momitem_t *protoitm)
 void
 mom_unregister_named_finalized_item (momitem_t *finitm)
 {
+  assert (finitm && !finitm->itm_anonymous && finitm->itm_name);
+  const momstring_t *itmnam = finitm->itm_name;
+  pthread_rwlock_wrlock (&named_lock_mom);
+  assert (named_count_mom > 0);	/* we have some predefined names! */
+  if (MOM_UNLIKELY
+      (named_count_mom > 0
+       && named_nbuck_mom * (named_nbuck_mom + 1) < named_count_mom / 3))
+    reorganize_named_items_mom ();
   MOM_WARNPRINTF
     ("unregister_named_finalized_item unimplemented finitm@%p %s",
      (void *) finitm, mom_item_cstring (finitm));
-#warning mom_unregister_named_finalized_item unimplemented
-}
+  int lobix = 0, hibix = named_nbuck_mom, mdbix = 0;
+  int bix = -1;
+  while (lobix + 3 < hibix)
+    {
+      while (lobix < hibix && named_buckets_mom[lobix]->nambuck_len == 0)
+	lobix++;
+      while (hibix > lobix && named_buckets_mom[hibix - 1]->nambuck_len == 0)
+	hibix--;
+      if (lobix + 2 >= hibix)
+	break;
+      mdbix = (lobix + hibix) / 2;
+      while (mdbix < hibix && named_buckets_mom[mdbix]->nambuck_len == 0)
+	mdbix++;
+      struct namebucket_mom_st *mdbuck = named_buckets_mom[mdbix];
+      unsigned mdlen = mdbuck->nambuck_len;
+      assert (mdlen > 0);
+      const momitem_t *mditm = mdbuck->nambuck_arr[mdlen / 2];
+      assert (mditm && !mditm->itm_anonymous && mditm->itm_name);
+      MOM_DEBUGPRINTF (item,
+		       "unregister_named_finalized_item %s mdbix %d (lobix=%d hibix=%d), mditm %s",
+		       itmnam->cstr, mdbix, lobix, hibix,
+		       mditm->itm_name->cstr);
+      if (strcmp (itmnam->cstr, mditm->itm_name->cstr) < 0)
+	hibix = mdbix + 1;
+      else
+	lobix = mdbix;
+    }
+  // try to find the appropriate bucket index bix
+  for (mdbix = lobix; mdbix < hibix && bix < 0; mdbix++)
+    {
+      struct namebucket_mom_st *mdbuck = named_buckets_mom[mdbix];
+      unsigned mdlen = mdbuck->nambuck_len;
+      MOM_DEBUGPRINTF (item,
+		       "unregister_named_finalized_item %s mdbix=%d mdlen=%d",
+		       itmnam->cstr, mdbix, mdlen);
+      if (mdlen == 0)
+	continue;
+      const momitem_t *firstitm = mdbuck->nambuck_arr[0];
+      assert (firstitm && !firstitm->itm_anonymous && firstitm->itm_name);
+      const momitem_t *lastitm = mdbuck->nambuck_arr[mdlen - 1];
+      assert (lastitm && !lastitm->itm_anonymous && lastitm->itm_name);
+      MOM_DEBUGPRINTF (item,
+		       "unregister_named_finalized_item %s mdbix=%d firstitm %s lastitm %s",
+		       itmnam->cstr, mdbix, firstitm->itm_name->cstr,
+		       lastitm->itm_name->cstr);
+      if (strcmp (firstitm->itm_name->cstr, itmnam->cstr) <= 0
+	  && strcmp (itmnam->cstr, lastitm->itm_name->cstr) <= 0)
+	bix = mdbix;
+    };
+  assert (bix >= 0);
+  {
+    struct namebucket_mom_st *buck = named_buckets_mom[bix];
+    int pos = -1;
+    unsigned blen = buck->nambuck_len;
+    MOM_DEBUGPRINTF (item,
+		     "unregister_named_finalized_item %s blen=%d bix=%d",
+		     itmnam->cstr, blen, bix);
+    assert (blen > 0);
+    int lo = 0, hi = (int) blen, md = 0;
+    while (lo + 3 < hi && pos < 0)
+      {
+	int md = (lo + hi) / 2;
+	const momitem_t *curitm = buck->nambuck_arr[md];
+	assert (curitm && !curitm->itm_anonymous && curitm->itm_name);
+	MOM_DEBUGPRINTF (item,
+			 "unregister_named_finalized_item %s lo=%d hi=%d md=%d curitm %s",
+			 itmnam->cstr, lo, hi, md, curitm->itm_name->cstr);
+	int cmp = strcmp (curitm->itm_name->cstr, itmnam->cstr);
+	if (!cmp)
+	  pos = md;
+	else if (cmp < 0)
+	  lo = md;
+	else
+	  hi = md;
+      }
+    for (md = lo; md <= hi && pos < 0; md++)
+      {
+	const momitem_t *curitm = buck->nambuck_arr[md];
+	assert (curitm && !curitm->itm_anonymous && curitm->itm_name);
+	if (curitm == finitm)
+	  pos = md;
+      };
+    if (pos < 0)
+      MOM_FATAPRINTF ("failed to find finalized named item %s in bucket#%d",
+		      itmnam->cstr, bix);
+    for (int ix = pos; ix + 1 < blen; ix++)
+      buck->nambuck_arr[ix] = buck->nambuck_arr[ix + 1];
+    buck->nambuck_arr[blen - 1] = NULL;
+    buck->nambuck_len = blen - 1;
+  }
+}				/* end mom_unregister_named_finalized_item */
 
 void
 mom_gc_finalize_item (void *itmad, void *data __attribute__ ((unused)))
