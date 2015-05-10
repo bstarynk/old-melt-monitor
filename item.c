@@ -680,6 +680,7 @@ mom_unregister_named_finalized_item (momitem_t *finitm)
     buck->nambuck_arr[blen - 1] = NULL;
     buck->nambuck_len = blen - 1;
   }
+  pthread_rwlock_unlock (&named_lock_mom);
 }				/* end mom_unregister_named_finalized_item */
 
 void
