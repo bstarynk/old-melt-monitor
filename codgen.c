@@ -1977,6 +1977,17 @@ cgen_third_decorating_pass_mom (momitem_t *itmcgen)
 			   "third_decorating_pass funix#%d function %s: blix#%d curblock %s",
 			   funix, mom_item_cstring (curfunitm), blix,
 			   mom_item_cstring (itmcurblock));
+	  struct momentry_st *ent = mom_attributes_find_entry
+	    ((struct momattributes_st *) itmblocks->itm_data1,
+	     itmcurblock);
+	  momvalue_t valblockinfo = MOM_NONEV;
+	  if (ent)
+	    valblockinfo = ent->ent_val;
+	  MOM_DEBUGPRINTF (gencod,
+			   "third_decorating_pass funix#%d function %s: blix#%d curblock %s valblockinfo %s",
+			   funix, mom_item_cstring (curfunitm), blix,
+			   mom_item_cstring (itmcurblock),
+			   mom_output_gcstring (valblockinfo));
 	};
       ///
       MOM_DEBUGPRINTF (gencod,
