@@ -562,8 +562,9 @@ mom_find_item (const char *str)
       pthread_rwlock_unlock (&named_lock_mom);
       return (momitem_t *) itm;
     }
-  else if (str[0] == '_')
+  else if (str[0] == '_' && mom_valid_item_id_str (str, &end) && end && !*end)
     {
+      // see anonym.c
       extern const momitem_t *mom_find_anonymous_item (const char *idstr);
       return (momitem_t *) mom_find_anonymous_item (str);
     }

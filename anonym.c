@@ -22,6 +22,7 @@
 
 #define HASH_ANON_MOD_MOM 53
 static pthread_mutex_t mtx_anon_mom[HASH_ANON_MOD_MOM];
+
 struct anon_htable_mom_st
 {
   unsigned anh_size;
@@ -135,7 +136,6 @@ find_anonymous_of_id_mom (const char *idstr, momhash_t h)
   if (!h)
     h = mom_cstring_hash (idstr);
   unsigned hix = h % HASH_ANON_MOD_MOM;
-  pthread_mutex_lock (&mtx_anon_mom[hix]);
   struct anon_htable_mom_st *anh = anh_arr_mom[hix];
   assert (anh && anh->anh_size > 0 && anh->anh_count < anh->anh_size);
   unsigned hsiz = anh->anh_size;
@@ -162,7 +162,6 @@ find_anonymous_of_id_mom (const char *idstr, momhash_t h)
       if (!strcmp (curitm->itm_id->cstr, idstr))
 	itm = curitm;
     }
-  pthread_mutex_unlock (&mtx_anon_mom[hix]);
   return itm;
 }				/* end of find_anonymous_of_id_mom */
 
@@ -250,7 +249,15 @@ reorganize_anon_bucket_mom (unsigned hrk)
 const momitem_t *
 mom_find_anonymous_item (const char *idstr)
 {
-  return find_anonymous_of_id_mom (idstr, 0);
+  momitem_t *itm = NULL;
+  if (!idstr || !idstr[0] == '_')
+    return NULL;
+  momhash_t h = mom_cstring_hash (idstr);
+  unsigned hix = h % HASH_ANON_MOD_MOM;
+  pthread_mutex_lock (&mtx_anon_mom[hix]);
+  itm = find_anonymous_of_id_mom (idstr, h);
+  pthread_mutex_unlock (&mtx_anon_mom[hix]);
+  return itm;
 }
 
 const momstring_t *
