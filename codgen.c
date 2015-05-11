@@ -111,6 +111,8 @@ static void cgen_first_scanning_pass_mom (momitem_t *itmcgen);
 
 static void cgen_second_emitting_pass_mom (momitem_t *itmcgen);
 
+static void cgen_third_decorating_pass_mom (momitem_t *itmcgen);
+
 bool
   momfunc_1itm_to_val_generate_c_module
   (const momnode_t *clonode, momitem_t *itm, momvalue_t *res)
@@ -138,6 +140,9 @@ bool
   if (cg->cg_errormsg)
     goto end;
   cgen_second_emitting_pass_mom (itmcgen);
+  if (cg->cg_errormsg)
+    goto end;
+  cgen_third_decorating_pass_mom (itmcgen);
   if (cg->cg_errormsg)
     goto end;
 end:
@@ -1642,8 +1647,50 @@ cgen_second_emitting_pass_mom (momitem_t *itmcgen)
 	   "\n\n//// end of generated module file " MOM_SHARED_MODULE_PREFIX
 	   "%s.c\n\n", mom_item_cstring (itmmod));
   fflush (cg->cg_emitfile);
+  long buflen = ftell (cg->cg_emitfile);
   MOM_DEBUGPRINTF (gencod, "end cgen_second_emitting_pass_mom buffer:\n%s\n",
 		   cg->cg_emitbuffer);
+  bool same = true;
+  {
+    char oldpath[256];
+    memset (oldpath, 0, sizeof (oldpath));
+    if (snprintf (oldpath, sizeof (oldpath), MOM_SHARED_MODULE_PREFIX "%s.c",
+		  mom_item_cstring (itmmod)) < (int) sizeof (oldpath) - 1)
+      {
+	FILE *fold = fopen (oldpath, "r");
+	for (int ix = 0; ix < (int) buflen && same; ix++)
+	  {
+	    int c = fgetc (fold);
+	    if (c == EOF || c != cg->cg_emitbuffer[ix])
+	      same = false;
+	  }
+	if (fold)
+	  {
+	    fclose (fold);
+	  };
+      }
+  };
+  const momstring_t *pbstr =	//
+    mom_make_string_sprintf (MOM_SHARED_MODULE_PREFIX "%s.c",
+			     mom_item_cstring (itmmod));
+  if (!same)
+    {
+      char backpath[256];
+      memset (backpath, 0, sizeof (backpath));
+      if (snprintf (backpath, sizeof (backpath), "%s~", pbstr->cstr) <
+	  (int) sizeof (backpath))
+	rename (pbstr->cstr, backpath);
+      FILE *fnew = fopen (pbstr->cstr, "w");
+      if (!fnew)
+	MOM_FATAPRINTF ("failed to open new emitted C file %s : %m",
+			pbstr->cstr);
+      fwrite (cg->cg_emitbuffer, buflen, 1, fnew);
+      fflush (fnew);
+      fclose (fnew);
+      MOM_INFORMPRINTF ("emitted file %s", pbstr->cstr);
+    }
+  else
+    MOM_INFORMPRINTF ("keep same file %s", pbstr->cstr);
 }				/* end cgen_second_emitting_pass_mom */
 
 
@@ -1855,5 +1902,37 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
   fprintf (cg->cg_emitfile, "} // end of %s_%s \n\n",
 	   mom_item_cstring (curfunitm), mom_string_cstr (strradix));
 }				/* end cgen_emit_function_declaration_mom */
+
+
+
+static void
+cgen_third_decorating_pass_mom (momitem_t *itmcgen)
+{
+  assert (itmcgen
+	  && itmcgen->itm_kind == MOM_PREDEFINED_NAMED (c_code_generation));
+  struct codegen_mom_st *cg = (struct codegen_mom_st *) itmcgen->itm_data1;
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  momitem_t *itmmod = cg->cg_moduleitm;
+  MOM_DEBUGPRINTF (gencod, "third_decorating_pass  itmcgen %s itmmod %s",
+		   mom_string_cstr (itmcgen), mom_string_cstr (itmmod));
+  const momseq_t *seqfun = mom_hashset_elements_set (cg->cg_functionhset);
+  unsigned nbfun = mom_seq_length (seqfun);
+  for (unsigned funix = 0; funix < nbfun; funix++)
+    {
+      const momitem_t *curfunitm = mom_seq_nth (seqfun, funix);
+      MOM_DEBUGPRINTF (gencod, "third_decorating_pass funix#%d curfunitm %s",
+		       funix, mom_string_cstr (curfunitm));
+      struct momentry_st *entfun =
+	mom_attributes_find_entry (cg->cg_functionassoc, curfunitm);
+      momvalue_t vfuninfo = MOM_NONEV;
+      if (entfun)
+	vfuninfo = entfun->ent_val;
+      MOM_DEBUGPRINTF (gencod,
+		       "third_decorating_pass funix#%d curfunitm %s vfuninfo %s",
+		       mom_string_cstr (curfunitm),
+		       mom_output_gcstring (vfuninfo));
+    }
+  MOM_DEBUGPRINTF (gencod, "third_decorating_pass done itmmod %s", itmmod);
+}				/* end cgen_third_decorating_pass_mom */
 
 /// eof codgen.c
