@@ -732,6 +732,7 @@ cgen_type_of_scanned_expr_mom (struct codegen_mom_st *cg, momvalue_t vexpr)
       cgen_lock_item_mom (cg, vexpr.vitem);
       return cgen_type_of_scanned_item_mom (cg, vexpr.vitem);
     }
+  return NULL;
 }
 
 static void
@@ -1636,10 +1637,13 @@ cgen_second_emitting_pass_mom (momitem_t *itmcgen)
       assert (curfunitm);
       cgen_emit_function_code_mom (cg, funix, (momitem_t *) curfunitm);
     };
-#warning cgen_second_emitting_pass_mom empty
-  MOM_FATAPRINTF
-    ("missing cgen_second_emitting_pass_mom itmcgen=%s itmmod=%s",
-     mom_item_cstring (itmcgen), mom_item_cstring (itmmod));
+  fprintf (cg->cg_emitfile, "\n\n" "/***** end %d functions *****/\n", nbfun);
+  fprintf (cg->cg_emitfile,
+	   "\n\n//// end of generated module file " MOM_SHARED_MODULE_PREFIX
+	   "%s.c\n\n", mom_item_cstring (itmmod));
+  fflush (cg->cg_emitfile);
+  MOM_DEBUGPRINTF (gencod, "end cgen_second_emitting_pass_mom buffer:\n%s\n",
+		   cg->cg_emitbuffer);
 }				/* end cgen_second_emitting_pass_mom */
 
 
