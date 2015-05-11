@@ -780,6 +780,7 @@ main (int argc_main, char **argv_main)
     mom_nb_workers = MOM_MAX_WORKERS;
   mom_load_state ();
   MOM_DEBUGPRINTF (load, "loaded state");
+  MOM_INFORMPRINTF ("MONIMELT loaded state, process %d", (int) getpid ());
   if (nbmorepredef_mom > 0)
     {
       for (unsigned prix = 0; prix < nbmorepredef_mom; prix++)
