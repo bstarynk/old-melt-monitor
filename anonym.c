@@ -68,12 +68,16 @@ mom_initialize_anonymous_items (void)
 static const char *
 num48_to_char10_mom (uint64_t num, char *buf)
 {
+  uint64_t initnum = num;
   for (int ix = 8; ix > 0; ix--)
     {
       unsigned dig = num % ID_BASE_MOM;
       num = num / ID_BASE_MOM;
       buf[ix + 1] = ID_DIGITS_MOM[dig];
     }
+  if (MOM_UNLIKELY (num > 9))
+    MOM_FATAPRINTF ("bad num %d for initnum %lld", (int) num,
+		    (long long) initnum);
   assert (num <= 9);
   buf[1] = '0' + num;
   buf[0] = '_';
@@ -259,8 +263,11 @@ mom_make_random_idstr (unsigned salt, struct momitem_st *protoitem)
       uint32_t r1 = 0, r2 = 0, r3 = 0;
       uint64_t hi = 0, lo = 0;	/* actually 48 bits unsigned each */
       mom_random_three_nonzero_32 (salt, &r1, &r2, &r3);
-      hi = ((uint64_t) r1) << 32 | (uint64_t) (r2 >> 16);
-      lo = (((uint64_t) (r2 & 0xffff)) << 32) | ((uint64_t) r3);
+      hi =
+	(((uint64_t) r1) << 32 | (uint64_t) ((r2 >> 16))) & 0xffffffffffffLL;
+      lo =
+	((((uint64_t) (r2 & 0xffff)) << 32) | ((uint64_t) r3)) &
+	0xffffffffffffLL;
       if (hi == 0 || lo == 0)
 	continue;
       char buf1[16], buf2[16], bufstr[32];
