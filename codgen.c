@@ -1658,18 +1658,20 @@ cgen_second_emitting_pass_mom (momitem_t *itmcgen)
 		  mom_item_cstring (itmmod)) < (int) sizeof (oldpath) - 1)
       {
 	FILE *fold = fopen (oldpath, "r");
-	for (int ix = 0; ix < (int) buflen && same; ix++)
-	  {
-	    int c = fgetc (fold);
-	    if (c == EOF || c != cg->cg_emitbuffer[ix])
-	      same = false;
-	  }
 	if (fold)
 	  {
+	    for (int ix = 0; ix < (int) buflen && same; ix++)
+	      {
+		int c = fgetc (fold);
+		if (c == EOF || c != cg->cg_emitbuffer[ix])
+		  same = false;
+	      }
 	    fclose (fold);
-	  };
+	  }
       }
   };
+  MOM_DEBUGPRINTF (gencod, "end cgen_second_emitting_pass_mom same %s",
+		   same ? "true" : "false");
   const momstring_t *pbstr =	//
     mom_make_string_sprintf (MOM_SHARED_MODULE_PREFIX "%s.c",
 			     mom_item_cstring (itmmod));
@@ -1914,14 +1916,14 @@ cgen_third_decorating_pass_mom (momitem_t *itmcgen)
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   momitem_t *itmmod = cg->cg_moduleitm;
   MOM_DEBUGPRINTF (gencod, "third_decorating_pass  itmcgen %s itmmod %s",
-		   mom_string_cstr (itmcgen), mom_string_cstr (itmmod));
+		   mom_item_cstring (itmcgen), mom_item_cstring (itmmod));
   const momseq_t *seqfun = mom_hashset_elements_set (cg->cg_functionhset);
   unsigned nbfun = mom_seq_length (seqfun);
   for (unsigned funix = 0; funix < nbfun; funix++)
     {
       const momitem_t *curfunitm = mom_seq_nth (seqfun, funix);
       MOM_DEBUGPRINTF (gencod, "third_decorating_pass funix#%d curfunitm %s",
-		       funix, mom_string_cstr (curfunitm));
+		       funix, mom_item_cstring (curfunitm));
       struct momentry_st *entfun =
 	mom_attributes_find_entry (cg->cg_functionassoc, curfunitm);
       momvalue_t vfuninfo = MOM_NONEV;
@@ -1929,10 +1931,60 @@ cgen_third_decorating_pass_mom (momitem_t *itmcgen)
 	vfuninfo = entfun->ent_val;
       MOM_DEBUGPRINTF (gencod,
 		       "third_decorating_pass funix#%d curfunitm %s vfuninfo %s",
-		       mom_string_cstr (curfunitm),
+		       funix, mom_item_cstring (curfunitm),
 		       mom_output_gcstring (vfuninfo));
+      if (vfuninfo.typnum == momty_null)
+	MOM_FATAPRINTF ("unexpected function %s in module %s",
+			mom_item_cstring (curfunitm),
+			mom_item_cstring (itmmod));
+      const momnode_t *nodfuninfo = mom_value_to_node (vfuninfo);
+      assert (nodfuninfo != NULL && mom_node_arity (nodfuninfo) == 6);
+      momitem_t *itmsignature =
+	mom_value_to_item (mom_node_nth (nodfuninfo, 0));
+      momitem_t *itmblocks = mom_value_to_item (mom_node_nth (nodfuninfo, 1));
+      momitem_t *itmbindings =
+	mom_value_to_item (mom_node_nth (nodfuninfo, 2));
+      momvalue_t vsetconst = mom_node_nth (nodfuninfo, 3);
+      momvalue_t vsetclosed = mom_node_nth (nodfuninfo, 4);
+      momvalue_t vsetvars = mom_node_nth (nodfuninfo, 5);
+      MOM_DEBUGPRINTF (gencod,
+		       "third_decorating_pass funix#%d curfunitm %s; itmsignature %s;"
+		       " itmblocks %s; itmbindings %s; setconst %s setclosed %s setvar %s",
+		       funix, mom_item_cstring (curfunitm),
+		       mom_item_cstring (itmsignature),
+		       mom_item_cstring (itmblocks),
+		       mom_item_cstring (itmbindings),
+		       mom_output_gcstring (vsetconst),
+		       mom_output_gcstring (vsetclosed),
+		       mom_output_gcstring (vsetvars));
+      assert (itmblocks->itm_kind == MOM_PREDEFINED_NAMED (association));
+      momvalue_t vsetblocks = MOM_NONEV;
+      if (itmblocks->itm_kind == MOM_PREDEFINED_NAMED (association))
+	vsetblocks =
+	  mom_unsafe_setv (mom_attributes_set
+			   ((struct momattributes_st *) itmblocks->itm_data1,
+			    MOM_NONEV));
+      MOM_DEBUGPRINTF (gencod, "third_decorating_pass funix#%d vsetblocks %s",
+		       funix, mom_output_gcstring (vsetblocks));
+      const struct momseq_st *seqblocks = mom_value_to_set (vsetblocks);
+      unsigned nbblocks = mom_seq_length (seqblocks);
+      MOM_DEBUGPRINTF (gencod, "third_decorating_pass funix#%d nbblocks %d",
+		       funix, nbblocks);
+      for (unsigned blix = 0; blix < nbblocks; blix++)
+	{
+	  momitem_t *itmcurblock = mom_seq_nth (seqblocks, (int) blix);
+	  MOM_DEBUGPRINTF (gencod,
+			   "third_decorating_pass funix#%d function %s: blix#%d curblock %s",
+			   funix, mom_item_cstring (curfunitm), blix,
+			   mom_item_cstring (itmcurblock));
+	};
+      ///
+      MOM_DEBUGPRINTF (gencod,
+		       "third_decorating_pass funix#%d done curfunitm %s",
+		       funix, mom_item_cstring (curfunitm));
     }
-  MOM_DEBUGPRINTF (gencod, "third_decorating_pass done itmmod %s", itmmod);
+  MOM_DEBUGPRINTF (gencod, "third_decorating_pass done itmmod %s",
+		   mom_item_cstring (itmmod));
 }				/* end cgen_third_decorating_pass_mom */
 
 /// eof codgen.c
