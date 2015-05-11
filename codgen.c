@@ -263,6 +263,7 @@ cgen_bind_closed_variables_mom (struct codegen_mom_st *cg,
 static void
 cgen_bind_closed_item_mom (struct codegen_mom_st *cg, momitem_t *itmc);
 
+
 static void
 cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
 {
@@ -274,7 +275,8 @@ cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
   cg->cg_funclosedset = NULL;
   cg->cg_funvariableset = NULL;
   momitem_t *itmsignature = NULL;
-  MOM_DEBUGPRINTF (gencod, "scanning function %s", mom_item_cstring (itmfun));
+  MOM_DEBUGPRINTF (gencod, "cgen_scan_function_first scanning function %s",
+		   mom_item_cstring (itmfun));
   cg->cg_curfunitm = itmfun;
   memset (&cg->cg_blockqueue, 0, sizeof (cg->cg_blockqueue));
   {
@@ -311,6 +313,9 @@ cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
 			   mom_item_cstring (cg->cg_moduleitm),
 			   mom_item_cstring (itmfun));
   cgen_lock_item_mom (cg, itmsignature);
+  MOM_DEBUGPRINTF (gencod, "scanning function %s itmsignature %s",
+		   mom_item_cstring (itmfun),
+		   mom_item_cstring (itmsignature));
   momvalue_t vstart =
     mom_item_unsync_get_attribute (itmfun, MOM_PREDEFINED_NAMED (start));
   if (vstart.typnum != momty_item)
@@ -409,6 +414,7 @@ cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
   itmblocks->itm_space = momspa_transient;
   itmblocks->itm_kind = MOM_PREDEFINED_NAMED (association);
   itmblocks->itm_data1 = cg->cg_blockassoc;
+  cgen_lock_item_mom (cg, itmblocks);
   MOM_DEBUGPRINTF (gencod, "for scanned function %s itmblocks %s",
 		   mom_item_cstring (itmfun), mom_item_cstring (itmblocks));
   momvalue_t vconstset = mom_hashset_elements_value (cg->cg_funconstset);
@@ -1295,6 +1301,12 @@ cgen_bind_formals_mom (struct codegen_mom_st *cg, momitem_t *itmsignature,
   momvalue_t voutputy =		//
     mom_item_unsync_get_attribute (itmsignature,
 				   MOM_PREDEFINED_NAMED (output_types));
+  MOM_DEBUGPRINTF (gencod,
+		   "cgen_bind_formals fun %s itmsignature=%s vinputy %s voutputy %s",
+		   mom_item_cstring (cg->cg_curfunitm),
+		   mom_item_cstring (itmsignature),
+		   mom_output_gcstring (vinputy),
+		   mom_output_gcstring (voutputy));
   unsigned nbins = 0, nbouts = 0;
   const struct momseq_st *tupins = NULL;
   const struct momseq_st *tupouts = NULL;
@@ -1318,6 +1330,8 @@ cgen_bind_formals_mom (struct codegen_mom_st *cg, momitem_t *itmsignature,
       assert (intypitm);
       momitem_t *informalitm = (momitem_t *) vformals.vtuple->arritm[inix];
       assert (informalitm);
+      cgen_lock_item_mom (cg, intypitm);
+      cgen_lock_item_mom (cg, informalitm);
       MOM_DEBUGPRINTF (gencod,
 		       "cgen_bind_formals function %s inix#%d intypitm %s informalitm %s",
 		       mom_item_cstring (cg->cg_curfunitm), inix,
@@ -1360,6 +1374,8 @@ cgen_bind_formals_mom (struct codegen_mom_st *cg, momitem_t *itmsignature,
 		       mom_item_cstring (cg->cg_curfunitm), outix,
 		       mom_item_cstring (outtypitm),
 		       mom_item_cstring (outformalitm));
+      cgen_lock_item_mom (cg, outtypitm);
+      cgen_lock_item_mom (cg, outformalitm);
       if (outtypitm->itm_kind != MOM_PREDEFINED_NAMED (c_type))
 	CGEN_ERROR_RETURN_MOM (cg,
 			       "module item %s : function %s bad output type #%d %s",
@@ -1639,6 +1655,10 @@ cgen_emit_function_declaration_mom (struct codegen_mom_st *cg,
   momvalue_t vfuninfo = MOM_NONEV;
   if (entfun)
     vfuninfo = entfun->ent_val;
+  MOM_DEBUGPRINTF (gencod,
+		   "cgen_emit_function_declaration funix#%d curfunitm %s vfuninfo %s",
+		   funix, mom_item_cstring (curfunitm),
+		   mom_output_gcstring (vfuninfo));
   const momnode_t *funinfonod = mom_value_to_node (vfuninfo);
   momitem_t *funsigitm = NULL;
   if (!funinfonod || mom_node_arity (funinfonod) != 6
@@ -1647,9 +1667,9 @@ cgen_emit_function_declaration_mom (struct codegen_mom_st *cg,
       || !mom_hashset_contains (cg->cg_lockeditemset, funsigitm)
       || funsigitm->itm_kind != MOM_PREDEFINED_NAMED (function_signature))
     MOM_FATAPRINTF
-      ("corrupted function info %s for function %s of module %s",
+      ("corrupted function info %s for function %s (signature %s) of module %s",
        mom_output_gcstring (vfuninfo), mom_item_cstring (curfunitm),
-       mom_item_cstring (itmmod));
+       mom_item_cstring (funsigitm), mom_item_cstring (itmmod));
   MOM_DEBUGPRINTF (gencod,
 		   "emitting declaration signature %s of curfunitm %s",
 		   mom_item_cstring (funsigitm),
@@ -1680,6 +1700,12 @@ cgen_emit_function_declaration_mom (struct codegen_mom_st *cg,
   for (unsigned inix = 0; inix < nbinputs && !cg->cg_errormsg; inix++)
     {
       momitem_t *intypitm = (momitem_t *) mom_seq_nth (seqinputs, inix);
+      MOM_DEBUGPRINTF (gencod,
+		       "cgen_emit_function_declaration curfunitm %s funsigitm %s inix#%d intypitm %s (%s)",
+		       mom_item_cstring (curfunitm),
+		       mom_item_cstring (funsigitm), inix,
+		       mom_item_cstring (intypitm),
+		       mom_item_cstring (intypitm->itm_kind));
       const momstring_t *typstr = NULL;
       if (!intypitm || intypitm->itm_kind != MOM_PREDEFINED_NAMED (c_type)
 	  || !mom_hashset_contains (cg->cg_lockeditemset, intypitm)
@@ -1741,14 +1767,17 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
       || !(funblocksitm = mom_value_to_item (mom_node_nth (funinfonod, 1)))
       || !mom_hashset_contains (cg->cg_lockeditemset, funblocksitm)
       || !(funbindingsitm = mom_value_to_item (mom_node_nth (funinfonod, 2)))
-      || !mom_hashset_contains (cg->cg_lockeditemset, funbindingsitm)
-      || !(funseqconsts = mom_value_to_set (mom_node_nth (funinfonod, 3)))
-      || !(funseqclosed = mom_value_to_set (mom_node_nth (funinfonod, 4)))
-      || !(funseqvars = mom_value_to_set (mom_node_nth (funinfonod, 5))))
+      || !mom_hashset_contains (cg->cg_lockeditemset, funbindingsitm))
     MOM_FATAPRINTF
-      ("corrupted function info %s for function %s of module %s",
+      ("corrupted function info %s for function %s (signature %s, bindings %s) of module %s",
        mom_output_gcstring (vfuninfo), mom_item_cstring (curfunitm),
+       mom_item_cstring (funsigitm), mom_item_cstring (funbindingsitm),
        mom_item_cstring (itmmod));
+  //
+  funseqconsts = mom_value_to_set (mom_node_nth (funinfonod, 3));
+  funseqclosed = mom_value_to_set (mom_node_nth (funinfonod, 4));
+  funseqvars = mom_value_to_set (mom_node_nth (funinfonod, 5));
+  //
   cg->cg_curfunitm = curfunitm;
   MOM_DEBUGPRINTF (gencod, "emitting code signature %s of curfunitm %s",
 		   mom_item_cstring (funsigitm),
