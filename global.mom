@@ -346,6 +346,13 @@
 ..
 
 
+** in   ////// PREDEFINED
+{
+  * comment  "attribute giving some container information" }
+ 
+..
+
+
 ** input_types   ////// PREDEFINED
 {
   * comment  "give the tuple of input types inside signatures" }

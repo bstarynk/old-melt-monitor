@@ -62,7 +62,7 @@
 
 ** test_funb
 {
-  * formals  [test_itmy test_itmx test_valres]
+  * formals  [test_itmx test_itmy test_valres]
   * function_signature  signature_2itm_to_val
   * start  _78Bvf0DAn_3jn0Ue36p }
  
