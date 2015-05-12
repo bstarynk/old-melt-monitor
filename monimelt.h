@@ -1362,6 +1362,15 @@ mom_unsync_item_get_nth_component (momitem_t *itm, int rk)
   return vres;
 }
 
+
+static inline unsigned
+mom_unsync_item_components_count (momitem_t *itm)
+{
+  if (itm && itm->itm_comps)
+    return mom_components_count (itm->itm_comps);
+  return 0;
+}
+
 /****************************************************************
   Informal descriptions of kinds
   ==============================
