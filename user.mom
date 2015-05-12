@@ -18,42 +18,12 @@
 ///
 
 
-** _0zL9dxcfb_9Ju36Hij5
-{
-  * c_instructions  [_5idnF66Ab_7Bef62kaL]
-  * comment  "block set result to itmx" }
- 
-  %  ^filler_of_plain_kind( c_block)
- 
-..
-
-
 ** _2yhjRaR72_5sd4haPDv
 {
-  * c_instructions  [_5yHMf0xw6_2582U1Li6]
+  * c_instructions  []
   * comment  "start block of test_funa" }
  
   %  ^filler_of_plain_kind( c_block)
- 
-..
-
-
-** _5idnF66Ab_7Bef62kaL
-{
-  * comment  "set test_valres to itmx" }
- [[  set  test_valres  ^value_of_item( test_itmx) ]]
- 
-  %  ^filler_of_plain_kind( code_statement)
- 
-..
-
-
-** _5yHMf0xw6_2582U1Li6
-{
-  * comment  "if itmx then result = itmx" }
- [[  if  test_itmx  _0zL9dxcfb_9Ju36Hij5 ]]
- 
-  %  ^filler_of_plain_kind( code_statement)
  
 ..
 
@@ -92,7 +62,7 @@
 
 ** test_funb
 {
-  * formals  [test_itmx test_itmy test_valres]
+  * formals  [test_itmy test_itmx test_valres]
   * function_signature  signature_2itm_to_val
   * start  _78Bvf0DAn_3jn0Ue36p }
  

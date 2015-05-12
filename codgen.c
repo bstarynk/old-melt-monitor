@@ -30,7 +30,7 @@ struct codegen_mom_st
   momitem_t *cg_moduleitm;	/* the module item */
   struct momhashset_st *cg_functionhset;	/* the set of c functions */
   struct momattributes_st *cg_functionassoc;	/* associate each function with a node
-						   function_info(<itm-signature>,<associtm-blocks>,<associtm-bindings>, <set-constants>,<set-closed>,<set-variables>) */
+						   function_info(<itm-signature>,<associtm-blocks>,<associtm-bindings>,<startitem>, <set-constants>,<set-closed>,<set-variables>) */
   const momstring_t *cg_errormsg;	/* the error message */
   struct momhashset_st *cg_lockeditemset;	/* the set of locked items */
   char *cg_emitbuffer;
@@ -329,6 +329,9 @@ cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
 			   mom_item_cstring (cg->cg_moduleitm),
 			   mom_item_cstring (itmfun),
 			   mom_output_gcstring (vstart));
+  momitem_t *itmstart = mom_value_to_item (vstart);
+  MOM_DEBUGPRINTF (gencod, "scanning function %s itmstart %s",
+		   mom_item_cstring (itmfun), mom_item_cstring (itmstart));
   /////
   {				/* bind the formals */
     momvalue_t vformals =	//
@@ -395,7 +398,7 @@ cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
     return;
   ////
   //// scan start and all the queued blocks 
-  momitem_t *itmstart = vstart.vitem;
+  itmstart = vstart.vitem;
   cgen_lock_item_mom (cg, itmstart);
   cgen_scan_block_first_mom (cg, itmstart);
   while (!cg->cg_errormsg && mom_queueitem_size (&cg->cg_blockqueue) > 0)
@@ -434,10 +437,11 @@ cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
   MOM_DEBUGPRINTF (gencod, "for scanned function %s vvarset %s",
 		   mom_item_cstring (itmfun), mom_output_gcstring (vvarset));
   momvalue_t vfuninfo =		//
-    mom_nodev_new (MOM_PREDEFINED_NAMED (function_info), 6,
+    mom_nodev_new (MOM_PREDEFINED_NAMED (function_info), 7,
 		   mom_itemv (itmsignature),
 		   mom_itemv (itmblocks),
 		   mom_itemv (itmbindings),
+		   mom_itemv (itmstart),
 		   vconstset,
 		   vclosedset,
 		   vvarset);
@@ -1752,7 +1756,7 @@ cgen_emit_function_declaration_mom (struct codegen_mom_st *cg,
 		   mom_output_gcstring (vfuninfo));
   const momnode_t *funinfonod = mom_value_to_node (vfuninfo);
   momitem_t *funsigitm = NULL;
-  if (!funinfonod || mom_node_arity (funinfonod) != 6
+  if (!funinfonod || mom_node_arity (funinfonod) != 7
       || mom_node_conn (funinfonod) != MOM_PREDEFINED_NAMED (function_info)
       || !(funsigitm = mom_value_to_item (mom_node_nth (funinfonod, 0)))
       || !mom_hashset_contains (cg->cg_lockeditemset, funsigitm)
@@ -1761,6 +1765,7 @@ cgen_emit_function_declaration_mom (struct codegen_mom_st *cg,
       ("corrupted function info %s for function %s (signature %s) of module %s",
        mom_output_gcstring (vfuninfo), mom_item_cstring (curfunitm),
        mom_item_cstring (funsigitm), mom_item_cstring (itmmod));
+  momitem_t *itmstart = mom_value_to_item (mom_node_nth (funinfonod, 3));
   MOM_DEBUGPRINTF (gencod,
 		   "emitting declaration signature %s of curfunitm %s",
 		   mom_item_cstring (funsigitm),
@@ -1826,10 +1831,16 @@ cgen_emit_function_declaration_mom (struct codegen_mom_st *cg,
 	   mom_item_cstring (funsigitm), outix, mom_item_cstring (outtypitm));
       fprintf (cg->cg_emitfile, ", %s*", mom_string_cstr (typstr));
     };
-  fprintf (cg->cg_emitfile, ";\n");
+  fprintf (cg->cg_emitfile, ");\n");
 }				/* end cgen_emit_function_declaration_mom */
 
 
+
+#define BLOCK_LABEL_PREFIX_MOM "momblocklab"
+
+static void
+cgen_emit_block_mom (struct codegen_mom_st *cg, unsigned bix,
+		     momitem_t *blockitm);
 
 static void
 cgen_emit_function_code_mom (struct codegen_mom_st *cg,
@@ -1838,6 +1849,10 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   assert (curfunitm);
   momitem_t *itmmod = cg->cg_moduleitm;
+  MOM_DEBUGPRINTF (gencod,
+		   "emit_function_code start funix#%d itmmod %s curfunitm %s",
+		   funix, mom_item_cstring (itmmod),
+		   mom_item_cstring (curfunitm));
   struct momentry_st *entfun =
     mom_attributes_find_entry (cg->cg_functionassoc, curfunitm);
   momvalue_t vfuninfo = MOM_NONEV;
@@ -1847,10 +1862,11 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
   momitem_t *funsigitm = NULL;
   momitem_t *funblocksitm = NULL;
   momitem_t *funbindingsitm = NULL;
+  momitem_t *funstartitm = NULL;
   const momseq_t *funseqconsts = NULL;
   const momseq_t *funseqclosed = NULL;
   const momseq_t *funseqvars = NULL;
-  if (!funinfonod || mom_node_arity (funinfonod) != 6
+  if (!funinfonod || mom_node_arity (funinfonod) != 7
       || mom_node_conn (funinfonod) != MOM_PREDEFINED_NAMED (function_info)
       || !(funsigitm = mom_value_to_item (mom_node_nth (funinfonod, 0)))
       || !mom_hashset_contains (cg->cg_lockeditemset, funsigitm)
@@ -1858,16 +1874,39 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
       || !(funblocksitm = mom_value_to_item (mom_node_nth (funinfonod, 1)))
       || !mom_hashset_contains (cg->cg_lockeditemset, funblocksitm)
       || !(funbindingsitm = mom_value_to_item (mom_node_nth (funinfonod, 2)))
-      || !mom_hashset_contains (cg->cg_lockeditemset, funbindingsitm))
+      || !mom_hashset_contains (cg->cg_lockeditemset, funbindingsitm)
+      || !(funstartitm = mom_value_to_item (mom_node_nth (funinfonod, 3)))
+      || !mom_hashset_contains (cg->cg_lockeditemset, funstartitm))
     MOM_FATAPRINTF
       ("corrupted function info %s for function %s (signature %s, bindings %s) of module %s",
        mom_output_gcstring (vfuninfo), mom_item_cstring (curfunitm),
        mom_item_cstring (funsigitm), mom_item_cstring (funbindingsitm),
        mom_item_cstring (itmmod));
+  MOM_DEBUGPRINTF (gencod,
+		   "emit_function_code curfunitm %s funsigitm %s funblocksitm %s funbindingsitm %s funstartitm %s",
+		   mom_item_cstring (curfunitm),
+		   mom_item_cstring (funsigitm),
+		   mom_item_cstring (funblocksitm),
+		   mom_item_cstring (funbindingsitm),
+		   mom_item_cstring (funstartitm));
   //
-  funseqconsts = mom_value_to_set (mom_node_nth (funinfonod, 3));
-  funseqclosed = mom_value_to_set (mom_node_nth (funinfonod, 4));
-  funseqvars = mom_value_to_set (mom_node_nth (funinfonod, 5));
+  funseqconsts = mom_value_to_set (mom_node_nth (funinfonod, 4));
+  funseqclosed = mom_value_to_set (mom_node_nth (funinfonod, 5));
+  funseqvars = mom_value_to_set (mom_node_nth (funinfonod, 6));
+  assert (funblocksitm);
+  MOM_DEBUGPRINTF (gencod, "emit_function_code funblocksitm %s (%s)",
+		   mom_item_cstring (funblocksitm),
+		   mom_item_cstring (funblocksitm->itm_kind));
+  assert (funblocksitm->itm_kind == MOM_PREDEFINED_NAMED (association));
+  momvalue_t vblockset = MOM_NONEV;
+  if (funblocksitm->itm_kind == MOM_PREDEFINED_NAMED (association))
+    vblockset =
+      mom_unsafe_setv (mom_attributes_set
+		       ((struct momattributes_st *) funblocksitm->itm_data1,
+			MOM_NONEV));
+  MOM_DEBUGPRINTF (gencod, "emit_function_code funblocksitm %s vblockset %s",
+		   mom_item_cstring (funblocksitm),
+		   mom_output_gcstring (vblockset));
   //
   cg->cg_curfunitm = curfunitm;
   MOM_DEBUGPRINTF (gencod, "emitting code signature %s of curfunitm %s",
@@ -1939,11 +1978,53 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
 	   "      || mom_node_arity(mom_node) < %d)\n"
 	   "      || !(mom_funcitm = mom_node_conn(mom_node)))\n"
 	   "  return false;\n", mom_seq_length (funseqclosed));
+  if (funstartitm)
+    fprintf (cg->cg_emitfile, "  goto " BLOCK_LABEL_PREFIX_MOM "_%s;\n",
+	     mom_item_cstring (funstartitm));
+  const momseq_t *blockseq = mom_value_to_set (vblockset);
+  unsigned nbblocks = mom_seq_length (blockseq);
+  for (unsigned bix = 0; bix < nbblocks; bix++)
+    {
+      momitem_t *blockitm = mom_seq_nth (blockseq, bix);
+      fprintf (cg->cg_emitfile, " // block #%d : %s\n", bix,
+	       mom_item_cstring (blockitm));
+      cg->cg_curblockitm = blockitm;
+      cgen_emit_block_mom (cg, bix, blockitm);
+      cg->cg_curblockitm = NULL;
+    }
   /// emit the epilogue
-  fprintf (cg->cg_emitfile, "} // end of %s_%s \n\n",
-	   mom_item_cstring (curfunitm), mom_string_cstr (strradix));
-}				/* end cgen_emit_function_declaration_mom */
+  fprintf (cg->cg_emitfile, "} // end of momfunc_%s_%s \n\n",
+	   mom_string_cstr (strradix), mom_item_cstring (curfunitm));
+  MOM_DEBUGPRINTF (gencod,
+		   "emit_function_code done funix#%d itmmod %s curfunitm %s",
+		   funix, mom_item_cstring (itmmod),
+		   mom_item_cstring (curfunitm));
+}				/* end cgen_emit_function_code_mom */
 
+
+static void
+cgen_emit_block_mom (struct codegen_mom_st *cg, unsigned bix,
+		     momitem_t *blockitm)
+{
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  assert (blockitm);
+  momitem_t *itmmod = cg->cg_moduleitm;
+  momitem_t *curfunitm = cg->cg_curfunitm;
+  MOM_DEBUGPRINTF (gencod,
+		   "emit_block start itmmod %s curfunitm %s bix#%d blockitm %s",
+		   mom_item_cstring (itmmod),
+		   mom_item_cstring (curfunitm),
+		   bix, mom_item_cstring (blockitm));
+  fprintf (cg->cg_emitfile, " " BLOCK_LABEL_PREFIX_MOM "_%s: {\n",
+	   mom_item_cstring (blockitm));
+  fprintf (cg->cg_emitfile, "\n  }; // end block %s\n",
+	   mom_item_cstring (blockitm));
+  MOM_DEBUGPRINTF (gencod,
+		   "emit_block done itmmod %s curfunitm %s bix#%d blockitm %s",
+		   mom_item_cstring (itmmod),
+		   mom_item_cstring (curfunitm), bix,
+		   mom_item_cstring (blockitm));
+}
 
 
 static void
@@ -2008,10 +2089,10 @@ cgen_third_decorating_pass_mom (momitem_t *itmcgen)
 			    MOM_NONEV));
       MOM_DEBUGPRINTF (gencod, "third_decorating_pass funix#%d vsetblocks %s",
 		       funix, mom_output_gcstring (vsetblocks));
-      mom_item_unsync_put_attribute (curfunitm,
+      mom_item_unsync_put_attribute ((momitem_t *) curfunitm,
 				     MOM_PREDEFINED_NAMED (emitted_blocks),
 				     vsetblocks);
-      mom_item_unsync_put_attribute (curfunitm,
+      mom_item_unsync_put_attribute ((momitem_t *) curfunitm,
 				     MOM_PREDEFINED_NAMED (in),
 				     mom_itemv (itmmod));
       const struct momseq_st *seqblocks = mom_value_to_set (vsetblocks);
