@@ -1096,7 +1096,7 @@ static inline momvalue_t
 mom_nodev (const momnode_t *nod)
 {
   momvalue_t val = MOM_NONEV;
-  if (nod)
+  if (nod && nod != MOM_EMPTY)
     {
       val.typnum = momty_node;
       val.vnode = (momnode_t *) nod;

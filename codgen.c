@@ -753,11 +753,12 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
   struct momcomponents_st *stmtcomps = itmstmt->itm_comps;
   if (itmstmt->itm_kind != MOM_PREDEFINED_NAMED (code_statement))
     CGEN_ERROR_RETURN_MOM (cg,
-			   "module item %s : function %s with block %s with bad statement %s",
+			   "module item %s : function %s with block %s with bad statement %s (%s)",
 			   mom_item_cstring (cg->cg_moduleitm),
 			   mom_item_cstring (cg->cg_curfunitm),
 			   mom_item_cstring (cg->cg_curblockitm),
-			   mom_item_cstring (itmstmt));
+			   mom_item_cstring (itmstmt),
+			   mom_item_cstring (itmstmt->itm_kind));
   unsigned stmtlen = mom_components_count (stmtcomps);
   if (stmtlen < 1)
     CGEN_ERROR_RETURN_MOM (cg,
@@ -1353,7 +1354,8 @@ cgen_bind_formals_mom (struct codegen_mom_st *cg, momitem_t *itmsignature,
 					  4,
 					  mom_itemv (cg->cg_curfunitm),
 					  mom_intv (inix),
-					  MOM_PREDEFINED_NAMED (input_types),
+					  mom_itemv (MOM_PREDEFINED_NAMED
+						     (input_types)),
 					  mom_itemv (intypitm));
       MOM_DEBUGPRINTF (gencod,
 		       "cgen_bind_formals function %s inix#%d informalitm %s valbind %s",
@@ -1392,7 +1394,8 @@ cgen_bind_formals_mom (struct codegen_mom_st *cg, momitem_t *itmsignature,
 					  4,
 					  mom_itemv (cg->cg_curfunitm),
 					  mom_intv (outix),
-					  MOM_PREDEFINED_NAMED (output_types),
+					  mom_itemv (MOM_PREDEFINED_NAMED
+						     (output_types)),
 					  mom_itemv (outtypitm));
       MOM_DEBUGPRINTF (gencod,
 		       "cgen_bind_formals function %s outix#%d outformalitm %s valbind %s",
@@ -1654,8 +1657,10 @@ cgen_second_emitting_pass_mom (momitem_t *itmcgen)
   {
     char oldpath[256];
     memset (oldpath, 0, sizeof (oldpath));
-    if (snprintf (oldpath, sizeof (oldpath),  MOM_MODULE_DIRECTORY MOM_SHARED_MODULE_PREFIX "%s.c",
-		  mom_item_cstring (itmmod)) < (int) sizeof (oldpath) - 1)
+    if (snprintf
+	(oldpath, sizeof (oldpath),
+	 MOM_MODULE_DIRECTORY MOM_SHARED_MODULE_PREFIX "%s.c",
+	 mom_item_cstring (itmmod)) < (int) sizeof (oldpath) - 1)
       {
 	FILE *fold = fopen (oldpath, "r");
 	if (fold)
@@ -1675,7 +1680,8 @@ cgen_second_emitting_pass_mom (momitem_t *itmcgen)
   MOM_DEBUGPRINTF (gencod, "end cgen_second_emitting_pass_mom same %s",
 		   same ? "true" : "false");
   const momstring_t *pbstr =	//
-    mom_make_string_sprintf (MOM_MODULE_DIRECTORY MOM_SHARED_MODULE_PREFIX "%s.c",
+    mom_make_string_sprintf (MOM_MODULE_DIRECTORY MOM_SHARED_MODULE_PREFIX
+			     "%s.c",
 			     mom_item_cstring (itmmod));
   if (!same)
     {
@@ -1895,7 +1901,8 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
 	       outix);
     };
   /// emit the early prologue
-  fprintf (cg->cg_emitfile, "\n{\n");
+  fprintf (cg->cg_emitfile, ")\n{ // body of function %s\n",
+	   mom_item_cstring (curfunitm));
   fprintf (cg->cg_emitfile, "  bool mom_resflag = false;\n");
   fprintf (cg->cg_emitfile, "  momitem_t* mom_funcitm = NULL;\n");
   fprintf (cg->cg_emitfile, "  if (MOM_UNLIKELY(!mom_node\n"

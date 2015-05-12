@@ -121,14 +121,16 @@
 
 ** code_operation   ////// PREDEFINED
 {
-  * comment  "kind for (user-provided) code operations" }
+  * comment  "kind for (user-provided) code operations"
+  * dumped_item_emitter  ^emitter_of_plain_kind() }
  
 ..
 
 
 ** code_statement   ////// PREDEFINED
 {
-  * comment  "kind of each instruction in a block" }
+  * comment  "kind of each instruction in a block"
+  * dumped_item_emitter  ^emitter_of_plain_kind() }
  
 ..
 
@@ -610,7 +612,7 @@
 ** the_software   ////// PREDEFINED
 {
   * comment  "describes the entire software system" }
- [[  test_module ]]
+ [[  test_module  value_of_item ]]
  
 ..
 
@@ -621,6 +623,13 @@
   * comment  "type for momvalue_t" }
  
   %  ^filler_of_plain_kind( c_type)
+ 
+..
+
+
+** value_of_item
+{
+  * comment  "operator to convert an item to a value" }
  
 ..
 

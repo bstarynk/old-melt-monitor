@@ -2623,7 +2623,7 @@ static void
 output_val_mom (struct momvaloutput_st *ov, const momvalue_t val)
 {
   assert (ov && ov->vout_magic == VALOUT_MAGIC_MOM);
-  switch ((enum momvaltype_en) val.typnum)
+  switch ((enum momvaltype_en) (val.typnum))
     {
     case momty_null:
       fputs ("~", ov->vout_file);
@@ -2657,11 +2657,11 @@ output_val_mom (struct momvaloutput_st *ov, const momvalue_t val)
 	    return;
 	  };
 	fprintf (ov->vout_file, "%a", x);
-	break;
+	return;
       }
     case momty_int:
       fprintf (ov->vout_file, "%lld", (long long) val.vint);
-      break;
+      return;
     case momty_delim:
       {
 	char dbuf[8 + sizeof (val.vdelim)];
@@ -2671,16 +2671,16 @@ output_val_mom (struct momvaloutput_st *ov, const momvalue_t val)
 	mom_output_utf8cstr_cencoded (ov->vout_file, dbuf, -1);
 	fputs ("\"", ov->vout_file);
       }
-      break;
+      return;
     case momty_string:
       fputs ("\"", ov->vout_file);
       mom_output_utf8cstr_cencoded (ov->vout_file, val.vstr->cstr, -1);
       fputs ("\"", ov->vout_file);
-      break;
+      return;
     case momty_item:
       assert (val.vitem);
       output_item_mom (ov, val.vitem);
-      break;
+      return;
     case momty_tuple:
       {
 	momseq_t *tup = val.vtuple;
@@ -2706,7 +2706,7 @@ output_val_mom (struct momvaloutput_st *ov, const momvalue_t val)
 	output_outdent_mom (ov);
 	fputs ("]", ov->vout_file);
       }
-      break;
+      return;
     case momty_set:
       {
 	momseq_t *tup = val.vtuple;
@@ -2732,7 +2732,7 @@ output_val_mom (struct momvaloutput_st *ov, const momvalue_t val)
 	output_outdent_mom (ov);
 	fputs ("}", ov->vout_file);
       }
-      break;
+      return;
     case momty_node:
       {
 	momnode_t *nod = val.vnode;
@@ -2757,7 +2757,9 @@ output_val_mom (struct momvaloutput_st *ov, const momvalue_t val)
 	output_outdent_mom (ov);
 	fputs (")", ov->vout_file);
       }
-      break;
+      return;
+    default:
+      fprintf (ov->vout_file, "/*strange type#%d*/ ", (int) (val.typnum));
     }
 }				/* end output_val_mom */
 

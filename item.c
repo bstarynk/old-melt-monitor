@@ -307,8 +307,8 @@ reorganize_named_items_mom (void)
   named_buckets_mom = NULL;
   named_nbuck_mom = 0;
   named_count_mom = 0;
-  unsigned newnbuck = (int) (1.2 * sqrt (namecount)) + 10;
-  unsigned newblen = (namecount + newnbuck / 2) / newnbuck;
+  unsigned newnbuck = (int) (1.2 * sqrt (namecount)) + 11;
+  unsigned newblen = (namecount + newnbuck / 2) / newnbuck + 1;
   if (MOM_UNLIKELY (newblen < 2))
     newblen++;
   unsigned newbsiz = ((3 * newblen / 2 + 5) | 0xf) + 1;
@@ -343,7 +343,10 @@ reorganize_named_items_mom (void)
       MOM_DEBUGPRINTF (item,
 		       "reorganize_named_items bix#%u bucklen=itmix=%u", bix,
 		       itmix);
-    }
+    };
+  MOM_DEBUGPRINTF (item,
+		   "reorganize_named_items namix=%u namecount=%u newnbuck=%u",
+		   namix, namecount, newnbuck);
   assert (namix >= namecount);
   named_count_mom = namecount;
   assert (oldnamecount == namecount);
