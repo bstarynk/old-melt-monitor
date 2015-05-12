@@ -1362,6 +1362,16 @@ mom_unsync_item_get_nth_component (momitem_t *itm, int rk)
   return vres;
 }
 
+static inline momvalue_t
+mom_raw_item_get_indexed_component (momitem_t *itm, unsigned ix)
+{
+  assert (itm);
+  struct momcomponents_st *comps = itm->itm_comps;
+  assert (comps);
+  assert (ix < comps->cp_cnt);
+  return comps->cp_comps[ix];
+}
+
 
 static inline unsigned
 mom_unsync_item_components_count (momitem_t *itm)

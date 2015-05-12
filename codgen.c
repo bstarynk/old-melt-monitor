@@ -1886,7 +1886,7 @@ cgen_emit_constdecl_mom (struct codegen_mom_st *cg, unsigned constix,
 
 static void
 cgen_emit_closeddecl_mom (struct codegen_mom_st *cg, unsigned closix,
-			 momitem_t *clositm);
+			  momitem_t *clositm);
 
 
 static void
@@ -2039,12 +2039,12 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
     fprintf (cg->cg_emitfile,
 	     "      || mom_unsync_item_components_count(mom_funcitm)<%d\n",
 	     nbconsts);
-  fprintf (cg->cg_emitfile, "       )\n" "  return false;\n");
+  fprintf (cg->cg_emitfile, "       ))\n" "  return false;\n");
   /// emit the variables declaration
   MOM_DEBUGPRINTF (gencod,
 		   "emit_function_code function %s has %u variables",
 		   mom_item_cstring (curfunitm), nbvars);
-  printf (cg->cg_emitfile, "  // %u variables:\n", nbvars);
+  fprintf (cg->cg_emitfile, "  // %u variables:\n", nbvars);
   for (unsigned varix = 0; varix < nbvars; varix++)
     {
       momitem_t *varitm = mom_seq_nth (funseqvars, varix);
@@ -2158,10 +2158,30 @@ cgen_emit_vardecl_mom (struct codegen_mom_st *cg, unsigned varix,
 		   "emit_vardecl varix#%u varitm %s vbindvar %s",
 		   varix, mom_item_cstring (varitm),
 		   mom_output_gcstring (vbindvar));
-  MOM_WARNPRINTF
-    ("unimplemented cgen_emit_vardecl_mom varix#%u varitm %s vbindvar %s",
-     varix, mom_item_cstring (varitm), mom_output_gcstring (vbindvar));
-#warning cgen_emit_vardecl_mom unimplemented
+  const momnode_t *nodvar = mom_value_to_node (vbindvar);
+  assert (nodvar != NULL
+	  && mom_node_conn (nodvar) == MOM_PREDEFINED_NAMED (variable));
+  intptr_t varrk = mom_value_to_int (mom_node_nth (nodvar, 1), -1);
+  momitem_t *vartypitm = mom_value_to_item (mom_node_nth (nodvar, 2));
+  MOM_DEBUGPRINTF (gencod,
+		   "emit_vardecl varix#%u varitm %s varrk#%ld vartypitm %s",
+		   varix, mom_item_cstring (varitm), (long) varrk,
+		   mom_item_cstring (vartypitm));
+  assert (varrk >= 0);
+  fprintf (cg->cg_emitfile, "// variable %s of type %s\n",
+	   mom_item_cstring (varitm), mom_item_cstring (vartypitm));
+  const momstring_t *typstr =	//
+    mom_value_to_string (mom_item_unsync_get_attribute (vartypitm,
+							MOM_PREDEFINED_NAMED
+							(c_code)));
+  assert (typstr != NULL);
+  if (vartypitm == MOM_PREDEFINED_NAMED (value))
+    fprintf (cg->cg_emitfile,
+	     "  momvalue_t " VARIABLE_PREFIX_MOM "%d = MOM_NONEV;\n",
+	     (int) varrk);
+  else
+    fprintf (cg->cg_emitfile, "  %s " VARIABLE_PREFIX_MOM "%d = (%s)0;\n",
+	     typstr->cstr, (int) varrk, typstr->cstr);
 }				/* end of cgen_emit_vardecl_mom */
 
 
@@ -2214,7 +2234,7 @@ cgen_emit_constdecl_mom (struct codegen_mom_st *cg, unsigned constix,
     else
       {
 	fprintf (cg->cg_emitfile,
-		 " mom_unsync_item_get_nth_component(mom_funcitm, %d)",
+		 "\n    mom_raw_item_get_indexed_component (mom_funcitm, %d)",
 		 (int) constrk);
       }
   }
@@ -2224,7 +2244,7 @@ cgen_emit_constdecl_mom (struct codegen_mom_st *cg, unsigned constix,
 
 void
 cgen_emit_closeddecl_mom (struct codegen_mom_st *cg, unsigned closix,
-		       momitem_t *clositm)
+			  momitem_t *clositm)
 {
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   MOM_DEBUGPRINTF (gencod,

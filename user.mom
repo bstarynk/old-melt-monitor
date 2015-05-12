@@ -18,9 +18,19 @@
 ///
 
 
+** _2DxdHB02H_7J0mhIR26
+{
+  * comment  "set itmz := itmx" }
+ [[  set  test_itmz  test_itmx ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
 ** _2yhjRaR72_5sd4haPDv
 {
-  * c_instructions  []
+  * c_instructions  [_2DxdHB02H_7J0mhIR26]
   * comment  "start block of test_funa" }
  
   %  ^filler_of_plain_kind( c_block)
@@ -62,7 +72,7 @@
 
 ** test_funb
 {
-  * formals  [test_itmy test_itmx test_valres]
+  * formals  [test_itmx test_itmy test_valres]
   * function_signature  signature_2itm_to_val
   * start  _78Bvf0DAn_3jn0Ue36p }
  
@@ -76,6 +86,16 @@
 
 ** test_itmy
 
+..
+
+
+** test_itmz
+{
+  * c_type  item
+  * comment  "the itmz variable" }
+ 
+  %  ^filler_of_plain_kind( variable)
+ 
 ..
 
 
