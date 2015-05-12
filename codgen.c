@@ -1654,7 +1654,7 @@ cgen_second_emitting_pass_mom (momitem_t *itmcgen)
   {
     char oldpath[256];
     memset (oldpath, 0, sizeof (oldpath));
-    if (snprintf (oldpath, sizeof (oldpath), MOM_SHARED_MODULE_PREFIX "%s.c",
+    if (snprintf (oldpath, sizeof (oldpath),  MOM_MODULE_DIRECTORY MOM_SHARED_MODULE_PREFIX "%s.c",
 		  mom_item_cstring (itmmod)) < (int) sizeof (oldpath) - 1)
       {
 	FILE *fold = fopen (oldpath, "r");
@@ -1668,12 +1668,14 @@ cgen_second_emitting_pass_mom (momitem_t *itmcgen)
 	      }
 	    fclose (fold);
 	  }
+	else
+	  same = false;
       }
   };
   MOM_DEBUGPRINTF (gencod, "end cgen_second_emitting_pass_mom same %s",
 		   same ? "true" : "false");
   const momstring_t *pbstr =	//
-    mom_make_string_sprintf (MOM_SHARED_MODULE_PREFIX "%s.c",
+    mom_make_string_sprintf (MOM_MODULE_DIRECTORY MOM_SHARED_MODULE_PREFIX "%s.c",
 			     mom_item_cstring (itmmod));
   if (!same)
     {
@@ -1991,9 +1993,8 @@ cgen_third_decorating_pass_mom (momitem_t *itmcgen)
 	  mom_item_unsync_put_attribute
 	    (itmcurblock, MOM_PREDEFINED_NAMED (in), mom_itemv (curfunitm));
 	  struct momentry_st *ent =
-	    mom_attributes_find_entry ((struct
-					momattributes_st
-					*) itmblocks->itm_data1,
+	    mom_attributes_find_entry ((struct momattributes_st *)
+				       itmblocks->itm_data1,
 				       itmcurblock);
 	  momvalue_t valblockinfo = MOM_NONEV;
 	  if (ent)

@@ -138,6 +138,7 @@ extern void *GC_calloc (size_t nbelem, size_t elsiz);
 
 /// two prefixes known by our Makefile!
 // generated modules start with:
+#define MOM_MODULE_DIRECTORY "modules/"
 #define MOM_SHARED_MODULE_PREFIX "momg_"
 // plugins path start with
 #define MOM_PLUGIN_PREFIX "momplug_"
