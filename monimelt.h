@@ -471,6 +471,14 @@ mom_value_to_item (const momvalue_t val)
   return NULL;
 }
 
+static inline intptr_t
+mom_value_to_int (const momvalue_t val, intptr_t def)
+{
+  if (val.typnum == momty_int)
+    return val.vint;
+  return def;
+}
+
 momhash_t mom_valueptr_hash (momvalue_t *pval);
 
 static inline momhash_t
@@ -1344,6 +1352,15 @@ mom_item_unsync_put_attribute (momitem_t *itm, momitem_t *itmat,
 }
 
 
+
+static inline momvalue_t
+mom_unsync_item_get_nth_component (momitem_t *itm, int rk)
+{
+  momvalue_t vres = MOM_NONEV;
+  if (itm && itm->itm_comps)
+    vres = mom_components_nth (itm->itm_comps, rk);
+  return vres;
+}
 
 /****************************************************************
   Informal descriptions of kinds
