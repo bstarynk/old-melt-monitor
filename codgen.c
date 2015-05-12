@@ -1767,7 +1767,7 @@ cgen_emit_function_declaration_mom (struct codegen_mom_st *cg,
 		   funix, mom_item_cstring (curfunitm),
 		   mom_output_gcstring (vfuninfo));
   const momnode_t *funinfonod = mom_value_to_node (vfuninfo);
-  cg->cg_funinfonod = funinfonod;
+  cg->cg_funinfonod = (momnode_t *) funinfonod;
   momitem_t *funsigitm = NULL;
   if (!funinfonod || mom_node_arity (funinfonod) != 7
       || mom_node_conn (funinfonod) != MOM_PREDEFINED_NAMED (function_info)
@@ -1933,7 +1933,7 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
        mom_output_gcstring (vfuninfo), mom_item_cstring (curfunitm),
        mom_item_cstring (funsigitm), mom_item_cstring (funbindingsitm),
        mom_item_cstring (itmmod));
-  cg->cg_funinfonod = funinfonod;
+  cg->cg_funinfonod = (momnode_t *) funinfonod;
   MOM_DEBUGPRINTF (gencod,
 		   "emit_function_code curfunitm %s funsigitm %s funblocksitm %s funbindingsitm %s funstartitm %s",
 		   mom_item_cstring (curfunitm),
@@ -2047,7 +2047,7 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
   fprintf (cg->cg_emitfile, "  // %u variables:\n", nbvars);
   for (unsigned varix = 0; varix < nbvars; varix++)
     {
-      momitem_t *varitm = mom_seq_nth (funseqvars, varix);
+      momitem_t *varitm = (momitem_t *) mom_seq_nth (funseqvars, varix);
       MOM_DEBUGPRINTF (gencod,
 		       "emit_function_code function %s varix#%d varitm %s",
 		       mom_item_cstring (curfunitm), varix,
@@ -2061,7 +2061,7 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
   fprintf (cg->cg_emitfile, "  // %u constants:\n", nbconsts);
   for (unsigned constix = 0; constix < nbconsts; constix++)
     {
-      momitem_t *constitm = mom_seq_nth (funseqconsts, constix);
+      momitem_t *constitm = (momitem_t *) mom_seq_nth (funseqconsts, constix);
       MOM_DEBUGPRINTF (gencod,
 		       "emit_function_code function %s constix#%d constitm %s",
 		       mom_item_cstring (curfunitm), constix,
@@ -2075,7 +2075,7 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
   fprintf (cg->cg_emitfile, "  // %u closed:\n", nbclosed);
   for (unsigned closix = 0; closix < nbclosed; closix++)
     {
-      momitem_t *clositm = mom_seq_nth (funseqclosed, closix);
+      momitem_t *clositm = (momitem_t *) mom_seq_nth (funseqclosed, closix);
       MOM_DEBUGPRINTF (gencod,
 		       "emit_function_code function %s closix#%d clositm %s",
 		       mom_item_cstring (curfunitm), closix,
@@ -2091,7 +2091,7 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
   unsigned nbblocks = mom_seq_length (blockseq);
   for (unsigned bix = 0; bix < nbblocks; bix++)
     {
-      momitem_t *blockitm = mom_seq_nth (blockseq, bix);
+      momitem_t *blockitm = (momitem_t *) mom_seq_nth (blockseq, bix);
       fprintf (cg->cg_emitfile, " // block #%d : %s\n", bix,
 	       mom_item_cstring (blockitm));
       cg->cg_curblockitm = blockitm;
@@ -2110,6 +2110,10 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
 
 
 static void
+cgen_emit_statement_mom (struct codegen_mom_st *cg, unsigned insix,
+			 momitem_t *insitm);
+
+static void
 cgen_emit_block_mom (struct codegen_mom_st *cg, unsigned bix,
 		     momitem_t *blockitm)
 {
@@ -2124,6 +2128,23 @@ cgen_emit_block_mom (struct codegen_mom_st *cg, unsigned bix,
 		   bix, mom_item_cstring (blockitm));
   fprintf (cg->cg_emitfile, " " BLOCK_LABEL_PREFIX_MOM "_%s: {\n",
 	   mom_item_cstring (blockitm));
+  unsigned nbinstr = mom_components_count (blockitm->itm_comps);
+  MOM_DEBUGPRINTF (gencod,
+		   "emit_block blockitm %s nbinstr %u",
+		   mom_item_cstring (blockitm), nbinstr);
+  for (unsigned insix = 0; insix < nbinstr; insix++)
+    {
+      momitem_t *insitm =
+	mom_value_to_item (mom_components_nth (blockitm->itm_comps, insix));
+      MOM_DEBUGPRINTF (gencod, "emit_block blockitm %s insix#%d insitm %s",
+		       mom_item_cstring (blockitm), insix,
+		       mom_item_cstring (insitm));
+      fprintf (cg->cg_emitfile, "// instruction #%d %s\n", insix,
+	       mom_item_cstring (insitm));
+      cg->cg_curstmtitm = insitm;
+      cgen_emit_statement_mom (cg, insix, insitm);
+      cg->cg_curstmtitm = NULL;
+    }
   fprintf (cg->cg_emitfile, "\n  }; // end block %s\n",
 	   mom_item_cstring (blockitm));
   MOM_DEBUGPRINTF (gencod,
@@ -2273,6 +2294,19 @@ cgen_emit_closeddecl_mom (struct codegen_mom_st *cg, unsigned closix,
 }				/* end of cgen_emit_closeddecl_mom */
 
 
+static void
+cgen_emit_statement_mom (struct codegen_mom_st *cg, unsigned insix,
+			 momitem_t *insitm)
+{
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  MOM_DEBUGPRINTF (gencod,
+		   "emit_statement start insix#%u insitm %s",
+		   insix, mom_item_cstring (insitm));
+#warning cgen_emit_statement_mom unimplemented
+  fprintf (cg->cg_emitfile,
+	   "#warning unimplemented emission of statement %s #%d\n",
+	   mom_item_cstring (insitm), insix);
+}				/* end of cgen_emit_statement_mom */
 
 static void
 cgen_third_decorating_pass_mom (momitem_t *itmcgen)
@@ -2353,14 +2387,15 @@ cgen_third_decorating_pass_mom (momitem_t *itmcgen)
 		       funix, nbblocks);
       for (unsigned blix = 0; blix < nbblocks; blix++)
 	{
-	  momitem_t *itmcurblock = mom_seq_nth (seqblocks, (int) blix);
+	  momitem_t *itmcurblock =
+	    (momitem_t *) mom_seq_nth (seqblocks, (int) blix);
 	  MOM_DEBUGPRINTF (gencod,
 			   "third_decorating_pass funix#%d function %s: blix#%d curblock %s",
-			   funix,
-			   mom_item_cstring
-			   (curfunitm), blix, mom_item_cstring (itmcurblock));
-	  mom_item_unsync_put_attribute
-	    (itmcurblock, MOM_PREDEFINED_NAMED (in), mom_itemv (curfunitm));
+			   funix, mom_item_cstring (curfunitm), blix,
+			   mom_item_cstring (itmcurblock));
+	  mom_item_unsync_put_attribute (itmcurblock,
+					 MOM_PREDEFINED_NAMED (in),
+					 mom_itemv (curfunitm));
 	  struct momentry_st *ent =
 	    mom_attributes_find_entry ((struct momattributes_st *)
 				       itmblocks->itm_data1,
