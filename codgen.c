@@ -569,6 +569,8 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
 {
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   assert (itm != NULL);
+  MOM_DEBUGPRINTF (gencod, "start cgen_type_of_scanned_item itm %s",
+		   mom_item_cstring (itm));
   assert (mom_hashset_contains (cg->cg_lockeditemset, itm));
   struct momentry_st *ent = mom_attributes_find_entry (cg->cg_funbind, itm);
   if (ent != NULL)
@@ -635,8 +637,15 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
   momitem_t *itmkind = itm->itm_kind;
   MOM_DEBUGPRINTF (gencod, "in function %s item %s (of kind %s) is unbound",
 		   mom_item_cstring (cg->cg_curfunitm),
-		   mom_item_cstring (itm),
-		   itmkind ? mom_item_cstring (itmkind) : "~");
+		   mom_item_cstring (itm), mom_item_cstring (itmkind));
+  if (!itmkind)
+    CGEN_ERROR_RESULT_MOM (cg, NULL,
+			   "module item %s : function %s has block %s with statement %s with bad kindless item %s",
+			   mom_item_cstring (cg->cg_moduleitm),
+			   mom_item_cstring (cg->cg_curfunitm),
+			   mom_item_cstring (cg->cg_curblockitm),
+			   mom_item_cstring (cg->cg_curstmtitm),
+			   mom_item_cstring (itm));
   switch (mom_item_hash (itmkind))
     {
     case MOM_PREDEFINED_NAMED_CASE (closed, itmkind, otherwisekindlab):
@@ -694,12 +703,15 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
 	MOM_DEBUGPRINTF (gencod,
 			 "function %s has new constant item %s of kind %s",
 			 mom_item_cstring (cg->cg_curfunitm),
-			 mom_item_cstring (itm),
-			 itmkind ? mom_item_cstring (itmkind) : "~");
+			 mom_item_cstring (itm), mom_item_cstring (itmkind));
 	return MOM_PREDEFINED_NAMED (value);
       }
       break;
     }
+  MOM_DEBUGPRINTF (gencod,
+		   "function %s has unexpected item %s (%s)",
+		   mom_item_cstring (cg->cg_curfunitm),
+		   mom_item_cstring (itm), mom_item_cstring (itmkind));
   CGEN_ERROR_RESULT_MOM (cg, NULL,
 			 "module item %s : function %s has block %s with statement %s with unexpected item %s",
 			 mom_item_cstring (cg->cg_moduleitm),
@@ -790,6 +802,7 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 				 mom_item_cstring (cg->cg_curfunitm),
 				 mom_item_cstring (cg->cg_curblockitm),
 				 mom_item_cstring (itmstmt));
+	cgen_lock_item_mom (cg, itmlvar);
 	momvalue_t rexprv = mom_components_nth (stmtcomps, 2);
 	MOM_DEBUGPRINTF (gencod,
 			 "in function %s block %s set statement %s lvar %s rexpr %s",
@@ -801,6 +814,14 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 	momitem_t *lvarctypitm = cgen_type_of_scanned_item_mom (cg, itmlvar);
 	if (cg->cg_errormsg)
 	  return;
+	MOM_DEBUGPRINTF (gencod,
+			 "in function %s block %s set statement %s lvar %s lvarctypitm %s",
+			 mom_item_cstring (cg->cg_curfunitm),
+			 mom_item_cstring (cg->cg_curblockitm),
+			 mom_item_cstring (itmstmt),
+			 mom_item_cstring (itmlvar),
+			 mom_item_cstring (lvarctypitm));
+	cgen_lock_item_mom (cg, lvarctypitm);
 	MOM_DEBUGPRINTF (gencod,
 			 "in function %s block %s set statement %s lvar %s lvarctyp %s",
 			 mom_item_cstring (cg->cg_curfunitm),
@@ -1329,6 +1350,9 @@ cgen_bind_formals_mom (struct codegen_mom_st *cg, momitem_t *itmsignature,
 			   mom_output_gcstring (vinputy),
 			   mom_output_gcstring (voutputy));
   //// process input formals
+  MOM_DEBUGPRINTF (gencod,
+		   "cgen_bind_formals function %s nbins=%d",
+		   mom_item_cstring (cg->cg_curfunitm), nbins);
   for (unsigned inix = 0; inix < nbins; inix++)
     {
       if (cg->cg_errormsg)
@@ -1368,6 +1392,9 @@ cgen_bind_formals_mom (struct codegen_mom_st *cg, momitem_t *itmsignature,
 	return;
     }
   //// process output formals
+  MOM_DEBUGPRINTF (gencod,
+		   "cgen_bind_formals function %s nbouts=%d",
+		   mom_item_cstring (cg->cg_curfunitm), nbouts);
   for (unsigned outix = 0; outix < nbouts; outix++)
     {
       if (cg->cg_errormsg)
@@ -1407,6 +1434,9 @@ cgen_bind_formals_mom (struct codegen_mom_st *cg, momitem_t *itmsignature,
       if (cg->cg_errormsg)
 	return;
     }
+  MOM_DEBUGPRINTF (gencod,
+		   "cgen_bind_formals function %s done",
+		   mom_item_cstring (cg->cg_curfunitm));
 }				/* end cgen_bind_formals_mom */
 
 
