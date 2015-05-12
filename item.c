@@ -256,6 +256,11 @@ reorganize_named_items_mom (void)
 {
   const momitem_t **allnamedarr = NULL;
   unsigned oldnamecount = named_count_mom;
+  static long reorgcounter;
+  reorgcounter++;
+  MOM_DEBUGPRINTF (item,
+		   "reorganize_named_items reorgcounter#%ld oldnamecount=%u",
+		   reorgcounter, oldnamecount);
   allnamedarr =
     MOM_GC_ALLOC ("allnamedarr", sizeof (momitem_t *) * (oldnamecount + 2));
   unsigned namecount = 0;
@@ -274,6 +279,9 @@ reorganize_named_items_mom (void)
 	  if (MOM_UNLIKELY (namecount > named_count_mom))
 	    MOM_FATAPRINTF ("more named items than expected %d", namecount);
 	  allnamedarr[namecount] = itm;
+	  MOM_DEBUGPRINTF (item,
+			   "reorganize_named_items bix#%u itmix#%u namecount#%u itm %s",
+			   bix, itmix, namecount, mom_item_cstring (itm));
 	  if (MOM_LIKELY (namecount > 0))
 	    {
 	      const momitem_t *previtm = allnamedarr[namecount - 1];
@@ -282,7 +290,7 @@ reorganize_named_items_mom (void)
 		   0))
 		MOM_FATAPRINTF ("corrupted named item element #%d",
 				namecount);
-	    }
+	    };
 	  namecount++;
 	}
       named_buckets_mom[bix] = NULL;
@@ -290,6 +298,9 @@ reorganize_named_items_mom (void)
 		   sizeof (struct namebucket_mom_st) +
 		   bsiz * sizeof (momitem_t *));
     }
+  MOM_DEBUGPRINTF (item,
+		   "reorganize_named_items namecount=%u named_count_mom=%u",
+		   namecount, named_count_mom);
   assert (namecount == named_count_mom);
   MOM_GC_FREE (named_buckets_mom,
 	       sizeof (struct namebucket_mom_st *) * named_nbuck_mom);
@@ -297,10 +308,13 @@ reorganize_named_items_mom (void)
   named_nbuck_mom = 0;
   named_count_mom = 0;
   unsigned newnbuck = (int) (1.2 * sqrt (namecount)) + 10;
-  unsigned newblen = namecount / newnbuck;
+  unsigned newblen = (namecount + newnbuck / 2) / newnbuck;
   if (MOM_UNLIKELY (newblen < 2))
     newblen++;
   unsigned newbsiz = ((3 * newblen / 2 + 5) | 0xf) + 1;
+  MOM_DEBUGPRINTF (item,
+		   "reorganize_named_items newnbuck=%u newblen=%u newbsiz=%u",
+		   newnbuck, newblen, newbsiz);
   named_buckets_mom =
     MOM_GC_ALLOC ("named buckets",
 		  newnbuck * sizeof (struct namebucket_mom_st *));
@@ -313,16 +327,22 @@ reorganize_named_items_mom (void)
 	MOM_GC_SCALAR_ALLOC ("bucket", sizeof (struct namebucket_mom_st)
 			     + newbsiz * sizeof (momitem_t *));
       curbuck->nambuck_size = newbsiz;
+      MOM_DEBUGPRINTF (item, "reorganize_named_items fillinx bix#%u", bix);
       named_buckets_mom[bix] = curbuck;
       unsigned itmix = 0;
-      if (MOM_LIKELY (namix < namecount))
-	for (itmix = 0; itmix < newblen; itmix++)
-	  {
-	    if (MOM_UNLIKELY (namix >= namecount))
-	      break;
-	    curbuck->nambuck_arr[itmix] = allnamedarr[namix++];
-	  };
+      for (itmix = 0; itmix < newblen && namix < namecount; itmix++)
+	{
+	  const momitem_t *curitm = allnamedarr[namix];
+	  MOM_DEBUGPRINTF (item,
+			   "reorganize_named_items bix#%u itmix#%u namix#%u curitm %s",
+			   bix, itmix, namix, mom_item_cstring (curitm));
+	  curbuck->nambuck_arr[itmix] = curitm;
+	  namix++;
+	};
       curbuck->nambuck_len = itmix;
+      MOM_DEBUGPRINTF (item,
+		       "reorganize_named_items bix#%u bucklen=itmix=%u", bix,
+		       itmix);
     }
   assert (namix >= namecount);
   named_count_mom = namecount;
@@ -676,7 +696,7 @@ mom_unregister_named_finalized_item (momitem_t *finitm)
     if (pos < 0)
       MOM_FATAPRINTF ("failed to find finalized named item %s in bucket#%d",
 		      itmnam->cstr, bix);
-    for (int ix = pos; ix + 1 < blen; ix++)
+    for (int ix = pos; ix + 1 < (int) blen; ix++)
       buck->nambuck_arr[ix] = buck->nambuck_arr[ix + 1];
     buck->nambuck_arr[blen - 1] = NULL;
     buck->nambuck_len = blen - 1;
@@ -746,8 +766,11 @@ mom_make_named_item (const char *namstr)
     }
   MOM_DEBUGPRINTF (item,
 		   "make_named_item %s lobix=%d (bucklen %d) hibix=%d (bucklen %d)",
-		   namstr, lobix, named_buckets_mom[lobix]->nambuck_len,
-		   hibix, named_buckets_mom[hibix]->nambuck_len);
+		   namstr, lobix,
+		   named_buckets_mom[lobix]
+		   ? (named_buckets_mom[lobix]->nambuck_len) : 0, hibix,
+		   named_buckets_mom[hibix]
+		   ? (named_buckets_mom[hibix]->nambuck_len) : 0);
   // try to find the appropriate bucket index bix
   for (mdbix = lobix; mdbix < hibix && bix < 0; mdbix++)
     {
