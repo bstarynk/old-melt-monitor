@@ -1918,6 +1918,8 @@ cgen_third_decorating_pass_mom (momitem_t *itmcgen)
   MOM_DEBUGPRINTF (gencod, "third_decorating_pass  itmcgen %s itmmod %s",
 		   mom_item_cstring (itmcgen), mom_item_cstring (itmmod));
   const momseq_t *seqfun = mom_hashset_elements_set (cg->cg_functionhset);
+  mom_item_unsync_put_attribute(itmmod, MOM_PREDEFINED_NAMED(emitted_functions),
+				mom_unsafe_setv(seqfun));
   unsigned nbfun = mom_seq_length (seqfun);
   for (unsigned funix = 0; funix < nbfun; funix++)
     {
@@ -1966,6 +1968,8 @@ cgen_third_decorating_pass_mom (momitem_t *itmcgen)
 			    MOM_NONEV));
       MOM_DEBUGPRINTF (gencod, "third_decorating_pass funix#%d vsetblocks %s",
 		       funix, mom_output_gcstring (vsetblocks));
+      mom_item_unsync_put_attribute(curfunitm, MOM_PREDEFINED_NAMED(emitted_blocks), vsetblocks);
+      //mom_item_unsync_put_attribute(curfunitm, MOM_PREDEFINED_NAMED
       const struct momseq_st *seqblocks = mom_value_to_set (vsetblocks);
       unsigned nbblocks = mom_seq_length (seqblocks);
       MOM_DEBUGPRINTF (gencod, "third_decorating_pass funix#%d nbblocks %d",

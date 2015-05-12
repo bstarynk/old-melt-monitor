@@ -177,6 +177,20 @@
 ..
 
 
+** emitted_blocks   ////// PREDEFINED
+{
+  * comment  "attribute giving the emitted blocks inside a function" }
+ 
+..
+
+
+** emitted_functions   ////// PREDEFINED
+{
+  * comment  "attribute giving the emitted functions inside a module" }
+ 
+..
+
+
 ** emitter_of_association   ////// PREDEFINED
 {
   * comment  "emitter routine for association items" }
