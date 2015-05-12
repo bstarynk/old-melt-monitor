@@ -1972,29 +1972,39 @@ cgen_third_decorating_pass_mom (momitem_t *itmcgen)
       mom_item_unsync_put_attribute (curfunitm,
 				     MOM_PREDEFINED_NAMED (emitted_blocks),
 				     vsetblocks);
-      //mom_item_unsync_put_attribute(curfunitm, MOM_PREDEFINED_NAMED
+      mom_item_unsync_put_attribute (curfunitm,
+				     MOM_PREDEFINED_NAMED (in),
+				     mom_itemv (itmmod));
       const struct momseq_st *seqblocks = mom_value_to_set (vsetblocks);
       unsigned nbblocks = mom_seq_length (seqblocks);
-      MOM_DEBUGPRINTF (gencod, "third_decorating_pass funix#%d nbblocks %d",
+      MOM_DEBUGPRINTF (gencod,
+		       "third_decorating_pass funix#%d nbblocks %d",
 		       funix, nbblocks);
       for (unsigned blix = 0; blix < nbblocks; blix++)
 	{
 	  momitem_t *itmcurblock = mom_seq_nth (seqblocks, (int) blix);
 	  MOM_DEBUGPRINTF (gencod,
 			   "third_decorating_pass funix#%d function %s: blix#%d curblock %s",
-			   funix, mom_item_cstring (curfunitm), blix,
-			   mom_item_cstring (itmcurblock));
-	  struct momentry_st *ent = mom_attributes_find_entry
-	    ((struct momattributes_st *) itmblocks->itm_data1,
-	     itmcurblock);
+			   funix,
+			   mom_item_cstring
+			   (curfunitm), blix, mom_item_cstring (itmcurblock));
+	  mom_item_unsync_put_attribute
+	    (itmcurblock, MOM_PREDEFINED_NAMED (in), mom_itemv (curfunitm));
+	  struct momentry_st *ent =
+	    mom_attributes_find_entry ((struct
+					momattributes_st
+					*) itmblocks->itm_data1,
+				       itmcurblock);
 	  momvalue_t valblockinfo = MOM_NONEV;
 	  if (ent)
 	    valblockinfo = ent->ent_val;
 	  MOM_DEBUGPRINTF (gencod,
 			   "third_decorating_pass funix#%d function %s: blix#%d curblock %s valblockinfo %s",
-			   funix, mom_item_cstring (curfunitm), blix,
-			   mom_item_cstring (itmcurblock),
-			   mom_output_gcstring (valblockinfo));
+			   funix,
+			   mom_item_cstring
+			   (curfunitm), blix,
+			   mom_item_cstring
+			   (itmcurblock), mom_output_gcstring (valblockinfo));
 	};
       ///
       MOM_DEBUGPRINTF (gencod,
