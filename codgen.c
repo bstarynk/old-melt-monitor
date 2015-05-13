@@ -2809,6 +2809,7 @@ cgen_emit_item_switch_statement_mom (struct codegen_mom_st *cg,
   assert (itmstmt);
   struct momcomponents_st *stmtcomps = itmstmt->itm_comps;
   unsigned stmtlen = mom_components_count (stmtcomps);
+  unsigned nbcases = stmtlen - 2;
   momvalue_t vexpr = mom_components_nth (stmtcomps, 1);
   assert (stmtlen < MOM_MAX_SEQ_LENGTH / 2);
   struct itemswent_mom_st *swentarr =	//
@@ -2838,15 +2839,48 @@ cgen_emit_item_switch_statement_mom (struct codegen_mom_st *cg,
       swentarr[caseix - 2].isw_item = casitm;
       swentarr[caseix - 2].isw_block = blockitm;
     }
-  unsigned prim = (unsigned) mom_prime_above (3 * stmtlen + 2);
+  unsigned prim = (unsigned) mom_prime_above (3 * stmtlen + 5);
   assert (prim > 2);
-  qsort_r (swentarr, stmtlen - 2, sizeof (struct itemswent_mom_st),
+  qsort_r (swentarr, nbcases, sizeof (struct itemswent_mom_st),
 	   itemswent_cmp_mom, &prim);
-#warning should emit the code in cgen_emit_item_switch_statement_mom
-  MOM_FATAPRINTF
-    ("cgen_emit_item_switch_statement_mom unimplemented itmstmt %s",
-     mom_item_cstring (itmstmt));
+  fprintf (cg->cg_emitfile, "{ momitem_t* momswitchitem_%s = ",
+	   mom_item_cstring (itmstmt));
+  cgen_emit_expr_mom (cg, vexpr);
+  fputs (";\n", cg->cg_emitfile);
+  fprintf (cg->cg_emitfile,
+	   "  momhash_t momswitchhash_%s = mom_item_hash(momswitchitem_%s);\n",
+	   mom_item_cstring (itmstmt), mom_item_cstring (itmstmt));
+  fprintf (cg->cg_emitfile, "  switch (momswitchhash_%s %% %u) {\n",
+	   mom_item_cstring (itmstmt), prim);
+  int prevhmod = -1;
+  for (unsigned ix = 0; ix < nbcases; ix++)
+    {
+      momitem_t *casitm = swentarr[ix].isw_item;
+      momitem_t *blockitm = swentarr[ix].isw_block;
+      assert (casitm != NULL);
+      assert (blockitm != NULL);
+      int curhmod = mom_item_hash (casitm) % prim;
+      assert (curhmod >= 0);
+      if (prevhmod != curhmod)
+	{
+	  if (prevhmod >= 0)
+	    fputs ("    break;\n", cg->cg_emitfile);
+	  fprintf (cg->cg_emitfile, "   case %d:\n", curhmod);
+	  prevhmod = curhmod;
+	};
+      fprintf (cg->cg_emitfile, "    if (momswitchitem_%s == (",
+	       mom_item_cstring (itmstmt));
+      cgen_emit_item_mom (cg, casitm);
+      fprintf (cg->cg_emitfile, "))  goto " BLOCK_LABEL_PREFIX_MOM "_%s;\n",
+	       mom_item_cstring (blockitm));
+    }
+  fprintf (cg->cg_emitfile, "  default: break;\n"
+	   "  } // end switch\n"
+	   "  momswitchitem_%s = NULL;\n"
+	   "  } // end  item_switch statement %s\n",
+	   mom_item_cstring (itmstmt), mom_item_cstring (itmstmt));
 }				/* end cgen_emit_item_switch_statement_mom */
+
 
 static void
 cgen_emit_other_statement_mom (struct codegen_mom_st *cg, unsigned insix,
