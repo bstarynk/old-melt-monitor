@@ -2556,9 +2556,6 @@ cgen_emit_set_statement_mom (struct codegen_mom_st *cg, unsigned insix,
       cgen_emit_expr_mom (cg, rexprv);
       fputs (";\n", cg->cg_emitfile);
     }
-  MOM_FATAPRINTF ("emit_set_statement unimplemented itmstmt %s",
-		  mom_item_cstring (itmstmt));
-#warning cgen_emit_set_statement_mom unimplemented
 }				/* end cgen_emit_set_statement_mom */
 
 
@@ -2570,6 +2567,9 @@ cgen_emit_chunk_statement_mom (struct codegen_mom_st *cg, unsigned insix,
   assert (itmstmt);
   struct momcomponents_st *stmtcomps = itmstmt->itm_comps;
   unsigned inslen = mom_components_count (stmtcomps);
+  MOM_DEBUGPRINTF (gencod,
+		   "emit chunk stmt %s of %u components",
+		   mom_item_cstring (itmstmt), inslen);
   fprintf (cg->cg_emitfile, "  // chunk of %d components\n", inslen);
   for (unsigned ix = 1; ix < inslen; ix++)
     {
@@ -2607,25 +2607,55 @@ cgen_emit_apply_statement_mom (struct codegen_mom_st *cg, unsigned insix,
 
 static void
 cgen_emit_if_statement_mom (struct codegen_mom_st *cg, unsigned insix,
-			    momitem_t *insitm)
+			    momitem_t *itmstmt)
 {
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
-  assert (insitm);
-  MOM_FATAPRINTF ("emit_if_statement unimplemented insitm %s",
-		  mom_item_cstring (insitm));
-#warning cgen_emit_if_statement_mom unimplemented
+  assert (itmstmt);
+  struct momcomponents_st *stmtcomps = itmstmt->itm_comps;
+  unsigned inslen = mom_components_count (stmtcomps);
+  momvalue_t vcondexpr = mom_components_nth (stmtcomps, 1);
+  momitem_t *targetitm =
+    mom_value_to_item (mom_components_nth (stmtcomps, 2));
+  momitem_t *typconditm = cgen_type_of_scanned_expr_mom (cg, vcondexpr);
+  MOM_DEBUGPRINTF (gencod,
+		   "emit if stmt %s condexpr %s targetitm %s typcond %s",
+		   mom_item_cstring (itmstmt),
+		   mom_output_gcstring (vcondexpr),
+		   mom_item_cstring (targetitm),
+		   mom_item_cstring (typconditm));
+  fprintf (cg->cg_emitfile, "// if testing on %s\n",
+	   mom_item_cstring (typconditm));
+  if (typconditm == MOM_PREDEFINED_NAMED (value))
+    {
+      fprintf (cg->cg_emitfile, "   if ((");
+      cgen_emit_expr_mom (cg, vcondexpr);
+      fprintf (cg->cg_emitfile, ").typnum != momty_null)\n");
+    }
+  else
+    {
+      fprintf (cg->cg_emitfile, "    if (");
+      cgen_emit_expr_mom (cg, vcondexpr);
+      fprintf (cg->cg_emitfile, ")\n");
+    }
+  fprintf (cg->cg_emitfile, "      goto " BLOCK_LABEL_PREFIX_MOM "_%s;\n",
+	   mom_item_cstring (targetitm));
 }				/* end cgen_emit_if_statement_mom */
 
 
 static void
 cgen_emit_jump_statement_mom (struct codegen_mom_st *cg, unsigned insix,
-			      momitem_t *insitm)
+			      momitem_t *itmstmt)
 {
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
-  assert (insitm);
-  MOM_FATAPRINTF ("emit_jump_statement unimplemented insitm %s",
-		  mom_item_cstring (insitm));
-#warning cgen_emit_jump_statement_mom unimplemented
+  assert (itmstmt);
+  struct momcomponents_st *stmtcomps = itmstmt->itm_comps;
+  momitem_t *targetitm =
+    mom_value_to_item (mom_components_nth (stmtcomps, 1));
+  MOM_DEBUGPRINTF (gencod, "emit jump stmt %s targetitm %s",
+		   mom_item_cstring (itmstmt), mom_item_cstring (targetitm));
+  fprintf (cg->cg_emitfile, "// jump to %s\n", mom_item_cstring (targetitm));
+  fprintf (cg->cg_emitfile, "  goto " BLOCK_LABEL_PREFIX_MOM "_%s;\n",
+	   mom_item_cstring (targetitm));
 }				/* end cgen_emit_jump_statement_mom */
 
 
