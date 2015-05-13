@@ -764,6 +764,13 @@ cgen_type_of_scanned_expr_mom (struct codegen_mom_st *cg, momvalue_t vexpr)
     case momty_item:
       cgen_lock_item_mom (cg, vexpr.vitem);
       return cgen_type_of_scanned_item_mom (cg, vexpr.vitem);
+    case momty_node:
+      MOM_FATAPRINTF
+	("unimplemented scan of node %s in function %s block %s statement %s",
+	 mom_output_gcstring (vexpr), mom_item_cstring (cg->cg_curfunitm),
+	 mom_item_cstring (cg->cg_curblockitm),
+	 mom_item_cstring (cg->cg_curstmtitm));
+#warning should give type of scanned node
     }
   return NULL;
 }
@@ -2382,22 +2389,47 @@ cgen_emit_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
 }				/* end of cgen_emit_item_mom */
 
 
+static void cgen_emit_node_expr_mom (struct codegen_mom_st *cg,
+				     const momnode_t *nod);
 
 static void
 cgen_emit_expr_mom (struct codegen_mom_st *cg, momvalue_t vexpr)
 {
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
-  if (vexpr.typnum == momty_item)
+  switch (vexpr.typnum)
     {
+    case momty_item:
       cgen_emit_item_mom (cg, vexpr.vitem);
       return;
+    case momty_int:
+      fprintf (cg->cg_emitfile, "%lld", (long long) vexpr.vint);
+      return;
+    case momty_string:
+      fputs (" \"", cg->cg_emitfile);
+      mom_output_utf8cstr_cencoded (cg->cg_emitfile, vexpr.vstr->cstr,
+				    vexpr.vstr->slen);
+      fputs ("\"", cg->cg_emitfile);
+      return;
+    case momty_double:
+      fputs (mom_output_gcstring (vexpr), cg->cg_emitfile);
+      return;
+    case momty_node:
+      {
+	cgen_emit_node_expr_mom (cg, vexpr.vnode);
+	return;
+      }
     }
-#warning cgen_emit_expr_mom unimplemented
-  MOM_FATAPRINTF ("unimplemented cgen_emit_expr vexpr %s",
-		  mom_output_gcstring (vexpr));
 }				/* end of cgen_emit_expr_mom */
 
 
+static void
+cgen_emit_node_expr_mom (struct codegen_mom_st *cg, const momnode_t *nod)
+{
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  MOM_FATAPRINTF ("unimplemented emit of node %s",
+		  mom_output_gcstring (mom_nodev (nod)));
+#warning should scan node
+}				/* end of cgen_emit_node_expr_mom */
 
 static void
 cgen_emit_set_statement_mom (struct codegen_mom_st *cg, unsigned insix,
