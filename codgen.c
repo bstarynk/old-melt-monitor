@@ -2584,6 +2584,19 @@ cgen_emit_chunk_statement_mom (struct codegen_mom_st *cg, unsigned insix,
 	  break;
 	case momty_null:
 	  continue;
+	case momty_item:
+	  {
+	    const momitem_t *itm = vcomp.vitem;
+	    if (itm && itm->itm_kind == MOM_PREDEFINED_NAMED (c_block))
+	      {
+		fprintf (cg->cg_emitfile,
+			 " goto " BLOCK_LABEL_PREFIX_MOM "_%s;\n",
+			 mom_item_cstring (itm));
+	      }
+	    else
+	      cgen_emit_item_mom (cg, itm);
+	  }
+	  break;
 	default:
 	  cgen_emit_expr_mom (cg, vcomp);
 	  break;
