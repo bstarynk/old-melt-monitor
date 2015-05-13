@@ -85,6 +85,13 @@
 extern const char monimelt_timestamp[];
 extern const char monimelt_lastgitcommit[];
 
+// increasing array of primes and its size
+extern const int64_t mom_primes_tab[];
+extern const unsigned mom_primes_num;
+/// give a prime number above or below a given n, or else 0
+int64_t mom_prime_above (int64_t n);
+int64_t mom_prime_below (int64_t n);
+
 #define MOM_MAX_WORKERS 10
 #define MOM_MIN_WORKERS 2
 int mom_nb_workers;
