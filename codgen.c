@@ -2339,6 +2339,66 @@ cgen_emit_closeddecl_mom (struct codegen_mom_st *cg, unsigned closix,
 }				/* end of cgen_emit_closeddecl_mom */
 
 
+
+static void cgen_emit_item_mom (struct codegen_mom_st *cg, momitem_t *itm);
+static void cgen_emit_expr_mom (struct codegen_mom_st *cg, momvalue_t vexpr);
+
+
+static void
+cgen_emit_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
+{
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  assert (itm != NULL);
+  momvalue_t vbind = MOM_NONEV;
+  {
+    struct momentry_st *ent = mom_attributes_find_entry (cg->cg_funbind, itm);
+    if (ent)
+      vbind = ent->ent_val;
+  }
+  MOM_DEBUGPRINTF (gencod, "cgen_emit_item itm %s vbind %s",
+		   mom_item_cstring (itm), mom_output_gcstring (vbind));
+  const momnode_t *bindnod = mom_value_to_node (vbind);
+  assert (bindnod);
+  momitem_t *natitm = mom_node_conn (bindnod);
+  if (natitm == NULL)
+    MOM_FATAPRINTF ("corrupted item %s to emit vbind %s",
+		    mom_item_cstring (itm), mom_output_gcstring (vbind));
+  switch (mom_item_hash (natitm))
+    {
+    case MOM_PREDEFINED_NAMED_CASE (variable, natitm, otherwisenatlab):
+      {
+	intptr_t varrk = mom_value_to_int (mom_node_nth (bindnod, 1), -1);
+	assert (varrk >= 0);
+	fprintf (cg->cg_emitfile, VARIABLE_PREFIX_MOM "%d /*var:%s*/",
+		 (int) varrk, mom_item_cstring (itm));
+      }
+      break;
+    otherwisenatlab:
+    default:
+      MOM_FATAPRINTF ("emitted item %s has unexpected vbind %s",
+		      mom_item_cstring (itm), mom_output_gcstring (vbind));
+
+    };				/* end swith natitm */
+}				/* end of cgen_emit_item_mom */
+
+
+
+static void
+cgen_emit_expr_mom (struct codegen_mom_st *cg, momvalue_t vexpr)
+{
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  if (vexpr.typnum == momty_item)
+    {
+      cgen_emit_item_mom (cg, vexpr.vitem);
+      return;
+    }
+#warning cgen_emit_expr_mom unimplemented
+  MOM_FATAPRINTF ("unimplemented cgen_emit_expr vexpr %s",
+		  mom_output_gcstring (vexpr));
+}				/* end of cgen_emit_expr_mom */
+
+
+
 static void
 cgen_emit_set_statement_mom (struct codegen_mom_st *cg, unsigned insix,
 			     momitem_t *insitm);
@@ -2453,6 +2513,49 @@ cgen_emit_set_statement_mom (struct codegen_mom_st *cg, unsigned insix,
 		   mom_item_cstring (itmstmt), mom_item_cstring (itmlvar),
 		   mom_item_cstring (lvarctypitm),
 		   mom_output_gcstring (rexprv));
+  if (lvarctypitm == MOM_PREDEFINED_NAMED (locked_item))
+    {
+      fprintf (cg->cg_emitfile, "  { // locked set into %s\n",
+	       mom_item_cstring (itmlvar));
+      fprintf (cg->cg_emitfile, "  momlockeditem_t* momoldlocked_%s = ",
+	       mom_item_cstring (itmstmt));
+      cgen_emit_item_mom (cg, itmlvar);
+      fputs (";\n", cg->cg_emitfile);
+      fprintf (cg->cg_emitfile, "  momlockeditem_t* momnewlocked_%s = ",
+	       mom_item_cstring (itmstmt));
+      cgen_emit_expr_mom (cg, rexprv);
+      fputs (";\n", cg->cg_emitfile);
+      fprintf (cg->cg_emitfile,
+	       "  if (momoldlocked_%s != momnewlocked_%s) {\n",
+	       mom_item_cstring (itmstmt), mom_item_cstring (itmstmt));
+      fprintf (cg->cg_emitfile,
+	       "    if (momoldlocked_%s != NULL) mom_item_unlock (momoldlocked_%s);\n",
+	       mom_item_cstring (itmstmt), mom_item_cstring (itmstmt));
+      fprintf (cg->cg_emitfile,
+	       "    if (momnewlocked_%s != NULL) mom_item_lock (momnewlocked_%s);\n",
+	       mom_item_cstring (itmstmt), mom_item_cstring (itmstmt));
+      fprintf (cg->cg_emitfile, "  } // end lock test %s\n",
+	       mom_item_cstring (itmstmt));
+      fputs ("    ", cg->cg_emitfile);
+      cgen_emit_item_mom (cg, itmlvar);
+      fprintf (cg->cg_emitfile, " = momnewlocked_%s;\n",
+	       mom_item_cstring (itmstmt));
+      fprintf (cg->cg_emitfile, "  momoldlocked_%s = NULL;\n",
+	       mom_item_cstring (itmstmt));
+      fprintf (cg->cg_emitfile, "  momnewlocked_%s = NULL;\n",
+	       mom_item_cstring (itmstmt));
+      fprintf (cg->cg_emitfile, "  } // end locked set into %s\n",
+	       mom_item_cstring (itmlvar));
+    }
+  else
+    {
+      fprintf (cg->cg_emitfile, "// set into %s\n",
+	       mom_item_cstring (itmlvar));
+      cgen_emit_item_mom (cg, itmlvar);
+      fputs (" = ", cg->cg_emitfile);
+      cgen_emit_expr_mom (cg, rexprv);
+      fputs (";\n", cg->cg_emitfile);
+    }
   MOM_FATAPRINTF ("emit_set_statement unimplemented itmstmt %s",
 		  mom_item_cstring (itmstmt));
 #warning cgen_emit_set_statement_mom unimplemented
