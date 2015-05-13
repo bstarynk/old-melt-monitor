@@ -806,6 +806,24 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
   switch (mom_item_hash (itmop))
     {
       ////////////////
+    case MOM_PREDEFINED_NAMED_CASE (jump, itmop, otherwiseoplab):
+      {				/// jump <blockitm>
+	momitem_t *itmjump = NULL;
+	if (stmtlen != 2
+	    || !(itmjump =
+		 mom_value_to_item (mom_components_nth (stmtcomps, 1)))
+	    || itmjump->itm_kind != MOM_PREDEFINED_NAMED (c_block))
+	  CGEN_ERROR_RETURN_MOM (cg,
+				 "module item %s : function %s with block %s with bad jump statement %s",
+				 mom_item_cstring (cg->cg_moduleitm),
+				 mom_item_cstring (cg->cg_curfunitm),
+				 mom_item_cstring (cg->cg_curblockitm),
+				 mom_item_cstring (itmstmt));
+	cgen_lock_item_mom (cg, itmjump);
+	cgen_scan_block_first_mom (cg, itmjump);
+      }
+      break;
+      ////////////////
     case MOM_PREDEFINED_NAMED_CASE (set, itmop, otherwiseoplab):
       {				/// set <lvar> <rexpr>
 	momitem_t *itmlvar = NULL;
@@ -2315,6 +2333,38 @@ cgen_emit_closeddecl_mom (struct codegen_mom_st *cg, unsigned closix,
 
 
 static void
+cgen_emit_set_statement_mom (struct codegen_mom_st *cg, unsigned insix,
+			     momitem_t *insitm);
+
+static void
+cgen_emit_chunk_statement_mom (struct codegen_mom_st *cg, unsigned insix,
+			       momitem_t *insitm);
+
+static void
+cgen_emit_apply_statement_mom (struct codegen_mom_st *cg, unsigned insix,
+			       momitem_t *insitm);
+
+static void
+cgen_emit_if_statement_mom (struct codegen_mom_st *cg, unsigned insix,
+			    momitem_t *insitm);
+
+static void
+cgen_emit_jump_statement_mom (struct codegen_mom_st *cg, unsigned insix,
+			      momitem_t *insitm);
+
+static void
+cgen_emit_int_switch_statement_mom (struct codegen_mom_st *cg, unsigned insix,
+				    momitem_t *insitm);
+
+static void
+cgen_emit_item_switch_statement_mom (struct codegen_mom_st *cg,
+				     unsigned insix, momitem_t *insitm);
+
+static void
+cgen_emit_other_statement_mom (struct codegen_mom_st *cg, unsigned insix,
+			       momitem_t *insitm);
+
+static void
 cgen_emit_statement_mom (struct codegen_mom_st *cg, unsigned insix,
 			 momitem_t *insitm)
 {
@@ -2322,11 +2372,160 @@ cgen_emit_statement_mom (struct codegen_mom_st *cg, unsigned insix,
   MOM_DEBUGPRINTF (gencod,
 		   "emit_statement start insix#%u insitm %s",
 		   insix, mom_item_cstring (insitm));
-#warning cgen_emit_statement_mom unimplemented
-  fprintf (cg->cg_emitfile,
-	   "#warning unimplemented emission of statement %s #%d\n",
-	   mom_item_cstring (insitm), insix);
+  momitem_t *opitm =
+    mom_value_to_item (mom_unsync_item_get_nth_component (insitm, 0));
+  MOM_DEBUGPRINTF (gencod, "emit_statement insitm %s opitm %s",
+		   mom_item_cstring (insitm), mom_item_cstring (opitm));
+  assert (opitm != NULL);
+  switch (mom_item_hash (opitm))
+    {
+      ////////////////
+    case MOM_PREDEFINED_NAMED_CASE (set, opitm, otherwiseoplab):
+      {
+	cgen_emit_set_statement_mom (cg, insix, insitm);
+      }
+      break;
+      ////////////////
+    case MOM_PREDEFINED_NAMED_CASE (chunk, opitm, otherwiseoplab):
+      {
+	cgen_emit_chunk_statement_mom (cg, insix, insitm);
+      }
+      break;
+      ////////////////
+    case MOM_PREDEFINED_NAMED_CASE (apply, opitm, otherwiseoplab):
+      {
+	cgen_emit_apply_statement_mom (cg, insix, insitm);
+      }
+      break;
+      ////////////////
+      case MOM_PREDEFINED_NAMED_CASE (if, opitm, otherwiseoplab)
+    :
+	{
+	  cgen_emit_if_statement_mom (cg, insix, insitm);
+	}
+      break;
+      ////////////////
+    case MOM_PREDEFINED_NAMED_CASE (int_switch, opitm, otherwiseoplab):
+      {
+	cgen_emit_int_switch_statement_mom (cg, insix, insitm);
+      }
+      break;
+      ////////////////
+    case MOM_PREDEFINED_NAMED_CASE (item_switch, opitm, otherwiseoplab):
+      {
+	cgen_emit_item_switch_statement_mom (cg, insix, insitm);
+      }
+      break;
+      ////////////////
+    case MOM_PREDEFINED_NAMED_CASE (jump, opitm, otherwiseoplab):
+      {
+	cgen_emit_jump_statement_mom (cg, insix, insitm);
+      }
+      break;
+    default:
+    otherwiseoplab:
+      {
+	cgen_emit_other_statement_mom (cg, insix, insitm);
+      }
+    }
 }				/* end of cgen_emit_statement_mom */
+
+
+static void
+cgen_emit_set_statement_mom (struct codegen_mom_st *cg, unsigned insix,
+			     momitem_t *insitm)
+{
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  assert (insitm);
+  MOM_FATAPRINTF ("emit_set_statement unimplemented insitm %s",
+		  mom_item_cstring (insitm));
+#warning cgen_emit_set_statement_mom unimplemented
+}				/* end cgen_emit_set_statement_mom */
+
+
+static void
+cgen_emit_chunk_statement_mom (struct codegen_mom_st *cg, unsigned insix,
+			       momitem_t *insitm)
+{
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  assert (insitm);
+  MOM_FATAPRINTF ("emit_chunk_statement unimplemented insitm %s",
+		  mom_item_cstring (insitm));
+#warning cgen_emit_chunk_statement_mom unimplemented
+}				/* end cgen_emit_chunk_statement_mom */
+
+
+static void
+cgen_emit_apply_statement_mom (struct codegen_mom_st *cg, unsigned insix,
+			       momitem_t *insitm)
+{
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  assert (insitm);
+  MOM_FATAPRINTF ("emit_apply_statement unimplemented insitm %s",
+		  mom_item_cstring (insitm));
+#warning cgen_emit_apply_statement_mom unimplemented
+}				/* end cgen_emit_apply_statement_mom */
+
+
+static void
+cgen_emit_if_statement_mom (struct codegen_mom_st *cg, unsigned insix,
+			    momitem_t *insitm)
+{
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  assert (insitm);
+  MOM_FATAPRINTF ("emit_if_statement unimplemented insitm %s",
+		  mom_item_cstring (insitm));
+#warning cgen_emit_if_statement_mom unimplemented
+}				/* end cgen_emit_if_statement_mom */
+
+
+static void
+cgen_emit_jump_statement_mom (struct codegen_mom_st *cg, unsigned insix,
+			      momitem_t *insitm)
+{
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  assert (insitm);
+  MOM_FATAPRINTF ("emit_jump_statement unimplemented insitm %s",
+		  mom_item_cstring (insitm));
+#warning cgen_emit_jump_statement_mom unimplemented
+}				/* end cgen_emit_jump_statement_mom */
+
+
+static void
+cgen_emit_int_switch_statement_mom (struct codegen_mom_st *cg, unsigned insix,
+				    momitem_t *insitm)
+{
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  assert (insitm);
+  MOM_FATAPRINTF ("emit_int_switch_statement unimplemented insitm %s",
+		  mom_item_cstring (insitm));
+#warning cgen_emit_int_switch_statement_mom unimplemented
+}				/* end cgen_emit_int_switch_statement_mom */
+
+
+static void
+cgen_emit_item_switch_statement_mom (struct codegen_mom_st *cg,
+				     unsigned insix, momitem_t *insitm)
+{
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  assert (insitm);
+  MOM_FATAPRINTF ("emit_item_switch_statement unimplemented insitm %s",
+		  mom_item_cstring (insitm));
+#warning cgen_emit_item_switch_statement_mom unimplemented
+}				/* end cgen_emit_item_switch_statement_mom */
+
+static void
+cgen_emit_other_statement_mom (struct codegen_mom_st *cg, unsigned insix,
+			       momitem_t *insitm)
+{
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  assert (insitm);
+  MOM_FATAPRINTF ("emit_item_other_statement unimplemented insitm %s",
+		  mom_item_cstring (insitm));
+#warning cgen_emit_other_statement_mom unimplemented
+}				/* end cgen_emit_other_statement_mom */
+
+
 
 static void
 cgen_third_decorating_pass_mom (momitem_t *itmcgen)
