@@ -2689,7 +2689,6 @@ cgen_emit_if_statement_mom (struct codegen_mom_st *cg, unsigned insix,
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   assert (itmstmt);
   struct momcomponents_st *stmtcomps = itmstmt->itm_comps;
-  unsigned inslen = mom_components_count (stmtcomps);
   momvalue_t vcondexpr = mom_components_nth (stmtcomps, 1);
   momitem_t *targetitm =
     mom_value_to_item (mom_components_nth (stmtcomps, 2));
@@ -2738,13 +2737,42 @@ cgen_emit_jump_statement_mom (struct codegen_mom_st *cg, unsigned insix,
 
 static void
 cgen_emit_int_switch_statement_mom (struct codegen_mom_st *cg, unsigned insix,
-				    momitem_t *insitm)
-{
+				    momitem_t *itmstmt)
+{				// int_switch <expr> <case....>
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
-  assert (insitm);
-  MOM_FATAPRINTF ("emit_int_switch_statement unimplemented insitm %s",
-		  mom_item_cstring (insitm));
-#warning cgen_emit_int_switch_statement_mom unimplemented
+  assert (itmstmt);
+  struct momcomponents_st *stmtcomps = itmstmt->itm_comps;
+  unsigned stmtlen = mom_components_count (stmtcomps);
+  momvalue_t vexpr = mom_components_nth (stmtcomps, 1);
+  MOM_DEBUGPRINTF (gencod, "emit int_switch stmt %s with %d cases vexpr %s",
+		   mom_item_cstring (itmstmt),
+		   stmtlen - 2, mom_output_gcstring (vexpr));
+  fprintf (cg->cg_emitfile, "// int_switch with %d cases\n", stmtlen - 2);
+  fputs ("   switch (", cg->cg_emitfile);
+  cgen_emit_expr_mom (cg, vexpr);
+  fputs (") {\n", cg->cg_emitfile);
+  for (unsigned caseix = 2; caseix < stmtlen; caseix)
+    {
+      momvalue_t vcase = mom_components_nth (stmtcomps, caseix);
+      MOM_DEBUGPRINTF (gencod, "emit int_switch stmt %s caseix %d vcase %s",
+		       mom_item_cstring (itmstmt),
+		       caseix, mom_output_gcstring (vcase));
+      const momnode_t *casnod = mom_value_to_node (vcase);
+      assert (casnod && mom_node_arity (casnod) == 2);
+      assert (mom_node_conn (casnod) == MOM_PREDEFINED_NAMED (case));
+      const momvalue_t vcasnum = mom_node_nth (casnod, 0);
+      const momvalue_t vcasblock = mom_node_nth (casnod, 1);
+      assert (vcasnum.typnum == momty_int);
+      assert (vcasblock.typnum == momty_item);
+      intptr_t num = mom_value_to_int (vcasnum, -1);
+      momitem_t *blockitm = mom_value_to_item (vcasblock);
+      fprintf (cg->cg_emitfile,
+	       "    case %lld: goto " BLOCK_LABEL_PREFIX_MOM "_%s;\n",
+	       (long long) num, mom_item_cstring (blockitm));
+    }
+  fprintf (cg->cg_emitfile, "    default: break;\n");
+  fprintf (cg->cg_emitfile, "  } // end case int_switch %s\n",
+	   mom_item_cstring (itmstmt));
 }				/* end cgen_emit_int_switch_statement_mom */
 
 
