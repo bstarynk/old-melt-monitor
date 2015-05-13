@@ -768,6 +768,9 @@ cgen_type_of_scanned_expr_mom (struct codegen_mom_st *cg, momvalue_t vexpr)
   return NULL;
 }
 
+
+
+////////////////
 static void
 cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 {
@@ -889,10 +892,10 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 				 mom_item_cstring (cg->cg_curblockitm),
 				 mom_item_cstring (itmstmt),
 				 mom_output_gcstring (rexprv));
-	if (lvarctypitm == rexpctypitm)
-	  break;
 	if (cg->cg_errormsg)
 	  return;
+	if (lvarctypitm == rexpctypitm)
+	  break;
 	if ((lvarctypitm == MOM_PREDEFINED_NAMED (item)
 	     || lvarctypitm == MOM_PREDEFINED_NAMED (locked_item))
 	    && (rexpctypitm == MOM_PREDEFINED_NAMED (item)
@@ -1952,6 +1955,9 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
        mom_item_cstring (funsigitm), mom_item_cstring (funbindingsitm),
        mom_item_cstring (itmmod));
   cg->cg_funinfonod = (momnode_t *) funinfonod;
+  if (funbindingsitm
+      && funbindingsitm->itm_kind == MOM_PREDEFINED_NAMED (association))
+    cg->cg_funbind = (struct momattributes_st *) funbindingsitm->itm_data1;
   MOM_DEBUGPRINTF (gencod,
 		   "emit_function_code curfunitm %s funsigitm %s funblocksitm %s funbindingsitm %s funstartitm %s",
 		   mom_item_cstring (curfunitm),
@@ -2124,6 +2130,7 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
 		   funix, mom_item_cstring (itmmod),
 		   mom_item_cstring (curfunitm));
   cg->cg_funinfonod = NULL;
+  cg->cg_funbind = NULL;
 }				/* end cgen_emit_function_code_mom */
 
 
@@ -2433,12 +2440,21 @@ cgen_emit_statement_mom (struct codegen_mom_st *cg, unsigned insix,
 
 static void
 cgen_emit_set_statement_mom (struct codegen_mom_st *cg, unsigned insix,
-			     momitem_t *insitm)
+			     momitem_t *itmstmt)
 {
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
-  assert (insitm);
-  MOM_FATAPRINTF ("emit_set_statement unimplemented insitm %s",
-		  mom_item_cstring (insitm));
+  assert (itmstmt);
+  struct momcomponents_st *stmtcomps = itmstmt->itm_comps;
+  momitem_t *itmlvar = mom_value_to_item (mom_components_nth (stmtcomps, 1));
+  momitem_t *lvarctypitm = cgen_type_of_scanned_item_mom (cg, itmlvar);
+  momvalue_t rexprv = mom_components_nth (stmtcomps, 2);
+  MOM_DEBUGPRINTF (gencod,
+		   "emit set stmt %s itmlvar %s lvarctypitm %s rexprv %s",
+		   mom_item_cstring (itmstmt), mom_item_cstring (itmlvar),
+		   mom_item_cstring (lvarctypitm),
+		   mom_output_gcstring (rexprv));
+  MOM_FATAPRINTF ("emit_set_statement unimplemented itmstmt %s",
+		  mom_item_cstring (itmstmt));
 #warning cgen_emit_set_statement_mom unimplemented
 }				/* end cgen_emit_set_statement_mom */
 
