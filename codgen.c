@@ -2126,6 +2126,22 @@ cgen_emit_block_mom (struct codegen_mom_st *cg, unsigned bix,
 		   mom_item_cstring (itmmod),
 		   mom_item_cstring (curfunitm),
 		   bix, mom_item_cstring (blockitm));
+  momitem_t *binditm =
+    mom_value_to_item (mom_node_nth (cg->cg_funinfonod, funinfo_bindings));
+  assert (binditm && binditm->itm_kind == MOM_PREDEFINED_NAMED (association));
+  momvalue_t vbindblock = MOM_NONEV;
+  if (binditm && binditm->itm_kind == MOM_PREDEFINED_NAMED (association))
+    {
+      struct momentry_st *ent =
+	mom_attributes_find_entry ((struct momattributes_st *)
+				   binditm->itm_data1, blockitm);
+      if (ent)
+	vbindblock = ent->ent_val;
+    };
+  MOM_DEBUGPRINTF (gencod,
+		   "emit_block blockitm %s vbindblock %s",
+		   mom_item_cstring (blockitm),
+		   mom_output_gcstring (vbindblock));
   fprintf (cg->cg_emitfile, " " BLOCK_LABEL_PREFIX_MOM "_%s: {\n",
 	   mom_item_cstring (blockitm));
   unsigned nbinstr = mom_components_count (blockitm->itm_comps);
