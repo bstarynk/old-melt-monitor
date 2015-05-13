@@ -2566,12 +2566,12 @@ cgen_emit_chunk_statement_mom (struct codegen_mom_st *cg, unsigned insix,
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   assert (itmstmt);
   struct momcomponents_st *stmtcomps = itmstmt->itm_comps;
-  unsigned inslen = mom_components_count (stmtcomps);
+  unsigned stmtlen = mom_components_count (stmtcomps);
   MOM_DEBUGPRINTF (gencod,
 		   "emit chunk stmt %s of %u components",
-		   mom_item_cstring (itmstmt), inslen);
-  fprintf (cg->cg_emitfile, "  // chunk of %d components\n", inslen);
-  for (unsigned ix = 1; ix < inslen; ix++)
+		   mom_item_cstring (itmstmt), stmtlen);
+  fprintf (cg->cg_emitfile, "  // chunk of %d components\n", stmtlen);
+  for (unsigned ix = 1; ix < stmtlen; ix++)
     {
       momvalue_t vcomp = mom_components_nth (stmtcomps, ix);
       switch (vcomp.typnum)
@@ -2595,13 +2595,77 @@ cgen_emit_chunk_statement_mom (struct codegen_mom_st *cg, unsigned insix,
 
 static void
 cgen_emit_apply_statement_mom (struct codegen_mom_st *cg, unsigned insix,
-			       momitem_t *insitm)
-{
+			       momitem_t *itmstmt)
+{				/// apply <signature> <results...> <fun> <args...> [<else-block>]
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
-  assert (insitm);
-  MOM_FATAPRINTF ("emit_apply_statement unimplemented insitm %s",
-		  mom_item_cstring (insitm));
-#warning cgen_emit_apply_statement_mom unimplemented
+  assert (itmstmt);
+  struct momcomponents_st *stmtcomps = itmstmt->itm_comps;
+  unsigned stmtlen = mom_components_count (stmtcomps);
+  momitem_t *itmsig = mom_value_to_item (mom_components_nth (stmtcomps, 1));
+  assert (itmsig);
+  const momvalue_t vinputy =	//
+    mom_item_unsync_get_attribute (itmsig,
+				   MOM_PREDEFINED_NAMED (input_types));
+  momvalue_t voutputy =		//
+    mom_item_unsync_get_attribute (itmsig,
+				   MOM_PREDEFINED_NAMED (output_types));
+  momvalue_t vradix =		//
+    mom_item_unsync_get_attribute (itmsig,
+				   MOM_PREDEFINED_NAMED (c_function_radix));
+
+  MOM_DEBUGPRINTF (gencod,
+		   "emit apply stmt %s sig %s vinputy %s voutputy %s vradix %s",
+		   mom_item_cstring (itmstmt), mom_item_cstring (itmsig),
+		   mom_output_gcstring (vinputy),
+		   mom_output_gcstring (voutputy),
+		   mom_output_gcstring (vradix));
+  unsigned nbinargs = mom_seq_length (mom_value_to_tuple (vinputy));
+  unsigned nboutres = mom_seq_length (mom_value_to_tuple (voutputy));
+  const momstring_t *radixstr = mom_value_to_string (vradix);
+  fprintf (cg->cg_emitfile,
+	   "// apply with %d input arguments and %d output results, radix %s\n",
+	   nbinargs, nboutres, mom_string_cstr (radixstr));
+  momvalue_t vfunexpr = mom_components_nth (stmtcomps, 2 + nboutres);
+  MOM_DEBUGPRINTF (gencod, "emit apply stmt %s vfunexpr %s",
+		   mom_item_cstring (itmstmt),
+		   mom_output_gcstring (vfunexpr));
+  fprintf (cg->cg_emitfile,
+	   "   if (!mom_applval_%s (", mom_string_cstr (radixstr));
+  cgen_emit_expr_mom (cg, vfunexpr);
+  for (unsigned argix = 0; argix < nbinargs; argix++)
+    {
+      momvalue_t vargexp =
+	mom_components_nth (stmtcomps, 2 + nboutres + argix);
+      MOM_DEBUGPRINTF (gencod, "emit apply stmt %s argix#%d vargexp %s",
+		       mom_item_cstring (itmstmt), argix,
+		       mom_output_gcstring (vargexp));
+      fputs (", ", cg->cg_emitfile);
+      cgen_emit_expr_mom (cg, vargexp);
+    };
+  for (unsigned resix = 0; resix < nboutres; resix++)
+    {
+      momitem_t *curesitm =
+	mom_value_to_item (mom_components_nth (stmtcomps, 2 + resix));
+      MOM_DEBUGPRINTF (gencod, "emit apply stmt %s resix#%d curesitm %s",
+		       mom_item_cstring (itmstmt), resix,
+		       mom_item_cstring (curesitm));
+      fputs (", &(", cg->cg_emitfile);
+      cgen_emit_item_mom (cg, curesitm);
+      fputs (")", cg->cg_emitfile);
+    };
+  fputs (")\n", cg->cg_emitfile);
+  momitem_t *elseitm = NULL;
+  if (stmtlen > 2 + nbinargs + nboutres)
+    elseitm =
+      mom_value_to_item (mom_components_nth
+			 (stmtcomps, 2 + nbinargs + nboutres));
+  MOM_DEBUGPRINTF (gencod, "emit apply stmt %s elseitm %s",
+		   mom_item_cstring (itmstmt), mom_item_cstring (elseitm));
+  if (elseitm)
+    fprintf (cg->cg_emitfile, "    goto " BLOCK_LABEL_PREFIX_MOM "_%s;\n",
+	     mom_item_cstring (elseitm));
+  else
+    fputs ("     return false;\n", cg->cg_emitfile);
 }				/* end cgen_emit_apply_statement_mom */
 
 
