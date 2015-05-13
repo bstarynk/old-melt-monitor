@@ -2775,6 +2775,31 @@ cgen_emit_int_switch_statement_mom (struct codegen_mom_st *cg, unsigned insix,
 	   mom_item_cstring (itmstmt));
 }				/* end cgen_emit_int_switch_statement_mom */
 
+struct itemswent_mom_st
+{
+  const momitem_t *isw_item;
+  const momitem_t *isw_block;
+};
+
+int
+itemswent_cmp_mom (const void *p1, const void *p2, void *data)
+{
+  unsigned prim = *(unsigned *) data;
+  const struct itemswent_mom_st *e1 = (const struct itemswent_mom_st *) p1;
+  const struct itemswent_mom_st *e2 = (const struct itemswent_mom_st *) p2;
+  const momitem_t *itm1 = e1->isw_item;
+  const momitem_t *itm2 = e2->isw_item;
+  momhash_t h1 = mom_item_hash (itm1);
+  momhash_t h2 = mom_item_hash (itm2);
+  unsigned q1 = h1 / prim;
+  unsigned q2 = h2 / prim;
+  if (q1 == q2)
+    return strcmp (itm1->itm_str->cstr, itm2->itm_str->cstr);
+  else if (q1 < q2)
+    return -1;
+  else
+    return 1;
+}
 
 static void
 cgen_emit_item_switch_statement_mom (struct codegen_mom_st *cg,
@@ -2785,6 +2810,10 @@ cgen_emit_item_switch_statement_mom (struct codegen_mom_st *cg,
   struct momcomponents_st *stmtcomps = itmstmt->itm_comps;
   unsigned stmtlen = mom_components_count (stmtcomps);
   momvalue_t vexpr = mom_components_nth (stmtcomps, 1);
+  assert (stmtlen < MOM_MAX_SEQ_LENGTH / 2);
+  struct itemswent_mom_st *swentarr =	//
+    MOM_GC_ALLOC ("swentarr",
+		  (stmtlen + 1) * sizeof (struct itemswent_mom_st));
   MOM_DEBUGPRINTF (gencod, "emit item_switch stmt %s with %d cases vexpr %s",
 		   mom_item_cstring (itmstmt),
 		   stmtlen - 2, mom_output_gcstring (vexpr));
@@ -2806,7 +2835,17 @@ cgen_emit_item_switch_statement_mom (struct codegen_mom_st *cg,
       momitem_t *blockitm = mom_value_to_item (vcasblock);
       assert (casitm);
       assert (blockitm);
+      swentarr[caseix - 2].isw_item = casitm;
+      swentarr[caseix - 2].isw_block = blockitm;
     }
+  unsigned prim = (unsigned) mom_prime_above (3 * stmtlen + 2);
+  assert (prim > 2);
+  qsort_r (swentarr, stmtlen - 2, sizeof (struct itemswent_mom_st),
+	   itemswent_cmp_mom, &prim);
+#warning should emit the code in cgen_emit_item_switch_statement_mom
+  MOM_FATAPRINTF
+    ("cgen_emit_item_switch_statement_mom unimplemented itmstmt %s",
+     mom_item_cstring (itmstmt));
 }				/* end cgen_emit_item_switch_statement_mom */
 
 static void
