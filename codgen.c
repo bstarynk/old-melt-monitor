@@ -2564,13 +2564,32 @@ cgen_emit_set_statement_mom (struct codegen_mom_st *cg, unsigned insix,
 
 static void
 cgen_emit_chunk_statement_mom (struct codegen_mom_st *cg, unsigned insix,
-			       momitem_t *insitm)
+			       momitem_t *itmstmt)
 {
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
-  assert (insitm);
-  MOM_FATAPRINTF ("emit_chunk_statement unimplemented insitm %s",
-		  mom_item_cstring (insitm));
-#warning cgen_emit_chunk_statement_mom unimplemented
+  assert (itmstmt);
+  struct momcomponents_st *stmtcomps = itmstmt->itm_comps;
+  unsigned inslen = mom_components_count (stmtcomps);
+  fprintf (cg->cg_emitfile, "  // chunk of %d components\n", inslen);
+  for (unsigned ix = 1; ix < inslen; ix++)
+    {
+      momvalue_t vcomp = mom_components_nth (stmtcomps, ix);
+      switch (vcomp.typnum)
+	{
+	case momty_string:
+	  fputs (vcomp.vstr->cstr, cg->cg_emitfile);
+	  break;
+	case momty_int:
+	  fprintf (cg->cg_emitfile, "%lld", (long long) vcomp.vint);
+	  break;
+	case momty_null:
+	  continue;
+	default:
+	  cgen_emit_expr_mom (cg, vcomp);
+	  break;
+	}
+    }
+  fputs (" ;\n", cg->cg_emitfile);
 }				/* end cgen_emit_chunk_statement_mom */
 
 
