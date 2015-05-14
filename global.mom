@@ -206,6 +206,13 @@
 ..
 
 
+** fail   ////// PREDEFINED
+{
+  * comment  "opcode to return with failure" }
+ 
+..
+
+
 ** filler_of_association   ////// PREDEFINED
 {
   * comment  "filler routine for association items" }
@@ -596,6 +603,13 @@
 ** statement_scanner   ////// PREDEFINED
 {
   * comment  "attribute giving the scanning closure in code operations" }
+ 
+..
+
+
+** success   ////// PREDEFINED
+{
+  * comment  "opcode to return successfully" }
  
 ..
 
