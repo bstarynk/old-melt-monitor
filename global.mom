@@ -497,6 +497,19 @@
 ..
 
 
+** signature_1itm1val_to_void   ////// PREDEFINED
+{
+  * comment  "signature of functions taking one item, one value and giving no results"
+  * dumped_item_emitter  ^emitter_of_function()
+  * function_radix  "1itm1val_to_void"
+  * input_types  [item value]
+  * output_types  [] }
+ 
+  %  ^filler_of_plain_kind( function_signature)
+ 
+..
+
+
 ** signature_1itm_to_val   ////// PREDEFINED
 {
   * comment  "signature for function of 1 item argument and 1 value result"

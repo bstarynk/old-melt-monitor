@@ -2607,12 +2607,15 @@ cgen_emit_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
 
 
 static void cgen_emit_node_expr_mom (struct codegen_mom_st *cg,
-				     const momnode_t *nod);
+				     const momvalue_t vnodexpr);
 
 static void
 cgen_emit_expr_mom (struct codegen_mom_st *cg, momvalue_t vexpr)
 {
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  MOM_DEBUGPRINTF (gencod, "cgen_emit_expr stmt %s vexpr %s",
+		   mom_item_cstring (cg->cg_curstmtitm),
+		   mom_output_gcstring (vexpr));
   switch (vexpr.typnum)
     {
     case momty_item:
@@ -2632,7 +2635,7 @@ cgen_emit_expr_mom (struct codegen_mom_st *cg, momvalue_t vexpr)
       return;
     case momty_node:
       {
-	cgen_emit_node_expr_mom (cg, vexpr.vnode);
+	cgen_emit_node_expr_mom (cg, vexpr);
 	return;
       }
     }
@@ -2640,13 +2643,44 @@ cgen_emit_expr_mom (struct codegen_mom_st *cg, momvalue_t vexpr)
 
 
 static void
-cgen_emit_node_expr_mom (struct codegen_mom_st *cg, const momnode_t *nod)
+cgen_emit_node_expr_mom (struct codegen_mom_st *cg, const momvalue_t vnodexpr)
 {
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
-  MOM_FATAPRINTF ("unimplemented emit of node %s",
-		  mom_output_gcstring (mom_nodev (nod)));
-#warning should scan node
+  const momnode_t *nod = mom_value_to_node (vnodexpr);
+  assert (nod != NULL);
+  momitem_t *connitm = mom_node_conn (nod);
+  assert (connitm);
+  assert (mom_hashset_contains (cg->cg_lockeditemset, connitm));
+  momvalue_t vcodemit = mom_item_unsync_get_attribute (connitm,
+						       MOM_PREDEFINED_NAMED
+						       (code_emitter));
+  assert (vcodemit.typnum == momty_node);
+  MOM_DEBUGPRINTF (gencod,
+		   "cgen_emit_node_expr stmt %s vnodexpr %s vcodemit %s",
+		   mom_item_cstring (cg->cg_curstmtitm),
+		   mom_output_gcstring (vnodexpr),
+		   mom_output_gcstring (vcodemit));
+  // apply vcodemit to cgitem, vnodexpr
+  if (!mom_applval_1itm1val_to_void (vcodemit, cg->cg_codgenitm, vnodexpr)
+      || cg->cg_errormsg)
+    {
+      if (cg->cg_errormsg)
+	return;
+      CGEN_ERROR_RESULT_MOM (cg, NULL,
+			     "module item %s : function %s has block %s with expression %s with connective %s failing to emit",
+			     mom_item_cstring (cg->cg_moduleitm),
+			     mom_item_cstring (cg->cg_curfunitm),
+			     mom_item_cstring (cg->cg_curblockitm),
+			     mom_output_gcstring (vnodexpr),
+			     mom_item_cstring (connitm));
+    }
+  MOM_DEBUGPRINTF (gencod,
+		   "cgen_emit_node_expr done stmt %s vnodexpr %s vcodemit %s",
+		   mom_item_cstring (cg->cg_curstmtitm),
+		   mom_output_gcstring (vnodexpr),
+		   mom_output_gcstring (vcodemit));
 }				/* end of cgen_emit_node_expr_mom */
+
 
 static void
 cgen_emit_set_statement_mom (struct codegen_mom_st *cg, unsigned insix,
