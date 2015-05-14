@@ -3353,6 +3353,7 @@ bool momfunc_1itm1val_to_item_plain_code_type_scanner
   momnode_t *nod = mom_value_to_node (vexpr);
   if (!nod || itmcodgen->itm_kind != MOM_PREDEFINED_NAMED (code_generation))
     return false;
+  unsigned arity = mom_node_arity (nod);
   struct codegen_mom_st *cg = (struct codegen_mom_st *) itmcodgen->itm_data1;
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   momitem_t *itmconn = mom_node_conn (nod);
@@ -3363,22 +3364,91 @@ bool momfunc_1itm1val_to_item_plain_code_type_scanner
   momvalue_t vformals =		//
     mom_item_unsync_get_attribute (itmconn,
 				   MOM_PREDEFINED_NAMED (formals));
-  if (vcodexp.typnum != momty_node || vformals.typnum != momty_tuple)
+  momitem_t *conntypitm =
+    mom_value_to_item (mom_item_unsync_get_attribute (itmconn,
+						      MOM_PREDEFINED_NAMED
+						      (type)));
+  MOM_DEBUGPRINTF (gencod,
+		   "plain_code_type_scanner itmconn %s vcodexp %s vformals %s conntypitm %s",
+		   mom_item_cstring (itmconn), mom_output_gcstring (vcodexp),
+		   mom_output_gcstring (vformals),
+		   mom_item_cstring (conntypitm));
+  if (vcodexp.typnum != momty_node || vformals.typnum != momty_tuple
+      || !conntypitm)
     {
       CGEN_ERROR_RESULT_MOM (cg, false,
 			     "plain_code_type_scanner:: module item %s : function %s has block %s"
-			     " with statement %s with bad plain vexpr %s",
+			     " with statement %s with bad connective %s in plain vexpr %s",
 			     mom_item_cstring (cg->cg_moduleitm),
 			     mom_item_cstring (cg->cg_curfunitm),
 			     mom_item_cstring (cg->cg_curblockitm),
 			     mom_item_cstring (cg->cg_curstmtitm),
+			     mom_item_cstring (itmconn),
 			     mom_output_gcstring (vexpr));
     }
   const momseq_t *tupformals = mom_value_to_tuple (vformals);
+  unsigned nbformals = mom_seq_length (tupformals);
+  if (nbformals > arity)
+    {
+      CGEN_ERROR_RESULT_MOM (cg, false,
+			     "plain_code_type_scanner:: module item %s : function %s has block %s"
+			     " with statement %s with expr %s shorter than %d formals",
+			     mom_item_cstring (cg->cg_moduleitm),
+			     mom_item_cstring (cg->cg_curfunitm),
+			     mom_item_cstring (cg->cg_curblockitm),
+			     mom_item_cstring (cg->cg_curstmtitm),
+			     mom_output_gcstring (vexpr), nbformals);
+    }
+  for (unsigned formix = 0; formix < nbformals && !cg->cg_errormsg; formix)
+    {
+      momitem_t *curformitm = mom_seq_nth (tupformals, formix);
+      momvalue_t vsubexpr = mom_node_nth (nod, formix);
+      cgen_lock_item_mom (cg, curformitm);
+      momitem_t *curtypitm =
+	mom_value_to_item (mom_item_unsync_get_attribute (curformitm,
+							  MOM_PREDEFINED_NAMED
+							  (type)));
+      MOM_DEBUGPRINTF (gencod,
+		       "plain_code_type_scanner formix#%d curformitm %s curtypitm %s vsubexpr %s",
+		       formix, mom_item_cstring (curformitm),
+		       mom_item_cstring (curtypitm),
+		       mom_output_gcstring (vsubexpr));
+      if (!curtypitm || curtypitm->itm_kind != MOM_PREDEFINED_NAMED (type))
+	CGEN_ERROR_RESULT_MOM (cg, false,
+			       "plain_code_type_scanner:: module item %s : function %s has block %s"
+			       " with statement %s with expr %s formal (#%d) %s untyped",
+			       mom_item_cstring (cg->cg_moduleitm),
+			       mom_item_cstring (cg->cg_curfunitm),
+			       mom_item_cstring (cg->cg_curblockitm),
+			       mom_item_cstring (cg->cg_curstmtitm),
+			       mom_output_gcstring (vexpr), formix,
+			       mom_item_cstring (curformitm));
+      momitem_t *subtypitm = cgen_type_of_scanned_expr_mom (cg, vsubexpr);
+      MOM_DEBUGPRINTF (gencod,
+		       "plain_code_type_scanner formix#%d vsubexpr %s subtypitm %s curtypitm %s curformitm %s",
+		       formix, mom_output_gcstring (vexpr),
+		       mom_item_cstring (subtypitm),
+		       mom_item_cstring (curtypitm),
+		       mom_item_cstring (curformitm));
+      if (curtypitm != subtypitm)
+	CGEN_ERROR_RESULT_MOM (cg, false,
+			       "plain_code_type_scanner:: module item %s : function %s has block %s"
+			       " with statement %s with expr %s formal (#%d) %s mistyped, subexpr %s has type %s expecting %s",
+			       mom_item_cstring (cg->cg_moduleitm),
+			       mom_item_cstring (cg->cg_curfunitm),
+			       mom_item_cstring (cg->cg_curblockitm),
+			       mom_item_cstring (cg->cg_curstmtitm),
+			       mom_output_gcstring (vexpr), formix,
+			       mom_item_cstring (curformitm),
+			       mom_output_gcstring (vsubexpr),
+			       mom_item_cstring (subtypitm),
+			       mom_item_cstring (curtypitm));
+    }
+
   MOM_FATAPRINTF
     ("unimplemented plain_code_type_scanner itmcodgen=%s vexpr=%s",
      mom_item_cstring (itmcodgen), mom_output_gcstring (vexpr));
-#warning unimplemented plain_code_type_scanner
+#warning unimplemented plain_code_type_scanner, should hande variadic...
 }				/* end of momfunc_1itm1val_to_item_plain_code_type_scanner */
 
 
