@@ -786,7 +786,7 @@ cgen_type_of_scanned_nodexpr_mom (struct codegen_mom_st *cg,
   MOM_DEBUGPRINTF (gencod, "start cgen_type_of_scanned_nodexpr_mom vnode %s",
 		   mom_output_gcstring (vnodexpr));
   assert (nod != NULL);
-  const momitem_t *connitm = mom_node_conn (nod);
+  momitem_t *connitm = mom_node_conn (nod);
   cgen_lock_item_mom (cg, connitm);
   momvalue_t vtypscan = mom_item_unsync_get_attribute (connitm,
 						       MOM_PREDEFINED_NAMED
@@ -832,7 +832,8 @@ cgen_type_of_scanned_nodexpr_mom (struct codegen_mom_st *cg,
   MOM_DEBUGPRINTF (gencod,
 		   "type_of_scanned_nodexpr blockitm %s connitm %s vnodexpr %s gives type %s",
 		   mom_item_cstring (cg->cg_curblockitm),
-		   mom_output_gcstring (vnodexpr), mom_item_cstring (itmtyp));
+		   mom_item_cstring (connitm), mom_output_gcstring (vnodexpr),
+		   mom_item_cstring (itmtyp));
   return itmtyp;
 }				/* end of cgen_type_of_scanned_nodexpr_mom */
 
@@ -2342,7 +2343,7 @@ cgen_emit_block_mom (struct codegen_mom_st *cg, unsigned bix,
 		   mom_item_cstring (blockitm), nbinstr);
   for (unsigned insix = 0; insix < nbinstr; insix++)
     {
-      momitem_t *insitm = mom_seq_nth (tupblock, insix);
+      momitem_t *insitm = (momitem_t *) mom_seq_nth (tupblock, insix);
       MOM_DEBUGPRINTF (gencod, "emit_block blockitm %s insix#%d insitm %s",
 		       mom_item_cstring (blockitm), insix,
 		       mom_item_cstring (insitm));
@@ -2666,7 +2667,7 @@ cgen_emit_node_expr_mom (struct codegen_mom_st *cg, const momvalue_t vnodexpr)
     {
       if (cg->cg_errormsg)
 	return;
-      CGEN_ERROR_RESULT_MOM (cg, NULL,
+      CGEN_ERROR_RETURN_MOM (cg,
 			     "module item %s : function %s has block %s with expression %s with connective %s failing to emit",
 			     mom_item_cstring (cg->cg_moduleitm),
 			     mom_item_cstring (cg->cg_curfunitm),
@@ -2889,7 +2890,7 @@ cgen_emit_chunk_statement_mom (struct codegen_mom_st *cg, unsigned insix,
 	  continue;
 	case momty_item:
 	  {
-	    const momitem_t *itm = vcomp.vitem;
+	    momitem_t *itm = vcomp.vitem;
 	    if (itm && itm->itm_kind == MOM_PREDEFINED_NAMED (block))
 	      {
 		fprintf (cg->cg_emitfile,
@@ -3186,8 +3187,8 @@ cgen_emit_item_switch_statement_mom (struct codegen_mom_st *cg,
   int prevhmod = -1;
   for (unsigned ix = 0; ix < nbcases; ix++)
     {
-      momitem_t *casitm = swentarr[ix].isw_item;
-      momitem_t *blockitm = swentarr[ix].isw_block;
+      momitem_t *casitm = (momitem_t *) swentarr[ix].isw_item;
+      momitem_t *blockitm = (momitem_t *) swentarr[ix].isw_block;
       assert (casitm != NULL);
       assert (blockitm != NULL);
       int curhmod = mom_item_hash (casitm) % prim;
@@ -3339,5 +3340,35 @@ cgen_third_decorating_pass_mom (momitem_t *itmcgen)
   MOM_DEBUGPRINTF (gencod, "third_decorating_pass done itmmod %s",
 		   mom_item_cstring (itmmod));
 }				/* end cgen_third_decorating_pass_mom */
+
+
+bool momfunc_1itm1val_to_item_plain_code_type_scanner
+  (const momnode_t *clonode, momitem_t *itmcodgen, const momvalue_t vexpr,
+   momitem_t **resitm)
+{
+  MOM_DEBUGPRINTF (gencod,
+		   "plain_code_type_scanner start itmcodgen=%s vexpr=%s",
+		   mom_item_cstring (itmcodgen), mom_output_gcstring (vexpr));
+  momnode_t *nod = mom_value_to_node (vexpr);
+  assert (nod != NULL);
+  MOM_FATAPRINTF
+    ("unimplemented plain_code_type_scanner itmcodgen=%s vexpr=%s",
+     mom_item_cstring (itmcodgen), mom_output_gcstring (vexpr));
+#warning unimplemented plain_code_type_scanner
+}				/* end of momfunc_1itm1val_to_item_plain_code_type_scanner */
+
+
+bool momfunc_1itm1val_to_void_plain_code_emitter
+  (const momnode_t *clonode, momitem_t *itmcodgen, const momvalue_t vexpr)
+{
+  MOM_DEBUGPRINTF (gencod, "plain_code_emitter start itmcodgen=%s vexpr=%s",
+		   mom_item_cstring (itmcodgen), mom_output_gcstring (vexpr));
+  momnode_t *nod = mom_value_to_node (vexpr);
+  assert (nod != NULL);
+  MOM_FATAPRINTF ("unimplemented plain_code_emitter itmcodgen=%s vexpr=%s",
+		  mom_item_cstring (itmcodgen), mom_output_gcstring (vexpr));
+#warning unimplemented plain_code_emitter
+}				/* end of momfunc_1itm1val_to_void_plain_code_emitter */
+
 
 /// eof codgen.c

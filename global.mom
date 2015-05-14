@@ -442,6 +442,24 @@
 ..
 
 
+** plain_code_emitter
+{
+  * comment  "function to emit plain operator" }
+ 
+  %  ^filler_of_function( signature_1itm1val_to_void)
+ 
+..
+
+
+** plain_code_type_scanner
+{
+  * comment  "function to scan plain operator" }
+ 
+  %  ^filler_of_function( signature_1itm1val_to_item)
+ 
+..
+
+
 ** preparation   ////// PREDEFINED
 {
   * comment  "attribute giving the closure to prepare something, e.g. a code module"
@@ -657,7 +675,8 @@
 ** the_software   ////// PREDEFINED
 {
   * comment  "describes the entire software system" }
- [[  test_module  value_of_item ]]
+ [[  test_module  plain_code_type_scanner  plain_code_emitter  value_of_item
+ ]]
  
 ..
 
