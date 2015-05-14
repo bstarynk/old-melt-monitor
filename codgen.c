@@ -584,6 +584,9 @@ cmp_intptr_mom (const void *p1, const void *p2)
   return 0;
 }
 
+static momitem_t *cgen_type_of_scanned_nodexpr_mom (struct codegen_mom_st *cg,
+						    momvalue_t vnodexpr);
+
 static momitem_t *
 cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
 {
@@ -769,16 +772,69 @@ cgen_type_of_scanned_expr_mom (struct codegen_mom_st *cg, momvalue_t vexpr)
       cgen_lock_item_mom (cg, vexpr.vitem);
       return cgen_type_of_scanned_item_mom (cg, vexpr.vitem);
     case momty_node:
-      MOM_FATAPRINTF
-	("unimplemented scan of node %s in function %s block %s statement %s",
-	 mom_output_gcstring (vexpr), mom_item_cstring (cg->cg_curfunitm),
-	 mom_item_cstring (cg->cg_curblockitm),
-	 mom_item_cstring (cg->cg_curstmtitm));
-#warning should give type of scanned node
+      return cgen_type_of_scanned_nodexpr_mom (cg, vexpr);
     }
   return NULL;
 }
 
+static momitem_t *
+cgen_type_of_scanned_nodexpr_mom (struct codegen_mom_st *cg,
+				  const momvalue_t vnodexpr)
+{
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  const momnode_t *nod = mom_value_to_node (vnodexpr);
+  MOM_DEBUGPRINTF (gencod, "start cgen_type_of_scanned_nodexpr_mom vnode %s",
+		   mom_output_gcstring (vnodexpr));
+  assert (nod != NULL);
+  const momitem_t *connitm = mom_node_conn (nod);
+  cgen_lock_item_mom (cg, connitm);
+  momvalue_t vtypscan = mom_item_unsync_get_attribute (connitm,
+						       MOM_PREDEFINED_NAMED
+						       (code_type_scanner));
+  momvalue_t vcodemit = mom_item_unsync_get_attribute (connitm,
+						       MOM_PREDEFINED_NAMED
+						       (code_emitter));
+  MOM_DEBUGPRINTF (gencod,
+		   "start cgen_type_of_scanned_nodexpr_mom connitm %s vtypscan %s vcodemit %s",
+		   mom_item_cstring (connitm), mom_output_gcstring (vtypscan),
+		   mom_output_gcstring (vcodemit));
+  if (vtypscan.typnum != momty_node)
+    CGEN_ERROR_RESULT_MOM (cg, NULL,
+			   "module item %s : function %s has block %s with expression %s with connective %s with bad `code_type_scanner`",
+			   mom_item_cstring (cg->cg_moduleitm),
+			   mom_item_cstring (cg->cg_curfunitm),
+			   mom_item_cstring (cg->cg_curblockitm),
+			   mom_output_gcstring (vnodexpr),
+			   mom_item_cstring (connitm));
+  if (vcodemit.typnum != momty_node)
+    CGEN_ERROR_RESULT_MOM (cg, NULL,
+			   "module item %s : function %s has block %s with expression %s with connective %s with bad `code_emitter`",
+			   mom_item_cstring (cg->cg_moduleitm),
+			   mom_item_cstring (cg->cg_curfunitm),
+			   mom_item_cstring (cg->cg_curblockitm),
+			   mom_output_gcstring (vnodexpr),
+			   mom_item_cstring (connitm));
+  momitem_t *itmtyp = NULL;
+  // apply vtypscan to cgitem, vnodexpr
+  if (!mom_applval_1itm1val_to_item (vtypscan, cg->cg_codgenitm, vnodexpr,
+				     &itmtyp) || !itmtyp || cg->cg_errormsg)
+    {
+      if (cg->cg_errormsg)
+	return NULL;
+      CGEN_ERROR_RESULT_MOM (cg, NULL,
+			     "module item %s : function %s has block %s with expression %s with connective %s failing to type",
+			     mom_item_cstring (cg->cg_moduleitm),
+			     mom_item_cstring (cg->cg_curfunitm),
+			     mom_item_cstring (cg->cg_curblockitm),
+			     mom_output_gcstring (vnodexpr),
+			     mom_item_cstring (connitm));
+    }
+  MOM_DEBUGPRINTF (gencod,
+		   "type_of_scanned_nodexpr blockitm %s connitm %s vnodexpr %s gives type %s",
+		   mom_item_cstring (cg->cg_curblockitm),
+		   mom_output_gcstring (vnodexpr), mom_item_cstring (itmtyp));
+  return itmtyp;
+}				/* end of cgen_type_of_scanned_nodexpr_mom */
 
 
 ////////////////

@@ -72,6 +72,13 @@
 ..
 
 
+** code_emitter   ////// PREDEFINED
+{
+  * comment  "gives the closure to emit code" }
+ 
+..
+
+
 ** code_generation   ////// PREDEFINED
 {
   * comment  "kind of transient items for code generation" }
@@ -99,6 +106,13 @@
 {
   * comment  "kind of each instruction in a block"
   * dumped_item_emitter  ^emitter_of_plain_kind() }
+ 
+..
+
+
+** code_type_scanner   ////// PREDEFINED
+{
+  * comment  "gives the closure to scan a node" }
  
 ..
 
@@ -466,6 +480,19 @@
 ** set   ////// PREDEFINED
 {
   * comment  "operation for assignment instruction" }
+ 
+..
+
+
+** signature_1itm1val_to_item   ////// PREDEFINED
+{
+  * comment  "signature of functions taking one item, one value and giving a value"
+  * dumped_item_emitter  ^emitter_of_function()
+  * function_radix  "1itm1val_to_item"
+  * input_types  [item value]
+  * output_types  [item] }
+ 
+  %  ^filler_of_plain_kind( function_signature)
  
 ..
 
