@@ -30,20 +30,20 @@
 
 ** _2yhjRaR72_5sd4haPDv
 {
-  * c_instructions  [_2DxdHB02H_7J0mhIR26]
-  * comment  "start block of test_funa" }
+  * comment  "start block of test_funa"
+  * instructions  [_2DxdHB02H_7J0mhIR26] }
  
-  %  ^filler_of_plain_kind( c_block)
+  %  ^filler_of_plain_kind( block)
  
 ..
 
 
 ** _78Bvf0DAn_3jn0Ue36p
 {
-  * c_instructions  []
-  * comment  "start of test_funb" }
+  * comment  "start of test_funb"
+  * instructions  [] }
  
-  %  ^filler_of_plain_kind( c_block)
+  %  ^filler_of_plain_kind( block)
  
 ..
 
@@ -91,8 +91,8 @@
 
 ** test_itmz
 {
-  * c_type  item
-  * comment  "the itmz variable" }
+  * comment  "the itmz variable"
+  * type  item }
  
   %  ^filler_of_plain_kind( variable)
  
@@ -104,7 +104,7 @@
   * comment  "the first test module"
   * functions  {test_funa test_funb} }
  
-  %  ^filler_of_plain_kind( c_module)
+  %  ^filler_of_plain_kind( code_module)
  
 ..
 

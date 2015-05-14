@@ -59,13 +59,12 @@ mom_predefined_items_fill (void)
 // item generate_c_module of kind signature_1itm_to_val
   MOM_PREDEFINED_NAMED (generate_c_module)->itm_kind
     = MOM_PREDEFINED_NAMED (signature_1itm_to_val);
-// item integer of kind c_type
-  MOM_PREDEFINED_NAMED (integer)->itm_kind = MOM_PREDEFINED_NAMED (c_type);
-// item item of kind c_type
-  MOM_PREDEFINED_NAMED (item)->itm_kind = MOM_PREDEFINED_NAMED (c_type);
-// item locked_item of kind c_type
-  MOM_PREDEFINED_NAMED (locked_item)->itm_kind
-    = MOM_PREDEFINED_NAMED (c_type);
+// item integer of kind type
+  MOM_PREDEFINED_NAMED (integer)->itm_kind = MOM_PREDEFINED_NAMED (type);
+// item item of kind type
+  MOM_PREDEFINED_NAMED (item)->itm_kind = MOM_PREDEFINED_NAMED (type);
+// item locked_item of kind type
+  MOM_PREDEFINED_NAMED (locked_item)->itm_kind = MOM_PREDEFINED_NAMED (type);
 // item scanner_of_association of kind signature_1itm_to_void
   MOM_PREDEFINED_NAMED (scanner_of_association)->itm_kind
     = MOM_PREDEFINED_NAMED (signature_1itm_to_void);
@@ -102,10 +101,10 @@ mom_predefined_items_fill (void)
 // item signature_void_to_void of kind function_signature
   MOM_PREDEFINED_NAMED (signature_void_to_void)->itm_kind
     = MOM_PREDEFINED_NAMED (function_signature);
-// item value of kind c_type
-  MOM_PREDEFINED_NAMED (value)->itm_kind = MOM_PREDEFINED_NAMED (c_type);
-// item void of kind c_type
-  MOM_PREDEFINED_NAMED (void)->itm_kind = MOM_PREDEFINED_NAMED (c_type);
+// item value of kind type
+  MOM_PREDEFINED_NAMED (value)->itm_kind = MOM_PREDEFINED_NAMED (type);
+// item void of kind type
+  MOM_PREDEFINED_NAMED (void)->itm_kind = MOM_PREDEFINED_NAMED (type);
 // function item emitter_of_association of signature_1itm_to_val:
   MOM_PREDEFINED_NAMED (emitter_of_association)->itm_data1 =
     mom_dynload_symbol ("momfunc_1itm_to_val_emitter_of_association");

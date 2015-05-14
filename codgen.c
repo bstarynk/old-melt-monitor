@@ -43,8 +43,8 @@ struct codegen_mom_st
   struct momhashset_st *cg_funclosedset;	/* the set of closed items */
   struct momhashset_st *cg_funvariableset;	/* the set of variable items */
   struct momattributes_st *cg_blockassoc;	/* the association of
-						   c_block-s to a node ^c_block(<function>,<instruction-tuple>) */
-  struct momqueueitems_st cg_blockqueue;	/* the queue of c_blocks to be scanned */
+						   block-s to a node ^block(<function>,<instruction-tuple>) */
+  struct momqueueitems_st cg_blockqueue;	/* the queue of blocks to be scanned */
   momnode_t *cg_funinfonod;	/* information node about the function */
   momitem_t *cg_curblockitm;	/* the current block */
   momitem_t *cg_curstmtitm;	/* the current statement */
@@ -144,7 +144,7 @@ bool
   cg->cg_moduleitm = itm;
   cg->cg_codgenitm = itmcgen;
   mom_item_lock (itmcgen);
-  itmcgen->itm_kind = MOM_PREDEFINED_NAMED (c_code_generation);
+  itmcgen->itm_kind = MOM_PREDEFINED_NAMED (code_generation);
   itmcgen->itm_data1 = (void *) cg;
   itmcgen->itm_data2 = NULL;
   cgen_lock_item_mom (cg, itm);
@@ -182,20 +182,20 @@ void
 cgen_first_scanning_pass_mom (momitem_t *itmcgen)
 {
   assert (itmcgen
-	  && itmcgen->itm_kind == MOM_PREDEFINED_NAMED (c_code_generation));
+	  && itmcgen->itm_kind == MOM_PREDEFINED_NAMED (code_generation));
   struct codegen_mom_st *cg = (struct codegen_mom_st *) itmcgen->itm_data1;
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   momitem_t *itmmod = cg->cg_moduleitm;
   assert (itmmod);
-  if (itmmod->itm_kind != MOM_PREDEFINED_NAMED (c_module))
-    CGEN_ERROR_RETURN_MOM (cg, "module item %s is not a `c_module`",
+  if (itmmod->itm_kind != MOM_PREDEFINED_NAMED (code_module))
+    CGEN_ERROR_RETURN_MOM (cg, "module item %s is not a `code_module`",
 			   mom_item_cstring (itmmod));
-  ///// prepare the module using its c_preparation
+  ///// prepare the module using its preparation
   momvalue_t resprepv = MOM_NONEV;
   momvalue_t prepv =		//
     mom_item_unsync_get_attribute (itmmod,
-				   MOM_PREDEFINED_NAMED (c_preparation));
-  MOM_DEBUGPRINTF (gencod, "c_preparation of %s is %s",
+				   MOM_PREDEFINED_NAMED (preparation));
+  MOM_DEBUGPRINTF (gencod, "preparation of %s is %s",
 		   mom_item_cstring (itmmod), mom_output_gcstring (prepv));
   if (prepv.typnum == momty_node
       && (!mom_applval_2itm_to_val (prepv, itmmod, itmcgen, &resprepv)
@@ -486,7 +486,7 @@ cgen_scan_block_first_mom (struct codegen_mom_st *cg, momitem_t *itmblock)
   MOM_DEBUGPRINTF (gencod, "in function %s scanning block %s",
 		   mom_item_cstring (cg->cg_curfunitm),
 		   mom_item_cstring (itmblock));
-  if (itmblock->itm_kind != MOM_PREDEFINED_NAMED (c_block))
+  if (itmblock->itm_kind != MOM_PREDEFINED_NAMED (block))
     CGEN_ERROR_RETURN_MOM
       (cg, "module item %s : function %s has invalid block %s (of kind %s)",
        mom_item_cstring (cg->cg_moduleitm),
@@ -502,7 +502,7 @@ cgen_scan_block_first_mom (struct codegen_mom_st *cg, momitem_t *itmblock)
     if (vablock.typnum == momty_node)
       {
 	assert (vablock.vnode->slen == 2
-		&& vablock.vnode->conn == MOM_PREDEFINED_NAMED (c_block));
+		&& vablock.vnode->conn == MOM_PREDEFINED_NAMED (block));
 	momitem_t *blockfunitm =
 	  mom_value_to_item (vablock.vnode->arrsons[0]);
 	assert (blockfunitm);
@@ -518,7 +518,7 @@ cgen_scan_block_first_mom (struct codegen_mom_st *cg, momitem_t *itmblock)
       }
     vcinstrs = mom_item_unsync_get_attribute (itmblock,
 					      MOM_PREDEFINED_NAMED
-					      (c_instructions));
+					      (instructions));
     if (vcinstrs.typnum == momty_node)
       {
 	momvalue_t newvcinstrs = MOM_NONEV;
@@ -527,7 +527,7 @@ cgen_scan_block_first_mom (struct codegen_mom_st *cg, momitem_t *itmblock)
 	  vcinstrs = newvcinstrs;
 	else
 	  CGEN_ERROR_RETURN_MOM (cg,
-				 "module item %s : function %s has block %s with bad `c_instructions` closure %s",
+				 "module item %s : function %s has block %s with bad `instructions` closure %s",
 				 mom_item_cstring (cg->cg_moduleitm),
 				 mom_item_cstring (cg->cg_curfunitm),
 				 mom_output_gcstring (vablock),
@@ -535,14 +535,14 @@ cgen_scan_block_first_mom (struct codegen_mom_st *cg, momitem_t *itmblock)
       };
     if (vcinstrs.typnum == momty_tuple)
       {
-	vablock = mom_nodev_new (MOM_PREDEFINED_NAMED (c_block), 2,
+	vablock = mom_nodev_new (MOM_PREDEFINED_NAMED (block), 2,
 				 mom_itemv (cg->cg_curfunitm), vcinstrs);
 	cg->cg_blockassoc = mom_attributes_put (cg->cg_blockassoc,
 						itmblock, &vablock);
       }
     else
       CGEN_ERROR_RETURN_MOM (cg,
-			     "module item %s : function %s has block %s with bad `c_instructions` %s",
+			     "module item %s : function %s has block %s with bad `instructions` %s",
 			     mom_item_cstring (cg->cg_moduleitm),
 			     mom_item_cstring (cg->cg_curfunitm),
 			     mom_item_cstring (itmblock),
@@ -678,7 +678,7 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
 	momitem_t *itmctyp = NULL;
 	itmctyp = mom_value_to_item (mom_item_unsync_get_attribute (itm,
 								    MOM_PREDEFINED_NAMED
-								    (c_type)));
+								    (type)));
 	if (!itmctyp)
 	  CGEN_ERROR_RESULT_MOM (cg, NULL,
 				 "module item %s : function %s has block %s with statement %s with untyped variable %s",
@@ -822,7 +822,7 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 	if (stmtlen != 2
 	    || !(itmjump =
 		 mom_value_to_item (mom_components_nth (stmtcomps, 1)))
-	    || itmjump->itm_kind != MOM_PREDEFINED_NAMED (c_block))
+	    || itmjump->itm_kind != MOM_PREDEFINED_NAMED (block))
 	  CGEN_ERROR_RETURN_MOM (cg,
 				 "module item %s : function %s with block %s with bad jump statement %s",
 				 mom_item_cstring (cg->cg_moduleitm),
@@ -931,7 +931,7 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 	    if (itmarg != NULL)
 	      {
 		cgen_lock_item_mom (cg, itmarg);
-		if (itmarg->itm_kind == MOM_PREDEFINED_NAMED (c_block))
+		if (itmarg->itm_kind == MOM_PREDEFINED_NAMED (block))
 		  {
 		    cgen_scan_block_first_mom (cg, itmarg);
 		    continue;
@@ -984,7 +984,7 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 				   mom_item_cstring (itmstmt));
 	  if (cg->cg_errormsg)
 	    return;
-	  if (thenitm->itm_kind == MOM_PREDEFINED_NAMED (c_block))
+	  if (thenitm->itm_kind == MOM_PREDEFINED_NAMED (block))
 	    {
 	      cgen_lock_item_mom (cg, thenitm);
 	      cgen_scan_block_first_mom (cg, thenitm);
@@ -1143,7 +1143,7 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 				     mom_item_cstring (cg->cg_curblockitm),
 				     mom_item_cstring (itmstmt));
 	    cgen_lock_item_mom (cg, itmelse);
-	    if (itmelse->itm_kind == MOM_PREDEFINED_NAMED (c_block))
+	    if (itmelse->itm_kind == MOM_PREDEFINED_NAMED (block))
 	      {
 		cgen_scan_block_first_mom (cg, itmelse);
 	      }
@@ -1199,7 +1199,7 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 		|| (!(caseblockitm = mom_value_to_item (caseblockv)))
 		|| (cgen_lock_item_mom (cg, caseblockitm),
 		    cgen_scan_block_first_mom (cg, caseblockitm),
-		    caseblockitm->itm_kind != MOM_PREDEFINED_NAMED (c_block)))
+		    caseblockitm->itm_kind != MOM_PREDEFINED_NAMED (block)))
 	      CGEN_ERROR_RETURN_MOM (cg,
 				     "module item %s : function %s with block %s with int_switch statement %s with bad case#%d: %s",
 				     mom_item_cstring (cg->cg_moduleitm),
@@ -1254,7 +1254,7 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 		|| (!(caseblockitm = mom_value_to_item (caseblockv)))
 		|| (cgen_lock_item_mom (cg, caseblockitm),
 		    cgen_scan_block_first_mom (cg, caseblockitm),
-		    caseblockitm->itm_kind != MOM_PREDEFINED_NAMED (c_block)))
+		    caseblockitm->itm_kind != MOM_PREDEFINED_NAMED (block)))
 	      CGEN_ERROR_RETURN_MOM (cg,
 				     "module item %s : function %s with block %s with item_switch statement %s with bad case#%d: %s",
 				     mom_item_cstring (cg->cg_moduleitm),
@@ -1412,7 +1412,7 @@ cgen_bind_formals_mom (struct codegen_mom_st *cg, momitem_t *itmsignature,
 		       mom_item_cstring (cg->cg_curfunitm), inix,
 		       mom_item_cstring (intypitm),
 		       mom_item_cstring (informalitm));
-      if (intypitm->itm_kind != MOM_PREDEFINED_NAMED (c_type))
+      if (intypitm->itm_kind != MOM_PREDEFINED_NAMED (type))
 	CGEN_ERROR_RETURN_MOM (cg,
 			       "module item %s : function %s bad input type #%d %s",
 			       mom_item_cstring (cg->cg_moduleitm),
@@ -1455,7 +1455,7 @@ cgen_bind_formals_mom (struct codegen_mom_st *cg, momitem_t *itmsignature,
 		       mom_item_cstring (outformalitm));
       cgen_lock_item_mom (cg, outtypitm);
       cgen_lock_item_mom (cg, outformalitm);
-      if (outtypitm->itm_kind != MOM_PREDEFINED_NAMED (c_type))
+      if (outtypitm->itm_kind != MOM_PREDEFINED_NAMED (type))
 	CGEN_ERROR_RETURN_MOM (cg,
 			       "module item %s : function %s bad output type #%d %s",
 			       mom_item_cstring (cg->cg_moduleitm),
@@ -1561,11 +1561,11 @@ cgen_bind_variable_item_mom (struct codegen_mom_st *cg, momitem_t *itmv)
 			   mom_item_cstring (itmv));
   momvalue_t vctyp =		//
     mom_item_unsync_get_attribute (itmv,
-				   MOM_PREDEFINED_NAMED (c_type));
+				   MOM_PREDEFINED_NAMED (type));
   momitem_t *itmctyp = mom_value_to_item (vctyp);
-  if (!itmctyp || itmctyp->itm_kind != MOM_PREDEFINED_NAMED (c_type))
+  if (!itmctyp || itmctyp->itm_kind != MOM_PREDEFINED_NAMED (type))
     CGEN_ERROR_RETURN_MOM (cg,
-			   "module item %s : function %s has variable %s with bad `c_type` %s",
+			   "module item %s : function %s has variable %s with bad `type` %s",
 			   mom_item_cstring (cg->cg_moduleitm),
 			   mom_item_cstring (cg->cg_curfunitm),
 			   mom_item_cstring (itmv),
@@ -1665,7 +1665,7 @@ static void
 cgen_second_emitting_pass_mom (momitem_t *itmcgen)
 {
   assert (itmcgen
-	  && itmcgen->itm_kind == MOM_PREDEFINED_NAMED (c_code_generation));
+	  && itmcgen->itm_kind == MOM_PREDEFINED_NAMED (code_generation));
   struct codegen_mom_st *cg = (struct codegen_mom_st *) itmcgen->itm_data1;
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   momitem_t *itmmod = cg->cg_moduleitm;
@@ -1816,7 +1816,7 @@ cgen_emit_function_declaration_mom (struct codegen_mom_st *cg,
   const momstring_t *strradix =	//
     mom_value_to_string (mom_item_unsync_get_attribute (funsigitm,
 							MOM_PREDEFINED_NAMED
-							(c_function_radix)));
+							(function_radix)));
   const momseq_t *seqinputs =	//
     mom_value_to_tuple (mom_item_unsync_get_attribute (funsigitm,
 						       MOM_PREDEFINED_NAMED
@@ -1846,12 +1846,12 @@ cgen_emit_function_declaration_mom (struct codegen_mom_st *cg,
 		       mom_item_cstring (intypitm),
 		       mom_item_cstring (intypitm->itm_kind));
       const momstring_t *typstr = NULL;
-      if (!intypitm || intypitm->itm_kind != MOM_PREDEFINED_NAMED (c_type)
+      if (!intypitm || intypitm->itm_kind != MOM_PREDEFINED_NAMED (type)
 	  || !mom_hashset_contains (cg->cg_lockeditemset, intypitm)
 	  || !(typstr =
 	       mom_value_to_string (mom_item_unsync_get_attribute (intypitm,
 								   MOM_PREDEFINED_NAMED
-								   (c_code)))))
+								   (code)))))
 	MOM_FATAPRINTF
 	  ("function %s of module %s has signature %s with bad input #%d : %s",
 	   mom_item_cstring (curfunitm), mom_item_cstring (itmmod),
@@ -1862,12 +1862,12 @@ cgen_emit_function_declaration_mom (struct codegen_mom_st *cg,
     {
       momitem_t *outtypitm = (momitem_t *) mom_seq_nth (seqoutputs, outix);
       const momstring_t *typstr = NULL;
-      if (!outtypitm || outtypitm->itm_kind != MOM_PREDEFINED_NAMED (c_type)
+      if (!outtypitm || outtypitm->itm_kind != MOM_PREDEFINED_NAMED (type)
 	  || !mom_hashset_contains (cg->cg_lockeditemset, outtypitm)
 	  || !(typstr =
 	       mom_value_to_string (mom_item_unsync_get_attribute (outtypitm,
 								   MOM_PREDEFINED_NAMED
-								   (c_code)))))
+								   (code)))))
 	MOM_FATAPRINTF
 	  ("function %s of module %s has signature %s with bad output #%d : %s",
 	   mom_item_cstring (curfunitm), mom_item_cstring (itmmod),
@@ -1998,7 +1998,7 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
   const momstring_t *strradix =	//
     mom_value_to_string (mom_item_unsync_get_attribute (funsigitm,
 							MOM_PREDEFINED_NAMED
-							(c_function_radix)));
+							(function_radix)));
   const momseq_t *seqinputs =	//
     mom_value_to_tuple (mom_item_unsync_get_attribute (funsigitm,
 						       MOM_PREDEFINED_NAMED
@@ -2025,12 +2025,12 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
     {
       momitem_t *intypitm = (momitem_t *) mom_seq_nth (seqinputs, inix);
       const momstring_t *typstr = NULL;
-      if (!intypitm || intypitm->itm_kind != MOM_PREDEFINED_NAMED (c_type)
+      if (!intypitm || intypitm->itm_kind != MOM_PREDEFINED_NAMED (type)
 	  || !mom_hashset_contains (cg->cg_lockeditemset, intypitm)
 	  || !(typstr =
 	       mom_value_to_string (mom_item_unsync_get_attribute (intypitm,
 								   MOM_PREDEFINED_NAMED
-								   (c_code)))))
+								   (code)))))
 	MOM_FATAPRINTF
 	  ("function %s of module %s has signature %s with bad input #%d : %s",
 	   mom_item_cstring (curfunitm), mom_item_cstring (itmmod),
@@ -2042,12 +2042,12 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
     {
       momitem_t *outtypitm = (momitem_t *) mom_seq_nth (seqoutputs, outix);
       const momstring_t *typstr = NULL;
-      if (!outtypitm || outtypitm->itm_kind != MOM_PREDEFINED_NAMED (c_type)
+      if (!outtypitm || outtypitm->itm_kind != MOM_PREDEFINED_NAMED (type)
 	  || !mom_hashset_contains (cg->cg_lockeditemset, outtypitm)
 	  || !(typstr =
 	       mom_value_to_string (mom_item_unsync_get_attribute (outtypitm,
 								   MOM_PREDEFINED_NAMED
-								   (c_code)))))
+								   (code)))))
 	MOM_FATAPRINTF
 	  ("function %s of module %s has signature %s with bad output #%d : %s",
 	   mom_item_cstring (curfunitm), mom_item_cstring (itmmod),
@@ -2246,7 +2246,7 @@ cgen_emit_vardecl_mom (struct codegen_mom_st *cg, unsigned varix,
   const momstring_t *typstr =	//
     mom_value_to_string (mom_item_unsync_get_attribute (vartypitm,
 							MOM_PREDEFINED_NAMED
-							(c_code)));
+							(code)));
   assert (typstr != NULL);
   if (vartypitm == MOM_PREDEFINED_NAMED (value))
     fprintf (cg->cg_emitfile,
@@ -2619,7 +2619,7 @@ cgen_emit_chunk_statement_mom (struct codegen_mom_st *cg, unsigned insix,
 	case momty_item:
 	  {
 	    const momitem_t *itm = vcomp.vitem;
-	    if (itm && itm->itm_kind == MOM_PREDEFINED_NAMED (c_block))
+	    if (itm && itm->itm_kind == MOM_PREDEFINED_NAMED (block))
 	      {
 		fprintf (cg->cg_emitfile,
 			 " goto " BLOCK_LABEL_PREFIX_MOM "_%s;\n",
@@ -2656,7 +2656,7 @@ cgen_emit_apply_statement_mom (struct codegen_mom_st *cg, unsigned insix,
 				   MOM_PREDEFINED_NAMED (output_types));
   momvalue_t vradix =		//
     mom_item_unsync_get_attribute (itmsig,
-				   MOM_PREDEFINED_NAMED (c_function_radix));
+				   MOM_PREDEFINED_NAMED (function_radix));
 
   MOM_DEBUGPRINTF (gencod,
 		   "emit apply stmt %s sig %s vinputy %s voutputy %s vradix %s",
@@ -2931,7 +2931,7 @@ static void
 cgen_third_decorating_pass_mom (momitem_t *itmcgen)
 {
   assert (itmcgen
-	  && itmcgen->itm_kind == MOM_PREDEFINED_NAMED (c_code_generation));
+	  && itmcgen->itm_kind == MOM_PREDEFINED_NAMED (code_generation));
   struct codegen_mom_st *cg = (struct codegen_mom_st *) itmcgen->itm_data1;
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   momitem_t *itmmod = cg->cg_moduleitm;

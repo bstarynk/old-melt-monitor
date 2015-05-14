@@ -148,12 +148,12 @@ bool
     mom_item_lock (itmsig);
     cfunradv =
       mom_item_unsync_get_attribute (itmsig,
-				     MOM_PREDEFINED_NAMED (c_function_radix));
+				     MOM_PREDEFINED_NAMED (function_radix));
     mom_item_unlock (itmsig);
   }
   if (cfunradv.typnum != momty_string)
     MOM_FATAPRINTF
-      ("filler_of_function %s with kind %s and bad `c_function_radix` %s",
+      ("filler_of_function %s with kind %s and bad `function_radix` %s",
        mom_item_cstring (itm), mom_item_cstring (itmsig),
        mom_output_gcstring (cfunradv));
   if (snprintf

@@ -1781,10 +1781,10 @@ emit_signature_application_code_mom (FILE *foutaphd,
 		       mom_item_cstring (itypitm));
       assert (itypitm != NULL);
       assert (mom_hashset_contains (dumper_mom->duitemglobalset, itypitm));
-      assert (itypitm->itm_kind == MOM_PREDEFINED_NAMED (c_type));
+      assert (itypitm->itm_kind == MOM_PREDEFINED_NAMED (type));
       momvalue_t vccode =	//
 	mom_item_unsync_get_attribute (itypitm,
-				       MOM_PREDEFINED_NAMED (c_code));
+				       MOM_PREDEFINED_NAMED (code));
       assert (vccode.typnum == momty_string);
       fprintf (foutaphd, ",\n\t\t %s arg%d_mom", mom_value_cstr (vccode), ix);
     };
@@ -1796,10 +1796,10 @@ emit_signature_application_code_mom (FILE *foutaphd,
 		       mom_item_cstring (otypitm));
       assert (otypitm != NULL);
       assert (mom_hashset_contains (dumper_mom->duitemglobalset, otypitm));
-      assert (otypitm->itm_kind == MOM_PREDEFINED_NAMED (c_type));
+      assert (otypitm->itm_kind == MOM_PREDEFINED_NAMED (type));
       momvalue_t vccode =	//
 	mom_item_unsync_get_attribute (otypitm,
-				       MOM_PREDEFINED_NAMED (c_code));
+				       MOM_PREDEFINED_NAMED (code));
       assert (vccode.typnum == momty_string);
       fprintf (foutaphd, ",\n\t\t  %s* res%d_mom", mom_value_cstr (vccode),
 	       ix);
@@ -1820,7 +1820,7 @@ emit_signature_application_code_mom (FILE *foutaphd,
 		       mom_item_cstring (itypitm));
       momvalue_t vccode =	//
 	mom_item_unsync_get_attribute (itypitm,
-				       MOM_PREDEFINED_NAMED (c_code));
+				       MOM_PREDEFINED_NAMED (code));
       fprintf (foutaphd, ",\n\t\t %s arg%d_mom", mom_value_cstr (vccode), ix);
     };
   for (unsigned ix = 0; ix < nboutputy; ix++)
@@ -1831,7 +1831,7 @@ emit_signature_application_code_mom (FILE *foutaphd,
 		       mom_item_cstring (otypitm));
       momvalue_t vccode =	//
 	mom_item_unsync_get_attribute (otypitm,
-				       MOM_PREDEFINED_NAMED (c_code));
+				       MOM_PREDEFINED_NAMED (code));
       fprintf (foutaphd, ",\n\t\t  %s* res%d_mom", mom_value_cstr (vccode),
 	       ix);
     };
@@ -1854,7 +1854,7 @@ emit_signature_application_code_mom (FILE *foutaphd,
 		       mom_item_cstring (itypitm));
       momvalue_t vccode =	//
 	mom_item_unsync_get_attribute (itypitm,
-				       MOM_PREDEFINED_NAMED (c_code));
+				       MOM_PREDEFINED_NAMED (code));
       fprintf (foutaphd, ", %s arg%d_mom", mom_value_cstr (vccode), ix);
     };
   for (unsigned ix = 0; ix < nboutputy; ix++)
@@ -1865,7 +1865,7 @@ emit_signature_application_code_mom (FILE *foutaphd,
 		       mom_item_cstring (otypitm));
       momvalue_t vccode =	//
 	mom_item_unsync_get_attribute (otypitm,
-				       MOM_PREDEFINED_NAMED (c_code));
+				       MOM_PREDEFINED_NAMED (code));
       fprintf (foutaphd, ",  %s* res%d_mom", mom_value_cstr (vccode), ix);
     };
   fprintf (foutaphd, ")\n{\n bool ok_mom= false; //// generated in %s\n",
@@ -1965,7 +1965,7 @@ emit_signature_application_hook_mom (FILE *foutaphd,
       fprintf (foutaphd, "%s mom_arg%d",
 	       mom_string_cstr (mom_value_to_string
 				(mom_item_unsync_get_attribute
-				 (intypitm, MOM_PREDEFINED_NAMED (c_code)))),
+				 (intypitm, MOM_PREDEFINED_NAMED (code)))),
 	       ixin);
     };
   for (unsigned ixout = 0; ixout < nbouts; ixout++)
@@ -1976,7 +1976,7 @@ emit_signature_application_hook_mom (FILE *foutaphd,
       fprintf (foutaphd, "%s* mom_res%d",
 	       mom_string_cstr (mom_value_to_string
 				(mom_item_unsync_get_attribute
-				 (outypitm, MOM_PREDEFINED_NAMED (c_code)))),
+				 (outypitm, MOM_PREDEFINED_NAMED (code)))),
 	       ixout);
     }
   fprintf (foutaphd, ")\n{\n");
@@ -2018,7 +2018,7 @@ emit_signature_application_hook_mom (FILE *foutaphd,
   const momstring_t *strradix	//
     = mom_value_to_string (mom_item_unsync_get_attribute (itmkindsig,
 							  MOM_PREDEFINED_NAMED
-							  (c_function_radix)));
+							  (function_radix)));
   if (!strradix)
     MOM_FATAPRINTF ("missing radix for hooked signature %s of %s",
 		    mom_item_cstring (itmkindsig),
@@ -2085,7 +2085,7 @@ emit_predefined_fill_mom (void)
 	  momvalue_t vradix =
 	    mom_item_unsync_get_attribute ((momitem_t *) itmkind,
 					   MOM_PREDEFINED_NAMED
-					   (c_function_radix));
+					   (function_radix));
 	  MOM_DEBUGPRINTF (dump,
 			   "emit_predefined_fill ix#%d itmpredef %s vradix %s",
 			   ix, mom_item_cstring (itmpredef),
@@ -2115,7 +2115,7 @@ emit_predefined_fill_mom (void)
 	  momvalue_t vradix =
 	    mom_item_unsync_get_attribute ((momitem_t *) itmpredef,
 					   MOM_PREDEFINED_NAMED
-					   (c_function_radix));
+					   (function_radix));
 	  momvalue_t vinputy =
 	    mom_item_unsync_get_attribute ((momitem_t *) itmpredef,
 					   MOM_PREDEFINED_NAMED

@@ -35,63 +35,9 @@
 ..
 
 
-** c_block   ////// PREDEFINED
+** block   ////// PREDEFINED
 {
-  * comment  "kind of C code block"
-  * dumped_item_emitter  ^emitter_of_plain_kind() }
- 
-..
-
-
-** c_code   ////// PREDEFINED
-{
-  * comment  "gives the C code for something" }
- 
-..
-
-
-** c_code_generation   ////// PREDEFINED
-{
-  * comment  "kind of transient items for C code generation" }
- 
-..
-
-
-** c_function_radix   ////// PREDEFINED
-{
-  * comment  "gives the radix of names related to signatures & functions"
- }
- 
-..
-
-
-** c_instructions   ////// PREDEFINED
-{
-  * comment  "attribute giving the tuple of c_instructions inside a block"
- }
- 
-..
-
-
-** c_module   ////// PREDEFINED
-{
-  * comment  "kind of C modules"
-  * dumped_item_emitter  ^emitter_of_plain_kind() }
- 
-..
-
-
-** c_preparation   ////// PREDEFINED
-{
-  * comment  "in a C module, attribute giving the closure to prepare it, applied to the module and the code generator items"
- }
- 
-..
-
-
-** c_type   ////// PREDEFINED
-{
-  * comment  "kind of C types"
+  * comment  "kind for code blocks"
   * dumped_item_emitter  ^emitter_of_plain_kind() }
  
 ..
@@ -115,6 +61,28 @@
 ** closed   ////// PREDEFINED
 {
   * comment  "to give set or tuple of closed values in a function" }
+ 
+..
+
+
+** code   ////// PREDEFINED
+{
+  * comment  "gives the code for something" }
+ 
+..
+
+
+** code_generation   ////// PREDEFINED
+{
+  * comment  "kind of transient items for code generation" }
+ 
+..
+
+
+** code_module   ////// PREDEFINED
+{
+  * comment  "kind of code modules"
+  * dumped_item_emitter  ^emitter_of_plain_kind() }
  
 ..
 
@@ -297,6 +265,14 @@
 ..
 
 
+** function_radix   ////// PREDEFINED
+{
+  * comment  "gives the radix of names related to signatures & functions"
+ }
+ 
+..
+
+
 ** function_signature   ////// PREDEFINED
 {
   * comment  "kind of function signatures"
@@ -362,6 +338,13 @@
 ..
 
 
+** instructions   ////// PREDEFINED
+{
+  * comment  "attribute giving the tuple of instruction inside a block" }
+ 
+..
+
+
 ** int_switch   ////// PREDEFINED
 {
   * comment  "operation for switch on integer: int_switch <expr> <case>..."
@@ -372,20 +355,20 @@
 
 ** integer   ////// PREDEFINED
 {
-  * c_code  "intptr_t"
+  * code  "intptr_t"
   * comment  "type for intptr_t" }
  
-  %  ^filler_of_plain_kind( c_type)
+  %  ^filler_of_plain_kind( type)
  
 ..
 
 
 ** item   ////// PREDEFINED
 {
-  * c_code  "momitem_t*"
+  * code  "momitem_t*"
   * comment  "type for momitem_t*" }
  
-  %  ^filler_of_plain_kind( c_type)
+  %  ^filler_of_plain_kind( type)
  
 ..
 
@@ -414,10 +397,10 @@
 
 ** locked_item   ////// PREDEFINED
 {
-  * c_code  "momlockeditem_t*"
-  * comment  "c_type for \"momlockeditem_t*\"" }
+  * code  "momlockeditem_t*"
+  * comment  "type for \"momlockeditem_t*\"" }
  
-  %  ^filler_of_plain_kind( c_type)
+  %  ^filler_of_plain_kind( type)
  
 ..
 
@@ -434,6 +417,14 @@
 ** output_types   ////// PREDEFINED
 {
   * comment  "give the tuple of result types inside signatures" }
+ 
+..
+
+
+** preparation   ////// PREDEFINED
+{
+  * comment  "attribute giving the closure to prepare something, e.g. a code module"
+ }
  
 ..
 
@@ -474,9 +465,9 @@
 
 ** signature_1itm_to_val   ////// PREDEFINED
 {
-  * c_function_radix  "1itm_to_val"
   * comment  "signature for function of 1 item argument and 1 value result"
   * dumped_item_emitter  ^emitter_of_function()
+  * function_radix  "1itm_to_val"
   * input_types  [item]
   * output_types  [value] }
  
@@ -487,9 +478,9 @@
 
 ** signature_1itm_to_void   ////// PREDEFINED
 {
-  * c_function_radix  "1itm_to_void"
   * comment  "signature for function of 1 item argument and no result"
   * dumped_item_emitter  ^emitter_of_function()
+  * function_radix  "1itm_to_void"
   * input_types  [item]
   * output_types  [] }
  
@@ -500,9 +491,9 @@
 
 ** signature_1val_to_val   ////// PREDEFINED
 {
-  * c_function_radix  "1val_to_val"
   * comment  "signature for closures with one value argument and one value result"
   * dumped_item_emitter  ^emitter_of_function()
+  * function_radix  "1val_to_val"
   * input_types  [value]
   * output_types  [value] }
  
@@ -513,9 +504,9 @@
 
 ** signature_1val_to_void   ////// PREDEFINED
 {
-  * c_function_radix  "1val_to_void"
   * comment  "signature for closures with one value argument and no result"
   * dumped_item_emitter  ^emitter_of_function()
+  * function_radix  "1val_to_void"
   * input_types  [value]
   * output_types  [] }
  
@@ -526,9 +517,9 @@
 
 ** signature_2itm1val_to_val   ////// PREDEFINED
 {
-  * c_function_radix  "2itm1val_to_val"
   * comment  "signature of functions taking two items and a value and giving a value"
   * dumped_item_emitter  ^emitter_of_function()
+  * function_radix  "2itm1val_to_val"
   * input_types  [item item value]
   * output_types  [value] }
  
@@ -539,9 +530,9 @@
 
 ** signature_2itm1val_to_void   ////// PREDEFINED
 {
-  * c_function_radix  "2itm1val_to_void"
   * comment  "signature of functions taking two items and a value and giving no result"
   * dumped_item_emitter  ^emitter_of_function()
+  * function_radix  "2itm1val_to_void"
   * input_types  [item item value]
   * output_types  [] }
  
@@ -552,9 +543,9 @@
 
 ** signature_2itm_to_val   ////// PREDEFINED
 {
-  * c_function_radix  "2itm_to_val"
   * comment  "signature of functions taking two items and giving one value"
   * dumped_item_emitter  ^emitter_of_function()
+  * function_radix  "2itm_to_val"
   * input_types  [item item]
   * output_types  [value] }
  
@@ -565,8 +556,8 @@
 
 ** signature_2itm_to_void   ////// PREDEFINED
 {
-  * c_function_radix  "2itm_to_void"
   * comment  "signature of functions taking two items giving no result"
+  * function_radix  "2itm_to_void"
   * input_types  [item item]
   * output_types  [] }
  
@@ -577,9 +568,9 @@
 
 ** signature_void_to_void   ////// PREDEFINED
 {
-  * c_function_radix  "void_to_void"
   * comment  "signature for closures with no arguments and no result"
   * dumped_item_emitter  ^emitter_of_function()
+  * function_radix  "void_to_void"
   * input_types  []
   * output_types  [] }
  
@@ -617,12 +608,20 @@
 ..
 
 
+** type   ////// PREDEFINED
+{
+  * comment  "kind of code types, etc.."
+  * dumped_item_emitter  ^emitter_of_plain_kind() }
+ 
+..
+
+
 ** value   ////// PREDEFINED
 {
-  * c_code  "momvalue_t"
+  * code  "momvalue_t"
   * comment  "type for momvalue_t" }
  
-  %  ^filler_of_plain_kind( c_type)
+  %  ^filler_of_plain_kind( type)
  
 ..
 
@@ -644,10 +643,10 @@
 
 ** void   ////// PREDEFINED
 {
-  * c_code  "void"
-  * comment  "c_type for C \'void\' type" }
+  * code  "void"
+  * comment  "type for C \'void\' type" }
  
-  %  ^filler_of_plain_kind( c_type)
+  %  ^filler_of_plain_kind( type)
  
 ..
 
