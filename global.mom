@@ -79,6 +79,13 @@
 ..
 
 
+** code_expansion   ////// PREDEFINED
+{
+  * comment  "attributes giving the code expansion" }
+ 
+..
+
+
 ** code_generation   ////// PREDEFINED
 {
   * comment  "kind of transient items for code generation" }

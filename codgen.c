@@ -3342,6 +3342,7 @@ cgen_third_decorating_pass_mom (momitem_t *itmcgen)
 }				/* end cgen_third_decorating_pass_mom */
 
 
+
 bool momfunc_1itm1val_to_item_plain_code_type_scanner
   (const momnode_t *clonode, momitem_t *itmcodgen, const momvalue_t vexpr,
    momitem_t **resitm)
@@ -3350,12 +3351,36 @@ bool momfunc_1itm1val_to_item_plain_code_type_scanner
 		   "plain_code_type_scanner start itmcodgen=%s vexpr=%s",
 		   mom_item_cstring (itmcodgen), mom_output_gcstring (vexpr));
   momnode_t *nod = mom_value_to_node (vexpr);
-  assert (nod != NULL);
+  if (!nod || itmcodgen->itm_kind != MOM_PREDEFINED_NAMED (code_generation))
+    return false;
+  struct codegen_mom_st *cg = (struct codegen_mom_st *) itmcodgen->itm_data1;
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  momitem_t *itmconn = mom_node_conn (nod);
+  cgen_lock_item_mom (cg, itmconn);
+  momvalue_t vcodexp =		//
+    mom_item_unsync_get_attribute (itmconn,
+				   MOM_PREDEFINED_NAMED (code_expansion));
+  momvalue_t vformals =		//
+    mom_item_unsync_get_attribute (itmconn,
+				   MOM_PREDEFINED_NAMED (formals));
+  if (vcodexp.typnum != momty_node || vformals.typnum != momty_tuple)
+    {
+      CGEN_ERROR_RESULT_MOM (cg, false,
+			     "plain_code_type_scanner:: module item %s : function %s has block %s"
+			     " with statement %s with bad plain vexpr %s",
+			     mom_item_cstring (cg->cg_moduleitm),
+			     mom_item_cstring (cg->cg_curfunitm),
+			     mom_item_cstring (cg->cg_curblockitm),
+			     mom_item_cstring (cg->cg_curstmtitm),
+			     mom_output_gcstring (vexpr));
+    }
+  const momseq_t *tupformals = mom_value_to_tuple (vformals);
   MOM_FATAPRINTF
     ("unimplemented plain_code_type_scanner itmcodgen=%s vexpr=%s",
      mom_item_cstring (itmcodgen), mom_output_gcstring (vexpr));
 #warning unimplemented plain_code_type_scanner
 }				/* end of momfunc_1itm1val_to_item_plain_code_type_scanner */
+
 
 
 bool momfunc_1itm1val_to_void_plain_code_emitter
@@ -3364,11 +3389,16 @@ bool momfunc_1itm1val_to_void_plain_code_emitter
   MOM_DEBUGPRINTF (gencod, "plain_code_emitter start itmcodgen=%s vexpr=%s",
 		   mom_item_cstring (itmcodgen), mom_output_gcstring (vexpr));
   momnode_t *nod = mom_value_to_node (vexpr);
-  assert (nod != NULL);
+  if (!nod || itmcodgen->itm_kind != MOM_PREDEFINED_NAMED (code_generation))
+    return false;
+  struct codegen_mom_st *cg = (struct codegen_mom_st *) itmcodgen->itm_data1;
+  momitem_t *itmconn = mom_node_conn (nod);
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   MOM_FATAPRINTF ("unimplemented plain_code_emitter itmcodgen=%s vexpr=%s",
 		  mom_item_cstring (itmcodgen), mom_output_gcstring (vexpr));
 #warning unimplemented plain_code_emitter
 }				/* end of momfunc_1itm1val_to_void_plain_code_emitter */
+
 
 
 /// eof codgen.c
