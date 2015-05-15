@@ -3465,6 +3465,9 @@ bool
     mom_value_to_item (mom_item_unsync_get_attribute (itmconn,
 						      MOM_PREDEFINED_NAMED
 						      (variadic_rest)));
+  MOM_DEBUGPRINTF (gencod,
+		   "plain_code_type_scanner varestitm %s",
+		   mom_item_cstring (varestitm));
   if (!varestitm)
     CGEN_ERROR_RESULT_MOM (cg, false,
 			   "plain_code_type_scanner:: module item %s : function %s has block %s"
@@ -3475,6 +3478,48 @@ bool
 			   mom_item_cstring (cg->cg_curstmtitm),
 			   mom_output_gcstring (vexpr),
 			   mom_item_cstring (itmconn));
+  cgen_lock_item_mom (cg, varestitm);
+  momitem_t *restypitm =
+    mom_value_to_item (mom_item_unsync_get_attribute (varestitm,
+						      MOM_PREDEFINED_NAMED
+						      (type)));
+  if (!restypitm || restypitm->itm_kind != MOM_PREDEFINED_NAMED (type))
+    CGEN_ERROR_RESULT_MOM (cg, false,
+			   "plain_code_type_scanner:: module item %s : function %s has block %s"
+			   " with statement %s with expr %s with bad variadic_rest %s",
+			   mom_item_cstring (cg->cg_moduleitm),
+			   mom_item_cstring (cg->cg_curfunitm),
+			   mom_item_cstring (cg->cg_curblockitm),
+			   mom_item_cstring (cg->cg_curstmtitm),
+			   mom_output_gcstring (vexpr),
+			   mom_item_cstring (varestitm));
+  for (unsigned rix = nbformals; rix < arity && !cg->cg_errormsg; rix++)
+    {
+      momvalue_t vrestexpr = mom_node_nth (nod, rix);
+      MOM_DEBUGPRINTF (gencod,
+		       "plain_code_type_scanner rix#%d vrestexpr %s", rix,
+		       mom_output_gcstring (vrestexpr));
+      momitem_t *curestypitm = cgen_type_of_scanned_expr_mom (cg, vrestexpr);
+      MOM_DEBUGPRINTF (gencod,
+		       "plain_code_type_scanner rix#%d restypitm %s",
+		       rix, mom_item_cstring (restypitm));
+      if (restypitm != curestypitm)
+	CGEN_ERROR_RESULT_MOM (cg, false,
+			       "plain_code_type_scanner:: module item %s : function %s has block %s"
+			       " with statement %s with rest expr #%d %s"
+			       " of type %s but variadic_rest %s wants type %s",
+			       mom_item_cstring (cg->cg_moduleitm),
+			       mom_item_cstring (cg->cg_curfunitm),
+			       mom_item_cstring (cg->cg_curblockitm),
+			       mom_item_cstring (cg->cg_curstmtitm),
+			       rix,
+			       mom_output_gcstring (vrestexpr),
+			       mom_item_cstring (curestypitm),
+			       mom_item_cstring (varestitm),
+			       mom_item_cstring (restypitm));
+    };
+  if (cg->cg_errormsg)
+    return false;
   MOM_DEBUGPRINTF (gencod,
 		   "plain_code_type_scanner variadic vexpr %s gives conntypitm %s",
 		   mom_output_gcstring (vexpr),
@@ -3502,6 +3547,10 @@ bool momfunc_1itm1val_to_void_plain_code_emitter
   momvalue_t vcodexp =		//
     mom_item_unsync_get_attribute (connitm,
 				   MOM_PREDEFINED_NAMED (code_expansion));
+  momnode_t *nodexp = mom_value_to_node (vcodexp);
+  if (!nodexp)
+    MOM_FATAPRINTF ("code_expansion of %s is not a node",
+		    mom_output_gcstring (vcodexp));
   momvalue_t vformals =		//
     mom_item_unsync_get_attribute (connitm,
 				   MOM_PREDEFINED_NAMED (formals));
@@ -3511,9 +3560,112 @@ bool momfunc_1itm1val_to_void_plain_code_emitter
   unsigned nbformals = mom_seq_length (tupformals);
   assert (nbformals <= arity);
   struct momattributes_st *att = mom_attributes_make (6 * arity / 5 + 2);
-  MOM_FATAPRINTF ("unimplemented plain_code_emitter itmcodgen=%s vexpr=%s",
-		  mom_item_cstring (itmcodgen), mom_output_gcstring (vexpr));
-#warning unimplemented plain_code_emitter
+  for (unsigned formix = 0; formix < nbformals; formix++)
+    {
+      momitem_t *curformitm = mom_seq_nth (tupformals, formix);
+      assert (curformitm);
+      if (mom_attributes_find_entry (att, curformitm) != NULL)
+	MOM_FATAPRINTF ("duplicate formal itm %s in plain connective %s"
+			" for vexpr %s in block %s of function %s in module %s",
+			mom_item_cstring (curformitm),
+			mom_item_cstring (connitm),
+			mom_output_gcstring (vexpr),
+			mom_item_cstring (cg->cg_curblockitm),
+			mom_item_cstring (cg->cg_curfunitm),
+			mom_item_cstring (cg->cg_moduleitm));
+      momvalue_t vsubexpr = mom_node_nth (nod, formix);
+      MOM_DEBUGPRINTF (gencod,
+		       "plain_code_emitter formix#%d curformitm %s vsubexpr %s",
+		       formix, mom_item_cstring (curformitm),
+		       mom_output_gcstring (vsubexpr));
+      att = mom_attributes_put (att, curformitm, &vsubexpr);
+    };
+  momitem_t *varcountitm =
+    mom_value_to_item (mom_item_unsync_get_attribute (connitm,
+						      MOM_PREDEFINED_NAMED
+						      (variadic_count)));
+  momitem_t *varestitm =
+    mom_value_to_item (mom_item_unsync_get_attribute (connitm,
+						      MOM_PREDEFINED_NAMED
+						      (variadic_rest)));
+  unsigned nbexp = mom_node_arity (nodexp);
+  for (unsigned xix = 0; xix < nbexp && !cg->cg_errormsg; xix++)
+    {
+      momvalue_t vcurexp = mom_node_nth (nodexp, xix);
+      MOM_DEBUGPRINTF (gencod,
+		       "plain_code_emitter xix#%d vcurexp %s", xix,
+		       mom_output_gcstring (vcurexp));
+      switch (vcurexp.typnum)
+	{
+	case momty_null:
+	  continue;
+	case momty_string:
+	  fputs (mom_string_cstr (vcurexp.vstr), cg->cg_emitfile);
+	  continue;
+	case momty_int:
+	  fprintf (cg->cg_emitfile, "%lld", (long long) vcurexp.vint);
+	case momty_item:
+	  {
+	    momitem_t *curitm = vcurexp.vitem;
+	    assert (curitm != NULL);
+	    if (curitm == varcountitm)
+	      {
+		MOM_DEBUGPRINTF (gencod,
+				 "plain_code_emitter count %d",
+				 (int) (nbexp - nbformals));
+		fprintf (cg->cg_emitfile, " /*variadic-count %s:*/%d",
+			 mom_item_cstring (varcountitm),
+			 (int) (nbexp - nbformals));
+		continue;
+	      }
+	    else if (curitm == varestitm)
+	      {
+		MOM_DEBUGPRINTF (gencod,
+				 "plain_code_emitter got varestitm %s",
+				 mom_item_cstring (varestitm));
+		unsigned nbrest = nbexp - nbformals;
+		fprintf (cg->cg_emitfile, " /*variadic-rest %s:*/",
+			 mom_item_cstring (varestitm));
+		for (unsigned rix = 0; rix < nbrest && !cg->cg_errormsg;
+		     rix++)
+		  {
+		    if (rix > 0)
+		      fputs (", ", cg->cg_emitfile);
+		    momvalue_t vcurexp =
+		      mom_node_nth (nodexp, nbformals + rix);
+		    MOM_DEBUGPRINTF (gencod,
+				     "plain_code_emitter rix#%d vcurexp %s",
+				     rix, mom_output_gcstring (vcurexp));
+		    fprintf (cg->cg_emitfile, " /*rest#%d*/(", rix);
+		    cgen_emit_expr_mom (cg, vcurexp);
+		    fprintf (cg->cg_emitfile, ")");
+		  }
+		continue;
+	      };
+	    momvalue_t valbind = MOM_NONEV;
+	    struct momentry_st *ent = mom_attributes_find_entry (att, curitm);
+	    if (ent)
+	      valbind = ent->ent_val;
+	    MOM_DEBUGPRINTF (gencod,
+			     "plain_code_emitter curitm %s valbind %s",
+			     mom_item_cstring (curitm),
+			     mom_output_gcstring (valbind));
+	    if (valbind.typnum != momty_null)
+	      cgen_emit_expr_mom (cg, valbind);
+	    else
+	      fprintf (cg->cg_emitfile, "%s", mom_item_cstring (curitm));
+	  }
+	  break;
+	default:
+	  cgen_emit_expr_mom (cg, vcurexp);
+	}			/* end switch vcurexp.typnum */
+    };
+  fflush (cg->cg_emitfile);
+  MOM_DEBUGPRINTF (gencod,
+		   "plain_code_emitter done itmcodgen=%s vexpr=%s fileoff %ld",
+		   mom_item_cstring (itmcodgen), mom_output_gcstring (vexpr),
+		   ftell (cg->cg_emitfile));
+  return true;
 }				/* end of momfunc_1itm1val_to_void_plain_code_emitter */
 
 
