@@ -3345,7 +3345,7 @@ cgen_third_decorating_pass_mom (momitem_t *itmcgen)
 
 bool momfunc_1itm1val_to_item_plain_code_type_scanner
   (const momnode_t *clonode, momitem_t *itmcodgen, const momvalue_t vexpr,
-   momitem_t **resitm)
+   momitem_t **respitm)
 {
   MOM_DEBUGPRINTF (gencod,
 		   "plain_code_type_scanner start itmcodgen=%s vexpr=%s",
@@ -3399,6 +3399,8 @@ bool momfunc_1itm1val_to_item_plain_code_type_scanner
 			     mom_item_cstring (cg->cg_curstmtitm),
 			     mom_output_gcstring (vexpr), nbformals);
     }
+  if (cg->cg_errormsg)
+    return false;
   for (unsigned formix = 0; formix < nbformals && !cg->cg_errormsg; formix)
     {
       momitem_t *curformitm = mom_seq_nth (tupformals, formix);
@@ -3444,11 +3446,40 @@ bool momfunc_1itm1val_to_item_plain_code_type_scanner
 			       mom_item_cstring (subtypitm),
 			       mom_item_cstring (curtypitm));
     }
+  if (cg->cg_errormsg)
+    return false;
+  if (nbformals == arity)
+    {
+      MOM_DEBUGPRINTF (gencod,
+		       "plain_code_type_scanner vexpr %s gives conntypitm %s",
+		       mom_output_gcstring (vexpr),
+		       mom_item_cstring (conntypitm));
+      if (respitm)
+	*respitm = conntypitm;
+      return true;
+    };
+  momitem_t *varestitm =	//
+    mom_value_to_item (mom_item_unsync_get_attribute (itmconn,
+						      MOM_PREDEFINED_NAMED
+						      (variadic_rest)));
+  if (!varestitm)
+    CGEN_ERROR_RESULT_MOM (cg, false,
+			   "plain_code_type_scanner:: module item %s : function %s has block %s"
+			   " with statement %s with expr %s with non-variadic connective %s",
+			   mom_item_cstring (cg->cg_moduleitm),
+			   mom_item_cstring (cg->cg_curfunitm),
+			   mom_item_cstring (cg->cg_curblockitm),
+			   mom_item_cstring (cg->cg_curstmtitm),
+			   mom_output_gcstring (vexpr),
+			   mom_item_cstring (itmconn));
+  MOM_DEBUGPRINTF (gencod,
+		   "plain_code_type_scanner variadic vexpr %s gives conntypitm %s",
+		   mom_output_gcstring (vexpr),
+		   mom_item_cstring (conntypitm));
+  if (respitm)
+    *respitm = conntypitm;
+  return true;
 
-  MOM_FATAPRINTF
-    ("unimplemented plain_code_type_scanner itmcodgen=%s vexpr=%s",
-     mom_item_cstring (itmcodgen), mom_output_gcstring (vexpr));
-#warning unimplemented plain_code_type_scanner, should hande variadic...
 }				/* end of momfunc_1itm1val_to_item_plain_code_type_scanner */
 
 

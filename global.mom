@@ -721,6 +721,22 @@
 ..
 
 
+** variadic_count   ////// PREDEFINED
+{
+  * comment  "in plain connectives, gives item bound to count of remaining arguments"
+ }
+ 
+..
+
+
+** variadic_rest   ////// PREDEFINED
+{
+  * comment  "in plain connectives, gives item bound to rest of arguments"
+ }
+ 
+..
+
+
 ** void   ////// PREDEFINED
 {
   * code  "void"
