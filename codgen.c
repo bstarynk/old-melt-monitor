@@ -3343,7 +3343,10 @@ cgen_third_decorating_pass_mom (momitem_t *itmcgen)
 
 
 
-bool momfunc_1itm1val_to_item_plain_code_type_scanner
+
+////////////////
+bool
+  momfunc_1itm1val_to_item_plain_code_type_scanner
   (const momnode_t *clonode, momitem_t *itmcodgen, const momvalue_t vexpr,
    momitem_t **respitm)
 {
@@ -3493,8 +3496,21 @@ bool momfunc_1itm1val_to_void_plain_code_emitter
   if (!nod || itmcodgen->itm_kind != MOM_PREDEFINED_NAMED (code_generation))
     return false;
   struct codegen_mom_st *cg = (struct codegen_mom_st *) itmcodgen->itm_data1;
-  momitem_t *itmconn = mom_node_conn (nod);
+  momitem_t *connitm = mom_node_conn (nod);
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  unsigned arity = mom_node_arity (nod);
+  momvalue_t vcodexp =		//
+    mom_item_unsync_get_attribute (connitm,
+				   MOM_PREDEFINED_NAMED (code_expansion));
+  momvalue_t vformals =		//
+    mom_item_unsync_get_attribute (connitm,
+				   MOM_PREDEFINED_NAMED (formals));
+  assert (connitm && mom_hashset_contains (cg->cg_lockeditemset, connitm));
+  const momseq_t *tupformals = mom_value_to_tuple (vformals);
+  assert (tupformals);
+  unsigned nbformals = mom_seq_length (tupformals);
+  assert (nbformals <= arity);
+  struct momattributes_st *att = mom_attributes_make (6 * arity / 5 + 2);
   MOM_FATAPRINTF ("unimplemented plain_code_emitter itmcodgen=%s vexpr=%s",
 		  mom_item_cstring (itmcodgen), mom_output_gcstring (vexpr));
 #warning unimplemented plain_code_emitter

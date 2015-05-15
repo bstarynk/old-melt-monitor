@@ -114,11 +114,7 @@ mom_attributes_put (struct momattributes_st *attrs,
       if (!itma || !pval || pval->typnum == momty_null)
 	return NULL;
       unsigned siz = SMALL_ATTR_LEN_MOM / 2;
-      struct momattributes_st *newattrs =	//
-	MOM_GC_ALLOC ("new attributes",	//
-		      sizeof (struct momattributes_st)
-		      + siz * sizeof (struct momentry_st));
-      newattrs->at_len = siz;
+      struct momattributes_st *newattrs = mom_attributes_make (siz);
       newattrs->at_cnt = 1;
       newattrs->at_entries[0].ent_itm = itma;
       newattrs->at_entries[0].ent_val = *pval;
@@ -151,14 +147,10 @@ mom_attributes_put (struct momattributes_st *attrs,
   if (alen < SMALL_ATTR_LEN_MOM)
     {
       unsigned newsiz = SMALL_ATTR_LEN_MOM;
-      struct momattributes_st *newattrs =	//
-	MOM_GC_ALLOC ("new attributes",	//
-		      sizeof (struct momattributes_st)
-		      + newsiz * sizeof (struct momentry_st));
+      struct momattributes_st *newattrs = mom_attributes_make (newsiz);
       memcpy (newattrs, attrs,
 	      sizeof (struct momattributes_st) +
 	      alen * sizeof (struct momentry_st));
-      newattrs->at_len = newsiz;
       newattrs->at_entries[alen].ent_itm = itma;
       newattrs->at_entries[alen].ent_val = *pval;
       newattrs->at_cnt++;
@@ -167,11 +159,7 @@ mom_attributes_put (struct momattributes_st *attrs,
   else
     {
       unsigned newsiz = ((4 * acnt / 3 + 2) | 0xf) + 1;
-      struct momattributes_st *newattrs =	//
-	MOM_GC_ALLOC ("new attributes",	//
-		      sizeof (struct momattributes_st)
-		      + newsiz * sizeof (struct momentry_st));
-      newattrs->at_len = newsiz;
+      struct momattributes_st *newattrs = mom_attributes_make (newsiz);
       for (unsigned ix = 0; ix < alen; ix++)
 	{
 	  int newpos = -1;
@@ -216,11 +204,7 @@ mom_attributes_remove (struct momattributes_st *attrs, const momitem_t *itma)
 	{
 	  unsigned newsiz = SMALL_ATTR_LEN_MOM;
 	  unsigned newcnt = 0;
-	  struct momattributes_st *newattrs =	//
-	    MOM_GC_ALLOC ("new attributes",	//
-			  sizeof (struct momattributes_st)
-			  + newsiz * sizeof (struct momentry_st));
-	  newattrs->at_len = newsiz;
+	  struct momattributes_st *newattrs = mom_attributes_make (newsiz);
 	  for (unsigned ix = 0; ix < alen; ix++)
 	    {
 	      assert (newcnt < newsiz);
@@ -240,11 +224,7 @@ mom_attributes_remove (struct momattributes_st *attrs, const momitem_t *itma)
 	  unsigned newsiz = (((3 * acnt / 2) + 2) | 0xf) + 1;
 	  if (newsiz >= alen)
 	    return attrs;
-	  struct momattributes_st *newattrs =	//
-	    MOM_GC_ALLOC ("new attributes",	//
-			  sizeof (struct momattributes_st)
-			  + newsiz * sizeof (struct momentry_st));
-	  newattrs->at_len = newsiz;
+	  struct momattributes_st *newattrs = mom_attributes_make (newsiz);
 	  for (unsigned ix = 0; ix < alen; ix++)
 	    {
 	      const momitem_t *olditm = attrs->at_entries[ix].ent_itm;
@@ -282,11 +262,7 @@ mom_attributes_make_atva (unsigned nbent, ...
        SMALL_ATTR_LEN_MOM - 1) ? (SMALL_ATTR_LEN_MOM) : (1 +
 							 ((4 * nbent / 3 +
 							   2) | 0xf));
-  struct momattributes_st *attrs =	//
-    MOM_GC_ALLOC ("new attributes",	//
-		  sizeof (struct momattributes_st)
-		  + siz * sizeof (struct momentry_st));
-  attrs->at_len = siz;
+  struct momattributes_st *attrs = mom_attributes_make (siz);
   va_start (args, nbent);
   for (unsigned ix = 0; ix < nbent; ix++)
     {

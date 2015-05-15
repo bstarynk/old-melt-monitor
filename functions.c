@@ -308,12 +308,7 @@ bool
 		    mom_item_cstring (itm));
   unsigned nbent = clonode->slen;
   unsigned siz = ((5 * nbent / 4 + 3) | 7) + 1;
-  struct momattributes_st *assoc = MOM_GC_ALLOC ("assoc",
-						 sizeof (struct
-							 momattributes_st) +
-						 siz *
-						 sizeof (struct momentry_st));
-  assoc->at_len = siz;
+  struct momattributes_st *assoc = mom_attributes_make (siz);
   for (unsigned ix = 0; ix < nbent; ix++)
     {
       momvalue_t vcomp = clonode->arrsons[ix];

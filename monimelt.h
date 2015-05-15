@@ -671,6 +671,22 @@ struct momattributes_st *mom_attributes_remove (struct momattributes_st
 struct momattributes_st *mom_attributes_make_atva (unsigned nbent, ...
 						   /* item1, val1, item2, val2, ... */
   );
+
+
+static inline struct momattributes_st *
+mom_attributes_make (unsigned len)
+{
+  if (len > MOM_MAX_SEQ_LENGTH)
+    MOM_FATAPRINTF ("too long %u attributes table", len);
+  struct momattributes_st *att =	//
+    MOM_GC_ALLOC ("attributes",
+		  sizeof (struct momattributes_st) +
+		  len * sizeof (struct momentry_st));
+  att->at_len = len;
+  return att;
+}				/* end mom_attributes_make */
+
+
 void mom_attributes_scan_dump (struct momattributes_st *attrs);
 static inline unsigned
 mom_attributes_count (struct momattributes_st *attrs)
