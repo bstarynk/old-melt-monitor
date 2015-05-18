@@ -28,7 +28,7 @@ queueitem_chunk_count_pack_mom (struct momqueuechunkitems_st *chk,
     return 0;
   assert (pack);
   int cnt = 0;
-  for (int ix = MOM_QUEUECHUNK_LEN - 1; ix >= 0; ix--)
+  for (int ix = 0; ix < MOM_QUEUECHUNK_LEN; ix++)
     {
       const momitem_t *itm = chk->quechi_items[ix];
       if (itm)
@@ -265,7 +265,7 @@ queuevalue_chunk_count_pack_mom (struct momqueuechunkvalues_st *chk,
     return 0;
   assert (pack);
   int cnt = 0;
-  for (int ix = MOM_QUEUECHUNK_LEN - 1; ix >= 0; ix--)
+  for (int ix = 0; ix < MOM_QUEUECHUNK_LEN; ix++)
     {
       const momvalue_t val = chk->quechv_values[ix];
       if (val.typnum != momty_null)
