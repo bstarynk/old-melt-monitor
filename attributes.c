@@ -151,23 +151,37 @@ mom_attributes_put (struct momattributes_st *attrs,
 	  assert (attrs->at_cnt <= attrs->at_len);
 	  return attrs;
 	}
-    }
-  if (alen < SMALL_ATTR_LEN_MOM && acnt < alen)
+    };
+  if (alen < SMALL_ATTR_LEN_MOM)
     {
       unsigned newsiz = SMALL_ATTR_LEN_MOM;
       struct momattributes_st *newattrs = mom_attributes_make (newsiz);
-      memcpy (newattrs, attrs,
-	      sizeof (struct momattributes_st) +
+      memcpy (newattrs->at_entries, attrs->at_entries,
 	      alen * sizeof (struct momentry_st));
-      newattrs->at_cnt = acnt + 1;
-      newattrs->at_entries[acnt].ent_itm = itma;
-      newattrs->at_entries[acnt].ent_val = *pval;
-      assert (newattrs->at_cnt <= newattrs->at_len);
-      return newattrs;
+      newattrs->at_cnt = acnt;
+      if (MOM_LIKELY (newattrs->at_entries[acnt].ent_itm == NULL))
+	{
+	  newattrs->at_cnt = acnt + 1;
+	  newattrs->at_entries[acnt].ent_itm = itma;
+	  newattrs->at_entries[acnt].ent_val = *pval;
+	  assert (newattrs->at_cnt <= newattrs->at_len);
+	  return newattrs;
+	}
+      else
+	{			// could happen if some items have been previously removed
+	  int pos = -1;
+	  (void) attributes_find_entry_pos_mom (newattrs, itma, &pos);
+	  assert (pos >= 0 && pos < (int) newsiz);
+	  newattrs->at_cnt = acnt + 1;
+	  newattrs->at_entries[pos].ent_itm = itma;
+	  newattrs->at_entries[pos].ent_val = *pval;
+	  assert (newattrs->at_cnt <= newattrs->at_len);
+	  return newattrs;
+	}
     }
   else
     {
-      unsigned newsiz = ((4 * acnt / 3 + 2) | 0xf) + 1;
+      unsigned newsiz = ((4 * acnt / 3 + 2) | 0x7) + 1;
       struct momattributes_st *newattrs = mom_attributes_make (newsiz);
       for (unsigned ix = 0; ix < alen; ix++)
 	{
@@ -234,7 +248,7 @@ mom_attributes_remove (struct momattributes_st *attrs, const momitem_t *itma)
 	}
       else			// acnt >= SMALL_ATTR_LEN_MOM-1
 	{
-	  unsigned newsiz = (((3 * acnt / 2) + 2) | 0xf) + 1;
+	  unsigned newsiz = (((3 * acnt / 2) + 2) | 0x7) + 1;
 	  if (newsiz >= alen)
 	    return attrs;
 	  struct momattributes_st *newattrs = mom_attributes_make (newsiz);

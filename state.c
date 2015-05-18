@@ -863,10 +863,13 @@ load_fill_item_mom (momitem_t *itm, bool internal)
 	    break;
 	  if (mom_load_value (&vat) && vat.typnum != momty_null)
 	    {
-	      MOM_DEBUGPRINTF (load, "load_fill_item %s itmat=%s vat=%s",
+	      MOM_DEBUGPRINTF (load,
+			       "load_fill_item %s itmat=%s vat=%s (atcnt %d atlen %d)",
 			       mom_item_cstring (itm),
 			       mom_item_cstring (itmat),
-			       mom_output_gcstring (vat));
+			       mom_output_gcstring (vat),
+			       itm->itm_attrs ? itm->itm_attrs->at_cnt : 0,
+			       itm->itm_attrs ? itm->itm_attrs->at_len : 0);
 	      itm->itm_attrs =
 		mom_attributes_put (itm->itm_attrs, itmat, &vat);
 	      MOM_DEBUGPRINTF (load, "load_fill_item %s done itmat=%s",
