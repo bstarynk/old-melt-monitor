@@ -734,6 +734,10 @@ struct momcomponents_st *mom_components_append_sized_array (struct
 							    const momvalue_t
 							    *valarr);
 
+
+struct momcomponents_st *mom_components_reserve (struct momcomponents_st *csq,
+						 unsigned nbcomp);
+
 static inline unsigned
 mom_components_count (const struct momcomponents_st *csq)
 {
@@ -1078,6 +1082,7 @@ mom_tuplev (const momseq_t *seq)
 #define mom_tuplev_meta_tuple(Meta,Nb,...) mom_tuplev(mom_make_meta_tuple((Meta),(Nb),__VA_ARGS__))
 #define mom_tuplev_tuple(Nb,...) mom_tuplev(mom_make_tuple((Nb),__VA_ARGS__))
 #define mom_tuplev_sized_meta_tuple(Meta,Nb,Arr)  mom_tuplev(mom_make_sized_meta_tuple((Meta),(Nb),(Arr)))
+#define mom_tuplev_sized_tuple(Nb,Arr)  mom_tuplev(mom_make_sized_tuple((Nb),(Arr)))
 
 // make a set from given items. NULL and MOM_EMPTY item pointers are
 // skipped.  Remaining items are sorted, and duplicates are ignored.
@@ -1402,6 +1407,20 @@ mom_unsync_item_components_count (momitem_t *itm)
   if (itm && itm->itm_comps)
     return mom_components_count (itm->itm_comps);
   return 0;
+}
+
+static inline void
+mom_unsync_item_components_reserve (momitem_t *itm, unsigned siz)
+{
+  if (!itm || !siz)
+    return;
+  itm->itm_comps = mom_components_reserve (itm->itm_comps, siz);
+}
+
+static inline void
+mom_unsync_item_put_nth_component (momitem_t *itm, int rk, momvalue_t val)
+{
+  mom_components_put_nth (itm->itm_comps, rk, val);
 }
 
 /****************************************************************

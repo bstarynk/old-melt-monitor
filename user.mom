@@ -28,10 +28,19 @@
 ..
 
 
+** _2n1vLp5v3_6h15ihHan
+{
+  * comment  "set itmz closeda" }
+ [[  set  test_itmz  test_closed_a ]]
+ 
+..
+
+
 ** _2yhjRaR72_5sd4haPDv
 {
   * comment  "start block of test_funa"
-  * instructions  [_2DxdHB02H_7J0mhIR26 _9bEj56Crk_4Ph9A38a7] }
+  * instructions  [_2DxdHB02H_7J0mhIR26 _9bEj56Crk_4Ph9A38a7 _2n1vLp5v3_6h15ihHan]
+ }
  
   %  ^filler_of_plain_kind( block)
  
@@ -58,6 +67,13 @@
 ..
 
 
+** test_closed_a
+{
+  * comment  "closeda in test" }
+ 
+..
+
+
 ** test_constant_one
 {
   * value  1 }
@@ -72,6 +88,7 @@
 
 ** test_funa
 {
+  * closed  {test_closed_a}
   * constants  {test_constant_one test_constant_quote}
   * formals  [test_itmx]
   * function_signature  signature_1itm_to_void

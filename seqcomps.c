@@ -147,3 +147,32 @@ mom_components_append_sized_array (struct momcomponents_st *csq,
     csq->cp_comps[cnt++] = valarr[ix];
   return csq;
 }
+
+
+struct momcomponents_st *
+mom_components_reserve (struct momcomponents_st *csq, unsigned nbcomp)
+{
+  if (!nbcomp)
+    return csq;
+  unsigned cnt = csq ? csq->cp_cnt : 0;
+  unsigned len = csq ? csq->cp_len : 0;
+  if (nbcomp > len)
+    {
+      unsigned newsiz = ((nbcomp + len / 8 + 2) | 0xf) + 1;
+      struct momcomponents_st *newcsq =	//
+	MOM_GC_ALLOC ("new components seq",
+		      sizeof (struct momcomponents_st) +
+		      newsiz * sizeof (momvalue_t));
+      if (cnt > 0)
+	memcpy (newcsq->cp_comps, csq->cp_comps, cnt * sizeof (momvalue_t));
+      newcsq->cp_len = newsiz;
+      newcsq->cp_cnt = nbcomp;
+      MOM_GC_FREE (csq,
+		   sizeof (struct momcomponents_st) +
+		   len * sizeof (momvalue_t));
+      return newcsq;
+    };
+  memset (csq->cp_comps + cnt, 0, (cnt - len) * sizeof (momvalue_t));
+  csq->cp_len = nbcomp;
+  return csq;
+}

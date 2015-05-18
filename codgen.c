@@ -3381,15 +3381,61 @@ cgen_third_decorating_pass_mom (momitem_t *itmcgen)
       MOM_DEBUGPRINTF (gencod, "third_decorating_pass funitm %s vsetconst %s",
 		       mom_item_cstring (curfunitm),
 		       mom_output_gcstring (vsetconst));
+      {
+	const momseq_t *constset = mom_value_to_set (vsetconst);
+	unsigned nbconst = mom_seq_length (constset);
+	if (nbconst > 0
+	    && nbconst > mom_unsync_item_components_count (curfunitm))
+	  mom_unsync_item_components_reserve (curfunitm, nbconst);
+	momitem_t **arritm = MOM_GC_ALLOC ("arritm constset",
+					   (nbconst +
+					    1) * sizeof (momitem_t *));
+	for (unsigned cix = 0; cix < nbconst; cix++)
+	  {
+	    momitem_t *curcstitm = mom_seq_nth (constset, cix);
+	    momvalue_t vbindcst = MOM_NONEV;
+	    struct momentry_st *ent =
+	      mom_attributes_find_entry ((struct momattributes_st *)
+					 itmbindings->itm_data1,
+					 curcstitm);
+	    if (ent)
+	      vbindcst = ent->ent_val;
+	    MOM_DEBUGPRINTF (gencod,
+			     "third_decorating_pass cix#%d  curcstitm %s vbindcst %s",
+			     cix, mom_item_cstring (curcstitm),
+			     mom_output_gcstring (vbindcst));
+	    const momnode_t *bindcstnod = mom_value_to_node (vbindcst);
+	    assert (bindcstnod != NULL);
+	    intptr_t cstoff =
+	      mom_value_to_int (mom_node_nth (bindcstnod, 1), -1);
+	    momvalue_t valcst = mom_node_nth (bindcstnod, 2);
+	    MOM_DEBUGPRINTF (gencod,
+			     "third_decorating_pass cix#%d curcstitm %s valcst %s",
+			     cix, mom_item_cstring (curcstitm),
+			     mom_output_gcstring (valcst));
+	    assert (cstoff >= 0 && cstoff < nbconst);
+	    arritm[cstoff] = curcstitm;
+	    mom_unsync_item_put_nth_component (curfunitm, cix, valcst);
+	  }
+	momvalue_t vtupconstitems = mom_tuplev_sized_tuple (nbconst, arritm);
+	MOM_DEBUGPRINTF (gencod,
+			 "third_decorating_pass funitm %s vtupconstitems %s",
+			 mom_item_cstring (curfunitm),
+			 mom_output_gcstring (vtupconstitems));
+	mom_item_unsync_put_attribute (curfunitm,
+				       MOM_PREDEFINED_NAMED
+				       (emitted_constants), vtupconstitems);
+      }
 
-      /*
-         mom_item_unsync_put_attribute ((momitem_t *) curfunitm,
-         MOM_PREDEFINED_NAMED (emitted_constants),
-         tupconst);
-       */
-      // vsetconst = mom_node_nth (nodfuninfo, funinfo_const);
-      // vsetclosed = mom_node_nth (nodfuninfo, funinfo_closed);
-      // vsetvars = mom_node_nth (nodfuninfo, funinfo_vars);
+      ///
+      MOM_DEBUGPRINTF (gencod,
+		       "third_decorating_pass funitm %s vsetclosed %s",
+		       mom_item_cstring (curfunitm),
+		       mom_output_gcstring (vsetclosed));
+      ///
+      MOM_DEBUGPRINTF (gencod, "third_decorating_pass funitm %s vsetvars %s",
+		       mom_item_cstring (curfunitm),
+		       mom_output_gcstring (vsetvars));
       ///
       MOM_DEBUGPRINTF (gencod,
 		       "third_decorating_pass funix#%d done curfunitm %s",

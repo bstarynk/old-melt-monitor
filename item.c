@@ -998,6 +998,7 @@ mom_predefined_items_set (void)
   return set;
 }
 
+
 int
 mom_itemptr_cmp (const void *p1, const void *p2)
 {
