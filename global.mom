@@ -175,9 +175,30 @@
 ..
 
 
+** emitted_closed   ////// PREDEFINED
+{
+  * comment  "attribute giving emitted closed values in function" }
+ 
+..
+
+
+** emitted_constants   ////// PREDEFINED
+{
+  * comment  "attribute giving emitted constants in function" }
+ 
+..
+
+
 ** emitted_functions   ////// PREDEFINED
 {
   * comment  "attribute giving the emitted functions inside a module" }
+ 
+..
+
+
+** emitted_variables   ////// PREDEFINED
+{
+  * comment  "attribute giving emitted variables in function" }
  
 ..
 

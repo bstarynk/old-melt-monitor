@@ -31,7 +31,7 @@
 ** _2yhjRaR72_5sd4haPDv
 {
   * comment  "start block of test_funa"
-  * instructions  [_2DxdHB02H_7J0mhIR26] }
+  * instructions  [_2DxdHB02H_7J0mhIR26 _9bEj56Crk_4Ph9A38a7] }
  
   %  ^filler_of_plain_kind( block)
  
@@ -44,6 +44,14 @@
   * instructions  [] }
  
   %  ^filler_of_plain_kind( block)
+ 
+..
+
+
+** _9bEj56Crk_4Ph9A38a7
+{
+  * comment  "set itmy := const_quote" }
+ [[  set  test_itmy  test_constant_quote ]]
  
 ..
 

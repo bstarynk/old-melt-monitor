@@ -3336,7 +3336,35 @@ cgen_third_decorating_pass_mom (momitem_t *itmcgen)
 			   (curfunitm), blix,
 			   mom_item_cstring
 			   (itmcurblock), mom_output_gcstring (valblockinfo));
+	  const momseq_t *tupins =
+	    mom_value_to_tuple (mom_node_nth
+				(mom_value_to_node (valblockinfo), 1));
+	  if (tupins)
+	    {
+	      unsigned nbins = mom_seq_length (tupins);
+	      for (unsigned insix = 0; insix < nbins; insix++)
+		{
+		  momitem_t *insitm = mom_seq_nth (tupins, insix);
+		  mom_item_unsync_put_attribute (insitm,
+						 MOM_PREDEFINED_NAMED (in),
+						 mom_itemv (itmcurblock));
+		}
+	    }
+
 	};
+      ///
+      MOM_DEBUGPRINTF (gencod, "third_decorating_pass funitm %s vsetconst %s",
+		       mom_itemv (curfunitm),
+		       mom_output_gcstring (vsetconst));
+
+      /*
+         mom_item_unsync_put_attribute ((momitem_t *) curfunitm,
+         MOM_PREDEFINED_NAMED (emitted_constants),
+         tupconst);
+       */
+      // vsetconst = mom_node_nth (nodfuninfo, funinfo_const);
+      // vsetclosed = mom_node_nth (nodfuninfo, funinfo_closed);
+      // vsetvars = mom_node_nth (nodfuninfo, funinfo_vars);
       ///
       MOM_DEBUGPRINTF (gencod,
 		       "third_decorating_pass funix#%d done curfunitm %s",
