@@ -145,6 +145,14 @@
 ..
 
 
+** count
+{
+  * comment  "usual count in variadic operations"
+  * type  integer }
+ 
+..
+
+
 ** double   ////// PREDEFINED
 {
   * comment  "type for double" }
@@ -430,6 +438,13 @@
 ..
 
 
+** itm1
+{
+  * type  item }
+ 
+..
+
+
 ** jump   ////// PREDEFINED
 {
   * comment  "operation for jump instruction" }
@@ -459,6 +474,21 @@
   * comment  "kind of magic attributes"
   * dumped_item_emitter  ^emitter_of_magic_attribute()
   * dumped_item_scanner  ^scanner_of_magic_attribute() }
+ 
+..
+
+
+** node
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/node:*/ mom_make_node("  itm1  ", "
+    count  ","  restitm  ")")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "operation for making nodes"
+  * formals  [itm1]
+  * type  value
+  * variadic_count  count
+  * variadic_rest  restitm }
  
 ..
 
@@ -496,6 +526,13 @@
 ..
 
 
+** restitm
+{
+  * type  item }
+ 
+..
+
+
 ** scanner_of_association   ////// PREDEFINED
 {
   * comment  "scanner routine for association items" }
@@ -525,7 +562,15 @@
 
 ** set   ////// PREDEFINED
 {
-  * comment  "operation for assignment instruction" }
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/set:*/ mom_setv_new("  count  ","
+    restitm  ")")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "operation for assignment instruction, also for making sets"
+  * formals  []
+  * type  value
+  * variadic_count  count
+  * variadic_rest  restitm }
  
 ..
 
@@ -704,7 +749,22 @@
 {
   * comment  "describes the entire software system" }
  [[  test_module  plain_code_type_scanner  plain_code_emitter  value_of_item
-   value_to_item ]]
+   value_to_item  tuple  node ]]
+ 
+..
+
+
+** tuple
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/tuple:*/ mom_make_tuple("  count 
+   ","  restitm  ")")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "operation for making tuples"
+  * formals  []
+  * type  value
+  * variadic_count  count
+  * variadic_rest  restitm }
  
 ..
 
@@ -736,7 +796,13 @@
 
 ** value_of_item
 {
-  * comment  "operator to convert an item to a value" }
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*value_of_item:*/ mom_itemv("  val1
+    ")")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "operator to convert an item to a value"
+  * formals  [itm1]
+  * type  value }
  
 ..
 
