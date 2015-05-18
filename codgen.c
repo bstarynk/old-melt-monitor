@@ -2603,6 +2603,31 @@ cgen_emit_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
 	  goto otherwisenatlab;
       }
       break;
+    case MOM_PREDEFINED_NAMED_CASE (constants, natitm, otherwisenatlab):
+      {
+	intptr_t cstrk = mom_value_to_int (mom_node_nth (bindnod, 1), -1);
+	assert (cstrk >= 0);
+	momitem_t *cstitm = mom_value_to_item (mom_node_nth (bindnod, 2));
+	if (cstitm && cstitm->itm_space == momspa_predefined)
+	  {
+	    if (cstitm->itm_anonymous)
+	      fprintf (cg->cg_emitfile,
+		       " /*constant#%d:*/MOM_PREDEFINED_ANONYMOUS(%s)",
+		       (int) cstrk, mom_item_cstring (cstitm));
+	    else
+	      fprintf (cg->cg_emitfile,
+		       " /*constant#%d:*/MOM_PREDEFINED_NAMED(%s)",
+		       (int) cstrk, mom_item_cstring (cstitm));
+	  }
+	else if (cstitm)
+	  fprintf (cg->cg_emitfile,
+		   " /*constant-item:%s*/" CONSTANT_PREFIX_MOM "_%d",
+		   mom_item_cstring (cstitm), (int) cstrk);
+	else
+	  fprintf (cg->cg_emitfile, " " CONSTANT_PREFIX_MOM "_%d",
+		   (int) cstrk);
+      }
+      break;
     otherwisenatlab:
     default:
       MOM_FATAPRINTF ("emitted item %s has unexpected vbind %s",
@@ -3354,7 +3379,7 @@ cgen_third_decorating_pass_mom (momitem_t *itmcgen)
 	};
       ///
       MOM_DEBUGPRINTF (gencod, "third_decorating_pass funitm %s vsetconst %s",
-		       mom_itemv (curfunitm),
+		       mom_item_cstring (curfunitm),
 		       mom_output_gcstring (vsetconst));
 
       /*
@@ -3437,7 +3462,7 @@ bool
     }
   if (cg->cg_errormsg)
     return false;
-  for (unsigned formix = 0; formix < nbformals && !cg->cg_errormsg; formix)
+  for (unsigned formix = 0; formix < nbformals && !cg->cg_errormsg; formix++)
     {
       momitem_t *curformitm = mom_seq_nth (tupformals, formix);
       momvalue_t vsubexpr = mom_node_nth (nod, formix);
@@ -3568,18 +3593,23 @@ bool
 bool momfunc_1itm1val_to_void_plain_code_emitter
   (const momnode_t *clonode, momitem_t *itmcodgen, const momvalue_t vexpr)
 {
-  MOM_DEBUGPRINTF (gencod, "plain_code_emitter start itmcodgen=%s vexpr=%s",
-		   mom_item_cstring (itmcodgen), mom_output_gcstring (vexpr));
   momnode_t *nod = mom_value_to_node (vexpr);
   if (!nod || itmcodgen->itm_kind != MOM_PREDEFINED_NAMED (code_generation))
     return false;
   struct codegen_mom_st *cg = (struct codegen_mom_st *) itmcodgen->itm_data1;
-  momitem_t *connitm = mom_node_conn (nod);
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  MOM_DEBUGPRINTF (gencod,
+		   "plain_code_emitter start itmcodgen=%s vexpr=%s  **fileoff %ld",
+		   mom_item_cstring (itmcodgen), mom_output_gcstring (vexpr),
+		   ftell (cg->cg_emitfile));
+  momitem_t *connitm = mom_node_conn (nod);
   unsigned arity = mom_node_arity (nod);
   momvalue_t vcodexp =		//
     mom_item_unsync_get_attribute (connitm,
 				   MOM_PREDEFINED_NAMED (code_expansion));
+  MOM_DEBUGPRINTF (gencod,
+		   "plain_code_emitter vcodexp %s",
+		   mom_output_gcstring (vcodexp));
   momnode_t *nodexp = mom_value_to_node (vcodexp);
   if (!nodexp)
     MOM_FATAPRINTF ("code_expansion of %s is not a node",
@@ -3622,6 +3652,11 @@ bool momfunc_1itm1val_to_void_plain_code_emitter
 						      MOM_PREDEFINED_NAMED
 						      (variadic_rest)));
   unsigned nbexp = mom_node_arity (nodexp);
+  MOM_DEBUGPRINTF (gencod,
+		   "plain_code_emitter curblock %s vexpr %s nbexp=%d vcodexp %s",
+		   mom_item_cstring (cg->cg_curblockitm),
+		   mom_output_gcstring (vexpr), nbexp,
+		   mom_output_gcstring (vcodexp));
   for (unsigned xix = 0; xix < nbexp && !cg->cg_errormsg; xix++)
     {
       momvalue_t vcurexp = mom_node_nth (nodexp, xix);

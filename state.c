@@ -1275,6 +1275,9 @@ mom_load_value (momvalue_t *pval)
       int linecnt = loader_mom->ldlinecount;
       mom_eat_token_load ();
       const momitem_t *connitm = mom_load_itemref ();
+      MOM_DEBUGPRINTF (load, "begin node connitm %s at position %s",
+		       mom_item_cstring (connitm),
+		       load_position_mom (NULL, 0, linecnt));
       momvalue_t metav = MOM_NONEV;
       if (!connitm)
 	MOM_FATAPRINTF ("missing connective item after ^ "
@@ -1293,6 +1296,10 @@ mom_load_value (momvalue_t *pval)
       momvalue_t vson = MOM_NONEV;
       while ((vson = MOM_NONEV), mom_load_value (&vson))
 	{
+	  MOM_DEBUGPRINTF (load, "for node connitm %s vson %s at position %s",
+			   mom_item_cstring (connitm),
+			   mom_output_gcstring (vson),
+			   load_position_mom (NULL, 0, linecnt));
 	  mom_queuevalue_push_back (&quvals, vson);
 	  linecnt = loader_mom->ldlinecount;
 	}
@@ -1305,6 +1312,9 @@ mom_load_value (momvalue_t *pval)
       pval->typnum = momty_node;
       pval->vnode =
 	(momnode_t *) mom_queuevalue_node (&quvals, connitm, metav);
+      MOM_DEBUGPRINTF (load, "done node %s at position %s",
+		       mom_output_gcstring (*pval), load_position_mom (NULL,
+								       0, 0));
       return true;
     }				/* done nodes */
   return false;
