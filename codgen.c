@@ -3261,13 +3261,40 @@ cgen_emit_item_switch_statement_mom (struct codegen_mom_st *cg,
 
 static void
 cgen_emit_other_statement_mom (struct codegen_mom_st *cg, unsigned insix,
-			       momitem_t *insitm)
+			       momitem_t *stmtitm)
 {
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
-  assert (insitm);
-  MOM_FATAPRINTF ("emit_item_other_statement unimplemented insitm %s",
-		  mom_item_cstring (insitm));
-#warning cgen_emit_other_statement_mom unimplemented
+  assert (stmtitm);
+  momitem_t *itmop =
+    mom_value_to_item (mom_unsync_item_get_nth_component (stmtitm, 0));
+  assert (itmop && mom_hashset_contains (cg->cg_lockeditemset, itmop));
+  momvalue_t codemitv = mom_item_unsync_get_attribute (itmop,
+						       MOM_PREDEFINED_NAMED
+						       (statement_emitter));
+  MOM_DEBUGPRINTF (gencod,
+		   "emit_other_statement start function %s block %s stmt %s itmop %s codemitv %s",
+		   mom_item_cstring (cg->cg_curfunitm),
+		   mom_item_cstring (cg->cg_curblockitm),
+		   mom_item_cstring (stmtitm), mom_item_cstring (itmop),
+		   mom_output_gcstring (codemitv));
+  if (!mom_applval_2itm_to_void (codemitv, cg->cg_codgenitm, stmtitm)
+      || cg->cg_errormsg)
+    {
+      if (cg->cg_errormsg)
+	return;
+      CGEN_ERROR_RETURN_MOM (cg,
+			     "module item %s : function %s has block %s with statement %s with operation %s failing to emit",
+			     mom_item_cstring (cg->cg_moduleitm),
+			     mom_item_cstring (cg->cg_curfunitm),
+			     mom_item_cstring (cg->cg_curblockitm),
+			     mom_item_cstring (stmtitm),
+			     mom_item_cstring (itmop));
+    }
+  MOM_DEBUGPRINTF (gencod,
+		   "emit_other_statement done function %s block %s stmt %s itmop %s",
+		   mom_item_cstring (cg->cg_curfunitm),
+		   mom_item_cstring (cg->cg_curblockitm),
+		   mom_item_cstring (stmtitm), mom_item_cstring (itmop));
 }				/* end cgen_emit_other_statement_mom */
 
 
