@@ -31,7 +31,9 @@
 ** _2n1vLp5v3_6h15ihHan
 {
   * comment  "set itmz closeda" }
- [[  set  test_itmz  test_closed_a ]]
+ [[  set  test_itmz  ^value_to_item( test_closed_a) ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
  
 ..
 

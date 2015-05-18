@@ -2544,6 +2544,14 @@ cgen_emit_closeddecl_mom (struct codegen_mom_st *cg, unsigned closix,
 		   "emit_closeddecl closix#%u clositm %s vbindclos %s",
 		   closix, mom_item_cstring (clositm),
 		   mom_output_gcstring (vbindclos));
+  fprintf (cg->cg_emitfile,
+	   "\n" "#warning should declare closed#%d %s\n", closix,
+	   mom_item_cstring (clositm));
+  /*
+     fprintf (cg->cg_emitfile,
+     "  momvalue_t " CLOSED_PREFIX_MOM " _%d = mom_node_nth(mom_node, %d);\n",
+     );
+   */
   MOM_WARNPRINTF
     ("unimplemented cgen_emit_closeddecl_mom closix#%u clositm %s vbindclos %s",
      closix, mom_item_cstring (clositm), mom_output_gcstring (vbindclos));
@@ -2603,6 +2611,7 @@ cgen_emit_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
 	  goto otherwisenatlab;
       }
       break;
+      ////
     case MOM_PREDEFINED_NAMED_CASE (constants, natitm, otherwisenatlab):
       {
 	intptr_t cstrk = mom_value_to_int (mom_node_nth (bindnod, 1), -1);
@@ -2628,13 +2637,23 @@ cgen_emit_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
 		   (int) cstrk);
       }
       break;
+      ////
+    case MOM_PREDEFINED_NAMED_CASE (closed, natitm, otherwisenatlab):
+      {
+	intptr_t clork = mom_value_to_int (mom_node_nth (bindnod, 1), -1);
+	assert (clork >= 0);
+
+      }
+      break;
     otherwisenatlab:
     default:
       MOM_FATAPRINTF ("emitted item %s has unexpected vbind %s",
 		      mom_item_cstring (itm), mom_output_gcstring (vbind));
 
-    };				/* end swith natitm */
+    };				/* end switch natitm */
 }				/* end of cgen_emit_item_mom */
+
+
 
 
 static void cgen_emit_node_expr_mom (struct codegen_mom_st *cg,
