@@ -272,7 +272,8 @@ reorganize_named_items_mom (void)
       unsigned blen = curbuck->nambuck_len;
       unsigned bsiz = curbuck->nambuck_size;
       MOM_DEBUGPRINTF (item,
-		       "reorganize_named_items bix#%d blen=%d bsiz=%d", bix, blen, bsiz);
+		       "reorganize_named_items bix#%d blen=%d bsiz=%d", bix,
+		       blen, bsiz);
       assert (bsiz >= blen);
       for (unsigned itmix = 0; itmix < blen; itmix++)
 	{
@@ -709,6 +710,8 @@ mom_unregister_named_finalized_item (momitem_t *finitm)
   pthread_rwlock_unlock (&named_lock_mom);
 }				/* end mom_unregister_named_finalized_item */
 
+
+
 void
 mom_gc_finalize_item (void *itmad, void *data __attribute__ ((unused)))
 {
@@ -728,6 +731,8 @@ mom_gc_finalize_item (void *itmad, void *data __attribute__ ((unused)))
 }
 
 
+
+
 momitem_t *
 mom_make_named_item (const char *namstr)
 {
@@ -742,6 +747,11 @@ mom_make_named_item (const char *namstr)
       (named_count_mom > 0
        && (5 * named_nbuck_mom / 4 + 1) * (named_nbuck_mom + 1) <
        named_count_mom))
+    reorganize_named_items_mom ();
+  else if (MOM_UNLIKELY (named_count_mom > 0
+			 && (2 * named_nbuck_mom + 1) * (named_nbuck_mom +
+							 2) >=
+			 3 * named_count_mom))
     reorganize_named_items_mom ();
   int lobix = 0, hibix = named_nbuck_mom, mdbix = 0;
   int bix = -1;
@@ -930,6 +940,9 @@ mom_make_named_item (const char *namstr)
   assert (pos >= 0);
   struct namebucket_mom_st *curbuck = named_buckets_mom[bix];
   unsigned bucklen = curbuck->nambuck_len;
+  if (MOM_UNLIKELY
+      (bucklen > 3 && (3 + bucklen) * (bucklen + 1) > 3 * named_count_mom))
+    reorganize_named_items_mom ();
   if (!itm)
     {
       momitem_t *newitm = MOM_GC_ALLOC ("new named item", sizeof (momitem_t));

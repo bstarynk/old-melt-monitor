@@ -703,8 +703,8 @@
 ** the_software   ////// PREDEFINED
 {
   * comment  "describes the entire software system" }
- [[  test_module  plain_code_type_scanner  plain_code_emitter  value_of_item value_to_item
- ]]
+ [[  test_module  plain_code_type_scanner  plain_code_emitter  value_of_item
+   value_to_item ]]
  
 ..
 
@@ -713,6 +713,13 @@
 {
   * comment  "kind of code types, etc.."
   * dumped_item_emitter  ^emitter_of_plain_kind() }
+ 
+..
+
+
+** val1
+{
+  * type  value }
  
 ..
 
@@ -733,21 +740,17 @@
  
 ..
 
+
 ** value_to_item
 {
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*value_to_item:*/ mom_value_to_item("
+    val1  ")")
+  * code_type_scanner  ^plain_code_type_scanner()
   * comment  "operator to convert a value to an item"
-  * formals [ val1 ]
-  * type item
-  * code_expansion ^code_expansion("/*value_to_item:*/ mom_value_to_item("  val1 ")")
-  * code_type_scanner ^plain_code_type_scanner ()
-  * code_emitter ^plain_code_emitter()
-  }
+  * formals  [val1]
+  * type  item }
  
-..
-
-** val1 {
-* type value
-}
 ..
 
 
