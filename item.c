@@ -271,6 +271,8 @@ reorganize_named_items_mom (void)
       assert (curbuck != NULL);
       unsigned blen = curbuck->nambuck_len;
       unsigned bsiz = curbuck->nambuck_size;
+      MOM_DEBUGPRINTF (item,
+		       "reorganize_named_items bix#%d blen=%d bsiz=%d", bix, blen, bsiz);
       assert (bsiz >= blen);
       for (unsigned itmix = 0; itmix < blen; itmix++)
 	{

@@ -51,7 +51,9 @@
 ** _9bEj56Crk_4Ph9A38a7
 {
   * comment  "set itmy := const_quote" }
- [[  set  test_itmy  test_constant_quote ]]
+ [[  set  test_itmy  ^value_to_item(test_constant_quote) ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
  
 ..
 
@@ -88,12 +90,22 @@
 
 
 ** test_itmx
-
+{
+  * comment  "the itmx variable"
+  * type  item }
+ 
+  %  ^filler_of_plain_kind( variable)
+ 
 ..
 
 
 ** test_itmy
-
+{
+  * comment  "the itmy variable"
+  * type  item }
+ 
+  %  ^filler_of_plain_kind( variable)
+ 
 ..
 
 
