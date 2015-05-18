@@ -2173,12 +2173,12 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
   fprintf (cg->cg_emitfile, "  if (MOM_UNLIKELY(!mom_node\n");
   if (nbclosed > 0)
     fprintf (cg->cg_emitfile,
-	     "      || mom_node_arity(mom_node) < %d)\n", nbclosed);
+	     "      || mom_node_arity (mom_node) < %d\n", nbclosed);
   fprintf (cg->cg_emitfile,
-	   "      || !(mom_funcitm = mom_node_conn(mom_node))\n");
+	   "      || !(mom_funcitm = mom_node_conn (mom_node))\n");
   if (nbconsts > 0)
     fprintf (cg->cg_emitfile,
-	     "      || mom_unsync_item_components_count(mom_funcitm)<%d\n",
+	     "      || mom_unsync_item_components_count (mom_funcitm)<%d\n",
 	     nbconsts);
   fprintf (cg->cg_emitfile, "       ))\n" "  return false;\n");
   /// emit the declaration of output variables
@@ -2544,18 +2544,13 @@ cgen_emit_closeddecl_mom (struct codegen_mom_st *cg, unsigned closix,
 		   "emit_closeddecl closix#%u clositm %s vbindclos %s",
 		   closix, mom_item_cstring (clositm),
 		   mom_output_gcstring (vbindclos));
+  intptr_t closnum =
+    mom_value_to_int (mom_node_nth (mom_value_to_node (vbindclos), 1), -1);
+  assert (closnum >= 0);
   fprintf (cg->cg_emitfile,
-	   "\n" "#warning should declare closed#%d %s\n", closix,
-	   mom_item_cstring (clositm));
-  /*
-     fprintf (cg->cg_emitfile,
-     "  momvalue_t " CLOSED_PREFIX_MOM " _%d = mom_node_nth(mom_node, %d);\n",
-     );
-   */
-  MOM_WARNPRINTF
-    ("unimplemented cgen_emit_closeddecl_mom closix#%u clositm %s vbindclos %s",
-     closix, mom_item_cstring (clositm), mom_output_gcstring (vbindclos));
-#warning cgen_emit_closeddecl_mom unimplemented
+	   "  const momvalue_t " CLOSED_PREFIX_MOM
+	   "_%d = mom_node_nth(mom_node, %d);\n", (int) closnum,
+	   (int) closnum);
 }				/* end of cgen_emit_closeddecl_mom */
 
 
@@ -2642,7 +2637,8 @@ cgen_emit_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
       {
 	intptr_t clork = mom_value_to_int (mom_node_nth (bindnod, 1), -1);
 	assert (clork >= 0);
-
+	fprintf (cg->cg_emitfile, " /*closed:%s*/" CLOSED_PREFIX_MOM "_%d",
+		 mom_item_cstring (itm), (int) clork);
       }
       break;
     otherwisenatlab:
@@ -3451,10 +3447,83 @@ cgen_third_decorating_pass_mom (momitem_t *itmcgen)
 		       "third_decorating_pass funitm %s vsetclosed %s",
 		       mom_item_cstring (curfunitm),
 		       mom_output_gcstring (vsetclosed));
+      {
+	const momseq_t *closet = mom_value_to_set (vsetclosed);
+	unsigned nbclosed = mom_seq_length (closet);
+	momitem_t **arritm =	//
+	  MOM_GC_ALLOC ("arritm closet",
+			(nbclosed + 1) * sizeof (momitem_t *));
+	for (unsigned cix = 0; cix < nbclosed; cix++)
+	  {
+	    momitem_t *curcloitm = mom_seq_nth (closet, cix);
+	    momvalue_t vbindclo = MOM_NONEV;
+	    struct momentry_st *ent =
+	      mom_attributes_find_entry ((struct momattributes_st *)
+					 itmbindings->itm_data1,
+					 curcloitm);
+	    if (ent)
+	      vbindclo = ent->ent_val;
+	    MOM_DEBUGPRINTF (gencod,
+			     "third_decorating_pass cix#%d  curcloitm %s vbindclo %s",
+			     cix, mom_item_cstring (curcloitm),
+			     mom_output_gcstring (vbindclo));
+	    const momnode_t *bindclonod = mom_value_to_node (vbindclo);
+	    intptr_t cloff =
+	      mom_value_to_int (mom_node_nth (bindclonod, 1), -1);
+	    assert (cloff >= 0 && cloff < nbclosed);
+	    arritm[cloff] = curcloitm;
+	  }
+	momvalue_t vtupcloseditems =
+	  mom_tuplev_sized_tuple (nbclosed, arritm);
+	MOM_DEBUGPRINTF (gencod,
+			 "third_decorating_pass funitm %s vtupcloseditems %s",
+			 mom_item_cstring (curfunitm),
+			 mom_output_gcstring (vtupcloseditems));
+	mom_item_unsync_put_attribute (curfunitm,
+				       MOM_PREDEFINED_NAMED (emitted_closed),
+				       vtupcloseditems);
+      }
+      ///
       ///
       MOM_DEBUGPRINTF (gencod, "third_decorating_pass funitm %s vsetvars %s",
 		       mom_item_cstring (curfunitm),
 		       mom_output_gcstring (vsetvars));
+      {
+	const momseq_t *varset = mom_value_to_set (vsetvars);
+	unsigned nbvars = mom_seq_length (varset);
+	momitem_t **arritm =	//
+	  MOM_GC_ALLOC ("arritm varset",
+			(nbvars + 1) * sizeof (momitem_t *));
+	for (unsigned vix = 0; vix < nbvars; vix++)
+	  {
+	    momitem_t *curvaritm = mom_seq_nth (varset, vix);
+	    momvalue_t vbindvar = MOM_NONEV;
+	    struct momentry_st *ent =
+	      mom_attributes_find_entry ((struct momattributes_st *)
+					 itmbindings->itm_data1,
+					 curvaritm);
+	    if (ent)
+	      vbindvar = ent->ent_val;
+	    MOM_DEBUGPRINTF (gencod,
+			     "third_decorating_pass vix#%d  curvaritm %s vbindvar %s",
+			     vix, mom_item_cstring (curvaritm),
+			     mom_output_gcstring (vbindvar));
+	    const momnode_t *bindvarnod = mom_value_to_node (vbindvar);
+	    intptr_t varoff =
+	      mom_value_to_int (mom_node_nth (bindvarnod, 1), -1);
+	    assert (varoff >= 0 && varoff < nbvars);
+	    arritm[varoff] = curvaritm;
+	  }
+	momvalue_t vtupvaritems = mom_tuplev_sized_tuple (nbvars, arritm);
+	MOM_DEBUGPRINTF (gencod,
+			 "third_decorating_pass funitm %s vtupvaritems %s",
+			 mom_item_cstring (curfunitm),
+			 mom_output_gcstring (vtupvaritems));
+	mom_item_unsync_put_attribute (curfunitm,
+				       MOM_PREDEFINED_NAMED
+				       (emitted_variables), vtupvaritems);
+      }
+      ///
       ///
       MOM_DEBUGPRINTF (gencod,
 		       "third_decorating_pass funix#%d done curfunitm %s",
