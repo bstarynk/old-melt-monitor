@@ -1455,6 +1455,11 @@ cgen_bind_formals_mom (struct codegen_mom_st *cg, momitem_t *itmsignature,
   momvalue_t vinputy =		//
     mom_item_unsync_get_attribute (itmsignature,
 				   MOM_PREDEFINED_NAMED (input_types));
+  MOM_DEBUGPRINTF (gencod,
+		   "cgen_bind_formals fun %s itmsignature=%s vinputy %s",
+		   mom_item_cstring (cg->cg_curfunitm),
+		   mom_item_cstring (itmsignature),
+		   mom_output_gcstring (vinputy));
   momvalue_t voutputy =		//
     mom_item_unsync_get_attribute (itmsignature,
 				   MOM_PREDEFINED_NAMED (output_types));

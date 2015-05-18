@@ -33,6 +33,7 @@ attributes_find_entry_pos_mom (const struct momattributes_st *attrs,
   if (!attrs || !itma)
     return NULL;
   unsigned len = attrs->at_len;
+  assert (len >= attrs->at_cnt);
   int pos = -1;
   if (len <= SMALL_ATTR_LEN_MOM)
     {
@@ -118,19 +119,23 @@ mom_attributes_put (struct momattributes_st *attrs,
       newattrs->at_cnt = 1;
       newattrs->at_entries[0].ent_itm = itma;
       newattrs->at_entries[0].ent_val = *pval;
+      assert (newattrs->at_cnt <= newattrs->at_len);
       return newattrs;
     }
+  assert (attrs->at_cnt <= attrs->at_len);
   if (!itma)
     return (struct momattributes_st *) attrs;
   if (!pval)
     return mom_attributes_remove (attrs, itma);
   int pos = -1;
+  assert (attrs->at_cnt <= attrs->at_len);
   unsigned alen = attrs->at_len;
   unsigned acnt = attrs->at_cnt;
   struct momentry_st *ent = attributes_find_entry_pos_mom (attrs, itma, &pos);
   if (ent)
     {				/* in-place replacement */
       ent->ent_val = *pval;
+      assert (attrs->at_cnt <= attrs->at_len);
       return attrs;
     };
   if (pos >= 0)
@@ -138,22 +143,26 @@ mom_attributes_put (struct momattributes_st *attrs,
       if (alen <= SMALL_ATTR_LEN_MOM || 5 * acnt + 1 < 4 * alen)
 	{
 	  assert (pos < (int) alen);
+	  assert (attrs->at_entries[pos].ent_itm == NULL
+		  || attrs->at_entries[pos].ent_itm == MOM_EMPTY);
 	  attrs->at_entries[pos].ent_itm = itma;
 	  attrs->at_entries[pos].ent_val = *pval;
 	  attrs->at_cnt++;
+	  assert (attrs->at_cnt <= attrs->at_len);
 	  return attrs;
 	}
     }
-  if (alen < SMALL_ATTR_LEN_MOM)
+  if (alen < SMALL_ATTR_LEN_MOM && acnt < alen)
     {
       unsigned newsiz = SMALL_ATTR_LEN_MOM;
       struct momattributes_st *newattrs = mom_attributes_make (newsiz);
       memcpy (newattrs, attrs,
 	      sizeof (struct momattributes_st) +
 	      alen * sizeof (struct momentry_st));
-      newattrs->at_entries[alen].ent_itm = itma;
-      newattrs->at_entries[alen].ent_val = *pval;
-      newattrs->at_cnt++;
+      newattrs->at_cnt = acnt + 1;
+      newattrs->at_entries[acnt].ent_itm = itma;
+      newattrs->at_entries[acnt].ent_val = *pval;
+      assert (newattrs->at_cnt <= newattrs->at_len);
       return newattrs;
     }
   else
@@ -177,6 +186,7 @@ mom_attributes_put (struct momattributes_st *attrs,
       MOM_GC_FREE (attrs,
 		   sizeof (struct momattributes_st) +
 		   alen * sizeof (struct momentry_st));
+      assert (newattrs->at_cnt <= newattrs->at_len);
       return newattrs;
     }
 }
@@ -188,6 +198,7 @@ mom_attributes_remove (struct momattributes_st *attrs, const momitem_t *itma)
     return attrs;
   if (!attrs)
     return NULL;
+  assert (attrs->at_cnt <= attrs->at_len);
   struct momentry_st *ent = attributes_find_entry_pos_mom (attrs, itma, NULL);
   if (!ent)
     return attrs;
@@ -196,6 +207,7 @@ mom_attributes_remove (struct momattributes_st *attrs, const momitem_t *itma)
   attrs->at_cnt--;
   unsigned alen = attrs->at_len;
   unsigned acnt = attrs->at_cnt;
+  assert (attrs->at_cnt <= attrs->at_len);
   if (alen <= SMALL_ATTR_LEN_MOM)
     return attrs;
   if (MOM_UNLIKELY (3 * acnt + 1 < alen))
@@ -214,6 +226,7 @@ mom_attributes_remove (struct momattributes_st *attrs, const momitem_t *itma)
 	      newattrs->at_entries[newcnt++] = attrs->at_entries[ix];
 	    };
 	  newattrs->at_cnt = newcnt;
+	  assert (newattrs->at_cnt <= newattrs->at_len);
 	  MOM_GC_FREE (attrs,
 		       sizeof (struct momattributes_st)
 		       + alen * sizeof (struct momentry_st));
@@ -240,6 +253,7 @@ mom_attributes_remove (struct momattributes_st *attrs, const momitem_t *itma)
 	      newattrs->at_entries[newpos] = attrs->at_entries[ix];
 	      newattrs->at_cnt++;
 	    }
+	  assert (newattrs->at_cnt <= newattrs->at_len);
 	  MOM_GC_FREE (attrs,	//
 		       sizeof (struct momattributes_st)
 		       + alen * sizeof (struct momentry_st));
@@ -273,6 +287,7 @@ mom_attributes_make_atva (unsigned nbent, ...
       attrs = mom_attributes_put (attrs, itm, &val);
     }
   va_end (args);
+  assert (attrs->at_cnt <= attrs->at_len);
   return attrs;
 }
 
@@ -282,6 +297,7 @@ mom_attributes_scan_dump (struct momattributes_st *attrs)
   if (!attrs)
     return;
   unsigned alen = attrs->at_len;
+  assert (attrs->at_cnt <= attrs->at_len);
   for (unsigned ix = 0; ix < alen; ix++)
     {
       const momitem_t *curitm = attrs->at_entries[ix].ent_itm;

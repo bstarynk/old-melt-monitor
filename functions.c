@@ -132,7 +132,7 @@ bool
 {
   char bufnam[256];
   memset (bufnam, 0, sizeof (bufnam));
-  MOM_DEBUGPRINTF (dump, "filler_of_function itm=%s", mom_item_cstring (itm));
+  MOM_DEBUGPRINTF (load, "filler_of_function itm=%s", mom_item_cstring (itm));
   if (!clonode || clonode->slen < 1)
     MOM_FATAPRINTF ("filler_of_function %s has bad closure %s",
 		    mom_item_cstring (itm),
@@ -143,6 +143,8 @@ bool
     MOM_FATAPRINTF ("filler_of_function %s has bad closed signature %s",
 		    mom_item_cstring (itm),
 		    mom_output_gcstring (clonode->arrsons[0]));
+  MOM_DEBUGPRINTF (load, "filler_of_function itm=%s itmsig=%s",
+		   mom_item_cstring (itm), mom_item_cstring (itmsig));
   momvalue_t cfunradv = MOM_NONEV;
   {
     mom_item_lock (itmsig);
@@ -151,6 +153,9 @@ bool
 				     MOM_PREDEFINED_NAMED (function_radix));
     mom_item_unlock (itmsig);
   }
+  MOM_DEBUGPRINTF (load, "filler_of_function itm=%s itmsig=%s cfunradv %s",
+		   mom_item_cstring (itm), mom_item_cstring (itmsig),
+		   mom_output_gcstring (cfunradv));
   if (cfunradv.typnum != momty_string)
     MOM_FATAPRINTF
       ("filler_of_function %s with kind %s and bad `function_radix` %s",
