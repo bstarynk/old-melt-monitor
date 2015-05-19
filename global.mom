@@ -238,6 +238,15 @@
 ..
 
 
+** emitter_of_item_queue   ////// PREDEFINED
+{
+  * comment  "emitter for item_queue" }
+ 
+  %  ^filler_of_function( signature_1itm_to_val)
+ 
+..
+
+
 ** emitter_of_magic_attribute   ////// PREDEFINED
 {
   * comment  "predefined routine to emit magic_attribute-s" }
@@ -284,6 +293,15 @@
 ** filler_of_hashed_set   ////// PREDEFINED
 {
   * comment  "filler routine for hashed set items" }
+ 
+  %  ^filler_of_function( signature_1itm_to_void)
+ 
+..
+
+
+** filler_of_item_queue   ////// PREDEFINED
+{
+  * comment  "filler for item_queue" }
  
   %  ^filler_of_function( signature_1itm_to_void)
  
@@ -430,6 +448,15 @@
 ..
 
 
+** item_queue   ////// PREDEFINED
+{
+  * comment  "kind of queueitem-payloaded items"
+  * dumped_item_emitter  ^emitter_of_item_queue()
+  * dumped_item_scanner  ^scanner_of_item_queue() }
+ 
+..
+
+
 ** item_switch   ////// PREDEFINED
 {
   * comment  "operation for switch on item: item_switch <expr> <case>..."
@@ -545,6 +572,15 @@
 ** scanner_of_hashed_set   ////// PREDEFINED
 {
   * comment  "scanner routine for hashed set items" }
+ 
+  %  ^filler_of_function( signature_1itm_to_void)
+ 
+..
+
+
+** scanner_of_item_queue   ////// PREDEFINED
+{
+  * comment  "scanner for item_queue" }
  
   %  ^filler_of_function( signature_1itm_to_void)
  
@@ -741,6 +777,15 @@
 ** success   ////// PREDEFINED
 {
   * comment  "opcode to return successfully" }
+ 
+..
+
+
+** the_agenda   ////// PREDEFINED
+{
+  * comment  "agenda queue of tasklets" }
+ 
+  %  ^filler_of_item_queue( [])
  
 ..
 

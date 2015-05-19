@@ -412,3 +412,87 @@ bool
     itm->itm_data1 = NULL;
   return true;
 }				/* end of filler_of_hashed_set */
+
+
+
+
+////////////////////////////////////////////////////////////////
+////////// item_queue-s
+
+
+bool
+  momfunc_1itm_to_void_scanner_of_item_queue
+  (const momnode_t *clonode, momitem_t *itm)
+{
+  assert (clonode);
+  MOM_DEBUGPRINTF (dump,
+		   "scanner_of_item_queue itm=%s", mom_item_cstring (itm));
+  assert (itm->itm_kind == MOM_PREDEFINED_NAMED (item_queue));
+  struct momqueueitems_st *iqu = itm->itm_data1;
+  if (iqu)
+    mom_queueitem_scan_dump (iqu);
+  MOM_DEBUGPRINTF (dump,
+		   "scanner_of_item_queue end itm=%s",
+		   mom_item_cstring (itm));
+  return true;
+}				/* end scanner_of_item_queue */
+
+bool
+  momfunc_1itm_to_val_emitter_of_item_queue
+  (const momnode_t *clonode, momitem_t *itm, momvalue_t *res)
+{
+  MOM_DEBUGPRINTF (dump,
+		   "emitter_of_item_queue itm=%s", mom_item_cstring (itm));
+  assert (clonode);
+  assert (itm);
+  assert (itm->itm_kind == MOM_PREDEFINED_NAMED (item_queue));
+  struct momqueueitems_st *iqu = itm->itm_data1;
+  const momseq_t *tupque = iqu ? mom_queueitem_tuple (iqu, MOM_NONEV) : NULL;
+  momvalue_t vclos =
+    mom_nodev_new (MOM_PREDEFINED_NAMED (filler_of_item_queue),
+		   1,
+		   mom_tuplev (tupque));
+  MOM_DEBUGPRINTF (dump, "emitter_of_item_queue vclos=%s",
+		   mom_output_gcstring (vclos));
+  *res = vclos;
+  return true;
+}				/* end emitter_of_item_queue */
+
+
+
+
+bool
+  momfunc_1itm_to_void_filler_of_item_queue
+  (const momnode_t *clonode, momitem_t *itm)
+{
+  MOM_DEBUGPRINTF (dump,
+		   "filler_of_item_queue itm=%s", mom_item_cstring (itm));
+  if (!clonode)
+    MOM_FATAPRINTF ("filler_of_item_queue %s without closure",
+		    mom_item_cstring (itm));
+
+  if (clonode->conn != MOM_PREDEFINED_NAMED (filler_of_item_queue)
+      || clonode->slen != 1 || (clonode->arrsons[0].typnum != momty_null
+				&& clonode->arrsons[0].typnum != momty_tuple))
+    MOM_FATAPRINTF ("filler_of_item_queue %s has bad closure",
+		    mom_item_cstring (itm));
+  itm->itm_kind = MOM_PREDEFINED_NAMED (item_queue);
+  if (clonode->arrsons[0].typnum == momty_tuple)
+    {
+      struct momqueueitems_st *iqu =
+	MOM_GC_ALLOC ("new queue items", sizeof (struct momqueueitems_st));
+      const momseq_t *tup = mom_value_to_tuple (clonode->arrsons[0]);
+      assert (tup != NULL);
+      unsigned nbitems = mom_seq_length (tup);
+      for (unsigned ix = 0; ix < nbitems; ix++)
+	{
+	  const momitem_t *curitm = mom_seq_nth (tup, ix);
+	  if (curitm)
+	    mom_queueitem_push_back (iqu, curitm);
+	}
+      itm->itm_data1 = iqu;
+    }
+  else
+    itm->itm_data1 = NULL;
+  return true;
+}				/* end of filler_of_item_queue */

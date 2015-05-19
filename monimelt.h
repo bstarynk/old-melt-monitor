@@ -1436,10 +1436,10 @@ magic_attribute-s:
      put-closure(container-item,attribute-item,value)
 
 association-s
-  itm_data1 is a struct mom_attributes_st
+  itm_data1 is pointer to a struct mom_attributes_st
 
 hash_set-s
-  itm_data1 is a struct mom_hashset_st
+  itm_data1 is pointer to a struct mom_hashset_st
 
  ***************************************************************/
 #endif /*MONIMELT_INCLUDED_ */

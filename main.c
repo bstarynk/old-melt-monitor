@@ -32,7 +32,7 @@ static const char *generate_c_module_mom;
 
 
 unsigned nbmorepredef_mom;
-#define MAX_NEW_PREDEF_MOM 10
+#define MAX_NEW_PREDEF_MOM 16
 char *newpredefname_mom[MAX_NEW_PREDEF_MOM];
 char *newpredefcomment_mom[MAX_NEW_PREDEF_MOM];
 
