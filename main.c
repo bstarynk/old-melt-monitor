@@ -730,7 +730,7 @@ parse_program_arguments_and_load_plugins_mom (int *pargc, char ***pargv)
 		fflush (NULL);
 		sleep (1);
 		int ok = system (optarg);
-		if (!ok)
+		if (ok)
 		  MOM_FATAPRINTF
 		    ("failed to run command : %s ; got %d status",
 		     optarg, ok);
