@@ -211,8 +211,8 @@ first_pass_load_mom (const char *path, FILE *fil)
 	    MOM_FATAPRINTF ("invalid line #%d in file %s:\t%s", lincnt, path,
 			    linbuf);
 	}
-      /// lines like: == <item-name> are requesting a module
-      else if (linlen >= 4 && linbuf[0] == '=' && linbuf[1] == '=')
+      /// lines like: !! <item-name> are requesting a module
+      else if (linlen >= 4 && linbuf[0] == '!' && linbuf[1] == '!')
 	{
 	  char *pc = linbuf + 2;
 	  char *end = NULL;
@@ -294,24 +294,31 @@ make_modules_load_mom (void)
   fflush (NULL);
   MOM_INFORMPRINTF ("running %s for %d modules",
 		    makecmd, mom_hashset_count (loader_mom->ldmoduleset));
+  fflush (NULL);
   int ok = system (makecmd);
-  if (!ok)
-    MOM_FATAPRINTF ("failed to run %s", makecmd);
+  MOM_INFORMPRINTF ("after running %s got %d", makecmd, ok);
+  if (!ok > 1)
+    MOM_FATAPRINTF ("failed to run %s : got exit code %d", makecmd, ok);
   int nbmod = 0;
   for (unsigned mix = 0; mix < setmod->slen; mix++)
     {
       const momitem_t *moditm = setmod->arritm[mix];
       assert (moditm && moditm != MOM_EMPTY);
       assert (moditm->itm_str);
-      const momstring_t *mstr = mom_make_string_sprintf ("modules/momg_%s.so",
-							 moditm->itm_str->
-							 cstr);
+      const momstring_t *mstr =	//
+	mom_make_string_sprintf (MOM_MODULE_DIRECTORY MOM_SHARED_MODULE_PREFIX
+				 "%.so",
+				 moditm->itm_str->cstr);
       void *dlh = dlopen (mstr->cstr, RTLD_NOW | RTLD_GLOBAL);
       if (!dlh)
 	MOM_FATAPRINTF ("failed to dlopen %s : %s", mstr->cstr, dlerror ());
       nbmod++;
     }
-  MOM_INFORMPRINTF ("loaded %d modules", nbmod);
+  if (nbmod > 0)
+    MOM_INFORMPRINTF ("loaded %d modules : %s", nbmod,
+		      mom_unsafe_setv (setmod));
+  else
+    MOM_INFORMPRINTF ("loaded no modules");
 }
 
 static bool

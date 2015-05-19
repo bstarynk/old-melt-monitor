@@ -103,6 +103,7 @@ bool
 
 
 //////////////// functions
+#warning should add scanner_of_function which adds the module, if any
 bool
   momfunc_1itm_to_val_emitter_of_function
   (const momnode_t *clonode, momitem_t *itm, momvalue_t *res)

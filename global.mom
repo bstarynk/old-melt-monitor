@@ -18,6 +18,29 @@
 ///
 
 
+** _9rwzfFAJ2_0J3c749dM
+{
+  * comment  "start of agenda_step"
+  * instructions  [] }
+ 
+  %  ^filler_of_plain_kind( block)
+ 
+..
+
+
+** agenda_step   ////// PREDEFINED
+{
+  * comment  "the function to run a step of the agenda"
+  * constants  {the_agenda}
+  * formals  []
+  * function_signature  signature_void_to_void
+  * start  _9rwzfFAJ2_0J3c749dM }
+ 
+ // %  ^filler_of_function( signature_void_to_void)
+ 
+..
+
+
 ** apply   ////// PREDEFINED
 {
   * comment  "opcode for apply <signature> <results...> <fun> <args...> [<else-block>] statement"
@@ -781,11 +804,28 @@
 ..
 
 
+** tasklet   ////// PREDEFINED
+{
+  * comment  "kind for tasklets inside the_agenda" }
+ 
+..
+
+
 ** the_agenda   ////// PREDEFINED
 {
   * comment  "agenda queue of tasklets" }
  
   %  ^filler_of_item_queue( [])
+ 
+..
+
+
+** the_base_module   ////// PREDEFINED
+{
+  * comment  "the base module, notably for agenda functions"
+  * functions  {agenda_step} }
+ 
+  %  ^filler_of_plain_kind( code_module)
  
 ..
 
