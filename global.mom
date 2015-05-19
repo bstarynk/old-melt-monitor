@@ -27,7 +27,7 @@
  
 ..
 
-
+ 
 ** _7MF947fC8_8ChefReMD
 {
   * comment  "starting block of agenda_step"
@@ -41,14 +41,14 @@
 
 ** agenda_step   ////// PREDEFINED
 {
-  * comment  "the function to run a step of the agenda"
-  * constants  {_07BHLcwhp_48ka0t9bq the_agenda}
+  * emitted_closed  []
+  * emitted_constants  [_07BHLcwhp_48ka0t9bq the_agenda]
   * emitted_variables  []
-  * formals  []
+  * formals  [] 
   * function_signature  signature_void_to_void
   * hook_closure  0
-  * start  _7MF947fC8_8ChefReMD }
- [[  the_agenda ]]
+  * start  _7MF947fC8_8ChefReMD}
+ [[  ^agenda_step() ]]
  
   %  ^filler_of_function( signature_void_to_void)
  

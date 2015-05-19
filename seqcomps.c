@@ -172,7 +172,9 @@ mom_components_reserve (struct momcomponents_st *csq, unsigned nbcomp)
 		   len * sizeof (momvalue_t));
       return newcsq;
     };
-  memset (csq->cp_comps + cnt, 0, (cnt - len) * sizeof (momvalue_t));
+  assert (len >= cnt);
+  if (len > cnt)
+    memset (csq->cp_comps + cnt, 0, (len - cnt) * sizeof (momvalue_t));
   csq->cp_len = nbcomp;
   return csq;
 }
