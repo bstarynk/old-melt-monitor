@@ -18,6 +18,8 @@
 ///
 
 
+!! the_base_module
+
 ** _9rwzfFAJ2_0J3c749dM
 {
   * comment  "start of agenda_step"
@@ -36,7 +38,7 @@
   * function_signature  signature_void_to_void
   * start  _9rwzfFAJ2_0J3c749dM }
  
- // %  ^filler_of_function( signature_void_to_void)
+//  %  ^filler_of_function( signature_void_to_void)
  
 ..
 
@@ -592,6 +594,16 @@
 ..
 
 
+** scanner_of_function   ////// PREDEFINED
+{
+  * comment  "scanning routine for C functions, may add their containing module"
+ }
+ 
+  %  ^filler_of_function( signature_1itm_to_void)
+ 
+..
+
+
 ** scanner_of_hashed_set   ////// PREDEFINED
 {
   * comment  "scanner routine for hashed set items" }
@@ -638,6 +650,7 @@
 {
   * comment  "signature of functions taking one item, one value and giving a value"
   * dumped_item_emitter  ^emitter_of_function()
+  * dumped_item_scanner  ^scanner_of_function()
   * function_radix  "1itm1val_to_item"
   * input_types  [item value]
   * output_types  [item] }
@@ -651,6 +664,7 @@
 {
   * comment  "signature of functions taking one item, one value and giving no results"
   * dumped_item_emitter  ^emitter_of_function()
+  * dumped_item_scanner  ^scanner_of_function()
   * function_radix  "1itm1val_to_void"
   * input_types  [item value]
   * output_types  [] }
@@ -664,6 +678,7 @@
 {
   * comment  "signature for function of 1 item argument and 1 value result"
   * dumped_item_emitter  ^emitter_of_function()
+  * dumped_item_scanner  ^scanner_of_function()
   * function_radix  "1itm_to_val"
   * input_types  [item]
   * output_types  [value] }
@@ -677,6 +692,7 @@
 {
   * comment  "signature for function of 1 item argument and no result"
   * dumped_item_emitter  ^emitter_of_function()
+  * dumped_item_scanner  ^scanner_of_function()
   * function_radix  "1itm_to_void"
   * input_types  [item]
   * output_types  [] }
@@ -690,6 +706,7 @@
 {
   * comment  "signature for closures with one value argument and one value result"
   * dumped_item_emitter  ^emitter_of_function()
+  * dumped_item_scanner  ^scanner_of_function()
   * function_radix  "1val_to_val"
   * input_types  [value]
   * output_types  [value] }
@@ -703,6 +720,7 @@
 {
   * comment  "signature for closures with one value argument and no result"
   * dumped_item_emitter  ^emitter_of_function()
+  * dumped_item_scanner  ^scanner_of_function()
   * function_radix  "1val_to_void"
   * input_types  [value]
   * output_types  [] }
@@ -716,6 +734,7 @@
 {
   * comment  "signature of functions taking two items and a value and giving a value"
   * dumped_item_emitter  ^emitter_of_function()
+  * dumped_item_scanner  ^scanner_of_function()
   * function_radix  "2itm1val_to_val"
   * input_types  [item item value]
   * output_types  [value] }
@@ -729,6 +748,7 @@
 {
   * comment  "signature of functions taking two items and a value and giving no result"
   * dumped_item_emitter  ^emitter_of_function()
+  * dumped_item_scanner  ^scanner_of_function()
   * function_radix  "2itm1val_to_void"
   * input_types  [item item value]
   * output_types  [] }
@@ -742,6 +762,7 @@
 {
   * comment  "signature of functions taking two items and giving one value"
   * dumped_item_emitter  ^emitter_of_function()
+  * dumped_item_scanner  ^scanner_of_function()
   * function_radix  "2itm_to_val"
   * input_types  [item item]
   * output_types  [value] }
@@ -767,6 +788,7 @@
 {
   * comment  "signature for closures with no arguments and no result"
   * dumped_item_emitter  ^emitter_of_function()
+  * dumped_item_scanner  ^scanner_of_function()
   * function_radix  "void_to_void"
   * input_types  []
   * output_types  [] }

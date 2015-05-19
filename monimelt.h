@@ -149,6 +149,8 @@ extern void *GC_calloc (size_t nbelem, size_t elsiz);
 #define MOM_SHARED_MODULE_PREFIX "momg_"
 // plugins path start with
 #define MOM_PLUGIN_PREFIX "momplug_"
+// generated functions start with
+#define MOM_FUNCTION_PREFIX "momfunc_"
 
 // query a clock
 static inline double

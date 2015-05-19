@@ -304,11 +304,12 @@ make_modules_load_mom (void)
     {
       const momitem_t *moditm = setmod->arritm[mix];
       assert (moditm && moditm != MOM_EMPTY);
-      assert (moditm->itm_str);
+      MOM_DEBUGPRINTF (load, "loading module mix#%d moditm %s",
+		       mix, mom_item_cstring (moditm));
       const momstring_t *mstr =	//
 	mom_make_string_sprintf (MOM_MODULE_DIRECTORY MOM_SHARED_MODULE_PREFIX
-				 "%.so",
-				 moditm->itm_str->cstr);
+				 "%s.so",
+				 mom_item_cstring (moditm));
       void *dlh = dlopen (mstr->cstr, RTLD_NOW | RTLD_GLOBAL);
       if (!dlh)
 	MOM_FATAPRINTF ("failed to dlopen %s : %s", mstr->cstr, dlerror ());
@@ -316,7 +317,7 @@ make_modules_load_mom (void)
     }
   if (nbmod > 0)
     MOM_INFORMPRINTF ("loaded %d modules : %s", nbmod,
-		      mom_unsafe_setv (setmod));
+		      mom_output_gcstring (mom_unsafe_setv (setmod)));
   else
     MOM_INFORMPRINTF ("loaded no modules");
 }
@@ -1487,6 +1488,8 @@ mom_scan_dumped_module_item (const momitem_t *moditm)
     MOM_FATAPRINTF ("scan module outside of dumping");
   if (!moditm || moditm == MOM_EMPTY)
     return;
+  MOM_DEBUGPRINTF (dump, "scan_dumped_module_item moditm %s",
+		   mom_item_cstring (moditm));
   if (dumper_mom->dustate != dump_scan)
     return;
   mom_scan_dumped_item (moditm);
@@ -1825,7 +1828,8 @@ emit_signature_application_code_mom (FILE *foutaphd,
 	       ix);
     };
   fputs (");\n\n", foutaphd);
-  fprintf (foutaphd, "\n" "#define MOM_PREFIXFUN_%s \"momfunc_%s\"\n",
+  fprintf (foutaphd,
+	   "\n" "#define MOM_PREFIXFUN_%s \"" MOM_FUNCTION_PREFIX "%s\"\n",
 	   suffix, mom_value_cstr (vradix));
   fprintf (foutaphd, "static inline mom_%s_sig_t mom_applclos_%s;\n", suffix,
 	   suffix);
@@ -1904,8 +1908,8 @@ emit_signature_application_code_mom (FILE *foutaphd,
 	   (int) ((2 * strlen (suffix) + 192) | 0x3f) + 1);
   fprintf (foutaphd, "    memset (nambuf_mom, 0, sizeof(nambuf_mom));\n");
   fprintf (foutaphd,
-	   "    if (snprintf(nambuf_mom, sizeof(nambuf_mom), \"momfunc_%s_%%s\",\n",
-	   mom_value_cstr (vradix));
+	   "    if (snprintf(nambuf_mom, sizeof(nambuf_mom), \""
+	   MOM_FUNCTION_PREFIX "%s_%%s\",\n", mom_value_cstr (vradix));
   fprintf (foutaphd,
 	   "                 mom_item_cstring(connitm_mom)) < (int)sizeof(nambuf_mom))\n");
   fprintf (foutaphd,

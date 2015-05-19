@@ -103,7 +103,6 @@ bool
 
 
 //////////////// functions
-#warning should add scanner_of_function which adds the module, if any
 bool
   momfunc_1itm_to_val_emitter_of_function
   (const momnode_t *clonode, momitem_t *itm, momvalue_t *res)
@@ -163,7 +162,8 @@ bool
        mom_item_cstring (itm), mom_item_cstring (itmsig),
        mom_output_gcstring (cfunradv));
   if (snprintf
-      (bufnam, sizeof (bufnam), "momfunc_%s_%s", mom_value_cstr (cfunradv),
+      (bufnam, sizeof (bufnam), MOM_FUNCTION_PREFIX "%s_%s",
+       mom_value_cstr (cfunradv),
        mom_item_cstring (itm)) >= (int) sizeof (bufnam))
     MOM_FATAPRINTF ("filler_of_function %s with kind %s too long name %s",
 		    mom_item_cstring (itm), mom_item_cstring (itmsig),
@@ -184,6 +184,81 @@ bool
 		   adfun);
   return true;
 }				/* end of filler_of_function */
+
+bool
+  momfunc_1itm_to_void_scanner_of_function
+  (const momnode_t *clonode, momitem_t *itm)
+{
+  assert (clonode);
+  MOM_DEBUGPRINTF (dump,
+		   "scanner_of_function itm=%s", mom_item_cstring (itm));
+  momitem_t *kinditm = itm->itm_kind;
+  if (kinditm
+      && kinditm->itm_kind == MOM_PREDEFINED_NAMED (function_signature))
+    {
+      Dl_info dlinfo;
+      memset (&dlinfo, 0, sizeof (dlinfo));
+      if (dladdr (itm->itm_data1, &dlinfo))
+	{
+	  MOM_DEBUGPRINTF (dump,
+			   "scanner_of_function itm=%s"
+			   " dli_fname %s, dli_sname %s, dli_saddr %p, itmdata %p"
+			   "; delta %#lx",
+			   mom_item_cstring (itm),
+			   dlinfo.dli_fname,
+			   dlinfo.dli_sname,
+			   dlinfo.dli_saddr,
+			   itm->itm_data1,
+			   (long) ((char *) dlinfo.dli_saddr -
+				   (char *) itm->itm_data1));
+	  if (!strncmp
+	      (dlinfo.dli_sname, MOM_FUNCTION_PREFIX,
+	       strlen (MOM_FUNCTION_PREFIX))
+	      && !strncmp (dlinfo.dli_fname,
+			   MOM_MODULE_DIRECTORY MOM_SHARED_MODULE_PREFIX,
+			   strlen (MOM_MODULE_DIRECTORY
+				   MOM_SHARED_MODULE_PREFIX)))
+	    {
+	      MOM_DEBUGPRINTF (dump,
+			       "scanner_of_function itm=%s  good dli_fname %s",
+			       mom_item_cstring (itm), dlinfo.dli_fname);
+	      char *restnam = MOM_GC_STRDUP ("restnam",
+					     dlinfo.dli_fname +
+					     strlen (MOM_MODULE_DIRECTORY
+						     MOM_SHARED_MODULE_PREFIX));
+	      MOM_DEBUGPRINTF (dump, "scanner_of_function itm=%s restnam %s",
+			       mom_item_cstring (itm), restnam);
+	      char *dotrest = strchr (restnam, '.');
+	      if (dotrest)
+		*dotrest = '\0';
+	      momitem_t *moditm = mom_find_item (restnam);
+	      MOM_DEBUGPRINTF (dump,
+			       "scanner_of_function itm=%s truncated restnam %s moditm %s",
+			       mom_item_cstring (itm), restnam,
+			       mom_item_cstring (moditm));
+	      if (moditm)
+		mom_scan_dumped_module_item (moditm);
+	      MOM_DEBUGPRINTF (dump,
+			       "scanner_of_function itm=%s done moduleitem %s",
+			       mom_item_cstring (itm),
+			       mom_item_cstring (moditm));
+	    }
+	  else
+	    MOM_DEBUGPRINTF (dump,
+			     "scanner_of_function itm=%s strange dli_fname <%s> not starting with "
+			     MOM_MODULE_DIRECTORY MOM_SHARED_MODULE_PREFIX,
+			     mom_item_cstring (itm), dlinfo.dli_fname);
+
+
+	}
+      else
+	MOM_WARNPRINTF ("scanner_of_function itm=%s ad@%p failed : %s",
+			mom_item_cstring (itm), itm->itm_data1, dlerror ());
+    }
+  MOM_DEBUGPRINTF (dump,
+		   "scanner_of_function end itm=%s", mom_item_cstring (itm));
+  return true;
+}				/* end scanner_of_function */
 
 ////////////////////////////////////////////////////////////////
 //// plain kind
