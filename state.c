@@ -1943,7 +1943,6 @@ static void
 emit_signature_application_hook_mom (FILE *foutaphd,
 				     momitem_t *itmpredef, momvalue_t vhook)
 {
-#warning emit_signature_application_hook_mom should be called later
   char prefixbuf[256];
   char applyvalbuf[256];
   char applyclosbuf[256];
@@ -2058,6 +2057,8 @@ emit_signature_application_hook_mom (FILE *foutaphd,
   fprintf (foutaphd, "\n} // end momhook_%s of %s\n\n",
 	   mom_item_cstring (itmpredef), mom_item_cstring (itmkindsig));
 }				/* end of emit_signature_application_hook_mom   */
+
+
 
 static void
 emit_predefined_fill_mom (void)

@@ -384,6 +384,7 @@ enum extraopt_en
   xtraopt_dumpcoldstate,
   xtraopt_daemon_noclose,
   xtraopt_generate_c_module,
+  xtraopt_system,
 };
 
 static const struct option mom_long_options[] = {
@@ -408,6 +409,7 @@ static const struct option mom_long_options[] = {
   {"dump-cold-state", required_argument, NULL, xtraopt_dumpcoldstate},
   {"add-predefined", required_argument, NULL, xtraopt_addpredef},
   {"generate-c-module", required_argument, NULL, xtraopt_generate_c_module},
+  {"system", required_argument, NULL, xtraopt_system},
   /* Terminating NULL placeholder.  */
   {NULL, no_argument, NULL, 0},
 };
@@ -547,6 +549,8 @@ usage_mom (const char *argv0)
   printf ("\t --add-predefined <predefname> [<comment>]"
 	  "\t #add a new predefined and dump\n");
   printf ("\t --generate-c-module <moduleitem>" "\t #generate a C module\n");
+  printf ("\t --system <command>"
+	  "\t #run an arbitrary command at argument parsing type\n");
 }
 
 static void
@@ -714,6 +718,27 @@ parse_program_arguments_and_load_plugins_mom (int *pargc, char ***pargv)
 	case xtraopt_generate_c_module:
 	  {
 	    generate_c_module_mom = optarg;
+	  }
+	  break;
+	case xtraopt_system:
+	  {
+	    if (optarg)
+	      {
+		fflush (NULL);
+		MOM_INFORMPRINTF
+		  ("before running command with system(3) : %s", optarg);
+		fflush (NULL);
+		sleep (1);
+		int ok = system (optarg);
+		if (!ok)
+		  MOM_FATAPRINTF
+		    ("failed to run command : %s ; got %d status",
+		     optarg, ok);
+		else
+		  MOM_INFORMPRINTF ("did run command : %s", optarg);
+	      }
+	    else
+	      MOM_FATAPRINTF ("invalid --system %s", optarg);
 	  }
 	  break;
 	default:
