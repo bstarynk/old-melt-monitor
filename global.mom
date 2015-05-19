@@ -41,11 +41,11 @@
 
 ** agenda_step   ////// PREDEFINED
 {
+  * constants  {_07BHLcwhp_48ka0t9bq the_agenda}
   * emitted_closed  []
   * emitted_constants  [_07BHLcwhp_48ka0t9bq the_agenda]
   * emitted_variables  []
   * formals  []
-  * constants {_07BHLcwhp_48ka0t9bq the_agenda}
   * function_signature  signature_void_to_void
   * hook_closure  0
   * start  _7MF947fC8_8ChefReMD }
