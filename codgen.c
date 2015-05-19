@@ -3316,7 +3316,7 @@ cgen_third_decorating_pass_mom (momitem_t *itmcgen)
   unsigned nbfun = mom_seq_length (seqfun);
   for (unsigned funix = 0; funix < nbfun; funix++)
     {
-      const momitem_t *curfunitm = mom_seq_nth (seqfun, funix);
+      momitem_t *curfunitm = (momitem_t *) mom_seq_nth (seqfun, funix);
       MOM_DEBUGPRINTF (gencod, "third_decorating_pass funix#%d curfunitm %s",
 		       funix, mom_item_cstring (curfunitm));
       struct momentry_st *entfun =

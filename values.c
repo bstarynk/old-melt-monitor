@@ -354,11 +354,14 @@ sort_set_unique_items_mom (const momitem_t **itmarr, unsigned nbitems)
       const momitem_t *previtm = itmarr[ix - 1];
       if (MOM_UNLIKELY (itmarr[ix] == previtm))
 	{
-	  unsigned nextix;
+	  unsigned nextix = 0;
+	  MOM_DEBUGPRINTF (item,
+			   "sort_set_unique_items duplicate item #%d  : %s",
+			   ix, mom_item_cstring (previtm));
 	  for (nextix = ix; nextix < nbitems; nextix++)
 	    if (MOM_UNLIKELY (itmarr[nextix] != previtm))
 	      break;
-	  assert (nextix > ix);
+	  assert (nextix >= ix);
 	  memmove (itmarr + ix, itmarr + nextix,
 		   (nextix - ix) * sizeof (momitem_t *));
 	  nbitems -= (nextix - ix);

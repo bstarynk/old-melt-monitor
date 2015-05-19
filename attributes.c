@@ -343,6 +343,7 @@ mom_attributes_set (struct momattributes_st *attrs, momvalue_t meta)
     };
   assert (count == acnt);
   const momseq_t *set = mom_make_sized_meta_set (meta, count, arr);
+  assert (acnt == 0 || set->slen == acnt);
   MOM_GC_FREE (arr, (acnt + 1) * sizeof (momitem_t *));
   return set;
 }

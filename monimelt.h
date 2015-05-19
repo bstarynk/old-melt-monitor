@@ -690,11 +690,13 @@ mom_attributes_make (unsigned len)
 
 
 void mom_attributes_scan_dump (struct momattributes_st *attrs);
+
 static inline unsigned
 mom_attributes_count (struct momattributes_st *attrs)
 {
   if (!attrs || attrs == MOM_EMPTY)
     return 0;
+  assert (attrs->at_cnt <= attrs->at_len);
   return attrs->at_cnt;
 }
 
