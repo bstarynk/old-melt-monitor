@@ -17,8 +17,8 @@
 ///  <http://www.gnu.org/licenses/>. 
 ///
 
-
 !! the_base_module
+
 
 ** _9rwzfFAJ2_0J3c749dM
 {
@@ -38,7 +38,7 @@
   * function_signature  signature_void_to_void
   * start  _9rwzfFAJ2_0J3c749dM }
  
-//  %  ^filler_of_function( signature_void_to_void)
+  %  ^filler_of_function( signature_void_to_void)
  
 ..
 
