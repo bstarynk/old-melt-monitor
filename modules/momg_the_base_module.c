@@ -39,11 +39,17 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
   momitem_t* mom_funcitm = NULL;
   if (MOM_UNLIKELY(!mom_node
       || !(mom_funcitm = mom_node_conn (mom_node))
+      || mom_unsync_item_components_count (mom_funcitm)<2
        ))
   return false;
   // 0 output results:
   // 0 variables:
-  // 0 constants:
+  // 2 constants:
+  // constant _07BHLcwhp_48ka0t9bq
+  const momvalue_t momconst_0 = 
+    mom_raw_item_get_indexed_component (mom_funcitm, 0);
+  // constant the_agenda
+  const momvalue_t momconst_1 =  mom_itemv(MOM_PREDEFINED_NAMED(the_agenda));
   // 0 closed:
   goto momblocklab__7MF947fC8_8ChefReMD;
  // block #0 : _7MF947fC8_8ChefReMD

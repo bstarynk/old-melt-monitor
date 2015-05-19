@@ -944,8 +944,10 @@ void mom_unregister_named_finalized_item (momitem_t *finitm);
 static inline const char *
 mom_item_cstring (const momitem_t *itm)
 {
-  if (!itm || itm == MOM_EMPTY)
+  if (!itm)
     return "~";
+  if (itm == MOM_EMPTY)
+    return "~/*empty*/ ";
   assert (itm->itm_str);
   return itm->itm_str->cstr;
 }

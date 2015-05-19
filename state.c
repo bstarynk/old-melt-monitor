@@ -2216,37 +2216,53 @@ emit_content_dumped_item_mom (const momitem_t *itm)
 {				//// keep in sync with load_fill_item_mom
   assert (dumper_mom && dumper_mom->dumagic == DUMPER_MAGIC_MOM);
   assert (itm && itm != MOM_EMPTY);
-  MOM_DEBUGPRINTF (dump, "emit content item %s", mom_item_cstring (itm));
-  if (mom_attributes_count (itm->itm_attrs) > 0)
+  unsigned nbat = mom_attributes_count (itm->itm_attrs);
+  unsigned nbcomp = mom_components_count (itm->itm_comps);
+  MOM_DEBUGPRINTF (dump,
+		   "emit_content_dumped_item start %s nbat %u nbcomp %u kind %s",
+		   mom_item_cstring (itm), nbat, nbcomp,
+		   mom_item_cstring (itm->itm_kind));
+  if (nbat > 0)
     {
       fputs ("{", dumper_mom->dufile);
       const momseq_t *setat = mom_attributes_set (itm->itm_attrs, MOM_NONEV);
-      MOM_DEBUGPRINTF (dump, "content of item %s attributes set %s",
+      MOM_DEBUGPRINTF (dump,
+		       "emit_content_dumped_item item %s attributes set %s",
 		       mom_item_cstring (itm),
 		       mom_output_gcstring (mom_unsafe_setv (setat)));
       if (setat)
 	for (unsigned ix = 0; ix < setat->slen; ix++)
 	  {
 	    const momitem_t *itmat = setat->arritm[ix];
+	    MOM_DEBUGPRINTF (dump,
+			     "emit_content_dumped_item item %s attribute %s ix#%u",
+			     mom_item_cstring (itm), mom_item_cstring (itmat),
+			     ix);
 	    struct momentry_st *ent =
 	      mom_attributes_find_entry (itm->itm_attrs, itmat);
 	    if (!ent)
-	      continue;
+	      {
+		MOM_WARNPRINTF
+		  ("in content of dumped item %s missing attribute %s",
+		   mom_item_cstring (itm), mom_item_cstring (itmat));
+		continue;
+	      }
 	    momvalue_t aval = ent->ent_val;
-	    MOM_DEBUGPRINTF (dump, "dumpcontent entry itmat=%s val=%s",
+	    MOM_DEBUGPRINTF (dump,
+			     "emit_content_dumped_item entry itmat=%s val=%s",
 			     mom_item_cstring (itmat),
 			     mom_output_gcstring (aval));
 	    if (!mom_dumpable_item (itmat))
 	      {
 		MOM_DEBUGPRINTF (dump,
-				 "dumpcontent non dumpable attribute %s",
+				 "emit_content_dumped_item non dumpable attribute %s",
 				 mom_item_cstring (itmat));
 		continue;
 	      }
 	    if (!mom_dumpable_value (aval))
 	      {
 		MOM_DEBUGPRINTF (dump,
-				 "dumpcontent non dumpable value %s of attribute %s",
+				 "emit_content_dumped_item non dumpable value %s of attribute %s",
 				 mom_output_gcstring (aval),
 				 mom_item_cstring (itmat));
 		continue;
@@ -2255,7 +2271,7 @@ emit_content_dumped_item_mom (const momitem_t *itm)
 	    mom_emit_dumped_newline ();
 	    fputs ("* ", dumper_mom->dufile);
 	    MOM_DEBUGPRINTF (dump,
-			     "dumpcontent doing entry itmat=%s aval=%s",
+			     "emit_content_dumped_item doing entry itmat=%s aval=%s",
 			     mom_item_cstring (itmat),
 			     mom_output_gcstring (aval));
 	    mom_emit_dumped_itemref (itmat);
@@ -2268,20 +2284,23 @@ emit_content_dumped_item_mom (const momitem_t *itm)
       mom_emit_dumped_newline ();
     }
   else
-    MOM_DEBUGPRINTF (dump, "dump_content no attributes for item %s",
+    MOM_DEBUGPRINTF (dump,
+		     "emit_content_dumped_item no attributes for item %s",
 		     mom_item_cstring (itm));
-  unsigned cnt = mom_components_count (itm->itm_comps);
-  if (cnt > 0)
+  MOM_DEBUGPRINTF (dump, "emit_content_dumped_item item %s nbcomp %u",
+		   mom_item_cstring (itm), nbcomp);
+  if (nbcomp > 0)
     {
       fputs ("[[", dumper_mom->dufile);
       mom_emit_dump_indent ();
-      for (unsigned ix = 0; ix < cnt; ix++)
+      for (unsigned ix = 0; ix < nbcomp; ix++)
 	{
 	  dumper_mom->duindentation = 1;
 	  mom_emit_dumped_space ();
 	  momvalue_t valcomp = mom_components_nth (itm->itm_comps,
 						   (int) ix);
-	  MOM_DEBUGPRINTF (dump, "comp#%d %s", ix,
+	  MOM_DEBUGPRINTF (dump, "emit_content_dumped_item %s comp#%d %s",
+			   mom_item_cstring (itm), ix,
 			   mom_output_gcstring (valcomp));
 	  mom_emit_dumped_value (valcomp);
 	}
@@ -2291,10 +2310,12 @@ emit_content_dumped_item_mom (const momitem_t *itm)
       mom_emit_dumped_newline ();
     }
   else
-    MOM_DEBUGPRINTF (dump, "dump_content no components for item %s",
+    MOM_DEBUGPRINTF (dump,
+		     "emit_content_dumped_item no components for item %s",
 		     mom_item_cstring (itm));
   momitem_t *itmkd = (momitem_t *) itm->itm_kind;
-  MOM_DEBUGPRINTF (dump, "itmkd=%s", mom_item_cstring (itmkd));
+  MOM_DEBUGPRINTF (dump, "emit_content_dumped_item item %s of kind %s",
+		   mom_item_cstring (itm), mom_item_cstring (itmkd));
   if (itmkd && mom_dumpable_item (itmkd))
     {
       momvalue_t valemitter = MOM_NONEV;
@@ -2334,10 +2355,10 @@ emit_content_dumped_item_mom (const momitem_t *itm)
       mom_emit_dumped_newline ();
     }
   else
-    MOM_DEBUGPRINTF (dump, "dump_content no kind for item %s",
+    MOM_DEBUGPRINTF (dump, "emit_content_dumped_item no kind for item %s",
 		     mom_item_cstring (itm));
   dumper_mom->duindentation = 0;
-  MOM_DEBUGPRINTF (dump, "done emit content item %s\n",
+  MOM_DEBUGPRINTF (dump, "emit_content_dumped_item done item %s\n",
 		   mom_item_cstring (itm));
 }				/* end emit_content_dumped_item_mom */
 
@@ -2726,6 +2747,8 @@ output_val_mom (struct momvaloutput_st *ov, const momvalue_t val)
 	  {
 	    if (something)
 	      output_space_mom (ov);
+	    if (ix % 5 == 0 && ix > 0)
+	      output_space_mom (ov);
 	    output_item_mom (ov, tup->arritm[ix]);
 	    something = true;
 	  }
@@ -2751,6 +2774,8 @@ output_val_mom (struct momvaloutput_st *ov, const momvalue_t val)
 	for (unsigned ix = 0; ix < len; ix++)
 	  {
 	    if (something)
+	      output_space_mom (ov);
+	    if (ix % 5 == 0 && ix > 0)
 	      output_space_mom (ov);
 	    output_item_mom (ov, tup->arritm[ix]);
 	    something = true;
