@@ -660,6 +660,17 @@ end_mom:
 
 
 static inline bool
+momhook_agenda_step (void)
+{
+  momvalue_t mom_clos = MOM_NONEV;
+  momitem_t *mom_itm = MOM_PREDEFINED_NAMED (agenda_step);
+  mom_item_lock (mom_itm);
+  mom_clos = mom_components_nth (mom_itm->itm_comps, 0);
+  mom_item_unlock (mom_itm);
+  return mom_applval_void_to_void (mom_clos);
+}				// end momhook_agenda_step of signature_void_to_void
+
+static inline bool
 momhook_generate_c_module (momitem_t *mom_arg0, momvalue_t *mom_res0)
 {
   momvalue_t mom_clos = MOM_NONEV;

@@ -2003,6 +2003,8 @@ emit_signature_application_hook_mom (FILE *foutaphd,
 				 (outypitm, MOM_PREDEFINED_NAMED (code)))),
 	       ixout);
     }
+  if (nbins == 0 && nbouts == 0)
+    fprintf (foutaphd, "void");
   fprintf (foutaphd, ")\n{\n");
   fprintf (foutaphd, "  momvalue_t mom_clos = MOM_NONEV;\n");
   fprintf (foutaphd, "  momitem_t* mom_itm = ");

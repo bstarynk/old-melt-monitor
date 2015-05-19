@@ -20,9 +20,18 @@
 !! the_base_module
 
 
-** _9rwzfFAJ2_0J3c749dM
+** _07BHLcwhp_48ka0t9bq
 {
-  * comment  "start of agenda_step"
+  * comment  "constant for hook of agenda_step"
+  * value  ^agenda_step() }
+ 
+..
+
+
+** _7MF947fC8_8ChefReMD
+{
+  * comment  "starting block of agenda_step"
+  * in  agenda_step
   * instructions  [] }
  
   %  ^filler_of_plain_kind( block)
@@ -33,10 +42,13 @@
 ** agenda_step   ////// PREDEFINED
 {
   * comment  "the function to run a step of the agenda"
-  * constants  {the_agenda}
+  * constants  {_07BHLcwhp_48ka0t9bq the_agenda}
+  * emitted_variables  []
   * formals  []
   * function_signature  signature_void_to_void
-  * start  _9rwzfFAJ2_0J3c749dM }
+  * hook_closure  0
+  * start  _7MF947fC8_8ChefReMD }
+ [[  the_agenda ]]
  
   %  ^filler_of_function( signature_void_to_void)
  
@@ -845,6 +857,7 @@
 ** the_base_module   ////// PREDEFINED
 {
   * comment  "the base module, notably for agenda functions"
+  * emitted_functions  {agenda_step}
   * functions  {agenda_step} }
  
   %  ^filler_of_plain_kind( code_module)
