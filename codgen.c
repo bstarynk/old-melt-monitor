@@ -2616,11 +2616,11 @@ cgen_emit_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
 	  {
 	    if (cstitm->itm_anonymous)
 	      fprintf (cg->cg_emitfile,
-		       " /*constant#%d:*/MOM_PREDEFINED_ANONYMOUS(%s)",
+		       " /*constant#%d:*/mom_itemv(MOM_PREDEFINED_ANONYMOUS(%s))",
 		       (int) cstrk, mom_item_cstring (cstitm));
 	    else
 	      fprintf (cg->cg_emitfile,
-		       " /*constant#%d:*/MOM_PREDEFINED_NAMED(%s)",
+		       " /*constant#%d:*/mom_itemv(MOM_PREDEFINED_NAMED(%s))",
 		       (int) cstrk, mom_item_cstring (cstitm));
 	  }
 	else if (cstitm)

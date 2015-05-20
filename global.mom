@@ -28,11 +28,21 @@
 ..
 
 
+** _1c462DJmx_68zwnz1Ua
+{
+  * comment  "set lkitm_agenda := the_agenda" }
+ [[  set  lkitm_agenda  ^value_to_item( the_agenda) ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
 ** _7MF947fC8_8ChefReMD
 {
   * comment  "starting block of agenda_step"
   * in  agenda_step
-  * instructions  [] }
+  * instructions  [_1c462DJmx_68zwnz1Ua] }
  
   %  ^filler_of_plain_kind( block)
  
@@ -522,6 +532,16 @@
 ** kind   ////// PREDEFINED
 {
   * comment  "very magic pseudo attribute giving the kind of items" }
+ 
+..
+
+
+** lkitm_agenda
+{
+  * comment  "the locked item for the agenda"
+  * type  locked_item }
+ 
+  %  ^filler_of_plain_kind( variable)
  
 ..
 
