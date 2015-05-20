@@ -613,6 +613,20 @@
 ..
 
 
+** queue_item_is_empty
+{
+  * code_expansion  ^code_expansion( "/*queue_item_is_empty:*/"  itm1  " && "
+    itm1  "->itm_kind == MOM_PREDEFINED_NAMED(itm_queue) "  " && mom_queueitem_size ("
+    itm1  "->itm_data1) == 0")
+  * comment  "test if a queue item is empty"
+  * formals  [itm1]
+  * type  integer }
+ 
+  %  ^filler_of_plain_kind( code_operation)
+ 
+..
+
+
 ** restitm
 {
   * type  item }
@@ -892,7 +906,7 @@
 {
   * comment  "describes the entire software system" }
  [[  test_module  plain_code_type_scanner  plain_code_emitter  value_of_item
-   value_to_item  tuple  node ]]
+   value_to_item  tuple  node  queue_item_is_empty ]]
  
 ..
 

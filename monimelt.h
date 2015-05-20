@@ -1471,5 +1471,8 @@ association-s
 hash_set-s
   itm_data1 is pointer to a struct mom_hashset_st
 
+item_queue-s
+
+  itm_data1 is a pointer to a struct  momqueueitems_st
  ***************************************************************/
 #endif /*MONIMELT_INCLUDED_ */
