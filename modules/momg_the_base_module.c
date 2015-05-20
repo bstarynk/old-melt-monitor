@@ -54,9 +54,15 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
   momitem_t* momconst_1 = MOM_PREDEFINED_NAMED(the_agenda);
   // 0 closed:
   goto momblocklab__7MF947fC8_8ChefReMD;
- // block #0 : _7MF947fC8_8ChefReMD
+ // block #0 : _4xAIqB3tj_97IrD41UP
+ momblocklab__4xAIqB3tj_97IrD41UP: {
+// 0 statements in block _4xAIqB3tj_97IrD41UP
+
+  }; // end block _4xAIqB3tj_97IrD41UP
+  goto momepilog_agenda_step;
+ // block #1 : _7MF947fC8_8ChefReMD
  momblocklab__7MF947fC8_8ChefReMD: {
-// 1 statements in block _7MF947fC8_8ChefReMD
+// 2 statements in block _7MF947fC8_8ChefReMD
 // statement #0 _1c462DJmx_68zwnz1Ua
   { // locked set into lkitm_agenda
   momlockeditem_t* momoldlocked__1c462DJmx_68zwnz1Ua = momvar0 /*var:lkitm_agenda*/;
@@ -69,8 +75,13 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
   momoldlocked__1c462DJmx_68zwnz1Ua = NULL;
   momnewlocked__1c462DJmx_68zwnz1Ua = NULL;
   } // end locked set into lkitm_agenda
+// statement #1 _44tmkDkKa_8nUhJEeay
+// if testing on integer
+    if (/*queue_item_is_empty:*/momvar0 /*var:lkitm_agenda*/ && momvar0 /*var:lkitm_agenda*/->itm_kind == MOM_PREDEFINED_NAMED(item_queue)  && mom_queueitem_size (momvar0 /*var:lkitm_agenda*/->itm_data1) == 0)
+      goto momblocklab__4xAIqB3tj_97IrD41UP;
 
   }; // end block _7MF947fC8_8ChefReMD
+  goto momepilog_agenda_step;
 //////
 // epilogue of agenda_step
     momsuccess_agenda_step = true;

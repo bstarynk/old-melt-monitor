@@ -857,6 +857,7 @@ cgen_type_of_scanned_nodexpr_mom (struct codegen_mom_st *cg,
 }				/* end of cgen_type_of_scanned_nodexpr_mom */
 
 
+
 ////////////////
 static void
 cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
@@ -1073,6 +1074,9 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 	  momvalue_t vtestexpr = MOM_NONEV;
 	  momitem_t *testctypitm = NULL;
 	  momitem_t *thenitm = NULL;
+	  MOM_DEBUGPRINTF (gencod,
+			   "scan_statement_first if %s",
+			   mom_item_cstring (itmstmt));
 	  if (stmtlen != 3
 	      || (vtestexpr =
 		  mom_components_nth (stmtcomps, 1)).typnum == momty_null
@@ -1080,14 +1084,28 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 		   cgen_type_of_scanned_expr_mom (cg, vtestexpr))
 	      || !(thenitm =
 		   mom_value_to_item (mom_components_nth (stmtcomps, 2))))
-	    CGEN_ERROR_RETURN_MOM (cg,
-				   "module item %s : function %s with block %s with bad if statement %s",
-				   mom_item_cstring (cg->cg_moduleitm),
-				   mom_item_cstring (cg->cg_curfunitm),
-				   mom_item_cstring (cg->cg_curblockitm),
-				   mom_item_cstring (itmstmt));
+	    {
+	      MOM_DEBUGPRINTF (gencod,
+			       "scan_statement_first if %s vtestexpr %s testctypitm %s thenitm %s",
+			       mom_item_cstring (itmstmt),
+			       mom_output_gcstring (vtestexpr),
+			       mom_item_cstring (testctypitm),
+			       mom_item_cstring (thenitm));
+	      CGEN_ERROR_RETURN_MOM (cg,
+				     "module item %s : function %s with block %s with bad if statement %s",
+				     mom_item_cstring (cg->cg_moduleitm),
+				     mom_item_cstring (cg->cg_curfunitm),
+				     mom_item_cstring (cg->cg_curblockitm),
+				     mom_item_cstring (itmstmt));
+	    }
 	  if (cg->cg_errormsg)
 	    return;
+	  MOM_DEBUGPRINTF (gencod,
+			   "scan_statement_first if %s got vtestexpr %s testctypitm %s thenitm %s",
+			   mom_item_cstring (itmstmt),
+			   mom_output_gcstring (vtestexpr),
+			   mom_item_cstring (testctypitm),
+			   mom_item_cstring (thenitm));
 	  if (thenitm->itm_kind == MOM_PREDEFINED_NAMED (block))
 	    {
 	      cgen_lock_item_mom (cg, thenitm);
@@ -2378,6 +2396,8 @@ cgen_emit_block_mom (struct codegen_mom_st *cg, unsigned bix,
     }
   fprintf (cg->cg_emitfile, "\n  }; // end block %s\n",
 	   mom_item_cstring (blockitm));
+  fprintf (cg->cg_emitfile, "  goto " EPILOGUE_PREFIX_MOM "_%s;\n",
+	   mom_item_cstring (cg->cg_curfunitm));
   MOM_DEBUGPRINTF (gencod,
 		   "emit_block done itmmod %s curfunitm %s bix#%d blockitm %s",
 		   mom_item_cstring (itmmod),
@@ -3700,10 +3720,16 @@ bool
 		       mom_item_cstring (subtypitm),
 		       mom_item_cstring (curtypitm),
 		       mom_item_cstring (curformitm));
-      if (curtypitm != subtypitm)
+      bool bothitems =
+	(curtypitm == MOM_PREDEFINED_NAMED (item)
+	 || curtypitm == MOM_PREDEFINED_NAMED (locked_item))
+	&& (subtypitm == MOM_PREDEFINED_NAMED (item)
+	    || subtypitm == MOM_PREDEFINED_NAMED (locked_item));
+      if (!bothitems && curtypitm != subtypitm)
 	CGEN_ERROR_RESULT_MOM (cg, false,
 			       "plain_code_type_scanner:: module item %s : function %s has block %s"
-			       " with statement %s with expr %s formal (#%d) %s mistyped, subexpr %s has type %s expecting %s",
+			       " with statement %s with expr %s formal (#%d) %s mistyped,"
+			       " subexpr %s has type %s expecting %s ..",
 			       mom_item_cstring (cg->cg_moduleitm),
 			       mom_item_cstring (cg->cg_curfunitm),
 			       mom_item_cstring (cg->cg_curblockitm),

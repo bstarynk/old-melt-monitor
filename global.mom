@@ -38,11 +38,31 @@
 ..
 
 
+** _44tmkDkKa_8nUhJEeay
+{
+  * comment  "if empty agenda refill it" }
+ [[  if  ^queue_item_is_empty( lkitm_agenda)  _4xAIqB3tj_97IrD41UP ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
+** _4xAIqB3tj_97IrD41UP
+{
+  * comment  "refill empty agenda"
+  * instructions  [] }
+ 
+  %  ^filler_of_plain_kind( block)
+ 
+..
+
+
 ** _7MF947fC8_8ChefReMD
 {
   * comment  "starting block of agenda_step"
   * in  agenda_step
-  * instructions  [_1c462DJmx_68zwnz1Ua] }
+  * instructions  [_1c462DJmx_68zwnz1Ua _44tmkDkKa_8nUhJEeay] }
  
   %  ^filler_of_plain_kind( block)
  
@@ -616,10 +636,12 @@
 ** queue_item_is_empty
 {
   * code_expansion  ^code_expansion( "/*queue_item_is_empty:*/"  itm1  " && "
-    itm1  "->itm_kind == MOM_PREDEFINED_NAMED(itm_queue) "  " && mom_queueitem_size ("
+    itm1  "->itm_kind == MOM_PREDEFINED_NAMED(item_queue) "  " && mom_queueitem_size ("
     itm1  "->itm_data1) == 0")
   * comment  "test if a queue item is empty"
   * formals  [itm1]
+  * code_type_scanner  ^plain_code_type_scanner()
+  * code_emitter  ^plain_code_emitter()
   * type  integer }
  
   %  ^filler_of_plain_kind( code_operation)
