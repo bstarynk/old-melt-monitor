@@ -51,7 +51,7 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
   const momvalue_t momconst_0 = 
     mom_raw_item_get_indexed_component (mom_funcitm, 0);
   // constant the_agenda
-  const momvalue_t momconst_1 =  mom_itemv(MOM_PREDEFINED_NAMED(the_agenda));
+  momitem_t* momconst_1 = MOM_PREDEFINED_NAMED(the_agenda);
   // 0 closed:
   goto momblocklab__7MF947fC8_8ChefReMD;
  // block #0 : _7MF947fC8_8ChefReMD
@@ -60,7 +60,7 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
 // statement #0 _1c462DJmx_68zwnz1Ua
   { // locked set into lkitm_agenda
   momlockeditem_t* momoldlocked__1c462DJmx_68zwnz1Ua = momvar0 /*var:lkitm_agenda*/;
-  momlockeditem_t* momnewlocked__1c462DJmx_68zwnz1Ua = /*value_to_item:*/ mom_value_to_item( /*constant#1:*/mom_itemv(MOM_PREDEFINED_NAMED(the_agenda)));
+  momlockeditem_t* momnewlocked__1c462DJmx_68zwnz1Ua =  /*constant#1:*/MOM_PREDEFINED_NAMED(the_agenda);
   if (momoldlocked__1c462DJmx_68zwnz1Ua != momnewlocked__1c462DJmx_68zwnz1Ua) {
     if (momoldlocked__1c462DJmx_68zwnz1Ua != NULL) mom_item_unlock (momoldlocked__1c462DJmx_68zwnz1Ua);
     if (momnewlocked__1c462DJmx_68zwnz1Ua != NULL) mom_item_lock (momnewlocked__1c462DJmx_68zwnz1Ua);

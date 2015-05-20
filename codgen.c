@@ -599,6 +599,8 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
   if (ent != NULL)
     {
       momvalue_t vbind = ent->ent_val;
+      MOM_DEBUGPRINTF (gencod, "type_of_scanned_item %s vbind %s",
+		       mom_item_cstring (itm), mom_output_gcstring (vbind));
       assert (vbind.typnum == momty_node);
       const momnode_t *nodbind = mom_value_to_node (vbind);
       assert (nodbind != NULL);
@@ -609,7 +611,8 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
 	case MOM_PREDEFINED_NAMED_CASE (formals, nodconnitm, otherwiseconnlab):
 	  {
 	    momvalue_t vres = mom_node_nth (nodbind, 3);
-	    MOM_DEBUGPRINTF (gencod, "in function %s item %s is formal of %s",
+	    MOM_DEBUGPRINTF (gencod,
+			     "type_of_scanned_item in function %s item %s is formal of %s",
 			     mom_item_cstring (cg->cg_curfunitm),
 			     mom_item_cstring (itm),
 			     mom_output_gcstring (vres));
@@ -619,16 +622,29 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
 	  break;
 	case MOM_PREDEFINED_NAMED_CASE (constants, nodconnitm, otherwiseconnlab):
 	  {
-	    MOM_DEBUGPRINTF (gencod,
-			     "in function %s item %s is constant value",
-			     mom_item_cstring (cg->cg_curfunitm),
-			     mom_item_cstring (itm));
-	    return MOM_PREDEFINED_NAMED (value);
+	    momvalue_t vconst = mom_node_nth (nodbind, 2);
+	    if (mom_value_to_item (vconst) == itm)
+	      {
+		MOM_DEBUGPRINTF (gencod,
+				 "type_of_scanned_item in function %s item %s is item",
+				 mom_item_cstring (cg->cg_curfunitm),
+				 mom_item_cstring (itm));
+		return MOM_PREDEFINED_NAMED (item);
+	      }
+	    else
+	      {
+		MOM_DEBUGPRINTF (gencod,
+				 "type_of_scanned_item in function %s item %s is constant value",
+				 mom_item_cstring (cg->cg_curfunitm),
+				 mom_item_cstring (itm));
+		return MOM_PREDEFINED_NAMED (value);
+	      }
 	  }
 	  break;
 	case MOM_PREDEFINED_NAMED_CASE (closed, nodconnitm, otherwiseconnlab):
 	  {
-	    MOM_DEBUGPRINTF (gencod, "in function %s item %s is closed value",
+	    MOM_DEBUGPRINTF (gencod,
+			     "type_of_scanned_item in function %s item %s is closed value",
 			     mom_item_cstring (cg->cg_curfunitm),
 			     mom_item_cstring (itm));
 	    return MOM_PREDEFINED_NAMED (value);
@@ -638,7 +654,7 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
 	  {
 	    momvalue_t vres = mom_node_nth (nodbind, 2);
 	    MOM_DEBUGPRINTF (gencod,
-			     "in function %s item %s is variable of %s",
+			     "type_of_scanned_item in function %s item %s is variable of %s",
 			     mom_item_cstring (cg->cg_curfunitm),
 			     mom_item_cstring (itm),
 			     mom_output_gcstring (vres));
@@ -658,7 +674,8 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
     }
   //// unbound item:
   momitem_t *itmkind = itm->itm_kind;
-  MOM_DEBUGPRINTF (gencod, "in function %s item %s (of kind %s) is unbound",
+  MOM_DEBUGPRINTF (gencod,
+		   "type_of_scanned_item in function %s item %s (of kind %s) is unbound",
 		   mom_item_cstring (cg->cg_curfunitm),
 		   mom_item_cstring (itm), mom_item_cstring (itmkind));
   if (!itmkind)
@@ -674,7 +691,8 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
     case MOM_PREDEFINED_NAMED_CASE (closed, itmkind, otherwisekindlab):
       {
 	cgen_bind_closed_item_mom (cg, itm);
-	MOM_DEBUGPRINTF (gencod, "function %s has new closed value item %s",
+	MOM_DEBUGPRINTF (gencod,
+			 "type_of_scanned_item function %s has new closed value item %s",
 			 mom_item_cstring (cg->cg_curfunitm),
 			 mom_item_cstring (itm));
 	return MOM_PREDEFINED_NAMED (value);
@@ -688,7 +706,7 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
 								    (type)));
 	if (!itmctyp)
 	  CGEN_ERROR_RESULT_MOM (cg, NULL,
-				 "module item %s : function %s has block %s with statement %s with untyped variable %s",
+				 "type_of_scanned_item module item %s : function %s has block %s with statement %s with untyped variable %s",
 				 mom_item_cstring (cg->cg_moduleitm),
 				 mom_item_cstring (cg->cg_curfunitm),
 				 mom_item_cstring (cg->cg_curblockitm),
@@ -700,7 +718,7 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
 	if (cg->cg_errormsg)
 	  return NULL;
 	MOM_DEBUGPRINTF (gencod,
-			 "function %s has new variable item %s of type %s",
+			 "type_of_scanned_item function %s has new variable item %s of type %s",
 			 mom_item_cstring (cg->cg_curfunitm),
 			 mom_item_cstring (itm), mom_item_cstring (itmctyp));
 	return itmctyp;
@@ -724,7 +742,7 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
 	if (cg->cg_errormsg)
 	  return NULL;
 	MOM_DEBUGPRINTF (gencod,
-			 "function %s has new constant item %s of kind %s",
+			 "type_of_scanned_item function %s has new constant item %s of kind %s",
 			 mom_item_cstring (cg->cg_curfunitm),
 			 mom_item_cstring (itm), mom_item_cstring (itmkind));
 	return MOM_PREDEFINED_NAMED (value);
@@ -732,7 +750,7 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
       break;
     }
   MOM_DEBUGPRINTF (gencod,
-		   "function %s has unexpected item %s (%s)",
+		   "type_of_scanned_item function %s has unexpected item %s (%s)",
 		   mom_item_cstring (cg->cg_curfunitm),
 		   mom_item_cstring (itm), mom_item_cstring (itmkind));
   CGEN_ERROR_RESULT_MOM (cg, NULL,
@@ -743,6 +761,7 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
 			 mom_item_cstring (cg->cg_curstmtitm),
 			 mom_item_cstring (itm));
 }				/* end cgen_type_of_scanned_item_mom */
+
 
 
 static momitem_t *
@@ -1400,7 +1419,6 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 			       mom_item_cstring (itmop));
       break;
     }
-#warning cgen_scan_statement_first_mom unimplemented
   MOM_DEBUGPRINTF (gencod, "in function %s end scanning statement %s",
 		   mom_item_cstring (cg->cg_curfunitm),
 		   mom_item_cstring (itmstmt));
@@ -2494,26 +2512,54 @@ cgen_emit_constdecl_mom (struct codegen_mom_st *cg, unsigned constix,
   assert (constrk >= 0 && constval.typnum != momty_null);
   fprintf (cg->cg_emitfile, "  // constant %s\n",
 	   mom_item_cstring (constitm));
-  fprintf (cg->cg_emitfile,
-	   "  const momvalue_t " CONSTANT_PREFIX_MOM "_%d = ", (int) constrk);
+  bool isitem = false;
+  if (mom_value_to_item (constval) == constitm)
+    {
+      isitem = true;
+      fprintf (cg->cg_emitfile,
+	       "  momitem_t* " CONSTANT_PREFIX_MOM "_%d =", (int) constrk);
+    }
+  else
+    fprintf (cg->cg_emitfile,
+	     "  const momvalue_t " CONSTANT_PREFIX_MOM "_%d = ",
+	     (int) constrk);
   {
     momitem_t *constitm = NULL;
     if (constval.typnum == momty_item
 	&& (constitm = constval.vitem)->itm_space == momspa_predefined)
       {
-	if (constitm->itm_anonymous)
-	  fprintf (cg->cg_emitfile,
-		   " mom_itemv(MOM_PREDEFINED_ANONYMOUS(%s))",
-		   mom_item_cstring (constitm));
+	if (isitem)
+	  {
+	    if (constitm->itm_anonymous)
+	      fprintf (cg->cg_emitfile,
+		       " MOM_PREDEFINED_ANONYMOUS(%s)",
+		       mom_item_cstring (constitm));
+	    else
+	      fprintf (cg->cg_emitfile, " MOM_PREDEFINED_NAMED(%s)",
+		       mom_item_cstring (constitm));
+	  }
 	else
-	  fprintf (cg->cg_emitfile, " mom_itemv(MOM_PREDEFINED_NAMED(%s))",
-		   mom_item_cstring (constitm));
+	  {
+	    if (constitm->itm_anonymous)
+	      fprintf (cg->cg_emitfile,
+		       " mom_itemv(MOM_PREDEFINED_ANONYMOUS(%s))",
+		       mom_item_cstring (constitm));
+	    else
+	      fprintf (cg->cg_emitfile,
+		       " mom_itemv(MOM_PREDEFINED_NAMED(%s))",
+		       mom_item_cstring (constitm));
+	  }
       }
     else
       {
-	fprintf (cg->cg_emitfile,
-		 "\n    mom_raw_item_get_indexed_component (mom_funcitm, %d)",
-		 (int) constrk);
+	if (isitem)
+	  fprintf (cg->cg_emitfile,
+		   "\n    mom_value_to_item(mom_raw_item_get_indexed_component (mom_funcitm, %d))",
+		   (int) constrk);
+	else
+	  fprintf (cg->cg_emitfile,
+		   "\n    mom_raw_item_get_indexed_component (mom_funcitm, %d)",
+		   (int) constrk);
       }
   }
   fputs (";\n", cg->cg_emitfile);
@@ -2612,15 +2658,15 @@ cgen_emit_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
 	intptr_t cstrk = mom_value_to_int (mom_node_nth (bindnod, 1), -1);
 	assert (cstrk >= 0);
 	momitem_t *cstitm = mom_value_to_item (mom_node_nth (bindnod, 2));
-	if (cstitm && cstitm->itm_space == momspa_predefined)
+	if (cstitm && cstitm->itm_space == momspa_predefined && cstitm == itm)
 	  {
 	    if (cstitm->itm_anonymous)
 	      fprintf (cg->cg_emitfile,
-		       " /*constant#%d:*/mom_itemv(MOM_PREDEFINED_ANONYMOUS(%s))",
+		       " /*constant#%d:*/MOM_PREDEFINED_ANONYMOUS(%s)",
 		       (int) cstrk, mom_item_cstring (cstitm));
 	    else
 	      fprintf (cg->cg_emitfile,
-		       " /*constant#%d:*/mom_itemv(MOM_PREDEFINED_NAMED(%s))",
+		       " /*constant#%d:*/MOM_PREDEFINED_NAMED(%s)",
 		       (int) cstrk, mom_item_cstring (cstitm));
 	  }
 	else if (cstitm)

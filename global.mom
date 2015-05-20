@@ -31,7 +31,7 @@
 ** _1c462DJmx_68zwnz1Ua
 {
   * comment  "set lkitm_agenda := the_agenda" }
- [[  set  lkitm_agenda  ^value_to_item( the_agenda) ]]
+ [[  set  lkitm_agenda  the_agenda ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
