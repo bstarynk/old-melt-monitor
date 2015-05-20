@@ -1389,7 +1389,7 @@ cgen_scan_apply_statement_first_mom (struct codegen_mom_st *cg,
 		   mom_item_cstring (itmstmt), nbout);
   for (unsigned outix = 0; outix < nbout && !cg->cg_errormsg; outix++)
     {
-      momvalue_t outcurv = mom_components_nth (stmtcomps, 2 + outix);
+      momvalue_t outcurv = mom_components_nth (stmtcomps, 3 + outix);
       MOM_DEBUGPRINTF (gencod,
 		       "scan_apply_statement in function %s apply statement %s with result-output#%d : %s",
 		       mom_item_cstring (cg->cg_curfunitm),
@@ -1422,7 +1422,7 @@ cgen_scan_apply_statement_first_mom (struct codegen_mom_st *cg,
 		   mom_item_cstring (itmstmt), nbin);
   for (unsigned inix = 0; inix < nbin && !cg->cg_errormsg; inix++)
     {
-      momvalue_t vcurin = mom_components_nth (stmtcomps, 2 + nbout + inix);
+      momvalue_t vcurin = mom_components_nth (stmtcomps, 3 + nbout + inix);
       const momitem_t *insigtypitm = mom_seq_nth (intyptup, inix);
       MOM_DEBUGPRINTF (gencod,
 		       "scan_apply_statement apply statement %s with inix#%d : vcurin %s insigtypitm %s",
@@ -1451,7 +1451,7 @@ cgen_scan_apply_statement_first_mom (struct codegen_mom_st *cg,
     };
   if (cg->cg_errormsg)
     return;
-  momvalue_t vexpfun = mom_components_nth (stmtcomps, 2 + nbin);
+  momvalue_t vexpfun = mom_components_nth (stmtcomps, 3 + nbin);
   momitem_t *itmtypfun = cgen_type_of_scanned_expr_mom (cg, vexpfun);
   MOM_DEBUGPRINTF (gencod,
 		   "scan_apply_statement in function %s apply statement %s with function %s of type %s",
