@@ -322,6 +322,13 @@ sort_set_unique_items_mom (const momitem_t **itmarr, unsigned nbitems)
   if (MOM_UNLIKELY (!itmarr || !nbitems))
     return 0;
   assert (itmarr);
+  MOM_DEBUGPRINTF (item, "sort_set_unique_items nbitems=%u", nbitems);
+  if (MOM_IS_DEBUGGING (item))
+    {
+      for (unsigned ix = 0; ix < nbitems; ix++)
+	MOM_DEBUGPRINTF (item, "sort_set_unique_items itmarr[%d] = %s",
+			 ix, mom_item_cstring (itmarr[ix]));
+    };
   if (MOM_UNLIKELY (nbitems == 1))
     return itmarr[0] ? 1 : 0;
   if (MOM_UNLIKELY (nbitems == 2))
@@ -349,6 +356,15 @@ sort_set_unique_items_mom (const momitem_t **itmarr, unsigned nbitems)
       return 2;
     }
   mom_item_qsort (itmarr, nbitems);
+  MOM_DEBUGPRINTF (item, "sort_set_unique_items after qsort nbitems=%u",
+		   nbitems);
+  if (MOM_IS_DEBUGGING (item))
+    {
+      for (unsigned ix = 0; ix < nbitems; ix++)
+	MOM_DEBUGPRINTF (item,
+			 "sort_set_unique_items qsorted itmarr[%d] = %s", ix,
+			 mom_item_cstring (itmarr[ix]));
+    };
   for (unsigned ix = 1; ix < nbitems; ix++)
     {
       const momitem_t *previtm = itmarr[ix - 1];
@@ -356,8 +372,9 @@ sort_set_unique_items_mom (const momitem_t **itmarr, unsigned nbitems)
 	{
 	  unsigned nextix = 0;
 	  MOM_DEBUGPRINTF (item,
-			   "sort_set_unique_items duplicate item #%d  : %s",
-			   ix, mom_item_cstring (previtm));
+			   "sort_set_unique_items duplicate item #%d  : %s previtm %s",
+			   ix, mom_item_cstring (itmarr[ix]),
+			   mom_item_cstring (previtm));
 	  for (nextix = ix; nextix < nbitems; nextix++)
 	    if (MOM_UNLIKELY (itmarr[nextix] != previtm))
 	      break;

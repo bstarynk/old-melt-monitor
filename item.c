@@ -271,9 +271,6 @@ reorganize_named_items_mom (void)
       assert (curbuck != NULL);
       unsigned blen = curbuck->nambuck_len;
       unsigned bsiz = curbuck->nambuck_size;
-      MOM_DEBUGPRINTF (item,
-		       "reorganize_named_items bix#%d blen=%d bsiz=%d", bix,
-		       blen, bsiz);
       assert (bsiz >= blen);
       for (unsigned itmix = 0; itmix < blen; itmix++)
 	{
@@ -282,9 +279,6 @@ reorganize_named_items_mom (void)
 	  if (MOM_UNLIKELY (namecount > named_count_mom))
 	    MOM_FATAPRINTF ("more named items than expected %d", namecount);
 	  allnamedarr[namecount] = itm;
-	  MOM_DEBUGPRINTF (item,
-			   "reorganize_named_items bix#%u itmix#%u namecount#%u itm %s",
-			   bix, itmix, namecount, mom_item_cstring (itm));
 	  if (MOM_LIKELY (namecount > 0))
 	    {
 	      const momitem_t *previtm = allnamedarr[namecount - 1];
@@ -330,25 +324,18 @@ reorganize_named_items_mom (void)
 	MOM_GC_SCALAR_ALLOC ("bucket", sizeof (struct namebucket_mom_st)
 			     + newbsiz * sizeof (momitem_t *));
       curbuck->nambuck_size = newbsiz;
-      MOM_DEBUGPRINTF (item, "reorganize_named_items fillinx bix#%u", bix);
       named_buckets_mom[bix] = curbuck;
       unsigned itmix = 0;
       for (itmix = 0; itmix < newblen && namix < namecount; itmix++)
 	{
 	  const momitem_t *curitm = allnamedarr[namix];
-	  MOM_DEBUGPRINTF (item,
-			   "reorganize_named_items bix#%u itmix#%u namix#%u curitm %s",
-			   bix, itmix, namix, mom_item_cstring (curitm));
 	  curbuck->nambuck_arr[itmix] = curitm;
 	  namix++;
 	};
       curbuck->nambuck_len = itmix;
-      MOM_DEBUGPRINTF (item,
-		       "reorganize_named_items bix#%u bucklen=itmix=%u", bix,
-		       itmix);
     };
   MOM_DEBUGPRINTF (item,
-		   "reorganize_named_items namix=%u namecount=%u newnbuck=%u",
+		   "reorganize_named_items ending namix=%u namecount=%u newnbuck=%u",
 		   namix, namecount, newnbuck);
   assert (namix >= namecount);
   named_count_mom = namecount;
@@ -1002,12 +989,16 @@ mom_predefined_items_set (void)
 int
 mom_itemptr_cmp (const void *p1, const void *p2)
 {
-  return mom_item_cmp (*(momitem_t **) p1, *(momitem_t **) p2);
+  const momitem_t *itm1 = *(momitem_t **) p1;
+  const momitem_t *itm2 = *(momitem_t **) p2;
+  int cmp = mom_item_cmp (itm1, itm2);
+  return cmp;
 }
 
 void
 mom_item_qsort (const momitem_t **arr, unsigned siz)
 {
+  MOM_DEBUGPRINTF (item, "item_qsort siz=%u", siz);
   if (MOM_UNLIKELY (!siz || siz == 1))
     return;
   if (MOM_UNLIKELY (siz == 2))
@@ -1020,7 +1011,21 @@ mom_item_qsort (const momitem_t **arr, unsigned siz)
 	}
       return;
     }
-  qsort (arr, siz, sizeof (momitem_t *), mom_itemptr_cmp);
+  if (MOM_IS_DEBUGGING (item))
+    {
+      for (unsigned ix = 0; ix < siz; ix++)
+	MOM_DEBUGPRINTF (item, "item_qsort unsorted arr[%d] = %s", ix,
+			 mom_item_cstring (arr[ix]));
+    }
+  MOM_DEBUGPRINTF (item, "item_qsort before qsort siz %u", siz);
+  qsort (arr, (size_t) siz, sizeof (momitem_t *), mom_itemptr_cmp);
+  MOM_DEBUGPRINTF (item, "item_qsort after qsort siz %u", siz);
+  if (MOM_IS_DEBUGGING (item))
+    {
+      for (unsigned ix = 0; ix < siz; ix++)
+	MOM_DEBUGPRINTF (item, "item_qsort qsorted arr[%d] = %s", ix,
+			 mom_item_cstring (arr[ix]));
+    }
 }
 
 

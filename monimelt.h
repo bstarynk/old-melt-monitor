@@ -993,7 +993,31 @@ mom_item_cmp (const momitem_t *itm1, const momitem_t *itm2)
     return +1;
   assert (itm1->itm_str);
   assert (itm2->itm_str);
-  return strcmp (itm1->itm_str->cstr, itm2->itm_str->cstr);
+  if (itm1->itm_anonymous)
+    {
+      if (itm2->itm_anonymous)
+	{
+	  int cmp = strcmp (itm1->itm_id->cstr, itm2->itm_id->cstr);
+	  assert (cmp != 0);
+	  if (cmp < 0)
+	    return -1;
+	  else
+	    return 1;
+	}
+      else
+	return -1;
+    }
+  else
+    {				// itm1 is named
+      if (itm2->itm_anonymous)
+	return +1;
+      int cmp = strcmp (itm1->itm_name->cstr, itm2->itm_name->cstr);
+      assert (cmp != 0);
+      if (cmp < 0)
+	return -1;
+      else
+	return 1;
+    }
 }
 
 // call the function above to sort an array of momitem_t*

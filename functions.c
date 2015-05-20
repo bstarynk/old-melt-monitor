@@ -222,10 +222,11 @@ bool
 	      MOM_DEBUGPRINTF (dump,
 			       "scanner_of_function itm=%s  good dli_fname %s",
 			       mom_item_cstring (itm), dlinfo.dli_fname);
-	      char *restnam = MOM_GC_STRDUP ("restnam",
-					     dlinfo.dli_fname +
-					     strlen (MOM_MODULE_DIRECTORY
-						     MOM_SHARED_MODULE_PREFIX));
+	      char *restnam = (char *) MOM_GC_STRDUP ("restnam",
+						      dlinfo.dli_fname +
+						      strlen
+						      (MOM_MODULE_DIRECTORY
+						       MOM_SHARED_MODULE_PREFIX));
 	      MOM_DEBUGPRINTF (dump, "scanner_of_function itm=%s restnam %s",
 			       mom_item_cstring (itm), restnam);
 	      char *dotrest = strchr (restnam, '.');
