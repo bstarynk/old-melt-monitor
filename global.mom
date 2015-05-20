@@ -31,7 +31,7 @@
 ** _14MzMbJ9v_627D0CIiA
 {
   * comment  "block to apply varclo"
-  * instructions  [] }
+  * instructions  [_4KKszvz3w_1HLUHLsru] }
  
   %  ^filler_of_plain_kind( block)
  
@@ -52,6 +52,16 @@
 {
   * comment  "if empty agenda refill it" }
  [[  if  ^queue_item_is_empty( lkitm_agenda)  _4xAIqB3tj_97IrD41UP ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
+** _4KKszvz3w_1HLUHLsru
+{
+  * comment  "apply varclo to lkitm_agenda" }
+ [[  apply  signature_1itm_to_void  varclo  the_agenda ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
