@@ -1318,7 +1318,7 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 static void
 cgen_scan_apply_statement_first_mom (struct codegen_mom_st *cg,
 				     momitem_t *itmstmt)
-{
+{				/// apply <signature> <results...> <fun> <args...> [<else-block>]
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   struct momcomponents_st *stmtcomps = itmstmt->itm_comps;
   unsigned stmtlen = mom_components_count (stmtcomps);
@@ -1383,12 +1383,46 @@ cgen_scan_apply_statement_first_mom (struct codegen_mom_st *cg,
 			   mom_item_cstring (cg->cg_curblockitm),
 			   mom_item_cstring (itmstmt),
 			   mom_item_cstring (sigitm), stmtlen);
+  ///
+  MOM_DEBUGPRINTF (gencod,
+		   "scan_apply_statement apply statement %s before outix loop nbout %u",
+		   mom_item_cstring (itmstmt), nbout);
+  for (unsigned outix = 0; outix < nbout && !cg->cg_errormsg; outix++)
+    {
+      momvalue_t outcurv = mom_components_nth (stmtcomps, 2 + outix);
+      MOM_DEBUGPRINTF (gencod,
+		       "scan_apply_statement in function %s apply statement %s with result-output#%d : %s",
+		       mom_item_cstring (cg->cg_curfunitm),
+		       mom_item_cstring (itmstmt),
+		       outix, mom_output_gcstring (outcurv));
+      momitem_t *outitm = mom_value_to_item (outcurv);
+      const momitem_t *outsigtypitm = mom_seq_nth (outyptup, outix);
+      momitem_t *outcurtypitm = cgen_type_of_scanned_item_mom (cg, outitm);
+      if (outitm && outsigtypitm
+	  && mom_cgen_compatible_types (outsigtypitm, outcurtypitm))
+	continue;
+      else
+	CGEN_ERROR_RETURN_MOM (cg,
+			       "module item %s : function %s with block %s"
+			       " with apply statement %s"
+			       " with invalid result-output#%d type got %s expecting %s for result %s",
+			       mom_item_cstring (cg->cg_moduleitm),
+			       mom_item_cstring (cg->cg_curfunitm),
+			       mom_item_cstring (cg->cg_curblockitm),
+			       mom_item_cstring (itmstmt), outix,
+			       mom_item_cstring (outcurtypitm),
+			       mom_item_cstring (outsigtypitm),
+			       mom_output_gcstring (outcurv));
+    };
+  if (cg->cg_errormsg)
+    return;
+  ////
   MOM_DEBUGPRINTF (gencod,
 		   "scan_apply_statement apply statement %s before inix loop nbin %u",
 		   mom_item_cstring (itmstmt), nbin);
   for (unsigned inix = 0; inix < nbin && !cg->cg_errormsg; inix++)
     {
-      momvalue_t vcurin = mom_components_nth (stmtcomps, 2 + inix);
+      momvalue_t vcurin = mom_components_nth (stmtcomps, 2 + nbout + inix);
       const momitem_t *insigtypitm = mom_seq_nth (intyptup, inix);
       MOM_DEBUGPRINTF (gencod,
 		       "scan_apply_statement apply statement %s with inix#%d : vcurin %s insigtypitm %s",
@@ -1435,32 +1469,7 @@ cgen_scan_apply_statement_first_mom (struct codegen_mom_st *cg,
 			   mom_output_gcstring (vexpfun));
   if (cg->cg_errormsg)
     return;
-  MOM_DEBUGPRINTF (gencod,
-		   "scan_apply_statement apply statement %s before outix loop nbout %u",
-		   mom_item_cstring (itmstmt), nbout);
-  for (unsigned outix = 0; outix < nbout && !cg->cg_errormsg; outix++)
-    {
-      momvalue_t outcurv = mom_components_nth (stmtcomps, 3 + nbin + outix);
-      MOM_DEBUGPRINTF (gencod,
-		       "scan_apply_statement in function %s apply statement %s with argument#%d : %s",
-		       mom_item_cstring (cg->cg_curfunitm),
-		       mom_item_cstring (itmstmt),
-		       outix, mom_output_gcstring (outcurv));
-      const momitem_t *outsigtypitm = mom_seq_nth (outyptup, outix);
-      momitem_t *outcurtypitm = cgen_type_of_scanned_expr_mom (cg, outcurv);
-      if (outsigtypitm
-	  && mom_cgen_compatible_types (outsigtypitm, outcurtypitm))
-	continue;
-      else
-	CGEN_ERROR_RETURN_MOM (cg,
-			       "module item %s : function %s with block %s with apply statement %s with invalid argument#%d type",
-			       mom_item_cstring (cg->cg_moduleitm),
-			       mom_item_cstring (cg->cg_curfunitm),
-			       mom_item_cstring (cg->cg_curblockitm),
-			       mom_item_cstring (itmstmt), outix);
-    };
-  if (cg->cg_errormsg)
-    return;
+  ////
   if (stmtlen == 5 + nbin + nbout)
     {
       momitem_t *itmelse =
