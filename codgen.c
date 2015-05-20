@@ -2399,6 +2399,27 @@ cgen_emit_block_mom (struct codegen_mom_st *cg, unsigned bix,
   unsigned nbinstr = mom_seq_length (tupblock);
   fprintf (cg->cg_emitfile, "// %u statements in block %s\n", nbinstr,
 	   mom_item_cstring (blockitm));
+  momvalue_t vcomm =
+    mom_item_unsync_get_attribute (blockitm, MOM_PREDEFINED_NAMED (comment));
+  MOM_DEBUGPRINTF (gencod, "emit_block blockitm %s vcomm %s",
+		   mom_item_cstring (blockitm), mom_output_gcstring (vcomm));
+  if (vcomm.typnum == momty_string)
+    {
+      char commbuf[72];
+      memset (commbuf, 0, sizeof (commbuf));
+      const char *commstr = mom_string_cstr (mom_value_to_string (vcomm));
+      const char *commnl = strchr (commstr, '\n');
+      if (!commnl)
+	fprintf (cg->cg_emitfile, "//: %s\n", commstr);
+      else
+	{
+	  if (commnl < commstr + sizeof (commbuf) - 1)
+	    strncpy (commbuf, commstr, commnl - commstr);
+	  else
+	    strncpy (commbuf, commstr, sizeof (commbuf) - 2);
+	  fprintf (cg->cg_emitfile, "//: %s\n", commbuf);
+	}
+    };
   MOM_DEBUGPRINTF (gencod, "emit_block blockitm %s nbinstr %u",
 		   mom_item_cstring (blockitm), nbinstr);
   for (unsigned insix = 0; insix < nbinstr; insix++)
@@ -2415,8 +2436,8 @@ cgen_emit_block_mom (struct codegen_mom_st *cg, unsigned bix,
     }
   fprintf (cg->cg_emitfile, "\n  }; // end block %s\n",
 	   mom_item_cstring (blockitm));
-  fprintf (cg->cg_emitfile, "  goto " EPILOGUE_PREFIX_MOM "_%s;\n",
-	   mom_item_cstring (cg->cg_curfunitm));
+  fprintf (cg->cg_emitfile, "  goto " EPILOGUE_PREFIX_MOM "_%s;\n"
+	   "////----\n", mom_item_cstring (cg->cg_curfunitm));
   MOM_DEBUGPRINTF (gencod,
 		   "emit_block done itmmod %s curfunitm %s bix#%d blockitm %s",
 		   mom_item_cstring (itmmod),

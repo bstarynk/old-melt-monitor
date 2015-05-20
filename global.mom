@@ -28,6 +28,16 @@
 ..
 
 
+** _14MzMbJ9v_627D0CIiA
+{
+  * comment  "block to apply varclo"
+  * instructions  [] }
+ 
+  %  ^filler_of_plain_kind( block)
+ 
+..
+
+
 ** _1c462DJmx_68zwnz1Ua
 {
   * comment  "set lkitm_agenda := the_agenda" }
@@ -51,7 +61,7 @@
 ** _4xAIqB3tj_97IrD41UP
 {
   * comment  "refill empty agenda"
-  * instructions  [_60nmad63F_1Jd336xAL] }
+  * instructions  [_60nmad63F_1Jd336xAL _7vj8eaIrt_9bLBC6eKB] }
  
   %  ^filler_of_plain_kind( block)
  
@@ -75,6 +85,16 @@
   * instructions  [_1c462DJmx_68zwnz1Ua _44tmkDkKa_8nUhJEeay] }
  
   %  ^filler_of_plain_kind( block)
+ 
+..
+
+
+** _7vj8eaIrt_9bLBC6eKB
+{
+  * comment  "if varclo apply it" }
+ [[  if  varclo  _14MzMbJ9v_627D0CIiA ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
  
 ..
 
