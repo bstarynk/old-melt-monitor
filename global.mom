@@ -42,12 +42,14 @@
 ** agenda_step   ////// PREDEFINED
 {
   * constants  {_07BHLcwhp_48ka0t9bq the_agenda}
+  * emitted_blocks  {_7MF947fC8_8ChefReMD}
   * emitted_closed  []
   * emitted_constants  [_07BHLcwhp_48ka0t9bq the_agenda]
   * emitted_variables  []
   * formals  []
   * function_signature  signature_void_to_void
   * hook_closure  0
+  * in  the_base_module
   * start  _7MF947fC8_8ChefReMD }
  [[  ^agenda_step() ]]
  
