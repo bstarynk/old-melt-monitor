@@ -51,9 +51,19 @@
 ** _4xAIqB3tj_97IrD41UP
 {
   * comment  "refill empty agenda"
-  * instructions  [] }
+  * instructions  [_60nmad63F_1Jd336xAL] }
  
   %  ^filler_of_plain_kind( block)
+ 
+..
+
+
+** _60nmad63F_1Jd336xAL
+{
+  * comment  "set varclo := fill_agenda(lkitm_agenda)" }
+ [[  set  varclo  ^unsync_get_attribute( lkitm_agenda  fill_agenda) ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
  
 ..
 
@@ -71,7 +81,7 @@
 
 ** agenda_step   ////// PREDEFINED
 {
-  * constants  {_07BHLcwhp_48ka0t9bq the_agenda}
+  * constants  {_07BHLcwhp_48ka0t9bq fill_agenda the_agenda}
   * emitted_blocks  {_7MF947fC8_8ChefReMD}
   * emitted_closed  []
   * emitted_constants  [_07BHLcwhp_48ka0t9bq the_agenda]
@@ -80,7 +90,8 @@
   * function_signature  signature_void_to_void
   * hook_closure  0
   * in  the_base_module
-  * start  _7MF947fC8_8ChefReMD }
+  * start  _7MF947fC8_8ChefReMD
+  * variable  [varclo] }
  [[  ^agenda_step() ]]
  
   %  ^filler_of_function( signature_void_to_void)
@@ -342,6 +353,13 @@
 ..
 
 
+** fill_agenda
+{
+  * comment  "attribute in agenda to refill it" }
+ 
+..
+
+
 ** filler_of_association   ////// PREDEFINED
 {
   * comment  "filler routine for association items" }
@@ -542,6 +560,13 @@
 ..
 
 
+** itm2
+{
+  * type  item }
+ 
+..
+
+
 ** jump   ////// PREDEFINED
 {
   * comment  "operation for jump instruction" }
@@ -635,13 +660,13 @@
 
 ** queue_item_is_empty
 {
+  * code_emitter  ^plain_code_emitter()
   * code_expansion  ^code_expansion( "/*queue_item_is_empty:*/"  itm1  " && "
     itm1  "->itm_kind == MOM_PREDEFINED_NAMED(item_queue) "  " && mom_queueitem_size ("
     itm1  "->itm_data1) == 0")
+  * code_type_scanner  ^plain_code_type_scanner()
   * comment  "test if a queue item is empty"
   * formals  [itm1]
-  * code_type_scanner  ^plain_code_type_scanner()
-  * code_emitter  ^plain_code_emitter()
   * type  integer }
  
   %  ^filler_of_plain_kind( code_operation)
@@ -928,7 +953,8 @@
 {
   * comment  "describes the entire software system" }
  [[  test_module  plain_code_type_scanner  plain_code_emitter  value_of_item
-   value_to_item  tuple  node  queue_item_is_empty ]]
+   value_to_item  tuple  node  queue_item_is_empty  unsync_get_attribute
+ ]]
  
 ..
 
@@ -952,6 +978,21 @@
 {
   * comment  "kind of code types, etc.."
   * dumped_item_emitter  ^emitter_of_plain_kind() }
+ 
+..
+
+
+** unsync_get_attribute
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*unsync_get_attribute:*/mom_item_unsync_get_attribute ("
+    itm1  ","  itm2  ")")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "get an attribute"
+  * formals  [itm1 itm2]
+  * type  value }
+ 
+  %  ^filler_of_plain_kind( code_operation)
  
 ..
 
@@ -995,6 +1036,15 @@
   * comment  "operator to convert a value to an item"
   * formals  [val1]
   * type  item }
+ 
+..
+
+
+** varclo
+{
+  * type  value }
+ 
+  %  ^filler_of_plain_kind( variable)
  
 ..
 

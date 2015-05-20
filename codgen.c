@@ -2301,6 +2301,25 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
 	   mom_item_cstring (curfunitm));
   fprintf (cg->cg_emitfile, " " EPILOGUE_PREFIX_MOM "_%s:\n",
 	   mom_item_cstring (curfunitm));
+  // emit unlock of locked item variables
+  for (unsigned varix = 0; varix < nbvars; varix++)
+    {
+      momitem_t *varitm = mom_seq_nth (funseqvars, varix);
+      momvalue_t vbind = MOM_NONEV;
+      struct momentry_st *ent =
+	mom_attributes_find_entry (cg->cg_funbind, varitm);
+      if (ent)
+	vbind = ent->ent_val;
+      momnode_t *bindnod = mom_value_to_node (vbind);
+      if (!bindnod)
+	continue;
+      int vrk = mom_value_to_int (mom_node_nth (bindnod, 1), -1);
+      momitem_t *vtypitm = mom_value_to_item (mom_node_nth (bindnod, 2));
+      if (vtypitm == MOM_PREDEFINED_NAMED (locked_item))
+	fprintf (cg->cg_emitfile,
+		 "   if (" VARIABLE_PREFIX_MOM "%d != NULL) mom_item_unlock("
+		 VARIABLE_PREFIX_MOM "%d);\n", vrk, vrk);
+    };
   fprintf (cg->cg_emitfile, "// give %d outputs\n", nboutputs);
   if (nboutputs > 0)
     {
