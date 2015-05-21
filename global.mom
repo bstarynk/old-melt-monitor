@@ -767,8 +767,11 @@
 ** pop_front_queue_item
 {
   * code_expansion  ^code_expansion( "/*pop_front_queue_item:*/\n"  itmres
-    " = (momitem_t*)NULL;\n"  "if ("  itm1  " && "  itm1  "->kind/*@@ == ... */)")
+    " = (momitem_t*)NULL;\n"  "{if ("  itm1  " && "  itm1  "->kind == " 
+   item_queue  ")\n"  "  "  itmres  " = mom_queueitem_pop_front((struct momqueueitems_st*)"
+    itm1  "->itm_data1);}\n")
   * comment  "statement operation to pop front of queue item"
+  * extern  {item_queue}
   * formals  [itm1]
   * results  [itmres]
   * statement_emitter  ^plain_statement_emitter()
@@ -789,10 +792,11 @@
 {
   * code_emitter  ^plain_code_emitter()
   * code_expansion  ^code_expansion( "/*queue_item_is_empty:*/"  itm1  " && "
-    itm1  "->itm_kind == MOM_PREDEFINED_NAMED(item_queue) "  " && mom_queueitem_size ("
-    itm1  "->itm_data1) == 0")
+    itm1  "->itm_kind =="  item_queue  " && mom_queueitem_size ("  itm1 
+   "->itm_data1) == 0")
   * code_type_scanner  ^plain_code_type_scanner()
   * comment  "test if a queue item is empty"
+  * extern  {item_queue}
   * formals  [itm1]
   * type  integer }
  
