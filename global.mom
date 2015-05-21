@@ -736,6 +736,29 @@
 ..
 
 
+** plain_statement_emitter
+{
+  * comment  "function to emit statement with plain code_operation" }
+ 
+..
+
+
+** plain_statement_scanner
+{
+  * comment  "function to scan statement with plain code_operation" }
+ 
+..
+
+
+** pop_front_queue_item
+{
+  * comment  "statement operation to pop front of queue item"
+  * statement_emitter  ^plain_statement_emitter()
+  * statement_scanner  ^plain_statement_scanner() }
+ 
+..
+
+
 ** preparation   ////// PREDEFINED
 {
   * comment  "attribute giving the closure to prepare something, e.g. a code module"
@@ -1038,9 +1061,10 @@
 ** the_software   ////// PREDEFINED
 {
   * comment  "describes the entire software system" }
- [[  node  plain_code_emitter  plain_code_type_scanner  queue_item_is_empty
-   test_module  tuple  unsync_get_attribute  value_is_node  value_of_item
-   value_to_item ]]
+ [[  node  plain_code_emitter  plain_code_type_scanner  plain_statement_emitter
+   plain_statement_scanner  pop_front_queue_item  queue_item_is_empty  test_module
+   tuple  unsync_get_attribute  value_is_node  value_of_item  value_to_item
+ ]]
  
 ..
 

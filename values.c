@@ -279,7 +279,7 @@ mom_make_meta_tuple (momvalue_t metav, unsigned nbitems, ...)
 
 const momseq_t *
 mom_make_sized_meta_tuple (momvalue_t metav, unsigned nbitems,
-			   const momitem_t **itmarr)
+			   momitem_t *const *itmarr)
 {
   if (MOM_UNLIKELY (nbitems && !itmarr))
     MOM_FATAPRINTF ("missing item array for sized %u meta tuple", nbitems);

@@ -1090,9 +1090,9 @@ mom_value_cstr (const momvalue_t val)
 const momseq_t *mom_make_meta_tuple (momvalue_t metav, unsigned nbitems, ...);
 #define mom_make_tuple(NbItems,...) mom_make_meta_tuple(MOM_NONEV, (NbItems), __VA_ARGS__)
 const momseq_t *mom_make_sized_meta_tuple (momvalue_t metav, unsigned nbitems,
-					   const momitem_t **itmarr);
+					   momitem_t *const *itmarr);
 static inline const momseq_t *
-mom_make_sized_tuple (unsigned nbitems, const momitem_t **itmarr)
+mom_make_sized_tuple (unsigned nbitems, momitem_t *const *itmarr)
 {
   return mom_make_sized_meta_tuple (MOM_NONEV, nbitems, itmarr);
 };

@@ -64,7 +64,7 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
 //: block chunk-wait agenda-changed
  momblocklab__0HvrqAHte_4ryaA4drs: {
 // 3 statements in block _0HvrqAHte_4ryaA4drs
-// statement #0 _5a8Hrecb3_9evcyu8sh
+// statement #0 :: _5a8Hrecb3_9evcyu8sh; instr chunk-wait agenda changed
   // chunk of 16 components
 /*chunk wait agenda changed*/
   struct timespec ts__5a8Hrecb3_9evcyu8sh = {0,0};
@@ -72,7 +72,7 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
   ts__5a8Hrecb3_9evcyu8sh.tv_sec += MOM_AGENDA_WAIT_SEC;
   pthread_cond_timedwait(&mom_agenda_changed_condvar, &momvar1 /*var:lkitm_agenda*/->itm_mtx, & ts__5a8Hrecb3_9evcyu8sh);
  ;
-// statement #1 _46231jt3F_9IUe8xbwK
+// statement #1 :: _46231jt3F_9IUe8xbwK; clear lkitm_agenda to unlock it
   { // locked set into lkitm_agenda
   momlockeditem_t* momoldlocked__46231jt3F_9IUe8xbwK = momvar1 /*var:lkitm_agenda*/;
   momlockeditem_t* momnewlocked__46231jt3F_9IUe8xbwK =  (momlockeditem_t*)NULL;
@@ -84,7 +84,7 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
   momoldlocked__46231jt3F_9IUe8xbwK = NULL;
   momnewlocked__46231jt3F_9IUe8xbwK = NULL;
   } // end locked set into lkitm_agenda
-// statement #2 _51n8x1e9t_76B1hJrwI
+// statement #2 :: _51n8x1e9t_76B1hJrwI; jump start agenda_step
 // jump to _7MF947fC8_8ChefReMD
   goto momblocklab__7MF947fC8_8ChefReMD;
 
@@ -95,7 +95,7 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
 //: block to apply varclo
  momblocklab__14MzMbJ9v_627D0CIiA: {
 // 1 statements in block _14MzMbJ9v_627D0CIiA
-// statement #0 _4KKszvz3w_1HLUHLsru
+// statement #0 :: _4KKszvz3w_1HLUHLsru; apply varclo to lkitm_agenda
 // apply with 1 input arguments and 0 output results, radix 1itm_to_void
    if (!mom_applval_1itm_to_void (momvar0 /*var:varclo*/,  /*constant#2:*/MOM_PREDEFINED_NAMED(the_agenda)))
      return false;
@@ -108,15 +108,15 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
 //: refill empty agenda
  momblocklab__4xAIqB3tj_97IrD41UP: {
 // 3 statements in block _4xAIqB3tj_97IrD41UP
-// statement #0 _60nmad63F_1Jd336xAL
+// statement #0 :: _60nmad63F_1Jd336xAL; set varclo := fill_agenda(lkitm_agenda)
 // set into varclo
   momvar0 /*var:varclo*/ =
    /*unsync_get_attribute:*/mom_item_unsync_get_attribute (momvar1 /*var:lkitm_agenda*/, /*constant-item:fill_agenda*/momconst_1);
-// statement #1 _7vj8eaIrt_9bLBC6eKB
+// statement #1 :: _7vj8eaIrt_9bLBC6eKB; if varclo is node apply it
 // if testing on integer
     if (/*value_is_node:*/ (momvar0 /*var:varclo*/).typnum == momty_node)
       goto momblocklab__14MzMbJ9v_627D0CIiA;
-// statement #2 _6kDqRmkjk_6CxUEu2hk
+// statement #2 :: _6kDqRmkjk_6CxUEu2hk; if lkitm_agenda empty queue wait agenda-changed
 // if testing on integer
     if (/*queue_item_is_empty:*/momvar1 /*var:lkitm_agenda*/ && momvar1 /*var:lkitm_agenda*/->itm_kind == MOM_PREDEFINED_NAMED(item_queue)  && mom_queueitem_size (momvar1 /*var:lkitm_agenda*/->itm_data1) == 0)
       goto momblocklab__0HvrqAHte_4ryaA4drs;
@@ -129,7 +129,7 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
 //: starting block of agenda_step
  momblocklab__7MF947fC8_8ChefReMD: {
 // 2 statements in block _7MF947fC8_8ChefReMD
-// statement #0 _1c462DJmx_68zwnz1Ua
+// statement #0 :: _1c462DJmx_68zwnz1Ua; set lkitm_agenda := the_agenda
   { // locked set into lkitm_agenda
   momlockeditem_t* momoldlocked__1c462DJmx_68zwnz1Ua = momvar1 /*var:lkitm_agenda*/;
   momlockeditem_t* momnewlocked__1c462DJmx_68zwnz1Ua =  /*constant#2:*/MOM_PREDEFINED_NAMED(the_agenda);
@@ -141,7 +141,7 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
   momoldlocked__1c462DJmx_68zwnz1Ua = NULL;
   momnewlocked__1c462DJmx_68zwnz1Ua = NULL;
   } // end locked set into lkitm_agenda
-// statement #1 _44tmkDkKa_8nUhJEeay
+// statement #1 :: _44tmkDkKa_8nUhJEeay; if empty agenda refill it
 // if testing on integer
     if (/*queue_item_is_empty:*/momvar1 /*var:lkitm_agenda*/ && momvar1 /*var:lkitm_agenda*/->itm_kind == MOM_PREDEFINED_NAMED(item_queue)  && mom_queueitem_size (momvar1 /*var:lkitm_agenda*/->itm_data1) == 0)
       goto momblocklab__4xAIqB3tj_97IrD41UP;

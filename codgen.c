@@ -2009,9 +2009,9 @@ cgen_emit_function_declaration_mom (struct codegen_mom_st *cg,
   momitem_t *itmstart =
     mom_value_to_item (mom_node_nth (funinfonod, funinfo_start));
   MOM_DEBUGPRINTF (gencod,
-		   "emitting declaration signature %s of curfunitm %s",
+		   "emitting declaration signature %s of curfunitm %s; itmstart %s",
 		   mom_item_cstring (funsigitm),
-		   mom_item_cstring (curfunitm));
+		   mom_item_cstring (curfunitm), mom_item_cstring (itmstart));
   const momstring_t *strradix =	//
     mom_value_to_string (mom_item_unsync_get_attribute (funsigitm,
 							MOM_PREDEFINED_NAMED
@@ -2375,13 +2375,13 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
   // emit unlock of locked item variables
   for (unsigned varix = 0; varix < nbvars; varix++)
     {
-      momitem_t *varitm = mom_seq_nth (funseqvars, varix);
+      momitem_t *varitm = (momitem_t *) mom_seq_nth (funseqvars, varix);
       momvalue_t vbind = MOM_NONEV;
       struct momentry_st *ent =
 	mom_attributes_find_entry (cg->cg_funbind, varitm);
       if (ent)
 	vbind = ent->ent_val;
-      momnode_t *bindnod = mom_value_to_node (vbind);
+      const momnode_t *bindnod = mom_value_to_node (vbind);
       if (!bindnod)
 	continue;
       int vrk = mom_value_to_int (mom_node_nth (bindnod, 1), -1);
@@ -2502,8 +2502,6 @@ cgen_emit_block_mom (struct codegen_mom_st *cg, unsigned bix,
       MOM_DEBUGPRINTF (gencod, "emit_block blockitm %s insix#%d stmtitm %s",
 		       mom_item_cstring (blockitm), insix,
 		       mom_item_cstring (stmtitm));
-      fprintf (cg->cg_emitfile, "// statement #%d %s\n", insix,
-	       mom_item_cstring (stmtitm));
       cg->cg_curstmtitm = stmtitm;
       cgen_emit_statement_mom (cg, insix, stmtitm);
       if (cg->cg_errormsg)
@@ -2515,7 +2513,7 @@ cgen_emit_block_mom (struct codegen_mom_st *cg, unsigned bix,
     }
   fprintf (cg->cg_emitfile, "\n  }; // end block %s\n",
 	   mom_item_cstring (blockitm));
-  if (lastjmpindex != nbinstr - 1)
+  if (lastjmpindex != (int) nbinstr - 1)
     fprintf (cg->cg_emitfile, "  goto " EPILOGUE_PREFIX_MOM "_%s;\n"
 	     " ////----\n", mom_item_cstring (cg->cg_curfunitm));
   else
@@ -2969,6 +2967,26 @@ cgen_emit_statement_mom (struct codegen_mom_st *cg, unsigned insix,
   MOM_DEBUGPRINTF (gencod, "emit_statement stmtitm %s opitm %s",
 		   mom_item_cstring (stmtitm), mom_item_cstring (opitm));
   assert (opitm != NULL);
+  momvalue_t vcomm =
+    mom_item_unsync_get_attribute (stmtitm, MOM_PREDEFINED_NAMED (comment));
+  if (vcomm.typnum == momty_string)
+    {
+      assert (vcomm.vstr);
+      const char *commstr = vcomm.vstr->cstr;
+      const char *nl = strchr (commstr, '\n');
+      if (nl)
+	fprintf (cg->cg_emitfile, "// statement #%d ::: %s; %*s\n",
+		 insix, mom_item_cstring (stmtitm),
+		 (int) (nl - commstr), commstr);
+      else
+	fprintf (cg->cg_emitfile, "// statement #%d :: %s; %s\n",
+		 insix, mom_item_cstring (stmtitm), commstr);
+    }
+  else
+    {
+      fprintf (cg->cg_emitfile, "// statement #%d : %s\n", insix,
+	       mom_item_cstring (stmtitm));
+    }
   switch (mom_item_hash (opitm))
     {
       ////////////////
@@ -3036,8 +3054,8 @@ cgen_emit_statement_mom (struct codegen_mom_st *cg, unsigned insix,
 
 
 static void
-cgen_emit_set_statement_mom (struct codegen_mom_st *cg, unsigned insix,
-			     momitem_t *itmstmt)
+cgen_emit_set_statement_mom (struct codegen_mom_st *cg, unsigned insix
+			     __attribute__ ((unused)), momitem_t *itmstmt)
 {
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   assert (itmstmt);
@@ -3114,8 +3132,8 @@ cgen_emit_set_statement_mom (struct codegen_mom_st *cg, unsigned insix,
 
 
 static void
-cgen_emit_chunk_statement_mom (struct codegen_mom_st *cg, unsigned insix,
-			       momitem_t *itmstmt)
+cgen_emit_chunk_statement_mom (struct codegen_mom_st *cg, unsigned insix
+			       __attribute__ ((unused)), momitem_t *itmstmt)
 {
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   assert (itmstmt);
@@ -3166,8 +3184,8 @@ cgen_emit_chunk_statement_mom (struct codegen_mom_st *cg, unsigned insix,
 
 
 static void
-cgen_emit_apply_statement_mom (struct codegen_mom_st *cg, unsigned insix,
-			       momitem_t *itmstmt)
+cgen_emit_apply_statement_mom (struct codegen_mom_st *cg, unsigned insix
+			       __attribute__ ((unused)), momitem_t *itmstmt)
 {				/// apply <signature> <results...> <fun> <args...> [<else-block>]
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   assert (itmstmt);
@@ -3246,8 +3264,8 @@ cgen_emit_apply_statement_mom (struct codegen_mom_st *cg, unsigned insix,
 
 
 static void
-cgen_emit_if_statement_mom (struct codegen_mom_st *cg, unsigned insix,
-			    momitem_t *itmstmt)
+cgen_emit_if_statement_mom (struct codegen_mom_st *cg, unsigned insix
+			    __attribute__ ((unused)), momitem_t *itmstmt)
 {
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   assert (itmstmt);
@@ -3282,8 +3300,8 @@ cgen_emit_if_statement_mom (struct codegen_mom_st *cg, unsigned insix,
 
 
 static void
-cgen_emit_jump_statement_mom (struct codegen_mom_st *cg, unsigned insix,
-			      momitem_t *itmstmt)
+cgen_emit_jump_statement_mom (struct codegen_mom_st *cg, unsigned insix
+			      __attribute__ ((unused)), momitem_t *itmstmt)
 {
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   assert (itmstmt);
@@ -3297,9 +3315,10 @@ cgen_emit_jump_statement_mom (struct codegen_mom_st *cg, unsigned insix,
 	   mom_item_cstring (targetitm));
 }				/* end cgen_emit_jump_statement_mom */
 
+
 static void
-cgen_emit_success_statement_mom (struct codegen_mom_st *cg, unsigned insix,
-				 momitem_t *itmstmt)
+cgen_emit_success_statement_mom (struct codegen_mom_st *cg, unsigned insix
+				 __attribute__ ((unused)), momitem_t *itmstmt)
 {
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   assert (itmstmt);
@@ -3311,9 +3330,10 @@ cgen_emit_success_statement_mom (struct codegen_mom_st *cg, unsigned insix,
 }				/* end of cgen_emit_success_statement_mom */
 
 
+
 static void
-cgen_emit_fail_statement_mom (struct codegen_mom_st *cg, unsigned insix,
-			      momitem_t *itmstmt)
+cgen_emit_fail_statement_mom (struct codegen_mom_st *cg, unsigned insix
+			      __attribute__ ((unused)), momitem_t *itmstmt)
 {
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   assert (itmstmt);
@@ -3327,7 +3347,8 @@ cgen_emit_fail_statement_mom (struct codegen_mom_st *cg, unsigned insix,
 
 
 static void
-cgen_emit_int_switch_statement_mom (struct codegen_mom_st *cg, unsigned insix,
+cgen_emit_int_switch_statement_mom (struct codegen_mom_st *cg, unsigned insix
+				    __attribute__ ((unused)),
 				    momitem_t *itmstmt)
 {				// int_switch <expr> <case....>
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
@@ -3342,7 +3363,7 @@ cgen_emit_int_switch_statement_mom (struct codegen_mom_st *cg, unsigned insix,
   fputs ("   switch (", cg->cg_emitfile);
   cgen_emit_expr_mom (cg, vexpr);
   fputs (") {\n", cg->cg_emitfile);
-  for (unsigned caseix = 2; caseix < stmtlen; caseix)
+  for (unsigned caseix = 2; caseix < stmtlen; caseix++)
     {
       momvalue_t vcase = mom_components_nth (stmtcomps, caseix);
       MOM_DEBUGPRINTF (gencod, "emit int_switch stmt %s caseix %d vcase %s",
@@ -3394,7 +3415,9 @@ itemswent_cmp_mom (const void *p1, const void *p2, void *data)
 
 static void
 cgen_emit_item_switch_statement_mom (struct codegen_mom_st *cg,
-				     unsigned insix, momitem_t *itmstmt)
+				     unsigned insix
+				     __attribute__ ((unused)),
+				     momitem_t *itmstmt)
 {
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   assert (itmstmt);
@@ -3410,7 +3433,7 @@ cgen_emit_item_switch_statement_mom (struct codegen_mom_st *cg,
 		   mom_item_cstring (itmstmt),
 		   stmtlen - 2, mom_output_gcstring (vexpr));
   fprintf (cg->cg_emitfile, "// item_switch with %d cases\n", stmtlen - 2);
-  for (unsigned caseix = 2; caseix < stmtlen; caseix)
+  for (unsigned caseix = 2; caseix < stmtlen; caseix++)
     {
       momvalue_t vcase = mom_components_nth (stmtcomps, caseix);
       MOM_DEBUGPRINTF (gencod, "emit item_switch stmt %s caseix %d vcase %s",
@@ -3474,8 +3497,8 @@ cgen_emit_item_switch_statement_mom (struct codegen_mom_st *cg,
 
 
 static void
-cgen_emit_other_statement_mom (struct codegen_mom_st *cg, unsigned insix,
-			       momitem_t *stmtitm)
+cgen_emit_other_statement_mom (struct codegen_mom_st *cg, unsigned insix
+			       __attribute__ ((unused)), momitem_t *stmtitm)
 {
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   assert (stmtitm);
@@ -3625,7 +3648,8 @@ cgen_third_decorating_pass_mom (momitem_t *itmcgen)
 	      unsigned nbins = mom_seq_length (tupins);
 	      for (unsigned insix = 0; insix < nbins; insix++)
 		{
-		  momitem_t *stmtitm = mom_seq_nth (tupins, insix);
+		  momitem_t *stmtitm =
+		    (momitem_t *) mom_seq_nth (tupins, insix);
 		  mom_item_unsync_put_attribute (stmtitm,
 						 MOM_PREDEFINED_NAMED (in),
 						 mom_itemv (itmcurblock));
@@ -3648,7 +3672,7 @@ cgen_third_decorating_pass_mom (momitem_t *itmcgen)
 					    1) * sizeof (momitem_t *));
 	for (unsigned cix = 0; cix < nbconst; cix++)
 	  {
-	    momitem_t *curcstitm = mom_seq_nth (constset, cix);
+	    momitem_t *curcstitm = (momitem_t *) mom_seq_nth (constset, cix);
 	    momvalue_t vbindcst = MOM_NONEV;
 	    struct momentry_st *ent =
 	      mom_attributes_find_entry ((struct momattributes_st *)
@@ -3696,7 +3720,7 @@ cgen_third_decorating_pass_mom (momitem_t *itmcgen)
 			(nbclosed + 1) * sizeof (momitem_t *));
 	for (unsigned cix = 0; cix < nbclosed; cix++)
 	  {
-	    momitem_t *curcloitm = mom_seq_nth (closet, cix);
+	    momitem_t *curcloitm = (momitem_t *) mom_seq_nth (closet, cix);
 	    momvalue_t vbindclo = MOM_NONEV;
 	    struct momentry_st *ent =
 	      mom_attributes_find_entry ((struct momattributes_st *)
@@ -3737,7 +3761,7 @@ cgen_third_decorating_pass_mom (momitem_t *itmcgen)
 			(nbvars + 1) * sizeof (momitem_t *));
 	for (unsigned vix = 0; vix < nbvars; vix++)
 	  {
-	    momitem_t *curvaritm = mom_seq_nth (varset, vix);
+	    momitem_t *curvaritm = (momitem_t *) mom_seq_nth (varset, vix);
 	    momvalue_t vbindvar = MOM_NONEV;
 	    struct momentry_st *ent =
 	      mom_attributes_find_entry ((struct momattributes_st *)
@@ -4123,5 +4147,40 @@ bool momfunc_1itm1val_to_void_plain_code_emitter
 }				/* end of momfunc_1itm1val_to_void_plain_code_emitter */
 
 
+
+bool momfunc_2itm_to_void_plain_statement_scanner
+  (const momnode_t *clonode, momitem_t *itmcodgen, momitem_t *itmstmt)
+{
+  if (!itmcodgen
+      || itmcodgen->itm_kind != MOM_PREDEFINED_NAMED (code_generation)
+      || !itmstmt)
+    return false;
+  struct codegen_mom_st *cg = (struct codegen_mom_st *) itmcodgen->itm_data1;
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  MOM_DEBUGPRINTF (gencod,
+		   "plain_statement_scanner start itmcodgen=%s itmstmt=%s",
+		   mom_item_cstring (itmcodgen), mom_item_cstring (itmstmt));
+  MOM_FATAPRINTF ("unimplemented plain_statement_scanner %s",
+		  mom_item_cstring (itmstmt));
+#warning unimplemented plain_statement_scanner
+}				/* end plain_statement_scanner */
+
+bool momfunc_2itm_to_void_plain_statement_emitter
+  (const momnode_t *clonode, momitem_t *itmcodgen, momitem_t *itmstmt)
+{
+  if (!itmcodgen
+      || itmcodgen->itm_kind != MOM_PREDEFINED_NAMED (code_generation)
+      || !itmstmt)
+    return false;
+  struct codegen_mom_st *cg = (struct codegen_mom_st *) itmcodgen->itm_data1;
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  MOM_DEBUGPRINTF (gencod,
+		   "plain_statement_emitter start itmcodgen=%s itmstmt=%s  **fileoff %ld",
+		   mom_item_cstring (itmcodgen), mom_item_cstring (itmstmt),
+		   ftell (cg->cg_emitfile));
+  MOM_FATAPRINTF ("unimplemented plain_statement_emitter %s",
+		  mom_item_cstring (itmstmt));
+#warning unimplemented plain_statement_emitter
+}				/* end plain_statement_scanner */
 
 /// eof codgen.c
