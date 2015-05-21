@@ -2359,14 +2359,12 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
   for (unsigned bix = 0; bix < nbblocks; bix++)
     {
       momitem_t *blockitm = (momitem_t *) mom_seq_nth (blockseq, bix);
-      fprintf (cg->cg_emitfile, " // block #%d : %s\n", bix,
-	       mom_item_cstring (blockitm));
       cg->cg_curblockitm = blockitm;
       cgen_emit_block_mom (cg, bix, blockitm);
       cg->cg_curblockitm = NULL;
     }
   /// emit the epilogue
-  fprintf (cg->cg_emitfile, "//////\n"
+  fprintf (cg->cg_emitfile, "\n//////\n"
 	   "// epilogue of %s\n", mom_item_cstring (curfunitm));
   fprintf (cg->cg_emitfile, "    " SUCCESS_PREFIX_MOM "_%s = true;\n",
 	   mom_item_cstring (curfunitm));
@@ -2419,7 +2417,7 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
     }
   fprintf (cg->cg_emitfile, "  return " SUCCESS_PREFIX_MOM "_%s;\n",
 	   mom_item_cstring (curfunitm));
-  fprintf (cg->cg_emitfile, "} // end of momfunc_%s_%s \n\n",
+  fprintf (cg->cg_emitfile, "} // end of momfunc_%s_%s \n\n\n",
 	   mom_string_cstr (strradix), mom_item_cstring (curfunitm));
   MOM_DEBUGPRINTF (gencod,
 		   "emit_function_code done funix#%d itmmod %s curfunitm %s",
@@ -2464,14 +2462,8 @@ cgen_emit_block_mom (struct codegen_mom_st *cg, unsigned bix,
 		   "emit_block blockitm %s vbindblock %s",
 		   mom_item_cstring (blockitm),
 		   mom_output_gcstring (vbindblock));
-  fprintf (cg->cg_emitfile, " " BLOCK_LABEL_PREFIX_MOM "_%s: {\n",
-	   mom_item_cstring (blockitm));
-  const momseq_t *tupblock =
-    mom_value_to_tuple (mom_node_nth (mom_value_to_node (vbindblock), 1));
-  assert (tupblock != NULL);
-  unsigned nbinstr = mom_seq_length (tupblock);
-  fprintf (cg->cg_emitfile, "// %u statements in block %s\n", nbinstr,
-	   mom_item_cstring (blockitm));
+  fprintf (cg->cg_emitfile,
+	   "\n/// block #%d: %s\n", bix, mom_item_cstring (blockitm));
   momvalue_t vcomm =
     mom_item_unsync_get_attribute (blockitm, MOM_PREDEFINED_NAMED (comment));
   MOM_DEBUGPRINTF (gencod, "emit_block blockitm %s vcomm %s",
@@ -2493,6 +2485,14 @@ cgen_emit_block_mom (struct codegen_mom_st *cg, unsigned bix,
 	  fprintf (cg->cg_emitfile, "//: %s\n", commbuf);
 	}
     };
+  fprintf (cg->cg_emitfile, " " BLOCK_LABEL_PREFIX_MOM "_%s: {\n",
+	   mom_item_cstring (blockitm));
+  const momseq_t *tupblock =
+    mom_value_to_tuple (mom_node_nth (mom_value_to_node (vbindblock), 1));
+  assert (tupblock != NULL);
+  unsigned nbinstr = mom_seq_length (tupblock);
+  fprintf (cg->cg_emitfile, "// %u statements in block %s\n", nbinstr,
+	   mom_item_cstring (blockitm));
   MOM_DEBUGPRINTF (gencod, "emit_block blockitm %s nbinstr %u",
 		   mom_item_cstring (blockitm), nbinstr);
   int lastjmpindex = -1;
@@ -2517,7 +2517,7 @@ cgen_emit_block_mom (struct codegen_mom_st *cg, unsigned bix,
 	   mom_item_cstring (blockitm));
   if (lastjmpindex != nbinstr - 1)
     fprintf (cg->cg_emitfile, "  goto " EPILOGUE_PREFIX_MOM "_%s;\n"
-	     "////----\n", mom_item_cstring (cg->cg_curfunitm));
+	     " ////----\n", mom_item_cstring (cg->cg_curfunitm));
   else
     fprintf (cg->cg_emitfile, "////----++++\n");
   MOM_DEBUGPRINTF (gencod,

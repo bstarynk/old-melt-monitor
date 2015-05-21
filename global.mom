@@ -31,7 +31,8 @@
 ** _0HvrqAHte_4ryaA4drs
 {
   * comment  "block chunk-wait agenda-changed"
-  * instructions  [_5a8Hrecb3_9evcyu8sh] }
+  * instructions  [_5a8Hrecb3_9evcyu8sh _46231jt3F_9IUe8xbwK _51n8x1e9t_76B1hJrwI]
+ }
  
   %  ^filler_of_plain_kind( block)
  
@@ -68,6 +69,16 @@
 ..
 
 
+** _46231jt3F_9IUe8xbwK
+{
+  * comment  "clear lkitm_agenda to unlock it" }
+ [[  set  lkitm_agenda  ~ ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
 ** _4KKszvz3w_1HLUHLsru
 {
   * comment  "apply varclo to lkitm_agenda" }
@@ -85,6 +96,16 @@
  }
  
   %  ^filler_of_plain_kind( block)
+ 
+..
+
+
+** _51n8x1e9t_76B1hJrwI
+{
+  * comment  "jump start agenda_step" }
+ [[  jump  _7MF947fC8_8ChefReMD ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
  
 ..
 
@@ -1127,6 +1148,7 @@
 
 ** varclo
 {
+  * comment  "variable for a closure"
   * type  value }
  
   %  ^filler_of_plain_kind( variable)

@@ -455,6 +455,7 @@ const char *const delim_mom[] = {
   "(!", "!)",
   "°", "§", "*", "(", ")",
   "[", "]",
+  "~",
   "{", "}", "<", ">", "^", "!", "%", "@", "|", "&",
   NULL
 };
@@ -1158,6 +1159,9 @@ mom_load_value (momvalue_t *pval)
     return false;
   memset (pval, 0, sizeof (momvalue_t));
   momvalue_t vtok = mom_peek_token_load ();
+  MOM_DEBUGPRINTF (load, "load_value vtok %s near %s",
+		   mom_output_gcstring (vtok), load_position_mom (NULL, 0,
+								  0));
   if (vtok.typnum == momty_null)
     return false;
   if (vtok.typnum == momty_item)
