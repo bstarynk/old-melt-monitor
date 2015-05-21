@@ -4073,6 +4073,9 @@ bool momfunc_1itm1val_to_void_plain_code_emitter
   momvalue_t vformals =		//
     mom_item_unsync_get_attribute (connitm,
 				   MOM_PREDEFINED_NAMED (formals));
+  momvalue_t vextern =		//
+    mom_item_unsync_get_attribute (connitm,
+				   MOM_PREDEFINED_NAMED (extern));
   assert (connitm && mom_hashset_contains (cg->cg_lockeditemset, connitm));
   const momseq_t *tupformals = mom_value_to_tuple (vformals);
   assert (tupformals);
@@ -4132,7 +4135,6 @@ bool momfunc_1itm1val_to_void_plain_code_emitter
 	  {
 	    momitem_t *curitm = vcurexp.vitem;
 	    assert (curitm != NULL);
-#warning should handle extern item in plain_code_emitter
 	    if (curitm == varcountitm)
 	      {
 		MOM_DEBUGPRINTF (gencod,
@@ -4170,6 +4172,14 @@ bool momfunc_1itm1val_to_void_plain_code_emitter
 	    else if (curitm == MOM_PREDEFINED_NAMED (this_statement))
 	      {
 		fputs (mom_item_cstring (cg->cg_curstmtitm), cg->cg_emitfile);
+		continue;
+	      }
+	    else if (mom_setv_contains (vextern, curitm))
+	      {
+		MOM_DEBUGPRINTF (gencod,
+				 "plain_code_emitter extern item %s",
+				 mom_item_cstring (curitm));
+		cgen_emit_item_mom (cg, curitm);
 		continue;
 	      }
 	    momvalue_t valbind = MOM_NONEV;
@@ -4531,28 +4541,32 @@ bool
 		   mom_item_cstring (itmop), ftell (cg->cg_emitfile));
   assert (mom_hashset_contains (cg->cg_lockeditemset, itmstmt));
   assert (mom_hashset_contains (cg->cg_lockeditemset, itmop));
-  momvalue_t vformals =
+  momvalue_t vformals =		//
     mom_item_unsync_get_attribute (itmop, MOM_PREDEFINED_NAMED (formals));
-  momvalue_t vresults =
+  momvalue_t vresults =		//
     mom_item_unsync_get_attribute (itmop, MOM_PREDEFINED_NAMED (results));
-  momvalue_t vvaricount = mom_item_unsync_get_attribute (itmop,
-							 MOM_PREDEFINED_NAMED
-							 (variadic_count));
-  momvalue_t vvarirest = mom_item_unsync_get_attribute (itmop,
-							MOM_PREDEFINED_NAMED
-							(variadic_rest));
-  momvalue_t vcodexp = mom_item_unsync_get_attribute (itmop,
-						      MOM_PREDEFINED_NAMED
-						      (code_expansion));
+  momvalue_t vvaricount =	//
+    mom_item_unsync_get_attribute (itmop,
+				   MOM_PREDEFINED_NAMED (variadic_count));
+  momvalue_t vvarirest =	//
+    mom_item_unsync_get_attribute (itmop,
+				   MOM_PREDEFINED_NAMED (variadic_rest));
+  momvalue_t vcodexp =		//
+    mom_item_unsync_get_attribute (itmop,
+				   MOM_PREDEFINED_NAMED (code_expansion));
+  momvalue_t vextern =		//
+    mom_item_unsync_get_attribute (itmop,
+				   MOM_PREDEFINED_NAMED (extern));
   MOM_DEBUGPRINTF (gencod,
 		   "plain_statement_emitter itmstmt=%s itmop=%s;"
-		   " vformals=%s vresults=%s vvaricount=%s vvarirest=%s vcodexp=%s",
+		   " vformals=%s vresults=%s vvaricount=%s vvarirest=%s vcodexp=%s vextern=%s",
 		   mom_item_cstring (itmstmt), mom_item_cstring (itmop),
 		   mom_output_gcstring (vformals),
 		   mom_output_gcstring (vresults),
 		   mom_output_gcstring (vvaricount),
 		   mom_output_gcstring (vvarirest),
-		   mom_output_gcstring (vcodexp));
+		   mom_output_gcstring (vcodexp),
+		   mom_output_gcstring (vextern));
   const momseq_t *formalseq = mom_value_to_tuple (vformals);
   const momseq_t *resultseq = mom_value_to_tuple (vresults);
   momitem_t *varicountitm = mom_value_to_item (vvaricount);
@@ -4657,7 +4671,6 @@ bool
 	  continue;
 	case momty_item:
 	  {
-#warning should handle extern items in plain_statement_emitter
 	    momitem_t *curxitm = vcurexp.vitem;
 	    assert (curxitm);
 	    if (curxitm == varicountitm)
@@ -4678,6 +4691,15 @@ bool
 				     mom_output_gcstring (vcurest));
 		    cgen_emit_expr_mom (cg, vcurest);
 		  }
+	      }
+	    else if (mom_setv_contains (vextern, curxitm))
+	      {
+		MOM_DEBUGPRINTF (gencod,
+				 "plain_statement_emitter itmstmt=%s extern curxitm=%s",
+				 mom_item_cstring (itmstmt),
+				 mom_item_cstring (curxitm));
+		cgen_emit_item_mom (cg, curxitm);
+		continue;
 	      }
 	    else
 	      {
@@ -4709,9 +4731,8 @@ bool
 				 mom_item_cstring (cg->cg_curfunitm),
 				 mom_item_cstring (cg->cg_curblockitm),
 				 mom_item_cstring (itmstmt),
-				 mom_item_cstring (itmop),
-				 expix, mom_output_gcstring (vcurexp));
-
+				 mom_item_cstring (itmop), expix,
+				 mom_output_gcstring (vcurexp));
 	}			/* end switch vcurexp.typnum */
     };				/* end for expix */
   if (cg->cg_errormsg)
