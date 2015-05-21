@@ -1096,16 +1096,16 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 	  momvalue_t vtestexpr = MOM_NONEV;
 	  momitem_t *testctypitm = NULL;
 	  momitem_t *thenitm = NULL;
+	  vtestexpr = mom_components_nth (stmtcomps, 1);
+	  thenitm = mom_value_to_item (mom_components_nth (stmtcomps, 2));
 	  MOM_DEBUGPRINTF (gencod,
-			   "scan_statement_first if %s",
-			   mom_item_cstring (itmstmt));
+			   "scan_statement_first if %s vtestexpr %s thenitm %s",
+			   mom_item_cstring (itmstmt),
+			   mom_output_gcstring (vtestexpr),
+			   mom_item_cstring (thenitm));
+	  testctypitm = cgen_type_of_scanned_expr_mom (cg, vtestexpr);
 	  if (stmtlen != 3
-	      || (vtestexpr =
-		  mom_components_nth (stmtcomps, 1)).typnum == momty_null
-	      || !(testctypitm =
-		   cgen_type_of_scanned_expr_mom (cg, vtestexpr))
-	      || !(thenitm =
-		   mom_value_to_item (mom_components_nth (stmtcomps, 2))))
+	      || vtestexpr.typnum == momty_null || !testctypitm || !thenitm)
 	    {
 	      MOM_DEBUGPRINTF (gencod,
 			       "scan_statement_first if %s vtestexpr %s testctypitm %s thenitm %s",
@@ -3863,6 +3863,7 @@ bool
 			   "plain_code_type_scanner itmconn %s curextitm %s",
 			   mom_item_cstring (itmconn),
 			   mom_item_cstring (curextitm));
+	  cgen_lock_item_mom (cg, curextitm);
 	  if (!cgen_type_of_scanned_item_mom (cg, curextitm))
 	    CGEN_ERROR_RESULT_MOM (cg, false,
 				   "plain_code_type_scanner:: module item %s : function %s has block %s"
