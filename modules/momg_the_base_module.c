@@ -59,10 +59,11 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
   momitem_t* momconst_2 = MOM_PREDEFINED_NAMED(the_agenda);
   // 0 closed:
   goto momblocklab__7MF947fC8_8ChefReMD;
- // block #0 : _0HvrqAHte_4ryaA4drs
- momblocklab__0HvrqAHte_4ryaA4drs: {
-// 1 statements in block _0HvrqAHte_4ryaA4drs
+
+/// block #0: _0HvrqAHte_4ryaA4drs
 //: block chunk-wait agenda-changed
+ momblocklab__0HvrqAHte_4ryaA4drs: {
+// 3 statements in block _0HvrqAHte_4ryaA4drs
 // statement #0 _5a8Hrecb3_9evcyu8sh
   // chunk of 16 components
 /*chunk wait agenda changed*/
@@ -71,14 +72,29 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
   ts__5a8Hrecb3_9evcyu8sh.tv_sec += MOM_AGENDA_WAIT_SEC;
   pthread_cond_timedwait(&mom_agenda_changed_condvar, &momvar1 /*var:lkitm_agenda*/->itm_mtx, & ts__5a8Hrecb3_9evcyu8sh);
  ;
+// statement #1 _46231jt3F_9IUe8xbwK
+  { // locked set into lkitm_agenda
+  momlockeditem_t* momoldlocked__46231jt3F_9IUe8xbwK = momvar1 /*var:lkitm_agenda*/;
+  momlockeditem_t* momnewlocked__46231jt3F_9IUe8xbwK =  (momlockeditem_t*)NULL;
+  if (momoldlocked__46231jt3F_9IUe8xbwK != momnewlocked__46231jt3F_9IUe8xbwK) {
+    if (momoldlocked__46231jt3F_9IUe8xbwK != NULL) mom_item_unlock (momoldlocked__46231jt3F_9IUe8xbwK);
+    if (momnewlocked__46231jt3F_9IUe8xbwK != NULL) mom_item_lock (momnewlocked__46231jt3F_9IUe8xbwK);
+  } // end lock test _46231jt3F_9IUe8xbwK
+    momvar1 /*var:lkitm_agenda*/ = momnewlocked__46231jt3F_9IUe8xbwK;
+  momoldlocked__46231jt3F_9IUe8xbwK = NULL;
+  momnewlocked__46231jt3F_9IUe8xbwK = NULL;
+  } // end locked set into lkitm_agenda
+// statement #2 _51n8x1e9t_76B1hJrwI
+// jump to _7MF947fC8_8ChefReMD
+  goto momblocklab__7MF947fC8_8ChefReMD;
 
   }; // end block _0HvrqAHte_4ryaA4drs
-  goto momepilog_agenda_step;
-////----
- // block #1 : _14MzMbJ9v_627D0CIiA
+////----++++
+
+/// block #1: _14MzMbJ9v_627D0CIiA
+//: block to apply varclo
  momblocklab__14MzMbJ9v_627D0CIiA: {
 // 1 statements in block _14MzMbJ9v_627D0CIiA
-//: block to apply varclo
 // statement #0 _4KKszvz3w_1HLUHLsru
 // apply with 1 input arguments and 0 output results, radix 1itm_to_void
    if (!mom_applval_1itm_to_void (momvar0 /*var:varclo*/,  /*constant#2:*/MOM_PREDEFINED_NAMED(the_agenda)))
@@ -86,11 +102,12 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
 
   }; // end block _14MzMbJ9v_627D0CIiA
   goto momepilog_agenda_step;
-////----
- // block #2 : _4xAIqB3tj_97IrD41UP
+ ////----
+
+/// block #2: _4xAIqB3tj_97IrD41UP
+//: refill empty agenda
  momblocklab__4xAIqB3tj_97IrD41UP: {
 // 3 statements in block _4xAIqB3tj_97IrD41UP
-//: refill empty agenda
 // statement #0 _60nmad63F_1Jd336xAL
 // set into varclo
   momvar0 /*var:varclo*/ =
@@ -106,11 +123,12 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
 
   }; // end block _4xAIqB3tj_97IrD41UP
   goto momepilog_agenda_step;
-////----
- // block #3 : _7MF947fC8_8ChefReMD
+ ////----
+
+/// block #3: _7MF947fC8_8ChefReMD
+//: starting block of agenda_step
  momblocklab__7MF947fC8_8ChefReMD: {
 // 2 statements in block _7MF947fC8_8ChefReMD
-//: starting block of agenda_step
 // statement #0 _1c462DJmx_68zwnz1Ua
   { // locked set into lkitm_agenda
   momlockeditem_t* momoldlocked__1c462DJmx_68zwnz1Ua = momvar1 /*var:lkitm_agenda*/;
@@ -130,7 +148,8 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
 
   }; // end block _7MF947fC8_8ChefReMD
   goto momepilog_agenda_step;
-////----
+ ////----
+
 //////
 // epilogue of agenda_step
     momsuccess_agenda_step = true;
@@ -140,6 +159,7 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
 // give 0 outputs
   return momsuccess_agenda_step;
 } // end of momfunc_void_to_void_agenda_step 
+
 
 
 
