@@ -4231,6 +4231,17 @@ bool
 			   mom_item_cstring (cg->cg_curblockitm),
 			   mom_item_cstring (itmstmt), stmtlen, nbformals,
 			   nbresults);
+  if (mom_node_conn (nodcodexp) != MOM_PREDEFINED_NAMED (code_expansion))
+    CGEN_ERROR_RESULT_MOM (cg, false,
+			   "plain_statement_scanner. module item %s :"
+			   " function %s with block %s with plain statement %s"
+			   " with operator %s with bad `code_expansion` %s",
+			   mom_item_cstring (cg->cg_moduleitm),
+			   mom_item_cstring (cg->cg_curfunitm),
+			   mom_item_cstring (cg->cg_curblockitm),
+			   mom_item_cstring (itmstmt),
+			   mom_item_cstring (itmop),
+			   mom_output_gcstring (vcodexp));
   if (varirestitm)
     cgen_lock_item_mom (cg, varirestitm);
   if (varicountitm)
@@ -4409,7 +4420,6 @@ bool
     };				/* end if varirestitm .... */
   if (cg->cg_errormsg)
     return false;
-
   MOM_DEBUGPRINTF (gencod,
 		   "plain_statement_scanner done itmcodgen=%s itmstmt=%s stmtlen=%d itmop=%s",
 		   mom_item_cstring (itmcodgen), mom_item_cstring (itmstmt),
@@ -4469,6 +4479,7 @@ bool
   unsigned nbformals = mom_seq_length (formalseq);
   unsigned nbresults = mom_seq_length (resultseq);
   unsigned nbcodexp = mom_node_arity (nodcodexp);
+  int nbvari = stmtlen - (nbformals + nbresults + 1);
   struct momattributes_st *bndatt =
     mom_attributes_make (6 * (nbformals + nbresults) / 5 + 2);
   ////
@@ -4538,9 +4549,92 @@ bool
     };				/* end for argix */
   if (cg->cg_errormsg)
     return false;
-#warning unimplemented plain_statement_emitter
-  MOM_FATAPRINTF ("unimplemented plain_statement_emitter %s",
-		  mom_item_cstring (itmstmt));
+  ////
+  /// emission loop with expansion
+  assert (mom_node_conn (nodcodexp) == MOM_PREDEFINED_NAMED (code_expansion));
+  for (unsigned expix = 0; expix < nbcodexp && !cg->cg_errormsg; expix++)
+    {
+      momvalue_t vcurexp = mom_node_nth (nodcodexp, expix);
+      MOM_DEBUGPRINTF (gencod,
+		       "plain_statement_emitter itmstmt=%s itmop=%s expix#%d vcurexp %s **filoff %ld",
+		       mom_item_cstring (itmstmt),
+		       mom_item_cstring (itmop),
+		       expix, mom_output_gcstring (vcurexp),
+		       ftell (cg->cg_emitfile));
+      switch (vcurexp.typnum)
+	{
+	case momty_null:
+	  continue;
+	case momty_int:
+	  fprintf (cg->cg_emitfile, "%lld", (long long) vcurexp.vint);
+	  continue;
+	case momty_string:
+	  assert (vcurexp.vstr);
+	  fputs (vcurexp.vstr->cstr, cg->cg_emitfile);
+	  continue;
+	case momty_item:
+	  {
+	    momitem_t *curxitm = vcurexp.vitem;
+	    assert (curxitm);
+	    if (curxitm == varicountitm)
+	      fprintf (cg->cg_emitfile, "%d", nbvari);
+	    else if (curxitm == varirestitm)
+	      {
+		for (unsigned oix = nbformals + nbformals + 1; oix < stmtlen;
+		     oix++)
+		  {
+		    if (oix > nbformals + nbformals + 1)
+		      fputs (", ", cg->cg_emitfile);
+		    momvalue_t vcurest = mom_components_nth (stmtcomps, oix);
+		    MOM_DEBUGPRINTF (gencod,
+				     "plain_statement_emitter itmstmt=%s oix#%d vcurest %s",
+				     mom_item_cstring (itmstmt), oix,
+				     mom_output_gcstring (vcurest));
+		    cgen_emit_expr_mom (cg, vcurest);
+		  }
+	      }
+	    else
+	      {
+		momvalue_t vbindx = MOM_NONEV;
+		{
+		  struct momentry_st *ent =
+		    mom_attributes_find_entry (bndatt, curxitm);
+		  if (ent)
+		    vbindx = ent->ent_val;
+		}
+		MOM_DEBUGPRINTF (gencod,
+				 "plain_statement_emitter itmstmt=%s curxitm %s vbindx %s",
+				 mom_item_cstring (itmstmt),
+				 mom_item_cstring (curxitm),
+				 mom_output_gcstring (vbindx));
+		if (vbindx.typnum == momty_null)
+		  goto badexpansionlab;
+		cgen_emit_expr_mom (cg, vbindx);
+	      }
+	  }
+	  continue;
+	badexpansionlab:
+	default:
+	  CGEN_ERROR_RESULT_MOM (cg, false,
+				 "plain_statement_emitter. module item %s :"
+				 " function %s with block %s with plain statement %s"
+				 " with operator %s with bad expansion#%d %s",
+				 mom_item_cstring (cg->cg_moduleitm),
+				 mom_item_cstring (cg->cg_curfunitm),
+				 mom_item_cstring (cg->cg_curblockitm),
+				 mom_item_cstring (itmstmt),
+				 mom_item_cstring (itmop),
+				 expix, mom_output_gcstring (vcurexp));
+
+	}			/* end switch vcurexp.typnum */
+    };				/* end for expix */
+  if (cg->cg_errormsg)
+    return false;
+  MOM_DEBUGPRINTF (gencod,
+		   "plain_statement_emitter done itmcodgen=%s itmstmt=%s itmop=%s **fileoff %ld",
+		   mom_item_cstring (itmcodgen), mom_item_cstring (itmstmt),
+		   mom_item_cstring (itmop), ftell (cg->cg_emitfile));
+  return true;
 }				/* end plain_statement_emitter */
 
 /// eof codgen.c

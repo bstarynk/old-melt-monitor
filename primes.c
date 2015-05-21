@@ -76,9 +76,9 @@ mom_prime_above (int64_t n)
       else
 	lo = md;
     };
-  if (hi < numprimes - 1)
+  if (hi < (int) numprimes - 1)
     hi++;
-  if (hi < numprimes - 1)
+  if (hi < (int) numprimes - 1)
     hi++;
   for (int ix = lo; ix < hi; ix++)
     if (mom_primes_tab[ix] > n)
@@ -103,9 +103,9 @@ mom_prime_below (int64_t n)
       else
 	lo = md;
     };
-  if (hi < numprimes - 1)
+  if (hi < (int) numprimes - 1)
     hi++;
-  if (hi < numprimes - 1)
+  if (hi < (int) numprimes - 1)
     hi++;
   for (int ix = hi; ix >= 0; ix--)
     if (mom_primes_tab[ix] < n)
