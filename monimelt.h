@@ -1144,8 +1144,8 @@ mom_unsafe_setv (const momseq_t *seq)
 #define mom_setv_sized_meta(Meta,Nb,ItmArr) mom_unsafe_setv(mom_make_sized_meta_set((Meta),(Nb),(ItmArr)))
 #define mom_setv_sized(Nb,ItmArr) mom_unsafe_setv(mom_make_sized_set((Nb),(ItmArr)))
 
+bool mom_setv_contains (const momvalue_t vset, const momitem_t *itm);
 
-#warning missing mom_setv_contains
 
 // make a node from given values.
 const momnode_t *mom_make_meta_node (momvalue_t metav, momitem_t *connitm,

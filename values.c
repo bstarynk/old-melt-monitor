@@ -471,6 +471,43 @@ mom_make_sized_meta_set (momvalue_t metav, unsigned nbitems,
   return set;
 }
 
+
+
+bool
+mom_setv_contains (const momvalue_t vset, const momitem_t *itm)
+{
+  const momseq_t *seq = NULL;
+  if (vset.typnum != momty_set || !itm || !(seq = vset.vset)
+      || itm == MOM_EMPTY)
+    return false;
+  unsigned nbelem = seq->slen;
+  if (!nbelem)
+    return false;
+  int lo = 0, hi = (int) nbelem - 1, md = 0;
+  while (lo + 8 < hi)
+    {
+      md = (lo + hi) / 2;
+      momitem_t *elemitm = seq->arritm[md];
+      assert (elemitm != NULL);
+      int cmp = mom_item_cmp (itm, elemitm);
+      if (!cmp)
+	return true;
+      if (cmp < 0)
+	hi = md;
+      else
+	lo = md;
+    };
+  for (md = lo; md <= hi; md++)
+    {
+      momitem_t *elemitm = seq->arritm[md];
+      assert (elemitm != NULL);
+      assert (md == 0 || mom_item_cmp (seq->arritm[md - 1], elemitm) < 0);
+      if (elemitm == itm)
+	return true;
+    };
+  return false;
+}				/* end mom_setv_contains */
+
 ////////////////////////////////////////////////////////////////
 ////// nodes
 
