@@ -3826,14 +3826,18 @@ bool
   momvalue_t vformals =		//
     mom_item_unsync_get_attribute (itmconn,
 				   MOM_PREDEFINED_NAMED (formals));
+  momvalue_t vextern =		//
+    mom_item_unsync_get_attribute (itmconn,
+				   MOM_PREDEFINED_NAMED (extern));
   momitem_t *conntypitm =
     mom_value_to_item (mom_item_unsync_get_attribute (itmconn,
 						      MOM_PREDEFINED_NAMED
 						      (type)));
   MOM_DEBUGPRINTF (gencod,
-		   "plain_code_type_scanner itmconn %s vcodexp %s vformals %s conntypitm %s",
+		   "plain_code_type_scanner itmconn %s vcodexp %s vformals %s vextern %s conntypitm %s",
 		   mom_item_cstring (itmconn), mom_output_gcstring (vcodexp),
 		   mom_output_gcstring (vformals),
+		   mom_output_gcstring (vextern),
 		   mom_item_cstring (conntypitm));
   if (vcodexp.typnum != momty_node || vformals.typnum != momty_tuple
       || !conntypitm)
@@ -3848,6 +3852,50 @@ bool
 			     mom_item_cstring (itmconn),
 			     mom_output_gcstring (vexpr));
     }
+  if (vextern.typnum == momty_set)
+    {
+      const momseq_t *seqextern = mom_value_to_set (vextern);
+      unsigned nbextern = mom_seq_length (seqextern);
+      for (unsigned exix = 0; exix < nbextern && !cg->cg_errormsg; exix++)
+	{
+	  momitem_t *curextitm = (momitem_t *) mom_seq_nth (seqextern, exix);
+	  MOM_DEBUGPRINTF (gencod,
+			   "plain_code_type_scanner itmconn %s curextitm %s",
+			   mom_item_cstring (itmconn),
+			   mom_item_cstring (curextitm));
+	  if (!cgen_type_of_scanned_item_mom (cg, curextitm))
+	    CGEN_ERROR_RESULT_MOM (cg, false,
+				   "plain_code_type_scanner:: module item %s : function %s has block %s"
+				   " with statement %s with bad connective %s in plain vexpr %s with bad `exterǹ %s invalid external-item %s",
+				   mom_item_cstring (cg->cg_moduleitm),
+				   mom_item_cstring (cg->cg_curfunitm),
+				   mom_item_cstring (cg->cg_curblockitm),
+				   mom_item_cstring (cg->cg_curstmtitm),
+				   mom_item_cstring (itmconn),
+				   mom_output_gcstring (vexpr),
+				   mom_output_gcstring (vextern),
+				   mom_item_cstring (curextitm));
+	}
+      MOM_DEBUGPRINTF (gencod,
+		       "plain_code_type_scanner itmconn %s scanned vextern %s",
+		       mom_item_cstring (itmconn),
+		       mom_output_gcstring (vextern));
+    }
+  else if (vextern.typnum != momty_null)
+    {
+      CGEN_ERROR_RESULT_MOM (cg, false,
+			     "plain_code_type_scanner:: module item %s : function %s has block %s"
+			     " with statement %s with bad connective %s in plain vexpr %s with bad `exterǹ %s",
+			     mom_item_cstring (cg->cg_moduleitm),
+			     mom_item_cstring (cg->cg_curfunitm),
+			     mom_item_cstring (cg->cg_curblockitm),
+			     mom_item_cstring (cg->cg_curstmtitm),
+			     mom_item_cstring (itmconn),
+			     mom_output_gcstring (vexpr),
+			     mom_output_gcstring (vextern));
+    }
+  if (cg->cg_errormsg)
+    return false;
   const momseq_t *tupformals = mom_value_to_tuple (vformals);
   unsigned nbformals = mom_seq_length (tupformals);
   if (nbformals > arity)
@@ -4084,6 +4132,7 @@ bool momfunc_1itm1val_to_void_plain_code_emitter
 	  {
 	    momitem_t *curitm = vcurexp.vitem;
 	    assert (curitm != NULL);
+#warning should handle extern item in plain_code_emitter
 	    if (curitm == varcountitm)
 	      {
 		MOM_DEBUGPRINTF (gencod,
@@ -4178,32 +4227,37 @@ bool
 		   "plain_statement_scanner start itmcodgen=%s itmstmt=%s stmtlen=%d itmop=%s",
 		   mom_item_cstring (itmcodgen), mom_item_cstring (itmstmt),
 		   stmtlen, mom_item_cstring (itmop));
-  momvalue_t vformals =
+  momvalue_t vformals =		//
     mom_item_unsync_get_attribute (itmop, MOM_PREDEFINED_NAMED (formals));
-  momvalue_t vresults =
+  momvalue_t vresults =		//
     mom_item_unsync_get_attribute (itmop, MOM_PREDEFINED_NAMED (results));
-  momvalue_t vvaricount = mom_item_unsync_get_attribute (itmop,
-							 MOM_PREDEFINED_NAMED
-							 (variadic_count));
-  momvalue_t vvarirest = mom_item_unsync_get_attribute (itmop,
-							MOM_PREDEFINED_NAMED
-							(variadic_rest));
-  momvalue_t vcodexp = mom_item_unsync_get_attribute (itmop,
-						      MOM_PREDEFINED_NAMED
-						      (code_expansion));
+  momvalue_t vvaricount =	//
+    mom_item_unsync_get_attribute (itmop,
+				   MOM_PREDEFINED_NAMED (variadic_count));
+  momvalue_t vvarirest =	//
+    mom_item_unsync_get_attribute (itmop,
+				   MOM_PREDEFINED_NAMED (variadic_rest));
+  momvalue_t vcodexp =		//
+    mom_item_unsync_get_attribute (itmop,
+				   MOM_PREDEFINED_NAMED (code_expansion));
+  momvalue_t vextern =		//
+    mom_item_unsync_get_attribute (itmop,
+				   MOM_PREDEFINED_NAMED (extern));
   MOM_DEBUGPRINTF (gencod,
 		   "plain_statement_scanner itmstmt=%s itmop=%s;"
-		   " vformals=%s vresults=%s vvaricount=%s vvarirest=%s vcodexp=%s",
+		   " vformals=%s vresults=%s vvaricount=%s vvarirest=%s vcodexp=%s vextern %s",
 		   mom_item_cstring (itmstmt), mom_item_cstring (itmop),
 		   mom_output_gcstring (vformals),
 		   mom_output_gcstring (vresults),
 		   mom_output_gcstring (vvaricount),
 		   mom_output_gcstring (vvarirest),
-		   mom_output_gcstring (vcodexp));
+		   mom_output_gcstring (vcodexp),
+		   mom_output_gcstring (vextern));
   if (vformals.typnum != momty_tuple || vresults.typnum != momty_tuple
       || vcodexp.typnum != momty_node || (vvaricount.typnum != momty_null
 					  && vvaricount.typnum != momty_item)
-      || (vvarirest.typnum != momty_null && vvarirest.typnum != momty_item))
+      || (vvarirest.typnum != momty_null && vvarirest.typnum != momty_item)
+      || (vextern.typnum != momty_null && vextern.typnum != momty_set))
     CGEN_ERROR_RESULT_MOM (cg, false,
 			   "plain_statement_scanner. module item %s :"
 			   " function %s with block %s with plain statement %s with incomplete operator %s",
@@ -4246,6 +4300,35 @@ bool
     cgen_lock_item_mom (cg, varirestitm);
   if (varicountitm)
     cgen_lock_item_mom (cg, varicountitm);
+  /// loop on extern-als
+  if (vextern.typnum == momty_set)
+    {
+      const momseq_t *seqextern = mom_value_to_set (vextern);
+      unsigned nbextern = mom_seq_length (seqextern);
+      for (unsigned exix = 0; exix < nbextern && !cg->cg_errormsg; exix++)
+	{
+	  momitem_t *curextitm = (momitem_t *) mom_seq_nth (seqextern, exix);
+	  MOM_DEBUGPRINTF (gencod,
+			   "plain_statement_scanner itmop %s curextitm %s",
+			   mom_item_cstring (itmop),
+			   mom_item_cstring (curextitm));
+	  if (!cgen_type_of_scanned_item_mom (cg, curextitm))
+	    CGEN_ERROR_RESULT_MOM (cg, false,
+				   "plain_statement_scanner:: module item %s : function %s has block %s"
+				   " with plain statement %s with operator %s with bad `exterǹ %s invalid external-item %s",
+				   mom_item_cstring (cg->cg_moduleitm),
+				   mom_item_cstring (cg->cg_curfunitm),
+				   mom_item_cstring (cg->cg_curblockitm),
+				   mom_item_cstring (itmstmt),
+				   mom_item_cstring (itmop),
+				   mom_output_gcstring (vextern),
+				   mom_item_cstring (curextitm));
+	}
+      MOM_DEBUGPRINTF (gencod,
+		       "plain_statement_scanner itmop %s scanned vextern %s",
+		       mom_item_cstring (itmop),
+		       mom_output_gcstring (vextern));
+    };				/* end if vextern is set */
   ////
   /// loop on results
   MOM_DEBUGPRINTF (gencod,
@@ -4574,10 +4657,13 @@ bool
 	  continue;
 	case momty_item:
 	  {
+#warning should handle extern items in plain_statement_emitter
 	    momitem_t *curxitm = vcurexp.vitem;
 	    assert (curxitm);
 	    if (curxitm == varicountitm)
 	      fprintf (cg->cg_emitfile, "%d", nbvari);
+	    else if (curxitm == MOM_PREDEFINED_NAMED (this_statement))
+	      fputs (mom_item_cstring (itmstmt), cg->cg_emitfile);
 	    else if (curxitm == varirestitm)
 	      {
 		for (unsigned oix = nbformals + nbformals + 1; oix < stmtlen;

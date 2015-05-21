@@ -432,6 +432,13 @@
 ..
 
 
+** extern   ////// PREDEFINED
+{
+  * comment  "for set of external items in operators" }
+ 
+..
+
+
 ** fail   ////// PREDEFINED
 {
   * comment  "opcode to return with failure" }
@@ -653,6 +660,13 @@
 ..
 
 
+** itmres
+{
+  * type  item }
+ 
+..
+
+
 ** jump   ////// PREDEFINED
 {
   * comment  "operation for jump instruction" }
@@ -752,7 +766,11 @@
 
 ** pop_front_queue_item
 {
+  * code_expansion  ^code_expansion( "/*pop_front_queue_item:*/\n"  itmres
+    " = (momitem_t*)NULL;\n"  "if ("  itm1  " && "  itm1  "->kind/*@@ == ... */)")
   * comment  "statement operation to pop front of queue item"
+  * formals  [itm1]
+  * results  [itmres]
   * statement_emitter  ^plain_statement_emitter()
   * statement_scanner  ^plain_statement_scanner() }
  
