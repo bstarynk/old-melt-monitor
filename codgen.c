@@ -3586,7 +3586,7 @@ cgen_third_decorating_pass_mom (momitem_t *itmcgen)
       momvalue_t vformals = mom_node_nth (nodfuninfo, funinfo_formals);
       MOM_DEBUGPRINTF (gencod,
 		       "third_decorating_pass funix#%d curfunitm %s; itmsignature %s;"
-		       " itmblocks %s; itmbindings %s; itmstart %s; setconst %s setclosed %s setvar %s",
+		       " itmblocks %s; itmbindings %s; itmstart %s; setconst %s setclosed %s setvar %s formals %s",
 		       funix, mom_item_cstring (curfunitm),
 		       mom_item_cstring (itmsignature),
 		       mom_item_cstring (itmblocks),
@@ -3594,7 +3594,8 @@ cgen_third_decorating_pass_mom (momitem_t *itmcgen)
 		       mom_item_cstring (itmstart),
 		       mom_output_gcstring (vsetconst),
 		       mom_output_gcstring (vsetclosed),
-		       mom_output_gcstring (vsetvars));
+		       mom_output_gcstring (vsetvars),
+		       mom_output_gcstring (vformals));
       assert (itmblocks->itm_kind == MOM_PREDEFINED_NAMED (association));
       momvalue_t vsetblocks = MOM_NONEV;
       if (itmblocks->itm_kind == MOM_PREDEFINED_NAMED (association))
@@ -3807,10 +3808,11 @@ bool
   (const momnode_t *clonode, momitem_t *itmcodgen, const momvalue_t vexpr,
    momitem_t **respitm)
 {
+  assert (clonode != NULL);
   MOM_DEBUGPRINTF (gencod,
 		   "plain_code_type_scanner start itmcodgen=%s vexpr=%s",
 		   mom_item_cstring (itmcodgen), mom_output_gcstring (vexpr));
-  momnode_t *nod = mom_value_to_node (vexpr);
+  const momnode_t *nod = mom_value_to_node (vexpr);
   if (!nod || itmcodgen->itm_kind != MOM_PREDEFINED_NAMED (code_generation))
     return false;
   unsigned arity = mom_node_arity (nod);
@@ -3863,7 +3865,7 @@ bool
     return false;
   for (unsigned formix = 0; formix < nbformals && !cg->cg_errormsg; formix++)
     {
-      momitem_t *curformitm = mom_seq_nth (tupformals, formix);
+      momitem_t *curformitm = (momitem_t *) mom_seq_nth (tupformals, formix);
       momvalue_t vsubexpr = mom_node_nth (nod, formix);
       cgen_lock_item_mom (cg, curformitm);
       momitem_t *curtypitm =
@@ -3998,7 +4000,8 @@ bool
 bool momfunc_1itm1val_to_void_plain_code_emitter
   (const momnode_t *clonode, momitem_t *itmcodgen, const momvalue_t vexpr)
 {
-  momnode_t *nod = mom_value_to_node (vexpr);
+  assert (clonode != NULL);
+  const momnode_t *nod = mom_value_to_node (vexpr);
   if (!nod || itmcodgen->itm_kind != MOM_PREDEFINED_NAMED (code_generation))
     return false;
   struct codegen_mom_st *cg = (struct codegen_mom_st *) itmcodgen->itm_data1;
@@ -4015,7 +4018,7 @@ bool momfunc_1itm1val_to_void_plain_code_emitter
   MOM_DEBUGPRINTF (gencod,
 		   "plain_code_emitter vcodexp %s",
 		   mom_output_gcstring (vcodexp));
-  momnode_t *nodexp = mom_value_to_node (vcodexp);
+  const momnode_t *nodexp = mom_value_to_node (vcodexp);
   if (!nodexp)
     MOM_FATAPRINTF ("code_expansion of %s is not a node",
 		    mom_output_gcstring (vcodexp));
@@ -4030,7 +4033,7 @@ bool momfunc_1itm1val_to_void_plain_code_emitter
   struct momattributes_st *att = mom_attributes_make (6 * arity / 5 + 2);
   for (unsigned formix = 0; formix < nbformals; formix++)
     {
-      momitem_t *curformitm = mom_seq_nth (tupformals, formix);
+      momitem_t *curformitm = (momitem_t *) mom_seq_nth (tupformals, formix);
       assert (curformitm);
       if (mom_attributes_find_entry (att, curformitm) != NULL)
 	MOM_FATAPRINTF ("duplicate formal itm %s in plain connective %s"
@@ -4148,36 +4151,293 @@ bool momfunc_1itm1val_to_void_plain_code_emitter
 
 
 
-bool momfunc_2itm_to_void_plain_statement_scanner
+bool
+  momfunc_2itm_to_void_plain_statement_scanner
   (const momnode_t *clonode, momitem_t *itmcodgen, momitem_t *itmstmt)
 {
+  assert (clonode != NULL);
   if (!itmcodgen
       || itmcodgen->itm_kind != MOM_PREDEFINED_NAMED (code_generation)
-      || !itmstmt)
+      || !itmstmt
+      || itmstmt->itm_kind != MOM_PREDEFINED_NAMED (code_statement))
     return false;
   struct codegen_mom_st *cg = (struct codegen_mom_st *) itmcodgen->itm_data1;
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  struct momcomponents_st *stmtcomps = itmstmt->itm_comps;
+  unsigned stmtlen = mom_components_count (stmtcomps);
+  momitem_t *itmop = mom_value_to_item (mom_components_nth (stmtcomps, 0));
+  if (stmtlen < 1 || !itmop)
+    CGEN_ERROR_RESULT_MOM (cg, false,
+			   "plain_statement_scanner. module item %s : function %s with block %s with empty statement %s",
+			   mom_item_cstring (cg->cg_moduleitm),
+			   mom_item_cstring (cg->cg_curfunitm),
+			   mom_item_cstring (cg->cg_curblockitm),
+			   mom_item_cstring (itmstmt));
+  cgen_lock_item_mom (cg, itmop);
   MOM_DEBUGPRINTF (gencod,
-		   "plain_statement_scanner start itmcodgen=%s itmstmt=%s",
-		   mom_item_cstring (itmcodgen), mom_item_cstring (itmstmt));
+		   "plain_statement_scanner start itmcodgen=%s itmstmt=%s stmtlen=%d itmop=%s",
+		   mom_item_cstring (itmcodgen), mom_item_cstring (itmstmt),
+		   stmtlen, mom_item_cstring (itmop));
+  momvalue_t vformals =
+    mom_item_unsync_get_attribute (itmop, MOM_PREDEFINED_NAMED (formals));
+  momvalue_t vresults =
+    mom_item_unsync_get_attribute (itmop, MOM_PREDEFINED_NAMED (results));
+  momvalue_t vvaricount = mom_item_unsync_get_attribute (itmop,
+							 MOM_PREDEFINED_NAMED
+							 (variadic_count));
+  momvalue_t vvarirest = mom_item_unsync_get_attribute (itmop,
+							MOM_PREDEFINED_NAMED
+							(variadic_rest));
+  momvalue_t vcodexp = mom_item_unsync_get_attribute (itmop,
+						      MOM_PREDEFINED_NAMED
+						      (code_expansion));
+  MOM_DEBUGPRINTF (gencod,
+		   "plain_statement_scanner itmstmt=%s itmop=%s;"
+		   " vformals=%s vresults=%s vvaricount=%s vvarirest=%s vcodexp=%s",
+		   mom_item_cstring (itmstmt), mom_item_cstring (itmop),
+		   mom_output_gcstring (vformals),
+		   mom_output_gcstring (vresults),
+		   mom_output_gcstring (vvaricount),
+		   mom_output_gcstring (vvarirest),
+		   mom_output_gcstring (vcodexp));
+  if (vformals.typnum != momty_tuple || vresults.typnum != momty_tuple
+      || vcodexp.typnum != momty_node || (vvaricount.typnum != momty_null
+					  && vvaricount.typnum != momty_item)
+      || (vvarirest.typnum != momty_null && vvarirest.typnum != momty_item))
+    CGEN_ERROR_RESULT_MOM (cg, false,
+			   "plain_statement_scanner. module item %s :"
+			   " function %s with block %s with plain statement %s with incomplete operator %s",
+			   mom_item_cstring (cg->cg_moduleitm),
+			   mom_item_cstring (cg->cg_curfunitm),
+			   mom_item_cstring (cg->cg_curblockitm),
+			   mom_item_cstring (itmstmt),
+			   mom_item_cstring (itmop));
   MOM_FATAPRINTF ("unimplemented plain_statement_scanner %s",
 		  mom_item_cstring (itmstmt));
-#warning unimplemented plain_statement_scanner
+  const momseq_t *formalseq = mom_value_to_tuple (vformals);
+  const momseq_t *resultseq = mom_value_to_tuple (vresults);
+  momitem_t *varicountitm = mom_value_to_item (vvaricount);
+  momitem_t *varirestitm = mom_value_to_item (vvarirest);
+  const momnode_t *nodcodexp = mom_value_to_node (vcodexp);
+  assert (nodcodexp != NULL);
+  unsigned nbformals = mom_seq_length (formalseq);
+  unsigned nbresults = mom_seq_length (resultseq);
+  if (varirestitm ? (stmtlen < nbformals + nbresults + 1)
+      : (stmtlen != nbformals + nbresults + 1))
+    CGEN_ERROR_RESULT_MOM (cg, false,
+			   "plain_statement_scanner. module item %s :"
+			   " function %s with block %s with plain statement %s"
+			   " with bad length %u (for %d formals & %d results)",
+			   mom_item_cstring (cg->cg_moduleitm),
+			   mom_item_cstring (cg->cg_curfunitm),
+			   mom_item_cstring (cg->cg_curblockitm),
+			   mom_item_cstring (itmstmt), stmtlen, nbformals,
+			   nbresults);
+  if (varirestitm)
+    cgen_lock_item_mom (cg, varirestitm);
+  if (varicountitm)
+    cgen_lock_item_mom (cg, varicountitm);
+  ////
+  /// loop on results
+  MOM_DEBUGPRINTF (gencod,
+		   "plain_statement_scanner itmstmt=%s nbresults=%d",
+		   mom_item_cstring (itmstmt), nbresults);
+  for (unsigned resix = 0; resix < nbresults && !cg->cg_errormsg; resix++)
+    {
+      momitem_t *curesformalitm =
+	(momitem_t *) mom_seq_nth (resultseq, resix);
+      assert (curesformalitm != NULL);
+      cgen_lock_item_mom (cg, curesformalitm);
+      momvalue_t vcuresvar = mom_components_nth (stmtcomps, resix + 1);
+      momitem_t *curesvaritm = mom_value_to_item (vcuresvar);
+      MOM_DEBUGPRINTF (gencod,
+		       "plain_statement_scanner itmstmt=%s resix#%d curesformalitm %s vcuresvar %s curesvaritm %s",
+		       mom_item_cstring (itmstmt), resix,
+		       mom_item_cstring (curesformalitm),
+		       mom_output_gcstring (vcuresvar),
+		       mom_item_cstring (curesvaritm));
+      if (!curesvaritm)
+	CGEN_ERROR_RESULT_MOM (cg, false,
+			       "plain_statement_scanner. module item %s :"
+			       " function %s with block %s with plain statement %s"
+			       " with bad result#%d (%s) for result formal %s",
+			       mom_item_cstring (cg->cg_moduleitm),
+			       mom_item_cstring (cg->cg_curfunitm),
+			       mom_item_cstring (cg->cg_curblockitm),
+			       mom_item_cstring (itmstmt), resix,
+			       mom_output_gcstring (vcuresvar),
+			       mom_item_cstring (curesformalitm));
+      cgen_lock_item_mom (cg, curesvaritm);
+      momitem_t *curformaltypitm =
+	mom_value_to_item (mom_item_unsync_get_attribute (curesformalitm,
+							  MOM_PREDEFINED_NAMED
+							  (type)));
+      momitem_t *curestypitm =
+	cgen_type_of_scanned_item_mom (cg, curesvaritm);
+      MOM_DEBUGPRINTF (gencod,
+		       "plain_statement_scanner itmstmt=%s resix#%d curesformalitm %s curformaltypitm %s curestypitm %s",
+		       mom_item_cstring (itmstmt), resix,
+		       mom_item_cstring (curesformalitm),
+		       mom_item_cstring (curformaltypitm),
+		       mom_item_cstring (curestypitm));
+      if (!curformaltypitm || !curestypitm
+	  // we demand strict type compatibility, having a locked_item instead of an item result is wrong
+	  || curformaltypitm != curestypitm)
+	CGEN_ERROR_RESULT_MOM (cg, false,
+			       "plain_statement_scanner. module item %s :"
+			       " function %s with block %s with plain statement %s"
+			       " with mismatching result (#%d) %s for result formal %s"
+			       " got type %s expecting %s",
+			       mom_item_cstring (cg->cg_moduleitm),
+			       mom_item_cstring (cg->cg_curfunitm),
+			       mom_item_cstring (cg->cg_curblockitm),
+			       mom_item_cstring (itmstmt), resix,
+			       mom_item_cstring (curesvaritm),
+			       mom_item_cstring (curesformalitm),
+			       mom_item_cstring (curestypitm),
+			       mom_item_cstring (curformaltypitm));
+      if (cg->cg_errormsg)
+	return false;
+    };				/* end for resix */
+  if (cg->cg_errormsg)
+    return false;
+  /////
+  /// loop on formals
+  MOM_DEBUGPRINTF (gencod,
+		   "plain_statement_scanner itmstmt=%s nbformals=%d",
+		   mom_item_cstring (itmstmt), nbformals);
+  for (unsigned argix = 0; argix < nbformals && !cg->cg_errormsg; argix++)
+    {
+      momvalue_t vcurarg =
+	mom_components_nth (stmtcomps, nbresults + 1 + argix);
+      momitem_t *curargformalitm =
+	(momitem_t *) mom_seq_nth (formalseq, argix);
+      assert (curargformalitm != NULL);
+      cgen_lock_item_mom (cg, curargformalitm);
+      MOM_DEBUGPRINTF (gencod,
+		       "plain_statement_scanner itmstmt=%s argix#%d vcurarg %s curargformalitm %s",
+		       mom_item_cstring (itmstmt), argix,
+		       mom_output_gcstring (vcurarg),
+		       mom_item_cstring (curargformalitm));
+      momitem_t *curformaltypitm =	//
+	mom_value_to_item (mom_item_unsync_get_attribute (curargformalitm,
+							  MOM_PREDEFINED_NAMED
+							  (type)));
+      momitem_t *curargtypitm = cgen_type_of_scanned_expr_mom (cg, vcurarg);
+      MOM_DEBUGPRINTF (gencod,
+		       "plain_statement_scanner itmstmt=%s argix#%d curformaltypitm %s curargtypitm %s",
+		       mom_item_cstring (itmstmt), argix,
+		       mom_item_cstring (curformaltypitm),
+		       mom_item_cstring (curargtypitm));
+      if (!curformaltypitm || !curargtypitm
+	  || (curformaltypitm != curargtypitm
+	      && !mom_cgen_compatible_types (curformaltypitm, curargtypitm)))
+	CGEN_ERROR_RESULT_MOM (cg, false,
+			       "plain_statement_scanner. module item %s :"
+			       " function %s with block %s with plain statement %s"
+			       " with mismatching argument (#%d) %s for input formal %s"
+			       " got type %s expecting %s",
+			       mom_item_cstring (cg->cg_moduleitm),
+			       mom_item_cstring (cg->cg_curfunitm),
+			       mom_item_cstring (cg->cg_curblockitm),
+			       mom_item_cstring (itmstmt), argix,
+			       mom_output_gcstring (vcurarg),
+			       mom_item_cstring (curargformalitm),
+			       mom_item_cstring (curargtypitm),
+			       mom_item_cstring (curformaltypitm));
+      if (cg->cg_errormsg)
+	return false;
+    };				/* end for argix */
+  if (cg->cg_errormsg)
+    return false;
+  ////
+  // loop on rest arguments
+  if (varirestitm && stmtlen > nbformals + nbresults + 1)
+    {
+      momitem_t *varirestypitm =	//
+	mom_value_to_item (mom_item_unsync_get_attribute (varirestitm,
+							  MOM_PREDEFINED_NAMED
+							  (type)));
+      MOM_DEBUGPRINTF (gencod,
+		       "plain_statement_scanner itmstmt=%s varirestitm=%s varirestypitm=%s",
+		       mom_item_cstring (itmstmt),
+		       mom_item_cstring (varirestitm),
+		       mom_item_cstring (varirestypitm));
+      if (!varirestypitm)
+	CGEN_ERROR_RESULT_MOM (cg, false,
+			       "plain_statement_scanner. module item %s :"
+			       " function %s with block %s with plain statement %s"
+			       " with operator %s with wrong `variadic_rest` item %s",
+			       mom_item_cstring (cg->cg_moduleitm),
+			       mom_item_cstring (cg->cg_curfunitm),
+			       mom_item_cstring (cg->cg_curblockitm),
+			       mom_item_cstring (itmstmt),
+			       mom_item_cstring (itmop),
+			       mom_item_cstring (varirestitm));
+      for (unsigned restix = 0;
+	   nbformals + nbresults + 1 + restix < stmtlen && !cg->cg_errormsg;
+	   restix++)
+	{
+	  momvalue_t vrestexp = mom_components_nth (stmtcomps, restix);
+	  MOM_DEBUGPRINTF (gencod,
+			   "plain_statement_scanner itmstmt=%s restix#%d vrestexp %s",
+			   mom_item_cstring (itmstmt), restix,
+			   mom_output_gcstring (vrestexp));
+	  momitem_t *vrestypitm =
+	    cgen_type_of_scanned_expr_mom (cg, vrestexp);
+	  MOM_DEBUGPRINTF (gencod,
+			   "plain_statement_scanner itmstmt=%s restix#%d vrestyp %s vrestypitm %s",
+			   mom_item_cstring (itmstmt), restix,
+			   mom_output_gcstring (vrestexp),
+			   mom_item_cstring (vrestypitm));
+	  if (!vrestypitm
+	      || !mom_cgen_compatible_types (vrestypitm, varirestypitm))
+	    CGEN_ERROR_RESULT_MOM (cg, false,
+				   "plain_statement_scanner. module item %s :"
+				   " function %s with block %s with plain statement %s"
+				   " with operator %s with rest-expression @#%d %s mismatching type"
+				   " got %s expecting %s",
+				   mom_item_cstring (cg->cg_moduleitm),
+				   mom_item_cstring (cg->cg_curfunitm),
+				   mom_item_cstring (cg->cg_curblockitm),
+				   mom_item_cstring (itmstmt),
+				   mom_item_cstring (itmop), restix,
+				   mom_output_gcstring (vrestexp),
+				   mom_item_cstring (vrestypitm),
+				   mom_item_cstring (varirestypitm));
+	  if (cg->cg_errormsg)
+	    return false;
+	};			/* end for restix */
+    };				/* end if varirestitm .... */
+  if (cg->cg_errormsg)
+    return false;
+
+  MOM_DEBUGPRINTF (gencod,
+		   "plain_statement_scanner done itmcodgen=%s itmstmt=%s stmtlen=%d itmop=%s",
+		   mom_item_cstring (itmcodgen), mom_item_cstring (itmstmt),
+		   stmtlen, mom_item_cstring (itmop));
+  return true;
 }				/* end plain_statement_scanner */
 
-bool momfunc_2itm_to_void_plain_statement_emitter
+
+bool
+  momfunc_2itm_to_void_plain_statement_emitter
   (const momnode_t *clonode, momitem_t *itmcodgen, momitem_t *itmstmt)
 {
+  assert (clonode != NULL);
   if (!itmcodgen
       || itmcodgen->itm_kind != MOM_PREDEFINED_NAMED (code_generation)
       || !itmstmt)
     return false;
   struct codegen_mom_st *cg = (struct codegen_mom_st *) itmcodgen->itm_data1;
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  struct momcomponents_st *stmtcomps = itmstmt->itm_comps;
+  unsigned stmtlen = mom_components_count (stmtcomps);
+  momitem_t *itmop = mom_value_to_item (mom_components_nth (stmtcomps, 0));
   MOM_DEBUGPRINTF (gencod,
-		   "plain_statement_emitter start itmcodgen=%s itmstmt=%s  **fileoff %ld",
+		   "plain_statement_emitter start itmcodgen=%s itmstmt=%s itmop=%s **fileoff %ld",
 		   mom_item_cstring (itmcodgen), mom_item_cstring (itmstmt),
-		   ftell (cg->cg_emitfile));
+		   mom_item_cstring (itmop), ftell (cg->cg_emitfile));
   MOM_FATAPRINTF ("unimplemented plain_statement_emitter %s",
 		  mom_item_cstring (itmstmt));
 #warning unimplemented plain_statement_emitter

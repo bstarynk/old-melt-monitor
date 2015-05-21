@@ -790,6 +790,13 @@
 ..
 
 
+** results   ////// PREDEFINED
+{
+  * comment  "give result formals for plain statement operations" }
+ 
+..
+
+
 ** scanner_of_association   ////// PREDEFINED
 {
   * comment  "scanner routine for association items" }

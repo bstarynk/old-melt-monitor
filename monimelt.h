@@ -1381,6 +1381,8 @@ mom_item_unsync_put_attribute (momitem_t *itm, momitem_t *itmat,
     return false;
   if (MOM_UNLIKELY (itmat == MOM_PREDEFINED_NAMED (kind)))
     {
+      MOM_WARNPRINTF ("unhandled put_attribute itm %s for `kind` with val %s",
+		      mom_item_cstring (itm), mom_output_gcstring (val));
 #warning should handle put_attribute for kind
       return false;
     }
