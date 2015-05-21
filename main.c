@@ -46,7 +46,7 @@ mom_informprintf_at (const char *fil, int lin, const char *fmt, ...)
 {
   int len = 0;
   char thrname[24];
-  char buf[128];
+  char buf[160];
   char timbuf[64];
   char *bigbuf = NULL;
   char *msg = NULL;
@@ -100,7 +100,7 @@ mom_debugprintf_at (const char *fil, int lin, enum mom_debug_en dbg,
 {
   static long countdbg;
   char thrname[24];
-  char buf[128];
+  char buf[160];
   char timbuf[64];
   int len = 0;
   char *msg = NULL;
@@ -170,7 +170,7 @@ mom_warnprintf_at (const char *fil, int lin, const char *fmt, ...)
 {
   int len = 0;
   char thrname[24];
-  char buf[128];
+  char buf[160];
   char timbuf[64];
   char *bigbuf = NULL;
   char *msg = NULL;
@@ -185,7 +185,7 @@ mom_warnprintf_at (const char *fil, int lin, const char *fmt, ...)
   va_start (alist, fmt);
   len = vsnprintf (buf, sizeof (buf), fmt, alist);
   va_end (alist);
-  if (MOM_UNLIKELY (len >= (int) sizeof (buf) - 1))
+  if (MOM_UNLIKELY (len >= (int) sizeof (buf) - 2))
     {
       bigbuf = malloc (len + 10);
       if (bigbuf)
@@ -231,7 +231,7 @@ mom_fataprintf_at (const char *fil, int lin, const char *fmt, ...)
 {
   int len = 0;
   char thrname[24];
-  char buf[128];
+  char buf[256];
   char timbuf[64];
   char *bigbuf = NULL;
   char *msg = NULL;

@@ -167,7 +167,7 @@
 
 ** agenda_step   ////// PREDEFINED
 {
-  * constants  {_07BHLcwhp_48ka0t9bq fill_agenda the_agenda}
+  * constants  {_07BHLcwhp_48ka0t9bq fill_agenda the_agenda item_queue}
   * emitted_blocks  {_7MF947fC8_8ChefReMD}
   * emitted_closed  []
   * emitted_constants  [_07BHLcwhp_48ka0t9bq the_agenda]
