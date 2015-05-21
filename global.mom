@@ -118,6 +118,8 @@
   * comment  "if lkitm_agenda empty queue wait agenda-changed" }
  [[  if  ^queue_item_is_empty( lkitm_agenda)  _0HvrqAHte_4ryaA4drs ]]
  
+  %  ^filler_of_plain_kind( code_statement)
+ 
 ..
 
 

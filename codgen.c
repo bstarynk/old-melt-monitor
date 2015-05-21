@@ -1050,6 +1050,8 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 	for (unsigned ix = 1; ix < stmtlen && !cg->cg_errormsg; ix++)
 	  {
 	    momvalue_t vchkarg = mom_components_nth (stmtcomps, ix);
+	    if (vchkarg.typnum == momty_string || vchkarg.typnum == momty_int)
+	      continue;
 	    momitem_t *itmarg = mom_value_to_item (vchkarg);
 	    if (itmarg == MOM_PREDEFINED_NAMED (this_statement))
 	      continue;

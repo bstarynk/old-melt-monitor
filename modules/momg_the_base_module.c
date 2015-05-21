@@ -59,7 +59,23 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
   momitem_t* momconst_2 = MOM_PREDEFINED_NAMED(the_agenda);
   // 0 closed:
   goto momblocklab__7MF947fC8_8ChefReMD;
- // block #0 : _14MzMbJ9v_627D0CIiA
+ // block #0 : _0HvrqAHte_4ryaA4drs
+ momblocklab__0HvrqAHte_4ryaA4drs: {
+// 1 statements in block _0HvrqAHte_4ryaA4drs
+//: block chunk-wait agenda-changed
+// statement #0 _5a8Hrecb3_9evcyu8sh
+  // chunk of 16 components
+/*chunk wait agenda changed*/
+  struct timespec ts__5a8Hrecb3_9evcyu8sh = {0,0};
+  clock_gettime(CLOCK_REALTIME, &ts__5a8Hrecb3_9evcyu8sh);
+  ts__5a8Hrecb3_9evcyu8sh.tv_sec += MOM_AGENDA_WAIT_SEC;
+  pthread_cond_timedwait(&mom_agenda_changed_condvar, &momvar1 /*var:lkitm_agenda*/->itm_mtx, & ts__5a8Hrecb3_9evcyu8sh);
+ ;
+
+  }; // end block _0HvrqAHte_4ryaA4drs
+  goto momepilog_agenda_step;
+////----
+ // block #1 : _14MzMbJ9v_627D0CIiA
  momblocklab__14MzMbJ9v_627D0CIiA: {
 // 1 statements in block _14MzMbJ9v_627D0CIiA
 //: block to apply varclo
@@ -71,22 +87,27 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
   }; // end block _14MzMbJ9v_627D0CIiA
   goto momepilog_agenda_step;
 ////----
- // block #1 : _4xAIqB3tj_97IrD41UP
+ // block #2 : _4xAIqB3tj_97IrD41UP
  momblocklab__4xAIqB3tj_97IrD41UP: {
-// 2 statements in block _4xAIqB3tj_97IrD41UP
+// 3 statements in block _4xAIqB3tj_97IrD41UP
 //: refill empty agenda
 // statement #0 _60nmad63F_1Jd336xAL
 // set into varclo
-  momvar0 /*var:varclo*/ = /*unsync_get_attribute:*/mom_item_unsync_get_attribute (momvar1 /*var:lkitm_agenda*/, /*constant-item:fill_agenda*/momconst_1);
+  momvar0 /*var:varclo*/ =
+   /*unsync_get_attribute:*/mom_item_unsync_get_attribute (momvar1 /*var:lkitm_agenda*/, /*constant-item:fill_agenda*/momconst_1);
 // statement #1 _7vj8eaIrt_9bLBC6eKB
-// if testing on value
-   if ((momvar0 /*var:varclo*/).typnum != momty_null)
+// if testing on integer
+    if (/*value_is_node:*/ (momvar0 /*var:varclo*/).typnum == momty_node)
       goto momblocklab__14MzMbJ9v_627D0CIiA;
+// statement #2 _6kDqRmkjk_6CxUEu2hk
+// if testing on integer
+    if (/*queue_item_is_empty:*/momvar1 /*var:lkitm_agenda*/ && momvar1 /*var:lkitm_agenda*/->itm_kind == MOM_PREDEFINED_NAMED(item_queue)  && mom_queueitem_size (momvar1 /*var:lkitm_agenda*/->itm_data1) == 0)
+      goto momblocklab__0HvrqAHte_4ryaA4drs;
 
   }; // end block _4xAIqB3tj_97IrD41UP
   goto momepilog_agenda_step;
 ////----
- // block #2 : _7MF947fC8_8ChefReMD
+ // block #3 : _7MF947fC8_8ChefReMD
  momblocklab__7MF947fC8_8ChefReMD: {
 // 2 statements in block _7MF947fC8_8ChefReMD
 //: starting block of agenda_step
