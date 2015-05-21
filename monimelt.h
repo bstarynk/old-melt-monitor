@@ -1453,6 +1453,9 @@ mom_unsync_item_put_nth_component (momitem_t *itm, int rk, momvalue_t val)
   mom_components_put_nth (itm->itm_comps, rk, val);
 }
 
+
+extern pthread_cond_t mom_agenda_changed_condvar;
+#define MOM_AGENDA_WAIT_SEC 2
 /****************************************************************
   Informal descriptions of kinds
   ==============================

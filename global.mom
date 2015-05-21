@@ -28,6 +28,16 @@
 ..
 
 
+** _0HvrqAHte_4ryaA4drs
+{
+  * comment  "block chunk-wait agenda-changed"
+  * instructions  [_5a8Hrecb3_9evcyu8sh] }
+ 
+  %  ^filler_of_plain_kind( block)
+ 
+..
+
+
 ** _14MzMbJ9v_627D0CIiA
 {
   * comment  "block to apply varclo"
@@ -71,9 +81,24 @@
 ** _4xAIqB3tj_97IrD41UP
 {
   * comment  "refill empty agenda"
-  * instructions  [_60nmad63F_1Jd336xAL _7vj8eaIrt_9bLBC6eKB] }
+  * instructions  [_60nmad63F_1Jd336xAL _7vj8eaIrt_9bLBC6eKB _6kDqRmkjk_6CxUEu2hk]
+ }
  
   %  ^filler_of_plain_kind( block)
+ 
+..
+
+
+** _5a8Hrecb3_9evcyu8sh
+{
+  * comment  "instr chunk-wait agenda changed" }
+ [[  chunk  "/*chunk wait agenda changed*/\n"  "  struct timespec ts_"  this_statement
+   " = {0,0};\n"  "  clock_gettime(CLOCK_REALTIME, &ts_"  this_statement
+   ");\n"  "  ts_"  this_statement  ".tv_sec += MOM_AGENDA_WAIT_SEC;\n" 
+  "  pthread_cond_timedwait(&mom_agenda_changed_condvar, &"  lkitm_agenda
+   "->itm_mtx, & ts_"  this_statement  ");\n" ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
  
 ..
 
@@ -84,6 +109,14 @@
  [[  set  varclo  ^unsync_get_attribute( lkitm_agenda  fill_agenda) ]]
  
   %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
+** _6kDqRmkjk_6CxUEu2hk
+{
+  * comment  "if lkitm_agenda empty queue wait agenda-changed" }
+ [[  if  ^queue_item_is_empty( lkitm_agenda)  _0HvrqAHte_4ryaA4drs ]]
  
 ..
 
@@ -101,8 +134,8 @@
 
 ** _7vj8eaIrt_9bLBC6eKB
 {
-  * comment  "if varclo apply it" }
- [[  if  varclo  _14MzMbJ9v_627D0CIiA ]]
+  * comment  "if varclo is node apply it" }
+ [[  if  ^value_is_node( varclo)  _14MzMbJ9v_627D0CIiA ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -982,9 +1015,17 @@
 ** the_software   ////// PREDEFINED
 {
   * comment  "describes the entire software system" }
- [[  test_module  plain_code_type_scanner  plain_code_emitter  value_of_item
-   value_to_item  tuple  node  queue_item_is_empty  unsync_get_attribute
- ]]
+ [[  node  plain_code_emitter  plain_code_type_scanner  queue_item_is_empty
+   test_module  tuple  unsync_get_attribute  value_is_node  value_of_item
+   value_to_item ]]
+ 
+..
+
+
+** this_statement   ////// PREDEFINED
+{
+  * comment  "in a chunk code statement or an operator, is expanded to the statement item"
+ }
  
 ..
 
@@ -1040,6 +1081,18 @@
   * comment  "type for momvalue_t" }
  
   %  ^filler_of_plain_kind( type)
+ 
+..
+
+
+** value_is_node
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*value_is_node:*/ ("  val1  ").typnum == momty_node")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "operator testing that operand is a node"
+  * formals  [val1]
+  * type  integer }
  
 ..
 

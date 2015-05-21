@@ -36,6 +36,9 @@ unsigned nbmorepredef_mom;
 char *newpredefname_mom[MAX_NEW_PREDEF_MOM];
 char *newpredefcomment_mom[MAX_NEW_PREDEF_MOM];
 
+
+pthread_cond_t mom_agenda_changed_condvar = PTHREAD_COND_INITIALIZER;
+
 /************************* inform *************************/
 
 void

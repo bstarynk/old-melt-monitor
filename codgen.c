@@ -1005,6 +1005,9 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 				 mom_item_cstring (cg->cg_curblockitm),
 				 mom_item_cstring (itmstmt),
 				 mom_item_cstring (itmlvar));
+	if (rexprv.typnum == momty_null)
+	  // special case, a nil at right of set is clearing
+	  break;
 	momitem_t *rexpctypitm = cgen_type_of_scanned_expr_mom (cg, rexprv);
 	MOM_DEBUGPRINTF (gencod,
 			 "in function %s block %s set statement %s rexpr %s of ctype %s",
@@ -1025,12 +1028,8 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 				 mom_output_gcstring (rexprv));
 	if (cg->cg_errormsg)
 	  return;
-	if (lvarctypitm == rexpctypitm)
-	  break;
-	if ((lvarctypitm == MOM_PREDEFINED_NAMED (item)
-	     || lvarctypitm == MOM_PREDEFINED_NAMED (locked_item))
-	    && (rexpctypitm == MOM_PREDEFINED_NAMED (item)
-		|| rexpctypitm == MOM_PREDEFINED_NAMED (locked_item)))
+	if (lvarctypitm == rexpctypitm
+	    || mom_cgen_compatible_types (lvarctypitm, rexpctypitm))
 	  break;
 	CGEN_ERROR_RETURN_MOM (cg,
 			       "module item %s : function %s with block %s with set statement %s : leftvar %s of type %s is incompatible with rightexpr %s of type %s",
@@ -1052,6 +1051,8 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 	  {
 	    momvalue_t vchkarg = mom_components_nth (stmtcomps, ix);
 	    momitem_t *itmarg = mom_value_to_item (vchkarg);
+	    if (itmarg == MOM_PREDEFINED_NAMED (this_statement))
+	      continue;
 	    if (itmarg != NULL)
 	      {
 		cgen_lock_item_mom (cg, itmarg);
@@ -1536,7 +1537,7 @@ cgen_bind_new_mom (struct codegen_mom_st *cg, momitem_t *itm,
 		   mom_item_cstring (cg->cg_curfunitm),
 		   mom_item_cstring (itm), mom_output_gcstring (vbind));
   cg->cg_funbind = mom_attributes_put (cg->cg_funbind, itm, &vbind);
-}
+}				/* end of cgen_bind_new */
 
 
 static void
@@ -2492,28 +2493,37 @@ cgen_emit_block_mom (struct codegen_mom_st *cg, unsigned bix,
     };
   MOM_DEBUGPRINTF (gencod, "emit_block blockitm %s nbinstr %u",
 		   mom_item_cstring (blockitm), nbinstr);
-  for (unsigned insix = 0; insix < nbinstr; insix++)
+  int lastjmpindex = -1;
+  for (unsigned insix = 0; insix < nbinstr && !cg->cg_errormsg; insix++)
     {
-      momitem_t *insitm = (momitem_t *) mom_seq_nth (tupblock, insix);
-      MOM_DEBUGPRINTF (gencod, "emit_block blockitm %s insix#%d insitm %s",
+      momitem_t *stmtitm = (momitem_t *) mom_seq_nth (tupblock, insix);
+      MOM_DEBUGPRINTF (gencod, "emit_block blockitm %s insix#%d stmtitm %s",
 		       mom_item_cstring (blockitm), insix,
-		       mom_item_cstring (insitm));
+		       mom_item_cstring (stmtitm));
       fprintf (cg->cg_emitfile, "// statement #%d %s\n", insix,
-	       mom_item_cstring (insitm));
-      cg->cg_curstmtitm = insitm;
-      cgen_emit_statement_mom (cg, insix, insitm);
+	       mom_item_cstring (stmtitm));
+      cg->cg_curstmtitm = stmtitm;
+      cgen_emit_statement_mom (cg, insix, stmtitm);
+      if (cg->cg_errormsg)
+	break;
+      if (mom_value_to_item (mom_unsync_item_get_nth_component (stmtitm, 0))
+	  == MOM_PREDEFINED_NAMED (jump))
+	lastjmpindex = insix;
       cg->cg_curstmtitm = NULL;
     }
   fprintf (cg->cg_emitfile, "\n  }; // end block %s\n",
 	   mom_item_cstring (blockitm));
-  fprintf (cg->cg_emitfile, "  goto " EPILOGUE_PREFIX_MOM "_%s;\n"
-	   "////----\n", mom_item_cstring (cg->cg_curfunitm));
+  if (lastjmpindex != nbinstr - 1)
+    fprintf (cg->cg_emitfile, "  goto " EPILOGUE_PREFIX_MOM "_%s;\n"
+	     "////----\n", mom_item_cstring (cg->cg_curfunitm));
+  else
+    fprintf (cg->cg_emitfile, "////----++++\n");
   MOM_DEBUGPRINTF (gencod,
 		   "emit_block done itmmod %s curfunitm %s bix#%d blockitm %s",
 		   mom_item_cstring (itmmod),
 		   mom_item_cstring (curfunitm), bix,
 		   mom_item_cstring (blockitm));
-}
+}				/* end cgen_emit_block_mom  */
 
 
 void
@@ -2906,118 +2916,118 @@ cgen_emit_node_expr_mom (struct codegen_mom_st *cg, const momvalue_t vnodexpr)
 
 static void
 cgen_emit_set_statement_mom (struct codegen_mom_st *cg, unsigned insix,
-			     momitem_t *insitm);
+			     momitem_t *stmtitm);
 
 static void
 cgen_emit_chunk_statement_mom (struct codegen_mom_st *cg, unsigned insix,
-			       momitem_t *insitm);
+			       momitem_t *stmtitm);
 
 static void
 cgen_emit_apply_statement_mom (struct codegen_mom_st *cg, unsigned insix,
-			       momitem_t *insitm);
+			       momitem_t *stmtitm);
 
 static void
 cgen_emit_if_statement_mom (struct codegen_mom_st *cg, unsigned insix,
-			    momitem_t *insitm);
+			    momitem_t *stmtitm);
 
 static void
 cgen_emit_jump_statement_mom (struct codegen_mom_st *cg, unsigned insix,
-			      momitem_t *insitm);
+			      momitem_t *stmtitm);
 
 static void
 cgen_emit_int_switch_statement_mom (struct codegen_mom_st *cg, unsigned insix,
-				    momitem_t *insitm);
+				    momitem_t *stmtitm);
 
 static void
 cgen_emit_item_switch_statement_mom (struct codegen_mom_st *cg,
-				     unsigned insix, momitem_t *insitm);
+				     unsigned insix, momitem_t *stmtitm);
 
 static void
 cgen_emit_success_statement_mom (struct codegen_mom_st *cg, unsigned insix,
-				 momitem_t *insitm);
+				 momitem_t *stmtitm);
 
 static void
 cgen_emit_fail_statement_mom (struct codegen_mom_st *cg, unsigned insix,
-			      momitem_t *insitm);
+			      momitem_t *stmtitm);
 
 static void
 cgen_emit_other_statement_mom (struct codegen_mom_st *cg, unsigned insix,
-			       momitem_t *insitm);
+			       momitem_t *stmtitm);
 
 static void
 cgen_emit_statement_mom (struct codegen_mom_st *cg, unsigned insix,
-			 momitem_t *insitm)
+			 momitem_t *stmtitm)
 {
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   MOM_DEBUGPRINTF (gencod,
-		   "emit_statement start insix#%u insitm %s",
-		   insix, mom_item_cstring (insitm));
+		   "emit_statement start insix#%u stmtitm %s",
+		   insix, mom_item_cstring (stmtitm));
   momitem_t *opitm =
-    mom_value_to_item (mom_unsync_item_get_nth_component (insitm, 0));
-  MOM_DEBUGPRINTF (gencod, "emit_statement insitm %s opitm %s",
-		   mom_item_cstring (insitm), mom_item_cstring (opitm));
+    mom_value_to_item (mom_unsync_item_get_nth_component (stmtitm, 0));
+  MOM_DEBUGPRINTF (gencod, "emit_statement stmtitm %s opitm %s",
+		   mom_item_cstring (stmtitm), mom_item_cstring (opitm));
   assert (opitm != NULL);
   switch (mom_item_hash (opitm))
     {
       ////////////////
     case MOM_PREDEFINED_NAMED_CASE (set, opitm, otherwiseoplab):
       {
-	cgen_emit_set_statement_mom (cg, insix, insitm);
+	cgen_emit_set_statement_mom (cg, insix, stmtitm);
       }
       break;
       ////////////////
     case MOM_PREDEFINED_NAMED_CASE (chunk, opitm, otherwiseoplab):
       {
-	cgen_emit_chunk_statement_mom (cg, insix, insitm);
+	cgen_emit_chunk_statement_mom (cg, insix, stmtitm);
       }
       break;
       ////////////////
     case MOM_PREDEFINED_NAMED_CASE (apply, opitm, otherwiseoplab):
       {
-	cgen_emit_apply_statement_mom (cg, insix, insitm);
+	cgen_emit_apply_statement_mom (cg, insix, stmtitm);
       }
       break;
       ////////////////
       case MOM_PREDEFINED_NAMED_CASE (if, opitm, otherwiseoplab)
     :
 	{
-	  cgen_emit_if_statement_mom (cg, insix, insitm);
+	  cgen_emit_if_statement_mom (cg, insix, stmtitm);
 	}
       break;
       ////////////////
     case MOM_PREDEFINED_NAMED_CASE (int_switch, opitm, otherwiseoplab):
       {
-	cgen_emit_int_switch_statement_mom (cg, insix, insitm);
+	cgen_emit_int_switch_statement_mom (cg, insix, stmtitm);
       }
       break;
       ////////////////
     case MOM_PREDEFINED_NAMED_CASE (item_switch, opitm, otherwiseoplab):
       {
-	cgen_emit_item_switch_statement_mom (cg, insix, insitm);
+	cgen_emit_item_switch_statement_mom (cg, insix, stmtitm);
       }
       break;
       ////////////////
     case MOM_PREDEFINED_NAMED_CASE (jump, opitm, otherwiseoplab):
       {
-	cgen_emit_jump_statement_mom (cg, insix, insitm);
+	cgen_emit_jump_statement_mom (cg, insix, stmtitm);
       }
       break;
       ////////////////
     case MOM_PREDEFINED_NAMED_CASE (success, opitm, otherwiseoplab):
       {
-	cgen_emit_success_statement_mom (cg, insix, insitm);
+	cgen_emit_success_statement_mom (cg, insix, stmtitm);
       }
       break;
       ////////////////
     case MOM_PREDEFINED_NAMED_CASE (fail, opitm, otherwiseoplab):
       {
-	cgen_emit_fail_statement_mom (cg, insix, insitm);
+	cgen_emit_fail_statement_mom (cg, insix, stmtitm);
       }
       break;
     default:
     otherwiseoplab:
       {
-	cgen_emit_other_statement_mom (cg, insix, insitm);
+	cgen_emit_other_statement_mom (cg, insix, stmtitm);
       }
     }
 }				/* end of cgen_emit_statement_mom */
@@ -3048,7 +3058,10 @@ cgen_emit_set_statement_mom (struct codegen_mom_st *cg, unsigned insix,
       fputs (";\n", cg->cg_emitfile);
       fprintf (cg->cg_emitfile, "  momlockeditem_t* momnewlocked_%s = ",
 	       mom_item_cstring (itmstmt));
-      cgen_emit_expr_mom (cg, rexprv);
+      if (rexprv.typnum != momty_null)
+	cgen_emit_expr_mom (cg, rexprv);
+      else
+	fputs (" (momlockeditem_t*)NULL", cg->cg_emitfile);
       fputs (";\n", cg->cg_emitfile);
       fprintf (cg->cg_emitfile,
 	       "  if (momoldlocked_%s != momnewlocked_%s) {\n",
@@ -3077,8 +3090,22 @@ cgen_emit_set_statement_mom (struct codegen_mom_st *cg, unsigned insix,
       fprintf (cg->cg_emitfile, "// set into %s\n  ",
 	       mom_item_cstring (itmlvar));
       cgen_emit_item_mom (cg, itmlvar);
-      fputs (" = ", cg->cg_emitfile);
-      cgen_emit_expr_mom (cg, rexprv);
+      fputs (" =\n   ", cg->cg_emitfile);
+      if (rexprv.typnum != momty_null)
+	cgen_emit_expr_mom (cg, rexprv);
+      else
+	{
+	  if (lvarctypitm == MOM_PREDEFINED_NAMED (value))
+	    fputs ("/*clearing-value*/ MOM_NONEV", cg->cg_emitfile);
+	  else
+	    {
+	      fprintf (cg->cg_emitfile, " /*clearing*/ (%s)0",
+		       mom_string_cstr (mom_value_to_string
+					(mom_item_unsync_get_attribute
+					 (lvarctypitm,
+					  MOM_PREDEFINED_NAMED (code)))));
+	    }
+	}
       fputs (";\n", cg->cg_emitfile);
     }
 }				/* end cgen_emit_set_statement_mom */
@@ -3112,6 +3139,11 @@ cgen_emit_chunk_statement_mom (struct codegen_mom_st *cg, unsigned insix,
 	case momty_item:
 	  {
 	    momitem_t *itm = vcomp.vitem;
+	    if (itm == MOM_PREDEFINED_NAMED (this_statement))
+	      {
+		fputs (mom_item_cstring (itmstmt), cg->cg_emitfile);
+		continue;
+	      }
 	    if (itm && itm->itm_kind == MOM_PREDEFINED_NAMED (block))
 	      {
 		fprintf (cg->cg_emitfile,
@@ -3591,8 +3623,8 @@ cgen_third_decorating_pass_mom (momitem_t *itmcgen)
 	      unsigned nbins = mom_seq_length (tupins);
 	      for (unsigned insix = 0; insix < nbins; insix++)
 		{
-		  momitem_t *insitm = mom_seq_nth (tupins, insix);
-		  mom_item_unsync_put_attribute (insitm,
+		  momitem_t *stmtitm = mom_seq_nth (tupins, insix);
+		  mom_item_unsync_put_attribute (stmtitm,
 						 MOM_PREDEFINED_NAMED (in),
 						 mom_itemv (itmcurblock));
 		}
@@ -4056,7 +4088,12 @@ bool momfunc_1itm1val_to_void_plain_code_emitter
 		    fprintf (cg->cg_emitfile, ")");
 		  }
 		continue;
-	      };
+	      }
+	    else if (curitm == MOM_PREDEFINED_NAMED (this_statement))
+	      {
+		fputs (mom_item_cstring (cg->cg_curstmtitm), cg->cg_emitfile);
+		continue;
+	      }
 	    momvalue_t valbind = MOM_NONEV;
 	    struct momentry_st *ent = mom_attributes_find_entry (att, curitm);
 	    if (ent)
