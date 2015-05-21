@@ -61,8 +61,12 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
   goto momblocklab__7MF947fC8_8ChefReMD;
  // block #0 : _14MzMbJ9v_627D0CIiA
  momblocklab__14MzMbJ9v_627D0CIiA: {
-// 0 statements in block _14MzMbJ9v_627D0CIiA
+// 1 statements in block _14MzMbJ9v_627D0CIiA
 //: block to apply varclo
+// statement #0 _4KKszvz3w_1HLUHLsru
+// apply with 1 input arguments and 0 output results, radix 1itm_to_void
+   if (!mom_applval_1itm_to_void (momvar0 /*var:varclo*/,  /*constant#2:*/MOM_PREDEFINED_NAMED(the_agenda)))
+     return false;
 
   }; // end block _14MzMbJ9v_627D0CIiA
   goto momepilog_agenda_step;

@@ -1451,7 +1451,11 @@ cgen_scan_apply_statement_first_mom (struct codegen_mom_st *cg,
     };
   if (cg->cg_errormsg)
     return;
-  momvalue_t vexpfun = mom_components_nth (stmtcomps, 3 + nbin);
+  momvalue_t vexpfun = mom_components_nth (stmtcomps, 2 + nbout);
+  MOM_DEBUGPRINTF (gencod,
+		   "scan_apply_statement applystmt %s nbin %d vexpfun %s",
+		   mom_item_cstring (itmstmt), nbin,
+		   mom_output_gcstring (vexpfun));
   momitem_t *itmtypfun = cgen_type_of_scanned_expr_mom (cg, vexpfun);
   MOM_DEBUGPRINTF (gencod,
 		   "scan_apply_statement in function %s apply statement %s with function %s of type %s",
@@ -1500,6 +1504,10 @@ cgen_scan_apply_statement_first_mom (struct codegen_mom_st *cg,
 			       mom_item_cstring (itmstmt),
 			       mom_item_cstring (itmelse));
     }
+  else
+    MOM_DEBUGPRINTF (gencod, "scan_apply_statement itmstmt %s without else",
+		     mom_item_cstring (itmstmt));
+
   MOM_DEBUGPRINTF (gencod, "scan_apply_statement done itmstmt %s\n",
 		   mom_item_cstring (itmstmt));
 }				/* end cgen_scan_apply_statement_first_mom */
@@ -3162,20 +3170,24 @@ cgen_emit_apply_statement_mom (struct codegen_mom_st *cg, unsigned insix,
   fprintf (cg->cg_emitfile,
 	   "   if (!mom_applval_%s (", mom_string_cstr (radixstr));
   cgen_emit_expr_mom (cg, vfunexpr);
+  MOM_DEBUGPRINTF (gencod, "emit apply stmt %s nbinargs %d",
+		   mom_item_cstring (itmstmt), nbinargs);
   for (unsigned argix = 0; argix < nbinargs; argix++)
     {
       momvalue_t vargexp =
-	mom_components_nth (stmtcomps, 2 + nboutres + argix);
+	mom_components_nth (stmtcomps, 3 + nboutres + argix);
       MOM_DEBUGPRINTF (gencod, "emit apply stmt %s argix#%d vargexp %s",
 		       mom_item_cstring (itmstmt), argix,
 		       mom_output_gcstring (vargexp));
       fputs (", ", cg->cg_emitfile);
       cgen_emit_expr_mom (cg, vargexp);
     };
+  MOM_DEBUGPRINTF (gencod, "emit apply stmt %s nboutres %d",
+		   mom_item_cstring (itmstmt), nboutres);
   for (unsigned resix = 0; resix < nboutres; resix++)
     {
       momitem_t *curesitm =
-	mom_value_to_item (mom_components_nth (stmtcomps, 2 + resix));
+	mom_value_to_item (mom_components_nth (stmtcomps, 3 + resix));
       MOM_DEBUGPRINTF (gencod, "emit apply stmt %s resix#%d curesitm %s",
 		       mom_item_cstring (itmstmt), resix,
 		       mom_item_cstring (curesitm));
@@ -3183,12 +3195,12 @@ cgen_emit_apply_statement_mom (struct codegen_mom_st *cg, unsigned insix,
       cgen_emit_item_mom (cg, curesitm);
       fputs (")", cg->cg_emitfile);
     };
-  fputs (")\n", cg->cg_emitfile);
+  fputs ("))\n", cg->cg_emitfile);
   momitem_t *elseitm = NULL;
-  if (stmtlen > 2 + nbinargs + nboutres)
+  if (stmtlen > 4 + nbinargs + nboutres)
     elseitm =
       mom_value_to_item (mom_components_nth
-			 (stmtcomps, 2 + nbinargs + nboutres));
+			 (stmtcomps, 4 + nbinargs + nboutres));
   MOM_DEBUGPRINTF (gencod, "emit apply stmt %s elseitm %s",
 		   mom_item_cstring (itmstmt), mom_item_cstring (elseitm));
   if (elseitm)
