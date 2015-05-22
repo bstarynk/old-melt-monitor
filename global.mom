@@ -176,6 +176,17 @@
 ..
 
 
+** _24z256FyK_7r8ApkvqK
+{
+  * comment  "set lkitm_tasklet := value_sequence_nth(argtasklets, varix); for agenda_push_front"
+  * in  _7jkswmJf4_89dmJmBc2 }
+ [[  set  lkitm_tasklet  ^value_sequence_nth( argtasklets  varix) ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
 ** _27PBmP9xP_3Hh1aedqr
 {
   * comment  "block to push every lkitm_tasklet in sequence argtasklets in back of agenda and notify"
@@ -279,6 +290,17 @@
 ..
 
 
+** _32pAfaaDd_1jeEvt083
+{
+  * comment  "push lkitm_tasklet in front of lkitm_tasklet; in agenda_push_front seq..."
+  * in  _7jkswmJf4_89dmJmBc2 }
+ [[  push_front_queue_item  lkitm_agenda  lkitm_tasklet ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
 ** _35ALykwdw_1UiPefUMH
 {
   * comment  "success of agenda_push_front"
@@ -294,7 +316,8 @@
 {
   * comment  "block seqloop on argtasklets; in agenda_push_back"
   * in  agenda_push_back
-  * instructions  [_61DxdHIjP_2U7hhsKDL] }
+  * instructions  [_61DxdHIjP_2U7hhsKDL _4qKLvc6ce_24ym1K7qm _60fFrKH58_32pCM7kxK
+   _6UmR4hJ3a_9A2d4BdrJ _7qRm75s5I_9vzdpzm0K] }
  
   %  ^filler_of_plain_kind( block)
  
@@ -361,6 +384,17 @@
   * comment  "if argtasklets is sequence push them in front then notify; in agenda_push_front"
   * in  _02MHbyAxU_563vpdUu2 }
  [[  if  ^value_is_sequence( argtasklets)  _9m9aprPJz_4hExeiqIi ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
+** _4qKLvc6ce_24ym1K7qm
+{
+  * comment  "set lkitm_tasklet := value_sequence_nth(argtasklets, varix); for agenda_push_back"
+  * in  _3JddiuKnc_1nzuB6bss }
+ [[  set  lkitm_tasklet  ^value_sequence_nth( argtasklets  varix) ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -461,6 +495,17 @@
 ..
 
 
+** _60fFrKH58_32pCM7kxK
+{
+  * comment  "push lkitm_tasklet in back of lkitm_tasklet; in agenda_push_back seq..."
+  * in  _3JddiuKnc_1nzuB6bss }
+ [[  push_back_queue_item  lkitm_agenda  lkitm_tasklet ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
 ** _60nmad63F_1Jd336xAL
 {
   * comment  "set varclo := fill_agenda(lkitm_agenda)"
@@ -512,6 +557,17 @@
   * in  _7jkswmJf4_89dmJmBc2 }
  [[  if  ^integer_greater_or_equal( varix  varlen)  _4h7BHLiLB_9askynfAC
  ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
+** _6UmR4hJ3a_9A2d4BdrJ
+{
+  * comment  "increment varix ; in agenda_push_back seq..."
+  * in  _3JddiuKnc_1nzuB6bss }
+ [[  set  varix  ^integer_add( varix  1) ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -600,9 +656,21 @@
 {
   * comment  "block seqloop on argtasklets; in agenda_push_front"
   * in  agenda_push_front
-  * instructions  [_6PukHeHkL_5rxkpnFsJ] }
+  * instructions  [_6PukHeHkL_5rxkpnFsJ _24z256FyK_7r8ApkvqK _32pAfaaDd_1jeEvt083
+   _9A2akip87_18CiHx1db _8HabUa62b_311b5M6qe] }
  
   %  ^filler_of_plain_kind( block)
+ 
+..
+
+
+** _7qRm75s5I_9vzdpzm0K
+{
+  * comment  "jump block seqloop; in agenda_push_back seq... "
+  * in  _3JddiuKnc_1nzuB6bss }
+ [[  jump  _3JddiuKnc_1nzuB6bss ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
  
 ..
 
@@ -641,6 +709,17 @@
 ..
 
 
+** _8HabUa62b_311b5M6qe
+{
+  * comment  "jump block seqloop; in agenda_push_front "
+  * in  _7jkswmJf4_89dmJmBc2 }
+ [[  jump  _7jkswmJf4_89dmJmBc2 ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
 ** _8UcKkiiIk_2ur4xDt59
 {
   * comment  "if lkitm_tasklet, push it front; in agenda_push_front"
@@ -660,6 +739,17 @@
    _55xk4tfhF_5sUF6zmde] }
  
   %  ^filler_of_plain_kind( block)
+ 
+..
+
+
+** _9A2akip87_18CiHx1db
+{
+  * comment  "increment varix ; in agenda_push_front seq..."
+  * in  _7jkswmJf4_89dmJmBc2 }
+ [[  set  varix  ^integer_add( varix  1) ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
  
 ..
 
@@ -1218,6 +1308,19 @@
 ..
 
 
+** integer_add
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*integer_add:*/(("  num1  ") + ("
+    num2  ")) ")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "integer_add: operator for integer +"
+  * formals  [num1 num2]
+  * type  integer }
+ 
+..
+
+
 ** integer_different
 {
   * code_emitter  ^plain_code_emitter()
@@ -1225,6 +1328,19 @@
     num2  ")) ")
   * code_type_scanner  ^plain_code_type_scanner()
   * comment  "integer_different: operator for integer != test"
+  * formals  [num1 num2]
+  * type  integer }
+ 
+..
+
+
+** integer_div
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*integer_div:*/(("  num1  ") / ("
+    num2  ")) ")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "integer_div: operator for integer *"
   * formals  [num1 num2]
   * type  integer }
  
@@ -1290,6 +1406,45 @@
     num2  ")) ")
   * code_type_scanner  ^plain_code_type_scanner()
   * comment  "integer_less_than: operator for integer < test"
+  * formals  [num1 num2]
+  * type  integer }
+ 
+..
+
+
+** integer_mod
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*integer_mod:*/(("  num1  ") % ("
+    num2  ")) ")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "integer_mod: operator for integer %"
+  * formals  [num1 num2]
+  * type  integer }
+ 
+..
+
+
+** integer_mul
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*integer_mul:*/(("  num1  ") * ("
+    num2  ")) ")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "integer_mul: operator for integer *"
+  * formals  [num1 num2]
+  * type  integer }
+ 
+..
+
+
+** integer_sub
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*integer_sub:*/(("  num1  ") - ("
+    num2  ")) ")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "integer_sub: operator for integer -"
   * formals  [num1 num2]
   * type  integer }
  
@@ -1894,7 +2049,8 @@
 ** the_software   ////// PREDEFINED
 {
   * comment  "describes the entire software system" }
- [[  integer_less_than  integer_less_or_equal  integer_greater_than  integer_greater_or_equal
+ [[  integer_add  integer_sub  integer_mul  integer_div  integer_mod  integer_less_than
+   integer_less_or_equal  integer_greater_than  integer_greater_or_equal
    integer_equal  integer_different  node  plain_code_emitter  plain_code_type_scanner
    plain_statement_emitter  plain_statement_scanner  pop_front_queue_item
    pop_back_queue_item  push_front_queue_item  push_back_queue_item  queue_item_is_empty
@@ -2051,7 +2207,7 @@
   * code_type_scanner  ^plain_code_type_scanner()
   * comment  "operator giving for a value sequence val1 its component of rank num"
   * formals  [val1 num]
-  * type  value }
+  * type  item }
  
 ..
 

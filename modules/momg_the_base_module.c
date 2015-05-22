@@ -153,15 +153,37 @@ bool momfunc_1val_to_void_agenda_push_back (const momnode_t *mom_node, momvalue_
 /// block #3: _3JddiuKnc_1nzuB6bss
 //: block seqloop on argtasklets; in agenda_push_back
  momblocklab__3JddiuKnc_1nzuB6bss: {
-// 1 statements in block _3JddiuKnc_1nzuB6bss
+// 5 statements in block _3JddiuKnc_1nzuB6bss
 // statement #0 :: _61DxdHIjP_2U7hhsKDL; if (varix>=varlen) goto epilogpushback; in agenda_push_back
 // if testing on integer
     if (/*integer_greater_or_equal:*/((momvar3 /*var:varix*/) >= (momvar2 /*var:varlen*/)) )
       goto momblocklab__2I2UdbsCL_6c82fexBk;
+// statement #1 :: _4qKLvc6ce_24ym1K7qm; set lkitm_tasklet := value_sequence_nth(argtasklets, varix); for agenda_push_back
+  { // locked set into lkitm_tasklet
+  momlockeditem_t* momoldlocked__4qKLvc6ce_24ym1K7qm = momvar1 /*var:lkitm_tasklet*/;
+  momlockeditem_t* momnewlocked__4qKLvc6ce_24ym1K7qm = /*value_sequence_nth:*/ mom_seq_nth(mom_value_to_sequ(momarg0 /*formalarg:argtasklets*/), (int)(momvar3 /*var:varix*/));
+  if (momoldlocked__4qKLvc6ce_24ym1K7qm != momnewlocked__4qKLvc6ce_24ym1K7qm) {
+    if (momoldlocked__4qKLvc6ce_24ym1K7qm != NULL) mom_item_unlock (momoldlocked__4qKLvc6ce_24ym1K7qm);
+    if (momnewlocked__4qKLvc6ce_24ym1K7qm != NULL) mom_item_lock (momnewlocked__4qKLvc6ce_24ym1K7qm);
+  } // end lock test _4qKLvc6ce_24ym1K7qm
+    momvar1 /*var:lkitm_tasklet*/ = momnewlocked__4qKLvc6ce_24ym1K7qm;
+  momoldlocked__4qKLvc6ce_24ym1K7qm = NULL;
+  momnewlocked__4qKLvc6ce_24ym1K7qm = NULL;
+  } // end locked set into lkitm_tasklet
+// statement #2 :: _60fFrKH58_32pCM7kxK; push lkitm_tasklet in back of lkitm_tasklet; in agenda_push_back seq...
+/*push_back_queue_item:*/
+{if (momvar0 /*var:lkitm_agenda*/ && momvar0 /*var:lkitm_agenda*/->itm_kind ==  /*constant#1:*/MOM_PREDEFINED_NAMED(item_queue))
+   mom_queueitem_push_back((struct momqueueitems_st*)momvar0 /*var:lkitm_agenda*/->itm_data1, momvar1 /*var:lkitm_tasklet*/);}
+// statement #3 :: _6UmR4hJ3a_9A2d4BdrJ; increment varix ; in agenda_push_back seq...
+// set into varix
+  momvar3 /*var:varix*/ =
+   /*integer_add:*/((momvar3 /*var:varix*/) + (1)) ;
+// statement #4 :: _7qRm75s5I_9vzdpzm0K; jump block seqloop; in agenda_push_back seq... 
+// jump to _3JddiuKnc_1nzuB6bss
+  goto momblocklab__3JddiuKnc_1nzuB6bss;
 
   }; // end block _3JddiuKnc_1nzuB6bss
-  goto momepilog_agenda_push_back;
- ////----
+////----++++
 
 /// block #4: _50yPKJAK2_4Ksihqd4c
 //: block to push lkitm_tasklet in back of agenda and epilog; in agenda_push_back
@@ -311,15 +333,37 @@ bool momfunc_1val_to_void_agenda_push_front (const momnode_t *mom_node, momvalue
 /// block #3: _7jkswmJf4_89dmJmBc2
 //: block seqloop on argtasklets; in agenda_push_front
  momblocklab__7jkswmJf4_89dmJmBc2: {
-// 1 statements in block _7jkswmJf4_89dmJmBc2
+// 5 statements in block _7jkswmJf4_89dmJmBc2
 // statement #0 :: _6PukHeHkL_5rxkpnFsJ; if (varix>=varlen) goto epilogpushfront; in agenda_push_front
 // if testing on integer
     if (/*integer_greater_or_equal:*/((momvar3 /*var:varix*/) >= (momvar2 /*var:varlen*/)) )
       goto momblocklab__4h7BHLiLB_9askynfAC;
+// statement #1 :: _24z256FyK_7r8ApkvqK; set lkitm_tasklet := value_sequence_nth(argtasklets, varix); for agenda_push_front
+  { // locked set into lkitm_tasklet
+  momlockeditem_t* momoldlocked__24z256FyK_7r8ApkvqK = momvar1 /*var:lkitm_tasklet*/;
+  momlockeditem_t* momnewlocked__24z256FyK_7r8ApkvqK = /*value_sequence_nth:*/ mom_seq_nth(mom_value_to_sequ(momarg0 /*formalarg:argtasklets*/), (int)(momvar3 /*var:varix*/));
+  if (momoldlocked__24z256FyK_7r8ApkvqK != momnewlocked__24z256FyK_7r8ApkvqK) {
+    if (momoldlocked__24z256FyK_7r8ApkvqK != NULL) mom_item_unlock (momoldlocked__24z256FyK_7r8ApkvqK);
+    if (momnewlocked__24z256FyK_7r8ApkvqK != NULL) mom_item_lock (momnewlocked__24z256FyK_7r8ApkvqK);
+  } // end lock test _24z256FyK_7r8ApkvqK
+    momvar1 /*var:lkitm_tasklet*/ = momnewlocked__24z256FyK_7r8ApkvqK;
+  momoldlocked__24z256FyK_7r8ApkvqK = NULL;
+  momnewlocked__24z256FyK_7r8ApkvqK = NULL;
+  } // end locked set into lkitm_tasklet
+// statement #2 :: _32pAfaaDd_1jeEvt083; push lkitm_tasklet in front of lkitm_tasklet; in agenda_push_front seq...
+/*push_front_queue_item:*/
+{if (momvar0 /*var:lkitm_agenda*/ && momvar0 /*var:lkitm_agenda*/->itm_kind ==  /*constant#1:*/MOM_PREDEFINED_NAMED(item_queue))
+  mom_queueitem_push_front((struct momqueueitems_st*)momvar0 /*var:lkitm_agenda*/->itm_data1, momvar1 /*var:lkitm_tasklet*/);}
+// statement #3 :: _9A2akip87_18CiHx1db; increment varix ; in agenda_push_front seq...
+// set into varix
+  momvar3 /*var:varix*/ =
+   /*integer_add:*/((momvar3 /*var:varix*/) + (1)) ;
+// statement #4 :: _8HabUa62b_311b5M6qe; jump block seqloop; in agenda_push_front 
+// jump to _7jkswmJf4_89dmJmBc2
+  goto momblocklab__7jkswmJf4_89dmJmBc2;
 
   }; // end block _7jkswmJf4_89dmJmBc2
-  goto momepilog_agenda_push_front;
- ////----
+////----++++
 
 /// block #4: _9m9aprPJz_4hExeiqIi
 //: block to push every lkitm_tasklet in sequence argtasklets in front of agenda and notify
