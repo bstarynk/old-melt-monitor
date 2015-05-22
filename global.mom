@@ -272,7 +272,7 @@
 {
   * comment  "block seqloop on argtasklets; in agenda_push_back"
   * in  agenda_push_back
-  * instructions  [] }
+  * instructions  [_61DxdHIjP_2U7hhsKDL] }
  
   %  ^filler_of_plain_kind( block)
  
@@ -450,11 +450,31 @@
 ..
 
 
+** _61DxdHIjP_2U7hhsKDL
+{
+  * comment  "if (varix>=varlen) goto epilogpushback; in agenda_push_back"
+ }
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
 ** _67HCKpy4n_17u81x1Cz
 {
   * comment  "varix := 0; in agenda_push_front"
   * in  _9m9aprPJz_4hExeiqIi }
  [[  set  varix  0 ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
+** _6PukHeHkL_5rxkpnFsJ
+{
+  * comment  "if (varix>=varlen) goto epilogpushfront; in agenda_push_front"
+ }
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -521,7 +541,7 @@
 {
   * comment  "block seqloop on argtasklets; in agenda_push_front"
   * in  agenda_push_front
-  * instructions  [] }
+  * instructions  [_6PukHeHkL_5rxkpnFsJ] }
  
   %  ^filler_of_plain_kind( block)
  
@@ -1128,6 +1148,84 @@
 ..
 
 
+** integer_different
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*integer_different:*/(("  num1  ") != ("
+    num2  ")) ")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "integer_different: operator for integer != test"
+  * formals  [num1 num2]
+  * type  integer }
+ 
+..
+
+
+** integer_equal
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*integer_equal:*/(("  num1  ") == ("
+    num2  ")) ")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "integer_equal: operator for integer == test"
+  * formals  [num1 num2]
+  * type  integer }
+ 
+..
+
+
+** integer_greater_or_equal
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*integer_greater_or_equal:*/(("  num1
+    ") >= ("  num2  ")) ")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "integer_greater_or_equal: operator for integer >= test"
+  * formals  [num1 num2]
+  * type  integer }
+ 
+..
+
+
+** integer_greater_than
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*integer_greater_than:*/(("  num1
+    ") > ("  num2  ")) ")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "integer_greater_than: operator for integer > test"
+  * formals  [num1 num2]
+  * type  integer }
+ 
+..
+
+
+** integer_less_or_equal
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*integer_less_or_equal:*/(("  num1
+    ") <= ("  num2  ")) ")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "integer_less_or_equal: operator for integer <= test"
+  * formals  [num1 num2]
+  * type  integer }
+ 
+..
+
+
+** integer_less_than
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*integer_less_than:*/(("  num1  ") < ("
+    num2  ")) ")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "integer_less_than: operator for integer < test"
+  * formals  [num1 num2]
+  * type  integer }
+ 
+..
+
+
 ** item   ////// PREDEFINED
 {
   * code  "momitem_t*"
@@ -1270,6 +1368,20 @@
 
 
 ** num
+{
+  * type  integer }
+ 
+..
+
+
+** num1
+{
+  * type  integer }
+ 
+..
+
+
+** num2
 {
   * type  integer }
  
@@ -1712,11 +1824,13 @@
 ** the_software   ////// PREDEFINED
 {
   * comment  "describes the entire software system" }
- [[  node  plain_code_emitter  plain_code_type_scanner  plain_statement_emitter
-   plain_statement_scanner  pop_front_queue_item  pop_back_queue_item  push_front_queue_item
-   push_back_queue_item  queue_item_is_empty  test_module  tuple  unsync_get_attribute
-   value_is_node  value_is_sequence  value_is_set  value_is_tuple  value_of_item
-   value_sequence_length  value_sequence_nth  value_to_item ]]
+ [[  integer_less_than  integer_less_or_equal  integer_greater_than  integer_greater_or_equal
+   integer_equal  integer_different  node  plain_code_emitter  plain_code_type_scanner
+   plain_statement_emitter  plain_statement_scanner  pop_front_queue_item
+   pop_back_queue_item  push_front_queue_item  push_back_queue_item  queue_item_is_empty
+   test_module  tuple  unsync_get_attribute  value_is_node  value_is_sequence
+   value_is_set  value_is_tuple  value_of_item  value_sequence_length  value_sequence_nth
+   value_to_item ]]
  
 ..
 
