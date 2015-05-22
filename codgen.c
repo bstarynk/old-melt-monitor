@@ -2614,11 +2614,14 @@ cgen_emit_vardecl_mom (struct codegen_mom_st *cg, unsigned varix,
   assert (typstr != NULL);
   if (vartypitm == MOM_PREDEFINED_NAMED (value))
     fprintf (cg->cg_emitfile,
-	     "  momvalue_t " VARIABLE_PREFIX_MOM "%d = MOM_NONEV;\n",
-	     (int) varrk);
+	     "  momvalue_t " VARIABLE_PREFIX_MOM
+	     "%d /*declvar:%s*/ = MOM_NONEV;\n", (int) varrk,
+	     mom_item_cstring (varitm));
   else
-    fprintf (cg->cg_emitfile, "  %s " VARIABLE_PREFIX_MOM "%d = (%s)0;\n",
-	     typstr->cstr, (int) varrk, typstr->cstr);
+    fprintf (cg->cg_emitfile,
+	     "  %s " VARIABLE_PREFIX_MOM "%d  /*declvar:%s*/ = (%s)0;\n",
+	     typstr->cstr, (int) varrk, mom_item_cstring (varitm),
+	     typstr->cstr);
 }				/* end of cgen_emit_vardecl_mom */
 
 
@@ -2702,12 +2705,13 @@ cgen_emit_constdecl_mom (struct codegen_mom_st *cg, unsigned constix,
     {
       isitem = true;
       fprintf (cg->cg_emitfile,
-	       "  momitem_t* " CONSTANT_PREFIX_MOM "_%d =", (int) constrk);
+	       "  momitem_t* " CONSTANT_PREFIX_MOM "_%d /*const:%s*/ =",
+	       (int) constrk, mom_item_cstring (constitm));
     }
   else
     fprintf (cg->cg_emitfile,
-	     "  const momvalue_t " CONSTANT_PREFIX_MOM "_%d = ",
-	     (int) constrk);
+	     "  const momvalue_t " CONSTANT_PREFIX_MOM "_%d /*const:%s*/ = ",
+	     (int) constrk, mom_item_cstring (constitm));
   {
     momitem_t *constitm = NULL;
     if (constval.typnum == momty_item

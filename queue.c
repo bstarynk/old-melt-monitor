@@ -133,7 +133,7 @@ mom_queueitem_push_front (struct momqueueitems_st *qu, const momitem_t *itm)
     }
 }
 
-const momitem_t *
+momitem_t *
 mom_queueitem_pop_front (struct momqueueitems_st *qu)
 {
   const momitem_t *itm = NULL;
@@ -166,7 +166,7 @@ mom_queueitem_pop_front (struct momqueueitems_st *qu)
 }
 
 
-const momitem_t *
+momitem_t *
 mom_queueitem_peek_nth (struct momqueueitems_st *qu, int rk)
 {
   if (!qu || !qu->que_size)

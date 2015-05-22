@@ -180,7 +180,7 @@
 {
   * comment  "block to push every lkitm_tasklet in sequence argtasklets in back of agenda and notify"
   * in  agenda_push_back
-  * instructions  [] }
+  * instructions  [_5JFtUFwBC_1v2BUA42z _60v4pLRCu_55xI9BKJD] }
  
   %  ^filler_of_plain_kind( block)
  
@@ -311,6 +311,17 @@
 ..
 
 
+** _4sni2unK9_1AqEEbhcc
+{
+  * comment  "varlen := length of argtasklets; in agenda_push_front"
+  * in  _9m9aprPJz_4hExeiqIi }
+ [[  set  varlen  ^value_sequence_length( argtasklets) ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
 ** _4xAIqB3tj_97IrD41UP
 {
   * comment  "refill empty agenda"
@@ -368,6 +379,17 @@
 ..
 
 
+** _5JFtUFwBC_1v2BUA42z
+{
+  * comment  "varlen := length of argtasklets; in agenda_push_back"
+  * in  _27PBmP9xP_3Hh1aedqr }
+ [[  set  varlen  ^value_sequence_length( argtasklets) ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
 ** _5a8Hrecb3_9evcyu8sh
 {
   * comment  "instr chunk-wait agenda changed"
@@ -388,6 +410,28 @@
   * comment  "set varclo := fill_agenda(lkitm_agenda)"
   * in  _4xAIqB3tj_97IrD41UP }
  [[  set  varclo  ^unsync_get_attribute( lkitm_agenda  fill_agenda) ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
+** _60v4pLRCu_55xI9BKJD
+{
+  * comment  "varix := 0; in agenda_push_back"
+  * in  _27PBmP9xP_3Hh1aedqr }
+ [[  set  varix  0 ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
+** _67HCKpy4n_17u81x1Cz
+{
+  * comment  "varix := 0; in agenda_push_front"
+  * in  _9m9aprPJz_4hExeiqIi }
+ [[  set  varix  0 ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -523,7 +567,7 @@
 {
   * comment  "block to push every lkitm_tasklet in sequence argtasklets in front of agenda and notify"
   * in  agenda_push_front
-  * instructions  [] }
+  * instructions  [_4sni2unK9_1AqEEbhcc _67HCKpy4n_17u81x1Cz] }
  
   %  ^filler_of_plain_kind( block)
  
@@ -537,7 +581,7 @@
   * emitted_blocks  {_0y7wu372C_3JH4an3L2 _27PBmP9xP_3Hh1aedqr _50yPKJAK2_4Ksihqd4c}
   * emitted_closed  []
   * emitted_constants  [hook_closure item_queue tasklet the_agenda]
-  * emitted_variables  [lkitm_agenda lkitm_tasklet]
+  * emitted_variables  [lkitm_agenda lkitm_tasklet varlen varix]
   * formals  [argtasklets]
   * function_signature  signature_1val_to_void
   * hook_closure  0
@@ -557,7 +601,7 @@
   * emitted_blocks  {_02MHbyAxU_563vpdUu2 _0LHqbyzz9_2J9v5p6zc _9m9aprPJz_4hExeiqIi}
   * emitted_closed  []
   * emitted_constants  [hook_closure item_queue tasklet the_agenda]
-  * emitted_variables  [lkitm_agenda lkitm_tasklet]
+  * emitted_variables  [lkitm_agenda lkitm_tasklet varlen varix]
   * formals  [argtasklets]
   * function_signature  signature_1val_to_void
   * hook_closure  0
@@ -1823,6 +1867,26 @@
 {
   * comment  "in plain connectives, gives item bound to rest of arguments"
  }
+ 
+..
+
+
+** varix
+{
+  * comment  "variable for an index"
+  * type  integer }
+ 
+  %  ^filler_of_plain_kind( variable)
+ 
+..
+
+
+** varlen
+{
+  * comment  "variable for a length"
+  * type  integer }
+ 
+  %  ^filler_of_plain_kind( variable)
  
 ..
 

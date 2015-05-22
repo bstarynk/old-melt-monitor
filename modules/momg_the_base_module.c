@@ -51,21 +51,25 @@ bool momfunc_1val_to_void_agenda_push_back (const momnode_t *mom_node, momvalue_
        ))
   return false;
   // 0 output results:
-  // 2 variables:
+  // 4 variables:
 // variable lkitm_agenda of type locked_item
-  momlockeditem_t* momvar0 = (momlockeditem_t*)0;
+  momlockeditem_t* momvar0  /*declvar:lkitm_agenda*/ = (momlockeditem_t*)0;
 // variable lkitm_tasklet of type locked_item
-  momlockeditem_t* momvar1 = (momlockeditem_t*)0;
+  momlockeditem_t* momvar1  /*declvar:lkitm_tasklet*/ = (momlockeditem_t*)0;
+// variable varix of type integer
+  intptr_t momvar3  /*declvar:varix*/ = (intptr_t)0;
+// variable varlen of type integer
+  intptr_t momvar2  /*declvar:varlen*/ = (intptr_t)0;
   // 4 constants:
   // constant hook_closure
-  const momvalue_t momconst_0 = 
+  const momvalue_t momconst_0 /*const:hook_closure*/ = 
     mom_raw_item_get_indexed_component (mom_funcitm, 0);
   // constant item_queue
-  momitem_t* momconst_1 = MOM_PREDEFINED_NAMED(item_queue);
+  momitem_t* momconst_1 /*const:item_queue*/ = MOM_PREDEFINED_NAMED(item_queue);
   // constant tasklet
-  momitem_t* momconst_2 = MOM_PREDEFINED_NAMED(tasklet);
+  momitem_t* momconst_2 /*const:tasklet*/ = MOM_PREDEFINED_NAMED(tasklet);
   // constant the_agenda
-  momitem_t* momconst_3 = MOM_PREDEFINED_NAMED(the_agenda);
+  momitem_t* momconst_3 /*const:the_agenda*/ = MOM_PREDEFINED_NAMED(the_agenda);
   // 0 closed:
   goto momblocklab__0y7wu372C_3JH4an3L2;
 
@@ -113,7 +117,15 @@ bool momfunc_1val_to_void_agenda_push_back (const momnode_t *mom_node, momvalue_
 /// block #1: _27PBmP9xP_3Hh1aedqr
 //: block to push every lkitm_tasklet in sequence argtasklets in back of agenda and notify
  momblocklab__27PBmP9xP_3Hh1aedqr: {
-// 0 statements in block _27PBmP9xP_3Hh1aedqr
+// 2 statements in block _27PBmP9xP_3Hh1aedqr
+// statement #0 :: _5JFtUFwBC_1v2BUA42z; varlen := length of argtasklets; in agenda_push_back
+// set into varlen
+  momvar2 /*var:varlen*/ =
+   /*value_sequence_length:*/ mom_seq_length(mom_value_to_sequ(momarg0 /*formalarg:argtasklets*/));
+// statement #1 :: _60v4pLRCu_55xI9BKJD; varix := 0; in agenda_push_back
+// set into varix
+  momvar3 /*var:varix*/ =
+   0;
 
   }; // end block _27PBmP9xP_3Hh1aedqr
   goto momepilog_agenda_push_back;
@@ -166,21 +178,25 @@ bool momfunc_1val_to_void_agenda_push_front (const momnode_t *mom_node, momvalue
        ))
   return false;
   // 0 output results:
-  // 2 variables:
+  // 4 variables:
 // variable lkitm_agenda of type locked_item
-  momlockeditem_t* momvar0 = (momlockeditem_t*)0;
+  momlockeditem_t* momvar0  /*declvar:lkitm_agenda*/ = (momlockeditem_t*)0;
 // variable lkitm_tasklet of type locked_item
-  momlockeditem_t* momvar1 = (momlockeditem_t*)0;
+  momlockeditem_t* momvar1  /*declvar:lkitm_tasklet*/ = (momlockeditem_t*)0;
+// variable varix of type integer
+  intptr_t momvar3  /*declvar:varix*/ = (intptr_t)0;
+// variable varlen of type integer
+  intptr_t momvar2  /*declvar:varlen*/ = (intptr_t)0;
   // 4 constants:
   // constant hook_closure
-  const momvalue_t momconst_0 = 
+  const momvalue_t momconst_0 /*const:hook_closure*/ = 
     mom_raw_item_get_indexed_component (mom_funcitm, 0);
   // constant item_queue
-  momitem_t* momconst_1 = MOM_PREDEFINED_NAMED(item_queue);
+  momitem_t* momconst_1 /*const:item_queue*/ = MOM_PREDEFINED_NAMED(item_queue);
   // constant tasklet
-  momitem_t* momconst_2 = MOM_PREDEFINED_NAMED(tasklet);
+  momitem_t* momconst_2 /*const:tasklet*/ = MOM_PREDEFINED_NAMED(tasklet);
   // constant the_agenda
-  momitem_t* momconst_3 = MOM_PREDEFINED_NAMED(the_agenda);
+  momitem_t* momconst_3 /*const:the_agenda*/ = MOM_PREDEFINED_NAMED(the_agenda);
   // 0 closed:
   goto momblocklab__02MHbyAxU_563vpdUu2;
 
@@ -250,7 +266,15 @@ bool momfunc_1val_to_void_agenda_push_front (const momnode_t *mom_node, momvalue
 /// block #2: _9m9aprPJz_4hExeiqIi
 //: block to push every lkitm_tasklet in sequence argtasklets in front of agenda and notify
  momblocklab__9m9aprPJz_4hExeiqIi: {
-// 0 statements in block _9m9aprPJz_4hExeiqIi
+// 2 statements in block _9m9aprPJz_4hExeiqIi
+// statement #0 :: _4sni2unK9_1AqEEbhcc; varlen := length of argtasklets; in agenda_push_front
+// set into varlen
+  momvar2 /*var:varlen*/ =
+   /*value_sequence_length:*/ mom_seq_length(mom_value_to_sequ(momarg0 /*formalarg:argtasklets*/));
+// statement #1 :: _67HCKpy4n_17u81x1Cz; varix := 0; in agenda_push_front
+// set into varix
+  momvar3 /*var:varix*/ =
+   0;
 
   }; // end block _9m9aprPJz_4hExeiqIi
   goto momepilog_agenda_push_front;
@@ -283,31 +307,31 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
   // 0 output results:
   // 4 variables:
 // variable itmvar_tasklet of type item
-  momitem_t* momvar2 = (momitem_t*)0;
+  momitem_t* momvar2  /*declvar:itmvar_tasklet*/ = (momitem_t*)0;
 // variable lkitm_agenda of type locked_item
-  momlockeditem_t* momvar1 = (momlockeditem_t*)0;
+  momlockeditem_t* momvar1  /*declvar:lkitm_agenda*/ = (momlockeditem_t*)0;
 // variable lkitm_tasklet of type locked_item
-  momlockeditem_t* momvar3 = (momlockeditem_t*)0;
+  momlockeditem_t* momvar3  /*declvar:lkitm_tasklet*/ = (momlockeditem_t*)0;
 // variable varclo of type value
-  momvalue_t momvar0 = MOM_NONEV;
+  momvalue_t momvar0 /*declvar:varclo*/ = MOM_NONEV;
   // 7 constants:
   // constant _07BHLcwhp_48ka0t9bq
-  const momvalue_t momconst_1 = 
+  const momvalue_t momconst_1 /*const:_07BHLcwhp_48ka0t9bq*/ = 
     mom_raw_item_get_indexed_component (mom_funcitm, 1);
   // constant fill_agenda
-  momitem_t* momconst_2 =
+  momitem_t* momconst_2 /*const:fill_agenda*/ =
     mom_value_to_item(mom_raw_item_get_indexed_component (mom_funcitm, 2));
   // constant hook_closure
-  const momvalue_t momconst_0 = 
+  const momvalue_t momconst_0 /*const:hook_closure*/ = 
     mom_raw_item_get_indexed_component (mom_funcitm, 0);
   // constant item_queue
-  momitem_t* momconst_3 = MOM_PREDEFINED_NAMED(item_queue);
+  momitem_t* momconst_3 /*const:item_queue*/ = MOM_PREDEFINED_NAMED(item_queue);
   // constant runner
-  momitem_t* momconst_4 = MOM_PREDEFINED_NAMED(runner);
+  momitem_t* momconst_4 /*const:runner*/ = MOM_PREDEFINED_NAMED(runner);
   // constant tasklet
-  momitem_t* momconst_5 = MOM_PREDEFINED_NAMED(tasklet);
+  momitem_t* momconst_5 /*const:tasklet*/ = MOM_PREDEFINED_NAMED(tasklet);
   // constant the_agenda
-  momitem_t* momconst_6 = MOM_PREDEFINED_NAMED(the_agenda);
+  momitem_t* momconst_6 /*const:the_agenda*/ = MOM_PREDEFINED_NAMED(the_agenda);
   // 0 closed:
   goto momblocklab__7MF947fC8_8ChefReMD;
 

@@ -844,7 +844,7 @@ mom_queueitem_peek_front (struct momqueueitems_st *qu)
 
 
 // if rank is >= 0, count from front; otherwise count from back
-const momitem_t *mom_queueitem_peek_nth (struct momqueueitems_st *qu, int rk);
+momitem_t *mom_queueitem_peek_nth (struct momqueueitems_st *qu, int rk);
 
 static inline unsigned long
 mom_queueitem_size (struct momqueueitems_st *qu)
@@ -854,7 +854,7 @@ mom_queueitem_size (struct momqueueitems_st *qu)
   return qu->que_size;
 }
 
-const momitem_t *mom_queueitem_pop_front (struct momqueueitems_st *qu);
+momitem_t *mom_queueitem_pop_front (struct momqueueitems_st *qu);
 const momseq_t *mom_queueitem_tuple (struct momqueueitems_st *qu,
 				     momvalue_t metav);
 
