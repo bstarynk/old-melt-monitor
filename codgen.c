@@ -308,6 +308,9 @@ static void
 cgen_bind_closed_item_mom (struct codegen_mom_st *cg, momitem_t *itmc);
 
 
+static void cgen_bind_constant_item_mom (struct codegen_mom_st *cg,
+					 momitem_t *itmk, momvalue_t vconst);
+
 static void
 cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
 {
@@ -387,6 +390,27 @@ cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
   if (cg->cg_errormsg)
     return;
   cg->cg_funsigitm = itmsignature;
+  /////
+  momvalue_t vhookclosure =	//
+    mom_item_unsync_get_attribute (itmfun,
+				   MOM_PREDEFINED_NAMED (hook_closure));
+  MOM_DEBUGPRINTF (gencod, "scanning function %s vhookclosure %s",
+		   mom_item_cstring (itmfun),
+		   mom_output_gcstring (vhookclosure));
+  if (vhookclosure.typnum == momty_int)
+    {
+      int hooknum = (int) vhookclosure.vint;
+      if (hooknum != 0)
+	CGEN_ERROR_RETURN_MOM (cg,
+			       "module item %s : function %s has non-zero `hook_closure` %s",
+			       mom_item_cstring (cg->cg_moduleitm),
+			       mom_item_cstring (itmfun),
+			       mom_output_gcstring (vhookclosure));
+      cgen_lock_item_mom (cg, MOM_PREDEFINED_NAMED (hook_closure));
+      cgen_bind_constant_item_mom (cg,
+				   MOM_PREDEFINED_NAMED (hook_closure),
+				   mom_nodev_new (itmfun, 0, NULL));
+    }
   /////
   {				/* bind the explicit constants */
     momvalue_t vconstants =	//
@@ -594,8 +618,6 @@ cgen_scan_block_first_mom (struct codegen_mom_st *cg, momitem_t *itmblock)
 static void cgen_bind_variable_item_mom (struct codegen_mom_st *cg,
 					 momitem_t *itmv);
 
-static void cgen_bind_constant_item_mom (struct codegen_mom_st *cg,
-					 momitem_t *itmk, momvalue_t vconst);
 
 static int
 cmp_intptr_mom (const void *p1, const void *p2)
@@ -3688,8 +3710,8 @@ cgen_third_decorating_pass_mom (momitem_t *itmcgen)
       {
 	const momseq_t *constset = mom_value_to_set (vsetconst);
 	unsigned nbconst = mom_seq_length (constset);
-	if (nbconst > 0
-	    && nbconst > mom_unsync_item_components_count (curfunitm))
+	curfunitm->itm_comps = NULL;	/* forget the old components! */
+	if (nbconst > 0)
 	  mom_unsync_item_components_reserve (curfunitm, nbconst);
 	momitem_t **arritm = MOM_GC_ALLOC ("arritm constset",
 					   (nbconst +

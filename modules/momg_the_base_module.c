@@ -47,7 +47,7 @@ bool momfunc_1val_to_void_agenda_push_back (const momnode_t *mom_node, momvalue_
   momitem_t* mom_funcitm = NULL;
   if (MOM_UNLIKELY(!mom_node
       || !(mom_funcitm = mom_node_conn (mom_node))
-      || mom_unsync_item_components_count (mom_funcitm)<3
+      || mom_unsync_item_components_count (mom_funcitm)<4
        ))
   return false;
   // 0 output results:
@@ -56,13 +56,16 @@ bool momfunc_1val_to_void_agenda_push_back (const momnode_t *mom_node, momvalue_
   momlockeditem_t* momvar0 = (momlockeditem_t*)0;
 // variable lkitm_tasklet of type locked_item
   momlockeditem_t* momvar1 = (momlockeditem_t*)0;
-  // 3 constants:
+  // 4 constants:
+  // constant hook_closure
+  const momvalue_t momconst_0 = 
+    mom_raw_item_get_indexed_component (mom_funcitm, 0);
   // constant item_queue
-  momitem_t* momconst_0 = MOM_PREDEFINED_NAMED(item_queue);
+  momitem_t* momconst_1 = MOM_PREDEFINED_NAMED(item_queue);
   // constant tasklet
-  momitem_t* momconst_1 = MOM_PREDEFINED_NAMED(tasklet);
+  momitem_t* momconst_2 = MOM_PREDEFINED_NAMED(tasklet);
   // constant the_agenda
-  momitem_t* momconst_2 = MOM_PREDEFINED_NAMED(the_agenda);
+  momitem_t* momconst_3 = MOM_PREDEFINED_NAMED(the_agenda);
   // 0 closed:
   goto momblocklab__0y7wu372C_3JH4an3L2;
 
@@ -73,7 +76,7 @@ bool momfunc_1val_to_void_agenda_push_back (const momnode_t *mom_node, momvalue_
 // statement #0 :: _2ur1uJ52w_1RmsKK5vb; set lkitm_agenda := the_agenda; in agenda_push_back
   { // locked set into lkitm_agenda
   momlockeditem_t* momoldlocked__2ur1uJ52w_1RmsKK5vb = momvar0 /*var:lkitm_agenda*/;
-  momlockeditem_t* momnewlocked__2ur1uJ52w_1RmsKK5vb =  /*constant#2:*/MOM_PREDEFINED_NAMED(the_agenda);
+  momlockeditem_t* momnewlocked__2ur1uJ52w_1RmsKK5vb =  /*constant#3:*/MOM_PREDEFINED_NAMED(the_agenda);
   if (momoldlocked__2ur1uJ52w_1RmsKK5vb != momnewlocked__2ur1uJ52w_1RmsKK5vb) {
     if (momoldlocked__2ur1uJ52w_1RmsKK5vb != NULL) mom_item_unlock (momoldlocked__2ur1uJ52w_1RmsKK5vb);
     if (momnewlocked__2ur1uJ52w_1RmsKK5vb != NULL) mom_item_lock (momnewlocked__2ur1uJ52w_1RmsKK5vb);
@@ -122,7 +125,7 @@ bool momfunc_1val_to_void_agenda_push_back (const momnode_t *mom_node, momvalue_
 // 3 statements in block _50yPKJAK2_4Ksihqd4c
 // statement #0 :: _24sBAv42k_3Ly5hw0vj; push lkitm_tasklet at back of lkitm_agenda; in agenda_push_back
 /*push_back_queue_item:*/
-{if (momvar0 /*var:lkitm_agenda*/ && momvar0 /*var:lkitm_agenda*/->itm_kind ==  /*constant#0:*/MOM_PREDEFINED_NAMED(item_queue))
+{if (momvar0 /*var:lkitm_agenda*/ && momvar0 /*var:lkitm_agenda*/->itm_kind ==  /*constant#1:*/MOM_PREDEFINED_NAMED(item_queue))
    mom_queueitem_push_back((struct momqueueitems_st*)momvar0 /*var:lkitm_agenda*/->itm_data1, momvar1 /*var:lkitm_tasklet*/);}
 // statement #1 :: _1R1KvIhCR_6ak3tU4ep; debug-printf pushed fron lkitm_tasklet in agenda_push_back
   // chunk of 5 components
@@ -159,7 +162,7 @@ bool momfunc_1val_to_void_agenda_push_front (const momnode_t *mom_node, momvalue
   momitem_t* mom_funcitm = NULL;
   if (MOM_UNLIKELY(!mom_node
       || !(mom_funcitm = mom_node_conn (mom_node))
-      || mom_unsync_item_components_count (mom_funcitm)<3
+      || mom_unsync_item_components_count (mom_funcitm)<4
        ))
   return false;
   // 0 output results:
@@ -168,13 +171,16 @@ bool momfunc_1val_to_void_agenda_push_front (const momnode_t *mom_node, momvalue
   momlockeditem_t* momvar0 = (momlockeditem_t*)0;
 // variable lkitm_tasklet of type locked_item
   momlockeditem_t* momvar1 = (momlockeditem_t*)0;
-  // 3 constants:
+  // 4 constants:
+  // constant hook_closure
+  const momvalue_t momconst_0 = 
+    mom_raw_item_get_indexed_component (mom_funcitm, 0);
   // constant item_queue
-  momitem_t* momconst_0 = MOM_PREDEFINED_NAMED(item_queue);
+  momitem_t* momconst_1 = MOM_PREDEFINED_NAMED(item_queue);
   // constant tasklet
-  momitem_t* momconst_1 = MOM_PREDEFINED_NAMED(tasklet);
+  momitem_t* momconst_2 = MOM_PREDEFINED_NAMED(tasklet);
   // constant the_agenda
-  momitem_t* momconst_2 = MOM_PREDEFINED_NAMED(the_agenda);
+  momitem_t* momconst_3 = MOM_PREDEFINED_NAMED(the_agenda);
   // 0 closed:
   goto momblocklab__02MHbyAxU_563vpdUu2;
 
@@ -185,7 +191,7 @@ bool momfunc_1val_to_void_agenda_push_front (const momnode_t *mom_node, momvalue
 // statement #0 :: _2P84CtHfA_4kF28e70H; set lkitm_agenda := the_agenda; in agenda_push_front
   { // locked set into lkitm_agenda
   momlockeditem_t* momoldlocked__2P84CtHfA_4kF28e70H = momvar0 /*var:lkitm_agenda*/;
-  momlockeditem_t* momnewlocked__2P84CtHfA_4kF28e70H =  /*constant#2:*/MOM_PREDEFINED_NAMED(the_agenda);
+  momlockeditem_t* momnewlocked__2P84CtHfA_4kF28e70H =  /*constant#3:*/MOM_PREDEFINED_NAMED(the_agenda);
   if (momoldlocked__2P84CtHfA_4kF28e70H != momnewlocked__2P84CtHfA_4kF28e70H) {
     if (momoldlocked__2P84CtHfA_4kF28e70H != NULL) mom_item_unlock (momoldlocked__2P84CtHfA_4kF28e70H);
     if (momnewlocked__2P84CtHfA_4kF28e70H != NULL) mom_item_lock (momnewlocked__2P84CtHfA_4kF28e70H);
@@ -225,7 +231,7 @@ bool momfunc_1val_to_void_agenda_push_front (const momnode_t *mom_node, momvalue
 // 3 statements in block _0LHqbyzz9_2J9v5p6zc
 // statement #0 :: _2AAHn6xi7_1R19bsnhn; push lkitm_tasklet in front of lkitm_agenda; in agenda_push_front
 /*push_front_queue_item:*/
-{if (momvar0 /*var:lkitm_agenda*/ && momvar0 /*var:lkitm_agenda*/->itm_kind ==  /*constant#0:*/MOM_PREDEFINED_NAMED(item_queue))
+{if (momvar0 /*var:lkitm_agenda*/ && momvar0 /*var:lkitm_agenda*/->itm_kind ==  /*constant#1:*/MOM_PREDEFINED_NAMED(item_queue))
   mom_queueitem_push_front((struct momqueueitems_st*)momvar0 /*var:lkitm_agenda*/->itm_data1, momvar1 /*var:lkitm_tasklet*/);}
 // statement #1 :: _9jMHbym6i_27j6eCiEL; debug-printf pushed fron lkitm_tasklet in agenda_push_front
   // chunk of 5 components
@@ -271,7 +277,7 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
   momitem_t* mom_funcitm = NULL;
   if (MOM_UNLIKELY(!mom_node
       || !(mom_funcitm = mom_node_conn (mom_node))
-      || mom_unsync_item_components_count (mom_funcitm)<6
+      || mom_unsync_item_components_count (mom_funcitm)<7
        ))
   return false;
   // 0 output results:
@@ -284,21 +290,24 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
   momlockeditem_t* momvar3 = (momlockeditem_t*)0;
 // variable varclo of type value
   momvalue_t momvar0 = MOM_NONEV;
-  // 6 constants:
+  // 7 constants:
   // constant _07BHLcwhp_48ka0t9bq
+  const momvalue_t momconst_1 = 
+    mom_raw_item_get_indexed_component (mom_funcitm, 1);
+  // constant fill_agenda
+  momitem_t* momconst_2 =
+    mom_value_to_item(mom_raw_item_get_indexed_component (mom_funcitm, 2));
+  // constant hook_closure
   const momvalue_t momconst_0 = 
     mom_raw_item_get_indexed_component (mom_funcitm, 0);
-  // constant fill_agenda
-  momitem_t* momconst_1 =
-    mom_value_to_item(mom_raw_item_get_indexed_component (mom_funcitm, 1));
   // constant item_queue
-  momitem_t* momconst_2 = MOM_PREDEFINED_NAMED(item_queue);
+  momitem_t* momconst_3 = MOM_PREDEFINED_NAMED(item_queue);
   // constant runner
-  momitem_t* momconst_3 = MOM_PREDEFINED_NAMED(runner);
+  momitem_t* momconst_4 = MOM_PREDEFINED_NAMED(runner);
   // constant tasklet
-  momitem_t* momconst_4 = MOM_PREDEFINED_NAMED(tasklet);
+  momitem_t* momconst_5 = MOM_PREDEFINED_NAMED(tasklet);
   // constant the_agenda
-  momitem_t* momconst_5 = MOM_PREDEFINED_NAMED(the_agenda);
+  momitem_t* momconst_6 = MOM_PREDEFINED_NAMED(the_agenda);
   // 0 closed:
   goto momblocklab__7MF947fC8_8ChefReMD;
 
@@ -339,7 +348,7 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
 // 1 statements in block _14MzMbJ9v_627D0CIiA
 // statement #0 :: _4KKszvz3w_1HLUHLsru; apply varclo to lkitm_agenda
 // apply with 1 input arguments and 0 output results, radix 1itm_to_void
-   if (!mom_applval_1itm_to_void (momvar0 /*var:varclo*/,  /*constant#5:*/MOM_PREDEFINED_NAMED(the_agenda)))
+   if (!mom_applval_1itm_to_void (momvar0 /*var:varclo*/,  /*constant#6:*/MOM_PREDEFINED_NAMED(the_agenda)))
      return false;
 
   }; // end block _14MzMbJ9v_627D0CIiA
@@ -365,7 +374,7 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
 // statement #1 :: _2u1LykBw5_7IRf5Cjub; set varclo := get_attr(lkitm_tasklet, runner)
 // set into varclo
   momvar0 /*var:varclo*/ =
-   /*unsync_get_attribute:*/mom_item_unsync_get_attribute (momvar3 /*var:lkitm_tasklet*/, /*constant#3:*/MOM_PREDEFINED_NAMED(runner));
+   /*unsync_get_attribute:*/mom_item_unsync_get_attribute (momvar3 /*var:lkitm_tasklet*/, /*constant#4:*/MOM_PREDEFINED_NAMED(runner));
 // statement #2 :: _1dhK6Bj47_4vvDyBKAR; if varclo is runner node, apply it to lkitm_tasklet
 // if testing on integer
     if (/*value_is_node:*/ (momvar0 /*var:varclo*/).typnum == momty_node)
@@ -382,14 +391,14 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
 // statement #0 :: _60nmad63F_1Jd336xAL; set varclo := fill_agenda(lkitm_agenda)
 // set into varclo
   momvar0 /*var:varclo*/ =
-   /*unsync_get_attribute:*/mom_item_unsync_get_attribute (momvar1 /*var:lkitm_agenda*/, /*constant-item:fill_agenda*/momconst_1);
+   /*unsync_get_attribute:*/mom_item_unsync_get_attribute (momvar1 /*var:lkitm_agenda*/, /*constant-item:fill_agenda*/momconst_2);
 // statement #1 :: _7vj8eaIrt_9bLBC6eKB; if varclo is node apply it
 // if testing on integer
     if (/*value_is_node:*/ (momvar0 /*var:varclo*/).typnum == momty_node)
       goto momblocklab__14MzMbJ9v_627D0CIiA;
 // statement #2 :: _6kDqRmkjk_6CxUEu2hk; if lkitm_agenda empty queue wait agenda-changed
 // if testing on integer
-    if (/*queue_item_is_empty:*/momvar1 /*var:lkitm_agenda*/ && momvar1 /*var:lkitm_agenda*/->itm_kind == /*constant#2:*/MOM_PREDEFINED_NAMED(item_queue) && mom_queueitem_size (momvar1 /*var:lkitm_agenda*/->itm_data1) == 0)
+    if (/*queue_item_is_empty:*/momvar1 /*var:lkitm_agenda*/ && momvar1 /*var:lkitm_agenda*/->itm_kind == /*constant#3:*/MOM_PREDEFINED_NAMED(item_queue) && mom_queueitem_size (momvar1 /*var:lkitm_agenda*/->itm_data1) == 0)
       goto momblocklab__0HvrqAHte_4ryaA4drs;
 
   }; // end block _4xAIqB3tj_97IrD41UP
@@ -403,7 +412,7 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
 // statement #0 :: _1c462DJmx_68zwnz1Ua; set lkitm_agenda := the_agenda in agenda_step
   { // locked set into lkitm_agenda
   momlockeditem_t* momoldlocked__1c462DJmx_68zwnz1Ua = momvar1 /*var:lkitm_agenda*/;
-  momlockeditem_t* momnewlocked__1c462DJmx_68zwnz1Ua =  /*constant#5:*/MOM_PREDEFINED_NAMED(the_agenda);
+  momlockeditem_t* momnewlocked__1c462DJmx_68zwnz1Ua =  /*constant#6:*/MOM_PREDEFINED_NAMED(the_agenda);
   if (momoldlocked__1c462DJmx_68zwnz1Ua != momnewlocked__1c462DJmx_68zwnz1Ua) {
     if (momoldlocked__1c462DJmx_68zwnz1Ua != NULL) mom_item_unlock (momoldlocked__1c462DJmx_68zwnz1Ua);
     if (momnewlocked__1c462DJmx_68zwnz1Ua != NULL) mom_item_lock (momnewlocked__1c462DJmx_68zwnz1Ua);
@@ -414,16 +423,16 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
   } // end locked set into lkitm_agenda
 // statement #1 :: _44tmkDkKa_8nUhJEeay; if empty agenda refill it
 // if testing on integer
-    if (/*queue_item_is_empty:*/momvar1 /*var:lkitm_agenda*/ && momvar1 /*var:lkitm_agenda*/->itm_kind == /*constant#2:*/MOM_PREDEFINED_NAMED(item_queue) && mom_queueitem_size (momvar1 /*var:lkitm_agenda*/->itm_data1) == 0)
+    if (/*queue_item_is_empty:*/momvar1 /*var:lkitm_agenda*/ && momvar1 /*var:lkitm_agenda*/->itm_kind == /*constant#3:*/MOM_PREDEFINED_NAMED(item_queue) && mom_queueitem_size (momvar1 /*var:lkitm_agenda*/->itm_data1) == 0)
       goto momblocklab__4xAIqB3tj_97IrD41UP;
 // statement #2 :: _0p7zBDIku_3njudUFtp; itmvar_tasklet <- pop_front(lkitm_agenda)
 /*pop_front_queue_item:*/
 momvar2 /*var:itmvar_tasklet*/ = (momitem_t*)NULL;
-{if (momvar1 /*var:lkitm_agenda*/ && momvar1 /*var:lkitm_agenda*/->itm_kind ==  /*constant#2:*/MOM_PREDEFINED_NAMED(item_queue))
+{if (momvar1 /*var:lkitm_agenda*/ && momvar1 /*var:lkitm_agenda*/->itm_kind ==  /*constant#3:*/MOM_PREDEFINED_NAMED(item_queue))
   momvar2 /*var:itmvar_tasklet*/ = mom_queueitem_pop_front((struct momqueueitems_st*)momvar1 /*var:lkitm_agenda*/->itm_data1);}
 // statement #3 :: _9MCjbp28L_6zLA3KERH; if itmvar_tasklet is a tasklet run it
 // if testing on integer
-    if (/*item_has_kind:*/momvar2 /*var:itmvar_tasklet*/ && momvar2 /*var:itmvar_tasklet*/->itm_kind == /*constant#4:*/MOM_PREDEFINED_NAMED(tasklet))
+    if (/*item_has_kind:*/momvar2 /*var:itmvar_tasklet*/ && momvar2 /*var:itmvar_tasklet*/->itm_kind == /*constant#5:*/MOM_PREDEFINED_NAMED(tasklet))
       goto momblocklab__2tz000b51_1AEBtnP4P;
 
   }; // end block _7MF947fC8_8ChefReMD

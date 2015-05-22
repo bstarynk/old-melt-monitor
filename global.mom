@@ -536,14 +536,14 @@
   * constants  {item_queue tasklet the_agenda}
   * emitted_blocks  {_0y7wu372C_3JH4an3L2 _27PBmP9xP_3Hh1aedqr _50yPKJAK2_4Ksihqd4c}
   * emitted_closed  []
-  * emitted_constants  [item_queue tasklet the_agenda]
+  * emitted_constants  [hook_closure item_queue tasklet the_agenda]
   * emitted_variables  [lkitm_agenda lkitm_tasklet]
   * formals  [argtasklets]
   * function_signature  signature_1val_to_void
   * hook_closure  0
   * in  the_base_module
   * start  _0y7wu372C_3JH4an3L2 }
- [[  item_queue  tasklet  the_agenda  the_agenda  the_agenda ]]
+ [[  ^agenda_push_back()  item_queue  tasklet  the_agenda ]]
  
   %  ^filler_of_function( signature_1val_to_void)
  
@@ -556,14 +556,14 @@
   * constants  {item_queue tasklet the_agenda}
   * emitted_blocks  {_02MHbyAxU_563vpdUu2 _0LHqbyzz9_2J9v5p6zc _9m9aprPJz_4hExeiqIi}
   * emitted_closed  []
-  * emitted_constants  [item_queue tasklet the_agenda]
+  * emitted_constants  [hook_closure item_queue tasklet the_agenda]
   * emitted_variables  [lkitm_agenda lkitm_tasklet]
   * formals  [argtasklets]
   * function_signature  signature_1val_to_void
   * hook_closure  0
   * in  the_base_module
   * start  _02MHbyAxU_563vpdUu2 }
- [[  item_queue  tasklet  the_agenda  the_agenda  the_agenda ]]
+ [[  ^agenda_push_front()  item_queue  tasklet  the_agenda ]]
  
   %  ^filler_of_function( signature_1val_to_void)
  
@@ -577,8 +577,8 @@
   * emitted_blocks  {_0HvrqAHte_4ryaA4drs _14MzMbJ9v_627D0CIiA _2tz000b51_1AEBtnP4P
    _4xAIqB3tj_97IrD41UP _7MF947fC8_8ChefReMD _8aqavIeMK_2EHL44cnU}
   * emitted_closed  []
-  * emitted_constants  [_07BHLcwhp_48ka0t9bq fill_agenda item_queue runner
-   tasklet the_agenda]
+  * emitted_constants  [hook_closure _07BHLcwhp_48ka0t9bq fill_agenda item_queue
+   runner tasklet the_agenda]
   * emitted_variables  [varclo lkitm_agenda itmvar_tasklet lkitm_tasklet]
   * formals  []
   * function_signature  signature_void_to_void
@@ -586,7 +586,8 @@
   * in  the_base_module
   * start  _7MF947fC8_8ChefReMD
   * variable  [varclo] }
- [[  ^agenda_step() ]]
+ [[  ^agenda_step()  fill_agenda  ^agenda_step()  item_queue  runner  tasklet
+   the_agenda ]]
  
   %  ^filler_of_function( signature_void_to_void)
  
@@ -1165,7 +1166,7 @@
 {
   * code_emitter  ^plain_code_emitter()
   * code_expansion  ^code_expansion( "/node:*/ mom_make_node("  itm1  ", "
-    count  ","  restitm  ")")
+    count  ","  restitm  ", NULL)")
   * code_type_scanner  ^plain_code_type_scanner()
   * comment  "operation for making nodes"
   * formals  [itm1]
@@ -1396,7 +1397,7 @@
 {
   * code_emitter  ^plain_code_emitter()
   * code_expansion  ^code_expansion( "/set:*/ mom_setv_new("  count  ","
-    restitm  ")")
+    restitm  ", NULL)")
   * code_type_scanner  ^plain_code_type_scanner()
   * comment  "operation for assignment instruction, also for making sets"
   * formals  []
@@ -1640,7 +1641,7 @@
 {
   * code_emitter  ^plain_code_emitter()
   * code_expansion  ^code_expansion( "/tuple:*/ mom_make_tuple("  count 
-   ","  restitm  ")")
+   ","  restitm  ", NULL)")
   * code_type_scanner  ^plain_code_type_scanner()
   * comment  "operation for making tuples"
   * formals  []
