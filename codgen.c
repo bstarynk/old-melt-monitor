@@ -1283,6 +1283,12 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 	  momvalue_t codemitv = mom_item_unsync_get_attribute (itmop,
 							       MOM_PREDEFINED_NAMED
 							       (statement_emitter));
+	  MOM_DEBUGPRINTF (gencod,
+			   "scan_statement_first itmstmt %s other itmop %s codscanv %s codemitv %s",
+			   mom_item_cstring (itmstmt),
+			   mom_item_cstring (itmop),
+			   mom_output_gcstring (codscanv),
+			   mom_output_gcstring (codemitv));
 	  if (codscanv.typnum != momty_node || codemitv.typnum != momty_node)
 	    CGEN_ERROR_RETURN_MOM (cg,
 				   "module item %s : function %s with block %s with statement %s with bad code operation %s",

@@ -830,12 +830,16 @@
 {
   * comment  "function to emit statement with plain code_operation" }
  
+  %  ^filler_of_function( signature_2itm_to_void)
+ 
 ..
 
 
 ** plain_statement_scanner
 {
   * comment  "function to scan statement with plain code_operation" }
+ 
+  %  ^filler_of_function( signature_2itm_to_void)
  
 ..
 
@@ -854,6 +858,8 @@
   * statement_emitter  ^plain_statement_emitter()
   * statement_scanner  ^plain_statement_scanner() }
  
+  %  ^filler_of_plain_kind( code_operation)
+ 
 ..
 
 
@@ -870,6 +876,8 @@
   * results  [itmres]
   * statement_emitter  ^plain_statement_emitter()
   * statement_scanner  ^plain_statement_scanner() }
+ 
+  %  ^filler_of_plain_kind( code_operation)
  
 ..
 
@@ -1137,6 +1145,8 @@
 ** signature_2itm_to_void   ////// PREDEFINED
 {
   * comment  "signature of functions taking two items giving no result"
+  * dumped_item_emitter  ^emitter_of_function()
+  * dumped_item_scanner  ^scanner_of_function()
   * function_radix  "2itm_to_void"
   * input_types  [item item]
   * output_types  [] }
