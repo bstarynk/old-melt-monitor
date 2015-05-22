@@ -39,6 +39,16 @@
 ..
 
 
+** _0p7zBDIku_3njudUFtp
+{
+  * comment  "itmvar_tasklet <- pop_front(lkitm_agenda)" }
+ [[  pop_front_queue_item  itmvar_tasklet  lkitm_agenda ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
 ** _14MzMbJ9v_627D0CIiA
 {
   * comment  "block to apply varclo"
@@ -55,6 +65,16 @@
  [[  set  lkitm_agenda  the_agenda ]]
  
   %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
+** _2tz000b51_1AEBtnP4P
+{
+  * comment  "lock and run the tasklet"
+  * instructions  [_4zMbIKH13_6KmkUPLpd] }
+ 
+  %  ^filler_of_plain_kind( block)
  
 ..
 
@@ -96,6 +116,16 @@
  }
  
   %  ^filler_of_plain_kind( block)
+ 
+..
+
+
+** _4zMbIKH13_6KmkUPLpd
+{
+  * comment  "set lkitm_tasklet := itmvar_tasklet" }
+ [[  set  lkitm_tasklet  itmvar_tasklet ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
  
 ..
 
@@ -148,7 +178,8 @@
 {
   * comment  "starting block of agenda_step"
   * in  agenda_step
-  * instructions  [_1c462DJmx_68zwnz1Ua _44tmkDkKa_8nUhJEeay] }
+  * instructions  [_1c462DJmx_68zwnz1Ua _44tmkDkKa_8nUhJEeay _0p7zBDIku_3njudUFtp
+   _9MCjbp28L_6zLA3KERH] }
  
   %  ^filler_of_plain_kind( block)
  
@@ -159,6 +190,16 @@
 {
   * comment  "if varclo is node apply it" }
  [[  if  ^value_is_node( varclo)  _14MzMbJ9v_627D0CIiA ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
+** _9MCjbp28L_6zLA3KERH
+{
+  * comment  "if itmvar_tasklet is a tasklet run it" }
+ [[  if  ^item_has_kind( itmvar_tasklet  tasklet)  _2tz000b51_1AEBtnP4P ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -629,6 +670,21 @@
 ..
 
 
+** item_has_kind
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*item_has_kind:*/"  itm1  " && " 
+   itm1  "->itm_kind =="  itm2)
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "test if an item itm1 has kind itm2"
+  * formals  [itm1 itm2]
+  * type  integer }
+ 
+  %  ^filler_of_plain_kind( code_operation)
+ 
+..
+
+
 ** item_queue   ////// PREDEFINED
 {
   * comment  "kind of queueitem-payloaded items"
@@ -667,6 +723,16 @@
 ..
 
 
+** itmvar_tasklet
+{
+  * comment  "the item variable for the tasklet"
+  * type  item }
+ 
+  %  ^filler_of_plain_kind( variable)
+ 
+..
+
+
 ** jump   ////// PREDEFINED
 {
   * comment  "operation for jump instruction" }
@@ -684,6 +750,16 @@
 ** lkitm_agenda
 {
   * comment  "the locked item for the agenda"
+  * type  locked_item }
+ 
+  %  ^filler_of_plain_kind( variable)
+ 
+..
+
+
+** lkitm_tasklet
+{
+  * comment  "the locked item for the tasklet"
   * type  locked_item }
  
   %  ^filler_of_plain_kind( variable)
