@@ -53,7 +53,7 @@
 
 ** _14MzMbJ9v_627D0CIiA
 {
-  * comment  "block to apply varclo"
+  * comment  "block to apply varclo to lkitm_agenda"
   * in  agenda_step
   * instructions  [_4KKszvz3w_1HLUHLsru] }
  
@@ -73,13 +73,49 @@
 ..
 
 
+** _1dhK6Bj47_4vvDyBKAR
+{
+  * comment  "if varclo is runner node, apply it to lkitm_tasklet"
+  * in  _2tz000b51_1AEBtnP4P }
+ [[  if  ^value_is_node( varclo)  _8aqavIeMK_2EHL44cnU ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
 ** _2tz000b51_1AEBtnP4P
 {
   * comment  "lock and run the tasklet"
   * in  agenda_step
-  * instructions  [_4zMbIKH13_6KmkUPLpd] }
+  * instructions  [_4zMbIKH13_6KmkUPLpd _2u1LykBw5_7IRf5Cjub _1dhK6Bj47_4vvDyBKAR]
+ }
  
   %  ^filler_of_plain_kind( block)
+ 
+..
+
+
+** _2u1LykBw5_7IRf5Cjub
+{
+  * comment  "set varclo := get_attr(lkitm_tasklet, runner)"
+  * in  _2tz000b51_1AEBtnP4P }
+ [[  set  varclo  ^unsync_get_attribute( lkitm_tasklet  runner) ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
+** _3243Pxefq_0KLe76cvy
+{
+  * comment  "debug-run lkitm_tasklet & varclo before running"
+  * in  _8aqavIeMK_2EHL44cnU }
+ [[  chunk  "  MOM_DEBUGPRINTF(run, \"before running tasklet %s using closure %s\",\n"
+   "    mom_item_cstring("  lkitm_tasklet  "),  mom_output_gcstring("  varclo
+   "));\n" ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
  
 ..
 
@@ -151,6 +187,17 @@
 ..
 
 
+** _55xk4tfhF_5sUF6zmde
+{
+  * comment  "succeed agenda_step after tasklet running"
+  * in  _8aqavIeMK_2EHL44cnU }
+ [[  success ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
 ** _5a8Hrecb3_9evcyu8sh
 {
   * comment  "instr chunk-wait agenda changed"
@@ -188,6 +235,17 @@
 ..
 
 
+** _6r8vRwBre_0c5UpIM8y
+{
+  * comment  "apply varclo to lkitm_tasklet for running"
+  * in  _8aqavIeMK_2EHL44cnU }
+ [[  apply  signature_1itm_to_void  varclo  lkitm_tasklet ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
 ** _7MF947fC8_8ChefReMD
 {
   * comment  "starting block of agenda_step"
@@ -200,6 +258,18 @@
 ..
 
 
+** _7s4IHrpuh_90FeBfefy
+{
+  * comment  "debug-run lkitm_tasklet after running"
+  * in  _8aqavIeMK_2EHL44cnU }
+ [[  chunk  "  MOM_DEBUGPRINTF(run, \"after running tasklet %s\\n\",\n" 
+  "    mom_item_cstring("  lkitm_tasklet  "));\n" ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
 ** _7vj8eaIrt_9bLBC6eKB
 {
   * comment  "if varclo is node apply it"
@@ -207,6 +277,18 @@
  [[  if  ^value_is_node( varclo)  _14MzMbJ9v_627D0CIiA ]]
  
   %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
+** _8aqavIeMK_2EHL44cnU
+{
+  * comment  "apply varclo to lkitm_tasklet and succeed"
+  * in  agenda_step
+  * instructions  [_3243Pxefq_0KLe76cvy _6r8vRwBre_0c5UpIM8y _7s4IHrpuh_90FeBfefy
+   _55xk4tfhF_5sUF6zmde] }
+ 
+  %  ^filler_of_plain_kind( block)
  
 ..
 
@@ -224,12 +306,13 @@
 
 ** agenda_step   ////// PREDEFINED
 {
-  * constants  {_07BHLcwhp_48ka0t9bq fill_agenda item_queue tasklet the_agenda}
+  * constants  {_07BHLcwhp_48ka0t9bq fill_agenda item_queue runner tasklet
+   the_agenda}
   * emitted_blocks  {_0HvrqAHte_4ryaA4drs _14MzMbJ9v_627D0CIiA _2tz000b51_1AEBtnP4P
-   _4xAIqB3tj_97IrD41UP _7MF947fC8_8ChefReMD}
+   _4xAIqB3tj_97IrD41UP _7MF947fC8_8ChefReMD _8aqavIeMK_2EHL44cnU}
   * emitted_closed  []
-  * emitted_constants  [_07BHLcwhp_48ka0t9bq fill_agenda item_queue tasklet
-   the_agenda]
+  * emitted_constants  [_07BHLcwhp_48ka0t9bq fill_agenda item_queue runner
+   tasklet the_agenda]
   * emitted_variables  [varclo lkitm_agenda itmvar_tasklet lkitm_tasklet]
   * formals  []
   * function_signature  signature_void_to_void
@@ -969,6 +1052,13 @@
 ** results   ////// PREDEFINED
 {
   * comment  "give result formals for plain statement operations" }
+ 
+..
+
+
+** runner   ////// PREDEFINED
+{
+  * comment  "gives the closure to run a tasklet" }
  
 ..
 

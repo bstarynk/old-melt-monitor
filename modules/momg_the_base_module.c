@@ -39,7 +39,7 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
   momitem_t* mom_funcitm = NULL;
   if (MOM_UNLIKELY(!mom_node
       || !(mom_funcitm = mom_node_conn (mom_node))
-      || mom_unsync_item_components_count (mom_funcitm)<5
+      || mom_unsync_item_components_count (mom_funcitm)<6
        ))
   return false;
   // 0 output results:
@@ -52,7 +52,7 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
   momlockeditem_t* momvar3 = (momlockeditem_t*)0;
 // variable varclo of type value
   momvalue_t momvar0 = MOM_NONEV;
-  // 5 constants:
+  // 6 constants:
   // constant _07BHLcwhp_48ka0t9bq
   const momvalue_t momconst_0 = 
     mom_raw_item_get_indexed_component (mom_funcitm, 0);
@@ -61,10 +61,12 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
     mom_value_to_item(mom_raw_item_get_indexed_component (mom_funcitm, 1));
   // constant item_queue
   momitem_t* momconst_2 = MOM_PREDEFINED_NAMED(item_queue);
+  // constant runner
+  momitem_t* momconst_3 = MOM_PREDEFINED_NAMED(runner);
   // constant tasklet
-  momitem_t* momconst_3 = MOM_PREDEFINED_NAMED(tasklet);
+  momitem_t* momconst_4 = MOM_PREDEFINED_NAMED(tasklet);
   // constant the_agenda
-  momitem_t* momconst_4 = MOM_PREDEFINED_NAMED(the_agenda);
+  momitem_t* momconst_5 = MOM_PREDEFINED_NAMED(the_agenda);
   // 0 closed:
   goto momblocklab__7MF947fC8_8ChefReMD;
 
@@ -100,12 +102,12 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
 ////----++++
 
 /// block #1: _14MzMbJ9v_627D0CIiA
-//: block to apply varclo
+//: block to apply varclo to lkitm_agenda
  momblocklab__14MzMbJ9v_627D0CIiA: {
 // 1 statements in block _14MzMbJ9v_627D0CIiA
 // statement #0 :: _4KKszvz3w_1HLUHLsru; apply varclo to lkitm_agenda
 // apply with 1 input arguments and 0 output results, radix 1itm_to_void
-   if (!mom_applval_1itm_to_void (momvar0 /*var:varclo*/,  /*constant#4:*/MOM_PREDEFINED_NAMED(the_agenda)))
+   if (!mom_applval_1itm_to_void (momvar0 /*var:varclo*/,  /*constant#5:*/MOM_PREDEFINED_NAMED(the_agenda)))
      return false;
 
   }; // end block _14MzMbJ9v_627D0CIiA
@@ -115,7 +117,7 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
 /// block #2: _2tz000b51_1AEBtnP4P
 //: lock and run the tasklet
  momblocklab__2tz000b51_1AEBtnP4P: {
-// 1 statements in block _2tz000b51_1AEBtnP4P
+// 3 statements in block _2tz000b51_1AEBtnP4P
 // statement #0 :: _4zMbIKH13_6KmkUPLpd; set lkitm_tasklet := itmvar_tasklet
   { // locked set into lkitm_tasklet
   momlockeditem_t* momoldlocked__4zMbIKH13_6KmkUPLpd = momvar3 /*var:lkitm_tasklet*/;
@@ -128,6 +130,14 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
   momoldlocked__4zMbIKH13_6KmkUPLpd = NULL;
   momnewlocked__4zMbIKH13_6KmkUPLpd = NULL;
   } // end locked set into lkitm_tasklet
+// statement #1 :: _2u1LykBw5_7IRf5Cjub; set varclo := get_attr(lkitm_tasklet, runner)
+// set into varclo
+  momvar0 /*var:varclo*/ =
+   /*unsync_get_attribute:*/mom_item_unsync_get_attribute (momvar3 /*var:lkitm_tasklet*/, /*constant#3:*/MOM_PREDEFINED_NAMED(runner));
+// statement #2 :: _1dhK6Bj47_4vvDyBKAR; if varclo is runner node, apply it to lkitm_tasklet
+// if testing on integer
+    if (/*value_is_node:*/ (momvar0 /*var:varclo*/).typnum == momty_node)
+      goto momblocklab__8aqavIeMK_2EHL44cnU;
 
   }; // end block _2tz000b51_1AEBtnP4P
   goto momepilog_agenda_step;
@@ -161,7 +171,7 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
 // statement #0 :: _1c462DJmx_68zwnz1Ua; set lkitm_agenda := the_agenda
   { // locked set into lkitm_agenda
   momlockeditem_t* momoldlocked__1c462DJmx_68zwnz1Ua = momvar1 /*var:lkitm_agenda*/;
-  momlockeditem_t* momnewlocked__1c462DJmx_68zwnz1Ua =  /*constant#4:*/MOM_PREDEFINED_NAMED(the_agenda);
+  momlockeditem_t* momnewlocked__1c462DJmx_68zwnz1Ua =  /*constant#5:*/MOM_PREDEFINED_NAMED(the_agenda);
   if (momoldlocked__1c462DJmx_68zwnz1Ua != momnewlocked__1c462DJmx_68zwnz1Ua) {
     if (momoldlocked__1c462DJmx_68zwnz1Ua != NULL) mom_item_unlock (momoldlocked__1c462DJmx_68zwnz1Ua);
     if (momnewlocked__1c462DJmx_68zwnz1Ua != NULL) mom_item_lock (momnewlocked__1c462DJmx_68zwnz1Ua);
@@ -181,10 +191,37 @@ momvar2 /*var:itmvar_tasklet*/ = (momitem_t*)NULL;
   momvar2 /*var:itmvar_tasklet*/ = mom_queueitem_pop_front((struct momqueueitems_st*)momvar1 /*var:lkitm_agenda*/->itm_data1);}
 // statement #3 :: _9MCjbp28L_6zLA3KERH; if itmvar_tasklet is a tasklet run it
 // if testing on integer
-    if (/*item_has_kind:*/momvar2 /*var:itmvar_tasklet*/ && momvar2 /*var:itmvar_tasklet*/->itm_kind == /*constant#3:*/MOM_PREDEFINED_NAMED(tasklet))
+    if (/*item_has_kind:*/momvar2 /*var:itmvar_tasklet*/ && momvar2 /*var:itmvar_tasklet*/->itm_kind == /*constant#4:*/MOM_PREDEFINED_NAMED(tasklet))
       goto momblocklab__2tz000b51_1AEBtnP4P;
 
   }; // end block _7MF947fC8_8ChefReMD
+  goto momepilog_agenda_step;
+ ////----
+
+/// block #5: _8aqavIeMK_2EHL44cnU
+//: apply varclo to lkitm_tasklet and succeed
+ momblocklab__8aqavIeMK_2EHL44cnU: {
+// 4 statements in block _8aqavIeMK_2EHL44cnU
+// statement #0 :: _3243Pxefq_0KLe76cvy; debug-run lkitm_tasklet & varclo before running
+  // chunk of 7 components
+  MOM_DEBUGPRINTF(run, "before running tasklet %s using closure %s",
+    mom_item_cstring(momvar3 /*var:lkitm_tasklet*/),  mom_output_gcstring(momvar0 /*var:varclo*/));
+ ;
+// statement #1 :: _6r8vRwBre_0c5UpIM8y; apply varclo to lkitm_tasklet for running
+// apply with 1 input arguments and 0 output results, radix 1itm_to_void
+   if (!mom_applval_1itm_to_void (momvar0 /*var:varclo*/, momvar3 /*var:lkitm_tasklet*/))
+     return false;
+// statement #2 :: _7s4IHrpuh_90FeBfefy; debug-run lkitm_tasklet after running
+  // chunk of 5 components
+  MOM_DEBUGPRINTF(run, "after running tasklet %s\n",
+    mom_item_cstring(momvar3 /*var:lkitm_tasklet*/));
+ ;
+// statement #3 :: _55xk4tfhF_5sUF6zmde; succeed agenda_step after tasklet running
+// success
+  momsuccess_agenda_step = true;
+  goto momepilog_agenda_step;
+
+  }; // end block _8aqavIeMK_2EHL44cnU
   goto momepilog_agenda_step;
  ////----
 
