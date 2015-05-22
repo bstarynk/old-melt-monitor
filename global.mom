@@ -65,12 +65,10 @@
 
 ** _0LHqbyzz9_2J9v5p6zc
 {
-  * comment  "block to push lkitm_tasklet in front of agenda and notify; in agenda_push_front"
+  * comment  "block to push lkitm_tasklet in front of agenda and epilog; in agenda_push_front"
   * in  agenda_push_front
-  * instructions  [_2AAHn6xi7_1R19bsnhn _9jMHbym6i_27j6eCiEL _1FU0vnqP4_6LLqBkKnt]
+  * instructions  [_2AAHn6xi7_1R19bsnhn _9jMHbym6i_27j6eCiEL _6npzcxMDM_2I2dUIfMn]
  }
- 
-  %  ^filler_of_plain_kind( block)
  
 ..
 
@@ -210,6 +208,16 @@
 ..
 
 
+** _2I2UdbsCL_6c82fexBk
+{
+  * comment  "blockepilog to notify in agenda_push_back"
+  * instructions  [_27iRH5wiL_0Rmz4hwxv _9asfCiefD_1pRiIn679] }
+ 
+  %  ^filler_of_plain_kind( block)
+ 
+..
+
+
 ** _2P84CtHfA_4kF28e70H
 {
   * comment  "set lkitm_agenda := the_agenda; in agenda_push_front"
@@ -262,6 +270,16 @@
  [[  chunk  "  MOM_DEBUGPRINTF(run, \"before running tasklet %s using closure %s\",\n"
    "    mom_item_cstring("  lkitm_tasklet  "),  mom_output_gcstring("  varclo
    "));\n" ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
+** _35ALykwdw_1UiPefUMH
+{
+  * comment  "success of agenda_push_front" }
+ [[  success ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -323,6 +341,16 @@
 ..
 
 
+** _4h7BHLiLB_9askynfAC
+{
+  * comment  "blockepilog to notify in agenda_push_front"
+  * instructions  [_1FU0vnqP4_6LLqBkKnt _35ALykwdw_1UiPefUMH] }
+ 
+  %  ^filler_of_plain_kind( block)
+ 
+..
+
+
 ** _4kFw4Pe2j_7uh2m7JuM
 {
   * comment  "if argtasklets is sequence push them in front then notify; in agenda_push_front"
@@ -370,9 +398,9 @@
 
 ** _50yPKJAK2_4Ksihqd4c
 {
-  * comment  "block to push lkitm_tasklet in back of agenda and notify; in agenda_push_back"
+  * comment  "block to push lkitm_tasklet in back of agenda and epilog; in agenda_push_back"
   * in  agenda_push_back
-  * instructions  [_24sBAv42k_3Ly5hw0vj _1R1KvIhCR_6ak3tU4ep _27iRH5wiL_0Rmz4hwxv]
+  * instructions  [_24sBAv42k_3Ly5hw0vj _1R1KvIhCR_6ak3tU4ep _6pte4hEqb_94D0cHswb]
  }
  
   %  ^filler_of_plain_kind( block)
@@ -503,6 +531,24 @@
 ..
 
 
+** _6npzcxMDM_2I2dUIfMn
+{
+  * comment  "jump to epilog of agenda_push_front" }
+ [[  jump  _4h7BHLiLB_9askynfAC ]]
+ 
+..
+
+
+** _6pte4hEqb_94D0cHswb
+{
+  * comment  "jump to epilog of agenda_push_back" }
+ [[  jump  _2I2UdbsCL_6c82fexBk ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
 ** _6r8vRwBre_0c5UpIM8y
 {
   * comment  "apply varclo to lkitm_tasklet for running"
@@ -610,6 +656,16 @@
   * comment  "if itmvar_tasklet is a tasklet run it"
   * in  _7MF947fC8_8ChefReMD }
  [[  if  ^item_has_kind( itmvar_tasklet  tasklet)  _2tz000b51_1AEBtnP4P ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
+** _9asfCiefD_1pRiIn679
+{
+  * comment  "success of agenda_push_back" }
+ [[  success ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
