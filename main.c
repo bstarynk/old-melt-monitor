@@ -873,8 +873,9 @@ main (int argc_main, char **argv_main)
 	{
 	  char makecmdbuf[256];
 	  memset (makecmdbuf, 0, sizeof (makecmdbuf));
-	  snprintf (makecmdbuf, sizeof (makecmdbuf), "make ",
-		    MOM_MODULE_DIRECTORY MOM_SHARED_MODULE_PREFIX "%s.so");
+	  snprintf (makecmdbuf, sizeof (makecmdbuf), "make "
+		    MOM_MODULE_DIRECTORY MOM_SHARED_MODULE_PREFIX "%s.so",
+		    mom_item_cstring (moditm));
 	  MOM_INFORMPRINTF ("before building generated module with : %s",
 			    makecmdbuf);
 	  fflush (NULL);
