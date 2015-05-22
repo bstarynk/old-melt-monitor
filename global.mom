@@ -339,7 +339,7 @@
   * hook_closure  0
   * in  the_base_module
   * start  _0y7wu372C_3JH4an3L2 }
- [[  item_queue  tasklet  the_agenda  the_agenda ]]
+ [[  ^agenda_push_back()  item_queue  tasklet  the_agenda  the_agenda ]]
  
   %  ^filler_of_function( signature_1val_to_void)
  
@@ -359,7 +359,7 @@
   * hook_closure  0
   * in  the_base_module
   * start  _02MHbyAxU_563vpdUu2 }
- [[  item_queue  tasklet  the_agenda  the_agenda ]]
+ [[  ^agenda_push_front()  item_queue  tasklet  the_agenda  the_agenda ]]
  
   %  ^filler_of_function( signature_1val_to_void)
  
@@ -1409,7 +1409,8 @@
  [[  node  plain_code_emitter  plain_code_type_scanner  plain_statement_emitter
    plain_statement_scanner  pop_front_queue_item  pop_back_queue_item  push_front_queue_item
    push_back_queue_item  queue_item_is_empty  test_module  tuple  unsync_get_attribute
-   value_is_node  value_of_item  value_to_item ]]
+   value_is_node  value_is_sequence  value_is_set  value_is_tuple  value_of_item
+   value_to_item ]]
  
 ..
 
@@ -1483,6 +1484,43 @@
   * code_expansion  ^code_expansion( "/*value_is_node:*/ ("  val1  ").typnum == momty_node")
   * code_type_scanner  ^plain_code_type_scanner()
   * comment  "operator testing that operand is a node"
+  * formals  [val1]
+  * type  integer }
+ 
+..
+
+
+** value_is_sequence
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*value_is_sequence:*/ mom_value_to_sequ("
+    val1  ") != NULL")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "operator testing that operand is a sequence (tuple or set)"
+  * formals  [val1]
+  * type  integer }
+ 
+..
+
+
+** value_is_set
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*value_is_set:*/ ("  val1  ").typnum == momty_set")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "operator testing that operand is a set"
+  * formals  [val1]
+  * type  integer }
+ 
+..
+
+
+** value_is_tuple
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*value_is_tuple:*/ ("  val1  ").typnum == momty_tuple")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "operator testing that operand is a tuple"
   * formals  [val1]
   * type  integer }
  
