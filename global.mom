@@ -180,7 +180,8 @@
 {
   * comment  "block to push every lkitm_tasklet in sequence argtasklets in back of agenda and notify"
   * in  agenda_push_back
-  * instructions  [_5JFtUFwBC_1v2BUA42z _60v4pLRCu_55xI9BKJD] }
+  * instructions  [_5JFtUFwBC_1v2BUA42z _60v4pLRCu_55xI9BKJD _4bmJK3Ip5_22Dnmu5Hu]
+ }
  
   %  ^filler_of_plain_kind( block)
  
@@ -267,6 +268,17 @@
 ..
 
 
+** _3JddiuKnc_1nzuB6bss
+{
+  * comment  "block seqloop on argtasklets; in agenda_push_back"
+  * in  agenda_push_back
+  * instructions  [] }
+ 
+  %  ^filler_of_plain_kind( block)
+ 
+..
+
+
 ** _44tmkDkKa_8nUhJEeay
 {
   * comment  "if empty agenda refill it"
@@ -294,6 +306,17 @@
   * comment  "apply varclo to lkitm_agenda"
   * in  _14MzMbJ9v_627D0CIiA }
  [[  apply  signature_1itm_to_void  varclo  the_agenda ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
+** _4bmJK3Ip5_22Dnmu5Hu
+{
+  * comment  "jump to seqloop on argtasklets; in agenda_push_back"
+  * in  _27PBmP9xP_3Hh1aedqr }
+ [[  jump  _3JddiuKnc_1nzuB6bss ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -483,6 +506,28 @@
 ..
 
 
+** _7e0I1v1zU_9Ibu5v8Iw
+{
+  * comment  "jump to seqloop on argtasklets; in agenda_push_front"
+  * in  _9m9aprPJz_4hExeiqIi }
+ [[  jump  _7jkswmJf4_89dmJmBc2 ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
+** _7jkswmJf4_89dmJmBc2
+{
+  * comment  "block seqloop on argtasklets; in agenda_push_front"
+  * in  agenda_push_front
+  * instructions  [] }
+ 
+  %  ^filler_of_plain_kind( block)
+ 
+..
+
+
 ** _7s4IHrpuh_90FeBfefy
 {
   * comment  "debug-run lkitm_tasklet after running"
@@ -567,7 +612,8 @@
 {
   * comment  "block to push every lkitm_tasklet in sequence argtasklets in front of agenda and notify"
   * in  agenda_push_front
-  * instructions  [_4sni2unK9_1AqEEbhcc _67HCKpy4n_17u81x1Cz] }
+  * instructions  [_4sni2unK9_1AqEEbhcc _67HCKpy4n_17u81x1Cz _7e0I1v1zU_9Ibu5v8Iw]
+ }
  
   %  ^filler_of_plain_kind( block)
  
@@ -578,7 +624,8 @@
 {
   * comment  "hook to push a tasklet or a set or tuple of them in back of the agenda"
   * constants  {item_queue tasklet the_agenda}
-  * emitted_blocks  {_0y7wu372C_3JH4an3L2 _27PBmP9xP_3Hh1aedqr _50yPKJAK2_4Ksihqd4c}
+  * emitted_blocks  {_0y7wu372C_3JH4an3L2 _27PBmP9xP_3Hh1aedqr _3JddiuKnc_1nzuB6bss
+   _50yPKJAK2_4Ksihqd4c}
   * emitted_closed  []
   * emitted_constants  [hook_closure item_queue tasklet the_agenda]
   * emitted_variables  [lkitm_agenda lkitm_tasklet varlen varix]
@@ -598,7 +645,8 @@
 {
   * comment  "hook to push a tasklet or a set or tuple of them in front of the agenda"
   * constants  {item_queue tasklet the_agenda}
-  * emitted_blocks  {_02MHbyAxU_563vpdUu2 _0LHqbyzz9_2J9v5p6zc _9m9aprPJz_4hExeiqIi}
+  * emitted_blocks  {_02MHbyAxU_563vpdUu2 _0LHqbyzz9_2J9v5p6zc _7jkswmJf4_89dmJmBc2
+   _9m9aprPJz_4hExeiqIi}
   * emitted_closed  []
   * emitted_constants  [hook_closure item_queue tasklet the_agenda]
   * emitted_variables  [lkitm_agenda lkitm_tasklet varlen varix]

@@ -117,7 +117,7 @@ bool momfunc_1val_to_void_agenda_push_back (const momnode_t *mom_node, momvalue_
 /// block #1: _27PBmP9xP_3Hh1aedqr
 //: block to push every lkitm_tasklet in sequence argtasklets in back of agenda and notify
  momblocklab__27PBmP9xP_3Hh1aedqr: {
-// 2 statements in block _27PBmP9xP_3Hh1aedqr
+// 3 statements in block _27PBmP9xP_3Hh1aedqr
 // statement #0 :: _5JFtUFwBC_1v2BUA42z; varlen := length of argtasklets; in agenda_push_back
 // set into varlen
   momvar2 /*var:varlen*/ =
@@ -126,12 +126,23 @@ bool momfunc_1val_to_void_agenda_push_back (const momnode_t *mom_node, momvalue_
 // set into varix
   momvar3 /*var:varix*/ =
    0;
+// statement #2 :: _4bmJK3Ip5_22Dnmu5Hu; jump to seqloop on argtasklets; in agenda_push_back
+// jump to _3JddiuKnc_1nzuB6bss
+  goto momblocklab__3JddiuKnc_1nzuB6bss;
 
   }; // end block _27PBmP9xP_3Hh1aedqr
+////----++++
+
+/// block #2: _3JddiuKnc_1nzuB6bss
+//: block seqloop on argtasklets; in agenda_push_back
+ momblocklab__3JddiuKnc_1nzuB6bss: {
+// 0 statements in block _3JddiuKnc_1nzuB6bss
+
+  }; // end block _3JddiuKnc_1nzuB6bss
   goto momepilog_agenda_push_back;
  ////----
 
-/// block #2: _50yPKJAK2_4Ksihqd4c
+/// block #3: _50yPKJAK2_4Ksihqd4c
 //: block to push lkitm_tasklet in back of agenda and notify; in agenda_push_back
  momblocklab__50yPKJAK2_4Ksihqd4c: {
 // 3 statements in block _50yPKJAK2_4Ksihqd4c
@@ -263,10 +274,19 @@ bool momfunc_1val_to_void_agenda_push_front (const momnode_t *mom_node, momvalue
   goto momepilog_agenda_push_front;
  ////----
 
-/// block #2: _9m9aprPJz_4hExeiqIi
+/// block #2: _7jkswmJf4_89dmJmBc2
+//: block seqloop on argtasklets; in agenda_push_front
+ momblocklab__7jkswmJf4_89dmJmBc2: {
+// 0 statements in block _7jkswmJf4_89dmJmBc2
+
+  }; // end block _7jkswmJf4_89dmJmBc2
+  goto momepilog_agenda_push_front;
+ ////----
+
+/// block #3: _9m9aprPJz_4hExeiqIi
 //: block to push every lkitm_tasklet in sequence argtasklets in front of agenda and notify
  momblocklab__9m9aprPJz_4hExeiqIi: {
-// 2 statements in block _9m9aprPJz_4hExeiqIi
+// 3 statements in block _9m9aprPJz_4hExeiqIi
 // statement #0 :: _4sni2unK9_1AqEEbhcc; varlen := length of argtasklets; in agenda_push_front
 // set into varlen
   momvar2 /*var:varlen*/ =
@@ -275,10 +295,12 @@ bool momfunc_1val_to_void_agenda_push_front (const momnode_t *mom_node, momvalue
 // set into varix
   momvar3 /*var:varix*/ =
    0;
+// statement #2 :: _7e0I1v1zU_9Ibu5v8Iw; jump to seqloop on argtasklets; in agenda_push_front
+// jump to _7jkswmJf4_89dmJmBc2
+  goto momblocklab__7jkswmJf4_89dmJmBc2;
 
   }; // end block _9m9aprPJz_4hExeiqIi
-  goto momepilog_agenda_push_front;
- ////----
+////----++++
 
 //////
 // epilogue of agenda_push_front
