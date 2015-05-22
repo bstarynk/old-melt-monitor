@@ -167,7 +167,7 @@
 
 ** agenda_step   ////// PREDEFINED
 {
-  * constants  {_07BHLcwhp_48ka0t9bq fill_agenda the_agenda item_queue}
+  * constants  {_07BHLcwhp_48ka0t9bq fill_agenda item_queue the_agenda}
   * emitted_blocks  {_7MF947fC8_8ChefReMD}
   * emitted_closed  []
   * emitted_constants  [_07BHLcwhp_48ka0t9bq the_agenda]
@@ -764,6 +764,23 @@
 ..
 
 
+** pop_back_queue_item
+{
+  * code_expansion  ^code_expansion( "/*pop_back_queue_item:*/\n"  itmres
+    " = (momitem_t*)NULL;\n"  "{if ("  itm1  " && "  itm1  "->kind == " 
+   item_queue  ")\n"  "  "  itmres  " = mom_queueitem_pop_back((struct momqueueitems_st*)"
+    itm1  "->itm_data1);}\n")
+  * comment  "statement operation to pop back of queue item"
+  * constants  {item_queue}
+  * extern  {item_queue}
+  * formals  [itm1]
+  * results  [itmres]
+  * statement_emitter  ^plain_statement_emitter()
+  * statement_scanner  ^plain_statement_scanner() }
+ 
+..
+
+
 ** pop_front_queue_item
 {
   * code_expansion  ^code_expansion( "/*pop_front_queue_item:*/\n"  itmres
@@ -771,6 +788,7 @@
    item_queue  ")\n"  "  "  itmres  " = mom_queueitem_pop_front((struct momqueueitems_st*)"
     itm1  "->itm_data1);}\n")
   * comment  "statement operation to pop front of queue item"
+  * constants  {item_queue}
   * extern  {item_queue}
   * formals  [itm1]
   * results  [itmres]
@@ -784,6 +802,40 @@
 {
   * comment  "attribute giving the closure to prepare something, e.g. a code module"
  }
+ 
+..
+
+
+** push_back_queue_item
+{
+  * code_expansion  ^code_expansion( "/*push_back_queue_item:*/\n"  itmres
+    " = (momitem_t*)NULL;\n"  "{if ("  itm1  " && "  itm1  "->kind == " 
+   item_queue  ")\n"  "   mom_queueitem_push_back((struct momqueueitems_st*)"
+    itm1  "->itm_data1, "  itm2  ");}\n")
+  * comment  "statement operation to push at back of queue item itm1 the item itm2"
+  * constants  {item_queue}
+  * extern  {item_queue}
+  * formals  [itm1 itm2]
+  * results  []
+  * statement_emitter  ^plain_statement_emitter()
+  * statement_scanner  ^plain_statement_scanner() }
+ 
+..
+
+
+** push_front_queue_item
+{
+  * code_expansion  ^code_expansion( "/*push_front_queue_item:*/\n"  itmres
+    " = (momitem_t*)NULL;\n"  "{if ("  itm1  " && "  itm1  "->kind == " 
+   item_queue  ")\n"  "  mom_queueitem_push_front((struct momqueueitems_st*)"
+    itm1  "->itm_data1, "  itm2  ");}\n")
+  * comment  "statement operation to push at front of queue item itm1 the item itm2"
+  * constants  {item_queue}
+  * extern  {item_queue}
+  * formals  [itm1 itm2]
+  * results  []
+  * statement_emitter  ^plain_statement_emitter()
+  * statement_scanner  ^plain_statement_scanner() }
  
 ..
 
@@ -1091,9 +1143,9 @@
 {
   * comment  "describes the entire software system" }
  [[  node  plain_code_emitter  plain_code_type_scanner  plain_statement_emitter
-   plain_statement_scanner  pop_front_queue_item  queue_item_is_empty  test_module
-   tuple  unsync_get_attribute  value_is_node  value_of_item  value_to_item
- ]]
+   plain_statement_scanner  pop_front_queue_item  pop_back_queue_item  push_front_queue_item
+   push_back_queue_item  queue_item_is_empty  test_module  tuple  unsync_get_attribute
+   value_is_node  value_of_item  value_to_item ]]
  
 ..
 

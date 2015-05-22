@@ -286,7 +286,8 @@ cgen_bind_formals_mom (struct codegen_mom_st *cg, momitem_t *itmsignature,
 
 
 static void
-cgen_bind_constants_mom (struct codegen_mom_st *cg, momvalue_t vconstants);
+cgen_bind_constants_mom (struct codegen_mom_st *cg, momvalue_t vconstants,
+			 bool unique);
 
 static void
 cgen_bind_variables_mom (struct codegen_mom_st *cg, momvalue_t vvariables);
@@ -384,7 +385,7 @@ cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
       mom_item_unsync_get_attribute (itmfun,
 				     MOM_PREDEFINED_NAMED (constants));
     if (vconstants.typnum == momty_tuple || vconstants.typnum == momty_set)
-      cgen_bind_constants_mom (cg, vconstants);
+      cgen_bind_constants_mom (cg, vconstants, true);
     else if (vconstants.typnum != momty_null)
       CGEN_ERROR_RETURN_MOM (cg,
 			     "module item %s : function %s has bad `constants` %s",
@@ -1709,10 +1710,12 @@ cgen_bind_constant_item_mom (struct codegen_mom_st *cg, momitem_t *itmk,
 		   mom_item_cstring (itmk), mom_output_gcstring (vconst));
   cg->cg_funconstset = mom_hashset_put (cg->cg_funconstset, itmk);
   cgen_bind_new_mom (cg, itmk, vconstbind);
-}
+}				/* end ofcgen_bind_constant_item_mom  */
+
 
 static void
-cgen_bind_constants_mom (struct codegen_mom_st *cg, momvalue_t vconstants)
+cgen_bind_constants_mom (struct codegen_mom_st *cg, momvalue_t vconstants,
+			 bool unique)
 {
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   MOM_DEBUGPRINTF (gencod, "in function %s binding constants %s",
@@ -1726,6 +1729,8 @@ cgen_bind_constants_mom (struct codegen_mom_st *cg, momvalue_t vconstants)
       momitem_t *itmk = (momitem_t *) seqconstants->arritm[ixk];
       assert (itmk != NULL);
       cgen_lock_item_mom (cg, itmk);
+      if (!unique && mom_hashset_contains (cg->cg_funconstset, itmk))
+	continue;
       momvalue_t valconst =	//
 	mom_item_unsync_get_attribute (itmk,
 				       MOM_PREDEFINED_NAMED (value));
@@ -3829,15 +3834,19 @@ bool
   momvalue_t vextern =		//
     mom_item_unsync_get_attribute (itmconn,
 				   MOM_PREDEFINED_NAMED (extern));
+  momvalue_t vconstants =	//
+    mom_item_unsync_get_attribute (itmconn,
+				   MOM_PREDEFINED_NAMED (constants));
   momitem_t *conntypitm =
     mom_value_to_item (mom_item_unsync_get_attribute (itmconn,
 						      MOM_PREDEFINED_NAMED
 						      (type)));
   MOM_DEBUGPRINTF (gencod,
-		   "plain_code_type_scanner itmconn %s vcodexp %s vformals %s vextern %s conntypitm %s",
+		   "plain_code_type_scanner itmconn %s vcodexp %s vformals %s vextern %s vconstants %s conntypitm %s",
 		   mom_item_cstring (itmconn), mom_output_gcstring (vcodexp),
 		   mom_output_gcstring (vformals),
 		   mom_output_gcstring (vextern),
+		   mom_output_gcstring (vconstants),
 		   mom_item_cstring (conntypitm));
   if (vcodexp.typnum != momty_node || vformals.typnum != momty_tuple
       || !conntypitm)
@@ -3894,6 +3903,23 @@ bool
 			     mom_item_cstring (itmconn),
 			     mom_output_gcstring (vexpr),
 			     mom_output_gcstring (vextern));
+    }
+  if (cg->cg_errormsg)
+    return false;
+  if (vconstants.typnum == momty_set)
+    cgen_bind_constants_mom (cg, vconstants, false);
+  else if (vconstants.typnum != momty_null)
+    {
+      CGEN_ERROR_RESULT_MOM (cg, false,
+			     "plain_code_type_scanner:: module item %s : function %s has block %s"
+			     " with statement %s with bad connective %s in plain vexpr %s with bad `constants̀ %s",
+			     mom_item_cstring (cg->cg_moduleitm),
+			     mom_item_cstring (cg->cg_curfunitm),
+			     mom_item_cstring (cg->cg_curblockitm),
+			     mom_item_cstring (cg->cg_curstmtitm),
+			     mom_item_cstring (itmconn),
+			     mom_output_gcstring (vexpr),
+			     mom_output_gcstring (vconstants));
     }
   if (cg->cg_errormsg)
     return false;
@@ -4254,16 +4280,20 @@ bool
   momvalue_t vextern =		//
     mom_item_unsync_get_attribute (itmop,
 				   MOM_PREDEFINED_NAMED (extern));
+  momvalue_t vconstants =	//
+    mom_item_unsync_get_attribute (itmop,
+				   MOM_PREDEFINED_NAMED (constants));
   MOM_DEBUGPRINTF (gencod,
 		   "plain_statement_scanner itmstmt=%s itmop=%s;"
-		   " vformals=%s vresults=%s vvaricount=%s vvarirest=%s vcodexp=%s vextern %s",
+		   " vformals=%s vresults=%s vvaricount=%s vvarirest=%s vcodexp=%s vextern %s  vconstants %s",
 		   mom_item_cstring (itmstmt), mom_item_cstring (itmop),
 		   mom_output_gcstring (vformals),
 		   mom_output_gcstring (vresults),
 		   mom_output_gcstring (vvaricount),
 		   mom_output_gcstring (vvarirest),
 		   mom_output_gcstring (vcodexp),
-		   mom_output_gcstring (vextern));
+		   mom_output_gcstring (vextern),
+		   mom_output_gcstring (vconstants));
   if (vformals.typnum != momty_tuple || vresults.typnum != momty_tuple
       || vcodexp.typnum != momty_node || (vvaricount.typnum != momty_null
 					  && vvaricount.typnum != momty_item)
@@ -4277,6 +4307,22 @@ bool
 			   mom_item_cstring (cg->cg_curblockitm),
 			   mom_item_cstring (itmstmt),
 			   mom_item_cstring (itmop));
+  if (vconstants.typnum == momty_set)
+    cgen_bind_constants_mom (cg, vconstants, false);
+  else if (vconstants.typnum != momty_null)
+    {
+      CGEN_ERROR_RESULT_MOM (cg, false,
+			     "plain_statement_scanner:: module item %s : function %s has block %s"
+			     " with statement %s with bad operation %s with bad `constants̀ %s",
+			     mom_item_cstring (cg->cg_moduleitm),
+			     mom_item_cstring (cg->cg_curfunitm),
+			     mom_item_cstring (cg->cg_curblockitm),
+			     mom_item_cstring (cg->cg_curstmtitm),
+			     mom_item_cstring (itmop),
+			     mom_output_gcstring (vconstants));
+    }
+  if (cg->cg_errormsg)
+    return false;
   const momseq_t *formalseq = mom_value_to_tuple (vformals);
   const momseq_t *resultseq = mom_value_to_tuple (vresults);
   momitem_t *varicountitm = mom_value_to_item (vvaricount);
