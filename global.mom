@@ -20,11 +20,23 @@
 !! the_base_module
 
 
+** _01KbUac4A_3Jk2sUhJp
+{
+  * comment  "if argtasklets is sequence push them in back then notify; in agenda_push_back"
+ }
+ [[  if  ^value_is_sequence( argtasklets)  _27PBmP9xP_3Hh1aedqr ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
 ** _02MHbyAxU_563vpdUu2
 {
   * comment  "start block of agenda_push_front"
   * in  agenda_push_front
-  * instructions  [_1c462DJmx_68zwnz1Ua] }
+  * instructions  [_2P84CtHfA_4kF28e70H _7zujDCE1i_9m9ccD6C7 _8UcKkiiIk_2ur4xDt59
+   _4kFw4Pe2j_7uh2m7JuM] }
  
   %  ^filler_of_plain_kind( block)
  
@@ -51,6 +63,16 @@
 ..
 
 
+** _0LHqbyzz9_2J9v5p6zc
+{
+  * comment  "block to push lkitm_tasklet in front of agenda and notify"
+  * instructions  [] }
+ 
+  %  ^filler_of_plain_kind( block)
+ 
+..
+
+
 ** _0p7zBDIku_3njudUFtp
 {
   * comment  "itmvar_tasklet <- pop_front(lkitm_agenda)"
@@ -66,7 +88,8 @@
 {
   * comment  "start block of agenda_push_back"
   * in  agenda_push_back
-  * instructions  [_1c462DJmx_68zwnz1Ua] }
+  * instructions  [_2ur1uJ52w_1RmsKK5vb _6e0q8qCzJ_3ycbtIr58 _1m2L2Rncp_4uuzUDCqz
+   _01KbUac4A_3Jk2sUhJp] }
  
   %  ^filler_of_plain_kind( block)
  
@@ -86,7 +109,7 @@
 
 ** _1c462DJmx_68zwnz1Ua
 {
-  * comment  "set lkitm_agenda := the_agenda"
+  * comment  "set lkitm_agenda := the_agenda in agenda_step"
   * in  _7MF947fC8_8ChefReMD }
  [[  set  lkitm_agenda  the_agenda ]]
  
@@ -100,6 +123,36 @@
   * comment  "if varclo is runner node, apply it to lkitm_tasklet"
   * in  _2tz000b51_1AEBtnP4P }
  [[  if  ^value_is_node( varclo)  _8aqavIeMK_2EHL44cnU ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
+** _1m2L2Rncp_4uuzUDCqz
+{
+  * comment  "if lkitm_tasklet, push it back; in agenda_push_back" }
+ [[  if  lkitm_tasklet  _50yPKJAK2_4Ksihqd4c ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
+** _27PBmP9xP_3Hh1aedqr
+{
+  * comment  "block to push every lkitm_tasklet in sequence argtasklets in back of agenda and notify"
+  * instructions  [] }
+ 
+  %  ^filler_of_plain_kind( block)
+ 
+..
+
+
+** _2P84CtHfA_4kF28e70H
+{
+  * comment  "set lkitm_agenda := the_agenda; in agenda_push_front" }
+ [[  set  lkitm_agenda  the_agenda ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -123,6 +176,16 @@
   * comment  "set varclo := get_attr(lkitm_tasklet, runner)"
   * in  _2tz000b51_1AEBtnP4P }
  [[  set  varclo  ^unsync_get_attribute( lkitm_tasklet  runner) ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
+** _2ur1uJ52w_1RmsKK5vb
+{
+  * comment  "set lkitm_agenda := the_agenda; in agenda_push_back" }
+ [[  set  lkitm_agenda  the_agenda ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -175,6 +238,17 @@
 ..
 
 
+** _4kFw4Pe2j_7uh2m7JuM
+{
+  * comment  "if argtasklets is sequence push them in front then notify; in agenda_push_front"
+ }
+ [[  if  ^value_is_sequence( argtasklets)  _9m9aprPJz_4hExeiqIi ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
 ** _4xAIqB3tj_97IrD41UP
 {
   * comment  "refill empty agenda"
@@ -194,6 +268,16 @@
  [[  set  lkitm_tasklet  itmvar_tasklet ]]
  
   %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
+** _50yPKJAK2_4Ksihqd4c
+{
+  * comment  "block to push lkitm_tasklet in back of agenda and notify"
+  * instructions  [] }
+ 
+  %  ^filler_of_plain_kind( block)
  
 ..
 
@@ -240,6 +324,17 @@
   * comment  "set varclo := fill_agenda(lkitm_agenda)"
   * in  _4xAIqB3tj_97IrD41UP }
  [[  set  varclo  ^unsync_get_attribute( lkitm_agenda  fill_agenda) ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
+** _6e0q8qCzJ_3ycbtIr58
+{
+  * comment  "set lkitm_tasklet := value_to_item(argtasklets); in agenda_push_back"
+ }
+ [[  set  lkitm_tasklet  ^value_to_item( argtasklets) ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -303,6 +398,27 @@
 ..
 
 
+** _7zujDCE1i_9m9ccD6C7
+{
+  * comment  "set lkitm_tasklet := value_to_item(argtasklets); in agenda_push_front"
+ }
+ [[  set  lkitm_tasklet  ^value_to_item( argtasklets) ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
+** _8UcKkiiIk_2ur4xDt59
+{
+  * comment  "if lkitm_tasklet, push it front; in agenda_push_front" }
+ [[  if  lkitm_tasklet  _0LHqbyzz9_2J9v5p6zc ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
 ** _8aqavIeMK_2EHL44cnU
 {
   * comment  "apply varclo to lkitm_tasklet and succeed"
@@ -322,6 +438,16 @@
  [[  if  ^item_has_kind( itmvar_tasklet  tasklet)  _2tz000b51_1AEBtnP4P ]]
  
   %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
+** _9m9aprPJz_4hExeiqIi
+{
+  * comment  "block to push every lkitm_tasklet in sequence argtasklets in front of agenda and notify"
+  * instructions  [] }
+ 
+  %  ^filler_of_plain_kind( block)
  
 ..
 
