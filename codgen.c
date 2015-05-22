@@ -187,9 +187,17 @@ end:
     };
   mom_item_unlock (itmcgen);
   if (cg->cg_errormsg)
-    *res = mom_stringv (cg->cg_errormsg);
+    {
+      MOM_WARNPRINTF ("generate_c_module failed: %s\n",
+		      mom_string_cstr (cg->cg_errormsg));
+      *res = mom_stringv (cg->cg_errormsg);
+    }
   else
-    *res = mom_itemv (itm);
+    {
+      MOM_INFORMPRINTF ("generate_c_module sucessful for %s",
+			mom_item_cstring (itm));
+      *res = mom_itemv (itm);
+    }
   return true;
 }				/* end generate_c_module */
 
@@ -1917,19 +1925,23 @@ cgen_second_emitting_pass_mom (momitem_t *itmcgen)
       assert (curfunitm);
       cgen_emit_function_declaration_mom (cg, funix, (momitem_t *) curfunitm);
     };
+  if (cg->cg_errormsg)
+    return;
   fprintf (cg->cg_emitfile,
 	   "\n\n" "/***** implementing %d functions *****/\n", nbfun);
   for (unsigned funix = 0; funix < nbfun && !cg->cg_errormsg; funix++)
     {
       const momitem_t *curfunitm = mom_seq_nth (seqfun, funix);
       MOM_DEBUGPRINTF (gencod,
-		       "emitting signature of curfunitm %s #%d in module %s",
+		       "emitting code of curfunitm %s #%d in module %s",
 		       mom_item_cstring (curfunitm), funix,
 		       mom_item_cstring (itmmod));
       assert (curfunitm);
       cgen_emit_function_code_mom (cg, funix, (momitem_t *) curfunitm);
     };
   fprintf (cg->cg_emitfile, "\n\n" "/***** end %d functions *****/\n", nbfun);
+  if (cg->cg_errormsg)
+    return;
   fprintf (cg->cg_emitfile,
 	   "\n\n//// end of generated module file " MOM_SHARED_MODULE_PREFIX
 	   "%s.c\n\n", mom_item_cstring (itmmod));
@@ -2506,7 +2518,7 @@ cgen_emit_block_mom (struct codegen_mom_st *cg, unsigned bix,
 	   mom_item_cstring (blockitm));
   MOM_DEBUGPRINTF (gencod, "emit_block blockitm %s nbinstr %u",
 		   mom_item_cstring (blockitm), nbinstr);
-  int lastjmpindex = -1;
+  int lastjmpindex = -2;
   for (unsigned insix = 0; insix < nbinstr && !cg->cg_errormsg; insix++)
     {
       momitem_t *stmtitm = (momitem_t *) mom_seq_nth (tupblock, insix);
@@ -2524,7 +2536,7 @@ cgen_emit_block_mom (struct codegen_mom_st *cg, unsigned bix,
     }
   fprintf (cg->cg_emitfile, "\n  }; // end block %s\n",
 	   mom_item_cstring (blockitm));
-  if (lastjmpindex != (int) nbinstr - 1)
+  if (nbinstr == 0 || lastjmpindex != (int) nbinstr - 1)
     fprintf (cg->cg_emitfile, "  goto " EPILOGUE_PREFIX_MOM "_%s;\n"
 	     " ////----\n", mom_item_cstring (cg->cg_curfunitm));
   else
@@ -4725,6 +4737,10 @@ bool
 	case momty_item:
 	  {
 	    momitem_t *curxitm = vcurexp.vitem;
+	    MOM_DEBUGPRINTF (gencod,
+			     "plain_statement_emitter itmstmt=%s expix#%d curxitm %s",
+			     mom_item_cstring (itmstmt), expix,
+			     mom_item_cstring (curxitm));
 	    assert (curxitm);
 	    if (curxitm == varicountitm)
 	      fprintf (cg->cg_emitfile, "%d", nbvari);
@@ -4732,8 +4748,8 @@ bool
 	      fputs (mom_item_cstring (itmstmt), cg->cg_emitfile);
 	    else if (curxitm == varirestitm)
 	      {
-		for (unsigned oix = nbformals + nbformals + 1; oix < stmtlen;
-		     oix++)
+		for (unsigned oix = nbformals + nbformals + 1;
+		     oix < stmtlen && !cg->cg_errormsg; oix++)
 		  {
 		    if (oix > nbformals + nbformals + 1)
 		      fputs (", ", cg->cg_emitfile);
@@ -4771,6 +4787,11 @@ bool
 		if (vbindx.typnum == momty_null)
 		  goto badexpansionlab;
 		cgen_emit_expr_mom (cg, vbindx);
+		MOM_DEBUGPRINTF (gencod,
+				 "plain_statement_emitter itmstmt=%s curxitm %s done vbindx %s",
+				 mom_item_cstring (itmstmt),
+				 mom_item_cstring (curxitm),
+				 mom_output_gcstring (vbindx));
 	      }
 	  }
 	  continue;
@@ -4787,6 +4808,8 @@ bool
 				 mom_item_cstring (itmop), expix,
 				 mom_output_gcstring (vcurexp));
 	}			/* end switch vcurexp.typnum */
+      if (cg->cg_errormsg)
+	return false;
     };				/* end for expix */
   if (cg->cg_errormsg)
     return false;

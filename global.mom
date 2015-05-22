@@ -23,7 +23,7 @@
 ** _01KbUac4A_3Jk2sUhJp
 {
   * comment  "if argtasklets is sequence push them in back then notify; in agenda_push_back"
- }
+  * in  _0y7wu372C_3JH4an3L2 }
  [[  if  ^value_is_sequence( argtasklets)  _27PBmP9xP_3Hh1aedqr ]]
  
   %  ^filler_of_plain_kind( code_statement)
@@ -66,6 +66,7 @@
 ** _0LHqbyzz9_2J9v5p6zc
 {
   * comment  "block to push lkitm_tasklet in front of agenda and notify; in agenda_push_front"
+  * in  agenda_push_front
   * instructions  [_2AAHn6xi7_1R19bsnhn _9jMHbym6i_27j6eCiEL _1FU0vnqP4_6LLqBkKnt]
  }
  
@@ -111,7 +112,7 @@
 ** _1FU0vnqP4_6LLqBkKnt
 {
   * comment  "broadcast agenda changed after pushing tasklet in agenda_push_front"
- }
+  * in  _0LHqbyzz9_2J9v5p6zc }
  [[  chunk  "  pthread_cond_broadcast(&mom_agenda_changed_condvar);\n" ]]
  
   %  ^filler_of_plain_kind( code_statement)
@@ -122,7 +123,7 @@
 ** _1R1KvIhCR_6ak3tU4ep
 {
   * comment  "debug-printf pushed fron lkitm_tasklet in agenda_push_back"
- }
+  * in  _50yPKJAK2_4Ksihqd4c }
  [[  chunk  "  MOM_DEBUGPRINTF(run, \"agenda_push_back: pushed tasklet %s in back of the_agenda\",\n"
    "   mom_item_cstring("  lkitm_tasklet  "));\n" ]]
  
@@ -155,7 +156,8 @@
 
 ** _1m2L2Rncp_4uuzUDCqz
 {
-  * comment  "if lkitm_tasklet, push it back; in agenda_push_back" }
+  * comment  "if lkitm_tasklet, push it back; in agenda_push_back"
+  * in  _0y7wu372C_3JH4an3L2 }
  [[  if  lkitm_tasklet  _50yPKJAK2_4Ksihqd4c ]]
  
   %  ^filler_of_plain_kind( code_statement)
@@ -166,7 +168,7 @@
 ** _24sBAv42k_3Ly5hw0vj
 {
   * comment  "push lkitm_tasklet at back of lkitm_agenda; in agenda_push_back"
- }
+  * in  _50yPKJAK2_4Ksihqd4c }
  [[  push_back_queue_item  lkitm_agenda  lkitm_tasklet ]]
  
   %  ^filler_of_plain_kind( code_statement)
@@ -177,6 +179,7 @@
 ** _27PBmP9xP_3Hh1aedqr
 {
   * comment  "block to push every lkitm_tasklet in sequence argtasklets in back of agenda and notify"
+  * in  agenda_push_back
   * instructions  [] }
  
   %  ^filler_of_plain_kind( block)
@@ -187,7 +190,7 @@
 ** _27iRH5wiL_0Rmz4hwxv
 {
   * comment  "broadcast agenda changed after pushing tasklet in agenda_push_back"
- }
+  * in  _50yPKJAK2_4Ksihqd4c }
  [[  chunk  "  pthread_cond_broadcast(&mom_agenda_changed_condvar);\n" ]]
  
   %  ^filler_of_plain_kind( code_statement)
@@ -198,7 +201,7 @@
 ** _2AAHn6xi7_1R19bsnhn
 {
   * comment  "push lkitm_tasklet in front of lkitm_agenda; in agenda_push_front"
- }
+  * in  _0LHqbyzz9_2J9v5p6zc }
  [[  push_front_queue_item  lkitm_agenda  lkitm_tasklet ]]
  
   %  ^filler_of_plain_kind( code_statement)
@@ -208,7 +211,8 @@
 
 ** _2P84CtHfA_4kF28e70H
 {
-  * comment  "set lkitm_agenda := the_agenda; in agenda_push_front" }
+  * comment  "set lkitm_agenda := the_agenda; in agenda_push_front"
+  * in  _02MHbyAxU_563vpdUu2 }
  [[  set  lkitm_agenda  the_agenda ]]
  
   %  ^filler_of_plain_kind( code_statement)
@@ -241,7 +245,8 @@
 
 ** _2ur1uJ52w_1RmsKK5vb
 {
-  * comment  "set lkitm_agenda := the_agenda; in agenda_push_back" }
+  * comment  "set lkitm_agenda := the_agenda; in agenda_push_back"
+  * in  _0y7wu372C_3JH4an3L2 }
  [[  set  lkitm_agenda  the_agenda ]]
  
   %  ^filler_of_plain_kind( code_statement)
@@ -298,7 +303,7 @@
 ** _4kFw4Pe2j_7uh2m7JuM
 {
   * comment  "if argtasklets is sequence push them in front then notify; in agenda_push_front"
- }
+  * in  _02MHbyAxU_563vpdUu2 }
  [[  if  ^value_is_sequence( argtasklets)  _9m9aprPJz_4hExeiqIi ]]
  
   %  ^filler_of_plain_kind( code_statement)
@@ -332,6 +337,7 @@
 ** _50yPKJAK2_4Ksihqd4c
 {
   * comment  "block to push lkitm_tasklet in back of agenda and notify; in agenda_push_back"
+  * in  agenda_push_back
   * instructions  [_24sBAv42k_3Ly5hw0vj _1R1KvIhCR_6ak3tU4ep _27iRH5wiL_0Rmz4hwxv]
  }
  
@@ -391,7 +397,7 @@
 ** _6e0q8qCzJ_3ycbtIr58
 {
   * comment  "set lkitm_tasklet := value_to_item(argtasklets); in agenda_push_back"
- }
+  * in  _0y7wu372C_3JH4an3L2 }
  [[  set  lkitm_tasklet  ^value_to_item( argtasklets) ]]
  
   %  ^filler_of_plain_kind( code_statement)
@@ -459,7 +465,7 @@
 ** _7zujDCE1i_9m9ccD6C7
 {
   * comment  "set lkitm_tasklet := value_to_item(argtasklets); in agenda_push_front"
- }
+  * in  _02MHbyAxU_563vpdUu2 }
  [[  set  lkitm_tasklet  ^value_to_item( argtasklets) ]]
  
   %  ^filler_of_plain_kind( code_statement)
@@ -469,7 +475,8 @@
 
 ** _8UcKkiiIk_2ur4xDt59
 {
-  * comment  "if lkitm_tasklet, push it front; in agenda_push_front" }
+  * comment  "if lkitm_tasklet, push it front; in agenda_push_front"
+  * in  _02MHbyAxU_563vpdUu2 }
  [[  if  lkitm_tasklet  _0LHqbyzz9_2J9v5p6zc ]]
  
   %  ^filler_of_plain_kind( code_statement)
@@ -503,7 +510,7 @@
 ** _9jMHbym6i_27j6eCiEL
 {
   * comment  "debug-printf pushed fron lkitm_tasklet in agenda_push_front"
- }
+  * in  _0LHqbyzz9_2J9v5p6zc }
  [[  chunk  "  MOM_DEBUGPRINTF(run, \"agenda_push_front: pushed tasklet %s in front of the_agenda\",\n"
    "   mom_item_cstring("  lkitm_tasklet  "));\n" ]]
  
@@ -515,6 +522,7 @@
 ** _9m9aprPJz_4hExeiqIi
 {
   * comment  "block to push every lkitm_tasklet in sequence argtasklets in front of agenda and notify"
+  * in  agenda_push_front
   * instructions  [] }
  
   %  ^filler_of_plain_kind( block)
@@ -526,16 +534,16 @@
 {
   * comment  "hook to push a tasklet or a set or tuple of them in back of the agenda"
   * constants  {item_queue tasklet the_agenda}
-  * emitted_blocks  {_0y7wu372C_3JH4an3L2}
+  * emitted_blocks  {_0y7wu372C_3JH4an3L2 _27PBmP9xP_3Hh1aedqr _50yPKJAK2_4Ksihqd4c}
   * emitted_closed  []
   * emitted_constants  [item_queue tasklet the_agenda]
-  * emitted_variables  [lkitm_agenda]
+  * emitted_variables  [lkitm_agenda lkitm_tasklet]
   * formals  [argtasklets]
   * function_signature  signature_1val_to_void
   * hook_closure  0
   * in  the_base_module
   * start  _0y7wu372C_3JH4an3L2 }
- [[  ^agenda_push_back()  item_queue  tasklet  the_agenda  the_agenda ]]
+ [[  item_queue  tasklet  the_agenda  the_agenda  the_agenda ]]
  
   %  ^filler_of_function( signature_1val_to_void)
  
@@ -546,16 +554,16 @@
 {
   * comment  "hook to push a tasklet or a set or tuple of them in front of the agenda"
   * constants  {item_queue tasklet the_agenda}
-  * emitted_blocks  {_02MHbyAxU_563vpdUu2}
+  * emitted_blocks  {_02MHbyAxU_563vpdUu2 _0LHqbyzz9_2J9v5p6zc _9m9aprPJz_4hExeiqIi}
   * emitted_closed  []
   * emitted_constants  [item_queue tasklet the_agenda]
-  * emitted_variables  [lkitm_agenda]
+  * emitted_variables  [lkitm_agenda lkitm_tasklet]
   * formals  [argtasklets]
   * function_signature  signature_1val_to_void
   * hook_closure  0
   * in  the_base_module
   * start  _02MHbyAxU_563vpdUu2 }
- [[  ^agenda_push_front()  item_queue  tasklet  the_agenda  the_agenda ]]
+ [[  item_queue  tasklet  the_agenda  the_agenda  the_agenda ]]
  
   %  ^filler_of_function( signature_1val_to_void)
  
@@ -1266,9 +1274,8 @@
 
 ** push_back_queue_item
 {
-  * code_expansion  ^code_expansion( "/*push_back_queue_item:*/\n"  itmres
-    " = (momitem_t*)NULL;\n"  "{if ("  itm1  " && "  itm1  "->kind == " 
-   item_queue  ")\n"  "   mom_queueitem_push_back((struct momqueueitems_st*)"
+  * code_expansion  ^code_expansion( "/*push_back_queue_item:*/\n"  "{if ("
+    itm1  " && "  itm1  "->itm_kind == "  item_queue  ")\n"  "   mom_queueitem_push_back((struct momqueueitems_st*)"
     itm1  "->itm_data1, "  itm2  ");}\n")
   * comment  "statement operation to push at back of queue item itm1 the item itm2"
   * constants  {item_queue}
@@ -1285,9 +1292,8 @@
 
 ** push_front_queue_item
 {
-  * code_expansion  ^code_expansion( "/*push_front_queue_item:*/\n"  itmres
-    " = (momitem_t*)NULL;\n"  "{if ("  itm1  " && "  itm1  "->kind == " 
-   item_queue  ")\n"  "  mom_queueitem_push_front((struct momqueueitems_st*)"
+  * code_expansion  ^code_expansion( "/*push_front_queue_item:*/\n"  "{if ("
+    itm1  " && "  itm1  "->itm_kind == "  item_queue  ")\n"  "  mom_queueitem_push_front((struct momqueueitems_st*)"
     itm1  "->itm_data1, "  itm2  ");}\n")
   * comment  "statement operation to push at front of queue item itm1 the item itm2"
   * constants  {item_queue}

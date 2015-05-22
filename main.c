@@ -835,9 +835,29 @@ main (int argc_main, char **argv_main)
   do_after_initial_load_with_plugins_mom ();
   if (generate_c_module_mom)
     {
+      bool backedup = false;
       momitem_t *moditm = mom_find_item (generate_c_module_mom);
       if (!moditm)
 	MOM_FATAPRINTF ("cannot find C module %s", generate_c_module_mom);
+      char cpcmdbuf[256];
+      memset (cpcmdbuf, 0, sizeof (cpcmdbuf));
+      char pathbuf[100];
+      memset (pathbuf, 0, sizeof (pathbuf));
+      snprintf (pathbuf, sizeof (pathbuf),
+		MOM_MODULE_DIRECTORY MOM_SHARED_MODULE_PREFIX "%s.c",
+		mom_item_cstring (moditm));
+      if (!access (pathbuf, R_OK))
+	{
+	  snprintf (cpcmdbuf, sizeof (cpcmdbuf),
+		    "cp -vb %s %s%%", pathbuf, pathbuf);
+	  MOM_INFORMPRINTF ("before backup: %s", cpcmdbuf);
+	  fflush (NULL);
+	  int backfail = system (cpcmdbuf);
+	  if (backfail)
+	    MOM_WARNPRINTF ("backup with %s failed %d", cpcmdbuf, backfail);
+	  else
+	    backedup = true;
+	};
       momvalue_t valgen = MOM_NONEV;
       MOM_INFORMPRINTF ("before generating C module %s",
 			mom_item_cstring (moditm));
@@ -848,9 +868,23 @@ main (int argc_main, char **argv_main)
 	MOM_INFORMPRINTF ("after generating C module %s got %s",
 			  mom_item_cstring (moditm),
 			  mom_output_gcstring (valgen));
-      // if generation succeeded, we need to dump
+      // if generation succeeded, we need to compile and dump
       if (valgen.typnum == momty_item && valgen.vitem == moditm)
 	{
+	  char makecmdbuf[256];
+	  memset (makecmdbuf, 0, sizeof (makecmdbuf));
+	  snprintf (makecmdbuf, sizeof (makecmdbuf), "make ",
+		    MOM_MODULE_DIRECTORY MOM_SHARED_MODULE_PREFIX "%s.so");
+	  MOM_INFORMPRINTF ("before building generated module with : %s",
+			    makecmdbuf);
+	  fflush (NULL);
+	  int buildfail = system (makecmdbuf);
+	  if (buildfail)
+	    MOM_FATAPRINTF ("failed to build generated with : %s (got %d)",
+			    makecmdbuf, buildfail);
+	  else
+	    MOM_INFORMPRINTF ("successfully built generated module with : %s",
+			      makecmdbuf);
 	  if (!dump_exit_dir_mom)
 	    {
 	      MOM_INFORMPRINTF
