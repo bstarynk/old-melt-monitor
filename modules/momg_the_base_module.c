@@ -22,17 +22,141 @@
 
 
 
-/***** declaring 1 functions *****/
+/***** declaring 3 functions *****/
 
 
-/// declare function #0: agenda_step
+/// declare function #0: agenda_push_back
+extern bool momfunc_1val_to_void_agenda_push_back (const momnode_t *, momvalue_t);
+
+
+/// declare function #1: agenda_push_front
+extern bool momfunc_1val_to_void_agenda_push_front (const momnode_t *, momvalue_t);
+
+
+/// declare function #2: agenda_step
 extern bool momfunc_void_to_void_agenda_step (const momnode_t *);
 
 
-/***** implementing 1 functions *****/
+/***** implementing 3 functions *****/
 
 
-/// implement function #0: agenda_step
+/// implement function #0: agenda_push_back
+bool momfunc_1val_to_void_agenda_push_back (const momnode_t *mom_node, momvalue_t momarg0)
+{ // body of function agenda_push_back
+  bool momsuccess_agenda_push_back = false;
+  momitem_t* mom_funcitm = NULL;
+  if (MOM_UNLIKELY(!mom_node
+      || !(mom_funcitm = mom_node_conn (mom_node))
+      || mom_unsync_item_components_count (mom_funcitm)<3
+       ))
+  return false;
+  // 0 output results:
+  // 1 variables:
+// variable lkitm_agenda of type locked_item
+  momlockeditem_t* momvar0 = (momlockeditem_t*)0;
+  // 3 constants:
+  // constant item_queue
+  momitem_t* momconst_0 = MOM_PREDEFINED_NAMED(item_queue);
+  // constant tasklet
+  momitem_t* momconst_1 = MOM_PREDEFINED_NAMED(tasklet);
+  // constant the_agenda
+  momitem_t* momconst_2 = MOM_PREDEFINED_NAMED(the_agenda);
+  // 0 closed:
+  goto momblocklab__0y7wu372C_3JH4an3L2;
+
+/// block #0: _0y7wu372C_3JH4an3L2
+//: start block of agenda_push_back
+ momblocklab__0y7wu372C_3JH4an3L2: {
+// 1 statements in block _0y7wu372C_3JH4an3L2
+// statement #0 :: _1c462DJmx_68zwnz1Ua; set lkitm_agenda := the_agenda
+  { // locked set into lkitm_agenda
+  momlockeditem_t* momoldlocked__1c462DJmx_68zwnz1Ua = momvar0 /*var:lkitm_agenda*/;
+  momlockeditem_t* momnewlocked__1c462DJmx_68zwnz1Ua =  /*constant#2:*/MOM_PREDEFINED_NAMED(the_agenda);
+  if (momoldlocked__1c462DJmx_68zwnz1Ua != momnewlocked__1c462DJmx_68zwnz1Ua) {
+    if (momoldlocked__1c462DJmx_68zwnz1Ua != NULL) mom_item_unlock (momoldlocked__1c462DJmx_68zwnz1Ua);
+    if (momnewlocked__1c462DJmx_68zwnz1Ua != NULL) mom_item_lock (momnewlocked__1c462DJmx_68zwnz1Ua);
+  } // end lock test _1c462DJmx_68zwnz1Ua
+    momvar0 /*var:lkitm_agenda*/ = momnewlocked__1c462DJmx_68zwnz1Ua;
+  momoldlocked__1c462DJmx_68zwnz1Ua = NULL;
+  momnewlocked__1c462DJmx_68zwnz1Ua = NULL;
+  } // end locked set into lkitm_agenda
+
+  }; // end block _0y7wu372C_3JH4an3L2
+  goto momepilog_agenda_push_back;
+ ////----
+
+//////
+// epilogue of agenda_push_back
+    momsuccess_agenda_push_back = true;
+    goto momepilog_agenda_push_back;
+ momepilog_agenda_push_back:
+   if (momvar0 != NULL) mom_item_unlock(momvar0);
+// give 0 outputs
+  return momsuccess_agenda_push_back;
+} // end of momfunc_1val_to_void_agenda_push_back 
+
+
+
+
+/// implement function #1: agenda_push_front
+bool momfunc_1val_to_void_agenda_push_front (const momnode_t *mom_node, momvalue_t momarg0)
+{ // body of function agenda_push_front
+  bool momsuccess_agenda_push_front = false;
+  momitem_t* mom_funcitm = NULL;
+  if (MOM_UNLIKELY(!mom_node
+      || !(mom_funcitm = mom_node_conn (mom_node))
+      || mom_unsync_item_components_count (mom_funcitm)<3
+       ))
+  return false;
+  // 0 output results:
+  // 1 variables:
+// variable lkitm_agenda of type locked_item
+  momlockeditem_t* momvar0 = (momlockeditem_t*)0;
+  // 3 constants:
+  // constant item_queue
+  momitem_t* momconst_0 = MOM_PREDEFINED_NAMED(item_queue);
+  // constant tasklet
+  momitem_t* momconst_1 = MOM_PREDEFINED_NAMED(tasklet);
+  // constant the_agenda
+  momitem_t* momconst_2 = MOM_PREDEFINED_NAMED(the_agenda);
+  // 0 closed:
+  goto momblocklab__02MHbyAxU_563vpdUu2;
+
+/// block #0: _02MHbyAxU_563vpdUu2
+//: start block of agenda_push_front
+ momblocklab__02MHbyAxU_563vpdUu2: {
+// 1 statements in block _02MHbyAxU_563vpdUu2
+// statement #0 :: _1c462DJmx_68zwnz1Ua; set lkitm_agenda := the_agenda
+  { // locked set into lkitm_agenda
+  momlockeditem_t* momoldlocked__1c462DJmx_68zwnz1Ua = momvar0 /*var:lkitm_agenda*/;
+  momlockeditem_t* momnewlocked__1c462DJmx_68zwnz1Ua =  /*constant#2:*/MOM_PREDEFINED_NAMED(the_agenda);
+  if (momoldlocked__1c462DJmx_68zwnz1Ua != momnewlocked__1c462DJmx_68zwnz1Ua) {
+    if (momoldlocked__1c462DJmx_68zwnz1Ua != NULL) mom_item_unlock (momoldlocked__1c462DJmx_68zwnz1Ua);
+    if (momnewlocked__1c462DJmx_68zwnz1Ua != NULL) mom_item_lock (momnewlocked__1c462DJmx_68zwnz1Ua);
+  } // end lock test _1c462DJmx_68zwnz1Ua
+    momvar0 /*var:lkitm_agenda*/ = momnewlocked__1c462DJmx_68zwnz1Ua;
+  momoldlocked__1c462DJmx_68zwnz1Ua = NULL;
+  momnewlocked__1c462DJmx_68zwnz1Ua = NULL;
+  } // end locked set into lkitm_agenda
+
+  }; // end block _02MHbyAxU_563vpdUu2
+  goto momepilog_agenda_push_front;
+ ////----
+
+//////
+// epilogue of agenda_push_front
+    momsuccess_agenda_push_front = true;
+    goto momepilog_agenda_push_front;
+ momepilog_agenda_push_front:
+   if (momvar0 != NULL) mom_item_unlock(momvar0);
+// give 0 outputs
+  return momsuccess_agenda_push_front;
+} // end of momfunc_1val_to_void_agenda_push_front 
+
+
+
+
+/// implement function #2: agenda_step
 bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
 { // body of function agenda_step
   bool momsuccess_agenda_step = false;
@@ -239,7 +363,7 @@ momvar2 /*var:itmvar_tasklet*/ = (momitem_t*)NULL;
 
 
 
-/***** end 1 functions *****/
+/***** end 3 functions *****/
 
 
 //// end of generated module file momg_the_base_module.c

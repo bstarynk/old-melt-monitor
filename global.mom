@@ -20,6 +20,17 @@
 !! the_base_module
 
 
+** _02MHbyAxU_563vpdUu2
+{
+  * comment  "start block of agenda_push_front"
+  * in  agenda_push_front
+  * instructions  [_1c462DJmx_68zwnz1Ua] }
+ 
+  %  ^filler_of_plain_kind( block)
+ 
+..
+
+
 ** _07BHLcwhp_48ka0t9bq
 {
   * comment  "constant for hook of agenda_step"
@@ -47,6 +58,17 @@
  [[  pop_front_queue_item  itmvar_tasklet  lkitm_agenda ]]
  
   %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
+** _0y7wu372C_3JH4an3L2
+{
+  * comment  "start block of agenda_push_back"
+  * in  agenda_push_back
+  * instructions  [_1c462DJmx_68zwnz1Ua] }
+ 
+  %  ^filler_of_plain_kind( block)
  
 ..
 
@@ -304,6 +326,46 @@
 ..
 
 
+** agenda_push_back   ////// PREDEFINED
+{
+  * comment  "hook to push a tasklet or a set or tuple of them in back of the agenda"
+  * constants  {item_queue tasklet the_agenda}
+  * emitted_blocks  {_0y7wu372C_3JH4an3L2}
+  * emitted_closed  []
+  * emitted_constants  [item_queue tasklet the_agenda]
+  * emitted_variables  [lkitm_agenda]
+  * formals  [argtasklets]
+  * function_signature  signature_1val_to_void
+  * hook_closure  0
+  * in  the_base_module
+  * start  _0y7wu372C_3JH4an3L2 }
+ [[  item_queue  tasklet  the_agenda  the_agenda ]]
+ 
+  %  ^filler_of_function( signature_1val_to_void)
+ 
+..
+
+
+** agenda_push_front   ////// PREDEFINED
+{
+  * comment  "hook to push a tasklet or a set or tuple of them in front of the agenda"
+  * constants  {item_queue tasklet the_agenda}
+  * emitted_blocks  {_02MHbyAxU_563vpdUu2}
+  * emitted_closed  []
+  * emitted_constants  [item_queue tasklet the_agenda]
+  * emitted_variables  [lkitm_agenda]
+  * formals  [argtasklets]
+  * function_signature  signature_1val_to_void
+  * hook_closure  0
+  * in  the_base_module
+  * start  _02MHbyAxU_563vpdUu2 }
+ [[  item_queue  tasklet  the_agenda  the_agenda ]]
+ 
+  %  ^filler_of_function( signature_1val_to_void)
+ 
+..
+
+
 ** agenda_step   ////// PREDEFINED
 {
   * constants  {_07BHLcwhp_48ka0t9bq fill_agenda item_queue runner tasklet
@@ -331,6 +393,14 @@
 {
   * comment  "opcode for apply <signature> <results...> <fun> <args...> [<else-block>] statement"
  }
+ 
+..
+
+
+** argtasklets
+{
+  * comment  "argument for tasklets to push into agenda"
+  * type  value }
  
 ..
 
@@ -1325,8 +1395,8 @@
 ** the_base_module   ////// PREDEFINED
 {
   * comment  "the base module, notably for agenda functions"
-  * emitted_functions  {agenda_step}
-  * functions  {agenda_step} }
+  * emitted_functions  {agenda_push_back agenda_push_front agenda_step}
+  * functions  {agenda_push_back agenda_push_front agenda_step} }
  
   %  ^filler_of_plain_kind( code_module)
  
