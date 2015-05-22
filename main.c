@@ -848,6 +848,17 @@ main (int argc_main, char **argv_main)
 	MOM_INFORMPRINTF ("after generating C module %s got %s",
 			  mom_item_cstring (moditm),
 			  mom_output_gcstring (valgen));
+      // if generation succeeded, we need to dump
+      if (valgen.typnum == momty_item && valgen.vitem == moditm)
+	{
+	  if (!dump_exit_dir_mom)
+	    {
+	      MOM_INFORMPRINTF
+		("after successful generation of C module %s will dump state",
+		 mom_item_cstring (moditm));
+	      dump_exit_dir_mom = "./";
+	    }
+	}
     }
   printf
     ("sizeof(momvalue_t)=%zd sizeof(momvaltype_t)=%zd sizeof(momitem_t)=%zd\n",

@@ -31,6 +31,7 @@
 ** _0HvrqAHte_4ryaA4drs
 {
   * comment  "block chunk-wait agenda-changed"
+  * in  agenda_step
   * instructions  [_5a8Hrecb3_9evcyu8sh _46231jt3F_9IUe8xbwK _51n8x1e9t_76B1hJrwI]
  }
  
@@ -41,7 +42,8 @@
 
 ** _0p7zBDIku_3njudUFtp
 {
-  * comment  "itmvar_tasklet <- pop_front(lkitm_agenda)" }
+  * comment  "itmvar_tasklet <- pop_front(lkitm_agenda)"
+  * in  _7MF947fC8_8ChefReMD }
  [[  pop_front_queue_item  itmvar_tasklet  lkitm_agenda ]]
  
   %  ^filler_of_plain_kind( code_statement)
@@ -52,6 +54,7 @@
 ** _14MzMbJ9v_627D0CIiA
 {
   * comment  "block to apply varclo"
+  * in  agenda_step
   * instructions  [_4KKszvz3w_1HLUHLsru] }
  
   %  ^filler_of_plain_kind( block)
@@ -61,7 +64,8 @@
 
 ** _1c462DJmx_68zwnz1Ua
 {
-  * comment  "set lkitm_agenda := the_agenda" }
+  * comment  "set lkitm_agenda := the_agenda"
+  * in  _7MF947fC8_8ChefReMD }
  [[  set  lkitm_agenda  the_agenda ]]
  
   %  ^filler_of_plain_kind( code_statement)
@@ -72,6 +76,7 @@
 ** _2tz000b51_1AEBtnP4P
 {
   * comment  "lock and run the tasklet"
+  * in  agenda_step
   * instructions  [_4zMbIKH13_6KmkUPLpd] }
  
   %  ^filler_of_plain_kind( block)
@@ -81,7 +86,8 @@
 
 ** _44tmkDkKa_8nUhJEeay
 {
-  * comment  "if empty agenda refill it" }
+  * comment  "if empty agenda refill it"
+  * in  _7MF947fC8_8ChefReMD }
  [[  if  ^queue_item_is_empty( lkitm_agenda)  _4xAIqB3tj_97IrD41UP ]]
  
   %  ^filler_of_plain_kind( code_statement)
@@ -91,7 +97,8 @@
 
 ** _46231jt3F_9IUe8xbwK
 {
-  * comment  "clear lkitm_agenda to unlock it" }
+  * comment  "clear lkitm_agenda to unlock it"
+  * in  _0HvrqAHte_4ryaA4drs }
  [[  set  lkitm_agenda  ~ ]]
  
   %  ^filler_of_plain_kind( code_statement)
@@ -101,7 +108,8 @@
 
 ** _4KKszvz3w_1HLUHLsru
 {
-  * comment  "apply varclo to lkitm_agenda" }
+  * comment  "apply varclo to lkitm_agenda"
+  * in  _14MzMbJ9v_627D0CIiA }
  [[  apply  signature_1itm_to_void  varclo  the_agenda ]]
  
   %  ^filler_of_plain_kind( code_statement)
@@ -112,6 +120,7 @@
 ** _4xAIqB3tj_97IrD41UP
 {
   * comment  "refill empty agenda"
+  * in  agenda_step
   * instructions  [_60nmad63F_1Jd336xAL _7vj8eaIrt_9bLBC6eKB _6kDqRmkjk_6CxUEu2hk]
  }
  
@@ -122,7 +131,8 @@
 
 ** _4zMbIKH13_6KmkUPLpd
 {
-  * comment  "set lkitm_tasklet := itmvar_tasklet" }
+  * comment  "set lkitm_tasklet := itmvar_tasklet"
+  * in  _2tz000b51_1AEBtnP4P }
  [[  set  lkitm_tasklet  itmvar_tasklet ]]
  
   %  ^filler_of_plain_kind( code_statement)
@@ -132,7 +142,8 @@
 
 ** _51n8x1e9t_76B1hJrwI
 {
-  * comment  "jump start agenda_step" }
+  * comment  "jump start agenda_step"
+  * in  _0HvrqAHte_4ryaA4drs }
  [[  jump  _7MF947fC8_8ChefReMD ]]
  
   %  ^filler_of_plain_kind( code_statement)
@@ -142,7 +153,8 @@
 
 ** _5a8Hrecb3_9evcyu8sh
 {
-  * comment  "instr chunk-wait agenda changed" }
+  * comment  "instr chunk-wait agenda changed"
+  * in  _0HvrqAHte_4ryaA4drs }
  [[  chunk  "/*chunk wait agenda changed*/\n"  "  struct timespec ts_"  this_statement
    " = {0,0};\n"  "  clock_gettime(CLOCK_REALTIME, &ts_"  this_statement
    ");\n"  "  ts_"  this_statement  ".tv_sec += MOM_AGENDA_WAIT_SEC;\n" 
@@ -156,7 +168,8 @@
 
 ** _60nmad63F_1Jd336xAL
 {
-  * comment  "set varclo := fill_agenda(lkitm_agenda)" }
+  * comment  "set varclo := fill_agenda(lkitm_agenda)"
+  * in  _4xAIqB3tj_97IrD41UP }
  [[  set  varclo  ^unsync_get_attribute( lkitm_agenda  fill_agenda) ]]
  
   %  ^filler_of_plain_kind( code_statement)
@@ -166,7 +179,8 @@
 
 ** _6kDqRmkjk_6CxUEu2hk
 {
-  * comment  "if lkitm_agenda empty queue wait agenda-changed" }
+  * comment  "if lkitm_agenda empty queue wait agenda-changed"
+  * in  _4xAIqB3tj_97IrD41UP }
  [[  if  ^queue_item_is_empty( lkitm_agenda)  _0HvrqAHte_4ryaA4drs ]]
  
   %  ^filler_of_plain_kind( code_statement)
@@ -188,7 +202,8 @@
 
 ** _7vj8eaIrt_9bLBC6eKB
 {
-  * comment  "if varclo is node apply it" }
+  * comment  "if varclo is node apply it"
+  * in  _4xAIqB3tj_97IrD41UP }
  [[  if  ^value_is_node( varclo)  _14MzMbJ9v_627D0CIiA ]]
  
   %  ^filler_of_plain_kind( code_statement)
@@ -198,7 +213,8 @@
 
 ** _9MCjbp28L_6zLA3KERH
 {
-  * comment  "if itmvar_tasklet is a tasklet run it" }
+  * comment  "if itmvar_tasklet is a tasklet run it"
+  * in  _7MF947fC8_8ChefReMD }
  [[  if  ^item_has_kind( itmvar_tasklet  tasklet)  _2tz000b51_1AEBtnP4P ]]
  
   %  ^filler_of_plain_kind( code_statement)
@@ -208,11 +224,13 @@
 
 ** agenda_step   ////// PREDEFINED
 {
-  * constants  {_07BHLcwhp_48ka0t9bq fill_agenda item_queue the_agenda}
-  * emitted_blocks  {_7MF947fC8_8ChefReMD}
+  * constants  {_07BHLcwhp_48ka0t9bq fill_agenda item_queue tasklet the_agenda}
+  * emitted_blocks  {_0HvrqAHte_4ryaA4drs _14MzMbJ9v_627D0CIiA _2tz000b51_1AEBtnP4P
+   _4xAIqB3tj_97IrD41UP _7MF947fC8_8ChefReMD}
   * emitted_closed  []
-  * emitted_constants  [_07BHLcwhp_48ka0t9bq the_agenda]
-  * emitted_variables  []
+  * emitted_constants  [_07BHLcwhp_48ka0t9bq fill_agenda item_queue tasklet
+   the_agenda]
+  * emitted_variables  [varclo lkitm_agenda itmvar_tasklet lkitm_tasklet]
   * formals  []
   * function_signature  signature_void_to_void
   * hook_closure  0
@@ -847,8 +865,8 @@
 ** pop_back_queue_item
 {
   * code_expansion  ^code_expansion( "/*pop_back_queue_item:*/\n"  itmres
-    " = (momitem_t*)NULL;\n"  "{if ("  itm1  " && "  itm1  "->kind == " 
-   item_queue  ")\n"  "  "  itmres  " = mom_queueitem_pop_back((struct momqueueitems_st*)"
+    " = (momitem_t*)NULL;\n"  "{if ("  itm1  " && "  itm1  "->itm_kind == "
+    item_queue  ")\n"  "  "  itmres  " = mom_queueitem_pop_back((struct momqueueitems_st*)"
     itm1  "->itm_data1);}\n")
   * comment  "statement operation to pop back of queue item"
   * constants  {item_queue}
@@ -866,8 +884,8 @@
 ** pop_front_queue_item
 {
   * code_expansion  ^code_expansion( "/*pop_front_queue_item:*/\n"  itmres
-    " = (momitem_t*)NULL;\n"  "{if ("  itm1  " && "  itm1  "->kind == " 
-   item_queue  ")\n"  "  "  itmres  " = mom_queueitem_pop_front((struct momqueueitems_st*)"
+    " = (momitem_t*)NULL;\n"  "{if ("  itm1  " && "  itm1  "->itm_kind == "
+    item_queue  ")\n"  "  "  itmres  " = mom_queueitem_pop_front((struct momqueueitems_st*)"
     itm1  "->itm_data1);}\n")
   * comment  "statement operation to pop front of queue item"
   * constants  {item_queue}
