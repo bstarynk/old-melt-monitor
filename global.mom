@@ -65,8 +65,9 @@
 
 ** _0LHqbyzz9_2J9v5p6zc
 {
-  * comment  "block to push lkitm_tasklet in front of agenda and notify"
-  * instructions  [] }
+  * comment  "block to push lkitm_tasklet in front of agenda and notify; in agenda_push_front"
+  * instructions  [_2AAHn6xi7_1R19bsnhn _9jMHbym6i_27j6eCiEL _1FU0vnqP4_6LLqBkKnt]
+ }
  
   %  ^filler_of_plain_kind( block)
  
@@ -107,6 +108,29 @@
 ..
 
 
+** _1FU0vnqP4_6LLqBkKnt
+{
+  * comment  "broadcast agenda changed after pushing tasklet in agenda_push_front"
+ }
+ [[  chunk  "  pthread_cond_broadcast(&mom_agenda_changed_condvar);\n" ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
+** _1R1KvIhCR_6ak3tU4ep
+{
+  * comment  "debug-printf pushed fron lkitm_tasklet in agenda_push_back"
+ }
+ [[  chunk  "  MOM_DEBUGPRINTF(run, \"agenda_push_back: pushed tasklet %s in back of the_agenda\",\n"
+   "   mom_item_cstring("  lkitm_tasklet  "));\n" ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
 ** _1c462DJmx_68zwnz1Ua
 {
   * comment  "set lkitm_agenda := the_agenda in agenda_step"
@@ -139,12 +163,45 @@
 ..
 
 
+** _24sBAv42k_3Ly5hw0vj
+{
+  * comment  "push lkitm_tasklet at back of lkitm_agenda; in agenda_push_back"
+ }
+ [[  push_back_queue_item  lkitm_agenda  lkitm_tasklet ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
 ** _27PBmP9xP_3Hh1aedqr
 {
   * comment  "block to push every lkitm_tasklet in sequence argtasklets in back of agenda and notify"
   * instructions  [] }
  
   %  ^filler_of_plain_kind( block)
+ 
+..
+
+
+** _27iRH5wiL_0Rmz4hwxv
+{
+  * comment  "broadcast agenda changed after pushing tasklet in agenda_push_back"
+ }
+ [[  chunk  "  pthread_cond_broadcast(&mom_agenda_changed_condvar);\n" ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
+** _2AAHn6xi7_1R19bsnhn
+{
+  * comment  "push lkitm_tasklet in front of lkitm_agenda; in agenda_push_front"
+ }
+ [[  push_front_queue_item  lkitm_agenda  lkitm_tasklet ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
  
 ..
 
@@ -274,8 +331,9 @@
 
 ** _50yPKJAK2_4Ksihqd4c
 {
-  * comment  "block to push lkitm_tasklet in back of agenda and notify"
-  * instructions  [] }
+  * comment  "block to push lkitm_tasklet in back of agenda and notify; in agenda_push_back"
+  * instructions  [_24sBAv42k_3Ly5hw0vj _1R1KvIhCR_6ak3tU4ep _27iRH5wiL_0Rmz4hwxv]
+ }
  
   %  ^filler_of_plain_kind( block)
  
@@ -436,6 +494,18 @@
   * comment  "if itmvar_tasklet is a tasklet run it"
   * in  _7MF947fC8_8ChefReMD }
  [[  if  ^item_has_kind( itmvar_tasklet  tasklet)  _2tz000b51_1AEBtnP4P ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
+** _9jMHbym6i_27j6eCiEL
+{
+  * comment  "debug-printf pushed fron lkitm_tasklet in agenda_push_front"
+ }
+ [[  chunk  "  MOM_DEBUGPRINTF(run, \"agenda_push_front: pushed tasklet %s in front of the_agenda\",\n"
+   "   mom_item_cstring("  lkitm_tasklet  "));\n" ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -1208,6 +1278,8 @@
   * statement_emitter  ^plain_statement_emitter()
   * statement_scanner  ^plain_statement_scanner() }
  
+  %  ^filler_of_plain_kind( code_operation)
+ 
 ..
 
 
@@ -1224,6 +1296,8 @@
   * results  []
   * statement_emitter  ^plain_statement_emitter()
   * statement_scanner  ^plain_statement_scanner() }
+ 
+  %  ^filler_of_plain_kind( code_operation)
  
 ..
 
