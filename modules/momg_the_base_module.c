@@ -133,17 +133,38 @@ bool momfunc_1val_to_void_agenda_push_back (const momnode_t *mom_node, momvalue_
   }; // end block _27PBmP9xP_3Hh1aedqr
 ////----++++
 
-/// block #2: _3JddiuKnc_1nzuB6bss
+/// block #2: _2I2UdbsCL_6c82fexBk
+//: blockepilog to notify in agenda_push_back
+ momblocklab__2I2UdbsCL_6c82fexBk: {
+// 2 statements in block _2I2UdbsCL_6c82fexBk
+// statement #0 :: _27iRH5wiL_0Rmz4hwxv; broadcast agenda changed after pushing tasklet in agenda_push_back
+  // chunk of 2 components
+  pthread_cond_broadcast(&mom_agenda_changed_condvar);
+ ;
+// statement #1 :: _9asfCiefD_1pRiIn679; success of agenda_push_back
+// success
+  momsuccess_agenda_push_back = true;
+  goto momepilog_agenda_push_back;
+
+  }; // end block _2I2UdbsCL_6c82fexBk
+  goto momepilog_agenda_push_back;
+ ////----
+
+/// block #3: _3JddiuKnc_1nzuB6bss
 //: block seqloop on argtasklets; in agenda_push_back
  momblocklab__3JddiuKnc_1nzuB6bss: {
-// 0 statements in block _3JddiuKnc_1nzuB6bss
+// 1 statements in block _3JddiuKnc_1nzuB6bss
+// statement #0 :: _61DxdHIjP_2U7hhsKDL; if (varix>=varlen) goto epilogpushback; in agenda_push_back
+// if testing on integer
+    if (/*integer_greater_or_equal:*/((momvar3 /*var:varix*/) >= (momvar2 /*var:varlen*/)) )
+      goto momblocklab__2I2UdbsCL_6c82fexBk;
 
   }; // end block _3JddiuKnc_1nzuB6bss
   goto momepilog_agenda_push_back;
  ////----
 
-/// block #3: _50yPKJAK2_4Ksihqd4c
-//: block to push lkitm_tasklet in back of agenda and notify; in agenda_push_back
+/// block #4: _50yPKJAK2_4Ksihqd4c
+//: block to push lkitm_tasklet in back of agenda and epilog; in agenda_push_back
  momblocklab__50yPKJAK2_4Ksihqd4c: {
 // 3 statements in block _50yPKJAK2_4Ksihqd4c
 // statement #0 :: _24sBAv42k_3Ly5hw0vj; push lkitm_tasklet at back of lkitm_agenda; in agenda_push_back
@@ -155,14 +176,12 @@ bool momfunc_1val_to_void_agenda_push_back (const momnode_t *mom_node, momvalue_
   MOM_DEBUGPRINTF(run, "agenda_push_back: pushed tasklet %s in back of the_agenda",
    mom_item_cstring(momvar1 /*var:lkitm_tasklet*/));
  ;
-// statement #2 :: _27iRH5wiL_0Rmz4hwxv; broadcast agenda changed after pushing tasklet in agenda_push_back
-  // chunk of 2 components
-  pthread_cond_broadcast(&mom_agenda_changed_condvar);
- ;
+// statement #2 :: _6pte4hEqb_94D0cHswb; jump to epilog of agenda_push_back
+// jump to _2I2UdbsCL_6c82fexBk
+  goto momblocklab__2I2UdbsCL_6c82fexBk;
 
   }; // end block _50yPKJAK2_4Ksihqd4c
-  goto momepilog_agenda_push_back;
- ////----
+////----++++
 
 //////
 // epilogue of agenda_push_back
@@ -253,7 +272,7 @@ bool momfunc_1val_to_void_agenda_push_front (const momnode_t *mom_node, momvalue
  ////----
 
 /// block #1: _0LHqbyzz9_2J9v5p6zc
-//: block to push lkitm_tasklet in front of agenda and notify; in agenda_push_front
+//: block to push lkitm_tasklet in front of agenda and epilog; in agenda_push_front
  momblocklab__0LHqbyzz9_2J9v5p6zc: {
 // 3 statements in block _0LHqbyzz9_2J9v5p6zc
 // statement #0 :: _2AAHn6xi7_1R19bsnhn; push lkitm_tasklet in front of lkitm_agenda; in agenda_push_front
@@ -265,25 +284,44 @@ bool momfunc_1val_to_void_agenda_push_front (const momnode_t *mom_node, momvalue
   MOM_DEBUGPRINTF(run, "agenda_push_front: pushed tasklet %s in front of the_agenda",
    mom_item_cstring(momvar1 /*var:lkitm_tasklet*/));
  ;
-// statement #2 :: _1FU0vnqP4_6LLqBkKnt; broadcast agenda changed after pushing tasklet in agenda_push_front
+// statement #2 :: _6npzcxMDM_2I2dUIfMn; jump to epilog of agenda_push_front
+// jump to _4h7BHLiLB_9askynfAC
+  goto momblocklab__4h7BHLiLB_9askynfAC;
+
+  }; // end block _0LHqbyzz9_2J9v5p6zc
+////----++++
+
+/// block #2: _4h7BHLiLB_9askynfAC
+//: blockepilog to notify in agenda_push_front
+ momblocklab__4h7BHLiLB_9askynfAC: {
+// 2 statements in block _4h7BHLiLB_9askynfAC
+// statement #0 :: _1FU0vnqP4_6LLqBkKnt; broadcast agenda changed after pushing tasklet in agenda_push_front
   // chunk of 2 components
   pthread_cond_broadcast(&mom_agenda_changed_condvar);
  ;
+// statement #1 :: _35ALykwdw_1UiPefUMH; success of agenda_push_front
+// success
+  momsuccess_agenda_push_front = true;
+  goto momepilog_agenda_push_front;
 
-  }; // end block _0LHqbyzz9_2J9v5p6zc
+  }; // end block _4h7BHLiLB_9askynfAC
   goto momepilog_agenda_push_front;
  ////----
 
-/// block #2: _7jkswmJf4_89dmJmBc2
+/// block #3: _7jkswmJf4_89dmJmBc2
 //: block seqloop on argtasklets; in agenda_push_front
  momblocklab__7jkswmJf4_89dmJmBc2: {
-// 0 statements in block _7jkswmJf4_89dmJmBc2
+// 1 statements in block _7jkswmJf4_89dmJmBc2
+// statement #0 :: _6PukHeHkL_5rxkpnFsJ; if (varix>=varlen) goto epilogpushfront; in agenda_push_front
+// if testing on integer
+    if (/*integer_greater_or_equal:*/((momvar3 /*var:varix*/) >= (momvar2 /*var:varlen*/)) )
+      goto momblocklab__4h7BHLiLB_9askynfAC;
 
   }; // end block _7jkswmJf4_89dmJmBc2
   goto momepilog_agenda_push_front;
  ////----
 
-/// block #3: _9m9aprPJz_4hExeiqIi
+/// block #4: _9m9aprPJz_4hExeiqIi
 //: block to push every lkitm_tasklet in sequence argtasklets in front of agenda and notify
  momblocklab__9m9aprPJz_4hExeiqIi: {
 // 3 statements in block _9m9aprPJz_4hExeiqIi

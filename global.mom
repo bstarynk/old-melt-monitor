@@ -70,6 +70,8 @@
   * instructions  [_2AAHn6xi7_1R19bsnhn _9jMHbym6i_27j6eCiEL _6npzcxMDM_2I2dUIfMn]
  }
  
+  %  ^filler_of_plain_kind( block)
+ 
 ..
 
 
@@ -110,7 +112,7 @@
 ** _1FU0vnqP4_6LLqBkKnt
 {
   * comment  "broadcast agenda changed after pushing tasklet in agenda_push_front"
-  * in  _0LHqbyzz9_2J9v5p6zc }
+  * in  _4h7BHLiLB_9askynfAC }
  [[  chunk  "  pthread_cond_broadcast(&mom_agenda_changed_condvar);\n" ]]
  
   %  ^filler_of_plain_kind( code_statement)
@@ -189,7 +191,7 @@
 ** _27iRH5wiL_0Rmz4hwxv
 {
   * comment  "broadcast agenda changed after pushing tasklet in agenda_push_back"
-  * in  _50yPKJAK2_4Ksihqd4c }
+  * in  _2I2UdbsCL_6c82fexBk }
  [[  chunk  "  pthread_cond_broadcast(&mom_agenda_changed_condvar);\n" ]]
  
   %  ^filler_of_plain_kind( code_statement)
@@ -211,6 +213,7 @@
 ** _2I2UdbsCL_6c82fexBk
 {
   * comment  "blockepilog to notify in agenda_push_back"
+  * in  agenda_push_back
   * instructions  [_27iRH5wiL_0Rmz4hwxv _9asfCiefD_1pRiIn679] }
  
   %  ^filler_of_plain_kind( block)
@@ -278,7 +281,8 @@
 
 ** _35ALykwdw_1UiPefUMH
 {
-  * comment  "success of agenda_push_front" }
+  * comment  "success of agenda_push_front"
+  * in  _4h7BHLiLB_9askynfAC }
  [[  success ]]
  
   %  ^filler_of_plain_kind( code_statement)
@@ -344,6 +348,7 @@
 ** _4h7BHLiLB_9askynfAC
 {
   * comment  "blockepilog to notify in agenda_push_front"
+  * in  agenda_push_front
   * instructions  [_1FU0vnqP4_6LLqBkKnt _35ALykwdw_1UiPefUMH] }
  
   %  ^filler_of_plain_kind( block)
@@ -481,7 +486,9 @@
 ** _61DxdHIjP_2U7hhsKDL
 {
   * comment  "if (varix>=varlen) goto epilogpushback; in agenda_push_back"
- }
+  * in  _3JddiuKnc_1nzuB6bss }
+ [[  if  ^integer_greater_or_equal( varix  varlen)  _2I2UdbsCL_6c82fexBk
+ ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -502,7 +509,9 @@
 ** _6PukHeHkL_5rxkpnFsJ
 {
   * comment  "if (varix>=varlen) goto epilogpushfront; in agenda_push_front"
- }
+  * in  _7jkswmJf4_89dmJmBc2 }
+ [[  if  ^integer_greater_or_equal( varix  varlen)  _4h7BHLiLB_9askynfAC
+ ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -533,15 +542,19 @@
 
 ** _6npzcxMDM_2I2dUIfMn
 {
-  * comment  "jump to epilog of agenda_push_front" }
+  * comment  "jump to epilog of agenda_push_front"
+  * in  _0LHqbyzz9_2J9v5p6zc }
  [[  jump  _4h7BHLiLB_9askynfAC ]]
+ 
+  %  ^filler_of_plain_kind( code_statement)
  
 ..
 
 
 ** _6pte4hEqb_94D0cHswb
 {
-  * comment  "jump to epilog of agenda_push_back" }
+  * comment  "jump to epilog of agenda_push_back"
+  * in  _50yPKJAK2_4Ksihqd4c }
  [[  jump  _2I2UdbsCL_6c82fexBk ]]
  
   %  ^filler_of_plain_kind( code_statement)
@@ -664,7 +677,8 @@
 
 ** _9asfCiefD_1pRiIn679
 {
-  * comment  "success of agenda_push_back" }
+  * comment  "success of agenda_push_back"
+  * in  _2I2UdbsCL_6c82fexBk }
  [[  success ]]
  
   %  ^filler_of_plain_kind( code_statement)
@@ -700,8 +714,8 @@
 {
   * comment  "hook to push a tasklet or a set or tuple of them in back of the agenda"
   * constants  {item_queue tasklet the_agenda}
-  * emitted_blocks  {_0y7wu372C_3JH4an3L2 _27PBmP9xP_3Hh1aedqr _3JddiuKnc_1nzuB6bss
-   _50yPKJAK2_4Ksihqd4c}
+  * emitted_blocks  {_0y7wu372C_3JH4an3L2 _27PBmP9xP_3Hh1aedqr _2I2UdbsCL_6c82fexBk
+   _3JddiuKnc_1nzuB6bss _50yPKJAK2_4Ksihqd4c}
   * emitted_closed  []
   * emitted_constants  [hook_closure item_queue tasklet the_agenda]
   * emitted_variables  [lkitm_agenda lkitm_tasklet varlen varix]
@@ -721,8 +735,8 @@
 {
   * comment  "hook to push a tasklet or a set or tuple of them in front of the agenda"
   * constants  {item_queue tasklet the_agenda}
-  * emitted_blocks  {_02MHbyAxU_563vpdUu2 _0LHqbyzz9_2J9v5p6zc _7jkswmJf4_89dmJmBc2
-   _9m9aprPJz_4hExeiqIi}
+  * emitted_blocks  {_02MHbyAxU_563vpdUu2 _0LHqbyzz9_2J9v5p6zc _4h7BHLiLB_9askynfAC
+   _7jkswmJf4_89dmJmBc2 _9m9aprPJz_4hExeiqIi}
   * emitted_closed  []
   * emitted_constants  [hook_closure item_queue tasklet the_agenda]
   * emitted_variables  [lkitm_agenda lkitm_tasklet varlen varix]
