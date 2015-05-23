@@ -1350,6 +1350,79 @@ mom_load_value (momvalue_t *pval)
 								       0, 0));
       return true;
     }				/* done nodes */
+  else if (mom_value_is_delim (vtok, "@"))
+    {				//// read-time application: @ <value-clo> <value-arg1> [ & <value-arg2> ]
+      int linecnt = loader_mom->ldlinecount;
+      mom_eat_token_load ();
+      momvalue_t vclonod = MOM_NONEV;
+      momvalue_t vres = MOM_NONEV;
+      if (!mom_load_value (&vclonod))
+	MOM_FATAPRINTF
+	  ("missing value for read-time application after @ near %s",
+	   load_position_mom (NULL, 0, linecnt));
+      linecnt = loader_mom->ldlinecount;
+      momvalue_t varg1 = MOM_NONEV;
+      if (!mom_load_value (&varg1))
+	MOM_FATAPRINTF
+	  ("missing first argument for read-time application after @ near %s",
+	   load_position_mom (NULL, 0, linecnt));
+      momvalue_t vtokamp = mom_peek_token_load ();
+      if (mom_value_is_delim (vtokamp, "&"))
+	{
+	  mom_eat_token_load ();
+	  linecnt = loader_mom->ldlinecount;
+	  momvalue_t varg2 = MOM_NONEV;
+	  if (!mom_load_value (&varg2))
+	    MOM_FATAPRINTF
+	      ("missing second argument for read-time application after & near %s",
+	       load_position_mom (NULL, 0, linecnt));
+	  MOM_DEBUGPRINTF (load,
+			   "before two-arg read-time application vclonod=%s varg1=%s varg2=%s near %s",
+			   mom_output_gcstring (vclonod),
+			   mom_output_gcstring (varg1),
+			   mom_output_gcstring (varg2),
+			   load_position_mom (NULL, 0, linecnt));
+	  if (!mom_applval_2val_to_val (vclonod, varg1, varg2, &vres))
+	    MOM_FATAPRINTF
+	      ("failed two-argument read-time application of %s to %s and %s after & near %s",
+	       mom_output_gcstring (vclonod),
+	       mom_output_gcstring (varg1),
+	       mom_output_gcstring (varg2),
+	       load_position_mom (NULL, 0, linecnt));
+	  MOM_DEBUGPRINTF (load, "after two-arg read-time application"
+			   " vclonod=%s varg1=%s varg2=%s vres=%s near %s",
+			   mom_output_gcstring (vclonod),
+			   mom_output_gcstring (varg1),
+			   mom_output_gcstring (varg2),
+			   mom_output_gcstring (vres),
+			   load_position_mom (NULL, 0, linecnt));
+	  *pval = vres;
+	  return true;
+	}
+      else
+	{
+	  MOM_DEBUGPRINTF (load,
+			   "before one-arg read-time application vclonod=%s varg1=%s near %s",
+			   mom_output_gcstring (vclonod),
+			   mom_output_gcstring (varg1),
+			   load_position_mom (NULL, 0, linecnt));
+	  if (!mom_applval_1val_to_val (vclonod, varg1, &vres))
+	    MOM_FATAPRINTF
+	      ("failed one-argument read-time application of %s to %s near %s",
+	       mom_output_gcstring (vclonod),
+	       mom_output_gcstring (varg1), load_position_mom (NULL, 0,
+							       linecnt));
+	  MOM_DEBUGPRINTF (load,
+			   "after one-arg read-time application"
+			   " vclonod=%s varg1=%s vres=%s near %s",
+			   mom_output_gcstring (vclonod),
+			   mom_output_gcstring (varg1),
+			   mom_output_gcstring (vres),
+			   load_position_mom (NULL, 0, linecnt));
+	  *pval = vres;
+	  return true;
+	}
+    }
   return false;
 }				/* end mom_load_value */
 

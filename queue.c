@@ -151,7 +151,7 @@ mom_queueitem_pop_front (struct momqueueitems_st *qu)
 	qu->que_back = NULL;
       MOM_GC_FREE (fr, sizeof (*fr));
       qu->que_size--;
-      return itm;
+      return (momitem_t *) itm;
     }
   else
     {
@@ -161,7 +161,7 @@ mom_queueitem_pop_front (struct momqueueitems_st *qu)
 	  fr->quechi_items[ix] = NULL;
 	}
       qu->que_size--;
-      return itm;
+      return (momitem_t *) itm;
     }
 }
 
@@ -199,7 +199,7 @@ mom_queueitem_peek_nth (struct momqueueitems_st *qu, int rk)
 	      if (itm)
 		{
 		  if (cnt == rk)
-		    return itm;
+		    return (momitem_t *) itm;
 		  cnt++;
 		}
 	    }
