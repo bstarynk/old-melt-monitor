@@ -22,6 +22,8 @@
 
 ////////////////
 
+#warning missing handling of anonymous aliases
+
 struct transformpair_mom_st
 {
   const momitem_t *transp_itm;
@@ -35,6 +37,12 @@ struct transformvect_mom_st
   struct transformpair_mom_st transf_pairs[];	/* of length transf_size */
 };
 
+struct loaderaliasent_st
+{
+  const momstring_t *al_name;
+  momitem_t *al_itm;
+};
+
 #define LOADER_MAGIC_MOM 0x169128bb
 struct momloader_st
 {
@@ -45,6 +53,9 @@ struct momloader_st
   const char *lduserpath;
   FILE *ldglobalfile;
   FILE *lduserfile;
+  struct loaderaliasent_st *ldaliasentarr;	// of ldaliaslen size
+  unsigned ldaliaslen;
+  unsigned ldaliascount;
   struct momhashset_st *lditemset;
   struct momhashset_st *ldmoduleset;
   struct transformvect_mom_st *ldtransfvect;
@@ -129,6 +140,70 @@ load_position_mom (char *buf, size_t siz, int lineno)
       return MOM_GC_STRDUP ("location message", lbuf);
     }
 }
+
+static void
+raw_add_alias_mom (const momstring_t *nam, momitem_t *itm)
+{
+  assert (loader_mom && loader_mom->ldmagic == LOADER_MAGIC_MOM);
+  assert (nam != NULL && nam != MOM_EMPTY && nam->slen > 0);
+  assert (itm != NULL && itm != MOM_EMPTY);
+  assert (6 * loader_mom->ldaliascount < 5 * loader_mom->ldaliaslen);
+  unsigned h = nam->shash;
+  assert (h != 0);
+  unsigned asiz = loader_mom->ldaliaslen;
+  struct loaderaliasent_st *alarr = loader_mom->ldaliasentarr;
+  assert (asiz > 10 && asiz % 2 != 0 && asiz % 3 != 0);
+  unsigned startix = h % asiz;
+  int pos = -2;
+  for (unsigned ix = startix; ix < asiz; ix++)
+    {
+      const momstring_t *curname = alarr[ix].al_name;
+      if (!curname)
+	{
+	  if (pos < 0)
+	    pos = ix;
+	  break;
+	}
+      else if (curname == MOM_EMPTY)
+	{
+	  if (pos < 0)
+	    pos = ix;
+	  continue;
+	}
+      else if (curname->shash == h && !strcmp (curname->cstr, nam->cstr))
+	{
+	  alarr[ix].al_itm = itm;
+	  return;
+	}
+    };
+  for (unsigned ix = 0; ix < startix; ix++)
+    {
+      const momstring_t *curname = alarr[ix].al_name;
+      if (!curname)
+	{
+	  if (pos < 0)
+	    pos = ix;
+	  break;
+	}
+      else if (curname == MOM_EMPTY)
+	{
+	  if (pos < 0)
+	    pos = ix;
+	  continue;
+	}
+      else if (curname->shash == h && !strcmp (curname->cstr, nam->cstr))
+	{
+	  alarr[ix].al_itm = itm;
+	  return;
+	}
+    };
+  assert (pos >= 0);
+  alarr[pos].al_itm = itm;
+  alarr[pos].al_name = nam;
+  loader_mom->ldaliascount++;
+}				/* end of raw_add_alias_mom */
+
+#warning missing alias_reorganize_mom routine
 
 static void
 first_pass_load_mom (const char *path, FILE *fil)
@@ -1445,6 +1520,14 @@ mom_load_state ()
   else
     ldr.lduserpath = MOM_USER_DATA_PATH;
   ldr.ldforglobals = true;
+  {
+    unsigned alisiz = 41;	/* a prime */
+    ldr.ldaliasentarr =
+      MOM_GC_ALLOC ("aliasentarr",
+		    alisiz * sizeof (struct loaderaliasent_st));
+    ldr.ldaliaslen = alisiz;
+    ldr.ldaliascount = 0;
+  }
   loader_mom = &ldr;
   MOM_DEBUGPRINTF (load, "first pass");
   first_pass_load_mom (ldr.ldglobalpath, ldr.ldglobalfile);

@@ -573,3 +573,16 @@ bool
     itm->itm_data1 = NULL;
   return true;
 }				/* end of filler_of_item_queue */
+
+
+bool
+  momfunc_1val_to_val_transform_block_statement
+  (const momnode_t *clonode, momvalue_t valblockstmt, momvalue_t *pvalres)
+{
+  MOM_DEBUGPRINTF (gencod,
+		   "transform_block_statement start valblockstmt=%s",
+		   mom_output_gcstring (valblockstmt));
+  MOM_FATAPRINTF ("unimplemented transform_block_statement valblockstmt=%s",
+		  mom_output_gcstring (valblockstmt));
+#warning transform_block_statement unimplemented
+}				/* end fo transform_block_statement */

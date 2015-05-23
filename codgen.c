@@ -771,6 +771,18 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
 	return itmctyp;
       }
       break;
+    case MOM_PREDEFINED_NAMED_CASE (block_statement, itmkind, otherwisekindlab):
+      // this should not happen
+      {
+	CGEN_ERROR_RESULT_MOM (cg, NULL,
+			       "type_of_scanned_item module item %s : function %s has block %s with statement %s with block_statement %s",
+			       mom_item_cstring (cg->cg_moduleitm),
+			       mom_item_cstring (cg->cg_curfunitm),
+			       mom_item_cstring (cg->cg_curblockitm),
+			       mom_item_cstring (cg->cg_curstmtitm),
+			       mom_item_cstring (itm));
+	break;
+      }
     default:
     otherwisekindlab:
     case MOM_PREDEFINED_NAMED_CASE (value, itmkind, otherwisekindlab):
