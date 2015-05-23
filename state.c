@@ -289,10 +289,9 @@ mom_load_itemref_at (const char *fil, int lin)
 	MOM_FATAPRINTF
 	  ("load_itemref _! failed to load value to convert near %s",
 	   load_position_mom (NULL, 0, 0));
-      MOM_DEBUGPRINTF (load, "load_itemref@%s:%d valitm=%s near %s",
-		       mom_output_gcstring (valitm), load_position_mom (NULL,
-									0,
-									0));
+      MOM_DEBUGPRINTF (load, "load_itemref@%s:%d valitm=%s near %s", fil, lin,
+		       mom_output_gcstring (valitm),
+		       load_position_mom (NULL, 0, 0));
       if (valitm.typnum != momty_item)
 	MOM_FATAPRINTF ("loading _! near %s does not get an item, but %s",
 			load_position_mom (NULL, 0, linum),

@@ -1977,6 +1977,20 @@
 ..
 
 
+** signature_2val_to_val   ////// PREDEFINED
+{
+  * comment  "signature of functions : value value -> value"
+  * dumped_item_emitter  ^emitter_of_function()
+  * dumped_item_scanner  ^scanner_of_function()
+  * function_radix  "2val_to_val"
+  * input_types  [value value]
+  * output_types  [value] }
+ 
+  %  ^filler_of_plain_kind( function_signature)
+ 
+..
+
+
 ** signature_void_to_void   ////// PREDEFINED
 {
   * comment  "signature for closures with no arguments and no result"

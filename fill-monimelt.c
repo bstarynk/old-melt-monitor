@@ -125,6 +125,9 @@ mom_predefined_items_fill (void)
 // item signature_2itm_to_void of kind function_signature
   MOM_PREDEFINED_NAMED (signature_2itm_to_void)->itm_kind
     = MOM_PREDEFINED_NAMED (function_signature);
+// item signature_2val_to_val of kind function_signature
+  MOM_PREDEFINED_NAMED (signature_2val_to_val)->itm_kind
+    = MOM_PREDEFINED_NAMED (function_signature);
 // item signature_void_to_void of kind function_signature
   MOM_PREDEFINED_NAMED (signature_void_to_void)->itm_kind
     = MOM_PREDEFINED_NAMED (function_signature);
