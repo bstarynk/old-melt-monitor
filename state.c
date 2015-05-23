@@ -1019,9 +1019,7 @@ mom_load_new_anonymous_item (bool global)
     }
   vtok = mom_peek_token_load ();
   if (!mom_value_is_delim (vtok, "(!"))
-    MOM_FATAPRINTF ("unexpected token %s in %s, expected (!",
-		    mom_output_gcstring (vtok),
-		    load_position_mom (NULL, 0, 0));
+    return newitm;
   mom_eat_token_load ();
   load_fill_item_mom (newitm, true);
   vtok = mom_peek_token_load ();

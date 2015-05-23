@@ -899,6 +899,13 @@
 ..
 
 
+** block_statement   ////// PREDEFINED
+{
+  * comment  "kind for block statement, to be translated into blocks" }
+ 
+..
+
+
 ** case   ////// PREDEFINED
 {
   * comment  "node for cases in int_switch or item_switch statements: case(<case-const>,<block-item>)"
