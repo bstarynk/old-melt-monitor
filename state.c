@@ -278,8 +278,29 @@ mom_load_itemref_at (const char *fil, int lin)
 		       lin);
       return mom_load_new_anonymous_item (false);
     }
+  else if (mom_value_is_delim (valtok, "_!"))
+    {
+      momvalue_t valitm = MOM_NONEV;
+      int linum = (int) loader_mom->ldlinecount;
+      mom_eat_token_load_at (fil, lin);
+      MOM_DEBUGPRINTF (load, "load_itemref@%s:%d start value2item near %s",
+		       fil, lin, load_position_mom (NULL, 0, 0));
+      if (!mom_load_value (&valitm))
+	MOM_FATAPRINTF
+	  ("load_itemref _! failed to load value to convert near %s",
+	   load_position_mom (NULL, 0, 0));
+      MOM_DEBUGPRINTF (load, "load_itemref@%s:%d valitm=%s near %s",
+		       mom_output_gcstring (valitm), load_position_mom (NULL,
+									0,
+									0));
+      if (valitm.typnum != momty_item)
+	MOM_FATAPRINTF ("loading _! near %s does not get an item, but %s",
+			load_position_mom (NULL, 0, linum),
+			mom_output_gcstring (valitm));
+      return valitm.vitem;
+    }
   return NULL;
-}
+}				/* end mom_load_itemref_at */
 
 
 static void
@@ -451,7 +472,7 @@ token_string_load_mom (momvalue_t *pval)
 const char *const delim_mom[] = {
   /// first the 2 bytes delimiters; notice that degree-sign °, section-sign §, are two UTF-8 bytes
   "==",
-  "**", "++", "--", "[[", "]]", "..", "_*", "_:",
+  "**", "++", "--", "[[", "]]", "..", "_*", "_:", "_!",
   "(!", "!)",
   "°", "§", "*", "(", ")",
   "[", "]",
@@ -1170,7 +1191,8 @@ mom_load_value (momvalue_t *pval)
       mom_eat_token_load ();
       return true;
     }
-  if (mom_value_is_delim (vtok, "_*") || mom_value_is_delim (vtok, "_:"))
+  if (mom_value_is_delim (vtok, "_*") || mom_value_is_delim (vtok, "_:")
+      || mom_value_is_delim (vtok, "_!"))
     {
       momvalue_t vitem = MOM_NONEV;
       const momitem_t *anitm = mom_load_itemref ();
