@@ -22,7 +22,6 @@
 
 ////////////////
 
-#warning missing handling of anonymous aliases
 
 struct transformpair_mom_st
 {
@@ -142,7 +141,7 @@ load_position_mom (char *buf, size_t siz, int lineno)
 }
 
 static void
-raw_add_alias_mom (const momstring_t *nam, momitem_t *itm)
+raw_add_alias_mom (const momstring_t *nam, const momitem_t *itm)
 {
   assert (loader_mom && loader_mom->ldmagic == LOADER_MAGIC_MOM);
   assert (nam != NULL && nam != MOM_EMPTY && nam->slen > 0);
@@ -152,6 +151,7 @@ raw_add_alias_mom (const momstring_t *nam, momitem_t *itm)
   assert (h != 0);
   unsigned asiz = loader_mom->ldaliaslen;
   struct loaderaliasent_st *alarr = loader_mom->ldaliasentarr;
+  assert (alarr != NULL);
   assert (asiz > 10 && asiz % 2 != 0 && asiz % 3 != 0);
   unsigned startix = h % asiz;
   int pos = -2;
@@ -172,7 +172,7 @@ raw_add_alias_mom (const momstring_t *nam, momitem_t *itm)
 	}
       else if (curname->shash == h && !strcmp (curname->cstr, nam->cstr))
 	{
-	  alarr[ix].al_itm = itm;
+	  alarr[ix].al_itm = (momitem_t *) itm;
 	  return;
 	}
     };
@@ -193,17 +193,94 @@ raw_add_alias_mom (const momstring_t *nam, momitem_t *itm)
 	}
       else if (curname->shash == h && !strcmp (curname->cstr, nam->cstr))
 	{
-	  alarr[ix].al_itm = itm;
+	  alarr[ix].al_itm = (momitem_t *) itm;
 	  return;
 	}
     };
   assert (pos >= 0);
-  alarr[pos].al_itm = itm;
+  alarr[pos].al_itm = (momitem_t *) itm;
   alarr[pos].al_name = nam;
   loader_mom->ldaliascount++;
 }				/* end of raw_add_alias_mom */
 
-#warning missing alias_reorganize_mom routine
+
+static momitem_t *
+find_alias_item_mom (const momstring_t *nam)
+{
+  assert (loader_mom && loader_mom->ldmagic == LOADER_MAGIC_MOM);
+  assert (nam != NULL && nam != MOM_EMPTY && nam->slen > 0);
+  assert (6 * loader_mom->ldaliascount < 5 * loader_mom->ldaliaslen);
+  unsigned h = nam->shash;
+  assert (h != 0);
+  unsigned asiz = loader_mom->ldaliaslen;
+  struct loaderaliasent_st *alarr = loader_mom->ldaliasentarr;
+  assert (alarr != NULL);
+  assert (asiz > 10 && asiz % 2 != 0 && asiz % 3 != 0);
+  unsigned startix = h % asiz;
+  for (unsigned ix = startix; ix < asiz; ix++)
+    {
+      const momstring_t *curname = alarr[ix].al_name;
+      if (!curname)
+	return NULL;
+      if (curname == MOM_EMPTY)
+	continue;
+      if (curname->shash && !strcmp (curname->cstr, nam->cstr))
+	return alarr[ix].al_itm;
+    };
+  for (unsigned ix = 0; ix < startix; ix++)
+    {
+      const momstring_t *curname = alarr[ix].al_name;
+      if (!curname)
+	return NULL;
+      if (curname == MOM_EMPTY)
+	continue;
+      if (curname->shash && !strcmp (curname->cstr, nam->cstr))
+	return alarr[ix].al_itm;
+    };
+  return NULL;
+}				/* end of find_alias_item_mom */
+
+
+static void
+alias_reorganize_mom (void)
+{
+  assert (loader_mom && loader_mom->ldmagic == LOADER_MAGIC_MOM);
+  unsigned oldsiz = loader_mom->ldaliaslen;
+  struct loaderaliasent_st *oldarr = loader_mom->ldaliasentarr;
+  unsigned oldcnt = loader_mom->ldaliascount;
+  unsigned newsiz = mom_prime_above (3 * oldcnt / 2 + 30);
+  if (newsiz == oldsiz)
+    return;
+  loader_mom->ldaliasentarr =	//
+    MOM_GC_ALLOC ("newalias", newsiz * sizeof (struct loaderaliasent_st));
+  loader_mom->ldaliascount = 0;
+  loader_mom->ldaliaslen = newsiz;
+  for (unsigned ix = 0; ix < oldsiz; ix++)
+    {
+      const momstring_t *curnam = oldarr[ix].al_name;
+      if (!curnam || curnam == MOM_EMPTY)
+	continue;
+      const momitem_t *curitm = oldarr[ix].al_itm;
+      if (!curitm || curitm == MOM_EMPTY)
+	continue;
+      raw_add_alias_mom (curnam, curitm);
+    }
+  assert (loader_mom->ldaliascount == oldcnt);
+}				/* end of alias_reorganize_mom */
+
+
+static void
+add_alias_mom (const momstring_t *nam, momitem_t *itm)
+{
+  assert (loader_mom && loader_mom->ldmagic == LOADER_MAGIC_MOM);
+  assert (nam != NULL && nam != MOM_EMPTY && nam->slen > 0);
+  assert (itm != NULL && itm != MOM_EMPTY);
+  if (MOM_UNLIKELY
+      (5 * loader_mom->ldaliascount + 2 >= 4 * loader_mom->ldaliaslen))
+    alias_reorganize_mom ();
+  raw_add_alias_mom (nam, itm);
+}				/* end of add_alias_mom */
+
 
 static void
 first_pass_load_mom (const char *path, FILE *fil)
@@ -322,9 +399,11 @@ first_pass_load_mom (const char *path, FILE *fil)
 	}
     }
   free (linbuf);
-}
+}				/* end first_pass_load_mom */
 
 
+
+static void load_fill_item_mom (momitem_t *itm, bool internal);
 
 const momitem_t *
 mom_load_itemref_at (const char *fil, int lin)
@@ -337,6 +416,17 @@ mom_load_itemref_at (const char *fil, int lin)
       const momitem_t *itm = valtok.vitem;
       assert (itm);
       mom_eat_token_load_at (fil, lin);
+      valtok = mom_peek_token_load_at (fil, lin);
+      if (!mom_value_is_delim (valtok, "(!"))
+	return itm;
+      mom_eat_token_load ();
+      load_fill_item_mom ((momitem_t *) itm, true);
+      valtok = mom_peek_token_load ();
+      if (!mom_value_is_delim (valtok, "!)"))
+	MOM_FATAPRINTF ("unexpected token %s in %s, expected !)",
+			mom_output_gcstring (valtok),
+			load_position_mom (NULL, 0, 0));
+      mom_eat_token_load ();
       return itm;
     }
   else if (mom_value_is_delim (valtok, "_*"))
@@ -371,7 +461,40 @@ mom_load_itemref_at (const char *fil, int lin)
 	MOM_FATAPRINTF ("loading _! near %s does not get an item, but %s",
 			load_position_mom (NULL, 0, linum),
 			mom_output_gcstring (valitm));
+      valtok = mom_peek_token_load_at (fil, lin);
+      if (!mom_value_is_delim (valtok, "(!"))
+	return valitm.vitem;
+      load_fill_item_mom (valitm.vitem, true);
+      valtok = mom_peek_token_load ();
+      if (!mom_value_is_delim (valtok, "!)"))
+	MOM_FATAPRINTF ("unexpected token %s in %s, expected !)",
+			mom_output_gcstring (valtok),
+			load_position_mom (NULL, 0, 0));
+      mom_eat_token_load ();
       return valitm.vitem;
+    }
+  else if (valtok.typnum == momty_node
+	   && mom_node_conn (valtok.vnode) == MOM_PREDEFINED_NAMED (item))
+    {
+      // handle aliases
+      const momstring_t *namstr =
+	mom_value_to_string (mom_node_nth (valtok.vnode, 0));
+      assert (namstr != NULL);
+      mom_eat_token_load_at (fil, lin);
+      momitem_t *alitm = find_alias_item_mom (namstr);
+      if (alitm)
+	{			/* existing alias */
+	  MOM_DEBUGPRINTF (load,
+			   "load_itemref@%s:%d namstr=%s found alitm=%s near %s",
+			   fil, lin, namstr->cstr, mom_item_cstring (alitm),
+			   load_position_mom (NULL, 0, 0));
+	  return alitm;
+	}
+      else
+	{
+	  MOM_FATAPRINTF ("unknown alias %s near %s",
+			  namstr->cstr, load_position_mom (NULL, 0, 0));
+	};
     }
   return NULL;
 }				/* end mom_load_itemref_at */
@@ -550,7 +673,7 @@ const char *const delim_mom[] = {
   "(!", "!)",
   "°", "§", "*", "(", ")",
   "[", "]",
-  "~",
+  "~", "=",
   "{", "}", "<", ">", "^", "!", "%", "@", "|", "&",
   NULL
 };
@@ -736,6 +859,25 @@ readagain:
       loader_mom->ldlinecol += 2;
       MOM_DEBUGPRINTF (load,
 		       "token_parse_load@%s:%d: got quasidelim token %s at %s",
+		       fil, lin, mom_output_gcstring (valtok),
+		       load_position_mom (locbuf, sizeof (locbuf), 0));
+      return valtok;
+    }
+  else if (c == '_' && pstart[1] == '_' && isalpha (pstart[2]))
+    {
+      // item alias, tokenized as ^item(<name>)
+      char *p = pstart;
+      while (*p && (isalnum (*p) || *p == '_'))
+	p++;
+      char oldc = *p;
+      *p = 0;
+      const momstring_t *namstr = mom_make_string_cstr (pstart);
+      *p = oldc;
+      loader_mom->ldlinecol += (p - pstart);
+      valtok =
+	mom_nodev_new (MOM_PREDEFINED_NAMED (item), 1, mom_stringv (namstr));
+      MOM_DEBUGPRINTF (load,
+		       "token_parse_load@%s:%d: got alias token %s at %s",
 		       fil, lin, mom_output_gcstring (valtok),
 		       load_position_mom (locbuf, sizeof (locbuf), 0));
       return valtok;
@@ -926,7 +1068,7 @@ mom_eat_token_load_at (const char *fil, int lin)
 }				/* end mom_eat_token_load_at */
 
 ////////////////
-void
+static void
 load_fill_item_mom (momitem_t *itm, bool internal)
 {				// keep in sync with emit_content_dumped_item_mom
   assert (loader_mom && loader_mom->ldmagic == LOADER_MAGIC_MOM);
@@ -1082,10 +1224,32 @@ mom_load_new_anonymous_item (bool global)
     newitm->itm_space = momspa_global;
   else
     newitm->itm_space = momspa_user;
-  momvalue_t vtok = mom_peek_token_load ();
+  momvalue_t vtok = MOM_NONEV;
+  vtok = mom_peek_token_load ();
   if (vtok.typnum == momty_null)
     MOM_FATAPRINTF ("failed to load new anonymous item in %s",
 		    load_position_mom (NULL, 0, 0));
+  if (mom_value_is_delim (vtok, "="))
+    {
+      mom_eat_token_load ();
+      vtok = mom_peek_token_load ();
+      if (vtok.typnum != momty_node
+	  || mom_node_conn (vtok.vnode) != MOM_PREDEFINED_NAMED (item))
+	MOM_FATAPRINTF ("expecting alias after = in anonymous item near %s",
+			load_position_mom (NULL, 0, 0));
+      const momstring_t *namstr =
+	mom_value_to_string (mom_node_nth (vtok.vnode, 0));
+      assert (namstr != NULL);
+      MOM_DEBUGPRINTF (load, "load_new_anonymous_item newitm %s namstr %s",
+		       mom_item_cstring (newitm), namstr->cstr);
+      if (find_alias_item_mom (namstr))
+	MOM_FATAPRINTF ("redefining alias %s in anonymous item %s near %s",
+			namstr->cstr, mom_item_cstring (newitm),
+			load_position_mom (NULL, 0, 0));
+      add_alias_mom (namstr, newitm);
+      mom_eat_token_load ();
+      vtok = mom_peek_token_load ();
+    }
   if (vtok.typnum == momty_string)
     {
       mom_item_unsync_put_attribute (newitm, MOM_PREDEFINED_NAMED (comment),
