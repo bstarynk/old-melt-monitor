@@ -1879,6 +1879,20 @@
 ..
 
 
+** signature_1itm_to_itm   ////// PREDEFINED
+{
+  * comment  "signature of functions : item -> item"
+  * dumped_item_emitter  ^emitter_of_function()
+  * dumped_item_scanner  ^scanner_of_function()
+  * function_radix  "1itm_to_itm"
+  * input_types  [item]
+  * output_types  [item] }
+ 
+  %  ^filler_of_plain_kind( function_signature)
+ 
+..
+
+
 ** signature_1itm_to_val   ////// PREDEFINED
 {
   * comment  "signature for function of 1 item argument and 1 value result"
@@ -2099,10 +2113,21 @@
 
 ** transform_block_statement
 {
-  * comment  "function to transform a block statement into several block-s"
+  * comment  "function to transform a block statement value into block-s"
  }
+ [[  ^transform_block_statement_item() ]]
  
   %  ^filler_of_function( signature_1val_to_val)
+ 
+..
+
+
+** transform_block_statement_item
+{
+  * comment  "function to transform a block statement value into block-s"
+ }
+ 
+  %  ^filler_of_function( signature_1itm_to_itm)
  
 ..
 

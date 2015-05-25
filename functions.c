@@ -582,7 +582,47 @@ bool
   MOM_DEBUGPRINTF (gencod,
 		   "transform_block_statement start valblockstmt=%s",
 		   mom_output_gcstring (valblockstmt));
-  MOM_FATAPRINTF ("unimplemented transform_block_statement valblockstmt=%s",
-		  mom_output_gcstring (valblockstmt));
-#warning transform_block_statement unimplemented
-}				/* end fo transform_block_statement */
+  assert (clonode != NULL);
+  momitem_t *funcitm = mom_node_conn (clonode);
+  momvalue_t vclos = mom_raw_item_get_indexed_component (funcitm, 0);
+  MOM_DEBUGPRINTF (gencod,
+		   "transform_block_statement vclos=%s",
+		   mom_output_gcstring (vclos));
+  if (vclos.typnum != momty_node)
+    MOM_FATAPRINTF
+      ("corrupted transform_block_statement funcitm %s starts with bad vclos %s for valblockstmt %s",
+       mom_item_cstring (funcitm), mom_output_gcstring (vclos),
+       mom_output_gcstring (valblockstmt));
+  if (valblockstmt.typnum != momty_item)
+    {
+      MOM_WARNPRINTF ("transform_block_statement bad valblockstmt %s",
+		      mom_output_gcstring (valblockstmt));
+      return false;
+    }
+  momitem_t *resitm = NULL;
+  if (!mom_applval_1itm_to_itm (vclos, valblockstmt.vitem, &resitm))
+    return false;
+  MOM_DEBUGPRINTF (gencod,
+		   "transform_block_statement valblockstmt=%s resitm=%s",
+		   mom_output_gcstring (valblockstmt),
+		   mom_item_cstring (resitm));
+  if (!resitm)
+    return false;
+  if (pvalres)
+    *pvalres = mom_itemv (resitm);
+  return true;
+}				/* end of transform_block_statement */
+
+
+
+bool
+  momfunc_1itm_to_itm_transform_block_statement_item
+  (const momnode_t *clonode, momitem_t *blockstmtitm, momitem_t *presitm)
+{
+  MOM_DEBUGPRINTF (gencod,
+		   "transform_block_statement_item start blockstmtitm=%s",
+		   mom_item_cstring (blockstmtitm));
+  MOM_FATAPRINTF
+    ("unimplemented transform_block_statement_item blockstmtitm=%s",
+     mom_item_cstring (blockstmtitm));
+}				/* end fo transform_block_statement_item */
