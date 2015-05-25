@@ -617,11 +617,20 @@ bool
 
 bool
   momfunc_1itm_to_itm_transform_block_statement_item
-  (const momnode_t *clonode, momitem_t *blockstmtitm, momitem_t *presitm)
+  (const momnode_t *clonode, momitem_t *blockstmtitm, momitem_t **presitm)
 {
   MOM_DEBUGPRINTF (gencod,
 		   "transform_block_statement_item start blockstmtitm=%s",
 		   mom_item_cstring (blockstmtitm));
+  if (!blockstmtitm)
+    return false;
+  if (blockstmtitm->itm_kind == MOM_PREDEFINED_NAMED (block))
+    {
+      *presitm = blockstmtitm;
+      return true;
+    };
+  if (blockstmtitm->itm_kind != MOM_PREDEFINED_NAMED (block_statement))
+    return false;
   MOM_FATAPRINTF
     ("unimplemented transform_block_statement_item blockstmtitm=%s",
      mom_item_cstring (blockstmtitm));
