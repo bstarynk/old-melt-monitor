@@ -95,11 +95,17 @@ mom_predefined_items_fill (void)
 // item scanner_of_magic_attribute of kind signature_1itm_to_void
   MOM_PREDEFINED_NAMED (scanner_of_magic_attribute)->itm_kind
     = MOM_PREDEFINED_NAMED (signature_1itm_to_void);
+// item signature_1itm1int_to_item of kind function_signature
+  MOM_PREDEFINED_NAMED (signature_1itm1int_to_item)->itm_kind
+    = MOM_PREDEFINED_NAMED (function_signature);
 // item signature_1itm1val_to_item of kind function_signature
   MOM_PREDEFINED_NAMED (signature_1itm1val_to_item)->itm_kind
     = MOM_PREDEFINED_NAMED (function_signature);
 // item signature_1itm1val_to_void of kind function_signature
   MOM_PREDEFINED_NAMED (signature_1itm1val_to_void)->itm_kind
+    = MOM_PREDEFINED_NAMED (function_signature);
+// item signature_1itm_to_item of kind function_signature
+  MOM_PREDEFINED_NAMED (signature_1itm_to_item)->itm_kind
     = MOM_PREDEFINED_NAMED (function_signature);
 // item signature_1itm_to_itm of kind function_signature
   MOM_PREDEFINED_NAMED (signature_1itm_to_itm)->itm_kind

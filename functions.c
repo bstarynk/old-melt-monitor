@@ -600,7 +600,7 @@ bool
       return false;
     }
   momitem_t *resitm = NULL;
-  if (!mom_applval_1itm_to_itm (vclos, valblockstmt.vitem, &resitm))
+  if (!mom_applval_1itm_to_item (vclos, valblockstmt.vitem, &resitm))
     return false;
   MOM_DEBUGPRINTF (gencod,
 		   "transform_block_statement valblockstmt=%s resitm=%s",
@@ -616,7 +616,7 @@ bool
 
 
 bool
-  momfunc_1itm_to_itm_transform_block_statement_item
+  momfunc_1itm1int_to_item_transform_block_statement_item
   (const momnode_t *clonode, momitem_t *blockstmtitm, momitem_t **presitm)
 {
   MOM_DEBUGPRINTF (gencod,

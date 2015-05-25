@@ -1851,6 +1851,25 @@
 ..
 
 
+** signature_1itm1_to_item   ////// PREDEFINED
+
+..
+
+
+** signature_1itm1int_to_item   ////// PREDEFINED
+{
+  * comment  "signature for : item integer -> item"
+  * dumped_item_emitter  ^emitter_of_function()
+  * dumped_item_scanner  ^scanner_of_function()
+  * function_radix  "1itm1int_to_item"
+  * input_types  [item integer]
+  * output_types  [item] }
+ 
+  %  ^filler_of_plain_kind( function_signature)
+ 
+..
+
+
 ** signature_1itm1val_to_item   ////// PREDEFINED
 {
   * comment  "signature of functions taking one item, one value and giving a value"
@@ -1879,15 +1898,22 @@
 ..
 
 
-** signature_1itm_to_itm   ////// PREDEFINED
+** signature_1itm_to_item   ////// PREDEFINED
 {
-  * comment  "signature of functions : item -> item"
+  * comment  "signature for : item  -> item"
   * dumped_item_emitter  ^emitter_of_function()
   * dumped_item_scanner  ^scanner_of_function()
-  * function_radix  "1itm_to_itm"
+  * function_radix  "1itm_to_item"
   * input_types  [item]
   * output_types  [item] }
  
+  %  ^filler_of_plain_kind( function_signature)
+ 
+..
+
+
+** signature_1itm_to_itm   ////// PREDEFINED
+
   %  ^filler_of_plain_kind( function_signature)
  
 ..
@@ -2127,7 +2153,7 @@
   * comment  "function to transform a block statement value into block-s"
  }
  
-  %  ^filler_of_function( signature_1itm_to_itm)
+  %  ^filler_of_function( signature_1itm1int_to_item)
  
 ..
 
