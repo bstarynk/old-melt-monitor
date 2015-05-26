@@ -1016,6 +1016,15 @@
 ..
 
 
+** decorate_block_statement_item
+{
+  * comment  "function to decorate a block statement" }
+ 
+  %  ^filler_of_function( signature_1itm_to_void)
+ 
+..
+
+
 ** double   ////// PREDEFINED
 {
   * comment  "type for double" }
@@ -1545,6 +1554,13 @@
 ..
 
 
+** leader_block   ////// PREDEFINED
+{
+  * comment  "attribute marking leader blocks" }
+ 
+..
+
+
 ** lkitm_agenda
 {
   * comment  "the locked item for the agenda"
@@ -1912,13 +1928,6 @@
 ..
 
 
-** signature_1itm_to_itm   ////// PREDEFINED
-
-  %  ^filler_of_plain_kind( function_signature)
- 
-..
-
-
 ** signature_1itm_to_val   ////// PREDEFINED
 {
   * comment  "signature for function of 1 item argument and 1 value result"
@@ -2166,8 +2175,9 @@
 {
   * comment  "function to transform a block statement value into block-s"
  }
+ [[  ^decorate_block_statement_item() ]]
  
-  %  ^filler_of_function( signature_2itm1int_to_item)
+  %  ^filler_of_function( signature_1itm_to_item)
  
 ..
 

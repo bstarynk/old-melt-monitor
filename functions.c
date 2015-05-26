@@ -600,8 +600,7 @@ bool
       return false;
     }
   momitem_t *resitm = NULL;
-  if (!mom_applval_2itm1int_to_item
-      (vclos, valblockstmt.vitem, (momitem_t *) NULL, (intptr_t) 0, &resitm))
+  if (!mom_applval_1itm_to_item (vclos, valblockstmt.vitem, &resitm))
     return false;
   MOM_DEBUGPRINTF (gencod,
 		   "transform_block_statement valblockstmt=%s resitm=%s",
@@ -615,11 +614,10 @@ bool
 }				/* end of transform_block_statement */
 
 
-
+// see http://en.wikipedia.org/wiki/Basic_block
 bool
-  momfunc_2itm1int_to_item_transform_block_statement_item
-  (const momnode_t *clonode, momitem_t *blockstmtitm, momitem_t *nextitm,
-   intptr_t rk, momitem_t **presitm)
+  momfunc_1itm_to_item_transform_block_statement_item
+  (const momnode_t *clonode, momitem_t *blockstmtitm, momitem_t **presitm)
 {
   MOM_DEBUGPRINTF (gencod,
 		   "transform_block_statement_item start blockstmtitm=%s",
@@ -637,3 +635,20 @@ bool
     ("unimplemented transform_block_statement_item blockstmtitm=%s",
      mom_item_cstring (blockstmtitm));
 }				/* end fo transform_block_statement_item */
+
+
+
+// see http://en.wikipedia.org/wiki/Basic_block
+bool
+  momfunc_1itm_to_void_decorate_block_statement_item
+  (const momnode_t *clonode, momitem_t *blockstmtitm)
+{
+  MOM_DEBUGPRINTF (gencod,
+		   "decorate_block_statement_item start blockstmtitm=%s",
+		   mom_item_cstring (blockstmtitm));
+  /// put a leader_block attribute into each leader statement
+#warning decorate_block_statement_item unimplemented
+  MOM_FATAPRINTF
+    ("unimplemented decorate_block_statement_item blockstmtitm=%s",
+     mom_item_cstring (blockstmtitm));
+}
