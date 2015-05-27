@@ -619,6 +619,11 @@ bool
   momfunc_1itm_to_item_transform_block_statement_item
   (const momnode_t *clonode, momitem_t *blockstmtitm, momitem_t **presitm)
 {
+  enum transfblockstmtitemclo_en
+  {
+    tbsi_decorator,
+    tbsi__end
+  };
   MOM_DEBUGPRINTF (gencod,
 		   "transform_block_statement_item start blockstmtitm=%s",
 		   mom_item_cstring (blockstmtitm));
@@ -630,6 +635,13 @@ bool
       return true;
     };
   if (blockstmtitm->itm_kind != MOM_PREDEFINED_NAMED (block_statement))
+    return false;
+  momitem_t *funcitm = mom_node_conn (clonode);
+  momvalue_t vdecoclos =
+    mom_raw_item_get_indexed_component (funcitm, tbsi_decorator);
+  MOM_DEBUGPRINTF (gencod, "transform_block_statement_item vdecoclos=%s",
+		   mom_output_gcstring (vdecoclos));
+  if (!mom_applval_1itm_to_void (vdecoclos, blockstmtitm))
     return false;
   MOM_FATAPRINTF
     ("unimplemented transform_block_statement_item blockstmtitm=%s",
@@ -646,6 +658,39 @@ bool
   MOM_DEBUGPRINTF (gencod,
 		   "decorate_block_statement_item start blockstmtitm=%s",
 		   mom_item_cstring (blockstmtitm));
+  if (!blockstmtitm
+      || blockstmtitm->itm_kind != MOM_PREDEFINED_NAMED (block_statement))
+    return false;
+  mom_item_lock (blockstmtitm);
+  {
+    momitem_t *opitm =
+      mom_value_to_item (mom_raw_item_get_indexed_component
+			 (blockstmtitm, 0));
+    MOM_DEBUGPRINTF (gencod,
+		     "decorate_block_statement_item blockstmtitm=%s opitm=%s",
+		     mom_item_cstring (blockstmtitm),
+		     mom_item_cstring (opitm));
+    if (!opitm)
+      goto endlock;
+    switch (mom_item_hash (opitm))
+      {
+      case MOM_PREDEFINED_NAMED_CASE (int_switch, opitm, otherwiseoplab):
+	{
+#warning unimplemented decorate_block_statement_item
+	}
+	break;
+      otherwiseoplab:
+      default:
+	break;
+      };			/* end switch hash opitm */
+    goto endlock;
+  }
+endlock:
+  mom_item_unlock (blockstmtitm);
+  MOM_DEBUGPRINTF (gencod,
+		   "decorate_block_statement_item end blockstmtitm=%s",
+		   mom_item_cstring (blockstmtitm));
+
   /// put a leader_block attribute into each leader statement
 #warning decorate_block_statement_item unimplemented
   MOM_FATAPRINTF
