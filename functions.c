@@ -482,7 +482,8 @@ bool
       struct momhashset_st *hset =	//
 	mom_hashset_add_sized_items (NULL,	//
 				     clonode->arrsons[0].vset->slen,
-				     clonode->arrsons[0].vset->arritm);
+				     (momitem_t *const *) clonode->
+				     arrsons[0].vset->arritm);
       itm->itm_data1 = hset;
     }
   else

@@ -65,6 +65,7 @@ struct momloader_st
   size_t ldlinelen;
   size_t ldlinecol;
   size_t ldlinecount;
+  long ldlineoff;
 };
 
 static struct momloader_st *loader_mom;
@@ -696,10 +697,12 @@ readagain:
     {
       if (loader_mom->ldlinebuf)
 	memset (loader_mom->ldlinebuf, 0, loader_mom->ldlinesize);
+      FILE *f =
+	loader_mom->ldforglobals ? loader_mom->
+	ldglobalfile : loader_mom->lduserfile;
+      loader_mom->ldlineoff = ftell (f);
       loader_mom->ldlinelen =
-	getline (&loader_mom->ldlinebuf, &loader_mom->ldlinesize,
-		 loader_mom->ldforglobals ? loader_mom->
-		 ldglobalfile : loader_mom->lduserfile);
+	getline (&loader_mom->ldlinebuf, &loader_mom->ldlinesize, f);
       if (loader_mom->ldlinelen <= 0)
 	{
 	  MOM_DEBUGPRINTF (load, "token_parse_load@%s:%d: got EOF at %s", fil,
@@ -718,12 +721,17 @@ readagain:
   char c = loader_mom->ldlinebuf[loader_mom->ldlinecol];
   char *pstart = loader_mom->ldlinebuf + loader_mom->ldlinecol;
   char *end = NULL;
-  if (pstart[0] == '/' && pstart[1] == '/')
+  if (isspace (c))
+    {
+      loader_mom->ldlinecol++;
+      goto readagain;
+    }
+  if (c == '/' && pstart[1] == '/')
     {
       loader_mom->ldlinecol = loader_mom->ldlinelen;
       goto readagain;
     }
-  else if (pstart[0] == '/' && pstart[1] == '*')
+  else if (c == '/' && pstart[1] == '*')
     {
       char *endcomm = strstr (pstart + 2, "*/");
       if (!endcomm)
@@ -733,10 +741,55 @@ readagain:
       loader_mom->ldlinecol += (endcomm + 2 - pstart);
       goto readagain;
     }
-  if (isspace (c))
+  else if (c == '\\' && pstart[1] == '|')	/*  \| starts a JSON object */
     {
-      loader_mom->ldlinecol++;
-      goto readagain;
+      /* hacky: we use json_loadf, then we read again the lines to
+         compute the line count */
+      long startjsonoff = loader_mom->ldlineoff + loader_mom->ldlinecol + 2;
+      long linoff = loader_mom->ldlineoff;
+      long lincnt = loader_mom->ldlinecount;
+      FILE *f =			//
+	loader_mom->ldforglobals ? loader_mom->
+	ldglobalfile : loader_mom->lduserfile;
+      long curoff = fseek (f, startjsonoff, SEEK_SET);
+      int lin = loader_mom->ldlinecount;
+      json_error_t jerr;
+      memset (&jerr, 0, sizeof (jerr));
+      json_t *js =
+	json_loadf (f, JSON_DISABLE_EOF_CHECK | JSON_DECODE_ANY, &jerr);
+      if (!js)
+	MOM_FATAPRINTF
+	  ("failed to parse JSON at byte offset %ld near %s (pos %ld): %s",
+	   curoff, load_position_mom (locbuf, sizeof (locbuf), lin),
+	   (long) jerr.position, jerr.text);
+      long endjsonoff = ftell (f);
+      MOM_DEBUGPRINTF (load,
+		       "loaded JSON near %s startjsonoff=%ld linoff=%ld lincnt=%ld endjsonoff=%ld\n\t %s",
+		       load_position_mom (locbuf, sizeof (locbuf), lin),
+		       startjsonoff, linoff, lincnt, endjsonoff,
+		       /* Notice that json_dumps is using the malloc given to JSON */
+		       json_dumps (js,
+				   JSON_SORT_KEYS | JSON_ENSURE_ASCII |
+				   JSON_INDENT (1)));
+      fseek (f, linoff, SEEK_SET);
+      loader_mom->ldlineoff = linoff;
+      loader_mom->ldlinecount = lincnt;
+      do
+	{
+	  ssize_t sz = 0;
+	  loader_mom->ldlineoff = ftell (f);
+	  sz = getline (&loader_mom->ldlinebuf, &loader_mom->ldlinesize, f);
+	  if (sz < 0)
+	    break;
+	  loader_mom->ldlinelen = sz;
+	  loader_mom->ldlinecount++;
+	}
+      while ((long) (loader_mom->ldlineoff + loader_mom->ldlinelen) <
+	     (long) endjsonoff);
+      if (loader_mom->ldlinelen > 0
+	  && (long) (loader_mom->ldlineoff + loader_mom->ldlinelen) <
+	  endjsonoff)
+	loader_mom->ldlinecol = endjsonoff - loader_mom->ldlineoff + 1;
     }
   else if (isdigit (c)
 	   || ((c == '+' || c == '-')
@@ -1289,17 +1342,18 @@ second_pass_load_mom (bool global)
   }
   loader_mom->ldlinelen = 0;
   loader_mom->ldforglobals = global;
-  rewind (loader_mom->ldforglobals ? loader_mom->ldglobalfile : loader_mom->
-	  lduserfile);
+  FILE *f =
+    loader_mom->ldforglobals ? loader_mom->ldglobalfile : loader_mom->
+    lduserfile;
+  rewind (f);
   loader_mom->ldlinecol = loader_mom->ldlinelen = loader_mom->ldlinecount = 0;
   do
     {
       if (loader_mom->ldlinebuf)
 	memset (loader_mom->ldlinebuf, 0, loader_mom->ldlinesize);
+      loader_mom->ldlineoff = ftell (f);
       loader_mom->ldlinelen =
-	getline (&loader_mom->ldlinebuf, &loader_mom->ldlinesize,
-		 loader_mom->ldforglobals ? loader_mom->
-		 ldglobalfile : loader_mom->lduserfile);
+	getline (&loader_mom->ldlinebuf, &loader_mom->ldlinesize, f);
       if (loader_mom->ldlinelen <= 0)
 	{
 	  MOM_DEBUGPRINTF (load, "second %s pass end-of-file at %s",
@@ -1343,9 +1397,7 @@ second_pass_load_mom (bool global)
 			   val.vitem->itm_str->cstr);
 	}
     }
-  while (!feof
-	 (loader_mom->ldforglobals ? loader_mom->ldglobalfile : loader_mom->
-	  lduserfile));
+  while (!feof (f));
 }
 
 void
@@ -1860,6 +1912,7 @@ mom_scan_dumped_value (const momvalue_t val)
     case momty_null:
     case momty_string:
     case momty_delim:
+    case momty_json:
       goto end;
     case momty_item:
       mom_scan_dumped_item (val.vitem);
@@ -1867,7 +1920,7 @@ mom_scan_dumped_value (const momvalue_t val)
     case momty_set:
     case momty_tuple:
       {
-	momseq_t *sq = val.vsequ;
+	const momseq_t *sq = val.vsequ;
 	assert (sq);
 	mom_scan_dumped_value (sq->meta);
 	unsigned slen = sq->slen;
@@ -1877,7 +1930,7 @@ mom_scan_dumped_value (const momvalue_t val)
       }
     case momty_node:
       {
-	momnode_t *nod = val.vnode;
+	const momnode_t *nod = val.vnode;
 	assert (nod);
 	if (!mom_scan_dumped_item (nod->conn))
 	  {
@@ -2836,7 +2889,7 @@ mom_dumpable_value (const momvalue_t val)
       return (mom_dumpable_item (val.vitem));
     case momty_node:
       {
-	momnode_t *nod = val.vnode;
+	const momnode_t *nod = val.vnode;
 	assert (nod);
 	return (mom_dumpable_item (nod->conn));
       }
@@ -3071,6 +3124,13 @@ output_val_mom (struct momvaloutput_st *ov, const momvalue_t val)
     case momty_item:
       assert (val.vitem);
       output_item_mom (ov, val.vitem);
+      return;
+    case momty_json:
+      assert (val.vjson);
+      fputs ("\\| ", ov->vout_file);
+      json_dumpf ((json_t *) val.vjson, ov->vout_file,
+		  JSON_SORT_KEYS | JSON_ENSURE_ASCII | JSON_INDENT (1));
+      output_space_mom (ov);
       return;
     case momty_tuple:
       {

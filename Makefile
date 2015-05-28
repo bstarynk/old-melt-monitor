@@ -19,7 +19,7 @@
 ################################################################
 ## onion is not packaged, see https://github.com/davidmoreno/onion
 ## Boehm GC is from http://www.hboehm.info/gc/
-PACKAGES=  libcurl #sqlite3 glib-2.0 gmime-2.6
+PACKAGES=  libcurl jansson #sqlite3 glib-2.0 gmime-2.6
 PKGCONFIG= pkg-config
 CC=gcc
 CCFLAGS=  -std=gnu11 -Wall -Wextra -fdiagnostics-color=auto
@@ -98,7 +98,7 @@ plugins: $(PLUGINS)
 ## or - or _ characters, conventionally by the name or identstr of the
 ## module item. see MONIMELT_SHARED_MODULE_PREFIX in monimelt.h
 modules/momg_%.so: modules/momg_%.c | monimelt.h predef-monimelt.h
-	- [ -f $@ ] && mv -f $@ $@~
+	-[ -f $@ ] && mv -vf $@ $@~
 	$(LINK.c) -DMONIMELT_CURRENT_MODULE=\"$(patsubst momg_%.so,%,$(*F))\" \
 		  -DMONIMELT_MD5_MODULE=\"$(shell md5sum $< | cut '-d ' -f1)\" \
 		  -DMONIMELT_LAST_COMMITID=\"$(shell git log -n 1 --abbrev=16 --format=%h)\" \

@@ -536,9 +536,10 @@ usage_mom (const char *argv0)
   printf ("\t -J | --jobs <nb-work-threads> " " \t# Start work threads.\n");
   printf ("\t -P | --plugin <plugin-name> <plugin-arg> "
 	  " \t# load a plugin.\n");
-  printf ("\t -W | --web <webhost>\n");
+  printf ("\t -W | --web <webhost> "
+	  " \t# e.g. -W localhost:8088 for web server\n");
   printf ("\t -S | --socket <socket>"
-	  "\t #host:port for TCP socket, /absolute/path for UNIX socket\n");
+	  " \t #host:port for TCP socket, /absolute/path for UNIX socket\n");
   putchar ('\n');
   printf ("\t --chdir <directory>" "\t #change directory\n");
   printf ("\t --write-pid <file>"
@@ -625,6 +626,9 @@ parse_program_arguments_and_load_plugins_mom (int *pargc, char ***pargv)
 	{
 	case 'h':
 	  usage_mom (argv[0]);
+	  putchar ('\n');
+	  fputs ("\nVersion info:::::\n", stdout);
+	  print_version_mom (argv[0]);
 	  exit (EXIT_FAILURE);
 	  return;
 	case 'V':
@@ -856,6 +860,12 @@ do_generate_c_module_mom (void)
 static bool daemonize_mom = false;
 static bool noclose_daemonize_mom = false;
 
+static void *
+json_malloc_mom (size_t sz)
+{
+  return MOM_GC_ALLOC ("json malloc", sz);
+};
+
 int
 main (int argc_main, char **argv_main)
 {
@@ -873,6 +883,8 @@ main (int argc_main, char **argv_main)
      GC_pthread_join,
      GC_pthread_cancel,
      GC_pthread_detach, GC_pthread_exit, GC_pthread_sigmask);
+  json_set_alloc_funcs (json_malloc_mom, GC_free);
+  json_object_seed (0);		/* use random device ie system entropy source */
   mom_prog_dlhandle = GC_dlopen (NULL, RTLD_NOW | RTLD_GLOBAL);
   if (MOM_UNLIKELY (!mom_prog_dlhandle))
     MOM_FATAPRINTF ("failed to dlopen the program: %s", dlerror ());

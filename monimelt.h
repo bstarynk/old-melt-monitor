@@ -81,6 +81,11 @@
 #include <onion/internal_status.h>
 #include <onion/websocket.h>
 
+
+// jansson, a JSON library in C which is Boehm-GC friendly
+// see http://www.digip.org/jansson/
+#include <jansson.h>
+
 // in generated _timestamp.c
 extern const char monimelt_timestamp[];
 extern const char monimelt_lastgitcommit[];
@@ -115,6 +120,7 @@ extern void mom_run_workers (void);
 typedef uint32_t momhash_t;
 
 typedef struct momstring_st momstring_t;
+typedef struct momjson_st momjson_t;
 typedef struct momdelim_st momdelim_t;
 typedef struct momitem_st momitem_t;
 typedef struct momitem_st momlockeditem_t;
@@ -203,6 +209,7 @@ typedef enum momvaltype_en
   momty_int = -1,
   momty_null = 0,
   momty_string,
+  momty_json,
   momty_item,
   momty_tuple,
   momty_set,
@@ -460,10 +467,11 @@ struct momvalue_st
     momdelim_t vdelim;
     const momstring_t *vstr;
     momitem_t *vitem;
-    momnode_t *vnode;
-    momseq_t *vsequ;
-    momseq_t *vset;
-    momseq_t *vtuple;
+    const momjson_t *vjson;
+    const momnode_t *vnode;
+    const momseq_t *vsequ;
+    const momseq_t *vset;
+    const momseq_t *vtuple;
   };
 };
 #define MOM_NONEV ((momvalue_t){momty_null,false,{NULL}})
@@ -557,6 +565,49 @@ struct momstring_st
   momhash_t shash;
   char cstr[];			/* length is slen+1 */
 };
+
+#define MOM_MAX_JSON_LENGTH (1<<24)	/* max sequence length 16777216 */
+struct momjson_st
+{
+  uint32_t slen;
+  momhash_t shash;
+  momvalue_t meta;
+  const json_t *json;
+};
+
+static inline unsigned
+mom_json_length (const struct momjson_st *mj)
+{
+  if (!mj || mj == MOM_EMPTY)
+    return 0;
+  return mj->slen;
+}
+
+static inline momhash_t
+mom_json_hash (const struct momjson_st *mj)
+{
+  if (!mj || mj == MOM_EMPTY)
+    return 0;
+  return mj->shash;
+}
+
+static inline momvalue_t
+mom_json_meta (const struct momjson_st *mj)
+{
+  if (!mj || mj == MOM_EMPTY)
+    return MOM_NONEV;
+  return mj->meta;
+}
+
+static inline const json_t *
+mom_json_data (const momjson_t *mj)
+{
+  if (!mj || mj == MOM_EMPTY)
+    return NULL;
+  return mj->json;
+}
+
+int mom_cmp_json (const json_t * js1, const json_t * js2);
 
 #define MOM_MAX_SEQ_LENGTH (1<<24)	/* max sequence length 16777216 */
 struct momseq_st
@@ -653,6 +704,15 @@ mom_value_to_node (const momvalue_t val)
 {
   if (val.typnum == momty_node)
     return val.vnode;
+  else
+    return NULL;
+}
+
+static inline const momjson_t *
+mom_value_to_json (const momvalue_t val)
+{
+  if (val.typnum == momty_json)
+    return val.vjson;
   else
     return NULL;
 }
@@ -1147,6 +1207,36 @@ mom_unsafe_setv (const momseq_t *seq)
 #define mom_setv_sized(Nb,ItmArr) mom_unsafe_setv(mom_make_sized_set((Nb),(ItmArr)))
 
 bool mom_setv_contains (const momvalue_t vset, const momitem_t *itm);
+
+const momjson_t *mom_make_meta_json (momvalue_t metav, json_t * js);
+#define mom_make_json(Js) mom_make_meta_json(MOM_NONEV, (Js))
+
+static inline momvalue_t
+mom_jsonv (json_t * js)
+{
+  momvalue_t val = MOM_NONEV;
+  if (js && js != MOM_EMPTY)
+    {
+      val.vjson = mom_make_json (js);
+      if (val.vjson)
+	val.typnum = momty_json;
+    };
+  return val;
+}
+
+
+static inline momvalue_t
+mom_meta_jsonv (momvalue_t metav, json_t * js)
+{
+  momvalue_t val = MOM_NONEV;
+  if (js && js != MOM_EMPTY)
+    {
+      val.vjson = mom_make_meta_json (metav, js);
+      if (val.vjson)
+	val.typnum = momty_json;
+    };
+  return val;
+}
 
 
 // make a node from given values.
