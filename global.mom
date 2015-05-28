@@ -2401,4 +2401,11 @@
  
 ..
 
+
+** web_exchange   ////// PREDEFINED
+{
+  * comment  "kind of transient web request/response exchange" }
+ 
+..
+
 //// end of global file global.mom
