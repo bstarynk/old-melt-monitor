@@ -96,6 +96,7 @@ int64_t mom_prime_below (int64_t n);
 #define MOM_MIN_WORKERS 2
 int mom_nb_workers;
 const char *mom_web_host;
+const char *mom_socket;
 const char *mom_user_data;
 // mark unlikely conditions to help optimization
 #ifdef __GNUC__
@@ -108,6 +109,7 @@ const char *mom_user_data;
 #define MOM_UNUSED
 #endif
 
+extern void mom_run_workers (void);
 
 // every hashcode is a non-zero 32 bits unsigned
 typedef uint32_t momhash_t;

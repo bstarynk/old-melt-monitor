@@ -399,6 +399,7 @@ static const struct option mom_long_options[] = {
   {"daemon", no_argument, NULL, 'd'},
   {"syslog", no_argument, NULL, 'l'},
   {"web", required_argument, NULL, 'W'},
+  {"socket", required_argument, NULL, 'S'},
   {"user-data", required_argument, NULL, 'U'},
   // long-only options
   {"daemon-noclose", no_argument, NULL, xtraopt_daemon_noclose},
@@ -533,12 +534,11 @@ usage_mom (const char *argv0)
   putchar ('\n');
   printf ("\t -n | --nice <nice-level> " " \t# Set process nice level.\n");
   printf ("\t -J | --jobs <nb-work-threads> " " \t# Start work threads.\n");
-  printf ("\t -R | --jsonrpc <jsonrpc> " " \t# Start JSONRPC service\n");
-  printf ("\t\t## <jsonrpc> is"
-	  "like localhost:8087 or 8087 for TCP, or /some/path for Unix socket\n");
   printf ("\t -P | --plugin <plugin-name> <plugin-arg> "
 	  " \t# load a plugin.\n");
   printf ("\t -W | --web <webhost>\n");
+  printf ("\t -S | --socket <socket>"
+	  "\t #host:port for TCP socket, /absolute/path for UNIX socket\n");
   putchar ('\n');
   printf ("\t --chdir <directory>" "\t #change directory\n");
   printf ("\t --write-pid <file>"
@@ -553,7 +553,7 @@ usage_mom (const char *argv0)
 	  "\t #add a new predefined and dump\n");
   printf ("\t --generate-c-module <moduleitem>" "\t #generate a C module\n");
   printf ("\t --system <command>"
-	  "\t #run an arbitrary command at argument parsing type\n");
+	  "\t #run an arbitrary (perhaps dangereous) command at argument parsing time\n");
 }
 
 static void
@@ -618,7 +618,7 @@ parse_program_arguments_and_load_plugins_mom (int *pargc, char ***pargv)
   int argc = *pargc;
   char **argv = *pargv;
   int opt = -1;
-  while ((opt = getopt_long (argc, argv, "lhVdn:P:W:J:D:R:",
+  while ((opt = getopt_long (argc, argv, "lhVdn:P:W:J:D:S:",
 			     mom_long_options, NULL)) >= 0)
     {
       switch (opt)
@@ -648,6 +648,9 @@ parse_program_arguments_and_load_plugins_mom (int *pargc, char ***pargv)
 	  break;
 	case 'W':
 	  mom_web_host = optarg;
+	  break;
+	case 'S':
+	  mom_socket = optarg;
 	  break;
 	case 'U':
 	  mom_user_data = optarg;
@@ -760,6 +763,96 @@ parse_program_arguments_and_load_plugins_mom (int *pargc, char ***pargv)
   *pargv = argv;
 }
 
+
+
+static void
+do_generate_c_module_mom (void)
+{
+  bool backedup = false;
+  momitem_t *moditm = mom_find_item (generate_c_module_mom);
+  if (!moditm)
+    MOM_FATAPRINTF ("cannot find C module %s", generate_c_module_mom);
+  char cpcmdbuf[256];
+  memset (cpcmdbuf, 0, sizeof (cpcmdbuf));
+  char pathbuf[128];
+  memset (pathbuf, 0, sizeof (pathbuf));
+  if (snprintf (pathbuf, sizeof (pathbuf),
+		MOM_MODULE_DIRECTORY MOM_SHARED_MODULE_PREFIX "%s.c",
+		mom_item_cstring (moditm)) >=
+      (int) sizeof (pathbuf) - /*space for .bad or % suffix */ 6)
+    MOM_FATAPRINTF ("too long pathbuf %s for C module %s", pathbuf,
+		    mom_item_cstring (moditm));
+  if (!access (pathbuf, R_OK))
+    {
+      snprintf (cpcmdbuf, sizeof (cpcmdbuf),
+		"cp -vb %s %s%%", pathbuf, pathbuf);
+      MOM_INFORMPRINTF ("before backup: %s", cpcmdbuf);
+      fflush (NULL);
+      int backfail = system (cpcmdbuf);
+      if (backfail)
+	MOM_WARNPRINTF ("backup with %s failed %d", cpcmdbuf, backfail);
+      else
+	backedup = true;
+    };
+  momvalue_t valgen = MOM_NONEV;
+  MOM_INFORMPRINTF ("before generating C module %s",
+		    mom_item_cstring (moditm));
+  if (!momhook_generate_c_module (moditm, &valgen))
+    MOM_WARNPRINTF ("failed to generate C module %s",
+		    mom_item_cstring (moditm));
+  else
+    MOM_INFORMPRINTF ("after generating C module %s got %s",
+		      mom_item_cstring (moditm),
+		      mom_output_gcstring (valgen));
+  // if generation succeeded, we need to compile and dump
+  if (valgen.typnum == momty_item && valgen.vitem == moditm)
+    {
+      char makecmdbuf[256];
+      memset (makecmdbuf, 0, sizeof (makecmdbuf));
+      snprintf (makecmdbuf, sizeof (makecmdbuf), "make "
+		MOM_MODULE_DIRECTORY MOM_SHARED_MODULE_PREFIX "%s.so",
+		mom_item_cstring (moditm));
+      MOM_INFORMPRINTF ("before building generated module with : %s",
+			makecmdbuf);
+      fflush (NULL);
+      int buildfail = system (makecmdbuf);
+      if (buildfail)
+	{
+	  if (backedup)
+	    {
+	      char badbuf[sizeof (pathbuf)];
+	      char backupbuf[sizeof (pathbuf)];
+	      memset (badbuf, 0, sizeof (badbuf));
+	      memset (backupbuf, 0, sizeof (backupbuf));
+	      snprintf (badbuf, sizeof (badbuf), "%s.bad", pathbuf);
+	      snprintf (backupbuf, sizeof (backupbuf), "%s%%", pathbuf);
+	      if (MOM_UNLIKELY (rename (pathbuf, badbuf)))
+		MOM_FATAPRINTF ("failed to rename %s as %s - %m", pathbuf,
+				badbuf);
+	      if (MOM_UNLIKELY (rename (backupbuf, pathbuf)))
+		MOM_FATAPRINTF ("failed to rename backup %s as %s - %m",
+				backupbuf, pathbuf);
+	      MOM_INFORMPRINTF
+		("restored backed up %s as %s, and renamed generated file to bad file %s",
+		 backupbuf, pathbuf, badbuf);
+	    };
+	  MOM_FATAPRINTF ("failed to build generated with : %s (got %d)",
+			  makecmdbuf, buildfail);
+	}
+      else
+	MOM_INFORMPRINTF ("successfully built generated module with : %s",
+			  makecmdbuf);
+      if (!dump_exit_dir_mom)
+	{
+	  MOM_INFORMPRINTF
+	    ("after successful generation of C module %s will dump state",
+	     mom_item_cstring (moditm));
+	  dump_exit_dir_mom = "./";
+	}
+    }
+}
+
+
 static bool daemonize_mom = false;
 static bool noclose_daemonize_mom = false;
 
@@ -834,69 +927,11 @@ main (int argc_main, char **argv_main)
     }
   do_after_initial_load_with_plugins_mom ();
   if (generate_c_module_mom)
-    {
-      bool backedup = false;
-      momitem_t *moditm = mom_find_item (generate_c_module_mom);
-      if (!moditm)
-	MOM_FATAPRINTF ("cannot find C module %s", generate_c_module_mom);
-      char cpcmdbuf[256];
-      memset (cpcmdbuf, 0, sizeof (cpcmdbuf));
-      char pathbuf[100];
-      memset (pathbuf, 0, sizeof (pathbuf));
-      snprintf (pathbuf, sizeof (pathbuf),
-		MOM_MODULE_DIRECTORY MOM_SHARED_MODULE_PREFIX "%s.c",
-		mom_item_cstring (moditm));
-      if (!access (pathbuf, R_OK))
-	{
-	  snprintf (cpcmdbuf, sizeof (cpcmdbuf),
-		    "cp -vb %s %s%%", pathbuf, pathbuf);
-	  MOM_INFORMPRINTF ("before backup: %s", cpcmdbuf);
-	  fflush (NULL);
-	  int backfail = system (cpcmdbuf);
-	  if (backfail)
-	    MOM_WARNPRINTF ("backup with %s failed %d", cpcmdbuf, backfail);
-	  else
-	    backedup = true;
-	};
-      momvalue_t valgen = MOM_NONEV;
-      MOM_INFORMPRINTF ("before generating C module %s",
-			mom_item_cstring (moditm));
-      if (!momhook_generate_c_module (moditm, &valgen))
-	MOM_WARNPRINTF ("failed to generate C module %s",
-			mom_item_cstring (moditm));
-      else
-	MOM_INFORMPRINTF ("after generating C module %s got %s",
-			  mom_item_cstring (moditm),
-			  mom_output_gcstring (valgen));
-      // if generation succeeded, we need to compile and dump
-      if (valgen.typnum == momty_item && valgen.vitem == moditm)
-	{
-	  char makecmdbuf[256];
-	  memset (makecmdbuf, 0, sizeof (makecmdbuf));
-	  snprintf (makecmdbuf, sizeof (makecmdbuf), "make "
-		    MOM_MODULE_DIRECTORY MOM_SHARED_MODULE_PREFIX "%s.so",
-		    mom_item_cstring (moditm));
-	  MOM_INFORMPRINTF ("before building generated module with : %s",
-			    makecmdbuf);
-	  fflush (NULL);
-	  int buildfail = system (makecmdbuf);
-	  if (buildfail)
-	    MOM_FATAPRINTF ("failed to build generated with : %s (got %d)",
-			    makecmdbuf, buildfail);
-	  else
-	    MOM_INFORMPRINTF ("successfully built generated module with : %s",
-			      makecmdbuf);
-	  if (!dump_exit_dir_mom)
-	    {
-	      MOM_INFORMPRINTF
-		("after successful generation of C module %s will dump state",
-		 mom_item_cstring (moditm));
-	      dump_exit_dir_mom = "./";
-	    }
-	}
-    }
-  printf
-    ("sizeof(momvalue_t)=%zd sizeof(momvaltype_t)=%zd sizeof(momitem_t)=%zd\n",
+    do_generate_c_module_mom ();
+  if (mom_web_host || mom_socket)
+    mom_run_workers ();
+  MOM_INFORMPRINTF
+    ("after run sizeof(momvalue_t)=%zd sizeof(momvaltype_t)=%zd sizeof(momitem_t)=%zd\n",
      sizeof (momvalue_t), sizeof (momvaltype_t), sizeof (momitem_t));
   if (dump_exit_dir_mom)
     mom_dump_state (dump_exit_dir_mom);
