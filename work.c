@@ -132,6 +132,7 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
 		      reqfupath);
       return OCS_INTERNAL_ERROR;
     }
+#warning handle_web_mom should do something here
   MOM_DEBUGPRINTF (web,
 		   "handle_web request #%ld  reqfupath %s reqmethitm %s NOT PROCESSED !!!",
 		   reqcnt, reqfupath, mom_item_cstring (reqmethitm));
