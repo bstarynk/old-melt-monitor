@@ -1051,7 +1051,7 @@ mom_unsync_item_set_kind (momitem_t *itm, momitem_t *kinditm)
     if (kinditm->itm_kind == MOM_PREDEFINED_NAMED (function_signature))
       {
 	momvalue_t vfillclos =	//
-	  mom_nodev_new (1, MOM_PREDEFINED_NAMED (filler_of_function),
+	  mom_nodev_new (MOM_PREDEFINED_NAMED (filler_of_function), 1,
 			 kinditm);
 	res = mom_applval_1itm_to_void (vfillclos, itm);
 	goto endunlocklab;

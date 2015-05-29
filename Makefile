@@ -77,6 +77,8 @@ $(OBJECTS): monimelt.h predef-monimelt.h apply-monimelt.h
 	- sed -n 's/typedef.*\(mom[a-z0-9_]*_t\).*;/-T \1/p' monimelt.h | sort -u > $@-tmp
 	- echo '-T FILE' >> $@-tmp
 	- echo '-T json_t' >> $@-tmp
+	- echo '-T onion_request' >> $@-tmp
+	- echo '-T onion_response' >> $@-tmp
 	- echo '-T int8_t' >> $@-tmp
 	- echo '-T int16_t' >> $@-tmp
 	- echo '-T int32_t' >> $@-tmp

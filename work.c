@@ -21,6 +21,8 @@
 #include "monimelt.h"
 
 static volatile atomic_bool stop_work_loop_mom;
+static volatile atomic_long webcount_mom;
+
 _Thread_local int mom_worker_num;
 
 static pthread_t worker_threads_mom[MOM_MAX_WORKERS + 2];
@@ -103,6 +105,39 @@ join_workers_mom (void)
 }				/* end of join_workers_mom */
 
 
+static onion_connection_status
+handle_web_mom (void *data, onion_request *requ, onion_response *resp)
+{
+  assert (data == NULL);
+  long reqcnt = atomic_fetch_add (&webcount_mom, 1) + 1;
+  const char *reqfupath = onion_request_get_fullpath (requ);
+  const char *reqpath = onion_request_get_path (requ);
+  unsigned reqflags = onion_request_get_flags (requ);
+  momitem_t *reqmethitm = NULL;
+  if ((reqflags & OR_METHODS) == OR_HEAD)
+    reqmethitm = MOM_PREDEFINED_NAMED (http_HEAD);
+  else if ((reqflags & OR_METHODS) == OR_GET)
+    reqmethitm = MOM_PREDEFINED_NAMED (http_GET);
+  else if ((reqflags & OR_METHODS) == OR_POST)
+    reqmethitm = MOM_PREDEFINED_NAMED (http_POST);
+  MOM_DEBUGPRINTF (web,
+		   "handle_web request #%ld reqfupath %s reqpath %s reqflags/%x reqmethitm %s",
+		   reqcnt, reqfupath, reqpath, reqflags,
+		   mom_item_cstring (reqmethitm));
+  if (MOM_UNLIKELY (reqmethitm == NULL))
+    return OCS_NOT_IMPLEMENTED;
+  if (MOM_UNLIKELY (mom_should_stop ()))
+    {
+      MOM_WARNPRINTF ("handle_web aborting request #%ld full path %s", reqcnt,
+		      reqfupath);
+      return OCS_INTERNAL_ERROR;
+    }
+  MOM_DEBUGPRINTF (web,
+		   "handle_web request #%ld  reqfupath %s reqmethitm %s NOT PROCESSED !!!",
+		   reqcnt, reqfupath, mom_item_cstring (reqmethitm));
+  return OCS_NOT_PROCESSED;
+}				/* end of handle_web_mom */
+
 
 static void
 start_web_onion_mom (void)
@@ -125,15 +160,21 @@ start_web_onion_mom (void)
     };
   {
     onion_url *ourl = onion_root_url (onion_mom);
+    int onerr = 0;
     for (int rix = 0; rix < MOM_MAX_WEBDOCROOT; rix++)
       {
 	const char *curdocroot = mom_webdocroot[rix];
 	if (!curdocroot)
 	  break;
+	onerr = 0;
 	MOM_DEBUGPRINTF (web, "start_web_onion rix#%d curdocroot %s", rix,
 			 curdocroot);
-	onion_url_add_handler (ourl, "^" MOM_WEB_DOC_ROOT_PREFIX,
-			       onion_handler_export_local_new (curdocroot));
+	if ((onerr = onion_url_add_handler (ourl, "^" MOM_WEB_DOC_ROOT_PREFIX,
+					    onion_handler_export_local_new
+					    (curdocroot))) != 0)
+	  MOM_FATAPRINTF ("failed to add to  ^" MOM_WEB_DOC_ROOT_PREFIX
+			  " export-local handler #%d for %s (onionerr#%d)",
+			  rix, curdocroot, onerr);
 	MOM_INFORMPRINTF ("will serve the files in %s/ from http://%s/%s",
 			  curdocroot, mom_web_host, MOM_WEB_DOC_ROOT_PREFIX);
       };
@@ -142,17 +183,28 @@ start_web_onion_mom (void)
     if (!stat (MOM_WEBDOCROOT_DIRECTORY, &wrstat)
 	&& (wrstat.st_mode & S_IFMT) == S_IFDIR)
       {
+	onerr = 0;
 	MOM_DEBUGPRINTF (web, "start_web_onion %s is directory",
 			 MOM_WEBDOCROOT_DIRECTORY);
-	onion_url_add_handler (ourl, "^" MOM_WEB_DOC_ROOT_PREFIX,
-			       onion_handler_export_local_new
-			       (MOM_WEBDOCROOT_DIRECTORY));
+	if ((onerr = onion_url_add_handler (ourl, "^" MOM_WEB_DOC_ROOT_PREFIX,
+					    onion_handler_export_local_new
+					    (MOM_WEBDOCROOT_DIRECTORY))) != 0)
+	  MOM_FATAPRINTF ("failed to add to  ^" MOM_WEB_DOC_ROOT_PREFIX
+			  " export-local handler for webdocroot %s (onionerr#%d)",
+			  MOM_WEBDOCROOT_DIRECTORY, onerr);
 	MOM_INFORMPRINTF ("will serve the files in %s/ from http://%s/%s",
 			  MOM_WEBDOCROOT_DIRECTORY, mom_web_host,
 			  MOM_WEB_DOC_ROOT_PREFIX);
-      }
-
+      };
+    onerr = 0;
+    if ((onerr =
+	 onion_url_add_handler (ourl, "",
+				onion_handler_new (handle_web_mom, NULL,
+						   NULL))) != 0)
+      MOM_FATAPRINTF ("failed to add generic webhandler (onionerr#%d", onerr);
   };
+  MOM_DEBUGPRINTF (web, "start_web_onion before listening @%p", onion_mom);
+  onion_listen (onion_mom);
 }				/* end start_web_onion_mom */
 
 
@@ -170,6 +222,8 @@ mom_run_workers (void)
   sched_yield ();
 #warning should start the webservice, the socketservice, handle signals & timers
   join_workers_mom ();
+  if (onion_mom)
+    onion_listen_stop (onion_mom);
   assert (mom_should_stop ());
   MOM_INFORMPRINTF ("done running %d workers", mom_nb_workers);
 }				/* end of mom_run_workers */

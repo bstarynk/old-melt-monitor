@@ -1278,6 +1278,27 @@
 ..
 
 
+** http_GET   ////// PREDEFINED
+{
+  * comment  "predefined for HTTP web GET requests" }
+ 
+..
+
+
+** http_HEAD   ////// PREDEFINED
+{
+  * comment  "predefined for HTTP web HEAD requests" }
+ 
+..
+
+
+** http_POST   ////// PREDEFINED
+{
+  * comment  "predefined for HTTP web POST requests" }
+ 
+..
+
+
 ** if   ////// PREDEFINED
 {
   * comment  "opcode for if <expr> <then-block> instruction" }

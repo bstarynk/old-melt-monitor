@@ -10,6 +10,8 @@
 -T momvalue_t
 -T FILE
 -T json_t
+-T onion_request
+-T onion_response
 -T int8_t
 -T int16_t
 -T int32_t
