@@ -861,9 +861,9 @@ static bool daemonize_mom = false;
 static bool noclose_daemonize_mom = false;
 
 static void *
-json_malloc_mom (size_t sz)
+jansson_malloc_mom (size_t sz)
 {
-  return MOM_GC_ALLOC ("json malloc", sz);
+  return MOM_GC_ALLOC ("jansson malloc", sz);
 };
 
 int
@@ -883,7 +883,7 @@ main (int argc_main, char **argv_main)
      GC_pthread_join,
      GC_pthread_cancel,
      GC_pthread_detach, GC_pthread_exit, GC_pthread_sigmask);
-  json_set_alloc_funcs (json_malloc_mom, GC_free);
+  json_set_alloc_funcs (jansson_malloc_mom, GC_free);
   json_object_seed (0);		/* use random device ie system entropy source */
   mom_prog_dlhandle = GC_dlopen (NULL, RTLD_NOW | RTLD_GLOBAL);
   if (MOM_UNLIKELY (!mom_prog_dlhandle))

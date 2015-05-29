@@ -1029,6 +1029,54 @@ mom_item_qsort (const momitem_t **arr, unsigned siz)
 }
 
 
+bool
+mom_unsync_item_set_kind (momitem_t *itm, momitem_t *kinditm)
+{
+  bool res = false;
+  if (!itm || itm == MOM_EMPTY)
+    return false;
+  if (!kinditm || kinditm == MOM_EMPTY)
+    return false;
+  if (MOM_UNLIKELY (itm->itm_kind == kinditm))
+    return true;
+  MOM_DEBUGPRINTF (item, "item_set_kind itm=%s kinditm=%s oldkind=%s",
+		   mom_item_cstring (itm), mom_item_cstring (kinditm),
+		   mom_item_cstring (itm->itm_kind));
+  itm->itm_data1 = NULL;
+  itm->itm_data2 = NULL;
+  itm->itm_kind = NULL;
+  momvalue_t vcons = MOM_NONEV;
+  {
+    mom_item_lock (kinditm);
+    if (kinditm->itm_kind == MOM_PREDEFINED_NAMED (function_signature))
+      {
+	momvalue_t vfillclos =	//
+	  mom_nodev_new (1, MOM_PREDEFINED_NAMED (filler_of_function),
+			 kinditm);
+	res = mom_applval_1itm_to_void (vfillclos, itm);
+	goto endunlocklab;
+      }
+    vcons = mom_item_unsync_get_attribute (kinditm,	//
+					   MOM_PREDEFINED_NAMED
+					   (kind_constructor));
+    if (vcons.typnum == momty_node)
+      {
+	res = mom_applval_1itm_to_void (vcons, itm);
+	goto endunlocklab;
+      };
+    if (kinditm->itm_kind == MOM_PREDEFINED_NAMED (kind))
+      {
+	itm->itm_kind = kinditm;
+	res = true;
+	goto endunlocklab;
+      };
+  endunlocklab:
+    mom_item_unlock (kinditm);
+  }
+  return res;
+}				/* end of mom_unsync_item_set_kind */
+
+
 // if this function compiles correctly, it means that all predefined items have distinct hashcode.
 momitem_t *
 mom_predefined_item_of_hash (momhash_t h)

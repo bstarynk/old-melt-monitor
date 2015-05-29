@@ -1540,6 +1540,13 @@
 ..
 
 
+** json   ////// PREDEFINED
+{
+  * comment  "kind of temporary JSON items" }
+ 
+..
+
+
 ** jump   ////// PREDEFINED
 {
   * comment  "operation for jump instruction" }
@@ -1550,6 +1557,14 @@
 ** kind   ////// PREDEFINED
 {
   * comment  "very magic pseudo attribute giving the kind of items" }
+ 
+..
+
+
+** kind_constructor   ////// PREDEFINED
+{
+  * comment  "attribute giving an item -> void closure for constructing some kind"
+ }
  
 ..
 

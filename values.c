@@ -64,12 +64,6 @@ mom_valueptr_hash (momvalue_t *pval)
 	assert (ps);
 	return ps->shash;
       }
-    case momty_json:
-      {
-	const momjson_t *mj = pval->vjson;
-	assert (mj);
-	return mj->shash;
-      }
     case momty_delim:
       {
 	char dbuf[8 + sizeof (pval->vdelim)];
@@ -624,16 +618,6 @@ mom_value_equal (momvalue_t v1, momvalue_t v2)
 	const momitem_t *itm2 = v2.vitem;
 	return itm1 == itm2;
       }
-    case momty_json:
-      {
-	const momjson_t *mj1 = v1.vjson;
-	const momjson_t *mj2 = v2.vjson;
-	if (mj1 == mj2)
-	  return true;
-	if (mj1->shash != mj2->shash)
-	  return false;
-	return !mom_cmp_json (mj1->json, mj2->json);
-      }
     case momty_set:
     case momty_tuple:
       {
@@ -763,13 +747,6 @@ mom_value_compare (momvalue_t v1, momvalue_t v2)
 	else
 	  return 0;
       }
-    case momty_json:
-      {
-	const momjson_t *mj1 = v1.vjson;
-	const momjson_t *mj2 = v2.vjson;
-	assert (mj1 != NULL && mj2 != NULL);
-	return mom_cmp_json (mj1->json, mj2->json);
-      }
     case momty_node:
       {
 	const momnode_t *pn1 = v1.vnode;
@@ -808,193 +785,3 @@ mom_value_compare (momvalue_t v1, momvalue_t v2)
     }
   MOM_FATAPRINTF ("corrupted values to compare");
 }
-
-struct jsonhpair_mom_st
-{
-  momhash_t h1, h2;
-};
-
-static struct jsonhpair_mom_st
-json_update_hash_mom (json_t * js, unsigned depth,
-		      struct jsonhpair_mom_st inhp)
-{
-  struct jsonhpair_mom_st hp = inhp;
-  if (!js || js == MOM_EMPTY)
-    return hp;
-  switch (json_typeof (js))
-    {
-    case JSON_OBJECT:
-      {
-	size_t sz = json_object_size (js);
-	hp.h1 = (479 * sz) ^ (inhp.h2 * 773 + 7 * depth);
-	hp.h2 = (inhp.h1 * 31) ^ ((2 + inhp.h2) * 3769 - (sz & 0xff));
-	const char *jkey = NULL;
-	json_t *jval = NULL;
-	// be careful that the hash update does not depend on order of traversal
-	json_object_foreach (js, jkey, jval)
-	{
-	  struct jsonhpair_mom_st hcomp =
-	    json_update_hash_mom (jval, depth + 1, inhp);
-	  hp.h1 += (11 * mom_cstring_hash (jkey) ^ (571 * hcomp.h1));
-	  hp.h2 += (677 * hcomp.h2);
-	};
-	hp.h1 = (inhp.h2 * 151) ^ (19 * hp.h1);
-	hp.h2 = (inhp.h1 * 557) + (13 * hp.h2);
-	return hp;
-      }
-    case JSON_ARRAY:
-      {
-	size_t sz = json_array_size (js);
-	hp.h1 = (389 * sz) ^ (inhp.h2 * 773 + 11 * depth);
-	hp.h2 = (383 * depth) ^ (inhp.h1 * 11 + 2);
-	size_t ix = 0;
-	json_t *jcomp = NULL;
-	json_array_foreach (js, ix, jcomp)
-	{
-	  struct jsonhpair_mom_st hcomp =
-	    json_update_hash_mom (jcomp, depth + 1, hp);
-	  hp.h1 = (353 * hcomp.h2) ^ (19 * (ix + depth));
-	  hp.h2 = (11 * hcomp.h1 - ix) ^ (hcomp.h2 * 17);
-	};
-	return hp;
-      }
-    case JSON_STRING:
-      {
-	hp.h1 =
-	  (421 * inhp.h2) ^ (449 *
-			     mom_cstring_hash_len (json_string_value (js),
-						   json_string_length (js)));
-	hp.h2 = (449 * depth) ^ (13 * inhp.h2);
-	return hp;
-      }
-    case JSON_INTEGER:
-      {
-	hp.h1 =
-	  (353 * (3 * depth + (json_integer_value (js) & 0xffffff)))
-	  ^ (5 * inhp.h2);
-	hp.h2 =
-	  (647 * (json_integer_value (js) / 1234657))
-	  ^ (151 * (depth + inhp.h1));
-	return hp;
-      }
-    case JSON_FALSE:
-      {
-	hp.h1 = (depth % 17) + (127 * inhp.h2);
-	hp.h2 = inhp.h1 ^ inhp.h2;
-	return hp;
-      }
-    case JSON_TRUE:
-      {
-	hp.h1 = (depth % 19) + (137 * inhp.h2);
-	hp.h2 = inhp.h1 ^ (11 * inhp.h2);
-	return hp;
-      }
-    case JSON_NULL:
-      {
-	hp.h1 = (depth % 31) + (149 * inhp.h2);
-	hp.h2 = inhp.h1 ^ (13 * inhp.h2);
-	return hp;
-      }
-      return hp;
-    default:
-      MOM_FATAPRINTF ("corrupted json at @%p of strange JSON kind #%d",
-		      js, json_typeof (js));
-    }
-}				/* end of json_update_hash_mom */
-
-
-const momjson_t *
-mom_make_meta_json (momvalue_t metav, json_t * js)
-{
-  if (!js || js == MOM_EMPTY)
-    return NULL;
-  momjson_t *mj = MOM_GC_ALLOC ("json", sizeof (momjson_t));
-  struct jsonhpair_mom_st hp = { 2, 5234653 };
-  hp = json_update_hash_mom (js, 0, hp);
-  momhash_t h = (hp.h1 * 131) ^ (hp.h2 * 1231 + 10);
-  if (MOM_UNLIKELY (h == 0))
-    {
-      h = hp.h2;
-      if (MOM_UNLIKELY (h == 0))
-	h = hp.h1 + hp.h2;
-      if (MOM_UNLIKELY (h == 0))
-	h = 1259;
-    }
-  assert (h != 0);
-  mj->slen = json_is_object (js) ? json_object_size (js)
-    : json_is_array (js) ? json_array_size (js)
-    : json_is_string (js) ? json_string_length (js) : 0;
-  mj->shash = h;
-  mj->meta = metav;
-  mj->json = js;
-  return mj;
-}				/* end mom_make_meta_json */
-
-
-int
-mom_cmp_json (const json_t * js1, const json_t * js2)
-{
-  if (MOM_UNLIKELY (js1 == MOM_EMPTY))
-    js1 = NULL;
-  if (MOM_UNLIKELY (js2 == MOM_EMPTY))
-    js2 = NULL;
-  if (MOM_UNLIKELY (js1 == js2))
-    return 0;
-  if (MOM_UNLIKELY (js1 == NULL))
-    return -1;
-  if (MOM_UNLIKELY (js2 == NULL))
-    return +1;
-  int ty1 = json_typeof (js1);
-  int ty2 = json_typeof (js2);
-  if (ty1 < ty2)
-    return -1;
-  if (ty1 > ty2)
-    return +1;
-  assert (ty1 == ty2);
-  switch (ty1)
-    {
-    case JSON_OBJECT:
-      {
-	size_t sz1 = json_object_size (js1);
-	size_t sz2 = json_object_size (js2);
-	if (sz1 > sz2)
-	  return -mom_cmp_json (js2, js1);
-	assert (sz1 <= sz2);
-	const char *jkey1 = NULL;
-	json_t *jval1 = NULL;
-	// be careful that the compare does not depend on order of traversal
-	json_object_foreach ((json_t *) js1, jkey1, jval1)
-	{
-	  json_t *jval2 = json_object_get (js2, jkey1);
-	  int cmp = mom_cmp_json (jval1, jval2);
-	  if (cmp == 0)
-	    continue;
-	  else
-	    return cmp;
-	}
-	if (sz1 == sz2)
-	  return 0;
-	else
-	  return -1;
-      }
-      break;
-    case JSON_ARRAY:
-      {
-	size_t sz1 = json_array_size (js1);
-	size_t sz2 = json_array_size (js2);
-	if (sz1 > sz2)
-	  return -mom_cmp_json (js2, js1);
-	assert (sz1 <= sz2);
-      }
-      break;
-#warning mom_cmp_json very incomplete
-    }
-  MOM_FATAPRINTF ("failed to compare JSON js1 %s with js2 %s",
-		  /* Notice that json_dumps is using the malloc given to JSON */
-		  json_dumps (js1,
-			      JSON_SORT_KEYS | JSON_ENSURE_ASCII |
-			      JSON_INDENT (1)),
-		  json_dumps (js2,
-			      JSON_SORT_KEYS | JSON_ENSURE_ASCII |
-			      JSON_INDENT (1)));
-}				/* end mom_cmp_json */

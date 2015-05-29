@@ -469,7 +469,7 @@ mom_hashset_add_items (struct momhashset_st *hset,
 
 struct momhashset_st *
 mom_hashset_add_sized_items (struct momhashset_st *hset,
-			     unsigned siz, const momitem_t **itmarr)
+			     unsigned siz, momitem_t *const *itmarr)
 {
   if (!itmarr || itmarr == MOM_EMPTY)
     siz = 0;

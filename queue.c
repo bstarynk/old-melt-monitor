@@ -230,7 +230,8 @@ mom_queueitem_tuple (struct momqueueitems_st *qu, momvalue_t metav)
 	}
     };
   assert (cnt == siz);
-  const momseq_t *tu = mom_make_sized_meta_tuple (metav, cnt, arr);
+  const momseq_t *tu = mom_make_sized_meta_tuple (metav, cnt,
+						  (momitem_t *const *) arr);
   MOM_GC_FREE (arr, siz * sizeof (momitem_t *));
   return tu;
 }

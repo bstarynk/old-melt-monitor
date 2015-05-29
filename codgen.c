@@ -266,7 +266,7 @@ cgen_first_scanning_pass_mom (momitem_t *itmcgen)
 			   mom_output_gcstring (funsv));
   cg->cg_functionhset =
     mom_hashset_add_sized_items (NULL, funsv.vsequ->slen,
-				 funsv.vsequ->arritm);
+				 (momitem_t *const *) funsv.vsequ->arritm);
   {
     const momseq_t *fseq = mom_hashset_elements_set (cg->cg_functionhset);
     assert (fseq != NULL);
