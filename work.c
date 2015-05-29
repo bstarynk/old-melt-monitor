@@ -105,6 +105,48 @@ join_workers_mom (void)
 }				/* end of join_workers_mom */
 
 
+
+
+static onion_connection_status
+web_doc_root_mom (const char *reqfupath, long reqcnt, onion_request *requ,
+		  onion_response *resp)
+{
+  assert (!strncmp (reqfupath, MOM_WEB_DOC_ROOT_PREFIX,
+		    strlen (MOM_WEB_DOC_ROOT_PREFIX)));
+  const char *restpath = reqfupath + strlen (MOM_WEB_DOC_ROOT_PREFIX);
+  MOM_DEBUGPRINTF (web, "web_doc_root request#%ld restpath=%s",
+		   reqcnt, restpath);
+  // reject path with .. inside, so reject URL going outside the web doc root
+  if (strstr (reqfupath, ".."))
+    return OCS_NOT_PROCESSED;
+  // reject too long paths
+  if (strlen (reqfupath) >= MOM_PATH_MAX - 16)
+    return OCS_NOT_PROCESSED;
+  char fpath[MOM_PATH_MAX];
+#define CHECK_PATH_WEB_MOM(Dir)   do {					\
+    memset (fpath, 0, sizeof(fpath));					\
+    if (snprintf(fpath, sizeof(fpath), "%s/%s",				\
+		 (Dir), restpath)					\
+	<(int)sizeof(fpath)						\
+	&& !access(fpath, R_OK)) {					\
+      MOM_DEBUGPRINTF(web, "web_doc_root request#%ld got fpath %s",	\
+		      reqcnt, fpath);					\
+      return onion_shortcut_response_file(fpath, requ, resp);		\
+    }									\
+  } while(0)
+  for (int rix = 0; rix < MOM_MAX_WEBDOCROOT; rix++)
+    {
+      const char *curdocroot = mom_webdocroot[rix];
+      if (!curdocroot)
+	break;
+      CHECK_PATH_WEB_MOM (curdocroot);
+    };
+  CHECK_PATH_WEB_MOM (MOM_WEBDOCROOT_DIRECTORY);
+#undef CHECK_PATH_WEB_MOM
+}				/* end of web_doc_root_mom */
+
+
+
 static onion_connection_status
 handle_web_mom (void *data, onion_request *requ, onion_response *resp)
 {
@@ -121,7 +163,7 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
   else if ((reqflags & OR_METHODS) == OR_POST)
     reqmethitm = MOM_PREDEFINED_NAMED (http_POST);
   MOM_DEBUGPRINTF (web,
-		   "handle_web request #%ld reqfupath %s reqpath %s reqflags/%x reqmethitm %s",
+		   "handle_web request #%ld reqfupath '%s' reqpath '%s' reqflags/%x reqmethitm %s",
 		   reqcnt, reqfupath, reqpath, reqflags,
 		   mom_item_cstring (reqmethitm));
   if (MOM_UNLIKELY (reqmethitm == NULL))
@@ -131,6 +173,16 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
       MOM_WARNPRINTF ("handle_web aborting request #%ld full path %s", reqcnt,
 		      reqfupath);
       return OCS_INTERNAL_ERROR;
+    }
+  if (!strncmp
+      (reqpath, MOM_WEB_DOC_ROOT_PREFIX, strlen (MOM_WEB_DOC_ROOT_PREFIX))
+      && (reqmethitm == MOM_PREDEFINED_NAMED (http_GET)
+	  || reqmethitm == MOM_PREDEFINED_NAMED (http_POST)))
+    {
+      MOM_DEBUGPRINTF (web,
+		       "handle_web request #%ld reqpath '%s' WEB_DOC_ROOT",
+		       reqcnt, reqpath);
+      return web_doc_root_mom (reqpath, reqcnt, requ, resp);
     }
 #warning handle_web_mom should do something here
   MOM_DEBUGPRINTF (web,
@@ -159,10 +211,13 @@ start_web_onion_mom (void)
       onion_set_port (onion_mom, whcolon + 1);
       MOM_DEBUGPRINTF (web, "start_web_onion port %s", whcolon + 1);
     };
+  onion_url *ourl = onion_root_url (onion_mom);
 #warning the union of several export_local_new handlers does not work. We need to do the work using onion_shortcut_response_file & realpath
   {
-    onion_url *ourl = onion_root_url (onion_mom);
     int onerr = 0;
+
+    ///////old
+#if 0
     for (int rix = 0; rix < MOM_MAX_WEBDOCROOT; rix++)
       {
 	const char *curdocroot = mom_webdocroot[rix];
@@ -198,9 +253,11 @@ start_web_onion_mom (void)
 			  MOM_WEBDOCROOT_DIRECTORY, mom_web_host,
 			  MOM_WEB_DOC_ROOT_PREFIX);
       };
+#endif //0
+
     onerr = 0;
     if ((onerr =
-	 onion_url_add_handler (ourl, "",
+	 onion_url_add_handler (ourl, "^",
 				onion_handler_new (handle_web_mom, NULL,
 						   NULL))) != 0)
       MOM_FATAPRINTF ("failed to add generic webhandler (onionerr#%d", onerr);
