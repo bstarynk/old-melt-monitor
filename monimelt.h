@@ -105,6 +105,8 @@ extern _Thread_local int mom_worker_num;
 const char *mom_web_host;
 const char *mom_socket;
 const char *mom_user_data;
+#define MOM_MAX_WEBDOCROOT 8
+const char *mom_webdocroot[MOM_MAX_WEBDOCROOT + 1];
 // mark unlikely conditions to help optimization
 #ifdef __GNUC__
 #define MOM_UNLIKELY(P) __builtin_expect((P),0)

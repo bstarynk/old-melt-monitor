@@ -49,13 +49,17 @@ work_run_mom (void *p)
   pthread_setname_np (pthread_self (), wbuf);
   long count = 0;
   mom_worker_num = ix;
+  usleep (ix * 1024);
   while (!mom_should_stop ())
     {
       count++;
       MOM_DEBUGPRINTF (run, "work_run count#%ld before step", count);
       if (MOM_UNLIKELY (!momhook_agenda_step ()))
 	MOM_WARNPRINTF ("agenda_step failed count#%ld", count);
+      if (MOM_UNLIKELY ((count + MOM_MAX_WORKERS) % 2048 == ix))
+	usleep (20);
     }
+  MOM_DEBUGPRINTF (run, "work_run count#%ld ending", count);
   return NULL;
 }				/* end work_run_mom */
 
@@ -73,7 +77,7 @@ start_workers_mom (void)
 			   work_run_mom, (void *) ((intptr_t) ix))) != 0)
 	MOM_FATAPRINTF ("pthread_create for worker#%d failed (%d = %s)", ix,
 			err, strerror (err));
-      MOM_DEBUGPRINTF (run, "start_workers worker#%u thread = %ld", ix,
+      MOM_DEBUGPRINTF (run, "start_workers worker#%u thread = %#lx", ix,
 		       (long) worker_threads_mom[ix]);
       usleep (1000);
     }
@@ -96,6 +100,12 @@ join_workers_mom (void)
     };
 }				/* end of join_workers_mom */
 
+static void
+start_web_onion_mom (void)
+{
+  MOM_INFORMPRINTF ("start web services using webhost %s", mom_web_host);
+}				/* end start_web_onion_mom */
+
 void
 mom_run_workers (void)
 {
@@ -105,6 +115,8 @@ mom_run_workers (void)
 		    || mom_nb_workers > MOM_MAX_WORKERS))
     MOM_FATAPRINTF ("invalid mom_nb_workers %d", mom_nb_workers);
   start_workers_mom ();
+  if (mom_web_host && mom_web_host[0])
+    start_web_onion_mom ();
   sched_yield ();
 #warning should start the webservice, the socketservice, handle signals & timers
   join_workers_mom ();

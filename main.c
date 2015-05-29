@@ -401,6 +401,7 @@ static const struct option mom_long_options[] = {
   {"web", required_argument, NULL, 'W'},
   {"socket", required_argument, NULL, 'S'},
   {"user-data", required_argument, NULL, 'U'},
+  {"doc-root", required_argument, NULL, 'r'},
   // long-only options
   {"daemon-noclose", no_argument, NULL, xtraopt_daemon_noclose},
   {"write-pid", required_argument, NULL, xtraopt_writepid},
@@ -538,6 +539,8 @@ usage_mom (const char *argv0)
 	  " \t# load a plugin.\n");
   printf ("\t -W | --web <webhost> "
 	  " \t# e.g. -W localhost:8088 for web server\n");
+  printf ("\t -r | --doc-root <web-doc-root> "
+	  " \t# e.g. -r /var/www/ for adding some web document root\n");
   printf ("\t -S | --socket <socket>"
 	  " \t #host:port for TCP socket, /absolute/path for UNIX socket\n");
   putchar ('\n');
@@ -619,7 +622,7 @@ parse_program_arguments_and_load_plugins_mom (int *pargc, char ***pargv)
   int argc = *pargc;
   char **argv = *pargv;
   int opt = -1;
-  while ((opt = getopt_long (argc, argv, "lhVdn:P:W:J:D:S:",
+  while ((opt = getopt_long (argc, argv, "lhVdn:P:W:J:D:S:r:",
 			     mom_long_options, NULL)) >= 0)
     {
       switch (opt)
@@ -658,6 +661,34 @@ parse_program_arguments_and_load_plugins_mom (int *pargc, char ***pargv)
 	  break;
 	case 'U':
 	  mom_user_data = optarg;
+	  break;
+	case 'r':		// --doc-root to add a web root directory
+	  if (optarg)
+	    {
+	      struct stat rdstat;
+	      memset (&rdstat, 0, sizeof (rdstat));
+	      errno = 0;
+	      if (stat (optarg, &rdstat)
+		  || (rdstat.st_mode & S_IFMT) != S_IFDIR)
+		{
+		  if (!errno)
+		    errno = ENOTDIR;
+		  MOM_FATAPRINTF
+		    ("bad specified doc-root (for web service) %s directory (%m)",
+		     optarg);
+		};
+	      if (mom_webdocroot[MOM_MAX_WEBDOCROOT - 1])
+		MOM_FATAPRINTF ("too many %d web doc-root for %s",
+				MOM_MAX_WEBDOCROOT, optarg);
+	      for (int ix = 0; ix < MOM_MAX_WEBDOCROOT; ix++)
+		if (!mom_webdocroot[ix])
+		  {
+		    mom_webdocroot[ix] = optarg;
+		    MOM_INFORMPRINTF ("adding web doc-root directory %s",
+				      optarg);
+		    break;
+		  };
+	    }
 	  break;
 	case 'P':
 	  {
@@ -884,11 +915,11 @@ main (int argc_main, char **argv_main)
      GC_pthread_cancel,
      GC_pthread_detach, GC_pthread_exit, GC_pthread_sigmask);
   json_set_alloc_funcs (jansson_malloc_mom, GC_free);
+  mom_initialize_random ();
   json_object_seed (0);		/* use random device ie system entropy source */
   mom_prog_dlhandle = GC_dlopen (NULL, RTLD_NOW | RTLD_GLOBAL);
   if (MOM_UNLIKELY (!mom_prog_dlhandle))
     MOM_FATAPRINTF ("failed to dlopen the program: %s", dlerror ());
-  mom_initialize_random ();
   {
     int arg0len = 0;
     if (argc > 1 && (arg0len = strlen (argv[0]) > 5)

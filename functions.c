@@ -185,6 +185,7 @@ bool
   return true;
 }				/* end of filler_of_function */
 
+
 bool
   momfunc_1itm_to_void_scanner_of_function
   (const momnode_t *clonode, momitem_t *itm)
