@@ -25,6 +25,8 @@ _Thread_local int mom_worker_num;
 
 static pthread_t worker_threads_mom[MOM_MAX_WORKERS + 2];
 
+static onion *onion_mom;
+
 bool
 mom_should_stop (void)
 {
@@ -100,11 +102,59 @@ join_workers_mom (void)
     };
 }				/* end of join_workers_mom */
 
+
+
 static void
 start_web_onion_mom (void)
 {
   MOM_INFORMPRINTF ("start web services using webhost %s", mom_web_host);
+  onion_mom = onion_new (O_THREADED);
+  onion_set_max_threads (onion_mom, mom_nb_workers);
+  char *whcolon = strchr (mom_web_host, ':');
+  if (whcolon && whcolon > mom_web_host)
+    {
+      *whcolon = 0;
+      onion_set_hostname (onion_mom, mom_web_host);
+      MOM_DEBUGPRINTF (web, "start_web_onion hostname %s", mom_web_host);
+      *whcolon = ':';
+    }
+  if (whcolon && isdigit (whcolon[1]))
+    {
+      onion_set_port (onion_mom, whcolon + 1);
+      MOM_DEBUGPRINTF (web, "start_web_onion port %s", whcolon + 1);
+    };
+  {
+    onion_url *ourl = onion_root_url (onion_mom);
+    for (int rix = 0; rix < MOM_MAX_WEBDOCROOT; rix++)
+      {
+	const char *curdocroot = mom_webdocroot[rix];
+	if (!curdocroot)
+	  break;
+	MOM_DEBUGPRINTF (web, "start_web_onion rix#%d curdocroot %s", rix,
+			 curdocroot);
+	onion_url_add_handler (ourl, "^" MOM_WEB_DOC_ROOT_PREFIX,
+			       onion_handler_export_local_new (curdocroot));
+	MOM_INFORMPRINTF ("will serve the files in %s/ from http://%s/%s",
+			  curdocroot, mom_web_host, MOM_WEB_DOC_ROOT_PREFIX);
+      };
+    struct stat wrstat;
+    memset (&wrstat, 0, sizeof (wrstat));
+    if (!stat (MOM_WEBDOCROOT_DIRECTORY, &wrstat)
+	&& (wrstat.st_mode & S_IFMT) == S_IFDIR)
+      {
+	MOM_DEBUGPRINTF (web, "start_web_onion %s is directory",
+			 MOM_WEBDOCROOT_DIRECTORY);
+	onion_url_add_handler (ourl, "^" MOM_WEB_DOC_ROOT_PREFIX,
+			       onion_handler_export_local_new
+			       (MOM_WEBDOCROOT_DIRECTORY));
+	MOM_INFORMPRINTF ("will serve the files in %s/ from http://%s/%s",
+			  MOM_WEBDOCROOT_DIRECTORY, mom_web_host,
+			  MOM_WEB_DOC_ROOT_PREFIX);
+      }
+
+  };
 }				/* end start_web_onion_mom */
+
 
 void
 mom_run_workers (void)

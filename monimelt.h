@@ -165,6 +165,14 @@ extern void *GC_calloc (size_t nbelem, size_t elsiz);
 // generated functions start with
 #define MOM_FUNCTION_PREFIX "momfunc_"
 
+#define MOM_WEB_DOC_ROOT_PREFIX "webdoc/"
+/** if the webroot/ directory exists, we serve the files inside as web
+   document roots web-doc-root/, so file webroot/jquery.min.js would
+   be accessible eg thru the URL
+   http://localhost:8087/webdoc/jquery.min.js if we started with
+   webservice localhost:8087 */
+#define MOM_WEBDOCROOT_DIRECTORY "webroot/"
+
 // query a clock
 static inline double
 mom_clock_time (clockid_t cid)
