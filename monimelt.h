@@ -100,6 +100,8 @@ int64_t mom_prime_below (int64_t n);
 #define MOM_MAX_WORKERS 10
 #define MOM_MIN_WORKERS 2
 int mom_nb_workers;
+extern _Thread_local int mom_worker_num;
+
 const char *mom_web_host;
 const char *mom_socket;
 const char *mom_user_data;
@@ -114,6 +116,8 @@ const char *mom_user_data;
 #define MOM_UNUSED
 #endif
 
+extern bool mom_should_stop (void);
+extern void mom_stop_work (void);
 extern void mom_run_workers (void);
 
 // every hashcode is a non-zero 32 bits unsigned

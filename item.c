@@ -1056,9 +1056,9 @@ mom_unsync_item_set_kind (momitem_t *itm, momitem_t *kinditm)
 	res = mom_applval_1itm_to_void (vfillclos, itm);
 	goto endunlocklab;
       }
-    vcons = mom_item_unsync_get_attribute (kinditm,	//
-					   MOM_PREDEFINED_NAMED
-					   (kind_constructor));
+    vcons =			//
+      mom_item_unsync_get_attribute	//
+      (kinditm, MOM_PREDEFINED_NAMED (kind_constructor));
     if (vcons.typnum == momty_node)
       {
 	res = mom_applval_1itm_to_void (vcons, itm);
