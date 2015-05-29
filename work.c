@@ -159,6 +159,7 @@ start_web_onion_mom (void)
       onion_set_port (onion_mom, whcolon + 1);
       MOM_DEBUGPRINTF (web, "start_web_onion port %s", whcolon + 1);
     };
+#warning the union of several export_local_new handlers does not work. We need to do the work using onion_shortcut_response_file & realpath
   {
     onion_url *ourl = onion_root_url (onion_mom);
     int onerr = 0;
