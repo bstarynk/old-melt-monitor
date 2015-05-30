@@ -724,6 +724,34 @@ mom_attributes_count (struct momattributes_st *attrs)
 const momseq_t *mom_attributes_set (struct momattributes_st *attrs,
 				    momvalue_t meta);
 
+////////////////////////////////////////////////////
+struct momdictvalent_st
+{
+  const momstring_t *dicent_str;
+  momvalue_t dicent_val;
+};
+
+struct momhashdict_st
+{
+  uint32_t hdic_len;		// allocated length
+  uint32_t hdic_cnt;		// used count
+  struct momdictvalent_st hdic_ents[];
+};				// end struct momhashdict_st
+
+struct momhashdict_st *mom_hashdict_put (struct momhashdict_st *hdict,
+					 momstring_t *str, momvalue_t val);
+struct momhashdict_st *mom_hashdict_reserve (struct momhashdict_st *hdict,
+					     unsigned gap);
+momvalue_t mom_hashdict_get (struct momhashdict_st *hdict,
+			     const momstring_t *str);
+momvalue_t mom_hashdict_getcstr (struct momhashdict_st *hdict,
+				 const char *cstr);
+struct momhashdict_st *mom_hashdict_remove (struct momhashdict_st *hdict,
+					    const momstring_t *str);
+const momnode_t *mom_hashdict_sorted_strings (struct momhashdict_st *hdict,
+					      const momitem_t *connitm);
+
+////////////////////////////////////////////////////
 
 struct momcomponents_st
 {
