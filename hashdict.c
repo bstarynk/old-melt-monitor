@@ -74,6 +74,48 @@ hashdict_raw_put_mom (struct momhashdict_st *hdict, const momstring_t *str,
 }				/* end of hashdict_raw_put_mom */
 
 
+
+static struct momdictvalent_st *
+hashdict_find_entry_mom (struct momhashdict_st *hdict, const momstring_t *str)
+{
+  assert (hdict);
+  assert (str);
+  assert (str->cstr[0]);
+  unsigned len = hdict->hdic_len;
+  unsigned cnt = hdict->hdic_cnt;
+  assert (cnt < len);
+  assert (len > 2 && len % 2 != 0);
+  momhash_t hs = str->shash;
+  unsigned startix = hs % len;
+  for (unsigned ix = startix; ix < len; ix++)
+    {
+      const momstring_t *curstr = hdict->hdic_ents[ix].dicent_str;
+      if (curstr == MOM_EMPTY)
+	continue;
+      if (!curstr)
+	return NULL;
+      if (curstr->shash == hs && !strcmp (curstr->cstr, str->cstr))
+	{
+	  return hdict->hdic_ents + ix;
+	}
+    };
+  for (unsigned ix = 0; ix < startix; ix++)
+    {
+      const momstring_t *curstr = hdict->hdic_ents[ix].dicent_str;
+      if (curstr == MOM_EMPTY)
+	continue;
+      if (!curstr)
+	return NULL;
+      if (curstr->shash == hs && !strcmp (curstr->cstr, str->cstr))
+	{
+	  return hdict->hdic_ents + ix;
+	}
+    };
+  return NULL;
+}				/* end of hashdict_find_entry_mom */
+
+
+
 static void
 fill_hashdict_from_old_mom (struct momhashdict_st *newhdict,
 			    const struct momhashdict_st *oldhdict)
@@ -91,13 +133,14 @@ fill_hashdict_from_old_mom (struct momhashdict_st *newhdict,
     }
 }				/* end fill_hashdict_from_old_mom */
 
+
 struct momhashdict_st *
 mom_hashdict_put (struct momhashdict_st *hdict,
 		  momstring_t *str, momvalue_t val)
 {
   if (hdict == MOM_EMPTY)
     hdict = NULL;
-  if (!str || str == MOM_EMPTY)
+  if (!str || str == MOM_EMPTY || !str->cstr[0])
     return hdict;
   if (val.typnum == momty_null)
     return mom_hashdict_remove (hdict, str);
@@ -121,7 +164,17 @@ mom_hashdict_put (struct momhashdict_st *hdict,
     {
       unsigned newsiz = mom_prime_above (4 * oldcnt / 3 + oldcnt / 32 + 10);
       assert (newsiz > oldlen);
-    }
+      struct momhashdict_st *newhdict =	//
+	MOM_GC_ALLOC ("grow hashdict",
+		      sizeof (struct momhashdict_st) +
+		      newsiz * sizeof (struct momdictvalent_st));
+      hdict->hdic_len = newsiz;
+      hdict->hdic_cnt = 0;
+      fill_hashdict_from_old_mom (newhdict, hdict);
+      hdict = newhdict;
+    };
+  hashdict_raw_put_mom (hdict, str, val);
+  return hdict;
 }				/* end of mom_hashdict_put */
 
 
@@ -131,9 +184,86 @@ mom_hashdict_remove (struct momhashdict_st *hdict, const momstring_t *str)
 {
   if (hdict == MOM_EMPTY || hdict == NULL)
     return NULL;
-  if (!str || str == MOM_EMPTY)
+  if (!str || str == MOM_EMPTY || !str->cstr[0])
     return hdict;
-#warning mom_hashdict_remove incomplete
+  unsigned cnt = hdict->hdic_cnt;
+  unsigned len = hdict->hdic_len;
+  if (MOM_UNLIKELY (len > 40 && 3 * cnt < len))
+    {
+      unsigned newsiz = mom_prime_above (3 * cnt / 2 + cnt / 8 + 5);
+      if (newsiz < len)
+	{
+	  struct momhashdict_st *newhdict =	//
+	    MOM_GC_ALLOC ("shrink hashdict",
+			  sizeof (struct momhashdict_st) +
+			  newsiz * sizeof (struct momdictvalent_st));
+	  newhdict->hdic_len = newsiz;
+	  fill_hashdict_from_old_mom (newhdict, hdict);
+	  hdict = newhdict;
+	  cnt = hdict->hdic_cnt;
+	  len = hdict->hdic_len;
+	}
+    }
+  struct momdictvalent_st *ent = hashdict_find_entry_mom (hdict, str);
+  if (ent)
+    {
+      ent->dicent_str = MOM_EMPTY;
+      ent->dicent_val = MOM_NONEV;
+      hdict->hdic_cnt--;
+    };
+  return hdict;
 }				/* end mom_hashdict_remove */
+
+
+momvalue_t
+mom_hashdict_get (const struct momhashdict_st *hdict, const momstring_t *str)
+{
+  if (!hdict || hdict == MOM_EMPTY || !str || str == MOM_EMPTY
+      || !str->cstr[0])
+    return MOM_NONEV;
+  struct momdictvalent_st *ent =
+    hashdict_find_entry_mom ((struct momhashdict_st *) hdict, str);
+  if (ent)
+    return ent->dicent_val;
+  return MOM_NONEV;
+}				/* end mom_hashdict_get */
+
+
+
+
+
+momvalue_t
+mom_hashdict_getcstr (const struct momhashdict_st *hdict, const char *cstr)
+{
+  if (!hdict || hdict == MOM_EMPTY || !cstr || cstr == MOM_EMPTY || !cstr[0])
+    return MOM_NONEV;
+  unsigned hs = mom_cstring_hash (cstr);
+  unsigned len = hdict->hdic_len;
+  unsigned cnt = hdict->hdic_cnt;
+  assert (cnt < len);
+  assert (len > 2 && len % 2 != 0);
+  unsigned startix = hs % len;
+  for (unsigned ix = startix; ix < len; ix++)
+    {
+      const momstring_t *curstr = hdict->hdic_ents[ix].dicent_str;
+      if (curstr == MOM_EMPTY)
+	continue;
+      if (!curstr)
+	return MOM_NONEV;
+      if (curstr->shash == hs && !strcmp (curstr->cstr, cstr))
+	return hdict->hdic_ents[ix].dicent_val;
+    };
+  for (unsigned ix = 0; ix < startix; ix++)
+    {
+      const momstring_t *curstr = hdict->hdic_ents[ix].dicent_str;
+      if (curstr == MOM_EMPTY)
+	continue;
+      if (!curstr)
+	return MOM_NONEV;
+      if (curstr->shash == hs && !strcmp (curstr->cstr, cstr))
+	return hdict->hdic_ents[ix].dicent_val;
+    };
+  return MOM_NONEV;
+}				/* end mom_hashdict_getcstr */
 
 #warning missing other hashdict functions
