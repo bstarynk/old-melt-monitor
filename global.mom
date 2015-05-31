@@ -1101,6 +1101,15 @@
 ..
 
 
+** emitter_of_hashed_dict   ////// PREDEFINED
+{
+  * comment  "emitter routine for hashed dict items" }
+ 
+  %  ^filler_of_function( signature_1itm_to_val)
+ 
+..
+
+
 ** emitter_of_hashed_set   ////// PREDEFINED
 {
   * comment  "emitter routine for hashed set items" }
@@ -1170,6 +1179,15 @@
 ** filler_of_function   ////// PREDEFINED
 {
   * comment  "routine to fill loaded C functions" }
+ 
+  %  ^filler_of_function( signature_1itm_to_void)
+ 
+..
+
+
+** filler_of_hashed_dict   ////// PREDEFINED
+{
+  * comment  "filler routine for hashed dictitems" }
  
   %  ^filler_of_function( signature_1itm_to_void)
  
@@ -1257,6 +1275,15 @@
  [[  ^generate_c_module() ]]
  
   %  ^filler_of_function( signature_1itm_to_val)
+ 
+..
+
+
+** hashed_dict   ////// PREDEFINED
+{
+  * comment  "kind of item with hashed dict"
+  * dumped_item_emitter  ^emitter_of_hashed_dict()
+  * dumped_item_scanner  ^scanner_of_hashed_dict() }
  
 ..
 
@@ -1855,6 +1882,15 @@
 {
   * comment  "scanning routine for C functions, may add their containing module"
  }
+ 
+  %  ^filler_of_function( signature_1itm_to_void)
+ 
+..
+
+
+** scanner_of_hashed_dict   ////// PREDEFINED
+{
+  * comment  "scanner for hashed dict items" }
  
   %  ^filler_of_function( signature_1itm_to_void)
  

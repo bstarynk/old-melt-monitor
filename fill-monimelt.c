@@ -41,6 +41,9 @@ mom_predefined_items_fill (void)
 // item emitter_of_function of kind signature_1itm_to_val
   MOM_PREDEFINED_NAMED (emitter_of_function)->itm_kind
     = MOM_PREDEFINED_NAMED (signature_1itm_to_val);
+// item emitter_of_hashed_dict of kind signature_1itm_to_val
+  MOM_PREDEFINED_NAMED (emitter_of_hashed_dict)->itm_kind
+    = MOM_PREDEFINED_NAMED (signature_1itm_to_val);
 // item emitter_of_hashed_set of kind signature_1itm_to_val
   MOM_PREDEFINED_NAMED (emitter_of_hashed_set)->itm_kind
     = MOM_PREDEFINED_NAMED (signature_1itm_to_val);
@@ -58,6 +61,9 @@ mom_predefined_items_fill (void)
     = MOM_PREDEFINED_NAMED (signature_1itm_to_void);
 // item filler_of_function of kind signature_1itm_to_void
   MOM_PREDEFINED_NAMED (filler_of_function)->itm_kind
+    = MOM_PREDEFINED_NAMED (signature_1itm_to_void);
+// item filler_of_hashed_dict of kind signature_1itm_to_void
+  MOM_PREDEFINED_NAMED (filler_of_hashed_dict)->itm_kind
     = MOM_PREDEFINED_NAMED (signature_1itm_to_void);
 // item filler_of_hashed_set of kind signature_1itm_to_void
   MOM_PREDEFINED_NAMED (filler_of_hashed_set)->itm_kind
@@ -85,6 +91,9 @@ mom_predefined_items_fill (void)
     = MOM_PREDEFINED_NAMED (signature_1itm_to_void);
 // item scanner_of_function of kind signature_1itm_to_void
   MOM_PREDEFINED_NAMED (scanner_of_function)->itm_kind
+    = MOM_PREDEFINED_NAMED (signature_1itm_to_void);
+// item scanner_of_hashed_dict of kind signature_1itm_to_void
+  MOM_PREDEFINED_NAMED (scanner_of_hashed_dict)->itm_kind
     = MOM_PREDEFINED_NAMED (signature_1itm_to_void);
 // item scanner_of_hashed_set of kind signature_1itm_to_void
   MOM_PREDEFINED_NAMED (scanner_of_hashed_set)->itm_kind
@@ -165,6 +174,9 @@ mom_predefined_items_fill (void)
 // function item emitter_of_function of signature_1itm_to_val:
   MOM_PREDEFINED_NAMED (emitter_of_function)->itm_data1 =
     mom_dynload_symbol ("momfunc_1itm_to_val_emitter_of_function");
+// function item emitter_of_hashed_dict of signature_1itm_to_val:
+  MOM_PREDEFINED_NAMED (emitter_of_hashed_dict)->itm_data1 =
+    mom_dynload_symbol ("momfunc_1itm_to_val_emitter_of_hashed_dict");
 // function item emitter_of_hashed_set of signature_1itm_to_val:
   MOM_PREDEFINED_NAMED (emitter_of_hashed_set)->itm_data1 =
     mom_dynload_symbol ("momfunc_1itm_to_val_emitter_of_hashed_set");
@@ -183,6 +195,9 @@ mom_predefined_items_fill (void)
 // function item filler_of_function of signature_1itm_to_void:
   MOM_PREDEFINED_NAMED (filler_of_function)->itm_data1 =
     mom_dynload_symbol ("momfunc_1itm_to_void_filler_of_function");
+// function item filler_of_hashed_dict of signature_1itm_to_void:
+  MOM_PREDEFINED_NAMED (filler_of_hashed_dict)->itm_data1 =
+    mom_dynload_symbol ("momfunc_1itm_to_void_filler_of_hashed_dict");
 // function item filler_of_hashed_set of signature_1itm_to_void:
   MOM_PREDEFINED_NAMED (filler_of_hashed_set)->itm_data1 =
     mom_dynload_symbol ("momfunc_1itm_to_void_filler_of_hashed_set");
@@ -204,6 +219,9 @@ mom_predefined_items_fill (void)
 // function item scanner_of_function of signature_1itm_to_void:
   MOM_PREDEFINED_NAMED (scanner_of_function)->itm_data1 =
     mom_dynload_symbol ("momfunc_1itm_to_void_scanner_of_function");
+// function item scanner_of_hashed_dict of signature_1itm_to_void:
+  MOM_PREDEFINED_NAMED (scanner_of_hashed_dict)->itm_data1 =
+    mom_dynload_symbol ("momfunc_1itm_to_void_scanner_of_hashed_dict");
 // function item scanner_of_hashed_set of signature_1itm_to_void:
   MOM_PREDEFINED_NAMED (scanner_of_hashed_set)->itm_data1 =
     mom_dynload_symbol ("momfunc_1itm_to_void_scanner_of_hashed_set");

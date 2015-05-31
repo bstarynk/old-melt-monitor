@@ -418,6 +418,57 @@ bool
 
 
 ////////////////////////////////////////////////////////////////
+////////// hashed_dict-s
+
+
+bool
+  momfunc_1itm_to_void_scanner_of_hashed_dict
+  (const momnode_t *clonode, momitem_t *itm)
+{
+  assert (clonode);
+  MOM_DEBUGPRINTF (dump,
+		   "scanner_of_hashed_dict itm=%s", mom_item_cstring (itm));
+  assert (itm->itm_kind == MOM_PREDEFINED_NAMED (hashed_dict));
+#warning scanner_of_hashed_dict unimplemented
+  MOM_FATAPRINTF ("scanner_of_hashed_dict unimplemented itm=%s",
+		  mom_item_cstring (itm));
+  return true;
+}				/* end scanner_of_hashed_dict */
+
+bool
+  momfunc_1itm_to_val_emitter_of_hashed_dict
+  (const momnode_t *clonode, momitem_t *itm, momvalue_t *res)
+{
+  MOM_DEBUGPRINTF (dump,
+		   "emitter_of_hashed_dict itm=%s", mom_item_cstring (itm));
+  assert (clonode);
+  assert (itm);
+  assert (itm->itm_kind == MOM_PREDEFINED_NAMED (hashed_dict));
+#warning emitter_of_hashed_dict unimplemented
+  MOM_FATAPRINTF ("emitter_of_hashed_dict unimplemented itm=%s",
+		  mom_item_cstring (itm));
+  return true;
+}				/* end emitter_of_hashed_dict */
+
+
+bool
+  momfunc_1itm_to_void_filler_of_hashed_dict
+  (const momnode_t *clonode, momitem_t *itm)
+{
+  MOM_DEBUGPRINTF (dump,
+		   "filler_of_hashed_dict itm=%s", mom_item_cstring (itm));
+  assert (clonode);
+  assert (itm);
+  assert (itm->itm_kind == MOM_PREDEFINED_NAMED (hashed_dict));
+#warning filler_of_hashed_dict unimplemented
+  MOM_FATAPRINTF ("filler_of_hashed_dict unimplemented itm=%s",
+		  mom_item_cstring (itm));
+
+  return true;
+}				/* end of filler_of_hashed_dict */
+
+
+////////////////////////////////////////////////////////////////
 ////////// hashed_set-s
 
 
