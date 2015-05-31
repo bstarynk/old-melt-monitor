@@ -212,50 +212,8 @@ start_web_onion_mom (void)
       MOM_DEBUGPRINTF (web, "start_web_onion port %s", whcolon + 1);
     };
   onion_url *ourl = onion_root_url (onion_mom);
-#warning the union of several export_local_new handlers does not work. We need to do the work using onion_shortcut_response_file & realpath
   {
     int onerr = 0;
-
-    ///////old
-#if 0
-    for (int rix = 0; rix < MOM_MAX_WEBDOCROOT; rix++)
-      {
-	const char *curdocroot = mom_webdocroot[rix];
-	if (!curdocroot)
-	  break;
-	onerr = 0;
-	MOM_DEBUGPRINTF (web, "start_web_onion rix#%d curdocroot %s", rix,
-			 curdocroot);
-	if ((onerr = onion_url_add_handler (ourl, "^" MOM_WEB_DOC_ROOT_PREFIX,
-					    onion_handler_export_local_new
-					    (curdocroot))) != 0)
-	  MOM_FATAPRINTF ("failed to add to  ^" MOM_WEB_DOC_ROOT_PREFIX
-			  " export-local handler #%d for %s (onionerr#%d)",
-			  rix, curdocroot, onerr);
-	MOM_INFORMPRINTF ("will serve the files in %s/ from http://%s/%s",
-			  curdocroot, mom_web_host, MOM_WEB_DOC_ROOT_PREFIX);
-      };
-    struct stat wrstat;
-    memset (&wrstat, 0, sizeof (wrstat));
-    if (!stat (MOM_WEBDOCROOT_DIRECTORY, &wrstat)
-	&& (wrstat.st_mode & S_IFMT) == S_IFDIR)
-      {
-	onerr = 0;
-	MOM_DEBUGPRINTF (web, "start_web_onion %s is directory",
-			 MOM_WEBDOCROOT_DIRECTORY);
-	if ((onerr = onion_url_add_handler (ourl, "^" MOM_WEB_DOC_ROOT_PREFIX,
-					    onion_handler_export_local_new
-					    (MOM_WEBDOCROOT_DIRECTORY))) != 0)
-	  MOM_FATAPRINTF ("failed to add to  ^" MOM_WEB_DOC_ROOT_PREFIX
-			  " export-local handler for webdocroot %s (onionerr#%d)",
-			  MOM_WEBDOCROOT_DIRECTORY, onerr);
-	MOM_INFORMPRINTF ("will serve the files in %s/ from http://%s/%s",
-			  MOM_WEBDOCROOT_DIRECTORY, mom_web_host,
-			  MOM_WEB_DOC_ROOT_PREFIX);
-      };
-#endif //0
-
-    onerr = 0;
     if ((onerr =
 	 onion_url_add_handler (ourl, "^",
 				onion_handler_new (handle_web_mom, NULL,
