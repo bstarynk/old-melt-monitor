@@ -760,6 +760,8 @@ static inline const momnode_t *mom_hashdict_sorted_strings
   return NULL;
 }
 
+void mom_hashdict_scan_dump (struct momhashdict_st *hdict);
+
 ////////////////////////////////////////////////////
 
 struct momcomponents_st
