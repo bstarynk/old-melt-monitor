@@ -266,4 +266,47 @@ mom_hashdict_getcstr (const struct momhashdict_st *hdict, const char *cstr)
   return MOM_NONEV;
 }				/* end mom_hashdict_getcstr */
 
+static int
+stringptr_cmp_mom (const void *p1, const void *p2)
+{
+  const momvalue_t *pv1 = (const momvalue_t *) p1;
+  const momvalue_t *pv2 = (const momvalue_t *) p2;
+  assert (pv1 && pv1->typnum == momty_string);
+  assert (pv2 && pv2->typnum == momty_string);
+  assert (pv1->vstr != NULL);
+  assert (pv2->vstr != NULL);
+  return strcmp (pv1->vstr->cstr, pv2->vstr->cstr);
+}				/* end stringptr_cmp_mom */
+
+
+const momnode_t *
+mom_hashdict_sorted_strings_meta (const struct momhashdict_st *hdict,
+				  const momitem_t *connitm,
+				  const momvalue_t metav)
+{
+  if (!hdict || hdict == MOM_EMPTY)
+    return NULL;
+  if (!connitm || connitm == MOM_EMPTY)
+    return NULL;
+  unsigned len = hdict->hdic_len;
+  unsigned cnt = hdict->hdic_cnt;
+  assert (cnt <= len);
+  assert (len > 2 && len % 2 != 0);
+  momvalue_t *arrval = MOM_GC_ALLOC ("arrvalstrings hashdict",
+				     (len + 1) * sizeof (momvalue_t));
+  unsigned nbs = 0;
+  for (unsigned ix = 0; ix < len; ix++)
+    {
+      const momstring_t *curstr = hdict->hdic_ents[ix].dicent_str;
+      if (!curstr || curstr == MOM_EMPTY)
+	continue;
+      assert (nbs < cnt);
+      arrval[nbs++] = mom_stringv (curstr);
+    };
+  assert (nbs == cnt);
+  if (nbs > 1)
+    qsort (arrval, nbs, sizeof (momvalue_t), stringptr_cmp_mom);
+  return mom_make_meta_node (metav, (momitem_t *) connitm, nbs, arrval);
+}				/* end mom_hashdict_sorted_strings */
+
 #warning missing other hashdict functions

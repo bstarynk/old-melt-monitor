@@ -748,8 +748,17 @@ momvalue_t mom_hashdict_getcstr (const struct momhashdict_st *hdict,
 				 const char *cstr);
 struct momhashdict_st *mom_hashdict_remove (struct momhashdict_st *hdict,
 					    const momstring_t *str);
-const momnode_t *mom_hashdict_sorted_strings (struct momhashdict_st *hdict,
-					      const momitem_t *connitm);
+const momnode_t *mom_hashdict_sorted_strings_meta
+  (const struct momhashdict_st *hdict, const momitem_t *connitm,
+   const momvalue_t metav);
+
+static inline const momnode_t *mom_hashdict_sorted_strings
+  (const struct momhashdict_st *hdict, const momitem_t *connitm)
+{
+  if (hdict && connitm)
+    return mom_hashdict_sorted_strings_meta (hdict, connitm, MOM_NONEV);
+  return NULL;
+}
 
 ////////////////////////////////////////////////////
 
