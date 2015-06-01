@@ -121,7 +121,8 @@ fill_hashdict_from_old_mom (struct momhashdict_st *newhdict,
 			    const struct momhashdict_st *oldhdict)
 {
   assert (newhdict != NULL);
-  assert (oldhdict != NULL);
+  if (!oldhdict)
+    return;
   unsigned oldlen = oldhdict->hdic_len;
   for (unsigned oix = 0; oix < oldlen; oix++)
     {
@@ -136,7 +137,7 @@ fill_hashdict_from_old_mom (struct momhashdict_st *newhdict,
 
 struct momhashdict_st *
 mom_hashdict_put (struct momhashdict_st *hdict,
-		  momstring_t *str, momvalue_t val)
+		  const momstring_t *str, momvalue_t val)
 {
   if (hdict == MOM_EMPTY)
     hdict = NULL;
@@ -323,5 +324,37 @@ mom_hashdict_scan_dump (struct momhashdict_st *hdict)
       mom_scan_dumped_value (hdict->hdic_ents[ix].dicent_val);
     }
 }				/* end of mom_hashdict_scan_dump */
+
+
+struct momhashdict_st *
+mom_hashdict_reserve (struct momhashdict_st *hdict, unsigned gap)
+{
+  if (hdict == MOM_EMPTY)
+    hdict = NULL;
+  unsigned len = hdict ? hdict->hdic_len : 0;
+  unsigned cnt = hdict ? hdict->hdic_cnt : 0;
+  unsigned newsiz = mom_prime_above (4 * (cnt + gap) / 3 + gap / 16 + 10);
+  if (newsiz > len)
+    {
+      struct momhashdict_st *newhdict =	//
+	MOM_GC_ALLOC ("growing hdict",
+		      sizeof (struct momhashdict_st) +
+		      newsiz * sizeof (struct momdictvalent_st));
+      newhdict->hdic_len = newsiz;
+      fill_hashdict_from_old_mom (newhdict, hdict);
+      return newhdict;
+    }
+  else if (newsiz > 30 && newsiz < len / 2)
+    {
+      struct momhashdict_st *newhdict =	//
+	MOM_GC_ALLOC ("shrinking hdict",
+		      sizeof (struct momhashdict_st) +
+		      newsiz * sizeof (struct momdictvalent_st));
+      newhdict->hdic_len = newsiz;
+      fill_hashdict_from_old_mom (newhdict, hdict);
+      return newhdict;
+    }
+  return hdict;
+}
 
 #warning missing other hashdict functions

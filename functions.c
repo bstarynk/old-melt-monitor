@@ -497,10 +497,31 @@ bool
 		   "filler_of_hashed_dict itm=%s", mom_item_cstring (itm));
   assert (clonode);
   assert (itm);
-#warning filler_of_hashed_dict unimplemented
-  MOM_FATAPRINTF ("filler_of_hashed_dict unimplemented itm=%s",
-		  mom_item_cstring (itm));
-
+  unsigned nbent = mom_node_arity (clonode);
+  struct momhashdict_st *hdic =
+    mom_hashdict_reserve (NULL, 4 * nbent / 3 + nbent / 16 + 5);
+  for (unsigned ix = 0; ix < nbent; ix++)
+    {
+      const momvalue_t vcurnod = mom_node_nth (clonode, ix);
+      MOM_DEBUGPRINTF (dump,
+		       "filler_of_hashed_dict itm=%s ix#%d vcurnod=%s",
+		       mom_item_cstring (itm), ix,
+		       mom_output_gcstring (vcurnod));
+      const momnode_t *curnod = mom_value_to_node (vcurnod);
+      assert (curnod != NULL);
+      assert (mom_node_conn (curnod) == MOM_PREDEFINED_NAMED (in)
+	      && mom_node_arity (curnod) == 2);
+      const momvalue_t vcurstr = mom_node_nth (curnod, 0);
+      const momvalue_t vcurval = mom_node_nth (curnod, 1);
+      const momstring_t *curstr = mom_value_to_string (vcurstr);
+      assert (curstr != NULL);
+      mom_hashdict_put (hdic, curstr, vcurval);
+    }
+  itm->itm_kind = MOM_PREDEFINED_NAMED (hashed_dict);
+  itm->itm_data1 = hdic;
+  MOM_DEBUGPRINTF (dump,
+		   "filler_of_hashed_dict done itm=%s",
+		   mom_item_cstring (itm));
   return true;
 }				/* end of filler_of_hashed_dict */
 

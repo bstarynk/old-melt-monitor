@@ -754,7 +754,8 @@ struct momhashdict_st
 };				// end struct momhashdict_st
 
 struct momhashdict_st *mom_hashdict_put (struct momhashdict_st *hdict,
-					 momstring_t *str, momvalue_t val);
+					 const momstring_t *str,
+					 momvalue_t val);
 struct momhashdict_st *mom_hashdict_reserve (struct momhashdict_st *hdict,
 					     unsigned gap);
 momvalue_t mom_hashdict_get (const struct momhashdict_st *hdict,
@@ -763,9 +764,10 @@ momvalue_t mom_hashdict_getcstr (const struct momhashdict_st *hdict,
 				 const char *cstr);
 struct momhashdict_st *mom_hashdict_remove (struct momhashdict_st *hdict,
 					    const momstring_t *str);
-const momnode_t *mom_hashdict_sorted_strings_meta
-  (const struct momhashdict_st *hdict, const momitem_t *connitm,
-   const momvalue_t metav);
+const momnode_t *mom_hashdict_sorted_strings_meta (const struct momhashdict_st
+						   *hdict,
+						   const momitem_t *connitm,
+						   const momvalue_t metav);
 
 static inline const momnode_t *mom_hashdict_sorted_strings
   (const struct momhashdict_st *hdict, const momitem_t *connitm)
