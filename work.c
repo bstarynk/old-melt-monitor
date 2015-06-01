@@ -404,9 +404,11 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
       MOM_DEBUGPRINTF (web,
 		       "handle_web request #%ld reqfupath '%s' LOGIN ACTION",
 		       reqcnt, reqfupath);
+      // we use some random usleep-s to slight bother the malicious attacker....
       if (reqmethitm == MOM_PREDEFINED_NAMED (http_POST))
 	{
-	  usleep (6000 + getpid() % 1024 + mom_random_nonzero_32_here() % 32768);
+	  usleep (6000 + getpid () % 1024 +
+		  mom_random_nonzero_32_here () % 32768);
 	  pthread_mutex_lock (&webmtx_mom);
 	  onion_connection_status ocs =	//
 	    web_login_post_mom (reqcnt, reqfupath, requ, resp);
@@ -415,7 +417,8 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
 	}
       else
 	{
-	  usleep (4000 + getpid() % 1024 + mom_random_nonzero_32_here() % 4096);
+	  usleep (4000 + getpid () % 1024 +
+		  mom_random_nonzero_32_here () % 4096);
 	  pthread_mutex_lock (&webmtx_mom);
 	  onion_connection_status ocs =	//
 	    web_login_template_mom (reqcnt, reqfupath, reqmethitm, requ,

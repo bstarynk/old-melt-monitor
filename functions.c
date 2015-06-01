@@ -353,19 +353,22 @@ bool
   assert (nbattr == 0 || (seqattr && seqattr->slen == nbattr));
   momvalue_t *assarr =
     MOM_GC_ALLOC ("associations", (nbattr + 1) * sizeof (momvalue_t));
+  unsigned nbassoc = 0;
   for (unsigned ix = 0; ix < nbattr; ix++)
     {
       const momitem_t *itm = seqattr->arritm[ix];
       assert (itm && itm != MOM_EMPTY);
       struct momentry_st *ent = mom_attributes_find_entry (assoc, itm);
       assert (ent != NULL);
-      assarr[ix] =		//
-	mom_nodev_new (MOM_PREDEFINED_NAMED (association),
+      if (!mom_dumpable_value (ent->ent_val))
+	continue;
+      assarr[nbassoc++] =	//
+	mom_nodev_new (MOM_PREDEFINED_NAMED (in),
 		       2, mom_itemv (itm), ent->ent_val);
     };
   momvalue_t vclos =
     mom_nodev_sized (MOM_PREDEFINED_NAMED (filler_of_association),
-		     nbattr,
+		     nbassoc,
 		     assarr);
   MOM_DEBUGPRINTF (dump, "emitter_of_association vclos=%s",
 		   mom_output_gcstring (vclos));
@@ -396,7 +399,7 @@ bool
     {
       momvalue_t vcomp = clonode->arrsons[ix];
       if (vcomp.typnum != momty_node
-	  || vcomp.vnode->conn != MOM_PREDEFINED_NAMED (association)
+	  || vcomp.vnode->conn != MOM_PREDEFINED_NAMED (in)
 	  || vcomp.vnode->slen != 2)
 	MOM_FATAPRINTF ("filler_of_association %s has bad comp#%d %s",
 			mom_item_cstring (itm), ix,
@@ -429,24 +432,59 @@ bool
   MOM_DEBUGPRINTF (dump,
 		   "scanner_of_hashed_dict itm=%s", mom_item_cstring (itm));
   assert (itm->itm_kind == MOM_PREDEFINED_NAMED (hashed_dict));
-#warning scanner_of_hashed_dict unimplemented
-  MOM_FATAPRINTF ("scanner_of_hashed_dict unimplemented itm=%s",
-		  mom_item_cstring (itm));
+  struct momhashdict_st *hdic = itm->itm_data1;
+  if (hdic)
+    mom_hashdict_scan_dump (hdic);
+  MOM_DEBUGPRINTF (dump,
+		   "scanner_of_hashed_dict end itm=%s",
+		   mom_item_cstring (itm));
   return true;
 }				/* end scanner_of_hashed_dict */
+
 
 bool
   momfunc_1itm_to_val_emitter_of_hashed_dict
   (const momnode_t *clonode, momitem_t *itm, momvalue_t *res)
 {
+  momvalue_t resnodv = MOM_NONEV;
   MOM_DEBUGPRINTF (dump,
 		   "emitter_of_hashed_dict itm=%s", mom_item_cstring (itm));
   assert (clonode);
   assert (itm);
   assert (itm->itm_kind == MOM_PREDEFINED_NAMED (hashed_dict));
-#warning emitter_of_hashed_dict unimplemented
-  MOM_FATAPRINTF ("emitter_of_hashed_dict unimplemented itm=%s",
-		  mom_item_cstring (itm));
+  struct momhashdict_st *hdic = itm->itm_data1;
+  if (hdic)
+    {
+      const momnode_t *nodsortedstrings =	//
+	mom_hashdict_sorted_strings (hdic,
+				     MOM_PREDEFINED_NAMED (hashed_dict));
+      MOM_DEBUGPRINTF (dump, "emitter_of_hashed_dict itm=%s sortedstrings=%s",
+		       mom_item_cstring (itm),
+		       mom_output_gcstring (mom_nodev (nodsortedstrings)));
+      unsigned nbent = mom_node_arity (nodsortedstrings);
+      unsigned cntent = 0;
+      momvalue_t *valarr =	//
+	MOM_GC_ALLOC ("valarr", (nbent + 1) * sizeof (momvalue_t));
+      for (unsigned ix = 0; ix < nbent; ix++)
+	{
+	  const momvalue_t curson = mom_node_nth (nodsortedstrings, ix);
+	  const momstring_t *cursonstr = mom_value_to_string (curson);
+	  assert (cursonstr != NULL);
+	  momvalue_t curval = mom_hashdict_get (hdic, cursonstr);
+	  if (!mom_dumpable_value (curval))
+	    continue;
+	  assert (curval.typnum != momty_null);
+	  valarr[cntent++] =	//
+	    mom_nodev_new (MOM_PREDEFINED_NAMED (in), 2, curson, curval);
+	}
+      resnodv =			//
+	mom_nodev_sized (MOM_PREDEFINED_NAMED (filler_of_hashed_dict),
+			 cntent, valarr);
+    }
+  MOM_DEBUGPRINTF (dump,
+		   "emitter_of_hashed_dict end itm=%s resnodv=%s",
+		   mom_item_cstring (itm), mom_output_gcstring (resnodv));
+  *res = resnodv;
   return true;
 }				/* end emitter_of_hashed_dict */
 
@@ -459,7 +497,6 @@ bool
 		   "filler_of_hashed_dict itm=%s", mom_item_cstring (itm));
   assert (clonode);
   assert (itm);
-  assert (itm->itm_kind == MOM_PREDEFINED_NAMED (hashed_dict));
 #warning filler_of_hashed_dict unimplemented
   MOM_FATAPRINTF ("filler_of_hashed_dict unimplemented itm=%s",
 		  mom_item_cstring (itm));
