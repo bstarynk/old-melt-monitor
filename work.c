@@ -20,8 +20,10 @@
 
 #include "monimelt.h"
 
+#define SESSION_COOKIE_MOM "MOMSESSION"
 static volatile atomic_bool stop_work_loop_mom;
 static volatile atomic_long webcount_mom;
+static struct momhashdict_st *websessiondict_mom;
 
 _Thread_local int mom_worker_num;
 
@@ -146,6 +148,62 @@ web_doc_root_mom (const char *reqfupath, long reqcnt, onion_request *requ,
 }				/* end of web_doc_root_mom */
 
 
+static onion_connection_status
+web_login_template_mom (long reqcnt, const char *reqfupath,
+			const momitem_t *reqmethitm, onion_request *requ,
+			onion_response *resp)
+{
+  MOM_DEBUGPRINTF (web,
+		   "web_login_template start request #%ld reqfupath '%s' reqmethitm %s",
+		   reqcnt, reqfupath, mom_item_cstring (reqmethitm));
+  FILE *wlf = NULL;
+  char wlogintpath[MOM_PATH_MAX];
+  // see the MOM_WEBLOGIN_TEMPLATE_FILE in every webdocroot
+  for (unsigned ix = 0; ix < MOM_MAX_WEBDOCROOT && !wlf; ix++)
+    {
+      memset (wlogintpath, 0, sizeof (wlogintpath));
+      if (!mom_webdocroot[ix])
+	break;
+      if (snprintf (wlogintpath, sizeof (wlogintpath),
+		    "%s/%s", mom_webdocroot[ix], MOM_WEBLOGIN_TEMPLATE_FILE)
+	  >= (int) sizeof (wlogintpath) - 2)
+	MOM_FATAPRINTF ("too long wlogintpath %s for webdocroot#%d %s",
+			wlogintpath, ix, mom_webdocroot[ix]);
+      errno = 0;
+      wlf = fopen (wlogintpath, "r");
+      MOM_DEBUGPRINTF (web, "web_login_template ix#%d wlogintpath %s - %s",
+		       ix, wlogintpath,
+		       wlf ? "got login file" : strerror (errno));
+    };
+  if (!wlf)
+    {
+      memset (wlogintpath, 0, sizeof (wlogintpath));
+      if (snprintf (wlogintpath, sizeof (wlogintpath),
+		    "%s/%s", MOM_WEBDOCROOT_DIRECTORY,
+		    MOM_WEBLOGIN_TEMPLATE_FILE) >=
+	  (int) sizeof (wlogintpath) - 2)
+	// this cannot happen, but still....
+	MOM_FATAPRINTF
+	  ("too long wlogintpath %s for builtin webdocroot directory",
+	   wlogintpath);
+      errno = 0;
+      wlf = fopen (wlogintpath, "r");
+      MOM_DEBUGPRINTF (web, "web_login_template builtin wlogintpath %s - %s",
+		       wlogintpath,
+		       wlf ? "got login file" : strerror (errno));
+    };
+  if (!wlf)
+    {
+      MOM_WARNPRINTF
+	("failed to get web login template file %s for webrequest #%ld to full path %s",
+	 MOM_WEBLOGIN_TEMPLATE_FILE, reqcnt, reqfupath);
+      return OCS_NOT_PROCESSED;
+    };
+#warning web_login_template_mom incomplete
+  MOM_FATAPRINTF
+    ("web_login_template_mom incomplete request #%ld reqfupath '%s' reqmethitm %s",
+     reqcnt, reqfupath, mom_item_cstring (reqmethitm));
+}				/* end web_login_template_mom */
 
 static onion_connection_status
 handle_web_mom (void *data, onion_request *requ, onion_response *resp)
@@ -177,13 +235,27 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
   if (!strncmp
       (reqpath, MOM_WEB_DOC_ROOT_PREFIX, strlen (MOM_WEB_DOC_ROOT_PREFIX))
       && (reqmethitm == MOM_PREDEFINED_NAMED (http_GET)
-	  || reqmethitm == MOM_PREDEFINED_NAMED (http_POST)))
+	  || reqmethitm == MOM_PREDEFINED_NAMED (http_HEAD)))
     {
       MOM_DEBUGPRINTF (web,
 		       "handle_web request #%ld reqpath '%s' WEB_DOC_ROOT",
 		       reqcnt, reqpath);
       return web_doc_root_mom (reqpath, reqcnt, requ, resp);
     }
+  const char *sesscookie
+    = onion_request_get_cookie (requ, SESSION_COOKIE_MOM);
+  momvalue_t sessval = mom_hashdict_getcstr (websessiondict_mom, sesscookie);
+  MOM_DEBUGPRINTF (web,
+		   "handle_web request #%ld  reqfupath %s reqmethitm %s sesscookie=%s sessval=%s",
+		   reqcnt, reqfupath, mom_item_cstring (reqmethitm),
+		   sesscookie, mom_output_gcstring (sessval));
+  if (sessval.typnum == momty_null)
+    {
+      if (reqmethitm == MOM_PREDEFINED_NAMED (http_POST))
+	return OCS_FORBIDDEN;
+      return web_login_template_mom (reqcnt, reqfupath, reqmethitm, requ,
+				     resp);
+    };
 #warning handle_web_mom should do something here
   MOM_DEBUGPRINTF (web,
 		   "handle_web request #%ld  reqfupath %s reqmethitm %s NOT PROCESSED !!!",

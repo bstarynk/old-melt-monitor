@@ -107,6 +107,16 @@ const char *mom_socket;
 const char *mom_user_data;
 #define MOM_MAX_WEBDOCROOT 8
 const char *mom_webdocroot[MOM_MAX_WEBDOCROOT + 1];
+
+#define MOM_WEB_DOC_ROOT_PREFIX "wdoc/"
+/** if the webroot/ directory exists, we serve the files inside as web
+   document roots web-doc-root/, so file webroot/jquery.min.js would
+   be accessible eg thru the URL
+   http://localhost:8087/wdoc/jquery.min.js if we started with
+   webservice localhost:8087 */
+#define MOM_WEBDOCROOT_DIRECTORY "webroot/"
+
+
 // mark unlikely conditions to help optimization
 #ifdef __GNUC__
 #define MOM_UNLIKELY(P) __builtin_expect((P),0)
@@ -165,13 +175,10 @@ extern void *GC_calloc (size_t nbelem, size_t elsiz);
 // generated functions start with
 #define MOM_FUNCTION_PREFIX "momfunc_"
 
-#define MOM_WEB_DOC_ROOT_PREFIX "wdoc/"
-/** if the webroot/ directory exists, we serve the files inside as web
-   document roots web-doc-root/, so file webroot/jquery.min.js would
-   be accessible eg thru the URL
-   http://localhost:8087/wdoc/jquery.min.js if we started with
-   webservice localhost:8087 */
-#define MOM_WEBDOCROOT_DIRECTORY "webroot/"
+
+// the weblogin template is seeked in all the webroots and at last in
+// the MOM_WEBDOCROOT_DIRECTORY; it is used when we have no valid cookies.
+#define MOM_WEBLOGIN_TEMPLATE_FILE "momlogin.thtml"
 
 // query a clock
 static inline double
