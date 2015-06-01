@@ -19,7 +19,11 @@
     <br/>
     <label for='mom_login_password'>Password:</label>
     <input type='password' name='mom_login_password'/>
+    <br/>
     <?mom_web_login_hidden_input?>
+    <input type='submit' name='mom_do_login' value='Log in'/>
+    -
+    <input type='reset' name='mom_reset' value='Clear'/>
   </form>
   <br/>
   <small class='time_cl'>Login at

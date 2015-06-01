@@ -262,7 +262,7 @@ web_login_template_mom (long reqcnt, const char *reqfupath,
   memset (outbuf, 0, outsiz);
   char timbuf[80];
   memset (timbuf, 0, sizeof (timbuf));
-  mom_now_strftime_bufcenti (timbuf, "%y %b %d, %H:%M:%S.__ %Z");
+  mom_now_strftime_bufcenti (timbuf, "%Y %b %d, %H:%M:%S.__ %Z");
   while ((linlen = getline (&linbuf, &linsiz, wlf)) >= 0)
     {
       const char *pc = linbuf;
@@ -399,6 +399,13 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
 		       reqcnt, reqpath);
       return web_doc_root_mom (reqpath, reqcnt, requ, resp);
     }
+  else if (!strcmp(reqpath, "/favicon.ico")) {
+      MOM_DEBUGPRINTF (web,
+		       "handle_web request #%ld reqpath '%s' WEB /favicon.ico",
+		       reqcnt, reqpath);
+      return web_doc_root_mom ("/" MOM_WEB_DOC_ROOT_PREFIX "/favicon.ico",
+			       reqcnt, requ, resp);
+  }
   if (!strcmp (reqfupath, "/" MOM_WEBLOGIN_ACTION))
     {
       MOM_DEBUGPRINTF (web,
