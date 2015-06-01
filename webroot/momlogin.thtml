@@ -15,7 +15,7 @@
   <h1>Login to <a href="http://gcc-melt.org/">MELT</a> monitor</h1>
   <form method='POST' action="/mom_web_login">
     <label for='mom_login_user'>User Email:</label>
-    <input type='text' name='mom_login_user' class='user_cl'/>
+    <input type='text' name='mom_login_useremail' class='user_cl'/>
     <br/>
     <label for='mom_login_password'>Password:</label>
     <input type='password' name='mom_login_password'/>

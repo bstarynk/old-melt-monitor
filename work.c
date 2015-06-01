@@ -198,7 +198,7 @@ web_login_template_mom (long reqcnt, const char *reqfupath,
 			onion_response *resp)
 {
   if (MOM_UNLIKELY (webloginrandom_mom == 0))
-    webloginrandom_mom = mom_random_nonzero_32_here ();
+    webloginrandom_mom = (mom_random_nonzero_32_here () & 0x3fffffff);
   MOM_DEBUGPRINTF (web,
 		   "web_login_template start request #%ld reqfupath '%s' reqmethitm %s loginrandom=%u",
 		   reqcnt, reqfupath, mom_item_cstring (reqmethitm),
@@ -356,6 +356,24 @@ web_login_post_mom (long reqcnt, const char *reqfupath,
 {
   assert (requ != NULL);
   assert (resp != NULL);
+  const char* postrandomstr = onion_request_get_post(requ, "mom_login_random");
+  const char* postfullpathstr = onion_request_get_post(requ, "mom_web_full_path");
+  const char* postquerystr = onion_request_get_post(requ, "mom_web_query");
+  const char* postuseremailstr = onion_request_get_post(requ, "mom_login_useremail");
+  const char* postpasswordstr = onion_request_get_post(requ, "mom_login_password");
+  const char* postdologinstr = onion_request_get_post(requ, "mom_do_login");
+  MOM_DEBUGPRINTF (web,
+		   "web_login_post for request#%ld to full path %s;\n .."
+		   "random=%s fullpath=%s query=%s useremail=%s password=%s dologin=%s",
+		   reqcnt, reqfupath,
+		   postrandomstr, postfullpathstr, postquerystr, postuseremailstr, postpasswordstr, postdologinstr);
+  if (!postrandomstr || atoi(postrandomstr) != (int)webloginrandom_mom)
+    {
+      MOM_WARNPRINTF("web login request#%ld fullpath=%s longinrandom mismatch expecting %d",
+		     reqcnt, reqfupath, webloginrandom_mom);
+      return OCS_FORBIDDEN;
+    };
+  /* we could use crypt(3) & mkpasswd(1) or htpasswd(1) */
   MOM_FATAPRINTF ("unimplemented web_login_post_mom request#%ld full path %s",
 		  reqcnt, reqfupath);
 #warning unimplemented web_login_post_mom
