@@ -24,6 +24,9 @@
 static volatile atomic_bool stop_work_loop_mom;
 static volatile atomic_long webcount_mom;
 static struct momhashdict_st *websessiondict_mom;
+static pthread_mutex_t webmtx_mom = PTHREAD_MUTEX_INITIALIZER;
+
+uint32_t webloginrandom_mom;
 
 _Thread_local int mom_worker_num;
 
@@ -145,7 +148,48 @@ web_doc_root_mom (const char *reqfupath, long reqcnt, onion_request *requ,
     };
   CHECK_PATH_WEB_MOM (MOM_WEBDOCROOT_DIRECTORY);
 #undef CHECK_PATH_WEB_MOM
+  return OCS_NOT_PROCESSED;
 }				/* end of web_doc_root_mom */
+
+
+#define LOGIN_QUERY_DATA_MAGIC 373530929	/* login_query_data_magic 0x1643a131 */
+struct login_query_data_mom_st
+{
+  unsigned logqd_magic;		/* always LOGIN_QUERY_DATA_MAGIC */
+  unsigned logqd_count;
+  FILE *logqd_outf;
+  long logqd__gap;
+};
+
+static void
+weblogin_querydictpreorder_mom (void *data, const char *key,
+				const void *valuep, int flags)
+{
+  struct login_query_data_mom_st *plqd =
+    (struct login_query_data_mom_st *) data;
+  const char *sval = (const char *) valuep;
+  if (!plqd || plqd->logqd_magic != LOGIN_QUERY_DATA_MAGIC)
+    MOM_FATAPRINTF ("weblogin_querydictpreorder_mom bad plqd@%p for key=%s",
+		    plqd, key);
+  assert (plqd->logqd_outf != NULL);
+  MOM_DEBUGPRINTF (web,
+		   "weblogin_querydictpreorder key=%s count=%d sval=%s flags=%d",
+		   key, plqd->logqd_count, sval, flags);
+  if (plqd->logqd_count > 0)
+    putc ('&', plqd->logqd_outf);
+  plqd->logqd_count++;
+  fprintf (plqd->logqd_outf, "%s=", key);
+  if (sval)
+    for (const char *ps = sval; *ps != '\0'; ps++)
+      {
+	if (*ps == ' ')
+	  putc ('+', plqd->logqd_outf);
+	else if (isalnum (*ps))
+	  putc (*ps, plqd->logqd_outf);
+	else
+	  fprintf (plqd->logqd_outf, "%%%02x", (unsigned) (*ps) & 0xff);
+      };
+}				/* end of weblogin_querydictpreorder_mom */
 
 
 static onion_connection_status
@@ -153,9 +197,12 @@ web_login_template_mom (long reqcnt, const char *reqfupath,
 			const momitem_t *reqmethitm, onion_request *requ,
 			onion_response *resp)
 {
+  if (MOM_UNLIKELY (webloginrandom_mom == 0))
+    webloginrandom_mom = mom_random_nonzero_32_here ();
   MOM_DEBUGPRINTF (web,
-		   "web_login_template start request #%ld reqfupath '%s' reqmethitm %s",
-		   reqcnt, reqfupath, mom_item_cstring (reqmethitm));
+		   "web_login_template start request #%ld reqfupath '%s' reqmethitm %s loginrandom=%u",
+		   reqcnt, reqfupath, mom_item_cstring (reqmethitm),
+		   (unsigned) webloginrandom_mom);
   FILE *wlf = NULL;
   char wlogintpath[MOM_PATH_MAX];
   // see the MOM_WEBLOGIN_TEMPLATE_FILE in every webdocroot
@@ -199,11 +246,121 @@ web_login_template_mom (long reqcnt, const char *reqfupath,
 	 MOM_WEBLOGIN_TEMPLATE_FILE, reqcnt, reqfupath);
       return OCS_NOT_PROCESSED;
     };
-#warning web_login_template_mom incomplete
-  MOM_FATAPRINTF
-    ("web_login_template_mom incomplete request #%ld reqfupath '%s' reqmethitm %s",
-     reqcnt, reqfupath, mom_item_cstring (reqmethitm));
+
+  size_t outsiz = 2048;
+  char *outbuf = malloc (outsiz);
+  size_t linsiz = 128;
+  ssize_t linlen = -1;
+  char *linbuf = malloc (linsiz);
+  FILE *outf = NULL;
+  int linecount = 0;
+  int nbwlhidinp = 0;
+  if (!outbuf || !linbuf || !(outf = open_memstream (&outbuf, &outsiz)))
+    MOM_FATAPRINTF ("web_login_template request #%ld full path '%s' failed"
+		    " to allocate output buffer of %zd bytes or line of %zd bytes",
+		    reqcnt, reqfupath, outsiz, linsiz);
+  memset (outbuf, 0, outsiz);
+  char timbuf[80];
+  memset (timbuf, 0, sizeof (timbuf));
+  mom_now_strftime_bufcenti (timbuf, "%y %b %d, %H:%M:%S.__ %Z");
+  while ((linlen = getline (&linbuf, &linsiz, wlf)) >= 0)
+    {
+      const char *pc = linbuf;
+      size_t pilen = 0;
+      linecount++;
+      while (pc && *pc && isspace (*pc))
+	pc++;
+      if (!strncmp (pc, MOM_WEBLOGIN_HIDDEN_INPUT_PI,
+		    (pilen = sizeof (MOM_WEBLOGIN_HIDDEN_INPUT_PI) - 1))
+	  || !strncmp (pc, MOM_WEBLOGIN_HIDDEN_INPUT_COMM,
+		       (pilen = sizeof (MOM_WEBLOGIN_HIDDEN_INPUT_COMM) - 1)))
+	{
+	  nbwlhidinp++;
+	  if (pc > linbuf)
+	    fwrite (linbuf, pc - linbuf, 1, outf);
+	  fprintf (outf, " <!-- WEBLOGIN GENERATED at %s -->\n", timbuf);
+	  fprintf (outf,
+		   "<input type='hidden' name='mom_web_full_path' value='%s'/>\n",
+		   reqfupath);
+	  fprintf (outf,
+		   "<input type='hidden' name='mom_login_random', value='%d'/>\n",
+		   (int) webloginrandom_mom);
+	  const onion_dict *querydict = onion_request_get_query_dict (requ);
+	  if (querydict && onion_dict_count (querydict) > 0)
+	    {
+	      struct login_query_data_mom_st lqd;
+	      memset (&lqd, 0, sizeof (lqd));
+	      lqd.logqd_magic = LOGIN_QUERY_DATA_MAGIC;
+	      lqd.logqd_outf = outf;
+	      lqd.logqd_count = 0;
+	      fputs ("<input type='hidden' name='mom_web_query' value='",
+		     outf);
+	      onion_dict_preorder (querydict, weblogin_querydictpreorder_mom,
+				   &lqd);
+	      memset (&lqd, 0, sizeof (lqd));
+	      fputs ("'/>\n", outf);
+	    }
+	  if (pc + pilen < linbuf + linlen)
+	    fputs (pc + pilen, outf);
+	}
+      else
+	if (!strncmp
+	    (pc, MOM_WEBLOGIN_TIMESTAMP_PI,
+	     (pilen = sizeof (MOM_WEBLOGIN_TIMESTAMP_PI) - 1)))
+	{
+	  if (pc > linbuf)
+	    fwrite (linbuf, pc - linbuf, 1, outf);
+	  fputs (timbuf, outf);
+	  if (pc + pilen < linbuf + linlen)
+	    fputs (pc + pilen, outf);
+	}
+      else
+	{
+	  char *piptr = strstr (linbuf, "<?mom_web_login");
+	  if (MOM_UNLIKELY (piptr != NULL) && piptr > linbuf)
+	    MOM_WARNPRINTF ("in weblogin file %s line #%d got unexpected"
+			    " HTML processing instruction %s\n for request #%ld full path '%s'",
+			    wlogintpath, linecount, piptr, reqcnt, reqfupath);
+	  fputs (linbuf, outf);
+	}
+    };				/* end while ... getline ... */
+  if (nbwlhidinp != 1)
+    MOM_FATAPRINTF
+      ("invalid login template file %s; it should contain exactly one occurrence of "
+       MOM_WEBLOGIN_HIDDEN_INPUT_PI " or " MOM_WEBLOGIN_HIDDEN_INPUT_COMM
+       " but got %d", wlogintpath, nbwlhidinp);
+  fclose (wlf), wlf = NULL;
+  long outbuflen = ftell (outf);
+  if (MOM_UNLIKELY (fflush (outf)))
+    MOM_FATAPRINTF
+      ("web_login_template_mom failed to flush output buffer (of %ld bytes) for request#%ld to full path %s",
+       outbuflen, reqcnt, reqfupath);
+  assert (outbuflen > 0);
+  if (outbuflen < (long) outsiz)
+    outbuf[outbuflen] = (char) 0;
+  MOM_DEBUGPRINTF (web,
+		   "web_login_template for request#%ld to full path %s: output buffer of %ld bytes:\n%s\n\n",
+		   reqcnt, reqfupath, outbuflen, outbuf);
+  onion_response_set_length (resp, outbuflen);
+  onion_response_set_code (resp, HTTP_OK);
+  onion_response_set_header (resp, "Content-Type",
+			     "text/html; charset=utf-8");
+  onion_response_write (resp, outbuf, outbuflen);
+  return OCS_PROCESSED;
 }				/* end web_login_template_mom */
+
+
+static onion_connection_status
+web_login_post_mom (long reqcnt, const char *reqfupath,
+		    onion_request *requ, onion_response *resp)
+{
+  assert (requ != NULL);
+  assert (resp != NULL);
+  MOM_FATAPRINTF ("unimplemented web_login_post_mom request#%ld full path %s",
+		  reqcnt, reqfupath);
+#warning unimplemented web_login_post_mom
+}				/* end of web_login_post_mom */
+
 
 static onion_connection_status
 handle_web_mom (void *data, onion_request *requ, onion_response *resp)
@@ -242,6 +399,31 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
 		       reqcnt, reqpath);
       return web_doc_root_mom (reqpath, reqcnt, requ, resp);
     }
+  if (!strcmp (reqfupath, "/" MOM_WEBLOGIN_ACTION))
+    {
+      MOM_DEBUGPRINTF (web,
+		       "handle_web request #%ld reqfupath '%s' LOGIN ACTION",
+		       reqcnt, reqfupath);
+      if (reqmethitm == MOM_PREDEFINED_NAMED (http_POST))
+	{
+	  usleep (6000 + getpid() % 1024 + mom_random_nonzero_32_here() % 32768);
+	  pthread_mutex_lock (&webmtx_mom);
+	  onion_connection_status ocs =	//
+	    web_login_post_mom (reqcnt, reqfupath, requ, resp);
+	  pthread_mutex_lock (&webmtx_mom);
+	  return ocs;
+	}
+      else
+	{
+	  usleep (4000 + getpid() % 1024 + mom_random_nonzero_32_here() % 4096);
+	  pthread_mutex_lock (&webmtx_mom);
+	  onion_connection_status ocs =	//
+	    web_login_template_mom (reqcnt, reqfupath, reqmethitm, requ,
+				    resp);
+	  pthread_mutex_unlock (&webmtx_mom);
+	  return ocs;
+	}
+    }
   const char *sesscookie
     = onion_request_get_cookie (requ, SESSION_COOKIE_MOM);
   momvalue_t sessval = mom_hashdict_getcstr (websessiondict_mom, sesscookie);
@@ -253,8 +435,11 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
     {
       if (reqmethitm == MOM_PREDEFINED_NAMED (http_POST))
 	return OCS_FORBIDDEN;
-      return web_login_template_mom (reqcnt, reqfupath, reqmethitm, requ,
-				     resp);
+      pthread_mutex_lock (&webmtx_mom);
+      onion_connection_status ocs =	//
+	web_login_template_mom (reqcnt, reqfupath, reqmethitm, requ, resp);
+      pthread_mutex_unlock (&webmtx_mom);
+      return ocs;
     };
 #warning handle_web_mom should do something here
   MOM_DEBUGPRINTF (web,

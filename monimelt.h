@@ -180,6 +180,14 @@ extern void *GC_calloc (size_t nbelem, size_t elsiz);
 // the MOM_WEBDOCROOT_DIRECTORY; it is used when we have no valid cookies.
 #define MOM_WEBLOGIN_TEMPLATE_FILE "momlogin.thtml"
 
+// the weblogin template file should contain a single line with one of:
+#define MOM_WEBLOGIN_HIDDEN_INPUT_PI "<?mom_web_login_hidden_input?>"
+#define MOM_WEBLOGIN_HIDDEN_INPUT_COMM "<!--mom_web_login_hidden_input-->"
+#define MOM_WEBLOGIN_TIMESTAMP_PI "<?mom_web_login_timestamp?>"
+
+#define MOM_WEBLOGIN_ACTION "mom_web_login"
+
+
 // query a clock
 static inline double
 mom_clock_time (clockid_t cid)

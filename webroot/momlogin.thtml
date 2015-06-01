@@ -1,0 +1,29 @@
+<!doctype html>
+<!-- file momlogin.thtml -->
+<html>
+  <style>
+    body {background-color:lightskyblue}
+    input.user_cl {background-color:lightyellow}
+    small.time_cl {color: firebrick}
+  </style>
+  <head>
+    <title>Login to MELT monitor</title>
+  </head>
+  <!-- all the mom_web_login processing instructions should be on
+  separate lines -->
+<body>
+  <h1>Login to <a href="http://gcc-melt.org/">MELT</a> monitor</h1>
+  <form method='POST' action="/mom_web_login">
+    <label for='mom_login_user'>User Email:</label>
+    <input type='text' name='mom_login_user' class='user_cl'/>
+    <br/>
+    <label for='mom_login_password'>Password:</label>
+    <input type='password' name='mom_login_password'/>
+    <?mom_web_login_hidden_input?>
+  </form>
+  <br/>
+  <small class='time_cl'>Login at
+    <?mom_web_login_timestamp?>
+  </small>
+</body>
+</html>
