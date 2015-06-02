@@ -40,6 +40,11 @@ struct webexchange_mom_st
   onion_request *webx_requ;
   onion_response *webx_resp;
   momvalue_t webx_sessionv;
+  char *webx_outbuf;
+  size_t webx_outsiz;
+  FILE *webx_outfil;
+  int webx_code;
+  pthread_cond_t webx_donecond;
   long webx__spare;
 };
 
@@ -668,6 +673,21 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
   webex->webx_requ = requ;
   webex->webx_resp = resp;
   webex->webx_sessionv = sessval;
+  unsigned respinisiz = 4072;
+  webex->webx_outbuf = malloc (respinisiz);
+  if (MOM_UNLIKELY (!webex->webx_outbuf))
+    MOM_FATAPRINTF
+      ("failed to allocate webx_outbuf of %u bytes for request#%ld; %m",
+       respinisiz, reqcnt);
+  memset (webex->webx_outbuf, 0, respinisiz);
+  webex->webx_outsiz = respinisiz;
+  pthread_cond_init (&webex->webx_donecond, NULL);
+  webex->webx_outfil =
+    open_memstream (&webex->webx_outbuf, &webex->webx_outsiz);
+  if (MOM_UNLIKELY (webex->webx_outfil == NULL))
+    MOM_FATAPRINTF
+      ("failed to openmemstream for output of %u bytes for request#%ld; %m",
+       respinisiz, reqcnt);
   webxitm->itm_kind = MOM_PREDEFINED_NAMED (web_exchange);
   webxitm->itm_data1 = webex;
   const momnode_t *sessnod = mom_value_to_node (sessval);
