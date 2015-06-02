@@ -391,6 +391,40 @@ web_login_post_mom (long reqcnt, const char *reqfupath,
 	 reqcnt, reqfupath, postuserstr);
       return OCS_FORBIDDEN;
     }
+  if (postfullpathstr)
+    {
+      for (const char *fp = postfullpathstr; *fp; fp++)
+	{
+	  if (isalnum (*fp) || *fp == '+' || *fp == '-' || *fp == '/'
+	      || (*fp == '.' && fp > postfullpathstr && isalnum (fp[-1])))
+	    continue;
+	  else
+	    {
+	      MOM_WARNPRINTF
+		("web_login_post for request#%ld  invalid postfullpathstr %s",
+		 reqcnt, postfullpathstr);
+	      return OCS_FORBIDDEN;
+	    };
+	}
+    }
+  else
+    postfullpathstr = "/";
+  if (postquerystr)
+    {
+      for (const char *fq = postquerystr; *fq; fq++)
+	{
+	  if (isalnum (*fq) || *fq == '%' || *fq == '&' || *fq == '+'
+	      || *fq == '.' || *fq == '-' || *fq == '_' || *fq == '/')
+	    continue;
+	  else
+	    {
+	      MOM_WARNPRINTF
+		("web_login_post for request#%ld invalid postquerystr %s",
+		 reqcnt, postquerystr);
+	      return OCS_FORBIDDEN;
+	    };
+	}
+    };
   if (!mom_web_authentificator)
     {
       MOM_WARNPRINTF
@@ -462,6 +496,8 @@ web_login_post_mom (long reqcnt, const char *reqfupath,
       onion_response_add_cookie (resp, SESSION_COOKIE_MOM, cookiebuf,
 				 SESSION_TIMEOUT_MOM, "/",
 				 web_host_mom[0] ? web_host_mom : NULL, 0);
+      const char *newfullurlhtml =
+	onion_html_quote (newfullurl) ? : newfullurl;
       const momstring_t *redirstr =	//
 	mom_make_string_sprintf
 	("<!doctype html>\n"
@@ -471,14 +507,17 @@ web_login_post_mom (long reqcnt, const char *reqfupath,
 	 "</head>\n"
 	 "<body><h1>redirection to <a href='%s'>%s</a></h1></body>\n"
 	 "</html>\n",
-	 newfullurl, newfullurl, newfullurl);
+	 newfullurl, newfullurlhtml, newfullurl);
       MOM_DEBUGPRINTF (web,
 		       "web_login_post for request#%ld user %s redirstr=%s",
 		       reqcnt, postuserstr, mom_string_cstr (redirstr));
+      assert (redirstr != NULL);
       onion_response_set_header (resp, "Location", newfullurl);
       onion_response_set_length (resp, redirstr->slen);
+      onion_response_set_header (resp, "Content-Type",
+				 "text/html; charset=utf-8");
       onion_response_set_code (resp, HTTP_REDIRECT);
-      onion_response_write0 (resp, mom_string_cstr (redirstr));
+      onion_response_write0 (resp, redirstr->cstr);
       return OCS_PROCESSED;
     }
   else

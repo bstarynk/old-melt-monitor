@@ -343,7 +343,7 @@ mom_attributes_scan_dump (struct momattributes_st *attrs)
 	continue;
       if (!mom_scan_dumped_item (curitm))
 	continue;
-      mom_scan_dumped_value (attrs->at_entries[ix].ent_val);
+      mom_scan_dumped_valueptr (&attrs->at_entries[ix].ent_val);
     }
 }
 

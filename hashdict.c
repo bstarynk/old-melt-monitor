@@ -321,7 +321,7 @@ mom_hashdict_scan_dump (struct momhashdict_st *hdict)
       const momstring_t *curstr = hdict->hdic_ents[ix].dicent_str;
       if (!curstr || curstr == MOM_EMPTY)
 	continue;
-      mom_scan_dumped_value (hdict->hdic_ents[ix].dicent_val);
+      mom_scan_dumped_valueptr (&hdict->hdic_ents[ix].dicent_val);
     }
 }				/* end of mom_hashdict_scan_dump */
 

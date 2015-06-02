@@ -70,6 +70,7 @@
 // https://github.com/davidmoreno/onion
 #include <onion/onion.h>
 #include <onion/low.h>
+#include <onion/codecs.h>
 #include <onion/request.h>
 #include <onion/response.h>
 #include <onion/block.h>
@@ -1403,19 +1404,38 @@ momitem_t *mom_predefined_item_of_hash (momhash_t h);
 // mom_scan_dumped_item returns true for an item to be scanned (non
 // null, non transient)
 bool mom_scan_dumped_item (const momitem_t *itm);
-void mom_scan_dumped_value (const momvalue_t val);
+void mom_scan_dumped_valueptr (const momvalue_t *pval);
+static inline void
+mom_scan_dumped_value (const momvalue_t val)
+{
+  mom_scan_dumped_valueptr (&val);
+}
+
 void mom_scan_dumped_module_item (const momitem_t *moditm);
 void mom_output_gplv3_notice (FILE *out, const char *prefix,
 			      const char *suffix, const char *filename);
 
-bool mom_dumpable_value (const momvalue_t val);
+bool mom_dumpable_valueptr (const momvalue_t *pval);
+static inline bool
+mom_dumpable_value (const momvalue_t val)
+{
+  return mom_dumpable_valueptr (&val);
+}
+
 bool mom_dumpable_item (const momitem_t *itm);
 void mom_emit_dumped_newline (void);
 void mom_emit_dumped_space (void);
 void mom_emit_dump_indent (void);
 void mom_emit_dump_outdent (void);
 bool mom_emit_dumped_itemref (const momitem_t *itm);
-void mom_emit_dumped_value (const momvalue_t val);
+
+void mom_emit_dumped_valueptr (const momvalue_t *pval);
+static inline void
+mom_emit_dumped_value (const momvalue_t val)
+{
+  mom_emit_dumped_valueptr (&val);
+}
+
 #define mom_make_anonymous_item() mom_make_anonymous_item_at(__LINE__)
 
 void mom_output_utf8cstr_cencoded (FILE *fil, const char *str, int len);

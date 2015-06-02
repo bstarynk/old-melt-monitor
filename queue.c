@@ -490,9 +490,7 @@ mom_queuevalue_scan_dump (struct momqueuevalues_st *qu)
     {
       for (unsigned ix = 0; ix < MOM_QUEUECHUNK_LEN; ix++)
 	{
-	  const momvalue_t val = ch->quechv_values[ix];
-	  if (val.typnum != momty_null)
-	    mom_scan_dumped_value (val);
+	  mom_scan_dumped_valueptr (&ch->quechv_values[ix]);
 	}
     }
 }

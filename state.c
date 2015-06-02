@@ -1410,7 +1410,7 @@ load_metavalue_mom (momvalue_t *pval)
 
 
 ////////////////
-bool				// should be in sync with mom_emit_dumped_value
+bool				// should be in sync with mom_emit_dumped_valueptr
 mom_load_value (momvalue_t *pval)
 {
   assert (loader_mom && loader_mom->ldmagic == LOADER_MAGIC_MOM);
@@ -1843,19 +1843,21 @@ mom_scan_dumped_module_item (const momitem_t *moditm)
 }
 
 void
-mom_scan_dumped_value (const momvalue_t val)
+mom_scan_dumped_valueptr (const momvalue_t *pval)
 {
   if (!dumper_mom || dumper_mom->dumagic != DUMPER_MAGIC_MOM)
     MOM_FATAPRINTF ("scan dumped value outside of dumping");
-  if (mom_valueptr_is_transient (&val))
+  if (!pval || pval == MOM_EMPTY)
+    return;
+  if (mom_valueptr_is_transient (pval))
     {
       MOM_DEBUGPRINTF (dump, "ignoring transient dumped value %s",
-		       mom_output_gcstring (val));
+		       mom_output_gcstring (*pval));
       return;
     }
   MOM_DEBUGPRINTF (dump, "start scanning dumped value %s",
-		   mom_output_gcstring (val));
-  switch ((enum momvaltype_en) val.typnum)
+		   mom_output_gcstring (*pval));
+  switch ((enum momvaltype_en) pval->typnum)
     {
     case momty_double:
     case momty_int:
@@ -1864,14 +1866,14 @@ mom_scan_dumped_value (const momvalue_t val)
     case momty_delim:
       goto end;
     case momty_item:
-      mom_scan_dumped_item (val.vitem);
+      mom_scan_dumped_item (pval->vitem);
       goto end;
     case momty_set:
     case momty_tuple:
       {
-	const momseq_t *sq = val.vsequ;
+	const momseq_t *sq = pval->vsequ;
 	assert (sq);
-	mom_scan_dumped_value (sq->meta);
+	mom_scan_dumped_valueptr (&sq->meta);
 	unsigned slen = sq->slen;
 	for (unsigned ix = 0; ix < slen; ix++)
 	  mom_scan_dumped_item (sq->arritm[ix]);
@@ -1879,7 +1881,7 @@ mom_scan_dumped_value (const momvalue_t val)
       }
     case momty_node:
       {
-	const momnode_t *nod = val.vnode;
+	const momnode_t *nod = pval->vnode;
 	assert (nod);
 	if (!mom_scan_dumped_item (nod->conn))
 	  {
@@ -1887,16 +1889,16 @@ mom_scan_dumped_value (const momvalue_t val)
 			     mom_item_cstring (nod->conn));
 	    goto end;
 	  }
-	mom_scan_dumped_value (nod->meta);
+	mom_scan_dumped_valueptr (&nod->meta);
 	unsigned slen = nod->slen;
 	for (unsigned ix = 0; ix < slen; ix++)
-	  mom_scan_dumped_value (nod->arrsons[ix]);
+	  mom_scan_dumped_valueptr (&nod->arrsons[ix]);
 	goto end;
       }
     }
 end:
   MOM_DEBUGPRINTF (dump, "done scanning dumped value %s",
-		   mom_output_gcstring (val));
+		   mom_output_gcstring (*pval));
 }
 
 static void
@@ -2593,11 +2595,11 @@ emit_content_dumped_item_mom (const momitem_t *itm)
 		   mom_item_cstring (itm), mom_item_cstring (itmat));
 		continue;
 	      }
-	    momvalue_t aval = ent->ent_val;
+	    momvalue_t *paval = &ent->ent_val;
 	    MOM_DEBUGPRINTF (dump,
 			     "emit_content_dumped_item entry itmat=%s val=%s",
 			     mom_item_cstring (itmat),
-			     mom_output_gcstring (aval));
+			     mom_output_gcstring (*paval));
 	    if (!mom_dumpable_item (itmat))
 	      {
 		MOM_DEBUGPRINTF (dump,
@@ -2605,11 +2607,11 @@ emit_content_dumped_item_mom (const momitem_t *itm)
 				 mom_item_cstring (itmat));
 		continue;
 	      }
-	    if (!mom_dumpable_value (aval))
+	    if (!mom_dumpable_valueptr (paval))
 	      {
 		MOM_DEBUGPRINTF (dump,
 				 "emit_content_dumped_item non dumpable value %s of attribute %s",
-				 mom_output_gcstring (aval),
+				 mom_output_gcstring (*paval),
 				 mom_item_cstring (itmat));
 		continue;
 	      }
@@ -2619,10 +2621,10 @@ emit_content_dumped_item_mom (const momitem_t *itm)
 	    MOM_DEBUGPRINTF (dump,
 			     "emit_content_dumped_item doing entry itmat=%s aval=%s",
 			     mom_item_cstring (itmat),
-			     mom_output_gcstring (aval));
+			     mom_output_gcstring (*paval));
 	    mom_emit_dumped_itemref (itmat);
 	    mom_emit_dumped_space ();
-	    mom_emit_dumped_value (aval);
+	    mom_emit_dumped_valueptr (paval);
 	  };
       dumper_mom->duindentation = 0;
       mom_emit_dumped_space ();
@@ -2643,12 +2645,11 @@ emit_content_dumped_item_mom (const momitem_t *itm)
 	{
 	  dumper_mom->duindentation = 1;
 	  mom_emit_dumped_space ();
-	  momvalue_t valcomp = mom_components_nth (itm->itm_comps,
-						   (int) ix);
+	  const momvalue_t* pvalcomp = itm->itm_comps+ix;
 	  MOM_DEBUGPRINTF (dump, "emit_content_dumped_item %s comp#%d %s",
 			   mom_item_cstring (itm), ix,
-			   mom_output_gcstring (valcomp));
-	  mom_emit_dumped_value (valcomp);
+			   mom_output_gcstring (*pvalcomp));
+	  mom_emit_dumped_valueptr (pvalcomp);
 	}
       dumper_mom->duindentation = 0;
       mom_emit_dumped_space ();
@@ -2695,7 +2696,7 @@ emit_content_dumped_item_mom (const momitem_t *itm)
 	  dumper_mom->duindentation = 1;
 	  mom_emit_dumped_newline ();
 	  fputs ("% ", dumper_mom->dufile);
-	  mom_emit_dumped_value (valtransformer);
+	  mom_emit_dumped_valueptr (&valtransformer);
 	}
       dumper_mom->duindentation = 0;
       mom_emit_dumped_newline ();
@@ -2814,16 +2815,18 @@ mom_dumpable_item (const momitem_t *itm)
     return true;
   MOM_DEBUGPRINTF (dump, "non-dumpable item %s", mom_item_cstring (itm));
   return false;
-}
+}				/* end of mom_dumpable_item */
 
 bool
-mom_dumpable_value (const momvalue_t val)
+mom_dumpable_valueptr (const momvalue_t *pval)
 {
   assert (dumper_mom && dumper_mom->dumagic == DUMPER_MAGIC_MOM);
-  assert (dumper_mom->dustate == dump_emit);
-  if (mom_valueptr_is_transient (&val))
+  if (!pval || pval == MOM_EMPTY)
     return false;
-  switch ((enum momvaltype_en) val.typnum)
+  assert (dumper_mom->dustate == dump_emit);
+  if (mom_valueptr_is_transient (pval))
+    return false;
+  switch ((enum momvaltype_en) pval->typnum)
     {
     case momty_null:
       return false;
@@ -2835,16 +2838,16 @@ mom_dumpable_value (const momvalue_t val)
     case momty_set:
       return true;
     case momty_item:
-      return (mom_dumpable_item (val.vitem));
+      return (mom_dumpable_item (pval->vitem));
     case momty_node:
       {
-	const momnode_t *nod = val.vnode;
+	const momnode_t *nod = pval->vnode;
 	assert (nod);
 	return (mom_dumpable_item (nod->conn));
       }
     }
   return false;
-}
+}				/* end of mom_dumpable_valueptr */
 
 
 #define VALOUT_MAGIC_MOM 886023773	/* valout_magic_mom 0x34cfa65d */
@@ -3010,7 +3013,7 @@ output_item_mom (struct momvaloutput_st *ov, const momitem_t *itm)
 }
 
 
-/// similar to mom_emit_dumped_value, except that we don't care about
+/// similar to mom_emit_dumped_valueptr, except that we don't care about
 /// non-dumpable items, etc...
 static void
 output_val_mom (struct momvaloutput_st *ov, const momvalue_t val)
@@ -3162,15 +3165,17 @@ output_val_mom (struct momvaloutput_st *ov, const momvalue_t val)
 
 
 void				// see also mom_load_value
-mom_emit_dumped_value (const momvalue_t val)
+mom_emit_dumped_valueptr (const momvalue_t *pval)
 {
   assert (dumper_mom && dumper_mom->dumagic == DUMPER_MAGIC_MOM);
   assert (dumper_mom->dustate == dump_emit);
   assert (dumper_mom->dufile);
+  if (!pval || pval == MOM_EMPTY)
+    return;
   mom_emit_dumped_space ();
-  if (mom_valueptr_is_transient (&val) || !mom_dumpable_value (val))
+  if (mom_valueptr_is_transient (pval) || !mom_dumpable_valueptr (pval))
     goto emit_null;
-  switch ((enum momvaltype_en) val.typnum)
+  switch ((enum momvaltype_en) pval->typnum)
     {
     case momty_null:
     emit_null:
@@ -3178,7 +3183,7 @@ mom_emit_dumped_value (const momvalue_t val)
       return;
     case momty_double:
       {
-	double x = val.vdbl;
+	double x = pval->vdbl;
 	if (isnan (x))
 	  fputs ("+NAN", dumper_mom->dufile);
 	else if (isinf (x) > 0)
@@ -3208,13 +3213,13 @@ mom_emit_dumped_value (const momvalue_t val)
 	break;
       }
     case momty_int:
-      fprintf (dumper_mom->dufile, "%lld", (long long) val.vint);
+      fprintf (dumper_mom->dufile, "%lld", (long long) pval->vint);
       break;
     case momty_delim:
       {
-	char dbuf[8 + sizeof (val.vdelim)];
+	char dbuf[8 + sizeof (pval->vdelim)];
 	memset (dbuf, 0, sizeof (dbuf));
-	strncpy (dbuf, val.vdelim.delim, sizeof (val.vdelim));
+	strncpy (dbuf, pval->vdelim.delim, sizeof (pval->vdelim));
 	fputs ("° \"", dumper_mom->dufile);
 	mom_output_utf8cstr_cencoded (dumper_mom->dufile, dbuf, -1);
 	fputs ("\"", dumper_mom->dufile);
@@ -3222,29 +3227,32 @@ mom_emit_dumped_value (const momvalue_t val)
       break;
     case momty_string:
       fputs ("\"", dumper_mom->dufile);
-      mom_output_utf8cstr_cencoded (dumper_mom->dufile, val.vstr->cstr, -1);
+      mom_output_utf8cstr_cencoded (dumper_mom->dufile, pval->vstr->cstr, -1);
       fputs ("\"", dumper_mom->dufile);
       break;
     case momty_item:
-      assert (val.vitem && val.vitem->itm_str);
-      if (mom_hashset_contains (dumper_mom->duitemuserset, val.vitem)
-	  || mom_hashset_contains (dumper_mom->duitemglobalset, val.vitem))
-	fputs (val.vitem->itm_str->cstr, dumper_mom->dufile);
-      else
-	fputs ("~", dumper_mom->dufile);
+      {
+	momitem_t *itm = pval->vitem;
+	assert (itm && itm->itm_str);
+	if (mom_hashset_contains (dumper_mom->duitemuserset, itm)
+	    || mom_hashset_contains (dumper_mom->duitemglobalset, itm))
+	  fputs (itm->itm_str->cstr, dumper_mom->dufile);
+	else
+	  fputs ("~", dumper_mom->dufile);
+      }
       break;
     case momty_tuple:
       {
-	const momseq_t *tup = val.vtuple;
+	const momseq_t *tup = pval->vtuple;
 	bool something = false;
 	assert (tup);
 	fputs ("[", dumper_mom->dufile);
 	mom_emit_dump_indent ();
-	if (mom_dumpable_value (tup->meta))
+	if (mom_dumpable_valueptr (&tup->meta))
 	  {
 	    mom_emit_dumped_space ();
 	    fputs ("!", dumper_mom->dufile);
-	    mom_emit_dumped_value (tup->meta);
+	    mom_emit_dumped_valueptr (&tup->meta);
 	    something = true;
 	  }
 	unsigned len = tup->slen;
@@ -3264,16 +3272,16 @@ mom_emit_dumped_value (const momvalue_t val)
       break;
     case momty_set:
       {
-	const momseq_t *tup = val.vtuple;
+	const momseq_t *tup = pval->vtuple;
 	bool something = false;
 	assert (tup);
 	fputs ("{", dumper_mom->dufile);
 	mom_emit_dump_indent ();
-	if (mom_dumpable_value (tup->meta))
+	if (mom_dumpable_valueptr (&tup->meta))
 	  {
 	    mom_emit_dumped_space ();
 	    fputs ("!", dumper_mom->dufile);
-	    mom_emit_dumped_value (tup->meta);
+	    mom_emit_dumped_valueptr (&tup->meta);
 	    something = true;
 	  }
 	unsigned len = tup->slen;
@@ -3293,18 +3301,18 @@ mom_emit_dumped_value (const momvalue_t val)
       break;
     case momty_node:
       {
-	momnode_t *nod = val.vnode;
+	momnode_t *nod = pval->vnode;
 	assert (nod);
 	unsigned ln = nod->slen;
 	if (!mom_dumpable_item (nod->conn))
 	  goto emit_null;
 	fputs ("^", dumper_mom->dufile);
 	mom_emit_dumped_itemref (nod->conn);
-	if (mom_dumpable_value (nod->meta))
+	if (mom_dumpable_valueptr (&nod->meta))
 	  {
 	    mom_emit_dumped_space ();
 	    fputs ("!", dumper_mom->dufile);
-	    mom_emit_dumped_value (nod->meta);
+	    mom_emit_dumped_valueptr (&nod->meta);
 	  }
 	fputs ("(", dumper_mom->dufile);
 	mom_emit_dump_indent ();
@@ -3312,14 +3320,15 @@ mom_emit_dumped_value (const momvalue_t val)
 	  {
 	    if (ix > 0)
 	      mom_emit_dumped_space ();
-	    mom_emit_dumped_value (nod->arrsons[ix]);
+	    mom_emit_dumped_valueptr (&nod->arrsons[ix]);
 	  }
 	mom_emit_dump_outdent ();
 	fputs (")", dumper_mom->dufile);
       }
       break;
     }
-}				/* end mom_emit_dumped_value */
+}				/* end mom_emit_dumped_valueptr */
+
 
 static int
 emit_global_items_mom (void)

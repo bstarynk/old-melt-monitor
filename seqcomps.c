@@ -42,7 +42,7 @@ mom_components_scan_dump (struct momcomponents_st *csq)
     return;
   unsigned cnt = csq->cp_cnt;
   for (unsigned ix = 0; ix < cnt; ix++)
-    mom_scan_dumped_value (csq->cp_comps[ix]);
+    mom_scan_dumped_valueptr (&csq->cp_comps[ix]);
 }
 
 struct momcomponents_st *
