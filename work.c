@@ -533,10 +533,13 @@ web_login_post_mom (long reqcnt, const char *reqfupath,
 	 "</head>\n"
 	 "<body><h1>redirection to <a href='%s'>%s</a></h1></body>\n"
 	 "</html>\n",
-	 newfullurl, newfullurlhtml, newfullurl);
+	 newfullurl, newfullurl, newfullurlhtml);
       MOM_DEBUGPRINTF (web,
-		       "web_login_post for request#%ld user %s redirstr=%s",
-		       reqcnt, postuserstr, mom_string_cstr (redirstr));
+		       "web_login_post for request#%ld user %s newfullurlhtml=%s (%s) redirstr=%s",
+		       reqcnt, postuserstr,
+		       newfullurlhtml,
+		       (newfullurlhtml == newfullurl) ? "same" : "quoted",
+		       mom_string_cstr (redirstr));
       assert (redirstr != NULL);
       onion_response_set_header (resp, "Location", newfullurl);
       onion_response_set_length (resp, redirstr->slen);
@@ -741,6 +744,8 @@ start_web_onion_mom (void)
   MOM_INFORMPRINTF ("start web services using webhost %s", mom_web_host);
   onion_mom = onion_new (O_THREADED);
   onion_set_max_threads (onion_mom, mom_nb_workers);
+  MOM_DEBUGPRINTF (web, "start_web_onion onion_html_quote of %s is %s",
+		   "/foo?xx=1&yy=2", onion_html_quote ("/foo?xx=1&yy=2"));
   char *whcolon = strchr (mom_web_host, ':');
   if (whcolon && whcolon > mom_web_host)
     {

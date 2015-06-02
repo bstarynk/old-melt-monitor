@@ -3645,4 +3645,54 @@ mom_output_utf8cstr_cencoded (FILE *fil, const char *str, int len)
 	}
       pc += lc;
     }
-}
+}				/* end mom_output_utf8cstr_cencoded */
+
+
+
+void
+mom_output_utf8html_cencoded (FILE *fil, const char *str, int len, bool usebr)
+{
+  if (!fil || !str)
+    return;
+  if (len < 0)
+    len = strlen (str);
+  const char *pc = str;
+  const char *pend = str + len;
+  while (pc < pend)
+    {
+      ucs4_t uc = 0;
+      int lc = u8_strmbtouc (&uc, (const uint8_t *) pc);
+      if (lc <= 0)
+	break;
+      switch (uc)
+	{
+	case (ucs4_t) '\"':
+	  fputs ("&quot;", fil);
+	  break;
+	case (ucs4_t) '\'':
+	  fputs ("&apos;", fil);
+	  break;
+	case (ucs4_t) '<':
+	  fputs ("&lt;", fil);
+	  break;
+	case (ucs4_t) '>':
+	  fputs ("&gt;", fil);
+	  break;
+	case (ucs4_t) '&':
+	  fputs ("&amp;", fil);
+	  break;
+	case (ucs4_t) '\n':
+	  if (usebr)
+	    fputs ("<br/>", fil);
+	  else
+	    fputc ('\n', fil);
+	  break;
+	default:
+	  if (uc >= (ucs4_t) ' ' && uc <= 0x7f && isprint ((char) (uc)))
+	    fputc (uc, fil);
+	  else
+	    fprintf (fil, "&#%d;", (unsigned) uc);
+	}
+      pc += lc;
+    }
+}				/* end mom_output_utf8html_cencoded */

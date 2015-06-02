@@ -1438,7 +1438,11 @@ mom_emit_dumped_value (const momvalue_t val)
 
 #define mom_make_anonymous_item() mom_make_anonymous_item_at(__LINE__)
 
+// output an UTF-8 string à la C
 void mom_output_utf8cstr_cencoded (FILE *fil, const char *str, int len);
+// output an UTF-8 string à la HTML, is usebr is set, output <br/> for newlines.
+void mom_output_utf8html_cencoded (FILE *fil, const char *str, int len,
+				   bool usebr);
 
 #define MOM_HAS_PREDEFINED_NAMED(Nam,Hash) extern momitem_t*mompi_##Nam;
 #define MOM_HAS_PREDEFINED_ANONYMOUS(Id,Hash) extern momitem_t*mompi_##Id;
