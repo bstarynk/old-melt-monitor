@@ -2645,7 +2645,7 @@ emit_content_dumped_item_mom (const momitem_t *itm)
 	{
 	  dumper_mom->duindentation = 1;
 	  mom_emit_dumped_space ();
-	  const momvalue_t* pvalcomp = itm->itm_comps+ix;
+	  const momvalue_t *pvalcomp = itm->itm_comps + ix;
 	  MOM_DEBUGPRINTF (dump, "emit_content_dumped_item %s comp#%d %s",
 			   mom_item_cstring (itm), ix,
 			   mom_output_gcstring (*pvalcomp));

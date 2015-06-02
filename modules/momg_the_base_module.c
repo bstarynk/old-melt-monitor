@@ -403,6 +403,8 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
 { // body of function agenda_step
   bool momsuccess_agenda_step = false;
   momitem_t* mom_funcitm = NULL;
+  MOM_DEBUGPRINTF(run, "manual agenda_step start mom_node=%s",
+		  mom_output_gcstring(mom_nodev(mom_node)));
   if (MOM_UNLIKELY(!mom_node
       || !(mom_funcitm = mom_node_conn (mom_node))
       || mom_unsync_item_components_count (mom_funcitm)<7
@@ -549,6 +551,8 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
   momoldlocked__1c462DJmx_68zwnz1Ua = NULL;
   momnewlocked__1c462DJmx_68zwnz1Ua = NULL;
   } // end locked set into lkitm_agenda
+  MOM_DEBUGPRINTF(run, "manual agenda_step lkitm_agenda=%s of kind=%s",
+		  mom_item_cstring(momvar1), momvar1?mom_item_cstring(momvar1->itm_kind):"*none*");
 // statement #1 :: _44tmkDkKa_8nUhJEeay; if empty agenda refill it
 // if testing on integer
     if (/*queue_item_is_empty:*/momvar1 /*var:lkitm_agenda*/ && momvar1 /*var:lkitm_agenda*/->itm_kind == /*constant#3:*/MOM_PREDEFINED_NAMED(item_queue) && mom_queueitem_size (momvar1 /*var:lkitm_agenda*/->itm_data1) == 0)

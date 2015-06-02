@@ -66,7 +66,10 @@ work_run_mom (void *p)
       count++;
       MOM_DEBUGPRINTF (run, "work_run count#%ld before step", count);
       if (MOM_UNLIKELY (!momhook_agenda_step ()))
-	MOM_WARNPRINTF ("agenda_step failed count#%ld", count);
+	{
+	  MOM_WARNPRINTF ("agenda_step failed count#%ld", count);
+	  usleep (95000 + mom_random_nonzero_32_here () % 65536);
+	};
       if (MOM_UNLIKELY ((count + MOM_MAX_WORKERS) % 2048 == ix))
 	usleep (20);
     }
@@ -530,6 +533,7 @@ web_login_post_mom (long reqcnt, const char *reqfupath,
 }				/* end of web_login_post_mom */
 
 
+
 static onion_connection_status
 handle_web_mom (void *data, onion_request *requ, onion_response *resp)
 {
@@ -568,7 +572,8 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
       return web_doc_root_mom (reqpath, reqcnt, requ, resp);
     }
   else if (!strcmp (reqpath, "/favicon.ico"))
-    {
+    {				// favicon.ico deserve a special redirection because it is often
+      // requested by browsers/
       MOM_DEBUGPRINTF (web,
 		       "handle_web request #%ld reqpath '%s' WEB /favicon.ico",
 		       reqcnt, reqpath);
@@ -620,6 +625,8 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
       pthread_mutex_unlock (&webmtx_mom);
       return ocs;
     };
+  const momnode_t *sessnod = mom_value_to_node (sessval);
+  assert (sessnod != NULL);
 #warning handle_web_mom should do something here
   MOM_DEBUGPRINTF (web,
 		   "handle_web request #%ld  reqfupath %s reqmethitm %s NOT PROCESSED !!!",

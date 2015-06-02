@@ -159,6 +159,9 @@ mom_predefined_items_fill (void)
   MOM_PREDEFINED_NAMED (value)->itm_kind = MOM_PREDEFINED_NAMED (type);
 // item void of kind type
   MOM_PREDEFINED_NAMED (void)->itm_kind = MOM_PREDEFINED_NAMED (type);
+// item web_processor of kind hashed_dict
+  MOM_PREDEFINED_NAMED (web_processor)->itm_kind
+    = MOM_PREDEFINED_NAMED (hashed_dict);
 // function item agenda_push_back of signature_1val_to_void:
   MOM_PREDEFINED_NAMED (agenda_push_back)->itm_data1 =
     mom_dynload_symbol ("momfunc_1val_to_void_agenda_push_back");

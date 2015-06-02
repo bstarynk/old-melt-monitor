@@ -42,7 +42,7 @@ OBJECTS= $(patsubst %.c,%.o,$(SOURCES))
 RM= rm -fv
 ####
 ####
-.PHONY: all modules plugins clean tests indent restore-state dump-state
+.PHONY: all modules plugins clean tests indent restore-state dump-state passwords
 .SUFFIXES: .so .i
 # to make with tsan: make OPTIMFLAGS='-g3 -fsanitize=thread -fPIE' LINKFLAGS=-pie
 all: monimelt modules plugins
@@ -115,3 +115,10 @@ modules/momg_%.so: modules/momg_%.c | monimelt.h predef-monimelt.h
 momplug_%.so: momplug_%.c  | monimelt.h predef-monimelt.h
 	$(LINK.c) -fPIC $< -shared -o $@ $(shell grep MONIMELTLIBS: $< | sed s/MONIMELTLIBS://)
 
+## the web passwords file .monpasswd, à la htpasswd(5)
+passwords: .mompasswd
+
+.mompasswd:
+	-mv -fv .mompasswd .mompasswd~
+	@echo Enter web password for master
+	@(echo -n master: ; mkpasswd -msha-256) > .mompasswd 	
