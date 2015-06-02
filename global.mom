@@ -1016,6 +1016,15 @@
 ..
 
 
+** decorate_block_statement_item
+{
+  * comment  "function to decorate a block statement" }
+ 
+  %  ^filler_of_function( signature_1itm_to_void)
+ 
+..
+
+
 ** double   ////// PREDEFINED
 {
   * comment  "type for double" }
