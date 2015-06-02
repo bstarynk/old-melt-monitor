@@ -28,6 +28,21 @@ static struct momhashdict_st *websessiondict_mom;
 static pthread_mutex_t webmtx_mom = PTHREAD_MUTEX_INITIALIZER;
 static char web_host_mom[80];
 
+
+#define WEBEXCHANGE_MAGIC_MOM 815064971	/* webexchange magic 0x3094e78b */
+struct webexchange_mom_st
+{
+  unsigned webx_magic;		// always WEBEXCHANGE_MAGIC_MOM
+  double webx_time;
+  long webx_reqcnt;
+  momitem_t *webx_methitm;
+  const momstring_t *webx_fupath;
+  onion_request *webx_requ;
+  onion_response *webx_resp;
+  momvalue_t webx_sessionv;
+  long webx__spare;
+};
+
 uint32_t webloginrandom_mom;
 
 _Thread_local int mom_worker_num;
@@ -389,9 +404,13 @@ web_login_post_mom (long reqcnt, const char *reqfupath,
   if (!postuserstr || !postpasswordstr || !isalnum (postuserstr[0])
       || strlen (postpasswordstr) < MOM_MIN_PASSWD_LEN)
     {
+      MOM_DEBUGPRINTF (web,
+		       "web_login_post for request#%ld bad postuserstr=%s postpasswordstr=%s minpasslen=%d",
+		       reqcnt, postuserstr, postpasswordstr,
+		       MOM_MIN_PASSWD_LEN);
       MOM_WARNPRINTF
-	("web login POST request#%ld fullpath=%s with bad user (%s) or password",
-	 reqcnt, reqfupath, postuserstr);
+	("web login POST request#%ld fullpath=%s with bad user (%s) or password too short (%d minimal length)",
+	 reqcnt, reqfupath, postuserstr, MOM_MIN_PASSWD_LEN);
       return OCS_FORBIDDEN;
     }
   if (postfullpathstr)
@@ -417,7 +436,8 @@ web_login_post_mom (long reqcnt, const char *reqfupath,
       for (const char *fq = postquerystr; *fq; fq++)
 	{
 	  if (isalnum (*fq) || *fq == '%' || *fq == '&' || *fq == '+'
-	      || *fq == '.' || *fq == '-' || *fq == '_' || *fq == '/')
+	      || *fq == '=' || *fq == '.' || *fq == '-' || *fq == '_'
+	      || *fq == '/')
 	    continue;
 	  else
 	    {
@@ -436,6 +456,9 @@ web_login_post_mom (long reqcnt, const char *reqfupath,
       usleep (100 + mom_random_nonzero_32_here () % 4096);
       return OCS_FORBIDDEN;
     }
+  MOM_DEBUGPRINTF (web,
+		   "web_login_post for request#%ld before authentificator user=%s password=%s",
+		   reqcnt, postuserstr, postpasswordstr);
   if ((*mom_web_authentificator) (postuserstr, postpasswordstr))
     {
       MOM_DEBUGPRINTF (web,
@@ -593,7 +616,10 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
 	  pthread_mutex_lock (&webmtx_mom);
 	  onion_connection_status ocs =	//
 	    web_login_post_mom (reqcnt, reqfupath, requ, resp);
-	  pthread_mutex_lock (&webmtx_mom);
+	  pthread_mutex_unlock (&webmtx_mom);
+	  MOM_DEBUGPRINTF (web,
+			   "handle_web request #%ld after login_post_mom ocs#%d",
+			   reqcnt, (int) ocs);
 	  return ocs;
 	}
       else
@@ -625,6 +651,20 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
       pthread_mutex_unlock (&webmtx_mom);
       return ocs;
     };
+  momitem_t *webxitm = mom_make_anonymous_item ();
+  webxitm->itm_space = momspa_transient;
+  struct webexchange_mom_st *webex =	//
+    MOM_GC_ALLOC ("webexchange", sizeof (struct webexchange_mom_st));
+  webex->webx_magic = WEBEXCHANGE_MAGIC_MOM;
+  webex->webx_time = mom_elapsed_real_time ();
+  webex->webx_reqcnt = reqcnt;
+  webex->webx_methitm = reqmethitm;
+  webex->webx_fupath = mom_make_string_cstr (reqfupath);
+  webex->webx_requ = requ;
+  webex->webx_resp = resp;
+  webex->webx_sessionv = sessval;
+  webxitm->itm_kind = MOM_PREDEFINED_NAMED (web_exchange);
+  webxitm->itm_data1 = webex;
   const momnode_t *sessnod = mom_value_to_node (sessval);
   assert (sessnod != NULL);
 #warning handle_web_mom should do something here
@@ -640,6 +680,8 @@ default_web_authentificator_mom (const char *user, const char *passwd)
   bool good = false;
   assert (user != NULL);
   assert (passwd != NULL);
+  MOM_DEBUGPRINTF (web, "default_web_authentificator start user=%s passwd=%s",
+		   user, passwd);
   FILE *fp = fopen (mom_webpasswdfile, "r");
   if (!fp)
     {
@@ -662,14 +704,24 @@ default_web_authentificator_mom (const char *user, const char *passwd)
       memset (linbuf, 0, sizeof (linbuf));
       if (!fgets (linbuf, sizeof (linbuf) - 2, fp))
 	break;
+      MOM_DEBUGPRINTF (web, "default_web_authentificator linbuf=%s", linbuf);
       if (linbuf[0] == '#')
 	continue;
       if (strncmp (linbuf, user, userlen))
 	continue;
       if (linbuf[userlen] != ':')
 	continue;
-      if (!strcmp
-	  (crypt (passwd, linbuf + userlen + 1), linbuf + userlen + 1))
+      int linlen = strlen (linbuf);
+      if (linlen < userlen + 8)
+	continue;
+      if (linbuf[linlen - 1] == '\n')
+	linbuf[linlen - 1] = (char) 0;
+      const char *linpass = linbuf + userlen + 1;
+      const char *crypass = crypt (passwd, linpass);
+      MOM_DEBUGPRINTF (web,
+		       "default_web_authentificator passwd=%s linpass=%s crypass=%s",
+		       passwd, linpass, crypass);
+      if (!strcmp (crypass, linpass))
 	{
 	  MOM_DEBUGPRINTF (web, "authentifying user %s with %s", user,
 			   linbuf);
