@@ -395,6 +395,7 @@ static const struct option mom_long_options[] = {
   {"version", no_argument, NULL, 'V'},
   {"nice", required_argument, NULL, 'n'},
   {"plugin", required_argument, NULL, 'P'},
+  {"password-file", required_argument, NULL, 'p'},
   {"jobs", required_argument, NULL, 'J'},
   {"daemon", no_argument, NULL, 'd'},
   {"syslog", no_argument, NULL, 'l'},
@@ -537,6 +538,8 @@ usage_mom (const char *argv0)
   printf ("\t -J | --jobs <nb-work-threads> " " \t# Start work threads.\n");
   printf ("\t -P | --plugin <plugin-name> <plugin-arg> "
 	  " \t# load a plugin.\n");
+  printf ("\t -p | --password-file <password-file> "
+	  " \t# Use the given password, or .mompasswd, à la htpasswd(5), for web password\n");
   printf ("\t -W | --web <webhost> "
 	  " \t# e.g. -W localhost:8088 for web server\n");
   printf ("\t -r | --doc-root <web-doc-root> "
@@ -622,7 +625,7 @@ parse_program_arguments_and_load_plugins_mom (int *pargc, char ***pargv)
   int argc = *pargc;
   char **argv = *pargv;
   int opt = -1;
-  while ((opt = getopt_long (argc, argv, "lhVdn:P:W:J:D:S:r:",
+  while ((opt = getopt_long (argc, argv, "lhVdn:P:W:J:D:S:r:p:",
 			     mom_long_options, NULL)) >= 0)
     {
       switch (opt)
@@ -689,6 +692,14 @@ parse_program_arguments_and_load_plugins_mom (int *pargc, char ***pargv)
 		    break;
 		  };
 	    }
+	  break;
+	case 'p':
+	  {
+	    if (optarg)
+	      mom_webpasswdfile = optarg;
+	    MOM_INFORMPRINTF ("using %s as web password file",
+			      mom_webpasswdfile);
+	  };
 	  break;
 	case 'P':
 	  {

@@ -124,6 +124,9 @@ web_doc_root_mom (const char *reqfupath, long reqcnt, onion_request *requ,
   // reject path with .. inside, so reject URL going outside the web doc root
   if (strstr (reqfupath, ".."))
     return OCS_NOT_PROCESSED;
+  // reject paths starting with a dot
+  if (reqfupath[0] == '.' || reqfupath[1] == '.')
+    return OCS_NOT_PROCESSED;
   // reject too long paths
   if (strlen (reqfupath) >= MOM_PATH_MAX - 16)
     return OCS_NOT_PROCESSED;
@@ -356,21 +359,27 @@ web_login_post_mom (long reqcnt, const char *reqfupath,
 {
   assert (requ != NULL);
   assert (resp != NULL);
-  const char* postrandomstr = onion_request_get_post(requ, "mom_login_random");
-  const char* postfullpathstr = onion_request_get_post(requ, "mom_web_full_path");
-  const char* postquerystr = onion_request_get_post(requ, "mom_web_query");
-  const char* postuseremailstr = onion_request_get_post(requ, "mom_login_useremail");
-  const char* postpasswordstr = onion_request_get_post(requ, "mom_login_password");
-  const char* postdologinstr = onion_request_get_post(requ, "mom_do_login");
+  const char *postrandomstr =
+    onion_request_get_post (requ, "mom_login_random");
+  const char *postfullpathstr =
+    onion_request_get_post (requ, "mom_web_full_path");
+  const char *postquerystr = onion_request_get_post (requ, "mom_web_query");
+  const char *postuseremailstr =
+    onion_request_get_post (requ, "mom_login_useremail");
+  const char *postpasswordstr =
+    onion_request_get_post (requ, "mom_login_password");
+  const char *postdologinstr = onion_request_get_post (requ, "mom_do_login");
   MOM_DEBUGPRINTF (web,
 		   "web_login_post for request#%ld to full path %s;\n .."
 		   "random=%s fullpath=%s query=%s useremail=%s password=%s dologin=%s",
 		   reqcnt, reqfupath,
-		   postrandomstr, postfullpathstr, postquerystr, postuseremailstr, postpasswordstr, postdologinstr);
-  if (!postrandomstr || atoi(postrandomstr) != (int)webloginrandom_mom)
+		   postrandomstr, postfullpathstr, postquerystr,
+		   postuseremailstr, postpasswordstr, postdologinstr);
+  if (!postrandomstr || atoi (postrandomstr) != (int) webloginrandom_mom)
     {
-      MOM_WARNPRINTF("web login request#%ld fullpath=%s longinrandom mismatch expecting %d",
-		     reqcnt, reqfupath, webloginrandom_mom);
+      MOM_WARNPRINTF
+	("web login request#%ld fullpath=%s longinrandom mismatch expecting %d",
+	 reqcnt, reqfupath, webloginrandom_mom);
       return OCS_FORBIDDEN;
     };
   /* we could use crypt(3) & mkpasswd(1) or htpasswd(1) */
@@ -417,13 +426,14 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
 		       reqcnt, reqpath);
       return web_doc_root_mom (reqpath, reqcnt, requ, resp);
     }
-  else if (!strcmp(reqpath, "/favicon.ico")) {
+  else if (!strcmp (reqpath, "/favicon.ico"))
+    {
       MOM_DEBUGPRINTF (web,
 		       "handle_web request #%ld reqpath '%s' WEB /favicon.ico",
 		       reqcnt, reqpath);
       return web_doc_root_mom ("/" MOM_WEB_DOC_ROOT_PREFIX "/favicon.ico",
 			       reqcnt, requ, resp);
-  }
+    }
   if (!strcmp (reqfupath, "/" MOM_WEBLOGIN_ACTION))
     {
       MOM_DEBUGPRINTF (web,
@@ -476,6 +486,54 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
   return OCS_NOT_PROCESSED;
 }				/* end of handle_web_mom */
 
+static bool
+default_web_authentificator_mom (const char *user, const char *passwd)
+{
+  bool good = false;
+  assert (user != NULL);
+  assert (passwd != NULL);
+  FILE *fp = fopen (mom_webpasswdfile, "r");
+  if (!fp)
+    {
+      MOM_WARNPRINTF ("failed to open default web password %s - %m",
+		      mom_webpasswdfile);
+      return false;
+    };
+  if (!isalpha (user[0]) || !isalnum (user[1]))
+    return false;
+  for (const char *pu = user; *pu; pu++)
+    if (!isalnum (*pu) && *pu != '_' && *pu != '.' && *pu != '@')
+      return false;
+  int userlen = strlen (user);
+  int passlen = strlen (passwd);
+  if (!userlen || !passlen)
+    return false;
+  char linbuf[256];
+  do
+    {
+      memset (linbuf, 0, sizeof (linbuf));
+      if (!fgets (linbuf, sizeof (linbuf) - 2, fp))
+	break;
+      if (linbuf[0] == '#')
+	continue;
+      if (strncmp (linbuf, user, userlen))
+	continue;
+      if (linbuf[userlen] != ':')
+	continue;
+      if (!strcmp
+	  (crypt (passwd, linbuf + userlen + 1), linbuf + userlen + 1))
+	{
+	  MOM_DEBUGPRINTF (web, "authentifying user %s with %s", user,
+			   linbuf);
+	  good = true;
+	}
+    }
+  while (!feof (fp));
+  fclose (fp);
+  MOM_DEBUGPRINTF (web, "web authentification of user %s is %s",
+		   user, good ? "good" : "bad");
+  return good;
+}				/* end of default_web_authentificator_mom */
 
 static void
 start_web_onion_mom (void)
@@ -496,6 +554,10 @@ start_web_onion_mom (void)
       onion_set_port (onion_mom, whcolon + 1);
       MOM_DEBUGPRINTF (web, "start_web_onion port %s", whcolon + 1);
     };
+  if (!mom_webpasswdfile && !access (MOM_DEFAULT_WEBPASSWD, R_OK))
+    mom_webpasswdfile = MOM_DEFAULT_WEBPASSWD;
+  if (mom_webpasswdfile)
+    mom_web_authentificator = default_web_authentificator_mom;
   onion_url *ourl = onion_root_url (onion_mom);
   {
     int onerr = 0;

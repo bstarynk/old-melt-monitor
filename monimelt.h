@@ -115,7 +115,11 @@ const char *mom_webdocroot[MOM_MAX_WEBDOCROOT + 1];
    http://localhost:8087/wdoc/jquery.min.js if we started with
    webservice localhost:8087 */
 #define MOM_WEBDOCROOT_DIRECTORY "webroot/"
-
+const char *mom_webpasswdfile;
+#define MOM_DEFAULT_WEBPASSWD ".mompasswd"
+typedef bool mom_web_authentificator_sig_t (const char *webuser,
+					    const char *webpasswd);
+mom_web_authentificator_sig_t *mom_web_authentificator;
 
 // mark unlikely conditions to help optimization
 #ifdef __GNUC__
