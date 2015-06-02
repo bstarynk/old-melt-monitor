@@ -723,6 +723,10 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
 	if (vclos.typnum == momty_node)
 	  {
 	    foundhandler = true;
+	    break;
+	  }
+	else
+	  {
 	    char *prevlastslash = lastslash;
 	    lastslash = strrchr (reqfucopy, '/');
 	    if (lastslash && lastslash > reqfucopy)
@@ -734,10 +738,7 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
 	      }
 	    else
 	      restpathstr = NULL;
-	    break;
-	  }
-	else
-	  continue;
+	  };
       }
     while (!foundhandler);
     mom_item_unlock (MOM_PREDEFINED_NAMED (web_processor));
