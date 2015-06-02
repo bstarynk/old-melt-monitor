@@ -307,7 +307,7 @@ mom_hashdict_sorted_strings_meta (const struct momhashdict_st *hdict,
   assert (nbs == cnt);
   if (nbs > 1)
     qsort (arrval, nbs, sizeof (momvalue_t), stringptr_cmp_mom);
-  return mom_make_meta_node (metav, (momitem_t *) connitm, nbs, arrval);
+  return mom_make_sized_meta_node (metav, (momitem_t *) connitm, nbs, arrval);
 }				/* end mom_hashdict_sorted_strings */
 
 void
