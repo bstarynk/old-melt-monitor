@@ -576,9 +576,11 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
   else if ((reqflags & OR_METHODS) == OR_POST)
     reqmethitm = MOM_PREDEFINED_NAMED (http_POST);
   MOM_DEBUGPRINTF (web,
-		   "handle_web request #%ld reqfupath '%s' reqpath '%s' reqflags/%x reqmethitm %s",
+		   "handle_web request #%ld reqfupath '%s' reqpath '%s' reqflags/%#x reqmethitm %s (%d queries, %d posts)",
 		   reqcnt, reqfupath, reqpath, reqflags,
-		   mom_item_cstring (reqmethitm));
+		   mom_item_cstring (reqmethitm),
+		   onion_dict_count (onion_request_get_query_dict (requ)),
+		   onion_dict_count (onion_request_get_post_dict (requ)));
   if (MOM_UNLIKELY (reqmethitm == NULL))
     return OCS_NOT_IMPLEMENTED;
   if (MOM_UNLIKELY (mom_should_stop ()))
