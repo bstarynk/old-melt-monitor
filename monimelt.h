@@ -189,6 +189,7 @@ extern void *GC_calloc (size_t nbelem, size_t elsiz);
 // the weblogin template file should contain a single line with one of:
 #define MOM_WEBLOGIN_HIDDEN_INPUT_PI "<?mom_web_login_hidden_input?>"
 #define MOM_WEBLOGIN_HIDDEN_INPUT_COMM "<!--mom_web_login_hidden_input-->"
+// and could contain also lines with
 #define MOM_WEBLOGIN_TIMESTAMP_PI "<?mom_web_login_timestamp?>"
 
 #define MOM_WEBLOGIN_ACTION "mom_web_login"

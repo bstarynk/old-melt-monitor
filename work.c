@@ -692,7 +692,44 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
   webxitm->itm_kind = MOM_PREDEFINED_NAMED (web_exchange);
   webxitm->itm_data1 = webex;
   const momnode_t *sessnod = mom_value_to_node (sessval);
+  MOM_DEBUGPRINTF (web,
+		   "handle_web request #%ld reqfupath %s reqmethitm %s webxitm %s",
+		   reqcnt, reqfupath, mom_item_cstring (reqmethitm),
+		   mom_item_cstring (webxitm));
   assert (sessnod != NULL);
+  assert (reqfupath[0] == '/');
+  bool foundhandler = false;
+  momvalue_t vclos = MOM_NONEV;
+  {
+    const momstring_t *restpathstr = NULL;
+    char *reqfucopy =
+      strchr (reqfupath + 1, '/') ? MOM_GC_STRDUP ("reqfucopy",
+						   reqfupath) : reqfupath;
+    assert (MOM_PREDEFINED_NAMED (web_processor) != NULL);
+    mom_item_lock (MOM_PREDEFINED_NAMED (web_processor));
+    do
+      {
+	if (MOM_PREDEFINED_NAMED (web_processor)->itm_kind !=
+	    MOM_PREDEFINED_NAMED (hashed_dict))
+	  break;
+	struct momhashdict_st *hdic =
+	  MOM_PREDEFINED_NAMED (web_processor)->itm_data1;
+	vclos = mom_hashdict_getcstr (hdic, reqfucopy);
+	if (vclos.typnum == momty_node)
+	  foundhandler = true;
+	else
+	  break;
+	char *lastslash = strrchr (reqfucopy, '/');
+	if (lastslash && lastslash > reqfucopy)
+	  {
+	    *lastslash = '\0';
+	    restpathstr = lastslash + 1;
+	  }
+#warning bad handling of last slash
+      }
+    while (!foundhandler);
+    mom_item_unlock (MOM_PREDEFINED_NAMED (web_processor));
+  }
 #warning handle_web_mom should do something here
   MOM_DEBUGPRINTF (web,
 		   "handle_web request #%ld  reqfupath %s reqmethitm %s NOT PROCESSED !!!",
