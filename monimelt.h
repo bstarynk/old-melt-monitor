@@ -1593,6 +1593,14 @@ mom_unsync_item_put_nth_component (momitem_t *itm, int rk, momvalue_t val)
   mom_components_put_nth (itm->itm_comps, rk, val);
 }
 
+FILE *mom_unsync_webexitem_file (const momitem_t *wxitm);
+int mom_unsync_webexitem_printf (momitem_t *wxitm, const char *fmt, ...)
+  __attribute__ ((format (printf, 2, 3)));
+int mom_unsync_webexitem_fputs (momitem_t *wxitm, const char *str);
+void mom_unsync_webexitem_reply (momitem_t *wxitm, const char *mimetype,
+				 int code);
+onion_request *mom_unsync_webexitem_request (momitem_t *wxitm);
+onion_response *mom_unsync_webexitem_response (momitem_t *wxitm);
 
 extern pthread_cond_t mom_agenda_changed_condvar;
 #define MOM_AGENDA_WAIT_SEC 2

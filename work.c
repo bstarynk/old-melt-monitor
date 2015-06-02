@@ -43,6 +43,7 @@ struct webexchange_mom_st
   char *webx_outbuf;
   size_t webx_outsiz;
   FILE *webx_outfil;
+  const momstring_t *webx_contype;
   int webx_code;
   pthread_cond_t webx_donecond;
   long webx__spare;
@@ -699,6 +700,93 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
   return OCS_NOT_PROCESSED;
 }				/* end of handle_web_mom */
 
+
+FILE *
+mom_unsync_webexitem_file (const momitem_t *wxitm)
+{
+  if (!wxitm || wxitm == MOM_EMPTY)
+    return NULL;
+  if (wxitm->itm_kind != MOM_PREDEFINED_NAMED (web_exchange))
+    return NULL;
+  struct webexchange_mom_st *webex = wxitm->itm_data1;
+  if (!webex || webex == MOM_EMPTY)
+    return NULL;
+  assert (webex && webex->webx_magic == WEBEXCHANGE_MAGIC_MOM);
+  return webex->webx_outfil;
+}
+
+
+int
+mom_unsync_webexitem_printf (momitem_t *wxitm, const char *fmt, ...)
+{
+  int n = -1;
+  if (!wxitm || wxitm == MOM_EMPTY)
+    return -1;
+  if (wxitm->itm_kind != MOM_PREDEFINED_NAMED (web_exchange))
+    return -1;
+  struct webexchange_mom_st *webex = wxitm->itm_data1;
+  if (!webex || webex == MOM_EMPTY)
+    return -1;
+  assert (webex && webex->webx_magic == WEBEXCHANGE_MAGIC_MOM);
+  if (!webex->webx_outfil)
+    return -1;
+  va_list args;
+  va_start (args, fmt);
+  n = vfprintf (webex->webx_outfil, fmt, args);
+  va_end (args);
+  return n;
+}				/* end mom_unsync_webexitem_printf */
+
+onion_request *
+mom_unsync_webexitem_request (momitem_t *wxitm)
+{
+  if (!wxitm || wxitm == MOM_EMPTY)
+    return NULL;
+  if (wxitm->itm_kind != MOM_PREDEFINED_NAMED (web_exchange))
+    return NULL;
+  struct webexchange_mom_st *webex = wxitm->itm_data1;
+  if (!webex || webex == MOM_EMPTY)
+    return NULL;
+  assert (webex && webex->webx_magic == WEBEXCHANGE_MAGIC_MOM);
+  return webex->webx_requ;
+}				/* end of mom_unsync_webexitem_request */
+
+
+onion_response *
+mom_unsync_webexitem_response (momitem_t *wxitm)
+{
+  if (!wxitm || wxitm == MOM_EMPTY)
+    return NULL;
+  if (wxitm->itm_kind != MOM_PREDEFINED_NAMED (web_exchange))
+    return NULL;
+  struct webexchange_mom_st *webex = wxitm->itm_data1;
+  if (!webex || webex == MOM_EMPTY)
+    return NULL;
+  assert (webex && webex->webx_magic == WEBEXCHANGE_MAGIC_MOM);
+  return webex->webx_resp;
+}				/* end of mom_unsync_webexitem_response */
+
+
+int
+mom_unsync_webexitem_fputs (momitem_t *wxitm, const char *str)
+{
+  int n = -1;
+  if (!wxitm || wxitm == MOM_EMPTY)
+    return -1;
+  if (!str || str == MOM_EMPTY)
+    return -1;
+  if (wxitm->itm_kind != MOM_PREDEFINED_NAMED (web_exchange))
+    return -1;
+  struct webexchange_mom_st *webex = wxitm->itm_data1;
+  if (!webex || webex == MOM_EMPTY)
+    return -1;
+  assert (webex && webex->webx_magic == WEBEXCHANGE_MAGIC_MOM);
+  if (!webex->webx_outfil)
+    return -1;
+  n = fputs (str, webex->webx_outfil);
+  return n;
+}				/* end mom_unsync_webexitem_fputs */
+
 static bool
 default_web_authentificator_mom (const char *user, const char *passwd)
 {
@@ -765,7 +853,7 @@ start_web_onion_mom (void)
 {
   MOM_INFORMPRINTF ("start web services using webhost %s", mom_web_host);
   onion_mom = onion_new (O_THREADED);
-  onion_set_max_threads (onion_mom, mom_nb_workers);
+  onion_set_max_threads (onion_mom, mom_nb_workers + 1);
   MOM_DEBUGPRINTF (web, "start_web_onion onion_html_quote of %s is %s",
 		   "/foo?xx=1&yy=2", onion_html_quote ("/foo?xx=1&yy=2"));
   char *whcolon = strchr (mom_web_host, ':');
