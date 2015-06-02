@@ -667,7 +667,7 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
   struct webexchange_mom_st *webex =	//
     MOM_GC_ALLOC ("webexchange", sizeof (struct webexchange_mom_st));
   webex->webx_magic = WEBEXCHANGE_MAGIC_MOM;
-  webex->webx_time = mom_elapsed_real_time ();
+  webex->webx_time = mom_clock_time (CLOCK_REALTIME);
   webex->webx_reqcnt = reqcnt;
   webex->webx_methitm = reqmethitm;
   webex->webx_fupath = mom_make_string_cstr (reqfupath);
@@ -707,6 +707,7 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
 						   reqfupath) : reqfupath;
     assert (MOM_PREDEFINED_NAMED (web_processor) != NULL);
     mom_item_lock (MOM_PREDEFINED_NAMED (web_processor));
+    char *lastslash = NULL;
     do
       {
 	if (MOM_PREDEFINED_NAMED (web_processor)->itm_kind !=
@@ -715,21 +716,43 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
 	struct momhashdict_st *hdic =
 	  MOM_PREDEFINED_NAMED (web_processor)->itm_data1;
 	vclos = mom_hashdict_getcstr (hdic, reqfucopy);
+	MOM_DEBUGPRINTF (web,
+			 "handle_web request #%ld reqfucopy=%s vclos=%s restpathstr=%s",
+			 reqcnt, reqfucopy, mom_output_gcstring (vclos),
+			 mom_string_cstr (restpathstr));
 	if (vclos.typnum == momty_node)
-	  foundhandler = true;
-	else
-	  break;
-	char *lastslash = strrchr (reqfucopy, '/');
-	if (lastslash && lastslash > reqfucopy)
 	  {
-	    *lastslash = '\0';
-	    restpathstr = lastslash + 1;
+	    foundhandler = true;
+	    char *prevlastslash = lastslash;
+	    lastslash = strrchr (reqfucopy, '/');
+	    if (lastslash && lastslash > reqfucopy)
+	      {
+		*lastslash = '\0';
+		if (prevlastslash)
+		  *prevlastslash = '/';
+		restpathstr = mom_make_string_cstr (lastslash + 1);
+	      }
+	    else
+	      restpathstr = NULL;
+	    break;
 	  }
-#warning bad handling of last slash
+	else
+	  continue;
       }
     while (!foundhandler);
     mom_item_unlock (MOM_PREDEFINED_NAMED (web_processor));
+    MOM_DEBUGPRINTF (web,
+		     "handle_web request #%ld got reqfucopy=%s vclos=%s restpathstr=%s ;"
+		     " webxitm=%s sessval=%s",
+		     reqcnt, reqfucopy, mom_output_gcstring (vclos),
+		     mom_string_cstr (restpathstr),
+		     mom_item_cstring (webxitm),
+		     mom_output_gcstring (sessval));
   }
+  if (vclos.typnum == momty_node)
+    {
+      /// apply vclos to webxitm && sessval
+    }
 #warning handle_web_mom should do something here
   MOM_DEBUGPRINTF (web,
 		   "handle_web request #%ld  reqfupath %s reqmethitm %s NOT PROCESSED !!!",
