@@ -2645,7 +2645,8 @@ emit_content_dumped_item_mom (const momitem_t *itm)
 	{
 	  dumper_mom->duindentation = 1;
 	  mom_emit_dumped_space ();
-	  const momvalue_t *pvalcomp = itm->itm_comps + ix;
+	  const momvalue_t *pvalcomp =
+	    mom_raw_item_get_indexed_component_ptr ((momitem_t *) itm, ix);
 	  MOM_DEBUGPRINTF (dump, "emit_content_dumped_item %s comp#%d %s",
 			   mom_item_cstring (itm), ix,
 			   mom_output_gcstring (*pvalcomp));
@@ -3301,7 +3302,7 @@ mom_emit_dumped_valueptr (const momvalue_t *pval)
       break;
     case momty_node:
       {
-	momnode_t *nod = pval->vnode;
+	const momnode_t *nod = pval->vnode;
 	assert (nod);
 	unsigned ln = nod->slen;
 	if (!mom_dumpable_item (nod->conn))

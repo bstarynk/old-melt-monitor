@@ -3752,7 +3752,8 @@ cgen_third_decorating_pass_mom (momitem_t *itmcgen)
 	      mom_value_to_int (mom_node_nth (bindcstnod, 1), -1);
 	    momvalue_t valcst = mom_node_nth (bindcstnod, 2);
 	    MOM_DEBUGPRINTF (gencod,
-			     "third_decorating_pass cix#%d curcstitm %s valcst %s",
+			     "third_decorating_pass curfunitm %s; cix#%d curcstitm %s valcst %s",
+			     mom_item_cstring (curfunitm),
 			     cix, mom_item_cstring (curcstitm),
 			     mom_output_gcstring (valcst));
 	    assert (cstoff >= 0 && cstoff < nbconst);

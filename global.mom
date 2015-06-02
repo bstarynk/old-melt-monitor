@@ -24,7 +24,7 @@
 {
   * comment  "if argtasklets is sequence push them in back then notify; in agenda_push_back"
   * in  _0y7wu372C_3JH4an3L2 }
- [[  ~  ~  ~ ]]
+ [[  if  ^value_is_sequence( argtasklets)  _27PBmP9xP_3Hh1aedqr ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -79,7 +79,7 @@
 {
   * comment  "itmvar_tasklet <- pop_front(lkitm_agenda)"
   * in  _7MF947fC8_8ChefReMD }
- [[  ~  ~  ~ ]]
+ [[  pop_front_queue_item  itmvar_tasklet  lkitm_agenda ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -113,7 +113,7 @@
 {
   * comment  "broadcast agenda changed after pushing tasklet in agenda_push_front"
   * in  _4h7BHLiLB_9askynfAC }
- [[  ~  ~ ]]
+ [[  chunk  "  pthread_cond_broadcast(&mom_agenda_changed_condvar);\n" ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -124,7 +124,8 @@
 {
   * comment  "debug-printf pushed fron lkitm_tasklet in agenda_push_back"
   * in  _50yPKJAK2_4Ksihqd4c }
- [[  ~  ~  ~  ~  ~ ]]
+ [[  chunk  "  MOM_DEBUGPRINTF(run, \"agenda_push_back: pushed tasklet %s in back of the_agenda\",\n"
+   "   mom_item_cstring("  lkitm_tasklet  "));\n" ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -135,7 +136,7 @@
 {
   * comment  "set lkitm_agenda := the_agenda in agenda_step"
   * in  _7MF947fC8_8ChefReMD }
- [[  ~  ~  ~ ]]
+ [[  set  lkitm_agenda  the_agenda ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -146,7 +147,7 @@
 {
   * comment  "if varclo is runner node, apply it to lkitm_tasklet"
   * in  _2tz000b51_1AEBtnP4P }
- [[  ~  ~  ~ ]]
+ [[  if  ^value_is_node( varclo)  _8aqavIeMK_2EHL44cnU ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -157,7 +158,7 @@
 {
   * comment  "if lkitm_tasklet, push it back; in agenda_push_back"
   * in  _0y7wu372C_3JH4an3L2 }
- [[  ~  ~  ~ ]]
+ [[  if  lkitm_tasklet  _50yPKJAK2_4Ksihqd4c ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -168,7 +169,7 @@
 {
   * comment  "push lkitm_tasklet at back of lkitm_agenda; in agenda_push_back"
   * in  _50yPKJAK2_4Ksihqd4c }
- [[  ~  ~  ~ ]]
+ [[  push_back_queue_item  lkitm_agenda  lkitm_tasklet ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -179,7 +180,7 @@
 {
   * comment  "set lkitm_tasklet := value_sequence_nth(argtasklets, varix); for agenda_push_front"
   * in  _7jkswmJf4_89dmJmBc2 }
- [[  ~  ~  ~ ]]
+ [[  set  lkitm_tasklet  ^value_sequence_nth( argtasklets  varix) ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -202,7 +203,7 @@
 {
   * comment  "broadcast agenda changed after pushing tasklet in agenda_push_back"
   * in  _2I2UdbsCL_6c82fexBk }
- [[  ~  ~ ]]
+ [[  chunk  "  pthread_cond_broadcast(&mom_agenda_changed_condvar);\n" ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -213,7 +214,7 @@
 {
   * comment  "push lkitm_tasklet in front of lkitm_agenda; in agenda_push_front"
   * in  _0LHqbyzz9_2J9v5p6zc }
- [[  ~  ~  ~ ]]
+ [[  push_front_queue_item  lkitm_agenda  lkitm_tasklet ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -235,7 +236,7 @@
 {
   * comment  "set lkitm_agenda := the_agenda; in agenda_push_front"
   * in  _02MHbyAxU_563vpdUu2 }
- [[  ~  ~  ~ ]]
+ [[  set  lkitm_agenda  the_agenda ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -258,7 +259,7 @@
 {
   * comment  "set varclo := get_attr(lkitm_tasklet, runner)"
   * in  _2tz000b51_1AEBtnP4P }
- [[  ~  ~  ~ ]]
+ [[  set  varclo  ^unsync_get_attribute( lkitm_tasklet  runner) ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -269,7 +270,7 @@
 {
   * comment  "set lkitm_agenda := the_agenda; in agenda_push_back"
   * in  _0y7wu372C_3JH4an3L2 }
- [[  ~  ~  ~ ]]
+ [[  set  lkitm_agenda  the_agenda ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -280,7 +281,9 @@
 {
   * comment  "debug-run lkitm_tasklet & varclo before running"
   * in  _8aqavIeMK_2EHL44cnU }
- [[  ~  ~  ~  ~  ~  ~  ~ ]]
+ [[  chunk  "  MOM_DEBUGPRINTF(run, \"before running tasklet %s using closure %s\",\n"
+   "    mom_item_cstring("  lkitm_tasklet  "),  mom_output_gcstring("  varclo
+   "));\n" ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -291,7 +294,7 @@
 {
   * comment  "push lkitm_tasklet in front of lkitm_tasklet; in agenda_push_front seq..."
   * in  _7jkswmJf4_89dmJmBc2 }
- [[  ~  ~  ~ ]]
+ [[  push_front_queue_item  lkitm_agenda  lkitm_tasklet ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -302,7 +305,7 @@
 {
   * comment  "success of agenda_push_front"
   * in  _4h7BHLiLB_9askynfAC }
- [[  ~ ]]
+ [[  success ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -325,7 +328,7 @@
 {
   * comment  "if empty agenda refill it"
   * in  _7MF947fC8_8ChefReMD }
- [[  ~  ~  ~ ]]
+ [[  if  ^queue_item_is_empty( lkitm_agenda)  _4xAIqB3tj_97IrD41UP ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -336,7 +339,7 @@
 {
   * comment  "clear lkitm_agenda to unlock it"
   * in  _0HvrqAHte_4ryaA4drs }
- [[  ~  ~  ~ ]]
+ [[  set  lkitm_agenda  ~ ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -347,7 +350,7 @@
 {
   * comment  "apply varclo to lkitm_agenda"
   * in  _14MzMbJ9v_627D0CIiA }
- [[  ~  ~  ~  ~ ]]
+ [[  apply  signature_1itm_to_void  varclo  the_agenda ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -358,7 +361,7 @@
 {
   * comment  "jump to seqloop on argtasklets; in agenda_push_back"
   * in  _27PBmP9xP_3Hh1aedqr }
- [[  ~  ~ ]]
+ [[  jump  _3JddiuKnc_1nzuB6bss ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -380,7 +383,7 @@
 {
   * comment  "if argtasklets is sequence push them in front then notify; in agenda_push_front"
   * in  _02MHbyAxU_563vpdUu2 }
- [[  ~  ~  ~ ]]
+ [[  if  ^value_is_sequence( argtasklets)  _9m9aprPJz_4hExeiqIi ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -391,7 +394,7 @@
 {
   * comment  "set lkitm_tasklet := value_sequence_nth(argtasklets, varix); for agenda_push_back"
   * in  _3JddiuKnc_1nzuB6bss }
- [[  ~  ~  ~ ]]
+ [[  set  lkitm_tasklet  ^value_sequence_nth( argtasklets  varix) ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -402,7 +405,7 @@
 {
   * comment  "varlen := length of argtasklets; in agenda_push_front"
   * in  _9m9aprPJz_4hExeiqIi }
- [[  ~  ~  ~ ]]
+ [[  set  varlen  ^value_sequence_length( argtasklets) ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -425,7 +428,7 @@
 {
   * comment  "set lkitm_tasklet := itmvar_tasklet"
   * in  _2tz000b51_1AEBtnP4P }
- [[  ~  ~  ~ ]]
+ [[  set  lkitm_tasklet  itmvar_tasklet ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -448,7 +451,7 @@
 {
   * comment  "jump start agenda_step"
   * in  _0HvrqAHte_4ryaA4drs }
- [[  ~  ~ ]]
+ [[  jump  _7MF947fC8_8ChefReMD ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -459,7 +462,7 @@
 {
   * comment  "succeed agenda_step after tasklet running"
   * in  _8aqavIeMK_2EHL44cnU }
- [[  ~ ]]
+ [[  success ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -470,7 +473,7 @@
 {
   * comment  "varlen := length of argtasklets; in agenda_push_back"
   * in  _27PBmP9xP_3Hh1aedqr }
- [[  ~  ~  ~ ]]
+ [[  set  varlen  ^value_sequence_length( argtasklets) ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -481,8 +484,11 @@
 {
   * comment  "instr chunk-wait agenda changed"
   * in  _0HvrqAHte_4ryaA4drs }
- [[  ~  ~  ~  ~  ~  ~  ~  chunk  ~  ~  ~  ~  ~  ~  ~  "/*chunk wait agenda changed*/\n"
- ]]
+ [[  chunk  "/*chunk wait agenda changed*/\n"  "  struct timespec ts_"  this_statement
+   " = {0,0};\n"  "  clock_gettime(CLOCK_REALTIME, &ts_"  this_statement
+   ");\n"  "  ts_"  this_statement  ".tv_sec += MOM_AGENDA_WAIT_SEC;\n" 
+  "  pthread_cond_timedwait(&mom_agenda_changed_condvar, &"  lkitm_agenda
+   "->itm_mtx, & ts_"  this_statement  ");\n" ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -493,7 +499,7 @@
 {
   * comment  "push lkitm_tasklet in back of lkitm_tasklet; in agenda_push_back seq..."
   * in  _3JddiuKnc_1nzuB6bss }
- [[  ~  ~  ~ ]]
+ [[  push_back_queue_item  lkitm_agenda  lkitm_tasklet ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -504,7 +510,7 @@
 {
   * comment  "set varclo := fill_agenda(lkitm_agenda)"
   * in  _4xAIqB3tj_97IrD41UP }
- [[  ~  ~  ~ ]]
+ [[  set  varclo  ^unsync_get_attribute( lkitm_agenda  fill_agenda) ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -515,7 +521,7 @@
 {
   * comment  "varix := 0; in agenda_push_back"
   * in  _27PBmP9xP_3Hh1aedqr }
- [[  ~  ~  ~ ]]
+ [[  set  varix  0 ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -526,7 +532,8 @@
 {
   * comment  "if (varix>=varlen) goto epilogpushback; in agenda_push_back"
   * in  _3JddiuKnc_1nzuB6bss }
- [[  ~  ~  ~ ]]
+ [[  if  ^integer_greater_or_equal( varix  varlen)  _2I2UdbsCL_6c82fexBk
+ ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -537,7 +544,7 @@
 {
   * comment  "varix := 0; in agenda_push_front"
   * in  _9m9aprPJz_4hExeiqIi }
- [[  ~  ~  ~ ]]
+ [[  set  varix  0 ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -548,7 +555,8 @@
 {
   * comment  "if (varix>=varlen) goto epilogpushfront; in agenda_push_front"
   * in  _7jkswmJf4_89dmJmBc2 }
- [[  ~  ~  ~ ]]
+ [[  if  ^integer_greater_or_equal( varix  varlen)  _4h7BHLiLB_9askynfAC
+ ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -559,7 +567,7 @@
 {
   * comment  "increment varix ; in agenda_push_back seq..."
   * in  _3JddiuKnc_1nzuB6bss }
- [[  ~  ~  ~ ]]
+ [[  set  varix  ^integer_add( varix  1) ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -570,7 +578,7 @@
 {
   * comment  "set lkitm_tasklet := value_to_item(argtasklets); in agenda_push_back"
   * in  _0y7wu372C_3JH4an3L2 }
- [[  ~  ~  ~ ]]
+ [[  set  lkitm_tasklet  ^value_to_item( argtasklets) ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -581,7 +589,7 @@
 {
   * comment  "if lkitm_agenda empty queue wait agenda-changed"
   * in  _4xAIqB3tj_97IrD41UP }
- [[  ~  ~  ~ ]]
+ [[  if  ^queue_item_is_empty( lkitm_agenda)  _0HvrqAHte_4ryaA4drs ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -592,7 +600,7 @@
 {
   * comment  "jump to epilog of agenda_push_front"
   * in  _0LHqbyzz9_2J9v5p6zc }
- [[  ~  ~ ]]
+ [[  jump  _4h7BHLiLB_9askynfAC ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -603,7 +611,7 @@
 {
   * comment  "jump to epilog of agenda_push_back"
   * in  _50yPKJAK2_4Ksihqd4c }
- [[  ~  ~ ]]
+ [[  jump  _2I2UdbsCL_6c82fexBk ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -614,7 +622,7 @@
 {
   * comment  "apply varclo to lkitm_tasklet for running"
   * in  _8aqavIeMK_2EHL44cnU }
- [[  ~  ~  ~  ~ ]]
+ [[  apply  signature_1itm_to_void  varclo  lkitm_tasklet ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -637,7 +645,7 @@
 {
   * comment  "jump to seqloop on argtasklets; in agenda_push_front"
   * in  _9m9aprPJz_4hExeiqIi }
- [[  ~  ~ ]]
+ [[  jump  _7jkswmJf4_89dmJmBc2 ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -660,7 +668,7 @@
 {
   * comment  "jump block seqloop; in agenda_push_back seq... "
   * in  _3JddiuKnc_1nzuB6bss }
- [[  ~  ~ ]]
+ [[  jump  _3JddiuKnc_1nzuB6bss ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -671,7 +679,8 @@
 {
   * comment  "debug-run lkitm_tasklet after running"
   * in  _8aqavIeMK_2EHL44cnU }
- [[  ~  ~  ~  ~  ~ ]]
+ [[  chunk  "  MOM_DEBUGPRINTF(run, \"after running tasklet %s\\n\",\n" 
+  "    mom_item_cstring("  lkitm_tasklet  "));\n" ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -682,7 +691,7 @@
 {
   * comment  "if varclo is node apply it"
   * in  _4xAIqB3tj_97IrD41UP }
- [[  ~  ~  ~ ]]
+ [[  if  ^value_is_node( varclo)  _14MzMbJ9v_627D0CIiA ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -693,7 +702,7 @@
 {
   * comment  "set lkitm_tasklet := value_to_item(argtasklets); in agenda_push_front"
   * in  _02MHbyAxU_563vpdUu2 }
- [[  ~  ~  ~ ]]
+ [[  set  lkitm_tasklet  ^value_to_item( argtasklets) ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -704,7 +713,7 @@
 {
   * comment  "jump block seqloop; in agenda_push_front "
   * in  _7jkswmJf4_89dmJmBc2 }
- [[  ~  ~ ]]
+ [[  jump  _7jkswmJf4_89dmJmBc2 ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -715,7 +724,7 @@
 {
   * comment  "if lkitm_tasklet, push it front; in agenda_push_front"
   * in  _02MHbyAxU_563vpdUu2 }
- [[  ~  ~  ~ ]]
+ [[  if  lkitm_tasklet  _0LHqbyzz9_2J9v5p6zc ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -738,7 +747,7 @@
 {
   * comment  "increment varix ; in agenda_push_front seq..."
   * in  _7jkswmJf4_89dmJmBc2 }
- [[  ~  ~  ~ ]]
+ [[  set  varix  ^integer_add( varix  1) ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -749,7 +758,7 @@
 {
   * comment  "if itmvar_tasklet is a tasklet run it"
   * in  _7MF947fC8_8ChefReMD }
- [[  ~  ~  ~ ]]
+ [[  if  ^item_has_kind( itmvar_tasklet  tasklet)  _2tz000b51_1AEBtnP4P ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -760,7 +769,7 @@
 {
   * comment  "success of agenda_push_back"
   * in  _2I2UdbsCL_6c82fexBk }
- [[  ~ ]]
+ [[  success ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -771,7 +780,8 @@
 {
   * comment  "debug-printf pushed fron lkitm_tasklet in agenda_push_front"
   * in  _0LHqbyzz9_2J9v5p6zc }
- [[  ~  ~  ~  ~  ~ ]]
+ [[  chunk  "  MOM_DEBUGPRINTF(run, \"agenda_push_front: pushed tasklet %s in front of the_agenda\",\n"
+   "   mom_item_cstring("  lkitm_tasklet  "));\n" ]]
  
   %  ^filler_of_plain_kind( code_statement)
  
@@ -804,7 +814,7 @@
   * hook_closure  0
   * in  the_base_module
   * start  _0y7wu372C_3JH4an3L2 }
- [[  ~  ~  ~  ~ ]]
+ [[  ^agenda_push_back()  item_queue  tasklet  the_agenda ]]
  
   %  ^filler_of_function( signature_1val_to_void)
  
@@ -825,7 +835,7 @@
   * hook_closure  0
   * in  the_base_module
   * start  _02MHbyAxU_563vpdUu2 }
- [[  ~  ~  ~  ~ ]]
+ [[  ^agenda_push_front()  item_queue  tasklet  the_agenda ]]
  
   %  ^filler_of_function( signature_1val_to_void)
  
@@ -848,7 +858,8 @@
   * in  the_base_module
   * start  _7MF947fC8_8ChefReMD
   * variable  [varclo] }
- [[  ~  ~  ~  ~  ~  ~  ~ ]]
+ [[  ^agenda_step()  fill_agenda  ^agenda_step()  item_queue  runner  tasklet
+   the_agenda ]]
  
   %  ^filler_of_function( signature_void_to_void)
  
@@ -1252,7 +1263,7 @@
 {
   * comment  "routine to generate a C module; returns the item on success, or an error message"
   * hook_closure  0 }
- [[  ~ ]]
+ [[  ^generate_c_module() ]]
  
   %  ^filler_of_function( signature_1itm_to_val)
  
@@ -1365,6 +1376,19 @@
 ..
 
 
+** integer_different
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*integer_different:*/(("  num1  ") != ("
+    num2  ")) ")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "integer_different: operator for integer != test"
+  * formals  [num1 num2]
+  * type  integer }
+ 
+..
+
+
 ** integer_div
 {
   * code_emitter  ^plain_code_emitter()
@@ -1372,6 +1396,32 @@
     num2  ")) ")
   * code_type_scanner  ^plain_code_type_scanner()
   * comment  "integer_div: operator for integer *"
+  * formals  [num1 num2]
+  * type  integer }
+ 
+..
+
+
+** integer_equal
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*integer_equal:*/(("  num1  ") == ("
+    num2  ")) ")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "integer_equal: operator for integer == test"
+  * formals  [num1 num2]
+  * type  integer }
+ 
+..
+
+
+** integer_greater_or_equal
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*integer_greater_or_equal:*/(("  num1
+    ") >= ("  num2  ")) ")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "integer_greater_or_equal: operator for integer >= test"
   * formals  [num1 num2]
   * type  integer }
  
@@ -1466,6 +1516,21 @@
 ..
 
 
+** item_has_kind
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*item_has_kind:*/"  itm1  " && " 
+   itm1  "->itm_kind =="  itm2)
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "test if an item itm1 has kind itm2"
+  * formals  [itm1 itm2]
+  * type  integer }
+ 
+  %  ^filler_of_plain_kind( code_operation)
+ 
+..
+
+
 ** item_queue   ////// PREDEFINED
 {
   * comment  "kind of queueitem-payloaded items"
@@ -1479,6 +1544,27 @@
 {
   * comment  "operation for switch on item: item_switch <expr> <case>..."
  }
+ 
+..
+
+
+** itm1
+{
+  * type  item }
+ 
+..
+
+
+** itm2
+{
+  * type  item }
+ 
+..
+
+
+** itmres
+{
+  * type  item }
  
 ..
 
@@ -1568,6 +1654,28 @@
 ..
 
 
+** node
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/node:*/ mom_make_node("  itm1  ", "
+    count  ","  restitm  ", NULL)")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "operation for making nodes"
+  * formals  [itm1]
+  * type  value
+  * variadic_count  count
+  * variadic_rest  restitm }
+ 
+..
+
+
+** num
+{
+  * type  integer }
+ 
+..
+
+
 ** num1
 {
   * type  integer }
@@ -1614,10 +1722,119 @@
 ..
 
 
+** plain_statement_emitter
+{
+  * comment  "function to emit statement with plain code_operation" }
+ 
+  %  ^filler_of_function( signature_2itm_to_void)
+ 
+..
+
+
+** plain_statement_scanner
+{
+  * comment  "function to scan statement with plain code_operation" }
+ 
+  %  ^filler_of_function( signature_2itm_to_void)
+ 
+..
+
+
+** pop_back_queue_item
+{
+  * code_expansion  ^code_expansion( "/*pop_back_queue_item:*/\n"  itmres
+    " = (momitem_t*)NULL;\n"  "{if ("  itm1  " && "  itm1  "->itm_kind == "
+    item_queue  ")\n"  "  "  itmres  " = mom_queueitem_pop_back((struct momqueueitems_st*)"
+    itm1  "->itm_data1);}\n")
+  * comment  "statement operation to pop back of queue item"
+  * constants  {item_queue}
+  * extern  {item_queue}
+  * formals  [itm1]
+  * results  [itmres]
+  * statement_emitter  ^plain_statement_emitter()
+  * statement_scanner  ^plain_statement_scanner() }
+ 
+  %  ^filler_of_plain_kind( code_operation)
+ 
+..
+
+
+** pop_front_queue_item
+{
+  * code_expansion  ^code_expansion( "/*pop_front_queue_item:*/\n"  itmres
+    " = (momitem_t*)NULL;\n"  "{if ("  itm1  " && "  itm1  "->itm_kind == "
+    item_queue  ")\n"  "  "  itmres  " = mom_queueitem_pop_front((struct momqueueitems_st*)"
+    itm1  "->itm_data1);}\n")
+  * comment  "statement operation to pop front of queue item"
+  * constants  {item_queue}
+  * extern  {item_queue}
+  * formals  [itm1]
+  * results  [itmres]
+  * statement_emitter  ^plain_statement_emitter()
+  * statement_scanner  ^plain_statement_scanner() }
+ 
+  %  ^filler_of_plain_kind( code_operation)
+ 
+..
+
+
 ** preparation   ////// PREDEFINED
 {
   * comment  "attribute giving the closure to prepare something, e.g. a code module"
  }
+ 
+..
+
+
+** push_back_queue_item
+{
+  * code_expansion  ^code_expansion( "/*push_back_queue_item:*/\n"  "{if ("
+    itm1  " && "  itm1  "->itm_kind == "  item_queue  ")\n"  "   mom_queueitem_push_back((struct momqueueitems_st*)"
+    itm1  "->itm_data1, "  itm2  ");}\n")
+  * comment  "statement operation to push at back of queue item itm1 the item itm2"
+  * constants  {item_queue}
+  * extern  {item_queue}
+  * formals  [itm1 itm2]
+  * results  []
+  * statement_emitter  ^plain_statement_emitter()
+  * statement_scanner  ^plain_statement_scanner() }
+ 
+  %  ^filler_of_plain_kind( code_operation)
+ 
+..
+
+
+** push_front_queue_item
+{
+  * code_expansion  ^code_expansion( "/*push_front_queue_item:*/\n"  "{if ("
+    itm1  " && "  itm1  "->itm_kind == "  item_queue  ")\n"  "  mom_queueitem_push_front((struct momqueueitems_st*)"
+    itm1  "->itm_data1, "  itm2  ");}\n")
+  * comment  "statement operation to push at front of queue item itm1 the item itm2"
+  * constants  {item_queue}
+  * extern  {item_queue}
+  * formals  [itm1 itm2]
+  * results  []
+  * statement_emitter  ^plain_statement_emitter()
+  * statement_scanner  ^plain_statement_scanner() }
+ 
+  %  ^filler_of_plain_kind( code_operation)
+ 
+..
+
+
+** queue_item_is_empty
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*queue_item_is_empty:*/"  itm1  " && "
+    itm1  "->itm_kind =="  item_queue  " && mom_queueitem_size ("  itm1 
+   "->itm_data1) == 0")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "test if a queue item is empty"
+  * extern  {item_queue}
+  * formals  [itm1]
+  * type  integer }
+ 
+  %  ^filler_of_plain_kind( code_operation)
  
 ..
 
@@ -1986,8 +2203,14 @@
 ** the_software   ////// PREDEFINED
 {
   * comment  "describes the entire software system" }
- [[  ~  ~  ~  ~  ~  ~  ~  integer_add  ~  ~  ~  ~  ~  ~  ~  integer_sub 
-  ~  ~  ~  ~  ~  ~  ~  integer_mul  ~  ~  ~  ~  ~  ~  ~  integer_div  ~ ]]
+ [[  integer_add  integer_sub  integer_mul  integer_div  integer_mod  integer_less_than
+   integer_less_or_equal  integer_greater_than  integer_greater_or_equal
+   integer_equal  integer_different  node  plain_code_emitter  plain_code_type_scanner
+   plain_statement_emitter  plain_statement_scanner  pop_front_queue_item
+   pop_back_queue_item  push_front_queue_item  push_back_queue_item  queue_item_is_empty
+   test_module  transform_block_statement  tuple  unsync_get_attribute  value_is_node
+   value_is_sequence  value_is_set  value_is_tuple  value_of_item  value_sequence_length
+   value_sequence_nth  value_to_item ]]
  
 ..
 
@@ -2000,10 +2223,62 @@
 ..
 
 
+** transform_block_statement
+{
+  * comment  "function to transform a block statement value into block-s"
+ }
+ [[  ^transform_block_statement_item() ]]
+ 
+  %  ^filler_of_function( signature_1val_to_val)
+ 
+..
+
+
+** transform_block_statement_item
+{
+  * comment  "function to transform a block statement value into block-s"
+ }
+ [[  ^decorate_block_statement_item() ]]
+ 
+  %  ^filler_of_function( signature_1itm_to_item)
+ 
+..
+
+
+** tuple
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/tuple:*/ mom_make_tuple("  count 
+   ","  restitm  ", NULL)")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "operation for making tuples"
+  * formals  []
+  * type  value
+  * variadic_count  count
+  * variadic_rest  restitm }
+ 
+..
+
+
 ** type   ////// PREDEFINED
 {
   * comment  "kind of code types, etc.."
   * dumped_item_emitter  ^emitter_of_plain_kind() }
+ 
+..
+
+
+** unsync_get_attribute
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*unsync_get_attribute:*/mom_item_unsync_get_attribute ("
+    itm1  ","  itm2  ")")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "get an attribute"
+  * formals  [itm1 itm2]
+  * type  value }
+ 
+  %  ^filler_of_plain_kind( code_operation)
  
 ..
 
@@ -2015,12 +2290,120 @@
 ..
 
 
+** val1
+{
+  * type  value }
+ 
+..
+
+
 ** value   ////// PREDEFINED
 {
   * code  "momvalue_t"
   * comment  "type for momvalue_t" }
  
   %  ^filler_of_plain_kind( type)
+ 
+..
+
+
+** value_is_node
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*value_is_node:*/ ("  val1  ").typnum == momty_node")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "operator testing that operand is a node"
+  * formals  [val1]
+  * type  integer }
+ 
+..
+
+
+** value_is_sequence
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*value_is_sequence:*/ mom_value_to_sequ("
+    val1  ") != NULL")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "operator testing that operand is a sequence (tuple or set)"
+  * formals  [val1]
+  * type  integer }
+ 
+..
+
+
+** value_is_set
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*value_is_set:*/ ("  val1  ").typnum == momty_set")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "operator testing that operand is a set"
+  * formals  [val1]
+  * type  integer }
+ 
+..
+
+
+** value_is_tuple
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*value_is_tuple:*/ ("  val1  ").typnum == momty_tuple")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "operator testing that operand is a tuple"
+  * formals  [val1]
+  * type  integer }
+ 
+..
+
+
+** value_of_item
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*value_of_item:*/ mom_itemv("  val1
+    ")")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "operator to convert an item to a value"
+  * formals  [itm1]
+  * type  value }
+ 
+..
+
+
+** value_sequence_length
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*value_sequence_length:*/ mom_seq_length(mom_value_to_sequ("
+    val1  "))")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "operator giving the length of a sequence value"
+  * formals  [val1]
+  * type  integer }
+ 
+..
+
+
+** value_sequence_nth
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*value_sequence_nth:*/ mom_seq_nth(mom_value_to_sequ("
+    val1  "), (int)("  num  "))")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "operator giving for a value sequence val1 its component of rank num"
+  * formals  [val1 num]
+  * type  item }
+ 
+..
+
+
+** value_to_item
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*value_to_item:*/ mom_value_to_item("
+    val1  ")")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "operator to convert a value to an item"
+  * formals  [val1]
+  * type  item }
  
 ..
 
