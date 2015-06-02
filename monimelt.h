@@ -117,6 +117,7 @@ const char *mom_webdocroot[MOM_MAX_WEBDOCROOT + 1];
 #define MOM_WEBDOCROOT_DIRECTORY "webroot/"
 const char *mom_webpasswdfile;
 #define MOM_DEFAULT_WEBPASSWD ".mompasswd"
+#define MOM_MIN_PASSWD_LEN 7
 typedef bool mom_web_authentificator_sig_t (const char *webuser,
 					    const char *webpasswd);
 mom_web_authentificator_sig_t *mom_web_authentificator;
@@ -503,6 +504,22 @@ struct momvalue_st
     const momseq_t *vtuple;
   };
 };
+
+static inline void
+mom_valueptr_set_transient (momvalue_t *pval, bool transient)
+{
+  if (pval && pval != MOM_EMPTY)
+    atomic_store (&pval->istransient, transient);
+}
+
+static inline bool
+mom_valueptr_is_transient (const momvalue_t *pval)
+{
+  if (!pval || pval == MOM_EMPTY)
+    return false;
+  return atomic_load (&pval->istransient);
+}
+
 #define MOM_NONEV ((momvalue_t){momty_null,false,{NULL}})
 
 // return a GC_STRDUP-ed string with some output for a value

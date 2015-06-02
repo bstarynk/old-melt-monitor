@@ -1847,7 +1847,7 @@ mom_scan_dumped_value (const momvalue_t val)
 {
   if (!dumper_mom || dumper_mom->dumagic != DUMPER_MAGIC_MOM)
     MOM_FATAPRINTF ("scan dumped value outside of dumping");
-  if (val.istransient)
+  if (mom_valueptr_is_transient (&val))
     {
       MOM_DEBUGPRINTF (dump, "ignoring transient dumped value %s",
 		       mom_output_gcstring (val));
@@ -2821,7 +2821,7 @@ mom_dumpable_value (const momvalue_t val)
 {
   assert (dumper_mom && dumper_mom->dumagic == DUMPER_MAGIC_MOM);
   assert (dumper_mom->dustate == dump_emit);
-  if (val.istransient)
+  if (mom_valueptr_is_transient (&val))
     return false;
   switch ((enum momvaltype_en) val.typnum)
     {
@@ -3168,7 +3168,7 @@ mom_emit_dumped_value (const momvalue_t val)
   assert (dumper_mom->dustate == dump_emit);
   assert (dumper_mom->dufile);
   mom_emit_dumped_space ();
-  if (val.istransient || !mom_dumpable_value (val))
+  if (mom_valueptr_is_transient (&val) || !mom_dumpable_value (val))
     goto emit_null;
   switch ((enum momvaltype_en) val.typnum)
     {

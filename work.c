@@ -21,10 +21,12 @@
 #include "monimelt.h"
 
 #define SESSION_COOKIE_MOM "MOMSESSION"
+#define SESSION_TIMEOUT_MOM 4000	/* a bit more than one hour of inactivity */
 static volatile atomic_bool stop_work_loop_mom;
 static volatile atomic_long webcount_mom;
 static struct momhashdict_st *websessiondict_mom;
 static pthread_mutex_t webmtx_mom = PTHREAD_MUTEX_INITIALIZER;
+static char web_host_mom[80];
 
 uint32_t webloginrandom_mom;
 
@@ -364,28 +366,128 @@ web_login_post_mom (long reqcnt, const char *reqfupath,
   const char *postfullpathstr =
     onion_request_get_post (requ, "mom_web_full_path");
   const char *postquerystr = onion_request_get_post (requ, "mom_web_query");
-  const char *postuseremailstr =
-    onion_request_get_post (requ, "mom_login_useremail");
+  const char *postuserstr = onion_request_get_post (requ, "mom_login_user");
   const char *postpasswordstr =
     onion_request_get_post (requ, "mom_login_password");
   const char *postdologinstr = onion_request_get_post (requ, "mom_do_login");
   MOM_DEBUGPRINTF (web,
 		   "web_login_post for request#%ld to full path %s;\n .."
-		   "random=%s fullpath=%s query=%s useremail=%s password=%s dologin=%s",
+		   "random=%s fullpath=%s query=%s user=%s password=%s dologin=%s",
 		   reqcnt, reqfupath,
 		   postrandomstr, postfullpathstr, postquerystr,
-		   postuseremailstr, postpasswordstr, postdologinstr);
+		   postuserstr, postpasswordstr, postdologinstr);
   if (!postrandomstr || atoi (postrandomstr) != (int) webloginrandom_mom)
     {
       MOM_WARNPRINTF
-	("web login request#%ld fullpath=%s longinrandom mismatch expecting %d",
+	("web login POST request#%ld fullpath=%s longinrandom mismatch expecting %d",
 	 reqcnt, reqfupath, webloginrandom_mom);
       return OCS_FORBIDDEN;
     };
-  /* we could use crypt(3) & mkpasswd(1) or htpasswd(1) */
-  MOM_FATAPRINTF ("unimplemented web_login_post_mom request#%ld full path %s",
-		  reqcnt, reqfupath);
-#warning unimplemented web_login_post_mom
+  if (!postuserstr || !postpasswordstr || !isalnum (postuserstr[0])
+      || strlen (postpasswordstr) < MOM_MIN_PASSWD_LEN)
+    {
+      MOM_WARNPRINTF
+	("web login POST request#%ld fullpath=%s with bad user (%s) or password",
+	 reqcnt, reqfupath, postuserstr);
+      return OCS_FORBIDDEN;
+    }
+  if (!mom_web_authentificator)
+    {
+      MOM_WARNPRINTF
+	("web login POST request#%ld fullpath=%s without authentificator routine",
+	 reqcnt, reqfupath);
+      usleep (100 + mom_random_nonzero_32_here () % 4096);
+      return OCS_FORBIDDEN;
+    }
+  if ((*mom_web_authentificator) (postuserstr, postpasswordstr))
+    {
+      MOM_DEBUGPRINTF (web,
+		       "web_login_post for request#%ld authentified user %s",
+		       reqcnt, postuserstr);
+      usleep (100 + mom_random_nonzero_32_here () % 4096);
+      if (!postfullpathstr || postfullpathstr[0] == '\0')
+	postfullpathstr = "/";
+      const char *newfullurl = NULL;
+      char fullurlbuf[MOM_PATH_MAX];
+      const momstring_t *fullurlstr = NULL;
+      memset (fullurlbuf, 0, sizeof (fullurlbuf));
+      if (postquerystr && postquerystr[0])
+	{
+	  if (strlen (postquerystr) + strlen (postfullpathstr) + 10 <
+	      sizeof (fullurlbuf))
+	    {
+	      snprintf (fullurlbuf, sizeof (fullurlbuf), "%s?%s",
+			postfullpathstr, postquerystr);
+	      newfullurl = fullurlbuf;
+	    }
+	  else
+	    {
+	      fullurlstr =
+		mom_make_string_sprintf ("%s?%s", postfullpathstr,
+					 postquerystr);
+	      newfullurl = fullurlstr->cstr;
+	    };
+	}
+      else
+	newfullurl = postfullpathstr;
+      MOM_DEBUGPRINTF (web,
+		       "web_login_post for request#%ld for authentified user %s redirect newfullurl %s",
+		       reqcnt, postuserstr, newfullurl);
+      momitem_t *websessitm = mom_make_anonymous_item ();
+      websessitm->itm_kind = MOM_PREDEFINED_NAMED (web_session);
+      websessitm->itm_space = momspa_transient;
+      momvalue_t valuser = mom_stringv_cstr (postuserstr);
+      mom_item_unsync_put_attribute (websessitm, MOM_PREDEFINED_NAMED (user),
+				     valuser);
+      char cookiebuf[80];
+      memset (cookiebuf, 0, sizeof (cookiebuf));
+      snprintf (cookiebuf, sizeof (cookiebuf), "%s/%08d",
+		mom_item_cstring (websessitm),
+		mom_random_nonzero_32_here () % 100000000);
+      long obstime =
+	(long) mom_elapsed_real_time () + 3 * SESSION_TIMEOUT_MOM / 4;
+      momvalue_t webval =
+	mom_nodev_new (MOM_PREDEFINED_NAMED (web_session), 3,
+		       mom_itemv (websessitm),
+		       mom_intv (obstime),
+		       valuser);
+      mom_valueptr_set_transient (&webval, true);
+      MOM_DEBUGPRINTF (web,
+		       "web_login_post for request#%ld user %s has sessionval %s for cookie %s",
+		       reqcnt, postuserstr, mom_output_gcstring (webval),
+		       cookiebuf);
+      websessiondict_mom =
+	mom_hashdict_put (websessiondict_mom,
+			  mom_make_string_cstr (cookiebuf), webval);
+      onion_response_add_cookie (resp, SESSION_COOKIE_MOM, cookiebuf,
+				 SESSION_TIMEOUT_MOM, "/",
+				 web_host_mom[0] ? web_host_mom : NULL, 0);
+      const momstring_t *redirstr =	//
+	mom_make_string_sprintf
+	("<!doctype html>\n"
+	 "<html>\n"
+	 "<head><title>MELTmon redirect</title>\n"
+	 "<meta http-equiv=\"refresh\" content='1; URL=%s'/>"
+	 "</head>\n"
+	 "<body><h1>redirection to <a href='%s'>%s</a></h1></body>\n"
+	 "</html>\n",
+	 newfullurl, newfullurl, newfullurl);
+      MOM_DEBUGPRINTF (web,
+		       "web_login_post for request#%ld user %s redirstr=%s",
+		       reqcnt, postuserstr, mom_string_cstr (redirstr));
+      onion_response_set_header (resp, "Location", newfullurl);
+      onion_response_set_length (resp, redirstr->slen);
+      onion_response_set_code (resp, HTTP_REDIRECT);
+      onion_response_write0 (resp, mom_string_cstr (redirstr));
+      return OCS_PROCESSED;
+    }
+  else
+    {
+      MOM_WARNPRINTF
+	("web login POST request#%ld fullpath=%s postfullpathstr=%s authentification for user %s failed",
+	 reqcnt, reqfupath, postfullpathstr, postuserstr);
+      return OCS_FORBIDDEN;
+    }
 }				/* end of web_login_post_mom */
 
 
@@ -546,6 +648,7 @@ start_web_onion_mom (void)
     {
       *whcolon = 0;
       onion_set_hostname (onion_mom, mom_web_host);
+      strncpy (web_host_mom, mom_web_host, sizeof (web_host_mom) - 1);
       MOM_DEBUGPRINTF (web, "start_web_onion hostname %s", mom_web_host);
       *whcolon = ':';
     }

@@ -510,7 +510,7 @@ cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
 		   vclosedset,
 		   vvarset,
 		   vformals);
-  vfuninfo.istransient = true;
+  mom_valueptr_set_transient (&vfuninfo, true);
   MOM_DEBUGPRINTF (gencod, "for scanned function %s vfuninfo %s",
 		   mom_item_cstring (itmfun), mom_output_gcstring (vfuninfo));
   cg->cg_functionassoc =

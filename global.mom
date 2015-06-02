@@ -2292,6 +2292,13 @@
 ..
 
 
+** user   ////// PREDEFINED
+{
+  * comment  "attribute giving the user, etc..." }
+ 
+..
+
+
 ** val1
 {
   * type  value }
@@ -2477,6 +2484,13 @@
 ** web_exchange   ////// PREDEFINED
 {
   * comment  "kind of transient web request/response exchange" }
+ 
+..
+
+
+** web_session   ////// PREDEFINED
+{
+  * comment  "kind of transient items for web sessions" }
  
 ..
 

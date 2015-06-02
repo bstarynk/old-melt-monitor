@@ -1,10 +1,9 @@
--T mom_plugin_after_load_t
--T mom_web_authentificator_sig_t
 -T momdelim_t
 -T momhash_t
 -T momitem_t
 -T momlockeditem_t
 -T momnode_t
+-T mom_plugin_after_load_t
 -T momseq_t
 -T momstring_t
 -T momtypenum_t
