@@ -22,8 +22,7 @@
 {
   * comment  "set itmz := itmx" }
  [[  set  test_itmz  test_itmx ]]
- 
-  %  ^filler_of_plain_kind( code_statement)
+ %  ^filler_of_plain_kind( code_statement)
  
 ..
 
@@ -32,8 +31,7 @@
 {
   * comment  "set itmz closeda" }
  [[  set  test_itmz  ^value_to_item( test_closed_a) ]]
- 
-  %  ^filler_of_plain_kind( code_statement)
+ %  ^filler_of_plain_kind( code_statement)
  
 ..
 
@@ -43,8 +41,7 @@
   * comment  "start block of test_funa"
   * instructions  [_2DxdHB02H_7J0mhIR26 _9bEj56Crk_4Ph9A38a7 _2n1vLp5v3_6h15ihHan]
  }
- 
-  %  ^filler_of_plain_kind( block)
+ %  ^filler_of_plain_kind( block)
  
 ..
 
@@ -53,8 +50,7 @@
 {
   * comment  "start of test_funb"
   * instructions  [] }
- 
-  %  ^filler_of_plain_kind( block)
+ %  ^filler_of_plain_kind( block)
  
 ..
 
@@ -63,8 +59,7 @@
 {
   * comment  "set itmy := const_quote" }
  [[  set  test_itmy  ^value_to_item( test_constant_quote) ]]
- 
-  %  ^filler_of_plain_kind( code_statement)
+ %  ^filler_of_plain_kind( code_statement)
  
 ..
 
@@ -112,8 +107,7 @@
 {
   * comment  "the itmx variable"
   * type  item }
- 
-  %  ^filler_of_plain_kind( variable)
+ %  ^filler_of_plain_kind( variable)
  
 ..
 
@@ -122,8 +116,7 @@
 {
   * comment  "the itmy variable"
   * type  item }
- 
-  %  ^filler_of_plain_kind( variable)
+ %  ^filler_of_plain_kind( variable)
  
 ..
 
@@ -132,8 +125,7 @@
 {
   * comment  "the itmz variable"
   * type  item }
- 
-  %  ^filler_of_plain_kind( variable)
+ %  ^filler_of_plain_kind( variable)
  
 ..
 
@@ -142,8 +134,7 @@
 {
   * comment  "the first test module"
   * functions  {test_funa test_funb} }
- 
-  %  ^filler_of_plain_kind( code_module)
+ %  ^filler_of_plain_kind( code_module)
  
 ..
 

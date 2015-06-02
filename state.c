@@ -2695,7 +2695,6 @@ emit_content_dumped_item_mom (const momitem_t *itm)
 	  && valtransformer.typnum == momty_node)
 	{
 	  dumper_mom->duindentation = 1;
-	  mom_emit_dumped_newline ();
 	  fputs ("% ", dumper_mom->dufile);
 	  mom_emit_dumped_valueptr (&valtransformer);
 	}

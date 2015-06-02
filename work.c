@@ -700,6 +700,7 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
   assert (reqfupath[0] == '/');
   bool foundhandler = false;
   momvalue_t vclos = MOM_NONEV;
+  momvalue_t vrestpath = MOM_NONEV;
   {
     const momstring_t *restpathstr = NULL;
     char *reqfucopy =
@@ -741,18 +742,61 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
 	  };
       }
     while (!foundhandler);
+    if (vclos.typnum == momty_node)
+      {
+	MOM_DEBUGPRINTF (web,
+			 "handle_web request #%ld got reqfucopy=%s vclos=%s restpathstr=%s ;"
+			 " webxitm=%s sessval=%s",
+			 reqcnt, reqfucopy, mom_output_gcstring (vclos),
+			 mom_string_cstr (restpathstr),
+			 mom_item_cstring (webxitm),
+			 mom_output_gcstring (sessval));
+      }
+    else
+      {
+	vclos =
+	  mom_item_unsync_get_attribute (MOM_PREDEFINED_NAMED (web_processor),
+					 MOM_PREDEFINED_NAMED (fail));
+	restpathstr = mom_make_string_cstr (reqfupath);
+	reqfucopy = NULL;
+	MOM_DEBUGPRINTF (web,
+			 "handle_web request #%ld failing vclos=%s restpathstr=%s ;"
+			 " webxitm=%s sessval=%s",
+			 reqcnt, mom_output_gcstring (vclos),
+			 mom_string_cstr (restpathstr),
+			 mom_item_cstring (webxitm),
+			 mom_output_gcstring (sessval));
+      }
+    vrestpath = mom_stringv (restpathstr);
     mom_item_unlock (MOM_PREDEFINED_NAMED (web_processor));
-    MOM_DEBUGPRINTF (web,
-		     "handle_web request #%ld got reqfucopy=%s vclos=%s restpathstr=%s ;"
-		     " webxitm=%s sessval=%s",
-		     reqcnt, reqfucopy, mom_output_gcstring (vclos),
-		     mom_string_cstr (restpathstr),
-		     mom_item_cstring (webxitm),
-		     mom_output_gcstring (sessval));
   }
-  if (vclos.typnum == momty_node)
+  /// apply vclos to webxitm & reqmethitm & vrestpath & sessval
+  MOM_DEBUGPRINTF (web,
+		   "handle_web request #%ld reqfupath %s applying vclos %s webxitm %s reqmethitm %s vrestpath %s sessval %s",
+		   reqcnt, reqfupath, mom_output_gcstring (vclos),
+		   mom_item_cstring (webxitm), mom_item_cstring (reqmethitm),
+		   mom_output_gcstring (vrestpath),
+		   mom_output_gcstring (sessval));
+  if (mom_applval_2itm2val_to_void
+      (vclos, webxitm, reqmethitm, vrestpath, sessval))
     {
-      /// apply vclos to webxitm && sessval
+      MOM_DEBUGPRINTF (web,
+		       "handle_web request #%ld !!successful application"
+		       " reqfupath %s vclos %s webxitm %s reqmethitm %s",
+		       reqcnt, reqfupath, mom_output_gcstring (vclos),
+		       mom_item_cstring (webxitm),
+		       mom_item_cstring (reqmethitm));
+#warning should wait for the request to be replied with mom_unsync_webexitem_reply
+    }
+  else
+    {
+      MOM_DEBUGPRINTF (web,
+		       "handle_web request #%ld **failed application"
+		       " reqfupath %s vclos %s webxitm %s reqmethitm %s",
+		       reqcnt, reqfupath, mom_output_gcstring (vclos),
+		       mom_item_cstring (webxitm),
+		       mom_item_cstring (reqmethitm));
+#warning should clear the webxitm
     }
 #warning handle_web_mom should do something here
   MOM_DEBUGPRINTF (web,
