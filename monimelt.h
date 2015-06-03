@@ -1326,6 +1326,11 @@ mom_node_nth (const momnode_t *nod, int rk)
 // find some existing item by its id or its name
 momitem_t *mom_find_item (const char *str);
 
+// find some existing named item by its name
+momitem_t *mom_find_named_item (const char *name);
+
+// get the set of named items with a common prefix
+momvalue_t mom_set_named_items_of_prefix (const char *prefix);
 
 // find or make a named item; if it is new, it is made transient
 momitem_t *mom_make_named_item (const char *namstr);

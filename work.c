@@ -951,7 +951,7 @@ mom_unsync_webexitem_file (const momitem_t *wxitm)
     return NULL;
   assert (webex && webex->webx_magic == WEBEXCHANGE_MAGIC_MOM);
   return webex->webx_outfil;
-}
+}				/* end mom_unsync_webexitem_file */
 
 
 int
@@ -1024,6 +1024,7 @@ mom_unsync_webexitem_fputs (momitem_t *wxitm, const char *str)
   n = fputs (str, webex->webx_outfil);
   return n;
 }				/* end mom_unsync_webexitem_fputs */
+
 
 static bool
 default_web_authentificator_mom (const char *user, const char *passwd)
@@ -1138,7 +1139,7 @@ mom_run_workers (void)
   if (mom_web_host && mom_web_host[0])
     start_web_onion_mom ();
   sched_yield ();
-#warning should start the webservice, the socketservice, handle signals & timers
+#warning should start the socketservice, handle signals & timers
   join_workers_mom ();
   if (onion_mom)
     onion_listen_stop (onion_mom);
