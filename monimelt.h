@@ -1350,6 +1350,10 @@ mom_make_anonymous_item_at (unsigned lin)
   return mom_make_anonymous_item_salt (count + lin);
 }
 
+// get the set of anonymous items with a common prefix; this is a slow
+// operation since it has to scan every anonymous item!
+momvalue_t mom_set_anonymous_items_of_prefix (const char *prefix);
+
 enum mom_predefhash_en
 {
   mompredh__none = 0,

@@ -20,7 +20,7 @@
 
 #include "monimelt.h"
 
-#define HASH_ANON_MOD_MOM 53
+#define HASH_ANON_MOD_MOM 83
 static pthread_mutex_t mtx_anon_mom[HASH_ANON_MOD_MOM];
 
 struct anon_htable_mom_st
@@ -405,3 +405,55 @@ mom_unregister_anonymous_finalized_item (momitem_t *finitm)
     reorganize_anon_bucket_mom (hrk);
   pthread_mutex_unlock (&mtx_anon_mom[hrk]);
 }				/* end mom_unregister_anonymous_finalized_item */
+
+
+
+momvalue_t
+mom_set_anonymous_items_of_prefix (const char *prefix)
+{
+  momvalue_t vres = MOM_NONEV;
+  if (!prefix || prefix == MOM_EMPTY)
+    prefix = "_";
+  if (prefix[0] != '_' || (prefix[1] && !isdigit (prefix[1])))
+    return MOM_NONEV;
+  int prefixlen = strlen (prefix);
+  unsigned arrsiz = 64;
+  unsigned itmcount = 0;
+  momitem_t **arritm =
+    MOM_GC_ALLOC ("anonymous arritm", sizeof (momitem_t *) * arrsiz);
+  for (unsigned hix = 0; hix < HASH_ANON_MOD_MOM; hix++)
+    {
+      pthread_mutex_lock (&mtx_anon_mom[hix]);
+      struct anon_htable_mom_st *aht = anh_arr_mom[hix];
+      assert (aht != NULL);
+      unsigned asiz = aht->anh_size;
+      for (unsigned tix = 0; tix < asiz; tix++)
+	{
+	  momitem_t *curitm = aht->anh_arritm[tix];
+	  if (!curitm || curitm == MOM_EMPTY)
+	    continue;
+	  assert (curitm->itm_anonymous && curitm->itm_id);
+	  if (strncmp (curitm->itm_id->cstr, prefix, prefixlen))
+	    continue;
+	  if (MOM_UNLIKELY (itmcount + 1 >= arrsiz))
+	    {
+	      unsigned newsiz = ((10 + 4 * arrsiz / 3) | 0xf) + 1;
+	      unsigned oldsiz = arrsiz;
+	      assert (newsiz > oldsiz);
+	      momitem_t **oldarritm = arritm;
+	      arritm =
+		MOM_GC_ALLOC ("grown anonymous arritm",
+			      sizeof (momitem_t *) * newsiz);
+	      arrsiz = newsiz;
+	      memcpy (arritm, oldarritm, itmcount * sizeof (momitem_t *));
+	      MOM_GC_FREE (oldarritm, oldsiz * sizeof (momitem_t *));
+	    }
+	  arritm[itmcount] = curitm;
+	  itmcount++;
+	}
+      pthread_mutex_unlock (&mtx_anon_mom[hix]);
+    };
+  vres = mom_setv_sized (itmcount, (const momitem_t **) arritm);
+  MOM_GC_FREE (arritm, arrsiz * sizeof (momitem_t *));
+  return vres;
+}				/* end of mom_set_anonymous_items_of_prefix */
