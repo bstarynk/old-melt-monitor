@@ -22,6 +22,10 @@
 
 #define SESSION_COOKIE_MOM "MOMSESSION"
 #define SESSION_TIMEOUT_MOM 4000	/* a bit more than one hour of inactivity */
+
+// maximal reply delay for a web request - in seconds
+#define REPLY_TIMEOUT_MOM 3.5	/* reply timeout in seconds */
+
 static volatile atomic_bool stop_work_loop_mom;
 static volatile atomic_long webcount_mom;
 static struct momhashdict_st *websessiondict_mom;
@@ -43,7 +47,7 @@ struct webexchange_mom_st
   char *webx_outbuf;
   size_t webx_outsiz;
   FILE *webx_outfil;
-  const momstring_t *webx_contype;
+  char webx_mimetype[48];
   int webx_code;
   pthread_cond_t webx_donecond;
   long webx__spare;
@@ -786,7 +790,110 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
 		       reqcnt, reqfupath, mom_output_gcstring (vclos),
 		       mom_item_cstring (webxitm),
 		       mom_item_cstring (reqmethitm));
-#warning should wait for the request to be replied with mom_unsync_webexitem_reply
+      bool waitreply = false;
+      do
+	{
+	  int waitres = -1;
+	  waitreply = true;
+	  mom_item_lock (webxitm);
+	  if (webxitm->itm_kind != MOM_PREDEFINED_NAMED (web_exchange)
+	      || webxitm->itm_data1 != webex)
+	    MOM_FATAPRINTF
+	      ("handle_web request #%ld reqfupath %s bad webxitm %s after application",
+	       reqcnt, reqfupath, mom_item_cstring (webxitm));
+	  struct timespec ts =
+	    mom_timespec (webex->webx_time + REPLY_TIMEOUT_MOM);
+	  MOM_DEBUGPRINTF (web,
+			   "handle_web request #%ld reqfupath %s waiting from reply to %s",
+			   reqcnt, reqfupath, mom_item_cstring (webxitm));
+	  if (webex->webx_code > 0)
+	    // the closure might have replied already
+	    waitres = 0;
+	  else
+	    waitres =
+	      pthread_cond_timedwait (&webex->webx_donecond,
+				      &webxitm->itm_mtx, &ts);
+	  MOM_DEBUGPRINTF (web,
+			   "handle_web request #%ld reqfupath %s waited from reply to %s waitres %s code %d mimetype %s",
+			   reqcnt, reqfupath, mom_item_cstring (webxitm),
+			   strerror (waitres), webex->webx_code,
+			   webex->webx_mimetype);
+	  if (!waitres && webex->webx_code > 0
+	      && isalpha (webex->webx_mimetype[0]))
+	    {
+	      waitreply = false;
+	      webxitm->itm_kind = NULL;
+	      webxitm->itm_data1 = webxitm->itm_data2 = NULL;
+	      long off = ftell (webex->webx_outfil);
+	      MOM_DEBUGPRINTF (web,
+			       "handle_web request #%ld reqfupath %s reqmethitm %s webxitm %s got reply code %d mimetype %s length %ld",
+			       reqcnt, reqfupath,
+			       mom_item_cstring (reqmethitm),
+			       mom_item_cstring (webxitm),
+			       webex->webx_code, webex->webx_mimetype, off);
+	      fflush (webex->webx_outfil);
+	      onion_response_set_code (webex->webx_resp, webex->webx_code);
+	      if (!strncmp (webex->webx_mimetype, "text/", 5)
+		  && !strstr (webex->webx_mimetype, "charset"))
+		{
+		  char fullmime[sizeof (webex->webx_mimetype) + 16];
+		  memset (fullmime, 0, sizeof (fullmime));
+		  snprintf (fullmime, sizeof (fullmime), "%s; charset=UTF-8",
+			    webex->webx_mimetype);
+		  onion_response_set_header (webex->webx_resp, "Content-Type",
+					     fullmime);
+		}
+	      else
+		onion_response_set_header (webex->webx_resp, "Content-Type",
+					   webex->webx_mimetype);
+	      onion_response_set_length (webex->webx_resp, off);
+	      onion_response_write (webex->webx_resp, webex->webx_outbuf,
+				    off);
+	      fclose (webex->webx_outfil);
+	      free (webex->webx_outbuf), webex->webx_outbuf = NULL;
+	      webex->webx_outsiz = 0;
+	      memset (webex, 0, sizeof (*webex));
+	    }
+	  else if (mom_clock_time (CLOCK_REALTIME) >=
+		   webex->webx_time + REPLY_TIMEOUT_MOM)
+	    {
+	      // timeout
+	      MOM_WARNPRINTF
+		("handle_web request #%ld reqfupath %s, webxitm %s, reqmethitm %s timed out",
+		 reqcnt, reqfupath, mom_item_cstring (webxitm),
+		 mom_item_cstring (reqmethitm));
+	      waitreply = false;
+	      webxitm->itm_kind = NULL;
+	      webxitm->itm_data1 = webxitm->itm_data2 = NULL;
+	      fclose (webex->webx_outfil);
+	      free (webex->webx_outbuf), webex->webx_outbuf = NULL;
+	      webex->webx_outsiz = 0;
+	      char timeoutbuf[64];
+	      memset (timeoutbuf, 0, sizeof (timeoutbuf));
+	      mom_now_strftime_bufcenti (timeoutbuf,
+					 "%Y %b %d, %H:%M:%S.__ %Z");
+	      const momstring_t *timeoutstr =	//
+		mom_make_string_sprintf
+		("<!doctype html>\n"
+		 "<html><head><title>MONIMELT timedout</title></head>\n"
+		 "<body><h1>MONIMELT request #%ld timedout</h1>\n"
+		 "%s request to <tt>%s</tt> timed out with webxitm %s on %s</body></html>\n",
+		 reqcnt, mom_item_cstring (reqmethitm), reqfupath,
+		 mom_item_cstring (webxitm),
+		 timeoutbuf);
+	      assert (timeoutstr != NULL);
+	      onion_response_set_code (webex->webx_resp, HTTP_INTERNAL_ERROR);
+	      onion_response_set_header (webex->webx_resp, "Content-Type",
+					 "text/html; charset=UTF-8");
+	      onion_response_set_length (webex->webx_resp, timeoutstr->slen);
+	      onion_response_write (webex->webx_resp, timeoutstr->cstr,
+				    timeoutstr->slen);
+	      memset (webex, 0, sizeof (*webex));
+	    }
+	  mom_item_unlock (webxitm);
+	}
+      while (!waitreply);
+      return OCS_PROCESSED;
     }
   else
     {
@@ -805,6 +912,32 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
   return OCS_NOT_PROCESSED;
 }				/* end of handle_web_mom */
 
+
+void
+mom_unsync_webexitem_reply (momitem_t *wxitm, const char *mimetype, int code)
+{
+  struct webexchange_mom_st *webex = NULL;
+  if (!wxitm || wxitm == MOM_EMPTY)
+    MOM_FATAPRINTF ("webexitem_reply without wxitm (code %d)", code);
+  if (wxitm->itm_kind != MOM_PREDEFINED_NAMED (web_exchange)
+      || !(webex = wxitm->itm_data1)
+      || webex->webx_magic != WEBEXCHANGE_MAGIC_MOM)
+    MOM_FATAPRINTF ("webexitem_reply with invalid wxitm %s (code %d)",
+		    mom_item_cstring (wxitm), code);
+  if (!mimetype || mimetype == MOM_EMPTY || !isalpha (mimetype[0]))
+    MOM_FATAPRINTF ("webexitem_reply with bad mimetype (wxitem %s, code %d)",
+		    mom_item_cstring (wxitm), code);
+  if (code <= 0 || code > 999)
+    MOM_FATAPRINTF ("webexitem_reply with bad code %d (wxitem %s)",
+		    code, mom_item_cstring (wxitm));
+  webex->webx_code = code;
+  fflush (webex->webx_outfil);
+  memset (webex->webx_mimetype, 0, sizeof (webex->webx_mimetype));
+  strncpy (webex->webx_mimetype, mimetype, sizeof (webex->webx_mimetype) - 1);
+  MOM_DEBUGPRINTF (web, "webexitem_reply wxitm %s mimetype %s code %d",
+		   mom_item_cstring (wxitm), mimetype, code);
+  pthread_cond_broadcast (&webex->webx_donecond);
+}				/* end of mom_unsync_webexitem_reply  */
 
 FILE *
 mom_unsync_webexitem_file (const momitem_t *wxitm)
