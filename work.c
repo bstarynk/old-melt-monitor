@@ -610,8 +610,9 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
       return web_doc_root_mom (reqpath, reqcnt, requ, resp);
     }
   else if (!strcmp (reqpath, "/favicon.ico"))
-    {				// favicon.ico deserve a special redirection because it is often
-      // requested by browsers/
+    {
+      // favicon.ico deserves a special redirection because it is often
+      // requested by browsers
       MOM_DEBUGPRINTF (web,
 		       "handle_web request #%ld reqpath '%s' WEB /favicon.ico",
 		       reqcnt, reqpath);
@@ -701,6 +702,8 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
 		   reqcnt, reqfupath, mom_item_cstring (reqmethitm),
 		   mom_item_cstring (webxitm));
   assert (sessnod != NULL);
+  assert (mom_node_arity (sessnod) == 3);
+  long sessobstime = mom_value_to_int (mom_node_nth (sessnod, 1), -1);
   assert (reqfupath[0] == '/');
   bool foundhandler = false;
   momvalue_t vclos = MOM_NONEV;
@@ -832,6 +835,33 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
 			       mom_item_cstring (webxitm),
 			       webex->webx_code, webex->webx_mimetype, off);
 	      fflush (webex->webx_outfil);
+	      if ((long) (mom_elapsed_real_time () + 10.0) >= sessobstime)
+		{
+		  long newobstime =
+		    (long) mom_elapsed_real_time () +
+		    3 * SESSION_TIMEOUT_MOM / 4;
+		  momvalue_t newwebval =
+		    mom_nodev_new (MOM_PREDEFINED_NAMED (web_session), 3,
+				   mom_node_nth (sessnod, 0),
+				   mom_intv (newobstime),
+				   mom_node_nth (sessnod, 2));
+		  mom_valueptr_set_transient (&newwebval, true);
+		  pthread_mutex_lock (&webmtx_mom);
+		  websessiondict_mom =
+		    mom_hashdict_put (websessiondict_mom,
+				      mom_make_string_cstr (sesscookie),
+				      newwebval);
+		  pthread_mutex_unlock (&webmtx_mom);
+		  MOM_DEBUGPRINTF (web,
+				   "handle_web request #%ld refresh cookie %s newwebval %s",
+				   reqcnt, sesscookie,
+				   mom_output_gcstring (newwebval));
+		  onion_response_add_cookie (webex->webx_resp,
+					     SESSION_COOKIE_MOM, sesscookie,
+					     SESSION_TIMEOUT_MOM, "/",
+					     web_host_mom[0] ? web_host_mom :
+					     NULL, 0);
+		};
 	      onion_response_set_code (webex->webx_resp, webex->webx_code);
 	      if (!strncmp (webex->webx_mimetype, "text/", 5)
 		  && !strstr (webex->webx_mimetype, "charset"))
