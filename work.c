@@ -56,11 +56,15 @@ struct webexchange_mom_st
 
 
 #define WEBSESSION_MAGIC_MOM 659863763	/* websession magic 659863763 */
+/// the websocket is expecting JSON messages on read, each message being newline-terminated
 struct websession_mom_st
 {
+  // it is the itm_data1 of `web_session` items
   unsigned wbss_magic;		/* always WEBSESSION_MAGIC_MOM  */
   onion_websocket *wbss_websock;
-  // it is the itm_data1 of `web_session` items
+  char *wbss_inbuf;		/* GC-scalar-allocated input buffer */
+  unsigned wbss_insiz;		/* size of buffer */
+  unsigned wbss_inoff;		/* used offset or length */
 };				/* end of struct websession_mom_st */
 
 static onion_connection_status websocketcb_mom (void *data,
@@ -1226,9 +1230,9 @@ websocketcb_mom (void *pridata, onion_websocket * ws, ssize_t datalen)
 
   assert (ws != NULL);
   assert (wsessitm != NULL);
-  pthread_mutex_lock (wsessitm);
-  MOM_DEBUGPRINTF (web, "websocketcb start wsessitm=%s datalen=%d", wsessitm,
-		   datalen);
+  mom_item_lock (wsessitm);
+  MOM_DEBUGPRINTF (web, "websocketcb start wsessitm=%s datalen=%d",
+		   mom_item_cstring (wsessitm), (int) datalen);
   if (wsessitm->itm_kind != MOM_PREDEFINED_NAMED (web_session)
       || !(wses = wsessitm->itm_data1))
     {
@@ -1238,11 +1242,83 @@ websocketcb_mom (void *pridata, onion_websocket * ws, ssize_t datalen)
     };
   assert (wses->wbss_magic == WEBSESSION_MAGIC_MOM);
   assert (!wses->wbss_websock || wses->wbss_websock == ws);
-#warning  websocketcb_mom unimplemented
+  if (datalen < 0)
+    {
+      MOM_DEBUGPRINTF (web,
+		       "websocketcb start wsessitm=%s closing websocket",
+		       mom_item_cstring (wsessitm));
+      wses->wbss_websock = NULL;
+      ocs = OCS_CLOSE_CONNECTION;
+    }
+  else if (datalen > 0)
+    {
+      char *buf = wses->wbss_inbuf;
+      if (MOM_UNLIKELY (buf == MOM_EMPTY))
+	buf = NULL;
+      unsigned bsiz = (buf != NULL) ? wses->wbss_insiz : 0;
+      unsigned off = (buf != NULL) ? wses->wbss_inoff : 0;
+      if (off + datalen + 4 >= bsiz)
+	{
+	  unsigned newsiz = ((off + datalen + bsiz / 4 + 100) | 0xff) + 1;
+	  char *newbuf = MOM_GC_SCALAR_ALLOC ("websockbuf", newsiz);
+	  if (off > 0)
+	    memcpy (newbuf, wses->wbss_inbuf, off);
+	  wses->wbss_inbuf = newbuf;
+	  if (buf)
+	    MOM_GC_FREE (buf, bsiz);
+	  buf = newbuf;
+	  wses->wbss_insiz = bsiz = newsiz;
+	};
+      buf[off] = '\0';
+      int rlen = onion_websocket_read (ws, buf + off, datalen);
+      if (rlen >= 0)
+	buf[off + rlen] = '\0';
+      MOM_DEBUGPRINTF (web,
+		       "websocketcb wsessitm=%s read %d bytes offset %d:\n%s\n",
+		       mom_item_cstring (wsessitm), rlen, off,
+		       (rlen > 0) ? (buf + off) : "");
+      const char *nl = NULL;
+      do
+	{
+	  nl = strchr (buf, '\n');
+	  if (!nl)
+	    break;
+	  int nloff = nl - buf;
+	  assert (nloff <= (int) off);
+	  json_error_t jerr;
+	  memset (&jerr, 0, sizeof (jerr));
+	  MOM_DEBUGPRINTF (web,
+			   "websocketcb wsessitm=%s decoding %d bytes for JSON: %.*s\n",
+			   mom_item_cstring (wsessitm), nloff, nloff, buf);
+	  json_t *json = json_loadb (buf, nl - buf,
+				     JSON_DECODE_ANY | JSON_DISABLE_EOF_CHECK,
+				     &jerr);
+	  if (!json)
+	    MOM_WARNPRINTF
+	      ("websocketcb wsessitm=%s json error %s at %d for input:\n%.*s\n",
+	       mom_item_cstring (wsessitm), jerr.text, jerr.position, nloff,
+	       buf);
+	  else
+	    {
+	      MOM_DEBUGPRINTF (web,
+			       "websocketcb wsessitm=%s decoded JSON %s",
+			       mom_item_cstring (wsessitm),
+			       json_dumps (json,
+					   JSON_ENSURE_ASCII |
+					   JSON_ENCODE_ANY));
+#warning websocketcb_mom should consume json
+	    };
+	  memmove (buf, buf + nloff, off - nloff);
+	  buf[off - nloff] = (char) 0;
+	  wses->wbss_inoff = off - nloff;
+	}
+      while (nl);
+    }
+#warning  websocketcb_mom unimplemented, should incrementally parse JSON on input
   MOM_WARNPRINTF ("websocketcb wsessitm=%s datalen=%d unimplemented",
 		  mom_item_cstring (wsessitm), (int) datalen);
 end:
-  pthread_mutex_unlock (wsessitm);
+  mom_item_unlock (wsessitm);
   return ocs;
 }				/* end websocketcb_mom */
 
