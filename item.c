@@ -256,6 +256,7 @@ momvalue_t
 mom_set_named_items_of_prefix (const char *prefix)
 {
   momvalue_t setv = MOM_NONEV;
+  int lobix = 0, hibix = 0;
   if (!prefix || prefix == MOM_EMPTY)
     prefix = "";
   if (prefix[0])
@@ -273,7 +274,8 @@ mom_set_named_items_of_prefix (const char *prefix)
   MOM_DEBUGPRINTF (item, "set_named_items_of_prefix prefix=%s", prefix);
   if (MOM_UNLIKELY (named_count_mom == 0))
     goto end;
-  int lobix = 0, hibix = named_nbuck_mom;
+  lobix = 0;
+  hibix = named_nbuck_mom;
   {
     while (lobix + 2 < hibix)
       {

@@ -52,8 +52,14 @@
 #include <sys/stat.h>
 #include <sys/poll.h>
 #include <sys/select.h>
+#include <sys/signalfd.h>
+#include <sys/timerfd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <sys/wait.h>
 #include <sys/file.h>
+#include <sys/un.h>
 #include <fcntl.h>
 #include <dlfcn.h>
 #include <execinfo.h>
@@ -104,7 +110,7 @@ int mom_nb_workers;
 extern _Thread_local int mom_worker_num;
 
 const char *mom_web_host;
-const char *mom_socket;
+const char *mom_socket_path;
 const char *mom_user_data;
 #define MOM_MAX_WEBDOCROOT 8
 const char *mom_webdocroot[MOM_MAX_WEBDOCROOT + 1];
@@ -1624,6 +1630,9 @@ onion_request *mom_unsync_webexitem_request (momitem_t *wxitm);
 onion_response *mom_unsync_webexitem_response (momitem_t *wxitm);
 
 extern pthread_cond_t mom_agenda_changed_condvar;
+
+void mom_wake_event_loop (void);
+
 #define MOM_AGENDA_WAIT_SEC 2
 /****************************************************************
   Informal descriptions of kinds

@@ -32,7 +32,6 @@ static struct momhashdict_st *websessiondict_mom;
 static pthread_mutex_t webmtx_mom = PTHREAD_MUTEX_INITIALIZER;
 static char web_host_mom[80];
 
-
 #define WEBEXCHANGE_MAGIC_MOM 815064971	/* webexchange magic 0x3094e78b */
 struct webexchange_mom_st
 {				// it is the itm_data1 of `web_exchange` items
@@ -1365,11 +1364,14 @@ end:
 
 
 
+
+
 void
 mom_run_workers (void)
 {
+  extern void mom_event_loop (void);	// in file eventloop.c
   MOM_INFORMPRINTF ("start run %d workers (webhost %s, socket %s)",
-		    mom_nb_workers, mom_web_host, mom_socket);
+		    mom_nb_workers, mom_web_host, mom_socket_path);
   if (MOM_UNLIKELY (mom_nb_workers < MOM_MIN_WORKERS
 		    || mom_nb_workers > MOM_MAX_WORKERS))
     MOM_FATAPRINTF ("invalid mom_nb_workers %d", mom_nb_workers);
@@ -1377,7 +1379,7 @@ mom_run_workers (void)
   if (mom_web_host && mom_web_host[0])
     start_web_onion_mom ();
   sched_yield ();
-#warning should start the socketservice, handle signals & timers
+  mom_event_loop ();
   join_workers_mom ();
   if (onion_mom)
     onion_listen_stop (onion_mom);

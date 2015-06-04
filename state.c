@@ -529,7 +529,7 @@ make_modules_load_mom (void)
 	mom_make_string_sprintf (MOM_MODULE_DIRECTORY MOM_SHARED_MODULE_PREFIX
 				 "%s.so",
 				 mom_item_cstring (moditm));
-      void *dlh = dlopen (mstr->cstr, RTLD_NOW | RTLD_GLOBAL);
+      void *dlh = GC_dlopen (mstr->cstr, RTLD_NOW | RTLD_GLOBAL);
       if (!dlh)
 	MOM_FATAPRINTF ("failed to dlopen %s : %s", mstr->cstr, dlerror ());
       nbmod++;
@@ -539,7 +539,9 @@ make_modules_load_mom (void)
 		      mom_output_gcstring (mom_unsafe_setv (setmod)));
   else
     MOM_INFORMPRINTF ("loaded no modules");
-}
+}				/* end make_modules_load_mom */
+
+
 
 static bool
 token_string_load_mom (momvalue_t *pval)

@@ -660,7 +660,7 @@ parse_program_arguments_and_load_plugins_mom (int *pargc, char ***pargv)
 	  mom_web_host = optarg;
 	  break;
 	case 'S':
-	  mom_socket = optarg;
+	  mom_socket_path = optarg;
 	  break;
 	case 'U':
 	  mom_user_data = optarg;
@@ -982,7 +982,7 @@ main (int argc_main, char **argv_main)
   do_after_initial_load_with_plugins_mom ();
   if (generate_c_module_mom)
     do_generate_c_module_mom ();
-  if (mom_web_host || mom_socket)
+  if (mom_web_host || mom_socket_path)
     mom_run_workers ();
   MOM_INFORMPRINTF
     ("after run sizeof(momvalue_t)=%zd sizeof(momvaltype_t)=%zd sizeof(momitem_t)=%zd\n",
