@@ -85,12 +85,14 @@ mom_should_stop (void)
   return atomic_load (&stop_work_loop_mom);
 }
 
+
 void
 mom_stop_work (void)
 {
   atomic_store (&stop_work_loop_mom, true);
   MOM_DEBUGPRINTF (run, "stop working");
 }
+
 
 static void *
 work_run_mom (void *p)
@@ -1203,6 +1205,8 @@ default_web_authentificator_mom (const char *user, const char *passwd)
   return good;
 }				/* end of default_web_authentificator_mom */
 
+
+
 static void
 start_web_onion_mom (void)
 {
@@ -1239,6 +1243,7 @@ start_web_onion_mom (void)
   MOM_DEBUGPRINTF (web, "start_web_onion before listening @%p", onion_mom);
   onion_listen (onion_mom);
 }				/* end start_web_onion_mom */
+
 
 
 static onion_connection_status
@@ -1357,6 +1362,8 @@ end:
 		   mom_item_cstring (wsessitm), (int) ocs);
   return ocs;
 }				/* end websocketcb_mom */
+
+
 
 void
 mom_run_workers (void)
