@@ -1210,7 +1210,7 @@ static void
 start_web_onion_mom (void)
 {
   MOM_INFORMPRINTF ("start web services using webhost %s", mom_web_host);
-  onion_mom = onion_new (O_THREADED);
+  onion_mom = onion_new (O_THREADED | O_DETACH_LISTEN);
   onion_set_max_threads (onion_mom, mom_nb_workers + 1);
   char *whcolon = strchr (mom_web_host, ':');
   if (whcolon && whcolon > mom_web_host)
@@ -1241,6 +1241,7 @@ start_web_onion_mom (void)
   };
   MOM_DEBUGPRINTF (web, "start_web_onion before listening @%p", onion_mom);
   onion_listen (onion_mom);
+  MOM_DEBUGPRINTF (web, "start_web_onion done");
 }				/* end start_web_onion_mom */
 
 
@@ -1379,6 +1380,7 @@ mom_run_workers (void)
   if (mom_web_host && mom_web_host[0])
     start_web_onion_mom ();
   sched_yield ();
+  MOM_DEBUGPRINTF (run, "run_workers before event_loop");
   mom_event_loop ();
   join_workers_mom ();
   if (onion_mom)

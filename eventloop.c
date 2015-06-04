@@ -116,6 +116,7 @@ void
 mom_event_loop (void)
 {
   int evpipe[2] = { -1, -1 };
+  MOM_DEBUGPRINTF (run, "start mom_event_loop");
   if (MOM_UNLIKELY (pipe (evpipe) || evpipe[0] <= 0 || evpipe[1] <= 0))
     MOM_FATAPRINTF ("failed to create pipe for event loop");
   readfdeventloop_mom = evpipe[0];
@@ -136,4 +137,6 @@ mom_event_loop (void)
     MOM_FATAPRINTF ("event_loop failed to timerfd_create (%m)");
   if (mom_socket_path && mom_socket_path[0])
     mastersocketfd_mom = open_bind_socket_mom ();
+  MOM_FATAPRINTF ("incomplete mom_event_loop");
+#warning incomplete mom_event_loop
 }				/* end of mom_event_loop */
