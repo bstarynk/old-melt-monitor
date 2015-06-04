@@ -591,6 +591,29 @@ web_login_post_mom (long reqcnt, const char *reqfupath,
 }				/* end of web_login_post_mom */
 
 
+static void
+unsync_clear_webexitem_mom (momitem_t *wxitm)
+{
+  assert (wxitm && wxitm != MOM_EMPTY);
+  if (wxitm->itm_kind != MOM_PREDEFINED_NAMED (web_exchange))
+    return;
+  struct webexchange_mom_st *webex = wxitm->itm_data1;
+  wxitm->itm_kind = NULL;
+  wxitm->itm_data1 = NULL;
+  assert (webex && webex->webx_magic == WEBEXCHANGE_MAGIC_MOM);
+  if (webex->webx_outfil)
+    {
+      fclose (webex->webx_outfil), webex->webx_outfil = NULL;
+    };
+  if (webex->webx_outbuf)
+    {
+      free (webex->webx_outbuf), webex->webx_outbuf = NULL;
+      webex->webx_outsiz = 0;
+    };
+  pthread_cond_destroy (&webex->webx_donecond);
+  memset (webex, 0, sizeof (struct webexchange_mom_st));
+}				/* end unsync_clear_webexitem_mom */
+
 
 static onion_connection_status
 handle_web_mom (void *data, onion_request *requ, onion_response *resp)
@@ -945,10 +968,8 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
 	      onion_response_set_length (webex->webx_resp, off);
 	      onion_response_write (webex->webx_resp, webex->webx_outbuf,
 				    off);
-	      fclose (webex->webx_outfil);
-	      free (webex->webx_outbuf), webex->webx_outbuf = NULL;
-	      webex->webx_outsiz = 0;
-	      memset (webex, 0, sizeof (*webex));
+	      webex = NULL;
+	      unsync_clear_webexitem_mom (webxitm);
 	    }
 	  else if (mom_clock_time (CLOCK_REALTIME) >=
 		   webex->webx_time + REPLY_TIMEOUT_MOM)
@@ -959,11 +980,6 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
 		 reqcnt, reqfupath, mom_item_cstring (webxitm),
 		 mom_item_cstring (reqmethitm));
 	      waitreply = false;
-	      webxitm->itm_kind = NULL;
-	      webxitm->itm_data1 = webxitm->itm_data2 = NULL;
-	      fclose (webex->webx_outfil);
-	      free (webex->webx_outbuf), webex->webx_outbuf = NULL;
-	      webex->webx_outsiz = 0;
 	      char timeoutbuf[64];
 	      memset (timeoutbuf, 0, sizeof (timeoutbuf));
 	      mom_now_strftime_bufcenti (timeoutbuf,
@@ -984,24 +1000,28 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
 	      onion_response_set_length (webex->webx_resp, timeoutstr->slen);
 	      onion_response_write (webex->webx_resp, timeoutstr->cstr,
 				    timeoutstr->slen);
-	      memset (webex, 0, sizeof (*webex));
+	      webex = NULL;
+	      unsync_clear_webexitem_mom (webxitm);
 	    }
 	  mom_item_unlock (webxitm);
 	}
-      while (!waitreply);
+      while (waitreply);
+      MOM_DEBUGPRINTF (web, "handle_web request #%ld done", reqcnt);
       return OCS_PROCESSED;
     }
   else
-    {
+    {				/* vclos application failed */
       MOM_DEBUGPRINTF (web,
 		       "handle_web request #%ld **failed application"
 		       " reqfupath %s vclos %s webxitm %s reqmethitm %s",
 		       reqcnt, reqfupath, mom_output_gcstring (vclos),
 		       mom_item_cstring (webxitm),
 		       mom_item_cstring (reqmethitm));
-#warning should clear the webxitm
+      mom_item_lock (webxitm);
+      webex = NULL;
+      unsync_clear_webexitem_mom (webxitm);
+      mom_item_unlock (webxitm);
     }
-#warning handle_web_mom should do something here
   MOM_DEBUGPRINTF (web,
 		   "handle_web request #%ld  reqfupath %s reqmethitm %s NOT PROCESSED !!!",
 		   reqcnt, reqfupath, mom_item_cstring (reqmethitm));
