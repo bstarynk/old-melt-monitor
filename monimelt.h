@@ -110,6 +110,7 @@ const char *mom_user_data;
 const char *mom_webdocroot[MOM_MAX_WEBDOCROOT + 1];
 
 #define MOM_WEB_DOC_ROOT_PREFIX "wdoc/"
+#define MOM_WEB_SOCKET_FULL_PATH "/websocket"
 /** if the webroot/ directory exists, we serve the files inside as web
    document roots web-doc-root/, so file webroot/jquery.min.js would
    be accessible eg thru the URL

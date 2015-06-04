@@ -35,7 +35,7 @@ static char web_host_mom[80];
 
 #define WEBEXCHANGE_MAGIC_MOM 815064971	/* webexchange magic 0x3094e78b */
 struct webexchange_mom_st
-{
+{				// it is the itm_data1 of `web_exchange` items
   unsigned webx_magic;		// always WEBEXCHANGE_MAGIC_MOM
   double webx_time;
   long webx_reqcnt;
@@ -51,7 +51,17 @@ struct webexchange_mom_st
   int webx_code;
   pthread_cond_t webx_donecond;
   long webx__spare;
-};
+};				/* end of struct webexchange_mom_st */
+
+
+
+#define WEBSESSION_MAGIC_MOM 659863763	/* websession magic 659863763 */
+struct websession_mom_st
+{
+  unsigned wbss_magic;		/* always WEBSESSION_MAGIC_MOM  */
+  onion_websocket *wbss_websock;
+  // it is the itm_data1 of `web_session` items
+};				/* end of struct websession_mom_st */
 
 uint32_t webloginrandom_mom;
 
@@ -506,6 +516,10 @@ web_login_post_mom (long reqcnt, const char *reqfupath,
       momitem_t *websessitm = mom_make_anonymous_item ();
       websessitm->itm_kind = MOM_PREDEFINED_NAMED (web_session);
       websessitm->itm_space = momspa_transient;
+      struct websession_mom_st *wses =	//
+	MOM_GC_ALLOC ("websession", sizeof (struct websession_mom_st));
+      wses->wbss_magic = WEBSESSION_MAGIC_MOM;
+      websessitm->itm_data1 = wses;
       momvalue_t valuser = mom_stringv_cstr (postuserstr);
       mom_item_unsync_put_attribute (websessitm, MOM_PREDEFINED_NAMED (user),
 				     valuser);
@@ -608,6 +622,17 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
 		       "handle_web request #%ld reqpath '%s' WEB_DOC_ROOT",
 		       reqcnt, reqpath);
       return web_doc_root_mom (reqpath, reqcnt, requ, resp);
+    }
+  else if (!strcmp (reqpath, MOM_WEB_SOCKET_FULL_PATH))
+    {
+      MOM_DEBUGPRINTF (web,
+		       "handle_web request #%ld reqpath '%s' WEB_SOCKET",
+		       reqcnt, reqpath);
+      /// should call onion_websocket_new, put it into the websession data, and return OCS_WEBSOCKET
+#warning handle_web unimplemented websocket
+      MOM_WARNPRINTF ("websocket not handled request #%ld reqpath '%s'",
+		      reqcnt, reqpath);
+      return OCS_NOT_IMPLEMENTED;
     }
   else if (!strcmp (reqpath, "/favicon.ico"))
     {
@@ -1123,8 +1148,6 @@ start_web_onion_mom (void)
   MOM_INFORMPRINTF ("start web services using webhost %s", mom_web_host);
   onion_mom = onion_new (O_THREADED);
   onion_set_max_threads (onion_mom, mom_nb_workers + 1);
-  MOM_DEBUGPRINTF (web, "start_web_onion onion_html_quote of %s is %s",
-		   "/foo?xx=1&yy=2", onion_html_quote ("/foo?xx=1&yy=2"));
   char *whcolon = strchr (mom_web_host, ':');
   if (whcolon && whcolon > mom_web_host)
     {
