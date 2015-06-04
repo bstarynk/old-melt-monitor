@@ -2395,4 +2395,11 @@
  
 ..
 
+
+** websocket_handler   ////// PREDEFINED
+{
+  * comment  "attribute giving the websocket handler of incoming JSON" }
+ 
+..
+
 //// end of global file global.mom

@@ -1300,25 +1300,41 @@ websocketcb_mom (void *pridata, onion_websocket * ws, ssize_t datalen)
 	       buf);
 	  else
 	    {
-	      MOM_DEBUGPRINTF (web,
-			       "websocketcb wsessitm=%s decoded JSON %s",
-			       mom_item_cstring (wsessitm),
+	      momvalue_t vwebsockhdler = MOM_NONEV;
+	      {
+		mom_item_lock (MOM_PREDEFINED_NAMED (web_processor));
+		vwebsockhdler =	//
+		  mom_item_unsync_get_attribute	//
+		  (MOM_PREDEFINED_NAMED (web_processor),
+		   MOM_PREDEFINED_NAMED (websocket_handler));
+		mom_item_unlock (MOM_PREDEFINED_NAMED (web_processor));
+	      }
+	      momitem_t *jsonitm = mom_make_anonymous_item ();
+	      jsonitm->itm_kind = MOM_PREDEFINED_NAMED (json);
+	      jsonitm->itm_space = momspa_transient;
+	      jsonitm->itm_data1 = json;
+	      MOM_DEBUGPRINTF (web, "websocketcb wsessitm=%s vwebsockhdler=%s jsonitm=%s decoded JSON %s", mom_item_cstring (wsessitm), mom_output_gcstring (vwebsockhdler), mom_item_cstring (jsonitm),	//
 			       json_dumps (json,
 					   JSON_ENSURE_ASCII |
 					   JSON_ENCODE_ANY));
-#warning websocketcb_mom should consume json
+	      if (!mom_applval_2itm_to_void
+		  (vwebsockhdler, wsessitm, jsonitm))
+		MOM_WARNPRINTF
+		  ("websocketcb failed to apply vwebsockhdler=%s to wsessitm=%s jsonitm=%s",
+		   mom_output_gcstring (vwebsockhdler),
+		   mom_item_cstring (wsessitm), mom_item_cstring (jsonitm));
 	    };
 	  memmove (buf, buf + nloff, off - nloff);
 	  buf[off - nloff] = (char) 0;
 	  wses->wbss_inoff = off - nloff;
 	}
       while (nl);
+      ocs = OCS_PROCESSED;
     }
-#warning  websocketcb_mom unimplemented, should incrementally parse JSON on input
-  MOM_WARNPRINTF ("websocketcb wsessitm=%s datalen=%d unimplemented",
-		  mom_item_cstring (wsessitm), (int) datalen);
 end:
   mom_item_unlock (wsessitm);
+  MOM_DEBUGPRINTF (web, "websocketcb end wsessitm=%s ocs#%d",
+		   mom_item_cstring (wsessitm), (int) ocs);
   return ocs;
 }				/* end websocketcb_mom */
 
