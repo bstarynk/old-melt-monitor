@@ -63,6 +63,10 @@ struct websession_mom_st
   // it is the itm_data1 of `web_session` items
 };				/* end of struct websession_mom_st */
 
+static onion_connection_status websocketcb_mom (void *data,
+						onion_websocket * ws,
+						ssize_t datalen);
+
 uint32_t webloginrandom_mom;
 
 _Thread_local int mom_worker_num;
@@ -607,6 +611,14 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
 		   onion_dict_count (onion_request_get_post_dict (requ)));
   if (MOM_UNLIKELY (reqmethitm == NULL))
     return OCS_NOT_IMPLEMENTED;
+  const char *sesscookie
+    = onion_request_get_cookie (requ, SESSION_COOKIE_MOM);
+  momvalue_t sessval = mom_hashdict_getcstr (websessiondict_mom, sesscookie);
+  MOM_DEBUGPRINTF (web,
+		   "handle_web request #%ld  reqfupath %s reqmethitm %s sesscookie=%s sessval=%s",
+		   reqcnt, reqfupath, mom_item_cstring (reqmethitm),
+		   sesscookie, mom_output_gcstring (sessval));
+  const momnode_t *sessnod = mom_value_to_node (sessval);
   if (MOM_UNLIKELY (mom_should_stop ()))
     {
       MOM_WARNPRINTF ("handle_web aborting request #%ld full path %s", reqcnt,
@@ -625,14 +637,47 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
     }
   else if (!strcmp (reqpath, MOM_WEB_SOCKET_FULL_PATH))
     {
+      onion_connection_status ocs = OCS_NOT_IMPLEMENTED;
       MOM_DEBUGPRINTF (web,
 		       "handle_web request #%ld reqpath '%s' WEB_SOCKET",
 		       reqcnt, reqpath);
-      /// should call onion_websocket_new, put it into the websession data, and return OCS_WEBSOCKET
-#warning handle_web unimplemented websocket
-      MOM_WARNPRINTF ("websocket not handled request #%ld reqpath '%s'",
-		      reqcnt, reqpath);
-      return OCS_NOT_IMPLEMENTED;
+      if (!sessnod)
+	{
+	  MOM_WARNPRINTF
+	    ("websocket request #%ld reqpath '%s' without session", reqcnt,
+	     reqpath);
+	  return OCS_NOT_PROCESSED;
+	}
+      momitem_t *wsessitm = mom_value_to_item (mom_node_nth (sessnod, 0));
+      assert (wsessitm != NULL);
+      {
+	mom_item_lock (wsessitm);
+	assert (wsessitm->itm_kind == MOM_PREDEFINED_NAMED (web_session));
+	struct websession_mom_st *wsess =
+	  (struct websession_mom_st *) wsessitm->itm_data1;
+	assert (wsess && wsess->wbss_magic == WEBSESSION_MAGIC_MOM);
+	if (wsess->wbss_websock)
+	  {
+	    MOM_WARNPRINTF
+	      ("websocket request #%ld reqpath '%s' already has websocket",
+	       reqcnt, reqpath);
+	  }
+	else
+	  {
+	    wsess->wbss_websock = onion_websocket_new (requ, resp);
+	    onion_websocket_set_userdata (wsess->wbss_websock, wsessitm,
+					  NULL);
+	    onion_websocket_set_callback (wsess->wbss_websock,
+					  websocketcb_mom);
+	    MOM_DEBUGPRINTF (web,
+			     "handle_web request #%ld reqpath '%s' created websocket@%p in wsessitm=%s",
+			     reqcnt, reqpath, wsess->wbss_websock,
+			     mom_item_cstring (wsessitm));
+	    ocs = OCS_WEBSOCKET;
+	  };
+	mom_item_unlock (wsessitm);
+      }
+      return ocs;
     }
   else if (!strcmp (reqpath, "/favicon.ico"))
     {
@@ -675,13 +720,6 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
 	  return ocs;
 	}
     }
-  const char *sesscookie
-    = onion_request_get_cookie (requ, SESSION_COOKIE_MOM);
-  momvalue_t sessval = mom_hashdict_getcstr (websessiondict_mom, sesscookie);
-  MOM_DEBUGPRINTF (web,
-		   "handle_web request #%ld  reqfupath %s reqmethitm %s sesscookie=%s sessval=%s",
-		   reqcnt, reqfupath, mom_item_cstring (reqmethitm),
-		   sesscookie, mom_output_gcstring (sessval));
   if (sessval.typnum == momty_null)
     {
       if (reqmethitm == MOM_PREDEFINED_NAMED (http_POST))
@@ -721,7 +759,6 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
        respinisiz, reqcnt);
   webxitm->itm_kind = MOM_PREDEFINED_NAMED (web_exchange);
   webxitm->itm_data1 = webex;
-  const momnode_t *sessnod = mom_value_to_node (sessval);
   MOM_DEBUGPRINTF (web,
 		   "handle_web request #%ld reqfupath %s reqmethitm %s webxitm %s",
 		   reqcnt, reqfupath, mom_item_cstring (reqmethitm),
@@ -1179,6 +1216,35 @@ start_web_onion_mom (void)
   onion_listen (onion_mom);
 }				/* end start_web_onion_mom */
 
+
+static onion_connection_status
+websocketcb_mom (void *pridata, onion_websocket * ws, ssize_t datalen)
+{
+  onion_connection_status ocs = OCS_NOT_PROCESSED;
+  momitem_t *wsessitm = (momitem_t *) pridata;
+  struct websession_mom_st *wses = NULL;
+
+  assert (ws != NULL);
+  assert (wsessitm != NULL);
+  pthread_mutex_lock (wsessitm);
+  MOM_DEBUGPRINTF (web, "websocketcb start wsessitm=%s datalen=%d", wsessitm,
+		   datalen);
+  if (wsessitm->itm_kind != MOM_PREDEFINED_NAMED (web_session)
+      || !(wses = wsessitm->itm_data1))
+    {
+      MOM_WARNPRINTF ("websocketcb bad wsessitm=%s",
+		      mom_item_cstring (wsessitm));
+      goto end;
+    };
+  assert (wses->wbss_magic == WEBSESSION_MAGIC_MOM);
+  assert (!wses->wbss_websock || wses->wbss_websock == ws);
+#warning  websocketcb_mom unimplemented
+  MOM_WARNPRINTF ("websocketcb wsessitm=%s datalen=%d unimplemented",
+		  mom_item_cstring (wsessitm), (int) datalen);
+end:
+  pthread_mutex_unlock (wsessitm);
+  return ocs;
+}				/* end websocketcb_mom */
 
 void
 mom_run_workers (void)
