@@ -59,6 +59,7 @@
 #include <netinet/tcp.h>
 #include <sys/wait.h>
 #include <sys/file.h>
+#include <sys/resource.h>
 #include <sys/un.h>
 #include <fcntl.h>
 #include <dlfcn.h>
@@ -92,6 +93,10 @@
 // jansson, a JSON library in C which is Boehm-GC friendly
 // see http://www.digip.org/jansson/
 #include <jansson.h>
+
+
+// CURL, a very usually HTTP client library, see http://curl.haxx.se/libcurl/
+#include <curl/curl.h>
 
 // in generated _timestamp.c
 extern const char monimelt_timestamp[];

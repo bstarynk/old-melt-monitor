@@ -908,6 +908,26 @@ jansson_malloc_mom (size_t sz)
   return MOM_GC_ALLOC ("jansson malloc", sz);
 };
 
+// we sadly need to use select(2), not poll(2), because libcurl wants
+// select.  so we limit the number of file descriptors to
+// FD_SETSIZE-1; on my Debian/Linux FD_SETSIZE is 1024....
+static void
+limit_nofile_mom (void)
+{
+  int maxfd = FD_SETSIZE - 1;
+  struct rlimit myrlimits;
+  memset (&myrlimits, 0, sizeof (myrlimits));
+  if (getrlimit (RLIMIT_NOFILE, &myrlimits))
+    MOM_FATAPRINTF ("getrlimit RLIMIT_NOFILE failure");
+  if (myrlimits.rlim_cur > maxfd)
+    {
+      myrlimits.rlim_cur = maxfd;
+      MOM_DEBUGPRINTF (run, "limiting RLIMIT_NOFILE to %d", maxfd);
+      if (setrlimit (RLIMIT_NOFILE, &myrlimits))
+	MOM_FATAPRINTF ("setrlimit RLIMIT_NOFILE to %d failed (%m)", maxfd);
+    }
+}				/* end of limit_nofile_mom */
+
 int
 main (int argc_main, char **argv_main)
 {
@@ -948,6 +968,7 @@ main (int argc_main, char **argv_main)
       }
   }
   parse_program_arguments_and_load_plugins_mom (&argc, &argv);
+  limit_nofile_mom ();
   mom_initialize_items ();
   if (mom_nb_workers < MOM_MIN_WORKERS)
     mom_nb_workers = MOM_MIN_WORKERS;

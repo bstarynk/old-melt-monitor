@@ -57,7 +57,12 @@ struct socket_mom_st
 static struct socket_mom_st activesockets_mom[MOM_MAX_SOCKETS];
 int nb_sockets_mom;
 
+static CURLM *curlmulti_mom;
+
 #define MAX_POLL_MOM (MOM_MAX_SOCKETS+MOM_MAX_WORKERS+10)
+#if MAX_POLL_MOM > 256
+#warning MAX_POLL_MOM is quite big
+#endif
 
 /***
 We should dlopen every module with RTLD_GLOBAL | RTLD_NOW |
@@ -127,13 +132,16 @@ open_bind_socket_mom (void)
 void
 mom_event_loop (void)
 {
-#define BUSY_POLL_DELAY_MOM 25
-#define IDLE_POLL_DELAY_MOM 2500
+#define BUSY_MILLISEC_DELAY_MOM 25	/* milliseconds, i.e. 0.025 sec */
+#define IDLE_MILLISEC_DELAY_MOM 2500	/* milliseconds, i.e. 2.5 sec */
   bool idle = false;
   int evpipe[2] = { -1, -1 };
   MOM_DEBUGPRINTF (run, "start mom_event_loop");
   if (MOM_UNLIKELY (pipe (evpipe) || evpipe[0] <= 0 || evpipe[1] <= 0))
     MOM_FATAPRINTF ("failed to create pipe for event loop");
+  curlmulti_mom = curl_multi_init ();
+  if (MOM_UNLIKELY (curlmulti_mom == NULL))
+    MOM_FATAPRINTF ("failed to initialize CURL multi-handle");
   readfdeventloop_mom = evpipe[0];
   writefdeventloop_mom = evpipe[1];
   sigset_t mysigmasks;
@@ -155,50 +163,93 @@ mom_event_loop (void)
   while (!mom_should_stop ())
     {
       int nbpoll = 0;
-      struct pollfd pollarr[MAX_POLL_MOM];
-      struct
+      fd_set readfdset;
+      fd_set writefdset;
+      fd_set exceptfdset;
+      FD_ZERO (&readfdset);
+      FD_ZERO (&writefdset);
+      FD_ZERO (&exceptfdset);
+      struct timeval seltv = { 0, 0 };
+      struct polldata_fdmom_st
       {
 	mom_poll_handler_t *polld_hdlr;
 	intptr_t polld_dataindex;
-      } polldata[MAX_POLL_MOM];
-      memset (pollarr, 0, sizeof (pollarr));
+	int polld_fd;
+	short polld_event;
+      };
+      int maxfd = 0;
+      struct polldata_fdmom_st polldata[MAX_POLL_MOM];
       memset (polldata, 0, sizeof (polldata));
       {
 	pthread_mutex_lock (&eventloop_mtx_mom);
-#define DO_POLL_MOM(Fd,Event,Handler,DataIndex) do {	\
-      if (MOM_UNLIKELY(nbpoll >= MAX_POLL_MOM))		\
-	MOM_FATAPRINTF("too many %d poll handlers for "	\
-		       #Handler,			\
-		       nbpoll);				\
-      pollarr[nbpoll].fd = (Fd);			\
-      pollarr[nbpoll].events = (Event);			\
-      polldata[nbpoll].polld_hdlr = (Handler);		\
-      polldata[nbpoll].polld_dataindex = (DataIndex);	\
-      nbpoll++;						\
-    } while(0)
-	DO_POLL_MOM (readfdeventloop_mom, POLLIN, eventloopupdate_evcb_mom,
-		     0);
-	DO_POLL_MOM (signalfd_mom, POLLIN, signalprocess_evcb_mom, 0);
-	DO_POLL_MOM (timerfd_mom, POLLIN, timeout_evcb_mom, 0);
+	int curlmaxfd = 0;
+	CURLMcode err =
+	  curl_multi_fdset (curlmulti_mom, &readfdset, &writefdset,
+			    &exceptfdset, &curlmaxfd);
+	if (err)
+	  MOM_FATAPRINTF ("curl_multi_fdset failed %s",
+			  curl_multi_strerror (err));
+	if (curlmaxfd > 0)
+	  idle = false;
+	if (curlmaxfd > maxfd)
+	  maxfd = curlmaxfd;
+#define DO_READ_POLL_MOM(Fd,Handler,DataIndex)	do {		\
+	int rdfd = (Fd);					\
+	  if (rdfd<=0 || rdfd>=FD_SETSIZE)			\
+	    MOM_FATAPRINTF("bad read filedescriptor %d",	\
+			   rdfd);				\
+	  if (nbpoll >= MAX_POLL_MOM)				\
+	    MOM_FATAPRINTF("too many (%d) read polls",		\
+			   nbpoll);				\
+	  if (rdfd>maxfd)					\
+	    maxfd = rdfd;					\
+	  FD_SET(rdfd, &readfdset);            			\
+	  polldata[nbpoll].polld_hdlr = (Handler);		\
+	  polldata[nbpoll].polld_dataindex = (DataIndex);	\
+	  polldata[nbpoll].polld_event = POLLIN;		\
+	  nbpoll++;						\
+	} while(0)
+	DO_READ_POLL_MOM (readfdeventloop_mom, eventloopupdate_evcb_mom, 0);
+	DO_READ_POLL_MOM (signalfd_mom, signalprocess_evcb_mom, 0);
+	DO_READ_POLL_MOM (timerfd_mom, timeout_evcb_mom, 0);
 	for (int pix = 0; pix < MOM_MAX_WORKERS; pix++)
 	  if (workingprocesses_mom[pix].mproc_pid > 0
 	      && workingprocesses_mom[pix].mproc_outfd > 0
 	      && workingprocesses_mom[pix].mproc_itm != NULL)
-	    DO_POLL_MOM (workingprocesses_mom[pix].mproc_outfd, POLLIN,
-			 process_evcb_mom, pix);
+	    DO_READ_POLL_MOM (workingprocesses_mom[pix].mproc_outfd,
+			      process_evcb_mom, pix);
 	if (mastersocketfd_mom > 0)
-	  DO_POLL_MOM (mastersocketfd_mom, POLLIN, mastersocket_evcb_mom, 0);
+	  DO_READ_POLL_MOM (mastersocketfd_mom, mastersocket_evcb_mom, 0);
 	for (int six = 0; six < MOM_MAX_SOCKETS; six++)
 	  if (activesockets_mom[six].msock_fd > 0
 	      && activesockets_mom[six].msock_itm != NULL)
-	    DO_POLL_MOM (activesockets_mom[six].msock_fd, POLLIN,
-			 activesocket_evcb_mom, six);
-#warning incomplete mom_event_loop
-	MOM_FATAPRINTF ("incomplete mom_event_loop");
-#undef DO_POLL_MOM
+	    DO_READ_POLL_MOM (activesockets_mom[six].msock_fd,
+			      activesocket_evcb_mom, six);
+	int millisec =
+	  idle ? IDLE_MILLISEC_DELAY_MOM : BUSY_MILLISEC_DELAY_MOM;
+	long cutimeout = 0;
+	{
+	  CURLMcode err = curl_multi_timeout (curlmulti_mom, &cutimeout);
+	  if (err)
+	    MOM_FATAPRINTF ("curl_multi_timeout failed %s",
+			    curl_multi_strerror (err));
+	}
+	if (cutimeout > 0 && millisec > cutimeout)
+	  millisec = cutimeout;
+	if (millisec < 0)
+	  millisec = 1;
+	seltv.tv_sec = millisec / 1000;
+	seltv.tv_usec = millisec / 1000;
+#undef DO_READ_POLL_MOM
 	pthread_mutex_unlock (&eventloop_mtx_mom);
-      }
+      };
+      int selres =
+	select (maxfd + 1, &readfdset, &writefdset, &exceptfdset, &seltv);
+#warning incomplete mom_event_loop
+      MOM_FATAPRINTF ("incomplete mom_event_loop");
     };
+  // perhaps we should call curl_multi_cleanup(curlmulti_mom); etc.
+  MOM_DEBUGPRINTF (run, "end mom_event_loop");
 }				/* end of mom_event_loop */
 
 static void
