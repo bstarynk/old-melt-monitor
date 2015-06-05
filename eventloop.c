@@ -269,6 +269,8 @@ mom_event_loop (void)
 	  eventloopupdate_mom ();
 	  continue;
 	};
+      if (selres == 0)
+	idle = true;
       if (readfdeventloop_mom > 0
 	  && FD_ISSET (readfdeventloop_mom, &readfdset))
 	eventloopupdate_mom ();
