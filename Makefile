@@ -89,6 +89,9 @@ $(OBJECTS): monimelt.h predef-monimelt.h apply-monimelt.h
 	- echo '-T uint32_t' >> $@-tmp
 	- echo '-T uint64_t' >> $@-tmp
 	- echo '-T uintptr_t' >> $@-tmp
+	- echo '-T fd_set' >> $@-tmp
+	- echo '-T CURLM' >> $@-tmp
+	- echo '-T CURL' >> $@-tmp
 	- mv $@-tmp $@
 
 %.i: %.c

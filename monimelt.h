@@ -1638,6 +1638,15 @@ extern pthread_cond_t mom_agenda_changed_condvar;
 
 void mom_wake_event_loop (void);
 
+/// start a batch process (e.g. to compile the generated C code in
+/// some newly generated module). The closure vclos would be called
+/// after the process has ended, and is given the output string value
+/// & the exit code integer of that process, or the faulty vprocnode
+/// and some negative number. The vprocnode is a node of connective
+/// `batch_process` and whose sons are strings, passed to execvp (so
+/// the first son is the program name)
+void mom_start_batch_process (momvalue_t vclos, momvalue_t vprocnode);
+
 #define MOM_AGENDA_WAIT_SEC 2
 /****************************************************************
   Informal descriptions of kinds

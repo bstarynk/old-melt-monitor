@@ -25,6 +25,7 @@ static int readfdeventloop_mom = -1;
 static int signalfd_mom = -1;
 static int timerfd_mom = -1;
 static int mastersocketfd_mom = -1;
+static char *finaleventloopdump_mom;
 
 typedef void mom_poll_handler_t (int fd, short revent, intptr_t dataindex);
 static void eventloopupdate_mom (void);
@@ -34,19 +35,23 @@ static void process_evcb_mom (int fd, short revent, intptr_t dataindex);
 static void mastersocket_evcb_mom (int fd, short revent, intptr_t dataindex);
 static void activesocket_evcb_mom (int fd, short revent, intptr_t dataindex);
 
-struct process_mom_st
+struct runningbatchprocess_mom_st
 {
-  pid_t mproc_pid;
-  int mproc_outfd;
-  momitem_t *mproc_itm;
-  momvalue_t mproc_handlerv;
+  pid_t bproc_pid;
+  int bproc_outfd;
+  momvalue_t bproc_hclosv;
+  char *bproc_outbuf;
+  unsigned bproc_outsiz;
+  unsigned bproc_outoff;
+  long bproc__spare;
 };
 
-static struct process_mom_st workingprocesses_mom[MOM_MAX_WORKERS + 2];
+static struct runningbatchprocess_mom_st runbatchproc_mom[MOM_MAX_WORKERS +
+							  2];
 static int nb_processes_mom;
+// the queue of nodes ^in(<closure>,<procnode>)
+static struct momqueuevalues_st pendingbatchprocque_mom;
 
-
-static struct momqueuevalues_st pendingprocque_mom;
 
 
 struct socket_mom_st
@@ -56,8 +61,8 @@ struct socket_mom_st
   momvalue_t msock_handlerv;
 };
 
-#define MOM_MAX_SOCKETS (2*MOM_MAX_WORKERS+1)
-static struct socket_mom_st activesockets_mom[MOM_MAX_SOCKETS];
+#define MOM_MAX_SOCKETS (2*MOM_MAX_WORKERS)
+static struct socket_mom_st activesockets_mom[MOM_MAX_SOCKETS + 2];
 int nb_sockets_mom;
 
 static CURLM *curlmulti_mom;
@@ -129,6 +134,32 @@ open_bind_socket_mom (void)
 }				/* end of open_bind_socket_mom */
 
 
+struct polldata_fdmom_st
+{
+  mom_poll_handler_t *polld_hdlr;
+  intptr_t polld_dataindex;
+  int polld_fd;
+  short polld_event;
+};
+
+static inline void
+handle_polldata_mom (struct polldata_fdmom_st *pfd, fd_set *preadfdset,
+		     fd_set *pwritefdset, fd_set *pexceptfdset)
+{
+  int curfd = pfd->polld_fd;
+  if (curfd <= 0 || !pfd->polld_hdlr)
+    return;
+  short revent = 0;
+  if ((pfd->polld_event & POLLIN) && FD_ISSET (curfd, preadfdset))
+    revent |= POLLIN;
+  if ((pfd->polld_event & POLLOUT) && FD_ISSET (curfd, pwritefdset))
+    revent |= POLLOUT;
+  if ((pfd->polld_event & POLLPRI) && FD_ISSET (curfd, pexceptfdset))
+    revent |= POLLPRI;
+  if (revent)
+    (*pfd->polld_hdlr) (curfd, revent, pfd->polld_dataindex);
+}
+
 
 /// called from mom_run_workers in work.c; we assume that stdin is
 /// opened, that is that pollable file descriptors are >0
@@ -175,13 +206,6 @@ mom_event_loop (void)
       FD_ZERO (&writefdset);
       FD_ZERO (&exceptfdset);
       struct timeval seltv = { 0, 0 };
-      struct polldata_fdmom_st
-      {
-	mom_poll_handler_t *polld_hdlr;
-	intptr_t polld_dataindex;
-	int polld_fd;
-	short polld_event;
-      };
       int maxfd = 0;
       int curlmaxfd = 0;
       struct polldata_fdmom_st polldata[MAX_POLL_MOM];
@@ -205,7 +229,7 @@ mom_event_loop (void)
 	if (curlmaxfd > maxfd)
 	  maxfd = curlmaxfd;
 #define DO_READ_POLL_MOM(Fd,Handler,DataIndex)	do {		\
-	int rdfd = (Fd);					\
+	  int rdfd = (Fd);					\
 	  if (rdfd<=0 || rdfd>=FD_SETSIZE)			\
 	    MOM_FATAPRINTF("bad read filedescriptor %d",	\
 			   rdfd);				\
@@ -230,10 +254,10 @@ mom_event_loop (void)
 	if (timerfd_mom > 0)
 	  FD_SET (timerfd_mom, &readfdset);
 	for (int pix = 0; pix < MOM_MAX_WORKERS; pix++)
-	  if (workingprocesses_mom[pix].mproc_pid > 0
-	      && workingprocesses_mom[pix].mproc_outfd > 0
-	      && workingprocesses_mom[pix].mproc_itm != NULL)
-	    DO_READ_POLL_MOM (workingprocesses_mom[pix].mproc_outfd,
+	  if (runbatchproc_mom[pix].bproc_pid > 0
+	      && runbatchproc_mom[pix].bproc_outfd > 0
+	      && runbatchproc_mom[pix].bproc_outbuf != NULL)
+	    DO_READ_POLL_MOM (runbatchproc_mom[pix].bproc_outfd,
 			      process_evcb_mom, pix);
 	if (mastersocketfd_mom > 0)
 	  DO_READ_POLL_MOM (mastersocketfd_mom, mastersocket_evcb_mom, 0);
@@ -294,39 +318,13 @@ mom_event_loop (void)
 	     1) ? ((mom_random_nonzero_32_here () & 0x3ffffff) % nbpoll) : 0;
 	  for (int pix = startix; pix < nbpoll; pix++)
 	    {
-	      struct polldata_fdmom_st *pfd = polldata + pix;
-	      int curfd = pfd->polld_fd;
-	      if (curfd <= 0 || !pfd->polld_hdlr)
-		continue;
-	      short revent = 0;
-	      if ((pfd->polld_event & POLLIN) && FD_ISSET (curfd, &readfdset))
-		revent |= POLLIN;
-	      if ((pfd->polld_event & POLLOUT)
-		  && FD_ISSET (curfd, &writefdset))
-		revent |= POLLOUT;
-	      if ((pfd->polld_event & POLLPRI)
-		  && FD_ISSET (curfd, &exceptfdset))
-		revent |= POLLPRI;
-	      if (revent)
-		(*pfd->polld_hdlr) (curfd, revent, pfd->polld_dataindex);
+	      handle_polldata_mom (polldata + pix, &readfdset, &writefdset,
+				   &exceptfdset);
 	    }
 	  for (int pix = 0; pix < startix; pix++)
 	    {
-	      struct polldata_fdmom_st *pfd = polldata + pix;
-	      int curfd = pfd->polld_fd;
-	      if (curfd <= 0 || !pfd->polld_hdlr)
-		continue;
-	      short revent = 0;
-	      if ((pfd->polld_event & POLLIN) && FD_ISSET (curfd, &readfdset))
-		revent |= POLLIN;
-	      if ((pfd->polld_event & POLLOUT)
-		  && FD_ISSET (curfd, &writefdset))
-		revent |= POLLOUT;
-	      if ((pfd->polld_event & POLLPRI)
-		  && FD_ISSET (curfd, &exceptfdset))
-		revent |= POLLPRI;
-	      if (revent)
-		(*pfd->polld_hdlr) (curfd, revent, pfd->polld_dataindex);
+	      handle_polldata_mom (polldata + pix, &readfdset, &writefdset,
+				   &exceptfdset);
 	    };
 	};
       if (MOM_UNLIKELY (loopcount % LOOPDBG_FREQUENCY_MOM == 0))
@@ -335,14 +333,116 @@ mom_event_loop (void)
 	};
       loopcount++;
     };				/* end while !mom_should_stop */
+  if (finaleventloopdump_mom && finaleventloopdump_mom[0])
+    {
+      MOM_DEBUGPRINTF (run,
+		       "ending mom_event_loop done %ld loops before dumping to %s",
+		       loopcount, finaleventloopdump_mom);
+      mom_dump_state (finaleventloopdump_mom);
+      MOM_INFORMPRINTF ("event loop dumped state to %s after %ld loops",
+			finaleventloopdump_mom, loopcount);
+      MOM_DEBUGPRINTF (run,
+		       "ending mom_event_loop after %ld loops before dumping to %s",
+		       loopcount, finaleventloopdump_mom);
+    }
+
   // perhaps we should call curl_multi_cleanup(curlmulti_mom); etc.
   MOM_DEBUGPRINTF (run, "end mom_event_loop, done %ld loops", loopcount);
 }				/* end of mom_event_loop */
 
 
 static void
+start1batchprocess_mom (void)
+{
+  momvalue_t vinode = mom_queuevalue_pop_front (&pendingbatchprocque_mom);
+  const momnode_t *inod = mom_value_to_node (vinode);
+  assert (inod && mom_node_conn (inod) == MOM_PREDEFINED_NAMED (in)
+	  && mom_node_arity (inod) == 2);
+  momvalue_t vclos = mom_node_nth (inod, 0);
+  momvalue_t vprocnode = mom_node_nth (inod, 1);
+  struct runningbatchprocess_mom_st *bp = NULL;
+  for (unsigned ix = 1; ix <= MOM_MAX_WORKERS; ix++)
+    if (runbatchproc_mom[ix].bproc_pid == 0
+	&& runbatchproc_mom[ix].bproc_outfd == 0)
+      {
+	bp = runbatchproc_mom + ix;
+	break;
+      };
+  if (bp == NULL)
+    MOM_FATAPRINTF
+      ("corrupted runbatchproc array, filled but should have %d processes",
+       nb_processes_mom);
+  const momnode_t *procnod = mom_value_to_node (vprocnode);
+  unsigned proclen = mom_node_arity (procnod);
+  assert (proclen > 0);
+  int pipefds[2] = { -1, -1 };
+  if (MOM_UNLIKELY (pipe (pipefds)))
+    MOM_FATAPRINTF
+      ("failed to pipe when starting batch process for closure %s & process-node %s (%m)",
+       mom_output_gcstring (vclos), mom_output_gcstring (vprocnode));
+  assert (pipefds[0] > 2 && pipefds[1] > 2);
+  fflush (NULL);
+  pid_t pid = fork ();
+  if (MOM_UNLIKELY (pid < 0))
+    MOM_FATAPRINTF
+      ("failed to fork when starting batch process for closure %s & process-node %s (%m)",
+       mom_output_gcstring (vclos), mom_output_gcstring (vprocnode));
+  if (pid == 0)
+    {
+      // child process
+      close (STDIN_FILENO);
+      int nullfd = open ("/dev/null", O_RDONLY);
+      assert (nullfd == STDIN_FILENO);
+      dup2 (pipefds[1], STDOUT_FILENO);
+      dup2 (pipefds[1], STDERR_FILENO);
+      const char **argv =
+	MOM_GC_ALLOC ("argv batchprocess", (proclen + 2) * sizeof (char *));
+      for (unsigned ix = 0; ix < proclen; ix++)
+	argv[ix] =		//
+	  MOM_GC_STRDUP ("arg string batchprocess",	//
+			 mom_string_cstr (mom_value_to_string
+					  (mom_node_nth (procnod, ix))));
+      dup2 (pipefds[1], STDOUT_FILENO);
+      dup2 (pipefds[1], STDERR_FILENO);
+      for (int fd = 3; fd < 48; fd++)
+	close (fd);
+      execvp (argv[0], (char *const *) argv);
+      {
+	char errbuf[128];
+	snprintf (errbuf, sizeof (errbuf), "execvp %s", argv[0]);
+	perror (errbuf);
+	fflush (NULL);
+	_exit (127);
+      };
+      return;
+    }
+  // parent process
+  unsigned busiz = 4096;
+  char *buf = MOM_GC_SCALAR_ALLOC ("process output buffer", busiz);
+  memset (bp, 0, sizeof (*bp));
+  close (pipefds[1]);
+  bp->bproc_pid = pid;
+  bp->bproc_outfd = pipefds[0];
+  bp->bproc_hclosv = vclos;
+  bp->bproc_outbuf = buf;
+  bp->bproc_outsiz = busiz;
+  bp->bproc_outoff = 0;
+  nb_processes_mom++;
+  MOM_INFORMPRINTF ("started batch process %s as pid %d",
+		    mom_output_gcstring (vprocnode), (int) pid);
+}				/* end of start1batchprocess_mom */
+
+
+static void
 eventloopupdate_mom (void)
 {
+  {
+    pthread_mutex_lock (&eventloop_mtx_mom);
+    while (mom_queuevalue_size (&pendingbatchprocque_mom) > 0
+	   && nb_processes_mom < mom_nb_workers)
+      start1batchprocess_mom ();
+    pthread_mutex_unlock (&eventloop_mtx_mom);
+  }
   MOM_FATAPRINTF ("unimplemented eventloopupdate");
 #warning unimplemented eventloopupdate_mom
 }
@@ -350,6 +450,7 @@ eventloopupdate_mom (void)
 static void
 signalprocess_mom (void)
 {
+  /* should handle SIGCHLD by waiting the process */
   MOM_FATAPRINTF ("unimplemented signalprocess");
 #warning unimplemented signalprocess_mom
 }
@@ -372,15 +473,57 @@ process_evcb_mom (int fd, short revent, intptr_t dataindex)
 static void
 mastersocket_evcb_mom (int fd, short revent, intptr_t dataindex)
 {
-  MOM_FATAPRINTF ("unimplemented mastersocket_evcb fd=%d dataindex=%ld", fd,
-		  (long) dataindex);
+  MOM_FATAPRINTF
+    ("unimplemented mastersocket_evcb fd=%d revent=%d dataindex=%ld", fd,
+     (int) revent, (long) dataindex);
 #warning unimplemented mastersocket_evcb_mom
 }
 
 static void
 activesocket_evcb_mom (int fd, short revent, intptr_t dataindex)
 {
-  MOM_FATAPRINTF ("unimplemented activesocket_evcb fd=%d dataindex=%ld", fd,
-		  (long) dataindex);
+  MOM_FATAPRINTF
+    ("unimplemented activesocket_evcb fd=%d revent=%d dataindex=%ld", fd,
+     (int) revent, (long) dataindex);
 #warning unimplemented activesocket_evcb_mom
 }
+
+
+void
+mom_start_batch_process (momvalue_t vclos, momvalue_t vprocnode)
+{
+  bool ok = true;
+  MOM_DEBUGPRINTF (run, "start_batch_process vclos=%s vprocnode=%s",
+		   mom_output_gcstring (vclos),
+		   mom_output_gcstring (vprocnode));
+  if (vclos.typnum != momty_node)
+    ok = false;
+  momnode_t *procnod = mom_value_to_node (vprocnode);
+  unsigned procarity = 0;
+  if (!procnod
+      || mom_node_conn (procnod) != MOM_PREDEFINED_NAMED (batch_process)
+      || (procarity = mom_node_arity (procnod)) == 0)
+    ok = false;
+  else
+    {
+      for (unsigned ix = 0; ix < procarity && ok; ix++)
+	if (!mom_value_to_string (mom_node_nth (procnod, ix)))
+	  ok = false;
+    };
+  if (!ok)
+    {
+      MOM_WARNPRINTF
+	("invalid arguments to start_batch_process vclos=%s vprocnode=%s",
+	 mom_output_gcstring (vclos), mom_output_gcstring (vprocnode));
+      mom_applval_1val1int_to_void (vclos, vprocnode, -1);
+      return;
+    };
+  momvalue_t vinode =
+    mom_nodev_new (MOM_PREDEFINED_NAMED (in), 2, vclos, vprocnode);
+  {
+    pthread_mutex_lock (&eventloop_mtx_mom);
+    mom_queuevalue_push_back (&pendingbatchprocque_mom, vinode);
+    pthread_mutex_unlock (&eventloop_mtx_mom);
+    mom_wake_event_loop ();
+  }
+}				/* end of mom_start_batch_process */

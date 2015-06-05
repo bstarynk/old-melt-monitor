@@ -433,6 +433,65 @@ end_mom:
 
 
 
+// signature application support for signature_1val1int_to_void
+typedef bool mom_1val1int_to_void_sig_t (const momnode_t *nod_mom
+					 /* 2 inputs, 0 outputs: */ ,
+					 momvalue_t arg0_mom,
+					 intptr_t arg1_mom);
+
+
+#define MOM_PREFIXFUN_1val1int_to_void "momfunc_1val1int_to_void"
+static inline mom_1val1int_to_void_sig_t mom_applclos_1val1int_to_void;
+static inline bool
+mom_applval_1val1int_to_void (const momvalue_t clo_mom,
+			      momvalue_t arg0_mom, intptr_t arg1_mom)
+{
+  if (clo_mom.typnum != momty_node)
+    return false;
+  return mom_applclos_1val1int_to_void (clo_mom.vnode, arg0_mom, arg1_mom);
+}				// end of mom_applval_1val1int_to_void 
+
+static inline bool
+mom_applclos_1val1int_to_void (const momnode_t *nod_mom, momvalue_t arg0_mom,
+			       intptr_t arg1_mom)
+{
+  bool ok_mom = false;		//// generated in state.c
+  if (!nod_mom)
+    return false;
+  momitem_t *connitm_mom = (momitem_t *) nod_mom->conn;
+  assert (connitm_mom != NULL);
+  if (MOM_UNLIKELY ((const momitem_t *) connitm_mom->itm_kind
+		    != MOM_PREDEFINED_NAMED (signature_1val1int_to_void)))
+    goto end_mom;
+  void *data1_mom = connitm_mom->itm_data1;
+  if (MOM_UNLIKELY (data1_mom == NULL))
+    {
+      char nambuf_mom[256];
+      memset (nambuf_mom, 0, sizeof (nambuf_mom));
+      if (snprintf
+	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_1val1int_to_void_%s",
+	   mom_item_cstring (connitm_mom)) < (int) sizeof (nambuf_mom))
+	((momitem_t *) connitm_mom)->itm_data1 = data1_mom =
+	  mom_dynload_symbol (nambuf_mom);
+      else
+	MOM_FATAPRINTF
+	  ("too long function name %s for signature_1val1int_to_void",
+	   mom_item_cstring (connitm_mom));
+    };
+  if (MOM_LIKELY (data1_mom != NULL && data1_mom != MOM_EMPTY))
+    {
+      mom_1val1int_to_void_sig_t *fun_mom =
+	(mom_1val1int_to_void_sig_t *) data1_mom;
+      ok_mom = (*fun_mom) (nod_mom, arg0_mom, arg1_mom);
+    };
+end_mom:
+  mom_item_unlock (connitm_mom);
+  return ok_mom;
+}				// end of mom_applclos_1val1int_to_void
+
+
+
+
 // signature application support for signature_1val_to_val
 typedef bool mom_1val_to_val_sig_t (const momnode_t *nod_mom
 				    /* 1 inputs, 1 outputs: */ ,

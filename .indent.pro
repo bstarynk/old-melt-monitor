@@ -22,3 +22,6 @@
 -T uint32_t
 -T uint64_t
 -T uintptr_t
+-T fd_set
+-T CURLM
+-T CURL
