@@ -26,11 +26,18 @@ static int signalfd_mom = -1;
 static int timerfd_mom = -1;
 static int mastersocketfd_mom = -1;
 
-typedef void mom_poll_handler_t (int fd, void *data1, intptr_t data2);
+typedef void mom_poll_handler_t (int fd, intptr_t dataindex);
+static void eventloopupdate_evcb_mom (int fd, intptr_t dataindex);
+static void signalprocess_evcb_mom (int fd, intptr_t dataindex);
+static void timeout_evcb_mom (int fd, intptr_t dataindex);
+static void process_evcb_mom (int fd, intptr_t dataindex);
+static void mastersocket_evcb_mom (int fd, intptr_t dataindex);
+static void activesocket_evcb_mom (int fd, intptr_t dataindex);
+
 struct process_mom_st
 {
   pid_t mproc_pid;
-  int mproc_out;
+  int mproc_outfd;
   momitem_t *mproc_itm;
   momvalue_t mproc_handlerv;
 };
@@ -47,7 +54,7 @@ struct socket_mom_st
 };
 
 #define MOM_MAX_SOCKETS (2*MOM_MAX_WORKERS+1)
-static struct socket_mom_st sockets_mom[MOM_MAX_SOCKETS];
+static struct socket_mom_st activesockets_mom[MOM_MAX_SOCKETS];
 int nb_sockets_mom;
 
 #define MAX_POLL_MOM (MOM_MAX_SOCKETS+MOM_MAX_WORKERS+10)
@@ -114,10 +121,15 @@ open_bind_socket_mom (void)
 }				/* end of open_bind_socket_mom */
 
 
-/// called from mom_run_workers in work.c
+
+/// called from mom_run_workers in work.c; we assume that stdin is
+/// opened, that is that pollable file descriptors are >0
 void
 mom_event_loop (void)
 {
+#define BUSY_POLL_DELAY_MOM 25
+#define IDLE_POLL_DELAY_MOM 2500
+  bool idle = false;
   int evpipe[2] = { -1, -1 };
   MOM_DEBUGPRINTF (run, "start mom_event_loop");
   if (MOM_UNLIKELY (pipe (evpipe) || evpipe[0] <= 0 || evpipe[1] <= 0))
@@ -147,24 +159,92 @@ mom_event_loop (void)
       struct
       {
 	mom_poll_handler_t *polld_hdlr;
-	void *polld_data1;
-	intptr_t polld_data2;
+	intptr_t polld_dataindex;
       } polldata[MAX_POLL_MOM];
       memset (pollarr, 0, sizeof (pollarr));
       memset (polldata, 0, sizeof (polldata));
       {
 	pthread_mutex_lock (&eventloop_mtx_mom);
-#define DO_POLL(Fd,Event,Handler,Data1,Data2) do {	\
+#define DO_POLL_MOM(Fd,Event,Handler,DataIndex) do {	\
+      if (MOM_UNLIKELY(nbpoll >= MAX_POLL_MOM))		\
+	MOM_FATAPRINTF("too many %d poll handlers for "	\
+		       #Handler,			\
+		       nbpoll);				\
       pollarr[nbpoll].fd = (Fd);			\
-      pollarr[nbpoll].event = (Event);			\
+      pollarr[nbpoll].events = (Event);			\
       polldata[nbpoll].polld_hdlr = (Handler);		\
-      polldata[nbpoll].polld_data1 = (Data1);		\
-      polldata[nbpoll].polld_data2 = (Data2);		\
+      polldata[nbpoll].polld_dataindex = (DataIndex);	\
       nbpoll++;						\
     } while(0)
-	MOM_FATAPRINTF ("incomplete mom_event_loop");
+	DO_POLL_MOM (readfdeventloop_mom, POLLIN, eventloopupdate_evcb_mom,
+		     0);
+	DO_POLL_MOM (signalfd_mom, POLLIN, signalprocess_evcb_mom, 0);
+	DO_POLL_MOM (timerfd_mom, POLLIN, timeout_evcb_mom, 0);
+	for (int pix = 0; pix < MOM_MAX_WORKERS; pix++)
+	  if (workingprocesses_mom[pix].mproc_pid > 0
+	      && workingprocesses_mom[pix].mproc_outfd > 0
+	      && workingprocesses_mom[pix].mproc_itm != NULL)
+	    DO_POLL_MOM (workingprocesses_mom[pix].mproc_outfd, POLLIN,
+			 process_evcb_mom, pix);
+	if (mastersocketfd_mom > 0)
+	  DO_POLL_MOM (mastersocketfd_mom, POLLIN, mastersocket_evcb_mom, 0);
+	for (int six = 0; six < MOM_MAX_SOCKETS; six++)
+	  if (activesockets_mom[six].msock_fd > 0
+	      && activesockets_mom[six].msock_itm != NULL)
+	    DO_POLL_MOM (activesockets_mom[six].msock_fd, POLLIN,
+			 activesocket_evcb_mom, six);
 #warning incomplete mom_event_loop
+	MOM_FATAPRINTF ("incomplete mom_event_loop");
+#undef DO_POLL_MOM
 	pthread_mutex_unlock (&eventloop_mtx_mom);
       }
     };
 }				/* end of mom_event_loop */
+
+static void
+eventloopupdate_evcb_mom (int fd, intptr_t dataindex)
+{
+  MOM_FATAPRINTF ("unimplemented eventloopupdate_evcb fd=%d dataindex=%ld",
+		  fd, (long) dataindex);
+#warning unimplemented eventloopupdate_evcb_mom
+}
+
+static void
+signalprocess_evcb_mom (int fd, intptr_t dataindex)
+{
+  MOM_FATAPRINTF ("unimplemented signalprocess_evcb fd=%d dataindex=%ld", fd,
+		  (long) dataindex);
+#warning unimplemented signalprocess_evcb_mom
+}
+
+static void
+timeout_evcb_mom (int fd, intptr_t dataindex)
+{
+  MOM_FATAPRINTF ("unimplemented timeout_evcb fd=%d dataindex=%ld", fd,
+		  (long) dataindex);
+#warning unimplemented timeout_evcb_mom
+}
+
+static void
+process_evcb_mom (int fd, intptr_t dataindex)
+{
+  MOM_FATAPRINTF ("unimplemented process_evcb fd=%d dataindex=%ld", fd,
+		  (long) dataindex);
+#warning unimplemented process_evcb_mom
+}
+
+static void
+mastersocket_evcb_mom (int fd, intptr_t dataindex)
+{
+  MOM_FATAPRINTF ("unimplemented mastersocket_evcb fd=%d dataindex=%ld", fd,
+		  (long) dataindex);
+#warning unimplemented mastersocket_evcb_mom
+}
+
+static void
+activesocket_evcb_mom (int fd, intptr_t dataindex)
+{
+  MOM_FATAPRINTF ("unimplemented activesocket_evcb fd=%d dataindex=%ld", fd,
+		  (long) dataindex);
+#warning unimplemented activesocket_evcb_mom
+}
