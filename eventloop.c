@@ -26,13 +26,13 @@ static int signalfd_mom = -1;
 static int timerfd_mom = -1;
 static int mastersocketfd_mom = -1;
 
-typedef void mom_poll_handler_t (int fd, intptr_t dataindex);
-static void eventloopupdate_evcb_mom (int fd, intptr_t dataindex);
-static void signalprocess_evcb_mom (int fd, intptr_t dataindex);
-static void timeout_evcb_mom (int fd, intptr_t dataindex);
-static void process_evcb_mom (int fd, intptr_t dataindex);
-static void mastersocket_evcb_mom (int fd, intptr_t dataindex);
-static void activesocket_evcb_mom (int fd, intptr_t dataindex);
+typedef void mom_poll_handler_t (int fd, short revent, intptr_t dataindex);
+static void eventloopupdate_mom (void);
+static void signalprocess_mom (void);
+static void ringtimer_mom (void);
+static void process_evcb_mom (int fd, short revent, intptr_t dataindex);
+static void mastersocket_evcb_mom (int fd, short revent, intptr_t dataindex);
+static void activesocket_evcb_mom (int fd, short revent, intptr_t dataindex);
 
 struct process_mom_st
 {
@@ -152,10 +152,10 @@ mom_event_loop (void)
   sigaddset (&mysigmasks, SIGCHLD);
   if (sigprocmask (SIG_BLOCK, &mysigmasks, NULL) < 0)
     MOM_FATAPRINTF ("event_loop failed to block signals (%m)");
-  signalfd_mom = signalfd (-1, &mysigmasks, SFD_CLOEXEC);
+  signalfd_mom = signalfd (-1, &mysigmasks, SFD_NONBLOCK | SFD_CLOEXEC);
   if (signalfd_mom < 0)
     MOM_FATAPRINTF ("event_loop failed to signalfd (%m)");
-  timerfd_mom = timerfd_create (CLOCK_REALTIME, TFD_CLOEXEC);
+  timerfd_mom = timerfd_create (CLOCK_REALTIME, TFD_NONBLOCK | TFD_CLOEXEC);
   if (timerfd_mom < 0)
     MOM_FATAPRINTF ("event_loop failed to timerfd_create (%m)");
   if (mom_socket_path && mom_socket_path[0])
@@ -178,17 +178,19 @@ mom_event_loop (void)
 	short polld_event;
       };
       int maxfd = 0;
+      int curlmaxfd = 0;
       struct polldata_fdmom_st polldata[MAX_POLL_MOM];
       memset (polldata, 0, sizeof (polldata));
       {
 	pthread_mutex_lock (&eventloop_mtx_mom);
-	int curlmaxfd = 0;
-	CURLMcode err =
-	  curl_multi_fdset (curlmulti_mom, &readfdset, &writefdset,
-			    &exceptfdset, &curlmaxfd);
-	if (err)
-	  MOM_FATAPRINTF ("curl_multi_fdset failed %s",
-			  curl_multi_strerror (err));
+	{
+	  CURLMcode err =
+	    curl_multi_fdset (curlmulti_mom, &readfdset, &writefdset,
+			      &exceptfdset, &curlmaxfd);
+	  if (err)
+	    MOM_FATAPRINTF ("curl_multi_fdset failed %s",
+			    curl_multi_strerror (err));
+	}
 	if (curlmaxfd > 0)
 	  idle = false;
 	if (curlmaxfd > maxfd)
@@ -206,12 +208,18 @@ mom_event_loop (void)
 	  FD_SET(rdfd, &readfdset);            			\
 	  polldata[nbpoll].polld_hdlr = (Handler);		\
 	  polldata[nbpoll].polld_dataindex = (DataIndex);	\
-	  polldata[nbpoll].polld_event = POLLIN;		\
+	  polldata[nbpoll].polld_event |= POLLIN;		\
 	  nbpoll++;						\
 	} while(0)
-	DO_READ_POLL_MOM (readfdeventloop_mom, eventloopupdate_evcb_mom, 0);
-	DO_READ_POLL_MOM (signalfd_mom, signalprocess_evcb_mom, 0);
-	DO_READ_POLL_MOM (timerfd_mom, timeout_evcb_mom, 0);
+	/* We don't DO_READ_POLL_MOM for the special file descriptors
+	   readfdeventloop_mom, signalfd_mom, timerfd_mom since these 
+	   are processed specifically. */
+	if (readfdeventloop_mom > 0)
+	  FD_SET (readfdeventloop_mom, &readfdset);
+	if (signalfd_mom > 0)
+	  FD_SET (signalfd_mom, &readfdset);
+	if (timerfd_mom > 0)
+	  FD_SET (timerfd_mom, &readfdset);
 	for (int pix = 0; pix < MOM_MAX_WORKERS; pix++)
 	  if (workingprocesses_mom[pix].mproc_pid > 0
 	      && workingprocesses_mom[pix].mproc_outfd > 0
@@ -229,10 +237,10 @@ mom_event_loop (void)
 	  idle ? IDLE_MILLISEC_DELAY_MOM : BUSY_MILLISEC_DELAY_MOM;
 	long cutimeout = 0;
 	{
-	  CURLMcode err = curl_multi_timeout (curlmulti_mom, &cutimeout);
-	  if (err)
+	  CURLMcode cuerr = curl_multi_timeout (curlmulti_mom, &cutimeout);
+	  if (cuerr)
 	    MOM_FATAPRINTF ("curl_multi_timeout failed %s",
-			    curl_multi_strerror (err));
+			    curl_multi_strerror (cuerr));
 	}
 	if (cutimeout > 0 && millisec > cutimeout)
 	  millisec = cutimeout;
@@ -243,41 +251,102 @@ mom_event_loop (void)
 #undef DO_READ_POLL_MOM
 	pthread_mutex_unlock (&eventloop_mtx_mom);
       };
+      errno = 0;
       int selres =
 	select (maxfd + 1, &readfdset, &writefdset, &exceptfdset, &seltv);
-#warning incomplete mom_event_loop
-      MOM_FATAPRINTF ("incomplete mom_event_loop");
-    };
+      if (selres < 0 && errno != EINTR)
+	{
+	  MOM_WARNPRINTF ("event_loop select failed : %m");
+	  eventloopupdate_mom ();
+	  continue;
+	};
+      if (readfdeventloop_mom > 0
+	  && FD_ISSET (readfdeventloop_mom, &readfdset))
+	eventloopupdate_mom ();
+      if (signalfd_mom > 0 && FD_ISSET (signalfd_mom, &readfdset))
+	signalprocess_mom ();
+      if (timerfd_mom > 0 && FD_ISSET (timerfd_mom, &readfdset))
+	ringtimer_mom ();
+      if (curlmaxfd > 0)
+	{
+	  int nbcuhd = 0;
+	  CURLMcode cuerr = curl_multi_perform (curlmulti_mom, &nbcuhd);
+	  if (cuerr)
+	    MOM_FATAPRINTF ("curl_multi_perform failed %s",
+			    curl_multi_strerror (cuerr));
+	};
+      if (nbpoll > 0)
+	{
+	  // we handle the polldata starting at some random index.
+	  int startix =
+	    (nbpoll >
+	     1) ? ((mom_random_nonzero_32_here () & 0x3ffffff) % nbpoll) : 0;
+	  for (int pix = startix; pix < nbpoll; pix++)
+	    {
+	      struct polldata_fdmom_st *pfd = polldata + pix;
+	      int curfd = pfd->polld_fd;
+	      if (curfd <= 0 || !pfd->polld_hdlr)
+		continue;
+	      short revent = 0;
+	      if ((pfd->polld_event & POLLIN) && FD_ISSET (curfd, &readfdset))
+		revent |= POLLIN;
+	      if ((pfd->polld_event & POLLOUT)
+		  && FD_ISSET (curfd, &writefdset))
+		revent |= POLLOUT;
+	      if ((pfd->polld_event & POLLPRI)
+		  && FD_ISSET (curfd, &exceptfdset))
+		revent |= POLLPRI;
+	      if (revent)
+		(*pfd->polld_hdlr) (curfd, revent, pfd->polld_dataindex);
+	    }
+	  for (int pix = 0; pix < startix; pix++)
+	    {
+	      struct polldata_fdmom_st *pfd = polldata + pix;
+	      int curfd = pfd->polld_fd;
+	      if (curfd <= 0 || !pfd->polld_hdlr)
+		continue;
+	      short revent = 0;
+	      if ((pfd->polld_event & POLLIN) && FD_ISSET (curfd, &readfdset))
+		revent |= POLLIN;
+	      if ((pfd->polld_event & POLLOUT)
+		  && FD_ISSET (curfd, &writefdset))
+		revent |= POLLOUT;
+	      if ((pfd->polld_event & POLLPRI)
+		  && FD_ISSET (curfd, &exceptfdset))
+		revent |= POLLPRI;
+	      if (revent)
+		(*pfd->polld_hdlr) (curfd, revent, pfd->polld_dataindex);
+	    };
+	};
+    };				/* end while !mom_should_stop */
   // perhaps we should call curl_multi_cleanup(curlmulti_mom); etc.
   MOM_DEBUGPRINTF (run, "end mom_event_loop");
 }				/* end of mom_event_loop */
 
+
 static void
-eventloopupdate_evcb_mom (int fd, intptr_t dataindex)
+eventloopupdate_mom (void)
 {
-  MOM_FATAPRINTF ("unimplemented eventloopupdate_evcb fd=%d dataindex=%ld",
-		  fd, (long) dataindex);
-#warning unimplemented eventloopupdate_evcb_mom
+  MOM_FATAPRINTF ("unimplemented eventloopupdate");
+#warning unimplemented eventloopupdate_mom
 }
 
 static void
-signalprocess_evcb_mom (int fd, intptr_t dataindex)
+signalprocess_mom (void)
 {
-  MOM_FATAPRINTF ("unimplemented signalprocess_evcb fd=%d dataindex=%ld", fd,
-		  (long) dataindex);
-#warning unimplemented signalprocess_evcb_mom
+  MOM_FATAPRINTF ("unimplemented signalprocess");
+#warning unimplemented signalprocess_mom
 }
 
 static void
-timeout_evcb_mom (int fd, intptr_t dataindex)
+ringtimer_mom (void)
 {
-  MOM_FATAPRINTF ("unimplemented timeout_evcb fd=%d dataindex=%ld", fd,
-		  (long) dataindex);
-#warning unimplemented timeout_evcb_mom
+  MOM_FATAPRINTF ("unimplemented ringtimer_mom");
+#warning unimplemented ringtimer_mom
 }
 
 static void
-process_evcb_mom (int fd, intptr_t dataindex)
+process_evcb_mom (int fd, short revent, intptr_t dataindex)
 {
   MOM_FATAPRINTF ("unimplemented process_evcb fd=%d dataindex=%ld", fd,
 		  (long) dataindex);
@@ -285,7 +354,7 @@ process_evcb_mom (int fd, intptr_t dataindex)
 }
 
 static void
-mastersocket_evcb_mom (int fd, intptr_t dataindex)
+mastersocket_evcb_mom (int fd, short revent, intptr_t dataindex)
 {
   MOM_FATAPRINTF ("unimplemented mastersocket_evcb fd=%d dataindex=%ld", fd,
 		  (long) dataindex);
@@ -293,7 +362,7 @@ mastersocket_evcb_mom (int fd, intptr_t dataindex)
 }
 
 static void
-activesocket_evcb_mom (int fd, intptr_t dataindex)
+activesocket_evcb_mom (int fd, short revent, intptr_t dataindex)
 {
   MOM_FATAPRINTF ("unimplemented activesocket_evcb fd=%d dataindex=%ld", fd,
 		  (long) dataindex);
