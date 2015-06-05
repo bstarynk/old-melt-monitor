@@ -46,8 +46,8 @@ struct runningbatchprocess_mom_st
   long bproc__spare;
 };
 
-static struct runningbatchprocess_mom_st runbatchproc_mom[MOM_MAX_WORKERS +
-							  2];
+static struct runningbatchprocess_mom_st
+  runbatchproc_mom[MOM_MAX_WORKERS + 2];
 static int nb_processes_mom;
 // the queue of nodes ^in(<closure>,<procnode>)
 static struct momqueuevalues_st pendingbatchprocque_mom;
@@ -171,7 +171,8 @@ mom_event_loop (void)
   bool idle = false;
   int evpipe[2] = { -1, -1 };
   MOM_DEBUGPRINTF (run, "start mom_event_loop");
-  if (MOM_UNLIKELY (pipe (evpipe) || evpipe[0] <= 0 || evpipe[1] <= 0))
+  if (MOM_UNLIKELY (pipe2 (evpipe, O_CLOEXEC)
+		    || evpipe[0] <= 0 || evpipe[1] <= 0))
     MOM_FATAPRINTF ("failed to create pipe for event loop");
   curlmulti_mom = curl_multi_init ();
   if (MOM_UNLIKELY (curlmulti_mom == NULL))
@@ -253,7 +254,7 @@ mom_event_loop (void)
 	  FD_SET (signalfd_mom, &readfdset);
 	if (timerfd_mom > 0)
 	  FD_SET (timerfd_mom, &readfdset);
-	for (int pix = 0; pix < MOM_MAX_WORKERS; pix++)
+	for (int pix = 1; pix <= MOM_MAX_WORKERS; pix++)
 	  if (runbatchproc_mom[pix].bproc_pid > 0
 	      && runbatchproc_mom[pix].bproc_outfd > 0
 	      && runbatchproc_mom[pix].bproc_outbuf != NULL)
@@ -433,9 +434,13 @@ start1batchprocess_mom (void)
 }				/* end of start1batchprocess_mom */
 
 
+
 static void
 eventloopupdate_mom (void)
 {
+  char inbuf[2 * MOM_MAX_WORKERS];
+  // consume the bytes on the eventloop fd, but we don't use them
+  (void) read (readfdeventloop_mom, inbuf, sizeof (inbuf));
   {
     pthread_mutex_lock (&eventloop_mtx_mom);
     while (mom_queuevalue_size (&pendingbatchprocque_mom) > 0
@@ -447,9 +452,61 @@ eventloopupdate_mom (void)
 #warning unimplemented eventloopupdate_mom
 }
 
+
+void
+waitprocess_mom (void)
+{
+  for (;;)
+    {
+      int wsta = 0;
+      pid_t wpid = waitpid (0, &wsta, WNOHANG);
+      if (wpid <= 0)
+	return;
+      momvalue_t vclos = MOM_NONEV;
+      momvalue_t vout = MOM_NONEV;
+      {
+	struct runningbatchprocess_mom_st bproc;
+	memset (&bproc, 0, sizeof (bproc));
+	pthread_mutex_lock (&eventloop_mtx_mom);
+	for (unsigned ix = 1; ix <= MOM_MAX_WORKERS; ix++)
+	  if (runbatchproc_mom[ix].bproc_pid == wpid)
+	    {
+	      bproc = runbatchproc_mom[ix];
+	      memset (&runbatchproc_mom[ix], 0, sizeof (bproc));
+	      nb_processes_mom--;
+	      break;
+	    }
+	pthread_mutex_unlock (&eventloop_mtx_mom);
+	vclos = bproc.bproc_hclosv;
+	assert (bproc.bproc_outbuf);
+	assert (bproc.bproc_outoff < bproc.bproc_outsiz);
+	bproc.bproc_outbuf[bproc.bproc_outoff] = '\0';
+	vout = mom_stringv (mom_make_string_cstr (bproc.bproc_outbuf));
+	if (bproc.bproc_outfd > 0)
+	  close (bproc.bproc_outfd);
+	memset (&bproc, 0, sizeof (bproc));
+	if (!mom_applval_1val1int_to_void (vclos, vout, wsta))
+	  MOM_WARNPRINTF ("failed to apply closure %s after process %d ended",
+			  mom_output_gcstring (vclos), (int) wpid);
+      }
+    }
+}				/* end waitprocess_mom */
+
+
 static void
 signalprocess_mom (void)
 {
+  struct signalfd_siginfo sifd;
+  memset (&sifd, 0, sizeof (sifd));
+  int rd = read (signalfd_mom, &sifd, sizeof (sifd));
+  if (rd <= 0)
+    return;
+  assert (rd == sizeof (sifd));
+  MOM_DEBUGPRINTF (run, "signalprocess sifd: signo=%d code=%d",
+		   (int) sifd.ssi_signo, (int) sifd.ssi_code);
+  if (sifd.ssi_signo == SIGCHLD)
+    {
+    }
   /* should handle SIGCHLD by waiting the process */
   MOM_FATAPRINTF ("unimplemented signalprocess");
 #warning unimplemented signalprocess_mom
@@ -465,9 +522,36 @@ ringtimer_mom (void)
 static void
 process_evcb_mom (int fd, short revent, intptr_t dataindex)
 {
+  static char inbuf[4096];
+  assert (dataindex > 0 && dataindex <= MOM_MAX_WORKERS);
+  assert (revent & POLLIN);
+  assert (fd > 0);
+  memset (inbuf, 0, sizeof (inbuf));
+  pthread_mutex_lock (&eventloop_mtx_mom);
+  assert (runbatchproc_mom[dataindex].bproc_outfd == fd);
+  int rdcnt = read (fd, inbuf, sizeof (inbuf));
+  if (rdcnt > 0)
+    {
+      unsigned off = runbatchproc_mom[dataindex].bproc_outoff;
+      unsigned siz = runbatchproc_mom[dataindex].bproc_outsiz;
+      if (off + rdcnt + 2 >= siz)
+	{
+	  unsigned newsiz = ((off + rdcnt + off / 4) | 0x3ff) + 1;
+	  char *newbuf = MOM_GC_SCALAR_ALLOC ("newbuf", newsiz);
+	  char *oldbuf = runbatchproc_mom[dataindex].bproc_outbuf;
+	  memcpy (newbuf, oldbuf, off);
+	  runbatchproc_mom[dataindex].bproc_outsiz = newsiz;
+	  runbatchproc_mom[dataindex].bproc_outbuf = newbuf;
+	  MOM_GC_FREE (oldbuf, siz);
+	  siz = newsiz;
+	};
+      /// need to copy the readed data.
+#warning unimplemented process_evcb_mom
+
+    };
+  pthread_mutex_unlock (&eventloop_mtx_mom);
   MOM_FATAPRINTF ("unimplemented process_evcb fd=%d dataindex=%ld", fd,
 		  (long) dataindex);
-#warning unimplemented process_evcb_mom
 }
 
 static void
