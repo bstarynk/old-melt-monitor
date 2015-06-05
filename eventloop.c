@@ -42,9 +42,12 @@ struct process_mom_st
   momvalue_t mproc_handlerv;
 };
 
-static struct process_mom_st workingprocesses_mom[MOM_MAX_WORKERS + 1];
+static struct process_mom_st workingprocesses_mom[MOM_MAX_WORKERS + 2];
 static int nb_processes_mom;
+
+
 static struct momqueuevalues_st pendingprocque_mom;
+
 
 struct socket_mom_st
 {
@@ -160,6 +163,8 @@ mom_event_loop (void)
     MOM_FATAPRINTF ("event_loop failed to timerfd_create (%m)");
   if (mom_socket_path && mom_socket_path[0])
     mastersocketfd_mom = open_bind_socket_mom ();
+  long loopcount = 0;
+#define LOOPDBG_FREQUENCY_MOM 32
   while (!mom_should_stop ())
     {
       int nbpoll = 0;
@@ -181,6 +186,10 @@ mom_event_loop (void)
       int curlmaxfd = 0;
       struct polldata_fdmom_st polldata[MAX_POLL_MOM];
       memset (polldata, 0, sizeof (polldata));
+      if (MOM_UNLIKELY (loopcount % LOOPDBG_FREQUENCY_MOM == 0))
+	{
+	  MOM_DEBUGPRINTF (run, "start of eventloop #%ld", loopcount);
+	};
       {
 	pthread_mutex_lock (&eventloop_mtx_mom);
 	{
@@ -318,9 +327,14 @@ mom_event_loop (void)
 		(*pfd->polld_hdlr) (curfd, revent, pfd->polld_dataindex);
 	    };
 	};
+      if (MOM_UNLIKELY (loopcount % LOOPDBG_FREQUENCY_MOM == 0))
+	{
+	  MOM_DEBUGPRINTF (run, "end of eventloop #%ld", loopcount);
+	};
+      loopcount++;
     };				/* end while !mom_should_stop */
   // perhaps we should call curl_multi_cleanup(curlmulti_mom); etc.
-  MOM_DEBUGPRINTF (run, "end mom_event_loop");
+  MOM_DEBUGPRINTF (run, "end mom_event_loop, done %ld loops", loopcount);
 }				/* end of mom_event_loop */
 
 
