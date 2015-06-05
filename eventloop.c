@@ -26,6 +26,7 @@ static int signalfd_mom = -1;
 static int timerfd_mom = -1;
 static int mastersocketfd_mom = -1;
 
+typedef void mom_poll_handler_t (int fd, void *data1, intptr_t data2);
 struct process_mom_st
 {
   pid_t mproc_pid;
@@ -48,6 +49,8 @@ struct socket_mom_st
 #define MOM_MAX_SOCKETS (2*MOM_MAX_WORKERS+1)
 static struct socket_mom_st sockets_mom[MOM_MAX_SOCKETS];
 int nb_sockets_mom;
+
+#define MAX_POLL_MOM (MOM_MAX_SOCKETS+MOM_MAX_WORKERS+10)
 
 /***
 We should dlopen every module with RTLD_GLOBAL | RTLD_NOW |
@@ -137,6 +140,31 @@ mom_event_loop (void)
     MOM_FATAPRINTF ("event_loop failed to timerfd_create (%m)");
   if (mom_socket_path && mom_socket_path[0])
     mastersocketfd_mom = open_bind_socket_mom ();
-  MOM_FATAPRINTF ("incomplete mom_event_loop");
+  while (!mom_should_stop ())
+    {
+      int nbpoll = 0;
+      struct pollfd pollarr[MAX_POLL_MOM];
+      struct
+      {
+	mom_poll_handler_t *polld_hdlr;
+	void *polld_data1;
+	intptr_t polld_data2;
+      } polldata[MAX_POLL_MOM];
+      memset (pollarr, 0, sizeof (pollarr));
+      memset (polldata, 0, sizeof (polldata));
+      {
+	pthread_mutex_lock (&eventloop_mtx_mom);
+#define DO_POLL(Fd,Event,Handler,Data1,Data2) do {	\
+      pollarr[nbpoll].fd = (Fd);			\
+      pollarr[nbpoll].event = (Event);			\
+      polldata[nbpoll].polld_hdlr = (Handler);		\
+      polldata[nbpoll].polld_data1 = (Data1);		\
+      polldata[nbpoll].polld_data2 = (Data2);		\
+      nbpoll++;						\
+    } while(0)
+	MOM_FATAPRINTF ("incomplete mom_event_loop");
 #warning incomplete mom_event_loop
+	pthread_mutex_unlock (&eventloop_mtx_mom);
+      }
+    };
 }				/* end of mom_event_loop */
