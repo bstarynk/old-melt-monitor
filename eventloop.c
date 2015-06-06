@@ -160,6 +160,72 @@ handle_polldata_mom (struct polldata_fdmom_st *pfd, fd_set *preadfdset,
     (*pfd->polld_hdlr) (curfd, revent, pfd->polld_dataindex);
 }
 
+static inline void
+read_output_from_batchproc_mom (struct runningbatchprocess_mom_st *bp,
+				void *rbuf, size_t rsiz)
+{
+  if (bp->bproc_outfd <= 0)
+    return;
+  errno = 0;
+  for (;;)
+    {
+      int rcnt = read (bp->bproc_outfd, rbuf, rsiz);
+      if (rcnt < 0)
+	{
+	  if (errno == EINTR)
+	    continue;
+	  if (errno == EWOULDBLOCK)
+	    return;
+	  MOM_WARNPRINTF ("read output from batch process %d failed (%m)",
+			  bp->bproc_pid);
+	  close (bp->bproc_outfd);
+	  bp->bproc_outfd = -1;
+	  return;
+	}
+      else if (rcnt == 0)
+	{
+	  // got eof
+	  close (bp->bproc_outfd);
+	  bp->bproc_outfd = -1;
+	  return;
+	};
+      char *pbuf = bp->bproc_outbuf;
+      unsigned psiz = bp->bproc_outsiz;
+      unsigned poff = bp->bproc_outoff;
+      if (MOM_UNLIKELY (poff + rcnt >= MOM_MAX_STRING_LENGTH))
+	{
+	  MOM_WARNPRINTF
+	    ("output from batch process %d exceeds string capacity",
+	     bp->bproc_pid);
+	  rcnt = MOM_MAX_STRING_LENGTH - 1 - (rcnt + poff);
+	  close (bp->bproc_outfd);
+	  bp->bproc_outfd = -1;
+	  if (bp->bproc_pid > 0)
+	    kill (SIGTERM, bp->bproc_pid);
+	  if (rcnt <= 0)
+	    return;
+	  // the offending child process would probably get SIGPIPE fairly
+	  // quickly on its next output!
+	};
+      if (MOM_UNLIKELY (poff + rcnt + 1 >= psiz))
+	{
+	  unsigned newpsiz = ((poff + rcnt + 300 + poff / 4) | 0xff) + 1;
+	  char *newpbuf =
+	    MOM_GC_SCALAR_ALLOC ("grown output buffer", newpsiz);
+	  char *oldpbuf = pbuf;
+	  unsigned oldpsiz = psiz;
+	  memcpy (newpbuf, oldpbuf, poff);
+	  pbuf = bp->bproc_outbuf = newpbuf;
+	  psiz = bp->bproc_outsiz = newpsiz;
+	  MOM_GC_FREE (oldpbuf, oldpsiz);
+	};
+      memcpy (pbuf + poff, rbuf, rcnt);
+      pbuf[poff + rcnt] = (char) 0;
+      poff += rcnt;
+      bp->bproc_outoff = poff;
+    };				/* end forever loop */
+}				/* end of read_output_from_batchproc_mom */
+
 
 /// called from mom_run_workers in work.c; we assume that stdin is
 /// opened, that is that pollable file descriptors are >0
@@ -422,6 +488,7 @@ start1batchprocess_mom (void)
   char *buf = MOM_GC_SCALAR_ALLOC ("process output buffer", busiz);
   memset (bp, 0, sizeof (*bp));
   close (pipefds[1]);
+  fcntl (pipefds[0], F_SETFL, O_NONBLOCK);
   bp->bproc_pid = pid;
   bp->bproc_outfd = pipefds[0];
   bp->bproc_hclosv = vclos;
@@ -476,6 +543,10 @@ waitprocess_mom (void)
 	      nb_processes_mom--;
 	      break;
 	    }
+	// some residual bytes might stay in the pipe. We use a
+	// rather small local buffer to read them.
+	char rdbuf[256];
+	read_output_from_batchproc_mom (&bproc, rdbuf, sizeof (rdbuf));
 	pthread_mutex_unlock (&eventloop_mtx_mom);
 	vclos = bproc.bproc_hclosv;
 	assert (bproc.bproc_outbuf);
@@ -522,6 +593,8 @@ ringtimer_mom (void)
 static void
 process_evcb_mom (int fd, short revent, intptr_t dataindex)
 {
+  // we use a static input buffer, since we are only called from the
+  // event loop and its thread
   static char inbuf[4096];
   assert (dataindex > 0 && dataindex <= MOM_MAX_WORKERS);
   assert (revent & POLLIN);
@@ -529,29 +602,9 @@ process_evcb_mom (int fd, short revent, intptr_t dataindex)
   memset (inbuf, 0, sizeof (inbuf));
   pthread_mutex_lock (&eventloop_mtx_mom);
   assert (runbatchproc_mom[dataindex].bproc_outfd == fd);
-  int rdcnt = read (fd, inbuf, sizeof (inbuf));
-  if (rdcnt > 0)
-    {
-      unsigned off = runbatchproc_mom[dataindex].bproc_outoff;
-      unsigned siz = runbatchproc_mom[dataindex].bproc_outsiz;
-      if (off + rdcnt + 2 >= siz)
-	{
-	  unsigned newsiz = ((off + rdcnt + off / 4) | 0x3ff) + 1;
-	  char *newbuf = MOM_GC_SCALAR_ALLOC ("newbuf", newsiz);
-	  char *oldbuf = runbatchproc_mom[dataindex].bproc_outbuf;
-	  memcpy (newbuf, oldbuf, off);
-	  runbatchproc_mom[dataindex].bproc_outsiz = newsiz;
-	  runbatchproc_mom[dataindex].bproc_outbuf = newbuf;
-	  MOM_GC_FREE (oldbuf, siz);
-	  siz = newsiz;
-	};
-      /// need to copy the readed data.
-#warning unimplemented process_evcb_mom
-
-    };
+  read_output_from_batchproc_mom (&runbatchproc_mom[dataindex], inbuf,
+				  sizeof (inbuf));
   pthread_mutex_unlock (&eventloop_mtx_mom);
-  MOM_FATAPRINTF ("unimplemented process_evcb fd=%d dataindex=%ld", fd,
-		  (long) dataindex);
 }
 
 static void
