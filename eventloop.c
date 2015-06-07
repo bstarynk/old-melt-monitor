@@ -569,18 +569,55 @@ signalprocess_mom (void)
 {
   struct signalfd_siginfo sifd;
   memset (&sifd, 0, sizeof (sifd));
-  int rd = read (signalfd_mom, &sifd, sizeof (sifd));
-  if (rd <= 0)
-    return;
-  assert (rd == sizeof (sifd));
-  MOM_DEBUGPRINTF (run, "signalprocess sifd: signo=%d code=%d",
-		   (int) sifd.ssi_signo, (int) sifd.ssi_code);
-  if (sifd.ssi_signo == SIGCHLD)
+  for (;;)
     {
+      int rd = read (signalfd_mom, &sifd, sizeof (sifd));
+      if (rd <= 0)
+	return;
+      assert (rd == sizeof (sifd));
+      unsigned signo = sifd.ssi_signo;
+      MOM_DEBUGPRINTF (run, "signalprocess sifd: signo=%d (%s) code=%d",
+		       (int) signo, strsignal (signo), (int) sifd.ssi_code);
+      if (signo == SIGCHLD)
+	{
+	  waitprocess_mom ();
+	}
+      else if (signo == SIGTERM)
+	{
+	  char templdirnam[32] = "monimelt_term_XXXXXX";
+	  if (!mkdtemp (templdirnam))
+	    MOM_FATAPRINTF ("failed to create temporary dump directory (%m)");
+	  strcat (templdirnam, "/");
+	  finaleventloopdump_mom = templdirnam;
+	  MOM_INFORMPRINTF
+	    ("got SIGTERM, so will dump into temporary directory %s",
+	     templdirnam);
+	  mom_stop_work ();
+	}
+      else if (signo == SIGINT)
+	{
+	  char templdirnam[32] = "monimelt_int_XXXXXX";
+	  if (!mkdtemp (templdirnam))
+	    MOM_FATAPRINTF ("failed to create temporary dump directory (%m)");
+	  strcat (templdirnam, "/");
+	  finaleventloopdump_mom = templdirnam;
+	  MOM_INFORMPRINTF
+	    ("got SIGINT, so will dump into temporary directory %s",
+	     templdirnam);
+	  mom_stop_work ();
+	}
+      else if (signo == SIGQUIT)
+	{
+	  MOM_INFORMPRINTF ("got SIGQUIT, so will stop without saving state");
+	  mom_stop_work ();
+	}
+      else
+	{
+	  MOM_WARNPRINTF
+	    ("signalprocess got unexpected signal#%d (%s), code=%d",
+	     (int) signo, strsignal (signo), (int) sifd.ssi_code);
+	}
     }
-  /* should handle SIGCHLD by waiting the process */
-  MOM_FATAPRINTF ("unimplemented signalprocess");
-#warning unimplemented signalprocess_mom
 }
 
 static void

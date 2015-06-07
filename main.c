@@ -919,7 +919,7 @@ limit_nofile_mom (void)
   memset (&myrlimits, 0, sizeof (myrlimits));
   if (getrlimit (RLIMIT_NOFILE, &myrlimits))
     MOM_FATAPRINTF ("getrlimit RLIMIT_NOFILE failure");
-  if (myrlimits.rlim_cur > maxfd)
+  if ((int) myrlimits.rlim_cur > maxfd)
     {
       myrlimits.rlim_cur = maxfd;
       MOM_DEBUGPRINTF (run, "limiting RLIMIT_NOFILE to %d", maxfd);
