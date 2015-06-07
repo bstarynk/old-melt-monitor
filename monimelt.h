@@ -63,7 +63,9 @@
 #include <sys/un.h>
 #include <fcntl.h>
 #include <dlfcn.h>
+#if __GLIBC__
 #include <execinfo.h>
+#endif
 
 // libunistring: https://www.gnu.org/software/libunistring/
 #include <unistr.h>

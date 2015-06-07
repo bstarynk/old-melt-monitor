@@ -260,6 +260,7 @@ mom_fataprintf_at (const char *fil, int lin, const char *fmt, ...)
     }
   else
     msg = buf;
+#if __GLIBC__
 #define BACKTRACE_MAX_MOM 100
   void *bbuf[BACKTRACE_MAX_MOM];
   int blev = 0;
@@ -291,6 +292,7 @@ mom_fataprintf_at (const char *fil, int lin, const char *fmt, ...)
 	fprintf (stderr, "MONIMELTB[%d]: %s\n", i, bsym[i]);
       fflush (NULL);
     }
+#endif
   if (bigbuf)
     free (bigbuf);
   abort ();
@@ -927,6 +929,7 @@ limit_nofile_mom (void)
 	MOM_FATAPRINTF ("setrlimit RLIMIT_NOFILE to %d failed (%m)", maxfd);
     }
 }				/* end of limit_nofile_mom */
+
 
 int
 main (int argc_main, char **argv_main)

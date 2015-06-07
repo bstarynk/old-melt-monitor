@@ -29,7 +29,7 @@ static char *finaleventloopdump_mom;
 
 typedef void mom_poll_handler_t (int fd, short revent, intptr_t dataindex);
 static void eventloopupdate_mom (void);
-static void signalprocess_mom (void);
+static void signalhandle_mom (void);
 static void ringtimer_mom (void);
 static void process_evcb_mom (int fd, short revent, intptr_t dataindex);
 static void mastersocket_evcb_mom (int fd, short revent, intptr_t dataindex);
@@ -233,7 +233,7 @@ void
 mom_event_loop (void)
 {
 #define BUSY_MILLISEC_DELAY_MOM 25	/* milliseconds, i.e. 0.025 sec */
-#define IDLE_MILLISEC_DELAY_MOM 2500	/* milliseconds, i.e. 2.5 sec */
+#define IDLE_MILLISEC_DELAY_MOM 3500	/* milliseconds, i.e. 3.5 sec */
   bool idle = false;
   int evpipe[2] = { -1, -1 };
   MOM_DEBUGPRINTF (run, "start mom_event_loop");
@@ -246,19 +246,25 @@ mom_event_loop (void)
   readfdeventloop_mom = evpipe[0];
   writefdeventloop_mom = evpipe[1];
   sigset_t mysigmasks;
+  MOM_DEBUGPRINTF (run,
+		   "event_loop before handling signals SIGINT=%d SIGTERM=%d SIGQUIT=%dSIGCHLD=%d",
+		   SIGINT, SIGTERM, SIGQUIT, SIGCHLD);
   sigemptyset (&mysigmasks);
   sigaddset (&mysigmasks, SIGINT);
   sigaddset (&mysigmasks, SIGQUIT);
   sigaddset (&mysigmasks, SIGTERM);
   sigaddset (&mysigmasks, SIGCHLD);
-  if (sigprocmask (SIG_BLOCK, &mysigmasks, NULL) < 0)
-    MOM_FATAPRINTF ("event_loop failed to block signals (%m)");
+  // we must block the signals before signalfd!
+  if (sigprocmask (SIG_BLOCK, &mysigmasks, NULL))
+    MOM_FATAPRINTF ("failed to block signals before signalfd");
   signalfd_mom = signalfd (-1, &mysigmasks, SFD_NONBLOCK | SFD_CLOEXEC);
   if (signalfd_mom < 0)
     MOM_FATAPRINTF ("event_loop failed to signalfd (%m)");
+  MOM_DEBUGPRINTF (run, "event_loop got signalfd#%d", signalfd_mom);
   timerfd_mom = timerfd_create (CLOCK_REALTIME, TFD_NONBLOCK | TFD_CLOEXEC);
   if (timerfd_mom < 0)
     MOM_FATAPRINTF ("event_loop failed to timerfd_create (%m)");
+  MOM_DEBUGPRINTF (run, "event_loop got timerfd#%d", timerfd_mom);
   if (mom_socket_path && mom_socket_path[0])
     mastersocketfd_mom = open_bind_socket_mom ();
   long loopcount = 0;
@@ -360,13 +366,15 @@ mom_event_loop (void)
 	  eventloopupdate_mom ();
 	  continue;
 	};
+      MOM_DEBUGPRINTF (run, "event_loop selres=%d loopcount=%ld", selres,
+		       loopcount);
       if (selres == 0)
 	idle = true;
       if (readfdeventloop_mom > 0
 	  && FD_ISSET (readfdeventloop_mom, &readfdset))
 	eventloopupdate_mom ();
       if (signalfd_mom > 0 && FD_ISSET (signalfd_mom, &readfdset))
-	signalprocess_mom ();
+	signalhandle_mom ();
       if (timerfd_mom > 0 && FD_ISSET (timerfd_mom, &readfdset))
 	ringtimer_mom ();
       if (curlmaxfd > 0)
@@ -565,10 +573,11 @@ waitprocess_mom (void)
 
 
 static void
-signalprocess_mom (void)
+signalhandle_mom (void)
 {
   struct signalfd_siginfo sifd;
   memset (&sifd, 0, sizeof (sifd));
+  MOM_DEBUGPRINTF (run, "signalhandle start signalfd#%d", signalfd_mom);
   for (;;)
     {
       int rd = read (signalfd_mom, &sifd, sizeof (sifd));
@@ -576,7 +585,7 @@ signalprocess_mom (void)
 	return;
       assert (rd == sizeof (sifd));
       unsigned signo = sifd.ssi_signo;
-      MOM_DEBUGPRINTF (run, "signalprocess sifd: signo=%d (%s) code=%d",
+      MOM_DEBUGPRINTF (run, "signalhandle sifd: signo=%d (%s) code=%d",
 		       (int) signo, strsignal (signo), (int) sifd.ssi_code);
       if (signo == SIGCHLD)
 	{
@@ -614,7 +623,7 @@ signalprocess_mom (void)
       else
 	{
 	  MOM_WARNPRINTF
-	    ("signalprocess got unexpected signal#%d (%s), code=%d",
+	    ("signalhandle got unexpected signal#%d (%s), code=%d",
 	     (int) signo, strsignal (signo), (int) sifd.ssi_code);
 	}
     }
