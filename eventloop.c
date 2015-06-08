@@ -711,6 +711,9 @@ signalhandle_mom (void)
 	  MOM_INFORMPRINTF
 	    ("got SIGTERM, so will dump into temporary directory %s",
 	     templdirnam);
+	  MOM_DEBUGPRINTF (run, "signalhandle before SIGTERM-ing workers");
+	  mom_kill_workers (SIGTERM);
+	  MOM_DEBUGPRINTF (run, "signalhandle after SIGTERM-ing workers");
 	  mom_stop_work ();
 	}
       if (do_sigint)
@@ -723,16 +726,22 @@ signalhandle_mom (void)
 	  MOM_INFORMPRINTF
 	    ("got SIGINT, so will dump into temporary directory %s",
 	     templdirnam);
+	  MOM_DEBUGPRINTF (run, "signalhandle before SIGINT-ing workers");
+	  mom_kill_workers (SIGINT);
+	  MOM_DEBUGPRINTF (run, "signalhandle after SIGINT-ing workers");
 	  mom_stop_work ();
 	}
       if (do_sigquit)
 	{
 	  MOM_INFORMPRINTF ("got SIGQUIT, so will stop without saving state");
+	  MOM_DEBUGPRINTF (run, "signalhandle before SIGQUIT-ing workers");
+	  mom_kill_workers (SIGQUIT);
+	  MOM_DEBUGPRINTF (run, "signalhandle after SIGQUIT-ing workers");
 	  mom_stop_work ();
 	}
       if (!got_signal)
 	{
-	  MOM_DEBUGPRINTF (run, "signalhandle done, no signal");
+	  MOM_DEBUGPRINTF (run, "signalhandle done, no more signals");
 	  return;
 	}
     }

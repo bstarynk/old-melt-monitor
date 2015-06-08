@@ -137,6 +137,9 @@ typedef bool mom_web_authentificator_sig_t (const char *webuser,
 					    const char *webpasswd);
 mom_web_authentificator_sig_t *mom_web_authentificator;
 
+// pthread_kill every worker thread unless should stop
+void mom_kill_workers (int signum);
+
 // mark unlikely conditions to help optimization
 #ifdef __GNUC__
 #define MOM_UNLIKELY(P) __builtin_expect((P),0)

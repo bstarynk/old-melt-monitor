@@ -93,6 +93,25 @@ mom_stop_work (void)
 }
 
 
+void
+mom_kill_workers (int signum)
+{
+  MOM_DEBUGPRINTF (run, "kill_workers signum=%d", signum);
+  if (!mom_should_stop ())
+    {
+      for (unsigned ix = 1; ix <= (unsigned) mom_nb_workers; ix++)
+	{
+	  pthread_t wth = worker_threads_mom[ix];
+	  if (wth)
+	    {
+	      MOM_DEBUGPRINTF (run, "kill_workers ix#%d wth=%#lx", ix,
+			       (long) wth);
+	      pthread_kill (signum, wth);
+	    }
+	}
+    }
+}				/* end mom_kill_workers */
+
 static void *
 work_run_mom (void *p)
 {
@@ -105,6 +124,7 @@ work_run_mom (void *p)
   long count = 0;
   mom_worker_num = ix;
   usleep (ix * 1024);
+  MOM_DEBUGPRINTF (run, "work_run start ix#%d", (int) ix);
   while (!mom_should_stop ())
     {
       count++;
@@ -118,7 +138,7 @@ work_run_mom (void *p)
       if (MOM_UNLIKELY ((count + MOM_MAX_WORKERS) % 2048 == ix))
 	usleep (20);
     }
-  MOM_DEBUGPRINTF (run, "work_run count#%ld ending", count);
+  MOM_DEBUGPRINTF (run, "work_run ix#%d count#%ld ending", (int) ix, count);
   return NULL;
 }				/* end work_run_mom */
 
@@ -156,6 +176,7 @@ join_workers_mom (void)
       if ((err = pthread_join (worker_threads_mom[ix], &ret)) != 0)
 	MOM_FATAPRINTF ("pthread_join for worker#%d failed (%d = %s)",
 			ix, err, strerror (err));
+      worker_threads_mom[ix] = (pthread_t) 0;
     };
 }				/* end of join_workers_mom */
 
