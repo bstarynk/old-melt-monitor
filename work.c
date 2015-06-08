@@ -106,7 +106,7 @@ mom_kill_workers (int signum)
 	    {
 	      MOM_DEBUGPRINTF (run, "kill_workers ix#%d wth=%#lx", ix,
 			       (long) wth);
-	      pthread_kill (signum, wth);
+	      pthread_kill (wth, signum);
 	    }
 	}
     }

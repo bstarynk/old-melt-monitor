@@ -498,6 +498,11 @@ mom_event_loop (void)
 			finaleventloopdump_mom, loopcount);
       finaleventloopdump_mom = NULL;
     }
+  else
+    MOM_DEBUGPRINTF (run,
+		     "ending mom_event_loop done %ld loops no final dump",
+		     loopcount);
+
 
   // perhaps we should call curl_multi_cleanup(curlmulti_mom); etc.
   MOM_DEBUGPRINTF (run, "ended mom_event_loop (pid %d), done %ld loops",
