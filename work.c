@@ -1373,14 +1373,21 @@ void
 mom_run_workers (void)
 {
   extern void mom_event_loop (void);	// in file eventloop.c
+  extern void mom_initialize_signals (void);	// in file eventloop.c
   MOM_INFORMPRINTF ("start run %d workers (webhost %s, socket %s)",
 		    mom_nb_workers, mom_web_host, mom_socket_path);
   if (MOM_UNLIKELY (mom_nb_workers < MOM_MIN_WORKERS
 		    || mom_nb_workers > MOM_MAX_WORKERS))
     MOM_FATAPRINTF ("invalid mom_nb_workers %d", mom_nb_workers);
+  MOM_DEBUGPRINTF (run, "run_workers before initialize_signals");
+  mom_initialize_signals ();
+  MOM_DEBUGPRINTF (run, "run_workers before start_web_onion_mom");
   start_workers_mom ();
   if (mom_web_host && mom_web_host[0])
-    start_web_onion_mom ();
+    {
+      MOM_DEBUGPRINTF (run, "run_workers before start_web_onion");
+      start_web_onion_mom ();
+    }
   sched_yield ();
   MOM_DEBUGPRINTF (run, "run_workers before event_loop");
   mom_event_loop ();

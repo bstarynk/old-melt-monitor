@@ -26,6 +26,11 @@ static int signalfd_mom = -1;
 static int timerfd_mom = -1;
 static int mastersocketfd_mom = -1;
 static char *finaleventloopdump_mom;
+static volatile sig_atomic_t gotsomesignal_mom;
+static volatile sig_atomic_t gotsigterm_mom;
+static volatile sig_atomic_t gotsigint_mom;
+static volatile sig_atomic_t gotsigquit_mom;
+static volatile sig_atomic_t gotsigchild_mom;
 
 typedef void mom_poll_handler_t (int fd, short revent, intptr_t dataindex);
 static void eventloopupdate_mom (void);
@@ -227,6 +232,89 @@ read_output_from_batchproc_mom (struct runningbatchprocess_mom_st *bp,
 }				/* end of read_output_from_batchproc_mom */
 
 
+
+static void
+sigterm_handler_mom (int sig)
+{
+  assert (sig == SIGTERM);
+  gotsomesignal_mom = 1;
+  gotsigterm_mom = 1;
+}
+
+static void
+sigint_handler_mom (int sig)
+{
+  assert (sig == SIGINT);
+  gotsomesignal_mom = 1;
+  gotsigint_mom = 1;
+}
+
+static void
+sigquit_handler_mom (int sig)
+{
+  assert (sig == SIGQUIT);
+  gotsomesignal_mom = 1;
+  gotsigquit_mom = 1;
+}
+
+static void
+sigchild_handler_mom (int sig)
+{
+  assert (sig == SIGCHLD);
+  gotsomesignal_mom = 1;
+  gotsigchild_mom = 1;
+}
+
+/// called early from mom_run_workers in work.c before starting
+/// workers or onion.
+void
+mom_initialize_signals (void)
+{
+  /// see also https://ldpreload.com/blog/signalfd-is-useless
+  MOM_DEBUGPRINTF (run, "start mom_initialize_signals");
+  sigset_t mysigmasks;
+  MOM_DEBUGPRINTF (run,
+		   "initialize_signals before handling signals SIGINT=%d SIGTERM=%d SIGQUIT=%dSIGCHLD=%d",
+		   SIGINT, SIGTERM, SIGQUIT, SIGCHLD);
+  sigemptyset (&mysigmasks);
+  sigaddset (&mysigmasks, SIGINT);
+  sigaddset (&mysigmasks, SIGQUIT);
+  sigaddset (&mysigmasks, SIGTERM);
+  sigaddset (&mysigmasks, SIGCHLD);
+  struct sigaction sa;
+  // SIGINT:
+  memset (&sa, 0, sizeof (sa));
+  sa.sa_handler = sigint_handler_mom;
+  sa.sa_mask = mysigmasks;
+  sa.sa_flags = SA_RESTART;
+  sigaction (SIGINT, &sa, NULL);
+  // SIGQUIT:
+  memset (&sa, 0, sizeof (sa));
+  sa.sa_handler = sigquit_handler_mom;
+  sa.sa_mask = mysigmasks;
+  sa.sa_flags = SA_RESTART;
+  sigaction (SIGQUIT, &sa, NULL);
+  // SIGTERM:
+  memset (&sa, 0, sizeof (sa));
+  sa.sa_handler = sigterm_handler_mom;
+  sa.sa_mask = mysigmasks;
+  sa.sa_flags = SA_RESTART;
+  sigaction (SIGTERM, &sa, NULL);
+  // SIGCHILD:
+  memset (&sa, 0, sizeof (sa));
+  sa.sa_handler = sigchild_handler_mom;
+  sa.sa_mask = mysigmasks;
+  sa.sa_flags = SA_RESTART | SA_NOCLDSTOP;
+  sigaction (SIGCHLD, &sa, NULL);
+  // set the signalfd
+  signalfd_mom = signalfd (-1, &mysigmasks, SFD_NONBLOCK | SFD_CLOEXEC);
+  if (signalfd_mom < 0)
+    MOM_FATAPRINTF ("initialize_signals failed to signalfd (%m)");
+  MOM_DEBUGPRINTF (run, "initialize_signals got signalfd#%d", signalfd_mom);
+}				/* end of mom_initialize_signals */
+
+
+
 /// called from mom_run_workers in work.c; we assume that stdin is
 /// opened, that is that pollable file descriptors are >0
 void
@@ -245,28 +333,22 @@ mom_event_loop (void)
     MOM_FATAPRINTF ("failed to initialize CURL multi-handle");
   readfdeventloop_mom = evpipe[0];
   writefdeventloop_mom = evpipe[1];
-  sigset_t mysigmasks;
-  MOM_DEBUGPRINTF (run,
-		   "event_loop before handling signals SIGINT=%d SIGTERM=%d SIGQUIT=%dSIGCHLD=%d",
-		   SIGINT, SIGTERM, SIGQUIT, SIGCHLD);
-  sigemptyset (&mysigmasks);
-  sigaddset (&mysigmasks, SIGINT);
-  sigaddset (&mysigmasks, SIGQUIT);
-  sigaddset (&mysigmasks, SIGTERM);
-  sigaddset (&mysigmasks, SIGCHLD);
-  // we must block the signals before signalfd!
-  if (sigprocmask (SIG_BLOCK, &mysigmasks, NULL))
-    MOM_FATAPRINTF ("failed to block signals before signalfd");
-  signalfd_mom = signalfd (-1, &mysigmasks, SFD_NONBLOCK | SFD_CLOEXEC);
-  if (signalfd_mom < 0)
-    MOM_FATAPRINTF ("event_loop failed to signalfd (%m)");
-  MOM_DEBUGPRINTF (run, "event_loop got signalfd#%d", signalfd_mom);
   timerfd_mom = timerfd_create (CLOCK_REALTIME, TFD_NONBLOCK | TFD_CLOEXEC);
   if (timerfd_mom < 0)
     MOM_FATAPRINTF ("event_loop failed to timerfd_create (%m)");
   MOM_DEBUGPRINTF (run, "event_loop got timerfd#%d", timerfd_mom);
   if (mom_socket_path && mom_socket_path[0])
     mastersocketfd_mom = open_bind_socket_mom ();
+  if (MOM_IS_DEBUGGING (run))
+    {
+      int pid = getpid ();
+      char cmdbuf[48];
+      snprintf (cmdbuf, sizeof (cmdbuf), "/bin/ls -l /proc/%d/fd/", pid);
+      MOM_DEBUGPRINTF (run, "event_loop before running %s", cmdbuf);
+      fflush (NULL);
+      int ok = system (cmdbuf);
+      MOM_DEBUGPRINTF (run, "event_loop after running %s ok=%d", cmdbuf, ok);
+    }
   long loopcount = 0;
 #define LOOPDBG_FREQUENCY_MOM 32
   while (!mom_should_stop ())
@@ -373,7 +455,8 @@ mom_event_loop (void)
       if (readfdeventloop_mom > 0
 	  && FD_ISSET (readfdeventloop_mom, &readfdset))
 	eventloopupdate_mom ();
-      if (signalfd_mom > 0 && FD_ISSET (signalfd_mom, &readfdset))
+      if (gotsomesignal_mom
+	  || (signalfd_mom > 0 && FD_ISSET (signalfd_mom, &readfdset)))
 	signalhandle_mom ();
       if (timerfd_mom > 0 && FD_ISSET (timerfd_mom, &readfdset))
 	ringtimer_mom ();
@@ -576,22 +659,62 @@ static void
 signalhandle_mom (void)
 {
   struct signalfd_siginfo sifd;
-  memset (&sifd, 0, sizeof (sifd));
+  int lpnum = 0;
   MOM_DEBUGPRINTF (run, "signalhandle start signalfd#%d", signalfd_mom);
   for (;;)
     {
+      bool got_signal = false, do_sigchld = false, do_sigterm =
+	false, do_sigint = false, do_sigquit = false;
+      memset (&sifd, 0, sizeof (sifd));
+      lpnum++;
+      MOM_DEBUGPRINTF (run, "signalhandle gotsomesignal=%d lpnum#%d",
+		       (int) gotsomesignal_mom, lpnum);
+      if (gotsomesignal_mom)
+	{
+	  got_signal = true;
+	  gotsomesignal_mom = 0;
+	  if (gotsigchild_mom)
+	    {
+	      MOM_DEBUGPRINTF (run, "signalhandle gotsigchild");
+	      do_sigchld = true;
+	      gotsigchild_mom = 0;
+	    };
+	  if (gotsigquit_mom)
+	    {
+	      MOM_DEBUGPRINTF (run, "signalhandle gotsigquit");
+	      do_sigquit = true;
+	      gotsigquit_mom = 0;
+	    };
+	  if (gotsigint_mom)
+	    {
+	      MOM_DEBUGPRINTF (run, "signalhandle gotsigint");
+	      do_sigint = true;
+	      gotsigint_mom = 0;
+	    };
+	  if (gotsigterm_mom)
+	    {
+	      MOM_DEBUGPRINTF (run, "signalhandle gotsigterm");
+	      do_sigterm = true;
+	      gotsigterm_mom = 0;
+	    };
+	};
+
       int rd = read (signalfd_mom, &sifd, sizeof (sifd));
-      if (rd <= 0)
-	return;
-      assert (rd == sizeof (sifd));
-      unsigned signo = sifd.ssi_signo;
+      MOM_DEBUGPRINTF (run,
+		       "signalhandle rd=%d do_sigchld:%s do_sigquit:%s do_sigint:%s do_sigterm:%s",
+		       rd, do_sigchld ? "yes" : "no",
+		       do_sigquit ? "yes" : "no", do_sigint ? "yes" : "no",
+		       do_sigterm ? "yes" : "no");
+      unsigned signo = (rd > 0) ? sifd.ssi_signo : 0;
       MOM_DEBUGPRINTF (run, "signalhandle sifd: signo=%d (%s) code=%d",
 		       (int) signo, strsignal (signo), (int) sifd.ssi_code);
-      if (signo == SIGCHLD)
+      if (do_sigchld || signo == SIGCHLD)
 	{
+	  MOM_DEBUGPRINTF (run, "signalhandle handle sigchld");
 	  waitprocess_mom ();
+	  MOM_DEBUGPRINTF (run, "signalhandle done handle sigchld");
 	}
-      else if (signo == SIGTERM)
+      if (do_sigterm || signo == SIGTERM)
 	{
 	  char templdirnam[32] = "monimelt_term_XXXXXX";
 	  if (!mkdtemp (templdirnam))
@@ -603,7 +726,7 @@ signalhandle_mom (void)
 	     templdirnam);
 	  mom_stop_work ();
 	}
-      else if (signo == SIGINT)
+      if (do_sigint || signo == SIGINT)
 	{
 	  char templdirnam[32] = "monimelt_int_XXXXXX";
 	  if (!mkdtemp (templdirnam))
@@ -615,16 +738,21 @@ signalhandle_mom (void)
 	     templdirnam);
 	  mom_stop_work ();
 	}
-      else if (signo == SIGQUIT)
+      if (do_sigquit || signo == SIGQUIT)
 	{
 	  MOM_INFORMPRINTF ("got SIGQUIT, so will stop without saving state");
 	  mom_stop_work ();
 	}
-      else
+      if (rd > 0)
 	{
 	  MOM_WARNPRINTF
 	    ("signalhandle got unexpected signal#%d (%s), code=%d",
 	     (int) signo, strsignal (signo), (int) sifd.ssi_code);
+	};
+      if (rd < 0 && !got_signal)
+	{
+	  MOM_DEBUGPRINTF (run, "signalhandle done, no signal");
+	  return;
 	}
     }
 }
