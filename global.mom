@@ -204,6 +204,15 @@
 ..
 
 
+** _2CMuyktFw_5rt7PbyCD
+{
+  * comment  "block succeed agenda_step since stopping" }
+ [[  _7H4dmCuFI_1C4PP5IBx ]]
+ %  ^filler_of_plain_kind( block)
+ 
+..
+
+
 ** _2I2UdbsCL_6c82fexBk
 {
   * comment  "blockepilog to notify in agenda_push_back"
@@ -576,12 +585,21 @@
 ..
 
 
+** _7H4dmCuFI_1C4PP5IBx
+{
+  * comment  "succeed agenda_step when stopping" }
+ [[  success ]]
+ %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
 ** _7MF947fC8_8ChefReMD
 {
   * comment  "starting block of agenda_step"
   * in  agenda_step
-  * instructions  [_1c462DJmx_68zwnz1Ua _44tmkDkKa_8nUhJEeay _0p7zBDIku_3njudUFtp
-   _9MCjbp28L_6zLA3KERH] }
+  * instructions  [_1c462DJmx_68zwnz1Ua _9kCFcc1xu_2s0E2MiAa _44tmkDkKa_8nUhJEeay
+   _0p7zBDIku_3njudUFtp _9MCjbp28L_6zLA3KERH] }
  %  ^filler_of_plain_kind( block)
  
 ..
@@ -716,6 +734,15 @@
   * in  _0LHqbyzz9_2J9v5p6zc }
  [[  chunk  "  MOM_DEBUGPRINTF(run, \"agenda_push_front: pushed tasklet %s in front of the_agenda\",\n"
    "   mom_item_cstring("  lkitm_tasklet  "));\n" ]]
+ %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
+** _9kCFcc1xu_2s0E2MiAa
+{
+  * comment  "if should_stop succeed in agenda_step" }
+ [[  if  ^should_stop()  _2CMuyktFw_5rt7PbyCD ]]
  %  ^filler_of_plain_kind( code_statement)
  
 ..
@@ -1825,6 +1852,19 @@
   * type  value
   * variadic_count  count
   * variadic_rest  restitm }
+ 
+..
+
+
+** should_stop
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*should_stop:*/ mom_should_stop()")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "test if mom should_stop"
+  * formals  []
+  * type  integer }
+ %  ^filler_of_plain_kind( code_operation)
  
 ..
 
