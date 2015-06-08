@@ -22,7 +22,6 @@
 
 static int writefdeventloop_mom = -1;
 static int readfdeventloop_mom = -1;
-static int signalfd_mom = -1;
 static int timerfd_mom = -1;
 static int mastersocketfd_mom = -1;
 static char *finaleventloopdump_mom;
@@ -239,6 +238,7 @@ sigterm_handler_mom (int sig)
   assert (sig == SIGTERM);
   gotsomesignal_mom = 1;
   gotsigterm_mom = 1;
+  (void) write (writefdeventloop_mom, "T", 1);
 }
 
 static void
@@ -247,6 +247,7 @@ sigint_handler_mom (int sig)
   assert (sig == SIGINT);
   gotsomesignal_mom = 1;
   gotsigint_mom = 1;
+  (void) write (writefdeventloop_mom, "I", 1);
 }
 
 static void
@@ -255,6 +256,7 @@ sigquit_handler_mom (int sig)
   assert (sig == SIGQUIT);
   gotsomesignal_mom = 1;
   gotsigquit_mom = 1;
+  (void) write (writefdeventloop_mom, "Q", 1);
 }
 
 static void
@@ -263,6 +265,7 @@ sigchild_handler_mom (int sig)
   assert (sig == SIGCHLD);
   gotsomesignal_mom = 1;
   gotsigchild_mom = 1;
+  (void) write (writefdeventloop_mom, "C", 1);
 }
 
 /// called early from mom_run_workers in work.c before starting
@@ -306,11 +309,7 @@ mom_initialize_signals (void)
   sa.sa_mask = mysigmasks;
   sa.sa_flags = SA_RESTART | SA_NOCLDSTOP;
   sigaction (SIGCHLD, &sa, NULL);
-  // set the signalfd
-  signalfd_mom = signalfd (-1, &mysigmasks, SFD_NONBLOCK | SFD_CLOEXEC);
-  if (signalfd_mom < 0)
-    MOM_FATAPRINTF ("initialize_signals failed to signalfd (%m)");
-  MOM_DEBUGPRINTF (run, "initialize_signals got signalfd#%d", signalfd_mom);
+  MOM_DEBUGPRINTF (run, "initialize_signals done");
 }				/* end of mom_initialize_signals */
 
 
@@ -404,8 +403,6 @@ mom_event_loop (void)
 	   are processed specifically. */
 	if (readfdeventloop_mom > 0)
 	  FD_SET (readfdeventloop_mom, &readfdset);
-	if (signalfd_mom > 0)
-	  FD_SET (signalfd_mom, &readfdset);
 	if (timerfd_mom > 0)
 	  FD_SET (timerfd_mom, &readfdset);
 	for (int pix = 1; pix <= MOM_MAX_WORKERS; pix++)
@@ -455,8 +452,7 @@ mom_event_loop (void)
       if (readfdeventloop_mom > 0
 	  && FD_ISSET (readfdeventloop_mom, &readfdset))
 	eventloopupdate_mom ();
-      if (gotsomesignal_mom
-	  || (signalfd_mom > 0 && FD_ISSET (signalfd_mom, &readfdset)))
+      if (gotsomesignal_mom)
 	signalhandle_mom ();
       if (timerfd_mom > 0 && FD_ISSET (timerfd_mom, &readfdset))
 	ringtimer_mom ();
@@ -491,6 +487,7 @@ mom_event_loop (void)
 	};
       loopcount++;
     };				/* end while !mom_should_stop */
+  MOM_DEBUGPRINTF (run, "ending eventloop loopcount=%ld", loopcount);
   if (finaleventloopdump_mom && finaleventloopdump_mom[0])
     {
       MOM_DEBUGPRINTF (run,
@@ -499,13 +496,12 @@ mom_event_loop (void)
       mom_dump_state (finaleventloopdump_mom);
       MOM_INFORMPRINTF ("event loop dumped state to %s after %ld loops",
 			finaleventloopdump_mom, loopcount);
-      MOM_DEBUGPRINTF (run,
-		       "ending mom_event_loop after %ld loops before dumping to %s",
-		       loopcount, finaleventloopdump_mom);
+      finaleventloopdump_mom = NULL;
     }
 
   // perhaps we should call curl_multi_cleanup(curlmulti_mom); etc.
-  MOM_DEBUGPRINTF (run, "end mom_event_loop, done %ld loops", loopcount);
+  MOM_DEBUGPRINTF (run, "ended mom_event_loop (pid %d), done %ld loops",
+		   (int) getpid (), loopcount);
 }				/* end of mom_event_loop */
 
 
@@ -596,9 +592,11 @@ start1batchprocess_mom (void)
 static void
 eventloopupdate_mom (void)
 {
-  char inbuf[2 * MOM_MAX_WORKERS];
+  char inbuf[2 * MOM_MAX_WORKERS + 1];
+  memset (inbuf, 0, sizeof (inbuf));
   // consume the bytes on the eventloop fd, but we don't use them
-  (void) read (readfdeventloop_mom, inbuf, sizeof (inbuf));
+  int rd = read (readfdeventloop_mom, inbuf, sizeof (inbuf) - 1);
+  MOM_DEBUGPRINTF (run, "eventloopupdate rd=%d inbuf=%s", rd, inbuf);
   {
     pthread_mutex_lock (&eventloop_mtx_mom);
     while (mom_queuevalue_size (&pendingbatchprocque_mom) > 0
@@ -606,7 +604,7 @@ eventloopupdate_mom (void)
       start1batchprocess_mom ();
     pthread_mutex_unlock (&eventloop_mtx_mom);
   }
-  MOM_FATAPRINTF ("unimplemented eventloopupdate");
+  MOM_DEBUGPRINTF (run, "eventloopupdate done inbuf=%s", inbuf);
 #warning unimplemented eventloopupdate_mom
 }
 
@@ -658,14 +656,12 @@ waitprocess_mom (void)
 static void
 signalhandle_mom (void)
 {
-  struct signalfd_siginfo sifd;
   int lpnum = 0;
-  MOM_DEBUGPRINTF (run, "signalhandle start signalfd#%d", signalfd_mom);
+  MOM_DEBUGPRINTF (run, "signalhandle start");
   for (;;)
     {
       bool got_signal = false, do_sigchld = false, do_sigterm =
 	false, do_sigint = false, do_sigquit = false;
-      memset (&sifd, 0, sizeof (sifd));
       lpnum++;
       MOM_DEBUGPRINTF (run, "signalhandle gotsomesignal=%d lpnum#%d",
 		       (int) gotsomesignal_mom, lpnum);
@@ -699,22 +695,13 @@ signalhandle_mom (void)
 	    };
 	};
 
-      int rd = read (signalfd_mom, &sifd, sizeof (sifd));
-      MOM_DEBUGPRINTF (run,
-		       "signalhandle rd=%d do_sigchld:%s do_sigquit:%s do_sigint:%s do_sigterm:%s",
-		       rd, do_sigchld ? "yes" : "no",
-		       do_sigquit ? "yes" : "no", do_sigint ? "yes" : "no",
-		       do_sigterm ? "yes" : "no");
-      unsigned signo = (rd > 0) ? sifd.ssi_signo : 0;
-      MOM_DEBUGPRINTF (run, "signalhandle sifd: signo=%d (%s) code=%d",
-		       (int) signo, strsignal (signo), (int) sifd.ssi_code);
-      if (do_sigchld || signo == SIGCHLD)
+      if (do_sigchld)
 	{
 	  MOM_DEBUGPRINTF (run, "signalhandle handle sigchld");
 	  waitprocess_mom ();
 	  MOM_DEBUGPRINTF (run, "signalhandle done handle sigchld");
 	}
-      if (do_sigterm || signo == SIGTERM)
+      if (do_sigterm)
 	{
 	  char templdirnam[32] = "monimelt_term_XXXXXX";
 	  if (!mkdtemp (templdirnam))
@@ -726,7 +713,7 @@ signalhandle_mom (void)
 	     templdirnam);
 	  mom_stop_work ();
 	}
-      if (do_sigint || signo == SIGINT)
+      if (do_sigint)
 	{
 	  char templdirnam[32] = "monimelt_int_XXXXXX";
 	  if (!mkdtemp (templdirnam))
@@ -738,18 +725,12 @@ signalhandle_mom (void)
 	     templdirnam);
 	  mom_stop_work ();
 	}
-      if (do_sigquit || signo == SIGQUIT)
+      if (do_sigquit)
 	{
 	  MOM_INFORMPRINTF ("got SIGQUIT, so will stop without saving state");
 	  mom_stop_work ();
 	}
-      if (rd > 0)
-	{
-	  MOM_WARNPRINTF
-	    ("signalhandle got unexpected signal#%d (%s), code=%d",
-	     (int) signo, strsignal (signo), (int) sifd.ssi_code);
-	};
-      if (rd < 0 && !got_signal)
+      if (!got_signal)
 	{
 	  MOM_DEBUGPRINTF (run, "signalhandle done, no signal");
 	  return;
@@ -760,7 +741,7 @@ signalhandle_mom (void)
 static void
 ringtimer_mom (void)
 {
-  MOM_FATAPRINTF ("unimplemented ringtimer_mom");
+  MOM_WARNPRINTF ("unimplemented ringtimer_mom");
 #warning unimplemented ringtimer_mom
 }
 
