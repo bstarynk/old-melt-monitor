@@ -206,8 +206,9 @@
 
 ** _2CMuyktFw_5rt7PbyCD
 {
-  * comment  "block succeed agenda_step since stopping" }
- [[  _7H4dmCuFI_1C4PP5IBx ]]
+  * comment  "block succeed agenda_step since stopping"
+  * in  agenda_step
+  * instructions  [_7H4dmCuFI_1C4PP5IBx] }
  %  ^filler_of_plain_kind( block)
  
 ..
@@ -587,7 +588,8 @@
 
 ** _7H4dmCuFI_1C4PP5IBx
 {
-  * comment  "succeed agenda_step when stopping" }
+  * comment  "succeed agenda_step when stopping"
+  * in  _2CMuyktFw_5rt7PbyCD }
  [[  success ]]
  %  ^filler_of_plain_kind( code_statement)
  
@@ -741,7 +743,8 @@
 
 ** _9kCFcc1xu_2s0E2MiAa
 {
-  * comment  "if should_stop succeed in agenda_step" }
+  * comment  "if should_stop succeed in agenda_step"
+  * in  _7MF947fC8_8ChefReMD }
  [[  if  ^should_stop()  _2CMuyktFw_5rt7PbyCD ]]
  %  ^filler_of_plain_kind( code_statement)
  
@@ -803,8 +806,8 @@
 {
   * constants  {_07BHLcwhp_48ka0t9bq fill_agenda item_queue runner tasklet
    the_agenda}
-  * emitted_blocks  {_0HvrqAHte_4ryaA4drs _14MzMbJ9v_627D0CIiA _2tz000b51_1AEBtnP4P
-   _4xAIqB3tj_97IrD41UP _7MF947fC8_8ChefReMD _8aqavIeMK_2EHL44cnU}
+  * emitted_blocks  {_0HvrqAHte_4ryaA4drs _14MzMbJ9v_627D0CIiA _2CMuyktFw_5rt7PbyCD
+   _2tz000b51_1AEBtnP4P _4xAIqB3tj_97IrD41UP _7MF947fC8_8ChefReMD _8aqavIeMK_2EHL44cnU}
   * emitted_closed  []
   * emitted_constants  [hook_closure _07BHLcwhp_48ka0t9bq fill_agenda item_queue
    runner tasklet the_agenda]

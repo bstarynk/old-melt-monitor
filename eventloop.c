@@ -744,6 +744,11 @@ signalhandle_mom (void)
 	  MOM_DEBUGPRINTF (run, "signalhandle after SIGQUIT-ing workers");
 	  mom_stop_work ();
 	}
+      if (MOM_UNLIKELY (mom_should_stop ()))
+	{
+	  MOM_DEBUGPRINTF (run, "signalhandle broadscast agenda_changed");
+	  pthread_cond_broadcast (&mom_agenda_changed_condvar);
+	}
       if (!got_signal)
 	{
 	  MOM_DEBUGPRINTF (run, "signalhandle done, no more signals");

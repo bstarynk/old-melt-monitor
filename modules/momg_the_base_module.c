@@ -483,7 +483,20 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
   goto momepilog_agenda_step;
  ////----
 
-/// block #2: _2tz000b51_1AEBtnP4P
+/// block #2: _2CMuyktFw_5rt7PbyCD
+//: block succeed agenda_step since stopping
+ momblocklab__2CMuyktFw_5rt7PbyCD: {
+// 1 statements in block _2CMuyktFw_5rt7PbyCD
+// statement #0 :: _7H4dmCuFI_1C4PP5IBx; succeed agenda_step when stopping
+// success
+  momsuccess_agenda_step = true;
+  goto momepilog_agenda_step;
+
+  }; // end block _2CMuyktFw_5rt7PbyCD
+  goto momepilog_agenda_step;
+ ////----
+
+/// block #3: _2tz000b51_1AEBtnP4P
 //: lock and run the tasklet
  momblocklab__2tz000b51_1AEBtnP4P: {
 // 3 statements in block _2tz000b51_1AEBtnP4P
@@ -512,7 +525,7 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
   goto momepilog_agenda_step;
  ////----
 
-/// block #3: _4xAIqB3tj_97IrD41UP
+/// block #4: _4xAIqB3tj_97IrD41UP
 //: refill empty agenda
  momblocklab__4xAIqB3tj_97IrD41UP: {
 // 3 statements in block _4xAIqB3tj_97IrD41UP
@@ -533,10 +546,10 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
   goto momepilog_agenda_step;
  ////----
 
-/// block #4: _7MF947fC8_8ChefReMD
+/// block #5: _7MF947fC8_8ChefReMD
 //: starting block of agenda_step
  momblocklab__7MF947fC8_8ChefReMD: {
-// 4 statements in block _7MF947fC8_8ChefReMD
+// 5 statements in block _7MF947fC8_8ChefReMD
 // statement #0 :: _1c462DJmx_68zwnz1Ua; set lkitm_agenda := the_agenda in agenda_step
   { // locked set into lkitm_agenda
   momlockeditem_t* momoldlocked__1c462DJmx_68zwnz1Ua = momvar1 /*var:lkitm_agenda*/;
@@ -549,16 +562,20 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
   momoldlocked__1c462DJmx_68zwnz1Ua = NULL;
   momnewlocked__1c462DJmx_68zwnz1Ua = NULL;
   } // end locked set into lkitm_agenda
-// statement #1 :: _44tmkDkKa_8nUhJEeay; if empty agenda refill it
+// statement #1 :: _9kCFcc1xu_2s0E2MiAa; if should_stop succeed in agenda_step
+// if testing on integer
+    if (/*should_stop:*/ mom_should_stop())
+      goto momblocklab__2CMuyktFw_5rt7PbyCD;
+// statement #2 :: _44tmkDkKa_8nUhJEeay; if empty agenda refill it
 // if testing on integer
     if (/*queue_item_is_empty:*/momvar1 /*var:lkitm_agenda*/ && momvar1 /*var:lkitm_agenda*/->itm_kind == /*constant#3:*/MOM_PREDEFINED_NAMED(item_queue) && mom_queueitem_size (momvar1 /*var:lkitm_agenda*/->itm_data1) == 0)
       goto momblocklab__4xAIqB3tj_97IrD41UP;
-// statement #2 :: _0p7zBDIku_3njudUFtp; itmvar_tasklet <- pop_front(lkitm_agenda)
+// statement #3 :: _0p7zBDIku_3njudUFtp; itmvar_tasklet <- pop_front(lkitm_agenda)
 /*pop_front_queue_item:*/
 momvar2 /*var:itmvar_tasklet*/ = (momitem_t*)NULL;
 {if (momvar1 /*var:lkitm_agenda*/ && momvar1 /*var:lkitm_agenda*/->itm_kind ==  /*constant#3:*/MOM_PREDEFINED_NAMED(item_queue))
   momvar2 /*var:itmvar_tasklet*/ = mom_queueitem_pop_front((struct momqueueitems_st*)momvar1 /*var:lkitm_agenda*/->itm_data1);}
-// statement #3 :: _9MCjbp28L_6zLA3KERH; if itmvar_tasklet is a tasklet run it
+// statement #4 :: _9MCjbp28L_6zLA3KERH; if itmvar_tasklet is a tasklet run it
 // if testing on integer
     if (/*item_has_kind:*/momvar2 /*var:itmvar_tasklet*/ && momvar2 /*var:itmvar_tasklet*/->itm_kind == /*constant#5:*/MOM_PREDEFINED_NAMED(tasklet))
       goto momblocklab__2tz000b51_1AEBtnP4P;
@@ -567,7 +584,7 @@ momvar2 /*var:itmvar_tasklet*/ = (momitem_t*)NULL;
   goto momepilog_agenda_step;
  ////----
 
-/// block #5: _8aqavIeMK_2EHL44cnU
+/// block #6: _8aqavIeMK_2EHL44cnU
 //: apply varclo to lkitm_tasklet and succeed
  momblocklab__8aqavIeMK_2EHL44cnU: {
 // 4 statements in block _8aqavIeMK_2EHL44cnU
