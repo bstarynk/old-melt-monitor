@@ -638,6 +638,7 @@ unsync_clear_webexitem_mom (momitem_t *wxitm)
 }				/* end unsync_clear_webexitem_mom */
 
 
+
 static onion_connection_status
 handle_web_mom (void *data, onion_request *requ, onion_response *resp)
 {
@@ -817,19 +818,20 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
   assert (mom_node_arity (sessnod) == 3);
   long sessobstime = mom_value_to_int (mom_node_nth (sessnod, 1), -1);
   assert (reqfupath[0] == '/');
-  bool foundhandler = false;
+  bool shrinkagain = false;
   momvalue_t vclos = MOM_NONEV;
   momvalue_t vrestpath = MOM_NONEV;
   {
     const momstring_t *restpathstr = NULL;
-    char *reqfucopy =
-      strchr (reqfupath + 1, '/') ? MOM_GC_STRDUP ("reqfucopy",
-						   reqfupath) : reqfupath;
+    char *reqfucopy = strchr (reqfupath + 1, '/')	//
+      ? MOM_GC_STRDUP ("reqfucopy", reqfupath)	//
+      : reqfupath;
     assert (MOM_PREDEFINED_NAMED (web_processor) != NULL);
     mom_item_lock (MOM_PREDEFINED_NAMED (web_processor));
     char *lastslash = NULL;
     do
       {
+	shrinkagain = false;
 	if (MOM_PREDEFINED_NAMED (web_processor)->itm_kind !=
 	    MOM_PREDEFINED_NAMED (hashed_dict))
 	  break;
@@ -842,8 +844,7 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
 			 mom_string_cstr (restpathstr));
 	if (vclos.typnum == momty_node)
 	  {
-	    foundhandler = true;
-	    break;
+	    shrinkagain = false;
 	  }
 	else
 	  {
@@ -854,13 +855,18 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
 		*lastslash = '\0';
 		if (prevlastslash)
 		  *prevlastslash = '/';
+		shrinkagain = true;
 		restpathstr = mom_make_string_cstr (lastslash + 1);
 	      }
 	    else
 	      restpathstr = NULL;
 	  };
+	MOM_DEBUGPRINTF (web,
+			 "handle_web request #%ld reqfupath: %s reqfucopy: %s restpathstr: %s shrinkagain %s",
+			 reqcnt, reqfucopy, reqfucopy, restpathstr,
+			 shrinkagain ? "yes" : "no");
       }
-    while (!foundhandler);
+    while (shrinkagain);
     if (vclos.typnum == momty_node)
       {
 	MOM_DEBUGPRINTF (web,
