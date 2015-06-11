@@ -628,5 +628,47 @@ momvar2 /*var:itmvar_tasklet*/ = (momitem_t*)NULL;
 /***** end 3 functions *****/
 
 
+
+/***** old function addresses of module the_base_module *****/
+static void* momoldad_agenda_push_back;
+static void* momoldad_agenda_push_front;
+static void* momoldad_agenda_step;
+
+
+/***** loading constructor of module the_base_module *****/
+static void momloadcons_the_base_module (void) __attribute__((constructor));
+static void momloadcons_the_base_module (void)
+{ // loading constructor
+  MOM_DEBUGPRINTF(run, "loading constructor of the_base_module with 3 functions");
+ // load constructor #0 for agenda_push_back
+  momoldad_agenda_push_back
+  = mom_dynload_function("agenda_push_back", "signature_1val_to_void", (void*) &momfunc_1val_to_void_agenda_push_back);
+ // load constructor #1 for agenda_push_front
+  momoldad_agenda_push_front
+  = mom_dynload_function("agenda_push_front", "signature_1val_to_void", (void*) &momfunc_1val_to_void_agenda_push_front);
+ // load constructor #2 for agenda_step
+  momoldad_agenda_step
+  = mom_dynload_function("agenda_step", "signature_void_to_void", (void*) &momfunc_void_to_void_agenda_step);
+
+} // end loading constructor momloadcons_the_base_module
+
+
+
+/***** unloading desstructor of module the_base_module *****/
+static void momunloaddestr_the_base_module (void) __attribute__((destructor));
+static void momunloaddestr_the_base_module (void)
+{ // unloading destructor
+  MOM_DEBUGPRINTF(run, "unloading destructor of the_base_module with 3 functions");
+ // unload destructor #0 for agenda_push_back
+  mom_dynunload_function ("agenda_push_back", "signature_1val_to_void", momoldad_agenda_push_back);
+ // unload destructor #1 for agenda_push_front
+  mom_dynunload_function ("agenda_push_front", "signature_1val_to_void", momoldad_agenda_push_front);
+ // unload destructor #2 for agenda_step
+  mom_dynunload_function ("agenda_step", "signature_void_to_void", momoldad_agenda_step);
+
+} // end unloading destructor momunloaddestr_the_base_module
+
+
+
 //// end of generated module file momg_the_base_module.c
 
