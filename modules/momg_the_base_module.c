@@ -661,10 +661,13 @@ static void momunloaddestr_the_base_module (void)
   MOM_DEBUGPRINTF(run, "unloading destructor of the_base_module with 3 functions");
  // unload destructor #0 for agenda_push_back
   mom_dynunload_function ("agenda_push_back", "signature_1val_to_void", momoldad_agenda_push_back);
+  momoldad_agenda_push_back = NULL;
  // unload destructor #1 for agenda_push_front
   mom_dynunload_function ("agenda_push_front", "signature_1val_to_void", momoldad_agenda_push_front);
+  momoldad_agenda_push_front = NULL;
  // unload destructor #2 for agenda_step
   mom_dynunload_function ("agenda_step", "signature_void_to_void", momoldad_agenda_step);
+  momoldad_agenda_step = NULL;
 
 } // end unloading destructor momunloaddestr_the_base_module
 

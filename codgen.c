@@ -3758,6 +3758,8 @@ cgen_emit_function_unloaddestr_mom (struct codegen_mom_st *cg,
 	   "  mom_dynunload_function (\"%s\", \"%s\", " OLDADDR_PREFIX_MOM
 	   "_%s);\n", mom_item_cstring (curfunitm),
 	   mom_item_cstring (funsigitm), mom_item_cstring (curfunitm));
+  fprintf (cg->cg_emitfile, "  " OLDADDR_PREFIX_MOM "_%s = NULL;\n",
+	   mom_item_cstring (curfunitm));
   cg->cg_funinfonod = NULL;
 }				/* end of cgen_emit_function_loadcons_mom   */
 

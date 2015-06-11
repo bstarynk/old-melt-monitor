@@ -145,6 +145,9 @@ void
 mom_dynunload_function (const char *funame, const char *signame,
 			void *restoread)
 {
+  // don't bother unloading function if we have no program handle, e.g. because main has returned....
+  if (!mom_prog_dlhandle)
+    return;
   momitem_t *funitm = mom_find_item (funame);
   momitem_t *sigitm = mom_find_item (signame);
   MOM_DEBUGPRINTF (run,

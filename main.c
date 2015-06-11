@@ -1022,5 +1022,6 @@ main (int argc_main, char **argv_main)
 	MOM_FATAPRINTF ("failed to make -j %d after predefined",
 			mom_nb_workers);
     }
+  mom_prog_dlhandle = NULL;
   return 0;
 }
