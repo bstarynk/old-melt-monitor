@@ -105,6 +105,80 @@ mom_dynload_symbol (const char *name)
   return ptr;
 }
 
+void *
+mom_dynload_function (const char *funame, const char *signame, void *newad)
+{
+  void *oldad = NULL;
+  momitem_t *funitm = mom_find_item (funame);
+  momitem_t *sigitm = mom_find_item (signame);
+  MOM_DEBUGPRINTF (run,
+		   "dynload_function funame %s funitm %s signame %s sigitm %s newad@%p",
+		   funame, mom_item_cstring (funitm), signame,
+		   mom_item_cstring (sigitm), newad);
+  if (!funitm || !sigitm)
+    return NULL;
+  mom_item_lock (funitm);
+  if (funitm->itm_kind == NULL)
+    {
+      MOM_INFORMPRINTF ("loaded function %s set to signature %s",
+			mom_item_cstring (funitm), mom_item_cstring (sigitm));
+      funitm->itm_data1 = newad;
+      funitm->itm_kind = sigitm;
+    }
+  else if (funitm->itm_kind == sigitm)
+    {
+      oldad = funitm->itm_data1;
+      funitm->itm_data1 = newad;
+    }
+  else
+    {
+      MOM_WARNPRINTF
+	("loaded function %s has kind %s but expecting signature %s",
+	 mom_item_cstring (funitm), mom_item_cstring (funitm->itm_kind),
+	 mom_item_cstring (sigitm));
+    }
+  mom_item_unlock (funitm);
+  return oldad;
+}
+
+void
+mom_dynunload_function (const char *funame, const char *signame,
+			void *restoread)
+{
+  momitem_t *funitm = mom_find_item (funame);
+  momitem_t *sigitm = mom_find_item (signame);
+  MOM_DEBUGPRINTF (run,
+		   "dynunload_function funame %s funitm %s signame %s sigitm %s restoread@%p",
+		   funame, mom_item_cstring (funitm), signame,
+		   mom_item_cstring (sigitm), restoread);
+  if (!funitm || !sigitm)
+    return;
+  mom_item_lock (funitm);
+  if (funitm->itm_kind == sigitm)
+    {
+      if (restoread)
+	funitm->itm_data1 = restoread;
+      else
+	{
+	  MOM_WARNPRINTF ("unloaded function %s of signature %s is cleared",
+			  mom_item_cstring (funitm),
+			  mom_item_cstring (sigitm));
+	  funitm->itm_kind = NULL;
+	  funitm->itm_data1 = NULL;
+	  funitm->itm_data2 = NULL;
+	};
+
+    }
+  else
+    {
+      MOM_WARNPRINTF
+	("unloaded function %s has kind %s but expecting signature %s",
+	 mom_item_cstring (funitm), mom_item_cstring (funitm->itm_kind),
+	 mom_item_cstring (sigitm));
+    }
+  mom_item_unlock (funitm);
+}
+
 void
 mom_wake_event_loop (void)
 {

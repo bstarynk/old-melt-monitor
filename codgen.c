@@ -1,4 +1,4 @@
-// file codgen.c - manage the persistent state load & dump
+// file codgen.c - manage the C code generation
 
 /**   Copyright (C)  2015 Free Software Foundation, Inc.
     MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -1902,6 +1902,23 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
 			     unsigned funix, momitem_t *curfunitm);
 
 static void
+cgen_emit_function_loadcons_mom (struct codegen_mom_st *cg,
+				 unsigned funix, momitem_t *curfunitm);
+
+static void
+cgen_emit_function_unloaddestr_mom (struct codegen_mom_st *cg,
+				    unsigned funix, momitem_t *curfunitm);
+
+// prefix for loading constructor
+#define LOADCONS_PREFIX_MOM "momloadcons"
+
+// prefix for unloading destructor
+#define UNLOADDESTR_PREFIX_MOM "momunloaddestr"
+
+// prefix for static old addresses
+#define OLDADDR_PREFIX_MOM "momoldad"
+
+static void
 cgen_second_emitting_pass_mom (momitem_t *itmcgen)
 {
   assert (itmcgen
@@ -1961,9 +1978,84 @@ cgen_second_emitting_pass_mom (momitem_t *itmcgen)
       assert (curfunitm);
       cgen_emit_function_code_mom (cg, funix, (momitem_t *) curfunitm);
     };
-  fprintf (cg->cg_emitfile, "\n\n" "/***** end %d functions *****/\n", nbfun);
+  fprintf (cg->cg_emitfile, "\n\n" "/***** end %d functions *****/\n\n",
+	   nbfun);
+  //// emit the old address declarations
+  fprintf (cg->cg_emitfile,
+	   "\n\n" "/***** old function addresses of module %s *****/\n",
+	   mom_item_cstring (itmmod));
+  for (unsigned funix = 0; funix < nbfun && !cg->cg_errormsg; funix++)
+    {
+      const momitem_t *curfunitm = mom_seq_nth (seqfun, funix);
+      MOM_DEBUGPRINTF (gencod,
+		       "emitting old addresses of curfunitm %s #%d in module %s",
+		       mom_item_cstring (curfunitm), funix,
+		       mom_item_cstring (itmmod));
+      assert (curfunitm);
+      fprintf (cg->cg_emitfile, "static void* " OLDADDR_PREFIX_MOM "_%s;\n",
+	       mom_item_cstring (curfunitm));
+    };
+  //// emit the loading constructor
+  fprintf (cg->cg_emitfile,
+	   "\n\n" "/***** loading constructor of module %s *****/\n",
+	   mom_item_cstring (itmmod));
+  fprintf (cg->cg_emitfile,
+	   "static void " LOADCONS_PREFIX_MOM
+	   "_%s (void) __attribute__((constructor));\n",
+	   mom_item_cstring (itmmod));
+  fprintf (cg->cg_emitfile,
+	   "static void " LOADCONS_PREFIX_MOM
+	   "_%s (void)\n{ // loading constructor\n",
+	   mom_item_cstring (itmmod));
+  fprintf (cg->cg_emitfile,
+	   "  MOM_DEBUGPRINTF(run, \"loading constructor of %s with %d functions\");\n",
+	   mom_item_cstring (itmmod), nbfun);
+  for (unsigned funix = 0; funix < nbfun && !cg->cg_errormsg; funix++)
+    {
+      const momitem_t *curfunitm = mom_seq_nth (seqfun, funix);
+      MOM_DEBUGPRINTF (gencod,
+		       "emitting load-construction of curfunitm %s #%d in module %s",
+		       mom_item_cstring (curfunitm), funix,
+		       mom_item_cstring (itmmod));
+      assert (curfunitm);
+      cgen_emit_function_loadcons_mom (cg, funix, (momitem_t *) curfunitm);
+    };
+  fprintf (cg->cg_emitfile,
+	   "\n} // end loading constructor " LOADCONS_PREFIX_MOM "_%s\n\n",
+	   mom_item_cstring (itmmod));
   if (cg->cg_errormsg)
     return;
+  ///// emit the unloading destructor
+  fprintf (cg->cg_emitfile,
+	   "\n\n" "/***** unloading desstructor of module %s *****/\n",
+	   mom_item_cstring (itmmod));
+  fprintf (cg->cg_emitfile,
+	   "static void " UNLOADDESTR_PREFIX_MOM
+	   "_%s (void) __attribute__((destructor));\n",
+	   mom_item_cstring (itmmod));
+  fprintf (cg->cg_emitfile,
+	   "static void " UNLOADDESTR_PREFIX_MOM
+	   "_%s (void)\n{ // unloading destructor\n",
+	   mom_item_cstring (itmmod));
+  fprintf (cg->cg_emitfile,
+	   "  MOM_DEBUGPRINTF(run, \"unloading destructor of %s with %d functions\");\n",
+	   mom_item_cstring (itmmod), nbfun);
+  for (unsigned funix = 0; funix < nbfun && !cg->cg_errormsg; funix++)
+    {
+      const momitem_t *curfunitm = mom_seq_nth (seqfun, funix);
+      MOM_DEBUGPRINTF (gencod,
+		       "emitting unload-destruction of curfunitm %s #%d in module %s",
+		       mom_item_cstring (curfunitm), funix,
+		       mom_item_cstring (itmmod));
+      assert (curfunitm);
+      cgen_emit_function_unloaddestr_mom (cg, funix, (momitem_t *) curfunitm);
+    };
+  fprintf (cg->cg_emitfile,
+	   "\n} // end unloading destructor " UNLOADDESTR_PREFIX_MOM
+	   "_%s\n\n", mom_item_cstring (itmmod));
+  if (cg->cg_errormsg)
+    return;
+  ///// emit end of file
   fprintf (cg->cg_emitfile,
 	   "\n\n//// end of generated module file " MOM_SHARED_MODULE_PREFIX
 	   "%s.c\n\n", mom_item_cstring (itmmod));
@@ -2077,8 +2169,8 @@ cgen_emit_function_declaration_mom (struct codegen_mom_st *cg,
   unsigned nboutputs = mom_seq_length (seqoutputs);
   fprintf (cg->cg_emitfile,
 	   "\n\n" "/// declare function #%d: %s\n"
-	   "extern bool momfunc_%s_%s (const momnode_t *", funix,
-	   mom_item_cstring (curfunitm), mom_string_cstr (strradix),
+	   "extern bool " MOM_FUNCTION_PREFIX "%s_%s (const momnode_t *",
+	   funix, mom_item_cstring (curfunitm), mom_string_cstr (strradix),
 	   mom_item_cstring (curfunitm));
   for (unsigned inix = 0; inix < nbinputs && !cg->cg_errormsg; inix++)
     {
@@ -2149,6 +2241,8 @@ cgen_emit_function_declaration_mom (struct codegen_mom_st *cg,
 
 // prefix for success-flag
 #define SUCCESS_PREFIX_MOM "momsuccess"
+
+
 static void
 cgen_emit_block_mom (struct codegen_mom_st *cg, unsigned bix,
 		     momitem_t *blockitm);
@@ -2280,8 +2374,8 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
   unsigned nbvars = mom_seq_length (funseqvars);
   fprintf (cg->cg_emitfile,
 	   "\n\n" "/// implement function #%d: %s\n"
-	   "bool momfunc_%s_%s (const momnode_t *mom_node", funix,
-	   mom_item_cstring (curfunitm), mom_string_cstr (strradix),
+	   "bool " MOM_FUNCTION_PREFIX "%s_%s (const momnode_t *mom_node",
+	   funix, mom_item_cstring (curfunitm), mom_string_cstr (strradix),
 	   mom_item_cstring (curfunitm));
   assert (funseqformals);
   for (unsigned inix = 0; inix < nbinputs && !cg->cg_errormsg; inix++)
@@ -2462,7 +2556,7 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
     }
   fprintf (cg->cg_emitfile, "  return " SUCCESS_PREFIX_MOM "_%s;\n",
 	   mom_item_cstring (curfunitm));
-  fprintf (cg->cg_emitfile, "} // end of momfunc_%s_%s \n\n\n",
+  fprintf (cg->cg_emitfile, "} // end of " MOM_FUNCTION_PREFIX "%s_%s \n\n\n",
 	   mom_string_cstr (strradix), mom_item_cstring (curfunitm));
   MOM_DEBUGPRINTF (gencod,
 		   "emit_function_code done funix#%d itmmod %s curfunitm %s",
@@ -3583,6 +3677,89 @@ cgen_emit_other_statement_mom (struct codegen_mom_st *cg, unsigned insix
 		   mom_item_cstring (stmtitm), mom_item_cstring (itmop));
 }				/* end cgen_emit_other_statement_mom */
 
+
+static void
+cgen_emit_function_loadcons_mom (struct codegen_mom_st *cg,
+				 unsigned funix, momitem_t *curfunitm)
+{
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  assert (curfunitm);
+  momitem_t *itmmod = cg->cg_moduleitm;
+  struct momentry_st *entfun =
+    mom_attributes_find_entry (cg->cg_functionassoc, curfunitm);
+  momvalue_t vfuninfo = MOM_NONEV;
+  if (entfun)
+    vfuninfo = entfun->ent_val;
+  MOM_DEBUGPRINTF (gencod,
+		   "cgen_emit_function_loadcons funix#%d curfunitm %s vfuninfo %s",
+		   funix, mom_item_cstring (curfunitm),
+		   mom_output_gcstring (vfuninfo));
+  const momnode_t *funinfonod = mom_value_to_node (vfuninfo);
+  cg->cg_funinfonod = (momnode_t *) funinfonod;
+  momitem_t *funsigitm = NULL;
+  if (!funinfonod || mom_node_arity (funinfonod) != funinfo__last
+      || mom_node_conn (funinfonod) != MOM_PREDEFINED_NAMED (function_info)
+      || !(funsigitm =
+	   mom_value_to_item (mom_node_nth (funinfonod, funinfo_signature)))
+      || !mom_hashset_contains (cg->cg_lockeditemset, funsigitm)
+      || funsigitm->itm_kind != MOM_PREDEFINED_NAMED (function_signature))
+    MOM_FATAPRINTF
+      ("corrupted function info %s for function %s (signature %s) of module %s",
+       mom_output_gcstring (vfuninfo), mom_item_cstring (curfunitm),
+       mom_item_cstring (funsigitm), mom_item_cstring (itmmod));
+  const momstring_t *strradix =	//
+    mom_value_to_string (mom_item_unsync_get_attribute (funsigitm,
+							MOM_PREDEFINED_NAMED
+							(function_radix)));
+  fprintf (cg->cg_emitfile, " // load constructor #%d for %s\n", funix,
+	   mom_item_cstring (curfunitm));
+  fprintf (cg->cg_emitfile,
+	   "  " OLDADDR_PREFIX_MOM "_%s\n"
+	   "  = mom_dynload_function(\"%s\", \"%s\", (void*) &"
+	   MOM_FUNCTION_PREFIX "%s_%s);\n", mom_item_cstring (curfunitm),
+	   mom_item_cstring (curfunitm), mom_item_cstring (funsigitm),
+	   mom_string_cstr (strradix), mom_item_cstring (curfunitm));
+  cg->cg_funinfonod = NULL;
+}				/* end of cgen_emit_function_loadcons_mom   */
+
+
+static void
+cgen_emit_function_unloaddestr_mom (struct codegen_mom_st *cg,
+				    unsigned funix, momitem_t *curfunitm)
+{
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  assert (curfunitm);
+  momitem_t *itmmod = cg->cg_moduleitm;
+  struct momentry_st *entfun =
+    mom_attributes_find_entry (cg->cg_functionassoc, curfunitm);
+  momvalue_t vfuninfo = MOM_NONEV;
+  if (entfun)
+    vfuninfo = entfun->ent_val;
+  MOM_DEBUGPRINTF (gencod,
+		   "cgen_emit_function_unloaddestr funix#%d curfunitm %s vfuninfo %s",
+		   funix, mom_item_cstring (curfunitm),
+		   mom_output_gcstring (vfuninfo));
+  const momnode_t *funinfonod = mom_value_to_node (vfuninfo);
+  cg->cg_funinfonod = (momnode_t *) funinfonod;
+  momitem_t *funsigitm = NULL;
+  if (!funinfonod || mom_node_arity (funinfonod) != funinfo__last
+      || mom_node_conn (funinfonod) != MOM_PREDEFINED_NAMED (function_info)
+      || !(funsigitm =
+	   mom_value_to_item (mom_node_nth (funinfonod, funinfo_signature)))
+      || !mom_hashset_contains (cg->cg_lockeditemset, funsigitm)
+      || funsigitm->itm_kind != MOM_PREDEFINED_NAMED (function_signature))
+    MOM_FATAPRINTF
+      ("corrupted function info %s for function %s (signature %s) of module %s",
+       mom_output_gcstring (vfuninfo), mom_item_cstring (curfunitm),
+       mom_item_cstring (funsigitm), mom_item_cstring (itmmod));
+  fprintf (cg->cg_emitfile, " // unload destructor #%d for %s\n", funix,
+	   mom_item_cstring (curfunitm));
+  fprintf (cg->cg_emitfile,
+	   "  mom_dynunload_function (\"%s\", \"%s\", " OLDADDR_PREFIX_MOM
+	   "_%s);\n", mom_item_cstring (curfunitm),
+	   mom_item_cstring (funsigitm), mom_item_cstring (curfunitm));
+  cg->cg_funinfonod = NULL;
+}				/* end of cgen_emit_function_loadcons_mom   */
 
 
 static void

@@ -1484,6 +1484,15 @@ void mom_output_utf8html_cencoded (FILE *fil, const char *str, int len,
 
 
 extern void *mom_dynload_symbol (const char *name);
+
+// the two mom_dynload_function & mom_dynunload_function are called by
+// generated constructor & destructor functions at dlopen & dlclose
+// time...
+void *mom_dynload_function (const char *funame, const char *signame,
+			    void *newad);
+void mom_dynunload_function (const char *funame, const char *signame,
+			     void *restoread);
+
 //
 // apply-monimelt.h is generated
 #include "apply-monimelt.h"
