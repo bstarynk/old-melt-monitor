@@ -708,7 +708,7 @@ signalhandle_mom (void)
 	}
       if (do_sigterm)
 	{
-	  char templdirnam[32] = "monimelt_term_XXXXXX";
+	  char templdirnam[32] = "_monimelt_term_XXXXXX";
 	  if (!mkdtemp (templdirnam))
 	    MOM_FATAPRINTF ("failed to create temporary dump directory (%m)");
 	  strcat (templdirnam, "/");
@@ -723,7 +723,7 @@ signalhandle_mom (void)
 	}
       if (do_sigint)
 	{
-	  char templdirnam[32] = "monimelt_int_XXXXXX";
+	  char templdirnam[32] = "_monimelt_int_XXXXXX";
 	  if (!mkdtemp (templdirnam))
 	    MOM_FATAPRINTF ("failed to create temporary dump directory (%m)");
 	  strcat (templdirnam, "/");
