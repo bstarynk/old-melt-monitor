@@ -1638,6 +1638,27 @@ mom_unsync_webexitem_reply_str (momitem_t *wxitm,
 
 onion_request *mom_unsync_webexitem_request (momitem_t *wxitm);
 onion_response *mom_unsync_webexitem_response (momitem_t *wxitm);
+void mom_unsync_webexitem_out_utf8cstr_cencoded (momitem_t *wxitm,
+						 const char *str, int len);
+static inline void
+mom_unsync_webexitem_outstr_cstr (momitem_t *wxitm, const momstring_t *s)
+{
+  if (!s || s == MOM_EMPTY)
+    return;
+  mom_unsync_webexitem_out_utf8cstr_cencoded (wxitm, s->cstr, s->slen);
+}
+
+void mom_unsync_webexitem_out_utf8html_cencoded (momitem_t *wxitm,
+						 const char *str, int len,
+						 bool usebr);
+static inline void
+mom_unsync_webexitem_outstr_html (momitem_t *wxitm, const momstring_t *s,
+				  bool usebr)
+{
+  if (!s || s == MOM_EMPTY)
+    return;
+  mom_unsync_webexitem_out_utf8html_cencoded (wxitm, s->cstr, s->slen, usebr);
+}
 
 extern pthread_cond_t mom_agenda_changed_condvar;
 

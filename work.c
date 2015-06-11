@@ -863,7 +863,8 @@ handle_web_mom (void *data, onion_request *requ, onion_response *resp)
 	  };
 	MOM_DEBUGPRINTF (web,
 			 "handle_web request #%ld reqfupath: %s reqfucopy: %s restpathstr: %s shrinkagain %s",
-			 reqcnt, reqfucopy, reqfucopy, restpathstr,
+			 reqcnt, reqfucopy, reqfucopy,
+			 mom_string_cstr (restpathstr),
 			 shrinkagain ? "yes" : "no");
       }
     while (shrinkagain);
@@ -1169,6 +1170,56 @@ mom_unsync_webexitem_fputs (momitem_t *wxitm, const char *str)
   n = fputs (str, webex->webx_outfil);
   return n;
 }				/* end mom_unsync_webexitem_fputs */
+
+
+void
+mom_unsync_webexitem_out_utf8cstr_cencoded (momitem_t *wxitm, const char *str,
+					    int len)
+{
+  if (!wxitm || wxitm == MOM_EMPTY)
+    return;
+  if (!str || str == MOM_EMPTY)
+    return;
+  if (len < 0)
+    len = strlen (str);
+  if (wxitm->itm_kind != MOM_PREDEFINED_NAMED (web_exchange))
+    return;
+  struct webexchange_mom_st *webex = wxitm->itm_data1;
+  if (!webex || webex == MOM_EMPTY)
+    return;
+  assert (webex && webex->webx_magic == WEBEXCHANGE_MAGIC_MOM);
+  if (!webex->webx_outfil)
+    return;
+  if (len <= 0)
+    return;
+  mom_output_utf8cstr_cencoded (webex->webx_outfil, str, len);
+}				/* end of mom_unsync_webexitem_out_utf8cstr_cencoded */
+
+
+
+void
+mom_unsync_webexitem_out_utf8html_cencoded (momitem_t *wxitm, const char *str,
+					    int len, bool usebr)
+{
+  if (!wxitm || wxitm == MOM_EMPTY)
+    return;
+  if (!str || str == MOM_EMPTY)
+    return;
+  if (len < 0)
+    len = strlen (str);
+  if (wxitm->itm_kind != MOM_PREDEFINED_NAMED (web_exchange))
+    return;
+  struct webexchange_mom_st *webex = wxitm->itm_data1;
+  if (!webex || webex == MOM_EMPTY)
+    return;
+  assert (webex && webex->webx_magic == WEBEXCHANGE_MAGIC_MOM);
+  if (!webex->webx_outfil)
+    return;
+  if (len <= 0)
+    return;
+  mom_output_utf8html_cencoded (webex->webx_outfil, str, len, usebr);
+}				/* end of mom_unsync_webexitem_out_utf8html_cencoded */
+
 
 
 static bool
