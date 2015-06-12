@@ -1326,7 +1326,8 @@ second_pass_load_mom (bool global)
 		       (int) loader_mom->ldlinecount, loader_mom->ldlinebuf);
       if (loader_mom->ldlinelen > 4
 	  && loader_mom->ldlinebuf[0] == '*'
-	  && loader_mom->ldlinebuf[1] == '*')
+	  && (loader_mom->ldlinebuf[1] == '*'
+	      || loader_mom->ldlinebuf[1] == ':'))
 	{
 	  loader_mom->ldlinecol = 2;
 	  MOM_DEBUGPRINTF (load, "second %s pass defining line#%d: %s",
