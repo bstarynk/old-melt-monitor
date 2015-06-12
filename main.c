@@ -29,7 +29,7 @@ static const char *write_pid_file_mom;
 static const char *dump_cold_dir_mom;
 static const char *dump_exit_dir_mom;
 static const char *generate_c_module_mom;
-
+static const char *xtra_path_mom;
 
 unsigned nbmorepredef_mom;
 #define MAX_NEW_PREDEF_MOM 16
@@ -405,6 +405,7 @@ static const struct option mom_long_options[] = {
   {"socket", required_argument, NULL, 'S'},
   {"user-data", required_argument, NULL, 'U'},
   {"doc-root", required_argument, NULL, 'r'},
+  {"xtra-file", required_argument, NULL, 'X'},
   // long-only options
   {"daemon-noclose", no_argument, NULL, xtraopt_daemon_noclose},
   {"write-pid", required_argument, NULL, xtraopt_writepid},
@@ -548,6 +549,7 @@ usage_mom (const char *argv0)
 	  " \t# e.g. -r /var/www/ for adding some web document root\n");
   printf ("\t -S | --socket <socket>"
 	  " \t #host:port for TCP socket, /absolute/path for UNIX socket\n");
+  printf ("\t -X | --xtra-file <filename>" " \t #extra file to be loaded\n");
   putchar ('\n');
   printf ("\t --chdir <directory>" "\t #change directory\n");
   printf ("\t --write-pid <file>"
@@ -627,7 +629,7 @@ parse_program_arguments_and_load_plugins_mom (int *pargc, char ***pargv)
   int argc = *pargc;
   char **argv = *pargv;
   int opt = -1;
-  while ((opt = getopt_long (argc, argv, "lhVdn:P:W:J:D:S:r:p:",
+  while ((opt = getopt_long (argc, argv, "lhVdn:P:W:J:D:S:X:r:p:",
 			     mom_long_options, NULL)) >= 0)
     {
       switch (opt)
@@ -660,6 +662,9 @@ parse_program_arguments_and_load_plugins_mom (int *pargc, char ***pargv)
 	  break;
 	case 'W':
 	  mom_web_host = optarg;
+	  break;
+	case 'X':
+	  xtra_path_mom = optarg;
 	  break;
 	case 'S':
 	  mom_socket_path = optarg;
@@ -977,8 +982,9 @@ main (int argc_main, char **argv_main)
     mom_nb_workers = MOM_MIN_WORKERS;
   else if (mom_nb_workers > MOM_MAX_WORKERS)
     mom_nb_workers = MOM_MAX_WORKERS;
-  mom_load_state (NULL);
-  MOM_DEBUGPRINTF (load, "loaded state");
+  MOM_DEBUGPRINTF (load, "before loading state (xtrapath=%s)", xtra_path_mom);
+  mom_load_state (xtra_path_mom);
+  MOM_DEBUGPRINTF (load, "loaded state (xtrapath=%s)", xtra_path_mom);
   MOM_INFORMPRINTF ("MONIMELT loaded state, process %d", (int) getpid ());
   if (nbmorepredef_mom > 0)
     {
