@@ -300,9 +300,11 @@ first_pass_load_mom (const char *path, FILE *fil)
   while ((linlen = getline (&linbuf, &linsiz, fil)) >= 0)
     {
       lincnt++;
-      /// lines like: ** <item-name> are defining an item
-      if (linlen >= 4 && linbuf[0] == '*' && linbuf[1] == '*')
+      /// lines like: ** <item-name> or *: <item-name> are defining an item
+      if (linlen >= 4 && linbuf[0] == '*'
+	  && (linbuf[1] == '*' || linbuf[1] == ':'))
 	{
+	  bool isuser = linbuf[1] == ':';
 	  char locbuf[64];
 	  memset (locbuf, 0, sizeof (locbuf));
 	  MOM_DEBUGPRINTF (load, "first %s pass line#%d: %s",
@@ -325,7 +327,7 @@ first_pass_load_mom (const char *path, FILE *fil)
 			       itm, pc);
 	      if (itm->itm_space == momspa_transient)
 		{
-		  if (loader_mom->ldforglobals)
+		  if (!isuser)
 		    itm->itm_space = momspa_global;
 		  else
 		    itm->itm_space = momspa_user;
@@ -346,7 +348,7 @@ first_pass_load_mom (const char *path, FILE *fil)
 	      itm = mom_make_anonymous_item_by_id (pc);
 	      if (itm->itm_space == momspa_transient)
 		{
-		  if (loader_mom->ldforglobals)
+		  if (!isuser)
 		    itm->itm_space = momspa_global;
 		  else
 		    itm->itm_space = momspa_user;
@@ -672,7 +674,7 @@ token_string_load_mom (momvalue_t *pval)
 const char *const delim_mom[] = {
   /// first the 2 bytes delimiters; notice that degree-sign °, section-sign §, are two UTF-8 bytes
   "==",
-  "**", "++", "--", "[[", "]]", "..", "_*", "_:", "_!",
+  "**", "*:", "++", "--", "[[", "]]", "..", "_*", "_:", "_!",
   "(!", "!)",
   "°", "§", "*", "(", ")",
   "[", "]",
@@ -2720,6 +2722,11 @@ emit_dumped_item_mom (const momitem_t *itm)
   assert (dumper_mom && dumper_mom->dumagic == DUMPER_MAGIC_MOM);
   assert (dumper_mom->dustate == dump_emit);
   assert (dumper_mom->dufile);
+  assert (itm != NULL);
+  assert (itm->itm_space == momspa_predefined
+	  || itm->itm_space == momspa_global
+	  || itm->itm_space == momspa_user);
+  bool isuser = itm->itm_space == momspa_user;
   MOM_DEBUGPRINTF (dump, "emit_dumped_item start %s", mom_item_cstring (itm));
   if (!mom_hashset_contains (dumper_mom->duitemuserset, itm)
       && !mom_hashset_contains (dumper_mom->duitemglobalset, itm))
@@ -2728,6 +2735,8 @@ emit_dumped_item_mom (const momitem_t *itm)
   if (mom_hashset_contains (dumper_mom->dupredefineditemset, itm))
     fprintf (dumper_mom->dufile, "** %s   ////// PREDEFINED\n",
 	     mom_item_cstring (itm));
+  else if (isuser)
+    fprintf (dumper_mom->dufile, "*: %s\n", mom_item_cstring (itm));
   else
     fprintf (dumper_mom->dufile, "** %s\n", mom_item_cstring (itm));
   dumper_mom->duindentation = 0;
