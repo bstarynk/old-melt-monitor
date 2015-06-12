@@ -48,10 +48,8 @@ struct momloader_st
   unsigned ldmagic;		/* always LOADER_MAGIC_MOM */
   double ldstartelapsedtime;
   double ldstartcputime;
-  const char *ldglobalpath;
-  const char *lduserpath;
-  FILE *ldglobalfile;
-  FILE *lduserfile;
+  const char *ldcurpath;
+  FILE *ldcurfile;
   struct loaderaliasent_st *ldaliasentarr;	// of ldaliaslen size
   unsigned ldaliaslen;
   unsigned ldaliascount;
@@ -59,7 +57,6 @@ struct momloader_st
   struct momhashset_st *ldmoduleset;
   struct transformvect_mom_st *ldtransfvect;
   struct momqueuevalues_st ldquetokens;
-  bool ldforglobals;
   char *ldlinebuf;
   size_t ldlinesize;
   size_t ldlinelen;
@@ -121,10 +118,8 @@ load_position_mom (char *buf, size_t siz, int lineno)
   assert (loader_mom && loader_mom->ldmagic == LOADER_MAGIC_MOM);
   if (buf)
     {
-      snprintf (buf, siz, "%s file %s line %d",	//
-		loader_mom->ldforglobals ? "global" : "user", loader_mom->ldforglobals	//
-		? loader_mom->ldglobalpath	//
-		: loader_mom->lduserpath,
+      snprintf (buf, siz, "file %s line %d",	//
+		loader_mom->ldcurpath,	//
 		(lineno > 0) ? lineno : (int) loader_mom->ldlinecount);
       return buf;
     }
@@ -132,10 +127,8 @@ load_position_mom (char *buf, size_t siz, int lineno)
     {
       char lbuf[192];
       memset (lbuf, 0, sizeof (lbuf));
-      snprintf (lbuf, sizeof (lbuf), "%s file %s line %d",	//
-		loader_mom->ldforglobals ? "global" : "user", loader_mom->ldforglobals	//
-		? loader_mom->ldglobalpath	//
-		: loader_mom->lduserpath,
+      snprintf (lbuf, sizeof (lbuf), "file %s line %d",	//
+		loader_mom->ldcurpath,
 		(lineno > 0) ? lineno : (int) loader_mom->ldlinecount);
       return MOM_GC_STRDUP ("location message", lbuf);
     }
@@ -291,6 +284,8 @@ first_pass_load_mom (const char *path, FILE *fil)
   size_t linsiz = 0;
   ssize_t linlen = 0;
   unsigned lincnt = 0;
+  loader_mom->ldcurpath = path;
+  loader_mom->ldcurfile = fil;
   rewind (fil);
   linsiz = 128;
   linbuf = malloc (linsiz);	// for getline
@@ -307,9 +302,8 @@ first_pass_load_mom (const char *path, FILE *fil)
 	  bool isuser = linbuf[1] == ':';
 	  char locbuf[64];
 	  memset (locbuf, 0, sizeof (locbuf));
-	  MOM_DEBUGPRINTF (load, "first %s pass line#%d: %s",
-			   loader_mom->ldforglobals ? "global" : "user",
-			   lincnt, linbuf);
+	  MOM_DEBUGPRINTF (load, "first pass file %s line#%d: %s",
+			   loader_mom->ldcurpath, lincnt, linbuf);
 	  char *pc = linbuf + 2;
 	  char *end = NULL;
 	  momitem_t *itm = NULL;
@@ -322,9 +316,8 @@ first_pass_load_mom (const char *path, FILE *fil)
 	      char endch = *end;
 	      *end = 0;
 	      itm = mom_make_named_item (pc);
-	      MOM_DEBUGPRINTF (load, "first %s pass named item @%p %s",
-			       loader_mom->ldforglobals ? "global" : "user",
-			       itm, pc);
+	      MOM_DEBUGPRINTF (load, "first pass file %s named item @%p %s",
+			       loader_mom->ldcurpath, itm, pc);
 	      if (itm->itm_space == momspa_transient)
 		{
 		  if (!isuser)
@@ -354,8 +347,8 @@ first_pass_load_mom (const char *path, FILE *fil)
 		    itm->itm_space = momspa_user;
 		};
 	      MOM_DEBUGPRINTF (load,
-			       "first %s pass anonymous item %s (%s) @%p %s",
-			       loader_mom->ldforglobals ? "global" : "user",
+			       "first pass file %s anonymous item %s (%s) @%p %s",
+			       loader_mom->ldcurpath,
 			       mom_item_cstring (itm),
 			       mom_item_space_string (itm), itm, pc);
 	      *end = endch;
@@ -402,6 +395,8 @@ first_pass_load_mom (const char *path, FILE *fil)
 	}
     }
   free (linbuf);
+  loader_mom->ldcurpath = NULL;
+  loader_mom->ldcurfile = NULL;
 }				/* end first_pass_load_mom */
 
 
@@ -701,9 +696,7 @@ readagain:
     {
       if (loader_mom->ldlinebuf)
 	memset (loader_mom->ldlinebuf, 0, loader_mom->ldlinesize);
-      FILE *f =
-	loader_mom->ldforglobals ? loader_mom->
-	ldglobalfile : loader_mom->lduserfile;
+      FILE *f = loader_mom->ldcurfile;
       loader_mom->ldlineoff = ftell (f);
       loader_mom->ldlinelen =
 	getline (&loader_mom->ldlinebuf, &loader_mom->ldlinesize, f);
@@ -872,7 +865,7 @@ readagain:
     }
   else if (c == '_' && pstart[1] == '_' && isalpha (pstart[2]))
     {
-      // item alias, tokenized as ^item(<name>)
+      // item alias __<aliasname>, tokenized as ^item(<name>)
       char *p = pstart;
       while (*p && (isalnum (*p) || *p == '_'))
 	p++;
@@ -1045,9 +1038,7 @@ mom_eat_token_load_at (const char *fil, int lin)
       (void) mom_queuevalue_pop_front (&loader_mom->ldquetokens);
     };
   if (mom_queuevalue_size (&loader_mom->ldquetokens) == 0
-      && !feof (loader_mom->
-		ldforglobals ? loader_mom->ldglobalfile : loader_mom->
-		lduserfile))
+      && !feof (loader_mom->ldcurfile))
     {
       MOM_DEBUGPRINTF (load, "eat_token_load@%s:%d parsing near %s",
 		       fil, lin,
@@ -1280,9 +1271,11 @@ mom_load_new_anonymous_item (bool global)
 ////////////////
 
 void
-second_pass_load_mom (bool global)
+second_pass_load_mom (const char *curpath, FILE *curfil)
 {
   assert (loader_mom && loader_mom->ldmagic == LOADER_MAGIC_MOM);
+  assert (curpath != NULL);
+  assert (curfil != NULL);
   if (loader_mom->ldlinebuf)
     free (loader_mom->ldlinebuf);
   {
@@ -1295,23 +1288,21 @@ second_pass_load_mom (bool global)
     loader_mom->ldlinesize = siz;
   }
   loader_mom->ldlinelen = 0;
-  loader_mom->ldforglobals = global;
-  FILE *f =
-    loader_mom->ldforglobals ? loader_mom->ldglobalfile : loader_mom->
-    lduserfile;
-  rewind (f);
+  loader_mom->ldcurpath = curpath;
+  loader_mom->ldcurfile = curfil;
+  rewind (curfil);
   loader_mom->ldlinecol = loader_mom->ldlinelen = loader_mom->ldlinecount = 0;
   do
     {
       if (loader_mom->ldlinebuf)
 	memset (loader_mom->ldlinebuf, 0, loader_mom->ldlinesize);
-      loader_mom->ldlineoff = ftell (f);
+      loader_mom->ldlineoff = ftell (curfil);
       loader_mom->ldlinelen =
-	getline (&loader_mom->ldlinebuf, &loader_mom->ldlinesize, f);
+	getline (&loader_mom->ldlinebuf, &loader_mom->ldlinesize, curfil);
       if (loader_mom->ldlinelen <= 0)
 	{
-	  MOM_DEBUGPRINTF (load, "second %s pass end-of-file at %s",
-			   loader_mom->ldforglobals ? "global" : "user",
+	  MOM_DEBUGPRINTF (load, "second pass end-of-file %s at %s",
+			   loader_mom->ldcurpath,
 			   load_position_mom (NULL, 0, 0));
 	  return;
 	}
@@ -1321,8 +1312,8 @@ second_pass_load_mom (bool global)
 	  && loader_mom->ldlinebuf[0] == '/'
 	  && loader_mom->ldlinebuf[1] == '/')
 	continue;
-      MOM_DEBUGPRINTF (load, "second %s pass line#%d: %s",
-		       loader_mom->ldforglobals ? "global" : "user",
+      MOM_DEBUGPRINTF (load, "second pass file %s line#%d: %s",
+		       loader_mom->ldcurpath,
 		       (int) loader_mom->ldlinecount, loader_mom->ldlinebuf);
       if (loader_mom->ldlinelen > 4
 	  && loader_mom->ldlinebuf[0] == '*'
@@ -1330,8 +1321,8 @@ second_pass_load_mom (bool global)
 	      || loader_mom->ldlinebuf[1] == ':'))
 	{
 	  loader_mom->ldlinecol = 2;
-	  MOM_DEBUGPRINTF (load, "second %s pass defining line#%d: %s",
-			   loader_mom->ldforglobals ? "global" : "user",
+	  MOM_DEBUGPRINTF (load, "second pass file %s defining line#%d: %s",
+			   loader_mom->ldcurpath,
 			   (int) loader_mom->ldlinecount,
 			   loader_mom->ldlinebuf);
 	  memset (&loader_mom->ldquetokens, 0,
@@ -1347,12 +1338,13 @@ second_pass_load_mom (bool global)
 			   load_position_mom (NULL, 0, 0));
 	  mom_eat_token_load ();
 	  load_fill_item_mom (val.vitem, false);
-	  MOM_DEBUGPRINTF (load, "second %s pass filled item %s\n",
-			   loader_mom->ldforglobals ? "global" : "user",
-			   val.vitem->itm_str->cstr);
+	  MOM_DEBUGPRINTF (load, "second pass file %s filled item %s\n",
+			   loader_mom->ldcurpath, val.vitem->itm_str->cstr);
 	}
     }
-  while (!feof (f));
+  while (!feof (curfil));
+  loader_mom->ldcurpath = NULL;
+  loader_mom->ldcurfile = NULL;
 }
 
 void
@@ -1673,24 +1665,30 @@ mom_load_value (momvalue_t *pval)
 
 
 void
-mom_load_state ()
+mom_load_state (const char *xtrapath)
 {
+  const char *globalpath = MOM_GLOBAL_DATA_PATH;
+  const char *userpath = MOM_USER_DATA_PATH;
+  FILE *globalfile = NULL;
+  FILE *userfile = NULL;
+  FILE *xtrafile = NULL;
   struct momloader_st ldr;
   memset (&ldr, 0, sizeof (ldr));
   ldr.ldmagic = LOADER_MAGIC_MOM;
   ldr.ldstartelapsedtime = mom_elapsed_real_time ();
   ldr.ldstartcputime = mom_clock_time (CLOCK_PROCESS_CPUTIME_ID);
-  ldr.ldglobalpath = MOM_GLOBAL_DATA_PATH;
-  ldr.ldglobalfile = fopen (MOM_GLOBAL_DATA_PATH, "r");
-  if (!ldr.ldglobalfile)
-    MOM_FATAPRINTF ("failed to open global data %s: %m",
-		    MOM_GLOBAL_DATA_PATH);
-  ldr.lduserfile = fopen (MOM_USER_DATA_PATH, "r");
-  if (!ldr.lduserfile)
-    MOM_WARNPRINTF ("failed to open user data %s: %m", MOM_USER_DATA_PATH);
-  else
-    ldr.lduserpath = MOM_USER_DATA_PATH;
-  ldr.ldforglobals = true;
+  globalfile = fopen (globalpath, "rm");
+  if (!globalfile)
+    MOM_FATAPRINTF ("failed to open global state file %s : %m", globalpath);
+  userfile = fopen (userpath, "rm");
+  if (!userfile)
+    MOM_WARNPRINTF ("failed to open user state file %s : %m", userpath);
+  if (xtrapath && xtrapath[0])
+    {
+      xtrafile = fopen (xtrapath, "rm");
+      if (!xtrafile)
+	MOM_WARNPRINTF ("failed to open xtra state file %s : %m", xtrapath);
+    };
   {
     unsigned alisiz = 41;	/* a prime */
     ldr.ldaliasentarr =
@@ -1701,27 +1699,21 @@ mom_load_state ()
   }
   loader_mom = &ldr;
   MOM_DEBUGPRINTF (load, "first pass");
-  first_pass_load_mom (ldr.ldglobalpath, ldr.ldglobalfile);
-  if (ldr.lduserpath)
-    {
-      ldr.ldforglobals = false;
-      first_pass_load_mom (ldr.lduserpath, ldr.lduserfile);
-    }
+  first_pass_load_mom (globalpath, globalfile);
+  if (userfile)
+    first_pass_load_mom (userpath, userfile);
+  if (xtrafile)
+    first_pass_load_mom (xtrapath, xtrafile);
   if (ldr.ldmoduleset)
     {
       make_modules_load_mom ();
     }
   MOM_DEBUGPRINTF (load, "second pass");
-  // second pass for global data
-  ldr.ldforglobals = true;
-  second_pass_load_mom (true);
-  // second pass for user data  
-  if (ldr.lduserfile)
-    {
-      MOM_DEBUGPRINTF (load, "second pass for user file %s", ldr.lduserpath);
-      ldr.ldforglobals = false;
-      second_pass_load_mom (false);
-    }
+  second_pass_load_mom (globalpath, globalfile);
+  if (userfile)
+    second_pass_load_mom (userpath, userfile);
+  if (xtrafile)
+    second_pass_load_mom (xtrapath, xtrafile);
   /// fill the predefined
   {
     // this function is in the generated file fill-monimelt.c, see MOM_FILL_PREDEFINED_PATH
@@ -1755,18 +1747,32 @@ mom_load_state ()
 	}
     }
   MOM_INFORMPRINTF
-    ("loaded %d items and %d modules ...\n"
-     ".. with %d transforms from global %s and user %s files ...\n"
-     ".. in %.3f elapsed & %.3f cpu seconds",
+    ("loaded %d items and %d modules with %d transforms in %.3f elapsed & %.3f cpu seconds",
      (int) mom_hashset_count (ldr.lditemset),
-     (int) mom_hashset_count (ldr.ldmoduleset), nbtransf, ldr.ldglobalpath,
-     ldr.lduserpath,
+     (int) mom_hashset_count (ldr.ldmoduleset), nbtransf,
      mom_elapsed_real_time () - ldr.ldstartelapsedtime,
      mom_clock_time (CLOCK_PROCESS_CPUTIME_ID) - ldr.ldstartcputime);
+  if (userfile != NULL)
+    {
+      if (xtrafile != NULL)
+	MOM_INFORMPRINTF
+	  ("loaded global %s, user %s, xtra %s files", globalpath, userpath,
+	   xtrapath);
+      else
+	MOM_INFORMPRINTF ("loaded global %s, user %s files", globalpath,
+			  userpath);
+    }
+  else
+    MOM_INFORMPRINTF ("loaded global %s file", globalpath);
+  if (xtrafile)
+    fclose (xtrafile);
+  if (userfile)
+    fclose (userfile);
+  fclose (globalfile);
   loader_mom = NULL;
   MOM_DEBUGPRINTF (load, "end loading");
   memset (&ldr, 0, sizeof (ldr));
-}
+}				// end function mom_load_state
 
 
 

@@ -977,7 +977,7 @@ main (int argc_main, char **argv_main)
     mom_nb_workers = MOM_MIN_WORKERS;
   else if (mom_nb_workers > MOM_MAX_WORKERS)
     mom_nb_workers = MOM_MAX_WORKERS;
-  mom_load_state ();
+  mom_load_state (NULL);
   MOM_DEBUGPRINTF (load, "loaded state");
   MOM_INFORMPRINTF ("MONIMELT loaded state, process %d", (int) getpid ());
   if (nbmorepredef_mom > 0)

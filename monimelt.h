@@ -454,7 +454,7 @@ typedef struct momvalue_st momvalue_t;
 #define MOM_APPLY_HEADER_PATH "apply-monimelt.h"
 
 
-void mom_load_state (void);
+void mom_load_state (const char *extrapath);
 void mom_dump_state (const char *prefix);
 
 momvalue_t mom_peek_token_load_at (const char *fil, int lin);
