@@ -1099,6 +1099,21 @@ mom_unsync_webexitem_file (const momitem_t *wxitm)
   return webex->webx_outfil;
 }				/* end mom_unsync_webexitem_file */
 
+long
+mom_unsync_webexitem_ftell (const momitem_t *wxitm)
+{
+  if (!wxitm || wxitm == MOM_EMPTY)
+    return -1;
+  if (wxitm->itm_kind != MOM_PREDEFINED_NAMED (web_exchange))
+    return -1;
+  struct webexchange_mom_st *webex = wxitm->itm_data1;
+  if (!webex || webex == MOM_EMPTY)
+    return -1;
+  assert (webex && webex->webx_magic == WEBEXCHANGE_MAGIC_MOM);
+  if (!webex->webx_outfil)
+    return -1;
+  return ftell (webex->webx_outfil);
+}				/* end mom_unsync_webexitem_ftell */
 
 int
 mom_unsync_webexitem_printf (momitem_t *wxitm, const char *fmt, ...)

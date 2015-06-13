@@ -1633,6 +1633,7 @@ FILE *mom_unsync_webexitem_file (const momitem_t *wxitm);
 int mom_unsync_webexitem_printf (momitem_t *wxitm, const char *fmt, ...)
   __attribute__ ((format (printf, 2, 3)));
 int mom_unsync_webexitem_fputs (momitem_t *wxitm, const char *str);
+long mom_unsync_webexitem_ftell (const momitem_t *wxitm);
 // mom_unsync_webexitem_reply should have valid argument, otherwise it
 // is aborting
 void mom_unsync_webexitem_reply (momitem_t *wxitm, const char *mimetype,
