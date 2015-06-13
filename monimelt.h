@@ -1214,6 +1214,23 @@ mom_make_sized_tuple (unsigned nbitems, momitem_t *const *itmarr)
   return mom_make_sized_meta_tuple (MOM_NONEV, nbitems, itmarr);
 };
 
+/// make a tuple from given values, collecting items, tuples & sets (and
+/// ignoring scalars and nodes) to form a tuple
+const momseq_t *mom_collect_meta_tuple (momvalue_t metav, unsigned nbvals,
+					...);
+#define mom_collect_tuple(NbVals,...) mom_collect_meta_tuple(MOM_NONEV, (NbVals), __VA_ARGS__)
+const momseq_t *mom_collect_sized_meta_tuple (momvalue_t metav,
+					      unsigned nbvals,
+					      const momvalue_t *valarr);
+
+static inline const momseq_t *
+mom_collect_sized_tuple (unsigned nbvals, const momvalue_t *valarr)
+{
+  return mom_collect_sized_meta_tuple (MOM_NONEV, nbvals, valarr);
+};
+
+
+
 static inline momvalue_t
 mom_tuplev (const momseq_t *seq)
 {
@@ -1231,17 +1248,32 @@ mom_tuplev (const momseq_t *seq)
 #define mom_tuplev_sized_meta_tuple(Meta,Nb,Arr)  mom_tuplev(mom_make_sized_meta_tuple((Meta),(Nb),(Arr)))
 #define mom_tuplev_sized_tuple(Nb,Arr)  mom_tuplev(mom_make_sized_tuple((Nb),(Arr)))
 
+
 // make a set from given items. NULL and MOM_EMPTY item pointers are
 // skipped.  Remaining items are sorted, and duplicates are ignored.
 const momseq_t *mom_make_meta_set (momvalue_t metav, unsigned nbitems, ...);
 #define mom_make_set(NbItems,...) mom_make_meta_set(MOM_NONEV, (NbItems), __VA_ARGS__)
 const momseq_t *mom_make_sized_meta_set (momvalue_t metav, unsigned nbitems,
 					 const momitem_t **itmarr);
+
 static inline const momseq_t *
 mom_make_sized_set (unsigned nbitems, const momitem_t **itmarr)
 {
   return mom_make_sized_meta_set (MOM_NONEV, nbitems, itmarr);
 };
+
+/// make a set from given values, collecting items, tuples & sets (and
+/// ignoring scalars and nodes) to form a set
+const momseq_t *mom_collect_meta_set (momvalue_t metav, unsigned nbvals, ...);
+#define mom_collect_set(NbVals,...) mom_collect_meta_set(MOM_NONEV, (NbVals), __VA_ARGS__)
+const momseq_t *mom_collect_sized_meta_set (momvalue_t metav, unsigned nbvals,
+					    const momvalue_t *valarr);
+static inline const momseq_t *
+mom_collect_sized_set (unsigned nbvals, const momvalue_t *valarr)
+{
+  return mom_collect_sized_meta_set (MOM_NONEV, nbvals, valarr);
+};
+
 
 static inline momvalue_t
 // this is unsafe, e.g. if seq is not sorted

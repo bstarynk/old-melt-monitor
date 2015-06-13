@@ -238,6 +238,54 @@ update_seq_hash_mom (momseq_t *seq)
 }
 
 ////////////////////////////////////////////////////////////////
+////// common support for collections ...
+static inline void
+append_collected_item_mom (momitem_t ***pitmarr, unsigned *pcount,
+			   unsigned *psize, momitem_t *itm, unsigned gap)
+{
+  unsigned count = *pcount;
+  unsigned size = *psize;
+  momitem_t **itmarr = *pitmarr;
+  if (MOM_UNLIKELY (count + 1 >= size))
+    {
+      unsigned newsiz = ((size + count / 4 + gap + 3) | 0xf) + 1;
+      unsigned oldsiz = size;
+      momitem_t **newitmarr =	//
+	MOM_GC_ALLOC ("newitmarr", newsiz * sizeof (momitem_t *));
+      memcpy (newitmarr, itmarr, count * sizeof (momitem_t *));
+      momitem_t **olditmarr = itmarr;
+      MOM_GC_FREE (olditmarr, oldsiz * sizeof (momitem_t *));
+      *pitmarr = itmarr = newitmarr;
+      *psize = size = newsiz;
+    };
+  itmarr[count++] = itm;
+  *pcount = count;
+}				/* end append_collected_item_mom */
+
+#define DO_APPEND_COLLECTED_ITEM_MOM(ItmArr,Count,Size,Itm,Gap)	\
+  append_collected_item_mom((&(ItmArr)),&(Count),&(Size),(Itm),(Gap))
+
+#define DO_APPEND_COLLECTED_VALUE_MOM_AT(Lin,ItmArr,Count,Size,Val) do { \
+  momvalue_t val_##Lin = (Val);						\
+  const momseq_t* seq_##Lin = mom_value_to_sequ(val_##Lin);		\
+  momitem_t* itm_##Lin = NULL;						\
+  if (seq_##Lin) {							\
+    unsigned seqlen_##Lin = seq_##Lin->slen;				\
+    for (unsigned ix=0; ix<seqlen_##Lin; ix++) {			\
+      itm_##Lin = (momitem_t*)seq_##Lin->arritm[ix];			\
+      assert (itm_##Lin != NULL);					\
+      DO_APPEND_COLLECTED_ITEM_MOM((ItmArr),(Count),(Size),		\
+				   itm_##Lin,seqlen_##Lin);		\
+    }									\
+  }									\
+  else if ((itm_##Lin = mom_value_to_item(val_##Lin)) != NULL)		\
+    DO_APPEND_COLLECTED_ITEM_MOM((ItmArr),(Count),(Size),		\
+				 itm_##Lin,0);				\
+ } while(0)
+#define DO_APPEND_COLLECTED_VALUE_MOM(ItmArr,Count,Size,Val) \
+  DO_APPEND_COLLECTED_VALUE_MOM_AT(__LINE__,ItmArr,Count,Size,Val)
+
+////////////////////////////////////////////////////////////////
 ////// tuples
 
 
@@ -311,7 +359,48 @@ mom_make_sized_meta_tuple (momvalue_t metav, unsigned nbitems,
   update_seq_hash_mom (tup);
   tup->meta = metav;
   return tup;
-}
+}				/* end of mom_make_sized_meta_tuple */
+
+
+const momseq_t *
+mom_collect_meta_tuple (momvalue_t metav, unsigned nbvals, ...)
+{
+  va_list args;
+  unsigned siz = ((3 * nbvals / 2 + 10) | 0xf) + 1;
+  unsigned count = 0;
+  momitem_t **itmarr =		//
+    MOM_GC_ALLOC ("initial itmarr", siz * sizeof (momitem_t *));
+  va_start (args, nbvals);
+  for (unsigned ix = 0; ix < nbvals; ix++)
+    {
+      momvalue_t curval = va_arg (args, momvalue_t);
+      DO_APPEND_COLLECTED_VALUE_MOM (itmarr, count, siz, curval);
+    }
+  va_end (args);
+  const momseq_t *seq = mom_make_sized_meta_tuple (metav, count, itmarr);
+  MOM_GC_FREE (itmarr, siz * sizeof (momitem_t *));
+  return seq;
+}				/* end of mom_collect_meta_tuple */
+
+const momseq_t *
+mom_collect_sized_meta_tuple (momvalue_t metav, unsigned nbvals,
+			      const momvalue_t *valarr)
+{
+  if (nbvals > 0 && valarr == NULL)
+    return NULL;
+  unsigned siz = ((3 * nbvals / 2 + 10) | 0xf) + 1;
+  unsigned count = 0;
+  momitem_t **itmarr =		//
+    MOM_GC_ALLOC ("initial itmarr", siz * sizeof (momitem_t *));
+  for (unsigned ix = 0; ix < nbvals; ix++)
+    {
+      momvalue_t curval = valarr[ix];
+      DO_APPEND_COLLECTED_VALUE_MOM (itmarr, count, siz, curval);
+    }
+  const momseq_t *seq = mom_make_sized_meta_tuple (metav, count, itmarr);
+  MOM_GC_FREE (itmarr, siz * sizeof (momitem_t *));
+  return seq;
+}				/* end of mom_collect_sized_meta_tuple */
 
 
 ////////////////////////////////////////////////////////////////
@@ -470,6 +559,49 @@ mom_make_sized_meta_set (momvalue_t metav, unsigned nbitems,
   set->meta = metav;
   return set;
 }
+
+
+const momseq_t *
+mom_collect_meta_set (momvalue_t metav, unsigned nbvals, ...)
+{
+  va_list args;
+  unsigned siz = ((3 * nbvals / 2 + 10) | 0xf) + 1;
+  unsigned count = 0;
+  momitem_t **itmarr =		//
+    MOM_GC_ALLOC ("initial itmarr", siz * sizeof (momitem_t *));
+  va_start (args, nbvals);
+  for (unsigned ix = 0; ix < nbvals; ix++)
+    {
+      momvalue_t curval = va_arg (args, momvalue_t);
+      DO_APPEND_COLLECTED_VALUE_MOM (itmarr, count, siz, curval);
+    }
+  va_end (args);
+  const momseq_t *seq = //
+    mom_make_sized_meta_set (metav, count, (const momitem_t**) itmarr);
+  MOM_GC_FREE (itmarr, siz * sizeof (momitem_t *));
+  return seq;
+}				/* end of mom_collect_meta_set */
+
+const momseq_t *
+mom_collect_sized_meta_set (momvalue_t metav, unsigned nbvals,
+			      const momvalue_t *valarr)
+{
+  if (nbvals > 0 && valarr == NULL)
+    return NULL;
+  unsigned siz = ((3 * nbvals / 2 + 10) | 0xf) + 1;
+  unsigned count = 0;
+  momitem_t **itmarr =		//
+    MOM_GC_ALLOC ("initial itmarr", siz * sizeof (momitem_t *));
+  for (unsigned ix = 0; ix < nbvals; ix++)
+    {
+      momvalue_t curval = valarr[ix];
+      DO_APPEND_COLLECTED_VALUE_MOM (itmarr, count, siz, curval);
+    }
+  const momseq_t *seq = //
+    mom_make_sized_meta_set (metav, count, (const momitem_t**)itmarr);
+  MOM_GC_FREE (itmarr, siz * sizeof (momitem_t *));
+  return seq;
+}				/* end of mom_collect_sized_meta_set */
 
 
 
