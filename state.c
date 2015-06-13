@@ -1185,7 +1185,7 @@ load_fill_item_mom (momitem_t *itm, bool internal)
       int lineno = loader_mom->ldlinecount;
       vtok = mom_peek_token_load ();
       if (!mom_value_is_delim (vtok, "]]"))
-	MOM_FATAPRINTF ("expecting ]] but got %s to end attributes of item %s"
+	MOM_FATAPRINTF ("expecting ]] but got %s to end components of item %s"
 			" in %s",
 			mom_output_gcstring (vtok),
 			mom_item_cstring (itm), load_position_mom (NULL, 0,
@@ -1463,6 +1463,7 @@ mom_load_value (momvalue_t *pval)
     return false;
   memset (pval, 0, sizeof (momvalue_t));
   momvalue_t vtok = mom_peek_token_load ();
+  const momstring_t *namstr = NULL;
   MOM_DEBUGPRINTF (load, "load_value vtok %s near %s",
 		   mom_output_gcstring (vtok), load_position_mom (NULL, 0,
 								  0));
@@ -1470,6 +1471,22 @@ mom_load_value (momvalue_t *pval)
     return false;
   if (vtok.typnum == momty_item)
     {				// items
+      *pval = vtok;
+      mom_eat_token_load ();
+      return true;
+    }
+  if (vtok.typnum == momty_node
+      && mom_node_conn (vtok.vnode) == MOM_PREDEFINED_NAMED (item)
+      && (namstr =
+	  mom_value_to_string (mom_node_nth (vtok.vnode, 0))) != NULL)
+    {				/* alias */
+      momitem_t *alitm = find_alias_item_mom (namstr);
+      if (!alitm)
+	MOM_FATAPRINTF ("invalid alias %s near %s",
+			mom_string_cstr (namstr), load_position_mom (NULL, 0,
+								     0));
+      vtok.typnum = momty_item;
+      vtok.vitem = alitm;
       *pval = vtok;
       mom_eat_token_load ();
       return true;
