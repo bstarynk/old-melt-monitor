@@ -355,6 +355,37 @@ first_pass_load_mom (const char *path, FILE *fil)
 	      loader_mom->lditemset =
 		mom_hashset_put (loader_mom->lditemset, itm);
 	    }
+	  // lines like ** __<aliasname> are defining an alias
+	  else if (*pc == '_' && pc[1] == '_' && isalpha (pc[2]))
+	    {
+	      char aliasname[80];
+	      memset (aliasname, 0, sizeof (aliasname));
+	      if (sscanf (pc, "%78[A-Za-z0-9_]", aliasname) <= 0
+		  || aliasname[0] != '_' || aliasname[1] != '_'
+		  || !isalpha (aliasname[2]))
+		MOM_FATAPRINTF ("invalid alias name '%s' near %s",
+				aliasname, load_position_mom (locbuf,
+							      sizeof (locbuf),
+							      0));
+	      aliasname[sizeof (aliasname) - 1] = '\0';
+	      MOM_DEBUGPRINTF (load,
+			       "first pass file %s alias %s line#%d: %s",
+			       loader_mom->ldcurpath, aliasname, lincnt,
+			       linbuf);
+	      const momstring_t *aliastr = mom_make_string_cstr (aliasname);
+	      itm = mom_make_anonymous_item ();
+	      if (!isuser)
+		itm->itm_space = momspa_global;
+	      else
+		itm->itm_space = momspa_user;
+	      MOM_DEBUGPRINTF (load,
+			       "first pass new %s alias %s for %s at %s",
+			       isuser ? "user" : "global", aliasname,
+			       mom_item_cstring (itm),
+			       load_position_mom (locbuf, sizeof (locbuf),
+						  0));
+	      add_alias_mom (aliastr, itm);
+	    }
 	  else
 	    MOM_FATAPRINTF ("invalid line #%d in file %s:\t%s", lincnt, path,
 			    linbuf);
@@ -865,7 +896,8 @@ readagain:
     }
   else if (c == '_' && pstart[1] == '_' && isalpha (pstart[2]))
     {
-      // item alias __<aliasname>, tokenized as ^item(<name>)
+      // item alias __<aliasname>, tokenized as ^item(<fullaliasname>)
+      // where <fullaliasname> is a string starting with __
       char *p = pstart;
       while (*p && (isalnum (*p) || *p == '_'))
 	p++;
@@ -1320,6 +1352,8 @@ second_pass_load_mom (const char *curpath, FILE *curfil)
 	  && (loader_mom->ldlinebuf[1] == '*'
 	      || loader_mom->ldlinebuf[1] == ':'))
 	{
+	  char locbuf[72];
+	  memset (locbuf, 0, sizeof (locbuf));
 	  loader_mom->ldlinecol = 2;
 	  MOM_DEBUGPRINTF (load, "second pass file %s defining line#%d: %s",
 			   loader_mom->ldcurpath,
@@ -1328,18 +1362,32 @@ second_pass_load_mom (const char *curpath, FILE *curfil)
 	  memset (&loader_mom->ldquetokens, 0,
 		  sizeof (loader_mom->ldquetokens));
 	  momvalue_t val = mom_peek_token_load ();
-	  if (val.typnum != momty_item)
+	  momitem_t *itm = NULL;
+	  const momstring_t *namstr = NULL;
+	  if (val.typnum == momty_item)
+	    itm = val.vitem;
+	  else if (val.typnum == momty_node
+		   && mom_node_conn (val.vnode) == MOM_PREDEFINED_NAMED (item)
+		   && (namstr =
+		       mom_value_to_string (mom_node_nth (val.vnode, 0))) !=
+		   NULL)
+	    {
+	      itm = find_alias_item_mom (namstr);
+	      assert (itm != NULL && itm->itm_anonymous);
+	    }
+	  else
 	    MOM_FATAPRINTF ("invalid line %d '%s' of %s (got %s, expecting some item) ",	//
 			    (int) loader_mom->ldlinecount, loader_mom->ldlinebuf,	//
-			    load_position_mom (NULL, 0, 0),
+			    load_position_mom (locbuf, sizeof (locbuf), 0),
 			    mom_output_gcstring (val));
 	  MOM_DEBUGPRINTF (load, "second pass filling item %s near %s",
-			   mom_item_cstring (val.vitem),
-			   load_position_mom (NULL, 0, 0));
+			   mom_item_cstring (itm),
+			   load_position_mom (locbuf, sizeof (locbuf), 0));
 	  mom_eat_token_load ();
-	  load_fill_item_mom (val.vitem, false);
-	  MOM_DEBUGPRINTF (load, "second pass file %s filled item %s\n",
-			   loader_mom->ldcurpath, val.vitem->itm_str->cstr);
+	  load_fill_item_mom (itm, false);
+	  MOM_DEBUGPRINTF (load, "second pass near %s filled item %s\n",
+			   load_position_mom (locbuf, sizeof (locbuf), 0),
+			   mom_item_cstring (itm));
 	}
     }
   while (!feof (curfil));

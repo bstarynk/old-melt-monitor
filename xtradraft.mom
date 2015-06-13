@@ -4,6 +4,8 @@
 /// This file xtradraft.mom is part of MONIMELT, part of GCC
 /// sometimes used as a draft to change the state, thru the
 /// --xtra-file program argument
+/// we usually don't use that file, but we keep it to be able
+/// to sometimes reuse parts of it....
 
 ///
 /// GCC is free software; you can redistribute it and/or modify 
@@ -55,7 +57,19 @@
   * type  value }
 ..
 
+** getproc
+{
+  * comment "closed value for processing GET web request "
+  * type value
+  }
+  ..
 
+** postproc
+{
+  * comment "closed value for processing POST web request "
+  * type value
+  }
+  ..
 
 ** basic_web_html
 {
@@ -63,19 +77,21 @@
  * function_signature  signature_2itm2val_to_void
  * constants { }
  * formals [ webxitm reqmethitm restpathval sessval ]
- * start _* = __start_block_basic_web_html "start block of basic_web_html"
-   (|
+ * closed [ getproc postproc ]
+ * start _* = __start_block_basic_web_html
+   (!
     {
+      * comment  "start block of basic_web_html"
       * instructions [
-        _* "set lkitm_webx = webxitm" (| [[ set lkitm_webx webxitm ]] |)
-      ]
+        //////
+        _* "set lkitm_webx = webxitm" (! [[ set lkitm_webx webxitm ]] !)
+      ] // end of instructions from __start_block_basic_web_html
     }
     %  ^filler_of_plain_kind( block)
-   |) // end  __start_block_basic_web_html
+   !) // end  __start_block_basic_web_html
 }
 [[
 ]]
-
 ..
 
 ////////////////////////////////////////////////////////////////
@@ -87,20 +103,21 @@
  * function_signature  signature_2itm2val_to_void
  * constants { }
  * formals [ webxitm reqmethitm restpathval sessval ]
- * start _* = __start_block_basic_web_json "start block of basic_web_json"
-  (|
+ * closed [ getproc postproc ]
+ * start _* = __start_block_basic_web_json
+  (!
     {
+      * comment "start block of basic_web_json"
       * instructions [
-        _* "set lkitm_webx = webxitm" (| [[ set lkitm_webx webxitm ]] |)
-      ]
+        /////
+        _* "set lkitm_webx = webxitm" (! [[ set lkitm_webx webxitm ]] !)
+      ] // end of instructions from __start_block_basic_web_json
     }
     %  ^filler_of_plain_kind( block)
-  |) // end __start_block_basic_web_json
+  !) // end __start_block_basic_web_json
 }
 [[
 ]]
-
-
 ..
 
 
