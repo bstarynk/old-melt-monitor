@@ -113,14 +113,22 @@
 ]]
  %  ^filler_of_plain_kind( block)
 ..
+/////
+** depth
+{
+  * comment  "usual depth"
+  * type  integer }
+ 
+..
+
 ////////////////////////////////////////////////////////////////
 
 ** basic_html_output 
 {
  * comment "internal function to output HTML"
- * function_signature ~
+ * function_signature signature_1itm1val1int_to_void
  * constants { }
- * formals [ webxitm ]
+ * formals [ webxitm val1 depth ]
  * closed [ ]
  * start _* = __start_block_basic_html_output
   (!
