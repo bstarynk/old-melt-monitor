@@ -1,0 +1,107 @@
+
+/// Copyright (C) 2015 Free Software Foundation, Inc. 
+/// MONIMELT is a monitor for MELT - see http://gcc-melt.org/ 
+/// This file xtradraft.mom is part of MONIMELT, part of GCC
+/// sometimes used as a draft to change the state, thru the
+/// --xtra-file program argument
+
+///
+/// GCC is free software; you can redistribute it and/or modify 
+/// it under the terms of the GNU General Public License as published by 
+/// the Free Software Foundation; either version 3, or (at your option) 
+/// any later version. 
+///
+///  GCC is distributed in the hope that it will be useful, 
+///  but WITHOUT ANY WARRANTY; without even the implied warranty of 
+///  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+///  GNU General Public License for more details. 
+///  You should have received a copy of the GNU General Public License 
+///  along with GCC; see the file COPYING3.   If not see 
+///  <http://www.gnu.org/licenses/>. 
+///
+
+** webxitm
+{
+  * comment "formal for the web exchange item"
+  * type  item }
+
+..
+
+
+** lkitm_webx
+{
+  * comment  "the locked item for the web exchange"
+  * type  locked_item }
+ %  ^filler_of_plain_kind( variable)
+ 
+..
+
+** reqmethitm
+{
+  * comment "formal for the request method item"
+  * type  item }
+
+..
+
+** restpathval
+{
+  * comment "formal for the web rest path string value"
+  * type  value }
+..
+
+** sessval
+{
+  * comment "formal for the session node value"
+  * type  value }
+..
+
+
+
+** basic_web_html
+{
+ * comment "function to handle basic web reply in HTML"
+ * function_signature  signature_2itm2val_to_void
+ * constants { }
+ * formals [ webxitm reqmethitm restpathval sessval ]
+ * start _* = __start_block_basic_web_html "start block of basic_web_html"
+   (|
+    {
+      * instructions [
+        _* "set lkitm_webx = webxitm" (| [[ set lkitm_webx webxitm ]] |)
+      ]
+    }
+    %  ^filler_of_plain_kind( block)
+   |) // end  __start_block_basic_web_html
+}
+[[
+]]
+
+..
+
+////////////////////////////////////////////////////////////////
+
+
+** basic_web_json
+{
+ * comment "function to handle basic web reply in JSON"
+ * function_signature  signature_2itm2val_to_void
+ * constants { }
+ * formals [ webxitm reqmethitm restpathval sessval ]
+ * start _* = __start_block_basic_web_json "start block of basic_web_json"
+  (|
+    {
+      * instructions [
+        _* "set lkitm_webx = webxitm" (| [[ set lkitm_webx webxitm ]] |)
+      ]
+    }
+    %  ^filler_of_plain_kind( block)
+  |) // end __start_block_basic_web_json
+}
+[[
+]]
+
+
+..
+
+
+/// eof _more.mom
