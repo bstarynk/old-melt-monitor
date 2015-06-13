@@ -115,6 +115,27 @@
 ..
 ////////////////////////////////////////////////////////////////
 
+** basic_html_output 
+{
+ * comment "internal function to output HTML"
+ * function_signature ~
+ * constants { }
+ * formals [ webxitm ]
+ * closed [ ]
+ * start _* = __start_block_basic_html_output
+  (!
+    {
+      * comment "start block of basic_html_output"
+      * instructions [
+      ]
+    }
+  !)
+ }
+[[
+]]
+..
+
+////////////////////////////////////////////////////////////////
 
 ** basic_web_json
 {
@@ -140,4 +161,4 @@
 ..
 
 
-/// eof _more.mom
+/// eof xtradraft.mom

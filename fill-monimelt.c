@@ -107,6 +107,9 @@ mom_predefined_items_fill (void)
 // item signature_1itm1int_to_item of kind function_signature
   MOM_PREDEFINED_NAMED (signature_1itm1int_to_item)->itm_kind
     = MOM_PREDEFINED_NAMED (function_signature);
+// item signature_1itm1val1int_to_void of kind function_signature
+  MOM_PREDEFINED_NAMED (signature_1itm1val1int_to_void)->itm_kind
+    = MOM_PREDEFINED_NAMED (function_signature);
 // item signature_1itm1val_to_item of kind function_signature
   MOM_PREDEFINED_NAMED (signature_1itm1val_to_item)->itm_kind
     = MOM_PREDEFINED_NAMED (function_signature);

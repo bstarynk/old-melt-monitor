@@ -1890,6 +1890,19 @@
 ..
 
 
+** signature_1itm1val1int_to_void   ////// PREDEFINED
+{
+  * comment  "signature for function: item value int -> ()"
+  * dumped_item_emitter  ^emitter_of_function()
+  * dumped_item_scanner  ^scanner_of_function()
+  * function_radix  "1itm1val1int_to_void"
+  * input_types  [item value integer]
+  * output_types  [] }
+ %  ^filler_of_plain_kind( function_signature)
+ 
+..
+
+
 ** signature_1itm1val_to_item   ////// PREDEFINED
 {
   * comment  "signature of functions taking one item, one value and giving a value"
