@@ -576,15 +576,15 @@ mom_collect_meta_set (momvalue_t metav, unsigned nbvals, ...)
       DO_APPEND_COLLECTED_VALUE_MOM (itmarr, count, siz, curval);
     }
   va_end (args);
-  const momseq_t *seq = //
-    mom_make_sized_meta_set (metav, count, (const momitem_t**) itmarr);
+  const momseq_t *seq =		//
+    mom_make_sized_meta_set (metav, count, (const momitem_t **) itmarr);
   MOM_GC_FREE (itmarr, siz * sizeof (momitem_t *));
   return seq;
 }				/* end of mom_collect_meta_set */
 
 const momseq_t *
 mom_collect_sized_meta_set (momvalue_t metav, unsigned nbvals,
-			      const momvalue_t *valarr)
+			    const momvalue_t *valarr)
 {
   if (nbvals > 0 && valarr == NULL)
     return NULL;
@@ -597,8 +597,8 @@ mom_collect_sized_meta_set (momvalue_t metav, unsigned nbvals,
       momvalue_t curval = valarr[ix];
       DO_APPEND_COLLECTED_VALUE_MOM (itmarr, count, siz, curval);
     }
-  const momseq_t *seq = //
-    mom_make_sized_meta_set (metav, count, (const momitem_t**)itmarr);
+  const momseq_t *seq =		//
+    mom_make_sized_meta_set (metav, count, (const momitem_t **) itmarr);
   MOM_GC_FREE (itmarr, siz * sizeof (momitem_t *));
   return seq;
 }				/* end of mom_collect_sized_meta_set */

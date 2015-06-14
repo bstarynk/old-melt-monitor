@@ -1795,10 +1795,11 @@ cgen_bind_variable_item_mom (struct codegen_mom_st *cg, momitem_t *itmv)
     return;
   if (itmv->itm_kind != MOM_PREDEFINED_NAMED (variable))
     CGEN_ERROR_RETURN_MOM (cg,
-			   "module item %s : function %s has bad variable %s",
+			   "module item %s : function %s has bad variable %s of kind %s",
 			   mom_item_cstring (cg->cg_moduleitm),
 			   mom_item_cstring (cg->cg_curfunitm),
-			   mom_item_cstring (itmv));
+			   mom_item_cstring (itmv),
+			   mom_item_cstring (itmv->itm_kind));
   momvalue_t vctyp =		//
     mom_item_unsync_get_attribute (itmv,
 				   MOM_PREDEFINED_NAMED (type));
@@ -4363,10 +4364,13 @@ bool momfunc_1itm1val_to_void_plain_code_emitter
 						      (variadic_rest)));
   unsigned nbexp = mom_node_arity (nodexp);
   MOM_DEBUGPRINTF (gencod,
-		   "plain_code_emitter curblock %s vexpr %s nbexp=%d vcodexp %s",
+		   "plain_code_emitter curblock %s vexpr %s\n"
+		   "... nbexp=%d vcodexp=%s varcountitm=%s varestitm=%s\n",
 		   mom_item_cstring (cg->cg_curblockitm),
 		   mom_output_gcstring (vexpr), nbexp,
-		   mom_output_gcstring (vcodexp));
+		   mom_output_gcstring (vcodexp),
+		   mom_item_cstring (varcountitm),
+		   mom_item_cstring (varestitm));
   for (unsigned xix = 0; xix < nbexp && !cg->cg_errormsg; xix++)
     {
       momvalue_t vcurexp = mom_node_nth (nodexp, xix);
@@ -4385,6 +4389,11 @@ bool momfunc_1itm1val_to_void_plain_code_emitter
 	case momty_item:
 	  {
 	    momitem_t *curitm = vcurexp.vitem;
+	    MOM_DEBUGPRINTF (gencod,
+			     "plain_code_emitter xix#%d curitm=%s, varcountitm=%s, varestitm=%s",
+			     xix, mom_item_cstring (curitm),
+			     mom_item_cstring (varcountitm),
+			     mom_item_cstring (varestitm));
 	    assert (curitm != NULL);
 	    if (curitm == varcountitm)
 	      {
@@ -4398,10 +4407,11 @@ bool momfunc_1itm1val_to_void_plain_code_emitter
 	      }
 	    else if (curitm == varestitm)
 	      {
+		unsigned nbrest = arity - nbformals;
 		MOM_DEBUGPRINTF (gencod,
-				 "plain_code_emitter got varestitm %s",
-				 mom_item_cstring (varestitm));
-		unsigned nbrest = nbexp - nbformals;
+				 "plain_code_emitter rest xix#%d got varestitm %s, nbrest=%d, arity=%d, nbformals=%d",
+				 xix, mom_item_cstring (varestitm), nbrest,
+				 arity, nbformals);
 		fprintf (cg->cg_emitfile, " /*variadic-rest %s:*/",
 			 mom_item_cstring (varestitm));
 		for (unsigned rix = 0; rix < nbrest && !cg->cg_errormsg;
@@ -4409,11 +4419,11 @@ bool momfunc_1itm1val_to_void_plain_code_emitter
 		  {
 		    if (rix > 0)
 		      fputs (", ", cg->cg_emitfile);
-		    momvalue_t vcurexp =
-		      mom_node_nth (nodexp, nbformals + rix);
+		    momvalue_t vcurexp = mom_node_nth (nod, nbformals + rix);
 		    MOM_DEBUGPRINTF (gencod,
-				     "plain_code_emitter rix#%d vcurexp %s",
-				     rix, mom_output_gcstring (vcurexp));
+				     "plain_code_emitter rix#%d vcurexp=%s from vcodexp=%s",
+				     rix, mom_output_gcstring (vcurexp),
+				     mom_output_gcstring (vcodexp));
 		    fprintf (cg->cg_emitfile, " /*rest#%d*/(", rix);
 		    cgen_emit_expr_mom (cg, vcurexp);
 		    fprintf (cg->cg_emitfile, ")");
@@ -4433,6 +4443,9 @@ bool momfunc_1itm1val_to_void_plain_code_emitter
 		cgen_emit_item_mom (cg, curitm);
 		continue;
 	      }
+	    MOM_DEBUGPRINTF (gencod,
+			     "plain_code_emitter xix#%d ordinary curitm=%s",
+			     xix, mom_item_cstring (curitm));
 	    momvalue_t valbind = MOM_NONEV;
 	    struct momentry_st *ent = mom_attributes_find_entry (att, curitm);
 	    if (ent)

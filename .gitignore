@@ -4,6 +4,7 @@
 *.fcgi
 .mompasswd
 *~
+*.bad
 *orig
 *%
 *.dbsqlite

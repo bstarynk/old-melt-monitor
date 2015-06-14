@@ -22,7 +22,7 @@
 
 
 
-/***** declaring 3 functions *****/
+/***** declaring 4 functions *****/
 
 
 /// declare function #0: agenda_push_back
@@ -37,7 +37,11 @@ extern bool momfunc_1val_to_void_agenda_push_front (const momnode_t *, momvalue_
 extern bool momfunc_void_to_void_agenda_step (const momnode_t *);
 
 
-/***** implementing 3 functions *****/
+/// declare function #3: append_function_to_closed_module
+extern bool momfunc_1itm_to_void_append_function_to_closed_module (const momnode_t *, momitem_t*);
+
+
+/***** implementing 4 functions *****/
 
 
 /// implement function #0: agenda_push_back
@@ -625,7 +629,133 @@ momvar2 /*var:itmvar_tasklet*/ = (momitem_t*)NULL;
 
 
 
-/***** end 3 functions *****/
+/// implement function #3: append_function_to_closed_module
+bool momfunc_1itm_to_void_append_function_to_closed_module (const momnode_t *mom_node, momitem_t* momarg0)
+{ // body of function append_function_to_closed_module
+  bool momsuccess_append_function_to_closed_module = false;
+  momitem_t* mom_funcitm = NULL;
+  if (MOM_UNLIKELY(!mom_node
+      || mom_node_arity (mom_node) < 1
+      || !(mom_funcitm = mom_node_conn (mom_node))
+      || mom_unsync_item_components_count (mom_funcitm)<3
+       ))
+  return false;
+  // 0 output results:
+  // 4 variables:
+// variable itmvar_funsig of type item
+  momitem_t* momvar0  /*declvar:itmvar_funsig*/ = (momitem_t*)0;
+// variable lkitm_fun of type locked_item
+  momlockeditem_t* momvar2  /*declvar:lkitm_fun*/ = (momlockeditem_t*)0;
+// variable lkitm_module of type locked_item
+  momlockeditem_t* momvar3  /*declvar:lkitm_module*/ = (momlockeditem_t*)0;
+// variable valvar_funcset of type value
+  momvalue_t momvar1 /*declvar:valvar_funcset*/ = MOM_NONEV;
+  // 3 constants:
+  // constant code_module
+  momitem_t* momconst_1 /*const:code_module*/ = MOM_PREDEFINED_NAMED(code_module);
+  // constant function_signature
+  momitem_t* momconst_0 /*const:function_signature*/ = MOM_PREDEFINED_NAMED(function_signature);
+  // constant functions
+  momitem_t* momconst_2 /*const:functions*/ = MOM_PREDEFINED_NAMED(functions);
+  // 1 closed:
+  const momvalue_t momclosed_0 = mom_node_nth(mom_node, 0);
+  goto momblocklab__9MARH5tjh_28MKpzxv3;
+
+/// block #0: _4he2bnU93_5b5bkfLER
+//: testmodule block of append_function_to_closed_module
+ momblocklab__4he2bnU93_5b5bkfLER: {
+// 2 statements in block _4he2bnU93_5b5bkfLER
+// statement #0 :: _4cDEyFzEy_8frx4MEAH; if lkitm_module is a code_module ... in appfuntoclomod
+// if testing on integer
+    if (/*item_has_kind:*/momvar3 /*var:lkitm_module*/ && momvar3 /*var:lkitm_module*/->itm_kind == /*constant#1:*/MOM_PREDEFINED_NAMED(code_module))
+      goto momblocklab__8xBt9K6Ch_2v6P4PEtw;
+// statement #1 :: _20wqLcAtc_09ciRnJLc; otherwise -no itmvar_funsig- fail ... in appfuntoclomod
+// fail
+  momsuccess_append_function_to_closed_module = false;
+  goto momepilog_append_function_to_closed_module;
+
+  }; // end block _4he2bnU93_5b5bkfLER
+  goto momepilog_append_function_to_closed_module;
+ ////----
+
+/// block #1: _8xBt9K6Ch_2v6P4PEtw
+//: get in valvar_funcset functions block of append_function_to_closed_module
+ momblocklab__8xBt9K6Ch_2v6P4PEtw: {
+// 3 statements in block _8xBt9K6Ch_2v6P4PEtw
+// statement #0 :: _8ePmCtD84_0yERvJzrB; get in valvar_funcset functions of module ... in appfuntoclomod
+// set into valvar_funcset
+  momvar1 /*var:valvar_funcset*/ =
+   /*unsync_get_attribute:*/mom_item_unsync_get_attribute (momvar3 /*var:lkitm_module*/, /*constant#2:*/MOM_PREDEFINED_NAMED(functions));
+// statement #1 :: _2Pjxm7fux_60FU0zy46; put in lkitm_module the augmented valvar_funcset with lkitm_fun
+/*unsync_put_attribute:*/ (void)mom_item_unsync_put_attribute((momvar3 /*var:lkitm_module*/), ( /*constant#2:*/MOM_PREDEFINED_NAMED(functions)), (/*collect_set:*/ mom_collect_setv( /*variadic-count count:*/5, /*variadic-rest restval:*/ /*rest#0*/(momvar1 /*var:valvar_funcset*/),  /*rest#1*/(/*value_of_item:*/ mom_itemv(momvar2 /*var:lkitm_fun*/)), NULL)));// statement #2 :: _6xfMIeeHE_66yBKz8u6; succeed in appfuntoclomod
+// success
+  momsuccess_append_function_to_closed_module = true;
+  goto momepilog_append_function_to_closed_module;
+
+  }; // end block _8xBt9K6Ch_2v6P4PEtw
+  goto momepilog_append_function_to_closed_module;
+ ////----
+
+/// block #2: _9MARH5tjh_28MKpzxv3
+//: start block of append_function_to_closed_module
+ momblocklab__9MARH5tjh_28MKpzxv3: {
+// 5 statements in block _9MARH5tjh_28MKpzxv3
+// statement #0 :: _1mhPemeyd_4k5enfKC3; set lkitm_fun <- itm1 ... in appfuntoclomod
+  { // locked set into lkitm_fun
+  momlockeditem_t* momoldlocked__1mhPemeyd_4k5enfKC3 = momvar2 /*var:lkitm_fun*/;
+  momlockeditem_t* momnewlocked__1mhPemeyd_4k5enfKC3 = momarg0 /*formalarg:itm1*/;
+  if (momoldlocked__1mhPemeyd_4k5enfKC3 != momnewlocked__1mhPemeyd_4k5enfKC3) {
+    if (momoldlocked__1mhPemeyd_4k5enfKC3 != NULL) mom_item_unlock (momoldlocked__1mhPemeyd_4k5enfKC3);
+    if (momnewlocked__1mhPemeyd_4k5enfKC3 != NULL) mom_item_lock (momnewlocked__1mhPemeyd_4k5enfKC3);
+  } // end lock test _1mhPemeyd_4k5enfKC3
+    momvar2 /*var:lkitm_fun*/ = momnewlocked__1mhPemeyd_4k5enfKC3;
+  momoldlocked__1mhPemeyd_4k5enfKC3 = NULL;
+  momnewlocked__1mhPemeyd_4k5enfKC3 = NULL;
+  } // end locked set into lkitm_fun
+// statement #1 :: _5Icpjuev3_8xCdCtMdD; set lkitm_module <- val2 ..., closed in appfuntoclomod
+  { // locked set into lkitm_module
+  momlockeditem_t* momoldlocked__5Icpjuev3_8xCdCtMdD = momvar3 /*var:lkitm_module*/;
+  momlockeditem_t* momnewlocked__5Icpjuev3_8xCdCtMdD = /*value_to_item:*/ mom_value_to_item( /*closed:val2*/momclosed_0);
+  if (momoldlocked__5Icpjuev3_8xCdCtMdD != momnewlocked__5Icpjuev3_8xCdCtMdD) {
+    if (momoldlocked__5Icpjuev3_8xCdCtMdD != NULL) mom_item_unlock (momoldlocked__5Icpjuev3_8xCdCtMdD);
+    if (momnewlocked__5Icpjuev3_8xCdCtMdD != NULL) mom_item_lock (momnewlocked__5Icpjuev3_8xCdCtMdD);
+  } // end lock test _5Icpjuev3_8xCdCtMdD
+    momvar3 /*var:lkitm_module*/ = momnewlocked__5Icpjuev3_8xCdCtMdD;
+  momoldlocked__5Icpjuev3_8xCdCtMdD = NULL;
+  momnewlocked__5Icpjuev3_8xCdCtMdD = NULL;
+  } // end locked set into lkitm_module
+// statement #2 :: _5hCHeHf33_2y4IR7sHP; set itmvar_funsig <- get(lkitm_fun, function_signature) ... in appfuntoclomod
+// set into itmvar_funsig
+  momvar0 /*var:itmvar_funsig*/ =
+   /*value_to_item:*/ mom_value_to_item(/*unsync_get_attribute:*/mom_item_unsync_get_attribute (momvar2 /*var:lkitm_fun*/, /*constant#0:*/MOM_PREDEFINED_NAMED(function_signature)));
+// statement #3 :: _2ijiEhdMr_0E10qj6s8; if itmvar_funsig test-module ... in appfuntoclomod
+// if testing on item
+    if (momvar0 /*var:itmvar_funsig*/)
+      goto momblocklab__4he2bnU93_5b5bkfLER;
+// statement #4 :: _0t73aJCyK_6IRtxxHRn; otherwise -no funcset- fail ... in appfuntoclomod
+// fail
+  momsuccess_append_function_to_closed_module = false;
+  goto momepilog_append_function_to_closed_module;
+
+  }; // end block _9MARH5tjh_28MKpzxv3
+  goto momepilog_append_function_to_closed_module;
+ ////----
+
+//////
+// epilogue of append_function_to_closed_module
+    momsuccess_append_function_to_closed_module = true;
+    goto momepilog_append_function_to_closed_module;
+ momepilog_append_function_to_closed_module:
+   if (momvar2 != NULL) mom_item_unlock(momvar2);
+   if (momvar3 != NULL) mom_item_unlock(momvar3);
+// give 0 outputs
+  return momsuccess_append_function_to_closed_module;
+} // end of momfunc_1itm_to_void_append_function_to_closed_module 
+
+
+
+
+/***** end 4 functions *****/
 
 
 
@@ -633,13 +763,14 @@ momvar2 /*var:itmvar_tasklet*/ = (momitem_t*)NULL;
 static void* momoldad_agenda_push_back;
 static void* momoldad_agenda_push_front;
 static void* momoldad_agenda_step;
+static void* momoldad_append_function_to_closed_module;
 
 
 /***** loading constructor of module the_base_module *****/
 static void momloadcons_the_base_module (void) __attribute__((constructor));
 static void momloadcons_the_base_module (void)
 { // loading constructor
-  MOM_DEBUGPRINTF(run, "loading constructor of the_base_module with 3 functions");
+  MOM_DEBUGPRINTF(run, "loading constructor of the_base_module with 4 functions");
  // load constructor #0 for agenda_push_back
   momoldad_agenda_push_back
   = mom_dynload_function("agenda_push_back", "signature_1val_to_void", (void*) &momfunc_1val_to_void_agenda_push_back);
@@ -649,6 +780,9 @@ static void momloadcons_the_base_module (void)
  // load constructor #2 for agenda_step
   momoldad_agenda_step
   = mom_dynload_function("agenda_step", "signature_void_to_void", (void*) &momfunc_void_to_void_agenda_step);
+ // load constructor #3 for append_function_to_closed_module
+  momoldad_append_function_to_closed_module
+  = mom_dynload_function("append_function_to_closed_module", "signature_1itm_to_void", (void*) &momfunc_1itm_to_void_append_function_to_closed_module);
 
 } // end loading constructor momloadcons_the_base_module
 
@@ -658,7 +792,7 @@ static void momloadcons_the_base_module (void)
 static void momunloaddestr_the_base_module (void) __attribute__((destructor));
 static void momunloaddestr_the_base_module (void)
 { // unloading destructor
-  MOM_DEBUGPRINTF(run, "unloading destructor of the_base_module with 3 functions");
+  MOM_DEBUGPRINTF(run, "unloading destructor of the_base_module with 4 functions");
  // unload destructor #0 for agenda_push_back
   mom_dynunload_function ("agenda_push_back", "signature_1val_to_void", momoldad_agenda_push_back);
   momoldad_agenda_push_back = NULL;
@@ -668,6 +802,9 @@ static void momunloaddestr_the_base_module (void)
  // unload destructor #2 for agenda_step
   mom_dynunload_function ("agenda_step", "signature_void_to_void", momoldad_agenda_step);
   momoldad_agenda_step = NULL;
+ // unload destructor #3 for append_function_to_closed_module
+  mom_dynunload_function ("append_function_to_closed_module", "signature_1itm_to_void", momoldad_append_function_to_closed_module);
+  momoldad_append_function_to_closed_module = NULL;
 
 } // end unloading destructor momunloaddestr_the_base_module
 

@@ -1218,17 +1218,24 @@ mom_make_sized_tuple (unsigned nbitems, momitem_t *const *itmarr)
 /// ignoring scalars and nodes) to form a tuple
 const momseq_t *mom_collect_meta_tuple (momvalue_t metav, unsigned nbvals,
 					...);
+#define mom_collect_meta_tuplev(Meta,NbVals,...) \
+  mom_tuplev(mom_collect_meta_tuple((Meta),(NbVals),__VA_ARGS__))
 #define mom_collect_tuple(NbVals,...) mom_collect_meta_tuple(MOM_NONEV, (NbVals), __VA_ARGS__)
+#define mom_collect_tuplev(NbVals,...) mom_tuplev(mom_collect_tuple((NbVals), __VA_ARGS__))
+
 const momseq_t *mom_collect_sized_meta_tuple (momvalue_t metav,
 					      unsigned nbvals,
 					      const momvalue_t *valarr);
-
+#define mom_collect_sized_meta_tuplev(Meta,NbVals,ValArr) \
+  mom_tuplev(mom_collect_sized_meta_tuple((Meta),(NbVals),(ValArr)))
 static inline const momseq_t *
 mom_collect_sized_tuple (unsigned nbvals, const momvalue_t *valarr)
 {
   return mom_collect_sized_meta_tuple (MOM_NONEV, nbvals, valarr);
 };
 
+#define mom_collect_sized_tuplev(NbVals,ValArr) \
+  mom_tuplev(mom_collect_sized_tuple((NbVals),(ValArr)))
 
 
 static inline momvalue_t
@@ -1265,14 +1272,22 @@ mom_make_sized_set (unsigned nbitems, const momitem_t **itmarr)
 /// make a set from given values, collecting items, tuples & sets (and
 /// ignoring scalars and nodes) to form a set
 const momseq_t *mom_collect_meta_set (momvalue_t metav, unsigned nbvals, ...);
+#define mom_collect_meta_setv(Meta,NbVals,...) \
+  mom_unsafe_setv(mom_collect_meta_set((Meta),(NbVals),__VA_ARGS__,NULL))
 #define mom_collect_set(NbVals,...) mom_collect_meta_set(MOM_NONEV, (NbVals), __VA_ARGS__)
+#define mom_collect_setv(NbVals,...) mom_unsafe_setv(mom_collect_set((NbVals),__VA_ARGS__))
 const momseq_t *mom_collect_sized_meta_set (momvalue_t metav, unsigned nbvals,
 					    const momvalue_t *valarr);
+#define mom_collect_sized_meta_setv(Meta,NbVals,ValArr) \
+  mom_unsafe_setv(mom_collect_sized_meta_set((Meta),(NbVals),(ValArr)))
 static inline const momseq_t *
 mom_collect_sized_set (unsigned nbvals, const momvalue_t *valarr)
 {
   return mom_collect_sized_meta_set (MOM_NONEV, nbvals, valarr);
 };
+
+#define mom_collect_sized_setv(NbVals,ValArr) \
+  mom_unsafe_setv(mom_collect_sized_set((NbVals),(ValArr)))
 
 
 static inline momvalue_t
