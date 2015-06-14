@@ -98,7 +98,8 @@
 }
 [[
 ]]
- %  ^filler_of_plain_kind( block)
+// %  ^filler_of_plain_kind(signature_2itm2val_to_void )
+% ^append_function_to_closed_module(the_base_module)
 ..
 
 
@@ -166,6 +167,7 @@
 }
 [[
 ]]
+% ^append_function_to_closed_module(the_base_module)
 ..
 
 
