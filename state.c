@@ -1201,7 +1201,7 @@ load_fill_item_mom (momitem_t *itm, bool internal)
   MOM_DEBUGPRINTF (load, "load_fill_item %s vtok=%s for transformers at %s",	//
 		   mom_item_cstring (itm), mom_output_gcstring (vtok),	//
 		   load_position_mom (NULL, 0, 0));
-  if (mom_value_is_delim (vtok, "%"))
+  while (mom_value_is_delim (vtok, "%"))
     {
       MOM_DEBUGPRINTF (load, "load_fill_item transformer of %s at %s", mom_item_cstring (itm),	//
 		       load_position_mom (NULL, 0, 0));
@@ -1218,8 +1218,8 @@ load_fill_item_mom (momitem_t *itm, bool internal)
 	   mom_output_gcstring (valtransf), mom_item_cstring (itm),
 	   load_position_mom (NULL, 0, lineno));
       add_load_transformer_mom (itm, valtransf);
+      vtok = mom_peek_token_load ();
     }
-  vtok = mom_peek_token_load ();
   MOM_DEBUGPRINTF (load, "load_fill_item final vtok %s near %s",
 		   mom_output_gcstring (vtok),
 		   load_position_mom (NULL, 0, 0));
