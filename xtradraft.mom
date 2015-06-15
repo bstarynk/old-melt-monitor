@@ -205,7 +205,10 @@
 {
  * comment "block to output an integer in basic_html_output"
  * instructions [
- 
+   _* "print integer to web in basic_web_html" (!
+	[[ chunk "(void) mom_unsync_webexitem_printf(" lkitm_webx ", \"%lld\", (long long) mom_value_to_int(" val1 ", -1));\n" ]]
+       % ^filler_of_plain_kind(code_statement)
+       !)
  ]
  }
 [[
@@ -230,6 +233,10 @@
 {
  * comment "block to output a double in basic_html_output"
  * instructions [
+   _* "print double to web in basic_web_html" (!
+	[[ chunk "(void) mom_unsync_webexitem_printf(" lkitm_webx ", \"%g\", mom_value_to_double(" val1 "));\n" ]]
+       % ^filler_of_plain_kind(code_statement)
+       !)
  ]
  }
 [[

@@ -2409,6 +2409,15 @@
 ..
 
 
+** string_type
+{
+  * code  "momty_string"
+  * comment  "integer constant for string value type" }
+ %  ^filler_of_plain_kind( integer)
+ 
+..
+
+
 ** success   ////// PREDEFINED
 {
   * comment  "opcode to return successfully" }
@@ -2451,9 +2460,10 @@
    integer_type item_type node_type plain_code_emitter plain_code_type_scanner
    plain_statement_emitter plain_statement_scanner pop_back_queue_item pop_front_queue_item
    push_back_queue_item push_front_queue_item queue_item_is_empty set_type
-   test_module tuple tuple_type type_of_value unsync_get_attribute unsync_put_attribute
-   value_is_node value_is_sequence value_is_set value_is_tuple value_of_item
-   value_sequence_length value_sequence_nth value_to_item} }
+   string_type test_module tuple tuple_type type_of_value unsync_get_attribute
+   unsync_put_attribute value_is_node value_is_sequence value_is_set value_is_tuple
+   value_of_item value_sequence_length value_sequence_nth value_to_item}
+ }
  
 ..
 
