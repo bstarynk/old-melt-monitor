@@ -454,27 +454,32 @@ sort_set_unique_items_mom (const momitem_t **itmarr, unsigned nbitems)
 			 "sort_set_unique_items qsorted itmarr[%d] = %s", ix,
 			 mom_item_cstring (itmarr[ix]));
     };
+  unsigned oldnbitems = nbitems;
   for (unsigned ix = 1; ix < nbitems; ix++)
     {
       const momitem_t *previtm = itmarr[ix - 1];
       if (MOM_UNLIKELY (itmarr[ix] == previtm))
 	{
 	  unsigned nextix = 0;
-	  MOM_DEBUGPRINTF (item,
-			   "sort_set_unique_items duplicate item #%d  : %s previtm %s",
-			   ix, mom_item_cstring (itmarr[ix]),
-			   mom_item_cstring (previtm));
 	  for (nextix = ix; nextix < nbitems; nextix++)
 	    if (MOM_UNLIKELY (itmarr[nextix] != previtm))
 	      break;
+	  MOM_DEBUGPRINTF (item,
+			   "sort_set_unique_items duplicate item ix=%d nextix=%d : %s previtm %s",
+			   ix, nextix, mom_item_cstring (itmarr[ix]),
+			   mom_item_cstring (previtm));
 	  assert (nextix >= ix);
-	  memmove (itmarr + ix, itmarr + nextix,
-		   (nextix - ix) * sizeof (momitem_t *));
-	  nbitems -= (nextix - ix);
+	  int skip = (nextix - ix) + 1;
+	  for (int shix = ix; shix + skip < (int) nbitems; shix++)
+	    itmarr[shix] = itmarr[shix + skip];
+	  nbitems -= skip;
 	}
-    }
+    };
+  for (unsigned ix = nbitems; ix < oldnbitems; ix++)
+    itmarr[ix] = NULL;
+  assert (nbitems <= oldnbitems);
   return nbitems;
-}
+}				// end sort_set_unique_items_mom 
 
 
 
@@ -527,6 +532,8 @@ mom_make_sized_meta_set (momvalue_t metav, unsigned nbitems,
     MOM_FATAPRINTF ("missing item array for sized %u meta set", nbitems);
   if (MOM_UNLIKELY (nbitems > MOM_MAX_SEQ_LENGTH))
     MOM_FATAPRINTF ("too big set %u", nbitems);
+  MOM_DEBUGPRINTF (item, "make_sized_meta_set start metav=%s nbitems=%d",
+		   mom_output_gcstring (metav), nbitems);
   momseq_t *set = MOM_GC_ALLOC ("set",
 				sizeof (momseq_t) +
 				nbitems * sizeof (momitem_t *));
@@ -535,26 +542,40 @@ mom_make_sized_meta_set (momvalue_t metav, unsigned nbitems,
     {
       const momitem_t *itm = itmarr[ix];
       if (itm && itm != MOM_EMPTY)
-	set->arritm[cntitems++] = (momitem_t *) itm;
+	{
+	  MOM_DEBUGPRINTF (item, "make_sized_meta_set arritm[%d] = %s",
+			   cntitems, mom_item_cstring (itm));
+	  set->arritm[cntitems++] = (momitem_t *) itm;
+	}
     }
-  cntitems = sort_set_unique_items_mom (set->arritm, cntitems);
-  if (MOM_UNLIKELY (cntitems < nbitems))
+  unsigned newcntitems = sort_set_unique_items_mom (set->arritm, cntitems);
+  MOM_DEBUGPRINTF (item, "make_sized_meta_set cntitems=%d newcntitems=%d",
+		   cntitems, newcntitems);
+  if (MOM_IS_DEBUGGING (item))
+    for (unsigned ix = 0; ix < newcntitems; ix++)
+      MOM_DEBUGPRINTF (item, "make_sized_meta_set sorted-arritm[%d] = %s", ix,
+		       mom_item_cstring (set->arritm[ix]));
+  if (MOM_UNLIKELY (newcntitems < nbitems))
     {
       momseq_t *oldset = set;
       momseq_t *newset = MOM_GC_ALLOC ("shrinked set",
 				       sizeof (momseq_t) +
 				       cntitems * sizeof (momitem_t *));
       memcpy (newset->arritm, oldset->arritm,
-	      cntitems * sizeof (momitem_t *));
+	      newcntitems * sizeof (momitem_t *));
       set = newset;
       MOM_GC_FREE (oldset,
 		   sizeof (momseq_t) + nbitems * sizeof (momitem_t *));
     }
 #ifndef NDEBUG
-  for (unsigned ix = 1; ix < cntitems; ix++)
-    assert (mom_item_cmp (set->arritm[ix - 1], set->arritm[ix]) < 0);
+  for (unsigned ix = 1; ix < newcntitems; ix++)
+    if (mom_item_cmp (set->arritm[ix - 1], set->arritm[ix]) >= 0)
+      MOM_FATAPRINTF
+	("missorted items in make_sized_meta_set ix=%d, newcntitems=%d arritm[%d]=%s arritm[%d]=%s",
+	 ix, newcntitems, ix - 1, mom_item_cstring (set->arritm[ix - 1]), ix,
+	 mom_item_cstring (set->arritm[ix - 1]));
 #endif
-  set->slen = cntitems;
+  set->slen = newcntitems;
   update_seq_hash_mom (set);
   set->meta = metav;
   return set;

@@ -1592,13 +1592,17 @@ mom_load_value (momvalue_t *pval)
 	pval->typnum = momty_set;
 	const momseq_t *tup = mom_queueitem_tuple (&quitems, MOM_NONEV);
 	assert (tup);
+	MOM_DEBUGPRINTF (load, "should make set from metav=%s tuple %s",
+			 mom_output_gcstring (metav),
+			 mom_output_gcstring (mom_tuplev (tup)));
 	pval->vset =
 	  (momseq_t *) mom_make_sized_meta_set (metav, tup->slen,
 						(const momitem_t **)
 						tup->arritm);
 	MOM_DEBUGPRINTF (load, "end of set %s at position %s",
-			 mom_output_gcstring (*pval),
-			 load_position_mom (NULL, 0, linecnt));
+			 mom_output_gcstring (*pval), load_position_mom (NULL,
+									 0,
+									 linecnt));
 	return true;
       }
     }				/* done sets */
