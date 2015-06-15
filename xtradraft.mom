@@ -146,6 +146,15 @@
 ..
 ////////////////////////////////////////////////////////////////
 
+
+** maximal_html_output_length
+{
+  * comment "integer constant for maximal html output length"
+  * code "(MOM_MAX_STRING_LENGTH/2)"
+  }
+          %  ^filler_of_plain_kind(integer)
+  ..
+  
 ** basic_html_output 
 {
  * comment "internal function to output HTML"
@@ -168,11 +177,19 @@
         _* "set lkitm_webx = webxitm" (! [[ set lkitm_webx webxitm ]]
            %  ^filler_of_plain_kind( code_statement) !)
         //////
-        _* "if unsync_webexitem_ftell(lkitm_webx) > 16777216 fail in basic_html_output" (!
-        [[ if ^integer_greater_than(^unsync_webexitem_ftell(lkitm_webx) 16777216) __failblock_basic_html_output 
+        _* "if webx output too big fail in basic_html_output" (!
+        [[ if ^integer_greater_than(^unsync_webexitem_ftell(lkitm_webx) maximal_html_output_length) __failblock_basic_html_output 
         ]]
           %  ^filler_of_plain_kind( code_statement)
         !)
+	_* "switch on type of val1 in basic_html_output" (!
+	[[ int_switch ^type_of_value(val1)
+	^case (integer_type __block_when_integer_basic_html)
+	^case (string_type __block_when_string_basic_html)
+	^case (double_type __block_when_double_basic_html)
+	]]
+          %  ^filler_of_plain_kind( code_statement)
+	!)
       ]
     }
     %  ^filler_of_plain_kind( block)
@@ -183,6 +200,42 @@
 % ^append_function_to_closed_module(the_base_module)
 ..
 
+
+** __block_when_integer_basic_html
+{
+ * comment "block to output an integer in basic_html_output"
+ * instructions [
+ 
+ ]
+ }
+[[
+]]
+%  ^filler_of_plain_kind( block)
+..
+
+
+** __block_when_string_basic_html
+{
+ * comment "block to output a string in basic_html_output"
+ * instructions [
+ ]
+ }
+[[
+]]
+%  ^filler_of_plain_kind( block)
+..
+
+
+** __block_when_double_basic_html
+{
+ * comment "block to output a double in basic_html_output"
+ * instructions [
+ ]
+ }
+[[
+]]
+%  ^filler_of_plain_kind( block)
+..
 
 ** __failblock_basic_html_output
 {

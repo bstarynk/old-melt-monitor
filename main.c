@@ -551,7 +551,7 @@ usage_mom (const char *argv0)
 	  " \t #host:port for TCP socket, /absolute/path for UNIX socket\n");
   printf ("\t -X | --xtra-file <filename>" " \t #extra file to be loaded\n");
   putchar ('\n');
-  printf ("\t --chdir <directory>" "\t #change directory\n");
+  printf ("\t --chdir <directory>" "\t #change directory after loading\n");
   printf ("\t --write-pid <file>"
 	  "\t #write the pid (e.g. --write-pid /var/run/monimelt.pid)\n");
   printf ("\t --random-idstr" "\t #output a random idstr then exit\n");
@@ -986,6 +986,19 @@ main (int argc_main, char **argv_main)
   mom_load_state (xtra_path_mom);
   MOM_DEBUGPRINTF (load, "loaded state (xtrapath=%s)", xtra_path_mom);
   MOM_INFORMPRINTF ("MONIMELT loaded state, process %d", (int) getpid ());
+  if (wanted_dir_mom && wanted_dir_mom[0])
+    {
+      char dirbuf[MOM_PATH_MAX];
+      memset (dirbuf, 0, sizeof (dirbuf));
+      // we do a getcwd because the given directory might have symlinks, etc.
+      if (chdir (wanted_dir_mom) || !getcwd (dirbuf, sizeof (dirbuf) - 1))
+	MOM_FATAPRINTF ("failed to chdir to %s : %m", wanted_dir_mom);
+      if (strcmp (dirbuf, wanted_dir_mom))
+	MOM_INFORMPRINTF ("MONIMELT changed directory to %s, now in %s",
+			  wanted_dir_mom, dirbuf);
+      else
+	MOM_INFORMPRINTF ("MONIMELT changed directory, now in %s", dirbuf);
+    }
   if (nbmorepredef_mom > 0)
     {
       for (unsigned prix = 0; prix < nbmorepredef_mom; prix++)
