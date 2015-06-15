@@ -992,7 +992,8 @@ main (int argc_main, char **argv_main)
       memset (dirbuf, 0, sizeof (dirbuf));
       // we do a getcwd because the given directory might have symlinks, etc.
       if (chdir (wanted_dir_mom) || !getcwd (dirbuf, sizeof (dirbuf) - 1))
-	MOM_FATAPRINTF ("failed to chdir to %s : %m", wanted_dir_mom);
+	MOM_FATAPRINTF ("failed to chdir to %s then getcwd: %m",
+			wanted_dir_mom);
       if (strcmp (dirbuf, wanted_dir_mom))
 	MOM_INFORMPRINTF ("MONIMELT changed directory to %s, now in %s",
 			  wanted_dir_mom, dirbuf);
