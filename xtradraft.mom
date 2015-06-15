@@ -87,10 +87,10 @@
         _* "set lkitm_webx = webxitm" (! [[ set lkitm_webx webxitm ]]
 	   %  ^filler_of_plain_kind( code_statement) !)
 	//////
-	_* "if reqmethitm==http_POST handle-post-webhtml"
-	(! [[ if ^item_same(reqmethitm http_POST)
-	      __post_block_basic_web_html ]]
-	   %  ^filler_of_plain_kind( code_statement) !)
+        _* "if reqmethitm==http_POST handle-post-webhtml"
+        (! [[ if ^item_same(reqmethitm http_POST)
+              __post_block_basic_web_html ]]
+           %  ^filler_of_plain_kind( code_statement) !)
       ] // end of instructions from __start_block_basic_web_html
     }
     %  ^filler_of_plain_kind( block)
@@ -122,6 +122,28 @@
  
 ..
 
+
+** unsync_webexitem_ftell
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*unsync_webexitem_ftell:*/(("  itm1  ")) ")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "unsync_webexitem_ftell gives the output offset of a wexexitem itm1"
+  * formals  [itm1]
+  * type  integer }
+ 
+..
+
+** item_same
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*item_same:*/(("  itm1  ") == (" itm2 "))")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "test itm1 == itm2"
+  * formals  [itm1 itm2]
+  * type  integer }
+ 
+..
 ////////////////////////////////////////////////////////////////
 
 ** basic_html_output 
@@ -136,14 +158,45 @@
     {
       * comment "start block of basic_html_output"
       * instructions [
+        //
+        _* "if depth>64 fail in basic_html_output" (!
+        [[ if ^integer_greater_than(depth 64) __failblock_basic_html_output 
+        ]]
+          %  ^filler_of_plain_kind( code_statement)
+        !)
+        //////
+        _* "set lkitm_webx = webxitm" (! [[ set lkitm_webx webxitm ]]
+           %  ^filler_of_plain_kind( code_statement) !)
+        //////
+        _* "if unsync_webexitem_ftell(lkitm_webx) > 16777216 fail in basic_html_output" (!
+        [[ if ^integer_greater_than(^unsync_webexitem_ftell(lkitm_webx) 16777216) __failblock_basic_html_output 
+        ]]
+          %  ^filler_of_plain_kind( code_statement)
+        !)
       ]
     }
+    %  ^filler_of_plain_kind( block)
   !)
- }
+}
 [[
 ]]
+% ^append_function_to_closed_module(the_base_module)
 ..
 
+
+** __failblock_basic_html_output
+{
+  * comment "fail block of basic_html_output"
+  * instructions [
+        _* "fail in basic_html_output" (! [[ fail ]]
+	  %  ^filler_of_plain_kind( code_statement)
+	!)
+  ]
+}
+[[
+]]
+%  ^filler_of_plain_kind( block)
+..
 ////////////////////////////////////////////////////////////////
 
 ** basic_web_json
@@ -159,7 +212,9 @@
       * comment "start block of basic_web_json"
       * instructions [
         /////
-        _* "set lkitm_webx = webxitm" (! [[ set lkitm_webx webxitm ]] !)
+        _* "set lkitm_webx = webxitm" (! [[ set lkitm_webx webxitm ]]
+	  %  ^filler_of_plain_kind( code_statement)
+	!)
       ] // end of instructions from __start_block_basic_web_json
     }
     %  ^filler_of_plain_kind( block)

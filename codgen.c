@@ -1215,6 +1215,7 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 	    momvalue_t casevalv = MOM_NONEV;
 	    momvalue_t caseblockv = MOM_NONEV;
 	    momitem_t *caseblockitm = NULL;
+#warning the casevalv might be a constant integer in switches
 	    if (!casnod
 		|| mom_node_conn (casnod) != MOM_PREDEFINED_NAMED (case)
 		|| mom_node_arity (casnod) != 2

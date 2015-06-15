@@ -936,11 +936,9 @@ readagain:
 	  return valtok;
 	}
       else
-	MOM_DEBUGPRINTF (load,
-			 "token_parse_load@%s:%d: did not found named %s at %s",
-			 fil, lin, pstart, load_position_mom (locbuf,
-							      sizeof (locbuf),
-							      0));
+	MOM_WARNPRINTF
+	  ("token_parse_load@%s:%d: did not found named %s at %s", fil, lin,
+	   pstart, load_position_mom (locbuf, sizeof (locbuf), 0));
     }
   else if (ispunct (c) || (unsigned char) c >= 0x7f)
     {
