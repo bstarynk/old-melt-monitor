@@ -619,6 +619,9 @@ static void cgen_bind_variable_item_mom (struct codegen_mom_st *cg,
 					 momitem_t *itmv);
 
 
+static void cgen_bind_new_mom (struct codegen_mom_st *cg, momitem_t *itm,
+			       momvalue_t vbind);
+
 static int
 cmp_intptr_mom (const void *p1, const void *p2)
 {
@@ -697,6 +700,15 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
 	    return MOM_PREDEFINED_NAMED (value);
 	  }
 	  break;
+	case MOM_PREDEFINED_NAMED_CASE (integer, nodconnitm, otherwiseconnlab):
+	  {
+	    MOM_DEBUGPRINTF (gencod,
+			     "type_of_scanned_item in function %s item %s is integer constant",
+			     mom_item_cstring (cg->cg_curfunitm),
+			     mom_item_cstring (itm));
+	    return MOM_PREDEFINED_NAMED (integer);
+	  }
+	  break;
 	case MOM_PREDEFINED_NAMED_CASE (variable, nodconnitm, otherwiseconnlab):
 	  {
 	    momvalue_t vres = mom_node_nth (nodbind, 2);
@@ -743,6 +755,53 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
 			 mom_item_cstring (cg->cg_curfunitm),
 			 mom_item_cstring (itm));
 	return MOM_PREDEFINED_NAMED (value);
+      }
+      break;
+    case MOM_PREDEFINED_NAMED_CASE (integer, itmkind, otherwisekindlab):
+      {
+	// an item of kind `integer` should either have a `integer`
+	// attribute giving the integer or a `code_expansion` value
+	// giving the closure to apply for code expansion
+	momvalue_t integerv =	//
+	  mom_item_unsync_get_attribute (itm, MOM_PREDEFINED_NAMED (integer));
+	momvalue_t codexpv =	//
+	  mom_item_unsync_get_attribute (itm,	//
+					 MOM_PREDEFINED_NAMED
+					 (code_expansion));
+	MOM_DEBUGPRINTF (gencod,
+			 "type_of_scanned_item in function %s integer item %s integerv=%s codexpv=%s",
+			 mom_item_cstring (cg->cg_curfunitm),
+			 mom_item_cstring (itm),
+			 mom_output_gcstring (integerv),
+			 mom_output_gcstring (codexpv));
+	if (integerv.typnum == momty_int)
+	  {
+	    cgen_bind_new_mom (cg, itm,	//
+			       mom_nodev_new (MOM_PREDEFINED_NAMED (integer),
+					      2,
+					      mom_itemv (MOM_PREDEFINED_NAMED
+							 (integer)),
+					      integerv));
+	  }
+	else if (codexpv.typnum == momty_node)
+	  {
+	    cgen_bind_new_mom (cg, itm,	//
+			       mom_nodev_new (MOM_PREDEFINED_NAMED (integer),
+					      2,
+					      mom_itemv (MOM_PREDEFINED_NAMED
+							 (code_expansion)),
+					      codexpv));
+	  }
+	else
+	  CGEN_ERROR_RESULT_MOM (cg, NULL,
+				 "type_of_scanned_item module item %s : function %s has block %s with statement %s"
+				 " with bad integer constant item %s",
+				 mom_item_cstring (cg->cg_moduleitm),
+				 mom_item_cstring (cg->cg_curfunitm),
+				 mom_item_cstring (cg->cg_curblockitm),
+				 mom_item_cstring (cg->cg_curstmtitm),
+				 mom_item_cstring (itm));
+	return MOM_PREDEFINED_NAMED (integer);
       }
       break;
     case MOM_PREDEFINED_NAMED_CASE (variable, itmkind, otherwisekindlab):
@@ -1199,6 +1258,10 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 	momitem_t *typxitm = cgen_type_of_scanned_expr_mom (cg, exprv);
 	intptr_t *intarr =
 	  MOM_GC_SCALAR_ALLOC ("intarr", stmtlen * sizeof (intptr_t));
+	momitem_t **itmarr =
+	  MOM_GC_ALLOC ("itmarr", stmtlen * sizeof (momitem_t *));
+	unsigned nbintcases = 0;
+	unsigned nbconstcases = 0;
 	if (typxitm != MOM_PREDEFINED_NAMED (integer))
 	  CGEN_ERROR_RETURN_MOM (cg,
 				 "module item %s : function %s with block %s with non-integer selector %s in int_switch statement %s",
@@ -1210,16 +1273,18 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 	unsigned nbcases = stmtlen - 2;
 	for (unsigned ixc = 0; ixc < nbcases && !cg->cg_errormsg; ixc++)
 	  {
+	    assert (nbintcases <= nbcases);
+	    assert (nbconstcases <= nbcases);
 	    momvalue_t casev = mom_components_nth (stmtcomps, ixc + 2);
 	    const momnode_t *casnod = mom_value_to_node (casev);
 	    momvalue_t casevalv = MOM_NONEV;
 	    momvalue_t caseblockv = MOM_NONEV;
 	    momitem_t *caseblockitm = NULL;
-#warning the casevalv might be a constant integer in switches
 	    if (!casnod
 		|| mom_node_conn (casnod) != MOM_PREDEFINED_NAMED (case)
 		|| mom_node_arity (casnod) != 2
-		|| ((casevalv = mom_node_nth (casnod, 0)).typnum != momty_int)
+		|| ((casevalv = mom_node_nth (casnod, 0)).typnum != momty_int
+		    && casevalv.typnum != momty_item)
 		|| ((caseblockv = mom_node_nth (casnod, 1)).typnum !=
 		    momty_item)
 		|| (!(caseblockitm = mom_value_to_item (caseblockv)))
@@ -1235,18 +1300,56 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 				     mom_output_gcstring (casevalv));
 	    if (cg->cg_errormsg)
 	      return;
-	    intarr[ixc] = casevalv.vint;
+	    if (casevalv.typnum == momty_int)
+	      intarr[nbintcases++] = casevalv.vint;
+	    else if (casevalv.typnum == momty_item)
+	      {
+		momitem_t *caseconstitm = casevalv.vitem;
+		cgen_lock_item_mom (cg, caseconstitm);
+		momitem_t *constitmtyp =
+		  cgen_type_of_scanned_item_mom (cg, caseconstitm);
+		if (caseconstitm->itm_kind != MOM_PREDEFINED_NAMED (integer)
+		    || constitmtyp != MOM_PREDEFINED_NAMED (integer))
+		  CGEN_ERROR_RETURN_MOM (cg,
+					 "module item %s : function %s with block %s with int_switch statement %s with base case#%d constant value %s",
+					 mom_item_cstring (cg->cg_moduleitm),
+					 mom_item_cstring (cg->cg_curfunitm),
+					 mom_item_cstring
+					 (cg->cg_curblockitm),
+					 mom_item_cstring (itmstmt), ixc,
+					 mom_output_gcstring (casevalv));
+		itmarr[nbconstcases++] = caseconstitm;
+	      }
 	  }
-	qsort (intarr, nbcases, sizeof (intptr_t), cmp_intptr_mom);
-	for (unsigned ix = 0; ix < nbcases - 1 && !cg->cg_errormsg; ix++)
-	  if (intarr[ix] == intarr[ix + 1])
-	    CGEN_ERROR_RETURN_MOM (cg,
-				   "module item %s : function %s with block %s with int_switch statement %s with duplicate case number %lld",
-				   mom_item_cstring (cg->cg_moduleitm),
-				   mom_item_cstring (cg->cg_curfunitm),
-				   mom_item_cstring (cg->cg_curblockitm),
-				   mom_item_cstring (itmstmt),
-				   (long long) intarr[ix]);
+	if (nbintcases > 1)
+	  {
+	    qsort (intarr, nbintcases, sizeof (intptr_t), cmp_intptr_mom);
+	    for (unsigned ix = 0; ix < nbintcases - 1 && !cg->cg_errormsg;
+		 ix++)
+	      if (intarr[ix] == intarr[ix + 1])
+		CGEN_ERROR_RETURN_MOM (cg,
+				       "module item %s : function %s with block %s with int_switch statement %s with duplicate case number %lld",
+				       mom_item_cstring (cg->cg_moduleitm),
+				       mom_item_cstring (cg->cg_curfunitm),
+				       mom_item_cstring (cg->cg_curblockitm),
+				       mom_item_cstring (itmstmt),
+				       (long long) intarr[ix]);
+	  }
+	if (nbconstcases > 1)
+	  {
+	    qsort (itmarr, nbconstcases, sizeof (momitem_t *),
+		   mom_itemptr_cmp);
+	    for (unsigned ix = 0; ix < nbconstcases - 1 && !cg->cg_errormsg;
+		 ix++)
+	      if (itmarr[ix] == itmarr[ix + 1])
+		CGEN_ERROR_RETURN_MOM (cg,
+				       "module item %s : function %s with block %s with int_switch statement %s with duplicate case constant %s",
+				       mom_item_cstring (cg->cg_moduleitm),
+				       mom_item_cstring (cg->cg_curfunitm),
+				       mom_item_cstring (cg->cg_curblockitm),
+				       mom_item_cstring (itmstmt),
+				       mom_item_cstring (itmarr[ix]));
+	  }
       };
       break;
       ////////////////
@@ -2972,6 +3075,43 @@ cgen_emit_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
 		 mom_item_cstring (itm), (int) clork);
       }
       break;
+    case MOM_PREDEFINED_NAMED_CASE (integer, natitm, otherwisenatlab):
+      {
+	/* for `integer` constant items: bound to node
+	   ^integer(integer,<intval>) or to
+	   ^integer(code_expansion,<code-expander>) */
+	assert (mom_node_arity (bindnod) == 2);
+	momitem_t *kindintitm = mom_value_to_item (mom_node_nth (bindnod, 0));
+	if (kindintitm == MOM_PREDEFINED_NAMED (integer))
+	  {
+	    momvalue_t vintval = mom_node_nth (bindnod, 1);
+	    assert (vintval.typnum == momty_int);
+	    fprintf (cg->cg_emitfile, "/*integer %s constant*/ %lld",
+		     mom_item_cstring (itm),
+		     (long long) mom_value_to_int (vintval, -1));
+	  }
+	else if (kindintitm == MOM_PREDEFINED_NAMED (code_expansion))
+	  {
+	    fprintf (cg->cg_emitfile, "/*integer %s expanded constant*/",
+		     mom_item_cstring (itm));
+	    momvalue_t vcodemit = mom_node_nth (bindnod, 1);
+	    assert (vcodemit.typnum = momty_node);
+	    if (!mom_applval_1itm1val_to_void
+		(vcodemit, cg->cg_codgenitm, mom_itemv (itm)))
+	      CGEN_ERROR_RETURN_MOM (cg,
+				     "in function %s block %s statement %s failed to emit integer constant %s",
+				     mom_item_cstring (cg->cg_curfunitm),
+				     mom_item_cstring (cg->cg_curblockitm),
+				     mom_item_cstring (cg->cg_curstmtitm),
+				     mom_item_cstring (itm));
+	  }
+	else
+	  // this should never happen
+	  MOM_FATAPRINTF ("invalid `integer` binding %s for item %s",
+			  mom_output_gcstring (vbind),
+			  mom_item_cstring (itm));
+      }
+      break;
     otherwisenatlab:
     default:
       MOM_FATAPRINTF ("emitted item %s has unexpected vbind %s",
@@ -3519,13 +3659,32 @@ cgen_emit_int_switch_statement_mom (struct codegen_mom_st *cg, unsigned insix
       assert (mom_node_conn (casnod) == MOM_PREDEFINED_NAMED (case));
       const momvalue_t vcasnum = mom_node_nth (casnod, 0);
       const momvalue_t vcasblock = mom_node_nth (casnod, 1);
-      assert (vcasnum.typnum == momty_int);
       assert (vcasblock.typnum == momty_item);
-      intptr_t num = mom_value_to_int (vcasnum, -1);
       momitem_t *blockitm = mom_value_to_item (vcasblock);
-      fprintf (cg->cg_emitfile,
-	       "    case %lld: goto " BLOCK_LABEL_PREFIX_MOM "_%s;\n",
-	       (long long) num, mom_item_cstring (blockitm));
+      assert (blockitm != NULL);
+      if (vcasnum.typnum == momty_int)
+	{
+	  fprintf (cg->cg_emitfile,
+		   "    case %lld: goto " BLOCK_LABEL_PREFIX_MOM "_%s;\n",
+		   (long long) vcasnum.vint, mom_item_cstring (blockitm));
+	}
+      else if (vcasnum.typnum == momty_item)
+	{
+	  momitem_t *cstitm = vcasnum.vitem;
+	  assert (cstitm
+		  && cstitm->itm_kind == MOM_PREDEFINED_NAMED (integer));
+	  fprintf (cg->cg_emitfile, "    /*constant integer %s case*/ case ",
+		   mom_item_cstring (cstitm));
+	  cgen_emit_item_mom (cg, cstitm);
+	  fprintf (cg->cg_emitfile,
+		   " : goto " BLOCK_LABEL_PREFIX_MOM "_%s;\n",
+		   mom_item_cstring (blockitm));
+	}
+      else
+	// this should never happen
+	MOM_FATAPRINTF ("in emit int_switch stmt %s caseix %d bad vcase %s",
+			mom_item_cstring (itmstmt),
+			caseix, mom_output_gcstring (vcase));
     }
   fprintf (cg->cg_emitfile, "    default: break;\n");
   fprintf (cg->cg_emitfile, "  } // end case int_switch %s\n",
