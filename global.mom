@@ -1161,9 +1161,26 @@
 ..
 
 
+** delim_type
+{
+  * code  "momty_delim"
+  * comment  "integer constant for delim value type" }
+ 
+..
+
+
 ** double   ////// PREDEFINED
 {
   * comment  "type for double" }
+ 
+..
+
+
+** double_type
+{
+  * code  "momty_double"
+  * comment  "integer constant for double value type"
+  * in  double }
  
 ..
 
@@ -1642,6 +1659,15 @@
 ..
 
 
+** integer_type
+{
+  * code  "momty_int"
+  * comment  "integer constant for integer value type"
+  * in  integer }
+ 
+..
+
+
 ** item   ////// PREDEFINED
 {
   * code  "momitem_t*"
@@ -1678,6 +1704,15 @@
 {
   * comment  "operation for switch on item: item_switch <expr> <case>..."
  }
+ 
+..
+
+
+** item_type
+{
+  * code  "momty_item"
+  * comment  "integer constant for item value type"
+  * in  item }
  
 ..
 
@@ -1826,6 +1861,23 @@
 ..
 
 
+** node_type
+{
+  * code  "momty_node"
+  * comment  "integer constant for node value type"
+  * in  set }
+ 
+..
+
+
+** null_type
+{
+  * code  "momty_null"
+  * comment  "integer constant for null value type" }
+ 
+..
+
+
 ** num
 {
   * type  integer }
@@ -1891,7 +1943,6 @@
  %  ^filler_of_function( signature_2itm_to_void)
  
 ..
-
 
 ** pop_back_queue_item
 {
@@ -2398,105 +2449,54 @@
 ..
 
 
-** delim_type
-{
-  * comment "integer constant for delim value type"
-  * code "momty_delim"
-}
-% ^filler_of_plain_kind(integer)
-..
-
-** double_type
-{
-  * comment "integer constant for double value type"
-  * code "momty_double"
-  * in double
-}
-% ^filler_of_plain_kind(integer)
-..
-
-** integer_type
-{
-  * comment "integer constant for integer value type"
-  * code "momty_int"
-  * in integer
-}
-% ^filler_of_plain_kind(integer)
-..
-
-** null_type
-{
-  * comment "integer constant for null value type"
-  * code "momty_null"
-}
-% ^filler_of_plain_kind(integer)
-..
-
-**  string_type
-{
-  * comment "integer constant for string value type"
-  * code "momty_string"
-}
-% ^filler_of_plain_kind(integer)
-..
-
-**  item_type
-{
-  * comment "integer constant for item value type"
-  * code "momty_item"
-  * in item
-}
-% ^filler_of_plain_kind(integer)
-..
-
-**  tuple_type
-{
-  * comment "integer constant for tuple value type"
-  * code "momty_tuple"
-  * in tuple
-}
-% ^filler_of_plain_kind(integer)
-..
-
-**  set_type
-{
-  * comment "integer constant for set value type"
-  * code "momty_set"
-  * in set
-}
-% ^filler_of_plain_kind(integer)
-..
-
-**  node_type
-{
-  * comment "integer constant for node value type"
-  * code "momty_node"
-  * in set
-}
-% ^filler_of_plain_kind(integer)
-..
-
 ** the_software   ////// PREDEFINED
 {
   * comment  "describes the entire software system"
-  * item {
-  delim_type
-  double_type
-  integer_type
-  null_type
-  string_type
+  * item  {
+   collect_set
+   collect_tuple
+   delim_type
+   double_type
+   integer_add
+   integer_different
+   integer_div
+   integer_equal
+   integer_greater_or_equal
+   integer_greater_than
+   integer_less_or_equal
+   integer_less_than
+   integer_mod
+   integer_mul
+   integer_sub
+   integer_type
    item_type
-   tuple_type  set_type  node_type
-  collect_set  collect_tuple  delim_type integer_add  integer_sub  integer_mul  integer_div
-   integer_mod  integer_less_than  integer_less_or_equal  integer_greater_than
-   integer_greater_or_equal  integer_equal  integer_different  node  plain_code_emitter
-   plain_code_type_scanner  plain_statement_emitter  plain_statement_scanner
-   pop_front_queue_item  pop_back_queue_item  push_front_queue_item  push_back_queue_item
-   queue_item_is_empty  test_module  tuple  unsync_get_attribute  unsync_put_attribute
-   value_is_node  value_is_sequence  value_is_set  value_is_tuple  value_of_item
-   value_sequence_length  value_sequence_nth  value_to_item}
-  }
- [[   ]]
+   node
+   node_type
+   null_type
+   plain_code_emitter
+   plain_code_type_scanner
+   plain_statement_emitter
+   plain_statement_scanner
+   pop_back_queue_item
+   pop_back_queue_item
+   pop_front_queue_item //// duplicate
+   pop_front_queue_item
+   push_back_queue_item
+   push_front_queue_item
+   queue_item_is_empty
+   test_module
+   tuple
+   unsync_get_attribute
+   unsync_put_attribute
+   value_is_node
+   value_is_sequence
+   value_is_set
+   value_is_tuple
+   value_of_item
+   value_sequence_length
+   value_sequence_nth
+   value_to_item
+   } }
  
 ..
 
@@ -2507,7 +2507,6 @@
  }
  
 ..
-
 
 ** tuple
 {
@@ -2614,7 +2613,6 @@
  
 ..
 
-
 ** value_is_set
 {
   * code_emitter  ^plain_code_emitter()
@@ -2623,7 +2621,6 @@
   * comment  "operator testing that operand is a set"
   * formals  [val1]
   * type  integer }
- 
 ..
 
 
@@ -2637,7 +2634,6 @@
   * type  integer }
  
 ..
-
 
 ** value_of_item
 {

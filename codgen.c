@@ -768,8 +768,9 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
 	  mom_item_unsync_get_attribute (itm,	//
 					 MOM_PREDEFINED_NAMED (code));
 	momvalue_t codexpv =	//
-	  mom_item_unsync_get_attribute (itm,	//
-					 MOM_PREDEFINED_NAMED (code_expansion));
+	  mom_item_unsync_get_attribute	//
+	  (itm,
+	   MOM_PREDEFINED_NAMED (code_expansion));
 	MOM_DEBUGPRINTF (gencod,
 			 "type_of_scanned_item in function %s integer item %s integerv=%s codstrv=%s codexpv=%s",
 			 mom_item_cstring (cg->cg_curfunitm),
@@ -788,8 +789,8 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
 	  }
 	else if (codstrv.typnum == momty_string)
 	  {
-	    cgen_bind_new_mom //
-	      (cg, itm,	//
+	    cgen_bind_new_mom	//
+	      (cg, itm,		//
 	       mom_nodev_new (MOM_PREDEFINED_NAMED (integer),
 			      2,
 			      mom_itemv (MOM_PREDEFINED_NAMED (code)),
@@ -797,12 +798,12 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
 	  }
 	else if (codexpv.typnum == momty_node)
 	  {
-	    cgen_bind_new_mom //
-	      (cg, itm,	//
+	    cgen_bind_new_mom	//
+	      (cg, itm,		//
 	       mom_nodev_new (MOM_PREDEFINED_NAMED (integer),
 			      2,
-			      mom_itemv (MOM_PREDEFINED_NAMED (code_expansion)),
-			      codexpv));
+			      mom_itemv (MOM_PREDEFINED_NAMED
+					 (code_expansion)), codexpv));
 	  }
 	else
 	  CGEN_ERROR_RESULT_MOM (cg, NULL,
@@ -3108,8 +3109,7 @@ cgen_emit_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
 	    momvalue_t vcodstr = mom_node_nth (bindnod, 1);
 	    assert (vcodstr.typnum = momty_string);
 	    fprintf (cg->cg_emitfile, "/*integer %s code constant*/%s",
-		     mom_item_cstring (itm),
-		     mom_value_cstr(vcodstr));
+		     mom_item_cstring (itm), mom_value_cstr (vcodstr));
 	  }
 	else if (kindintitm == MOM_PREDEFINED_NAMED (code_expansion))
 	  {
@@ -3117,8 +3117,7 @@ cgen_emit_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
 		     mom_item_cstring (itm));
 	    momvalue_t vcodemit = mom_node_nth (bindnod, 1);
 	    assert (vcodemit.typnum = momty_node);
-	    if (!mom_applval_2itm_to_void
-		(vcodemit, cg->cg_codgenitm, itm))
+	    if (!mom_applval_2itm_to_void (vcodemit, cg->cg_codgenitm, itm))
 	      CGEN_ERROR_RETURN_MOM (cg,
 				     "in function %s block %s statement %s failed to emit integer constant %s",
 				     mom_item_cstring (cg->cg_curfunitm),
@@ -4489,7 +4488,7 @@ bool momfunc_1itm1val_to_void_plain_code_emitter
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   MOM_DEBUGPRINTF (gencod,
 		   "plain_code_emitter start clonode=%s itmcodgen=%s vexpr=%s  **fileoff %ld",
-		   mom_output_gcstring(mom_nodev(clonode)),
+		   mom_output_gcstring (mom_nodev (clonode)),
 		   mom_item_cstring (itmcodgen), mom_output_gcstring (vexpr),
 		   ftell (cg->cg_emitfile));
   momitem_t *connitm = mom_node_conn (nod);
