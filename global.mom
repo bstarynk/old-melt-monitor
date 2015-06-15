@@ -266,10 +266,9 @@
 
 ** _2Pjxm7fux_60FU0zy46
 {
-  * comment  "put in lkitm_module the augmented valvar_funcset with lkitm_fun"
+  * comment  "put in lkitm_module attribute `functions` the valvar_newfuncset "
   * in  _8xBt9K6Ch_2v6P4PEtw }
- [[  unsync_put_attribute  lkitm_module  functions  ^collect_set( valvar_funcset
-    ^value_of_item( lkitm_fun)) ]]
+ [[  unsync_put_attribute  lkitm_module  functions  valvar_newfuncset ]]
  %  ^filler_of_plain_kind( code_statement)
  
 ..
@@ -488,6 +487,29 @@
   * instructions  [_24sBAv42k_3Ly5hw0vj _1R1KvIhCR_6ak3tU4ep _6pte4hEqb_94D0cHswb]
  }
  %  ^filler_of_plain_kind( block)
+ 
+..
+
+
+** _50yPKJrza_50B8EJ0LA
+{
+  * comment  "set valvar_newfuncset augmenting vavar_funcset ... in appfuntoclomod"
+  * in  _8xBt9K6Ch_2v6P4PEtw }
+ [[  set  valvar_newfuncset  ^collect_set( valvar_funcset  ^value_of_item(
+    lkitm_fun)) ]]
+ %  ^filler_of_plain_kind( code_statement)
+ 
+..
+
+
+** _50yPKJtuB_0LhHHcP39
+{
+  * comment  "chunk inform about the updated module in appfuntoclomod"
+  * in  _8xBt9K6Ch_2v6P4PEtw }
+ [[  chunk  "MOM_INFORMPRINTF(\"updated functions of module %s to %s\", \n"
+   "    mom_item_cstring("  lkitm_module  "), mom_output_gcstring("  valvar_newfuncset
+   "));\n" ]]
+ %  ^filler_of_plain_kind( code_statement)
  
 ..
 
@@ -818,8 +840,8 @@
 {
   * comment  "get in valvar_funcset functions block of append_function_to_closed_module"
   * in  append_function_to_closed_module
-  * instructions  [_8ePmCtD84_0yERvJzrB _2Pjxm7fux_60FU0zy46 _6xfMIeeHE_66yBKz8u6]
- }
+  * instructions  [_8ePmCtD84_0yERvJzrB _50yPKJrza_50B8EJ0LA _2Pjxm7fux_60FU0zy46
+   _50yPKJtuB_0LhHHcP39 _6xfMIeeHE_66yBKz8u6] }
  %  ^filler_of_plain_kind( block)
  
 ..
@@ -969,12 +991,13 @@
   * emitted_blocks  {_4he2bnU93_5b5bkfLER _8xBt9K6Ch_2v6P4PEtw _9MARH5tjh_28MKpzxv3}
   * emitted_closed  [val2]
   * emitted_constants  [function_signature code_module functions]
-  * emitted_variables  [itmvar_funsig valvar_funcset lkitm_fun lkitm_module]
+  * emitted_variables  [itmvar_funsig valvar_funcset valvar_newfuncset lkitm_fun
+   lkitm_module]
   * formals  [itm1]
   * function_signature  signature_1itm_to_void
   * in  the_base_module
   * start  _9MARH5tjh_28MKpzxv3
-  * variable  [itmvar_funsig valvar_funcset] }
+  * variable  [itmvar_funsig valvar_funcset valvar_newfuncset] }
  [[  code_module  function_signature  functions ]]
  %  ^filler_of_function( signature_1itm_to_void)
  
@@ -2683,7 +2706,16 @@
 
 ** valvar_funcset
 {
-  * comment  "the value variable for the functions"
+  * comment  "the value variable for the functions set"
+  * type  value }
+ %  ^filler_of_plain_kind( variable)
+ 
+..
+
+
+** valvar_newfuncset
+{
+  * comment  "the value variable for the updated functions set"
   * type  value }
  %  ^filler_of_plain_kind( variable)
  
