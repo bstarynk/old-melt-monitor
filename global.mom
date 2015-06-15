@@ -2459,9 +2459,9 @@
    integer_type item_type node node_type null_type plain_code_emitter plain_code_type_scanner
    plain_statement_emitter plain_statement_scanner pop_back_queue_item pop_front_queue_item
    push_back_queue_item push_front_queue_item queue_item_is_empty test_module
-   tuple unsync_get_attribute unsync_put_attribute value_is_node value_is_sequence
-   value_is_set value_is_tuple value_of_item value_sequence_length value_sequence_nth
-   value_to_item} }
+   tuple type_of_value unsync_get_attribute unsync_put_attribute value_is_node
+   value_is_sequence value_is_set value_is_tuple value_of_item value_sequence_length
+   value_sequence_nth value_to_item} }
  
 ..
 
@@ -2493,6 +2493,19 @@
 {
   * comment  "kind of code types, etc.."
   * dumped_item_emitter  ^emitter_of_plain_kind() }
+ 
+..
+
+
+** type_of_value
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*type_of_value:*/ ((intptr_t) (" 
+   val1  ").typnum)")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "operator giving the type of some value val1"
+  * formals  [val1]
+  * type  integer }
  
 ..
 
