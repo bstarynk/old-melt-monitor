@@ -2181,6 +2181,18 @@ cgen_second_emitting_pass_mom (momitem_t *itmcgen)
   long buflen = ftell (cg->cg_emitfile);
   MOM_DEBUGPRINTF (gencod, "end cgen_second_emitting_pass_mom buffer:\n%s\n",
 		   cg->cg_emitbuffer);
+  if (access (MOM_MODULE_DIRECTORY, R_OK))
+    {
+      char dirbuf[MOM_PATH_MAX];
+      memset (dirbuf, 0, sizeof (dirbuf));
+      getcwd (dirbuf, sizeof (dirbuf) - 1);
+      if (mkdir (MOM_MODULE_DIRECTORY, 0750 /* drwxr-x--- */ ))
+	MOM_FATAPRINTF ("failed to mkdir %s in %s: %m", MOM_MODULE_DIRECTORY,
+			dirbuf);
+      else
+	MOM_INFORMPRINTF ("made %s directory in %s for code generation",
+			  MOM_MODULE_DIRECTORY, dirbuf);
+    };
   bool same = true;
   {
     char oldpath[256];
