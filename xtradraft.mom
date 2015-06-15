@@ -126,7 +126,7 @@
 ** unsync_webexitem_ftell
 {
   * code_emitter  ^plain_code_emitter()
-  * code_expansion  ^code_expansion( "/*unsync_webexitem_ftell:*/(("  itm1  ")) ")
+  * code_expansion  ^code_expansion( "/*unsync_webexitem_ftell:*/(mom_unsync_webexitem_ftell("  itm1  ")) ")
   * code_type_scanner  ^plain_code_type_scanner()
   * comment  "unsync_webexitem_ftell gives the output offset of a wexexitem itm1"
   * formals  [itm1]

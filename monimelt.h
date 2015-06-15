@@ -563,6 +563,16 @@ mom_value_to_int (const momvalue_t val, intptr_t def)
   return def;
 }
 
+static inline double
+mom_value_to_double (const momvalue_t val)
+{
+  if (val.typnum == momty_double)
+    return val.vdbl;
+  else
+    return NAN;
+}
+
+
 momhash_t mom_valueptr_hash (momvalue_t *pval);
 
 static inline momhash_t

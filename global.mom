@@ -2681,7 +2681,7 @@
 ** value_sequence_nth
 {
   * code_emitter  ^plain_code_emitter()
-  * code_expansion  ^code_expansion( "/*value_sequence_nth:*/ mom_seq_nth(mom_value_to_sequ("
+  * code_expansion  ^code_expansion( "/*value_sequence_nth:*/ (momitem_t*)mom_seq_nth(mom_value_to_sequ("
     val1  "), (int)("  num  "))")
   * code_type_scanner  ^plain_code_type_scanner()
   * comment  "operator giving for a value sequence val1 its component of rank num"
