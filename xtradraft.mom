@@ -315,7 +315,13 @@
 {
  * comment "block to output a node in basic_html_output_value"
  * instructions [
- 
+     _* "set varlen := arity of val1 in basic_html_output_value"
+     (! [[ set varlen ^value_node_arity(val1) ]]
+     %  ^filler_of_plain_kind( code_statement) !)
+     //
+     _* "set lkitm_conn := connective of val1 in basic_html_output_value"
+     (! [[ set lkitm_conn ^value_node_conn(val1) ]]
+     %  ^filler_of_plain_kind( code_statement) !)
  ]
  }
 [[
@@ -348,6 +354,16 @@
 {
   * comment  "the item variable for the subitem"
   * type  item }
+ %  ^filler_of_plain_kind( variable)
+ 
+..
+
+
+
+** var_son
+{
+  * comment  "the value variable for the son"
+  * type  value }
  %  ^filler_of_plain_kind( variable)
  
 ..
