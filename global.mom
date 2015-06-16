@@ -506,9 +506,10 @@
 {
   * comment  "chunk inform about the updated module in appfuntoclomod"
   * in  _8xBt9K6Ch_2v6P4PEtw }
- [[  chunk  "MOM_INFORMPRINTF(\"updated functions of module %s to %s\", \n"
-   "    mom_item_cstring("  lkitm_module  "), mom_output_gcstring("  valvar_newfuncset
-   "));\n" ]]
+ [[  chunk  "MOM_INFORMPRINTF(\"updated functions of module %s from %s to %s\", \n"
+   "    mom_item_cstring("  lkitm_module  "),"  " mom_output_gcstring(" 
+  valvar_funcset  "), "  " mom_output_gcstring("  valvar_newfuncset  ")"
+   ");\n" ]]
  %  ^filler_of_plain_kind( code_statement)
  
 ..

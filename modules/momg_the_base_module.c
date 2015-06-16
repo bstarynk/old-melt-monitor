@@ -165,7 +165,7 @@ bool momfunc_1val_to_void_agenda_push_back (const momnode_t *mom_node, momvalue_
 // statement #1 :: _4qKLvc6ce_24ym1K7qm; set lkitm_tasklet := value_sequence_nth(argtasklets, varix); for agenda_push_back
   { // locked set into lkitm_tasklet
   momlockeditem_t* momoldlocked__4qKLvc6ce_24ym1K7qm = momvar1 /*var:lkitm_tasklet*/;
-  momlockeditem_t* momnewlocked__4qKLvc6ce_24ym1K7qm = /*value_sequence_nth:*/ mom_seq_nth(mom_value_to_sequ(momarg0 /*formalarg:argtasklets*/), (int)(momvar3 /*var:varix*/));
+  momlockeditem_t* momnewlocked__4qKLvc6ce_24ym1K7qm = /*value_sequence_nth:*/ (momitem_t*)mom_seq_nth(mom_value_to_sequ(momarg0 /*formalarg:argtasklets*/), (int)(momvar3 /*var:varix*/));
   if (momoldlocked__4qKLvc6ce_24ym1K7qm != momnewlocked__4qKLvc6ce_24ym1K7qm) {
     if (momoldlocked__4qKLvc6ce_24ym1K7qm != NULL) mom_item_unlock (momoldlocked__4qKLvc6ce_24ym1K7qm);
     if (momnewlocked__4qKLvc6ce_24ym1K7qm != NULL) mom_item_lock (momnewlocked__4qKLvc6ce_24ym1K7qm);
@@ -345,7 +345,7 @@ bool momfunc_1val_to_void_agenda_push_front (const momnode_t *mom_node, momvalue
 // statement #1 :: _24z256FyK_7r8ApkvqK; set lkitm_tasklet := value_sequence_nth(argtasklets, varix); for agenda_push_front
   { // locked set into lkitm_tasklet
   momlockeditem_t* momoldlocked__24z256FyK_7r8ApkvqK = momvar1 /*var:lkitm_tasklet*/;
-  momlockeditem_t* momnewlocked__24z256FyK_7r8ApkvqK = /*value_sequence_nth:*/ mom_seq_nth(mom_value_to_sequ(momarg0 /*formalarg:argtasklets*/), (int)(momvar3 /*var:varix*/));
+  momlockeditem_t* momnewlocked__24z256FyK_7r8ApkvqK = /*value_sequence_nth:*/ (momitem_t*)mom_seq_nth(mom_value_to_sequ(momarg0 /*formalarg:argtasklets*/), (int)(momvar3 /*var:varix*/));
   if (momoldlocked__24z256FyK_7r8ApkvqK != momnewlocked__24z256FyK_7r8ApkvqK) {
     if (momoldlocked__24z256FyK_7r8ApkvqK != NULL) mom_item_unlock (momoldlocked__24z256FyK_7r8ApkvqK);
     if (momnewlocked__24z256FyK_7r8ApkvqK != NULL) mom_item_lock (momnewlocked__24z256FyK_7r8ApkvqK);
@@ -694,9 +694,9 @@ bool momfunc_1itm_to_void_append_function_to_closed_module (const momnode_t *mom
    /*collect_set:*/ mom_collect_setv( /*variadic-count count:*/5, /*variadic-rest restval:*/ /*rest#0*/(momvar1 /*var:valvar_funcset*/),  /*rest#1*/(/*value_of_item:*/ mom_itemv(momvar3 /*var:lkitm_fun*/)), NULL);
 // statement #2 :: _2Pjxm7fux_60FU0zy46; put in lkitm_module attribute `functions` the valvar_newfuncset 
 /*unsync_put_attribute:*/ (void)mom_item_unsync_put_attribute((momvar4 /*var:lkitm_module*/), ( /*constant#2:*/MOM_PREDEFINED_NAMED(functions)), (momvar2 /*var:valvar_newfuncset*/));// statement #3 :: _50yPKJtuB_0LhHHcP39; chunk inform about the updated module in appfuntoclomod
-  // chunk of 7 components
-MOM_INFORMPRINTF("updated functions of module %s to %s", 
-    mom_item_cstring(momvar4 /*var:lkitm_module*/), mom_output_gcstring(momvar2 /*var:valvar_newfuncset*/));
+  // chunk of 12 components
+MOM_INFORMPRINTF("updated functions of module %s from %s to %s", 
+    mom_item_cstring(momvar4 /*var:lkitm_module*/), mom_output_gcstring(momvar1 /*var:valvar_funcset*/),  mom_output_gcstring(momvar2 /*var:valvar_newfuncset*/));
  ;
 // statement #4 :: _6xfMIeeHE_66yBKz8u6; succeed in appfuntoclomod
 // success
