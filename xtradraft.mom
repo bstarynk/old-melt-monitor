@@ -282,6 +282,13 @@
 {
  * comment "block to output an item in basic_html_output_value"
  * instructions [
+ 
+   _* "apply basic_html_output_item to lkitm_webx item-value (depth+1)" (!
+      [[ apply signature_2itm1int_to_void basic_html_output_item
+            lkitm_webx ^value_to_item(val1) ^integer_add(depth 1)
+      ]]
+      % ^filler_of_plain_kind(code_statement)
+   !)
  ]
  }
 [[

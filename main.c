@@ -939,6 +939,8 @@ limit_nofile_mom (void)
 }				/* end of limit_nofile_mom */
 
 
+static char hostname_mom[80];
+
 int
 main (int argc_main, char **argv_main)
 {
@@ -957,6 +959,7 @@ main (int argc_main, char **argv_main)
      GC_pthread_cancel,
      GC_pthread_detach, GC_pthread_exit, GC_pthread_sigmask);
   json_set_alloc_funcs (jansson_malloc_mom, GC_free);
+  gethostname (hostname_mom, sizeof (hostname_mom) - 1);
   mom_initialize_random ();
   json_object_seed (0);		/* use random device ie system entropy source */
   mom_prog_dlhandle = GC_dlopen (NULL, RTLD_NOW | RTLD_GLOBAL);
@@ -988,7 +991,8 @@ main (int argc_main, char **argv_main)
   MOM_DEBUGPRINTF (load, "before loading state (xtrapath=%s)", xtra_path_mom);
   mom_load_state (xtra_path_mom);
   MOM_DEBUGPRINTF (load, "loaded state (xtrapath=%s)", xtra_path_mom);
-  MOM_INFORMPRINTF ("MONIMELT loaded state, process %d", (int) getpid ());
+  MOM_INFORMPRINTF ("MONIMELT loaded state, process %d on %s",
+		    (int) getpid (), hostname_mom);
   if (wanted_dir_mom && wanted_dir_mom[0])
     {
       char dirbuf[MOM_PATH_MAX];
@@ -1045,6 +1049,10 @@ main (int argc_main, char **argv_main)
 	MOM_FATAPRINTF ("failed to make -j %d after predefined",
 			mom_nb_workers);
     }
+  MOM_INFORMPRINTF
+    ("MONIMELT ending pid %d on %s, elapsed time %.3f, cpu time %.3f sec",
+     (int) getpid (), hostname_mom, mom_elapsed_real_time (),
+     mom_clock_time (CLOCK_PROCESS_CPUTIME_ID));
   mom_prog_dlhandle = NULL;
   return 0;
 }
