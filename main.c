@@ -893,8 +893,11 @@ do_generate_c_module_mom (void)
 			  makecmdbuf, buildfail);
 	}
       else
-	MOM_INFORMPRINTF ("successfully built generated module with : %s",
-			  makecmdbuf);
+	{
+	  MOM_INFORMPRINTF ("successfully built generated module with : %s",
+			    makecmdbuf);
+	};
+      mom_dynload_module_item (moditm);
       if (!dump_exit_dir_mom)
 	{
 	  MOM_INFORMPRINTF

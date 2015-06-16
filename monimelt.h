@@ -1559,6 +1559,11 @@ mom_output_utf8string_html (FILE *fil, const momstring_t *str, bool usebr)
 
 extern void *mom_dynload_symbol (const char *name);
 
+// dlopen a module item
+void mom_dynload_module_item (momitem_t *moditm);
+// dlclose it
+void mom_dynunload_module_item (momitem_t *moditm);
+
 // the two mom_dynload_function & mom_dynunload_function are called by
 // generated constructor & destructor functions at dlopen & dlclose
 // time...
