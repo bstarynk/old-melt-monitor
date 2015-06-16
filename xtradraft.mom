@@ -181,7 +181,7 @@
 {
  * comment "internal function to output HTML in webxitm for value val1 at given depth"
  * function_signature signature_1itm1val1int_to_void
- * constants { }
+ * constants { basic_html_output_item basic_html_output_value __constantclo_basic_html_output_item }
  * formals [ webxitm val1 depth ]
  * closed [ ]
  * start _* = __start_block_basic_html_output_value
@@ -277,6 +277,12 @@
 %  ^filler_of_plain_kind( block)
 ..
 
+** __constantclo_basic_html_output_item
+{ * comment "the quoted ^basic_html_output_item () constant"
+  * value ^basic_html_output_item ()
+  * type value }
+  % ^filler_of_plain_kind(constant)
+..
 
 ** __block_when_item_basic_html
 {
@@ -284,7 +290,7 @@
  * instructions [
  
    _* "apply basic_html_output_item to lkitm_webx item-value (depth+1)" (!
-      [[ apply signature_2itm1int_to_void basic_html_output_item
+      [[ apply signature_2itm1int_to_void __constantclo_basic_html_output_item
             lkitm_webx ^value_to_item(val1) ^integer_add(depth 1)
       ]]
       % ^filler_of_plain_kind(code_statement)
