@@ -321,6 +321,12 @@
 {
  * comment "block to output a sequence in basic_html_output_value"
  * instructions [
+     _* "set varlen := length of val1 in basic_html_output_value"
+     (! [[ set varlen ^value_sequence_length(val1) ]]
+     %  ^filler_of_plain_kind( code_statement) !)
+     _* "set varix := 0  in basic_html_output_value"
+     (! [[ set varix 0 ]]
+     %  ^filler_of_plain_kind( code_statement) !)
  ]
  }
 [[
@@ -329,6 +335,44 @@
 ..
 
 
+** var_subitm
+{
+  * comment  "the item variable for the subitem"
+  * type  item }
+ %  ^filler_of_plain_kind( variable)
+ 
+..
+
+
+** __loopblock_seq_basic_html_output_value
+{
+  * comment "loop sequence block of basic_html_output_value"
+  * instructions [
+     _* "if varix >= varlen succeed in basic_html_output_value"
+     (! [[ if ^integer_greater_or_equal(varix varlen)  __succeedblock_basic_html_output_value ]]
+     %  ^filler_of_plain_kind( code_statement) !)
+     _* "set var_subitm := component #varix of val1 in basic_html_output_value"
+     (! [[ set var_subitm  ^value_sequence_nth(val1 varix) ]]
+     %  ^filler_of_plain_kind( code_statement) !)
+   //
+   _* "apply basic_html_output_item to lkitm_webx var_subitm (depth+1)" (!
+      [[ apply signature_2itm1int_to_void __constantclo_basic_html_output_item
+            lkitm_webx var_subitm ^integer_add(depth 1)
+      ]]
+      % ^filler_of_plain_kind(code_statement) !)
+   //
+   _* "increment varix in basic_html_output_value"
+      (! [[  set  varix  ^integer_add( varix  1) ]]
+         %  ^filler_of_plain_kind( code_statement) !)
+   //
+   _* "jump to loop start for sequence in basic_html_output_value"
+   (! [[ jump __loopblock_seq_basic_html_output_value ]]
+         %  ^filler_of_plain_kind( code_statement) !)
+  ]
+  }
+%  ^filler_of_plain_kind( block)
+..
+  
 
 
 ** __failblock_basic_html_output_value
@@ -336,6 +380,20 @@
   * comment "fail block of basic_html_output_value"
   * instructions [
         _* "fail in basic_html_output_value" (! [[ fail ]]
+	  %  ^filler_of_plain_kind( code_statement)
+	!)
+  ]
+}
+[[
+]]
+%  ^filler_of_plain_kind( block)
+..
+
+** __succeedblock_basic_html_output_value
+{
+  * comment "succeed block of basic_html_output_value"
+  * instructions [
+        _* "succeed in basic_html_output_value" (! [[ success ]]
 	  %  ^filler_of_plain_kind( code_statement)
 	!)
   ]
