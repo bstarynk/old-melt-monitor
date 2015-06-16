@@ -109,9 +109,11 @@ void
 mom_dynload_module_item (momitem_t *moditm)
 {
   char modpath[MOM_PATH_MAX];
+  char dirpath[MOM_PATH_MAX];
   if (!moditm || moditm == MOM_EMPTY)
     return;
   memset (modpath, 0, sizeof (modpath));
+  memset (dirpath, 0, sizeof (dirpath));
   mom_item_lock (moditm);
   pthread_mutex_lock (&dynload_mtx_mom);
   if (moditm->itm_kind != MOM_PREDEFINED_NAMED (code_module))
@@ -121,6 +123,8 @@ mom_dynload_module_item (momitem_t *moditm)
 		      mom_item_cstring (moditm->itm_kind));
       goto end;
     };
+  if (!getcwd (dirpath, sizeof (dirpath)))
+    MOM_FATAPRINTF ("dynload module failed to getcwd: %m");
   if (snprintf (modpath, sizeof (modpath) - 1,
 		MOM_MODULE_DIRECTORY MOM_SHARED_MODULE_PREFIX "%s.so",
 		mom_item_cstring (moditm)) >= (int) sizeof (modpath) - 2)
@@ -133,21 +137,24 @@ mom_dynload_module_item (momitem_t *moditm)
       goto end;
     };
   moditm->itm_data1 = NULL;
-  MOM_DEBUGPRINTF (run, "dynload module before dlopen %s", modpath);
+  MOM_DEBUGPRINTF (run, "dynload module before dlopen %s in %s", modpath,
+		   dirpath);
   void *modh = GC_dlopen (modpath, RTLD_NOW | RTLD_GLOBAL);
   if (modh)
     {
       moditm->itm_data1 = modh;
-      MOM_INFORMPRINTF ("dynloaded module %s from %s",
-			mom_item_cstring (moditm), modpath);
+      MOM_INFORMPRINTF ("dynloaded module %s from %s in %s",
+			mom_item_cstring (moditm), modpath, dirpath);
     }
   else
     {
-      MOM_WARNPRINTF ("failed to dynload module %s from %s : %s",
-		      mom_item_cstring (moditm), modpath, dlerror ());
+      MOM_WARNPRINTF ("failed to dynload module %s from %s in %s: %s",
+		      mom_item_cstring (moditm), modpath, dirpath,
+		      dlerror ());
       goto end;
     }
-  MOM_DEBUGPRINTF (run, "dynload module after dlopen %s", modpath);
+  MOM_DEBUGPRINTF (run, "dynload module after dlopen %s in %s", modpath,
+		   dirpath);
 end:
   mom_item_unlock (moditm);
   pthread_mutex_unlock (&dynload_mtx_mom);
@@ -160,6 +167,8 @@ mom_dynunload_module_item (momitem_t *moditm)
 {
   if (!moditm || moditm == MOM_EMPTY)
     return;
+  char dirpath[MOM_PATH_MAX];
+  memset (dirpath, 0, sizeof (dirpath));
   mom_item_lock (moditm);
   pthread_mutex_lock (&dynload_mtx_mom);
   if (moditm->itm_kind != MOM_PREDEFINED_NAMED (code_module))
@@ -175,19 +184,22 @@ mom_dynunload_module_item (momitem_t *moditm)
 		      mom_item_cstring (moditm));
       goto end;
     };
+  if (!getcwd (dirpath, sizeof (dirpath)))
+    MOM_FATAPRINTF ("dynunload module failed to getcwd: %m");
   void *modad = moditm->itm_data1;
   moditm->itm_data1 = NULL;
-  MOM_DEBUGPRINTF (run, "dynunload module before dlclose module item %s",
-		   mom_item_cstring (moditm));
+  MOM_DEBUGPRINTF (run,
+		   "dynunload module before dlclose module item %s in %s",
+		   mom_item_cstring (moditm), dirpath);
   int err = dlclose (modad);
   if (err)
     {
-      MOM_WARNPRINTF ("dynunload module %s failed to dlclose: %s",
-		      mom_item_cstring (moditm), dlerror ());
+      MOM_WARNPRINTF ("dynunload module %s failed to dlclose in %s: %s",
+		      mom_item_cstring (moditm), dirpath, dlerror ());
       goto end;
     };
-  MOM_DEBUGPRINTF (run, "dynunload module after dlclose module item %s",
-		   mom_item_cstring (moditm));
+  MOM_DEBUGPRINTF (run, "dynunload module after dlclose module item %s in %s",
+		   mom_item_cstring (moditm), dirpath);
 end:
   mom_item_unlock (moditm);
   pthread_mutex_unlock (&dynload_mtx_mom);
