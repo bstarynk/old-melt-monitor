@@ -1528,6 +1528,20 @@ void mom_output_utf8cstr_cencoded (FILE *fil, const char *str, int len);
 void mom_output_utf8html_cencoded (FILE *fil, const char *str, int len,
 				   bool usebr);
 
+static inline void
+mom_output_utf8string_cstr (FILE *fil, const momstring_t *str)
+{
+  if (fil != NULL && str != NULL && str != MOM_EMPTY)
+    mom_output_utf8cstr_cencoded (fil, str->cstr, str->slen);
+}
+
+static inline void
+mom_output_utf8string_html (FILE *fil, const momstring_t *str, bool usebr)
+{
+  if (fil != NULL && str != NULL && str != MOM_EMPTY)
+    mom_output_utf8html_cencoded (fil, str->cstr, str->slen, usebr);
+}
+
 #define MOM_HAS_PREDEFINED_NAMED(Nam,Hash) extern momitem_t*mompi_##Nam;
 #define MOM_HAS_PREDEFINED_ANONYMOUS(Id,Hash) extern momitem_t*mompi_##Id;
 

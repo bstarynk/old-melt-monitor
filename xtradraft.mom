@@ -187,6 +187,10 @@
 	^case (integer_type __block_when_integer_basic_html)
 	^case (string_type __block_when_string_basic_html)
 	^case (double_type __block_when_double_basic_html)
+	^case (item_type __block_when_item_basic_html)
+	^case (node_type __block_when_node_basic_html)
+	^case (tuple_type __block_when_sequ_basic_html)
+	^case (set_type __block_when_sequ_basic_html)
 	]]
           %  ^filler_of_plain_kind( code_statement)
 	!)
@@ -206,9 +210,9 @@
  * comment "block to output an integer in basic_html_output"
  * instructions [
    _* "print integer to web in basic_web_html" (!
-	[[ chunk "(void) mom_unsync_webexitem_printf(" lkitm_webx ", \"%lld\", (long long) mom_value_to_int(" val1 ", -1));\n" ]]
-       % ^filler_of_plain_kind(code_statement)
-       !)
+     [[ chunk "(void) mom_unsync_webexitem_printf(" lkitm_webx ", \"%lld\", (long long) mom_value_to_int(" val1 ", -1));\n" ]]
+     % ^filler_of_plain_kind(code_statement)
+   !)
  ]
  }
 [[
@@ -221,6 +225,11 @@
 {
  * comment "block to output a string in basic_html_output"
  * instructions [
+   _* "print string, with <br/>, as HTML encoded, in basic_web_html" (!
+     [[ chunk "mom_output_utf8string_html (mom_unsync_webexitem_file ("
+              lkitm_webx "), mom_value_to_string(" val1 "))" ]]
+     % ^filler_of_plain_kind(code_statement)
+   !)
  ]
  }
 [[
@@ -234,7 +243,8 @@
  * comment "block to output a double in basic_html_output"
  * instructions [
    _* "print double to web in basic_web_html" (!
-	[[ chunk "(void) mom_unsync_webexitem_printf(" lkitm_webx ", \"%g\", mom_value_to_double(" val1 "));\n" ]]
+	[[ chunk "(void) mom_unsync_webexitem_printf(" lkitm_webx
+	         ", \"%g\", mom_value_to_double(" val1 "));\n" ]]
        % ^filler_of_plain_kind(code_statement)
        !)
  ]
@@ -243,6 +253,47 @@
 ]]
 %  ^filler_of_plain_kind( block)
 ..
+
+
+** __block_when_item_basic_html
+{
+ * comment "block to output an item in basic_html_output"
+ * instructions [
+ ]
+ }
+[[
+]]
+%  ^filler_of_plain_kind( block)
+..
+
+
+** __block_when_node_basic_html
+{
+ * comment "block to output a node in basic_html_output"
+ * instructions [
+ ]
+ }
+[[
+]]
+%  ^filler_of_plain_kind( block)
+..
+
+
+
+
+** __block_when_sequ_basic_html
+{
+ * comment "block to output a sequence in basic_html_output"
+ * instructions [
+ ]
+ }
+[[
+]]
+%  ^filler_of_plain_kind( block)
+..
+
+
+
 
 ** __failblock_basic_html_output
 {
