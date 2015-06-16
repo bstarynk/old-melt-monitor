@@ -48,6 +48,7 @@
  
 ..
 
+
 ** reqmethitm
 {
   * comment "formal for the request method item"
@@ -164,7 +165,18 @@
   }
           %  ^filler_of_plain_kind(integer)
   ..
-  
+
+
+** maximal_html_output_depth
+{
+  * comment "integer constant for maximal html output recursive depth"
+  * integer 80
+  }
+%  ^filler_of_plain_kind(integer)
+..
+
+
+
 ** basic_html_output_value 
 {
  * comment "internal function to output HTML in webxitm for value val1 at given depth"
@@ -178,8 +190,8 @@
       * comment "start block of basic_html_output_value"
       * instructions [
         //
-        _* "if depth>64 fail in basic_html_output_value" (!
-        [[ if ^integer_greater_than(depth 64) __failblock_basic_html_output_value 
+        _* "if depth too big fail in basic_html_output_value" (!
+        [[ if ^integer_greater_than(depth maximal_html_output_depth) __failblock_basic_html_output_value 
         ]]
           %  ^filler_of_plain_kind( code_statement)
         !)
@@ -323,6 +335,13 @@
 
 ////////////////
 
+** lkitm1
+{
+  * comment  "the locked item for the itm1"
+  * type  locked_item }
+ %  ^filler_of_plain_kind( variable)
+ 
+..
 ** basic_html_output_item 
 {
  * comment "internal function to output HTML in webxitm for item itm1 at given depth"
@@ -332,12 +351,45 @@
  * closed [ ]
  * start _* = __start_block_basic_html_output_item
   (!
+    {
+      * comment  "start block of basic_web_output_item"
+      * instructions [
+        //////
+        _* "if depth too big fail in basic_html_output_item" (!
+        [[ if ^integer_greater_than(depth maximal_html_output_depth) __failblock_basic_html_output_item 
+        ]]
+          %  ^filler_of_plain_kind( code_statement)
+        !)
+	////
+        _* "set lkitm_webx = webxitm" (! [[ set lkitm_webx webxitm ]]
+	   %  ^filler_of_plain_kind( code_statement) !)
+        //////
+        _* "set lkitm1 = itm1" (! [[ set lkitm1 itm1 ]]
+	   %  ^filler_of_plain_kind( code_statement) !)
+      ]
+    }
+    %  ^filler_of_plain_kind( block)    
   !)
 }
 [[
 ]]
 % ^append_function_to_closed_module(the_base_module)
 ..
+
+** __failblock_basic_html_output_item
+{
+  * comment "fail block of basic_html_output_item"
+  * instructions [
+        _* "fail in basic_html_output_item" (! [[ fail ]]
+	  %  ^filler_of_plain_kind( code_statement)
+	!)
+  ]
+}
+[[
+]]
+%  ^filler_of_plain_kind( block)
+..
+
 
 
 ////////////////////////////////////////////////////////////////
