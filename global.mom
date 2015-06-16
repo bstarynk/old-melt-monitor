@@ -2499,8 +2499,8 @@
    push_back_queue_item push_front_queue_item queue_item_is_empty set_type
    string_type test_module tuple tuple_type type_of_value unsync_get_attribute
    unsync_put_attribute value_is_node value_is_sequence value_is_set value_is_tuple
-   value_of_item value_sequence_length value_sequence_nth value_to_item}
- }
+   value_node_arity value_node_nth value_of_item value_sequence_length value_sequence_nth
+   value_to_item} }
  
 ..
 
@@ -2662,6 +2662,32 @@
   * comment  "operator testing that operand is a tuple"
   * formals  [val1]
   * type  integer }
+ 
+..
+
+
+** value_node_arity
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*value_node_arity:*/ (intptr_t)mom_node_arity(mom_value_to_node("
+    val1  "))")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "operator giving for a value node val1 its arity"
+  * formals  [val1]
+  * type  integer }
+ 
+..
+
+
+** value_node_nth
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*value_node_nth:*/ mom_node_nth(mom_value_to_node("
+    val1  "), ("  num  "))")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "operator giving for a value node val1 its son at rank num"
+  * formals  [val1 num]
+  * type  value }
  
 ..
 

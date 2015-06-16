@@ -48,6 +48,14 @@
  
 ..
 
+** lkitm_conn
+{
+  * comment  "the locked item for the connective"
+  * type  locked_item }
+ %  ^filler_of_plain_kind( variable)
+ 
+..
+
 
 ** reqmethitm
 {
@@ -307,6 +315,7 @@
 {
  * comment "block to output a node in basic_html_output_value"
  * instructions [
+ 
  ]
  }
 [[
