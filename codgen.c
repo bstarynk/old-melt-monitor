@@ -1597,14 +1597,15 @@ cgen_scan_apply_statement_first_mom (struct codegen_mom_st *cg,
 	continue;
       else
 	CGEN_ERROR_RETURN_MOM (cg,
-			       "module item %s : function %s with block %s with apply statement %s with invalid argument#%d %s of type %s, expecting %s",
+			       "module item %s : function %s with block %s with apply statement %s with invalid argument#%d %s of type %s, expecting %s, for signature %s",
 			       mom_item_cstring (cg->cg_moduleitm),
 			       mom_item_cstring (cg->cg_curfunitm),
 			       mom_item_cstring (cg->cg_curblockitm),
 			       mom_item_cstring (itmstmt), inix,
 			       mom_output_gcstring (vcurin),
 			       mom_item_cstring (incurtypitm),
-			       mom_item_cstring (insigtypitm));
+			       mom_item_cstring (insigtypitm),
+			       mom_item_cstring (sigitm));
     };
   if (cg->cg_errormsg)
     return;

@@ -189,7 +189,8 @@
 {
  * comment "internal function to output HTML in webxitm for value val1 at given depth"
  * function_signature signature_1itm1val1int_to_void
- * constants { basic_html_output_item basic_html_output_value __constantclo_basic_html_output_item }
+ * constants { basic_html_output_item basic_html_output_value __constantclo_basic_html_output_item
+               simple_html_tag simple_html_start simple_html_between simple_html_end }
  * formals [ webxitm val1 depth ]
  * closed [ ]
  * start _* = __start_block_basic_html_output_value
@@ -311,17 +312,50 @@
 ..
 
 
+** simple_html_tag  
+{
+  * comment  "kind for simple HTML tags"
+  * dumped_item_emitter  ^emitter_of_plain_kind() }
+ 
+..
+
+** simple_html_start  
+{
+  * comment  "in simple HTML tags connective, give the closure in charge of emission before the node" }
+ 
+..
+
+
+** simple_html_between
+{
+  * comment  "in simple HTML tags connective, give the closure in charge of emission between sons" }
+ 
+..
+
+** simple_html_end  
+{
+  * comment  "in simple HTML tags connective, give the closure in charge of emission after the node" }
+ 
+..
+
+
+
 ** __block_when_node_basic_html
 {
  * comment "block to output a node in basic_html_output_value"
  * instructions [
-     _* "set varlen := arity of val1 in basic_html_output_value"
+     _* "set varlen := arity of val1; in basic_html_output_value"
      (! [[ set varlen ^value_node_arity(val1) ]]
      %  ^filler_of_plain_kind( code_statement) !)
      //
-     _* "set lkitm_conn := connective of val1 in basic_html_output_value"
+     _* "set lkitm_conn := connective of val1; in basic_html_output_value"
      (! [[ set lkitm_conn ^value_node_conn(val1) ]]
      %  ^filler_of_plain_kind( code_statement) !)
+     //
+     _* "if lkitm_conn has kind simple_html_tag, process it"
+     (! [[ if ^item_has_kind(lkitm_conn simple_html_tag) __block_simple_html_node ]]
+     %  ^filler_of_plain_kind( code_statement) !)
+     
  ]
  }
 [[
@@ -329,8 +363,72 @@
 %  ^filler_of_plain_kind( block)
 ..
 
+** __block_simple_html_node
+{
+ * comment "block to output a simple html node in basic_html_output_value"
+ * instructions [
+     _* "set var_start := simple_html_start of lkitm_conn; in basic_html_output_value"
+     (! [[ set var_start ^unsync_get_attribute(lkitm_conn simple_html_start) ]]
+     % ^filler_of_plain_kind(code_statement) !)
+     _* "set var_end := simple_html_end of lkitm_conn; in basic_html_output_value"
+     (! [[ set var_end ^unsync_get_attribute(lkitm_conn simple_html_end) ]]
+     % ^filler_of_plain_kind(code_statement) !)
+     _* "set var_between := simple_html_between of lkitm_conn; in basic_html_output_value"
+     (! [[ set var_between ^unsync_get_attribute(lkitm_conn simple_html_between) ]]
+     % ^filler_of_plain_kind(code_statement) !)
+     _* "set varix := 0; basic_html_output_value, for node"
+     (! [[ set varix 0 ]]
+     %  ^filler_of_plain_kind( code_statement) !)
+     _* "if var_start is node, apply it; in basic_html_output_value"
+     (!  [[  if  ^value_is_node(var_start) __block_apply_start_simple_html_node ]]
+     %  ^filler_of_plain_kind( code_statement) !)
+ ]
+ }
+% ^filler_of_plain_kind(block)
+ ..
 
 
+** __block_apply_start_simple_html_node 
+{
+ * comment "block to apply var_start to output a simple html node in basic_html_output_value"
+ * instructions [
+   _* "apply var_start to lkitm_webx val1 depth"
+   (! [[ apply signature_1itm1val1int_to_void var_start lkitm_webx val1 depth ]]
+   %  ^filler_of_plain_kind( code_statement) !)
+   _* "jump to start of loop on simple html _node
+    (! [[ jump __block_start_loop_simple_html_node ]]
+     %  ^filler_of_plain_kind( code_statement) !)
+ ]
+ }
+% ^filler_of_plain_kind(block)
+..
+
+
+** __block_start_loop_simple_html_node
+{
+* comment "block to start looping on sons of simple html node in basic_html_output_value"
+* instructions [
+   _* "if varix == 0 jump to block process son simple html node"
+   (! [[ if ^integer_equal(varix 0) __block_process_simple_html_node ]]
+    % ^filler_of_plain_kind(code_statement) !)
+   _* "apply var_between to lkitm_webx val1 depth"
+   (! [[ apply signature_1itm1val1int_to_void var_between lkitm_webx val1 depth ]] 
+     % ^filler_of_plain_kind(code_statement) !)
+  ]
+}
+% ^filler_of_plain_kind(block)
+..
+ 
+
+** __block_process_simple_html_node 
+{
+  * comment "block to process the current son of simple html node in basic_html_output_value"
+  * instructions [
+//// @@@ A COMPLETER
+  ]
+}
+% ^filler_of_plain_kind(block)
+..
 
 ** __block_when_sequ_basic_html
 {
@@ -339,7 +437,7 @@
      _* "set varlen := length of val1 in basic_html_output_value"
      (! [[ set varlen ^value_sequence_length(val1) ]]
      %  ^filler_of_plain_kind( code_statement) !)
-     _* "set varix := 0  in basic_html_output_value"
+     _* "set varix := 0  in basic_html_output_value, for seq"
      (! [[ set varix 0 ]]
      %  ^filler_of_plain_kind( code_statement) !)
  ]
@@ -363,6 +461,30 @@
 ** var_son
 {
   * comment  "the value variable for the son"
+  * type  value }
+ %  ^filler_of_plain_kind( variable)
+ 
+..
+
+** var_start
+{
+  * comment  "the value variable for the start"
+  * type  value }
+ %  ^filler_of_plain_kind( variable)
+ 
+..
+
+** var_end
+{
+  * comment  "the value variable for the end"
+  * type  value }
+ %  ^filler_of_plain_kind( variable)
+ 
+..
+
+** var_between
+{
+  * comment  "the value variable for the between"
   * type  value }
  %  ^filler_of_plain_kind( variable)
  

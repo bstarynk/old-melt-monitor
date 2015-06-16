@@ -1212,7 +1212,7 @@ load_fill_item_mom (momitem_t *itm, bool internal)
 	   mom_item_cstring (itm), load_position_mom (NULL, 0, lineno));
       if (valtransf.typnum != momty_node)
 	MOM_FATAPRINTF
-	  ("bad transformer %s for item %s in %s",
+	  ("bad non-node transformer %s for item %s in %s",
 	   mom_output_gcstring (valtransf), mom_item_cstring (itm),
 	   load_position_mom (NULL, 0, lineno));
       add_load_transformer_mom (itm, valtransf);
