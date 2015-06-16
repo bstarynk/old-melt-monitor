@@ -2320,6 +2320,19 @@
 ..
 
 
+** signature_2itm1int_to_void   ////// PREDEFINED
+{
+  * comment  "signature for : item item int -> void"
+  * dumped_item_emitter  ^emitter_of_function()
+  * dumped_item_scanner  ^scanner_of_function()
+  * function_radix  "2itm1int_to_void"
+  * input_types  [item item integer]
+  * output_types  [] }
+ %  ^filler_of_plain_kind( function_signature)
+ 
+..
+
+
 ** signature_2itm1val_to_val   ////// PREDEFINED
 {
   * comment  "signature of functions taking two items and a value and giving a value"

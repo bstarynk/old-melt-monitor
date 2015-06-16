@@ -733,6 +733,68 @@ end_mom:
 
 
 
+// signature application support for signature_2itm1int_to_void
+typedef bool mom_2itm1int_to_void_sig_t (const momnode_t *nod_mom
+					 /* 3 inputs, 0 outputs: */ ,
+					 momitem_t *arg0_mom,
+					 momitem_t *arg1_mom,
+					 intptr_t arg2_mom);
+
+
+#define MOM_PREFIXFUN_2itm1int_to_void "momfunc_2itm1int_to_void"
+static inline mom_2itm1int_to_void_sig_t mom_applclos_2itm1int_to_void;
+static inline bool
+mom_applval_2itm1int_to_void (const momvalue_t clo_mom,
+			      momitem_t *arg0_mom,
+			      momitem_t *arg1_mom, intptr_t arg2_mom)
+{
+  if (clo_mom.typnum != momty_node)
+    return false;
+  return mom_applclos_2itm1int_to_void (clo_mom.vnode, arg0_mom, arg1_mom,
+					arg2_mom);
+}				// end of mom_applval_2itm1int_to_void 
+
+static inline bool
+mom_applclos_2itm1int_to_void (const momnode_t *nod_mom, momitem_t *arg0_mom,
+			       momitem_t *arg1_mom, intptr_t arg2_mom)
+{
+  bool ok_mom = false;		//// generated in state.c
+  if (!nod_mom)
+    return false;
+  momitem_t *connitm_mom = (momitem_t *) nod_mom->conn;
+  assert (connitm_mom != NULL);
+  if (MOM_UNLIKELY ((const momitem_t *) connitm_mom->itm_kind
+		    != MOM_PREDEFINED_NAMED (signature_2itm1int_to_void)))
+    goto end_mom;
+  void *data1_mom = connitm_mom->itm_data1;
+  if (MOM_UNLIKELY (data1_mom == NULL))
+    {
+      char nambuf_mom[256];
+      memset (nambuf_mom, 0, sizeof (nambuf_mom));
+      if (snprintf
+	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_2itm1int_to_void_%s",
+	   mom_item_cstring (connitm_mom)) < (int) sizeof (nambuf_mom))
+	((momitem_t *) connitm_mom)->itm_data1 = data1_mom =
+	  mom_dynload_symbol (nambuf_mom);
+      else
+	MOM_FATAPRINTF
+	  ("too long function name %s for signature_2itm1int_to_void",
+	   mom_item_cstring (connitm_mom));
+    };
+  if (MOM_LIKELY (data1_mom != NULL && data1_mom != MOM_EMPTY))
+    {
+      mom_2itm1int_to_void_sig_t *fun_mom =
+	(mom_2itm1int_to_void_sig_t *) data1_mom;
+      ok_mom = (*fun_mom) (nod_mom, arg0_mom, arg1_mom, arg2_mom);
+    };
+end_mom:
+  mom_item_unlock (connitm_mom);
+  return ok_mom;
+}				// end of mom_applclos_2itm1int_to_void
+
+
+
+
 // signature application support for signature_2itm1val_to_val
 typedef bool mom_2itm1val_to_val_sig_t (const momnode_t *nod_mom
 					/* 3 inputs, 1 outputs: */ ,
