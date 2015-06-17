@@ -110,6 +110,9 @@
         (! [[ if ^item_same(reqmethitm http_POST)
               __post_block_basic_web_html ]]
            %  ^filler_of_plain_kind( code_statement) !)
+	_* "else jump to get-head block webml"
+	(! [[ jump  __gethead_block_basic_web_html ]] 
+           %  ^filler_of_plain_kind( code_statement) !)
       ] // end of instructions from __start_block_basic_web_html
     }
     %  ^filler_of_plain_kind( block)
@@ -127,12 +130,51 @@
 {
   * comment  "first block to process POST requests in basic_web_html"
   * instructions [
+  // @@@A REVOIR this is wrong, we should add a tasklet
+   _* "apply postproc; in basic_web_html" (!
+     [[ apply signature_1itm2val_to_void postproc lkitm_webx restpathval sessval ]]
+    %  ^filler_of_plain_kind( code_statement) !)
+   _* "jump endsuccess after postproc; in basic_web_html" (!
+     [[ jump __endsuccess_block_basic_web_html ]]
+    %  ^filler_of_plain_kind( code_statement) !)
   ]
 }
 [[
 ]]
  %  ^filler_of_plain_kind( block)
 ..
+
+
+** __gethead_block_basic_web_html
+{
+  * comment  "first block to process GET or HEAD requests in basic_web_html"
+  * instructions [
+  //@@@A REVOIR  this is wrong, we should add a tasklet
+   _* "apply getproc; in basic_web_html" (!
+     [[ apply signature_1itm2val_to_void getproc lkitm_webx restpathval sessval ]]
+    %  ^filler_of_plain_kind( code_statement) !)
+   _* "jump endsuccess after getproc; in basic_web_html" (!
+     [[ jump __endsuccess_block_basic_web_html ]]
+    %  ^filler_of_plain_kind( code_statement) !)
+  ]
+}
+[[
+]]
+ %  ^filler_of_plain_kind( block)
+..
+
+** __endsuccess_block_basic_web_html
+{
+  * comment  "last successblock to process requests in basic_web_html"
+  * instructions [
+  ]
+}
+[[
+]]
+ %  ^filler_of_plain_kind( block)
+..
+
+
 /////
 ** depth
 {
