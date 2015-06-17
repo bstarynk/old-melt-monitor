@@ -503,7 +503,7 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
 /// block #3: _2tz000b51_1AEBtnP4P
 //: lock and run the tasklet
  momblocklab__2tz000b51_1AEBtnP4P: {
-// 3 statements in block _2tz000b51_1AEBtnP4P
+// 4 statements in block _2tz000b51_1AEBtnP4P
 // statement #0 :: _4zMbIKH13_6KmkUPLpd; set lkitm_tasklet := itmvar_tasklet
   { // locked set into lkitm_tasklet
   momlockeditem_t* momoldlocked__4zMbIKH13_6KmkUPLpd = momvar3 /*var:lkitm_tasklet*/;
@@ -524,6 +524,10 @@ bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
 // if testing on integer
     if (/*value_is_node:*/ (momvar0 /*var:varclo*/).typnum == momty_node)
       goto momblocklab__8aqavIeMK_2EHL44cnU;
+// statement #3 :: _50yPKJB7U_0vwFpPCA0; else, bad varclo, give a warning; in agenda_step
+  // chunk of 7 components
+MOM_WARNPRINTF("agenda_step: in tasklet %s bad `runner` %s",
+    mom_item_cstring(momvar3 /*var:lkitm_tasklet*/), mom_output_gcstring(momvar0 /*var:varclo*/)); ;
 
   }; // end block _2tz000b51_1AEBtnP4P
   goto momepilog_agenda_step;
