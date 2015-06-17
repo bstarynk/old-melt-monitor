@@ -506,6 +506,9 @@ mom_load_plugin (const char *plugname, const char *plugarg, int *pargc,
 static void
 do_after_initial_load_with_plugins_mom (void)
 {
+  MOM_DEBUGPRINTF (run,
+		   "do_after_initial_load_with_plugins start (plugins_count %d)",
+		   plugins_mom.plugins_count);
   for (unsigned plugix = 1; plugix <= plugins_mom.plugins_count; plugix++)
     {
       void *plugdlh = plugins_mom.plugins_arr[plugix].plugin_dlh;
@@ -517,10 +520,13 @@ do_after_initial_load_with_plugins_mom (void)
 	{
 	  MOM_DEBUGPRINTF (run, "before after load of plugin#%d %s",
 			   plugix, plugnam);
-	  plugafterload ();
+	  (*plugafterload) ();
 	  MOM_INFORMPRINTF ("done after load of plugin#%d %s",
 			    plugix, plugnam);
 	}
+      else
+	MOM_DEBUGPRINTF (run, "no momplugin_after_load in plugin#%d %s - %s",
+			 plugix, plugnam, dlerror ());
     }
 }
 

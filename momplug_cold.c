@@ -27,7 +27,7 @@ mom_plugin_init (const char *pluginarg, int *pargc, char ***pargv)
 }
 
 void
-mom_plugin_after_load (void)
+momplugin_after_load (void)
 {
   MOM_INFORMPRINTF ("cold plugin after load");
   momitem_t *taskletitm = mom_make_anonymous_item ();
@@ -37,4 +37,6 @@ mom_plugin_after_load (void)
   momhook_agenda_push_front (mom_itemv (taskletitm));
   MOM_DEBUGPRINTF (run, "coldplugin pushed agenda front taskletitm %s",
 		   mom_item_cstring (taskletitm));
+  MOM_INFORMPRINTF ("cold plugin done after load, taskletitm=%s",
+		    mom_item_cstring (taskletitm));
 }

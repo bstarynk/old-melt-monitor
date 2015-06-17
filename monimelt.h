@@ -503,7 +503,7 @@ typedef void mom_plugin_init_t (const char *pluginarg, int *pargc,
 extern void mom_plugin_init (const char *pluginarg, int *pargc, char ***pargv);	// the plugin initializer
 /// they may also define a function to be called after load
 typedef void mom_plugin_after_load_t (void);
-extern void mom_plugin_after_load (void);
+extern void momplugin_after_load (void);
 
 struct momvalue_st
 {
