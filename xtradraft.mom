@@ -314,7 +314,7 @@
 
 ** simple_html_tag  
 {
-  * comment  "kind for simple HTML tags"
+  * comment  "kind for simple HTML tags, used as connectives"
   * dumped_item_emitter  ^emitter_of_plain_kind() }
  
 ..
@@ -570,18 +570,33 @@
 
 ////////////////
 
+
+** indirect_html_item 
+{
+* comment "kind for indirect HTML items for basic_html_output_item"
+}
+..
+
 ** lkitm1
 {
   * comment  "the locked item for the itm1"
   * type  locked_item }
  %  ^filler_of_plain_kind( variable)
- 
+ ..
+
+** __constantclo_basic_html_output_value
+{ * comment "the quoted ^basic_html_output_value () constant"
+  * value ^basic_html_output_value ()
+  * type value }
+  % ^filler_of_plain_kind(constant)
+..
+
 ..
 ** basic_html_output_item 
 {
  * comment "internal function to output HTML in webxitm for item itm1 at given depth"
  * function_signature signature_2itm1int_to_void
- * constants { }
+ * constants { indirect_html_item  __constantclo_basic_html_output_value }
  * formals [ webxitm itm1 depth ]
  * closed [ ]
  * start _* = __start_block_basic_html_output_item
@@ -601,6 +616,10 @@
         //////
         _* "set lkitm1 = itm1" (! [[ set lkitm1 itm1 ]]
 	   %  ^filler_of_plain_kind( code_statement) !)
+	/////
+        _* "if lkitm1 is of indirect_html_item kind, process it; in basic_html_output_item"
+	(! [[ if ^item_has_kind(lkitm1 indirect_html_item) __block_process_output_indirect_html_item ]]
+           % ^filler_of_plain_kind (code_statement) !)
       ]
     }
     %  ^filler_of_plain_kind( block)    
@@ -609,6 +628,17 @@
 [[
 ]]
 % ^append_function_to_closed_module(the_base_module)
+..
+
+
+** __block_process_output_indirect_html_item 
+{
+  * comment "block to process indirect html item in basic_html_output_item"
+      * instructions [
+//// @@@@ A COMPLETER
+      ]
+}
+  %  ^filler_of_plain_kind( block)  
 ..
 
 ** __failblock_basic_html_output_item
