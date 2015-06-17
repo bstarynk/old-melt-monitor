@@ -2218,6 +2218,19 @@
 ..
 
 
+** signature_1itm2val_to_item   ////// PREDEFINED
+{
+  * comment  "signature of functions : item value value -> item"
+  * dumped_item_emitter  ^emitter_of_function()
+  * dumped_item_scanner  ^scanner_of_function()
+  * function_radix  "1itm2val_to_item"
+  * input_types  [item value value]
+  * output_types  [item] }
+ %  ^filler_of_plain_kind( function_signature)
+ 
+..
+
+
 ** signature_1itm2val_to_void   ////// PREDEFINED
 {
   * comment  "signature of functions taking one item, two values and giving no results"
