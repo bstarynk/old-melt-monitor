@@ -352,10 +352,12 @@
      (! [[ set lkitm_conn ^value_node_conn(val1) ]]
      %  ^filler_of_plain_kind( code_statement) !)
      //
-     _* "if lkitm_conn has kind simple_html_tag, process it"
+     _* "if lkitm_conn has kind simple_html_tag, process it; in basic_html_output_value"
      (! [[ if ^item_has_kind(lkitm_conn simple_html_tag) __block_simple_html_node ]]
      %  ^filler_of_plain_kind( code_statement) !)
-     
+     _* "apply val1 to webxitm thisclosure (depth+1); in basic_html_output_value"
+     (! [[ apply signature_1itm1val1int_to_void val1 lkitm_webx ^this_closure()  ^integer_add(depth 1) ]]
+     %  ^filler_of_plain_kind( code_statement) !)
  ]
  }
 [[
@@ -427,11 +429,10 @@
 {
   * comment "block to process the current son of simple html node in basic_html_output_value"
   * instructions [
-////@@@ A CORRIGER
-///  *_ "apply this closure to webxitm currentson depth+1; in basic_html_output_value"
-///  (! [[ apply  signature_1itm1val1int_to_void ^this_closure() lkitm_webx
-///      ^value_node_nth(val1 varix) ^integer_add(depth 1) ]]
-///   %  ^filler_of_plain_kind( code_statement)  !)
+  _* "apply this closure to webxitm currentson depth+1; in basic_html_output_value"
+  (! [[ apply  signature_1itm1val1int_to_void ^this_closure() lkitm_webx
+      ^value_node_nth(val1 varix) ^integer_add(depth 1) ]]
+   %  ^filler_of_plain_kind( code_statement)  !)
 
    _* "increment varix; node in basic_html_output_value"
       (! [[  set  varix  ^integer_add( varix  1) ]]

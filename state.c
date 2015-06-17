@@ -3067,21 +3067,21 @@ output_item_mom (struct momvaloutput_st *ov, const momitem_t *itm)
 	    strncpy (combuf, comstr, sizeof (combuf) - 1);
 	  else if (nl && eoc && nl >= comstr + 3 && eoc >= comstr + 3)
 	    {
-	      int nbc = (nl > eoc) ? (comstr - nl - 1) : (comstr - eoc - 1);
+	      int nbc = (nl > eoc) ? (nl - comstr - 1) : (eoc - comstr - 1);
 	      if (nbc >= (int) sizeof (combuf))
 		nbc = sizeof (combuf) - 1;
 	      strncpy (combuf, comstr, nbc);
 	    }
 	  else if (nl && nl >= comstr + 3)
 	    {
-	      int nbc = (comstr - nl - 1);
+	      int nbc = (nl - comstr - 1);
 	      if (nbc >= (int) sizeof (combuf))
 		nbc = sizeof (combuf) - 1;
 	      strncpy (combuf, comstr, nbc);
 	    }
 	  else if (eoc && eoc >= comstr + 3)
 	    {
-	      int nbc = (comstr - eoc - 1);
+	      int nbc = (eoc - comstr - 1);
 	      if (nbc >= (int) sizeof (combuf))
 		nbc = sizeof (combuf) - 1;
 	      strncpy (combuf, comstr, nbc);
