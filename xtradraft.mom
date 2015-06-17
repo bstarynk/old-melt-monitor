@@ -130,10 +130,25 @@
 {
   * comment  "first block to process POST requests in basic_web_html"
   * instructions [
-  // @@@A REVOIR this is wrong, we should add a tasklet
-   _* "apply postproc; in basic_web_html" (!
-     [[ apply signature_1itm2val_to_void postproc lkitm_webx restpathval sessval ]]
+  _* "debug chunk before apply postproc; in basic_web_html" (!
+  [[ chunk "/*before applying postproc in basic_web_html*/\n"
+    "  MOM_DEBUGPRINTF(web, \"basic_web_html: before applying postproc=%s webx=%s restpathval=%s sessval=%s\",\n"
+    "     mom_output_gcstring("postproc "), mom_item_cstring(" lkitm_webx
+    "), mom_output_gcstring(" restpathval "), mom_output_gcstring(" sessval "));\n" ]]
+   %  ^filler_of_plain_kind( code_statement) !)
+   _* "apply postproc, expecting a tasklet; in basic_web_html" (!
+   ///@@@ MARCHE PAS
+     [[ apply signature_1itm2val_to_item itmvar_tasklet postproc lkitm_webx restpathval sessval ]] 
+   %  ^filler_of_plain_kind( code_statement) !)
+  _* "debug chunk after apply postproc; in basic_web_html" (!
+  [[ chunk "/*after applying postproc in basic_web_html*/\n"
+    "  MOM_DEBUGPRINTF(web, \"basic_web_html: after applying postproc=%s webx=%s restpathval=%s sessval=%s got tasklet=%s\",\n"
+    "     mom_output_gcstring("postproc "), mom_item_cstring(" lkitm_webx
+    "), mom_output_gcstring(" restpathval
+    "), mom_output_gcstring(" sessval "), mom_item_cstring(" itmvar_tasklet ");\n" ]]
     %  ^filler_of_plain_kind( code_statement) !)
+    //// @@@A COMPLETER: should lock tasklet, test that it is a tasklet,
+    //// put the webx inside, add it at front of the agenda
    _* "jump endsuccess after postproc; in basic_web_html" (!
      [[ jump __endsuccess_block_basic_web_html ]]
     %  ^filler_of_plain_kind( code_statement) !)
