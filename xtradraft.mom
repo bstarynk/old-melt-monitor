@@ -244,6 +244,9 @@
      [[ chunk "(void) mom_unsync_webexitem_printf(" lkitm_webx ", \"%lld\", (long long) mom_value_to_int(" val1 ", -1));\n" ]]
      % ^filler_of_plain_kind(code_statement)
    !)
+     _* "success after integer output; in basic_html_output_value"
+     (! [[ jump __succeedblock_basic_html_output_value ]]
+     %  ^filler_of_plain_kind( code_statement) !)
  ]
  }
 [[
@@ -262,6 +265,9 @@
 	      "), MOM_HTML_WITH_BREAK)" ]]
      % ^filler_of_plain_kind(code_statement)
    !)
+     _* "success after string output; in basic_html_output_value"
+     (! [[ jump __succeedblock_basic_html_output_value ]]
+     %  ^filler_of_plain_kind( code_statement) !)
  ]
  }
 [[
@@ -279,6 +285,9 @@
 	         ", \"%g\", mom_value_to_double(" val1 "));\n" ]]
        % ^filler_of_plain_kind(code_statement)
        !)
+     _* "success after double output; in basic_html_output_value"
+     (! [[ jump __succeedblock_basic_html_output_value ]]
+     %  ^filler_of_plain_kind( code_statement) !)
  ]
  }
 [[
@@ -304,6 +313,9 @@
       ]]
       % ^filler_of_plain_kind(code_statement)
    !)
+     _* "success after item output; in basic_html_output_value"
+     (! [[ jump __succeedblock_basic_html_output_value ]]
+     %  ^filler_of_plain_kind( code_statement) !)
  ]
  }
 [[
@@ -344,6 +356,12 @@
 {
  * comment "block to output a node in basic_html_output_value"
  * instructions [
+
+     _* "debug chunk at start of node in basic_html_output_value" (!
+     [[ chunk "/*debug start node basic_html_output_value*/\n"
+       "  MOM_DEBUGPRINTF(web, \"basic_html_output_value start node lkitm_webx=%s val1=%s depth=%d\", \n"
+       "     mom_item_cstring(" lkitm_webx "), mom_output_gcstring(" val1 "), (int)" depth ");" ]]
+       %  ^filler_of_plain_kind( code_statement) !)
      _* "set varlen := arity of val1; in basic_html_output_value"
      (! [[ set varlen ^value_node_arity(val1) ]]
      %  ^filler_of_plain_kind( code_statement) !)
@@ -359,6 +377,9 @@
      %  ^filler_of_plain_kind( code_statement) !)
      _* "apply val1 to webxitm thisclosure (depth+1); in basic_html_output_value"
      (! [[ apply signature_1itm1val1int_to_void val1 lkitm_webx ^this_closure()  ^integer_add(depth 1) ]]
+     %  ^filler_of_plain_kind( code_statement) !)
+     _* "success after application; in basic_html_output_value"
+     (! [[ jump __succeedblock_basic_html_output_value ]]
      %  ^filler_of_plain_kind( code_statement) !)
  ]
  }
@@ -381,7 +402,7 @@
    (! [[ if ^value_is_string(var_son)  __block_string_code_html_node ]]
      %  ^filler_of_plain_kind( code_statement) !)
    _* "if var_son is item, jump to output item code; in basic_html_output_value"
-   (! [[ if ^value_is_string(var_son)  __block_item_code_html_node ]]
+   (! [[ if ^value_is_item(var_son)  __block_item_code_html_node ]]
      %  ^filler_of_plain_kind( code_statement) !)
    
  ]
@@ -398,6 +419,9 @@
         (! [[ chunk "/*output verbatim code string */ mom_unsync_webexitem_fputs(" 
                     lkitm_webx ", mom_value_cstr(" var_son "));" ]]
      %  ^filler_of_plain_kind( code_statement) !)
+  _* "jump to success for output code string of basic_html_output_value"
+  (! [[ jump __succeedblock_basic_html_output_value ]]
+      %  ^filler_of_plain_kind( code_statement) !)
 		    
  ]
 }
@@ -413,6 +437,9 @@
         (! [[ chunk "/*output verbatim code item */ mom_unsync_webexitem_fputs(" 
                     lkitm_webx ", mom_item_cstring(mom_value_to_item (" var_son ")));" ]]
      %  ^filler_of_plain_kind( code_statement) !)
+  _* "jump to success for output code item of basic_html_output_value"
+  (! [[ jump __succeedblock_basic_html_output_value ]]
+      %  ^filler_of_plain_kind( code_statement) !)
 		    
  ]
 }
@@ -439,6 +466,9 @@
      %  ^filler_of_plain_kind( code_statement) !)
      _* "if var_start is node, apply it; in basic_html_output_value"
      (!  [[  if  ^value_is_node(var_start) __block_apply_start_simple_html_node ]]
+     %  ^filler_of_plain_kind( code_statement) !)
+     _* "else -var_start non-node- jump to start looping;  in basic_html_output_value"
+     (! [[ jump __block_start_loop_simple_html_node ]]
      %  ^filler_of_plain_kind( code_statement) !)
  ]
  }
@@ -599,6 +629,12 @@
 {
   * comment "fail block of basic_html_output_value"
   * instructions [
+        _* "warn chunk for fail in basic_html_output_value" (!
+	   [[ chunk "/*warn chunk fail basic_html_output_value*/\n"
+	   "  MOM_WARNPRINTF(\"failure basic_html_output_value webxitm %s value %s depth %d\",\n"
+	   "    mom_item_cstring(" webxitm "), mom_output_gcstring(" val1 "), (int)" depth ");\n" ]]
+	  %  ^filler_of_plain_kind( code_statement) !)
+	
         _* "fail in basic_html_output_value" (! [[ fail ]]
 	  %  ^filler_of_plain_kind( code_statement)
 	!)
@@ -613,6 +649,11 @@
 {
   * comment "succeed block of basic_html_output_value"
   * instructions [
+     _* "debug chunk at end of basic_html_output_value" (!
+     [[ chunk "/*debug end basic_html_output_value*/\n"
+       "  MOM_DEBUGPRINTF(web, \"basic_html_output_value successful end lkitm_webx=%s val1=%s depth=%d\", \n"
+       "     mom_item_cstring(" lkitm_webx "), mom_output_gcstring(" val1 "), (int)" depth ");" ]]
+       %  ^filler_of_plain_kind( code_statement) !)
         _* "succeed in basic_html_output_value" (! [[ success ]]
 	  %  ^filler_of_plain_kind( code_statement)
 	!)
