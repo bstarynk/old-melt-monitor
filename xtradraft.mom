@@ -351,7 +351,9 @@
      _* "set lkitm_conn := connective of val1; in basic_html_output_value"
      (! [[ set lkitm_conn ^value_node_conn(val1) ]]
      %  ^filler_of_plain_kind( code_statement) !)
-     //
+     _* "if lkitm_conn is code, process it; in basic_html_output_value"
+     (! [[ if ^item_same(lkitm_conn code) __block_code_html_node ]]
+     %  ^filler_of_plain_kind( code_statement) !)
      _* "if lkitm_conn has kind simple_html_tag, process it; in basic_html_output_value"
      (! [[ if ^item_has_kind(lkitm_conn simple_html_tag) __block_simple_html_node ]]
      %  ^filler_of_plain_kind( code_statement) !)
@@ -362,6 +364,22 @@
  }
 [[
 ]]
+%  ^filler_of_plain_kind( block)
+..
+
+** block_code_html_node 
+{
+ * comment "block to output a code node, as a verbatim quotation, in basic_html_output_value"
+ * instructions [
+   _* "if varlen != 1 fail for code node; in basic_html_output_value"
+   (! [[ if ^integer_different(varlen 1)  __failblock_basic_html_output_value  ]]
+     %  ^filler_of_plain_kind( code_statement) !)
+   _* "set var_son := 0-th node of code-node val1; in basic_html_output_value"
+   (! [[ set var_son ^value_node_nth(val1 0) ]]
+     %  ^filler_of_plain_kind( code_statement) !)
+   
+ ]
+}
 %  ^filler_of_plain_kind( block)
 ..
 
@@ -620,6 +638,10 @@
         _* "if lkitm1 is of indirect_html_item kind, process it; in basic_html_output_item"
 	(! [[ if ^item_has_kind(lkitm1 indirect_html_item) __block_process_output_indirect_html_item ]]
            % ^filler_of_plain_kind (code_statement) !)
+        _* "other kinds for lkitm1 are output verbatim; in basic_html_output_item"
+        (! [[ chunk "/*output verbatim html other kind of item */ mom_unsync_webexitem_fputs(" 
+                    lkitm_webx ", mom_item_cstring(" lkitm1 "));"
+           ]] % ^filler_of_plain_kind (code_statement) !)
       ]
     }
     %  ^filler_of_plain_kind( block)    

@@ -1069,7 +1069,8 @@
 
 ** code   ////// PREDEFINED
 {
-  * comment  "gives the code for something" }
+  * comment  "gives the code for something; also connective to quote a string or item in HTML"
+ }
  
 ..
 
@@ -2499,10 +2500,10 @@
    push_back_queue_item push_front_queue_item queue_item_is_empty set_type
    string_type test_module this_closure tuple tuple_type type_of_value unsync_get_attribute
    unsync_item_components_count unsync_item_components_reserve unsync_item_get_nth_component
-   unsync_item_put_nth_component unsync_put_attribute value_is_node value_is_sequence
-   value_is_set value_is_tuple value_node_arity value_node_conn value_node_nth
-   value_of_item value_sequence_length value_sequence_nth value_to_item}
- }
+   unsync_item_put_nth_component unsync_put_attribute value_is_double value_is_integer
+   value_is_item value_is_node value_is_sequence value_is_set value_is_string
+   value_is_tuple value_node_arity value_node_conn value_node_nth value_of_item
+   value_sequence_length value_sequence_nth value_to_item} }
  
 ..
 
@@ -2688,6 +2689,42 @@
 ..
 
 
+** value_is_double
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*value_is_double:*/ ("  val1  ").typnum == momty_double")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "operator testing that operand is a double"
+  * formals  [val1]
+  * type  integer }
+ 
+..
+
+
+** value_is_integer
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*value_is_integer:*/ ("  val1  ").typnum == momty_int")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "operator testing that operand is an integer"
+  * formals  [val1]
+  * type  integer }
+ 
+..
+
+
+** value_is_item
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*value_is_item:*/ ("  val1  ").typnum == momty_item")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "operator testing that operand is an item"
+  * formals  [val1]
+  * type  integer }
+ 
+..
+
+
 ** value_is_node
 {
   * code_emitter  ^plain_code_emitter()
@@ -2719,6 +2756,18 @@
   * code_expansion  ^code_expansion( "/*value_is_set:*/ ("  val1  ").typnum == momty_set")
   * code_type_scanner  ^plain_code_type_scanner()
   * comment  "operator testing that operand is a set"
+  * formals  [val1]
+  * type  integer }
+ 
+..
+
+
+** value_is_string
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*value_is_string:*/ ("  val1  ").typnum == momty_string")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "operator testing that operand is a string"
   * formals  [val1]
   * type  integer }
  
