@@ -2465,7 +2465,8 @@
 
 ** tasklet   ////// PREDEFINED
 {
-  * comment  "kind for tasklets inside the_agenda" }
+  * comment  "kind for tasklets inside the_agenda\n they have a `runner` attribute giving a closure applied to them"
+ }
  
 ..
 
