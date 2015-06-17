@@ -2497,10 +2497,22 @@
    integer_type item_type node_type plain_code_emitter plain_code_type_scanner
    plain_statement_emitter plain_statement_scanner pop_back_queue_item pop_front_queue_item
    push_back_queue_item push_front_queue_item queue_item_is_empty set_type
-   string_type test_module tuple tuple_type type_of_value unsync_get_attribute
+   string_type test_module this_closure tuple tuple_type type_of_value unsync_get_attribute
    unsync_put_attribute value_is_node value_is_sequence value_is_set value_is_tuple
    value_node_arity value_node_conn value_node_nth value_of_item value_sequence_length
    value_sequence_nth value_to_item} }
+ 
+..
+
+
+** this_closure
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*this_closure:*/ mom_nodev(mom_node)")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "operation to give the current closure\'s value"
+  * formals  []
+  * type  value }
  
 ..
 
