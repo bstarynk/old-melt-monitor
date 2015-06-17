@@ -2498,9 +2498,11 @@
    plain_statement_emitter plain_statement_scanner pop_back_queue_item pop_front_queue_item
    push_back_queue_item push_front_queue_item queue_item_is_empty set_type
    string_type test_module this_closure tuple tuple_type type_of_value unsync_get_attribute
-   unsync_put_attribute value_is_node value_is_sequence value_is_set value_is_tuple
-   value_node_arity value_node_conn value_node_nth value_of_item value_sequence_length
-   value_sequence_nth value_to_item} }
+   unsync_item_components_count unsync_item_components_reserve unsync_item_get_nth_component
+   unsync_item_put_nth_component unsync_put_attribute value_is_node value_is_sequence
+   value_is_set value_is_tuple value_node_arity value_node_conn value_node_nth
+   value_of_item value_sequence_length value_sequence_nth value_to_item}
+ }
  
 ..
 
@@ -2580,6 +2582,63 @@
   * comment  "get an attribute"
   * formals  [itm1 itm2]
   * type  value }
+ %  ^filler_of_plain_kind( code_operation)
+ 
+..
+
+
+** unsync_item_components_count
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*unsync_item_components_count:*/mom_unsync_item_components_count ("
+    itm1  ")")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "get count of components inside itm1"
+  * formals  [itm1]
+  * type  integer }
+ %  ^filler_of_plain_kind( code_operation)
+ 
+..
+
+
+** unsync_item_components_reserve
+{
+  * code_expansion  ^code_expansion( "/*unsync_item_components_reserve:*/"
+    " mom_unsync_item_components_reserve(("  itm1  "), ("  num1  "));")
+  * comment  "statement operation to reserve inside item itm1 place for num1 components"
+  * formals  [itm1 num1]
+  * results  []
+  * statement_emitter  ^plain_statement_emitter()
+  * statement_scanner  ^plain_statement_scanner() }
+ %  ^filler_of_plain_kind( code_operation)
+ 
+..
+
+
+** unsync_item_get_nth_component
+{
+  * code_emitter  ^plain_code_emitter()
+  * code_expansion  ^code_expansion( "/*unsync_item_get_nth_component:*/mom_unsync_item_get_nth_component ((momitem_t*)("
+    itm1  ") ,("  num1  "))")
+  * code_type_scanner  ^plain_code_type_scanner()
+  * comment  "in item itm1 get its component of rank num1"
+  * formals  [itm1 num1]
+  * type  value }
+ %  ^filler_of_plain_kind( code_operation)
+ 
+..
+
+
+** unsync_item_put_nth_component
+{
+  * code_expansion  ^code_expansion( "/*unsync_item_put_nth_component:*/"
+    " mom_unsync_item_put_nth_component (("  itm1  "), ("  num1  "), (" 
+   val1  "));")
+  * comment  "statement operation to put inside item itm1 the component of rank num1 to val1"
+  * formals  [itm1 num1 val1]
+  * results  []
+  * statement_emitter  ^plain_statement_emitter()
+  * statement_scanner  ^plain_statement_scanner() }
  %  ^filler_of_plain_kind( code_operation)
  
 ..
