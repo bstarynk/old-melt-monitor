@@ -190,7 +190,7 @@
  * comment "internal function to output HTML in webxitm for value val1 at given depth"
  * function_signature signature_1itm1val1int_to_void
  * constants { basic_html_output_item basic_html_output_value __constantclo_basic_html_output_item
-               simple_html_tag simple_html_start simple_html_between simple_html_end }
+               simple_html_tag simple_html_start simple_html_between simple_html_end code }
  * formals [ webxitm val1 depth ]
  * closed [ ]
  * start _* = __start_block_basic_html_output_value
@@ -367,7 +367,7 @@
 %  ^filler_of_plain_kind( block)
 ..
 
-** block_code_html_node 
+** __block_code_html_node 
 {
  * comment "block to output a code node, as a verbatim quotation, in basic_html_output_value"
  * instructions [
@@ -377,11 +377,49 @@
    _* "set var_son := 0-th node of code-node val1; in basic_html_output_value"
    (! [[ set var_son ^value_node_nth(val1 0) ]]
      %  ^filler_of_plain_kind( code_statement) !)
+   _* "if var_son is string, jump to output string code; in basic_html_output_value"
+   (! [[ if ^value_is_string(var_son)  __block_string_code_html_node ]]
+     %  ^filler_of_plain_kind( code_statement) !)
+   _* "if var_son is item, jump to output item code; in basic_html_output_value"
+   (! [[ if ^value_is_string(var_son)  __block_item_code_html_node ]]
+     %  ^filler_of_plain_kind( code_statement) !)
    
  ]
 }
 %  ^filler_of_plain_kind( block)
 ..
+
+
+** __block_string_code_html_node
+{
+ * comment "block to output a string code node in basic_html_output_value"
+ * instructions [
+  _* "chunk to output code string" 
+        (! [[ chunk "/*output verbatim code string */ mom_unsync_webexitem_fputs(" 
+                    lkitm_webx ", mom_value_cstr(" var_son "));" ]]
+     %  ^filler_of_plain_kind( code_statement) !)
+		    
+ ]
+}
+%  ^filler_of_plain_kind( block)
+..
+
+ 
+** __block_item_code_html_node
+{
+ * comment "block to output an item code node in basic_html_output_value"
+ * instructions [
+  _* "chunk to output code string" 
+        (! [[ chunk "/*output verbatim code item */ mom_unsync_webexitem_fputs(" 
+                    lkitm_webx ", mom_item_cstring(mom_value_to_item (" var_son ")));" ]]
+     %  ^filler_of_plain_kind( code_statement) !)
+		    
+ ]
+}
+%  ^filler_of_plain_kind( block)
+..
+
+ 
 
 ** __block_simple_html_node
 {
