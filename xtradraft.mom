@@ -635,10 +635,55 @@
 {
   * comment "block to process indirect html item in basic_html_output_item"
       * instructions [
-//// @@@@ A COMPLETER
+      _* "set varlen = nbcomp(lkitm1); in basic_html_output_item"
+      (! [[ set varlen ^unsync_item_components_count(lkitm1) ]]
+           % ^filler_of_plain_kind (code_statement) !)
+      _* "set varix = 0; in basic_html_output_item"
+      (! [[ set varix 0 ]]
+           % ^filler_of_plain_kind (code_statement) !)
+      _* "jump block loop output_indirect_html_item"
+      (! [[ jump __block_loop_output_indirect_html_item ]]
+           % ^filler_of_plain_kind (code_statement) !)
       ]
 }
   %  ^filler_of_plain_kind( block)  
+..
+
+** __block_loop_output_indirect_html_item 
+{
+  * comment "block to loop indirect html item in basic_html_output_item"
+  * instructions [
+      _* "if varix >= varlen jump success; in basic_html_output_item"
+      (! [[ if ^integer_greater_than(varix varlen)  __endblock_basic_html_output_item ]]
+           % ^filler_of_plain_kind (code_statement) !)
+   _* "apply basic_html_output_value to lkitm_webx (varix-th component of lkitm1) (depth+1); in basic_html_output_item" (!
+      [[ apply signature_1itm1val1int_to_void __constantclo_basic_html_output_value
+            lkitm_webx  ^unsync_item_get_nth_component(lkitm1 varix) ^integer_add(depth 1)
+      ]]
+      % ^filler_of_plain_kind(code_statement) !)
+   _* "increment varix; in basic_html_output_item"
+      (! [[  set  varix  ^integer_add( varix  1) ]]
+         %  ^filler_of_plain_kind( code_statement) !)
+   _* "jump loop indirect html item; in basic_html_output_item"
+      (! [[ jump __block_loop_output_indirect_html_item ]]
+         %  ^filler_of_plain_kind( code_statement) !)
+  ]
+}
+  %  ^filler_of_plain_kind( block)  
+..
+
+** __endblock_basic_html_output_item
+{
+  * comment "end block of basic_html_output_item"
+  * instructions [
+        _* "success in basic_html_output_item" (! [[ success ]]
+	  %  ^filler_of_plain_kind( code_statement)
+	!)
+  ]
+}
+[[
+]]
+%  ^filler_of_plain_kind( block)
 ..
 
 ** __failblock_basic_html_output_item
