@@ -202,9 +202,10 @@ mom_itemvec_reserve (struct momitemvec_st *ivec, unsigned gap)
   unsigned cnt = ivec ? ivec->ivec_cnt : 0;
   unsigned len = ivec ? ivec->ivec_len : 0;
   assert (cnt <= len);
-  if (cnt + gap <= len)
+  if (cnt + gap >= len)
     {
       unsigned newsiz = ((cnt + gap + cnt / 16 + 10) | 0xf) + 1;
+      assert (newsiz > 1);
       if (newsiz > len)
 	{
 	  struct momitemvec_st *newivec =	//
@@ -259,7 +260,7 @@ mom_itemvec_append_items (struct momitemvec_st *ivec, unsigned nbitems, ...)
   unsigned len = ivec ? ivec->ivec_len : 0;
   if (cnt + nbitems >= len)
     {
-      ivec = mom_itemvec_reserve (ivec, nbitems + cnt / 64);
+      ivec = mom_itemvec_reserve (ivec, nbitems + cnt / 64 + 1);
       len = ivec->ivec_len;
     }
   va_start (args, nbitems);
@@ -290,9 +291,11 @@ mom_itemvec_append_sized_item_array (struct momitemvec_st *ivec,
   unsigned len = ivec ? ivec->ivec_len : 0;
   if (cnt + nbitems >= len)
     {
-      ivec = mom_itemvec_reserve (ivec, nbitems + cnt / 64);
+      ivec = mom_itemvec_reserve (ivec, nbitems + cnt / 64 + 1);
+      assert (ivec != NULL);
       len = ivec->ivec_len;
     }
+  assert (ivec != NULL && ivec->ivec_cnt + nbitems <= ivec->ivec_len);
   for (unsigned ix = 0; ix < nbitems; ix++)
     {
       const momitem_t *itm = itemarr[ix];
