@@ -190,7 +190,7 @@ mom_itemvec_put_nth (struct momitemvec_st *ivec, int rk, const momitem_t *itm)
   unsigned cnt = ivec->ivec_cnt;
   if (rk < 0)
     rk += cnt;
-  if (rk >= 0 && rk < cnt)
+  if (rk >= 0 && rk < (int) cnt)
     ivec->ivec_arr[rk] = itm;
 }
 
@@ -229,7 +229,7 @@ mom_itemvec_reserve (struct momitemvec_st *ivec, unsigned gap)
 }				// end of mom_itemvec_reserve
 
 struct momitemvec_st *
-mom_itemvec_append1 (struct momitemvec_st *ivec, momitem_t *itm)
+mom_itemvec_append1 (struct momitemvec_st *ivec, const momitem_t *itm)
 {
   if (ivec == MOM_EMPTY)
     ivec = NULL;
@@ -295,7 +295,7 @@ mom_itemvec_append_sized_item_array (struct momitemvec_st *ivec,
     }
   for (unsigned ix = 0; ix < nbitems; ix++)
     {
-      momitem_t *itm = itemarr[ix];
+      const momitem_t *itm = itemarr[ix];
       if (!itm || itm == MOM_EMPTY)
 	continue;
       ivec->ivec_arr[cnt++] = itm;

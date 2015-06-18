@@ -933,7 +933,7 @@ struct momitemvec_st *mom_itemvec_reserve (struct momitemvec_st *ivec,
 					   unsigned gap);
 
 struct momitemvec_st *mom_itemvec_append1 (struct momitemvec_st *ivec,
-					   momitem_t *itm);
+					   const momitem_t *itm);
 
 struct momitemvec_st *mom_itemvec_append_items (struct momitemvec_st *ivec,
 						unsigned nbitems, ...);
@@ -1296,8 +1296,14 @@ mom_make_sized_tuple (unsigned nbitems, momitem_t *const *itmarr)
   return mom_make_sized_meta_tuple (MOM_NONEV, nbitems, itmarr);
 };
 
+/*** 
+  handling of specific node when collecting tuples & sets
+  if a node is ^in(sequence-value, start-index, end-index)
+    the items in sequence from start included to end excluded are added
+***/
+
 /// make a tuple from given values, collecting items, tuples & sets (and
-/// ignoring scalars and nodes) to form a tuple
+/// ignoring scalars and most nodes) to form a tuple
 const momseq_t *mom_collect_meta_tuple (momvalue_t metav, unsigned nbvals,
 					...);
 #define mom_collect_meta_tuplev(Meta,NbVals,...) \

@@ -2542,13 +2542,13 @@
 ..
 
 
-** tuple
+** tuple   ////// PREDEFINED
 {
   * code_emitter  ^plain_code_emitter()
   * code_expansion  ^code_expansion( "/tuple:*/ mom_make_tuple("  count 
    ","  restitm  ", NULL)")
   * code_type_scanner  ^plain_code_type_scanner()
-  * comment  "operation for making tuples"
+  * comment  "for making tuple-s"
   * formals  []
   * type  value
   * variadic_count  count

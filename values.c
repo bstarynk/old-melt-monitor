@@ -254,6 +254,47 @@ append_collected_value_mom (struct momitemvec_st *ivec, const momvalue_t val)
     case momty_tuple:
       ivec = mom_itemvec_append_sequ (ivec, val.vsequ);
       break;
+    case momty_node:
+      {
+	momitem_t *conn = mom_node_conn (val.vnode);
+	assert (conn != NULL);
+	unsigned arity = mom_node_arity (val.vnode);
+	if (conn == MOM_PREDEFINED_NAMED (in) && arity == 3)
+	  {
+	    const momseq_t *sequ =
+	      mom_value_to_sequ (mom_node_nth (val.vnode, 0));
+	    if (!sequ)
+	      break;
+	    unsigned len = sequ->slen;
+	    int startix =
+	      (int) mom_value_to_int (mom_node_nth (val.vnode, 1), 0);
+	    int endix =
+	      (int) mom_value_to_int (mom_node_nth (val.vnode, 2), -1);
+	    if (startix < 0)
+	      startix += len;
+	    if (endix < 0)
+	      endix += len;
+	    if (startix < 0 || startix >= (int) len)
+	      break;
+	    if (endix < 0 || endix < startix || endix > (int) len)
+	      break;
+	    ivec = mom_itemvec_reserve (ivec, endix - startix + 1);
+	    for (int ix = startix; ix <= endix && ix < (int) len; ix++)
+	      ivec = mom_itemvec_append1 (ivec, sequ->arritm[ix]);
+	  }
+	else if (conn == MOM_PREDEFINED_NAMED (set))
+	  {
+	    momseq_t *seq = mom_collect_sized_set (arity, val.vnode->arrsons);
+	    ivec = mom_itemvec_append_sequ (ivec, seq);
+	  }
+	else if (conn == MOM_PREDEFINED_NAMED (tuple))
+	  {
+	    momseq_t *seq =
+	      mom_collect_sized_tuple (arity, val.vnode->arrsons);
+	    ivec = mom_itemvec_append_sequ (ivec, seq);
+	  }
+      };
+      break;
     }
   return ivec;
 }				/* end of append_collected_value_mom */
