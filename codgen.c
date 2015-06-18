@@ -363,6 +363,29 @@ cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
   MOM_DEBUGPRINTF (gencod, "scanning function %s itmsignature %s",
 		   mom_item_cstring (itmfun),
 		   mom_item_cstring (itmsignature));
+  momvalue_t vgener =		//
+    mom_item_unsync_get_attribute (itmfun, MOM_PREDEFINED_NAMED (generator));
+  if (vgener.typnum == momty_null)
+    vgener =
+      mom_item_unsync_get_attribute (cg->cg_moduleitm,
+				     MOM_PREDEFINED_NAMED (generator));
+  MOM_DEBUGPRINTF (gencod, "scanning function %s with vgener=%s",
+		   mom_item_cstring (itmfun), mom_output_gcstring (vgener));
+  if (vgener.typnum == momty_node)
+    {
+      assert (cg->cg_codgenitm != NULL);
+      if (!mom_applval_2itm_to_void (vgener, itmfun, cg->cg_codgenitm))
+	CGEN_ERROR_RETURN_MOM (cg,
+			       "module item %s : function %s could not be generated with `generator` %s on %s",
+			       mom_item_cstring (cg->cg_moduleitm),
+			       mom_item_cstring (itmfun),
+			       mom_output_gcstring (vgener),
+			       mom_item_cstring (cg->cg_codgenitm));
+      MOM_DEBUGPRINTF (gencod,
+		       "scanning function %s successfully generated with vgener=%s",
+		       mom_item_cstring (itmfun),
+		       mom_output_gcstring (vgener));
+    }
   momvalue_t vstart =
     mom_item_unsync_get_attribute (itmfun, MOM_PREDEFINED_NAMED (start));
   if (vstart.typnum != momty_item)

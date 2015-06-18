@@ -452,9 +452,10 @@ mom_load_itemref_at (const char *fil, int lin)
       load_fill_item_mom ((momitem_t *) itm, true);
       valtok = mom_peek_token_load ();
       if (!mom_value_is_delim (valtok, "!)"))
-	MOM_FATAPRINTF ("unexpected token %s in %s, expected !)",
+	MOM_FATAPRINTF ("unexpected token %s in %s for item %s, expected !)",
 			mom_output_gcstring (valtok),
-			load_position_mom (NULL, 0, 0));
+			load_position_mom (NULL, 0, 0),
+			mom_item_cstring (itm));
       mom_eat_token_load ();
       return itm;
     }
