@@ -1,4 +1,4 @@
-// file seqcomps.c - manage sequence of value components
+// file sequ.c - manage sequence of value components, or of items
 
 
 /**   Copyright (C)  2015 Free Software Foundation, Inc.
@@ -178,3 +178,128 @@ mom_components_reserve (struct momcomponents_st *csq, unsigned nbcomp)
   csq->cp_len = nbcomp;
   return csq;
 }
+
+
+void
+mom_itemvec_put_nth (struct momitemvec_st *ivec, int rk, const momitem_t *itm)
+{
+  if (!ivec || ivec == MOM_EMPTY)
+    return;
+  if (!itm || itm == MOM_EMPTY)
+    return;
+  unsigned cnt = ivec->ivec_cnt;
+  if (rk < 0)
+    rk += cnt;
+  if (rk >= 0 && rk < cnt)
+    ivec->ivec_arr[rk] = itm;
+}
+
+struct momitemvec_st *
+mom_itemvec_reserve (struct momitemvec_st *ivec, unsigned gap)
+{
+  if (ivec == MOM_EMPTY)
+    ivec = NULL;
+  unsigned cnt = ivec ? ivec->ivec_cnt : 0;
+  unsigned len = ivec ? ivec->ivec_len : 0;
+  assert (cnt <= len);
+  if (cnt + gap <= len)
+    {
+      unsigned newsiz = ((cnt + gap + cnt / 16 + 10) | 0xf) + 1;
+      if (newsiz > len)
+	{
+	  struct momitemvec_st *newivec =	//
+	    MOM_GC_ALLOC ("newivec",
+			  sizeof (struct momitemvec_st) +
+			  newsiz * sizeof (momitem_t *));
+	  newivec->ivec_len = newsiz;
+	  if (cnt > 0)
+	    {
+	      memcpy (newivec->ivec_arr, ivec->ivec_arr,
+		      cnt * sizeof (momitem_t *));
+	      newivec->ivec_cnt = cnt;
+	    }
+	  struct momitemvec_st *oldivec = ivec;
+	  ivec = newivec;
+	  MOM_GC_FREE (oldivec,
+		       sizeof (struct momitemvec_st) +
+		       len * sizeof (momitem_t *));
+	}
+    }
+  return ivec;
+}				// end of mom_itemvec_reserve
+
+struct momitemvec_st *
+mom_itemvec_append1 (struct momitemvec_st *ivec, momitem_t *itm)
+{
+  if (ivec == MOM_EMPTY)
+    ivec = NULL;
+  if (!itm || itm == MOM_EMPTY)
+    return ivec;
+  unsigned cnt = ivec ? ivec->ivec_cnt : 0;
+  unsigned len = ivec ? ivec->ivec_len : 0;
+  if (cnt >= len)
+    {
+      ivec = mom_itemvec_reserve (ivec, 1 + cnt / 64);
+      len = ivec->ivec_len;
+    }
+  ivec->ivec_arr[cnt] = itm;
+  ivec->ivec_cnt = cnt + 1;
+  return ivec;
+}				// end of mom_itemvec_append1
+
+struct momitemvec_st *
+mom_itemvec_append_items (struct momitemvec_st *ivec, unsigned nbitems, ...)
+{
+  va_list args;
+  if (ivec == MOM_EMPTY)
+    ivec = NULL;
+  if (!nbitems)
+    return ivec;
+  unsigned cnt = ivec ? ivec->ivec_cnt : 0;
+  unsigned len = ivec ? ivec->ivec_len : 0;
+  if (cnt + nbitems >= len)
+    {
+      ivec = mom_itemvec_reserve (ivec, nbitems + cnt / 64);
+      len = ivec->ivec_len;
+    }
+  va_start (args, nbitems);
+  for (unsigned ix = 0; ix < nbitems; ix++)
+    {
+      momitem_t *itm = va_arg (args, momitem_t *);
+      if (!itm || itm == MOM_EMPTY)
+	continue;
+      ivec->ivec_arr[cnt++] = itm;
+    };
+  va_end (args);
+  ivec->ivec_cnt = cnt;
+  return ivec;
+}				/* end of mom_itemvec_append_items */
+
+
+
+struct momitemvec_st *
+mom_itemvec_append_sized_item_array (struct momitemvec_st *ivec,
+				     unsigned nbitems,
+				     const momitem_t **itemarr)
+{
+  if (ivec == MOM_EMPTY)
+    ivec = NULL;
+  if (!nbitems || !itemarr)
+    return ivec;
+  unsigned cnt = ivec ? ivec->ivec_cnt : 0;
+  unsigned len = ivec ? ivec->ivec_len : 0;
+  if (cnt + nbitems >= len)
+    {
+      ivec = mom_itemvec_reserve (ivec, nbitems + cnt / 64);
+      len = ivec->ivec_len;
+    }
+  for (unsigned ix = 0; ix < nbitems; ix++)
+    {
+      momitem_t *itm = itemarr[ix];
+      if (!itm || itm == MOM_EMPTY)
+	continue;
+      ivec->ivec_arr[cnt++] = itm;
+    };
+  ivec->ivec_cnt = cnt;
+  return ivec;
+}				/* end of mom_itemvec_append_sized_item_array */

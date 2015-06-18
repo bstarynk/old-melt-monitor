@@ -883,6 +883,78 @@ mom_components_put_nth (struct momcomponents_st *csq, int rk,
 
 void mom_components_scan_dump (struct momcomponents_st *csq);
 
+////////////////////////////////////////////////////////////////
+struct momitemvec_st
+{
+  uint32_t ivec_len;		/* allocated length */
+  uint32_t ivec_cnt;		/* used count */
+  const momitem_t *ivec_arr[];
+};
+
+static inline const momitem_t *
+mom_itemvec_nth (const struct momitemvec_st *ivec, int rk)
+{
+  if (!ivec || ivec == MOM_EMPTY)
+    return NULL;
+  unsigned cnt = ivec->ivec_cnt;
+  if (rk < 0)
+    rk += cnt;
+  if (rk >= 0 && rk < (int) cnt)
+    return ivec->ivec_arr[rk];
+  return NULL;
+}
+
+// put a non-null item...
+void mom_itemvec_put_nth (struct momitemvec_st *ivec, int rk,
+			  const momitem_t *itm);
+
+static inline const momitem_t **
+mom_itemvec_nth_ptr (const struct momitemvec_st *ivec, int rk)
+{
+  if (!ivec || ivec == MOM_EMPTY)
+    return NULL;
+  unsigned cnt = ivec->ivec_cnt;
+  if (rk < 0)
+    rk += cnt;
+  if (rk >= 0 && rk < (int) cnt)
+    return (const momitem_t **) &ivec->ivec_arr[rk];
+  return NULL;
+}
+
+static inline unsigned
+mom_itemvec_count (const struct momitemvec_st *ivec)
+{
+  if (!ivec || ivec == MOM_EMPTY)
+    return 0;
+  return ivec->ivec_cnt;
+}
+
+struct momitemvec_st *mom_itemvec_reserve (struct momitemvec_st *ivec,
+					   unsigned gap);
+
+struct momitemvec_st *mom_itemvec_append1 (struct momitemvec_st *ivec,
+					   momitem_t *itm);
+
+struct momitemvec_st *mom_itemvec_append_items (struct momitemvec_st *ivec,
+						unsigned nbitems, ...);
+
+struct momitemvec_st *mom_itemvec_append_sized_item_array (struct
+							   momitemvec_st
+							   *ivec,
+							   unsigned siz,
+							   const momitem_t
+							   **itemarr);
+static inline struct momitemvec_st *
+mom_itemvec_append_sequ (struct momitemvec_st *ivec, const momseq_t *sequ)
+{
+  if (!sequ || sequ == MOM_EMPTY)
+    return ivec;
+  return mom_itemvec_append_sized_item_array (ivec, sequ->slen,
+					      (const momitem_t **)
+					      sequ->arritm);
+}
+
+////////////////////////////////////////////////////////////////
 
 struct momhashset_st
 {
