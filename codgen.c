@@ -5396,6 +5396,46 @@ scan_instruction_for_leaders_mom (struct codegen_mom_st *cg,
 			   mom_output_gcstring (codinsv));
   momitem_t *codopitm = mom_node_conn (codnod);
   unsigned codarity = mom_node_arity (codnod);
+  switch (mom_item_hash (codopitm))
+    {
+      case MOM_PREDEFINED_NAMED_CASE (if, codopitm, otherwiseoplab)
+    :
+	{
+	}
+      break;
+    case MOM_PREDEFINED_NAMED_CASE (if_else, codopitm, otherwiseoplab):
+      {
+      }
+      break;
+    case MOM_PREDEFINED_NAMED_CASE (apply_else, codopitm, otherwiseoplab):
+      {
+      }
+      break;
+    case MOM_PREDEFINED_NAMED_CASE (int_switch, codopitm, otherwiseoplab):
+    case MOM_PREDEFINED_NAMED_CASE (item_switch, codopitm, otherwiseoplab):
+      {
+      }
+      break;
+    case MOM_PREDEFINED_NAMED_CASE (block, codopitm, otherwiseoplab):
+      {
+      }
+      break;
+    case MOM_PREDEFINED_NAMED_CASE (continue, codopitm, otherwiseoplab):
+      {
+      }
+      break;
+    case MOM_PREDEFINED_NAMED_CASE (break, codopitm, otherwiseoplab):
+      {
+      }
+      break;
+    case MOM_PREDEFINED_NAMED_CASE (jump, codopitm, otherwiseoplab):
+      {
+      }
+      break;
+    default:
+    otherwiseoplab:
+      ;
+    }
   MOM_FATAPRINTF
     ("scan_instruction_for_leaders incomplete instritm=%s codinsv=%s",
      mom_item_cstring (instritm), mom_output_gcstring (codinsv));
