@@ -5270,17 +5270,21 @@ bool
 ////////////////
 
 /// see https://en.wikipedia.org/wiki/Basic_block
+
+// returns true if *next* instruction should be a leader
+static bool scan_instruction_for_leaders_mom (struct codegen_mom_st *cg,
+					      momitem_t *itminstr);
+
 static void
 scan_for_basic_block_leaders_mom (struct codegen_mom_st *cg,
-				  momitem_t **itmarr, unsigned siz,
-				  momitem_t *nextblockitm)
+				  momitem_t **itmarr, unsigned siz)
 {
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
-  assert (nextblockitm != NULL);
   assert (siz == 0 || itmarr != NULL);
   MOM_DEBUGPRINTF (gencod,
-		   "scan_for_basic_block_leaders start %u items @%p, nextblockitm=%s",
-		   siz, itmarr, mom_item_cstring (nextblockitm));
+		   "scan_for_basic_block_leaders start %u items @%p",
+		   siz, itmarr);
+  bool leading = true;		// first instruction is a leader
   for (unsigned ix = 0; ix < siz && !cg->cg_errormsg; ix++)
     {
       momitem_t *curinsitm = itmarr[ix];
@@ -5297,8 +5301,8 @@ scan_for_basic_block_leaders_mom (struct codegen_mom_st *cg,
 			       mom_item_cstring (cg->cg_moduleitm),
 			       mom_item_cstring (cg->cg_curfunitm),
 			       mom_item_cstring (curinsitm));
-      if (ix == 0)
-	{			// the first instruction of a block is a leader
+      if (leading)
+	{
 	  momvalue_t vblock = mom_itemv (MOM_PREDEFINED_NAMED (block));
 	  cg->cg_funleadermap =	//
 	    mom_attributes_put (cg->cg_funleadermap, curinsitm, &vblock);
@@ -5306,14 +5310,80 @@ scan_for_basic_block_leaders_mom (struct codegen_mom_st *cg,
 			   "scan_for_basic_block_leaders curinsitm=%s first loeader",
 			   mom_item_cstring (curinsitm));
 	};
-
+      leading = scan_instruction_for_leaders_mom (cg, curinsitm);
+      MOM_DEBUGPRINTF (gencod,
+		       "scan_for_basic_block_leaders ix=%u after curinsitm=%s leading=%s",
+		       ix, mom_item_cstring (curinsitm),
+		       leading ? "true" : "false");
     };				/* end for ix */
-#warning scan_for_basic_block_leaders unimplemented
-  MOM_FATAPRINTF ("scan_for_basic_block_leaders unimplemented (siz=%u)", siz);
   MOM_DEBUGPRINTF (gencod,
-		   "scan_for_basic_block_leaders end %u items @%p, nextblockitm=%s",
-		   siz, itmarr, mom_item_cstring (nextblockitm));
+		   "scan_for_basic_block_leaders end %u items @%p",
+		   siz, itmarr);
 }				/* end scan_for_basic_block_leaders_mom */
+
+
+
+// return true if next instruction should be a leader
+static bool
+scan_instruction_for_leaders_mom (struct codegen_mom_st *cg,
+				  momitem_t *instritm)
+{
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  assert (instritm != NULL
+	  && instritm->itm_kind == MOM_PREDEFINED_NAMED (code_statement));
+  momvalue_t codinsv =
+    mom_item_unsync_get_attribute (instritm, MOM_PREDEFINED_NAMED (code));
+  MOM_DEBUGPRINTF (gencod,
+		   "scan_instruction_for_leaders start instritm=%s codinsv=%s",
+		   mom_item_cstring (instritm),
+		   mom_output_gcstring (codinsv));
+  // if we have no `code`, we assume it is a plain instruction with
+  // blocks, and we build the code as a node...
+  if (codinsv.typnum == momty_null)
+    {
+      unsigned nbcomp = mom_unsync_item_components_count (instritm);
+      momitem_t *opitm =	//
+	mom_value_to_item (mom_unsync_item_get_nth_component (instritm, 0));
+      if (nbcomp == 0 || !opitm)
+	CGEN_ERROR_RESULT_MOM (cg, false,
+			       "scan_instruction_for_leaders: module item %s :"
+			       " function %s with empty `code`-less instruction %s",
+			       mom_item_cstring (cg->cg_moduleitm),
+			       mom_item_cstring (cg->cg_curfunitm),
+			       mom_item_cstring (instritm));
+      codinsv = mom_nodev_sized (opitm, nbcomp - 1,
+				 (momvalue_t *)
+				 mom_raw_item_get_indexed_component_ptr
+				 (instritm, 1));
+      mom_item_unsync_put_attribute (instritm, MOM_PREDEFINED_NAMED (code),
+				     codinsv);
+
+      MOM_DEBUGPRINTF (gencod,
+		       "scan_instruction_for_leaders in instritm=%s put code: %s",
+		       mom_item_cstring (instritm),
+		       mom_output_gcstring (codinsv));
+    }
+  else				// some codinsv
+    MOM_DEBUGPRINTF (gencod,
+		     "scan_instruction_for_leaders in instritm=%s got code: %s",
+		     mom_item_cstring (instritm),
+		     mom_output_gcstring (codinsv));
+  const momnode_t *codnod = mom_value_to_node (codinsv);
+  if (!codnod)
+    CGEN_ERROR_RESULT_MOM (cg, false,
+			   "scan_instruction_for_leaders: module item %s :"
+			   " function %s with instruction %s with bad `code` %s",
+			   mom_item_cstring (cg->cg_moduleitm),
+			   mom_item_cstring (cg->cg_curfunitm),
+			   mom_item_cstring (instritm),
+			   mom_output_gcstring (codinsv));
+  momitem_t *codopitm = mom_node_conn (codnod);
+  MOM_FATAPRINTF
+    ("scan_instruction_for_leaders incomplete instritm=%s codinsv=%s",
+     mom_item_cstring (instritm), mom_output_gcstring (codinsv));
+#warning scan_instruction_for_leaders incomplete
+}				/* end scan_instruction_for_leaders_mom */
+
 
 
 bool
@@ -5401,7 +5471,7 @@ bool
 		   mom_item_cstring (itmfun), mom_output_gcstring (codev),
 		   mom_item_cstring (successblockitm));
   scan_for_basic_block_leaders_mom (cg, (momitem_t **) codetup->arritm,
-				    codetup->slen, successblockitm);
+				    codetup->slen);
   MOM_DEBUGPRINTF (gencod,
 		   "plain_function_generator itmfun=%s after scan_for_basic_block_leaders codev=%s successblockitm=%s",
 		   mom_item_cstring (itmfun), mom_output_gcstring (codev),
