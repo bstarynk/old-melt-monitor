@@ -94,6 +94,7 @@ $(OBJECTS): monimelt.h predef-monimelt.h apply-monimelt.h
 	- echo '-T CURLM' >> $@-tmp
 	- echo '-T CURL' >> $@-tmp
 	- sort  $@-tmp > $@
+	- rm $@-tmp
 
 %.i: %.c
 	$(COMPILE.c) -C -E $< | sed s:^#://#: > $@

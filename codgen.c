@@ -42,6 +42,7 @@ struct codegen_mom_st
   struct momhashset_st *cg_funconstset;	/* the set of constant items */
   struct momhashset_st *cg_funclosedset;	/* the set of closed items */
   struct momhashset_st *cg_funvariableset;	/* the set of variable items */
+  struct momattributes_st *cg_funleadermap;	/* associate each leader instruction with its basic block */
   struct momattributes_st *cg_blockassoc;	/* the association of
 						   block-s to a node ^block(<function>,<instruction-tuple>) */
   struct momqueueitems_st cg_blockqueue;	/* the queue of blocks to be scanned */
@@ -5261,6 +5262,25 @@ bool
 ////////////////
 
 
+static void
+scan_for_basic_block_leaders_mom (struct codegen_mom_st *cg,
+				  momitem_t **itmarr, unsigned siz,
+				  momitem_t *nextblockitm)
+{
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  assert (nextblockitm != NULL);
+  assert (siz == 0 || itmarr != NULL);
+  MOM_DEBUGPRINTF (gencod,
+		   "scan_for_basic_block_leaders start %u items @%p, nextblockitm=%s",
+		   siz, itmarr, mom_item_cstring (nextblockitm));
+#warning scan_for_basic_block_leaders unimplemented
+  MOM_FATAPRINTF ("scan_for_basic_block_leaders unimplemented (siz=%u)", siz);
+  MOM_DEBUGPRINTF (gencod,
+		   "scan_for_basic_block_leaders end %u items @%p, nextblockitm=%s",
+		   siz, itmarr, mom_item_cstring (nextblockitm));
+}				/* end scan_for_basic_block_leaders_mom */
+
+
 bool
   momfunc_2itm_to_void__plain_function_generator
   (const momnode_t *clonode, momitem_t *itmcodgen, momitem_t *itmfun)
@@ -5275,7 +5295,82 @@ bool
     return false;
   struct codegen_mom_st *cg = (struct codegen_mom_st *) itmcodgen->itm_data1;
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
-#warning unimplemented plain_function_generator
+  assert (itmfun == cg->cg_curfunitm);
+  enum momspace_en funspa = (enum momspace_en) itmfun->itm_space;
+  if (funspa < momspa_transient)
+    funspa = momspa_transient;
+  else if (funspa >= momspa_predefined)
+    funspa = momspa_global;
+  cg->cg_funleadermap = mom_attributes_make (48);
+  momvalue_t codev =		//
+    mom_item_unsync_get_attribute (itmfun, MOM_PREDEFINED_NAMED (code));
+  const momseq_t *codetup = mom_value_to_tuple (codev);
+  if (!codetup)
+    CGEN_ERROR_RESULT_MOM (cg, false,
+			   "plain_function_generator. module item %s :"
+			   " function %s with non-tuple `code` value %s",
+			   mom_item_cstring (cg->cg_moduleitm),
+			   mom_item_cstring (cg->cg_curfunitm),
+			   mom_output_gcstring (codev));
+  momitem_t *successblockitm =	//
+    mom_value_to_item (mom_item_unsync_get_attribute	//
+		       (itmfun,
+			MOM_PREDEFINED_NAMED (success)));
+  if (!successblockitm)
+    {
+      successblockitm = mom_make_anonymous_item ();
+      successblockitm->itm_space = funspa;
+      mom_item_unsync_put_attribute (itmfun, MOM_PREDEFINED_NAMED (success),
+				     mom_itemv (successblockitm));
+      MOM_DEBUGPRINTF (gencod,
+		       "plain_function_generator itmfun=%s made successblockitm=%s",
+		       mom_item_cstring (itmfun),
+		       mom_item_cstring (successblockitm));
+    };
+  cgen_lock_item_mom (cg, successblockitm);
+  momitem_t *successinsitm = NULL;
+  {
+    momvalue_t successinstrsv =	//
+      mom_item_unsync_get_attribute (successblockitm,
+				     MOM_PREDEFINED_NAMED (instructions));
+    const momseq_t *successinstup = mom_value_to_tuple (successinstrsv);
+    successinsitm = (momitem_t *) mom_seq_nth (successinstup, 0);
+    if (!successinsitm)
+      {
+	successinsitm = mom_make_anonymous_item ();
+	successinsitm->itm_space = funspa;
+	MOM_DEBUGPRINTF (gencod,
+			 "plain_function_generator itmfun=%s made successinsitm=%s",
+			 mom_item_cstring (itmfun),
+			 mom_item_cstring (successinsitm));
+      };
+    cgen_lock_item_mom (cg, successinsitm);
+    if (mom_seq_length (successinstup) != 1
+	|| successblockitm->itm_kind != MOM_PREDEFINED_NAMED (block))
+      {
+	successblockitm->itm_kind = MOM_PREDEFINED_NAMED (block);
+	successinstrsv = mom_tuplev (mom_make_tuple (1, successinsitm));
+	successinstup = mom_value_to_tuple (successinstrsv);
+	mom_item_unsync_put_attribute (successblockitm,
+				       MOM_PREDEFINED_NAMED (instructions),
+				       successinstrsv);
+	MOM_DEBUGPRINTF (gencod,
+			 "plain_function_generator itmfun=%s successblockitm=%s put successinstrsv=%s",
+			 mom_item_cstring (itmfun),
+			 mom_item_cstring (successblockitm),
+			 mom_output_gcstring (successinstrsv));
+      };
+  }
+  MOM_DEBUGPRINTF (gencod,
+		   "plain_function_generator itmfun=%s before scan_for_basic_block_leaders codev=%s successblockitm=%s",
+		   mom_item_cstring (itmfun), mom_output_gcstring (codev),
+		   mom_item_cstring (successblockitm));
+  scan_for_basic_block_leaders_mom (cg, (momitem_t **) codetup->arritm,
+				    codetup->slen, successblockitm);
+  MOM_DEBUGPRINTF (gencod,
+		   "plain_function_generator itmfun=%s after scan_for_basic_block_leaders codev=%s successblockitm=%s",
+		   mom_item_cstring (itmfun), mom_output_gcstring (codev),
+		   mom_item_cstring (successblockitm));
   MOM_FATAPRINTF
     ("unimplemented plain_function_generator itmcodgen=%s itmfun=%s",
      mom_item_cstring (itmcodgen), mom_item_cstring (itmfun));
