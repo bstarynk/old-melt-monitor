@@ -374,7 +374,7 @@ cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
   if (vgener.typnum == momty_node)
     {
       assert (cg->cg_codgenitm != NULL);
-      if (!mom_applval_2itm_to_void (vgener, itmfun, cg->cg_codgenitm))
+      if (!mom_applval_2itm_to_void (vgener, cg->cg_codgenitm, itmfun))
 	CGEN_ERROR_RETURN_MOM (cg,
 			       "module item %s : function %s could not be generated with `generator` %s on %s",
 			       mom_item_cstring (cg->cg_moduleitm),
@@ -1620,7 +1620,8 @@ cgen_scan_apply_statement_first_mom (struct codegen_mom_st *cg,
 	continue;
       else
 	CGEN_ERROR_RETURN_MOM (cg,
-			       "module item %s : function %s with block %s with apply statement %s with invalid argument#%d %s of type %s, expecting %s, for signature %s",
+			       "module item %s : function %s with block %s with apply statement %s"
+			       " with invalid argument#%d %s of type %s, expecting %s, for signature %s",
 			       mom_item_cstring (cg->cg_moduleitm),
 			       mom_item_cstring (cg->cg_curfunitm),
 			       mom_item_cstring (cg->cg_curblockitm),
@@ -5256,5 +5257,28 @@ bool
 		   mom_item_cstring (itmop), ftell (cg->cg_emitfile));
   return true;
 }				/* end plain_statement_emitter */
+
+////////////////
+
+
+bool
+  momfunc_2itm_to_void__plain_function_generator
+  (const momnode_t *clonode, momitem_t *itmcodgen, momitem_t *itmfun)
+{
+  assert (clonode != NULL);
+  MOM_DEBUGPRINTF (gencod,
+		   "plain_function_generator start itmcodgen=%s itmfun=%s",
+		   mom_item_cstring (itmcodgen), mom_item_cstring (itmfun));
+  if (!itmcodgen
+      || itmcodgen->itm_kind != MOM_PREDEFINED_NAMED (code_generation)
+      || !itmfun)
+    return false;
+  struct codegen_mom_st *cg = (struct codegen_mom_st *) itmcodgen->itm_data1;
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+#warning unimplemented plain_function_generator
+  MOM_FATAPRINTF
+    ("unimplemented plain_function_generator itmcodgen=%s itmfun=%s",
+     mom_item_cstring (itmcodgen), mom_item_cstring (itmfun));
+}				/* end of plain_function_generator */
 
 /// eof codgen.c
