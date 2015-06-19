@@ -1010,7 +1010,7 @@ cgen_type_of_scanned_nodexpr_mom (struct codegen_mom_st *cg,
 
 static void
 cgen_scan_apply_statement_first_mom (struct codegen_mom_st *cg,
-				     momitem_t *itmstmt);
+				     momitem_t *itmstmt, bool haselse);
 
 ////////////////
 static void
@@ -1280,11 +1280,17 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
       break;
       ////////////////
     case MOM_PREDEFINED_NAMED_CASE (apply, itmop, otherwiseoplab):
-      {				/// apply <signature> <results...> <fun> <args...> [<else-block>]
+    case MOM_PREDEFINED_NAMED_CASE (apply_else, itmop, otherwiseoplab):
+      {
+	/// apply <signature> <results...> <fun> <args...>
+	/// apply_else <signature> <results...> <fun> <args...> <elseblock>
 	MOM_DEBUGPRINTF (gencod,
 			 "scan_statement_first apply %s",
 			 mom_item_cstring (itmstmt));
-	cgen_scan_apply_statement_first_mom (cg, itmstmt);
+	cgen_scan_apply_statement_first_mom (cg, itmstmt,
+					     itmop ==
+					     MOM_PREDEFINED_NAMED
+					     (apply_else));
 	if (cg->cg_errormsg)
 	  return;
       }
@@ -1506,13 +1512,15 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 ////////////////////////////////////////////////////////////////
 static void
 cgen_scan_apply_statement_first_mom (struct codegen_mom_st *cg,
-				     momitem_t *itmstmt)
-{				/// apply <signature> <results...> <fun> <args...> [<else-block>]
+				     momitem_t *itmstmt, bool haselse)
+{
+  /// apply <signature> <results...> <fun> <args...>
+  /// apply_else <signature> <results...> <fun> <args...> <elseblock>
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   struct momcomponents_st *stmtcomps = itmstmt->itm_comps;
   unsigned stmtlen = mom_components_count (stmtcomps);
-  MOM_DEBUGPRINTF (gencod, "scan_apply_statement start itmstmt %s",
-		   mom_item_cstring (itmstmt));
+  MOM_DEBUGPRINTF (gencod, "scan_apply_statement start itmstmt %s - %s else",
+		   mom_item_cstring (itmstmt), haselse ? "with" : "without");
   if (stmtlen < 3)
     CGEN_ERROR_RETURN_MOM (cg,
 			   "module item %s : function %s with block %s with too short apply statement %s",
@@ -1667,8 +1675,9 @@ cgen_scan_apply_statement_first_mom (struct codegen_mom_st *cg,
   ////
   if (stmtlen == 5 + nbin + nbout)
     {
-      momitem_t *itmelse =
-	mom_value_to_item (mom_components_nth (stmtcomps, 4 + nbin + nbout));
+      momitem_t *itmelse = haselse ?
+	mom_value_to_item (mom_components_nth (stmtcomps, 4 + nbin + nbout)) :
+	NULL;
       MOM_DEBUGPRINTF (gencod,
 		       "scan_apply_statement in function %s apply statement %s with else %s",
 		       mom_item_cstring (cg->cg_curfunitm),
@@ -3276,7 +3285,7 @@ cgen_emit_chunk_statement_mom (struct codegen_mom_st *cg, unsigned insix,
 
 static void
 cgen_emit_apply_statement_mom (struct codegen_mom_st *cg, unsigned insix,
-			       momitem_t *stmtitm);
+			       momitem_t *stmtitm, bool haselse);
 
 static void
 cgen_emit_if_statement_mom (struct codegen_mom_st *cg, unsigned insix,
@@ -3355,8 +3364,11 @@ cgen_emit_statement_mom (struct codegen_mom_st *cg, unsigned insix,
       break;
       ////////////////
     case MOM_PREDEFINED_NAMED_CASE (apply, opitm, otherwiseoplab):
+    case MOM_PREDEFINED_NAMED_CASE (apply_else, opitm, otherwiseoplab):
       {
-	cgen_emit_apply_statement_mom (cg, insix, stmtitm);
+	cgen_emit_apply_statement_mom (cg, insix, stmtitm,
+				       opitm ==
+				       MOM_PREDEFINED_NAMED (apply_else));
       }
       break;
       ////////////////
@@ -3537,8 +3549,11 @@ cgen_emit_chunk_statement_mom (struct codegen_mom_st *cg, unsigned insix
 
 static void
 cgen_emit_apply_statement_mom (struct codegen_mom_st *cg, unsigned insix
-			       __attribute__ ((unused)), momitem_t *itmstmt)
-{				/// apply <signature> <results...> <fun> <args...> [<else-block>]
+			       __attribute__ ((unused)), momitem_t *itmstmt,
+			       bool haselse)
+{
+  /// apply <signature> <results...> <fun> <args...> 
+  /// apply_else <signature> <results...> <fun> <args...> <elseblock>
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   assert (itmstmt);
   struct momcomponents_st *stmtcomps = itmstmt->itm_comps;
@@ -3556,11 +3571,12 @@ cgen_emit_apply_statement_mom (struct codegen_mom_st *cg, unsigned insix
 				   MOM_PREDEFINED_NAMED (function_radix));
 
   MOM_DEBUGPRINTF (gencod,
-		   "emit apply stmt %s sig %s vinputy %s voutputy %s vradix %s",
+		   "emit apply stmt %s sig %s vinputy %s voutputy %s vradix %s - %s else",
 		   mom_item_cstring (itmstmt), mom_item_cstring (itmsig),
 		   mom_output_gcstring (vinputy),
 		   mom_output_gcstring (voutputy),
-		   mom_output_gcstring (vradix));
+		   mom_output_gcstring (vradix),
+		   haselse ? "with" : "without");
   unsigned nbinargs = mom_seq_length (mom_value_to_tuple (vinputy));
   unsigned nboutres = mom_seq_length (mom_value_to_tuple (voutputy));
   const momstring_t *radixstr = mom_value_to_string (vradix);
@@ -3601,7 +3617,7 @@ cgen_emit_apply_statement_mom (struct codegen_mom_st *cg, unsigned insix
     };
   fputs ("))\n", cg->cg_emitfile);
   momitem_t *elseitm = NULL;
-  if (stmtlen > 4 + nbinargs + nboutres)
+  if (stmtlen > 4 + nbinargs + nboutres && haselse)
     elseitm =
       mom_value_to_item (mom_components_nth
 			 (stmtcomps, 4 + nbinargs + nboutres));
@@ -5328,6 +5344,7 @@ static bool
 scan_instruction_for_leaders_mom (struct codegen_mom_st *cg,
 				  momitem_t *instritm)
 {
+  bool nextisleader = false;
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   assert (instritm != NULL
 	  && instritm->itm_kind == MOM_PREDEFINED_NAMED (code_statement));
@@ -5378,6 +5395,7 @@ scan_instruction_for_leaders_mom (struct codegen_mom_st *cg,
 			   mom_item_cstring (instritm),
 			   mom_output_gcstring (codinsv));
   momitem_t *codopitm = mom_node_conn (codnod);
+  unsigned codarity = mom_node_arity (codnod);
   MOM_FATAPRINTF
     ("scan_instruction_for_leaders incomplete instritm=%s codinsv=%s",
      mom_item_cstring (instritm), mom_output_gcstring (codinsv));

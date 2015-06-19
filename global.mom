@@ -1013,6 +1013,13 @@
 ..
 
 
+** apply_else   ////// PREDEFINED
+{
+  * comment  "opcode for application with failure case" }
+ 
+..
+
+
 ** argtasklets
 {
   * comment  "argument for tasklets to push into agenda"
@@ -1512,6 +1519,14 @@
 ..
 
 
+** if_else   ////// PREDEFINED
+{
+  * comment  "opcode for if_else <test> <then-block-node> <else-block-node>"
+ }
+ 
+..
+
+
 ** in   ////// PREDEFINED
 {
   * comment  "attribute giving some container information" }
@@ -1916,6 +1931,13 @@
 ** origin   ////// PREDEFINED
 {
   * comment  "attribute giving the origin" }
+ 
+..
+
+
+** otherwise   ////// PREDEFINED
+{
+  * comment  "connective in switch statements for the otherwise part" }
  
 ..
 
