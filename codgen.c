@@ -2710,7 +2710,8 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
     }
   fprintf (cg->cg_emitfile, "  return " SUCCESS_PREFIX_MOM "_%s;\n",
 	   mom_item_cstring (curfunitm));
-  fprintf (cg->cg_emitfile, "} // end of " MOM_FUNCTION_PREFIX "%s__%s \n\n\n",
+  fprintf (cg->cg_emitfile,
+	   "} // end of " MOM_FUNCTION_PREFIX "%s__%s \n\n\n",
 	   mom_string_cstr (strradix), mom_item_cstring (curfunitm));
   MOM_DEBUGPRINTF (gencod,
 		   "emit_function_code done funix#%d itmmod %s curfunitm %s",
