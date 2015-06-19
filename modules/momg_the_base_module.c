@@ -26,26 +26,26 @@
 
 
 /// declare function #0: agenda_push_back
-extern bool momfunc_1val_to_void_agenda_push_back (const momnode_t *, momvalue_t);
+extern bool momfunc_1val_to_void__agenda_push_back (const momnode_t *, momvalue_t);
 
 
 /// declare function #1: agenda_push_front
-extern bool momfunc_1val_to_void_agenda_push_front (const momnode_t *, momvalue_t);
+extern bool momfunc_1val_to_void__agenda_push_front (const momnode_t *, momvalue_t);
 
 
 /// declare function #2: agenda_step
-extern bool momfunc_void_to_void_agenda_step (const momnode_t *);
+extern bool momfunc_void_to_void__agenda_step (const momnode_t *);
 
 
 /// declare function #3: append_function_to_closed_module
-extern bool momfunc_1itm_to_void_append_function_to_closed_module (const momnode_t *, momitem_t*);
+extern bool momfunc_1itm_to_void__append_function_to_closed_module (const momnode_t *, momitem_t*);
 
 
 /***** implementing 4 functions *****/
 
 
 /// implement function #0: agenda_push_back
-bool momfunc_1val_to_void_agenda_push_back (const momnode_t *mom_node, momvalue_t momarg0)
+bool momfunc_1val_to_void__agenda_push_back (const momnode_t *mom_node, momvalue_t momarg0)
 { // body of function agenda_push_back
   bool momsuccess_agenda_push_back = false;
   momitem_t* mom_funcitm = NULL;
@@ -218,13 +218,13 @@ bool momfunc_1val_to_void_agenda_push_back (const momnode_t *mom_node, momvalue_
    if (momvar1 != NULL) mom_item_unlock(momvar1);
 // give 0 outputs
   return momsuccess_agenda_push_back;
-} // end of momfunc_1val_to_void_agenda_push_back 
+} // end of momfunc_1val_to_void__agenda_push_back 
 
 
 
 
 /// implement function #1: agenda_push_front
-bool momfunc_1val_to_void_agenda_push_front (const momnode_t *mom_node, momvalue_t momarg0)
+bool momfunc_1val_to_void__agenda_push_front (const momnode_t *mom_node, momvalue_t momarg0)
 { // body of function agenda_push_front
   bool momsuccess_agenda_push_front = false;
   momitem_t* mom_funcitm = NULL;
@@ -403,7 +403,7 @@ bool momfunc_1val_to_void_agenda_push_front (const momnode_t *mom_node, momvalue
 
 
 /// implement function #2: agenda_step
-bool momfunc_void_to_void_agenda_step (const momnode_t *mom_node)
+bool momfunc_void_to_void__agenda_step (const momnode_t *mom_node)
 { // body of function agenda_step
   bool momsuccess_agenda_step = false;
   momitem_t* mom_funcitm = NULL;
@@ -634,7 +634,7 @@ momvar2 /*var:itmvar_tasklet*/ = (momitem_t*)NULL;
 
 
 /// implement function #3: append_function_to_closed_module
-bool momfunc_1itm_to_void_append_function_to_closed_module (const momnode_t *mom_node, momitem_t* momarg0)
+bool momfunc_1itm_to_void__append_function_to_closed_module (const momnode_t *mom_node, momitem_t* momarg0)
 { // body of function append_function_to_closed_module
   bool momsuccess_append_function_to_closed_module = false;
   momitem_t* mom_funcitm = NULL;
@@ -788,16 +788,16 @@ static void momloadcons_the_base_module (void)
   MOM_DEBUGPRINTF(run, "loading constructor of the_base_module with 4 functions");
  // load constructor #0 for agenda_push_back
   momoldad_agenda_push_back
-  = mom_dynload_function("agenda_push_back", "signature_1val_to_void", (void*) &momfunc_1val_to_void_agenda_push_back);
+  = mom_dynload_function("agenda_push_back", "signature_1val_to_void", (void*) &momfunc_1val_to_void__agenda_push_back);
  // load constructor #1 for agenda_push_front
   momoldad_agenda_push_front
-  = mom_dynload_function("agenda_push_front", "signature_1val_to_void", (void*) &momfunc_1val_to_void_agenda_push_front);
+  = mom_dynload_function("agenda_push_front", "signature_1val_to_void", (void*) &momfunc_1val_to_void__agenda_push_front);
  // load constructor #2 for agenda_step
   momoldad_agenda_step
-  = mom_dynload_function("agenda_step", "signature_void_to_void", (void*) &momfunc_void_to_void_agenda_step);
+  = mom_dynload_function("agenda_step", "signature_void_to_void", (void*) &momfunc_void_to_void__agenda_step);
  // load constructor #3 for append_function_to_closed_module
   momoldad_append_function_to_closed_module
-  = mom_dynload_function("append_function_to_closed_module", "signature_1itm_to_void", (void*) &momfunc_1itm_to_void_append_function_to_closed_module);
+  = mom_dynload_function("append_function_to_closed_module", "signature_1itm_to_void", (void*) &momfunc_1itm_to_void__append_function_to_closed_module);
 
 } // end loading constructor momloadcons_the_base_module
 

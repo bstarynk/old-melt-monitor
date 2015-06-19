@@ -2335,7 +2335,7 @@ emit_signature_application_code_mom (FILE *foutaphd,
   fprintf (foutaphd, "    memset (nambuf_mom, 0, sizeof(nambuf_mom));\n");
   fprintf (foutaphd,
 	   "    if (snprintf(nambuf_mom, sizeof(nambuf_mom), \""
-	   MOM_FUNCTION_PREFIX "%s_%%s\",\n", mom_value_cstr (vradix));
+	   MOM_FUNCTION_PREFIX "%s__%%s\",\n", mom_value_cstr (vradix));
   fprintf (foutaphd,
 	   "                 mom_item_cstring(connitm_mom)) < (int)sizeof(nambuf_mom))\n");
   fprintf (foutaphd,
@@ -2558,7 +2558,7 @@ emit_predefined_fill_mom (void)
 		       mom_item_cstring (itmkind));
 	      emit_predefined_itemref_mom (foutfp, itmpredef);
 	      fprintf (foutfp,
-		       "->itm_data1 =\n     mom_dynload_symbol(\"momfunc_%s_%s\");\n",
+		       "->itm_data1 =\n     mom_dynload_symbol(\"momfunc_%s__%s\");\n",
 		       mom_value_cstr (vradix), mom_item_cstring (itmpredef));
 	    }
 	}

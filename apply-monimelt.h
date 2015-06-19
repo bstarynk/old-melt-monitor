@@ -57,7 +57,7 @@ mom_applclos_1itm1int_to_item (const momnode_t *nod_mom, momitem_t *arg0_mom,
       char nambuf_mom[256];
       memset (nambuf_mom, 0, sizeof (nambuf_mom));
       if (snprintf
-	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_1itm1int_to_item_%s",
+	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_1itm1int_to_item__%s",
 	   mom_item_cstring (connitm_mom)) < (int) sizeof (nambuf_mom))
 	((momitem_t *) connitm_mom)->itm_data1 = data1_mom =
 	  mom_dynload_symbol (nambuf_mom);
@@ -121,7 +121,7 @@ mom_applclos_1itm1val1int_to_void (const momnode_t *nod_mom,
       char nambuf_mom[256];
       memset (nambuf_mom, 0, sizeof (nambuf_mom));
       if (snprintf
-	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_1itm1val1int_to_void_%s",
+	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_1itm1val1int_to_void__%s",
 	   mom_item_cstring (connitm_mom)) < (int) sizeof (nambuf_mom))
 	((momitem_t *) connitm_mom)->itm_data1 = data1_mom =
 	  mom_dynload_symbol (nambuf_mom);
@@ -183,7 +183,7 @@ mom_applclos_1itm1val_to_item (const momnode_t *nod_mom, momitem_t *arg0_mom,
       char nambuf_mom[256];
       memset (nambuf_mom, 0, sizeof (nambuf_mom));
       if (snprintf
-	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_1itm1val_to_item_%s",
+	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_1itm1val_to_item__%s",
 	   mom_item_cstring (connitm_mom)) < (int) sizeof (nambuf_mom))
 	((momitem_t *) connitm_mom)->itm_data1 = data1_mom =
 	  mom_dynload_symbol (nambuf_mom);
@@ -242,7 +242,7 @@ mom_applclos_1itm1val_to_void (const momnode_t *nod_mom, momitem_t *arg0_mom,
       char nambuf_mom[256];
       memset (nambuf_mom, 0, sizeof (nambuf_mom));
       if (snprintf
-	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_1itm1val_to_void_%s",
+	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_1itm1val_to_void__%s",
 	   mom_item_cstring (connitm_mom)) < (int) sizeof (nambuf_mom))
 	((momitem_t *) connitm_mom)->itm_data1 = data1_mom =
 	  mom_dynload_symbol (nambuf_mom);
@@ -307,7 +307,7 @@ mom_applclos_1itm2val_to_item (const momnode_t *nod_mom, momitem_t *arg0_mom,
       char nambuf_mom[256];
       memset (nambuf_mom, 0, sizeof (nambuf_mom));
       if (snprintf
-	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_1itm2val_to_item_%s",
+	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_1itm2val_to_item__%s",
 	   mom_item_cstring (connitm_mom)) < (int) sizeof (nambuf_mom))
 	((momitem_t *) connitm_mom)->itm_data1 = data1_mom =
 	  mom_dynload_symbol (nambuf_mom);
@@ -369,7 +369,7 @@ mom_applclos_1itm2val_to_void (const momnode_t *nod_mom, momitem_t *arg0_mom,
       char nambuf_mom[256];
       memset (nambuf_mom, 0, sizeof (nambuf_mom));
       if (snprintf
-	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_1itm2val_to_void_%s",
+	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_1itm2val_to_void__%s",
 	   mom_item_cstring (connitm_mom)) < (int) sizeof (nambuf_mom))
 	((momitem_t *) connitm_mom)->itm_data1 = data1_mom =
 	  mom_dynload_symbol (nambuf_mom);
@@ -428,7 +428,7 @@ mom_applclos_1itm_to_item (const momnode_t *nod_mom, momitem_t *arg0_mom,
       char nambuf_mom[256];
       memset (nambuf_mom, 0, sizeof (nambuf_mom));
       if (snprintf
-	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_1itm_to_item_%s",
+	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_1itm_to_item__%s",
 	   mom_item_cstring (connitm_mom)) < (int) sizeof (nambuf_mom))
 	((momitem_t *) connitm_mom)->itm_data1 = data1_mom =
 	  mom_dynload_symbol (nambuf_mom);
@@ -485,7 +485,7 @@ mom_applclos_1itm_to_val (const momnode_t *nod_mom, momitem_t *arg0_mom,
     {
       char nambuf_mom[256];
       memset (nambuf_mom, 0, sizeof (nambuf_mom));
-      if (snprintf (nambuf_mom, sizeof (nambuf_mom), "momfunc_1itm_to_val_%s",
+      if (snprintf (nambuf_mom, sizeof (nambuf_mom), "momfunc_1itm_to_val__%s",
 		    mom_item_cstring (connitm_mom)) <
 	  (int) sizeof (nambuf_mom))
 	((momitem_t *) connitm_mom)->itm_data1 = data1_mom =
@@ -540,7 +540,7 @@ mom_applclos_1itm_to_void (const momnode_t *nod_mom, momitem_t *arg0_mom)
       char nambuf_mom[256];
       memset (nambuf_mom, 0, sizeof (nambuf_mom));
       if (snprintf
-	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_1itm_to_void_%s",
+	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_1itm_to_void__%s",
 	   mom_item_cstring (connitm_mom)) < (int) sizeof (nambuf_mom))
 	((momitem_t *) connitm_mom)->itm_data1 = data1_mom =
 	  mom_dynload_symbol (nambuf_mom);
@@ -598,7 +598,7 @@ mom_applclos_1val1int_to_void (const momnode_t *nod_mom, momvalue_t arg0_mom,
       char nambuf_mom[256];
       memset (nambuf_mom, 0, sizeof (nambuf_mom));
       if (snprintf
-	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_1val1int_to_void_%s",
+	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_1val1int_to_void__%s",
 	   mom_item_cstring (connitm_mom)) < (int) sizeof (nambuf_mom))
 	((momitem_t *) connitm_mom)->itm_data1 = data1_mom =
 	  mom_dynload_symbol (nambuf_mom);
@@ -656,7 +656,7 @@ mom_applclos_1val_to_val (const momnode_t *nod_mom, momvalue_t arg0_mom,
     {
       char nambuf_mom[256];
       memset (nambuf_mom, 0, sizeof (nambuf_mom));
-      if (snprintf (nambuf_mom, sizeof (nambuf_mom), "momfunc_1val_to_val_%s",
+      if (snprintf (nambuf_mom, sizeof (nambuf_mom), "momfunc_1val_to_val__%s",
 		    mom_item_cstring (connitm_mom)) <
 	  (int) sizeof (nambuf_mom))
 	((momitem_t *) connitm_mom)->itm_data1 = data1_mom =
@@ -711,7 +711,7 @@ mom_applclos_1val_to_void (const momnode_t *nod_mom, momvalue_t arg0_mom)
       char nambuf_mom[256];
       memset (nambuf_mom, 0, sizeof (nambuf_mom));
       if (snprintf
-	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_1val_to_void_%s",
+	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_1val_to_void__%s",
 	   mom_item_cstring (connitm_mom)) < (int) sizeof (nambuf_mom))
 	((momitem_t *) connitm_mom)->itm_data1 = data1_mom =
 	  mom_dynload_symbol (nambuf_mom);
@@ -775,7 +775,7 @@ mom_applclos_2itm1int_to_item (const momnode_t *nod_mom, momitem_t *arg0_mom,
       char nambuf_mom[256];
       memset (nambuf_mom, 0, sizeof (nambuf_mom));
       if (snprintf
-	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_2itm1int_to_item_%s",
+	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_2itm1int_to_item__%s",
 	   mom_item_cstring (connitm_mom)) < (int) sizeof (nambuf_mom))
 	((momitem_t *) connitm_mom)->itm_data1 = data1_mom =
 	  mom_dynload_symbol (nambuf_mom);
@@ -837,7 +837,7 @@ mom_applclos_2itm1int_to_void (const momnode_t *nod_mom, momitem_t *arg0_mom,
       char nambuf_mom[256];
       memset (nambuf_mom, 0, sizeof (nambuf_mom));
       if (snprintf
-	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_2itm1int_to_void_%s",
+	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_2itm1int_to_void__%s",
 	   mom_item_cstring (connitm_mom)) < (int) sizeof (nambuf_mom))
 	((momitem_t *) connitm_mom)->itm_data1 = data1_mom =
 	  mom_dynload_symbol (nambuf_mom);
@@ -902,7 +902,7 @@ mom_applclos_2itm1val_to_val (const momnode_t *nod_mom, momitem_t *arg0_mom,
       char nambuf_mom[256];
       memset (nambuf_mom, 0, sizeof (nambuf_mom));
       if (snprintf
-	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_2itm1val_to_val_%s",
+	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_2itm1val_to_val__%s",
 	   mom_item_cstring (connitm_mom)) < (int) sizeof (nambuf_mom))
 	((momitem_t *) connitm_mom)->itm_data1 = data1_mom =
 	  mom_dynload_symbol (nambuf_mom);
@@ -964,7 +964,7 @@ mom_applclos_2itm1val_to_void (const momnode_t *nod_mom, momitem_t *arg0_mom,
       char nambuf_mom[256];
       memset (nambuf_mom, 0, sizeof (nambuf_mom));
       if (snprintf
-	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_2itm1val_to_void_%s",
+	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_2itm1val_to_void__%s",
 	   mom_item_cstring (connitm_mom)) < (int) sizeof (nambuf_mom))
 	((momitem_t *) connitm_mom)->itm_data1 = data1_mom =
 	  mom_dynload_symbol (nambuf_mom);
@@ -1029,7 +1029,7 @@ mom_applclos_2itm2val_to_void (const momnode_t *nod_mom, momitem_t *arg0_mom,
       char nambuf_mom[256];
       memset (nambuf_mom, 0, sizeof (nambuf_mom));
       if (snprintf
-	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_2itm2val_to_void_%s",
+	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_2itm2val_to_void__%s",
 	   mom_item_cstring (connitm_mom)) < (int) sizeof (nambuf_mom))
 	((momitem_t *) connitm_mom)->itm_data1 = data1_mom =
 	  mom_dynload_symbol (nambuf_mom);
@@ -1089,7 +1089,7 @@ mom_applclos_2itm_to_val (const momnode_t *nod_mom, momitem_t *arg0_mom,
     {
       char nambuf_mom[256];
       memset (nambuf_mom, 0, sizeof (nambuf_mom));
-      if (snprintf (nambuf_mom, sizeof (nambuf_mom), "momfunc_2itm_to_val_%s",
+      if (snprintf (nambuf_mom, sizeof (nambuf_mom), "momfunc_2itm_to_val__%s",
 		    mom_item_cstring (connitm_mom)) <
 	  (int) sizeof (nambuf_mom))
 	((momitem_t *) connitm_mom)->itm_data1 = data1_mom =
@@ -1147,7 +1147,7 @@ mom_applclos_2itm_to_void (const momnode_t *nod_mom, momitem_t *arg0_mom,
       char nambuf_mom[256];
       memset (nambuf_mom, 0, sizeof (nambuf_mom));
       if (snprintf
-	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_2itm_to_void_%s",
+	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_2itm_to_void__%s",
 	   mom_item_cstring (connitm_mom)) < (int) sizeof (nambuf_mom))
 	((momitem_t *) connitm_mom)->itm_data1 = data1_mom =
 	  mom_dynload_symbol (nambuf_mom);
@@ -1206,7 +1206,7 @@ mom_applclos_2val_to_val (const momnode_t *nod_mom, momvalue_t arg0_mom,
     {
       char nambuf_mom[256];
       memset (nambuf_mom, 0, sizeof (nambuf_mom));
-      if (snprintf (nambuf_mom, sizeof (nambuf_mom), "momfunc_2val_to_val_%s",
+      if (snprintf (nambuf_mom, sizeof (nambuf_mom), "momfunc_2val_to_val__%s",
 		    mom_item_cstring (connitm_mom)) <
 	  (int) sizeof (nambuf_mom))
 	((momitem_t *) connitm_mom)->itm_data1 = data1_mom =
@@ -1260,7 +1260,7 @@ mom_applclos_void_to_void (const momnode_t *nod_mom)
       char nambuf_mom[256];
       memset (nambuf_mom, 0, sizeof (nambuf_mom));
       if (snprintf
-	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_void_to_void_%s",
+	  (nambuf_mom, sizeof (nambuf_mom), "momfunc_void_to_void__%s",
 	   mom_item_cstring (connitm_mom)) < (int) sizeof (nambuf_mom))
 	((momitem_t *) connitm_mom)->itm_data1 = data1_mom =
 	  mom_dynload_symbol (nambuf_mom);

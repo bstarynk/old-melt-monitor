@@ -144,7 +144,7 @@ static void cgen_second_emitting_pass_mom (momitem_t *itmcgen);
 static void cgen_third_decorating_pass_mom (momitem_t *itmcgen);
 
 bool
-  momfunc_1itm_to_val_generate_c_module
+  momfunc_1itm_to_val__generate_c_module
   (const momnode_t *clonode, momitem_t *itm, momvalue_t *res)
 {
   MOM_DEBUGPRINTF (gencod,
@@ -2323,7 +2323,7 @@ cgen_emit_function_declaration_mom (struct codegen_mom_st *cg,
   unsigned nboutputs = mom_seq_length (seqoutputs);
   fprintf (cg->cg_emitfile,
 	   "\n\n" "/// declare function #%d: %s\n"
-	   "extern bool " MOM_FUNCTION_PREFIX "%s_%s (const momnode_t *",
+	   "extern bool " MOM_FUNCTION_PREFIX "%s__%s (const momnode_t *",
 	   funix, mom_item_cstring (curfunitm), mom_string_cstr (strradix),
 	   mom_item_cstring (curfunitm));
   for (unsigned inix = 0; inix < nbinputs && !cg->cg_errormsg; inix++)
@@ -2528,7 +2528,7 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
   unsigned nbvars = mom_seq_length (funseqvars);
   fprintf (cg->cg_emitfile,
 	   "\n\n" "/// implement function #%d: %s\n"
-	   "bool " MOM_FUNCTION_PREFIX "%s_%s (const momnode_t *mom_node",
+	   "bool " MOM_FUNCTION_PREFIX "%s__%s (const momnode_t *mom_node",
 	   funix, mom_item_cstring (curfunitm), mom_string_cstr (strradix),
 	   mom_item_cstring (curfunitm));
   assert (funseqformals);
@@ -2710,7 +2710,7 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
     }
   fprintf (cg->cg_emitfile, "  return " SUCCESS_PREFIX_MOM "_%s;\n",
 	   mom_item_cstring (curfunitm));
-  fprintf (cg->cg_emitfile, "} // end of " MOM_FUNCTION_PREFIX "%s_%s \n\n\n",
+  fprintf (cg->cg_emitfile, "} // end of " MOM_FUNCTION_PREFIX "%s__%s \n\n\n",
 	   mom_string_cstr (strradix), mom_item_cstring (curfunitm));
   MOM_DEBUGPRINTF (gencod,
 		   "emit_function_code done funix#%d itmmod %s curfunitm %s",
@@ -3933,7 +3933,7 @@ cgen_emit_function_loadcons_mom (struct codegen_mom_st *cg,
   fprintf (cg->cg_emitfile,
 	   "  " OLDADDR_PREFIX_MOM "_%s\n"
 	   "  = mom_dynload_function(\"%s\", \"%s\", (void*) &"
-	   MOM_FUNCTION_PREFIX "%s_%s);\n", mom_item_cstring (curfunitm),
+	   MOM_FUNCTION_PREFIX "%s__%s);\n", mom_item_cstring (curfunitm),
 	   mom_item_cstring (curfunitm), mom_item_cstring (funsigitm),
 	   mom_string_cstr (strradix), mom_item_cstring (curfunitm));
   cg->cg_funinfonod = NULL;
@@ -4250,7 +4250,7 @@ cgen_third_decorating_pass_mom (momitem_t *itmcgen)
 
 ////////////////
 bool
-  momfunc_1itm1val_to_item_plain_code_type_scanner
+  momfunc_1itm1val_to_item__plain_code_type_scanner
   (const momnode_t *clonode, momitem_t *itmcodgen, const momvalue_t vexpr,
    momitem_t **respitm)
 {
@@ -4513,7 +4513,7 @@ bool
 
 
 
-bool momfunc_1itm1val_to_void_plain_code_emitter
+bool momfunc_1itm1val_to_void__plain_code_emitter
   (const momnode_t *clonode, momitem_t *itmcodgen, const momvalue_t vexpr)
 {
   assert (clonode != NULL);
@@ -4687,12 +4687,12 @@ bool momfunc_1itm1val_to_void_plain_code_emitter
 		   mom_item_cstring (itmcodgen), mom_output_gcstring (vexpr),
 		   ftell (cg->cg_emitfile));
   return true;
-}				/* end of momfunc_1itm1val_to_void_plain_code_emitter */
+}				/* end of momfunc_1itm1val_to_void__plain_code_emitter */
 
 
 
 bool
-  momfunc_2itm_to_void_plain_statement_scanner
+  momfunc_2itm_to_void__plain_statement_scanner
   (const momnode_t *clonode, momitem_t *itmcodgen, momitem_t *itmstmt)
 {
   assert (clonode != NULL);
@@ -5023,7 +5023,7 @@ bool
 
 
 bool
-  momfunc_2itm_to_void_plain_statement_emitter
+  momfunc_2itm_to_void__plain_statement_emitter
   (const momnode_t *clonode, momitem_t *itmcodgen, momitem_t *itmstmt)
 {
   assert (clonode != NULL);

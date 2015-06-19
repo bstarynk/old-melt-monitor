@@ -24,7 +24,7 @@
 ////////////////////////////////////////////////////////////////
 //// magic_attribute
 bool
-  momfunc_1itm_to_val_emitter_of_magic_attribute
+  momfunc_1itm_to_val__emitter_of_magic_attribute
   (const momnode_t *clonode, momitem_t *itm, momvalue_t *res)
 {
   MOM_DEBUGPRINTF (dump,
@@ -48,7 +48,7 @@ bool
 
 
 bool
-  momfunc_1itm_to_void_scanner_of_magic_attribute
+  momfunc_1itm_to_void__scanner_of_magic_attribute
   (const momnode_t *clonode, momitem_t *itm)
 {
   assert (clonode);
@@ -72,7 +72,7 @@ bool
 
 
 bool
-  momfunc_1itm_to_void_filler_of_magic_attribute
+  momfunc_1itm_to_void__filler_of_magic_attribute
   (const momnode_t *clonode, momitem_t *itm)
 {
   MOM_DEBUGPRINTF (dump,
@@ -104,7 +104,7 @@ bool
 
 //////////////// functions
 bool
-  momfunc_1itm_to_val_emitter_of_function
+  momfunc_1itm_to_val__emitter_of_function
   (const momnode_t *clonode, momitem_t *itm, momvalue_t *res)
 {
   momitem_t *itmkind = itm->itm_kind;
@@ -127,7 +127,7 @@ bool
 
 
 bool
-  momfunc_1itm_to_void_filler_of_function
+  momfunc_1itm_to_void__filler_of_function
   (const momnode_t *clonode, momitem_t *itm)
 {
   char bufnam[256];
@@ -162,7 +162,7 @@ bool
        mom_item_cstring (itm), mom_item_cstring (itmsig),
        mom_output_gcstring (cfunradv));
   if (snprintf
-      (bufnam, sizeof (bufnam), MOM_FUNCTION_PREFIX "%s_%s",
+      (bufnam, sizeof (bufnam), MOM_FUNCTION_PREFIX "%s__%s",
        mom_value_cstr (cfunradv),
        mom_item_cstring (itm)) >= (int) sizeof (bufnam))
     MOM_FATAPRINTF ("filler_of_function %s with kind %s too long name %s",
@@ -187,7 +187,7 @@ bool
 
 
 bool
-  momfunc_1itm_to_void_scanner_of_function
+  momfunc_1itm_to_void__scanner_of_function
   (const momnode_t *clonode, momitem_t *itm)
 {
   assert (clonode);
@@ -265,7 +265,7 @@ bool
 ////////////////////////////////////////////////////////////////
 //// plain kind
 bool
-  momfunc_1itm_to_val_emitter_of_plain_kind
+  momfunc_1itm_to_val__emitter_of_plain_kind
   (const momnode_t *clonode, momitem_t *itm, momvalue_t *res)
 {
   momitem_t *itmclokind = NULL;
@@ -288,7 +288,7 @@ bool
 }				/* end emitter_of_plain_kind */
 
 bool
-  momfunc_1itm_to_void_filler_of_plain_kind
+  momfunc_1itm_to_void__filler_of_plain_kind
   (const momnode_t *clonode, momitem_t *itm)
 {
   MOM_DEBUGPRINTF (dump,
@@ -322,7 +322,7 @@ bool
 
 
 bool
-  momfunc_1itm_to_void_scanner_of_association
+  momfunc_1itm_to_void__scanner_of_association
   (const momnode_t *clonode, momitem_t *itm)
 {
   assert (clonode);
@@ -339,7 +339,7 @@ bool
 }				/* end scanner_of_association */
 
 bool
-  momfunc_1itm_to_val_emitter_of_association
+  momfunc_1itm_to_val__emitter_of_association
   (const momnode_t *clonode, momitem_t *itm, momvalue_t *res)
 {
   MOM_DEBUGPRINTF (dump,
@@ -380,7 +380,7 @@ bool
 
 
 bool
-  momfunc_1itm_to_void_filler_of_association
+  momfunc_1itm_to_void__filler_of_association
   (const momnode_t *clonode, momitem_t *itm)
 {
   MOM_DEBUGPRINTF (dump,
@@ -425,7 +425,7 @@ bool
 
 
 bool
-  momfunc_1itm_to_void_scanner_of_hashed_dict
+  momfunc_1itm_to_void__scanner_of_hashed_dict
   (const momnode_t *clonode, momitem_t *itm)
 {
   assert (clonode);
@@ -443,7 +443,7 @@ bool
 
 
 bool
-  momfunc_1itm_to_val_emitter_of_hashed_dict
+  momfunc_1itm_to_val__emitter_of_hashed_dict
   (const momnode_t *clonode, momitem_t *itm, momvalue_t *res)
 {
   momvalue_t resnodv = MOM_NONEV;
@@ -490,7 +490,7 @@ bool
 
 
 bool
-  momfunc_1itm_to_void_filler_of_hashed_dict
+  momfunc_1itm_to_void__filler_of_hashed_dict
   (const momnode_t *clonode, momitem_t *itm)
 {
   MOM_DEBUGPRINTF (dump,
@@ -531,7 +531,7 @@ bool
 
 
 bool
-  momfunc_1itm_to_void_scanner_of_hashed_set
+  momfunc_1itm_to_void__scanner_of_hashed_set
   (const momnode_t *clonode, momitem_t *itm)
 {
   assert (clonode);
@@ -548,7 +548,7 @@ bool
 }				/* end scanner_of_hashed_set */
 
 bool
-  momfunc_1itm_to_val_emitter_of_hashed_set
+  momfunc_1itm_to_val__emitter_of_hashed_set
   (const momnode_t *clonode, momitem_t *itm, momvalue_t *res)
 {
   MOM_DEBUGPRINTF (dump,
@@ -572,7 +572,7 @@ bool
 
 
 bool
-  momfunc_1itm_to_void_filler_of_hashed_set
+  momfunc_1itm_to_void__filler_of_hashed_set
   (const momnode_t *clonode, momitem_t *itm)
 {
   MOM_DEBUGPRINTF (dump,
@@ -609,7 +609,7 @@ bool
 
 
 bool
-  momfunc_1itm_to_void_scanner_of_item_queue
+  momfunc_1itm_to_void__scanner_of_item_queue
   (const momnode_t *clonode, momitem_t *itm)
 {
   assert (clonode);
@@ -626,7 +626,7 @@ bool
 }				/* end scanner_of_item_queue */
 
 bool
-  momfunc_1itm_to_val_emitter_of_item_queue
+  momfunc_1itm_to_val__emitter_of_item_queue
   (const momnode_t *clonode, momitem_t *itm, momvalue_t *res)
 {
   MOM_DEBUGPRINTF (dump,
@@ -650,7 +650,7 @@ bool
 
 
 bool
-  momfunc_1itm_to_void_filler_of_item_queue
+  momfunc_1itm_to_void__filler_of_item_queue
   (const momnode_t *clonode, momitem_t *itm)
 {
   MOM_DEBUGPRINTF (dump,

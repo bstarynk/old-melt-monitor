@@ -106,7 +106,7 @@ plugins: $(PLUGINS)
 ## or - or _ characters, conventionally by the name or identstr of the
 ## module item. see MONIMELT_SHARED_MODULE_PREFIX in monimelt.h
 modules/momg_%.so: modules/momg_%.c | monimelt.h predef-monimelt.h
-	-mv -vf $@ $@~
+	@-mv -vf $@ $@~
 	$(LINK.c) -DMONIMELT_CURRENT_MODULE=\"$(patsubst momg_%.so,%,$(*F))\" \
 		  -DMONIMELT_MD5_MODULE=\"$(shell md5sum $< | cut '-d ' -f1)\" \
 		  -DMONIMELT_LAST_COMMITID=\"$(shell git log -n 1 --abbrev=16 --format=%h)\" \
