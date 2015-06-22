@@ -616,6 +616,11 @@ cgen_scan_block_first_mom (struct codegen_mom_st *cg, momitem_t *itmblock)
 				 mom_itemv (cg->cg_curfunitm), vcinstrs);
 	cg->cg_blockassoc = mom_attributes_put (cg->cg_blockassoc,
 						itmblock, &vablock);
+	mom_queueitem_push_back (&cg->cg_blockqueue, itmblock);
+	MOM_DEBUGPRINTF (gencod,
+			 "cgen_scan_block_first queuing itmblock=%s with vablock=%s",
+			 mom_item_cstring (itmblock),
+			 mom_output_gcstring (vablock));
       }
     else
       CGEN_ERROR_RETURN_MOM (cg,
@@ -953,7 +958,8 @@ cgen_type_of_scanned_nodexpr_mom (struct codegen_mom_st *cg,
   /// reject nodes with `block` connectives
   if (connitm == MOM_PREDEFINED_NAMED (block))
     CGEN_ERROR_RESULT_MOM (cg, NULL,
-			   "module item %s : function %s has block %s with expression %s with `block`  connective",
+			   "module item %s : function %s has block %s with expression %s"
+			   " with `block`  connective",
 			   mom_item_cstring (cg->cg_moduleitm),
 			   mom_item_cstring (cg->cg_curfunitm),
 			   mom_item_cstring (cg->cg_curblockitm),
@@ -970,7 +976,8 @@ cgen_type_of_scanned_nodexpr_mom (struct codegen_mom_st *cg,
 		   mom_output_gcstring (vcodemit));
   if (vtypscan.typnum != momty_node)
     CGEN_ERROR_RESULT_MOM (cg, NULL,
-			   "module item %s : function %s has block %s with expression %s with connective %s with bad `code_type_scanner`",
+			   "module item %s : function %s has block %s with expression %s"
+			   " with connective %s with bad `code_type_scanner`",
 			   mom_item_cstring (cg->cg_moduleitm),
 			   mom_item_cstring (cg->cg_curfunitm),
 			   mom_item_cstring (cg->cg_curblockitm),
@@ -978,7 +985,8 @@ cgen_type_of_scanned_nodexpr_mom (struct codegen_mom_st *cg,
 			   mom_item_cstring (connitm));
   if (vcodemit.typnum != momty_node)
     CGEN_ERROR_RESULT_MOM (cg, NULL,
-			   "module item %s : function %s has block %s with expression %s with connective %s with bad `code_emitter`",
+			   "module item %s : function %s has block %s with expression %s"
+			   " with connective %s with bad `code_emitter`",
 			   mom_item_cstring (cg->cg_moduleitm),
 			   mom_item_cstring (cg->cg_curfunitm),
 			   mom_item_cstring (cg->cg_curblockitm),
@@ -992,7 +1000,8 @@ cgen_type_of_scanned_nodexpr_mom (struct codegen_mom_st *cg,
       if (cg->cg_errormsg)
 	return NULL;
       CGEN_ERROR_RESULT_MOM (cg, NULL,
-			     "module item %s : function %s has block %s with expression %s with connective %s failing to type",
+			     "module item %s : function %s has block %s with expression %s"
+			     " with connective %s failing to type",
 			     mom_item_cstring (cg->cg_moduleitm),
 			     mom_item_cstring (cg->cg_curfunitm),
 			     mom_item_cstring (cg->cg_curblockitm),
@@ -5291,28 +5300,67 @@ bool
 static bool scan_instruction_for_leaders_mom (struct codegen_mom_st *cg,
 					      momitem_t *itminstr);
 
+
 static void
-scan_for_basic_block_leaders_mom (struct codegen_mom_st *cg,
-				  momitem_t **itmarr, unsigned siz)
+scan_block_for_leaders_mom (struct codegen_mom_st *cg, momitem_t *itmblock)
+{
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  if (itmblock == NULL || itmblock == MOM_EMPTY)
+    return;
+  cgen_lock_item_mom (cg, itmblock);
+  if (itmblock->itm_kind != MOM_PREDEFINED_NAMED (block))
+    CGEN_ERROR_RETURN_MOM (cg,
+			   "scan_block_for_leaders: module item %s: function %s bad block %s",
+			   mom_item_cstring (cg->cg_moduleitm),
+			   mom_item_cstring (cg->cg_curfunitm),
+			   mom_item_cstring (itmblock));
+  momvalue_t vablock = MOM_NONEV;
+  struct momentry_st *entblock =
+    mom_attributes_find_entry (cg->cg_blockassoc, itmblock);
+  if (entblock)
+    {
+      vablock = entblock->ent_val;
+      MOM_DEBUGPRINTF (gencod,
+		       "scan_block_for_leaders for itmblock=%s found vablock=%s",
+		       mom_item_cstring (itmblock),
+		       mom_output_gcstring (vablock));
+    }
+  else
+    {
+      vablock = mom_itemv (itmblock);
+      cg->cg_blockassoc = mom_attributes_put (cg->cg_blockassoc,
+					      itmblock, &vablock);
+      mom_queueitem_push_back (&cg->cg_blockqueue, itmblock);
+      MOM_DEBUGPRINTF (gencod,
+		       "scan_block_for_leaders queued itmblock=%s with vablock=%s",
+		       mom_item_cstring (itmblock),
+		       mom_output_gcstring (vablock));
+    }
+}				/* end scan_block_for_leaders_mom */
+
+
+static void
+scan_array_for_basic_block_leaders_mom (struct codegen_mom_st *cg,
+					momitem_t **itmarr, unsigned siz)
 {
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
   assert (siz == 0 || itmarr != NULL);
   MOM_DEBUGPRINTF (gencod,
-		   "scan_for_basic_block_leaders start %u items @%p",
+		   "scan_array_for_basic_block_leaders start %u items @%p",
 		   siz, itmarr);
   bool leading = true;		// first instruction is a leader
   for (unsigned ix = 0; ix < siz && !cg->cg_errormsg; ix++)
     {
       momitem_t *curinsitm = itmarr[ix];
       MOM_DEBUGPRINTF (gencod,
-		       "scan_for_basic_block_leaders ix=%u curinsitm=%s", ix,
-		       mom_item_cstring (curinsitm));
+		       "scan_array_for_basic_block_leaders ix=%u curinsitm=%s",
+		       ix, mom_item_cstring (curinsitm));
       assert (curinsitm && curinsitm != MOM_EMPTY);
       cgen_lock_item_mom (cg, curinsitm);
       if (curinsitm->itm_kind != MOM_PREDEFINED_NAMED (code_statement)
 	  || mom_attributes_find_entry (cg->cg_funleadermap, curinsitm))
 	CGEN_ERROR_RETURN_MOM (cg,
-			       "scan_for_basic_block_leaders: module item %s:"
+			       "scan_array_for_basic_block_leaders: module item %s:"
 			       " function %s has bad or already scanned instruction %s",
 			       mom_item_cstring (cg->cg_moduleitm),
 			       mom_item_cstring (cg->cg_curfunitm),
@@ -5323,20 +5371,32 @@ scan_for_basic_block_leaders_mom (struct codegen_mom_st *cg,
 	  cg->cg_funleadermap =	//
 	    mom_attributes_put (cg->cg_funleadermap, curinsitm, &vblock);
 	  MOM_DEBUGPRINTF (gencod,
-			   "scan_for_basic_block_leaders curinsitm=%s first loeader",
+			   "scan_array_for_basic_block_leaders curinsitm=%s first loeader",
 			   mom_item_cstring (curinsitm));
 	};
       leading = scan_instruction_for_leaders_mom (cg, curinsitm);
       MOM_DEBUGPRINTF (gencod,
-		       "scan_for_basic_block_leaders ix=%u after curinsitm=%s leading=%s",
+		       "scan_array_for_basic_block_leaders ix=%u after curinsitm=%s leading=%s",
 		       ix, mom_item_cstring (curinsitm),
 		       leading ? "true" : "false");
     };				/* end for ix */
   MOM_DEBUGPRINTF (gencod,
-		   "scan_for_basic_block_leaders end %u items @%p",
+		   "scan_array_for_basic_block_leaders end %u items @%p",
 		   siz, itmarr);
-}				/* end scan_for_basic_block_leaders_mom */
+}				/* end scan_array_for_basic_block_leaders_mom */
 
+void
+scan_inside_block_for_leaders_mom (struct codegen_mom_st *cg,
+				   momitem_t *itmblock)
+{
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  MOM_DEBUGPRINTF (gencod,
+		   "scan_inside_block_for_leaders start itmblock=%s",
+		   mom_item_cstring (itmblock));
+#warning scan_inside_block_for_leaders unimplemented
+  MOM_FATAPRINTF ("unimplemented scan_inside_block_for_leaders itmblock=%s",
+		  mom_item_cstring (itmblock));
+}				/* end of scan_inside_block_for_leaders_mom */
 
 
 // return true if next instruction should be a leader
@@ -5443,7 +5503,6 @@ scan_instruction_for_leaders_mom (struct codegen_mom_st *cg,
 }				/* end scan_instruction_for_leaders_mom */
 
 
-
 bool
   momfunc_2itm_to_void__plain_function_generator
   (const momnode_t *clonode, momitem_t *itmcodgen, momitem_t *itmfun)
@@ -5528,8 +5587,20 @@ bool
 		   "plain_function_generator itmfun=%s before scan_for_basic_block_leaders codev=%s successblockitm=%s",
 		   mom_item_cstring (itmfun), mom_output_gcstring (codev),
 		   mom_item_cstring (successblockitm));
-  scan_for_basic_block_leaders_mom (cg, (momitem_t **) codetup->arritm,
-				    codetup->slen);
+  memset (&cg->cg_blockqueue, 0, sizeof (struct momqueueitems_st));
+  cg->cg_blockassoc = NULL;
+  scan_array_for_basic_block_leaders_mom (cg, (momitem_t **) codetup->arritm,
+					  codetup->slen);
+  while (!cg->cg_errormsg && mom_queueitem_size (&cg->cg_blockqueue) > 0)
+    {
+      momitem_t *itmblock =
+	(momitem_t *) mom_queueitem_pop_front (&cg->cg_blockqueue);
+      MOM_DEBUGPRINTF (gencod,
+		       "plain_function_generator itmblock=%s",
+		       mom_item_cstring (itmblock));
+      assert (itmblock != NULL);
+    };
+
   MOM_DEBUGPRINTF (gencod,
 		   "plain_function_generator itmfun=%s after scan_for_basic_block_leaders codev=%s successblockitm=%s",
 		   mom_item_cstring (itmfun), mom_output_gcstring (codev),
@@ -5539,6 +5610,8 @@ bool
     ("unimplemented plain_function_generator itmcodgen=%s itmfun=%s",
      mom_item_cstring (itmcodgen), mom_item_cstring (itmfun));
   cg->cg_funleadermap = NULL;
+  memset (&cg->cg_blockqueue, 0, sizeof (struct momqueueitems_st));
+  cg->cg_blockassoc = NULL;
 }				/* end of plain_function_generator */
 
 /// eof codgen.c
