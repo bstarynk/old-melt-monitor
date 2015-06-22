@@ -5438,9 +5438,19 @@ scan_value_block_for_leaders_mom (struct codegen_mom_st *cg,
     case momty_node:
       {
 	const momnode_t *nod = val.vnode;
+	momitem_t *blockitm = NULL;
 	assert (nod != NULL);
+	unsigned nodarity = 0;
 	if (mom_node_conn (nod) != MOM_PREDEFINED_NAMED (block))
 	  goto badvaluetoscan;
+	if ((nodarity = mom_node_arity (nod)) <= 1)
+	  goto badvaluetoscan;
+	if (!(blockitm = mom_value_to_item (mom_node_nth (nod, 0))))
+	  goto badvaluetoscan;
+	MOM_DEBUGPRINTF (gencod,
+			 "scan_value_block_for_leaders insitm=%s val=%s blockitm=%s",
+			 mom_item_cstring (insitm), mom_output_gcstring (val),
+			 mom_item_cstring (blockitm));
 #warning scan_value_block_for_leaders_mom incomplete
 	MOM_FATAPRINTF
 	  ("scan_value_block_for_leaders incomplete insitm=%s val=%s",
