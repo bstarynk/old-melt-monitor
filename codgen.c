@@ -5402,6 +5402,7 @@ scan_inside_block_for_leaders_mom (struct codegen_mom_st *cg,
 		   "scan_inside_block_for_leaders start itmblock=%s vinstrs=%s",
 		   mom_item_cstring (itmblock),
 		   mom_output_gcstring (vinstrs));
+  cg->cg_curblockitm = itmblock;
   const momseq_t *tupinstrs = mom_value_to_tuple (vinstrs);
   if (!tupinstrs)
     CGEN_ERROR_RETURN_MOM (cg,
@@ -5414,12 +5415,50 @@ scan_inside_block_for_leaders_mom (struct codegen_mom_st *cg,
   scan_array_for_basic_block_leaders_mom (cg,
 					  (momitem_t **) tupinstrs->arritm,
 					  tupinstrs->slen);
+  cg->cg_curblockitm = NULL;
   MOM_DEBUGPRINTF (gencod,
 		   "scan_inside_block_for_leaders done itmblock=%s vinstrs=%s",
 		   mom_item_cstring (itmblock),
 		   mom_output_gcstring (vinstrs));
 }				/* end of scan_inside_block_for_leaders_mom */
 
+
+static void
+scan_value_block_for_leaders_mom (struct codegen_mom_st *cg,
+				  momitem_t *insitm, const momvalue_t val)
+{
+  assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  switch (val.typnum)
+    {
+    case momty_item:
+      {
+	scan_block_for_leaders_mom (cg, val.vitem);
+      }
+      break;
+    case momty_node:
+      {
+	const momnode_t *nod = val.vnode;
+	assert (nod != NULL);
+	if (mom_node_conn (nod) != MOM_PREDEFINED_NAMED (block))
+	  goto badvaluetoscan;
+#warning scan_value_block_for_leaders_mom incomplete
+	MOM_FATAPRINTF
+	  ("scan_value_block_for_leaders incomplete insitm=%s val=%s",
+	   mom_item_cstring (insitm), mom_output_gcstring (val));
+      }
+      break;
+    default:
+    badvaluetoscan:
+      CGEN_ERROR_RETURN_MOM (cg,
+			     "scan_value_block_for_leaders: module item %s:"
+			     " function %s has block %s with instruction %s with bad value-block %s",
+			     mom_item_cstring (cg->cg_moduleitm),
+			     mom_item_cstring (cg->cg_curfunitm),
+			     mom_item_cstring (cg->cg_curblockitm),
+			     mom_item_cstring (insitm),
+			     mom_output_gcstring (val));
+    }
+}				/* end of scan_value_block_for_leaders_mom */
 
 // return true if next instruction should be a leader
 static bool
