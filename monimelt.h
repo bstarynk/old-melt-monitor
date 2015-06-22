@@ -1532,6 +1532,10 @@ enum mom_predefhash_en
      default:
        do_something_otherwise(itm);
    }
+
+Notice that it is wrong to use two MOM_PREDEFINED_NAMED_CASE
+consecutively, each case should have its own statement[s], perhaps a
+goto...
 ***/
 
 #define MOM_PREDEFINED_NAMED_CASE_AT(Nam,Itm,Def,Lin)	\

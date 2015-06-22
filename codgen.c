@@ -1289,7 +1289,9 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
       break;
       ////////////////
     case MOM_PREDEFINED_NAMED_CASE (apply, itmop, otherwiseoplab):
+      goto scanapplyop;
     case MOM_PREDEFINED_NAMED_CASE (apply_else, itmop, otherwiseoplab):
+    scanapplyop:
       {
 	/// apply <signature> <results...> <fun> <args...>
 	/// apply_else <signature> <results...> <fun> <args...> <elseblock>
@@ -3373,7 +3375,9 @@ cgen_emit_statement_mom (struct codegen_mom_st *cg, unsigned insix,
       break;
       ////////////////
     case MOM_PREDEFINED_NAMED_CASE (apply, opitm, otherwiseoplab):
+      goto emitapplyop;
     case MOM_PREDEFINED_NAMED_CASE (apply_else, opitm, otherwiseoplab):
+    emitapplyop:
       {
 	cgen_emit_apply_statement_mom (cg, insix, stmtitm,
 				       opitm ==
