@@ -5394,12 +5394,30 @@ scan_inside_block_for_leaders_mom (struct codegen_mom_st *cg,
 				   momitem_t *itmblock)
 {
   assert (cg && cg->cg_magic == CODEGEN_MAGIC_MOM);
+  assert (itmblock && itmblock->itm_kind == MOM_PREDEFINED_NAMED (block));
+  momvalue_t vinstrs =		//
+    mom_item_unsync_get_attribute (itmblock,
+				   MOM_PREDEFINED_NAMED (instructions));
   MOM_DEBUGPRINTF (gencod,
-		   "scan_inside_block_for_leaders start itmblock=%s",
-		   mom_item_cstring (itmblock));
-#warning scan_inside_block_for_leaders unimplemented
-  MOM_FATAPRINTF ("unimplemented scan_inside_block_for_leaders itmblock=%s",
-		  mom_item_cstring (itmblock));
+		   "scan_inside_block_for_leaders start itmblock=%s vinstrs=%s",
+		   mom_item_cstring (itmblock),
+		   mom_output_gcstring (vinstrs));
+  const momseq_t *tupinstrs = mom_value_to_tuple (vinstrs);
+  if (!tupinstrs)
+    CGEN_ERROR_RETURN_MOM (cg,
+			   "scan_inside_block_for_leaders: module item %s:"
+			   " function %s has block %s with bad vinstrs %s",
+			   mom_item_cstring (cg->cg_moduleitm),
+			   mom_item_cstring (cg->cg_curfunitm),
+			   mom_item_cstring (itmblock),
+			   mom_output_gcstring (vinstrs));
+  scan_array_for_basic_block_leaders_mom (cg,
+					  (momitem_t **) tupinstrs->arritm,
+					  tupinstrs->slen);
+  MOM_DEBUGPRINTF (gencod,
+		   "scan_inside_block_for_leaders done itmblock=%s vinstrs=%s",
+		   mom_item_cstring (itmblock),
+		   mom_output_gcstring (vinstrs));
 }				/* end of scan_inside_block_for_leaders_mom */
 
 
