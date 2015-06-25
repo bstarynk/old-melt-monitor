@@ -1833,6 +1833,21 @@ mom_unsync_webexitem_outstr_html (momitem_t *wxitm, const momstring_t *s,
 
 extern pthread_cond_t mom_agenda_changed_condvar;
 
+static inline bool
+mom_code_compatible_types (const momitem_t *typ1itm, const momitem_t *typ2itm)
+{
+  if (typ1itm == typ2itm)
+    return true;
+  if (!typ1itm || !typ2itm)
+    return false;
+  if ((typ1itm == MOM_PREDEFINED_NAMED (item)
+       || typ1itm == MOM_PREDEFINED_NAMED (locked_item))
+      && (typ2itm == MOM_PREDEFINED_NAMED (item)
+	  || typ2itm == MOM_PREDEFINED_NAMED (locked_item)))
+    return true;
+  return false;
+}				/* end mom_code_compatible_types */
+
 void mom_wake_event_loop (void);
 
 /// start a batch process (e.g. to compile the generated C code in

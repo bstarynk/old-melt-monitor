@@ -95,21 +95,6 @@ enum funinfoindex_mom_en
   CGEN_ERROR_RESULT_AT_MOM(__LINE__,(Cg),(Res),(Fmt),__VA_ARGS__)
 
 
-bool
-mom_cgen_compatible_types (const momitem_t *typ1itm, const momitem_t *typ2itm)
-{
-  if (typ1itm == typ2itm)
-    return true;
-  if (!typ1itm || !typ2itm)
-    return false;
-  if ((typ1itm == MOM_PREDEFINED_NAMED (item)
-       || typ1itm == MOM_PREDEFINED_NAMED (locked_item))
-      && (typ2itm == MOM_PREDEFINED_NAMED (item)
-	  || typ2itm == MOM_PREDEFINED_NAMED (locked_item)))
-    return true;
-  return false;
-}				/* end mom_cgen_compatible_types */
-
 
 static void
 cgen_lock_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
@@ -1173,7 +1158,7 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
 	if (cg->cg_errormsg)
 	  return;
 	if (lvarctypitm == rexpctypitm
-	    || mom_cgen_compatible_types (lvarctypitm, rexpctypitm))
+	    || mom_code_compatible_types (lvarctypitm, rexpctypitm))
 	  break;
 	CGEN_ERROR_RETURN_MOM (cg,
 			       "module item %s : function %s with block %s with set statement %s : leftvar %s of type %s is incompatible with rightexpr %s of type %s",
@@ -1607,7 +1592,7 @@ cgen_scan_apply_statement_first_mom (struct codegen_mom_st *cg,
       const momitem_t *outsigtypitm = mom_seq_nth (outyptup, outix);
       momitem_t *outcurtypitm = cgen_type_of_scanned_item_mom (cg, outitm);
       if (outitm && outsigtypitm
-	  && mom_cgen_compatible_types (outsigtypitm, outcurtypitm))
+	  && mom_code_compatible_types (outsigtypitm, outcurtypitm))
 	continue;
       else
 	CGEN_ERROR_RETURN_MOM (cg,
@@ -1644,7 +1629,7 @@ cgen_scan_apply_statement_first_mom (struct codegen_mom_st *cg,
 		       mom_output_gcstring (vcurin),
 		       mom_item_cstring (insigtypitm),
 		       mom_item_cstring (incurtypitm));
-      if (insigtypitm && mom_cgen_compatible_types (insigtypitm, incurtypitm))
+      if (insigtypitm && mom_code_compatible_types (insigtypitm, incurtypitm))
 	continue;
       else
 	CGEN_ERROR_RETURN_MOM (cg,
@@ -4974,7 +4959,7 @@ bool
 		       mom_item_cstring (curargtypitm));
       if (!curformaltypitm || !curargtypitm
 	  || (curformaltypitm != curargtypitm
-	      && !mom_cgen_compatible_types (curformaltypitm, curargtypitm)))
+	      && !mom_code_compatible_types (curformaltypitm, curargtypitm)))
 	CGEN_ERROR_RESULT_MOM (cg, false,
 			       "plain_statement_scanner. module item %s :"
 			       " function %s with block %s with plain statement %s"
@@ -5034,7 +5019,7 @@ bool
 			   mom_output_gcstring (vrestexp),
 			   mom_item_cstring (vrestypitm));
 	  if (!vrestypitm
-	      || !mom_cgen_compatible_types (vrestypitm, varirestypitm))
+	      || !mom_code_compatible_types (vrestypitm, varirestypitm))
 	    CGEN_ERROR_RESULT_MOM (cg, false,
 				   "plain_statement_scanner. module item %s :"
 				   " function %s with block %s with plain statement %s"
