@@ -29,6 +29,7 @@ struct codejit_mom_st
   momitem_t *cj_moduleitm;
   struct momhashset_st *cj_lockeditemset;	/* the set of locked items */
   struct momhashset_st *cj_functionhset;	/* the set of c functions */
+  momitem_t *cj_curfunitm;	/* the current function */
 };
 
 #define CJIT_ERROR_RETURN_MOM_AT_BIS(Lin,Cj,Fmt,...) do {       \
@@ -154,30 +155,6 @@ cjit_first_scanning_pass_mom (momitem_t *itmcjit)
   if (itmmod->itm_kind != MOM_PREDEFINED_NAMED (code_module))
     CJIT_ERROR_RETURN_MOM (cj, "module item %s is not a `code_module`",
 			   mom_item_cstring (itmmod));
-  ///// prepare the module using its preparation
-  momvalue_t resprepv = MOM_NONEV;
-  momvalue_t prepv =		//
-    mom_item_unsync_get_attribute (itmmod,
-				   MOM_PREDEFINED_NAMED (preparation));
-  MOM_DEBUGPRINTF (gencod, "preparation of %s is %s",
-		   mom_item_cstring (itmmod), mom_output_gcstring (prepv));
-  if (prepv.typnum == momty_node
-      && (!mom_applval_2itm_to_val (prepv, itmmod, itmcjit, &resprepv)
-	  || resprepv.typnum == momty_string))
-    {
-      MOM_DEBUGPRINTF (gencod, "preparation of %s gave %s",
-		       mom_item_cstring (itmmod),
-		       mom_output_gcstring (resprepv));
-      if (resprepv.typnum == momty_string)
-	cj->cj_errormsg = mom_value_to_string (resprepv);
-      else
-	CJIT_ERROR_RETURN_MOM (cj, "module item %s preparation failed",
-			       mom_item_cstring (itmmod));
-    }
-  else if (prepv.typnum != momty_null)
-    CJIT_ERROR_RETURN_MOM (cj, "module item %s has bad preparation %s",
-			   mom_item_cstring (itmmod),
-			   mom_output_gcstring (prepv));
   ///// compute into cg_functionhset the hashed set of functions
   momvalue_t funsv =		//
     mom_item_unsync_get_attribute (itmmod, MOM_PREDEFINED_NAMED (functions));
@@ -186,8 +163,8 @@ cjit_first_scanning_pass_mom (momitem_t *itmcjit)
   if (funsv.typnum == momty_node)
     {
       momvalue_t funsetv = MOM_NONEV;
-      if (!mom_applval_2itm_to_val (prepv, itmmod, itmcjit, &funsetv)
-	  || (funsv.typnum != momty_set || funsv.typnum != momty_tuple))
+      if (!mom_applval_2itm_to_val (funsv, itmmod, itmcjit, &funsetv)
+	  || (funsetv.typnum != momty_set || funsetv.typnum != momty_tuple))
 	CJIT_ERROR_RETURN_MOM (cj,
 			       "module item %s : application of `functions` clsosure %s gave non-sequence result %s",
 			       mom_item_cstring (itmmod),
@@ -223,6 +200,48 @@ static void
 cjit_scan_function_first_mom (struct codejit_mom_st *cj, momitem_t *itmfun)
 {
   assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
+  assert (itmfun != NULL);
+  momitem_t *itmsignature = NULL;
+  MOM_DEBUGPRINTF (gencod, "cjit_scan_function_first scanning function %s",
+		   mom_item_cstring (itmfun));
+  cj->cj_curfunitm = itmfun;
+  {
+    momitem_t *itmfunkind = itmfun->itm_kind;
+    if (itmfunkind)
+      {
+	mom_item_lock (itmfunkind);
+	if (itmfunkind->itm_kind == MOM_PREDEFINED_NAMED (function_signature))
+	  {
+	    itmsignature = itmfunkind;
+	    MOM_DEBUGPRINTF (gencod, "scanning function %s itmsignature %s",
+			     mom_item_cstring (itmfun),
+			     mom_item_cstring (itmsignature));
+	  }
+	mom_item_unlock (itmfunkind);
+      }
+    momvalue_t vfunctionsig = MOM_NONEV;
+    if (!itmsignature)
+      {
+	vfunctionsig =
+	  mom_item_unsync_get_attribute (itmfun,
+					 MOM_PREDEFINED_NAMED
+					 (function_signature));
+	MOM_DEBUGPRINTF (gencod, "scanning function %s vfunctionsig=%s",
+			 mom_item_cstring (itmfun),
+			 mom_output_gcstring (vfunctionsig));
+	itmsignature = mom_value_to_item (vfunctionsig);
+      }
+  }
+  if (!itmsignature
+      || itmsignature->itm_kind != MOM_PREDEFINED_NAMED (function_signature))
+    CJIT_ERROR_RETURN_MOM (cj,
+			   "module item %s : function %s without signature",
+			   mom_item_cstring (cj->cj_moduleitm),
+			   mom_item_cstring (itmfun));
+  cjit_lock_item_mom (cj, itmsignature);
+  MOM_DEBUGPRINTF (gencod, "scanning function %s itmsignature %s",
+		   mom_item_cstring (itmfun),
+		   mom_item_cstring (itmsignature));
   MOM_FATAPRINTF ("cjit_scan_function_first unimplemented itmfun=%s",
 		  mom_item_cstring (itmfun));
 #warning cjit_scan_function_first_mom unimplemented
