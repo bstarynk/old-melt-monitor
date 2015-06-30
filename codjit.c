@@ -207,6 +207,10 @@ cjit_scan_function_for_signature_mom (struct codejit_mom_st *cj,
 				      momitem_t *itmsignature);
 
 static void
+cjit_scan_function_constants_mom (struct codejit_mom_st *cj,
+				  momitem_t *itmfun, momvalue_t vconstants);
+
+static void
 cjit_scan_function_first_mom (struct codejit_mom_st *cj, momitem_t *itmfun)
 {
   assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
@@ -233,9 +237,8 @@ cjit_scan_function_first_mom (struct codejit_mom_st *cj, momitem_t *itmfun)
     if (!itmsignature)
       {
 	vfunctionsig =		//
-	  mom_item_unsync_get_attribute (itmfun,
-					 MOM_PREDEFINED_NAMED
-					 (function_signature));
+	  mom_item_unsync_get_attribute	//
+	  (itmfun, MOM_PREDEFINED_NAMED (function_signature));
 	MOM_DEBUGPRINTF (gencod, "scanning function %s vfunctionsig=%s",
 			 mom_item_cstring (itmfun),
 			 mom_output_gcstring (vfunctionsig));
@@ -255,6 +258,13 @@ cjit_scan_function_first_mom (struct codejit_mom_st *cj, momitem_t *itmfun)
 		   mom_item_cstring (itmfun),
 		   mom_item_cstring (itmsignature));
   cjit_scan_function_for_signature_mom (cj, itmfun, itmsignature);
+  {
+    momvalue_t vconstants = mom_item_unsync_get_attribute	//
+      (itmfun,
+       MOM_PREDEFINED_NAMED (constants));
+    if (vconstants.typnum != momty_null)
+      cjit_scan_function_constants_mom (cj, itmfun, vconstants);
+  }
   MOM_FATAPRINTF ("cjit_scan_function_first unimplemented itmfun=%s",
 		  mom_item_cstring (itmfun));
 #warning cjit_scan_function_first_mom unimplemented
@@ -410,3 +420,42 @@ cjit_scan_function_for_signature_mom (struct codejit_mom_st *cj,
 		   mom_item_cstring (itmfun),
 		   mom_item_cstring (itmsignature));
 }				/* end of cjit_scan_function_for_signature_mom */
+
+
+
+static void
+cjit_scan_function_constants_mom (struct codejit_mom_st *cj,
+				  momitem_t *itmfun, momvalue_t vconstants)
+{
+  assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
+  assert (itmfun != NULL);
+  assert (itmfun == cj->cj_curfunitm);
+  MOM_DEBUGPRINTF (gencod,
+		   "start scanning function %s constants %s",
+		   mom_item_cstring (itmfun),
+		   mom_output_gcstring (vconstants));
+  const momseq_t *constantseq = mom_value_to_sequ (vconstants);
+  if (!constantseq)
+    CJIT_ERROR_RETURN_MOM (cj,
+			   "module item %s : function %s with bad constants %s",
+			   mom_item_cstring (cj->cj_moduleitm),
+			   mom_item_cstring (itmfun),
+			   mom_output_gcstring (vconstants));
+  unsigned nbconsts = mom_seq_length (constantseq);
+  for (unsigned kix = 0; kix < nbconsts && !cj->cj_errormsg; kix++)
+    {
+      momitem_t *curconstitm = (momitem_t *) mom_seq_nth (constantseq, kix);
+      if (mom_attributes_find_entry (cj->cj_funbind, curconstitm))
+	CJIT_ERROR_RETURN_MOM (cj,
+			       "module item %s : function %s with duplicate constant #%d %s bound to %s",
+			       mom_item_cstring (cj->cj_moduleitm),
+			       mom_item_cstring (itmfun),
+			       kix,
+			       mom_item_cstring (curconstitm),
+			       mom_output_gcstring (mom_attributes_find_value
+						    (cj->cj_funbind,
+						     curconstitm)));
+      cjit_lock_item_mom (cj, curconstitm);
+#warning a completer  cjit_scan_function_constants_mom
+    }
+}				/* end of cjit_scan_function_constants_mom */
