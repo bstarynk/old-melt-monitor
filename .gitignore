@@ -19,3 +19,4 @@ momjsrpc_client
 meltmom*.cc
 meltmom*.mk
 meltmom*.[ch]
+*doc.html

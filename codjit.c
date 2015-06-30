@@ -28,8 +28,10 @@ struct codejit_mom_st
   momitem_t *cj_codjititm;
   momitem_t *cj_moduleitm;
   struct momhashset_st *cj_lockeditemset;	/* the set of locked items */
-  struct momhashset_st *cj_functionhset;	/* the set of c functions */
+  struct momhashset_st *cj_functionhset;	/* the set of functions */
+  struct momattributes_st *cj_globalbind;	/* global bindings */
   momitem_t *cj_curfunitm;	/* the current function */
+  struct momattributes_st *cj_funbind;	/* the function's bindings */
 };
 
 #define CJIT_ERROR_RETURN_MOM_AT_BIS(Lin,Cj,Fmt,...) do {       \
@@ -190,12 +192,15 @@ cjit_first_scanning_pass_mom (momitem_t *itmcjit)
       {
 	cjit_lock_item_mom (cj, (momitem_t *) fseq->arritm[ix]);
 	cjit_scan_function_first_mom (cj, (momitem_t *) fseq->arritm[ix]);
+	cj->cj_curfunitm = NULL;
 	if (cj->cj_errormsg)
 	  return;
       }
   }
 }				/* end of cjit_first_scanning_pass */
 
+
+////////////////////////////////////////////////////////////////
 static void
 cjit_scan_function_first_mom (struct codejit_mom_st *cj, momitem_t *itmfun)
 {
