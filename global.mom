@@ -2979,6 +2979,13 @@
 ..
 
 
+** variables   ////// PREDEFINED
+{
+  * comment  "Give the sequence of variables" }
+ 
+..
+
+
 ** variadic_count   ////// PREDEFINED
 {
   * comment  "in plain connectives, gives item bound to count of remaining arguments"

@@ -750,6 +750,17 @@ struct momattributes_st
 
 struct momentry_st *mom_attributes_find_entry (const struct momattributes_st
 					       *attrs, const momitem_t *itma);
+inline momvalue_t
+mom_attributes_find_value (struct momattributes_st *attrs,
+			   const momitem_t *itma)
+{
+  struct momentry_st *ent = mom_attributes_find_entry (attrs, itma);
+  if (ent)
+    return ent->ent_val;
+  else
+    return MOM_NONEV;
+}
+
 struct momattributes_st *mom_attributes_put (struct momattributes_st *attrs,
 					     const momitem_t *itma,
 					     const momvalue_t *pval);

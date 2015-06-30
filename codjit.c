@@ -202,6 +202,11 @@ cjit_first_scanning_pass_mom (momitem_t *itmcjit)
 
 ////////////////////////////////////////////////////////////////
 static void
+cjit_scan_function_for_signature_mom (struct codejit_mom_st *cj,
+				      momitem_t *itmfun,
+				      momitem_t *itmsignature);
+
+static void
 cjit_scan_function_first_mom (struct codejit_mom_st *cj, momitem_t *itmfun)
 {
   assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
@@ -227,7 +232,7 @@ cjit_scan_function_first_mom (struct codejit_mom_st *cj, momitem_t *itmfun)
     momvalue_t vfunctionsig = MOM_NONEV;
     if (!itmsignature)
       {
-	vfunctionsig =
+	vfunctionsig =		//
 	  mom_item_unsync_get_attribute (itmfun,
 					 MOM_PREDEFINED_NAMED
 					 (function_signature));
@@ -244,10 +249,164 @@ cjit_scan_function_first_mom (struct codejit_mom_st *cj, momitem_t *itmfun)
 			   mom_item_cstring (cj->cj_moduleitm),
 			   mom_item_cstring (itmfun));
   cjit_lock_item_mom (cj, itmsignature);
+  const unsigned nbfuninitattrs = 15;
+  cj->cj_funbind = mom_attributes_make (nbfuninitattrs);
   MOM_DEBUGPRINTF (gencod, "scanning function %s itmsignature %s",
 		   mom_item_cstring (itmfun),
 		   mom_item_cstring (itmsignature));
+  cjit_scan_function_for_signature_mom (cj, itmfun, itmsignature);
   MOM_FATAPRINTF ("cjit_scan_function_first unimplemented itmfun=%s",
 		  mom_item_cstring (itmfun));
 #warning cjit_scan_function_first_mom unimplemented
 }				/* end of cjit_scan_function_first_mom */
+
+static void
+cjit_scan_function_for_signature_mom (struct codejit_mom_st *cj,
+				      momitem_t *itmfun,
+				      momitem_t *itmsignature)
+{
+  assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
+  assert (itmfun != NULL);
+  assert (itmsignature != NULL);
+  assert (itmfun == cj->cj_curfunitm);
+  if (cj->cj_errormsg)
+    return;
+  momvalue_t valformals =	//
+    mom_item_unsync_get_attribute (itmfun,
+				   MOM_PREDEFINED_NAMED (formals));
+  momvalue_t valresults =	//
+    mom_item_unsync_get_attribute (itmfun, MOM_PREDEFINED_NAMED (results));
+  momvalue_t valinputypes =	//
+    mom_item_unsync_get_attribute (itmsignature,
+				   MOM_PREDEFINED_NAMED (input_types));
+  momvalue_t valoutputypes =	//
+    mom_item_unsync_get_attribute (itmsignature,
+				   MOM_PREDEFINED_NAMED (output_types));
+  const momseq_t *formalseq = mom_value_to_sequ (valformals);
+  const momseq_t *resultseq = mom_value_to_sequ (valresults);
+  MOM_DEBUGPRINTF (gencod,
+		   "scanning function %s signature %s formals %s results %s",
+		   mom_item_cstring (itmfun),
+		   mom_item_cstring (itmsignature),
+		   mom_output_gcstring (valformals),
+		   mom_output_gcstring (valresults));
+  if (valformals.typnum != momty_null && !formalseq)
+    CJIT_ERROR_RETURN_MOM (cj,
+			   "module item %s : function %s with bad `formals` %s",
+			   mom_item_cstring (cj->cj_moduleitm),
+			   mom_item_cstring (itmfun),
+			   mom_output_gcstring (valformals));
+  if (valresults.typnum != momty_null && !resultseq)
+    CJIT_ERROR_RETURN_MOM (cj,
+			   "module item %s : function %s with bad `results` %s",
+			   mom_item_cstring (cj->cj_moduleitm),
+			   mom_item_cstring (itmfun),
+			   mom_output_gcstring (valresults));
+  const momseq_t *inputypeseq = mom_value_to_tuple (valinputypes);
+  const momseq_t *outputypeseq = mom_value_to_tuple (valoutputypes);
+  unsigned nbins = 0, nbouts = 0;
+  if (formalseq
+      && (nbins = mom_seq_length (inputypeseq)) != mom_seq_length (formalseq))
+    CJIT_ERROR_RETURN_MOM (cj,
+			   "module item %s : function %s with `formals` %s"
+			   " has signature %s with bad `input_types` %s",
+			   mom_item_cstring (cj->cj_moduleitm),
+			   mom_item_cstring (itmfun),
+			   mom_output_gcstring (valformals),
+			   mom_item_cstring (itmsignature),
+			   mom_output_gcstring (valinputypes));
+  if (resultseq
+      && (nbouts =
+	  mom_seq_length (outputypeseq)) != mom_seq_length (resultseq))
+    CJIT_ERROR_RETURN_MOM (cj,
+			   "module item %s : function %s with `results` %s"
+			   " has signature %s with bad `output_types` %s",
+			   mom_item_cstring (cj->cj_moduleitm),
+			   mom_item_cstring (itmfun),
+			   mom_output_gcstring (valresults),
+			   mom_item_cstring (itmsignature),
+			   mom_output_gcstring (valoutputypes));
+  // handle the input formals
+  for (unsigned inix = 0; inix < nbins && !cj->cj_errormsg; inix++)
+    {
+      momitem_t *curformalitm = (momitem_t *) mom_seq_nth (formalseq, inix);
+      momitem_t *curintypitm = (momitem_t *) mom_seq_nth (inputypeseq, inix);
+      if (mom_attributes_find_entry (cj->cj_funbind, curformalitm))
+	CJIT_ERROR_RETURN_MOM (cj,
+			       "module item %s : function %s with duplicate formal #%d %s bound to %s",
+			       mom_item_cstring (cj->cj_moduleitm),
+			       mom_item_cstring (itmfun),
+			       inix,
+			       mom_item_cstring (curformalitm),
+			       mom_output_gcstring (mom_attributes_find_value
+						    (cj->cj_funbind,
+						     curformalitm)));
+      cjit_lock_item_mom (cj, curformalitm);
+      cjit_lock_item_mom (cj, curintypitm);
+      if (mom_value_to_item
+	  (mom_item_unsync_get_attribute
+	   (curformalitm, MOM_PREDEFINED_NAMED (type))) != curintypitm)
+	CJIT_ERROR_RETURN_MOM (cj,
+			       "module item %s : function %s with formal #%d %s mismatching type, wants %s",
+			       mom_item_cstring (cj->cj_moduleitm),
+			       mom_item_cstring (itmfun), inix,
+			       mom_item_cstring (curformalitm),
+			       mom_item_cstring (curintypitm));
+      // add the formal bindings
+      momvalue_t vnod = mom_nodev_new (MOM_PREDEFINED_NAMED (formals), 3,
+				       mom_itemv (itmfun),
+				       mom_itemv (curintypitm),
+				       mom_intv (inix));
+      cj->cj_funbind =
+	mom_attributes_put (cj->cj_funbind, curformalitm, &vnod);
+      MOM_DEBUGPRINTF (gencod,
+		       "scanning function-sig %s bound formal#%d %s to %s",
+		       mom_item_cstring (itmfun), inix,
+		       mom_item_cstring (curformalitm),
+		       mom_output_gcstring (vnod));
+    }
+  // handle the output results
+  for (unsigned outix = 0; outix < nbouts && !cj->cj_errormsg; outix++)
+    {
+      momitem_t *curesultitm = (momitem_t *) mom_seq_nth (resultseq, outix);
+      momitem_t *curoutypitm =
+	(momitem_t *) mom_seq_nth (outputypeseq, outix);
+      if (mom_attributes_find_entry (cj->cj_funbind, curesultitm))
+	CJIT_ERROR_RETURN_MOM (cj,
+			       "module item %s : function %s with duplicate result #%d %s bound to %s",
+			       mom_item_cstring (cj->cj_moduleitm),
+			       mom_item_cstring (itmfun),
+			       outix,
+			       mom_item_cstring (curesultitm),
+			       mom_output_gcstring (mom_attributes_find_value
+						    (cj->cj_funbind,
+						     curesultitm)));
+      cjit_lock_item_mom (cj, curesultitm);
+      cjit_lock_item_mom (cj, curoutypitm);
+      if (mom_value_to_item
+	  (mom_item_unsync_get_attribute
+	   (curesultitm, MOM_PREDEFINED_NAMED (type))) != curoutypitm)
+	CJIT_ERROR_RETURN_MOM (cj,
+			       "module item %s : function %s with result #%d %s mismatching type, wants %s",
+			       mom_item_cstring (cj->cj_moduleitm),
+			       mom_item_cstring (itmfun), outix,
+			       mom_item_cstring (curesultitm),
+			       mom_item_cstring (curoutypitm));
+      // add the results bindings
+      momvalue_t vnod = mom_nodev_new (MOM_PREDEFINED_NAMED (results), 3,
+				       mom_itemv (itmfun),
+				       mom_itemv (curoutypitm),
+				       mom_intv (outix));
+      cj->cj_funbind =
+	mom_attributes_put (cj->cj_funbind, curesultitm, &vnod);
+      MOM_DEBUGPRINTF (gencod,
+		       "scanning function-sig %s bound result#%d %s to %s",
+		       mom_item_cstring (itmfun), outix,
+		       mom_item_cstring (curesultitm),
+		       mom_output_gcstring (vnod));
+    }
+  MOM_DEBUGPRINTF (gencod,
+		   "done scanning function %s signature %s",
+		   mom_item_cstring (itmfun),
+		   mom_item_cstring (itmsignature));
+}				/* end of cjit_scan_function_for_signature_mom */
