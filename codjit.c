@@ -32,7 +32,10 @@ struct codejit_mom_st
   struct momattributes_st *cj_globalbind;	/* global bindings */
   momitem_t *cj_curfunitm;	/* the current function */
   struct momattributes_st *cj_funbind;	/* the function's bindings */
+  struct momhashset_st *cj_funconstset;	/* the set of constant items */
+  struct momhashset_st *cj_funclosedset;	/* the set of closed items */
 };
+
 
 #define CJIT_ERROR_RETURN_MOM_AT_BIS(Lin,Cj,Fmt,...) do {       \
   struct codejit_mom_st *cj_##Lin = (Cj);                       \
@@ -210,6 +213,17 @@ static void
 cjit_scan_function_constants_mom (struct codejit_mom_st *cj,
 				  momitem_t *itmfun, momvalue_t vconstants);
 
+
+static void
+cjit_scan_function_closed_mom (struct codejit_mom_st *cj,
+			       momitem_t *itmfun, momvalue_t vclosed);
+
+
+static void
+cjit_scan_function_variables_mom (struct codejit_mom_st *cj,
+				  momitem_t *itmfun, momvalue_t vvariables);
+
+
 static void
 cjit_scan_function_first_mom (struct codejit_mom_st *cj, momitem_t *itmfun)
 {
@@ -254,10 +268,13 @@ cjit_scan_function_first_mom (struct codejit_mom_st *cj, momitem_t *itmfun)
   cjit_lock_item_mom (cj, itmsignature);
   const unsigned nbfuninitattrs = 15;
   cj->cj_funbind = mom_attributes_make (nbfuninitattrs);
+  cj->cj_funconstset = NULL;
+  cj->cj_funclosedset = NULL;
   MOM_DEBUGPRINTF (gencod, "scanning function %s itmsignature %s",
 		   mom_item_cstring (itmfun),
 		   mom_item_cstring (itmsignature));
   cjit_scan_function_for_signature_mom (cj, itmfun, itmsignature);
+  //scan the constants
   {
     momvalue_t vconstants = mom_item_unsync_get_attribute	//
       (itmfun,
@@ -265,10 +282,28 @@ cjit_scan_function_first_mom (struct codejit_mom_st *cj, momitem_t *itmfun)
     if (vconstants.typnum != momty_null)
       cjit_scan_function_constants_mom (cj, itmfun, vconstants);
   }
+  //scan the closed
+  {
+    momvalue_t vclosed = mom_item_unsync_get_attribute	//
+      (itmfun,
+       MOM_PREDEFINED_NAMED (closed));
+    if (vclosed.typnum != momty_null)
+      cjit_scan_function_closed_mom (cj, itmfun, vclosed);
+  }
+
+  //scan the variables
+  {
+    momvalue_t vvariables = mom_item_unsync_get_attribute	//
+      (itmfun,
+       MOM_PREDEFINED_NAMED (variables));
+    if (vvariables.typnum != momty_null)
+      cjit_scan_function_closed_mom (cj, itmfun, vvariables);
+  }
   MOM_FATAPRINTF ("cjit_scan_function_first unimplemented itmfun=%s",
 		  mom_item_cstring (itmfun));
 #warning cjit_scan_function_first_mom unimplemented
 }				/* end of cjit_scan_function_first_mom */
+
 
 static void
 cjit_scan_function_for_signature_mom (struct codejit_mom_st *cj,
@@ -456,6 +491,72 @@ cjit_scan_function_constants_mom (struct codejit_mom_st *cj,
 						    (cj->cj_funbind,
 						     curconstitm)));
       cjit_lock_item_mom (cj, curconstitm);
-#warning a completer  cjit_scan_function_constants_mom
+      momvalue_t valcurconst =	//
+	mom_item_unsync_get_attribute (curconstitm,
+				       MOM_PREDEFINED_NAMED (value));
+      if (valcurconst.typnum == momty_null)
+	valcurconst = mom_itemv (curconstitm);
+      cj->cj_funconstset = mom_hashset_put (cj->cj_funconstset, curconstitm);
+      {
+	// add the constant bindings
+	momvalue_t vnod = mom_nodev_new (MOM_PREDEFINED_NAMED (constant), 3,
+					 mom_itemv (itmfun),
+					 valcurconst,
+					 mom_intv (kix));
+	cj->cj_funbind =
+	  mom_attributes_put (cj->cj_funbind, curconstitm, &vnod);
+	MOM_DEBUGPRINTF (gencod,
+			 "scanning function-const %s bound constant#%d %s to %s",
+			 mom_item_cstring (itmfun), kix,
+			 mom_item_cstring (curconstitm),
+			 mom_output_gcstring (vnod));
+      }
     }
 }				/* end of cjit_scan_function_constants_mom */
+
+
+static void
+cjit_scan_function_closed_mom (struct codejit_mom_st *cj,
+			       momitem_t *itmfun, momvalue_t vclosed)
+{
+
+  assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
+  assert (itmfun != NULL);
+  assert (itmfun == cj->cj_curfunitm);
+  MOM_DEBUGPRINTF (gencod,
+		   "start scanning function %s closed %s",
+		   mom_item_cstring (itmfun), mom_output_gcstring (vclosed));
+  const momseq_t *closedseq = mom_value_to_sequ (vclosed);
+  if (!closedseq)
+    CJIT_ERROR_RETURN_MOM (cj,
+			   "module item %s : function %s with bad closed %s",
+			   mom_item_cstring (cj->cj_moduleitm),
+			   mom_item_cstring (itmfun),
+			   mom_output_gcstring (vclosed));
+  unsigned nbclosed = mom_seq_length (closedseq);
+#warning incomplete cjit_scan_function_closed_mom
+}				/* end cjit_scan_function_closed_mom */
+
+
+
+static void
+cjit_scan_function_variables_mom (struct codejit_mom_st *cj,
+				  momitem_t *itmfun, momvalue_t vvariables)
+{
+  assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
+  assert (itmfun != NULL);
+  assert (itmfun == cj->cj_curfunitm);
+  MOM_DEBUGPRINTF (gencod,
+		   "start scanning function %s variables %s",
+		   mom_item_cstring (itmfun),
+		   mom_output_gcstring (vvariables));
+  const momseq_t *variableseq = mom_value_to_sequ (vvariables);
+  if (!variableseq)
+    CJIT_ERROR_RETURN_MOM (cj,
+			   "module item %s : function %s with bad variables %s",
+			   mom_item_cstring (cj->cj_moduleitm),
+			   mom_item_cstring (itmfun),
+			   mom_output_gcstring (vvariables));
+  unsigned nbvars = mom_seq_length (variableseq);
+#warning incomplete cjit_scan_function_variables_mom
+}				/* end cjit_scan_function_variables_mom */
