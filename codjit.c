@@ -534,7 +534,34 @@ cjit_scan_function_closed_mom (struct codejit_mom_st *cj,
 			   mom_item_cstring (itmfun),
 			   mom_output_gcstring (vclosed));
   unsigned nbclosed = mom_seq_length (closedseq);
-#warning incomplete cjit_scan_function_closed_mom
+  for (unsigned clix = 0; clix < nbclosed && !cj->cj_errormsg; clix++)
+    {
+      momitem_t *curclositm = (momitem_t *) mom_seq_nth (closedseq, clix);
+      if (mom_attributes_find_entry (cj->cj_funbind, curclositm))
+	CJIT_ERROR_RETURN_MOM (cj,
+			       "module item %s : function %s with duplicate closed #%d %s bound to %s",
+			       mom_item_cstring (cj->cj_moduleitm),
+			       mom_item_cstring (itmfun),
+			       clix,
+			       mom_item_cstring (curclositm),
+			       mom_output_gcstring (mom_attributes_find_value
+						    (cj->cj_funbind,
+						     curclositm)));
+      cjit_lock_item_mom (cj, curclositm);
+      {
+	// add the closed bindings
+	momvalue_t vnod = mom_nodev_new (MOM_PREDEFINED_NAMED (closed), 2,
+					 mom_itemv (itmfun),
+					 mom_intv (clix));
+	cj->cj_funbind =
+	  mom_attributes_put (cj->cj_funbind, curclositm, &vnod);
+	MOM_DEBUGPRINTF (gencod,
+			 "scanning function-clos %s bound closed#%d %s to %s",
+			 mom_item_cstring (itmfun), clix,
+			 mom_item_cstring (curclositm),
+			 mom_output_gcstring (vnod));
+      }
+    }
 }				/* end cjit_scan_function_closed_mom */
 
 
@@ -558,5 +585,33 @@ cjit_scan_function_variables_mom (struct codejit_mom_st *cj,
 			   mom_item_cstring (itmfun),
 			   mom_output_gcstring (vvariables));
   unsigned nbvars = mom_seq_length (variableseq);
+  for (unsigned vix = 0; vix < nbvars && !cj->cj_errormsg; vix++)
+    {
+      momitem_t *curvaritm = (momitem_t *) mom_seq_nth (variableseq, vix);
+      if (mom_attributes_find_entry (cj->cj_funbind, curvaritm))
+	CJIT_ERROR_RETURN_MOM (cj,
+			       "module item %s : function %s with duplicate variable #%d %s bound to %s",
+			       mom_item_cstring (cj->cj_moduleitm),
+			       mom_item_cstring (itmfun),
+			       vix,
+			       mom_item_cstring (curvaritm),
+			       mom_output_gcstring (mom_attributes_find_value
+						    (cj->cj_funbind,
+						     curvaritm)));
+      cjit_lock_item_mom (cj, curvaritm);
+      {
+	// add the variable bindings
+	momvalue_t vnod = mom_nodev_new (MOM_PREDEFINED_NAMED (variable), 2,
+					 mom_itemv (itmfun),
+					 mom_intv (vix));
+	cj->cj_funbind =
+	  mom_attributes_put (cj->cj_funbind, curvaritm, &vnod);
+	MOM_DEBUGPRINTF (gencod,
+			 "scanning function-const %s bound variable#%d %s to %s",
+			 mom_item_cstring (itmfun), vix,
+			 mom_item_cstring (curvaritm),
+			 mom_output_gcstring (vnod));
+      }
+    }
 #warning incomplete cjit_scan_function_variables_mom
 }				/* end cjit_scan_function_variables_mom */
