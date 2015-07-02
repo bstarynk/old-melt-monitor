@@ -28,21 +28,21 @@ bool
   (const momnode_t *clonode, momitem_t *itm, momvalue_t *res)
 {
   MOM_DEBUGPRINTF (dump,
-		   "emitter_of_magic_attribute itm=%s",
-		   mom_item_cstring (itm));
+                   "emitter_of_magic_attribute itm=%s",
+                   mom_item_cstring (itm));
   assert (clonode);
   assert (itm);
   assert (itm->itm_kind == MOM_PREDEFINED_NAMED (magic_attribute));
   momvalue_t vclos =
     mom_nodev_new (MOM_PREDEFINED_NAMED (filler_of_magic_attribute),
-		   2,
-		   mom_nodev ((momnode_t *) itm->itm_data1),
-		   mom_nodev ((momnode_t *) itm->itm_data2));
+                   2,
+                   mom_nodev ((momnode_t *) itm->itm_data1),
+                   mom_nodev ((momnode_t *) itm->itm_data2));
   MOM_DEBUGPRINTF (dump, "emitter_of_magic_attribute vclos=%s",
-		   mom_output_gcstring (vclos));
+                   mom_output_gcstring (vclos));
   *res = vclos;
   return true;
-}				/* end emitter_of_magic_attribute */
+}                               /* end emitter_of_magic_attribute */
 
 
 
@@ -53,22 +53,22 @@ bool
 {
   assert (clonode);
   MOM_DEBUGPRINTF (dump,
-		   "scanner_of_magic_attribute itm=%s",
-		   mom_item_cstring (itm));
+                   "scanner_of_magic_attribute itm=%s",
+                   mom_item_cstring (itm));
   assert (itm->itm_kind == MOM_PREDEFINED_NAMED (magic_attribute));
   momvalue_t valgetclos = mom_nodev ((momnode_t *) itm->itm_data1);
   momvalue_t valputclos = mom_nodev ((momnode_t *) itm->itm_data2);
   MOM_DEBUGPRINTF (dump,
-		   "scanner_of_magic_attribute itm=%s valgetclos=%s valputclos=%s",
-		   mom_item_cstring (itm), mom_output_gcstring (valgetclos),
-		   mom_output_gcstring (valputclos));
+                   "scanner_of_magic_attribute itm=%s valgetclos=%s valputclos=%s",
+                   mom_item_cstring (itm), mom_output_gcstring (valgetclos),
+                   mom_output_gcstring (valputclos));
   mom_scan_dumped_value (valgetclos);
   mom_scan_dumped_value (valputclos);
   MOM_DEBUGPRINTF (dump,
-		   "scanner_of_magic_attribute end itm=%s",
-		   mom_item_cstring (itm));
+                   "scanner_of_magic_attribute end itm=%s",
+                   mom_item_cstring (itm));
   return true;
-}				/* end scanner_of_magic_attribute */
+}                               /* end scanner_of_magic_attribute */
 
 
 bool
@@ -76,30 +76,30 @@ bool
   (const momnode_t *clonode, momitem_t *itm)
 {
   MOM_DEBUGPRINTF (dump,
-		   "filler_of_magic_attribute itm=%s",
-		   mom_item_cstring (itm));
+                   "filler_of_magic_attribute itm=%s",
+                   mom_item_cstring (itm));
   if (!clonode || clonode->slen < 2)
     MOM_FATAPRINTF ("filler_of_magic_attribute %s has bad closure %s",
-		    mom_item_cstring (itm),
-		    mom_output_gcstring (mom_nodev (clonode)));
+                    mom_item_cstring (itm),
+                    mom_output_gcstring (mom_nodev (clonode)));
   momvalue_t vgetclos = clonode->arrsons[0];
   momvalue_t vputclos = clonode->arrsons[1];
   if (vgetclos.typnum != momty_node)
     MOM_FATAPRINTF ("filler_of_magic_attribute %s has bad getter %s",
-		    mom_item_cstring (itm), mom_output_gcstring (vgetclos));
+                    mom_item_cstring (itm), mom_output_gcstring (vgetclos));
   if (vputclos.typnum != momty_node)
     MOM_FATAPRINTF ("filler_of_magic_attribute %s has bad getter %s",
-		    mom_item_cstring (itm), mom_output_gcstring (vputclos));
+                    mom_item_cstring (itm), mom_output_gcstring (vputclos));
   itm->itm_kind = MOM_PREDEFINED_NAMED (magic_attribute);
   itm->itm_data1 = (void *) vgetclos.vnode;
   itm->itm_data2 = (void *) vputclos.vnode;
   MOM_DEBUGPRINTF (dump,
-		   "filler_of_magic_attribute itm=%s done vgetclos=%s vputclos=%s",
-		   mom_item_cstring (itm),
-		   mom_output_gcstring (vgetclos),
-		   mom_output_gcstring (vputclos));
+                   "filler_of_magic_attribute itm=%s done vgetclos=%s vputclos=%s",
+                   mom_item_cstring (itm),
+                   mom_output_gcstring (vgetclos),
+                   mom_output_gcstring (vputclos));
   return true;
-}				/* end of filler_of_magic_attribute */
+}                               /* end of filler_of_magic_attribute */
 
 
 //////////////// functions
@@ -111,18 +111,18 @@ bool
   assert (itmkind);
   assert (clonode);
   MOM_DEBUGPRINTF (dump,
-		   "emitter_of_function itm=%s kind %s (of kind %s)",
-		   mom_item_cstring (itm), mom_item_cstring (itmkind),
-		   mom_item_cstring (itmkind->itm_kind));
+                   "emitter_of_function itm=%s kind %s (of kind %s)",
+                   mom_item_cstring (itm), mom_item_cstring (itmkind),
+                   mom_item_cstring (itmkind->itm_kind));
   assert (itmkind->itm_kind == MOM_PREDEFINED_NAMED (function_signature));
   momvalue_t vclos = mom_nodev_new (MOM_PREDEFINED_NAMED (filler_of_function),
-				    1,
-				    mom_itemv (itmkind));
+                                    1,
+                                    mom_itemv (itmkind));
   MOM_DEBUGPRINTF (dump, "emitter_of_function vclos=%s",
-		   mom_output_gcstring (vclos));
+                   mom_output_gcstring (vclos));
   *res = vclos;
   return true;
-}				/* end emitter_of_function */
+}                               /* end emitter_of_function */
 
 
 
@@ -135,27 +135,27 @@ bool
   MOM_DEBUGPRINTF (load, "filler_of_function itm=%s", mom_item_cstring (itm));
   if (!clonode || clonode->slen < 1)
     MOM_FATAPRINTF ("filler_of_function %s has bad closure %s",
-		    mom_item_cstring (itm),
-		    mom_output_gcstring (mom_nodev (clonode)));
+                    mom_item_cstring (itm),
+                    mom_output_gcstring (mom_nodev (clonode)));
   momitem_t *itmsig = mom_value_to_item (clonode->arrsons[0]);
   if (!itmsig
       || itmsig->itm_kind != MOM_PREDEFINED_NAMED (function_signature))
     MOM_FATAPRINTF ("filler_of_function %s has bad closed signature %s",
-		    mom_item_cstring (itm),
-		    mom_output_gcstring (clonode->arrsons[0]));
+                    mom_item_cstring (itm),
+                    mom_output_gcstring (clonode->arrsons[0]));
   MOM_DEBUGPRINTF (load, "filler_of_function itm=%s itmsig=%s",
-		   mom_item_cstring (itm), mom_item_cstring (itmsig));
+                   mom_item_cstring (itm), mom_item_cstring (itmsig));
   momvalue_t cfunradv = MOM_NONEV;
   {
     mom_item_lock (itmsig);
     cfunradv =
       mom_item_unsync_get_attribute (itmsig,
-				     MOM_PREDEFINED_NAMED (function_radix));
+                                     MOM_PREDEFINED_NAMED (function_radix));
     mom_item_unlock (itmsig);
   }
   MOM_DEBUGPRINTF (load, "filler_of_function itm=%s itmsig=%s cfunradv %s",
-		   mom_item_cstring (itm), mom_item_cstring (itmsig),
-		   mom_output_gcstring (cfunradv));
+                   mom_item_cstring (itm), mom_item_cstring (itmsig),
+                   mom_output_gcstring (cfunradv));
   if (cfunradv.typnum != momty_string)
     MOM_FATAPRINTF
       ("filler_of_function %s with kind %s and bad `function_radix` %s",
@@ -166,8 +166,8 @@ bool
        mom_value_cstr (cfunradv),
        mom_item_cstring (itm)) >= (int) sizeof (bufnam))
     MOM_FATAPRINTF ("filler_of_function %s with kind %s too long name %s",
-		    mom_item_cstring (itm), mom_item_cstring (itmsig),
-		    bufnam);
+                    mom_item_cstring (itm), mom_item_cstring (itmsig),
+                    bufnam);
   void *adfun = mom_dynload_symbol (bufnam);
   if (!adfun)
     MOM_FATAPRINTF
@@ -180,10 +180,10 @@ bool
     mom_item_unlock (itm);
   }
   MOM_DEBUGPRINTF (load, "filler_of_function %s done kind %s function %s @%p",
-		   mom_item_cstring (itm), mom_item_cstring (itmsig), bufnam,
-		   adfun);
+                   mom_item_cstring (itm), mom_item_cstring (itmsig), bufnam,
+                   adfun);
   return true;
-}				/* end of filler_of_function */
+}                               /* end of filler_of_function */
 
 
 bool
@@ -192,7 +192,7 @@ bool
 {
   assert (clonode);
   MOM_DEBUGPRINTF (dump,
-		   "scanner_of_function itm=%s", mom_item_cstring (itm));
+                   "scanner_of_function itm=%s", mom_item_cstring (itm));
   momitem_t *kinditm = itm->itm_kind;
   if (kinditm
       && kinditm->itm_kind == MOM_PREDEFINED_NAMED (function_signature))
@@ -200,67 +200,67 @@ bool
       Dl_info dlinfo;
       memset (&dlinfo, 0, sizeof (dlinfo));
       if (dladdr (itm->itm_data1, &dlinfo))
-	{
-	  MOM_DEBUGPRINTF (dump,
-			   "scanner_of_function itm=%s"
-			   " dli_fname %s, dli_sname %s, dli_saddr %p, itmdata %p"
-			   "; delta %#lx",
-			   mom_item_cstring (itm),
-			   dlinfo.dli_fname,
-			   dlinfo.dli_sname,
-			   dlinfo.dli_saddr,
-			   itm->itm_data1,
-			   (long) ((char *) dlinfo.dli_saddr -
-				   (char *) itm->itm_data1));
-	  if (!strncmp
-	      (dlinfo.dli_sname, MOM_FUNCTION_PREFIX,
-	       strlen (MOM_FUNCTION_PREFIX))
-	      && !strncmp (dlinfo.dli_fname,
-			   MOM_MODULE_DIRECTORY MOM_SHARED_MODULE_PREFIX,
-			   strlen (MOM_MODULE_DIRECTORY
-				   MOM_SHARED_MODULE_PREFIX)))
-	    {
-	      MOM_DEBUGPRINTF (dump,
-			       "scanner_of_function itm=%s  good dli_fname %s",
-			       mom_item_cstring (itm), dlinfo.dli_fname);
-	      char *restnam = (char *) MOM_GC_STRDUP ("restnam",
-						      dlinfo.dli_fname +
-						      strlen
-						      (MOM_MODULE_DIRECTORY
-						       MOM_SHARED_MODULE_PREFIX));
-	      MOM_DEBUGPRINTF (dump, "scanner_of_function itm=%s restnam %s",
-			       mom_item_cstring (itm), restnam);
-	      char *dotrest = strchr (restnam, '.');
-	      if (dotrest)
-		*dotrest = '\0';
-	      momitem_t *moditm = mom_find_item (restnam);
-	      MOM_DEBUGPRINTF (dump,
-			       "scanner_of_function itm=%s truncated restnam %s moditm %s",
-			       mom_item_cstring (itm), restnam,
-			       mom_item_cstring (moditm));
-	      if (moditm)
-		mom_scan_dumped_module_item (moditm);
-	      MOM_DEBUGPRINTF (dump,
-			       "scanner_of_function itm=%s done moduleitem %s",
-			       mom_item_cstring (itm),
-			       mom_item_cstring (moditm));
-	    }
-	  else
-	    MOM_DEBUGPRINTF (dump,
-			     "scanner_of_function itm=%s strange dli_fname <%s> not starting with "
-			     MOM_MODULE_DIRECTORY MOM_SHARED_MODULE_PREFIX,
-			     mom_item_cstring (itm), dlinfo.dli_fname);
+        {
+          MOM_DEBUGPRINTF (dump,
+                           "scanner_of_function itm=%s"
+                           " dli_fname %s, dli_sname %s, dli_saddr %p, itmdata %p"
+                           "; delta %#lx",
+                           mom_item_cstring (itm),
+                           dlinfo.dli_fname,
+                           dlinfo.dli_sname,
+                           dlinfo.dli_saddr,
+                           itm->itm_data1,
+                           (long) ((char *) dlinfo.dli_saddr -
+                                   (char *) itm->itm_data1));
+          if (!strncmp
+              (dlinfo.dli_sname, MOM_FUNCTION_PREFIX,
+               strlen (MOM_FUNCTION_PREFIX))
+              && !strncmp (dlinfo.dli_fname,
+                           MOM_MODULE_DIRECTORY MOM_SHARED_MODULE_PREFIX,
+                           strlen (MOM_MODULE_DIRECTORY
+                                   MOM_SHARED_MODULE_PREFIX)))
+            {
+              MOM_DEBUGPRINTF (dump,
+                               "scanner_of_function itm=%s  good dli_fname %s",
+                               mom_item_cstring (itm), dlinfo.dli_fname);
+              char *restnam = (char *) MOM_GC_STRDUP ("restnam",
+                                                      dlinfo.dli_fname +
+                                                      strlen
+                                                      (MOM_MODULE_DIRECTORY
+                                                       MOM_SHARED_MODULE_PREFIX));
+              MOM_DEBUGPRINTF (dump, "scanner_of_function itm=%s restnam %s",
+                               mom_item_cstring (itm), restnam);
+              char *dotrest = strchr (restnam, '.');
+              if (dotrest)
+                *dotrest = '\0';
+              momitem_t *moditm = mom_find_item (restnam);
+              MOM_DEBUGPRINTF (dump,
+                               "scanner_of_function itm=%s truncated restnam %s moditm %s",
+                               mom_item_cstring (itm), restnam,
+                               mom_item_cstring (moditm));
+              if (moditm)
+                mom_scan_dumped_module_item (moditm);
+              MOM_DEBUGPRINTF (dump,
+                               "scanner_of_function itm=%s done moduleitem %s",
+                               mom_item_cstring (itm),
+                               mom_item_cstring (moditm));
+            }
+          else
+            MOM_DEBUGPRINTF (dump,
+                             "scanner_of_function itm=%s strange dli_fname <%s> not starting with "
+                             MOM_MODULE_DIRECTORY MOM_SHARED_MODULE_PREFIX,
+                             mom_item_cstring (itm), dlinfo.dli_fname);
 
 
-	}
+        }
       else
-	MOM_WARNPRINTF ("scanner_of_function itm=%s ad@%p failed : %s",
-			mom_item_cstring (itm), itm->itm_data1, dlerror ());
+        MOM_WARNPRINTF ("scanner_of_function itm=%s ad@%p failed : %s",
+                        mom_item_cstring (itm), itm->itm_data1, dlerror ());
     }
   MOM_DEBUGPRINTF (dump,
-		   "scanner_of_function end itm=%s", mom_item_cstring (itm));
+                   "scanner_of_function end itm=%s", mom_item_cstring (itm));
   return true;
-}				/* end scanner_of_function */
+}                               /* end scanner_of_function */
 
 ////////////////////////////////////////////////////////////////
 //// plain kind
@@ -270,38 +270,38 @@ bool
 {
   momitem_t *itmclokind = NULL;
   MOM_DEBUGPRINTF (dump,
-		   "emitter_of_plain_kind itm=%s", mom_item_cstring (itm));
+                   "emitter_of_plain_kind itm=%s", mom_item_cstring (itm));
   if (!clonode || clonode->slen == 0)
     itmclokind = itm->itm_kind;
   else if (!(itmclokind = mom_value_to_item (clonode->arrsons[0])))
     MOM_FATAPRINTF ("emitter_of_plain_kind itm=%s bad closure %s",
-		    mom_item_cstring (itm),
-		    mom_output_gcstring (mom_nodev (clonode)));
+                    mom_item_cstring (itm),
+                    mom_output_gcstring (mom_nodev (clonode)));
 
   momvalue_t vclos =
     mom_nodev_new (MOM_PREDEFINED_NAMED (filler_of_plain_kind),
-		   1, mom_itemv (itmclokind));
+                   1, mom_itemv (itmclokind));
   MOM_DEBUGPRINTF (dump, "emitter_of_plain_kind vclos=%s",
-		   mom_output_gcstring (vclos));
+                   mom_output_gcstring (vclos));
   *res = vclos;
   return true;
-}				/* end emitter_of_plain_kind */
+}                               /* end emitter_of_plain_kind */
 
 bool
   momfunc_1itm_to_void__filler_of_plain_kind
   (const momnode_t *clonode, momitem_t *itm)
 {
   MOM_DEBUGPRINTF (dump,
-		   "filler_of_plain_kind itm=%s", mom_item_cstring (itm));
+                   "filler_of_plain_kind itm=%s", mom_item_cstring (itm));
   if (!clonode || clonode->slen < 1)
     MOM_FATAPRINTF ("filler_of_plain_kind %s has bad closure %s",
-		    mom_item_cstring (itm),
-		    mom_output_gcstring (mom_nodev (clonode)));
+                    mom_item_cstring (itm),
+                    mom_output_gcstring (mom_nodev (clonode)));
   momitem_t *itmkind = mom_value_to_item (clonode->arrsons[0]);
   if (!itmkind)
     MOM_FATAPRINTF ("filler_of_plain_kind %s with bad kind %s",
-		    mom_item_cstring (itm),
-		    mom_output_gcstring (clonode->arrsons[0]));
+                    mom_item_cstring (itm),
+                    mom_output_gcstring (clonode->arrsons[0]));
   assert (!itm->itm_kind || itm->itm_kind == itmkind);
   {
     mom_item_lock (itm);
@@ -311,7 +311,7 @@ bool
     mom_item_unlock (itm);
   }
   MOM_DEBUGPRINTF (load, "filler_of_plain_kind %s done kind %s",
-		   mom_item_cstring (itm), mom_item_cstring (itmkind));
+                   mom_item_cstring (itm), mom_item_cstring (itmkind));
   return true;
 
 }
@@ -327,23 +327,23 @@ bool
 {
   assert (clonode);
   MOM_DEBUGPRINTF (dump,
-		   "scanner_of_association itm=%s", mom_item_cstring (itm));
+                   "scanner_of_association itm=%s", mom_item_cstring (itm));
   assert (itm->itm_kind == MOM_PREDEFINED_NAMED (association));
   struct momattributes_st *assoc = itm->itm_data1;
   if (assoc)
     mom_attributes_scan_dump (assoc);
   MOM_DEBUGPRINTF (dump,
-		   "scanner_of_association end itm=%s",
-		   mom_item_cstring (itm));
+                   "scanner_of_association end itm=%s",
+                   mom_item_cstring (itm));
   return true;
-}				/* end scanner_of_association */
+}                               /* end scanner_of_association */
 
 bool
   momfunc_1itm_to_val__emitter_of_association
   (const momnode_t *clonode, momitem_t *itm, momvalue_t *res)
 {
   MOM_DEBUGPRINTF (dump,
-		   "emitter_of_association itm=%s", mom_item_cstring (itm));
+                   "emitter_of_association itm=%s", mom_item_cstring (itm));
   assert (clonode);
   assert (itm);
   assert (itm->itm_kind == MOM_PREDEFINED_NAMED (association));
@@ -361,20 +361,20 @@ bool
       struct momentry_st *ent = mom_attributes_find_entry (assoc, itm);
       assert (ent != NULL);
       if (!mom_dumpable_value (ent->ent_val))
-	continue;
-      assarr[nbassoc++] =	//
-	mom_nodev_new (MOM_PREDEFINED_NAMED (in),
-		       2, mom_itemv (itm), ent->ent_val);
+        continue;
+      assarr[nbassoc++] =       //
+        mom_nodev_new (MOM_PREDEFINED_NAMED (in),
+                       2, mom_itemv (itm), ent->ent_val);
     };
   momvalue_t vclos =
     mom_nodev_sized (MOM_PREDEFINED_NAMED (filler_of_association),
-		     nbassoc,
-		     assarr);
+                     nbassoc,
+                     assarr);
   MOM_DEBUGPRINTF (dump, "emitter_of_association vclos=%s",
-		   mom_output_gcstring (vclos));
+                   mom_output_gcstring (vclos));
   *res = vclos;
   return true;
-}				/* end emitter_of_association */
+}                               /* end emitter_of_association */
 
 
 
@@ -384,14 +384,14 @@ bool
   (const momnode_t *clonode, momitem_t *itm)
 {
   MOM_DEBUGPRINTF (dump,
-		   "filler_of_association itm=%s", mom_item_cstring (itm));
+                   "filler_of_association itm=%s", mom_item_cstring (itm));
   if (!clonode)
     MOM_FATAPRINTF ("filler_of_association %s without closure",
-		    mom_item_cstring (itm));
+                    mom_item_cstring (itm));
 
   if (clonode->conn != MOM_PREDEFINED_NAMED (filler_of_association))
     MOM_FATAPRINTF ("filler_of_association %s has bad closure",
-		    mom_item_cstring (itm));
+                    mom_item_cstring (itm));
   unsigned nbent = clonode->slen;
   unsigned siz = ((5 * nbent / 4 + 3) | 7) + 1;
   struct momattributes_st *assoc = mom_attributes_make (siz);
@@ -399,23 +399,23 @@ bool
     {
       momvalue_t vcomp = clonode->arrsons[ix];
       if (vcomp.typnum != momty_node
-	  || vcomp.vnode->conn != MOM_PREDEFINED_NAMED (in)
-	  || vcomp.vnode->slen != 2)
-	MOM_FATAPRINTF ("filler_of_association %s has bad comp#%d %s",
-			mom_item_cstring (itm), ix,
-			mom_output_gcstring (vcomp));
+          || vcomp.vnode->conn != MOM_PREDEFINED_NAMED (in)
+          || vcomp.vnode->slen != 2)
+        MOM_FATAPRINTF ("filler_of_association %s has bad comp#%d %s",
+                        mom_item_cstring (itm), ix,
+                        mom_output_gcstring (vcomp));
       assoc =
-	mom_attributes_put (assoc,
-			    mom_value_to_item (vcomp.vnode->arrsons[0]),
-			    &vcomp.vnode->arrsons[1]);
+        mom_attributes_put (assoc,
+                            mom_value_to_item (vcomp.vnode->arrsons[0]),
+                            &vcomp.vnode->arrsons[1]);
     }
   itm->itm_kind = MOM_PREDEFINED_NAMED (association);
   itm->itm_data1 = assoc;
   MOM_DEBUGPRINTF (dump,
-		   "filler_of_association itm=%s done",
-		   mom_item_cstring (itm));
+                   "filler_of_association itm=%s done",
+                   mom_item_cstring (itm));
   return true;
-}				/* end of filler_of_association */
+}                               /* end of filler_of_association */
 
 
 
@@ -430,16 +430,16 @@ bool
 {
   assert (clonode);
   MOM_DEBUGPRINTF (dump,
-		   "scanner_of_hashed_dict itm=%s", mom_item_cstring (itm));
+                   "scanner_of_hashed_dict itm=%s", mom_item_cstring (itm));
   assert (itm->itm_kind == MOM_PREDEFINED_NAMED (hashed_dict));
   struct momhashdict_st *hdic = itm->itm_data1;
   if (hdic)
     mom_hashdict_scan_dump (hdic);
   MOM_DEBUGPRINTF (dump,
-		   "scanner_of_hashed_dict end itm=%s",
-		   mom_item_cstring (itm));
+                   "scanner_of_hashed_dict end itm=%s",
+                   mom_item_cstring (itm));
   return true;
-}				/* end scanner_of_hashed_dict */
+}                               /* end scanner_of_hashed_dict */
 
 
 bool
@@ -448,45 +448,45 @@ bool
 {
   momvalue_t resnodv = MOM_NONEV;
   MOM_DEBUGPRINTF (dump,
-		   "emitter_of_hashed_dict itm=%s", mom_item_cstring (itm));
+                   "emitter_of_hashed_dict itm=%s", mom_item_cstring (itm));
   assert (clonode);
   assert (itm);
   assert (itm->itm_kind == MOM_PREDEFINED_NAMED (hashed_dict));
   struct momhashdict_st *hdic = itm->itm_data1;
   if (hdic)
     {
-      const momnode_t *nodsortedstrings =	//
-	mom_hashdict_sorted_strings (hdic,
-				     MOM_PREDEFINED_NAMED (hashed_dict));
+      const momnode_t *nodsortedstrings =       //
+        mom_hashdict_sorted_strings (hdic,
+                                     MOM_PREDEFINED_NAMED (hashed_dict));
       MOM_DEBUGPRINTF (dump, "emitter_of_hashed_dict itm=%s sortedstrings=%s",
-		       mom_item_cstring (itm),
-		       mom_output_gcstring (mom_nodev (nodsortedstrings)));
+                       mom_item_cstring (itm),
+                       mom_output_gcstring (mom_nodev (nodsortedstrings)));
       unsigned nbent = mom_node_arity (nodsortedstrings);
       unsigned cntent = 0;
-      momvalue_t *valarr =	//
-	MOM_GC_ALLOC ("valarr", (nbent + 1) * sizeof (momvalue_t));
+      momvalue_t *valarr =      //
+        MOM_GC_ALLOC ("valarr", (nbent + 1) * sizeof (momvalue_t));
       for (unsigned ix = 0; ix < nbent; ix++)
-	{
-	  const momvalue_t curson = mom_node_nth (nodsortedstrings, ix);
-	  const momstring_t *cursonstr = mom_value_to_string (curson);
-	  assert (cursonstr != NULL);
-	  momvalue_t curval = mom_hashdict_get (hdic, cursonstr);
-	  if (!mom_dumpable_value (curval))
-	    continue;
-	  assert (curval.typnum != momty_null);
-	  valarr[cntent++] =	//
-	    mom_nodev_new (MOM_PREDEFINED_NAMED (in), 2, curson, curval);
-	}
-      resnodv =			//
-	mom_nodev_sized (MOM_PREDEFINED_NAMED (filler_of_hashed_dict),
-			 cntent, valarr);
+        {
+          const momvalue_t curson = mom_node_nth (nodsortedstrings, ix);
+          const momstring_t *cursonstr = mom_value_to_string (curson);
+          assert (cursonstr != NULL);
+          momvalue_t curval = mom_hashdict_get (hdic, cursonstr);
+          if (!mom_dumpable_value (curval))
+            continue;
+          assert (curval.typnum != momty_null);
+          valarr[cntent++] =    //
+            mom_nodev_new (MOM_PREDEFINED_NAMED (in), 2, curson, curval);
+        }
+      resnodv =                 //
+        mom_nodev_sized (MOM_PREDEFINED_NAMED (filler_of_hashed_dict),
+                         cntent, valarr);
     }
   MOM_DEBUGPRINTF (dump,
-		   "emitter_of_hashed_dict end itm=%s resnodv=%s",
-		   mom_item_cstring (itm), mom_output_gcstring (resnodv));
+                   "emitter_of_hashed_dict end itm=%s resnodv=%s",
+                   mom_item_cstring (itm), mom_output_gcstring (resnodv));
   *res = resnodv;
   return true;
-}				/* end emitter_of_hashed_dict */
+}                               /* end emitter_of_hashed_dict */
 
 
 bool
@@ -494,7 +494,7 @@ bool
   (const momnode_t *clonode, momitem_t *itm)
 {
   MOM_DEBUGPRINTF (dump,
-		   "filler_of_hashed_dict itm=%s", mom_item_cstring (itm));
+                   "filler_of_hashed_dict itm=%s", mom_item_cstring (itm));
   assert (clonode);
   assert (itm);
   unsigned nbent = mom_node_arity (clonode);
@@ -504,13 +504,13 @@ bool
     {
       const momvalue_t vcurnod = mom_node_nth (clonode, ix);
       MOM_DEBUGPRINTF (dump,
-		       "filler_of_hashed_dict itm=%s ix#%d vcurnod=%s",
-		       mom_item_cstring (itm), ix,
-		       mom_output_gcstring (vcurnod));
+                       "filler_of_hashed_dict itm=%s ix#%d vcurnod=%s",
+                       mom_item_cstring (itm), ix,
+                       mom_output_gcstring (vcurnod));
       const momnode_t *curnod = mom_value_to_node (vcurnod);
       assert (curnod != NULL);
       assert (mom_node_conn (curnod) == MOM_PREDEFINED_NAMED (in)
-	      && mom_node_arity (curnod) == 2);
+              && mom_node_arity (curnod) == 2);
       const momvalue_t vcurstr = mom_node_nth (curnod, 0);
       const momvalue_t vcurval = mom_node_nth (curnod, 1);
       const momstring_t *curstr = mom_value_to_string (vcurstr);
@@ -520,10 +520,10 @@ bool
   itm->itm_kind = MOM_PREDEFINED_NAMED (hashed_dict);
   itm->itm_data1 = hdic;
   MOM_DEBUGPRINTF (dump,
-		   "filler_of_hashed_dict done itm=%s",
-		   mom_item_cstring (itm));
+                   "filler_of_hashed_dict done itm=%s",
+                   mom_item_cstring (itm));
   return true;
-}				/* end of filler_of_hashed_dict */
+}                               /* end of filler_of_hashed_dict */
 
 
 ////////////////////////////////////////////////////////////////
@@ -536,23 +536,23 @@ bool
 {
   assert (clonode);
   MOM_DEBUGPRINTF (dump,
-		   "scanner_of_hashed_set itm=%s", mom_item_cstring (itm));
+                   "scanner_of_hashed_set itm=%s", mom_item_cstring (itm));
   assert (itm->itm_kind == MOM_PREDEFINED_NAMED (hashed_set));
   struct momhashset_st *hset = itm->itm_data1;
   if (hset)
     mom_hashset_scan_dump (hset);
   MOM_DEBUGPRINTF (dump,
-		   "scanner_of_hashed_set end itm=%s",
-		   mom_item_cstring (itm));
+                   "scanner_of_hashed_set end itm=%s",
+                   mom_item_cstring (itm));
   return true;
-}				/* end scanner_of_hashed_set */
+}                               /* end scanner_of_hashed_set */
 
 bool
   momfunc_1itm_to_val__emitter_of_hashed_set
   (const momnode_t *clonode, momitem_t *itm, momvalue_t *res)
 {
   MOM_DEBUGPRINTF (dump,
-		   "emitter_of_hashed_set itm=%s", mom_item_cstring (itm));
+                   "emitter_of_hashed_set itm=%s", mom_item_cstring (itm));
   assert (clonode);
   assert (itm);
   assert (itm->itm_kind == MOM_PREDEFINED_NAMED (hashed_set));
@@ -560,13 +560,13 @@ bool
   const momseq_t *seqset = mom_hashset_elements_set (hset);
   momvalue_t vclos =
     mom_nodev_new (MOM_PREDEFINED_NAMED (filler_of_hashed_set),
-		   1,
-		   mom_unsafe_setv (seqset));
+                   1,
+                   mom_unsafe_setv (seqset));
   MOM_DEBUGPRINTF (dump, "emitter_of_hashed_set vclos=%s",
-		   mom_output_gcstring (vclos));
+                   mom_output_gcstring (vclos));
   *res = vclos;
   return true;
-}				/* end emitter_of_hashed_set */
+}                               /* end emitter_of_hashed_set */
 
 
 
@@ -576,30 +576,30 @@ bool
   (const momnode_t *clonode, momitem_t *itm)
 {
   MOM_DEBUGPRINTF (dump,
-		   "filler_of_hashed_set itm=%s", mom_item_cstring (itm));
+                   "filler_of_hashed_set itm=%s", mom_item_cstring (itm));
   if (!clonode)
     MOM_FATAPRINTF ("filler_of_hashed_set %s without closure",
-		    mom_item_cstring (itm));
+                    mom_item_cstring (itm));
 
   if (clonode->conn != MOM_PREDEFINED_NAMED (filler_of_hashed_set)
       || clonode->slen != 1 || (clonode->arrsons[0].typnum != momty_null
-				&& clonode->arrsons[0].typnum != momty_set))
+                                && clonode->arrsons[0].typnum != momty_set))
     MOM_FATAPRINTF ("filler_of_hashed_set %s has bad closure",
-		    mom_item_cstring (itm));
+                    mom_item_cstring (itm));
   itm->itm_kind = MOM_PREDEFINED_NAMED (hashed_set);
   if (clonode->arrsons[0].typnum == momty_set)
     {
-      struct momhashset_st *hset =	//
-	mom_hashset_add_sized_items (NULL,	//
-				     clonode->arrsons[0].vset->slen,
-				     (momitem_t *const *) clonode->
-				     arrsons[0].vset->arritm);
+      struct momhashset_st *hset =      //
+        mom_hashset_add_sized_items (NULL,      //
+                                     clonode->arrsons[0].vset->slen,
+                                     (momitem_t *const *) clonode->
+                                     arrsons[0].vset->arritm);
       itm->itm_data1 = hset;
     }
   else
     itm->itm_data1 = NULL;
   return true;
-}				/* end of filler_of_hashed_set */
+}                               /* end of filler_of_hashed_set */
 
 
 
@@ -614,23 +614,23 @@ bool
 {
   assert (clonode);
   MOM_DEBUGPRINTF (dump,
-		   "scanner_of_item_queue itm=%s", mom_item_cstring (itm));
+                   "scanner_of_item_queue itm=%s", mom_item_cstring (itm));
   assert (itm->itm_kind == MOM_PREDEFINED_NAMED (item_queue));
   struct momqueueitems_st *iqu = itm->itm_data1;
   if (iqu)
     mom_queueitem_scan_dump (iqu);
   MOM_DEBUGPRINTF (dump,
-		   "scanner_of_item_queue end itm=%s",
-		   mom_item_cstring (itm));
+                   "scanner_of_item_queue end itm=%s",
+                   mom_item_cstring (itm));
   return true;
-}				/* end scanner_of_item_queue */
+}                               /* end scanner_of_item_queue */
 
 bool
   momfunc_1itm_to_val__emitter_of_item_queue
   (const momnode_t *clonode, momitem_t *itm, momvalue_t *res)
 {
   MOM_DEBUGPRINTF (dump,
-		   "emitter_of_item_queue itm=%s", mom_item_cstring (itm));
+                   "emitter_of_item_queue itm=%s", mom_item_cstring (itm));
   assert (clonode);
   assert (itm);
   assert (itm->itm_kind == MOM_PREDEFINED_NAMED (item_queue));
@@ -638,13 +638,13 @@ bool
   const momseq_t *tupque = iqu ? mom_queueitem_tuple (iqu, MOM_NONEV) : NULL;
   momvalue_t vclos =
     mom_nodev_new (MOM_PREDEFINED_NAMED (filler_of_item_queue),
-		   1,
-		   mom_tuplev (tupque));
+                   1,
+                   mom_tuplev (tupque));
   MOM_DEBUGPRINTF (dump, "emitter_of_item_queue vclos=%s",
-		   mom_output_gcstring (vclos));
+                   mom_output_gcstring (vclos));
   *res = vclos;
   return true;
-}				/* end emitter_of_item_queue */
+}                               /* end emitter_of_item_queue */
 
 
 
@@ -654,33 +654,33 @@ bool
   (const momnode_t *clonode, momitem_t *itm)
 {
   MOM_DEBUGPRINTF (dump,
-		   "filler_of_item_queue itm=%s", mom_item_cstring (itm));
+                   "filler_of_item_queue itm=%s", mom_item_cstring (itm));
   if (!clonode)
     MOM_FATAPRINTF ("filler_of_item_queue %s without closure",
-		    mom_item_cstring (itm));
+                    mom_item_cstring (itm));
 
   if (clonode->conn != MOM_PREDEFINED_NAMED (filler_of_item_queue)
       || clonode->slen != 1 || (clonode->arrsons[0].typnum != momty_null
-				&& clonode->arrsons[0].typnum != momty_tuple))
+                                && clonode->arrsons[0].typnum != momty_tuple))
     MOM_FATAPRINTF ("filler_of_item_queue %s has bad closure",
-		    mom_item_cstring (itm));
+                    mom_item_cstring (itm));
   itm->itm_kind = MOM_PREDEFINED_NAMED (item_queue);
   if (clonode->arrsons[0].typnum == momty_tuple)
     {
       struct momqueueitems_st *iqu =
-	MOM_GC_ALLOC ("new queue items", sizeof (struct momqueueitems_st));
+        MOM_GC_ALLOC ("new queue items", sizeof (struct momqueueitems_st));
       const momseq_t *tup = mom_value_to_tuple (clonode->arrsons[0]);
       assert (tup != NULL);
       unsigned nbitems = mom_seq_length (tup);
       for (unsigned ix = 0; ix < nbitems; ix++)
-	{
-	  const momitem_t *curitm = mom_seq_nth (tup, ix);
-	  if (curitm)
-	    mom_queueitem_push_back (iqu, curitm);
-	}
+        {
+          const momitem_t *curitm = mom_seq_nth (tup, ix);
+          if (curitm)
+            mom_queueitem_push_back (iqu, curitm);
+        }
       itm->itm_data1 = iqu;
     }
   else
     itm->itm_data1 = NULL;
   return true;
-}				/* end of filler_of_item_queue */
+}                               /* end of filler_of_item_queue */

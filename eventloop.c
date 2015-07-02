@@ -119,46 +119,46 @@ mom_dynload_module_item (momitem_t *moditm)
   if (moditm->itm_kind != MOM_PREDEFINED_NAMED (code_module))
     {
       MOM_WARNPRINTF ("dynload module %s with bad kind %s",
-		      mom_item_cstring (moditm),
-		      mom_item_cstring (moditm->itm_kind));
+                      mom_item_cstring (moditm),
+                      mom_item_cstring (moditm->itm_kind));
       goto end;
     };
   if (!getcwd (dirpath, sizeof (dirpath)))
     MOM_FATAPRINTF ("dynload module failed to getcwd: %m");
   if (snprintf (modpath, sizeof (modpath) - 1,
-		MOM_MODULE_DIRECTORY MOM_SHARED_MODULE_PREFIX "%s.so",
-		mom_item_cstring (moditm)) >= (int) sizeof (modpath) - 2)
+                MOM_MODULE_DIRECTORY MOM_SHARED_MODULE_PREFIX "%s.so",
+                mom_item_cstring (moditm)) >= (int) sizeof (modpath) - 2)
     MOM_FATAPRINTF ("too long module path %s for loaded module item %s",
-		    modpath, mom_item_cstring (moditm));
+                    modpath, mom_item_cstring (moditm));
   if (access (modpath, R_OK))
     {
       MOM_WARNPRINTF ("dynload module %s cannot access %s : %m",
-		      mom_item_cstring (moditm), modpath);
+                      mom_item_cstring (moditm), modpath);
       goto end;
     };
   moditm->itm_data1 = NULL;
   MOM_DEBUGPRINTF (run, "dynload module before dlopen %s in %s", modpath,
-		   dirpath);
+                   dirpath);
   void *modh = GC_dlopen (modpath, RTLD_NOW | RTLD_GLOBAL);
   if (modh)
     {
       moditm->itm_data1 = modh;
       MOM_INFORMPRINTF ("dynloaded module %s from %s in %s",
-			mom_item_cstring (moditm), modpath, dirpath);
+                        mom_item_cstring (moditm), modpath, dirpath);
     }
   else
     {
       MOM_WARNPRINTF ("failed to dynload module %s from %s in %s: %s",
-		      mom_item_cstring (moditm), modpath, dirpath,
-		      dlerror ());
+                      mom_item_cstring (moditm), modpath, dirpath,
+                      dlerror ());
       goto end;
     }
   MOM_DEBUGPRINTF (run, "dynload module after dlopen %s in %s", modpath,
-		   dirpath);
+                   dirpath);
 end:
   mom_item_unlock (moditm);
   pthread_mutex_unlock (&dynload_mtx_mom);
-}				/* end of mom_dynload_module_item  */
+}                               /* end of mom_dynload_module_item  */
 
 
 
@@ -174,14 +174,14 @@ mom_dynunload_module_item (momitem_t *moditm)
   if (moditm->itm_kind != MOM_PREDEFINED_NAMED (code_module))
     {
       MOM_WARNPRINTF ("dynunload module %s with bad kind %s",
-		      mom_item_cstring (moditm),
-		      mom_item_cstring (moditm->itm_kind));
+                      mom_item_cstring (moditm),
+                      mom_item_cstring (moditm->itm_kind));
       goto end;
     };
   if (!moditm->itm_data1)
     {
       MOM_WARNPRINTF ("dynunload module %s already closed",
-		      mom_item_cstring (moditm));
+                      mom_item_cstring (moditm));
       goto end;
     };
   if (!getcwd (dirpath, sizeof (dirpath)))
@@ -189,21 +189,21 @@ mom_dynunload_module_item (momitem_t *moditm)
   void *modad = moditm->itm_data1;
   moditm->itm_data1 = NULL;
   MOM_DEBUGPRINTF (run,
-		   "dynunload module before dlclose module item %s in %s",
-		   mom_item_cstring (moditm), dirpath);
+                   "dynunload module before dlclose module item %s in %s",
+                   mom_item_cstring (moditm), dirpath);
   int err = dlclose (modad);
   if (err)
     {
       MOM_WARNPRINTF ("dynunload module %s failed to dlclose in %s: %s",
-		      mom_item_cstring (moditm), dirpath, dlerror ());
+                      mom_item_cstring (moditm), dirpath, dlerror ());
       goto end;
     };
   MOM_DEBUGPRINTF (run, "dynunload module after dlclose module item %s in %s",
-		   mom_item_cstring (moditm), dirpath);
+                   mom_item_cstring (moditm), dirpath);
 end:
   mom_item_unlock (moditm);
   pthread_mutex_unlock (&dynload_mtx_mom);
-}				/* end of mom_dynunload_module_item  */
+}                               /* end of mom_dynunload_module_item  */
 
 
 
@@ -214,16 +214,16 @@ mom_dynload_function (const char *funame, const char *signame, void *newad)
   momitem_t *funitm = mom_find_item (funame);
   momitem_t *sigitm = mom_find_item (signame);
   MOM_DEBUGPRINTF (run,
-		   "dynload_function funame %s funitm %s signame %s sigitm %s newad@%p",
-		   funame, mom_item_cstring (funitm), signame,
-		   mom_item_cstring (sigitm), newad);
+                   "dynload_function funame %s funitm %s signame %s sigitm %s newad@%p",
+                   funame, mom_item_cstring (funitm), signame,
+                   mom_item_cstring (sigitm), newad);
   if (!funitm || !sigitm)
     return NULL;
   mom_item_lock (funitm);
   if (funitm->itm_kind == NULL)
     {
       MOM_INFORMPRINTF ("loaded function %s set to signature %s",
-			mom_item_cstring (funitm), mom_item_cstring (sigitm));
+                        mom_item_cstring (funitm), mom_item_cstring (sigitm));
       funitm->itm_data1 = newad;
       funitm->itm_kind = sigitm;
     }
@@ -235,9 +235,9 @@ mom_dynload_function (const char *funame, const char *signame, void *newad)
   else
     {
       MOM_WARNPRINTF
-	("loaded function %s has kind %s but expecting signature %s",
-	 mom_item_cstring (funitm), mom_item_cstring (funitm->itm_kind),
-	 mom_item_cstring (sigitm));
+        ("loaded function %s has kind %s but expecting signature %s",
+         mom_item_cstring (funitm), mom_item_cstring (funitm->itm_kind),
+         mom_item_cstring (sigitm));
     }
   mom_item_unlock (funitm);
   return oldad;
@@ -245,7 +245,7 @@ mom_dynload_function (const char *funame, const char *signame, void *newad)
 
 void
 mom_dynunload_function (const char *funame, const char *signame,
-			void *restoread)
+                        void *restoread)
 {
   // don't bother unloading function if we have no program handle, e.g. because main has returned....
   if (!mom_prog_dlhandle)
@@ -253,33 +253,33 @@ mom_dynunload_function (const char *funame, const char *signame,
   momitem_t *funitm = mom_find_item (funame);
   momitem_t *sigitm = mom_find_item (signame);
   MOM_DEBUGPRINTF (run,
-		   "dynunload_function funame %s funitm %s signame %s sigitm %s restoread@%p",
-		   funame, mom_item_cstring (funitm), signame,
-		   mom_item_cstring (sigitm), restoread);
+                   "dynunload_function funame %s funitm %s signame %s sigitm %s restoread@%p",
+                   funame, mom_item_cstring (funitm), signame,
+                   mom_item_cstring (sigitm), restoread);
   if (!funitm || !sigitm)
     return;
   mom_item_lock (funitm);
   if (funitm->itm_kind == sigitm)
     {
       if (restoread)
-	funitm->itm_data1 = restoread;
+        funitm->itm_data1 = restoread;
       else
-	{
-	  MOM_WARNPRINTF ("unloaded function %s of signature %s is cleared",
-			  mom_item_cstring (funitm),
-			  mom_item_cstring (sigitm));
-	  funitm->itm_kind = NULL;
-	  funitm->itm_data1 = NULL;
-	  funitm->itm_data2 = NULL;
-	};
+        {
+          MOM_WARNPRINTF ("unloaded function %s of signature %s is cleared",
+                          mom_item_cstring (funitm),
+                          mom_item_cstring (sigitm));
+          funitm->itm_kind = NULL;
+          funitm->itm_data1 = NULL;
+          funitm->itm_data2 = NULL;
+        };
 
     }
   else
     {
       MOM_WARNPRINTF
-	("unloaded function %s has kind %s but expecting signature %s",
-	 mom_item_cstring (funitm), mom_item_cstring (funitm->itm_kind),
-	 mom_item_cstring (sigitm));
+        ("unloaded function %s has kind %s but expecting signature %s",
+         mom_item_cstring (funitm), mom_item_cstring (funitm->itm_kind),
+         mom_item_cstring (sigitm));
     }
   mom_item_unlock (funitm);
 }
@@ -291,7 +291,7 @@ mom_wake_event_loop (void)
     MOM_FATAPRINTF
       ("wake_event_loop failed to write to event loop fd#%d : %m",
        writefdeventloop_mom);
-}				/* end mom_wake_event_loop */
+}                               /* end mom_wake_event_loop */
 
 
 static int
@@ -303,8 +303,8 @@ open_bind_socket_mom (void)
   if (!strchr (mom_socket_path, '/')
       || strlen (mom_socket_path) >= (int) sizeof (sun.sun_path))
     MOM_FATAPRINTF ("bad path (no /) for AF_UNIX socket but got %s",
-		    mom_socket_path);
-  (void) remove (mom_socket_path);	// should remove the socket before binding it
+                    mom_socket_path);
+  (void) remove (mom_socket_path);      // should remove the socket before binding it
   sfd = socket (AF_UNIX, SOCK_STREAM, 0);
   if (sfd < 0)
     MOM_FATAPRINTF ("socket AF_UNIX failed : %m");
@@ -314,7 +314,7 @@ open_bind_socket_mom (void)
     MOM_FATAPRINTF ("failed to bind unix socket %s : %m", sun.sun_path);
   MOM_DEBUGPRINTF (run, "bind unix socket #%d to %s", sfd, sun.sun_path);
   return sfd;
-}				/* end of open_bind_socket_mom */
+}                               /* end of open_bind_socket_mom */
 
 
 struct polldata_fdmom_st
@@ -327,7 +327,7 @@ struct polldata_fdmom_st
 
 static inline void
 handle_polldata_mom (struct polldata_fdmom_st *pfd, fd_set *preadfdset,
-		     fd_set *pwritefdset, fd_set *pexceptfdset)
+                     fd_set *pwritefdset, fd_set *pexceptfdset)
 {
   int curfd = pfd->polld_fd;
   if (curfd <= 0 || !pfd->polld_hdlr)
@@ -345,7 +345,7 @@ handle_polldata_mom (struct polldata_fdmom_st *pfd, fd_set *preadfdset,
 
 static inline void
 read_output_from_batchproc_mom (struct runningbatchprocess_mom_st *bp,
-				void *rbuf, size_t rsiz)
+                                void *rbuf, size_t rsiz)
 {
   if (bp->bproc_outfd <= 0)
     return;
@@ -354,60 +354,60 @@ read_output_from_batchproc_mom (struct runningbatchprocess_mom_st *bp,
     {
       int rcnt = read (bp->bproc_outfd, rbuf, rsiz);
       if (rcnt < 0)
-	{
-	  if (errno == EINTR)
-	    continue;
-	  if (errno == EWOULDBLOCK)
-	    return;
-	  MOM_WARNPRINTF ("read output from batch process %d failed (%m)",
-			  bp->bproc_pid);
-	  close (bp->bproc_outfd);
-	  bp->bproc_outfd = -1;
-	  return;
-	}
+        {
+          if (errno == EINTR)
+            continue;
+          if (errno == EWOULDBLOCK)
+            return;
+          MOM_WARNPRINTF ("read output from batch process %d failed (%m)",
+                          bp->bproc_pid);
+          close (bp->bproc_outfd);
+          bp->bproc_outfd = -1;
+          return;
+        }
       else if (rcnt == 0)
-	{
-	  // got eof
-	  close (bp->bproc_outfd);
-	  bp->bproc_outfd = -1;
-	  return;
-	};
+        {
+          // got eof
+          close (bp->bproc_outfd);
+          bp->bproc_outfd = -1;
+          return;
+        };
       char *pbuf = bp->bproc_outbuf;
       unsigned psiz = bp->bproc_outsiz;
       unsigned poff = bp->bproc_outoff;
       if (MOM_UNLIKELY (poff + rcnt >= MOM_MAX_STRING_LENGTH))
-	{
-	  MOM_WARNPRINTF
-	    ("output from batch process %d exceeds string capacity",
-	     bp->bproc_pid);
-	  rcnt = MOM_MAX_STRING_LENGTH - 1 - (rcnt + poff);
-	  close (bp->bproc_outfd);
-	  bp->bproc_outfd = -1;
-	  if (bp->bproc_pid > 0)
-	    kill (SIGTERM, bp->bproc_pid);
-	  if (rcnt <= 0)
-	    return;
-	  // the offending child process would probably get SIGPIPE fairly
-	  // quickly on its next output!
-	};
+        {
+          MOM_WARNPRINTF
+            ("output from batch process %d exceeds string capacity",
+             bp->bproc_pid);
+          rcnt = MOM_MAX_STRING_LENGTH - 1 - (rcnt + poff);
+          close (bp->bproc_outfd);
+          bp->bproc_outfd = -1;
+          if (bp->bproc_pid > 0)
+            kill (SIGTERM, bp->bproc_pid);
+          if (rcnt <= 0)
+            return;
+          // the offending child process would probably get SIGPIPE fairly
+          // quickly on its next output!
+        };
       if (MOM_UNLIKELY (poff + rcnt + 1 >= psiz))
-	{
-	  unsigned newpsiz = ((poff + rcnt + 300 + poff / 4) | 0xff) + 1;
-	  char *newpbuf =
-	    MOM_GC_SCALAR_ALLOC ("grown output buffer", newpsiz);
-	  char *oldpbuf = pbuf;
-	  unsigned oldpsiz = psiz;
-	  memcpy (newpbuf, oldpbuf, poff);
-	  pbuf = bp->bproc_outbuf = newpbuf;
-	  psiz = bp->bproc_outsiz = newpsiz;
-	  MOM_GC_FREE (oldpbuf, oldpsiz);
-	};
+        {
+          unsigned newpsiz = ((poff + rcnt + 300 + poff / 4) | 0xff) + 1;
+          char *newpbuf =
+            MOM_GC_SCALAR_ALLOC ("grown output buffer", newpsiz);
+          char *oldpbuf = pbuf;
+          unsigned oldpsiz = psiz;
+          memcpy (newpbuf, oldpbuf, poff);
+          pbuf = bp->bproc_outbuf = newpbuf;
+          psiz = bp->bproc_outsiz = newpsiz;
+          MOM_GC_FREE (oldpbuf, oldpsiz);
+        };
       memcpy (pbuf + poff, rbuf, rcnt);
       pbuf[poff + rcnt] = (char) 0;
       poff += rcnt;
       bp->bproc_outoff = poff;
-    };				/* end forever loop */
-}				/* end of read_output_from_batchproc_mom */
+    };                          /* end forever loop */
+}                               /* end of read_output_from_batchproc_mom */
 
 
 
@@ -456,8 +456,8 @@ mom_initialize_signals (void)
   MOM_DEBUGPRINTF (run, "start mom_initialize_signals");
   sigset_t mysigmasks;
   MOM_DEBUGPRINTF (run,
-		   "initialize_signals before handling signals SIGINT=%d SIGTERM=%d SIGQUIT=%dSIGCHLD=%d",
-		   SIGINT, SIGTERM, SIGQUIT, SIGCHLD);
+                   "initialize_signals before handling signals SIGINT=%d SIGTERM=%d SIGQUIT=%dSIGCHLD=%d",
+                   SIGINT, SIGTERM, SIGQUIT, SIGCHLD);
   sigemptyset (&mysigmasks);
   sigaddset (&mysigmasks, SIGINT);
   sigaddset (&mysigmasks, SIGQUIT);
@@ -489,7 +489,7 @@ mom_initialize_signals (void)
   sa.sa_flags = SA_RESTART | SA_NOCLDSTOP;
   sigaction (SIGCHLD, &sa, NULL);
   MOM_DEBUGPRINTF (run, "initialize_signals done");
-}				/* end of mom_initialize_signals */
+}                               /* end of mom_initialize_signals */
 
 
 
@@ -498,13 +498,13 @@ mom_initialize_signals (void)
 void
 mom_event_loop (void)
 {
-#define BUSY_MILLISEC_DELAY_MOM 25	/* milliseconds, i.e. 0.025 sec */
-#define IDLE_MILLISEC_DELAY_MOM 3500	/* milliseconds, i.e. 3.5 sec */
+#define BUSY_MILLISEC_DELAY_MOM 25      /* milliseconds, i.e. 0.025 sec */
+#define IDLE_MILLISEC_DELAY_MOM 3500    /* milliseconds, i.e. 3.5 sec */
   bool idle = false;
   int evpipe[2] = { -1, -1 };
   MOM_DEBUGPRINTF (run, "start mom_event_loop");
   if (MOM_UNLIKELY (pipe2 (evpipe, O_CLOEXEC)
-		    || evpipe[0] <= 0 || evpipe[1] <= 0))
+                    || evpipe[0] <= 0 || evpipe[1] <= 0))
     MOM_FATAPRINTF ("failed to create pipe for event loop");
   curlmulti_mom = curl_multi_init ();
   if (MOM_UNLIKELY (curlmulti_mom == NULL))
@@ -544,23 +544,23 @@ mom_event_loop (void)
       struct polldata_fdmom_st polldata[MAX_POLL_MOM];
       memset (polldata, 0, sizeof (polldata));
       if (MOM_UNLIKELY (loopcount % LOOPDBG_FREQUENCY_MOM == 0))
-	{
-	  MOM_DEBUGPRINTF (run, "start of eventloop #%ld", loopcount);
-	};
+        {
+          MOM_DEBUGPRINTF (run, "start of eventloop #%ld", loopcount);
+        };
       {
-	pthread_mutex_lock (&eventloop_mtx_mom);
-	{
-	  CURLMcode err =
-	    curl_multi_fdset (curlmulti_mom, &readfdset, &writefdset,
-			      &exceptfdset, &curlmaxfd);
-	  if (err)
-	    MOM_FATAPRINTF ("curl_multi_fdset failed %s",
-			    curl_multi_strerror (err));
-	}
-	if (curlmaxfd > 0)
-	  idle = false;
-	if (curlmaxfd > maxfd)
-	  maxfd = curlmaxfd;
+        pthread_mutex_lock (&eventloop_mtx_mom);
+        {
+          CURLMcode err =
+            curl_multi_fdset (curlmulti_mom, &readfdset, &writefdset,
+                              &exceptfdset, &curlmaxfd);
+          if (err)
+            MOM_FATAPRINTF ("curl_multi_fdset failed %s",
+                            curl_multi_strerror (err));
+        }
+        if (curlmaxfd > 0)
+          idle = false;
+        if (curlmaxfd > maxfd)
+          maxfd = curlmaxfd;
 #define DO_READ_POLL_MOM(Fd,Handler,DataIndex)	do {		\
 	  int rdfd = (Fd);					\
 	  if (rdfd<=0 || rdfd>=FD_SETSIZE)			\
@@ -577,116 +577,116 @@ mom_event_loop (void)
 	  polldata[nbpoll].polld_event |= POLLIN;		\
 	  nbpoll++;						\
 	} while(0)
-	/* We don't DO_READ_POLL_MOM for the special file descriptors
-	   readfdeventloop_mom, signalfd_mom, timerfd_mom since these 
-	   are processed specifically. */
-	if (readfdeventloop_mom > 0)
-	  FD_SET (readfdeventloop_mom, &readfdset);
-	if (timerfd_mom > 0)
-	  FD_SET (timerfd_mom, &readfdset);
-	for (int pix = 1; pix <= MOM_MAX_WORKERS; pix++)
-	  if (runbatchproc_mom[pix].bproc_pid > 0
-	      && runbatchproc_mom[pix].bproc_outfd > 0
-	      && runbatchproc_mom[pix].bproc_outbuf != NULL)
-	    DO_READ_POLL_MOM (runbatchproc_mom[pix].bproc_outfd,
-			      process_evcb_mom, pix);
-	if (mastersocketfd_mom > 0)
-	  DO_READ_POLL_MOM (mastersocketfd_mom, mastersocket_evcb_mom, 0);
-	for (int six = 0; six < MOM_MAX_SOCKETS; six++)
-	  if (activesockets_mom[six].msock_fd > 0
-	      && activesockets_mom[six].msock_itm != NULL)
-	    DO_READ_POLL_MOM (activesockets_mom[six].msock_fd,
-			      activesocket_evcb_mom, six);
-	int millisec =
-	  idle ? IDLE_MILLISEC_DELAY_MOM : BUSY_MILLISEC_DELAY_MOM;
-	long cutimeout = 0;
-	{
-	  CURLMcode cuerr = curl_multi_timeout (curlmulti_mom, &cutimeout);
-	  if (cuerr)
-	    MOM_FATAPRINTF ("curl_multi_timeout failed %s",
-			    curl_multi_strerror (cuerr));
-	}
-	if (cutimeout > 0 && millisec > cutimeout)
-	  millisec = cutimeout;
-	if (millisec < 0)
-	  millisec = 1;
-	seltv.tv_sec = millisec / 1000;
-	seltv.tv_usec = millisec / 1000;
+        /* We don't DO_READ_POLL_MOM for the special file descriptors
+           readfdeventloop_mom, signalfd_mom, timerfd_mom since these 
+           are processed specifically. */
+        if (readfdeventloop_mom > 0)
+          FD_SET (readfdeventloop_mom, &readfdset);
+        if (timerfd_mom > 0)
+          FD_SET (timerfd_mom, &readfdset);
+        for (int pix = 1; pix <= MOM_MAX_WORKERS; pix++)
+          if (runbatchproc_mom[pix].bproc_pid > 0
+              && runbatchproc_mom[pix].bproc_outfd > 0
+              && runbatchproc_mom[pix].bproc_outbuf != NULL)
+            DO_READ_POLL_MOM (runbatchproc_mom[pix].bproc_outfd,
+                              process_evcb_mom, pix);
+        if (mastersocketfd_mom > 0)
+          DO_READ_POLL_MOM (mastersocketfd_mom, mastersocket_evcb_mom, 0);
+        for (int six = 0; six < MOM_MAX_SOCKETS; six++)
+          if (activesockets_mom[six].msock_fd > 0
+              && activesockets_mom[six].msock_itm != NULL)
+            DO_READ_POLL_MOM (activesockets_mom[six].msock_fd,
+                              activesocket_evcb_mom, six);
+        int millisec =
+          idle ? IDLE_MILLISEC_DELAY_MOM : BUSY_MILLISEC_DELAY_MOM;
+        long cutimeout = 0;
+        {
+          CURLMcode cuerr = curl_multi_timeout (curlmulti_mom, &cutimeout);
+          if (cuerr)
+            MOM_FATAPRINTF ("curl_multi_timeout failed %s",
+                            curl_multi_strerror (cuerr));
+        }
+        if (cutimeout > 0 && millisec > cutimeout)
+          millisec = cutimeout;
+        if (millisec < 0)
+          millisec = 1;
+        seltv.tv_sec = millisec / 1000;
+        seltv.tv_usec = millisec / 1000;
 #undef DO_READ_POLL_MOM
-	pthread_mutex_unlock (&eventloop_mtx_mom);
+        pthread_mutex_unlock (&eventloop_mtx_mom);
       };
       errno = 0;
       int selres =
-	select (maxfd + 1, &readfdset, &writefdset, &exceptfdset, &seltv);
+        select (maxfd + 1, &readfdset, &writefdset, &exceptfdset, &seltv);
       if (selres < 0 && errno != EINTR)
-	{
-	  MOM_WARNPRINTF ("event_loop select failed : %m");
-	  eventloopupdate_mom ();
-	  continue;
-	};
+        {
+          MOM_WARNPRINTF ("event_loop select failed : %m");
+          eventloopupdate_mom ();
+          continue;
+        };
       MOM_DEBUGPRINTF (run, "event_loop selres=%d loopcount=%ld", selres,
-		       loopcount);
+                       loopcount);
       if (selres == 0)
-	idle = true;
+        idle = true;
       if (readfdeventloop_mom > 0
-	  && FD_ISSET (readfdeventloop_mom, &readfdset))
-	eventloopupdate_mom ();
+          && FD_ISSET (readfdeventloop_mom, &readfdset))
+        eventloopupdate_mom ();
       if (gotsomesignal_mom)
-	signalhandle_mom ();
+        signalhandle_mom ();
       if (timerfd_mom > 0 && FD_ISSET (timerfd_mom, &readfdset))
-	ringtimer_mom ();
+        ringtimer_mom ();
       if (curlmaxfd > 0)
-	{
-	  int nbcuhd = 0;
-	  CURLMcode cuerr = curl_multi_perform (curlmulti_mom, &nbcuhd);
-	  if (cuerr)
-	    MOM_FATAPRINTF ("curl_multi_perform failed %s",
-			    curl_multi_strerror (cuerr));
-	};
+        {
+          int nbcuhd = 0;
+          CURLMcode cuerr = curl_multi_perform (curlmulti_mom, &nbcuhd);
+          if (cuerr)
+            MOM_FATAPRINTF ("curl_multi_perform failed %s",
+                            curl_multi_strerror (cuerr));
+        };
       if (nbpoll > 0)
-	{
-	  // we handle the polldata starting at some random index.
-	  int startix =
-	    (nbpoll >
-	     1) ? ((mom_random_nonzero_32_here () & 0x3ffffff) % nbpoll) : 0;
-	  for (int pix = startix; pix < nbpoll; pix++)
-	    {
-	      handle_polldata_mom (polldata + pix, &readfdset, &writefdset,
-				   &exceptfdset);
-	    }
-	  for (int pix = 0; pix < startix; pix++)
-	    {
-	      handle_polldata_mom (polldata + pix, &readfdset, &writefdset,
-				   &exceptfdset);
-	    };
-	};
+        {
+          // we handle the polldata starting at some random index.
+          int startix =
+            (nbpoll >
+             1) ? ((mom_random_nonzero_32_here () & 0x3ffffff) % nbpoll) : 0;
+          for (int pix = startix; pix < nbpoll; pix++)
+            {
+              handle_polldata_mom (polldata + pix, &readfdset, &writefdset,
+                                   &exceptfdset);
+            }
+          for (int pix = 0; pix < startix; pix++)
+            {
+              handle_polldata_mom (polldata + pix, &readfdset, &writefdset,
+                                   &exceptfdset);
+            };
+        };
       if (MOM_UNLIKELY (loopcount % LOOPDBG_FREQUENCY_MOM == 0))
-	{
-	  MOM_DEBUGPRINTF (run, "end of eventloop #%ld", loopcount);
-	};
+        {
+          MOM_DEBUGPRINTF (run, "end of eventloop #%ld", loopcount);
+        };
       loopcount++;
-    };				/* end while !mom_should_stop */
+    };                          /* end while !mom_should_stop */
   MOM_DEBUGPRINTF (run, "ending eventloop loopcount=%ld", loopcount);
   if (finaleventloopdump_mom && finaleventloopdump_mom[0])
     {
       MOM_DEBUGPRINTF (run,
-		       "ending mom_event_loop done %ld loops before dumping to %s",
-		       loopcount, finaleventloopdump_mom);
+                       "ending mom_event_loop done %ld loops before dumping to %s",
+                       loopcount, finaleventloopdump_mom);
       mom_dump_state (finaleventloopdump_mom);
       MOM_INFORMPRINTF ("event loop dumped state to %s after %ld loops",
-			finaleventloopdump_mom, loopcount);
+                        finaleventloopdump_mom, loopcount);
       finaleventloopdump_mom = NULL;
     }
   else
     MOM_DEBUGPRINTF (run,
-		     "ending mom_event_loop done %ld loops no final dump",
-		     loopcount);
+                     "ending mom_event_loop done %ld loops no final dump",
+                     loopcount);
 
 
   // perhaps we should call curl_multi_cleanup(curlmulti_mom); etc.
   MOM_DEBUGPRINTF (run, "ended mom_event_loop (pid %d), done %ld loops",
-		   (int) getpid (), loopcount);
-}				/* end of mom_event_loop */
+                   (int) getpid (), loopcount);
+}                               /* end of mom_event_loop */
 
 
 static void
@@ -695,16 +695,16 @@ start1batchprocess_mom (void)
   momvalue_t vinode = mom_queuevalue_pop_front (&pendingbatchprocque_mom);
   const momnode_t *inod = mom_value_to_node (vinode);
   assert (inod && mom_node_conn (inod) == MOM_PREDEFINED_NAMED (in)
-	  && mom_node_arity (inod) == 2);
+          && mom_node_arity (inod) == 2);
   momvalue_t vclos = mom_node_nth (inod, 0);
   momvalue_t vprocnode = mom_node_nth (inod, 1);
   struct runningbatchprocess_mom_st *bp = NULL;
   for (unsigned ix = 1; ix <= MOM_MAX_WORKERS; ix++)
     if (runbatchproc_mom[ix].bproc_pid == 0
-	&& runbatchproc_mom[ix].bproc_outfd == 0)
+        && runbatchproc_mom[ix].bproc_outfd == 0)
       {
-	bp = runbatchproc_mom + ix;
-	break;
+        bp = runbatchproc_mom + ix;
+        break;
       };
   if (bp == NULL)
     MOM_FATAPRINTF
@@ -734,23 +734,23 @@ start1batchprocess_mom (void)
       dup2 (pipefds[1], STDOUT_FILENO);
       dup2 (pipefds[1], STDERR_FILENO);
       const char **argv =
-	MOM_GC_ALLOC ("argv batchprocess", (proclen + 2) * sizeof (char *));
+        MOM_GC_ALLOC ("argv batchprocess", (proclen + 2) * sizeof (char *));
       for (unsigned ix = 0; ix < proclen; ix++)
-	argv[ix] =		//
-	  MOM_GC_STRDUP ("arg string batchprocess",	//
-			 mom_string_cstr (mom_value_to_string
-					  (mom_node_nth (procnod, ix))));
+        argv[ix] =              //
+          MOM_GC_STRDUP ("arg string batchprocess",     //
+                         mom_string_cstr (mom_value_to_string
+                                          (mom_node_nth (procnod, ix))));
       dup2 (pipefds[1], STDOUT_FILENO);
       dup2 (pipefds[1], STDERR_FILENO);
       for (int fd = 3; fd < 48; fd++)
-	close (fd);
+        close (fd);
       execvp (argv[0], (char *const *) argv);
       {
-	char errbuf[128];
-	snprintf (errbuf, sizeof (errbuf), "execvp %s", argv[0]);
-	perror (errbuf);
-	fflush (NULL);
-	_exit (127);
+        char errbuf[128];
+        snprintf (errbuf, sizeof (errbuf), "execvp %s", argv[0]);
+        perror (errbuf);
+        fflush (NULL);
+        _exit (127);
       };
       return;
     }
@@ -768,8 +768,8 @@ start1batchprocess_mom (void)
   bp->bproc_outoff = 0;
   nb_processes_mom++;
   MOM_INFORMPRINTF ("started batch process %s as pid %d",
-		    mom_output_gcstring (vprocnode), (int) pid);
-}				/* end of start1batchprocess_mom */
+                    mom_output_gcstring (vprocnode), (int) pid);
+}                               /* end of start1batchprocess_mom */
 
 
 
@@ -784,7 +784,7 @@ eventloopupdate_mom (void)
   {
     pthread_mutex_lock (&eventloop_mtx_mom);
     while (mom_queuevalue_size (&pendingbatchprocque_mom) > 0
-	   && nb_processes_mom < mom_nb_workers)
+           && nb_processes_mom < mom_nb_workers)
       start1batchprocess_mom ();
     pthread_mutex_unlock (&eventloop_mtx_mom);
   }
@@ -801,40 +801,40 @@ waitprocess_mom (void)
       int wsta = 0;
       pid_t wpid = waitpid (0, &wsta, WNOHANG);
       if (wpid <= 0)
-	return;
+        return;
       momvalue_t vclos = MOM_NONEV;
       momvalue_t vout = MOM_NONEV;
       {
-	struct runningbatchprocess_mom_st bproc;
-	memset (&bproc, 0, sizeof (bproc));
-	pthread_mutex_lock (&eventloop_mtx_mom);
-	for (unsigned ix = 1; ix <= MOM_MAX_WORKERS; ix++)
-	  if (runbatchproc_mom[ix].bproc_pid == wpid)
-	    {
-	      bproc = runbatchproc_mom[ix];
-	      memset (&runbatchproc_mom[ix], 0, sizeof (bproc));
-	      nb_processes_mom--;
-	      break;
-	    }
-	// some residual bytes might stay in the pipe. We use a
-	// rather small local buffer to read them.
-	char rdbuf[256];
-	read_output_from_batchproc_mom (&bproc, rdbuf, sizeof (rdbuf));
-	pthread_mutex_unlock (&eventloop_mtx_mom);
-	vclos = bproc.bproc_hclosv;
-	assert (bproc.bproc_outbuf);
-	assert (bproc.bproc_outoff < bproc.bproc_outsiz);
-	bproc.bproc_outbuf[bproc.bproc_outoff] = '\0';
-	vout = mom_stringv (mom_make_string_cstr (bproc.bproc_outbuf));
-	if (bproc.bproc_outfd > 0)
-	  close (bproc.bproc_outfd);
-	memset (&bproc, 0, sizeof (bproc));
-	if (!mom_applval_1val1int_to_void (vclos, vout, wsta))
-	  MOM_WARNPRINTF ("failed to apply closure %s after process %d ended",
-			  mom_output_gcstring (vclos), (int) wpid);
+        struct runningbatchprocess_mom_st bproc;
+        memset (&bproc, 0, sizeof (bproc));
+        pthread_mutex_lock (&eventloop_mtx_mom);
+        for (unsigned ix = 1; ix <= MOM_MAX_WORKERS; ix++)
+          if (runbatchproc_mom[ix].bproc_pid == wpid)
+            {
+              bproc = runbatchproc_mom[ix];
+              memset (&runbatchproc_mom[ix], 0, sizeof (bproc));
+              nb_processes_mom--;
+              break;
+            }
+        // some residual bytes might stay in the pipe. We use a
+        // rather small local buffer to read them.
+        char rdbuf[256];
+        read_output_from_batchproc_mom (&bproc, rdbuf, sizeof (rdbuf));
+        pthread_mutex_unlock (&eventloop_mtx_mom);
+        vclos = bproc.bproc_hclosv;
+        assert (bproc.bproc_outbuf);
+        assert (bproc.bproc_outoff < bproc.bproc_outsiz);
+        bproc.bproc_outbuf[bproc.bproc_outoff] = '\0';
+        vout = mom_stringv (mom_make_string_cstr (bproc.bproc_outbuf));
+        if (bproc.bproc_outfd > 0)
+          close (bproc.bproc_outfd);
+        memset (&bproc, 0, sizeof (bproc));
+        if (!mom_applval_1val1int_to_void (vclos, vout, wsta))
+          MOM_WARNPRINTF ("failed to apply closure %s after process %d ended",
+                          mom_output_gcstring (vclos), (int) wpid);
       }
     }
-}				/* end waitprocess_mom */
+}                               /* end waitprocess_mom */
 
 
 static void
@@ -845,94 +845,94 @@ signalhandle_mom (void)
   for (;;)
     {
       bool got_signal = false, do_sigchld = false, do_sigterm =
-	false, do_sigint = false, do_sigquit = false;
+        false, do_sigint = false, do_sigquit = false;
       lpnum++;
       MOM_DEBUGPRINTF (run, "signalhandle gotsomesignal=%d lpnum#%d",
-		       (int) gotsomesignal_mom, lpnum);
+                       (int) gotsomesignal_mom, lpnum);
       if (gotsomesignal_mom)
-	{
-	  got_signal = true;
-	  gotsomesignal_mom = 0;
-	  if (gotsigchild_mom)
-	    {
-	      MOM_DEBUGPRINTF (run, "signalhandle gotsigchild");
-	      do_sigchld = true;
-	      gotsigchild_mom = 0;
-	    };
-	  if (gotsigquit_mom)
-	    {
-	      MOM_DEBUGPRINTF (run, "signalhandle gotsigquit");
-	      do_sigquit = true;
-	      gotsigquit_mom = 0;
-	    };
-	  if (gotsigint_mom)
-	    {
-	      MOM_DEBUGPRINTF (run, "signalhandle gotsigint");
-	      do_sigint = true;
-	      gotsigint_mom = 0;
-	    };
-	  if (gotsigterm_mom)
-	    {
-	      MOM_DEBUGPRINTF (run, "signalhandle gotsigterm");
-	      do_sigterm = true;
-	      gotsigterm_mom = 0;
-	    };
-	};
+        {
+          got_signal = true;
+          gotsomesignal_mom = 0;
+          if (gotsigchild_mom)
+            {
+              MOM_DEBUGPRINTF (run, "signalhandle gotsigchild");
+              do_sigchld = true;
+              gotsigchild_mom = 0;
+            };
+          if (gotsigquit_mom)
+            {
+              MOM_DEBUGPRINTF (run, "signalhandle gotsigquit");
+              do_sigquit = true;
+              gotsigquit_mom = 0;
+            };
+          if (gotsigint_mom)
+            {
+              MOM_DEBUGPRINTF (run, "signalhandle gotsigint");
+              do_sigint = true;
+              gotsigint_mom = 0;
+            };
+          if (gotsigterm_mom)
+            {
+              MOM_DEBUGPRINTF (run, "signalhandle gotsigterm");
+              do_sigterm = true;
+              gotsigterm_mom = 0;
+            };
+        };
 
       if (do_sigchld)
-	{
-	  MOM_DEBUGPRINTF (run, "signalhandle handle sigchld");
-	  waitprocess_mom ();
-	  MOM_DEBUGPRINTF (run, "signalhandle done handle sigchld");
-	}
+        {
+          MOM_DEBUGPRINTF (run, "signalhandle handle sigchld");
+          waitprocess_mom ();
+          MOM_DEBUGPRINTF (run, "signalhandle done handle sigchld");
+        }
       if (do_sigterm)
-	{
-	  char templdirnam[32] = "_monimelt_term_XXXXXX";
-	  if (!mkdtemp (templdirnam))
-	    MOM_FATAPRINTF ("failed to create temporary dump directory (%m)");
-	  strcat (templdirnam, "/");
-	  finaleventloopdump_mom = templdirnam;
-	  MOM_INFORMPRINTF
-	    ("got SIGTERM, so will dump into temporary directory %s",
-	     templdirnam);
-	  MOM_DEBUGPRINTF (run, "signalhandle before SIGTERM-ing workers");
-	  mom_kill_workers (SIGTERM);
-	  MOM_DEBUGPRINTF (run, "signalhandle after SIGTERM-ing workers");
-	  mom_stop_work ();
-	}
+        {
+          char templdirnam[32] = "_monimelt_term_XXXXXX";
+          if (!mkdtemp (templdirnam))
+            MOM_FATAPRINTF ("failed to create temporary dump directory (%m)");
+          strcat (templdirnam, "/");
+          finaleventloopdump_mom = templdirnam;
+          MOM_INFORMPRINTF
+            ("got SIGTERM, so will dump into temporary directory %s",
+             templdirnam);
+          MOM_DEBUGPRINTF (run, "signalhandle before SIGTERM-ing workers");
+          mom_kill_workers (SIGTERM);
+          MOM_DEBUGPRINTF (run, "signalhandle after SIGTERM-ing workers");
+          mom_stop_work ();
+        }
       if (do_sigint)
-	{
-	  char templdirnam[32] = "_monimelt_int_XXXXXX";
-	  if (!mkdtemp (templdirnam))
-	    MOM_FATAPRINTF ("failed to create temporary dump directory (%m)");
-	  strcat (templdirnam, "/");
-	  finaleventloopdump_mom = templdirnam;
-	  MOM_INFORMPRINTF
-	    ("got SIGINT, so will dump into temporary directory %s",
-	     templdirnam);
-	  MOM_DEBUGPRINTF (run, "signalhandle before SIGINT-ing workers");
-	  mom_kill_workers (SIGINT);
-	  MOM_DEBUGPRINTF (run, "signalhandle after SIGINT-ing workers");
-	  mom_stop_work ();
-	}
+        {
+          char templdirnam[32] = "_monimelt_int_XXXXXX";
+          if (!mkdtemp (templdirnam))
+            MOM_FATAPRINTF ("failed to create temporary dump directory (%m)");
+          strcat (templdirnam, "/");
+          finaleventloopdump_mom = templdirnam;
+          MOM_INFORMPRINTF
+            ("got SIGINT, so will dump into temporary directory %s",
+             templdirnam);
+          MOM_DEBUGPRINTF (run, "signalhandle before SIGINT-ing workers");
+          mom_kill_workers (SIGINT);
+          MOM_DEBUGPRINTF (run, "signalhandle after SIGINT-ing workers");
+          mom_stop_work ();
+        }
       if (do_sigquit)
-	{
-	  MOM_INFORMPRINTF ("got SIGQUIT, so will stop without saving state");
-	  MOM_DEBUGPRINTF (run, "signalhandle before SIGQUIT-ing workers");
-	  mom_kill_workers (SIGQUIT);
-	  MOM_DEBUGPRINTF (run, "signalhandle after SIGQUIT-ing workers");
-	  mom_stop_work ();
-	}
+        {
+          MOM_INFORMPRINTF ("got SIGQUIT, so will stop without saving state");
+          MOM_DEBUGPRINTF (run, "signalhandle before SIGQUIT-ing workers");
+          mom_kill_workers (SIGQUIT);
+          MOM_DEBUGPRINTF (run, "signalhandle after SIGQUIT-ing workers");
+          mom_stop_work ();
+        }
       if (MOM_UNLIKELY (mom_should_stop ()))
-	{
-	  MOM_DEBUGPRINTF (run, "signalhandle broadscast agenda_changed");
-	  pthread_cond_broadcast (&mom_agenda_changed_condvar);
-	}
+        {
+          MOM_DEBUGPRINTF (run, "signalhandle broadscast agenda_changed");
+          pthread_cond_broadcast (&mom_agenda_changed_condvar);
+        }
       if (!got_signal)
-	{
-	  MOM_DEBUGPRINTF (run, "signalhandle done, no more signals");
-	  return;
-	}
+        {
+          MOM_DEBUGPRINTF (run, "signalhandle done, no more signals");
+          return;
+        }
     }
 }
 
@@ -956,7 +956,7 @@ process_evcb_mom (int fd, short revent, intptr_t dataindex)
   pthread_mutex_lock (&eventloop_mtx_mom);
   assert (runbatchproc_mom[dataindex].bproc_outfd == fd);
   read_output_from_batchproc_mom (&runbatchproc_mom[dataindex], inbuf,
-				  sizeof (inbuf));
+                                  sizeof (inbuf));
   pthread_mutex_unlock (&eventloop_mtx_mom);
 }
 
@@ -984,8 +984,8 @@ mom_start_batch_process (momvalue_t vclos, momvalue_t vprocnode)
 {
   bool ok = true;
   MOM_DEBUGPRINTF (run, "start_batch_process vclos=%s vprocnode=%s",
-		   mom_output_gcstring (vclos),
-		   mom_output_gcstring (vprocnode));
+                   mom_output_gcstring (vclos),
+                   mom_output_gcstring (vprocnode));
   if (vclos.typnum != momty_node)
     ok = false;
   momnode_t *procnod = mom_value_to_node (vprocnode);
@@ -997,14 +997,14 @@ mom_start_batch_process (momvalue_t vclos, momvalue_t vprocnode)
   else
     {
       for (unsigned ix = 0; ix < procarity && ok; ix++)
-	if (!mom_value_to_string (mom_node_nth (procnod, ix)))
-	  ok = false;
+        if (!mom_value_to_string (mom_node_nth (procnod, ix)))
+          ok = false;
     };
   if (!ok)
     {
       MOM_WARNPRINTF
-	("invalid arguments to start_batch_process vclos=%s vprocnode=%s",
-	 mom_output_gcstring (vclos), mom_output_gcstring (vprocnode));
+        ("invalid arguments to start_batch_process vclos=%s vprocnode=%s",
+         mom_output_gcstring (vclos), mom_output_gcstring (vprocnode));
       mom_applval_1val1int_to_void (vclos, vprocnode, -1);
       return;
     };
@@ -1016,4 +1016,4 @@ mom_start_batch_process (momvalue_t vclos, momvalue_t vprocnode)
     pthread_mutex_unlock (&eventloop_mtx_mom);
     mom_wake_event_loop ();
   }
-}				/* end of mom_start_batch_process */
+}                               /* end of mom_start_batch_process */

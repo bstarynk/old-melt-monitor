@@ -45,22 +45,22 @@ void
 mom_initialize_anonymous_items (void)
 {
   static_assert (sizeof (ID_DIGITS_MOM) - 1 == ID_BASE_MOM,
-		 "invalid number of id digits");
+                 "invalid number of id digits");
   pthread_mutexattr_init (&anomtxattr_mom);
   pthread_mutexattr_settype (&anomtxattr_mom, PTHREAD_MUTEX_RECURSIVE);
   for (int ix = 0; ix < HASH_ANON_MOD_MOM; ix++)
     {
       pthread_mutex_init (&mtx_anon_mom[ix], &anomtxattr_mom);
       unsigned siz = ANH_INITIAL_SIZE_MOM;
-      struct anon_htable_mom_st *an =	//
-	MOM_GC_SCALAR_ALLOC ("anh",
-			     sizeof (struct anon_htable_mom_st) +
-			     siz * sizeof (momitem_t *));
+      struct anon_htable_mom_st *an =   //
+        MOM_GC_SCALAR_ALLOC ("anh",
+                             sizeof (struct anon_htable_mom_st) +
+                             siz * sizeof (momitem_t *));
       an->anh_size = siz;
       anh_arr_mom[ix] = an;
     }
   MOM_DEBUGPRINTF (item, "end mom_initialize_anonymous_items");
-}				/* end mom_initialize_anonymous_items */
+}                               /* end mom_initialize_anonymous_items */
 
 
 ////////////////////////////////////////////////////////////////
@@ -78,7 +78,7 @@ num48_to_char10_mom (uint64_t num, char *buf)
     }
   if (MOM_UNLIKELY (num > 9))
     MOM_FATAPRINTF ("bad num %d for initnum %lld", (int) num,
-		    (long long) initnum);
+                    (long long) initnum);
   assert (num <= 9);
   buf[1] = '0' + num;
   buf[0] = '_';
@@ -98,7 +98,7 @@ char10_to_num48_mom (const char *buf)
       char c = buf[ix];
       char *p = strchr (ID_DIGITS_MOM, c);
       if (!p)
-	return 0;
+        return 0;
       num = (num * 48 + p - ID_DIGITS_MOM);
     }
   return num;
@@ -114,12 +114,12 @@ mom_valid_item_id_str (const char *id, const char **pend)
   for (int ns = 0; ns < 2; ns++)
     {
       if (id[ns * 10 + 0] != '_')
-	return false;
+        return false;
       if (id[ns * 10 + 1] < '0' || id[ns * 10 + 1] > '9')
-	return false;
+        return false;
       for (int i = 1; i <= 9; i++)
-	if (!strchr (ID_DIGITS_MOM, id[ns * 10 + i]))
-	  return false;
+        if (!strchr (ID_DIGITS_MOM, id[ns * 10 + i]))
+          return false;
     }
   if (isalnum (id[20]) || id[20] == '_')
     return false;
@@ -144,26 +144,26 @@ find_anonymous_of_id_mom (const char *idstr, momhash_t h)
     {
       momitem_t *curitm = anh->anh_arritm[ix];
       if (!curitm)
-	break;
+        break;
       if (curitm == MOM_EMPTY)
-	continue;
+        continue;
       assert (curitm->itm_anonymous && curitm->itm_id);
       if (!strcmp (curitm->itm_id->cstr, idstr))
-	itm = curitm;
+        itm = curitm;
     }
   for (unsigned ix = 0; ix < startix && !itm; ix++)
     {
       momitem_t *curitm = anh->anh_arritm[ix];
       if (!curitm)
-	break;
+        break;
       if (curitm == MOM_EMPTY)
-	continue;
+        continue;
       assert (curitm->itm_anonymous && curitm->itm_id);
       if (!strcmp (curitm->itm_id->cstr, idstr))
-	itm = curitm;
+        itm = curitm;
     }
   return itm;
-}				/* end of find_anonymous_of_id_mom */
+}                               /* end of find_anonymous_of_id_mom */
 
 static inline void
 raw_add_anon_item_mom (momitem_t *itm, unsigned hrk)
@@ -182,35 +182,35 @@ raw_add_anon_item_mom (momitem_t *itm, unsigned hrk)
     {
       momitem_t *curitm = anh->anh_arritm[ix];
       if (!curitm)
-	{
-	  if (pos < 0)
-	    pos = (int) ix;
-	  break;
-	}
+        {
+          if (pos < 0)
+            pos = (int) ix;
+          break;
+        }
       else if (curitm == MOM_EMPTY)
-	{
-	  if (pos < 0)
-	    pos = (int) ix;
-	}
+        {
+          if (pos < 0)
+            pos = (int) ix;
+        }
       else if (curitm == itm)
-	return;
+        return;
     }
   for (unsigned ix = 0; ix < startix; ix++)
     {
       momitem_t *curitm = anh->anh_arritm[ix];
       if (!curitm)
-	{
-	  if (pos < 0)
-	    pos = (int) ix;
-	  break;
-	}
+        {
+          if (pos < 0)
+            pos = (int) ix;
+          break;
+        }
       else if (curitm == MOM_EMPTY)
-	{
-	  if (pos < 0)
-	    pos = (int) ix;
-	}
+        {
+          if (pos < 0)
+            pos = (int) ix;
+        }
       else if (curitm == itm)
-	return;
+        return;
     }
   assert (pos >= 0);
   anh->anh_arritm[pos] = itm;
@@ -228,22 +228,22 @@ reorganize_anon_bucket_mom (unsigned hrk)
   unsigned newsiz = ((6 * bcnt / 5 + 7) | 0x1f) + 1;
   if (newsiz == hsiz)
     return;
-  struct anon_htable_mom_st *newbuck =	//
+  struct anon_htable_mom_st *newbuck =  //
     MOM_GC_SCALAR_ALLOC ("newanbuck", sizeof (struct anon_htable_mom_st)
-			 + newsiz * sizeof (momitem_t *));
+                         + newsiz * sizeof (momitem_t *));
   newbuck->anh_size = newsiz;
   anh_arr_mom[hrk] = newbuck;
   for (unsigned ix = 0; ix < hsiz; ix++)
     {
       const momitem_t *curitm = anh->anh_arritm[ix];
       if (!curitm || curitm == MOM_EMPTY)
-	continue;
+        continue;
       raw_add_anon_item_mom ((momitem_t *) curitm, hrk);
     }
   MOM_GC_FREE (anh, sizeof (struct anon_htable_mom_st)
-	       + hsiz * sizeof (momitem_t *));
+               + hsiz * sizeof (momitem_t *));
   assert (newbuck->anh_count == bcnt);
-}				/* end of reorganize_anon_bucket_mom */
+}                               /* end of reorganize_anon_bucket_mom */
 
 
 const momitem_t *
@@ -268,15 +268,15 @@ mom_make_random_idstr (unsigned salt, struct momitem_st *protoitem)
   do
     {
       uint32_t r1 = 0, r2 = 0, r3 = 0;
-      uint64_t hi = 0, lo = 0;	/* actually 48 bits unsigned each */
+      uint64_t hi = 0, lo = 0;  /* actually 48 bits unsigned each */
       mom_random_three_nonzero_32 (salt, &r1, &r2, &r3);
       hi =
-	(((uint64_t) r1) << 32 | (uint64_t) ((r2 >> 16))) & 0xffffffffffffLL;
+        (((uint64_t) r1) << 32 | (uint64_t) ((r2 >> 16))) & 0xffffffffffffLL;
       lo =
-	((((uint64_t) (r2 & 0xffff)) << 32) | ((uint64_t) r3)) &
-	0xffffffffffffLL;
+        ((((uint64_t) (r2 & 0xffff)) << 32) | ((uint64_t) r3)) &
+        0xffffffffffffLL;
       if (hi == 0 || lo == 0)
-	continue;
+        continue;
       char buf1[16], buf2[16], bufstr[32];
 #define NUM48LEN_MOM 10
       memset (buf1, 0, sizeof (buf1));
@@ -285,32 +285,32 @@ mom_make_random_idstr (unsigned salt, struct momitem_st *protoitem)
       const char *p1 = num48_to_char10_mom (hi, buf1);
       const char *p2 = num48_to_char10_mom (lo, buf2);
       if (MOM_UNLIKELY (!p1 || strlen (p1) != NUM48LEN_MOM))
-	MOM_FATAPRINTF ("bad high number %lld", (long long) hi);
+        MOM_FATAPRINTF ("bad high number %lld", (long long) hi);
       if (MOM_UNLIKELY (!p2 || strlen (p2) != NUM48LEN_MOM))
-	MOM_FATAPRINTF ("bad low number %lld", (long long) lo);
+        MOM_FATAPRINTF ("bad low number %lld", (long long) lo);
       memcpy (bufstr, p1, NUM48LEN_MOM);
       memcpy (bufstr + NUM48LEN_MOM, p2, NUM48LEN_MOM);
       momhash_t hs = mom_cstring_hash (bufstr);
       if (MOM_UNLIKELY (NULL != find_anonymous_of_id_mom (bufstr, hs)))
-	continue;
+        continue;
       str = mom_make_string_cstr (bufstr);
       if (protoitem)
-	{
-	  unsigned hrk = hs % HASH_ANON_MOD_MOM;
-	  pthread_mutex_lock (&mtx_anon_mom[hrk]);
-	  protoitem->itm_id = str;
-	  protoitem->itm_anonymous = true;
-	  struct anon_htable_mom_st *anh = anh_arr_mom[hrk];
-	  assert (anh != NULL);
-	  if (anh->anh_count + anh->anh_count / 8 + 2 >= anh->anh_size)
-	    reorganize_anon_bucket_mom (hrk);
-	  raw_add_anon_item_mom (protoitem, hrk);
-	  pthread_mutex_unlock (&mtx_anon_mom[hrk]);
-	}
+        {
+          unsigned hrk = hs % HASH_ANON_MOD_MOM;
+          pthread_mutex_lock (&mtx_anon_mom[hrk]);
+          protoitem->itm_id = str;
+          protoitem->itm_anonymous = true;
+          struct anon_htable_mom_st *anh = anh_arr_mom[hrk];
+          assert (anh != NULL);
+          if (anh->anh_count + anh->anh_count / 8 + 2 >= anh->anh_size)
+            reorganize_anon_bucket_mom (hrk);
+          raw_add_anon_item_mom (protoitem, hrk);
+          pthread_mutex_unlock (&mtx_anon_mom[hrk]);
+        }
     }
   while (!str);
   return str;
-}				/* end mom_make_random_idstr  */
+}                               /* end mom_make_random_idstr  */
 
 
 
@@ -337,13 +337,13 @@ mom_make_anonymous_item_by_id (const char *ids)
   momhash_t hstr = mom_cstring_hash (ids);
   unsigned hrk = hstr % HASH_ANON_MOD_MOM;
   MOM_DEBUGPRINTF (item, "make_anonymous_item_by_id ids=%s hstr=%u hrk=%u",
-		   ids, (unsigned) hstr, hrk);
+                   ids, (unsigned) hstr, hrk);
   pthread_mutex_lock (&mtx_anon_mom[hrk]);
   itm = find_anonymous_of_id_mom (ids, hrk);
   if (!itm)
     {
       momitem_t *newitm =
-	MOM_GC_ALLOC ("new anonymous item", sizeof (momitem_t));
+        MOM_GC_ALLOC ("new anonymous item", sizeof (momitem_t));
       mom_initialize_protoitem (newitm);
       newitm->itm_anonymous = true;
       newitm->itm_space = momspa_transient;
@@ -352,13 +352,13 @@ mom_make_anonymous_item_by_id (const char *ids)
       struct anon_htable_mom_st *anh = anh_arr_mom[hrk];
       assert (anh != NULL);
       if (anh->anh_count + anh->anh_count / 8 + 2 >= anh->anh_size)
-	reorganize_anon_bucket_mom (hrk);
+        reorganize_anon_bucket_mom (hrk);
       raw_add_anon_item_mom (itm, hrk);
       GC_REGISTER_FINALIZER (newitm, mom_gc_finalize_item, NULL, NULL, NULL);
     }
   pthread_mutex_unlock (&mtx_anon_mom[hrk]);
   MOM_DEBUGPRINTF (item, "make_anonymous_item_by_id ids=%s itm@%p", ids,
-		   (void *) itm);
+                   (void *) itm);
   return (momitem_t *) itm;
 }
 
@@ -369,8 +369,8 @@ mom_unregister_anonymous_finalized_item (momitem_t *finitm)
   momhash_t h = finitm->itm_id->shash;
   unsigned hrk = h % HASH_ANON_MOD_MOM;
   MOM_DEBUGPRINTF (item,
-		   "unregister_anonymous_finalized_item finitm %s h=%u hrk=%u",
-		   mom_item_cstring (finitm), (unsigned) h, (unsigned) hrk);
+                   "unregister_anonymous_finalized_item finitm %s h=%u hrk=%u",
+                   mom_item_cstring (finitm), (unsigned) h, (unsigned) hrk);
   int pos = -1;
   pthread_mutex_lock (&mtx_anon_mom[hrk]);
   struct anon_htable_mom_st *anh = anh_arr_mom[hrk];
@@ -382,21 +382,21 @@ mom_unregister_anonymous_finalized_item (momitem_t *finitm)
     {
       momitem_t *curitm = anh->anh_arritm[ix];
       if (!curitm)
-	break;
+        break;
       if (curitm == MOM_EMPTY)
-	continue;
+        continue;
       if (curitm == finitm)
-	pos = (int) ix;
+        pos = (int) ix;
     };
   for (unsigned ix = 0; ix < startix && pos < 0; ix++)
     {
       momitem_t *curitm = anh->anh_arritm[ix];
       if (!curitm)
-	break;
+        break;
       if (curitm == MOM_EMPTY)
-	continue;
+        continue;
       if (curitm == finitm)
-	pos = (int) ix;
+        pos = (int) ix;
     };
   assert (pos >= 0 && pos < (int) hsiz && anh->anh_arritm[pos] == finitm);
   anh->anh_arritm[pos] = MOM_EMPTY;
@@ -404,7 +404,7 @@ mom_unregister_anonymous_finalized_item (momitem_t *finitm)
   if (anh->anh_count < hsiz / 4 && hsiz > 2 * ANH_INITIAL_SIZE_MOM)
     reorganize_anon_bucket_mom (hrk);
   pthread_mutex_unlock (&mtx_anon_mom[hrk]);
-}				/* end mom_unregister_anonymous_finalized_item */
+}                               /* end mom_unregister_anonymous_finalized_item */
 
 
 
@@ -428,32 +428,32 @@ mom_set_anonymous_items_of_prefix (const char *prefix)
       assert (aht != NULL);
       unsigned asiz = aht->anh_size;
       for (unsigned tix = 0; tix < asiz; tix++)
-	{
-	  momitem_t *curitm = aht->anh_arritm[tix];
-	  if (!curitm || curitm == MOM_EMPTY)
-	    continue;
-	  assert (curitm->itm_anonymous && curitm->itm_id);
-	  if (strncmp (curitm->itm_id->cstr, prefix, prefixlen))
-	    continue;
-	  if (MOM_UNLIKELY (itmcount + 1 >= arrsiz))
-	    {
-	      unsigned newsiz = ((10 + 4 * arrsiz / 3) | 0xf) + 1;
-	      unsigned oldsiz = arrsiz;
-	      assert (newsiz > oldsiz);
-	      momitem_t **oldarritm = arritm;
-	      arritm =
-		MOM_GC_ALLOC ("grown anonymous arritm",
-			      sizeof (momitem_t *) * newsiz);
-	      arrsiz = newsiz;
-	      memcpy (arritm, oldarritm, itmcount * sizeof (momitem_t *));
-	      MOM_GC_FREE (oldarritm, oldsiz * sizeof (momitem_t *));
-	    }
-	  arritm[itmcount] = curitm;
-	  itmcount++;
-	}
+        {
+          momitem_t *curitm = aht->anh_arritm[tix];
+          if (!curitm || curitm == MOM_EMPTY)
+            continue;
+          assert (curitm->itm_anonymous && curitm->itm_id);
+          if (strncmp (curitm->itm_id->cstr, prefix, prefixlen))
+            continue;
+          if (MOM_UNLIKELY (itmcount + 1 >= arrsiz))
+            {
+              unsigned newsiz = ((10 + 4 * arrsiz / 3) | 0xf) + 1;
+              unsigned oldsiz = arrsiz;
+              assert (newsiz > oldsiz);
+              momitem_t **oldarritm = arritm;
+              arritm =
+                MOM_GC_ALLOC ("grown anonymous arritm",
+                              sizeof (momitem_t *) * newsiz);
+              arrsiz = newsiz;
+              memcpy (arritm, oldarritm, itmcount * sizeof (momitem_t *));
+              MOM_GC_FREE (oldarritm, oldsiz * sizeof (momitem_t *));
+            }
+          arritm[itmcount] = curitm;
+          itmcount++;
+        }
       pthread_mutex_unlock (&mtx_anon_mom[hix]);
     };
   vres = mom_setv_sized (itmcount, (const momitem_t **) arritm);
   MOM_GC_FREE (arritm, arrsiz * sizeof (momitem_t *));
   return vres;
-}				/* end of mom_set_anonymous_items_of_prefix */
+}                               /* end of mom_set_anonymous_items_of_prefix */

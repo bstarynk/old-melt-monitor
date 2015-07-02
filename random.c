@@ -49,9 +49,9 @@ mom_initialize_random (void)
       clock_gettime (CLOCK_REALTIME, &ts);
       rseed = ((31 * pid) ^ (17 * ts.tv_sec ^ ts.tv_nsec)) + 50033 * ix;
       if (fread (&rseed, sizeof (rseed), 1, filr) < 1)
-	usleep (5 + (ts.tv_sec + ts.tv_nsec) % 50);
+        usleep (5 + (ts.tv_sec + ts.tv_nsec) % 50);
       initstate_r (rseed, (char *) randstate_mom + ix,
-		   RANDSTATELEN_MOM, randata_mom + ix);
+                   RANDSTATELEN_MOM, randata_mom + ix);
       setstate_r ((char *) randstate_mom + ix, randata_mom + ix);
     }
   fclose (filr);
@@ -67,7 +67,7 @@ mom_random_nonzero_32 (unsigned num)
     {
       int32_t sr;
       if (MOM_UNLIKELY (random_r (randata_mom + rk, &sr)))
-	MOM_FATAPRINTF ("random_r failure %m");
+        MOM_FATAPRINTF ("random_r failure %m");
       r = (uint32_t) sr;
     }
   while (MOM_UNLIKELY (r == 0));
@@ -116,7 +116,7 @@ mom_random_intptr (unsigned num)
     return mom_random_64 (num);
   else
     MOM_FATAPRINTF ("unsupported architecture with strange pointer size %d",
-		    (int) sizeof (uintptr_t));
+                    (int) sizeof (uintptr_t));
 }
 
 void
@@ -131,7 +131,7 @@ mom_random_two_nonzero_32 (unsigned num, uint32_t *r1, uint32_t *r2)
     {
       int32_t sr = 0;
       if (MOM_UNLIKELY (random_r (randata_mom + rk, &sr)))
-	MOM_FATAPRINTF ("random_r failure %m");
+        MOM_FATAPRINTF ("random_r failure %m");
       r = (uint32_t) sr;
     }
   while (MOM_UNLIKELY (r == 0));
@@ -140,7 +140,7 @@ mom_random_two_nonzero_32 (unsigned num, uint32_t *r1, uint32_t *r2)
     {
       int32_t sr = 0;
       if (MOM_UNLIKELY (random_r (randata_mom + rk, &sr)))
-	MOM_FATAPRINTF ("random_r failure %m");
+        MOM_FATAPRINTF ("random_r failure %m");
       r = (uint32_t) sr;
     }
   while (MOM_UNLIKELY (r == 0));
@@ -151,7 +151,7 @@ mom_random_two_nonzero_32 (unsigned num, uint32_t *r1, uint32_t *r2)
 
 void
 mom_random_three_nonzero_32 (unsigned num, uint32_t *r1, uint32_t *r2,
-			     uint32_t *r3)
+                             uint32_t *r3)
 {
   assert (r1);
   assert (r2);
@@ -162,7 +162,7 @@ mom_random_three_nonzero_32 (unsigned num, uint32_t *r1, uint32_t *r2,
     {
       int32_t sr = 0;
       if (MOM_UNLIKELY (random_r (randata_mom + rk, &sr)))
-	MOM_FATAPRINTF ("random_r failure %m");
+        MOM_FATAPRINTF ("random_r failure %m");
       r = (uint32_t) sr;
     }
   while (MOM_UNLIKELY (r == 0));
@@ -171,7 +171,7 @@ mom_random_three_nonzero_32 (unsigned num, uint32_t *r1, uint32_t *r2,
     {
       int32_t sr = 0;
       if (MOM_UNLIKELY (random_r (randata_mom + rk, &sr)))
-	MOM_FATAPRINTF ("random_r failure %m");
+        MOM_FATAPRINTF ("random_r failure %m");
       r = (uint32_t) sr;
     }
   while (MOM_UNLIKELY (r == 0));
@@ -180,7 +180,7 @@ mom_random_three_nonzero_32 (unsigned num, uint32_t *r1, uint32_t *r2,
     {
       int32_t sr = 0;
       if (MOM_UNLIKELY (random_r (randata_mom + rk, &sr)))
-	MOM_FATAPRINTF ("random_r failure %m");
+        MOM_FATAPRINTF ("random_r failure %m");
       r = (uint32_t) sr;
     }
   while (MOM_UNLIKELY (r == 0));

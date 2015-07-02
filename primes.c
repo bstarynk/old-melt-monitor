@@ -72,9 +72,9 @@ mom_prime_above (int64_t n)
     {
       int md = (lo + hi) / 2;
       if (mom_primes_tab[md] > n)
-	hi = md;
+        hi = md;
       else
-	lo = md;
+        lo = md;
     };
   if (hi < (int) numprimes - 1)
     hi++;
@@ -99,9 +99,9 @@ mom_prime_below (int64_t n)
     {
       int md = (lo + hi) / 2;
       if (mom_primes_tab[md] > n)
-	hi = md;
+        hi = md;
       else
-	lo = md;
+        lo = md;
     };
   if (hi < (int) numprimes - 1)
     hi++;

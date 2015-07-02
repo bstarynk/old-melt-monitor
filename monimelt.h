@@ -26,7 +26,7 @@
 #define GC_THREADS 1
 #define HAVE_PTHREADS 1
 
-#include <features.h>		// GNU things
+#include <features.h>           // GNU things
 #include <assert.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -134,7 +134,7 @@ const char *mom_webpasswdfile;
 #define MOM_DEFAULT_WEBPASSWD ".mompasswd"
 #define MOM_MIN_PASSWD_LEN 7
 typedef bool mom_web_authentificator_sig_t (const char *webuser,
-					    const char *webpasswd);
+                                            const char *webpasswd);
 mom_web_authentificator_sig_t *mom_web_authentificator;
 
 // pthread_kill every worker thread unless should stop
@@ -386,7 +386,7 @@ void mom_set_debugging (const char *dbgopt);
 
 void
 mom_debugprintf_at (const char *fil, int lin, enum mom_debug_en dbg,
-		    const char *fmt, ...)
+                    const char *fmt, ...)
 __attribute__ ((format (printf, 4, 5)));
 
 #define MOM_DEBUGPRINTF_AT(Fil,Lin,Dbg,Fmt,...) do {	\
@@ -469,7 +469,7 @@ void mom_eat_token_load_at (const char *fil, int lin);
 unsigned mom_load_nb_queued_tokens (void);
 // return the node of queued tokens, or nil if none
 const momnode_t *mom_load_queued_tokens_mode (const momitem_t *connitm,
-					      momvalue_t meta);
+                                              momvalue_t meta);
 void mom_load_push_front_token (momvalue_t valtok);
 void mom_load_push_back_token (momvalue_t valtok);
 
@@ -490,17 +490,17 @@ uint32_t mom_random_nonzero_32 (unsigned num);
 void mom_random_two_nonzero_32 (unsigned num, uint32_t *r1, uint32_t *r2);
 // get three random non-zero numbers
 void mom_random_three_nonzero_32 (unsigned num, uint32_t *r1, uint32_t *r2,
-				  uint32_t *r3);
+                                  uint32_t *r3);
 // get a random, possibly zero, 32 bits or 64 bits number
 uint32_t mom_random_32 (unsigned num);
 uint64_t mom_random_64 (unsigned num);
 uintptr_t mom_random_intptr (unsigned num);
 
 /// plugins are required to define
-extern const char mom_plugin_GPL_compatible[];	// a string describing the licence
+extern const char mom_plugin_GPL_compatible[];  // a string describing the licence
 typedef void mom_plugin_init_t (const char *pluginarg, int *pargc,
-				char ***pargv);
-extern void mom_plugin_init (const char *pluginarg, int *pargc, char ***pargv);	// the plugin initializer
+                                char ***pargv);
+extern void mom_plugin_init (const char *pluginarg, int *pargc, char ***pargv); // the plugin initializer
 /// they may also define a function to be called after load
 typedef void mom_plugin_after_load_t (void);
 extern void momplugin_after_load (void);
@@ -633,22 +633,22 @@ mom_delimv (const char *s)
   return val;
 }
 
-#define MOM_MAX_STRING_LENGTH (1<<25)	/* max string length 33554432 */
+#define MOM_MAX_STRING_LENGTH (1<<25)   /* max string length 33554432 */
 struct momstring_st
 {
   uint32_t slen;
   momhash_t shash;
-  char cstr[];			/* length is slen+1 */
+  char cstr[];                  /* length is slen+1 */
 };
 
 
-#define MOM_MAX_SEQ_LENGTH (1<<24)	/* max sequence length 16777216 */
+#define MOM_MAX_SEQ_LENGTH (1<<24)      /* max sequence length 16777216 */
 struct momseq_st
 {
   uint32_t slen;
   momhash_t shash;
   momvalue_t meta;
-  const momitem_t *arritm[];	/* length is slen */
+  const momitem_t *arritm[];    /* length is slen */
 };
 
 static inline unsigned
@@ -680,14 +680,14 @@ mom_seq_nth (const struct momseq_st *seq, int rk)
   return NULL;
 }
 
-#define MOM_MAX_NODE_LENGTH (1<<24)	/* max node length 16777216 */
+#define MOM_MAX_NODE_LENGTH (1<<24)     /* max node length 16777216 */
 struct momnode_st
 {
   uint32_t slen;
   momhash_t shash;
   momitem_t *conn;
   momvalue_t meta;
-  momvalue_t arrsons[];		/* length is slen */
+  momvalue_t arrsons[];         /* length is slen */
 };
 
 struct momentry_st
@@ -743,16 +743,16 @@ mom_value_to_node (const momvalue_t val)
 
 struct momattributes_st
 {
-  uint32_t at_len;		/* allocated length */
-  uint32_t at_cnt;		/* used count */
-  struct momentry_st at_entries[];	/* length is at_len */
+  uint32_t at_len;              /* allocated length */
+  uint32_t at_cnt;              /* used count */
+  struct momentry_st at_entries[];      /* length is at_len */
 };
 
 struct momentry_st *mom_attributes_find_entry (const struct momattributes_st
-					       *attrs, const momitem_t *itma);
+                                               *attrs, const momitem_t *itma);
 inline momvalue_t
 mom_attributes_find_value (struct momattributes_st *attrs,
-			   const momitem_t *itma)
+                           const momitem_t *itma)
 {
   struct momentry_st *ent = mom_attributes_find_entry (attrs, itma);
   if (ent)
@@ -762,13 +762,13 @@ mom_attributes_find_value (struct momattributes_st *attrs,
 }
 
 struct momattributes_st *mom_attributes_put (struct momattributes_st *attrs,
-					     const momitem_t *itma,
-					     const momvalue_t *pval);
+                                             const momitem_t *itma,
+                                             const momvalue_t *pval);
 struct momattributes_st *mom_attributes_remove (struct momattributes_st
-						*attrs,
-						const momitem_t *itma);
+                                                *attrs,
+                                                const momitem_t *itma);
 struct momattributes_st *mom_attributes_make_atva (unsigned nbent, ...
-						   /* item1, val1, item2, val2, ... */
+                                                   /* item1, val1, item2, val2, ... */
   );
 
 
@@ -777,13 +777,13 @@ mom_attributes_make (unsigned len)
 {
   if (len > MOM_MAX_SEQ_LENGTH)
     MOM_FATAPRINTF ("too long %u attributes table", len);
-  struct momattributes_st *att =	//
+  struct momattributes_st *att =        //
     MOM_GC_ALLOC ("attributes",
-		  sizeof (struct momattributes_st) +
-		  len * sizeof (struct momentry_st));
+                  sizeof (struct momattributes_st) +
+                  len * sizeof (struct momentry_st));
   att->at_len = len;
   return att;
-}				/* end mom_attributes_make */
+}                               /* end mom_attributes_make */
 
 
 void mom_attributes_scan_dump (struct momattributes_st *attrs);
@@ -798,7 +798,7 @@ mom_attributes_count (struct momattributes_st *attrs)
 }
 
 const momseq_t *mom_attributes_set (struct momattributes_st *attrs,
-				    momvalue_t meta);
+                                    momvalue_t meta);
 
 ////////////////////////////////////////////////////
 struct momdictvalent_st
@@ -809,26 +809,26 @@ struct momdictvalent_st
 
 struct momhashdict_st
 {
-  uint32_t hdic_len;		// allocated length
-  uint32_t hdic_cnt;		// used count
+  uint32_t hdic_len;            // allocated length
+  uint32_t hdic_cnt;            // used count
   struct momdictvalent_st hdic_ents[];
-};				// end struct momhashdict_st
+};                              // end struct momhashdict_st
 
 struct momhashdict_st *mom_hashdict_put (struct momhashdict_st *hdict,
-					 const momstring_t *str,
-					 momvalue_t val);
+                                         const momstring_t *str,
+                                         momvalue_t val);
 struct momhashdict_st *mom_hashdict_reserve (struct momhashdict_st *hdict,
-					     unsigned gap);
+                                             unsigned gap);
 momvalue_t mom_hashdict_get (const struct momhashdict_st *hdict,
-			     const momstring_t *str);
+                             const momstring_t *str);
 momvalue_t mom_hashdict_getcstr (const struct momhashdict_st *hdict,
-				 const char *cstr);
+                                 const char *cstr);
 struct momhashdict_st *mom_hashdict_remove (struct momhashdict_st *hdict,
-					    const momstring_t *str);
+                                            const momstring_t *str);
 const momnode_t *mom_hashdict_sorted_strings_meta (const struct momhashdict_st
-						   *hdict,
-						   const momitem_t *connitm,
-						   const momvalue_t metav);
+                                                   *hdict,
+                                                   const momitem_t *connitm,
+                                                   const momvalue_t metav);
 
 static inline const momnode_t *mom_hashdict_sorted_strings
   (const struct momhashdict_st *hdict, const momitem_t *connitm)
@@ -844,9 +844,9 @@ void mom_hashdict_scan_dump (struct momhashdict_st *hdict);
 
 struct momcomponents_st
 {
-  uint32_t cp_len;		/* allocated length */
-  uint32_t cp_cnt;		/* used count */
-  momvalue_t cp_comps[];	/* length is cp_len */
+  uint32_t cp_len;              /* allocated length */
+  uint32_t cp_cnt;              /* used count */
+  momvalue_t cp_comps[];        /* length is cp_len */
 };
 
 static inline momvalue_t
@@ -863,22 +863,22 @@ mom_components_nth (const struct momcomponents_st *csq, int rk)
 }
 
 struct momcomponents_st *mom_components_append1 (struct momcomponents_st *csq,
-						 const momvalue_t val);
+                                                 const momvalue_t val);
 
 struct momcomponents_st *mom_components_append_values (struct momcomponents_st
-						       *csq, unsigned nbval,
-						       ... /*values */ );
+                                                       *csq, unsigned nbval,
+                                                       ... /*values */ );
 
 struct momcomponents_st *mom_components_append_sized_array (struct
-							    momcomponents_st
-							    *csq,
-							    unsigned nbval,
-							    const momvalue_t
-							    *valarr);
+                                                            momcomponents_st
+                                                            *csq,
+                                                            unsigned nbval,
+                                                            const momvalue_t
+                                                            *valarr);
 
 
 struct momcomponents_st *mom_components_reserve (struct momcomponents_st *csq,
-						 unsigned nbcomp);
+                                                 unsigned nbcomp);
 
 static inline unsigned
 mom_components_count (const struct momcomponents_st *csq)
@@ -890,15 +890,15 @@ mom_components_count (const struct momcomponents_st *csq)
 
 void
 mom_components_put_nth (struct momcomponents_st *csq, int rk,
-			const momvalue_t val);
+                        const momvalue_t val);
 
 void mom_components_scan_dump (struct momcomponents_st *csq);
 
 ////////////////////////////////////////////////////////////////
 struct momitemvec_st
 {
-  uint32_t ivec_len;		/* allocated length */
-  uint32_t ivec_cnt;		/* used count */
+  uint32_t ivec_len;            /* allocated length */
+  uint32_t ivec_cnt;            /* used count */
   const momitem_t *ivec_arr[];
 };
 
@@ -917,7 +917,7 @@ mom_itemvec_nth (const struct momitemvec_st *ivec, int rk)
 
 // put a non-null item...
 void mom_itemvec_put_nth (struct momitemvec_st *ivec, int rk,
-			  const momitem_t *itm);
+                          const momitem_t *itm);
 
 static inline const momitem_t **
 mom_itemvec_nth_ptr (const struct momitemvec_st *ivec, int rk)
@@ -941,36 +941,36 @@ mom_itemvec_count (const struct momitemvec_st *ivec)
 }
 
 struct momitemvec_st *mom_itemvec_reserve (struct momitemvec_st *ivec,
-					   unsigned gap);
+                                           unsigned gap);
 
 struct momitemvec_st *mom_itemvec_append1 (struct momitemvec_st *ivec,
-					   const momitem_t *itm);
+                                           const momitem_t *itm);
 
 struct momitemvec_st *mom_itemvec_append_items (struct momitemvec_st *ivec,
-						unsigned nbitems, ...);
+                                                unsigned nbitems, ...);
 
 struct momitemvec_st *mom_itemvec_append_sized_item_array (struct
-							   momitemvec_st
-							   *ivec,
-							   unsigned siz,
-							   const momitem_t
-							   **itemarr);
+                                                           momitemvec_st
+                                                           *ivec,
+                                                           unsigned siz,
+                                                           const momitem_t
+                                                           **itemarr);
 static inline struct momitemvec_st *
 mom_itemvec_append_sequ (struct momitemvec_st *ivec, const momseq_t *sequ)
 {
   if (!sequ || sequ == MOM_EMPTY)
     return ivec;
   return mom_itemvec_append_sized_item_array (ivec, sequ->slen,
-					      (const momitem_t **)
-					      sequ->arritm);
+                                              (const momitem_t **)
+                                              sequ->arritm);
 }
 
 ////////////////////////////////////////////////////////////////
 
 struct momhashset_st
 {
-  uint32_t hset_len;		/* allocated length */
-  uint32_t hset_cnt;		/* used count */
+  uint32_t hset_len;            /* allocated length */
+  uint32_t hset_cnt;            /* used count */
   const momitem_t *hset_elems[];
 };
 
@@ -983,19 +983,19 @@ mom_hashset_count (const struct momhashset_st *hset)
 }
 
 bool mom_hashset_contains (const struct momhashset_st * hset,
-			   const momitem_t *itm);
+                           const momitem_t *itm);
 struct momhashset_st *mom_hashset_put (struct momhashset_st *hset,
-				       const momitem_t *itm);
+                                       const momitem_t *itm);
 struct momhashset_st *mom_hashset_remove (struct momhashset_st *hset,
-					  const momitem_t *itm);
+                                          const momitem_t *itm);
 struct momhashset_st *mom_hashset_add_items (struct momhashset_st *hset,
-					     unsigned nbitems,
-					     ... /* items */ );
+                                             unsigned nbitems,
+                                             ... /* items */ );
 struct momhashset_st *mom_hashset_add_sized_items (struct momhashset_st *hset,
-						   unsigned siz,
-						   momitem_t *const *itmarr);
+                                                   unsigned siz,
+                                                   momitem_t *const *itmarr);
 const momseq_t *mom_hashset_elements_set_meta (struct momhashset_st *hset,
-					       momvalue_t metav);
+                                               momvalue_t metav);
 static inline const momseq_t *
 mom_hashset_elements_set (struct momhashset_st *hset)
 {
@@ -1030,10 +1030,10 @@ struct momqueuechunkitems_st
 };
 
 void mom_queueitem_push_back (struct momqueueitems_st *qu,
-			      const momitem_t *itm);
+                              const momitem_t *itm);
 
 void mom_queueitem_push_front (struct momqueueitems_st *qu,
-			       const momitem_t *itm);
+                               const momitem_t *itm);
 
 static inline const momitem_t *
 mom_queueitem_peek_front (struct momqueueitems_st *qu)
@@ -1047,7 +1047,7 @@ mom_queueitem_peek_front (struct momqueueitems_st *qu)
     {
       const momitem_t *itm = fr->quechi_items[ix];
       if (itm && itm != MOM_EMPTY)
-	return itm;
+        return itm;
     };
   return NULL;
 }
@@ -1066,7 +1066,7 @@ mom_queueitem_size (struct momqueueitems_st *qu)
 
 momitem_t *mom_queueitem_pop_front (struct momqueueitems_st *qu);
 const momseq_t *mom_queueitem_tuple (struct momqueueitems_st *qu,
-				     momvalue_t metav);
+                                     momvalue_t metav);
 
 void mom_queueitem_scan_dump (struct momqueueitems_st *qu);
 
@@ -1087,10 +1087,10 @@ struct momqueuechunkvalues_st
 };
 
 void mom_queuevalue_push_back (struct momqueuevalues_st *qu,
-			       const momvalue_t val);
+                               const momvalue_t val);
 
 void mom_queuevalue_push_front (struct momqueuevalues_st *qu,
-				const momvalue_t val);
+                                const momvalue_t val);
 
 static inline momvalue_t
 mom_queuevalue_peek_front (struct momqueuevalues_st *qu)
@@ -1104,7 +1104,7 @@ mom_queuevalue_peek_front (struct momqueuevalues_st *qu)
     {
       const momvalue_t val = fr->quechv_values[ix];
       if (val.typnum != momty_null)
-	return val;
+        return val;
     };
   return MOM_NONEV;
 }
@@ -1121,8 +1121,8 @@ mom_queuevalue_size (struct momqueuevalues_st *qu)
 
 momvalue_t mom_queuevalue_pop_front (struct momqueuevalues_st *qu);
 const momnode_t *mom_queuevalue_node (struct momqueuevalues_st *qu,
-				      const momitem_t *conn,
-				      momvalue_t metav);
+                                      const momitem_t *conn,
+                                      momvalue_t metav);
 
 void mom_queuevalue_scan_dump (struct momqueuevalues_st *qu);
 
@@ -1138,15 +1138,15 @@ struct momitem_st
   union
   {
     const momstring_t *itm_str;
-    const momstring_t *itm_id;	/* when itm_anonymous */
-    const momstring_t *itm_name;	/* when !itm_anonymous */
+    const momstring_t *itm_id;  /* when itm_anonymous */
+    const momstring_t *itm_name;        /* when !itm_anonymous */
   };
   struct momattributes_st *itm_attrs;
   struct momcomponents_st *itm_comps;
   momitem_t *itm_kind;
   void *itm_data1;
   void *itm_data2;
-};				/* end struct momitem_st */
+};                              /* end struct momitem_st */
 
 // initialize an unregistered item
 void mom_initialize_protoitem (momitem_t *protoitm);
@@ -1206,27 +1206,27 @@ mom_item_cmp (const momitem_t *itm1, const momitem_t *itm2)
   if (itm1->itm_anonymous)
     {
       if (itm2->itm_anonymous)
-	{
-	  int cmp = strcmp (itm1->itm_id->cstr, itm2->itm_id->cstr);
-	  assert (cmp != 0);
-	  if (cmp < 0)
-	    return -1;
-	  else
-	    return 1;
-	}
+        {
+          int cmp = strcmp (itm1->itm_id->cstr, itm2->itm_id->cstr);
+          assert (cmp != 0);
+          if (cmp < 0)
+            return -1;
+          else
+            return 1;
+        }
       else
-	return -1;
+        return -1;
     }
   else
-    {				// itm1 is named
+    {                           // itm1 is named
       if (itm2->itm_anonymous)
-	return +1;
+        return +1;
       int cmp = strcmp (itm1->itm_name->cstr, itm2->itm_name->cstr);
       assert (cmp != 0);
       if (cmp < 0)
-	return -1;
+        return -1;
       else
-	return 1;
+        return 1;
     }
 }
 
@@ -1236,7 +1236,7 @@ int mom_itemptr_cmp (const void *, const void *);
 void mom_item_qsort (const momitem_t **arr, unsigned siz);
 
 const momstring_t *mom_make_random_idstr (unsigned salt,
-					  struct momitem_st *protoitem);
+                                          struct momitem_st *protoitem);
 
 // check validity of an id string, if good, sets *pend to its end
 // an id starts with _ ...
@@ -1300,7 +1300,7 @@ mom_value_cstr (const momvalue_t val)
 const momseq_t *mom_make_meta_tuple (momvalue_t metav, unsigned nbitems, ...);
 #define mom_make_tuple(NbItems,...) mom_make_meta_tuple(MOM_NONEV, (NbItems), __VA_ARGS__)
 const momseq_t *mom_make_sized_meta_tuple (momvalue_t metav, unsigned nbitems,
-					   momitem_t *const *itmarr);
+                                           momitem_t *const *itmarr);
 static inline const momseq_t *
 mom_make_sized_tuple (unsigned nbitems, momitem_t *const *itmarr)
 {
@@ -1316,15 +1316,15 @@ mom_make_sized_tuple (unsigned nbitems, momitem_t *const *itmarr)
 /// make a tuple from given values, collecting items, tuples & sets (and
 /// ignoring scalars and most nodes) to form a tuple
 const momseq_t *mom_collect_meta_tuple (momvalue_t metav, unsigned nbvals,
-					...);
+                                        ...);
 #define mom_collect_meta_tuplev(Meta,NbVals,...) \
   mom_tuplev(mom_collect_meta_tuple((Meta),(NbVals),__VA_ARGS__))
 #define mom_collect_tuple(NbVals,...) mom_collect_meta_tuple(MOM_NONEV, (NbVals), __VA_ARGS__)
 #define mom_collect_tuplev(NbVals,...) mom_tuplev(mom_collect_tuple((NbVals), __VA_ARGS__))
 
 const momseq_t *mom_collect_sized_meta_tuple (momvalue_t metav,
-					      unsigned nbvals,
-					      const momvalue_t *valarr);
+                                              unsigned nbvals,
+                                              const momvalue_t *valarr);
 #define mom_collect_sized_meta_tuplev(Meta,NbVals,ValArr) \
   mom_tuplev(mom_collect_sized_meta_tuple((Meta),(NbVals),(ValArr)))
 static inline const momseq_t *
@@ -1360,7 +1360,7 @@ mom_tuplev (const momseq_t *seq)
 const momseq_t *mom_make_meta_set (momvalue_t metav, unsigned nbitems, ...);
 #define mom_make_set(NbItems,...) mom_make_meta_set(MOM_NONEV, (NbItems), __VA_ARGS__)
 const momseq_t *mom_make_sized_meta_set (momvalue_t metav, unsigned nbitems,
-					 const momitem_t **itmarr);
+                                         const momitem_t **itmarr);
 
 static inline const momseq_t *
 mom_make_sized_set (unsigned nbitems, const momitem_t **itmarr)
@@ -1376,7 +1376,7 @@ const momseq_t *mom_collect_meta_set (momvalue_t metav, unsigned nbvals, ...);
 #define mom_collect_set(NbVals,...) mom_collect_meta_set(MOM_NONEV, (NbVals), __VA_ARGS__)
 #define mom_collect_setv(NbVals,...) mom_unsafe_setv(mom_collect_set((NbVals),__VA_ARGS__))
 const momseq_t *mom_collect_sized_meta_set (momvalue_t metav, unsigned nbvals,
-					    const momvalue_t *valarr);
+                                            const momvalue_t *valarr);
 #define mom_collect_sized_meta_setv(Meta,NbVals,ValArr) \
   mom_unsafe_setv(mom_collect_sized_meta_set((Meta),(NbVals),(ValArr)))
 static inline const momseq_t *
@@ -1413,12 +1413,12 @@ bool mom_setv_contains (const momvalue_t vset, const momitem_t *itm);
 
 // make a node from given values.
 const momnode_t *mom_make_meta_node (momvalue_t metav, momitem_t *connitm,
-				     unsigned nbsons, ...);
+                                     unsigned nbsons, ...);
 #define mom_make_node(ConnItm,NbSons,...) mom_make_meta_node(MOM_NONEV, (ConnItm), (NbSons), __VA_ARGS__)
 const momnode_t *mom_make_sized_meta_node (momvalue_t metav,
-					   momitem_t *connitm,
-					   unsigned nbsons,
-					   momvalue_t *sonarr);
+                                           momitem_t *connitm,
+                                           unsigned nbsons,
+                                           momvalue_t *sonarr);
 static inline const momnode_t *
 mom_make_sized_node (momitem_t *connitm, unsigned nbsons, momvalue_t *sonarr)
 {
@@ -1590,7 +1590,7 @@ mom_scan_dumped_value (const momvalue_t val)
 
 void mom_scan_dumped_module_item (const momitem_t *moditm);
 void mom_output_gplv3_notice (FILE *out, const char *prefix,
-			      const char *suffix, const char *filename);
+                              const char *suffix, const char *filename);
 
 bool mom_dumpable_valueptr (const momvalue_t *pval);
 static inline bool
@@ -1622,7 +1622,7 @@ mom_emit_dumped_value (const momvalue_t val)
 void mom_output_utf8cstr_cencoded (FILE *fil, const char *str, int len);
 // output an UTF-8 string à la HTML, is usebr is set, output <br/> for newlines.
 void mom_output_utf8html_cencoded (FILE *fil, const char *str, int len,
-				   bool usebr);
+                                   bool usebr);
 
 static inline void
 mom_output_utf8string_cstr (FILE *fil, const momstring_t *str)
@@ -1661,9 +1661,9 @@ void mom_dynunload_module_item (momitem_t *moditm);
 // generated constructor & destructor functions at dlopen & dlclose
 // time...
 void *mom_dynload_function (const char *funame, const char *signame,
-			    void *newad);
+                            void *newad);
 void mom_dynunload_function (const char *funame, const char *signame,
-			     void *restoread);
+                             void *restoread);
 
 //
 // apply-monimelt.h is generated
@@ -1692,14 +1692,14 @@ mom_item_unsync_get_attribute (momitem_t *itm, momitem_t *itmat)
       momnode_t *getnod = (momnode_t *) itmat->itm_data1;
       assert (getnod != NULL);
       if (mom_applval_2itm_to_val (mom_nodev (getnod), itm, itmat, &res))
-	return res;
+        return res;
     }
   if (itm->itm_attrs)
     {
       struct momentry_st *ent =
-	mom_attributes_find_entry (itm->itm_attrs, itmat);
+        mom_attributes_find_entry (itm->itm_attrs, itmat);
       if (ent)
-	return ent->ent_val;
+        return ent->ent_val;
     }
   return MOM_NONEV;
 }
@@ -1709,7 +1709,7 @@ bool mom_unsync_item_set_kind (momitem_t *itm, momitem_t *kinditm);
 
 static inline bool
 mom_item_unsync_put_attribute (momitem_t *itm, momitem_t *itmat,
-			       const momvalue_t val)
+                               const momvalue_t val)
 {
   if (MOM_UNLIKELY (!itm || itm == MOM_EMPTY))
     return false;
@@ -1718,7 +1718,7 @@ mom_item_unsync_put_attribute (momitem_t *itm, momitem_t *itmat,
   if (MOM_UNLIKELY (itmat == MOM_PREDEFINED_NAMED (kind)))
     {
       if (val.typnum != momty_item || !val.vitem)
-	return false;
+        return false;
       return mom_unsync_item_set_kind (itm, (momitem_t *) val.vitem);
     }
   if (MOM_UNLIKELY
@@ -1728,7 +1728,7 @@ mom_item_unsync_put_attribute (momitem_t *itm, momitem_t *itmat,
       momnode_t *putnod = (momnode_t *) itmat->itm_data2;
       assert (putnod != NULL);
       return mom_applval_2itm1val_to_void (mom_nodev (putnod), itm, itmat,
-					   val);
+                                           val);
     }
   //
   if (val.typnum == momty_null)
@@ -1809,11 +1809,11 @@ long mom_unsync_webexitem_ftell (const momitem_t *wxitm);
 // mom_unsync_webexitem_reply should have valid argument, otherwise it
 // is aborting
 void mom_unsync_webexitem_reply (momitem_t *wxitm, const char *mimetype,
-				 int code);
+                                 int code);
 
 static inline void
 mom_unsync_webexitem_reply_str (momitem_t *wxitm,
-				const momstring_t *mimetypestr, int code)
+                                const momstring_t *mimetypestr, int code)
 {
   mom_unsync_webexitem_reply (wxitm, mom_string_cstr (mimetypestr), code);
 }
@@ -1821,7 +1821,7 @@ mom_unsync_webexitem_reply_str (momitem_t *wxitm,
 onion_request *mom_unsync_webexitem_request (momitem_t *wxitm);
 onion_response *mom_unsync_webexitem_response (momitem_t *wxitm);
 void mom_unsync_webexitem_out_utf8cstr_cencoded (momitem_t *wxitm,
-						 const char *str, int len);
+                                                 const char *str, int len);
 static inline void
 mom_unsync_webexitem_outstr_cstr (momitem_t *wxitm, const momstring_t *s)
 {
@@ -1831,11 +1831,11 @@ mom_unsync_webexitem_outstr_cstr (momitem_t *wxitm, const momstring_t *s)
 }
 
 void mom_unsync_webexitem_out_utf8html_cencoded (momitem_t *wxitm,
-						 const char *str, int len,
-						 bool usebr);
+                                                 const char *str, int len,
+                                                 bool usebr);
 static inline void
 mom_unsync_webexitem_outstr_html (momitem_t *wxitm, const momstring_t *s,
-				  bool usebr)
+                                  bool usebr)
 {
   if (!s || s == MOM_EMPTY)
     return;
@@ -1854,10 +1854,10 @@ mom_code_compatible_types (const momitem_t *typ1itm, const momitem_t *typ2itm)
   if ((typ1itm == MOM_PREDEFINED_NAMED (item)
        || typ1itm == MOM_PREDEFINED_NAMED (locked_item))
       && (typ2itm == MOM_PREDEFINED_NAMED (item)
-	  || typ2itm == MOM_PREDEFINED_NAMED (locked_item)))
+          || typ2itm == MOM_PREDEFINED_NAMED (locked_item)))
     return true;
   return false;
-}				/* end mom_code_compatible_types */
+}                               /* end mom_code_compatible_types */
 
 void mom_wake_event_loop (void);
 

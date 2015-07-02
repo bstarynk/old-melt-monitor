@@ -26,7 +26,8 @@ CCFLAGS=  -std=gnu11 -Wall -Wextra -fdiagnostics-color=auto
 CFLAGS= $(CCFLAGS) $(PREPROFLAGS) $(OPTIMFLAGS)
 CXX=g++
 CXXFLAGS= -std=c++11 -Wall -pthread  $(PREPROFLAGS) $(OPTIMFLAGS)
-INDENT= indent -gnu
+INDENT= indent
+INDENTFLAGS= -gnu --no-tabs
 ASTYLE= astyle --style=gnu  
 PREPROFLAGS= -I. -I/usr/local/include $(shell $(PKGCONFIG) --cflags $(PACKAGES))
 OPTIMFLAGS= -Og -g3
@@ -68,7 +69,7 @@ _timestamp.c:
 indent: .indent.pro # don't indent predef-monimelt.h or generated modules/momg*.c
 	@for f in *.c $(filter-out predef-monimelt.h, $(wildcard *.h)) \
 	    ; do \
-	  echo indenting $$f; $(INDENT) $$f ;$(INDENT) $$f; done
+	  echo indenting $$f; cp $$f $$f% ; $(INDENT) $(INDENTFLAGS) $$f ; $(INDENT)  $(INDENTFLAGS) $$f; done
 	@for f in $(wildcard *.cc) ; do \
           echo formatting $$f; $(ASTYLE) $$f; done
 

@@ -64,25 +64,25 @@ mom_informprintf_at (const char *fil, int lin, const char *fmt, ...)
     {
       bigbuf = malloc (len + 10);
       if (bigbuf)
-	{
-	  memset (bigbuf, 0, len + 10);
-	  va_start (alist, fmt);
-	  (void) vsnprintf (bigbuf, len + 1, fmt, alist);
-	  va_end (alist);
-	  msg = bigbuf;
-	}
+        {
+          memset (bigbuf, 0, len + 10);
+          va_start (alist, fmt);
+          (void) vsnprintf (bigbuf, len + 1, fmt, alist);
+          va_end (alist);
+          msg = bigbuf;
+        }
     }
   else
     msg = buf;
   if (syslogging_mom)
     {
       syslog (LOG_INFO, "MONIMELT INFORM @%s:%d <%s:%d> %s %s",
-	      fil, lin, thrname, (int) mom_gettid (), timbuf, msg);
+              fil, lin, thrname, (int) mom_gettid (), timbuf, msg);
     }
   else
     {
       fprintf (stderr, "MONIMELT INFORM @%s:%d <%s:%d> %s %s\n",
-	       fil, lin, thrname, (int) mom_gettid (), timbuf, msg);
+               fil, lin, thrname, (int) mom_gettid (), timbuf, msg);
       fflush (NULL);
     }
   if (bigbuf)
@@ -96,7 +96,7 @@ static const char *dbg_level_mom (enum mom_debug_en dbg);
 static pthread_mutex_t dbgmtx_mom = PTHREAD_MUTEX_INITIALIZER;
 void
 mom_debugprintf_at (const char *fil, int lin, enum mom_debug_en dbg,
-		    const char *fmt, ...)
+                    const char *fmt, ...)
 {
   static long countdbg;
   char thrname[24];
@@ -119,13 +119,13 @@ mom_debugprintf_at (const char *fil, int lin, enum mom_debug_en dbg,
     {
       char *bigbuf = malloc (len + 10);
       if (bigbuf)
-	{
-	  memset (bigbuf, 0, len + 10);
-	  va_start (alist, fmt);
-	  (void) vsnprintf (bigbuf, len + 1, fmt, alist);
-	  va_end (alist);
-	  msg = bigbuf;
-	}
+        {
+          memset (bigbuf, 0, len + 10);
+          va_start (alist, fmt);
+          (void) vsnprintf (bigbuf, len + 1, fmt, alist);
+          va_end (alist);
+          msg = bigbuf;
+        }
     }
   else
     msg = buf;
@@ -136,25 +136,25 @@ mom_debugprintf_at (const char *fil, int lin, enum mom_debug_en dbg,
     char datebuf[48] = { 0 };
     if (nbdbg % DEBUG_DATE_PERIOD_MOM == 0)
       {
-	mom_now_strftime_bufcenti (datebuf, "%Y-%b-%d@%H:%M:%S.__ %Z");
+        mom_now_strftime_bufcenti (datebuf, "%Y-%b-%d@%H:%M:%S.__ %Z");
       };
     if (syslogging_mom)
       {
-	syslog (LOG_DEBUG, "MONIMELT DEBUG %7s <%s> @%s:%d %s %s",
-		dbg_level_mom (dbg), thrname, fil, lin, timbuf, msg);
-	if (nbdbg % DEBUG_DATE_PERIOD_MOM == 0)
-	  syslog (LOG_DEBUG, "MONIMELT DEBUG#%04ld ~ %s *^*^*", nbdbg,
-		  datebuf);
+        syslog (LOG_DEBUG, "MONIMELT DEBUG %7s <%s> @%s:%d %s %s",
+                dbg_level_mom (dbg), thrname, fil, lin, timbuf, msg);
+        if (nbdbg % DEBUG_DATE_PERIOD_MOM == 0)
+          syslog (LOG_DEBUG, "MONIMELT DEBUG#%04ld ~ %s *^*^*", nbdbg,
+                  datebuf);
       }
     else
       {
-	fprintf (stderr, "MONIMELT DEBUG %7s <%s> @%s:%d %s %s\n",
-		 dbg_level_mom (dbg), thrname, fil, lin, timbuf, msg);
-	fflush (stderr);
-	if (nbdbg % DEBUG_DATE_PERIOD_MOM == 0)
-	  fprintf (stderr, "MONIMELT DEBUG#%04ld ~ %s *^*^*\n", nbdbg,
-		   datebuf);
-	fflush (NULL);
+        fprintf (stderr, "MONIMELT DEBUG %7s <%s> @%s:%d %s %s\n",
+                 dbg_level_mom (dbg), thrname, fil, lin, timbuf, msg);
+        fflush (stderr);
+        if (nbdbg % DEBUG_DATE_PERIOD_MOM == 0)
+          fprintf (stderr, "MONIMELT DEBUG#%04ld ~ %s *^*^*\n", nbdbg,
+                   datebuf);
+        fflush (NULL);
       }
     pthread_mutex_unlock (&dbgmtx_mom);
   }
@@ -189,35 +189,35 @@ mom_warnprintf_at (const char *fil, int lin, const char *fmt, ...)
     {
       bigbuf = malloc (len + 10);
       if (bigbuf)
-	{
-	  memset (bigbuf, 0, len + 10);
-	  va_start (alist, fmt);
-	  (void) vsnprintf (bigbuf, len + 1, fmt, alist);
-	  va_end (alist);
-	  msg = bigbuf;
-	}
+        {
+          memset (bigbuf, 0, len + 10);
+          va_start (alist, fmt);
+          (void) vsnprintf (bigbuf, len + 1, fmt, alist);
+          va_end (alist);
+          msg = bigbuf;
+        }
     }
   else
     msg = buf;
   if (syslogging_mom)
     {
       if (err)
-	syslog (LOG_WARNING, "MONIMELT WARNING @%s:%d <%s:%d> %s %s (%s)",
-		fil, lin, thrname, (int) mom_gettid (), timbuf,
-		msg, strerror (err));
+        syslog (LOG_WARNING, "MONIMELT WARNING @%s:%d <%s:%d> %s %s (%s)",
+                fil, lin, thrname, (int) mom_gettid (), timbuf,
+                msg, strerror (err));
       else
-	syslog (LOG_WARNING, "MONIMELT WARNING @%s:%d <%s:%d> %s %s",
-		fil, lin, thrname, (int) mom_gettid (), timbuf, msg);
+        syslog (LOG_WARNING, "MONIMELT WARNING @%s:%d <%s:%d> %s %s",
+                fil, lin, thrname, (int) mom_gettid (), timbuf, msg);
     }
   else
     {
       if (err)
-	fprintf (stderr, "MONIMELT WARNING @%s:%d <%s:%d> %s %s (%s)\n",
-		 fil, lin, thrname, (int) mom_gettid (), timbuf,
-		 msg, strerror (err));
+        fprintf (stderr, "MONIMELT WARNING @%s:%d <%s:%d> %s %s (%s)\n",
+                 fil, lin, thrname, (int) mom_gettid (), timbuf,
+                 msg, strerror (err));
       else
-	fprintf (stderr, "MONIMELT WARNING @%s:%d <%s:%d> %s %s\n",
-		 fil, lin, thrname, (int) mom_gettid (), timbuf, msg);
+        fprintf (stderr, "MONIMELT WARNING @%s:%d <%s:%d> %s %s\n",
+                 fil, lin, thrname, (int) mom_gettid (), timbuf, msg);
       fflush (NULL);
     }
   if (bigbuf)
@@ -250,13 +250,13 @@ mom_fataprintf_at (const char *fil, int lin, const char *fmt, ...)
     {
       bigbuf = malloc (len + 10);
       if (bigbuf)
-	{
-	  memset (bigbuf, 0, len + 10);
-	  va_start (alist, fmt);
-	  (void) vsnprintf (bigbuf, len + 1, fmt, alist);
-	  va_end (alist);
-	  msg = bigbuf;
-	}
+        {
+          memset (bigbuf, 0, len + 10);
+          va_start (alist, fmt);
+          (void) vsnprintf (bigbuf, len + 1, fmt, alist);
+          va_end (alist);
+          msg = bigbuf;
+        }
     }
   else
     msg = buf;
@@ -270,26 +270,26 @@ mom_fataprintf_at (const char *fil, int lin, const char *fmt, ...)
   if (syslogging_mom)
     {
       if (err)
-	syslog (LOG_ALERT, "MONIMELT FATAL! @%s:%d <%s:%d> %s %s (%s)",
-		fil, lin, thrname, (int) mom_gettid (), timbuf,
-		msg, strerror (err));
+        syslog (LOG_ALERT, "MONIMELT FATAL! @%s:%d <%s:%d> %s %s (%s)",
+                fil, lin, thrname, (int) mom_gettid (), timbuf,
+                msg, strerror (err));
       else
-	syslog (LOG_ALERT, "MONIMELT FATAL! @%s:%d <%s:%d> %s %s",
-		fil, lin, thrname, (int) mom_gettid (), timbuf, msg);
+        syslog (LOG_ALERT, "MONIMELT FATAL! @%s:%d <%s:%d> %s %s",
+                fil, lin, thrname, (int) mom_gettid (), timbuf, msg);
       for (int i = 0; i < blev; i++)
-	syslog (LOG_ALERT, "MONIMELTB![%d]: %s", i, bsym[i]);
+        syslog (LOG_ALERT, "MONIMELTB![%d]: %s", i, bsym[i]);
     }
   else
     {
       if (err)
-	fprintf (stderr, "MONIMELT FATAL @%s:%d <%s:%d> %s %s (%s)\n",
-		 fil, lin, thrname, (int) mom_gettid (), timbuf,
-		 msg, strerror (err));
+        fprintf (stderr, "MONIMELT FATAL @%s:%d <%s:%d> %s %s (%s)\n",
+                 fil, lin, thrname, (int) mom_gettid (), timbuf,
+                 msg, strerror (err));
       else
-	fprintf (stderr, "MONIMELT FATAL @%s:%d <%s:%d> %s %s\n",
-		 fil, lin, thrname, (int) mom_gettid (), timbuf, msg);
+        fprintf (stderr, "MONIMELT FATAL @%s:%d <%s:%d> %s %s\n",
+                 fil, lin, thrname, (int) mom_gettid (), timbuf, msg);
       for (int i = 0; i < blev; i++)
-	fprintf (stderr, "MONIMELTB[%d]: %s\n", i, bsym[i]);
+        fprintf (stderr, "MONIMELTB[%d]: %s\n", i, bsym[i]);
       fflush (NULL);
     }
 #endif
@@ -358,9 +358,9 @@ dbg_level_mom (enum mom_debug_en dbg)
       MOM_DEBUG_LIST_OPTIONS (LEVDBG);
     default:
       {
-	static char dbglev[16];
-	snprintf (dbglev, sizeof (dbglev), "?DBG?%d", (int) dbg);
-	return dbglev;
+        static char dbglev[16];
+        snprintf (dbglev, sizeof (dbglev), "?DBG?%d", (int) dbg);
+        return dbglev;
       }
     }
 #undef LEVDBG
@@ -444,7 +444,7 @@ static struct
 
 void
 mom_load_plugin (const char *plugname, const char *plugarg, int *pargc,
-		 char ***pargv)
+                 char ***pargv)
 {
   char plugpath[MOM_PATH_MAX];
   memset (plugpath, 0, sizeof (plugpath));
@@ -452,7 +452,7 @@ mom_load_plugin (const char *plugname, const char *plugarg, int *pargc,
       || strchr (plugname, '/') || strlen (plugname) > MOM_PATH_MAX - 32)
     MOM_FATAPRINTF ("invalid plugin name %s", plugname);
   snprintf (plugpath, sizeof (plugpath), "./" MOM_PLUGIN_PREFIX "%s.so",
-	    plugname);
+            plugname);
   pthread_mutex_lock (&plugins_mom.plugins_mtx);
   if (MOM_UNLIKELY
       (plugins_mom.plugins_count + 2 >= plugins_mom.plugins_size))
@@ -462,15 +462,15 @@ mom_load_plugin (const char *plugname, const char *plugarg, int *pargc,
       struct plugin_mom_st *oldarr = plugins_mom.plugins_arr;
       unsigned newsiz = 1 + (((3 * oldcnt / 2) + 10) | 0xf);
       struct plugin_mom_st *newarr =
-	MOM_GC_ALLOC ("plugins", newsiz * sizeof (struct plugin_mom_st));
+        MOM_GC_ALLOC ("plugins", newsiz * sizeof (struct plugin_mom_st));
       if (oldcnt > 0)
-	memcpy (newarr, oldarr, oldcnt * sizeof (struct plugin_mom_st));
+        memcpy (newarr, oldarr, oldcnt * sizeof (struct plugin_mom_st));
       plugins_mom.plugins_arr = newarr;
       plugins_mom.plugins_size = newsiz;
       if (oldarr)
-	{
-	  MOM_GC_FREE (oldarr, oldsiz * sizeof (struct plugin_mom_st));
-	}
+        {
+          MOM_GC_FREE (oldarr, oldsiz * sizeof (struct plugin_mom_st));
+        }
     }
   void *plugdlh = GC_dlopen (plugpath, RTLD_NOW | RTLD_GLOBAL);
   if (!plugdlh)
@@ -485,18 +485,18 @@ mom_load_plugin (const char *plugname, const char *plugarg, int *pargc,
     (mom_plugin_init_t *) dlsym (plugdlh, "mom_plugin_init");
   if (!pluginit)
     MOM_FATAPRINTF ("plugin %s without 'mom_plugin_init' function: %s",
-		    plugpath, dlerror ());
+                    plugpath, dlerror ());
   /// we don't use the index 0 on purpose!
   unsigned plugix = ++plugins_mom.plugins_count;
   plugins_mom.plugins_arr[plugix].plugin_name =
     MOM_GC_STRDUP ("plugin name", plugname);
   plugins_mom.plugins_arr[plugix].plugin_dlh = plugdlh;
   MOM_DEBUGPRINTF (run,
-		   "initializing plugin #%d %s from %s argument %s GPL compatible %s",
-		   plugix, plugname, plugpath, plugarg, pluggplcompatible);
+                   "initializing plugin #%d %s from %s argument %s GPL compatible %s",
+                   plugix, plugname, plugpath, plugarg, pluggplcompatible);
   pluginit (plugarg, pargc, pargv);
   MOM_INFORMPRINTF ("using plugin #%d %s from %s, GPL compatible: %s",
-		    plugix, plugname, plugpath, pluggplcompatible);
+                    plugix, plugname, plugpath, pluggplcompatible);
   pthread_mutex_unlock (&plugins_mom.plugins_mtx);
 }
 
@@ -507,26 +507,26 @@ static void
 do_after_initial_load_with_plugins_mom (void)
 {
   MOM_DEBUGPRINTF (run,
-		   "do_after_initial_load_with_plugins start (plugins_count %d)",
-		   plugins_mom.plugins_count);
+                   "do_after_initial_load_with_plugins start (plugins_count %d)",
+                   plugins_mom.plugins_count);
   for (unsigned plugix = 1; plugix <= plugins_mom.plugins_count; plugix++)
     {
       void *plugdlh = plugins_mom.plugins_arr[plugix].plugin_dlh;
       const char *plugnam = plugins_mom.plugins_arr[plugix].plugin_name;
       assert (plugdlh != NULL && plugnam != NULL);
       mom_plugin_after_load_t *plugafterload =
-	dlsym (plugdlh, "momplugin_after_load");
+        dlsym (plugdlh, "momplugin_after_load");
       if (plugafterload)
-	{
-	  MOM_DEBUGPRINTF (run, "before after load of plugin#%d %s",
-			   plugix, plugnam);
-	  (*plugafterload) ();
-	  MOM_INFORMPRINTF ("done after load of plugin#%d %s",
-			    plugix, plugnam);
-	}
+        {
+          MOM_DEBUGPRINTF (run, "before after load of plugin#%d %s",
+                           plugix, plugnam);
+          (*plugafterload) ();
+          MOM_INFORMPRINTF ("done after load of plugin#%d %s",
+                            plugix, plugnam);
+        }
       else
-	MOM_DEBUGPRINTF (run, "no momplugin_after_load in plugin#%d %s - %s",
-			 plugix, plugnam, dlerror ());
+        MOM_DEBUGPRINTF (run, "no momplugin_after_load in plugin#%d %s - %s",
+                         plugix, plugnam, dlerror ());
     }
 }
 
@@ -539,45 +539,45 @@ usage_mom (const char *argv0)
   printf ("\t -V | --version " " \t# Give version information.\n");
   printf ("\t -d | --daemon " " \t# Daemonize.\n");
   printf ("\t -D | --debug <debug-features>"
-	  " \t# Debugging comma separated features\n\t\t##");
+          " \t# Debugging comma separated features\n\t\t##");
   for (unsigned ix = 1; ix < momdbg__last; ix++)
     printf (" %s", mom_debug_names[ix]);
   putchar ('\n');
   printf ("\t -n | --nice <nice-level> " " \t# Set process nice level.\n");
   printf ("\t -J | --jobs <nb-work-threads> " " \t# Start work threads.\n");
   printf ("\t -P | --plugin <plugin-name> <plugin-arg> "
-	  " \t# load a plugin.\n");
+          " \t# load a plugin.\n");
   printf ("\t -p | --password-file <password-file> "
-	  " \t# Use the given password, or .mompasswd, à la htpasswd(5), for web password\n");
+          " \t# Use the given password, or .mompasswd, à la htpasswd(5), for web password\n");
   printf ("\t -W | --web <webhost> "
-	  " \t# e.g. -W localhost:8088 for web server\n");
+          " \t# e.g. -W localhost:8088 for web server\n");
   printf ("\t -r | --doc-root <web-doc-root> "
-	  " \t# e.g. -r /var/www/ for adding some web document root\n");
+          " \t# e.g. -r /var/www/ for adding some web document root\n");
   printf ("\t -S | --socket <socket>"
-	  " \t #host:port for TCP socket, /absolute/path for UNIX socket\n");
+          " \t #host:port for TCP socket, /absolute/path for UNIX socket\n");
   printf ("\t -X | --xtra-file <filename>" " \t #extra file to be loaded\n");
   putchar ('\n');
   printf ("\t --chdir <directory>" "\t #change directory after loading\n");
   printf ("\t --write-pid <file>"
-	  "\t #write the pid (e.g. --write-pid /var/run/monimelt.pid)\n");
+          "\t #write the pid (e.g. --write-pid /var/run/monimelt.pid)\n");
   printf ("\t --random-idstr" "\t #output a random idstr then exit\n");
   printf ("\t --string-hash <string>" "\t #output the hash of the string\n");
   printf ("\t --dump-cold-state <dumpdir>" "\t #dump the cold state\n");
   printf ("\t --dump-state <dumpdir>" "\t #dump the final state\n");
   printf ("\t --daemon-noclose"
-	  "\t daemonize with daemon(3) with nochdir=true noclose=true\n");
+          "\t daemonize with daemon(3) with nochdir=true noclose=true\n");
   printf ("\t --add-predefined <predefname> [<comment>]"
-	  "\t #add a new predefined and dump\n");
+          "\t #add a new predefined and dump\n");
   printf ("\t --generate-c-module <moduleitem>" "\t #generate a C module\n");
   printf ("\t --system <command>"
-	  "\t #run an arbitrary (perhaps dangereous) command at argument parsing time\n");
+          "\t #run an arbitrary (perhaps dangereous) command at argument parsing time\n");
 }
 
 static void
 print_version_mom (const char *argv0)
 {
   printf ("%s built on %s gitcommit %s\n", argv0,
-	  monimelt_timestamp, monimelt_lastgitcommit);
+          monimelt_timestamp, monimelt_lastgitcommit);
 }
 
 void
@@ -599,18 +599,18 @@ mom_set_debugging (const char *dbgopt)
   else
     for (char *pc = dbuf; pc != NULL; pc = comma ? comma + 1 : NULL)
       {
-	comma = strchr (pc, ',');
-	if (comma)
-	  *comma = (char) 0;
+        comma = strchr (pc, ',');
+        if (comma)
+          *comma = (char) 0;
 #define MOM_TEST_DEBUG_OPTION(Nam)			\
 	if (!strcmp(pc,#Nam))		{		\
 	  mom_debugflags |=  (1<<momdbg_##Nam); } else	\
 	  if (!strcmp(pc,"!"#Nam))			\
 	    mom_debugflags &=  ~(1<<momdbg_##Nam); else
-	if (!pc)
-	  break;
-	MOM_DEBUG_LIST_OPTIONS (MOM_TEST_DEBUG_OPTION) if (pc && *pc)
-	  MOM_WARNPRINTF ("unrecognized debug flag %s", pc);
+        if (!pc)
+          break;
+        MOM_DEBUG_LIST_OPTIONS (MOM_TEST_DEBUG_OPTION) if (pc && *pc)
+          MOM_WARNPRINTF ("unrecognized debug flag %s", pc);
       }
   char alldebugflags[2 * sizeof (dbuf) + 120];
   memset (alldebugflags, 0, sizeof (alldebugflags));
@@ -636,185 +636,185 @@ parse_program_arguments_and_load_plugins_mom (int *pargc, char ***pargv)
   char **argv = *pargv;
   int opt = -1;
   while ((opt = getopt_long (argc, argv, "lhVdn:P:W:J:D:S:X:r:p:",
-			     mom_long_options, NULL)) >= 0)
+                             mom_long_options, NULL)) >= 0)
     {
       switch (opt)
-	{
-	case 'h':
-	  usage_mom (argv[0]);
-	  putchar ('\n');
-	  fputs ("\nVersion info:::::\n", stdout);
-	  print_version_mom (argv[0]);
-	  exit (EXIT_FAILURE);
-	  return;
-	case 'V':
-	  print_version_mom (argv[0]);
-	  exit (EXIT_SUCCESS);
-	  break;
-	case 'd':
-	  daemonize_mom = true;
-	  syslogging_mom = true;
-	  break;
-	case 'l':
-	  syslogging_mom = true;
-	  break;
-	case 'D':
-	  if (optarg)
-	    mom_set_debugging (optarg);
-	  break;
-	case 'J':
-	  if (optarg)
-	    mom_nb_workers = atoi (optarg);
-	  break;
-	case 'W':
-	  mom_web_host = optarg;
-	  break;
-	case 'X':
-	  xtra_path_mom = optarg;
-	  break;
-	case 'S':
-	  mom_socket_path = optarg;
-	  break;
-	case 'U':
-	  mom_user_data = optarg;
-	  break;
-	case 'r':		// --doc-root to add a web root directory
-	  if (optarg)
-	    {
-	      struct stat rdstat;
-	      memset (&rdstat, 0, sizeof (rdstat));
-	      errno = 0;
-	      if (stat (optarg, &rdstat)
-		  || (rdstat.st_mode & S_IFMT) != S_IFDIR)
-		{
-		  if (!errno)
-		    errno = ENOTDIR;
-		  MOM_FATAPRINTF
-		    ("bad specified doc-root (for web service) %s directory (%m)",
-		     optarg);
-		};
-	      if (mom_webdocroot[MOM_MAX_WEBDOCROOT - 1])
-		MOM_FATAPRINTF ("too many %d web doc-root for %s",
-				MOM_MAX_WEBDOCROOT, optarg);
-	      for (int ix = 0; ix < MOM_MAX_WEBDOCROOT; ix++)
-		if (!mom_webdocroot[ix])
-		  {
-		    mom_webdocroot[ix] = optarg;
-		    MOM_INFORMPRINTF ("adding web doc-root directory %s",
-				      optarg);
-		    break;
-		  };
-	    }
-	  break;
-	case 'p':
-	  {
-	    if (optarg)
-	      mom_webpasswdfile = optarg;
-	    MOM_INFORMPRINTF ("using %s as web password file",
-			      mom_webpasswdfile);
-	  };
-	  break;
-	case 'P':
-	  {
-	    char *plugnam = optarg;
-	    char *plugarg = argv[optind++];
-	    mom_load_plugin (plugnam, plugarg, pargc, pargv);
-	  }
-	  break;
-	case xtraopt_chdir:
-	  wanted_dir_mom = optarg;
-	  break;
-	case xtraopt_dumpstate:
-	  if (optarg && !strcmp (optarg, "."))
-	    dump_exit_dir_mom = "./";
-	  else if (optarg)
-	    dump_exit_dir_mom = optarg;
-	  break;
-	case xtraopt_randomidstr:
-	  {
-	    errno = 0;
-	    const momstring_t *randidstr =
-	      mom_make_random_idstr (getpid () % 256, NULL);
-	    printf ("%s\n", randidstr->cstr);
-	    MOM_WARNPRINTF ("exiting after random id string %s",
-			    randidstr->cstr);
-	    exit (EXIT_SUCCESS);
-	  }
-	  break;
-	case xtraopt_hashstr:
-	  {
-	    if (optarg)
-	      {
-		momhash_t hs = mom_cstring_hash (optarg);
-		printf ("hash of string %s is %u = %#x\n", optarg, hs, hs);
-		MOM_WARNPRINTF ("exiting after hashing string '%s' as %u",
-				optarg, hs);
-		exit (EXIT_SUCCESS);
-	      }
-	  }
-	  break;
-	case xtraopt_writepid:
-	  {
-	    write_pid_file_mom = optarg;
-	  }
-	  break;
-	case xtraopt_dumpcoldstate:
-	  {
-	    dump_cold_dir_mom = optarg;
-	  }
-	  break;
-	case xtraopt_addpredef:
-	  {
-	    if (nbmorepredef_mom >= MAX_NEW_PREDEF_MOM)
-	      MOM_FATAPRINTF ("too many new predefined %d", nbmorepredef_mom);
-	    char *predname = optarg;
-	    char *comment = argv[optind];
-	    if (predname && comment && isalnum (comment[0]))
-	      {
-		newpredefname_mom[nbmorepredef_mom] = predname;
-		newpredefcomment_mom[nbmorepredef_mom] = comment;
-		nbmorepredef_mom++;
-	      }
-	  }
-	  break;
-	case xtraopt_daemon_noclose:
-	  noclose_daemonize_mom = true;
-	  break;
-	case xtraopt_generate_c_module:
-	  {
-	    generate_c_module_mom = optarg;
-	  }
-	  break;
-	case xtraopt_system:
-	  {
-	    if (optarg)
-	      {
-		fflush (NULL);
-		MOM_INFORMPRINTF
-		  ("before running command with system(3) : %s", optarg);
-		fflush (NULL);
-		sleep (1);
-		int ok = system (optarg);
-		if (ok)
-		  MOM_FATAPRINTF
-		    ("failed to run command : %s ; got %d status",
-		     optarg, ok);
-		else
-		  MOM_INFORMPRINTF ("did run command : %s", optarg);
-	      }
-	    else
-	      MOM_FATAPRINTF ("invalid --system %s", optarg);
-	  }
-	  break;
-	default:
-	  {
-	    if (opt > 0 && opt < UCHAR_MAX && isalpha ((char) opt))
-	      MOM_FATAPRINTF ("unknown option %c", opt);
-	    else
-	      MOM_FATAPRINTF ("unknown option #%d", opt);
-	  }
-	  break;
-	}
+        {
+        case 'h':
+          usage_mom (argv[0]);
+          putchar ('\n');
+          fputs ("\nVersion info:::::\n", stdout);
+          print_version_mom (argv[0]);
+          exit (EXIT_FAILURE);
+          return;
+        case 'V':
+          print_version_mom (argv[0]);
+          exit (EXIT_SUCCESS);
+          break;
+        case 'd':
+          daemonize_mom = true;
+          syslogging_mom = true;
+          break;
+        case 'l':
+          syslogging_mom = true;
+          break;
+        case 'D':
+          if (optarg)
+            mom_set_debugging (optarg);
+          break;
+        case 'J':
+          if (optarg)
+            mom_nb_workers = atoi (optarg);
+          break;
+        case 'W':
+          mom_web_host = optarg;
+          break;
+        case 'X':
+          xtra_path_mom = optarg;
+          break;
+        case 'S':
+          mom_socket_path = optarg;
+          break;
+        case 'U':
+          mom_user_data = optarg;
+          break;
+        case 'r':              // --doc-root to add a web root directory
+          if (optarg)
+            {
+              struct stat rdstat;
+              memset (&rdstat, 0, sizeof (rdstat));
+              errno = 0;
+              if (stat (optarg, &rdstat)
+                  || (rdstat.st_mode & S_IFMT) != S_IFDIR)
+                {
+                  if (!errno)
+                    errno = ENOTDIR;
+                  MOM_FATAPRINTF
+                    ("bad specified doc-root (for web service) %s directory (%m)",
+                     optarg);
+                };
+              if (mom_webdocroot[MOM_MAX_WEBDOCROOT - 1])
+                MOM_FATAPRINTF ("too many %d web doc-root for %s",
+                                MOM_MAX_WEBDOCROOT, optarg);
+              for (int ix = 0; ix < MOM_MAX_WEBDOCROOT; ix++)
+                if (!mom_webdocroot[ix])
+                  {
+                    mom_webdocroot[ix] = optarg;
+                    MOM_INFORMPRINTF ("adding web doc-root directory %s",
+                                      optarg);
+                    break;
+                  };
+            }
+          break;
+        case 'p':
+          {
+            if (optarg)
+              mom_webpasswdfile = optarg;
+            MOM_INFORMPRINTF ("using %s as web password file",
+                              mom_webpasswdfile);
+          };
+          break;
+        case 'P':
+          {
+            char *plugnam = optarg;
+            char *plugarg = argv[optind++];
+            mom_load_plugin (plugnam, plugarg, pargc, pargv);
+          }
+          break;
+        case xtraopt_chdir:
+          wanted_dir_mom = optarg;
+          break;
+        case xtraopt_dumpstate:
+          if (optarg && !strcmp (optarg, "."))
+            dump_exit_dir_mom = "./";
+          else if (optarg)
+            dump_exit_dir_mom = optarg;
+          break;
+        case xtraopt_randomidstr:
+          {
+            errno = 0;
+            const momstring_t *randidstr =
+              mom_make_random_idstr (getpid () % 256, NULL);
+            printf ("%s\n", randidstr->cstr);
+            MOM_WARNPRINTF ("exiting after random id string %s",
+                            randidstr->cstr);
+            exit (EXIT_SUCCESS);
+          }
+          break;
+        case xtraopt_hashstr:
+          {
+            if (optarg)
+              {
+                momhash_t hs = mom_cstring_hash (optarg);
+                printf ("hash of string %s is %u = %#x\n", optarg, hs, hs);
+                MOM_WARNPRINTF ("exiting after hashing string '%s' as %u",
+                                optarg, hs);
+                exit (EXIT_SUCCESS);
+              }
+          }
+          break;
+        case xtraopt_writepid:
+          {
+            write_pid_file_mom = optarg;
+          }
+          break;
+        case xtraopt_dumpcoldstate:
+          {
+            dump_cold_dir_mom = optarg;
+          }
+          break;
+        case xtraopt_addpredef:
+          {
+            if (nbmorepredef_mom >= MAX_NEW_PREDEF_MOM)
+              MOM_FATAPRINTF ("too many new predefined %d", nbmorepredef_mom);
+            char *predname = optarg;
+            char *comment = argv[optind];
+            if (predname && comment && isalnum (comment[0]))
+              {
+                newpredefname_mom[nbmorepredef_mom] = predname;
+                newpredefcomment_mom[nbmorepredef_mom] = comment;
+                nbmorepredef_mom++;
+              }
+          }
+          break;
+        case xtraopt_daemon_noclose:
+          noclose_daemonize_mom = true;
+          break;
+        case xtraopt_generate_c_module:
+          {
+            generate_c_module_mom = optarg;
+          }
+          break;
+        case xtraopt_system:
+          {
+            if (optarg)
+              {
+                fflush (NULL);
+                MOM_INFORMPRINTF
+                  ("before running command with system(3) : %s", optarg);
+                fflush (NULL);
+                sleep (1);
+                int ok = system (optarg);
+                if (ok)
+                  MOM_FATAPRINTF
+                    ("failed to run command : %s ; got %d status",
+                     optarg, ok);
+                else
+                  MOM_INFORMPRINTF ("did run command : %s", optarg);
+              }
+            else
+              MOM_FATAPRINTF ("invalid --system %s", optarg);
+          }
+          break;
+        default:
+          {
+            if (opt > 0 && opt < UCHAR_MAX && isalpha ((char) opt))
+              MOM_FATAPRINTF ("unknown option %c", opt);
+            else
+              MOM_FATAPRINTF ("unknown option #%d", opt);
+          }
+          break;
+        }
     }
   argc -= optind;
   argv += optind;
@@ -836,81 +836,81 @@ do_generate_c_module_mom (void)
   char pathbuf[128];
   memset (pathbuf, 0, sizeof (pathbuf));
   if (snprintf (pathbuf, sizeof (pathbuf),
-		MOM_MODULE_DIRECTORY MOM_SHARED_MODULE_PREFIX "%s.c",
-		mom_item_cstring (moditm)) >=
+                MOM_MODULE_DIRECTORY MOM_SHARED_MODULE_PREFIX "%s.c",
+                mom_item_cstring (moditm)) >=
       (int) sizeof (pathbuf) - /*space for .bad or % suffix */ 6)
     MOM_FATAPRINTF ("too long pathbuf %s for C module %s", pathbuf,
-		    mom_item_cstring (moditm));
+                    mom_item_cstring (moditm));
   if (!access (pathbuf, R_OK))
     {
       snprintf (cpcmdbuf, sizeof (cpcmdbuf),
-		"cp -vb %s %s%%", pathbuf, pathbuf);
+                "cp -vb %s %s%%", pathbuf, pathbuf);
       MOM_INFORMPRINTF ("before backup: %s", cpcmdbuf);
       fflush (NULL);
       int backfail = system (cpcmdbuf);
       if (backfail)
-	MOM_WARNPRINTF ("backup with %s failed %d", cpcmdbuf, backfail);
+        MOM_WARNPRINTF ("backup with %s failed %d", cpcmdbuf, backfail);
       else
-	backedup = true;
+        backedup = true;
     };
   momvalue_t valgen = MOM_NONEV;
   MOM_INFORMPRINTF ("before generating C module %s",
-		    mom_item_cstring (moditm));
+                    mom_item_cstring (moditm));
   if (!momhook_generate_c_module (moditm, &valgen))
     MOM_WARNPRINTF ("failed to generate C module %s",
-		    mom_item_cstring (moditm));
+                    mom_item_cstring (moditm));
   else
     MOM_INFORMPRINTF ("after generating C module %s got %s",
-		      mom_item_cstring (moditm),
-		      mom_output_gcstring (valgen));
+                      mom_item_cstring (moditm),
+                      mom_output_gcstring (valgen));
   // if generation succeeded, we need to compile and dump
   if (valgen.typnum == momty_item && valgen.vitem == moditm)
     {
       char makecmdbuf[256];
       memset (makecmdbuf, 0, sizeof (makecmdbuf));
       snprintf (makecmdbuf, sizeof (makecmdbuf), "make "
-		MOM_MODULE_DIRECTORY MOM_SHARED_MODULE_PREFIX "%s.so",
-		mom_item_cstring (moditm));
+                MOM_MODULE_DIRECTORY MOM_SHARED_MODULE_PREFIX "%s.so",
+                mom_item_cstring (moditm));
       MOM_INFORMPRINTF ("before building generated module with : %s",
-			makecmdbuf);
+                        makecmdbuf);
       fflush (NULL);
       int buildfail = system (makecmdbuf);
       if (buildfail)
-	{
-	  if (backedup)
-	    {
-	      char badbuf[sizeof (pathbuf)];
-	      char backupbuf[sizeof (pathbuf)];
-	      memset (badbuf, 0, sizeof (badbuf));
-	      memset (backupbuf, 0, sizeof (backupbuf));
-	      snprintf (badbuf, sizeof (badbuf), "%s.bad", pathbuf);
-	      snprintf (backupbuf, sizeof (backupbuf), "%s%%", pathbuf);
-	      if (MOM_UNLIKELY (rename (pathbuf, badbuf)))
-		MOM_FATAPRINTF ("failed to rename %s as %s - %m", pathbuf,
-				badbuf);
-	      if (MOM_UNLIKELY (rename (backupbuf, pathbuf)))
-		MOM_FATAPRINTF ("failed to rename backup %s as %s - %m",
-				backupbuf, pathbuf);
-	      MOM_INFORMPRINTF
-		("restored backed up %s as %s, and renamed generated file to bad file %s",
-		 backupbuf, pathbuf, badbuf);
-	    };
-	  MOM_FATAPRINTF ("failed to build generated with : %s (got %d)",
-			  makecmdbuf, buildfail);
-	}
+        {
+          if (backedup)
+            {
+              char badbuf[sizeof (pathbuf)];
+              char backupbuf[sizeof (pathbuf)];
+              memset (badbuf, 0, sizeof (badbuf));
+              memset (backupbuf, 0, sizeof (backupbuf));
+              snprintf (badbuf, sizeof (badbuf), "%s.bad", pathbuf);
+              snprintf (backupbuf, sizeof (backupbuf), "%s%%", pathbuf);
+              if (MOM_UNLIKELY (rename (pathbuf, badbuf)))
+                MOM_FATAPRINTF ("failed to rename %s as %s - %m", pathbuf,
+                                badbuf);
+              if (MOM_UNLIKELY (rename (backupbuf, pathbuf)))
+                MOM_FATAPRINTF ("failed to rename backup %s as %s - %m",
+                                backupbuf, pathbuf);
+              MOM_INFORMPRINTF
+                ("restored backed up %s as %s, and renamed generated file to bad file %s",
+                 backupbuf, pathbuf, badbuf);
+            };
+          MOM_FATAPRINTF ("failed to build generated with : %s (got %d)",
+                          makecmdbuf, buildfail);
+        }
       else
-	{
-	  MOM_INFORMPRINTF ("successfully built generated module with : %s",
-			    makecmdbuf);
-	};
+        {
+          MOM_INFORMPRINTF ("successfully built generated module with : %s",
+                            makecmdbuf);
+        };
       mom_dynload_module_item (moditm);
       if (!dump_exit_dir_mom)
-	{
-	  MOM_INFORMPRINTF
-	    ("after successful generation of C module %s will dump state",
-	     mom_item_cstring (moditm));
-	  dump_exit_dir_mom = "./";
-	}
+        {
+          MOM_INFORMPRINTF
+            ("after successful generation of C module %s will dump state",
+             mom_item_cstring (moditm));
+          dump_exit_dir_mom = "./";
+        }
     }
 }
 
@@ -940,9 +940,9 @@ limit_nofile_mom (void)
       myrlimits.rlim_cur = maxfd;
       MOM_DEBUGPRINTF (run, "limiting RLIMIT_NOFILE to %d", maxfd);
       if (setrlimit (RLIMIT_NOFILE, &myrlimits))
-	MOM_FATAPRINTF ("setrlimit RLIMIT_NOFILE to %d failed (%m)", maxfd);
+        MOM_FATAPRINTF ("setrlimit RLIMIT_NOFILE to %d failed (%m)", maxfd);
     }
-}				/* end of limit_nofile_mom */
+}                               /* end of limit_nofile_mom */
 
 
 static char hostname_mom[80];
@@ -967,24 +967,24 @@ main (int argc_main, char **argv_main)
   json_set_alloc_funcs (jansson_malloc_mom, GC_free);
   gethostname (hostname_mom, sizeof (hostname_mom) - 1);
   mom_initialize_random ();
-  json_object_seed (0);		/* use random device ie system entropy source */
+  json_object_seed (0);         /* use random device ie system entropy source */
   mom_prog_dlhandle = GC_dlopen (NULL, RTLD_NOW | RTLD_GLOBAL);
   if (MOM_UNLIKELY (!mom_prog_dlhandle))
     MOM_FATAPRINTF ("failed to dlopen the program: %s", dlerror ());
   {
     int arg0len = 0;
     if (argc > 1 && (arg0len = strlen (argv[0]) > 5)
-	&& !strcmp (argv[0] + arg0len - 4, ".run"))
+        && !strcmp (argv[0] + arg0len - 4, ".run"))
       {
-	char **newargv = GC_MALLOC ((argc + 3) * sizeof (char *));
-	if (!newargv)
-	  MOM_FATAPRINTF ("failed to grow argv for .run suffix: %m");
-	memset (newargv, 0, (argc + 3) * sizeof (char *));
-	newargv[0] = argv[0];
-	newargv[1] = "--run";
-	for (int ix = 1; ix < argc; ix++)
-	  newargv[ix + 1] = argv[ix];
-	argv = newargv;
+        char **newargv = GC_MALLOC ((argc + 3) * sizeof (char *));
+        if (!newargv)
+          MOM_FATAPRINTF ("failed to grow argv for .run suffix: %m");
+        memset (newargv, 0, (argc + 3) * sizeof (char *));
+        newargv[0] = argv[0];
+        newargv[1] = "--run";
+        for (int ix = 1; ix < argc; ix++)
+          newargv[ix + 1] = argv[ix];
+        argv = newargv;
       }
   }
   parse_program_arguments_and_load_plugins_mom (&argc, &argv);
@@ -998,43 +998,43 @@ main (int argc_main, char **argv_main)
   mom_load_state (xtra_path_mom);
   MOM_DEBUGPRINTF (load, "loaded state (xtrapath=%s)", xtra_path_mom);
   MOM_INFORMPRINTF ("MONIMELT loaded state, process %d on %s",
-		    (int) getpid (), hostname_mom);
+                    (int) getpid (), hostname_mom);
   if (wanted_dir_mom && wanted_dir_mom[0])
     {
       char dirbuf[MOM_PATH_MAX];
       memset (dirbuf, 0, sizeof (dirbuf));
       // we do a getcwd because the given directory might have symlinks, etc.
       if (chdir (wanted_dir_mom) || !getcwd (dirbuf, sizeof (dirbuf) - 1))
-	MOM_FATAPRINTF ("failed to chdir to %s then getcwd: %m",
-			wanted_dir_mom);
+        MOM_FATAPRINTF ("failed to chdir to %s then getcwd: %m",
+                        wanted_dir_mom);
       if (strcmp (dirbuf, wanted_dir_mom))
-	MOM_INFORMPRINTF ("MONIMELT changed directory to %s, now in %s",
-			  wanted_dir_mom, dirbuf);
+        MOM_INFORMPRINTF ("MONIMELT changed directory to %s, now in %s",
+                          wanted_dir_mom, dirbuf);
       else
-	MOM_INFORMPRINTF ("MONIMELT changed directory, now in %s", dirbuf);
+        MOM_INFORMPRINTF ("MONIMELT changed directory, now in %s", dirbuf);
     }
   if (nbmorepredef_mom > 0)
     {
       for (unsigned prix = 0; prix < nbmorepredef_mom; prix++)
-	{
-	  momitem_t *pritm =
-	    mom_make_predefined_named_item (newpredefname_mom[prix]);
-	  if (newpredefcomment_mom[prix]
-	      && strlen (newpredefcomment_mom[prix]) > 0)
-	    {
-	      momvalue_t valstr =
-		mom_stringv (mom_make_string_cstr
-			     (newpredefcomment_mom[prix]));
-	      pritm->itm_attrs	//
-		= mom_attributes_put (pritm->itm_attrs,
-				      MOM_PREDEFINED_NAMED (comment),
-				      &valstr);
-	    }
-	  MOM_INFORMPRINTF ("made predefined %s", pritm->itm_name->cstr);
-	  if (!dump_exit_dir_mom || !dump_exit_dir_mom[0]
-	      || !strcmp (dump_exit_dir_mom, "."))
-	    dump_exit_dir_mom = "./";
-	}
+        {
+          momitem_t *pritm =
+            mom_make_predefined_named_item (newpredefname_mom[prix]);
+          if (newpredefcomment_mom[prix]
+              && strlen (newpredefcomment_mom[prix]) > 0)
+            {
+              momvalue_t valstr =
+                mom_stringv (mom_make_string_cstr
+                             (newpredefcomment_mom[prix]));
+              pritm->itm_attrs  //
+                = mom_attributes_put (pritm->itm_attrs,
+                                      MOM_PREDEFINED_NAMED (comment),
+                                      &valstr);
+            }
+          MOM_INFORMPRINTF ("made predefined %s", pritm->itm_name->cstr);
+          if (!dump_exit_dir_mom || !dump_exit_dir_mom[0]
+              || !strcmp (dump_exit_dir_mom, "."))
+            dump_exit_dir_mom = "./";
+        }
     }
   do_after_initial_load_with_plugins_mom ();
   if (generate_c_module_mom)
@@ -1052,8 +1052,8 @@ main (int argc_main, char **argv_main)
       memset (makebuf, 0, sizeof (makebuf));
       snprintf (makebuf, sizeof (makebuf), "make -j %d", mom_nb_workers);
       if (system (makebuf))
-	MOM_FATAPRINTF ("failed to make -j %d after predefined",
-			mom_nb_workers);
+        MOM_FATAPRINTF ("failed to make -j %d after predefined",
+                        mom_nb_workers);
     }
   MOM_INFORMPRINTF
     ("MONIMELT ending pid %d on %s, elapsed time %.3f, cpu time %.3f sec",

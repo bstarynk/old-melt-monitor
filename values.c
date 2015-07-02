@@ -32,75 +32,75 @@ mom_valueptr_hash (momvalue_t *pval)
       return 0;
     case momty_int:
       {
-	intptr_t i = pval->vint;
-	h = ((momhash_t) i ^ ((momhash_t) (i >> 27)));
-	if (!h)
-	  {
-	    h = (momhash_t) i;
-	    if (!h)
-	      h = 12753;
-	  }
-	return h;
+        intptr_t i = pval->vint;
+        h = ((momhash_t) i ^ ((momhash_t) (i >> 27)));
+        if (!h)
+          {
+            h = (momhash_t) i;
+            if (!h)
+              h = 12753;
+          }
+        return h;
       }
     case momty_double:
       {
-	double d = pval->vdbl;
-	if (isnan (d))
-	  return 3000229;
-	int e = 0;
-	double x = frexp (d, &e);
-	h = ((momhash_t) (x / (M_PI * M_LN2 * DBL_EPSILON))) ^ e;
-	if (!h)
-	  {
-	    h = e;
-	    if (!h)
-	      h = (x > 0.0) ? 1689767 : (x < 0.0) ? 2000281 : 13;
-	  }
-	return h;
+        double d = pval->vdbl;
+        if (isnan (d))
+          return 3000229;
+        int e = 0;
+        double x = frexp (d, &e);
+        h = ((momhash_t) (x / (M_PI * M_LN2 * DBL_EPSILON))) ^ e;
+        if (!h)
+          {
+            h = e;
+            if (!h)
+              h = (x > 0.0) ? 1689767 : (x < 0.0) ? 2000281 : 13;
+          }
+        return h;
       }
     case momty_string:
       {
-	const momstring_t *ps = pval->vstr;
-	assert (ps);
-	return ps->shash;
+        const momstring_t *ps = pval->vstr;
+        assert (ps);
+        return ps->shash;
       }
     case momty_delim:
       {
-	char dbuf[8 + sizeof (pval->vdelim)];
-	memset (dbuf, 0, sizeof (dbuf));
-	strncpy (dbuf, (const char *) &pval->vdelim, sizeof (pval->vdelim));
-	return mom_cstring_hash (dbuf);
+        char dbuf[8 + sizeof (pval->vdelim)];
+        memset (dbuf, 0, sizeof (dbuf));
+        strncpy (dbuf, (const char *) &pval->vdelim, sizeof (pval->vdelim));
+        return mom_cstring_hash (dbuf);
       }
     case momty_set:
       {
-	const momseq_t *ps = pval->vset;
-	assert (ps);
-	h = (11 * ps->shash) ^ (31 * ps->slen);
-	if (MOM_UNLIKELY (!h))
-	  h = ((17 * ps->slen) & 0xfffff) + 3;
-	return h;
+        const momseq_t *ps = pval->vset;
+        assert (ps);
+        h = (11 * ps->shash) ^ (31 * ps->slen);
+        if (MOM_UNLIKELY (!h))
+          h = ((17 * ps->slen) & 0xfffff) + 3;
+        return h;
       }
     case momty_tuple:
       {
-	const momseq_t *pt = pval->vtuple;
-	assert (pt);
-	h = (19 * pt->shash) ^ (59 * pt->slen);
-	if (MOM_UNLIKELY (!h))
-	  h = ((37 * pt->slen) & 0xfffff) + 10;
-	return h;
+        const momseq_t *pt = pval->vtuple;
+        assert (pt);
+        h = (19 * pt->shash) ^ (59 * pt->slen);
+        if (MOM_UNLIKELY (!h))
+          h = ((37 * pt->slen) & 0xfffff) + 10;
+        return h;
       }
     case momty_node:
       {
-	const momnode_t *pn = pval->vnode;
-	assert (pn);
-	return pn->shash;
+        const momnode_t *pn = pval->vnode;
+        assert (pn);
+        return pn->shash;
       }
     case momty_item:
       {
-	const momitem_t *pitm = pval->vitem;
-	assert (pitm);
-	assert (pitm->itm_str);
-	return pitm->itm_str->shash;
+        const momitem_t *pitm = pval->vitem;
+        assert (pitm);
+        assert (pitm->itm_str);
+        return pitm->itm_str->shash;
       }
     }
   return 0;
@@ -119,11 +119,11 @@ mom_cstring_hash_len (const char *str, int len)
   while (l > 4)
     {
       h1 =
-	(509 * h2 +
-	 307 * ((signed char *) str)[0]) ^ (1319 * ((signed char *) str)[1]);
+        (509 * h2 +
+         307 * ((signed char *) str)[0]) ^ (1319 * ((signed char *) str)[1]);
       h2 =
-	(17 * l + 5 + 5309 * h2) ^ ((3313 * ((signed char *) str)[2]) +
-				    9337 * ((signed char *) str)[3] + 517);
+        (17 * l + 5 + 5309 * h2) ^ ((3313 * ((signed char *) str)[2]) +
+                                    9337 * ((signed char *) str)[3] + 517);
       l -= 4;
       str += 4;
     }
@@ -131,30 +131,30 @@ mom_cstring_hash_len (const char *str, int len)
     {
       h1 = (h1 * 7703) ^ (503 * ((signed char *) str)[0]);
       if (l > 1)
-	{
-	  h2 = (h2 * 7717) ^ (509 * ((signed char *) str)[1]);
-	  if (l > 2)
-	    {
-	      h1 = (h1 * 9323) ^ (11 + 523 * ((signed char *) str)[2]);
-	      if (l > 3)
-		{
-		  h2 =
-		    (h2 * 7727 + 127) ^ (313 +
-					 547 * ((signed char *) str)[3]);
-		}
-	    }
-	}
+        {
+          h2 = (h2 * 7717) ^ (509 * ((signed char *) str)[1]);
+          if (l > 2)
+            {
+              h1 = (h1 * 9323) ^ (11 + 523 * ((signed char *) str)[2]);
+              if (l > 3)
+                {
+                  h2 =
+                    (h2 * 7727 + 127) ^ (313 +
+                                         547 * ((signed char *) str)[3]);
+                }
+            }
+        }
     }
   h = (h1 * 29311 + 59) ^ (h2 * 7321 + 120501);
   if (!h)
     {
       h = h1;
       if (!h)
-	{
-	  h = h2;
-	  if (!h)
-	    h = (len & 0xffffff) + 11;
-	}
+        {
+          h = h2;
+          if (!h)
+            h = (len & 0xffffff) + 11;
+        }
     }
   return h;
 }
@@ -195,8 +195,8 @@ mom_make_string_sprintf (const char *fmt, ...)
   else
     {
       momstring_t *res = MOM_GC_SCALAR_ALLOC ("momstring",
-					      sizeof (momstring_t) + slen +
-					      1);
+                                              sizeof (momstring_t) + slen +
+                                              1);
       memset (res, 0, sizeof (momstring_t) + slen + 1);
       va_start (args, fmt);
       vsnprintf (res->cstr, slen, fmt, args);
@@ -256,48 +256,49 @@ append_collected_value_mom (struct momitemvec_st *ivec, const momvalue_t val)
       break;
     case momty_node:
       {
-	momitem_t *conn = mom_node_conn (val.vnode);
-	assert (conn != NULL);
-	unsigned arity = mom_node_arity (val.vnode);
-	if (conn == MOM_PREDEFINED_NAMED (in) && arity == 3)
-	  {
-	    const momseq_t *sequ =
-	      mom_value_to_sequ (mom_node_nth (val.vnode, 0));
-	    if (!sequ)
-	      break;
-	    unsigned len = sequ->slen;
-	    int startix =
-	      (int) mom_value_to_int (mom_node_nth (val.vnode, 1), 0);
-	    int endix =
-	      (int) mom_value_to_int (mom_node_nth (val.vnode, 2), -1);
-	    if (startix < 0)
-	      startix += len;
-	    if (endix < 0)
-	      endix += len;
-	    if (startix < 0 || startix >= (int) len)
-	      break;
-	    if (endix < 0 || endix < startix || endix > (int) len)
-	      break;
-	    ivec = mom_itemvec_reserve (ivec, endix - startix + 1);
-	    for (int ix = startix; ix <= endix && ix < (int) len; ix++)
-	      ivec = mom_itemvec_append1 (ivec, sequ->arritm[ix]);
-	  }
-	else if (conn == MOM_PREDEFINED_NAMED (set))
-	  {
-	    momseq_t *seq = mom_collect_sized_set (arity, val.vnode->arrsons);
-	    ivec = mom_itemvec_append_sequ (ivec, seq);
-	  }
-	else if (conn == MOM_PREDEFINED_NAMED (tuple))
-	  {
-	    momseq_t *seq =
-	      mom_collect_sized_tuple (arity, val.vnode->arrsons);
-	    ivec = mom_itemvec_append_sequ (ivec, seq);
-	  }
+        momitem_t *conn = mom_node_conn (val.vnode);
+        assert (conn != NULL);
+        unsigned arity = mom_node_arity (val.vnode);
+        if (conn == MOM_PREDEFINED_NAMED (in) && arity == 3)
+          {
+            const momseq_t *sequ =
+              mom_value_to_sequ (mom_node_nth (val.vnode, 0));
+            if (!sequ)
+              break;
+            unsigned len = sequ->slen;
+            int startix =
+              (int) mom_value_to_int (mom_node_nth (val.vnode, 1), 0);
+            int endix =
+              (int) mom_value_to_int (mom_node_nth (val.vnode, 2), -1);
+            if (startix < 0)
+              startix += len;
+            if (endix < 0)
+              endix += len;
+            if (startix < 0 || startix >= (int) len)
+              break;
+            if (endix < 0 || endix < startix || endix > (int) len)
+              break;
+            ivec = mom_itemvec_reserve (ivec, endix - startix + 1);
+            for (int ix = startix; ix <= endix && ix < (int) len; ix++)
+              ivec = mom_itemvec_append1 (ivec, sequ->arritm[ix]);
+          }
+        else if (conn == MOM_PREDEFINED_NAMED (set))
+          {
+            const momseq_t *seq =
+              mom_collect_sized_set (arity, val.vnode->arrsons);
+            ivec = mom_itemvec_append_sequ (ivec, seq);
+          }
+        else if (conn == MOM_PREDEFINED_NAMED (tuple))
+          {
+            const momseq_t *seq =
+              mom_collect_sized_tuple (arity, val.vnode->arrsons);
+            ivec = mom_itemvec_append_sequ (ivec, seq);
+          }
       };
       break;
     }
   return ivec;
-}				/* end of append_collected_value_mom */
+}                               /* end of append_collected_value_mom */
 
 ////////////////////////////////////////////////////////////////
 ////// tuples
@@ -310,28 +311,28 @@ mom_make_meta_tuple (momvalue_t metav, unsigned nbitems, ...)
   if (MOM_UNLIKELY (nbitems > MOM_MAX_SEQ_LENGTH))
     MOM_FATAPRINTF ("too big tuple %u", nbitems);
   momseq_t *tup = MOM_GC_ALLOC ("tuple",
-				sizeof (momseq_t) +
-				nbitems * sizeof (momitem_t *));
+                                sizeof (momseq_t) +
+                                nbitems * sizeof (momitem_t *));
   unsigned cntitems = 0;
   va_start (args, nbitems);
   for (unsigned ix = 0; ix < nbitems; ix++)
     {
       momitem_t *itm = va_arg (args, momitem_t *);
       if (itm && itm != MOM_EMPTY)
-	tup->arritm[cntitems++] = itm;
+        tup->arritm[cntitems++] = itm;
     }
   va_end (args);
   if (MOM_UNLIKELY (cntitems < nbitems))
     {
       momseq_t *oldtup = tup;
       momseq_t *newtup = MOM_GC_ALLOC ("tuple",
-				       sizeof (momseq_t) +
-				       cntitems * sizeof (momitem_t *));
+                                       sizeof (momseq_t) +
+                                       cntitems * sizeof (momitem_t *));
       memcpy (newtup->arritm, oldtup->arritm,
-	      cntitems * sizeof (momitem_t *));
+              cntitems * sizeof (momitem_t *));
       tup = newtup;
       MOM_GC_FREE (oldtup, sizeof (momseq_t) +
-		   nbitems * sizeof (momitem_t *));
+                   nbitems * sizeof (momitem_t *));
     }
   tup->slen = cntitems;
   update_seq_hash_mom (tup);
@@ -341,39 +342,39 @@ mom_make_meta_tuple (momvalue_t metav, unsigned nbitems, ...)
 
 const momseq_t *
 mom_make_sized_meta_tuple (momvalue_t metav, unsigned nbitems,
-			   momitem_t *const *itmarr)
+                           momitem_t *const *itmarr)
 {
   if (MOM_UNLIKELY (nbitems && !itmarr))
     MOM_FATAPRINTF ("missing item array for sized %u meta tuple", nbitems);
   if (MOM_UNLIKELY (nbitems > MOM_MAX_SEQ_LENGTH))
     MOM_FATAPRINTF ("too big tuple %u", nbitems);
   momseq_t *tup = MOM_GC_ALLOC ("tuple",
-				sizeof (momseq_t) +
-				nbitems * sizeof (momitem_t *));
+                                sizeof (momseq_t) +
+                                nbitems * sizeof (momitem_t *));
   unsigned cntitems = 0;
   for (unsigned ix = 0; ix < nbitems; ix++)
     {
       const momitem_t *itm = itmarr[ix];
       if (itm && itm != MOM_EMPTY)
-	tup->arritm[cntitems++] = itm;
+        tup->arritm[cntitems++] = itm;
     }
   if (MOM_UNLIKELY (cntitems < nbitems))
     {
       momseq_t *oldtup = tup;
       momseq_t *newtup = MOM_GC_ALLOC ("shrinked tuple",
-				       sizeof (momseq_t) +
-				       cntitems * sizeof (momitem_t *));
+                                       sizeof (momseq_t) +
+                                       cntitems * sizeof (momitem_t *));
       memcpy (newtup->arritm, oldtup->arritm,
-	      cntitems * sizeof (momitem_t *));
+              cntitems * sizeof (momitem_t *));
       tup = newtup;
       MOM_GC_FREE (oldtup, sizeof (momseq_t) +
-		   nbitems * sizeof (momitem_t *));
+                   nbitems * sizeof (momitem_t *));
     }
   tup->slen = cntitems;
   update_seq_hash_mom (tup);
   tup->meta = metav;
   return tup;
-}				/* end of mom_make_sized_meta_tuple */
+}                               /* end of mom_make_sized_meta_tuple */
 
 
 const momseq_t *
@@ -391,17 +392,17 @@ mom_collect_meta_tuple (momvalue_t metav, unsigned nbvals, ...)
   va_end (args);
   assert (ivec != NULL);
   const momseq_t *seq = mom_make_sized_meta_tuple (metav, ivec->ivec_cnt,
-						   (momitem_t *const *)
-						   ivec->ivec_arr);
+                                                   (momitem_t *const *)
+                                                   ivec->ivec_arr);
   MOM_GC_FREE (ivec,
-	       sizeof (struct momitemvec_st) +
-	       ivec->ivec_len * sizeof (momitem_t *));
+               sizeof (struct momitemvec_st) +
+               ivec->ivec_len * sizeof (momitem_t *));
   return seq;
-}				/* end of mom_collect_meta_tuple */
+}                               /* end of mom_collect_meta_tuple */
 
 const momseq_t *
 mom_collect_sized_meta_tuple (momvalue_t metav, unsigned nbvals,
-			      const momvalue_t *valarr)
+                              const momvalue_t *valarr)
 {
   if (nbvals > 0 && valarr == NULL)
     return NULL;
@@ -414,13 +415,13 @@ mom_collect_sized_meta_tuple (momvalue_t metav, unsigned nbvals,
     }
   assert (ivec != NULL);
   const momseq_t *seq = mom_make_sized_meta_tuple (metav, ivec->ivec_cnt,
-						   (momitem_t *const *)
-						   ivec->ivec_arr);
+                                                   (momitem_t *const *)
+                                                   ivec->ivec_arr);
   MOM_GC_FREE (ivec,
-	       sizeof (struct momitemvec_st) +
-	       ivec->ivec_len * sizeof (momitem_t *));
+               sizeof (struct momitemvec_st) +
+               ivec->ivec_len * sizeof (momitem_t *));
   return seq;
-}				/* end of mom_collect_sized_meta_tuple */
+}                               /* end of mom_collect_sized_meta_tuple */
 
 
 ////////////////////////////////////////////////////////////////
@@ -435,71 +436,71 @@ sort_set_unique_items_mom (const momitem_t **itmarr, unsigned nbitems)
   if (MOM_IS_DEBUGGING (item))
     {
       for (unsigned ix = 0; ix < nbitems; ix++)
-	MOM_DEBUGPRINTF (item, "sort_set_unique_items itmarr[%d] = %s",
-			 ix, mom_item_cstring (itmarr[ix]));
+        MOM_DEBUGPRINTF (item, "sort_set_unique_items itmarr[%d] = %s",
+                         ix, mom_item_cstring (itmarr[ix]));
     };
   if (MOM_UNLIKELY (nbitems == 1))
     return itmarr[0] ? 1 : 0;
   if (MOM_UNLIKELY (nbitems == 2))
     {
       if (MOM_UNLIKELY (!itmarr[0] && !itmarr[1]))
-	return 0;
+        return 0;
       if (MOM_UNLIKELY (!itmarr[1]))
-	return 1;
+        return 1;
       if (MOM_UNLIKELY (!itmarr[0]))
-	{
-	  itmarr[0] = itmarr[1];
-	  return 1;
-	};
+        {
+          itmarr[0] = itmarr[1];
+          return 1;
+        };
       int cmp = mom_item_cmp (itmarr[0], itmarr[1]);
       if (!cmp)
-	{
-	  return 1;
-	};
+        {
+          return 1;
+        };
       if (cmp > 0)
-	{
-	  const momitem_t *tmpitm = itmarr[0];
-	  itmarr[0] = itmarr[1];
-	  itmarr[1] = tmpitm;
-	};
+        {
+          const momitem_t *tmpitm = itmarr[0];
+          itmarr[0] = itmarr[1];
+          itmarr[1] = tmpitm;
+        };
       return 2;
     }
   mom_item_qsort (itmarr, nbitems);
   MOM_DEBUGPRINTF (item, "sort_set_unique_items after qsort nbitems=%u",
-		   nbitems);
+                   nbitems);
   if (MOM_IS_DEBUGGING (item))
     {
       for (unsigned ix = 0; ix < nbitems; ix++)
-	MOM_DEBUGPRINTF (item,
-			 "sort_set_unique_items qsorted itmarr[%d] = %s", ix,
-			 mom_item_cstring (itmarr[ix]));
+        MOM_DEBUGPRINTF (item,
+                         "sort_set_unique_items qsorted itmarr[%d] = %s", ix,
+                         mom_item_cstring (itmarr[ix]));
     };
   unsigned oldnbitems = nbitems;
   for (unsigned ix = 1; ix < nbitems; ix++)
     {
       const momitem_t *previtm = itmarr[ix - 1];
       if (MOM_UNLIKELY (itmarr[ix] == previtm))
-	{
-	  unsigned nextix = 0;
-	  for (nextix = ix; nextix < nbitems; nextix++)
-	    if (MOM_UNLIKELY (itmarr[nextix] != previtm))
-	      break;
-	  MOM_DEBUGPRINTF (item,
-			   "sort_set_unique_items duplicate item ix=%d nextix=%d : %s previtm %s",
-			   ix, nextix, mom_item_cstring (itmarr[ix]),
-			   mom_item_cstring (previtm));
-	  assert (nextix >= ix);
-	  int skip = (nextix - ix) + 1;
-	  for (int shix = ix; shix + skip < (int) nbitems; shix++)
-	    itmarr[shix] = itmarr[shix + skip];
-	  nbitems -= skip;
-	}
+        {
+          unsigned nextix = 0;
+          for (nextix = ix; nextix < nbitems; nextix++)
+            if (MOM_UNLIKELY (itmarr[nextix] != previtm))
+              break;
+          MOM_DEBUGPRINTF (item,
+                           "sort_set_unique_items duplicate item ix=%d nextix=%d : %s previtm %s",
+                           ix, nextix, mom_item_cstring (itmarr[ix]),
+                           mom_item_cstring (previtm));
+          assert (nextix >= ix);
+          int skip = (nextix - ix) + 1;
+          for (int shix = ix; shix + skip < (int) nbitems; shix++)
+            itmarr[shix] = itmarr[shix + skip];
+          nbitems -= skip;
+        }
     };
   for (unsigned ix = nbitems; ix < oldnbitems; ix++)
     itmarr[ix] = NULL;
   assert (nbitems <= oldnbitems);
   return nbitems;
-}				// end sort_set_unique_items_mom 
+}                               // end sort_set_unique_items_mom 
 
 
 
@@ -510,15 +511,15 @@ mom_make_meta_set (momvalue_t metav, unsigned nbitems, ...)
   if (MOM_UNLIKELY (nbitems > MOM_MAX_SEQ_LENGTH))
     MOM_FATAPRINTF ("too big set %u", nbitems);
   momseq_t *set = MOM_GC_ALLOC ("set",
-				sizeof (momseq_t) +
-				nbitems * sizeof (momitem_t *));
+                                sizeof (momseq_t) +
+                                nbitems * sizeof (momitem_t *));
   unsigned cntitems = 0;
   va_start (args, nbitems);
   for (unsigned ix = 0; ix < nbitems; ix++)
     {
       momitem_t *itm = va_arg (args, momitem_t *);
       if (itm && itm != MOM_EMPTY)
-	set->arritm[cntitems++] = itm;
+        set->arritm[cntitems++] = itm;
     }
   va_end (args);
   cntitems = sort_set_unique_items_mom (set->arritm, cntitems);
@@ -526,13 +527,13 @@ mom_make_meta_set (momvalue_t metav, unsigned nbitems, ...)
     {
       momseq_t *oldset = set;
       momseq_t *newset = MOM_GC_ALLOC ("shrinked set",
-				       sizeof (momseq_t) +
-				       cntitems * sizeof (momitem_t *));
+                                       sizeof (momseq_t) +
+                                       cntitems * sizeof (momitem_t *));
       memcpy (newset->arritm, oldset->arritm,
-	      cntitems * sizeof (momitem_t *));
+              cntitems * sizeof (momitem_t *));
       set = newset;
       MOM_GC_FREE (oldset,
-		   sizeof (momseq_t) + nbitems * sizeof (momitem_t *));
+                   sizeof (momseq_t) + nbitems * sizeof (momitem_t *));
     }
 #ifndef NDEBUG
   for (unsigned ix = 1; ix < cntitems; ix++)
@@ -546,54 +547,54 @@ mom_make_meta_set (momvalue_t metav, unsigned nbitems, ...)
 
 const momseq_t *
 mom_make_sized_meta_set (momvalue_t metav, unsigned nbitems,
-			 const momitem_t **itmarr)
+                         const momitem_t **itmarr)
 {
   if (MOM_UNLIKELY (nbitems && !itmarr))
     MOM_FATAPRINTF ("missing item array for sized %u meta set", nbitems);
   if (MOM_UNLIKELY (nbitems > MOM_MAX_SEQ_LENGTH))
     MOM_FATAPRINTF ("too big set %u", nbitems);
   MOM_DEBUGPRINTF (item, "make_sized_meta_set start metav=%s nbitems=%d",
-		   mom_output_gcstring (metav), nbitems);
+                   mom_output_gcstring (metav), nbitems);
   momseq_t *set = MOM_GC_ALLOC ("set",
-				sizeof (momseq_t) +
-				nbitems * sizeof (momitem_t *));
+                                sizeof (momseq_t) +
+                                nbitems * sizeof (momitem_t *));
   unsigned cntitems = 0;
   for (unsigned ix = 0; ix < nbitems; ix++)
     {
       const momitem_t *itm = itmarr[ix];
       if (itm && itm != MOM_EMPTY)
-	{
-	  MOM_DEBUGPRINTF (item, "make_sized_meta_set arritm[%d] = %s",
-			   cntitems, mom_item_cstring (itm));
-	  set->arritm[cntitems++] = (momitem_t *) itm;
-	}
+        {
+          MOM_DEBUGPRINTF (item, "make_sized_meta_set arritm[%d] = %s",
+                           cntitems, mom_item_cstring (itm));
+          set->arritm[cntitems++] = (momitem_t *) itm;
+        }
     }
   unsigned newcntitems = sort_set_unique_items_mom (set->arritm, cntitems);
   MOM_DEBUGPRINTF (item, "make_sized_meta_set cntitems=%d newcntitems=%d",
-		   cntitems, newcntitems);
+                   cntitems, newcntitems);
   if (MOM_IS_DEBUGGING (item))
     for (unsigned ix = 0; ix < newcntitems; ix++)
       MOM_DEBUGPRINTF (item, "make_sized_meta_set sorted-arritm[%d] = %s", ix,
-		       mom_item_cstring (set->arritm[ix]));
+                       mom_item_cstring (set->arritm[ix]));
   if (MOM_UNLIKELY (newcntitems < nbitems))
     {
       momseq_t *oldset = set;
       momseq_t *newset = MOM_GC_ALLOC ("shrinked set",
-				       sizeof (momseq_t) +
-				       cntitems * sizeof (momitem_t *));
+                                       sizeof (momseq_t) +
+                                       cntitems * sizeof (momitem_t *));
       memcpy (newset->arritm, oldset->arritm,
-	      newcntitems * sizeof (momitem_t *));
+              newcntitems * sizeof (momitem_t *));
       set = newset;
       MOM_GC_FREE (oldset,
-		   sizeof (momseq_t) + nbitems * sizeof (momitem_t *));
+                   sizeof (momseq_t) + nbitems * sizeof (momitem_t *));
     }
 #ifndef NDEBUG
   for (unsigned ix = 1; ix < newcntitems; ix++)
     if (mom_item_cmp (set->arritm[ix - 1], set->arritm[ix]) >= 0)
       MOM_FATAPRINTF
-	("missorted items in make_sized_meta_set ix=%d, newcntitems=%d arritm[%d]=%s arritm[%d]=%s",
-	 ix, newcntitems, ix - 1, mom_item_cstring (set->arritm[ix - 1]), ix,
-	 mom_item_cstring (set->arritm[ix - 1]));
+        ("missorted items in make_sized_meta_set ix=%d, newcntitems=%d arritm[%d]=%s arritm[%d]=%s",
+         ix, newcntitems, ix - 1, mom_item_cstring (set->arritm[ix - 1]), ix,
+         mom_item_cstring (set->arritm[ix - 1]));
 #endif
   set->slen = newcntitems;
   update_seq_hash_mom (set);
@@ -615,18 +616,18 @@ mom_collect_meta_set (momvalue_t metav, unsigned nbvals, ...)
       ivec = append_collected_value_mom (ivec, curval);
     }
   va_end (args);
-  const momseq_t *seq =		//
+  const momseq_t *seq =         //
     mom_make_sized_meta_set (metav, ivec->ivec_cnt,
-			     (const momitem_t **) ivec->ivec_arr);
+                             (const momitem_t **) ivec->ivec_arr);
   MOM_GC_FREE (ivec,
-	       sizeof (struct momitemvec_st) +
-	       ivec->ivec_len * sizeof (momitem_t *));
+               sizeof (struct momitemvec_st) +
+               ivec->ivec_len * sizeof (momitem_t *));
   return seq;
-}				/* end of mom_collect_meta_set */
+}                               /* end of mom_collect_meta_set */
 
 const momseq_t *
 mom_collect_sized_meta_set (momvalue_t metav, unsigned nbvals,
-			    const momvalue_t *valarr)
+                            const momvalue_t *valarr)
 {
   if (nbvals > 0 && valarr == NULL)
     return NULL;
@@ -637,14 +638,14 @@ mom_collect_sized_meta_set (momvalue_t metav, unsigned nbvals,
       momvalue_t curval = valarr[ix];
       ivec = append_collected_value_mom (ivec, curval);
     }
-  const momseq_t *seq =		//
+  const momseq_t *seq =         //
     mom_make_sized_meta_set (metav, ivec->ivec_cnt,
-			     (const momitem_t **) ivec->ivec_arr);
+                             (const momitem_t **) ivec->ivec_arr);
   MOM_GC_FREE (ivec,
-	       sizeof (struct momitemvec_st) +
-	       ivec->ivec_len * sizeof (momitem_t *));
+               sizeof (struct momitemvec_st) +
+               ivec->ivec_len * sizeof (momitem_t *));
   return seq;
-}				/* end of mom_collect_sized_meta_set */
+}                               /* end of mom_collect_sized_meta_set */
 
 
 
@@ -666,11 +667,11 @@ mom_setv_contains (const momvalue_t vset, const momitem_t *itm)
       assert (elemitm != NULL);
       int cmp = mom_item_cmp (itm, elemitm);
       if (!cmp)
-	return true;
+        return true;
       if (cmp < 0)
-	hi = md;
+        hi = md;
       else
-	lo = md;
+        lo = md;
     };
   for (md = lo; md <= hi; md++)
     {
@@ -678,10 +679,10 @@ mom_setv_contains (const momvalue_t vset, const momitem_t *itm)
       assert (elemitm != NULL);
       assert (md == 0 || mom_item_cmp (seq->arritm[md - 1], elemitm) < 0);
       if (elemitm == itm)
-	return true;
+        return true;
     };
   return false;
-}				/* end mom_setv_contains */
+}                               /* end mom_setv_contains */
 
 ////////////////////////////////////////////////////////////////
 ////// nodes
@@ -698,7 +699,7 @@ update_node_hash_mom (momnode_t *nod)
     {
       h1 = ((h1 * 211) ^ (61 * mom_valueptr_hash (nod->arrsons + ix))) + ix;
       h2 =
-	(h2 * 233) ^ ((73 * mom_valueptr_hash (nod->arrsons + ix + 1)) - ix);
+        (h2 * 233) ^ ((73 * mom_valueptr_hash (nod->arrsons + ix + 1)) - ix);
     }
   if (nlen % 2)
     h1 =
@@ -715,7 +716,7 @@ update_node_hash_mom (momnode_t *nod)
 
 const momnode_t *
 mom_make_meta_node (momvalue_t metav, momitem_t *connitm, unsigned nbsons,
-		    ...)
+                    ...)
 {
   va_list args;
   if (MOM_UNLIKELY (!connitm))
@@ -723,8 +724,8 @@ mom_make_meta_node (momvalue_t metav, momitem_t *connitm, unsigned nbsons,
   if (MOM_UNLIKELY (nbsons > MOM_MAX_NODE_LENGTH))
     MOM_FATAPRINTF ("too big node %u", nbsons);
   momnode_t *nod = MOM_GC_ALLOC ("node",
-				 sizeof (momnode_t) +
-				 nbsons * sizeof (momvalue_t));
+                                 sizeof (momnode_t) +
+                                 nbsons * sizeof (momvalue_t));
   va_start (args, nbsons);
   for (unsigned ix = 0; ix < nbsons; ix++)
     {
@@ -740,16 +741,16 @@ mom_make_meta_node (momvalue_t metav, momitem_t *connitm, unsigned nbsons,
 
 const momnode_t *
 mom_make_sized_meta_node (momvalue_t metav,
-			  momitem_t *connitm,
-			  unsigned nbsons, momvalue_t *sonarr)
+                          momitem_t *connitm,
+                          unsigned nbsons, momvalue_t *sonarr)
 {
   if (MOM_UNLIKELY (!connitm || connitm == MOM_EMPTY || (nbsons && !sonarr)))
     return NULL;
   if (MOM_UNLIKELY (nbsons > MOM_MAX_NODE_LENGTH))
     MOM_FATAPRINTF ("too big node %u", nbsons);
   momnode_t *nod = MOM_GC_ALLOC ("node",
-				 sizeof (momnode_t) +
-				 nbsons * sizeof (momvalue_t));
+                                 sizeof (momnode_t) +
+                                 nbsons * sizeof (momvalue_t));
   nod->conn = connitm;
   nod->slen = nbsons;
   nod->meta = metav;
@@ -772,65 +773,65 @@ mom_value_equal (momvalue_t v1, momvalue_t v2)
       return v1.vint == v2.vint;
     case momty_delim:
       return !strncmp (v1.vdelim.delim, v2.vdelim.delim,
-		       sizeof (v1.vdelim.delim));
+                       sizeof (v1.vdelim.delim));
     case momty_double:
       return v1.vdbl == v2.vdbl || (isnan (v1.vdbl) && isnan (v2.vdbl));
     case momty_string:
       {
-	const momstring_t *ps1 = v1.vstr;
-	const momstring_t *ps2 = v2.vstr;
-	if (ps1 == ps2)
-	  return true;
-	assert (ps1);
-	assert (ps2);
-	if (ps1->shash != ps2->shash)
-	  return false;
-	return !strcmp (ps1->cstr, ps2->cstr);
+        const momstring_t *ps1 = v1.vstr;
+        const momstring_t *ps2 = v2.vstr;
+        if (ps1 == ps2)
+          return true;
+        assert (ps1);
+        assert (ps2);
+        if (ps1->shash != ps2->shash)
+          return false;
+        return !strcmp (ps1->cstr, ps2->cstr);
       };
     case momty_item:
       {
-	const momitem_t *itm1 = v1.vitem;
-	const momitem_t *itm2 = v2.vitem;
-	return itm1 == itm2;
+        const momitem_t *itm1 = v1.vitem;
+        const momitem_t *itm2 = v2.vitem;
+        return itm1 == itm2;
       }
     case momty_set:
     case momty_tuple:
       {
-	const momseq_t *ps1 = v1.vsequ;
-	const momseq_t *ps2 = v2.vsequ;
-	if (ps1 == ps2)
-	  return true;
-	assert (ps1);
-	assert (ps2);
-	if (ps1->shash != ps2->shash)
-	  return false;
-	if (ps1->slen != ps2->slen)
-	  return false;
-	unsigned l = ps1->slen;
-	for (unsigned ix = 0; ix < l; ix++)
-	  if (ps1->arritm[ix] != ps2->arritm[ix])
-	    return false;
-	return true;
+        const momseq_t *ps1 = v1.vsequ;
+        const momseq_t *ps2 = v2.vsequ;
+        if (ps1 == ps2)
+          return true;
+        assert (ps1);
+        assert (ps2);
+        if (ps1->shash != ps2->shash)
+          return false;
+        if (ps1->slen != ps2->slen)
+          return false;
+        unsigned l = ps1->slen;
+        for (unsigned ix = 0; ix < l; ix++)
+          if (ps1->arritm[ix] != ps2->arritm[ix])
+            return false;
+        return true;
       }
     case momty_node:
       {
-	const momnode_t *pn1 = v1.vnode;
-	const momnode_t *pn2 = v2.vnode;
-	if (pn1 == pn2)
-	  return true;
-	assert (pn1);
-	assert (pn2);
-	if (pn1->shash != pn2->shash)
-	  return false;
-	if (pn1->conn != pn2->conn)
-	  return false;
-	if (pn1->slen != pn2->slen)
-	  return false;
-	unsigned l = pn1->slen;
-	for (unsigned ix = 0; ix < l; ix++)
-	  if (!mom_value_equal (pn1->arrsons[ix], pn2->arrsons[ix]))
-	    return false;
-	return true;
+        const momnode_t *pn1 = v1.vnode;
+        const momnode_t *pn2 = v2.vnode;
+        if (pn1 == pn2)
+          return true;
+        assert (pn1);
+        assert (pn2);
+        if (pn1->shash != pn2->shash)
+          return false;
+        if (pn1->conn != pn2->conn)
+          return false;
+        if (pn1->slen != pn2->slen)
+          return false;
+        unsigned l = pn1->slen;
+        for (unsigned ix = 0; ix < l; ix++)
+          if (!mom_value_equal (pn1->arrsons[ix], pn2->arrsons[ix]))
+            return false;
+        return true;
       }
     }
   MOM_FATAPRINTF ("corrupted values to test for equality");
@@ -849,113 +850,113 @@ mom_value_compare (momvalue_t v1, momvalue_t v2)
       return 0;
     case momty_int:
       if (v1.vint == v2.vint)
-	return 0;
+        return 0;
       else if (v1.vint < v2.vint)
-	return -1;
+        return -1;
       else
-	return 1;
+        return 1;
     case momty_delim:
       {
-	return strncmp ((const char *) &v1.vdelim, (const char *) &v2.vdelim,
-			sizeof (v1.vdelim));
+        return strncmp ((const char *) &v1.vdelim, (const char *) &v2.vdelim,
+                        sizeof (v1.vdelim));
       }
     case momty_double:
       if (v1.vdbl == v2.vdbl || (isnan (v1.vdbl) && isnan (v2.vdbl)))
-	return 0;
+        return 0;
       if (v1.vdbl < v2.vdbl)
-	return -1;
+        return -1;
       else
-	return 1;
+        return 1;
     case momty_item:
       {
-	const momitem_t *itm1 = v1.vitem;
-	const momitem_t *itm2 = v2.vitem;
-	assert (itm1);
-	assert (itm2);
-	if (itm1 == itm2)
-	  return 0;
-	assert (itm1->itm_str);
-	assert (itm2->itm_str);
-	int cmp = strcmp (itm1->itm_str->cstr, itm2->itm_str->cstr);
-	assert (cmp);
-	return cmp;
+        const momitem_t *itm1 = v1.vitem;
+        const momitem_t *itm2 = v2.vitem;
+        assert (itm1);
+        assert (itm2);
+        if (itm1 == itm2)
+          return 0;
+        assert (itm1->itm_str);
+        assert (itm2->itm_str);
+        int cmp = strcmp (itm1->itm_str->cstr, itm2->itm_str->cstr);
+        assert (cmp);
+        return cmp;
       }
     case momty_string:
       {
-	const momstring_t *ps1 = v1.vstr;
-	const momstring_t *ps2 = v2.vstr;
-	if (ps1 == ps2)
-	  return 0;
-	assert (ps1);
-	assert (ps2);
-	return strcmp (ps1->cstr, ps2->cstr);
+        const momstring_t *ps1 = v1.vstr;
+        const momstring_t *ps2 = v2.vstr;
+        if (ps1 == ps2)
+          return 0;
+        assert (ps1);
+        assert (ps2);
+        return strcmp (ps1->cstr, ps2->cstr);
       };
     case momty_set:
     case momty_tuple:
       {
-	const momseq_t *ps1 = v1.vsequ;
-	const momseq_t *ps2 = v2.vsequ;
-	if (ps1 == ps2)
-	  return 0;
-	assert (ps1);
-	assert (ps2);
-	// if same hash, it is likely that the values are equal, which
-	// is faster to test
-	if (MOM_UNLIKELY (ps1->shash == ps2->shash))
-	  {
-	    if (mom_value_equal (v1, v2))
-	      return 0;
-	  };
-	unsigned l1 = ps1->slen;
-	unsigned l2 = ps2->slen;
-	unsigned lmin = (l1 < l2) ? l1 : l2;
-	for (unsigned ix = 0; ix < lmin; ix++)
-	  {
-	    int cmp = mom_item_cmp (ps1->arritm[ix], ps2->arritm[ix]);
-	    if (cmp)
-	      return cmp;
-	  };
-	if (l1 < l2)
-	  return -1;
-	else if (l1 > l2)
-	  return 1;
-	else
-	  return 0;
+        const momseq_t *ps1 = v1.vsequ;
+        const momseq_t *ps2 = v2.vsequ;
+        if (ps1 == ps2)
+          return 0;
+        assert (ps1);
+        assert (ps2);
+        // if same hash, it is likely that the values are equal, which
+        // is faster to test
+        if (MOM_UNLIKELY (ps1->shash == ps2->shash))
+          {
+            if (mom_value_equal (v1, v2))
+              return 0;
+          };
+        unsigned l1 = ps1->slen;
+        unsigned l2 = ps2->slen;
+        unsigned lmin = (l1 < l2) ? l1 : l2;
+        for (unsigned ix = 0; ix < lmin; ix++)
+          {
+            int cmp = mom_item_cmp (ps1->arritm[ix], ps2->arritm[ix]);
+            if (cmp)
+              return cmp;
+          };
+        if (l1 < l2)
+          return -1;
+        else if (l1 > l2)
+          return 1;
+        else
+          return 0;
       }
     case momty_node:
       {
-	const momnode_t *pn1 = v1.vnode;
-	const momnode_t *pn2 = v2.vnode;
-	if (pn1 == pn2)
-	  return 0;
-	assert (pn1);
-	assert (pn2);
-	int cmpconn = mom_item_cmp (pn1->conn, pn2->conn);
-	if (cmpconn)
-	  return cmpconn;
-	// if same hash, it is likely that the values are equal, which
-	// is faster to test
-	if (MOM_UNLIKELY (pn1->shash == pn2->shash))
-	  {
-	    if (mom_value_equal (v1, v2))
-	      return 0;
-	  };
-	unsigned l1 = pn1->slen;
-	unsigned l2 = pn2->slen;
-	unsigned lmin = (l1 < l2) ? l1 : l2;
-	for (unsigned ix = 0; ix < lmin; ix++)
-	  {
-	    int cmpson =
-	      mom_value_compare (pn1->arrsons[ix], pn2->arrsons[ix]);
-	    if (cmpson)
-	      return cmpson;
-	  }
-	if (l1 < l2)
-	  return -1;
-	else if (l1 > l2)
-	  return 1;
-	else
-	  return 0;
+        const momnode_t *pn1 = v1.vnode;
+        const momnode_t *pn2 = v2.vnode;
+        if (pn1 == pn2)
+          return 0;
+        assert (pn1);
+        assert (pn2);
+        int cmpconn = mom_item_cmp (pn1->conn, pn2->conn);
+        if (cmpconn)
+          return cmpconn;
+        // if same hash, it is likely that the values are equal, which
+        // is faster to test
+        if (MOM_UNLIKELY (pn1->shash == pn2->shash))
+          {
+            if (mom_value_equal (v1, v2))
+              return 0;
+          };
+        unsigned l1 = pn1->slen;
+        unsigned l2 = pn2->slen;
+        unsigned lmin = (l1 < l2) ? l1 : l2;
+        for (unsigned ix = 0; ix < lmin; ix++)
+          {
+            int cmpson =
+              mom_value_compare (pn1->arrsons[ix], pn2->arrsons[ix]);
+            if (cmpson)
+              return cmpson;
+          }
+        if (l1 < l2)
+          return -1;
+        else if (l1 > l2)
+          return 1;
+        else
+          return 0;
       }
     }
   MOM_FATAPRINTF ("corrupted values to compare");

@@ -22,7 +22,7 @@
 
 static int
 queueitem_chunk_count_pack_mom (struct momqueuechunkitems_st *chk,
-				momitem_t **pack)
+                                momitem_t **pack)
 {
   if (!chk)
     return 0;
@@ -32,7 +32,7 @@ queueitem_chunk_count_pack_mom (struct momqueuechunkitems_st *chk,
     {
       const momitem_t *itm = chk->quechi_items[ix];
       if (itm)
-	pack[cnt++] = (momitem_t *) itm;
+        pack[cnt++] = (momitem_t *) itm;
     }
   return cnt;
 }
@@ -52,31 +52,31 @@ mom_queueitem_push_back (struct momqueueitems_st *qu, const momitem_t *itm)
       int nch = queueitem_chunk_count_pack_mom (bk, packarr);
       assert (nch > 0);
       if (nch < MOM_QUEUECHUNK_LEN)
-	{
-	  packarr[nch++] = (momitem_t *) itm;
-	  memset (bk->quechi_items, 0, sizeof (bk->quechi_items));
-	  memcpy (bk->quechi_items, packarr, nch * sizeof (momitem_t *));
-	  qu->que_size++;
-	  return;
-	}
+        {
+          packarr[nch++] = (momitem_t *) itm;
+          memset (bk->quechi_items, 0, sizeof (bk->quechi_items));
+          memcpy (bk->quechi_items, packarr, nch * sizeof (momitem_t *));
+          qu->que_size++;
+          return;
+        }
       else
-	{
-	  struct momqueuechunkitems_st *newch	//
-	    = MOM_GC_ALLOC ("queue chunk",
-			    sizeof (struct momqueuechunkitems_st));
-	  bk->quechi_next = newch;
-	  newch->quechi_prev = bk;
-	  newch->quechi_items[0] = itm;
-	  qu->que_size++;
-	  qu->que_back = newch;
-	  return;
-	}
+        {
+          struct momqueuechunkitems_st *newch   //
+            = MOM_GC_ALLOC ("queue chunk",
+                            sizeof (struct momqueuechunkitems_st));
+          bk->quechi_next = newch;
+          newch->quechi_prev = bk;
+          newch->quechi_items[0] = itm;
+          qu->que_size++;
+          qu->que_back = newch;
+          return;
+        }
     }
-  else				/* !bk, empty queue */
+  else                          /* !bk, empty queue */
     {
       assert (qu->que_size == 0);
-      struct momqueuechunkitems_st *newch	//
-	= MOM_GC_ALLOC ("queue chunk", sizeof (struct momqueuechunkitems_st));
+      struct momqueuechunkitems_st *newch       //
+        = MOM_GC_ALLOC ("queue chunk", sizeof (struct momqueuechunkitems_st));
       newch->quechi_items[0] = itm;
       qu->que_front = qu->que_back = newch;
       qu->que_size = 1;
@@ -94,38 +94,38 @@ mom_queueitem_push_front (struct momqueueitems_st *qu, const momitem_t *itm)
   struct momqueuechunkitems_st *fr = qu->que_front;
   if (fr)
     {
-      momitem_t *packarr[MOM_QUEUECHUNK_LEN + 1];	// extra space for one item
+      momitem_t *packarr[MOM_QUEUECHUNK_LEN + 1];       // extra space for one item
       memset (packarr, 0, sizeof (packarr));
       assert (fr->quechi_prev == NULL);
       int nch = queueitem_chunk_count_pack_mom (fr, packarr + 1);
-      assert (nch > 0);		/* cannot be empty chunk */
+      assert (nch > 0);         /* cannot be empty chunk */
       if (nch < MOM_QUEUECHUNK_LEN)
-	{
-	  packarr[0] = (momitem_t *) itm;
-	  nch++;
-	  memset (fr->quechi_items, 0, sizeof (fr->quechi_items));
-	  memcpy (fr->quechi_items, packarr, nch * sizeof (momitem_t *));
-	  qu->que_size++;
-	  return;
-	}
+        {
+          packarr[0] = (momitem_t *) itm;
+          nch++;
+          memset (fr->quechi_items, 0, sizeof (fr->quechi_items));
+          memcpy (fr->quechi_items, packarr, nch * sizeof (momitem_t *));
+          qu->que_size++;
+          return;
+        }
       else
-	{
-	  struct momqueuechunkitems_st *newch	//
-	    = MOM_GC_ALLOC ("queue chunk",
-			    sizeof (struct momqueuechunkitems_st));
-	  fr->quechi_prev = newch;
-	  newch->quechi_next = fr;
-	  newch->quechi_items[0] = itm;
-	  qu->que_size++;
-	  qu->que_front = newch;
-	  return;
-	}
+        {
+          struct momqueuechunkitems_st *newch   //
+            = MOM_GC_ALLOC ("queue chunk",
+                            sizeof (struct momqueuechunkitems_st));
+          fr->quechi_prev = newch;
+          newch->quechi_next = fr;
+          newch->quechi_items[0] = itm;
+          qu->que_size++;
+          qu->que_front = newch;
+          return;
+        }
     }
-  else				/* !fr, empty queue */
+  else                          /* !fr, empty queue */
     {
       assert (qu->que_size == 0);
-      struct momqueuechunkitems_st *newch	//
-	= MOM_GC_ALLOC ("queue chunk", sizeof (struct momqueuechunkitems_st));
+      struct momqueuechunkitems_st *newch       //
+        = MOM_GC_ALLOC ("queue chunk", sizeof (struct momqueuechunkitems_st));
       newch->quechi_items[0] = itm;
       qu->que_front = qu->que_back = newch;
       qu->que_size = 1;
@@ -148,7 +148,7 @@ mom_queueitem_pop_front (struct momqueueitems_st *qu)
       // front becomes empty, remove it
       qu->que_front = fr->quechi_next;
       if (!qu->que_front)
-	qu->que_back = NULL;
+        qu->que_back = NULL;
       MOM_GC_FREE (fr, sizeof (*fr));
       qu->que_size--;
       return (momitem_t *) itm;
@@ -156,10 +156,10 @@ mom_queueitem_pop_front (struct momqueueitems_st *qu)
   else
     {
       for (unsigned ix = 1; ix < MOM_QUEUECHUNK_LEN; ix++)
-	{
-	  fr->quechi_items[ix - 1] = fr->quechi_items[ix];
-	  fr->quechi_items[ix] = NULL;
-	}
+        {
+          fr->quechi_items[ix - 1] = fr->quechi_items[ix];
+          fr->quechi_items[ix] = NULL;
+        }
       qu->que_size--;
       return (momitem_t *) itm;
     }
@@ -180,30 +180,30 @@ mom_queueitem_peek_nth (struct momqueueitems_st *qu, int rk)
     {
       __builtin_prefetch (ch->quechi_next);
       if (rk >= MOM_QUEUECHUNK_LEN)
-	{
-	  if (ch->quechi_items[0] && ch->quechi_items[MOM_QUEUECHUNK_LEN - 1])
-	    {
-	      rk -= MOM_QUEUECHUNK_LEN;
-	      ch = ch->quechi_next;
-	      continue;
-	    }
-	  else
-	    return NULL;
-	}
+        {
+          if (ch->quechi_items[0] && ch->quechi_items[MOM_QUEUECHUNK_LEN - 1])
+            {
+              rk -= MOM_QUEUECHUNK_LEN;
+              ch = ch->quechi_next;
+              continue;
+            }
+          else
+            return NULL;
+        }
       else
-	{
-	  int cnt = 0;
-	  for (int ix = 0; ix < MOM_QUEUECHUNK_LEN; ix++)
-	    {
-	      const momitem_t *itm = ch->quechi_items[ix];
-	      if (itm)
-		{
-		  if (cnt == rk)
-		    return (momitem_t *) itm;
-		  cnt++;
-		}
-	    }
-	}
+        {
+          int cnt = 0;
+          for (int ix = 0; ix < MOM_QUEUECHUNK_LEN; ix++)
+            {
+              const momitem_t *itm = ch->quechi_items[ix];
+              if (itm)
+                {
+                  if (cnt == rk)
+                    return (momitem_t *) itm;
+                  cnt++;
+                }
+            }
+        }
     }
   return NULL;
 }
@@ -223,15 +223,15 @@ mom_queueitem_tuple (struct momqueueitems_st *qu, momvalue_t metav)
        ch = ch->quechi_next)
     {
       for (unsigned ix = 0; ix < MOM_QUEUECHUNK_LEN; ix++)
-	{
-	  const momitem_t *itm = ch->quechi_items[ix];
-	  if (itm && itm != MOM_EMPTY)
-	    arr[cnt++] = itm;
-	}
+        {
+          const momitem_t *itm = ch->quechi_items[ix];
+          if (itm && itm != MOM_EMPTY)
+            arr[cnt++] = itm;
+        }
     };
   assert (cnt == siz);
   const momseq_t *tu = mom_make_sized_meta_tuple (metav, cnt,
-						  (momitem_t *const *) arr);
+                                                  (momitem_t *const *) arr);
   MOM_GC_FREE (arr, siz * sizeof (momitem_t *));
   return tu;
 }
@@ -247,11 +247,11 @@ mom_queueitem_scan_dump (struct momqueueitems_st *qu)
        ch = ch->quechi_next)
     {
       for (unsigned ix = 0; ix < MOM_QUEUECHUNK_LEN; ix++)
-	{
-	  const momitem_t *itm = ch->quechi_items[ix];
-	  if (itm && itm != MOM_EMPTY)
-	    mom_scan_dumped_item (itm);
-	}
+        {
+          const momitem_t *itm = ch->quechi_items[ix];
+          if (itm && itm != MOM_EMPTY)
+            mom_scan_dumped_item (itm);
+        }
     }
 }
 
@@ -260,7 +260,7 @@ mom_queueitem_scan_dump (struct momqueueitems_st *qu)
 
 static int
 queuevalue_chunk_count_pack_mom (struct momqueuechunkvalues_st *chk,
-				 momvalue_t *pack)
+                                 momvalue_t *pack)
 {
   if (!chk)
     return 0;
@@ -270,7 +270,7 @@ queuevalue_chunk_count_pack_mom (struct momqueuechunkvalues_st *chk,
     {
       const momvalue_t val = chk->quechv_values[ix];
       if (val.typnum != momty_null)
-	pack[cnt++] = val;
+        pack[cnt++] = val;
     }
   return cnt;
 }
@@ -291,29 +291,29 @@ mom_queuevalue_peek_nth (struct momqueuevalues_st *qu, int rk)
     {
       __builtin_prefetch (ch->quechv_next);
       if (rk >= MOM_QUEUECHUNK_LEN)
-	{
-	  if (ch->quechv_values[0].typnum != momty_null
-	      && ch->quechv_values[MOM_QUEUECHUNK_LEN].typnum != momty_null)
-	    {
-	      rk -= MOM_QUEUECHUNK_LEN;
-	      ch = ch->quechv_next;
-	      continue;
-	    }
-	  else
-	    return MOM_NONEV;
-	}
+        {
+          if (ch->quechv_values[0].typnum != momty_null
+              && ch->quechv_values[MOM_QUEUECHUNK_LEN].typnum != momty_null)
+            {
+              rk -= MOM_QUEUECHUNK_LEN;
+              ch = ch->quechv_next;
+              continue;
+            }
+          else
+            return MOM_NONEV;
+        }
       else
-	{
-	  int cnt = 0;
-	  for (int ix = 0; ix < MOM_QUEUECHUNK_LEN; ix++)
-	    {
-	      if (ch->quechv_values[ix].typnum == momty_null)
-		continue;
-	      if (cnt == rk)
-		return ch->quechv_values[ix];
-	      cnt++;
-	    }
-	}
+        {
+          int cnt = 0;
+          for (int ix = 0; ix < MOM_QUEUECHUNK_LEN; ix++)
+            {
+              if (ch->quechv_values[ix].typnum == momty_null)
+                continue;
+              if (cnt == rk)
+                return ch->quechv_values[ix];
+              cnt++;
+            }
+        }
     }
   return MOM_NONEV;
 }
@@ -334,32 +334,32 @@ mom_queuevalue_push_back (struct momqueuevalues_st *qu, const momvalue_t val)
       int nbc = queuevalue_chunk_count_pack_mom (bk, pack);
       assert (nbc > 0);
       if (nbc < MOM_QUEUECHUNK_LEN)
-	{
-	  pack[nbc++] = val;
-	  memset (bk->quechv_values, 0, sizeof (bk->quechv_values));
-	  memcpy (bk->quechv_values, pack, nbc * sizeof (momvalue_t));
-	  qu->que_size++;
-	  return;
-	}
+        {
+          pack[nbc++] = val;
+          memset (bk->quechv_values, 0, sizeof (bk->quechv_values));
+          memcpy (bk->quechv_values, pack, nbc * sizeof (momvalue_t));
+          qu->que_size++;
+          return;
+        }
       else
-	{
-	  struct momqueuechunkvalues_st *newch	//
-	    = MOM_GC_ALLOC ("queue chunk",
-			    sizeof (struct momqueuechunkvalues_st));
-	  bk->quechv_next = newch;
-	  newch->quechv_prev = bk;
-	  newch->quechv_values[0] = val;
-	  qu->que_size++;
-	  qu->que_back = newch;
-	  return;
-	}
+        {
+          struct momqueuechunkvalues_st *newch  //
+            = MOM_GC_ALLOC ("queue chunk",
+                            sizeof (struct momqueuechunkvalues_st));
+          bk->quechv_next = newch;
+          newch->quechv_prev = bk;
+          newch->quechv_values[0] = val;
+          qu->que_size++;
+          qu->que_back = newch;
+          return;
+        }
     }
-  else				/* !bk, empty queue */
+  else                          /* !bk, empty queue */
     {
       assert (qu->que_size == 0);
-      struct momqueuechunkvalues_st *newch	//
-	= MOM_GC_ALLOC ("queue chunk",
-			sizeof (struct momqueuechunkvalues_st));
+      struct momqueuechunkvalues_st *newch      //
+        = MOM_GC_ALLOC ("queue chunk",
+                        sizeof (struct momqueuechunkvalues_st));
       newch->quechv_values[0] = val;
       qu->que_front = qu->que_back = newch;
       qu->que_size = 1;
@@ -378,37 +378,37 @@ mom_queuevalue_push_front (struct momqueuevalues_st *qu, const momvalue_t val)
   if (fr)
     {
       assert (fr->quechv_prev == NULL);
-      momvalue_t pack[MOM_QUEUECHUNK_LEN + 1];	/* extra space for new value */
+      momvalue_t pack[MOM_QUEUECHUNK_LEN + 1];  /* extra space for new value */
       memset (pack, 0, sizeof (pack));
       int nbc = queuevalue_chunk_count_pack_mom (fr, pack + 1);
       pack[0] = val;
       nbc++;
       if (nbc < MOM_QUEUECHUNK_LEN)
-	{
-	  memset (fr->quechv_values, 0, sizeof (fr->quechv_values));
-	  memcpy (fr->quechv_values, pack, nbc * sizeof (momvalue_t));
-	  qu->que_size++;
-	  return;
-	}
+        {
+          memset (fr->quechv_values, 0, sizeof (fr->quechv_values));
+          memcpy (fr->quechv_values, pack, nbc * sizeof (momvalue_t));
+          qu->que_size++;
+          return;
+        }
       else
-	{
-	  struct momqueuechunkvalues_st *newch	//
-	    = MOM_GC_ALLOC ("queue chunk",
-			    sizeof (struct momqueuechunkvalues_st));
-	  fr->quechv_prev = newch;
-	  newch->quechv_next = fr;
-	  newch->quechv_values[0] = val;
-	  qu->que_size++;
-	  qu->que_front = newch;
-	  return;
-	}
+        {
+          struct momqueuechunkvalues_st *newch  //
+            = MOM_GC_ALLOC ("queue chunk",
+                            sizeof (struct momqueuechunkvalues_st));
+          fr->quechv_prev = newch;
+          newch->quechv_next = fr;
+          newch->quechv_values[0] = val;
+          qu->que_size++;
+          qu->que_front = newch;
+          return;
+        }
     }
-  else				/* !fr, empty queue */
+  else                          /* !fr, empty queue */
     {
       assert (qu->que_size == 0);
-      struct momqueuechunkvalues_st *newch	//
-	= MOM_GC_ALLOC ("queue chunk",
-			sizeof (struct momqueuechunkvalues_st));
+      struct momqueuechunkvalues_st *newch      //
+        = MOM_GC_ALLOC ("queue chunk",
+                        sizeof (struct momqueuechunkvalues_st));
       newch->quechv_values[0] = val;
       qu->que_front = qu->que_back = newch;
       qu->que_size = 1;
@@ -431,7 +431,7 @@ mom_queuevalue_pop_front (struct momqueuevalues_st *qu)
       // front becomes empty, remove it
       qu->que_front = fr->quechv_next;
       if (!qu->que_front)
-	qu->que_back = NULL;
+        qu->que_back = NULL;
       MOM_GC_FREE (fr, sizeof (*fr));
       qu->que_size--;
       return val;
@@ -439,10 +439,10 @@ mom_queuevalue_pop_front (struct momqueuevalues_st *qu)
   else
     {
       for (unsigned ix = 1; ix < MOM_QUEUECHUNK_LEN; ix++)
-	{
-	  fr->quechv_values[ix - 1] = fr->quechv_values[ix];
-	  fr->quechv_values[ix] = MOM_NONEV;
-	}
+        {
+          fr->quechv_values[ix - 1] = fr->quechv_values[ix];
+          fr->quechv_values[ix] = MOM_NONEV;
+        }
       qu->que_size--;
       return val;
     }
@@ -451,7 +451,7 @@ mom_queuevalue_pop_front (struct momqueuevalues_st *qu)
 
 const momnode_t *
 mom_queuevalue_node (struct momqueuevalues_st *qu, const momitem_t *connitm,
-		     momvalue_t metav)
+                     momvalue_t metav)
 {
   if (!qu || qu == MOM_EMPTY || !connitm || connitm == MOM_EMPTY)
     return NULL;
@@ -465,11 +465,11 @@ mom_queuevalue_node (struct momqueuevalues_st *qu, const momitem_t *connitm,
        ch = ch->quechv_next)
     {
       for (unsigned ix = 0; ix < MOM_QUEUECHUNK_LEN; ix++)
-	{
-	  const momvalue_t val = ch->quechv_values[ix];
-	  if (val.typnum != momty_null)
-	    arr[cnt++] = val;
-	}
+        {
+          const momvalue_t val = ch->quechv_values[ix];
+          if (val.typnum != momty_null)
+            arr[cnt++] = val;
+        }
     };
   assert (cnt == siz);
   const momnode_t *nd =
@@ -489,8 +489,8 @@ mom_queuevalue_scan_dump (struct momqueuevalues_st *qu)
        ch = ch->quechv_next)
     {
       for (unsigned ix = 0; ix < MOM_QUEUECHUNK_LEN; ix++)
-	{
-	  mom_scan_dumped_valueptr (&ch->quechv_values[ix]);
-	}
+        {
+          mom_scan_dumped_valueptr (&ch->quechv_values[ix]);
+        }
     }
 }

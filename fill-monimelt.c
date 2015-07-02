@@ -253,6 +253,6 @@ mom_predefined_items_fill (void)
   MOM_PREDEFINED_NAMED (scanner_of_magic_attribute)->itm_data1 =
     mom_dynload_symbol ("momfunc_1itm_to_void__scanner_of_magic_attribute");
 
-}				/* end mom_predefined_items_fill */
+}                               /* end mom_predefined_items_fill */
 
  // end of generated file fill-monimelt.c
