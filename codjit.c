@@ -230,8 +230,9 @@ cjit_scan_function_variables_mom (struct codejit_mom_st *cj,
 
 
 static void
-cjit_scan_function_code_mom (struct codejit_mom_st *cj,
-                             momitem_t *itmfun, momvalue_t vcode);
+cjit_scan_function_code_next_mom (struct codejit_mom_st *cj,
+                                  momitem_t *itmfun, momvalue_t vcode,
+                                  momitem_t *nextitm, int nextpos);
 
 
 static void
@@ -315,7 +316,7 @@ cjit_scan_function_first_mom (struct codejit_mom_st *cj, momitem_t *itmfun)
       (itmfun,
        MOM_PREDEFINED_NAMED (code));
     if (vcode.typnum != momty_null)
-      cjit_scan_function_code_mom (cj, itmfun, vcode);
+      cjit_scan_function_code_next_mom (cj, itmfun, vcode, NULL, -1);
     else
       CJIT_ERROR_MOM (cj,
                       "module item %s : function %s without code",
@@ -649,15 +650,80 @@ cjit_scan_function_variables_mom (struct codejit_mom_st *cj,
     }
 }                               /* end cjit_scan_function_variables_mom */
 
+
 static void
-cjit_scan_function_code_mom (struct codejit_mom_st *cj,
-                             momitem_t *itmfun, momvalue_t vcode)
+cjit_scan_node_code_next_mom (struct codejit_mom_st *cj,
+                              const momnode_t *nodcod, momitem_t *nextitm,
+                              int nextpos);
+
+static void
+cjit_scan_function_code_next_mom (struct codejit_mom_st *cj,
+                                  momitem_t *itmfun, momvalue_t vcode,
+                                  momitem_t *nextitm, int nextpos)
 {
   assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
   assert (itmfun != NULL);
   assert (itmfun == cj->cj_curfunitm);
   assert (vcode.typnum != momty_null);
-  CJIT_ERROR_MOM (cj, "unimplemented scan_function_code fun %s code %s",
+  MOM_DEBUGPRINTF (gencod,
+                   "scan_function_code_next start itmfun=%s vcode=%s nextitm=%s nextpos=%d",
+                   mom_item_cstring (itmfun), mom_output_gcstring (vcode),
+                   mom_item_cstring (nextitm), nextpos);
+  switch (vcode.typnum)
+    {
+    case momty_node:
+      {
+        const momnode_t *nodcod = mom_value_to_node (vcode);
+        momitem_t *opcoditm = mom_node_conn (nodcod);
+        cjit_lock_item_mom (cj, opcoditm);
+        switch (mom_item_hash (opcoditm))
+          {
+          case MOM_PREDEFINED_NAMED_CASE (code, opcoditm, bad_code_lab):
+            cjit_scan_node_code_next_mom (cj, nodcod, nextitm, nextpos);
+            break;
+          default:
+            break;
+          };
+      }
+      break;
+    case momty_item:
+    default:
+      goto bad_code_lab;
+    }
+  return;
+bad_code_lab:
+  CJIT_ERROR_MOM (cj, "scan_function_code_next fun %s with bad code %s",
                   mom_item_cstring (itmfun), mom_output_gcstring (vcode));
 #warning cjit_scan_function_code_mom unimplemented
 }                               /* end of cjit_scan_function_code_mom */
+
+static void
+cjit_scan_node_code_next_mom (struct codejit_mom_st *cj,
+                              const momnode_t *nodcod, momitem_t *nextitm,
+                              int nextpos)
+{
+  assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
+  assert (nodcod);
+  momitem_t *codblkitm = mom_value_to_item (mom_node_nth (nodcod, 0));
+  momvalue_t vcodn = mom_nodev (nodcod);
+  if (!codblkitm)
+    CJIT_ERROR_MOM (cj,
+                    "scan_node_code_next in function %s vcodn=%s should have a code-block-item",
+                    mom_item_cstring (cj->cj_curfunitm),
+                    mom_output_gcstring (vcodn));
+  cjit_lock_item_mom (cj, codblkitm);
+  momvalue_t vblknodbind =
+    mom_attributes_find_value (cj->cj_funbind, codblkitm);
+  MOM_DEBUGPRINTF (gencod,
+                   "start scan_node_cod_next in function %s vcodn=%s codblkitm=%s vblknodbind=%s nextitm=%s nextpos=%d",
+                   mom_item_cstring (cj->cj_curfunitm),
+                   mom_output_gcstring (vcodn), mom_item_cstring (codblkitm),
+                   mom_output_gcstring (vblknodbind),
+                   mom_item_cstring (nextitm), nextpos);
+#warning scan_node_code_next unimplemented
+  CJIT_ERROR_MOM (cj,
+                  "scan_node_code_next unimplemented function %s vcodn=%s",
+                  mom_item_cstring (cj->cj_curfunitm),
+                  mom_output_gcstring (vcodn));
+
+}                               /* end of cjit_scan_node_code_next_mom */
