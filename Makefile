@@ -32,7 +32,7 @@ ASTYLE= astyle --style=gnu
 PREPROFLAGS= -I. -I/usr/local/include $(shell $(PKGCONFIG) --cflags $(PACKAGES))
 OPTIMFLAGS= -Og -g3
 LIBES= -L/usr/local/lib -lunistring -lgc $(shell $(PKGCONFIG) --libs $(PACKAGES)) \
-        -lonion -lpthread -lcrypt -lm -ldl
+        -lgccjit -lonion -lpthread -lcrypt -lm -ldl
 PLUGIN_SOURCES= $(sort $(wildcard momplug_*.c))
 PLUGINS=  $(patsubst %.c,%.so,$(PLUGIN_SOURCES))
 # modules are generated inside modules/

@@ -32,6 +32,7 @@ struct codejit_mom_st
   unsigned cj_magic;            /* always CODEJIT_MAGIC_MOM */
   const momstring_t *cj_errormsg;       /* the error message */
   jmp_buf cj_jmpbuferror;       /* for longjmp on error */
+  gcc_jit_context *cj_jitctxt;  /* for GCCJIT */
   momitem_t *cj_codjititm;
   momitem_t *cj_moduleitm;
   struct momhashset_st *cj_lockeditemset;       /* the set of locked items */
@@ -108,6 +109,7 @@ bool
   cj->cj_magic = CODEJIT_MAGIC_MOM;
   cj->cj_moduleitm = itm;
   cj->cj_codjititm = itmcjit;
+  cj->cj_jitctxt = gcc_jit_context_acquire ();
   mom_item_lock (itmcjit);
   itmcjit->itm_kind = MOM_PREDEFINED_NAMED (code_generation);
   itmcjit->itm_data1 = (void *) cj;
@@ -122,6 +124,11 @@ bool
     goto end;
 end:
   cjit_unlock_all_items_mom (cj);
+  if (cj->cj_jitctxt)
+    {
+      gcc_jit_context_release (cj->cj_jitctxt);
+      cj->cj_jitctxt = NULL;
+    }
   if (cj->cj_errormsg)
     {
       MOM_WARNPRINTF ("generate_jit_module failed: %s (at line %d)\n",
