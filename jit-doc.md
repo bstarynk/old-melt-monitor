@@ -47,6 +47,16 @@ Constants, formals, results, and variables should have a `type`
 attribute (a predefined item of kind `type`, like `item` or
 `locked_item` or `integer` or `value` etc..).
 
+
+## Blocks
+Blocks are items of kind `block`
+
+## Statements
+
+Statements are generally nodes. A statement which is a block item is
+understood as an unconditional jump to that item block. The connective
+of a statement node is called the statement operation or stmt-op.
+
 [markdown]: http://daringfireball.net/projects/markdown/syntax
 "markdown syntax"
 

@@ -765,7 +765,7 @@ cjit_scan_node_code_next_mom (struct codejit_mom_st *cj,
   momvalue_t vblknodbind =
     mom_attributes_find_value (cj->cj_funbind, codblkitm);
   MOM_DEBUGPRINTF (gencod,
-                   "start scan_node_cod_next in function %s vcodn=%s codblkitm=%s vblknodbind=%s nextitm=%s nextpos=%d",
+                   "start scan_node_code_next in function %s vcodn=%s codblkitm=%s vblknodbind=%s nextitm=%s nextpos=%d",
                    mom_item_cstring (cj->cj_curfunitm),
                    mom_output_gcstring (vcodn), mom_item_cstring (codblkitm),
                    mom_output_gcstring (vblknodbind),
@@ -779,8 +779,18 @@ cjit_scan_node_code_next_mom (struct codejit_mom_st *cj,
                     mom_item_cstring (codblkitm),
                     mom_output_gcstring (vblknodbind),
                     mom_output_gcstring (vcodn));
-
-
+  vblknodbind =                 //
+    mom_nodev_new (MOM_PREDEFINED_NAMED (code_statement),
+                   3, vcodn, mom_itemv (nextitm), mom_intv (nextpos));
+  cj->cj_funbind =              //
+    mom_attributes_put (cj->cj_funbind, codblkitm, &vblknodbind);
+  MOM_DEBUGPRINTF (gencod,
+                   "scan_node_code_next function %s vcodn=%s codblkitm=%s new vblknodbind=%s",
+                   mom_item_cstring (cj->cj_curfunitm),
+                   mom_output_gcstring (vcodn), mom_item_cstring (codblkitm),
+                   mom_output_gcstring (vblknodbind));
+  /// should probably fill the codblkitm with the statements, or clear it?
+  /// should probably add a todo to scan the block
 #warning scan_node_code_next unimplemented
   CJIT_ERROR_MOM (cj,
                   "scan_node_code_next unimplemented function %s vcodn=%s",
