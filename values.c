@@ -961,3 +961,13 @@ mom_value_compare (momvalue_t v1, momvalue_t v2)
     }
   MOM_FATAPRINTF ("corrupted values to compare");
 }
+
+
+
+int
+mom_valueptr_cmp (const void *p1, const void *p2)
+{
+  momvalue_t v1 = *(momvalue_t *) p1;
+  momvalue_t v2 = *(momvalue_t *) p2;
+  return mom_value_compare (v1, v2);
+}

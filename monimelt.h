@@ -590,6 +590,10 @@ mom_value_is_delim (momvalue_t v, const char *delim)
 
 bool mom_value_equal (momvalue_t v1, momvalue_t v2);
 int mom_value_compare (momvalue_t v1, momvalue_t v2);
+int mom_valueptr_cmp (const void *p1, const void *p2);  /* suitable for
+                                                           qsort of array
+                                                           of
+                                                           momvalue_t */
 
 static inline momvalue_t
 mom_intv (intptr_t i)
@@ -1048,6 +1052,22 @@ struct momhashassoc_st *mom_hassoc_put (struct momhashassoc_st *ha,
                                         momvalue_t keyv, momvalue_t valv);
 struct momhashassoc_st *mom_hassoc_remove (struct momhashassoc_st *ha,
                                            momvalue_t keyv);
+
+void mom_hassoc_scan_dump (struct momhashassoc_st *ha);
+
+const momnode_t *mom_hassoc_sorted_keys_meta (const struct momhashassoc_st
+                                              *ha,
+                                              const momitem_t *connitm,
+                                              const momvalue_t metav);
+
+static inline const momnode_t *mom_hasssoc_sorted_keys
+  (const struct momhashassoc_st *ha, const momitem_t *connitm)
+{
+  if (ha && connitm)
+    return mom_hassoc_sorted_keys_meta (ha, connitm, MOM_NONEV);
+  return NULL;
+}
+
 
 ////////////////
 struct momqueuechunkitems_st;

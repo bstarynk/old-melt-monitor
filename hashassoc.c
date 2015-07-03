@@ -247,3 +247,57 @@ mom_hassoc_remove (struct momhashassoc_st *ha, momvalue_t keyv)
   ha->hass_cnt = hcnt - 1;
   return ha;
 }                               /* end of mom_hassoc_remove */
+
+void
+mom_hassoc_scan_dump (struct momhashassoc_st *ha)
+{
+  if (ha == MOM_EMPTY)
+    ha = NULL;
+  if (!ha)
+    return;
+  uint32_t hsiz = ha->hass_len;
+  uint32_t hcnt = ha->hass_cnt;
+  for (unsigned ix = 0; ix < hsiz; ix++)
+    {
+      struct momhassocent_st *curent = ha->hass_arr + ix;
+      if (curent->ha_key.typnum == momty_null)
+        continue;
+      if (mom_valueptr_is_transient (&curent->ha_key)
+          || mom_valueptr_is_transient (&curent->ha_val))
+        continue;
+      mom_scan_dumped_valueptr (&curent->ha_key);
+      mom_scan_dumped_valueptr (&curent->ha_val);
+    }
+}                               /* end of mom_hassoc_scan_dump */
+
+const momnode_t *
+mom_hassoc_sorted_keys_meta (const struct momhashassoc_st *ha,
+                             const momitem_t *connitm, const momvalue_t metav)
+{
+  if (ha == MOM_EMPTY)
+    ha = NULL;
+  if (connitm == MOM_EMPTY)
+    connitm = NULL;
+  if (!ha)
+    return NULL;
+  if (!connitm)
+    return NULL;
+  uint32_t hsiz = ha->hass_len;
+  uint32_t hcnt = ha->hass_cnt;
+  momvalue_t *keyarr =
+    MOM_GC_ALLOC ("keyarr", (hcnt + 2) * sizeof (momvalue_t));
+  unsigned keycnt = 0;
+  for (unsigned ix = 0; ix < hsiz; ix++)
+    {
+      struct momhassocent_st *curent = ha->hass_arr + ix;
+      if (curent->ha_key.typnum == momty_null)
+        continue;
+      assert (keycnt < hcnt);
+      keyarr[keycnt++] = curent->ha_key;
+    }
+  assert (keycnt == hcnt);
+  qsort (keyarr, keycnt, sizeof (momvalue_t), mom_valueptr_cmp);
+  momnode_t *nod = mom_make_sized_node (connitm, keycnt, keyarr);
+  MOM_GC_FREE (keyarr, (hcnt + 2) * sizeof (momvalue_t));
+  return nod;
+}                               /* end of mom_hassoc_sorted_keys_meta */
