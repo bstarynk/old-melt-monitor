@@ -1013,6 +1013,36 @@ mom_hashset_elements_value (struct momhashset_st *hset)
 void mom_hashset_scan_dump (struct momhashset_st *hset);
 
 
+////////////////////////////////////////////////////////////////////
+/// in hashassoc.c
+struct momhassocent_st
+{
+  /// empty slots have ha_key.typnum == momty_null & ha_key.vptr == MOM_EMPTY
+  momvalue_t ha_key, ha_val;
+};
+
+struct momhashassoc_st
+{
+  uint32_t hass_len;            /* allocated length */
+  uint32_t hass_cnt;            /* used count */
+  struct momhassocent_st hass_arr[];    /* of hass_len size */
+};
+
+static inline struct momhashassoc_st *
+mom_hassoc_reserve (struct momhashassoc_st *ha, unsigned gap)
+{
+  extern struct momhashassoc_st *mom_hassoc_really_reserve (struct
+                                                            momhashassoc_st
+                                                            *ha,
+                                                            unsigned gap);
+  if (ha == MOM_EMPTY)
+    ha = NULL;
+  if (!ha || ha->hass_cnt + gap >= ha->hass_len)
+    return mom_hassoc_really_reserve (ha, gap);
+  else
+    return ha;
+}
+
 ////////////////
 struct momqueuechunkitems_st;
 struct momqueueitems_st
