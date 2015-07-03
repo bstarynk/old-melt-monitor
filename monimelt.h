@@ -1037,11 +1037,17 @@ mom_hassoc_reserve (struct momhashassoc_st *ha, unsigned gap)
                                                             unsigned gap);
   if (ha == MOM_EMPTY)
     ha = NULL;
-  if (!ha || ha->hass_cnt + gap >= ha->hass_len)
+  if (!ha || 5 * ha->hass_cnt / 4 + gap + 2 >= ha->hass_len)
     return mom_hassoc_really_reserve (ha, gap);
   else
     return ha;
 }
+
+momvalue_t mom_hassoc_get (const struct momhashassoc_st *ha, momvalue_t key);
+struct momhashassoc_st *mom_hassoc_put (struct momhashassoc_st *ha,
+                                        momvalue_t keyv, momvalue_t valv);
+struct momhashassoc_st *mom_hassoc_remove (struct momhashassoc_st *ha,
+                                           momvalue_t keyv);
 
 ////////////////
 struct momqueuechunkitems_st;
