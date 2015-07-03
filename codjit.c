@@ -1,4 +1,4 @@
-// file codgen.c - manage the just-in-time code generation
+// file codjit.c - manage the just-in-time code generation
 
 /**   Copyright (C)  2015 Free Software Foundation, Inc.
     MONIMELT is a monitor for MELT - see http://gcc-melt.org/
@@ -310,7 +310,7 @@ cjit_scan_function_first_mom (struct codejit_mom_st *cj, momitem_t *itmfun)
     if (vvariables.typnum != momty_null)
       cjit_scan_function_variables_mom (cj, itmfun, vvariables);
   }
-  //scan the code
+  //scan the function code
   {
     momvalue_t vcode = mom_item_unsync_get_attribute    //
       (itmfun,
@@ -322,7 +322,6 @@ cjit_scan_function_first_mom (struct codejit_mom_st *cj, momitem_t *itmfun)
                       "module item %s : function %s without code",
                       mom_item_cstring (cj->cj_moduleitm),
                       mom_item_cstring (itmfun));
-
   }
   MOM_FATAPRINTF ("cjit_scan_function_first unimplemented itmfun=%s",
                   mom_item_cstring (itmfun));
@@ -697,6 +696,8 @@ bad_code_lab:
 #warning cjit_scan_function_code_mom unimplemented
 }                               /* end of cjit_scan_function_code_mom */
 
+
+/* function to scan a ^code(...) node */
 static void
 cjit_scan_node_code_next_mom (struct codejit_mom_st *cj,
                               const momnode_t *nodcod, momitem_t *nextitm,
@@ -720,6 +721,17 @@ cjit_scan_node_code_next_mom (struct codejit_mom_st *cj,
                    mom_output_gcstring (vcodn), mom_item_cstring (codblkitm),
                    mom_output_gcstring (vblknodbind),
                    mom_item_cstring (nextitm), nextpos);
+  if (vblknodbind.typnum != momty_null)
+    CJIT_ERROR_MOM (cj,
+                    "scan_node_code_next in module %s function %s"
+                    " got already bound codeblock item %s to %s for node %s",
+                    mom_item_cstring (cj->cj_moduleitm),
+                    mom_item_cstring (cj->cj_curfunitm),
+                    mom_item_cstring (codblkitm),
+                    mom_output_gcstring (vblknodbind),
+                    mom_output_gcstring (vcodn));
+
+
 #warning scan_node_code_next unimplemented
   CJIT_ERROR_MOM (cj,
                   "scan_node_code_next unimplemented function %s vcodn=%s",
