@@ -31,8 +31,8 @@ A JITable function item **should have the following attributes**
 * `results` : *resultup*, a tuple of results (compatible with the
 `output_types` of *sigitm*)
 
-* `code` : *codenode*, a node of connective `code` giving a sequence
-of instruction nodes.
+* `code` : *code*, an instruction or a block, usually a node of connective
+`code` giving a sequence of instruction nodes.
 
 * `closed` : *clostup*, a tuple of closed "variables", i.e. items.
 

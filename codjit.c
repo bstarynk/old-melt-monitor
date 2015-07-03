@@ -40,20 +40,23 @@ struct codejit_mom_st
   struct momattributes_st *cj_globalbind;       /* global bindings */
   momitem_t *cj_curfunitm;      /* the current function */
   struct momattributes_st *cj_funbind;  /* the function's bindings */
+  struct momqueuevalues_st cj_fundoque; /* the queue of closures to do */
   struct momhashset_st *cj_funconstset; /* the set of constant items */
   struct momhashset_st *cj_funclosedset;        /* the set of closed items */
 };
 
 
-#define CJIT_ERROR_MOM_AT_BIS(Lin,Cj,Fmt,...) do {       \
-  struct codejit_mom_st *cj_##Lin = (Cj);                       \
-  assert (cj_##Lin && cj_##Lin->cj_magic == CODEJIT_MAGIC_MOM); \
-  cj_##Lin->cj_errormsg =                                       \
-    mom_make_string_sprintf(Fmt,__VA_ARGS__);                   \
-  mom_warnprintf_at(__FILE__,Lin,"CODEJIT ERROR: %s",           \
-                    cj_##Lin->cj_errormsg->cstr);               \
-  longjmp (cj->cj_jmpbuferror, (int)(Lin));			\
+#define CJIT_ERROR_MOM_AT_BIS(Lin,Cj,Fmt,...) do {	\
+  struct codejit_mom_st *cj_##Lin = (Cj);		\
+  assert (cj_##Lin					\
+	  && cj_##Lin->cj_magic == CODEJIT_MAGIC_MOM);	\
+  cj_##Lin->cj_errormsg =				\
+    mom_make_string_sprintf(Fmt,__VA_ARGS__);		\
+  mom_warnprintf_at(__FILE__,Lin,"CODEJIT ERROR: %s",	\
+                    cj_##Lin->cj_errormsg->cstr);	\
+  longjmp (cj->cj_jmpbuferror, (int)(Lin));		\
  }while(0)
+
 #define CJIT_ERROR_MOM_AT(Lin,Cj,Fmt,...) \
   CJIT_ERROR_MOM_AT_BIS(Lin,Cj,Fmt,__VA_ARGS__)
 #define CJIT_ERROR_MOM(Cj,Fmt,...) \
@@ -71,7 +74,7 @@ cjit_lock_item_mom (struct codejit_mom_st *cj, momitem_t *itm)
       mom_item_lock (itm);
       cj->cj_lockeditemset = mom_hashset_put (cj->cj_lockeditemset, itm);
     }
-}
+}                               /* end of cjit_lock_item_mom */
 
 static void
 cjit_unlock_all_items_mom (struct codejit_mom_st *cj)
@@ -87,7 +90,50 @@ cjit_unlock_all_items_mom (struct codejit_mom_st *cj)
         continue;
       mom_item_unlock (itm);
     }
-}
+}                               /* end of cjit_unlock_all_items_mom */
+
+
+static void
+cjit_queue_to_do_mom (struct codejit_mom_st *cj, momvalue_t vtodo)
+{
+  assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
+  MOM_DEBUGPRINTF (gencod, "queue_to_do %s", mom_output_gcstring (vtodo));
+  if (vtodo.typnum != momty_node)
+    CJIT_ERROR_MOM (cj, "queued vtodo %s is not a node",
+                    mom_output_gcstring (vtodo));
+  mom_queuevalue_push_back (&cj->cj_fundoque, vtodo);
+}                               /* end of cjit_queue_to_do_mom */
+
+
+static void
+cjit_do_all_queued_to_do_at_mom (struct codejit_mom_st *cj, int lin)
+{
+  assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
+  MOM_DEBUGPRINTF_AT (__FILE__, lin, gencod,
+                      "do_all_queued_to_do start queuesize=%d",
+                      (int) mom_queuevalue_size (&cj->cj_fundoque));
+  long todocount = 0;
+  while (mom_queuevalue_size (&cj->cj_fundoque) > 0)
+    {
+      todocount++;
+      momvalue_t vtodo = mom_queuevalue_pop_front (&cj->cj_fundoque);
+      MOM_DEBUGPRINTF_AT (__FILE__, lin, gencod,
+                          "do_all_queued_to_do todocount#%ld vtodo=%s",
+                          todocount, mom_output_gcstring (vtodo));
+      if (!mom_applval_1itm_to_void (vtodo, cj->cj_codjititm))
+        CJIT_ERROR_MOM (cj, "failed to do %s (from line#%d)",
+                        mom_output_gcstring (vtodo), lin);
+      MOM_DEBUGPRINTF_AT (__FILE__, lin, gencod,
+                          "do_all_queued_to_do todocount#%ld done",
+                          todocount);
+    };
+  MOM_DEBUGPRINTF_AT (__FILE__, lin, gencod,
+                      "do_all_queued_to_do ended todocount#%ld", todocount);
+}                               /* end of cjit_do_all_queued_to_do_at_mom */
+
+
+#define cjit_do_all_queued_to_do_mom(Cj) \
+  cjit_do_all_queued_to_do_at_mom((Cj),__LINE__)
 
 static void cjit_first_scanning_pass_mom (momitem_t *itmcjit);
 
@@ -200,9 +246,10 @@ cjit_first_scanning_pass_mom (momitem_t *itmcjit)
       {
         cjit_lock_item_mom (cj, (momitem_t *) fseq->arritm[ix]);
         cjit_scan_function_first_mom (cj, (momitem_t *) fseq->arritm[ix]);
-        cj->cj_curfunitm = NULL;
         if (cj->cj_errormsg)
           return;
+        cj->cj_curfunitm = NULL;
+        memset (&cj->cj_fundoque, 0, sizeof (cj->cj_fundoque));
       }
   }
 }                               /* end of cjit_first_scanning_pass */
@@ -323,6 +370,8 @@ cjit_scan_function_first_mom (struct codejit_mom_st *cj, momitem_t *itmfun)
                       mom_item_cstring (cj->cj_moduleitm),
                       mom_item_cstring (itmfun));
   }
+  // do all queued to_do-s
+  cjit_do_all_queued_to_do_mom (cj);
   MOM_FATAPRINTF ("cjit_scan_function_first unimplemented itmfun=%s",
                   mom_item_cstring (itmfun));
 #warning cjit_scan_function_first_mom unimplemented
