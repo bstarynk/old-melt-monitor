@@ -806,6 +806,7 @@ cjit_scan_node_code_next_mom (struct codejit_mom_st *cj,
 
 }                               /* end of cjit_scan_node_code_next_mom */
 
+
 static void
 cjit_scan_block_next_mom (struct codejit_mom_st *cj,
                           momitem_t *blockitm, momitem_t *nextitm,
@@ -816,9 +817,40 @@ cjit_scan_block_next_mom (struct codejit_mom_st *cj,
   momvalue_t vblockbind =       //
     mom_attributes_find_value (cj->cj_funbind, blockitm);
   MOM_DEBUGPRINTF
-    (gencod, "scan_block_next function %s; blockitm=%s vblockbind=%s nextitm=%s nextpos=%s",
+    (gencod,
+     "scan_block_next function %s; blockitm=%s vblockbind=%s nextitm=%s nextpos=%d",
      mom_item_cstring (cj->cj_curfunitm), mom_item_cstring (blockitm),
      mom_output_gcstring (vblockbind), mom_item_cstring (nextitm), nextpos);
+  momvalue_t vnewblockbind =    //
+    mom_nodev_new (MOM_PREDEFINED_NAMED (block),
+                   2,
+                   mom_itemv (nextitm),
+                   mom_intv (nextpos));
+  if (vblockbind.typnum == momty_null)
+    {
+      cj->cj_funbind =          //
+        mom_attributes_put (cj->cj_funbind, blockitm, &vnewblockbind);
+      MOM_DEBUGPRINTF
+        (gencod, "scan_block_next function %s; blockitm=%s bound to %s",
+         mom_item_cstring (cj->cj_curfunitm), mom_item_cstring (blockitm),
+         mom_output_gcstring (vnewblockbind));
+      // add todo scan inside the block
+    }
+  else if (mom_value_equal (vblockbind, vnewblockbind))
+    {
+      momnode_t *uselessnewnod = vnewblockbind.vnode;
+      vnewblockbind = vblockbind;
+      MOM_GC_FREE (uselessnewnod,
+                   sizeof (momnode_t) + 2 * sizeof (momvalue_t));
+    }
+  else
+    CJIT_ERROR_MOM (cj,
+                    "scan_block_next function %s blockitm %s has invalid blockbind %s expecting %s",
+                    mom_item_cstring (cj->cj_curfunitm),
+                    mom_item_cstring (blockitm),
+                    mom_output_gcstring (vblockbind),
+                    mom_output_gcstring (vnewblockbind));
+
 #warning scan_block_next unimplemented
   CJIT_ERROR_MOM (cj,
                   "scan_block_next unimplemented function %s blockitm=%s",
