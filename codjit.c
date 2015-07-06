@@ -43,6 +43,7 @@ struct codejit_mom_st
   struct momqueuevalues_st cj_fundoque; /* the queue of closures to do */
   struct momhashset_st *cj_funconstset; /* the set of constant items */
   struct momhashset_st *cj_funclosedset;        /* the set of closed items */
+  struct momhashassoc_st *cj_funleadassoc;      /* hash-association for leaders of basic blocks */
 };
 
 
@@ -328,6 +329,7 @@ cjit_scan_function_first_mom (struct codejit_mom_st *cj, momitem_t *itmfun)
   cj->cj_funbind = mom_attributes_make (nbfuninitattrs);
   cj->cj_funconstset = NULL;
   cj->cj_funclosedset = NULL;
+  cj->cj_funleadassoc = mom_hassoc_reserve (NULL, 32);
   MOM_DEBUGPRINTF (gencod, "scanning function %s itmsignature %s",
                    mom_item_cstring (itmfun),
                    mom_item_cstring (itmsignature));
@@ -374,8 +376,10 @@ cjit_scan_function_first_mom (struct codejit_mom_st *cj, momitem_t *itmfun)
   cjit_do_all_queued_to_do_mom (cj);
   MOM_FATAPRINTF ("cjit_scan_function_first unimplemented itmfun=%s",
                   mom_item_cstring (itmfun));
+  // perhaps here: cj->cj_funleadassoc = NULL; 
 #warning cjit_scan_function_first_mom unimplemented
 }                               /* end of cjit_scan_function_first_mom */
+
 
 
 static void
@@ -856,6 +860,10 @@ cjit_scan_block_next_mom (struct codejit_mom_st *cj,
          mom_item_cstring (cj->cj_curfunitm), mom_item_cstring (blockitm),
          mom_output_gcstring (vnewblockbind));
       // add todo scan inside the block
+      cjit_queue_to_do_mom (cj, //
+                            mom_nodev_new (MOM_PREDEFINED_NAMED
+                                           (jitdo_scan_block), 1,
+                                           mom_itemv (blockitm)));
     }
   else if (mom_value_equal (vblockbind, vnewblockbind))
     {

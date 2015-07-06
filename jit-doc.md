@@ -57,6 +57,28 @@ Statements are generally nodes. A statement which is a block item is
 understood as an unconditional jump to that item block. The connective
 of a statement node is called the statement operation or stmt-op.
 
+Some statements are considered (during JIT compilation) as **leading
+statement**s or leaders. They will become the first statement of their
+*basic* blocks. See wikipage about [basic blocks][]
+
+The following stmt-ops are understood:
+
+* `^if` ( *test* *then* [ *else* ]); both *then* and *else* are
+  leaders, and so is the next statement.
+
+* `^int_switch` ( *expr* *case* ... ); sons except the first are
+  *cases*, i.e. nodes like `^case(` *casevalue* *statement* `)`. Each
+  case statement, and the next statement, is a leader.
+
+* `^item_switch` ( *expr* *case* ... ), similar to `int_switch` except
+that the discriminating *expr* should give an item.
+
+* `^code` ( *sub-statement* ), with the first sub-statement being a
+  leader.
+
 [markdown]: http://daringfireball.net/projects/markdown/syntax
 "markdown syntax"
+
+[basic blocks]: http://en.wikipedia.org/wiki/Basic_block
+
 
