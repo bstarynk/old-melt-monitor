@@ -807,6 +807,10 @@ cjit_scan_node_code_next_mom (struct codejit_mom_st *cj,
       mom_unsync_item_put_nth_component (codblkitm, six - 1, subinsv);
     }
   /// should probably add a todo to scan the block
+  cjit_queue_to_do_mom (cj,     //
+                        mom_nodev_new (MOM_PREDEFINED_NAMED
+                                       (jitdo_scan_block), 1,
+                                       mom_itemv (codblkitm)));
 #warning scan_node_code_next unimplemented
   CJIT_ERROR_MOM (cj,
                   "scan_node_code_next unimplemented function %s vcodn=%s",
@@ -816,6 +820,7 @@ cjit_scan_node_code_next_mom (struct codejit_mom_st *cj,
 }                               /* end of cjit_scan_node_code_next_mom */
 
 
+
 static void
 cjit_scan_block_next_mom (struct codejit_mom_st *cj,
                           momitem_t *blockitm, momitem_t *nextitm,
@@ -823,6 +828,13 @@ cjit_scan_block_next_mom (struct codejit_mom_st *cj,
 {
   assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
   cjit_lock_item_mom (cj, blockitm);
+  if (blockitm->itm_kind != MOM_PREDEFINED_NAMED (block))
+    CJIT_ERROR_MOM (cj,
+                    "scan_block_next function %s blockitm %s has invalid kind %s",
+                    mom_item_cstring (cj->cj_curfunitm),
+                    mom_item_cstring (blockitm),
+                    mom_item_cstring (blockitm->itm_kind));
+
   momvalue_t vblockbind =       //
     mom_attributes_find_value (cj->cj_funbind, blockitm);
   MOM_DEBUGPRINTF
@@ -847,10 +859,16 @@ cjit_scan_block_next_mom (struct codejit_mom_st *cj,
     }
   else if (mom_value_equal (vblockbind, vnewblockbind))
     {
-      momnode_t *uselessnewnod = vnewblockbind.vnode;
+      const momnode_t *uselessnewnod = vnewblockbind.vnode;
       vnewblockbind = vblockbind;
       MOM_GC_FREE (uselessnewnod,
                    sizeof (momnode_t) + 2 * sizeof (momvalue_t));
+      MOM_DEBUGPRINTF
+        (gencod,
+         "scan_block_next function %s; blockitm=%s already found, vblockbind=%s",
+         mom_item_cstring (cj->cj_curfunitm),
+         mom_item_cstring (blockitm), mom_output_gcstring (vblockbind));
+      return;
     }
   else
     CJIT_ERROR_MOM (cj,
@@ -866,3 +884,22 @@ cjit_scan_block_next_mom (struct codejit_mom_st *cj,
                   mom_item_cstring (cj->cj_curfunitm),
                   mom_item_cstring (blockitm));
 }                               /* end of cjit_scan_block_next_mom */
+
+bool
+momfunc_1itm_to_void__jitdo_scan_block (const momnode_t *clonod,
+                                        momitem_t *cjitm)
+{
+  momitem_t *blockitm = NULL;
+  struct codejit_mom_st *cj = NULL;
+  /// should never happen...
+  if (mom_node_arity (clonod) != 1
+      || !(blockitm = mom_value_to_item (mom_node_nth (clonod, 0)))
+      || !cjitm || cjitm->itm_kind != MOM_PREDEFINED_NAMED (code_generation)
+      || !(cj = cjitm->itm_data1) || cj->cj_magic != CODEJIT_MAGIC_MOM)
+    MOM_FATAPRINTF ("jitdo_scan_block: bad clonode %s or cjitm %s",
+                    mom_output_gcstring (mom_nodev (clonod)),
+                    mom_item_cstring (cjitm));
+  MOM_DEBUGPRINTF (gencod, "jitdo_scan_block start blockitm=%s cjitm=%s",
+                   mom_item_cstring (blockitm), mom_item_cstring (cjitm));
+#warning jitdo_scan_block unimplemented
+}                               /* end of momfunc_1itm_to_void__jitdo_scan_block */

@@ -84,6 +84,9 @@ mom_predefined_items_fill (void)
   MOM_PREDEFINED_NAMED (integer)->itm_kind = MOM_PREDEFINED_NAMED (type);
 // item item of kind type
   MOM_PREDEFINED_NAMED (item)->itm_kind = MOM_PREDEFINED_NAMED (type);
+// item jitdo_scan_block of kind signature_1itm_to_void
+  MOM_PREDEFINED_NAMED (jitdo_scan_block)->itm_kind
+    = MOM_PREDEFINED_NAMED (signature_1itm_to_void);
 // item locked_item of kind type
   MOM_PREDEFINED_NAMED (locked_item)->itm_kind = MOM_PREDEFINED_NAMED (type);
 // item scanner_of_association of kind signature_1itm_to_void
@@ -234,6 +237,9 @@ mom_predefined_items_fill (void)
 // function item generate_c_module of signature_1itm_to_val:
   MOM_PREDEFINED_NAMED (generate_c_module)->itm_data1 =
     mom_dynload_symbol ("momfunc_1itm_to_val__generate_c_module");
+// function item jitdo_scan_block of signature_1itm_to_void:
+  MOM_PREDEFINED_NAMED (jitdo_scan_block)->itm_data1 =
+    mom_dynload_symbol ("momfunc_1itm_to_void__jitdo_scan_block");
 // function item scanner_of_association of signature_1itm_to_void:
   MOM_PREDEFINED_NAMED (scanner_of_association)->itm_data1 =
     mom_dynload_symbol ("momfunc_1itm_to_void__scanner_of_association");

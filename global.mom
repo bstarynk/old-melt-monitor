@@ -1822,6 +1822,14 @@
 ..
 
 
+** jitdo_scan_block   ////// PREDEFINED
+{
+  * comment  "JIT todo function to scan a block" }
+ %  ^filler_of_function( signature_1itm_to_void)
+ 
+..
+
+
 ** json   ////// PREDEFINED
 {
   * comment  "kind of temporary JSON items" }
