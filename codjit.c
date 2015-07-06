@@ -761,9 +761,11 @@ cjit_scan_node_code_next_mom (struct codejit_mom_st *cj,
 {
   assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
   assert (nodcod);
+  assert (mom_node_conn (nodcod) == MOM_PREDEFINED_NAMED (code));
+  unsigned codlen = mom_node_arity (nodcod);
   momitem_t *codblkitm = mom_value_to_item (mom_node_nth (nodcod, 0));
   momvalue_t vcodn = mom_nodev (nodcod);
-  if (!codblkitm)
+  if (!codblkitm || codlen == 0)
     CJIT_ERROR_MOM (cj,
                     "scan_node_code_next in function %s vcodn=%s should have a code-block-item",
                     mom_item_cstring (cj->cj_curfunitm),
@@ -796,7 +798,14 @@ cjit_scan_node_code_next_mom (struct codejit_mom_st *cj,
                    mom_item_cstring (cj->cj_curfunitm),
                    mom_output_gcstring (vcodn), mom_item_cstring (codblkitm),
                    mom_output_gcstring (vblknodbind));
-  /// should probably fill the codblkitm with the statements, or clear it?
+  /// fill the codblkitm with the statements, skip the first sun
+  codblkitm->itm_comps = NULL;
+  mom_unsync_item_components_reserve (codblkitm, codlen - 1);
+  for (unsigned six = 1; six < codlen; six++)
+    {
+      momvalue_t subinsv = mom_node_nth (nodcod, six);
+      mom_unsync_item_put_nth_component (codblkitm, six - 1, subinsv);
+    }
   /// should probably add a todo to scan the block
 #warning scan_node_code_next unimplemented
   CJIT_ERROR_MOM (cj,
