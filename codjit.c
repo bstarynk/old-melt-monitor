@@ -705,6 +705,11 @@ cjit_scan_node_code_next_mom (struct codejit_mom_st *cj,
                               int nextpos);
 
 static void
+cjit_scan_block_next_mom (struct codejit_mom_st *cj,
+                          momitem_t *blockitm, momitem_t *nextitm,
+                          int nextpos);
+
+static void
 cjit_scan_function_code_next_mom (struct codejit_mom_st *cj,
                                   momitem_t *itmfun, momvalue_t vcode,
                                   momitem_t *nextitm, int nextpos)
@@ -735,6 +740,8 @@ cjit_scan_function_code_next_mom (struct codejit_mom_st *cj,
       }
       break;
     case momty_item:
+      cjit_scan_block_next_mom (cj, vcode.vitem, nextitm, nextpos);
+      break;
     default:
       goto bad_code_lab;
     }
@@ -798,3 +805,23 @@ cjit_scan_node_code_next_mom (struct codejit_mom_st *cj,
                   mom_output_gcstring (vcodn));
 
 }                               /* end of cjit_scan_node_code_next_mom */
+
+static void
+cjit_scan_block_next_mom (struct codejit_mom_st *cj,
+                          momitem_t *blockitm, momitem_t *nextitm,
+                          int nextpos)
+{
+  assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
+  cjit_lock_item_mom (cj, blockitm);
+  momvalue_t vblockbind =       //
+    mom_attributes_find_value (cj->cj_funbind, blockitm);
+  MOM_DEBUGPRINTF
+    (gencod, "scan_block_next function %s; blockitm=%s vblockbind=%s nextitm=%s nextpos=%s",
+     mom_item_cstring (cj->cj_curfunitm), mom_item_cstring (blockitm),
+     mom_output_gcstring (vblockbind), mom_item_cstring (nextitm), nextpos);
+#warning scan_block_next unimplemented
+  CJIT_ERROR_MOM (cj,
+                  "scan_block_next unimplemented function %s blockitm=%s",
+                  mom_item_cstring (cj->cj_curfunitm),
+                  mom_item_cstring (blockitm));
+}                               /* end of cjit_scan_block_next_mom */
