@@ -63,7 +63,7 @@ Some statements are considered (during JIT compilation) as **leading
 statement**s or leaders. They will become the first statement of their
 *basic* blocks. See wikipage about [basic blocks][]
 
-The following stmt-ops are understood:
+The following control flow related stmt-ops are understood:
 
 * `if` *test* *then* [ *else* ]; both *then* and *else* are
   leaders, and so is the next statement.
@@ -75,8 +75,29 @@ The following stmt-ops are understood:
 * `item_switch` *expr* *case* ... , similar to `int_switch` except
 that the discriminating *expr* should give an item.
 
-* `code` *sub-statement*, with the first sub-statement being a
-  leader.
+* `jump` *block-item* ; is an unconditional jump (so could play the
+  role of a `continue` to restart the block)
+
+* `code` *sub-statement* ..., with the first sub-statement being a
+leader (like blocks in C). An implicit block is then made and stored in
+the `block` attribute of that statement.
+
+* `block` *blockitem* *sub-statement* ... likewise, but the block is
+  explicitly given.
+
+* `loop` *blockitem* *sub-statement* ... likewise, for an infinite
+loop of given block item, but the block is explicitly given.
+
+* `break` *blockitem* to jump to the next instruction after the given block.
+
+* `apply` *signature* *result-vars* ... *function-expr*
+  *argument-expr* ... ; where *signature* is a (compile-time) item of
+  kind `signature`; if the application fails, the current function
+  also fails
+
+* `apply_else` *signature* *result-vars* ... *function-expr*
+  *argument-expr* ... *else-statement* ; if the application fails, the
+  *final* else substatement is executed so it is a leader.
 
 [markdown]: http://daringfireball.net/projects/markdown/syntax
 "markdown syntax"
