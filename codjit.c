@@ -850,6 +850,55 @@ cjit_scan_stmt_loop_next_mom (struct codejit_mom_st *cj,
                               int nextpos);
 
 
+static void
+cjit_scan_stmt_break_next_mom (struct codejit_mom_st *cj,
+                               momitem_t *stmtitm, momitem_t *nextitm,
+                               int nextpos);
+
+
+static void
+cjit_scan_stmt_apply_next_mom (struct codejit_mom_st *cj,
+                               momitem_t *stmtitm, momitem_t *nextitm,
+                               int nextpos);
+
+static void
+cjit_scan_stmt_apply_else_next_mom (struct codejit_mom_st *cj,
+                                    momitem_t *stmtitm, momitem_t *nextitm,
+                                    int nextpos);
+
+
+static momitem_t *
+cjit_get_statement_mom (struct codejit_mom_st *cj, momitem_t *blockitm,
+                        int pos)
+{
+  assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
+  if (!blockitm || pos < 0)
+    return NULL;
+  if (!cjit_is_locked_item_mom (cj, blockitm)
+      || blockitm->itm_kind != MOM_PREDEFINED_NAMED (block))
+    CJIT_ERROR_MOM (cj, "get_statement: invalid blockitm %s",
+                    mom_item_cstring (blockitm));
+  unsigned nbstmt = mom_unsync_item_components_count (blockitm);
+  if (pos < 0 || pos >= nbstmt)
+    CJIT_ERROR_MOM (cj,
+                    "get_statement: blockitm %s with invalid pos %d (nbstmt=%u)",
+                    mom_item_cstring (blockitm), pos, nbstmt);
+  momvalue_t curstmtv = mom_raw_item_get_indexed_component (blockitm, pos);
+  momitem_t *curstmtitm =       //
+    mom_value_to_item (curstmtv);
+  if (!curstmtitm)
+    CJIT_ERROR_MOM (cj,
+                    "get_statement: blockitm %s with bad curstmt %s at pos %d",
+                    mom_item_cstring (blockitm),
+                    mom_output_gcstring (curstmtv), pos);
+  return curstmtitm;
+}                               /* end of cjit_get_statement_mom */
+
+
+static void
+cjit_add_basic_block_stmt_leader_mom (struct codejit_mom_st *cj,
+                                      momitem_t *stmtitm);
+
 bool
 momfunc_1itm_to_void__jitdo_scan_block (const
                                         momnode_t *clonod, momitem_t *cjitm)
@@ -876,6 +925,7 @@ momfunc_1itm_to_void__jitdo_scan_block (const
                    mom_item_cstring (blockitm),
                    mom_item_cstring (nextitm),
                    nextpos, mom_item_cstring (cjitm));
+  // cjit_scan_block_next_mom has already locked the statement
   if (!cjit_is_locked_item_mom (cj, blockitm)
       || blockitm->itm_kind != MOM_PREDEFINED_NAMED (block))
     CJIT_ERROR_MOM (cj,
@@ -944,6 +994,22 @@ momfunc_1itm_to_void__jitdo_scan_block (const
           cjit_scan_stmt_block_next_mom (cj, curstmtitm, curnextitm,
                                          curnextpos);
           break;
+        case MOM_PREDEFINED_NAMED_CASE (loop, curopitm, otherwiseoplab):
+          cjit_scan_stmt_loop_next_mom (cj, curstmtitm, curnextitm,
+                                        curnextpos);
+          break;
+        case MOM_PREDEFINED_NAMED_CASE (break, curopitm, otherwiseoplab):
+          cjit_scan_stmt_break_next_mom (cj, curstmtitm, curnextitm,
+                                         curnextpos);
+          break;
+        case MOM_PREDEFINED_NAMED_CASE (apply, curopitm, otherwiseoplab):
+          cjit_scan_stmt_apply_next_mom (cj, curstmtitm, curnextitm,
+                                         curnextpos);
+          break;
+        case MOM_PREDEFINED_NAMED_CASE (apply_else, curopitm, otherwiseoplab):
+          cjit_scan_stmt_apply_else_next_mom (cj, curstmtitm, curnextitm,
+                                              curnextpos);
+          break;
 #warning jitdo_scan_block missing cases
         default:
         otherwiseoplab:
@@ -963,6 +1029,12 @@ cjit_scan_stmt_if_next_mom (struct codejit_mom_st *cj,
                             momitem_t *stmtitm, momitem_t *nextitm,
                             int nextpos)
 {
+  unsigned stmtlen = mom_unsync_item_components_count (stmtitm);
+  if (stmtlen < 3 || stmtlen > 4)
+    CJIT_ERROR_MOM (cj,
+                    "scan_stmt_if: invalid if stmtitm %s of length %u",
+                    mom_item_cstring (stmtitm), stmtlen);
+
 #warning cjit_scan_stmt_if_next_mom unimplemented
   MOM_FATAPRINTF ("cjit_scan_stmt_if_next_mom unimplemented stmtitm=%s",
                   mom_item_cstring (stmtitm));
@@ -1041,3 +1113,34 @@ cjit_scan_stmt_loop_next_mom (struct codejit_mom_st *cj,
   MOM_FATAPRINTF ("cjit_scan_stmt_loop_next_mom unimplemented stmtitm=%s",
                   mom_item_cstring (stmtitm));
 }                               // end of cjit_scan_stmt_loop_next_mom
+
+static void
+cjit_scan_stmt_break_next_mom (struct codejit_mom_st *cj,
+                               momitem_t *stmtitm, momitem_t *nextitm,
+                               int nextpos)
+{
+#warning cjit_scan_stmt_break_next_mom unimplemented
+  MOM_FATAPRINTF ("cjit_scan_stmt_break_next_mom unimplemented stmtitm=%s",
+                  mom_item_cstring (stmtitm));
+}                               // end of cjit_scan_stmt_break_next_mom
+
+static void
+cjit_scan_stmt_apply_next_mom (struct codejit_mom_st *cj,
+                               momitem_t *stmtitm, momitem_t *nextitm,
+                               int nextpos)
+{
+#warning cjit_scan_stmt_apply_next_mom unimplemented
+  MOM_FATAPRINTF ("cjit_scan_stmt_apply_next_mom unimplemented stmtitm=%s",
+                  mom_item_cstring (stmtitm));
+}                               // end of cjit_scan_stmt_apply_next_mom
+
+static void
+cjit_scan_stmt_apply_else_next_mom (struct codejit_mom_st *cj,
+                                    momitem_t *stmtitm, momitem_t *nextitm,
+                                    int nextpos)
+{
+#warning cjit_scan_stmt_apply_else_next_mom unimplemented
+  MOM_FATAPRINTF
+    ("cjit_scan_stmt_apply_else_next_mom unimplemented stmtitm=%s",
+     mom_item_cstring (stmtitm));
+}                               // end of cjit_scan_stmt_apply_else_next_mom

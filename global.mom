@@ -1054,7 +1054,7 @@
 
 ** break   ////// PREDEFINED
 {
-  * comment  "break like statement" }
+  * comment  "for JIT breaking operations" }
  
 ..
 
@@ -1907,6 +1907,13 @@
   * code  "momlockeditem_t*"
   * comment  "type for \"momlockeditem_t*\"" }
  %  ^filler_of_plain_kind( type)
+ 
+..
+
+
+** loop   ////// PREDEFINED
+{
+  * comment  "for JIT code looping blocks" }
  
 ..
 
