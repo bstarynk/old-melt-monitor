@@ -810,6 +810,46 @@ cjit_scan_block_next_mom (struct codejit_mom_st *cj,
 }                               /* end of cjit_scan_block_next_mom */
 
 
+static void
+cjit_scan_stmt_if_next_mom (struct codejit_mom_st *cj,
+                            momitem_t *stmtitm, momitem_t *nextitm,
+                            int nextpos);
+
+static void
+cjit_scan_stmt_int_switch_next_mom (struct codejit_mom_st *cj,
+                                    momitem_t *stmtitm, momitem_t *nextitm,
+                                    int nextpos);
+
+
+static void
+cjit_scan_stmt_item_switch_next_mom (struct codejit_mom_st *cj,
+                                     momitem_t *stmtitm, momitem_t *nextitm,
+                                     int nextpos);
+
+
+
+static void
+cjit_scan_stmt_jump_next_mom (struct codejit_mom_st *cj,
+                              momitem_t *stmtitm, momitem_t *nextitm,
+                              int nextpos);
+
+
+static void
+cjit_scan_stmt_code_next_mom (struct codejit_mom_st *cj,
+                              momitem_t *stmtitm, momitem_t *nextitm,
+                              int nextpos);
+
+static void
+cjit_scan_stmt_block_next_mom (struct codejit_mom_st *cj,
+                               momitem_t *stmtitm, momitem_t *nextitm,
+                               int nextpos);
+
+static void
+cjit_scan_stmt_loop_next_mom (struct codejit_mom_st *cj,
+                              momitem_t *stmtitm, momitem_t *nextitm,
+                              int nextpos);
+
+
 bool
 momfunc_1itm_to_void__jitdo_scan_block (const
                                         momnode_t *clonod, momitem_t *cjitm)
@@ -877,7 +917,127 @@ momfunc_1itm_to_void__jitdo_scan_block (const
          mom_item_cstring (curstmtitm), six,
          mom_item_cstring (curopitm),
          mom_item_cstring (curnextitm), curnextpos);
+      switch (mom_item_hash (curopitm))
+        {
+          case MOM_PREDEFINED_NAMED_CASE (if, curopitm, otherwiseoplab)
+        :
+            cjit_scan_stmt_if_next_mom (cj, curstmtitm, curnextitm,
+                                        curnextpos);
+          break;
+        case MOM_PREDEFINED_NAMED_CASE (int_switch, curopitm, otherwiseoplab):
+          cjit_scan_stmt_int_switch_next_mom (cj, curstmtitm, curnextitm,
+                                              curnextpos);
+          break;
+        case MOM_PREDEFINED_NAMED_CASE (item_switch, curopitm, otherwiseoplab):
+          cjit_scan_stmt_item_switch_next_mom (cj, curstmtitm, curnextitm,
+                                               curnextpos);
+          break;
+        case MOM_PREDEFINED_NAMED_CASE (jump, curopitm, otherwiseoplab):
+          cjit_scan_stmt_jump_next_mom (cj, curstmtitm, curnextitm,
+                                        curnextpos);
+          break;
+        case MOM_PREDEFINED_NAMED_CASE (code, curopitm, otherwiseoplab):
+          cjit_scan_stmt_code_next_mom (cj, curstmtitm, curnextitm,
+                                        curnextpos);
+          break;
+        case MOM_PREDEFINED_NAMED_CASE (block, curopitm, otherwiseoplab):
+          cjit_scan_stmt_block_next_mom (cj, curstmtitm, curnextitm,
+                                         curnextpos);
+          break;
+#warning jitdo_scan_block missing cases
+        default:
+        otherwiseoplab:
+          break;
+        }
     }
 
 #warning jitdo_scan_block unimplemented
 }                               /* end of momfunc_1itm_to_void__jitdo_scan_block */
+
+
+
+
+
+static void
+cjit_scan_stmt_if_next_mom (struct codejit_mom_st *cj,
+                            momitem_t *stmtitm, momitem_t *nextitm,
+                            int nextpos)
+{
+#warning cjit_scan_stmt_if_next_mom unimplemented
+  MOM_FATAPRINTF ("cjit_scan_stmt_if_next_mom unimplemented stmtitm=%s",
+                  mom_item_cstring (stmtitm));
+}                               // end of cjit_scan_stmt_if_next_mom
+
+static void
+cjit_scan_stmt_int_switch_next_mom (struct codejit_mom_st *cj,
+                                    momitem_t *stmtitm, momitem_t *nextitm,
+                                    int nextpos)
+{
+#warning cjit_scan_stmt_int_switch_next_mom unimplemented
+  MOM_FATAPRINTF
+    ("cjit_scan_stmt_int_switch_next_mom unimplemented stmtitm=%s",
+     mom_item_cstring (stmtitm));
+}                               // end of cjit_scan_stmt_int_switch_next_mom
+
+
+
+
+static void
+cjit_scan_stmt_item_switch_next_mom (struct codejit_mom_st *cj,
+                                     momitem_t *stmtitm, momitem_t *nextitm,
+                                     int nextpos)
+{
+#warning cjit_scan_stmt_item_switch_next_mom unimplemented
+  MOM_FATAPRINTF
+    ("cjit_scan_stmt_item_switch_next_mom unimplemented stmtitm=%s",
+     mom_item_cstring (stmtitm));
+}                               // end of cjit_scan_stmt_item_switch_next_mom
+
+
+
+
+static void
+cjit_scan_stmt_jump_next_mom (struct codejit_mom_st *cj,
+                              momitem_t *stmtitm, momitem_t *nextitm,
+                              int nextpos)
+{
+#warning cjit_scan_stmt_jump_next_mom unimplemented
+  MOM_FATAPRINTF ("cjit_scan_stmt_jump_next_mom unimplemented stmtitm=%s",
+                  mom_item_cstring (stmtitm));
+}                               // end of cjit_scan_stmt_jump_next_mom
+
+
+
+static void
+cjit_scan_stmt_code_next_mom (struct codejit_mom_st *cj,
+                              momitem_t *stmtitm, momitem_t *nextitm,
+                              int nextpos)
+{
+#warning cjit_scan_stmt_code_next_mom unimplemented
+  MOM_FATAPRINTF ("cjit_scan_stmt_code_next_mom unimplemented stmtitm=%s",
+                  mom_item_cstring (stmtitm));
+}                               // end of cjit_scan_stmt_code_next_mom
+
+
+
+static void
+cjit_scan_stmt_block_next_mom (struct codejit_mom_st *cj,
+                               momitem_t *stmtitm, momitem_t *nextitm,
+                               int nextpos)
+{
+#warning cjit_scan_stmt_block_next_mom unimplemented
+  MOM_FATAPRINTF ("cjit_scan_stmt_block_next_mom unimplemented stmtitm=%s",
+                  mom_item_cstring (stmtitm));
+}                               // end of cjit_scan_stmt_block_next_mom
+
+
+
+static void
+cjit_scan_stmt_loop_next_mom (struct codejit_mom_st *cj,
+                              momitem_t *stmtitm, momitem_t *nextitm,
+                              int nextpos)
+{
+#warning cjit_scan_stmt_loop_next_mom unimplemented
+  MOM_FATAPRINTF ("cjit_scan_stmt_loop_next_mom unimplemented stmtitm=%s",
+                  mom_item_cstring (stmtitm));
+}                               // end of cjit_scan_stmt_loop_next_mom
