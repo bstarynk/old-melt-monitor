@@ -77,6 +77,15 @@ cjit_lock_item_mom (struct codejit_mom_st *cj, momitem_t *itm)
     }
 }                               /* end of cjit_lock_item_mom */
 
+static bool
+cjit_is_locked_item_mom(struct codejit_mom_st *cj, momitem_t *itm)
+{
+  assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
+  if (!itm) return false;
+  return mom_hashset_contains (cj->cj_lockeditemset, itm);
+}
+
+    
 static void
 cjit_unlock_all_items_mom (struct codejit_mom_st *cj)
 {
@@ -137,6 +146,11 @@ cjit_do_all_queued_to_do_at_mom (struct codejit_mom_st *cj, int lin)
   cjit_do_all_queued_to_do_at_mom((Cj),__LINE__)
 
 static void cjit_first_scanning_pass_mom (momitem_t *itmcjit);
+
+static void
+cjit_scan_block_next_mom (struct codejit_mom_st *cj,
+                          momitem_t *blockitm, momitem_t *nextitm,
+                          int nextpos);
 
 bool
   momfunc_1itm_to_val__generate_jit_module
@@ -361,11 +375,12 @@ cjit_scan_function_first_mom (struct codejit_mom_st *cj, momitem_t *itmfun)
   }
   //scan the function code
   {
-    momvalue_t vcode = mom_item_unsync_get_attribute    //
-      (itmfun,
-       MOM_PREDEFINED_NAMED (code));
-    if (vcode.typnum != momty_null)
-      cjit_scan_function_code_next_mom (cj, itmfun, vcode, NULL, -1);
+    momitem_t *coditm =         //
+      mom_value_to_item (mom_item_unsync_get_attribute (itmfun,
+                                                        MOM_PREDEFINED_NAMED
+                                                        (code)));
+    if (coditm)
+      cjit_scan_block_next_mom (cj, coditm, NULL, -1);
     else
       CJIT_ERROR_MOM (cj,
                       "module item %s : function %s without code",
@@ -708,10 +723,6 @@ cjit_scan_node_code_next_mom (struct codejit_mom_st *cj,
                               const momnode_t *nodcod, momitem_t *nextitm,
                               int nextpos);
 
-static void
-cjit_scan_block_next_mom (struct codejit_mom_st *cj,
-                          momitem_t *blockitm, momitem_t *nextitm,
-                          int nextpos);
 
 static void
 cjit_scan_function_code_next_mom (struct codejit_mom_st *cj,
@@ -859,11 +870,30 @@ cjit_scan_block_next_mom (struct codejit_mom_st *cj,
         (gencod, "scan_block_next function %s; blockitm=%s bound to %s",
          mom_item_cstring (cj->cj_curfunitm), mom_item_cstring (blockitm),
          mom_output_gcstring (vnewblockbind));
+      // check that every component is a statement
+      unsigned nbstmt = mom_unsync_item_components_count (blockitm);
+      for (unsigned ix = 0; ix < nbstmt; ix++)
+        {
+          momvalue_t curstmtv = 
+	    mom_raw_item_get_indexed_component (blockitm, ix);
+          momitem_t *curstmtitm =       //
+            mom_value_to_item (curstmtv);
+          if (curstmtitm)
+            cjit_lock_item_mom (cj, curstmtitm);
+          if (!curstmtitm
+              || curstmtitm->itm_kind != MOM_PREDEFINED_NAMED (code_statement))
+            CJIT_ERROR_MOM (cj,
+                            "scan_block_next function %s blockitm %s has bad statment #%u %s",
+                            mom_item_cstring (cj->cj_curfunitm),
+                            mom_item_cstring (blockitm), ix,
+                            mom_output_gcstring (curstmtv));
+        }
       // add todo scan inside the block
       cjit_queue_to_do_mom (cj, //
                             mom_nodev_new (MOM_PREDEFINED_NAMED
                                            (jitdo_scan_block), 1,
                                            mom_itemv (blockitm)));
+      return;
     }
   else if (mom_value_equal (vblockbind, vnewblockbind))
     {
@@ -885,13 +915,8 @@ cjit_scan_block_next_mom (struct codejit_mom_st *cj,
                     mom_item_cstring (blockitm),
                     mom_output_gcstring (vblockbind),
                     mom_output_gcstring (vnewblockbind));
-
-#warning scan_block_next unimplemented
-  CJIT_ERROR_MOM (cj,
-                  "scan_block_next unimplemented function %s blockitm=%s",
-                  mom_item_cstring (cj->cj_curfunitm),
-                  mom_item_cstring (blockitm));
 }                               /* end of cjit_scan_block_next_mom */
+
 
 bool
 momfunc_1itm_to_void__jitdo_scan_block (const momnode_t *clonod,
@@ -909,5 +934,10 @@ momfunc_1itm_to_void__jitdo_scan_block (const momnode_t *clonod,
                     mom_item_cstring (cjitm));
   MOM_DEBUGPRINTF (gencod, "jitdo_scan_block start blockitm=%s cjitm=%s",
                    mom_item_cstring (blockitm), mom_item_cstring (cjitm));
+  if (!cjit_is_locked_item_mom(cj, blockitm)
+      || blockitm->itm_kind != MOM_PREDEFINED_NAMED(block))
+    CJIT_ERROR_MOM (cj,
+                    "jitdo_scan_block: invalid blockitm %s",
+		    mom_item_cstring(blockitm));
 #warning jitdo_scan_block unimplemented
 }                               /* end of momfunc_1itm_to_void__jitdo_scan_block */

@@ -31,8 +31,7 @@ A JITable function item **should have the following attributes**
 * `results` : *resultup*, a tuple of results (compatible with the
 `output_types` of *sigitm*)
 
-* `code` : *code*, an instruction or a block, usually a node of connective
-`code` giving a sequence of instruction nodes.
+* `code` : *code*,  the starting block of the function.
 
 * `closed` : *clostup*, a tuple of closed "variables", i.e. items.
 
@@ -49,13 +48,16 @@ attribute (a predefined item of kind `type`, like `item` or
 
 
 ## Blocks
-Blocks are items of kind `block`
+Blocks are items of kind `block` ; their components are statement items.
 
 ## Statements
 
-Statements are generally nodes. A statement which is a block item is
-understood as an unconditional jump to that item block. The connective
-of a statement node is called the statement operation or stmt-op.
+Statements are items of kind `code_statement`; every statement of a
+function should be unique: two different blocks of a function cannot
+share a statement item. A statement should have a non-empty component
+sequence. The first component (of rank 0) is called the operation of
+that statement. It should be an item, called a statement operation (or
+*stmt-op*)
 
 Some statements are considered (during JIT compilation) as **leading
 statement**s or leaders. They will become the first statement of their
@@ -63,17 +65,17 @@ statement**s or leaders. They will become the first statement of their
 
 The following stmt-ops are understood:
 
-* `^if` ( *test* *then* [ *else* ]); both *then* and *else* are
+* `if` *test* *then* [ *else* ]; both *then* and *else* are
   leaders, and so is the next statement.
 
-* `^int_switch` ( *expr* *case* ... ); sons except the first are
+* `int_switch` *expr* *case* ... ; sons except the first are
   *cases*, i.e. nodes like `^case(` *casevalue* *statement* `)`. Each
   case statement, and the next statement, is a leader.
 
-* `^item_switch` ( *expr* *case* ... ), similar to `int_switch` except
+* `item_switch` *expr* *case* ... , similar to `int_switch` except
 that the discriminating *expr* should give an item.
 
-* `^code` ( *sub-statement* ), with the first sub-statement being a
+* `code` *sub-statement*, with the first sub-statement being a
   leader.
 
 [markdown]: http://daringfireball.net/projects/markdown/syntax
