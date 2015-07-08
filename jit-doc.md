@@ -39,7 +39,7 @@ A JITable function item **should have the following attributes**
   a constant item contains some `value` attribute, it is the
   constant's value; otherwise the constant item stays for itself.
 
-* `variables` : *varseq*, a tuple or sequence of variable items. 
+* `variables` : *varseq*, a tuple or sequence of variable items.
 
 
 Constants, formals, results, and variables should have a `type`
@@ -59,8 +59,8 @@ sequence. The first component (of rank 0) is called the operation of
 that statement. It should be an item, called a statement operation (or
 *stmt-op*)
 
-Some statements are considered (during JIT compilation) as **leading
-statement**s or leaders. They will become the first statement of their
+Some statements are considered (during JIT compilation) as
+**leading statement**s or leaders. They will become the first statement of their
 *basic* blocks. See wikipage about [basic blocks][]
 
 The following control flow related stmt-ops are understood:
@@ -103,5 +103,3 @@ loop of given block item, but the block is explicitly given.
 "markdown syntax"
 
 [basic blocks]: http://en.wikipedia.org/wiki/Basic_block
-
-

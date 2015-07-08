@@ -11,6 +11,7 @@
 *.dbsqlite-journal
 monimelt
 make-named
+TAGS
 core*
 _monimelt_sigterm*.*
 _monimelt_termdump*

@@ -1,21 +1,21 @@
 // file codjit.c - manage the just-in-time code generation
 
 /**   Copyright (C)  2015 Free Software Foundation, Inc.
-    MONIMELT is a monitor for MELT - see http://gcc-melt.org/
-    This file is part of GCC.
-  
-    GCC is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 3, or (at your option)
-    any later version.
-  
-    GCC is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-    You should have received a copy of the GNU General Public License
-    along with GCC; see the file COPYING3.   If not see
-    <http://www.gnu.org/licenses/>.
+MONIMELT is a monitor for MELT - see http://gcc-melt.org/
+This file is part of GCC.
+
+GCC is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 3, or (at your option)
+any later version.
+
+GCC is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with GCC; see the file COPYING3.   If not see
+<http://www.gnu.org/licenses/>.
 **/
 
 #include "monimelt.h"
@@ -50,13 +50,13 @@ struct codejit_mom_st
 #define CJIT_ERROR_MOM_AT_BIS(Lin,Cj,Fmt,...) do {	\
   struct codejit_mom_st *cj_##Lin = (Cj);		\
   assert (cj_##Lin					\
-	  && cj_##Lin->cj_magic == CODEJIT_MAGIC_MOM);	\
-  cj_##Lin->cj_errormsg =				\
+    && cj_##Lin->cj_magic == CODEJIT_MAGIC_MOM);	\
+    cj_##Lin->cj_errormsg =				\
     mom_make_string_sprintf(Fmt,__VA_ARGS__);		\
-  mom_warnprintf_at(__FILE__,Lin,"CODEJIT ERROR: %s",	\
-                    cj_##Lin->cj_errormsg->cstr);	\
-  longjmp (cj->cj_jmpbuferror, (int)(Lin));		\
- }while(0)
+    mom_warnprintf_at(__FILE__,Lin,"CODEJIT ERROR: %s",	\
+    cj_##Lin->cj_errormsg->cstr);	\
+    longjmp (cj->cj_jmpbuferror, (int)(Lin));		\
+  }while(0)
 
 #define CJIT_ERROR_MOM_AT(Lin,Cj,Fmt,...) \
   CJIT_ERROR_MOM_AT_BIS(Lin,Cj,Fmt,__VA_ARGS__)
@@ -144,7 +144,7 @@ cjit_do_all_queued_to_do_at_mom (struct codejit_mom_st *cj, int lin)
 
 
 #define cjit_do_all_queued_to_do_mom(Cj) \
-  cjit_do_all_queued_to_do_at_mom((Cj),__LINE__)
+          cjit_do_all_queued_to_do_at_mom((Cj),__LINE__)
 
 static void cjit_first_scanning_pass_mom (momitem_t *itmcjit);
 
@@ -280,7 +280,7 @@ cjit_first_scanning_pass_mom (momitem_t *itmcjit)
 }                               /* end of cjit_first_scanning_pass */
 
 
-////////////////////////////////////////////////////////////////
+                        ////////////////////////////////////////////////////////////////
 static void
 cjit_scan_function_for_signature_mom (struct codejit_mom_st *cj,
                                       momitem_t *itmfun,
@@ -396,7 +396,7 @@ cjit_scan_function_first_mom (struct codejit_mom_st *cj, momitem_t *itmfun)
   cjit_do_all_queued_to_do_mom (cj);
   MOM_FATAPRINTF ("cjit_scan_function_first unimplemented itmfun=%s",
                   mom_item_cstring (itmfun));
-  // perhaps here: cj->cj_funleadassoc = NULL; 
+  // perhaps here: cj->cj_funleadattr = NULL;
 #warning cjit_scan_function_first_mom unimplemented
 }                               /* end of cjit_scan_function_first_mom */
 
@@ -788,7 +788,7 @@ cjit_scan_block_next_mom (struct codejit_mom_st *cj,
     }
   else if (mom_value_equal (vblockbind, vnewblockbind))
     {
-      momnode_t *uselessnewnod = vnewblockbind.vnode;
+      const momnode_t *uselessnewnod = vnewblockbind.vnode;
       vnewblockbind = vblockbind;
       MOM_GC_FREE (uselessnewnod,
                    sizeof (momnode_t) + 2 * sizeof (momvalue_t));
@@ -873,13 +873,17 @@ cjit_get_statement_mom (struct codejit_mom_st *cj, momitem_t *blockitm,
 {
   assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
   if (!blockitm || pos < 0)
-    return NULL;
+    {
+      MOM_DEBUGPRINTF (gencod, "get_statement: blockitm %s pos %d => NULL",
+                       mom_item_cstring (blockitm), pos);
+      return NULL;
+    }
   if (!cjit_is_locked_item_mom (cj, blockitm)
       || blockitm->itm_kind != MOM_PREDEFINED_NAMED (block))
     CJIT_ERROR_MOM (cj, "get_statement: invalid blockitm %s",
                     mom_item_cstring (blockitm));
   unsigned nbstmt = mom_unsync_item_components_count (blockitm);
-  if (pos < 0 || pos >= nbstmt)
+  if (pos < 0 || pos >= (int) nbstmt)
     CJIT_ERROR_MOM (cj,
                     "get_statement: blockitm %s with invalid pos %d (nbstmt=%u)",
                     mom_item_cstring (blockitm), pos, nbstmt);
@@ -891,13 +895,73 @@ cjit_get_statement_mom (struct codejit_mom_st *cj, momitem_t *blockitm,
                     "get_statement: blockitm %s with bad curstmt %s at pos %d",
                     mom_item_cstring (blockitm),
                     mom_output_gcstring (curstmtv), pos);
+  cjit_lock_item_mom (cj, curstmtitm);
+  if (curstmtitm->itm_kind != MOM_PREDEFINED_NAMED (code_statement))
+    CJIT_ERROR_MOM (cj,
+                    "get_statement: blockitm %s with bad curstmt %s of kind %s at pos %d",
+                    mom_item_cstring (blockitm),
+                    mom_item_cstring (curstmtitm),
+                    mom_item_cstring (curstmtitm->itm_kind), pos);
+  MOM_DEBUGPRINTF (gencod, "get_statement: blockitm %s pos %d == %s",
+                   mom_item_cstring (blockitm), pos,
+                   mom_item_cstring (curstmtitm));
   return curstmtitm;
 }                               /* end of cjit_get_statement_mom */
 
 
 static void
 cjit_add_basic_block_stmt_leader_mom (struct codejit_mom_st *cj,
-                                      momitem_t *stmtitm);
+                                      momitem_t *stmtitm,
+                                      /*inside: */ momitem_t *blockitm,
+                                      int pos)
+{
+  assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
+  assert (stmtitm);
+  cjit_lock_item_mom (cj, stmtitm);
+  if (stmtitm->itm_kind != MOM_PREDEFINED_NAMED (code_statement))
+    CJIT_ERROR_MOM (cj, "invalid statement %s leading in block %s pos#%d",
+                    mom_item_cstring (stmtitm), mom_item_cstring (blockitm),
+                    pos);
+  if (blockitm && pos >= 0)
+    {
+      momvalue_t curstmtv =
+        mom_raw_item_get_indexed_component (blockitm, pos);
+      momitem_t *curstmtitm =   //
+        mom_value_to_item (curstmtv);
+      if (curstmtitm != stmtitm)
+        CJIT_ERROR_MOM (cj, "invalid statement %s leading in block %s pos#%d;"
+                        " expecting %s",
+                        mom_item_cstring (stmtitm),
+                        mom_item_cstring (blockitm), pos,
+                        mom_output_gcstring (curstmtv));
+    }
+  momvalue_t leadv = mom_attributes_find_value (cj->cj_funleadattr, stmtitm);
+  const momnode_t *leadnod = NULL;
+  if (leadv.typnum == momty_null)
+    {
+      leadv = mom_nodev_new (MOM_PREDEFINED_NAMED (block), 2,
+                             mom_itemv (blockitm), mom_intv (pos));
+      cj->cj_funleadattr =
+        mom_attributes_put (cj->cj_funleadattr, stmtitm, &leadv);
+      MOM_DEBUGPRINTF (gencod,
+                       "adding basic block leader stmtitm=%s leadv=%s",
+                       mom_item_cstring (stmtitm),
+                       mom_output_gcstring (leadv));
+      return;
+    }
+  else if (!(leadnod = mom_value_to_node (leadv))
+           || mom_node_conn (leadnod) != MOM_PREDEFINED_NAMED (block)
+           || mom_node_arity (leadnod) != 2
+           || mom_value_to_item (mom_node_nth (leadnod, 0)) != blockitm
+           || mom_value_to_int (mom_node_nth (leadnod, 1), -2) != pos)
+    CJIT_ERROR_MOM (cj, "invalid statement %s leading in block %s pos#%d;"
+                    " already leading %s",
+                    mom_item_cstring (stmtitm), mom_item_cstring (blockitm),
+                    pos, mom_output_gcstring (leadv));
+  MOM_DEBUGPRINTF (gencod, "got basic block leader stmtitm=%s leadv=%s",
+                   mom_item_cstring (stmtitm), mom_output_gcstring (leadv));
+}                               /* end cjit_add_basic_block_stmt_leader_mom */
+
 
 bool
 momfunc_1itm_to_void__jitdo_scan_block (const
@@ -1029,11 +1093,19 @@ cjit_scan_stmt_if_next_mom (struct codejit_mom_st *cj,
                             momitem_t *stmtitm, momitem_t *nextitm,
                             int nextpos)
 {
+  /* `if` *test* *then* [ *else* ]; both *then* and *else* are
+     leaders, and so is the next statement. */
   unsigned stmtlen = mom_unsync_item_components_count (stmtitm);
   if (stmtlen < 3 || stmtlen > 4)
     CJIT_ERROR_MOM (cj,
                     "scan_stmt_if: invalid if stmtitm %s of length %u",
                     mom_item_cstring (stmtitm), stmtlen);
+  momitem_t *thenitm =
+    mom_value_to_item (mom_raw_item_get_indexed_component (stmtitm, 2));
+  if (!thenitm)
+    CJIT_ERROR_MOM (cj,
+                    "scan_stmt_if: invalid if stmtitm %s with bad then part",
+                    mom_item_cstring (stmtitm));
 
 #warning cjit_scan_stmt_if_next_mom unimplemented
   MOM_FATAPRINTF ("cjit_scan_stmt_if_next_mom unimplemented stmtitm=%s",
@@ -1042,8 +1114,8 @@ cjit_scan_stmt_if_next_mom (struct codejit_mom_st *cj,
 
 static void
 cjit_scan_stmt_int_switch_next_mom (struct codejit_mom_st *cj,
-                                    momitem_t *stmtitm, momitem_t *nextitm,
-                                    int nextpos)
+                                    momitem_t *stmtitm,
+                                    momitem_t *nextitm, int nextpos)
 {
 #warning cjit_scan_stmt_int_switch_next_mom unimplemented
   MOM_FATAPRINTF
@@ -1056,8 +1128,8 @@ cjit_scan_stmt_int_switch_next_mom (struct codejit_mom_st *cj,
 
 static void
 cjit_scan_stmt_item_switch_next_mom (struct codejit_mom_st *cj,
-                                     momitem_t *stmtitm, momitem_t *nextitm,
-                                     int nextpos)
+                                     momitem_t *stmtitm,
+                                     momitem_t *nextitm, int nextpos)
 {
 #warning cjit_scan_stmt_item_switch_next_mom unimplemented
   MOM_FATAPRINTF
@@ -1136,8 +1208,8 @@ cjit_scan_stmt_apply_next_mom (struct codejit_mom_st *cj,
 
 static void
 cjit_scan_stmt_apply_else_next_mom (struct codejit_mom_st *cj,
-                                    momitem_t *stmtitm, momitem_t *nextitm,
-                                    int nextpos)
+                                    momitem_t *stmtitm,
+                                    momitem_t *nextitm, int nextpos)
 {
 #warning cjit_scan_stmt_apply_else_next_mom unimplemented
   MOM_FATAPRINTF

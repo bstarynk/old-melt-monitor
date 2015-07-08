@@ -28,9 +28,10 @@ CXX=g++
 CXXFLAGS= -std=c++11 -Wall -pthread  $(PREPROFLAGS) $(OPTIMFLAGS)
 INDENT= indent
 INDENTFLAGS= -gnu --no-tabs
-ASTYLE= astyle --style=gnu  
+ASTYLE= astyle --style=gnu
 PREPROFLAGS= -I. -I/usr/local/include $(shell $(PKGCONFIG) --cflags $(PACKAGES))
 OPTIMFLAGS= -Og -g3
+TAGS= etags
 LIBES= -L/usr/local/lib -lunistring -lgc $(shell $(PKGCONFIG) --libs $(PACKAGES)) \
         -lgccjit -lonion -lpthread -lcrypt -lm -ldl
 PLUGIN_SOURCES= $(sort $(wildcard momplug_*.c))
@@ -43,10 +44,10 @@ OBJECTS= $(patsubst %.c,%.o,$(SOURCES))
 RM= rm -fv
 ####
 ####
-.PHONY: all modules plugins clean tests indent restore-state dump-state passwords
+.PHONY: all tags modules plugins clean tests indent restore-state dump-state passwords
 .SUFFIXES: .so .i
 # to make with tsan: make OPTIMFLAGS='-g3 -fsanitize=thread -fPIE' LINKFLAGS=-pie
-all: monimelt modules plugins
+all: monimelt modules plugins tags
 clean:
 	$(RM) *~ *.o *.so */*.so */*~ */*.orig *.i *.orig melt*.cc meltmom*.[ch] meltmom*.o meltmom*.so meltmom*.mk \
 	      _tmp_* monimelt core* modules/*.tmp modules/*.bad webdir/*~ *.tmp  _timestamp.* *dbsqlite*-journal *%
@@ -97,6 +98,11 @@ $(OBJECTS): monimelt.h predef-monimelt.h apply-monimelt.h
 	- sort  $@-tmp > $@
 	- rm $@-tmp
 
+tags: TAGS
+
+TAGS: $(wildcard *.h *.c */*.c)
+	$(TAGS) $(wildcard *.h *.c */*.c)
+
 %.i: %.c
 	$(COMPILE.c) -C -E $< | sed s:^#://#: > $@
 
@@ -127,4 +133,4 @@ passwords: .mompasswd
 .mompasswd:
 	-mv -fv .mompasswd .mompasswd~
 	@echo Enter web password for master
-	@(echo -n master: ; mkpasswd -msha-256) > .mompasswd 	
+	@(echo -n master: ; mkpasswd -msha-256) > .mompasswd
