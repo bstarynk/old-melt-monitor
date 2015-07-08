@@ -724,6 +724,9 @@ cjit_scan_function_variables_mom (struct codejit_mom_st *cj,
 
 
 
+static momitem_t *cjit_type_of_scanned_expr_mom (struct codejit_mom_st *cj,
+                                                 const momvalue_t vexpr);
+
 static void
 cjit_scan_block_next_mom (struct codejit_mom_st *cj,
                           momitem_t *blockitm, momitem_t *nextitm,
@@ -1093,6 +1096,7 @@ cjit_scan_stmt_if_next_mom (struct codejit_mom_st *cj,
                             momitem_t *stmtitm, momitem_t *nextitm,
                             int nextpos)
 {
+  assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
   /* `if` *test* *then* [ *else* ]; both *then* and *else* are
      leaders, and so is the next statement. */
   unsigned stmtlen = mom_unsync_item_components_count (stmtitm);
@@ -1100,17 +1104,62 @@ cjit_scan_stmt_if_next_mom (struct codejit_mom_st *cj,
     CJIT_ERROR_MOM (cj,
                     "scan_stmt_if: invalid if stmtitm %s of length %u",
                     mom_item_cstring (stmtitm), stmtlen);
+  momvalue_t testexprv =        //
+    mom_raw_item_get_indexed_component (stmtitm, 1);
+  {
+    momitem_t *typtestitm = cjit_type_of_scanned_expr_mom (cj, testexprv);
+    if (!typtestitm || typtestitm == MOM_PREDEFINED_NAMED (void))
+        CJIT_ERROR_MOM (cj,
+                        "scan_stmt_if: invalid if stmtitm %s with bad test %s",
+                        mom_item_cstring (stmtitm),
+                        mom_output_gcstring (testexprv));
+  }
   momitem_t *thenitm =
     mom_value_to_item (mom_raw_item_get_indexed_component (stmtitm, 2));
   if (!thenitm)
     CJIT_ERROR_MOM (cj,
                     "scan_stmt_if: invalid if stmtitm %s with bad then part",
                     mom_item_cstring (stmtitm));
-
-#warning cjit_scan_stmt_if_next_mom unimplemented
-  MOM_FATAPRINTF ("cjit_scan_stmt_if_next_mom unimplemented stmtitm=%s",
-                  mom_item_cstring (stmtitm));
+  cjit_lock_item_mom (cj, thenitm);
+  if (thenitm->itm_kind != MOM_PREDEFINED_NAMED (block))
+    CJIT_ERROR_MOM (cj,
+                    "scan_stmt_if: invalid if stmtitm %s"
+                    " with non-block then item %s",
+                    mom_item_cstring (stmtitm), mom_item_cstring (thenitm));
+  cjit_scan_block_next_mom (cj, thenitm, nextitm, nextpos);
+  if (stmtlen > 3)
+    {
+      momitem_t *elseitm =
+        mom_value_to_item (mom_raw_item_get_indexed_component (stmtitm, 3));
+      if (!elseitm)
+        CJIT_ERROR_MOM (cj,
+                        "scan_stmt_if: invalid if stmtitm %s with bad else part",
+                        mom_item_cstring (stmtitm));
+      cjit_lock_item_mom (cj, elseitm);
+      if (elseitm->itm_kind != MOM_PREDEFINED_NAMED (block))
+        CJIT_ERROR_MOM (cj,
+                        "scan_stmt_if: invalid if stmtitm %s"
+                        " with non-block else item %s",
+                        mom_item_cstring (stmtitm),
+                        mom_item_cstring (elseitm));
+      cjit_scan_block_next_mom (cj, elseitm, nextitm, nextpos);
+    };
+  if (nextitm)
+    {
+      cjit_lock_item_mom (cj, nextitm);
+      if (nextitm->itm_kind == MOM_PREDEFINED_NAMED (block))
+        {
+          momitem_t *nextstmtitm =
+            cjit_get_statement_mom (cj, nextitm, nextpos + 1);
+          if (nextstmtitm)
+            {
+              cjit_add_basic_block_stmt_leader_mom (cj, nextstmtitm, nextitm,
+                                                    nextpos + 2);
+            }
+        }
+    }
 }                               // end of cjit_scan_stmt_if_next_mom
+
 
 static void
 cjit_scan_stmt_int_switch_next_mom (struct codejit_mom_st *cj,
@@ -1216,3 +1265,16 @@ cjit_scan_stmt_apply_else_next_mom (struct codejit_mom_st *cj,
     ("cjit_scan_stmt_apply_else_next_mom unimplemented stmtitm=%s",
      mom_item_cstring (stmtitm));
 }                               // end of cjit_scan_stmt_apply_else_next_mom
+
+
+
+static momitem_t *
+cjit_type_of_scanned_expr_mom (struct codejit_mom_st *cj,
+                               const momvalue_t vexpr)
+{
+  assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
+#warning cjit_type_of_scanned_expr_mom unimplemented
+  MOM_FATAPRINTF
+    ("cjit_type_of_scanned_expr_mom %s unimplemented",
+     mom_output_gcstring (vexpr));
+}                               /* end of cjit_type_of_scanned_expr_mom */

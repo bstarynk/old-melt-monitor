@@ -65,18 +65,18 @@ Some statements are considered (during JIT compilation) as
 
 The following control flow related stmt-ops are understood:
 
-* `if` *test* *then* [ *else* ]; both *then* and *else* are
-  leaders, and so is the next statement.
+* `if` *test* *then-block* [ *else-block* ]; the next statement is a leader.
 
 * `int_switch` *expr* *case* ... ; sons except the first are
-  *cases*, i.e. nodes like `^case(` *casevalue* *statement* `)`. Each
-  case statement, and the next statement, is a leader.
+  *cases*, i.e. nodes like `^case(` *casevalue* *block* `)`. Each
+  the next statement is a leader.
 
 * `item_switch` *expr* *case* ... , similar to `int_switch` except
 that the discriminating *expr* should give an item.
 
 * `jump` *block-item* ; is an unconditional jump (so could play the
-  role of a `continue` to restart the block)
+  role of a `continue` to restart the block); there should not be any
+  next statement, or else it should be a leader...
 
 * `code` *sub-statement* ..., with the first sub-statement being a
 leader (like blocks in C). An implicit block is then made and stored in
@@ -96,8 +96,8 @@ loop of given block item, but the block is explicitly given.
   also fails
 
 * `apply_else` *signature* *result-vars* ... *function-expr*
-  *argument-expr* ... *else-statement* ; if the application fails, the
-  *final* else substatement is executed so it is a leader.
+  *argument-expr* ... *else-block* ; if the application fails, the
+  *final* else block is executed so it is a leader.
 
 [markdown]: http://daringfireball.net/projects/markdown/syntax
 "markdown syntax"
