@@ -67,12 +67,13 @@ The following control flow related stmt-ops are understood:
 
 * `if` *test* *then-block* [ *else-block* ]; the next statement is a leader.
 
-* `int_switch` *expr* *case* ... ; sons except the first are
-  *cases*, i.e. nodes like `^case(` *casevalue* *block* `)`. Each
-  the next statement is a leader.
+* `item_switch` *expr* *case* ... , where each *case* is a node like
+  `^case(` *caseitem* *block* `)`; the next statement is a leader.
 
-* `item_switch` *expr* *case* ... , similar to `int_switch` except
-that the discriminating *expr* should give an item.
+* `int_switch` *expr* *case* ... ; *case*-s can be like `^case(`
+  *case-int* *block* ) or `^case_range`( *low-case-int*
+  *high-case-int* *block* ).
+
 
 * `jump` *block-item* ; is an unconditional jump (so could play the
   role of a `continue` to restart the block); there should not be any

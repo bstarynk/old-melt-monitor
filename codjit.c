@@ -1088,6 +1088,28 @@ momfunc_1itm_to_void__jitdo_scan_block (const
 }                               /* end of momfunc_1itm_to_void__jitdo_scan_block */
 
 
+static intptr_t
+cjit_get_integer_constant_mom (struct codejit_mom_st*cj,
+			       momitem_t* stmtitm,
+			       momvalue_t vexpr)
+{
+  momitem_t* expitm = NULL;
+  assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
+  if (vexpr.typnum == momty_int) return vexpr.vint;
+  else if ((expitm=mom_value_to_item(vexpr)) != NULL) {
+    cjit_lock_item_mom(cj, expitm);
+    if (expitm->itm_kind != MOM_PREDEFINED_NAMED(constant)) goto badconstantlab;
+    momvalue_t vconst = //
+      mom_item_unsync_get_attribute (expitm,
+				     MOM_PREDEFINED_NAMED(value));
+    if (vconst.typnum != momty_int) goto badconstantlab;
+    return vconst.vint;
+  }
+  else
+  badconstantlab:
+    CJIT_ERROR_MOM (cj, "invalid integer constant %s in statement %s",
+		    mom_output_gcstring(vexpr), mom_item_cstring(stmtitm));
+} /* end of cjit_get_integer_constant_mom */
 
 
 
@@ -1097,8 +1119,8 @@ cjit_scan_stmt_if_next_mom (struct codejit_mom_st *cj,
                             int nextpos)
 {
   assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
-  /* `if` *test* *then* [ *else* ]; both *then* and *else* are
-     leaders, and so is the next statement. */
+  /* `if` *test* *then-block* [ *else-block* ]; the next statement is
+     a leader. */
   unsigned stmtlen = mom_unsync_item_components_count (stmtitm);
   if (stmtlen < 3 || stmtlen > 4)
     CJIT_ERROR_MOM (cj,
@@ -1161,11 +1183,50 @@ cjit_scan_stmt_if_next_mom (struct codejit_mom_st *cj,
 }                               // end of cjit_scan_stmt_if_next_mom
 
 
+
 static void
 cjit_scan_stmt_int_switch_next_mom (struct codejit_mom_st *cj,
                                     momitem_t *stmtitm,
                                     momitem_t *nextitm, int nextpos)
 {
+  assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
+  unsigned stmtlen = mom_unsync_item_components_count (stmtitm);
+  momvalue_t selexprv = MOM_NONEV;
+  momitem_t *seltypitm = NULL;
+  if (stmtlen < 2
+      || (selexprv =
+          mom_raw_item_get_indexed_component (stmtitm,
+                                              1)).typnum == momty_null
+      || (seltypitm =
+          cjit_type_of_scanned_expr_mom (cj,
+                                         selexprv)) !=
+      MOM_PREDEFINED_NAMED (integer))
+    CJIT_ERROR_MOM (cj,
+                    "scan_stmt_int_switch: invalid int_switch statement %s",
+                    mom_item_cstring (stmtitm));
+  for (unsigned casix=2; casix<stmtlen; casix++) {
+    momvalue_t casev =  mom_raw_item_get_indexed_component (stmtitm, casix);
+    const momnode_t* casenod = mom_value_to_node(casev);
+    momitem_t* casconnitm = mom_node_conn(casenod);
+    unsigned caselen = mom_node_arity(casenod);
+    if (casconnitm == MOM_PREDEFINED_NAMED(case) && caselen==2)
+      {
+	momvalue_t constv = mom_node_nth(casenod, 0);
+	intptr_t casnum = cjit_get_integer_constant_mom(cj, stmtitm, constv);
+#warning scan_stmt_int_switch incomplete
+      }
+    /*
+    else if (casconnitm == MOM_PREDEFINED_NAMED(case_range) && caselen==3)
+      {
+      }
+    */
+    else
+    CJIT_ERROR_MOM (cj,
+                    "scan_stmt_int_switch: invalid int_switch statement %s"
+		    " bad case#%d %s",
+		    mom_item_cstring (stmtitm), casix, mom_output_gcstring(casev));
+      
+  } /* end for casix */
 #warning cjit_scan_stmt_int_switch_next_mom unimplemented
   MOM_FATAPRINTF
     ("cjit_scan_stmt_int_switch_next_mom unimplemented stmtitm=%s",
