@@ -1099,14 +1099,24 @@ cjit_get_integer_constant_mom (struct codejit_mom_st *cj,
   else if ((expitm = mom_value_to_item (vexpr)) != NULL)
     {
       cjit_lock_item_mom (cj, expitm);
-      if (expitm->itm_kind != MOM_PREDEFINED_NAMED (constant))
+      momvalue_t constbindv =
+        mom_attributes_find_value (cj->cj_funbind, expitm);
+      momvalue_t constv = MOM_NONEV;
+      const momnode_t *constbindnod = mom_value_to_node (constbindv);
+      if (mom_node_conn (constbindnod) == MOM_PREDEFINED_NAMED (constant))
+        {
+          assert (mom_node_arity (constbindnod) == 3);
+          constv = mom_node_nth (constbindnod, 1);
+        }
+      if (expitm->itm_kind != MOM_PREDEFINED_NAMED (constant)
+          || constv.typnum != momty_int
+          || cjit_type_of_scanned_expr_mom (cj,
+                                            vexpr) !=
+          MOM_PREDEFINED_NAMED (integer))
         goto badconstantlab;
-      momvalue_t vconst =       //
-        mom_item_unsync_get_attribute (expitm,
-                                       MOM_PREDEFINED_NAMED (value));
-      if (vconst.typnum != momty_int)
+      if (constv.typnum != momty_int)
         goto badconstantlab;
-      return vconst.vint;
+      return constv.vint;
     }
   else
   badconstantlab:
@@ -1114,6 +1124,41 @@ cjit_get_integer_constant_mom (struct codejit_mom_st *cj,
                     mom_output_gcstring (vexpr), mom_item_cstring (stmtitm));
 }                               /* end of cjit_get_integer_constant_mom */
 
+
+
+static momitem_t *
+cjit_get_item_constant_mom (struct codejit_mom_st *cj,
+                            momitem_t *stmtitm, momvalue_t vexpr)
+{
+  momitem_t *expitm = NULL;
+  assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
+  if ((expitm = mom_value_to_item (vexpr)) != NULL)
+    {
+      cjit_lock_item_mom (cj, expitm);
+      momvalue_t constbindv =
+        mom_attributes_find_value (cj->cj_funbind, expitm);
+      momvalue_t constv = MOM_NONEV;
+      const momnode_t *constbindnod = mom_value_to_node (constbindv);
+      if (mom_node_conn (constbindnod) == MOM_PREDEFINED_NAMED (constant))
+        {
+          assert (mom_node_arity (constbindnod) == 3);
+          constv = mom_node_nth (constbindnod, 1);
+        }
+      if (expitm->itm_kind != MOM_PREDEFINED_NAMED (constant)
+          || constv.typnum != momty_item
+          || cjit_type_of_scanned_expr_mom (cj,
+                                            vexpr) !=
+          MOM_PREDEFINED_NAMED (item))
+        goto badconstantlab;
+      if (constv.typnum != momty_item)
+        goto badconstantlab;
+      return constv.vitem;
+    }
+  else
+  badconstantlab:
+    CJIT_ERROR_MOM (cj, "invalid item constant %s in statement %s",
+                    mom_output_gcstring (vexpr), mom_item_cstring (stmtitm));
+}                               /* end of cjit_get_item_constant_mom */
 
 
 static void
