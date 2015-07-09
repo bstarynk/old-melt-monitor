@@ -1252,11 +1252,22 @@ cjit_scan_stmt_int_switch_next_mom (struct codejit_mom_st *cj,
                         mom_item_cstring (stmtitm), casix,
                         mom_output_gcstring (casev),
                         mom_item_cstring (casblockitm));
+      cjit_scan_block_next_mom (cj, casblockitm, nextitm, nextpos);
     }                           /* end for casix */
-#warning cjit_scan_stmt_int_switch_next_mom unimplemented
-  MOM_FATAPRINTF
-    ("cjit_scan_stmt_int_switch_next_mom unimplemented stmtitm=%s",
-     mom_item_cstring (stmtitm));
+  if (nextitm)
+    {
+      cjit_lock_item_mom (cj, nextitm);
+      if (nextitm->itm_kind == MOM_PREDEFINED_NAMED (block))
+        {
+          momitem_t *nextstmtitm =
+            cjit_get_statement_mom (cj, nextitm, nextpos + 1);
+          if (nextstmtitm)
+            {
+              cjit_add_basic_block_stmt_leader_mom (cj, nextstmtitm, nextitm,
+                                                    nextpos + 2);
+            }
+        }
+    }
 }                               // end of cjit_scan_stmt_int_switch_next_mom
 
 
