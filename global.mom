@@ -1067,6 +1067,14 @@
 ..
 
 
+** case_range   ////// PREDEFINED
+{
+  * comment  "Use ^case_range(<low>,<high>,<block> in int_switch statements"
+ }
+ 
+..
+
+
 ** chunk   ////// PREDEFINED
 {
   * comment  "operation for C code chunk" }

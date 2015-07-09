@@ -256,7 +256,6 @@ mom_hassoc_scan_dump (struct momhashassoc_st *ha)
   if (!ha)
     return;
   uint32_t hsiz = ha->hass_len;
-  uint32_t hcnt = ha->hass_cnt;
   for (unsigned ix = 0; ix < hsiz; ix++)
     {
       struct momhassocent_st *curent = ha->hass_arr + ix;
@@ -289,7 +288,7 @@ mom_hassoc_sorted_keys_meta (const struct momhashassoc_st *ha,
   unsigned keycnt = 0;
   for (unsigned ix = 0; ix < hsiz; ix++)
     {
-      struct momhassocent_st *curent = ha->hass_arr + ix;
+      const struct momhassocent_st *curent = ha->hass_arr + ix;
       if (curent->ha_key.typnum == momty_null)
         continue;
       assert (keycnt < hcnt);
@@ -297,7 +296,8 @@ mom_hassoc_sorted_keys_meta (const struct momhashassoc_st *ha,
     }
   assert (keycnt == hcnt);
   qsort (keyarr, keycnt, sizeof (momvalue_t), mom_valueptr_cmp);
-  momnode_t *nod = mom_make_sized_node (connitm, keycnt, keyarr);
+  const momnode_t *nod =
+    mom_make_sized_meta_node (metav, (momitem_t *) connitm, keycnt, keyarr);
   MOM_GC_FREE (keyarr, (hcnt + 2) * sizeof (momvalue_t));
   return nod;
 }                               /* end of mom_hassoc_sorted_keys_meta */

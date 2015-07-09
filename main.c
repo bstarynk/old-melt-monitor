@@ -769,12 +769,17 @@ parse_program_arguments_and_load_plugins_mom (int *pargc, char ***pargv)
               MOM_FATAPRINTF ("too many new predefined %d", nbmorepredef_mom);
             char *predname = optarg;
             char *comment = argv[optind];
-            if (predname && comment && isalnum (comment[0]))
+            if (predname && isalpha (predname[0])
+                && comment && isalnum (comment[0]))
               {
                 newpredefname_mom[nbmorepredef_mom] = predname;
                 newpredefcomment_mom[nbmorepredef_mom] = comment;
                 nbmorepredef_mom++;
               }
+            else
+              MOM_WARNPRINTF
+                ("bad or missing comment %s for --add-predefined %s", comment,
+                 predname);
           }
           break;
         case xtraopt_daemon_noclose:

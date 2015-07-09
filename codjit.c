@@ -1089,27 +1089,30 @@ momfunc_1itm_to_void__jitdo_scan_block (const
 
 
 static intptr_t
-cjit_get_integer_constant_mom (struct codejit_mom_st*cj,
-			       momitem_t* stmtitm,
-			       momvalue_t vexpr)
+cjit_get_integer_constant_mom (struct codejit_mom_st *cj,
+                               momitem_t *stmtitm, momvalue_t vexpr)
 {
-  momitem_t* expitm = NULL;
+  momitem_t *expitm = NULL;
   assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
-  if (vexpr.typnum == momty_int) return vexpr.vint;
-  else if ((expitm=mom_value_to_item(vexpr)) != NULL) {
-    cjit_lock_item_mom(cj, expitm);
-    if (expitm->itm_kind != MOM_PREDEFINED_NAMED(constant)) goto badconstantlab;
-    momvalue_t vconst = //
-      mom_item_unsync_get_attribute (expitm,
-				     MOM_PREDEFINED_NAMED(value));
-    if (vconst.typnum != momty_int) goto badconstantlab;
-    return vconst.vint;
-  }
+  if (vexpr.typnum == momty_int)
+    return vexpr.vint;
+  else if ((expitm = mom_value_to_item (vexpr)) != NULL)
+    {
+      cjit_lock_item_mom (cj, expitm);
+      if (expitm->itm_kind != MOM_PREDEFINED_NAMED (constant))
+        goto badconstantlab;
+      momvalue_t vconst =       //
+        mom_item_unsync_get_attribute (expitm,
+                                       MOM_PREDEFINED_NAMED (value));
+      if (vconst.typnum != momty_int)
+        goto badconstantlab;
+      return vconst.vint;
+    }
   else
   badconstantlab:
     CJIT_ERROR_MOM (cj, "invalid integer constant %s in statement %s",
-		    mom_output_gcstring(vexpr), mom_item_cstring(stmtitm));
-} /* end of cjit_get_integer_constant_mom */
+                    mom_output_gcstring (vexpr), mom_item_cstring (stmtitm));
+}                               /* end of cjit_get_integer_constant_mom */
 
 
 
@@ -1198,35 +1201,58 @@ cjit_scan_stmt_int_switch_next_mom (struct codejit_mom_st *cj,
           mom_raw_item_get_indexed_component (stmtitm,
                                               1)).typnum == momty_null
       || (seltypitm =
-          cjit_type_of_scanned_expr_mom (cj,
-                                         selexprv)) !=
-      MOM_PREDEFINED_NAMED (integer))
+          cjit_type_of_scanned_expr_mom (cj, selexprv))
+      != MOM_PREDEFINED_NAMED (integer))
     CJIT_ERROR_MOM (cj,
                     "scan_stmt_int_switch: invalid int_switch statement %s",
                     mom_item_cstring (stmtitm));
-  for (unsigned casix=2; casix<stmtlen; casix++) {
-    momvalue_t casev =  mom_raw_item_get_indexed_component (stmtitm, casix);
-    const momnode_t* casenod = mom_value_to_node(casev);
-    momitem_t* casconnitm = mom_node_conn(casenod);
-    unsigned caselen = mom_node_arity(casenod);
-    if (casconnitm == MOM_PREDEFINED_NAMED(case) && caselen==2)
-      {
-	momvalue_t constv = mom_node_nth(casenod, 0);
-	intptr_t casnum = cjit_get_integer_constant_mom(cj, stmtitm, constv);
-#warning scan_stmt_int_switch incomplete
-      }
-    /*
-    else if (casconnitm == MOM_PREDEFINED_NAMED(case_range) && caselen==3)
-      {
-      }
-    */
-    else
-    CJIT_ERROR_MOM (cj,
-                    "scan_stmt_int_switch: invalid int_switch statement %s"
-		    " bad case#%d %s",
-		    mom_item_cstring (stmtitm), casix, mom_output_gcstring(casev));
-      
-  } /* end for casix */
+  for (unsigned casix = 2; casix < stmtlen; casix++)
+    {
+      momvalue_t casev = mom_raw_item_get_indexed_component (stmtitm, casix);
+      const momnode_t *casenod = mom_value_to_node (casev);
+      momitem_t *casconnitm = mom_node_conn (casenod);
+      unsigned caselen = mom_node_arity (casenod);
+      momitem_t *casblockitm = NULL;
+      if (casconnitm == MOM_PREDEFINED_NAMED (case) && caselen == 2)
+        {
+          momvalue_t constv = mom_node_nth (casenod, 0);
+          intptr_t casnum =
+            cjit_get_integer_constant_mom (cj, stmtitm, constv);
+          casblockitm = mom_value_to_item (mom_node_nth (casenod, 1));
+          if (!casblockitm)
+            goto badcase_lab;
+        }
+      else if (casconnitm == MOM_PREDEFINED_NAMED (case_range)
+               && caselen == 4)
+        {
+          momvalue_t loconstv = mom_node_nth (casenod, 0);
+          intptr_t caslonum =
+            cjit_get_integer_constant_mom (cj, stmtitm, loconstv);
+          momvalue_t hiconstv = mom_node_nth (casenod, 0);
+          intptr_t cashinum =
+            cjit_get_integer_constant_mom (cj, stmtitm, hiconstv);
+          if (caslonum > cashinum)
+            goto badcase_lab;
+          casblockitm = mom_value_to_item (mom_node_nth (casenod, 2));
+          if (!casblockitm)
+            goto badcase_lab;
+        }
+      else
+      badcase_lab:
+        CJIT_ERROR_MOM (cj,
+                        "scan_stmt_int_switch: invalid int_switch statement %s"
+                        " bad case#%d %s",
+                        mom_item_cstring (stmtitm), casix,
+                        mom_output_gcstring (casev));
+      cjit_lock_item_mom (cj, casblockitm);
+      if (casblockitm->itm_kind != MOM_PREDEFINED_NAMED (block))
+        CJIT_ERROR_MOM (cj,
+                        "scan_stmt_int_switch: invalid int_switch statement %s"
+                        " bad case#%d %s with bad block %s",
+                        mom_item_cstring (stmtitm), casix,
+                        mom_output_gcstring (casev),
+                        mom_item_cstring (casblockitm));
+    }                           /* end for casix */
 #warning cjit_scan_stmt_int_switch_next_mom unimplemented
   MOM_FATAPRINTF
     ("cjit_scan_stmt_int_switch_next_mom unimplemented stmtitm=%s",
