@@ -1451,6 +1451,68 @@ cjit_scan_stmt_jump_next_mom (struct codejit_mom_st *cj,
 }                               // end of cjit_scan_stmt_jump_next_mom
 
 
+static void
+cjit_scan_stmt_break_next_mom (struct codejit_mom_st *cj,
+                               momitem_t *stmtitm, momitem_t *nextitm,
+                               int nextpos)
+{
+  assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
+  unsigned stmtlen = mom_unsync_item_components_count (stmtitm);
+  momvalue_t targetv = MOM_NONEV;
+  momitem_t *targetitm = NULL;
+  if (stmtlen != 2
+      || ((targetv = mom_raw_item_get_indexed_component (stmtitm, 1)).typnum
+          != momty_item)
+      || !(targetitm = targetv.vitem)
+      || (cjit_lock_item_mom (cj, targetitm),
+          targetitm->itm_kind != MOM_PREDEFINED_NAMED (block)))
+    CJIT_ERROR_MOM (cj, "scan_stmt_break: invalid break statement %s",
+                    mom_item_cstring (stmtitm));
+  momvalue_t targbindv =
+    mom_attributes_find_value (cj->cj_funbind, targetitm);
+  const momnode_t *targbindnod = NULL;
+  momvalue_t targbind0v = MOM_NONEV;
+  momvalue_t targbind1v = MOM_NONEV;
+  momitem_t *targnextitm = NULL;
+  int targnextpos = -2;
+  if (targbindv.typnum == momty_null)
+    CJIT_ERROR_MOM (cj,
+                    "scan_stmt_break: break statement %s with unbound target block %s",
+                    mom_item_cstring (stmtitm), mom_item_cstring (targetitm));
+  if (!(targbindnod = mom_value_to_node (targbindv))
+      || mom_node_conn (targbindnod) != MOM_PREDEFINED_NAMED (block)
+      || mom_node_arity (targbindnod) != 2
+      || !(targnextitm =
+           mom_value_to_item ((targbind0v = mom_node_nth (targbindnod, 0))))
+      || (targnextpos =
+          mom_value_to_int ((targbind1v =
+                             mom_node_nth (targbindnod, 1)), -2)) < 0)
+    CJIT_ERROR_MOM (cj,
+                    "scan_stmt_break: break statement %s"
+                    " with strange target %s bound to %s",
+                    mom_item_cstring (stmtitm), mom_item_cstring (targetitm),
+                    mom_output_gcstring (targbindv));
+  momvalue_t vnod = mom_nodev_new (MOM_PREDEFINED_NAMED (break), 3,
+                                   mom_itemv (targetitm),
+                                   targbind0v,
+                                   targbind1v);
+  cj->cj_funbind = mom_attributes_put (cj->cj_funbind, stmtitm, &vnod);
+  if (nextitm)
+    {
+      cjit_lock_item_mom (cj, nextitm);
+      if (nextitm->itm_kind == MOM_PREDEFINED_NAMED (block))
+        {
+          momitem_t *nextstmtitm =
+            cjit_get_statement_mom (cj, nextitm, nextpos + 1);
+          if (nextstmtitm)
+            {
+              cjit_add_basic_block_stmt_leader_mom (cj, nextstmtitm, nextitm,
+                                                    nextpos + 1);
+            }
+        }
+    }
+}                               // end of cjit_scan_stmt_break_next_mom
+
 
 static void
 cjit_scan_stmt_code_next_mom (struct codejit_mom_st *cj,
@@ -1724,17 +1786,6 @@ given - if it is nil, it becomes created and stored as the component
         }
     }
 }                               // end of cjit_scan_stmt_loop_next_mom
-
-static void
-cjit_scan_stmt_break_next_mom (struct codejit_mom_st *cj,
-                               momitem_t *stmtitm, momitem_t *nextitm,
-                               int nextpos)
-{
-  assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
-#warning cjit_scan_stmt_break_next_mom unimplemented
-  MOM_FATAPRINTF ("cjit_scan_stmt_break_next_mom unimplemented stmtitm=%s",
-                  mom_item_cstring (stmtitm));
-}                               // end of cjit_scan_stmt_break_next_mom
 
 static void
 cjit_scan_stmt_apply_next_mom (struct codejit_mom_st *cj,
