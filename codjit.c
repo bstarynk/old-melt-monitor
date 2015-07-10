@@ -791,7 +791,7 @@ cjit_scan_block_next_mom (struct codejit_mom_st *cj,
     }
   else if (mom_value_equal (vblockbind, vnewblockbind))
     {
-      const momnode_t *uselessnewnod = vnewblockbind.vnode;
+      momnode_t *uselessnewnod = (momnode_t *) vnewblockbind.vnode;
       vnewblockbind = vblockbind;
       MOM_GC_FREE (uselessnewnod,
                    sizeof (momnode_t) + 2 * sizeof (momvalue_t));
@@ -912,6 +912,9 @@ cjit_get_statement_mom (struct codejit_mom_st *cj, momitem_t *blockitm,
 }                               /* end of cjit_get_statement_mom */
 
 
+/* the blockitm & pos gives the reference where the stmtitm is
+   sitting; it is not the "next" instruction, since we don't care
+   about it ... */
 static void
 cjit_add_basic_block_stmt_leader_mom (struct codejit_mom_st *cj,
                                       momitem_t *stmtitm,
@@ -1224,7 +1227,7 @@ cjit_scan_stmt_if_next_mom (struct codejit_mom_st *cj,
           if (nextstmtitm)
             {
               cjit_add_basic_block_stmt_leader_mom (cj, nextstmtitm, nextitm,
-                                                    nextpos + 2);
+                                                    nextpos + 1);
             }
         }
     }
@@ -1251,6 +1254,7 @@ cjit_scan_stmt_int_switch_next_mom (struct codejit_mom_st *cj,
     CJIT_ERROR_MOM (cj,
                     "scan_stmt_int_switch: invalid int_switch statement %s",
                     mom_item_cstring (stmtitm));
+  struct momhashassoc_st *ha = mom_hassoc_reserve (NULL, 4 * stmtlen / 3 + 5);
   for (unsigned casix = 2; casix < stmtlen; casix++)
     {
       momvalue_t casev = mom_raw_item_get_indexed_component (stmtitm, casix);
@@ -1263,6 +1267,15 @@ cjit_scan_stmt_int_switch_next_mom (struct codejit_mom_st *cj,
           momvalue_t constv = mom_node_nth (casenod, 0);
           intptr_t casnum =
             cjit_get_integer_constant_mom (cj, stmtitm, constv);
+          momvalue_t numv = mom_intv (casnum);
+          // for convenience, we catch duplicate single-number cases.
+          if (mom_hassoc_get (ha, numv).typnum != momty_null)
+            CJIT_ERROR_MOM (cj,
+                            "scan_stmt_int_switch: in int_switch statement %s"
+                            " duplicate case #%d %s",
+                            mom_item_cstring (stmtitm), casix,
+                            mom_output_gcstring (casev));
+          ha = mom_hassoc_put (ha, numv, casev);
           casblockitm = mom_value_to_item (mom_node_nth (casenod, 1));
           if (!casblockitm)
             goto badcase_lab;
@@ -1270,6 +1283,8 @@ cjit_scan_stmt_int_switch_next_mom (struct codejit_mom_st *cj,
       else if (casconnitm == MOM_PREDEFINED_NAMED (case_range)
                && caselen == 4)
         {
+          // we don't catch duplicate cases when using case_range,
+          // since GCCJIT will error if something is wrong..
           momvalue_t loconstv = mom_node_nth (casenod, 0);
           intptr_t caslonum =
             cjit_get_integer_constant_mom (cj, stmtitm, loconstv);
@@ -1309,7 +1324,7 @@ cjit_scan_stmt_int_switch_next_mom (struct codejit_mom_st *cj,
           if (nextstmtitm)
             {
               cjit_add_basic_block_stmt_leader_mom (cj, nextstmtitm, nextitm,
-                                                    nextpos + 2);
+                                                    nextpos + 1);
             }
         }
     }
@@ -1323,10 +1338,75 @@ cjit_scan_stmt_item_switch_next_mom (struct codejit_mom_st *cj,
                                      momitem_t *stmtitm,
                                      momitem_t *nextitm, int nextpos)
 {
-#warning cjit_scan_stmt_item_switch_next_mom unimplemented
-  MOM_FATAPRINTF
-    ("cjit_scan_stmt_item_switch_next_mom unimplemented stmtitm=%s",
-     mom_item_cstring (stmtitm));
+  momvalue_t selexprv = MOM_NONEV;
+  momitem_t *seltypitm = NULL;
+  unsigned stmtlen = mom_unsync_item_components_count (stmtitm);
+  if (stmtlen < 2
+      || (selexprv =
+          mom_raw_item_get_indexed_component (stmtitm,
+                                              1)).typnum == momty_null
+      || !(seltypitm = cjit_type_of_scanned_expr_mom (cj, selexprv))
+      || !mom_code_compatible_types (MOM_PREDEFINED_NAMED (item), seltypitm))
+    CJIT_ERROR_MOM (cj,
+                    "scan_stmt_item_switch: invalid item_switch statement %s",
+                    mom_item_cstring (stmtitm));
+  struct momattributes_st *tb = mom_attributes_make (4 * stmtlen / 3 + 5);
+  for (unsigned casix = 2; casix < stmtlen; casix++)
+    {
+      momvalue_t casev = mom_raw_item_get_indexed_component (stmtitm, casix);
+      const momnode_t *casenod = mom_value_to_node (casev);
+      momitem_t *casconnitm = mom_node_conn (casenod);
+      unsigned caselen = mom_node_arity (casenod);
+      momitem_t *casblockitm = NULL;
+      if (casconnitm == MOM_PREDEFINED_NAMED (case) && caselen == 2)
+        {
+          momvalue_t casitmv = mom_node_nth (casenod, 0);
+          momitem_t *casitm =
+            cjit_get_item_constant_mom (cj, stmtitm, casitmv);
+          if (mom_attributes_find_entry (tb, casitm))
+            CJIT_ERROR_MOM (cj,
+                            "scan_stmt_item_switch: item_switch statement %s"
+                            " has case #%d: %s with duplicate item %s",
+                            mom_item_cstring (stmtitm),
+                            casix,
+                            mom_output_gcstring (casev),
+                            mom_item_cstring (casitm));
+          tb = mom_attributes_put (tb, casitm, &casev);
+          casblockitm = mom_value_to_item (mom_node_nth (casenod, 1));
+          if (!casblockitm)
+            goto badcase_lab;
+        }
+      else
+      badcase_lab:
+        CJIT_ERROR_MOM (cj,
+                        "scan_stmt_item_switch: item_switch statement %s"
+                        " has invalid case #%d: %s",
+                        mom_item_cstring (stmtitm),
+                        casix, mom_output_gcstring (casev));
+      cjit_lock_item_mom (cj, casblockitm);
+      if (casblockitm->itm_kind != MOM_PREDEFINED_NAMED (block))
+        CJIT_ERROR_MOM (cj,
+                        "scan_stmt_item_switch: invalid item_switch statement %s"
+                        " bad case#%d %s with bad block %s",
+                        mom_item_cstring (stmtitm), casix,
+                        mom_output_gcstring (casev),
+                        mom_item_cstring (casblockitm));
+      cjit_scan_block_next_mom (cj, casblockitm, nextitm, nextpos);
+    }
+  if (nextitm)
+    {
+      cjit_lock_item_mom (cj, nextitm);
+      if (nextitm->itm_kind == MOM_PREDEFINED_NAMED (block))
+        {
+          momitem_t *nextstmtitm =
+            cjit_get_statement_mom (cj, nextitm, nextpos + 1);
+          if (nextstmtitm)
+            {
+              cjit_add_basic_block_stmt_leader_mom (cj, nextstmtitm, nextitm,
+                                                    nextpos + 1);
+            }
+        }
+    }
 }                               // end of cjit_scan_stmt_item_switch_next_mom
 
 
