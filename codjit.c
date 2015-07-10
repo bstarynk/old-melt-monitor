@@ -1488,6 +1488,7 @@ the `block` attribute of that statement.
          momspa_predefined) ? stmtitm->itm_space : momspa_transient;
       mom_item_unsync_put_attribute (stmtitm, MOM_PREDEFINED_NAMED (block),
                                      mom_itemv (blockitm));
+      cjit_lock_item_mom (cj, blockitm);
     }
   cjit_lock_item_mom (cj, blockitm);
   if (blockitm->itm_kind != MOM_PREDEFINED_NAMED (block))
@@ -1544,7 +1545,7 @@ cjit_scan_stmt_block_next_mom (struct codejit_mom_st *cj,
   unsigned stmtlen = mom_unsync_item_components_count (stmtitm);
   if (stmtlen < 2)
     CJIT_ERROR_MOM (cj,
-                    "scan_stmt_code: invalid block statement %s",
+                    "scan_stmt_block: invalid block statement %s",
                     mom_item_cstring (stmtitm));
   for (unsigned six = 2; six < stmtlen; six++)
     {
@@ -1554,7 +1555,7 @@ cjit_scan_stmt_block_next_mom (struct codejit_mom_st *cj,
           || (cjit_lock_item_mom (cj, substmtitm),
               substmtitm->itm_kind != MOM_PREDEFINED_NAMED (code_statement)))
         CJIT_ERROR_MOM (cj,
-                        "scan_stmt_code: invalid block statement %s with bad substmt#%d %s",
+                        "scan_stmt_block: invalid block statement %s with bad substmt#%d %s",
                         mom_item_cstring (stmtitm), six,
                         mom_output_gcstring (substmtv));
     };
@@ -1568,7 +1569,8 @@ cjit_scan_stmt_block_next_mom (struct codejit_mom_st *cj,
         (stmtitm->itm_space > momspa_transient
          && stmtitm->itm_space <
          momspa_predefined) ? stmtitm->itm_space : momspa_transient;
-      mom_unsync_item_put_nth_component (stmtitm, 1, mom_itemv(blockitm));
+      mom_unsync_item_put_nth_component (stmtitm, 1, mom_itemv (blockitm));
+      cjit_lock_item_mom (cj, blockitm);
     }
   momvalue_t vblockbind =       //
     mom_attributes_find_value (cj->cj_funbind, blockitm);
@@ -1612,11 +1614,115 @@ cjit_scan_stmt_loop_next_mom (struct codejit_mom_st *cj,
                               momitem_t *stmtitm, momitem_t *nextitm,
                               int nextpos)
 {
+  /**
+* `loop` *blockitem* *sub-statement* ... like a `block` statement, for
+an infinite loop of given block item, but the block is explicitly
+given - if it is nil, it becomes created and stored as the component
+#1.
+   **/
   assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
   unsigned stmtlen = mom_unsync_item_components_count (stmtitm);
-#warning cjit_scan_stmt_loop_next_mom unimplemented
-  MOM_FATAPRINTF ("cjit_scan_stmt_loop_next_mom unimplemented stmtitm=%s",
-                  mom_item_cstring (stmtitm));
+  if (stmtlen < 2)
+    CJIT_ERROR_MOM (cj,
+                    "scan_stmt_loop: invalid loop statement %s",
+                    mom_item_cstring (stmtitm));
+  for (unsigned six = 2; six < stmtlen; six++)
+    {
+      momvalue_t substmtv = mom_raw_item_get_indexed_component (stmtitm, six);
+      momitem_t *substmtitm = mom_value_to_item (substmtv);
+      if (!substmtitm
+          || (cjit_lock_item_mom (cj, substmtitm),
+              substmtitm->itm_kind != MOM_PREDEFINED_NAMED (code_statement)))
+        CJIT_ERROR_MOM (cj,
+                        "scan_stmt_loop: invalid loop statement %s with bad substmt#%d %s",
+                        mom_item_cstring (stmtitm), six,
+                        mom_output_gcstring (substmtv));
+    };
+  momitem_t *blockitm =         //
+    mom_value_to_item (mom_raw_item_get_indexed_component (stmtitm, 1));
+  if (!blockitm)
+    {
+      blockitm = mom_make_anonymous_item ();
+      blockitm->itm_kind = MOM_PREDEFINED_NAMED (block);
+      blockitm->itm_space =     //
+        (stmtitm->itm_space > momspa_transient
+         && stmtitm->itm_space <
+         momspa_predefined) ? stmtitm->itm_space : momspa_transient;
+      mom_unsync_item_put_nth_component (stmtitm, 1, mom_itemv (blockitm));
+      cjit_lock_item_mom (cj, blockitm);
+    }
+  momvalue_t vblockbind =       //
+    mom_attributes_find_value (cj->cj_funbind, blockitm);
+  if (vblockbind.typnum != momty_null)
+    CJIT_ERROR_MOM (cj, "scan_stmt_loop: invalid loop statement %s"
+                    " with block %s already bound to %s",
+                    mom_item_cstring (stmtitm), mom_item_cstring (blockitm),
+                    mom_output_gcstring (vblockbind));
+  momitem_t *lastjumpitm = NULL;
+  {
+    unsigned blocklen = mom_unsync_item_components_count (blockitm);
+    unsigned laststmtlen = 0;
+    momitem_t *laststmtitm = (blocklen > 0)     //
+      ?
+      mom_value_to_item (mom_raw_item_get_indexed_component
+                         (blockitm, blocklen - 1)) : NULL;
+    if (laststmtitm
+        && (cjit_lock_item_mom (cj, laststmtitm),
+            laststmtitm->itm_kind == MOM_PREDEFINED_NAMED (code_statement))
+        && (laststmtlen = mom_unsync_item_components_count (laststmtitm)) == 2
+        &&
+        (mom_value_to_item
+         (mom_raw_item_get_indexed_component (laststmtitm, 0)) ==
+         MOM_PREDEFINED_NAMED (jump))
+        &&
+        (mom_value_to_item
+         (mom_raw_item_get_indexed_component (laststmtitm, 1)) == blockitm))
+      lastjumpitm = laststmtitm;
+  }
+  if (!lastjumpitm)
+    {
+      lastjumpitm = mom_make_anonymous_item ();
+      lastjumpitm->itm_kind = MOM_PREDEFINED_NAMED (code_statement);
+      lastjumpitm->itm_space =  //
+        (blockitm->itm_space > momspa_transient
+         && blockitm->itm_space <
+         momspa_predefined) ? blockitm->itm_space : momspa_transient;
+    }
+  cjit_lock_item_mom (cj, lastjumpitm);
+  lastjumpitm->itm_comps = mom_components_reserve (NULL, 2);
+  lastjumpitm->itm_comps =      //
+    mom_components_append1 (lastjumpitm->itm_comps,
+                            mom_itemv (MOM_PREDEFINED_NAMED (jump)));
+  lastjumpitm->itm_comps =      //
+    mom_components_append1 (lastjumpitm->itm_comps, mom_itemv (blockitm));
+  blockitm->itm_comps = mom_components_reserve (NULL, stmtlen - 1);
+  for (unsigned six = 2; six < stmtlen; six++)
+    {
+      momvalue_t substmtv = mom_raw_item_get_indexed_component (stmtitm, six);
+      momitem_t *substmtitm = mom_value_to_item (substmtv);
+      assert (substmtitm && cjit_is_locked_item_mom (cj, substmtitm)
+              && substmtitm->itm_kind ==
+              MOM_PREDEFINED_NAMED (code_statement));
+      blockitm->itm_comps =
+        mom_components_append1 (blockitm->itm_comps, mom_itemv (substmtitm));
+    }
+  blockitm->itm_comps =
+    mom_components_append1 (blockitm->itm_comps, mom_itemv (lastjumpitm));
+  cjit_scan_block_next_mom (cj, blockitm, nextitm, nextpos);
+  if (nextitm)
+    {
+      cjit_lock_item_mom (cj, nextitm);
+      if (nextitm->itm_kind == MOM_PREDEFINED_NAMED (block))
+        {
+          momitem_t *nextstmtitm =
+            cjit_get_statement_mom (cj, nextitm, nextpos + 1);
+          if (nextstmtitm)
+            {
+              cjit_add_basic_block_stmt_leader_mom (cj, nextstmtitm, nextitm,
+                                                    nextpos + 1);
+            }
+        }
+    }
 }                               // end of cjit_scan_stmt_loop_next_mom
 
 static void
