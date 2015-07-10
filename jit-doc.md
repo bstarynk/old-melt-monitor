@@ -84,10 +84,12 @@ leader (like blocks in C). An implicit block is then made and stored in
 the `block` attribute of that statement.
 
 * `block` *blockitem* *sub-statement* ... likewise, but the block is
-  explicitly given.
+  explicitly given - if it is nil, it becomes created and stored as
+  the component #1
 
 * `loop` *blockitem* *sub-statement* ... likewise, for an infinite
-loop of given block item, but the block is explicitly given.
+loop of given block item, but the block is explicitly given - if it is
+nil, it becomes created and stored as the component #1.
 
 * `break` *blockitem* to jump to the next instruction after the given block.
 
