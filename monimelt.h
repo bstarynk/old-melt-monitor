@@ -186,7 +186,8 @@ extern void *GC_calloc (size_t nbelem, size_t elsiz);
 // we handle specially "tiny" data, e.g. by stack-allocating temporories.
 #define MOM_TINY_MAX 8
 
-#define MOM_PATH_MAX 256
+// see http://programmers.stackexchange.com/q/289427/40065 
+#define MOM_PATH_MAX 384 
 
 
 /// two prefixes known by our Makefile!
