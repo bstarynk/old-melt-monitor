@@ -722,6 +722,12 @@ cjit_scan_function_variables_mom (struct codejit_mom_st *cj,
 static momitem_t *cjit_type_of_scanned_expr_mom (struct codejit_mom_st *cj,
                                                  const momvalue_t vexpr);
 
+static momitem_t *cjit_type_of_scanned_node_mom (struct codejit_mom_st *cj,
+                                                 const momnode_t *nod);
+
+static momitem_t *cjit_type_of_scanned_item_mom (struct codejit_mom_st *cj,
+                                                 momitem_t *itm);
+
 static void
 cjit_scan_block_next_mom (struct codejit_mom_st *cj,
                           momitem_t *blockitm, momitem_t *nextitm,
@@ -1816,8 +1822,49 @@ cjit_type_of_scanned_expr_mom (struct codejit_mom_st *cj,
                                const momvalue_t vexpr)
 {
   assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
-#warning cjit_type_of_scanned_expr_mom unimplemented
-  MOM_FATAPRINTF
-    ("cjit_type_of_scanned_expr_mom %s unimplemented",
-     mom_output_gcstring (vexpr));
+  switch (vexpr.typnum)
+    {
+    case momty_null:
+      return NULL;
+    case momty_int:
+      return MOM_PREDEFINED_NAMED (integer);
+    case momty_double:
+      return MOM_PREDEFINED_NAMED (double);
+    case momty_node:
+      return cjit_type_of_scanned_node_mom (cj, vexpr.vnode);
+    case momty_item:
+      return cjit_type_of_scanned_item_mom (cj, vexpr.vitem);
+    case momty_set:
+    case momty_tuple:
+    default:
+      CJIT_ERROR_MOM (cj,
+                      "type_of_scanned_expr: bad expression %s in statement %s in block %s in function %s",
+                      mom_output_gcstring (vexpr),
+                      mom_item_cstring (cj->cj_curstmtitm),
+                      mom_item_cstring (cj->cj_curblockitm),
+                      mom_item_cstring (cj->cj_curfunitm));
+    }
 }                               /* end of cjit_type_of_scanned_expr_mom */
+
+
+static momitem_t *
+cjit_type_of_scanned_node_mom (struct codejit_mom_st *cj,
+                               const momnode_t *nod)
+{
+  momvalue_t nodev = mom_nodev (nod);
+#warning cjit_type_of_scanned_node_mom unimplemented
+  MOM_FATAPRINTF
+    ("cjit_type_of_scanned_node_mom %s unimplemented",
+     mom_output_gcstring (nodev));
+}                               /* end of cjit_type_of_scanned_node_mom */
+
+
+
+static momitem_t *
+cjit_type_of_scanned_item_mom (struct codejit_mom_st *cj, momitem_t *itm)
+{
+#warning cjit_type_of_scanned_item_mom unimplemented
+  MOM_FATAPRINTF
+    ("cjit_type_of_scanned_item_mom %s unimplemented",
+     mom_item_cstring (itm));
+}                               /* end of cjit_type_of_scanned_item_mom */
