@@ -187,7 +187,7 @@ extern void *GC_calloc (size_t nbelem, size_t elsiz);
 #define MOM_TINY_MAX 8
 
 // see http://programmers.stackexchange.com/q/289427/40065 
-#define MOM_PATH_MAX 384 
+#define MOM_PATH_MAX 384
 
 
 /// two prefixes known by our Makefile!

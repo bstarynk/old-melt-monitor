@@ -44,6 +44,8 @@ struct codejit_mom_st
   struct momhashset_st *cj_funconstset; /* the set of constant items */
   struct momhashset_st *cj_funclosedset;        /* the set of closed items */
   struct momattributes_st *cj_funleadattr;      /* associate for leaders of basic blocks */
+  struct momitem_t *cj_curblockitm;
+  struct momitem_t *cj_curstmtitm;
 };
 
 
@@ -152,13 +154,6 @@ static void
 cjit_scan_block_next_mom (struct codejit_mom_st *cj,
                           momitem_t *blockitm, momitem_t *nextitm,
                           int nextpos);
-
-static void
-cjit_scan_statement_next_mom (struct codejit_mom_st *cj,
-                              momitem_t *stmtitm, momitem_t *nextitm,
-                              int nextpos)
-{
-}
 
 bool
   momfunc_1itm_to_val__generate_jit_module
@@ -1001,6 +996,8 @@ momfunc_1itm_to_void__jitdo_scan_block (const
     CJIT_ERROR_MOM (cj,
                     "jitdo_scan_block: invalid blockitm %s",
                     mom_item_cstring (blockitm));
+  cj->cj_curblockitm = blockitm;
+  cj->cj_curstmtitm = NULL;
   unsigned nbstmt = mom_unsync_item_components_count (blockitm);
   momitem_t **stmtarr = MOM_GC_ALLOC ("stmtarr",
                                       (nbstmt + 1) * sizeof (momitem_t *));
@@ -1018,6 +1015,7 @@ momfunc_1itm_to_void__jitdo_scan_block (const
                         "jitdo_scan_block: in blockitm %s invalid statement #%d %s"
                         " of length %u", mom_item_cstring (blockitm), six,
                         mom_output_gcstring (curstmtv), stmtlen);
+      cj->cj_curstmtitm = curstmtitm;
       momvalue_t curopv = mom_raw_item_get_indexed_component (curstmtitm, 0);
       momitem_t *curopitm =     //
         mom_value_to_item (curopv);
@@ -1085,9 +1083,10 @@ momfunc_1itm_to_void__jitdo_scan_block (const
         otherwiseoplab:
           break;
         }
+      cj->cj_curstmtitm = NULL;
     }
-
-#warning jitdo_scan_block unimplemented
+  cj->cj_curblockitm = NULL;
+  cj->cj_curstmtitm = NULL;
 }                               /* end of momfunc_1itm_to_void__jitdo_scan_block */
 
 
