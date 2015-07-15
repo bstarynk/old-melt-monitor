@@ -102,7 +102,33 @@ nil, it becomes created and stored as the component #1.
   *argument-expr* ... *else-block* ; if the application fails, the
   *final* else block is executed so it is a leader.
 
+
+
+## expressions
+
+Each expression has a type, reified as some item of `type` kind
+(e.g. `integer`, `double`, `item`, `value` ....)
+
+### predefined unary operators
+
+* `jit_abs` for the absolute value of the numerical `integer` or `double`
+  argument. Uses [GCC_JIT_UNARY_OP_ABS][] from GCCJIT.
+
+* `jit_minus` for the opposite numerical value (like unary `-` in C) of the numerical
+  argument. Uses [GCC_JIT_UNARY_OP_MINUS][] from GCCJIT.
+
+* `jit_negate` for the logical negation (like unary `!` in C) of the argument.
+Uses [GCC_JIT_UNARY_OP_LOGICAL_NEGATE][] from GCCJIT.
+
+* `jit_bitnot` for the bitwise not (like unary `~` in C) of the argument.
+Uses [GCC_JIT_UNARY_OP_BITWISE_NEGATE][] from GCCJIT.
+
 [markdown]: http://daringfireball.net/projects/markdown/syntax
 "markdown syntax"
 
 [basic blocks]: http://en.wikipedia.org/wiki/Basic_block
+
+[GCC_JIT_UNARY_OP_ABS]: https://gcc.gnu.org/onlinedocs/jit/topics/expressions.html#GCC_JIT_UNARY_OP_ABS
+
+[GCC_JIT_UNARY_OP_MINUS]: https://gcc.gnu.org/onlinedocs/jit/topics/expressions.html#GCC_JIT_UNARY_OP_MINUS
+

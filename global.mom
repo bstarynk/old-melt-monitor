@@ -1830,6 +1830,34 @@
 ..
 
 
+** jit_abs   ////// PREDEFINED
+{
+  * comment  "unary absolute-value operator for JIT" }
+ 
+..
+
+
+** jit_bitnot   ////// PREDEFINED
+{
+  * comment  "unary bitwise not operator for JIT" }
+ 
+..
+
+
+** jit_minus   ////// PREDEFINED
+{
+  * comment  "unary minus operator for JIT" }
+ 
+..
+
+
+** jit_negate   ////// PREDEFINED
+{
+  * comment  "unary bitwise negate operator for JIT" }
+ 
+..
+
+
 ** jitdo_scan_block   ////// PREDEFINED
 {
   * comment  "JIT todo function to scan a block" }

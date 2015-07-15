@@ -1851,6 +1851,8 @@ static momitem_t *
 cjit_type_of_scanned_node_mom (struct codejit_mom_st *cj,
                                const momnode_t *nod)
 {
+  assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
+  assert (nod != NULL);
   momvalue_t nodev = mom_nodev (nod);
 #warning cjit_type_of_scanned_node_mom unimplemented
   MOM_FATAPRINTF
