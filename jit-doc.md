@@ -126,6 +126,8 @@ Uses [`GCC_JIT_UNARY_OP_BITWISE_NEGATE`][GCCJITUNARYOPBITWISENEGATE] from GCCJIT
 GCCJIT.
 
 
+### predefined binary operators
+
 [markdown]: http://daringfireball.net/projects/markdown/syntax
 "markdown syntax"
 

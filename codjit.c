@@ -1861,44 +1861,47 @@ cjit_type_of_scanned_node_mom (struct codejit_mom_st *cj,
   switch (mom_item_hash (connitm))
     {
     case MOM_CASE_PREDEFINED_NAMED (jit_abs, connitm, otherwiseoplab):
-      if (arity == 1 && (((typarg0itm   //
-                           = cjit_type_of_scanned_expr_mom (cj,
-                                                            mom_node_nth (nod,
-                                                                          0)))
-                          == MOM_PREDEFINED_NAMED (integer))
-                         || typarg0itm == MOM_PREDEFINED_NAMED (double)))
+      if (arity == 1            //
+          && (((typarg0itm      //
+                = cjit_type_of_scanned_expr_mom (cj,
+                                                 mom_node_nth (nod,
+                                                               0)))) != NULL)
+          && (typarg0itm == MOM_PREDEFINED_NAMED (integer)
+              || typarg0itm == MOM_PREDEFINED_NAMED (double)))
           return typarg0itm;
       else
         goto badnode_lab;
     case MOM_CASE_PREDEFINED_NAMED (jit_bitnot, connitm, otherwiseoplab):
-      if (arity == 1 && ((typarg0itm    //
-                          = cjit_type_of_scanned_expr_mom (cj,
-                                                           mom_node_nth (nod,
-                                                                         0)))
-                         == MOM_PREDEFINED_NAMED (integer)))
+      if (arity == 1            //
+          && ((typarg0itm       //
+               = cjit_type_of_scanned_expr_mom (cj,
+                                                mom_node_nth (nod,
+                                                              0))) != NULL)
+          && typarg0itm == MOM_PREDEFINED_NAMED (integer))
         return MOM_PREDEFINED_NAMED (integer);
       else
         goto badnode_lab;
     case MOM_CASE_PREDEFINED_NAMED (jit_minus, connitm, otherwiseoplab):
-      if (arity == 1 && (((typarg0itm   //
-                           = cjit_type_of_scanned_expr_mom (cj,
-                                                            mom_node_nth (nod,
-                                                                          0)))
-                          == MOM_PREDEFINED_NAMED (integer))
-                         || typarg0itm == MOM_PREDEFINED_NAMED (double)))
+      if (arity == 1            //
+          && (((typarg0itm      //
+                = cjit_type_of_scanned_expr_mom (cj,
+                                                 mom_node_nth (nod,
+                                                               0)))) != NULL)
+          && (typarg0itm == MOM_PREDEFINED_NAMED (integer)
+              || typarg0itm == MOM_PREDEFINED_NAMED (double)))
           return typarg0itm;
       else
         goto badnode_lab;
     case MOM_CASE_PREDEFINED_NAMED (jit_negate, connitm, otherwiseoplab):
-      if (arity == 1 && (((typarg0itm   //
-                           = cjit_type_of_scanned_expr_mom (cj,
-                                                            mom_node_nth (nod,
-                                                                          0)))
-                          == MOM_PREDEFINED_NAMED (integer))
-                         || typarg0itm == MOM_PREDEFINED_NAMED (double)
-                         || mom_code_compatible_types (typarg0itm,
-                                                       MOM_PREDEFINED_NAMED
-                                                       (item))))
+      if (arity == 1            //
+          && (((typarg0itm      //
+                = cjit_type_of_scanned_expr_mom (cj,
+                                                 mom_node_nth (nod,
+                                                               0)))) != NULL)
+          && (typarg0itm == MOM_PREDEFINED_NAMED (integer)
+              || typarg0itm == MOM_PREDEFINED_NAMED (double)
+              || mom_code_compatible_types (typarg0itm,
+                                            MOM_PREDEFINED_NAMED (item))))
           return typarg0itm;
       else
         goto badnode_lab;
