@@ -1,7 +1,7 @@
 <!-- -*- Markdown -*- -->
 # the JIT inside MELT monitor
 
-This is the `jit-doc.md` file (in [markdown][markdown] syntax) of the MELT monitor.
+This is the `jit-doc.md` file (in [markdown][markdown] syntax) of the MELT monitor. The Just-In-Time translation is using [GCC-JIT][GCCJIT] and needs a recent version (from GCC 5.2 or GCC 6 at least) of GCC.
 
 The source file `codjit.c` contains a just-in-time compilation
 framework, implemented thru the applicable function
@@ -112,23 +112,33 @@ Each expression has a type, reified as some item of `type` kind
 ### predefined unary operators
 
 * `jit_abs` for the absolute value of the numerical `integer` or `double`
-  argument. Uses [GCC_JIT_UNARY_OP_ABS][] from GCCJIT.
-
-* `jit_minus` for the opposite numerical value (like unary `-` in C) of the numerical
-  argument. Uses [GCC_JIT_UNARY_OP_MINUS][] from GCCJIT.
-
-* `jit_negate` for the logical negation (like unary `!` in C) of the argument.
-Uses [GCC_JIT_UNARY_OP_LOGICAL_NEGATE][] from GCCJIT.
+  argument. Uses [`GCC_JIT_UNARY_OP_ABS`][GCCJITUNARYOPABS] from GCCJIT.
 
 * `jit_bitnot` for the bitwise not (like unary `~` in C) of the argument.
-Uses [GCC_JIT_UNARY_OP_BITWISE_NEGATE][] from GCCJIT.
+Uses [`GCC_JIT_UNARY_OP_BITWISE_NEGATE`][GCCJITUNARYOPBITWISENEGATE] from GCCJIT.
+
+* `jit_minus` for the opposite numerical value (like unary `-` in C) of the numerical
+  argument. Uses [`GCC_JIT_UNARY_OP_MINUS`][GCCJITUNARYOPMINUS] from GCCJIT.
+
+* `jit_negate` for the logical negation (like unary `!` in C) of the
+`integer`, `double`, or `item` argument.  Uses
+[`GCC_JIT_UNARY_OP_LOGICAL_NEGATE`][GCCJITUNARYOPLOGICALNEGATE] from
+GCCJIT.
+
 
 [markdown]: http://daringfireball.net/projects/markdown/syntax
 "markdown syntax"
 
 [basic blocks]: http://en.wikipedia.org/wiki/Basic_block
 
-[GCC_JIT_UNARY_OP_ABS]: https://gcc.gnu.org/onlinedocs/jit/topics/expressions.html#GCC_JIT_UNARY_OP_ABS
+[GCCJIT]: https://gcc.gnu.org/onlinedocs/jit/
 
-[GCC_JIT_UNARY_OP_MINUS]: https://gcc.gnu.org/onlinedocs/jit/topics/expressions.html#GCC_JIT_UNARY_OP_MINUS
+[GCCJITUNARYOPABS]: https://gcc.gnu.org/onlinedocs/jit/topics/expressions.html#GCC_JIT_UNARY_OP_ABS
+
+[GCCJITUNARYOPMINUS]: https://gcc.gnu.org/onlinedocs/jit/topics/expressions.html#GCC_JIT_UNARY_OP_MINUS
+
+
+[GCCJITUNARYOPLOGICALNEGATE]: https://gcc.gnu.org/onlinedocs/jit/topics/expressions.html#GCC_JIT_UNARY_OP_LOGICAL_NEGATE
+
+[GCCJITUNARYOPBITWISENEGATE]: https://gcc.gnu.org/onlinedocs/jit/topics/expressions.html#GCC_JIT_UNARY_OP_LOGICAL_NEGATE
 

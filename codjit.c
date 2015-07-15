@@ -44,8 +44,8 @@ struct codejit_mom_st
   struct momhashset_st *cj_funconstset; /* the set of constant items */
   struct momhashset_st *cj_funclosedset;        /* the set of closed items */
   struct momattributes_st *cj_funleadattr;      /* associate for leaders of basic blocks */
-  struct momitem_t *cj_curblockitm;
-  struct momitem_t *cj_curstmtitm;
+  momitem_t *cj_curblockitm;
+  momitem_t *cj_curstmtitm;
 };
 
 
@@ -1043,44 +1043,44 @@ momfunc_1itm_to_void__jitdo_scan_block (const
          mom_item_cstring (curnextitm), curnextpos);
       switch (mom_item_hash (curopitm))
         {
-          case MOM_PREDEFINED_NAMED_CASE (if, curopitm, otherwiseoplab)
+        case MOM_CASE_PREDEFINED_NAMED (int_switch, curopitm, otherwiseoplab):
+          cjit_scan_stmt_int_switch_next_mom (cj, curstmtitm, curnextitm,
+                                              curnextpos);
+          break;
+        case MOM_CASE_PREDEFINED_NAMED (item_switch, curopitm, otherwiseoplab):
+          cjit_scan_stmt_item_switch_next_mom (cj, curstmtitm, curnextitm,
+                                               curnextpos);
+          break;
+          case MOM_CASE_PREDEFINED_NAMED (if, curopitm, otherwiseoplab)
         :
             cjit_scan_stmt_if_next_mom (cj, curstmtitm, curnextitm,
                                         curnextpos);
           break;
-        case MOM_PREDEFINED_NAMED_CASE (int_switch, curopitm, otherwiseoplab):
-          cjit_scan_stmt_int_switch_next_mom (cj, curstmtitm, curnextitm,
-                                              curnextpos);
-          break;
-        case MOM_PREDEFINED_NAMED_CASE (item_switch, curopitm, otherwiseoplab):
-          cjit_scan_stmt_item_switch_next_mom (cj, curstmtitm, curnextitm,
-                                               curnextpos);
-          break;
-        case MOM_PREDEFINED_NAMED_CASE (jump, curopitm, otherwiseoplab):
+        case MOM_CASE_PREDEFINED_NAMED (jump, curopitm, otherwiseoplab):
           cjit_scan_stmt_jump_next_mom (cj, curstmtitm, curnextitm,
                                         curnextpos);
           break;
-        case MOM_PREDEFINED_NAMED_CASE (code, curopitm, otherwiseoplab):
+        case MOM_CASE_PREDEFINED_NAMED (code, curopitm, otherwiseoplab):
           cjit_scan_stmt_code_next_mom (cj, curstmtitm, curnextitm,
                                         curnextpos);
           break;
-        case MOM_PREDEFINED_NAMED_CASE (block, curopitm, otherwiseoplab):
+        case MOM_CASE_PREDEFINED_NAMED (block, curopitm, otherwiseoplab):
           cjit_scan_stmt_block_next_mom (cj, curstmtitm, curnextitm,
                                          curnextpos);
           break;
-        case MOM_PREDEFINED_NAMED_CASE (loop, curopitm, otherwiseoplab):
+        case MOM_CASE_PREDEFINED_NAMED (loop, curopitm, otherwiseoplab):
           cjit_scan_stmt_loop_next_mom (cj, curstmtitm, curnextitm,
                                         curnextpos);
           break;
-        case MOM_PREDEFINED_NAMED_CASE (break, curopitm, otherwiseoplab):
+        case MOM_CASE_PREDEFINED_NAMED (break, curopitm, otherwiseoplab):
           cjit_scan_stmt_break_next_mom (cj, curstmtitm, curnextitm,
                                          curnextpos);
           break;
-        case MOM_PREDEFINED_NAMED_CASE (apply, curopitm, otherwiseoplab):
+        case MOM_CASE_PREDEFINED_NAMED (apply, curopitm, otherwiseoplab):
           cjit_scan_stmt_apply_next_mom (cj, curstmtitm, curnextitm,
                                          curnextpos);
           break;
-        case MOM_PREDEFINED_NAMED_CASE (apply_else, curopitm, otherwiseoplab):
+        case MOM_CASE_PREDEFINED_NAMED (apply_else, curopitm, otherwiseoplab):
           cjit_scan_stmt_apply_else_next_mom (cj, curstmtitm, curnextitm,
                                               curnextpos);
           break;
@@ -1854,6 +1854,66 @@ cjit_type_of_scanned_node_mom (struct codejit_mom_st *cj,
   assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
   assert (nod != NULL);
   momvalue_t nodev = mom_nodev (nod);
+  unsigned arity = mom_node_arity (nod);
+  momitem_t *connitm = mom_node_conn (nod);
+  momitem_t *typarg0itm = NULL;
+  momitem_t *typarg1itm = NULL;
+  switch (mom_item_hash (connitm))
+    {
+    case MOM_CASE_PREDEFINED_NAMED (jit_abs, connitm, otherwiseoplab):
+      if (arity == 1 && (((typarg0itm   //
+                           = cjit_type_of_scanned_expr_mom (cj,
+                                                            mom_node_nth (nod,
+                                                                          0)))
+                          == MOM_PREDEFINED_NAMED (integer))
+                         || typarg0itm == MOM_PREDEFINED_NAMED (double)))
+          return typarg0itm;
+      else
+        goto badnode_lab;
+    case MOM_CASE_PREDEFINED_NAMED (jit_bitnot, connitm, otherwiseoplab):
+      if (arity == 1 && ((typarg0itm    //
+                          = cjit_type_of_scanned_expr_mom (cj,
+                                                           mom_node_nth (nod,
+                                                                         0)))
+                         == MOM_PREDEFINED_NAMED (integer)))
+        return MOM_PREDEFINED_NAMED (integer);
+      else
+        goto badnode_lab;
+    case MOM_CASE_PREDEFINED_NAMED (jit_minus, connitm, otherwiseoplab):
+      if (arity == 1 && (((typarg0itm   //
+                           = cjit_type_of_scanned_expr_mom (cj,
+                                                            mom_node_nth (nod,
+                                                                          0)))
+                          == MOM_PREDEFINED_NAMED (integer))
+                         || typarg0itm == MOM_PREDEFINED_NAMED (double)))
+          return typarg0itm;
+      else
+        goto badnode_lab;
+    case MOM_CASE_PREDEFINED_NAMED (jit_negate, connitm, otherwiseoplab):
+      if (arity == 1 && (((typarg0itm   //
+                           = cjit_type_of_scanned_expr_mom (cj,
+                                                            mom_node_nth (nod,
+                                                                          0)))
+                          == MOM_PREDEFINED_NAMED (integer))
+                         || typarg0itm == MOM_PREDEFINED_NAMED (double)
+                         || mom_code_compatible_types (typarg0itm,
+                                                       MOM_PREDEFINED_NAMED
+                                                       (item))))
+          return typarg0itm;
+      else
+        goto badnode_lab;
+    otherwiseoplab:
+    default:
+      break;
+    }
+badnode_lab:
+  CJIT_ERROR_MOM (cj,
+                  "type of scanned node: invalid nodev %s in statement %s of block %s of function %s",
+                  mom_output_gcstring (nodev),
+                  mom_item_cstring (cj->cj_curstmtitm),
+                  mom_item_cstring (cj->cj_curblockitm),
+                  mom_item_cstring (cj->cj_curfunitm));
+
 #warning cjit_type_of_scanned_node_mom unimplemented
   MOM_FATAPRINTF
     ("cjit_type_of_scanned_node_mom %s unimplemented",

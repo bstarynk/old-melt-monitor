@@ -1590,10 +1590,10 @@ enum mom_predefhash_en
 
    momitem_t*itm = something();
    switch (mom_item_hash(itm)) {
-     case MOM_PREDEFINED_NAMED_CASE(association,itm,otherwiselab):
+     case MOM_CASE_PREDEFINED_NAMED(association,itm,otherwiselab):
        do_something_for_association(itm);
        break;
-     case MOM_PREDEFINED_NAMED_CASE(double,itm,otherwiselab):
+     case MOM_CASE_PREDEFINED_NAMED(double,itm,otherwiselab):
        do_something_for_double(itm);
        break;
      otherwiselab;
@@ -1601,35 +1601,35 @@ enum mom_predefhash_en
        do_something_otherwise(itm);
    }
 
-Notice that it is wrong to use two MOM_PREDEFINED_NAMED_CASE
+Notice that it is wrong to use two MOM_CASE_PREDEFINED_NAMED
 consecutively, each case should have its own statement[s], perhaps a
 goto...
 ***/
 
-#define MOM_PREDEFINED_NAMED_CASE_AT(Nam,Itm,Def,Lin)	\
+#define MOM_CASE_PREDEFINED_NAMED_AT(Nam,Itm,Def,Lin)	\
   (momhash_t)MOM_HASH_PREDEFINED_NAMED(Nam):		\
   if ((Itm) != MOM_PREDEFINED_NAMED(Nam)) goto Def;	\
   else goto predef_named_##Nam##_l##Lin;		\
   predef_named_##Nam##_l##Lin
 
-#define MOM_PREDEFINED_NAMED_CASE_BIS(Nam,Pit,Def,Lin) \
-  MOM_PREDEFINED_NAMED_CASE_AT(Nam,Pit,Def,Lin)
+#define MOM_CASE_PREDEFINED_NAMED_BIS(Nam,Pit,Def,Lin) \
+  MOM_CASE_PREDEFINED_NAMED_AT(Nam,Pit,Def,Lin)
 
-#define MOM_PREDEFINED_NAMED_CASE(Nam,Pit,Def) \
-  MOM_PREDEFINED_NAMED_CASE_BIS(Nam,Pit,Def,__LINE__)
+#define MOM_CASE_PREDEFINED_NAMED(Nam,Pit,Def) \
+  MOM_CASE_PREDEFINED_NAMED_BIS(Nam,Pit,Def,__LINE__)
 
 
-#define MOM_PREDEFINED_ANONYMOUS_CASE_AT(Id,Itm,Def,Lin)	\
+#define MOM_CASE_PREDEFINED_ANONYMOUS_AT(Id,Itm,Def,Lin)	\
   (momhash_t)MOM_HASH_PREDEFINED_ANONYMOUS(Id):			\
   if ((Itm) != MOM_PREDEFINED_ANONYMOUS(Id)) goto Def;		\
   else goto predef_anon_##Id##_l##Lin;				\
   predef_anon_##Id##_l##Lin
 
-#define MOM_PREDEFINED_ANONYMOUS_CASE_BIS(Id,Itm,Def,Lin) \
-  MOM_PREDEFINED_ANONYMOUS_CASE_AT(Id,Itm,Def,Lin)
+#define MOM_CASE_PREDEFINED_ANONYMOUS_BIS(Id,Itm,Def,Lin) \
+  MOM_CASE_PREDEFINED_ANONYMOUS_AT(Id,Itm,Def,Lin)
 
-#define MOM_PREDEFINED_ANONYMOUS_CASE(Id,Itm,Def) \
-  MOM_PREDEFINED_ANONYMOUS_CASE_BIS(Id,Pit,Def,__LINE__)
+#define MOM_CASE_PREDEFINED_ANONYMOUS(Id,Itm,Def) \
+  MOM_CASE_PREDEFINED_ANONYMOUS_BIS(Id,Pit,Def,__LINE__)
 
 
 

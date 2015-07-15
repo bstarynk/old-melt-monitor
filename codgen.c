@@ -672,7 +672,7 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
       assert (nodconnitm != NULL);
       switch (mom_item_hash (nodconnitm))
         {
-        case MOM_PREDEFINED_NAMED_CASE (formals, nodconnitm, otherwiseconnlab):
+        case MOM_CASE_PREDEFINED_NAMED (formals, nodconnitm, otherwiseconnlab):
           {
             momvalue_t vres = mom_node_nth (nodbind, 3);
             MOM_DEBUGPRINTF (gencod,
@@ -684,7 +684,7 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
             return mom_value_to_item (vres);
           }
           break;
-        case MOM_PREDEFINED_NAMED_CASE (constants, nodconnitm, otherwiseconnlab):
+        case MOM_CASE_PREDEFINED_NAMED (constants, nodconnitm, otherwiseconnlab):
           {
             momvalue_t vconst = mom_node_nth (nodbind, 2);
             if (mom_value_to_item (vconst) == itm)
@@ -705,7 +705,7 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
               }
           }
           break;
-        case MOM_PREDEFINED_NAMED_CASE (closed, nodconnitm, otherwiseconnlab):
+        case MOM_CASE_PREDEFINED_NAMED (closed, nodconnitm, otherwiseconnlab):
           {
             MOM_DEBUGPRINTF (gencod,
                              "type_of_scanned_item in function %s item %s is closed value",
@@ -714,7 +714,7 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
             return MOM_PREDEFINED_NAMED (value);
           }
           break;
-        case MOM_PREDEFINED_NAMED_CASE (integer, nodconnitm, otherwiseconnlab):
+        case MOM_CASE_PREDEFINED_NAMED (integer, nodconnitm, otherwiseconnlab):
           {
             MOM_DEBUGPRINTF (gencod,
                              "type_of_scanned_item in function %s item %s is integer constant",
@@ -723,7 +723,7 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
             return MOM_PREDEFINED_NAMED (integer);
           }
           break;
-        case MOM_PREDEFINED_NAMED_CASE (variable, nodconnitm, otherwiseconnlab):
+        case MOM_CASE_PREDEFINED_NAMED (variable, nodconnitm, otherwiseconnlab):
           {
             momvalue_t vres = mom_node_nth (nodbind, 2);
             MOM_DEBUGPRINTF (gencod,
@@ -761,7 +761,7 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
                            mom_item_cstring (itm));
   switch (mom_item_hash (itmkind))
     {
-    case MOM_PREDEFINED_NAMED_CASE (closed, itmkind, otherwisekindlab):
+    case MOM_CASE_PREDEFINED_NAMED (closed, itmkind, otherwisekindlab):
       {
         cgen_bind_closed_item_mom (cg, itm);
         MOM_DEBUGPRINTF (gencod,
@@ -771,7 +771,7 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
         return MOM_PREDEFINED_NAMED (value);
       }
       break;
-    case MOM_PREDEFINED_NAMED_CASE (integer, itmkind, otherwisekindlab):
+    case MOM_CASE_PREDEFINED_NAMED (integer, itmkind, otherwisekindlab):
       {
         // an item of kind `integer` should either have a `integer`
         // attribute giving the integer or a `code` string value, or a `code_expansion` value
@@ -831,7 +831,7 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
         return MOM_PREDEFINED_NAMED (integer);
       }
       break;
-    case MOM_PREDEFINED_NAMED_CASE (variable, itmkind, otherwisekindlab):
+    case MOM_CASE_PREDEFINED_NAMED (variable, itmkind, otherwisekindlab):
       {
         momitem_t *itmctyp = NULL;
         itmctyp = mom_value_to_item (mom_item_unsync_get_attribute (itm,
@@ -859,7 +859,7 @@ cgen_type_of_scanned_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
       break;
     default:
     otherwisekindlab:
-    case MOM_PREDEFINED_NAMED_CASE (value, itmkind, otherwisekindlab):
+    case MOM_CASE_PREDEFINED_NAMED (value, itmkind, otherwisekindlab):
       // handle the item as a constant
       {
         momvalue_t valconst = MOM_NONEV;
@@ -1045,7 +1045,7 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
   switch (mom_item_hash (itmop))
     {
       ////////////////
-    case MOM_PREDEFINED_NAMED_CASE (jump, itmop, otherwiseoplab):
+    case MOM_CASE_PREDEFINED_NAMED (jump, itmop, otherwiseoplab):
       {                         /// jump <blockitm>
         momitem_t *itmjump = NULL;
         if (stmtlen != 2
@@ -1063,7 +1063,7 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
       }
       break;
       ////////////////
-    case MOM_PREDEFINED_NAMED_CASE (success, itmop, otherwiseoplab):
+    case MOM_CASE_PREDEFINED_NAMED (success, itmop, otherwiseoplab):
       {                         /// success
         if (stmtlen != 1)
           CGEN_ERROR_RETURN_MOM (cg,
@@ -1075,7 +1075,7 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
       }
       break;
       ////////////////
-    case MOM_PREDEFINED_NAMED_CASE (fail, itmop, otherwiseoplab):
+    case MOM_CASE_PREDEFINED_NAMED (fail, itmop, otherwiseoplab):
       {                         /// fail
         if (stmtlen != 1)
           CGEN_ERROR_RETURN_MOM (cg,
@@ -1087,7 +1087,7 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
       }
       break;
       ////////////////
-    case MOM_PREDEFINED_NAMED_CASE (set, itmop, otherwiseoplab):
+    case MOM_CASE_PREDEFINED_NAMED (set, itmop, otherwiseoplab):
       {                         /// set <lvar> <rexpr>
         momitem_t *itmlvar = NULL;
         if (stmtlen != 3
@@ -1174,7 +1174,7 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
       }
       break;
       ////////////////
-    case MOM_PREDEFINED_NAMED_CASE (chunk, itmop, otherwiseoplab):
+    case MOM_CASE_PREDEFINED_NAMED (chunk, itmop, otherwiseoplab):
       {                         /// chunk ...
         for (unsigned ix = 1; ix < stmtlen && !cg->cg_errormsg; ix++)
           {
@@ -1219,7 +1219,7 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
       }
       break;
       ////////////////
-      case MOM_PREDEFINED_NAMED_CASE (if, itmop, otherwiseoplab)
+      case MOM_CASE_PREDEFINED_NAMED (if, itmop, otherwiseoplab)
     :
         {                       /// if <expr-cond> <block>
           momvalue_t vtestexpr = MOM_NONEV;
@@ -1273,9 +1273,9 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
         }
       break;
       ////////////////
-    case MOM_PREDEFINED_NAMED_CASE (apply, itmop, otherwiseoplab):
+    case MOM_CASE_PREDEFINED_NAMED (apply, itmop, otherwiseoplab):
       goto scanapplyop;
-    case MOM_PREDEFINED_NAMED_CASE (apply_else, itmop, otherwiseoplab):
+    case MOM_CASE_PREDEFINED_NAMED (apply_else, itmop, otherwiseoplab):
     scanapplyop:
       {
         /// apply <signature> <results...> <fun> <args...>
@@ -1292,7 +1292,7 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
       }
       break;
       ////////////////
-    case MOM_PREDEFINED_NAMED_CASE (int_switch, itmop, otherwiseoplab):
+    case MOM_CASE_PREDEFINED_NAMED (int_switch, itmop, otherwiseoplab):
       {                         // int_switch <expr> <case....>
         if (stmtlen < 2)
           CGEN_ERROR_RETURN_MOM (cg,
@@ -1400,7 +1400,7 @@ cgen_scan_statement_first_mom (struct codegen_mom_st *cg, momitem_t *itmstmt)
       };
       break;
       ////////////////
-    case MOM_PREDEFINED_NAMED_CASE (item_switch, itmop, otherwiseoplab):
+    case MOM_CASE_PREDEFINED_NAMED (item_switch, itmop, otherwiseoplab):
       {
         if (stmtlen < 2)
           CGEN_ERROR_RETURN_MOM (cg,
@@ -3076,7 +3076,7 @@ cgen_emit_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
                     mom_item_cstring (itm), mom_output_gcstring (vbind));
   switch (mom_item_hash (natitm))
     {
-    case MOM_PREDEFINED_NAMED_CASE (variable, natitm, otherwisenatlab):
+    case MOM_CASE_PREDEFINED_NAMED (variable, natitm, otherwisenatlab):
       {
         intptr_t varrk = mom_value_to_int (mom_node_nth (bindnod, 1), -1);
         assert (varrk >= 0);
@@ -3084,7 +3084,7 @@ cgen_emit_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
                  (int) varrk, mom_item_cstring (itm));
       }
       break;
-    case MOM_PREDEFINED_NAMED_CASE (formals, natitm, otherwisenatlab):
+    case MOM_CASE_PREDEFINED_NAMED (formals, natitm, otherwisenatlab):
       {
         intptr_t varrk = mom_value_to_int (mom_node_nth (bindnod, 1), -1);
         assert (varrk >= 0);
@@ -3106,7 +3106,7 @@ cgen_emit_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
       }
       break;
       ////
-    case MOM_PREDEFINED_NAMED_CASE (constants, natitm, otherwisenatlab):
+    case MOM_CASE_PREDEFINED_NAMED (constants, natitm, otherwisenatlab):
       {
         intptr_t cstrk = mom_value_to_int (mom_node_nth (bindnod, 1), -1);
         assert (cstrk >= 0);
@@ -3132,7 +3132,7 @@ cgen_emit_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
       }
       break;
       ////
-    case MOM_PREDEFINED_NAMED_CASE (closed, natitm, otherwisenatlab):
+    case MOM_CASE_PREDEFINED_NAMED (closed, natitm, otherwisenatlab):
       {
         intptr_t clork = mom_value_to_int (mom_node_nth (bindnod, 1), -1);
         assert (clork >= 0);
@@ -3140,7 +3140,7 @@ cgen_emit_item_mom (struct codegen_mom_st *cg, momitem_t *itm)
                  mom_item_cstring (itm), (int) clork);
       }
       break;
-    case MOM_PREDEFINED_NAMED_CASE (integer, natitm, otherwisenatlab):
+    case MOM_CASE_PREDEFINED_NAMED (integer, natitm, otherwisenatlab):
       {
         /* for `integer` constant items: bound to node
            ^integer(integer,<intval>) or to
@@ -3347,21 +3347,21 @@ cgen_emit_statement_mom (struct codegen_mom_st *cg, unsigned insix,
   switch (mom_item_hash (opitm))
     {
       ////////////////
-    case MOM_PREDEFINED_NAMED_CASE (set, opitm, otherwiseoplab):
+    case MOM_CASE_PREDEFINED_NAMED (set, opitm, otherwiseoplab):
       {
         cgen_emit_set_statement_mom (cg, insix, stmtitm);
       }
       break;
       ////////////////
-    case MOM_PREDEFINED_NAMED_CASE (chunk, opitm, otherwiseoplab):
+    case MOM_CASE_PREDEFINED_NAMED (chunk, opitm, otherwiseoplab):
       {
         cgen_emit_chunk_statement_mom (cg, insix, stmtitm);
       }
       break;
       ////////////////
-    case MOM_PREDEFINED_NAMED_CASE (apply, opitm, otherwiseoplab):
+    case MOM_CASE_PREDEFINED_NAMED (apply, opitm, otherwiseoplab):
       goto emitapplyop;
-    case MOM_PREDEFINED_NAMED_CASE (apply_else, opitm, otherwiseoplab):
+    case MOM_CASE_PREDEFINED_NAMED (apply_else, opitm, otherwiseoplab):
     emitapplyop:
       {
         cgen_emit_apply_statement_mom (cg, insix, stmtitm,
@@ -3370,38 +3370,38 @@ cgen_emit_statement_mom (struct codegen_mom_st *cg, unsigned insix,
       }
       break;
       ////////////////
-      case MOM_PREDEFINED_NAMED_CASE (if, opitm, otherwiseoplab)
+      case MOM_CASE_PREDEFINED_NAMED (if, opitm, otherwiseoplab)
     :
         {
           cgen_emit_if_statement_mom (cg, insix, stmtitm);
         }
       break;
       ////////////////
-    case MOM_PREDEFINED_NAMED_CASE (int_switch, opitm, otherwiseoplab):
+    case MOM_CASE_PREDEFINED_NAMED (int_switch, opitm, otherwiseoplab):
       {
         cgen_emit_int_switch_statement_mom (cg, insix, stmtitm);
       }
       break;
       ////////////////
-    case MOM_PREDEFINED_NAMED_CASE (item_switch, opitm, otherwiseoplab):
+    case MOM_CASE_PREDEFINED_NAMED (item_switch, opitm, otherwiseoplab):
       {
         cgen_emit_item_switch_statement_mom (cg, insix, stmtitm);
       }
       break;
       ////////////////
-    case MOM_PREDEFINED_NAMED_CASE (jump, opitm, otherwiseoplab):
+    case MOM_CASE_PREDEFINED_NAMED (jump, opitm, otherwiseoplab):
       {
         cgen_emit_jump_statement_mom (cg, insix, stmtitm);
       }
       break;
       ////////////////
-    case MOM_PREDEFINED_NAMED_CASE (success, opitm, otherwiseoplab):
+    case MOM_CASE_PREDEFINED_NAMED (success, opitm, otherwiseoplab):
       {
         cgen_emit_success_statement_mom (cg, insix, stmtitm);
       }
       break;
       ////////////////
-    case MOM_PREDEFINED_NAMED_CASE (fail, opitm, otherwiseoplab):
+    case MOM_CASE_PREDEFINED_NAMED (fail, opitm, otherwiseoplab):
       {
         cgen_emit_fail_statement_mom (cg, insix, stmtitm);
       }
@@ -5514,37 +5514,37 @@ scan_instruction_for_leaders_mom (struct codegen_mom_st *cg,
   unsigned codarity = mom_node_arity (codnod);
   switch (mom_item_hash (codopitm))
     {
-      case MOM_PREDEFINED_NAMED_CASE (if, codopitm, otherwiseoplab)
+      case MOM_CASE_PREDEFINED_NAMED (if, codopitm, otherwiseoplab)
     :
         {
         }
       break;
-    case MOM_PREDEFINED_NAMED_CASE (if_else, codopitm, otherwiseoplab):
+    case MOM_CASE_PREDEFINED_NAMED (if_else, codopitm, otherwiseoplab):
       {
       }
       break;
-    case MOM_PREDEFINED_NAMED_CASE (apply_else, codopitm, otherwiseoplab):
+    case MOM_CASE_PREDEFINED_NAMED (apply_else, codopitm, otherwiseoplab):
       {
       }
       break;
-    case MOM_PREDEFINED_NAMED_CASE (int_switch, codopitm, otherwiseoplab):
-    case MOM_PREDEFINED_NAMED_CASE (item_switch, codopitm, otherwiseoplab):
+    case MOM_CASE_PREDEFINED_NAMED (int_switch, codopitm, otherwiseoplab):
+    case MOM_CASE_PREDEFINED_NAMED (item_switch, codopitm, otherwiseoplab):
       {
       }
       break;
-    case MOM_PREDEFINED_NAMED_CASE (block, codopitm, otherwiseoplab):
+    case MOM_CASE_PREDEFINED_NAMED (block, codopitm, otherwiseoplab):
       {
       }
       break;
-    case MOM_PREDEFINED_NAMED_CASE (continue, codopitm, otherwiseoplab):
+    case MOM_CASE_PREDEFINED_NAMED (continue, codopitm, otherwiseoplab):
       {
       }
       break;
-    case MOM_PREDEFINED_NAMED_CASE (break, codopitm, otherwiseoplab):
+    case MOM_CASE_PREDEFINED_NAMED (break, codopitm, otherwiseoplab):
       {
       }
       break;
-    case MOM_PREDEFINED_NAMED_CASE (jump, codopitm, otherwiseoplab):
+    case MOM_CASE_PREDEFINED_NAMED (jump, codopitm, otherwiseoplab):
       {
       }
       break;
