@@ -1837,9 +1837,44 @@
 ..
 
 
+** jit_bitand   ////// PREDEFINED
+{
+  * comment  "binary bitwise and for JIT" }
+ 
+..
+
+
 ** jit_bitnot   ////// PREDEFINED
 {
   * comment  "unary bitwise not operator for JIT" }
+ 
+..
+
+
+** jit_bitor   ////// PREDEFINED
+{
+  * comment  "binary bitwise or for JIT" }
+ 
+..
+
+
+** jit_bitxor   ////// PREDEFINED
+{
+  * comment  "binary bitwise exclusive-or for JIT" }
+ 
+..
+
+
+** jit_div   ////// PREDEFINED
+{
+  * comment  "binary division for JIT" }
+ 
+..
+
+
+** jit_leftshift   ////// PREDEFINED
+{
+  * comment  "binary leftshift integer operator for JIT" }
  
 ..
 
@@ -1851,9 +1886,44 @@
 ..
 
 
+** jit_mod   ////// PREDEFINED
+{
+  * comment  "binary modulus for JIT" }
+ 
+..
+
+
+** jit_mult   ////// PREDEFINED
+{
+  * comment  "binary multiplication for JIT" }
+ 
+..
+
+
 ** jit_negate   ////// PREDEFINED
 {
   * comment  "unary bitwise negate operator for JIT" }
+ 
+..
+
+
+** jit_plus   ////// PREDEFINED
+{
+  * comment  "binary addition for jit" }
+ 
+..
+
+
+** jit_rightshift   ////// PREDEFINED
+{
+  * comment  "binary rightshift integer operator for JIT" }
+ 
+..
+
+
+** jit_sub   ////// PREDEFINED
+{
+  * comment  "binary substraction for JIT" }
  
 ..
 

@@ -1860,6 +1860,7 @@ cjit_type_of_scanned_node_mom (struct codejit_mom_st *cj,
   momitem_t *typarg1itm = NULL;
   switch (mom_item_hash (connitm))
     {
+      //////////////// unary operations
     case MOM_CASE_PREDEFINED_NAMED (jit_abs, connitm, otherwiseoplab):
       if (arity == 1            //
           && (((typarg0itm      //
@@ -1903,6 +1904,51 @@ cjit_type_of_scanned_node_mom (struct codejit_mom_st *cj,
               || mom_code_compatible_types (typarg0itm,
                                             MOM_PREDEFINED_NAMED (item))))
           return typarg0itm;
+      else
+        goto badnode_lab;
+      //////////////// binary operations
+    case MOM_CASE_PREDEFINED_NAMED (jit_plus, connitm, otherwiseoplab):
+      goto binaryarithmeticop_lab;
+    case MOM_CASE_PREDEFINED_NAMED (jit_sub, connitm, otherwiseoplab):
+      goto binaryarithmeticop_lab;
+    case MOM_CASE_PREDEFINED_NAMED (jit_mult, connitm, otherwiseoplab):
+      goto binaryarithmeticop_lab;
+    case MOM_CASE_PREDEFINED_NAMED (jit_div, connitm, otherwiseoplab):
+      goto binaryarithmeticop_lab;
+    binaryarithmeticop_lab:
+      if (arity == 2            //
+          && (((typarg0itm      //
+                = cjit_type_of_scanned_expr_mom (cj, mom_node_nth (nod, 0)))) != NULL)  //
+          && (((typarg1itm      //
+                = cjit_type_of_scanned_expr_mom (cj, mom_node_nth (nod, 1)))) != NULL)  //
+          && (typarg0itm == typarg1itm) //
+          &&
+          ((typarg0itm == MOM_PREDEFINED_NAMED (integer)
+            || typarg0itm == MOM_PREDEFINED_NAMED (double))))
+          return typarg0itm;
+      else
+        goto badnode_lab;
+    case MOM_CASE_PREDEFINED_NAMED (jit_mod, connitm, otherwiseoplab):
+      goto binaryintegerop_lab;
+    case MOM_CASE_PREDEFINED_NAMED (jit_bitand, connitm, otherwiseoplab):
+      goto binaryintegerop_lab;
+    case MOM_CASE_PREDEFINED_NAMED (jit_bitor, connitm, otherwiseoplab):
+      goto binaryintegerop_lab;
+    case MOM_CASE_PREDEFINED_NAMED (jit_bitxor, connitm, otherwiseoplab):
+      goto binaryintegerop_lab;
+    case MOM_CASE_PREDEFINED_NAMED (jit_leftshift, connitm, otherwiseoplab):
+      goto binaryintegerop_lab;
+    case MOM_CASE_PREDEFINED_NAMED (jit_rightshift, connitm, otherwiseoplab):
+      goto binaryintegerop_lab;
+    binaryintegerop_lab:
+      if (arity == 2            //
+          && (((typarg0itm      //
+                = cjit_type_of_scanned_expr_mom (cj, mom_node_nth (nod, 0)))) != NULL)  //
+          && (((typarg1itm      //
+                = cjit_type_of_scanned_expr_mom (cj, mom_node_nth (nod, 1)))) != NULL)  //
+          && (typarg0itm == typarg1itm) //
+          && (typarg0itm == MOM_PREDEFINED_NAMED (integer)))
+        return typarg0itm;
       else
         goto badnode_lab;
     otherwiseoplab:

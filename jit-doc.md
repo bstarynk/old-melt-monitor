@@ -128,6 +128,44 @@ GCCJIT.
 
 ### predefined binary operators
 
+
+* `jit_plus` for numeric additions or sums, using
+[`GCC_JIT_BINARY_OP_PLUS`][GCCJITBINARYOPPLUS] from GCCJIT.
+
+* `jit_sub` for numeric substractions or differences, using
+[`GCC_JIT_BINARY_OP_MINUS`][GCCJITBINARYOPMINUS] from GCCJIT (not
+using `jit_minus` since it is an an unary operation).
+
+* `jit_mult` for numerical multiplications or products, using
+[`GCC_JIT_BINARY_OP_MULT`][GCCJITBINARYOPMULT] from GCCJIT 
+
+* `jit_div` for numerical divisions or quotients, using
+[`GCC_JIT_BINARY_OP_DIVIDE`][GCCJITBINARYOPDIVIDE] from GCCJIT;
+division by zero is an undefined behavior, so would generally crash,
+hence should *always* be avoided.
+
+* `jit_mod` for numerical modulus or remainders on integers, using
+[`GCC_JIT_BINARY_OP_MODULO`][GCCJITBINARYOPMODULO] from GCCJIT; modulo
+by zero is an undefined behavior, so would generally crash, hence
+should *always* be avoided.
+
+* `jit_bitand` for bitwise *and* on integers; using
+[`GCC_JIT_BINARY_OP_BITWISE_AND`][GCCJITBINARYOPBITWISEAND] from GCCJIT.
+
+* `jit_bitor` for bitwise (inclusive) *or* on integers; using
+[`GCC_JIT_BINARY_OP_BITWISE_OR`][GCCJITBINARYOPBITWISEOR] from GCCJIT.
+
+* `jit_bitxor` for bitwise *exclusive-or* on integers; using
+[`GCC_JIT_BINARY_OP_BITWISE_XOR`][GCCJITBINARYOPBITWISEXOR] from GCCJIT.
+
+* `jit_bitleftshift` for bitwise *left-shift* on integers; using
+[`GCC_JIT_BINARY_OP_LSHIFT`][GCCJITBINARYOPLSHIFT] from GCCJIT.
+
+* `jit_bitrightshift` for bitwise *right-shift* on integers; using
+[`GCC_JIT_BINARY_OP_RSHIFT`][GCCJITBINARYOPRSHIFT] from GCCJIT.
+
+### primitives
+
 [markdown]: http://daringfireball.net/projects/markdown/syntax
 "markdown syntax"
 
@@ -140,7 +178,40 @@ GCCJIT.
 [GCCJITUNARYOPMINUS]: https://gcc.gnu.org/onlinedocs/jit/topics/expressions.html#GCC_JIT_UNARY_OP_MINUS
 
 
+[GCCJITUNARYOPBITWISENEGATE]: https://gcc.gnu.org/onlinedocs/jit/topics/expressions.html#GCC_JIT_UNARY_OP_BITWISE_NEGATE
+
 [GCCJITUNARYOPLOGICALNEGATE]: https://gcc.gnu.org/onlinedocs/jit/topics/expressions.html#GCC_JIT_UNARY_OP_LOGICAL_NEGATE
 
-[GCCJITUNARYOPBITWISENEGATE]: https://gcc.gnu.org/onlinedocs/jit/topics/expressions.html#GCC_JIT_UNARY_OP_LOGICAL_NEGATE
+[GCCJITBINARYOPPLUS]: https://gcc.gnu.org/onlinedocs/jit/topics/expressions.html#GCC_JIT_BINARY_OP_PLUS
+
+[GCCJITBINARYOPMINUS]:
+https://gcc.gnu.org/onlinedocs/jit/topics/expressions.html#GCC_JIT_BINARY_OP_MINUS
+
+[GCCJITBINARYOPMULT]:
+https://gcc.gnu.org/onlinedocs/jit/topics/expressions.html#GCC_JIT_BINARY_OP_MULT
+
+[GCCJITBINARYOPDIVIDE]:
+https://gcc.gnu.org/onlinedocs/jit/topics/expressions.html#GCC_JIT_BINARY_OP_DIVIDE
+
+[GCCJITBINARYOPMODULO]:
+https://gcc.gnu.org/onlinedocs/jit/topics/expressions.html#GCC_JIT_BINARY_OP_MODULO
+
+[GCCJITBINARYOPBITWISEAND]:
+https://gcc.gnu.org/onlinedocs/jit/topics/expressions.html#GCC_JIT_BINARY_OP_BITWISE_AND
+
+[GCCJITBINARYOPBITWISEOR]:
+https://gcc.gnu.org/onlinedocs/jit/topics/expressions.html#GCC_JIT_BINARY_OP_BITWISE_OR
+
+
+[GCCJITBINARYOPBITWISEXOR]:
+https://gcc.gnu.org/onlinedocs/jit/topics/expressions.html#GCC_JIT_BINARY_OP_BITWISE_XOR
+
+
+
+[GCCJITBINARYOPLSHIFT]:
+https://gcc.gnu.org/onlinedocs/jit/topics/expressions.html#GCC_JIT_BINARY_OP_LSHIFT
+
+[GCCJITBINARYOPRSHIFT]:
+https://gcc.gnu.org/onlinedocs/jit/topics/expressions.html#GCC_JIT_BINARY_OP_RSHIFT
+
 
