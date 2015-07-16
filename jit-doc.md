@@ -164,7 +164,39 @@ should *always* be avoided.
 * `jit_bitrightshift` for bitwise *right-shift* on integers; using
 [`GCC_JIT_BINARY_OP_RSHIFT`][GCCJITBINARYOPRSHIFT] from GCCJIT.
 
+### predefined binary comparison
+
+Both left and right operands should have the same type.
+
+* `jit_eq` for equal comparison `==` using 
+`GCC_JIT_COMPARISON_EQ` from GCCJIT.
+
+* `jit_ne` for not-equal comparison `!=` using 
+`GCC_JIT_COMPARISON_NE` from GCCJIT.
+
+* `jit_lt` for less than comparison `<` using 
+`GCC_JIT_COMPARISON_LT` from GCCJIT.
+
+* `jit_le` for less-or-equal comparison `<` using 
+`GCC_JIT_COMPARISON_EQ` from GCCJIT.
+
+* `jit_gt` for greater than comparison `>` using 
+`GCC_JIT_COMPARISON_GT` from GCCJIT.
+
+* `jit_ge` for greater-or-equal comparison `>=` using 
+`GCC_JIT_COMPARISON_GE` from GCCJIT.
+
+
+Ordered comparison operators invoke `mom_value_compare` on values, and
+`mom_item_cmp` on items (instead of GCCJIT [comparison][gccjitcomparison] operators).
+
 ### primitives
+
+
+
+
+
+
 
 [markdown]: http://daringfireball.net/projects/markdown/syntax
 "markdown syntax"
@@ -215,3 +247,5 @@ https://gcc.gnu.org/onlinedocs/jit/topics/expressions.html#GCC_JIT_BINARY_OP_LSH
 https://gcc.gnu.org/onlinedocs/jit/topics/expressions.html#GCC_JIT_BINARY_OP_RSHIFT
 
 
+[gccjitcomparison]:
+https://gcc.gnu.org/onlinedocs/jit/topics/expressions.html#gcc_jit_comparison

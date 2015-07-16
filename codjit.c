@@ -1951,8 +1951,37 @@ cjit_type_of_scanned_node_mom (struct codejit_mom_st *cj,
         return typarg0itm;
       else
         goto badnode_lab;
+      //////////////// binary comparisons
+    case MOM_CASE_PREDEFINED_NAMED (jit_eq, connitm, otherwiseoplab):
+      goto binarycomparison_lab;
+    case MOM_CASE_PREDEFINED_NAMED (jit_ne, connitm, otherwiseoplab):
+      goto binarycomparison_lab;
+    case MOM_CASE_PREDEFINED_NAMED (jit_lt, connitm, otherwiseoplab):
+      goto binarycomparison_lab;
+    case MOM_CASE_PREDEFINED_NAMED (jit_le, connitm, otherwiseoplab):
+      goto binarycomparison_lab;
+    case MOM_CASE_PREDEFINED_NAMED (jit_gt, connitm, otherwiseoplab):
+      goto binarycomparison_lab;
+    case MOM_CASE_PREDEFINED_NAMED (jit_ge, connitm, otherwiseoplab):
+      goto binarycomparison_lab;
+    binarycomparison_lab:
+      if (arity == 2            //
+          && (((typarg0itm      //
+                = cjit_type_of_scanned_expr_mom (cj, mom_node_nth (nod, 0)))) != NULL)  //
+          && (((typarg1itm      //
+                = cjit_type_of_scanned_expr_mom (cj, mom_node_nth (nod, 1)))) != NULL)  //
+          && (typarg0itm == typarg1itm))
+        return MOM_PREDEFINED_NAMED (integer);
+      else
+        goto badnode_lab;
+      ////////////////
     otherwiseoplab:
     default:
+
+#warning cjit_type_of_scanned_node_mom unimplemented
+      MOM_FATAPRINTF
+        ("cjit_type_of_scanned_node_mom %s unimplemented",
+         mom_output_gcstring (nodev));
       break;
     }
 badnode_lab:
@@ -1962,11 +1991,6 @@ badnode_lab:
                   mom_item_cstring (cj->cj_curstmtitm),
                   mom_item_cstring (cj->cj_curblockitm),
                   mom_item_cstring (cj->cj_curfunitm));
-
-#warning cjit_type_of_scanned_node_mom unimplemented
-  MOM_FATAPRINTF
-    ("cjit_type_of_scanned_node_mom %s unimplemented",
-     mom_output_gcstring (nodev));
 }                               /* end of cjit_type_of_scanned_node_mom */
 
 

@@ -1872,9 +1872,44 @@
 ..
 
 
+** jit_eq   ////// PREDEFINED
+{
+  * comment  "equal compare == for JIT" }
+ 
+..
+
+
+** jit_ge   ////// PREDEFINED
+{
+  * comment  "greater-or-equal compare >= for JIT" }
+ 
+..
+
+
+** jit_gt   ////// PREDEFINED
+{
+  * comment  "greater-than compare > for JIT" }
+ 
+..
+
+
+** jit_le   ////// PREDEFINED
+{
+  * comment  "less-or-equal compare <= for JIT" }
+ 
+..
+
+
 ** jit_leftshift   ////// PREDEFINED
 {
   * comment  "binary leftshift integer operator for JIT" }
+ 
+..
+
+
+** jit_lt   ////// PREDEFINED
+{
+  * comment  "less-than compare < for JIT" }
  
 ..
 
@@ -1896,6 +1931,13 @@
 ** jit_mult   ////// PREDEFINED
 {
   * comment  "binary multiplication for JIT" }
+ 
+..
+
+
+** jit_ne   ////// PREDEFINED
+{
+  * comment  "not-equal compare != for JIT" }
  
 ..
 
