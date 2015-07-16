@@ -1974,6 +1974,22 @@ cjit_type_of_scanned_node_mom (struct codejit_mom_st *cj,
         return MOM_PREDEFINED_NAMED (integer);
       else
         goto badnode_lab;
+      //////////////// logical lazy andthen & orelse operators
+
+    case MOM_CASE_PREDEFINED_NAMED (jit_andthen, connitm, otherwiseoplab):
+      goto binarylazy_lab;
+    case MOM_CASE_PREDEFINED_NAMED (jit_orelse, connitm, otherwiseoplab):
+      goto binarylazy_lab;
+    binarylazy_lab:
+      if (arity == 2            //
+          && (((typarg0itm      //
+                = cjit_type_of_scanned_expr_mom (cj, mom_node_nth (nod, 0)))) != NULL)  //
+          && (((typarg1itm      //
+                = cjit_type_of_scanned_expr_mom (cj, mom_node_nth (nod, 1)))) != NULL)  //
+          && (typarg0itm == typarg1itm))
+        return (typarg0itm);
+      else
+        goto badnode_lab;
       ////////////////
     otherwiseoplab:
     default:

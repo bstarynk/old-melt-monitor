@@ -1837,6 +1837,13 @@
 ..
 
 
+** jit_andthen   ////// PREDEFINED
+{
+  * comment  "logical lazy and-then && in JIT" }
+ 
+..
+
+
 ** jit_bitand   ////// PREDEFINED
 {
   * comment  "binary bitwise and for JIT" }
@@ -1945,6 +1952,13 @@
 ** jit_negate   ////// PREDEFINED
 {
   * comment  "unary bitwise negate operator for JIT" }
+ 
+..
+
+
+** jit_orelse   ////// PREDEFINED
+{
+  * comment  "logical lazy or-else || in JIT" }
  
 ..
 

@@ -190,6 +190,17 @@ Both left and right operands should have the same type.
 Ordered comparison operators invoke `mom_value_compare` on values, and
 `mom_item_cmp` on items (instead of GCCJIT [comparison][gccjitcomparison] operators).
 
+### logical lazy operators
+
+* `jit_andthen` for logical lazy *and-then* (like `&&` in C) using
+[`GCC_JIT_BINARY_OP_LOGICAL_AND`][GCCJITBINARYOPLOGICALAND] from GCCJIT.
+
+* `jit_orelse` for logical lazy *or-else* (like `||` in C) using
+[`GCC_JIT_BINARY_OP_LOGICAL_OR`][GCCJITBINARYOPLOGICALOR] from GCCJIT.
+
+Both arguments should have the same type, which is the return of the
+lazy operator.
+
 ### primitives
 
 
@@ -249,3 +260,9 @@ https://gcc.gnu.org/onlinedocs/jit/topics/expressions.html#GCC_JIT_BINARY_OP_RSH
 
 [gccjitcomparison]:
 https://gcc.gnu.org/onlinedocs/jit/topics/expressions.html#gcc_jit_comparison
+
+[GCCJITBINARYOPLOGICALAND]:
+https://gcc.gnu.org/onlinedocs/jit/topics/expressions.html#GCC_JIT_BINARY_OP_LOGICAL_AND
+
+[GCCJITBINARYOPLOGICALOR]:
+https://gcc.gnu.org/onlinedocs/jit/topics/expressions.html#GCC_JIT_BINARY_OP_LOGICAL_OR
