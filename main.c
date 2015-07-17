@@ -32,10 +32,12 @@ static const char *generate_c_module_mom;
 static const char *xtra_path_mom;
 
 unsigned nbmorepredef_mom;
+unsigned nbunpredef_mom;
 #define MAX_NEW_PREDEF_MOM 16
 char *newpredefname_mom[MAX_NEW_PREDEF_MOM];
 char *newpredefcomment_mom[MAX_NEW_PREDEF_MOM];
-
+#define MAX_UNPREDEF_MOM 10
+char *unpredefname_mom[MAX_UNPREDEF_MOM];
 
 pthread_cond_t mom_agenda_changed_condvar = PTHREAD_COND_INITIALIZER;
 
@@ -380,6 +382,7 @@ enum extraopt_en
   xtraopt__none = 0,
   xtraopt_chdir = 1024,
   xtraopt_addpredef,
+  xtraopt_unpredefine,
   xtraopt_writepid,
   xtraopt_loadstate,
   xtraopt_dumpstate,
@@ -417,6 +420,7 @@ static const struct option mom_long_options[] = {
   {"string-hash", required_argument, NULL, xtraopt_hashstr},
   {"dump-cold-state", required_argument, NULL, xtraopt_dumpcoldstate},
   {"add-predefined", required_argument, NULL, xtraopt_addpredef},
+  {"unpredefine", required_argument, NULL, xtraopt_unpredefine},
   {"generate-c-module", required_argument, NULL, xtraopt_generate_c_module},
   {"system", required_argument, NULL, xtraopt_system},
   /* Terminating NULL placeholder.  */
@@ -568,6 +572,8 @@ usage_mom (const char *argv0)
           "\t daemonize with daemon(3) with nochdir=true noclose=true\n");
   printf ("\t --add-predefined <predefname> [<comment>]"
           "\t #add a new predefined and dump\n");
+  printf ("\t --unpredefine <predefname>"
+          "\t #change a predefined to a global\n");
   printf ("\t --generate-c-module <moduleitem>" "\t #generate a C module\n");
   printf ("\t --system <command>"
           "\t #run an arbitrary (perhaps dangereous) command at argument parsing time\n");
@@ -781,6 +787,20 @@ parse_program_arguments_and_load_plugins_mom (int *pargc, char ***pargv)
                 ("bad or missing comment %s for --add-predefined %s", comment,
                  predname);
           }
+          break;
+        case xtraopt_unpredefine:
+          if (nbunpredef_mom >= MAX_UNPREDEF_MOM)
+            MOM_FATAPRINTF ("too many unpredefine %d", nbunpredef_mom);
+          char *unpredname = optarg;
+          if (unpredname && isalpha (unpredname[0]))
+            {
+              unpredefname_mom[nbunpredef_mom] = optarg;
+              nbunpredef_mom++;
+            }
+          else
+            MOM_WARNPRINTF
+              ("bad unpredefined %s", unpredname ? unpredname : "<missing>");
+
           break;
         case xtraopt_daemon_noclose:
           noclose_daemonize_mom = true;
@@ -1041,6 +1061,29 @@ main (int argc_main, char **argv_main)
             dump_exit_dir_mom = "./";
         }
     }
+  if (nbunpredef_mom > 0)
+    {
+      for (unsigned upix = 0; upix < nbunpredef_mom; upix++)
+        {
+          momitem_t *pritm = mom_find_named_item (unpredefname_mom[upix]);
+          if (!pritm)
+            MOM_FATAPRINTF ("unknown name %s to unpredefine",
+                            unpredefname_mom[upix]);
+          if (pritm->itm_space != momspa_predefined)
+            MOM_WARNPRINTF ("item %s is not predefined",
+                            mom_item_cstring (pritm));
+          else
+            {
+              pritm->itm_space = momspa_global;
+              MOM_INFORMPRINTF ("item %s is no more predefined but global",
+                          mom_item_cstring (pritm));
+            };
+        }
+      if (!dump_exit_dir_mom || !dump_exit_dir_mom[0]
+          || !strcmp (dump_exit_dir_mom, "."))
+        dump_exit_dir_mom = "./";
+    };
+
   do_after_initial_load_with_plugins_mom ();
   if (generate_c_module_mom)
     do_generate_c_module_mom ();
@@ -1051,7 +1094,7 @@ main (int argc_main, char **argv_main)
      sizeof (momvalue_t), sizeof (momvaltype_t), sizeof (momitem_t));
   if (dump_exit_dir_mom)
     mom_dump_state (dump_exit_dir_mom);
-  if (nbmorepredef_mom > 0)
+  if (nbmorepredef_mom > 0 || nbunpredef_mom > 0)
     {
       char makebuf[64];
       memset (makebuf, 0, sizeof (makebuf));

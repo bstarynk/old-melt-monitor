@@ -1835,6 +1835,25 @@ cjit_scan_stmt_primitive_next_mom (struct codejit_mom_st *cj,
                                    momitem_t *nextitm, int nextpos)
 {
   assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
+  assert (primopitm
+          && primopitm->itm_kind == MOM_PREDEFINED_NAMED (primitive));
+  assert (stmtitm
+          && stmtitm->itm_kind == MOM_PREDEFINED_NAMED (code_statement));
+#if 0
+  momitem_t *sigitm =           //
+    mom_value_to_item (mom_item_unsync_get_attribute (primopitm,
+                                                      MOM_PREDEFINED_NAMED
+                                                      (signature)));
+  if (!sigitm
+      || (cjit_lock_item_mom (cj, sigitm),
+          sigitm->itm_kind) != MOM_PREDEFINED_NAMED (signature))
+
+    CJIT_ERROR_MOM (cj,
+                    "bad primitive statement %s with operator %s in block %s in function %s",
+                    mom_item_cstring (stmtitm), mom_item_cstring (primopitm),
+                    mom_item_cstring (cj->cj_curblockitm),
+                    mom_item_cstring (cj->cj_curfunitm));
+#endif
 #warning cjit_scan_stmt_primitive_next_mom unimplemented
   MOM_FATAPRINTF
     ("cjit_scan_stmt_primitive_next_mom unimplemented stmtitm=%s",

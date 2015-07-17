@@ -203,6 +203,9 @@ lazy operator.
 
 ### primitives
 
+A primitive of kind `primitive` should have a `signature` attribute
+(with some signature item).  It can be used as a statement operator,
+or, if it is returning a single result, as an expression operator.
 
 
 

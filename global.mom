@@ -2397,11 +2397,6 @@
 ..
 
 
-** signature_1itm1_to_item   ////// PREDEFINED
-
-..
-
-
 ** signature_1itm1int_to_item   ////// PREDEFINED
 {
   * comment  "signature for : item integer -> item"
