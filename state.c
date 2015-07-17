@@ -2177,9 +2177,9 @@ emit_predefined_itemref_mom (FILE *out, const momitem_t *itm)
   assert (dumper_mom && dumper_mom->dumagic == DUMPER_MAGIC_MOM);
   assert (itm && itm->itm_space == momspa_predefined);
   if (itm->itm_anonymous)
-    fprintf (out, "MOM_PREDEFINED_ANONYMOUS(%s)", mom_item_cstring (itm));
+    fprintf (out, "MOM_PREDEFINED_ANONYMOUS (%s)", mom_item_cstring (itm));
   else
-    fprintf (out, "MOM_PREDEFINED_NAMED(%s)", mom_item_cstring (itm));
+    fprintf (out, "MOM_PREDEFINED_NAMED (%s)", mom_item_cstring (itm));
 }
 
 

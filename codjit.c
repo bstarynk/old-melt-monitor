@@ -984,17 +984,14 @@ momfunc_1itm_to_void__jitdo_scan_block (const
   momitem_t *nextitm = NULL;
   struct codejit_mom_st *cj = NULL;
   /// should never happen...
-  if (mom_node_arity (clonod) != 3
-      || !(blockitm =
-           mom_value_to_item (mom_node_nth
-                              (clonod, 0)))
-      || !cjitm
-      || cjitm->itm_kind !=
-      MOM_PREDEFINED_NAMED (code_generation)
+  if (mom_node_arity (clonod) != 3 || !(blockitm =      //
+                                        mom_value_to_item (mom_node_nth
+                                                           (clonod, 0)))
+      || !cjitm || cjitm->itm_kind != MOM_PREDEFINED_NAMED (code_generation)
       || !(cj = cjitm->itm_data1) || cj->cj_magic != CODEJIT_MAGIC_MOM)
-    MOM_FATAPRINTF
-      ("jitdo_scan_block: bad clonode %s or cjitm %s",
-       mom_output_gcstring (mom_nodev (clonod)), mom_item_cstring (cjitm));
+    MOM_FATAPRINTF ("jitdo_scan_block: bad clonode %s or cjitm %s",
+                    mom_output_gcstring (mom_nodev (clonod)),
+                    mom_item_cstring (cjitm));
   nextitm = mom_value_to_item (mom_node_nth (clonod, 1));
   int nextpos = mom_value_to_int (mom_node_nth (clonod, 1), -2);
   MOM_DEBUGPRINTF (gencod,
@@ -1028,6 +1025,7 @@ momfunc_1itm_to_void__jitdo_scan_block (const
                         " of length %u", mom_item_cstring (blockitm), six,
                         mom_output_gcstring (curstmtv), stmtlen);
       cj->cj_curstmtitm = curstmtitm;
+      stmtarr[six] = curstmtitm;
       momvalue_t curopv = mom_raw_item_get_indexed_component (curstmtitm, 0);
       momitem_t *curopitm =     //
         mom_value_to_item (curopv);
@@ -1094,6 +1092,7 @@ momfunc_1itm_to_void__jitdo_scan_block (const
           else
             goto bad_statement_lab;
         }
+#warning jitdo_scan_block should do something with stmtarr
       cj->cj_curstmtitm = NULL;
       continue;
     bad_statement_lab:
@@ -1835,30 +1834,73 @@ cjit_scan_stmt_primitive_next_mom (struct codejit_mom_st *cj,
                                    momitem_t *nextitm, int nextpos)
 {
   assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
+  unsigned stmtlen = mom_unsync_item_components_count (stmtitm);
   assert (primopitm
           && primopitm->itm_kind == MOM_PREDEFINED_NAMED (primitive));
   assert (stmtitm
           && stmtitm->itm_kind == MOM_PREDEFINED_NAMED (code_statement));
-#if 0
   momitem_t *sigitm =           //
-    mom_value_to_item (mom_item_unsync_get_attribute (primopitm,
-                                                      MOM_PREDEFINED_NAMED
-                                                      (signature)));
+    mom_value_to_item           //
+    (mom_item_unsync_get_attribute (primopitm,
+                                    MOM_PREDEFINED_NAMED (signature)));
   if (!sigitm
       || (cjit_lock_item_mom (cj, sigitm),
           sigitm->itm_kind) != MOM_PREDEFINED_NAMED (signature))
-
+    goto bad_signature_lab;
+  momvalue_t inputypv =         //
+    mom_item_unsync_get_attribute (sigitm,
+                                   MOM_PREDEFINED_NAMED (input_types));
+  const momseq_t *inputyptup = mom_value_to_tuple (inputypv);
+  if (!inputyptup)
+    {
+      // this really should not happen, we issue a specific warning
+      MOM_WARNPRINTF ("corrupted signature %s of primitive %s"
+                      " has bad input_types %s",
+                      mom_item_cstring (sigitm),
+                      mom_item_cstring (primopitm),
+                      mom_output_gcstring (inputypv));
+      goto bad_signature_lab;
+    };
+  unsigned nbins = mom_seq_length (inputyptup);
+  if (stmtlen != nbins + 1)
     CJIT_ERROR_MOM (cj,
-                    "bad primitive statement %s with operator %s in block %s in function %s",
+                    "bad primitive statement %s with operator %s"
+                    " had mismatching arity (length %d, expecting %d)"
+                    " for signature %s"
+                    " in block %s in function %s",
                     mom_item_cstring (stmtitm), mom_item_cstring (primopitm),
+                    stmtlen, nbins + 1,
+                    mom_item_cstring (sigitm),
                     mom_item_cstring (cj->cj_curblockitm),
                     mom_item_cstring (cj->cj_curfunitm));
-#endif
-#warning cjit_scan_stmt_primitive_next_mom unimplemented
-  MOM_FATAPRINTF
-    ("cjit_scan_stmt_primitive_next_mom unimplemented stmtitm=%s",
-     mom_item_cstring (stmtitm));
-}
+  for (unsigned ix = 0; ix < nbins; ix++)
+    {
+      momitem_t *curtypitm = mom_seq_nth (inputyptup, ix);
+      assert (curtypitm != NULL);
+      momvalue_t curarg = mom_raw_item_get_indexed_component (stmtitm, ix);
+      momitem_t *argtypitm = cjit_type_of_scanned_expr_mom (cj, curarg);
+      if (curtypitm != argtypitm)
+        CJIT_ERROR_MOM (cj,
+                        "in primitive %s statement %s in block %s in function %s"
+                        " formal #%d expecting type %s but argument %s has type %s",
+                        mom_item_cstring (primopitm),
+                        mom_item_cstring (stmtitm),
+                        mom_item_cstring (cj->cj_curblockitm),
+                        mom_item_cstring (cj->cj_curfunitm), ix,
+                        mom_item_cstring (argtypitm),
+                        mom_output_gcstring (curarg),
+                        mom_item_cstring (curtypitm));
+    }
+  return;
+bad_signature_lab:
+  CJIT_ERROR_MOM (cj,
+                  "bad primitive statement %s with operator %s in block %s in function %s",
+                  mom_item_cstring (stmtitm), mom_item_cstring (primopitm),
+                  mom_item_cstring (cj->cj_curblockitm),
+                  mom_item_cstring (cj->cj_curfunitm));
+}                               /* end of cjit_scan_stmt_primitive_next_mom */
+
+
 
 static momitem_t *
 cjit_type_of_scanned_expr_mom (struct codejit_mom_st *cj,
