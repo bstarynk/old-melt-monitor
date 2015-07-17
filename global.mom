@@ -1454,11 +1454,6 @@
 ..
 
 
-** function_signature
-
-..
-
-
 ** functions   ////// PREDEFINED
 {
   * comment  "in a C module, attribute giving the set or tuple of functions, or a closure to compute them"
