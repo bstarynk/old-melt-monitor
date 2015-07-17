@@ -2225,6 +2225,13 @@
 ..
 
 
+** primitive   ////// PREDEFINED
+{
+  * comment  "kind of primitive operations" }
+ 
+..
+
+
 ** push_back_queue_item
 {
   * code_expansion  ^code_expansion( "/*push_back_queue_item:*/\n"  "{if ("

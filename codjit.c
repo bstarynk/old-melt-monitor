@@ -871,6 +871,12 @@ cjit_scan_stmt_apply_else_next_mom (struct codejit_mom_st *cj,
                                     int nextpos);
 
 
+static void
+cjit_scan_stmt_primitive_next_mom (struct codejit_mom_st *cj,
+                                   momitem_t *primopitm, momitem_t *stmtitm,
+                                   momitem_t *nextitm, int nextpos);
+
+
 static momitem_t *
 cjit_get_statement_mom (struct codejit_mom_st *cj, momitem_t *blockitm,
                         int pos)
@@ -1026,12 +1032,7 @@ momfunc_1itm_to_void__jitdo_scan_block (const
       momitem_t *curopitm =     //
         mom_value_to_item (curopv);
       if (!curopitm)
-        CJIT_ERROR_MOM (cj,
-                        "jitdo_scan_block: in blockitm %s invalid statement #%d %s"
-                        " with bad stmtop %s",
-                        mom_item_cstring (blockitm), six,
-                        mom_output_gcstring (curstmtv),
-                        mom_output_gcstring (curopv));
+        goto bad_statement_lab;
       momitem_t *curnextitm = ((six + 1) < nbstmt) ? blockitm : nextitm;
       int curnextpos = ((six + 1) < nbstmt) ? ((int) six + 1) : nextpos;
       MOM_DEBUGPRINTF
@@ -1041,6 +1042,7 @@ momfunc_1itm_to_void__jitdo_scan_block (const
          mom_item_cstring (curstmtitm), six,
          mom_item_cstring (curopitm),
          mom_item_cstring (curnextitm), curnextpos);
+      cjit_lock_item_mom (cj, curopitm);
       switch (mom_item_hash (curopitm))
         {
         case MOM_CASE_PREDEFINED_NAMED (int_switch, curopitm, otherwiseoplab):
@@ -1084,12 +1086,23 @@ momfunc_1itm_to_void__jitdo_scan_block (const
           cjit_scan_stmt_apply_else_next_mom (cj, curstmtitm, curnextitm,
                                               curnextpos);
           break;
-#warning jitdo_scan_block missing cases
         default:
         otherwiseoplab:
-          break;
+          if (curopitm->itm_kind == MOM_PREDEFINED_NAMED (primitive))
+            cjit_scan_stmt_primitive_next_mom (cj, curopitm, curstmtitm,
+                                               curnextitm, curnextpos);
+          else
+            goto bad_statement_lab;
         }
       cj->cj_curstmtitm = NULL;
+      continue;
+    bad_statement_lab:
+      CJIT_ERROR_MOM (cj,
+                      "jitdo_scan_block: in blockitm %s invalid statement #%d %s"
+                      " with bad stmtop %s",
+                      mom_item_cstring (blockitm), six,
+                      mom_output_gcstring (curstmtv),
+                      mom_output_gcstring (curopv));
     }
   cj->cj_curblockitm = NULL;
   cj->cj_curstmtitm = NULL;
@@ -1816,6 +1829,17 @@ cjit_scan_stmt_apply_else_next_mom (struct codejit_mom_st *cj,
 }                               // end of cjit_scan_stmt_apply_else_next_mom
 
 
+static void
+cjit_scan_stmt_primitive_next_mom (struct codejit_mom_st *cj,
+                                   momitem_t *primopitm, momitem_t *stmtitm,
+                                   momitem_t *nextitm, int nextpos)
+{
+  assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
+#warning cjit_scan_stmt_primitive_next_mom unimplemented
+  MOM_FATAPRINTF
+    ("cjit_scan_stmt_primitive_next_mom unimplemented stmtitm=%s",
+     mom_item_cstring (stmtitm));
+}
 
 static momitem_t *
 cjit_type_of_scanned_expr_mom (struct codejit_mom_st *cj,
