@@ -704,8 +704,8 @@ cjit_scan_function_variables_mom (struct codejit_mom_st *cj,
         // add the variable bindings
         momvalue_t vnod = mom_nodev_new (MOM_PREDEFINED_NAMED (variable), 3,
                                          mom_itemv (itmfun),
-                                         mom_intv (vix),
-                                         mom_itemv (vartypitm));
+                                         mom_itemv (vartypitm),
+                                         mom_intv (vix));
         cj->cj_funbind =
           mom_attributes_put (cj->cj_funbind, curvaritm, &vnod);
         MOM_DEBUGPRINTF (gencod,
@@ -727,6 +727,9 @@ static momitem_t *cjit_type_of_scanned_node_mom (struct codejit_mom_st *cj,
 
 static momitem_t *cjit_type_of_scanned_item_mom (struct codejit_mom_st *cj,
                                                  momitem_t *itm);
+
+static momitem_t *cjit_type_of_scanned_variable_mom (struct codejit_mom_st
+                                                     *cj, momitem_t *varitm);
 
 static void
 cjit_scan_block_next_mom (struct codejit_mom_st *cj,
@@ -1804,15 +1807,108 @@ given - if it is nil, it becomes created and stored as the component
     }
 }                               // end of cjit_scan_stmt_loop_next_mom
 
+
+static void
+cjit_scan_apply_next_mom (struct codejit_mom_st *cj,
+                          momitem_t *stmtitm, momitem_t *nextitm,
+                          int nextpos, bool haselse)
+{
+  assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
+  unsigned stmtlen = mom_unsync_item_components_count (stmtitm);
+  if (stmtlen < 3)
+    goto badapply_lab;
+  momitem_t *sigitm             //
+    = mom_value_to_item (mom_raw_item_get_indexed_component (stmtitm, 1));
+  if (!sigitm || ((cjit_lock_item_mom (cj, sigitm), sigitm->itm_kind)   //
+                  != MOM_PREDEFINED_NAMED (signature)))
+    goto badapply_lab;
+  momvalue_t inputypv =         //
+    mom_item_unsync_get_attribute (sigitm,
+                                   MOM_PREDEFINED_NAMED (input_types));
+  const momseq_t *inputyptup = mom_value_to_tuple (inputypv);
+  momvalue_t outputypv =        //
+    mom_item_unsync_get_attribute (sigitm,
+                                   MOM_PREDEFINED_NAMED (output_types));
+  const momseq_t *outputyptup = mom_value_to_tuple (outputypv);
+  if (!inputyptup || !outputyptup)
+    {
+      // issue a warning, the signature is corrupted
+      MOM_WARNPRINTF ("apply statement %s with corrupted signature %s"
+                      " has input_types %s, output_types %s",
+                      mom_item_cstring (stmtitm),
+                      mom_item_cstring (sigitm),
+                      mom_output_gcstring (inputypv),
+                      mom_output_gcstring (outputypv));
+      goto badapply_lab;
+    };
+  unsigned nbins = mom_seq_length (inputyptup);
+  unsigned nbouts = mom_seq_length (outputyptup);
+  if (haselse)
+    {
+      if (stmtlen != nbins + nbouts + 3)
+        CJIT_ERROR_MOM (cj,
+                        "scan_apply_next: invalid apply_else statement %s"
+                        " in block %s in function %s"
+                        " of size %d"
+                        " but needs %d results and %d arguments",
+                        mom_item_cstring (stmtitm),
+                        mom_item_cstring (cj->cj_curblockitm),
+                        mom_item_cstring (cj->cj_curfunitm),
+                        stmtlen, nbouts, nbins);
+    }
+  else
+    {
+      if (stmtlen != nbins + nbouts + 2)
+        CJIT_ERROR_MOM (cj,
+                        "scan_apply_next: invalid apply statement %s"
+                        " in block %s in function %s"
+                        " of size %d"
+                        " but needs %d results and %d arguments",
+                        mom_item_cstring (stmtitm),
+                        mom_item_cstring (cj->cj_curblockitm),
+                        mom_item_cstring (cj->cj_curfunitm),
+                        stmtlen, nbouts, nbins);
+    }
+  for (unsigned resix = 0; resix < nbouts; resix++)
+    {
+      momitem_t *curesoutitm =  //
+        mom_value_to_item (mom_raw_item_get_indexed_component
+                           (stmtitm, 2 + resix));
+      momitem_t *curestypitm = NULL;
+      momitem_t *curoutformaltypitm = mom_seq_nth (outputyptup, resix);
+      if (!curesoutitm || !curoutformaltypitm
+          || !(curestypitm =
+               cjit_type_of_scanned_variable_mom (cj, curesoutitm))
+          || curestypitm != curoutformaltypitm)
+        CJIT_ERROR_MOM (cj,
+                        "scan_apply_next: apply statement %s"
+                        " in block %s in function %s"
+                        " has bad result#%d %s expected type %s actual type %s",
+                        mom_item_cstring (stmtitm),
+                        mom_item_cstring (cj->cj_curblockitm),
+                        mom_item_cstring (cj->cj_curfunitm), resix,
+                        mom_item_cstring (curesoutitm),
+                        mom_item_cstring (curoutformaltypitm),
+                        mom_item_cstring (curestypitm));
+    };
+#warning  cjit_scan_apply_next_mom incomplete
+badapply_lab:
+  CJIT_ERROR_MOM (cj,
+                  "scan_apply_next: invalid apply statement %s in block %s in function %s",
+                  mom_item_cstring (stmtitm),
+                  mom_item_cstring (cj->cj_curblockitm),
+                  mom_item_cstring (cj->cj_curfunitm));
+}                               /* end of cjit_scan_apply_next_mom */
+
+
+
 static void
 cjit_scan_stmt_apply_next_mom (struct codejit_mom_st *cj,
                                momitem_t *stmtitm, momitem_t *nextitm,
                                int nextpos)
 {
   assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
-#warning cjit_scan_stmt_apply_next_mom unimplemented
-  MOM_FATAPRINTF ("cjit_scan_stmt_apply_next_mom unimplemented stmtitm=%s",
-                  mom_item_cstring (stmtitm));
+  cjit_scan_apply_next_mom (cj, stmtitm, nextitm, nextpos, false);
 }                               // end of cjit_scan_stmt_apply_next_mom
 
 static void
@@ -1821,10 +1917,7 @@ cjit_scan_stmt_apply_else_next_mom (struct codejit_mom_st *cj,
                                     momitem_t *nextitm, int nextpos)
 {
   assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
-#warning cjit_scan_stmt_apply_else_next_mom unimplemented
-  MOM_FATAPRINTF
-    ("cjit_scan_stmt_apply_else_next_mom unimplemented stmtitm=%s",
-     mom_item_cstring (stmtitm));
+  cjit_scan_apply_next_mom (cj, stmtitm, nextitm, nextpos, true);
 }                               // end of cjit_scan_stmt_apply_else_next_mom
 
 
@@ -2099,8 +2192,63 @@ badnode_lab:
 static momitem_t *
 cjit_type_of_scanned_item_mom (struct codejit_mom_st *cj, momitem_t *itm)
 {
+  assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
+  assert (itm != NULL);
+  cjit_lock_item_mom (cj, itm);
+  if (itm->itm_kind == MOM_PREDEFINED_NAMED (variable))
+    return cjit_type_of_scanned_variable_mom (cj, itm);
 #warning cjit_type_of_scanned_item_mom unimplemented
   MOM_FATAPRINTF
     ("cjit_type_of_scanned_item_mom %s unimplemented",
      mom_item_cstring (itm));
 }                               /* end of cjit_type_of_scanned_item_mom */
+
+static momitem_t *
+cjit_type_of_scanned_variable_mom (struct codejit_mom_st *cj,
+                                   momitem_t *varitm)
+{
+  assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
+  assert (varitm != NULL);
+  cjit_lock_item_mom (cj, varitm);
+  if (varitm->itm_kind != MOM_PREDEFINED_NAMED (variable))
+    CJIT_ERROR_MOM (cj,
+                    "type of scanned variable: invalid variable %s"
+                    " in statement %s in block %s in function %s",
+                    mom_item_cstring (varitm),
+                    mom_item_cstring (cj->cj_curstmtitm),
+                    mom_item_cstring (cj->cj_curblockitm),
+                    mom_item_cstring (cj->cj_curfunitm));
+  momvalue_t bindv =            //
+    mom_attributes_find_value (cj->cj_funbind, varitm);
+  const momnode_t *bindnod = NULL;
+  if (bindv.typnum == momty_null || !(bindnod = mom_value_to_node (bindv)))
+    CJIT_ERROR_MOM (cj,
+                    "type of scanned variable: unbound variable %s"
+                    " in statement %s in block %s in function %s",
+                    mom_item_cstring (varitm),
+                    mom_item_cstring (cj->cj_curstmtitm),
+                    mom_item_cstring (cj->cj_curblockitm),
+                    mom_item_cstring (cj->cj_curfunitm));
+  momitem_t *bindconnitm = mom_node_conn (bindnod);
+  unsigned bindarity = mom_node_arity (bindnod);
+  if (bindconnitm == MOM_PREDEFINED_NAMED (formals) && bindarity == 3)
+    {
+      return mom_value_to_item (mom_node_nth (bindnod, 1));
+    };
+  if (bindconnitm == MOM_PREDEFINED_NAMED (results) && bindarity == 3)
+    {
+      return mom_value_to_item (mom_node_nth (bindnod, 1));
+    }
+  if (bindconnitm == MOM_PREDEFINED_NAMED (variable) && bindarity == 3)
+    {
+      return mom_value_to_item (mom_node_nth (bindnod, 1));
+    }
+  CJIT_ERROR_MOM (cj,
+                  "type of scanned variable: variable %s wrongly bound to %s "
+                  " in statement %s in block %s in function %s",
+                  mom_item_cstring (varitm),
+                  mom_output_gcstring (bindv),
+                  mom_item_cstring (cj->cj_curstmtitm),
+                  mom_item_cstring (cj->cj_curblockitm),
+                  mom_item_cstring (cj->cj_curfunitm));
+}                               /* end of cjit_type_of_scanned_variable_mom */
