@@ -655,10 +655,10 @@ bool momfunc_1itm_to_void__append_function_to_closed_module (const momnode_t *mo
   // 3 constants:
   // constant code_module
   momitem_t* momconst_1 /*const:code_module*/ = MOM_PREDEFINED_NAMED(code_module);
-  // constant function_signature
-  momitem_t* momconst_0 /*const:function_signature*/ = MOM_PREDEFINED_NAMED(function_signature);
   // constant functions
   momitem_t* momconst_2 /*const:functions*/ = MOM_PREDEFINED_NAMED(functions);
+  // constant signature
+  momitem_t* momconst_0 /*const:signature*/ = MOM_PREDEFINED_NAMED(signature);
   // 1 closed:
   const momvalue_t momclosed_0 = mom_node_nth(mom_node, 0);
   goto momblocklab__9MARH5tjh_28MKpzxv3;
@@ -735,10 +735,10 @@ MOM_INFORMPRINTF("updated functions of module %s from %s to %s",
   momoldlocked__5Icpjuev3_8xCdCtMdD = NULL;
   momnewlocked__5Icpjuev3_8xCdCtMdD = NULL;
   } // end locked set into lkitm_module
-// statement #2 :: _5hCHeHf33_2y4IR7sHP; set itmvar_funsig <- get(lkitm_fun, function_signature) ... in appfuntoclomod
+// statement #2 :: _5hCHeHf33_2y4IR7sHP; set itmvar_funsig <- get(lkitm_fun, signature) ... in appfuntoclomod
 // set into itmvar_funsig
   momvar0 /*var:itmvar_funsig*/ =
-   /*value_to_item:*/ mom_value_to_item(/*unsync_get_attribute:*/mom_item_unsync_get_attribute (momvar3 /*var:lkitm_fun*/, /*constant#0:*/MOM_PREDEFINED_NAMED(function_signature)));
+   /*value_to_item:*/ mom_value_to_item(/*unsync_get_attribute:*/mom_item_unsync_get_attribute (momvar3 /*var:lkitm_fun*/, /*constant#0:*/MOM_PREDEFINED_NAMED(signature)));
 // statement #3 :: _2ijiEhdMr_0E10qj6s8; if itmvar_funsig test-module ... in appfuntoclomod
 // if testing on item
     if (momvar0 /*var:itmvar_funsig*/)

@@ -114,7 +114,7 @@ bool
                    "emitter_of_function itm=%s kind %s (of kind %s)",
                    mom_item_cstring (itm), mom_item_cstring (itmkind),
                    mom_item_cstring (itmkind->itm_kind));
-  assert (itmkind->itm_kind == MOM_PREDEFINED_NAMED (function_signature));
+  assert (itmkind->itm_kind == MOM_PREDEFINED_NAMED (signature));
   momvalue_t vclos = mom_nodev_new (MOM_PREDEFINED_NAMED (filler_of_function),
                                     1,
                                     mom_itemv (itmkind));
@@ -138,8 +138,7 @@ bool
                     mom_item_cstring (itm),
                     mom_output_gcstring (mom_nodev (clonode)));
   momitem_t *itmsig = mom_value_to_item (clonode->arrsons[0]);
-  if (!itmsig
-      || itmsig->itm_kind != MOM_PREDEFINED_NAMED (function_signature))
+  if (!itmsig || itmsig->itm_kind != MOM_PREDEFINED_NAMED (signature))
     MOM_FATAPRINTF ("filler_of_function %s has bad closed signature %s",
                     mom_item_cstring (itm),
                     mom_output_gcstring (clonode->arrsons[0]));
@@ -194,8 +193,7 @@ bool
   MOM_DEBUGPRINTF (dump,
                    "scanner_of_function itm=%s", mom_item_cstring (itm));
   momitem_t *kinditm = itm->itm_kind;
-  if (kinditm
-      && kinditm->itm_kind == MOM_PREDEFINED_NAMED (function_signature))
+  if (kinditm && kinditm->itm_kind == MOM_PREDEFINED_NAMED (signature))
     {
       Dl_info dlinfo;
       memset (&dlinfo, 0, sizeof (dlinfo));

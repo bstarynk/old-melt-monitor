@@ -311,7 +311,7 @@ cjit_scan_function_first_mom (struct codejit_mom_st *cj, momitem_t *itmfun)
     if (itmfunkind)
       {
         mom_item_lock (itmfunkind);
-        if (itmfunkind->itm_kind == MOM_PREDEFINED_NAMED (function_signature))
+        if (itmfunkind->itm_kind == MOM_PREDEFINED_NAMED (signature))
           {
             itmsignature = itmfunkind;
             MOM_DEBUGPRINTF (gencod, "scanning function %s itmsignature %s",
@@ -325,7 +325,7 @@ cjit_scan_function_first_mom (struct codejit_mom_st *cj, momitem_t *itmfun)
       {
         vfunctionsig =          //
           mom_item_unsync_get_attribute //
-          (itmfun, MOM_PREDEFINED_NAMED (function_signature));
+          (itmfun, MOM_PREDEFINED_NAMED (signature));
         MOM_DEBUGPRINTF (gencod, "scanning function %s vfunctionsig=%s",
                          mom_item_cstring (itmfun),
                          mom_output_gcstring (vfunctionsig));
@@ -333,7 +333,7 @@ cjit_scan_function_first_mom (struct codejit_mom_st *cj, momitem_t *itmfun)
       }
   }
   if (!itmsignature
-      || itmsignature->itm_kind != MOM_PREDEFINED_NAMED (function_signature))
+      || itmsignature->itm_kind != MOM_PREDEFINED_NAMED (signature))
     CJIT_ERROR_MOM (cj, "module item %s : function %s without signature",
                     mom_item_cstring (cj->cj_moduleitm),
                     mom_item_cstring (itmfun));

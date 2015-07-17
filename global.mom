@@ -571,10 +571,10 @@
 
 ** _5hCHeHf33_2y4IR7sHP
 {
-  * comment  "set itmvar_funsig <- get(lkitm_fun, function_signature) ... in appfuntoclomod"
+  * comment  "set itmvar_funsig <- get(lkitm_fun, signature) ... in appfuntoclomod"
   * in  _9MARH5tjh_28MKpzxv3 }
  [[  set  itmvar_funsig  ^value_to_item( ^unsync_get_attribute( lkitm_fun
-     function_signature)) ]]
+     signature)) ]]
  %  ^filler_of_plain_kind( code_statement)
  
 ..
@@ -931,9 +931,9 @@
   * emitted_constants  [hook_closure item_queue tasklet the_agenda]
   * emitted_variables  [lkitm_agenda lkitm_tasklet varlen varix]
   * formals  [argtasklets]
-  * function_signature  signature_1val_to_void
   * hook_closure  0
   * in  the_base_module
+  * signature  signature_1val_to_void
   * start  _0y7wu372C_3JH4an3L2 }
  [[  ^agenda_push_back()  item_queue  tasklet  the_agenda ]]
  %  ^filler_of_function( signature_1val_to_void)
@@ -951,9 +951,9 @@
   * emitted_constants  [hook_closure item_queue tasklet the_agenda]
   * emitted_variables  [lkitm_agenda lkitm_tasklet varlen varix]
   * formals  [argtasklets]
-  * function_signature  signature_1val_to_void
   * hook_closure  0
   * in  the_base_module
+  * signature  signature_1val_to_void
   * start  _02MHbyAxU_563vpdUu2 }
  [[  ^agenda_push_front()  item_queue  tasklet  the_agenda ]]
  %  ^filler_of_function( signature_1val_to_void)
@@ -972,9 +972,9 @@
    runner tasklet the_agenda]
   * emitted_variables  [varclo lkitm_agenda itmvar_tasklet lkitm_tasklet]
   * formals  []
-  * function_signature  signature_void_to_void
   * hook_closure  0
   * in  the_base_module
+  * signature  signature_void_to_void
   * start  _7MF947fC8_8ChefReMD
   * variable  [varclo] }
  [[  ^agenda_step()  fill_agenda  ^agenda_step()  item_queue  runner  tasklet
@@ -988,18 +988,18 @@
 {
   * closed  [val2]
   * comment  "append argument function itm1 to module closed val2"
-  * constants  [function_signature code_module functions]
+  * constants  [signature code_module functions]
   * emitted_blocks  {_4he2bnU93_5b5bkfLER _8xBt9K6Ch_2v6P4PEtw _9MARH5tjh_28MKpzxv3}
   * emitted_closed  [val2]
-  * emitted_constants  [function_signature code_module functions]
+  * emitted_constants  [signature code_module functions]
   * emitted_variables  [itmvar_funsig valvar_funcset valvar_newfuncset lkitm_fun
    lkitm_module]
   * formals  [itm1]
-  * function_signature  signature_1itm_to_void
   * in  the_base_module
+  * signature  signature_1itm_to_void
   * start  _9MARH5tjh_28MKpzxv3
   * variable  [itmvar_funsig valvar_funcset valvar_newfuncset] }
- [[  code_module  function_signature  functions ]]
+ [[  code_module  functions  signature ]]
  %  ^filler_of_function( signature_1itm_to_void)
  
 ..
@@ -1454,11 +1454,8 @@
 ..
 
 
-** function_signature   ////// PREDEFINED
-{
-  * comment  "kind of function signatures"
-  * dumped_item_emitter  ^emitter_of_plain_kind() }
- 
+** function_signature
+
 ..
 
 
@@ -1814,7 +1811,7 @@
 
 ** itmvar_funsig
 {
-  * comment  "the item variable for the function_signature"
+  * comment  "the item variable for the signature"
   * type  item }
  %  ^filler_of_plain_kind( variable)
  
@@ -2397,6 +2394,14 @@
 ..
 
 
+** signature   ////// PREDEFINED
+{
+  * comment  "attribute & kind for signature of functions and primitives, etc..."
+  * dumped_item_emitter  ^emitter_of_plain_kind() }
+ 
+..
+
+
 ** signature_1itm1int_to_item   ////// PREDEFINED
 {
   * comment  "signature for : item integer -> item"
@@ -2405,7 +2410,7 @@
   * function_radix  "1itm1int_to_item"
   * input_types  [item integer]
   * output_types  [item] }
- %  ^filler_of_plain_kind( function_signature)
+ %  ^filler_of_plain_kind( signature)
  
 ..
 
@@ -2418,7 +2423,7 @@
   * function_radix  "1itm1val1int_to_void"
   * input_types  [item value integer]
   * output_types  [] }
- %  ^filler_of_plain_kind( function_signature)
+ %  ^filler_of_plain_kind( signature)
  
 ..
 
@@ -2431,7 +2436,7 @@
   * function_radix  "1itm1val_to_item"
   * input_types  [item value]
   * output_types  [item] }
- %  ^filler_of_plain_kind( function_signature)
+ %  ^filler_of_plain_kind( signature)
  
 ..
 
@@ -2444,7 +2449,7 @@
   * function_radix  "1itm1val_to_void"
   * input_types  [item value]
   * output_types  [] }
- %  ^filler_of_plain_kind( function_signature)
+ %  ^filler_of_plain_kind( signature)
  
 ..
 
@@ -2457,7 +2462,7 @@
   * function_radix  "1itm2val_to_item"
   * input_types  [item value value]
   * output_types  [item] }
- %  ^filler_of_plain_kind( function_signature)
+ %  ^filler_of_plain_kind( signature)
  
 ..
 
@@ -2470,7 +2475,7 @@
   * function_radix  "1itm2val_to_void"
   * input_types  [item value value]
   * output_types  [] }
- %  ^filler_of_plain_kind( function_signature)
+ %  ^filler_of_plain_kind( signature)
  
 ..
 
@@ -2483,7 +2488,7 @@
   * function_radix  "1itm_to_item"
   * input_types  [item]
   * output_types  [item] }
- %  ^filler_of_plain_kind( function_signature)
+ %  ^filler_of_plain_kind( signature)
  
 ..
 
@@ -2496,7 +2501,7 @@
   * function_radix  "1itm_to_val"
   * input_types  [item]
   * output_types  [value] }
- %  ^filler_of_plain_kind( function_signature)
+ %  ^filler_of_plain_kind( signature)
  
 ..
 
@@ -2509,7 +2514,7 @@
   * function_radix  "1itm_to_void"
   * input_types  [item]
   * output_types  [] }
- %  ^filler_of_plain_kind( function_signature)
+ %  ^filler_of_plain_kind( signature)
  
 ..
 
@@ -2522,7 +2527,7 @@
   * function_radix  "1val1int_to_void"
   * input_types  [value integer]
   * output_types  [] }
- %  ^filler_of_plain_kind( function_signature)
+ %  ^filler_of_plain_kind( signature)
  
 ..
 
@@ -2535,7 +2540,7 @@
   * function_radix  "1val_to_val"
   * input_types  [value]
   * output_types  [value] }
- %  ^filler_of_plain_kind( function_signature)
+ %  ^filler_of_plain_kind( signature)
  
 ..
 
@@ -2548,7 +2553,7 @@
   * function_radix  "1val_to_void"
   * input_types  [value]
   * output_types  [] }
- %  ^filler_of_plain_kind( function_signature)
+ %  ^filler_of_plain_kind( signature)
  
 ..
 
@@ -2561,7 +2566,7 @@
   * function_radix  "2itm1int_to_item"
   * input_types  [item item integer]
   * output_types  [value] }
- %  ^filler_of_plain_kind( function_signature)
+ %  ^filler_of_plain_kind( signature)
  
 ..
 
@@ -2574,7 +2579,7 @@
   * function_radix  "2itm1int_to_void"
   * input_types  [item item integer]
   * output_types  [] }
- %  ^filler_of_plain_kind( function_signature)
+ %  ^filler_of_plain_kind( signature)
  
 ..
 
@@ -2587,7 +2592,7 @@
   * function_radix  "2itm1val_to_val"
   * input_types  [item item value]
   * output_types  [value] }
- %  ^filler_of_plain_kind( function_signature)
+ %  ^filler_of_plain_kind( signature)
  
 ..
 
@@ -2600,7 +2605,7 @@
   * function_radix  "2itm1val_to_void"
   * input_types  [item item value]
   * output_types  [] }
- %  ^filler_of_plain_kind( function_signature)
+ %  ^filler_of_plain_kind( signature)
  
 ..
 
@@ -2613,7 +2618,7 @@
   * function_radix  "2itm2val_to_void"
   * input_types  [item item value value]
   * output_types  [] }
- %  ^filler_of_plain_kind( function_signature)
+ %  ^filler_of_plain_kind( signature)
  
 ..
 
@@ -2626,7 +2631,7 @@
   * function_radix  "2itm_to_val"
   * input_types  [item item]
   * output_types  [value] }
- %  ^filler_of_plain_kind( function_signature)
+ %  ^filler_of_plain_kind( signature)
  
 ..
 
@@ -2639,7 +2644,7 @@
   * function_radix  "2itm_to_void"
   * input_types  [item item]
   * output_types  [] }
- %  ^filler_of_plain_kind( function_signature)
+ %  ^filler_of_plain_kind( signature)
  
 ..
 
@@ -2652,7 +2657,7 @@
   * function_radix  "2val_to_val"
   * input_types  [value value]
   * output_types  [value] }
- %  ^filler_of_plain_kind( function_signature)
+ %  ^filler_of_plain_kind( signature)
  
 ..
 
@@ -2665,7 +2670,7 @@
   * function_radix  "void_to_void"
   * input_types  []
   * output_types  [] }
- %  ^filler_of_plain_kind( function_signature)
+ %  ^filler_of_plain_kind( signature)
  
 ..
 

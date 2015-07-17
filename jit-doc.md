@@ -21,8 +21,8 @@ Functions are "compiled" into some code which is applicable.
 
 A JITable function item **should have the following attributes**
 
-* `function_signature` : *sigitm*, an item giving the signature (so of
-  kind `function_signature`, like `signature_1itm1val_to_item` for
+* `signature` : *sigitm*, an item giving the signature (so of
+  kind `signature`, like `signature_1itm1val_to_item` for
   example)
 
 * `formals` : *formaltup*, a tuple of formals (compatible with the

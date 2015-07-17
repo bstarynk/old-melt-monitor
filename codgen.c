@@ -317,7 +317,7 @@ cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
     if (itmfunkind)
       {
         mom_item_lock (itmfunkind);
-        if (itmfunkind->itm_kind == MOM_PREDEFINED_NAMED (function_signature))
+        if (itmfunkind->itm_kind == MOM_PREDEFINED_NAMED (signature))
           {
             itmsignature = itmfunkind;
             MOM_DEBUGPRINTF (gencod, "scanning function %s itmsignature %s",
@@ -331,8 +331,7 @@ cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
       {
         vfunctionsig =
           mom_item_unsync_get_attribute (itmfun,
-                                         MOM_PREDEFINED_NAMED
-                                         (function_signature));
+                                         MOM_PREDEFINED_NAMED (signature));
         MOM_DEBUGPRINTF (gencod, "scanning function %s vfunctionsig=%s",
                          mom_item_cstring (itmfun),
                          mom_output_gcstring (vfunctionsig));
@@ -340,7 +339,7 @@ cgen_scan_function_first_mom (struct codegen_mom_st *cg, momitem_t *itmfun)
       }
   }
   if (!itmsignature
-      || itmsignature->itm_kind != MOM_PREDEFINED_NAMED (function_signature))
+      || itmsignature->itm_kind != MOM_PREDEFINED_NAMED (signature))
     CGEN_ERROR_RETURN_MOM (cg,
                            "module item %s : function %s without signature",
                            mom_item_cstring (cg->cg_moduleitm),
@@ -1531,7 +1530,7 @@ cgen_scan_apply_statement_first_mom (struct codegen_mom_st *cg,
                    mom_item_cstring (itmstmt), mom_item_cstring (sigitm));
   if (!sigitm
       || (cgen_lock_item_mom (cg, sigitm),
-          sigitm->itm_kind != MOM_PREDEFINED_NAMED (function_signature)))
+          sigitm->itm_kind != MOM_PREDEFINED_NAMED (signature)))
     CGEN_ERROR_RETURN_MOM (cg,
                            "module item %s : function %s with block %s with  apply statement %s with bad signature %s",
                            mom_item_cstring (cg->cg_moduleitm),
@@ -1748,7 +1747,7 @@ cgen_bind_formals_mom (struct codegen_mom_st *cg, momitem_t *itmsignature,
                    mom_item_cstring (itmsignature),
                    mom_output_gcstring (vformals));
   unsigned nbformals = vformals.vtuple->slen;
-  if (itmsignature->itm_kind != MOM_PREDEFINED_NAMED (function_signature))
+  if (itmsignature->itm_kind != MOM_PREDEFINED_NAMED (signature))
     CGEN_ERROR_RETURN_MOM (cg,
                            "module item %s : function %s has bad signature %s",
                            mom_item_cstring (cg->cg_moduleitm),
@@ -2307,7 +2306,7 @@ cgen_emit_function_declaration_mom (struct codegen_mom_st *cg,
       || !(funsigitm =
            mom_value_to_item (mom_node_nth (funinfonod, funinfo_signature)))
       || !mom_hashset_contains (cg->cg_lockeditemset, funsigitm)
-      || funsigitm->itm_kind != MOM_PREDEFINED_NAMED (function_signature))
+      || funsigitm->itm_kind != MOM_PREDEFINED_NAMED (signature))
     MOM_FATAPRINTF
       ("corrupted function info %s for function %s (signature %s) of module %s",
        mom_output_gcstring (vfuninfo), mom_item_cstring (curfunitm),
@@ -2469,7 +2468,7 @@ cgen_emit_function_code_mom (struct codegen_mom_st *cg,
       || !(funsigitm =
            mom_value_to_item (mom_node_nth (funinfonod, funinfo_signature)))
       || !mom_hashset_contains (cg->cg_lockeditemset, funsigitm)
-      || funsigitm->itm_kind != MOM_PREDEFINED_NAMED (function_signature)
+      || funsigitm->itm_kind != MOM_PREDEFINED_NAMED (signature)
       || !(funblocksitm =
            mom_value_to_item (mom_node_nth (funinfonod, funinfo_blocks)))
       || !mom_hashset_contains (cg->cg_lockeditemset, funblocksitm)
@@ -3944,7 +3943,7 @@ cgen_emit_function_loadcons_mom (struct codegen_mom_st *cg,
       || !(funsigitm =
            mom_value_to_item (mom_node_nth (funinfonod, funinfo_signature)))
       || !mom_hashset_contains (cg->cg_lockeditemset, funsigitm)
-      || funsigitm->itm_kind != MOM_PREDEFINED_NAMED (function_signature))
+      || funsigitm->itm_kind != MOM_PREDEFINED_NAMED (signature))
     MOM_FATAPRINTF
       ("corrupted function info %s for function %s (signature %s) of module %s",
        mom_output_gcstring (vfuninfo), mom_item_cstring (curfunitm),
@@ -3989,7 +3988,7 @@ cgen_emit_function_unloaddestr_mom (struct codegen_mom_st *cg,
       || !(funsigitm =
            mom_value_to_item (mom_node_nth (funinfonod, funinfo_signature)))
       || !mom_hashset_contains (cg->cg_lockeditemset, funsigitm)
-      || funsigitm->itm_kind != MOM_PREDEFINED_NAMED (function_signature))
+      || funsigitm->itm_kind != MOM_PREDEFINED_NAMED (signature))
     MOM_FATAPRINTF
       ("corrupted function info %s for function %s (signature %s) of module %s",
        mom_output_gcstring (vfuninfo), mom_item_cstring (curfunitm),

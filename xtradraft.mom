@@ -93,7 +93,7 @@
 ** basic_web_html
 {
  * comment "function to handle basic web reply in HTML"
- * function_signature  signature_2itm2val_to_void
+ * signature  signature_2itm2val_to_void
  * constants {http_POST }
  * formals [ webxitm reqmethitm restpathval sessval ]
  * closed [ getproc postproc ]
@@ -245,7 +245,7 @@
 ** basic_html_output_value 
 {
  * comment "internal function to output HTML in webxitm for value val1 at given depth"
- * function_signature signature_1itm1val1int_to_void
+ * signature signature_1itm1val1int_to_void
  * constants { basic_html_output_item basic_html_output_value __constantclo_basic_html_output_item
                simple_html_tag simple_html_start simple_html_between simple_html_end code }
  * formals [ webxitm val1 depth ]
@@ -749,7 +749,7 @@
 ** basic_html_output_item 
 {
  * comment "internal function to output HTML in webxitm for item itm1 at given depth"
- * function_signature signature_2itm1int_to_void
+ * signature signature_2itm1int_to_void
  * constants { indirect_html_item  __constantclo_basic_html_output_value }
  * formals [ webxitm itm1 depth ]
  * closed [ ]
@@ -865,7 +865,7 @@
 ** basic_web_json
 {
  * comment "function to handle basic web reply in JSON"
- * function_signature  signature_2itm2val_to_void
+ * signature  signature_2itm2val_to_void
  * constants { }
  * formals [ webxitm reqmethitm restpathval sessval ]
  * closed [ getproc postproc ]

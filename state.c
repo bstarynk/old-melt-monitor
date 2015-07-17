@@ -2384,8 +2384,7 @@ emit_signature_application_hook_mom (FILE *foutaphd,
                    mom_output_gcstring (vhook));
   assert (foutaphd);
   assert (itmpredef && itmpredef->itm_space == momspa_predefined);
-  if (!itmkindsig
-      || itmkindsig->itm_kind != MOM_PREDEFINED_NAMED (function_signature))
+  if (!itmkindsig || itmkindsig->itm_kind != MOM_PREDEFINED_NAMED (signature))
     MOM_FATAPRINTF
       ("emit_signature_application_hook itmpredef %s with invalid kind %s",
        mom_item_cstring (itmpredef), mom_item_cstring (itmkindsig));
@@ -2533,7 +2532,7 @@ emit_predefined_fill_mom (void)
                        ix, mom_item_cstring (itmpredef),
                        mom_item_cstring (itmkind),
                        mom_item_cstring (itmkind->itm_kind) ? : "~");
-      if (itmkind->itm_kind == MOM_PREDEFINED_NAMED (function_signature))
+      if (itmkind->itm_kind == MOM_PREDEFINED_NAMED (signature))
         {
           momvalue_t vradix =
             mom_item_unsync_get_attribute ((momitem_t *) itmkind,
@@ -2563,7 +2562,7 @@ emit_predefined_fill_mom (void)
             }
         }
 
-      if (itmpredef->itm_kind == MOM_PREDEFINED_NAMED (function_signature))
+      if (itmpredef->itm_kind == MOM_PREDEFINED_NAMED (signature))
         {
           momvalue_t vradix =
             mom_item_unsync_get_attribute ((momitem_t *) itmpredef,
@@ -2609,7 +2608,7 @@ emit_predefined_fill_mom (void)
                        mom_item_cstring (itmkind));
       if (!itmkind)
         continue;
-      if (itmkind->itm_kind != MOM_PREDEFINED_NAMED (function_signature))
+      if (itmkind->itm_kind != MOM_PREDEFINED_NAMED (signature))
         continue;
       MOM_DEBUGPRINTF (dump,
                        "emit_predefined_fill ix#%d itmpredef %s for hook",

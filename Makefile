@@ -51,8 +51,9 @@ all: monimelt modules plugins tags
 clean:
 	$(RM) *~ *.o *.so */*.so */*~ */*.orig *.i *.orig melt*.cc meltmom*.[ch] meltmom*.o meltmom*.so meltmom*.mk \
 	      _tmp_* monimelt core* modules/*.tmp modules/*.bad webdir/*~ *.tmp  _timestamp.* *dbsqlite*-journal *%
-	$(RM) modules/*.so modules/*~
+	$(RM) modules/*.so modules/*~ modules/*%
 	$(RM) -rf _monimelt_*
+	$(RM) jit-doc.html
 ################
 monimelt: $(OBJECTS) _timestamp.o
 	@if [ -f $@ ]; then echo -n backup old executable: ' ' ; mv -v $@ $@~ ; fi

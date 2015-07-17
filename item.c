@@ -1204,7 +1204,7 @@ mom_unsync_item_set_kind (momitem_t *itm, momitem_t *kinditm)
   momvalue_t vcons = MOM_NONEV;
   {
     mom_item_lock (kinditm);
-    if (kinditm->itm_kind == MOM_PREDEFINED_NAMED (function_signature))
+    if (kinditm->itm_kind == MOM_PREDEFINED_NAMED (signature))
       {
         momvalue_t vfillclos =  //
           mom_nodev_new (MOM_PREDEFINED_NAMED (filler_of_function), 1,

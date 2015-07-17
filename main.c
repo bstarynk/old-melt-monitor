@@ -1076,7 +1076,7 @@ main (int argc_main, char **argv_main)
             {
               pritm->itm_space = momspa_global;
               MOM_INFORMPRINTF ("item %s is no more predefined but global",
-                          mom_item_cstring (pritm));
+                                mom_item_cstring (pritm));
             };
         }
       if (!dump_exit_dir_mom || !dump_exit_dir_mom[0]
