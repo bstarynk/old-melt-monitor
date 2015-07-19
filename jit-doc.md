@@ -79,13 +79,10 @@ The following control flow related stmt-ops are understood:
   role of a `continue` to restart the block); there should not be any
   next statement, or else it should be a leader...
 
-* `code` *sub-statement* ..., with the first sub-statement being a
-leader (like blocks in C). An implicit block is then made and stored in
-the `block` attribute of that statement.
-
-* `block` *blockitem* *sub-statement* ... likewise, but the block is
-  explicitly given - if it is nil, it becomes created and stored as
-  the component #1
+* `block` *blockitem* *sub-statement* ... ; like block `{`...`}`
+  statements in C, the first sub-statement being a leader, but the
+  block is explicitly given - if it is nil, it becomes created and
+  stored as the component #1
 
 * `loop` *blockitem* *sub-statement* ... likewise, for an infinite
 loop of given block item, but the block is explicitly given - if it is

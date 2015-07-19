@@ -1063,10 +1063,6 @@ momfunc_1itm_to_void__jitdo_scan_block (const
           cjit_scan_stmt_jump_next_mom (cj, curstmtitm, curnextitm,
                                         curnextpos);
           break;
-        case MOM_CASE_PREDEFINED_NAMED (code, curopitm, otherwiseoplab):
-          cjit_scan_stmt_code_next_mom (cj, curstmtitm, curnextitm,
-                                        curnextpos);
-          break;
         case MOM_CASE_PREDEFINED_NAMED (block, curopitm, otherwiseoplab):
           cjit_scan_stmt_block_next_mom (cj, curstmtitm, curnextitm,
                                          curnextpos);
@@ -1534,85 +1530,6 @@ cjit_scan_stmt_break_next_mom (struct codejit_mom_st *cj,
 }                               // end of cjit_scan_stmt_break_next_mom
 
 
-static void
-cjit_scan_stmt_code_next_mom (struct codejit_mom_st *cj,
-                              momitem_t *stmtitm, momitem_t *nextitm,
-                              int nextpos)
-{/**
-* `code` *sub-statement* ..., with the first sub-statement being a
-leader (like blocks in C). An implicit block is then made and stored in
-the `block` attribute of that statement.
-  **/
-  unsigned stmtlen = mom_unsync_item_components_count (stmtitm);
-  assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
-  for (unsigned six = 1; six < stmtlen; six++)
-    {
-      momvalue_t substmtv = mom_raw_item_get_indexed_component (stmtitm, six);
-      momitem_t *substmtitm = mom_value_to_item (substmtv);
-      if (!substmtitm
-          || (cjit_lock_item_mom (cj, substmtitm),
-              substmtitm->itm_kind != MOM_PREDEFINED_NAMED (code_statement)))
-        CJIT_ERROR_MOM (cj,
-                        "scan_stmt_code: invalid code statement %s with bad substmt#%d %s",
-                        mom_item_cstring (stmtitm), six,
-                        mom_output_gcstring (substmtv));
-    };
-  momitem_t *blockitm =         //
-    mom_value_to_item (mom_item_unsync_get_attribute
-                       (stmtitm, MOM_PREDEFINED_NAMED (block)));
-  if (!blockitm)
-    {
-      blockitm = mom_make_anonymous_item ();
-      blockitm->itm_kind = MOM_PREDEFINED_NAMED (block);
-      blockitm->itm_space =     //
-        (stmtitm->itm_space > momspa_transient
-         && stmtitm->itm_space <
-         momspa_predefined) ? stmtitm->itm_space : momspa_transient;
-      mom_item_unsync_put_attribute (stmtitm, MOM_PREDEFINED_NAMED (block),
-                                     mom_itemv (blockitm));
-      cjit_lock_item_mom (cj, blockitm);
-    }
-  cjit_lock_item_mom (cj, blockitm);
-  if (blockitm->itm_kind != MOM_PREDEFINED_NAMED (block))
-    CJIT_ERROR_MOM (cj,
-                    "scan_stmt_code: invalid code statement %s with bad block %s",
-                    mom_item_cstring (stmtitm), mom_item_cstring (blockitm));
-  momvalue_t vblockbind =       //
-    mom_attributes_find_value (cj->cj_funbind, blockitm);
-  if (vblockbind.typnum != momty_null)
-    CJIT_ERROR_MOM (cj, "scan_stmt_code: invalid code statement %s"
-                    " with block %s already bound to %s",
-                    mom_item_cstring (stmtitm), mom_item_cstring (blockitm),
-                    mom_output_gcstring (vblockbind));
-  blockitm->itm_comps = mom_components_reserve (NULL, stmtlen - 1);
-  for (unsigned six = 1; six < stmtlen; six++)
-    {
-      momvalue_t substmtv = mom_raw_item_get_indexed_component (stmtitm, six);
-      momitem_t *substmtitm = mom_value_to_item (substmtv);
-      assert (substmtitm && cjit_is_locked_item_mom (cj, substmtitm)
-              && substmtitm->itm_kind ==
-              MOM_PREDEFINED_NAMED (code_statement));
-      blockitm->itm_comps =
-        mom_components_append1 (blockitm->itm_comps, mom_itemv (substmtitm));
-    }
-  cjit_scan_block_next_mom (cj, blockitm, nextitm, nextpos);
-  if (nextitm)
-    {
-      cjit_lock_item_mom (cj, nextitm);
-      if (nextitm->itm_kind == MOM_PREDEFINED_NAMED (block))
-        {
-          momitem_t *nextstmtitm =
-            cjit_get_statement_mom (cj, nextitm, nextpos + 1);
-          if (nextstmtitm)
-            {
-              cjit_add_basic_block_stmt_leader_mom (cj, nextstmtitm, nextitm,
-                                                    nextpos + 1);
-            }
-        }
-    }
-}                               // end of cjit_scan_stmt_code_next_mom
-
-
 
 static void
 cjit_scan_stmt_block_next_mom (struct codejit_mom_st *cj,
@@ -1890,8 +1807,28 @@ cjit_scan_apply_next_mom (struct codejit_mom_st *cj,
                         mom_item_cstring (curesoutitm),
                         mom_item_cstring (curoutformaltypitm),
                         mom_item_cstring (curestypitm));
-    };
-#warning  cjit_scan_apply_next_mom incomplete
+    };                          /* end for resix */
+  for (unsigned argix = 0; argix < nbins; argix++)
+    {
+      momvalue_t curargexprv =  //
+        mom_raw_item_get_indexed_component (stmtitm, 2 + nbouts + argix);
+      momitem_t *curargtypitm = NULL;
+      momitem_t *curinformaltypitm = mom_seq_nth (inputyptup, argix);
+      if (!curinformaltypitm
+          || !(curargtypitm =
+               cjit_type_of_scanned_expr_mom (cj, curargexprv))
+          || !mom_code_compatible_types (curinformaltypitm, curargtypitm))
+        CJIT_ERROR_MOM (cj,
+                        "scan_apply_next: apply statement %s"
+                        " in block %s in function %s"
+                        " has bad argument#%d %s expected type %s actual type %s",
+                        mom_item_cstring (stmtitm),
+                        mom_item_cstring (cj->cj_curblockitm),
+                        mom_item_cstring (cj->cj_curfunitm), argix,
+                        mom_output_gcstring,
+                        mom_item_cstring (curinformaltypitm),
+                        mom_item_cstring (curargtypitm));
+    };                          /* end for argix */
 badapply_lab:
   CJIT_ERROR_MOM (cj,
                   "scan_apply_next: invalid apply statement %s in block %s in function %s",
