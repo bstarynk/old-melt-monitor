@@ -1002,9 +1002,9 @@ momfunc_1itm_to_void__jitdo_scan_block (const
   momitem_t *nextitm = NULL;
   struct codejit_mom_st *cj = NULL;
   /// should never happen...
-  if (mom_node_arity (clonod) != 3 || !(blockitm =      //
-                                        mom_value_to_item (mom_node_nth
-                                                           (clonod, 0)))
+  if (mom_node_arity (clonod) != 3      //
+      || !(blockitm =           //
+           mom_value_to_item (mom_node_nth (clonod, 0)))        //
       || !cjitm || cjitm->itm_kind != MOM_PREDEFINED_NAMED (code_generation)
       || !(cj = cjitm->itm_data1) || cj->cj_magic != CODEJIT_MAGIC_MOM)
     MOM_FATAPRINTF ("jitdo_scan_block: bad clonode %s or cjitm %s",
@@ -1194,6 +1194,26 @@ cjit_get_item_constant_mom (struct codejit_mom_st *cj,
                     mom_output_gcstring (vexpr), mom_item_cstring (stmtitm));
 }                               /* end of cjit_get_item_constant_mom */
 
+static void
+cjit_add_block_statement_leader_mom (struct codejit_mom_st *cj,
+                                     momitem_t *blockitm, int pos)
+{
+  assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
+  if (blockitm)
+    {
+      cjit_lock_item_mom (cj, blockitm);
+      if (blockitm->itm_kind == MOM_PREDEFINED_NAMED (block))
+        {
+          momitem_t *stmtitm = cjit_get_statement_mom (cj, blockitm, pos);
+          if (stmtitm)
+            {
+              cjit_add_basic_block_stmt_leader_mom (cj, stmtitm,
+                                                    blockitm, pos);
+            }
+        }
+    }
+}                               /* end of cjit_add_block_statement_leader_mom */
+
 
 static void
 cjit_scan_stmt_if_next_mom (struct codejit_mom_st *cj,
@@ -1249,19 +1269,7 @@ cjit_scan_stmt_if_next_mom (struct codejit_mom_st *cj,
       cjit_scan_block_next_mom (cj, elseitm, nextitm, nextpos);
     };
   if (nextitm)
-    {
-      cjit_lock_item_mom (cj, nextitm);
-      if (nextitm->itm_kind == MOM_PREDEFINED_NAMED (block))
-        {
-          momitem_t *nextstmtitm =
-            cjit_get_statement_mom (cj, nextitm, nextpos + 1);
-          if (nextstmtitm)
-            {
-              cjit_add_basic_block_stmt_leader_mom (cj, nextstmtitm, nextitm,
-                                                    nextpos + 1);
-            }
-        }
-    }
+    cjit_add_block_statement_leader_mom (cj, nextitm, nextpos);
 }                               // end of cjit_scan_stmt_if_next_mom
 
 
@@ -1346,19 +1354,7 @@ cjit_scan_stmt_int_switch_next_mom (struct codejit_mom_st *cj,
       cjit_scan_block_next_mom (cj, casblockitm, nextitm, nextpos);
     }                           /* end for casix */
   if (nextitm)
-    {
-      cjit_lock_item_mom (cj, nextitm);
-      if (nextitm->itm_kind == MOM_PREDEFINED_NAMED (block))
-        {
-          momitem_t *nextstmtitm =
-            cjit_get_statement_mom (cj, nextitm, nextpos + 1);
-          if (nextstmtitm)
-            {
-              cjit_add_basic_block_stmt_leader_mom (cj, nextstmtitm, nextitm,
-                                                    nextpos + 1);
-            }
-        }
-    }
+    cjit_add_block_statement_leader_mom (cj, nextitm, nextpos);
 }                               // end of cjit_scan_stmt_int_switch_next_mom
 
 
@@ -1426,19 +1422,7 @@ cjit_scan_stmt_item_switch_next_mom (struct codejit_mom_st *cj,
       cjit_scan_block_next_mom (cj, casblockitm, nextitm, nextpos);
     }
   if (nextitm)
-    {
-      cjit_lock_item_mom (cj, nextitm);
-      if (nextitm->itm_kind == MOM_PREDEFINED_NAMED (block))
-        {
-          momitem_t *nextstmtitm =
-            cjit_get_statement_mom (cj, nextitm, nextpos + 1);
-          if (nextstmtitm)
-            {
-              cjit_add_basic_block_stmt_leader_mom (cj, nextstmtitm, nextitm,
-                                                    nextpos + 1);
-            }
-        }
-    }
+    cjit_add_block_statement_leader_mom (cj, nextitm, nextpos);
 }                               // end of cjit_scan_stmt_item_switch_next_mom
 
 
@@ -1466,19 +1450,7 @@ cjit_scan_stmt_jump_next_mom (struct codejit_mom_st *cj,
                     mom_item_cstring (stmtitm));
   cjit_scan_block_next_mom (cj, targetitm, nextitm, nextpos);
   if (nextitm)
-    {
-      cjit_lock_item_mom (cj, nextitm);
-      if (nextitm->itm_kind == MOM_PREDEFINED_NAMED (block))
-        {
-          momitem_t *nextstmtitm =
-            cjit_get_statement_mom (cj, nextitm, nextpos + 1);
-          if (nextstmtitm)
-            {
-              cjit_add_basic_block_stmt_leader_mom (cj, nextstmtitm, nextitm,
-                                                    nextpos + 1);
-            }
-        }
-    }
+    cjit_add_block_statement_leader_mom (cj, nextitm, nextpos);
 }                               // end of cjit_scan_stmt_jump_next_mom
 
 
@@ -1529,19 +1501,7 @@ cjit_scan_stmt_break_next_mom (struct codejit_mom_st *cj,
                                    targbind1v);
   cj->cj_funbind = mom_attributes_put (cj->cj_funbind, stmtitm, &vnod);
   if (nextitm)
-    {
-      cjit_lock_item_mom (cj, nextitm);
-      if (nextitm->itm_kind == MOM_PREDEFINED_NAMED (block))
-        {
-          momitem_t *nextstmtitm =
-            cjit_get_statement_mom (cj, nextitm, nextpos + 1);
-          if (nextstmtitm)
-            {
-              cjit_add_basic_block_stmt_leader_mom (cj, nextstmtitm, nextitm,
-                                                    nextpos + 1);
-            }
-        }
-    }
+    cjit_add_block_statement_leader_mom (cj, nextitm, nextpos);
 }                               // end of cjit_scan_stmt_break_next_mom
 
 
@@ -1606,19 +1566,7 @@ cjit_scan_stmt_block_next_mom (struct codejit_mom_st *cj,
     }
   cjit_scan_block_next_mom (cj, blockitm, nextitm, nextpos);
   if (nextitm)
-    {
-      cjit_lock_item_mom (cj, nextitm);
-      if (nextitm->itm_kind == MOM_PREDEFINED_NAMED (block))
-        {
-          momitem_t *nextstmtitm =
-            cjit_get_statement_mom (cj, nextitm, nextpos + 1);
-          if (nextstmtitm)
-            {
-              cjit_add_basic_block_stmt_leader_mom (cj, nextstmtitm, nextitm,
-                                                    nextpos + 1);
-            }
-        }
-    }
+    cjit_add_block_statement_leader_mom (cj, nextitm, nextpos);
 }                               // end of cjit_scan_stmt_block_next_mom
 
 
@@ -1724,19 +1672,7 @@ given - if it is nil, it becomes created and stored as the component
     mom_components_append1 (blockitm->itm_comps, mom_itemv (lastjumpitm));
   cjit_scan_block_next_mom (cj, blockitm, nextitm, nextpos);
   if (nextitm)
-    {
-      cjit_lock_item_mom (cj, nextitm);
-      if (nextitm->itm_kind == MOM_PREDEFINED_NAMED (block))
-        {
-          momitem_t *nextstmtitm =
-            cjit_get_statement_mom (cj, nextitm, nextpos + 1);
-          if (nextstmtitm)
-            {
-              cjit_add_basic_block_stmt_leader_mom (cj, nextstmtitm, nextitm,
-                                                    nextpos + 1);
-            }
-        }
-    }
+    cjit_add_block_statement_leader_mom (cj, nextitm, nextpos);
 }                               // end of cjit_scan_stmt_loop_next_mom
 
 
@@ -1844,6 +1780,11 @@ cjit_scan_apply_next_mom (struct codejit_mom_st *cj,
                         mom_item_cstring (curinformaltypitm),
                         mom_item_cstring (curargtypitm));
     };                          /* end for argix */
+  if (nextitm)
+    cjit_add_block_statement_leader_mom (cj, nextitm, nextpos);
+#warning cjit_scan_apply_next_mom incomplete
+  MOM_FATAPRINTF ("cjit_scan_apply_next_mom incomplete stmtitm %s",
+                  mom_item_cstring (stmtitm));
 badapply_lab:
   CJIT_ERROR_MOM (cj,
                   "scan_apply_next: invalid apply statement %s in block %s in function %s",
