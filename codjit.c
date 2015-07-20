@@ -765,7 +765,7 @@ cjit_scan_block_next_mom (struct codejit_mom_st *cj,
         (gencod, "scan_block_next function %s; blockitm=%s bound to %s",
          mom_item_cstring (cj->cj_curfunitm), mom_item_cstring (blockitm),
          mom_output_gcstring (vnewblockbind));
-      // check that every component is a statement item
+      // check that every component is a fresh statement item
       unsigned nbstmt = mom_unsync_item_components_count (blockitm);
       for (unsigned ix = 0; ix < nbstmt; ix++)
         {
@@ -783,6 +783,21 @@ cjit_scan_block_next_mom (struct codejit_mom_st *cj,
                             mom_item_cstring (cj->cj_curfunitm),
                             mom_item_cstring (blockitm), ix,
                             mom_output_gcstring (curstmtv));
+          momvalue_t stmtbindv =
+            mom_attributes_find_value (cj->cj_funbind, curstmtitm);
+          if (stmtbindv.typnum != momty_null)
+            CJIT_ERROR_MOM (cj,
+                            "scan_block_next function %s blockitm %s"
+                            " has statement #%u %s already bound to %s",
+                            mom_item_cstring (cj->cj_curfunitm),
+                            mom_item_cstring (blockitm), ix,
+                            mom_item_cstring (curstmtitm),
+                            mom_output_gcstring (stmtbindv));
+          stmtbindv = mom_nodev_new (MOM_PREDEFINED_NAMED (code_statement), 2,
+                                     mom_itemv (blockitm), mom_intv (ix));
+          cj->cj_funbind =      //
+            mom_attributes_put (cj->cj_funbind, curstmtitm, &stmtbindv);
+
         }
       // add todo scan inside the block
       cjit_queue_to_do_mom (cj, //
