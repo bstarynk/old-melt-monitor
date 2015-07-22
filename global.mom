@@ -2407,6 +2407,19 @@
 ..
 
 
+** signature_1int_to_int   ////// PREDEFINED
+{
+  * comment  "signature for : integer -> integer"
+  * dumped_item_emitter  ^emitter_of_function()
+  * dumped_item_scanner  ^scanner_of_function()
+  * function_radix  "1int_to_int"
+  * input_types  [integer]
+  * output_types  [integer] }
+ %  ^filler_of_plain_kind( signature)
+ 
+..
+
+
 ** signature_1itm1int_to_item   ////// PREDEFINED
 {
   * comment  "signature for : item integer -> item"

@@ -110,6 +110,9 @@ mom_predefined_items_fill (void)
 // item scanner_of_magic_attribute of kind signature_1itm_to_void
   MOM_PREDEFINED_NAMED (scanner_of_magic_attribute)->itm_kind
     = MOM_PREDEFINED_NAMED (signature_1itm_to_void);
+// item signature_1int_to_int of kind signature
+  MOM_PREDEFINED_NAMED (signature_1int_to_int)->itm_kind
+    = MOM_PREDEFINED_NAMED (signature);
 // item signature_1itm1int_to_item of kind signature
   MOM_PREDEFINED_NAMED (signature_1itm1int_to_item)->itm_kind
     = MOM_PREDEFINED_NAMED (signature);
