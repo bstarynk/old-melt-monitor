@@ -19,8 +19,7 @@ along with GCC; see the file COPYING3.   If not see
 **/
 
 #include "monimelt.h"
-#include "libgccjit.h"
-#include <setjmp.h>
+#include <libgccjit.h>
 
 #ifndef LIBGCCJIT_HAVE_SWITCH_STATEMENTS
 #error  libgccjit is too old since without switch statements

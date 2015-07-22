@@ -29,6 +29,7 @@ static const char *write_pid_file_mom;
 static const char *dump_cold_dir_mom;
 static const char *dump_exit_dir_mom;
 static const char *generate_c_module_mom;
+static const char *generate_jit_module_mom;
 static const char *xtra_path_mom;
 
 unsigned nbmorepredef_mom;
@@ -392,6 +393,7 @@ enum extraopt_en
   xtraopt_dumpcoldstate,
   xtraopt_daemon_noclose,
   xtraopt_generate_c_module,
+  xtraopt_generate_jit_module,
   xtraopt_system,
 };
 
@@ -422,6 +424,8 @@ static const struct option mom_long_options[] = {
   {"add-predefined", required_argument, NULL, xtraopt_addpredef},
   {"unpredefine", required_argument, NULL, xtraopt_unpredefine},
   {"generate-c-module", required_argument, NULL, xtraopt_generate_c_module},
+  {"generate-jit-module", required_argument, NULL,
+   xtraopt_generate_jit_module},
   {"system", required_argument, NULL, xtraopt_system},
   /* Terminating NULL placeholder.  */
   {NULL, no_argument, NULL, 0},
@@ -575,6 +579,8 @@ usage_mom (const char *argv0)
   printf ("\t --unpredefine <predefname>"
           "\t #change a predefined to a global\n");
   printf ("\t --generate-c-module <moduleitem>" "\t #generate a C module\n");
+  printf ("\t --generate-jit-module <moduleitem>"
+          "\t #generate a JIT module\n");
   printf ("\t --system <command>"
           "\t #run an arbitrary (perhaps dangereous) command at argument parsing time\n");
 }
@@ -810,6 +816,11 @@ parse_program_arguments_and_load_plugins_mom (int *pargc, char ***pargv)
             generate_c_module_mom = optarg;
           }
           break;
+        case xtraopt_generate_jit_module:
+          {
+            generate_jit_module_mom = optarg;
+          }
+          break;
         case xtraopt_system:
           {
             if (optarg)
@@ -937,7 +948,19 @@ do_generate_c_module_mom (void)
           dump_exit_dir_mom = "./";
         }
     }
-}
+}                               /* end of do_generate_c_module_mom */
+
+static void
+do_generate_jit_module_mom (void)
+{
+  bool backedup = false;
+  momitem_t *moditm = mom_find_item (generate_jit_module_mom);
+  if (!moditm)
+    MOM_FATAPRINTF ("cannot find C module %s", generate_jit_module_mom);
+#warning do_generate_jit_module_mom unimplemented
+  MOM_FATAPRINTF ("do_generate_jit_module_mom %s unimplemented",
+                  mom_item_cstring (moditm));
+}                               /* end of do_generate_jit_module_mom */
 
 
 static bool daemonize_mom = false;

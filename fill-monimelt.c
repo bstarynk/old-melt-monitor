@@ -80,6 +80,9 @@ mom_predefined_items_fill (void)
 // item generate_c_module of kind signature_1itm_to_val
   MOM_PREDEFINED_NAMED (generate_c_module)->itm_kind
     = MOM_PREDEFINED_NAMED (signature_1itm_to_val);
+// item generate_jit_module of kind signature_1itm_to_val
+  MOM_PREDEFINED_NAMED (generate_jit_module)->itm_kind
+    = MOM_PREDEFINED_NAMED (signature_1itm_to_val);
 // item integer of kind type
   MOM_PREDEFINED_NAMED (integer)->itm_kind = MOM_PREDEFINED_NAMED (type);
 // item item of kind type
@@ -237,6 +240,9 @@ mom_predefined_items_fill (void)
 // function item generate_c_module of signature_1itm_to_val:
   MOM_PREDEFINED_NAMED (generate_c_module)->itm_data1 =
     mom_dynload_symbol ("momfunc_1itm_to_val__generate_c_module");
+// function item generate_jit_module of signature_1itm_to_val:
+  MOM_PREDEFINED_NAMED (generate_jit_module)->itm_data1 =
+    mom_dynload_symbol ("momfunc_1itm_to_val__generate_jit_module");
 // function item jitdo_scan_block of signature_1itm_to_void:
   MOM_PREDEFINED_NAMED (jitdo_scan_block)->itm_data1 =
     mom_dynload_symbol ("momfunc_1itm_to_void__jitdo_scan_block");

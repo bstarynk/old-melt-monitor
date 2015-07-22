@@ -1472,6 +1472,16 @@
 ..
 
 
+** generate_jit_module   ////// PREDEFINED
+{
+  * comment  "routine to generate a JIT module; returns the module item on success, or an error message"
+  * hook_closure  0 }
+ [[  ^generate_c_module() ]]
+ %  ^filler_of_function( signature_1itm_to_val)
+ 
+..
+
+
 ** generator   ////// PREDEFINED
 {
   * comment  "e.g. to give generating closure, etc..." }
