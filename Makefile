@@ -49,7 +49,7 @@ RM= rm -fv
 # to make with tsan: make OPTIMFLAGS='-g3 -fsanitize=thread -fPIE' LINKFLAGS=-pie
 all: monimelt modules plugins tags
 clean:
-	$(RM) *~ *.o *.so */*.so */*~ */*.orig *.i *.orig melt*.cc meltmom*.[ch] meltmom*.o meltmom*.so meltmom*.mk \
+	$(RM) *~ *.o *.so */*.so *.log */*~ */*.orig *.i *.orig melt*.cc meltmom*.[ch] meltmom*.o meltmom*.so meltmom*.mk \
 	      _tmp_* monimelt core* modules/*.tmp modules/*.bad webdir/*~ *.tmp  _timestamp.* *dbsqlite*-journal *%
 	$(RM) modules/*.so modules/*~ modules/*%
 	$(RM) -rf _monimelt_*
@@ -96,6 +96,8 @@ $(OBJECTS): monimelt.h predef-monimelt.h apply-monimelt.h
 	- echo '-T fd_set' >> $@-tmp
 	- echo '-T CURLM' >> $@-tmp
 	- echo '-T CURL' >> $@-tmp
+	- echo '-T gcc_jit_context' >> $@-tmp
+	- echo '-T gcc_jit_object' >> $@-tmp	
 	- sort  $@-tmp > $@
 	- rm $@-tmp
 
@@ -140,6 +142,7 @@ passwords: .mompasswd
 
 tests-jit: ./monimelt $(wildcard xtra-jitest-*.mom)
 	[ -d /tmp/newmonimelt/ ] || mkdir /tmp/newmonimelt/
+	rm -rf /tmp/newmonimelt/*
 	./monimelt -Dgencod -X xtra-jitest-fact.mom \
             --chdir /tmp/newmonimelt/ \
 	    --generate-jit-module jitest_fact_module \

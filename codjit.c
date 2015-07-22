@@ -31,9 +31,17 @@ struct codejit_mom_st
   unsigned cj_magic;            /* always CODEJIT_MAGIC_MOM */
   const momstring_t *cj_errormsg;       /* the error message */
   jmp_buf cj_jmpbuferror;       /* for longjmp on error */
-  gcc_jit_context *cj_jitctxt;  /* for GCCJIT */
   momitem_t *cj_codjititm;
   momitem_t *cj_moduleitm;
+  gcc_jit_context *cj_jitctxt;  /* for GCCJIT */
+  FILE *cj_jitlog;              /* for GCCJIT */
+  // indexed base of GCCJIT gcc_jit_object pointers
+  unsigned cj_objcount;         /* number of GCCJIT gcc_jit_object-s
+                                   and index of last used slot in
+                                   cj_objptrarr */
+  const gcc_jit_object **cj_objptrarr;  /* array of GCCJIT gcc_jit_object-s; slot#0 stays NULL */
+  unsigned *cj_objhasharr;      /* hashed array of indexes for GCCJIT */
+  unsigned cj_objsize;          /* allocated sizefor GCCJIT  of cj_objptrarr & cj_objhasharr */
   struct momhashset_st *cj_lockeditemset;       /* the set of locked items */
   struct momhashset_st *cj_functionhset;        /* the set of functions */
   struct momattributes_st *cj_globalbind;       /* global bindings */
@@ -65,7 +73,10 @@ struct codejit_mom_st
   CJIT_ERROR_MOM_AT(__LINE__,(Cj),(Fmt),__VA_ARGS__)
 
 
-
+#define cjit_logprintf(Cj,Fmt,...) cjit_logprintf_at(Cj,__LINE__,Fmt "\n",__VA_ARGS__)
+static void cjit_logprintf_at (struct codejit_mom_st *cj, int lin,
+                               const char *fmt, ...)
+  __attribute__ ((format (printf, 3, 4)));
 
 static void
 cjit_lock_item_mom (struct codejit_mom_st *cj, momitem_t *itm)
@@ -104,6 +115,203 @@ cjit_unlock_all_items_mom (struct codejit_mom_st *cj)
     }
 }                               /* end of cjit_unlock_all_items_mom */
 
+
+// given an index, find the GCCJIT object of that index
+static inline const gcc_jit_object *
+cjit_find_indexed_object_mom (struct codejit_mom_st *cj, unsigned ix)
+{
+  assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
+  if (ix == 0 || ix > cj->cj_objcount)
+    return NULL;
+  assert (cj->cj_objptrarr != NULL);
+  return cj->cj_objptrarr[ix];
+}                               /* end of cjit_find_indexed_object_mom */
+
+// given a GCCJIT object, find its index, or 0 if not known
+static unsigned cjit_find_object_index_mom (struct codejit_mom_st *cj,
+                                            const gcc_jit_object *obj);
+
+// put a GCCJIT object in the indexed base - or give its index if it was there already
+static unsigned cjit_put_object_mom (struct codejit_mom_st *cj,
+                                     const gcc_jit_object *obj);
+
+static void
+cjit_logprintf_at (struct codejit_mom_st *cj, int lin, const char *fmt, ...)
+{
+  assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
+  if (!cj->cj_jitlog)
+    return;
+  va_list args;
+  fprintf (cj->cj_jitlog, "%s:%d: ", __FILE__, lin);
+  va_start (args, fmt);
+  vfprintf (cj->cj_jitlog, fmt, args);
+  fflush (cj->cj_jitlog);
+  va_end (args);
+}                               /* end of cjit_logprintf */
+
+
+static inline unsigned
+cjit_object_hash (const gcc_jit_object *obj)
+{
+  if (!obj)
+    return 0;
+  unsigned hob =
+    (unsigned) ((((intptr_t) obj * 61007) ^ ((intptr_t) obj / 523 +
+                                             13))) >> 1;
+  if (hob > 0)
+    return hob;
+  else
+    return ((intptr_t) obj) % 829 + 10;
+}                               /* end of cjit_object_hash */
+
+
+static unsigned
+cjit_raw_put_object (struct codejit_mom_st *cj, const gcc_jit_object *obj)
+{
+  assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
+  if (!obj)
+    return 0;
+  unsigned obsiz = cj->cj_objsize;
+  assert (obsiz > 10 && 5 * cj->cj_objcount + 2 < 4 * obsiz);
+  unsigned hob = cjit_object_hash (obj);
+  unsigned startix = hob % obsiz;
+  for (unsigned ix = startix; ix < obsiz; ix++)
+    {
+      unsigned curhix = cj->cj_objhasharr[ix];
+      if (curhix == 0)
+        {
+          unsigned newcount = ++cj->cj_objcount;
+          assert (newcount < obsiz);
+          assert (cj->cj_objptrarr[newcount] == NULL);
+          cj->cj_objhasharr[ix] = newcount;
+          cj->cj_objptrarr[newcount] = obj;
+          return newcount;
+        }
+      else
+        {
+          assert (curhix < obsiz);
+          assert (curhix <= cj->cj_objcount);
+          const gcc_jit_object *curobj = cj->cj_objptrarr[curhix];
+          assert (curobj != NULL);
+          if (curobj == obj)
+            return curhix;
+          continue;
+        }
+    }
+  for (unsigned ix = 0; ix < startix; ix++)
+    {
+      unsigned curhix = cj->cj_objhasharr[ix];
+      if (curhix == 0)
+        {
+          unsigned newcount = ++cj->cj_objcount;
+          assert (newcount < obsiz);
+          assert (cj->cj_objptrarr[newcount] == NULL);
+          cj->cj_objhasharr[ix] = newcount;
+          cj->cj_objptrarr[newcount] = obj;
+          return newcount;
+        }
+      else
+        {
+          assert (curhix < obsiz);
+          assert (curhix <= cj->cj_objcount);
+          const gcc_jit_object *curobj = cj->cj_objptrarr[curhix];
+          assert (curobj != NULL);
+          if (curobj == obj)
+            return curhix;
+          continue;
+        }
+    }
+  // should never happen
+  MOM_FATAPRINTF
+    ("cjit_raw_put_object corrupted object index tables in cj@%p",
+     (void *) cj);
+}                               /* end of cjit_raw_put_object */
+
+
+// given a GCCJIT object, find its index, or 0 if not known
+static unsigned
+cjit_find_object_index_mom (struct codejit_mom_st *cj,
+                            const gcc_jit_object *obj)
+{
+  assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
+  if (!obj)
+    return 0;
+  unsigned obsiz = cj->cj_objsize;
+  assert (obsiz > 10 && 5 * cj->cj_objcount + 2 < 4 * obsiz);
+  unsigned hob = cjit_object_hash (obj);
+  unsigned startix = hob % obsiz;
+  for (unsigned ix = startix; ix < obsiz; ix++)
+    {
+      unsigned curhix = cj->cj_objhasharr[ix];
+      if (curhix == 0)
+        return 0;
+      assert (curhix < obsiz);
+      assert (curhix <= cj->cj_objcount);
+      const gcc_jit_object *curobj = cj->cj_objptrarr[curhix];
+      assert (curobj != NULL);
+      if (curobj == obj)
+        return curhix;
+      continue;
+    }
+  for (unsigned ix = 0; ix < startix; ix++)
+    {
+      unsigned curhix = cj->cj_objhasharr[ix];
+      if (curhix == 0)
+        return 0;
+      assert (curhix < obsiz);
+      assert (curhix <= cj->cj_objcount);
+      const gcc_jit_object *curobj = cj->cj_objptrarr[curhix];
+      assert (curobj != NULL);
+      if (curobj == obj)
+        return curhix;
+      continue;
+    }
+  return 0;
+}                               /* end of cjit_find_object_index_mom */
+
+
+// put a GCCJIT object in the indexed base - or give its index if it was there already
+static unsigned
+cjit_put_object_mom (struct codejit_mom_st *cj, const gcc_jit_object *obj)
+{
+  assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
+  if (!obj)
+    return 0;
+  unsigned obsiz = cj->cj_objsize;
+  unsigned obcnt = cj->cj_objcount;
+  assert (obsiz > 10 && obcnt < obsiz);
+  assert (cj->cj_objptrarr[0] == NULL);
+  if (4 * obcnt + 5 >= 3 * obsiz)
+    {
+      unsigned newsiz = mom_prime_above (3 * obcnt / 2 + 100);
+      if (newsiz > obsiz)
+        {
+          const gcc_jit_object **oldptrarr = cj->cj_objptrarr;
+          unsigned *oldhasharr = cj->cj_objhasharr;
+          assert (oldptrarr != NULL);
+          assert (oldhasharr != NULL);
+          cj->cj_objhasharr =
+            MOM_GC_SCALAR_ALLOC ("objhasharr",
+                                 newsiz * sizeof (cj->cj_objhasharr[0]));
+          cj->cj_objptrarr =
+            MOM_GC_SCALAR_ALLOC ("objptrarr",
+                                 newsiz * sizeof (cj->cj_objptrarr[0]));
+          cj->cj_objsize = newsiz;
+          cj->cj_objcount = 0;
+          for (unsigned ix = 1; ix <= obcnt; ix++)
+            {
+              const gcc_jit_object *curoldobj = oldptrarr[ix];
+              assert (curoldobj != NULL);
+              (void) cjit_raw_put_object (cj, curoldobj);
+            };
+          assert (cj->cj_objcount == obcnt);
+          obsiz = newsiz;
+          MOM_GC_FREE (oldptrarr, obsiz * sizeof (oldptrarr[0]));
+          MOM_GC_FREE (oldhasharr, obsiz * sizeof (oldhasharr[0]));
+        }
+    }
+  return cjit_raw_put_object (cj, obj);
+}                               /* end of cjit_put_object_mom */
 
 static void
 cjit_queue_to_do_mom (struct codejit_mom_st *cj, momvalue_t vtodo)
@@ -176,6 +384,32 @@ bool
   cj->cj_codjititm = itmcjit;
   cj->cj_jitctxt = gcc_jit_context_acquire ();
   mom_item_lock (itmcjit);
+  {                             // initialize an empty base for GCCJIT
+    unsigned initsiz = mom_prime_above (100);
+    cj->cj_objptrarr =
+      MOM_GC_SCALAR_ALLOC ("GCCJIT objptrarr",
+                           initsiz * sizeof (gcc_jit_object *));
+    cj->cj_objhasharr =
+      MOM_GC_SCALAR_ALLOC ("GCCJIT objhasharr", initsiz * sizeof (unsigned));
+    cj->cj_objsize = initsiz;
+  }
+  if (MOM_IS_DEBUGGING (gencod))
+    {
+      char logpath[MOM_PATH_MAX];
+      memset (logpath, 0, sizeof (logpath));
+      snprintf (logpath, sizeof (logpath), "_jit_%s_p%d.log",
+                mom_item_cstring (itm), (int) getpid ());
+      if ((cj->cj_jitlog = fopen (logpath, "w")) == NULL)
+        MOM_WARNPRINTF ("failed to open JIT logfile %s: %m", logpath);
+      else
+        {
+          MOM_INFORMPRINTF ("opened JIT logfile %s for itmcjit=%s",
+                            logpath, mom_item_cstring (itmcjit));
+          fprintf (cj->cj_jitlog,
+                   "##MONIMELT JIT logfile %s for itmcjit=%s\n", logpath,
+                   mom_item_cstring (itmcjit));
+        }
+    };
   itmcjit->itm_kind = MOM_PREDEFINED_NAMED (code_generation);
   itmcjit->itm_data1 = (void *) cj;
   int errlin = 0;
@@ -261,6 +495,8 @@ cjit_first_scanning_pass_mom (momitem_t *itmcjit)
   if (itmmod->itm_kind != MOM_PREDEFINED_NAMED (code_module))
     CJIT_ERROR_MOM (cj, "module item %s is not a `code_module`",
                     mom_item_cstring (itmmod));
+  cjit_logprintf (cj, "first_scanning_pass itmmod=%s",
+                  mom_item_cstring (itmmod));
   ///// compute into cg_functionhset the hashed set of functions
   momvalue_t funsv =            //
     mom_item_unsync_get_attribute (itmmod,
@@ -303,6 +539,8 @@ cjit_first_scanning_pass_mom (momitem_t *itmcjit)
         memset (&cj->cj_fundoque, 0, sizeof (cj->cj_fundoque));
       }
   }
+  cjit_logprintf (cj, "first_scanning_pass end itmmod=%s",
+                  mom_item_cstring (itmmod));
   MOM_DEBUGPRINTF (gencod, "cjit_first_scanning_pass end itmcjit=%s",
                    mom_item_cstring (itmcjit));
 }                               /* end of cjit_first_scanning_pass */
@@ -385,6 +623,9 @@ cjit_scan_function_first_mom (struct codejit_mom_st *cj, momitem_t *itmfun)
     momvalue_t vconstants = mom_item_unsync_get_attribute       //
       (itmfun,
        MOM_PREDEFINED_NAMED (constants));
+    MOM_DEBUGPRINTF (gencod, "scanning function %s vconstants %s",
+                     mom_item_cstring (itmfun),
+                     mom_output_gcstring (vconstants));
     if (vconstants.typnum != momty_null)
       cjit_scan_function_constants_mom (cj, itmfun, vconstants);
   }
@@ -393,6 +634,9 @@ cjit_scan_function_first_mom (struct codejit_mom_st *cj, momitem_t *itmfun)
     momvalue_t vclosed = mom_item_unsync_get_attribute  //
       (itmfun,
        MOM_PREDEFINED_NAMED (closed));
+    MOM_DEBUGPRINTF (gencod, "scanning function %s vclosed %s",
+                     mom_item_cstring (itmfun),
+                     mom_output_gcstring (vclosed));
     if (vclosed.typnum != momty_null)
       cjit_scan_function_closed_mom (cj, itmfun, vclosed);
   }
@@ -402,6 +646,9 @@ cjit_scan_function_first_mom (struct codejit_mom_st *cj, momitem_t *itmfun)
     momvalue_t vvariables = mom_item_unsync_get_attribute       //
       (itmfun,
        MOM_PREDEFINED_NAMED (variables));
+    MOM_DEBUGPRINTF (gencod, "scanning function %s vvariables %s",
+                     mom_item_cstring (itmfun),
+                     mom_output_gcstring (vvariables));
     if (vvariables.typnum != momty_null)
       cjit_scan_function_variables_mom (cj, itmfun, vvariables);
   }
@@ -412,6 +659,8 @@ cjit_scan_function_first_mom (struct codejit_mom_st *cj, momitem_t *itmfun)
                                      MOM_PREDEFINED_NAMED (code));
     momitem_t *coditm =         //
       mom_value_to_item (codv);
+    MOM_DEBUGPRINTF (gencod, "scanning function %s coditm %s",
+                     mom_item_cstring (itmfun), mom_item_cstring (coditm));
     if (coditm)
       cjit_scan_block_next_mom (cj, coditm, NULL, -1);
     else
@@ -421,7 +670,11 @@ cjit_scan_function_first_mom (struct codejit_mom_st *cj, momitem_t *itmfun)
                       mom_item_cstring (itmfun), mom_output_gcstring (codv));
   }
   // do all queued to_do-s
+  MOM_DEBUGPRINTF (gencod, "scanning function %s before doing queued todos",
+                   mom_item_cstring (itmfun));
   cjit_do_all_queued_to_do_mom (cj);
+  MOM_DEBUGPRINTF (gencod, "scanning function %s after doing queued todos",
+                   mom_item_cstring (itmfun));
   MOM_FATAPRINTF ("cjit_scan_function_first unimplemented itmfun=%s",
                   mom_item_cstring (itmfun));
   // perhaps here: cj->cj_funleadattr = NULL;
@@ -1812,7 +2065,7 @@ cjit_scan_apply_next_mom (struct codejit_mom_st *cj,
                         mom_item_cstring (stmtitm),
                         mom_item_cstring (cj->cj_curblockitm),
                         mom_item_cstring (cj->cj_curfunitm), argix,
-                        mom_output_gcstring,
+                        mom_output_gcstring (curargexprv),
                         mom_item_cstring (curinformaltypitm),
                         mom_item_cstring (curargtypitm));
     };                          /* end for argix */

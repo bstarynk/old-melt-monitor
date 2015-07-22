@@ -2,6 +2,8 @@
 -T CURLM
 -T fd_set
 -T FILE
+-T gcc_jit_context
+-T gcc_jit_object
 -T int16_t
 -T int32_t
 -T int64_t
