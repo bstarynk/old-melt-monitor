@@ -953,13 +953,21 @@ do_generate_c_module_mom (void)
 static void
 do_generate_jit_module_mom (void)
 {
-  bool backedup = false;
+  momvalue_t valgen = MOM_NONEV;
   momitem_t *moditm = mom_find_item (generate_jit_module_mom);
   if (!moditm)
-    MOM_FATAPRINTF ("cannot find C module %s", generate_jit_module_mom);
-#warning do_generate_jit_module_mom unimplemented
-  MOM_FATAPRINTF ("do_generate_jit_module_mom %s unimplemented",
-                  mom_item_cstring (moditm));
+    MOM_FATAPRINTF ("cannot find JIT module %s", generate_jit_module_mom);
+  MOM_INFORMPRINTF ("before generating JIT module %s",
+                    mom_item_cstring (moditm));
+  if (!momhook_generate_jit_module (moditm, &valgen))
+    MOM_WARNPRINTF ("failed to generate JIT module %s",
+                    mom_item_cstring (moditm));
+  else if (valgen.typnum == momty_string)
+    MOM_WARNPRINTF
+      ("errored when generating JIT module %s;\n** JIT error string: %s\n",
+       mom_item_cstring (moditm), mom_value_cstr (valgen));
+  MOM_INFORMPRINTF ("after generating JIT module %s got %s",
+                    mom_item_cstring (moditm), mom_output_gcstring (valgen));
 }                               /* end of do_generate_jit_module_mom */
 
 
@@ -1110,6 +1118,8 @@ main (int argc_main, char **argv_main)
   do_after_initial_load_with_plugins_mom ();
   if (generate_c_module_mom)
     do_generate_c_module_mom ();
+  if (generate_jit_module_mom)
+    do_generate_jit_module_mom ();
   if (mom_web_host || mom_socket_path)
     mom_run_workers ();
   MOM_INFORMPRINTF

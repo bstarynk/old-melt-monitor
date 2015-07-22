@@ -148,6 +148,8 @@ cjit_do_all_queued_to_do_at_mom (struct codejit_mom_st *cj, int lin)
           cjit_do_all_queued_to_do_at_mom((Cj),__LINE__)
 
 static void cjit_first_scanning_pass_mom (momitem_t *itmcjit);
+static void cjit_second_emitting_pass_mom (momitem_t *itmcjit);
+static void cjit_third_decorating_pass_mom (momitem_t *itmcjit);
 
 static void
 cjit_scan_block_next_mom (struct codejit_mom_st *cj,
@@ -180,15 +182,39 @@ bool
   if ((errlin = setjmp (cj->cj_jmpbuferror)))
     {
       assert (cj->cj_errormsg);
+      MOM_DEBUGPRINTF (gencod, "generate_jit_module errlin=%d", errlin);
       goto end;
     };
+  MOM_DEBUGPRINTF (gencod,
+                   "generate_jit_module itm=%s before first_scanning_pass itmcjit=%s",
+                   mom_item_cstring (itm), mom_item_cstring (itmcjit));
   cjit_first_scanning_pass_mom (itmcjit);
   if (cj->cj_errormsg)
     goto end;
+  //
+  MOM_DEBUGPRINTF (gencod,
+                   "generate_jit_module itm=%s before second_emitting_pass itmcjit=%s",
+                   mom_item_cstring (itm), mom_item_cstring (itmcjit));
+  cjit_second_emitting_pass_mom (itmcjit);
+  if (cj->cj_errormsg)
+    goto end;
+  //
+  MOM_DEBUGPRINTF (gencod,
+                   "generate_jit_module itm=%s before third_decorating_pass itmcjit=%s",
+                   mom_item_cstring (itm), mom_item_cstring (itmcjit));
+  cjit_third_decorating_pass_mom (itmcjit);
+  if (cj->cj_errormsg)
+    goto end;
+  MOM_DEBUGPRINTF (gencod,
+                   "generate_jit_module itm=%s after third_decorating_pass itmcjit=%s",
+                   mom_item_cstring (itm), mom_item_cstring (itmcjit));
 end:
   cjit_unlock_all_items_mom (cj);
   if (cj->cj_jitctxt)
     {
+      MOM_DEBUGPRINTF (gencod,
+                       "generate_jit_module itm=%s releasing jitctxt@%p",
+                       mom_item_cstring (itm), (void *) cj->cj_jitctxt);
       gcc_jit_context_release (cj->cj_jitctxt);
       cj->cj_jitctxt = NULL;
     }
@@ -204,6 +230,12 @@ end:
                         mom_item_cstring (itm));
       *res = mom_itemv (itm);
     }
+  itmcjit->itm_kind = NULL;
+  itmcjit->itm_data1 = NULL;
+  mom_item_unlock (itmcjit);
+  MOM_DEBUGPRINTF (gencod,
+                   "generate_jit_module itm=%s itmcjit=%s done",
+                   mom_item_cstring (itm), mom_item_cstring (itmcjit));
   return true;
 }                               /* end of momfunc_1itm_to_val__generate_jit_module */
 
@@ -271,6 +303,8 @@ cjit_first_scanning_pass_mom (momitem_t *itmcjit)
         memset (&cj->cj_fundoque, 0, sizeof (cj->cj_fundoque));
       }
   }
+  MOM_DEBUGPRINTF (gencod, "cjit_first_scanning_pass end itmcjit=%s",
+                   mom_item_cstring (itmcjit));
 }                               /* end of cjit_first_scanning_pass */
 
 
@@ -1118,6 +1152,9 @@ momfunc_1itm_to_void__jitdo_scan_block (const
     }
   cj->cj_curblockitm = NULL;
   cj->cj_curstmtitm = NULL;
+  MOM_DEBUGPRINTF (gencod, "jitdo_scan_block end blockitm=%s",
+                   mom_item_cstring (blockitm));
+  return true;
 }                               /* end of momfunc_1itm_to_void__jitdo_scan_block */
 
 
@@ -2144,3 +2181,33 @@ cjit_type_of_scanned_variable_mom (struct codejit_mom_st *cj,
                   mom_item_cstring (cj->cj_curblockitm),
                   mom_item_cstring (cj->cj_curfunitm));
 }                               /* end of cjit_type_of_scanned_variable_mom */
+
+
+
+static void
+cjit_second_emitting_pass_mom (momitem_t *itmcjit)
+{
+  struct codejit_mom_st *cj = NULL;
+  MOM_DEBUGPRINTF (gencod, "cjit_second_emitting_pass start itmcjit=%s",
+                   mom_item_cstring (itmcjit));
+  if (!itmcjit
+      || itmcjit->itm_kind != MOM_PREDEFINED_NAMED (code_generation)
+      || !(cj = itmcjit->itm_data1) || cj->cj_magic != CODEJIT_MAGIC_MOM)
+    MOM_FATAPRINTF ("cjit_second_emitting_pass: corrupted itmcjit %s",
+                    mom_item_cstring (itmcjit));
+}                               /* end of cjit_second_emitting_pass_mom */
+
+
+
+static void
+cjit_third_decorating_pass_mom (momitem_t *itmcjit)
+{
+  struct codejit_mom_st *cj = NULL;
+  MOM_DEBUGPRINTF (gencod, "cjit_third_decorating_pass start itmcjit=%s",
+                   mom_item_cstring (itmcjit));
+  if (!itmcjit
+      || itmcjit->itm_kind != MOM_PREDEFINED_NAMED (code_generation)
+      || !(cj = itmcjit->itm_data1) || cj->cj_magic != CODEJIT_MAGIC_MOM)
+    MOM_FATAPRINTF ("cjit_third_decorating_pass: corrupted itmcjit %s",
+                    mom_item_cstring (itmcjit));
+}                               /* end of cjit_third_decorating_pass_mom */

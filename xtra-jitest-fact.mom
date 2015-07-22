@@ -1,0 +1,72 @@
+
+/// Copyright (C) 2015 Free Software Foundation, Inc. 
+/// MONIMELT is a monitor for MELT - see http://gcc-melt.org/ 
+/// This file xtra-jitest-fact.mom is part of MONIMELT, part of GCC
+/// sometimes used as a draft to change the state, thru the
+/// --xtra-file program argument
+///
+/// GCC is free software; you can redistribute it and/or modify 
+/// it under the terms of the GNU General Public License as published by 
+/// the Free Software Foundation; either version 3, or (at your option) 
+/// any later version. 
+///
+///  GCC is distributed in the hope that it will be useful, 
+///  but WITHOUT ANY WARRANTY; without even the implied warranty of 
+///  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
+///  GNU General Public License for more details. 
+///  You should have received a copy of the GNU General Public License 
+///  along with GCC; see the file COPYING3.   If not see 
+///  <http://www.gnu.org/licenses/>. 
+///
+
+//// Practical usage hint: make a fresh directory /tmp/newmonimelt/
+//// Then run
+////     ./monimelt -Dgencod -X xtra-jitest-fact.mom \
+////         --chdir /tmp/newmonimelt/ \
+////         --generate-jit-module jitest_fact_module \
+////         --dump-state /tmp/newmonimelt/
+
+*: jitest_fact_module
+{
+  * comment "a single function module to test JIT on a factorial function"
+  * functions {jitest_fact_function}
+}  
+ %  ^filler_of_plain_kind( code_module)
+ 
+..
+
+*: jitest_fact_function
+{
+   * comment "a simple recursive factorial function"
+   * signature signature_1int_to_int
+   * constants [ jitest_fact_function ]
+   * formals [ jitest_fact_n ]
+   * results [ jitest_fact_result ]
+   * code  jitest_fact_block
+}
+..
+
+*: jitest_fact_n
+{ * type integer
+  * comment "formal for jitest_fact_function"
+}
+% ^filler_of_plain_kind(variable)
+..
+
+
+*: jitest_fact_result
+{ * type integer
+  * comment "result for jitest_fact_function"
+}
+% ^filler_of_plain_kind(variable)
+..
+
+*: jitest_fact_block
+{
+   * comment "the code block for factorial"
+   }
+[[
+  
+]]
+% ^filler_of_plain_kind(block)
+..

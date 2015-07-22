@@ -138,4 +138,9 @@ passwords: .mompasswd
 	@echo Enter web password for master
 	@(echo -n master: ; mkpasswd -msha-256) > .mompasswd
 
-tests-jit: ./monimelt 
+tests-jit: ./monimelt $(wildcard xtra-jitest-*.mom)
+	[ -d /tmp/newmonimelt/ ] || mkdir /tmp/newmonimelt/
+	./monimelt -Dgencod -X xtra-jitest-fact.mom \
+            --chdir /tmp/newmonimelt/ \
+	    --generate-jit-module jitest_fact_module \
+            --dump-state /tmp/newmonimelt/
