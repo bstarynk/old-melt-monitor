@@ -567,10 +567,24 @@ cjit_scan_function_variables_mom (struct codejit_mom_st *cj,
                                   momitem_t *itmfun, momvalue_t vvariables);
 
 
+static void
+cjit_scan_function_formals_mom (struct codejit_mom_st *cj,
+                                momitem_t *itmfun, momitem_t *itmsig,
+                                const momseq_t *tupformals);
+
+
+
+static void
+cjit_scan_function_results_mom (struct codejit_mom_st *cj,
+                                momitem_t *itmfun, momitem_t *itmsig,
+                                const momseq_t *tupresults);
+
+
 
 static void
 cjit_scan_function_first_mom (struct codejit_mom_st *cj, momitem_t *itmfun)
 {
+  const momstring_t *radixstr = NULL;
   assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
   assert (itmfun != NULL);
   momitem_t *itmsignature = NULL;
@@ -603,12 +617,23 @@ cjit_scan_function_first_mom (struct codejit_mom_st *cj, momitem_t *itmfun)
         itmsignature = mom_value_to_item (vfunctionsig);
       }
   }
-  if (!itmsignature
-      || itmsignature->itm_kind != MOM_PREDEFINED_NAMED (signature))
-    CJIT_ERROR_MOM (cj, "module item %s : function %s without signature",
+  if (!itmsignature             //
+      || (cjit_lock_item_mom (cj, itmsignature),        //
+          itmsignature->itm_kind != MOM_PREDEFINED_NAMED (signature))   //
+      || !(radixstr =           //
+           mom_value_to_string
+           (mom_item_unsync_get_attribute
+            (itmsignature, MOM_PREDEFINED_NAMED (function_radix)))))
+    CJIT_ERROR_MOM (cj, "module item %s : function %s with bad signature %s",
                     mom_item_cstring (cj->cj_moduleitm),
-                    mom_item_cstring (itmfun));
-  cjit_lock_item_mom (cj, itmsignature);
+                    mom_item_cstring (itmfun),
+                    mom_item_cstring (itmsignature));
+  const momseq_t *tupformals =  //
+    mom_value_to_tuple (mom_item_unsync_get_attribute
+                        (itmfun, MOM_PREDEFINED_NAMED (formals)));
+  const momseq_t *tupresults =  //
+    mom_value_to_tuple (mom_item_unsync_get_attribute
+                        (itmfun, MOM_PREDEFINED_NAMED (results)));
   const unsigned nbfuninitattrs = 15;
   cj->cj_funbind = mom_attributes_make (nbfuninitattrs);
   cj->cj_funconstset = NULL;
@@ -618,6 +643,10 @@ cjit_scan_function_first_mom (struct codejit_mom_st *cj, momitem_t *itmfun)
                    mom_item_cstring (itmfun),
                    mom_item_cstring (itmsignature));
   cjit_scan_function_for_signature_mom (cj, itmfun, itmsignature);
+  // scan the formals
+  cjit_scan_function_formals_mom (cj, itmfun, itmsignature, tupformals);
+  // scan the results
+  cjit_scan_function_results_mom (cj, itmfun, itmsignature, tupresults);
   //scan the constants
   {
     momvalue_t vconstants = mom_item_unsync_get_attribute       //
@@ -675,6 +704,35 @@ cjit_scan_function_first_mom (struct codejit_mom_st *cj, momitem_t *itmfun)
   cjit_do_all_queued_to_do_mom (cj);
   MOM_DEBUGPRINTF (gencod, "scanning function %s after doing queued todos",
                    mom_item_cstring (itmfun));
+  {
+    char jitfunam[MOM_PATH_MAX];
+    memset (jitfunam, 0, sizeof (jitfunam));
+    if (snprintf (jitfunam, sizeof (jitfunam), MOM_FUNCTION_PREFIX "%s__%s",
+                  mom_item_cstring (itmfun), mom_string_cstr (radixstr))
+        >= (int) sizeof (jitfunam) - 6)
+      CJIT_ERROR_MOM (cj,
+                      "module item %s: function %s and radix %s gives too long function name %s",
+                      mom_item_cstring (cj->cj_moduleitm),
+                      mom_item_cstring (itmfun), mom_string_cstr (radixstr),
+                      jitfunam);
+    gcc_jit_location *jitloc = NULL;
+    gcc_jit_type *jitretyp =
+      gcc_jit_context_get_type (cj->cj_jitctxt, GCC_JIT_TYPE_BOOL);
+    unsigned jitnbparams = 0;   //@@FIXME
+    gcc_jit_param **jitparamarr = MOM_GC_SCALAR_ALLOC ("jitparamarr",
+                                                       jitnbparams *
+                                                       sizeof (jitparamarr
+                                                               [0]));
+#warning should fill the jitparamarr & jitnbparams
+    gcc_jit_function *jitfun =  //
+      gcc_jit_context_new_function (cj->cj_jitctxt, jitloc,
+                                    GCC_JIT_FUNCTION_EXPORTED,
+                                    jitretyp,
+                                    jitfunam,
+                                    jitnbparams,
+                                    jitparamarr,
+                                    0 /*non-variadic */ );
+  }
   MOM_FATAPRINTF ("cjit_scan_function_first unimplemented itmfun=%s",
                   mom_item_cstring (itmfun));
   // perhaps here: cj->cj_funleadattr = NULL;
@@ -1002,6 +1060,33 @@ cjit_scan_function_variables_mom (struct codejit_mom_st *cj,
       }
     }
 }                               /* end cjit_scan_function_variables_mom */
+
+
+
+static void
+cjit_scan_function_formals_mom (struct codejit_mom_st *cj,
+                                momitem_t *itmfun, momitem_t *itmsig,
+                                const momseq_t *tupformals)
+{
+  assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
+#warning unimplemented cjit_scan_function_formals_mom
+  MOM_FATAPRINTF ("unimplemented cjit_scan_function_formals_mom itmfun=%s",
+                  mom_item_cstring (itmfun));
+}                               /* end of cjit_scan_function_formals_mom */
+
+
+
+
+static void
+cjit_scan_function_results_mom (struct codejit_mom_st *cj,
+                                momitem_t *itmfun, momitem_t *itmsig,
+                                const momseq_t *tupresults)
+{
+  assert (cj && cj->cj_magic == CODEJIT_MAGIC_MOM);
+#warning unimplemented cjit_scan_function_results_mom
+  MOM_FATAPRINTF ("unimplemented cjit_scan_function_results_mom itmfun=%s",
+                  mom_item_cstring (itmfun));
+}                               /* end of cjit_scan_function_results_mom */
 
 
 
